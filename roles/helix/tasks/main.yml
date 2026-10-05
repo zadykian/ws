@@ -1,0 +1,94 @@
+---
+# Ubuntu's package is hx, not helix. git and g++ fetch and build the grammars below. apt's daily
+# jobs hold its lock for a while after a new machine's first boot, as in bootstrap.sh.
+- name: Install helix, and git and g++ for its grammars
+  ansible.builtin.apt:
+    name: [hx, git, g++]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+
+# As ws_user, so that each lands in that user's home. root needs no become, and a container has
+# no sudo. HOME is set, as hx reads its config and keeps its grammars under it and go install
+# its caches, and without become it would be the caller's.
+- name: Set helix up for ws_user
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"
+  block:
+    - name: Create helix's config directory
+      ansible.builtin.file:
+        path: "{{ ws_home }}/.config/helix"
+        state: directory
+        mode: "0755"
+
+    - name: Write helix's config
+      ansible.builtin.copy:
+        src: config.toml
+        dest: "{{ ws_home }}/.config/helix/config.toml"
+        mode: "0644"
+        backup: true
+
+    - name: Write helix's languages
+      ansible.builtin.template:
+        src: languages.toml.j2
+        dest: "{{ ws_home }}/.config/helix/languages.toml"
+        mode: "0644"
+        backup: true
+
+    # gopls type-checks with the Go it was built with, so a new Go needs a new gopls too. A
+    # missing gopls fails the command, which counts as another version.
+    - name: Read gopls's version and the Go it was built with
+      ansible.builtin.command:
+        argv: ["{{ helix_gopls }}", version, -json]
+      register: helix_gopls_installed
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Install gopls
+      when: >-
+        helix_gopls_installed.rc != 0
+        or (helix_gopls_installed.stdout | from_json).Version != 'v' ~ helix_gopls_version
+        or (helix_gopls_installed.stdout | from_json).GoVersion != 'go' ~ devtools_go_version
+      block:
+        - name: Find the devtools role's Go
+          ansible.builtin.stat:
+            path: /usr/local/go/bin/go
+          register: helix_go
+
+        # A dry run of the whole playbook installs no Go before this.
+        - name: Require the devtools role's Go
+          ansible.builtin.assert:
+            that: helix_go.stat.exists
+            fail_msg: gopls is built with the Go in /usr/local/go, which the devtools role installs.
+            quiet: true
+          when: not ansible_check_mode
+
+        # GOBIN puts gopls where languages.toml names it, whatever GOPATH or GOBIN the user's go
+        # env sets. GOTOOLCHAIN=local builds it with this Go, never one go would download.
+        - name: Build gopls
+          ansible.builtin.command:
+            argv:
+              - /usr/local/go/bin/go
+              - install
+              - golang.org/x/tools/gopls@v{{ helix_gopls_version }}
+          environment:
+            GOBIN: "{{ helix_gopls | dirname }}"
+            GOTOOLCHAIN: local
+          changed_when: true
+
+    # hx fetches a grammar only where its checkout isn't at the revision hx pins, and builds one
+    # only where its sources are newer than its library. So both run every time: a run with
+    # nothing to do changes nothing and needs no network, and a new hx's revisions are picked up.
+    - name: Fetch helix's grammars
+      ansible.builtin.command: hx --grammar fetch
+      register: helix_grammars_fetched
+      changed_when: helix_grammars_fetched.stdout is search('updated grammars')
+
+    - name: Build helix's grammars
+      ansible.builtin.command: hx --grammar build
+      register: helix_grammars_built
+      changed_when: helix_grammars_built.stdout is search('grammars built now')

@@ -61,6 +61,12 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   which takes OTLP on loopback, reads the journal, the host's metrics and its temperatures from
   node_exporter, and sends it all to SigNoz, and claude's metrics to another collector where one is
   set: [below](#the-collector).
+- `helix`: the helix editor, `hx`, from Ubuntu's archive, with `~/.config/helix/config.toml` set
+  close to GoLand's and Rider's settings, and `languages.toml`. Ubuntu's hx ships no tree-sitter
+  grammars, so the role fetches and builds those `helix_grammars` lists with `hx --grammar`. Go's
+  language server, gopls, comes from `go install` at the version `group_vars/all.yml` pins, with
+  the Go of the `devtools` role, and is built again when either version changes. Each run replaces
+  changes made to the two files by hand, and keeps the old file beside the new one.
 
 ## A new machine
 

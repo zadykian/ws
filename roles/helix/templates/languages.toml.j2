@@ -1,0 +1,14 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+
+# The grammars the playbook fetches and builds with hx --grammar. Without this list, hx would
+# take every grammar it knows, more than two hundred.
+use-grammars = { only = {{ helix_grammars | to_json }} }
+
+# The gopls the playbook installs, at its pinned version, rather than any gopls on PATH.
+[language-server.gopls]
+command = {{ helix_gopls | to_json }}
+
+# gopls alone: helix's defaults add golangci-lint-langserver, which nothing installs.
+[[language]]
+name = "go"
+language-servers = ["gopls"]

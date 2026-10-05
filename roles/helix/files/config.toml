@@ -1,0 +1,35 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# helix as close to the IDEs, GoLand and Rider, as its settings go: their dark theme, current line,
+# right margin, tabs, bar caret and indent guides, with spaces and tabs shown as the IDEs here
+# show them.
+theme = "jetbrains_dark"
+
+[editor]
+cursorline = true
+rulers = [120]
+# Tabs once more than one file is open.
+bufferline = "multiple"
+# Completion pops up from the first character typed, as in the IDEs, rather than the second.
+completion-trigger-len = 1
+
+# The IDEs save on their own. helix saves 3 seconds after the last edit, and when the terminal
+# reports that it lost focus. An auto-save doesn't format the file; a :write does.
+[editor.auto-save]
+focus-lost = true
+after-delay.enable = true
+
+[editor.cursor-shape]
+insert = "bar"
+
+# The file picker and global search find dotfiles too, as the IDEs' Go to File does: .github's,
+# say. .gitignore still applies, and helix always leaves .git out.
+[editor.file-picker]
+hidden = false
+
+[editor.indent-guides]
+render = true
+
+[editor.whitespace.render]
+space = "all"
+tab = "all"
