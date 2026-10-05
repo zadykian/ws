@@ -49,8 +49,8 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
 - `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days,
   with its UI and OTLP/HTTP intake on loopback and no login: [below](#signoz).
 - `otelcol`: the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on the host,
-  which takes OTLP on loopback, reads the journal and the host's metrics, and sends it all to
-  SigNoz: [below](#the-collector).
+  which takes OTLP on loopback, reads the journal, the host's metrics and its temperatures from
+  node_exporter, and sends it all to SigNoz: [below](#the-collector).
 
 ## A new machine
 
@@ -169,6 +169,8 @@ its release, which `group_vars/all.yml` pins by version and SHA-256. Its config,
   journal, so it leaves them out;
 - reads the host's metrics every 60 seconds: CPU, load, memory, paging, disks, filesystems,
   network, and the count of processes;
+- scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60 seconds, as the
+  host's metrics have none;
 - sends it all to SigNoz's intake on `127.0.0.1:14318`, with the host's name added as `host.name`.
 
 A journal line's message is its body and its priority its severity; its other fields are
@@ -176,6 +178,14 @@ attributes, such as `journald._SYSTEMD_UNIT`, its unit. Its process's ID, execut
 line are dropped, since as attributes of the resource they would make each process a resource of
 its own in SigNoz. The collector reads the journal from its end each time it starts, so what is
 logged while it is down stays in the journal alone.
+
+node_exporter is Ubuntu's `prometheus-node-exporter`, without its recommends, with only its
+`hwmon` and `thermal_zone` collectors and without its own Go and process metrics. Its arguments are
+in `/etc/default/prometheus-node-exporter`, which the role writes before it installs the package,
+as the package starts node_exporter at once; dpkg keeps that file and puts the package's beside it,
+as `.dpkg-dist`. Its metrics keep their Prometheus names, such as `node_hwmon_temp_celsius`, with
+`service.name` `node` and the host's name. A VM has no temperatures or fans to read, so there they
+are missing.
 
 The collector refuses new data once it holds 384 MiB, as when SigNoz is down and what it would send
 piles up, so that it doesn't grow until the kernel kills another process.

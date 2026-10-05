@@ -1,0 +1,38 @@
+---
+# The arguments go in before the package, whose postinst starts node_exporter with them: with the
+# package's own, it would serve every collector on every address. The file is one of the package's
+# conffiles, and apt's force-confold keeps the one it finds.
+- name: Write node_exporter's arguments
+  ansible.builtin.copy:
+    src: prometheus-node-exporter
+    dest: /etc/default/prometheus-node-exporter
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart node_exporter
+
+# Its recommends add textfile scripts, with their timers and Python, for collectors it leaves off.
+- name: Install node_exporter
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+
+# A dry run where the package isn't installed yet has no unit to start.
+- name: Enable and start node_exporter
+  ansible.builtin.systemd_service:
+    name: prometheus-node-exporter
+    enabled: true
+    state: started
+  when: >-
+    not ansible_check_mode
+    or '/usr/lib/systemd/system/prometheus-node-exporter.service' is file
+  tags: [systemd]
+
+# Here rather than at the collector's flush: a failure in between would lose the notification, and
+# the next run, finding the file in place, would not notify again.
+- name: Restart node_exporter now if its arguments changed
+  ansible.builtin.meta: flush_handlers

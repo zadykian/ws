@@ -1,4 +1,9 @@
 ---
+# Temperatures and fans, which the collector's host metrics lack. node_exporter comes first, so
+# that the collector's first scrape finds it.
+- name: Set up node_exporter
+  ansible.builtin.import_tasks: node_exporter.yml
+
 - name: Read dpkg's architecture
   ansible.builtin.command: dpkg --print-architecture
   register: otelcol_architecture

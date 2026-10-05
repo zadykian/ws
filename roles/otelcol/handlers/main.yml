@@ -1,6 +1,6 @@
 ---
-# A notified handler runs whatever --skip-tags says, so it checks the systemd tag itself. A dry run
-# where the package isn't installed yet has no unit to restart.
+# A notified handler runs whatever --skip-tags says, so each one checks the systemd tag itself. A
+# dry run where the package isn't installed yet has no unit to restart.
 - name: Restart the collector
   ansible.builtin.systemd_service:
     name: otelcol-contrib
@@ -9,4 +9,15 @@
   when: >-
     'systemd' not in ansible_skip_tags
     and (not ansible_check_mode or '/lib/systemd/system/otelcol-contrib.service' is file)
+  tags: [systemd]
+
+# node_exporter reads its arguments only as it starts.
+- name: Restart node_exporter
+  ansible.builtin.systemd_service:
+    name: prometheus-node-exporter
+    state: restarted
+  when: >-
+    'systemd' not in ansible_skip_tags
+    and (not ansible_check_mode
+    or '/usr/lib/systemd/system/prometheus-node-exporter.service' is file)
   tags: [systemd]

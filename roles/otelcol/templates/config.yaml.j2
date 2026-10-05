@@ -1,7 +1,7 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
 # It starts from SigNoz's config for a collector on a VM, with every port on loopback, the journal
-# added and the per-process metrics left out.
+# and node_exporter's temperatures added, and the per-process metrics left out.
 
 extensions:
   health_check:
@@ -33,6 +33,15 @@ receivers:
       filesystem: {}
       network: {}
       processes: {}
+  # Temperatures and fans, which host_metrics doesn't read, from node_exporter on loopback, which
+  # serves only its hwmon and thermal_zone collectors. A VM has none of either.
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: node
+          scrape_interval: 60s
+          static_configs:
+            - targets: [127.0.0.1:9100]
 
 processors:
   # Past 384 MiB (512 less the spike), the collector refuses new data, as when SigNoz is down and
@@ -79,7 +88,7 @@ service:
       processors: [memory_limiter, resource_detection, batch]
       exporters: [otlp_http/signoz]
     metrics:
-      receivers: [otlp, host_metrics]
+      receivers: [otlp, host_metrics, prometheus]
       processors: [memory_limiter, resource_detection, batch]
       exporters: [otlp_http/signoz]
     logs:
