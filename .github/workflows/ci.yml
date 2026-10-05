@@ -68,3 +68,45 @@ jobs:
       # --redact keeps a secret it finds out of the log, which is public.
       - name: gitleaks
         run: gitleaks git --no-banner --redact --verbose .
+
+  # The playbook as on a new machine, but in a container rather than a booted system, so without
+  # the tasks tagged systemd. It runs twice, and the second run must change nothing.
+  playbook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    container: ubuntu:26.04
+    env:
+      # The home of root, as on a new machine, rather than the /github/home a container job gets.
+      HOME: /root
+    steps:
+      # Without git, the checkout would be the files alone, not a clone.
+      - name: Install git
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates git
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # bootstrap.sh runs the playbook from the clone in /root/repository/ws, which it leaves as it
+      # is. The checkout is copied there, so that root owns it: git refuses root a repository whose
+      # directory another user owns, and the runner's user owns the workspace.
+      - name: Put the checkout at /root/repository/ws
+        run: |
+          mkdir -p /root/repository
+          cp -R "$GITHUB_WORKSPACE" /root/repository/ws
+      # As the one-liner in the README runs it: sh reads the script from stdin.
+      - name: Bootstrap
+        run: sh -s -- --skip-tags systemd </root/repository/ws/bootstrap.sh
+      - name: Run again, changing nothing
+        shell: bash
+        run: |
+          /root/repository/ws/bootstrap.sh --skip-tags systemd | tee "$RUNNER_TEMP/again.log"
+          if ! grep -Eq '^localhost +: ok=[0-9]+ +changed=0 +unreachable=0 +failed=0 ' \
+              "$RUNNER_TEMP/again.log"; then
+              echo '::error::The second run of the playbook changed something.'
+              exit 1
+          fi

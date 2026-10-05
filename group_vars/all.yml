@@ -1,0 +1,16 @@
+---
+# The user the roles set the machine up for: root, as on the server this repository replaces.
+ws_user: root
+# The user's home, which follows ws_user unless it is set too.
+ws_home: "{{ '/root' if ws_user == 'root' else '/home/' ~ ws_user }}"
+
+# Versions, each named for the role that installs it.
+
+# Go, in /usr/local/go.
+devtools_go_version: "1.27.1"
+# Node's major version: NodeSource's repository node_MAJOR.x.
+devtools_node_major: 24
+# The .NET SDKs, from the dotnet/backports PPA.
+devtools_dotnet_sdks: ["8.0", "10.0"]
+# otelcol-contrib, from the .deb of the collector's release.
+otelcol_version: "0.162.0"

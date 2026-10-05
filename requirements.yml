@@ -1,3 +1,10 @@
 ---
 # The collections the roles use, each pinned to a version.
-collections: []
+collections:
+  - name: community.general
+    version: 13.4.0
+  - name: community.docker
+    version: 5.4.0
+  # community.docker's dependency, pinned too, so that its next release changes nothing here.
+  - name: community.library_inventory_filtering_v1
+    version: 1.1.5
