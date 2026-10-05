@@ -35,11 +35,19 @@ space = "all"
 tab = "all"
 
 # The keys of F12, the IDEs' keymap here, where helix has the command, with F12's action beside
-# each. Cmd never reaches a terminal program, so F12's Ctrl keys stand in for it. Where a key was
-# helix's own, helix's other key for it stays: space w for the window menu of C-w, A-o and A-i
-# for the selection keys of A-up and A-down. A-d was helix's only key for delete without
-# yanking; "_d does the same. The README says which keys a terminal or tmux may not pass on, and
-# helix's own keys that do the same.
+# each: a core set first, then the rest by topic. docs/helix-keymap.md in the repository lists
+# every F12 action with its keys and helix command, the actions helix has no command for, and
+# helix's own key for each where a terminal or tmux doesn't pass F12's on. Cmd never reaches a
+# terminal program, so F12's Ctrl keys stand in for it.
+#
+# Where a key was helix's own, helix's other key for it stays: space w for the window menu of C-w,
+# A-o and A-i for the selection keys of A-up and A-down, space c for the comments of C-c, pageup
+# and pagedown for C-b and C-f, tab for C-i, A-p and A-n for A-left and A-right. Delete deletes
+# without yanking, as A-d did. These lose their only key: increment and decrement (C-a, C-x),
+# save_selection (C-s), suspend (C-z), move_parent_node_end (A-e), ensure_selections_forward
+# (A-:), merge_consecutive_selections (A-_) and select_all_children (A-I, S-A-down). C-o stays
+# jump_backward, Back's key where C-minus doesn't arrive, so F12's Open, also C-o, isn't bound: Go
+# to file opens the same picker.
 [keys.normal]
 A-d = "goto_definition"               # Go to declaration
 C-A-d = "goto_implementation"         # Go to implementation
@@ -63,21 +71,158 @@ C-S-w = "shrink_selection"            # Shrink selection
 A-up = '@v"m<A-up>'
 A-down = '@v"m<A-down>'
 
+# Editing. Copy, Cut and Delete leave the " register alone, so p still pastes the last yank.
+# Paste goes before the selection, at the cursor, as the IDEs paste at the caret: over the
+# selection, it would delete the character under a lone cursor. Space R pastes over a selection.
+C-z = "undo"                          # Undo
+C-y = "redo"                          # Redo
+C-S-z = "redo"                        # Redo
+C-c = "yank_to_clipboard"             # Copy
+C-x = ["yank_to_clipboard", "delete_selection_noyank"] # Cut
+C-v = "paste_clipboard_before"        # Paste
+del = "delete_selection_noyank"       # Delete
+C-S-ret = "open_below"                # Start new line
+"C-A-/" = "toggle_line_comments"      # Comment line
+"C-?" = "toggle_block_comments"       # Comment with block comment
+C-A-ret = ":format"                   # Reformat code
+C-A-S-l = ":format"                   # Reformat file
+C-A-S-f = ":format"                   # Go fmt file
+C-S-del = "surround_delete"           # Unwrap
+C-s = ":write"                        # Save
+C-S-s = ":write-all"                  # Save all
+
+# Selection
+C-a = "select_all"                    # Select all
+"A-+" = "expand_selection"            # Extend selection
+A-_ = "shrink_selection"              # Shrink selection
+S-left = "extend_char_left"           # Left with selection
+S-right = "extend_char_right"         # Right with selection
+"C-A-{" = "extend_parent_node_start"  # Code block start with selection
+"C-A-}" = "extend_parent_node_end"    # Code block end with selection
+A-S-up = "copy_selection_on_prev_line" # Clone caret above
+A-S-down = "copy_selection_on_next_line" # Clone caret below
+# Add selection for next occurrence: the next match of the selection, as * then n in select mode.
+# With the cursor alone, that is the next match of its character, so select the word first.
+A-gt = ["search_selection_detect_word_boundaries", "extend_search_next"]
+A-lt = "remove_primary_selection"     # Unselect occurrence
+"A-:" = "select_references_to_symbol_under_cursor" # Select all occurrences
+"A-}" = "@maf"                        # Select containing declaration
+"C-{" = "@maf"                        # Select containing declaration
+
+# Navigation
+A-F12 = "goto_implementation"         # Quick definition
+C-S-F11 = "goto_type_definition"      # Go to type declaration
+A-S-F12 = "goto_reference"            # Show usages
+C-A-S-F12 = "goto_reference"          # Find usages settings
+C-S-backspace = "goto_last_modification" # Last edit location
+"C-]" = "match_brackets"              # Matching brace
+"A-{" = "move_parent_node_start"      # Code block start
+# Containing declaration: helix has no command that goes to the start of the function around the
+# cursor, so this selects around the function and keeps the selection's start.
+"C-[" = "@maf<A-;>;"
+C-S-F1 = "hover"                      # Quick documentation
+
+# Search. Search everywhere finds files alone.
+C-f = "search"                        # Find
+C-S-down = "search_next"              # Find next
+"A-?" = "search_next"                 # Find next
+"C-," = "file_picker"                 # Search everywhere
+
+# Code. F12's refactorings open the language server's code actions, which offer what it has.
+S-ret = "code_action"                 # Show intention actions
+C-ret = "code_action"                 # Show intention actions
+C-t = "code_action"                   # Refactor this
+C-A-c = "code_action"                 # Introduce constant
+A-ins = "code_action"                 # Generate
+C-S-i = "code_action"                 # Implement methods
+C-i = ":toggle lsp.display-inlay-hints" # Toggle inlay hints
+
+# Problems
+A-S-i = "diagnostics_picker"          # Inspect code with editor settings
+A-F11 = "workspace_diagnostics_picker" # Inspect code
+C-A-2 = "workspace_diagnostics_picker" # Errors in solution
+C-A-4 = "workspace_diagnostics_picker" # Inspection results
+C-A-v = "workspace_diagnostics_picker" # Inspection results
+A-S-pagedown = "workspace_diagnostics_picker" # Next error in solution
+C-S-F12 = "workspace_diagnostics_picker" # Next error in solution
+A-S-F2 = "workspace_diagnostics_picker" # Previous error in solution
+A-S-pageup = "workspace_diagnostics_picker" # Previous error in solution
+
+# Files, tabs and splits: helix's buffers stand for the IDEs' tabs.
+F1 = "file_explorer"                  # Project
+A-1 = "file_explorer"                 # Project
+A-S-l = "file_explorer_in_current_buffer_directory" # Locate in solution view
+C-A-pagedown = "goto_next_buffer"     # Next tab
+A-right = "goto_next_buffer"          # Next tab
+C-A-pageup = "goto_previous_buffer"   # Previous tab
+A-left = "goto_previous_buffer"       # Previous tab
+C-S-tab = "buffer_picker"             # Switcher
+C-end = "rotate_view"                 # Next splitter
+A-S-right = "rotate_view"             # Next splitter
+C-home = "rotate_view_reverse"        # Previous splitter
+A-S-left = "rotate_view_reverse"      # Previous splitter
+C-A-S-r = "vsplit"                    # Split right
+
+# Version control
+F5 = "changed_file_picker"            # Commit
+A-5 = "changed_file_picker"           # Commit
+F6 = "changed_file_picker"            # Version control
+A-6 = "changed_file_picker"           # Version control
+F8 = "goto_next_change"               # Next difference
+C-A-S-n = "goto_next_change"          # Next change
+S-F8 = "goto_prev_change"             # Previous difference
+S-F7 = "goto_prev_change"             # Previous difference
+C-A-S-p = "goto_prev_change"          # Previous change
+C-A-z = ":reset-diff-change"          # Rollback lines
+
+# Debugger: helix's debug adapter commands, which need the language's debugger, dlv for Go. The
+# playbook installs none.
+C-b = "dap_toggle_breakpoint"         # Toggle line breakpoint
+A-F9 = "dap_edit_condition"           # Edit breakpoint
+C-A-b = "dap_edit_condition"          # Edit breakpoint
+C-F5 = "dap_launch"                   # Debug
+C-S-F5 = "dap_continue"               # Resume program
+C-pause = "dap_pause"                 # Pause program
+C-S-p = "dap_pause"                   # Pause program
+A-F5 = "dap_terminate"                # Stop
+A-w = "dap_next"                      # Step over
+A-e = "dap_step_in"                   # Step into
+A-q = "dap_step_out"                  # Step out
+
 [keys.normal.C-r]
 r = "rename_symbol"                   # Rename
+s = "code_action"                     # Change signature
+m = "code_action"                     # Extract method
 
 [keys.normal.C-k]
 i = "hover"                           # Quick documentation
+C-i = "hover"                         # Quick documentation
 c = "toggle_line_comments"            # Comment line
+C-c = "toggle_line_comments"          # Comment line
+"C-/" = "toggle_line_comments"        # Comment line
+C-u = "toggle_line_comments"          # Comment line
 # gopls formats only whole files, and format_selections asks for a range, so this formats the
 # file, as the IDEs do with nothing selected.
 f = ":format"                         # Reformat code
+C-f = ":format"                       # Reformat code
+d = ":format"                         # Reformat code
+C-d = ":format"                       # Reformat code
+s = "surround_add"                    # Surround with live template
+C-s = "surround_add"                  # Surround with live template
 
-# The same in insert mode, but for three. Completion is here alone: helix drops completions
-# outside insert mode. The selection keys leave insert mode, since text typed in it goes before the
+[keys.normal.C-m]
+c = "align_view_center"               # Scroll to center
+C-c = "align_view_center"             # Scroll to center
+
+# The same in insert mode, but for these. Completion is here alone: helix drops completions outside
+# insert mode. The selection keys leave insert mode, since text typed in it goes before the
 # selection rather than over it; the selection is then there to change or delete, as with c or d.
-# Moving lines goes back to insert mode, at the start of the moved lines. A-backspace and A-del
-# still delete words, but C-r's registers and C-k's kill to the line's end have no other key.
+# Moving lines goes back to insert mode, at the start of the moved lines. Copy and Cut do nothing:
+# insert mode's selection is the character after the cursor, which Cut would take, and bound to
+# nothing, a Ctrl key there would type its letter. Surround with acts on that character. Delete
+# stays helix's, which deletes it, as the IDEs do. A-backspace and A-del still delete words and
+# enter starts a line, as A-d and C-j did, but C-r's registers, C-k's kill to the line's end, C-s's
+# undo checkpoint and C-x's completion have no other key: F12's C-space and C-j complete.
 [keys.insert]
 A-d = "goto_definition"
 C-A-d = "goto_implementation"
@@ -98,13 +243,149 @@ C-space = "completion"                # Completion
 A-up = '@<esc>v"m<A-up>i'
 A-down = '@<esc>v"m<A-down>i'
 
+# Editing. Paste inserts the clipboard at the cursor, as C-r + does: null, a key no terminal sends,
+# runs C-r's insert_register. helix's paste commands put it before or after the selection, which
+# after a is the character before the cursor.
+C-z = "undo"
+C-y = "redo"
+C-S-z = "redo"
+C-c = "no_op"
+C-x = "no_op"
+null = "insert_register"
+C-v = "@<null>+"                      # Paste
+C-S-ret = "open_below"
+"C-A-/" = "toggle_line_comments"
+"C-?" = "toggle_block_comments"
+C-A-ret = ":format"
+C-A-S-l = ":format"
+C-A-S-f = ":format"
+C-S-del = "surround_delete"
+C-s = ":write"
+C-S-s = ":write-all"
+
+# Completion. Second basic completion is F12's Shift+Alt+Space, which arrives as A-space: helix
+# drops Shift from a character key, space too. Parameter info, Shift+Ctrl+Space, would arrive as
+# C-space, Completion, so it isn't bound; helix shows a call's parameters as it is typed.
+C-j = "completion"                    # Completion
+A-space = "completion"                # Second basic completion
+C-A-space = "completion"              # Type-matching completion
+"A-/" = "completion"                  # Cyclic expand word
+
+# Selection
+C-a = ["normal_mode", "select_all"]
+"A-+" = ["normal_mode", "expand_selection"]
+A-_ = ["normal_mode", "shrink_selection"]
+S-left = ["normal_mode", "extend_char_left"]
+S-right = ["normal_mode", "extend_char_right"]
+"C-A-{" = ["normal_mode", "extend_parent_node_start"]
+"C-A-}" = ["normal_mode", "extend_parent_node_end"]
+A-S-up = "copy_selection_on_prev_line"
+A-S-down = "copy_selection_on_next_line"
+A-gt = ["normal_mode", "search_selection_detect_word_boundaries", "extend_search_next"]
+A-lt = ["normal_mode", "remove_primary_selection"]
+"A-:" = ["normal_mode", "select_references_to_symbol_under_cursor"]
+"A-}" = "@<esc>maf"
+"C-{" = "@<esc>maf"
+
+# Navigation
+A-F12 = "goto_implementation"
+C-S-F11 = "goto_type_definition"
+A-S-F12 = "goto_reference"
+C-A-S-F12 = "goto_reference"
+C-S-backspace = "goto_last_modification"
+"C-]" = "match_brackets"
+"A-{" = "move_parent_node_start"
+"C-[" = "@<esc>maf<A-;>;i"
+C-S-F1 = "hover"
+
+# Search
+C-f = ["normal_mode", "search"]
+C-S-down = ["normal_mode", "search_next"]
+"A-?" = ["normal_mode", "search_next"]
+"C-," = "file_picker"
+
+# Code
+S-ret = "code_action"
+C-ret = "code_action"
+C-t = "code_action"
+C-A-c = "code_action"
+A-ins = "code_action"
+C-S-i = "code_action"
+C-i = ":toggle lsp.display-inlay-hints"
+
+# Problems
+A-S-i = "diagnostics_picker"
+A-F11 = "workspace_diagnostics_picker"
+C-A-2 = "workspace_diagnostics_picker"
+C-A-4 = "workspace_diagnostics_picker"
+C-A-v = "workspace_diagnostics_picker"
+A-S-pagedown = "workspace_diagnostics_picker"
+C-S-F12 = "workspace_diagnostics_picker"
+A-S-F2 = "workspace_diagnostics_picker"
+A-S-pageup = "workspace_diagnostics_picker"
+
+# Files, tabs and splits
+F1 = "file_explorer"
+A-1 = "file_explorer"
+A-S-l = "file_explorer_in_current_buffer_directory"
+C-A-pagedown = "goto_next_buffer"
+A-right = "goto_next_buffer"
+C-A-pageup = "goto_previous_buffer"
+A-left = "goto_previous_buffer"
+C-S-tab = "buffer_picker"
+C-end = "rotate_view"
+A-S-right = "rotate_view"
+C-home = "rotate_view_reverse"
+A-S-left = "rotate_view_reverse"
+C-A-S-r = "vsplit"
+
+# Version control
+F5 = "changed_file_picker"
+A-5 = "changed_file_picker"
+F6 = "changed_file_picker"
+A-6 = "changed_file_picker"
+F8 = "goto_next_change"
+C-A-S-n = "goto_next_change"
+S-F8 = "goto_prev_change"
+S-F7 = "goto_prev_change"
+C-A-S-p = "goto_prev_change"
+C-A-z = ":reset-diff-change"
+
+# Debugger
+C-b = "dap_toggle_breakpoint"
+A-F9 = "dap_edit_condition"
+C-A-b = "dap_edit_condition"
+C-F5 = "dap_launch"
+C-S-F5 = "dap_continue"
+C-pause = "dap_pause"
+C-S-p = "dap_pause"
+A-F5 = "dap_terminate"
+A-w = "dap_next"
+A-e = "dap_step_in"
+A-q = "dap_step_out"
+
 [keys.insert.C-r]
 r = "rename_symbol"
+s = "code_action"
+m = "code_action"
 
 [keys.insert.C-k]
 i = "hover"
+C-i = "hover"
 c = "toggle_line_comments"
+C-c = "toggle_line_comments"
+"C-/" = "toggle_line_comments"
+C-u = "toggle_line_comments"
 f = ":format"
+C-f = ":format"
+d = ":format"
+C-d = ":format"
+s = "surround_add"
+C-s = "surround_add"
+
+[keys.insert.C-m]
+c = "align_view_center"
+C-c = "align_view_center"
 
 # Move line, for the keys above: X d k P up, X d p down. Pressed in select mode itself, they move
 # the lines through the " register. A move off or onto a last line that has no final newline
