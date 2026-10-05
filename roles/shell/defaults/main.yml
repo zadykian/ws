@@ -1,0 +1,4 @@
+---
+# The author of git's commits, in ~/.gitconfig.
+shell_git_name: zadykian
+shell_git_email: me@zadykian.dev

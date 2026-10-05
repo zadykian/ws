@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: zadykian
+  description: bashrc, profile and gitconfig, with ble.sh and bash-completion
+  license: MIT
+  min_ansible_version: "2.20"
+  platforms:
+    - name: Ubuntu
+      versions: [resolute]
+dependencies: []

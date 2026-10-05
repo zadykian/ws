@@ -7,3 +7,5 @@
       tags: [base]
     - role: security
       tags: [security]
+    - role: shell
+      tags: [shell]

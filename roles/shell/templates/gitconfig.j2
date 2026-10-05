@@ -1,0 +1,17 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. Settings of
+# this machine's own, such as a signing key, go in ~/.config/git/local, included below.
+[user]
+	name = {{ shell_git_name }}
+	email = {{ shell_git_email }}
+# GitHub CLI's credential helper, byte for byte as `gh auth setup-git` writes it, the space after
+# the empty helper's = included, so that running that changes nothing here. The empty helper
+# drops any set before it.
+[credential "https://github.com"]
+	helper = {{ "" }}
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = {{ "" }}
+	helper = !/usr/bin/gh auth git-credential
+# Last, so that its settings win. git skips it where the file is missing.
+[include]
+	path = ~/.config/git/local

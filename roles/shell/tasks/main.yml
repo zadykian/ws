@@ -1,0 +1,77 @@
+---
+# apt's daily jobs hold its lock for a while after a new machine's first boot, as in bootstrap.sh.
+- name: Install bash-completion and ble.sh
+  ansible.builtin.apt:
+    name:
+      - bash-completion
+      - ble.sh
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+
+- name: Write ~/.bashrc
+  ansible.builtin.template:
+    src: bashrc.j2
+    dest: "{{ ws_home }}/.bashrc"
+    owner: "{{ ws_user }}"
+    group: "{{ ws_user }}"
+    mode: "0644"
+
+- name: Write ~/.profile
+  ansible.builtin.template:
+    src: profile.j2
+    dest: "{{ ws_home }}/.profile"
+    owner: "{{ ws_user }}"
+    group: "{{ ws_user }}"
+    mode: "0644"
+
+# The template drops what a .gitconfig set up by hand holds beyond it, and --diff can't show
+# that, as below. The names alone, without their values, show it in a dry run.
+- name: Check for ~/.gitconfig
+  ansible.builtin.stat:
+    path: "{{ ws_home }}/.gitconfig"
+  register: shell_gitconfig
+
+- name: List the keys of ~/.gitconfig
+  ansible.builtin.command:
+    argv: [git, config, --file, "{{ ws_home }}/.gitconfig", --name-only, --list]
+  register: shell_gitconfig_keys
+  when: shell_gitconfig.stat.exists
+  check_mode: false
+  changed_when: false
+
+- name: List the keys of the template
+  ansible.builtin.command:
+    argv: [git, config, --file, "-", --name-only, --list]
+    stdin: "{{ lookup('ansible.builtin.template', 'gitconfig.j2') }}"
+  register: shell_gitconfig_template_keys
+  when: shell_gitconfig.stat.exists
+  check_mode: false
+  changed_when: false
+
+# A subsection shows as '*', as one may be a URL, which names a host: http.*.extraheader stands
+# for http.<url>.extraheader.
+- name: Name the keys a run drops from ~/.gitconfig
+  ansible.builtin.debug:
+    msg: >-
+      Writing ~/.gitconfig drops {{ shell_gitconfig_dropped | join(', ') }}. Move them to
+      ~/.config/git/local first; a real run keeps the old file beside it, as ~/.gitconfig.*~.
+  vars:
+    shell_gitconfig_dropped: >-
+      {{ shell_gitconfig_keys.stdout_lines
+         | difference(shell_gitconfig_template_keys.stdout_lines)
+         | map('regex_replace', '^([^.]+)\..*\.([^.]+)$', '\1.*.\2') | unique | sort }}
+  when: shell_gitconfig.stat.exists and shell_gitconfig_dropped | length > 0
+
+# No diff: a .gitconfig set up by hand may hold a credential, such as an http.extraHeader, which
+# --diff would print. The backup keeps what the template drops, with the old file's mode.
+- name: Write ~/.gitconfig
+  ansible.builtin.template:
+    src: gitconfig.j2
+    dest: "{{ ws_home }}/.gitconfig"
+    owner: "{{ ws_user }}"
+    group: "{{ ws_user }}"
+    mode: "0600"
+    backup: true
+  diff: false
