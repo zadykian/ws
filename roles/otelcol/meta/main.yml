@@ -3,7 +3,8 @@ galaxy_info:
   author: zadykian
   description: >-
     The OpenTelemetry Collector on the host, from its release's .deb: OTLP on loopback, the journal,
-    the host's metrics and node_exporter's temperatures, all sent to SigNoz
+    the host's metrics and node_exporter's temperatures, all sent to SigNoz, and claude's metrics to
+    a remote collector where one is set
   license: MIT
   min_ansible_version: "2.20"
   platforms:

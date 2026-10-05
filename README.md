@@ -51,7 +51,8 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   [below](#signoz).
 - `otelcol`: the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on the host,
   which takes OTLP on loopback, reads the journal, the host's metrics and its temperatures from
-  node_exporter, and sends it all to SigNoz: [below](#the-collector).
+  node_exporter, and sends it all to SigNoz, and claude's metrics to another collector where one is
+  set: [below](#the-collector).
 
 ## A new machine
 
@@ -185,7 +186,9 @@ its release, which `group_vars/all.yml` pins by version and SHA-256. Its config,
   network, and the count of processes;
 - scrapes temperatures and fans from node_exporter on `127.0.0.1:9100` every 60 seconds, as the
   host's metrics have none;
-- sends it all to SigNoz's intake on `127.0.0.1:14318`, with the host's name added as `host.name`.
+- sends it all to SigNoz's intake on `127.0.0.1:14318`, with the host's name added as `host.name`;
+- sends claude's metrics to a remote collector too, where `~/.secrets/env` sets
+  `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`: [below](#claudes-metrics-elsewhere).
 
 A journal line's message is its body and its priority its severity; its other fields are
 attributes, such as `journald._SYSTEMD_UNIT`, its unit. Its process's ID, executable and command
@@ -208,6 +211,22 @@ The role checks a new config with `otelcol-contrib validate` before the collecto
 On a first install, the package starts the collector with the package's own config, which listens
 on every address; ufw keeps those ports from outside. The role stops and disables it at once, and
 enables it again once the role's config is in place.
+
+### claude's metrics elsewhere
+
+Where `~/.secrets/env`, the file of secrets the shell reads and this repository never writes, sets
+`OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
+OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`; the
+role refuses any other, and one that leads back to the collector's own receiver on `127.0.0.1:4317`,
+which would send the metrics around without end. Only the metrics whose resource has `service.name`
+`claude-code` go, as claude sends them, without the host's name. claude's traces and logs, with
+their tool details, stay in SigNoz.
+
+The role reads that one variable from the last line of the file that sets it, with or without
+`export` and quotes, without running the file. It writes it to `/etc/otelcol-contrib/claude.env`,
+which only root reads and a drop-in adds to the service's environment. The config names the
+variable, never its value, and the run's output leaves the value out. Without the variable, the role
+removes that file and the config has no second pipeline. A new value restarts the collector.
 
 ## By hand
 

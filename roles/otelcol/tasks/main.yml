@@ -58,17 +58,6 @@
         path: /var/cache/{{ otelcol_deb }}
         state: absent
 
-# A new config is checked by the collector before it replaces the running one's.
-- name: Write the collector's config
-  ansible.builtin.template:
-    src: config.yaml.j2
-    dest: /etc/otelcol-contrib/config.yaml
-    owner: root
-    group: root
-    mode: "0644"
-    validate: /usr/bin/otelcol-contrib validate --config=%s
-  notify: Restart the collector
-
 - name: Create the collector's drop-in directory
   ansible.builtin.file:
     path: /etc/systemd/system/otelcol-contrib.service.d
@@ -84,6 +73,95 @@
     owner: root
     group: root
     mode: "0644"
+  notify: Restart the collector
+
+- name: Give the collector the remote collector's endpoint
+  ansible.builtin.copy:
+    src: claude.conf
+    dest: /etc/systemd/system/otelcol-contrib.service.d/claude.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart the collector
+
+# A remote collector for claude's metrics, where the user's ~/.secrets/env names one. The file is
+# read, not sourced, so that nothing in it runs as root, and only that variable's value comes out:
+# from the last line that sets it, as in the shell, with one pair of quotes removed.
+- name: Read the remote collector's endpoint
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      if [ -f {{ otelcol_secrets_env | quote }} ]; then
+          sed -n -E 's/^[[:space:]]*(export[[:space:]]+)?OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=//p' \
+              {{ otelcol_secrets_env | quote }} |
+              tail -n 1 | sed -E -e 's/[[:space:]]+$//' -e "s/^([\"'])(.*)\1$/\2/"
+      fi
+    executable: /bin/bash
+  vars:
+    otelcol_secrets_env: "{{ ws_home }}/.secrets/env"
+  register: otelcol_claude_endpoint
+  changed_when: false
+  check_mode: false
+  no_log: true
+
+# The collector checks the URL only as it starts, from the service's environment. A URL that leads
+# to its own gRPC receiver, on 127.0.0.1, would send claude's metrics back to both pipelines without
+# end: cld refuses it for that reason too. The message leaves the value out, as it is a secret.
+- name: Check the remote collector's endpoint
+  ansible.builtin.assert:
+    that:
+      - otelcol_claude_endpoint.stdout is match(otelcol_url)
+      - otelcol_claude_endpoint.stdout | regex_replace('^.*:', '') | int <= 65535
+      - otelcol_claude_endpoint.stdout is not match(otelcol_receiver, ignorecase=true)
+    fail_msg: >-
+      OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT in ~/.secrets/env is neither http://HOST:PORT nor
+      https://HOST:PORT, with PORT from 1 to 65535, or it leads to the collector's own receiver
+    quiet: true
+  vars:
+    otelcol_url: '^https?://([A-Za-z0-9._-]+|\[[0-9A-Fa-f:.]+\]):[1-9][0-9]{0,4}$'
+    otelcol_receiver: "^https?://({{ otelcol_local | join('|') }}):4317$"
+    # 127.0.0.1, an unspecified address, either one as IPv6, and localhost or a name under it.
+    otelcol_local:
+      - '127\.0\.0\.1'
+      - '0\.0\.0\.0'
+      - '\[[0:]*\]'
+      - '\[[0:]*:ffff:(127\.0\.0\.1|0\.0\.0\.0)\]'
+      - '([^/]*\.)?localhost\.?'
+  when: otelcol_claude_endpoint.stdout | length > 0
+
+# The config names the variable, and only root reads its value. The file is written before the
+# config and removed after it, so that a run cut short never leaves a config that names a variable
+# the service lacks. A new value needs a restart: the collector's reload rereads its config alone.
+- name: Write the remote collector's endpoint for the service
+  ansible.builtin.template:
+    src: claude.env.j2
+    dest: /etc/otelcol-contrib/claude.env
+    owner: root
+    group: root
+    mode: "0600"
+  when: otelcol_claude_endpoint.stdout | length > 0
+  no_log: true
+  notify: Restart the collector
+
+# A new config is checked by the collector before it replaces the running one's. The remote
+# endpoint is a stand-in there, as its value is only in the service's environment.
+- name: Write the collector's config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/otelcol-contrib/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+    validate: >-
+      env OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://remote.invalid:4317
+      /usr/bin/otelcol-contrib validate --config=%s
+  notify: Restart the collector
+
+- name: Remove the remote collector's endpoint
+  ansible.builtin.file:
+    path: /etc/otelcol-contrib/claude.env
+    state: absent
+  when: otelcol_claude_endpoint.stdout | length == 0
   notify: Restart the collector
 
 - name: Restart the collector now if its config changed

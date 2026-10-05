@@ -1,7 +1,8 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
 # It starts from SigNoz's config for a collector on a VM, with every port on loopback, the journal
-# and node_exporter's temperatures added, and the per-process metrics left out.
+# and node_exporter's temperatures added, and the per-process metrics left out. Where ~/.secrets/env
+# sets OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT, claude's metrics go there too.
 
 extensions:
   health_check:
@@ -70,11 +71,28 @@ processors:
   batch:
     send_batch_size: 1000
     timeout: 10s
+{% if otelcol_claude_endpoint.stdout %}
+  # Only claude's metrics: those of any other resource, or of one without service.name, are dropped.
+  filter/claude:
+    metric_conditions:
+      - resource.attributes["service.name"] != "claude-code"
+{% endif %}
 
 exporters:
   # SigNoz's intake, which the signoz role publishes on loopback.
   otlp_http/signoz:
     endpoint: http://127.0.0.1:14318
+{% if otelcol_claude_endpoint.stdout %}
+  # The remote collector, whose URL is only in the service's environment, from a file root alone
+  # reads.
+  otlp_grpc/claude:
+    endpoint: ${env:OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT}
+{%   if otelcol_claude_endpoint.stdout is match('http://') %}
+    # gRPC goes over TLS unless told not to, whatever the URL's scheme.
+    tls:
+      insecure: true
+{%   endif %}
+{% endif %}
 
 service:
   # The collector's own metrics would listen on 127.0.0.1:8888.
@@ -99,3 +117,11 @@ service:
       receivers: [journald]
       processors: [memory_limiter, resource/journald, resource_detection, batch]
       exporters: [otlp_http/signoz]
+{% if otelcol_claude_endpoint.stdout %}
+    # claude's metrics as claude sends them: resource_detection adds host.name to a copy of its own,
+    # in the metrics pipeline above.
+    metrics/claude:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/claude, batch]
+      exporters: [otlp_grpc/claude]
+{% endif %}
