@@ -112,3 +112,45 @@ jobs:
               echo '::error::The second run of the playbook changed something.'
               exit 1
           fi
+
+  # SigNoz's compose files in roles/signoz/files are foundryctl's, forged from casting.yaml there.
+  # Forged again into an empty directory, as foundryctl never removes a file, they must be the same.
+  # Only what it forges is compared, so the role may keep other files beside them.
+  signoz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      # foundryctl's release for Linux on amd64, with its SHA-256 from the release's checksums file.
+      FOUNDRY: 0.3.0
+      FOUNDRY_SHA256: 7555f91ee87a9d0d517009fc859ef64be76ad8b045446b2fe4360b896dc5838d
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install foundryctl
+        run: |
+          mkdir "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP/bin"
+          foundry=https://github.com/SigNoz/foundry/releases/download/v$FOUNDRY
+          curl -fsSLo foundry.tar.gz "$foundry/foundry_linux_amd64.tar.gz"
+          printf '%s  %s\n' "$FOUNDRY_SHA256" foundry.tar.gz | sha256sum -c -
+          tar -xzf foundry.tar.gz --strip-components=2 foundry_linux_amd64/bin/foundryctl
+          echo "$RUNNER_TEMP/bin" >>"$GITHUB_PATH"
+      # Without --no-ledger and --no-updater, foundryctl reports each command to SigNoz and asks
+      # GitHub for a newer release.
+      - name: Forge again and compare
+        run: |
+          forged="$RUNNER_TEMP/forged"
+          mkdir "$forged"
+          cp roles/signoz/files/casting.yaml "$forged"
+          foundryctl forge --no-ledger --no-updater -f "$forged/casting.yaml" -p "$forged"
+          status=0
+          for file in "$forged"/*; do
+              diff -r "roles/signoz/files/${file##*/}" "$file" || status=1
+          done
+          if [ "$status" -ne 0 ]; then
+              echo '::error::foundryctl forges other files from casting.yaml: forge them again.'
+              exit 1
+          fi

@@ -17,3 +17,5 @@
       tags: [docker]
     - role: claude
       tags: [claude]
+    - role: signoz
+      tags: [signoz]

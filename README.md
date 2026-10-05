@@ -2,7 +2,7 @@
 
 Sets up my development server from code. Ansible runs on the machine itself and sets up packages,
 SSH by key and a firewall, Docker, the shell, tmux, the helix editor, claude and
-[cld](https://github.com/zadykian/cld).
+[cld](https://github.com/zadykian/cld), and SigNoz for the machine's telemetry.
 Running it again is safe, and `--check --diff` shows how a machine differs from the repository.
 
 The roles land one pull request at a time. Each is a tag of `site.yml`:
@@ -46,6 +46,8 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   reboot. The role turns lingering on, so that the user's systemd starts at boot rather than at
   the first login. The unit keeps the `PATH` of the user's login shell, where `cld restore`
   finds tmux; the next run of the role updates it after a change to that `PATH`.
+- `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry, with its UI
+  and OTLP/HTTP intake on loopback and no login: [below](#signoz).
 
 ## A new machine
 
@@ -109,6 +111,41 @@ collections, as the playbook cannot run without them.
 The playbook's dry run adds no apt repository, so where it would add or change a third-party one,
 apt may not know its packages: their install shows that error, and the dry run goes on.
 
+## SigNoz
+
+SigNoz runs in Docker from the compose files in `roles/signoz/files/deployment`, which the role
+copies to `/opt/signoz`. Docker's published ports get past ufw, so only two are published, on
+loopback: the UI on `127.0.0.1:3301` and the OTLP/HTTP intake on `127.0.0.1:14318`. 3301 was
+SigNoz's UI port before 8080, which dev servers often take.
+
+ClickHouse, SigNoz's database, may use 4 GB of memory. Without a limit of its own, it would size
+itself to the host's RAM, as it cannot see `docker.slice`'s.
+
+No one logs in: SigNoz serves every request as its root user, and its UI shows a banner that says
+so. The role generates the root user's password on the machine, in `/opt/signoz/root.env`, which
+only root reads; nothing else needs it. Reach the UI through an SSH tunnel, then open
+`http://localhost:3301`:
+
+```sh
+ssh -N -L 3301:127.0.0.1:3301 root@SERVER
+```
+
+A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.
+
+The compose files are generated. SigNoz's [Foundry](https://github.com/SigNoz/foundry) forges them
+from `roles/signoz/files/casting.yaml`, which pins every image, and the checksum of a ClickHouse
+function the stack downloads from GitHub. To change them, change the casting, then forge again with
+foundryctl 0.3.0 and commit what it writes:
+
+```sh
+cd roles/signoz/files
+rm -rf deployment casting.yaml.lock
+foundryctl forge --no-ledger --no-updater -f casting.yaml -p .
+```
+
+Without `--no-ledger` and `--no-updater`, foundryctl reports each command to SigNoz and asks GitHub
+for a newer release. It never removes a file, hence the `rm`.
+
 ## By hand
 
 Secrets are never in this repository. On a new machine, these stay manual:
@@ -144,6 +181,9 @@ scripts, and gitleaks over the whole history. Any finding fails it, warnings inc
 CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`,
 which need a booted machine. It runs it twice, and the second run must change nothing. Its swap
 file is 64 MiB, as the runner's disk has no room for one the size of its RAM.
+
+CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
+and fails where they differ from the repository's.
 
 The hooks in `.githooks` check each commit before it is made. Enable them in a clone, and so in
 its worktrees, with `git config core.hooksPath .githooks`, as `bootstrap.sh` does in its clone.

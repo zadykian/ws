@@ -1,11 +1,13 @@
 ---
 extends: default
 
-# Plans, worktrees and the tools' cache are local and untracked.
+# Plans, worktrees and the tools' cache are local and untracked. SigNoz's compose files are
+# foundryctl's, in its style: CI forges them again instead.
 ignore: |
   .cache/
   .claude/
   .git/
+  roles/signoz/files/deployment/
 
 rules:
   # The comments, braces and octal-values settings are those ansible-lint requires of a yamllint

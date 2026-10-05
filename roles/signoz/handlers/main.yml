@@ -1,0 +1,8 @@
+---
+- name: Mark SigNoz's containers for recreation
+  ansible.builtin.file:
+    path: "{{ signoz_dir }}/recreate"
+    state: touch
+    owner: root
+    group: root
+    mode: "0600"

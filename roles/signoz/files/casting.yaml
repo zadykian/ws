@@ -1,0 +1,117 @@
+---
+# SigNoz on Docker Compose, from which foundryctl 0.3.0 forges casting.yaml.lock and deployment/
+# beside it. After a change here, forge them again, as the README says: CI forges them again too
+# and fails on a difference.
+#
+# Each image is pinned by its tag and digest, a word too long for one line, hence the >-.
+apiVersion: v1alpha1
+kind: Installation
+metadata:
+  name: signoz
+spec:
+  deployment:
+    mode: docker
+    flavor: compose
+  signoz:
+    spec:
+      image: >-
+        signoz/signoz:v0.145.0@sha256:1301f2df51f01ba4227dfd5a8281e61d10aa09b771d2b20a30027bc68dba993d
+      env:
+        # No one logs in: SigNoz creates its root user from these settings and root.env, which
+        # holds the password the role generates on the machine, and serves every request as that
+        # user. Only an SSH tunnel reaches the UI. Impersonation requires the tokenizer and API
+        # keys off.
+        SIGNOZ_USER_ROOT_ENABLED: "true"
+        SIGNOZ_USER_ROOT_EMAIL: root@signoz.local
+        SIGNOZ_IDENTN_IMPERSONATION_ENABLED: "true"
+        SIGNOZ_IDENTN_TOKENIZER_ENABLED: "false"
+        SIGNOZ_IDENTN_APIKEY_ENABLED: "false"
+        # Otherwise SigNoz sends its usage stats out every 6 hours.
+        SIGNOZ_STATSREPORTER_ENABLED: "false"
+  ingester:
+    spec:
+      # SigNoz names no collector release for v0.145.0. This one, the latest when it came out, has
+      # every component Foundry's ingester.yaml uses.
+      image: >-
+        signoz/signoz-otel-collector:v0.144.12@sha256:deb566a7a3c0ba544ee58ccc92ee1f0e6da827bc40383e52f3c824705e100a3d
+  telemetrystore:
+    spec:
+      image: >-
+        clickhouse/clickhouse-server:25.12.5@sha256:cacf32d6884291dc2ff5e0156a97f46fc53ff7c929a7906d114e268a929dfd3a
+  telemetrykeeper:
+    kind: clickhousekeeper
+    spec:
+      image: >-
+        clickhouse/clickhouse-keeper:25.12.5@sha256:525b8b0f93ccb371131c46f22a066ea43d33d74aba314203e8044609945d8524
+  metastore:
+    kind: postgres
+    spec:
+      image: >-
+        postgres:16.15@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
+  # Docker's published ports get past ufw, and Foundry publishes the UI's 8080 and the ingester's
+  # 4317 and 4318 on every address. Only the UI and OTLP/HTTP are published, on loopback; each
+  # test fails the forge once Foundry publishes other ports there. The root user's password comes
+  # from root.env.
+  patches:
+    - target: deployment/compose.yaml
+      operations:
+        - op: test
+          path: /services/signoz-signoz-0/ports
+          value: ["8080:8080"]
+        - op: replace
+          path: /services/signoz-signoz-0/ports
+          value: ["127.0.0.1:3301:8080"]
+        - op: test
+          path: /services/ingester/ports
+          value: ["4317:4317", "4318:4318"]
+        - op: replace
+          path: /services/ingester/ports
+          value: ["127.0.0.1:14318:4318"]
+        - op: add
+          path: /services/signoz-signoz-0/env_file
+          value: [root.env]
+    # ClickHouse sizes its memory to 0.9 of its own cgroup's limit, else of the host's RAM: it
+    # cannot see docker.slice's. With a limit of its own, it keeps within it, instead of the
+    # kernel killing it or another container in the slice.
+    - target: deployment/compose.yaml
+      operations:
+        - op: add
+          path: /services/signoz-telemetrystore-clickhouse-0-0/mem_limit
+          value: 4g
+    # A one-shot service fetches histogram-quantile from GitHub at each up, and ClickHouse runs it
+    # as a function. The service now checks the archive against the SHA-256 in the release's
+    # checksums file, and set -e stops it at the first failure. The test fails the forge once
+    # Foundry changes the script. Foundry's URL runs past the line's limit, and must stay as it is.
+    - target: deployment/compose.yaml
+      operations:
+        # yamllint disable rule:line-length
+        - op: test
+          path: /services/signoz-telemetrystore-clickhouse-user-scripts/command/2
+          value: |-
+            version="v0.0.1"
+            node_os=$$(uname -s | tr '[:upper:]' '[:lower:]')
+            node_arch=$$(uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
+            echo "Fetching histogram-binary for $${node_os}/$${node_arch}"
+            cd /tmp
+            wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
+            tar -xvzf histogram-quantile.tar.gz
+            mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+        - op: replace
+          path: /services/signoz-telemetrystore-clickhouse-user-scripts/command/2
+          value: |-
+            set -e
+            version="v0.0.1"
+            node_os=$$(uname -s | tr '[:upper:]' '[:lower:]')
+            node_arch=$$(uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
+            case "$${node_os}_$${node_arch}" in
+            linux_amd64) sha256=33997073eb6d82b7be4f27f9fc8ec9e28a395e0f20674d5d54bb2fa28a75488d ;;
+            linux_arm64) sha256=e5605ebffa82a450ebbcdf6cf19dad546e1e40d52dbf3e03cfd2d2d5b7394211 ;;
+            *) echo "No checksum for $${node_os}/$${node_arch}" >&2; exit 1 ;;
+            esac
+            echo "Fetching histogram-binary for $${node_os}/$${node_arch}"
+            cd /tmp
+            wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
+            echo "$${sha256}  histogram-quantile.tar.gz" | sha256sum -c -
+            tar -xvzf histogram-quantile.tar.gz
+            mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+        # yamllint enable rule:line-length

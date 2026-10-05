@@ -1,0 +1,3 @@
+---
+# The compose project's directory: the forged files of files/deployment, and root.env.
+signoz_dir: /opt/signoz

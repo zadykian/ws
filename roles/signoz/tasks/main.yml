@@ -1,0 +1,88 @@
+---
+# Compose resolves the forged files' relative bind mounts against this directory. The containers
+# read those files as users other than root, so they stay world-readable, as Foundry writes them.
+- name: Create SigNoz's directory
+  ansible.builtin.file:
+    path: "{{ signoz_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy SigNoz's compose files
+  ansible.builtin.copy:
+    src: deployment/
+    dest: "{{ signoz_dir }}/"
+    owner: root
+    group: root
+    mode: "0644"
+    directory_mode: "0755"
+  notify: Mark SigNoz's containers for recreation
+
+# Compose recreates a container whose settings changed, but not one whose bind-mounted file did,
+# so new files recreate them all. The mark keeps that due until an up succeeds: after a failed
+# one, the old containers may still run the old files. It is set now, before anything can fail.
+- name: Mark SigNoz's containers for recreation now if their files changed
+  ansible.builtin.meta: flush_handlers
+
+# SigNoz needs a password for its root user, though no one logs in with it. It is generated once,
+# on the machine, and only root reads it. The 32 random letters and digits make the password; the
+# fixed -Aa1 makes sure it has the symbol, upper-case letter and digit SigNoz requires.
+- name: Generate the root user's password
+  ansible.builtin.copy:
+    content: "SIGNOZ_USER_ROOT_PASSWORD={{ signoz_password }}-Aa1\n"
+    dest: "{{ signoz_dir }}/root.env"
+    force: false
+    owner: root
+    group: root
+    mode: "0600"
+  vars:
+    signoz_password: >-
+      {{ lookup('ansible.builtin.password', '/dev/null', length=32,
+      chars=['ascii_letters', 'digits']) }}
+  no_log: true
+  diff: false
+  register: signoz_root_env
+
+# Compose's up runs the one-shot services again, the schema migrator among them, so it runs only
+# while a recreation is due, after a new password, or while a service that keeps running is down.
+# A dry run skips this, as compose's own waits forever on the one-shot service ClickHouse needs,
+# which it never runs.
+- name: Start SigNoz
+  when: not ansible_check_mode
+  tags: [systemd]
+  vars:
+    signoz_changed: "{{ signoz_recreate.stat.exists or signoz_root_env is changed }}"
+    # The services that keep running, as against the one-shot ones.
+    signoz_services: >-
+      {{ (lookup('ansible.builtin.file', 'deployment/compose.yaml') | from_yaml).services
+      | dict2items | selectattr('value.restart', 'eq', 'unless-stopped') | map(attribute='key')
+      | list }}
+  block:
+    - name: Look for a due recreation of SigNoz's containers
+      ansible.builtin.stat:
+        path: "{{ signoz_dir }}/recreate"
+      register: signoz_recreate
+
+    - name: List SigNoz's running services
+      ansible.builtin.command:
+        cmd: docker compose --project-name signoz ps --status running --services
+      register: signoz_running
+      changed_when: false
+      when: not signoz_changed
+
+    - name: Start SigNoz's containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ signoz_dir }}"
+        state: present
+        recreate: "{{ 'always' if signoz_recreate.stat.exists else 'auto' }}"
+        remove_orphans: true
+      when: >-
+        signoz_changed
+        or signoz_services | difference(signoz_running.stdout_lines) | length > 0
+
+    - name: Clear the mark for recreation
+      ansible.builtin.file:
+        path: "{{ signoz_dir }}/recreate"
+        state: absent
+      when: signoz_recreate.stat.exists
