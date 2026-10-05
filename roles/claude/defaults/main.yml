@@ -1,4 +1,12 @@
 ---
+# The permission set that cld setup config user adds to claude's user settings: read-only, to read
+# files and run commands that only read; cld, as cld's own repository has it; or none.
+claude_permissions: read-only
+# The channel claude notifies on, which cld sets where claude's user settings have none: auto,
+# iterm2, terminal_bell, iterm2_with_bell, kitty, ghostty or notifications_disabled. Empty sets
+# none, as on the server this repository replaces.
+claude_notifications: ""
+
 # The env keys of claude's user settings that send its telemetry to the host's collector: metrics,
 # logs and traces, over gRPC to the otelcol role's 127.0.0.1:4317. Values are strings, as env
 # takes them.

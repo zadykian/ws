@@ -5,7 +5,7 @@ SSH by key and a firewall, Docker, the shell, tmux, the helix editor, claude and
 [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check --diff` shows how a machine differs from the repository.
 
-The roles land one pull request at a time. Each is a tag of `site.yml`:
+Each role is a tag of `site.yml`:
 
 - `base`: the packages every machine gets, the locale `en_US.UTF-8`, the timezone UTC,
   unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily, and a
@@ -42,6 +42,12 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   both in `~/.local/bin`, and cld's completion in bash. claude updates itself in the background,
   so the role installs it only where it is missing. Where cld is installed, the role updates it
   with `cld update`; a dry run compares its version with the latest release instead.
+  Next, `cld setup config user` adds to `~/.claude/settings.json` what it lacks: the permission
+  set `claude_permissions` names, `read-only` by default, and cld's choices of model, effort,
+  theme, editor mode, auto-compact and update channel; with `claude_notifications`, the channel
+  claude notifies on. It keeps every value already there. A dry run runs cld on a copy of the
+  file and lists the keys it would add. A cld that predates the command gets it from the role's
+  `cld update` first; a dry run, which updates nothing, notes that cld lacks it.
   Then `cld setup restore`, which has the user's systemd bring cld's sessions back after a
   reboot. The role turns lingering on, so that the user's systemd starts at boot rather than at
   the first login. The unit keeps the `PATH` of the user's login shell, where `cld restore`
@@ -113,6 +119,8 @@ git -C /root/repository/ws pull --ff-only
 ```
 
 Its arguments go to `ansible-playbook`: `--tags NAME` runs the role NAME alone.
+`-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
+`ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home.
 
 ## Dry runs
 
