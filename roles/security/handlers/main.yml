@@ -1,0 +1,18 @@
+---
+# A notified handler runs whatever --skip-tags says, so each one checks the systemd tag itself.
+
+# ssh.service tests the config again before it reloads. ssh.socket starts sshd at the first login;
+# before that, this starts it.
+- name: Reload sshd
+  ansible.builtin.systemd_service:
+    name: ssh.service
+    state: reloaded
+  when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]
+
+- name: Reload fail2ban
+  ansible.builtin.systemd_service:
+    name: fail2ban.service
+    state: reloaded
+  when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]

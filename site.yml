@@ -5,3 +5,5 @@
   roles:
     - role: base
       tags: [base]
+    - role: security
+      tags: [security]

@@ -1,7 +1,8 @@
 # ws
 
-Sets up my development server from code. Ansible runs on the machine itself and installs packages,
-Docker, the shell, tmux, the helix editor, claude and [cld](https://github.com/zadykian/cld).
+Sets up my development server from code. Ansible runs on the machine itself and sets up packages,
+SSH by key and a firewall, Docker, the shell, tmux, the helix editor, claude and
+[cld](https://github.com/zadykian/cld).
 Running it again is safe, and `--check --diff` shows how a machine differs from the repository.
 
 The roles land one pull request at a time. Each is a tag of `site.yml`:
@@ -12,11 +13,21 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   sets another size in MiB, and 0 none. The file replaces the installer's `/swap.img`. A run
   stops before it changes the swap where the disk lacks room for the file and 2 GiB more, or
   where swapping an area off would bring back more than half the memory available.
+- `security`: an sshd drop-in that lets everyone log in by key only, ufw, and fail2ban for SSH:
+  [SSH and the firewall](#ssh-and-the-firewall).
 
 ## A new machine
 
-Install Ubuntu Server 26.04 by hand from its installer, with an SSH key to log in with. Then run
-`bootstrap.sh` as root, after `sudo -i` if you log in as the installer's user:
+Install Ubuntu Server 26.04 by hand from its installer, with an SSH key to log in with. The
+installer gives the key to its own user, and the playbook lets root log in by key only, so copy
+the key to root first, as the installer's user:
+
+```sh
+sudo install -d -m 700 /root/.ssh
+sudo install -m 600 ~/.ssh/authorized_keys /root/.ssh/authorized_keys
+```
+
+Then run `bootstrap.sh` as root, after `sudo -i` if you log in as the installer's user:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh | sh
@@ -25,6 +36,16 @@ curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh | sh
 It installs ansible-core and git with apt, clones this repository into `/root/repository/ws`,
 installs the Ansible collections of `requirements.yml`, and runs `site.yml`. Then do what stays
 by hand, below.
+
+## SSH and the firewall
+
+The playbook turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
+SSH on port 22 and nothing else, and fail2ban bans an address for 10 minutes after 5 failed logins
+in 10 minutes. Over SSH, keep the session that ran the playbook open until a new one logs in.
+The playbook stops before it turns passwords off if root has no key to log in with.
+
+Docker's published ports get past ufw: publish a container's port on `127.0.0.1` and reach it
+through an SSH tunnel.
 
 ## Running it again
 
