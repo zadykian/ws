@@ -1,0 +1,100 @@
+---
+# Each key comes from its vendor at every run, so that a renewed key replaces the old one: Charm's
+# expires in 2027. uri, as get_url sends only a HEAD in a dry run, which Ubuntu's keyserver refuses;
+# a GET reads, so it runs in a dry run too. A vendor's server can fail for a moment, so it tries
+# again.
+- name: Fetch the apt repositories' keys
+  ansible.builtin.uri:
+    url: "{{ item.key }}"
+    return_content: true
+  check_mode: false
+  changed_when: false
+  register: devtools_keys
+  until: devtools_keys is succeeded
+  retries: 5
+  delay: 10
+  loop: "{{ devtools_apt_repositories | selectattr('needed') }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# The diff below is off, so a key that changes shows no diff: only a key with the fingerprint its
+# repository pins goes in.
+- name: Check the keys' fingerprints
+  ansible.builtin.assert:
+    that: item.content | openpgp_fingerprint == item.item.fingerprint
+    fail_msg: >-
+      {{ item.item.key }} served a key whose fingerprint is
+      {{ item.content | openpgp_fingerprint }}, not {{ item.item.fingerprint }}
+    quiet: true
+  loop: "{{ devtools_keys.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+# apt refuses two sources of one repository whose keys differ, so the old sources go before the new
+# ones come: a run that stops between the two leaves a repository missing, never defined twice.
+- name: Remove the sources these repositories replace
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ devtools_apt_replaced_files }}"
+  notify: Update apt's package lists
+
+- name: Remove the apt repositories no longer needed
+  ansible.builtin.file:
+    path: /etc/apt/{{ item[1] | format(item[0]) }}
+    state: absent
+  loop: "{{ devtools_apt_repositories | rejectattr('needed') | map(attribute='name')
+    | product(['sources.list.d/%s.sources', 'keyrings/%s.asc']) | list }}"
+  notify: Update apt's package lists
+
+# The keyserver swaps the armor's Comment and Version lines from one fetch to the next, so they go.
+# apt reads the armored key as it is, in a .asc file. The diff is off, as it would be base64 alone.
+- name: Add the apt repositories' keys
+  ansible.builtin.copy:
+    content: "{{ item.content | regex_replace('(?m)^(Comment|Version): .*\\n', '') }}"
+    dest: /etc/apt/keyrings/{{ item.item.name }}.asc
+    owner: root
+    group: root
+    mode: "0644"
+  diff: false
+  loop: "{{ devtools_keys.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  notify: Update apt's package lists
+
+- name: Add the apt repositories
+  ansible.builtin.template:
+    src: repository.sources.j2
+    dest: /etc/apt/sources.list.d/{{ item.name }}.sources
+    owner: root
+    group: root
+    mode: "0644"
+  register: devtools_sources
+  loop: "{{ devtools_apt_repositories | selectattr('needed') }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Update apt's package lists
+
+# The packages below come from the repositories above, so apt reads their lists first.
+- name: Update apt's package lists for the repositories
+  ansible.builtin.meta: flush_handlers
+
+# A dry run adds no repository, so where it would add or change one, apt may not know the packages
+# that come from it. The dry run then shows that error and goes on; otherwise an error fails it.
+# The result is registered, as ansible-lint asks of an error ignored on a condition.
+- name: Install Node, the .NET SDKs, gh and glow
+  ansible.builtin.apt:
+    name: "{{ devtools_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+  register: devtools_install
+  ignore_errors: "{{ ansible_check_mode and devtools_sources is changed }}"
+
+- name: Install the libraries headless Chromium needs
+  ansible.builtin.apt:
+    name: "{{ devtools_chromium_libraries }}"
+    state: present
+    install_recommends: false
+    lock_timeout: 600

@@ -21,6 +21,10 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   tmux's snap is installed, the role removes it. Where cld's sessions run the snap's tmux, end them
   before a real run: cld then finds `/usr/bin/tmux` first on the `PATH`, and their key bindings
   call `/snap/bin/tmux`, which the removal takes away.
+- `devtools`: Node, the .NET SDKs, gh, glow and the libraries headless Chromium needs. Node comes
+  from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's archive or,
+  for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again and
+  checks each against the fingerprint the role pins.
 
 ## A new machine
 
@@ -80,6 +84,9 @@ curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh | sh 
 
 `bootstrap.sh` still installs ansible-core and git, clones the repository and installs the
 collections, as the playbook cannot run without them.
+
+The playbook's dry run adds no apt repository, so where it would add or change a third-party one,
+apt may not know its packages: their install shows that error, and the dry run goes on.
 
 ## By hand
 

@@ -3,3 +3,4 @@
 /.claude/plans/
 /.claude/worktrees/
 /.cache/
+__pycache__/

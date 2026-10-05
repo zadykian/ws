@@ -1,0 +1,51 @@
+---
+# The .NET SDKs Ubuntu's archive has for 26.04. Launchpad's dotnet/backports PPA has the others,
+# and the role adds it only when devtools_dotnet_sdks names one of those.
+devtools_dotnet_ubuntu_sdks: ["10.0"]
+
+# The third-party apt repositories: each a deb822 .sources file, with its key in /etc/apt/keyrings.
+# The role removes both files of a repository it no longer needs. A key fetched again must have the
+# primary fingerprint given here: a renewed key keeps it, another key does not.
+devtools_apt_repositories:
+  # Ubuntu's archive has an older Node.
+  - name: nodesource
+    key: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    fingerprint: 6F71F525282841EEDAF851B42F59B5F99B1BE0B4
+    uris: https://deb.nodesource.com/node_{{ devtools_node_major }}.x
+    suites: nodistro
+    components: main
+    needed: true
+  # Ubuntu's archive has an older glow.
+  - name: charm
+    key: https://repo.charm.sh/apt/gpg.key
+    fingerprint: ED927B38BE981E53CA09153D03BBF595D4DFD35C
+    uris: https://repo.charm.sh/apt/
+    suites: "*"
+    components: "*"
+    needed: true
+  # The PPA's key from Ubuntu's keyserver, by the fingerprint Launchpad gives it.
+  - name: dotnet-backports
+    key: >-
+      https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x45A3F127159BE9E5017811C62125B164E8E5D3FA
+    fingerprint: 45A3F127159BE9E5017811C62125B164E8E5D3FA
+    uris: https://ppa.launchpadcontent.net/dotnet/backports/ubuntu/
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: main
+    needed: "{{ devtools_dotnet_sdks | difference(devtools_dotnet_ubuntu_sdks) | length > 0 }}"
+
+# The same repositories as their own instructions add them: NodeSource's setup script, Charm's
+# README and add-apt-repository. apt refuses two sources of a repository whose keys differ, so the
+# role removes these, keys included.
+devtools_apt_replaced_files:
+  - /etc/apt/sources.list.d/nodesource.list
+  - /usr/share/keyrings/nodesource.gpg
+  - /etc/apt/sources.list.d/charm.list
+  - /etc/apt/keyrings/charm.gpg
+  - "/etc/apt/sources.list.d/dotnet-ubuntu-backports-{{
+    ansible_facts['distribution_release'] }}.sources"
+
+# Node at its major version, from NodeSource's repository; gh from Ubuntu's archive; glow from
+# Charm's; each .NET SDK from Ubuntu's archive or the PPA.
+devtools_packages: >-
+  {{ ['nodejs=' ~ devtools_node_major ~ '.*', 'gh', 'glow']
+  + devtools_dotnet_sdks | map('regex_replace', '^', 'dotnet-sdk-') | list }}

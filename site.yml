@@ -11,3 +11,5 @@
       tags: [shell]
     - role: tmux
       tags: [tmux]
+    - role: devtools
+      tags: [devtools]

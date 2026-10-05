@@ -1,0 +1,18 @@
+---
+# The libraries headless Chromium needs and a server lacks, for the browsers Puppeteer downloads.
+# They go in without recommends: the browser needs the libraries alone.
+devtools_chromium_libraries:
+  - libasound2t64
+  - libatk-bridge2.0-0t64
+  - libatk1.0-0t64
+  - libcairo2
+  - libcups2t64
+  - libgbm1
+  - libnspr4
+  - libnss3
+  - libpango-1.0-0
+  - libxcomposite1
+  - libxdamage1
+  - libxfixes3
+  - libxkbcommon0
+  - libxrandr2
