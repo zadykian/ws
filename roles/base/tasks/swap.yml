@@ -1,0 +1,172 @@
+---
+# /swapfile, base_swap_size_mb MiB, in /etc/fstab and swapped to; none where the size is 0. It takes
+# the place of /swap.img, which Ubuntu Server's installer makes.
+
+# A size that is not a whole number would read as 0, which removes the swap file.
+- name: Check the swap file's size is a whole number of MiB
+  ansible.builtin.assert:
+    that: base_swap_size_mb | string is match('^[0-9]+$')
+    fail_msg: >-
+      base_swap_size_mb is {{ base_swap_size_mb }}: it takes a whole number of MiB, or 0 for none.
+    quiet: true
+
+# No checksum: it would read the whole file at each run.
+- name: Check the swap file
+  ansible.builtin.stat:
+    path: /swapfile
+    get_checksum: false
+    get_mime: false
+    get_attributes: false
+  register: base_swap_file
+
+- name: List the areas swapped to, with the bytes each holds
+  ansible.builtin.command: swapon --show=NAME,USED --bytes --noheadings --raw
+  check_mode: false
+  changed_when: false
+  register: base_swap_listed
+
+- name: Read the memory available, in KiB
+  ansible.builtin.command: awk '/^MemAvailable:/ { print $2 }' /proc/meminfo
+  check_mode: false
+  changed_when: false
+  register: base_swap_memory
+
+- name: Read the disk space available, in MiB
+  ansible.builtin.command: df --output=avail --block-size=1M /
+  check_mode: false
+  changed_when: false
+  register: base_swap_disk
+
+# A swap file of another size is made again, not resized; at size 0 it is removed.
+- name: Note the areas swapped to and whether the swap file is of another size
+  ansible.builtin.set_fact:
+    base_swap_areas: "{{ dict(base_swap_listed.stdout_lines | map('split')) }}"
+    base_swap_stale: >-
+      {{ base_swap_file.stat.exists
+         and base_swap_file.stat.size != base_swap_size_mb | int * 1048576 }}
+
+# swapoff brings what an area holds back into memory, and the OOM killer ends processes where it
+# does not fit. Half of the memory available leaves room for what runs meanwhile.
+- name: Check memory has room for what the areas to swap off hold
+  ansible.builtin.assert:
+    that: base_swap_areas[item] | int // 1024 * 2 <= base_swap_memory.stdout | int
+    fail_msg: >-
+      {{ item }} holds {{ base_swap_areas[item] | int // 1048576 }} MiB swapped out, and memory has
+      {{ base_swap_memory.stdout | int // 1024 }} MiB available. Swapping it off needs twice what it
+      holds: free memory, then run again.
+    quiet: true
+  loop: "{{ (['/swapfile'] if base_swap_stale else []) + ['/swap.img'] }}"
+  when: item in base_swap_areas
+
+# Room for the file and 2 GiB more, so that the machine's own writes still fit. A file of another
+# size is removed first, which frees its space.
+- name: Check the disk has room for the swap file
+  ansible.builtin.assert:
+    that: >-
+      base_swap_disk.stdout_lines[-1] | int
+      + (base_swap_file.stat.size // 1048576 if base_swap_stale else 0)
+      >= base_swap_size_mb | int + 2048
+    fail_msg: >-
+      / has {{ base_swap_disk.stdout_lines[-1] | int }} MiB available, too little for a swap file
+      of {{ base_swap_size_mb }} MiB and 2048 MiB more: set base_swap_size_mb lower, or 0 for none.
+    quiet: true
+  when:
+    - base_swap_size_mb | int > 0
+    - not base_swap_file.stat.exists or base_swap_stale
+
+# Should the swapoff be skipped, the kernel refuses to remove a file it swaps to.
+- name: Stop swapping to a swap file of another size
+  ansible.builtin.command: swapoff /swapfile
+  when:
+    - base_swap_stale
+    - "'/swapfile' in base_swap_areas"
+  changed_when: true
+  tags: [systemd]
+
+- name: Remove a swap file of another size
+  ansible.builtin.file:
+    path: /swapfile
+    state: absent
+  when: base_swap_stale
+
+# fallocate allocates without writing. dd writes zeros where the file system does not support
+# fallocate, and on no other error: where the disk lacks room, it would fill it. A file left by a
+# killed run goes first, as fallocate keeps a larger file's size. The file takes its name once
+# mkswap has made it a swap area, so a run cut short leaves no file that swapon would refuse.
+- name: "Create the swap file, in MiB: {{ base_swap_size_mb }}"
+  ansible.builtin.shell: |
+    set -e
+    rm -f /swapfile.new
+    umask 077
+    trap 'rm -f /swapfile.new' EXIT
+    if ! error=$(LC_ALL=C fallocate -l {{ base_swap_size_mb | int }}MiB /swapfile.new 2>&1); then
+        case $error in
+        *"not supported"*)
+            dd if=/dev/zero of=/swapfile.new bs=1M count={{ base_swap_size_mb | int }} status=none
+            ;;
+        *)
+            echo "$error" >&2
+            exit 1
+            ;;
+        esac
+    fi
+    mkswap /swapfile.new
+    mv /swapfile.new /swapfile
+  args:
+    creates: /swapfile
+  when: base_swap_size_mb | int > 0
+  register: base_swap_created
+
+# A dry run keeps the file of another size, which the task above then takes as made.
+- name: Show the swap file would be made again
+  ansible.builtin.debug:
+    msg: /swapfile would be made again, {{ base_swap_size_mb }} MiB, and swapped to.
+  when:
+    - ansible_check_mode
+    - base_swap_stale
+    - base_swap_size_mb | int > 0
+  changed_when: true
+
+# It holds what is swapped out of memory. A dry run has no file to check where it would create one.
+- name: Keep the swap file readable by root alone
+  ansible.builtin.file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: "0600"
+  when:
+    - base_swap_size_mb | int > 0
+    - not (ansible_check_mode and base_swap_created is changed)
+
+- name: Swap to the file at boot
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: ^/swapfile\s
+    line: /swapfile none swap sw 0 0
+    state: "{{ 'present' if base_swap_size_mb | int > 0 else 'absent' }}"
+
+- name: Swap to the file
+  ansible.builtin.command: swapon /swapfile
+  when:
+    - base_swap_size_mb | int > 0
+    - base_swap_created is changed or '/swapfile' not in base_swap_areas
+  changed_when: true
+  tags: [systemd]
+
+# Swapped off once /swapfile is on, what the installer's file holds can move there.
+- name: Stop swapping to the installer's swap file at boot
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: ^/swap\.img\s
+    state: absent
+
+- name: Stop swapping to the installer's swap file
+  ansible.builtin.command: swapoff /swap.img
+  when: "'/swap.img' in base_swap_areas"
+  changed_when: true
+  tags: [systemd]
+
+- name: Remove the installer's swap file
+  ansible.builtin.file:
+    path: /swap.img
+    state: absent

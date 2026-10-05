@@ -38,3 +38,8 @@ base_locale: en_US.UTF-8
 
 # The system's timezone, a path under /usr/share/zoneinfo.
 base_timezone: Etc/UTC
+
+# The swap file's size in MiB, the unit of the memtotal_mb fact, or 0 for none. By default the
+# RAM's, rounded up to a whole GiB: the kernel reports a little less than the RAM, by an amount
+# that can move with its version, and the file is made again whenever its size changes.
+base_swap_size_mb: "{{ (ansible_facts['memtotal_mb'] | int + 1023) // 1024 * 1024 }}"

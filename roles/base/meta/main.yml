@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: zadykian
-  description: Packages, locale, timezone and unattended-upgrades
+  description: Packages, locale, timezone, unattended-upgrades and swap
   license: MIT
   min_ansible_version: "2.20"
   platforms:

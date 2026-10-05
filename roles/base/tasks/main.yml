@@ -67,3 +67,6 @@
     - apt-daily-upgrade.timer
     - unattended-upgrades.service
   tags: [systemd]
+
+- name: Set up the swap file
+  ansible.builtin.import_tasks: swap.yml

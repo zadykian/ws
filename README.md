@@ -6,8 +6,12 @@ Running it again is safe, and `--check --diff` shows how a machine differs from 
 
 The roles land one pull request at a time. Each is a tag of `site.yml`:
 
-- `base`: the packages every machine gets, the locale `en_US.UTF-8`, the timezone UTC, and
-  unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily.
+- `base`: the packages every machine gets, the locale `en_US.UTF-8`, the timezone UTC,
+  unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily, and a
+  swap file, `/swapfile`, the size of the RAM rounded up to a whole GiB. `-e base_swap_size_mb=N`
+  sets another size in MiB, and 0 none. The file replaces the installer's `/swap.img`. A run
+  stops before it changes the swap where the disk lacks room for the file and 2 GiB more, or
+  where swapping an area off would bring back more than half the memory available.
 
 ## A new machine
 
@@ -63,7 +67,8 @@ CI runs yamllint, ansible-lint with its production profile, ShellCheck and shfmt
 scripts, and gitleaks over the whole history. Any finding fails it, warnings included.
 
 CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`,
-which need a booted machine. It runs it twice, and the second run must change nothing.
+which need a booted machine. It runs it twice, and the second run must change nothing. Its swap
+file is 64 MiB, as the runner's disk has no room for one the size of its RAM.
 
 The hooks in `.githooks` check each commit before it is made. Enable them in a clone, and so in
 its worktrees, with `git config core.hooksPath .githooks`, as `bootstrap.sh` does in its clone.
