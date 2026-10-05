@@ -38,6 +38,10 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   images, stays outside the slice's limits. Where `ws_user` isn't root, the role adds it to the
   `docker` group, so that it runs `docker` without sudo. The group is root-equivalent, as a
   container can mount any of the host's files, and the user has it from its next login.
+- `claude`: claude, from its native installer, and cld, from its latest release's `install.sh`,
+  both in `~/.local/bin`, and cld's completion in bash. claude updates itself in the background,
+  so the role installs it only where it is missing. Where cld is installed, the role updates it
+  with `cld update`; a dry run compares its version with the latest release instead.
 
 ## A new machine
 

@@ -1,0 +1,89 @@
+---
+# As ws_user, so that each lands in that user's home. root needs no become, and a container has
+# no sudo. HOME is set, as the installers and cld write under it, and without become it would be
+# the caller's, such as the /github/home of a GitHub container job.
+- name: Install claude and cld
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"
+  block:
+    # claude updates itself in the background, so it is installed only where it is missing. The
+    # installer refuses root where SUDO_USER is set, as under `sudo -i`, from which the README
+    # runs bootstrap.sh; root is meant here.
+    - name: Install claude
+      ansible.builtin.shell:
+        cmd: set -o pipefail && curl -fsSL --retry 3 https://claude.ai/install.sh | bash
+        executable: /bin/bash
+        creates: "{{ ws_home }}/.local/bin/claude"
+      environment:
+        CLAUDE_INSTALL_ALLOW_SUDO: "1"
+
+    # cld is installed only where it is missing, and updated by the next task. CLD_INSTALL_DIR is
+    # set, as the caller's would win over ~/.local/bin. --retry rides out a 5xx from GitHub.
+    - name: Install cld
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail &&
+          curl -fsSL --retry 3 https://github.com/zadykian/cld/releases/latest/download/install.sh |
+          sh
+        executable: /bin/bash
+        creates: "{{ ws_home }}/.local/bin/cld"
+      environment:
+        CLD_INSTALL_DIR: "{{ ws_home }}/.local/bin"
+
+    # cld replaces itself where a newer release is out, and says so with Updated; a build from
+    # source, cld dev, it refuses.
+    - name: Update cld
+      ansible.builtin.command: "{{ ws_home }}/.local/bin/cld update"
+      register: claude_cld_update
+      changed_when: claude_cld_update.stdout is match('Updated ')
+
+    # A dry run skips the task above, so this one compares cld's version with the release that
+    # releases/latest leads to, as cld update does. Without cld, the task that installs it reports
+    # the change.
+    - name: Compare cld with its latest release
+      ansible.builtin.shell:
+        cmd: |
+          set -eo pipefail
+          cld={{ ws_home }}/.local/bin/cld
+          [ -x "$cld" ] || exit 0
+          have=$("$cld" --version)
+          have=${have#cld }
+          if [[ ! $have =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "cld $have is not a release, which cld update refuses" >&2
+              exit 1
+          fi
+          latest=$(curl -fsSIL --retry 3 -o /dev/null -w '%{url_effective}' \
+              https://github.com/zadykian/cld/releases/latest)
+          latest=${latest##*/v}
+          newest=$(printf '%s\n' "$have" "$latest" | sort -V | tail -n 1)
+          [ "$newest" = "$have" ] || echo "cld $have would be updated to $latest"
+        executable: /bin/bash
+      register: claude_cld_update_check
+      check_mode: false
+      changed_when: claude_cld_update_check.stdout != ''
+      when: ansible_check_mode
+
+    # cld writes the script only where it differs, and says so on its first line.
+    - name: Set up cld's completion in bash
+      ansible.builtin.command: "{{ ws_home }}/.local/bin/cld setup completion bash"
+      register: claude_completion
+      changed_when: claude_completion.stdout is match('(Created|Updated) ')
+
+    # A dry run skips the task above, so this one shows where the script differs from what cld
+    # writes. Without cld, the task that installs it reports the change.
+    - name: Compare cld's completion in bash with what cld writes
+      ansible.builtin.shell:
+        cmd: |
+          set -eo pipefail
+          cld={{ ws_home }}/.local/bin/cld
+          [ -x "$cld" ] || exit 0
+          want=$("$cld" completion bash | sha256sum)
+          have=$(sha256sum <{{ ws_home }}/.local/share/bash-completion/completions/cld) || have=
+          [ "$want" = "$have" ] || echo differs
+        executable: /bin/bash
+      register: claude_completion_check
+      check_mode: false
+      changed_when: claude_completion_check.stdout == 'differs'
+      when: ansible_check_mode

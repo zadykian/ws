@@ -15,3 +15,5 @@
       tags: [devtools]
     - role: docker
       tags: [docker]
+    - role: claude
+      tags: [claude]
