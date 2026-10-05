@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: zadykian
-  description: claude and cld, cld's completion in bash, and cld's restore at boot
+  description: claude and cld, cld's completion in bash, claude's telemetry, cld's restore at boot
   license: MIT
   min_ansible_version: "2.20"
   platforms:

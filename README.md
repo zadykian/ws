@@ -46,6 +46,14 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   reboot. The role turns lingering on, so that the user's systemd starts at boot rather than at
   the first login. The unit keeps the `PATH` of the user's login shell, where `cld restore`
   finds tmux; the next run of the role updates it after a change to that `PATH`.
+  claude sends its metrics, logs and traces, with tool details, to the host's collector on
+  `127.0.0.1:4317`. The role sets the keys for that in the `env` of `~/.claude/settings.json`
+  and removes each signal's own endpoint and protocol. It leaves every other key as it is, and
+  writes the file only where `env` changes. A dry run lists the keys it would set or remove,
+  not the file's diff, as the file may hold tokens. It replaces an endpoint already in `env`: to
+  keep sending claude's metrics to a remote collector, set its endpoint first as
+  `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` in `~/.secrets/env`, which the `otelcol` role reads.
+  claude reads the keys as it starts, so a session started before keeps sending where it did.
 - `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days,
   with its UI and OTLP/HTTP intake on loopback, no login, and a dashboard of the host:
   [below](#signoz).

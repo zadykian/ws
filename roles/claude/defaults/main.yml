@@ -1,0 +1,15 @@
+---
+# The env keys of claude's user settings that send its telemetry to the host's collector: metrics,
+# logs and traces, over gRPC to the otelcol role's 127.0.0.1:4317. Values are strings, as env
+# takes them.
+claude_telemetry_env:
+  CLAUDE_CODE_ENABLE_TELEMETRY: "1"
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:4317
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: otlp
+  # claude sends no traces without it.
+  CLAUDE_CODE_ENHANCED_TELEMETRY_BETA: "1"
+  # Bash commands, tool, skill and MCP server names, and tool input on events and spans.
+  OTEL_LOG_TOOL_DETAILS: "1"
