@@ -13,6 +13,16 @@ Secrets are never in this repository. On a new machine, these stay manual:
 - `gh auth login` and `gh auth setup-git`;
 - the claude login.
 
+## Checks
+
+CI runs yamllint, ansible-lint with its production profile, ShellCheck and shfmt on the shell
+scripts, and gitleaks over the whole history. Any finding fails it, warnings included.
+
+The hooks in `.githooks` check each commit before it is made. Enable them in a clone, and so in
+its worktrees, with `git config core.hooksPath .githooks`. Where `~/.config/ws/forbidden-words`
+exists, a word or phrase a line, they refuse a commit whose added lines, file names or message
+hold one. Where gitleaks is installed, they refuse a staged secret too.
+
 ## Pull requests
 
 Pull requests land on `main` by fast-forward only, as the commits CI checked. GitHub's merge

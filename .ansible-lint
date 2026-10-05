@@ -1,0 +1,11 @@
+---
+profile: production
+# Warnings fail too.
+strict: true
+# The collections come from requirements.yml, at its pins, not from what ansible-lint fetches.
+offline: true
+# Plans, worktrees and the tools' cache are local and untracked.
+exclude_paths:
+  - .cache/
+  - .claude/
+  - .git/

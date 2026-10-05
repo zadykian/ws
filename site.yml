@@ -1,0 +1,5 @@
+---
+- name: Set up the development server
+  hosts: localhost
+  connection: local
+  roles: []

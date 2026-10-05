@@ -1,0 +1,33 @@
+#!/bin/sh
+# Refuses a commit message that holds a word of the local list, matched as the pre-commit hook
+# matches it, and names the lines that matched, never the word.
+
+set -eu
+
+list=$HOME/.config/ws/forbidden-words
+[ -f "$list" ] || exit 0
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+trap 'exit 1' INT TERM
+sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' "$list" >"$tmp/words"
+
+# From a message written in the editor, git strips its comments, the lines starting with #, and
+# the diff below the scissors line; those become blank lines here, so that the line numbers stay
+# the message's. A message given with -m or -F keeps every line: git runs the hooks with
+# GIT_EDITOR=: then (githooks(5)).
+if [ "${GIT_EDITOR-}" = : ]; then
+    cp "$1" "$tmp/message"
+else
+    sed -e '/^# -* >8 -*$/,$d' -e 's/^#.*//' "$1" >"$tmp/message"
+fi
+
+rc=0
+grep -aniwF -f "$tmp/words" "$tmp/message" >"$tmp/hits" || rc=$?
+# An error of grep's refuses the commit too, rather than letting the message pass unchecked.
+[ "$rc" -le 1 ] || exit "$rc"
+if [ "$rc" = 0 ]; then
+    echo 'commit-msg: a word of the local list is in these lines of the message:' >&2
+    cut -d: -f1 "$tmp/hits" | sed 's/^/    line /' >&2
+    exit 1
+fi

@@ -1,0 +1,86 @@
+#!/bin/sh
+# Refuses a commit whose staged changes hold a word of the local list or, where gitleaks is
+# installed, a secret. The list, where it exists, has a word or phrase a line, matched
+# case-insensitively as a whole word; blank lines and lines starting with # are skipped. The hook
+# names the file and line that matched, never the word, so that its output does not spread the
+# list.
+
+set -eu
+
+list=$HOME/.config/ws/forbidden-words
+status=0
+
+# match WORDS FILE OUT writes to OUT FILE's lines that hold a word of WORDS, each with its number,
+# and fails where none does. An error of grep's ends the hook rather than letting the commit pass.
+match() {
+    rc=0
+    grep -aniwF -f "$1" "$2" >"$3" || rc=$?
+    [ "$rc" -le 1 ] || exit "$rc"
+    return "$rc"
+}
+
+if [ -f "$list" ]; then
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    trap 'exit 1' INT TERM
+    sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' "$list" >"$tmp/words"
+
+    # Each added line goes to added, and its file and line number to the same line of where. A
+    # line starting with +++ names the file only in the header, before the first @@. The options
+    # pin the diff's shape against the user's config and .gitattributes: the staged bytes as text,
+    # binary files and those marked -diff included, and never a textconv's rewrite of them.
+    git -c core.quotePath=false diff --cached --text --no-textconv --no-color --no-ext-diff \
+        --no-prefix -U0 --inter-hunk-context=0 --diff-filter=d >"$tmp/diff"
+    awk -v where="$tmp/where" '
+        /^diff --git / { header = 1; next }
+        header && /^\+\+\+ / { file = substr($0, 5); sub(/\t$/, "", file); next }
+        /^@@ / {
+            header = 0
+            n = $3
+            sub(/^\+/, "", n)
+            sub(/,.*/, "", n)
+            n += 0
+            next
+        }
+        header { next }
+        /^\+/ { print file ":" n >where; print substr($0, 2); n++; next }
+        /^ / { n++ }
+    ' "$tmp/diff" >"$tmp/added"
+    if match "$tmp/words" "$tmp/added" "$tmp/hits"; then
+        echo 'pre-commit: a word of the local list is in these added lines:' >&2
+        cut -d: -f1 "$tmp/hits" |
+            awk 'NR == FNR { hit[$1] = 1; next } FNR in hit { print "    " $0 }' - "$tmp/where" >&2
+        status=1
+    fi
+
+    # -z, as git quotes a name holding a tab, a newline, a quote or a backslash even with
+    # core.quotePath=false, and a word after \t would not match as a whole word.
+    git diff --cached --name-only --diff-filter=d -z >"$tmp/names0"
+    tr '\0' '\n' <"$tmp/names0" >"$tmp/names"
+    if match "$tmp/words" "$tmp/names" "$tmp/hits"; then
+        echo 'pre-commit: a word of the local list is in these file names:' >&2
+        cut -d: -f2- "$tmp/hits" | sed 's/^/    /' >&2
+        status=1
+    fi
+fi
+
+# gitleaks 8.19 replaced protect --staged with git --staged; Ubuntu's package is older. Exit
+# status 3 tells a finding from an error of gitleaks', which refuses the commit too.
+if command -v gitleaks >/dev/null 2>&1; then
+    if gitleaks git --help >/dev/null 2>&1; then
+        set -- git --staged
+    else
+        set -- protect --staged
+    fi
+    rc=0
+    gitleaks "$@" --no-banner --redact --verbose --log-level warn --exit-code 3 . || rc=$?
+    if [ "$rc" = 3 ]; then
+        echo 'pre-commit: gitleaks found a secret in the staged changes.' >&2
+        status=1
+    elif [ "$rc" != 0 ]; then
+        echo "pre-commit: gitleaks failed with status $rc; the staged changes are unchecked." >&2
+        status=1
+    fi
+fi
+
+exit "$status"
