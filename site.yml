@@ -9,3 +9,5 @@
       tags: [security]
     - role: shell
       tags: [shell]
+    - role: tmux
+      tags: [tmux]

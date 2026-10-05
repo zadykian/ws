@@ -17,6 +17,10 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   [SSH and the firewall](#ssh-and-the-firewall).
 - `shell`: `~/.bashrc` with ble.sh and bash-completion, `PATH` in `~/.profile`, and
   `~/.gitconfig`; see [The shell](#the-shell).
+- `tmux`: tmux from Ubuntu's archive, with no config, as cld runs tmux with `-f /dev/null`. Where
+  tmux's snap is installed, the role removes it. Where cld's sessions run the snap's tmux, end them
+  before a real run: cld then finds `/usr/bin/tmux` first on the `PATH`, and their key bindings
+  call `/snap/bin/tmux`, which the removal takes away.
 
 ## A new machine
 

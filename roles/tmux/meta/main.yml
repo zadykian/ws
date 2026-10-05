@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: zadykian
+  description: tmux from Ubuntu's archive, in place of its snap
+  license: MIT
+  min_ansible_version: "2.20"
+  platforms:
+    - name: Ubuntu
+      versions: [resolute]
+dependencies: []
