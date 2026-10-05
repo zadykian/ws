@@ -19,3 +19,5 @@
       tags: [claude]
     - role: signoz
       tags: [signoz]
+    - role: otelcol
+      tags: [otelcol]

@@ -1,0 +1,92 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# It starts from SigNoz's config for a collector on a VM, with every port on loopback, the journal
+# added and the per-process metrics left out.
+
+extensions:
+  health_check:
+    endpoint: 127.0.0.1:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 127.0.0.1:4317
+      http:
+        endpoint: 127.0.0.1:4318
+  # Through the host's journalctl, from the journal's end at each start. rsyslog's files under
+  # /var/log repeat the journal, so they are not read.
+  journald:
+    priority: info
+    # MESSAGE becomes the body and PRIORITY the severity, and the other fields become attributes,
+    # such as journald._SYSTEMD_UNIT, the unit: otherwise the whole entry is the body. _PID, _EXE
+    # and _CMDLINE become the resource's process.* attributes, which resource/journald removes.
+    convert_to_semantic_conventions: true
+  host_metrics:
+    collection_interval: 60s
+    scrapers:
+      cpu: {}
+      load: {}
+      memory: {}
+      paging: {}
+      disk: {}
+      filesystem: {}
+      network: {}
+      processes: {}
+
+processors:
+  # Past 384 MiB (512 less the spike), the collector refuses new data, as when SigNoz is down and
+  # the exporter's queue fills, rather than grow until the kernel kills another process.
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+  # A resource per process that writes to the journal would fill SigNoz's table of resources,
+  # which expects few of them.
+  resource/journald:
+    attributes:
+      - key: process.pid
+        action: delete
+      - key: process.command_line
+        action: delete
+      - key: process.executable.path
+        action: delete
+      - key: process.executable.name
+        action: delete
+  # host.name, which SigNoz's Host dashboard filters on, from the kernel's hostname rather than DNS.
+  resource_detection:
+    detectors: [system]
+    system:
+      hostname_sources: [os]
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+
+exporters:
+  # SigNoz's intake, which the signoz role publishes on loopback.
+  otlp_http/signoz:
+    endpoint: http://127.0.0.1:14318
+
+service:
+  # The collector's own metrics would listen on 127.0.0.1:8888.
+  telemetry:
+    metrics:
+      level: none
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource_detection, batch]
+      exporters: [otlp_http/signoz]
+    metrics:
+      receivers: [otlp, host_metrics]
+      processors: [memory_limiter, resource_detection, batch]
+      exporters: [otlp_http/signoz]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource_detection, batch]
+      exporters: [otlp_http/signoz]
+    logs/journald:
+      receivers: [journald]
+      processors: [memory_limiter, resource/journald, resource_detection, batch]
+      exporters: [otlp_http/signoz]

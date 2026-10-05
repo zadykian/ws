@@ -14,5 +14,9 @@ devtools_node_major: 24
 devtools_dotnet_sdks: ["8.0", "10.0"]
 # otelcol-contrib, from the .deb of the collector's release.
 otelcol_version: "0.162.0"
+# The SHA-256 of that .deb for each architecture, as the release's .deb.sha256 files give it.
+otelcol_sha256:
+  amd64: 0b2b37eeb83db8e19a5f9dfc60894d058c739384a226ac085e674561befaad44
+  arm64: b6163e6639989ac608ae2ba58b891128f2f31bba1b0af31a937ac5d0de7b0c23
 # SigNoz's images are pinned in roles/signoz/files/casting.yaml, as its compose files are forged
 # from it.

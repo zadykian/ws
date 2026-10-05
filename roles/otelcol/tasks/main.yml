@@ -1,0 +1,107 @@
+---
+- name: Read dpkg's architecture
+  ansible.builtin.command: dpkg --print-architecture
+  register: otelcol_architecture
+  changed_when: false
+  check_mode: false
+
+- name: Read the installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
+# The release's .deb, checked against its SHA-256 before dpkg reads it. The package adds the
+# otelcol-contrib user and service, and its postinst enables the service and, on a booted machine,
+# starts it with the package's own config.
+- name: Install otelcol-contrib
+  when: otelcol_version not in otelcol_installed
+  vars:
+    otelcol_installed: >-
+      {{ ansible_facts.packages['otelcol-contrib'] | default([]) | map(attribute='version')
+      | list }}
+    otelcol_deb: otelcol-contrib_{{ otelcol_version }}_linux_{{ otelcol_architecture.stdout }}.deb
+    otelcol_releases: https://github.com/open-telemetry/opentelemetry-collector-releases/releases
+  block:
+    - name: Download otelcol-contrib's .deb
+      ansible.builtin.get_url:
+        url: "{{ otelcol_releases }}/download/v{{ otelcol_version }}/{{ otelcol_deb }}"
+        dest: /var/cache/{{ otelcol_deb }}
+        checksum: sha256:{{ otelcol_sha256[otelcol_architecture.stdout] }}
+        owner: root
+        group: root
+        mode: "0644"
+
+    # A dry run downloads nothing for apt to read.
+    - name: Install otelcol-contrib's .deb
+      ansible.builtin.apt:
+        deb: /var/cache/{{ otelcol_deb }}
+        lock_timeout: 600
+      register: otelcol_install
+      when: not ansible_check_mode
+
+    # The package's config listens on every address. The collector stays off until the role's
+    # config is in place, also at boot should a task below fail.
+    - name: Stop the collector the package started
+      ansible.builtin.systemd_service:
+        name: otelcol-contrib
+        state: stopped
+        enabled: false
+      when: otelcol_install is defined and otelcol_install is changed
+      tags: [systemd]
+
+    - name: Remove otelcol-contrib's .deb
+      ansible.builtin.file:
+        path: /var/cache/{{ otelcol_deb }}
+        state: absent
+
+# A new config is checked by the collector before it replaces the running one's.
+- name: Write the collector's config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/otelcol-contrib/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/bin/otelcol-contrib validate --config=%s
+  notify: Restart the collector
+
+- name: Create the collector's drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/otelcol-contrib.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Let the collector read the journal
+  ansible.builtin.copy:
+    src: journal.conf
+    dest: /etc/systemd/system/otelcol-contrib.service.d/journal.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart the collector
+
+- name: Restart the collector now if its config changed
+  ansible.builtin.meta: flush_handlers
+
+# A dry run where the package isn't installed yet has no unit to start. The play runs on localhost,
+# where the controller's test sees the target's files.
+- name: Enable and start the collector
+  ansible.builtin.systemd_service:
+    name: otelcol-contrib
+    enabled: true
+    state: started
+  when: not ansible_check_mode or '/lib/systemd/system/otelcol-contrib.service' is file
+  tags: [systemd]
+
+# systemctl returns once the collector runs, before its receivers start. One that cannot, such as
+# OTLP's on a port another process holds, stops the collector, which then never answers.
+- name: Wait for the collector to answer
+  ansible.builtin.uri:
+    url: http://127.0.0.1:13133/
+  register: otelcol_health
+  until: otelcol_health.status == 200
+  retries: 30
+  delay: 2
+  when: not ansible_check_mode
+  tags: [systemd]

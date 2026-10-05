@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  author: zadykian
+  description: >-
+    The OpenTelemetry Collector on the host, from its release's .deb: OTLP on loopback, the journal
+    and the host's metrics, all sent to SigNoz
+  license: MIT
+  min_ansible_version: "2.20"
+  platforms:
+    - name: Ubuntu
+      versions: [resolute]
+dependencies: []

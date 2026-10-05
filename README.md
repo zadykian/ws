@@ -2,7 +2,7 @@
 
 Sets up my development server from code. Ansible runs on the machine itself and sets up packages,
 SSH by key and a firewall, Docker, the shell, tmux, the helix editor, claude and
-[cld](https://github.com/zadykian/cld), and SigNoz for the machine's telemetry.
+[cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check --diff` shows how a machine differs from the repository.
 
 The roles land one pull request at a time. Each is a tag of `site.yml`:
@@ -48,6 +48,9 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   finds tmux; the next run of the role updates it after a change to that `PATH`.
 - `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days,
   with its UI and OTLP/HTTP intake on loopback and no login: [below](#signoz).
+- `otelcol`: the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on the host,
+  which takes OTLP on loopback, reads the journal and the host's metrics, and sends it all to
+  SigNoz: [below](#the-collector).
 
 ## A new machine
 
@@ -152,6 +155,35 @@ foundryctl forge --no-ledger --no-updater -f casting.yaml -p .
 
 Without `--no-ledger` and `--no-updater`, foundryctl reports each command to SigNoz and asks GitHub
 for a newer release. It never removes a file, hence the `rm`.
+
+## The collector
+
+The OpenTelemetry Collector runs on the host as the service `otelcol-contrib`, from the `.deb` of
+its release, which `group_vars/all.yml` pins by version and SHA-256. Its config,
+`roles/otelcol/templates/config.yaml.j2`, starts from SigNoz's for a collector on a VM. It:
+
+- takes OTLP on `127.0.0.1:4317` (gRPC) and `127.0.0.1:4318` (HTTP), and answers its health check
+  on `127.0.0.1:13133`;
+- reads the journal at priority info and above through `journalctl`, as a member of
+  `systemd-journal`, which a drop-in gives the service; rsyslog's files under `/var/log` repeat the
+  journal, so it leaves them out;
+- reads the host's metrics every 60 seconds: CPU, load, memory, paging, disks, filesystems,
+  network, and the count of processes;
+- sends it all to SigNoz's intake on `127.0.0.1:14318`, with the host's name added as `host.name`.
+
+A journal line's message is its body and its priority its severity; its other fields are
+attributes, such as `journald._SYSTEMD_UNIT`, its unit. Its process's ID, executable and command
+line are dropped, since as attributes of the resource they would make each process a resource of
+its own in SigNoz. The collector reads the journal from its end each time it starts, so what is
+logged while it is down stays in the journal alone.
+
+The collector refuses new data once it holds 384 MiB, as when SigNoz is down and what it would send
+piles up, so that it doesn't grow until the kernel kills another process.
+
+The role checks a new config with `otelcol-contrib validate` before the collector restarts with it.
+On a first install, the package starts the collector with the package's own config, which listens
+on every address; ufw keeps those ports from outside. The role stops and disables it at once, and
+enables it again once the role's config is in place.
 
 ## By hand
 
