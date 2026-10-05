@@ -13,3 +13,5 @@
       tags: [tmux]
     - role: devtools
       tags: [devtools]
+    - role: docker
+      tags: [docker]

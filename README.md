@@ -28,6 +28,12 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   go.dev's tarball, checked against the SHA-256 go.dev lists for it, and is replaced when
   `group_vars/all.yml` pins another version. rustup installs Rust's stable toolchain in the user's
   home; once there, it updates itself, so the playbook leaves it as it is.
+- `docker`: Docker Engine with its buildx and compose plugins, from Docker's apt repository, and
+  `/etc/docker/daemon.json`, which rotates each container's log at 10 MB and keeps 3 files. A
+  container keeps the log settings it was created with. Containers keep running while Docker
+  restarts (`live-restore`). Where `ws_user` isn't root, the role adds it to the `docker` group,
+  so that it runs `docker` without sudo. The group is root-equivalent, as a container can mount
+  any of the host's files, and the user has it from its next login.
 
 ## A new machine
 

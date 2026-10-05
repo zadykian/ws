@@ -1,0 +1,104 @@
+---
+# The key and the source as Docker's install guide for Ubuntu writes them. The checksum is that of
+# the key with fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, so that a changed
+# key fails the run rather than being trusted unseen.
+- name: Add Docker's apt key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    checksum: sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Read dpkg's architecture
+  ansible.builtin.command: dpkg --print-architecture
+  register: docker_architecture
+  changed_when: false
+  check_mode: false
+
+- name: Add Docker's apt repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.sources
+    content: |
+      Types: deb
+      URIs: https://download.docker.com/linux/ubuntu
+      Suites: {{ ansible_facts['distribution_release'] }}
+      Components: stable
+      Architectures: {{ docker_architecture.stdout }}
+      Signed-By: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+  register: docker_repository
+
+# Docker's lists, which apt fetches with the cache. A run stopped after the source was written,
+# before the fetch, leaves them missing, and the next run must fetch them though the source is
+# unchanged.
+- name: Look for apt's lists of Docker's repository
+  ansible.builtin.stat:
+    path: /var/lib/apt/lists/download.docker.com_linux_ubuntu_dists_{{ docker_release }}_InRelease
+  vars:
+    docker_release: "{{ ansible_facts['distribution_release'] }}"
+  register: docker_lists
+
+# A dry run cannot fetch the lists, so apt knows none of Docker's packages, and the tasks below
+# would fail on a machine without them.
+- name: End the role in a dry run on a machine without Docker's lists
+  ansible.builtin.meta: end_role
+  when: ansible_check_mode and (docker_repository is changed or not docker_lists.stat.exists)
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+    update_cache: "{{ docker_repository is changed or not docker_lists.stat.exists }}"
+    lock_timeout: 600
+  register: docker_install
+
+# /etc/docker and docker.service come with the packages, so a dry run that would install them
+# cannot check the tasks below.
+- name: End the role in a dry run that would install Docker
+  ansible.builtin.meta: end_role
+  when: ansible_check_mode and docker_install is changed
+
+# Docker's socket answers root and the docker group, which the packages create. A ws_user other
+# than root joins the group to run docker without sudo; the group is root-equivalent, and the user
+# has it from its next login. The lookup fails where the user is missing, which the user module
+# would create.
+- name: Let ws_user run docker
+  when: ws_user != 'root'
+  block:
+    - name: Look up ws_user
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ ws_user }}"
+
+    - name: Add ws_user to the docker group
+      ansible.builtin.user:
+        name: "{{ ws_user }}"
+        groups: [docker]
+        append: true
+
+# A change restarts dockerd; live-restore keeps the running containers up through it, as the
+# settings here apply only to containers created afterwards.
+- name: Write daemon.json
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+    validate: dockerd --validate --config-file %s
+  notify: Restart Docker
+
+- name: Enable and start Docker
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+  tags: [systemd]
+
+# The roles after this one start containers, which should start under the new daemon.json.
+- name: Restart Docker now if daemon.json changed
+  ansible.builtin.meta: flush_handlers

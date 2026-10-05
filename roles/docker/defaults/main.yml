@@ -1,0 +1,13 @@
+---
+# Docker Engine and its plugins, from Docker's apt repository.
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# Each container's log is rotated at this size and keeps this many files. Docker's default keeps
+# one file that grows without bound.
+docker_log_max_size: 10m
+docker_log_max_file: 3

@@ -1,0 +1,8 @@
+---
+# Handlers ignore tags, so the condition skips it where the tasks tagged systemd are skipped.
+- name: Restart Docker
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
+  when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]
