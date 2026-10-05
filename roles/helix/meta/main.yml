@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: zadykian
-  description: The helix editor from Ubuntu's archive, its config, its grammars and gopls
+  description: The helix editor from Ubuntu's archive, its config, grammars and language servers
   license: MIT
   min_ansible_version: "2.20"
   platforms:

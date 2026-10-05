@@ -3,15 +3,21 @@
 # this path, so that hx finds the pinned gopls whatever PATH it runs with.
 helix_gopls: "{{ ws_home }}/go/bin/gopls"
 
+# Where dotnet tool install --global puts roslyn-language-server: ~/.dotnet/tools, which .profile
+# puts on PATH. languages.toml names it by this path, as it names gopls.
+helix_roslyn: "{{ ws_home }}/.dotnet/tools/roslyn-language-server"
+
 # The tree-sitter grammars the role builds, by helix's grammar names: Ubuntu's hx ships none, and
-# without them hx has no syntax highlighting and no syntax-aware selections. Go's four, then those
-# of shell scripts, diffs, JSON, Markdown, TOML and YAML; markdown_inline parses the text within
-# Markdown's blocks.
+# without them hx has no syntax highlighting and no syntax-aware selections. Go's four, C#'s, and
+# XML's, which helix uses for C#'s project files too; then those of shell scripts, diffs, JSON,
+# Markdown, TOML and YAML. markdown_inline parses the text within Markdown's blocks.
 helix_grammars:
   - go
   - gomod
   - gotmpl
   - gowork
+  - c-sharp
+  - xml
   - bash
   - diff
   - json

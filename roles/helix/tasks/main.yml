@@ -80,6 +80,75 @@
             GOTOOLCHAIN: local
           changed_when: true
 
+    # roslyn-language-server is a .NET tool, and its store keeps a directory per installed
+    # version. They are read there, and not with dotnet tool list: dotnet's first run with each
+    # SDK version writes files into the home, an HTTPS development certificate among them, and
+    # the read runs in a dry run too. NuGet names the directories in lower case.
+    - name: Find roslyn-language-server's store
+      ansible.builtin.stat:
+        path: "{{ helix_roslyn | dirname }}/.store/roslyn-language-server"
+      register: helix_roslyn_store
+
+    - name: Read roslyn-language-server's installed versions
+      ansible.builtin.find:
+        paths: "{{ helix_roslyn_store.stat.path }}"
+        file_type: directory
+      register: helix_roslyn_installed
+      when: helix_roslyn_store.stat.exists
+
+    - name: Install roslyn-language-server
+      vars:
+        helix_roslyn_versions: >-
+          {{ helix_roslyn_installed.files | default([]) | map(attribute='path') | map('basename')
+          | list }}
+      when: helix_roslyn_versions != [helix_roslyn_version | lower]
+      block:
+        # A dry run skips the install below, which removes the version it replaces, so this says
+        # what it would do.
+        - name: Show the version a real run installs
+          ansible.builtin.debug:
+            msg: >-
+              Would {{ 'replace' if helix_roslyn_versions else 'install' }} roslyn-language-server
+              {{ (helix_roslyn_versions | join(', ') ~ ' with ') if helix_roslyn_versions }}{{
+              helix_roslyn_version }}.
+          changed_when: true
+          when: ansible_check_mode
+
+        - name: Find the devtools role's .NET
+          ansible.builtin.stat:
+            path: /usr/bin/dotnet
+          register: helix_dotnet
+
+        # A dry run of the whole playbook installs no .NET before this.
+        - name: Require the devtools role's .NET
+          ansible.builtin.assert:
+            that: helix_dotnet.stat.exists
+            fail_msg: >-
+              roslyn-language-server is installed with the .NET SDK of the devtools role, and
+              runs on its .NET 10.
+            quiet: true
+          when: not ansible_check_mode
+
+        # update installs the tool where it is missing too, and --allow-downgrade lets the pin go
+        # back. NuGet asks every feed the user's NuGet config names, and one it can't reach fails
+        # the install, so --source asks nuget.org alone.
+        - name: Install roslyn-language-server from nuget.org
+          ansible.builtin.command:
+            argv:
+              - /usr/bin/dotnet
+              - tool
+              - update
+              - --global
+              - roslyn-language-server
+              - --version
+              - "{{ helix_roslyn_version }}"
+              - --allow-downgrade
+              - --source
+              - https://api.nuget.org/v3/index.json
+          environment:
+            DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+          changed_when: true
+
     # hx fetches a grammar only where its checkout isn't at the revision hx pins, and builds one
     # only where its sources are newer than its library. So both run every time: a run with
     # nothing to do changes nothing and needs no network, and a new hx's revisions are picked up.

@@ -65,9 +65,12 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   close to GoLand's and Rider's settings, and `languages.toml`. Ubuntu's hx ships no tree-sitter
   grammars, so the role fetches and builds those `helix_grammars` lists with `hx --grammar`. Go's
   language server, gopls, comes from `go install` at the version `group_vars/all.yml` pins, with
-  the Go of the `devtools` role, and is built again when either version changes. Each run replaces
-  changes made to the two files by hand, and keeps the old file beside the new one. The keys
-  follow the IDEs' F12 keymap: [helix's keys](#helixs-keys), below.
+  the Go of the `devtools` role, and is built again when either version changes. C#'s,
+  roslyn-language-server, the server of VS Code's C# extension, comes from nuget.org with
+  `dotnet tool` at the version pinned there too, and runs on the .NET 10 of the `devtools` role:
+  [C# in helix](#c-in-helix), below. Each run replaces changes made to the two files by hand, and
+  keeps the old file beside the new one. The keys follow the IDEs' F12 keymap:
+  [helix's keys](#helixs-keys), below.
 
 ## A new machine
 
@@ -313,6 +316,17 @@ shell too. tmux's prefix reaches helix pressed twice: Ctrl+B, Toggle line breakp
 and Ctrl+Q, Go to action, in cld's sessions.
 
 Where an F12 key doesn't arrive, helix's own key, in the keymap's page, does the same.
+
+## C# in helix
+
+hx gives roslyn-language-server the root of the git repository hx started in. There the server
+loads the one `.sln` or `.slnx`, or else every project below the root; `dotnet.defaultSolution` in
+the root's `.vscode/settings.json` picks one of several solutions. Started outside a git
+repository, hx gives the server no root, and the server takes each file as a program of its own.
+
+Ubuntu's hx asks the server for a file's errors when it opens the file and when the file changes,
+not when the server has loaded the projects. A file opened while they load shows its errors after
+its first edit, even one undone with `u`.
 
 ## Checks
 

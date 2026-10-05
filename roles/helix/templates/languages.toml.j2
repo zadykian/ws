@@ -12,3 +12,19 @@ command = {{ helix_gopls | to_json }}
 [[language]]
 name = "go"
 language-servers = ["gopls"]
+
+# C#'s server, the one behind VS Code's C# extension, which the playbook installs as a .NET tool,
+# by the name helix's own defaults give it after 25.07. --autoLoadProjects has it load the one .sln
+# or .slnx at the root helix gives it, that of the git repository hx started in, or else every
+# project under that root.
+[language-server.roslyn-language-server]
+command = {{ helix_roslyn | to_json }}
+args = ["--stdio", "--autoLoadProjects"]
+
+# roslyn-language-server alone: helix's defaults are OmniSharp and csharp-ls, which nothing
+# installs. New files get four spaces, as Rider indents C#, rather than helix's tab: an EditorConfig
+# file, or a file's own indentation, still comes first.
+[[language]]
+name = "c-sharp"
+language-servers = ["roslyn-language-server"]
+indent = { tab-width = 4, unit = "    " }

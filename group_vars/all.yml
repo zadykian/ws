@@ -22,3 +22,6 @@ otelcol_sha256:
 # from it.
 # gopls, which go install builds for helix.
 helix_gopls_version: "0.23.0"
+# roslyn-language-server, C#'s language server for helix, from nuget.org, where every version is a
+# prerelease.
+helix_roslyn_version: "5.12.0-1.26475.2"
