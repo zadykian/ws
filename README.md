@@ -4,7 +4,10 @@ Sets up my development server from code. Ansible runs on the machine itself and 
 Docker, the shell, tmux, the helix editor, claude and [cld](https://github.com/zadykian/cld).
 Running it again is safe, and `--check --diff` shows how a machine differs from the repository.
 
-The roles land one pull request at a time; none is here yet.
+The roles land one pull request at a time. Each is a tag of `site.yml`:
+
+- `base`: the packages every machine gets, the locale `en_US.UTF-8`, the timezone UTC, and
+  unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily.
 
 ## A new machine
 

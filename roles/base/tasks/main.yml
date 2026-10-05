@@ -1,0 +1,69 @@
+---
+# apt's daily jobs hold its lock for a while after a new machine's first boot, as in bootstrap.sh.
+- name: Install the base packages
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+
+- name: Generate the locale
+  community.general.locale_gen:
+    name: "{{ base_locale }}"
+    state: present
+
+# Ubuntu 26.04 keeps the system's locale in /etc/locale.conf; /etc/default/locale links to it.
+- name: Make the locale the system's
+  ansible.builtin.lineinfile:
+    path: /etc/locale.conf
+    regexp: ^LANG=
+    line: LANG={{ base_locale }}
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+
+# The link, without timedatectl, which needs a running systemd.
+- name: Set the timezone
+  ansible.builtin.file:
+    path: /etc/localtime
+    src: /usr/share/zoneinfo/{{ base_timezone }}
+    state: link
+
+# tzdata no longer uses /etc/timezone, but a machine installed with it may keep it, and some
+# readers, such as older JVMs and Python's tzlocal, check it before the link.
+- name: Check for /etc/timezone
+  ansible.builtin.stat:
+    path: /etc/timezone
+  register: base_etc_timezone
+
+- name: Keep /etc/timezone in step with the link
+  ansible.builtin.copy:
+    content: "{{ base_timezone }}\n"
+    dest: /etc/timezone
+    owner: root
+    group: root
+    mode: "0644"
+  when: base_etc_timezone.stat.exists
+
+# What the package writes when its debconf question is answered yes, Ubuntu's default. The stock
+# 50unattended-upgrades, left as it is, allows Ubuntu's security updates alone.
+- name: Turn on unattended upgrades
+  ansible.builtin.copy:
+    src: 20auto-upgrades
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable apt's daily timers and unattended-upgrades' shutdown check
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - apt-daily.timer
+    - apt-daily-upgrade.timer
+    - unattended-upgrades.service
+  tags: [systemd]

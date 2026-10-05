@@ -2,4 +2,6 @@
 - name: Set up the development server
   hosts: localhost
   connection: local
-  roles: []
+  roles:
+    - role: base
+      tags: [base]

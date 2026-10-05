@@ -1,0 +1,40 @@
+---
+# The packages every machine gets. Those of Docker, SSH, the firewall, tmux, the shell, the editor,
+# Node, .NET, Go and Rust are their roles'; Python's pip and venv stay here. locales, tzdata and
+# unattended-upgrades are here for the tasks of this role; a minimal install or a container may
+# lack them.
+base_packages:
+  - btop
+  - bubblewrap
+  - build-essential
+  - ca-certificates
+  - chrony
+  - curl
+  - fd-find
+  - git
+  - gnupg
+  - gzip
+  - htop
+  - iotop
+  - jq
+  - locales
+  - lsb-release
+  - ncdu
+  - pkg-config
+  - poppler-utils
+  - python3-pip
+  - python3-venv
+  - ripgrep
+  - tar
+  - tzdata
+  - unattended-upgrades
+  - unzip
+  - wget
+  - xz-utils
+  - zip
+
+# The locale generated and set as the system's LANG.
+base_locale: en_US.UTF-8
+
+# The system's timezone, a path under /usr/share/zoneinfo.
+base_timezone: Etc/UTC
