@@ -1,0 +1,6 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. Containers send
+# their lookups to the default bridge's address (daemon.json's dns), so that they resolve names as
+# the host does. resolved binds it with IP_FREEBIND, before docker0 has the address, so it needs
+# no ordering against Docker.
+[Resolve]
+DNSStubListenerExtra={{ docker_bridge_ip }}

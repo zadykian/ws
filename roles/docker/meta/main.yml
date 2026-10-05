@@ -1,7 +1,9 @@
 ---
 galaxy_info:
   author: zadykian
-  description: Docker Engine from Docker's apt repository, its daemon.json and docker.slice
+  description: >-
+    Docker Engine from Docker's apt repository, its daemon.json, docker.slice, and containers' DNS
+    through the host
   license: MIT
   min_ansible_version: "2.20"
   platforms:

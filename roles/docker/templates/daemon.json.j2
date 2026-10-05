@@ -1,5 +1,13 @@
 {
+  "bip": "{{ docker_bridge_ip }}/{{ docker_bridge_prefix_length }}",
   "cgroup-parent": "docker.slice",
+  "default-address-pools": [
+    {
+      "base": "{{ docker_address_pool }}",
+      "size": {{ docker_address_pool_size }}
+    }
+  ],
+  "dns": ["{{ docker_bridge_ip }}"],
   "live-restore": true,
   "log-driver": "json-file",
   "log-opts": {

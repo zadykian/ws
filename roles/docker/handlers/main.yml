@@ -7,6 +7,13 @@
   when: "'systemd' not in ansible_skip_tags"
   tags: [systemd]
 
+- name: Restart systemd-resolved
+  ansible.builtin.systemd_service:
+    name: systemd-resolved
+    state: restarted
+  when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]
+
 - name: Restart Docker
   ansible.builtin.systemd_service:
     name: docker

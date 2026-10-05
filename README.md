@@ -35,9 +35,16 @@ Each role is a tag of `site.yml`:
   the RAM and half the CPUs, with no swap; `docker_memory_max`, `docker_cpu_quota` and
   `docker_memory_swap_max` set other limits, in systemd's syntax (`16G`, `400%`). A running
   container moves into the slice when it next starts. `containerd`, which pulls and unpacks
-  images, stays outside the slice's limits. Where `ws_user` isn't root, the role adds it to the
-  `docker` group, so that it runs `docker` without sudo. The group is root-equivalent, as a
-  container can mount any of the host's files, and the user has it from its next login.
+  images, stays outside the slice's limits. Containers resolve names as the host does:
+  `daemon.json`'s `dns` is the default bridge's address, `172.17.0.1` (`docker_bridge_ip`), where
+  systemd-resolved listens too, and ufw lets Docker's networks reach port 53 there through their
+  bridges, `docker0` and `br-ID`. Docker takes each new network's subnet, a `/20`, from
+  `172.16.0.0/12` (`docker_address_pool`), which holds the default bridge too, so that one source
+  range covers them all; a network given a subnet outside it, or a bridge name of its own, gets no
+  answers. A running container takes the new `dns` when it next starts. Where `ws_user` isn't
+  root, the role adds it to the `docker` group, so that it runs `docker` without sudo. The group
+  is root-equivalent, as a container can mount any of the host's files, and the user has it from
+  its next login.
 - `claude`: claude, from its native installer, and cld, from its latest release's `install.sh`,
   both in `~/.local/bin`, and cld's completion in bash. claude updates itself in the background,
   so the role installs it only where it is missing. Where cld is installed, the role updates it
@@ -102,8 +109,9 @@ by hand, below.
 ## SSH and the firewall
 
 The playbook turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
-SSH on port 22 and nothing else, and fail2ban bans an address for 10 minutes after 5 failed logins
-in 10 minutes. Over SSH, keep the session that ran the playbook open until a new one logs in.
+SSH on port 22, and DNS lookups from Docker's bridges to the host's resolver (see `docker`), and
+nothing else; fail2ban bans an address for 10 minutes after 5 failed logins in 10 minutes. Over
+SSH, keep the session that ran the playbook open until a new one logs in.
 The playbook stops before it turns passwords off if root has no key to log in with.
 
 Docker's published ports get past ufw: publish a container's port on `127.0.0.1` and reach it

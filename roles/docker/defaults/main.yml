@@ -20,3 +20,18 @@ docker_cpu_quota: "{{ ansible_facts['processor_vcpus'] * 50 }}%"
 # The slice's swap, beyond MemoryMax. With none, a container past the cap is killed inside the slice
 # rather than filling the swap the user's sessions share.
 docker_memory_swap_max: "0"
+
+# The default bridge's address, docker0's, set rather than left to Docker: daemon.json's dns sends
+# containers' lookups there, to systemd-resolved, which listens on it too. The bridge's subnet must
+# lie in docker_address_pool, from which ufw lets lookups in.
+docker_bridge_ip: 172.17.0.1
+docker_bridge_prefix_length: 16
+
+# The range Docker takes each new network's subnet from, and each subnet's prefix length. In one
+# range, one ufw rule lets every network reach the resolver. Docker's own ranges hold the default
+# bridge and 14 more networks in 172.16.0.0/12, then run on into 192.168.0.0/16, where LANs often
+# are; /20s leave room for 240 beside the bridge. Docker skips subnets the main routing table has
+# on-link routes for, but not those routed through another table, as a VPN may route its own: such
+# a subnet in this range needs another range here.
+docker_address_pool: 172.16.0.0/12
+docker_address_pool_size: 20
