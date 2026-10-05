@@ -98,3 +98,121 @@
     state: present
     install_recommends: false
     lock_timeout: 600
+
+# Go from go.dev's tarball, as Go's install guide has it, in /usr/local/go, whose bin the shell
+# role's .profile puts on PATH. Where there is no Go yet, the read fails and the version is empty.
+- name: Read the version of the Go in /usr/local/go
+  ansible.builtin.slurp:
+    src: /usr/local/go/VERSION
+  register: devtools_go_installed
+  failed_when: false
+
+# VERSION's first line is the version, such as go1.27.1. tar writes the file near the start of the
+# tree, so the tree is unpacked elsewhere and moved into place whole: an unpack cut short in place
+# would pass for the version at the next run.
+- name: Install Go
+  when: >-
+    devtools_go_installed.content | default('') | b64decode | split('\n') | first
+    != 'go' ~ devtools_go_version
+  block:
+    # The list of every release, with each file's SHA-256, which uri parses as JSON. A GET reads,
+    # so it runs in a dry run too, and tries again, as the keys' fetch does.
+    - name: Fetch the list of Go's releases
+      ansible.builtin.uri:
+        url: https://go.dev/dl/?mode=json&include=all
+      check_mode: false
+      changed_when: false
+      register: devtools_go_releases
+      until: devtools_go_releases is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Look up the tarball's SHA-256
+      ansible.builtin.set_fact:
+        devtools_go_sha256: >-
+          {{ devtools_go_releases.json | map(attribute='files') | flatten
+          | selectattr('filename', '==', devtools_go_tarball) | map(attribute='sha256')
+          | first | default('') }}
+
+    - name: Check that go.dev lists the tarball
+      ansible.builtin.assert:
+        that: devtools_go_sha256 is match('^[0-9a-f]{64}$')
+        fail_msg: go.dev lists no {{ devtools_go_tarball }} with a SHA-256
+        quiet: true
+
+    # get_url checks the download against the SHA-256 before it writes dest, and downloads again
+    # where dest is there with another SHA-256, another version's.
+    - name: Download Go's tarball
+      ansible.builtin.get_url:
+        url: https://go.dev/dl/{{ devtools_go_tarball }}
+        dest: "{{ devtools_go_download }}"
+        checksum: sha256:{{ devtools_go_sha256 }}
+        owner: root
+        group: root
+        mode: "0644"
+      register: devtools_go_fetched
+      until: devtools_go_fetched is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Make the directory Go is unpacked in
+      ansible.builtin.file:
+        path: "{{ devtools_go_unpacked }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # A dry run downloads nothing, so it has no tarball to unpack.
+    - name: Unpack Go
+      ansible.builtin.unarchive:
+        src: "{{ devtools_go_download }}"
+        dest: "{{ devtools_go_unpacked }}"
+        remote_src: true
+      when: not ansible_check_mode
+
+    - name: Remove the Go it replaces
+      ansible.builtin.file:
+        path: /usr/local/go
+        state: absent
+
+    # A dry run has no unpacked Go to move, and its removal above removes nothing.
+    - name: Move Go into /usr/local/go
+      ansible.builtin.command:
+        argv: [mv, "{{ devtools_go_unpacked }}/go", /usr/local/go]
+      changed_when: true
+      when: not ansible_check_mode
+
+    # The move above is skipped in a dry run, so the dry run shows it here.
+    - name: Show that Go would be moved into /usr/local/go
+      ansible.builtin.debug:
+        msg: Go {{ devtools_go_version }} would be moved into /usr/local/go
+      changed_when: true
+      when: ansible_check_mode
+
+# Outside the block, so that the next run removes what a run cut short left here, whatever the
+# version it was for.
+- name: Remove Go's tarball and the directory it was unpacked in
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ devtools_go_download }}"
+    - "{{ devtools_go_staging }}"
+
+# rustup updates itself and its toolchains, so it is installed only where it is missing, as
+# ws_user, in ~/.cargo and ~/.rustup. --no-modify-path leaves PATH to the shell role's .profile,
+# which sources rustup's env file. root needs no become, and a container has no sudo. HOME is set,
+# as without become it would be the caller's.
+- name: Install rustup and Rust's stable toolchain
+  ansible.builtin.shell:
+    cmd: >-
+      set -o pipefail &&
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+      sh -s -- -y --no-modify-path --default-toolchain stable
+    executable: /bin/bash
+    creates: "{{ ws_home }}/.cargo/bin/rustup"
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"

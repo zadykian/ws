@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: zadykian
-  description: Node, the .NET SDKs, gh, glow and the libraries headless Chromium needs
+  description: Node, the .NET SDKs, gh, glow, headless Chromium's libraries, Go and rustup
   license: MIT
   min_ansible_version: "2.20"
   platforms:

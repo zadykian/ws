@@ -21,10 +21,13 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   tmux's snap is installed, the role removes it. Where cld's sessions run the snap's tmux, end them
   before a real run: cld then finds `/usr/bin/tmux` first on the `PATH`, and their key bindings
   call `/snap/bin/tmux`, which the removal takes away.
-- `devtools`: Node, the .NET SDKs, gh, glow and the libraries headless Chromium needs. Node comes
-  from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's archive or,
-  for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again and
-  checks each against the fingerprint the role pins.
+- `devtools`: Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs, Go and rustup.
+  Node comes from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's
+  archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys
+  again and checks each against the fingerprint the role pins. Go goes in `/usr/local/go` from
+  go.dev's tarball, checked against the SHA-256 go.dev lists for it, and is replaced when
+  `group_vars/all.yml` pins another version. rustup installs Rust's stable toolchain in the user's
+  home; once there, it updates itself, so the playbook leaves it as it is.
 
 ## A new machine
 
