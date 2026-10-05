@@ -66,7 +66,8 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   grammars, so the role fetches and builds those `helix_grammars` lists with `hx --grammar`. Go's
   language server, gopls, comes from `go install` at the version `group_vars/all.yml` pins, with
   the Go of the `devtools` role, and is built again when either version changes. Each run replaces
-  changes made to the two files by hand, and keeps the old file beside the new one.
+  changes made to the two files by hand, and keeps the old file beside the new one. The keys
+  follow the IDEs' F12 keymap: [helix's keys](#helixs-keys), below.
 
 ## A new machine
 
@@ -268,6 +269,67 @@ credential. It names instead the keys a real run would drop, without their value
 `~/.config/git/local` first. A subsection shows as `*`, as in `http.*.extraheader`, since one may
 be a URL, which names a host. A real run keeps the old file beside the new one, as
 `~/.gitconfig.*~`.
+
+## helix's keys
+
+`config.toml` binds the keys of F12, the keymap GoLand and Rider use here, in normal and in
+insert mode, where helix has the command, and names F12's action beside each. Cmd never reaches a
+program in a terminal, so F12's Ctrl keys stand in for it. On a Mac, the Alt keys need Option to
+act as Meta or send Esc+.
+
+Where F12 takes a key of helix's, helix's other key for it still works, but Alt+D was helix's only
+key to delete without yanking: `"_d` does the same.
+
+From normal and insert mode, Move line goes through register `m`, so the `"` register keeps the
+last yank, and a move is one undo step. A move off or onto a last line that has no final newline
+joins two lines, as `p` and `P` do there: `u` undoes it, and a `:w` adds the newline.
+
+A terminal that sends keys as older terminals did loses some: Shift+Ctrl with a letter arrives as
+Ctrl alone, so that Shift+Ctrl+W extends the selection, and Ctrl+- and Ctrl+= don't arrive. One
+that reports modified keys as `CSI u`, or answers helix's request for the kitty keyboard
+protocol, sends Ctrl+- and Ctrl+=. Shift+Ctrl with a letter arrives whole only where the terminal
+sends the shifted letter, as `CSI 84;6u` for Shift+Ctrl+T, or answers the kitty request and
+reports the shifted key too, as `CSI 116:84;6u`. Where it sends the letter alone, `CSI 116;6u`,
+helix drops the Shift and runs Ctrl+T.
+
+tmux 3.6a sends Shift+Ctrl with a letter as Ctrl alone whatever the terminal: it sends such keys
+whole only to a program that asks, and helix doesn't. Ctrl+- and Ctrl+= reach helix through tmux
+with these server options. Neither tmux's defaults nor cld's servers have them; for a tmux of your
+own, they go in `~/.tmux.conf`:
+
+```
+set -s extended-keys always
+set -s extended-keys-format csi-u
+set -as terminal-features 'xterm*:extkeys'
+```
+
+The last tells tmux that a terminal whose `TERM` starts with `xterm` reports modified keys; tmux
+knows it of iTerm2 already. With `always`, tmux sends those keys as `CSI u` to every program, a
+shell too. In cld's sessions Ctrl+Q is tmux's prefix, so it reaches helix pressed twice.
+
+Where an F12 key doesn't arrive, helix's own key does the same:
+
+| F12 action | F12's keys | helix's own key |
+| --- | --- | --- |
+| Go to declaration | Alt+D | `g d` |
+| Go to implementation | Ctrl+Alt+D | `g i` |
+| Find usages | Shift+F12 | `g r` |
+| Rename | Ctrl+R, R | `Space r` |
+| Show intention actions | Alt+Enter | `Space a` |
+| Quick documentation | Ctrl+K, I | `Space k` |
+| Comment line | Ctrl+K, C | Ctrl+C |
+| Reformat code | Ctrl+K, F | `:format` |
+| Go to file | Shift+Ctrl+T | `Space f` |
+| Go to symbol | Shift+Ctrl+Alt+T | `Space S` |
+| File structure | Alt+\\ | `Space s` |
+| Go to action | Ctrl+Q | `Space ?` |
+| Find in files | Shift+Ctrl+F | `Space /` |
+| Back, forward | Ctrl+-, Ctrl+= | Ctrl+O, Tab |
+| Next, previous error | Alt+PgDn, Alt+PgUp | `]d`, `[d` |
+| Extend selection | Ctrl+W | Alt+O |
+| Shrink selection | Shift+Ctrl+W | Alt+I |
+| Completion, in insert mode | Ctrl+Space | Ctrl+X |
+| Move line up, down | Alt+Up, Alt+Down | `X d k P`, `X d p` |
 
 ## Checks
 

@@ -33,3 +33,82 @@ render = true
 [editor.whitespace.render]
 space = "all"
 tab = "all"
+
+# The keys of F12, the IDEs' keymap here, where helix has the command, with F12's action beside
+# each. Cmd never reaches a terminal program, so F12's Ctrl keys stand in for it. Where a key was
+# helix's own, helix's other key for it stays: space w for the window menu of C-w, A-o and A-i
+# for the selection keys of A-up and A-down. A-d was helix's only key for delete without
+# yanking; "_d does the same. The README says which keys a terminal or tmux may not pass on, and
+# helix's own keys that do the same.
+[keys.normal]
+A-d = "goto_definition"               # Go to declaration
+C-A-d = "goto_implementation"         # Go to implementation
+S-F12 = "goto_reference"              # Find usages
+A-ret = "code_action"                 # Show intention actions
+C-S-t = "file_picker"                 # Go to file
+C-A-S-t = "workspace_symbol_picker"   # Go to symbol
+"A-\\" = "symbol_picker"              # File structure
+C-q = "command_palette"               # Go to action
+C-S-f = "global_search"               # Find in files
+C-minus = "jump_backward"             # Back
+"C-=" = "jump_forward"                # Forward
+A-pagedown = "goto_next_diag"         # Next error
+A-pageup = "goto_prev_diag"           # Previous error
+C-w = "expand_selection"              # Extend selection
+C-S-w = "shrink_selection"            # Shrink selection
+# Move line up and down: helix has no command for it. These select register m and run select
+# mode's A-up and A-down, at the end of this file, so that the moved lines go through m and the "
+# register keeps the last yank. Those are sequences, so a move is one undo step, where a macro of
+# the same keys would make it two.
+A-up = '@v"m<A-up>'
+A-down = '@v"m<A-down>'
+
+[keys.normal.C-r]
+r = "rename_symbol"                   # Rename
+
+[keys.normal.C-k]
+i = "hover"                           # Quick documentation
+c = "toggle_line_comments"            # Comment line
+# gopls formats only whole files, and format_selections asks for a range, so this formats the
+# file, as the IDEs do with nothing selected.
+f = ":format"                         # Reformat code
+
+# The same in insert mode, but for three. Completion is here alone: helix drops completions
+# outside insert mode. The selection keys leave insert mode, since text typed in it goes before the
+# selection rather than over it; the selection is then there to change or delete, as with c or d.
+# Moving lines goes back to insert mode, at the start of the moved lines. A-backspace and A-del
+# still delete words, but C-r's registers and C-k's kill to the line's end have no other key.
+[keys.insert]
+A-d = "goto_definition"
+C-A-d = "goto_implementation"
+S-F12 = "goto_reference"
+A-ret = "code_action"
+C-S-t = "file_picker"
+C-A-S-t = "workspace_symbol_picker"
+"A-\\" = "symbol_picker"
+C-q = "command_palette"
+C-S-f = "global_search"
+C-minus = "jump_backward"
+"C-=" = "jump_forward"
+A-pagedown = "goto_next_diag"
+A-pageup = "goto_prev_diag"
+C-w = ["normal_mode", "expand_selection"]
+C-S-w = ["normal_mode", "shrink_selection"]
+C-space = "completion"                # Completion
+A-up = '@<esc>v"m<A-up>i'
+A-down = '@<esc>v"m<A-down>i'
+
+[keys.insert.C-r]
+r = "rename_symbol"
+
+[keys.insert.C-k]
+i = "hover"
+c = "toggle_line_comments"
+f = ":format"
+
+# Move line, for the keys above: X d k P up, X d p down. Pressed in select mode itself, they move
+# the lines through the " register. A move off or onto a last line that has no final newline
+# joins two lines, as p and P do there: u undoes it, and a :w adds the newline.
+[keys.select]
+A-up = ["extend_to_line_bounds", "delete_selection", "move_line_up", "paste_before"]
+A-down = ["extend_to_line_bounds", "delete_selection", "paste_after"]
