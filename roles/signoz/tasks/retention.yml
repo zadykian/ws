@@ -1,0 +1,126 @@
+---
+# SigNoz keeps traces and logs for 15 days and metrics for 30, unless told otherwise. A new
+# retention applies only to data that comes in after it, so it is set before the collector sends
+# anything. SigNoz serves every request as its root user, an admin, so the calls need no login.
+
+# A dry run asks once and goes on without SigNoz, which it may not have started.
+- name: Wait for SigNoz to answer
+  ansible.builtin.uri:
+    url: "{{ signoz_url }}/api/v2/readyz"
+  register: signoz_ready
+  until: signoz_ready.status == 200 or ansible_check_mode
+  retries: 60
+  delay: 5
+  check_mode: false
+  changed_when: false
+  failed_when: signoz_ready.status != 200 and not ansible_check_mode
+
+# The uri module has no check mode, so a dry run reads the retention and reports what it would set.
+- name: Keep SigNoz's data for signoz_retention_days
+  when: signoz_ready.status == 200
+  vars:
+    signoz_retention_hours: "{{ signoz_retention_days | int * 24 }}"
+    # For an item of signoz_ttl.results: the signal's retention differs, or its last change failed.
+    signoz_ttl_due: >-
+      {{ item.json[item.item ~ '_ttl_duration_hrs'] != signoz_retention_hours | int
+      or item.json.status == 'failed' }}
+    signoz_logs_ttl_due: >-
+      {{ signoz_logs_ttl.json.default_ttl_days | default(0) != signoz_retention_days | int
+      or signoz_logs_ttl.json.status != 'success' }}
+  block:
+    # The schema migrator, a one-shot service that each up of compose runs, makes the tables after
+    # SigNoz answers, and sets some of their retention to its own default as it goes. A change
+    # beside it may also fail on a column it has yet to add, while SigNoz reports it as done. A
+    # migrator that is gone, as a prune removes stopped containers, finished on an earlier run.
+    - name: Wait for SigNoz's schema migrator to finish
+      ansible.builtin.command:
+        cmd: >-
+          docker container ls --all --filter name=^signoz-telemetrystore-migrator$
+          --format {{ '{{.Status}}' }}
+      register: signoz_migrator
+      until: signoz_migrator.stdout is not match('Created|Up|Restarting')
+      retries: 120
+      delay: 5
+      check_mode: false
+      changed_when: false
+      # Its last run failed, or it was stopped before it finished.
+      failed_when: >-
+        signoz_migrator.rc != 0
+        or signoz_migrator.stdout != '' and signoz_migrator.stdout is not match('Exited [(]0[)]')
+
+    - name: Read the retention of traces and metrics
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v1/settings/ttl?type={{ item }}"
+      loop: [traces, metrics]
+      register: signoz_ttl
+      check_mode: false
+      changed_when: false
+
+    - name: Report the retention of traces and metrics a run would set
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.item }}: {{ item.json[item.item ~ '_ttl_duration_hrs'] }} h,
+          {{ item.json.status }}; would set {{ signoz_retention_hours }} h
+      loop: "{{ signoz_ttl.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: ansible_check_mode and signoz_ttl_due
+      changed_when: true
+
+    # SigNoz answers at once and alters the tables after, so the next task waits for it.
+    - name: Set the retention of traces and metrics
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v1/settings/ttl?{{ signoz_query }}"
+        method: POST
+      vars:
+        signoz_query: type={{ item.item }}&duration={{ signoz_retention_hours }}h
+      loop: "{{ signoz_ttl.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: signoz_ttl_due
+      changed_when: true
+
+    - name: Wait for SigNoz to alter the tables of traces and metrics
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v1/settings/ttl?type={{ item.item }}"
+      loop: "{{ signoz_ttl.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: signoz_ttl_due
+      register: signoz_ttl_set
+      until: >-
+        signoz_ttl_set.json.status | default('') == 'success'
+        and signoz_ttl_set.json[item.item ~ '_ttl_duration_hrs'] | default(0)
+        == signoz_retention_hours | int
+      retries: 60
+      delay: 5
+      changed_when: false
+
+    - name: Read the retention of logs
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v2/settings/ttl"
+      register: signoz_logs_ttl
+      check_mode: false
+      changed_when: false
+
+    - name: Report the retention of logs a run would set
+      ansible.builtin.debug:
+        msg: >-
+          logs: {{ signoz_logs_ttl.json.default_ttl_days | default(0) }} days,
+          {{ signoz_logs_ttl.json.status }}; would set {{ signoz_retention_days }} days
+      when: ansible_check_mode and signoz_logs_ttl_due
+      changed_when: true
+
+    # SigNoz alters the tables before it answers. The rules set in its UI to keep some logs for
+    # another time are sent back as they were, so they stay.
+    - name: Set the retention of logs
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v2/settings/ttl"
+        method: POST
+        body_format: json
+        body:
+          type: logs
+          defaultTTLDays: "{{ signoz_retention_days | int }}"
+          ttlConditions: "{{ signoz_logs_ttl.json.ttl_conditions | default([]) }}"
+      when: signoz_logs_ttl_due
+      changed_when: true

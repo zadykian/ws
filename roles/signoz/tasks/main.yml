@@ -86,3 +86,8 @@
         path: "{{ signoz_dir }}/recreate"
         state: absent
       when: signoz_recreate.stat.exists
+
+# Through SigNoz's API, which answers only where Docker's daemon runs SigNoz.
+- name: Keep SigNoz's data for signoz_retention_days
+  ansible.builtin.import_tasks: retention.yml
+  tags: [systemd]

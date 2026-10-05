@@ -46,8 +46,8 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   reboot. The role turns lingering on, so that the user's systemd starts at boot rather than at
   the first login. The unit keeps the `PATH` of the user's login shell, where `cld restore`
   finds tmux; the next run of the role updates it after a change to that `PATH`.
-- `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry, with its UI
-  and OTLP/HTTP intake on loopback and no login: [below](#signoz).
+- `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days,
+  with its UI and OTLP/HTTP intake on loopback and no login: [below](#signoz).
 
 ## A new machine
 
@@ -131,6 +131,13 @@ ssh -N -L 3301:127.0.0.1:3301 root@SERVER
 ```
 
 A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.
+
+SigNoz keeps traces, metrics and logs for 90 days, `signoz_retention_days`; its own default is 15
+days, and 30 for metrics. The role sets it through SigNoz's API before anything is sent, as a change
+applies only to data that comes in after it, and after SigNoz's schema migrator has finished, as
+the migrator sets its own. Settings › General in the UI shows it; rules set there to keep some logs
+for another time stay. A dry run reads it and reports what it would change, and skips it where
+SigNoz isn't running.
 
 The compose files are generated. SigNoz's [Foundry](https://github.com/SigNoz/foundry) forges them
 from `roles/signoz/files/casting.yaml`, which pins every image, and the checksum of a ClickHouse

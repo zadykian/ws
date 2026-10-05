@@ -1,3 +1,7 @@
 ---
 # The compose project's directory: the forged files of files/deployment, and root.env.
 signoz_dir: /opt/signoz
+# Where the casting publishes SigNoz's UI and API, which the role calls.
+signoz_url: http://127.0.0.1:3301
+# How long SigNoz keeps traces, metrics and logs.
+signoz_retention_days: 90
