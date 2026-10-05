@@ -42,6 +42,10 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   both in `~/.local/bin`, and cld's completion in bash. claude updates itself in the background,
   so the role installs it only where it is missing. Where cld is installed, the role updates it
   with `cld update`; a dry run compares its version with the latest release instead.
+  Then `cld setup restore`, which has the user's systemd bring cld's sessions back after a
+  reboot. The role turns lingering on, so that the user's systemd starts at boot rather than at
+  the first login. The unit keeps the `PATH` of the user's login shell, where `cld restore`
+  finds tmux; the next run of the role updates it after a change to that `PATH`.
 
 ## A new machine
 

@@ -87,3 +87,103 @@
       check_mode: false
       changed_when: claude_completion_check.stdout == 'differs'
       when: ansible_check_mode
+
+# cld setup restore writes a systemd user unit that runs cld restore as the user's systemd starts,
+# which brings back the sessions a reboot ended. It leaves the rest to the user: lingering, so
+# that the user's systemd starts at boot rather than at the first login, and a shell where
+# systemctl --user reaches it. A container has no systemd, so these run on a booted machine only.
+- name: Restore cld's sessions at boot
+  tags: [systemd]
+  vars:
+    claude_uid: "{{ ansible_facts.getent_passwd[ws_user][1] }}"
+    claude_cld: "{{ ws_home }}/.local/bin/cld"
+    # A login shell of ws_user's, which runs the arguments after it. The unit keeps the PATH cld
+    # setup restore runs with, where cld restore finds tmux, and its TMUX_TMPDIR, XDG_STATE_HOME
+    # and CLD_IDLE_DAYS where set. So the shell starts from a clean environment, not the caller's:
+    # /etc/environment, as PAM gives a login, then bash's login files. With the user's bus,
+    # systemctl --user finds the user's systemd.
+    claude_login_shell: >-
+      env -i HOME={{ ws_home | quote }} USER={{ ws_user | quote }} LOGNAME={{ ws_user | quote }}
+      SHELL=/bin/bash XDG_RUNTIME_DIR=/run/user/{{ claude_uid }}
+      DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{{ claude_uid }}/bus
+      /bin/bash -c 'set -a && . /etc/environment && exec /bin/bash -l "$@"' bash
+  block:
+    - name: Look up ws_user's UID
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ ws_user }}"
+
+    # loginctl starts the user's systemd too, which the next task makes sure of.
+    - name: Enable lingering for ws_user
+      ansible.builtin.command:
+        argv: [loginctl, enable-linger, "{{ ws_user }}"]
+        creates: /var/lib/systemd/linger/{{ ws_user }}
+
+    - name: Start ws_user's systemd
+      ansible.builtin.systemd_service:
+        name: user@{{ claude_uid }}.service
+        state: started
+
+    # cld enables the unit at every run, but reports only whether it wrote its file. The link
+    # that systemctl --user enable makes tells whether a run enables it too.
+    - name: Check whether cld-restore.service is enabled
+      ansible.builtin.stat:
+        path: "{{ ws_home }}/.config/systemd/user/default.target.wants/cld-restore.service"
+      register: claude_restore_enabled
+
+    # cld writes the unit only where it differs, and says so on its first line. It exits 0 where
+    # lingering is off or unknown, and only says so, so the task fails unless cld says it is on.
+    # $0 is cld.
+    - name: Have ws_user's systemd restore cld's sessions as it starts
+      ansible.builtin.shell:
+        cmd: >-
+          {{ claude_login_shell }} -c 'exec "$0" setup restore' {{ claude_cld | quote }}
+        executable: /bin/bash
+      become: "{{ ws_user != 'root' }}"
+      become_user: "{{ ws_user }}"
+      register: claude_restore
+      failed_when: >-
+        claude_restore.rc != 0
+        or claude_restore.stdout is not search('^Lingering is on: ', multiline=True)
+      changed_when: >-
+        claude_restore.stdout is search('^(Created|Updated) ', multiline=True)
+        or not claude_restore_enabled.stat.exists
+
+    # A dry run skips the task above, so this one shows where the unit differs from what cld
+    # writes: in the lines that come from cld's environment and path, each quoted as cld quotes
+    # it. The rest of the unit is cld's own text.
+    - name: Compare cld-restore.service with what cld writes
+      ansible.builtin.shell:
+        cmd: >-
+          {{ claude_login_shell }} -c {{ claude_restore_compare | quote }} {{ claude_cld | quote }}
+        executable: /bin/bash
+      vars:
+        claude_restore_compare: |
+          unit=$HOME/.config/systemd/user/cld-restore.service
+          quote() {
+              local word=${1//\\/\\\\}
+              word=${word//\"/\\\"}
+              printf '"%s"' "${word//%/%%}"
+          }
+          want=$(
+              for name in PATH TMUX_TMPDIR XDG_STATE_HOME CLD_IDLE_DAYS; do
+                  if [ "$name" = PATH ] || [ -n "${!name-}" ]; then
+                      printf 'Environment=%s\n' "$(quote "$name=${!name-}")"
+                  fi
+              done
+              cld=$(readlink -f "$0")
+              printf 'ExecStart=%s restore\n' "$(quote "${cld//\$/\$\$}")"
+          )
+          if [ ! -f "$unit" ]; then
+              echo missing
+          elif [ "$(grep -E '^(Environment|ExecStart)=' "$unit")" != "$want" ]; then
+              echo differs
+          fi
+      become: "{{ ws_user != 'root' }}"
+      become_user: "{{ ws_user }}"
+      register: claude_restore_check
+      check_mode: false
+      changed_when: >-
+        claude_restore_check.stdout is search('^(missing|differs)$', multiline=True)
+        or not claude_restore_enabled.stat.exists
+      when: ansible_check_mode
