@@ -87,7 +87,24 @@
         state: absent
       when: signoz_recreate.stat.exists
 
-# Through SigNoz's API, which answers only where Docker's daemon runs SigNoz.
+# SigNoz's API answers only where Docker's daemon runs SigNoz. A dry run asks once and goes on
+# without SigNoz, which it may not have started.
+- name: Wait for SigNoz to answer
+  ansible.builtin.uri:
+    url: "{{ signoz_url }}/api/v2/readyz"
+  register: signoz_ready
+  until: signoz_ready.status == 200 or ansible_check_mode
+  retries: 60
+  delay: 5
+  check_mode: false
+  changed_when: false
+  failed_when: signoz_ready.status != 200 and not ansible_check_mode
+  tags: [systemd]
+
 - name: Keep SigNoz's data for signoz_retention_days
   ansible.builtin.import_tasks: retention.yml
+  tags: [systemd]
+
+- name: Create the Host dashboard
+  ansible.builtin.import_tasks: dashboard.yml
   tags: [systemd]

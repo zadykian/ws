@@ -3,18 +3,6 @@
 # retention applies only to data that comes in after it, so it is set before the collector sends
 # anything. SigNoz serves every request as its root user, an admin, so the calls need no login.
 
-# A dry run asks once and goes on without SigNoz, which it may not have started.
-- name: Wait for SigNoz to answer
-  ansible.builtin.uri:
-    url: "{{ signoz_url }}/api/v2/readyz"
-  register: signoz_ready
-  until: signoz_ready.status == 200 or ansible_check_mode
-  retries: 60
-  delay: 5
-  check_mode: false
-  changed_when: false
-  failed_when: signoz_ready.status != 200 and not ansible_check_mode
-
 # The uri module has no check mode, so a dry run reads the retention and reports what it would set.
 - name: Keep SigNoz's data for signoz_retention_days
   when: signoz_ready.status == 200

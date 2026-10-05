@@ -1,0 +1,85 @@
+---
+# The Host dashboard, files/dashboards/host.json, is created through SigNoz's API and replaced where
+# it differs from that file, so a change made to it in SigNoz's UI lasts until the next run.
+
+# The uri module has no check mode, so a dry run reads the dashboard and reports what it would do.
+- name: Create or replace the Host dashboard
+  when: signoz_ready.status == 200
+  vars:
+    signoz_dashboard: "{{ lookup('ansible.builtin.file', 'dashboards/host.json') | from_json }}"
+    signoz_dashboard_id: >-
+      {{ (signoz_dashboards.json.data.dashboards
+      + signoz_dashboards_more.results | map(attribute='json.data.dashboards') | flatten(1))
+      | selectattr('name', 'eq', signoz_dashboard.name) | map(attribute='id') | first
+      | default('') }}
+    # The file holds the dashboard as SigNoz returns it, so the two compare equal. SigNoz adds its
+    # ID, owner and times, which the file leaves out.
+    signoz_dashboard_due: >-
+      {{ signoz_dashboard_id == ''
+      or signoz_dashboard_read.json.data.spec != signoz_dashboard.spec
+      or signoz_dashboard_read.json.data.tags != signoz_dashboard.tags
+      or signoz_dashboard_read.json.data.image != signoz_dashboard.image }}
+    # SigNoz refuses to change a dashboard locked in its UI. The run leaves it as it is and says so,
+    # rather than fail and stop the roles after this one.
+    signoz_dashboard_locked: >-
+      {{ signoz_dashboard_id != '' and signoz_dashboard_read.json.data.locked }}
+  block:
+    # SigNoz lets dashboards share a name, and its list's filter matches the name its UI shows,
+    # which can be changed there. The role finds its own by the fixed name it gives it. The list
+    # gives 200 at most, and the total, by which the role reads the rest.
+    - name: List SigNoz's dashboards
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v2/dashboards?sort=created_at&order=asc&limit=200"
+      register: signoz_dashboards
+      check_mode: false
+      changed_when: false
+
+    - name: List the rest of SigNoz's dashboards
+      ansible.builtin.uri:
+        url: >-
+          {{ signoz_url }}/api/v2/dashboards?sort=created_at&order=asc&limit=200&offset={{ item }}
+      loop: "{{ range(200, signoz_dashboards.json.data.total, 200) | list }}"
+      register: signoz_dashboards_more
+      check_mode: false
+      changed_when: false
+
+    - name: Read the Host dashboard
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v2/dashboards/{{ signoz_dashboard_id }}"
+      register: signoz_dashboard_read
+      when: signoz_dashboard_id != ''
+      check_mode: false
+      changed_when: false
+
+    - name: Report a locked Host dashboard that differs from the file
+      ansible.builtin.debug:
+        msg: >-
+          The Host dashboard is locked in SigNoz's UI and differs from
+          roles/signoz/files/dashboards/host.json: unlock it for a run to replace it.
+      when: signoz_dashboard_locked and signoz_dashboard_due
+
+    - name: Report the change to the Host dashboard a run would make
+      ansible.builtin.debug:
+        msg: >-
+          Would {{ 'create' if signoz_dashboard_id == '' else 'replace' }} the Host dashboard
+      when: ansible_check_mode and signoz_dashboard_due and not signoz_dashboard_locked
+      changed_when: true
+
+    - name: Create the Host dashboard
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v2/dashboards"
+        method: POST
+        body_format: json
+        body: "{{ signoz_dashboard }}"
+        status_code: 201
+      when: signoz_dashboard_id == ''
+      changed_when: true
+
+    - name: Replace the Host dashboard
+      ansible.builtin.uri:
+        url: "{{ signoz_url }}/api/v2/dashboards/{{ signoz_dashboard_id }}"
+        method: PUT
+        body_format: json
+        body: "{{ signoz_dashboard }}"
+      when: signoz_dashboard_id != '' and signoz_dashboard_due and not signoz_dashboard_locked
+      changed_when: true

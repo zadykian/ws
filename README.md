@@ -47,7 +47,8 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
   the first login. The unit keeps the `PATH` of the user's login shell, where `cld restore`
   finds tmux; the next run of the role updates it after a change to that `PATH`.
 - `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days,
-  with its UI and OTLP/HTTP intake on loopback and no login: [below](#signoz).
+  with its UI and OTLP/HTTP intake on loopback, no login, and a dashboard of the host:
+  [below](#signoz).
 - `otelcol`: the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on the host,
   which takes OTLP on loopback, reads the journal, the host's metrics and its temperatures from
   node_exporter, and sends it all to SigNoz: [below](#the-collector).
@@ -142,6 +143,14 @@ the migrator sets its own. Settings › General in the UI shows it; rules set th
 for another time stay. A dry run reads it and reports what it would change, and skips it where
 SigNoz isn't running.
 
+The Host dashboard shows the CPU, memory, disks, file systems and network from the collector's host
+metrics, and the temperatures and fans from node_exporter. It is SigNoz's own host metrics
+dashboard, changed a little: `roles/signoz/files/dashboards` says how, and holds its license. The
+role creates it through SigNoz's API and replaces it where it differs from the repository's, so a
+change made to it in the UI lasts until the next run, and one made to a copy of it stays. SigNoz
+refuses to change a dashboard locked in the UI, so the run leaves it and says so. A dry run reports
+whether it would create or replace the dashboard.
+
 The compose files are generated. SigNoz's [Foundry](https://github.com/SigNoz/foundry) forges them
 from `roles/signoz/files/casting.yaml`, which pins every image, and the checksum of a ClickHouse
 function the stack downloads from GitHub. To change them, change the casting, then forge again with
@@ -155,6 +164,11 @@ foundryctl forge --no-ledger --no-updater -f casting.yaml -p .
 
 Without `--no-ledger` and `--no-updater`, foundryctl reports each command to SigNoz and asks GitHub
 for a newer release. It never removes a file, hence the `rm`.
+
+A new SigNoz may return the Host dashboard with fields added or dropped, and the role would then
+replace it on every run. So after changing SigNoz's image, run the role, refresh `host.json` from
+SigNoz as `roles/signoz/files/dashboards/README.md` says, and commit it with the casting. A second
+run must then leave the dashboard as it is.
 
 ## The collector
 
@@ -249,4 +263,5 @@ by hand, `git push origin SHA:main`.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), but for the Host dashboard in `roles/signoz/files/dashboards`, which is SigNoz's,
+under the [Apache License 2.0](roles/signoz/files/dashboards/LICENSE).
