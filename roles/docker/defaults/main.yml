@@ -11,3 +11,12 @@ docker_packages:
 # one file that grows without bound.
 docker_log_max_size: 10m
 docker_log_max_file: 3
+
+# The limits of docker.slice, over dockerd and every container together, in systemd's syntax: half
+# the RAM and half the CPUs, which leaves the other half to the rest of the machine, the user's
+# sessions among it.
+docker_memory_max: "{{ ansible_facts['memtotal_mb'] // 2 }}M"
+docker_cpu_quota: "{{ ansible_facts['processor_vcpus'] * 50 }}%"
+# The slice's swap, beyond MemoryMax. With none, a container past the cap is killed inside the slice
+# rather than filling the swap the user's sessions share.
+docker_memory_swap_max: "0"

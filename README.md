@@ -31,9 +31,13 @@ The roles land one pull request at a time. Each is a tag of `site.yml`:
 - `docker`: Docker Engine with its buildx and compose plugins, from Docker's apt repository, and
   `/etc/docker/daemon.json`, which rotates each container's log at 10 MB and keeps 3 files. A
   container keeps the log settings it was created with. Containers keep running while Docker
-  restarts (`live-restore`). Where `ws_user` isn't root, the role adds it to the `docker` group,
-  so that it runs `docker` without sudo. The group is root-equivalent, as a container can mount
-  any of the host's files, and the user has it from its next login.
+  restarts (`live-restore`). `dockerd` and every container run in `docker.slice`, capped at half
+  the RAM and half the CPUs, with no swap; `docker_memory_max`, `docker_cpu_quota` and
+  `docker_memory_swap_max` set other limits, in systemd's syntax (`16G`, `400%`). A running
+  container moves into the slice when it next starts. `containerd`, which pulls and unpacks
+  images, stays outside the slice's limits. Where `ws_user` isn't root, the role adds it to the
+  `docker` group, so that it runs `docker` without sudo. The group is root-equivalent, as a
+  container can mount any of the host's files, and the user has it from its next login.
 
 ## A new machine
 

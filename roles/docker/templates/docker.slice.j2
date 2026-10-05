@@ -1,0 +1,8 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+[Unit]
+Description=Docker's daemon and its containers
+
+[Slice]
+MemoryMax={{ docker_memory_max }}
+CPUQuota={{ docker_cpu_quota }}
+MemorySwapMax={{ docker_memory_swap_max }}

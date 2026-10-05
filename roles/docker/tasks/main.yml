@@ -81,7 +81,7 @@
         append: true
 
 # A change restarts dockerd; live-restore keeps the running containers up through it, as the
-# settings here apply only to containers created afterwards.
+# settings here apply only to containers created or started afterwards.
 - name: Write daemon.json
   ansible.builtin.template:
     src: daemon.json.j2
@@ -92,6 +92,38 @@
     validate: dockerd --validate --config-file %s
   notify: Restart Docker
 
+- name: Create docker.service's drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# systemd applies the slice's new limits as it reloads, to the processes already in the slice.
+- name: Write docker.slice
+  ansible.builtin.template:
+    src: docker.slice.j2
+    dest: /etc/systemd/system/docker.slice
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+# override.conf, the drop-in systemctl edit writes, is where a server set up by hand capped dockerd
+# alone; this one replaces those limits with the slice's. dockerd moves into the slice as it
+# restarts, and each running container as it next starts.
+- name: Put dockerd in docker.slice
+  ansible.builtin.copy:
+    src: override.conf
+    dest: /etc/systemd/system/docker.service.d/override.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Docker
+
 - name: Enable and start Docker
   ansible.builtin.systemd_service:
     name: docker
@@ -99,6 +131,7 @@
     state: started
   tags: [systemd]
 
-# The roles after this one start containers, which should start under the new daemon.json.
-- name: Restart Docker now if daemon.json changed
+# The roles after this one start containers, which should start under the new daemon.json and in
+# docker.slice.
+- name: Restart Docker now if its configuration changed
   ansible.builtin.meta: flush_handlers
