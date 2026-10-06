@@ -16,7 +16,7 @@ Secrets are never in this repository. On a new machine, these stay manual:
 ## Pull requests
 
 Pull requests land on `main` by fast-forward only, as the commits CI checked. GitHub's merge
-methods are all refused. A comment `/fast-forward` on a pull request pushes its head to `main`
+methods are all refused. A comment `/ff` on a pull request pushes its head to `main`
 (`.github/workflows/fast-forward.yml`). A pull request that changes `.github/workflows` is pushed
 by hand, `git push origin SHA:main`.
 
