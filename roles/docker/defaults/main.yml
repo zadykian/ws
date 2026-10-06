@@ -31,7 +31,7 @@ docker_bridge_prefix_length: 16
 # range, one ufw rule lets every network reach the resolver. Docker's own ranges hold the default
 # bridge and 14 more networks in 172.16.0.0/12, then run on into 192.168.0.0/16, where LANs often
 # are; /20s leave room for 240 beside the bridge. Docker skips subnets the main routing table has
-# on-link routes for, but not those routed through another table, as a VPN may route its own: such
-# a subnet in this range needs another range here.
+# on-link routes for, but not those routed through another table, as a VPN may route its own: the
+# role stops on such a route in this range, or on any route in the bridge's subnet, and names it.
 docker_address_pool: 172.16.0.0/12
 docker_address_pool_size: 20
