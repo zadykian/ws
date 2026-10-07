@@ -35,3 +35,10 @@ docker_bridge_prefix_length: 16
 # role stops on such a route in this range, or on any route in the bridge's subnet, and names it.
 docker_address_pool: 172.16.0.0/12
 docker_address_pool_size: 20
+
+# The address Docker publishes a container's port on when the port names none, as in -p 8080:80 or
+# compose's "8080:80", rather than every address, IPv4 and IPv6, which 0.0.0.0 gives back. Published
+# ports get past ufw, so on loopback they stay off every network the host is on. daemon.json's ip
+# sets it for the default bridge, and default-network-opts for each bridge network created
+# afterwards: a network created before keeps publishing on every address until it is created again.
+docker_publish_ip: 127.0.0.1

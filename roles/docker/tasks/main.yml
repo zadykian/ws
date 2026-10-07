@@ -106,7 +106,9 @@
         append: true
 
 # A change restarts dockerd; live-restore keeps the running containers up through it, as the
-# settings here apply only to containers created or started afterwards.
+# settings here apply only to containers created or started afterwards. default-network-opts
+# applies only to networks created afterwards, and the default bridge's settings, bip and ip, only
+# from a start of dockerd with no container running, such as the next boot's.
 - name: Write daemon.json
   ansible.builtin.template:
     src: daemon.json.j2

@@ -45,7 +45,12 @@ Each role is a tag of `site.yml`:
   routes, so the role stops, before it writes `daemon.json`, on any other route into the pool, such
   as one a VPN keeps in a table of its own, and on any route into the default bridge's subnet. It
   reads the routes as they are during the run: a VPN that is down shows none. A running container
-  takes the new `dns` when it next starts. Where `ws_user` isn't root, the role adds it to the
+  takes the new `dns` when it next starts. A port published without an address, as in `-p 8080:80`
+  or compose's `"8080:80"`, goes on `127.0.0.1` (`docker_publish_ip`) rather than on every address:
+  `daemon.json`'s `ip` sets that for the default bridge, and `default-network-opts` for each network
+  created afterwards. A network created before keeps publishing on every address until it is created
+  again, as by `docker compose down` and `up`, and the default bridge takes `ip` when Docker starts
+  with no container running, as after a reboot. Where `ws_user` isn't root, the role adds it to the
   `docker` group, so that it runs `docker` without sudo. The group is root-equivalent, as a
   container can mount any of the host's files, and the user has it from its next login.
 - `claude`: claude, from its native installer, and cld, from its latest release's `install.sh`,
@@ -117,8 +122,9 @@ nothing else; fail2ban bans an address for 10 minutes after 5 failed logins in 1
 SSH, keep the session that ran the playbook open until a new one logs in.
 The playbook stops before it turns passwords off if root has no key to log in with.
 
-Docker's published ports get past ufw: publish a container's port on `127.0.0.1` and reach it
-through an SSH tunnel.
+Docker's published ports get past ufw, so Docker publishes a port that names no address on
+`127.0.0.1` (see `docker`): reach it through an SSH tunnel. A port published on another address, as
+in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Running it again
 
