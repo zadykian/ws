@@ -41,10 +41,13 @@ Each role is a tag of `site.yml`:
   bridges, `docker0` and `br-ID`. Docker takes each new network's subnet, a `/20`, from
   `172.16.0.0/12` (`docker_address_pool`), which holds the default bridge too, so that one source
   range covers them all; a network given a subnet outside it, or a bridge name of its own, gets no
-  answers. A running container takes the new `dns` when it next starts. Where `ws_user` isn't
-  root, the role adds it to the `docker` group, so that it runs `docker` without sudo. The group
-  is root-equivalent, as a container can mount any of the host's files, and the user has it from
-  its next login.
+  answers. Docker leaves out of the pool only the subnets of the main routing table's on-link
+  routes, so the role stops, before it writes `daemon.json`, on any other route into the pool, such
+  as one a VPN keeps in a table of its own, and on any route into the default bridge's subnet. It
+  reads the routes as they are during the run: a VPN that is down shows none. A running container
+  takes the new `dns` when it next starts. Where `ws_user` isn't root, the role adds it to the
+  `docker` group, so that it runs `docker` without sudo. The group is root-equivalent, as a
+  container can mount any of the host's files, and the user has it from its next login.
 - `claude`: claude, from its native installer, and cld, from its latest release's `install.sh`,
   both in `~/.local/bin`, and cld's completion in bash. claude updates itself in the background,
   so the role installs it only where it is missing. Where cld is installed, the role updates it
