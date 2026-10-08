@@ -62,5 +62,32 @@
       "Bash(git push *:refs/heads/main *)"
     ]
   },
-  "plansDirectory": ".claude/plans"
+  "plansDirectory": ".claude/plans",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/lint-file.sh",
+            "args": [],
+            "statusMessage": "Linting the file"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/lint-branch.sh",
+            "args": [],
+            "statusMessage": "Running make lint"
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -1,5 +1,6 @@
-# The gates of `make lint`, the one gate, which CI's lint job runs, and the maintainer before a
-# push. Any finding fails a gate, warnings included; make -k lint runs every gate past a failure.
+# The gates of `make lint`, the one gate, which CI's lint job and Claude's Stop hook run, and the
+# maintainer before a push. Any finding fails a gate, warnings included; make -k lint runs every
+# gate past a failure.
 # Each gate is a target of its own, and those that check files take FILES, every file of their kind
 # when it is empty: make vale FILES=README.md.
 FILES =
@@ -48,8 +49,11 @@ yamllint: $(PIP_STAMP)
 		[ -z "$$files" ] || $(VENV)/bin/yamllint --strict $$files
 
 # ansible-lint runs ansible-playbook's syntax check, so the venv's bin goes first on the PATH.
+# Without FILES, it finds the files itself, and leaves out those .ansible-lint excludes.
 ansible-lint: $(PIP_STAMP) $(GALAXY_STAMP)
-	PATH="$(CURDIR)/$(VENV)/bin:$$PATH" $(VENV)/bin/ansible-lint
+	@set -ef; files=; if [ -n "$(FILES)" ]; then files=$$(tools/files yaml $(FILES)); \
+		[ -n "$$files" ] || exit 0; fi; \
+		PATH="$(CURDIR)/$(VENV)/bin:$$PATH" $(VENV)/bin/ansible-lint $$files
 
 # ruff's lint and format checks, as ruff.toml sets them.
 ruff: $(PIP_STAMP)
