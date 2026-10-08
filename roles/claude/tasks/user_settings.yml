@@ -1,0 +1,65 @@
+---
+# cld setup config user adds to claude's user settings what they lack: the permission set, cld's
+# choices of model, theme and the like, and the channel claude notifies on, where one is given.
+# It keeps every value already there, and leaves env, which telemetry.yml writes, alone.
+# CLAUDE_CONFIG_DIR is set, so that cld edits the file telemetry.yml edits, whatever the
+# caller's is.
+- name: Set up claude's user settings
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"
+    CLAUDE_CONFIG_DIR: "{{ ws_home }}/.claude"
+  vars:
+    claude_cld: "{{ ws_home }}/.local/bin/cld"
+    # cld refuses an empty channel, so without one the option is left out.
+    claude_user_args: >-
+      {{ ['setup', 'config', 'user', '--permissions=' ~ claude_permissions]
+      + (['--notifications=' ~ claude_notifications] if claude_notifications else []) }}
+    # Whether a dry run found a change: cld's report says Left where it would change nothing, and
+    # it is empty without cld.
+    claude_user_differs: >-
+      {{ claude_user_check.stdout | default('') is not match('(Left |$)') }}
+  block:
+    # cld writes the file only where it changes, and says so. A cld older than setup config user
+    # has it by now, from the update in main.yml.
+    - name: Add what claude's user settings lack
+      ansible.builtin.command:
+        argv: "{{ [claude_cld] + claude_user_args }}"
+      register: claude_user
+      changed_when: claude_user.stdout is match('(Created|Updated) ')
+
+    # A dry run skips the task above, so this one runs cld on a copy of the file, removed after.
+    # cld's report names the keys it would change, not their values, as the file may hold tokens.
+    # Without cld, the task that installs it reports the change.
+    - name: Compare claude's user settings with what cld writes
+      ansible.builtin.shell:
+        cmd: |
+          set -eo pipefail
+          cld={{ claude_cld | quote }}
+          [ -x "$cld" ] || exit 0
+          if ! "$cld" help setup config user >/dev/null 2>&1; then
+              echo "$("$cld" --version) has no setup config user: a run updates cld first"
+              exit 0
+          fi
+          settings=$CLAUDE_CONFIG_DIR/settings.json
+          # cld refuses a link to no file, so the dry run fails where the real one would.
+          if [ -L "$settings" ] && [ ! -e "$settings" ]; then
+              echo "$settings is a symbolic link to a file that does not exist" >&2
+              exit 1
+          fi
+          copy=$(mktemp -d)
+          trap 'rm -rf "$copy"' EXIT
+          [ ! -e "$settings" ] || cp "$settings" "$copy/settings.json"
+          report=$(CLAUDE_CONFIG_DIR=$copy "$cld" {{ claude_user_args | map('quote') | join(' ') }})
+          echo "${report//"$copy/settings.json"/$settings}"
+        executable: /bin/bash
+      register: claude_user_check
+      check_mode: false
+      changed_when: claude_user_differs
+      when: ansible_check_mode
+
+    - name: Show what cld would change in claude's user settings
+      ansible.builtin.debug:
+        msg: "{{ claude_user_check.stdout_lines }}"
+      when: claude_user_differs
