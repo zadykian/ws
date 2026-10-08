@@ -42,3 +42,22 @@ docker_address_pool_size: 20
 # sets it for the default bridge, and default-network-opts for each bridge network created
 # afterwards: a network created before keeps publishing on every address until it is created again.
 docker_publish_ip: 127.0.0.1
+
+# BuildKit drops build cache that no build has used for this many days, shared with an image or
+# not; 0 keeps it whatever its age. daemon.json takes the age in hours, as Go has no unit of days.
+# BuildKit collects as dockerd starts and a second after each build, at most once a minute.
+docker_build_cache_keep_days: 90
+
+# Docker's own limits on the build cache, restated, as a policy in daemon.json replaces Docker's
+# default one whole and the age alone would bound nothing: the least used cache goes while the disk
+# has less than min_free_space free or the cache takes more than max_used_space, down to
+# reserved_space. reserved_space, max_used_space and min_free_space default to 10%, 80% and 20% of
+# the filesystem that holds /var/lib/docker, whose size the role reads with df
+# (docker_build_cache_disk), in whole GiB plus one, as BuildKit rounds them. They take daemon.json's
+# size format, where GB means GiB.
+docker_build_cache_reserved_space: >-
+  {{ docker_build_cache_disk.stdout_lines[-1] | int * 10 // 100 // 2**30 + 1 }}GB
+docker_build_cache_max_used_space: >-
+  {{ docker_build_cache_disk.stdout_lines[-1] | int * 80 // 100 // 2**30 + 1 }}GB
+docker_build_cache_min_free_space: >-
+  {{ docker_build_cache_disk.stdout_lines[-1] | int * 20 // 100 // 2**30 + 1 }}GB

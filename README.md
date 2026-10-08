@@ -50,9 +50,16 @@ Each role is a tag of `site.yml`:
   `daemon.json`'s `ip` sets that for the default bridge, and `default-network-opts` for each network
   created afterwards. A network created before keeps publishing on every address until it is created
   again, as by `docker compose down` and `up`, and the default bridge takes `ip` when Docker starts
-  with no container running, as after a reboot. Where `ws_user` isn't root, the role adds it to the
-  `docker` group, so that it runs `docker` without sudo. The group is root-equivalent, as a
-  container can mount any of the host's files, and the user has it from its next login.
+  with no container running, as after a reboot. BuildKit drops build cache that no build has used
+  for 90 days (`docker_build_cache_keep_days`). It collects when Docker starts and after each build,
+  so idle cache goes at the next build or restart. As Docker's own policy does, it also drops the
+  least used cache, down to 10% of the disk, while the disk has less than 20% free or the cache
+  takes more than 80% of it. `docker_build_cache_reserved_space`,
+  `docker_build_cache_max_used_space` and `docker_build_cache_min_free_space` set other sizes, in
+  `daemon.json`'s format (`50GB`). Cache that an image shares frees no space until the image is
+  removed. Where `ws_user` isn't root, the role adds it to the `docker` group, so that it runs
+  `docker` without sudo. The group is root-equivalent, as a container can mount any of the host's
+  files, and the user has it from its next login.
 - `claude`: claude, from its native installer, and cld, from its latest release's `install.sh`,
   both in `~/.local/bin`, and cld's completion in bash. claude updates itself in the background,
   so the role installs it only where it is missing. Where cld is installed, the role updates it

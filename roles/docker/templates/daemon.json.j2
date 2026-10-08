@@ -1,5 +1,29 @@
 {
   "bip": "{{ docker_bridge_ip }}/{{ docker_bridge_prefix_length }}",
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "policy": [
+{% if docker_build_cache_keep_days | int > 0 %}
+        {
+          "all": true,
+          "filter": ["until={{ docker_build_cache_keep_days | int * 24 }}h"]
+        },
+{% endif %}
+        {
+          "reservedSpace": "{{ docker_build_cache_reserved_space }}",
+          "maxUsedSpace": "{{ docker_build_cache_max_used_space }}",
+          "minFreeSpace": "{{ docker_build_cache_min_free_space }}"
+        },
+        {
+          "all": true,
+          "reservedSpace": "{{ docker_build_cache_reserved_space }}",
+          "maxUsedSpace": "{{ docker_build_cache_max_used_space }}",
+          "minFreeSpace": "{{ docker_build_cache_min_free_space }}"
+        }
+      ]
+    }
+  },
   "cgroup-parent": "docker.slice",
   "default-address-pools": [
     {
