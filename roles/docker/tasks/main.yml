@@ -105,10 +105,46 @@
         groups: [docker]
         append: true
 
+# The facts leave out a root whose device is no path, such as a container's overlay or a ZFS
+# dataset, so df reads the size. Until dockerd first starts, /var/lib/docker is missing unless a
+# mount makes it, and Docker's data will lie on /var/lib's filesystem.
+- name: Read the size of the filesystem that holds Docker's data, in bytes
+  ansible.builtin.shell: |
+    dir=/var/lib/docker
+    [ -d "$dir" ] || dir=/var/lib
+    df --output=size --block-size=1 "$dir"
+  register: docker_build_cache_disk
+  changed_when: false
+  check_mode: false
+
+# dockerd --validate skips daemon.json's builder section: a size or an age it cannot parse passes
+# it, then stops dockerd as the handler restarts it, and Docker stays down until the file is fixed.
+# A day count that is not a whole number would be cut short, as 1.5 to 1, or read as 0, as 30d,
+# which leaves the age out. Six digits may pass Go's longest duration, 106,751 days, which stops
+# dockerd too.
+- name: Check the build cache's settings
+  ansible.builtin.assert:
+    that:
+      - docker_build_cache_keep_days | string is match('^[0-9]{1,5}$')
+      - docker_build_cache_reserved_space | string is match(docker_size_format)
+      - docker_build_cache_max_used_space | string is match(docker_size_format)
+      - docker_build_cache_min_free_space | string is match(docker_size_format)
+    fail_msg: >-
+      docker_build_cache_keep_days is {{ docker_build_cache_keep_days }}: it takes a whole number of
+      days up to 99999, or 0 for no age limit. docker_build_cache_reserved_space, _max_used_space
+      and _min_free_space are {{ docker_build_cache_reserved_space }},
+      {{ docker_build_cache_max_used_space }} and {{ docker_build_cache_min_free_space }}: they take
+      daemon.json's size format, as 50GB.
+    quiet: true
+  vars:
+    docker_size_format: '^[0-9]+(\.[0-9]+)? ?[kKmMgGtTpP]?[iI]?[bB]?$'
+
 # A change restarts dockerd; live-restore keeps the running containers up through it, as the
 # settings here apply only to containers created or started afterwards. default-network-opts
 # applies only to networks created afterwards, and the default bridge's settings, bip and ip, only
-# from a start of dockerd with no container running, such as the next boot's.
+# from a start of dockerd with no container running, such as the next boot's. builder applies at
+# each start of dockerd, not at a reload: the restart puts the build cache's policy in force, and
+# the collection that follows drops at once the cache unused for docker_build_cache_keep_days.
 - name: Write daemon.json
   ansible.builtin.template:
     src: daemon.json.j2
