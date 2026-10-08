@@ -5,3 +5,7 @@ signoz_dir: /opt/signoz
 signoz_url: http://127.0.0.1:3301
 # How long SigNoz keeps traces, metrics and logs.
 signoz_retention_days: 90
+# The dashboards the role keeps in SigNoz. Each is the fixed name the role gives a dashboard, by
+# which it finds it, and files/dashboards/NAME.json holds it. A name taken off the list leaves its
+# dashboard in SigNoz.
+signoz_dashboards: [host, claude]

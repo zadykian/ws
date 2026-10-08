@@ -1,0 +1,1836 @@
+{
+  "schemaVersion": "v6",
+  "image": "/assets/Logos/claude-code",
+  "name": "claude",
+  "tags": [
+    {
+      "key": "tag",
+      "value": "claude"
+    },
+    {
+      "key": "tag",
+      "value": "ai"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "Claude",
+      "description": "What claude on this server cost, in tokens and dollars, by model and by day, and what it did: sessions, active time, lines of code, commits, pull requests, edit decisions, prompts, tool calls and API errors. From claude's metrics and events. Cost is claude's estimate at API prices, not what a subscription bills. Days are in UTC. Written for github.com/zadykian/ws."
+    },
+    "variables": [],
+    "panels": {
+      "active-time": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Active time",
+            "description": "The time claude was in use over the time range: the user typing, and claude running tools and waiting on the API."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "1"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.active_time.total",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "active-time-by-type": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Active time",
+            "description": "Active time per day: user, the user typing, and cli, claude running tools and waiting on the API. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "1"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.active_time.total",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "name": "type",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{type}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "api-errors": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "API errors",
+            "description": "Requests to the API that failed after claude's retries, per day, by HTTP status. One with no status, such as a refused connection, shows without one. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "logs",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "expression": "count()"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "service.name = 'claude-code' AND body = 'claude_code.api_error'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "status_code",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "number"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{status_code}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "cache-share": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cache reads",
+            "description": "Tokens read from the prompt cache as a share of the tokens sent, per day: cacheRead / (input + cacheRead + cacheCreation). Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": false
+              },
+              "formatting": {
+                "unit": "percentunit",
+                "decimalPrecision": "1"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 86400,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "claude_code.token.usage",
+                              "temporality": "",
+                              "timeAggregation": "increase",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "sum"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "type = 'cacheRead'"
+                          },
+                          "groupBy": [],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": ""
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 86400,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "claude_code.token.usage",
+                              "temporality": "",
+                              "timeAggregation": "increase",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "sum"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "type IN ('input', 'cacheRead', 'cacheCreation')"
+                          },
+                          "groupBy": [],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": ""
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "A/B",
+                          "disabled": false,
+                          "order": null,
+                          "functions": null,
+                          "legend": "Cache reads"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "commits": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Commits",
+            "description": "Git commits claude made over the time range."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.commit.count",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "commits-and-pull-requests": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Commits and pull requests",
+            "description": "Git commits claude made and pull requests it created, per day. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 86400,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "claude_code.commit.count",
+                              "temporality": "",
+                              "timeAggregation": "increase",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "sum"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "groupBy": [],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "Commits"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 86400,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "claude_code.pull_request.count",
+                              "temporality": "",
+                              "timeAggregation": "increase",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "sum"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "groupBy": [],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "Pull requests"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "cost": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cost",
+            "description": "What claude's requests to the API cost over the time range: claude's estimate at API prices, in US dollars: under a subscription, it is not what was billed."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "currencyUSD",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.cost.usage",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "cost-by-model": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cost by model",
+            "description": "Cost per day, by model: claude's estimate at API prices, in US dollars: under a subscription, it is not what was billed. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "currencyUSD",
+                "decimalPrecision": "2"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.cost.usage",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "name": "model",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{model}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "cost-by-source": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cost by source",
+            "description": "Cost per day, by the part of claude that made the requests: main, subagent or auxiliary. claude's estimate at API prices, in US dollars: under a subscription, it is not what was billed. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "currencyUSD",
+                "decimalPrecision": "2"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.cost.usage",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "name": "query_source",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{query_source}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "edit-decisions": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Edit decisions",
+            "description": "claude's Edit, Write and NotebookEdit calls over the time range, by decision, accept or reject, and by its source: config, a permission rule or mode; hook; user_temporary or user_permanent, the user allowing it; user_reject, the user refusing it; user_abort, the user dismissing the prompt."
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "columnUnits": {
+                  "A": "none"
+                },
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.code_edit_tool.decision",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "name": "tool_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "decision",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "source",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "Decisions"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "lines": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Lines of code",
+            "description": "Lines claude added and removed per day. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "0"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.lines_of_code.count",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "name": "type",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{type}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "lines-added": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Lines added",
+            "description": "Lines of code claude added over the time range."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.lines_of_code.count",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "type = 'added'"
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "lines-removed": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Lines removed",
+            "description": "Lines of code claude removed over the time range."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.lines_of_code.count",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "type = 'removed'"
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "prompts": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Prompts",
+            "description": "Prompts per day, the user's and those claude starts a turn with itself. Their text is not sent. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "logs",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "expression": "count()"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "service.name = 'claude-code' AND body = 'claude_code.user_prompt'"
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "Prompts"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "pull-requests": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pull requests",
+            "description": "Pull requests claude created over the time range."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.pull_request.count",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "sessions": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Sessions",
+            "description": "Sessions started over the time range: fresh, resumed and continued. The claude agents view is left out."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.session.count",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "start_type != 'agents_view'"
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "sessions-by-start": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Sessions",
+            "description": "Sessions started per day: fresh, resume or continue. The claude agents view is left out. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.session.count",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "start_type != 'agents_view'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "start_type",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{start_type}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "tokens": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tokens",
+            "description": "Tokens of every type over the time range: input, output, and those read from and written to the prompt cache."
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.token.usage",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "tokens-by-model": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tokens by model",
+            "description": "Tokens of every type per day, by model. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.token.usage",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "name": "model",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{model}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "tokens-by-type": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tokens by type",
+            "description": "Tokens per day, by type: input, output, cacheRead, read from the prompt cache, and cacheCreation, written to it. input leaves out both. Days are in UTC."
+          },
+          "plugin": {
+            "kind": "signoz/BarChartPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false,
+                "stackedBarChart": true
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 86400,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "claude_code.token.usage",
+                        "temporality": "",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "name": "type",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{type}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "tool-calls": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tool calls",
+            "description": "Tool calls that ran over the time range, by tool, the 15 most frequent. Calls refused permission are left out."
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "columnUnits": {
+                  "A": "none"
+                },
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "logs",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "expression": "count()"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "service.name = 'claude-code' AND body = 'claude_code.tool_result'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "tool_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [
+                      {
+                        "key": {
+                          "name": "count()",
+                          "signal": "",
+                          "fieldContext": "",
+                          "fieldDataType": ""
+                        },
+                        "direction": "desc"
+                      }
+                    ],
+                    "limit": 15,
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "Calls"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Overview",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/cost"
+              }
+            },
+            {
+              "x": 3,
+              "y": 0,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/tokens"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/sessions"
+              }
+            },
+            {
+              "x": 9,
+              "y": 0,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/active-time"
+              }
+            },
+            {
+              "x": 0,
+              "y": 3,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/lines-added"
+              }
+            },
+            {
+              "x": 3,
+              "y": 3,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/lines-removed"
+              }
+            },
+            {
+              "x": 6,
+              "y": 3,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/commits"
+              }
+            },
+            {
+              "x": 9,
+              "y": 3,
+              "width": 3,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/pull-requests"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Tokens and cost",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/cost-by-model"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/cost-by-source"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/tokens-by-type"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/tokens-by-model"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 12,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/cache-share"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Work",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/active-time-by-type"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/sessions-by-start"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/lines"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/commits-and-pull-requests"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/edit-decisions"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Events",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/prompts"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/api-errors"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/tool-calls"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
+}

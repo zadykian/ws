@@ -105,6 +105,14 @@
   ansible.builtin.import_tasks: retention.yml
   tags: [systemd]
 
-- name: Create the Host dashboard
-  ansible.builtin.import_tasks: dashboard.yml
+# Once for each dashboard. --skip-tags systemd skips the include, and so its tasks. apply gives
+# them its systemd tag, which they would not otherwise have, so that --tags systemd runs them too.
+- name: Create or replace the dashboards
+  ansible.builtin.include_tasks:
+    file: dashboard.yml
+    apply:
+      tags: [systemd]
+  loop: "{{ signoz_dashboards }}"
+  loop_control:
+    loop_var: signoz_dashboard_name
   tags: [systemd]
