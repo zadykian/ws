@@ -1,0 +1,99 @@
+---
+# The cable from the Mac's dock to the server: the server's end gets network_direct_link_address
+# from a netplan file of its own. With the variable empty, the file goes, and so does the address.
+- name: Remove the direct link where no interface is named
+  ansible.builtin.file:
+    path: /etc/netplan/60-direct-link.yaml
+    state: absent
+  when: network_direct_link_interface | length == 0
+  notify: Apply the direct link
+
+# A machine without the cable's port, as a cloud VM or CI's container, keeps its netplan files as
+# they are.
+- name: Note that this machine lacks the direct link's interface
+  ansible.builtin.debug:
+    msg: >-
+      This machine has no interface {{ network_direct_link_interface }}, so the role leaves the
+      direct link as it is. network_direct_link_interface names the port of the Mac's cable, as ip
+      link lists it.
+  when:
+    - network_direct_link_interface | length > 0
+    - network_direct_link_interface not in ansible_facts.interfaces
+
+- name: Set up the direct link
+  when:
+    - network_direct_link_interface | length > 0
+    - network_direct_link_interface in ansible_facts.interfaces
+  block:
+    # The file turns DHCP off on the interface: on the uplink, that would cut the machine off.
+    - name: Check that the direct link's interface isn't the uplink
+      ansible.builtin.assert:
+        that: network_direct_link_interface not in network_uplinks
+        fail_msg: >-
+          network_direct_link_interface is {{ network_direct_link_interface }}, which carries the
+          default route: it names the port of the Mac's cable, not the uplink.
+        quiet: true
+      vars:
+        network_uplinks:
+          - "{{ ansible_facts.default_ipv4.interface | default('') }}"
+          - "{{ ansible_facts.default_ipv6.interface | default('') }}"
+
+    - name: Check the direct link's address
+      ansible.builtin.assert:
+        that: network_problems | length == 0
+        fail_msg: "network_direct_link_address: {{ network_problems | join(' ') }}"
+        quiet: true
+      vars:
+        network_problems: "{{ network_direct_link_address | network_address_problems }}"
+
+    # netplan hands an interface to networkd unless its settings name another renderer, as Ubuntu
+    # Desktop's name NetworkManager for every interface. netplan get merges every file, as netplan
+    # generate does.
+    - name: Read netplan's settings
+      ansible.builtin.command: netplan get
+      register: network_netplan
+      changed_when: false
+      check_mode: false
+
+    - name: Check that networkd renders the direct link
+      ansible.builtin.assert:
+        that: network_renderer == 'networkd'
+        fail_msg: >-
+          netplan hands {{ network_direct_link_interface }} to {{ network_renderer }}, not
+          networkd, which the role sets up the direct link with.
+        quiet: true
+      vars:
+        network_settings: "{{ ((network_netplan.stdout | from_yaml) or {}).network | default({}) }}"
+        network_entry: >-
+          {{ (network_settings.ethernets | default({}))[network_direct_link_interface]
+          | default({}) }}
+        network_renderer: >-
+          {{ network_entry.renderer | default(network_settings.renderer | default('networkd')) }}
+
+    # networkctl reload, which puts the file in force, asks the running networkd.
+    - name: Read the services' states
+      ansible.builtin.service_facts:
+      tags: [systemd]
+
+    - name: Check that systemd-networkd is running
+      ansible.builtin.assert:
+        that: network_networkd == 'running'
+        fail_msg: >-
+          systemd-networkd is {{ network_networkd }}, so nothing would set up the direct link:
+          the role expects netplan to render with networkd, as on Ubuntu Server, not with
+          NetworkManager, as on Ubuntu Desktop.
+        quiet: true
+      vars:
+        network_networkd: >-
+          {{ ansible_facts.services['systemd-networkd.service'].state | default('missing') }}
+      tags: [systemd]
+
+    # 0600, as netplan warns of a file others can read.
+    - name: Write the direct link's netplan file
+      ansible.builtin.template:
+        src: 60-direct-link.yaml.j2
+        dest: /etc/netplan/60-direct-link.yaml
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Apply the direct link

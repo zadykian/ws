@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: zadykian
+  description: A direct link to the Mac, an address on the interface of its cable
+  license: MIT
+  min_ansible_version: "2.20"
+  platforms:
+    - name: Ubuntu
+      versions: [resolute]
+dependencies: []

@@ -1,0 +1,23 @@
+---
+# A notified handler runs whatever --skip-tags says, so each one checks the systemd tag itself.
+# Both run, in the order written here, on the one notice. Their names are their own, as handlers of
+# one name in two roles would be one handler.
+
+# netplan writes networkd's files for every interface it sets up, in /run/systemd/network, all of
+# them anew.
+- name: Write networkd's files from netplan's
+  ansible.builtin.command: netplan generate
+  changed_when: true
+  when: "'systemd' not in ansible_skip_tags"
+  listen: Apply the direct link
+  tags: [systemd]
+
+# networkd sets up again each link whose file is new or changed, by its content or its time: every
+# link netplan sets up, the uplink too. A DHCP lease whose settings are the same stays, and with it
+# the uplink's address.
+- name: Reload networkd for the direct link
+  ansible.builtin.command: networkctl reload
+  changed_when: true
+  when: "'systemd' not in ansible_skip_tags"
+  listen: Apply the direct link
+  tags: [systemd]

@@ -1,0 +1,9 @@
+---
+# The interface of the cable to the Mac, as ip link names it: on the server, the port the Mac's dock
+# plugs into. Empty, the role sets up no direct link, and takes away one it set up before. A
+# machine that lacks the interface, as a cloud VM or CI's container, is left as it is.
+network_direct_link_interface: ""
+
+# The server's address on the cable, with the prefix length of the link's subnet. A /30 holds two
+# hosts: the server and the Mac, which takes 10.77.0.2 in its own settings.
+network_direct_link_address: 10.77.0.1/30
