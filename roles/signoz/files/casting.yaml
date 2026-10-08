@@ -1,6 +1,6 @@
 ---
 # SigNoz on Docker Compose, from which foundryctl 0.3.0 forges casting.yaml.lock and deployment/
-# beside it. After a change here, forge them again, as the README says: CI forges them again too
+# beside it. After a change here, forge them again, as docs/signoz.md says: CI forges them again too
 # and fails on a difference.
 #
 # Each image is pinned by its tag and digest, a word too long for one line, hence the >-.
