@@ -10,9 +10,9 @@
 # ws-ssh does. It puts `Include config.d/ws` first in ~/.ssh/config.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
-# wireguard-go and ws-tunnel in /usr/local/libexec/ws-tunnel; the Mac's key, made once, and
-# tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without WS_PUBLIC_KEY,
-# ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
+# wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
+# once, and tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without
+# WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
 #
 # A run changes only what differs, so a second prints nothing. --check prints each change as a
 # diff and makes none. README.md's The Mac has the rest.
@@ -24,162 +24,14 @@ set -eu
 dir=$(cd "$(dirname "$0")" && pwd -P)
 # shellcheck source=lib.sh
 . "$dir/lib.sh"
+# shellcheck source=setup-lib.sh
+. "$dir/setup-lib.sh"
+# shellcheck source=setup-ssh.sh
+. "$dir/setup-ssh.sh"
 
-# ws's end of the cable, and its address in the tunnel.
-cable_server=10.77.0.1
-tunnel_server=10.99.0.1
 # The daemon's files.
 libexec=/usr/local/libexec/ws-tunnel
 plist=/Library/LaunchDaemons/$ws_label.plist
-# The start of config.d/ws's first line, by which a run knows the file for the script's own.
-header="# Written by ws's mac/setup.sh"
-
-# ssh_config prints ~/.ssh/config.d/ws from mac.conf's values and the IgnoreUnknown patterns $1.
-# ssh keeps the first value it reads for a key, so each Match sets Port 22 before Host ws-ssh sets
-# the forward's port, and the cable comes before the LAN. localnetwork matches the Mac's own
-# addresses, with no probe. originalhost matches the name typed, which a HostName set above does
-# not change, unlike Match host. Until mac.conf has WS_PUBLIC_KEY, ws takes ws-ssh's ways too, so
-# that an ssh ws that worked before the tunnel goes on working through the keys' exchange.
-ssh_config() {
-    # The hosts of the direct ways, for Host and for Match originalhost's list.
-    direct=ws-ssh
-    listed=ws-ssh
-    if [ -z "$WS_PUBLIC_KEY" ]; then
-        direct='ws ws-ssh'
-        listed=ws,ws-ssh
-    fi
-    cat <<EOF
-$header from ~/.config/ws/mac.conf: its next run replaces changes made here.
-
-# Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
-# carries the patterns of ~/.ssh/config's own too: run setup.sh again after a change to those.
-IgnoreUnknown $1
-
-# ws over the cable, where the Mac has an address on it.
-Match originalhost $listed localnetwork $ws_cable_net
-    HostName $cable_server
-    Port 22
-EOF
-    if [ -n "$WS_LAN" ]; then
-        cat <<EOF
-# ws on the home LAN, where the Mac has an address there.
-Match originalhost $listed localnetwork $WS_LAN
-    HostName $WS_LAN_ADDRESS
-    Port 22
-EOF
-    fi
-    if [ -n "$WS_REMOTE_PORT" ]; then
-        cat <<EOF
-# Elsewhere, through the router's port forward, which takes IPv4 alone, while the router's name
-# may have an AAAA record too.
-Host $direct
-    HostName $WS_REMOTE
-    Port $WS_REMOTE_PORT
-    AddressFamily inet
-EOF
-    fi
-    if [ -n "$WS_PUBLIC_KEY" ]; then
-        cat <<EOF
-
-# ws through the tunnel, at the one address it has there whichever way the Mac is connected, on
-# ws's own port, whatever a Host * of the user's sets.
-Host ws
-    HostName $tunnel_server
-    Port 22
-EOF
-    fi
-    cat <<EOF
-
-# One known_hosts entry, ws's, whichever way ssh goes. 30 s between checks, 3 of them unanswered
-# before ssh gives up.
-Host ws ws-ssh
-    User $WS_USER
-    HostKeyAlias ws
-    IdentityFile ~/.ssh/id_ed25519
-    IdentitiesOnly yes
-    UseKeychain yes
-    AddKeysToAgent yes
-    ServerAliveInterval 30
-EOF
-}
-
-# ssh_whole stops where ssh refuses the new config.d/ws, $1, read first, then ~/.ssh/config, then
-# the system's file, as ssh will read them after the run. ~/.ssh/config's Include of config.d/ws,
-# at line $2 where there is one, is left out, as it would read the file the run replaces.
-ssh_whole() {
-    user=$HOME/.ssh/config
-    read_user=$user
-    ws_tmp
-    whole=$ws_tmpfile
-    ws_tmp
-    copy=$ws_tmpfile
-    if [ -n "$2" ] && [ -f "$user" ]; then
-        awk -v skip="$2" '{ print (NR == skip ? "" : $0) }' "$user" >"$copy" ||
-            ws_die "cannot read $user"
-        read_user=$copy
-    fi
-    # The system's file goes through an Include too, so ssh resolves its relative Includes under
-    # ~/.ssh, and checks its mode, where ssh itself would not.
-    {
-        printf 'Include "%s"\n' "$1"
-        [ ! -f "$user" ] || printf 'Match all\nInclude "%s"\n' "$read_user"
-        [ ! -f /etc/ssh/ssh_config ] || printf 'Match all\nInclude /etc/ssh/ssh_config\n'
-    } >"$whole" || ws_die "cannot write $whole"
-    if ! err=$(ssh -G -F "$whole" ws 2>&1 >/dev/null) ||
-        ! err=$(ssh -G -F "$whole" ws-ssh 2>&1 >/dev/null); then
-        rm -f "$whole" "$copy" "$1"
-        err=$(printf '%s\n' "$err" | sed "s|$copy|$user|g")
-        case $err in
-        *"$HOME/.ssh/config.d/ws"*)
-            ws_die "ssh refuses the old config.d/ws, which ~/.ssh/config also reads, as $err:" \
-                "move it away, and run setup.sh again"
-            ;;
-        *'Bad configuration option'*)
-            ws_die "ssh refuses ~/.ssh/config read after the new config.d/ws, as $err;" \
-                "config.d/ws's IgnoreUnknown, read first, carries only ~/.ssh/config's own" \
-                "patterns, so one for a file it includes must be there too"
-            ;;
-        esac
-        ws_die "ssh refuses ~/.ssh/config read after the new config.d/ws, as $err"
-    fi
-    rm -f "$whole" "$copy"
-}
-
-# ssh_files writes ~/.ssh/config.d/ws and puts its Include first in ~/.ssh/config. Before it
-# writes, it stops where config.d/ws is a file it did not write, where the Include could not go
-# first, and where ssh refuses the new file, alone or as ssh_whole reads it.
-ssh_files() {
-    conf=$HOME/.ssh/config.d/ws
-    if [ -e "$conf" ] || [ -L "$conf" ]; then
-        first=$(head -n 1 "$conf" 2>/dev/null) || first=
-        case $first in
-        "$header"*) ;;
-        *) ws_die "$conf is not mac/setup.sh's: move it away, as the script writes its own there" ;;
-        esac
-    fi
-    at=$(ws_include_ok "$HOME/.ssh/config" config.d/ws) || exit 1
-    patterns=$(ws_ignore_unknown "$HOME/.ssh/config" UseKeychain)
-    ws_tmp
-    new=$ws_tmpfile
-    ssh_config "$patterns" >"$new"
-    if ! err=$(ssh -G -F "$new" ws-ssh 2>&1 >/dev/null) ||
-        ! err=$(ssh -G -F "$new" ws 2>&1 >/dev/null); then
-        rm -f "$new"
-        ws_die "ssh refuses the config it would write, as $err;" \
-            "Match localnetwork needs OpenSSH 9.4"
-    fi
-    ssh_whole "$new" "${at#first }"
-    [ -d "$HOME/.ssh" ] || ws_dir "$HOME/.ssh" 700
-    ws_dir "$HOME/.ssh/config.d" 700
-    if [ -L "$HOME/.ssh/config.d" ] && ! cmp -s "$conf" "$new" 2>/dev/null; then
-        ws_say "warning: ~/.ssh/config.d is a link to $(readlink "$HOME/.ssh/config.d"):" \
-            "config.d/ws, with mac.conf's addresses, goes there"
-    fi
-    ws_put "$conf" 600 <"$new"
-    rm -f "$new"
-    ws_include_first "$HOME/.ssh/config" config.d/ws
-    ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
-}
 
 # tools installs Homebrew's wireguard-tools where missing, which brings wireguard-go, and sets
 # wg_from and go_from to their programs.
@@ -197,11 +49,12 @@ tools() {
     go_from=$("$brew" --prefix wireguard-go 2>/dev/null)/bin/wireguard-go
 }
 
-# copies puts root's copies of ws-tunnel, wg and wireguard-go in /usr/local/libexec/ws-tunnel. The
-# user owns Homebrew's prefix, so a root daemon that ran Homebrew's files would let anything that
-# runs as the user become root at its next start. /usr/local/libexec is made where missing; every
-# directory above the copies must be root's and writable by root alone. A brew upgrade reaches
-# the copies at the next run.
+# copies puts root's copies of ws-tunnel, its functions, wg and wireguard-go in
+# /usr/local/libexec/ws-tunnel. The user owns Homebrew's prefix, so a root daemon that ran
+# Homebrew's files would let anything that runs as the user become root at its next start.
+# /usr/local/libexec is made where missing; every directory above the copies must be root's and
+# writable by root alone. A brew upgrade reaches the copies at the next run. The functions go
+# first, so that a daemon that starts in between finds those its copy sources.
 copies() {
     [ -n "$(ws_root_attrs /usr/local)" ] || ws_dir_root /usr/local 755
     [ -n "$(ws_root_attrs /usr/local/libexec)" ] || ws_dir_root /usr/local/libexec 755
@@ -215,6 +68,9 @@ copies() {
     done
     ws_dir_root "$libexec" 755
     ws_changed=0
+    for each in tunnel-conf.sh tunnel-paths.sh; do
+        ws_put_root "$libexec/$each" 644 <"$dir/$each"
+    done
     ws_put_root "$libexec/ws-tunnel" 755 <"$dir/ws-tunnel"
     if [ -e "$wg_from" ]; then
         ws_copy_root "$wg_from" "$libexec/wg" 755
