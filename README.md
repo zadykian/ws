@@ -727,6 +727,15 @@ JetBrains backend, `jetbrains_backends: []`, as it has no room for those either.
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
 and fails where they differ from the repository's.
 
+CI also sets up a Mac, on GitHub's macOS runner, in [The Mac](#the-mac)'s order: `mac/setup.sh`
+without ws's key must make the Mac's key and load no daemon, and with a stand-in's key must load
+it; then a second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh`
+their addresses. The stand-in for ws is a second wireguard-go on the runner, with the Mac's key as
+its peer, which answers on loopback both as the LAN and as `WS_REMOTE`, and `ws-tunnel status`
+must show a handshake on each in turn. Last, a network that `ws_tunnel_routes` adds must be routed
+into the daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`. Where the
+runner can make no utun, the steps of the tunnel are skipped, with a warning.
+
 The hooks in `.githooks` check each commit before it is made. Enable them in a clone, and so in
 its worktrees, with `git config core.hooksPath .githooks`, as `bootstrap.sh` does in its clone.
 Where `~/.config/ws/forbidden-words` exists, a word or phrase a line, they refuse a commit whose
