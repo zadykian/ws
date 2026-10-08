@@ -10,7 +10,7 @@ on:
 permissions: {}
 
 jobs:
-  # The Mac's side on macOS, in the README's order: mac/setup.sh without ws's key makes the Mac's
+  # The Mac's side on macOS, in docs/mac.md's order: mac/setup.sh without ws's key makes the Mac's
   # key and installs no daemon; with a stand-in ws's key it installs the daemon; then a second run
   # and --check must print nothing. ssh -G must give each host's address. A stand-in ws, a second
   # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on

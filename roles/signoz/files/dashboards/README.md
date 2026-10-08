@@ -7,10 +7,10 @@ shown as Host, and `claude.json`, shown as Claude. It finds each by the fixed `n
 
 `host.json` is SigNoz's Host Metrics dashboard, `hostmetrics/hostmetrics.json` in
 [SigNoz/dashboards](https://github.com/SigNoz/dashboards) at commit `1fd19dd`, under the Apache
-License 2.0 in [LICENSE](LICENSE), which covers `host.json` alone. It was changed for this
-repository:
+License 2.0 in [LICENSE](LICENSE), which covers `host.json` alone. This repository changed it:
 
-- It is named `host`, by which the role finds it, and shows as Host, with a description of its own.
+- Its name is `host`, by which the role finds it, and it shows as Host, with a description of its
+  own.
 - The File system usage panel averages `system.filesystem.usage`, as the inode panel does. Its
   rate, which the original took, gives no rows: the collector sends the metric as a sum that goes
   up and down.
@@ -35,10 +35,10 @@ to the collector, as the `claude` role sets it:
 
 Each metric's panel takes its `increase` over time and sums it across series. claude sends its
 counters as deltas, which the `claude` role leaves as they are, and that gives their totals. A
-claude set to send them as cumulative sums would show less: SigNoz counts no increase in the first
+claude set to send them as cumulative sums would show less. SigNoz counts no increase in the first
 step of a cumulative series, and each session is a series of its own.
 
-The bars are days in UTC, the server's timezone. Today's bar can lack the last five minutes:
+The bars are days in UTC, the server's timezone. Today's bar can lack the last five minutes.
 SigNoz's query cache reads them apart from the rest of the day, and keeps the earlier part alone
 for a bar that began before them. Cost is claude's estimate at API prices, which under a
 subscription is not what was billed. No panel shows a prompt's text, a tool's input or a command.
