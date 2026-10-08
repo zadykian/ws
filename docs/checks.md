@@ -2,11 +2,12 @@
 
 ## make lint
 
-`make lint` is the one gate: CI's lint job runs it, and the maintainer runs it before a push. Any
-finding fails it, warnings included. A finding is fixed, or justified in place with its linter's
-own inline mechanism and a reason. No gate lowers a severity or keeps a baseline, and none leaves
-out a file written here. `make -k lint` runs every gate past a failure. Each gate is a target of
-its own, and those that check files take `FILES`, as in `make vale FILES=README.md`:
+`make lint` is the one gate: CI's lint job and Claude's Stop hook run it, and the maintainer runs
+it before a push ([Claude's hooks](#claudes-hooks)). Any finding fails it, warnings included. A
+finding is fixed, or justified in place with its linter's own inline mechanism and a reason. No
+gate lowers a severity or keeps a baseline, and none leaves out a file written here.
+`make -k lint` runs every gate past a failure. Each gate is a target of its own, and those that
+check files take `FILES`, as in `make vale FILES=README.md`:
 
 - `shell`: ShellCheck and `shfmt -d -i 4` on every shell script, found by extension or shebang;
 - `yamllint`: `yamllint --strict`, as `.yamllint` sets it;
@@ -63,3 +64,18 @@ its worktrees, with `git config core.hooksPath .githooks`, as `bootstrap.sh` doe
 Where `~/.config/ws/forbidden-words` exists, a word or phrase a line, they refuse a commit whose
 added lines, file names or message hold one. Where gitleaks is installed, they refuse a staged
 secret too.
+
+## Claude's hooks
+
+`.claude/settings.json` has Claude Code run two hooks, both POSIX sh. After each Edit or Write,
+`.claude/hooks/lint-file.sh` runs the gates of the file's kind on that file alone:
+
+- Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
+- YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
+- shell, by extension or shebang: `shell` and `sizecheck`;
+- Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
+
+It passes over a file outside the repository, one git ignores, and one of a branch from before the
+gates. As Claude ends its turn, `.claude/hooks/lint-branch.sh` runs `make lint` where the work tree
+differs from `origin/main`. A finding of either goes back to Claude, which then fixes it. The Stop
+hook runs once a stop: where Claude stops again, `stop_hook_active` lets it.
