@@ -1,6 +1,7 @@
 ---
 # /swapfile, base_swap_size_mb MiB, in /etc/fstab and swapped to; none where the size is 0. It takes
-# the place of /swap.img, which Ubuntu Server's installer makes.
+# the place of /swap.img, which Ubuntu Server's installer makes. Then the kernel's swappiness,
+# base_swappiness, at boot and in force.
 
 # A size that is not a whole number would read as 0, which removes the swap file.
 - name: Check the swap file's size is a whole number of MiB
@@ -8,6 +9,15 @@
     that: base_swap_size_mb | string is match('^[0-9]+$')
     fail_msg: >-
       base_swap_size_mb is {{ base_swap_size_mb }}: it takes a whole number of MiB, or 0 for none.
+    quiet: true
+
+# Checked before anything changes, so that a wrong value stops the run with the swap as it was.
+- name: Check the swappiness is a whole number from 0 to 200
+  ansible.builtin.assert:
+    that:
+      - base_swappiness | string is match('^[0-9]+$')
+      - base_swappiness | int <= 200
+    fail_msg: "base_swappiness is {{ base_swappiness }}: it takes a whole number from 0 to 200."
     quiet: true
 
 # No checksum: it would read the whole file at each run.
@@ -170,3 +180,27 @@
   ansible.builtin.file:
     path: /swap.img
     state: absent
+
+# The swappiness is set whatever the swap file's size: with no swap area, the kernel reclaims only
+# the page cache, and the value counts again once one is back.
+- name: Set swappiness at boot
+  ansible.builtin.template:
+    src: 99-swappiness.conf.j2
+    dest: /etc/sysctl.d/99-swappiness.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+# /proc/sys can be read in a dry run and in a container, where it is read-only.
+- name: Read the swappiness in force
+  ansible.builtin.slurp:
+    src: /proc/sys/vm/swappiness
+  register: base_swappiness_now
+
+# systemd-sysctl applies the files' value for this one key, as boot does, and nothing else.
+# --strict makes it fail where /proc/sys is read-only, instead of going on as if the value were set.
+- name: Set swappiness now
+  ansible.builtin.command: /usr/lib/systemd/systemd-sysctl --strict --prefix=vm.swappiness
+  when: base_swappiness_now.content | b64decode | int != base_swappiness | int
+  changed_when: true
+  tags: [systemd]
