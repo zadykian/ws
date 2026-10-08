@@ -1,0 +1,653 @@
+#!/bin/sh
+# ws-tunnel keeps the Mac's WireGuard tunnel to ws up, and points it at the fastest path to ws that
+# answers: the cable, the home LAN, then the internet through the router. launchd runs it as root,
+# from /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist, which mac/setup.sh installs with
+# root's copies of this script, wg and wireguard-go in /usr/local/libexec/ws-tunnel.
+#
+#   ws-tunnel [run]    keeps the tunnel up until SIGTERM; SIGHUP has it read its settings again
+#   ws-tunnel status   prints the path in use, the latest handshake and the bytes moved
+#
+# It reads /etc/ws-tunnel, which only root reads: private.key, the Mac's key; tunnel.conf, the
+# KEY=value lines setup.sh copies from mac.conf; and routes.d, whose files hold a network a line
+# that it routes into the tunnel too. It logs a line for each switch and failure to its standard
+# output, launchd's log file, which it starts anew past 1 MiB.
+#
+# The tunnel runs on wireguard-go, as wg-quick does on macOS, with wg-quick's steps taken here:
+# its utun gets 10.99.0.2 and a route to ws's 10.99.0.1, and the peer, ws, gets the endpoint of
+# the path in use. A switch removes the peer and adds it again, so that wireguard-go handshakes
+# at once, and holds only where that handshake completes within 5 s, WireGuard's own retry time.
+
+set -u
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+umask 022
+
+bin=/usr/local/libexec/ws-tunnel
+etc=/etc/ws-tunnel
+sockets=/var/run/wireguard
+name_file=$sockets/ws-tunnel.name
+state_file=/var/run/ws-tunnel.state
+fifo=/var/run/ws-tunnel.fifo
+log=/var/log/ws-tunnel.log
+# The tunnel's two ends, its subnet, and the cable's subnet and ws's end of it.
+server=10.99.0.1
+address=10.99.0.2
+tunnel_net=10.99.0.0/24
+cable_net=10.77.0.0/30
+cable_server=10.77.0.1
+keepalive=25
+change=com.apple.system.config.network_change
+
+# wg runs root's copy of wg, as launchd's PATH has no Homebrew.
+wg() {
+    "$bin/wg" "$@"
+}
+
+# say logs a line, with the time.
+say() {
+    printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
+}
+
+# trim_log starts the log anew past 1 MiB. launchd opens it to append, so the next line goes at
+# its new end.
+trim_log() {
+    if [ -f "$log" ] && [ "$(wc -c <"$log")" -gt 1048576 ]; then
+        : >"$log"
+        say "started the log anew past 1 MiB"
+    fi
+}
+
+# is_ipv4 ADDRESS succeeds where ADDRESS is an IPv4 address in four decimal parts, none with a
+# leading zero, which the shell's arithmetic would read as octal.
+is_ipv4() {
+    case $1 in
+    *[!0-9.]* | *..* | .* | *.) return 1 ;;
+    esac
+    rest=$1.
+    parts=0
+    while [ -n "$rest" ]; do
+        part=${rest%%.*}
+        rest=${rest#*.}
+        parts=$((parts + 1))
+        case $part in
+        [0-9] | [1-9][0-9] | 1[0-9][0-9] | 2[0-4][0-9] | 25[0-5]) ;;
+        *) return 1 ;;
+        esac
+    done
+    [ "$parts" = 4 ]
+}
+
+# ipv4_int ADDRESS prints a valid IPv4 address as a number.
+ipv4_int() {
+    rest=$1.
+    int=0
+    while [ -n "$rest" ]; do
+        int=$((int * 256 + ${rest%%.*}))
+        rest=${rest#*.}
+    done
+    echo "$int"
+}
+
+# is_cidr CIDR succeeds where CIDR is an IPv4 network with no bits set past its length.
+is_cidr() {
+    case $1 in
+    */[0-9] | */[12][0-9] | */3[0-2]) ;;
+    *) return 1 ;;
+    esac
+    is_ipv4 "${1%/*}" || return 1
+    [ $(($(ipv4_int "${1%/*}") & ((1 << (32 - ${1#*/})) - 1))) = 0 ]
+}
+
+# contains CIDR ADDRESS succeeds where the network CIDR holds ADDRESS.
+contains() {
+    shift_by=$((32 - ${1#*/}))
+    [ $(($(ipv4_int "${1%/*}") >> shift_by)) = $(($(ipv4_int "$2") >> shift_by)) ]
+}
+
+# overlaps CIDR CIDR succeeds where the two networks share an address.
+overlaps() {
+    contains "$1" "${2%/*}" || contains "$2" "${1%/*}"
+}
+
+# is_name NAME succeeds where NAME is DNS labels joined by dots.
+is_name() {
+    [ -n "$1" ] && [ "${#1}" -le 253 ] || return 1
+    rest=$1.
+    while [ -n "$rest" ]; do
+        part=${rest%%.*}
+        rest=${rest#*.}
+        case $part in
+        '' | -* | *- | *[!A-Za-z0-9-]*) return 1 ;;
+        esac
+        [ "${#part}" -le 63 ] || return 1
+    done
+}
+
+# is_port PORT succeeds where PORT is 1 to 65535.
+is_port() {
+    case $1 in
+    '' | 0* | *[!0-9]* | ??????*) return 1 ;;
+    esac
+    [ "$1" -le 65535 ]
+}
+
+# is_key KEY succeeds where KEY is a WireGuard key in base64: 43 characters and an =.
+is_key() {
+    case $1 in
+    *[!A-Za-z0-9+/=]* | *=?*) return 1 ;;
+    esac
+    [ "${#1}" = 44 ] && [ "${1%=}" != "$1" ]
+}
+
+# read_conf reads tunnel.conf, without running it, into new_key, new_lan, new_lan_server,
+# new_remote and new_port, and fails on a line it doesn't take or without WS_PUBLIC_KEY.
+read_conf() {
+    new_key=
+    new_lan=
+    new_lan_server=
+    new_remote=
+    new_port=51820
+    if [ ! -r "$etc/tunnel.conf" ]; then
+        say "cannot read $etc/tunnel.conf: run mac/setup.sh"
+        return 1
+    fi
+    while IFS=' 	' read -r line || [ -n "$line" ]; do
+        value=${line#*=}
+        case $line in
+        '' | '#'*) continue ;;
+        WS_PUBLIC_KEY=*) is_key "$value" && new_key=$value ;;
+        WS_LAN=*) is_cidr "$value" && new_lan=$value ;;
+        WS_LAN_ADDRESS=*) is_ipv4 "$value" && new_lan_server=$value ;;
+        WS_REMOTE=*) is_name "$value" && new_remote=$value ;;
+        WS_PORT=*) is_port "$value" && new_port=$value ;;
+        *) false ;;
+        esac || {
+            say "tunnel.conf: cannot take '$line'"
+            return 1
+        }
+    done <"$etc/tunnel.conf"
+    if [ -z "$new_key" ]; then
+        say "tunnel.conf has no WS_PUBLIC_KEY"
+        return 1
+    fi
+}
+
+# read_routes reads routes.d into new_routes, each network once, and leaves out a line that isn't
+# a network, or one that overlaps the tunnel's or the cable's subnet.
+read_routes() {
+    new_routes=
+    for file in "$etc"/routes.d/*; do
+        [ -f "$file" ] || continue
+        while IFS=' 	' read -r line || [ -n "$line" ]; do
+            case $line in
+            '' | '#'*) continue ;;
+            esac
+            if is_cidr "$line" && ! overlaps "$line" "$tunnel_net" &&
+                ! overlaps "$line" "$cable_net"; then
+                case " $new_routes " in
+                *" $line "*) ;;
+                *) new_routes="$new_routes $line" ;;
+                esac
+            else
+                say "routes.d/${file##*/}: leaves out '$line', not a network it can route"
+            fi
+        done <"$file"
+    done
+    new_routes=${new_routes# }
+}
+
+# addresses prints the Mac's IPv4 addresses on interfaces that are up, the tunnel's aside, an
+# interface and an address a line, in order.
+addresses() {
+    ifconfig 2>/dev/null | awk -v tunnel="$tun" '
+        /^[^ \t]/ {
+            name = $1
+            sub(/:$/, "", name)
+            up = ($0 ~ /[<,]UP[,>]/)
+            next
+        }
+        $1 == "inet" && up && name != tunnel { print name, $2 }
+    ' | sort
+}
+
+# has_address_in CIDR succeeds where one of the Mac's addresses lies in the network CIDR.
+has_address_in() {
+    for each in $(printf '%s\n' "$seen" | awk '{ print $2 }'); do
+        is_ipv4 "$each" && contains "$1" "$each" && return 0
+    done
+    return 1
+}
+
+# resolve NAME prints NAME's first IPv4 address from the system's resolver, as wg would take
+# getaddrinfo's first answer, which may be IPv6, and the router forwards IPv4 alone.
+resolve() {
+    if is_ipv4 "$1"; then
+        echo "$1"
+        return 0
+    fi
+    found=$(dscacheutil -q host -a name "$1" 2>/dev/null |
+        awk '$1 == "ip_address:" { print $2; exit }')
+    is_ipv4 "$found" && echo "$found"
+}
+
+# allowed_for ENDPOINT sets want to the networks of routes.d that the tunnel takes with ENDPOINT
+# in use, and allowed to the peer's AllowedIPs: ws's address and those. A network that holds
+# ENDPOINT would send the tunnel's own packets into it, so it goes in left_out instead.
+allowed_for() {
+    want=
+    out=
+    for each in $routes; do
+        if [ -n "$1" ] && contains "$each" "$1"; then
+            case " $left_out " in
+            *" $each "*) ;;
+            *) say "leaves $each out of the tunnel while it holds the endpoint, $1" ;;
+            esac
+            out="$out $each"
+        else
+            want="$want $each"
+        fi
+    done
+    want=${want# }
+    left_out=${out# }
+    allowed=$server/32
+    for each in $want; do
+        allowed=$allowed,$each
+    done
+}
+
+# apply_routes routes want into the tunnel and stops routing what it no longer holds. A network
+# it cannot route, as one another route already takes, it logs once and tries again each time.
+apply_routes() {
+    for each in $routed; do
+        case " $want " in
+        *" $each "*) ;;
+        *)
+            route -q -n delete -inet "$each" >/dev/null 2>&1 ||
+                say "cannot remove the route to $each"
+            ;;
+        esac
+    done
+    kept=
+    failed_now=
+    for each in $want; do
+        case " $routed " in
+        *" $each "*) kept="$kept $each" ;;
+        *)
+            if route -q -n add -inet "$each" -interface "$tun" >/dev/null 2>&1; then
+                kept="$kept $each"
+            else
+                case " $unroutable " in
+                *" $each "*) ;;
+                *) say "cannot route $each into $tun, as another route to it may be in the way" ;;
+                esac
+                failed_now="$failed_now $each"
+            fi
+            ;;
+        esac
+    done
+    routed=${kept# }
+    unroutable=${failed_now# }
+}
+
+# try HOST points the peer at HOST, and succeeds where a handshake completes within 5 s with the
+# peer still at HOST. The peer is removed and added again: wireguard-go handshakes at once with a
+# new peer that has a keepalive, while a new endpoint alone would wait for the next rekey, up to 2
+# minutes away. A handshake that ws started over another path moves the endpoint there, and
+# proves nothing of HOST.
+try() {
+    allowed_for "$1"
+    peer=$1
+    wg set "$tun" peer "$key" remove 2>/dev/null
+    if ! wg set "$tun" peer "$key" endpoint "$1:$port" allowed-ips "$allowed" \
+        persistent-keepalive "$keepalive"; then
+        say "cannot set the peer's endpoint to $1:$port"
+        return 1
+    fi
+    waited=0
+    while [ "$waited" -lt 5 ]; do
+        sleep 1
+        waited=$((waited + 1))
+        handshake=$(peer_field latest-handshakes "$key")
+        [ "${handshake:-0}" -gt 0 ] || continue
+        at=$(peer_field endpoints "$key")
+        [ "$at" = "$1:$port" ] && return 0
+        say "the handshake came from $at, not $1:$port"
+        return 1
+    done
+    return 1
+}
+
+# tiers points the tunnel at the first path that answers: the cable, where the Mac has an address
+# in its subnet; the LAN, where it has one in WS_LAN; then WS_REMOTE, resolved anew. Without one,
+# it logs that once, and the next tick tries them all again.
+tiers() {
+    misses=0
+    why=
+    for tier in cable lan remote; do
+        case $tier in
+        cable)
+            has_address_in "$cable_net" || continue
+            host=$cable_server
+            ;;
+        lan)
+            if [ -z "$lan" ] || ! has_address_in "$lan"; then
+                continue
+            fi
+            host=$lan_server
+            ;;
+        remote)
+            [ -n "$remote" ] || continue
+            if ! host=$(resolve "$remote"); then
+                why="$why, $remote has no IPv4 address"
+                continue
+            fi
+            ;;
+        esac
+        if try "$host"; then
+            apply_routes
+            if [ "$tier $host" != "$in_use" ]; then
+                say "on the $tier tier, $host:$port"
+                in_use="$tier $host"
+                since=$(date +%s)
+            fi
+            write_state "$tier" "$host:$port"
+            return 0
+        fi
+        why="$why, no handshake from $host:$port on the $tier tier"
+    done
+    if [ "$in_use" != none ]; then
+        say "no path to ws answers${why:-, as the Mac is on none}; trying again every 10 s"
+        in_use=none
+        since=$(date +%s)
+    fi
+    # The routes stay in the tunnel, which drops what they carry, rather than let it go out by the
+    # network the Mac is on.
+    allowed_for "$peer"
+    apply_routes
+    write_state none ""
+    return 1
+}
+
+# write_state writes TIER and ENDPOINT, with the interface, the time of the switch and the routes,
+# for status.
+write_state() {
+    {
+        echo "tier=$1"
+        echo "endpoint=$2"
+        echo "interface=$tun"
+        echo "since=$since"
+        echo "routes=$routed"
+        echo "left_out=$left_out"
+    } >"$state_file.new" && mv -f "$state_file.new" "$state_file"
+}
+
+# reload reads tunnel.conf and routes.d again, on SIGHUP. A new key or path runs the tiers;
+# otherwise it changes the peer's AllowedIPs and the routes in place, which keeps the session.
+reload() {
+    reload=0
+    old="$key $lan $lan_server $remote $port"
+    old_key=$key
+    if read_conf; then
+        key=$new_key
+        lan=$new_lan
+        lan_server=$new_lan_server
+        remote=$new_remote
+        port=$new_port
+    else
+        say "keeps the settings it had"
+    fi
+    read_routes
+    routes=$new_routes
+    if [ "$old" != "$key $lan $lan_server $remote $port" ]; then
+        say "read new settings; trying the paths again"
+        [ "$old_key" = "$key" ] || wg set "$tun" peer "$old_key" remove 2>/dev/null
+        tiers
+        return 0
+    fi
+    allowed_for "$peer"
+    if [ -n "$peer" ]; then
+        wg set "$tun" peer "$key" allowed-ips "$allowed" || say "cannot set the peer's AllowedIPs"
+    fi
+    apply_routes
+    say "read its settings again; routes: ${routed:-none}"
+    case $in_use in
+    none) write_state none "" ;;
+    *) write_state "${in_use%% *}" "$peer:$port" ;;
+    esac
+}
+
+# peer_field FIELD KEY prints what wg show IF FIELD gives for the peer KEY.
+peer_field() {
+    wg show "$tun" "$1" 2>/dev/null | awk -v key="$2" '$1 == key { print $2 }'
+}
+
+# alive succeeds while wireguard-go runs and answers on its socket.
+alive() {
+    kill -0 "$wg_pid" 2>/dev/null && wg show "$tun" public-key >/dev/null 2>&1
+}
+
+# tick runs every 10 s: it starts the log anew where it is too long, ends the daemon where
+# wireguard-go has exited, and runs the tiers where the Mac's addresses changed, where no path
+# answered, or where ws missed 3 pings in a row.
+tick() {
+    trim_log
+    if ! alive; then
+        say "wireguard-go has exited"
+        exit 1
+    fi
+    if ! kill -0 "$notify_pid" 2>/dev/null; then
+        watch_changes
+    fi
+    now=$(addresses)
+    if [ "$now" != "$seen" ]; then
+        seen=$now
+        tiers
+    elif [ "$in_use" = none ]; then
+        tiers
+    elif ping -c 1 -t 2 -q "$server" >/dev/null 2>&1; then
+        misses=0
+    else
+        misses=$((misses + 1))
+        if [ "$misses" -ge 3 ]; then
+            say "ws missed 3 pings in a row; trying the paths again"
+            tiers
+        fi
+    fi
+}
+
+# settle runs 2 s after a network change, as one change brings several and DHCP takes a moment,
+# and runs the tiers where the Mac's addresses changed.
+settle() {
+    now=$(addresses)
+    if [ "$now" != "$seen" ]; then
+        seen=$now
+        tiers
+    fi
+}
+
+# watch_changes starts notifyutil, which prints a line each time configd posts a network change,
+# as when an interface's IPv4 address comes or goes, into the daemon's events.
+watch_changes() {
+    notifyutil -w "$change" 3<&- >&4 &
+    notify_pid=$!
+}
+
+# stop ends the helpers and wireguard-go, which takes the utun and its routes with it.
+stop() {
+    trap - EXIT
+    # The ticker's sleep first, which the ticker's end would leave running.
+    [ -z "$ticker_pid" ] || pkill -P "$ticker_pid" 2>/dev/null
+    for each in $ticker_pid $notify_pid; do
+        kill "$each" 2>/dev/null
+    done
+    if [ -n "$wg_pid" ]; then
+        kill "$wg_pid" 2>/dev/null
+        wait "$wg_pid" 2>/dev/null
+    fi
+    rm -f "$name_file" "$state_file" "$state_file.new" "$fifo"
+    say "stopped"
+}
+
+run() {
+    [ "$(id -u)" = 0 ] || {
+        echo "ws-tunnel: launchd runs it as root" >&2
+        exit 1
+    }
+    trim_log
+    read_conf || exit 1
+    key=$new_key
+    lan=$new_lan
+    lan_server=$new_lan_server
+    remote=$new_remote
+    port=$new_port
+    read_routes
+    routes=$new_routes
+    if [ -s "$name_file" ] && wg show "$(cat "$name_file")" public-key >/dev/null 2>&1; then
+        say "already runs, on $(cat "$name_file")"
+        exit 1
+    fi
+
+    wg_pid=
+    ticker_pid=
+    notify_pid=
+    tun=
+    seen=
+    peer=
+    want=
+    routed=
+    unroutable=
+    left_out=
+    in_use=
+    since=$(date +%s)
+    misses=0
+    reload=0
+    mkdir -p "$sockets"
+    rm -f "$name_file" "$state_file" "$fifo"
+    trap stop EXIT
+    trap 'exit 0' TERM INT
+    trap 'reload=1' HUP
+
+    # wireguard-go writes the name of the utun it gets to WG_TUN_NAME_FILE, then makes its socket.
+    WG_TUN_NAME_FILE=$name_file "$bin/wireguard-go" -f utun &
+    wg_pid=$!
+    waited=0
+    while :; do
+        [ -s "$name_file" ] && tun=$(cat "$name_file") && [ -S "$sockets/$tun.sock" ] && break
+        if [ "$waited" -ge 50 ] || ! kill -0 "$wg_pid" 2>/dev/null; then
+            say "wireguard-go made no utun"
+            exit 1
+        fi
+        sleep 0.1
+        waited=$((waited + 1))
+    done
+    case $tun in
+    utun[0-9] | utun[0-9][0-9] | utun[0-9][0-9][0-9]) ;;
+    *)
+        say "wireguard-go's interface, '$tun', is no utun"
+        exit 1
+        ;;
+    esac
+    if ! wg set "$tun" private-key "$etc/private.key" ||
+        ! ifconfig "$tun" inet "$address/32" "$address" alias ||
+        ! ifconfig "$tun" up ||
+        ! route -q -n add -inet "$server/32" -interface "$tun" >/dev/null; then
+        say "cannot set up $tun"
+        exit 1
+    fi
+    say "started on $tun, $address"
+
+    # The events: notifyutil's lines, a tick every 10 s, and settle 2 s after a network change,
+    # all on one pipe. The daemon reads it on fd 3 and keeps fd 4 open to write it, so that it
+    # never ends; the helpers close fd 3.
+    mkfifo -m 600 "$fifo" || exit 1
+    (while sleep 10; do echo tick; done) 3<&- >"$fifo" &
+    ticker_pid=$!
+    exec 3<"$fifo"
+    exec 4>"$fifo"
+    rm -f "$fifo"
+    # bash 3.2, macOS's sh, goes on with a read that a trap cut short, so the trap writes a line
+    # too, which ends it.
+    trap 'reload=1; echo hup >&4' HUP
+    watch_changes
+
+    seen=$(addresses)
+    tiers
+    failed=0
+    while :; do
+        [ "$reload" = 0 ] || reload
+        # A signal can cut a read short, and the loop then does the signal's work. As fd 4 keeps
+        # the pipe open, nothing else ends a read, but in case it does, the daemon ends too.
+        if ! read -r event <&3; then
+            failed=$((failed + 1))
+            if [ "$failed" -ge 10 ]; then
+                say "cannot read its events"
+                exit 1
+            fi
+            continue
+        fi
+        failed=0
+        case $event in
+        tick) tick ;;
+        settle) settle ;;
+        hup) ;;
+        "$change") (sleep 2 && echo settle) 3<&- >&4 & ;;
+        esac
+    done
+}
+
+# status prints the state the daemon wrote and what wg reports of the peer.
+status() {
+    [ "$(id -u)" = 0 ] || {
+        echo "ws-tunnel status: run it as root, with sudo" >&2
+        exit 1
+    }
+    if [ ! -f "$state_file" ]; then
+        echo "ws-tunnel isn't running; its log is $log"
+        exit 1
+    fi
+    tier=
+    endpoint=
+    tun=
+    since=
+    routed=
+    left_out=
+    while IFS= read -r line; do
+        value=${line#*=}
+        case $line in
+        tier=*) tier=$value ;;
+        endpoint=*) endpoint=$value ;;
+        interface=*) tun=$value ;;
+        since=*) since=$value ;;
+        routes=*) routed=$value ;;
+        left_out=*) left_out=$value ;;
+        esac
+    done <"$state_file"
+    read_conf || exit 1
+    now=$(date +%s)
+    case $tier in
+    none) echo "tier: none, as no path to ws answers" ;;
+    *) echo "tier: $tier" ;;
+    esac
+    echo "endpoint: ${endpoint:-none}"
+    echo "interface: $tun"
+    echo "since: $((now - since)) s ago"
+    handshake=$(peer_field latest-handshakes "$new_key")
+    if [ "${handshake:-0}" -gt 0 ]; then
+        echo "latest handshake: $((now - handshake)) s ago"
+    else
+        echo "latest handshake: none"
+    fi
+    wg show "$tun" transfer 2>/dev/null | awk -v key="$new_key" '
+        $1 == key { printf "transfer: %d B received, %d B sent\n", $2, $3 }'
+    echo "routes: ${routed:-none}"
+    [ -z "$left_out" ] || echo "left out, as they hold the endpoint: $left_out"
+}
+
+case ${1:-run} in
+run) run ;;
+status) status ;;
+*)
+    echo "usage: ws-tunnel [run | status]" >&2
+    exit 2
+    ;;
+esac
