@@ -7,9 +7,13 @@ import ipaddress
 
 from ansible.errors import AnsibleFilterError
 
+# The shortest prefix of a route that counts: a shorter one covers every address rather than names
+# a network.
+SHORTEST_PREFIX = 8
+
 
 def _network(value):
-    """Returns the network value names; ip writes a route to one address without its /32."""
+    """Return the network value names; ip writes a route to one address without its /32."""
     try:
         return ipaddress.ip_network(value, strict=False)
     except ValueError as err:
@@ -17,7 +21,7 @@ def _network(value):
 
 
 def docker_route_conflicts(routes, pool, bridge):
-    """Returns, as text, the routes Docker's networks would overlap.
+    """Return, as text, the routes Docker's networks would overlap.
 
     routes is the parsed output of `ip -j -4 route show table all`. Docker leaves out of pool only
     the subnets of the main table's on-link routes, so any other route into pool counts, as does
@@ -34,7 +38,7 @@ def docker_route_conflicts(routes, pool, bridge):
         if route.get("type", "unicast") != "unicast" or dst == "default":
             continue
         network = _network(dst)
-        if network.prefixlen < 8:
+        if network.prefixlen < SHORTEST_PREFIX:
             continue
         table = route.get("table", "main")
         dev = route.get("dev", "-")
@@ -50,4 +54,5 @@ class FilterModule:
     """The role's filters."""
 
     def filters(self):
+        """Return the filters by name."""
         return {"docker_route_conflicts": docker_route_conflicts}

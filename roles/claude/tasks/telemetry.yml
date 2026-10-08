@@ -1,0 +1,84 @@
+---
+# claude's telemetry goes to the host's collector. The keys are in claude's user settings, not in
+# .bashrc, so that the sessions cld restore starts get them too. A signal's own endpoint or
+# protocol would override the general one, so they go. The file is written only where env
+# changes: claude reorders the keys as it writes the file, so its bytes would differ at every run.
+- name: Send claude's telemetry to the host's collector
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  vars:
+    claude_settings_path: "{{ ws_home }}/.claude/settings.json"
+    claude_telemetry_env_removed:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+      - OTEL_EXPORTER_OTLP_TRACES_PROTOCOL
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+      - OTEL_EXPORTER_OTLP_METRICS_PROTOCOL
+      - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+      - OTEL_EXPORTER_OTLP_LOGS_PROTOCOL
+    # An empty file holds no settings yet.
+    claude_settings: >-
+      {{ ((claude_settings_file.content | b64decode | trim) or '{}') | from_json
+      if claude_settings_stat.stat.exists else {} }}
+    claude_settings_env: "{{ claude_settings.env | default({}) }}"
+    # Every other key keeps its place, and a new one goes at the end.
+    claude_settings_env_new: >-
+      {{ claude_settings_env | dict2items
+      | rejectattr('key', 'in', claude_telemetry_env_removed) | items2dict
+      | combine(claude_telemetry_env) }}
+  block:
+    # Followed where it is a link, as into a clone of dotfiles.
+    - name: Check for claude's user settings
+      ansible.builtin.stat:
+        path: "{{ claude_settings_path }}"
+        follow: true
+      register: claude_settings_stat
+
+    # The file may hold tokens, so -v does not print what this reads.
+    - name: Read claude's user settings
+      ansible.builtin.slurp:
+        src: "{{ claude_settings_path }}"
+      register: claude_settings_file
+      when: claude_settings_stat.stat.exists
+      no_log: true
+
+    - name: Check that claude's user settings can be edited
+      ansible.builtin.assert:
+        that:
+          - claude_settings is mapping
+          - claude_settings_env is mapping
+        fail_msg: "{{ claude_settings_path }} is not a JSON object whose env is an object"
+        quiet: true
+
+    # claude's installer makes it, but a dry run on a new machine runs no installer. u+rwx gives
+    # a new directory 0755 under the usual umask, and leaves the mode of an existing one, which
+    # holds claude's credentials and may be 0700.
+    - name: Make claude's directory
+      ansible.builtin.file:
+        path: "{{ ws_home }}/.claude"
+        state: directory
+        mode: u+rwx
+
+    # The copy below shows no diff, as that would print every value in the file, tokens included.
+    # This lists what the role changes instead: the keys it sets, whose values are its own, and the
+    # keys it removes, by name.
+    - name: Show the changes to claude's telemetry settings
+      ansible.builtin.debug:
+        msg:
+          set: >-
+            {{ claude_telemetry_env | dict2items
+            | difference(claude_settings_env | dict2items) | items2dict }}
+          remove: "{{ claude_telemetry_env_removed | select('in', claude_settings_env) | list }}"
+      when: not claude_settings_stat.stat.exists or claude_settings_env_new != claude_settings_env
+
+    # As claude writes the file: two spaces, a member a line, non-ASCII as it is, a newline at the
+    # end. A new file gets claude's mode, and an existing one keeps its own.
+    - name: Set claude's telemetry in its user settings
+      ansible.builtin.copy:
+        content: |
+          {{ claude_settings | combine({'env': claude_settings_env_new})
+          | to_nice_json(indent=2, sort_keys=false, ensure_ascii=false) }}
+        dest: "{{ claude_settings_path }}"
+        follow: true
+        mode: "{{ claude_settings_stat.stat.mode | default('0644') }}"
+      diff: false
+      when: not claude_settings_stat.stat.exists or claude_settings_env_new != claude_settings_env
