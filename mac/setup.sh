@@ -9,9 +9,9 @@
 # port forward, whichever the Mac is on. It puts `Include config.d/*` first in ~/.ssh/config.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
-# wireguard-go and ws-tunnel in /usr/local/libexec/ws-tunnel; the Mac's key, made once, and
-# tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without WS_PUBLIC_KEY,
-# ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
+# wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
+# once, and tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without
+# WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
 #
 # A run changes only what differs, so a second prints nothing. --check prints each change as a
 # diff and makes none. README.md's The Mac has the rest.
@@ -23,6 +23,8 @@ set -eu
 dir=$(cd "$(dirname "$0")" && pwd -P)
 # shellcheck source=lib.sh
 . "$dir/lib.sh"
+# shellcheck source=setup-lib.sh
+. "$dir/setup-lib.sh"
 
 # ws's end of the cable, and its address in the tunnel.
 cable_server=10.77.0.1
@@ -122,11 +124,12 @@ tools() {
     go_from=$("$brew" --prefix wireguard-go 2>/dev/null)/bin/wireguard-go
 }
 
-# copies puts root's copies of ws-tunnel, wg and wireguard-go in /usr/local/libexec/ws-tunnel. The
-# user owns Homebrew's prefix, so a root daemon that ran Homebrew's files would let anything that
-# runs as the user become root at its next start. /usr/local/libexec is made where missing; every
-# directory above the copies must be root's and writable by root alone. A brew upgrade reaches
-# the copies at the next run.
+# copies puts root's copies of ws-tunnel, its functions, wg and wireguard-go in
+# /usr/local/libexec/ws-tunnel. The user owns Homebrew's prefix, so a root daemon that ran
+# Homebrew's files would let anything that runs as the user become root at its next start.
+# /usr/local/libexec is made where missing; every directory above the copies must be root's and
+# writable by root alone. A brew upgrade reaches the copies at the next run. The functions go
+# first, so that a daemon that starts in between finds those its copy sources.
 copies() {
     [ -n "$(ws_root_attrs /usr/local)" ] || ws_dir_root /usr/local 755
     [ -n "$(ws_root_attrs /usr/local/libexec)" ] || ws_dir_root /usr/local/libexec 755
@@ -140,6 +143,9 @@ copies() {
     done
     ws_dir_root "$libexec" 755
     ws_changed=0
+    for each in tunnel-conf.sh tunnel-paths.sh; do
+        ws_put_root "$libexec/$each" 644 <"$dir/$each"
+    done
     ws_put_root "$libexec/ws-tunnel" 755 <"$dir/ws-tunnel"
     if [ -e "$wg_from" ]; then
         ws_copy_root "$wg_from" "$libexec/wg" 755
