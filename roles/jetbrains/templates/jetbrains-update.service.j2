@@ -1,0 +1,15 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. It runs the
+# jetbrains role as the last run of the playbook left it, from {{ jetbrains_timer_dir }}, with
+# the ansible-playbook of Ubuntu's ansible-core. Its output goes to the journal.
+[Unit]
+Description=Update JetBrains Gateway's backends
+Documentation=https://github.com/zadykian/ws#jetbrains-backends
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=HOME=/root
+Nice=10
+IOSchedulingClass=idle
+ExecStart=/usr/bin/ansible-playbook -i localhost, -c local {{ jetbrains_timer_dir }}/update.yml

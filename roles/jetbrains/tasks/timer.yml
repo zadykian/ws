@@ -1,0 +1,68 @@
+---
+# jetbrains-update.timer runs the role once a week, so that a new release reaches the server
+# between runs of the playbook, which runs by hand. The service applies a copy of the role, with
+# this run's variables, rather than the clone, whose working tree may hold changes not yet
+# applied, or be gone.
+
+# bootstrap.sh installs ansible-core too, but a run of the playbook may come from another Ansible,
+# and the service runs /usr/bin/ansible-playbook. Without recommends, as in bootstrap.sh: they
+# bring Ubuntu's ansible package. The role needs no collection.
+- name: Install the ansible-playbook the weekly update runs
+  ansible.builtin.apt:
+    name: ansible-core
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+
+# copy never removes a file the role has since dropped. Nothing includes such a file, so it does
+# nothing there.
+- name: Copy the role for the weekly update
+  ansible.builtin.copy:
+    src: "{{ role_path }}/"
+    dest: "{{ jetbrains_timer_dir }}/roles/jetbrains/"
+    owner: root
+    group: root
+    mode: "0644"
+    directory_mode: "0755"
+
+- name: Write the weekly update's playbook
+  ansible.builtin.template:
+    src: update.yml.j2
+    dest: "{{ jetbrains_timer_dir }}/update.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Write jetbrains-update.service
+  ansible.builtin.template:
+    src: jetbrains-update.service.j2
+    dest: /etc/systemd/system/jetbrains-update.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd for the weekly update
+
+- name: Write jetbrains-update.timer
+  ansible.builtin.copy:
+    src: jetbrains-update.timer
+    dest: /etc/systemd/system/jetbrains-update.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd for the weekly update
+
+# systemd reads the units again before the timer is enabled.
+- name: Reload systemd now if the units changed
+  ansible.builtin.meta: flush_handlers
+
+# A dry run where the timer isn't written yet has no unit to enable. The play runs on localhost,
+# where the controller's test sees the target's files.
+- name: Enable and start jetbrains-update.timer
+  ansible.builtin.systemd_service:
+    name: jetbrains-update.timer
+    enabled: true
+    state: started
+  when: not ansible_check_mode or '/etc/systemd/system/jetbrains-update.timer' is file
+  tags: [systemd]

@@ -1,0 +1,17 @@
+---
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# jetbrains-update.service runs this playbook: the jetbrains role, copied beside it, with the
+# variables the last run of the playbook gave it. jetbrains_from_timer leaves out the role's own
+# setup of the timer.
+- name: Update JetBrains Gateway's backends
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ws_user: {{ ws_user | to_json }}
+    ws_home: {{ ws_home | to_json }}
+    jetbrains_backends: {{ jetbrains_backends | to_json }}
+    jetbrains_prune: {{ jetbrains_prune | to_json }}
+    jetbrains_from_timer: true
+  roles:
+    - jetbrains
