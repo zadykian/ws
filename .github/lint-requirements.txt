@@ -1,7 +1,8 @@
-# CI's Python tools and every package they pull in, each pinned, so that a new release of a
-# dependency changes no finding. ansible-lint runs ansible-core's syntax check, so ansible-core is
-# pinned too. To change a pin: pip install ansible-core, ansible-lint, yamllint and shellcheck-py
-# at their new versions in a fresh venv on Ubuntu 24.04, the runner's Python, then pip freeze.
+# The Python tools of `make lint` and every package they pull in, each pinned, so that a new
+# release of a dependency changes no finding. ansible-lint runs ansible-core's syntax check, so
+# ansible-core is pinned too. To change a pin: pip install ansible-core, ansible-lint, yamllint,
+# shellcheck-py and ruff at their new versions in a fresh venv on Ubuntu 24.04, the runner's
+# Python, then pip freeze.
 ansible-compat==26.9.0
 ansible-core==2.20.10
 ansible-lint==26.9.0
@@ -28,6 +29,7 @@ referencing==0.37.0
 resolvelib==1.2.1
 rpds-py==2026.9.1
 ruamel.yaml==0.19.1
+ruff==0.16.10
 shellcheck_py==0.11.0.1
 subprocess-tee==0.4.2
 typing_extensions==4.16.0
