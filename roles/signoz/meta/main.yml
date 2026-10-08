@@ -3,7 +3,7 @@ galaxy_info:
   author: zadykian
   description: >-
     SigNoz in Docker, from Foundry's compose files, on loopback, with no login, 90 days of data and
-    the Host dashboard
+    the Host and Claude dashboards
   license: MIT
   min_ansible_version: "2.20"
   platforms:

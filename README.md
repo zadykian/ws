@@ -86,8 +86,8 @@ Each role is a tag of `site.yml`:
   `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` in `~/.secrets/env`, which the `otelcol` role reads.
   claude reads the keys as it starts, so a session started before keeps sending where it did.
 - `signoz`: [SigNoz](https://signoz.io) in Docker, which keeps the machine's telemetry for 90 days,
-  with its UI and OTLP/HTTP intake on loopback, no login, and a dashboard of the host:
-  [below](#signoz).
+  with its UI and OTLP/HTTP intake on loopback, no login, a dashboard of the host and one of
+  claude's usage: [below](#signoz).
 - `otelcol`: the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on the host,
   which takes OTLP on loopback, reads the journal, the host's metrics and its temperatures from
   node_exporter, and sends it all to SigNoz, and claude's metrics to another collector where one is
@@ -199,11 +199,22 @@ SigNoz isn't running.
 
 The Host dashboard shows the CPU, memory, disks, file systems and network from the collector's host
 metrics, and the temperatures and fans from node_exporter. It is SigNoz's own host metrics
-dashboard, changed a little: `roles/signoz/files/dashboards` says how, and holds its license. The
-role creates it through SigNoz's API and replaces it where it differs from the repository's, so a
-change made to it in the UI lasts until the next run, and one made to a copy of it stays. SigNoz
-refuses to change a dashboard locked in the UI, so the run leaves it and says so. A dry run reports
-whether it would create or replace the dashboard.
+dashboard, changed a little: `roles/signoz/files/dashboards` says how, and holds its license.
+
+The Claude dashboard shows what claude on the server cost and what it did, from the metrics and
+events claude sends to the collector (see `claude`): cost and tokens by model and by day, the share
+of tokens read from the prompt cache, sessions, active time, lines of code, commits, pull requests,
+edit decisions, prompts, tool calls and API errors, over the range of the UI's time picker. Its
+bars are days in UTC, the server's timezone. Cost is claude's estimate at API prices: under a
+subscription, it is not what was billed. No panel shows a prompt's text, a tool's input or a
+command, and claude sends no prompt text, as `OTEL_LOG_USER_PROMPTS` is unset. It was written for
+this repository, and `roles/signoz/files/dashboards` says what it reads.
+
+The role creates each dashboard of `signoz_dashboards` through SigNoz's API and replaces it where it
+differs from the repository's, so a change made to it in the UI lasts until the next run, and one
+made to a copy of it stays. A name taken off the list leaves its dashboard in SigNoz. SigNoz refuses
+to change a dashboard locked in the UI, so the run leaves it and says so. A dry run reports whether
+it would create or replace each dashboard.
 
 The compose files are generated. SigNoz's [Foundry](https://github.com/SigNoz/foundry) forges them
 from `roles/signoz/files/casting.yaml`, which pins every image, and the checksum of a ClickHouse
@@ -219,10 +230,10 @@ foundryctl forge --no-ledger --no-updater -f casting.yaml -p .
 Without `--no-ledger` and `--no-updater`, foundryctl reports each command to SigNoz and asks GitHub
 for a newer release. It never removes a file, hence the `rm`.
 
-A new SigNoz may return the Host dashboard with fields added or dropped, and the role would then
-replace it on every run. So after changing SigNoz's image, run the role, refresh `host.json` from
-SigNoz as `roles/signoz/files/dashboards/README.md` says, and commit it with the casting. A second
-run must then leave the dashboard as it is.
+A new SigNoz may return the dashboards with fields added or dropped, and the role would then replace
+them on every run. So after changing SigNoz's image, run the role, refresh `host.json` and
+`claude.json` from SigNoz as `roles/signoz/files/dashboards/README.md` says, and commit them with
+the casting. A second run must then leave both dashboards as they are.
 
 ## The collector
 

@@ -1,15 +1,19 @@
 ---
-# The Host dashboard, files/dashboards/host.json, is created through SigNoz's API and replaced where
-# it differs from that file, so a change made to it in SigNoz's UI lasts until the next run.
+# The dashboard that signoz_dashboard_name names, one of signoz_dashboards, is created from
+# files/dashboards/NAME.json through SigNoz's API and replaced where it differs from that file, so a
+# change made to it in SigNoz's UI lasts until the next run.
 
 # The uri module has no check mode, so a dry run reads the dashboard and reports what it would do.
-- name: Create or replace the Host dashboard
+- name: Create or replace a dashboard
   when: signoz_ready.status == 200
   vars:
-    signoz_dashboard: "{{ lookup('ansible.builtin.file', 'dashboards/host.json') | from_json }}"
+    signoz_dashboard_file: dashboards/{{ signoz_dashboard_name }}.json
+    signoz_dashboard: "{{ lookup('ansible.builtin.file', signoz_dashboard_file) | from_json }}"
+    # The name SigNoz's UI shows, as Claude for claude.
+    signoz_dashboard_title: "{{ signoz_dashboard.spec.display.name }}"
     signoz_dashboard_id: >-
-      {{ (signoz_dashboards.json.data.dashboards
-      + signoz_dashboards_more.results | map(attribute='json.data.dashboards') | flatten(1))
+      {{ (signoz_dashboard_list.json.data.dashboards
+      + signoz_dashboard_list_more.results | map(attribute='json.data.dashboards') | flatten(1))
       | selectattr('name', 'eq', signoz_dashboard.name) | map(attribute='id') | first
       | default('') }}
     # The file holds the dashboard as SigNoz returns it, so the two compare equal. SigNoz adds its
@@ -30,7 +34,7 @@
     - name: List SigNoz's dashboards
       ansible.builtin.uri:
         url: "{{ signoz_url }}/api/v2/dashboards?sort=created_at&order=asc&limit=200"
-      register: signoz_dashboards
+      register: signoz_dashboard_list
       check_mode: false
       changed_when: false
 
@@ -38,12 +42,12 @@
       ansible.builtin.uri:
         url: >-
           {{ signoz_url }}/api/v2/dashboards?sort=created_at&order=asc&limit=200&offset={{ item }}
-      loop: "{{ range(200, signoz_dashboards.json.data.total, 200) | list }}"
-      register: signoz_dashboards_more
+      loop: "{{ range(200, signoz_dashboard_list.json.data.total, 200) | list }}"
+      register: signoz_dashboard_list_more
       check_mode: false
       changed_when: false
 
-    - name: Read the Host dashboard
+    - name: "Read the dashboard: {{ signoz_dashboard_title }}"
       ansible.builtin.uri:
         url: "{{ signoz_url }}/api/v2/dashboards/{{ signoz_dashboard_id }}"
       register: signoz_dashboard_read
@@ -51,21 +55,22 @@
       check_mode: false
       changed_when: false
 
-    - name: Report a locked Host dashboard that differs from the file
+    - name: "Report a locked dashboard that differs from its file: {{ signoz_dashboard_title }}"
       ansible.builtin.debug:
         msg: >-
-          The Host dashboard is locked in SigNoz's UI and differs from
-          roles/signoz/files/dashboards/host.json: unlock it for a run to replace it.
+          The {{ signoz_dashboard_title }} dashboard is locked in SigNoz's UI and differs from
+          roles/signoz/files/{{ signoz_dashboard_file }}: unlock it for a run to replace it.
       when: signoz_dashboard_locked and signoz_dashboard_due
 
-    - name: Report the change to the Host dashboard a run would make
+    - name: "Report the change a run would make to the dashboard: {{ signoz_dashboard_title }}"
       ansible.builtin.debug:
         msg: >-
-          Would {{ 'create' if signoz_dashboard_id == '' else 'replace' }} the Host dashboard
+          Would {{ 'create' if signoz_dashboard_id == '' else 'replace' }} the
+          {{ signoz_dashboard_title }} dashboard
       when: ansible_check_mode and signoz_dashboard_due and not signoz_dashboard_locked
       changed_when: true
 
-    - name: Create the Host dashboard
+    - name: "Create the dashboard: {{ signoz_dashboard_title }}"
       ansible.builtin.uri:
         url: "{{ signoz_url }}/api/v2/dashboards"
         method: POST
@@ -75,7 +80,7 @@
       when: signoz_dashboard_id == ''
       changed_when: true
 
-    - name: Replace the Host dashboard
+    - name: "Replace the dashboard: {{ signoz_dashboard_title }}"
       ansible.builtin.uri:
         url: "{{ signoz_url }}/api/v2/dashboards/{{ signoz_dashboard_id }}"
         method: PUT
