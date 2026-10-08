@@ -43,3 +43,8 @@ base_timezone: Etc/UTC
 # RAM's, rounded up to a whole GiB: the kernel reports a little less than the RAM, by an amount
 # that can move with its version, and the file is made again whenever its size changes.
 base_swap_size_mb: "{{ (ansible_facts['memtotal_mb'] | int + 1023) // 1024 * 1024 }}"
+
+# vm.swappiness, from 0 to 200: how cheap the kernel takes swapping to be against dropping the page
+# cache, 100 for even. The kernel's default is 60; at 10, it frees the page cache in preference to
+# swapping memory out.
+base_swappiness: 10

@@ -1,0 +1,5 @@
+# Written by github.com/zadykian/ws's base role; edit it there.
+#
+# The name sorts after those of Ubuntu's files in /usr/lib/sysctl.d, so that at boot this value
+# wins over any of theirs.
+vm.swappiness = {{ base_swappiness | int }}
