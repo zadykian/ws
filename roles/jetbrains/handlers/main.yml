@@ -1,0 +1,8 @@
+---
+# Handlers ignore tags, so the condition skips it where the tasks tagged systemd are skipped. Its
+# name is its own, as handlers of one name in two roles would be one handler.
+- name: Reload systemd for the weekly update
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]

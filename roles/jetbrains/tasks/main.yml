@@ -164,3 +164,8 @@
       loop: "{{ jetbrains_running.results }}"
       loop_control:
         label: "{{ item.item | basename }}"
+
+# Not from the weekly update itself, whose copy of the role is the one this sets up.
+- name: Set up the weekly update
+  ansible.builtin.include_tasks: timer.yml
+  when: not jetbrains_from_timer

@@ -10,3 +10,7 @@ jetbrains_backends: [RD, GO]
 # too, once the latest is in place: each takes several GB. A build a process runs from stays until
 # a run finds none. false keeps every build.
 jetbrains_prune: true
+
+# Set by the playbook jetbrains-update.service runs, so that the copy of the role it applies leaves
+# the timer, and itself, as the last run of the playbook set them up.
+jetbrains_from_timer: false

@@ -22,3 +22,6 @@ jetbrains_download_key: >-
 # /usr/local/src, root's, and on disk where /tmp may be in memory. The name holds no version, so a
 # run removes what any earlier run left.
 jetbrains_download: /usr/local/src/jetbrains-%s.tar.gz
+
+# Where each run leaves a copy of the role and a playbook that applies it, for the weekly update.
+jetbrains_timer_dir: /usr/local/lib/ws/jetbrains

@@ -106,7 +106,8 @@ Each role is a tag of `site.yml`:
 - `jetbrains`: the backends of Rider and GoLand, at their latest releases, where JetBrains Gateway
   looks for them, so that it finds them ready rather than downloading its own, and `libicu78`,
   without which Rider's hangs. Each run installs a new release and removes the builds it
-  replaces: [JetBrains backends](#jetbrains-backends), below.
+  replaces, and a weekly timer does the same between runs:
+  [JetBrains backends](#jetbrains-backends), below.
 
 ## A new machine
 
@@ -410,6 +411,16 @@ the disk has 4 times its size free, as JetBrains asks, and removes it once unpac
 `jetbrains_backends` names the backends by JetBrains' product codes, `[RD, GO]`, and
 `-e '{"jetbrains_backends": []}'` installs none. A dry run reads the releases and the directory,
 and reports each build it would install and each it would remove; it downloads nothing.
+
+Between runs of the playbook, `jetbrains-update.timer` runs the role once a week, in the hour after
+Monday's midnight, or at boot where the machine was off then. Its service applies the role as the
+last run of the playbook left it: each run copies the role, and a playbook with that run's
+variables, into `/usr/local/lib/ws/jetbrains`, so that a change in the clone reaches the timer
+with the next run alone. It runs `/usr/bin/ansible-playbook`, from Ubuntu's ansible-core, which
+the role installs where bootstrap.sh hasn't. Its output goes to the journal, and so to SigNoz.
+`systemctl list-timers jetbrains-update.timer` shows when it runs next, `journalctl -u
+jetbrains-update` what it did, and `systemctl start jetbrains-update` runs it now. A backend open
+in Gateway as it runs keeps its build until a later run.
 
 ## Checks
 
