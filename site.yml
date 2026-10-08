@@ -23,3 +23,5 @@
       tags: [otelcol]
     - role: helix
       tags: [helix]
+    - role: jetbrains
+      tags: [jetbrains]

@@ -1,0 +1,166 @@
+---
+# Rider's backend runs ReSharper's host on .NET, which hangs without ICU. The devtools role's .NET
+# depends on it already; the role names it too, so that --tags jetbrains stands alone. GoLand's
+# backend needs nothing a server lacks.
+- name: Install ICU for Rider's backend
+  ansible.builtin.apt:
+    name: libicu78
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+  when: "'RD' in jetbrains_backends"
+
+# The latest release of each backend, which uri parses as JSON. A GET reads, so it runs in a dry
+# run too, and tries again, as a server can fail for a moment.
+- name: Fetch the backends' latest releases
+  ansible.builtin.uri:
+    url: "{{ jetbrains_releases_url }}"
+  check_mode: false
+  changed_when: false
+  register: jetbrains_releases
+  until: jetbrains_releases is succeeded
+  retries: 5
+  delay: 10
+  when: jetbrains_backends | length > 0
+
+# Each build's directory is named as Gateway names it (vars/main.yml). The archive's name up to the
+# version, as in goland-, follows the hash in the directory of every build of that product, which
+# pattern matches. The list leaves out a code it doesn't know, so that code's build has no link,
+# which the next task reports.
+- name: Note each backend's latest build
+  ansible.builtin.set_fact:
+    jetbrains_builds: "{{ jetbrains_builds | default([]) + [jetbrains_build] }}"
+  vars:
+    jetbrains_release: "{{ jetbrains_releases.json[item] | default([]) | first | default({}) }}"
+    jetbrains_files: "{{ jetbrains_release.downloads[jetbrains_download_key] | default({}) }}"
+    jetbrains_link: "{{ jetbrains_files.link | default('') }}"
+    jetbrains_version: "{{ jetbrains_release.version | default('') }}"
+    jetbrains_name: "{{ jetbrains_link | basename | regex_replace('[.]tar[.]gz$', '') }}"
+    jetbrains_product: >-
+      {{ jetbrains_name | regex_replace('^(.*?-)' ~ (jetbrains_version | regex_escape)
+      ~ '(-.*)?$', '\1') }}
+    jetbrains_build:
+      code: "{{ item }}"
+      link: "{{ jetbrains_link }}"
+      size: "{{ jetbrains_files.size | default(0) | int }}"
+      checksum_link: "{{ jetbrains_files.checksumLink | default('') }}"
+      name: "{{ jetbrains_name }}"
+      dir: "{{ jetbrains_dist }}/{{ (jetbrains_link | hash('sha256'))[:13] }}_{{ jetbrains_name }}"
+      pattern: "^[0-9a-f]{13}_{{ jetbrains_product | regex_escape }}[0-9]"
+      archive: "{{ jetbrains_download | format(item) }}"
+  loop: "{{ jetbrains_backends }}"
+
+- name: Check that each backend has a release for this machine
+  ansible.builtin.assert:
+    that:
+      - item.link is match('https://.+[.]tar[.]gz$')
+      - item.checksum_link is match('https://')
+      - item.dir | basename is match(item.pattern)
+    fail_msg: >-
+      JetBrains lists no {{ jetbrains_download_key }} .tar.gz, with its SHA-256 and named for its
+      version, for the latest release of {{ item.code }}: is it a product code, such as RD or GO?
+    quiet: true
+  loop: "{{ jetbrains_builds | default([]) }}"
+  loop_control:
+    label: "{{ item.code }}"
+
+- name: Look for the backends' builds
+  when: jetbrains_backends | length > 0
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  block:
+    # As ws_user, whose Gateway connects and runs the backends. u+rwx gives a new directory 0755
+    # under the usual umask, and leaves the mode of one Gateway made.
+    - name: Create Gateway's directory of backends
+      ansible.builtin.file:
+        path: "{{ jetbrains_dist }}"
+        state: directory
+        mode: u+rwx
+      register: jetbrains_dist_made
+
+    # Gateway writes .expandSucceeded last, once the archive is unpacked, and so does the role. A
+    # directory without it was cut short, and is installed again.
+    - name: Check which builds are in place
+      ansible.builtin.stat:
+        path: "{{ item.dir }}/.expandSucceeded"
+        get_checksum: false
+        get_mime: false
+        get_attributes: false
+      register: jetbrains_installed
+      loop: "{{ jetbrains_builds }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+- name: Install the builds not in place
+  ansible.builtin.include_tasks: install.yml
+  loop: >-
+    {{ jetbrains_installed.results | default([]) | rejectattr('stat.exists')
+    | map(attribute='item') }}
+  loop_control:
+    loop_var: jetbrains_build
+    label: "{{ jetbrains_build.name }}"
+
+# Each install removes its archive, so this removes what a run cut short left.
+- name: Remove the backends' archives
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ jetbrains_builds | default([]) | map(attribute='archive') }}"
+
+# Once each latest build is in place, the other builds of its product go, Gateway's own downloads
+# too; other products' stay. A build a process runs from, such as a backend Gateway started, stays
+# until a run finds none. A dry run where the directory isn't made yet has nothing to remove.
+- name: Remove the builds the latest ones replace
+  when:
+    - jetbrains_prune
+    - jetbrains_backends | length > 0
+    - not (ansible_check_mode and jetbrains_dist_made is changed)
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  vars:
+    jetbrains_others: >-
+      {{ jetbrains_found.files | map(attribute='path')
+      | reject('in', jetbrains_builds | map(attribute='dir') | list) }}
+  block:
+    - name: Find the backends' builds
+      ansible.builtin.find:
+        paths: "{{ jetbrains_dist }}"
+        file_type: directory
+        use_regex: true
+        patterns: "{{ jetbrains_builds | map(attribute='pattern') }}"
+      register: jetbrains_found
+
+    # A backend's command line names its directory. pgrep exits 1 where no process matches.
+    - name: Look for processes that run from the other builds
+      ansible.builtin.command:
+        argv: [pgrep, -f, --, "{{ item }}/"]
+      register: jetbrains_running
+      changed_when: false
+      failed_when: jetbrains_running.rc > 1
+      check_mode: false
+      loop: "{{ jetbrains_others }}"
+      loop_control:
+        label: "{{ item | basename }}"
+
+    # No diff, as it would list each of the build's files, tens of thousands: the label names it.
+    - name: Remove the other builds no process runs from
+      ansible.builtin.file:
+        path: "{{ item.item }}"
+        state: absent
+      diff: false
+      when: item.rc == 1
+      loop: "{{ jetbrains_running.results }}"
+      loop_control:
+        label: "{{ item.item | basename }}"
+
+    - name: Show the builds kept while a process runs from them
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.item | basename }} stays, as a process runs from it: the next run that finds
+          none removes it.
+      when: item.rc == 0
+      loop: "{{ jetbrains_running.results }}"
+      loop_control:
+        label: "{{ item.item | basename }}"
