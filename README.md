@@ -115,6 +115,8 @@ Each role is a tag of `site.yml`:
   replaces, and a weekly timer does the same between runs:
   [JetBrains backends](#jetbrains-backends), below.
 
+`mac/` sets up the Mac that works on the server: [The Mac](#the-mac), below.
+
 ## A new machine
 
 Install Ubuntu Server 26.04 by hand from its installer, with an SSH key to log in with. The
@@ -542,6 +544,67 @@ the role installs where bootstrap.sh hasn't. Its output goes to the journal, and
 `systemctl list-timers jetbrains-update.timer` shows when it runs next, `journalctl -u
 jetbrains-update` what it did, and `systemctl start jetbrains-update` runs it now. A backend open
 in Gateway as it runs keeps its build until a later run.
+
+## The Mac
+
+The Mac reaches the server, ws, over the cable from the 2.5GbE port of the monitor it is docked at,
+over the home LAN, or from elsewhere through the router's port forward. `mac/setup.sh`, the one
+part of the repository that runs on the Mac, sets up `ssh ws-ssh` to take whichever of these the
+Mac is on. It is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone:
+
+```sh
+git clone https://github.com/zadykian/ws ~/repository/ws
+~/repository/ws/mac/setup.sh
+```
+
+The repository names no server, so the Mac's values go in `~/.config/ws/mac.conf`, `KEY=value`
+lines that the script reads without running them:
+
+```sh
+WS_LAN=10.88.0.0/24
+WS_LAN_ADDRESS=10.88.0.10
+WS_REMOTE=ws.example.com
+WS_REMOTE_PORT=22022
+```
+
+`WS_LAN` is the home LAN, and `WS_LAN_ADDRESS` ws's address on it, the router's static lease for
+it. `WS_REMOTE` is the router's name on the internet, and `WS_REMOTE_PORT` the port it forwards to
+ws's 22. A way without its values is left out, and the file may be empty. The router's side is
+under [By hand](#by-hand).
+
+The script writes `~/.ssh/config.d/ws`, whose host `ws-ssh` goes:
+
+- over the cable, to `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
+- over the LAN, to `WS_LAN_ADDRESS`, where one lies in `WS_LAN`;
+- elsewhere, to `WS_REMOTE` on `WS_REMOTE_PORT`, over IPv4, as the forward takes IPv4 alone.
+
+ssh picks the way from the Mac's own addresses (`Match localnetwork`, OpenSSH 9.4 and later), and
+probes nothing. Each way logs in as root with `~/.ssh/id_ed25519`, its passphrase kept in the
+Keychain, and checks ws's host key under the one name `ws` (`HostKeyAlias`). So `known_hosts` has
+one entry for ws whichever way ssh goes, and a host on another network that uses the LAN's subnet
+meets a host key mismatch, where ssh stops. A session ends after 90 s without word from ws.
+
+The script puts `Include config.d/*` first in `~/.ssh/config`, as ssh keeps the first value it reads
+for each key. Where the line is missing, it adds it at the top and keeps the old file as
+`~/.ssh/config.TIME~`; where the line sits below other settings, the script stops. It warns of a
+`Host` or `Match` of the file's own for `ws` or `ws-ssh`. A run changes only what differs, so a
+second prints nothing, and `--check` prints each change as a diff and makes none.
+
+The Mac's end of the cable is set by hand, once: in System Settings › Network, the monitor's
+adapter › Details › TCP/IP, Configure IPv4 Manually, with the IP address `10.77.0.2`, the subnet
+mask `255.255.255.252` and no router.
+
+Through the forward, ws takes logins from the internet: by key alone, as everywhere, with fail2ban
+banning the address of the network the Mac is on after 5 failed ones.
+
+The first login asks whether to trust ws's host key: compare its fingerprint with the one
+`ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the
+LAN, macOS asks once whether iTerm2, Gateway or another app may find devices on the local network:
+allow it. ssh run from Terminal needs no such grant. To see which way ssh went:
+
+```sh
+ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
+```
 
 ## Checks
 
