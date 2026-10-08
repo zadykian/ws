@@ -1,0 +1,157 @@
+---
+# wg0, the tunnel's end on this machine, from networkd's own files rather than netplan's: netplan
+# writes all of networkd's files anew at each change of the direct link, which would set wg0 up
+# again and drop its sessions. Nor wg-quick's: its reload sets the private key from its config
+# whether that holds one or not.
+- name: Check the tunnel's settings
+  ansible.builtin.assert:
+    that: wireguard_problems | length == 0
+    fail_msg: "{{ wireguard_problems | join(' ') }}"
+    quiet: true
+  vars:
+    wireguard_problems: >-
+      {{ wireguard_peers | wireguard_settings_problems(wireguard_address, wireguard_port) }}
+
+# networkd, its directory /etc/systemd/network and its group systemd-network come with systemd,
+# which a container may lack, so that --tags wireguard stands alone. wireguard-tools' recommends,
+# iptables or nftables, serve wg-quick, which the role doesn't use.
+- name: Install wireguard-tools and systemd
+  ansible.builtin.apt:
+    name: [wireguard-tools, systemd]
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+
+# networkd creates wg0 and gives it its address. Ubuntu Server runs it, as netplan renders with it.
+- name: Read the services' states
+  ansible.builtin.service_facts:
+  tags: [systemd]
+
+- name: Check that systemd-networkd is running
+  ansible.builtin.assert:
+    that: wireguard_networkd == 'running'
+    fail_msg: >-
+      systemd-networkd is {{ wireguard_networkd }}, so nothing would create wg0: the role expects
+      networkd, as on Ubuntu Server, not NetworkManager, as on Ubuntu Desktop.
+    quiet: true
+  vars:
+    wireguard_networkd: >-
+      {{ ansible_facts.services['systemd-networkd.service'].state | default('missing') }}
+  tags: [systemd]
+
+# networkd reads the key as the user systemd-network, so the file is root:systemd-network 0640, as
+# systemd.netdev(5) asks. It is written under umask 077, then given its group and mode, then its
+# name. Ansible never reads it. A credential in /etc/credstore, which could be 0600, would be read
+# only as networkd starts, so the run that made it would restart networkd under the uplink. A dry
+# run reports the key it would make, and makes none.
+- name: Make the server's private key
+  ansible.builtin.shell:
+    cmd: |
+      set -eu
+      umask 077
+      wg genkey >{{ wireguard_key }}.tmp
+      chgrp systemd-network {{ wireguard_key }}.tmp
+      chmod 0640 {{ wireguard_key }}.tmp
+      mv {{ wireguard_key }}.tmp {{ wireguard_key }}
+    creates: "{{ wireguard_key }}"
+  notify:
+    - Delete wg0
+    - Reload networkd for wg0
+
+# A peer's public key is a line, as wg pubkey prints it, in /etc/wireguard/NAME.pub, in the 0700
+# directory wireguard-tools makes. Access to the machine is granted on the machine, as SSH's
+# authorized_keys is: a key in the repository would let its peer into every machine it sets up.
+- name: Look for the peers' public keys
+  ansible.builtin.stat:
+    path: /etc/wireguard/{{ item.name }}.pub
+    get_checksum: false
+    get_mime: false
+    get_attributes: false
+  loop: "{{ wireguard_peers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: wireguard_key_files
+
+- name: Read the peers' public keys
+  ansible.builtin.slurp:
+    src: /etc/wireguard/{{ item.name }}.pub
+  loop: "{{ wireguard_key_files.results | selectattr('stat.exists') | map(attribute='item') }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: wireguard_keys
+
+- name: Check the peers' public keys
+  ansible.builtin.assert:
+    that: item.content | b64decode | trim is match('^[A-Za-z0-9+/]{43}=$')
+    fail_msg: >-
+      /etc/wireguard/{{ item.item.name }}.pub holds no WireGuard public key, 44 characters of
+      base64 as wg pubkey prints them.
+    quiet: true
+  loop: "{{ wireguard_keys.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Name the peers without a public key
+  ansible.builtin.debug:
+    msg: >-
+      wg0 leaves out the peer {{ item.name }}, as /etc/wireguard/{{ item.name }}.pub is missing.
+      Put its public key there, then run the role again.
+  loop: "{{ wireguard_key_files.results | rejectattr('stat.exists') | map(attribute='item') }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# The peers' keys are public, but networkd alone needs the file, so it is the key's group and mode,
+# as systemd.netdev(5) suggests for a WireGuard .netdev. A dry run shows the diff, which holds
+# public keys and addresses alone.
+- name: Write wg0's netdev
+  ansible.builtin.template:
+    src: 60-wg0.netdev.j2
+    dest: /etc/systemd/network/60-wg0.netdev
+    owner: root
+    group: systemd-network
+    mode: "0640"
+  notify: Reload networkd for wg0
+
+- name: Write wg0's network
+  ansible.builtin.template:
+    src: 60-wg0.network.j2
+    dest: /etc/systemd/network/60-wg0.network
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload networkd for wg0
+
+# On every interface, as the Mac reaches the port over the cable, the LAN and the router's forward.
+# Inside the tunnel, ufw takes wg0 as any interface: it lets in SSH, and forwards nothing.
+- name: Allow WireGuard through ufw
+  community.general.ufw:
+    rule: allow
+    port: "{{ wireguard_port | string }}"
+    proto: udp
+    comment: WireGuard
+  tags: [systemd]
+
+- name: Apply wg0's changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: Look for the server's private key
+  ansible.builtin.stat:
+    path: "{{ wireguard_key }}"
+  register: wireguard_key_file
+
+# From the private key, which stays in its file: the Mac's side of the tunnel needs it.
+- name: Read the server's public key
+  ansible.builtin.shell: wg pubkey <{{ wireguard_key }}
+  register: wireguard_public_key
+  changed_when: false
+  check_mode: false
+  when: wireguard_key_file.stat.exists
+
+- name: Show the server's public key
+  ansible.builtin.debug:
+    msg: >-
+      {{ "ws's WireGuard public key, for WS_PUBLIC_KEY in the Mac's mac.conf: "
+      ~ wireguard_public_key.stdout if wireguard_key_file.stat.exists
+      else 'The server has no WireGuard key yet: a real run makes it and shows its public key.' }}

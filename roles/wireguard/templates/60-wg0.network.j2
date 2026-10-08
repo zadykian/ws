@@ -1,0 +1,11 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# wg0's address, and no gateway, DNS or route beyond its subnet's. Boot doesn't wait for wg0.
+[Match]
+Name=wg0
+
+[Link]
+RequiredForOnline=no
+
+[Network]
+Address={{ wireguard_address }}

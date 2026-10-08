@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: zadykian
+  description: A WireGuard tunnel for the Mac, wg0, from networkd's own files
+  license: MIT
+  min_ansible_version: "2.20"
+  platforms:
+    - name: Ubuntu
+      versions: [resolute]
+dependencies: []

@@ -1,9 +1,10 @@
 # ws
 
 Sets up my development server from code. Ansible runs on the machine itself and sets up packages,
-SSH by key and a firewall, a direct link to the Mac, Docker, the shell, tmux, the helix editor,
-claude and [cld](https://github.com/zadykian/cld), SigNoz with a collector for the machine's
-telemetry, and the backends of Rider and GoLand that JetBrains Gateway connects to.
+SSH by key and a firewall, a direct link and a WireGuard tunnel to the Mac, Docker, the shell,
+tmux, the helix editor, claude and [cld](https://github.com/zadykian/cld), SigNoz with a collector
+for the machine's telemetry, and the backends of Rider and GoLand that JetBrains Gateway
+connects to.
 Running it again is safe, and `--check --diff` shows how a machine differs from the repository.
 
 Each role is a tag of `site.yml`:
@@ -21,6 +22,9 @@ Each role is a tag of `site.yml`:
   [SSH and the firewall](#ssh-and-the-firewall).
 - `network`: the server's end of a cable to the Mac, `10.77.0.1/30` on the port
   `network_direct_link_interface` names, from a netplan file: [The direct link](#the-direct-link).
+- `wireguard`: `wg0`, the server's end of a WireGuard tunnel for the Mac, `10.99.0.1/24` on UDP
+  port 51820, from networkd's own files, with a key made on the server and each peer's public key
+  read from `/etc/wireguard`: [The tunnel](#the-tunnel).
 - `shell`: `~/.bashrc` with ble.sh and bash-completion, `PATH` in `~/.profile`, and
   `~/.gitconfig`; see [The shell](#the-shell).
 - `tmux`: tmux from Ubuntu's archive, with no config, as cld runs tmux with `-f /dev/null`. Where
@@ -135,9 +139,10 @@ by hand, below.
 ## SSH and the firewall
 
 The playbook turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
-SSH on port 22, and DNS lookups from Docker's bridges to the host's resolver (see `docker`), and
-nothing else; fail2ban bans an address for 10 minutes after 5 failed logins in 10 minutes. Over
-SSH, keep the session that ran the playbook open until a new one logs in.
+SSH on port 22, WireGuard on UDP port 51820 (see `wireguard`), and DNS lookups from Docker's
+bridges to the host's resolver (see `docker`), and nothing else; fail2ban bans an address for 10
+minutes after 5 failed logins in 10 minutes. Over SSH, keep the session that ran the playbook open
+until a new one logs in.
 The playbook stops before it turns passwords off if root has no key to log in with.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
@@ -172,6 +177,50 @@ networkd's files anew for every interface it sets up, so networkd sets up each o
 again, the uplink too: the journal shows `Reconfiguring with …` for each. The uplink keeps its
 address: networkd asks its DHCP server for the same lease again, and leaves the address on the link
 meanwhile.
+
+## The tunnel
+
+The Mac reaches the server through a WireGuard tunnel whichever way it is connected: over the
+cable, the home LAN, or the internet through the router's forward (see [By hand](#by-hand)).
+Inside the tunnel the server keeps one address, and WireGuard knows a peer by its key, not by the
+address its packets come from, so the Mac's sessions outlive a move from one way to another. The
+`wireguard` role sets up the server's end, `wg0`, at `10.99.0.1/24` (`wireguard_address`) on UDP
+port 51820 (`wireguard_port`), from networkd's own files, `/etc/systemd/network/60-wg0.netdev` and
+`60-wg0.network`. Boot doesn't wait for `wg0`.
+
+The first run makes the server's private key on the server, in
+`/etc/systemd/network/60-wg0.key`, which the playbook never reads. networkd reads it as the user
+`systemd-network`, so the file is `root:systemd-network`, mode 0640, as systemd.netdev(5) asks.
+The role's last task shows the public key, which the Mac's end of the tunnel needs: last of all in
+`--tags wireguard`, among the other roles' output in a full run. `wg show wg0 public-key` shows it
+too. A dry run makes no key.
+
+`wireguard_peers` names the peers, each with its address in the tunnel: by default the Mac, `mac`,
+at `10.99.0.2`. A peer's public key is read from `/etc/wireguard/NAME.pub` on the server, a line as
+`wg pubkey` prints it, in a directory only root reads:
+
+```sh
+printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
+/root/repository/ws/bootstrap.sh --tags wireguard
+```
+
+The repository holds no peer's key, as access to a machine is granted on the machine, as SSH's
+`authorized_keys` is: anyone may run `bootstrap.sh`, and a key in the repository would let its peer
+into every machine set up from it. A peer without its file is left out of `wg0`, and the run names
+it. The run stops on a peer's name of other than lowercase letters, digits and dashes, on an
+address outside the subnet, the server's own or another peer's, and on a file that holds no key.
+
+A change reaches `wg0` through `networkctl reload`, which sets up again only the links whose files
+changed: the uplink and the cable are left alone. A change of peers ends every session of the
+tunnel, as networkd replaces all of `wg0`'s peers at once, and the Mac handshakes again within 15
+seconds of sending. So change the peers over SSH outside the tunnel, or from the console. A key made
+anew, after the old one was removed by hand, deletes `wg0` before the reload, as networkd reads the
+key only as it creates `wg0`.
+
+ufw lets in UDP port 51820 on every interface. Inside the tunnel it takes `wg0` as any other
+interface: it lets in SSH and ping, and forwards nothing, so the tunnel reaches the server alone.
+The run stops where systemd-networkd isn't running, as on Ubuntu Desktop, whose NetworkManager
+does its work instead.
 
 ## Running it again
 
@@ -334,7 +383,48 @@ removes that file and the config has no second pipeline. A new value restarts th
 Secrets are never in this repository. On a new machine, these stay manual:
 
 - `gh auth login` and `gh auth setup-git`;
-- the claude login.
+- the claude login;
+- each peer's public key in `/etc/wireguard`, as in [The tunnel](#the-tunnel).
+
+The router, a MikroTik on RouterOS 7, takes these steps once, each in Safe Mode, WinBox's button or
+Ctrl+X in its terminal, which undoes the changes if the session drops:
+
+- The LAN on `10.88.0.0/24`, clear of the cable's `10.77.0.0/30`, the tunnel's `10.99.0.0/24` and
+  Docker's `172.16.0.0/12`, and off RouterOS's default, `192.168.88.0/24`, which cafés and other
+  homes use too. From WinBox connected by MAC address, which the change doesn't drop, once
+  `/export` has shown the names these commands find:
+
+  ```
+  /ip address set [find address="192.168.88.1/24"] address=10.88.0.1/24
+  /ip pool set default-dhcp ranges=10.88.0.100-10.88.0.254
+  /ip dhcp-server network set [find address="192.168.88.0/24"] address=10.88.0.0/24 \
+      gateway=10.88.0.1 dns-server=10.88.0.1
+  /ip dns static set [find name=router.lan] address=10.88.0.1
+  ```
+
+  Clients move to the new range as they next renew their lease.
+- The server's lease, made static at `10.88.0.10`, HOST being the host name its lease shows:
+
+  ```
+  /ip dhcp-server lease make-static [find host-name=HOST]
+  /ip dhcp-server lease set [find host-name=HOST] address=10.88.0.10
+  ```
+
+- Two forwards from the internet to the server: UDP 51820, the tunnel's, and TCP 22022 to its SSH,
+  for networks that block UDP. The default firewall's rule that drops what comes in from the WAN
+  without a dst-nat lets both through:
+
+  ```
+  /ip firewall nat add chain=dstnat in-interface-list=WAN protocol=udp dst-port=51820 \
+      action=dst-nat to-addresses=10.88.0.10 to-ports=51820
+  /ip firewall nat add chain=dstnat in-interface-list=WAN protocol=tcp dst-port=22022 \
+      action=dst-nat to-addresses=10.88.0.10 to-ports=22
+  ```
+
+- A name for the router's public address: `/ip cloud set ddns-enabled=yes`, as `auto`, the default
+  since RouterOS 7.17, enables it only with Back To Home. `/ip cloud print` shows its `dns-name`,
+  `SERIAL.sn.mynetname.net`, for a CNAME at your domain's DNS; its records live 60 seconds. Its
+  `public-address` must be the WAN's own: behind the ISP's NAT, neither forward reaches the router.
 
 ## The shell
 

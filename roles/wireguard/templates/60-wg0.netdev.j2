@@ -1,0 +1,20 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# wg0, the tunnel's end on this machine. networkd reads the private key from the file below, made
+# here; each peer's public key is that of /etc/wireguard/NAME.pub, and a peer without that file is
+# left out. The server has no endpoint for a peer and never speaks first: it answers each peer at
+# the address its last packet came from.
+[NetDev]
+Name=wg0
+Kind=wireguard
+
+[WireGuard]
+PrivateKeyFile={{ wireguard_key }}
+ListenPort={{ wireguard_port }}
+{% for peer in wireguard_keys.results %}
+
+# {{ peer.item.name }}
+[WireGuardPeer]
+PublicKey={{ peer.content | b64decode | trim }}
+AllowedIPs={{ peer.item.address }}/32
+{% endfor %}
