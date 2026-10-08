@@ -1,0 +1,69 @@
+#!/bin/sh
+# Prints the files of a kind that a gate of `make lint` checks, a line each:
+#
+#   tools/files KIND [FILE...]
+#
+# KIND is md, py, sh, yaml or j2. Without a FILE, the files are those git lists, new ones included
+# but not those it ignores. With FILEs, they are those of the FILEs of the KIND, so that any list
+# of files will do. A shell script is found by its extension or its shebang, as shfmt -f finds it,
+# since the hooks in .githooks have no extension. The gates split the list at whitespace, so a
+# name that holds any fails here. So does a name git quotes, one that holds a control character, a
+# quote or a backslash. Run it from the repository's root.
+
+set -eu
+
+# die prints a message of the script's and exits with status 1.
+die() {
+    printf 'tools/files: %s\n' "$*" >&2
+    exit 1
+}
+
+# listed prints the FILEs, or, without one, the files git lists that exist. A name git quotes
+# goes on, quoted, for main to refuse.
+listed() {
+    if [ $# -gt 0 ]; then
+        for file; do
+            [ -f "$file" ] || die "no file $file"
+            printf '%s\n' "${file#./}"
+        done
+        return
+    fi
+    # core.quotePath=false keeps a UTF-8 name unquoted, so that its file is found.
+    git -c core.quotePath=false ls-files --cached --others --exclude-standard |
+        while IFS= read -r file; do
+            case $file in
+            \"*) printf '%s\n' "$file" ;;
+            *) [ ! -f "$file" ] || printf '%s\n' "$file" ;;
+            esac
+        done
+}
+
+main() {
+    [ $# -ge 1 ] || die "usage: tools/files KIND [FILE...]"
+    kind=$1
+    shift
+    case $kind in
+    md) pattern='\.md$' ;;
+    py) pattern='\.py$' ;;
+    yaml) pattern='\.ya?ml$' ;;
+    j2) pattern='\.j2$' ;;
+    sh) pattern= ;;
+    *) die "no kind $kind: md, py, sh, yaml or j2" ;;
+    esac
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    trap 'exit 1' HUP INT TERM
+    # Not in a pipeline, so that a missing FILE ends the script.
+    listed "$@" >"$tmp/listed"
+    LC_ALL=C sort -u "$tmp/listed" >"$tmp/files"
+    ! grep -n '[[:space:]]' "$tmp/files" >&2 || die "the names above hold whitespace"
+    ! grep -n '^"' "$tmp/files" >&2 || die "git quotes the names above: rename them"
+    if [ -n "$pattern" ]; then
+        grep -E "$pattern" "$tmp/files" || true
+    elif [ -s "$tmp/files" ]; then
+        # shfmt -f takes the files as arguments, which tr separates with NULs for xargs -0.
+        tr '\n' '\0' <"$tmp/files" | xargs -0 "$(dirname -- "$0")/run" shfmt -f
+    fi
+}
+
+main "$@"

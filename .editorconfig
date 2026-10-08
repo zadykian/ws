@@ -1,0 +1,18 @@
+# The files' encoding, line ends and indents, for editors that read it.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json,md,yml.j2,yaml.j2,json.j2}]
+indent_size = 2
+
+# make takes a recipe's lines after a tab. The git config template and plists keep the tabs that
+# git config and plutil write.
+[{Makefile,roles/shell/templates/gitconfig.j2,*.plist}]
+indent_style = tab

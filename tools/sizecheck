@@ -1,0 +1,54 @@
+#!/bin/sh
+# Keeps ws's files short: each is at most 300 lines. It checks the files git lists, new ones
+# included but not those it ignores, or those of the FILEs it caps:
+#
+#   tools/sizecheck [FILE...]
+#
+# It caps Markdown, YAML, shell scripts, found by extension or shebang, Python and Jinja
+# templates. Data files, such as TOML, JSON, conf files and licenses, are of no kind it caps.
+# Generated and vendored files are exempt, as they are not written here: foundryctl's compose
+# files in roles/signoz/files/deployment/ and its casting.yaml.lock, which yamllint and
+# ansible-lint leave out too, and the Vale styles in .vale/styles/, errata-ai's word lists. Each
+# finding goes to stdout as PATH: message, and any fails the check. Run it from the root.
+
+set -eu
+
+# max is the cap, in lines.
+max=300
+
+# exempt says whether the file $1 is generated or vendored.
+exempt() {
+    case $1 in
+    roles/signoz/files/deployment/* | roles/signoz/files/casting.yaml.lock) return 0 ;;
+    .vale/styles/*) return 0 ;;
+    esac
+    return 1
+}
+
+main() {
+    [ -f tools/sizecheck ] || {
+        echo "tools/sizecheck: run it from the repository's root" >&2
+        exit 1
+    }
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    trap 'exit 1' HUP INT TERM
+    dir=$(dirname -- "$0")
+    for kind in md yaml sh py j2; do
+        "$dir/files" "$kind" "$@" >>"$tmp/listed"
+    done
+    LC_ALL=C sort -u "$tmp/listed" >"$tmp/files"
+    status=0
+    while IFS= read -r file; do
+        ! exempt "$file" || continue
+        # awk counts a last line without its newline too.
+        lines=$(awk 'END { print NR }' "$file")
+        if [ "$lines" -gt "$max" ]; then
+            printf '%s: %d lines, over the cap of %d\n' "$file" "$lines" "$max"
+            status=1
+        fi
+    done <"$tmp/files"
+    return "$status"
+}
+
+main "$@"

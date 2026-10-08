@@ -10,64 +10,28 @@ on:
 permissions: {}
 
 jobs:
-  # Any finding fails the job, warnings included: yamllint runs with --strict, ansible-lint with
-  # strict: true (.ansible-lint), and the others fail on any finding as they are.
+  # make lint, the one gate, with the tools it pins: tools/run's binaries, the Python tools of
+  # .github/lint-requirements.txt on the runner's Python, 3.12 or newer as ansible-core 2.20
+  # needs, and requirements.yml's collections. Any finding fails it, warnings included.
   lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
-    env:
-      # Release binaries for Linux on amd64, each with its SHA-256: shfmt's from GitHub's asset
-      # digest, gitleaks' from its release's checksums file. The Python tools' pins are in
-      # .github/lint-requirements.txt.
-      SHFMT: 3.14.1
-      SHFMT_SHA256: 76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf
-      GITLEAKS: 8.30.1
-      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # gitleaks scans every commit, not only the last.
+          # A pull request's own head, which lands as it is, by fast-forward, rather than GitHub's
+          # merge of it. The whole history, every branch's included: gitleaks scans every commit,
+          # and the commit check reads those from origin/main to the head.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      # The runner's Python, 3.12 or newer as ansible-core 2.20 needs, in a venv: Ubuntu's pip
-      # installs nothing outside one.
-      - name: Install the Python tools
-        run: |
-          python3 -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/pip" install --quiet -r .github/lint-requirements.txt
-          echo "$RUNNER_TEMP/venv/bin" >>"$GITHUB_PATH"
-      - name: Install shfmt and gitleaks
-        run: |
-          mkdir "$RUNNER_TEMP/bin"
-          cd "$RUNNER_TEMP/bin"
-          shfmt=https://github.com/mvdan/sh/releases/download/v$SHFMT
-          gitleaks=https://github.com/gitleaks/gitleaks/releases/download/v$GITLEAKS
-          curl -fsSLo shfmt "$shfmt/shfmt_v${SHFMT}_linux_amd64"
-          curl -fsSLo gitleaks.tar.gz "$gitleaks/gitleaks_${GITLEAKS}_linux_x64.tar.gz"
-          printf '%s  %s\n' "$SHFMT_SHA256" shfmt "$GITLEAKS_SHA256" gitleaks.tar.gz |
-              sha256sum -c -
-          tar -xzf gitleaks.tar.gz gitleaks
-          chmod +x shfmt
-          echo "$RUNNER_TEMP/bin" >>"$GITHUB_PATH"
-      # ansible-lint is offline (.ansible-lint): the collections are requirements.yml's, at their
-      # pins.
-      - name: Install the collections
-        run: ansible-galaxy collection install -r requirements.yml
-      - name: yamllint
-        run: yamllint --strict .
-      - name: ansible-lint
-        run: ansible-lint
-      # shfmt -f finds the shell scripts by their shebang too, as the hooks have no extension.
-      - name: ShellCheck and shfmt
-        run: |
-          mapfile -t scripts < <(shfmt -f .)
-          shellcheck "${scripts[@]}"
-          shfmt -i 4 -d "${scripts[@]}"
-      # --redact keeps a secret it finds out of the log, which is public.
-      - name: gitleaks
-        run: gitleaks git --no-banner --redact --verbose .
+      - name: make lint
+        run: make lint
+        env:
+          # zizmor's online audits, which look the actions up on GitHub, need a token.
+          GH_TOKEN: ${{ github.token }}
 
   # The playbook as on a new machine, but in a container rather than a booted system, so without
   # the tasks tagged systemd. It runs twice, and the second run must change nothing.
