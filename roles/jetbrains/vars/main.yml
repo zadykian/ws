@@ -1,0 +1,24 @@
+---
+# Where Gateway keeps the backends it downloads, a directory each. Gateway names a build's
+# directory HASH_NAME: HASH is the first 13 hex digits of the SHA-256 of the download's link and
+# NAME the archive's name without .tar.gz, as in 46547c76f522d_goland-2026.2.3. It skips its own
+# download where that directory holds .expandSucceeded, which it writes once the archive is
+# unpacked. The role names and marks its builds the same way, so that Gateway takes them as its own.
+jetbrains_dist: "{{ ws_home }}/.cache/JetBrains/RemoteDev/dist"
+
+# JetBrains' list of releases, which Gateway reads too: the latest release of each product, with a
+# .tar.gz and its SHA-256 for each platform.
+jetbrains_releases_url: >-
+  https://data.services.jetbrains.com/products/releases?code={{
+  jetbrains_backends | join(',') }}&latest=true&type=release
+
+# The list's name for this machine's platform. Another architecture has no download, which the role
+# reports.
+jetbrains_download_key: >-
+  {{ {'x86_64': 'linux', 'aarch64': 'linuxARM64'}[ansible_facts['architecture']]
+  | default(ansible_facts['architecture']) }}
+
+# Where a backend's archive is downloaded, by product code, before it is unpacked: under
+# /usr/local/src, root's, and on disk where /tmp may be in memory. The name holds no version, so a
+# run removes what any earlier run left.
+jetbrains_download: /usr/local/src/jetbrains-%s.tar.gz

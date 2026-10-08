@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: zadykian
+  description: Rider's and GoLand's remote-development backends
+  license: MIT
+  min_ansible_version: "2.20"
+  platforms:
+    - name: Ubuntu
+      versions: [resolute]
+dependencies: []

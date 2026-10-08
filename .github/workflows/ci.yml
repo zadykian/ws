@@ -99,14 +99,17 @@ jobs:
           mkdir -p /root/repository
           cp -R "$GITHUB_WORKSPACE" /root/repository/ws
       # As the one-liner in the README runs it: sh reads the script from stdin. The swap file is
-      # small, as the runner's disk has no room for one the size of its RAM.
+      # small, as the runner's disk has no room for one the size of its RAM, and the JetBrains
+      # backends are left out, as it has none for their 10 GB either.
       - name: Bootstrap
-        run: sh -s -- --skip-tags systemd -e base_swap_size_mb=64 </root/repository/ws/bootstrap.sh
+        run: |
+          sh -s -- --skip-tags systemd -e base_swap_size_mb=64 \
+              -e '{"jetbrains_backends": []}' </root/repository/ws/bootstrap.sh
       - name: Run again, changing nothing
         shell: bash
         run: |
-          /root/repository/ws/bootstrap.sh --skip-tags systemd -e base_swap_size_mb=64 |
-              tee "$RUNNER_TEMP/again.log"
+          /root/repository/ws/bootstrap.sh --skip-tags systemd -e base_swap_size_mb=64 \
+              -e '{"jetbrains_backends": []}' | tee "$RUNNER_TEMP/again.log"
           if ! grep -Eq '^localhost +: ok=[0-9]+ +changed=0 +unreachable=0 +failed=0 ' \
               "$RUNNER_TEMP/again.log"; then
               echo '::error::The second run of the playbook changed something.'

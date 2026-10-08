@@ -1,0 +1,12 @@
+---
+# The IDE backends the role installs, by JetBrains' product codes: RD is Rider and GO is GoLand.
+# JetBrains Gateway opens each on the server from the Mac, and would download it on the first
+# connect and never update it: a backend starts with -Dide.no.platform.update=true. Each run
+# installs the latest release instead, where Gateway looks for it. [] installs none, as in CI,
+# whose runner has no room for them.
+jetbrains_backends: [RD, GO]
+
+# Whether a run removes the other builds of each product it installs, Gateway's own downloads
+# too, once the latest is in place: each takes several GB. A build a process runs from stays until
+# a run finds none. false keeps every build.
+jetbrains_prune: true

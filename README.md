@@ -2,7 +2,8 @@
 
 Sets up my development server from code. Ansible runs on the machine itself and sets up packages,
 SSH by key and a firewall, Docker, the shell, tmux, the helix editor, claude and
-[cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
+[cld](https://github.com/zadykian/cld), SigNoz with a collector for the machine's telemetry, and
+the backends of Rider and GoLand that JetBrains Gateway connects to.
 Running it again is safe, and `--check --diff` shows how a machine differs from the repository.
 
 Each role is a tag of `site.yml`:
@@ -102,6 +103,10 @@ Each role is a tag of `site.yml`:
   [C# in helix](#c-in-helix), below. Each run replaces changes made to the two files by hand, and
   keeps the old file beside the new one. The keys follow the IDEs' F12 keymap:
   [helix's keys](#helixs-keys), below.
+- `jetbrains`: the backends of Rider and GoLand, at their latest releases, where JetBrains Gateway
+  looks for them, so that it finds them ready rather than downloading its own, and `libicu78`,
+  without which Rider's hangs. Each run installs a new release and removes the builds it
+  replaces: [JetBrains backends](#jetbrains-backends), below.
 
 ## A new machine
 
@@ -374,6 +379,38 @@ Ubuntu's hx asks the server for a file's errors when it opens the file and when 
 not when the server has loaded the projects. A file opened while they load shows its errors after
 its first edit, even one undone with `u`.
 
+## JetBrains backends
+
+The Mac opens Rider and GoLand on the server through JetBrains Gateway, which runs each IDE's
+backend here. Left to itself, Gateway downloads a backend on the first connect, 2.4 GB for Rider
+and 1.2 GB for GoLand, and never updates it. So each run of the role asks JetBrains' list of
+releases, which Gateway reads too, for the latest release of each, and installs it where it is
+missing, checked against the SHA-256 JetBrains publishes for it.
+
+A build goes where Gateway would put its own download, in `~/.cache/JetBrains/RemoteDev/dist`, in
+a directory named as Gateway names it: the first 13 hex digits of the SHA-256 of the download's
+link, then the archive's name, as in `46547c76f522d_goland-2026.2.3`. The role writes
+`.expandSucceeded` there last, as Gateway does once a build is unpacked. Gateway then finds the
+build, lists it among the installed IDEs, and downloads nothing. Neither the name nor the file is
+documented: they are Gateway 2026.2.2's, and a later Gateway may change them.
+
+Gateway keeps each recent project on the build it was opened with, and shows "Project IDE is
+deleted" once that build is gone: "Select Different IDE…" picks the new one, with no download. The
+JetBrains Client on the Mac follows the backend's version, and Gateway fetches it as needed.
+Settings, plugins and caches are kept per major version, as in `~/.config/JetBrains/Rider2026.2`,
+so a 2026.2.x update keeps them.
+
+Once the new build is in place, the role removes every other build of that product from the
+directory, Gateway's own downloads too; other IDEs' stay. A build a process runs from, such as a
+backend open in Gateway, stays, and the run names it; the next run that finds none removes it.
+`jetbrains_prune: false` keeps every build.
+
+Rider's backend takes 6.6 GB unpacked and GoLand's 3.5 GB. A run downloads an archive only where
+the disk has 4 times its size free, as JetBrains asks, and removes it once unpacked.
+`jetbrains_backends` names the backends by JetBrains' product codes, `[RD, GO]`, and
+`-e '{"jetbrains_backends": []}'` installs none. A dry run reads the releases and the directory,
+and reports each build it would install and each it would remove; it downloads nothing.
+
 ## Checks
 
 CI runs yamllint, ansible-lint with its production profile, ShellCheck and shfmt on the shell
@@ -381,7 +418,8 @@ scripts, and gitleaks over the whole history. Any finding fails it, warnings inc
 
 CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`,
 which need a booted machine. It runs it twice, and the second run must change nothing. Its swap
-file is 64 MiB, as the runner's disk has no room for one the size of its RAM.
+file is 64 MiB, as the runner's disk has no room for one the size of its RAM, and it installs no
+JetBrains backend, `jetbrains_backends: []`, as it has no room for those either.
 
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
 and fails where they differ from the repository's.
