@@ -14,7 +14,7 @@
 # WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
 #
 # A run changes only what differs, so a second prints nothing. --check prints each change as a
-# diff and makes none. README.md's The Mac has the rest.
+# diff and makes none. docs/mac.md has the rest.
 #
 # shellcheck source-path=SCRIPTDIR
 

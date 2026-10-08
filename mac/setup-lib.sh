@@ -39,7 +39,7 @@ ws_args() {
 # skipped. It stops on any other line, any other key, and a value of the wrong form.
 # shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
 ws_conf() {
-    [ -f "$1" ] || ws_die "$1 is missing: README.md's The Mac says what goes in it"
+    [ -f "$1" ] || ws_die "$1 is missing: docs/mac.md says what goes in it"
     WS_PUBLIC_KEY=
     WS_LAN=
     WS_LAN_ADDRESS=
