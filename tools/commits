@@ -1,0 +1,65 @@
+#!/bin/sh
+# Checks the messages of the commits from BASE, origin/main by default, up to HEAD:
+#
+#   tools/commits [BASE]
+#
+# The header is `type(scope)!: description`, the scope and the ! optional, of 72 columns at most.
+# The type is one of feat, fix, build, chore, ci, docs, perf, refactor, style and test, and the
+# scope is of a-z, 0-9, _ and -. A blank line follows the header. Each line of the body is of 72
+# columns at most, but for the trailers, as git reads them, and a line that holds a URL. A column
+# is a character of UTF-8. Each finding goes to stdout as SHA: message, and any fails the check.
+
+set -eu
+
+# die prints a message of the script's and exits with status 1.
+die() {
+    printf 'tools/commits: %s\n' "$*" >&2
+    exit 1
+}
+
+# check prints the findings in the message of the commit $1, and fails where there are any.
+check() {
+    git log -1 --format=%B "$1" >"$tmp/message"
+    git log -1 --format='%(trailers:only)' "$1" >"$tmp/trailers"
+    LC_ALL=C awk -v sha="$(git rev-parse --short "$1")" '
+        # width is the columns of s: its bytes, less those that continue a character of UTF-8.
+        function width(s) {
+            gsub(/[\200-\277]/, "", s)
+            return length(s)
+        }
+        function finding(msg) {
+            print sha ": " msg
+            found = 1
+        }
+        FILENAME == ARGV[1] { trailer[$0] = 1; next }
+        FNR == 1 {
+            types = "(feat|fix|build|chore|ci|docs|perf|refactor|style|test)"
+            if ($0 !~ "^" types "(\\([a-z0-9_-]+\\))?!?: [^ ]")
+                finding("the header is not type(scope)!: description: " $0)
+            if (width($0) > 72)
+                finding("the header is " width($0) " columns, over 72")
+            next
+        }
+        FNR == 2 && $0 != "" { finding("no blank line after the header") }
+        width($0) > 72 && !($0 in trailer) && $0 !~ /[A-Za-z][A-Za-z0-9+.-]*:\/\// {
+            finding("line " FNR " is " width($0) " columns, over 72")
+        }
+        END { exit found }
+    ' "$tmp/trailers" "$tmp/message"
+}
+
+main() {
+    base=${1:-origin/main}
+    git rev-parse --verify --quiet "$base^{commit}" >/dev/null ||
+        die "no commit $base: fetch it first"
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    trap 'exit 1' HUP INT TERM
+    status=0
+    for sha in $(git rev-list --reverse "$base..HEAD"); do
+        check "$sha" || status=1
+    done
+    return "$status"
+}
+
+main "$@"
