@@ -1,0 +1,287 @@
+name: mac
+
+# mac/ on macOS, in a workflow of its own beside ci.yml, on the same events: every pull request,
+# whatever its base, and on main the commits pushed by hand.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  # The Mac's side on macOS, in the README's order: mac/setup.sh without ws's key makes the Mac's
+  # key and installs no daemon; with a stand-in ws's key it installs the daemon; then a second run
+  # and --check must print nothing. ssh -G must give each host's address. A stand-in ws, a second
+  # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on
+  # loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost), and the daemon's status must
+  # show each in turn. Last, lib.sh's routes and resolvers. Where the runner can make no utun, the
+  # steps that need one are skipped with a warning, and the rest still run.
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    # bash with pipefail, rather than the default bash -e, so that a failing setup.sh fails its
+    # step through a tee too.
+    defaults:
+      run:
+        shell: bash
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_ENV_HINTS: "1"
+      LABEL: com.github.zadykian.ws-tunnel
+      TUNNEL: /usr/local/libexec/ws-tunnel/ws-tunnel
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The runner
+        run: |
+          sw_vers
+          uname -m
+          ssh -V
+          ls -ld / /usr /usr/local /usr/local/libexec 2>&1 || true
+      # setup.sh stops where a directory above root's copies isn't root's alone, as on a Mac whose
+      # /usr/local an old Homebrew took. Where the runner's image gave /usr/local or its libexec to
+      # its user, they become root's, as on a Mac with Homebrew in /opt/homebrew: their contents
+      # stay as they are.
+      - name: Make /usr/local root's, as on a Mac
+        run: |
+          for dir in /usr/local /usr/local/libexec; do
+              [ -d "$dir" ] || continue
+              if [ "$(stat -f '%u %Lp' "$dir")" != "0 755" ]; then
+                  echo "::warning::$dir was $(stat -f '%Su:%Sg %Lp' "$dir"); made root's, 755"
+                  sudo chown root:wheel "$dir"
+                  sudo chmod 755 "$dir"
+              fi
+          done
+      - name: mac.conf, without ws's key
+        run: |
+          mkdir -p ~/.config/ws ~/.ssh
+          printf '%s\n' 'WS_LAN=127.0.0.0/8' 'WS_LAN_ADDRESS=127.0.0.1' 'WS_REMOTE=localhost' \
+              'WS_REMOTE_PORT=22022' >~/.config/ws/mac.conf
+          # A config of the user's own, which the Include must go above.
+          if [ ! -e ~/.ssh/config ]; then
+              printf 'Host *\n    ServerAliveInterval 60\n' >~/.ssh/config
+              chmod 600 ~/.ssh/config
+          fi
+          cp ~/.ssh/config "$RUNNER_TEMP/ssh-config-before"
+      - name: --check on a fresh Mac changes nothing
+        run: |
+          sh mac/setup.sh --check | tee "$RUNNER_TEMP/check.out"
+          fail=0
+          for path in ~/.ssh/config.d /etc/ws-tunnel /usr/local/libexec/ws-tunnel \
+              "/Library/LaunchDaemons/$LABEL.plist"; do
+              if sudo test -e "$path"; then
+                  echo "::error::setup.sh --check made $path"
+                  fail=1
+              fi
+          done
+          cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
+              { echo '::error::setup.sh --check changed ~/.ssh/config'; fail=1; }
+          grep -q '^+Include config.d/\*$' "$RUNNER_TEMP/check.out" ||
+              { echo "::error::setup.sh --check showed no Include for ~/.ssh/config"; fail=1; }
+          exit "$fail"
+      - name: Without ws's key, setup.sh makes the Mac's key and installs no daemon
+        run: |
+          sh mac/setup.sh | tee "$RUNNER_TEMP/first.out"
+          fail=0
+          grep -q "^The Mac's WireGuard public key is " "$RUNNER_TEMP/first.out" ||
+              { echo "::error::setup.sh printed no public key"; fail=1; }
+          [ "$(sudo stat -f '%Su:%Sg %Lp' /etc/ws-tunnel/private.key)" = "root:wheel 600" ] ||
+              { echo "::error::/etc/ws-tunnel/private.key is not root's, 600"; fail=1; }
+          for prog in ws-tunnel wg wireguard-go; do
+              file=/usr/local/libexec/ws-tunnel/$prog
+              [ "$(stat -f '%Su:%Sg %Lp' "$file")" = "root:wheel 755" ] ||
+                  { echo "::error::$file is not root's, 755"; fail=1; }
+          done
+          if launchctl print "system/$LABEL" >/dev/null 2>&1; then
+              echo "::error::setup.sh loaded the daemon without ws's key"
+              fail=1
+          fi
+          exit "$fail"
+      # A second wireguard-go, with its own key, listening on 51820 with the Mac's key as its peer.
+      # It has no address in the tunnel, so the daemon's pings go unanswered and the steps below
+      # read handshakes instead.
+      - name: A stand-in ws
+        run: |
+          wg=$(brew --prefix wireguard-tools)/bin/wg
+          go=$(brew --prefix wireguard-go)/bin/wireguard-go
+          (umask 077 && "$wg" genkey >"$RUNNER_TEMP/ws.key")
+          "$wg" pubkey <"$RUNNER_TEMP/ws.key" >"$RUNNER_TEMP/ws.pub"
+          mac=$(sudo sh -c '"$1" pubkey <"$2"' sh "$wg" /etc/ws-tunnel/private.key)
+          sudo mkdir -p /var/run/wireguard
+          if ! sudo env WG_TUN_NAME_FILE=/var/run/wireguard/standin.name "$go" utun; then
+              echo '::warning::wireguard-go made no utun here: the steps of the tunnel are skipped'
+              echo UTUN=0 >>"$GITHUB_ENV"
+              exit 0
+          fi
+          utun=$(sudo cat /var/run/wireguard/standin.name)
+          sudo "$wg" set "$utun" private-key "$RUNNER_TEMP/ws.key" listen-port 51820 \
+              peer "$mac" allowed-ips 10.99.0.2/32
+          sudo ifconfig "$utun" up
+          sudo "$wg" show "$utun"
+          echo UTUN=1 >>"$GITHUB_ENV"
+      - name: With ws's key, setup.sh installs the daemon
+        run: |
+          echo "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws.pub")" >>~/.config/ws/mac.conf
+          sh mac/setup.sh
+          launchctl print "system/$LABEL" >/dev/null ||
+              { echo '::error::the daemon is not loaded'; exit 1; }
+          [ "$(stat -f '%Su:%Sg %Lp' "/Library/LaunchDaemons/$LABEL.plist")" = "root:wheel 644" ] ||
+              { echo '::error::the plist is not root:wheel 644'; exit 1; }
+          plutil -lint "/Library/LaunchDaemons/$LABEL.plist"
+      - name: A second run and --check print nothing
+        run: |
+          fail=0
+          for args in run --check; do
+              if [ "$args" = run ]; then
+                  out=$(sh mac/setup.sh 2>&1)
+              else
+                  out=$(sh mac/setup.sh --check 2>&1)
+              fi
+              if [ -n "$out" ]; then
+                  echo "::error::setup.sh ($args) printed what it should not:"
+                  printf '%s\n' "$out"
+                  fail=1
+              fi
+          done
+          exit "$fail"
+      - name: ~/.ssh/config has the Include first and keeps its own lines
+        run: |
+          head -n 1 ~/.ssh/config | grep -qx 'Include config.d/\*' ||
+              { echo '::error::the Include is not first'; cat ~/.ssh/config; exit 1; }
+          tail -n +3 ~/.ssh/config | cmp -s - "$RUNNER_TEMP/ssh-config-before" ||
+              { echo "::error::~/.ssh/config lost its own lines"; cat ~/.ssh/config; exit 1; }
+          ls ~/.ssh/config.*~
+          [ "$(stat -f %Lp ~/.ssh/config.d)" = 700 ] ||
+              { echo '::error::~/.ssh/config.d is not 700'; exit 1; }
+          [ "$(stat -f %Lp ~/.ssh/config.d/ws)" = 600 ] ||
+              { echo '::error::~/.ssh/config.d/ws is not 600'; exit 1; }
+      - name: ssh -G gives ws and ws-ssh their addresses
+        run: |
+          fail=0
+          # expect HOST KEY VALUE: ssh -G HOST must give KEY the value VALUE.
+          expect() {
+              got=$(ssh -G "$1" | awk -v k="$2" '$1 == k { print $2; exit }')
+              if [ "$got" != "$3" ]; then
+                  echo "::error::ssh -G $1 gives $2 '$got', not '$3'"
+                  fail=1
+              fi
+          }
+          expect ws hostname 10.99.0.1
+          expect ws port 22
+          expect ws user root
+          expect ws hostkeyalias ws
+          expect ws serveraliveinterval 30
+          expect ws-ssh hostname 127.0.0.1
+          expect ws-ssh port 22
+          expect ws-ssh user root
+          expect ws-ssh hostkeyalias ws
+          expect ws-ssh identitiesonly yes
+          exit "$fail"
+      - name: The daemon on the LAN tier
+        if: env.UTUN == '1'
+        run: |
+          for _ in $(seq 1 40); do
+              status=$(sudo "$TUNNEL" status 2>&1) || true
+              if printf '%s\n' "$status" | grep -qx 'tier: lan' &&
+                  printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$'; then
+                  printf '%s\n' "$status"
+                  exit 0
+              fi
+              sleep 1
+          done
+          echo '::error::no handshake on the LAN tier in 40 s; ws-tunnel status gives:'
+          printf '%s\n' "$status"
+          exit 1
+      - name: With nothing at WS_LAN_ADDRESS, the remote tier
+        if: env.UTUN == '1'
+        run: |
+          sed -i '' 's/^WS_LAN_ADDRESS=.*/WS_LAN_ADDRESS=192.0.2.1/' ~/.config/ws/mac.conf
+          sh mac/setup.sh 2>&1 | tee "$RUNNER_TEMP/hup.out"
+          grep -q "ran launchctl kill SIGHUP system/$LABEL" "$RUNNER_TEMP/hup.out" ||
+              { echo '::error::setup.sh sent the daemon no SIGHUP for a new tunnel.conf'; exit 1; }
+          for _ in $(seq 1 60); do
+              status=$(sudo "$TUNNEL" status 2>&1) || true
+              if printf '%s\n' "$status" | grep -qx 'tier: remote' &&
+                  printf '%s\n' "$status" | grep -qx 'endpoint: 127.0.0.1:51820' &&
+                  printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$'; then
+                  printf '%s\n' "$status"
+                  exit 0
+              fi
+              sleep 1
+          done
+          echo '::error::no handshake on the remote tier in 60 s; ws-tunnel status gives:'
+          printf '%s\n' "$status"
+          exit 1
+      - name: Without the LAN's keys, ws-ssh goes to WS_REMOTE
+        run: |
+          sed -i '' '/^WS_LAN/d' ~/.config/ws/mac.conf
+          sh mac/setup.sh
+          fail=0
+          for pair in hostname=localhost port=22022 addressfamily=inet; do
+              got=$(ssh -G ws-ssh | awk -v k="${pair%%=*}" '$1 == k { print $2; exit }')
+              if [ "$got" != "${pair#*=}" ]; then
+                  echo "::error::ssh -G ws-ssh gives ${pair%%=*} '$got', not '${pair#*=}'"
+                  fail=1
+              fi
+          done
+          exit "$fail"
+      - name: lib.sh's routes and resolvers
+        run: |
+          cat >"$RUNNER_TEMP/extension.sh" <<'EOF'
+          set -eu
+          . mac/lib.sh
+          fail=0
+          error() { echo "::error::$*"; fail=1; }
+          # until SECONDS COMMAND... polls COMMAND every second.
+          until_ok() {
+              n=$1
+              shift
+              while ! "$@" >/dev/null 2>&1; do
+                  n=$((n - 1))
+                  [ "$n" -gt 0 ] || return 1
+                  sleep 1
+              done
+          }
+          ws_tunnel_loaded || error 'ws_tunnel_loaded fails with the daemon loaded'
+          for cidr in 0.0.0.0/0 10.99.0.0/16 10.77.0.0/29 198.51.100.5/24; do
+              if (ws_tunnel_routes test "$cidr") 2>/dev/null; then
+                  error "ws_tunnel_routes took $cidr"
+              fi
+          done
+          out=$(WS_CHECK=1 ws_tunnel_routes test 198.51.100.0/24 2>&1)
+          case $out in *'+198.51.100.0/24'*) ;; *) error "WS_CHECK showed no diff: $out" ;; esac
+          ! sudo test -e /etc/ws-tunnel/routes.d/test || error 'WS_CHECK wrote routes.d/test'
+          ws_tunnel_routes test 198.51.100.0/24
+          if [ "${UTUN:-0}" = 1 ]; then
+              utun=$(sudo "$TUNNEL" status | awk -F': ' '$1 == "interface" { print $2 }')
+              routed() { route -n get 198.51.100.1 | grep -q "interface: $utun\$"; }
+              until_ok 20 routed || error "198.51.100.1 is not routed into the daemon's $utun"
+              route -n get 198.51.100.1 || true
+              ws_tunnel_routes test
+              until_ok 20 eval '! routed' || error "198.51.100.1 is still routed into $utun"
+          else
+              ws_tunnel_routes test
+          fi
+          ! sudo test -e /etc/ws-tunnel/routes.d/test || error 'routes.d/test outlived its removal'
+          shown() {
+              scutil --dns | awk '/^resolver #/ { d = 0 } /domain *: example\.test$/ { d = 1 }
+                  d && /nameserver\[0\] *: 198\.51\.100\.53$/ { found = 1 } END { exit !found }'
+          }
+          ws_resolver example.test 198.51.100.53
+          until_ok 20 shown || error 'scutil --dns shows no resolver for example.test'
+          scutil --dns | grep -B 1 -A 3 'example.test' || true
+          ws_resolver example.test
+          until_ok 20 eval '! shown' || error 'scutil --dns still shows example.test'
+          exit "$fail"
+          EOF
+          sh "$RUNNER_TEMP/extension.sh"
+      - name: The daemon's status and log
+        if: always()
+        run: |
+          sudo "$TUNNEL" status || true
+          sudo cat /var/log/ws-tunnel.log || true

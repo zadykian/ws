@@ -639,8 +639,9 @@ With ws's key as `WS_PUBLIC_KEY`, `setup.sh` again installs the tunnel's daemon.
 rebuilt server changes one file on each side, and nothing in the repository.
 
 The daemon, `ws-tunnel`, runs as root from launchd, from boot and before any login, through
-`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. It runs root's copies of Homebrew's
-`wg` and `wireguard-go`, which sit beside it in `/usr/local/libexec/ws-tunnel`: the user owns
+`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. Its functions, `tunnel-conf.sh` and
+`tunnel-paths.sh`, sit beside it in `/usr/local/libexec/ws-tunnel`, as root's copies too. It runs
+root's copies of Homebrew's `wg` and `wireguard-go`, which sit there as well: the user owns
 Homebrew's prefix, so a root daemon that ran Homebrew's files would let anything that runs as the
 user become root. A `brew upgrade` reaches the copies at the next run of `setup.sh`, which restarts
 the daemon where a copy changed. Its settings are in `/etc/ws-tunnel`, which only root reads: the
