@@ -9,6 +9,8 @@
       tags: [security]
     - role: network
       tags: [network]
+    - role: wireguard
+      tags: [wireguard]
     - role: shell
       tags: [shell]
     - role: tmux

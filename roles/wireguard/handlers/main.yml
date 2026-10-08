@@ -1,0 +1,23 @@
+---
+# A notified handler runs whatever --skip-tags says, so each one checks the systemd tag itself.
+# They run in the order written here. Their names are their own, as handlers of one name in two
+# roles would be one handler.
+
+# networkd reads the private key only as it creates wg0, so a key made anew where wg0 is up takes
+# effect once wg0 is deleted and networkd creates it again.
+- name: Delete wg0
+  ansible.builtin.command: ip link delete wg0
+  changed_when: true
+  when:
+    - "'systemd' not in ansible_skip_tags"
+    - "'wg0' in ansible_facts.interfaces"
+  tags: [systemd]
+
+# networkd creates wg0 where it is missing, and sets up again the links whose files are new or
+# changed, and no other. A peer's change updates wg0 in place, but networkd replaces all its peers
+# at once, which ends the tunnel's sessions: each peer handshakes again as it next sends.
+- name: Reload networkd for wg0
+  ansible.builtin.command: networkctl reload
+  changed_when: true
+  when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]

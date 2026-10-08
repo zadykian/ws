@@ -1,0 +1,4 @@
+---
+# The server's private key, which networkd reads as it creates wg0. The role makes it on the
+# machine and never reads it.
+wireguard_key: /etc/systemd/network/60-wg0.key
