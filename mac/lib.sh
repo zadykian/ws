@@ -121,11 +121,30 @@ ws_is_domain() {
     done
 }
 
+# ws_is_key KEY succeeds where KEY is a WireGuard public key: 43 base64 characters and an =.
+ws_is_key() {
+    case $1 in
+    *[!A-Za-z0-9+/=]* | *=?*) return 1 ;;
+    esac
+    [ "${#1}" = 44 ] && [ "${1%=}" != "$1" ]
+}
+
+# ws_is_user NAME succeeds where NAME is a user name ssh can take: letters, digits, ., _ and -,
+# with no - first, and 32 characters at most.
+ws_is_user() {
+    case $1 in
+    '' | -* | *[!A-Za-z0-9._-]*) return 1 ;;
+    esac
+    [ "${#1}" -le 32 ]
+}
+
 # ws_conf FILE reads the Mac's settings from FILE, ~/.config/ws/mac.conf, without running it: a
 # KEY=value a line, the value bare or in a pair of quotes, blank lines and lines starting with #
 # skipped. It stops on any other line, any other key, and a value of the wrong form.
 ws_conf() {
     [ -f "$1" ] || ws_die "$1 is missing: README.md's The Mac says what goes in it"
+    WS_USER=root
+    WS_PUBLIC_KEY=
     WS_LAN=
     WS_LAN_ADDRESS=
     WS_REMOTE=
@@ -148,6 +167,18 @@ ws_conf() {
         esac
         ws_ok=true
         case $ws_key in
+        WS_USER)
+            # shellcheck disable=SC2034 # for setup.sh
+            WS_USER=$ws_value
+            ws_is_user "$ws_value" || ws_ok=false
+            ;;
+        WS_PUBLIC_KEY)
+            # ws's WireGuard key, which the wireguard role prints for this file. Nothing here uses
+            # it yet; the file may hold it all the same.
+            # shellcheck disable=SC2034
+            WS_PUBLIC_KEY=$ws_value
+            ws_is_key "$ws_value" || ws_ok=false
+            ;;
         WS_LAN)
             WS_LAN=$ws_value
             ws_is_cidr "$ws_value" && ! ws_cidr_overlaps "$ws_value" "$ws_cable_net" &&
@@ -180,6 +211,8 @@ ws_conf() {
 # ws_conf_form KEY prints the form a value of KEY takes, for ws_conf's message.
 ws_conf_form() {
     case $1 in
+    WS_USER) echo "a user name of 32 characters at most: letters, digits, ., _ and -, no - first" ;;
+    WS_PUBLIC_KEY) echo "a WireGuard public key, 43 base64 characters and an =" ;;
     WS_LAN) echo "an IPv4 network, as 10.88.0.0/24, clear of $ws_cable_net and $ws_tunnel_net" ;;
     WS_LAN_ADDRESS) echo "an IPv4 address" ;;
     WS_REMOTE) echo "a host name or an IPv4 address" ;;
@@ -188,9 +221,10 @@ ws_conf_form() {
 }
 
 # ws_mode FILE prints FILE's permissions in octal, as 600, with GNU's stat or the BSD stat of
-# macOS.
+# macOS. It follows a link, as chmod does, since a link's own mode is 755 on macOS whatever its
+# target's.
 ws_mode() {
-    stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"
+    stat -L -c %a "$1" 2>/dev/null || stat -L -f %Lp "$1"
 }
 
 # ws_tmp makes an empty file of the user's own for a function's text, and sets ws_tmpfile to its
@@ -263,34 +297,74 @@ ws_put() {
     fi
 }
 
-# ws_include_first FILE LINE puts LINE, an Include, above every setting of the ssh_config FILE,
-# as ssh keeps the first value it reads for a key. It makes FILE where it is missing, and adds
-# LINE at the top where FILE lacks it, keeping the old file as FILE.TIME~. It stops where LINE
-# sits below a setting, and where FILE is a link, which it would replace with a file.
-ws_include_first() {
-    [ ! -L "$1" ] || ws_die "$1 is a link: put '$2' at the top of the file it points to"
-    if [ ! -e "$1" ]; then
-        ws_put "$1" 600 <<EOF
-$2
-EOF
-        return 0
-    fi
-    ws_at=$(awk -v want="$2" '
+# ws_include_at FILE PATH prints where the ssh_config FILE has `Include PATH`, PATH under ~/.ssh:
+# "first LINE" where no setting comes before it, "below LINE" where one does, nothing where FILE
+# lacks it. The line counts by ~/.ssh/ or the home's full path too, in quotes, before a comment, or
+# with other paths after PATH. awk reads the file a link points to.
+ws_include_at() {
+    awk -v want="$2" -v home="$HOME" '
         {
             line = $0
             sub(/^[ \t]+/, "", line)
             sub(/[ \t\r]+$/, "", line)
-            gsub(/[ \t]+/, " ", line)
         }
         line == "" || line ~ /^#/ { next }
-        tolower(line) == tolower(want) { print (++settings == 1 ? "first" : NR); exit }
+        {
+            key = line
+            sub(/[ \t=].*/, "", key)
+            path = substr(line, length(key) + 1)
+            sub(/^[ \t]*=?[ \t]*/, "", path)
+            if (substr(path, 1, 1) == "\"") {
+                path = substr(path, 2)
+                sub(/".*/, "", path)
+            } else
+                sub(/[ \t].*/, "", path)
+            if (index(path, "~/.ssh/") == 1)
+                path = substr(path, 8)
+            else if (index(path, home "/.ssh/") == 1)
+                path = substr(path, length(home) + 7)
+        }
+        tolower(key) == "include" && path == want {
+            print (settings ? "below " : "first ") NR
+            exit
+        }
         { settings++ }
-    ' "$1") || ws_die "cannot read $1"
+    ' "$1" || ws_die "cannot read $1"
+}
+
+# ws_include_ok FILE PATH stops where ws_include_first could not put `Include PATH` first in the
+# ssh_config FILE: where the line sits below a setting, or FILE is a link that lacks it. Else it
+# prints what ws_include_at does, and nothing where FILE is missing.
+ws_include_ok() {
+    [ -e "$1" ] || [ -L "$1" ] || return 0
+    ws_at=$(ws_include_at "$1" "$2") || exit 1
     case $ws_at in
-    first) return 0 ;;
-    '') ;;
-    *) ws_die "line $ws_at of $1 is '$2', below other settings, which ssh would take first: move it to the top" ;;
+    below*)
+        ws_die "line ${ws_at#below } of $1 is the Include of $2, below other settings, which ssh" \
+            "would take first: move it to the top"
+        ;;
+    '')
+        if [ -L "$1" ]; then
+            ws_die "$1 is a link to $(readlink "$1"): put 'Include $2' at the top of that file"
+        fi
+        ;;
     esac
+    echo "$ws_at"
+}
+
+# ws_include_first FILE PATH puts `Include PATH` above every setting of the ssh_config FILE, as ssh
+# keeps the first value it reads for a key. Where FILE is missing, it makes it. Where FILE lacks the
+# line, it adds it at the top, keeping the old file as FILE.TIME~. It stops where ws_include_ok
+# does.
+ws_include_first() {
+    if [ ! -e "$1" ] && [ ! -L "$1" ]; then
+        ws_put "$1" 600 <<EOF
+Include $2
+EOF
+        return 0
+    fi
+    ws_at=$(ws_include_ok "$1" "$2") || exit 1
+    [ -z "$ws_at" ] || return 0
     if ! ws_checking; then
         ws_backup=$1.$(date +%Y%m%d%H%M%S)~
         cp -p "$1" "$ws_backup" || ws_die "cannot keep $1 as $ws_backup"
@@ -298,13 +372,48 @@ EOF
     fi
     ws_tmp
     ws_top=$ws_tmpfile
-    { printf '%s\n\n' "$2" && cat "$1"; } >"$ws_top" || ws_die "cannot write $ws_top"
+    { printf 'Include %s\n\n' "$2" && cat "$1"; } >"$ws_top" || ws_die "cannot write $ws_top"
     ws_put "$1" "$(ws_mode "$1")" <"$ws_top"
     rm -f "$ws_top"
 }
 
+# ws_ignore_unknown FILE FIRST prints FIRST and the patterns of every IgnoreUnknown of the
+# ssh_config FILE, in any block, each once, joined by commas. ssh keeps the first IgnoreUnknown it
+# reads, so the one in a file included above FILE's settings must carry them all.
+ws_ignore_unknown() {
+    ws_from=/dev/null
+    [ ! -f "$1" ] || ws_from=$1
+    awk -v first="$2" '
+        function add(pattern,  lower) {
+            lower = tolower(pattern)
+            if (pattern == "" || lower in seen)
+                return
+            seen[lower] = 1
+            out = out (out == "" ? "" : ",") pattern
+        }
+        BEGIN { add(first) }
+        {
+            line = $0
+            sub(/^[ \t]+/, "", line)
+            key = line
+            sub(/[ \t=].*/, "", key)
+        }
+        tolower(key) == "ignoreunknown" {
+            patterns = substr(line, length(key) + 1)
+            sub(/^[ \t]*=?[ \t]*/, "", patterns)
+            sub(/[ \t]#.*/, "", patterns)
+            sub(/[ \t\r]+$/, "", patterns)
+            gsub(/"/, "", patterns)
+            n = split(patterns, each, /[, \t]+/)
+            for (i = 1; i <= n; i++)
+                add(each[i])
+        }
+        END { print out }
+    ' "$ws_from" || ws_die "cannot read $1"
+}
+
 # ws_own_hosts FILE NAME... warns of each line of the ssh_config FILE that starts a Host or Match
-# block for one of the NAMEs, whose settings come after those config.d's first line gives.
+# block for one of the NAMEs. Its settings come after those of the Include at the file's top.
 ws_own_hosts() {
     [ -f "$1" ] || return 0
     ws_file=$1
@@ -318,6 +427,7 @@ ws_own_hosts() {
             }
         }
     ' "$ws_file" | while IFS= read -r ws_hit; do
-        ws_say "warning: line ${ws_hit%%:*} of $ws_file,${ws_hit#*:}, sets its own values for ws: those in config.d, read first, win where both set a key"
+        ws_say "warning: line ${ws_hit%%:*} of $ws_file,${ws_hit#*:}, sets its own values for ws:" \
+            "those in config.d/ws, read first, win where both set a key"
     done
 }

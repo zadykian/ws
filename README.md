@@ -549,8 +549,8 @@ in Gateway as it runs keeps its build until a later run.
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the monitor it is docked at,
 over the home LAN, or from elsewhere through the router's port forward. `mac/setup.sh`, the one
-part of the repository that runs on the Mac, sets up `ssh ws-ssh` to take whichever of these the
-Mac is on. It is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone:
+part of the repository that runs on the Mac, sets up `ssh ws` to take whichever of these the Mac
+is on. It is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone:
 
 ```sh
 git clone https://github.com/zadykian/ws ~/repository/ws
@@ -572,23 +572,46 @@ it. `WS_REMOTE` is the router's name on the internet, and `WS_REMOTE_PORT` the p
 ws's 22. A way without its values is left out, and the file may be empty. The router's side is
 under [By hand](#by-hand).
 
-The script writes `~/.ssh/config.d/ws`, whose host `ws-ssh` goes:
+`WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
+another. The file may also hold `WS_PUBLIC_KEY`, ws's WireGuard key, which the wireguard role
+prints for it; nothing here uses it yet.
+
+The script writes `~/.ssh/config.d/ws`, whose host `ws` goes:
 
 - over the cable, to `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
 - over the LAN, to `WS_LAN_ADDRESS`, where one lies in `WS_LAN`;
 - elsewhere, to `WS_REMOTE` on `WS_REMOTE_PORT`, over IPv4, as the forward takes IPv4 alone.
 
 ssh picks the way from the Mac's own addresses (`Match localnetwork`, OpenSSH 9.4 and later), and
-probes nothing. Each way logs in as root with `~/.ssh/id_ed25519`, its passphrase kept in the
+probes nothing. Each way logs in as `WS_USER` with `~/.ssh/id_ed25519`, its passphrase kept in the
 Keychain, and checks ws's host key under the one name `ws` (`HostKeyAlias`). So `known_hosts` has
 one entry for ws whichever way ssh goes, and a host on another network that uses the LAN's subnet
 meets a host key mismatch, where ssh stops. A session ends after 90 s without word from ws.
 
-The script puts `Include config.d/*` first in `~/.ssh/config`, as ssh keeps the first value it reads
-for each key. Where the line is missing, it adds it at the top and keeps the old file as
-`~/.ssh/config.TIME~`; where the line sits below other settings, the script stops. It warns of a
-`Host` or `Match` of the file's own for `ws` or `ws-ssh`. A run changes only what differs, so a
-second prints nothing, and `--check` prints each change as a diff and makes none.
+The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
+reads for each key. So neither the file's own settings nor the other files of `config.d` override
+ws's. Where the line is missing, the script adds it at the top and keeps the old file as
+`~/.ssh/config.TIME~`. Where the line sits below other settings, the script stops. The line also
+counts by `~/.ssh/` or the home's full path, in quotes, or as the first of several paths.
+
+Where `~/.ssh/config` is a link, as a dotfiles manager makes it, the script reads the file it points
+to. It stops where the line is missing there, rather than replace the link with a file. Where
+`~/.ssh/config.d` is a link, the script warns as it writes `config.d/ws` there, as the file holds
+`mac.conf`'s addresses. It stops where `config.d/ws` is a file it did not write, rather than
+replace it. It warns of a `Host` or `Match` of `~/.ssh/config`'s own for `ws`, whose settings come
+after those of `config.d/ws`.
+
+ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for `UseKeychain`, which
+only Apple's ssh knows, so it carries the patterns of every `IgnoreUnknown` in `~/.ssh/config`.
+Run the script again after a change to those. A pattern in a file that `~/.ssh/config` includes
+must be in `~/.ssh/config` too, as the script reads no other file.
+
+Before it writes, the script has `ssh -G ws` read the new `config.d/ws` alone. Then it reads it
+first, `~/.ssh/config` next, without its own Include of the old file, and the system's file last.
+Where ssh refuses either, the script stops and changes nothing, under `--check` too. The system's
+file goes through an Include there, so its relative Includes resolve under `~/.ssh`. A run changes
+only what differs, so a second prints nothing. `--check` prints each change as a diff and makes
+none.
 
 The Mac's end of the cable is set by hand, once: in System Settings › Network, the monitor's
 adapter › Details › TCP/IP, Configure IPv4 Manually, with the IP address `10.77.0.2`, the subnet
@@ -603,7 +626,7 @@ LAN, macOS asks once whether iTerm2, Gateway or another app may find devices on 
 allow it. ssh run from Terminal needs no such grant. To see which way ssh went:
 
 ```sh
-ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
+ssh -v ws exit 2>&1 | grep 'Connecting to'
 ```
 
 ## Checks
