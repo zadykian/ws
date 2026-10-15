@@ -6,7 +6,8 @@
 #
 # It reads mac.conf without running it, and writes ~/.ssh/config.d/ws. Its host ws goes through the
 # WireGuard tunnel to ws, and ws-ssh reaches ws over the cable, the home LAN or the router's port
-# forward, the first of these the Mac is on. It puts `Include config.d/ws` first in ~/.ssh/config.
+# forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY, ws goes the ways
+# ws-ssh does. It puts `Include config.d/ws` first in ~/.ssh/config.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
 # wireguard-go and ws-tunnel in /usr/local/libexec/ws-tunnel; the Mac's key, made once, and
@@ -37,8 +38,16 @@ header="# Written by ws's mac/setup.sh"
 # ssh keeps the first value it reads for a key, so each Match sets Port 22 before Host ws-ssh sets
 # the forward's port, and the cable comes before the LAN. localnetwork matches the Mac's own
 # addresses, with no probe. originalhost matches the name typed, which a HostName set above does
-# not change, unlike Match host.
+# not change, unlike Match host. Until mac.conf has WS_PUBLIC_KEY, ws takes ws-ssh's ways too, so
+# that an ssh ws that worked before the tunnel goes on working through the keys' exchange.
 ssh_config() {
+    # The hosts of the direct ways, for Host and for Match originalhost's list.
+    direct=ws-ssh
+    listed=ws-ssh
+    if [ -z "$WS_PUBLIC_KEY" ]; then
+        direct='ws ws-ssh'
+        listed=ws,ws-ssh
+    fi
     cat <<EOF
 $header from ~/.config/ws/mac.conf: its next run replaces changes made here.
 
@@ -47,14 +56,14 @@ $header from ~/.config/ws/mac.conf: its next run replaces changes made here.
 IgnoreUnknown $1
 
 # ws over the cable, where the Mac has an address on it.
-Match originalhost ws-ssh localnetwork $ws_cable_net
+Match originalhost $listed localnetwork $ws_cable_net
     HostName $cable_server
     Port 22
 EOF
     if [ -n "$WS_LAN" ]; then
         cat <<EOF
 # ws on the home LAN, where the Mac has an address there.
-Match originalhost ws-ssh localnetwork $WS_LAN
+Match originalhost $listed localnetwork $WS_LAN
     HostName $WS_LAN_ADDRESS
     Port 22
 EOF
@@ -63,17 +72,23 @@ EOF
         cat <<EOF
 # Elsewhere, through the router's port forward, which takes IPv4 alone, while the router's name
 # may have an AAAA record too.
-Host ws-ssh
+Host $direct
     HostName $WS_REMOTE
     Port $WS_REMOTE_PORT
     AddressFamily inet
 EOF
     fi
-    cat <<EOF
+    if [ -n "$WS_PUBLIC_KEY" ]; then
+        cat <<EOF
 
-# ws through the tunnel, at the one address it has there whichever way the Mac is connected.
+# ws through the tunnel, at the one address it has there whichever way the Mac is connected, on
+# ws's own port, whatever a Host * of the user's sets.
 Host ws
     HostName $tunnel_server
+    Port 22
+EOF
+    fi
+    cat <<EOF
 
 # One known_hosts entry, ws's, whichever way ssh goes. 30 s between checks, 3 of them unanswered
 # before ssh gives up.
@@ -237,12 +252,21 @@ tell() {
     ws_checking && return 0
     public=$(sudo sh -c '"$1" pubkey <"$2"' sh "$libexec/wg" "$ws_etc/private.key") ||
         ws_die "cannot read the Mac's public key"
+    # /etc/wireguard and bootstrap.sh are root's, so a WS_USER other than root goes through sudo,
+    # with a terminal for its password. The key, which is public, goes in the remote command, so
+    # that ssh's stdin stays the terminal.
+    sudo=
+    ssh_t=
+    if [ "$WS_USER" != root ]; then
+        sudo='sudo '
+        ssh_t='-t '
+    fi
     cat <<EOF
 The Mac's WireGuard public key is $public
 Make it ws's peer, mac, through ws-ssh:
 
-    printf '%s\\n' '$public' | ssh ws-ssh 'cat >/etc/wireguard/mac.pub'
-    ssh ws-ssh /root/repository/ws/bootstrap.sh --tags wireguard
+    ssh ${ssh_t}ws-ssh "printf '%s\\n' '$public' | ${sudo}tee /etc/wireguard/mac.pub >/dev/null"
+    ssh ${ssh_t}ws-ssh ${sudo}/root/repository/ws/bootstrap.sh --tags wireguard
 EOF
     if [ -z "$WS_PUBLIC_KEY" ]; then
         cat <<EOF

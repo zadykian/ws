@@ -582,13 +582,17 @@ WS_REMOTE_PORT=22022
 address on it, the router's static lease for it. `WS_REMOTE` is the router's name on the
 internet, and `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every
 way, which the router forwards too; `WS_PORT` sets another. A way without its values is left out.
-The router's side is under [By hand](#by-hand).
+The router's side is under [By hand](#by-hand). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's
+key, in the order of [The Mac's tunnel](#the-macs-tunnel).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another.
 
-The script writes `~/.ssh/config.d/ws`. Its host `ws` goes to `10.99.0.1` from every network;
-where UDP is blocked, `ssh ws` times out, and `ssh ws-ssh` serves. `ws-ssh` goes:
+The script writes `~/.ssh/config.d/ws`. Once `mac.conf` has `WS_PUBLIC_KEY`, its host `ws` goes to
+`10.99.0.1` from every network; where UDP is blocked, `ssh ws` times out, and `ssh ws-ssh` serves.
+Before that, `ws` goes the ways `ws-ssh` does, so that `ssh ws` works through the keys' exchange:
+set `WS_PUBLIC_KEY` once ws has the Mac's key ([The Mac's tunnel](#the-macs-tunnel)). `ws-ssh`
+goes:
 
 - over the cable, to `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
 - over the LAN, to `WS_LAN_ADDRESS`, where one lies in `WS_LAN`;
@@ -638,9 +642,10 @@ from another address.
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the
 LAN, macOS asks once whether iTerm2, Gateway or another app may find devices on the local network,
-for `ws-ssh`: allow it. ssh run from Terminal needs no such grant, and neither does `ws`: the
-tunnel's utun is no local network, and macOS lets daemons that run as root reach one anyway
-(Apple's TN3179). To see which way `ws-ssh` went:
+for `ws-ssh`, and for `ws` until `WS_PUBLIC_KEY` is set: allow it. ssh run from Terminal needs no
+such grant, and neither does `ws` through the tunnel. The tunnel's utun is no local network, and
+macOS lets daemons that run as root reach one anyway (Apple's TN3179). To see which way `ws-ssh`
+went:
 
 ```sh
 ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
@@ -653,9 +658,11 @@ public key. `setup.sh`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only
 prints its public key with the two commands that make the Mac ws's peer, over `ws-ssh`:
 
 ```sh
-printf '%s\n' 'MAC_PUBLIC_KEY' | ssh ws-ssh 'cat >/etc/wireguard/mac.pub'
+ssh ws-ssh "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
 ssh ws-ssh /root/repository/ws/bootstrap.sh --tags wireguard
 ```
+
+For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
 
 With ws's key as `WS_PUBLIC_KEY`, `setup.sh` again installs the tunnel's daemon. A new Mac or a
 rebuilt server changes one file on each side, and nothing in the repository.
