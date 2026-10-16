@@ -47,6 +47,9 @@ It installs ansible-core and git with apt, clones this repository into `/root/re
 installs the Ansible collections of `requirements.yml`, and runs `site.yml`. Then do what stays
 by hand, below.
 
+The last role, `jetbrains`, needs about 12 GB free on the home's disk for the backends of Rider
+and GoLand. With less, the run fails at that role: [Disk space](docs/jetbrains.md#disk-space).
+
 ## Running it again
 
 `bootstrap.sh` leaves the clone in `/root/repository/ws` as it finds it, so pull first:

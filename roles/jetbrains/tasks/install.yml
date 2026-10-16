@@ -1,6 +1,7 @@
 ---
-# One backend's build, jetbrains_build, in its directory under Gateway's, as the devtools role
-# installs Go: checked against the SHA-256 JetBrains publishes, then unpacked, as ws_user.
+# One backend's build, jetbrains_build, in its directory under Gateway's, as ws_user and as the
+# devtools role installs Go. The archive is checked against the SHA-256 JetBrains publishes and
+# unpacked beside the directory, which then moves into place whole.
 
 # The file is the SHA-256, then the archive's name. A GET reads, so it runs in a dry run too.
 - name: Fetch the archive's SHA-256
@@ -24,17 +25,60 @@
     fail_msg: "{{ jetbrains_build.checksum_link }} holds no SHA-256"
     quiet: true
 
-# A directory without .expandSucceeded is what an install cut short left, the role's or Gateway's.
-# It goes before the disk is measured, as its space is freed. No diff, as it would list each file.
+# A directory of the build without .expandSucceeded may be one Gateway is unpacking, or a build a
+# later Gateway marks otherwise. A process that runs from it stops the run, rather than lose its
+# files. A run's own unpack goes in DIR.part, which no command line names as DIR/.
+- name: Look for processes that run from the build's directory
+  ansible.builtin.command:
+    argv: [pgrep, -f, --, "{{ jetbrains_build.dir }}/"]
+  register: jetbrains_build_running
+  changed_when: false
+  failed_when: jetbrains_build_running.rc > 1
+  check_mode: false
+
+- name: Check that no process runs from the build's directory
+  ansible.builtin.assert:
+    that: jetbrains_build_running.rc == 1
+    fail_msg: >-
+      {{ jetbrains_build.dir }} lacks .expandSucceeded, and process
+      {{ jetbrains_build_running.stdout_lines | join(', ') }} runs from it: Gateway may be
+      unpacking it. Run again once that process ends.
+    quiet: true
+
+# The build's directory and DIR.part are what an install cut short left, the role's or Gateway's.
+# They go before the disk is measured, as their space is freed. A run unpacks or removes a build
+# only while it holds flock's lock on Gateway's directory, here and in backend.yml. So the weekly
+# update and a run by hand never unpack one build at once, nor remove the tree the other unpacks.
+# Under the lock, the run checks for .expandSucceeded again, which the other may have written.
+# A dry run prints what it would remove. Where Gateway's directory isn't made yet, it has nothing
+# to remove, and flock would make a file of it.
 - name: Remove what an install cut short left
-  ansible.builtin.file:
-    path: "{{ jetbrains_build.dir }}"
-    state: absent
-  diff: false
+  ansible.builtin.command:
+    argv:
+      - flock
+      - "{{ jetbrains_dist }}"
+      - sh
+      - -ec
+      - |
+        [ ! -e "$2/.expandSucceeded" ] || exit 0
+        for dir in "$2" "$2.part"; do
+            if [ -e "$dir" ]; then
+                [ "$1" = check ] || rm -rf -- "$dir"
+                echo "$dir"
+            fi
+        done
+      - sh
+      - "{{ ansible_check_mode | ternary('check', 'remove') }}"
+      - "{{ jetbrains_build.dir }}"
+  register: jetbrains_cut_short
+  changed_when: jetbrains_cut_short.stdout | length > 0
+  check_mode: false
+  when: not (ansible_check_mode and jetbrains_dist_made is changed)
   become: "{{ ws_user != 'root' }}"
   become_user: "{{ ws_user }}"
 
-# A dry run where Gateway's directory isn't made yet measures the home it would be made in.
+# A dry run where Gateway's directory isn't made yet measures the home it would be made in. The
+# downloads' directory lies in the home too (vars/main.yml).
 - name: Read the disk space available for the backend, in bytes
   ansible.builtin.command:
     argv:
@@ -53,59 +97,70 @@
     fail_msg: >-
       {{ jetbrains_dist }} has {{ jetbrains_disk.stdout_lines[-1] | int // 1048576 }} MiB
       available, and {{ jetbrains_build.name }} needs 4 times its archive's
-      {{ jetbrains_build.size | int // 1048576 }} MiB: free some, or leave
-      {{ jetbrains_build.code }} out of jetbrains_backends.
+      {{ jetbrains_build.size | int // 1048576 }} MiB. Its older builds there go only once this
+      one is in place: free some, or leave {{ jetbrains_build.code }} out of jetbrains_backends.
     quiet: true
 
-# get_url checks the download against the SHA-256 before it writes dest, and downloads again where
-# dest is there with another SHA-256, another build's. It downloads into tmp_dest, beside dest,
-# rather than Ansible's temporary directory in the home, so that moving the archive into place is
-# a rename, not a copy of up to 2.4 GB. A dry run downloads nothing.
-- name: Download the backend's archive
-  ansible.builtin.get_url:
-    url: "{{ jetbrains_build.link }}"
-    dest: "{{ jetbrains_build.archive }}"
-    tmp_dest: "{{ jetbrains_build.archive | dirname }}"
-    checksum: sha256:{{ jetbrains_sha256 }}
-    owner: root
-    group: root
-    mode: "0644"
-  register: jetbrains_fetched
-  until: jetbrains_fetched is succeeded
-  retries: 5
-  delay: 10
-
-# As ws_user, who owns what Gateway unpacks. The archive holds one directory, whose contents go in
-# the build's, as Gateway puts them. .expandSucceeded comes last, so that a build cut short lacks
-# it. A dry run downloads nothing to unpack.
-- name: Unpack the backend in Gateway's directory
-  when: not ansible_check_mode
+- name: Download and unpack the backend
   become: "{{ ws_user != 'root' }}"
   become_user: "{{ ws_user }}"
   block:
-    - name: Create the build's directory
+    - name: Create the directory of the downloads
       ansible.builtin.file:
-        path: "{{ jetbrains_build.dir }}"
+        path: "{{ jetbrains_downloads }}"
         state: directory
         mode: "0755"
 
-    - name: Unpack the backend
-      ansible.builtin.unarchive:
-        src: "{{ jetbrains_build.archive }}"
-        dest: "{{ jetbrains_build.dir }}"
-        remote_src: true
-        extra_opts: [--strip-components=1]
-
-    - name: Mark the build as unpacked, as Gateway does
-      ansible.builtin.copy:
-        content: ""
-        dest: "{{ jetbrains_build.dir }}/.expandSucceeded"
+    # get_url checks the download against the SHA-256 before it writes dest. It downloads into
+    # tmp_dest, beside dest, rather than Ansible's temporary directory. So the archive moves into
+    # place by a rename, not a copy of up to 2.4 GB. A dry run makes no directory for it, and
+    # downloads nothing.
+    - name: Download the backend's archive
+      ansible.builtin.get_url:
+        url: "{{ jetbrains_build.link }}"
+        dest: "{{ jetbrains_build.archive }}"
+        tmp_dest: "{{ jetbrains_downloads }}"
+        checksum: sha256:{{ jetbrains_sha256 }}
         mode: "0644"
+      register: jetbrains_fetched
+      until: jetbrains_fetched is succeeded
+      retries: 5
+      delay: 10
+      when: not ansible_check_mode
 
-- name: Remove the backend's archive
-  ansible.builtin.file:
-    path: "{{ jetbrains_build.archive }}"
-    state: absent
+    # Under the lock, as above. The archive holds one directory, whose contents go in DIR.part, as
+    # Gateway puts them in its own. The tree takes the build's name once whole and marked, so that
+    # a build cut short lacks it. mv replaces no directory Gateway has made there since, even an
+    # empty one. A dry run has nothing to unpack.
+    - name: Unpack the backend, then move it into place
+      ansible.builtin.command:
+        argv:
+          - flock
+          - "{{ jetbrains_dist }}"
+          - sh
+          - -ec
+          - |
+            [ ! -e "$1/.expandSucceeded" ] || exit 0
+            rm -rf -- "$1.part"
+            mkdir -m 0755 -- "$1.part"
+            tar -xzf "$2" -C "$1.part" --strip-components=1
+            : >"$1.part/.expandSucceeded"
+            mv -T --update=none-fail -- "$1.part" "$1"
+            echo installed
+          - sh
+          - "{{ jetbrains_build.dir }}"
+          - "{{ jetbrains_build.archive }}"
+      register: jetbrains_unpacked
+      changed_when: jetbrains_unpacked.stdout == 'installed'
+      when: not ansible_check_mode
+
+  # With the archive goes what a download cut short left beside it, before the next backend's disk
+  # check.
+  always:
+    - name: Remove the directory of the downloads
+      ansible.builtin.file:
+        path: "{{ jetbrains_downloads }}"
+        state: absent
 
 # The unpack above is skipped in a dry run, so the dry run shows it here.
 - name: Show the backend a real run installs

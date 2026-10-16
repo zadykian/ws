@@ -16,8 +16,6 @@
     cache_valid_time: 3600
     lock_timeout: 600
 
-# copy never removes a file the role has since dropped. Nothing includes such a file, so it does
-# nothing there.
 - name: Copy the role for the weekly update
   ansible.builtin.copy:
     src: "{{ role_path }}/"
@@ -26,6 +24,35 @@
     group: root
     mode: "0644"
     directory_mode: "0755"
+
+# copy never removes a file the role has since dropped, and Ansible loads some with no include.
+# The copy's vars/main.yml would still load, say, or its tasks/main.yml shadow a new main.yaml. So
+# the copy's files the role lacks go too. A dry run before the first copy has none to find.
+- name: Find the role's files and those of its copy
+  ansible.builtin.find:
+    paths: "{{ item }}"
+    recurse: true
+    file_type: any
+    hidden: true
+  register: jetbrains_role_files
+  when: item is directory
+  loop:
+    - "{{ role_path }}"
+    - "{{ jetbrains_timer_dir }}/roles/jetbrains"
+
+- name: Remove from the copy what the role has dropped
+  ansible.builtin.file:
+    path: "{{ jetbrains_timer_dir }}/roles/jetbrains/{{ item }}"
+    state: absent
+  loop: >-
+    {{ jetbrains_copied | reject('in', jetbrains_kept) }}
+  vars:
+    jetbrains_kept: >-
+      {{ jetbrains_role_files.results[0].files | map(attribute='path')
+      | map('relpath', role_path) | list }}
+    jetbrains_copied: >-
+      {{ jetbrains_role_files.results[1].files | default([]) | map(attribute='path')
+      | map('relpath', jetbrains_timer_dir ~ '/roles/jetbrains') }}
 
 - name: Write the weekly update's playbook
   ansible.builtin.template:

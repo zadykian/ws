@@ -12,6 +12,13 @@
     lock_timeout: 600
   when: "'RD' in jetbrains_backends"
 
+# Before the backends, so that a run that fails at one, as on a disk short of room, still leaves
+# the timer to try again. Not from the weekly update itself, whose copy of the role is the one this
+# sets up.
+- name: Set up the weekly update
+  ansible.builtin.include_tasks: timer.yml
+  when: not jetbrains_from_timer
+
 # The latest release of each backend, which uri parses as JSON. A GET reads, so it runs in a dry
 # run too, and tries again, as a server can fail for a moment.
 - name: Fetch the backends' latest releases
@@ -49,7 +56,7 @@
       name: "{{ jetbrains_name }}"
       dir: "{{ jetbrains_dist }}/{{ (jetbrains_link | hash('sha256'))[:13] }}_{{ jetbrains_name }}"
       pattern: "^[0-9a-f]{13}_{{ jetbrains_product | regex_escape }}[0-9]"
-      archive: "{{ jetbrains_download | format(item) }}"
+      archive: "{{ jetbrains_downloads }}/{{ jetbrains_name }}.tar.gz"
   loop: "{{ jetbrains_backends }}"
 
 - name: Check that each backend has a release for this machine
@@ -81,7 +88,7 @@
       register: jetbrains_dist_made
 
     # Gateway writes .expandSucceeded last, once the archive is unpacked, and so does the role. A
-    # directory without it was cut short, and is installed again.
+    # directory that lacks the file was cut short, and is installed again.
     - name: Check which builds are in place
       ansible.builtin.stat:
         path: "{{ item.dir }}/.expandSucceeded"
@@ -93,79 +100,22 @@
       loop_control:
         label: "{{ item.name }}"
 
-- name: Install the builds not in place
-  ansible.builtin.include_tasks: install.yml
-  loop: >-
-    {{ jetbrains_installed.results | default([]) | rejectattr('stat.exists')
-    | map(attribute='item') }}
-  loop_control:
-    loop_var: jetbrains_build
-    label: "{{ jetbrains_build.name }}"
-
-# Each install removes its archive, so this removes what a run cut short left.
-- name: Remove the backends' archives
+# What a run cut short left in the downloads' directory goes, whatever its code, such as one since
+# dropped from jetbrains_backends.
+- name: Remove the backends' downloads
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ jetbrains_downloads }}"
     state: absent
-  loop: "{{ jetbrains_builds | default([]) | map(attribute='archive') }}"
 
-# Once each latest build is in place, the other builds of its product go, Gateway's own downloads
-# too; other products' stay. A build a process runs from, such as a backend Gateway started, stays
-# until a run finds none. A dry run where the directory isn't made yet has nothing to remove.
-- name: Remove the builds the latest ones replace
-  when:
-    - jetbrains_prune
-    - jetbrains_backends | length > 0
-    - not (ansible_check_mode and jetbrains_dist_made is changed)
-  become: "{{ ws_user != 'root' }}"
-  become_user: "{{ ws_user }}"
+# One backend at a time: its build where missing, then the removal of the builds it replaces. So
+# each install finds the room that the older builds of those before it took. Those in place come
+# first, as their removals need no download (backend.yml).
+- name: Install each backend, then remove the builds it replaces
+  ansible.builtin.include_tasks: backend.yml
   vars:
-    jetbrains_others: >-
-      {{ jetbrains_found.files | map(attribute='path')
-      | reject('in', jetbrains_builds | map(attribute='dir') | list) }}
-  block:
-    - name: Find the backends' builds
-      ansible.builtin.find:
-        paths: "{{ jetbrains_dist }}"
-        file_type: directory
-        use_regex: true
-        patterns: "{{ jetbrains_builds | map(attribute='pattern') }}"
-      register: jetbrains_found
-
-    # A backend's command line names its directory. pgrep exits 1 where no process matches.
-    - name: Look for processes that run from the other builds
-      ansible.builtin.command:
-        argv: [pgrep, -f, --, "{{ item }}/"]
-      register: jetbrains_running
-      changed_when: false
-      failed_when: jetbrains_running.rc > 1
-      check_mode: false
-      loop: "{{ jetbrains_others }}"
-      loop_control:
-        label: "{{ item | basename }}"
-
-    # No diff, as it would list each of the build's files, tens of thousands: the label names it.
-    - name: Remove the other builds no process runs from
-      ansible.builtin.file:
-        path: "{{ item.item }}"
-        state: absent
-      diff: false
-      when: item.rc == 1
-      loop: "{{ jetbrains_running.results }}"
-      loop_control:
-        label: "{{ item.item | basename }}"
-
-    - name: Show the builds kept while a process runs from them
-      ansible.builtin.debug:
-        msg: >-
-          {{ item.item | basename }} stays, as a process runs from it: the next run that finds
-          none removes it.
-      when: item.rc == 0
-      loop: "{{ jetbrains_running.results }}"
-      loop_control:
-        label: "{{ item.item | basename }}"
-
-# Not from the weekly update itself, whose copy of the role is the one this sets up.
-- name: Set up the weekly update
-  ansible.builtin.include_tasks: timer.yml
-  when: not jetbrains_from_timer
+    jetbrains_build: "{{ jetbrains_backend.item }}"
+  loop: >-
+    {{ jetbrains_installed.results | default([]) | sort(attribute='stat.exists', reverse=true) }}
+  loop_control:
+    loop_var: jetbrains_backend
+    label: "{{ jetbrains_backend.item.name }}"

@@ -1,0 +1,75 @@
+---
+# One backend, jetbrains_backend: its build, jetbrains_build, where .expandSucceeded is missing,
+# then the removal of the other builds of its product.
+
+- name: Install the backend's build
+  ansible.builtin.include_tasks: install.yml
+  when: not jetbrains_backend.stat.exists
+
+# Once the latest build is in place, the other builds of its product go, Gateway's own downloads
+# too; other products' stay. A build a process runs from, such as a backend Gateway started, stays
+# until a run finds none. A dry run where the directory isn't made yet has nothing to remove.
+- name: Remove the builds the latest one replaces
+  when:
+    - jetbrains_prune
+    - not (ansible_check_mode and jetbrains_dist_made is changed)
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  vars:
+    jetbrains_others: >-
+      {{ jetbrains_found.files | map(attribute='path') | reject('==', jetbrains_build.dir) }}
+  block:
+    - name: Find the builds of the backend's product
+      ansible.builtin.find:
+        paths: "{{ jetbrains_dist }}"
+        file_type: directory
+        use_regex: true
+        patterns: ["{{ jetbrains_build.pattern }}"]
+      register: jetbrains_found
+
+    # A backend's command line names its directory. pgrep exits 1 where no process matches.
+    - name: Look for processes that run from the other builds
+      ansible.builtin.command:
+        argv: [pgrep, -f, --, "{{ item }}/"]
+      register: jetbrains_running
+      changed_when: false
+      failed_when: jetbrains_running.rc > 1
+      check_mode: false
+      loop: "{{ jetbrains_others }}"
+      loop_control:
+        label: "{{ item | basename }}"
+
+    # Under the lock install.yml takes. A DIR.part another run unpacks into has its build's name by
+    # the time this run holds the lock, and so stays. A dry run prints what it would remove.
+    - name: Remove the other builds no process runs from
+      ansible.builtin.command:
+        argv:
+          - flock
+          - "{{ jetbrains_dist }}"
+          - sh
+          - -ec
+          - |
+            if [ -e "$2" ]; then
+                [ "$1" = check ] || rm -rf -- "$2"
+                echo "$2"
+            fi
+          - sh
+          - "{{ ansible_check_mode | ternary('check', 'remove') }}"
+          - "{{ item.item }}"
+      register: jetbrains_pruned
+      changed_when: jetbrains_pruned.stdout | length > 0
+      check_mode: false
+      when: item.rc == 1
+      loop: "{{ jetbrains_running.results }}"
+      loop_control:
+        label: "{{ item.item | basename }}"
+
+    - name: Show the builds kept while a process runs from them
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.item | basename }} stays, as a process runs from it: the next run that finds
+          none removes it.
+      when: item.rc == 0
+      loop: "{{ jetbrains_running.results }}"
+      loop_control:
+        label: "{{ item.item | basename }}"
