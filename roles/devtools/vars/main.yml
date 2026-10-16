@@ -4,8 +4,9 @@
 devtools_dotnet_ubuntu_sdks: ["10.0"]
 
 # The third-party apt repositories: each a deb822 .sources file, with its key in /etc/apt/keyrings.
-# The role removes both files of a repository it no longer needs. A key fetched again must have the
-# primary fingerprint given here: a renewed key keeps it, another key does not.
+# The role removes both files of a repository it no longer needs. A key fetched again must hold
+# one certificate, whose primary fingerprint is given here: a renewed key keeps it, another key, in
+# its place or beside it, does not.
 devtools_apt_repositories:
   # Ubuntu's archive has an older Node.
   - name: nodesource

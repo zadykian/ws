@@ -17,14 +17,14 @@
   loop_control:
     label: "{{ item.name }}"
 
-# The diff below is off, so a key that changes shows no diff: only a key with the fingerprint its
-# repository pins goes in.
+# The diff below is off, so a key that changes shows no diff, and apt trusts every certificate in
+# its file. So a key goes in only where it holds one certificate, the one its repository pins.
 - name: Check the keys' fingerprints
   ansible.builtin.assert:
-    that: item.content | openpgp_fingerprint == item.item.fingerprint
+    that: item.content | openpgp_fingerprints == [item.item.fingerprint]
     fail_msg: >-
-      {{ item.item.key }} served a key whose fingerprint is
-      {{ item.content | openpgp_fingerprint }}, not {{ item.item.fingerprint }}
+      {{ item.item.key }} served the primary keys
+      {{ item.content | openpgp_fingerprints | join(', ') }}, not {{ item.item.fingerprint }} alone
     quiet: true
   loop: "{{ devtools_keys.results }}"
   loop_control:
