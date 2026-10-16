@@ -4,8 +4,9 @@ The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headle
 Go and rustup.
 
 Node comes from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's
-archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again
-and checks each against the fingerprint the role pins.
+archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again,
+and a key goes in only where it holds one certificate, whose fingerprint the role pins. A subkey
+added to that certificate passes, and a second certificate fails the run.
 
 Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it,
 and is replaced when `group_vars/all.yml` pins another version. rustup installs Rust's stable
