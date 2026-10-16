@@ -1,2 +1,3 @@
+# Written by github.com/zadykian/ws's base role; edit it there.
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";

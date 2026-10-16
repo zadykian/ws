@@ -163,6 +163,20 @@
   changed_when: true
   tags: [systemd]
 
+# A dry run skips the command above. This shows the change where the file is in place but not
+# swapped to, as after a run with --skip-tags systemd; the tasks above show the others.
+- name: Show the swap file would be swapped to
+  ansible.builtin.debug:
+    msg: /swapfile would be swapped to.
+  when:
+    - ansible_check_mode
+    - base_swap_size_mb | int > 0
+    - "'/swapfile' not in base_swap_areas"
+    - base_swap_created is not changed
+    - not base_swap_stale
+  changed_when: true
+  tags: [systemd]
+
 # Swapped off once /swapfile is on, what the installer's file holds can move there.
 - name: Stop swapping to the installer's swap file at boot
   ansible.builtin.lineinfile:
@@ -202,5 +216,17 @@
 - name: Set swappiness now
   ansible.builtin.command: /usr/lib/systemd/systemd-sysctl --strict --prefix=vm.swappiness
   when: base_swappiness_now.content | b64decode | int != base_swappiness | int
+  changed_when: true
+  tags: [systemd]
+
+# A dry run skips the command above and reports no change for it, so this shows the change.
+- name: Show the swappiness in force would change
+  ansible.builtin.debug:
+    msg: >-
+      The swappiness in force would go from {{ base_swappiness_now.content | b64decode | int }}
+      to {{ base_swappiness | int }}.
+  when:
+    - ansible_check_mode
+    - base_swappiness_now.content | b64decode | int != base_swappiness | int
   changed_when: true
   tags: [systemd]

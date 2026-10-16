@@ -7,6 +7,13 @@ The `base` role sets up the ground every machine stands on:
 - unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily;
 - a swap file, `/swapfile`, the size of the RAM rounded up to a whole GiB.
 
+## Unattended upgrades
+
+`/etc/apt/apt.conf.d/20auto-upgrades` holds the settings the package writes, under the role's
+header. ucf, which keeps the file for the package, takes the header for a change made by hand. So
+an upgrade of unattended-upgrades that ships other settings asks which file to keep, and keeps the
+role's where no one answers. Where the package's is taken, the next run writes the role's back.
+
 ## The swap file
 
 `-e base_swap_size_mb=N` sets another size in MiB, and 0 none. The file replaces the installer's
