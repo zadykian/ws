@@ -18,7 +18,9 @@ The `network` role then writes `/etc/netplan/60-direct-link.yaml`, which gives t
 file with the other files' entries of the port's name, as the installer's: its settings win, and
 its address joins theirs. Boot doesn't wait for the link, which is up only while the Mac is docked.
 The Mac takes `10.77.0.2`, with the mask `255.255.255.252` and no router, in its adapter's
-settings, by hand. ufw lets in SSH over the cable, as over any interface.
+settings, by hand. ufw lets in SSH over the cable, as over any interface. The `wireguard` role
+keeps Docker's containers off the cable, so a change of the port needs a run of it too
+([The firewall](wireguard.md#the-firewall)).
 
 The run stops where the port looks like an uplink: it carries a default route, in any routing
 table, or holds an IPv4 lease outside the direct link's subnet. A static address outside it, as an

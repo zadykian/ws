@@ -96,6 +96,9 @@ banning the address of the network the Mac is on after 5 failed ones. Over the t
 the Mac as `10.99.0.2`, which a ban would shut out of `ssh ws` for 10 minutes, while `ws-ssh` comes
 from another address.
 
+ws keeps Docker's bridged containers off the tunnel and the cable
+([The firewall](wireguard.md#the-firewall)). On the LAN, the Mac is a host like any other.
+
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,
 macOS asks once whether iTerm2, Gateway or another app may find devices on the local network, for
@@ -136,8 +139,10 @@ The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are t
 daemon reads no file the user can write. macOS lists the daemon under System Settings › General ›
 Login Items & Extensions, where "Allow in the Background" must stay on.
 
-The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's. The daemon points it at
-the first of these that answers, each on UDP 51820:
+The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
+The scripts fix both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
+variables give either end another address ([The tunnel](wireguard.md#the-tunnel)). The daemon
+points the Mac's end at the first of these that answers, each on UDP 51820:
 
 - the cable, `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
 - the LAN, `WS_LAN_ADDRESS`, where one lies in `WS_LAN`;
@@ -201,4 +206,5 @@ nothing as a script sources it. It sets `WS_CHECK` for its own `--check`, and ca
 With no network or address, each removes its file, `ws_resolver` only a file it wrote. Under
 `WS_CHECK` they print diffs and change nothing. The files outlive the daemon. While the daemon is
 stopped, the routes go with its utun, and the domain's lookups go out by the Mac's own network and
-fail. ws's firewall forwards nothing, so a network behind ws needs its side set up on ws too.
+fail. ufw on ws forwards nothing from the tunnel, so a network behind ws needs its side set up on ws
+too.

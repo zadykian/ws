@@ -1,0 +1,17 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Keeps Docker's containers off the Mac, before Docker starts, through docker-user.sh, which says
+# how. Docker wants the unit rather than requires it: a unit it required would keep Docker down
+# where the drops fail, and restart Docker at each restart of the unit, as a run makes.
+[Unit]
+Description=Keep Docker's containers off the Mac's tunnel and cable
+Documentation=https://github.com/zadykian/ws/blob/main/docs/wireguard.md#the-firewall
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart={{ wireguard_docker_user }} {{ wireguard_mac_interfaces | join(' ') }}
+
+[Install]
+WantedBy=docker.service

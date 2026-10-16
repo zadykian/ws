@@ -3,8 +3,9 @@
 # They run in the order written here. Their names are their own, as handlers of one name in two
 # roles would be one handler.
 
-# networkd reads the private key only as it creates wg0, so a key made anew where wg0 is up takes
-# effect once wg0 is deleted and networkd creates it again.
+# networkd reads the private key as it creates wg0, and again as a reload finds the .netdev changed,
+# but not where the key's file alone changed. So a key other than wg0's takes effect once wg0 is
+# deleted and networkd creates it again.
 - name: Delete wg0
   ansible.builtin.command: ip link delete wg0
   changed_when: true
@@ -20,4 +21,16 @@
   ansible.builtin.command: networkctl reload
   changed_when: true
   when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]
+
+# Puts a changed script or unit in force at once. A dry run where the unit isn't written yet has
+# none to restart.
+- name: Apply the containers' drops
+  ansible.builtin.systemd_service:
+    name: wireguard-docker-user.service
+    state: restarted
+    daemon_reload: true
+  when:
+    - "'systemd' not in ansible_skip_tags"
+    - not ansible_check_mode or '/etc/systemd/system/wireguard-docker-user.service' is file
   tags: [systemd]

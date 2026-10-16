@@ -13,16 +13,21 @@
       {{ wireguard_peers | wireguard_settings_problems(wireguard_address, wireguard_port) }}
 
 # networkd, its directory /etc/systemd/network and its group systemd-network come with systemd,
-# which a container may lack, so that --tags wireguard stands alone. wireguard-tools' recommends,
-# iptables or nftables, serve wg-quick, which the role doesn't use.
-- name: Install wireguard-tools and systemd
+# which a container may lack, so that --tags wireguard stands alone. iptables holds the containers'
+# drops (containers.yml). wireguard-tools' recommends, nftables or iptables, serve wg-quick, which
+# the role doesn't use.
+- name: Install wireguard-tools, systemd and iptables
   ansible.builtin.apt:
-    name: [wireguard-tools, systemd]
+    name: [wireguard-tools, systemd, iptables]
     state: present
     install_recommends: false
     update_cache: true
     cache_valid_time: 3600
     lock_timeout: 600
+
+# Ahead of wg0's tasks, which the drops don't need: a run that stops on wg0 still puts them in.
+- name: Keep Docker's containers off the Mac
+  ansible.builtin.import_tasks: containers.yml
 
 # networkd creates wg0 and gives it its address. Ubuntu Server runs it, as netplan renders with it.
 - name: Read the services' states
@@ -43,9 +48,10 @@
 
 # networkd reads the key as the user systemd-network, so the file is root:systemd-network 0640, as
 # systemd.netdev(5) asks. It is written under umask 077, then given its group and mode, then its
-# name. Ansible never reads it. A credential in /etc/credstore, which could be 0600, would be read
-# only as networkd starts, so the run that made it would restart networkd under the uplink. A dry
-# run reports the key it would make, and makes none.
+# name. No task copies, shows or diffs it: wg pubkey alone reads it, below. A credential in
+# /etc/credstore, which could be 0600, would be read only as networkd starts, so the run that made
+# it would restart networkd under the uplink. A dry run reports the key it would make, and makes
+# none.
 - name: Make the server's private key
   ansible.builtin.shell:
     cmd: |
@@ -59,6 +65,59 @@
   notify:
     - Delete wg0
     - Reload networkd for wg0
+
+# A key put back by hand may lack that owner, group and mode. networkd can't read a root:root 0600
+# key as it next creates wg0, and anyone can read one written under umask 022. A dry run that would
+# make the key has none to set.
+- name: Give the server's private key its owner, group and mode
+  ansible.builtin.file:
+    path: "{{ wireguard_key }}"
+    owner: root
+    group: systemd-network
+    mode: "0640"
+  when: wireguard_key is file
+  notify: Reload networkd for wg0
+
+# From the private key, which stays in its file: the Mac's side of the tunnel needs it.
+- name: Read the server's public key
+  ansible.builtin.shell: wg pubkey <{{ wireguard_key }}
+  register: wireguard_public_key
+  changed_when: false
+  check_mode: false
+  when: wireguard_key is file
+
+# wg0 keeps its key where the key's file alone changed, as after a key put back by hand (Delete wg0,
+# in the handlers), while the run shows the file's. The facts hold no interfaces where ip was
+# missing as they were read, as on a container's first run.
+- name: Read wg0's public key
+  ansible.builtin.command: wg show wg0 public-key
+  register: wireguard_wg0_key
+  changed_when: false
+  check_mode: false
+  when:
+    - wireguard_key is file
+    - "'wg0' in ansible_facts.interfaces | default([])"
+
+- name: Have networkd create wg0 again where it holds another key than the file's
+  ansible.builtin.debug:
+    msg: wg0 holds another key than {{ wireguard_key }}, so the run deletes it before the reload.
+  changed_when: true
+  when:
+    - wireguard_wg0_key is not skipped
+    - wireguard_wg0_key.stdout != wireguard_public_key.stdout
+  notify:
+    - Delete wg0
+    - Reload networkd for wg0
+
+# networkd creates wg0 as it starts or reloads, so a wg0 it left out, as for a key it couldn't read,
+# or one deleted by hand, stays missing until a reload. A container, without networkd, skips this.
+- name: Have networkd create wg0 where it is missing
+  ansible.builtin.debug:
+    msg: wg0 is missing, so the run reloads networkd, which creates it.
+  changed_when: true
+  when: "'wg0' not in ansible_facts.interfaces | default([])"
+  notify: Reload networkd for wg0
+  tags: [systemd]
 
 # A peer's public key is a line, as wg pubkey prints it, in /etc/wireguard/NAME.pub, in the 0700
 # directory wireguard-tools makes. Access to the machine is granted on the machine, as SSH's
@@ -124,7 +183,8 @@
   notify: Reload networkd for wg0
 
 # On every interface, as the Mac reaches the port over the cable, the LAN and the router's forward.
-# Inside the tunnel, ufw takes wg0 as any interface: it lets in SSH, and forwards nothing.
+# Inside the tunnel, ufw takes wg0 as any interface: it lets in SSH and forwards nothing, but Docker
+# forwards ahead of it (containers.yml).
 - name: Allow WireGuard through ufw
   community.general.ufw:
     rule: allow
@@ -133,25 +193,51 @@
     comment: WireGuard
   tags: [systemd]
 
+# ufw keeps the rule of a port that wireguard_port named before. The role's rules carry the comment
+# WireGuard, as ufw show added prints them; one made by hand, without it, stays.
+- name: Read ufw's rules
+  ansible.builtin.command: ufw show added
+  register: wireguard_ufw_rules
+  changed_when: false
+  check_mode: false
+  tags: [systemd]
+
+- name: Remove WireGuard's rules for other ports from ufw
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+    comment: WireGuard
+    delete: true
+  loop: "{{ wireguard_ufw_ports | reject('eq', wireguard_port | string) }}"
+  vars:
+    wireguard_ufw_ports: >-
+      {{ wireguard_ufw_rules.stdout
+      | regex_findall("^ufw allow ([0-9]+)/udp comment 'WireGuard'$", multiline=True) }}
+  tags: [systemd]
+
 - name: Apply wg0's changes now
   ansible.builtin.meta: flush_handlers
 
-- name: Look for the server's private key
-  ansible.builtin.stat:
-    path: "{{ wireguard_key }}"
-  register: wireguard_key_file
-
-# From the private key, which stays in its file: the Mac's side of the tunnel needs it.
-- name: Read the server's public key
-  ansible.builtin.shell: wg pubkey <{{ wireguard_key }}
-  register: wireguard_public_key
+# networkd creates wg0 a moment after the reload. A dry run, whose handlers change nothing, and a
+# container, without networkd, skip this, and so does --tags systemd, which skips the read of the
+# file's key.
+- name: Check that wg0 holds the server's key
+  ansible.builtin.command: wg show wg0 public-key
+  register: wireguard_wg0_key_now
   changed_when: false
-  check_mode: false
-  when: wireguard_key_file.stat.exists
+  failed_when: wireguard_wg0_key_now.stdout != wireguard_public_key.stdout
+  until: wireguard_wg0_key_now.stdout == wireguard_public_key.stdout
+  retries: 10
+  delay: 1
+  when:
+    - not ansible_check_mode
+    - wireguard_public_key is defined
+  tags: [systemd]
 
 - name: Show the server's public key
   ansible.builtin.debug:
     msg: >-
       {{ "ws's WireGuard public key, for WS_PUBLIC_KEY in the Mac's mac.conf: "
-      ~ wireguard_public_key.stdout if wireguard_key_file.stat.exists
+      ~ wireguard_public_key.stdout if wireguard_public_key is not skipped
       else 'The server has no WireGuard key yet: a real run makes it and shows its public key.' }}
