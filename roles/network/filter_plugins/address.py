@@ -6,7 +6,8 @@ Python's ipaddress, as ansible.utils' address filters need netaddr on the contro
 import ipaddress
 
 # The longest prefix of a subnet of more than two addresses, which keeps its first and its last
-# for itself and its broadcast: a /31 or a /32 has neither (RFC 3021).
+# for itself and its broadcast. A /31's two addresses are both hosts' (RFC 3021), and a /32 is one
+# host's alone.
 LONGEST_BROADCAST_PREFIX = 30
 
 

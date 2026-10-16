@@ -1,9 +1,10 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
 # The direct link to the Mac: an address, and no DHCP, gateway or DNS. netplan merges this entry
-# with any other file's for the interface, as the installer's: its settings win, as this file's
-# name sorts after theirs, and its address joins theirs. optional: boot doesn't wait for the link,
-# which is up only while the Mac is plugged in.
+# with other files' entries of the same name, as the installer's. Its settings win, as this file's
+# name sorts after theirs, and its address joins theirs. An entry of another name that fits the
+# interface keeps a networkd file of its own, which networkd may take first, so the role refuses
+# one. optional: boot doesn't wait for the link, which is up only while the Mac is plugged in.
 network:
   version: 2
   ethernets:
