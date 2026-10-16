@@ -91,8 +91,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - Secrets are never in this repository ([By hand](README.md#by-hand)).
 - ws is public. No word of the local list, `~/.config/ws/forbidden-words`, goes into it. That
   holds for its files, the names of files and branches, the commit messages, and the text of pull
-  requests and issues. The hooks in `.githooks` refuse a commit that holds one, and name the line,
-  never the word. Never print the list or a word of it, and never pass `--no-verify`
+  requests and issues. The hooks in `.githooks` refuse a commit that holds one. They name an added
+  line by its file and number, never its text, but print a file name that holds one whole. Never
+  print the list or a word of it, and never pass `--no-verify`
   ([The hooks](docs/checks.md#the-hooks)).
 - `make lint` fails on any finding, warnings included, in any line of any file
   ([make lint](docs/checks.md#make-lint); #47).
@@ -128,5 +129,8 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
   [writing.md](.claude/rules/writing.md), loaded with the files they cover.
 - Skills in `.claude/skills/`: `issue`, and `land`, run by hand only.
 - Agents in `.claude/agents/`: `doc-editor`, which edits prose to the writing policy.
-- Hooks in `.claude/hooks/`: the file's gates after each Edit or Write, and `make lint` as a turn
-  ends ([Claude's hooks](docs/checks.md#claudes-hooks)).
+- Hooks in `.claude/hooks/`: the file's gates after each Edit or Write, and `make lint` in the
+  trees the turn wrote as it ends. Both run a tree's code only where each commit since
+  `origin/main` bears its author's signature and nothing is staged. A diff applied to a tree, or a
+  merge left unstaged, goes unseen, so read an outside pull request at its commits
+  ([Claude's hooks](docs/checks.md#claudes-hooks)).

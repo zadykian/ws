@@ -22,7 +22,8 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 - `rumdl`: rumdl's rules on the Markdown files, with lines of 100 columns but in code blocks and
   tables (`.rumdl.toml`);
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
-- `gitleaks`: every commit of the history, for secrets;
+- `gitleaks`: every commit of the history, for secrets, or those that `LOG_OPTS` picks with git
+  log's options;
 - `commits`: the messages from `BASE`, `origin/main` by default, to `HEAD`, as `tools/commits`
   says. On a push to `main`, CI's `BASE` is the commit `main` was at before.
 
@@ -68,15 +69,46 @@ with a warning.
 ## The hooks
 
 The hooks in `.githooks` check each commit before git makes it. Enable them in a clone, and so in
-its worktrees, with `git config core.hooksPath .githooks`, as `bootstrap.sh` does in its clone.
-Where `~/.config/ws/forbidden-words` exists, a word or phrase a line, they refuse a commit whose
-added lines, file names or message hold one. Where gitleaks is installed, they refuse a staged
-secret too.
+its worktrees, with `git config core.hooksPath "$PWD/.githooks"` in its checkout, as `bootstrap.sh`
+does in its clone. The path is absolute, so that each worktree runs the checkout's hooks, never
+those of the branch it holds, such as an outside pull request's. Where
+`~/.config/ws/forbidden-words` exists, a word or phrase a line, they refuse a commit whose added
+lines, file names or message hold one. Where gitleaks is installed, they refuse a staged secret
+too.
 
 ## Claude's hooks
 
-`.claude/settings.json` has Claude Code run two hooks, both POSIX sh. After each Edit or Write,
-`.claude/hooks/lint-file.sh` runs the gates of the file's kind on that file alone:
+`.claude/settings.json` has Claude Code run two hooks, both POSIX sh, with the functions of
+`.claude/hooks/lib.sh`. Each runs the work tree's own code, as root on the server: its `Makefile`
+and `tools/`, and the Python tools and collections its pins name. ansible-lint loads the tree's
+`ansible.cfg`, inventory and Python too, such as the filter plugins. Its syntax check of
+`site.yml` runs a lookup in the playbook's YAML, as in an import's name, and `python3 -m venv`
+imports modules from the tree's root. So each hook runs that code only on a tree the maintainer
+vouches for, where these three hold:
+
+- each commit from `origin/main` to `HEAD` has a good signature, `%G?` of `G`, by the key that
+  `gpg.ssh.allowedSignersFile` lists for the commit's author;
+- the index matches `HEAD`, with no change staged and no conflict;
+- the gates' code, as `lib.sh` lists it, matches `HEAD` in the work tree too, with no file of it
+  untracked.
+
+On any other tree, a hook runs no gate and shows the user a line. That holds for an outside pull
+request fetched into a worktree, and for one merged, cherry-picked or checked out by path while the
+change stays staged. The scripts themselves are the project checkout's, so an outside pull request
+goes in a worktree, never there. The check reads what git records, so it lets two cases through:
+
+- A commit made here carries the maintainer's signature, whether Claude, a rebase or a cherry-pick
+  made it. A rebased outside commit keeps its author, so the check refuses it, unless its author's
+  address is the maintainer's. An outside change committed here as the maintainer's own passes:
+  read it first.
+- The check sees an unstaged change in the gates' code alone, and not where git ignores, as in
+  `.cache/`. So outside code may run where `git apply`, `git restore --source` or `git stash apply`
+  writes it, or where `git reset` or `git restore --staged` unstages a merge or checkout of it. The
+  maintainer's own edits look the same. Read an outside pull request at its own commits, never as a
+  diff applied to a tree.
+
+After each Edit or Write, `.claude/hooks/lint-file.sh` runs the gates of the file's kind on that
+file alone:
 
 - Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
 - YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
@@ -84,6 +116,18 @@ secret too.
 - Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
 
 It passes over a file outside the repository, one git ignores, and one of a branch from before the
-gates. As Claude ends its turn, `.claude/hooks/lint-branch.sh` runs `make lint` where the work tree
-differs from `origin/main`. A finding of either goes back to Claude, which then fixes it. The Stop
-hook runs once a stop: where Claude stops again, `stop_hook_active` lets it.
+gates. It passes over a path with a character outside `[A-Za-z0-9._/@+-]` or a part starting with
+`-` too, with a line to the user. Its findings go back to Claude, which fixes them. A staged
+change, or an edit of the gates' code, stops the gates in its tree until a commit takes it.
+
+It records the file's work tree too, in a file named by the session's id in `claude-lint/` of the
+clone's git directory. As Claude ends its turn, `.claude/hooks/lint-branch.sh` runs `make lint` in
+each recorded tree that the maintainer vouches for and that differs from `origin/main`. Then it
+clears the record, so a turn that wrote no file runs nothing. Nor does a turn that wrote through
+Bash alone, as with sed: `make lint` by hand, or CI, checks its changes. A tree whose gates' code
+the turn edited and committed is linted then too. That run's gitleaks scans only the branch's own
+commits, from `origin/main`.
+
+A failure goes back to Claude, which fixes what the turn broke, and reports rather than fixes one
+from before it. Where Claude stops again, `stop_hook_active` lets it. The hook then lints the trees
+written since the failure, and shows the user what still fails.

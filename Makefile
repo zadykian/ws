@@ -6,6 +6,9 @@
 FILES =
 # The ref after which tools/commits checks the commits' messages, up to HEAD.
 BASE = origin/main
+# The commits gitleaks scans, as git log's options, which its --log-opts takes: every commit of
+# the history when empty.
+LOG_OPTS =
 # The Python of the lint tools' venv: 3.12 to 3.14, the Pythons that ansible-core 2.20 supports
 # and that the wheels of .github/lint-requirements.txt cover.
 PYTHON = python3
@@ -101,9 +104,10 @@ actionlint:
 zizmor:
 	tools/run zizmor .
 
-# Every commit of the history. --redact keeps a secret it finds out of the log, which is public.
+# The commits of LOG_OPTS. --redact keeps a secret it finds out of the log, which is public.
 gitleaks:
-	tools/run gitleaks git --no-banner --redact --verbose .
+	tools/run gitleaks git --no-banner --redact --verbose \
+		$(if $(LOG_OPTS),--log-opts='$(LOG_OPTS)') .
 
 # The headers and bodies of the commits from BASE to HEAD.
 commits:

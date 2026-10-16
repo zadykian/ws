@@ -61,8 +61,9 @@ packages() {
         ansible-core ca-certificates git python3-apt || die "cannot install ansible-core and git"
 }
 
-# clone clones the repository into dir, or leaves the clone there as it is, so that a run applies
-# what the clone holds, and enables the hooks in its .githooks.
+# clone clones the repository into dir, or leaves a clone there unchanged, so that a run applies
+# what the clone holds. It enables the hooks in its .githooks by an absolute path, as
+# docs/checks.md says under The hooks.
 clone() {
     if [ -e "$dir/.git" ]; then
         say "using the clone in $dir as it is"
@@ -72,7 +73,7 @@ clone() {
         mkdir -p "${dir%/*}"
         git clone "$repository" "$dir" || die "cannot clone $repository"
     fi
-    git -C "$dir" config core.hooksPath .githooks
+    git -C "$dir" config core.hooksPath "$dir/.githooks"
 }
 
 main() {
