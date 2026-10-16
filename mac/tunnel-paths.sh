@@ -39,34 +39,49 @@ has_address_in() {
     return 1
 }
 
-# allowed_for ENDPOINT sets want to the networks of routes.d that the tunnel takes with ENDPOINT
-# in use, and allowed to the peer's AllowedIPs: ws's address and those. A network that holds
-# ENDPOINT would send the tunnel's own packets into it, so it goes in left_out instead.
+# allowed_for HOSTS sets want to the networks of routes.d that the tunnel takes with the endpoints
+# HOSTS, and out to those that hold one. It sets allowed to the peer's AllowedIPs: ws's address and
+# want. A network that holds an endpoint would send the tunnel's own packets into it. It logs a
+# network as it goes out, once until keep_out takes it back: told holds those logged.
 # shellcheck disable=SC2154 # ws-tunnel sets server and routes
 allowed_for() {
     want=
     out=
     for each in $routes; do
-        if [ -n "$1" ] && contains "$each" "$1"; then
-            case " $left_out " in
-            *" $each "*) ;;
-            *) say "leaves $each out of the tunnel while it holds the endpoint, $1" ;;
-            esac
-            out="$out $each"
-        else
+        held=
+        for host in $1; do
+            contains "$each" "$host" && held=$host && break
+        done
+        if [ -z "$held" ]; then
             want="$want $each"
+            continue
         fi
+        case " $told " in
+        *" $each "*) ;;
+        *) say "leaves $each out of the tunnel while it holds the endpoint, $held" ;;
+        esac
+        told="$told $each"
+        out="$out $each"
     done
     want=${want# }
-    left_out=${out# }
+    out=${out# }
     allowed=$server/32
     for each in $want; do
         allowed=$allowed,$each
     done
 }
 
+# keep_out takes allowed_for's out as the networks left out, for status, and as those the log has
+# named. The log names one again once it went back into the tunnel.
+keep_out() {
+    left_out=$out
+    told=$out
+}
+
 # apply_routes routes want into the tunnel and stops routing what it no longer holds. A network
 # it cannot route, as one another route already takes, it logs once and tries again each time.
+# unroutable holds those logged, and keeps those of allowed_for's out, so that trials that leave
+# one out and take it back log it once. It reads ws-tunnel's tun.
 apply_routes() {
     for each in $routed; do
         case " $want " in
@@ -79,6 +94,11 @@ apply_routes() {
     done
     kept=
     failed_now=
+    for each in $out; do
+        case " $unroutable " in
+        *" $each "*) failed_now="$failed_now $each" ;;
+        esac
+    done
     for each in $want; do
         case " $routed " in
         *" $each "*) kept="$kept $each" ;;
@@ -100,13 +120,15 @@ apply_routes() {
 }
 
 # try HOST points the peer at HOST, and succeeds where a handshake completes within 5 s with the
-# peer still at HOST. The peer is removed and added again: wireguard-go handshakes at once with a
-# new peer that has a keepalive, while a new endpoint alone would wait for the next rekey, up to 2
-# minutes away. A handshake that ws started over another path moves the endpoint there, and
-# proves nothing of HOST.
-# shellcheck disable=SC2154 # ws-tunnel sets key, port and keepalive
+# peer still at HOST. The routes change first, as a network that holds HOST and stayed routed would
+# take the handshake into the tunnel itself. The peer is removed and added again, as wireguard-go
+# handshakes at once with a new peer that has a keepalive. A new endpoint alone would wait for the
+# next rekey, up to 2 minutes away. A handshake that ws started over another path moves the
+# endpoint there, and proves nothing of HOST.
+# shellcheck disable=SC2034,SC2154 # ws-tunnel sets tun, key, port and keepalive; reload reads peer
 try() {
     allowed_for "$1"
+    apply_routes
     peer=$1
     wg set "$tun" peer "$key" remove 2>/dev/null
     if ! wg set "$tun" peer "$key" endpoint "$1:$port" allowed-ips "$allowed" \
@@ -130,11 +152,13 @@ try() {
 
 # tiers points the tunnel at the first path that answers: the cable, where the Mac has an address
 # in its subnet; the LAN, where it has one in WS_LAN; then WS_REMOTE, resolved anew. Without one,
-# it logs that once, and the next tick tries them all again.
-# shellcheck disable=SC2154 # ws-tunnel sets the cable's values and the LAN's
+# it logs that once, and the next tick tries them all again. It sets ends to the endpoints that the
+# routes stay clear of until the next tiers: the one in use, or those it tried.
+# shellcheck disable=SC2154 # ws-tunnel sets the cable's values, the LAN's, remote and port
 tiers() {
     misses=0
     why=
+    tried=
     for tier in cable lan remote; do
         case $tier in
         cable)
@@ -155,8 +179,10 @@ tiers() {
             fi
             ;;
         esac
+        tried="$tried $host"
         if try "$host"; then
-            apply_routes
+            ends=$host
+            keep_out
             if [ "$tier $host" != "$in_use" ]; then
                 say "on the $tier tier, $host:$port"
                 in_use="$tier $host"
@@ -168,21 +194,24 @@ tiers() {
         why="$why, no handshake from $host:$port on the $tier tier"
     done
     if [ "$in_use" != none ]; then
-        say "no path to ws answers${why:-, as the Mac is on none}; trying again every 10 s"
+        say "no path to ws answers${why:-, as the Mac is on none};" \
+            "trying again 10 s after each round"
         in_use=none
         since=$(date +%s)
     fi
     # The routes stay in the tunnel, which drops what they carry, rather than let it go out by the
-    # network the Mac is on.
-    allowed_for "$peer"
+    # network the Mac is on. Those that hold an endpoint tried stay out, for the next handshakes.
+    ends=${tried# }
+    allowed_for "$ends"
     apply_routes
+    keep_out
     write_state none ""
     return 1
 }
 
 # write_state writes TIER and ENDPOINT, with the interface, the time of the switch and the routes,
 # for status.
-# shellcheck disable=SC2154 # ws-tunnel sets state_file
+# shellcheck disable=SC2154 # ws-tunnel sets state_file and tun
 write_state() {
     {
         echo "tier=$1"
@@ -194,19 +223,19 @@ write_state() {
     } >"$state_file.new" && mv -f "$state_file.new" "$state_file"
 }
 
-# peer_field FIELD KEY prints what wg show IF FIELD gives for the peer KEY.
+# peer_field FIELD KEY prints what wg show FIELD gives for the peer KEY on ws-tunnel's tun.
 peer_field() {
     wg show "$tun" "$1" 2>/dev/null | awk -v key="$2" '$1 == key { print $2 }'
 }
 
-# alive succeeds while wireguard-go runs and answers on its socket.
+# alive succeeds while wireguard-go, ws-tunnel's wg_pid, runs and answers on tun's socket.
 alive() {
     kill -0 "$wg_pid" 2>/dev/null && wg show "$tun" public-key >/dev/null 2>&1
 }
 
-# tick runs every 10 s: it starts the log anew where it is too long, ends the daemon where
-# wireguard-go has exited, and runs the tiers where the Mac's addresses changed, where no path
-# answered, or where ws missed 3 pings in a row.
+# tick runs 10 s after the last tick or reload ended. It starts the log anew past 1 MiB, and ends
+# the daemon where wireguard-go has exited. It runs the tiers where the Mac's addresses changed,
+# where no path answered, or where ws, ws-tunnel's server, missed 3 pings in a row.
 tick() {
     trim_log
     if ! alive; then
@@ -252,7 +281,7 @@ watch_changes() {
 }
 
 # stop ends the helpers and wireguard-go, which takes the utun and its routes with it.
-# shellcheck disable=SC2154 # ws-tunnel sets its files' names
+# shellcheck disable=SC2154 # ws-tunnel sets its files' names, wg_pid and ticker_pid
 stop() {
     trap - EXIT
     # The ticker's sleep first, which the ticker's end would leave running.

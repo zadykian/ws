@@ -1,12 +1,12 @@
 # shellcheck shell=sh
-# The functions of ws's scripts for the Mac, sourced by mac/setup.sh, and by a private
-# repository's own script for the Mac, which may add routes into the tunnel and resolvers for
-# domains behind it (ws_tunnel_routes, ws_resolver and ws_tunnel_loaded, below). Sourcing it
-# defines functions and variables whose names start with ws_, and changes nothing else.
-# Every function that writes reads WS_CHECK: set to anything but empty or 0, as ws_args sets it
-# for --check, it prints each change as a diff, or a line where there is no text to compare, and
-# makes none. A function exits with status 1 on an error, with a message on stderr. Files outside
-# the user's home are written through sudo, owned by root.
+# The functions of mac/setup.sh and of a private repository's own script for the Mac, which sources
+# lib.sh alone. That script may call any of them, as ws_tunnel_routes, ws_resolver and
+# ws_tunnel_loaded below. setup.sh's own functions are in setup-lib.sh and setup-ssh.sh. Sourcing
+# lib.sh defines names that start with ws_, and changes nothing else. Under WS_CHECK, set to
+# anything but empty or 0, a function that writes makes no change. It prints each change, as a diff
+# or, with no text to compare, as a line. setup.sh's --check sets WS_CHECK through setup-lib.sh's
+# ws_args, and a script that sources lib.sh alone sets it itself. An error exits with status 1 and a
+# message on stderr. Files outside the user's home are written through sudo, owned by root.
 
 ws_prog=${0##*/}
 # The subnets of the cable and of the tunnel, which the home LAN and the routes stay clear of.

@@ -118,7 +118,8 @@ ws_conf() {
     fi
 }
 
-# ws_conf_form KEY prints the form a value of KEY takes, for ws_conf's message.
+# ws_conf_form KEY prints the form a value of KEY takes, for ws_conf's message. It names lib.sh's
+# ws_cable_net and ws_tunnel_net.
 ws_conf_form() {
     case $1 in
     WS_USER) echo "a user name of 32 characters at most: letters, digits, ., _ and -, no - first" ;;

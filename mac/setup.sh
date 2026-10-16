@@ -6,16 +6,18 @@
 #
 # It reads mac.conf without running it, and writes ~/.ssh/config.d/ws. Its host ws goes through the
 # WireGuard tunnel to ws, and ws-ssh reaches ws over the cable, the home LAN or the router's port
-# forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY, ws goes the ways
-# ws-ssh does. It puts `Include config.d/ws` first in ~/.ssh/config.
+# forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY and launchd has the
+# tunnel's daemon, ws goes the ways ws-ssh does. It puts `Include config.d/ws` first in
+# ~/.ssh/config.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
 # wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
 # once, and tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without
 # WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
 #
-# A run changes only what differs, so a second prints nothing. --check prints each change as a
-# diff and makes none. docs/mac.md has the rest.
+# A run changes only what differs, so a second prints nothing once mac.conf has WS_PUBLIC_KEY.
+# Until then, each run prints the Mac's public key again, with the commands that make it ws's peer.
+# --check prints each change as a diff and makes none. docs/mac.md has the rest.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -215,8 +217,20 @@ main() {
     [ "$(uname -s)" = Darwin ] || ws_die "it sets up a Mac, not $(uname -s)"
     [ "$(id -u)" != 0 ] || ws_die "run it as yourself, not root: it asks sudo where it needs root"
     ws_conf "$HOME/.config/ws/mac.conf"
+    # ssh_files sends ws through the tunnel once launchd has its daemon, so that a run that stops
+    # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon writes config.d/ws
+    # again, and --check shows the file of such a run. ws_own_hosts warns once, between the two.
+    via_tunnel=0
+    if [ -n "$WS_PUBLIC_KEY" ] && { ws_checking || ws_tunnel_loaded; }; then
+        via_tunnel=1
+    fi
     ssh_files
+    ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
     tunnel
+    if [ "$via_tunnel" = 0 ] && [ -n "$WS_PUBLIC_KEY" ] && ws_tunnel_loaded; then
+        via_tunnel=1
+        ssh_files
+    fi
 }
 
 main "$@"

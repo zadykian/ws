@@ -45,10 +45,11 @@ another.
 
 ## ssh's hosts
 
-The script writes `~/.ssh/config.d/ws`. Once `mac.conf` has `WS_PUBLIC_KEY`, its host `ws` goes to
-`10.99.0.1` from every network; where UDP is blocked, `ssh ws` times out, and `ssh ws-ssh` serves.
-Before that, `ws` goes the ways `ws-ssh` does, so that `ssh ws` works through the keys' exchange:
-set `WS_PUBLIC_KEY` once ws has the Mac's key ([The Mac's tunnel](#the-macs-tunnel)). `ws-ssh`
+The script writes `~/.ssh/config.d/ws`. Once `mac.conf` has `WS_PUBLIC_KEY` and launchd has the
+tunnel's daemon, its host `ws` goes to `10.99.0.1` from every network. Where UDP is blocked,
+`ssh ws` times out, and `ssh ws-ssh` serves. Before that, `ws` goes the ways `ws-ssh` does, so that
+`ssh ws` works through the keys' exchange, and after a run that stops before it loads the daemon.
+Set `WS_PUBLIC_KEY` once ws has the Mac's key ([The Mac's tunnel](#the-macs-tunnel)). `ws-ssh`
 goes:
 
 - over the cable, to `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
@@ -84,8 +85,9 @@ Before it writes, the script has `ssh -G`, for `ws` and `ws-ssh`, read the new `
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
 system's file last. Where ssh refuses either, the script stops and changes nothing, under `--check`
 too. The system's file goes through an Include there, so its relative Includes resolve under
-`~/.ssh`. A run changes only what differs, so a second prints nothing. `--check` prints each change
-as a diff and makes none.
+`~/.ssh`. A run changes only what differs, so a second prints nothing once `WS_PUBLIC_KEY` is set.
+Until then, each run prints the Mac's public key again, with the commands of
+[The Mac's tunnel](#the-macs-tunnel). `--check` prints each change as a diff and makes none.
 
 The Mac's end of the cable is set by hand, once. In System Settings › Network, pick the display's
 adapter › Details › TCP/IP, and Configure IPv4 Manually. Give it the IP address `10.77.0.2`, the
@@ -101,10 +103,11 @@ ws keeps Docker's bridged containers off the tunnel and the cable
 
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,
-macOS asks once whether iTerm2, Gateway or another app may find devices on the local network, for
-`ws-ssh`, and for `ws` until `WS_PUBLIC_KEY` is set: allow it. ssh run from Terminal needs no such
-grant, and neither does `ws` through the tunnel. The tunnel's utun is no local network, and macOS
-lets daemons that run as root reach one anyway (Apple's TN3179). To see which way `ws-ssh` went:
+macOS asks once whether iTerm2, Gateway or another app may find devices on the local network: allow
+it. It asks for `ws-ssh`, and for `ws` until it goes through the tunnel. ssh run from Terminal needs
+no such grant, and neither does `ws` through the tunnel. The tunnel's utun is no local network, and
+macOS lets daemons that run as root reach one anyway (Apple's TN3179). To see which way `ws-ssh`
+went:
 
 ```sh
 ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
@@ -154,10 +157,11 @@ or tries the next. ws follows the Mac to its new address from that handshake, an
 tunnel sends again what the pause lost.
 
 The daemon tries the ways again 2 s after macOS posts a network change, where the Mac's addresses
-changed. It checks them every 10 s besides, in case it missed one. It pings `10.99.0.1` every 10 s
-too, and three pings missed in a row have it try the ways again, as after the home's address
-changed. While none answers, it tries them all every 10 s. A way that comes back while the Mac's
-addresses stay as they were is taken at the next change or failure.
+changed. Besides, 10 s after each check ends, it checks them again, in case it missed one, and
+pings `10.99.0.1`. Three pings missed in a row have it try the ways again, as after the home's
+address changed. While none answers, it tries them all again 10 s after each round, which takes up
+to 5 s a way. A way that comes back while the Mac's addresses stay as they were is taken at the
+next change or failure.
 
 ```sh
 sudo /usr/local/libexec/ws-tunnel/ws-tunnel status
@@ -195,9 +199,10 @@ nothing as a script sources it. It sets `WS_CHECK` for its own `--check`, and ca
 - `ws_tunnel_routes NAME CIDR...`, which writes the IPv4 networks to
   `/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
   peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for
-  the time being one that holds the endpoint in use. `NAME` is of `a-z`, `0-9` and `-`. A network
-  that overlaps the tunnel's `10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is
-  refused. As in `ws_tunnel_routes example 198.51.100.0/24`.
+  the time being one that holds the endpoint in use, or one that holds a way's endpoint while none
+  answers. `NAME` is of `a-z`, `0-9` and `-`. A network that overlaps the tunnel's `10.99.0.0/24`
+  or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in
+  `ws_tunnel_routes example 198.51.100.0/24`.
 - `ws_resolver DOMAIN ADDRESS...`, which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers,
   so that macOS asks them for the domain's names (resolver(5)), and takes the file at once.
 - `ws_tunnel_loaded`, which says whether the daemon is loaded, so that the script can stop with

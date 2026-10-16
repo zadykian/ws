@@ -13,14 +13,14 @@ header="# Written by ws's mac/setup.sh"
 # ssh keeps the first value it reads for a key, so each Match sets Port 22 before Host ws-ssh sets
 # the forward's port, and the cable comes before the LAN. localnetwork matches the Mac's own
 # addresses, with no probe. originalhost matches the name typed, which a HostName set above does
-# not change, unlike Match host. Until mac.conf has WS_PUBLIC_KEY, ws takes ws-ssh's ways too, so
-# that an ssh ws that worked before the tunnel goes on working through the keys' exchange.
-# shellcheck disable=SC2154 # ws_cable_net is lib.sh's
+# not change, unlike Match host. Until ws goes through the tunnel, via_tunnel=1, ws takes the ways
+# of ws-ssh too, so that an ssh ws that worked before goes on working.
+# shellcheck disable=SC2154 # ws_cable_net is lib.sh's, and via_tunnel setup.sh's
 ssh_config() {
     # The hosts of the direct ways, for Host and for Match originalhost's list.
     direct=ws-ssh
     listed=ws-ssh
-    if [ -z "$WS_PUBLIC_KEY" ]; then
+    if [ "$via_tunnel" = 0 ]; then
         direct='ws ws-ssh'
         listed=ws,ws-ssh
     fi
@@ -54,7 +54,7 @@ Host $direct
     AddressFamily inet
 EOF
     fi
-    if [ -n "$WS_PUBLIC_KEY" ]; then
+    if [ "$via_tunnel" = 1 ]; then
         cat <<EOF
 
 # ws through the tunnel, at the one address it has there whichever way the Mac is connected, on
@@ -124,7 +124,8 @@ ssh_whole() {
 
 # ssh_files writes ~/.ssh/config.d/ws and puts its Include first in ~/.ssh/config. Before it
 # writes, it stops where config.d/ws is a file it did not write, where the Include could not go
-# first, and where ssh refuses the new file, alone or as ssh_whole reads it.
+# first, and where ssh refuses the new file, alone or as ssh_whole reads it. It reads ws_tmpfile,
+# which lib.sh's ws_tmp sets.
 ssh_files() {
     conf=$HOME/.ssh/config.d/ws
     if [ -e "$conf" ] || [ -L "$conf" ]; then
@@ -155,7 +156,6 @@ ssh_files() {
     ws_put "$conf" 600 <"$new"
     rm -f "$new"
     ws_include_first "$HOME/.ssh/config" config.d/ws
-    ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
 }
 
 # ws_include_at FILE PATH prints where the ssh_config FILE has `Include PATH`, PATH under ~/.ssh:
@@ -216,7 +216,7 @@ ws_include_ok() {
 # ws_include_first FILE PATH puts `Include PATH` above every setting of the ssh_config FILE, as ssh
 # keeps the first value it reads for a key. Where FILE is missing, it makes it. Where FILE lacks the
 # line, it adds it at the top, keeping the old file as FILE.TIME~. It stops where ws_include_ok
-# does.
+# does. It reads ws_tmpfile, which lib.sh's ws_tmp sets.
 ws_include_first() {
     if [ ! -e "$1" ] && [ ! -L "$1" ]; then
         ws_put "$1" 600 <<EOF
@@ -274,7 +274,8 @@ ws_ignore_unknown() {
 }
 
 # ws_own_hosts FILE NAME... warns of each line of the ssh_config FILE that starts a Host or Match
-# block for one of the NAMEs. Its settings come after those of the Include at the file's top.
+# block for one of the NAMEs, and names those it matches. Its settings come after those of the
+# Include at the file's top.
 ws_own_hosts() {
     [ -f "$1" ] || return 0
     ws_file=$1
@@ -283,12 +284,14 @@ ws_own_hosts() {
         {
             key = tolower($1)
             if (key != "host" && key != "match") next
-            for (i = 2; i <= NF; i++) {
-                if (index(names, " " $i " ")) { print NR ": " $0; next }
-            }
+            hits = ""
+            for (i = 2; i <= NF; i++)
+                if (index(names, " " $i " ") && !index(" " hits " ", " " $i " "))
+                    hits = hits (hits == "" ? "" : " and ") $i
+            if (hits != "") print NR ":" hits ":" $0
         }
-    ' "$ws_file" | while IFS= read -r ws_hit; do
-        ws_say "warning: line ${ws_hit%%:*} of $ws_file,${ws_hit#*:}, sets its own values for ws:" \
+    ' "$ws_file" | while IFS=: read -r ws_n ws_names ws_line; do
+        ws_say "warning: line $ws_n of $ws_file, $ws_line, sets its own values for $ws_names:" \
             "those in config.d/ws, read first, win where both set a key"
     done
 }

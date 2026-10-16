@@ -121,7 +121,7 @@ read_conf() {
 
 # read_routes reads routes.d into new_routes, each network once, and leaves out a line that isn't
 # a network, or one that overlaps the tunnel's or the cable's subnet.
-# shellcheck disable=SC2154 # the subnets are ws-tunnel's
+# shellcheck disable=SC2154 # etc and the subnets are ws-tunnel's
 read_routes() {
     new_routes=
     for file in "$etc"/routes.d/*; do
@@ -144,8 +144,9 @@ read_routes() {
     new_routes=${new_routes# }
 }
 
-# reload reads tunnel.conf and routes.d again, on SIGHUP. A new key or path runs the tiers;
-# otherwise it changes the peer's AllowedIPs and the routes in place, which keeps the session.
+# reload reads tunnel.conf and routes.d again, on SIGHUP. A new key or path runs the tiers.
+# Otherwise it changes the peer's AllowedIPs and the routes in place, which keeps the session. The
+# routes stay clear of the endpoints in ends, as the last tiers left them.
 # shellcheck disable=SC2034,SC2154 # the daemon's state, which ws-tunnel keeps
 reload() {
     reload=0
@@ -168,11 +169,12 @@ reload() {
         tiers
         return 0
     fi
-    allowed_for "$peer"
+    allowed_for "$ends"
     if [ -n "$peer" ]; then
         wg set "$tun" peer "$key" allowed-ips "$allowed" || say "cannot set the peer's AllowedIPs"
     fi
     apply_routes
+    keep_out
     say "read its settings again; routes: ${routed:-none}"
     case $in_use in
     none) write_state none "" ;;
