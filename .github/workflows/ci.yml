@@ -11,8 +11,8 @@ permissions: {}
 
 jobs:
   # make lint, the one gate, with the tools it pins: tools/run's binaries, the Python tools of
-  # .github/lint-requirements.txt on the runner's Python, 3.12 or newer as ansible-core 2.20
-  # needs, and requirements.yml's collections. Any finding fails it, warnings included.
+  # .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks, and
+  # requirements.yml's collections. Any finding fails it, warnings included.
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -23,13 +23,23 @@ jobs:
         with:
           # A pull request's own head, which lands as it is, by fast-forward, rather than GitHub's
           # merge of it. The whole history, every branch's included: gitleaks scans every commit,
-          # and the commit check reads those from origin/main to the head.
+          # and the commit check reads those from its base, below, to the head.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
+      # The commit check's base is origin/main, but on a push origin/main is the head itself. There
+      # the base is the commit main was at before the push, so that the check reads the commits the
+      # push adds. A push that makes the branch has none, all zeros, and keeps origin/main.
       - name: make lint
-        run: make lint
+        run: |
+          base=origin/main
+          case $BEFORE in
+          *[!0]*) base=$BEFORE ;;
+          esac
+          make lint BASE="$base"
         env:
+          # The commit main was at before a push, and empty on a pull request.
+          BEFORE: ${{ github.event_name == 'push' && github.event.before || '' }}
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 

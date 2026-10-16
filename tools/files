@@ -19,7 +19,8 @@ die() {
 }
 
 # listed prints the FILEs, or, without one, the files git lists that exist. A name git quotes
-# goes on, quoted, for main to refuse.
+# goes on, quoted, for main to refuse. Where git fails or lists none, it fails, so that no gate
+# passes having checked nothing.
 listed() {
     if [ $# -gt 0 ]; then
         for file; do
@@ -28,14 +29,17 @@ listed() {
         done
         return
     fi
-    # core.quotePath=false keeps a UTF-8 name unquoted, so that its file is found.
-    git -c core.quotePath=false ls-files --cached --others --exclude-standard |
-        while IFS= read -r file; do
-            case $file in
-            \"*) printf '%s\n' "$file" ;;
-            *) [ ! -f "$file" ] || printf '%s\n' "$file" ;;
-            esac
-        done
+    # core.quotePath=false keeps a UTF-8 name unquoted, so that its file is found. The list goes to
+    # a file, as sh has no pipefail, and a pipe would lose git's failure.
+    git -c core.quotePath=false ls-files --cached --others --exclude-standard >"$tmp/git" ||
+        die "git cannot list the files"
+    [ -s "$tmp/git" ] || die "git lists no file"
+    while IFS= read -r file; do
+        case $file in
+        \"*) printf '%s\n' "$file" ;;
+        *) [ ! -f "$file" ] || printf '%s\n' "$file" ;;
+        esac
+    done <"$tmp/git"
 }
 
 main() {

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Keeps ws's files short: each is at most 300 lines. It checks the files git lists, new ones
-# included but not those it ignores, or those of the FILEs it caps:
+# Keeps ws's files short: each is at most 300 lines, and the README at most 150. It checks the
+# files git lists, new ones included but not those it ignores, or those of the FILEs it caps:
 #
 #   tools/sizecheck [FILE...]
 #
@@ -13,8 +13,9 @@
 
 set -eu
 
-# max is the cap, in lines.
+# max is the cap, in lines, and readme the README's.
 max=300
+readme=150
 
 # exempt says whether the file $1 is generated or vendored.
 exempt() {
@@ -43,8 +44,12 @@ main() {
         ! exempt "$file" || continue
         # awk counts a last line without its newline too.
         lines=$(awk 'END { print NR }' "$file")
-        if [ "$lines" -gt "$max" ]; then
-            printf '%s: %d lines, over the cap of %d\n' "$file" "$lines" "$max"
+        case $file in
+        README.md) cap=$readme ;;
+        *) cap=$max ;;
+        esac
+        if [ "$lines" -gt "$cap" ]; then
+            printf '%s: %d lines, over the cap of %d\n' "$file" "$lines" "$cap"
             status=1
         fi
     done <"$tmp/files"
