@@ -1,7 +1,8 @@
 # The dashboards
 
 The role keeps a dashboard in SigNoz for each file here that `signoz_dashboards` names: `host.json`,
-shown as Host, and `claude.json`, shown as Claude. It finds each by the fixed `name` in its file.
+shown as Host, and `claude.json`, shown as Claude. It finds each by the fixed `name` in its file,
+which must be the file's name without `.json`, as a run checks.
 
 ## Host
 
@@ -34,11 +35,13 @@ to the collector, as the `claude` role sets it:
   without one.
 
 Each metric's panel takes its `increase` over time and sums it across series. claude sends its
-counters as deltas, which the `claude` role leaves as they are, and that gives their totals. A
-claude set to send them as cumulative sums would show less. SigNoz counts no increase in the first
-step of a cumulative series, and each session is a series of its own.
+counters as deltas, its default, and that gives their totals. Cumulative sums would show less, so
+the `claude` role removes a preference for them from claude's settings. SigNoz counts no increase
+in the first step of a cumulative series, and each session is a series of its own.
 
-The bars are days in UTC, the server's timezone. Today's bar can lack the last five minutes.
+The bars are days in UTC, the server's timezone. A metric's bar counts its whole day, as SigNoz
+moves a metric query's start back to a whole step. So the first bar can count time before the
+picker's start, which the totals leave out. Today's bar can lack the last five minutes.
 SigNoz's query cache reads them apart from the rest of the day, and keeps the earlier part alone
 for a bar that began before them. Cost is claude's estimate at API prices, which under a
 subscription is not what was billed. No panel shows a prompt's text, a tool's input or a command.
@@ -53,12 +56,32 @@ every run. After a run on the new SigNoz, refresh both files from the dashboards
 this directory:
 
 ```sh
-url=http://127.0.0.1:3301/api/v2/dashboards
-for name in host claude; do
-    id=$(curl -s "$url?sort=created_at&order=asc&limit=200" |
-        jq -r --arg name "$name" '[.data.dashboards[] | select(.name == $name)][0].id')
-    curl -s "$url/$id" | jq '.data | {schemaVersion, image, name, tags, spec}' >"$name.json"
-done
+(
+    set -eu
+    url=http://127.0.0.1:3301/api/v2/dashboards
+    list=$(curl -fsS "$url?sort=created_at&order=asc&limit=200")
+    trap 'rm -f dashboard.json.tmp' EXIT
+    for name in host claude; do
+        id=$(printf '%s\n' "$list" | jq -r --arg name "$name" '
+            first(.data.dashboards[] | select(.name == $name) | .id)
+            // error("SigNoz lists no dashboard \($name)")')
+        dashboard=$(curl -fsS "$url/$id")
+        printf '%s\n' "$dashboard" | jq --arg name "$name" '.data
+            | if .locked then error("\($name) is locked in SigNoz: unlock it, then run the role")
+              elif .name != $name or (.spec.display.name | type) != "string"
+              then error("SigNoz returned no dashboard \($name)")
+              else {schemaVersion, image, name, tags, spec} end' >dashboard.json.tmp
+        mv dashboard.json.tmp "$name.json"
+    done
+)
 ```
 
-The list gives 200 dashboards at most: where there are more, add `&offset=200` and so on.
+The parentheses run it in a subshell, so that `set -e` ends the snippet, not the shell. It stops
+at the first failure, and leaves that file untouched. It fails where SigNoz doesn't answer, lists
+no such dashboard, or holds one locked. A run leaves a locked dashboard unchanged, and says so only
+where it differs from its file. A refresh would copy the UI's edits here, so unlock it, run the
+role, then refresh. The list gives 200 dashboards at most: where there are more, add `&offset=200`
+and so on.
+
+Review `git diff` before a commit. Beyond the fields SigNoz adds or drops, a change is an edit
+made in the UI, such as a variable's selected value, which would go into this public repository.

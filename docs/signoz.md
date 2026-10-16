@@ -44,17 +44,21 @@ The Claude dashboard shows what claude on the server cost and what it did, from 
 events claude sends to the collector ([claude](claude.md#telemetry)). It shows cost and tokens by
 model and by day, and the share of tokens read from the prompt cache. It shows sessions, active
 time, lines of code, commits, pull requests, edit decisions, prompts, tool calls and API errors.
-Each covers the range of the UI's time picker. Its bars are days in UTC, the server's timezone.
-Cost is claude's estimate at API prices: under a subscription, that is not what was billed. No
-panel shows a prompt's text, a tool's input or a command. claude sends no prompt text, as
-`OTEL_LOG_USER_PROMPTS` is unset. The dashboard was written for this repository, and
+Its totals cover the range of the UI's time picker. Its bars are days in UTC, the server's timezone,
+and a metric's first bar can count time before the picker's start. Cost is claude's estimate at API
+prices: under a subscription, that is not what was billed. No panel shows a prompt's text, a tool's
+input or a command. claude sends a prompt's text only with `OTEL_LOG_USER_PROMPTS` set, which the
+`claude` role keeps out of claude's settings, though not out of the shell
+([claude](claude.md#telemetry)). The dashboard was written for this repository, and
 `roles/signoz/files/dashboards` says what it reads.
 
-The role creates each dashboard of `signoz_dashboards` through SigNoz's API. It replaces one where
-it differs from the repository's. So a change made to it in the UI lasts until the next run, while
-one made to a copy of it stays. A name taken off the list leaves its dashboard in SigNoz. SigNoz
-refuses to change a dashboard locked in the UI, so the run leaves it and says so. A dry run reports
-whether it would create or replace each dashboard.
+The role creates each dashboard of `signoz_dashboards` through SigNoz's API, from
+`roles/signoz/files/dashboards/NAME.json`. That file must hold NAME as its `name`, or a run fails,
+and CI's `playbook` job with it. The role replaces a dashboard where it differs from its file. So a
+change made to it in the UI lasts until the next run, while one made to a copy of it stays. A name
+taken off the list leaves its dashboard in SigNoz. SigNoz refuses to change a dashboard locked in
+the UI, so a run leaves one that differs and says so. A dry run reports whether it would create or
+replace each dashboard.
 
 ## The compose files
 
@@ -73,6 +77,7 @@ Without `--no-ledger` and `--no-updater`, foundryctl reports each command to Sig
 for a newer release. It never removes a file, hence the `rm`.
 
 A new SigNoz may return the dashboards with fields added or dropped, and the role would then replace
-them on every run. So after changing SigNoz's image, run the role, refresh `host.json` and
-`claude.json` from SigNoz as `roles/signoz/files/dashboards/README.md` says, and commit them with
+them on every run. So after changing SigNoz's image, unlock any dashboard locked in the UI, reported
+or not, as the refresh stops at one. Then run the role, refresh `host.json` and `claude.json` from
+SigNoz as `roles/signoz/files/dashboards/README.md` says, review their diff, and commit them with
 the casting. A second run must then leave both dashboards as they are.

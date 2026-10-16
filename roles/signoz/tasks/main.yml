@@ -105,6 +105,23 @@
   ansible.builtin.import_tasks: retention.yml
   tags: [systemd]
 
+# The role finds a dashboard by the name in its file, so each file holds its entry's name. Two
+# entries that found one dashboard would replace it in turn at every run, and never create the
+# other. This reads only the files, so CI's container run checks them too. It has no tag, so
+# --tags systemd skips it, and dashboard.yml checks again.
+- name: Check that each dashboard's file holds its name
+  ansible.builtin.assert:
+    that: signoz_dashboard_name_in_file == item
+    fail_msg: >-
+      roles/signoz/files/dashboards/{{ item }}.json names its dashboard
+      '{{ signoz_dashboard_name_in_file }}', not {{ item }}
+    quiet: true
+  vars:
+    signoz_dashboard_name_in_file: >-
+      {{ (lookup('ansible.builtin.file', 'dashboards/' ~ item ~ '.json') | from_json).name
+      | default('') }}
+  loop: "{{ signoz_dashboards }}"
+
 # Once for each dashboard. --skip-tags systemd skips the include, and so its tasks. apply gives
 # them its systemd tag, which they would not otherwise have, so that --tags systemd runs them too.
 - name: Create or replace the dashboards

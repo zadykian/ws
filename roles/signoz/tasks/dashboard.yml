@@ -28,6 +28,15 @@
     signoz_dashboard_locked: >-
       {{ signoz_dashboard_id != '' and signoz_dashboard_read.json.data.locked }}
   block:
+    # main.yml's check again, as --tags systemd skips that one and runs this include.
+    - name: "Check that the dashboard's file holds its name: {{ signoz_dashboard_name }}"
+      ansible.builtin.assert:
+        that: signoz_dashboard.name | default('') == signoz_dashboard_name
+        fail_msg: >-
+          roles/signoz/files/{{ signoz_dashboard_file }} names its dashboard
+          '{{ signoz_dashboard.name | default('') }}', not {{ signoz_dashboard_name }}
+        quiet: true
+
     # SigNoz lets dashboards share a name, and its list's filter matches the name its UI shows,
     # which can be changed there. The role finds its own by the fixed name it gives it. The list
     # gives 200 at most, and the total, by which the role reads the rest.
