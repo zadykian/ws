@@ -2,8 +2,9 @@
 # Refuses a commit whose staged changes hold a word of the local list or, where gitleaks is
 # installed, a secret. The list, where it exists, has a word or phrase a line, matched
 # case-insensitively as a whole word; blank lines and lines starting with # are skipped. The hook
-# names the file and line that matched, never the word, so that its output does not spread the
-# list.
+# names an added line that matched by its file and number, never its text, so that its output
+# does not spread the list. It prints a file name that matched whole, as the committer renames the
+# file by it, and git status prints it too.
 
 set -eu
 
