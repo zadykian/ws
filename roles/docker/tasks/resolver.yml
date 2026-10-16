@@ -1,0 +1,65 @@
+---
+- name: Create resolved's drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/resolved.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# With no dns of its own, Docker gives containers the servers of resolved's upstream resolv.conf,
+# without the domains that send a name to one link's servers alone: containers would miss names
+# the host resolves.
+- name: Let systemd-resolved listen on the default bridge's address
+  ansible.builtin.template:
+    src: resolved.conf.j2
+    dest: /etc/systemd/resolved.conf.d/docker.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart systemd-resolved
+
+# ufw refuses what comes in by default, containers' lookups to the host among it. The rules name no
+# protocol, so they take UDP and TCP, which DNS falls back to for long answers. They match only
+# Docker's bridges, docker0 and the br-ID of each network Docker creates ("+" matches any name with
+# that prefix), whatever a network's subnet. The bridge keeps out a LAN or a VPN in the same range,
+# and a spoofed packet. A source range would add nothing but cut off a subnet outside it. ufw is the
+# security role's, which runs first.
+- name: Let Docker's networks reach the resolver through ufw
+  tags: [systemd]
+  vars:
+    docker_resolver_bridges: [docker0, br-+]
+    docker_resolver_port: "53"
+    docker_resolver_comment: DNS from containers
+  block:
+    - name: Allow lookups from Docker's bridges to the resolver
+      community.general.ufw:
+        rule: allow
+        interface_in: "{{ item }}"
+        to_ip: "{{ docker_bridge_ip }}"
+        to_port: "{{ docker_resolver_port }}"
+        comment: "{{ docker_resolver_comment }}"
+      loop: "{{ docker_resolver_bridges }}"
+
+    - name: Read ufw's rules
+      ansible.builtin.slurp:
+        src: /etc/ufw/user.rules
+      register: docker_ufw_rules
+
+    # ufw keeps a rule until deleted, so those for a former docker_bridge_ip go, as do those with
+    # the source range the rules once had. Their comment tells them from the others.
+    - name: Delete the resolver's former rules from ufw
+      community.general.ufw:
+        rule: "{{ item.rule }}"
+        delete: true
+        interface_in: "{{ item.interface_in }}"
+        from_ip: "{{ item.from_ip }}"
+        to_ip: "{{ item.to_ip }}"
+        to_port: "{{ item.to_port }}"
+        comment: "{{ docker_resolver_comment }}"
+      loop: >-
+        {{ docker_ufw_rules.content | b64decode
+           | docker_stale_ufw_rules(docker_resolver_comment, docker_bridge_ip,
+                                    docker_resolver_port, docker_resolver_bridges) }}
+      loop_control:
+        label: "{{ item.interface_in }} from {{ item.from_ip }} to {{ item.to_ip }}"

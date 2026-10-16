@@ -19,14 +19,20 @@ systemd's syntax (`16G`, `400%`). A running container moves into the slice when 
 
 Containers resolve names as the host does. The `dns` of `daemon.json` is the default bridge's
 address, `172.17.0.1` (`docker_bridge_ip`), where systemd-resolved listens too. ufw lets Docker's
-networks reach port 53 there through their bridges, `docker0` and `br-ID`. A running container
-takes the new `dns` when it next starts.
+networks reach port 53 there through their bridges, `docker0` and `br-ID`, whatever their subnets.
+A network given a bridge name of its own gets no answers. A running container takes the new `dns`
+when it next starts. The role deletes the rules it gave ufw for a former `docker_bridge_ip`.
+
+`docker0` takes a new `docker_bridge_ip` or `docker_bridge_prefix_length` only when Docker starts
+with no container running, as after a reboot. Until then lookups to a new address get no answers,
+and the role stops after it restarts Docker. Reboot, or stop every container and restart Docker,
+then run the playbook again. A dry run shows the move.
 
 ## The address pool
 
-Docker takes each new network's subnet, a `/20`, from `172.16.0.0/12` (`docker_address_pool`). The
-pool holds the default bridge too, so that one source range covers them all. A network given a
-subnet outside it, or a bridge name of its own, gets no answers.
+Docker takes each new network's subnet, a `/20`, from `172.16.0.0/12` (`docker_address_pool`). A
+network created before the pool moves keeps its subnet until created again, as by
+`docker compose down` and `up`.
 
 Docker leaves out of the pool only the subnets of the main routing table's on-link routes. So the
 role stops, before it writes `daemon.json`, on any other route into the pool, such as one a VPN
@@ -50,8 +56,8 @@ collects when Docker starts and after each build, so idle cache goes at the next
 As Docker's own policy does, it also drops the least used cache, down to 10% of the disk. It does
 so while the disk has less than 20% free or the cache takes more than 80% of it.
 `docker_build_cache_reserved_space`, `docker_build_cache_max_used_space` and
-`docker_build_cache_min_free_space` set other sizes, in the format of `daemon.json` (`50GB`). Cache
-that an image shares frees no space until the image is removed.
+`docker_build_cache_min_free_space` set other sizes, in the format of `daemon.json`: `50G`, `50GB`
+or `50GiB`, but not `50Gi`. Cache that an image shares frees no space until the image is removed.
 
 ## The docker group
 

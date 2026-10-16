@@ -22,17 +22,18 @@ docker_cpu_quota: "{{ ansible_facts['processor_vcpus'] * 50 }}%"
 docker_memory_swap_max: "0"
 
 # The default bridge's address, docker0's, set rather than left to Docker: daemon.json's dns sends
-# containers' lookups there, to systemd-resolved, which listens on it too. The bridge's subnet must
-# lie in docker_address_pool, from which ufw lets lookups in.
+# containers' lookups there, to systemd-resolved, which listens on it too. docker0 takes a new one
+# only as Docker starts with no container running, as after a reboot: until then the role stops.
 docker_bridge_ip: 172.17.0.1
 docker_bridge_prefix_length: 16
 
-# The range Docker takes each new network's subnet from, and each subnet's prefix length. In one
-# range, one ufw rule lets every network reach the resolver. Docker's own ranges hold the default
-# bridge and 14 more networks in 172.16.0.0/12, then run on into 192.168.0.0/16, where LANs often
-# are; /20s leave room for 240 beside the bridge. Docker skips subnets the main routing table has
-# on-link routes for, but not those routed through another table, as a VPN may route its own: the
-# role stops on such a route in this range, or on any route in the bridge's subnet, and names it.
+# The range Docker takes each new network's subnet from, and each subnet's prefix length. Docker's
+# own ranges hold the default bridge and 14 more networks in 172.16.0.0/12, then run on into
+# 192.168.0.0/16, where LANs often are; /20s leave room for 240 beside the bridge. A network created
+# before the pool moves keeps its subnet until created again. Docker skips subnets the main routing
+# table has on-link routes for, but not those routed through another table, as a VPN may route its
+# own. The role stops on such a route in this range, or on any route in the bridge's subnet, and
+# names it. It sees the routes of the run alone: a VPN that is down shows none.
 docker_address_pool: 172.16.0.0/12
 docker_address_pool_size: 20
 
@@ -54,7 +55,7 @@ docker_build_cache_keep_days: 90
 # reserved_space. reserved_space, max_used_space and min_free_space default to 10%, 80% and 20% of
 # the filesystem that holds /var/lib/docker, whose size the role reads with df
 # (docker_build_cache_disk), in whole GiB plus one, as BuildKit rounds them. They take daemon.json's
-# size format, where GB means GiB.
+# size format, as 50G, 50GB or 50GiB, each of them GiB; dockerd refuses 50Gi.
 docker_build_cache_reserved_space: >-
   {{ docker_build_cache_disk.stdout_lines[-1] | int * 10 // 100 // 2**30 + 1 }}GB
 docker_build_cache_max_used_space: >-

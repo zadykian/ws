@@ -7,8 +7,8 @@ import ipaddress
 
 from ansible.errors import AnsibleFilterError
 
-# The shortest prefix of a route that counts: a shorter one covers every address rather than names
-# a network.
+# The shortest prefix of a route that counts: a shorter one is taken for a VPN's catch-all, as
+# 0.0.0.0/1, rather than a network.
 SHORTEST_PREFIX = 8
 
 
