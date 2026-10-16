@@ -1,4 +1,12 @@
 ---
-# The server's private key, which networkd reads as it creates wg0. The role makes it on the
-# machine and never reads it.
+# The server's private key, which networkd reads for wg0. The role makes it on the machine, and no
+# task copies, shows or diffs it.
 wireguard_key: /etc/systemd/network/60-wg0.key
+
+# The script that keeps Docker's containers off the Mac, which wireguard-docker-user.service runs.
+wireguard_docker_user: /usr/local/lib/ws/wireguard/docker-user.sh
+
+# The interfaces Docker's containers may not reach the Mac through: wg0, and the cable, the network
+# role's network_direct_link_interface, where one is named.
+wireguard_mac_interfaces: >-
+  {{ ['wg0', network_direct_link_interface | default('')] | select | list }}

@@ -16,7 +16,29 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   /ip dns static set [find name=router.lan] address=10.88.0.1
   ```
 
-  Clients move to the new range as they next renew their lease.
+  A client keeps its lease of the old range, whose gateway no longer answers, as its renewal goes
+  to the router's old address. It moves only once it rebinds, at 7/8 of the lease time, or
+  reconnects. So reconnect the other clients, and have ws take a new lease, from its console or
+  over the cable, UPLINK being its port to the router, as `ip route` names it:
+
+  ```sh
+  networkctl reconfigure UPLINK
+  ```
+
+  Or, a whole lease time ahead of the change, shorten the DHCP server's lease, so that every client
+  rebinds within minutes, once `print` has shown the lease time to restore:
+
+  ```routeros
+  /ip dhcp-server print
+  /ip dhcp-server set [find] lease-time=5m
+  ```
+
+  Once every client has moved, set it back, here to RouterOS 7's default of 30 minutes:
+
+  ```routeros
+  /ip dhcp-server set [find] lease-time=30m
+  ```
+
 - The server's lease, made static at `10.88.0.10`, HOST being the host name its lease shows:
 
   ```routeros
@@ -24,6 +46,7 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   /ip dhcp-server lease set [find host-name=HOST] address=10.88.0.10
   ```
 
+  ws takes the address as it next renews, or at once with `networkctl reconfigure UPLINK` again.
 - Two forwards from the internet to the server: UDP 51820, the tunnel's, and TCP 22022 to its SSH,
   for networks that block UDP. The default firewall's rule that drops what comes in from the WAN
   without a dst-nat lets both through:

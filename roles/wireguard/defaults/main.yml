@@ -1,6 +1,7 @@
 ---
 # wg0's address, the server's in the tunnel, with the prefix length of the tunnel's subnet, which
-# holds every peer's address too.
+# holds every peer's address too. With the peer mac, wg0 takes 10.99.0.1/24, which the Mac's scripts
+# fix.
 wireguard_address: 10.99.0.1/24
 
 # The UDP port wg0 listens on, which ufw lets in on every interface.
@@ -9,6 +10,7 @@ wireguard_port: 51820
 # The peers wg0 lets in: each has a name, lowercase letters, digits and dashes, and an address of
 # its own in the tunnel's subnet. A peer's public key is read from /etc/wireguard/NAME.pub on the
 # server, never from the repository; a peer without that file is left out, and the run names it.
+# mac, the Mac, is at 10.99.0.2, which its scripts fix.
 wireguard_peers:
   - name: mac
     address: 10.99.0.2

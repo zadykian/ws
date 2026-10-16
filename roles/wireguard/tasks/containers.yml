@@ -1,0 +1,45 @@
+---
+# Docker forwards its containers' packets ahead of ufw, and masquerades them. Through wg0 or the
+# cable they come from the server's address, and the Mac lets them in as the server's. So
+# wireguard-docker-user.service drops them, as docker-user.sh says. The role runs before docker's,
+# so a first run has the drops in place as Docker first starts; where Docker runs already, the
+# handler puts them in force at once. daemon.json leaves Docker on its iptables backend, which
+# docker-user.sh needs.
+- name: Create the directory of the containers' drops
+  ansible.builtin.file:
+    path: "{{ wireguard_docker_user | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write the containers' drops
+  ansible.builtin.copy:
+    src: docker-user.sh
+    dest: "{{ wireguard_docker_user }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Apply the containers' drops
+
+- name: Write wireguard-docker-user.service
+  ansible.builtin.template:
+    src: wireguard-docker-user.service.j2
+    dest: /etc/systemd/system/wireguard-docker-user.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply the containers' drops
+
+- name: Apply the containers' drops now
+  ansible.builtin.meta: flush_handlers
+
+# WantedBy=docker.service: Docker's start, at boot too, starts the unit first. A dry run where the
+# unit isn't written yet has no unit to enable.
+- name: Enable and start wireguard-docker-user.service
+  ansible.builtin.systemd_service:
+    name: wireguard-docker-user.service
+    enabled: true
+    state: started
+  when: not ansible_check_mode or '/etc/systemd/system/wireguard-docker-user.service' is file
+  tags: [systemd]
