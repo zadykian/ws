@@ -29,11 +29,15 @@ next run of the role updates it after a change to that `PATH`.
 
 claude sends its metrics, logs and traces, with tool details, to the host's collector on
 `127.0.0.1:4317` ([otelcol](otelcol.md)). The role sets the keys for that in the `env` of
-`~/.claude/settings.json` and removes each signal's own endpoint and protocol. It leaves every
-other key untouched, and writes the file only where `env` changes. A dry run lists the keys it
-would set or remove, not the file's diff, as the file may hold tokens.
+`~/.claude/settings.json` and removes each signal's own endpoint and protocol. It removes
+`OTEL_LOG_USER_PROMPTS` too, so that claude sends no prompt's text. It removes
+`OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE`, so that claude sends its counters as deltas,
+its default, which the Claude dashboard counts ([signoz](signoz.md#the-dashboards)). It leaves
+every other key untouched, and writes the file only where `env` changes. A dry run lists the keys
+it would set or remove, not the file's diff, as the file may hold tokens.
 
 The role replaces an endpoint already in `env`. To keep sending claude's metrics to a remote
 collector, set its endpoint first as `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` in `~/.secrets/env`,
 which the `otelcol` role reads: [claude's metrics elsewhere](otelcol.md#claudes-metrics-elsewhere).
-claude reads the keys as it starts, so a session started before keeps sending where it did.
+claude reads the keys as it starts, so a session started before keeps sending where it did. A key
+the role removes still applies where the shell exports it, as from `~/.secrets/env`.
