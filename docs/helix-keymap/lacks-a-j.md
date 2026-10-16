@@ -5,6 +5,13 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 
 | F12 action | F12's keys |
 | --- | --- |
+| `ActivateAIAssistantToolWindow` | F7; Alt+7 |
+| `ActivateBuildToolWindow` | F10 |
+| `ActivateNuGetToolWindow` | F4; Alt+4 |
+| `ActivateTerminalToolWindow` | F2; Alt+2 |
+| `ActivateTestsToolWindow` | F3 |
+| `ActivateUnitTestsToolWindow` | F3; Alt+3 |
+| `AddRiderItem` | Shift+Alt+A |
 | `AIAssistant.Chat.AIPopupChat` | Shift+Ctrl+Alt+\\ |
 | `AIAssistant.Chat.SendActions.NewLine` | Shift+Enter |
 | `AIAssistant.Chat.SendActions.SendToNewChat` | Shift+Ctrl+Enter |
@@ -20,13 +27,6 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `AIAssistant.ToolWindow.NewChatAction` | Ctrl+N; Alt+Insert |
 | `AIAssistant.ToolWindow.NewChatActionAlt` | Ctrl+N; Alt+Insert |
 | `AIAssistant.ToolWindow.RenameDialog` | Ctrl+R, R |
-| `ActivateAIAssistantToolWindow` | F7; Alt+7 |
-| `ActivateBuildToolWindow` | F10 |
-| `ActivateNuGetToolWindow` | F4; Alt+4 |
-| `ActivateTerminalToolWindow` | F2; Alt+2 |
-| `ActivateTestsToolWindow` | F3 |
-| `ActivateUnitTestsToolWindow` | F3; Alt+3 |
-| `AddRiderItem` | Shift+Alt+A |
 | `Arrangement.Alias.Rule.Remove` | Delete |
 | `Arrangement.Rule.Group.Condition.Move.Up` | Alt+Up |
 | `Arrangement.Rule.Match.Condition.Move.Down` | Alt+Down |
@@ -35,8 +35,6 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `AssemblyDiffAction` | Ctrl+D |
 | `BookmarksView.Delete` | Delete |
 | `BuildWholeSolutionAction` | Shift+Ctrl+B |
-| `CIDR.Debugger.DisassembleFrame` | Ctrl+D |
-| `CIDR.Debugger.ImageViewerActions.CopyImage` | Ctrl+C |
 | `CallHierarchy` | Ctrl+K, T; Ctrl+K, Ctrl+T |
 | `CallHierarchy.BaseOnThisMethod` | Ctrl+K, T; Ctrl+K, Ctrl+T |
 | `CancelBuildAction` | Ctrl+F9; Ctrl+Cancel |
@@ -50,6 +48,8 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `ChangesView.UnshelveSilently` | Ctrl+Alt+U |
 | `CheckinProject` | Ctrl+Alt+K |
 | `ChooseDebugConfiguration` | Shift+Alt+F9 |
+| `CIDR.Debugger.DisassembleFrame` | Ctrl+D |
+| `CIDR.Debugger.ImageViewerActions.CopyImage` | Ctrl+C |
 | `Code.Review.Editor.New.Comment` | Shift+Ctrl+X |
 | `CodeFloatingToolbar.GotoNextMenu` | Tab |
 | `CodeFloatingToolbar.GotoPrevMenu` | Shift+Tab |
@@ -70,10 +70,10 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `Console.TableResult.AddRow` | Alt+Insert |
 | `Console.TableResult.CloneColumn` | Shift+Ctrl+Alt+D |
 | `Console.TableResult.CloneRow` | Ctrl+D |
+| `Console.TableResult.ColumnsList` | Alt+\\ |
 | `Console.TableResult.ColumnSortAsc` | Alt+Up |
 | `Console.TableResult.ColumnSortDesc` | Alt+Down |
 | `Console.TableResult.ColumnSortReset` | Shift+Ctrl+Alt+Backspace |
-| `Console.TableResult.ColumnsList` | Alt+\\ |
 | `Console.TableResult.CompareCells` | Shift+Ctrl+D |
 | `Console.TableResult.Copy` | Ctrl+C |
 | `Console.TableResult.DeleteColumns` | Shift+Alt+Delete |
@@ -94,6 +94,9 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `Console.TableResult.Submit` | Ctrl+Enter |
 | `Console.TableResult.SubmitAndCommit` | Shift+Ctrl+Alt+Enter |
 | `Console.Transaction.Commit` | Shift+Ctrl+Alt+Enter |
+| `context.clear` | Shift+Alt+X |
+| `context.load` | Shift+Alt+L |
+| `context.save` | Shift+Alt+S |
 | `CopyReference` | Shift+Ctrl+Alt+C |
 | `CppIncludesHierarchy` | Shift+Alt+H |
 | `DatabaseView.CopyAction` | Ctrl+D |
@@ -126,14 +129,14 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `DownloadBackendFileToClient` | Shift+Ctrl+D |
 | `DumpLookupElementWeights` | Shift+Ctrl+Alt+W |
 | `DumpMLCompletionFeatures` | Shift+Ctrl+Alt+9 |
-| `EditPropertiesAction` | Alt+Enter; Shift+Enter; Ctrl+Enter |
-| `EditSource` | Alt+S |
 | `EditorAddOrRemoveCaret` | mouse Ctrl+Alt+click |
 | `EditorCreateRectangularSelection` | mouse Shift+Alt+click |
 | `EditorCreateRectangularSelectionOnMouseDrag` | mouse Alt+click; mouse Shift+Alt+click |
 | `EditorDecreaseFontSize` | Shift+Ctrl+-; mouse Ctrl+wheel down |
 | `EditorIncreaseFontSize` | Shift+Ctrl+=; mouse Ctrl+wheel up |
 | `EditorResetFontSizeGlobal` | Shift+Ctrl+\\ |
+| `EditPropertiesAction` | Alt+Enter; Shift+Enter; Ctrl+Enter |
+| `EditSource` | Alt+S |
 | `EmmetNextEditPoint` | Shift+Alt+\] |
 | `EmmetPreviousEditPoint` | Shift+Alt+\[ |
 | `EnableDaemon` | Shift+Ctrl+Alt+8 |
@@ -150,9 +153,9 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `ExternalSystem.ExpandAll` | Ctrl+Num + |
 | `FileChooser.Delete` | Delete |
 | `FileChooser.GoBackward` | Ctrl+-; Ctrl+Num - |
+| `FileChooser.GotoDesktop` | Ctrl+D |
 | `FileChooser.GoToParent` | Backspace |
 | `FileChooser.GoToRoot` | Ctrl+\\ |
-| `FileChooser.GotoDesktop` | Ctrl+D |
 | `FileChooser.NewFolder` | Alt+Insert; Ctrl+N |
 | `FileChooser.TogglePathBar` | Ctrl+P |
 | `ForceRunToCursor` | Ctrl+Alt+R |
@@ -191,11 +194,14 @@ action of [the actions helix has](actions.md). The rest, from L, are in [L to Z]
 | `Graph.Delete` | Delete |
 | `Graph.ZoomIn` | Num + |
 | `Graph.ZoomOut` | Num - |
-| `HTTPClient.PreviewHtml.NavigateBack` | Left |
-| `HTTPClient.PreviewHtml.NavigateForward` | Right |
 | `HelpTopics` | Ctrl+F1 |
 | `Hg.Commit.And.Push.Executor` | Shift+Ctrl+Alt+K |
+| `hg4idea.add` | Ctrl+Alt+A |
+| `hg4idea.QGotoFromPatches` | Shift+Alt+G |
+| `hg4idea.QPushAction` | Shift+Alt+P |
 | `HideAllWindows` | Shift+Esc |
+| `HTTPClient.PreviewHtml.NavigateBack` | Left |
+| `HTTPClient.PreviewHtml.NavigateForward` | Right |
 | `Images.EditExternally` | Ctrl+Alt+F4 |
 | `Images.Editor.ToggleGrid` | Ctrl+' |
 | `Images.Editor.ZoomIn` | Ctrl+Num + |

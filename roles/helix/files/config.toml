@@ -35,10 +35,11 @@ space = "all"
 tab = "all"
 
 # The keys of F12, the IDEs' keymap here, where helix has the command, with F12's action beside
-# each: a core set first, then the rest by topic. docs/helix-keymap.md in the repository lists
-# every F12 action with its keys and helix command, the actions helix has no command for, and
-# helix's own key for each where a terminal or tmux doesn't pass F12's on. Cmd never reaches a
-# terminal program, so F12's Ctrl keys stand in for it.
+# each: a core set first, then the rest by topic. In the repository, docs/helix-keymap.md and its
+# pages in docs/helix-keymap/ list every F12 action with its keys and helix command, then the
+# actions helix has no command for. They give helix's own key for each too, for where a terminal
+# or tmux doesn't pass F12's on. Cmd never reaches a terminal program, so F12's Ctrl keys stand in
+# for it.
 #
 # Where a key was helix's own, helix's other key for it stays: space w for the window menu of C-w,
 # A-o and A-i for the selection keys of A-up and A-down, space c for the comments of C-c, pageup

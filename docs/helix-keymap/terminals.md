@@ -6,8 +6,8 @@ keys as older terminals did loses or changes those below. So does tmux, whatever
 for those that its `extended-keys always` and `extended-keys-format csi-u` options let through:
 [helix's keys](../helix.md#helixs-keys) has them. Every other key arrived from each kind of
 terminal tried, directly and through tmux; the JetBrains terminal, below, loses more. Where F12's
-key doesn't arrive, helix's own key does the same: the tables below and
-[the actions helix has](actions.md) give it.
+key doesn't arrive, helix's own key does the same: [the actions helix has](actions.md) gives it,
+as does the JetBrains terminal's table below.
 
 Each was tried with hx 25.07.1 and tmux 3.6a from Ubuntu's archive, sent as each kind of
 terminal sends it. "tmux" is tmux's defaults or cld's servers.

@@ -15,13 +15,15 @@ Each role is a tag of `site.yml`, with a page of its own:
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile` and `~/.gitconfig`.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
-- [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and rustup.
+- [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
+  rustup.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`claude`](docs/claude.md): claude, its user settings and telemetry, and its sessions after a
   reboot.
 - [`signoz`](docs/signoz.md): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
-- [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and language servers for Go and C#.
+- [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and language servers for Go and
+  C#.
 - [`jetbrains`](docs/jetbrains.md): the backends of Rider and GoLand that JetBrains Gateway runs.
 
 `mac/` sets up the Mac that works on the server: [The Mac](docs/mac.md).

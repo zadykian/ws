@@ -1,6 +1,6 @@
 # The actions helix has
 
-The last column is helix's own key for the same command, for where F12's doesn't arrive.
+The fourth column, helix's own key, runs the same command, for where F12's keys don't arrive.
 
 ## Editing
 
