@@ -1,5 +1,6 @@
 ---
-# The collections the roles use, each pinned to a version.
+# The collections the roles use, each pinned to a version. ansible-galaxy checks each download
+# against the SHA-256 that Galaxy's API lists for that version.
 collections:
   - name: community.general
     version: 13.4.0

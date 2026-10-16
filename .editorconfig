@@ -13,6 +13,10 @@ indent_size = 4
 indent_size = 2
 
 # make takes a recipe's lines after a tab. The git config template and plists keep the tabs that
-# git config and plutil write.
-[{Makefile,roles/shell/templates/gitconfig.j2,*.plist}]
+# git config and plutil write. A glob that holds a / matches from this directory alone, so the
+# plists, in mac/, take a section of their own.
+[{Makefile,roles/shell/templates/gitconfig.j2}]
+indent_style = tab
+
+[*.plist]
 indent_style = tab

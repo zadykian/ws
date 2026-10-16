@@ -6,12 +6,14 @@
 FILES =
 # The ref after which tools/commits checks the commits' messages, up to HEAD.
 BASE = origin/main
-# The Python of the lint tools' venv: 3.12 or newer, as ansible-core 2.20 needs.
+# The Python of the lint tools' venv: 3.12 to 3.14, the Pythons that ansible-core 2.20 supports
+# and that the wheels of .github/lint-requirements.txt cover.
 PYTHON = python3
 
-# The Python tools, at the pins of .github/lint-requirements.txt, and the collections of
-# requirements.yml, which ansible-lint reads offline (.ansible-lint). Each is installed again where
-# it is older than the file it comes from. tools/run downloads the other tools into .cache/tools.
+# The Python tools, at the pins and SHA-256 sums of .github/lint-requirements.txt, and the
+# collections of requirements.yml, which ansible-lint reads offline (.ansible-lint). Each is
+# installed again where a file it comes from is newer. tools/run downloads the other tools into
+# .cache/tools.
 VENV = .cache/venv
 COLLECTIONS = .cache/collections
 PIP_STAMP = $(VENV)/.installed
@@ -24,13 +26,23 @@ export ANSIBLE_COLLECTIONS_PATH = $(CURDIR)/$(COLLECTIONS)
 lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor gitleaks \
 	commits
 
-$(PIP_STAMP): .github/lint-requirements.txt
-	@$(PYTHON) -c 'import sys; sys.exit(sys.version_info < (3, 12))' || \
-		{ echo 'make: the Python tools need Python 3.12 or newer, as ansible-core does'; \
+# Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in, so the install
+# stops where the .txt lacks a pin of the .in, rather than keep the old pin unseen. pip takes a file
+# only where the .txt lists its SHA-256. So a file PyPI adds to a release later never runs: pip
+# takes a listed one, or fails where none fits. --only-binary takes wheels alone, so no package's
+# build runs here.
+$(PIP_STAMP): .github/lint-requirements.in .github/lint-requirements.txt
+	@$(PYTHON) -c 'import sys; sys.exit(not (3, 12) <= sys.version_info[:2] <= (3, 14))' || \
+		{ echo 'make: the Python tools need Python 3.12 to 3.14, as ansible-core 2.20 supports'; \
 		exit 1; }
+	@awk 'NR == FNR { if (!/^(#|$$)/) pin[$$1] = 1; next } { delete pin[$$1] } \
+		END { for (p in pin) { print "make: lint-requirements.txt lacks " p \
+		", which lint-requirements.in pins: run uv as the .in says"; s = 1 } exit s }' \
+		.github/lint-requirements.in .github/lint-requirements.txt
 	rm -rf $(VENV)
 	$(PYTHON) -m venv $(VENV)
-	$(VENV)/bin/pip install --quiet --disable-pip-version-check -r .github/lint-requirements.txt
+	$(VENV)/bin/pip install --quiet --disable-pip-version-check --require-hashes \
+		--only-binary :all: -r .github/lint-requirements.txt
 	touch $@
 
 $(GALAXY_STAMP): requirements.yml $(PIP_STAMP)
@@ -38,10 +50,12 @@ $(GALAXY_STAMP): requirements.yml $(PIP_STAMP)
 	$(VENV)/bin/ansible-galaxy collection install -r requirements.yml -p $(COLLECTIONS)
 	touch $@
 
-# ShellCheck and shfmt on the shell scripts, found by extension or shebang (tools/files).
+# ShellCheck and shfmt on the shell scripts, found by extension or shebang (tools/files). -x
+# follows a script's source directives to the files outside FILES, so that a script checked alone
+# sees what it sources.
 shell:
 	@set -ef; files=$$(tools/files sh $(FILES)); [ -z "$$files" ] || { \
-		tools/run shellcheck $$files && tools/run shfmt -d -i 4 $$files; }
+		tools/run shellcheck -x $$files && tools/run shfmt -d -i 4 $$files; }
 
 # yamllint finds the YAML files itself, and leaves out those .yamllint ignores.
 yamllint: $(PIP_STAMP)
@@ -61,7 +75,7 @@ ruff: $(PIP_STAMP)
 		[ -z "$$files" ] || { $(VENV)/bin/ruff check $$files && \
 		$(VENV)/bin/ruff format --check $$files; }
 
-# The size caps: 300 lines a file.
+# The size caps: 300 lines a file, and 150 the README.
 sizecheck:
 	tools/sizecheck $(FILES)
 

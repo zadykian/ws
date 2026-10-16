@@ -1,0 +1,16 @@
+# The Python tools of `make lint`, ansible-lint, yamllint and ruff, each pinned. ansible-lint runs
+# ansible-core's syntax check, so ansible-core is pinned too. lint-requirements.txt, beside this
+# file, pins every package they pull in, with the SHA-256 of each of its files on PyPI, and make
+# installs from it. uv writes it from this file. To change a pin, change it here, then run, with uv:
+#
+#   uv pip compile --universal --python-version 3.12 --generate-hashes \
+#       --custom-compile-command 'uv pip compile, as .github/lint-requirements.in says' \
+#       .github/lint-requirements.in -o .github/lint-requirements.txt
+#
+# uv keeps the other pins of lint-requirements.txt where they fit, so that a new release of a
+# package they pull in changes no finding. --universal resolves for each Python from 3.12, as
+# ansible-core 2.20 needs, so the file serves CI's Python and ws's alike.
+ansible-core==2.20.10
+ansible-lint==26.9.0
+ruff==0.16.10
+yamllint==1.38.0

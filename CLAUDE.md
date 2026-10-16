@@ -35,8 +35,8 @@ make commits BASE=origin/BRANCH   # the messages from BRANCH, the one below in a
 
 The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, `lychee`, `rumdl`,
 `actionlint`, `zizmor`, `gitleaks` and `commits` ([Checks](docs/checks.md#make-lint)). `make lint`
-needs Python 3.12 or newer. It installs the Python tools and the collections into `.cache`, and
-`tools/run` downloads the rest there.
+needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
+collections into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs, which run on each pull request ([Checks](docs/checks.md)). `playbook`
 runs `bootstrap.sh` twice in an Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files
@@ -77,8 +77,11 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A pinned download is checked against its SHA-256 before use: otelcol's `.deb`
   ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
   ([its task](roles/docker/tasks/main.yml)), foundryctl ([ci.yml](.github/workflows/ci.yml)) and
-  the gates' tools ([tools/run](tools/run)). Go and the JetBrains backends are checked against the
-  SHA-256 their publishers list ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)).
+  the gates' tools ([tools/run](tools/run)). So are the Python tools
+  ([lint-requirements.in](.github/lint-requirements.in)). Go, the JetBrains backends and the
+  collections are checked against the SHA-256 their publishers list ([devtools](docs/devtools.md),
+  [jetbrains](docs/jetbrains.md), [requirements.yml](requirements.yml)). roslyn-language-server is
+  pinned by version alone ([group_vars/all.yml](group_vars/all.yml)).
 - The collections are pinned in `requirements.yml`, and ansible-lint runs offline on those pins
   ([.ansible-lint](.ansible-lint)).
 - foundryctl forges SigNoz's compose files, `roles/signoz/files/deployment/` and
@@ -98,8 +101,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
   exclusion or keep a baseline: every file passes every gate outright, and `.yamllint`,
   `.ansible-lint`, `ruff.toml` and `.vale.ini` are never weakened.
-- The caps: files of 300 lines or fewer (`tools/sizecheck`), the README of 150 or fewer, sentences
-  of 30 words or fewer, and prose wrapped at 100 columns ([writing.md](.claude/rules/writing.md)).
+- The caps: files of 300 lines or fewer and the README of 150 or fewer (`tools/sizecheck`),
+  sentences of 30 words or fewer, and prose wrapped at 100 columns
+  ([writing.md](.claude/rules/writing.md)).
 
 ## Commits
 
