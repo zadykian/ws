@@ -19,8 +19,8 @@ left out too in the tables of actions helix has, as helix has no names for them.
   terminal loses.
 - [helix's keys that F12 takes](helix-keymap/taken.md), with helix's other key for each.
 - [The actions helix has](helix-keymap/actions.md), by topic, with helix's own key for each.
-- The actions helix lacks: [A to J](helix-keymap/lacks-a-j.md) and
-  [L to Z](helix-keymap/lacks-l-z.md).
+- The actions helix lacks, in the order of their names, upper and lower case alike:
+  [A to J](helix-keymap/lacks-a-j.md) and [L to Z](helix-keymap/lacks-l-z.md).
 
 ## In insert mode
 

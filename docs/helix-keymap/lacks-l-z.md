@@ -19,23 +19,26 @@ action of [the actions helix has](actions.md). Those up to J are in [A to J](lac
 | `NewScratchFile` | Shift+Ctrl+Alt+Insert |
 | `NextOccurence` | F8 |
 | `OasEndpointsSidePanelSaveAction` | Alt+O |
+| `openAssertEqualsDiff` | Ctrl+D |
 | `OpenInRightSplit` | mouse Alt+double-click |
 | `OpenWinFormsDesignerAction` | Shift+F7 |
 | `Orchide.GotoInventory` | Shift+Ctrl+O, I |
-| `PCFindUsagesAction` | Shift+F12 |
-| `PCNavigateToSource` | Alt+S |
+| `org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction` | Ctrl+U |
+| `org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction` | Shift+Ctrl+S |
 | `ParameterInfo.GoToPreviousSignature` | Shift+Ctrl+P |
 | `PasteMultiple` | Shift+Ctrl+V; Shift+Ctrl+Insert |
+| `PCFindUsagesAction` | Shift+F12 |
+| `PCNavigateToSource` | Alt+S |
 | `PopupHector` | Shift+Ctrl+Alt+H |
 | `PreviousOccurence` | Shift+F8 |
 | `PublishGroup.UploadTo` | Shift+Ctrl+Alt+X |
-| `ReSharperNavigateTo` | Alt+\`; Alt+Dead grave |
 | `ReformatWithPrettierAction` | Shift+Ctrl+Alt+P |
 | `RemoteHostView.EditRemoteFile` | Enter |
 | `RemoteHostView.Rename` | Ctrl+R, R |
 | `Replace` | Ctrl+H |
 | `ReplaceInPath` | Shift+Ctrl+H |
 | `ResetColumnsWidth` | Ctrl+Alt+Up |
+| `ReSharperNavigateTo` | Alt+\`; Alt+Dead grave |
 | `ResizeToolWindowDown` | Ctrl+Alt+Down |
 | `ResizeToolWindowLeft` | Ctrl+Alt+Left |
 | `ResizeToolWindowRight` | Ctrl+Alt+Right |
@@ -113,6 +116,8 @@ action of [the actions helix has](actions.md). Those up to J are in [A to J](lac
 | `ShowPopupMenu` | Menu; F13 |
 | `ShowUmlDiagram` | Shift+Ctrl+Alt+U |
 | `ShowUmlDiagramPopup` | Ctrl+Alt+U |
+| `sql.ExtractFunctionAction` | Ctrl+R, M |
+| `sql.SelectInDatabaseView` | Shift+Alt+B |
 | `StretchSplitToBottom` | Ctrl+Alt+Down |
 | `StretchSplitToLeft` | Ctrl+Alt+Left |
 | `StretchSplitToRight` | Ctrl+Alt+Right |
@@ -129,6 +134,8 @@ action of [the actions helix has](actions.md). Those up to J are in [A to J](lac
 | `TableResult.SelectNextOccurrence` | Shift+Alt+. |
 | `TableResult.ShrinkSelection` | Shift+Alt+-; Shift+Ctrl+W |
 | `TableResult.UnselectPreviousOccurrence` | Shift+Alt+, |
+| `tasks.open.in.browser` | Shift+Alt+B |
+| `tasks.switch` | Shift+Alt+T |
 | `Terminal.CopySelectedText` | Ctrl+C; Ctrl+Insert |
 | `Terminal.ExpandBlockSelectionAbove` | Shift+Up |
 | `Terminal.ExpandBlockSelectionBelow` | Shift+Down |
@@ -149,11 +156,11 @@ action of [the actions helix has](actions.md). Those up to J are in [A to J](lac
 | `ToggleTemporaryLineBreakpoint` | Shift+Ctrl+Alt+F8 |
 | `Tree-selectParentExtendSelection` | Shift+Left |
 | `UML.Find` | Ctrl+F |
-| `UML.ShowChanges` | Shift+Ctrl+Alt+D |
-| `UML.ShowStructure` | Alt+\\ |
 | `Uml.NewElement` | Ctrl+N; Alt+Insert |
 | `Uml.NodeIntentions` | Alt+Enter; Shift+Enter; Ctrl+Enter |
+| `UML.ShowChanges` | Shift+Ctrl+Alt+D |
 | `Uml.ShowDiff` | Shift+Ctrl+D |
+| `UML.ShowStructure` | Alt+\\ |
 | `UpdateRunningApplication` | Ctrl+F10 |
 | `UsageView.Exclude` | Delete |
 | `UsageView.Include` | Insert |
@@ -192,16 +199,3 @@ action of [the actions helix has](actions.md). Those up to J are in [A to J](lac
 | `XPathView.Actions.ShowPath` | Ctrl+Alt+X, P |
 | `ZoomInIdeAction` | Shift+Ctrl+Alt+. |
 | `ZoomOutIdeAction` | Shift+Ctrl+Alt+, |
-| `context.clear` | Shift+Alt+X |
-| `context.load` | Shift+Alt+L |
-| `context.save` | Shift+Alt+S |
-| `hg4idea.QGotoFromPatches` | Shift+Alt+G |
-| `hg4idea.QPushAction` | Shift+Alt+P |
-| `hg4idea.add` | Ctrl+Alt+A |
-| `openAssertEqualsDiff` | Ctrl+D |
-| `org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction` | Ctrl+U |
-| `org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction` | Shift+Ctrl+S |
-| `sql.ExtractFunctionAction` | Ctrl+R, M |
-| `sql.SelectInDatabaseView` | Shift+Alt+B |
-| `tasks.open.in.browser` | Shift+Alt+B |
-| `tasks.switch` | Shift+Alt+T |

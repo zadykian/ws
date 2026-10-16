@@ -17,10 +17,10 @@ roslyn-language-server, is the server of VS Code's C# extension. It comes from n
 
 `config.toml` binds the keys of F12, the keymap GoLand and Rider use here, in normal and in insert
 mode. It binds them for each F12 action helix has a command for, and names F12's action beside
-each. [The F12 keymap](helix-keymap.md) lists every F12 action with its keys and helix command,
-and helix's own key for it, then the actions helix has no command for. Cmd never reaches a program
-in a terminal, so F12's Ctrl keys stand in for it. On a Mac, the Alt keys need Option to act as
-Meta or send Esc+.
+each. [The F12 keymap](helix-keymap.md) and its pages give each F12 action's keys, helix command
+and helix's own key, then the actions helix has no command for. Cmd never reaches a program in a
+terminal, so F12's Ctrl keys stand in for it. On a Mac, the Alt keys need Option to act as Meta or
+send Esc+.
 
 Where F12 takes a key of helix's, helix's other key for it still works. A few have no other key,
 which [helix's keys that F12 takes](helix-keymap/taken.md) lists. Alt+D was helix's only key to
@@ -35,9 +35,8 @@ Ctrl alone, so that Shift+Ctrl+W extends the selection and Shift+Ctrl+Z undoes. 
 don't arrive, and Ctrl+I, Ctrl+M and Ctrl+[ arrive as Tab, Enter and Esc. One that reports
 modified keys as `CSI u`, or answers helix's request for the kitty keyboard protocol, sends every
 one of these. Shift+Ctrl with a letter arrives whole only where the terminal sends the shifted
-letter, as `CSI 84;6u` for Shift+Ctrl+T. It arrives whole too where the terminal answers the kitty
-request and reports the shifted key, as `CSI 116:84;6u`. Where it sends the letter alone,
-`CSI 116;6u`, helix drops the Shift and runs Ctrl+T.
+letter, as `CSI 84;6u` for Shift+Ctrl+T, or `CSI 116:84;6u` in answer to the kitty request. Where
+it sends the letter alone, `CSI 116;6u`, helix drops the Shift and runs Ctrl+T.
 
 tmux 3.6a sends Shift+Ctrl with a letter as Ctrl alone whatever the terminal: it sends such keys
 whole only to a program that asks, and helix doesn't. Ctrl+- and Ctrl+= reach helix through tmux
@@ -55,7 +54,9 @@ knows it of iTerm2 already. With `always`, tmux sends those keys as `CSI u` to e
 shell too. tmux's prefix reaches helix pressed twice: Ctrl+B, Toggle line breakpoint, by default,
 and Ctrl+Q, Go to action, in cld's sessions.
 
-Where an F12 key doesn't arrive, helix's own key, in [the keymap](helix-keymap.md), does the same.
+Where an F12 key doesn't arrive, helix's own key does the same.
+[Keys a terminal or tmux may not pass on](helix-keymap/terminals.md) lists those keys, and
+[the actions helix has](helix-keymap/actions.md) gives helix's own key for each.
 
 ## C# in helix
 
