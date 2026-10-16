@@ -47,8 +47,9 @@
     mode: "0644"
   when: base_etc_timezone.stat.exists
 
-# What the package writes when its debconf question is answered yes, Ubuntu's default. The stock
-# 50unattended-upgrades, left as it is, allows Ubuntu's security updates alone.
+# The settings the package writes when its debconf question is answered yes, Ubuntu's default. The
+# stock 50unattended-upgrades, left unchanged, allows Ubuntu's security updates alone. What ucf does
+# with the file's header at an upgrade is in docs/base.md.
 - name: Turn on unattended upgrades
   ansible.builtin.copy:
     src: 20auto-upgrades
