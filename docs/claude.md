@@ -22,8 +22,9 @@ the file and lists the keys it would add. A cld that predates the command gets i
 
 Then `cld setup restore`, which has the user's systemd bring cld's sessions back after a reboot.
 The role turns lingering on, so that the user's systemd starts at boot rather than at the first
-login. The unit keeps the `PATH` of the user's login shell, where `cld restore` finds tmux. The
-next run of the role updates it after a change to that `PATH`.
+login. The unit keeps the `PATH` of the user's login shell, where `cld restore sessions` finds tmux.
+The next run of the role updates it, after a change to that `PATH` or to the command cld runs
+there.
 
 ## Telemetry
 

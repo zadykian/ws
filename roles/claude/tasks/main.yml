@@ -94,9 +94,9 @@
 - name: Send claude's telemetry to the host's collector
   ansible.builtin.import_tasks: telemetry.yml
 
-# cld setup restore writes a systemd user unit that runs cld restore as the user's systemd starts,
-# which brings back the sessions a reboot ended. It leaves the rest to the user: lingering, so
-# that the user's systemd starts at boot rather than at the first login, and a shell where
+# cld setup restore writes a systemd user unit that runs cld restore sessions as the user's systemd
+# starts, which brings back the sessions a reboot ended. It leaves the rest to the user: lingering,
+# so that the user's systemd starts at boot rather than at the first login, and a shell where
 # systemctl --user reaches it. A container has no systemd, so these run on a booted machine only.
 - name: Restore cld's sessions at boot
   tags: [systemd]
@@ -104,10 +104,10 @@
     claude_uid: "{{ ansible_facts.getent_passwd[ws_user][1] }}"
     claude_cld: "{{ ws_home }}/.local/bin/cld"
     # A login shell of ws_user's, which runs the arguments after it. The unit keeps the PATH cld
-    # setup restore runs with, where cld restore finds tmux, and its TMUX_TMPDIR, XDG_STATE_HOME
-    # and CLD_IDLE_DAYS where set. So the shell starts from a clean environment, not the caller's:
-    # /etc/environment, as PAM gives a login, then bash's login files. With the user's bus,
-    # systemctl --user finds the user's systemd.
+    # setup restore runs with, where cld restore sessions finds tmux, and its TMUX_TMPDIR,
+    # XDG_STATE_HOME and CLD_IDLE_DAYS where set. So the shell starts from a clean environment, not
+    # the caller's: /etc/environment, as PAM gives a login, then bash's login files. With the
+    # user's bus, systemctl --user finds the user's systemd.
     claude_login_shell: >-
       env -i HOME={{ ws_home | quote }} USER={{ ws_user | quote }} LOGNAME={{ ws_user | quote }}
       SHELL=/bin/bash XDG_RUNTIME_DIR=/run/user/{{ claude_uid }}
@@ -157,7 +157,9 @@
 
     # A dry run skips the task above, so this one shows where the unit differs from what cld
     # writes: in the lines that come from cld's environment and path, each quoted as cld quotes
-    # it. The rest of the unit is cld's own text.
+    # it. The rest of the unit is cld's own text. Its command is restore sessions where the cld
+    # installed has it, and plain restore with an older cld, which exits 2 on help restore sessions,
+    # as cld 0.13.0 does.
     - name: Compare cld-restore.service with what cld writes
       ansible.builtin.shell:
         cmd: >-
@@ -178,7 +180,11 @@
                   fi
               done
               cld=$(readlink -f "$0")
-              printf 'ExecStart=%s restore\n' "$(quote "${cld//\$/\$\$}")"
+              command=restore
+              if "$0" help restore sessions >/dev/null 2>&1; then
+                  command='restore sessions'
+              fi
+              printf 'ExecStart=%s %s\n' "$(quote "${cld//\$/\$\$}")" "$command"
           )
           if [ ! -f "$unit" ]; then
               echo missing
