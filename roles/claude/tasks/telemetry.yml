@@ -1,7 +1,7 @@
 ---
 # claude's telemetry goes to the host's collector. The keys are in claude's user settings, not in
-# .bashrc, so that the sessions cld restore starts get them too. A signal's own endpoint or
-# protocol would override the general one, so they go, with two keys that change what claude
+# .bashrc, so that the sessions cld restore sessions starts get them too. A signal's own endpoint
+# or protocol would override the general one, so they go, with two keys that change what claude
 # sends. The file is written only where env changes: claude reorders the keys as it writes the
 # file, so its bytes would differ at every run.
 - name: Send claude's telemetry to the host's collector
