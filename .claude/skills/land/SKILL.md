@@ -27,8 +27,8 @@ fast-forwards only: GitHub's merge methods are refused, and `.claude/settings.js
 2. **On main.** `git fetch origin`, then `git merge-base --is-ancestor origin/main HEAD_SHA`.
    Where main is not an ancestor of the head, stop: the stack needs a rebase (below).
 3. **Checks.** `gh pr checks N`: every check green, `lint`, `playbook` and `signoz` of
-   `.github/workflows/ci.yml`, and `mac` of `.github/workflows/mac.yml`. Stop on a failure, and
-   report it.
+   `.github/workflows/ci.yml`, `mac` of `.github/workflows/mac.yml`, and `mac-cld` of
+   `.github/workflows/mac-cld.yml`. Stop on a failure, and report it.
 4. **Conversations.** Every review conversation resolved; the ruleset refuses the push otherwise.
 5. **Land.**
    - A pull request that changes `.github/workflows`: the workflow's token may not push it. Give

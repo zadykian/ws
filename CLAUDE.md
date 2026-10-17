@@ -21,7 +21,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   caps them and `commits` checks the messages.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`; and `fast-forward.yml`, which lands a pull request on a `/ff` comment.
+  `mac`; `mac-cld.yml`, with `mac-cld`; and `fast-forward.yml`, which lands a pull request on a
+  `/ff` comment.
 
 ## Commands
 
@@ -40,8 +41,9 @@ collections into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs, which run on each pull request ([Checks](docs/checks.md)). `playbook`
 runs `bootstrap.sh` twice in an Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files
-again. `mac` sets up a Mac on GitHub's macOS runner. A run of the playbook sets up the machine that
-runs it, as below.
+again. `mac` sets up a Mac on GitHub's macOS runner, and `mac-cld` sets up cld and Ghostty's
+settings on another ([cld on the Mac](docs/checks.md#cld-on-the-mac)). A run of the playbook sets
+up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, and prints 0 where it holds none:

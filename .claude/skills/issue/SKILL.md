@@ -16,7 +16,8 @@ Reply with a plan and ask for approval:
 
 - the goal, in a sentence or two;
 - the changes, with `file:line` references;
-- what to check: the gates of `make lint`, and what CI's `playbook`, `signoz` and `mac` jobs run;
+- what to check: the gates of `make lint`, and what CI's `playbook`, `signoz`, `mac` and `mac-cld`
+  jobs run;
 - open decisions, each with a recommendation;
 - the pull requests, and where they go in the stack.
 
