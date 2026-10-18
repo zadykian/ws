@@ -1,0 +1,31 @@
+# The Mac's Ghostty settings, which mac/setup.sh writes to ws.ghostty, beside Ghostty's config.
+# Ghostty reads them after the config's own, so each wins over the config's value, and
+# shell-integration-features replaces the config's whole list. Its ssh-terminfo installs Ghostty's
+# terminfo on ws at the first ssh from Ghostty, so ws installs none itself.
+shell-integration = zsh
+shell-integration-features = title,ssh-env,ssh-terminfo
+clipboard-read = allow
+clipboard-write = allow
+window-step-resize = true
+# Ghostty brings back its windows after every quit, which cld restore tabs builds on.
+window-save-state = always
+window-vsync = true
+# New windows open 200 columns by 60 rows. Those that window-save-state brings back keep their size.
+window-height = 60
+window-width = 200
+window-new-tab-position = end
+title-report = true
+# setup.sh installs the font from Homebrew's cask where it is missing. A later font-family adds a
+# fallback to the config's own, so the empty one clears those first. font-family takes a family, as
+# ghostty +list-fonts heads it: a face, as JetBrainsMono NFM Regular, finds no font.
+font-thicken = true
+font-family = ""
+font-family = JetBrainsMono Nerd Font Mono
+font-size = 16
+theme = Starlight
+macos-titlebar-style = transparent
+macos-titlebar-proxy-icon = hidden
+macos-icon = retro
+# Ghostty updates itself from its stable releases: setup.sh installs it only where it is missing.
+auto-update = download
+auto-update-channel = stable
