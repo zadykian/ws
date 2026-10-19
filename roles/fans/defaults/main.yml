@@ -1,0 +1,66 @@
+---
+# The board's maker, as DMI names it: the role drives the fans only on a board of this maker, whose
+# NCT6687D chip the driver it builds reads. A machine with another board, as a cloud VM or CI's
+# container, is left as it is. Empty, no machine is.
+fans_board_vendor: Micro-Star International Co., Ltd.
+
+# The sensors, the curves and the fans, as docs/fans.md lists them. Each sensor names only sensors
+# above it.
+fans_sensors:
+  # The CPU package's temperature.
+  - name: cpu
+    hwmon: coretemp
+    label: Package id 0
+  - name: gpu
+    nvidia: 0
+  - name: cpu_average
+    average: cpu
+    seconds: 60
+  - name: gpu_average
+    average: gpu
+    seconds: 60
+  - name: cpu_gpu_max
+    max: [cpu_average, gpu_average]
+
+# Each curve's points are [°C, %]. Its hysteresis is in °C, its response time in seconds.
+fans_curves:
+  - name: cpu
+    sensor: cpu_average
+    points: [[50, 30], [80, 60]]
+    hysteresis: { up: 2, down: 2 }
+    response: { up: 5, down: 5 }
+  - name: gpu
+    sensor: gpu_average
+    points: [[30, 20], [50, 20], [80, 60]]
+    hysteresis: { up: 2, down: 2 }
+    response: { up: 5, down: 5 }
+  - name: cpu_gpu_max
+    sensor: cpu_gpu_max
+    points: [[50, 30], [80, 60]]
+    hysteresis: { up: 2, down: 2 }
+    response: { up: 5, down: 5 }
+
+# The board's headers the role drives, by nct6687's labels. The RTX 5080's own fans are off the
+# card: the GPU Fans on System Fan #1 cool it. The headers left out, System Fan #3 to #6, keep the
+# board's curves.
+fans_controls:
+  - name: CPU Pump
+    hwmon: nct6687
+    label: Pump Fan
+    curve: cpu
+  - name: Exhaust Fans
+    hwmon: nct6687
+    label: CPU Fan
+    curve: cpu_gpu_max
+  - name: GPU Fans
+    hwmon: nct6687
+    label: "System Fan #1"
+    curve: gpu
+  - name: MB Fan
+    hwmon: nct6687
+    label: "System Fan #2"
+    percent: 0
+
+# How far each fan's speed moves at most in a tick, in %, and the tick, in seconds.
+fans_step: { up: 10, down: 10 }
+fans_interval: 1

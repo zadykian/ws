@@ -11,6 +11,8 @@
       tags: [network]
     - role: wireguard
       tags: [wireguard]
+    - role: fans
+      tags: [fans]
     - role: shell
       tags: [shell]
     - role: tmux

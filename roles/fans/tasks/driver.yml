@@ -1,0 +1,156 @@
+---
+# Linux's own nct6683 reads the NCT6687D of MSI's boards but sets none of its fans. nct6687, from
+# github.com/Fred78290/nct6687d at the commit group_vars/all.yml pins, sets them. DKMS builds it
+# for the running kernel, and again for each new one, from the headers linux-headers-generic
+# brings with it.
+- name: Install DKMS and the kernels' headers
+  ansible.builtin.apt:
+    name:
+      - dkms
+      - linux-headers-generic
+      - linux-headers-{{ ansible_facts.kernel }}
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 600
+
+# The block's condition is checked again before each of its tasks, so it reads this once.
+- name: Check for the driver's source
+  ansible.builtin.stat:
+    path: "{{ fans_nct6687_source }}/nct6687.c"
+  register: fans_nct6687_unpacked
+
+# GitHub's tarball of the commit, checked against its SHA-256 before it is unpacked. The source
+# stays in /usr/src for DKMS, and the tarball goes.
+- name: Put the driver's source in place
+  when: not fans_nct6687_unpacked.stat.exists
+  block:
+    - name: Download the driver's source
+      ansible.builtin.get_url:
+        url: https://github.com/Fred78290/nct6687d/archive/{{ fans_nct6687_commit }}.tar.gz
+        dest: /var/cache/nct6687d-{{ fans_nct6687_version }}.tar.gz
+        checksum: sha256:{{ fans_nct6687_sha256 }}
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Create the driver's source directory
+      ansible.builtin.file:
+        path: "{{ fans_nct6687_source }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # A dry run downloads nothing to unpack.
+    - name: Unpack the driver's source
+      ansible.builtin.unarchive:
+        src: /var/cache/nct6687d-{{ fans_nct6687_version }}.tar.gz
+        dest: "{{ fans_nct6687_source }}"
+        remote_src: true
+        extra_opts: [--strip-components=1]
+        owner: root
+        group: root
+      when: not ansible_check_mode
+
+    - name: Remove the driver's tarball
+      ansible.builtin.file:
+        path: /var/cache/nct6687d-{{ fans_nct6687_version }}.tar.gz
+        state: absent
+
+- name: Write the driver's dkms.conf, with its version
+  ansible.builtin.template:
+    src: dkms.conf.j2
+    dest: "{{ fans_nct6687_source }}/dkms.conf"
+    owner: root
+    group: root
+    mode: "0644"
+
+# Its lines are as `nct6687d/VERSION, KERNEL, ARCH: installed`, or `nct6687d/VERSION: added`.
+- name: Read DKMS's versions of the driver
+  ansible.builtin.command: dkms status nct6687d
+  register: fans_dkms
+  changed_when: false
+  check_mode: false
+  when: not ansible_check_mode or '/usr/sbin/dkms' is file
+
+# Another version in the kernel's tree would stand in the pinned one's way.
+- name: Remove the driver's other versions
+  ansible.builtin.command: dkms remove nct6687d/{{ item }} --all
+  loop: "{{ fans_dkms_versions | reject('eq', fans_nct6687_version) }}"
+  changed_when: true
+
+- name: Remove the other versions' source
+  ansible.builtin.file:
+    path: /usr/src/nct6687d-{{ item }}
+    state: absent
+  loop: "{{ fans_dkms_versions | reject('eq', fans_nct6687_version) }}"
+
+- name: Add the driver to DKMS
+  ansible.builtin.command: dkms add nct6687d/{{ fans_nct6687_version }}
+  when: fans_nct6687_version not in fans_dkms_versions
+  changed_when: true
+
+- name: Build and install the driver for the running kernel
+  ansible.builtin.command: >-
+    dkms install nct6687d/{{ fans_nct6687_version }} -k {{ ansible_facts.kernel }}
+  when: not fans_dkms_installed
+  changed_when: true
+
+- name: Show the driver a dry run would build
+  ansible.builtin.debug:
+    msg: >-
+      A dry run builds nothing: the run would build nct6687d {{ fans_nct6687_version }} for
+      {{ ansible_facts.kernel }}.
+  when: ansible_check_mode and not fans_dkms_installed
+
+- name: Keep Linux's own driver off the chip
+  ansible.builtin.copy:
+    src: modprobe.conf
+    dest: /etc/modprobe.d/ws-fans.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+# systemd's modules-load.d, which a machine without systemd, as a container, may lack.
+- name: Create the directory of the modules to load at boot
+  ansible.builtin.file:
+    path: /etc/modules-load.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Load nct6687 at boot
+  ansible.builtin.copy:
+    src: modules-load.conf
+    dest: /etc/modules-load.d/ws-fans.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+# Where it is loaded, as after sensors-detect, it holds the chip, and nct6687 cannot take it.
+- name: Unload Linux's own driver of the chip
+  community.general.modprobe:
+    name: nct6683
+    state: absent
+
+# With Secure Boot on, the kernel refuses the driver until DKMS's key is enrolled, by hand at the
+# console: docs/fans.md#secure-boot. Until then, the run goes on, and the board's curves run. A
+# dry run checks with modprobe -n, which fails where the driver isn't built yet.
+- name: Load nct6687
+  community.general.modprobe:
+    name: nct6687
+    state: present
+  register: fans_modprobe
+  when: not ansible_check_mode or fans_dkms_installed
+  failed_when: >-
+    fans_modprobe.rc | default(0) != 0
+    and 'Key was rejected' not in fans_modprobe.stderr | default('')
+
+- name: Note that the kernel refused the driver
+  ansible.builtin.debug:
+    msg: >-
+      The kernel refused nct6687, as Secure Boot is on and DKMS's key is not enrolled, so the
+      board's own curves drive its fans. docs/fans.md#secure-boot says how to enroll it.
+  when: fans_modprobe.rc | default(0) != 0

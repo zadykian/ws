@@ -1,0 +1,17 @@
+---
+# A machine with another board, as a cloud VM or CI's container, keeps its fans as they are.
+- name: Note that this machine lacks the board whose fans the role drives
+  ansible.builtin.debug:
+    msg: >-
+      This machine's board is not one of {{ fans_board_vendor or 'no maker' }}'s, so the role
+      leaves its fans as they are. fans_board_vendor names the maker, as DMI does.
+  when: not fans_board
+
+- name: Drive the fans
+  when: fans_board
+  block:
+    - name: Set up the board's driver
+      ansible.builtin.import_tasks: driver.yml
+
+    - name: Set up ws-fans
+      ansible.builtin.import_tasks: service.yml

@@ -13,6 +13,7 @@ Each role is a tag of `site.yml`, with a page of its own:
 - [`security`](docs/security.md): SSH by key only, ufw and fail2ban.
 - [`network`](docs/network.md): the server's end of a cable to the Mac.
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
+- [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile` and `~/.gitconfig`.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
@@ -91,7 +92,8 @@ Secrets are never in this repository. On a new machine, these stay manual:
 
 - `gh auth login` and `gh auth setup-git`;
 - the claude login;
-- each peer's public key in `/etc/wireguard`, as in [The tunnel](docs/wireguard.md#the-tunnel).
+- each peer's public key in `/etc/wireguard`, as in [The tunnel](docs/wireguard.md#the-tunnel);
+- with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot).
 
 The router takes a few steps once, by hand: [The router](docs/router.md).
 

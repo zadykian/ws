@@ -1,5 +1,6 @@
-# ruff, run by `make ruff` on the Python files, the roles' filter plugins: its lint and format
-# checks. The plugins run on the controller, whose ansible-core 2.20 needs Python 3.12 or newer.
+# ruff, run by `make ruff` on the Python files, the roles' filter plugins and ws-fans: its lint and
+# format checks. The plugins run on the controller, whose ansible-core 2.20 needs Python 3.12 or
+# newer, and ws-fans on the server's python3, Ubuntu 26.04's.
 line-length = 100
 target-version = "py312"
 

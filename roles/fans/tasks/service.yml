@@ -1,0 +1,54 @@
+---
+# ws-fans, which drives the board's fans on the curves of its config: its two files of Python, run
+# by the system's python3.
+- name: Create ws-fans' directory
+  ansible.builtin.file:
+    path: /usr/local/lib/ws-fans
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install ws-fans
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /usr/local/lib/ws-fans/{{ item }}
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [ws-fans.py, fan_devices.py]
+  notify: Restart ws-fans
+
+# ws-fans checks a new config, and sets no fan, before the service restarts with it. A dry run
+# before ws-fans is installed checks nothing.
+- name: Write ws-fans' config
+  ansible.builtin.template:
+    src: ws-fans.json.j2
+    dest: /etc/ws-fans.json
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/bin/python3 -B /usr/local/lib/ws-fans/ws-fans.py --check %s
+  notify: Restart ws-fans
+
+- name: Write ws-fans.service
+  ansible.builtin.copy:
+    src: ws-fans.service
+    dest: /etc/systemd/system/ws-fans.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart ws-fans
+
+- name: Restart ws-fans now if it changed
+  ansible.builtin.meta: flush_handlers
+
+# A dry run where the unit isn't written yet has none to start. The play runs on localhost, where
+# the controller's test sees the target's files.
+- name: Enable and start ws-fans
+  ansible.builtin.systemd_service:
+    name: ws-fans
+    enabled: true
+    state: started
+  when: not ansible_check_mode or '/etc/systemd/system/ws-fans.service' is file
+  tags: [systemd]

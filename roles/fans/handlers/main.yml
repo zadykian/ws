@@ -1,0 +1,13 @@
+---
+# A notified handler runs whatever --skip-tags says, so it checks the systemd tag itself. A dry run
+# where the unit isn't written yet has none to restart. ws-fans hands the fans back as it stops,
+# and takes them again from their speeds as it starts.
+- name: Restart ws-fans
+  ansible.builtin.systemd_service:
+    name: ws-fans
+    state: restarted
+    daemon_reload: true
+  when: >-
+    'systemd' not in ansible_skip_tags
+    and (not ansible_check_mode or '/etc/systemd/system/ws-fans.service' is file)
+  tags: [systemd]

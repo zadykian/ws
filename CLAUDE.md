@@ -2,15 +2,17 @@
 
 ws sets up the maintainer's development server from code: `site.yml`, an Ansible playbook that runs
 on the machine itself. Its roles set up packages, SSH by key and a firewall, the links to the Mac,
-the shell, tmux, helix, Docker, claude, SigNoz with its collector, and the IDEs' backends. `mac/`
-sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
+and the fans. Then the shell, tmux, helix, Docker, claude, SigNoz with its collector, and the IDEs'
+backends. `mac/` sets up the Mac that works on the server. The rest is the docs, the lint gates'
+tools and CI.
 
 ## Layout
 
 - `site.yml`: the play, on localhost, each role a tag of its name. `bootstrap.sh` installs
   ansible-core and git, clones the repository, installs the collections and runs the play.
 - `roles/NAME`: a role per tag, each with its page, `docs/NAME.md`, and a line in the README. The
-  filter plugins, in Python, are in `roles/NAME/filter_plugins`.
+  filter plugins, in Python, are in `roles/NAME/filter_plugins`; ws-fans, the fans' service, is
+  Python too, in `roles/fans/files`.
 - `group_vars/all.yml`: `ws_user`, `ws_home` and the versions, each named for its role.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.

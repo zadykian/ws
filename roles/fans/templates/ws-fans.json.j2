@@ -1,0 +1,7 @@
+{{ {
+  'interval': fans_interval,
+  'step': fans_step,
+  'sensors': fans_sensors,
+  'curves': fans_curves,
+  'controls': fans_controls,
+} | to_nice_json(indent=2) }}

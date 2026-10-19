@@ -47,7 +47,8 @@ where a file it comes from is newer.
 CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`,
 which need a booted machine. It runs it twice, and the second run must change nothing. Its swap
 file is 64 MiB, as the runner's disk has no room for one the size of its RAM. It installs no
-JetBrains backend, `jetbrains_backends: []`, as it has no room for those either.
+JetBrains backend, `jetbrains_backends: []`, as it has no room for those either. Its board is not
+MSI's, so the `fans` role leaves its fans alone.
 
 ## SigNoz's compose files
 

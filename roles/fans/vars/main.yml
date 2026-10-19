@@ -1,0 +1,18 @@
+---
+# Whether this machine has the board whose fans the role drives.
+fans_board: >-
+  {{ fans_board_vendor | length > 0
+  and ansible_facts.board_vendor | default('') == fans_board_vendor }}
+
+# DKMS's version of the driver: its commit, short, as the driver's own dkms.conf has a fixed 1.
+fans_nct6687_version: "{{ fans_nct6687_commit[:12] }}"
+fans_nct6687_source: /usr/src/nct6687d-{{ fans_nct6687_version }}
+
+# The driver's versions in DKMS, and whether the pinned one is installed for the running kernel,
+# from `dkms status`. A dry run before dkms is installed has none.
+fans_dkms_versions: >-
+  {{ fans_dkms.stdout_lines | default([]) | select('match', 'nct6687d/')
+  | map('regex_replace', '^nct6687d/([^,:]+)[,:].*$', '\1') | unique }}
+fans_dkms_installed: >-
+  {{ fans_dkms.stdout | default('') is search('^nct6687d/' ~ (fans_nct6687_version | regex_escape)
+  ~ ', ' ~ (ansible_facts.kernel | regex_escape) ~ ', [^:]+: installed', multiline=True) }}

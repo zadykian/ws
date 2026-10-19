@@ -1,0 +1,20 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. It drives the
+# board's fans on the curves of /etc/ws-fans.json, and hands them back to the board's curves as it
+# stops. Its log goes to the journal.
+[Unit]
+Description=Fan curves for the board's headers
+Documentation=https://github.com/zadykian/ws/blob/main/docs/fans.md
+After=systemd-modules-load.service
+
+[Service]
+ExecStart=/usr/bin/python3 -B /usr/local/lib/ws-fans/ws-fans.py /etc/ws-fans.json
+Restart=on-failure
+RestartSec=5
+# /sys and /dev stay writable, for hwmon's files and NVIDIA's devices, which NVML reads.
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
