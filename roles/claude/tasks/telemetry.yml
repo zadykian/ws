@@ -1,8 +1,8 @@
 ---
 # claude's telemetry goes to the host's collector. The keys are in claude's user settings, not in
-# .bashrc, so that the sessions cld restore sessions starts get them too. A signal's own endpoint
-# or protocol would override the general one, so they go, with two keys that change what claude
-# sends. The file is written only where env changes: claude reorders the keys as it writes the
+# .bashrc, so that the sessions cld restore sessions starts get them too. A signal's own endpoint or
+# protocol would override the general one, so they go, with a key that changes how claude sends its
+# counters. The file is written only where env changes: claude reorders the keys as it writes the
 # file, so its bytes would differ at every run.
 - name: Send claude's telemetry to the host's collector
   become: "{{ ws_user != 'root' }}"
@@ -16,8 +16,6 @@
       - OTEL_EXPORTER_OTLP_METRICS_PROTOCOL
       - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
       - OTEL_EXPORTER_OTLP_LOGS_PROTOCOL
-      # It sends each prompt's text, which claude leaves out by default, to SigNoz with the rest.
-      - OTEL_LOG_USER_PROMPTS
       # The Claude dashboard counts deltas, claude's default, and would show less of cumulative
       # sums (roles/signoz/files/dashboards/README.md).
       - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE

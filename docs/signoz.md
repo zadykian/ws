@@ -43,13 +43,12 @@ dashboard, changed a little: `roles/signoz/files/dashboards` says how, and holds
 The Claude dashboard shows what claude on the server cost and what it did, from the metrics and
 events claude sends to the collector ([claude](claude.md#telemetry)). It shows cost and tokens by
 model and by day, and the share of tokens read from the prompt cache. It shows sessions, active
-time, lines of code, commits, pull requests, edit decisions, prompts, tool calls and API errors.
-Its totals cover the range of the UI's time picker. Its bars are days in UTC, the server's timezone,
-and a metric's first bar can count time before the picker's start. Cost is claude's estimate at API
-prices: under a subscription, that is not what was billed. No panel shows a prompt's text, a tool's
-input or a command. claude sends a prompt's text only with `OTEL_LOG_USER_PROMPTS` set, which the
-`claude` role keeps out of claude's settings, though not out of the shell
-([claude](claude.md#telemetry)). The dashboard was written for this repository, and
+time, lines of code, commits, pull requests, edit decisions, prompts, tool calls and API errors. Its
+totals cover the range of the UI's time picker. Its bars are days in UTC, the server's timezone, and
+a metric's first bar can count time before the picker's start. Cost is claude's estimate at API
+prices: under a subscription, that is not what was billed. No panel shows a prompt's or a response's
+text, a tool's input or output, or a command. claude sends them all, and they sit in SigNoz's logs
+and traces ([claude](claude.md#telemetry)). The dashboard was written for this repository, and
 `roles/signoz/files/dashboards` says what it reads.
 
 The role creates each dashboard of `signoz_dashboards` through SigNoz's API, from

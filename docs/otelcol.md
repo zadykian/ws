@@ -54,7 +54,8 @@ OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https
 role refuses any other. It refuses one that leads back to the collector's own receiver on
 `127.0.0.1:4317` too, which would send the metrics around without end. Only the metrics whose
 resource has `service.name` `claude-code` go, as claude sends them, without the host's name.
-claude's traces and logs, with their tool details, stay in SigNoz.
+claude's traces and logs, with the prompts' and responses' text and the tools' details and output,
+stay in SigNoz.
 
 The role reads that one variable from the last line of the file that sets it, with or without
 `export` and quotes, without running the file. It writes it to `/etc/otelcol-contrib/claude.env`,

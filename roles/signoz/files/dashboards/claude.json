@@ -1029,7 +1029,7 @@
         "spec": {
           "display": {
             "name": "Prompts",
-            "description": "Prompts per day, the user's and those claude starts a turn with itself. Their text is sent only with OTEL_LOG_USER_PROMPTS set. Days are in UTC."
+            "description": "Prompts per day, the user's and those claude starts a turn with itself. Their text is in SigNoz's logs, as the claude role sets OTEL_LOG_USER_PROMPTS, but no panel shows it. Days are in UTC."
           },
           "plugin": {
             "kind": "signoz/BarChartPanel",

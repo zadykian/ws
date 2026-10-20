@@ -8,8 +8,8 @@ claude_permissions: read-only
 claude_notifications: ""
 
 # The env keys of claude's user settings that send its telemetry to the host's collector: metrics,
-# logs and traces, over gRPC to the otelcol role's 127.0.0.1:4317. Values are strings, as env
-# takes them.
+# logs and traces, over gRPC to the otelcol role's 127.0.0.1:4317. The last four add what claude
+# leaves out by default (docs/claude.md). Values are strings, as env takes them.
 claude_telemetry_env:
   CLAUDE_CODE_ENABLE_TELEMETRY: "1"
   OTEL_METRICS_EXPORTER: otlp
@@ -21,3 +21,10 @@ claude_telemetry_env:
   CLAUDE_CODE_ENHANCED_TELEMETRY_BETA: "1"
   # Bash commands, tool, skill and MCP server names, and tool input on events and spans.
   OTEL_LOG_TOOL_DETAILS: "1"
+  # Each prompt's text on its event and spans.
+  OTEL_LOG_USER_PROMPTS: "1"
+  # Each response's text on its event. claude would take the key above for it where unset, so this
+  # one says so outright.
+  OTEL_LOG_ASSISTANT_RESPONSES: "1"
+  # What a tool returned, such as a command's output or a file's text, on the tool's span.
+  OTEL_LOG_TOOL_CONTENT: "1"
