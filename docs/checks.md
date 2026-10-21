@@ -69,19 +69,21 @@ handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.co
 in place, with the same pid. Last, a network that `ws_tunnel_routes` adds must be routed into the
 daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
 ([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Where wireguard-go makes no utun, the job
-fails, as the daemon runs the same wireguard-go.
+fails, as the daemon runs the same wireguard-go. `setup.sh` installs Ghostty, its font and cld there
+too, which the next job checks.
 
-## cld on the Mac
+## Ghostty and cld on the Mac
 
-A second workflow, `mac-cld.yml`, sets up cld on another macOS runner, as
-[cld and Ghostty](mac.md#cld-and-ghostty) says. `setup.sh` runs there with a stand-in for ws's
-key, so that a second run prints nothing. Without Ghostty's app, it must install no cld, write no
-Ghostty settings and give ssh no `LocalCommand`, and a second run must print nothing. Then
-`WS_GHOSTTY_APP` names a stand-in app, an empty directory. `--check` must change nothing, and note
-cld's install and the ssh lines that may follow. A run must install cld, whose `cld version` must
-run, and write `cld.ghostty` and the line that reads it. `ssh -G ws` must give `PermitLocalCommand`
-and `LocalCommand` exactly where the cld installed has `restore tabs`. A second run and `--check`
-must print nothing.
+A second workflow, `mac-cld.yml`, sets up Ghostty and cld on another macOS runner, as
+[Ghostty and cld on the Mac](mac-ghostty.md) says. `setup.sh` runs there with a stand-in for ws's
+key, so that a second run prints nothing. On a runner without Ghostty, its font or cld, `--check`
+must change nothing. It must note the installs of both casks and of cld, the ssh lines that may
+follow, and both of Ghostty's files. A run must install `Ghostty.app` from the cask `ghostty`, the
+font, and cld, whose `cld version` must run. It must write `ws.ghostty` as `mac/ws.ghostty` under
+the header, and the line that reads it, once. Ghostty's `+validate-config` must take the config
+that results, and `+list-fonts` must find the font it names. `ssh -G ws` must give
+`PermitLocalCommand` and `LocalCommand` exactly where the cld installed has `restore tabs`. A second
+run and `--check` must print nothing.
 
 Then stubs stand in for cld, so that both cases run whatever cld's latest release has. The first
 gains `restore tabs` as its `cld update` runs, so one run must print the update and add the ssh

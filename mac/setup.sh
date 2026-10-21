@@ -15,10 +15,12 @@
 # once, and tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without
 # WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
 #
-# Before the tunnel, where Ghostty's app is there, it sets up cld, for cld restore tabs: cld in
-# ~/.local/bin, installed where missing and updated, and cld.ghostty, which Ghostty's config reads.
-# Once cld has restore tabs, config.d/ws gets the lines that start its watcher. Where cld or
-# Ghostty's files can't be set up, it warns and goes on (setup-cld.sh).
+# Before the tunnel, it sets up Ghostty: Ghostty and the font of its settings from Homebrew's
+# casks, where missing, and ws.ghostty, those settings, which Ghostty's config reads. Ghostty then
+# updates itself. Where Ghostty's app is there, it sets up cld, for cld restore tabs: cld in
+# ~/.local/bin, installed where missing and updated. Once cld has restore tabs, config.d/ws gets the
+# lines that start its watcher. Where Ghostty or cld can't be set up, it warns and goes on
+# (setup-ghostty.sh, setup-cld.sh).
 #
 # A run changes only what differs, so a second prints nothing once mac.conf has WS_PUBLIC_KEY.
 # Until then, each run prints the Mac's public key again, with the commands that make it ws's peer.
@@ -35,6 +37,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/setup-lib.sh"
 # shellcheck source=setup-ssh.sh
 . "$dir/setup-ssh.sh"
+# shellcheck source=setup-ghostty.sh
+. "$dir/setup-ghostty.sh"
 # shellcheck source=setup-cld.sh
 . "$dir/setup-cld.sh"
 
@@ -227,9 +231,10 @@ main() {
     # ssh_files sends ws through the tunnel once launchd has its daemon, so that a run that stops
     # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon writes config.d/ws
     # again, and --check shows the file of such a run. ws_own_hosts warns once, between the two.
-    # cld_mac warns rather than stop, and comes before the tunnel, so that install.sh's output
-    # comes before the Mac's key. Where it changes cld_tabs, as by installing a cld with restore
-    # tabs, config.d/ws is written again. --check notes that change, as it runs no new cld.
+    # ghostty_mac and cld_mac warn rather than stop, and come before the tunnel, so that brew's
+    # and install.sh's output comes before the Mac's key. Where cld_mac changes cld_tabs, as by
+    # installing a cld with restore tabs, config.d/ws is written again. --check notes that change,
+    # as it runs no new cld.
     via_tunnel=0
     if [ -n "$WS_PUBLIC_KEY" ] && { ws_checking || ws_tunnel_loaded; }; then
         via_tunnel=1
@@ -238,6 +243,7 @@ main() {
     ssh_files
     ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
     was=$via_tunnel$cld_tabs
+    ghostty_mac
     cld_mac
     tunnel
     if [ "$via_tunnel" = 0 ] && [ -n "$WS_PUBLIC_KEY" ] && ws_tunnel_loaded; then

@@ -27,7 +27,7 @@ Each role is a tag of `site.yml`, with a page of its own:
   C#.
 - [`jetbrains`](docs/jetbrains.md): the backends of Rider and GoLand that JetBrains Gateway runs.
 
-`mac/` sets up the Mac that works on the server: [The Mac](docs/mac.md).
+`mac/` sets up the Mac that works on the server, and Ghostty on it: [The Mac](docs/mac.md).
 
 ## A new machine
 
