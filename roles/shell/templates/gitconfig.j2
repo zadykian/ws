@@ -24,6 +24,21 @@
 [credential "https://gist.github.com"]
 	helper = {{ "" }}
 	helper = !/usr/bin/gh auth git-credential
+{% if shell_git_credentials %}
+# The tokens of shell_git_credentials, each URL's in a file of the role's. The helper hands it to
+# git for get alone, so that store and erase leave the file as written. Of two sections whose URLs
+# match, the last wins, so the URLs go in order, each after those it extends.
+{% endif %}
+{% for credential in shell_git_credentials | sort(attribute='url') %}
+{% set file = '~/.config/git/tokens/' ~ shell_git_credential_files[credential.url] %}
+[credential "{{ credential.url }}"]
+	helper =
+	helper = "!f() { test \"$1\" != get || cat {{ file }}; }; f"
+{% if credential.proactive_auth | default(false) %}
+[http "{{ credential.url }}"]
+	proactiveAuth = basic
+{% endif %}
+{% endfor %}
 # Last, so that its settings win. git skips it where the file is missing.
 [include]
 	path = ~/.config/git/local
