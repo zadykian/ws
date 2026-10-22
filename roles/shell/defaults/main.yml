@@ -23,3 +23,7 @@ shell_git_credential_files: >-
   {{ dict(shell_git_credentials | map(attribute='url')
   | zip(shell_git_credentials | map(attribute='url') | map('regex_replace', '^https://', '')
   | map('regex_replace', '[^A-Za-z0-9._-]+', '_'))) }}
+
+# Repositories cloned once each, from a private repository's extra vars. Each entry takes repo,
+# without a token, and dest (docs/shell.md#clones).
+shell_git_clones: []

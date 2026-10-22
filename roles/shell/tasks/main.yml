@@ -87,3 +87,6 @@
 
 - name: Write git's tokens for hosts besides GitHub
   ansible.builtin.import_tasks: git_credentials.yml
+
+- name: Clone the repositories whose dest is missing
+  ansible.builtin.import_tasks: clones.yml

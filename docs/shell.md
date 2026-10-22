@@ -96,3 +96,21 @@ since dropped. With the list empty, it removes the directory too. A run that dro
 drops from `~/.gitconfig`: those are the entry's own. No token reaches `~/.gitconfig`, its backups
 or the run's output, `-v` and `--diff` included: a dry run shows that a token would change, not
 which.
+
+## Clones
+
+`shell_git_clones` lists repositories to clone once, as a private repository's extra vars set it,
+and is empty by default. Each entry takes:
+
+- `repo`: the repository's URL or path, with no token, which [Git credentials](#git-credentials)
+  give;
+- `dest`: the clone's path, absolute or relative to `ws_home`.
+
+Each repository is cloned as `ws_user`, after the tokens are written, where its `dest` is missing.
+A run never pulls, resets or removes a clone, and leaves alone a `dest` that exists, clone or not.
+A private server may sit behind a VPN, which must be up before the run. A clone that fails, as from
+a server out of reach, fails the run, and the next run tries again.
+
+A dry run lists each missing `dest` without reaching the server. A URL of `http://` or `https://`
+that holds a user name or token fails the run, as the clone's config would keep it. So does a
+`dest` with `*`, `?` or `[`, as the run's test for a missing `dest` takes it as a pattern.

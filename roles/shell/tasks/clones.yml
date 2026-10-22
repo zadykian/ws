@@ -1,0 +1,40 @@
+---
+# Repositories cloned once each (docs/shell.md#clones), after git_credentials.yml writes the tokens
+# a private server asks for.
+
+# A user name or token in an HTTP URL would stay in the clone's config, and in the run's output.
+# creates takes a glob, which a dest with *, ? or [ would turn into a pattern. A blank repo or
+# dest, which YAML reads as null, counts as missing: match would test it as the string None.
+- name: Check the clones
+  ansible.builtin.assert:
+    that:
+      - >-
+        shell_git_clones | map(attribute='repo') | map('default', '', true)
+        | reject('match', shell_git_clone_repo) | list == []
+      - >-
+        shell_git_clones | map(attribute='dest') | map('default', '', true)
+        | reject('match', shell_git_clone_dest) | list == []
+    fail_msg: >-
+      Each entry of shell_git_clones needs a repo, with no user name or token in a URL of http:// or
+      https://, and a dest without *, ? or [.
+    quiet: true
+  vars:
+    shell_git_clone_repo: '^(?!https?://[^/]*@).+\Z'
+    shell_git_clone_dest: '^[^*?[]+\Z'
+
+# git clone, not the git module, whose dry run asks the server where dest is missing. creates is
+# checked offline, so a dry run lists each missing dest. A clone is never pulled or reset: once
+# made, it is the user's. As ws_user, whose ~/.gitconfig gives the tokens; root needs no become,
+# and a container has no sudo. HOME is set, as without become it would be the caller's.
+- name: Clone each repository whose dest is missing
+  ansible.builtin.command:
+    argv: [git, clone, --, "{{ item.repo }}", "{{ item.dest }}"]
+    chdir: "{{ ws_home }}"
+    creates: "{{ item.dest }}"
+  loop: "{{ shell_git_clones }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"
