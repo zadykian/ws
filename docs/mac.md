@@ -30,6 +30,8 @@ WS_LAN=10.88.0.0/24
 WS_LAN_ADDRESS=10.88.0.10
 WS_REMOTE=ws.example.com
 WS_REMOTE_PORT=22022
+WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
+WS_RESOLVERS="example.internal=10.20.0.53,10.20.0.54"
 ```
 
 `WS_PUBLIC_KEY` is ws's WireGuard public key, which the `wireguard` role prints:
@@ -42,6 +44,18 @@ Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another.
+
+`WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
+sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
+domain comes once and in lower case, with up to 3 addresses split by commas. Once launchd has the
+tunnel's daemon, `setup.sh` hands both to `lib.sh`, whose caveats hold
+([Routes and resolvers of another repository](#routes-and-resolvers-of-another-repository)). The
+networks go in `/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver
+starts with a line of `setup.sh`'s own, so a domain whose file is another script's, or written by
+hand, stops the run. To move a domain from such a script, have it remove its file first, with
+`ws_resolver DOMAIN` and no address. A key emptied or removed takes back what earlier runs wrote,
+and only that. `--check` shows each change: a diff, or a line for the networks where `routes.d` is
+still missing.
 
 ## ssh's hosts
 
@@ -200,8 +214,8 @@ nothing as a script sources it. It sets `WS_CHECK` for its own `--check`, and ca
   `/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
   peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for
   the time being one that holds the endpoint in use, or one that holds a way's endpoint while none
-  answers. `NAME` is of `a-z`, `0-9` and `-`. A network that overlaps the tunnel's `10.99.0.0/24`
-  or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in
+  answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the
+  tunnel's `10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in
   `ws_tunnel_routes example 198.51.100.0/24`.
 - `ws_resolver DOMAIN ADDRESS...`, which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers,
   so that macOS asks them for the domain's names (resolver(5)), and takes the file at once.
@@ -212,4 +226,5 @@ With no network or address, each removes its file, `ws_resolver` only a file it 
 `WS_CHECK` they print diffs and change nothing. The files outlive the daemon. While the daemon is
 stopped, the routes go with its utun, and the domain's lookups go out by the Mac's own network and
 fail. ufw on ws forwards nothing from the tunnel, so a network behind ws needs its side set up on ws
-too.
+too. A network the Mac is on, inside one sent into the tunnel, keeps its part off the tunnel: macOS
+routes the narrower network to the Mac's own interface.
