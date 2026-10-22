@@ -1,0 +1,117 @@
+---
+# claude plugin marketplace add takes a source and no name: a marketplace bears the name its own
+# marketplace.json gives. So the role adds each name claude does not list, and fails where the
+# marketplace added names itself otherwise, as each run would add it again. add clones a git source
+# and declares the marketplace in claude's user settings; it needs no claude login. HOME is set, as
+# without become it would be the caller's.
+- name: Add claude's plugin marketplaces
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"
+  vars:
+    claude_bin: "{{ ws_home }}/.local/bin/claude"
+    # CLAUDE_CONFIG_DIR is unset, as the caller's would have claude keep its settings and plugins
+    # there, not in ~/.claude. Set to ~/.claude, it would move claude's .claude.json there too.
+    claude_marketplace_cli: [env, -u, CLAUDE_CONFIG_DIR, "{{ claude_bin }}", plugin, marketplace]
+    claude_marketplaces_known: "{{ (claude_marketplaces_list.stdout or '[]') | from_json }}"
+    claude_marketplaces_known_names: >-
+      {{ claude_marketplaces_known | map(attribute='name') | list }}
+    claude_marketplaces_missing: >-
+      {{ claude_marketplaces | rejectattr('name', 'in', claude_marketplaces_known_names) | list }}
+    # The source claude lists for item.name in claude_marketplaces_listed, which each check sets,
+    # rebuilt as add takes it: a GitHub repository's repo or a git URL's url, each with its ref
+    # apart, or a path.
+    claude_marketplace: >-
+      {{ claude_marketplaces_listed | selectattr('name', '==', item.name) | first }}
+    claude_marketplace_source: >-
+      {{ claude_marketplace.repo | default(claude_marketplace.url)
+      | default(claude_marketplace.path) | default('') }}{{
+      '#' ~ claude_marketplace.ref if claude_marketplace.ref is defined else '' }}
+    # claude drops a trailing slash, and gives a GitHub URL a .git ending, so the two sources
+    # compare without either.
+    claude_marketplace_source_kept: >-
+      {{ claude_marketplace_source | regex_replace('(?:[.]git)?/*(?=#|$)', '')
+      == item.source | regex_replace('(?:[.]git)?/*(?=#|$)', '') }}
+    claude_marketplace_source_msg: >-
+      claude lists the marketplace {{ item.name }} from {{ claude_marketplace_source }}, not
+      {{ item.source }}. Give that source, or remove the marketplace first, with claude plugin
+      marketplace remove {{ item.name }}
+  block:
+    # A read, so a dry run runs it too. Without claude, as in a dry run on a new machine, it lists
+    # none, so the dry run names every marketplace.
+    - name: List claude's plugin marketplaces
+      ansible.builtin.shell:
+        cmd: |
+          [ -x {{ claude_bin | quote }} ] || exit 0
+          exec {{ claude_marketplace_cli | map('quote') | join(' ') }} list --json
+      register: claude_marketplaces_list
+      check_mode: false
+      changed_when: false
+
+    # A known name is never added again, so a source changed in the list would go unseen. The run
+    # fails instead, and replaces nothing.
+    - name: Check that claude knows each marketplace from its source
+      ansible.builtin.assert:
+        that: claude_marketplace_source_kept
+        fail_msg: "{{ claude_marketplace_source_msg }}"
+        quiet: true
+      loop: "{{ claude_marketplaces | selectattr('name', 'in', claude_marketplaces_known_names) }}"
+      loop_control:
+        label: "{{ item.name }}"
+      vars:
+        claude_marketplaces_listed: "{{ claude_marketplaces_known }}"
+
+    # --json ends the output with a line of JSON, which names the marketplace as it names itself.
+    - name: Add the plugin marketplaces claude lacks
+      ansible.builtin.command:
+        argv: "{{ claude_marketplace_cli + ['add', '--json', item.source] }}"
+      loop: "{{ claude_marketplaces_missing }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: claude_marketplaces_added
+      changed_when: true
+
+    # claude keeps the marketplace all the same, under its own name.
+    - name: Check that each marketplace added bears its name
+      ansible.builtin.assert:
+        that: claude_marketplace_name == item.item.name
+        fail_msg: >-
+          The marketplace from {{ item.item.source }} names itself {{ claude_marketplace_name }},
+          not {{ item.item.name }}. claude has added it as {{ claude_marketplace_name }}: give that
+          name in claude_marketplaces
+        quiet: true
+      loop: "{{ claude_marketplaces_added.results | select('changed') }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      vars:
+        claude_marketplace_name: "{{ (item.stdout_lines | last | from_json).marketplace }}"
+
+    # claude lists some sources in another form than add took them, such as a relative path made
+    # absolute. The next run's check above would fail on such a one, so this run fails now. A dry
+    # run adds none, and skips both.
+    - name: List claude's plugin marketplaces after the adds
+      ansible.builtin.command:
+        argv: "{{ claude_marketplace_cli + ['list', '--json'] }}"
+      register: claude_marketplaces_relist
+      changed_when: false
+      when: not ansible_check_mode and claude_marketplaces_missing | length > 0
+
+    - name: Check that claude lists each marketplace added from its source
+      ansible.builtin.assert:
+        that: claude_marketplace_source_kept
+        fail_msg: "{{ claude_marketplace_source_msg }}"
+        quiet: true
+      loop: "{{ claude_marketplaces_missing }}"
+      loop_control:
+        label: "{{ item.name }}"
+      vars:
+        claude_marketplaces_listed: "{{ claude_marketplaces_relist.stdout | from_json }}"
+      when: not ansible_check_mode and claude_marketplaces_missing | length > 0
+
+    # A dry run skips the add above, so this one names the marketplaces a run would add.
+    - name: Show the plugin marketplaces a run would add
+      ansible.builtin.debug:
+        msg: "{{ claude_marketplaces_missing | map(attribute='name') }}"
+      changed_when: true
+      when: ansible_check_mode and claude_marketplaces_missing | length > 0

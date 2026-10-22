@@ -21,8 +21,8 @@ Each role is a tag of `site.yml`, with a page of its own:
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
   rustup. It registers the machine's signing key with GitHub.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json` and a slice for its containers.
-- [`claude`](docs/claude.md): claude, its user settings and telemetry, and its sessions after a
-  reboot.
+- [`claude`](docs/claude.md): claude, its user settings and telemetry, its sessions after a reboot,
+  and plugin marketplaces from a list.
 - [`signoz`](docs/signoz.md): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
 - [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and language servers for Go and
