@@ -1,10 +1,11 @@
 #!/bin/sh
 # Refuses a commit whose staged changes hold a word of the local list or, where gitleaks is
 # installed, a secret. The list, where it exists, has a word or phrase a line, matched
-# case-insensitively as a whole word; blank lines and lines starting with # are skipped. The hook
-# names an added line that matched by its file and number, never its text, so that its output
-# does not spread the list. It prints a file name that matched whole, as the committer renames the
-# file by it, and git status prints it too.
+# case-insensitively as a whole word; blank lines and lines starting with # are skipped. A word
+# matches where no letter or digit touches it: _ separates words, as - does. The hook names an
+# added line that matched by its file and number, never its text, so that its output does not
+# spread the list. It prints a file name that matched whole, as the committer renames the file by
+# it, and git status prints it too.
 
 set -eu
 
@@ -12,19 +13,34 @@ list=$HOME/.config/ws/forbidden-words
 status=0
 
 # match WORDS FILE OUT writes to OUT FILE's lines that hold a word of WORDS, each with its number,
-# and fails where none does. An error of grep's ends the hook rather than letting the commit pass.
+# and fails where none does. grep -w counts _ as part of a word, so grep reads a copy of FILE with
+# each _ a space, as in WORDS. tr keeps every line, so the numbers hold. It reads bytes, in the C
+# locale, as macOS's tr fails on bytes that are not UTF-8 in a UTF-8 one. A multibyte character
+# never holds the byte of _. An error of tr's or grep's ends the hook rather than letting the
+# commit pass.
 match() {
+    LC_ALL=C tr _ ' ' <"$2" >"$tmp/text" || exit
     rc=0
-    grep -aniwF -f "$1" "$2" >"$3" || rc=$?
+    grep -aniwF -f "$1" "$tmp/text" >"$3" || rc=$?
     [ "$rc" -le 1 ] || exit "$rc"
     return "$rc"
+}
+
+# show HITS FILE prints, indented, the lines of FILE whose numbers lead the lines of HITS. So a
+# file name shows as git gives it, never with the spaces of match's copy for its _.
+show() {
+    cut -d: -f1 "$1" |
+        awk 'NR == FNR { hit[$1] = 1; next } FNR in hit { print "    " $0 }' - "$2" >&2
 }
 
 if [ -f "$list" ]; then
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     trap 'exit 1' INT TERM
-    sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' "$list" >"$tmp/words"
+    # Each _ becomes a space, as in the text match reads. That comes before the trim, so that an
+    # entry of _ alone goes, rather than becoming a pattern of spaces.
+    sed -e 'y/_/ /' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' \
+        "$list" >"$tmp/words"
 
     # Each added line goes to added, and its file and line number to the same line of where. A
     # line starting with +++ names the file only in the header, before the first @@. The options
@@ -49,8 +65,7 @@ if [ -f "$list" ]; then
     ' "$tmp/diff" >"$tmp/added"
     if match "$tmp/words" "$tmp/added" "$tmp/hits"; then
         echo 'pre-commit: a word of the local list is in these added lines:' >&2
-        cut -d: -f1 "$tmp/hits" |
-            awk 'NR == FNR { hit[$1] = 1; next } FNR in hit { print "    " $0 }' - "$tmp/where" >&2
+        show "$tmp/hits" "$tmp/where"
         status=1
     fi
 
@@ -60,7 +75,7 @@ if [ -f "$list" ]; then
     tr '\0' '\n' <"$tmp/names0" >"$tmp/names"
     if match "$tmp/words" "$tmp/names" "$tmp/hits"; then
         echo 'pre-commit: a word of the local list is in these file names:' >&2
-        cut -d: -f2- "$tmp/hits" | sed 's/^/    /' >&2
+        show "$tmp/hits" "$tmp/names"
         status=1
     fi
 fi

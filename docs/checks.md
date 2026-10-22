@@ -78,8 +78,8 @@ its worktrees, with `git config core.hooksPath "$PWD/.githooks"` in its checkout
 does in its clone. The path is absolute, so that each worktree runs the checkout's hooks, never
 those of the branch it holds, such as an outside pull request's. Where
 `~/.config/ws/forbidden-words` exists, a word or phrase a line, they refuse a commit whose added
-lines, file names or message hold one. Where gitleaks is installed, they refuse a staged secret
-too.
+lines, file names or message hold one. Case aside, a word matches where no letter or digit touches
+it: `_` separates words, as `-` does. Where gitleaks is installed, they refuse a staged secret too.
 
 ## Claude's hooks
 

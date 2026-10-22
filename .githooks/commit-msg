@@ -1,6 +1,6 @@
 #!/bin/sh
 # Refuses a commit message that holds a word of the local list, matched as the pre-commit hook
-# matches it, and names the lines that matched, never the word.
+# matches it, where _ separates words as - does. It names the lines that matched, never the word.
 
 set -eu
 
@@ -10,16 +10,19 @@ list=$HOME/.config/ws/forbidden-words
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 trap 'exit 1' INT TERM
-sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' "$list" >"$tmp/words"
+sed -e 'y/_/ /' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' \
+    "$list" >"$tmp/words"
 
 # From a message written in the editor, git strips its comments, the lines starting with #, and
 # the diff below the scissors line; those become blank lines here, so that the line numbers stay
 # the message's. A message given with -m or -F keeps every line: git runs the hooks with
-# GIT_EDITOR=: then (githooks(5)).
+# GIT_EDITOR=: then (githooks(5)). grep -w counts _ as part of a word, so each _ becomes a space,
+# in the message as in the words. tr and sed read bytes, in the C locale: in a UTF-8 one, macOS's
+# tr and sed fail on bytes that are not UTF-8, and GNU sed's .* stops at one.
 if [ "${GIT_EDITOR-}" = : ]; then
-    cp "$1" "$tmp/message"
+    LC_ALL=C tr _ ' ' <"$1" >"$tmp/message"
 else
-    sed -e '/^# -* >8 -*$/,$d' -e 's/^#.*//' "$1" >"$tmp/message"
+    LC_ALL=C sed -e '/^# -* >8 -*$/,$d' -e 's/^#.*//' -e 'y/_/ /' "$1" >"$tmp/message"
 fi
 
 rc=0

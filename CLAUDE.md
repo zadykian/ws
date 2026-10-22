@@ -46,11 +46,11 @@ again. `mac` sets up a Mac on GitHub's macOS runner. A run of the playbook sets 
 runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
-request's body, and prints 0 where it holds none:
+request's body, as they do, and prints 0 where it holds none:
 
 ```sh
-grep -ciwF -f <(sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' \
-    ~/.config/ws/forbidden-words) FILE
+LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//' \
+    -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' ~/.config/ws/forbidden-words)
 ```
 
 ## How changes land
