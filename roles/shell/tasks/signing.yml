@@ -1,0 +1,93 @@
+---
+# ssh-keygen refuses a path whose directory is missing, as a container's ~/.ssh may be.
+- name: Make the directory of the signing key
+  ansible.builtin.file:
+    path: "{{ ws_git_signing_key | dirname }}"
+    state: directory
+    owner: "{{ ws_user }}"
+    group: "{{ ws_user }}"
+    mode: "0700"
+
+# Made once, with no passphrase, as tools and claude commit unattended; the key only signs, and
+# docs/shell.md says how to revoke it, under Signing. As ws_user, who then owns it: root needs no
+# become, and a container has no sudo. HOME is set, as without become it would be the caller's.
+- name: Make the SSH key that signs commits
+  ansible.builtin.command:
+    argv: [ssh-keygen, -q, -t, ed25519, -N, "", -f, "{{ ws_git_signing_key }}"]
+    creates: "{{ ws_git_signing_key }}"
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"
+
+- name: Make the directory of the allowed signers file
+  ansible.builtin.file:
+    path: "{{ shell_git_allowed_signers | dirname }}"
+    state: directory
+    owner: "{{ ws_user }}"
+    group: "{{ ws_user }}"
+    mode: "0755"
+
+# The public key's type and base64, without its comment, for shell_git_email. A dry run makes no
+# key, so where there is none yet it skips this, and the key's creation above shows the change. A
+# file set up by hand is kept beside it, as ~/.gitconfig is.
+- name: Trust the signing key for git verify-commit
+  ansible.builtin.copy:
+    content: |
+      # Written by github.com/zadykian/ws, whose next run replaces any change made here.
+      {{ shell_git_email }} {{ shell_git_signing_public }}
+    dest: "{{ shell_git_allowed_signers }}"
+    owner: "{{ ws_user }}"
+    group: "{{ ws_user }}"
+    mode: "0644"
+    backup: true
+  vars:
+    shell_git_signing_public: >-
+      {{ lookup('ansible.builtin.file', ws_git_signing_key ~ '.pub').split()[:2] | join(' ') }}
+  when: (ws_git_signing_key ~ '.pub') is file
+
+# The template replaces the signing key that a .gitconfig set up by hand names. The note on the
+# keys a run drops misses that, as the key's name stays. Its value is a path or a key's ID, not a
+# secret. The path type expands ~ with HOME, as git does when it signs.
+- name: Read the signing key of ~/.gitconfig
+  ansible.builtin.command:
+    argv: [git, config, --file, "{{ ws_home }}/.gitconfig", --type, path, --get, user.signingkey]
+  environment:
+    HOME: "{{ ws_home }}"
+  register: shell_gitconfig_signing_key
+  when: (ws_home ~ '/.gitconfig') is file
+  check_mode: false
+  changed_when: false
+  failed_when: shell_gitconfig_signing_key.rc not in [0, 1]
+
+- name: Name the signing key a run replaces in ~/.gitconfig
+  ansible.builtin.debug:
+    msg: >-
+      Writing ~/.gitconfig replaces its signing key, {{ shell_gitconfig_signing_key.stdout }},
+      with {{ ws_git_signing_key }}.pub. To sign with the old key, set user.signingkey in
+      ~/.config/git/local first.
+  when:
+    - shell_gitconfig_signing_key is not skipped
+    - shell_gitconfig_signing_key.rc == 0
+    - shell_gitconfig_signing_key.stdout != ws_git_signing_key ~ '.pub'
+
+# ~/.gitconfig includes ~/.config/git/local last, so a signing setting there wins over the role's.
+# The names alone, as the file may hold a credential.
+- name: List the keys of ~/.config/git/local
+  ansible.builtin.command:
+    argv: [git, config, --file, "{{ ws_home }}/.config/git/local", --name-only, --list]
+  register: shell_git_local_keys
+  when: (ws_home ~ '/.config/git/local') is file
+  check_mode: false
+  changed_when: false
+
+- name: Name the signing settings of ~/.config/git/local
+  ansible.builtin.debug:
+    msg: >-
+      ~/.config/git/local sets {{ shell_git_local_signing | join(', ') }}, which win over the
+      role's signing in ~/.gitconfig. Remove them to sign with {{ ws_git_signing_key }}.
+  vars:
+    shell_git_local_signing: >-
+      {{ shell_git_local_keys.stdout_lines
+         | select('match', '^(user\.signingkey|commit\.gpgsign|gpg\.)') | unique | sort }}
+  when: shell_git_local_keys is not skipped and shell_git_local_signing | length > 0

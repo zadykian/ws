@@ -14,10 +14,11 @@ Each role is a tag of `site.yml`, with a page of its own:
 - [`network`](docs/network.md): the server's end of a cable to the Mac.
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile` and `~/.gitconfig`.
+- [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile` and `~/.gitconfig`, and a key that signs
+  commits.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
-  rustup.
+  rustup. It registers the machine's signing key with GitHub.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`claude`](docs/claude.md): claude, its user settings and telemetry, and its sessions after a
   reboot.
@@ -40,9 +41,14 @@ sudo install -d -m 700 /root/.ssh
 sudo install -m 600 ~/.ssh/authorized_keys /root/.ssh/authorized_keys
 ```
 
-Then run `bootstrap.sh` as root, after `sudo -i` if you log in as the installer's user:
+Then, as root, after `sudo -i` if you log in as the installer's user, install gh and log in to
+GitHub. The login's scope lets the run register the machine's signing key
+([Signing](docs/shell.md#signing)). apt waits up to 10 minutes for the lock its daily jobs hold
+after the first boot, as in `bootstrap.sh`. Then run `bootstrap.sh`:
 
 ```sh
+apt-get -o DPkg::Lock::Timeout=600 install -y gh
+gh auth login -h github.com -s write:ssh_signing_key
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh | sh
 ```
 
@@ -65,6 +71,13 @@ git -C /root/repository/ws pull --ff-only
 Its arguments go to `ansible-playbook`: `--tags NAME` runs the role NAME alone.
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home.
+
+Where gh logged in without the `write:ssh_signing_key` scope, add it once, before the run, so that
+the run registers the machine's signing key ([The signing key](docs/devtools.md#the-signing-key)):
+
+```sh
+gh auth refresh -h github.com -s write:ssh_signing_key
+```
 
 ## Dry runs
 
@@ -90,7 +103,7 @@ apt may not know its packages: their install shows that error, and the dry run g
 
 Secrets are never in this repository. On a new machine, these stay manual:
 
-- `gh auth login` and `gh auth setup-git`;
+- `gh auth login`, before `bootstrap.sh` as above, and `gh auth setup-git`;
 - the claude login;
 - each peer's public key in `/etc/wireguard`, as in [The tunnel](docs/wireguard.md#the-tunnel);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot).

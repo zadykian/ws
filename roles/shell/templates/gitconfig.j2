@@ -1,8 +1,20 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here. Settings of
-# this machine's own, such as a signing key, go in ~/.config/git/local, included below.
+# this machine's own go in ~/.config/git/local, included below.
 [user]
 	name = {{ shell_git_name }}
 	email = {{ shell_git_email }}
+{% if shell_git_signing %}
+# Each commit signed with the machine's SSH key, which the allowed signers file trusts for the
+# email above. The public key's path, so that an agent holding the key signs too; otherwise
+# ssh-keygen reads the private key beside it.
+	signingkey = {{ ws_git_signing_key }}.pub
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = {{ shell_git_allowed_signers }}
+[commit]
+	gpgsign = true
+{% endif %}
 # GitHub CLI's credential helper, byte for byte as `gh auth setup-git` writes it, the space after
 # the empty helper's = included, so that running that changes nothing here. The empty helper
 # drops any set before it.

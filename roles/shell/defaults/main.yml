@@ -2,3 +2,9 @@
 # The author of git's commits, in ~/.gitconfig.
 shell_git_name: zadykian
 shell_git_email: me@zadykian.dev
+
+# Signing: git signs each commit with ws_git_signing_key, which the role makes, and git
+# verify-commit trusts it for shell_git_email through the allowed signers file. false leaves both
+# out of ~/.gitconfig, makes no key, and turns devtools' registration of the key off.
+shell_git_signing: true
+shell_git_allowed_signers: "{{ ws_home }}/.config/git/allowed_signers"

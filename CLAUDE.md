@@ -13,7 +13,8 @@ tools and CI.
 - `roles/NAME`: a role per tag, each with its page, `docs/NAME.md`, and a line in the README. The
   filter plugins, in Python, are in `roles/NAME/filter_plugins`; ws-fans, the fans' service, is
   Python too, in `roles/fans/files`.
-- `group_vars/all.yml`: `ws_user`, `ws_home` and the versions, each named for its role.
+- `group_vars/all.yml`: what roles share, `ws_user`, `ws_home` and `ws_git_signing_key`, and the
+  versions, each named for its role.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
 - `mac/`: the Mac's side, POSIX sh, run on the Mac ([The Mac](docs/mac.md)).

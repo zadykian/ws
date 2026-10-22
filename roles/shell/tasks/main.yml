@@ -26,6 +26,11 @@
     group: "{{ ws_user }}"
     mode: "0644"
 
+# Before ~/.gitconfig, which signs each commit with the key.
+- name: Set up the key that signs commits
+  ansible.builtin.import_tasks: signing.yml
+  when: shell_git_signing
+
 # The template drops what a .gitconfig set up by hand holds beyond it, and --diff can't show
 # that, as below. The names alone, without their values, show it in a dry run.
 - name: Check for ~/.gitconfig

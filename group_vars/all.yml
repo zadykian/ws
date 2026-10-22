@@ -3,6 +3,9 @@
 ws_user: root
 # The user's home, which follows ws_user unless it is set too.
 ws_home: "{{ '/root' if ws_user == 'root' else '/home/' ~ ws_user }}"
+# The user's SSH key that signs git's commits, with its public key beside it as .pub. The shell
+# role makes it, and devtools registers it with GitHub.
+ws_git_signing_key: "{{ ws_home }}/.ssh/id_ed25519_signing"
 
 # Versions, each named for the role that installs it.
 
