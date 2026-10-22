@@ -8,3 +8,8 @@ shell_git_email: me@zadykian.dev
 # out of ~/.gitconfig, makes no key, and turns devtools' registration of the key off.
 shell_git_signing: true
 shell_git_allowed_signers: "{{ ws_home }}/.config/git/allowed_signers"
+
+# ~/.secrets/env, which ~/.bashrc sources and the otelcol role reads: names to values, such as extra
+# vars from a private repository's Ansible Vault. Values are strings, quoted where YAML would read
+# a number, a boolean or null. Empty or null, the role leaves that file alone.
+shell_secret_env: {}

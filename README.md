@@ -14,8 +14,8 @@ Each role is a tag of `site.yml`, with a page of its own:
 - [`network`](docs/network.md): the server's end of a cable to the Mac.
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile` and `~/.gitconfig`, and a key that signs
-  commits.
+- [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from a
+  variable, and a key that signs commits.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
   rustup. It registers the machine's signing key with GitHub.

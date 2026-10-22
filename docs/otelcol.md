@@ -48,8 +48,9 @@ enables it again once the role's config is in place.
 
 ## claude's metrics elsewhere
 
-`~/.secrets/env` is the file of secrets the shell reads and this repository never writes. Where it
-sets `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
+`~/.secrets/env` is the file of secrets the shell reads, which the `shell` role writes from
+`shell_secret_env` ([Secrets](shell.md#secrets)). Where it sets
+`OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The
 role refuses any other. It refuses one that leads back to the collector's own receiver on
 `127.0.0.1:4317` too, which would send the metrics around without end. Only the metrics whose
