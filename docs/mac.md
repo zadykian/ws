@@ -143,7 +143,16 @@ An address, mask or router that `getinfo` leaves out, as it may undocked, counts
 still shows other settings after `-setmanual`, the script stops.
 
 Set the key once ws's end is up ([network](network.md)), as `ws-ssh` takes the cable while the Mac
-has an address on it.
+has an address on it. Then, docked, check once that the uplink keeps the default route:
+
+```sh
+route -n get default | grep interface
+```
+
+It must name the uplink's device, which `networksetup -listnetworkserviceorder` pairs with its
+service. Where it names the adapter's, move the service below the uplink's: Set Service Order, in
+the menu of System Settings › Network, or `networksetup -ordernetworkservices`, given every service
+in order.
 
 ## The Mac's tunnel
 
