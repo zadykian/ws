@@ -43,7 +43,8 @@ The router's side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, o
 Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
-another.
+another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
+`root` for `WS_USER`, 51820 for `WS_PORT`, and none for the others.
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each

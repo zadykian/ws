@@ -5,7 +5,8 @@
 
 # ws_conf FILE reads the Mac's settings from FILE, ~/.config/ws/mac.conf, without running it: a
 # KEY=value a line, the value bare or in a pair of quotes, blank lines and lines starting with #
-# skipped. It stops on any other line, any other key, and a value of the wrong form.
+# skipped. It stops on any other line, any other key, and a value of the wrong form. An empty
+# value, KEY= or KEY="", is the key's default, as a missing line is, and passes its key's check.
 # shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
 ws_conf() {
     [ -f "$1" ] || ws_die "$1 is missing: docs/mac.md says what goes in it"
@@ -38,7 +39,7 @@ ws_conf() {
         case $ws_key in
         WS_USER)
             # shellcheck disable=SC2034 # for setup-ssh.sh and setup.sh
-            WS_USER=$ws_value
+            WS_USER=${ws_value:-root}
             ws_is_user "$ws_value" || ws_ok=false
             ;;
         WS_PUBLIC_KEY)
@@ -80,7 +81,8 @@ ws_conf() {
             ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
-        $ws_ok || ws_die "$1, line $ws_n: $ws_key=$ws_value is not $(ws_conf_form "$ws_key")"
+        [ -z "$ws_value" ] || $ws_ok ||
+            ws_die "$1, line $ws_n: $ws_key=$ws_value is not $(ws_conf_form "$ws_key")"
     done <"$1"
     case ${WS_LAN:+lan}${WS_LAN_ADDRESS:+address} in
     lan | address) ws_die "$1: WS_LAN and WS_LAN_ADDRESS go together" ;;
