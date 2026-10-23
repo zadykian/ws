@@ -284,7 +284,7 @@ jobs:
           exit "$fail"
       - name: lib.sh's routes and resolvers
         run: sh .github/mac-lib-checks.sh
-      - name: mac.conf's networks and resolvers
+      - name: mac.conf's keys
         run: sh .github/mac-conf-checks.sh
       - name: The daemon's status and log
         if: always()

@@ -1,11 +1,13 @@
 #!/bin/sh
 # The mac job's checks of mac.conf's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which setup.sh hands to
-# lib.sh's functions. The job runs it from the repository's root after mac-lib-checks.sh, with the
-# tunnel's daemon loaded and WS_PUBLIC_KEY in mac.conf (.github/workflows/mac.yml). It takes
-# ws-tunnel's path from the job's TUNNEL, and stops without it. The keys' network must go into the
-# daemon's utun, and their domain show in scutil --dns. A second run and --check must print nothing.
-# Emptied or removed, the keys must take both back, and spare a script's own files. Each failure
-# prints an ::error:: line, and any fails the script at its end.
+# lib.sh's functions, then of how mac/setup.sh's ws_conf reads mac.conf. The job runs it from the
+# repository's root after mac-lib-checks.sh, with the tunnel's daemon loaded and WS_PUBLIC_KEY in
+# mac.conf (.github/workflows/mac.yml). It takes ws-tunnel's path from the job's TUNNEL, and stops
+# without it. The keys' network must go into the daemon's utun, and their domain show in scutil
+# --dns. A second run and --check must print nothing. Emptied or removed, the keys must take both
+# back, and spare a script's own files. ws_conf's cases each read a file of their own, in a section
+# per rule: they need no daemon, and leave the job's mac.conf alone. Each failure prints an
+# ::error:: line, and any fails the script at its end.
 #
 # shellcheck source-path=SCRIPTDIR/..
 
@@ -16,7 +18,14 @@ if [ -z "${TUNNEL-}" ]; then
 fi
 # shellcheck source=mac/lib.sh
 . mac/lib.sh
+# setup-lib.sh sources setup-conf.sh, ws_conf's, from dir, as setup.sh sets it.
+dir=mac
+# shellcheck source=mac/setup-lib.sh
+. mac/setup-lib.sh
 conf=$HOME/.config/ws/mac.conf
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/mac-conf-checks.XXXXXXXX")
+trap 'rm -rf "$tmp"' EXIT
+scratch=$tmp/mac.conf
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -25,7 +34,7 @@ error() {
     fail=1
 }
 
-# must COMMAND... runs a function of lib.sh's in a subshell, as one exits on an error, so that the
+# must COMMAND... runs a function of mac/'s in a subshell, as one exits on an error, so that the
 # failure is an ::error:: too.
 must() {
     ("$@") || error "$* failed, as above"
@@ -67,6 +76,36 @@ shown() {
         line == d { r = 1 }
         r && line == n { found = 1 }
         END { exit !found }'
+}
+
+# lines LINE... writes LINE..., a line each, to scratch, the cases' own mac.conf.
+lines() {
+    printf '%s\n' "$@" >"$scratch"
+}
+
+# refused TEXT LINE... writes LINE..., on which ws_conf must stop with TEXT in its message.
+refused() {
+    text=$1
+    shift
+    lines "$@"
+    if out=$(ws_conf "$scratch" 2>&1); then
+        error "ws_conf took $*"
+    else
+        case $out in *"$text"*) ;; *) error "ws_conf refused $* with another error: $out" ;; esac
+    fi
+}
+
+# gives KEY VALUE LINE... writes LINE..., which ws_conf must take, leaving KEY at VALUE.
+gives() {
+    name=$1
+    want=$2
+    shift 2
+    lines "$@"
+    if ! got=$(ws_conf "$scratch" 2>&1 && eval "printf '%s' \"\$$name\""); then
+        error "ws_conf refused $*: $got"
+    elif [ "$got" != "$want" ]; then
+        error "ws_conf took $* as $name='$got', not '$want'"
+    fi
 }
 
 utun=$(sudo "$TUNNEL" status | awk -F': ' '$1 == "interface" { print $2 }')
@@ -128,4 +167,31 @@ shown own.test 198.51.100.53 || error 'the removed key took own.test too'
 keys
 must ws_tunnel_routes own
 must ws_resolver own.test
+
+# Empty values. Each key's, bare or in quotes, must pass and leave the key's default, as a missing
+# line does, alone or with the others' in one file. So must one after a line that sets the key. A
+# value of the wrong form, a blank in quotes among them, must still stop ws_conf on its line. A key
+# that ws_conf lacks, and the rules of the pairs, must stop it too.
+: >"$tmp/all.conf"
+for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
+    WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS=; do
+    key=${each%%=*}
+    for line in "$key=" "$key=\"\"" "$key=''"; do
+        gives "$key" "${each#*=}" "$line"
+    done
+    echo "$key=" >>"$tmp/all.conf"
+done
+must ws_conf "$tmp/all.conf"
+gives WS_USER root WS_USER=admin WS_USER=
+gives WS_REMOTE '' WS_REMOTE=router.example.com WS_REMOTE=
+for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS=10.88.0.1x \
+    WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
+    WS_RESOLVERS=example.internal; do
+    refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
+done
+refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
+refused 'unknown key WS_NONE' WS_NONE=
+refused 'go together' WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=
+refused 'go together' WS_LAN= WS_LAN_ADDRESS=10.88.0.10
+refused 'needs WS_REMOTE' WS_REMOTE= WS_REMOTE_PORT=22022
 exit "$fail"
