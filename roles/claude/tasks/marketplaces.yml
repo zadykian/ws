@@ -1,6 +1,7 @@
 ---
 # claude plugin marketplace add takes a source and no name: a marketplace bears the name its own
-# marketplace.json gives. So the role adds each name claude does not list. add clones a git source
+# marketplace.json gives. So the role adds each name claude does not list, and fails where the
+# marketplace added names itself otherwise, as each run would add it again. add clones a git source
 # and declares the marketplace in claude's user settings; it needs no claude login. HOME is set, as
 # without become it would be the caller's.
 - name: Add claude's plugin marketplaces
@@ -61,13 +62,30 @@
       vars:
         claude_marketplaces_listed: "{{ claude_marketplaces_known }}"
 
+    # --json ends the output with a line of JSON, which names the marketplace as it names itself.
     - name: Add the plugin marketplaces claude lacks
       ansible.builtin.command:
-        argv: "{{ claude_marketplace_cli + ['add', item.source] }}"
+        argv: "{{ claude_marketplace_cli + ['add', '--json', item.source] }}"
       loop: "{{ claude_marketplaces_missing }}"
       loop_control:
         label: "{{ item.name }}"
+      register: claude_marketplaces_added
       changed_when: true
+
+    # claude keeps the marketplace all the same, under its own name.
+    - name: Check that each marketplace added bears its name
+      ansible.builtin.assert:
+        that: claude_marketplace_name == item.item.name
+        fail_msg: >-
+          The marketplace from {{ item.item.source }} names itself {{ claude_marketplace_name }},
+          not {{ item.item.name }}. claude has added it as {{ claude_marketplace_name }}: give that
+          name in claude_marketplaces
+        quiet: true
+      loop: "{{ claude_marketplaces_added.results | select('changed') }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      vars:
+        claude_marketplace_name: "{{ (item.stdout_lines | last | from_json).marketplace }}"
 
     # claude lists some sources in another form than add took them, such as a relative path made
     # absolute. The next run's check above would fail on such a one, so this run fails now. A dry
