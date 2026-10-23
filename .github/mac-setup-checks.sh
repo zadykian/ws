@@ -46,4 +46,62 @@ prints() {
 with 'WS_CABLE_SERVICE='
 prints ''
 prints '' --check
+
+# A stand-in networksetup goes first on PATH, with services whose names no Mac has, so that a call
+# of the runner's own changes nothing. It logs each -setmanual with its count of arguments, takes it
+# from root alone, and keeps each service's settings in a file.
+mkdir "$tmp/bin"
+: >"$tmp/setmanual.log"
+cat >"$tmp/bin/networksetup" <<'EOF'
+#!/bin/sh
+state=${0%/bin/*}
+info=$state/info-$(printf '%s' "${2-}" | tr -c 'A-Za-z0-9' _)
+[ "$1" != -setmanual ] || echo "$# $*" >>"$state/setmanual.log"
+[ "$1" != -setmanual ] || [ "$(id -u)" = 0 ] || exit 1
+case $1:${2-} in
+-listallnetworkservices:)
+    printf '%s\n' 'An asterisk (*) denotes that a network service is disabled.' \
+        'ws stand-in 10/100/1G/2.5G LAN'
+    ;;
+-getinfo:'ws stand-in '*)
+    [ -f "$info" ] || printf '%s\n' 'DHCP Configuration' 'IP address: 198.51.100.20' \
+        'Subnet mask: 255.255.255.0' 'Router: (null)' >"$info"
+    cat "$info"
+    printf '%s\n' 'IPv6: Automatic' 'IPv6 Router: none'
+    ;;
+-setmanual:'ws stand-in 10/100/1G/2.5G LAN')
+    printf '%s\n' 'Manual Configuration' "IP address: $3" "Subnet mask: $4" \
+        "Router: ${5:-(null)}" >"$info"
+    ;;
+*) echo "${2-} is not a recognized network service." && exit 4 ;;
+esac
+EOF
+chmod 755 "$tmp/bin/networksetup"
+PATH=$tmp/bin:$PATH
+args='10.77.0.2 255.255.255.252'
+
+# logged LINE... checks that the stand-in logged LINE..., a line each, since the last check. Where
+# it logged other calls, setup.sh may reach another networksetup, so the script stops there.
+logged() {
+    got=$(cat "$tmp/setmanual.log")
+    : >"$tmp/setmanual.log"
+    [ "$got" = "$(printf '%s\n' "$@")" ] && return
+    error "the stand-in logged '$got', not '$*', so the cable's other cases go"
+    exit 1
+}
+
+# --check must print one networksetup -setmanual and run none; a run must run it through sudo and
+# print it, and a second run and --check print nothing.
+if [ "$(command -v networksetup)" != "$tmp/bin/networksetup" ]; then
+    error "networksetup is $(command -v networksetup), not the stand-in, so the cable's cases go"
+    exit 1
+fi
+service='ws stand-in 10/100/1G/2.5G LAN'
+with "WS_CABLE_SERVICE=\"$service\""
+prints "setup.sh: would run networksetup -setmanual \"$service\" $args" --check
+prints "setup.sh: ran networksetup -setmanual \"$service\" $args"
+logged "4 -setmanual $service $args"
+prints ''
+prints '' --check
+logged
 exit "$fail"
