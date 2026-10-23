@@ -24,7 +24,7 @@ GALAXY_STAMP = $(COLLECTIONS)/.installed
 export ANSIBLE_COLLECTIONS_PATH = $(CURDIR)/$(COLLECTIONS)
 
 .PHONY: lint shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor \
-	gitleaks commits
+	gitleaks commits lint-file lint-tree
 
 lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor gitleaks \
 	commits
@@ -112,3 +112,26 @@ gitleaks:
 # The headers and bodies of the commits from BASE to HEAD.
 commits:
 	tools/commits $(BASE)
+
+# The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
+# file (docs/checks.md). A workflow takes actionlint and zizmor too. A file of no kind passes, as
+# each gate passes over the files not of its kind.
+lint-file:
+	@status=0; for file in $(FILES); do \
+		case $$file in \
+		*.md) gates='vale lychee rumdl sizecheck' ;; \
+		.github/workflows/*.yml | .github/workflows/*.yaml) \
+			gates='yamllint ansible-lint actionlint zizmor sizecheck' ;; \
+		*.yml | *.yaml) gates='yamllint ansible-lint sizecheck' ;; \
+		*.py) gates='ruff sizecheck' ;; \
+		*.j2) gates=sizecheck ;; \
+		*) gates='shell sizecheck' ;; \
+		esac; \
+		$(MAKE) --no-print-directory $$gates FILES="$$file" || status=1; \
+	done; exit $$status
+
+# Every gate, as the lint plugin runs it as Claude ends its turn, with BASE at origin/main's ref.
+# gitleaks scans the branch's own commits alone, as a secret in a stash or in another branch,
+# which every worktree shares, is none of the turn's.
+lint-tree: LOG_OPTS = $(BASE)..HEAD
+lint-tree: lint
