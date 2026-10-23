@@ -44,5 +44,8 @@ table inet ws {
         ip6 daddr fc00::/7 drop
         ip6 daddr fe80::/10 drop
         ip6 daddr ff00::/8 drop
+        # A global address on a link, should the LAN gain an IPv6 prefix: the next hop is the
+        # address itself, where a routed packet's is a link-local router.
+        ip6 daddr != fe80::/10 rt ip6 nexthop != fe80::/10 drop
     }
 }

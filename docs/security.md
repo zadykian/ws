@@ -42,6 +42,12 @@ address:
 These hold the LAN, the cable and `wg0`, so the server opens no connection to the router's LAN
 address, the Mac or another host of the LAN. The rest is the internet, and passes.
 
+The LAN has no IPv6 prefix. Should it gain one, a packet to a global address on the LAN drops
+too. Its next hop is the address itself, where a routed packet's is a link-local router. That
+holds where the prefix is on-link for the server, as SLAAC from an RA with the on-link flag
+gives. A DHCPv6 address alone, or a prefix without that flag, routes through the router, and
+passes.
+
 The caveats:
 
 - The router answers at its public address too, which the table takes for the internet: the
@@ -52,6 +58,7 @@ The caveats:
 - WireGuard's packets to the Mac are replies: the Mac speaks first, and its tunnel sends a
   keepalive every 25 seconds. Should the Mac fall silent past conntrack's UDP timeout, 2 minutes,
   ws's packets to it drop until its next one.
+- An IPv6 route through a global gateway, rather than a link-local one, drops as if on the link.
 - `nftables.service` stays off. Its `/etc/nftables.conf` flushes every table: ufw's, Docker's,
   fail2ban's and ikeward's.
 - `nft list table inet ws` shows the table, and `systemctl status security-outbound` why it failed
