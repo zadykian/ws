@@ -2,10 +2,11 @@
 
 ## make lint
 
-`make lint` is the one gate: CI's lint job and Claude's Stop hook run it, and the maintainer runs
-it before a push ([Claude's hooks](#claudes-hooks)). Any finding fails it, warnings included. A
-finding is fixed, or justified in place with its linter's own inline mechanism and a reason. No
-gate lowers a severity or keeps a baseline, and none leaves out a file written here.
+`make lint` is the one gate: CI's lint job runs it, the lint plugin through `make lint-tree` as
+Claude ends its turn, and the maintainer before a push ([Claude's hooks](#claudes-hooks)). Any
+finding fails it, warnings included. A finding is fixed, or justified in place with its linter's
+own inline mechanism and a reason. No gate lowers a severity or keeps a baseline, and none leaves
+out a file written here.
 `make -k lint` runs every gate past a failure. Each gate is a target of its own, and those that
 check files take `FILES`, as in `make vale FILES=README.md`:
 
@@ -83,24 +84,41 @@ it: `_` separates words, as `-` does. Where gitleaks is installed, they refuse a
 
 ## Claude's hooks
 
-`.claude/settings.json` has Claude Code run two hooks, both POSIX sh, with the functions of
-`.claude/hooks/lib.sh`. Each runs the work tree's own code, as root on the server: its `Makefile`
-and `tools/`, and the Python tools and collections its pins name. ansible-lint loads the tree's
-`ansible.cfg`, inventory and Python too, such as the filter plugins. Its syntax check of
-`site.yml` runs a lookup in the playbook's YAML, as in an import's name, and `python3 -m venv`
-imports modules from the tree's root. So each hook runs that code only on a tree the maintainer
-vouches for, where these three hold:
+The lint plugin of the `zadykian` marketplace, which `.claude/settings.json` enables, has Claude
+Code run two targets of the `Makefile`. After each edit, `make lint-file FILES=PATH` runs the gates
+of the file's kind on that file alone:
+
+- Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
+- YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
+- shell, by extension or shebang: `shell` and `sizecheck`;
+- Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
+
+As Claude ends its turn, `make lint-tree BASE=refs/remotes/origin/main` runs `make lint` in each
+tree Claude edited, and in the project's own tree where Bash changed it. Its gitleaks scans only
+the branch's own commits, from `origin/main`. A failure goes back to Claude, which fixes what the
+session broke, and reports rather than fixes one from before it. Where Claude stops again, the
+plugin lets it, and lints the fix as the next turn ends. It passes over a branch from before
+these targets, which has neither. [The plugin's docs][lint] say which files and trees it passes
+over, and what it shows the user.
+
+Each target runs the work tree's own code, as root on the server: its `Makefile` and `tools/`, and
+the Python tools and collections its pins name. ansible-lint loads the tree's `ansible.cfg`,
+inventory and Python too, such as the filter plugins. Its syntax check of `site.yml` runs a lookup
+in the playbook's YAML, as in an import's name, and `python3 -m venv` imports modules from the
+tree's root. So the plugin runs that code only on a tree the maintainer vouches for, where these
+three hold:
 
 - each commit from `origin/main` to `HEAD` has a good signature, `%G?` of `G`, by the key that
   `gpg.ssh.allowedSignersFile` lists for the commit's author;
 - the index matches `HEAD`, with no change staged and no conflict;
-- the gates' code, as `lib.sh` lists it, matches `HEAD` in the work tree too, with no file of it
-  untracked.
+- the gates' code matches `HEAD` in the work tree too, with no file of it untracked. That is the
+  plugin's defaults, such as the `Makefile`, `tools/` and `.cache/`, and the pathspecs of
+  [.claude/lint-gates](../.claude/lint-gates).
 
-On any other tree, a hook runs no gate and shows the user a line. That holds for an outside pull
-request fetched into a worktree, and for one merged, cherry-picked or checked out by path while the
-change stays staged. The scripts themselves are the project checkout's, so an outside pull request
-goes in a worktree, never there. The check reads what git records, so it lets two cases through:
+On any other tree, the plugin runs no gate, and shows the user a line that says why. That holds
+for an outside pull request fetched into a worktree, and for one merged, cherry-picked or checked
+out by path while the change stays staged. The check reads what git records, so it lets two cases
+through:
 
 - A commit made here carries the maintainer's signature, whether Claude, a rebase or a cherry-pick
   made it. A rebased outside commit keeps its author, so the check refuses it, unless its author's
@@ -112,27 +130,4 @@ goes in a worktree, never there. The check reads what git records, so it lets tw
   maintainer's own edits look the same. Read an outside pull request at its own commits, never as a
   diff applied to a tree.
 
-After each Edit or Write, `.claude/hooks/lint-file.sh` runs the gates of the file's kind on that
-file alone:
-
-- Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
-- YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
-- shell, by extension or shebang: `shell` and `sizecheck`;
-- Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
-
-It passes over a file outside the repository, one git ignores, and one of a branch from before the
-gates. It passes over a path with a character outside `[A-Za-z0-9._/@+-]` or a part starting with
-`-` too, with a line to the user. Its findings go back to Claude, which fixes them. A staged
-change, or an edit of the gates' code, stops the gates in its tree until a commit takes it.
-
-It records the file's work tree too, in a file named by the session's id in `claude-lint/` of the
-clone's git directory. As Claude ends its turn, `.claude/hooks/lint-branch.sh` runs `make lint` in
-each recorded tree that the maintainer vouches for and that differs from `origin/main`. Then it
-clears the record, so a turn that wrote no file runs nothing. Nor does a turn that wrote through
-Bash alone, as with sed: `make lint` by hand, or CI, checks its changes. A tree whose gates' code
-the turn edited and committed is linted then too. That run's gitleaks scans only the branch's own
-commits, from `origin/main`.
-
-A failure goes back to Claude, which fixes what the turn broke, and reports rather than fixes one
-from before it. Where Claude stops again, `stop_hook_active` lets it. The hook then lints the trees
-written since the failure, and shows the user what still fails.
+[lint]: https://github.com/zadykian/skills/blob/main/docs/lint.md#the-hooks
