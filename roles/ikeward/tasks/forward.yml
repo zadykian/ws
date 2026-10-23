@@ -1,7 +1,7 @@
 ---
 # The WireGuard peers of ikeward_forward_from reach the VPN through this machine: the kernel
 # forwards, and ufw lets each peer's packets from wg0 out by ikeward0. ikeward's NAT rule gives
-# them the address the VPN assigned. With no peer, the file goes.
+# them the address the VPN assigned. With no peer, the file goes, and so do the role's rules.
 - name: Forward IPv4 at boot
   ansible.builtin.copy:
     src: 99-ikeward.conf
@@ -46,6 +46,32 @@
     - ikeward_ip_forward is defined
     - ikeward_ip_forward.content | b64decode | int != 1
   changed_when: true
+  tags: [systemd]
+
+# ufw needs the kernel's netfilter even to show its rules. The role's rules carry the comment
+# ikeward, as ufw show added prints them. One made by hand, without it, stays, unless its peer is
+# listed: ufw then gives it the comment.
+- name: Read ufw's rules
+  ansible.builtin.command: ufw show added
+  register: ikeward_ufw_rules
+  changed_when: false
+  check_mode: false
+  tags: [systemd]
+
+- name: Remove the rules of peers no longer listed from ufw
+  community.general.ufw:
+    rule: allow
+    route: true
+    interface_in: wg0
+    interface_out: ikeward0
+    from_ip: "{{ item }}"
+    comment: ikeward
+    delete: true
+  loop: "{{ ikeward_ufw_peers | reject('in', ikeward_forward_from) }}"
+  vars:
+    ikeward_ufw_rule: "^ufw route allow in on wg0 out on ikeward0 from ([0-9.]+) comment 'ikeward'$"
+    ikeward_ufw_peers: >-
+      {{ ikeward_ufw_rules.stdout | regex_findall(ikeward_ufw_rule, multiline=True) }}
   tags: [systemd]
 
 # Each rule names wg0, as a rule that forwards out ikeward0 from any interface would let in what

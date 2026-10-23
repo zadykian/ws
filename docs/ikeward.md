@@ -78,7 +78,8 @@ address the VPN assigned. For them, the role:
   `ikeward`. Each names `wg0` too, as ikeward's NAT rule takes whatever leaves by `ikeward0`,
   whatever its source.
 
-A run removes the file where no peer is listed.
+A run removes the rule of a peer no longer listed, and the file where none is. A rule made by hand,
+without the comment, stays, unless its peer is listed: the run then takes it as the role's.
 
 ufw's default rules forward pings from any interface. So with forwarding on, any peer's pings reach
 the VPN, as ikeward's page on

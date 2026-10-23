@@ -20,6 +20,18 @@
         fail_msg: A profile needs ikeward_dns, and at least one domain in ikeward_domains.
         quiet: true
 
+    # ufw prints a rule's address as given, and the removal of a peer's rule compares the two.
+    - name: Check the peers' addresses
+      ansible.builtin.assert:
+        that: ikeward_bad_peers == []
+        fail_msg: >-
+          ikeward_forward_from holds {{ ikeward_bad_peers | join(', ') }}: each peer is an IPv4
+          address, as 10.99.0.2, with no prefix length.
+        quiet: true
+      vars:
+        ikeward_bad_peers: >-
+          {{ ikeward_forward_from | reject('match', '^([0-9]{1,3}\.){3}[0-9]{1,3}$') | list }}
+
     - name: Read dpkg's architecture
       ansible.builtin.command: dpkg --print-architecture
       register: ikeward_architecture
@@ -44,7 +56,7 @@
       retries: 5
       delay: 10
 
-    # First, so that the forwarding follows the list even while the VPN is down.
+    # First, so that a peer taken off the list loses its way in even while the VPN is down.
     - name: Forward the WireGuard peers to the VPN
       ansible.builtin.import_tasks: forward.yml
 
