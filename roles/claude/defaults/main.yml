@@ -28,3 +28,9 @@ claude_telemetry_env:
   OTEL_LOG_ASSISTANT_RESPONSES: "1"
   # What a tool returned, such as a command's output or a file's text, on the tool's span.
   OTEL_LOG_TOOL_CONTENT: "1"
+
+# The plugin marketplaces the role adds for ws_user, each {name, source}. The name is the one the
+# marketplace's own marketplace.json gives; the source, as claude plugin marketplace add takes it,
+# such as {name: acme-plugins, source: https://git.example.internal/team/plugins.git}. Set with -e
+# (docs/claude.md).
+claude_marketplaces: []

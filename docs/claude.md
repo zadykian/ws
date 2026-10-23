@@ -59,3 +59,26 @@ collector, set its endpoint first as `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT` in `sh
 role reads: [claude's metrics elsewhere](otelcol.md#claudes-metrics-elsewhere).
 claude reads the keys as it starts, so a session started before keeps sending where it did. A key
 the role removes still applies where the shell exports it, as from `~/.secrets/env`.
+
+## Plugin marketplaces
+
+`claude_marketplaces`, empty by default, lists the plugin marketplaces the role adds for `ws_user`,
+each a `name` and a `source`. The source is what `claude plugin marketplace add` takes: a GitHub
+`owner/repo`, a git URL or an absolute path. The first two take a branch or tag as `#REF`. A git URL
+off GitHub ends in `.git`, as claude reads one without it as a hosted `marketplace.json`. The name
+is the one the marketplace's own `marketplace.json` gives, as `add` takes none:
+
+```sh
+/root/repository/ws/bootstrap.sh -e '{"claude_marketplaces": [{"name": "acme-plugins",
+    "source": "https://git.example.internal/team/plugins.git"}]}'
+```
+
+A source that names a private server stays out of this repository: a private repository passes the
+list in its extra vars, as `-e @FILE`. A private source may sit behind a VPN, which must be up
+before the run. It needs a token for its host from the `shell` role, which runs before `claude`
+([Git credentials](shell.md#git-credentials)).
+
+The role adds each name that `claude plugin marketplace list` lacks, so the next run finds it and
+changes nothing. `add` clones a git source and declares the marketplace in
+`~/.claude/settings.json`; it needs no claude login. A dry run names the marketplaces a run would
+add, and clones none. The role removes no marketplace, and installs no plugin.

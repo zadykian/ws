@@ -94,6 +94,10 @@
 - name: Send claude's telemetry to the host's collector
   ansible.builtin.import_tasks: telemetry.yml
 
+- name: Add claude's plugin marketplaces
+  ansible.builtin.import_tasks: marketplaces.yml
+  when: claude_marketplaces | length > 0
+
 # cld setup restore writes a systemd user unit that runs cld restore sessions as the user's systemd
 # starts, which brings back the sessions a reboot ended. It leaves the rest to the user: lingering,
 # so that the user's systemd starts at boot rather than at the first login, and a shell where

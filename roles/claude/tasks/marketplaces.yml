@@ -1,0 +1,46 @@
+---
+# claude plugin marketplace add takes a source and no name: a marketplace bears the name its own
+# marketplace.json gives. So the role adds each name claude does not list. add clones a git source
+# and declares the marketplace in claude's user settings; it needs no claude login. HOME is set, as
+# without become it would be the caller's.
+- name: Add claude's plugin marketplaces
+  become: "{{ ws_user != 'root' }}"
+  become_user: "{{ ws_user }}"
+  environment:
+    HOME: "{{ ws_home }}"
+  vars:
+    claude_bin: "{{ ws_home }}/.local/bin/claude"
+    # CLAUDE_CONFIG_DIR is unset, as the caller's would have claude keep its settings and plugins
+    # there, not in ~/.claude. Set to ~/.claude, it would move claude's .claude.json there too.
+    claude_marketplace_cli: [env, -u, CLAUDE_CONFIG_DIR, "{{ claude_bin }}", plugin, marketplace]
+    claude_marketplaces_known: "{{ (claude_marketplaces_list.stdout or '[]') | from_json }}"
+    claude_marketplaces_known_names: >-
+      {{ claude_marketplaces_known | map(attribute='name') | list }}
+    claude_marketplaces_missing: >-
+      {{ claude_marketplaces | rejectattr('name', 'in', claude_marketplaces_known_names) | list }}
+  block:
+    # A read, so a dry run runs it too. Without claude, as in a dry run on a new machine, it lists
+    # none, so the dry run names every marketplace.
+    - name: List claude's plugin marketplaces
+      ansible.builtin.shell:
+        cmd: |
+          [ -x {{ claude_bin | quote }} ] || exit 0
+          exec {{ claude_marketplace_cli | map('quote') | join(' ') }} list --json
+      register: claude_marketplaces_list
+      check_mode: false
+      changed_when: false
+
+    - name: Add the plugin marketplaces claude lacks
+      ansible.builtin.command:
+        argv: "{{ claude_marketplace_cli + ['add', item.source] }}"
+      loop: "{{ claude_marketplaces_missing }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: true
+
+    # A dry run skips the add above, so this one names the marketplaces a run would add.
+    - name: Show the plugin marketplaces a run would add
+      ansible.builtin.debug:
+        msg: "{{ claude_marketplaces_missing | map(attribute='name') }}"
+      changed_when: true
+      when: ansible_check_mode and claude_marketplaces_missing | length > 0
