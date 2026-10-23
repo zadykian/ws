@@ -20,6 +20,7 @@ ws_conf() {
     WS_PORT=
     WS_TUNNEL_NETWORKS=
     WS_RESOLVERS=
+    WS_CABLE_SERVICE=
     ws_n=0
     while IFS=' 	' read -r ws_line || [ -n "$ws_line" ]; do
         ws_n=$((ws_n + 1))
@@ -80,6 +81,15 @@ ws_conf() {
             WS_RESOLVERS=$ws_value
             ws_are_resolvers "$ws_value" || ws_ok=false
             ;;
+        WS_CABLE_SERVICE)
+            # shellcheck disable=SC2034 # for the cable's step
+            WS_CABLE_SERVICE=$ws_value
+            # A blank needs quotes, as in a shell's assignment; a * first marks a disabled service.
+            case $ws_value in
+            \** | *[[:cntrl:]]*) ws_ok=false ;;
+            *' '*) [ "$ws_value" != "${ws_line#*=}" ] || ws_ok=false ;;
+            esac
+            ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
         [ -z "$ws_value" ] || $ws_ok ||
@@ -112,6 +122,10 @@ ws_conf_form() {
     WS_RESOLVERS)
         echo "DOMAIN=ADDRESS[,ADDRESS...] split by blanks, as example.internal=10.20.0.53, each" \
             "domain once and in lower case, with up to 3 IPv4 addresses"
+        ;;
+    WS_CABLE_SERVICE)
+        echo "a network service as networksetup -listallnetworkservices prints it, no * first," \
+            "in quotes where it holds a blank"
         ;;
     *) echo "a port, 1 to 65535" ;;
     esac
