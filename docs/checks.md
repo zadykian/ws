@@ -71,8 +71,9 @@ in place, with the same pid. Then a network that `ws_tunnel_routes` adds must be
 daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
 ([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Last, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
-`--check` must print nothing ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). Where
-wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
+`--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
+must take both back, and spare a script's own ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)).
+Where wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
 
 ## The hooks
 
