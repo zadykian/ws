@@ -3,3 +3,15 @@
 # /root/vpn/vpnclient for vpnclient.p12 and vpnclient.sswan, both vault-encrypted. Without one, the
 # role does nothing.
 ikeward_profile: ""
+
+# The .p12's password, which ikev2setup.sh prints where asked to protect the files; empty for none.
+ikeward_p12_password: ""
+
+# The remote network's resolver, an IPv4 address, and the domains whose names go to it alone:
+# install's --dns and each --domain. A profile needs both.
+ikeward_dns: ""
+ikeward_domains: []
+
+# The ranges kept off the uplink from boot on, whatever the tunnel grants: install's --floor each.
+# None is needed.
+ikeward_floors: []

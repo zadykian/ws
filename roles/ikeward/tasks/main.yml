@@ -4,6 +4,22 @@
 - name: Set up the VPN from its profile
   when: ikeward_profile | length > 0
   block:
+    # Checked before anything changes. A relative path would have copy look in the role's files.
+    - name: Check the profile's path
+      ansible.builtin.assert:
+        that: ikeward_profile is abs
+        fail_msg: ikeward_profile is {{ ikeward_profile }}, which is not an absolute path.
+        quiet: true
+
+    # ikeward install refuses to run without them, and its error names its flags, not these.
+    - name: Check the remote network's resolver and domains
+      ansible.builtin.assert:
+        that:
+          - ikeward_dns | length > 0
+          - ikeward_domains | length > 0
+        fail_msg: A profile needs ikeward_dns, and at least one domain in ikeward_domains.
+        quiet: true
+
     - name: Read dpkg's architecture
       ansible.builtin.command: dpkg --print-architecture
       register: ikeward_architecture
@@ -27,3 +43,6 @@
       until: ikeward_download is succeeded
       retries: 5
       delay: 10
+
+    - name: Check the VPN's profile with ikeward
+      ansible.builtin.import_tasks: install.yml

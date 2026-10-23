@@ -1,0 +1,57 @@
+---
+# A dry run downloads nothing, so where ikeward would be downloaded it has no binary to ask.
+- name: Check the profile with ikeward install's dry run
+  when: >-
+    not (ansible_check_mode and ikeward_download is defined and ikeward_download is changed)
+  block:
+    # The files go into /run for this run alone, a dry run's too, so neither the directory, the
+    # files nor their removal reports a change.
+    - name: Create the directory for the profile's decrypted files
+      ansible.builtin.file:
+        path: "{{ ikeward_run_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+      changed_when: false
+      check_mode: false
+
+    # copy decrypts the vault-encrypted files. The diff is off: the .sswan holds the .p12.
+    - name: Decrypt the profile's files
+      ansible.builtin.copy:
+        src: "{{ ikeward_profile }}.{{ item }}"
+        dest: "{{ ikeward_run_profile }}.{{ item }}"
+        owner: root
+        group: root
+        mode: "0600"
+      loop: [p12, sswan]
+      changed_when: false
+      check_mode: false
+      diff: false
+
+    # The password goes on stdin, one of the task's arguments, which no_log keeps out of the output
+    # with the rest of the result. ikeward prints no password and no key, so the check below shows
+    # its error.
+    - name: Ask ikeward install what it would change
+      ansible.builtin.command:
+        argv: "{{ ikeward_install + ['--dry-run'] }}"
+        stdin: "{{ ikeward_p12_password }}"
+      register: ikeward_dry_run
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      no_log: true
+
+    - name: Check that ikeward read the profile and the values
+      ansible.builtin.assert:
+        that: ikeward_dry_run.rc == 0
+        fail_msg: "{{ ikeward_dry_run.stderr or ikeward_dry_run.msg }}"
+        quiet: true
+
+  always:
+    - name: Remove the profile's decrypted files
+      ansible.builtin.file:
+        path: "{{ ikeward_run_dir }}"
+        state: absent
+      changed_when: false
+      check_mode: false

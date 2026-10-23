@@ -2,3 +2,17 @@
 # Where ikeward's install puts the binary that its services, the routing's and strongSwan run:
 # install refuses to run as any other program.
 ikeward_binary: /usr/local/sbin/ikeward
+
+# The profile's files, decrypted for the run alone, less their extension. They keep their names,
+# which name the files install writes. copy writes a file that all may read, then sets its mode, so
+# they go in a directory only root may enter.
+ikeward_run_dir: /run/ikeward-profile
+ikeward_run_profile: "{{ ikeward_run_dir }}/{{ ikeward_profile | basename }}"
+
+# install's arguments, from the decrypted files and the remote network's values. --probe stays
+# ikeward's default, the first domain.
+ikeward_install: >-
+  {{ [ikeward_binary, 'install', '--p12', ikeward_run_profile ~ '.p12',
+  '--sswan', ikeward_run_profile ~ '.sswan', '--dns', ikeward_dns]
+  + ikeward_domains | map('regex_replace', '^', '--domain=') | list
+  + ikeward_floors | map('regex_replace', '^', '--floor=') | list }}
