@@ -13,3 +13,13 @@ shell_git_allowed_signers: "{{ ws_home }}/.config/git/allowed_signers"
 # vars from a private repository's Ansible Vault. Values are strings, quoted where YAML would read
 # a number, a boolean or null. Empty or null, the role leaves that file alone.
 shell_secret_env: {}
+
+# git's tokens for servers besides GitHub, from a private repository's extra vars. Each entry
+# takes url and token, and optionally username and proactive_auth (docs/shell.md#git-credentials).
+shell_git_credentials: []
+# Each URL's file in ~/.config/git/tokens, which the role derives: the URL without its scheme,
+# each run of characters other than letters, digits, ., _ and - as _.
+shell_git_credential_files: >-
+  {{ dict(shell_git_credentials | map(attribute='url')
+  | zip(shell_git_credentials | map(attribute='url') | map('regex_replace', '^https://', '')
+  | map('regex_replace', '[^A-Za-z0-9._-]+', '_'))) }}

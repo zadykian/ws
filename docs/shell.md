@@ -69,3 +69,25 @@ variable. The `otelcol` role reads the file later in the same run:
 Empty, the variable leaves `~/.secrets` alone, even a file the role wrote, so that a run
 without the vault, as CI's, changes nothing. A null, as from a vault whose entries are all
 commented out, counts as empty. To drop the file, remove it by hand.
+
+## Git credentials
+
+`shell_git_credentials`, empty by default, gives git a token for each server besides GitHub. A
+private repository passes it in its extra vars, from the vault of `shell_secret_env`, say:
+[Secrets](#secrets). Each entry takes:
+
+- `url`: the server, as `https://git.example.com`, or a path on it, which covers the repositories
+  below it;
+- `token`: a personal access token, say;
+- `username`: `token` by default, as such servers take any.
+
+Each token goes in a 0600 file of `~/.config/git/tokens`, named for its URL. `~/.gitconfig` gets a
+helper for each URL, which answers git's request for a credential from that file. The helper ignores
+git's requests to store or erase one, so a token the server refuses stays until the entry changes.
+Where two URLs match, the longer one wins. gh's helper still answers for GitHub, except below an
+entry's URL there.
+
+With the list empty, the role removes the directory. A run that drops an entry names
+`credential.*.helper` among the keys it drops from `~/.gitconfig`: those are the entry's own. No
+token reaches `~/.gitconfig`, its backups or the run's output, `-v` and `--diff` included: a dry run
+shows that a token would change, not which.

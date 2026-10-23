@@ -83,3 +83,6 @@
 
 - name: Write ~/.secrets/env from shell_secret_env
   ansible.builtin.import_tasks: secret_env.yml
+
+- name: Write git's tokens for hosts besides GitHub
+  ansible.builtin.import_tasks: git_credentials.yml
