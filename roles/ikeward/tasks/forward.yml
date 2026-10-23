@@ -1,0 +1,48 @@
+---
+# The WireGuard peers of ikeward_forward_from reach the VPN through this machine, so the kernel
+# forwards IPv4. With no peer, the file goes.
+- name: Forward IPv4 at boot
+  ansible.builtin.copy:
+    src: 99-ikeward.conf
+    dest: /etc/sysctl.d/99-ikeward.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: ikeward_forward_from | length > 0
+
+- name: Stop forwarding IPv4 at boot for the VPN
+  ansible.builtin.file:
+    path: /etc/sysctl.d/99-ikeward.conf
+    state: absent
+  when: ikeward_forward_from | length == 0
+
+# /proc/sys can be read in a dry run and in a container, where it is read-only.
+- name: Read IPv4 forwarding in force
+  ansible.builtin.slurp:
+    src: /proc/sys/net/ipv4/ip_forward
+  register: ikeward_ip_forward
+  when: ikeward_forward_from | length > 0
+
+# systemd-sysctl applies the files' value for this one key, as boot does, and nothing else.
+# --strict makes it fail where /proc/sys is read-only, instead of going on as if the value were set.
+# --tags systemd skips the read above, and so this and the next.
+- name: Forward IPv4 now
+  ansible.builtin.command: /usr/lib/systemd/systemd-sysctl --strict --prefix=net.ipv4.ip_forward
+  when:
+    - ikeward_forward_from | length > 0
+    - ikeward_ip_forward is defined
+    - ikeward_ip_forward.content | b64decode | int != 1
+  changed_when: true
+  tags: [systemd]
+
+# A dry run skips the command above and reports no change for it, so this shows the change.
+- name: Show IPv4 forwarding would be turned on
+  ansible.builtin.debug:
+    msg: IPv4 forwarding would be turned on, for the WireGuard peers that reach the VPN.
+  when:
+    - ansible_check_mode
+    - ikeward_forward_from | length > 0
+    - ikeward_ip_forward is defined
+    - ikeward_ip_forward.content | b64decode | int != 1
+  changed_when: true
+  tags: [systemd]

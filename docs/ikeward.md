@@ -17,6 +17,7 @@ ikeward_p12_password: PASSWORD          # empty where the .p12 has none
 ikeward_dns: 10.20.0.53                 # the remote network's resolver
 ikeward_domains: [example.internal]     # the domains whose names go to it alone
 ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from boot on
+ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
 ```
 
 Encrypt the three with one vault password, then run the playbook with them:
@@ -60,8 +61,22 @@ The password goes into no output: the tasks that run `install` hide their argume
 Where `install` fails, the run shows ikeward's error, which holds no key and no password.
 `ikeward status` and `journalctl -u strongswan.service` show the rest.
 
-`install` and the wait need a booted machine, so they carry the tag `systemd`. In a container, with
-`--skip-tags systemd`, the role downloads ikeward and runs the dry run, and no more.
+`install`, the wait, and the forwarding's setting in force need a booted machine, so they carry the
+tag `systemd`. In a container, with `--skip-tags systemd`, the role downloads ikeward, writes the
+forwarding's file and runs the dry run, and no more.
+
+## Forwarding
+
+`ikeward_forward_from` names the WireGuard peers that reach the VPN through the server, each by its
+address in the tunnel, as `wireguard_peers` gives it. For them, the role writes
+`/etc/sysctl.d/99-ikeward.conf`, `net.ipv4.ip_forward = 1`, and puts it in force. Docker turns
+forwarding on as it starts, but the file does so at boot without Docker. A run removes the file
+where no peer is listed.
+
+ufw's default rules forward pings from any interface. So with forwarding on, any peer's pings reach
+the VPN, as ikeward's page on
+[NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
+says.
 
 ## Dry runs
 
@@ -72,7 +87,8 @@ says so alone, as it has no binary to ask. It skips the wait for `ikeward status
 
 ## By hand
 
-The role never removes the VPN. Without `ikeward_profile`, it leaves the VPN alone. ikeward's
+The role never removes the VPN. Without `ikeward_profile`, it leaves the VPN and the file as they
+are. ikeward's
 [Stop and uninstall](https://github.com/zadykian/ikeward/blob/v0.3.0/README.md#stop-and-uninstall)
-says how to stop it or remove it. The VPN's server, and the profile `ikev2setup.sh` makes there,
-are set up by hand.
+says how to stop it or remove it. The VPN's server, and the profile `ikev2setup.sh` makes there, are
+set up by hand.

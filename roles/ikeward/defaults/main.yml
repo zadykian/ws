@@ -15,3 +15,7 @@ ikeward_domains: []
 # The ranges kept off the uplink from boot on, whatever the tunnel grants: install's --floor each.
 # None is needed.
 ikeward_floors: []
+
+# The WireGuard peers that reach the VPN through this machine, each by its address in the tunnel,
+# as wireguard_peers gives it: 10.99.0.2 for the Mac.
+ikeward_forward_from: []

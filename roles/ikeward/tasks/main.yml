@@ -44,5 +44,9 @@
       retries: 5
       delay: 10
 
+    # First, so that the forwarding follows the list even while the VPN is down.
+    - name: Forward the WireGuard peers to the VPN
+      ansible.builtin.import_tasks: forward.yml
+
     - name: Install the VPN
       ansible.builtin.import_tasks: install.yml
