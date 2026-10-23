@@ -28,6 +28,19 @@ ws_is_user() {
     [ "${#1}" -le 32 ]
 }
 
+# ws_are_networks LIST succeeds where LIST is IPv4 networks split by blanks, each as WS_LAN takes
+# one. Its characters are checked first, so that the bare $1 globs nothing as it splits.
+# shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
+ws_are_networks() {
+    case $1 in
+    *[!0-9./[:blank:]]*) return 1 ;;
+    esac
+    for ws_net in $1; do
+        ws_is_cidr "$ws_net" && ! ws_cidr_overlaps "$ws_net" "$ws_cable_net" &&
+            ! ws_cidr_overlaps "$ws_net" "$ws_tunnel_net" || return 1
+    done
+}
+
 # ws_args takes a script's arguments: --check sets WS_CHECK.
 # shellcheck disable=SC2034,SC2154 # lib.sh's writers read WS_CHECK, and lib.sh sets ws_prog
 ws_args() {
@@ -56,6 +69,7 @@ ws_conf() {
     WS_REMOTE=
     WS_REMOTE_PORT=
     WS_PORT=
+    WS_TUNNEL_NETWORKS=
     ws_n=0
     while IFS=' 	' read -r ws_line || [ -n "$ws_line" ]; do
         ws_n=$((ws_n + 1))
@@ -106,6 +120,11 @@ ws_conf() {
             WS_PORT=$ws_value
             ws_is_port "$ws_value" || ws_ok=false
             ;;
+        WS_TUNNEL_NETWORKS)
+            # shellcheck disable=SC2034 # for setup.sh
+            WS_TUNNEL_NETWORKS=$ws_value
+            ws_are_networks "$ws_value" || ws_ok=false
+            ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
         $ws_ok || ws_die "$1, line $ws_n: $ws_key=$ws_value is not $(ws_conf_form "$ws_key")"
@@ -127,6 +146,10 @@ ws_conf_form() {
     WS_LAN) echo "an IPv4 network, as 10.88.0.0/24, clear of $ws_cable_net and $ws_tunnel_net" ;;
     WS_LAN_ADDRESS) echo "an IPv4 address" ;;
     WS_REMOTE) echo "a host name or an IPv4 address" ;;
+    WS_TUNNEL_NETWORKS)
+        echo "IPv4 networks split by blanks, as 10.20.0.0/16, each clear of $ws_cable_net and" \
+            "$ws_tunnel_net"
+        ;;
     *) echo "a port, 1 to 65535" ;;
     esac
 }

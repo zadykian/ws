@@ -13,7 +13,8 @@
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
 # wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
 # once, and tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without
-# WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet.
+# WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet. Once
+# launchd has the daemon, it sends WS_TUNNEL_NETWORKS into the tunnel.
 #
 # A run changes only what differs, so a second prints nothing once mac.conf has WS_PUBLIC_KEY.
 # Until then, each run prints the Mac's public key again, with the commands that make it ws's peer.
@@ -191,7 +192,20 @@ launchd_do() {
     ws_say "ran launchctl $*"
 }
 
-# tunnel sets up the tunnel's daemon.
+# networks has the daemon route WS_TUNNEL_NETWORKS, from routes.d/mac-conf, through lib.sh. Under
+# --check, key makes no routes.d, where ws_tunnel_routes would stop, so a line says what would go
+# there.
+# shellcheck disable=SC2086 # ws_conf let in no character that globs, so the list splits bare
+networks() {
+    if ws_checking && [ -z "$(ws_root_attrs "$ws_etc/routes.d")" ]; then
+        [ -z "$WS_TUNNEL_NETWORKS" ] || ws_say would put $WS_TUNNEL_NETWORKS in \
+            "$ws_etc/routes.d/mac-conf once routes.d is made"
+    else
+        ws_tunnel_routes mac-conf $WS_TUNNEL_NETWORKS
+    fi
+}
+
+# tunnel sets up the tunnel's daemon, then the networks of mac.conf.
 tunnel() {
     tools
     copies
@@ -208,6 +222,7 @@ tunnel() {
         ws_put_root "$plist" 644 <"$dir/$ws_label.plist"
         plist_changed=$ws_changed
         launchd
+        networks
     fi
     tell
 }
