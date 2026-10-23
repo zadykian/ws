@@ -1,0 +1,183 @@
+name: mac-cld
+
+# mac/setup-cld.sh on macOS, in a workflow of its own beside mac.yml, which nears its 300 lines.
+# It runs on mac.yml's events: every pull request, whatever its base, and each push to main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  # cld on a Mac with Ghostty, in docs/mac.md's order. mac/setup.sh runs with a stand-in for ws's
+  # key, so that the tunnel's daemon loads and a second run prints nothing. Without Ghostty's app,
+  # it must set up no cld and print nothing the second time. WS_GHOSTTY_APP then names a stand-in
+  # app, an empty directory: --check must change nothing, and a run must install cld and Ghostty's
+  # settings. ssh's LocalCommand must follow whether cld has restore tabs. Stubs then stand in for
+  # cld. The first gains restore tabs as it updates, so that one run adds the lines, and the line
+  # runs here before a release of cld has it. Under the second, which lacks it, a run drops them.
+  mac-cld:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    # bash with pipefail, rather than the default bash -e, so that a failing setup.sh fails its
+    # step through a tee too.
+    defaults:
+      run:
+        shell: bash
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_ENV_HINTS: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # As in mac.yml: setup.sh stops where a directory above root's copies isn't root's alone.
+      - name: Make /usr/local root's, as on a Mac
+        run: |
+          for dir in /usr/local /usr/local/libexec; do
+              [ -d "$dir" ] || continue
+              if [ "$(stat -f '%u %Lp' "$dir")" != "0 755" ]; then
+                  echo "::warning::$dir was $(stat -f '%Su:%Sg %Lp' "$dir"); made root's, 755"
+                  sudo chown root:wheel "$dir"
+                  sudo chmod 755 "$dir"
+              fi
+          done
+      # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed.
+      - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty or cld
+        run: |
+          fail=0
+          for path in /Applications/Ghostty.app ~/Applications/Ghostty.app ~/.local/bin/cld \
+              ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+              if [ -e "$path" ]; then
+                  echo "::error::the runner has $path already"
+                  fail=1
+              fi
+          done
+          mkdir -p ~/.config/ws
+          echo "WS_PUBLIC_KEY=$(openssl rand -base64 32)" >~/.config/ws/mac.conf
+          exit "$fail"
+      - name: Without Ghostty's app, setup.sh sets up no cld, and a second run prints nothing
+        run: |
+          sh mac/setup.sh || { echo '::error::setup.sh without Ghostty failed'; exit 1; }
+          fail=0
+          for path in ~/.local/bin/cld ~/.config/ghostty \
+              "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+              if [ -e "$path" ]; then
+                  echo "::error::setup.sh without Ghostty made $path"
+                  fail=1
+              fi
+          done
+          sh .github/mac-cld-checks.sh lines no || fail=1
+          sh .github/mac-cld-checks.sh quiet || fail=1
+          exit "$fail"
+      # --check shows cld's install, the ssh lines that may follow, and both of Ghostty's files, and
+      # writes none of them.
+      - name: --check with a stand-in Ghostty changes nothing
+        env:
+          WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
+        run: |
+          mkdir -p "$WS_GHOSTTY_APP"
+          sh mac/setup.sh --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
+              { echo '::error::setup.sh --check failed'; exit 1; }
+          fail=0
+          for path in ~/.local/bin/cld ~/.config/ghostty \
+              "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+              if [ -e "$path" ]; then
+                  echo "::error::setup.sh --check made $path"
+                  fail=1
+              fi
+          done
+          for line in ': would install cld into ~/.local/bin ' \
+              ": would add the lines that start cld's watcher to config.d/ws, " \
+              '^+window-save-state = always$' '^+config-file = ?cld.ghostty$'; do
+              grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
+                  { echo "::error::setup.sh --check showed no line '$line'"; fail=1; }
+          done
+          exit "$fail"
+      # The release of cld that install.sh installs has restore tabs, or not yet: ssh's lines must
+      # follow it either way.
+      - name: With a stand-in Ghostty, setup.sh installs cld and Ghostty's settings
+        env:
+          WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
+        run: |
+          sh mac/setup.sh || { echo '::error::setup.sh with Ghostty failed'; exit 1; }
+          fail=0
+          support="$HOME/Library/Application Support/com.mitchellh.ghostty"
+          version=$(~/.local/bin/cld version) ||
+              { echo '::error::~/.local/bin/cld version failed'; exit 1; }
+          echo "$version"
+          head -n 1 "$support/cld.ghostty" | grep -q "^# Written by ws's mac/setup.sh" ||
+              { echo "::error::cld.ghostty has no mac/ header"; fail=1; }
+          grep -qx 'window-save-state = always' "$support/cld.ghostty" ||
+              { echo '::error::cld.ghostty has no window-save-state = always'; fail=1; }
+          [ "$(grep -cx 'config-file = ?cld.ghostty' "$support/config.ghostty")" = 1 ] ||
+              { echo '::error::config.ghostty does not read cld.ghostty once'; fail=1; }
+          tabs=no
+          if ~/.local/bin/cld help restore tabs >/dev/null 2>&1; then
+              tabs=yes
+          fi
+          echo "$version has restore tabs: $tabs"
+          sh .github/mac-cld-checks.sh lines "$tabs" || fail=1
+          exit "$fail"
+      - name: A second run and --check print nothing
+        env:
+          WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
+        run: sh .github/mac-cld-checks.sh quiet
+      # The stub has restore tabs once its update has run, which prints an Updated line. It logs
+      # each restore tabs --watch, with its TERM_PROGRAM, and runs the release for the rest.
+      - name: With a cld that gains restore tabs, one run adds ssh's lines, which start its watcher
+        env:
+          WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
+        run: |
+          mv ~/.local/bin/cld "$RUNNER_TEMP/cld-release"
+          cat >~/.local/bin/cld <<EOF
+          #!/bin/sh
+          case \$* in
+          'help restore tabs') [ -e "$RUNNER_TEMP/updated" ] || exit 2 ;;
+          update)
+              if [ -e "$RUNNER_TEMP/updated" ]; then
+                  echo 'cld 0.14.0 is the latest release'
+              else
+                  touch "$RUNNER_TEMP/updated"
+                  echo "Updated cld 0.13.0 to 0.14.0: \$0"
+              fi
+              ;;
+          'restore tabs --watch') echo "\$TERM_PROGRAM" >>"$RUNNER_TEMP/watch.log" ;;
+          *) exec "$RUNNER_TEMP/cld-release" "\$@" ;;
+          esac
+          EOF
+          chmod 755 ~/.local/bin/cld
+          sh mac/setup.sh 2>&1 | tee "$RUNNER_TEMP/gain.out" ||
+              { echo '::error::setup.sh with the stub failed'; exit 1; }
+          fail=0
+          grep -q ': Updated cld 0.13.0 to 0.14.0: ' "$RUNNER_TEMP/gain.out" ||
+              { echo '::error::setup.sh printed no Updated line of the stub'; fail=1; }
+          sh .github/mac-cld-checks.sh lines yes || fail=1
+          sh .github/mac-cld-checks.sh watch "$RUNNER_TEMP/watch.log" || fail=1
+          sh .github/mac-cld-checks.sh quiet || fail=1
+          exit "$fail"
+      # This stub's help restore tabs exits 2, as cld 0.13.0's does, whatever the release has.
+      - name: With a cld without restore tabs, setup.sh drops ssh's lines
+        env:
+          WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
+        run: |
+          cat >~/.local/bin/cld <<EOF
+          #!/bin/sh
+          [ "\$*" != 'help restore tabs' ] || exit 2
+          exec "$RUNNER_TEMP/cld-release" "\$@"
+          EOF
+          sh mac/setup.sh ||
+              { echo '::error::setup.sh with a cld without restore tabs failed'; exit 1; }
+          fail=0
+          sh .github/mac-cld-checks.sh lines no || fail=1
+          sh .github/mac-cld-checks.sh quiet || fail=1
+          exit "$fail"
+      - name: The files written
+        if: always()
+        run: |
+          cat ~/.ssh/config.d/ws || true
+          cat "$HOME/Library/Application Support/com.mitchellh.ghostty/"* || true

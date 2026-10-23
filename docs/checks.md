@@ -71,6 +71,24 @@ daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
 ([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Where wireguard-go makes no utun, the job
 fails, as the daemon runs the same wireguard-go.
 
+## cld on the Mac
+
+A second workflow, `mac-cld.yml`, sets up cld on another macOS runner, as
+[cld and Ghostty](mac.md#cld-and-ghostty) says. `setup.sh` runs there with a stand-in for ws's
+key, so that a second run prints nothing. Without Ghostty's app, it must install no cld, write no
+Ghostty settings and give ssh no `LocalCommand`, and a second run must print nothing. Then
+`WS_GHOSTTY_APP` names a stand-in app, an empty directory. `--check` must change nothing, and note
+cld's install and the ssh lines that may follow. A run must install cld, whose `cld version` must
+run, and write `cld.ghostty` and the line that reads it. `ssh -G ws` must give `PermitLocalCommand`
+and `LocalCommand` exactly where the cld installed has `restore tabs`. A second run and `--check`
+must print nothing.
+
+Then stubs stand in for cld, so that both cases run whatever cld's latest release has. The first
+gains `restore tabs` as its `cld update` runs, so one run must print the update and add the ssh
+lines. Run by zsh and by sh, the line must start the stub's watcher in a Ghostty pane alone, and
+exit 0 elsewhere. The second stub's `cld help restore tabs` exits 2, as cld 0.13.0's does, and a
+run must drop the lines ([mac-cld-checks.sh](../.github/mac-cld-checks.sh)).
+
 ## The hooks
 
 The hooks in `.githooks` check each commit before git makes it. Enable them in a clone, and so in
