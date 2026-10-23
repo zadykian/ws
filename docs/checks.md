@@ -77,8 +77,9 @@ must take both back, and spare a script's own. Last, `ws_conf` must read an empt
 `mac.conf` as its key's default, and still stop on a value of the wrong form. It must also stop on a
 `WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address
 ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `setup.sh`
-must print nothing ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). Where wireguard-go makes
-no utun, the job fails, as the daemon runs the same wireguard-go.
+must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
+then none ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). Where wireguard-go makes no utun,
+the job fails, as the daemon runs the same wireguard-go.
 
 ## The rules
 
