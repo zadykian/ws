@@ -1,0 +1,23 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Loads the outbound table before the network comes up, as nftables.service would, which stays off.
+# A reload swaps the table, where a restart would leave none between its stop and its start. A stop
+# removes this table alone.
+[Unit]
+Description=Keep what ws starts to the internet and ikeward
+Documentation=https://github.com/zadykian/ws/blob/main/docs/security.md#outbound
+DefaultDependencies=no
+Wants=network-pre.target
+Before=network-pre.target shutdown.target
+After=local-fs.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f {{ security_outbound }}
+ExecReload=/usr/sbin/nft -f {{ security_outbound }}
+ExecStop=/usr/sbin/nft destroy table inet ws
+
+[Install]
+WantedBy=sysinit.target

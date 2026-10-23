@@ -1,0 +1,39 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# What ws starts goes to the internet and ikeward0 alone. A new packet to a private, shared,
+# link-local, multicast or broadcast range drops: these hold the LAN, the cable and wg0, none of
+# them named. Replies pass, so ws still answers the Mac, over WireGuard too, as the Mac speaks
+# first and keeps the flow alive.
+#
+# security-outbound.service loads the file with nft -f, one transaction that replaces this table
+# and no other: nftables.conf would flush ufw's, Docker's, fail2ban's and ikeward's tables too. No
+# rule holds a set of ranges, or of names with *. The kernel fills such a set after its rules take
+# effect, and in a lab, packets to the LAN got past a reload.
+destroy table inet ws
+
+table inet ws {
+    chain output {
+        type filter hook output priority filter; policy accept;
+        ct state established,related accept
+        # Loopback, the VPN, and Docker's bridges.
+        oifname { "lo", "ikeward0", "docker0" } accept
+        oifname "br-*" accept
+        # networkd's DHCP, by its user, as a raw socket could forge the ports. Its messages but a
+        # renewal go out by AF_PACKET, which no hook sees.
+        meta skuid "systemd-network" udp sport 68 udp dport 67 accept
+        # resolved asks the DNS server DHCP names, the router, for ws and its containers.
+        meta skuid "systemd-resolve" meta l4proto { tcp, udp } th dport 53 accept
+        jump private
+    }
+
+    # A new packet to these drops. The rest is the internet, and passes.
+    chain private {
+        ip daddr 10.0.0.0/8 drop
+        ip daddr 100.64.0.0/10 drop
+        ip daddr 169.254.0.0/16 drop
+        ip daddr 172.16.0.0/12 drop
+        ip daddr 192.168.0.0/16 drop
+        ip daddr 224.0.0.0/4 drop
+        ip daddr 255.255.255.255 drop
+    }
+}

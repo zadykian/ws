@@ -1,7 +1,9 @@
 ---
-- name: Install the SSH server, ufw and fail2ban
+# nftables brings nft, which loads the outbound table (outbound.yml). Its own service stays off, as
+# the package leaves it.
+- name: Install the SSH server, ufw, fail2ban and nftables
   ansible.builtin.apt:
-    name: [openssh-server, ufw, fail2ban]
+    name: [openssh-server, ufw, fail2ban, nftables]
     state: present
 
 # With passwords off, SSH lets in only the keys in the user's authorized_keys, and Ubuntu's
@@ -53,6 +55,8 @@
     default: deny
   tags: [systemd]
 
+# The outbound table holds what goes out where (outbound.yml): ufw can't match resolved's or
+# networkd's uid.
 - name: Allow outgoing connections by default
   community.general.ufw:
     direction: outgoing
@@ -91,3 +95,6 @@
 # a running sshd would go on taking passwords.
 - name: Apply SSH's and fail2ban's changes now
   ansible.builtin.meta: flush_handlers
+
+- name: Keep what ws starts to the internet and ikeward
+  ansible.builtin.import_tasks: outbound.yml

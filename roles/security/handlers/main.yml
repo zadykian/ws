@@ -16,3 +16,15 @@
     state: reloaded
   when: "'systemd' not in ansible_skip_tags"
   tags: [systemd]
+
+# Puts a changed table or unit in force at once. A reload starts a unit that isn't active. A dry
+# run where the unit isn't written yet has none to reload.
+- name: Load the outbound table
+  ansible.builtin.systemd_service:
+    name: security-outbound.service
+    state: reloaded
+    daemon_reload: true
+  when:
+    - "'systemd' not in ansible_skip_tags"
+    - not ansible_check_mode or '/etc/systemd/system/security-outbound.service' is file
+  tags: [systemd]

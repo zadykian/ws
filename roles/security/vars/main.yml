@@ -1,0 +1,3 @@
+---
+# The outbound table, which security-outbound.service loads.
+security_outbound: /usr/local/lib/ws/security/outbound.nft

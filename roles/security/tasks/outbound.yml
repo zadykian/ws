@@ -1,0 +1,44 @@
+---
+# outbound.nft keeps what goes out to the internet and ikeward0, in a table of ws's own that
+# security-outbound.service loads.
+- name: Create the directory of the outbound table
+  ansible.builtin.file:
+    path: "{{ security_outbound | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# nft -c checks the file in the kernel, which a container without NET_ADMIN refuses, as CI's does:
+# --skip-tags systemd skips the check.
+- name: Write the outbound table
+  ansible.builtin.template:
+    src: outbound.nft.j2
+    dest: "{{ security_outbound }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "{{ omit if 'systemd' in ansible_skip_tags else '/usr/sbin/nft -c -f %s' }}"
+  notify: Load the outbound table
+
+- name: Write security-outbound.service
+  ansible.builtin.template:
+    src: security-outbound.service.j2
+    dest: /etc/systemd/system/security-outbound.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Load the outbound table
+
+- name: Load the outbound table now
+  ansible.builtin.meta: flush_handlers
+
+# WantedBy=sysinit.target: boot loads the table before the network comes up. A dry run where the
+# unit isn't written yet has no unit to enable.
+- name: Enable and start security-outbound.service
+  ansible.builtin.systemd_service:
+    name: security-outbound.service
+    enabled: true
+    state: started
+  when: not ansible_check_mode or '/etc/systemd/system/security-outbound.service' is file
+  tags: [systemd]
