@@ -130,6 +130,9 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 - `.claude/rules/`: the roles' invariants in [roles.md](.claude/rules/roles.md), what each document
   holds in [docs.md](.claude/rules/docs.md), and the writing policy in
   [writing.md](.claude/rules/writing.md), loaded with the files they cover.
+- Plugins of the `zadykian` marketplace, [zadykian/skills](https://github.com/zadykian/skills),
+  which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
+  hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`.
 - Skills in `.claude/skills/`: `issue`, and `land`, run by hand only.
 - Agents in `.claude/agents/`: `doc-editor`, which edits prose to the writing policy.
 - Hooks in `.claude/hooks/`: the file's gates after each Edit or Write, and `make lint` in the
