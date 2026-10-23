@@ -2,14 +2,15 @@
 #
 # Loads the outbound table before the network comes up, as nftables.service would, which stays off.
 # A reload swaps the table, where a restart would leave none between its stop and its start. A stop
-# removes this table alone.
+# removes this table alone. It comes after nftables.service, should that be enabled, whose flush
+# would remove it.
 [Unit]
 Description=Keep what ws starts to the internet and ikeward
 Documentation=https://github.com/zadykian/ws/blob/main/docs/security.md#outbound
 DefaultDependencies=no
 Wants=network-pre.target
 Before=network-pre.target shutdown.target
-After=local-fs.target
+After=local-fs.target nftables.service
 Conflicts=shutdown.target
 
 [Service]

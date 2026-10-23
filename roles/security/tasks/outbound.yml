@@ -30,6 +30,17 @@
     mode: "0644"
   notify: Load the outbound table
 
+# A table deleted by hand, or flushed with every other, leaves the unit active, and nothing else
+# would notify the handler.
+- name: Look for the outbound table
+  ansible.builtin.command: nft list table inet ws
+  register: security_outbound_table
+  changed_when: security_outbound_table.rc != 0
+  failed_when: false
+  check_mode: false
+  notify: Load the outbound table
+  tags: [systemd]
+
 - name: Load the outbound table now
   ansible.builtin.meta: flush_handlers
 

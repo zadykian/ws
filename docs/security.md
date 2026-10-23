@@ -73,6 +73,7 @@ The caveats:
 - `nft list table inet ws` shows the table, and `systemctl status security-outbound` why it failed
   to load. `systemctl stop security-outbound` removes this table alone, until the next boot or run.
 
-A run checks the file with `nft -c` before it lands. Where the file or the unit changed, it
-reloads the table in one transaction, with no moment without it. In a container, as in CI, with
-`--skip-tags systemd`, the run writes both, but neither checks nor loads the table.
+A run checks the file with `nft -c` before it lands. Where the file or the unit changed, or the
+table is gone, as after `nft flush ruleset`, it reloads the table in one transaction, with no
+moment without it. In a container, as in CI, with `--skip-tags systemd`, the run writes both, but
+neither checks nor loads the table.
