@@ -15,8 +15,9 @@ extras() {
 # cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of
 # cable_client and cable_mask with no router, through sudo, where networksetup -getinfo shows other
 # settings. With no router, the cable takes no default route from the uplink. A service
-# networksetup lacks stops the run, and a disabled one draws a warning. Without WS_CABLE_SERVICE, it
-# leaves the network alone.
+# networksetup lacks stops the run, as does one with a router outside the cable's /30, as an
+# uplink has. A disabled one draws a warning. Without WS_CABLE_SERVICE, it leaves the network alone.
+# shellcheck disable=SC2154 # ws_cable_net is lib.sh's
 cable() {
     [ -n "$WS_CABLE_SERVICE" ] || return 0
     # sudo gets the program's path as the user's PATH finds it, whatever PATH sudo would keep.
@@ -39,6 +40,15 @@ cable() {
     esac
     cable_set && return 0
     getinfo="networksetup -getinfo \"$WS_CABLE_SERVICE\" shows"
+    # A router outside the cable's /30 is an uplink's: the cable, with no DHCP, gives none.
+    case $cable_other in
+    *'Router: '*)
+        router=${cable_other##*Router: }
+        { ws_is_ipv4 "$router" && ws_cidr_contains "$ws_cable_net" "$router"; } ||
+            ws_die "$getinfo Router: $router, so the service routes to another network:" \
+                "mac.conf's WS_CABLE_SERVICE must name the display's adapter's service"
+        ;;
+    esac
     manual="networksetup -setmanual \"$WS_CABLE_SERVICE\" $cable_client $cable_mask"
     if ws_checking; then
         ws_say "would run $manual"
