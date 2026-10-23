@@ -2,7 +2,8 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the home LAN too, or from elsewhere through the router's port forwards.
-`mac/setup.sh`, the one part of the repository that runs on the Mac, sets up two hosts for ssh:
+`mac/setup.sh`, the one part of the repository that runs on the Mac, sets up the Mac's end of the
+cable ([The cable](#the-cable)) and two hosts for ssh:
 
 - `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
   The sessions of `ssh ws` and JetBrains Gateway then stay open while the Mac moves between the
@@ -28,6 +29,7 @@ lines that the script reads without running them:
 WS_PUBLIC_KEY=WS_KEY
 WS_LAN=10.88.0.0/24
 WS_LAN_ADDRESS=10.88.0.10
+WS_CABLE_SERVICE="USB 10/100/1G/2.5G LAN"
 WS_REMOTE=ws.example.com
 WS_REMOTE_PORT=22022
 WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
@@ -41,7 +43,8 @@ LAN's network or broadcast address. `WS_REMOTE` is the router's name on the inte
 `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
 router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
 side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
-order of [The Mac's tunnel](#the-macs-tunnel).
+order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of
+the display's adapter, in quotes where it holds a blank: [The cable](#the-cable).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
@@ -105,10 +108,6 @@ too. The system's file goes through an Include there, so its relative Includes r
 Until then, each run prints the Mac's public key again, with the commands of
 [The Mac's tunnel](#the-macs-tunnel). `--check` prints each change as a diff and makes none.
 
-The Mac's end of the cable is set by hand, once. In System Settings › Network, pick the display's
-adapter › Details › TCP/IP, and Configure IPv4 Manually. Give it the IP address `10.77.0.2`, the
-subnet mask `255.255.255.252` and no router.
-
 Through the forward, ws takes logins from the internet: by key alone, as everywhere, with fail2ban
 banning the address of the network the Mac is on after 5 failed ones. Over the tunnel, ws sees
 the Mac as `10.99.0.2`, which a ban would shut out of `ssh ws` for 10 minutes, while `ws-ssh` comes
@@ -128,6 +127,20 @@ went:
 ```sh
 ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
 ```
+
+## The cable
+
+The Mac's end of the cable is the display's adapter, whose network service `WS_CABLE_SERVICE`
+names, as `networksetup -listallnetworkservices` prints it. Where `networksetup -getinfo` shows
+other settings, the script runs `sudo networksetup -setmanual SERVICE 10.77.0.2 255.255.255.252`:
+with no router argument, the service gets none. `--check` prints that command. The script stops
+on a service the list lacks. Without the key, it does nothing.
+
+An address, mask or router that `getinfo` leaves out, as it may undocked, counts as set. Where it
+still shows other settings after `-setmanual`, the script stops.
+
+Set the key once ws's end is up ([network](network.md)), as `ws-ssh` takes the cable while the Mac
+has an address on it.
 
 ## The Mac's tunnel
 
