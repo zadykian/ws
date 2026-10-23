@@ -38,6 +38,7 @@ cable() {
         ;;
     esac
     cable_set && return 0
+    getinfo="networksetup -getinfo \"$WS_CABLE_SERVICE\" shows"
     manual="networksetup -setmanual \"$WS_CABLE_SERVICE\" $cable_client $cable_mask"
     if ws_checking; then
         ws_say "would run $manual"
@@ -45,24 +46,31 @@ cable() {
     fi
     sudo "$networksetup" -setmanual "$WS_CABLE_SERVICE" "$cable_client" "$cable_mask" ||
         ws_die "$manual failed"
-    cable_set ||
-        ws_die "networksetup -getinfo \"$WS_CABLE_SERVICE\" shows other settings after $manual"
+    cable_set || ws_die "$getinfo $cable_other after $manual: set it by hand in System Settings ›" \
+        "Network, as docs/mac.md's The cable says, or empty mac.conf's WS_CABLE_SERVICE"
     ws_say "ran $manual"
 }
 
 # cable_set succeeds where networksetup -getinfo shows WS_CABLE_SERVICE in a Manual Configuration of
 # cable_client and cable_mask with no router, Router: (null). No source shows which lines getinfo
 # prints while the display, and so its adapter, is away. So an address, mask or router line it
-# leaves out passes, and a run docked checks the service again.
+# leaves out passes, and a run docked checks the service again. It sets cable_other to the lines
+# that differ, joined by "; ", or to nothing.
 cable_set() {
-    "$networksetup" -getinfo "$WS_CABLE_SERVICE" |
+    cable_other=$("$networksetup" -getinfo "$WS_CABLE_SERVICE" |
         awk -v address="$cable_client" -v mask="$cable_mask" '
             { sub(/[ \t\r]+$/, "") }
-            NR == 1 { manual = ($0 == "Manual Configuration") }
-            /^IP address: / { ips = 1 }
+            !NF { next }
+            !first++ && $0 != "Manual Configuration" { method = "; " $0 }
             $0 == "IP address: " address { ours = 1 }
-            /^Subnet mask: / && $0 != "Subnet mask: " mask { other = 1 }
-            /^Router: [0-9]/ { router = 1 }
-            END { exit !(manual && (ours || !ips) && !other && !router) }
-        '
+            /^IP address: / && $0 != "IP address: " address { ips = ips "; " $0 }
+            /^Subnet mask: / && $0 != "Subnet mask: " mask { masks = masks "; " $0 }
+            /^Router: [0-9]/ { routers = routers "; " $0 }
+            END {
+                if (!first) method = "; nothing"
+                if (ours) ips = ""
+                print substr(method ips masks routers, 3)
+            }
+        ')
+    [ -z "$cable_other" ]
 }
