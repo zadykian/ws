@@ -180,7 +180,7 @@ must ws_resolver own.test
 # that ws_conf lacks, and the rules of the pairs, must stop it too.
 : >"$tmp/all.conf"
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
-    WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS=; do
+    WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE=; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -192,7 +192,7 @@ gives WS_USER root WS_USER=admin WS_USER=
 gives WS_REMOTE '' WS_REMOTE=router.example.com WS_REMOTE=
 for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS=10.88.0.1x \
     WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
-    WS_RESOLVERS=example.internal; do
+    WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet'; do
     refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
@@ -216,4 +216,13 @@ refused 'inside WS_LAN, 10.88.0.64/26' WS_LAN=10.88.0.64/26 WS_LAN_ADDRESS=10.88
 refused 'inside WS_LAN, 10.88.0.64/26' WS_LAN=10.88.0.64/26 WS_LAN_ADDRESS=10.88.0.62
 refused "line 2: WS_LAN_ADDRESS=10.88.0.1x is not a host's IPv4 address inside WS_LAN" \
     WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=10.88.0.1x
+
+# WS_CABLE_SERVICE, a network service's name. One with blanks must pass in either quotes, and stop
+# ws_conf bare, as a shell would run its second word. A tab, or a CR at its end, must stop it too.
+gives WS_CABLE_SERVICE 'USB 10/100/1G/2.5G LAN' 'WS_CABLE_SERVICE="USB 10/100/1G/2.5G LAN"'
+gives WS_CABLE_SERVICE 'Thunderbolt Ethernet' "WS_CABLE_SERVICE='Thunderbolt Ethernet'"
+gives WS_CABLE_SERVICE Ethernet WS_CABLE_SERVICE=Ethernet
+refused 'line 1: WS_CABLE_SERVICE=USB LAN is not a network service' 'WS_CABLE_SERVICE=USB LAN'
+refused 'is not a network service' "WS_CABLE_SERVICE=\"USB$(printf '\t')LAN\""
+refused 'is not a network service' "WS_CABLE_SERVICE=Ethernet$(printf '\r')"
 exit "$fail"
