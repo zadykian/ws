@@ -77,4 +77,4 @@ without them, and `systemctl status wireguard-docker-user` shows why.
 The drops take a change of `network_direct_link_interface` as the `wireguard` role next runs, so
 run `--tags network,wireguard` after one. The LAN stays open: a container reaches the Mac there as
 it reaches any host of the LAN. A container on the host's network is one of the server's processes,
-whose new IPv4 to the Mac the `security` role's table drops ([Outbound](security.md#outbound)).
+whose new packets to the Mac the `security` role's table drops ([Outbound](security.md#outbound)).

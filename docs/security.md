@@ -1,7 +1,7 @@
 # security
 
 The `security` role sets up an sshd drop-in that lets everyone log in by key only, ufw, and
-fail2ban for SSH. It keeps what the server starts over IPv4 to the internet and ikeward's VPN.
+fail2ban for SSH. It keeps what the server starts to the internet and ikeward's VPN.
 
 ## SSH and the firewall
 
@@ -18,7 +18,7 @@ address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Outbound
 
-What the server starts over IPv4 goes to the internet and to `ikeward0`, ikeward's VPN
+What the server starts goes to the internet and to `ikeward0`, ikeward's VPN
 ([ikeward](ikeward.md)), and nowhere else. An nftables table of ws's own, `inet ws`, drops the
 rest. `security-outbound.service` loads it from `/usr/local/lib/ws/security/outbound.nft` at boot,
 before the network comes up. `ufw status verbose` still shows outgoing traffic allowed.
@@ -27,16 +27,20 @@ These pass:
 
 - replies, to the Mac or any other host, over the LAN, the cable or `wg0`;
 - what leaves by loopback, `ikeward0`, `docker0` or a `br-` bridge;
-- DHCP by networkd's user, `systemd-network`, to the LAN's server;
+- DHCP and DHCPv6 by networkd's user, `systemd-network`, and IPv6's router and neighbour
+  discovery and MLD reports;
 - lookups to port 53 by resolved's user, `systemd-resolve`. resolved asks the router for the
   server and its containers ([Names](docker.md#names)).
 
-Any other new IPv4 packet drops where it goes to a private, shared, link-local, multicast or
-broadcast address: `10.0.0.0/8`, `100.64.0.0/10`, `169.254.0.0/16`, `172.16.0.0/12`,
-`192.168.0.0/16`, `224.0.0.0/4` and `255.255.255.255`.
+Any other new packet drops where it goes to a private, shared, link-local, multicast or broadcast
+address:
 
-These hold the LAN, the cable and `wg0`, so the server opens no IPv4 connection to the router's
-LAN address, the Mac or another host of the LAN. The rest is the internet, and passes.
+- IPv4's `10.0.0.0/8`, `100.64.0.0/10`, `169.254.0.0/16`, `172.16.0.0/12`, `192.168.0.0/16`,
+  `224.0.0.0/4` and `255.255.255.255`;
+- IPv6's `fc00::/7`, `fe80::/10` and `ff00::/8`.
+
+These hold the LAN, the cable and `wg0`, so the server opens no connection to the router's LAN
+address, the Mac or another host of the LAN. The rest is the internet, and passes.
 
 The caveats:
 
