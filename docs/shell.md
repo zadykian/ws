@@ -58,6 +58,8 @@ variable. The `otelcol` role reads the file later in the same run:
 [claude's metrics elsewhere](otelcol.md#claudes-metrics-elsewhere).
 
 - A value that holds `{{`, `{%` or `{#` takes YAML's `!unsafe` tag, or Ansible templates it.
+- An `env` without that line at its top, as one written by hand, fails the run before the role
+  touches `~/.secrets`, in a dry run too. Move its values into the variable, then remove the file.
 - The role neither prints nor diffs the file, so a dry run says only that it would change.
 
 Empty, the variable leaves `~/.secrets` alone, even a file the role wrote, so that a run
