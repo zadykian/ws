@@ -63,7 +63,8 @@ prints '' --check
 
 # A stand-in networksetup goes first on PATH, with services whose names no Mac has, so that a call
 # of the runner's own changes nothing. It logs each -setmanual with its count of arguments, takes it
-# from root alone, and keeps each service's settings in a file.
+# from root alone, and keeps in files each service's settings and any line its getinfo writes to
+# stderr.
 mkdir "$tmp/bin"
 : >"$tmp/setmanual.log"
 cat >"$tmp/bin/networksetup" <<'EOF'
@@ -79,10 +80,11 @@ case $1:${2-} in
         'ws stand-in failing'
     ;;
 -getinfo:'ws stand-in '*)
+    [ ! -f "$info.err" ] || cat "$info.err" >&2
     [ -f "$info" ] || printf '%s\n' 'DHCP Configuration' 'IP address: 198.51.100.20' \
         'Subnet mask: 255.255.255.0' 'Router: (null)' >"$info"
     cat "$info"
-    printf '%s\n' 'IPv6: Automatic' 'IPv6 Router: none'
+    ! grep -q . "$info" || printf '%s\n' 'IPv6: Automatic' 'IPv6 Router: none'
     ;;
 -setmanual:'ws stand-in no-op') ;;
 -setmanual:'ws stand-in failing') exit 1 ;;
@@ -107,11 +109,13 @@ logged() {
     exit 1
 }
 
-# differs LINE... gives the no-op service the settings LINE..., on which setup.sh must run one
-# -setmanual and stop on the check after it.
+# differs WHAT LINE... gives the no-op service the settings LINE..., on which setup.sh must run one
+# -setmanual and stop, naming WHAT.
 differs() {
+    what="setup.sh: networksetup -getinfo \"ws stand-in no-op\" shows $1 after networksetup"
+    shift
     printf '%s\n' "$@" >"$tmp/info-ws_stand_in_no_op"
-    stops 'setup.sh: networksetup -getinfo "ws stand-in no-op" shows '
+    stops "$what -setmanual \"ws stand-in no-op\" $args: "
     logged "4 -setmanual ws stand-in no-op $args"
 }
 
@@ -149,19 +153,27 @@ with 'WS_CABLE_SERVICE="ws stand-in failing"'
 stops "setup.sh: networksetup -setmanual \"ws stand-in failing\" $args failed"
 logged "4 -setmanual ws stand-in failing $args"
 # The no-op's -setmanual exits 0 and changes nothing, which only the check after it catches:
-# setup.sh must stop on each setting that differs. The cable's address alone, with no mask or router
-# line, must pass.
+# setup.sh must stop on each setting that differs, and name it. The cable's address alone, with no
+# mask or router line, must pass.
 with 'WS_CABLE_SERVICE="ws stand-in no-op"'
-differs 'DHCP Configuration' 'IP address: 10.77.0.2'
-differs 'Manually Using DHCP Router Configuration' 'IP address: 10.77.0.2'
-differs 'Manual Configuration' 'IP address: 192.0.2.2'
-differs 'Manual Configuration' 'IP address: 10.77.0.2/30'
-differs 'Manual Configuration' 'IP address: 10.77.0.2' 'Subnet mask: 255.255.255.0'
-differs 'Manual Configuration' 'IP address: 10.77.0.2' 'Router: 10.77.0.1'
+differs 'DHCP Configuration' 'DHCP Configuration' 'IP address: 10.77.0.2'
+differs 'Manually Using DHCP Router Configuration' 'Manually Using DHCP Router Configuration' \
+    'IP address: 10.77.0.2'
+differs 'IP address: 192.0.2.2' 'Manual Configuration' 'IP address: 192.0.2.2'
+differs 'IP address: 10.77.0.2/30' 'Manual Configuration' 'IP address: 10.77.0.2/30'
+differs 'Subnet mask: 255.255.255.0' 'Manual Configuration' 'IP address: 10.77.0.2' \
+    'Subnet mask: 255.255.255.0'
+differs 'Router: 10.77.0.1' 'Manual Configuration' 'IP address: 10.77.0.2' 'Router: 10.77.0.1'
+differs nothing
 printf '%s\n' 'Manual Configuration' 'IP address: 10.77.0.2' >"$tmp/info-ws_stand_in_no_op"
 prints ''
 # So must a Manual Configuration with no address line, as getinfo may show while undocked.
 printf '%s\n' 'Manual Configuration' >"$tmp/info-ws_stand_in_no_op"
 prints ''
+logged
+# What getinfo writes to stderr reaches the terminal, and counts as none of its settings.
+echo 'networksetup: a diagnostic' >"$tmp/info-ws_stand_in_no_op.err"
+prints 'networksetup: a diagnostic'
+rm "$tmp/info-ws_stand_in_no_op.err"
 logged
 exit "$fail"
