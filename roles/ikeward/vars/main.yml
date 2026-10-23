@@ -1,0 +1,4 @@
+---
+# Where ikeward's install puts the binary that its services, the routing's and strongSwan run:
+# install refuses to run as any other program.
+ikeward_binary: /usr/local/sbin/ikeward

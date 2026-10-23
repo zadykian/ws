@@ -77,8 +77,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   reports a change ([ci.yml](.github/workflows/ci.yml)).
 - A task that needs a booted machine's systemd carries the tag `systemd`, which CI's container run
   skips ([The playbook](docs/checks.md#the-playbook)).
-- A pinned download is checked against its SHA-256 before use: otelcol's `.deb`
-  ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
+- A pinned download is checked against its SHA-256 before use: otelcol's `.deb` and ikeward's
+  binary ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
   ([its task](roles/docker/tasks/main.yml)), foundryctl ([ci.yml](.github/workflows/ci.yml)) and
   the gates' tools ([tools/run](tools/run)). So are the Python tools
   ([lint-requirements.in](.github/lint-requirements.in)). Go, the JetBrains backends and the

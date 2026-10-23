@@ -25,6 +25,12 @@ otelcol_sha256:
 # github.com/Fred78290/nct6687d, which tags no releases, and the SHA-256 of GitHub's tarball of it.
 fans_nct6687_commit: 7e3d7b36c55f06ab5bb2077bc85329f592996b2a
 fans_nct6687_sha256: d45306407920334b7a3e11c6a89c0527cbd5557b4efac343b96de7b4bffa850a
+# ikeward, the IKEv2 VPN's client, from its release's binary for the architecture.
+ikeward_version: "0.3.0"
+# The SHA-256 of that binary for each architecture, as the release's ikeward.sha256 gives it.
+ikeward_sha256:
+  amd64: b78ba9456f246ddaa5f08f34706cf96b975ad3717a69f142cbcbd893294b2d23
+  arm64: 711b9a1c72b59ce7bc453d94c790855588b529803b8789abc72ed3b405e83e3b
 # SigNoz's images are pinned in roles/signoz/files/casting.yaml, as its compose files are forged
 # from it.
 # gopls, which go install builds for helix.

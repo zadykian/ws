@@ -1,0 +1,5 @@
+---
+# The client profile that hwdsl2's ikev2setup.sh writes, as an absolute path less the extension:
+# /root/vpn/vpnclient for vpnclient.p12 and vpnclient.sswan, both vault-encrypted. Without one, the
+# role does nothing.
+ikeward_profile: ""

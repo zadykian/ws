@@ -11,6 +11,8 @@
       tags: [network]
     - role: wireguard
       tags: [wireguard]
+    - role: ikeward
+      tags: [ikeward]
     - role: fans
       tags: [fans]
     - role: shell

@@ -1,0 +1,29 @@
+---
+# ikeward keeps the server on an IKEv2 VPN, from the client profile of hwdsl2's ikev2setup.sh. The
+# role does nothing without one, as in CI's container.
+- name: Set up the VPN from its profile
+  when: ikeward_profile | length > 0
+  block:
+    - name: Read dpkg's architecture
+      ansible.builtin.command: dpkg --print-architecture
+      register: ikeward_architecture
+      changed_when: false
+      check_mode: false
+
+    # The release's binary, where install.sh would put it, without install.sh: get_url checks it
+    # against the SHA-256 before it writes dest, and downloads again where dest holds another.
+    - name: Download ikeward
+      ansible.builtin.get_url:
+        url: "{{ ikeward_releases }}/download/v{{ ikeward_version }}/{{ ikeward_asset }}"
+        dest: "{{ ikeward_binary }}"
+        checksum: sha256:{{ ikeward_sha256[ikeward_architecture.stdout] }}
+        owner: root
+        group: root
+        mode: "0755"
+      vars:
+        ikeward_releases: https://github.com/zadykian/ikeward/releases
+        ikeward_asset: ikeward-linux-{{ ikeward_architecture.stdout }}
+      register: ikeward_download
+      until: ikeward_download is succeeded
+      retries: 5
+      delay: 10
