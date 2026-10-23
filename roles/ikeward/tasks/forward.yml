@@ -1,6 +1,7 @@
 ---
-# The WireGuard peers of ikeward_forward_from reach the VPN through this machine, so the kernel
-# forwards IPv4. With no peer, the file goes.
+# The WireGuard peers of ikeward_forward_from reach the VPN through this machine: the kernel
+# forwards, and ufw lets each peer's packets from wg0 out by ikeward0. ikeward's NAT rule gives
+# them the address the VPN assigned. With no peer, the file goes.
 - name: Forward IPv4 at boot
   ansible.builtin.copy:
     src: 99-ikeward.conf
@@ -45,4 +46,17 @@
     - ikeward_ip_forward is defined
     - ikeward_ip_forward.content | b64decode | int != 1
   changed_when: true
+  tags: [systemd]
+
+# Each rule names wg0, as a rule that forwards out ikeward0 from any interface would let in what
+# ikeward's NAT rule takes, whatever its source.
+- name: Let the peers through ufw to the VPN
+  community.general.ufw:
+    rule: allow
+    route: true
+    interface_in: wg0
+    interface_out: ikeward0
+    from_ip: "{{ item }}"
+    comment: ikeward
+  loop: "{{ ikeward_forward_from }}"
   tags: [systemd]

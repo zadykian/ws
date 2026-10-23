@@ -225,6 +225,7 @@ nothing as a script sources it. It sets `WS_CHECK` for its own `--check`, and ca
 With no network or address, each removes its file, `ws_resolver` only a file it wrote. Under
 `WS_CHECK` they print diffs and change nothing. The files outlive the daemon. While the daemon is
 stopped, the routes go with its utun, and the domain's lookups go out by the Mac's own network and
-fail. ufw on ws forwards nothing from the tunnel, so a network behind ws needs its side set up on ws
+fail. ufw on ws forwards from the tunnel only ping, and what the `ikeward` role lets through to its
+VPN ([Forwarding](ikeward.md#forwarding)). Any other network behind ws needs its side set up on ws
 too. A network the Mac is on, inside one sent into the tunnel, keeps its part off the tunnel: macOS
 routes the narrower network to the Mac's own interface.

@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: zadykian
-  description: ikeward's IKEv2 VPN, where a profile is given
+  description: ikeward's IKEv2 VPN, where a profile is given, and the WireGuard peers' way into it
   license: MIT
   min_ansible_version: "2.20"
   platforms:

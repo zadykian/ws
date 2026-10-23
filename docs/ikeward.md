@@ -2,7 +2,8 @@
 
 The `ikeward` role keeps the server on an IKEv2 VPN with
 [ikeward](https://github.com/zadykian/ikeward), from a client profile that hwdsl2's `ikev2setup.sh`
-makes. Without a profile, it does nothing, as in CI's container.
+makes. It lets the WireGuard peers it names reach the VPN through the server too. Without a
+profile, it does nothing, as in CI's container.
 
 ## The profile
 
@@ -61,22 +62,30 @@ The password goes into no output: the tasks that run `install` hide their argume
 Where `install` fails, the run shows ikeward's error, which holds no key and no password.
 `ikeward status` and `journalctl -u strongswan.service` show the rest.
 
-`install`, the wait, and the forwarding's setting in force need a booted machine, so they carry the
-tag `systemd`. In a container, with `--skip-tags systemd`, the role downloads ikeward, writes the
-forwarding's file and runs the dry run, and no more.
+`install`, the wait, and the forwarding's ufw rules and setting in force need a booted machine, so
+they carry the tag `systemd`. In a container, with `--skip-tags systemd`, the role downloads
+ikeward, writes the forwarding's file and runs the dry run, and no more.
 
 ## Forwarding
 
 `ikeward_forward_from` names the WireGuard peers that reach the VPN through the server, each by its
-address in the tunnel, as `wireguard_peers` gives it. For them, the role writes
-`/etc/sysctl.d/99-ikeward.conf`, `net.ipv4.ip_forward = 1`, and puts it in force. Docker turns
-forwarding on as it starts, but the file does so at boot without Docker. A run removes the file
-where no peer is listed.
+address in the tunnel, as `wireguard_peers` gives it. ikeward's NAT rule gives what they send the
+address the VPN assigned. For them, the role:
+
+- writes `/etc/sysctl.d/99-ikeward.conf`, `net.ipv4.ip_forward = 1`, and puts it in force. Docker
+  turns forwarding on as it starts, but the file does so at boot without Docker;
+- adds `ufw route allow in on wg0 out on ikeward0 from ADDRESS` for each peer, with the comment
+  `ikeward`. Each names `wg0` too, as ikeward's NAT rule takes whatever leaves by `ikeward0`,
+  whatever its source.
+
+A run removes the file where no peer is listed.
 
 ufw's default rules forward pings from any interface. So with forwarding on, any peer's pings reach
 the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
-says.
+says. The Mac sends the VPN's networks and domains into the tunnel with `WS_TUNNEL_NETWORKS` and
+`WS_RESOLVERS` in [mac.conf](mac.md#macconf), or with a private repository's script
+([Routes and resolvers of another repository](mac.md#routes-and-resolvers-of-another-repository)).
 
 ## Dry runs
 
@@ -87,8 +96,8 @@ says so alone, as it has no binary to ask. It skips the wait for `ikeward status
 
 ## By hand
 
-The role never removes the VPN. Without `ikeward_profile`, it leaves the VPN and the file as they
-are. ikeward's
+The role never removes the VPN. Without `ikeward_profile`, it leaves the VPN, the file and ufw's
+rules as they are. ikeward's
 [Stop and uninstall](https://github.com/zadykian/ikeward/blob/v0.3.0/README.md#stop-and-uninstall)
-says how to stop it or remove it. The VPN's server, and the profile `ikev2setup.sh` makes there, are
-set up by hand.
+says how to stop it or remove it. The VPN's server, and the profile `ikev2setup.sh` makes there,
+are set up by hand.

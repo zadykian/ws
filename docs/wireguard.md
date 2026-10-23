@@ -59,8 +59,9 @@ systemd-networkd isn't running, as on Ubuntu Desktop, whose NetworkManager does 
 ## The firewall
 
 ufw lets in UDP port 51820 on every interface, and a run removes the rule of a port it let in
-before. Inside the tunnel ufw takes `wg0` as any other interface: it lets in SSH and ping, and
-forwards nothing.
+before. Inside the tunnel ufw takes `wg0` as any other interface: it lets in SSH and ping. It
+forwards from `wg0` only ping, as from any interface, and what the `ikeward` role lets through to
+its VPN ([Forwarding](ikeward.md#forwarding)).
 
 Docker forwards its containers' packets ahead of ufw, and gives them the server's address on the
 way out. Through `wg0` or the cable, the Mac would take them for the server's own, and any container

@@ -183,8 +183,8 @@
   notify: Reload networkd for wg0
 
 # On every interface, as the Mac reaches the port over the cable, the LAN and the router's forward.
-# Inside the tunnel, ufw takes wg0 as any interface: it lets in SSH and forwards nothing, but Docker
-# forwards ahead of it (containers.yml).
+# Inside the tunnel, ufw takes wg0 as any interface: it lets in SSH, and forwards only ping and what
+# the ikeward role lets through to the VPN. Docker forwards ahead of it (containers.yml).
 - name: Allow WireGuard through ufw
   community.general.ufw:
     rule: allow
