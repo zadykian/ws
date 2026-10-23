@@ -95,3 +95,15 @@
         state: absent
       changed_when: false
       check_mode: false
+
+# Later roles may need the VPN, as for a clone from the remote network, so one that is not up
+# within about 2 minutes fails the run. A dry run skips this, as install has not run.
+- name: Wait for the VPN to come up
+  ansible.builtin.command:
+    argv: ["{{ ikeward_binary }}", status]
+  register: ikeward_status
+  changed_when: false
+  until: ikeward_status.rc == 0
+  retries: 12
+  delay: 10
+  tags: [systemd]

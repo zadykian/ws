@@ -74,9 +74,9 @@ is the one the marketplace's own `marketplace.json` gives, as `add` takes none:
 ```
 
 A source that names a private server stays out of this repository: a private repository passes the
-list in its extra vars, as `-e @FILE`. A private source may sit behind a VPN, which must be up
-before the run. It needs a token for its host from the `shell` role, which runs before `claude`
-([Git credentials](shell.md#git-credentials)).
+list in its extra vars, as `-e @FILE`. A private source needs the VPN of the `ikeward` role
+([A run](ikeward.md#a-run)), and a token for its host from the `shell` role
+([Git credentials](shell.md#git-credentials)). Both roles run before `claude`.
 
 The role adds each name that `claude plugin marketplace list` lacks, so the next run finds it and
 changes nothing. `add` clones a git source and declares the marketplace in

@@ -52,12 +52,15 @@ the `.p12`.
   install a package, write or remove a file, or take a step. So a new version, a new value or a
   file of ikeward's edited by hand has it run again. So does an install cut short, or a unit of
   ikeward's found stopped.
+- The run then waits about 2 minutes for `ikeward status` to pass, and fails otherwise. A later
+  role may need the VPN, as for a clone from the remote network. While the VPN's server is down,
+  `--skip-tags ikeward` leaves the role out.
 
 The password goes into no output: the tasks that run `install` hide their arguments and output.
 Where `install` fails, the run shows ikeward's error, which holds no key and no password.
 `ikeward status` and `journalctl -u strongswan.service` show the rest.
 
-`install` needs a booted machine, so it carries the tag `systemd`. In a container, with
+`install` and the wait need a booted machine, so they carry the tag `systemd`. In a container, with
 `--skip-tags systemd`, the role downloads ikeward and runs the dry run, and no more.
 
 ## Dry runs
@@ -65,7 +68,7 @@ Where `install` fails, the run shows ikeward's error, which holds no key and no 
 With `--check`, the role decrypts the files and runs `ikeward install --dry-run` all the same, then
 removes them. Where `install` would run, it shows the dry run's lines: what the profile gives, and
 each file as a diff, but for those only root may read. Where the binary would be downloaded, it
-says so alone, as it has no binary to ask.
+says so alone, as it has no binary to ask. It skips the wait for `ikeward status`.
 
 ## By hand
 

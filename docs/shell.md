@@ -108,8 +108,9 @@ and is empty by default. Each entry takes:
 
 Each repository is cloned as `ws_user`, after the tokens are written, where its `dest` is missing.
 A run never pulls, resets or removes a clone, and leaves alone a `dest` that exists, clone or not.
-A private server may sit behind a VPN, which must be up before the run. A clone that fails, as from
-a server out of reach, fails the run, and the next run tries again.
+A private server may sit behind the VPN of the `ikeward` role, which runs before `shell`
+([A run](ikeward.md#a-run)). A clone that fails, as from a server out of reach, fails the run, and
+the next run tries again.
 
 A dry run lists each missing `dest` without reaching the server. A URL of `http://` or `https://`
 that holds a user name or token fails the run, as the clone's config would keep it. So does a
