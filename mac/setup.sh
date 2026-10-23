@@ -14,7 +14,8 @@
 # wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
 # once, and tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without
 # WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet. Once
-# launchd has the daemon, it sends WS_TUNNEL_NETWORKS into the tunnel.
+# launchd has the daemon, it sends WS_TUNNEL_NETWORKS into the tunnel and writes WS_RESOLVERS'
+# files in /etc/resolver.
 #
 # A run changes only what differs, so a second prints nothing once mac.conf has WS_PUBLIC_KEY.
 # Until then, each run prints the Mac's public key again, with the commands that make it ws's peer.
@@ -35,6 +36,9 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 # The daemon's files.
 libexec=/usr/local/libexec/ws-tunnel
 plist=/Library/LaunchDaemons/$ws_label.plist
+# The first line of the resolvers of WS_RESOLVERS, in place of lib.sh's, so that setup.sh and a
+# script that sources lib.sh alone each replace and remove only their own.
+ws_resolver_header="# Written by ws's mac/setup.sh from WS_RESOLVERS in ~/.config/ws/mac.conf."
 
 # tools installs Homebrew's wireguard-tools where missing, which brings wireguard-go, and sets
 # wg_from and go_from to their programs.
@@ -192,10 +196,12 @@ launchd_do() {
     ws_say "ran launchctl $*"
 }
 
-# networks has the daemon route WS_TUNNEL_NETWORKS, from routes.d/mac-conf, through lib.sh. Under
-# --check, key makes no routes.d, where ws_tunnel_routes would stop, so a line says what would go
-# there.
-# shellcheck disable=SC2086 # ws_conf let in no character that globs, so the list splits bare
+# networks has the daemon route WS_TUNNEL_NETWORKS, from routes.d/mac-conf, and macOS ask the
+# nameservers of WS_RESOLVERS for their domains, through lib.sh. A domain whose file lacks
+# setup.sh's header stops the run, with a way out that ws_resolver's message lacks. A resolver
+# with the header goes once WS_RESOLVERS no longer names its domain. Under --check, key makes no
+# routes.d, where ws_tunnel_routes would stop, so a line says what would go there.
+# shellcheck disable=SC2046,SC2086 # ws_conf let in no character that globs, so the lists split bare
 networks() {
     if ws_checking && [ -z "$(ws_root_attrs "$ws_etc/routes.d")" ]; then
         [ -z "$WS_TUNNEL_NETWORKS" ] || ws_say would put $WS_TUNNEL_NETWORKS in \
@@ -203,9 +209,25 @@ networks() {
     else
         ws_tunnel_routes mac-conf $WS_TUNNEL_NETWORKS
     fi
+    domains=' '
+    for pair in $WS_RESOLVERS; do
+        domain=${pair%%=*}
+        domains="$domains$domain "
+        if [ -n "$(ws_root_attrs "$ws_resolvers/$domain")" ] &&
+            [ "$(sudo head -n 1 "$ws_resolvers/$domain")" != "$ws_resolver_header" ]; then
+            ws_die "$ws_resolvers/$domain is another script's, or written by hand: have that" \
+                "script call ws_resolver $domain with no address, or move the file away"
+        fi
+        ws_resolver "$domain" $(echo "${pair#*=}" | tr , ' ')
+    done
+    for file in "$ws_resolvers"/*; do
+        case $domains in *" ${file##*/} "*) continue ;; esac
+        [ "$(sudo head -n 1 "$file" 2>/dev/null)" != "$ws_resolver_header" ] ||
+            ws_resolver "${file##*/}"
+    done
 }
 
-# tunnel sets up the tunnel's daemon, then the networks of mac.conf.
+# tunnel sets up the tunnel's daemon, then the networks and resolvers of mac.conf.
 tunnel() {
     tools
     copies

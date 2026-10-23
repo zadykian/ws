@@ -41,6 +41,31 @@ ws_are_networks() {
     done
 }
 
+# ws_are_resolvers LIST succeeds where LIST is DOMAIN=ADDRESS[,ADDRESS...] split by blanks, with up
+# to 3 IPv4 addresses, as ws_resolver takes them. Each domain comes once and in lower case, as
+# /etc/resolver's volume ignores case by default: two spellings would share one file.
+ws_are_resolvers() {
+    case $1 in
+    *[!a-z0-9.,=[:blank:]-]*) return 1 ;;
+    esac
+    ws_domains=' '
+    for ws_pair in $1; do
+        case $ws_pair in *=*) ;; *) return 1 ;; esac
+        ws_domain=${ws_pair%%=*}
+        ws_is_domain "$ws_domain" || return 1
+        case $ws_domains in *" $ws_domain "*) return 1 ;; esac
+        ws_domains="$ws_domains$ws_domain "
+        ws_addresses=${ws_pair#*=},
+        ws_count=0
+        while [ -n "$ws_addresses" ]; do
+            ws_is_ipv4 "${ws_addresses%%,*}" || return 1
+            ws_addresses=${ws_addresses#*,}
+            ws_count=$((ws_count + 1))
+        done
+        [ "$ws_count" -le 3 ] || return 1
+    done
+}
+
 # ws_args takes a script's arguments: --check sets WS_CHECK.
 # shellcheck disable=SC2034,SC2154 # lib.sh's writers read WS_CHECK, and lib.sh sets ws_prog
 ws_args() {
@@ -70,6 +95,7 @@ ws_conf() {
     WS_REMOTE_PORT=
     WS_PORT=
     WS_TUNNEL_NETWORKS=
+    WS_RESOLVERS=
     ws_n=0
     while IFS=' 	' read -r ws_line || [ -n "$ws_line" ]; do
         ws_n=$((ws_n + 1))
@@ -125,6 +151,11 @@ ws_conf() {
             WS_TUNNEL_NETWORKS=$ws_value
             ws_are_networks "$ws_value" || ws_ok=false
             ;;
+        WS_RESOLVERS)
+            # shellcheck disable=SC2034 # for setup.sh
+            WS_RESOLVERS=$ws_value
+            ws_are_resolvers "$ws_value" || ws_ok=false
+            ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
         $ws_ok || ws_die "$1, line $ws_n: $ws_key=$ws_value is not $(ws_conf_form "$ws_key")"
@@ -149,6 +180,10 @@ ws_conf_form() {
     WS_TUNNEL_NETWORKS)
         echo "IPv4 networks split by blanks, as 10.20.0.0/16, each clear of $ws_cable_net and" \
             "$ws_tunnel_net"
+        ;;
+    WS_RESOLVERS)
+        echo "DOMAIN=ADDRESS[,ADDRESS...] split by blanks, as example.internal=10.20.0.53, each" \
+            "domain once and in lower case, with up to 3 IPv4 addresses"
         ;;
     *) echo "a port, 1 to 65535" ;;
     esac

@@ -31,6 +31,7 @@ WS_LAN_ADDRESS=10.88.0.10
 WS_REMOTE=ws.example.com
 WS_REMOTE_PORT=22022
 WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
+WS_RESOLVERS="example.internal=10.20.0.53,10.20.0.54"
 ```
 
 `WS_PUBLIC_KEY` is ws's WireGuard public key, which the `wireguard` role prints:
@@ -44,12 +45,17 @@ Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another.
 
-`WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. Once launchd has
-the tunnel's daemon, `setup.sh` hands them to `lib.sh`, whose caveats hold
-([Routes and resolvers of another repository](#routes-and-resolvers-of-another-repository)). They go
-in `/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Emptied or removed, the key
-takes back what earlier runs wrote, and only that. `--check` shows each change: a diff, or a line
-for the networks where `routes.d` is still missing.
+`WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
+sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
+domain comes once and in lower case, with up to 3 addresses split by commas. Once launchd has the
+tunnel's daemon, `setup.sh` hands both to `lib.sh`, whose caveats hold
+([Routes and resolvers of another repository](#routes-and-resolvers-of-another-repository)). The
+networks go in `/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver
+starts with a line of `setup.sh`'s own, so a domain whose file is another script's, or written by
+hand, stops the run. To move a domain from such a script, have it remove its file first, with
+`ws_resolver DOMAIN` and no address. A key emptied or removed takes back what earlier runs wrote,
+and only that. `--check` shows each change: a diff, or a line for the networks where `routes.d` is
+still missing.
 
 ## ssh's hosts
 
