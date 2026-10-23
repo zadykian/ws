@@ -67,10 +67,12 @@ second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws
 addresses. The stand-in for ws is a second wireguard-go on the runner, with the printed key as its
 peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws-tunnel status` must show a
 handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and `routes.d`
-in place, with the same pid. Last, a network that `ws_tunnel_routes` adds must be routed into the
+in place, with the same pid. Then a network that `ws_tunnel_routes` adds must be routed into the
 daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
-([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Where wireguard-go makes no utun, the job
-fails, as the daemon runs the same wireguard-go.
+([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Last, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
+`WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
+`--check` must print nothing ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). Where
+wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
 
 ## The hooks
 

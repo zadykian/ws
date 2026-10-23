@@ -15,8 +15,8 @@ jobs:
   # and --check must print nothing. ssh -G must give each host's address. A stand-in ws, a second
   # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on
   # loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost), and the daemon's status must
-  # show each in turn. Last, lib.sh's routes and resolvers. A stand-in that makes no utun fails the
-  # job, as the daemon runs the same wireguard-go.
+  # show each in turn. Last, lib.sh's routes and resolvers, then mac.conf's. A stand-in that makes
+  # no utun fails the job, as the daemon runs the same wireguard-go.
   mac:
     runs-on: macos-latest
     timeout-minutes: 20
@@ -280,6 +280,8 @@ jobs:
           exit "$fail"
       - name: lib.sh's routes and resolvers
         run: sh .github/mac-lib-checks.sh
+      - name: mac.conf's networks and resolvers
+        run: sh .github/mac-conf-checks.sh
       - name: The daemon's status and log
         if: always()
         run: |
