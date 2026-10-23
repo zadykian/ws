@@ -83,11 +83,12 @@ private repository passes it in its extra vars, from the vault of `shell_secret_
 - `proactive_auth`: `true` for a server that sends no 401, so that git sends the token with its
   first request, by `http.<url>.proactiveAuth`.
 
-Each token goes in a 0600 file of `~/.config/git/tokens`, named for its URL. `~/.gitconfig` gets a
-helper for each URL, which answers git's request for a credential from that file. The helper ignores
-git's requests to store or erase one, so a token the server refuses stays until the entry changes.
-Where two URLs match, the longer one wins. gh's helper still answers for GitHub, except below an
-entry's URL there.
+A URL of `http://` fails the run, as git would send its token in clear. Each token goes in a 0600
+file of `~/.config/git/tokens`, named for its URL. `~/.gitconfig` gets a helper for each URL,
+which answers git's request for a credential from that file. The helper ignores git's requests to
+store or erase one, so a token the server refuses stays until the entry changes. Where two URLs
+match, the longer one wins. gh's helper still answers for GitHub, except below an entry's URL
+there.
 
 The directory is the role's: each run removes any other file there, such as the token of an entry
 since dropped. With the list empty, it removes the directory too. A run that drops an entry names

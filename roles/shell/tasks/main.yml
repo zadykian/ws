@@ -78,6 +78,7 @@
     owner: "{{ ws_user }}"
     group: "{{ ws_user }}"
     mode: "0600"
+    validate: git config --file %s --name-only --list
     backup: true
   diff: false
 
