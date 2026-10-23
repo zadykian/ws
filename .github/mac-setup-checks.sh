@@ -75,7 +75,7 @@ info=$state/info-$(printf '%s' "${2-}" | tr -c 'A-Za-z0-9' _)
 case $1:${2-} in
 -listallnetworkservices:)
     printf '%s\n' 'An asterisk (*) denotes that a network service is disabled.' \
-        'ws stand-in 10/100/1G/2.5G LAN'
+        'ws stand-in 10/100/1G/2.5G LAN' 'ws stand-in no-op' 'ws stand-in failing'
     ;;
 -getinfo:'ws stand-in '*)
     [ -f "$info" ] || printf '%s\n' 'DHCP Configuration' 'IP address: 198.51.100.20' \
@@ -83,6 +83,8 @@ case $1:${2-} in
     cat "$info"
     printf '%s\n' 'IPv6: Automatic' 'IPv6 Router: none'
     ;;
+-setmanual:'ws stand-in no-op') ;;
+-setmanual:'ws stand-in failing') exit 1 ;;
 -setmanual:'ws stand-in 10/100/1G/2.5G LAN')
     printf '%s\n' 'Manual Configuration' "IP address: $3" "Subnet mask: $4" \
         "Router: ${5:-(null)}" >"$info"
@@ -102,6 +104,14 @@ logged() {
     [ "$got" = "$(printf '%s\n' "$@")" ] && return
     error "the stand-in logged '$got', not '$*', so the cable's other cases go"
     exit 1
+}
+
+# differs LINE... gives the no-op service the settings LINE..., on which setup.sh must run one
+# -setmanual and stop on the check after it.
+differs() {
+    printf '%s\n' "$@" >"$tmp/info-ws_stand_in_no_op"
+    stops 'setup.sh: networksetup -getinfo "ws stand-in no-op" shows '
+    logged "4 -setmanual ws stand-in no-op $args"
 }
 
 # --check must print one networksetup -setmanual and run none; a run must run it through sudo and
@@ -124,5 +134,25 @@ for service in 'ws stand-in absent' 'ws stand-in' 'stand-in 10/100/1G/2.5G LAN' 
     with "WS_CABLE_SERVICE=\"$service\""
     stops "setup.sh: networksetup -listallnetworkservices lacks \"$service\", mac.conf's"
 done
+logged
+# A -setmanual that fails stops setup.sh.
+with 'WS_CABLE_SERVICE="ws stand-in failing"'
+stops "setup.sh: networksetup -setmanual \"ws stand-in failing\" $args failed"
+logged "4 -setmanual ws stand-in failing $args"
+# The no-op's -setmanual exits 0 and changes nothing, which only the check after it catches:
+# setup.sh must stop on each setting that differs. The cable's address alone, with no mask or router
+# line, must pass.
+with 'WS_CABLE_SERVICE="ws stand-in no-op"'
+differs 'DHCP Configuration' 'IP address: 10.77.0.2'
+differs 'Manually Using DHCP Router Configuration' 'IP address: 10.77.0.2'
+differs 'Manual Configuration' 'IP address: 192.0.2.2'
+differs 'Manual Configuration' 'IP address: 10.77.0.2/30'
+differs 'Manual Configuration' 'IP address: 10.77.0.2' 'Subnet mask: 255.255.255.0'
+differs 'Manual Configuration' 'IP address: 10.77.0.2' 'Router: 10.77.0.1'
+printf '%s\n' 'Manual Configuration' 'IP address: 10.77.0.2' >"$tmp/info-ws_stand_in_no_op"
+prints ''
+# So must a Manual Configuration with no address line, as getinfo may show while undocked.
+printf '%s\n' 'Manual Configuration' >"$tmp/info-ws_stand_in_no_op"
+prints ''
 logged
 exit "$fail"
