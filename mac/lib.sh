@@ -1,7 +1,7 @@
 # shellcheck shell=sh
 # The functions of mac/setup.sh and of a private repository's own script for the Mac, which sources
 # lib.sh alone. That script may call any of them, as ws_tunnel_routes, ws_resolver and
-# ws_tunnel_loaded below. setup.sh's own functions are in setup-lib.sh and setup-ssh.sh. Sourcing
+# ws_tunnel_loaded below. setup.sh's own functions are in the setup-*.sh files beside it. Sourcing
 # lib.sh defines names that start with ws_, and changes nothing else. Under WS_CHECK, set to
 # anything but empty or 0, a function that writes makes no change. It prints each change, as a diff
 # or, with no text to compare, as a line. setup.sh's --check sets WS_CHECK through setup-lib.sh's
