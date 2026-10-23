@@ -121,8 +121,9 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
   nouns, with no trailing period: `feat(base): a swappiness of 10`.
 - The body is a list of bullets wrapped at 72 columns: what was wrong or missing, what changed, and
   what was checked.
-- A pull request is one commit, and its title is the commit's header. Its body starts `Part of #N.`
-  or, on the one that completes issue N, `Closes #N.`, then `## What` and what was checked.
+- Commits and pull requests are cut as the `atomic-commits` skill of the `flow` plugin says. A pull
+  request's title is a header, as a commit's. Its body starts `Part of #N.` or, on the one that
+  completes issue N, `Closes #N.`, then `## What` and what was checked.
 - Commits are signed, as the ruleset on `main` requires.
 
 ## Where else to look
