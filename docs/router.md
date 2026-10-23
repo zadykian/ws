@@ -62,3 +62,12 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   since RouterOS 7.17, enables it only with Back To Home. `/ip cloud print` shows its `dns-name`,
   `SERIAL.sn.mynetname.net`, for a CNAME at your domain's DNS; its records live 60 seconds. Its
   `public-address` must be the WAN's own: behind the ISP's NAT, neither forward reaches the router.
+- A drop of what ws sends to the router's own addresses but `10.88.0.1`, such as its public one,
+  ahead of the default firewall's accepts. ws's table takes the public address for the internet
+  ([Outbound](security.md#outbound)), and the default firewall lets the LAN reach every address of
+  the router's. DNS and DHCP, to `10.88.0.1` or by broadcast, still pass:
+
+  ```routeros
+  /ip firewall filter add chain=input src-address=10.88.0.10 dst-address=!10.88.0.1 \
+      dst-address-type=local action=drop place-before=([find where chain=input dynamic=no]->0)
+  ```

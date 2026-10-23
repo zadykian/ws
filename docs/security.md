@@ -56,7 +56,7 @@ to judge ([Forwarding](ikeward.md#forwarding)).
 The caveats:
 
 - The router answers at its public address too, which the table takes for the internet: the
-  packet leaves by the same gateway.
+  packet leaves by the same gateway. A rule on the router drops it ([The router](router.md)).
 - The router, the DNS server DHCP names, hears only resolved's lookups. A program that asks it
   for names itself, not resolved at `127.0.0.53`, gets no answer. chrony, which the `base` role
   installs, keeps time from Ubuntu's pools on the internet.
