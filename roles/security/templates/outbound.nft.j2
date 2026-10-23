@@ -1,9 +1,9 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
-# What ws starts goes to the internet and ikeward0 alone. A new packet to a private, shared,
-# link-local, multicast or broadcast range drops: these hold the LAN, the cable and wg0, none of
-# them named. Replies pass, so ws still answers the Mac, over WireGuard too, as the Mac speaks
-# first and keeps the flow alive.
+# What ws and its containers start goes to the internet and ikeward0 alone. A new packet to a
+# private, shared, link-local, multicast or broadcast range drops: these hold the LAN, the cable
+# and wg0, none of them named. Replies pass, so ws still answers the Mac, over WireGuard too, as
+# the Mac speaks first and keeps the flow alive.
 #
 # security-outbound.service loads the file with nft -f, one transaction that replaces this table
 # and no other: nftables.conf would flush ufw's, Docker's, fail2ban's and ikeward's tables too. No
@@ -15,7 +15,7 @@ table inet ws {
     chain output {
         type filter hook output priority filter; policy accept;
         ct state established,related accept
-        # Loopback, the VPN, and Docker's bridges.
+        # Loopback, the VPN, and Docker's bridges, whose packets the forward chain sees.
         oifname { "lo", "ikeward0", "docker0" } accept
         oifname "br-*" accept
         # networkd's DHCP and DHCPv6, by its user, as a raw socket could forge the ports. Its DHCP
@@ -29,6 +29,21 @@ table inet ws {
         } accept
         # resolved asks the DNS server DHCP names, the router, for ws and its containers.
         meta skuid "systemd-resolve" meta l4proto { tcp, udp } th dport 53 accept
+        jump private
+    }
+
+    # Docker's containers. What comes in by another link, as wg0's way to ikeward0, is ufw's to
+    # judge.
+    chain forward {
+        type filter hook forward priority filter; policy accept;
+        ct state established,related accept
+        iifname "docker0" jump containers
+        iifname "br-*" jump containers
+    }
+
+    chain containers {
+        oifname { "ikeward0", "docker0" } return
+        oifname "br-*" return
         jump private
     }
 

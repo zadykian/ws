@@ -1,7 +1,8 @@
 # security
 
 The `security` role sets up an sshd drop-in that lets everyone log in by key only, ufw, and
-fail2ban for SSH. It keeps what the server starts to the internet and ikeward's VPN.
+fail2ban for SSH. It keeps what the server and its containers start to the internet and ikeward's
+VPN.
 
 ## SSH and the firewall
 
@@ -18,8 +19,8 @@ address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Outbound
 
-What the server starts goes to the internet and to `ikeward0`, ikeward's VPN
-([ikeward](ikeward.md)), and nowhere else. An nftables table of ws's own, `inet ws`, drops the
+What the server and Docker's containers start goes to the internet and to `ikeward0`, ikeward's
+VPN ([ikeward](ikeward.md)), and nowhere else. An nftables table of ws's own, `inet ws`, drops the
 rest. `security-outbound.service` loads it from `/usr/local/lib/ws/security/outbound.nft` at boot,
 before the network comes up. `ufw status verbose` still shows outgoing traffic allowed.
 
@@ -48,6 +49,10 @@ holds where the prefix is on-link for the server, as SLAAC from an RA with the o
 gives. A DHCPv6 address alone, or a prefix without that flag, routes through the router, and
 passes.
 
+What a container sends out of the server drops alike, but where it leaves by `ikeward0` or a
+bridge. What comes in by any other link, as the Mac's packets from `wg0` to `ikeward0`, is ufw's
+to judge ([Forwarding](ikeward.md#forwarding)).
+
 The caveats:
 
 - The router answers at its public address too, which the table takes for the internet: the
@@ -59,6 +64,10 @@ The caveats:
   keepalive every 25 seconds. Should the Mac fall silent past conntrack's UDP timeout, 2 minutes,
   ws's packets to it drop until its next one.
 - An IPv6 route through a global gateway, rather than a link-local one, drops as if on the link.
+- A Docker network given a bridge name of its own, not `br-`, is no bridge to the table: the
+  server's packets to its containers drop, and theirs go out unchecked.
+- Docker's macvlan and ipvlan networks never meet the table, nor does AF_PACKET from a process with
+  CAP_NET_RAW, as a host-network container's by default. No role runs one today.
 - `nftables.service` stays off. Its `/etc/nftables.conf` flushes every table: ufw's, Docker's,
   fail2ban's and ikeward's.
 - `nft list table inet ws` shows the table, and `systemctl status security-outbound` why it failed

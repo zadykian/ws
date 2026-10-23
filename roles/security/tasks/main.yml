@@ -56,7 +56,8 @@
   tags: [systemd]
 
 # The outbound table holds what goes out where (outbound.yml): ufw can't match resolved's or
-# networkd's uid.
+# networkd's uid, or an IPv6 next hop, and Docker forwards its containers' packets ahead of ufw's
+# rules.
 - name: Allow outgoing connections by default
   community.general.ufw:
     direction: outgoing
