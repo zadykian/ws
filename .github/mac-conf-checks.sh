@@ -83,6 +83,12 @@ lines() {
     printf '%s\n' "$@" >"$scratch"
 }
 
+# taken LINE... writes LINE..., which ws_conf must take.
+taken() {
+    lines "$@"
+    must ws_conf "$scratch"
+}
+
 # refused TEXT LINE... writes LINE..., on which ws_conf must stop with TEXT in its message.
 refused() {
     text=$1
@@ -194,4 +200,20 @@ refused 'unknown key WS_NONE' WS_NONE=
 refused 'go together' WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=
 refused 'go together' WS_LAN= WS_LAN_ADDRESS=10.88.0.10
 refused 'needs WS_REMOTE' WS_REMOTE= WS_REMOTE_PORT=22022
+
+# WS_LAN_ADDRESS inside WS_LAN, whichever line comes first. A host's address at either end of a /24
+# must pass, as must a /31's first. Its network and broadcast addresses, a /30's too, must stop
+# ws_conf. So must one far from it, one of the wrong form, and a host's address just above and just
+# below a /26, which only its bounds stop.
+taken WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=10.88.0.1
+taken WS_LAN_ADDRESS=10.88.0.254 WS_LAN=10.88.0.0/24
+taken WS_LAN=10.88.0.0/31 WS_LAN_ADDRESS=10.88.0.0
+refused 'inside WS_LAN, 10.88.0.0/24' WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=10.88.0.0
+refused 'inside WS_LAN, 10.88.0.0/24' WS_LAN_ADDRESS=10.88.0.255 WS_LAN=10.88.0.0/24
+refused 'inside WS_LAN, 10.88.0.0/30' WS_LAN=10.88.0.0/30 WS_LAN_ADDRESS=10.88.0.3
+refused 'inside WS_LAN, 10.88.0.0/24' WS_LAN_ADDRESS=192.0.2.10 WS_LAN=10.88.0.0/24
+refused 'inside WS_LAN, 10.88.0.64/26' WS_LAN=10.88.0.64/26 WS_LAN_ADDRESS=10.88.0.129
+refused 'inside WS_LAN, 10.88.0.64/26' WS_LAN=10.88.0.64/26 WS_LAN_ADDRESS=10.88.0.62
+refused "line 2: WS_LAN_ADDRESS=10.88.0.1x is not a host's IPv4 address inside WS_LAN" \
+    WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=10.88.0.1x
 exit "$fail"

@@ -75,7 +75,8 @@ daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
 must take both back, and spare a script's own. Last, `ws_conf` must read an empty value in
-`mac.conf` as its key's default, and still stop on a value of the wrong form
+`mac.conf` as its key's default, and still stop on a value of the wrong form. It must also stop on a
+`WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address
 ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). Where wireguard-go makes no utun, the job
 fails, as the daemon runs the same wireguard-go.
 
