@@ -176,4 +176,9 @@ echo 'networksetup: a diagnostic' >"$tmp/info-ws_stand_in_no_op.err"
 prints 'networksetup: a diagnostic'
 rm "$tmp/info-ws_stand_in_no_op.err"
 logged
+# A router outside the cable's /30, an uplink's, stops setup.sh before any -setmanual.
+printf '%s\n' 'DHCP Configuration' 'IP address: 192.0.2.10' 'Router: 192.0.2.1' \
+    >"$tmp/info-ws_stand_in_no_op"
+stops 'setup.sh: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
+logged
 exit "$fail"
