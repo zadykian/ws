@@ -75,7 +75,8 @@ info=$state/info-$(printf '%s' "${2-}" | tr -c 'A-Za-z0-9' _)
 case $1:${2-} in
 -listallnetworkservices:)
     printf '%s\n' 'An asterisk (*) denotes that a network service is disabled.' \
-        'ws stand-in 10/100/1G/2.5G LAN' 'ws stand-in no-op' 'ws stand-in failing'
+        'ws stand-in 10/100/1G/2.5G LAN' '*ws stand-in bridge' 'ws stand-in no-op' \
+        'ws stand-in failing'
     ;;
 -getinfo:'ws stand-in '*)
     [ -f "$info" ] || printf '%s\n' 'DHCP Configuration' 'IP address: 198.51.100.20' \
@@ -85,7 +86,7 @@ case $1:${2-} in
     ;;
 -setmanual:'ws stand-in no-op') ;;
 -setmanual:'ws stand-in failing') exit 1 ;;
--setmanual:'ws stand-in 10/100/1G/2.5G LAN')
+-setmanual:'ws stand-in 10/100/1G/2.5G LAN' | -setmanual:'ws stand-in bridge')
     printf '%s\n' 'Manual Configuration' "IP address: $3" "Subnet mask: $4" \
         "Router: ${5:-(null)}" >"$info"
     ;;
@@ -128,6 +129,14 @@ logged "4 -setmanual $service $args"
 prints ''
 prints '' --check
 logged
+# A disabled service draws a warning on every run, and still gets the settings.
+with 'WS_CABLE_SERVICE="ws stand-in bridge"'
+warning="setup.sh: warning: networksetup lists \"ws stand-in bridge\", mac.conf's"
+warning="$warning WS_CABLE_SERVICE, as disabled, so the cable carries nothing: turn it on in"
+warning="$warning System Settings › Network"
+prints "$warning${nl}setup.sh: ran networksetup -setmanual \"ws stand-in bridge\" $args"
+prints "$warning"
+logged "4 -setmanual ws stand-in bridge $args"
 # A service the list lacks stops setup.sh, though its name begins or ends one listed, or is a glob
 # that matches one.
 for service in 'ws stand-in absent' 'ws stand-in' 'stand-in 10/100/1G/2.5G LAN' 'ws stand-in*'; do
