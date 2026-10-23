@@ -79,7 +79,9 @@ private repository passes it in its extra vars, from the vault of `shell_secret_
 - `url`: the server, as `https://git.example.com`, or a path on it, which covers the repositories
   below it;
 - `token`: a personal access token, say;
-- `username`: `token` by default, as such servers take any.
+- `username`: `token` by default, as such servers take any;
+- `proactive_auth`: `true` for a server that sends no 401, so that git sends the token with its
+  first request, by `http.<url>.proactiveAuth`.
 
 Each token goes in a 0600 file of `~/.config/git/tokens`, named for its URL. `~/.gitconfig` gets a
 helper for each URL, which answers git's request for a credential from that file. The helper ignores
@@ -89,6 +91,7 @@ entry's URL there.
 
 The directory is the role's: each run removes any other file there, such as the token of an entry
 since dropped. With the list empty, it removes the directory too. A run that drops an entry names
-`credential.*.helper` among the keys it drops from `~/.gitconfig`: those are the entry's own. No
-token reaches `~/.gitconfig`, its backups or the run's output, `-v` and `--diff` included: a dry run
-shows that a token would change, not which.
+`credential.*.helper`, and `http.*.proactiveauth` for one with `proactive_auth`, among the keys it
+drops from `~/.gitconfig`: those are the entry's own. No token reaches `~/.gitconfig`, its backups
+or the run's output, `-v` and `--diff` included: a dry run shows that a token would change, not
+which.

@@ -34,6 +34,10 @@
 [credential "{{ credential.url }}"]
 	helper =
 	helper = "!f() { test \"$1\" != get || cat {{ file }}; }; f"
+{% if credential.proactive_auth | default(false) %}
+[http "{{ credential.url }}"]
+	proactiveAuth = basic
+{% endif %}
 {% endfor %}
 # Last, so that its settings win. git skips it where the file is missing.
 [include]
