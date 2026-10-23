@@ -7,7 +7,8 @@
 # --dns. A second run and --check must print nothing. Emptied or removed, the keys must take both
 # back, and spare a script's own files. ws_conf's cases each read a file of their own, in a section
 # per rule: they need no daemon, and leave the job's mac.conf alone. Each failure prints an
-# ::error:: line, and any fails the script at its end.
+# ::error:: line, and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose
+# cases run setup.sh's own steps.
 #
 # shellcheck source-path=SCRIPTDIR/..
 
@@ -225,4 +226,5 @@ gives WS_CABLE_SERVICE Ethernet WS_CABLE_SERVICE=Ethernet
 refused 'line 1: WS_CABLE_SERVICE=USB LAN is not a network service' 'WS_CABLE_SERVICE=USB LAN'
 refused 'is not a network service' "WS_CABLE_SERVICE=\"USB$(printf '\t')LAN\""
 refused 'is not a network service' "WS_CABLE_SERVICE=Ethernet$(printf '\r')"
+sh .github/mac-setup-checks.sh || fail=1
 exit "$fail"
