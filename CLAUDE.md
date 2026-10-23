@@ -105,9 +105,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
   exclusion or keep a baseline: every file passes every gate outright, and `.yamllint`,
   `.ansible-lint`, `ruff.toml` and `.vale.ini` are never weakened.
-- The caps: files of 300 lines or fewer and the README of 150 or fewer (`tools/sizecheck`),
-  sentences of 30 words or fewer, and prose wrapped at 100 columns
-  ([writing.md](.claude/rules/writing.md)).
+- The caps: files of 300 lines or fewer and the README of 150 or fewer (`tools/sizecheck`,
+  [writing.md](.claude/rules/writing.md)). Sentences are of 30 words or fewer, and prose is wrapped
+  at 100 columns (the `writing` skill).
 
 ## Commits
 
@@ -129,8 +129,9 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
 ## Where else to look
 
 - `.claude/rules/`: the roles' invariants in [roles.md](.claude/rules/roles.md), what each document
-  holds in [docs.md](.claude/rules/docs.md), and the writing policy in
-  [writing.md](.claude/rules/writing.md), loaded with the files they cover.
+  holds in [docs.md](.claude/rules/docs.md), and the writing rules in
+  [writing.md](.claude/rules/writing.md), loaded with the files they cover. The writing rules add
+  to the `writing` skill's policy.
 - Plugins of the `zadykian` marketplace, [zadykian/skills](https://github.com/zadykian/skills),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
   hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`.
