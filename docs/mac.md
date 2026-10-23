@@ -36,11 +36,12 @@ WS_RESOLVERS="example.internal=10.20.0.53,10.20.0.54"
 
 `WS_PUBLIC_KEY` is ws's WireGuard public key, which the `wireguard` role prints:
 [The Mac's tunnel](#the-macs-tunnel), below. `WS_LAN` is the home LAN, and `WS_LAN_ADDRESS` ws's
-address on it, the router's static lease for it. `WS_REMOTE` is the router's name on the
-internet, and `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every
-way, which the router forwards too; `WS_PORT` sets another. A way without its values is left out.
-The router's side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the
-Mac's key, in the order of [The Mac's tunnel](#the-macs-tunnel).
+address inside it, the router's static lease for it. The script stops on one outside, and on the
+LAN's network or broadcast address. `WS_REMOTE` is the router's name on the internet, and
+`WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
+router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
+side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
+order of [The Mac's tunnel](#the-macs-tunnel).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:

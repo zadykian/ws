@@ -231,14 +231,16 @@ jobs:
           echo '::error::no handshake on the LAN tier in 40 s; ws-tunnel status gives:'
           printf '%s\n' "$status"
           exit 1
-      # The daemon takes the new tunnel.conf on SIGHUP, in place: it keeps its pid and logs a
-      # reload. A daemon that died of the SIGHUP, and that launchd started again, would log a start.
+      # WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as setup.sh requires, where nothing answers:
+      # macOS's lo0 has 127.0.0.1 alone, and a handshake on the LAN tier fails the step. The daemon
+      # takes the new tunnel.conf on SIGHUP, in place: it keeps its pid and logs a reload. A daemon
+      # that died of the SIGHUP, and that launchd started again, would log a start.
       - name: With nothing at WS_LAN_ADDRESS, the remote tier
         run: |
           pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit }'; }
           was=$(pid) || true
           lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.log)
-          sed -i '' 's/^WS_LAN_ADDRESS=.*/WS_LAN_ADDRESS=192.0.2.1/' ~/.config/ws/mac.conf
+          sed -i '' 's/^WS_LAN_ADDRESS=.*/WS_LAN_ADDRESS=127.0.0.2/' ~/.config/ws/mac.conf
           sh mac/setup.sh 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
               { echo '::error::setup.sh with a new WS_LAN_ADDRESS failed'; exit 1; }
           grep -q "ran launchctl kill SIGHUP system/$LABEL" "$RUNNER_TEMP/hup.out" ||
@@ -265,6 +267,8 @@ jobs:
               { echo '::error::the daemon logged no reload of tunnel.conf'; exit 1; }
           ! grep -q ' started on ' <<<"$new" ||
               { echo '::error::the daemon started again on the SIGHUP'; exit 1; }
+          ! grep -q 'the handshake came from' <<<"$new" ||
+              { echo '::error::something answered 127.0.0.2 on the LAN tier'; exit 1; }
       - name: Without the LAN's keys, ws-ssh goes to WS_REMOTE
         run: |
           sed -i '' '/^WS_LAN/d' ~/.config/ws/mac.conf
