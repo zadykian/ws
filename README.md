@@ -108,6 +108,8 @@ Secrets are never in this repository. On a new machine, these stay manual:
 - `gh auth login`, before `bootstrap.sh` as above, and `gh auth setup-git`;
 - the claude login;
 - each peer's public key in `/etc/wireguard`, as in [The tunnel](docs/wireguard.md#the-tunnel);
+- the VPN's profile and the `ikeward` role's variables, vault-encrypted on the server, as in
+  [The profile](docs/ikeward.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot).
 
 The router takes a few steps once, by hand: [The router](docs/router.md).
