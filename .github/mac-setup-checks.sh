@@ -15,6 +15,8 @@ tmp=$(mktemp -d "${TMPDIR:-/tmp}/mac-setup-checks.XXXXXXXX")
 trap '[ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
 trap 'exit 1' HUP INT TERM
 cp "$conf" "$tmp/job.conf"
+nl='
+'
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -40,6 +42,18 @@ prints() {
     shift
     setup "$@" || error "setup.sh${*:+ $*} failed: $out"
     [ "$out" = "$text" ] || error "setup.sh${*:+ $*} printed '$out', not '$text'"
+}
+
+# stops TEXT [ARG] runs setup.sh, which must stop with one line that starts with TEXT.
+stops() {
+    text=$1
+    shift
+    ! setup "$@" || error "setup.sh${*:+ $*} went on where it should stop: $out"
+    case $out in
+    *"$nl"*) error "setup.sh${*:+ $*} printed more than one line: $out" ;;
+    "$text"*) ;;
+    *) error "setup.sh${*:+ $*} stopped on '$out', not '$text'" ;;
+    esac
 }
 
 # The cable's service. Empty, it must leave the network alone, and setup.sh print nothing.
@@ -103,5 +117,12 @@ prints "setup.sh: ran networksetup -setmanual \"$service\" $args"
 logged "4 -setmanual $service $args"
 prints ''
 prints '' --check
+logged
+# A service the list lacks stops setup.sh, though its name begins or ends one listed, or is a glob
+# that matches one.
+for service in 'ws stand-in absent' 'ws stand-in' 'stand-in 10/100/1G/2.5G LAN' 'ws stand-in*'; do
+    with "WS_CABLE_SERVICE=\"$service\""
+    stops "setup.sh: networksetup -listallnetworkservices lacks \"$service\", mac.conf's"
+done
 logged
 exit "$fail"
