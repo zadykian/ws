@@ -57,6 +57,10 @@ each name, the value quoted for the shell. Each run replaces the file, so a chan
 variable. The `otelcol` role reads the file later in the same run:
 [claude's metrics elsewhere](otelcol.md#claudes-metrics-elsewhere).
 
+- A name takes capitals, digits and underscores, and starts with no digit. The run refuses any
+  other, and its message names no value.
+- A value is a string. YAML reads a bare `0123`, `12:30`, `on` or `~` as a number, a boolean or
+  null, which the run refuses, naming the name alone: quote it, as `"0123"`.
 - A value that holds `{{`, `{%` or `{#` takes YAML's `!unsafe` tag, or Ansible templates it.
 - An `env` without that line at its top, as one written by hand, fails the run before the role
   touches `~/.secrets`, in a dry run too. Move its values into the variable, then remove the file.
