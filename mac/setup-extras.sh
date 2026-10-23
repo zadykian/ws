@@ -15,7 +15,8 @@ extras() {
 # cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of
 # cable_client and cable_mask with no router, through sudo, where networksetup -getinfo shows other
 # settings. With no router, the cable takes no default route from the uplink. A service
-# networksetup lacks stops the run. Without WS_CABLE_SERVICE, it leaves the network alone.
+# networksetup lacks stops the run, and a disabled one draws a warning. Without WS_CABLE_SERVICE, it
+# leaves the network alone.
 cable() {
     [ -n "$WS_CABLE_SERVICE" ] || return 0
     # sudo gets the program's path as the user's PATH finds it, whatever PATH sudo would keep.
@@ -27,6 +28,10 @@ cable() {
 '
     case $nl$services$nl in
     *"$nl$WS_CABLE_SERVICE$nl"*) ;;
+    *"$nl*$WS_CABLE_SERVICE$nl"*)
+        ws_say "warning: networksetup lists \"$WS_CABLE_SERVICE\", mac.conf's WS_CABLE_SERVICE," \
+            "as disabled, so the cable carries nothing: turn it on in System Settings › Network"
+        ;;
     *)
         ws_die "networksetup -listallnetworkservices lacks \"$WS_CABLE_SERVICE\", mac.conf's" \
             "WS_CABLE_SERVICE: name the display's adapter's service as the list prints it"

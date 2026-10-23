@@ -17,9 +17,9 @@
 # launchd has the daemon, it sends WS_TUNNEL_NETWORKS into the tunnel and writes WS_RESOLVERS'
 # files in /etc/resolver.
 #
-# A run changes only what differs, so a second prints nothing once mac.conf has WS_PUBLIC_KEY.
-# Until then, each run prints the Mac's public key again, with the commands that make it ws's peer.
-# --check prints each change as a diff and makes none. docs/mac.md has the rest.
+# A run changes only what differs, so a second prints nothing but warnings once mac.conf has
+# WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make
+# it ws's peer. --check prints each change as a diff and makes none. docs/mac.md has the rest.
 #
 # shellcheck source-path=SCRIPTDIR
 

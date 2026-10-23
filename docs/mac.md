@@ -104,8 +104,8 @@ Before it writes, the script has `ssh -G`, for `ws` and `ws-ssh`, read the new `
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
 system's file last. Where ssh refuses either, the script stops and changes nothing, under `--check`
 too. The system's file goes through an Include there, so its relative Includes resolve under
-`~/.ssh`. A run changes only what differs, so a second prints nothing once `WS_PUBLIC_KEY` is set.
-Until then, each run prints the Mac's public key again, with the commands of
+`~/.ssh`. A run changes only what differs, so a second prints nothing but warnings once
+`WS_PUBLIC_KEY` is set. Until then, each run prints the Mac's public key again, with the commands of
 [The Mac's tunnel](#the-macs-tunnel). `--check` prints each change as a diff and makes none.
 
 Through the forward, ws takes logins from the internet: by key alone, as everywhere, with fail2ban
@@ -135,8 +135,9 @@ ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
 The Mac's end of the cable is the display's adapter, whose network service `WS_CABLE_SERVICE`
 names, as `networksetup -listallnetworkservices` prints it. Where `networksetup -getinfo` shows
 other settings, the script runs `sudo networksetup -setmanual SERVICE 10.77.0.2 255.255.255.252`:
-with no router argument, the service gets none. `--check` prints that command. The script stops
-on a service the list lacks. Without the key, it does nothing.
+with no router argument, the service gets none. `--check` prints that command. The script stops on a
+service the list lacks. A disabled service, which the list prints with a `*` first and the key names
+without it, draws a warning at each run while it stays off. Without the key, it does nothing.
 
 An address, mask or router that `getinfo` leaves out, as it may undocked, counts as set. Where it
 still shows other settings after `-setmanual`, the script stops.
