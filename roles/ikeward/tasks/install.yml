@@ -1,6 +1,15 @@
 ---
 # A dry run downloads nothing, so where ikeward would be downloaded it has no binary to ask.
-- name: Check the profile with ikeward install's dry run
+- name: Show that ikeward would be downloaded
+  ansible.builtin.debug:
+    msg: >-
+      ikeward {{ ikeward_version }} would be downloaded into {{ ikeward_binary }}, then asked what
+      its install would change.
+  when: ansible_check_mode and ikeward_download is changed
+  changed_when: true
+
+# --tags systemd skips the download.
+- name: Run ikeward install from the profile
   when: >-
     not (ansible_check_mode and ikeward_download is defined and ikeward_download is changed)
   block:
@@ -30,11 +39,11 @@
       diff: false
 
     # The password goes on stdin, one of the task's arguments, which no_log keeps out of the output
-    # with the rest of the result. ikeward prints no password and no key, so the check below shows
-    # its error.
+    # with the rest of the result. ikeward prints no password and no key, so the checks below show
+    # its error. --exit-code has it exit 4 where install would change anything, and 0 where not.
     - name: Ask ikeward install what it would change
       ansible.builtin.command:
-        argv: "{{ ikeward_install + ['--dry-run'] }}"
+        argv: "{{ ikeward_install + ['--dry-run', '--exit-code'] }}"
         stdin: "{{ ikeward_p12_password }}"
       register: ikeward_dry_run
       changed_when: false
@@ -44,9 +53,40 @@
 
     - name: Check that ikeward read the profile and the values
       ansible.builtin.assert:
-        that: ikeward_dry_run.rc == 0
+        that: ikeward_dry_run.rc in [0, 4]
         fail_msg: "{{ ikeward_dry_run.stderr or ikeward_dry_run.msg }}"
         quiet: true
+
+    # A dry run skips the install below, so this shows what it would change: the files as diffs,
+    # but for those only root may read.
+    - name: Show what ikeward install would change
+      ansible.builtin.debug:
+        msg: "{{ ikeward_dry_run.stdout_lines }}"
+      when: ansible_check_mode and ikeward_dry_run.rc == 4
+      changed_when: true
+
+    # install runs where its dry run would change anything. Where the download changed the binary,
+    # the dry run was the new one's, so it sees what a new version changes too. install's steps
+    # take up what it changed, which needs a booted machine's systemd. --tags systemd skips the dry
+    # run, and so this too.
+    - name: Run ikeward install
+      ansible.builtin.command:
+        argv: "{{ ikeward_install + ['--exit-code'] }}"
+        stdin: "{{ ikeward_p12_password }}"
+      register: ikeward_installed
+      changed_when: ikeward_installed.rc == 4
+      failed_when: false
+      no_log: true
+      when: not ansible_check_mode and ikeward_dry_run is defined and ikeward_dry_run.rc == 4
+      tags: [systemd]
+
+    - name: Check that ikeward install succeeded
+      ansible.builtin.assert:
+        that: ikeward_installed.rc in [0, 4]
+        fail_msg: "{{ ikeward_installed.stderr or ikeward_installed.msg }}"
+        quiet: true
+      when: ikeward_installed is not skipped
+      tags: [systemd]
 
   always:
     - name: Remove the profile's decrypted files

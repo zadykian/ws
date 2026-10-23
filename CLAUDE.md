@@ -2,9 +2,9 @@
 
 ws sets up the maintainer's development server from code: `site.yml`, an Ansible playbook that runs
 on the machine itself. Its roles set up packages, SSH by key and a firewall, the links to the Mac,
-and the fans. Then the shell, tmux, helix, Docker, claude, SigNoz with its collector, and the IDEs'
-backends. `mac/` sets up the Mac that works on the server. The rest is the docs, the lint gates'
-tools and CI.
+an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, helix, Docker, claude,
+SigNoz with its collector, and the IDEs' backends. `mac/` sets up the Mac that works on the server.
+The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 

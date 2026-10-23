@@ -1,6 +1,6 @@
 # ikeward
 
-The `ikeward` role sets the server up for an IKEv2 VPN with
+The `ikeward` role keeps the server on an IKEv2 VPN with
 [ikeward](https://github.com/zadykian/ikeward), from a client profile that hwdsl2's `ikev2setup.sh`
 makes. Without a profile, it does nothing, as in CI's container.
 
@@ -45,21 +45,31 @@ the `.p12`.
   `/usr/local/sbin/ikeward`, where ikeward's `install.sh` would put it, checked against the pin. A
   new pin replaces it.
 - It decrypts the two files, under their names, into `/run/ikeward-profile`, which only root may
-  enter. It removes them once ikeward has read them, whether a task failed or not.
+  enter. It removes them once `install` has run, whether a task failed or not.
 - `ikeward install --dry-run` reads them, with the password on its standard input. The run stops
   where ikeward refuses the profile or a value, and shows ikeward's error.
+- `ikeward install` runs where the dry run, with `--exit-code`, exits 4: where install would
+  install a package, write or remove a file, or take a step. So a new version, a new value or a
+  file of ikeward's edited by hand has it run again. So does an install cut short, or a unit of
+  ikeward's found stopped.
 
-The password goes into no output: the task that runs the dry run hides its arguments and output.
-ikeward's error holds no key and no password.
+The password goes into no output: the tasks that run `install` hide their arguments and output.
+Where `install` fails, the run shows ikeward's error, which holds no key and no password.
+`ikeward status` and `journalctl -u strongswan.service` show the rest.
+
+`install` needs a booted machine, so it carries the tag `systemd`. In a container, with
+`--skip-tags systemd`, the role downloads ikeward and runs the dry run, and no more.
 
 ## Dry runs
 
 With `--check`, the role decrypts the files and runs `ikeward install --dry-run` all the same, then
-removes them. Where the binary would be downloaded, it skips both, as it has no binary to ask.
+removes them. Where `install` would run, it shows the dry run's lines: what the profile gives, and
+each file as a diff, but for those only root may read. Where the binary would be downloaded, it
+says so alone, as it has no binary to ask.
 
 ## By hand
 
-The role never removes ikeward. Without `ikeward_profile`, it leaves the binary alone. ikeward's
+The role never removes the VPN. Without `ikeward_profile`, it leaves the VPN alone. ikeward's
 [Stop and uninstall](https://github.com/zadykian/ikeward/blob/v0.3.0/README.md#stop-and-uninstall)
-says how to remove it. The VPN's server, and the profile `ikev2setup.sh` makes there, are set up by
-hand.
+says how to stop it or remove it. The VPN's server, and the profile `ikev2setup.sh` makes there,
+are set up by hand.

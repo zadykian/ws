@@ -13,7 +13,7 @@ Each role is a tag of `site.yml`, with a page of its own:
 - [`security`](docs/security.md): SSH by key only, ufw and fail2ban.
 - [`network`](docs/network.md): the server's end of a cable to the Mac.
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
-- [`ikeward`](docs/ikeward.md): ikeward, the IKEv2 VPN's client, where a profile is given.
+- [`ikeward`](docs/ikeward.md): ikeward's IKEv2 VPN, where a profile is given.
 - [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from a
   variable, a key that signs commits, git's tokens for servers besides GitHub, and clones of
