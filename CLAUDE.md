@@ -135,8 +135,9 @@ Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
   hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`.
 - Agents in `.claude/agents/`: `doc-editor`, which edits prose to the writing policy.
-- Hooks in `.claude/hooks/`: the file's gates after each Edit or Write, and `make lint` in the
-  trees the turn wrote as it ends. Both run a tree's code only where each commit since
-  `origin/main` bears its author's signature and nothing is staged. A diff applied to a tree, or a
-  merge left unstaged, goes unseen, so read an outside pull request at its commits
+- Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits, and
+  `make lint-tree` in the trees the turn changed as it ends. Both run a tree's code only where each
+  commit since `origin/main` bears its author's signature, nothing is staged, and the gates' code
+  matches `HEAD`, as [.claude/lint-gates](.claude/lint-gates) adds to it. A diff applied to a tree,
+  or a merge left unstaged, goes unseen, so read an outside pull request at its commits
   ([Claude's hooks](docs/checks.md#claudes-hooks)).

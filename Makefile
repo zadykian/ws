@@ -1,6 +1,6 @@
-# The gates of `make lint`, the one gate, which CI's lint job and Claude's Stop hook run, and the
-# maintainer before a push. Any finding fails a gate, warnings included; make -k lint runs every
-# gate past a failure.
+# The gates of `make lint`, the one gate, which CI's lint job runs, the lint plugin through
+# lint-tree, and the maintainer before a push. Any finding fails a gate, warnings included; make -k
+# lint runs every gate past a failure.
 # Each gate is a target of its own, and those that check files take FILES, every file of their kind
 # when it is empty: make vale FILES=README.md.
 FILES =
