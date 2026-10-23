@@ -87,7 +87,8 @@ git's requests to store or erase one, so a token the server refuses stays until 
 Where two URLs match, the longer one wins. gh's helper still answers for GitHub, except below an
 entry's URL there.
 
-With the list empty, the role removes the directory. A run that drops an entry names
+The directory is the role's: each run removes any other file there, such as the token of an entry
+since dropped. With the list empty, it removes the directory too. A run that drops an entry names
 `credential.*.helper` among the keys it drops from `~/.gitconfig`: those are the entry's own. No
 token reaches `~/.gitconfig`, its backups or the run's output, `-v` and `--diff` included: a dry run
 shows that a token would change, not which.
