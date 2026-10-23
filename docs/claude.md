@@ -80,5 +80,9 @@ before the run. It needs a token for its host from the `shell` role, which runs 
 
 The role adds each name that `claude plugin marketplace list` lacks, so the next run finds it and
 changes nothing. `add` clones a git source and declares the marketplace in
-`~/.claude/settings.json`; it needs no claude login. A dry run names the marketplaces a run would
-add, and clones none. The role removes no marketplace, and installs no plugin.
+`~/.claude/settings.json`; it needs no claude login. A name claude lists from another source fails
+the run: give that source, or remove the marketplace first, with `claude plugin marketplace remove`.
+claude drops a trailing slash, and adds `.git` to a GitHub URL, so those still match. A source it
+lists otherwise after `add`, such as a relative path made absolute, fails that run. A dry run names
+the marketplaces a run would add, and clones none, so it can't see such a source. The role removes
+no marketplace, and installs no plugin.
