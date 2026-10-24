@@ -181,7 +181,8 @@ must ws_resolver own.test
 # that ws_conf lacks, and the rules of the pairs, must stop it too.
 : >"$tmp/all.conf"
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
-    WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE=; do
+    WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE= WS_GIT_NAME= WS_GIT_EMAIL= \
+    WS_GIT_SIGNING_KEY=; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -193,7 +194,8 @@ gives WS_USER root WS_USER=admin WS_USER=
 gives WS_REMOTE '' WS_REMOTE=router.example.com WS_REMOTE=
 for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS=10.88.0.1x \
     WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
-    WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet'; do
+    WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet' 'WS_GIT_NAME=ws"stand-in' \
+    WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws'; do
     refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
@@ -226,5 +228,22 @@ gives WS_CABLE_SERVICE Ethernet WS_CABLE_SERVICE=Ethernet
 refused 'line 1: WS_CABLE_SERVICE=USB LAN is not a network service' 'WS_CABLE_SERVICE=USB LAN'
 refused 'is not a network service' "WS_CABLE_SERVICE=\"USB$(printf '\t')LAN\""
 refused 'is not a network service' "WS_CABLE_SERVICE=Ethernet$(printf '\r')"
+
+# git's identity and signing key. A name with blanks must pass in quotes, and stop ws_conf bare, as
+# must one with a \. An email takes one @, and a key's file starts at / or ~/ and ends in .pub. The
+# name and the email go together, and the key needs them.
+gives WS_GIT_NAME 'ws stand-in' 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws+git@example.com
+gives WS_GIT_SIGNING_KEY \~/.ssh/ws.pub WS_GIT_NAME=ws WS_GIT_EMAIL=ws@example.com \
+    'WS_GIT_SIGNING_KEY=~/.ssh/ws.pub'
+refused 'line 1: WS_GIT_NAME=ws\stand-in is not a name' 'WS_GIT_NAME="ws\stand-in"'
+for line in 'WS_GIT_NAME=ws stand-in' "WS_GIT_NAME=ws$(printf '\r')" WS_GIT_EMAIL=ws \
+    WS_GIT_EMAIL=ws@@example.com 'WS_GIT_EMAIL=ws"@example.com' WS_GIT_EMAIL=@example.com \
+    WS_GIT_SIGNING_KEY=.ssh/ws.pub 'WS_GIT_SIGNING_KEY=~ws/.ssh/ws.pub' \
+    'WS_GIT_SIGNING_KEY=/Users/ws/my key.pub'; do
+    refused "line 1: $line is not" "$line"
+done
+refused 'go together' WS_GIT_NAME=ws
+refused 'go together' WS_GIT_EMAIL=ws@example.com
+refused 'needs WS_GIT_NAME' 'WS_GIT_SIGNING_KEY=/Users/ws/.ssh/ws.pub'
 sh .github/mac-setup-checks.sh || fail=1
 exit "$fail"

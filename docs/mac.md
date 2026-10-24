@@ -2,8 +2,8 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the home LAN too, or from elsewhere through the router's port forwards.
-`mac/setup.sh`, the one part of the repository that runs on the Mac, sets up the Mac's end of the
-cable ([The cable](#the-cable)) and two hosts for ssh:
+`mac/setup.sh` is the one part of the repository that runs on the Mac. It sets up the Mac's end of
+the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)) and two hosts for ssh:
 
 - `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
   The sessions of `ssh ws` and JetBrains Gateway then stay open while the Mac moves between the
@@ -30,6 +30,8 @@ WS_PUBLIC_KEY=WS_KEY
 WS_LAN=10.88.0.0/24
 WS_LAN_ADDRESS=10.88.0.10
 WS_CABLE_SERVICE="USB 10/100/1G/2.5G LAN"
+WS_GIT_NAME="NAME"
+WS_GIT_EMAIL=NAME@example.com
 WS_REMOTE=ws.example.com
 WS_REMOTE_PORT=22022
 WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
@@ -44,11 +46,15 @@ LAN's network or broadcast address. `WS_REMOTE` is the router's name on the inte
 router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
 side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
 order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of
-the display's adapter, in quotes where it holds a blank: [The cable](#the-cable).
+the display's adapter, in quotes where it holds a blank: [The cable](#the-cable). `WS_GIT_NAME`
+and `WS_GIT_EMAIL`, which go together, are the author of git's commits on the Mac, the name in
+quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the `.pub` of the key that signs them, by
+its path from `/` or `~/`: [git on the Mac](mac-git.md).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
-`root` for `WS_USER`, 51820 for `WS_PORT`, and none for the others.
+`root` for `WS_USER`, 51820 for `WS_PORT`, `~/.ssh/id_ed25519_signing.pub` for `WS_GIT_SIGNING_KEY`,
+and none for the others.
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each

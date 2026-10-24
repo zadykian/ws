@@ -1,15 +1,20 @@
-# shellcheck shell=sh
-# The Mac's own steps of mac/setup.sh, beside ssh's hosts and the tunnel: for now, the cable's
-# address on the display's adapter. setup.sh sources it after lib.sh and setup-lib.sh, whose
-# functions it calls, and runs extras before the tunnel.
+# shellcheck shell=sh source-path=SCRIPTDIR
+# The Mac's own steps of mac/setup.sh, beside ssh's hosts and the tunnel: the cable's address on
+# the display's adapter, and a signing key for git. setup.sh sources it after lib.sh and
+# setup-lib.sh, whose functions it calls, and runs extras before the tunnel.
 
 # The Mac's end of the cable, in lib.sh's ws_cable_net, and that /30's mask.
 cable_client=10.77.0.2
 cable_mask=255.255.255.252
 
+# The git step's functions are setup-git.sh's, sourced from dir, mac/'s path, as setup.sh sets it.
+# shellcheck source=setup-git.sh disable=SC2154 # dir is setup.sh's
+. "$dir/setup-git.sh"
+
 # extras runs the Mac's own steps, each of which leaves the Mac alone where mac.conf lacks its key.
 extras() {
     cable
+    git_mac
 }
 
 # cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of
