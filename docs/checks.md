@@ -76,7 +76,9 @@ dash.
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
 `--check`, with the form the key takes. `--check` must show the environment's answers as the lines
-it would add to `mac.conf`, and the first run must add them at its end.
+it would add to `mac.conf`, and the first run must add them at its end. Typed at a terminal of
+`script`'s after bad ones, each asked again, the same answers must show the same lines, and empty
+lines the defaults. After the first run, they must write the same `mac.conf`.
 
 ## The Mac
 
