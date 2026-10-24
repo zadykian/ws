@@ -1,8 +1,9 @@
 # The Mac's wizard
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
-the values that `~/.config/ws/mac.conf` lacks, then runs `setup.sh`. On a new Mac with Apple
-silicon, one line installs what it needs, clones the repository and runs the wizard, as yourself:
+the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws, then runs `setup.sh`.
+On a new Mac with Apple silicon, one line installs what it needs, clones the repository and runs the
+wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -27,7 +28,8 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
    and warns of any other. Without a clone, `--check` lists the wizard's stages, each after this
    one.
 3. Answers: the values `mac.conf` lacks, below.
-4. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
+4. Mac key: the ssh key that the Mac offers ws, made where missing, below.
+5. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
 
 ## The answers
@@ -63,6 +65,19 @@ The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set b
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `setup.sh --check`
 then reads the file it would write, in the lock, which `WS_CONF` names. `WS_CONF` names another
 `mac.conf` for both scripts.
+
+## The Mac's key
+
+ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY` names ([mac.conf](mac.md#macconf)).
+Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.pub` is there,
+`ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
+`ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
+and asks it once more. Without `WS_IDENTITY`, the wizard makes `~/.ssh/id_ed25519` the same way.
+With no terminal to ask one, the wizard stops there, unless `WS_IDENTITY` names that file, which
+then gets no passphrase.
+
+The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
+differ, and says how to mend each.
 
 ## What stays by hand
 
