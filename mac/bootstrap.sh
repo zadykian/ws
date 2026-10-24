@@ -4,9 +4,11 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
 #
-# It clones the repository into ~/repository/ws, or leaves a clone there as it is, which --update
-# pulls. Then it runs the clone's mac/wizard.sh (docs/mac-wizard.md) with its own arguments, given
-# as `sh -s -- --check`, under which neither changes anything. A second run prints nothing.
+# It installs Apple's Command Line Tools through their dialog. It clones the repository into
+# ~/repository/ws, or leaves a clone there as it is, which --update pulls. Then it runs the clone's
+# mac/wizard.sh (docs/mac-wizard.md) with its own arguments, given as `sh -s -- --check`, under
+# which neither changes anything. A second run prints nothing. caffeinate keeps the Mac from idle
+# sleep while it runs.
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
 set -eu
@@ -51,21 +53,37 @@ clt_done() {
     clt=$(xcode-select -p 2>/dev/null) && [ -x "$clt/usr/bin/git" ]
 }
 
-# tools stops where the clone and the wizard would lack the Command Line Tools or Homebrew.
-tools() {
-    if ! clt_done || ! /opt/homebrew/bin/brew --version >/dev/null 2>&1; then
-        die "Tools: install Homebrew first, with the Command Line Tools it brings: https://brew.sh"
-    fi
+# clt installs the Command Line Tools through the dialog that xcode-select --install opens, where
+# none is open yet, and waits up to 60 minutes for them. A dialog cancelled opens at the next run.
+clt() {
+    clt_done || would Tools 'run xcode-select --install, for the Command Line Tools' && return 0
+    say "Tools: click Install in the Command Line Tools' dialog; waiting up to 60 minutes"
+    xcode-select --install 2>/dev/null || true
+    waited=0
+    until clt_done; do
+        [ "$waited" -lt 3600 ] || die "Tools: no Command Line Tools after 60 minutes"
+        sleep 10
+        waited=$((waited + 10))
+    done
+}
+
+# homebrew stops where /opt/homebrew/bin/brew doesn't run.
+homebrew() {
+    /opt/homebrew/bin/brew --version >/dev/null 2>&1 ||
+        die "Tools: install Homebrew first: https://brew.sh"
 }
 
 # clone clones the repository into dir, or leaves a clone there as it is, with core.hooksPath at its
-# .githooks by an absolute path (docs/checks.md, The hooks).
+# .githooks by an absolute path (docs/checks.md, The hooks). Under --check, git may wait for Tools.
 clone() {
     if [ ! -e "$dir/.git" ]; then
         [ ! -e "$dir" ] || die "Clone: $dir is there, but is not a clone: move it away"
         would Clone "clone $repository into $dir" && return 0
         say "Clone: cloning $repository into $dir"
         git clone -q "$repository" "$dir" || die "Clone: cannot clone $repository into $dir"
+    elif ! clt_done; then
+        say "Clone: after Tools"
+        return 0
     fi
     if [ "$(git -C "$dir" config core.hooksPath)" != "$dir/.githooks" ] &&
         ! would Clone "set core.hooksPath to $dir/.githooks"; then
@@ -98,10 +116,12 @@ main() {
     [ "$(uname -s)" = Darwin ] || die "it sets up a Mac, not $(uname -s)"
     [ "$(uname -m)" = arm64 ] || die "it sets up a Mac with Apple silicon, not $(uname -m)"
     [ "$(id -u)" != 0 ] || die "run it as yourself, not root: it asks sudo where it needs root"
-    tools
+    caffeinate -i -w $$ </dev/null >/dev/null 2>&1 &
+    clt
+    homebrew
     clone
-    if [ ! -e "$dir/.git" ]; then
-        # Under --check, the clone is missing, so the wizard's stages wait for it.
+    if [ ! -e "$dir/.git" ] || ! clt_done; then
+        # Under --check, the clone or its git is missing, so the wizard's stages wait for them.
         echo "$stages" | tr '|' '\n' | sed 's/.*/wizard.sh: &: after Clone/' >&2
         return 0
     fi
