@@ -1,6 +1,6 @@
 #!/bin/sh
 # Sets up the Mac that works on ws, the server this repository sets up. Run it as yourself, from a
-# clone of the repository, after writing ~/.config/ws/mac.conf:
+# clone of the repository, after writing ~/.config/ws/mac.conf, or the file WS_CONF names:
 #
 #   ~/repository/ws/mac/setup.sh [--check]
 #
@@ -257,7 +257,7 @@ main() {
     ws_args "$@"
     [ "$(uname -s)" = Darwin ] || ws_die "it sets up a Mac, not $(uname -s)"
     [ "$(id -u)" != 0 ] || ws_die "run it as yourself, not root: it asks sudo where it needs root"
-    ws_conf "$HOME/.config/ws/mac.conf"
+    ws_conf "${WS_CONF:-$HOME/.config/ws/mac.conf}"
     # ssh_files sends ws through the tunnel once launchd has its daemon, so that a run that stops
     # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon writes config.d/ws
     # again, and --check shows the file of such a run. ws_own_hosts warns once, between the two.
