@@ -89,7 +89,12 @@ must the default key or its `.pub` alone. git must then sign a commit and verify
 lines, and name its own settings. An include below them, or a second one, must stop `setup.sh`
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket,
-`--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names
+`--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. Its
+credential helper for GitHub must be a stand-in gh's, which must add the key to its login once.
+Logged out, gh must draw a warning at each run. Logged in, `setup.sh` must warn of a 404 or another
+error of gh's, and of an add that leaves the account without the key. It must add the key where the
+account lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh,
+`setup.sh` must install Homebrew's once, and only with git's keys
 ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun, the job
 fails, as the daemon runs the same wireguard-go.
 

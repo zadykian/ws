@@ -51,24 +51,65 @@ signed() {
         error "git log shows '$got' for the commit"
 }
 
+# warned PUB prints setup.sh's warning that gh, logged out, cannot register the key PUB.
+warned() {
+    echo "setup.sh: warning: gh has no login: gh auth login -h github.com -s" \
+        "write:ssh_signing_key logs in. Until a later run adds $1, GitHub shows the commits it" \
+        "signs as unverified"
+}
+
+# A stand-in gh goes in $tmp/bin, first on PATH, logged in while $tmp/login is there. It logs each
+# call, and lists and adds the account's signing keys in $tmp/keys, for setup.sh's commands alone.
+# With $tmp/error, it fails with that text; with $tmp/lost, an add keeps no key.
+: >"$tmp/keys"
+touch "$tmp/login"
+cat >"$tmp/bin/gh" <<'EOF'
+#!/bin/sh
+state=${0%/bin/*}
+echo "$*" >>"$state/gh.log"
+if [ ! -f "$state/login" ]; then
+    echo 'To get started with GitHub CLI, please run:  gh auth login' >&2
+    exit 4
+fi
+[ ! -f "$state/error" ] || { cat "$state/error" >&2 && exit 1; }
+case $* in
+'api --paginate user/ssh_signing_keys --jq .[].key') cat "$state/keys" ;;
+'ssh-key add '*) [ -f "$state/lost" ] || awk '{ print $1, $2 }' "$3" >>"$state/keys" ;;
+*) echo "gh: the stand-in takes no $*" >&2 && exit 2 ;;
+esac
+EOF
+chmod 755 "$tmp/bin/gh"
+if [ "$(command -v gh)" != "$tmp/bin/gh" ]; then
+    error "gh is $(command -v gh), not the stand-in, so git's cases go"
+    exit 1
+fi
+
 # With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, show the
-# files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, write the
-# files and say so, and a second run and --check print nothing.
+# files' diffs and the add to gh's login, and make none. A run must make the key, an ed25519 key
+# with no passphrase, and write the files. It must add the key to gh's login, titled with the Mac's
+# name, and say so. Its helper for GitHub must be gh's, and a second run and --check print nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
+title=$(hostname -s)
+add="gh ssh-key add $key.pub --type signing --title $title"
 setup --check || error "setup.sh --check failed: $out"
 case $out in
-"setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*) ;;
-*) error "setup.sh --check showed no key or gitconfig: $out" ;;
+"setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*"\
+${nl}setup.sh: would run $add once the key is made") ;;
+*) error "setup.sh --check showed no key, gitconfig or add: $out" ;;
 esac
 for each in "$key" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig; do
     [ ! -e "$each" ] || error "setup.sh --check made $each"
 done
 prints "setup.sh: made git's signing key, $key${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig"
+setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran $add"
 prints ''
 prints '' --check
 ssh-keygen -y -P '' -f "$key" | grep -q '^ssh-ed25519 ' ||
     error "$key is not an ed25519 key without a passphrase"
+for host in github.com gist.github.com; do
+    [ "$(git config --global --includes --get-all "credential.https://$host.helper")" = \
+        "$nl!$tmp/bin/gh auth git-credential" ] || error "git's helper for $host is not gh's"
+done
 signed
 own_warning="setup.sh: warning: $HOME/.gitconfig's own settings of user.email, user.name,"
 own_warning="$own_warning commit.gpgsign, below the include, win over ~/.config/ws/gitconfig's"
@@ -165,8 +206,76 @@ case $out in
 esac
 [ ! -e "$files/secretive-ssh-keygen" ] || error "setup.sh --check wrote $files/secretive-ssh-keygen"
 prints "setup.sh: wrote $files/secretive-ssh-keygen${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig"
+setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran gh ssh-key\
+ add $secretive/Data/PublicKeys/ws.pub --type signing --title $title"
 prints ''
 prints '' --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
+
+# Logged out, gh must draw a warning at each run, and nothing else where the files are written.
+# With gh's login, a 404, the answer to a login without the scope of signing keys, must draw a
+# warning that names the scope. Another error must draw its last line, its final period dropped, as
+# must an add that leaves the account without the key. Then, where the account lacks the key,
+# --check must show the add, a run must add it, and a second run and --check print nothing.
+with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
+rm "$tmp/login"
+warning=$(warned "$key.pub")
+prints "setup.sh: wrote $files/allowed_signers${nl}setup.sh: wrote $files/gitconfig$nl$warning"
+prints "$warning"
+prints "$warning" --check
+touch "$tmp/login"
+until="Until a later run adds $key.pub, GitHub shows the commits it signs as unverified"
+printf '%s\n' 'Post "https://api.github.com/user/ssh_signing_keys": EOF' 'gh: offline.' \
+    >"$tmp/error"
+prints "setup.sh: warning: gh failed: gh: offline. $until"
+echo 'gh: Not Found (HTTP 404)' >"$tmp/error"
+prints "setup.sh: warning: gh's login lacks the write:ssh_signing_key scope: gh auth refresh -h\
+ github.com -s write:ssh_signing_key adds it. $until"
+rm "$tmp/error"
+: >"$tmp/keys"
+touch "$tmp/lost"
+prints "setup.sh: warning: gh failed: gh api user/ssh_signing_keys lacks the key after $add. $until"
+rm "$tmp/lost"
+prints "setup.sh: would run $add" --check
+prints "setup.sh: ran $add"
+prints ''
+prints '' --check
+[ "$(grep '^ssh-key add ' "$tmp/gh.log" | tail -n 1)" = "${add#gh }" ] &&
+    [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
+    error "the stand-in logged another add, or holds other keys, than $key.pub's"
+
+# Where PATH has no gh, setup.sh must leave it so without git's keys. With them, --check must say
+# that Homebrew would install it, name the gh at Homebrew's prefix as git's helper, and name the
+# add. A run must install it, once. The stand-in brew's prefix is $tmp/brew, where its install puts
+# the stand-in gh, and it passes other commands to the runner's brew.
+brew=$(command -v brew)
+mkdir -p "$tmp/brew/bin"
+cat >"$tmp/brew/bin/brew" <<EOF
+#!/bin/sh
+case \$* in
+--prefix) echo '$tmp/brew' ;;
+'install gh') echo "\$*" >>'$tmp/brew.log' && cp '$tmp/bin/gh' '$tmp/brew/bin' ;;
+*) exec '$brew' "\$@" ;;
+esac
+EOF
+chmod 755 "$tmp/brew/bin/brew"
+path=$PATH
+PATH=$tmp/brew/bin$(echo "$PATH" | tr : '\n' | while read -r each; do
+    [ -x "$each/gh" ] || printf ':%s' "$each"
+done)
+with
+prints ''
+with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
+setup --check || error "setup.sh --check failed: $out"
+case $out in
+"setup.sh: would run brew install gh$nl"*"$nl+    helper = !$tmp/brew/bin/gh auth\
+ git-credential$nl"*"${nl}setup.sh: would run $add once gh is installed, where it has a login\
+ that lacks the key") ;;
+*) error "setup.sh --check showed no install of gh, another helper, or no add: $out" ;;
+esac
+[ ! -f "$tmp/brew.log" ] || error "setup.sh installed gh without git's keys, or under --check"
+prints "setup.sh: installing gh${nl}setup.sh: wrote $files/gitconfig$nl$warning"
+prints "$warning"
+[ "$(cat "$tmp/brew.log")" = 'install gh' ] || error "setup.sh ran brew install gh other than once"
+PATH=$path

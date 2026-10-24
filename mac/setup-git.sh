@@ -1,7 +1,9 @@
 # shellcheck shell=sh
 # The git step of mac/setup.sh, which setup-extras.sh sources: git's identity and a signing key of
 # the Mac's own. They go in ~/.config/ws/gitconfig, which ~/.gitconfig includes at its top, as the
-# shell role sets them up on ws. It calls the functions of lib.sh and setup-lib.sh.
+# shell role sets them up on ws. gh, from Homebrew where missing, takes git's pushes to GitHub, and
+# registers the key there, as the devtools role does on ws. It calls the functions of lib.sh and
+# setup-lib.sh.
 
 # The directory of mac.conf, where the step writes its files.
 git_dir=$HOME/.config/ws
@@ -16,8 +18,10 @@ git_mac() {
     [ -n "$WS_GIT_NAME" ] || return 0
     git_include_ok
     git_key
+    git_gh
     git_files
     git_include
+    git_register
 }
 
 # git_key sets git_pub to the signing key's .pub, WS_GIT_SIGNING_KEY with its ~/ the home, and
@@ -62,6 +66,28 @@ git_key() {
             "as ed25519 or Secretive's P-256"
 }
 
+# git_gh sets gh to the path of GitHub's CLI, which Homebrew installs where PATH has none. Under
+# --check, it is the path Homebrew would give it. git runs the helper in whatever directory it works
+# in, so the path must be absolute, not one that a relative directory of PATH gives.
+git_gh() {
+    if ! gh=$(command -v gh); then
+        brew=$(command -v brew) || ws_die "install Homebrew first: https://brew.sh"
+        if ws_checking; then
+            ws_say "would run brew install gh"
+            gh=$("$brew" --prefix)/bin/gh
+            return 0
+        fi
+        ws_say "installing gh"
+        "$brew" install gh >&2 || ws_die "brew install gh failed"
+        gh=$(command -v gh) || ws_die "brew install gh left no gh on PATH"
+    fi
+    case $gh in
+    /*) ;;
+    *) ws_die "PATH gives gh as $gh, which git would look for in each repository: drop PATH's" \
+        "relative directories" ;;
+    esac
+}
+
 # git_files writes ~/.config/ws/allowed_signers, which trusts the key for WS_GIT_EMAIL in git
 # verify-commit, and ~/.config/ws/gitconfig. For a key of Secretive's, git signs through
 # ~/.config/ws/secretive-ssh-keygen, which gives ssh-keygen Secretive's agent. So a terminal and an
@@ -99,8 +125,9 @@ EOF
 }
 
 # git_conf prints ~/.config/ws/gitconfig: the identity, and each commit signed with the key, which
-# the allowed signers file trusts for the email, through git_program where there is one. The name
-# and the paths go in quotes, which mac.conf's values cannot end.
+# the allowed signers file trusts for the email, through git_program where there is one. Then gh's
+# credential helper, as gh auth setup-git writes it, whose empty value drops any helper set before
+# it. The name and the paths go in quotes, which mac.conf's values cannot end.
 git_conf() {
     cat <<EOF
 # Written by ws's mac/setup.sh from ~/.config/ws/mac.conf: its next run replaces changes made here.
@@ -111,6 +138,12 @@ git_conf() {
     signingkey = "$git_pub"
 [commit]
     gpgsign = true
+[credential "https://github.com"]
+    helper =
+    helper = !$gh auth git-credential
+[credential "https://gist.github.com"]
+    helper =
+    helper = !$gh auth git-credential
 [gpg]
     format = ssh
 [gpg "ssh"]
@@ -194,4 +227,69 @@ git_own() {
         grep -xE -e 'user\.(name|email|signingkey)|commit\.gpgsign' \
             -e 'gpg\.(format|ssh\.program|ssh\.allowedsignersfile)' |
         awk '!seen[$0]++ { printf "%s%s", n++ ? ", " : "", $0 }'
+}
+
+# git_listed succeeds where the signing keys of gh's login hold the key. It sets git_status to
+# gh's exit status, and keeps gh's errors in git_err.
+git_listed() {
+    git_status=0
+    git_keys=$("$gh" api --paginate user/ssh_signing_keys --jq '.[].key' 2>"$git_err") ||
+        git_status=$?
+    [ "$git_status" = 0 ] && [ -n "$git_public" ] &&
+        printf '%s\n' "$git_keys" | grep -qxF -e "$git_public"
+}
+
+# git_register adds the key to the signing keys of gh's login where they lack it, titled with the
+# Mac's name, so that GitHub verifies the commits it signs. Then it checks that they list it.
+# Without a login or its write:ssh_signing_key scope, or on another error of gh's, it warns, at each
+# run until one adds the key. Under --check, before gh or the key is there, it says what it would
+# add once they are.
+# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
+git_register() {
+    git_title=$(hostname -s)
+    git_add="gh ssh-key add $git_pub --type signing --title $git_title"
+    if [ ! -x "$gh" ]; then
+        ws_say "would run $git_add once gh is installed, where it has a login that lacks the key"
+        return 0
+    fi
+    ws_tmp
+    git_err=$ws_tmpfile
+    if ! git_listed && [ "$git_status" = 0 ]; then
+        if [ -z "$git_public" ]; then
+            ws_say "would run $git_add once the key is made"
+        elif ws_checking; then
+            ws_say "would run $git_add"
+        else
+            "$gh" ssh-key add "$git_pub" --type signing --title "$git_title" >/dev/null \
+                2>"$git_err" || git_status=$?
+            if [ "$git_status" = 0 ] && git_listed; then
+                ws_say "ran $git_add"
+            elif [ "$git_status" = 0 ]; then
+                echo "gh api user/ssh_signing_keys lacks the key after $git_add" >"$git_err"
+                git_status=1
+            fi
+        fi
+    fi
+    [ "$git_status" = 0 ] || git_warn
+    rm -f "$git_err"
+}
+
+# git_warn warns that gh cannot register the key, and why, from git_status and git_err, in the
+# devtools role's words. A 404 answers a login without the scope, and gh's last line of error loses
+# its final period.
+git_warn() {
+    case $git_status:$(cat "$git_err") in
+    4:*) git_why="gh has no login: gh auth login -h github.com -s write:ssh_signing_key logs in" ;;
+    *'HTTP 404'*)
+        git_why="gh's login lacks the write:ssh_signing_key scope: gh auth refresh -h github.com"
+        git_why="$git_why -s write:ssh_signing_key adds it"
+        ;;
+    *)
+        git_why=$(tail -n 1 "$git_err")
+        git_why=${git_why%.}
+        git_why="gh failed: ${git_why:-exit $git_status}"
+        ;;
+    esac
+    ws_say "warning: $git_why. Until a later run adds $git_pub, GitHub shows the commits it" \
+        "signs as unverified"
 }

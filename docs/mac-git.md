@@ -3,8 +3,10 @@
 With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `mac/setup.sh` sets up git on the Mac ([The
 Mac](mac.md)), as the `shell` role does on ws ([Signing](shell.md#signing)). It writes
 `~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_KEY`, which
-`~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. Without the two keys,
-the script leaves git alone, and emptying them leaves the files and the include as they are.
+`~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
+helper too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
+Homebrew's gh where `PATH` has none. Without the two keys, the script leaves git alone, and emptying
+them leaves the files and the include as they are.
 
 Without `WS_GIT_SIGNING_KEY`, the key is `~/.ssh/id_ed25519_signing`, which the script makes once
 with no passphrase, as git signs unattended, in a rebase too. Where its `.pub` is there without the
@@ -31,5 +33,11 @@ Each stop comes before the script changes anything for git. git reads its XDG fi
 `~/.config/git/config`, before `~/.gitconfig`, so `~/.config/ws/gitconfig` wins over the settings
 there. The script names those of identity and signing as it adds the include.
 
-GitHub verifies a commit by the signing keys of its author's account, so add the key there once:
-`gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing`.
+GitHub verifies a commit by the signing keys of its author's account. Where those of gh's login lack
+the key, the script adds it with `gh ssh-key add --type signing`, titled with the Mac's name. The
+`devtools` role does the same on ws ([The signing key](devtools.md#the-signing-key)). The login
+needs the `write:ssh_signing_key` scope. Without a login or the scope, or on another error of gh's,
+the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
+commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,
+and says what it would add, also before the key is made. Before gh is installed, it says what it
+would add once gh has a login. After an add, the script checks that they list the key.
