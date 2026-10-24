@@ -39,4 +39,5 @@ the key, the script adds it with `gh ssh-key add --type signing`, titled with th
 needs the `write:ssh_signing_key` scope. Without a login or the scope, or on another error of gh's,
 the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
 commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,
-and says what it would add. After an add, the script checks that they list the key.
+and says what it would add, also before the key is made. Before gh is installed, it says what it
+would add once gh has a login. After an add, the script checks that they list the key.
