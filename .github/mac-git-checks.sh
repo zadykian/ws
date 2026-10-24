@@ -1,7 +1,8 @@
 # shellcheck shell=sh
 # The mac job's checks of mac/setup.sh's git step, which mac-setup-checks.sh sources last, so that
 # they run with its helpers and the job's mac.conf. The runner must lack the files the step writes,
-# which go as the script exits, on a signal too.
+# but ~/.gitconfig, which goes aside. As the script exits, on a signal too, the files go, and the
+# runner's ~/.gitconfig comes back.
 #
 # shellcheck disable=SC2154 # tmp, conf and the helpers are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
@@ -9,7 +10,16 @@ files=$HOME/.config/ws
 
 # git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
 git_made() {
-    "$@" "$key" "$key.pub" "$files/gitconfig" "$files/allowed_signers"
+    "$@" "$key" "$key.pub" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig.*~
+}
+
+# git_restore removes the files that git's cases made, and puts the runner's ~/.gitconfig back. It
+# leaves ~/.gitconfig alone until the runner's has gone aside.
+git_restore() {
+    git_made rm -f
+    [ -f "$tmp/gitconfig" ] || [ -n "${gitconfig_aside-}" ] || return 0
+    rm -f ~/.gitconfig
+    [ ! -f "$tmp/gitconfig" ] || mv "$tmp/gitconfig" ~/.gitconfig
 }
 
 found=$(git_made ls -d 2>/dev/null) || true
@@ -17,7 +27,9 @@ if [ -n "$found" ]; then
     error "the runner has what git's cases would make: $(echo "$found" | tr '\n' ' ')"
     exit 1
 fi
-trap 'git_made rm -f; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
+trap 'git_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
+[ ! -f ~/.gitconfig ] || mv ~/.gitconfig "$tmp/gitconfig"
+gitconfig_aside=1
 
 # With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, show the
 # files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, write the
@@ -28,11 +40,11 @@ case $out in
 "setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*) ;;
 *) error "setup.sh --check showed no key or gitconfig: $out" ;;
 esac
-for each in "$key" "$files/gitconfig" "$files/allowed_signers"; do
+for each in "$key" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig; do
     [ ! -e "$each" ] || error "setup.sh --check made $each"
 done
 prints "setup.sh: made git's signing key, $key${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig"
+setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig"
 prints ''
 prints '' --check
 ssh-keygen -y -P '' -f "$key" | grep -q '^ssh-ed25519 ' ||
