@@ -12,6 +12,7 @@
 # in order, after the Tools and Clone of mac/bootstrap.sh, which runs the wizard on a new Mac:
 #
 # - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
+# - Mac key: the key that ssh offers ws, made where missing;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
 # shellcheck source-path=SCRIPTDIR
@@ -25,6 +26,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/setup-lib.sh"
 # shellcheck source=wizard-ask.sh
 . "$dir/wizard-ask.sh"
+# shellcheck source=wizard-keys.sh
+. "$dir/wizard-keys.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -162,6 +165,7 @@ main() {
     # ends with this shell.
     caffeinate -i -w $$ </dev/null >/dev/null 2>&1 &
     stage Answers ask
+    stage "Mac key" keys
     stage setup.sh setup
     closing
 }
