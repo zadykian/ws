@@ -6,9 +6,30 @@ shell_git_credentials_absent: >-
 shell_git_credentials_present: >-
   {{ shell_git_credentials | reject('in', shell_git_credentials_absent) | list }}
 
-# Each URL's file in ~/.config/git/tokens: the URL without its scheme, each run of characters
-# other than letters, digits, ., _ and - as _.
+# Each URL's file in ~/.config/git/tokens, the list's and the kept ones': the URL without its
+# scheme, each run of characters other than letters, digits, ., _ and - as _.
 shell_git_credential_files: >-
-  {{ dict(shell_git_credentials | map(attribute='url')
-  | zip(shell_git_credentials | map(attribute='url') | map('regex_replace', '^https://', '')
-  | map('regex_replace', '[^A-Za-z0-9._-]+', '_'))) }}
+  {{ dict(shell_git_credential_urls | zip(shell_git_credential_urls
+  | map('regex_replace', '^https://', '') | map('regex_replace', '[^A-Za-z0-9._-]+', '_'))) }}
+shell_git_credential_urls: >-
+  {{ shell_git_credentials | map(attribute='url') | union(shell_git_credentials_kept) | sort }}
+
+# The URLs whose helpers ~/.config/git/tokens.gitconfig holds and the list omits, from
+# git_credentials.yml's read of its keys: a run keeps their sections, as it keeps their tokens.
+shell_git_credentials_kept: >-
+  {{ shell_git_tokens_keys.stdout_lines | default([]) | select('match', '^credential\..+\.helper$')
+  | map('regex_replace', '^credential\.(.+)\.helper$', '\1')
+  | difference(shell_git_credentials | map(attribute='url')) }}
+
+# tokens.gitconfig's URLs, in order, and those with proactiveAuth: a present entry's with
+# proactive_auth, and a kept one's that had it.
+shell_git_credential_sections: >-
+  {{ shell_git_credentials_present | map(attribute='url') | union(shell_git_credentials_kept)
+  | sort }}
+shell_git_credential_proactive: >-
+  {{ shell_git_credentials_present | selectattr('proactive_auth', 'defined')
+  | selectattr('proactive_auth') | map(attribute='url')
+  | union(shell_git_tokens_keys.stdout_lines | default([])
+  | select('match', '^http\..+\.proactiveauth$')
+  | map('regex_replace', '^http\.(.+)\.proactiveauth$', '\1')
+  | intersect(shell_git_credentials_kept)) }}
