@@ -90,9 +90,10 @@ lines, and name its own settings. An include below them, or a second one, must s
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket,
 `--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. Its
-credential helper for GitHub must be a stand-in gh's, which must add the key to its login once
-([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun, the job
-fails, as the daemon runs the same wireguard-go.
+credential helper for GitHub must be a stand-in gh's, which must add the key to its login once.
+Logged out, gh must draw a warning at each run. Logged in, `setup.sh` must warn of an error of gh's,
+and add the key where the account lacks it ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
+Where wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
 
 ## The hooks
 

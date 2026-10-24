@@ -51,8 +51,16 @@ signed() {
         error "git log shows '$got' for the commit"
 }
 
+# warned PUB prints setup.sh's warning that gh, logged out, cannot register the key PUB.
+warned() {
+    echo "setup.sh: warning: gh has no login: gh auth login -h github.com -s" \
+        "write:ssh_signing_key logs in. Until a later run adds $1, GitHub shows the commits it" \
+        "signs as unverified"
+}
+
 # A stand-in gh goes in $tmp/bin, first on PATH, logged in while $tmp/login is there. It logs each
 # call, and lists and adds the account's signing keys in $tmp/keys, for setup.sh's commands alone.
+# With $tmp/error, it fails with that text.
 : >"$tmp/keys"
 touch "$tmp/login"
 cat >"$tmp/bin/gh" <<'EOF'
@@ -63,6 +71,7 @@ if [ ! -f "$state/login" ]; then
     echo 'To get started with GitHub CLI, please run:  gh auth login' >&2
     exit 4
 fi
+[ ! -f "$state/error" ] || { cat "$state/error" >&2 && exit 1; }
 case $* in
 'api --paginate user/ssh_signing_keys --jq .[].key') cat "$state/keys" ;;
 'ssh-key add '*) awk '{ print $1, $2 }' "$3" >>"$state/keys" ;;
@@ -202,3 +211,27 @@ prints ''
 prints '' --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
+
+# Logged out, gh must draw a warning at each run, and nothing else where the files are written.
+# With gh's login, another error must draw a warning of its last line. Then, where the account
+# lacks the key, --check must show the add, a run must add it, and a second run and --check print
+# nothing.
+with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
+rm "$tmp/login"
+warning=$(warned "$key.pub")
+prints "setup.sh: wrote $files/allowed_signers${nl}setup.sh: wrote $files/gitconfig$nl$warning"
+prints "$warning"
+prints "$warning" --check
+touch "$tmp/login"
+until="Until a later run adds $key.pub, GitHub shows the commits it signs as unverified"
+printf '%s\n' 'Post "https://api.github.com/user/ssh_signing_keys": EOF' 'gh: offline' >"$tmp/error"
+prints "setup.sh: warning: gh failed: gh: offline. $until"
+rm "$tmp/error"
+: >"$tmp/keys"
+prints "setup.sh: would run $add" --check
+prints "setup.sh: ran $add"
+prints ''
+prints '' --check
+[ "$(grep '^ssh-key add ' "$tmp/gh.log" | tail -n 1)" = "${add#gh }" ] &&
+    [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
+    error "the stand-in logged another add, or holds other keys, than $key.pub's"
