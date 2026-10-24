@@ -120,9 +120,9 @@ ssh_whole() {
 }
 
 # ssh_files writes ~/.ssh/config.d/ws and puts its Include first in ~/.ssh/config. Before it
-# writes, it stops where config.d/ws is a file it did not write, where the Include could not go
-# first, and where ssh refuses the new file, alone or as ssh_whole reads it. It reads ws_tmpfile,
-# which lib.sh's ws_tmp sets.
+# writes, it stops where config.d/ws is a file it did not write, and where the Include could not go
+# first. It stops or warns where ws_identity does, and stops where ssh refuses the new file, alone
+# or as ssh_whole reads it. It reads ws_tmpfile, which lib.sh's ws_tmp sets.
 ssh_files() {
     conf=$HOME/.ssh/config.d/ws
     if [ -e "$conf" ] || [ -L "$conf" ]; then
@@ -134,7 +134,7 @@ ssh_files() {
     fi
     at=$(ws_include_ok "$HOME/.ssh/config" config.d/ws) || exit 1
     patterns=$(ws_ignore_unknown "$HOME/.ssh/config" UseKeychain)
-    ws_identity
+    ws_identity "$conf"
     ws_tmp
     new=$ws_tmpfile
     ssh_config "$patterns" >"$new"
