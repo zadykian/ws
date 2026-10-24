@@ -2,8 +2,8 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the home LAN too, or from elsewhere through the router's port forwards.
-`mac/setup.sh`, the one part of the repository that runs on the Mac, sets up the Mac's end of the
-cable ([The cable](#the-cable)) and two hosts for ssh:
+`mac/setup.sh` is the one part of the repository that runs on the Mac. It sets up the Mac's end of
+the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)) and two hosts for ssh:
 
 - `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
   The sessions of `ssh ws` and JetBrains Gateway then stay open while the Mac moves between the
@@ -49,11 +49,12 @@ order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the netw
 the display's adapter, in quotes where it holds a blank: [The cable](#the-cable). `WS_GIT_NAME`
 and `WS_GIT_EMAIL`, which go together, are the author of git's commits on the Mac, the name in
 quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the `.pub` of the key that signs them, by
-its path from `/` or `~/`.
+its path from `/` or `~/`: [git on the Mac](mac-git.md).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
-`root` for `WS_USER`, 51820 for `WS_PORT`, and none for the others.
+`root` for `WS_USER`, 51820 for `WS_PORT`, `~/.ssh/id_ed25519_signing.pub` for `WS_GIT_SIGNING_KEY`,
+and none for the others.
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
