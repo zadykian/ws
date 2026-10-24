@@ -86,7 +86,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   binary ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
   ([its task](roles/docker/tasks/main.yml)), foundryctl ([ci.yml](.github/workflows/ci.yml)) and
   the gates' tools ([tools/run](tools/run)). So are the Python tools
-  ([lint-requirements.in](.github/lint-requirements.in)). Go, the JetBrains backends and the
+  ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
+  ([mac/bootstrap.sh](mac/bootstrap.sh)). Go, the JetBrains backends and the
   collections are checked against the SHA-256 their publishers list ([devtools](docs/devtools.md),
   [jetbrains](docs/jetbrains.md), [requirements.yml](requirements.yml)). roslyn-language-server is
   pinned by version alone ([group_vars/all.yml](group_vars/all.yml)).

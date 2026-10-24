@@ -1,8 +1,8 @@
 # The Mac's wizard
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
-the values that `~/.config/ws/mac.conf` lacks, then runs `setup.sh`. On a Mac with Apple silicon and
-[Homebrew](https://brew.sh), one line clones the repository and runs the wizard, as yourself:
+the values that `~/.config/ws/mac.conf` lacks, then runs `setup.sh`. On a new Mac with Apple
+silicon, one line installs what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -18,7 +18,9 @@ and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`. Bot
 hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard starts:
 
 1. Tools: the Command Line Tools, through the dialog that `xcode-select --install` opens, waited
-   on for up to 60 minutes. Without Homebrew, it stops.
+   on for up to 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` of a release
+   that `bootstrap.sh` pins, checked by its SHA-256 and signer, through `sudo installer`. The
+   `.pkg` puts `/opt/homebrew/bin` on new shells' `PATH`.
 2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
    found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)).
    With `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone,

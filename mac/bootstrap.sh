@@ -1,20 +1,24 @@
 #!/bin/sh
-# Sets up a Mac to work on ws, the server this repository sets up. Run it as yourself, on a Mac with
-# Homebrew:
+# Sets up a new Mac to work on ws, the server this repository sets up. Run it as yourself, there:
 #
 #   curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
 #
-# It installs Apple's Command Line Tools through their dialog. It clones the repository into
-# ~/repository/ws, or leaves a clone there as it is, which --update pulls. Then it runs the clone's
-# mac/wizard.sh (docs/mac-wizard.md) with its own arguments, given as `sh -s -- --check`, under
-# which neither changes anything. A second run prints nothing. caffeinate keeps the Mac from idle
-# sleep while it runs.
+# It installs Apple's Command Line Tools through their dialog, and Homebrew from the Homebrew.pkg
+# pinned below. It clones the repository into ~/repository/ws, or leaves a clone there as it is,
+# which --update pulls. Then it runs the clone's mac/wizard.sh (docs/mac-wizard.md) with its own
+# arguments, given as `sh -s -- --check`, under which neither changes anything. A second run prints
+# nothing. caffeinate keeps the Mac from idle sleep while it runs.
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
 set -eu
 
 repository=https://github.com/zadykian/ws
 dir=$HOME/repository/ws
+# Homebrew's release: its Homebrew.pkg, that file's SHA-256, and its signer, as pkgutil names it.
+brew_version=7.0.10
+brew_url=https://github.com/Homebrew/brew/releases/download/$brew_version/Homebrew.pkg
+brew_sha256=ae13b8b0ac910730d3e982a9e7518288d17fd0ad272e42f412027e8ab4555575
+brew_signer='Developer ID Installer: Patrick Linnane (927JGANW46)'
 # The wizard's stages, split by |, as mac/wizard.sh's main runs them, for --check without a clone.
 stages='Answers|setup.sh'
 
@@ -67,10 +71,30 @@ clt() {
     done
 }
 
-# homebrew stops where /opt/homebrew/bin/brew doesn't run.
+# brew_check PKG stops unless PKG has the pinned SHA-256 and signer. The signer is the first of
+# the chain that pkgutil prints, after a status of Apple's Developer ID.
+brew_check() {
+    sum=$(shasum -a 256 "$1") || die "Tools: cannot read $1"
+    [ "${sum%% *}" = "$brew_sha256" ] || die "Tools: $1's SHA-256 is ${sum%% *}, not the pinned one"
+    signer=$(pkgutil --check-signature "$1" |
+        sed -n '/^ *Status: .* issued by Apple for distribution$/,$s/^ *1\. //p')
+    [ "$signer" = "$brew_signer" ] || die "Tools: $1 is signed by '$signer', not '$brew_signer'"
+}
+
+# homebrew installs Homebrew from the pinned Homebrew.pkg where /opt/homebrew/bin/brew doesn't run.
 homebrew() {
     /opt/homebrew/bin/brew --version >/dev/null 2>&1 ||
-        die "Tools: install Homebrew first: https://brew.sh"
+        would Tools "install Homebrew $brew_version from its Homebrew.pkg, through sudo" && return 0
+    say "Tools: installing Homebrew $brew_version"
+    pkg=$(mktemp -d "${TMPDIR:-/tmp}/ws-bootstrap.XXXXXXXX")/Homebrew.pkg ||
+        die "Tools: cannot make a directory in ${TMPDIR:-/tmp}"
+    trap 'rm -rf "${pkg%/*}"' EXIT
+    trap 'exit 1' HUP INT TERM
+    curl -fsSL -o "$pkg" "$brew_url" || die "Tools: cannot download $brew_url"
+    brew_check "$pkg"
+    sudo installer -pkg "$pkg" -target / >&2 || die "Tools: sudo installer failed on $pkg"
+    /opt/homebrew/bin/brew --version >/dev/null 2>&1 || die "Tools: no brew runs after the install"
+    rm -rf "${pkg%/*}"
 }
 
 # clone clones the repository into dir, or leaves a clone there as it is, with core.hooksPath at its
