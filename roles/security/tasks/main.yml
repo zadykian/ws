@@ -99,3 +99,8 @@
 
 - name: Keep what ws starts to the internet and ikeward
   ansible.builtin.import_tasks: outbound.yml
+  when: security_outbound | bool
+
+- name: Take the outbound table off
+  ansible.builtin.import_tasks: outbound_off.yml
+  when: not security_outbound | bool

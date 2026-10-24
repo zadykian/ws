@@ -1,3 +1,12 @@
 ---
 # The outbound table, which security-outbound.service loads.
 security_outbound_file: /usr/local/lib/ws/security/outbound.nft
+
+# What security_outbound: false takes off (outbound_off.yml): the units, in the order they stop, a
+# unit that starts another, as a .path unit, before it. Then their files and links, and these. The
+# table's directory holds the role's files alone.
+security_outbound_units:
+  - /etc/systemd/system/security-outbound.service
+security_outbound_files:
+  - "{{ security_outbound_file }}"
+  - "{{ security_outbound_file | dirname }}"

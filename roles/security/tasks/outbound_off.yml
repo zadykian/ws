@@ -1,0 +1,49 @@
+---
+# security_outbound: false takes the outbound table off. The stop of security-outbound.service
+# removes its table, but not after systemd reloads without the unit's file, which drops ExecStop.
+
+# systemd may still hold a unit whose file is gone, active or failed, which systemd_service can't
+# find. So these tasks ask systemctl, and read the links that enable a unit from the disk.
+- name: Read the states of the outbound table's units
+  # noqa: command-instead-of-module - systemd_service fails on a unit whose file is gone.
+  ansible.builtin.command: systemctl is-active {{ item | basename }}
+  loop: "{{ security_outbound_units }}"
+  register: security_outbound_states
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [systemd]
+
+# A dry run skips the stop: the removals below show the unit going.
+- name: Stop the outbound table's units
+  # noqa: command-instead-of-module - systemd_service fails on a unit whose file is gone.
+  ansible.builtin.command: systemctl stop {{ item.item | basename }}
+  loop: >-
+    {{ security_outbound_states.results | rejectattr('stdout', 'in', ['inactive', 'failed']) }}
+  loop_control:
+    label: "{{ item.item | basename }}"
+  changed_when: true
+  tags: [systemd]
+
+# The links that enable each unit, in any target's .wants or .requires, and --runtime's in /run:
+# their removal disables it, whether or not its file is there.
+- name: Find the links that enable the outbound table's units
+  ansible.builtin.find:
+    paths: "{{ ['/etc/systemd/system', '/run/systemd/system'] | select('directory') | list }}"
+    patterns: "{{ security_outbound_units | map('basename') | list }}"
+    file_type: link
+    recurse: true
+    depth: 2
+  register: security_outbound_links
+
+- name: Remove the outbound table's units, their links and its files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: >-
+    {{ security_outbound_links.files | map(attribute='path') | list + security_outbound_units
+    + security_outbound_files }}
+  notify: Reload systemd without the outbound units
+
+- name: Reload systemd now if the units went
+  ansible.builtin.meta: flush_handlers

@@ -21,6 +21,8 @@
     validate: "{{ omit if 'systemd' in ansible_skip_tags else '/usr/sbin/nft -c -f %s' }}"
   notify: Load the outbound table
 
+# A unit or file written here goes in vars/main.yml's lists too, for security_outbound: false to
+# remove.
 - name: Write security-outbound.service
   ansible.builtin.template:
     src: security-outbound.service.j2

@@ -77,3 +77,23 @@ A run checks the file with `nft -c` before it lands. Where the file or the unit 
 table is gone, as after `nft flush ruleset`, it reloads the table in one transaction, with no
 moment without it. In a container, with `--skip-tags systemd`, the run writes both, but neither
 checks nor loads the table. CI checks it after its runs ([The playbook](checks.md#the-playbook)).
+
+`security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
+drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
+instance credentials need. `bootstrap.sh` passes it to `ansible-playbook`, on a new machine and on
+each run after:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh |
+    sh -s -- -e security_outbound=false
+/root/repository/ws/bootstrap.sh -e security_outbound=false
+```
+
+`-e` holds for that run alone, so the next run without it puts the table back. A run with it false
+stops and disables `security-outbound.service`. It removes the unit, `/usr/local/lib/ws/security`
+and the table. A dry run shows each file's removal. Off leaves:
+
+- ufw's default, which allows every outgoing connection;
+- the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
+  or the cable, but for replies to the Mac's own connections
+  ([The firewall](wireguard.md#the-firewall)).
