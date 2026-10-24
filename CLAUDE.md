@@ -26,8 +26,9 @@ The rest is the docs, the lint gates' tools and CI.
   caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`; `rules.yml`, the checks of zadykian/actions, which warn alone; and `fast-forward.yml`,
-  which lands a pull request on a `/ff` comment.
+  `mac`; `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`;
+  `rules.yml`, the checks of zadykian/actions, which warn alone; and `fast-forward.yml`, which
+  lands a pull request on a `/ff` comment.
 
 ## Commands
 
@@ -45,8 +46,8 @@ collections into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs, which run on each pull request ([Checks](docs/checks.md)). `playbook`
 runs `bootstrap.sh` twice in an Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files
-again. `mac` sets up a Mac on GitHub's macOS runner. A run of the playbook sets up the machine that
-runs it, as below.
+again. `mac` sets up a Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on
+another. A run of the playbook sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
