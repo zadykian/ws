@@ -77,6 +77,11 @@ clone() {
 }
 
 main() {
+    # A Mac's ssh passes the Mac's locale on: LC_CTYPE=UTF-8, a name Linux has no locale for, and
+    # at times a LANG or another LC_* whose locale this machine lacks. Python stands C.UTF-8 in for
+    # the first (PEP 538), but Ansible stops on the others, and apt's Perl warns on each. So all
+    # that main runs takes C.UTF-8, which libc-bin gives every Ubuntu.
+    export LC_ALL=C.UTF-8
     system
     packages
     clone
