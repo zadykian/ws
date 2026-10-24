@@ -20,7 +20,9 @@ the old file as `~/.gitconfig.TIME~`. It names the file's own settings of identi
 which then win, such as a `user.email`. Where the include sits below the file's own settings, which
 it then overrides, or comes twice, the script stops: keep one, at the top. Where `~/.gitconfig` is a
 link that lacks the include, the script stops: put it at the top of the file the link points to.
-Each stop comes before the script changes anything for git.
+Each stop comes before the script changes anything for git. git reads its XDG file,
+`~/.config/git/config`, before `~/.gitconfig`, so `~/.config/ws/gitconfig` wins over the settings
+there. The script names those of identity and signing as it adds the include.
 
 GitHub verifies a commit by the signing keys of its author's account, so add the key there once:
 `gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing`.
