@@ -32,8 +32,8 @@ done
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded the daemon without ws's key"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"
-printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= \
-    WS_RESOLVERS= | cmp -s - ~/.config/ws/mac.conf ||
+printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' WS_LAN= \
+    WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= | cmp -s - ~/.config/ws/mac.conf ||
     error "wizard.sh wrote another mac.conf than standin.sh's lines and the environment's answers"
 if [ "$(sed -n 2p "$RUNNER_TEMP/run.out")" != 'What stays by hand:' ] ||
     ! grep -q "^- The Mac's tunnel: run mac/setup.sh, " "$RUNNER_TEMP/run.out"; then
