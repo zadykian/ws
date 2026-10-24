@@ -51,9 +51,23 @@ signed() {
         error "git log shows '$got' for the commit"
 }
 
+# A stand-in gh goes in $tmp/bin, first on PATH, logged out. It logs each call.
+cat >"$tmp/bin/gh" <<'EOF'
+#!/bin/sh
+echo "$*" >>"${0%/bin/*}/gh.log"
+echo 'To get started with GitHub CLI, please run:  gh auth login' >&2
+exit 4
+EOF
+chmod 755 "$tmp/bin/gh"
+if [ "$(command -v gh)" != "$tmp/bin/gh" ]; then
+    error "gh is $(command -v gh), not the stand-in, so git's cases go"
+    exit 1
+fi
+
 # With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, show the
-# files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, write the
-# files and say so, and a second run and --check print nothing.
+# files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, and write
+# the files and say so. Its helper for GitHub must be gh's, and a second run and --check print
+# nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 setup --check || error "setup.sh --check failed: $out"
 case $out in
@@ -69,6 +83,10 @@ prints ''
 prints '' --check
 ssh-keygen -y -P '' -f "$key" | grep -q '^ssh-ed25519 ' ||
     error "$key is not an ed25519 key without a passphrase"
+for host in github.com gist.github.com; do
+    [ "$(git config --global --includes --get-all "credential.https://$host.helper")" = \
+        "$nl!$tmp/bin/gh auth git-credential" ] || error "git's helper for $host is not gh's"
+done
 signed
 own_warning="setup.sh: warning: $HOME/.gitconfig's own settings of user.email, user.name,"
 own_warning="$own_warning commit.gpgsign, below the include, win over ~/.config/ws/gitconfig's"
