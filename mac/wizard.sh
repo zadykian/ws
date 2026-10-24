@@ -11,6 +11,7 @@
 # idle sleep until it exits. A run in which a stage acted ends with what stays by hand. The stages,
 # in order:
 #
+# - Answers: the values mac.conf lacks, from the environment;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
 # shellcheck source-path=SCRIPTDIR
@@ -22,6 +23,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/lib.sh"
 # shellcheck source=setup-lib.sh
 . "$dir/setup-lib.sh"
+# shellcheck source=wizard-ask.sh
+. "$dir/wizard-ask.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -117,7 +120,7 @@ setup_do() {
     fi
     # A mac.conf that ws_conf refuses stops setup.sh, which says why.
     exec 3>/dev/null
-    if (ws_conf "$HOME/.config/ws/mac.conf" && [ -n "$WS_PUBLIC_KEY" ]) 2>/dev/null; then
+    if (ws_conf "$WS_CONF" && [ -n "$WS_PUBLIC_KEY" ]) 2>/dev/null; then
         exec 3>&1
     fi
     {
@@ -130,7 +133,7 @@ setup_do() {
     if grep -qv '^setup\.sh: warning: ' "$lock/setup.log"; then
         acted=1
     fi
-    ws_conf "$HOME/.config/ws/mac.conf"
+    ws_conf "$WS_CONF"
     if [ -z "$WS_PUBLIC_KEY" ]; then
         by_hand "The Mac's tunnel: run mac/setup.sh, which prints the Mac's WireGuard key and the" \
             "two commands that make it ws's peer. Run those, set WS_PUBLIC_KEY in mac.conf to the" \
@@ -150,11 +153,14 @@ main() {
     # A shell started before Homebrew's install, or a profile without brew's line, lacks
     # /opt/homebrew/bin, so it goes first here, for the stages and setup.sh.
     PATH=/opt/homebrew/bin:$PATH
-    export PATH
+    # mac.conf, which WS_CONF names for setup.sh too, by a path from /, as ws_put writes it.
+    case ${WS_CONF:=$HOME/.config/ws/mac.conf} in /*) ;; *) WS_CONF=$PWD/$WS_CONF ;; esac
+    export PATH WS_CONF
     lock
     # caffeinate keeps the Mac from idle sleep while a stage waits on a download or an answer, and
     # ends with this shell.
     caffeinate -i -w $$ </dev/null >/dev/null 2>&1 &
+    stage Answers ask
     stage setup.sh setup
     closing
 }
