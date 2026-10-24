@@ -61,7 +61,9 @@ and fails where they differ from the repository's.
 
 CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
 `mac/setup.sh --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
-installs no formula. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
+installs no formula or cask. It must note the install of JetBrains Gateway's cask. A stand-in
+`JetBrains Gateway.app`, an empty directory in `~/Applications`, then spares the job's runs the
+download. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
 `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key in the
 command that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a
 second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their
