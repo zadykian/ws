@@ -85,16 +85,18 @@ if [ "$(command -v gh)" != "$tmp/bin/gh" ]; then
 fi
 
 # With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, show the
-# files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, and write
-# the files. It must add the key to gh's login, titled with the Mac's name, and say so. Its
-# credential command for GitHub must be gh's, and a second run and --check print nothing.
+# files' diffs and the add to gh's login, and make none. A run must make the key, an ed25519 key
+# with no passphrase, and write the files. It must add the key to gh's login, titled with the Mac's
+# name, and say so. Its credential command for GitHub must be gh's, and a second run and --check
+# print nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 title=$(hostname -s)
 add="gh ssh-key add $key.pub --type signing --title $title"
 setup --check || error "setup.sh --check failed: $out"
 case $out in
-"setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*) ;;
-*) error "setup.sh --check showed no key or gitconfig: $out" ;;
+"setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*"\
+${nl}setup.sh: would run $add once the key is made") ;;
+*) error "setup.sh --check showed no key, gitconfig or add: $out" ;;
 esac
 for each in "$key" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig; do
     [ ! -e "$each" ] || error "setup.sh --check made $each"
