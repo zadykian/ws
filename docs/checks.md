@@ -99,9 +99,9 @@ nothing. A failed install, or one that leaves no app, must draw a warning, and t
 tunnel. So must a cask that Homebrew has without its app, which neither a run nor `--check` may
 install again ([mac-gateway-checks.sh](../.github/mac-gateway-checks.sh)). With `WS_GIT_NAME`
 and `WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must
-stop on a `WS_GIT_SIGNING_KEY` that is missing, or a `.pub` that holds more than a public key. So
-must the default key or its `.pub` alone. git must then sign a commit and verify it. A
-`~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
+stop on a `WS_GIT_SIGNING_KEY` that is missing or unreadable, or a `.pub` that holds more than a
+public key. So must the default key or its `.pub` alone. git must then sign a commit and verify it.
+A `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
 lines, and name its own settings. An include below them, or a second one, must stop `setup.sh`
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket,

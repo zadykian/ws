@@ -26,8 +26,8 @@ git_mac() {
 # git_public to the key's type and base64. Without WS_GIT_SIGNING_KEY, the key is
 # ~/.ssh/id_ed25519_signing, which it makes once with no passphrase, as the shell role does on ws:
 # git signs unattended, in a rebase too. It makes no other key, and replaces no .pub. It stops where
-# the .pub is missing, holds more than a public key's line, as a private key does, or ssh-keygen
-# can't read it.
+# the .pub is missing or unreadable, holds more than a public key's line, as a private key does, or
+# ssh-keygen can't read it.
 git_key() {
     git_pub=${WS_GIT_SIGNING_KEY:-$HOME/.ssh/id_ed25519_signing.pub}
     case $git_pub in
@@ -52,7 +52,9 @@ git_key() {
         ws_die "$git_pub, mac.conf's WS_GIT_SIGNING_KEY, is missing: make the key first, as" \
             "docs/mac-git.md says"
     fi
-    git_public=$(awk 'NF { n++; key = $1 " " $2 } END { if (n == 1) print key }' "$git_pub")
+    git_public=$(awk 'NF { n++; key = $1 " " $2 } END { if (n == 1) print key }' "$git_pub" \
+        2>/dev/null) || ws_die "cannot read $git_pub: make it readable, or name another .pub in" \
+        "mac.conf's WS_GIT_SIGNING_KEY"
     case $git_public in
     *' '*[!A-Za-z0-9+/=]*) git_public= ;;
     ssh-?*' '?* | ecdsa-sha2-?*' '?* | sk-?*' '?*) ;;

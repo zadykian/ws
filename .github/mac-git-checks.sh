@@ -179,6 +179,13 @@ stops "setup.sh: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_KEY=$tmp/mixed.pub"
 stops "setup.sh: $tmp/mixed.pub holds no public key alone"
+# So must one it cannot read, where the user cannot, as on the runner: root reads it.
+cp "$key.pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
+if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
+    with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com \
+        "WS_GIT_SIGNING_KEY=$tmp/unread-git.pub"
+    stops "setup.sh: cannot read $tmp/unread-git.pub"
+fi
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com
 mv "$key" "$tmp/signing"
 stops "setup.sh: $key.pub is there without its private key"
