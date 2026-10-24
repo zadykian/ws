@@ -5,3 +5,10 @@ shell_git_credentials_absent: >-
   | list }}
 shell_git_credentials_present: >-
   {{ shell_git_credentials | reject('in', shell_git_credentials_absent) | list }}
+
+# Each URL's file in ~/.config/git/tokens: the URL without its scheme, each run of characters
+# other than letters, digits, ., _ and - as _.
+shell_git_credential_files: >-
+  {{ dict(shell_git_credentials | map(attribute='url')
+  | zip(shell_git_credentials | map(attribute='url') | map('regex_replace', '^https://', '')
+  | map('regex_replace', '[^A-Za-z0-9._-]+', '_'))) }}

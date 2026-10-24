@@ -18,12 +18,6 @@ shell_secret_env: {}
 # takes url and token, and optionally username, proactive_auth and state, present by default or
 # absent (docs/shell.md#git-credentials). Empty, the role leaves the tokens and their helpers alone.
 shell_git_credentials: []
-# Each URL's file in ~/.config/git/tokens, which the role derives: the URL without its scheme,
-# each run of characters other than letters, digits, ., _ and - as _.
-shell_git_credential_files: >-
-  {{ dict(shell_git_credentials | map(attribute='url')
-  | zip(shell_git_credentials | map(attribute='url') | map('regex_replace', '^https://', '')
-  | map('regex_replace', '[^A-Za-z0-9._-]+', '_'))) }}
 
 # Repositories cloned once each, from a private repository's extra vars. Each entry takes repo,
 # without a token, and dest (docs/shell.md#clones).
