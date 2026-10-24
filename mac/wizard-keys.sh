@@ -40,7 +40,7 @@ keys_home() {
 
 # keys_do makes the key that keys_done lacks, or says why it can't. A WS_IDENTITY outside
 # Secretive's PublicKeys, with no agent, is a key in a file, which keys_file makes. Without
-# WS_IDENTITY, keys_file makes the key that ws_identity finds, where it is missing.
+# WS_IDENTITY, the key that ws_identity finds is there, or keys_choose makes one.
 keys_do() {
     ws_conf "$WS_CONF"
     keys_pub=$(keys_home "$WS_IDENTITY")
@@ -51,7 +51,11 @@ keys_do() {
     fi
     ws_identity
     keys_pub=$(keys_home "$ws_identity_pub")
-    keys_file "${keys_pub%.pub}"
+    if [ -e "$keys_pub" ] || [ -e "${keys_pub%.pub}" ]; then
+        keys_file "${keys_pub%.pub}"
+    else
+        keys_choose
+    fi
 }
 
 # keys_file KEY makes KEY, a key in a file, where neither it nor KEY.pub is there. Else it stops
@@ -81,6 +85,15 @@ keys_make() {
     ssh-keygen -q -t ed25519 -a 100 -f "$1" >&2 || ws_die "Mac key: ssh-keygen cannot make $1"
     ssh-add --apple-use-keychain "$1" >&2 || ws_say "Mac key: warning: ssh-add cannot give $1 to" \
         "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
+}
+
+# keys_choose makes ws's key where it has none, in keys_pub's file, by keys_make, where the terminal
+# can take its passphrase. With no terminal, it stops, naming the key that answers.
+keys_choose() {
+    ws_checking || [ -t 0 ] || ws_die "Mac key: no terminal for the passphrase of" \
+        "${keys_pub%.pub}: set WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for a key without" \
+        "one, or run the wizard at a terminal"
+    keys_make "${keys_pub%.pub}"
 }
 
 # keys_fail says what to do where the Mac's key is still missing after keys_do.
