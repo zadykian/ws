@@ -91,8 +91,9 @@ settings of git's XDG file must be named. With a key that an agent holds at Secr
 `--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. Its
 credential command for GitHub must be a stand-in gh's, which must add the key to its login once.
 Logged out, gh must draw a warning at each run. Logged in, `setup.sh` must warn of an error of gh's,
-and add the key where the account lacks it ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
-Where wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
+and of an add that leaves the account without the key. It must add the key where the account lacks
+it ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun, the job
+fails, as the daemon runs the same wireguard-go.
 
 ## The rules
 
