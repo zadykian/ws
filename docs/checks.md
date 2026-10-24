@@ -62,7 +62,9 @@ and fails where they differ from the repository's.
 
 CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
 `mac/setup.sh --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
-installs no formula. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
+installs no formula or cask. It must note the install of JetBrains Gateway's cask. A stand-in
+`JetBrains Gateway.app`, an empty directory in `~/Applications`, then spares the job's runs the
+download. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
 `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key in the
 command that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a
 second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their
@@ -81,7 +83,12 @@ must take both back, and spare a script's own. Last, `ws_conf` must read an empt
 must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
 then none. It must warn of a disabled service. It must stop on one networksetup lacks, or one with a
 router outside the cable's `/30`. It must stop too on a `-setmanual` that fails or changes nothing,
-and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). With `WS_GIT_NAME`
+and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). Without the
+stand-in app, `setup.sh` must install Gateway's cask once, through a stand-in brew that refuses any
+other call, and then print nothing. With an app in `/Applications`, it must install nothing. A
+failed install, or one that leaves no app, must draw a warning, and the run go on to the tunnel. So
+must a cask that Homebrew has without its app, which neither a run nor `--check` may install again
+([mac-gateway-checks.sh](../.github/mac-gateway-checks.sh)). With `WS_GIT_NAME`
 and `WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must
 stop on a `WS_GIT_SIGNING_KEY` that is missing, or a `.pub` that holds more than a public key. So
 must the default key or its `.pub` alone. git must then sign a commit and verify it. A

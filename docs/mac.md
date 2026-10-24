@@ -3,7 +3,8 @@
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the home LAN too, or from elsewhere through the router's port forwards.
 `mac/setup.sh` is the one part of the repository that runs on the Mac. It sets up the Mac's end of
-the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)) and two hosts for ssh:
+the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), JetBrains Gateway from
+Homebrew ([The Mac's tunnel](#the-macs-tunnel)) and two hosts for ssh:
 
 - `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
   The sessions of `ssh ws` and JetBrains Gateway then stay open while the Mac moves between the
@@ -220,9 +221,15 @@ sudo /usr/local/libexec/ws-tunnel/ws-tunnel status
 prints the way in use, its endpoint, the latest handshake and the bytes moved.
 `/var/log/ws-tunnel.log` has a line for each switch and failure.
 
-JetBrains Gateway reads `~/.ssh/config` through the Mac's `ssh -G`, its default, with "Parse
-config file ~/.ssh/config" on in the SSH connection's settings. A connection to `ws` outlives a
-switch; a second, to `ws-ssh`, serves where UDP is blocked.
+`setup.sh` installs JetBrains Gateway from Homebrew's cask where `JetBrains Gateway.app` is in
+neither `/Applications` nor `~/Applications`, and runs no `brew upgrade`, as Gateway updates
+itself. A failed install draws a warning, and the next run tries again, with brew's output. Where
+Homebrew has the cask but not the app, the script warns instead, and installs nothing:
+`brew reinstall --cask jetbrains-gateway` puts the app back. By hand, add an SSH connection to `ws`
+in Gateway, with "Parse config file ~/.ssh/config" on. Gateway then reads `~/.ssh/config` through
+the Mac's `ssh -G`, its default. Through it, open Rider or GoLand, on a backend that the
+`jetbrains` role installed ([jetbrains](jetbrains.md)). A connection to `ws` outlives a switch; a
+second, to `ws-ssh`, serves where UDP is blocked.
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install

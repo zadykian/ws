@@ -8,10 +8,12 @@ the builds it replaces, and a weekly timer does the same between runs.
 ## Installs
 
 The Mac opens Rider and GoLand on the server through JetBrains Gateway, which runs each IDE's
-backend here. Left to itself, Gateway downloads a backend on the first connect, 2.4 GB for Rider
-and 1.2 GB for GoLand, and never updates it. So each run of the role asks JetBrains' list of
-releases, which Gateway reads too, for the latest release of each. It installs that release where
-the build is missing, checked against the SHA-256 JetBrains publishes for it.
+backend here. `mac/setup.sh` installs Gateway on the Mac
+([The Mac's tunnel](mac.md#the-macs-tunnel)). Left to itself, Gateway downloads a backend on the
+first connect, 2.4 GB for Rider and 1.2 GB for GoLand, and never updates it. So each run of the role
+asks JetBrains' list of releases, which Gateway reads too, for the latest release of each. It
+installs that release where the build is missing, checked against the SHA-256 JetBrains publishes
+for it.
 
 A build goes where Gateway would put its own download, in `~/.cache/JetBrains/RemoteDev/dist`. Its
 directory is named as Gateway names it: the first 13 hex digits of the SHA-256 of the download's
