@@ -3,8 +3,10 @@
 With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `mac/setup.sh` sets up git on the Mac ([The
 Mac](mac.md)), as the `shell` role does on ws ([Signing](shell.md#signing)). It writes
 `~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_KEY`, which
-`~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. Without the two keys,
-the script leaves git alone, and emptying them leaves the files and the include as they are.
+`~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
+helper too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
+Homebrew's gh where `PATH` has none. Without the two keys, the script leaves git alone, and emptying
+them leaves the files and the include as they are.
 
 Without `WS_GIT_SIGNING_KEY`, the key is `~/.ssh/id_ed25519_signing`, which the script makes once
 with no passphrase, as git signs unattended, in a rebase too. Where its `.pub` is there without the
