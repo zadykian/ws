@@ -4,8 +4,8 @@ The `ikeward` role keeps the server on an IKEv2 VPN with
 [ikeward](https://github.com/zadykian/ikeward), from a client profile that hwdsl2's `ikev2setup.sh`
 makes. It lets the WireGuard peers it names reach the VPN through the server too. Without a
 profile, it does nothing, as in CI's container. Unless `security_outbound` is false, the
-`security` role keeps the server and its containers off the LAN, but leaves `ikeward0` open to them
-([Outbound](security.md#outbound)).
+`security` role keeps what the server and its containers start off the LAN, but what the network
+needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](security.md#outbound)).
 
 ## The profile
 

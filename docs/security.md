@@ -2,7 +2,7 @@
 
 The `security` role sets up an sshd drop-in that lets everyone log in by key only, ufw, and
 fail2ban for SSH. By default, it keeps what the server and its containers start to the internet
-and ikeward's VPN.
+and ikeward's VPN, but what the network needs, such as DHCP and DNS.
 
 ## SSH and the firewall
 
@@ -19,18 +19,20 @@ address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Outbound
 
-Unless `security_outbound` is false, as below, what the server and Docker's containers start goes
-to the internet and to `ikeward0`, ikeward's VPN ([ikeward](ikeward.md)), and nowhere else. An
-nftables table of ws's own, `inet ws`, drops the rest. `security-outbound.service` loads it from
-`/usr/local/lib/ws/security/outbound.nft` at boot, before the network comes up. `ufw status verbose`
-still shows outgoing traffic allowed.
+Unless `security_outbound` is false, as below, an nftables table of ws's own, `inet ws`, keeps
+what the server and Docker's containers start to the internet and to `ikeward0`, ikeward's VPN
+([ikeward](ikeward.md)). Elsewhere, only what the list below names passes.
+`security-outbound.service` loads the table from `/usr/local/lib/ws/security/outbound.nft` at
+boot, before the network comes up. `ufw status verbose` still shows outgoing traffic allowed.
 
 These pass:
 
 - replies, to the Mac or any other host, over the LAN, the cable or `wg0`;
 - what leaves by loopback, `ikeward0`, `docker0` or a `br-` bridge;
-- DHCP and DHCPv6 by networkd's user, `systemd-network`, and IPv6's router and neighbour
-  discovery and MLD reports;
+- DHCP's renewals, releases and declines, and DHCPv6, to any address, by networkd's user,
+  `systemd-network`. networkd sends DHCP's discovers and its other requests by AF_PACKET, which
+  the table never sees;
+- IPv6's router and neighbour discovery and MLD reports, to any address, whoever sends them;
 - lookups to port 53 by resolved's user, `systemd-resolve`, to resolved's own DNS servers. resolved
   asks them for the server and its containers ([Names](docker.md#names)).
 

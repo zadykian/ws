@@ -10,8 +10,9 @@ repository.
 Each role is a tag of `site.yml`, with a page of its own:
 
 - [`base`](docs/base.md): packages, the locale, the timezone, security updates and a swap file.
-- [`security`](docs/security.md): SSH by key only, ufw and fail2ban, and outbound traffic to the
-  internet and ikeward alone, unless `security_outbound` is false, as a cloud VM wants.
+- [`security`](docs/security.md): SSH by key only, ufw and fail2ban, and a table that keeps what
+  ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
+  table is off where `security_outbound` is false, as a cloud VM wants.
 - [`network`](docs/network.md): the server's end of a cable to the Mac.
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](docs/ikeward.md): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
