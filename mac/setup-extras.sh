@@ -1,6 +1,6 @@
 # shellcheck shell=sh source-path=SCRIPTDIR
 # The Mac's own steps of mac/setup.sh, beside ssh's hosts and the tunnel: the cable's address on
-# the display's adapter, and a signing key for git. setup.sh sources it after lib.sh and
+# the display's adapter, and git's identity and signing key. setup.sh sources it after lib.sh and
 # setup-lib.sh, whose functions it calls, and runs extras before the tunnel.
 
 # The Mac's end of the cable, in lib.sh's ws_cable_net, and that /30's mask.
