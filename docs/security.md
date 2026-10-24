@@ -68,6 +68,12 @@ to judge ([Forwarding](ikeward.md#forwarding)).
 
 The caveats:
 
+- root gets past the table. Its programs meet the table, but it can stop `security-outbound`,
+  delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
+  become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
+  and the `docker` group's ([The docker group](docker.md#the-docker-group)). `ws_user` is root by
+  default ([group_vars/all.yml](../group_vars/all.yml)), and in the `docker` group otherwise. The
+  table binds the other users and the bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the
   packet leaves by the same gateway. A rule on the router drops it ([The router](router.md)).
 - A private DNS server of resolved's, as the router, hears only resolved's lookups. A program that
@@ -84,8 +90,8 @@ The caveats:
 - An IPv6 route through a global gateway, rather than a link-local one, drops as if on the link.
 - A Docker network given a bridge name of its own, not `br-`, is no bridge to the table: the
   server's packets to its containers drop, and theirs go out unchecked.
-- Docker's macvlan and ipvlan networks never meet the table, nor does AF_PACKET from a process with
-  CAP_NET_RAW, as a host-network container's by default. No role runs one today.
+- Docker's macvlan and ipvlan networks never meet the table, nor does AF_PACKET from a
+  host-network container, which Docker gives CAP_NET_RAW by default. No role runs either today.
 - `nftables.service` stays off. Its `/etc/nftables.conf` flushes every table: ufw's, Docker's,
   fail2ban's and ikeward's.
 - `nft list table inet ws` shows the table, and `systemctl status security-outbound` why it failed
