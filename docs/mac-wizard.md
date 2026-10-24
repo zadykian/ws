@@ -1,21 +1,28 @@
 # The Mac's wizard
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
-the values that `~/.config/ws/mac.conf` lacks, then runs `setup.sh`. Install
-[Homebrew](https://brew.sh) first, then clone the repository and run the wizard, as yourself:
+the values that `~/.config/ws/mac.conf` lacks, then runs `setup.sh`. On a Mac with Apple silicon and
+[Homebrew](https://brew.sh), one line clones the repository and runs the wizard, as yourself:
 
 ```sh
-git clone https://github.com/zadykian/ws ~/repository/ws
-~/repository/ws/mac/wizard.sh
+curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
 ```
+
+`mac/bootstrap.sh` hands its arguments to the wizard, given as `sh -s -- --check`. From a clone,
+`~/repository/ws/mac/wizard.sh` runs the wizard alone.
 
 Each stage reads what it sets up, acts where that isn't done, and reads it again. So a run takes up
 where the last one stopped, and a second prints nothing. `--check` prints what each stage would do,
-and changes nothing. A run holds a lock, `ws-wizard.lock` in `$TMPDIR`, and keeps the Mac from idle
-sleep. A run in which a stage acted ends with what stays by hand. The stages, in order:
+and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`, and keeps the Mac from
+idle sleep. A run in which a stage acted ends with what stays by hand. The stages, in order, the
+first two `bootstrap.sh`'s, before the wizard starts:
 
-1. Answers: the values `mac.conf` lacks, below.
-2. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
+1. Tools: the Command Line Tools and Homebrew, without which it stops.
+2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
+   found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)).
+   Without a clone, `--check` lists the wizard's stages, each after this one.
+3. Answers: the values `mac.conf` lacks, below.
+4. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
 
 ## The answers

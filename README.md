@@ -35,6 +35,13 @@ Each role is a tag of `site.yml`, with a page of its own:
 
 `mac/` sets up the Mac that works on the server: [The Mac](docs/mac.md).
 
+On a Mac with Apple silicon and Homebrew, one line clones this repository and runs the Mac's wizard
+([The Mac's wizard](docs/mac-wizard.md)):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
+```
+
 ## A new machine
 
 Install Ubuntu Server 26.04 by hand from its installer, with an SSH key to log in with. The
