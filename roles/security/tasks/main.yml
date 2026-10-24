@@ -97,6 +97,19 @@
 - name: Apply SSH's and fail2ban's changes now
   ansible.builtin.meta: flush_handlers
 
+# | bool reads any other value as false, so a typo would take the table off. always, as --tags
+# systemd runs the off path's stop too.
+- name: Check security_outbound
+  ansible.builtin.assert:
+    that: >-
+      security_outbound is boolean or security_outbound | string | lower
+      in ['true', 'false', 'yes', 'no', 'on', 'off', '1', '0']
+    fail_msg: >-
+      security_outbound is {{ security_outbound | to_json }}, where true or false is wanted
+      (docs/security.md#outbound).
+    quiet: true
+  tags: [always]
+
 - name: Keep what ws starts to the internet and ikeward
   ansible.builtin.import_tasks: outbound.yml
   when: security_outbound | bool
