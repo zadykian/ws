@@ -77,7 +77,8 @@ With no terminal to ask one, the wizard stops there, unless `WS_IDENTITY` names 
 then gets no passphrase.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
-differ, and says how to mend each.
+differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
+or Secretive's, must be one that the agent lists, or the stage stops, naming the socket.
 
 ## What stays by hand
 

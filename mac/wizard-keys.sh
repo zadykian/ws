@@ -5,18 +5,25 @@
 # makes ~/.ssh/id_ed25519, whose passphrase it asks at the terminal. It calls the functions of
 # lib.sh and setup-lib.sh, and reads wizard.sh's lock and WS_CONF, mac.conf's path.
 
-# keys_done succeeds where the key that ssh offers ws is there, in a file beside the .pub whose
-# fingerprint it shares. A key of an agent's counts as there.
+# keys_done succeeds where the key that ssh offers ws is there: in a file beside the .pub whose
+# fingerprint it shares, or listed by the agent that holds it.
 keys_done() {
     (ws_conf "$WS_CONF" && ws_identity && keys_there) >/dev/null 2>&1
 }
 
-# keys_there succeeds where the key that ws_identity set is there: the file beside the .pub is its
-# private key, or an agent holds it.
+# keys_there succeeds where the key that ws_identity set is there: the agent lists the key of the
+# .pub, or the file beside the .pub is its private key.
 # shellcheck disable=SC2154 # ws_identity sets ws_identity_pub and ws_identity_agent
 keys_there() {
     keys_pub=$(keys_home "$ws_identity_pub")
-    [ -n "$ws_identity_agent" ] || keys_same "${keys_pub%.pub}"
+    if [ -z "$ws_identity_agent" ]; then
+        keys_same "${keys_pub%.pub}"
+        return
+    fi
+    [ -f "$keys_pub" ] || return 1
+    keys_line=$(awk 'NF { print $1, $2; exit }' "$keys_pub")
+    SSH_AUTH_SOCK=$(keys_home "$ws_identity_agent") ssh-add -L 2>/dev/null |
+        awk '{ print $1, $2 }' | grep -qxF -e "$keys_line"
 }
 
 # keys_same KEY succeeds where KEY and KEY.pub are there and share a fingerprint. ssh-keygen reads
@@ -51,7 +58,11 @@ keys_do() {
     fi
     ws_identity
     keys_pub=$(keys_home "$ws_identity_pub")
-    if [ -e "$keys_pub" ] || [ -e "${keys_pub%.pub}" ]; then
+    if [ -n "$ws_identity_agent" ]; then
+        keys_there || ws_die "Mac key: the agent at $(keys_home "$ws_identity_agent") lists no" \
+            "key of $keys_pub: open Secretive, where it is that agent, or start the agent, then" \
+            "run the wizard again"
+    elif [ -e "$keys_pub" ] || [ -e "${keys_pub%.pub}" ]; then
         keys_file "${keys_pub%.pub}"
     else
         keys_choose
