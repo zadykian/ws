@@ -67,11 +67,13 @@ such as `mac.conf`'s answers and dash. Then `checks.sh` runs the cases beside it
 at the first that fails ([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an
 unknown argument and root. A run must stop where another holds the lock, and leave it. A fresh
 `--check`, by sh and by dash, must find brew with its directories taken off `PATH`. As
-`setup.sh --check` must, it must change nothing, and it must leave no lock or temporary file.
-The first run, with that `PATH` too, must install what `setup.sh` installs, and load no daemon
-without `WS_PUBLIC_KEY`. It must drop the Mac's key, which `setup.sh` prints until then, and end
-with that step as one left by hand. A second run and `--check` must print nothing, by sh and by
-dash.
+`setup.sh --check` must, it must change nothing, and it must leave no lock or temporary file. The
+job's `mac.conf` names `~/.ssh/id_ed25519` as the ssh key for ws, which `--check` must show it would
+make. With no terminal and a `mac.conf` that names none, a run must stop at the Mac key stage,
+naming `WS_IDENTITY`, and make nothing. The first run, with that `PATH` too, must make that key,
+with no passphrase, install what `setup.sh` installs, and load no daemon without `WS_PUBLIC_KEY`. It
+must drop the Mac's key, which `setup.sh` prints until then, and end with that step as one left by
+hand. A second run and `--check` must print nothing, by sh and by dash.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

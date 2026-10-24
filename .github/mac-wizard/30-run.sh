@@ -2,8 +2,10 @@
 # The first run, by sh, with standin.sh's PATH, which lacks brew. The wizard must still find brew,
 # so that setup.sh installs wireguard-tools, root's copies and the Mac's key, and writes ssh's
 # files. Without WS_PUBLIC_KEY, setup.sh loads no daemon, and prints the Mac's key, which the
-# wizard drops: it must end with the tunnel's step by hand instead. It must add the environment's
-# answers at the end of mac.conf, and leave no lock or file of its own in $TMPDIR.
+# wizard drops: it must end with the tunnel's step by hand instead. It must make the ssh key that
+# mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no terminal asked one.
+# It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
+# own in $TMPDIR.
 
 set -u
 
@@ -29,6 +31,9 @@ brew list --formula wireguard-tools >/dev/null 2>&1 ||
 for each in /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key ~/.ssh/config.d/ws; do
     sudo test -f "$each" || error "wizard.sh made no $each"
 done
+[ "$(ssh-keygen -y -P '' -f ~/.ssh/id_ed25519 | cut -d ' ' -f 1-2)" = \
+    "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ] ||
+    error 'wizard.sh made no ~/.ssh/id_ed25519 with no passphrase, beside its .pub'
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded the daemon without ws's key"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"
