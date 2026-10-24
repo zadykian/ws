@@ -86,7 +86,8 @@ router outside the cable's `/30`. It must stop too on a `-setmanual` that fails 
 and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). Without the
 stand-in app, `setup.sh` must install Gateway's cask once, through a stand-in brew that refuses any
 other call, and then print nothing. With an app in `/Applications`, it must install nothing. A
-failed install, or one that leaves no app, must draw a warning, and the run go on to the tunnel
+failed install, or one that leaves no app, must draw a warning, and the run go on to the tunnel. So
+must a cask that Homebrew has without its app, which neither a run nor `--check` may install again
 ([mac-gateway-checks.sh](../.github/mac-gateway-checks.sh)). With `WS_GIT_NAME`
 and `WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must
 stop on a `WS_GIT_SIGNING_KEY` that is missing, or a `.pub` that holds more than a public key. So
