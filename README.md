@@ -105,6 +105,9 @@ collections, as the playbook cannot run without them.
 The playbook's dry run adds no apt repository. So where it would add or change a third-party one,
 apt may not know its packages: their install shows that error, and the dry run goes on.
 
+A dry run checks no file it would write. Ansible runs a file's check, such as `nft -c`, `sshd -G`
+or `dockerd --validate`, only as it writes the file.
+
 ## By hand
 
 Secrets are never in this repository. On a new machine, these stay manual:

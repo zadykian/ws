@@ -103,17 +103,22 @@ The caveats:
   keepalive every 25 seconds. Should the Mac fall silent past conntrack's UDP timeout, 2 minutes,
   ws's packets to it drop until its next one.
 - An IPv6 route through a global gateway, rather than a link-local one, drops as if on the link.
+- The drops name no link: they cover the cable and `wg0` while their subnets, of
+  `network_direct_link_address` and `wireguard_address`, lie in the ranges above.
 - A Docker network given a bridge name of its own, not `br-`, is no bridge to the table: the
   server's packets to its containers drop, and theirs go out unchecked.
 - Docker's macvlan and ipvlan networks never meet the table, nor does AF_PACKET from a
   host-network container, which Docker gives CAP_NET_RAW by default. No role runs either today.
 - `nftables.service` stays off. Its `/etc/nftables.conf` flushes every table: ufw's, Docker's,
   fail2ban's and ikeward's.
+- A table that fails to load at boot leaves the network up without it.
 - `nft list table inet ws` shows the table, and `systemctl status security-outbound` why it failed
   to load. A load says in `journalctl -u security-outbound` which servers it left out, and when it
   loaded the table without the sets' elements, after which the unit still shows active. A fill says
   which it left out in `journalctl -u security-resolvers`. `systemctl stop security-outbound`
   removes this table alone, until the next boot or run.
+- A dry run checks no file it would write, neither the table nor sshd's drop-in
+  ([Dry runs](../README.md#dry-runs)).
 
 A run checks the file with `nft -c` before it lands. It then loads the file in a network namespace
 of its own, as the unit loads it, and compares that table with the kernel's, as
