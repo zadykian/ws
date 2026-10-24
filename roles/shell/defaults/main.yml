@@ -15,7 +15,8 @@ shell_git_allowed_signers: "{{ ws_home }}/.config/git/allowed_signers"
 shell_secret_env: {}
 
 # git's tokens for servers besides GitHub, from a private repository's extra vars. Each entry
-# takes url and token, and optionally username and proactive_auth (docs/shell.md#git-credentials).
+# takes url and token, and optionally username, proactive_auth and state, present by default or
+# absent (docs/shell.md#git-credentials).
 shell_git_credentials: []
 # Each URL's file in ~/.config/git/tokens, which the role derives: the URL without its scheme,
 # each run of characters other than letters, digits, ., _ and - as _.

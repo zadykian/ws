@@ -81,7 +81,9 @@ private repository passes it in its extra vars, from the vault of `shell_secret_
 - `token`: a personal access token, say;
 - `username`: `token` by default, as such servers take any;
 - `proactive_auth`: `true` for a server that sends no 401, so that git sends the token with its
-  first request, by `http.<url>.proactiveAuth`.
+  first request, by `http.<url>.proactiveAuth`;
+- `state`: `present` by default, or `absent`, which removes the URL's token and helper, and needs
+  no other key.
 
 A URL of `http://` fails the run, as git would send its token in clear. Each token goes in a 0600
 file of `~/.config/git/tokens`, named for its URL. `~/.config/git/tokens.gitconfig`, which
@@ -94,6 +96,9 @@ The directory is the role's: each run removes any other file there, such as the 
 since dropped, whose helper leaves `tokens.gitconfig`. With the list empty, it removes the
 directory too. No token reaches `tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` and
 `--diff` included: a dry run shows the helpers' diff, and that a token would change, not which.
+
+To revoke a token, revoke it on the server first. Then set `state: absent` on its entry, and keep
+the entry until each machine has run with it.
 
 ## Clones
 

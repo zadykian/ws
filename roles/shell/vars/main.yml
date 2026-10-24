@@ -1,0 +1,7 @@
+---
+# shell_git_credentials by state, present by default: an absent entry's token and helper go.
+shell_git_credentials_absent: >-
+  {{ shell_git_credentials | selectattr('state', 'defined') | selectattr('state', '==', 'absent')
+  | list }}
+shell_git_credentials_present: >-
+  {{ shell_git_credentials | reject('in', shell_git_credentials_absent) | list }}
