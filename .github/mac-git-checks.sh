@@ -7,16 +7,19 @@
 # shellcheck disable=SC2154 # tmp, conf and the helpers are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
 files=$HOME/.config/ws
+secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 
 # git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
 git_made() {
-    "$@" "$key" "$key.pub" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig.*~
+    "$@" "$key" "$key.pub" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig.*~ \
+        "$files/secretive-ssh-keygen" "$secretive"
 }
 
 # git_restore removes the files that git's cases made, and puts the runner's ~/.gitconfig back. It
 # leaves ~/.gitconfig alone until the runner's has gone aside.
 git_restore() {
-    git_made rm -f
+    [ -z "${agent-}" ] || kill "$agent" || true
+    git_made rm -rf
     [ -f "$tmp/gitconfig" ] || [ -n "${gitconfig_aside-}" ] || return 0
     rm -f ~/.gitconfig
     [ ! -f "$tmp/gitconfig" ] || mv "$tmp/gitconfig" ~/.gitconfig
@@ -140,3 +143,30 @@ mv "$tmp/signing" "$key"
 mv "$key.pub" "$tmp/signing.pub"
 stops "setup.sh: $key.pub is missing beside its key"
 mv "$tmp/signing.pub" "$key.pub"
+
+# A key of Secretive's, a P-256 key that an agent at Secretive's socket holds, its .pub among
+# Secretive's, named by ~/. --check must show the wrapper and gpg.ssh.program, and write neither.
+# git must sign with the agent, through the wrapper, whatever SSH_AUTH_SOCK names.
+mkdir -p "$secretive/Data/PublicKeys"
+ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/p256"
+cp "$tmp/p256.pub" "$secretive/Data/PublicKeys/ws.pub"
+agent=$(ssh-agent -s -a "$secretive/Data/socket.ssh" | sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p')
+if [ -z "$agent" ] || ! SSH_AUTH_SOCK=$secretive/Data/socket.ssh ssh-add -q "$tmp/p256"; then
+    error "no ssh-agent at Secretive's socket took the key"
+    exit 1
+fi
+rm "$tmp/p256"
+with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com \
+    "WS_GIT_SIGNING_KEY=~/${secretive#"$HOME/"}/Data/PublicKeys/ws.pub"
+setup --check || error "setup.sh --check failed: $out"
+case $out in
+*"+++ $files/secretive-ssh-keygen$nl"*"$nl+    program = \"$files/secretive-ssh-keygen\""*) ;;
+*) error "setup.sh --check showed no wrapper, or no gpg.ssh.program: $out" ;;
+esac
+[ ! -e "$files/secretive-ssh-keygen" ] || error "setup.sh --check wrote $files/secretive-ssh-keygen"
+prints "setup.sh: wrote $files/secretive-ssh-keygen${nl}setup.sh: wrote $files/allowed_signers${nl}\
+setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig"
+prints ''
+prints '' --check
+# In a subshell, as macOS's sh keeps a variable set for a function's call after it.
+(SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
