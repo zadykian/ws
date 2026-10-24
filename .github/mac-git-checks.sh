@@ -5,10 +5,11 @@
 #
 # shellcheck disable=SC2154 # tmp, conf and the helpers are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
+files=$HOME/.config/ws
 
 # git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
 git_made() {
-    "$@" "$key" "$key.pub"
+    "$@" "$key" "$key.pub" "$files/gitconfig" "$files/allowed_signers"
 }
 
 found=$(git_made ls -d 2>/dev/null) || true
@@ -18,13 +19,20 @@ if [ -n "$found" ]; then
 fi
 trap 'git_made rm -f; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
 
-# With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, and make
-# none. A run must make it, an ed25519 key with no passphrase, and a second run and --check print
-# nothing.
+# With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, show the
+# files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, write the
+# files and say so, and a second run and --check print nothing.
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com
-prints "setup.sh: would make git's signing key, $key" --check
-[ ! -e "$key" ] || error "setup.sh --check made $key"
-prints "setup.sh: made git's signing key, $key"
+setup --check || error "setup.sh --check failed: $out"
+case $out in
+"setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*) ;;
+*) error "setup.sh --check showed no key or gitconfig: $out" ;;
+esac
+for each in "$key" "$files/gitconfig" "$files/allowed_signers"; do
+    [ ! -e "$each" ] || error "setup.sh --check made $each"
+done
+prints "setup.sh: made git's signing key, $key${nl}setup.sh: wrote $files/allowed_signers${nl}\
+setup.sh: wrote $files/gitconfig"
 prints ''
 prints '' --check
 ssh-keygen -y -P '' -f "$key" | grep -q '^ssh-ed25519 ' ||
