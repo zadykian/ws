@@ -12,9 +12,16 @@ ws_secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data
 # skipped. It stops on any other line, any other key, a value of the wrong form, and a
 # WS_LAN_ADDRESS that is not a host's in WS_LAN. An empty value, KEY= or KEY="", is the key's
 # default, as a missing line is, and passes its key's check.
-# shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
 ws_conf() {
     [ -f "$1" ] || ws_die "$1 is missing: docs/mac.md says what goes in it"
+    ws_conf_lines "$1"
+    ws_conf_pairs "$1"
+}
+
+# ws_conf_lines FILE is ws_conf's reading of FILE, each line alone, with each key's variable set to
+# its default first. So it checks a line without the keys that go with it.
+# shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
+ws_conf_lines() {
     WS_USER=root
     WS_PUBLIC_KEY=
     WS_LAN=
@@ -148,6 +155,11 @@ ws_conf() {
         [ -z "$ws_value" ] || $ws_ok ||
             ws_die "$1, line $ws_n: $ws_key=$ws_value is not $(ws_conf_form "$ws_key")"
     done <"$1"
+}
+
+# ws_conf_pairs FILE is ws_conf's check of the keys that go together, as ws_conf_lines read them
+# from FILE, which its messages name.
+ws_conf_pairs() {
     case ${WS_LAN:+lan}${WS_LAN_ADDRESS:+address} in
     lan | address) ws_die "$1: WS_LAN and WS_LAN_ADDRESS go together" ;;
     esac
