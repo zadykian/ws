@@ -98,17 +98,27 @@ git_conf() {
 EOF
 }
 
-# git_include_ok sets git_included where ~/.gitconfig includes ~/.config/ws/gitconfig. It stops
-# where git can't read the file, and where it is a link that lacks the include, rather than replace
-# the link with a file. It writes nothing, so that the step stops before it acts, as setup-ssh.sh's
-# ws_include_ok does for ssh's Include.
+# git_include_ok sets git_included where ~/.gitconfig includes ~/.config/ws/gitconfig, first and
+# once. It stops where git can't read the file, and where the include comes twice or sits below the
+# file's own settings, which it then overrides. It stops too where the file is a link that lacks the
+# include, rather than replace the link with a file. It writes nothing, so that the step stops
+# before it acts, as setup-ssh.sh's ws_include_ok does for ssh's Include.
 git_include_ok() {
     git_file=$HOME/.gitconfig
     git_included=
     [ -e "$git_file" ] || [ -L "$git_file" ] || return 0
     git_paths=$(git config --file "$git_file" --type path --get-all include.path) ||
         [ $? = 1 ] || ws_die "git config cannot read $git_file"
-    if printf '%s\n' "$git_paths" | grep -qxF -e "$git_dir/gitconfig" -e .config/ws/gitconfig; then
+    if printf '%s\n' "$git_paths" | git_ours -q; then
+        # The file's first setting must be the include, of ~/.config/ws/gitconfig.
+        git_first=$(git config --file "$git_file" --name-only --list | head -n 1)
+        [ "$git_first" != include.path ] || git_first=$(printf '%s\n' "$git_paths" | head -n 1)
+        printf '%s\n' "$git_first" | git_ours -q ||
+            ws_die "$git_file includes ~/.config/ws/gitconfig below its own settings, which" \
+                "it then overrides: move the include to the top"
+        git_count=$(printf '%s\n' "$git_paths" | git_ours -c)
+        [ "$git_count" = 1 ] || ws_die "$git_file includes ~/.config/ws/gitconfig $git_count" \
+            "times: keep the one at the top"
         git_included=1
         return 0
     fi
@@ -143,6 +153,12 @@ git_include() {
     git_list=$(git_own "$git_file")
     [ -z "$git_list" ] || ws_say "warning: $git_file's own settings of $git_list, below the" \
         "include, win over ~/.config/ws/gitconfig's"
+}
+
+# git_ours -q|-c greps stdin for the lines that name ~/.config/ws/gitconfig, as git config prints
+# an include of ~/.gitconfig: by the home's path, or relative to the home.
+git_ours() {
+    grep "$1" -xF -e "$git_dir/gitconfig" -e .config/ws/gitconfig
 }
 
 # git_own FILE prints the settings of identity and signing that the git config FILE sets, once
