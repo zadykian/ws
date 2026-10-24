@@ -9,7 +9,7 @@
 # do, and changes nothing. --update has each stage that skips work by what an earlier run kept, such
 # as a stamp, do that work again. A run holds a lock, a directory in $TMPDIR, and keeps the Mac from
 # idle sleep until it exits. A run in which a stage acted ends with what stays by hand. The stages,
-# in order:
+# in order, after the Tools and Clone of mac/bootstrap.sh, which runs the wizard on a new Mac:
 #
 # - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
@@ -102,7 +102,8 @@ closing() {
     printf '\nWhat stays by hand:\n%s' "$hand"
 }
 
-# setup_after prints Tools where PATH has no brew, at which setup.sh --check would stop.
+# setup_after prints Tools, bootstrap.sh's stage, where PATH has no brew, at which setup.sh --check
+# would stop.
 setup_after() {
     command -v brew >/dev/null || echo Tools
 }
