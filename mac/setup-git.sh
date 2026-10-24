@@ -1,7 +1,7 @@
 # shellcheck shell=sh
 # The git step of mac/setup.sh, which setup-extras.sh sources: git's identity and a signing key of
-# the Mac's own. They go in ~/.config/ws/gitconfig, as the shell role sets them up on ws. It calls
-# the functions of lib.sh and setup-lib.sh.
+# the Mac's own. They go in ~/.config/ws/gitconfig, which ~/.gitconfig includes at its top, as the
+# shell role sets them up on ws. It calls the functions of lib.sh and setup-lib.sh.
 
 # The directory of mac.conf, where the step writes its files.
 git_dir=$HOME/.config/ws
@@ -10,8 +10,10 @@ git_dir=$HOME/.config/ws
 # it alone without them.
 git_mac() {
     [ -n "$WS_GIT_NAME" ] || return 0
+    git_include_ok
     git_key
     git_files
+    git_include
 }
 
 # git_key sets git_pub to the signing key's .pub, WS_GIT_SIGNING_KEY with its ~/ the home, and
@@ -82,7 +84,7 @@ EOF
 git_conf() {
     cat <<EOF
 # Written by ws's mac/setup.sh from ~/.config/ws/mac.conf: its next run replaces changes made here.
-# Include it at the top of ~/.gitconfig, so that that file's own settings win where both set one.
+# ~/.gitconfig includes it at its top, so that its own settings win where both set one.
 [user]
     name = "$WS_GIT_NAME"
     email = $WS_GIT_EMAIL
@@ -94,4 +96,61 @@ git_conf() {
 [gpg "ssh"]
     allowedSignersFile = "$git_dir/allowed_signers"
 EOF
+}
+
+# git_include_ok sets git_included where ~/.gitconfig includes ~/.config/ws/gitconfig. It stops
+# where git can't read the file, and where it is a link that lacks the include, rather than replace
+# the link with a file. It writes nothing, so that the step stops before it acts, as setup-ssh.sh's
+# ws_include_ok does for ssh's Include.
+git_include_ok() {
+    git_file=$HOME/.gitconfig
+    git_included=
+    [ -e "$git_file" ] || [ -L "$git_file" ] || return 0
+    git_paths=$(git config --file "$git_file" --type path --get-all include.path) ||
+        [ $? = 1 ] || ws_die "git config cannot read $git_file"
+    if printf '%s\n' "$git_paths" | grep -qxF -e "$git_dir/gitconfig" -e .config/ws/gitconfig; then
+        git_included=1
+        return 0
+    fi
+    [ ! -L "$git_file" ] || ws_die "$git_file is a link to $(readlink "$git_file"): put" \
+        "'[include] path = ~/.config/ws/gitconfig' at the top of that file"
+}
+
+# git_include puts an include of ~/.config/ws/gitconfig at the top of ~/.gitconfig where
+# git_include_ok found none, so that the file's own settings come after it and win. It makes the
+# file where missing, and keeps the old one as ~/.gitconfig.TIME~, as setup-ssh.sh keeps
+# ~/.ssh/config. It names the file's own settings of identity and signing.
+# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
+git_include() {
+    [ -z "$git_included" ] || return 0
+    git_mode=644
+    if [ -e "$git_file" ]; then
+        git_mode=$(ws_mode "$git_file")
+        if ! ws_checking; then
+            git_backup=$git_file.$(date +%Y%m%d%H%M%S)~
+            cp -p "$git_file" "$git_backup" || ws_die "cannot keep $git_file as $git_backup"
+            ws_say "kept the old $git_file as $git_backup"
+        fi
+    fi
+    ws_tmp
+    git_top=$ws_tmpfile
+    {
+        printf '[include]\n    path = ~/.config/ws/gitconfig\n'
+        [ ! -f "$git_file" ] || { echo && cat "$git_file"; }
+    } >"$git_top" || ws_die "cannot write $git_top"
+    ws_put "$git_file" "$git_mode" <"$git_top"
+    rm -f "$git_top"
+    git_list=$(git_own "$git_file")
+    [ -z "$git_list" ] || ws_say "warning: $git_file's own settings of $git_list, below the" \
+        "include, win over ~/.config/ws/gitconfig's"
+}
+
+# git_own FILE prints the settings of identity and signing that the git config FILE sets, once
+# each, in its order, and nothing where FILE is missing.
+git_own() {
+    [ -f "$1" ] || return 0
+    git config --file "$1" --name-only --list |
+        grep -xE -e 'user\.(name|email|signingkey)|commit\.gpgsign' \
+            -e 'gpg\.(format|ssh\.program|ssh\.allowedsignersfile)' |
+        awk '!seen[$0]++ { printf "%s%s", n++ ? ", " : "", $0 }'
 }
