@@ -3,6 +3,10 @@
 # sources it, so that a script that sources setup-lib.sh has them too. They call the functions of
 # lib.sh and setup-lib.sh, and set a variable named for each of mac.conf's keys.
 
+# Secretive's agent: its socket, and a .pub in PublicKeys for each key it holds (Secretive 4.0.0).
+# shellcheck disable=SC2034 # for setup-git.sh
+ws_secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data
+
 # ws_conf FILE reads the Mac's settings from FILE, ~/.config/ws/mac.conf, without running it: a
 # KEY=value a line, the value bare or in a pair of quotes, blank lines and lines starting with #
 # skipped. It stops on any other line, any other key, a value of the wrong form, and a
