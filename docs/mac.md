@@ -56,8 +56,9 @@ ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where 
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
-`root` for `WS_USER`, 51820 for `WS_PORT`, `~/.ssh/id_ed25519_signing.pub` for `WS_GIT_SIGNING_KEY`,
-and none for the others.
+`root` for `WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for
+`WS_GIT_SIGNING_KEY`. `WS_IDENTITY` takes the file key's, `~/.ssh/id_ed25519.pub`, and the others
+none.
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -85,11 +86,14 @@ goes:
 - elsewhere, to `WS_REMOTE` on `WS_REMOTE_PORT`, over IPv4, as the forward takes IPv4 alone.
 
 ssh picks the way from the Mac's own addresses (`Match localnetwork`, OpenSSH 9.4 and later), and
-probes nothing. Both hosts log in as `WS_USER` with `~/.ssh/id_ed25519`, its passphrase kept in
-the Keychain, and check ws's host key under the one name `ws` (`HostKeyAlias`). So `known_hosts` has
-one entry for ws whichever way ssh goes. A host on another network that uses the LAN's subnet then
-meets a host key mismatch, where ssh stops. A session ends after 90 s without word from ws, far
-longer than a switch of the tunnel takes.
+probes nothing. Both hosts log in as `WS_USER` with the key below, and check ws's host key under
+the one name `ws` (`HostKeyAlias`). So `known_hosts` has one entry for ws whichever way ssh goes. A
+host on another network that uses the LAN's subnet then meets a host key mismatch, where ssh stops.
+A session ends after 90 s without word from ws, far longer than a switch of the tunnel takes.
+
+ssh offers ws one key alone (`IdentitiesOnly`): `~/.ssh/id_ed25519`, its passphrase kept in the
+Keychain. `WS_IDENTITY` names another key's `.pub`. An agent holds it where `WS_IDENTITY_AGENT`
+names the agent's socket, else the file beside the `.pub`.
 
 The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
 reads for each key. So neither the file's own settings nor the other files of `config.d` override
@@ -102,12 +106,14 @@ to. It stops where the line is missing there, rather than replace the link with 
 `~/.ssh/config.d` is a link, the script warns as it writes `config.d/ws` there, as the file holds
 `mac.conf`'s addresses. It stops where `config.d/ws` is a file it did not write, rather than
 replace it. It warns of a `Host` or `Match` of `~/.ssh/config`'s own for `ws` or `ws-ssh`, whose
-settings come after those of `config.d/ws`.
+settings come after those of `config.d/ws`. Remove an older `Host ws` there, whose `IdentityFile`
+would add a key to ws's.
 
-ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for `UseKeychain`, which
-only Apple's ssh knows, so it carries the patterns of every `IgnoreUnknown` in `~/.ssh/config`.
-Run the script again after a change to those. A pattern in a file that `~/.ssh/config` includes
-must be in `~/.ssh/config` too, as the script reads no other file.
+ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
+`UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
+patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the script again after a change to those.
+A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as the script
+reads no other file.
 
 Before it writes, the script has `ssh -G`, for `ws` and `ws-ssh`, read the new `config.d/ws` alone.
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
