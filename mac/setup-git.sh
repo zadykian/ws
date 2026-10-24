@@ -239,9 +239,9 @@ git_listed() {
 }
 
 # git_register adds the key to the signing keys of gh's login where they lack it, titled with the
-# Mac's name, so that GitHub verifies the commits it signs. Without a login, or on an error of gh's,
-# it warns, at each run until one adds the key. Under --check, before gh or the key is there, it
-# does nothing.
+# Mac's name, so that GitHub verifies the commits it signs. Then it checks that they list it.
+# Without a login, or on an error of gh's, it warns, at each run until one adds the key. Under
+# --check, before gh or the key is there, it does nothing.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 git_register() {
     [ -n "$git_public" ] && [ -x "$gh" ] || return 0
@@ -252,11 +252,15 @@ git_register() {
     if ! git_listed && [ "$git_status" = 0 ]; then
         if ws_checking; then
             ws_say "would run $git_add"
-        elif "$gh" ssh-key add "$git_pub" --type signing --title "$git_title" >/dev/null \
-            2>"$git_err"; then
-            ws_say "ran $git_add"
         else
-            git_status=$?
+            "$gh" ssh-key add "$git_pub" --type signing --title "$git_title" >/dev/null \
+                2>"$git_err" || git_status=$?
+            if [ "$git_status" = 0 ] && git_listed; then
+                ws_say "ran $git_add"
+            elif [ "$git_status" = 0 ]; then
+                echo "gh api user/ssh_signing_keys lacks the key after $git_add" >"$git_err"
+                git_status=1
+            fi
         fi
     fi
     [ "$git_status" = 0 ] || git_warn

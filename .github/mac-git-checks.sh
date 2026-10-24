@@ -60,7 +60,7 @@ warned() {
 
 # A stand-in gh goes in $tmp/bin, first on PATH, logged in while $tmp/login is there. It logs each
 # call, and lists and adds the account's signing keys in $tmp/keys, for setup.sh's commands alone.
-# With $tmp/error, it fails with that text.
+# With $tmp/error, it fails with that text; with $tmp/lost, an add keeps no key.
 : >"$tmp/keys"
 touch "$tmp/login"
 cat >"$tmp/bin/gh" <<'EOF'
@@ -74,7 +74,7 @@ fi
 [ ! -f "$state/error" ] || { cat "$state/error" >&2 && exit 1; }
 case $* in
 'api --paginate user/ssh_signing_keys --jq .[].key') cat "$state/keys" ;;
-'ssh-key add '*) awk '{ print $1, $2 }' "$3" >>"$state/keys" ;;
+'ssh-key add '*) [ -f "$state/lost" ] || awk '{ print $1, $2 }' "$3" >>"$state/keys" ;;
 *) echo "gh: the stand-in takes no $*" >&2 && exit 2 ;;
 esac
 EOF
@@ -213,9 +213,9 @@ prints '' --check
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
 
 # Logged out, gh must draw a warning at each run, and nothing else where the files are written.
-# With gh's login, another error must draw a warning of its last line. Then, where the account
-# lacks the key, --check must show the add, a run must add it, and a second run and --check print
-# nothing.
+# With gh's login, another error must draw a warning of its last line, as must an add that leaves
+# the account without the key. Then, where the account lacks the key, --check must show the add, a
+# run must add it, and a second run and --check print nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 rm "$tmp/login"
 warning=$(warned "$key.pub")
@@ -228,6 +228,9 @@ printf '%s\n' 'Post "https://api.github.com/user/ssh_signing_keys": EOF' 'gh: of
 prints "setup.sh: warning: gh failed: gh: offline. $until"
 rm "$tmp/error"
 : >"$tmp/keys"
+touch "$tmp/lost"
+prints "setup.sh: warning: gh failed: gh api user/ssh_signing_keys lacks the key after $add. $until"
+rm "$tmp/lost"
 prints "setup.sh: would run $add" --check
 prints "setup.sh: ran $add"
 prints ''
