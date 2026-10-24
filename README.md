@@ -76,7 +76,8 @@ git -C /root/repository/ws pull --ff-only
 Its arguments go to `ansible-playbook`: `--tags NAME` runs the role NAME alone.
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home. A cloud VM passes
-`-e security_outbound=false` on each run ([Outbound](docs/security.md#outbound)).
+`-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). `-e` holds
+for one run: a value every run needs, as that one, goes in the untracked `host_vars/localhost.yml`.
 
 Where gh logged in without the `write:ssh_signing_key` scope, add it once, before the run, so that
 the run registers the machine's signing key ([The signing key](docs/devtools.md#the-signing-key)):

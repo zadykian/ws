@@ -6,12 +6,17 @@ The `network` role sets up the server's end of a cable to the Mac, `10.77.0.1/30
 ## The direct link
 
 The Mac can plug into the server with a cable of its own, from its dock's 2.5GbE port to a port of
-the server's, outside the router. Name the server's port in `group_vars/all.yml`, as `ip link`
-names it:
+the server's, outside the router. Name the server's port in `host_vars/localhost.yml`, in the
+clone, as `ip link` names it:
 
 ```yaml
+---
 network_direct_link_interface: enp5s0
 ```
+
+git ignores that file, so the clone stays clean for the pull before a run
+([Running it again](../README.md#running-it-again)). Every run from the clone reads it, so none
+removes the direct link for want of the value.
 
 The `network` role then writes `/etc/netplan/60-direct-link.yaml`, which gives that interface
 `10.77.0.1/30` (`network_direct_link_address`), and no DHCP, gateway or DNS. netplan merges the

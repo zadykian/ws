@@ -13,7 +13,9 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 
 - `shell`: ShellCheck, which follows a script's sources with `-x`, and `shfmt -d -i 4` on every
   shell script, found by extension or shebang;
-- `yamllint`: `yamllint --strict`, as `.yamllint` sets it;
+- `yamllint`: `yamllint --strict`, as `.yamllint` sets it, on the YAML files it finds itself.
+  Those include `host_vars/localhost.yml`, which git ignores, so that file starts with `---`
+  ([The direct link](network.md#the-direct-link));
 - `ansible-lint`: its production profile, strict and offline (`.ansible-lint`);
 - `ruff`: `ruff check` and `ruff format --check` on the Python files, as `ruff.toml` sets them;
 - `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python and Jinja templates;
