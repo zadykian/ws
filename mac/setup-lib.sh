@@ -81,10 +81,13 @@ ws_args() {
     done
 }
 
-# The functions that read mac.conf are setup-conf.sh's, sourced from dir, mac/'s path, which
-# setup.sh sets and any other script that sources setup-lib.sh must set too.
+# The functions that read mac.conf are setup-conf.sh's, and those that set ws's key from it are
+# setup-identity.sh's. Both are sourced from dir, mac/'s path, which setup.sh sets and any other
+# script that sources setup-lib.sh must set too.
 # shellcheck source=setup-conf.sh disable=SC2154 # dir is setup.sh's
 . "$dir/setup-conf.sh"
+# shellcheck source=setup-identity.sh disable=SC2154 # dir is setup.sh's
+. "$dir/setup-identity.sh"
 
 # ws_mode FILE prints FILE's permissions in three octal digits, as 600, with GNU's stat or the BSD
 # stat of macOS, leaving out the setuid, setgid and sticky bits. It follows a link, as chmod does,

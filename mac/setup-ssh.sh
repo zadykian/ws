@@ -71,10 +71,7 @@ EOF
 Host ws ws-ssh
     User $WS_USER
     HostKeyAlias ws
-    IdentityFile ~/.ssh/id_ed25519
-    IdentitiesOnly yes
-    UseKeychain yes
-    AddKeysToAgent yes
+$(ws_identity_lines)
     ServerAliveInterval 30
 EOF
 }
@@ -137,6 +134,7 @@ ssh_files() {
     fi
     at=$(ws_include_ok "$HOME/.ssh/config" config.d/ws) || exit 1
     patterns=$(ws_ignore_unknown "$HOME/.ssh/config" UseKeychain)
+    ws_identity
     ws_tmp
     new=$ws_tmpfile
     ssh_config "$patterns" >"$new"
