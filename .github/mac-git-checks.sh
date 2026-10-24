@@ -246,3 +246,38 @@ prints '' --check
 [ "$(grep '^ssh-key add ' "$tmp/gh.log" | tail -n 1)" = "${add#gh }" ] &&
     [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
     error "the stand-in logged another add, or holds other keys, than $key.pub's"
+
+# Where PATH has no gh, setup.sh must leave it so without git's keys. With them, --check must say
+# that Homebrew would install it, name the gh at Homebrew's prefix as git's credential command, and
+# name the add. A run must install it, once. The stand-in brew's prefix is $tmp/brew, where its
+# install puts the stand-in gh, and it passes other commands to the runner's brew.
+brew=$(command -v brew)
+mkdir -p "$tmp/brew/bin"
+cat >"$tmp/brew/bin/brew" <<EOF
+#!/bin/sh
+case \$* in
+--prefix) echo '$tmp/brew' ;;
+'install gh') echo "\$*" >>'$tmp/brew.log' && cp '$tmp/bin/gh' '$tmp/brew/bin' ;;
+*) exec '$brew' "\$@" ;;
+esac
+EOF
+chmod 755 "$tmp/brew/bin/brew"
+path=$PATH
+PATH=$tmp/brew/bin$(echo "$PATH" | tr : '\n' | while read -r each; do
+    [ -x "$each/gh" ] || printf ':%s' "$each"
+done)
+with
+prints ''
+with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
+setup --check || error "setup.sh --check failed: $out"
+case $out in
+"setup.sh: would run brew install gh$nl"*"$nl+    helper = !$tmp/brew/bin/gh auth\
+ git-credential$nl"*"${nl}setup.sh: would run $add once gh is installed, where it has a login\
+ that lacks the key") ;;
+*) error "setup.sh --check showed no install of gh, another credential command, or no add: $out" ;;
+esac
+[ ! -f "$tmp/brew.log" ] || error "setup.sh installed gh without git's keys, or under --check"
+prints "setup.sh: installing gh${nl}setup.sh: wrote $files/gitconfig$nl$warning"
+prints "$warning"
+[ "$(cat "$tmp/brew.log")" = 'install gh' ] || error "setup.sh ran brew install gh other than once"
+PATH=$path
