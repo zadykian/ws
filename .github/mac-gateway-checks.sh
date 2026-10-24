@@ -85,5 +85,14 @@ mv "$tmp/cask.fail" "$tmp/cask.none"
 with
 prints "setup.sh: installing jetbrains-gateway$nl$kept$nl$tunnel"
 brewed "$list" "$install" "$list" "$install"
+
+# Homebrew has the cask now, without its app. A run must warn and go on to the tunnel, and --check
+# print the warning alone. Neither may install the cask again, as brew install would upgrade it.
+with WS_PORT=51821
+prints "$kept$nl$tunnel"
+with
+prints "$kept$nl$tunnel"
+prints "$kept" --check
+brewed "$list" "$list" "$list"
 mkdir ~/Applications/"$app"
 rm "$tmp/bin/brew"
