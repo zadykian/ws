@@ -84,18 +84,16 @@ private repository passes it in its extra vars, from the vault of `shell_secret_
   first request, by `http.<url>.proactiveAuth`.
 
 A URL of `http://` fails the run, as git would send its token in clear. Each token goes in a 0600
-file of `~/.config/git/tokens`, named for its URL. `~/.gitconfig` gets a helper for each URL,
-which answers git's request for a credential from that file. The helper ignores git's requests to
-store or erase one, so a token the server refuses stays until the entry changes. Where two URLs
-match, the longer one wins. gh's helper still answers for GitHub, except below an entry's URL
-there.
+file of `~/.config/git/tokens`, named for its URL. `~/.config/git/tokens.gitconfig`, which
+`~/.gitconfig` includes, gets a helper for each URL, which answers git's request for a credential
+from that file. The helper ignores git's requests to store or erase one, so a token the server
+refuses stays until the entry changes. Where two URLs match, the longer one wins. gh's helper still
+answers for GitHub, except below an entry's URL there.
 
 The directory is the role's: each run removes any other file there, such as the token of an entry
-since dropped. With the list empty, it removes the directory too. A run that drops an entry names
-`credential.*.helper`, and `http.*.proactiveauth` for one with `proactive_auth`, among the keys it
-drops from `~/.gitconfig`: those are the entry's own. No token reaches `~/.gitconfig`, its backups
-or the run's output, `-v` and `--diff` included: a dry run shows that a token would change, not
-which.
+since dropped, whose helper leaves `tokens.gitconfig`. With the list empty, it removes the
+directory too. No token reaches `tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` and
+`--diff` included: a dry run shows the helpers' diff, and that a token would change, not which.
 
 ## Clones
 
