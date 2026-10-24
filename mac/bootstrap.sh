@@ -4,9 +4,9 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
 #
-# It clones the repository into ~/repository/ws, or leaves a clone there as it is. Then it runs the
-# clone's mac/wizard.sh (docs/mac-wizard.md) with its own arguments, given as
-# `sh -s -- --check`, under which neither changes anything. A second run prints nothing.
+# It clones the repository into ~/repository/ws, or leaves a clone there as it is, which --update
+# pulls. Then it runs the clone's mac/wizard.sh (docs/mac-wizard.md) with its own arguments, given
+# as `sh -s -- --check`, under which neither changes anything. A second run prints nothing.
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
 set -eu
@@ -32,14 +32,14 @@ would() {
     [ "$check" = 1 ] && say "$1: would $2"
 }
 
-# args takes the arguments, which go to the wizard too: --check sets check, and --update is the
-# wizard's alone.
+# args takes the arguments, which go to the wizard too: --check sets check, and --update update.
 args() {
     check=0
+    update=0
     for arg; do
         case $arg in
         --check) check=1 ;;
-        --update) ;;
+        --update) update=1 ;;
         *) die "unknown argument '$arg'; usage: bootstrap.sh [--check] [--update]" ;;
         esac
     done
@@ -71,6 +71,22 @@ clone() {
         ! would Clone "set core.hooksPath to $dir/.githooks"; then
         git -C "$dir" config core.hooksPath "$dir/.githooks" || die "Clone: git config failed"
         say "Clone: set core.hooksPath to $dir/.githooks"
+    fi
+    update
+}
+
+# update pulls a clean clone on main by fast-forward, under --update, where ls-remote, which writes
+# nothing, finds origin's main elsewhere. On another branch, or not clean, it warns and leaves it.
+update() {
+    [ "$update" = 1 ] || return 0
+    if [ "$(git -C "$dir" symbolic-ref -q --short HEAD)" != main ] ||
+        [ -n "$(git -C "$dir" --no-optional-locks status --porcelain --untracked-files=no)" ]; then
+        say "warning: Clone: leaves $dir as it is, not on main or not clean: pull it by hand"
+    elif head=$(git -C "$dir" rev-parse HEAD) && ! git -C "$dir" ls-remote origin refs/heads/main |
+        grep -q "^$head" && ! would Clone "pull $dir by fast-forward"; then
+        git -C "$dir" pull -q --ff-only || die "Clone: cannot pull $dir by fast-forward"
+        [ "$(git -C "$dir" rev-parse HEAD)" = "$head" ] ||
+            say "Clone: pulled $dir to $(git -C "$dir" rev-parse --short HEAD)"
     fi
 }
 

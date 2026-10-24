@@ -20,7 +20,9 @@ first two `bootstrap.sh`'s, before the wizard starts:
 1. Tools: the Command Line Tools and Homebrew, without which it stops.
 2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
    found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)).
-   Without a clone, `--check` lists the wizard's stages, each after this one.
+   With `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone,
+   and warns of any other. Without a clone, `--check` lists the wizard's stages, each after this
+   one.
 3. Answers: the values `mac.conf` lacks, below.
 4. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
