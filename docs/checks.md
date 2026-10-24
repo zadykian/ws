@@ -47,11 +47,12 @@ where a file it comes from is newer.
 
 CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`,
 which need a booted machine. It runs it twice, and the second run must change nothing. Then
-`nft -c` checks the outbound table the play wrote, which the container's NET_ADMIN allows, as the
-run leaves its own check to a booted machine ([Outbound](security.md#outbound)). Its swap file is
-64 MiB, as the runner's disk has no room for one the size of its RAM. It installs no JetBrains
-backend, `jetbrains_backends: []`, as it has no room for those either. Its board is not MSI's, so
-the `fans` role leaves its fans alone. It gives no VPN profile, so the `ikeward` role does nothing.
+`nft -c`, with the container's NET_ADMIN, checks the outbound table the play wrote and the users
+it names. The run leaves out its own check under `--skip-tags systemd`
+([Outbound](security.md#outbound)). Its swap file is 64 MiB, as the runner's disk has no room for
+one the size of its RAM. It installs no JetBrains backend, `jetbrains_backends: []`, as it has no
+room for those either. Its board is not MSI's, so the `fans` role leaves its fans alone. It gives
+no VPN profile, so the `ikeward` role does nothing.
 
 ## SigNoz's compose files
 
