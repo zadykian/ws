@@ -68,6 +68,10 @@ at the first that fails ([checks.sh](../.github/mac-wizard/checks.sh)). The wiza
 unknown argument and root. A run must stop where another holds the lock, and leave it. A fresh
 `--check`, by sh and by dash, must find brew with its directories taken off `PATH`. As
 `setup.sh --check` must, it must change nothing, and it must leave no lock or temporary file.
+The first run, with that `PATH` too, must install what `setup.sh` installs, and load no daemon
+without `WS_PUBLIC_KEY`. It must drop the Mac's key, which `setup.sh` prints until then, and end
+with that step as one left by hand. A second run and `--check` must print nothing, by sh and by
+dash.
 
 ## The Mac
 

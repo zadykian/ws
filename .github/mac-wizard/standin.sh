@@ -34,3 +34,6 @@ if (PATH=$path && command -v brew); then
     exit 1
 fi
 echo "$path" >"$RUNNER_TEMP/path"
+# A stand-in JetBrains Gateway.app, an empty directory, spares the runs the cask's download, as in
+# mac.yml.
+mkdir -p ~/Applications/"JetBrains Gateway.app"
