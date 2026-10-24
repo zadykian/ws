@@ -11,7 +11,7 @@
 # idle sleep until it exits. A run in which a stage acted ends with what stays by hand. The stages,
 # in order:
 #
-# - Answers: the values mac.conf lacks, from the environment;
+# - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
 # shellcheck source-path=SCRIPTDIR

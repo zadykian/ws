@@ -1,8 +1,8 @@
 # shellcheck shell=sh
 # The wizard's Answers stage: the values that mac.conf lacks, each from the environment, under its
-# key's name. wizard.sh sources it before any stage reads mac.conf, and runs the stage before
-# setup.sh's. It calls the functions of lib.sh and setup-lib.sh, and reads wizard.sh's lock and
-# WS_CONF, mac.conf's path.
+# key's name, or asked at the terminal. wizard.sh sources it before any stage reads mac.conf, and
+# runs the stage before setup.sh's. It calls the functions of lib.sh and setup-lib.sh, and reads
+# wizard.sh's lock and WS_CONF, mac.conf's path.
 
 # The environment's answers, kept before ws_conf sets each key's variable: ask_set_KEY is 1 where
 # the environment sets KEY, even to nothing, and ask_env_KEY holds its value.
@@ -11,35 +11,51 @@ for ask_key in WS_LAN WS_LAN_ADDRESS WS_REMOTE WS_REMOTE_PORT WS_GIT_NAME WS_GIT
     eval "ask_set_$ask_key=\${$ask_key+1} ask_env_$ask_key=\${$ask_key-}"
 done
 
-# ask_keys gives the stage's keys their values, in order. ws's address and git's email come only
-# with a LAN and a name, and need a value then; the router's port only with its name.
+# ask_keys asks the stage's keys in order, each with its question and default. ws's address and
+# git's email are asked only with a LAN and a name, and need a value then; the router's port only
+# with its name. The address defaults to the router's lease where the LAN holds it
+# (docs/router.md), and git's identity to ws's own.
 ask_keys() {
-    ask WS_LAN
+    ask WS_LAN "ws's home LAN" 10.88.0.0/24
     if [ -n "$WS_LAN" ]; then
-        ask WS_LAN_ADDRESS "WS_LAN and WS_LAN_ADDRESS go together"
+        ask_default=
+        ! ws_lan_host "$WS_LAN" 10.88.0.10 || ask_default=10.88.0.10
+        ask WS_LAN_ADDRESS "ws's address on the LAN" "$ask_default" \
+            "WS_LAN and WS_LAN_ADDRESS go together"
     fi
-    ask WS_REMOTE
-    [ -z "$WS_REMOTE" ] || ask WS_REMOTE_PORT
-    ask WS_GIT_NAME
+    ask WS_REMOTE "The router's name on the internet" ''
+    [ -z "$WS_REMOTE" ] || ask WS_REMOTE_PORT "The router's port forwarded to ws's 22" 22022
+    ask WS_GIT_NAME "git's name on the Mac" "$(ask_role shell_git_name)"
     if [ -n "$WS_GIT_NAME" ]; then
-        ask WS_GIT_EMAIL "WS_GIT_NAME and WS_GIT_EMAIL go together"
+        ask WS_GIT_EMAIL "git's email on the Mac" "$(ask_role shell_git_email)" \
+            "WS_GIT_NAME and WS_GIT_EMAIL go together"
     fi
-    ask WS_TUNNEL_NETWORKS
-    ask WS_RESOLVERS
+    ask WS_TUNNEL_NETWORKS "More networks through the tunnel, split by blanks" ''
+    ask WS_RESOLVERS "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks" ''
 }
 
-# ask KEY [NEED] gives KEY the environment's value where mac.conf has no line for it, and stops the
-# run where the environment has none, or a bad one. With NEED, ws_conf's message for KEY's pair, no
-# value is bad. It sets KEY and adds its line to ask_new. For ask_done, under ask_reading, it only
-# exits where the line is missing.
-# shellcheck disable=SC2154 # the eval sets ask_set and ask_value
+# ask_role NAME prints the shell role's default NAME, which ws's git takes.
+# shellcheck disable=SC2154 # dir is wizard.sh's
+ask_role() {
+    sed -n "s/^$1: *//p" "$dir/../roles/shell/defaults/main.yml" 2>/dev/null
+}
+
+# ask KEY QUESTION DEFAULT [NEED] gives KEY a value where mac.conf has no line for it: the
+# environment's, else the answer to QUESTION at the terminal, stdin. A bad answer is asked again,
+# and the environment's stops the run. With NEED, ws_conf's message for KEY's pair, no value is
+# bad. It sets KEY and adds its line to ask_new. For ask_done, under ask_reading, it only exits
+# where the line is missing.
 ask() {
     ask_lacks "$1" || return 0
     [ -z "${ask_reading-}" ] || exit 1
     eval "ask_set=\${ask_set_$1-} ask_value=\${ask_env_$1-}"
-    [ -n "$ask_set" ] || ws_die "Answers: no value for $1 in $WS_CONF or the environment: set $1"
-    ask_check "$1" "$ask_value" "${2-}" ||
-        ws_die "Answers: $1 comes from the environment: set it to such a value, or unset it"
+    if [ -n "$ask_set" ]; then
+        ask_check "$1" "$ask_value" "${4-}" ||
+            ws_die "Answers: $1 comes from the environment: set it to such a value, or unset it"
+    else
+        [ -t 0 ] || ws_die "Answers: no terminal to ask $1: set $1"
+        until ask_read "$1" "$2" "$3" "${4-}" && ask_check "$1" "$ask_value" "${4-}"; do :; done
+    fi
     eval "$1=\$ask_value"
     ask_new="$ask_new$(ask_line "$1" "$ask_value")
 "
@@ -48,6 +64,29 @@ ask() {
 # ask_lacks KEY succeeds where mac.conf has no line for KEY, or is missing.
 ask_lacks() {
     ! grep -q "^[[:blank:]]*$1=" "$WS_CONF" 2>/dev/null
+}
+
+# ask_read KEY QUESTION DEFAULT NEED prints QUESTION, with DEFAULT and none in brackets where they
+# serve. It sets ask_value to the line read: DEFAULT for an empty one, nothing for none, and a pair
+# of quotes taken off, as ws_conf does. The first says how to answer.
+ask_read() {
+    if [ -z "${ask_told-}" ]; then
+        ws_say "Answers: values for $WS_CONF; an empty line takes the one in brackets," \
+            "and none leaves it empty"
+        ask_told=1
+    fi
+    ask_hint=$3
+    [ -n "$4" ] || ask_hint=${3:+$3, or }none
+    printf '%s (%s)%s: ' "$2" "$1" "${ask_hint:+ [$ask_hint]}" >&2
+    read -r ask_value || ws_die "Answers: the terminal ended before $1's answer: set $1"
+    case $ask_value in
+    '') ask_value=$3 ;;
+    none) ask_value= ;;
+    \"*\" | \'*\')
+        ask_value=${ask_value#?}
+        ask_value=${ask_value%?}
+        ;;
+    esac
 }
 
 # ask_check KEY VALUE [NEED] succeeds where mac.conf can take VALUE for KEY, and otherwise says why:

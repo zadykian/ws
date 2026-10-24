@@ -58,9 +58,8 @@ added() {
 }
 
 cp "$conf" "$RUNNER_TEMP/mac.conf"
-quick "wizard.sh: Answers: no value for WS_LAN in $conf or the environment: set WS_LAN" sh "$wizard"
-quick "wizard.sh: Answers: no value for WS_LAN in $conf or the environment: set WS_LAN" \
-    sh "$wizard" --check
+quick 'wizard.sh: Answers: no terminal to ask WS_LAN: set WS_LAN' sh "$wizard"
+quick 'wizard.sh: Answers: no terminal to ask WS_LAN: set WS_LAN' sh "$wizard" --check
 quick 'WS_LAN=10.77.0.0/30 is not an IPv4 network, as 10.88.0.0/24, clear of 10.77.0.0/30' \
     env WS_LAN=10.77.0.0/30 sh "$wizard" --check
 quick "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 192.0.2.0/24" \
