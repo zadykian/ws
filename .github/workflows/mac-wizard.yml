@@ -1,0 +1,33 @@
+name: mac-wizard
+
+# mac/wizard.sh on macOS, in a workflow of its own beside mac.yml, on the same events: every pull
+# request, whatever its base, and on main the commits pushed by hand.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  # The wizard on a fresh runner, from the clone at ~/repository/ws: standin.sh, then checks.sh's
+  # cases. A new stage adds its cases and stand-ins in .github/mac-wizard, and nothing here.
+  mac-wizard:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The wizard runs from the clone in ~/repository/ws, where docs/mac.md puts it, so the
+      # checkout is copied there, as ci.yml's playbook job copies it into root's home.
+      - name: Put the checkout at ~/repository/ws
+        run: |
+          mkdir -p ~/repository
+          cp -R "$GITHUB_WORKSPACE" ~/repository/ws
+      - name: The stand-ins
+        run: sh ~/repository/ws/.github/mac-wizard/standin.sh
+      - name: The cases
+        run: sh ~/repository/ws/.github/mac-wizard/checks.sh
