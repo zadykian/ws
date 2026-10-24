@@ -71,3 +71,9 @@ button or Ctrl+X in its terminal, which undoes the changes if the session drops:
   /ip firewall filter add chain=input src-address=10.88.0.10 dst-address=!10.88.0.1 \
       dst-address-type=local action=drop place-before=([find where chain=input dynamic=no]->0)
   ```
+
+  It needs a static rule in the input chain to go before, such as the default firewall's: on a
+  chain with none, `place-before` fails with "no such item". The rule is IPv4's alone. Once the
+  LAN has an IPv6 prefix, it needs a twin in `/ipv6 firewall filter`, as ws's table passes the
+  router's routed IPv6 addresses too. It misses a VM on the Mac, whose packets reach the router
+  from the Mac's address, through the Mac's NAT.

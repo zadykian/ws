@@ -89,7 +89,8 @@ The caveats:
   default ([group_vars/all.yml](../group_vars/all.yml)), and in the `docker` group otherwise. The
   table binds the other users and the bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the
-  packet leaves by the same gateway. A rule on the router drops it ([The router](router.md)).
+  packet leaves by the same gateway. A rule on the router drops it for a machine on the LAN
+  ([The router](router.md)).
 - A private DNS server of resolved's, as the router, hears only resolved's lookups. A program that
   asks it for names itself, not resolved at `127.0.0.53`, gets no answer. chrony, which the `base`
   role installs, keeps time from Ubuntu's pools on the internet.
