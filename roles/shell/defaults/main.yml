@@ -16,7 +16,8 @@ shell_secret_env: {}
 
 # git's tokens for servers besides GitHub, from a private repository's extra vars. Each entry
 # takes url and token, and optionally username, proactive_auth and state, present by default or
-# absent (docs/shell.md#git-credentials). Empty, the role leaves the tokens and their helpers alone.
+# absent (docs/shell.md#git-credentials). Empty or null, the role leaves the tokens and their
+# helpers alone.
 shell_git_credentials: []
 
 # Repositories cloned once each, from a private repository's extra vars. Each entry takes repo,
