@@ -5,7 +5,9 @@
 
 # ws_conf FILE reads the Mac's settings from FILE, ~/.config/ws/mac.conf, without running it: a
 # KEY=value a line, the value bare or in a pair of quotes, blank lines and lines starting with #
-# skipped. It stops on any other line, any other key, and a value of the wrong form.
+# skipped. It stops on any other line, any other key, a value of the wrong form, and a
+# WS_LAN_ADDRESS that is not a host's in WS_LAN. An empty value, KEY= or KEY="", is the key's
+# default, as a missing line is, and passes its key's check.
 # shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
 ws_conf() {
     [ -f "$1" ] || ws_die "$1 is missing: docs/mac.md says what goes in it"
@@ -38,7 +40,7 @@ ws_conf() {
         case $ws_key in
         WS_USER)
             # shellcheck disable=SC2034 # for setup-ssh.sh and setup.sh
-            WS_USER=$ws_value
+            WS_USER=${ws_value:-root}
             ws_is_user "$ws_value" || ws_ok=false
             ;;
         WS_PUBLIC_KEY)
@@ -80,11 +82,15 @@ ws_conf() {
             ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
-        $ws_ok || ws_die "$1, line $ws_n: $ws_key=$ws_value is not $(ws_conf_form "$ws_key")"
+        [ -z "$ws_value" ] || $ws_ok ||
+            ws_die "$1, line $ws_n: $ws_key=$ws_value is not $(ws_conf_form "$ws_key")"
     done <"$1"
     case ${WS_LAN:+lan}${WS_LAN_ADDRESS:+address} in
     lan | address) ws_die "$1: WS_LAN and WS_LAN_ADDRESS go together" ;;
     esac
+    if [ -n "$WS_LAN" ] && ! ws_lan_host "$WS_LAN" "$WS_LAN_ADDRESS"; then
+        ws_die "$1: WS_LAN_ADDRESS=$WS_LAN_ADDRESS is not $(ws_conf_form WS_LAN_ADDRESS), $WS_LAN"
+    fi
     if [ -n "$WS_REMOTE_PORT" ] && [ -z "$WS_REMOTE" ]; then
         ws_die "$1: WS_REMOTE_PORT needs WS_REMOTE"
     fi
@@ -97,7 +103,7 @@ ws_conf_form() {
     WS_USER) echo "a user name of 32 characters at most: letters, digits, ., _ and -, no - first" ;;
     WS_PUBLIC_KEY) echo "a WireGuard public key, 43 base64 characters and an =" ;;
     WS_LAN) echo "an IPv4 network, as 10.88.0.0/24, clear of $ws_cable_net and $ws_tunnel_net" ;;
-    WS_LAN_ADDRESS) echo "an IPv4 address" ;;
+    WS_LAN_ADDRESS) echo "a host's IPv4 address inside WS_LAN" ;;
     WS_REMOTE) echo "a host name or an IPv4 address" ;;
     WS_TUNNEL_NETWORKS)
         echo "IPv4 networks split by blanks, as 10.20.0.0/16, each clear of $ws_cable_net and" \
@@ -109,4 +115,14 @@ ws_conf_form() {
         ;;
     *) echo "a port, 1 to 65535" ;;
     esac
+}
+
+# ws_lan_host CIDR ADDRESS succeeds where ADDRESS is a host's address in the network CIDR: inside
+# it, and neither its first address, the network's own, nor its last, its broadcast. In a /31 or a
+# /32, every address is a host's.
+ws_lan_host() {
+    ws_cidr_contains "$1" "$2" || return 1
+    ws_last=$(((1 << (32 - ${1#*/})) - 1))
+    ws_host=$(($(ws_ipv4_int "$2") & ws_last))
+    [ "$ws_last" -lt 3 ] || { [ "$ws_host" != 0 ] && [ "$ws_host" != "$ws_last" ]; }
 }

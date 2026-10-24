@@ -71,11 +71,14 @@ peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws-tunnel 
 handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and `routes.d`
 in place, with the same pid. Then a network that `ws_tunnel_routes` adds must be routed into the
 daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
-([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Last, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
+([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Next, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
-must take both back, and spare a script's own ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)).
-Where wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
+must take both back, and spare a script's own. Last, `ws_conf` must read an empty value in
+`mac.conf` as its key's default, and still stop on a value of the wrong form. It must also stop on a
+`WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address
+([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). Where wireguard-go makes no utun, the job
+fails, as the daemon runs the same wireguard-go.
 
 ## The hooks
 
