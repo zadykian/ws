@@ -50,7 +50,10 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    container: ubuntu:26.04
+    # NET_ADMIN lets nft -c, below, check the outbound table in the container's own netns.
+    container:
+      image: ubuntu:26.04
+      options: --cap-add=NET_ADMIN
     env:
       # The home of root, as on a new machine, rather than the /github/home a container job gets.
       HOME: /root
@@ -89,6 +92,10 @@ jobs:
               echo '::error::The second run of the playbook changed something.'
               exit 1
           fi
+      # The run's own nft -c is tagged systemd, so this checks the outbound table it wrote, and the
+      # users the table names, which the play's packages make.
+      - name: Check the outbound table
+        run: nft -c -f /usr/local/lib/ws/security/outbound.nft
 
   # SigNoz's compose files in roles/signoz/files are foundryctl's, forged from casting.yaml there.
   # Forged again into an empty directory, as foundryctl never removes a file, they must be the same.

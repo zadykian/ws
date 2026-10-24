@@ -75,5 +75,5 @@ The caveats:
 
 A run checks the file with `nft -c` before it lands. Where the file or the unit changed, or the
 table is gone, as after `nft flush ruleset`, it reloads the table in one transaction, with no
-moment without it. In a container, as in CI, with `--skip-tags systemd`, the run writes both, but
-neither checks nor loads the table.
+moment without it. In a container, with `--skip-tags systemd`, the run writes both, but neither
+checks nor loads the table. CI checks it after its runs ([The playbook](checks.md#the-playbook)).

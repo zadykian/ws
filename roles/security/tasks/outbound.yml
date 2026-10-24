@@ -9,8 +9,8 @@
     group: root
     mode: "0755"
 
-# nft -c checks the file in the kernel, which a container without NET_ADMIN refuses, as CI's does:
-# --skip-tags systemd skips the check.
+# nft -c checks the file in the kernel, which a container without NET_ADMIN refuses: --skip-tags
+# systemd skips the check. CI's playbook job runs it on the file after the play (docs/checks.md).
 - name: Write the outbound table
   ansible.builtin.template:
     src: outbound.nft.j2
