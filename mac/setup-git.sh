@@ -9,8 +9,6 @@
 git_dir=$HOME/.config/ws
 # git's XDG file, which git reads before ~/.gitconfig.
 git_xdg=${XDG_CONFIG_HOME:-$HOME/.config}/git/config
-# Secretive's agent: its socket, and a .pub in PublicKeys for each key it holds (Secretive 4.0.0).
-secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data
 
 # git_mac sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_KEY, and leaves
 # it alone without them.
@@ -93,17 +91,17 @@ git_gh() {
 # ~/.config/ws/secretive-ssh-keygen, which gives ssh-keygen Secretive's agent. So a terminal and an
 # IDE sign alike, whatever agent the app that runs git has. Under --check, before the key is made,
 # it writes no allowed signers.
-# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
+# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile, and ws_secretive is setup-conf.sh's
 git_files() {
     git_program=
     case $git_pub in
-    "$secretive"/PublicKeys/*.pub)
+    "$ws_secretive"/PublicKeys/*.pub)
         git_program=$git_dir/secretive-ssh-keygen
         ws_put "$git_program" 755 <<EOF
 #!/bin/sh
 # Written by ws's mac/setup.sh: git's gpg.ssh.program, ssh-keygen with Secretive's agent, which
 # holds the signing key. Its next run replaces changes made here.
-SSH_AUTH_SOCK='$secretive/socket.ssh'
+SSH_AUTH_SOCK='$ws_secretive/socket.ssh'
 export SSH_AUTH_SOCK
 exec ssh-keygen "\$@"
 EOF
