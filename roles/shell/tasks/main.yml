@@ -85,8 +85,11 @@
 - name: Write ~/.secrets/env from shell_secret_env
   ansible.builtin.import_tasks: secret_env.yml
 
+# Empty, the list leaves the tokens and their helpers as they are, so that a run without another
+# repository's values changes nothing.
 - name: Write git's tokens for hosts besides GitHub
   ansible.builtin.import_tasks: git_credentials.yml
+  when: shell_git_credentials | length > 0
 
 - name: Clone the repositories whose dest is missing
   ansible.builtin.import_tasks: clones.yml

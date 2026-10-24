@@ -24,9 +24,9 @@
 [credential "https://gist.github.com"]
 	helper = {{ "" }}
 	helper = !/usr/bin/gh auth git-credential
-# The helpers of git's tokens for servers besides GitHub, in a file of the role's. After gh's
-# helper, so that an entry for a path on GitHub wins below it. git skips it where the file is
-# missing.
+# The helpers of git's tokens for servers besides GitHub, in a file of the role's that a run
+# without shell_git_credentials leaves alone. After gh's helper, so that an entry for a path on
+# GitHub wins below it. git skips it where the file is missing.
 [include]
 	path = ~/.config/git/tokens.gitconfig
 # Last, so that its settings win. git skips it where the file is missing.

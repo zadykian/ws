@@ -93,9 +93,10 @@ refuses stays until the entry changes. Where two URLs match, the longer one wins
 answers for GitHub, except below an entry's URL there.
 
 The directory is the role's: each run removes any other file there, such as the token of an entry
-since dropped, whose helper leaves `tokens.gitconfig`. With the list empty, it removes the
-directory too. No token reaches `tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` and
-`--diff` included: a dry run shows the helpers' diff, and that a token would change, not which.
+since dropped, whose helper leaves `tokens.gitconfig`. Empty, the list leaves the tokens and
+`tokens.gitconfig` as they are, so that a run without the extra vars, as CI's, keeps them. No token
+reaches `tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` and `--diff` included: a dry
+run shows the helpers' diff, and that a token would change, not which.
 
 To revoke a token, revoke it on the server first. Then set `state: absent` on its entry, and keep
 the entry until each machine has run with it.
