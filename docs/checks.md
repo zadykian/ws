@@ -86,23 +86,31 @@ router outside the cable's `/30`. It must stop too on a `-setmanual` that fails 
 and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). `ssh -G` must give
 `ws` and `ws-ssh` the file key, by the four lines `config.d/ws` had for it before. It must give
 them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
-showing `config.d/ws`'s diff alone ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
+showing `config.d/ws`'s diff alone. Then it must give them an agent at Secretive's socket, which
+holds a P-256 key whose `.pub` is in `PublicKeys`, where those keys are empty. It must warn that
+this replaces the file key. A `-cert.pub`, a name with a blank or a directory there must not count.
+A second `.pub` must stop `setup.sh`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key
+must be the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is
+missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
+`setup.sh` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
+([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
 Without the stand-in app, `setup.sh` must install Gateway's cask once, through a stand-in brew that
 refuses any other call, and then print nothing. With an app in `/Applications`, it must install
 nothing. A failed install, or one that leaves no app, must draw a warning, and the run go on to the
 tunnel. So must a cask that Homebrew has without its app, which neither a run nor `--check` may
 install again ([mac-gateway-checks.sh](../.github/mac-gateway-checks.sh)). With `WS_GIT_NAME`
 and `WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must
-stop on a `WS_GIT_SIGNING_KEY` that is missing, or a `.pub` that holds more than a public key. So
-must the default key or its `.pub` alone. git must then sign a commit and verify it. A
-`~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
+stop on a `WS_GIT_SIGNING_KEY` that is missing or unreadable, or a `.pub` that holds more than a
+public key. So must the default key or its `.pub` alone. git must then sign a commit and verify it.
+A `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
 lines, and name its own settings. An include below them, or a second one, must stop `setup.sh`
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket,
-`--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. Its
-credential helper for GitHub must be a stand-in gh's, which must add the key to its login once.
-Logged out, gh must draw a warning at each run. Logged in, `setup.sh` must warn of a 404 or another
-error of gh's, and of an add that leaves the account without the key. It must add the key where the
+`--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. `ws`
+must keep the file key, as Secretive's one key is git's. git's credential helper for GitHub
+must be a stand-in gh's, which must add the key to its login once. Logged out, gh must
+draw a warning at each run. Logged in, `setup.sh` must warn of a 404 or another error of
+gh's, and of an add that leaves the account without the key. It must add the key where the
 account lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh,
 `setup.sh` must install Homebrew's once, and only with git's keys
 ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun, the job

@@ -177,6 +177,13 @@ stops "setup.sh: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_KEY=$tmp/mixed.pub"
 stops "setup.sh: $tmp/mixed.pub holds no public key alone"
+# So must one it cannot read, where the user cannot, as on the runner: root reads it.
+cp "$key.pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
+if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
+    with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com \
+        "WS_GIT_SIGNING_KEY=$tmp/unread-git.pub"
+    stops "setup.sh: cannot read $tmp/unread-git.pub"
+fi
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com
 mv "$key" "$tmp/signing"
 stops "setup.sh: $key.pub is there without its private key"
@@ -212,6 +219,13 @@ prints ''
 prints '' --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
+# Secretive's one key is git's, which ssh's key for ws leaves out, so ws keeps the file key. The
+# agent and Secretive's container then go, so that the cases below give ws no key of theirs.
+[ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
+    error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
+kill "$agent" || true
+agent=
+rm -rf "$secretive"
 
 # Logged out, gh must draw a warning at each run, and nothing else where the files are written.
 # With gh's login, a 404, the answer to a login without the scope of signing keys, must draw a
