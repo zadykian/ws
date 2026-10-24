@@ -4,3 +4,4 @@
 /.claude/worktrees/
 /.cache/
 __pycache__/
+/host_vars/

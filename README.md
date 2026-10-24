@@ -76,6 +76,11 @@ Its arguments go to `ansible-playbook`: `--tags NAME` runs the role NAME alone.
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home.
 
+`-e` sets a value for one run. A value every run needs, such as the cable's port, goes in
+the clone's `host_vars/localhost.yml`, which git ignores and Ansible reads on each run
+([The direct link](docs/network.md#the-direct-link)). An edit of the tracked `group_vars/all.yml`
+would stop a pull that changes that file.
+
 Where gh logged in without the `write:ssh_signing_key` scope, add it once, before the run, so that
 the run registers the machine's signing key ([The signing key](docs/devtools.md#the-signing-key)):
 
