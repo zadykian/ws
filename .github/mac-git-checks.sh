@@ -51,12 +51,23 @@ signed() {
         error "git log shows '$got' for the commit"
 }
 
-# A stand-in gh goes in $tmp/bin, first on PATH, logged out. It logs each call.
+# A stand-in gh goes in $tmp/bin, first on PATH, logged in while $tmp/login is there. It logs each
+# call, and lists and adds the account's signing keys in $tmp/keys, for setup.sh's commands alone.
+: >"$tmp/keys"
+touch "$tmp/login"
 cat >"$tmp/bin/gh" <<'EOF'
 #!/bin/sh
-echo "$*" >>"${0%/bin/*}/gh.log"
-echo 'To get started with GitHub CLI, please run:  gh auth login' >&2
-exit 4
+state=${0%/bin/*}
+echo "$*" >>"$state/gh.log"
+if [ ! -f "$state/login" ]; then
+    echo 'To get started with GitHub CLI, please run:  gh auth login' >&2
+    exit 4
+fi
+case $* in
+'api --paginate user/ssh_signing_keys --jq .[].key') cat "$state/keys" ;;
+'ssh-key add '*) awk '{ print $1, $2 }' "$3" >>"$state/keys" ;;
+*) echo "gh: the stand-in takes no $*" >&2 && exit 2 ;;
+esac
 EOF
 chmod 755 "$tmp/bin/gh"
 if [ "$(command -v gh)" != "$tmp/bin/gh" ]; then
@@ -66,9 +77,11 @@ fi
 
 # With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, show the
 # files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, and write
-# the files and say so. Its credential command for GitHub must be gh's, and a second run and
-# --check print nothing.
+# the files. It must add the key to gh's login, titled with the Mac's name, and say so. Its
+# credential command for GitHub must be gh's, and a second run and --check print nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
+title=$(hostname -s)
+add="gh ssh-key add $key.pub --type signing --title $title"
 setup --check || error "setup.sh --check failed: $out"
 case $out in
 "setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*) ;;
@@ -78,7 +91,7 @@ for each in "$key" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig; do
     [ ! -e "$each" ] || error "setup.sh --check made $each"
 done
 prints "setup.sh: made git's signing key, $key${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig"
+setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran $add"
 prints ''
 prints '' --check
 ssh-keygen -y -P '' -f "$key" | grep -q '^ssh-ed25519 ' ||
@@ -184,7 +197,8 @@ case $out in
 esac
 [ ! -e "$files/secretive-ssh-keygen" ] || error "setup.sh --check wrote $files/secretive-ssh-keygen"
 prints "setup.sh: wrote $files/secretive-ssh-keygen${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig"
+setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran gh ssh-key\
+ add $secretive/Data/PublicKeys/ws.pub --type signing --title $title"
 prints ''
 prints '' --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.

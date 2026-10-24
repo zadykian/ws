@@ -33,5 +33,10 @@ Each stop comes before the script changes anything for git. git reads its XDG fi
 `~/.config/git/config`, before `~/.gitconfig`, so `~/.config/ws/gitconfig` wins over the settings
 there. The script names those of identity and signing as it adds the include.
 
-GitHub verifies a commit by the signing keys of its author's account, so add the key there once:
-`gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing`.
+GitHub verifies a commit by the signing keys of its author's account. Where those of gh's login lack
+the key, the script adds it with `gh ssh-key add --type signing`, titled with the Mac's name. The
+`devtools` role does the same on ws ([The signing key](devtools.md#the-signing-key)). The login
+needs the `write:ssh_signing_key` scope. Without a login, or on an error of gh's, the script says so
+at each run, and goes on. Until a run adds the key, GitHub shows the Mac's commits as unverified,
+and the ruleset on `main` refuses them. `--check` reads the account's keys, and says what it would
+add.

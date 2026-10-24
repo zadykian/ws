@@ -1,8 +1,9 @@
 # shellcheck shell=sh
 # The git step of mac/setup.sh, which setup-extras.sh sources: git's identity and a signing key of
 # the Mac's own. They go in ~/.config/ws/gitconfig, which ~/.gitconfig includes at its top, as the
-# shell role sets them up on ws. gh, from Homebrew where missing, takes git's pushes to GitHub. It
-# calls the functions of lib.sh and setup-lib.sh.
+# shell role sets them up on ws. gh, from Homebrew where missing, takes git's pushes to GitHub, and
+# registers the key there, as the devtools role does on ws. It calls the functions of lib.sh and
+# setup-lib.sh.
 
 # The directory of mac.conf, where the step writes its files.
 git_dir=$HOME/.config/ws
@@ -20,6 +21,7 @@ git_mac() {
     git_gh
     git_files
     git_include
+    git_register
 }
 
 # git_key sets git_pub to the signing key's .pub, WS_GIT_SIGNING_KEY with its ~/ the home, and
@@ -225,4 +227,51 @@ git_own() {
         grep -xE -e 'user\.(name|email|signingkey)|commit\.gpgsign' \
             -e 'gpg\.(format|ssh\.program|ssh\.allowedsignersfile)' |
         awk '!seen[$0]++ { printf "%s%s", n++ ? ", " : "", $0 }'
+}
+
+# git_listed succeeds where the signing keys of gh's login hold the key. It sets git_status to
+# gh's exit status, and keeps gh's errors in git_err.
+git_listed() {
+    git_status=0
+    git_keys=$("$gh" api --paginate user/ssh_signing_keys --jq '.[].key' 2>"$git_err") ||
+        git_status=$?
+    [ "$git_status" = 0 ] && printf '%s\n' "$git_keys" | grep -qxF -e "$git_public"
+}
+
+# git_register adds the key to the signing keys of gh's login where they lack it, titled with the
+# Mac's name, so that GitHub verifies the commits it signs. Without a login, or on an error of gh's,
+# it warns, at each run until one adds the key. Under --check, before gh or the key is there, it
+# does nothing.
+# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
+git_register() {
+    [ -n "$git_public" ] && [ -x "$gh" ] || return 0
+    ws_tmp
+    git_err=$ws_tmpfile
+    git_title=$(hostname -s)
+    git_add="gh ssh-key add $git_pub --type signing --title $git_title"
+    if ! git_listed && [ "$git_status" = 0 ]; then
+        if ws_checking; then
+            ws_say "would run $git_add"
+        elif "$gh" ssh-key add "$git_pub" --type signing --title "$git_title" >/dev/null \
+            2>"$git_err"; then
+            ws_say "ran $git_add"
+        else
+            git_status=$?
+        fi
+    fi
+    [ "$git_status" = 0 ] || git_warn
+    rm -f "$git_err"
+}
+
+# git_warn warns that gh cannot register the key, and why, from git_status and git_err.
+git_warn() {
+    case $git_status:$(cat "$git_err") in
+    4:*) git_why="gh has no login: gh auth login -h github.com -s write:ssh_signing_key logs in" ;;
+    *)
+        git_why=$(tail -n 1 "$git_err")
+        git_why="gh failed: ${git_why:-exit $git_status}"
+        ;;
+    esac
+    ws_say "warning: $git_why. Until a later run adds $git_pub, GitHub shows the commits it" \
+        "signs as unverified"
 }
