@@ -112,8 +112,9 @@ banning the address of the network the Mac is on after 5 failed ones. Over the t
 the Mac as `10.99.0.2`, which a ban would shut out of `ssh ws` for 10 minutes, while `ws-ssh` comes
 from another address.
 
-Neither ws nor its bridged containers open a connection to the Mac over the cable, the LAN or the
-tunnel ([The firewall](wireguard.md#the-firewall), [Outbound](security.md#outbound)).
+Unless `security_outbound` is false, neither ws nor its bridged containers open a connection to
+the Mac over the cable, the LAN or the tunnel ([The firewall](wireguard.md#the-firewall),
+[Outbound](security.md#outbound)).
 
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,

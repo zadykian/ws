@@ -1,8 +1,8 @@
 # security
 
 The `security` role sets up an sshd drop-in that lets everyone log in by key only, ufw, and
-fail2ban for SSH. It keeps what the server and its containers start to the internet and ikeward's
-VPN.
+fail2ban for SSH. By default, it keeps what the server and its containers start to the internet
+and ikeward's VPN.
 
 ## SSH and the firewall
 
@@ -19,10 +19,11 @@ address, as in `-p 0.0.0.0:8080:80`, is open to every network the host is on.
 
 ## Outbound
 
-What the server and Docker's containers start goes to the internet and to `ikeward0`, ikeward's
-VPN ([ikeward](ikeward.md)), and nowhere else. An nftables table of ws's own, `inet ws`, drops the
-rest. `security-outbound.service` loads it from `/usr/local/lib/ws/security/outbound.nft` at boot,
-before the network comes up. `ufw status verbose` still shows outgoing traffic allowed.
+Unless `security_outbound` is false, as below, what the server and Docker's containers start goes
+to the internet and to `ikeward0`, ikeward's VPN ([ikeward](ikeward.md)), and nowhere else. An
+nftables table of ws's own, `inet ws`, drops the rest. `security-outbound.service` loads it from
+`/usr/local/lib/ws/security/outbound.nft` at boot, before the network comes up. `ufw status verbose`
+still shows outgoing traffic allowed.
 
 These pass:
 
@@ -97,3 +98,7 @@ and the table, even one loaded by hand. A dry run shows each removal. Off leaves
 - the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
   or the cable, but for replies to the Mac's own connections
   ([The firewall](wireguard.md#the-firewall)).
+
+So Docker's containers reach a cloud's metadata service, and the VPC or the LAN, too. Only the
+table's `containers` chain drops what they forward: Docker forwards it ahead of ufw's rules, and
+`WS-MAC` covers `wg0` and the cable alone.
