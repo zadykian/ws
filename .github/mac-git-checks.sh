@@ -91,17 +91,23 @@ prints ''
     error "setup.sh left ~/.gitconfig with includes other than one of ~/.config/ws/gitconfig"
 tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "setup.sh lost ~/.gitconfig's own lines"
 [ -n "$(find ~/.gitconfig -perm 600)" ] || error "setup.sh changed ~/.gitconfig's mode 600"
-# An include by a path from the home must pass too.
+# An include by a path from the home must pass too. One below the file's own settings, or one at the
+# top and again below them, must stop setup.sh, as must a link that lacks the include. Each must
+# stop before the step acts: with the key moved aside and another name, the step would make a key
+# and write gitconfig. The link must stay one, and once its file has the include at its top,
+# setup.sh must take it.
 printf '[include]\n\tpath = .config/ws/gitconfig\n' >~/.gitconfig
 prints ''
-# A link that lacks the include must stop setup.sh, and stay a link. It must stop before the step
-# acts: with the key moved aside and another name, the step would make a key and write gitconfig.
-# Once the file it points to has the include at its top, setup.sh must take it.
+with 'WS_GIT_NAME="ws stand-in #2"' WS_GIT_EMAIL=ws@example.com
+mv "$key" "$key.pub" "$tmp"
+printf '[user]\n\tname = someone\n[include]\n\tpath = ~/.config/ws/gitconfig\n' >~/.gitconfig
+stops "setup.sh: $HOME/.gitconfig includes ~/.config/ws/gitconfig below its own settings"
+printf '[include]\n\tpath = %s\n[user]\n\tname = someone\n[include]\n\tpath = %s\n' \
+    \~/.config/ws/gitconfig .config/ws/gitconfig >~/.gitconfig
+stops "setup.sh: $HOME/.gitconfig includes ~/.config/ws/gitconfig 2 times: keep the one at the top"
 printf '[user]\n\tname = someone\n' >"$tmp/linked"
 rm ~/.gitconfig
 ln -s "$tmp/linked" ~/.gitconfig
-with 'WS_GIT_NAME="ws stand-in #2"' WS_GIT_EMAIL=ws@example.com
-mv "$key" "$key.pub" "$tmp"
 stops "setup.sh: $HOME/.gitconfig is a link to $tmp/linked: put"
 mv "$tmp/id_ed25519_signing" "$tmp/id_ed25519_signing.pub" ~/.ssh
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com

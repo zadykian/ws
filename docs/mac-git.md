@@ -17,9 +17,10 @@ line, as a private key does, stops the script too.
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
 the old file as `~/.gitconfig.TIME~`. It names the file's own settings of identity and signing,
-which then win, such as a `user.email`. Where `~/.gitconfig` is a link that lacks the include, the
-script stops: put it at the top of the file the link points to. The stop comes before the script
-changes anything for git.
+which then win, such as a `user.email`. Where the include sits below the file's own settings, which
+it then overrides, or comes twice, the script stops: keep one, at the top. Where `~/.gitconfig` is a
+link that lacks the include, the script stops: put it at the top of the file the link points to.
+Each stop comes before the script changes anything for git.
 
 GitHub verifies a commit by the signing keys of its author's account, so add the key there once:
 `gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing`.
