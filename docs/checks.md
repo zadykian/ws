@@ -66,6 +66,7 @@ A workflow of its own, `mac-wizard.yml`, runs `mac/wizard.sh` on GitHub's macOS 
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and a user would,
 then `checks.sh` runs the cases beside it in order, and stops at the first that fails
 ([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument and root.
+A run must stop where another holds the lock, and leave it.
 
 ## The Mac
 
