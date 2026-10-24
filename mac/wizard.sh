@@ -8,7 +8,8 @@
 # up where the last one stopped, and a second prints nothing. --check prints what each stage would
 # do, and changes nothing. --update has each stage that skips work by what an earlier run kept, such
 # as a stamp, do that work again. A run holds a lock, a directory in $TMPDIR, and keeps the Mac from
-# idle sleep until it exits. The stages, in order:
+# idle sleep until it exits. A run in which a stage acted ends with what stays by hand. The stages,
+# in order:
 #
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
@@ -19,6 +20,12 @@ set -eu
 dir=$(cd "$(dirname "$0")" && pwd -P)
 # shellcheck source=lib.sh
 . "$dir/lib.sh"
+# shellcheck source=setup-lib.sh
+. "$dir/setup-lib.sh"
+
+# acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
+acted=0
+hand=
 
 # args takes the wizard's arguments: --check sets WS_CHECK, as setup-lib.sh's ws_args does, and
 # --update sets update.
@@ -38,8 +45,8 @@ args() {
     done
 }
 
-# lock takes a run's lock, a directory in TMPDIR, or stops where another run holds it. The exit
-# removes it, after a signal too.
+# lock takes a run's lock, a directory in TMPDIR that holds the run's own files, or stops where
+# another run holds it. The exit removes it, after a signal too.
 lock() {
     lock=${TMPDIR:-/tmp}
     lock=${lock%/}/ws-wizard.lock
@@ -47,7 +54,7 @@ lock() {
         [ -d "$lock" ] || ws_die "cannot make $lock"
         ws_die "another run holds $lock: wait for it to end, or remove it where none runs"
     fi
-    trap 'rmdir "$lock"' EXIT
+    trap 'rm -rf "$lock"' EXIT
     trap 'exit 1' HUP INT TERM
 }
 
@@ -60,10 +67,12 @@ lock() {
 # - FUNC_fail prints what failed and what to do, where FUNC_do fails or FUNC_done still does.
 # FUNC_after is optional: in a run, the stages before have done what this one waits on, or stopped
 # it. So is FUNC_done, without which FUNC_do runs at every run, and is silent where nothing differs.
-# FUNC_do runs on the left of ||, where set -e is off, so it checks what it runs itself.
+# FUNC_do runs on the left of ||, where set -e is off, so it checks what it runs itself. A stage
+# with FUNC_done acted where it was not done; one without sets acted itself.
 stage() {
     if command -v "$2_done" >/dev/null; then
         "$2_done" && return 0
+        ws_checking || acted=1
     fi
     if ws_checking && command -v "$2_after" >/dev/null; then
         stage_after=$("$2_after" || true)
@@ -78,19 +87,54 @@ stage() {
     fi
 }
 
+# by_hand TEXT... adds a line to what stays by hand, which a stage finds as it runs.
+by_hand() {
+    hand="$hand- $*
+"
+}
+
+# closing prints what stays by hand, after a run in which a stage acted.
+closing() {
+    [ "$acted" = 1 ] && [ -n "$hand" ] || return 0
+    printf '\nWhat stays by hand:\n%s' "$hand"
+}
+
 # setup_after prints Tools where PATH has no brew, at which setup.sh --check would stop.
 setup_after() {
     command -v brew >/dev/null || echo Tools
 }
 
 # setup_do runs mac/setup.sh, or setup.sh --check, after sudo's password rather than amid its
-# lines. setup.sh changes only what differs, and is silent then, so the stage has no setup_done.
+# lines. setup.sh changes only what differs, and is silent then, so the stage has no setup_done: a
+# run acted where setup.sh printed more than warnings. Until mac.conf has WS_PUBLIC_KEY, setup.sh
+# prints the Mac's key and the commands that make it ws's peer at every run, on stdout. So a run
+# drops that, and leaves the step by hand.
 setup_do() {
     sudo -v || ws_die "setup.sh: sudo -v failed; setup.sh needs sudo, as an admin of the Mac"
     if ws_checking; then
         sh "$dir/setup.sh" --check
-    else
-        sh "$dir/setup.sh"
+        return
+    fi
+    # A mac.conf that ws_conf refuses stops setup.sh, which says why.
+    exec 3>/dev/null
+    if (ws_conf "$HOME/.config/ws/mac.conf" && [ -n "$WS_PUBLIC_KEY" ]) 2>/dev/null; then
+        exec 3>&1
+    fi
+    {
+        setup_status=0
+        sh "$dir/setup.sh" 2>&1 >&3 3>&- || setup_status=$?
+        echo "$setup_status" >"$lock/setup.status"
+    } | tee "$lock/setup.log" >&2
+    exec 3>&-
+    [ "$(cat "$lock/setup.status")" = 0 ] || return 1
+    if grep -qv '^setup\.sh: warning: ' "$lock/setup.log"; then
+        acted=1
+    fi
+    ws_conf "$HOME/.config/ws/mac.conf"
+    if [ -z "$WS_PUBLIC_KEY" ]; then
+        by_hand "The Mac's tunnel: run mac/setup.sh, which prints the Mac's WireGuard key and the" \
+            "two commands that make it ws's peer. Run those, set WS_PUBLIC_KEY in mac.conf to the" \
+            "key the second prints, then run the wizard again (docs/mac.md, The Mac's tunnel)."
     fi
 }
 
@@ -112,6 +156,7 @@ main() {
     # ends with this shell.
     caffeinate -i -w $$ </dev/null >/dev/null 2>&1 &
     stage setup.sh setup
+    closing
 }
 
 main "$@"
