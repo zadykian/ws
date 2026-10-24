@@ -14,6 +14,13 @@ makes no other: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one. An empty
 `WS_GIT_SIGNING_KEY` gives the script's own instead. A `.pub` that holds more than a public key's
 line, as a private key does, stops the script too.
 
+Where Secretive holds the Mac's ssh key, give git a key of its own in Secretive's app, at Notify.
+The login key asks for Touch ID at each use by default, so a rebase would ask at each commit. Name
+its `.pub`, in `~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys`, in
+`WS_GIT_SIGNING_KEY`. git then signs through `~/.config/ws/secretive-ssh-keygen`, which gives
+`ssh-keygen` Secretive's agent, so that a terminal, a JetBrains IDE and other apps sign alike. The
+key never leaves the Secure Enclave, and signs only while the Mac is unlocked.
+
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
 the old file as `~/.gitconfig.TIME~`. It names the file's own settings of identity and signing,
