@@ -92,8 +92,8 @@ jobs:
               echo '::error::The second run of the playbook changed something.'
               exit 1
           fi
-      # The run's own nft -c is tagged systemd, so this checks the outbound table it wrote, and the
-      # users the table names, which the play's packages make.
+      # The run leaves out its own nft -c under --skip-tags systemd. This checks the outbound table
+      # it wrote, and the users the table names, which the play's packages make.
       - name: Check the outbound table
         run: nft -c -f /usr/local/lib/ws/security/outbound.nft
 
