@@ -38,8 +38,7 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 # shellcheck source=setup-ssh.sh
 . "$dir/setup-ssh.sh"
 
-# The daemon's files.
-libexec=/usr/local/libexec/ws-tunnel
+# The daemon's plist. Root's copies are in setup-lib.sh's ws_libexec.
 plist=/Library/LaunchDaemons/$ws_label.plist
 # The first line of the resolvers of WS_RESOLVERS, in place of lib.sh's, so that setup.sh and a
 # script that sources lib.sh alone each replace and remove only their own.
@@ -78,15 +77,15 @@ copies() {
         *) ws_die "$each, above root's copies, is not root's alone: owner, group and mode $attrs" ;;
         esac
     done
-    ws_dir_root "$libexec" 755
+    ws_dir_root "$ws_libexec" 755
     ws_changed=0
     for each in tunnel-conf.sh tunnel-paths.sh; do
-        ws_put_root "$libexec/$each" 644 <"$dir/$each"
+        ws_put_root "$ws_libexec/$each" 644 <"$dir/$each"
     done
-    ws_put_root "$libexec/ws-tunnel" 755 <"$dir/ws-tunnel"
+    ws_put_root "$ws_libexec/ws-tunnel" 755 <"$dir/ws-tunnel"
     if [ -e "$wg_from" ]; then
-        ws_copy_root "$wg_from" "$libexec/wg" 755
-        ws_copy_root "$go_from" "$libexec/wireguard-go" 755
+        ws_copy_root "$wg_from" "$ws_libexec/wg" 755
+        ws_copy_root "$go_from" "$ws_libexec/wireguard-go" 755
     else
         ws_say "would copy wg and wireguard-go once wireguard-tools is installed"
     fi
@@ -109,7 +108,7 @@ key() {
         return 0
     fi
     sudo sh -c 'umask 077 && "$1" genkey >"$2.new" && mv -f "$2.new" "$2"' \
-        sh "$libexec/wg" "$ws_etc/private.key" || ws_die "cannot make $ws_etc/private.key"
+        sh "$ws_libexec/wg" "$ws_etc/private.key" || ws_die "cannot make $ws_etc/private.key"
     ws_say "made the Mac's WireGuard key, $ws_etc/private.key"
 }
 
@@ -118,7 +117,7 @@ key() {
 tell() {
     [ "$key_made" = 1 ] || [ -z "$WS_PUBLIC_KEY" ] || return 0
     ws_checking && return 0
-    public=$(sudo sh -c '"$1" pubkey <"$2"' sh "$libexec/wg" "$ws_etc/private.key") ||
+    public=$(sudo sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" "$ws_etc/private.key") ||
         ws_die "cannot read the Mac's public key"
     # /etc/wireguard and bootstrap.sh are root's, so a WS_USER other than root goes through sudo,
     # with a terminal for its password. The key, which is public, goes in the remote command, so

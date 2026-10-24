@@ -3,6 +3,11 @@
 # take its arguments, check mac.conf's values, write the user's files and copy programs into
 # root's. They call lib.sh's functions and read and set its variables, as those of lib.sh do.
 
+# The directory of root's copies of ws-tunnel, its functions, wg and wireguard-go, which setup.sh
+# makes and the tunnel's daemon runs.
+# shellcheck disable=SC2034 # for setup.sh
+ws_libexec=/usr/local/libexec/ws-tunnel
+
 # ws_is_port PORT succeeds where PORT is a port number, 1 to 65535.
 ws_is_port() {
     case $1 in
