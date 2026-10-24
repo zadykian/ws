@@ -60,6 +60,20 @@ the `fans` role leaves its fans alone. It gives no VPN profile, so the `ikeward`
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
 and fails where they differ from the repository's.
 
+## The Mac's wizard
+
+A workflow of its own, `mac-wizard.yml`, runs `mac/wizard.sh` on GitHub's macOS runner, from a copy
+of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and a user would,
+such as `mac.conf`'s answers and dash. Then `checks.sh` runs the cases beside it in order, and stops
+at the first that fails ([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an
+unknown argument and root. A run must stop where another holds the lock, and leave it. A fresh
+`--check`, by sh and by dash, must find brew with its directories taken off `PATH`. As
+`setup.sh --check` must, it must change nothing, and it must leave no lock or temporary file.
+The first run, with that `PATH` too, must install what `setup.sh` installs, and load no daemon
+without `WS_PUBLIC_KEY`. It must drop the Mac's key, which `setup.sh` prints until then, and end
+with that step as one left by hand. A second run and `--check` must print nothing, by sh and by
+dash.
+
 ## The Mac
 
 CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
