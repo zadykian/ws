@@ -59,6 +59,13 @@ no VPN profile, so the `ikeward` role does nothing.
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
 and fails where they differ from the repository's.
 
+## The Mac's wizard
+
+A workflow of its own, `mac-wizard.yml`, runs `mac/wizard.sh` on GitHub's macOS runner, from a copy
+of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and a user would,
+then `checks.sh` runs the cases beside it in order, and stops at the first that fails
+([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument and root.
+
 ## The Mac
 
 CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
