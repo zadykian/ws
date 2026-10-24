@@ -7,7 +7,8 @@
 # Each stage reads what it sets up, acts where that isn't done, and reads it again. So a run takes
 # up where the last one stopped, and a second prints nothing. --check prints what each stage would
 # do, and changes nothing. --update has each stage that skips work by what an earlier run kept, such
-# as a stamp, do that work again. The stages, in order:
+# as a stamp, do that work again. A run holds a lock, a directory in $TMPDIR, and keeps the Mac from
+# idle sleep until it exits. The stages, in order:
 #
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
@@ -35,6 +36,19 @@ args() {
         *) ws_die "unknown argument '$arg'; usage: $ws_prog [--check] [--update]" ;;
         esac
     done
+}
+
+# lock takes a run's lock, a directory in TMPDIR, or stops where another run holds it. The exit
+# removes it, after a signal too.
+lock() {
+    lock=${TMPDIR:-/tmp}
+    lock=${lock%/}/ws-wizard.lock
+    if ! mkdir -m 700 "$lock" 2>/dev/null; then
+        [ -d "$lock" ] || ws_die "cannot make $lock"
+        ws_die "another run holds $lock: wait for it to end, or remove it where none runs"
+    fi
+    trap 'rmdir "$lock"' EXIT
+    trap 'exit 1' HUP INT TERM
 }
 
 # stage NAME FUNC runs the stage NAME through the functions whose names start with FUNC, as
@@ -93,6 +107,10 @@ main() {
     # /opt/homebrew/bin, so it goes first here, for the stages and setup.sh.
     PATH=/opt/homebrew/bin:$PATH
     export PATH
+    lock
+    # caffeinate keeps the Mac from idle sleep while a stage waits on a download or an answer, and
+    # ends with this shell.
+    caffeinate -i -w $$ </dev/null >/dev/null 2>&1 &
     stage setup.sh setup
 }
 
