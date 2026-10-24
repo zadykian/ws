@@ -56,7 +56,10 @@ named in a rule. By the kind of machine ws runs on, they hold:
 - on each, `wg0`, `10.99.0.0/24`.
 
 So, but for DHCP and resolved's lookups, the server opens no connection to the Mac or another host
-of these, nor to a gateway at a private address. The rest is the internet, and passes.
+of these, nor to a gateway at a private address. From the server, a UDP send there fails at once
+with "Operation not permitted", and ping shows only loss. A TCP connect hangs until the program
+gives up or its retries run out, after about 2 minutes, as the drop sends no reset. The rest is
+the internet, and passes.
 
 resolved's servers are the `nameserver` lines of `/run/systemd/resolve/resolv.conf`, from DHCP,
 DHCPv6, router advertisements, `DNS=` or a client such as `resolvectl`. The sets `resolvers4` and

@@ -49,6 +49,12 @@ created before keeps publishing on every address until created again, as by
 running, as after a reboot. Docker's published ports get past ufw:
 [SSH and the firewall](security.md#ssh-and-the-firewall).
 
+## Outbound
+
+Unless `security_outbound` is false, a container reaches no host of the LAN, the cable or `wg0`,
+nor of another private network around the server. The `security` role's table drops what it
+starts there, so a TCP connect hangs ([Outbound](security.md#outbound)).
+
 ## Build cache
 
 BuildKit drops build cache that no build has used for 90 days (`docker_build_cache_keep_days`). It
