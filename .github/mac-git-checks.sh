@@ -33,6 +33,9 @@ fi
 trap 'git_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
 [ ! -f ~/.gitconfig ] || mv ~/.gitconfig "$tmp/gitconfig"
 gitconfig_aside=1
+# git's XDG file is the cases' own, so that the runner's changes nothing.
+XDG_CONFIG_HOME=$tmp/xdg
+export XDG_CONFIG_HOME
 
 # signed makes a commit in a new repository, which git must sign with the key as WS_GIT_NAME and
 # WS_GIT_EMAIL, and verify with the allowed signers, which name the email.
@@ -115,6 +118,13 @@ printf '[include]\n\tpath = ~/.config/ws/gitconfig\n[user]\n\tname = someone\n' 
 prints ''
 [ -L ~/.gitconfig ] || error "setup.sh replaced the link ~/.gitconfig"
 rm ~/.gitconfig
+# git reads its XDG file before ~/.gitconfig, so ws's settings win over that file's: setup.sh must
+# name those of identity and signing as it makes ~/.gitconfig.
+mkdir -p "$tmp/xdg/git"
+printf '[user]\n\temail = someone@example.com\n' >"$tmp/xdg/git/config"
+prints "setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: warning: $tmp/xdg/git/config's settings of\
+ user.email come before the include in ~/.gitconfig, so ~/.config/ws/gitconfig's win over them"
+rm "$tmp/xdg/git/config" ~/.gitconfig
 # A WS_GIT_SIGNING_KEY that is missing must stop setup.sh, as must a .pub that holds more than a
 # public key's line, as a private key does. So must the default key's .pub alone, which a new key
 # would replace, and its private key alone.

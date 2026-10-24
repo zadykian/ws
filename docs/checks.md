@@ -86,9 +86,9 @@ stop on a `WS_GIT_SIGNING_KEY` that is missing, or a `.pub` that holds more than
 must the default key or its `.pub` alone. git must then sign a commit and verify it. A
 `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
 lines, and name its own settings. An include below them, or a second one, must stop `setup.sh`
-before it writes a file, as must a link that lacks the include. One whose file has it must pass
-([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun, the job
-fails, as the daemon runs the same wireguard-go.
+before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
+settings of git's XDG file must be named ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where
+wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
 
 ## The rules
 

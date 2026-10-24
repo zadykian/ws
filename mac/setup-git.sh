@@ -5,6 +5,8 @@
 
 # The directory of mac.conf, where the step writes its files.
 git_dir=$HOME/.config/ws
+# git's XDG file, which git reads before ~/.gitconfig.
+git_xdg=${XDG_CONFIG_HOME:-$HOME/.config}/git/config
 
 # git_mac sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_KEY, and leaves
 # it alone without them.
@@ -129,7 +131,8 @@ git_include_ok() {
 # git_include puts an include of ~/.config/ws/gitconfig at the top of ~/.gitconfig where
 # git_include_ok found none, so that the file's own settings come after it and win. It makes the
 # file where missing, and keeps the old one as ~/.gitconfig.TIME~, as setup-ssh.sh keeps
-# ~/.ssh/config. It names the file's own settings of identity and signing.
+# ~/.ssh/config. It names the file's own settings of identity and signing, which win, and those of
+# git's XDG file, which lose.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 git_include() {
     [ -z "$git_included" ] || return 0
@@ -153,6 +156,9 @@ git_include() {
     git_list=$(git_own "$git_file")
     [ -z "$git_list" ] || ws_say "warning: $git_file's own settings of $git_list, below the" \
         "include, win over ~/.config/ws/gitconfig's"
+    git_list=$(git_own "$git_xdg")
+    [ -z "$git_list" ] || ws_say "warning: $git_xdg's settings of $git_list come before the" \
+        "include in ~/.gitconfig, so ~/.config/ws/gitconfig's win over them"
 }
 
 # git_ours -q|-c greps stdin for the lines that name ~/.config/ws/gitconfig, as git config prints
