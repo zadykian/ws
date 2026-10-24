@@ -213,9 +213,10 @@ prints '' --check
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
 
 # Logged out, gh must draw a warning at each run, and nothing else where the files are written.
-# With gh's login, another error must draw a warning of its last line, as must an add that leaves
-# the account without the key. Then, where the account lacks the key, --check must show the add, a
-# run must add it, and a second run and --check print nothing.
+# With gh's login, a 404, the answer to a login without the scope of signing keys, must draw a
+# warning that names the scope. Another error must draw its last line, its final period dropped, as
+# must an add that leaves the account without the key. Then, where the account lacks the key,
+# --check must show the add, a run must add it, and a second run and --check print nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 rm "$tmp/login"
 warning=$(warned "$key.pub")
@@ -224,8 +225,12 @@ prints "$warning"
 prints "$warning" --check
 touch "$tmp/login"
 until="Until a later run adds $key.pub, GitHub shows the commits it signs as unverified"
-printf '%s\n' 'Post "https://api.github.com/user/ssh_signing_keys": EOF' 'gh: offline' >"$tmp/error"
+printf '%s\n' 'Post "https://api.github.com/user/ssh_signing_keys": EOF' 'gh: offline.' \
+    >"$tmp/error"
 prints "setup.sh: warning: gh failed: gh: offline. $until"
+echo 'gh: Not Found (HTTP 404)' >"$tmp/error"
+prints "setup.sh: warning: gh's login lacks the write:ssh_signing_key scope: gh auth refresh -h\
+ github.com -s write:ssh_signing_key adds it. $until"
 rm "$tmp/error"
 : >"$tmp/keys"
 touch "$tmp/lost"

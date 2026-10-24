@@ -240,8 +240,8 @@ git_listed() {
 
 # git_register adds the key to the signing keys of gh's login where they lack it, titled with the
 # Mac's name, so that GitHub verifies the commits it signs. Then it checks that they list it.
-# Without a login, or on an error of gh's, it warns, at each run until one adds the key. Under
-# --check, before gh or the key is there, it does nothing.
+# Without a login or its write:ssh_signing_key scope, or on another error of gh's, it warns, at each
+# run until one adds the key. Under --check, before gh or the key is there, it does nothing.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 git_register() {
     [ -n "$git_public" ] && [ -x "$gh" ] || return 0
@@ -267,12 +267,19 @@ git_register() {
     rm -f "$git_err"
 }
 
-# git_warn warns that gh cannot register the key, and why, from git_status and git_err.
+# git_warn warns that gh cannot register the key, and why, from git_status and git_err, in the
+# devtools role's words. A 404 answers a login without the scope, and gh's last line of error loses
+# its final period.
 git_warn() {
     case $git_status:$(cat "$git_err") in
     4:*) git_why="gh has no login: gh auth login -h github.com -s write:ssh_signing_key logs in" ;;
+    *'HTTP 404'*)
+        git_why="gh's login lacks the write:ssh_signing_key scope: gh auth refresh -h github.com"
+        git_why="$git_why -s write:ssh_signing_key adds it"
+        ;;
     *)
         git_why=$(tail -n 1 "$git_err")
+        git_why=${git_why%.}
         git_why="gh failed: ${git_why:-exit $git_status}"
         ;;
     esac
