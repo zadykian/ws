@@ -32,14 +32,53 @@
     mode: "0644"
   notify: Load the outbound table
 
-# A table deleted by hand, or flushed with every other, leaves the unit active, and nothing else
-# would notify the handler.
-- name: Look for the outbound table
-  ansible.builtin.command: nft list table inet ws
+# A run cut short before the handler leaves the old table in force. A table flushed or deleted by
+# hand leaves the unit active. Nothing else would notify the handler, so the run compares the
+# kernel's table with the file's, loaded in a network namespace of the task's own. -st leaves out
+# counters' values and named sets' elements, not the counters themselves. unshare needs
+# CAP_SYS_ADMIN, which CI's container lacks. A dry run skips the write's check, so an old file that
+# fails to load counts there as a reload due. One with no file yet has none to load.
+- name: List the table that the outbound file loads
+  ansible.builtin.command:
+    argv:
+      - unshare
+      - --net
+      - sh
+      - -c
+      - nft -f "$1" && nft -st list table inet ws
+      - sh
+      - "{{ security_outbound_file }}"
+  register: security_outbound_loaded
+  changed_when: false
+  failed_when: not ansible_check_mode and security_outbound_loaded.rc != 0
+  check_mode: false
+  when: not ansible_check_mode or security_outbound_file is file
+  tags: [systemd]
+
+- name: Compare the outbound table in force with its file's
+  ansible.builtin.command: nft -st list table inet ws
   register: security_outbound_table
-  changed_when: security_outbound_table.rc != 0
+  changed_when: >-
+    security_outbound_table.rc != 0
+    or security_outbound_loaded.rc | default(0) != 0
+    or security_outbound_table.stdout != security_outbound_loaded.stdout | default('')
   failed_when: false
   check_mode: false
+  notify: Load the outbound table
+  tags: [systemd]
+
+# A unit written by a run cut short is in force only after the handler's daemon-reload, as is one
+# systemd failed to load, such as one removed while active, then reloaded. systemd_service fails
+# on the latter, so a failure here is a reload due too. A dry run with no unit yet has none.
+- name: Look for a change to security-outbound.service that systemd hasn't read
+  ansible.builtin.systemd_service:
+    name: security-outbound.service
+  register: security_outbound_unit
+  changed_when: >-
+    security_outbound_unit.status.LoadState | default('') != 'loaded'
+    or security_outbound_unit.status.NeedDaemonReload | default('') == 'yes'
+  failed_when: false
+  when: not ansible_check_mode or '/etc/systemd/system/security-outbound.service' is file
   notify: Load the outbound table
   tags: [systemd]
 

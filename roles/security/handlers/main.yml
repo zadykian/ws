@@ -17,8 +17,9 @@
   when: "'systemd' not in ansible_skip_tags"
   tags: [systemd]
 
-# Puts a changed table or unit in force at once. A reload starts a unit that isn't active. A dry
-# run where the unit isn't written yet has none to reload.
+# Puts the file's table and unit in force at once, where the kernel holds another table or systemd
+# an older unit (outbound.yml). A reload starts a unit that isn't active. A dry run where the unit
+# isn't written yet has none to reload.
 - name: Load the outbound table
   ansible.builtin.systemd_service:
     name: security-outbound.service

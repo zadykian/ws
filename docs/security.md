@@ -74,10 +74,14 @@ The caveats:
 - `nft list table inet ws` shows the table, and `systemctl status security-outbound` why it failed
   to load. `systemctl stop security-outbound` removes this table alone, until the next boot or run.
 
-A run checks the file with `nft -c` before it lands. Where the file or the unit changed, or the
-table is gone, as after `nft flush ruleset`, it reloads the table in one transaction, with no
-moment without it. In a container, with `--skip-tags systemd`, the run writes both, but neither
-checks nor loads the table. CI checks it after its runs ([The playbook](checks.md#the-playbook)).
+A run checks the file with `nft -c` before it lands. It then loads the file in a network namespace
+of its own and compares that table with the kernel's, as `nft -st list table inet ws` lists them.
+That leaves out counters' values and named sets' elements, but not the counters themselves. Where
+the tables differ, the run reloads the table in one transaction, with no moment without it. So it
+does where systemd failed to load the unit, or hasn't read it since it changed. That covers a run
+cut short before the reload, and a table flushed or deleted by hand. In a container, with
+`--skip-tags systemd`, the run writes both, but skips the check, the comparison and the reload. CI
+checks the file after its runs ([The playbook](checks.md#the-playbook)).
 
 `security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
