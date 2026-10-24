@@ -35,3 +35,9 @@
     daemon_reload: true
   when: "'systemd' not in ansible_skip_tags"
   tags: [systemd]
+
+- name: Remove the outbound table
+  ansible.builtin.command: nft destroy table inet ws
+  changed_when: true
+  when: "'systemd' not in ansible_skip_tags"
+  tags: [systemd]

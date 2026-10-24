@@ -91,7 +91,7 @@ curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh |
 
 `-e` holds for that run alone, so the next run without it puts the table back. A run with it false
 stops and disables `security-outbound.service`. It removes the unit, `/usr/local/lib/ws/security`
-and the table. A dry run shows each file's removal. Off leaves:
+and the table, even one loaded by hand. A dry run shows each removal. Off leaves:
 
 - ufw's default, which allows every outgoing connection;
 - the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`

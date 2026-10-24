@@ -47,3 +47,17 @@
 
 - name: Reload systemd now if the units went
   ansible.builtin.meta: flush_handlers
+
+# A table no stop removed outlives it: one loaded by hand with nft -f, or one whose unit's file is
+# gone. A dry run, which stops no unit, finds the table and shows its removal.
+- name: Look for an outbound table still loaded
+  ansible.builtin.command: nft list table inet ws
+  register: security_outbound_left
+  changed_when: security_outbound_left.rc == 0
+  failed_when: false
+  check_mode: false
+  notify: Remove the outbound table
+  tags: [systemd]
+
+- name: Take the outbound table off now
+  ansible.builtin.meta: flush_handlers
