@@ -73,6 +73,11 @@ without `WS_PUBLIC_KEY`. It must drop the Mac's key, which `setup.sh` prints unt
 with that step as one left by hand. A second run and `--check` must print nothing, by sh and by
 dash.
 
+The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
+must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
+`--check`, with the form the key takes. `--check` must show the environment's answers as the lines
+it would add to `mac.conf`, and the first run must add them at its end.
+
 ## The Mac
 
 CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
