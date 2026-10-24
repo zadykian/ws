@@ -75,8 +75,6 @@ a run changes the drops, which last through Docker's restarts. Where the unit fa
 without them, and `systemctl status wireguard-docker-user` shows why.
 
 The drops take a change of `network_direct_link_interface` as the `wireguard` role next runs, so
-run `--tags network,wireguard` after one. Unless `security_outbound` is false, the `security`
-role's table drops what bridged containers start to the LAN too. It also drops what the server
-itself starts to the Mac over the LAN, the cable or `wg0`. A container on the host's network meets
-the table as the server's own processes do.
-[Outbound](security.md#outbound) says what gets past it.
+run `--tags network,wireguard` after one. Unless `security_outbound` is false, they are a second
+layer: the `security` role's table drops what the containers start through `wg0` or the cable too
+([Outbound](security.md#outbound)).

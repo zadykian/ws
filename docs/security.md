@@ -80,8 +80,9 @@ gives. A DHCPv6 address alone, or a prefix without that flag, routes through the
 passes.
 
 What a container sends out of the server drops alike, but where it leaves by `ikeward0` or a
-bridge. What comes in by any other link, as the Mac's packets from `wg0` to `ikeward0`, is ufw's
-to judge ([Forwarding](ikeward.md#forwarding)).
+bridge. A container on the host's network meets the table as the server's own processes do. What
+comes in by any other link, as the Mac's packets from `wg0` to `ikeward0`, is ufw's to judge
+([Forwarding](ikeward.md#forwarding)).
 
 The caveats:
 

@@ -19,9 +19,10 @@ file with the other files' entries of the port's name, as the installer's: its s
 its address joins theirs. Boot doesn't wait for the link, which is up only while the Mac is docked.
 The Mac takes `10.77.0.2`, with the mask `255.255.255.252` and no router, in its adapter's
 settings, by hand. ufw lets in SSH over the cable, as over any interface. Unless
-`security_outbound` is false, the server opens no connection over the cable
-([Outbound](security.md#outbound)). The `wireguard` role keeps Docker's
-containers off the cable, so a change of the port needs a run of it too
+`security_outbound` is false, the `security` role's table drops what the server and its
+containers start over the cable, whatever the port ([Outbound](security.md#outbound)). The
+`wireguard` role's drops keep the containers off it by the port's name: a second layer, or the
+only one with the table off. So a change of the port needs a run of that role too
 ([The firewall](wireguard.md#the-firewall)).
 
 The run stops where the port looks like an uplink: it carries a default route, in any routing
