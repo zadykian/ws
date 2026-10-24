@@ -11,6 +11,7 @@
 # ~/.ssh/config. With sudo, it gives the cable's address to the service WS_CABLE_SERVICE names. With
 # WS_GIT_NAME, it makes git's signing key and ~/.config/ws/gitconfig, which it includes at the top
 # of ~/.gitconfig, and installs Homebrew's gh where PATH has none. gh then adds the key to GitHub.
+# It installs JetBrains Gateway from Homebrew's cask where its app is missing.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
 # wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made

@@ -1,20 +1,24 @@
 # shellcheck shell=sh source-path=SCRIPTDIR
 # The Mac's own steps of mac/setup.sh, beside ssh's hosts and the tunnel: the cable's address on
-# the display's adapter, and git's identity and signing key. setup.sh sources it after lib.sh and
-# setup-lib.sh, whose functions it calls, and runs extras before the tunnel.
+# the display's adapter, git's identity and signing key, and JetBrains Gateway. setup.sh sources it
+# after lib.sh and setup-lib.sh, whose functions it calls, and runs extras before the tunnel.
 
 # The Mac's end of the cable, in lib.sh's ws_cable_net, and that /30's mask.
 cable_client=10.77.0.2
 cable_mask=255.255.255.252
+# The app that Homebrew's cask jetbrains-gateway puts in /Applications.
+gateway_app='JetBrains Gateway.app'
 
 # The git step's functions are setup-git.sh's, sourced from dir, mac/'s path, as setup.sh sets it.
 # shellcheck source=setup-git.sh disable=SC2154 # dir is setup.sh's
 . "$dir/setup-git.sh"
 
-# extras runs the Mac's own steps, each of which leaves the Mac alone where mac.conf lacks its key.
+# extras runs the Mac's own steps. The cable's and git's leave the Mac alone where mac.conf lacks
+# their keys, and Gateway's needs none.
 extras() {
     cable
     git_mac
+    gateway
 }
 
 # cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of
@@ -88,4 +92,37 @@ cable_set() {
             }
         ')
     [ -z "$cable_other" ]
+}
+
+# gateway installs JetBrains Gateway, through which the Mac opens Rider and GoLand on ws, from
+# Homebrew's cask where gateway_there finds no app, and then looks again. A failed install is a
+# warning, so that the tunnel's steps still run, and the next run tries again. Where Homebrew has
+# the cask but gateway_there finds no app, it warns instead, as brew install would upgrade the
+# cask. Gateway updates itself, so it runs no brew upgrade. Without Homebrew it stops, as tools
+# does.
+gateway() {
+    gateway_there && return 0
+    brew=$(command -v brew) || ws_die "install Homebrew first: https://brew.sh"
+    if ! "$brew" list --cask jetbrains-gateway >/dev/null 2>&1; then
+        if ws_checking; then
+            ws_say "would run brew install --cask jetbrains-gateway"
+            return 0
+        fi
+        ws_say "installing jetbrains-gateway"
+        if ! "$brew" install --cask jetbrains-gateway >&2; then
+            ws_say "warning: brew install --cask jetbrains-gateway failed, so the Mac has no" \
+                "JetBrains Gateway: the next run tries again"
+            return 0
+        fi
+        gateway_there && return 0
+    fi
+    ws_say "warning: Homebrew has the cask jetbrains-gateway, but no $gateway_app is in" \
+        "/Applications or ~/Applications: brew reinstall --cask jetbrains-gateway puts it in" \
+        "/Applications, unless HOMEBREW_CASK_OPTS names another --appdir"
+}
+
+# gateway_there succeeds where Gateway's app is in /Applications, where its cask puts it, or in
+# ~/Applications. An app of that name installed another way counts too.
+gateway_there() {
+    [ -d "/Applications/$gateway_app" ] || [ -d "$HOME/Applications/$gateway_app" ]
 }
