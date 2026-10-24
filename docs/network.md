@@ -17,8 +17,8 @@ The `network` role then writes `/etc/netplan/60-direct-link.yaml`, which gives t
 `10.77.0.1/30` (`network_direct_link_address`), and no DHCP, gateway or DNS. netplan merges the
 file with the other files' entries of the port's name, as the installer's: its settings win, and
 its address joins theirs. Boot doesn't wait for the link, which is up only while the Mac is docked.
-The Mac takes `10.77.0.2`, with the mask `255.255.255.252` and no router, in its adapter's
-settings, by hand. ufw lets in SSH over the cable, as over any interface. The server opens no
+The Mac takes `10.77.0.2/30`, with no router, from `mac/setup.sh` ([The cable](mac.md#the-cable)).
+ufw lets in SSH over the cable, as over any interface. The server opens no
 connection over the cable ([Outbound](security.md#outbound)). The `wireguard` role keeps Docker's
 containers off the cable, so a change of the port needs a run of it too
 ([The firewall](wireguard.md#the-firewall)).

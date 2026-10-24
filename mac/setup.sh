@@ -8,7 +8,7 @@
 # WireGuard tunnel to ws, and ws-ssh reaches ws over the cable, the home LAN or the router's port
 # forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY and launchd has the
 # tunnel's daemon, ws goes the ways ws-ssh does. It puts `Include config.d/ws` first in
-# ~/.ssh/config.
+# ~/.ssh/config. With sudo, it gives the cable's address to the service WS_CABLE_SERVICE names.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
 # wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
@@ -17,9 +17,9 @@
 # launchd has the daemon, it sends WS_TUNNEL_NETWORKS into the tunnel and writes WS_RESOLVERS'
 # files in /etc/resolver.
 #
-# A run changes only what differs, so a second prints nothing once mac.conf has WS_PUBLIC_KEY.
-# Until then, each run prints the Mac's public key again, with the commands that make it ws's peer.
-# --check prints each change as a diff and makes none. docs/mac.md has the rest.
+# A run changes only what differs, so a second prints nothing but warnings once mac.conf has
+# WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make
+# it ws's peer. --check prints each change as a diff and makes none. docs/mac.md has the rest.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -30,6 +30,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/lib.sh"
 # shellcheck source=setup-lib.sh
 . "$dir/setup-lib.sh"
+# shellcheck source=setup-extras.sh
+. "$dir/setup-extras.sh"
 # shellcheck source=setup-ssh.sh
 . "$dir/setup-ssh.sh"
 
@@ -263,6 +265,7 @@ main() {
     fi
     ssh_files
     ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
+    extras
     tunnel
     if [ "$via_tunnel" = 0 ] && [ -n "$WS_PUBLIC_KEY" ] && ws_tunnel_loaded; then
         via_tunnel=1
