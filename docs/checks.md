@@ -90,7 +90,9 @@ showing `config.d/ws`'s diff alone. Then it must give them an agent at Secretive
 holds a P-256 key whose `.pub` is in `PublicKeys`, where those keys are empty. It must warn that
 this replaces the file key. A `-cert.pub`, a name with a blank or a directory there must not count.
 A second `.pub` must stop `setup.sh`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key
-must be the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key
+must be the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is
+missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
+`setup.sh` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
 ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
 Without the stand-in app, `setup.sh` must install Gateway's cask once, through a stand-in brew that
 refuses any other call, and then print nothing. With an app in `/Applications`, it must install

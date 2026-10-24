@@ -62,6 +62,31 @@ keyed 'identitiesonly yes' "identityfile $tmp/key"
 socket="$tmp/ws agent.sock"
 with "WS_IDENTITY=$tmp/key.pub" "WS_IDENTITY_AGENT=\"$socket\""
 agented "$tmp/key.pub" "$socket"
+# A .pub that is missing, holds a private key or holds no key ssh-keygen reads must stop setup.sh.
+# So must a certificate, and a line that is no key, which setup.sh must not print as a key's type.
+with "WS_IDENTITY=$tmp/none.pub"
+stops "setup.sh: $tmp/none.pub, mac.conf's WS_IDENTITY, is missing"
+cp "$tmp/key" "$tmp/mixed.pub"
+with "WS_IDENTITY=$tmp/mixed.pub"
+stops "setup.sh: $tmp/mixed.pub holds no public key alone"
+echo 'ssh-ed25519 AAAA ws' >"$tmp/bad.pub"
+with "WS_IDENTITY=$tmp/bad.pub"
+stops "setup.sh: ssh-keygen cannot read $tmp/bad.pub"
+# So must one it cannot read, where the user cannot, as on the runner: root reads it.
+cp "$tmp/key.pub" "$tmp/unread.pub" && chmod 000 "$tmp/unread.pub"
+if ! cat "$tmp/unread.pub" >/dev/null 2>&1; then
+    with "WS_IDENTITY=$tmp/unread.pub"
+    stops "setup.sh: cannot read $tmp/unread.pub"
+fi
+ssh-keygen -q -s "$tmp/key" -I ws "$tmp/key.pub"
+with "WS_IDENTITY=$tmp/key-cert.pub"
+stops "setup.sh: $tmp/key-cert.pub is a certificate"
+rm "$tmp/key-cert.pub"
+for line in 'ws-token AAAA' 'ssh-ws stand-in!'; do
+    echo "$line" >"$tmp/token.pub"
+    with "WS_IDENTITY=$tmp/token.pub"
+    stops "setup.sh: $tmp/token.pub holds no public key alone"
+done
 # Without them, config.d/ws must be the job's again.
 job
 
@@ -134,6 +159,13 @@ with "WS_IDENTITY=$sec/PublicKeys/other.pub"
 agented "$sec/PublicKeys/other.pub" "$sec/socket.ssh"
 with "WS_IDENTITY=$sec/PublicKeys/other.pub" "WS_IDENTITY_AGENT=\"$socket\""
 agented "$sec/PublicKeys/other.pub" "$socket"
+# A key of a type that ws's OpenSSH lacks, as Secretive's ML-DSA, must stop setup.sh, --check too.
+rm "$data/PublicKeys/other.pub"
+echo 'ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws' >"$data/PublicKeys/ws.pub"
+with
+mldsa="setup.sh: $data/PublicKeys/ws.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
+stops "$mldsa"
+stops "$mldsa" --check
 # Without Secretive's agent, config.d/ws must be the job's again.
 secretive_restore
 job
