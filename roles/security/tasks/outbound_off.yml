@@ -48,6 +48,26 @@
 - name: Reload systemd now if the units went
   ansible.builtin.meta: flush_handlers
 
+# A failed unit stays loaded, and the system degraded, until reset-failed, which exits 0 for any
+# loaded unit: is-failed tells which failed. A dry run, which resets none, counts each as a change.
+- name: Look for the outbound table's failed units
+  # noqa: command-instead-of-module - systemd_service fails on a unit whose file is gone.
+  ansible.builtin.command: systemctl is-failed {{ item | basename }}
+  loop: "{{ security_outbound_units }}"
+  register: security_outbound_failed
+  changed_when: ansible_check_mode and security_outbound_failed.stdout == 'failed'
+  failed_when: false
+  check_mode: false
+  tags: [systemd]
+
+- name: Clear the outbound table's failed units
+  ansible.builtin.command: systemctl reset-failed {{ item.item | basename }}
+  loop: "{{ security_outbound_failed.results | selectattr('stdout', 'eq', 'failed') }}"
+  loop_control:
+    label: "{{ item.item | basename }}"
+  changed_when: true
+  tags: [systemd]
+
 # A table no stop removed outlives it: one loaded by hand with nft -f, or one whose unit's file is
 # gone. A dry run, which stops no unit, finds the table and shows its removal.
 - name: Look for an outbound table still loaded
