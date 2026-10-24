@@ -102,7 +102,10 @@ Where `config.d/ws` gave ws that key, the script warns as Secretive's replaces i
 `.pub` to ws's `authorized_keys`, or keep the file key with `WS_IDENTITY=~/.ssh/id_ed25519.pub`.
 `WS_IDENTITY` names any `.pub`, as one of Secretive's. Its agent is the one whose socket
 `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh reads the file
-beside the `.pub`.
+beside the `.pub`. The script stops where that `.pub`, but the file key's, is missing or unreadable.
+It stops too where the `.pub` holds other than one public key's line, as a private key or a
+certificate does. So does a key that ssh-keygen cannot read, or one of a type that ws's OpenSSH
+lacks, as Secretive's ML-DSA keys on macOS 26.
 
 The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
 reads for each key. So neither the file's own settings nor the other files of `config.d` override
