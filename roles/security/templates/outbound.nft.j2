@@ -1,16 +1,19 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
-# What ws and its containers start goes to the internet and ikeward0 alone. A new packet to a
-# private, shared, link-local, multicast or broadcast range drops: these hold the LAN, the cable
-# and wg0, none of them named. Replies pass, so ws still answers the Mac, over WireGuard too, as
-# the Mac speaks first and keeps the flow alive.
+# What ws and its containers start goes to the internet and ikeward0 alone, but what the network
+# needs, such as DHCP and DNS. A new packet to a private, shared, link-local, multicast or broadcast
+# range drops: these hold the LAN, the cable, wg0, and a VM host's or a cloud's private network,
+# none of them named in a rule. Replies pass, so ws still answers the Mac, over WireGuard too, as
+# the Mac speaks first and keeps the flow alive. So WireGuard has no rule on its UDP port or a
+# mark, either of which would let any user past. Ubuntu's mtr-packet, with CAP_NET_RAW, lets any
+# user send from any port and set any mark, and while wg0 is down anyone may bind its port.
 #
-# security-outbound.service loads it through resolvers.sh, one transaction that replaces this table
-# and no other: nftables.conf would flush ufw's, Docker's, fail2ban's and ikeward's tables too. No
-# rule holds a set of ranges, or of names with *. The kernel fills such a set after its rules take
-# effect, and in a lab, packets to the LAN got past a reload. Each run loads the file in an empty
-# network namespace too (outbound.yml), so a rule names a link by oifname or iifname, never by the
-# index of oif or iif.
+# security-outbound.service loads this file through resolvers.sh, one transaction that replaces this
+# table and no other: nftables.conf would flush ufw's, Docker's, fail2ban's and ikeward's tables
+# too. No rule holds a set of ranges, or of names with *. The kernel fills such a set after its
+# rules take effect, and in a lab, packets to the LAN got past a reload. Each run loads the file in
+# an empty network namespace too (outbound.yml), so a rule names a link by oifname or iifname, never
+# by the index of oif or iif.
 destroy table inet ws
 
 table inet ws {
@@ -26,11 +29,12 @@ table inet ws {
     chain output {
         type filter hook output priority filter; policy accept;
         ct state established,related accept
-        # Loopback, the VPN, and Docker's bridges, whose packets the forward chain sees.
+        # Loopback, the VPN, and Docker's bridges. ws's own packets to its containers meet this
+        # chain alone; the forward chain sees what the containers send.
         oifname { "lo", "ikeward0", "docker0" } accept
         oifname "br-*" accept
         # networkd's DHCP and DHCPv6, by its user, as a raw socket could forge the ports. Its DHCP
-        # messages but a renewal go out by AF_PACKET, which no hook sees.
+        # discovers, and its requests but a renewal, go out by AF_PACKET, which no hook sees.
         meta skuid "systemd-network" udp sport 68 udp dport 67 accept
         meta skuid "systemd-network" udp sport 546 udp dport 547 accept
         # IPv6 finds its router and neighbours, and joins groups, on each link.
