@@ -84,8 +84,11 @@ router outside the cable's `/30`. It must stop too on a `-setmanual` that fails 
 and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). With `WS_GIT_NAME`
 and `WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must
 stop on a `WS_GIT_SIGNING_KEY` that is missing, or a `.pub` that holds more than a public key. So
-must the default key or its `.pub` alone ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where
-wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
+must the default key or its `.pub` alone. git must then sign a commit and verify it. A
+`~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
+lines, and name its own settings. A link that lacks the include must stop `setup.sh` before it
+writes a file, and one whose file has it pass ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
+Where wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
 
 ## The hooks
 
