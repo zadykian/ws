@@ -16,8 +16,8 @@ Conflicts=shutdown.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/sbin/nft -f {{ security_outbound }}
-ExecReload=/usr/sbin/nft -f {{ security_outbound }}
+ExecStart=/usr/sbin/nft -f {{ security_outbound_file }}
+ExecReload=/usr/sbin/nft -f {{ security_outbound_file }}
 ExecStop=/usr/sbin/nft destroy table inet ws
 
 [Install]

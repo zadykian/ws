@@ -3,7 +3,7 @@
 # security-outbound.service loads.
 - name: Create the directory of the outbound table
   ansible.builtin.file:
-    path: "{{ security_outbound | dirname }}"
+    path: "{{ security_outbound_file | dirname }}"
     state: directory
     owner: root
     group: root
@@ -14,7 +14,7 @@
 - name: Write the outbound table
   ansible.builtin.template:
     src: outbound.nft.j2
-    dest: "{{ security_outbound }}"
+    dest: "{{ security_outbound_file }}"
     owner: root
     group: root
     mode: "0644"
