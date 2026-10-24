@@ -21,6 +21,8 @@ git clone https://github.com/zadykian/ws ~/repository/ws
 ~/repository/ws/mac/setup.sh
 ```
 
+`mac/wizard.sh`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
+
 ## mac.conf
 
 The repository names no server, so the Mac's values go in `~/.config/ws/mac.conf`, `KEY=value`
