@@ -8,7 +8,8 @@
 # WireGuard tunnel to ws, and ws-ssh reaches ws over the cable, the home LAN or the router's port
 # forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY and launchd has the
 # tunnel's daemon, ws goes the ways ws-ssh does. It puts `Include config.d/ws` first in
-# ~/.ssh/config. With sudo, it gives the cable's address to the service WS_CABLE_SERVICE names.
+# ~/.ssh/config. With sudo, it gives the cable's address to the service WS_CABLE_SERVICE names. With
+# WS_GIT_NAME, it makes git's signing key.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
 # wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
