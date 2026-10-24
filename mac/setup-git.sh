@@ -7,6 +7,8 @@
 git_dir=$HOME/.config/ws
 # git's XDG file, which git reads before ~/.gitconfig.
 git_xdg=${XDG_CONFIG_HOME:-$HOME/.config}/git/config
+# Secretive's agent: its socket, and a .pub in PublicKeys for each key it holds (Secretive 4.0.0).
+secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data
 
 # git_mac sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_KEY, and leaves
 # it alone without them.
@@ -57,14 +59,30 @@ git_key() {
     [ -n "$git_public" ] || ws_die "$git_pub holds no public key alone, as ssh-keygen -y prints one"
     ssh-keygen -l -f "$git_pub" >/dev/null 2>&1 ||
         ws_die "ssh-keygen cannot read $git_pub: git signs with a key the Mac's ssh-keygen knows," \
-            "as ed25519"
+            "as ed25519 or Secretive's P-256"
 }
 
 # git_files writes ~/.config/ws/allowed_signers, which trusts the key for WS_GIT_EMAIL in git
-# verify-commit, and ~/.config/ws/gitconfig. Under --check, before the key is made, it writes no
-# allowed signers.
+# verify-commit, and ~/.config/ws/gitconfig. For a key of Secretive's, git signs through
+# ~/.config/ws/secretive-ssh-keygen, which gives ssh-keygen Secretive's agent. So a terminal and an
+# IDE sign alike, whatever agent the app that runs git has. Under --check, before the key is made,
+# it writes no allowed signers.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 git_files() {
+    git_program=
+    case $git_pub in
+    "$secretive"/PublicKeys/*.pub)
+        git_program=$git_dir/secretive-ssh-keygen
+        ws_put "$git_program" 755 <<EOF
+#!/bin/sh
+# Written by ws's mac/setup.sh: git's gpg.ssh.program, ssh-keygen with Secretive's agent, which
+# holds the signing key. Its next run replaces changes made here.
+SSH_AUTH_SOCK='$secretive/socket.ssh'
+export SSH_AUTH_SOCK
+exec ssh-keygen "\$@"
+EOF
+        ;;
+    esac
     if [ -n "$git_public" ]; then
         ws_put "$git_dir/allowed_signers" 644 <<EOF
 # Written by ws's mac/setup.sh from ~/.config/ws/mac.conf: its next run replaces changes made here.
@@ -81,8 +99,8 @@ EOF
 }
 
 # git_conf prints ~/.config/ws/gitconfig: the identity, and each commit signed with the key, which
-# the allowed signers file trusts for the email. The name and the paths go in quotes, which
-# mac.conf's values cannot end.
+# the allowed signers file trusts for the email, through git_program where there is one. The name
+# and the paths go in quotes, which mac.conf's values cannot end.
 git_conf() {
     cat <<EOF
 # Written by ws's mac/setup.sh from ~/.config/ws/mac.conf: its next run replaces changes made here.
@@ -98,6 +116,7 @@ git_conf() {
 [gpg "ssh"]
     allowedSignersFile = "$git_dir/allowed_signers"
 EOF
+    [ -z "$git_program" ] || echo "    program = \"$git_program\""
 }
 
 # git_include_ok sets git_included where ~/.gitconfig includes ~/.config/ws/gitconfig, first and
