@@ -30,6 +30,8 @@ WS_PUBLIC_KEY=WS_KEY
 WS_LAN=10.88.0.0/24
 WS_LAN_ADDRESS=10.88.0.10
 WS_CABLE_SERVICE="USB 10/100/1G/2.5G LAN"
+WS_GIT_NAME="NAME"
+WS_GIT_EMAIL=NAME@example.com
 WS_REMOTE=ws.example.com
 WS_REMOTE_PORT=22022
 WS_TUNNEL_NETWORKS="10.20.0.0/16 198.51.100.0/24"
@@ -44,7 +46,10 @@ LAN's network or broadcast address. `WS_REMOTE` is the router's name on the inte
 router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
 side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
 order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of
-the display's adapter, in quotes where it holds a blank: [The cable](#the-cable).
+the display's adapter, in quotes where it holds a blank: [The cable](#the-cable). `WS_GIT_NAME`
+and `WS_GIT_EMAIL`, which go together, are the author of git's commits on the Mac, the name in
+quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the `.pub` of the key that signs them, by
+its path from `/` or `~/`.
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:

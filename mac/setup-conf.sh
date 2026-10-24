@@ -21,6 +21,9 @@ ws_conf() {
     WS_TUNNEL_NETWORKS=
     WS_RESOLVERS=
     WS_CABLE_SERVICE=
+    WS_GIT_NAME=
+    WS_GIT_EMAIL=
+    WS_GIT_SIGNING_KEY=
     ws_n=0
     while IFS=' 	' read -r ws_line || [ -n "$ws_line" ]; do
         ws_n=$((ws_n + 1))
@@ -90,6 +93,32 @@ ws_conf() {
             *' '*) [ "$ws_value" != "${ws_line#*=}" ] || ws_ok=false ;;
             esac
             ;;
+        WS_GIT_NAME)
+            # shellcheck disable=SC2034 # for setup-git.sh
+            WS_GIT_NAME=$ws_value
+            # git's config takes it in quotes, which a " would end and a \ escape.
+            case $ws_value in
+            *[[:cntrl:]\"\\]*) ws_ok=false ;;
+            *' '*) [ "$ws_value" != "${ws_line#*=}" ] || ws_ok=false ;;
+            esac
+            ;;
+        WS_GIT_EMAIL)
+            WS_GIT_EMAIL=$ws_value
+            case $ws_value in
+            *[!A-Za-z0-9._%+@-]* | @*) ws_ok=false ;;
+            *@*) ws_is_domain "${ws_value#*@}" || ws_ok=false ;;
+            *) ws_ok=false ;;
+            esac
+            ;;
+        WS_GIT_SIGNING_KEY)
+            # shellcheck disable=SC2034 # for setup-git.sh
+            WS_GIT_SIGNING_KEY=$ws_value
+            case ${ws_value#\~} in
+            *[!A-Za-z0-9._/@+-]*) ws_ok=false ;;
+            /*.pub) ;;
+            *) ws_ok=false ;;
+            esac
+            ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
         [ -z "$ws_value" ] || $ws_ok ||
@@ -103,6 +132,12 @@ ws_conf() {
     fi
     if [ -n "$WS_REMOTE_PORT" ] && [ -z "$WS_REMOTE" ]; then
         ws_die "$1: WS_REMOTE_PORT needs WS_REMOTE"
+    fi
+    case ${WS_GIT_NAME:+name}${WS_GIT_EMAIL:+email} in
+    name | email) ws_die "$1: WS_GIT_NAME and WS_GIT_EMAIL go together" ;;
+    esac
+    if [ -n "$WS_GIT_SIGNING_KEY" ] && [ -z "$WS_GIT_NAME" ]; then
+        ws_die "$1: WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL"
     fi
 }
 
@@ -126,6 +161,15 @@ ws_conf_form() {
     WS_CABLE_SERVICE)
         echo "a network service as networksetup -listallnetworkservices prints it, no * first," \
             "in quotes where it holds a blank"
+        ;;
+    WS_GIT_NAME) echo "a name, in quotes where it holds a blank, with no \" or \\" ;;
+    WS_GIT_EMAIL)
+        echo "an email address, as ws@example.com: letters, digits and ._%+- before the @, and" \
+            "a host name after it"
+        ;;
+    WS_GIT_SIGNING_KEY)
+        echo "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to .pub," \
+            "of letters, digits and ._/@+-"
         ;;
     *) echo "a port, 1 to 65535" ;;
     esac
