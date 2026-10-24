@@ -80,8 +80,11 @@ must take both back, and spare a script's own. Last, `ws_conf` must read an empt
 must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
 then none. It must warn of a disabled service. It must stop on one networksetup lacks, or one with a
 router outside the cable's `/30`. It must stop too on a `-setmanual` that fails or changes nothing,
-and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). Where wireguard-go
-makes no utun, the job fails, as the daemon runs the same wireguard-go.
+and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). With `WS_GIT_NAME`
+and `WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must
+stop on a `WS_GIT_SIGNING_KEY` that is missing, or a `.pub` that holds more than a public key. So
+must the default key or its `.pub` alone ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where
+wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
 
 ## The rules
 

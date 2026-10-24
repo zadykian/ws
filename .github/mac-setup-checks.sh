@@ -3,7 +3,8 @@
 # a section per key. mac-conf-checks.sh runs it last, from the repository's root, once setup.sh has
 # set up the Mac (.github/workflows/mac.yml). As it runs setup.sh, sudo included, and edits the
 # job's mac.conf, it stops without the job's TUNNEL, and puts the file back as it exits, on a
-# signal too. Each failure prints an ::error:: line, and any fails the script at its end.
+# signal too. Each failure prints an ::error:: line, and any fails the script at its end. Last, it
+# sources mac-git-checks.sh, git's cases.
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
@@ -181,4 +182,6 @@ printf '%s\n' 'DHCP Configuration' 'IP address: 192.0.2.10' 'Router: 192.0.2.1' 
     >"$tmp/info-ws_stand_in_no_op"
 stops 'setup.sh: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
 logged
+# shellcheck source=.github/mac-git-checks.sh
+. .github/mac-git-checks.sh
 exit "$fail"
