@@ -182,7 +182,7 @@ must ws_resolver own.test
 : >"$tmp/all.conf"
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
     WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE= WS_GIT_NAME= WS_GIT_EMAIL= \
-    WS_GIT_SIGNING_KEY=; do
+    WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_IDENTITY_AGENT=; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -195,7 +195,8 @@ gives WS_REMOTE '' WS_REMOTE=router.example.com WS_REMOTE=
 for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS=10.88.0.1x \
     WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
     WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet' 'WS_GIT_NAME=ws"stand-in' \
-    WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws'; do
+    WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws' 'WS_IDENTITY=~/.ssh/id_ed25519' \
+    WS_IDENTITY_AGENT=agent.sock; do
     refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
@@ -245,5 +246,18 @@ done
 refused 'go together' WS_GIT_NAME=ws
 refused 'go together' WS_GIT_EMAIL=ws@example.com
 refused 'needs WS_GIT_NAME' 'WS_GIT_SIGNING_KEY=/Users/ws/.ssh/ws.pub'
+
+# ssh's key for ws, by its .pub's path, as git's, and the socket of the agent that holds it, which
+# needs the key. A socket's path with blanks must pass in quotes, and stop ws_conf bare.
+agent='/Users/ws/Library/Group Containers/ws/agent.sock'
+gives WS_IDENTITY_AGENT "$agent" 'WS_IDENTITY=~/.ssh/ws.pub' "WS_IDENTITY_AGENT=\"$agent\""
+gives WS_IDENTITY_AGENT \~/.ssh/agent.sock 'WS_IDENTITY=/Users/ws/.ssh/ws.pub' \
+    'WS_IDENTITY_AGENT=~/.ssh/agent.sock'
+for line in 'WS_IDENTITY=~ws/.ssh/ws.pub' 'WS_IDENTITY=/tmp/%d.pub' 'WS_IDENTITY_AGENT=~/' \
+    'WS_IDENTITY_AGENT=/tmp/ws agent.sock' 'WS_IDENTITY_AGENT=/tmp/%d.sock' \
+    "WS_IDENTITY_AGENT=/tmp/\$HOME.sock"; do
+    refused "line 1: $line is not" "$line"
+done
+refused 'needs WS_IDENTITY' 'WS_IDENTITY_AGENT=/tmp/agent.sock'
 sh .github/mac-setup-checks.sh || fail=1
 exit "$fail"
