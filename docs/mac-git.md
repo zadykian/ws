@@ -13,8 +13,8 @@ with no passphrase, as git signs unattended, in a rebase too. Where its `.pub` i
 private key, as an agent's key leaves it, the script stops rather than replace it: name the `.pub`
 in `WS_GIT_SIGNING_KEY`. A key that `WS_GIT_SIGNING_KEY` names must be there already, as the script
 makes no other: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one. An empty
-`WS_GIT_SIGNING_KEY` gives the script's own instead. A `.pub` that holds more than a public key's
-line, as a private key does, stops the script too.
+`WS_GIT_SIGNING_KEY` gives the script's own instead. A `.pub` that the script cannot read, or that
+holds more than a public key's line, as a private key does, stops it too.
 
 Where Secretive holds the Mac's ssh key, give git a key of its own in Secretive's app, at Notify.
 The login key asks for Touch ID at each use by default, so a rebase would ask at each commit. Name
