@@ -1,7 +1,8 @@
 # shellcheck shell=sh
 # The git step of mac/setup.sh, which setup-extras.sh sources: git's identity and a signing key of
 # the Mac's own. They go in ~/.config/ws/gitconfig, which ~/.gitconfig includes at its top, as the
-# shell role sets them up on ws. It calls the functions of lib.sh and setup-lib.sh.
+# shell role sets them up on ws. gh, from Homebrew where missing, takes git's pushes to GitHub. It
+# calls the functions of lib.sh and setup-lib.sh.
 
 # The directory of mac.conf, where the step writes its files.
 git_dir=$HOME/.config/ws
@@ -16,6 +17,7 @@ git_mac() {
     [ -n "$WS_GIT_NAME" ] || return 0
     git_include_ok
     git_key
+    git_gh
     git_files
     git_include
 }
@@ -62,6 +64,28 @@ git_key() {
             "as ed25519 or Secretive's P-256"
 }
 
+# git_gh sets gh to the path of GitHub's CLI, which Homebrew installs where PATH has none. Under
+# --check, it is the path Homebrew would give it. git runs gh in whatever directory it works
+# in, so the path must be absolute, not one that a relative directory of PATH gives.
+git_gh() {
+    if ! gh=$(command -v gh); then
+        brew=$(command -v brew) || ws_die "install Homebrew first: https://brew.sh"
+        if ws_checking; then
+            ws_say "would run brew install gh"
+            gh=$("$brew" --prefix)/bin/gh
+            return 0
+        fi
+        ws_say "installing gh"
+        "$brew" install gh >&2 || ws_die "brew install gh failed"
+        gh=$(command -v gh) || ws_die "brew install gh left no gh on PATH"
+    fi
+    case $gh in
+    /*) ;;
+    *) ws_die "PATH gives gh as $gh, which git would look for in each repository: drop PATH's" \
+        "relative directories" ;;
+    esac
+}
+
 # git_files writes ~/.config/ws/allowed_signers, which trusts the key for WS_GIT_EMAIL in git
 # verify-commit, and ~/.config/ws/gitconfig. For a key of Secretive's, git signs through
 # ~/.config/ws/secretive-ssh-keygen, which gives ssh-keygen Secretive's agent. So a terminal and an
@@ -99,8 +123,9 @@ EOF
 }
 
 # git_conf prints ~/.config/ws/gitconfig: the identity, and each commit signed with the key, which
-# the allowed signers file trusts for the email, through git_program where there is one. The name
-# and the paths go in quotes, which mac.conf's values cannot end.
+# the allowed signers file trusts for the email, through git_program where there is one. Then gh's
+# credential command, as gh auth setup-git writes it, after an empty value that drops any set before
+# it. The name and the paths go in quotes, which mac.conf's values cannot end.
 git_conf() {
     cat <<EOF
 # Written by ws's mac/setup.sh from ~/.config/ws/mac.conf: its next run replaces changes made here.
@@ -111,6 +136,12 @@ git_conf() {
     signingkey = "$git_pub"
 [commit]
     gpgsign = true
+[credential "https://github.com"]
+    helper =
+    helper = !$gh auth git-credential
+[credential "https://gist.github.com"]
+    helper =
+    helper = !$gh auth git-credential
 [gpg]
     format = ssh
 [gpg "ssh"]
