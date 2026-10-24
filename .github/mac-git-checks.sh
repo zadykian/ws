@@ -27,14 +27,28 @@ if [ -n "$found" ]; then
     error "the runner has what git's cases would make: $(echo "$found" | tr '\n' ' ')"
     exit 1
 fi
+# The job's runs before these had no git keys, so they must have left ~/.gitconfig alone.
+! grep -qs config/ws/gitconfig ~/.gitconfig ||
+    error "setup.sh included ~/.config/ws/gitconfig in ~/.gitconfig without git's keys"
 trap 'git_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
 [ ! -f ~/.gitconfig ] || mv ~/.gitconfig "$tmp/gitconfig"
 gitconfig_aside=1
 
+# signed makes a commit in a new repository, which git must sign with the key as WS_GIT_NAME and
+# WS_GIT_EMAIL, and verify with the allowed signers, which name the email.
+signed() {
+    rm -rf "$tmp/repo"
+    git init -q "$tmp/repo"
+    git -C "$tmp/repo" commit -q --allow-empty -m ws || error "git cannot make a signed commit"
+    got=$(git -C "$tmp/repo" log -1 --format='%an <%ae> %G? %GS') || true
+    [ "$got" = 'ws stand-in #1 <ws@example.com> G ws@example.com' ] ||
+        error "git log shows '$got' for the commit"
+}
+
 # With WS_GIT_NAME and WS_GIT_EMAIL, --check must say that it would make the signing key, show the
 # files' diffs, and make none. A run must make the key, an ed25519 key with no passphrase, write the
 # files and say so, and a second run and --check print nothing.
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com
+with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 setup --check || error "setup.sh --check failed: $out"
 case $out in
 "setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*) ;;
@@ -49,6 +63,52 @@ prints ''
 prints '' --check
 ssh-keygen -y -P '' -f "$key" | grep -q '^ssh-ed25519 ' ||
     error "$key is not an ed25519 key without a passphrase"
+signed
+own_warning="setup.sh: warning: $HOME/.gitconfig's own settings of user.email, user.name,"
+own_warning="$own_warning commit.gpgsign, below the include, win over ~/.config/ws/gitconfig's"
+# A ~/.gitconfig of the user's own must get the include at its top, once, and keep the old file and
+# its mode. Its own settings of identity and signing, which win, must be named in its order.
+# --check must show it all, and change nothing.
+printf '[user]\n\temail = someone@example.com\n\tname = someone\n[commit]\n\tgpgSign = false\n' \
+    >~/.gitconfig
+chmod 600 ~/.gitconfig
+cp ~/.gitconfig "$tmp/own"
+setup --check || error "setup.sh --check failed: $out"
+case $out in
+"--- $HOME/.gitconfig$nl"*"$nl+[include]$nl"*"$nl$own_warning") ;;
+*) error "setup.sh --check printed '$out' for a ~/.gitconfig of its own" ;;
+esac
+cmp -s ~/.gitconfig "$tmp/own" && [ "$(echo ~/.gitconfig.*~)" = "$HOME/.gitconfig.*~" ] ||
+    error "setup.sh --check changed ~/.gitconfig, or kept a copy"
+setup || error "setup.sh failed: $out"
+case $out in
+"setup.sh: kept the old $HOME/.gitconfig as $HOME/.gitconfig."*"~${nl}setup.sh: wrote $HOME/\
+.gitconfig$nl$own_warning") ;;
+*) error "setup.sh printed '$out' for a ~/.gitconfig of its own" ;;
+esac
+prints ''
+[ "$(git config --file ~/.gitconfig --get-all include.path)" = \~/.config/ws/gitconfig ] ||
+    error "setup.sh left ~/.gitconfig with includes other than one of ~/.config/ws/gitconfig"
+tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "setup.sh lost ~/.gitconfig's own lines"
+[ -n "$(find ~/.gitconfig -perm 600)" ] || error "setup.sh changed ~/.gitconfig's mode 600"
+# An include by a path from the home must pass too.
+printf '[include]\n\tpath = .config/ws/gitconfig\n' >~/.gitconfig
+prints ''
+# A link that lacks the include must stop setup.sh, and stay a link. It must stop before the step
+# acts: with the key moved aside and another name, the step would make a key and write gitconfig.
+# Once the file it points to has the include at its top, setup.sh must take it.
+printf '[user]\n\tname = someone\n' >"$tmp/linked"
+rm ~/.gitconfig
+ln -s "$tmp/linked" ~/.gitconfig
+with 'WS_GIT_NAME="ws stand-in #2"' WS_GIT_EMAIL=ws@example.com
+mv "$key" "$key.pub" "$tmp"
+stops "setup.sh: $HOME/.gitconfig is a link to $tmp/linked: put"
+mv "$tmp/id_ed25519_signing" "$tmp/id_ed25519_signing.pub" ~/.ssh
+with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
+printf '[include]\n\tpath = ~/.config/ws/gitconfig\n[user]\n\tname = someone\n' >"$tmp/linked"
+prints ''
+[ -L ~/.gitconfig ] || error "setup.sh replaced the link ~/.gitconfig"
+rm ~/.gitconfig
 # A WS_GIT_SIGNING_KEY that is missing must stop setup.sh, as must a .pub that holds more than a
 # public key's line, as a private key does. So must the default key's .pub alone, which a new key
 # would replace, and its private key alone.
