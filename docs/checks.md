@@ -73,7 +73,10 @@ make. With no terminal and a `mac.conf` that names none, a run must stop at the 
 naming `WS_IDENTITY`, and make nothing. The first run, with that `PATH` too, must make that key,
 with no passphrase, install what `setup.sh` installs, and load no daemon without `WS_PUBLIC_KEY`. It
 must drop the Mac's key, which `setup.sh` prints until then, and end with that step as one left by
-hand. A second run and `--check` must print nothing, by sh and by dash.
+hand. A second run and `--check` must print nothing, by sh and by dash. Then a stand-in for
+Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key, whose `.pub` a `mac.conf` of its
+own names in `WS_IDENTITY`. `--check` must print nothing of the Mac key stage while the agent lists
+the key. Once it lacks the key, a run and `--check` must stop at the stage, naming the socket.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
