@@ -4,7 +4,8 @@
 # Fills the outbound table's sets of resolved's DNS servers from the nameserver lines of the
 # resolv.conf that resolved rewrites as they change. Who runs it, and when, is said here alone.
 # security-outbound.service runs it with the table's FILE, which it loads with the sets' elements in
-# one nft transaction, or alone where nft refuses them. A missing resolv.conf leaves the sets empty.
+# one nft transaction, or alone where nft refuses them. A run loads FILE so too, in a network
+# namespace of its own (outbound.yml). A missing resolv.conf leaves the sets empty.
 
 set -eu
 

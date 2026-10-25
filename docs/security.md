@@ -75,13 +75,14 @@ The caveats:
   to load. `systemctl stop security-outbound` removes this table alone, until the next boot or run.
 
 A run checks the file with `nft -c` before it lands. It then loads the file in a network namespace
-of its own and compares that table with the kernel's, as `nft -st list table inet ws` lists them.
-That leaves out counters' values and named sets' elements, but not the counters themselves. Where
-the tables differ, the run reloads the table in one transaction, with no moment without it. So it
-does where systemd failed to load the unit, or hasn't read it since it changed. That covers a run
-cut short before the reload, and a table flushed or deleted by hand. In a container, with
-`--skip-tags systemd`, the run writes both, but skips the check, the comparison and the reload. CI
-checks the file after its runs ([The playbook](checks.md#the-playbook)).
+of its own, as the unit loads it, and compares that table with the kernel's, as
+`nft -s list table inet ws` lists them. `-s` leaves out counters' values, but keeps the counters,
+and the sets' elements as a load fills them. Where the tables differ, the run reloads the table and
+its sets in one transaction, with no gap. So it does where systemd failed to load a unit of the
+table's, or hasn't read it since it changed. That covers a run cut short before the reload, and a
+table or set flushed or deleted by hand. In a container, with `--skip-tags systemd`, the run writes
+the files, but skips the check, the comparison and the reload. CI checks the file after its runs
+([The playbook](checks.md#the-playbook)).
 
 `security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
