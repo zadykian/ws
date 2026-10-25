@@ -167,21 +167,30 @@ root_after() {
 
 # root_done succeeds where ssh logs in to ws-ssh as root by the Mac's key, and runs a command. It
 # connects only where known_hosts holds a key under ws, so --check meets ws only once the Host key
-# stage is done.
+# stage is done. ssh's messages go in root.err in the lock.
 root_done() {
     [ "$(host_get user)" = root ] && ssh-keygen -F ws -f "$host_file" >/dev/null 2>&1 &&
-        [ "$(host_ssh -o BatchMode=yes ws-ssh echo ok 2>/dev/null </dev/null)" = ok ]
+        [ "$(host_ssh -o BatchMode=yes ws-ssh echo ok 2>"$lock/root.err" </dev/null)" = ok ]
 }
 
 # root_do adds the Mac's key for ws to root's authorized_keys on ws, in one ssh -t session as the
 # user of Ubuntu's installer, through sudo. That user takes the key that the installer imported
-# from GitHub, else ssh-copy-id's, by the password login that the installer allowed. It stops where
-# ssh logs in as another user than root. --check asks nothing.
+# from GitHub, else ssh-copy-id's, by the password login that the installer allowed. Where ws
+# doesn't answer, the Host key stage's question gives its address now. It stops where ssh logs in
+# as another user than root, and where ws offers another host key than known_hosts holds, which it
+# never removes. --check asks nothing.
 # shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub and gh_line
 root_do() {
     root_as=$(host_get user)
     [ "$root_as" = root ] || ws_die "Root's key: ssh logs in to ws as $root_as, mac.conf's" \
         "WS_USER, and the wizard sets ws up as root alone: take the README's steps by hand"
+    if ! host_scan; then
+        host_ask || return 0
+        ! root_done || return 0
+    fi
+    ! grep -q 'Host key verification failed' "$lock/root.err" || ws_die "Root's key: ws at" \
+        "$host_name:$host_port offers another host key than known_hosts holds under ws: where" \
+        "ws was installed again, run ssh-keygen -R ws, then the wizard again"
     if ws_checking; then
         ws_say "Root's key: would log in to ws as the user of its installer, asked, and add the" \
             "Mac's key to root's authorized_keys with sudo"
