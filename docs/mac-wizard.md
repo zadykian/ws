@@ -28,7 +28,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
    and warns of any other. Without a clone, `--check` lists the wizard's stages, each after this
    one.
 3. Answers: the values `mac.conf` lacks, below.
-4. Mac key: the ssh key that the Mac offers ws, made where missing, below.
+4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 5. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
 
@@ -72,9 +72,17 @@ ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY` names ([mac.conf](
 Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.pub` is there,
 `ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
 `ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
-and asks it once more. Without `WS_IDENTITY`, the wizard makes `~/.ssh/id_ed25519` the same way.
-With no terminal to ask one, the wizard stops there, unless `WS_IDENTITY` names that file, which
-then gets no passphrase.
+and asks it once more. With no terminal to ask one, the key gets none.
+
+Without `WS_IDENTITY`, and with no key yet, the wizard asks whether Secretive keeps the key, in the
+Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and where
+its app is there already, the wizard asks nothing. It opens the app, and waits up to 15 minutes for
+a P-256 key made there, at its default protection, which asks for Touch ID at each login. Where git
+has a name, a second key follows, for git's signing, at Notify, which signs with no prompt while
+the Mac is unlocked ([git](mac-git.md)). Their `.pub` files and Secretive's agent go in `mac.conf`,
+as `WS_IDENTITY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_KEY`. An empty `WS_GIT_SIGNING_KEY`
+keeps `setup.sh`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above. With
+no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
