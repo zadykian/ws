@@ -23,7 +23,8 @@
 # - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again;
 # - Hook on ws: the repository that WS_HOOK names, cloned on ws, and its apply.sh run there as root;
 # - Hook on the Mac: that repository's clone in ~/repository, its hooks and its Brewfile's formulae,
-#   and ws's word list.
+#   and ws's word list;
+# - Cable: ws's port of the cable from the Mac's display, in host_vars on ws, and the Mac's service.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -48,6 +49,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-tunnel.sh"
 # shellcheck source=wizard-hook.sh
 . "$dir/wizard-hook.sh"
+# shellcheck source=wizard-cable.sh
+. "$dir/wizard-cable.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -190,8 +193,10 @@ main() {
     stage Tunnel tunnel
     stage "Hook on ws" wshook
     stage "Hook on the Mac" hook
+    stage Cable cable
     run_hand
     hook_hand
+    cable_hand
     closing
 }
 
