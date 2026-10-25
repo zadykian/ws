@@ -117,24 +117,26 @@ ask_line() {
     esac
 }
 
-# ask_write LINES writes mac.conf with LINES at its end, through ws_put, where the whole passes
-# ws_conf: mode 644 for a new file, in a directory it makes. ws_conf's messages name mac.conf. Where
-# mac.conf is a link, as a dotfiles manager makes it, it prints LINES and stops. Under --check, it
-# prints the diff, and points WS_CONF at the file it would write, in the lock, for setup.sh --check.
+# ask_write LINES [STAGE] writes mac.conf with LINES at its end, through ws_put, where the whole
+# passes ws_conf: mode 644 for a new file, in a directory it makes. ws_conf's messages name
+# mac.conf, and its own name STAGE, Answers by default. Where mac.conf is a link, as a dotfiles
+# manager makes it, it prints LINES and stops. Under --check, it prints the diff, and points WS_CONF
+# at the file it would write, in the lock, for setup.sh --check.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 ask_write() {
     ask_file=$lock/mac.conf
+    ask_stage=${2:-Answers}
     {
         if [ -s "$WS_CONF" ]; then
-            cat "$WS_CONF" || ws_die "Answers: cannot read $WS_CONF"
+            cat "$WS_CONF" || ws_die "$ask_stage: cannot read $WS_CONF"
             [ -z "$(tail -c 1 "$WS_CONF")" ] || echo
         fi
         printf '%s' "$1"
-    } >"$ask_file" || ws_die "Answers: cannot write $ask_file"
+    } >"$ask_file" || ws_die "$ask_stage: cannot write $ask_file"
     (ws_conf_lines "$ask_file" && ws_conf_pairs "$WS_CONF") || return 1
     if [ -L "$WS_CONF" ]; then
-        ws_say "Answers: $WS_CONF is a link to $(readlink "$WS_CONF"), which the wizard leaves:" \
-            "add these lines to its file, then run the wizard again"
+        ws_say "$ask_stage: $WS_CONF is a link to $(readlink "$WS_CONF"), which the wizard" \
+            "leaves: add these lines to its file, then run the wizard again"
         printf '%s' "$1" >&2
         exit 1
     fi
@@ -146,7 +148,7 @@ ask_write() {
     elif ws_checking; then
         ws_say "would make $ask_dir"
     else
-        mkdir -p "$ask_dir" || ws_die "Answers: cannot make $ask_dir"
+        mkdir -p "$ask_dir" || ws_die "$ask_stage: cannot make $ask_dir"
     fi
     ws_put "$WS_CONF" "$ask_mode" <"$ask_file"
     if ws_checking; then
