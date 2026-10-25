@@ -45,6 +45,9 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
   hand ([shell](../../docs/shell.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing,
   with `creates:` ([claude's tasks](../../roles/claude/tasks/main.yml)).
+- A role given another repository's values, as its extra vars, changes nothing where they are
+  empty, and removes only what an entry's explicit `state: absent` names. So a run without them, as
+  CI's, keeps what a run with them made ([Git credentials](../../docs/shell.md#git-credentials)).
 
 ## Downloads and keys
 
