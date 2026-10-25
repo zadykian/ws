@@ -9,9 +9,9 @@
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer
 #   takes, and wg0 is wg0's own key. gh is ok, none, login, scope or key, below. claude is ok, none
 #   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok.
-# - run [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes on where
-#   ssh drops, or follows such a unit that runs already. It prints the unit's log until it ends, and
-#   exits with the run's status.
+# - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
+#   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
+#   ends, and exits with the run's status. --update first pulls a clean clone on main.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
@@ -93,6 +93,21 @@ status() {
     fi
 }
 
+# pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked
+# files aside. Otherwise it warns, and leaves it as it is.
+pull() {
+    [ -e "$dir/.git" ] || return 0
+    if [ "$(git -C "$dir" symbolic-ref -q --short HEAD)" != main ] ||
+        [ -n "$(git -C "$dir" status --porcelain --untracked-files=no)" ]; then
+        say "warning: leaves $dir as it is, not on main or not clean: pull it by hand"
+        return 0
+    fi
+    head=$(git -C "$dir" rev-parse --short HEAD)
+    git -C "$dir" pull -q --ff-only || die "git pull --ff-only failed in $dir; mend the clone"
+    [ "$(git -C "$dir" rev-parse --short HEAD)" = "$head" ] ||
+        say "pulled $dir to $(git -C "$dir" rev-parse --short HEAD)"
+}
+
 # job prints the script of a run's unit, which systemd-run runs with UNIT DIR STATE [ARG...]. It
 # runs bootstrap.sh ARGs from the clone in DIR, or from the README's download where DIR holds none.
 # Its last steps write STATE/last as UNIT and the status, and, without ARGs, STATE/run as the
@@ -122,10 +137,13 @@ EOF
 # run starts a run's unit, or follows the one that runs, as the header says. The unit takes root's
 # HOME, which systemd gives a unit only with a user, and the locale that Ansible needs.
 run() {
+    update=0
+    [ "${1-}" != --update ] || { update=1 && shift; }
     unit=$(active)
     if [ -n "$unit" ]; then
         say "following $unit, which runs on ws already"
     else
+        [ "$update" = 0 ] || pull
         mkdir -p "$state"
         job >"$state/job.new"
         mv -f "$state/job.new" "$state/job"
@@ -173,7 +191,7 @@ main() {
     case ${1-} in
     status) status ;;
     run) shift && run "$@" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...]" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [--update] [ARG...]" ;;
     esac
 }
 
