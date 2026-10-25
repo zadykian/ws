@@ -37,6 +37,8 @@ ws_conf_lines() {
     WS_GIT_SIGNING_KEY=
     WS_IDENTITY=
     WS_IDENTITY_AGENT=
+    WS_HOOK=
+    WS_HOOK_SECRET=
     ws_n=0
     while IFS=' 	' read -r ws_line || [ -n "$ws_line" ]; do
         ws_n=$((ws_n + 1))
@@ -150,6 +152,21 @@ ws_conf_lines() {
             *) ws_ok=false ;;
             esac
             ;;
+        WS_HOOK)
+            WS_HOOK=$ws_value
+            # OWNER/REPO on GitHub, as ws's /root/repository/REPO: neither side . or .. alone, and
+            # REPO not ws, whose clone there is ws's own.
+            case $ws_value in
+            *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */ws) ws_ok=false ;;
+            */*) ;;
+            *) ws_ok=false ;;
+            esac
+            ;;
+        WS_HOOK_SECRET)
+            WS_HOOK_SECRET=$ws_value
+            case $ws_value in *[!A-Za-z0-9._-]*) ws_ok=false ;; esac
+            [ "${#ws_value}" -le 64 ] || ws_ok=false
+            ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
         [ -z "$ws_value" ] || $ws_ok ||
@@ -177,6 +194,9 @@ ws_conf_pairs() {
     fi
     if [ -n "$WS_IDENTITY_AGENT" ] && [ -z "$WS_IDENTITY" ]; then
         ws_die "$1: WS_IDENTITY_AGENT needs WS_IDENTITY"
+    fi
+    if [ -n "$WS_HOOK_SECRET" ] && [ -z "$WS_HOOK" ]; then
+        ws_die "$1: WS_HOOK_SECRET needs WS_HOOK"
     fi
 }
 
@@ -214,6 +234,8 @@ ws_conf_form() {
         echo "an agent's socket: a path from / or ~/, of letters, digits, blanks and ._/@+-," \
             "in quotes where it holds a blank"
         ;;
+    WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" ;;
+    WS_HOOK_SECRET) echo "a Keychain item's name, 1 to 64 letters, digits and ._-" ;;
     *) echo "a port, 1 to 65535" ;;
     esac
 }
