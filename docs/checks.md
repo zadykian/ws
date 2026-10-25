@@ -112,7 +112,8 @@ A full run cut off must remove the stamp of the one before, so that the next sta
 The files script, `mac/wizard-remote-files.sh`, must clone another repository by the stand-in
 `gh`, whose `apply.sh` must run as root over `ssh`. Its stamp must follow, which `status` must
 list, as `OWNER/REPO`. A clone again must leave the clone alone, and remove the stamp. A clone of
-another owner's repository of that name must stop.
+another owner's repository of that name must stop. Its `words` must print git's hash of root's word
+list, or `-` without one, and the list for that hash alone.
 
 The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
 the playbook through the remote script, and each run since must read ws's `status` alone. A run must
@@ -151,7 +152,9 @@ the item, a run with no terminal must stop, naming `security add-generic-passwor
 stdin must be the secret, no terminal, and the next run print nothing. A failed run leaves no stamp.
 For the Hook on the Mac stage, the stand-in `gh` on the Mac clones it, with `.githooks` and an
 empty `Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git`
-by hand, unless git's config names gh's credential command. The next run must print nothing.
+by hand, unless git's config names gh's credential command. The next run must print nothing. The
+stand-in ws's word list, of stand-in words, must go to the Mac once, mode 600, and none of it be
+printed. Once the Mac's differs, `--check` must show no diff.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

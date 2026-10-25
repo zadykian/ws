@@ -4,8 +4,9 @@
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, runs ws's playbook
 there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, runs another
-repository's `apply.sh` on ws, and clones that repository on the Mac. On a new Mac with Apple
-silicon, one line installs what it needs, clones the repository and runs the wizard, as yourself:
+repository's `apply.sh` on ws, and clones that repository on the Mac, with ws's word list. On a new
+Mac with Apple silicon, one line installs what it needs, clones the repository and runs the wizard,
+as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -40,7 +41,8 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
-14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`.
+14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`,
+    and ws's word list, below.
 
 ## The answers
 
@@ -220,6 +222,12 @@ Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute 
 clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose formulae Homebrew lacks,
 as `brew bundle check` finds, with Homebrew's auto-update off, `brew bundle` installs them, and
 upgrades nothing. `--check` names each command that the stage would run.
+
+The stage copies ws's word list too, root's `~/.config/ws/forbidden-words`, which the hooks read
+([The hooks](checks.md#the-hooks)), with `WS_HOOK` or without. Where ws has one, and the Mac's
+differs by git's hash or can't be read, the files script, `mac/wizard-remote-files.sh`, sends it
+from ws. It replaces the Mac's, mode 600. The wizard never prints the list: `--check` says it would
+copy it, with no diff.
 
 ## What stays by hand
 
