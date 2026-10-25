@@ -2,11 +2,11 @@
 # The wizard's Cable stage: the cable from the Mac's display to a port of ws's, outside the router.
 # Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
 # wired ports. The stage names the port in host_vars/localhost.yml on ws, whose network role gives
-# it 10.77.0.1. The Mac's service that mac.conf's WS_CABLE_SERVICE names then takes 10.77.0.2 from
-# setup.sh. Undocked, the stage waits, and the closing list says to dock the Mac. wizard.sh sources
-# it, and runs the stage last. It calls the functions of lib.sh, setup-lib.sh, wizard-ask.sh,
-# wizard-ws.sh, wizard-hook.sh, and wizard.sh's by_hand. It reads wizard.sh's lock and WS_CONF, and
-# wizard-host.sh's root_in.
+# it 10.77.0.1. Then it names the Mac's service of the cable in mac.conf's WS_CABLE_SERVICE, and
+# setup.sh gives that 10.77.0.2. Undocked, the stage waits, and the closing list says to dock the
+# Mac. wizard.sh sources it, and runs the stage last. It calls the functions of lib.sh,
+# setup-lib.sh, wizard-ask.sh, wizard-ws.sh, wizard-hook.sh, and wizard.sh's setup_do and by_hand.
+# It reads wizard.sh's lock and WS_CONF, and wizard-host.sh's root_in.
 
 # cable_none succeeds where the environment answers none for the Mac's service of the cable, as an
 # empty WS_CABLE_SERVICE does.
@@ -44,9 +44,8 @@ cable_read() {
 # cable_do takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 # terminal, the one with carrier by default. link names it in host_vars on ws, and bootstrap.sh
 # --tags network,wireguard runs there, as both roles read it: the network role must give it
-# 10.77.0.1. Then it stops, naming WS_CABLE_SERVICE, the Mac's service, by hand. none, as the
-# answer or from the environment, writes an empty WS_CABLE_SERVICE. --check asks nothing, and says
-# what it would do.
+# 10.77.0.1. Then cable_service takes the Mac's service. none, as either answer, writes an empty
+# WS_CABLE_SERVICE. --check asks nothing, and says what it would do.
 cable_do() {
     cable_value=
     if cable_none; then
@@ -69,7 +68,7 @@ cable_do() {
         fi
         if ws_checking; then
             ws_say "Cable: would name $cable_value in host_vars/localhost.yml on ws, run" \
-                "bootstrap.sh --tags network,wireguard there"
+                "bootstrap.sh --tags network,wireguard there, then ask the Mac's service"
             return 0
         fi
         ws_say "Cable: $cable_value goes in host_vars/localhost.yml on ws, and bootstrap.sh" \
@@ -82,8 +81,37 @@ cable_do() {
             "10.77.0.1 after bootstrap.sh --tags network,wireguard: plug the Mac's cable into" \
             "it, or mend what that printed, then run the wizard again"
     fi
-    ws_die "Cable: ws's $cable_ws holds 10.77.0.1: set WS_CABLE_SERVICE in mac.conf to the Mac's" \
-        "service of the cable (docs/mac.md, The cable), or to nothing for none"
+    cable_service
+}
+
+# cable_service takes the Mac's service of the cable, from WS_CABLE_SERVICE in the environment or
+# the terminal. The default is the one service with a 169.254 address, which an adapter gives
+# itself where no DHCP server answers. It writes it in mac.conf, and runs setup.sh, which gives it
+# 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE.
+cable_service() {
+    cable_list=$(networksetup -listallnetworkservices) ||
+        ws_die "Cable: networksetup -listallnetworkservices failed"
+    cable_list=$(printf '%s\n' "$cable_list" | sed -e '/^An asterisk (\*) denotes/d' -e 's/^\*//')
+    if ws_checking && [ -z "${ask_set_WS_CABLE_SERVICE-}" ]; then
+        ws_say "Cable: would ask the Mac's service of the cable, write it in mac.conf as" \
+            "WS_CABLE_SERVICE, run mac/setup.sh, which gives it 10.77.0.2, and ping 10.77.0.1"
+        return 0
+    fi
+    cable_linked=$(printf '%s\n' "$cable_list" | while IFS= read -r each; do
+        networksetup -getinfo "$each" 2>/dev/null | grep -q '^IP address: 169\.254\.' &&
+            printf '%s\n' "$each"
+    done)
+    cable_ask WS_CABLE_SERVICE "The Mac's service of the cable, of $(cable_join "$cable_list")" \
+        "$(cable_one "$cable_linked")" "$cable_list"
+    cable_write || return 1
+    [ -n "$cable_value" ] || return 0
+    setup_do || return 1
+    if ws_checking; then
+        ws_say "Cable: would run ping -c 1 -t 3 10.77.0.1"
+    elif ! ping -c 1 -t 3 10.77.0.1 >/dev/null 2>&1; then
+        ws_die "Cable: ping -c 1 -t 3 10.77.0.1, ws's end of the cable, got no answer: mac.conf's" \
+            "WS_CABLE_SERVICE must name the service of the adapter that the cable plugs into"
+    fi
 }
 
 # cable_ask KEY QUESTION DEFAULT LIST sets cable_value to KEY's answer: the environment's, else a

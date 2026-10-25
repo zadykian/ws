@@ -7,14 +7,15 @@
 # what it would do, neither writing ws's host_vars. With WS_CABLE_PORT, a run must name enp5s0
 # there, run bootstrap.sh --tags network,wireguard, and stop at the Mac's service.
 #
-# WS_CABLE_SERVICE= must write that empty line, which the next run keeps. mac.conf and the stand-ins
-# go back, and a run must print nothing.
+# The Mac's services are a stand-in networksetup's. WS_CABLE_SERVICE= must write that empty line,
+# which the next run keeps. mac.conf and the stand-ins go back, and a run must print nothing.
 
 set -u
 
 wizard=$HOME/repository/ws/mac/wizard.sh
 conf=$HOME/.config/ws/mac.conf
 ws=$RUNNER_TEMP/ws
+cable=$RUNNER_TEMP/cable
 net=$ws/root/sys/class/net
 vars=$ws/root/root/repository/ws/host_vars/localhost.yml
 fail=0
@@ -42,6 +43,33 @@ for each in enp4s0:1 enp5s0:0 enp6s0:0 enp7s0; do
     [ "$each" = "${each%:*}" ] || echo "${each#*:}" | sudo tee "$net/${each%:*}/carrier" >/dev/null
 done
 echo enp4s0 >"$ws/uplink"
+# The Mac's services: an uplink's, and the display's adapter, which gives itself a 169.254 address
+# where no DHCP server answers. networksetup -setmanual takes root alone, as through sudo, and no
+# other service, so that no case reaches the runner's own.
+mkdir -p "$cable"
+printf '%s\n' 'DHCP Configuration' 'IP address: 198.51.100.20' 'Subnet mask: 255.255.255.0' \
+    'Router: 198.51.100.1' >"$cable/info-ws_stand_in_Wi_Fi"
+printf '%s\n' 'DHCP Configuration' 'IP address: 169.254.10.20' 'Subnet mask: 255.255.0.0' \
+    'Router: (null)' >"$cable/info-ws_stand_in_adapter"
+cat >/opt/homebrew/bin/networksetup <<EOF
+#!/bin/sh
+info='$cable'/info-\$(printf '%s' "\${2-}" | tr -c 'A-Za-z0-9' _)
+case \$1:\${2-} in
+-listallnetworkservices:)
+    printf '%s\n' 'An asterisk (*) denotes that a network service is disabled.' \
+        'ws stand-in Wi-Fi' 'ws stand-in adapter'
+    ;;
+-getinfo:'ws stand-in '*) cat "\$info" ;;
+-setmanual:'ws stand-in adapter')
+    [ "\$(id -u)" = 0 ] || exit 1
+    echo "\$*" >>'$cable/setmanual.log'
+    printf '%s\n' 'Manual Configuration' "IP address: \$3" "Subnet mask: \$4" 'Router: (null)' \
+        >"\$info"
+    ;;
+*) echo "\${2-} is not a recognized network service." && exit 4 ;;
+esac
+EOF
+chmod 755 /opt/homebrew/bin/networksetup
 
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run
@@ -72,9 +100,8 @@ in host_vars/localhost\.yml on ws, and run bootstrap\.sh --tags network,wireguar
 wizard run WS_CABLE_PORT=enp5s0
 printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &&
     cmp -s "$conf" "$RUNNER_TEMP/cable.conf" &&
-    printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: ws's enp5s0 holds 10\.77\.0\.1: set \
-WS_CABLE_SERVICE in mac\.conf to the Mac's service of the cable (docs/mac\.md, The cable), or to \
-nothing for none" && [ "$status" = 1 ] &&
+    printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: no terminal to ask WS_CABLE_SERVICE: set \
+WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
     error "wizard.sh with WS_CABLE_PORT exited $status, or wrote no host_vars, or ran no roles"
 wizard run WS_CABLE_SERVICE=
@@ -84,8 +111,8 @@ wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "the run after none exited $status"
 
 cp "$RUNNER_TEMP/cable.conf" "$conf"
-rm -f "$RUNNER_TEMP/cable.conf" "$ws/uplink"
-sudo rm -rf "$ws/root/sys" "$ws/addr" "${vars%/*}"
+rm -f /opt/homebrew/bin/networksetup "$RUNNER_TEMP/cable.conf" "$ws/uplink"
+sudo rm -rf "$cable" "$ws/root/sys" "$ws/addr" "${vars%/*}"
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status"
 exit "$fail"
