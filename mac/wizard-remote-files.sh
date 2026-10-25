@@ -1,6 +1,6 @@
 #!/bin/sh
-# The wizard's files script on ws, for another repository's files there, root's word list and ws's
-# wired ports. The Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, for another repository's files there, root's word list and the
+# cable's port. The Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
@@ -15,18 +15,22 @@
 #   read, or - where root has none. words HASH prints the list, while its hash is HASH.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
-#   or -.
+#   or -. link PORT names that port in ws's host_vars/localhost.yml as
+#   network_direct_link_interface, the port of the Mac's cable, which the network and wireguard
+#   roles read.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# The wizard's stamps, the repositories' clones, root's word list and sysfs's network interfaces.
-# CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
+# The wizard's stamps, the repositories' clones, root's word list, sysfs's network interfaces and
+# the host_vars file in ws's clone. CI's stand-in for ws roots each, a line NAME=PATH, in a
+# directory of its own.
 state=/var/lib/ws-wizard
 repos=/root/repository
 list=/root/.config/ws/forbidden-words
 net=/sys/class/net
+vars=/root/repository/ws/host_vars/localhost.yml
 
 # say prints a message of the script's on stderr.
 say() {
@@ -116,14 +120,35 @@ ports() {
     done
 }
 
-# link lists the ports, as the header says, with sysfs's carrier, which a port that is down lacks,
-# and ip's IPv4 addresses.
+# link [PORT] lists the ports, as the header says, with sysfs's carrier, which a port that is down
+# lacks, and ip's IPv4 addresses. Given PORT, one that it lists, it names it in vars, where that
+# names another, by a rename that keeps the file's other lines and its mode. A new file starts with
+# ---, as yamllint asks of the clone's YAML.
 link() {
-    for port in $(ports); do
-        carrier=$(cat "$net/$port/carrier" 2>/dev/null) || carrier=
-        addresses=$(ip -o -4 address show dev "$port" 2>/dev/null | awk '{ printf " %s", $4 }')
-        echo "$port ${carrier:--}${addresses:- -}"
-    done
+    if [ -z "${1-}" ]; then
+        for port in $(ports); do
+            carrier=$(cat "$net/$port/carrier" 2>/dev/null) || carrier=
+            addresses=$(ip -o -4 address show dev "$port" 2>/dev/null | awk '{ printf " %s", $4 }')
+            echo "$port ${carrier:--}${addresses:- -}"
+        done
+        return 0
+    fi
+    ports | grep -qxF -- "$1" || die "'$1' is none of the wired ports that link lists"
+    dir=${vars%/host_vars/*}
+    [ -d "$dir/.git" ] || die "ws has no clone in $dir, which ws's run makes"
+    [ "$(sed -n 's/^network_direct_link_interface: *"\{0,1\}\([A-Za-z0-9_.-]*\).*/\1/p' "$vars" \
+        2>/dev/null)" != "$1" ] || return 0
+    mkdir -p "${vars%/*}"
+    [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
+    {
+        [ -s "$vars" ] || echo ---
+        cat "$vars" 2>/dev/null | awk -v line="network_direct_link_interface: \"$1\"" '
+            /^network_direct_link_interface:/ { if (!done++) print line; next }
+            { print }
+            END { if (!done) print line }'
+    } >"$vars.new"
+    mv -f "$vars.new" "$vars"
+    say "wrote $vars"
 }
 
 main() {
@@ -132,9 +157,9 @@ main() {
     clone) clone "${2-}" ;;
     stamp) stamp "${2-}" ;;
     words) words "${2-}" ;;
-    link) link ;;
+    link) link "${2-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote-files.sh clone OWNER/REPO |" \
-        "stamp OWNER/REPO | words [HASH] | link" ;;
+        "stamp OWNER/REPO | words [HASH] | link [PORT]" ;;
     esac
 }
 
