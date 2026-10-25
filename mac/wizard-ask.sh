@@ -7,7 +7,7 @@
 # The environment's answers, kept before ws_conf sets each key's variable: ask_set_KEY is 1 where
 # the environment sets KEY, even to nothing, and ask_env_KEY holds its value.
 for ask_key in WS_LAN WS_LAN_ADDRESS WS_REMOTE WS_REMOTE_PORT WS_GIT_NAME WS_GIT_EMAIL \
-    WS_TUNNEL_NETWORKS WS_RESOLVERS WS_HOOK WS_HOOK_SECRET WS_CABLE_SERVICE; do
+    WS_TUNNEL_NETWORKS WS_RESOLVERS WS_HOOK WS_HOOK_SECRET WS_CABLE_SERVICE WS_CABLE_PORT; do
     eval "ask_set_$ask_key=\${$ask_key+1} ask_env_$ask_key=\${$ask_key-}"
 done
 
