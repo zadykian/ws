@@ -97,50 +97,23 @@ it: `_` separates words, as `-` does. Where gitleaks is installed, they refuse a
 ## Claude's hooks
 
 The lint plugin of the `zadykian` marketplace, which `.claude/settings.json` enables, has Claude
-Code run two targets of the `Makefile`. After each edit, `make lint-file FILES=PATH` runs the gates
-of the file's kind on that file alone:
+Code run two targets of the `Makefile`, as [its docs][lint] say. After each edit,
+`make lint-file FILES=PATH` runs the gates of the file's kind on that file alone:
 
 - Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
 - YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
 - shell, by extension or shebang: `shell` and `sizecheck`;
 - Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
 
-As Claude ends its turn, `make lint-tree BASE=refs/remotes/origin/main` runs `make lint` in each
-tree Claude edited, and in the project's own tree where Bash changed it. Its gitleaks scans only
-the branch's own commits, from `origin/main`. A failure goes back to Claude, which fixes what the
-session broke, and reports rather than fixes one from before it. Where Claude stops again, the
-plugin lets it, and lints the fix as the next turn ends. It passes over a branch from before
-these targets, which has neither. [The plugin's docs][lint] say which files and trees it passes
-over, and what it shows the user.
+As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only the
+branch's own commits, from `origin/main`.
 
-Each target runs the work tree's own code, as root on the server: its `Makefile` and `tools/`, and
-the Python tools and collections its pins name. ansible-lint loads the tree's `ansible.cfg`,
-inventory and Python too, such as the filter plugins. Its syntax check of `site.yml` runs a lookup
-in the playbook's YAML, as in an import's name, and `python3 -m venv` imports modules from the
-tree's root. So the plugin runs that code only on a tree the maintainer vouches for, where these
-three hold:
-
-- each commit from `origin/main` to `HEAD` has a good signature, `%G?` of `G`, by the key that
-  `gpg.ssh.allowedSignersFile` lists for the commit's author;
-- the index matches `HEAD`, with no change staged and no conflict;
-- the gates' code matches `HEAD` in the work tree too, with no file of it untracked. That is the
-  plugin's defaults, such as the `Makefile`, `tools/` and `.cache/`, and the pathspecs of
-  [.claude/lint-gates](../.claude/lint-gates).
-
-On any other tree, the plugin runs no gate, and shows the user a line that says why. That holds
-for an outside pull request fetched into a worktree, and for one merged, cherry-picked or checked
-out by path while the change stays staged. The check reads what git records, so it lets two cases
-through:
-
-- A commit made here carries the maintainer's signature, whether Claude, a rebase or a cherry-pick
-  made it. A rebased outside commit keeps its author, so the check refuses it, unless its author's
-  address is the maintainer's. An outside change committed here as the maintainer's own passes:
-  read it first.
-- The check sees an unstaged change in the gates' code alone, and not where git ignores, as in
-  `.cache/`. So outside code may run where `git apply`, `git restore --source` or `git stash apply`
-  writes it, or where `git reset` or `git restore --staged` unstages a merge or checkout of it. The
-  maintainer's own edits look the same. Read an outside pull request at its own commits, never as a
-  diff applied to a tree.
+Each target runs the work tree's own code, as root on the server. That is its `Makefile` and
+`tools/`, the tools its pins name, and the Python that ansible-lint loads, such as the filter
+plugins. ansible-lint's syntax check of `site.yml` runs the lookups in the playbook's YAML too. So
+the plugin runs them only on a tree the maintainer vouches for, as [the vouch rule][vouch] says.
+The gate code includes what [.claude/lint-gates](../.claude/lint-gates) lists.
 
 [lint]: https://github.com/zadykian/skills/blob/main/docs/lint.md#the-hooks
+[vouch]: https://github.com/zadykian/skills/blob/main/docs/lint.md#the-vouch-rule
 [writing]: https://github.com/zadykian/skills/blob/main/skills/writing/SKILL.md#the-caps-and-vale

@@ -124,9 +124,7 @@ skill. Commits are signed, as the ruleset on `main` requires.
 - Plugins of the `zadykian` marketplace, [zadykian/skills](https://github.com/zadykian/skills),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
   hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`.
-- Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits, and
-  `make lint-tree` in the trees the turn changed as it ends. Both run a tree's code only where each
-  commit since `origin/main` bears its author's signature, nothing is staged, and the gates' code
-  matches `HEAD`, as [.claude/lint-gates](.claude/lint-gates) adds to it. A diff applied to a tree,
-  or a merge left unstaged, goes unseen, so read an outside pull request at its commits
+- Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits and
+  `make lint-tree` as a turn ends, on a tree the maintainer vouches for. The gate code includes
+  what [.claude/lint-gates](.claude/lint-gates) lists
   ([Claude's hooks](docs/checks.md#claudes-hooks)).
