@@ -88,7 +88,8 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 printf '%s\n' "Match User $USER" "    AuthorizedKeysFile $RUNNER_TEMP/gh/keys" >>"$ws/sshd_config"
 # ws.sh, ws's shell: it logs each command in log, which root and the user both write, then runs it.
 # Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
-# command does, since sshd's ForceCommand runs in its place.
+# command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
+# and roots the paths of the wizard's remote script, each a line NAME=PATH of its own, in root here.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
@@ -101,9 +102,22 @@ case $line in
     exit 142
     ;;
 esac
-exec /bin/sh -c "$SSH_ORIGINAL_COMMAND"
+PATH=$WS_STANDIN/bin:$PATH
+export PATH
+case $SSH_ORIGINAL_COMMAND in
+'sh -s -- '*) sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
+*) exec /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
+esac
 EOF
 chmod 755 "$ws/ws.sh"
+# ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
+here=$(cd "$(dirname "$0")" && pwd)
+mkdir -p "$ws/bin" "$ws/units"
+for each in systemctl wg gh mokutil modinfo; do
+    ln -s "$here/ws-standin.sh" "$ws/bin/$each"
+done
+sudo mkdir -p "$ws/root/root/.local/bin"
+sudo ln -s "$here/ws-standin.sh" "$ws/root/root/.local/bin/claude"
 : >"$ws/log"
 chmod 666 "$ws/log"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
