@@ -8,7 +8,10 @@
 # 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run as
 # it was. A run during another's unit must follow that unit and start none. A full run whose unit is
 # cut off must exit 1 and remove the run stamp that the one before left. The next must start a unit
-# of its own. The stand-ins' state goes back.
+# of its own. The files script must clone another repository by the stand-in gh, whose apply.sh
+# must run as root over ssh, its stdin empty. Its stamp must follow, which status must list. Its
+# clone again must leave the clone, and remove the stamp, and another owner's must stop. The
+# stand-ins' state goes back.
 
 set -u
 
@@ -113,4 +116,35 @@ n=$(units)
 remote run
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0" ] ||
     error "the run after it exited $status, with run '$(stamp run)'"
+
+# files OP [ARG...]: the files script's OP, as remote runs the remote script's.
+files() {
+    out=$(ssh -o BatchMode=yes ws-ssh sh -s -- "$@" <"${remote_sh%/*}/wizard-remote-files.sh" 2>&1)
+    status=$?
+    printf '%s\n' "$out"
+}
+
+hook=$ws/root/root/repository/hook
+files clone example/hook
+[ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: cloned example/hook into $hook" ] &&
+    [ -x "$hook/apply.sh" ] || error "the files script's clone exited $status"
+ssh -o BatchMode=yes ws-ssh /root/repository/hook/apply.sh </dev/null &&
+    grep -qx 'root: /root/repository/hook/apply.sh' "$ws/log" &&
+    [ "$(cat "$ws/apply.log")" = "$(shasum -a 256 </dev/null | cut -d ' ' -f 1)" ] ||
+    error "the clone's apply.sh ran other than as root, once, with its stdin empty"
+files stamp example/hook
+[ "$status" = 0 ] &&
+    [ "$(stamp hook-hook)" = "$(sudo git -C "$hook" rev-parse HEAD) 0 example/hook" ] ||
+    error "the files script's stamp exited $status, leaving '$(stamp hook-hook)'"
+remote status
+printf '%s\n' "$out" | grep -qx 'hook example/hook' || error "status listed no example/hook"
+files clone example/hook
+[ "$status" = 0 ] && [ -z "$out" ] && [ "$(cat "$ws/clone.log")" = example/hook ] &&
+    [ "$(stamp hook-hook)" = - ] || error "the files script's clone again exited $status"
+files clone other/hook
+[ "$status" = 1 ] && [ "$out" = "wizard-remote-files.sh: $hook is not other/hook's clone, its \
+origin 'https://github.com/example/hook.git': move it aside" ] ||
+    error "the files script's clone of another owner's repository exited $status"
+sudo rm -rf "$hook"
+rm -f "$ws/clone.log" "$ws/apply.log"
 exit "$fail"

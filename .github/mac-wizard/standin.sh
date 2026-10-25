@@ -89,7 +89,8 @@ printf '%s\n' "Match User $USER" "    AuthorizedKeysFile $RUNNER_TEMP/gh/keys" >
 # ws.sh, ws's shell: it logs each command in log, which root and the user both write, then runs it.
 # Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
 # command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
-# and roots the paths of the wizard's remote script, each a line NAME=PATH of its own, in root here.
+# and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
+# here. So it roots a command's path from /root, such as another repository's apply.sh.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
@@ -106,6 +107,7 @@ PATH=$WS_STANDIN/bin:$PATH
 export PATH
 case $SSH_ORIGINAL_COMMAND in
 'sh -s -- '*) sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
+/root/*) exec "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
 *) exec /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
 esac
 EOF

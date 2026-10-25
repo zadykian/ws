@@ -109,6 +109,10 @@ for it and as its peer, gh's and claude's logins, Secure Boot that refuses the f
 `HOME` and a UTF-8 locale. It must print the log, and stamp the clone's commit and 0. A tagged run
 after it must start its own unit and leave that stamp. A run during another's unit must follow it.
 A full run cut off must remove the stamp of the one before, so that the next starts a unit again.
+The files script, `mac/wizard-remote-files.sh`, must clone another repository by the stand-in
+`gh`, whose `apply.sh` must run as root over `ssh`. Its stamp must follow, which `status` must
+list, as `OWNER/REPO`. A clone again must leave the clone alone, and remove the stamp. A clone of
+another owner's repository of that name must stop.
 
 The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
 the playbook through the remote script, and each run since must read ws's `status` alone. A run must

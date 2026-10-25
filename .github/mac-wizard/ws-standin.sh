@@ -12,7 +12,11 @@
 #   claude log each in;
 # - gh.keys holds the signing keys of gh's account, which bootstrap.sh --tags devtools adds ws's to,
 #   and gh.nosign gives their list a 404, as a login without the write:ssh_signing_key scope gets;
-# - ws.key is wg0's key, which bootstrap.sh --tags wireguard makes, and utun names wg0, root's.
+# - ws.key is wg0's key, which bootstrap.sh --tags wireguard makes, and utun names wg0, root's;
+# - clone.log holds the repositories that gh repo clone cloned, each with this script as apply.sh
+#   and its URL on GitHub as origin;
+# - apply.log holds a line for each run of apply.sh: tty where its stdin is a terminal, else the
+#   SHA-256 of what it read there, and apply.status its status.
 
 set -u
 
@@ -99,8 +103,8 @@ wg)
     /usr/local/libexec/ws-tunnel/wg show "$(cat "$s/utun")" peers
     ;;
 gh)
-    # The remote script's calls, then the device flow's login and refresh, which the wizard runs in
-    # ssh -t: each fails without a terminal.
+    # The calls of the wizard's scripts on ws, then the device flow's login and refresh, which the
+    # wizard runs in ssh -t: each fails without a terminal.
     case $* in
     'auth status -h github.com') [ -f "$s/gh" ] ;;
     'api --paginate user/ssh_signing_keys --jq .[].key')
@@ -114,6 +118,13 @@ gh)
         touch "$s/gh" && rm -f "$s/gh.nosign"
         ;;
     'auth refresh -h github.com -s write:ssh_signing_key') [ -t 0 ] && rm -f "$s/gh.nosign" ;;
+    'repo clone '*' -- -q')
+        [ -f "$s/gh" ] || exit 4
+        echo "$3" >>"$s/clone.log"
+        git init -q -b main "$4" && ln -s "$(readlink "$0")" "$4/apply.sh" &&
+            git -C "$4" remote add origin "https://github.com/$3.git" && git -C "$4" add apply.sh &&
+            git -C "$4" -c user.name=ws -c user.email=ws@example.com commit -q -m "$3"
+        ;;
     *) exit 2 ;;
     esac
     ;;
@@ -123,6 +134,10 @@ claude)
     'auth login') [ -t 0 ] && touch "$s/claude" ;;
     *) exit 2 ;;
     esac
+    ;;
+apply.sh)
+    if [ -t 0 ]; then echo tty; else shasum -a 256 | cut -d ' ' -f 1; fi >>"$s/apply.log"
+    exit "$(cat "$s/apply.status" 2>/dev/null || echo 0)"
     ;;
 mokutil) if [ -f "$s/sb" ]; then echo 'SecureBoot enabled'; else echo 'SecureBoot disabled'; fi ;;
 modinfo) [ -f "$s/nct6687" ] ;;
