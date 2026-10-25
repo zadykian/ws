@@ -130,10 +130,10 @@ macOS runner. The hooks in `.githooks` check each commit before git makes it.
 
 ## Pull requests
 
-Pull requests land on `main` by fast-forward only, as the commits CI checked. GitHub's merge
-methods are all refused. A comment `/ff` on a pull request pushes its head to `main`
-(`.github/workflows/fast-forward.yml`). A pull request that changes `.github/workflows` is pushed
-by hand, `git push origin SHA:main`.
+Pull requests land on `main` by fast-forward only, as the commits CI checked. GitHub's merge methods
+are all refused. A comment `/ff` on a pull request pushes its head to `main` and closes its linked
+issues (`.github/workflows/fast-forward.yml`). A pull request that changes `.github/workflows` is
+pushed by hand, `git push origin SHA:main`.
 
 ## License
 

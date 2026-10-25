@@ -59,8 +59,8 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 - Pull requests are stacked, each on the one below it, and CI runs on each whatever its base.
 - They land on `main` by fast-forward only, as the commits CI checked. GitHub's merge methods are
   all refused: never run `gh pr merge`.
-- Rebase onto `main`, then comment `/ff` on the pull request
-  (`.github/workflows/fast-forward.yml`). It pushes the head to `main` and deletes the branch.
+- Rebase onto `main`, then comment `/ff` on the pull request (`.github/workflows/fast-forward.yml`).
+  It pushes the head to `main`, closes the pull request's linked issues and deletes the branch.
 - The maintainer pushes a pull request that changes `.github/workflows` by hand,
   `git push origin SHA:main`, as the workflow's token may not push such a change.
 - `.claude/settings.json` denies `gh pr merge` and the usual forms of a push to `main`. A rule
