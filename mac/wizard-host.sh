@@ -132,6 +132,14 @@ host_trust() {
     esac
 }
 
+# host_ssh ARG... runs ssh with ARGs, and HostName the address that the Host key stage asked, where
+# it asked one, with 10 s to connect. Whatever the user's ssh_config says, ssh stops where
+# known_hosts lacks ws's key, or holds another, and adds nothing there: no other key, no address.
+host_ssh() {
+    ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o CheckHostIP=no \
+        ${host_first:+-o "HostName=$host_first"} "$@"
+}
+
 # host_fail says what to do where known_hosts still lacks ws's key.
 host_fail() {
     echo "$host_file still holds no key under ws, as above; run the wizard again"
