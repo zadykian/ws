@@ -136,6 +136,23 @@ sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
 cut -d ' ' -f 1-2 "$ws/signing.pub" >"$ws/gh.keys"
 touch "$ws/gh" "$ws/claude"
+# ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
+# stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws-tunnel has a
+# handshake, and lands in tunnel.log. Any other call is the runner's ssh.
+cat >/opt/homebrew/bin/ssh <<EOF
+#!/bin/sh
+case " \$* " in
+*' ws echo ok ')
+    sudo /usr/local/libexec/ws-tunnel/ws-tunnel status 2>/dev/null |
+        grep -q '^latest handshake: [0-9]' ||
+        { echo 'ssh: no handshake in the tunnel' >&2 && exit 255; }
+    echo "\$*" >>'$ws/tunnel.log'
+    exec /usr/bin/ssh -o HostName=127.0.0.1 -o Port=22022 "\$@"
+    ;;
+esac
+exec /usr/bin/ssh "\$@"
+EOF
+chmod 755 /opt/homebrew/bin/ssh
 : >"$ws/log"
 chmod 666 "$ws/log"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
