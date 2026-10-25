@@ -1,6 +1,6 @@
 #!/bin/sh
-# The stand-ins of the wizard's job, made once before checks.sh runs the cases: what a new Mac and
-# its user give the wizard, on GitHub's macOS runner.
+# The stand-ins of the wizard's job, made once before checks.sh runs the cases: what a new Mac, its
+# user and ws give the wizard, on GitHub's macOS runner.
 
 set -eu
 
@@ -67,3 +67,16 @@ case \$* in
 esac
 EOF
 chmod 755 /opt/homebrew/bin/gh
+# ws's stand-in: an sshd of its own at 127.0.0.1:22022, where mac.conf's WS_REMOTE and its port
+# lead, with a host key made here. The cases answer the Host key stage with its fingerprint.
+ws=$RUNNER_TEMP/ws
+mkdir -p "$ws"
+ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/host_key" </dev/null
+ssh-keygen -l -f "$ws/host_key.pub" | awk '{ print $2 }' >"$ws/fingerprint"
+printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $ws/sshd.pid" \
+    'PasswordAuthentication no' 'KbdInteractiveAuthentication no' >"$ws/sshd_config"
+# sshd 9.8 and later refuse an address for a while after connections that don't log in, which the
+# cases make in a row. The stand-in takes them, where its sshd knows the setting.
+! sudo /usr/sbin/sshd -G -f "$ws/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
+    echo 'PerSourcePenalties no' >>"$ws/sshd_config"
+sudo /usr/sbin/sshd -f "$ws/sshd_config"
