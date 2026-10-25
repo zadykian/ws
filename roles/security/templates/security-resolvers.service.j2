@@ -3,6 +3,7 @@
 # Runs resolvers.sh, which says when, from early boot, where the default dependencies would wait
 # for basic.target. A burst of changes hit the default start limit, which failed the path unit too.
 # A fill waits for a load, whose transaction, from an older read, would undo it.
+# LogLevelMax= keeps systemd's lines on each run out of the journal, SyslogLevel= the script's in.
 [Unit]
 Description=Fill the outbound table's sets of resolved's DNS servers
 Documentation=https://github.com/zadykian/ws/blob/main/docs/security.md#outbound
@@ -15,3 +16,5 @@ Conflicts=shutdown.target
 [Service]
 Type=oneshot
 ExecStart={{ security_resolvers_script }}
+SyslogLevel=notice
+LogLevelMax=notice

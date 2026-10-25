@@ -30,9 +30,10 @@
   loop: "{{ security_resolvers_watchers + ['security-resolvers.service'] }}"
   notify: Watch resolved's servers anew
 
-# WantedBy=sysinit.target: the path unit watches from before the table loads. It reads the units
-# first, as no handler has run yet. A dry run where the unit isn't written yet has none to enable.
-- name: Enable and start the fill's path unit
+# WantedBy=sysinit.target and timers.target: the path unit watches from before the table loads. It
+# reads the units first, as no handler has run yet. A dry run where the units aren't written yet has
+# none to enable.
+- name: Enable and start the fill's path unit and timer
   ansible.builtin.systemd_service:
     name: "{{ item }}"
     enabled: true

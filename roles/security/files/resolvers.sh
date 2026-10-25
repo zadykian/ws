@@ -5,14 +5,17 @@
 # resolv.conf that resolved rewrites as they change. Who runs it, and when, is said here alone.
 # security-outbound.service runs it with the table's FILE, which it loads with the sets' elements in
 # one nft transaction, or alone where nft refuses them. A run loads FILE so too, in a network
-# namespace of its own (outbound.yml). Without FILE, it fills the sets anew in one transaction, as
-# security-resolvers.path runs it on each change of resolv.conf. A missing resolv.conf leaves the
-# sets empty. A missing table stays missing, as sets made here would make a table that drops
-# nothing, yet looks loaded.
+# namespace of its own (outbound.yml). Without FILE, it fills the sets anew in one transaction.
+# security-resolvers.path runs it so on each change of resolv.conf, and security-resolvers.timer a
+# minute after each run: the path unit watches nothing while a fill runs, and a lab lost a change
+# made then. A missing resolv.conf leaves the sets empty. A missing table stays missing, as sets
+# made here would make a table that drops nothing, yet looks loaded.
 
 set -eu
 
 conf=/run/systemd/resolve/resolv.conf
+# The servers of the last fill. A fill from the same, as the timer's, names none it leaves out.
+last=/run/security-resolvers.conf
 cr=$(printf '\r')
 
 # ipv4 ADDR succeeds where ADDR is four numbers to 255 joined by dots, none with a leading zero.
@@ -51,10 +54,10 @@ ipv6() (
     [ "$groups" -ge "$min" ] && [ "$groups" -le "$max" ]
 )
 
-# elements prints the command that adds each server of the resolv.conf on stdin to its set, and
-# names those it leaves out: no address, or one in 0.0.0.0/8, an IPv6 one of zeros, broadcast or
-# multicast. It skips a bare nameserver line. An IPv4-mapped server's packets are IPv4. A set holds
-# no zone, so fe80::1%2 matches on any link.
+# elements prints the command that adds each server of the resolv.conf on stdin to its set, and,
+# unless quiet, names those it leaves out: no address, or one in 0.0.0.0/8, an IPv6 one of zeros,
+# broadcast or multicast. It skips a bare nameserver line. An IPv4-mapped server's packets are
+# IPv4. A set holds no zone, so fe80::1%2 matches on any link.
 elements() {
     while read -r key addr _; do
         addr=${addr%"$cr"}
@@ -74,7 +77,7 @@ elements() {
             *[!0:]*) echo "add element inet ws resolvers6 { $addr }" && continue ;;
             esac
         fi
-        printf 'resolvers.sh: left out %s\n' "$addr" >&2
+        [ -n "${quiet-}" ] || printf 'resolvers.sh: left out %s\n' "$addr" >&2
     done
 }
 
@@ -86,6 +89,15 @@ if [ $# -gt 0 ]; then
     echo "resolvers.sh: nft refused $1 with the sets' elements, so it loads $1 alone" >&2
     exec nft -f "$1"
 fi
+[ "$now" != "$(cat "$last" 2>/dev/null)" ] || quiet=1
 nft list set inet ws resolvers4 >/dev/null 2>&1 || exit 0
-add=$(printf '%s\n' "$now" | elements)
-printf '%s\n' 'flush set inet ws resolvers4' 'flush set inet ws resolvers6' "$add" | nft -f -
+# Where resolv.conf changed while the path unit watched nothing, the fill runs again.
+while :; do
+    add=$(printf '%s\n' "$now" | elements)
+    printf '%s\n' 'flush set inet ws resolvers4' 'flush set inet ws resolvers6' "$add" | nft -f -
+    filled=$now
+    now=$(cat "$conf" 2>/dev/null) || now=
+    [ "$now" != "$filled" ] || break
+    quiet=
+done
+printf '%s\n' "$now" >"$last"

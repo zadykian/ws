@@ -4,14 +4,15 @@ security_outbound_file: /usr/local/lib/ws/security/outbound.nft
 
 # The fill of the table's sets of resolved's servers (resolvers.sh), and the units that start it.
 security_resolvers_script: /usr/local/lib/ws/security/resolvers.sh
-security_resolvers_watchers: [security-resolvers.path]
+security_resolvers_watchers: [security-resolvers.timer, security-resolvers.path]
 
 # What security_outbound: false takes off (outbound_off.yml): the units, in the order they stop, a
 # unit that starts another, as a .path unit, before it. Then their files and links, and these. The
-# table's directory holds the role's files alone.
+# table's directory holds the role's files alone. /run/security-resolvers.conf is the fill's record.
 security_outbound_units: >-
   {{ (security_resolvers_watchers + ['security-resolvers.service', 'security-outbound.service'])
   | map('regex_replace', '^', '/etc/systemd/system/') | list }}
 security_outbound_files:
   - "{{ security_outbound_file }}"
   - "{{ security_outbound_file | dirname }}"
+  - /run/security-resolvers.conf
