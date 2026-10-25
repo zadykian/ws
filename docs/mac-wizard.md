@@ -3,8 +3,8 @@
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, runs ws's playbook
-there, and logs gh in on ws. On a new Mac with Apple silicon, one line installs what it needs,
-clones the repository and runs the wizard, as yourself:
+there, and logs gh and claude in on ws. On a new Mac with Apple silicon, one line installs what it
+needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -37,6 +37,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 8. Root's key: the Mac's key in root's `authorized_keys` on ws, by the installer's user, below.
 9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
 10. gh on ws: root's gh there, logged in to GitHub, and ws's signing key on the account, below.
+11. claude on ws: root's claude there, logged in, below.
 
 ## The answers
 
@@ -171,6 +172,14 @@ stops, naming the command. Then, or at once where the account lacks the key alon
 run needs no terminal, page or session. Where ws lacks gh, which its run installs, the stage stops:
 `--update` runs the playbook again.
 
+## claude on ws
+
+The stage is done where root's claude on ws has a login, as `claude auth status` says. Else the
+wizard runs `claude auth login` as root on ws, in an `ssh -t` session, through a login shell, whose
+`PATH` has `~/.local/bin`, where claude is ([claude](claude.md)). Take its steps at the terminal,
+with the address it shows opened in the Mac's browser. With no terminal, the stage stops, naming
+`claude auth login`. Where ws lacks claude, it stops, as gh's stage does.
+
 ## What stays by hand
 
 After a run in which a stage acted, the wizard lists each of these that applies:
@@ -179,7 +188,6 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   `WS_PUBLIC_KEY` in `mac.conf`, then the wizard again. Its `setup.sh` loads ws-tunnel: allow it in
   the Background where macOS asks. Where ws lacks the Mac's key, or `wg0`'s key isn't
   `WS_PUBLIC_KEY`, as once ws is installed again, the exchange again.
-- claude's login, as root on ws ([By hand](../README.md#by-hand)).
 - With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
   console ([Secure Boot](fans.md#secure-boot)).
 - What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, and
