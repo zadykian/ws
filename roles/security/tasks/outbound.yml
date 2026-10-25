@@ -103,19 +103,20 @@
   notify: [Load the outbound table, Watch resolved's servers anew]
   tags: [systemd]
 
-# A unit written by a run cut short is in force only after the handler's daemon-reload, as is one
+# A unit written by a run cut short is in force only after the handlers' daemon-reload. So is one
 # systemd failed to load, such as one removed while active, then reloaded. systemd_service fails
 # on the latter, so a failure here is a reload due too. A dry run with no unit yet has none.
-- name: Look for a change to security-outbound.service that systemd hasn't read
+- name: Look for a change to the outbound units that systemd hasn't read
   ansible.builtin.systemd_service:
-    name: security-outbound.service
+    name: "{{ item | basename }}"
+  loop: "{{ security_outbound_units }}"
   register: security_outbound_unit
   changed_when: >-
     security_outbound_unit.status.LoadState | default('') != 'loaded'
     or security_outbound_unit.status.NeedDaemonReload | default('') == 'yes'
   failed_when: false
-  when: not ansible_check_mode or '/etc/systemd/system/security-outbound.service' is file
-  notify: Load the outbound table
+  when: not ansible_check_mode or item is file
+  notify: [Load the outbound table, Watch resolved's servers anew]
   tags: [systemd]
 
 - name: Load the outbound table now
