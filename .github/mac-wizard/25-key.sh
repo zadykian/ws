@@ -2,8 +2,8 @@
 # The Mac key stage on a fresh Mac, which none of these runs may change. With a mac.conf of its own
 # that holds every answer but names no key for ws, and no terminal, a run must stop at the stage,
 # naming WS_IDENTITY, before setup.sh's. --check must say that a run at a terminal would ask whether
-# Secretive keeps the key. Neither may make a key, change that mac.conf, or leave a lock or file of
-# the wizard's in $TMPDIR.
+# Secretive keeps the key, and, with a stand-in for Secretive's app, that it would open the app.
+# None may make a key, change that mac.conf, or leave a lock or file of the wizard's in $TMPDIR.
 
 set -u
 
@@ -33,6 +33,13 @@ status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -q "^wizard\.sh: Mac key: would ask whether Secretive keeps " &&
     [ "$status" = 0 ] || error "wizard.sh --check exited $status, with no question on Secretive"
+mkdir -p ~/Applications/Secretive.app
+out=$(WS_CONF=$conf sh "$wizard" --check </dev/null 2>&1)
+status=$?
+printf '%s\n' "$out"
+printf '%s\n' "$out" | grep -q '^wizard\.sh: Mac key: would open Secretive, and wait for ' &&
+    [ "$status" = 0 ] || error "wizard.sh --check exited $status, with no Secretive's app to open"
+rmdir ~/Applications/Secretive.app
 for left in ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
     [ ! -e "$left" ] || error "wizard.sh left $left"
 done

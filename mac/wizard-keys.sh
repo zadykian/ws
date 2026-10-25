@@ -99,11 +99,13 @@ keys_make() {
         "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
 }
 
-# keys_choose makes ws's key where it has none: in Secretive, where the answer at the terminal is
-# other than no, else in keys_pub's file, by keys_make. --check asks nothing, and says what each
-# answer would do. With no terminal, it stops, naming the key that answers.
+# keys_choose makes ws's key where it has none: in Secretive, where its app is there or the
+# terminal's answer is other than no, else in keys_pub's file, by keys_make. --check asks nothing,
+# and says what each answer would do. With no terminal, it stops, naming the key that answers.
 keys_choose() {
-    if ws_checking; then
+    if keys_app; then
+        keys_secretive
+    elif ws_checking; then
         ws_say "Mac key: would ask whether Secretive keeps the Mac's key: yes installs its cask," \
             "no makes ${keys_pub%.pub} with ssh-keygen"
     else
