@@ -78,6 +78,14 @@ daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
 must take both back, and spare a script's own ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)).
 Where wireguard-go makes no utun, the job fails, as the daemon runs the same wireguard-go.
 
+## The rules
+
+`.github/workflows/rules.yml` runs the checks of
+[zadykian/actions](https://github.com/zadykian/actions) on each pull request. They check its
+commits, size and title, its description, and the terms it adds, against the rules of
+[zadykian/skills](https://github.com/zadykian/skills). Each warns and never blocks, so no ruleset
+requires it.
+
 ## The hooks
 
 The hooks in `.githooks` check each commit before git makes it. Enable them in a clone, and so in

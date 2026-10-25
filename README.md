@@ -125,7 +125,8 @@ The router takes a few steps once, by hand: [The router](docs/router.md).
 
 CI runs `make lint`, which lints the code, the docs, the workflows and the commits. It runs the
 playbook twice in a container, forges SigNoz's compose files again, and sets up a Mac on GitHub's
-macOS runner. The hooks in `.githooks` check each commit before git makes it.
+macOS runner. The rules workflow warns where a pull request breaks the rules of zadykian/skills.
+The hooks in `.githooks` check each commit before git makes it.
 [Checks](docs/checks.md) has the details.
 
 ## Pull requests

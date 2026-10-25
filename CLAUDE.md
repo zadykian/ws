@@ -24,7 +24,8 @@ The rest is the docs, the lint gates' tools and CI.
   caps them and `commits` checks the messages.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`; and `fast-forward.yml`, which lands a pull request on a `/ff` comment.
+  `mac`; `rules.yml`, the checks of zadykian/actions, which warn alone; and `fast-forward.yml`,
+  which lands a pull request on a `/ff` comment.
 
 ## Commands
 
