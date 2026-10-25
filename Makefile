@@ -4,7 +4,7 @@
 # Each gate is a target of its own, and those that check files take FILES, every file of their kind
 # when it is empty: make vale FILES=README.md.
 FILES =
-# The ref after which tools/commits checks the commits' messages, up to HEAD.
+# The ref the branch starts from: lint-tree's gitleaks scans the commits after it, up to HEAD.
 BASE = origin/main
 # The commits gitleaks scans, as git log's options, which its --log-opts takes: every commit of
 # the history when empty.
@@ -24,10 +24,9 @@ GALAXY_STAMP = $(COLLECTIONS)/.installed
 export ANSIBLE_COLLECTIONS_PATH = $(CURDIR)/$(COLLECTIONS)
 
 .PHONY: lint shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor \
-	gitleaks commits lint-file lint-tree
+	gitleaks lint-file lint-tree
 
-lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor gitleaks \
-	commits
+lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor gitleaks
 
 # Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in, so the install
 # stops where the .txt lacks a pin of the .in, rather than keep the old pin unseen. pip takes a file
@@ -108,10 +107,6 @@ zizmor:
 gitleaks:
 	tools/run gitleaks git --no-banner --redact --verbose \
 		$(if $(LOG_OPTS),--log-opts='$(LOG_OPTS)') .
-
-# The headers and bodies of the commits from BASE to HEAD.
-commits:
-	tools/commits $(BASE)
 
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
 # file (docs/checks.md). A workflow takes actionlint and zizmor too. A file of no kind passes, as

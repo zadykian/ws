@@ -20,8 +20,8 @@ The rest is the docs, the lint gates' tools and CI.
 - `mac/`: the Mac's side, POSIX sh, run on the Mac ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `mac.md`, `router.md` and `checks.md`; `helix-keymap.md`, the index of
   the keymap's pages in `docs/helix-keymap/`.
-- `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files, `sizecheck`
-  caps them and `commits` checks the messages.
+- `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
+  caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
   `mac`; `rules.yml`, the checks of zadykian/actions, which warn alone; and `fast-forward.yml`,
@@ -34,11 +34,10 @@ make lint                         # every gate, as CI's lint job runs it; -k goe
 make vale FILES=README.md         # one gate alone; the gates that check files take FILES
 make ansible-lint FILES=roles/base/tasks/main.yml   # this file alone: no syntax check of site.yml
 make shell                        # ShellCheck and shfmt -d -i 4 on every shell script
-make commits BASE=origin/BRANCH   # the messages from BRANCH, the one below in a stack, to HEAD
 ```
 
 The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, `lychee`, `rumdl`,
-`actionlint`, `zizmor`, `gitleaks` and `commits` ([Checks](docs/checks.md#make-lint)). `make lint`
+`actionlint`, `zizmor` and `gitleaks` ([Checks](docs/checks.md#make-lint)). `make lint`
 needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
 collections into `.cache`, and `tools/run` downloads the rest there.
 

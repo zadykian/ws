@@ -22,24 +22,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # A pull request's own head, which lands as it is, by fast-forward, rather than GitHub's
-          # merge of it. The whole history, every branch's included: gitleaks scans every commit,
-          # and the commit check reads those from its base, below, to the head.
+          # merge of it. The whole history, every branch's included, as gitleaks scans every
+          # commit.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      # The commit check's base is origin/main, but on a push origin/main is the head itself. There
-      # the base is the commit main was at before the push, so that the check reads the commits the
-      # push adds. A push that makes the branch has none, all zeros, and keeps origin/main.
       - name: make lint
-        run: |
-          base=origin/main
-          case $BEFORE in
-          *[!0]*) base=$BEFORE ;;
-          esac
-          make lint BASE="$base"
+        run: make lint
         env:
-          # The commit main was at before a push, and empty on a pull request.
-          BEFORE: ${{ github.event_name == 'push' && github.event.before || '' }}
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 

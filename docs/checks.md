@@ -24,9 +24,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   tables (`.rumdl.toml`);
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
 - `gitleaks`: every commit of the history, for secrets, or those that `LOG_OPTS` picks with git
-  log's options;
-- `commits`: the messages from `BASE`, `origin/main` by default, to `HEAD`, as `tools/commits`
-  says. On a push to `main`, CI's `BASE` is the commit `main` was at before.
+  log's options.
 
 `tools/sizecheck` leaves out the files nobody writes here. Those are foundryctl's compose files and
 lock, which yamllint and ansible-lint leave out too, and Vale's vendored styles. Data files, such
