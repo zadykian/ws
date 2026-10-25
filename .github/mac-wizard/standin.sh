@@ -43,7 +43,8 @@ mkdir -p ~/Applications/"JetBrains Gateway.app"
 # /opt/homebrew/bin first on PATH, so the stand-in replaces the runner's link there. Its state is in
 # $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,
 # which gh api answers with a 404. nosign gives that 404 for the signing keys alone. keys holds its
-# login's keys, and log its calls.
+# login's keys, and log its calls. Its repo clone makes a repository with .githooks and an empty
+# Brewfile, and its URL on GitHub as origin.
 mkdir -p "$RUNNER_TEMP/gh"
 : >"$RUNNER_TEMP/gh/keys"
 touch "$RUNNER_TEMP/gh/login"
@@ -63,6 +64,12 @@ case \$* in
     [ ! -f "\$state/nosign" ] || { echo 'gh: Not Found (HTTP 404)' >&2 && exit 1; }
     ;;
 'ssh-key add '*) awk 'NF { print \$1, \$2; exit }' "\$3" >>"\$state/keys" ;;
+'repo clone '*' -- -q')
+    git init -q -b main "\$4" && git -C "\$4" remote add origin "https://github.com/\$3.git" &&
+        mkdir "\$4/.githooks" && printf '#!/bin/sh\n' >"\$4/.githooks/pre-commit" &&
+        : >"\$4/Brewfile" && git -C "\$4" add . &&
+        git -C "\$4" -c user.name=ws -c user.email=ws@example.com commit -q -m "\$3"
+    ;;
 *) echo "gh: the stand-in takes no \$*" >&2 && exit 2 ;;
 esac
 EOF
