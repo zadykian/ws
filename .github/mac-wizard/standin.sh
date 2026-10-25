@@ -128,6 +128,10 @@ sudo ln -s "$here/ws-standin.sh" "$clone/bootstrap.sh"
 sudo git -C "$clone" init -q -b main
 sudo git -C "$clone" add bootstrap.sh
 sudo git -C "$clone" -c user.name=ws -c user.email=ws@example.com commit -q -m ws
+# Its origin is itself, so that the pull of --update finds nothing new.
+sudo git -C "$clone" remote add origin "$clone"
+sudo git -C "$clone" fetch -q origin
+sudo git -C "$clone" branch -q -u origin/main
 # ws's gh and claude, root's, logged in, and ws's signing key, which root's git config names and
 # gh's account lists, as the shell role and the logins' stages leave them. So no run of the wizard
 # opens a session on ws for a login.
