@@ -118,9 +118,8 @@ skill. Commits are signed, as the ruleset on `main` requires.
 ## Where else to look
 
 - `.claude/rules/`: the roles' invariants in [roles.md](.claude/rules/roles.md), what each document
-  holds in [docs.md](.claude/rules/docs.md), and the writing rules in
-  [writing.md](.claude/rules/writing.md), loaded with the files they cover. The writing rules add
-  to the `writing` skill's policy.
+  holds in [docs.md](.claude/rules/docs.md), and ws's facts beside the `writing` skill in
+  [writing.md](.claude/rules/writing.md), loaded with the files they cover.
 - Plugins of the `zadykian` marketplace, [zadykian/skills](https://github.com/zadykian/skills),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
   hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`.
