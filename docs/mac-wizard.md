@@ -1,9 +1,9 @@
 # The Mac's wizard
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
-the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws, then runs `setup.sh`.
-On a new Mac with Apple silicon, one line installs what it needs, clones the repository and runs the
-wizard, as yourself:
+the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
+then runs `setup.sh`. On a new Mac with Apple silicon, one line installs what it needs, clones the
+repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -29,7 +29,8 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
    one.
 3. Answers: the values `mac.conf` lacks, below.
 4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
-5. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
+5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
+6. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
 
 ## The answers
@@ -87,6 +88,18 @@ no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
 or Secretive's, must be one that the agent lists, or the stage stops, naming the socket.
+
+## GitHub and Ubuntu's install
+
+gh, from Homebrew where missing, logs in to github.com by its device flow, which shows a code to
+enter at `github.com/login/device`. Its scopes, `write:public_key` and `write:ssh_signing_key`, let
+it add the Mac's keys, and a login without them is refreshed the same way. The wizard adds the
+Mac's key for ws to the account's ssh keys, titled with the Mac's name. `setup.sh` then adds git's
+signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the command to run.
+
+Ubuntu's installer imports the account's keys for ws's user. So run the line before Ubuntu's
+install, or at any time. In the installer, turn OpenSSH on, import the keys from GitHub, and leave
+password login off.
 
 ## What stays by hand
 
