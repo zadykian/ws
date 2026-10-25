@@ -2,10 +2,11 @@
 # The wizard's stage Hook on ws: the apply.sh of another repository, which mac.conf's WS_HOOK names
 # as OWNER/REPO, run as root on ws. The wizard's files script, wizard-remote-files.sh, clones the
 # repository in /root/repository/REPO there, by root's gh login, where it is missing, and never
-# pulls it. apply.sh then runs by plain ssh. A stamp on ws marks a run of it that exited 0, so that
-# a second run of the wizard leaves it alone. wizard.sh sources it, and runs the stage after the
+# pulls it. apply.sh then runs by plain ssh, its stdin the Keychain item that WS_HOOK_SECRET names,
+# as security prints it, or else empty. A stamp on ws marks a run of it that exited 0, so that a
+# second run of the wizard leaves it alone. wizard.sh sources it, and runs the stage after the
 # Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-host.sh and wizard-ws.sh, and reads
-# wizard.sh's dir, update and WS_CONF, and wizard-host.sh's root_in.
+# wizard.sh's dir, lock, update and WS_CONF, and wizard-host.sh's root_in.
 
 # wshook_ran becomes 1 once the stage ran apply.sh in this run.
 wshook_ran=0
@@ -45,19 +46,56 @@ wshook_done() {
 # --check says what it would do.
 wshook_do() {
     wshook_apply=/root/repository/${WS_HOOK#*/}/apply.sh
+    wshook_in=${WS_HOOK_SECRET:+the Keychain item $WS_HOOK_SECRET}
+    wshook_item || return 1
     if ws_checking; then
         ws_say "Hook on ws: would clone $WS_HOOK into ${wshook_apply%/*} on ws, where missing," \
-            "then run its apply.sh there"
+            "then run its apply.sh there, its stdin ${wshook_in:-empty}"
         return 0
     fi
-    ws_say "Hook on ws: $WS_HOOK's apply.sh runs as root on ws"
+    ws_say "Hook on ws: $WS_HOOK's apply.sh runs as root on ws, its stdin ${wshook_in:-empty}"
     # shellcheck disable=SC2034 # wizard-ws.sh's remote_read reads it
     remote_got=0
     remote_files clone "$WS_HOOK" >&2 || return 1
-    host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh "$wshook_apply" </dev/null >&2 ||
-        return 1
+    wshook_run || return 1
     remote_files stamp "$WS_HOOK" >&2 || return 1
     wshook_ran=1
+}
+
+# wshook_item adds the Keychain item that WS_HOOK_SECRET names, where the Keychain lacks it, by
+# security, which asks for its secret twice at the terminal. The wizard never reads the secret.
+wshook_item() {
+    [ -n "$WS_HOOK_SECRET" ] || return 0
+    ! security find-generic-password -s "$WS_HOOK_SECRET" >/dev/null 2>&1 || return 0
+    wshook_add="security add-generic-password -a $USER -s $WS_HOOK_SECRET -w"
+    if ws_checking; then
+        ws_say "Hook on ws: would run $wshook_add, which asks for the item's secret at the terminal"
+        return 0
+    fi
+    [ -t 0 ] || ws_die "Hook on ws: the Keychain lacks the item $WS_HOOK_SECRET, and no terminal" \
+        "is there for $wshook_add: run it, then the wizard again"
+    ws_say "Hook on ws: $wshook_add asks for the secret of $WS_HOOK's apply.sh, twice"
+    security add-generic-password -a "$USER" -s "$WS_HOOK_SECRET" -w ||
+        ws_die "Hook on ws: $wshook_add failed, as above; run the wizard again"
+}
+
+# wshook_run runs apply.sh on ws, its stdin the item's secret, or /dev/null without an item, and
+# fails where apply.sh or ssh does. Where ssh reached ws, it stops where security can't read the
+# item, as where macOS's prompt for it was denied, even where apply.sh then exited 0.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+wshook_run() {
+    if [ -z "$WS_HOOK_SECRET" ]; then
+        host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh "$wshook_apply" </dev/null >&2
+        return
+    fi
+    rm -f "$lock/hook.status"
+    wshook_status=0
+    { security find-generic-password -s "$WS_HOOK_SECRET" -w || echo $? >"$lock/hook.status"; } |
+        host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh "$wshook_apply" >&2 ||
+        wshook_status=$?
+    [ ! -f "$lock/hook.status" ] || [ "$wshook_status" = 255 ] || ws_die "Hook on ws: security" \
+        "can't read the item $WS_HOOK_SECRET from the Keychain: allow it, then run the wizard again"
+    return "$wshook_status"
 }
 
 # wshook_fail says what to do where the clone or apply.sh failed, or ws still lacks the stamp.
