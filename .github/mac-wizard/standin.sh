@@ -42,7 +42,8 @@ mkdir -p ~/Applications/"JetBrains Gateway.app"
 # A stand-in gh, logged in to github.com, for the runner's, which has no login. The wizard puts
 # /opt/homebrew/bin first on PATH, so the stand-in replaces the runner's link there. Its state is in
 # $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,
-# which gh api answers with a 404. keys holds its login's keys, and log its calls.
+# which gh api answers with a 404. nosign gives that 404 for the signing keys alone. keys holds its
+# login's keys, and log its calls.
 mkdir -p "$RUNNER_TEMP/gh"
 : >"$RUNNER_TEMP/gh/keys"
 touch "$RUNNER_TEMP/gh/login"
@@ -58,7 +59,9 @@ case \$* in
     [ ! -f "\$state/noscope" ] || { echo 'gh: Not Found (HTTP 404)' >&2 && exit 1; }
     cat "\$state/keys"
     ;;
-'api --paginate user/ssh_signing_keys --jq .[].key') ;;
+'api --paginate user/ssh_signing_keys --jq .[].key')
+    [ ! -f "\$state/nosign" ] || { echo 'gh: Not Found (HTTP 404)' >&2 && exit 1; }
+    ;;
 'ssh-key add '*) awk 'NF { print \$1, \$2; exit }' "\$3" >>"\$state/keys" ;;
 *) echo "gh: the stand-in takes no \$*" >&2 && exit 2 ;;
 esac
