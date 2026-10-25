@@ -168,12 +168,18 @@ cable_write() {
 }
 
 # cable_hand adds the dock to what stays by hand, where mac.conf has no WS_CABLE_SERVICE yet, as no
-# port of ws's had carrier, and an empty WS_CABLE_SERVICE for a Mac without the cable.
+# port of ws's had carrier. It names WS_CABLE_PORT for the ports that ws keeps down, whose carrier
+# link can't read, and an empty WS_CABLE_SERVICE for a Mac without the cable.
 cable_hand() {
     ask_lacks WS_CABLE_SERVICE || return 0
-    by_hand "The cable: dock the Mac at the display that ws's cable plugs into, then run the line" \
-        "again, which takes the cable's steps. Without the cable, run the line once with" \
-        "WS_CABLE_SERVICE= in the environment (docs/mac-wizard.md, The cable)."
+    set -- "The cable: dock the Mac at the display that ws's cable plugs into, then run the line" \
+        "again, which takes the cable's steps."
+    cable_down=$(printf '%s\n' "${cable_ports-}" |
+        awk '$2 == "-" { printf "%s%s", (n++ ? " or " : ""), $1 }')
+    [ -z "$cable_down" ] || set -- "$@" "Where the cable plugs into $cable_down, which ws keeps" \
+        "down, run the line with WS_CABLE_PORT=PORT in the environment."
+    by_hand "$@" "Without the cable, run the line once with WS_CABLE_SERVICE= in the environment" \
+        "(docs/mac-wizard.md, The cable)."
 }
 
 # cable_fail says what to do where ws's port of the cable, its address or the Mac's service failed.

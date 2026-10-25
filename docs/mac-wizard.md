@@ -250,7 +250,7 @@ where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` 
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
 So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files
-script can't read its carrier. The roles' run brings it up.
+script can't read its carrier. The roles' run brings it up. The closing list names such ports.
 
 ## What stays by hand
 

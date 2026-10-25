@@ -3,6 +3,7 @@
 # as in 41-remote.sh. While no port has carrier, a run and --check must print nothing, and a run
 # read link once, and --update's closing list name the dock. WS_CABLE_PORT must end the wait:
 # enp7s0, which is down, must go in host_vars, and lack 10.77.0.1 after the roles' run.
+# --update's dock must name enp7s0 too, for WS_CABLE_PORT.
 # Once enp5s0 has carrier, a run with no terminal must stop, naming WS_CABLE_PORT, and --check say
 # what it would do, neither writing ws's host_vars. With WS_CABLE_PORT, a run must name enp5s0
 # there, run bootstrap.sh --tags network,wireguard, and stop at the Mac's service.
@@ -97,9 +98,11 @@ wizard run
 wizard --check
 [ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh --check with no carrier exited $status"
 wizard --update
-printf '%s\n' "$out" | grep -qx -e "- The cable: dock the Mac at the display .* steps\. Without \
-the cable, run the line once with WS_CABLE_SERVICE= in the environment (docs/mac-wizard\.md, The \
-cable)\." && [ "$status" = 0 ] || error "wizard.sh --update undocked exited $status, or no dock"
+printf '%s\n' "$out" | grep -qx -e "- The cable: dock the Mac at the display .* steps\. Where the \
+cable plugs into enp7s0, which ws keeps down, run the line with WS_CABLE_PORT=PORT in the \
+environment\. Without the cable, run the line once with WS_CABLE_SERVICE= in the environment \
+(docs/mac-wizard\.md, The cable)\." && [ "$status" = 0 ] ||
+    error "wizard.sh --update undocked exited $status, or named no dock, or no enp7s0"
 wizard run WS_CABLE_PORT=enp7s0
 printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
 bootstrap\.sh --tags network,wireguard: plug the Mac's cable into it, or mend what that printed, \
