@@ -7,9 +7,10 @@
 # reads wizard.sh's lock and WS_CONF, mac.conf's path.
 
 # keys_done succeeds where the key that ssh offers ws is there: in a file beside the .pub whose
-# fingerprint it shares, or listed by the agent that holds it.
+# fingerprint it shares, or listed by the agent that holds it. Where it is Secretive's, git, which
+# has a name, needs a key of its own there too, unless mac.conf has a line for WS_GIT_SIGNING_KEY.
 keys_done() {
-    (ws_conf "$WS_CONF" && ws_identity && keys_there) >/dev/null 2>&1
+    (ws_conf "$WS_CONF" && ws_identity && keys_there && ! keys_signing) >/dev/null 2>&1
 }
 
 # keys_there succeeds where the key that ws_identity set is there: the agent lists the key of the
@@ -46,9 +47,18 @@ keys_home() {
     esac
 }
 
+# keys_signing succeeds where ws's key is Secretive's, and git, which has a name, lacks a key of its
+# own there, as mac.conf has no line for WS_GIT_SIGNING_KEY. An empty one keeps setup.sh's key.
+# shellcheck disable=SC2154 # ws_secretive is setup-conf.sh's
+keys_signing() {
+    [ "$(keys_home "$ws_identity_agent")" = "$ws_secretive/socket.ssh" ] &&
+        [ -n "$WS_GIT_NAME" ] && ask_lacks WS_GIT_SIGNING_KEY
+}
+
 # keys_do makes the key that keys_done lacks, or says why it can't. A WS_IDENTITY outside
 # Secretive's PublicKeys, with no agent, is a key in a file, which keys_file makes. Without
-# WS_IDENTITY, the key that ws_identity finds is there, or keys_choose makes one.
+# WS_IDENTITY, the key that ws_identity finds is there, or keys_choose makes one. git's key in
+# Secretive follows ws's.
 keys_do() {
     ws_conf "$WS_CONF"
     keys_pub=$(keys_home "$WS_IDENTITY")
@@ -66,8 +76,9 @@ keys_do() {
     elif [ -e "$keys_pub" ] || [ -e "${keys_pub%.pub}" ]; then
         keys_file "${keys_pub%.pub}"
     else
-        keys_choose
+        keys_choose || return 1
     fi
+    ! keys_signing || keys_git
 }
 
 # keys_file KEY makes KEY, a key in a file, where neither it nor KEY.pub is there. Else it stops
@@ -123,12 +134,14 @@ keys_choose() {
 
 # keys_secretive has the user make ws's key in Secretive's app, installed where missing, at its
 # default protection, which asks for Touch ID at each use. It writes the key's .pub and the agent
-# into mac.conf, as a second key there would stop ws_identity's default, and the agent must list it.
+# into mac.conf, as git's key would stop ws_identity's default, and the agent must list it. --check
+# takes the agent as ws's, for keys_signing.
 keys_secretive() {
     keys_agent=\~/${ws_secretive#"$HOME"/}/socket.ssh
     if ws_checking; then
         keys_app || ws_say "Mac key: would run brew install --cask secretive"
         ws_say "Mac key: would open Secretive, and wait for ws's key made there"
+        ws_identity_agent=$keys_agent
         return 0
     fi
     keys_app || brew install --cask secretive >&2 || ws_die "Mac key: brew install --cask" \
@@ -146,16 +159,33 @@ $(ask_line WS_IDENTITY_AGENT "$keys_agent")
         "Secretive's setup, then run the wizard again"
 }
 
-# keys_pick WHAT sets keys_got to the .pub in PublicKeys other than keys_skip's. Where none is
-# there, it says to make WHAT in Secretive's app, and waits up to 15 minutes for one. It stops on a
-# key other than P-256, as an ML-DSA one, which ws's OpenSSH lacks.
+# keys_git has the user make git's signing key in Secretive's app, beside ws's, at Notify, so that
+# git signs with no prompt while the Mac is unlocked (#109). It writes its .pub's path into
+# mac.conf as WS_GIT_SIGNING_KEY.
+keys_git() {
+    if ws_checking; then
+        ws_say "Mac key: would open Secretive, and wait for git's signing key made there"
+        return 0
+    fi
+    open -a Secretive || ws_say "Mac key: warning: open cannot find Secretive: open it by hand"
+    keys_skip=$keys_pub
+    keys_pick "a second P-256 key, for git's signing, at Notify" \
+        "An empty WS_GIT_SIGNING_KEY= in mac.conf keeps setup.sh's file key for git at the next run"
+    keys_signer=\~/${keys_got#"$HOME"/}
+    ask_write "$(ask_line WS_GIT_SIGNING_KEY "$keys_signer")
+" "Mac key"
+}
+
+# keys_pick WHAT [ELSE] sets keys_got to the .pub in PublicKeys other than keys_skip's. Where none
+# is there, it says to make WHAT in Secretive's app, adds ELSE, and waits up to 15 minutes for one.
+# It stops on a key other than P-256, as an ML-DSA one, which ws's OpenSSH lacks.
 keys_pick() {
     if ! keys_other; then
-        ws_say "Mac key: in Secretive, make $1; the wizard waits up to 15 minutes for it"
+        ws_say "Mac key: in Secretive, make $1; the wizard waits up to 15 minutes for it${2:+. $2}"
         keys_left=450
         until keys_other; do
             [ "$((keys_left -= 1))" -ge 0 ] || ws_die "Mac key: Secretive made no key in 15" \
-                "minutes: make $1, then run the wizard again"
+                "minutes: make $1, then run the wizard again${2:+. $2}"
             sleep 2
         done
     fi

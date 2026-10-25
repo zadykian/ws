@@ -2,9 +2,10 @@
 # The Mac key stage with a key of an agent's, on the Mac that 40-again.sh leaves. The stand-in for
 # Secretive's agent is an ssh-agent at its socket that holds a P-256 key, whose .pub is in
 # PublicKeys. With a mac.conf of its own that names that .pub in WS_IDENTITY, --check must print
-# nothing of the stage while the agent lists the key. Once the agent lacks it, a run and --check
-# must stop at the stage, naming the socket, before setup.sh's. None may change that mac.conf, nor
-# the Mac's own or ssh's files. The stand-in goes after.
+# nothing of the stage while the agent lists the key. With git's name too, it must say it would wait
+# for git's key made in Secretive, unless mac.conf has an empty WS_GIT_SIGNING_KEY. Once the agent
+# lacks ws's key, a run and --check must stop at the stage, naming the socket, before setup.sh's.
+# None may change that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
 
@@ -51,6 +52,16 @@ files >"$RUNNER_TEMP/agent.files"
 
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] || error "wizard.sh --check exited $status, with '$mac'"
+printf '%s\n' 'WS_GIT_NAME="Jane Doe"' WS_GIT_EMAIL=jane@example.com >>"$conf"
+keys --check
+want="wizard.sh: Mac key: would open Secretive, and wait for git's signing key made there"
+[ "$status" = 0 ] && [ "$mac" = "$want" ] ||
+    error "wizard.sh --check with git's name exited $status, with '$mac', not '$want'"
+echo WS_GIT_SIGNING_KEY= >>"$conf"
+keys --check
+[ "$status" = 0 ] && [ -z "$mac" ] ||
+    error "wizard.sh --check with an empty WS_GIT_SIGNING_KEY exited $status, with '$mac'"
+cp "$RUNNER_TEMP/agent.conf.before" "$conf"
 SSH_AUTH_SOCK=$data/socket.ssh ssh-add -D 2>/dev/null
 want="wizard.sh: Mac key: the agent at $data/socket.ssh lists no key of $pub: open Secretive,"
 want="$want where it is that agent, or start the agent, then run the wizard again"

@@ -76,7 +76,9 @@ must drop the Mac's key, which `setup.sh` prints until then, and end with that s
 hand. A second run and `--check` must print nothing, by sh and by dash. Then a stand-in for
 Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key, whose `.pub` a `mac.conf` of its
 own names in `WS_IDENTITY`. `--check` must print nothing of the Mac key stage while the agent lists
-the key. Once it lacks the key, a run and `--check` must stop at the stage, naming the socket.
+the key. With git's name, it must say that it would wait for git's key made in Secretive, unless
+`WS_GIT_SIGNING_KEY` is empty. Once the agent lacks the key, a run and `--check` must stop at the
+stage, naming the socket.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
