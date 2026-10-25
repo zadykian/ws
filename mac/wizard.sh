@@ -190,6 +190,7 @@ main() {
     stage "Hook on ws" wshook
     stage "Hook on the Mac" hook
     run_hand
+    hook_hand
     closing
 }
 

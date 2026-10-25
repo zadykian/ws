@@ -5,10 +5,11 @@
 # pulls it. apply.sh then runs by plain ssh, its stdin the Keychain item that WS_HOOK_SECRET names,
 # as security prints it, or else empty. A stamp on ws marks a run of it that exited 0, so that a
 # second run of the wizard leaves it alone. Hook on the Mac clones the repository in
-# ~/repository/REPO by gh's login there, with its hooks and its Brewfile's formulae. wizard.sh
-# sources it, and runs the stages after the Tunnel. It calls the functions of lib.sh, setup-lib.sh,
-# wizard-gh.sh, wizard-host.sh and wizard-ws.sh, and reads wizard.sh's dir, lock, update and
-# WS_CONF, and wizard-host.sh's root_in.
+# ~/repository/REPO by gh's login there, with its hooks and its Brewfile's formulae. Where git lacks
+# gh's credential command, the closing list names gh auth setup-git. wizard.sh sources it, and runs
+# the stages after the Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-gh.sh,
+# wizard-host.sh and wizard-ws.sh, and wizard.sh's by_hand. It reads wizard.sh's dir, lock, update
+# and WS_CONF, and wizard-host.sh's root_in.
 
 # wshook_ran becomes 1 once the stage ran apply.sh in this run.
 wshook_ran=0
@@ -179,4 +180,13 @@ hook_run() {
 hook_fail() {
     echo "the clone of $WS_HOOK in $hook_dir, its hooks or its Brewfile's formulae failed, as" \
         "above; mend what they printed, then run the wizard again"
+}
+
+# hook_hand adds gh auth setup-git to what stays by hand, where git's config names no credential
+# command of gh's for github.com, as setup.sh's gitconfig does where mac.conf gives git a name.
+# Through that command, pushes from the Mac's clones take gh's login.
+hook_hand() {
+    git config --global --includes --get-all credential.https://github.com.helper 2>/dev/null |
+        grep -q ' auth git-credential$' || by_hand "Pushes from the Mac's clones to GitHub:" \
+        "gh auth setup-git, which has git take gh's login (docs/mac-git.md)."
 }
