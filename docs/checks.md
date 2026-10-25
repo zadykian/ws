@@ -117,12 +117,14 @@ cut off must stop at the stage, and the next must start a unit of its own. That 
 what stays by hand, with the fans' driver and the router's forwards. A run while a unit runs, as one
 that a dropped ssh left, must follow that unit.
 
-`standin.sh` logs ws's gh in, and its account lists ws's signing key, so no run may open a session
-on ws for gh's login. A fresh `--check` must show gh on ws after ws's run. Without the login, a run
-with no terminal must stop at gh on ws, naming `gh auth login`, and with a login that lacks the
-`write:ssh_signing_key` scope, `gh auth refresh`. `--check` must say it would run each. With the key
-off the account, a run must print nothing where root's git config names no signing key. Otherwise it
-must run `bootstrap.sh --tags devtools`, which adds it, and the next must print nothing.
+`standin.sh` logs ws's gh and claude in, and gh's account lists ws's signing key, so no run may open
+a session on ws for a login. A fresh `--check` must show gh on ws and claude on ws after ws's run.
+Without gh's login, a run with no terminal must stop at gh on ws, naming `gh auth login`, and with a
+login that lacks the `write:ssh_signing_key` scope, `gh auth refresh`. `--check` must say it would
+run each. With the key off the account, a run must print nothing where root's git config names no
+signing key. Otherwise it must run `bootstrap.sh --tags devtools`, which adds it. Without claude's
+login, a run must stop at claude on ws, naming `claude auth login`, and `--check` must say it would
+run it. The next run must print nothing.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

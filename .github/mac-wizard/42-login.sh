@@ -1,10 +1,12 @@
 #!/bin/sh
-# gh's login on the stand-in ws, on the Mac that 41-remote.sh leaves. standin.sh logged ws's gh in,
-# so no run of the wizard may have opened a session on ws for that login. Without it, a run with no
-# terminal must stop at gh on ws, naming gh auth login, and --check must say it would run it. With a
-# login that lacks the write:ssh_signing_key scope, each must name gh auth refresh. With ws's signing
-# key off the account, a run with no terminal must run bootstrap.sh --tags devtools, which adds it,
-# then list what stays by hand. The next run must print nothing.
+# gh's and claude's logins on the stand-in ws, on the Mac that 41-remote.sh leaves. standin.sh
+# logged both in, so no run of the wizard may have opened a session on ws for a login. Without gh's,
+# a run with no terminal must stop at gh on ws, naming gh auth login, and --check must say it would
+# run it. With a login that lacks the write:ssh_signing_key scope, each must name gh auth refresh.
+# With ws's signing key off the account, a run with no terminal must run bootstrap.sh --tags
+# devtools, which adds it, then list what stays by hand. Without claude's login, a run must stop at
+# claude on ws, naming claude auth login, and --check must say it would run it. The next run must
+# print nothing.
 
 set -u
 
@@ -35,9 +37,10 @@ expect() {
         [ "$status" = "$want_status" ] || error "wizard.sh $* exited $status, with no '$want'"
 }
 
-# sessions: no session on ws may have run gh's login.
+# sessions: no session on ws may have run a login.
 sessions() {
-    ! grep -q '^root: gh auth ' "$ws/log" || error "a run opened a session on ws for gh's login"
+    ! grep -q -e '^root: gh auth ' -e '^root: exec bash -lc "claude auth login"$' "$ws/log" ||
+        error "a run opened a session on ws for a login"
 }
 
 sessions
@@ -63,6 +66,10 @@ printf '%s\n' "$out" | grep -qx 'What stays by hand:' &&
     grep -qxF "$(cut -d ' ' -f 1-2 "$ws/signing.pub")" "$ws/gh.keys" &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags devtools' ] ||
     error "wizard.sh ran no $devtools that added ws's signing key, or listed nothing by hand"
+rm "$ws/claude"
+expect 'claude on ws' 1 'no terminal is there for claude auth login'
+expect 'claude on ws' 0 'would run claude auth login as root on ws' --check
+touch "$ws/claude"
 sessions
 out=$(sh "$wizard" </dev/null 2>&1)
 status=$?

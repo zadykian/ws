@@ -94,7 +94,13 @@ gh)
     *) exit 2 ;;
     esac
     ;;
-claude) [ -f "$s/claude" ] ;;
+claude)
+    case $* in
+    'auth status') [ -f "$s/claude" ] ;;
+    'auth login') touch "$s/claude" ;;
+    *) exit 2 ;;
+    esac
+    ;;
 mokutil) if [ -f "$s/sb" ]; then echo 'SecureBoot enabled'; else echo 'SecureBoot disabled'; fi ;;
 modinfo) [ -f "$s/nct6687" ] ;;
 *) exit 2 ;;
