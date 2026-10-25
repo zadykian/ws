@@ -21,7 +21,8 @@
 # - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
 # - claude on ws: root's claude there, logged in over ssh -t;
 # - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again;
-# - Hook on ws: the repository that WS_HOOK names, cloned on ws, and its apply.sh run there as root.
+# - Hook on ws: the repository that WS_HOOK names, cloned on ws, and its apply.sh run there as root;
+# - Hook on the Mac: that repository's clone in ~/repository, its hooks and its Brewfile's formulae.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -187,6 +188,7 @@ main() {
     stage "claude on ws" wsclaude
     stage Tunnel tunnel
     stage "Hook on ws" wshook
+    stage "Hook on the Mac" hook
     run_hand
     closing
 }

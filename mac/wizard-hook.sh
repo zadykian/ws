@@ -1,12 +1,14 @@
 # shellcheck shell=sh
-# The wizard's stage Hook on ws: the apply.sh of another repository, which mac.conf's WS_HOOK names
-# as OWNER/REPO, run as root on ws. The wizard's files script, wizard-remote-files.sh, clones the
+# The wizard's stages for another repository, which mac.conf's WS_HOOK names as OWNER/REPO. Hook on
+# ws runs its apply.sh as root on ws. The wizard's files script, wizard-remote-files.sh, clones the
 # repository in /root/repository/REPO there, by root's gh login, where it is missing, and never
 # pulls it. apply.sh then runs by plain ssh, its stdin the Keychain item that WS_HOOK_SECRET names,
 # as security prints it, or else empty. A stamp on ws marks a run of it that exited 0, so that a
-# second run of the wizard leaves it alone. wizard.sh sources it, and runs the stage after the
-# Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-host.sh and wizard-ws.sh, and reads
-# wizard.sh's dir, lock, update and WS_CONF, and wizard-host.sh's root_in.
+# second run of the wizard leaves it alone. Hook on the Mac clones the repository in
+# ~/repository/REPO by gh's login there, with its hooks and its Brewfile's formulae. wizard.sh
+# sources it, and runs the stages after the Tunnel. It calls the functions of lib.sh, setup-lib.sh,
+# wizard-gh.sh, wizard-host.sh and wizard-ws.sh, and reads wizard.sh's dir, lock, update and
+# WS_CONF, and wizard-host.sh's root_in.
 
 # wshook_ran becomes 1 once the stage ran apply.sh in this run.
 wshook_ran=0
@@ -102,4 +104,79 @@ wshook_run() {
 wshook_fail() {
     echo "the clone of $WS_HOOK on ws, or its apply.sh, failed, as above; mend what they printed," \
         "then run the wizard again, which runs apply.sh again"
+}
+
+# hook_after prints gh on the Mac, whose login clones the repository, where that isn't done.
+hook_after() {
+    gh_done || echo "gh on the Mac"
+}
+
+# hook_done succeeds where mac.conf names no repository, or where its clone is in ~/repository/REPO,
+# with core.hooksPath at its .githooks and its Brewfile's formulae installed, where it has them.
+hook_done() {
+    ws_conf "$WS_CONF"
+    [ -n "$WS_HOOK" ] || return 0
+    hook_dir=$HOME/repository/${WS_HOOK#*/}
+    [ -e "$hook_dir/.git" ] && hook_origin && hook_hooks && hook_brew
+}
+
+# hook_origin succeeds where the clone's origin names WS_HOOK on GitHub, as the files script reads
+# the clone on ws: by https or ssh, as gh sets it, letter case aside.
+hook_origin() {
+    hook_url=$(git -C "$hook_dir" remote get-url origin 2>/dev/null) || hook_url=
+    case $(printf '%s\n' "${hook_url%.git}" | tr '[:upper:]' '[:lower:]') in
+    *[/@]github.com[/:]"$(printf '%s\n' "${WS_HOOK%.git}" | tr '[:upper:]' '[:lower:]')") ;;
+    *) return 1 ;;
+    esac
+}
+
+# hook_hooks succeeds where the clone has no .githooks, or core.hooksPath names it, by an absolute
+# path, as in ws's clone (docs/checks.md, The hooks).
+hook_hooks() {
+    [ ! -d "$hook_dir/.githooks" ] ||
+        [ "$(git -C "$hook_dir" config core.hooksPath)" = "$hook_dir/.githooks" ]
+}
+
+# hook_brew succeeds where the clone has no Brewfile, or Homebrew has all it names. An outdated
+# formula counts as there, as the stage upgrades nothing. The check runs without Homebrew's
+# auto-update, which brew bundle would run first a day after the last, writing under --check too.
+hook_brew() {
+    [ ! -f "$hook_dir/Brewfile" ] || HOMEBREW_NO_AUTO_UPDATE=1 \
+        brew bundle check --no-upgrade --file="$hook_dir/Brewfile" >/dev/null 2>&1
+}
+
+# hook_do clones the repository by gh's login, where nothing is there, and stops where the path
+# holds no clone, or another repository's. It points core.hooksPath at the clone's .githooks, and
+# runs brew bundle, which installs what the Brewfile names and Homebrew lacks. --check says what it
+# would run.
+hook_do() {
+    if [ ! -e "$hook_dir" ] && [ ! -L "$hook_dir" ]; then
+        if ws_checking; then
+            ws_say "Hook on the Mac: would run gh repo clone $WS_HOOK $hook_dir, then set its" \
+                "core.hooksPath and run brew bundle, where it has .githooks or a Brewfile"
+            return 0
+        fi
+        hook_run gh repo clone "$WS_HOOK" "$hook_dir" -- -q
+    fi
+    [ -e "$hook_dir/.git" ] || ws_die "Hook on the Mac: $hook_dir holds no clone: move it aside"
+    hook_origin || ws_die "Hook on the Mac: $hook_dir is not $WS_HOOK's clone, its origin" \
+        "'$hook_url': move it aside"
+    hook_hooks || hook_run git -C "$hook_dir" config core.hooksPath "$hook_dir/.githooks"
+    hook_brew || hook_run brew bundle --no-upgrade --file="$hook_dir/Brewfile"
+}
+
+# hook_run CMD... runs CMD, which it names first, and stops where CMD fails. --check says it would.
+hook_run() {
+    if ws_checking; then
+        ws_say "Hook on the Mac: would run $*"
+        return 0
+    fi
+    ws_say "Hook on the Mac: running $*"
+    "$@" >&2 || ws_die "Hook on the Mac: $* failed, as above"
+}
+
+# hook_fail says what to do where the clone still lacks its hooks or its Brewfile's formulae.
+hook_fail() {
+    echo "the clone of $WS_HOOK in $hook_dir, its hooks or its Brewfile's formulae failed, as" \
+        "above; mend what they printed, then run the wizard again"
 }

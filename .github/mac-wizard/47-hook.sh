@@ -7,7 +7,7 @@
 # and run apply.sh once over plain ssh. Its stdin must be the secret, and no terminal. It must
 # print no secret, and the next run nothing. Where apply.sh exits 1, --update must stop, and the
 # next run, once it exits 0, run it again. With WS_HOOK_SECRET empty, its stdin must be empty.
-# mac.conf, the clone, the stamp and the keychain go back, and a run must print nothing.
+# mac.conf, the clones, the stamp and the keychain go back, and a run must print nothing.
 
 set -u
 
@@ -101,6 +101,7 @@ wizard
 
 cp "$before" "$conf"
 sudo rm -rf "$hook" "$stamp"
+rm -rf "$HOME/repository/hook"
 rm -f "$ws/clone.log" "$ws/apply.log" "$before" "$RUNNER_TEMP/tty"
 # shellcheck disable=SC2086 # as above
 security list-keychains -d user -s $list

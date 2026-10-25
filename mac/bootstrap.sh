@@ -21,7 +21,7 @@ brew_sha256=ae13b8b0ac910730d3e982a9e7518288d17fd0ad272e42f412027e8ab4555575
 brew_signer='Developer ID Installer: Patrick Linnane (927JGANW46)'
 # The wizard's stages, split by |, as mac/wizard.sh's main runs them, for --check without a clone.
 stages="Answers|Mac key|gh on the Mac|setup.sh|Host key|Root's key|ws's run|\
-gh on ws|claude on ws|Tunnel|Hook on ws"
+gh on ws|claude on ws|Tunnel|Hook on ws|Hook on the Mac"
 
 # say prints a message of bootstrap.sh's.
 say() {
