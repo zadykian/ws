@@ -126,6 +126,12 @@ signing key. Otherwise it must run `bootstrap.sh --tags devtools`, which adds it
 login, a run must stop at claude on ws, naming `claude auth login`, and `--check` must say it would
 run it. The next run must print nothing.
 
+With both logged out and the key off the account, a run with no terminal must open nothing. At a
+terminal of `script`'s, a run must open `github.com/login/device`, by a stand-in `open`, and run
+`gh auth login` in an `ssh -t` session. Then it must add the key, and run `claude auth login`
+through `bash -lc` in another session. The stand-ins' logins take a terminal alone, and the next run
+must print nothing.
+
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
 `--check`, with the form the key takes. `--check` must show the environment's answers as the lines

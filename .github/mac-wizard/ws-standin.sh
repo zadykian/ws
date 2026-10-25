@@ -78,7 +78,7 @@ bootstrap.sh)
 wg) cat "$s/wg0" 2>/dev/null ;;
 gh)
     # The remote script's calls, then the device flow's login and refresh, which the wizard runs in
-    # ssh -t.
+    # ssh -t: each fails without a terminal.
     case $* in
     'auth status -h github.com') [ -f "$s/gh" ] ;;
     'api --paginate user/ssh_signing_keys --jq .[].key')
@@ -87,17 +87,18 @@ gh)
         cat "$s/gh.keys"
         ;;
     'auth login -h github.com -p https -w -s write:ssh_signing_key')
+        [ -t 0 ] || exit 1
         echo '! First copy your one-time code: 0000-0000'
         touch "$s/gh" && rm -f "$s/gh.nosign"
         ;;
-    'auth refresh -h github.com -s write:ssh_signing_key') rm -f "$s/gh.nosign" ;;
+    'auth refresh -h github.com -s write:ssh_signing_key') [ -t 0 ] && rm -f "$s/gh.nosign" ;;
     *) exit 2 ;;
     esac
     ;;
 claude)
     case $* in
     'auth status') [ -f "$s/claude" ] ;;
-    'auth login') touch "$s/claude" ;;
+    'auth login') [ -t 0 ] && touch "$s/claude" ;;
     *) exit 2 ;;
     esac
     ;;
