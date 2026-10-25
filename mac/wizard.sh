@@ -45,7 +45,6 @@ hand=
 
 # args takes the wizard's arguments: --check sets WS_CHECK, as setup-lib.sh's ws_args does, and
 # --update sets update.
-# shellcheck disable=SC2034 # a stage that skips work by what it kept reads update
 args() {
     update=0
     for arg; do

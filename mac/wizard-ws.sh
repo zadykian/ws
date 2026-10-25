@@ -3,11 +3,13 @@
 # script that the wizard sends to root there over ssh, wizard-remote.sh, starts it and follows it. A
 # run goes on where ssh drops, and the next run of the wizard follows it. wizard.sh sources it, and
 # runs the stage after Root's key. It calls the functions of lib.sh and wizard-host.sh, and reads
-# wizard.sh's dir and lock.
+# wizard.sh's dir, lock and update.
 
-# remote_st holds what the remote script's status printed, once remote_got is 1.
+# remote_st holds what the remote script's status printed, once remote_got is 1. run_ran becomes 1
+# once the stage ran the playbook in this run.
 remote_got=0
 remote_st=
+run_ran=0
 
 # remote OP [ARG...] runs the remote script's OP as root on ws, through host_ssh, which reaches ws
 # at the address that the Host key stage asked, where it asked one. No ARG holds a blank or a quote.
@@ -42,17 +44,26 @@ run_after() {
     [ "$root_in" = 1 ] || echo "Root's key"
 }
 
-# run_done succeeds where ws's last full run exited 0, and no run's unit runs there now. It reads
-# ws only where root logged in there in this run.
+# run_done succeeds where ws's last full run exited 0, and no run's unit runs there now. Under
+# --update, only once the stage ran the playbook in this run. It reads ws only where root logged in
+# there in this run.
+# shellcheck disable=SC2154 # update is wizard.sh's
 run_done() {
+    [ "$update" = 0 ] || [ "$run_ran" = 1 ] || return 1
     [ "$root_in" = 1 ] && remote_read && [ "$(remote_get active)" = - ] &&
         [ "$(remote_get run | cut -d ' ' -f 2)" = 0 ]
 }
 
 # run_do runs ws's playbook in a unit of its own on ws through the remote script, or follows the run
-# that goes on there, with its log on stderr. --check says what it would do.
+# that goes on there, with its log on stderr. Under --update, the remote script pulls ws's clone
+# first. --check says what it would do.
 run_do() {
+    set --
     run_how="run bootstrap.sh on ws in a unit of its own, and follow its log"
+    if [ "$update" = 1 ]; then
+        set -- --update
+        run_how="pull ws's clone where it is on main and clean, then $run_how"
+    fi
     if ws_checking; then
         remote_read || true
         run_unit=$(remote_get active) || run_unit=-
@@ -67,7 +78,8 @@ run_do() {
     ws_say "ws's run: bootstrap.sh runs on ws in a unit of its own, which goes on where ssh" \
         "drops; a first run takes 20 to 40 minutes"
     remote_got=0
-    remote run >&2
+    remote run "$@" >&2 || return 1
+    run_ran=1
 }
 
 # run_fail says what to do where ws's playbook ran no full run to its end.
