@@ -4,6 +4,7 @@
 # files. Without WS_PUBLIC_KEY, setup.sh loads no daemon, and prints the Mac's key, which the
 # wizard drops: it must end with the tunnel's step by hand instead. It must make the ssh key that
 # mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no terminal asked one.
+# It must add the .pub to the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
 # own in $TMPDIR.
 
@@ -34,6 +35,11 @@ done
 [ "$(ssh-keygen -y -P '' -f ~/.ssh/id_ed25519 | cut -d ' ' -f 1-2)" = \
     "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ] ||
     error 'wizard.sh made no ~/.ssh/id_ed25519 with no passphrase, beside its .pub'
+added="ssh-key add $HOME/.ssh/id_ed25519.pub --title $(hostname -s)"
+if ! grep -qxF "$added" "$RUNNER_TEMP/gh/log" ||
+    ! grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" "$RUNNER_TEMP/gh/keys"; then
+    error "wizard.sh added no ~/.ssh/id_ed25519.pub to gh's login, titled with the Mac's name"
+fi
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded the daemon without ws's key"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"

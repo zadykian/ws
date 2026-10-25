@@ -13,7 +13,7 @@
 #
 # - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
 # - Mac key: the key that ssh offers ws, made where missing, in Secretive or a file of ssh-keygen's;
-# - gh on the Mac: gh's login to GitHub, with which setup.sh adds git's signing key;
+# - gh on the Mac: gh's login to GitHub, and the Mac's key among its keys, for Ubuntu's installer;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
 # shellcheck source-path=SCRIPTDIR
