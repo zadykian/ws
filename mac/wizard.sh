@@ -16,7 +16,8 @@
 # - gh on the Mac: gh's login to GitHub, and the Mac's key among its keys, for Ubuntu's installer;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md);
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
-# - Root's key: the Mac's key in root's authorized_keys on ws, added by the installer's user.
+# - Root's key: the Mac's key in root's authorized_keys on ws, added by the installer's user;
+# - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -35,6 +36,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-gh.sh"
 # shellcheck source=wizard-host.sh
 . "$dir/wizard-host.sh"
+# shellcheck source=wizard-ws.sh
+. "$dir/wizard-ws.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -177,6 +180,7 @@ main() {
     stage setup.sh setup
     stage "Host key" host
     stage "Root's key" root
+    stage "ws's run" run
     closing
 }
 

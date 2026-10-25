@@ -10,6 +10,8 @@
 # address that the run asked, where ws didn't answer at its way.
 host_scanned=
 host_first=
+# root_in becomes 1 once ssh logs in to ws as root by the Mac's key, in this run.
+root_in=0
 # The command at ws's console that prints the fingerprint of its ed25519 key.
 host_print='ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub'
 
@@ -165,12 +167,14 @@ root_after() {
     host_done || echo "Host key"
 }
 
-# root_done succeeds where ssh logs in to ws-ssh as root by the Mac's key, and runs a command. It
-# connects only where known_hosts holds a key under ws, so --check meets ws only once the Host key
-# stage is done. ssh's messages go in root.err in the lock.
+# root_done succeeds where ssh logs in to ws-ssh as root by the Mac's key, and runs a command, and
+# sets root_in then. It connects only where known_hosts holds a key under ws, so --check meets ws
+# only once the Host key stage is done. ssh's messages go in root.err in the lock.
+# shellcheck disable=SC2034 # wizard-ws.sh reads root_in
 root_done() {
     [ "$(host_get user)" = root ] && ssh-keygen -F ws -f "$host_file" >/dev/null 2>&1 &&
-        [ "$(host_ssh -o BatchMode=yes ws-ssh echo ok 2>"$lock/root.err" </dev/null)" = ok ]
+        [ "$(host_ssh -o BatchMode=yes ws-ssh echo ok 2>"$lock/root.err" </dev/null)" = ok ] &&
+        root_in=1
 }
 
 # root_do adds the Mac's key for ws to root's authorized_keys on ws, in one ssh -t session as the
