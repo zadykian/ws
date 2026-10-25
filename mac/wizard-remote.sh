@@ -9,15 +9,19 @@
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer
 #   takes, and wg0 is wg0's own key. gh is ok, none, login, scope or key, below. claude is ok, none
 #   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok.
+# - run [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes on where
+#   ssh drops, or follows such a unit that runs already. It prints the unit's log until it ends, and
+#   exits with the run's status.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# The wizard's stamps, the Mac's key for wg0, root's claude, ws's signing key, and the fans' driver
-# as the kernel loaded it. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory
-# of its own.
+# The wizard's stamps, ws's clone, the Mac's key for wg0, root's claude, ws's signing key, and the
+# fans' driver as the kernel loaded it. Each is a line NAME=PATH, which CI's stand-in for ws roots
+# in a directory of its own.
 state=/var/lib/ws-wizard
+dir=/root/repository/ws
 peer=/etc/wireguard/mac.pub
 claude=/root/.local/bin/claude
 signing=/root/.ssh/id_ed25519_signing.pub
@@ -89,11 +93,87 @@ status() {
     fi
 }
 
+# job prints the script of a run's unit, which systemd-run runs with UNIT DIR STATE [ARG...]. It
+# runs bootstrap.sh ARGs from the clone in DIR, or from the README's download where DIR holds none.
+# Its last steps write STATE/last as UNIT and the status, and, without ARGs, STATE/run as the
+# clone's commit and the status, each by a rename. A full run removes STATE/run first, as it starts.
+job() {
+    cat <<'EOF'
+unit=$1 dir=$2 state=$3 full=$(($# - 3))
+shift 3
+[ "$full" != 0 ] || rm -f "$state/run"
+if [ -e "$dir/.git" ]; then
+    sh "$dir/bootstrap.sh" "$@"
+else
+    curl -fsSL --retry 3 -o "$state/bootstrap.sh" \
+        https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh &&
+        sh "$state/bootstrap.sh" "$@"
+fi
+status=$?
+if [ "$full" = 0 ]; then
+    sha=$(git -C "$dir" rev-parse HEAD 2>/dev/null) || sha=-
+    echo "$sha $status" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
+fi
+echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
+exit "$status"
+EOF
+}
+
+# run starts a run's unit, or follows the one that runs, as the header says. The unit takes root's
+# HOME, which systemd gives a unit only with a user, and the locale that Ansible needs.
+run() {
+    unit=$(active)
+    if [ -n "$unit" ]; then
+        say "following $unit, which runs on ws already"
+    else
+        mkdir -p "$state"
+        job >"$state/job.new"
+        mv -f "$state/job.new" "$state/job"
+        unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
+        systemd-run --quiet --unit="$unit" --collect --expand-environment=no \
+            --description="ws's playbook, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
+            --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$dir" "$state" "$@" ||
+            die "systemd-run cannot start $unit"
+        say "started $unit, which goes on where ssh drops: journalctl -u $unit shows its log"
+    fi
+    follow "$unit"
+}
+
+# follow UNIT prints UNIT's log every 2 s while it runs, and once more a second after it ends. It
+# exits with the status that UNIT's job wrote in last, or 1 where the job ended before it wrote one.
+follow() {
+    cursor=$(mktemp -d)
+    trap 'rm -rf "$cursor"' EXIT
+    trap 'exit 1' HUP INT TERM
+    while running "$1"; do
+        journal "$1"
+        sleep 2
+    done
+    sleep 1
+    journal "$1"
+    last=$(stamp "$state/last")
+    [ "${last% *}" = "$1" ] ||
+        die "$1 ended before its run wrote its status, as where it was stopped: run it again"
+    [ "${last#* }" = 0 ] || say "$1's run exited ${last#* }: journalctl -u $1 shows its log"
+    exit "${last#* }"
+}
+
+# running succeeds while UNIT is active, or on its way in or out.
+running() {
+    systemctl show -p ActiveState --value "$1" | grep -qxE "active|activating|deactivating"
+}
+
+# journal prints the lines of UNIT's log that follow those it printed before, as its cursor marks.
+journal() {
+    journalctl -q -u "$1" -o cat --no-pager --cursor-file="$cursor/at" || true
+}
+
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
     case ${1-} in
     status) status ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote.sh status" ;;
+    run) shift && run "$@" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...]" ;;
     esac
 }
 
