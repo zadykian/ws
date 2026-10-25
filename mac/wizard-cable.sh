@@ -115,9 +115,9 @@ cable_service() {
 }
 
 # cable_ask KEY QUESTION DEFAULT LIST sets cable_value to KEY's answer: the environment's, else a
-# line read at the terminal, stdin, where an empty one takes DEFAULT and none no value. A value must
-# be a line of LIST. A bad answer at the terminal is asked again, and the environment's stops the
-# run, as the Answers stage's.
+# line read at the terminal, stdin. There an empty line takes DEFAULT, none no value, and a pair of
+# quotes comes off. A value must be a line of LIST. A bad answer at the terminal is asked again, and
+# the environment's stops the run, as the Answers stage's.
 cable_ask() {
     eval "cable_set=\${ask_set_$1-} cable_value=\${ask_env_$1-}"
     if [ -n "$cable_set" ]; then
@@ -129,7 +129,14 @@ cable_ask() {
     while :; do
         printf '%s (%s) [%s]: ' "$2" "$1" "${3:+$3, or }none" >&2
         read -r cable_value || ws_die "Cable: the terminal ended before $1's answer: set $1"
-        case $cable_value in '') cable_value=$3 ;; none) cable_value= ;; esac
+        case $cable_value in
+        '') cable_value=$3 ;;
+        none) cable_value= ;;
+        \"*\" | \'*\')
+            cable_value=${cable_value#?}
+            cable_value=${cable_value%?}
+            ;;
+        esac
         cable_in "$4" && return 0
         ws_say "Cable: '$cable_value' is none of those"
     done
