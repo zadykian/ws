@@ -5,8 +5,9 @@
 # none. A run with no terminal must stop, naming security add-generic-password. --update at a
 # terminal of script's must add it, its secret typed at security's prompts, clone the repository,
 # and run apply.sh once over plain ssh. Its stdin must be the secret, and no terminal. It must
-# print no secret, and the next run nothing. mac.conf, the clone, the stamp and the keychain go
-# back, and a run must print nothing.
+# print no secret, and the next run nothing. Where apply.sh exits 1, --update must stop, and the
+# next run, once it exits 0, run it again. With WS_HOOK_SECRET empty, its stdin must be empty.
+# mac.conf, the clone, the stamp and the keychain go back, and a run must print nothing.
 
 set -u
 
@@ -40,6 +41,7 @@ applied() {
 }
 
 sha=$(printf '%s\n' "$secret" | shasum -a 256 | cut -d ' ' -f 1)
+empty=$(shasum -a 256 </dev/null | cut -d ' ' -f 1)
 cp "$conf" "$before"
 { sed "$set" "$before" && echo WS_HOOK_SECRET=ws-ci-hook; } >"$conf"
 list=$(security list-keychains -d user | tr -d '"')
@@ -82,6 +84,20 @@ tr -d '\r' <"$RUNNER_TEMP/tty"
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] && [ "$(applied)" = "1 $sha" ] ||
     error "the next run exited $status"
+echo 1 >"$ws/apply.status"
+wizard --update
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'Hook on ws: the clone of example/hook' &&
+    [ "$(applied)" = "2 $sha" ] && [ ! -e "$stamp" ] ||
+    error "wizard.sh --update with apply.sh exiting 1 exited $status, or kept the stamp"
+rm "$ws/apply.status"
+wizard
+[ "$status" = 0 ] && [ "$(applied)" = "3 $sha" ] && [ -f "$stamp" ] ||
+    error "the run after it exited $status"
+{ sed "$set" "$before" && echo WS_HOOK_SECRET=; } >"$conf"
+sudo rm "$stamp"
+wizard
+[ "$status" = 0 ] && [ "$(applied)" = "4 $empty" ] ||
+    error "wizard.sh without WS_HOOK_SECRET exited $status, with apply.sh's log '$(applied)'"
 
 cp "$before" "$conf"
 sudo rm -rf "$hook" "$stamp"
