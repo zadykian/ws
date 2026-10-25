@@ -100,6 +100,12 @@ line by the bare key, and keep root's other key. With another host key under `ws
 with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s second host key, an
 ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a line to `known_hosts`.
 
+The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
+sends it. `ws.sh` puts stand-ins for ws's programs first on its `PATH`
+([ws-standin.sh](../.github/mac-wizard/ws-standin.sh)), and roots its paths in a directory of its
+own. `status` must print the stamps and each state of the stand-ins. Those are `wg0`'s key and the
+Mac's key for it, gh's and claude's logins, and Secure Boot that refuses the fans' driver.
+
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
 `--check`, with the form the key takes. `--check` must show the environment's answers as the lines
