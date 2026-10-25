@@ -1,13 +1,14 @@
 #!/bin/sh
 # The wizard's remote script on the stand-in ws, on the Mac that 40-again.sh leaves, sent to root
-# over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins:
-# with wg0's key, the Mac's key for it, and Secure Boot on that refuses the fans' driver, then with
-# gh's and claude's logins, and Secure Boot off. A full run must run bootstrap.sh without arguments
-# in a unit of its own, with root's HOME and a UTF-8 locale, print its log and exit 0. It must stamp
-# the clone's commit and 0 in run, and the unit and 0 in last. A tagged run after it must start its
-# own unit, exit with its status, and leave run as it was. A run during another's unit must follow
-# that unit and start none. A full run whose unit is cut off must exit 1 and remove the run stamp
-# that the one before left. The next must start a unit of its own. The stand-ins' state goes back.
+# over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins.
+# First come wg0's key, the Mac's key for it, Secure Boot on that refuses the fans' driver, and no
+# logins. Then gh's and claude's logins, with ws's signing key listed, and Secure Boot off. A full
+# run must run bootstrap.sh without arguments in a unit of its own, with root's HOME and a UTF-8
+# locale, print its log and exit 0. It must stamp the clone's commit and 0 in run, and the unit and
+# 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run as
+# it was. A run during another's unit must follow that unit and start none. A full run whose unit is
+# cut off must exit 1 and remove the run stamp that the one before left. The next must start a unit
+# of its own. The stand-ins' state goes back.
 
 set -u
 
@@ -50,12 +51,13 @@ echo "$key" >"$ws/wg0"
 touch "$ws/sb" "$ws/nct6687"
 sudo mkdir -p "${peer%/*}"
 echo "$mac" | sudo tee "$peer" >/dev/null
+rm "$ws/gh" "$ws/claude"
 states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused'
 touch "$ws/gh" "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm -r "${peer%/*/*}"
-states 'mac.pub -' 'wg0 -' 'gh key' 'claude ok' 'fans ok'
-rm "$ws/gh" "$ws/claude" "$ws/nct6687"
+states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok'
+rm "$ws/nct6687"
 
 # units prints how many units systemd-run started, and unit the last one's name.
 units() {

@@ -126,6 +126,16 @@ sudo ln -s "$here/ws-standin.sh" "$clone/bootstrap.sh"
 sudo git -C "$clone" init -q -b main
 sudo git -C "$clone" add bootstrap.sh
 sudo git -C "$clone" -c user.name=ws -c user.email=ws@example.com commit -q -m ws
+# ws's gh and claude, root's, logged in, and ws's signing key, which root's git config names and
+# gh's account lists, as the shell role and the logins' stages leave them. So no run of the wizard
+# opens a session on ws for a login.
+ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/signing" </dev/null
+sudo mkdir -p "$ws/root/root/.ssh"
+sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
+sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
+    "$ws/root/root/.ssh/id_ed25519_signing.pub"
+cut -d ' ' -f 1-2 "$ws/signing.pub" >"$ws/gh.keys"
+touch "$ws/gh" "$ws/claude"
 : >"$ws/log"
 chmod 666 "$ws/log"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
