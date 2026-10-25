@@ -30,6 +30,19 @@
     - not ansible_check_mode or '/etc/systemd/system/security-outbound.service' is file
   tags: [systemd]
 
+# Puts the fill's changed units in force, and fills the sets anew, which clears a failed fill. A dry
+# run with no units written yet has none to restart.
+- name: Watch resolved's servers anew
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: restarted
+    daemon_reload: true
+  loop: "{{ security_resolvers_watchers + ['security-resolvers.service'] }}"
+  when:
+    - "'systemd' not in ansible_skip_tags"
+    - not ansible_check_mode or ('/etc/systemd/system/' ~ item) is file
+  tags: [systemd]
+
 # systemd forgets the units that security_outbound: false removed.
 - name: Reload systemd without the outbound units
   ansible.builtin.systemd_service:

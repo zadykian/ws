@@ -5,7 +5,10 @@
 # resolv.conf that resolved rewrites as they change. Who runs it, and when, is said here alone.
 # security-outbound.service runs it with the table's FILE, which it loads with the sets' elements in
 # one nft transaction, or alone where nft refuses them. A run loads FILE so too, in a network
-# namespace of its own (outbound.yml). A missing resolv.conf leaves the sets empty.
+# namespace of its own (outbound.yml). Without FILE, it fills the sets anew in one transaction, as
+# security-resolvers.path runs it on each change of resolv.conf. A missing resolv.conf leaves the
+# sets empty. A missing table stays missing, as sets made here would make a table that drops
+# nothing, yet looks loaded.
 
 set -eu
 
@@ -83,3 +86,6 @@ if [ $# -gt 0 ]; then
     echo "resolvers.sh: nft refused $1 with the sets' elements, so it loads $1 alone" >&2
     exec nft -f "$1"
 fi
+nft list set inet ws resolvers4 >/dev/null 2>&1 || exit 0
+add=$(printf '%s\n' "$now" | elements)
+printf '%s\n' 'flush set inet ws resolvers4' 'flush set inet ws resolvers6' "$add" | nft -f -

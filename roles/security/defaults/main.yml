@@ -1,5 +1,5 @@
 ---
-# The outbound table (docs/security.md#outbound). false stops and disables its unit, and removes
-# the table, the unit and /usr/local/lib/ws/security. A string, as from -e security_outbound=false,
+# The outbound table (docs/security.md#outbound). false stops and disables its units, and removes
+# the table, the units and /usr/local/lib/ws/security. A string, as from -e security_outbound=false,
 # counts as the boolean it spells; the role refuses any other value.
 security_outbound: true
