@@ -45,19 +45,23 @@ states() {
         error "status exited $status, printing other than '$want'"
 }
 
+# The Tunnel stage's wg0 and mac.pub go aside, for the states, and come back after.
+mv "$ws/wg0" "$RUNNER_TEMP/wg0"
+sudo mv "$peer" "$RUNNER_TEMP/mac.pub"
 key=$(head -c 32 /dev/urandom | base64)
 mac=$(head -c 32 /dev/urandom | base64)
 echo "$key" >"$ws/wg0"
 touch "$ws/sb" "$ws/nct6687"
-sudo mkdir -p "${peer%/*}"
 echo "$mac" | sudo tee "$peer" >/dev/null
 rm "$ws/gh" "$ws/claude"
 states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'peer -'
 touch "$ws/gh" "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
-sudo rm -r "${peer%/*/*}"
+sudo rm "$peer"
 states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'peer -'
 rm "$ws/nct6687"
+mv "$RUNNER_TEMP/wg0" "$ws/wg0"
+sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
 
 # units prints how many units systemd-run started, and unit the last one's name.
 units() {

@@ -19,7 +19,8 @@
 # - Root's key: the Mac's key in root's authorized_keys on ws, added by the installer's user;
 # - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
 # - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
-# - claude on ws: root's claude there, logged in over ssh -t.
+# - claude on ws: root's claude there, logged in over ssh -t;
+# - Tunnel: the Mac's WireGuard key as wg0's peer on ws.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -40,6 +41,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-host.sh"
 # shellcheck source=wizard-ws.sh
 . "$dir/wizard-ws.sh"
+# shellcheck source=wizard-tunnel.sh
+. "$dir/wizard-tunnel.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -184,6 +187,7 @@ main() {
     stage "ws's run" run
     stage "gh on ws" wsgh
     stage "claude on ws" wsclaude
+    stage Tunnel tunnel
     run_hand
     closing
 }

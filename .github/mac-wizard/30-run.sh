@@ -10,7 +10,8 @@
 # host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. As the runner's user, the
 # installer's for WS_INSTALLER_USER, it must add the Mac's key to root's authorized_keys with sudo.
 # It must run ws's playbook once, bootstrap.sh without arguments in a unit with root's HOME, and
-# stamp its status 0.
+# stamp its status 0. Then the Mac's key must go to the stand-in ws's mac.pub, and bootstrap.sh
+# --tags wireguard run there.
 
 set -u
 
@@ -54,11 +55,14 @@ if ! sudo grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ~root/.ssh/auth
     ! grep -q "^$USER: sudo sh -c " "$RUNNER_TEMP/ws/log"; then
     error "wizard.sh added no ~/.ssh/id_ed25519.pub to root's authorized_keys, as $USER with sudo"
 fi
-if ! printf '\n' | cmp -s - "$RUNNER_TEMP/ws/bootstrap.log" ||
+if ! printf '\n%s\n' '--tags wireguard' | cmp -s - "$RUNNER_TEMP/ws/bootstrap.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
     ! grep -q ' 0$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
-    error "wizard.sh ran no bootstrap.sh on ws, once, in a unit with root's HOME, that exited 0"
+    error "wizard.sh ran no bootstrap.sh on ws, once, then --tags wireguard, with root's HOME"
 fi
+mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key)
+[ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||
+    error "wizard.sh gave the stand-in ws no mac.pub of the Mac's key, $mac"
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded the daemon without ws's key"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"
