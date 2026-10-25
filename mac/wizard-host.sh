@@ -199,11 +199,20 @@ root_do() {
     ws_say "Root's key: added $gh_pub to root's authorized_keys on ws"
 }
 
-# root_ask sets root_user to the user that Ubuntu's installer made on ws, WS_INSTALLER_USER.
+# root_ask sets root_user to the user that Ubuntu's installer made on ws: WS_INSTALLER_USER, else
+# the answer at the terminal, the Mac's user by default. A bad answer there is asked again.
 root_ask() {
     root_user=${WS_INSTALLER_USER-}
-    [ -n "${WS_INSTALLER_USER+set}" ] || ws_die "Root's key: root on ws lacks the Mac's key: set" \
-        "WS_INSTALLER_USER to the user that Ubuntu's installer made"
+    if [ -z "${WS_INSTALLER_USER+set}" ]; then
+        [ -t 0 ] || ws_die "Root's key: root on ws lacks the Mac's key, and no terminal is there" \
+            "to ask the user that Ubuntu's installer made: set WS_INSTALLER_USER"
+        until ws_is_user "$root_user"; do
+            [ -z "$root_user" ] || ws_say "Root's key: '$root_user' is not $(ws_conf_form WS_USER)"
+            printf "The user that Ubuntu's installer made on ws [%s]: " "$(id -un)" >&2
+            read -r root_user || ws_die "Root's key: the terminal ended before the user's name"
+            root_user=${root_user:-$(id -un)}
+        done
+    fi
     ws_is_user "$root_user" ||
         ws_die "Root's key: WS_INSTALLER_USER=$root_user is not $(ws_conf_form WS_USER)"
 }
