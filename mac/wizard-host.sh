@@ -175,7 +175,8 @@ root_done() {
 
 # root_do adds the Mac's key for ws to root's authorized_keys on ws, in one ssh -t session as the
 # user of Ubuntu's installer, through sudo. That user takes the key that the installer imported
-# from GitHub. It stops where ssh logs in as another user than root. --check asks nothing.
+# from GitHub, else ssh-copy-id's, by the password login that the installer allowed. It stops where
+# ssh logs in as another user than root. --check asks nothing.
 # shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub and gh_line
 root_do() {
     root_as=$(host_get user)
@@ -188,8 +189,7 @@ root_do() {
     fi
     gh_key || ws_die "Root's key: the Mac's key for ws has no .pub"
     root_ask
-    root_login || ws_die "Root's key: neither root nor $root_user on ws takes the Mac's key," \
-        "$gh_pub: install Ubuntu with OpenSSH and GitHub's keys, as docs/mac-wizard.md says"
+    root_login || root_copy
     ws_say "Root's key: sudo on ws asks $root_user's password, to add the Mac's key to root's" \
         "authorized_keys"
     set -- -T
@@ -220,6 +220,21 @@ root_ask() {
 # root_login succeeds where ssh logs in to ws as root_user by the Mac's key, and runs a command.
 root_login() {
     host_ssh -o BatchMode=yes -l "$root_user" ws-ssh true </dev/null >/dev/null 2>&1
+}
+
+# root_copy adds the Mac's key to root_user's authorized_keys on ws with ssh-copy-id, which asks
+# the user's password at the terminal, through ssh with host_ssh's options. It stops where that
+# fails, or no terminal is there, naming the installer's choices that give the user the key.
+root_copy() {
+    root_none="neither root nor $root_user on ws takes the Mac's key, $gh_pub"
+    root_how="install Ubuntu with OpenSSH and GitHub's keys, as docs/mac-wizard.md says"
+    [ -t 0 ] || ws_die "Root's key: $root_none, and no terminal is there for ssh-copy-id: $root_how"
+    ws_say "Root's key: $root_none: ssh-copy-id adds it, where the installer allowed passwords"
+    if ! ssh-copy-id -f -i "$gh_pub" -o ConnectTimeout=10 -o StrictHostKeyChecking=yes \
+        -o UpdateHostKeys=no -o CheckHostIP=no ${host_first:+-o "HostName=$host_first"} \
+        "$root_user@ws-ssh" >&2 || ! root_login; then
+        ws_die "Root's key: ssh-copy-id didn't give $root_user the Mac's key: $root_how"
+    fi
 }
 
 # root_fail says what to do where root still refuses the Mac's key.
