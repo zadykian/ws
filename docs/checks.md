@@ -15,8 +15,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 - `yamllint`: `yamllint --strict`, as `.yamllint` sets it;
 - `ansible-lint`: its production profile, strict and offline (`.ansible-lint`);
 - `ruff`: `ruff check` and `ruff format --check` on the Python files, as `ruff.toml` sets them;
-- `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python and Jinja templates, and 150
-  for the README;
+- `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python and Jinja templates;
 - `vale`: Vale's three rules (`.vale.ini`) on the Markdown files: sentences of 30 words or fewer,
   no wordy phrases and no needless variants;
 - `lychee`: the links to files and their headings in the Markdown files, offline;

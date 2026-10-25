@@ -7,9 +7,9 @@ paths:
 
 What each document holds. How to write them is in the `writing` skill and [writing.md](writing.md).
 
-- `README.md` is the overview, of 150 lines or fewer: what ws sets up, with a line per role that
-  links its page. Then a new machine, running it again, and dry runs. Then what stays by hand, the
-  checks, how pull requests land, and the license.
+- `README.md` is the overview: what ws sets up, with a line per role that links its page. Then a
+  new machine, running it again, and dry runs. Then what stays by hand, the checks, how pull
+  requests land, and the license.
 - `CLAUDE.md` holds what Claude needs before a change: the layout, the commands, how changes land,
   the hard rules, each linking its reason, and the commits' style. An area's invariants go in
   `.claude/rules/`, loaded with the files they cover, as [roles.md](roles.md) is.

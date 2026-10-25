@@ -77,7 +77,7 @@ ruff: $(PIP_STAMP)
 		[ -z "$$files" ] || { $(VENV)/bin/ruff check $$files && \
 		$(VENV)/bin/ruff format --check $$files; }
 
-# The size caps: 300 lines a file, and 150 the README.
+# The size cap: 300 lines a file.
 sizecheck:
 	tools/sizecheck $(FILES)
 
