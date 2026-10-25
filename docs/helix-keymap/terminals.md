@@ -12,9 +12,6 @@ as does the JetBrains terminal's table below.
 Each was tried with hx 25.07.1 and tmux 3.6a from Ubuntu's archive, sent as each kind of
 terminal sends it. "tmux" is tmux's defaults or cld's servers.
 
-<!-- Implement methods is an IDE action's name, which write-good takes for a wordy verb. -->
-<!-- vale write-good.TooWordy = NO -->
-
 | F12's keys | F12 action | Older terminal | tmux | tmux with the options |
 | --- | --- | --- | --- | --- |
 | Shift+Ctrl+T | Go to file | as Ctrl+T, Refactor this | the same | the same |
@@ -22,7 +19,7 @@ terminal sends it. "tmux" is tmux's defaults or cld's servers.
 | Shift+Ctrl+W | Shrink selection | as Ctrl+W, Extend selection | the same | the same |
 | Shift+Ctrl+Z | Redo | as Ctrl+Z, Undo | the same | the same |
 | Shift+Ctrl+S | Save all | as Ctrl+S, Save | the same | the same |
-| Shift+Ctrl+I | Implement methods | as Tab | the same | the same |
+| Shift+Ctrl+I | `Implement methods` | as Tab | the same | the same |
 | Shift+Ctrl+P | Pause program | as Ctrl+P | the same | the same |
 | Shift+Ctrl+Alt with a letter | Go to symbol, and others | no | no | no |
 | Ctrl+-; Ctrl+= | Back, Forward | no | no | yes |
@@ -44,8 +41,6 @@ terminal sends it. "tmux" is tmux's defaults or cld's servers.
 | Ctrl+Pause | Pause program | no | no | no |
 | Ctrl+B | Toggle line breakpoint | yes | pressed twice, as tmux's own prefix | the same |
 | Ctrl+Q | Go to action | yes | pressed twice in cld's sessions, its prefix there | yes |
-
-<!-- vale write-good.TooWordy = YES -->
 
 helix drops Shift from a character key, space too, whatever the terminal. So Shift+Alt+Space,
 Second basic completion, arrives as Alt+Space, which `config.toml` binds to it as well.

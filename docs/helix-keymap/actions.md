@@ -99,9 +99,6 @@ The fourth column, helix's own key, runs the same command, for where F12's keys 
 
 ## Code
 
-<!-- Implement methods is an IDE action's name, which write-good takes for a wordy verb. -->
-<!-- vale write-good.TooWordy = NO -->
-
 | F12 action | F12's keys | helix command | helix's own key | Note |
 | --- | --- | --- | --- | --- |
 | Show intention actions (`ShowIntentionActions`) | Alt+Enter; Shift+Enter; Ctrl+Enter | `code_action` | `Space a` |  |
@@ -111,10 +108,8 @@ The fourth column, helix's own key, runs the same command, for where F12's keys 
 | Extract method (`ExtractMethod`) | Ctrl+R, M | `code_action` | `Space a` | the server's code actions |
 | Introduce constant (`IntroduceConstant`) | Ctrl+Alt+C | `code_action` | `Space a` | the server's code actions |
 | Generate (`Generate`) | Alt+Insert | `code_action` | `Space a` | the server's code actions |
-| Implement methods (`ImplementMethods`) | Shift+Ctrl+I | `code_action` | `Space a` | the server's code actions |
+| `Implement methods` (`ImplementMethods`) | Shift+Ctrl+I | `code_action` | `Space a` | the server's code actions |
 | Toggle inlay hints (`ToggleInlayHintsGloballyAction`) | Ctrl+I | `:toggle lsp.display-inlay-hints` | `:toggle lsp.display-inlay-hints` |  |
-
-<!-- vale write-good.TooWordy = YES -->
 
 ## Problems
 

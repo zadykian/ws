@@ -5,8 +5,9 @@
 `make lint` is the one gate: CI's lint job runs it, the lint plugin through `make lint-tree` as
 Claude ends its turn, and the maintainer before a push ([Claude's hooks](#claudes-hooks)). Any
 finding fails it, warnings included. A finding is fixed, or justified in place with its linter's
-own inline mechanism and a reason. No gate lowers a severity or keeps a baseline, and none leaves
-out a file written here.
+own inline mechanism and a reason. A Vale alert is always fixed, by a rewrite of the sentence, as
+[the writing skill][writing] allows no exception to its rules. No gate lowers a severity or keeps
+a baseline, and none leaves out a file written here.
 `make -k lint` runs every gate past a failure. Each gate is a target of its own, and those that
 check files take `FILES`, as in `make vale FILES=README.md`:
 
@@ -142,3 +143,4 @@ through:
   diff applied to a tree.
 
 [lint]: https://github.com/zadykian/skills/blob/main/docs/lint.md#the-hooks
+[writing]: https://github.com/zadykian/skills/blob/main/skills/writing/SKILL.md#the-caps-and-vale
