@@ -1,6 +1,6 @@
 #!/bin/sh
-# The wizard's files script on ws, for another repository's files there. The Mac's wizard sends it
-# to root there over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, for another repository's files there, and root's word list. The
+# Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
@@ -11,15 +11,18 @@
 #   short leaves none.
 # - stamp OWNER/REPO stamps REPO's apply.sh, which exited 0, with the clone's commit and OWNER/REPO.
 #   The remote script's status lists the repositories that have a stamp, as OWNER/REPO.
+# - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
+#   read, or - where root has none. words HASH prints the list, while its hash is HASH.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# The wizard's stamps and the repositories' clones, each a line NAME=PATH, which CI's stand-in for
-# ws roots in a directory of its own.
+# The wizard's stamps, the repositories' clones and root's word list, each a line NAME=PATH, which
+# CI's stand-in for ws roots in a directory of its own.
 state=/var/lib/ws-wizard
 repos=/root/repository
+list=/root/.config/ws/forbidden-words
 
 # say prints a message of the script's on stderr.
 say() {
@@ -75,13 +78,29 @@ stamp() {
     echo "$sha 0 $1" >"$state/.hook-$repo" && mv -f "$state/.hook-$repo" "$state/hook-$repo"
 }
 
+# words [HASH] prints git's hash of the word list, or - where there is none. git hashes from /, as
+# the wizard does. Given HASH, as it printed it, it prints the list instead, and stops where the
+# list's hash is no longer HASH.
+words() {
+    sum=-
+    [ ! -f "$list" ] || sum=$(git -C / hash-object --stdin <"$list")
+    if [ -z "${1-}" ]; then
+        echo "$sum"
+    elif [ "$1" = "$sum" ] && [ "$sum" != - ]; then
+        cat "$list"
+    else
+        die "the word list on ws is no longer $1: run the wizard again"
+    fi
+}
+
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
     case ${1-} in
     clone) clone "${2-}" ;;
     stamp) stamp "${2-}" ;;
+    words) words "${2-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote-files.sh clone OWNER/REPO |" \
-        "stamp OWNER/REPO" ;;
+        "stamp OWNER/REPO | words [HASH]" ;;
     esac
 }
 
