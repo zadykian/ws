@@ -7,14 +7,14 @@
 # The environment's answers, kept before ws_conf sets each key's variable: ask_set_KEY is 1 where
 # the environment sets KEY, even to nothing, and ask_env_KEY holds its value.
 for ask_key in WS_LAN WS_LAN_ADDRESS WS_REMOTE WS_REMOTE_PORT WS_GIT_NAME WS_GIT_EMAIL \
-    WS_TUNNEL_NETWORKS WS_RESOLVERS; do
+    WS_TUNNEL_NETWORKS WS_RESOLVERS WS_HOOK WS_HOOK_SECRET; do
     eval "ask_set_$ask_key=\${$ask_key+1} ask_env_$ask_key=\${$ask_key-}"
 done
 
 # ask_keys asks the stage's keys in order, each with its question and default. ws's address and
 # git's email are asked only with a LAN and a name, and need a value then; the router's port only
-# with its name. The address defaults to the router's lease where the LAN holds it
-# (docs/router.md), and git's identity to ws's own.
+# with its name, and the Keychain item only with another repository. The address defaults to the
+# router's lease where the LAN holds it (docs/router.md), and git's identity to ws's own.
 ask_keys() {
     ask WS_LAN "ws's home LAN" 10.88.0.0/24
     if [ -n "$WS_LAN" ]; then
@@ -32,6 +32,8 @@ ask_keys() {
     fi
     ask WS_TUNNEL_NETWORKS "More networks through the tunnel, split by blanks" ''
     ask WS_RESOLVERS "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks" ''
+    ask WS_HOOK "Another repository whose apply.sh runs on ws, as OWNER/REPO" ''
+    [ -z "$WS_HOOK" ] || ask WS_HOOK_SECRET "The Keychain item of its apply.sh's secret" ''
 }
 
 # ask_role NAME prints the shell role's default NAME, which ws's git takes.
