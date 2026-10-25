@@ -202,7 +202,8 @@ ssh ws-ssh /root/repository/ws/bootstrap.sh --tags wireguard
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
 
 With ws's key as `WS_PUBLIC_KEY`, `setup.sh` again installs the tunnel's daemon. A new Mac or a
-rebuilt server changes one file on each side, and nothing in the repository.
+rebuilt server changes one file on each side, and nothing in the repository. The wizard's Tunnel
+stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#the-tunnel)).
 
 The daemon, `ws-tunnel`, runs as root from launchd, from boot and before any login, through
 `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. Its functions, `tunnel-conf.sh` and

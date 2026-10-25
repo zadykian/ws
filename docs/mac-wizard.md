@@ -3,8 +3,8 @@
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, runs ws's playbook
-there, and logs gh and claude in on ws. On a new Mac with Apple silicon, one line installs what it
-needs, clones the repository and runs the wizard, as yourself:
+there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys. On a new Mac with Apple
+silicon, one line installs what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -31,13 +31,13 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 3. Answers: the values `mac.conf` lacks, below.
 4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
-6. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
-   wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
+6. setup.sh: `mac/setup.sh`, after sudo's password. The wizard drops the Mac's key that it prints.
 7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 8. Root's key: the Mac's key in root's `authorized_keys` on ws, by the installer's user, below.
 9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
 10. gh on ws: root's gh there, logged in to GitHub, and ws's signing key on the account, below.
 11. claude on ws: root's claude there, logged in, below.
+12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 
 ## The answers
 
@@ -180,14 +180,19 @@ wizard runs `claude auth login` as root on ws, in an `ssh -t` session, through a
 with the address it shows opened in the Mac's browser. With no terminal, the stage stops, naming
 `claude auth login`. Where ws lacks claude, it stops, as gh's stage does.
 
+## The tunnel
+
+The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds
+another, and `bootstrap.sh --tags wireguard` gives `wg0` that peer. That run goes again where `wg0`
+lacks the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
+the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
+`wg0`'s key, in place of its line, and `setup.sh` runs again, which loads ws-tunnel
+([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background.
+
 ## What stays by hand
 
 After a run in which a stage acted, the wizard lists each of these that applies:
 
-- The Mac's tunnel: the keys' exchange of [The Mac's tunnel](mac.md#the-macs-tunnel), then
-  `WS_PUBLIC_KEY` in `mac.conf`, then the wizard again. Its `setup.sh` loads ws-tunnel: allow it in
-  the Background where macOS asks. Where ws lacks the Mac's key, or `wg0`'s key isn't
-  `WS_PUBLIC_KEY`, as once ws is installed again, the exchange again.
 - With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
   console ([Secure Boot](fans.md#secure-boot)).
 - What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, and
