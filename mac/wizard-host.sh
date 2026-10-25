@@ -6,6 +6,8 @@
 
 # The host and port of the last scan of ws's key, which host_scan keeps in host_line.
 host_scanned=
+# The command at ws's console that prints the fingerprint of its ed25519 key.
+host_print='ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub'
 
 # host_after prints setup.sh, which writes the ways of ws-ssh, where ~/.ssh/config.d/ws is missing.
 host_after() {
@@ -19,9 +21,10 @@ host_done() {
     host_way && ssh-keygen -F ws -f "$host_file" >/dev/null 2>&1
 }
 
-# host_do adds the ed25519 key that ws offers at its way to known_hosts, under ws, once WS_HOST_KEY
-# says that ws's console shows it. It stops where no way leads to ws, and warns where the way is the
-# router's forward. --check asks nothing, and shows the line it would add.
+# host_do adds the ed25519 key that ws offers at its way to known_hosts, under ws, once WS_HOST_KEY,
+# or the answer at the terminal, says that ws's console shows it. It stops where no way leads to
+# ws, and warns where the way is the router's forward. --check asks nothing, and shows the line it
+# would add.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 host_do() {
     ws_conf "$WS_CONF"
@@ -71,18 +74,23 @@ host_scan() {
     [ -n "$host_line" ]
 }
 
-# host_trust stops unless host_fp, the fingerprint of ws's key, is the one at ws's console:
-# WS_HOST_KEY must be yes, or hold that fingerprint as the console's ssh-keygen prints it. --check
-# asks nothing.
+# host_trust stops unless host_fp, the fingerprint of ws's key, is the one at ws's console.
+# WS_HOST_KEY, else the answer at the terminal, must be yes, or hold that fingerprint as the
+# console's ssh-keygen prints it. --check asks nothing.
 host_trust() {
     host_offer="ws at $host_name:$host_port offers the ed25519 key $host_fp"
     if ws_checking; then
         ws_say "Host key: $host_offer; a run would ask whether ws's console shows it"
         return 0
     fi
-    [ -n "${WS_HOST_KEY+set}" ] || ws_die "Host key: $host_offer: set WS_HOST_KEY to yes where" \
-        "ws's console shows it, as ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub prints it"
-    host_answer=$WS_HOST_KEY
+    host_answer=${WS_HOST_KEY-}
+    if [ -z "${WS_HOST_KEY+set}" ]; then
+        [ -t 0 ] || ws_die "Host key: $host_offer, and no terminal is there to compare it with" \
+            "ws's console: set WS_HOST_KEY to yes where it shows it, as $host_print prints it"
+        ws_say "Host key: $host_offer. At ws's console, $host_print prints the one it has"
+        printf 'Answer yes where the two match, or paste what it prints: ' >&2
+        read -r host_answer || ws_die "Host key: the terminal ended before the answer"
+    fi
     case " $host_answer " in
     *" $host_fp "* | ' '[Yy][Ee][Ss]' ') ;;
     *) ws_die "Host key: '$host_answer' is neither yes nor $host_fp, the key that ws offers at" \
