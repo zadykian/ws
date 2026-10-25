@@ -31,8 +31,8 @@ These pass:
 - what leaves by loopback, `ikeward0`, `docker0` or a `br-` bridge;
 - DHCP and DHCPv6 by networkd's user, `systemd-network`, and IPv6's router and neighbour
   discovery and MLD reports;
-- lookups to port 53 by resolved's user, `systemd-resolve`. resolved asks the router for the
-  server and its containers ([Names](docker.md#names)).
+- lookups to port 53 by resolved's user, `systemd-resolve`, to resolved's own DNS servers. resolved
+  asks them for the server and its containers ([Names](docker.md#names)).
 
 Any other new packet drops where it goes to a private, shared, link-local, multicast or broadcast
 address:
@@ -43,6 +43,18 @@ address:
 
 These hold the LAN, the cable and `wg0`, so the server opens no connection to the router's LAN
 address, the Mac or another host of the LAN. The rest is the internet, and passes.
+
+resolved's servers are the `nameserver` lines of `/run/systemd/resolve/resolv.conf`, from DHCP,
+DHCPv6, router advertisements, `DNS=` or a client such as `resolvectl`. The sets `resolvers4` and
+`resolvers6` hold them. A fill follows each change, and another runs each minute while the machine
+is up, so a change the first fill missed reaches them within a minute. On a machine on the LAN they
+hold the router, and on a VM on the Mac, the Mac. On a cloud VM they hold the cloud's resolver, at a
+link-local, private or public address.
+
+`nft list set inet ws resolvers4` shows the IPv4 ones. The table's own load fills them from
+`resolv.conf` where it exists, as on a reload, so they are empty at boot alone, until resolved
+writes it. Then, and for the moment a fill takes after each change, a lookup to a private server
+drops, and one to a public server passes as the internet.
 
 The LAN has no IPv6 prefix. Should it gain one, a packet to a global address on the LAN drops
 too. Its next hop is the address itself, where a routed packet's is a link-local router. That
@@ -58,9 +70,14 @@ The caveats:
 
 - The router answers at its public address too, which the table takes for the internet: the
   packet leaves by the same gateway. A rule on the router drops it ([The router](router.md)).
-- The router, the DNS server DHCP names, hears only resolved's lookups. A program that asks it
-  for names itself, not resolved at `127.0.0.53`, gets no answer. chrony, which the `base` role
-  installs, keeps time from Ubuntu's pools on the internet.
+- A private DNS server of resolved's, as the router, hears only resolved's lookups. A program that
+  asks it for names itself, not resolved at `127.0.0.53`, gets no answer. chrony, which the `base`
+  role installs, keeps time from Ubuntu's pools on the internet.
+- `resolv.conf` leaves out the servers of a link that is no default route for lookups. Such a link
+  has `DefaultRoute=no`, or, without that setting, a routing domain, as `~corp`, but no `~.` domain.
+  It leaves out a DNS delegate's servers too, but where it sets `DefaultRoute=yes`, and any server
+  on a port other than 53. Lookups resolved sends to those drop where the server is private.
+  `resolvectl status` shows each link's servers and its Default Route, to compare with the sets.
 - WireGuard's packets to the Mac are replies: the Mac speaks first, and its tunnel sends a
   keepalive every 25 seconds. Should the Mac fall silent past conntrack's UDP timeout, 2 minutes,
   ws's packets to it drop until its next one.
@@ -72,7 +89,10 @@ The caveats:
 - `nftables.service` stays off. Its `/etc/nftables.conf` flushes every table: ufw's, Docker's,
   fail2ban's and ikeward's.
 - `nft list table inet ws` shows the table, and `systemctl status security-outbound` why it failed
-  to load. `systemctl stop security-outbound` removes this table alone, until the next boot or run.
+  to load. A load says in `journalctl -u security-outbound` which servers it left out, and when it
+  loaded the table without the sets' elements, after which the unit still shows active. A fill says
+  which it left out in `journalctl -u security-resolvers`. `systemctl stop security-outbound`
+  removes this table alone, until the next boot or run.
 
 A run checks the file with `nft -c` before it lands. It then loads the file in a network namespace
 of its own, as the unit loads it, and compares that table with the kernel's, as

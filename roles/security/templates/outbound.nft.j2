@@ -38,9 +38,15 @@ table inet ws {
             nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert,
             mld-listener-report, mld2-listener-report
         } accept
-        # resolved asks the DNS server DHCP names, the router, for ws and its containers.
-        meta skuid "systemd-resolve" meta l4proto { tcp, udp } th dport 53 accept
+        # resolved's lookups for ws and its containers pass to its servers. private judges the rest.
+        meta skuid "systemd-resolve" meta l4proto { tcp, udp } th dport 53 jump dns
         jump private
+    }
+
+    # Unfilled, the sets accept nothing: a lookup to a private server drops, to a public one passes.
+    chain dns {
+        ip daddr @resolvers4 accept
+        ip6 daddr @resolvers6 accept
     }
 
     # Docker's containers. What comes in by another link, as wg0's way to ikeward0, is ufw's to
