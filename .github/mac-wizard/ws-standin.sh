@@ -11,11 +11,28 @@
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and gh and
 #   claude log each in;
 # - gh.keys holds the signing keys of gh's account, which bootstrap.sh --tags devtools adds ws's to,
-#   and gh.nosign gives their list a 404, as a login without the write:ssh_signing_key scope gets.
+#   and gh.nosign gives their list a 404, as a login without the write:ssh_signing_key scope gets;
+# - ws.key is wg0's key, which bootstrap.sh --tags wireguard makes, and utun names wg0, root's.
 
 set -u
 
 s=$WS_STANDIN
+
+# wg0 sets up ws's wg0 as the wireguard role does: its key, made once, whose public key goes in
+# wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of root's copy beside the
+# Mac's, on UDP 51820, as mac.yml's stand-in ws. It has no address in the tunnel.
+wg0() {
+    bin=/usr/local/libexec/ws-tunnel
+    [ -f "$s/ws.key" ] || (umask 077 && "$bin/wg" genkey >"$s/ws.key") || return 1
+    "$bin/wg" pubkey <"$s/ws.key" >"$s/wg0" || return 1
+    if [ ! -f "$s/utun" ] || ! "$bin/wg" show "$(cat "$s/utun")" >/dev/null 2>&1; then
+        mkdir -p /var/run/wireguard
+        WG_TUN_NAME_FILE=$s/utun "$bin/wireguard-go" utun || return 1
+    fi
+    "$bin/wg" set "$(cat "$s/utun")" private-key "$s/ws.key" listen-port 51820 \
+        peer "$(cat "$s/root/etc/wireguard/mac.pub")" allowed-ips 10.99.0.2/32 || return 1
+    ifconfig "$(cat "$s/utun")" up
+}
 case ${0##*/} in
 systemd-run)
     echo "$*" >>"$s/run.log"
@@ -72,10 +89,15 @@ bootstrap.sh)
     # The devtools role adds ws's signing key to the account, where gh's login has the scope.
     [ "$*" != '--tags devtools' ] || [ ! -f "$s/gh" ] || [ -f "$s/gh.nosign" ] ||
         cut -d ' ' -f 1-2 "$s/signing.pub" >>"$s/gh.keys"
+    [ "$*" != '--tags wireguard' ] || wg0 || exit 1
     echo 'PLAY RECAP'
     exit "$(cat "$s/bootstrap.status" 2>/dev/null || echo 0)"
     ;;
-wg) cat "$s/wg0" 2>/dev/null ;;
+wg)
+    # wg0's key, and with show wg0 peers the peers of wg0's wireguard-go.
+    [ "$*" = 'show wg0 peers' ] || exec cat "$s/wg0" 2>/dev/null
+    /usr/local/libexec/ws-tunnel/wg show "$(cat "$s/utun")" peers
+    ;;
 gh)
     # The remote script's calls, then the device flow's login and refresh, which the wizard runs in
     # ssh -t: each fails without a terminal.
