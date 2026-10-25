@@ -20,13 +20,19 @@ host_done() {
 }
 
 # host_do adds the ed25519 key that ws offers at its way to known_hosts, under ws, once WS_HOST_KEY
-# says that ws's console shows it. It stops where no way leads to ws. --check asks nothing, and
-# shows the line it would add.
+# says that ws's console shows it. It stops where no way leads to ws, and warns where the way is the
+# router's forward. --check asks nothing, and shows the line it would add.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 host_do() {
+    ws_conf "$WS_CONF"
     host_way || ws_die "Host key: ssh finds no way to ws-ssh from this network: no cable, no" \
         "address in WS_LAN and no WS_REMOTE_PORT; set those in mac.conf as docs/router.md has them"
     host_scan || ws_die "Host key: ws doesn't answer at $host_name:$host_port with an ed25519 key"
+    # ssh -G prints the host name in lower case, which WS_REMOTE may not be.
+    [ "$host_name" != "$(echo "$WS_REMOTE" | tr '[:upper:]' '[:lower:]')" ] ||
+        ws_say "Host key: warning: through the router's forward, ws's new sshd faces the" \
+            "internet, with any password login its installer allowed, until ws's run sets up its" \
+            "security role"
     echo "$host_line" >"$lock/host.pub"
     host_fp=$(ssh-keygen -l -f "$lock/host.pub" | awk '{ print $2 }')
     [ -n "$host_fp" ] || ws_die "Host key: ssh-keygen cannot read the key that ws offers"

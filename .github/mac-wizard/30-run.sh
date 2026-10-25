@@ -6,8 +6,8 @@
 # mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no terminal asked one.
 # It must add the .pub to the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
-# own in $TMPDIR. It must add ws's host key to known_hosts under ws, as WS_HOST_KEY gives its
-# fingerprint.
+# own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
+# host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint.
 
 set -u
 
@@ -42,6 +42,8 @@ if ! grep -qxF "$added" "$RUNNER_TEMP/gh/log" ||
     ! grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" "$RUNNER_TEMP/gh/keys"; then
     error "wizard.sh added no ~/.ssh/id_ed25519.pub to gh's login, titled with the Mac's name"
 fi
+grep -q "^wizard\.sh: Host key: warning: through the router's forward, " "$RUNNER_TEMP/run.err" ||
+    error "wizard.sh gave no warning that ws faces the internet through WS_REMOTE"
 grep -qxF "ws $(cut -d ' ' -f 1-2 "$RUNNER_TEMP/ws/host_key.pub")" ~/.ssh/known_hosts ||
     error "wizard.sh added no line for ws's host key to ~/.ssh/known_hosts"
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
