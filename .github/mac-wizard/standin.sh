@@ -39,3 +39,28 @@ echo "$path" >"$RUNNER_TEMP/path"
 # A stand-in JetBrains Gateway.app, an empty directory, spares the runs the cask's download, as in
 # mac.yml.
 mkdir -p ~/Applications/"JetBrains Gateway.app"
+# A stand-in gh, logged in to github.com, for the runner's, which has no login. The wizard puts
+# /opt/homebrew/bin first on PATH, so the stand-in replaces the runner's link there. Its state is in
+# $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,
+# which gh api answers with a 404. keys holds its login's keys, and log its calls.
+mkdir -p "$RUNNER_TEMP/gh"
+: >"$RUNNER_TEMP/gh/keys"
+touch "$RUNNER_TEMP/gh/login"
+rm -f /opt/homebrew/bin/gh
+cat >/opt/homebrew/bin/gh <<EOF
+#!/bin/sh
+state='$RUNNER_TEMP/gh'
+echo "\$*" >>"\$state/log"
+[ -f "\$state/login" ] || [ "\$1" != api ] || exit 4
+case \$* in
+'auth status -h github.com') [ -f "\$state/login" ] ;;
+'api --paginate user/keys --jq .[].key')
+    [ ! -f "\$state/noscope" ] || { echo 'gh: Not Found (HTTP 404)' >&2 && exit 1; }
+    cat "\$state/keys"
+    ;;
+'api --paginate user/ssh_signing_keys --jq .[].key') ;;
+'ssh-key add '*) awk 'NF { print \$1, \$2; exit }' "\$3" >>"\$state/keys" ;;
+*) echo "gh: the stand-in takes no \$*" >&2 && exit 2 ;;
+esac
+EOF
+chmod 755 /opt/homebrew/bin/gh
