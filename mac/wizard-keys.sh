@@ -145,7 +145,8 @@ $(ask_line WS_IDENTITY_AGENT "$keys_agent")
 }
 
 # keys_pick WHAT sets keys_got to the .pub in PublicKeys other than keys_skip's. Where none is
-# there, it says to make WHAT in Secretive's app, and waits up to 15 minutes for one.
+# there, it says to make WHAT in Secretive's app, and waits up to 15 minutes for one. It stops on a
+# key other than P-256, as an ML-DSA one, which ws's OpenSSH lacks.
 keys_pick() {
     if ! keys_other; then
         ws_say "Mac key: in Secretive, make $1; the wizard waits up to 15 minutes for it"
@@ -156,15 +157,20 @@ keys_pick() {
             sleep 2
         done
     fi
+    [ "$(awk 'NF { print $1; exit }' "$keys_got")" = ecdsa-sha2-nistp256 ] || ws_die "Mac key:" \
+        "$keys_got is not the P-256 key asked for: remove it in Secretive, make $1, then run" \
+        "the wizard again"
 }
 
 # keys_other succeeds where PublicKeys holds a .pub other than keys_skip's, as Secretive writes one
-# for each key, and sets keys_got to it.
+# for each key, and sets keys_got to it. It stops where several are there.
 keys_other() {
     keys_got=
     for keys_each in "$ws_secretive"/PublicKeys/*.pub; do
         case $keys_each in "$keys_skip" | *-cert.pub) continue ;; esac
         [ -f "$keys_each" ] || continue
+        [ -z "$keys_got" ] || ws_die "Mac key: Secretive holds several keys, $keys_got and" \
+            "$keys_each: name ws's in mac.conf's WS_IDENTITY, and git's in WS_GIT_SIGNING_KEY"
         keys_got=$keys_each
     done
     [ -n "$keys_got" ]
