@@ -104,7 +104,11 @@ The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`,
 sends it. `ws.sh` puts stand-ins for ws's programs first on its `PATH`
 ([ws-standin.sh](../.github/mac-wizard/ws-standin.sh)), and roots its paths in a directory of its
 own. `status` must print the stamps and each state of the stand-ins. Those are `wg0`'s key and the
-Mac's key for it, gh's and claude's logins, and Secure Boot that refuses the fans' driver.
+Mac's key for it, gh's and claude's logins, and Secure Boot that refuses the fans' driver. A full
+`run` must run the stand-in `bootstrap.sh`, without arguments, in a unit of its own, with root's
+`HOME` and a UTF-8 locale. It must print the log, and stamp the clone's commit and 0. A tagged run
+after it must start its own unit and leave that stamp. A run during another's unit must follow it.
+A full run cut off must remove the stamp of the one before, so that the next starts a unit again.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
