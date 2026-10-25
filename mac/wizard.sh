@@ -20,7 +20,7 @@
 # - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
 # - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
 # - claude on ws: root's claude there, logged in over ssh -t;
-# - Tunnel: the Mac's WireGuard key as wg0's peer on ws.
+# - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -129,7 +129,7 @@ setup_after() {
 # lines. setup.sh changes only what differs, and is silent then, so the stage has no setup_done: a
 # run acted where setup.sh printed more than warnings. Until mac.conf has WS_PUBLIC_KEY, setup.sh
 # prints the Mac's key and the commands that make it ws's peer at every run, on stdout. So a run
-# drops that, and leaves the step by hand.
+# drops that, as the Tunnel stage takes that step, and runs setup_do again.
 setup_do() {
     sudo -v || ws_die "setup.sh: sudo -v failed; setup.sh needs sudo, as an admin of the Mac"
     if ws_checking; then
@@ -152,11 +152,6 @@ setup_do() {
         acted=1
     fi
     ws_conf "$WS_CONF"
-    if [ -z "$WS_PUBLIC_KEY" ]; then
-        by_hand "The Mac's tunnel: run mac/setup.sh, which prints the Mac's WireGuard key and the" \
-            "two commands that make it ws's peer. Run those, set WS_PUBLIC_KEY in mac.conf to the" \
-            "key the second prints, then run the wizard again (docs/mac.md, The Mac's tunnel)."
-    fi
 }
 
 # setup_fail says what to do where setup.sh stops.

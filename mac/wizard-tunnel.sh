@@ -2,8 +2,10 @@
 # The wizard's Tunnel stage: the keys' exchange of the WireGuard tunnel between the Mac and ws. The
 # Mac's key goes to wg0's mac.pub on ws, where wg0 takes it as its peer, and bootstrap.sh --tags
 # wireguard runs there. Both go through the remote script over ws-ssh, as a change of wg0's peers
-# ends the tunnel's sessions. wizard.sh sources it, and runs the stage after claude on ws. It calls
-# the functions of lib.sh, setup-lib.sh and wizard-ws.sh, and reads wizard-host.sh's root_in.
+# ends the tunnel's sessions. Then mac.conf's WS_PUBLIC_KEY follows wg0's key, and setup.sh runs
+# again, which loads ws-tunnel. wizard.sh sources it, and runs the stage after claude on ws. It
+# calls the functions of lib.sh, setup-lib.sh, wizard-ask.sh, wizard-ws.sh and wizard.sh's
+# setup_do, and reads wizard.sh's WS_CONF and wizard-host.sh's root_in.
 
 # tunnel_after prints ws's run, which makes wg0, where that stage isn't done, as gh on ws's does. It
 # prints setup.sh, which makes the Mac's key, where root has none to read.
@@ -23,17 +25,21 @@ tunnel_key() {
         "$ws_etc/private.key" 2>/dev/null) && ws_is_key "$tunnel_mac"
 }
 
-# tunnel_done succeeds where ws's wg0 has the Mac's key as its peer, which mac.pub holds. It reads
-# ws only where root logged in there in this run.
+# tunnel_done succeeds where ws's wg0 has the Mac's key as its peer, WS_PUBLIC_KEY is wg0's key,
+# and launchd has ws-tunnel loaded. It reads ws only where root logged in there in this run.
 # shellcheck disable=SC2154 # root_in is wizard-host.sh's
 tunnel_done() {
-    [ "$root_in" = 1 ] && remote_read && [ "$(remote_get peer)" = ok ] && tunnel_key -n &&
-        [ "$(remote_get mac.pub)" = "$tunnel_mac" ]
+    ws_conf "$WS_CONF"
+    [ "$root_in" = 1 ] && remote_read && [ -n "$WS_PUBLIC_KEY" ] &&
+        [ "$(remote_get wg0)" = "$WS_PUBLIC_KEY" ] && [ "$(remote_get peer)" = ok ] &&
+        tunnel_key -n && [ "$(remote_get mac.pub)" = "$tunnel_mac" ] && ws_tunnel_loaded
 }
 
 # tunnel_do gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it,
 # as after a tagged run that failed. The peer op writes the key to mac.pub, then bootstrap.sh
-# --tags wireguard runs in a unit of its own. --check says what it would do.
+# --tags wireguard runs in a unit of its own. It sets WS_PUBLIC_KEY to wg0's key through ask_write,
+# where it differs, and runs setup.sh again. --check says what it would do, with mac.conf's diff
+# and setup.sh --check's where it knows wg0's key.
 tunnel_do() {
     sudo -v || ws_die "Tunnel: sudo -v failed; the Mac's key is root's, as an admin of the Mac"
     tunnel_key || ws_die "Tunnel: root's wg reads no key in $ws_etc/private.key: run" \
@@ -55,10 +61,22 @@ tunnel_do() {
                 "bootstrap.sh --tags wireguard: mend what it printed, then run the wizard again"
         fi
     fi
+    tunnel_ws=$(remote_get wg0) || tunnel_ws=-
+    if [ "$tunnel_ws" = - ]; then
+        ws_say "Tunnel: would set WS_PUBLIC_KEY in mac.conf to wg0's key, which that run makes," \
+            "then run mac/setup.sh again, which loads ws-tunnel"
+        return 0
+    fi
+    if [ "$WS_PUBLIC_KEY" != "$tunnel_ws" ]; then
+        ask_write "WS_PUBLIC_KEY=$tunnel_ws
+" Tunnel || return 1
+        ws_conf "$WS_CONF"
+    fi
+    setup_do
 }
 
-# tunnel_fail says what to do where ws's wg0 still lacks the Mac's key as its peer.
+# tunnel_fail says what to do where the keys still differ, or launchd lacks ws-tunnel.
 tunnel_fail() {
-    echo "ws's wg0 still lacks the Mac's key as its peer, as above; mend what bootstrap.sh" \
-        "printed, then run the wizard again"
+    echo "ws's wg0 still lacks the Mac's key, WS_PUBLIC_KEY wg0's key, or launchd ws-tunnel, as" \
+        "above; mend what it printed, then run the wizard again"
 }

@@ -1,17 +1,17 @@
 #!/bin/sh
 # The first run, by sh, with standin.sh's PATH, which lacks brew. The wizard must still find brew,
 # so that setup.sh installs wireguard-tools, root's copies and the Mac's key, and writes ssh's
-# files. Without WS_PUBLIC_KEY, setup.sh loads no daemon, and prints the Mac's key, which the
-# wizard drops: it must end with the tunnel's step by hand instead. It must make the ssh key that
-# mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no terminal asked one.
-# It must add the .pub to the stand-in gh's login, titled with the Mac's name.
+# files. Without WS_PUBLIC_KEY, setup.sh prints the Mac's key, which the wizard drops. It must make
+# the ssh key that mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no
+# terminal asked one. It must add the .pub to the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
 # own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
 # host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. As the runner's user, the
 # installer's for WS_INSTALLER_USER, it must add the Mac's key to root's authorized_keys with sudo.
 # It must run ws's playbook once, bootstrap.sh without arguments in a unit with root's HOME, and
 # stamp its status 0. Then the Mac's key must go to the stand-in ws's mac.pub, and bootstrap.sh
-# --tags wireguard run there.
+# --tags wireguard run there. wg0's key must end mac.conf as WS_PUBLIC_KEY, and setup.sh, run
+# again, load the daemon. The closing list must name no step of the tunnel.
 
 set -u
 
@@ -63,15 +63,16 @@ fi
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||
     error "wizard.sh gave the stand-in ws no mac.pub of the Mac's key, $mac"
-! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
-    error "wizard.sh loaded the daemon without ws's key"
+launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
+    error "wizard.sh loaded no daemon with wg0's key"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"
 printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' WS_LAN= \
-    WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= | cmp -s - ~/.config/ws/mac.conf ||
-    error "wizard.sh wrote another mac.conf than standin.sh's lines and the environment's answers"
+    WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" |
+    cmp -s - ~/.config/ws/mac.conf ||
+    error "wizard.sh wrote another mac.conf than standin.sh's lines, the answers and wg0's key"
 if [ "$(sed -n 2p "$RUNNER_TEMP/run.out")" != 'What stays by hand:' ] ||
-    ! grep -q "^- The Mac's tunnel: run mac/setup.sh, " "$RUNNER_TEMP/run.out"; then
-    error "wizard.sh listed no tunnel's step by hand"
+    grep -qi 'tunnel' "$RUNNER_TEMP/run.out"; then
+    error "wizard.sh listed nothing by hand, or a step of the tunnel"
 fi
 for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
     [ ! -e "$left" ] || error "wizard.sh left $left"

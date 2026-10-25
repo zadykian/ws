@@ -72,8 +72,8 @@ nothing, and it must leave no lock or temporary file. The job's `mac.conf` names
 as the ssh key for ws, which `--check` must show it would make. With no terminal and a `mac.conf`
 that names none, a run must stop at the Mac key stage, naming `WS_IDENTITY`, and make nothing. The
 first run, with that `PATH` too, must make that key, with no passphrase, add it to that login,
-install what `setup.sh` installs, and load no daemon without `WS_PUBLIC_KEY`. It must drop the Mac's
-key, which `setup.sh` prints until then, and end with that step as one left by hand. A second run
+install what `setup.sh` installs. It must drop the Mac's key, which `setup.sh` prints, and leave
+no step of the tunnel by hand, as the Tunnel stage, below, takes it. A second run
 and `--check` must print nothing, by sh and by dash. Then a stand-in for Secretive's agent, an
 `ssh-agent` at its socket, holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
 `WS_IDENTITY`. `--check` must print nothing of the Mac key stage while the agent lists the key. With
@@ -128,7 +128,7 @@ run it. The next run must print nothing.
 
 The stand-in `bootstrap.sh --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820, with
 the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's run.
-The first run must write `mac.pub`, and run that.
+The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and load the daemon.
 
 With both logged out and the key off the account, a run with no terminal must open nothing. At a
 terminal of `script`'s, a run must open `github.com/login/device`, by a stand-in `open`, and run

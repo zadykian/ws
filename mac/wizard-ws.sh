@@ -182,13 +182,6 @@ run_hand() {
     remote_read || true
     [ "$(remote_get fans)" != refused ] || by_hand "ws's fans' driver: with Secure Boot on," \
         "DKMS's key, enrolled at ws's console (docs/fans.md, Secure Boot)."
-    if [ -n "$WS_PUBLIC_KEY" ] && { [ "$(remote_get mac.pub)" = - ] ||
-        remote_get wg0 | grep -qvxF -e - -e "$WS_PUBLIC_KEY"; }; then
-        by_hand "The Mac's tunnel: ws lacks the Mac's key in WireGuard's mac.pub, or wg0's key" \
-            "isn't WS_PUBLIC_KEY: the keys' exchange again (docs/mac.md, The Mac's tunnel)."
-    fi
-    [ -n "$WS_PUBLIC_KEY" ] || by_hand "ws-tunnel in the Background: allow it where macOS asks," \
-        "as setup.sh loads it after the keys' exchange (docs/mac.md, The Mac's tunnel)."
     by_hand "macOS's local network: where it asks whether iTerm2, Gateway or another app may find" \
         "devices there, allow it (docs/mac.md, ssh's hosts)."
     by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \
