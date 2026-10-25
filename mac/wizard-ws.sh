@@ -1,9 +1,10 @@
 # shellcheck shell=sh
 # The wizard's stage ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws. The remote
 # script that the wizard sends to root there over ssh, wizard-remote.sh, starts it and follows it. A
-# run goes on where ssh drops, and the next run of the wizard follows it. wizard.sh sources it, and
-# runs the stage after Root's key. It calls the functions of lib.sh and wizard-host.sh, and reads
-# wizard.sh's dir, lock and update.
+# run goes on where ssh drops, and the next run of the wizard follows it. Then what stays by hand of
+# ws, the router and the Mac, for the closing list. wizard.sh sources it, and runs the stage after
+# Root's key. It calls the functions of lib.sh and wizard-host.sh, and reads wizard.sh's dir, lock,
+# update and acted, and the values of mac.conf that ws_conf set.
 
 # remote_st holds what the remote script's status printed, once remote_got is 1. run_ran becomes 1
 # once the stage ran the playbook in this run.
@@ -86,4 +87,38 @@ run_do() {
 run_fail() {
     echo "ws's playbook stopped, as above, or ssh dropped while it goes on; mend what it printed," \
         "then run the wizard again, which follows a run that goes on"
+}
+
+# run_hand adds what stays by hand of ws, the router and the Mac to the closing list, after a run in
+# which a stage acted. ws's part comes from the remote script's status, which the stage read.
+# shellcheck disable=SC2154 # acted is wizard.sh's, host_first wizard-host.sh's
+run_hand() {
+    [ "$acted" = 1 ] || return 0
+    remote_read || true
+    case $(remote_get gh) in login | none | scope | key)
+        by_hand "gh on ws: its login, with the write:ssh_signing_key scope, then bootstrap.sh" \
+            "--tags devtools there, which adds ws's signing key to GitHub (README, By hand)."
+        ;;
+    esac
+    case $(remote_get claude) in login | none)
+        by_hand "claude on ws: claude auth login, as root there (README, By hand)."
+        ;;
+    esac
+    [ "$(remote_get fans)" != refused ] || by_hand "ws's fans' driver: with Secure Boot on," \
+        "DKMS's key, enrolled at ws's console (docs/fans.md, Secure Boot)."
+    if [ -n "$WS_PUBLIC_KEY" ] && { [ "$(remote_get mac.pub)" = - ] ||
+        remote_get wg0 | grep -qvxF -e - -e "$WS_PUBLIC_KEY"; }; then
+        by_hand "The Mac's tunnel: ws lacks the Mac's key in WireGuard's mac.pub, or wg0's key" \
+            "isn't WS_PUBLIC_KEY: the keys' exchange again (docs/mac.md, The Mac's tunnel)."
+    fi
+    [ -n "$WS_PUBLIC_KEY" ] || by_hand "ws-tunnel in the Background: allow it where macOS asks," \
+        "as setup.sh loads it after the keys' exchange (docs/mac.md, The Mac's tunnel)."
+    by_hand "macOS's local network: where it asks whether iTerm2, Gateway or another app may find" \
+        "devices there, allow it (docs/mac.md, ssh's hosts)."
+    by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \
+        "config file ~/.ssh/config on (docs/mac.md)."
+    [ -z "$host_first" ] || by_hand "ws's lease: static at ${WS_LAN_ADDRESS:-10.88.0.10}, as" \
+        "docs/router.md has it, as this run reached ws at $host_first."
+    [ -z "$WS_REMOTE" ] || by_hand "The router's forwards to ws, UDP 51820 and TCP" \
+        "${WS_REMOTE_PORT:-22022}, for $WS_REMOTE, as docs/router.md has them."
 }

@@ -180,6 +180,7 @@ main() {
     stage "Host key" host
     stage "Root's key" root
     stage "ws's run" run
+    run_hand
     closing
 }
 
