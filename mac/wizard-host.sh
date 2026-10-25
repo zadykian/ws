@@ -4,6 +4,9 @@
 # the stage after setup.sh, which writes config.d/ws. It calls the functions of lib.sh,
 # setup-lib.sh and wizard-keys.sh, and reads wizard.sh's lock and WS_CONF, mac.conf's path.
 
+# The host and port of the last scan of ws's key, which host_scan keeps in host_line.
+host_scanned=
+
 # host_after prints setup.sh, which writes the ways of ws-ssh, where ~/.ssh/config.d/ws is missing.
 host_after() {
     [ -f "$HOME/.ssh/config.d/ws" ] || echo setup.sh
@@ -51,11 +54,14 @@ host_get() {
 }
 
 # host_scan sets host_line to the ed25519 key that ws offers at host_name and host_port, within
-# 10 s, over IPv4 alone where ssh takes it alone. It fails where ws offers none.
+# 10 s, over IPv4 alone where ssh takes it alone, once a run. It fails where ws offers none.
 host_scan() {
-    [ "$(host_get addressfamily)" != inet ] || set -- -4
-    host_line=$(ssh-keyscan "$@" -T 10 -t ed25519 -p "$host_port" "$host_name" 2>/dev/null |
-        awk '$2 == "ssh-ed25519" { print $2, $3; exit }')
+    if [ "$host_scanned" != "$host_name $host_port" ]; then
+        host_scanned="$host_name $host_port"
+        [ "$(host_get addressfamily)" != inet ] || set -- -4
+        host_line=$(ssh-keyscan "$@" -T 10 -t ed25519 -p "$host_port" "$host_name" 2>/dev/null |
+            awk '$2 == "ssh-ed25519" { print $2, $3; exit }')
+    fi
     [ -n "$host_line" ]
 }
 
