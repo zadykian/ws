@@ -5,8 +5,8 @@ the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws an
 then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, runs ws's playbook
 there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, runs another
 repository's `apply.sh` on ws, and clones that repository on the Mac, with ws's word list. Last, it
-names ws's port of the cable from the Mac's display. On a new Mac with Apple silicon, one line
-installs what it needs, clones the repository and runs the wizard, as yourself:
+sets up the cable from the Mac's display to ws. On a new Mac with Apple silicon, one line installs
+what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -43,7 +43,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
 14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`,
     and ws's word list, below.
-15. Cable: ws's port of the cable in its `host_vars`, below.
+15. Cable: ws's port of the cable in its `host_vars`, and the Mac's service of the cable, below.
 
 ## The answers
 
@@ -76,7 +76,8 @@ stops the run. ws's address and git's email take a value where asked. The wizard
 at the end of `mac.conf`, and keeps its comments and order. It writes the file once `setup.sh` would
 take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that `setup.sh`
 would refuse. Where `mac.conf` is a link, it prints the lines to add to the link's file, and stops.
-The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
+The Cable stage asks `WS_CABLE_SERVICE` ([The cable](#the-cable)). The other keys, such as
+`WS_USER` and `WS_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `setup.sh --check`
 then reads the file it would write, in the lock, which `WS_CONF` names. `WS_CONF` names another
@@ -238,12 +239,14 @@ but the uplink, each with its carrier and IPv4 addresses. Where none has carrier
 docked, the stage waits, and the closing list says to dock the Mac and run the line again. Docked,
 the stage asks ws's port of the cable, the one with carrier by default. It names the port in
 `host_vars/localhost.yml` on ws, then runs `bootstrap.sh --tags network,wireguard` there, as both
-roles read it. Once the port holds `10.77.0.1`, the stage stops, naming `WS_CABLE_SERVICE`, the
-Mac's service of the cable, for `mac.conf` ([The cable](mac.md#the-cable)).
+roles read it. Once the port holds `10.77.0.1`, the stage asks the Mac's service of the cable. The
+default is the one service with a `169.254` address, which an adapter gives itself where no DHCP
+server answers. The answer goes in `mac.conf` as `WS_CABLE_SERVICE`, then `setup.sh` gives the
+service `10.77.0.2` ([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must get an answer.
 
-`none` as the answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks no more, as where ws has
-no cable. From the environment, at a terminal too, `WS_CABLE_PORT` gives the port, and an empty
-`WS_CABLE_SERVICE` none. `--check` asks nothing, and says what the stage would do.
+`none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
+where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
+`WS_CABLE_SERVICE` give the answers. `--check` asks nothing, and says what the stage would do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
 So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files
