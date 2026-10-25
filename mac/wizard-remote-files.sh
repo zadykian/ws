@@ -1,6 +1,6 @@
 #!/bin/sh
-# The wizard's files script on ws, for another repository's files there, and root's word list. The
-# Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, for another repository's files there, root's word list and ws's
+# wired ports. The Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
@@ -13,16 +13,20 @@
 #   The remote script's status lists the repositories that have a stamp, as OWNER/REPO.
 # - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
 #   read, or - where root has none. words HASH prints the list, while its hash is HASH.
+# - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
+#   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
+#   or -.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# The wizard's stamps, the repositories' clones and root's word list, each a line NAME=PATH, which
-# CI's stand-in for ws roots in a directory of its own.
+# The wizard's stamps, the repositories' clones, root's word list and sysfs's network interfaces.
+# CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
 state=/var/lib/ws-wizard
 repos=/root/repository
 list=/root/.config/ws/forbidden-words
+net=/sys/class/net
 
 # say prints a message of the script's on stderr.
 say() {
@@ -93,14 +97,44 @@ words() {
     fi
 }
 
+# ports prints ws's wired ports: a device's, of ARPHRD_ETHER's type 1 and not wireless, but those
+# that a default route names, in any table, as an uplink's. A bridge's or bond's member, which
+# sysfs's master marks, is left out too, as an uplink may be one. So is a name of other characters
+# than letters, digits and ._-, or with a - first, as no argument may hold them.
+ports() {
+    uplinks=$({
+        ip route show default table all
+        ip -6 route show default table all
+    } 2>/dev/null | awk '{ for (i = 1; i < NF; i++) if ($i == "dev") print $(i + 1) }')
+    for path in "$net"/*; do
+        port=${path##*/}
+        case $port in *[!A-Za-z0-9_.-]* | -*) continue ;; esac
+        [ -e "$path/device" ] && [ ! -e "$path/master" ] &&
+            [ "$(cat "$path/type" 2>/dev/null)" = 1 ] &&
+            [ ! -e "$path/wireless" ] && [ ! -e "$path/phy80211" ] || continue
+        printf '%s\n' "$uplinks" | grep -qxF -- "$port" || echo "$port"
+    done
+}
+
+# link lists the ports, as the header says, with sysfs's carrier, which a port that is down lacks,
+# and ip's IPv4 addresses.
+link() {
+    for port in $(ports); do
+        carrier=$(cat "$net/$port/carrier" 2>/dev/null) || carrier=
+        addresses=$(ip -o -4 address show dev "$port" 2>/dev/null | awk '{ printf " %s", $4 }')
+        echo "$port ${carrier:--}${addresses:- -}"
+    done
+}
+
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
     case ${1-} in
     clone) clone "${2-}" ;;
     stamp) stamp "${2-}" ;;
     words) words "${2-}" ;;
+    link) link ;;
     *) die "unknown op '${1-}'; usage: wizard-remote-files.sh clone OWNER/REPO |" \
-        "stamp OWNER/REPO | words [HASH]" ;;
+        "stamp OWNER/REPO | words [HASH] | link" ;;
     esac
 }
 
