@@ -187,7 +187,9 @@ another, and `bootstrap.sh --tags wireguard` gives `wg0` that peer. That run goe
 lacks the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
 the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
 `wg0`'s key, in place of its line, and `setup.sh` runs again, which loads ws-tunnel
-([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background.
+([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. It then waits up to 30 s
+for ws-tunnel's handshake, and logs in once by `ssh ws`. Else it stops, naming the UDP port, the
+router's forward and the Background. Where the run asked ws's address, a later run checks it.
 
 ## What stays by hand
 
@@ -199,3 +201,5 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   Gateway's connection to ws.
 - ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `mac.conf` has `WS_REMOTE` ([The router](router.md)).
+- The tunnel's handshake, where the Host key stage asked ws's address: once ws's lease is static,
+  the wizard again, which checks it.

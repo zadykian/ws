@@ -11,7 +11,8 @@
 # It must run ws's playbook once, bootstrap.sh without arguments in a unit with root's HOME, and
 # stamp its status 0. Then the Mac's key must go to the stand-in ws's mac.pub, and bootstrap.sh
 # --tags wireguard run there. wg0's key must end mac.conf as WS_PUBLIC_KEY, and setup.sh, run
-# again, load the daemon. The closing list must name no step of the tunnel.
+# again, load the daemon, which must have a handshake with the stand-in ws. The wizard must log in
+# to ws through the tunnel once. The closing list must name no step of the tunnel.
 
 set -u
 
@@ -65,6 +66,9 @@ mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /usr/local/libexec/ws-tunnel/wg /etc/ws-
     error "wizard.sh gave the stand-in ws no mac.pub of the Mac's key, $mac"
 launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded no daemon with wg0's key"
+sudo /usr/local/libexec/ws-tunnel/ws-tunnel status | grep -q '^latest handshake: [0-9]' &&
+    [ "$(cat "$RUNNER_TEMP/ws/tunnel.log" 2>/dev/null | wc -l)" -eq 1 ] ||
+    error "wizard.sh had no handshake, or logged in to ws through the tunnel other than once"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"
 printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' WS_LAN= \
     WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" |

@@ -129,6 +129,7 @@ run it. The next run must print nothing.
 The stand-in `bootstrap.sh --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820, with
 the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's run.
 The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and load the daemon.
+It must have a handshake, and log in to ws once, by a stand-in `ssh`, as `wg0` has no address.
 
 With both logged out and the key off the account, a run with no terminal must open nothing. At a
 terminal of `script`'s, a run must open `github.com/login/device`, by a stand-in `open`, and run
