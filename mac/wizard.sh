@@ -14,7 +14,8 @@
 # - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
 # - Mac key: the key that ssh offers ws, made where missing, in Secretive or a file of ssh-keygen's;
 # - gh on the Mac: gh's login to GitHub, and the Mac's key among its keys, for Ubuntu's installer;
-# - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
+# - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md);
+# - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -31,6 +32,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-keys.sh"
 # shellcheck source=wizard-gh.sh
 . "$dir/wizard-gh.sh"
+# shellcheck source=wizard-host.sh
+. "$dir/wizard-host.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -171,6 +174,7 @@ main() {
     stage "Mac key" keys
     stage "gh on the Mac" gh
     stage setup.sh setup
+    stage "Host key" host
     closing
 }
 

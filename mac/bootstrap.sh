@@ -20,7 +20,7 @@ brew_url=https://github.com/Homebrew/brew/releases/download/$brew_version/Homebr
 brew_sha256=ae13b8b0ac910730d3e982a9e7518288d17fd0ad272e42f412027e8ab4555575
 brew_signer='Developer ID Installer: Patrick Linnane (927JGANW46)'
 # The wizard's stages, split by |, as mac/wizard.sh's main runs them, for --check without a clone.
-stages='Answers|Mac key|gh on the Mac|setup.sh'
+stages='Answers|Mac key|gh on the Mac|setup.sh|Host key'
 
 # say prints a message of bootstrap.sh's.
 say() {

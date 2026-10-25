@@ -6,7 +6,8 @@
 # mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no terminal asked one.
 # It must add the .pub to the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
-# own in $TMPDIR.
+# own in $TMPDIR. It must add ws's host key to known_hosts under ws, as WS_HOST_KEY gives its
+# fingerprint.
 
 set -u
 
@@ -23,7 +24,8 @@ error() {
     fail=1
 }
 
-PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" >"$RUNNER_TEMP/run.out" 2>"$RUNNER_TEMP/run.err"
+WS_HOST_KEY=$(cat "$RUNNER_TEMP/ws/fingerprint") PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" \
+    >"$RUNNER_TEMP/run.out" 2>"$RUNNER_TEMP/run.err"
 status=$?
 cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 [ "$status" = 0 ] || error "wizard.sh exited $status"
@@ -40,6 +42,8 @@ if ! grep -qxF "$added" "$RUNNER_TEMP/gh/log" ||
     ! grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" "$RUNNER_TEMP/gh/keys"; then
     error "wizard.sh added no ~/.ssh/id_ed25519.pub to gh's login, titled with the Mac's name"
 fi
+grep -qxF "ws $(cut -d ' ' -f 1-2 "$RUNNER_TEMP/ws/host_key.pub")" ~/.ssh/known_hosts ||
+    error "wizard.sh added no line for ws's host key to ~/.ssh/known_hosts"
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded the daemon without ws's key"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"
