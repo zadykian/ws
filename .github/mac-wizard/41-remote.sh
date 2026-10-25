@@ -10,7 +10,8 @@
 # cut off must exit 1 and remove the run stamp that the one before left. The next must start a unit
 # of its own. The files script must clone another repository by the stand-in gh, whose apply.sh
 # must run as root over ssh, its stdin empty. Its stamp must follow, which status must list. Its
-# clone again must leave the clone, and remove the stamp, and another owner's must stop. The
+# clone again must leave the clone, and remove the stamp, and another owner's must stop. Its words
+# must print git's hash of root's word list, or - without one, and the list for that hash alone. The
 # stand-ins' state goes back.
 
 set -u
@@ -145,6 +146,18 @@ files clone other/hook
 [ "$status" = 1 ] && [ "$out" = "wizard-remote-files.sh: $hook is not other/hook's clone, its \
 origin 'https://github.com/example/hook.git': move it aside" ] ||
     error "the files script's clone of another owner's repository exited $status"
-sudo rm -rf "$hook"
+list=$ws/root/root/.config/ws/forbidden-words
+files words
+[ "$status" = 0 ] && [ "$out" = - ] || error "the files script's words with no list exited $status"
+sudo mkdir -p "${list%/*}"
+printf '%s\n' '# stand-in words' example-word 'stand-in phrase' | sudo tee "$list" >/dev/null
+sum=$(git hash-object --stdin <"$list")
+files words
+[ "$status" = 0 ] && [ "$out" = "$sum" ] || error "the files script's words exited $status"
+files words "$sum"
+[ "$status" = 0 ] && [ "$out" = "$(cat "$list")" ] || error "its words $sum exited $status"
+files words 0
+[ "$status" = 1 ] || error "its words with another hash exited $status"
+sudo rm -rf "$hook" "$ws/root/root/.config"
 rm -f "$ws/clone.log" "$ws/apply.log"
 exit "$fail"
