@@ -83,6 +83,14 @@ stage, naming the socket. Last, without the login of the stand-in `gh`, a run wi
 stop at gh's stage, naming `gh auth login`. With a login that lacks the scopes, or the signing one
 alone, it must name `gh auth refresh`. `--check` must say it would run each.
 
+`standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
+leads, with a host key made there. A fresh `--check` must show the Host key stage after `setup.sh`.
+The first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as
+`WS_HOST_KEY` gives its fingerprint. Without that line, a run with no terminal must stop without
+`WS_HOST_KEY` and with another fingerprint, and `--check` must show the line. With a `mac.conf`
+of no way to ws, a run must stop, naming [The router](router.md). With one whose `WS_REMOTE`
+doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`.
+
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
 `--check`, with the form the key takes. `--check` must show the environment's answers as the lines

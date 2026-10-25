@@ -2,8 +2,8 @@
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
-then runs `setup.sh`. On a new Mac with Apple silicon, one line installs what it needs, clones the
-repository and runs the wizard, as yourself:
+then runs `setup.sh` and takes ws's host key. On a new Mac with Apple silicon, one line installs
+what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -32,6 +32,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
 6. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
+7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 
 ## The answers
 
@@ -98,12 +99,30 @@ Mac's key for ws to the account's ssh keys, titled with the Mac's name. `setup.s
 signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the command to run.
 
 Ubuntu's installer imports the account's keys for ws's user. So run the line before Ubuntu's
-install, or at any time. In the installer, turn OpenSSH on, import the keys from GitHub, and leave
-password login off.
+install, or at any time. A run before the install stops at the Host key stage, as ws doesn't answer
+yet. Leave ws's address empty there, and run the wizard again once Ubuntu is installed. In the
+installer, turn OpenSSH on, import the keys from GitHub, and leave password login off.
+
+## ws's host key
+
+The stage reads ws's ed25519 key with `ssh-keyscan`, at the host and port that `ssh -G ws-ssh`
+gives ([ssh's hosts](mac.md#sshs-hosts)). Where no way matches, it stops, naming
+[The router](router.md). A new ws has a lease from the router's pool, not its static address. So
+where ws gives no key within 10 s, the stage asks ws's address now, as the router's leases show it.
+ssh takes that address for the rest of the run, and `mac.conf` keeps nothing of it. An empty answer
+stops the run, as before Ubuntu's install.
+
+The stage shows the key's fingerprint. At ws's console, `ssh-keygen -lf
+/etc/ssh/ssh_host_ed25519_key.pub` prints ws's own: answer `yes` where they match, or paste what it
+prints. Any other answer stops the run. The key goes in `known_hosts` as `ws`, the name that
+`HostKeyAlias` gives each way. From then on, the stage reads nothing from ws. Through the router's
+forward, the stage warns that a new ws faces the internet until its run sets up the `security` role
+([security](security.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
+answers.
 
 ## What stays by hand
 
 - The Mac's tunnel: the keys' exchange of [The Mac's tunnel](mac.md#the-macs-tunnel), then
   `WS_PUBLIC_KEY` in `mac.conf`, then the wizard again.
-- What [The Mac](mac.md) leaves by hand: ws's host key at the first login, macOS's grant of the
-  local network to an app, and Gateway's connection to ws.
+- What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, and
+  Gateway's connection to ws.
