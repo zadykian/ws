@@ -123,7 +123,7 @@ chmod 755 "$ws/ws.sh"
 # clone, root's, holds the stand-in bootstrap.sh alone.
 here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$ws/bin" "$ws/units"
-for each in systemd-run systemctl journalctl wg gh mokutil modinfo; do
+for each in systemd-run systemctl journalctl wg gh mokutil modinfo ip; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
 : >"$ws/run.log"

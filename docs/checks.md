@@ -113,7 +113,8 @@ The files script, `mac/wizard-remote-files.sh`, must clone another repository by
 `gh`, whose `apply.sh` must run as root over `ssh`. Its stamp must follow, which `status` must
 list, as `OWNER/REPO`. A clone again must leave the clone alone, and remove the stamp. A clone of
 another owner's repository of that name must stop. Its `words` must print git's hash of root's word
-list, or `-` without one, and the list for that hash alone.
+list, or `-` without one, and the list for that hash alone. Its `link` must list the wired ports,
+and `link PORT` name one in `host_vars` once, which then takes `10.77.0.1`.
 
 The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
 the playbook through the remote script, and each run since must read ws's `status` alone. A run must

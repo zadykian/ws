@@ -11,8 +11,10 @@
 # of its own. The files script must clone another repository by the stand-in gh, whose apply.sh
 # must run as root over ssh, its stdin empty. Its stamp must follow, which status must list. Its
 # clone again must leave the clone, and remove the stamp, and another owner's must stop. Its words
-# must print git's hash of root's word list, or - without one, and the list for that hash alone. The
-# stand-ins' state goes back.
+# must print git's hash of root's word list, or - without one, and the list for that hash alone. Its
+# link must list ws's wired ports but the uplink and a bridge's member, with their carrier and IPv4
+# addresses. link PORT must name one in ws's host_vars once, which bootstrap.sh --tags
+# network,wireguard then gives 10.77.0.1. The stand-ins' state goes back.
 
 set -u
 
@@ -158,6 +160,36 @@ files words "$sum"
 [ "$status" = 0 ] && [ "$out" = "$(cat "$list")" ] || error "its words $sum exited $status"
 files words 0
 [ "$status" = 1 ] || error "its words with another hash exited $status"
-sudo rm -rf "$hook" "$ws/root/root/.config"
-rm -f "$ws/clone.log" "$ws/apply.log"
+# ws's ports, in a sysfs of the stand-in's, root's: the uplink, a port with carrier, one without and
+# with an address, one that is down, and a wireless one. A member of the bridge br0 has carrier.
+net=$ws/root/sys/class/net
+vars=$ws/root/root/repository/ws/host_vars/localhost.yml
+for each in enp4s0:1 enp5s0:1 enp6s0:0 enp7s0 wlan0:1 enp8s0:1; do
+    sudo mkdir -p "$net/${each%:*}/device"
+    echo 1 | sudo tee "$net/${each%:*}/type" >/dev/null
+    [ "$each" = "${each%:*}" ] || echo "${each#*:}" | sudo tee "$net/${each%:*}/carrier" >/dev/null
+done
+sudo mkdir "$net/wlan0/wireless" "$net/br0"
+sudo ln -s ../br0 "$net/enp8s0/master"
+echo enp4s0 >"$ws/uplink"
+mkdir -p "$ws/addr"
+echo 198.51.100.7/24 >"$ws/addr/enp6s0"
+files link
+[ "$status" = 0 ] && [ "$out" = "$(printf '%s\n' 'enp5s0 1 -' 'enp6s0 0 198.51.100.7/24' \
+    'enp7s0 - -')" ] || error "the files script's link exited $status"
+files link enp4s0
+[ "$status" = 1 ] && [ ! -e "$vars" ] || error "its link of the uplink exited $status"
+files link enp5s0
+printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &&
+    [ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: wrote $vars" ] ||
+    error "its link enp5s0 exited $status"
+files link enp5s0
+[ "$status" = 0 ] && [ -z "$out" ] || error "its link enp5s0 again exited $status"
+remote run --tags network,wireguard
+files link
+printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
+    [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
+    error "bootstrap.sh --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
+sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}"
+rm -f "$ws/clone.log" "$ws/apply.log" "$ws/uplink"
 exit "$fail"

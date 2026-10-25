@@ -16,7 +16,9 @@
 # - clone.log holds the repositories that gh repo clone cloned, each with this script as apply.sh
 #   and its URL on GitHub as origin;
 # - apply.log holds a line for each run of apply.sh: tty where its stdin is a terminal, else the
-#   SHA-256 of what it read there, and apply.status its status.
+#   SHA-256 of what it read there, and apply.status its status;
+# - uplink names the port of the default route, and addr/PORT holds a port's IPv4 addresses, which
+#   bootstrap.sh --tags network,wireguard gives the port that host_vars names, with carrier.
 
 set -u
 
@@ -36,6 +38,16 @@ wg0() {
     "$bin/wg" set "$(cat "$s/utun")" private-key "$s/ws.key" listen-port 51820 \
         peer "$(cat "$s/root/etc/wireguard/mac.pub")" allowed-ips 10.99.0.2/32 || return 1
     ifconfig "$(cat "$s/utun")" up
+}
+# direct gives the port that ws's host_vars names ws's end of the cable, 10.77.0.1/30, as the
+# network role's netplan file does, once networkd sees carrier, which the cases' sysfs shows.
+direct() {
+    port=$(sed -n 's/^network_direct_link_interface: "\(.*\)"$/\1/p' \
+        "$s/root/root/repository/ws/host_vars/localhost.yml" 2>/dev/null)
+    [ -n "$port" ] && [ "$(cat "$s/root/sys/class/net/$port/carrier" 2>/dev/null)" = 1 ] ||
+        return 0
+    mkdir -p "$s/addr"
+    grep -qsx 10.77.0.1/30 "$s/addr/$port" || echo 10.77.0.1/30 >>"$s/addr/$port"
 }
 case ${0##*/} in
 systemd-run)
@@ -94,6 +106,7 @@ bootstrap.sh)
     [ "$*" != '--tags devtools' ] || [ ! -f "$s/gh" ] || [ -f "$s/gh.nosign" ] ||
         cut -d ' ' -f 1-2 "$s/signing.pub" >>"$s/gh.keys"
     [ "$*" != '--tags wireguard' ] || wg0 || exit 1
+    [ "$*" != '--tags network,wireguard' ] || direct
     echo 'PLAY RECAP'
     exit "$(cat "$s/bootstrap.status" 2>/dev/null || echo 0)"
     ;;
@@ -138,6 +151,18 @@ claude)
 apply.sh)
     if [ -t 0 ]; then echo tty; else shasum -a 256 | cut -d ' ' -f 1; fi >>"$s/apply.log"
     exit "$(cat "$s/apply.status" 2>/dev/null || echo 0)"
+    ;;
+ip)
+    # The default routes, by the port that uplink names, and the IPv4 addresses in addr/PORT.
+    case $* in
+    *'route show default table all')
+        [ ! -f "$s/uplink" ] || echo "default via 192.0.2.1 dev $(cat "$s/uplink") metric 100"
+        ;;
+    "-o -4 address show dev ${6-}")
+        [ ! -f "$s/addr/$6" ] || sed "s|.*|2: $6    inet & scope global $6|" "$s/addr/$6"
+        ;;
+    *) exit 2 ;;
+    esac
     ;;
 mokutil) if [ -f "$s/sb" ]; then echo 'SecureBoot enabled'; else echo 'SecureBoot disabled'; fi ;;
 modinfo) [ -f "$s/nct6687" ] ;;
