@@ -7,8 +7,12 @@
 # what it would do, neither writing ws's host_vars. With WS_CABLE_PORT, a run must name enp5s0
 # there, run bootstrap.sh --tags network,wireguard, and stop at the Mac's service.
 #
-# The Mac's services are a stand-in networksetup's. WS_CABLE_SERVICE= must write that empty line,
-# which the next run keeps. mac.conf and the stand-ins go back, and a run must print nothing.
+# The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
+# script's after a bad one, an empty line must take the one service with a 169.254 address. setup.sh
+# must give it 10.77.0.2, and ping reach 10.77.0.1, once. The next run must print nothing. With no
+# answer from ping, a run must stop, naming WS_CABLE_SERVICE. WS_CABLE_SERVICE= must write that
+# empty line, which the next run keeps. mac.conf and the stand-ins go back, and a run must print
+# nothing.
 
 set -u
 
@@ -34,6 +38,11 @@ wizard() {
     out=$(env "$@" sh "$wizard" ${mode:+"$mode"} </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
+}
+
+# logged FILE prints how many lines the stand-in FILE in cable holds.
+logged() {
+    cat "$cable/$1" 2>/dev/null | wc -l | tr -d ' '
 }
 
 cp "$conf" "$RUNNER_TEMP/cable.conf"
@@ -69,7 +78,16 @@ case \$1:\${2-} in
 *) echo "\${2-} is not a recognized network service." && exit 4 ;;
 esac
 EOF
-chmod 755 /opt/homebrew/bin/networksetup
+# ping answers for 10.77.0.1 where both ends of the cable have their addresses, unless cable holds
+# a file silent.
+cat >/opt/homebrew/bin/ping <<EOF
+#!/bin/sh
+echo "\$*" >>'$cable/ping.log'
+[ "\$*" = '-c 1 -t 3 10.77.0.1' ] && [ ! -e '$cable/silent' ] &&
+    grep -qx 'IP address: 10.77.0.2' '$cable/info-ws_stand_in_adapter' &&
+    grep -qx 10.77.0.1/30 '$ws/addr/enp5s0' 2>/dev/null
+EOF
+chmod 755 /opt/homebrew/bin/networksetup /opt/homebrew/bin/ping
 
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run
@@ -104,14 +122,46 @@ printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
     error "wizard.sh with WS_CABLE_PORT exited $status, or wrote no host_vars, or ran no roles"
+# On macOS, sudo, which the stages' checks run, takes what the terminal holds, so the lines go in
+# once the question shows, or after 120 s. script's input ends 5 s after them, once it wrote them.
+# shellcheck disable=SC2094 # the loop reads the question that script writes to tty, by design
+{
+    for _ in $(seq 120); do
+        ! grep -qF '(WS_CABLE_SERVICE) [' "$RUNNER_TEMP/tty" 2>/dev/null || break
+        sleep 1
+    done
+    printf '%s\n' 'ws stand-in absent' ''
+    sleep 5
+} | script -q /dev/null sh "$wizard" >"$RUNNER_TEMP/tty" 2>&1
+status=$?
+tr -d '\r' <"$RUNNER_TEMP/tty"
+grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty" &&
+    grep -qF "wizard.sh: Cable: 'ws stand-in absent' is none of those" "$RUNNER_TEMP/tty" &&
+    [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = 'WS_CABLE_SERVICE="ws stand-in adapter"' ] &&
+    [ "$(logged setmanual.log) $(logged ping.log)" = '1 1' ] ||
+    error "wizard.sh at a terminal exited $status, or set the adapter or pinged other than once"
+wizard run
+[ "$status" = 0 ] && [ -z "$out" ] || error "the next run exited $status"
+cp "$RUNNER_TEMP/cable.conf" "$conf"
+touch "$cable/silent"
+wizard run "WS_CABLE_SERVICE=ws stand-in adapter"
+printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: ping -c 1 -t 3 10\.77\.0\.1, ws's end of the \
+cable, got no answer: mac\.conf's WS_CABLE_SERVICE must name the service of the adapter that the \
+cable plugs into" && [ "$status" = 1 ] &&
+    [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
+    error "wizard.sh with no answer from ping exited $status, or pinged other than once"
+rm "$cable/silent"
+cp "$RUNNER_TEMP/cable.conf" "$conf"
 wizard run WS_CABLE_SERVICE=
-[ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] ||
-    error "wizard.sh with WS_CABLE_SERVICE= exited $status, or wrote another line"
+[ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] &&
+    [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
+    error "wizard.sh with WS_CABLE_SERVICE= exited $status, or wrote another line, or acted"
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "the run after none exited $status"
 
 cp "$RUNNER_TEMP/cable.conf" "$conf"
-rm -f /opt/homebrew/bin/networksetup "$RUNNER_TEMP/cable.conf" "$ws/uplink"
+rm -rf /opt/homebrew/bin/networksetup /opt/homebrew/bin/ping "$RUNNER_TEMP/cable.conf" \
+    "$RUNNER_TEMP/tty" "$ws/uplink"
 sudo rm -rf "$cable" "$ws/root/sys" "$ws/addr" "${vars%/*}"
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status"
