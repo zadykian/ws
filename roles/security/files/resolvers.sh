@@ -9,6 +9,7 @@
 set -eu
 
 conf=/run/systemd/resolve/resolv.conf
+cr=$(printf '\r')
 
 # ipv4 ADDR succeeds where ADDR is four numbers to 255 joined by dots, none with a leading zero.
 # nft reads other forms loosely, as 010 for 8, or looks them up as names.
@@ -46,17 +47,30 @@ ipv6() (
     [ "$groups" -ge "$min" ] && [ "$groups" -le "$max" ]
 )
 
-# elements prints the command that adds each server of the resolv.conf on stdin to its set. A set
-# holds no zone, so fe80::1%2 matches on any link.
+# elements prints the command that adds each server of the resolv.conf on stdin to its set, and
+# names those it leaves out: no address, or one in 0.0.0.0/8, an IPv6 one of zeros, broadcast or
+# multicast. It skips a bare nameserver line. An IPv4-mapped server's packets are IPv4. A set holds
+# no zone, so fe80::1%2 matches on any link.
 elements() {
     while read -r key addr _; do
-        [ "$key" = nameserver ] || continue
+        addr=${addr%"$cr"}
+        [ "$key" = nameserver ] && [ -n "$addr" ] || continue
         addr=${addr%%\%*}
+        case $addr in
+        ::ffff:*.* | ::FFFF:*.*) addr=${addr#::????:} ;;
+        esac
         if ipv4 "$addr"; then
-            echo "add element inet ws resolvers4 { $addr }"
+            case $addr in
+            0.* | 255.255.255.255 | 22[4-9].* | 23[0-9].*) ;;
+            *) echo "add element inet ws resolvers4 { $addr }" && continue ;;
+            esac
         elif ipv6 "$addr"; then
-            echo "add element inet ws resolvers6 { $addr }"
+            case $addr in
+            [fF][fF][0-9A-Fa-f][0-9A-Fa-f]:*) ;;
+            *[!0:]*) echo "add element inet ws resolvers6 { $addr }" && continue ;;
+            esac
         fi
+        printf 'resolvers.sh: left out %s\n' "$addr" >&2
     done
 }
 
