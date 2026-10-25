@@ -7,14 +7,18 @@
 # - clone OWNER/REPO clones that repository on GitHub into /root/repository/REPO, by root's gh
 #   login, where nothing is there. It never pulls a clone, as the repository's apply.sh updates its
 #   own. It stops where the path holds no clone, another repository's, or a clone with no apply.sh
-#   that runs.
+#   that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails or is cut
+#   short leaves none.
+# - stamp OWNER/REPO stamps REPO's apply.sh, which exited 0, with the clone's commit and OWNER/REPO.
+#   The remote script's status lists the repositories that have a stamp, as OWNER/REPO.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# The repositories' clones, a line NAME=PATH, which CI's stand-in for ws roots in a directory of its
-# own.
+# The wizard's stamps and the repositories' clones, each a line NAME=PATH, which CI's stand-in for
+# ws roots in a directory of its own.
+state=/var/lib/ws-wizard
 repos=/root/repository
 
 # say prints a message of the script's on stderr.
@@ -46,6 +50,7 @@ repo() {
 # OWNER/REPO's: its origin, by https or ssh as gh sets it, names it on GitHub, letter case aside.
 clone() {
     repo "$1"
+    rm -f "$state/hook-$repo"
     if [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ]; then
         command -v gh >/dev/null || die "ws lacks gh, which ws's run installs"
         mkdir -p "$repos"
@@ -61,11 +66,22 @@ clone() {
     [ -x "$repos/$repo/apply.sh" ] || die "$repos/$repo has no apply.sh that runs"
 }
 
+# stamp OWNER/REPO writes REPO's stamp, hook-REPO in state, by a rename: the clone's commit, which
+# apply.sh may have moved, 0, its status, and OWNER/REPO, which the remote script's status lists.
+stamp() {
+    repo "$1"
+    mkdir -p "$state"
+    sha=$(git -C "$repos/$repo" rev-parse HEAD 2>/dev/null) || sha=-
+    echo "$sha 0 $1" >"$state/.hook-$repo" && mv -f "$state/.hook-$repo" "$state/hook-$repo"
+}
+
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
     case ${1-} in
     clone) clone "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh clone OWNER/REPO" ;;
+    stamp) stamp "${2-}" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh clone OWNER/REPO |" \
+        "stamp OWNER/REPO" ;;
     esac
 }
 

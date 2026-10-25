@@ -9,7 +9,8 @@
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer
 #   takes, and wg0 is wg0's own key. gh is ok, none, login, scope or key, below. claude is ok, none
 #   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok. peer is
-#   ok where wg0 has mac.pub's key as a peer.
+#   ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as OWNER/REPO, whose
+#   apply.sh has a stamp of wizard-remote-files.sh's, the files script.
 # - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. --update first pulls a clean clone on main.
@@ -96,6 +97,8 @@ status() {
     mac=$(head -n 1 "$peer" 2>/dev/null) || mac=
     echo "peer $(wg show wg0 peers 2>/dev/null |
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
+    hook=$(cat "$state"/hook-* 2>/dev/null | awk '$3 != "" { printf " %s", $3 }')
+    echo "hook${hook:- -}"
 }
 
 # pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked

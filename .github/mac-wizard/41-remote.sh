@@ -54,11 +54,12 @@ echo "$key" >"$ws/wg0"
 touch "$ws/sb" "$ws/nct6687"
 echo "$mac" | sudo tee "$peer" >/dev/null
 rm "$ws/gh" "$ws/claude"
-states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'peer -'
+states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'peer -' \
+    'hook -'
 touch "$ws/gh" "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'peer -'
+states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'peer -' 'hook -'
 rm "$ws/nct6687"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
