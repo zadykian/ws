@@ -124,7 +124,6 @@ skill. Commits are signed, as the ruleset on `main` requires.
 - Plugins of the `zadykian` marketplace, [zadykian/skills](https://github.com/zadykian/skills),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
   hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`.
-- Agents in `.claude/agents/`: `doc-editor`, which edits prose to the writing policy.
 - Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits, and
   `make lint-tree` in the trees the turn changed as it ends. Both run a tree's code only where each
   commit since `origin/main` bears its author's signature, nothing is staged, and the gates' code
