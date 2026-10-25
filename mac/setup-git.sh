@@ -1,9 +1,9 @@
 # shellcheck shell=sh
-# The git step of mac/setup.sh, which setup-extras.sh sources: git's identity and a signing key of
-# the Mac's own. They go in ~/.config/ws/gitconfig, which ~/.gitconfig includes at its top, as the
-# shell role sets them up on ws. gh, from Homebrew where missing, takes git's pushes to GitHub, and
-# registers the key there, as the devtools role does on ws. It calls the functions of lib.sh and
-# setup-lib.sh.
+# The git step of mac/setup.sh, which setup-extras.sh sources, as wizard-gh.sh does for git_gh:
+# git's identity and a signing key of the Mac's own. They go in ~/.config/ws/gitconfig, which
+# ~/.gitconfig includes at its top, as the shell role sets them up on ws. gh, from Homebrew where
+# missing, takes git's pushes to GitHub, and registers the key there, as the devtools role does on
+# ws. It calls the functions of lib.sh and setup-lib.sh.
 
 # The directory of mac.conf, where the step writes its files.
 git_dir=$HOME/.config/ws
@@ -66,25 +66,27 @@ git_key() {
             "as ed25519 or Secretive's P-256"
 }
 
-# git_gh sets gh to the path of GitHub's CLI, which Homebrew installs where PATH has none. Under
-# --check, it is the path Homebrew would give it. git runs gh in whatever directory it works
-# in, so the path must be absolute, not one that a relative directory of PATH gives.
+# git_gh [STAGE] sets gh to the path of GitHub's CLI, which Homebrew installs where PATH has none.
+# Under --check, it is the path Homebrew would give it. git runs gh in whatever directory it
+# works in, so the path must be absolute, not one that a relative directory of PATH gives. Its
+# messages name STAGE, where the wizard's stage gives one.
+# shellcheck disable=SC2120 # wizard-gh.sh's stage passes its name
 git_gh() {
     if ! gh=$(command -v gh); then
-        brew=$(command -v brew) || ws_die "install Homebrew first: https://brew.sh"
+        brew=$(command -v brew) || ws_die "${1:+$1: }install Homebrew first: https://brew.sh"
         if ws_checking; then
-            ws_say "would run brew install gh"
+            ws_say "${1:+$1: }would run brew install gh"
             gh=$("$brew" --prefix)/bin/gh
             return 0
         fi
-        ws_say "installing gh"
-        "$brew" install gh >&2 || ws_die "brew install gh failed"
-        gh=$(command -v gh) || ws_die "brew install gh left no gh on PATH"
+        ws_say "${1:+$1: }installing gh"
+        "$brew" install gh >&2 || ws_die "${1:+$1: }brew install gh failed"
+        gh=$(command -v gh) || ws_die "${1:+$1: }brew install gh left no gh on PATH"
     fi
     case $gh in
     /*) ;;
-    *) ws_die "PATH gives gh as $gh, which git would look for in each repository: drop PATH's" \
-        "relative directories" ;;
+    *) ws_die "${1:+$1: }PATH gives gh as $gh, which git would look for in each repository:" \
+        "drop PATH's relative directories" ;;
     esac
 }
 

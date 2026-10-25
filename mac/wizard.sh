@@ -13,6 +13,7 @@
 #
 # - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
 # - Mac key: the key that ssh offers ws, made where missing, in Secretive or a file of ssh-keygen's;
+# - gh on the Mac: gh's login to GitHub, with which setup.sh adds git's signing key;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
 # shellcheck source-path=SCRIPTDIR
@@ -28,6 +29,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-ask.sh"
 # shellcheck source=wizard-keys.sh
 . "$dir/wizard-keys.sh"
+# shellcheck source=wizard-gh.sh
+. "$dir/wizard-gh.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -166,6 +169,7 @@ main() {
     caffeinate -i -w $$ </dev/null >/dev/null 2>&1 &
     stage Answers ask
     stage "Mac key" keys
+    stage "gh on the Mac" gh
     stage setup.sh setup
     closing
 }
