@@ -3,7 +3,7 @@
 # Loads the outbound table before the network comes up, as nftables.service would, which stays off.
 # A reload swaps the table, where a restart would leave none between its stop and its start. A stop
 # removes this table alone. It comes after nftables.service, should that be enabled, whose flush
-# would remove it.
+# would remove it. It loads the table through resolvers.sh, with the sets of resolved's servers.
 [Unit]
 Description=Keep what ws starts to the internet and ikeward
 Documentation=https://github.com/zadykian/ws/blob/main/docs/security.md#outbound
@@ -16,8 +16,8 @@ Conflicts=shutdown.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/sbin/nft -f {{ security_outbound_file }}
-ExecReload=/usr/sbin/nft -f {{ security_outbound_file }}
+ExecStart={{ security_resolvers_script }} {{ security_outbound_file }}
+ExecReload={{ security_resolvers_script }} {{ security_outbound_file }}
 ExecStop=/usr/sbin/nft destroy table inet ws
 
 [Install]

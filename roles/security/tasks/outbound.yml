@@ -9,6 +9,16 @@
     group: root
     mode: "0755"
 
+# Before the table and the unit that runs it: a run cut short, then a boot, still loads a table.
+- name: Write the fill of resolved's servers
+  ansible.builtin.copy:
+    src: resolvers.sh
+    dest: "{{ security_resolvers_script }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Load the outbound table
+
 # nft -c checks the file in the kernel, which a container without NET_ADMIN refuses: --skip-tags
 # systemd skips the check. CI's playbook job runs it on the file after the play (docs/checks.md).
 - name: Write the outbound table
