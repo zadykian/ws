@@ -3,8 +3,9 @@
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, runs ws's playbook
-there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys. On a new Mac with Apple
-silicon, one line installs what it needs, clones the repository and runs the wizard, as yourself:
+there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, and runs another
+repository's `apply.sh` on ws. On a new Mac with Apple silicon, one line installs what it needs,
+clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -38,6 +39,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 10. gh on ws: root's gh there, logged in to GitHub, and ws's signing key on the account, below.
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
+13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
 
 ## The answers
 
@@ -51,10 +53,13 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 | git's email on the Mac | `WS_GIT_EMAIL` | the `shell` role's, `me@zadykian.dev` | with a name |
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
+| Another repository whose `apply.sh` runs on ws | `WS_HOOK` | none | always |
+| The Keychain item of its `apply.sh`'s secret | `WS_HOOK_SECRET` | none | with a repository |
 
-Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains. The
-defaults are [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's
-answer comes from the first of these that has one:
+Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
+last two, which [Another repository](#another-repository) does. The defaults are
+[The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
+from the first of these that has one:
 
 - `mac.conf`'s line for the key, even an empty one, so the wizard never asks it again;
 - the environment, under the key's name, as `WS_LAN=10.88.0.0/24`, or `WS_LAN=` for no value;
@@ -190,6 +195,23 @@ the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in
 ([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. It then waits up to 30 s
 for ws-tunnel's handshake, and logs in once by `ssh ws`. Else it stops, naming the UDP port, the
 router's forward and the Background. Where the run asked ws's address, a later run checks it.
+
+## Another repository
+
+`WS_HOOK` names another repository on GitHub, as `OWNER/REPO`, whose `apply.sh` sets up more of ws,
+such as values that this public repository leaves out. `WS_HOOK_SECRET` names the Keychain item of a
+secret that the script reads. `setup.sh` takes both keys, and reads neither. The stage clones the
+repository in `/root/repository/REPO` on ws by root's gh login, where missing, and never pulls it,
+as the script updates its own clone. A `REPO` of `ws`, ws's own clone, or another repository's clone
+there stops the stage. Where the Keychain lacks the item, it runs `security add-generic-password`,
+which asks for its secret twice at the terminal. Then `apply.sh` runs as root over plain
+`ssh ws-ssh`, never `ssh -t`, so it neither prompts nor echoes its stdin. That stdin is the item's
+secret, as `security find-generic-password -w` prints it, then the end of input, or empty without an
+item. The wizard never reads the secret, and passes the script no arguments.
+
+That run leaves a stamp, `/var/lib/ws-wizard/hook-REPO` on ws, and the stage is done. So a second
+run of the wizard leaves `apply.sh` alone, and `--update` runs it again. A run that fails stops the
+wizard, and the next runs it again. `--check` says what the stage would do, and runs nothing.
 
 ## What stays by hand
 

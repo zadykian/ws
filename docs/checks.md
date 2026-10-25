@@ -144,6 +144,12 @@ terminal of `script`'s, a run must open `github.com/login/device`, by a stand-in
 through `bash -lc` in another session. The stand-ins' logins take a terminal alone, and the next run
 must print nothing.
 
+For the Hook on ws stage, `WS_HOOK` names a repository that the stand-in `gh` clones, whose
+`apply.sh` logs its stdin's SHA-256, and `WS_HOOK_SECRET` an item of a throwaway keychain. Without
+the item, a run with no terminal must stop, naming `security add-generic-password`. At a terminal of
+`script`'s, it must add the item, typed at its prompts, and run `apply.sh` once over plain ssh. Its
+stdin must be the secret, no terminal, and the next run print nothing. A failed run leaves no stamp.
+
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
 `--check`, with the form the key takes. `--check` must show the environment's answers as the lines
