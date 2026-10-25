@@ -8,10 +8,12 @@
 #   is missing. run is the commit and status of the last full run, and last the unit and status of
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer
 #   takes, and wg0 is wg0's own key. gh is ok, none, login, scope or key, below. claude is ok, none
-#   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok.
+#   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok. peer is
+#   ok where wg0 has mac.pub's key as a peer.
 # - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. --update first pulls a clean clone on main.
+# - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
@@ -91,6 +93,9 @@ status() {
     else
         echo 'fans ok'
     fi
+    mac=$(head -n 1 "$peer" 2>/dev/null) || mac=
+    echo "peer $(wg show wg0 peers 2>/dev/null |
+        awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
 }
 
 # pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked
@@ -176,6 +181,19 @@ follow() {
     exit "${last#* }"
 }
 
+# peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
+# wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
+# wireguard-tools makes it.
+peer() {
+    printf '%s\n' "$1" | grep -qxE '[A-Za-z0-9+/]{43}=' && [ "${#1}" = 44 ] ||
+        die "'$1' is not a WireGuard public key"
+    [ "$(head -n 1 "$peer" 2>/dev/null)" != "$1" ] || return 0
+    (umask 077 && mkdir -p "${peer%/*}") || die "cannot make ${peer%/*}"
+    printf '%s\n' "$1" >"$peer.new" || die "cannot write $peer.new"
+    mv -f "$peer.new" "$peer" || die "cannot write $peer"
+    say "wrote $peer"
+}
+
 # running succeeds while UNIT is active, or on its way in or out.
 running() {
     systemctl show -p ActiveState --value "$1" | grep -qxE "active|activating|deactivating"
@@ -191,7 +209,9 @@ main() {
     case ${1-} in
     status) status ;;
     run) shift && run "$@" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [--update] [ARG...]" ;;
+    peer) peer "${2-}" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [--update] [ARG...] |" \
+        "peer KEY" ;;
     esac
 }
 

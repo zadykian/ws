@@ -103,8 +103,8 @@ ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a li
 The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
 sends it. `ws.sh` puts stand-ins for ws's programs first on its `PATH`
 ([ws-standin.sh](../.github/mac-wizard/ws-standin.sh)), and roots its paths in a directory of its
-own. `status` must print the stamps and each state of the stand-ins. Those are `wg0`'s key and the
-Mac's key for it, gh's and claude's logins, and Secure Boot that refuses the fans' driver. A full
+own. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key
+for it and as its peer, gh's and claude's logins, Secure Boot that refuses the fans' driver. A full
 `run` must run the stand-in `bootstrap.sh`, without arguments, in a unit of its own, with root's
 `HOME` and a UTF-8 locale. It must print the log, and stamp the clone's commit and 0. A tagged run
 after it must start its own unit and leave that stamp. A run during another's unit must follow it.
