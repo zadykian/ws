@@ -17,7 +17,8 @@
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md);
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
 # - Root's key: the Mac's key in root's authorized_keys on ws, added by the installer's user;
-# - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end.
+# - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
+# - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -180,6 +181,7 @@ main() {
     stage "Host key" host
     stage "Root's key" root
     stage "ws's run" run
+    stage "gh on ws" wsgh
     run_hand
     closing
 }
