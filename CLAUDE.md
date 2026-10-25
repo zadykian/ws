@@ -112,20 +112,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 
 ## Commits
 
-Messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/), as
-`git log` on `main` shows them, and `make commits` checks them ([tools/commits](tools/commits)).
-
-- The header is `type(scope): description`, of 72 columns at most. The type is `feat`, `fix`,
-  `build`, `chore`, `ci`, `docs`, `perf`, `refactor`, `style` or `test`.
-- The scope, optional, is the role changed, such as `docker` or `signoz`, or `mac`; none for a
-  change across the repository. The description is a short noun phrase, lower case but for proper
-  nouns, with no trailing period: `feat(base): a swappiness of 10`.
-- The body is a list of bullets wrapped at 72 columns: what was wrong or missing, what changed, and
-  what was checked.
-- Commits and pull requests are cut as the `atomic-commits` skill of the `flow` plugin says. A pull
-  request's title is a header, as a commit's. Its body starts `Part of #N.` or, on the one that
-  completes issue N, `Closes #N.`, then `## What` and what was checked.
-- Commits are signed, as the ruleset on `main` requires.
+Commits and pull requests follow the
+[atomic-commits](https://github.com/zadykian/skills/blob/main/skills/atomic-commits/SKILL.md)
+skill. Commits are signed, as the ruleset on `main` requires.
 
 ## Where else to look
 
