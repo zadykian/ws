@@ -2,9 +2,9 @@
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
-then runs `setup.sh`. It takes ws's host key, and gives root on ws the Mac's key. On a new Mac with
-Apple silicon, one line installs what it needs, clones the repository and runs the wizard, as
-yourself:
+then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, and runs ws's playbook
+there. On a new Mac with Apple silicon, one line installs what it needs, clones the repository and
+runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -35,6 +35,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
 7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 8. Root's key: the Mac's key in root's `authorized_keys` on ws, by the installer's user, below.
+9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
 
 ## The answers
 
@@ -136,9 +137,37 @@ than `known_hosts` holds, as once ws is installed again, it stops, naming `ssh-k
 does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and its logins add nothing to
 `known_hosts`. With no terminal, `WS_INSTALLER_USER` gives the user.
 
+## ws's run
+
+The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
+So the script is the Mac's clone's, whatever ws's clone holds. It runs `bootstrap.sh` from ws's
+clone in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8
+locale. Where ws has no clone, the unit runs the README's download of `bootstrap.sh` instead. The
+wizard prints the unit's log until it ends, and stops where the run fails. A first run takes 20 to
+40 minutes. The unit goes on where ssh drops, as when the Mac sleeps, and the next run of the wizard
+follows it to its end.
+
+Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A run without arguments, as
+the stage's, removes `/var/lib/ws-wizard/run` as it starts, and writes the clone's commit and the
+status there as it ends. The stage is done where that status is 0 and no unit runs. So a second run
+of the wizard runs no playbook, and one after a run cut short starts again. With `--update`, the
+stage runs the playbook again, and the remote script first pulls ws's clone, by fast-forward, where
+the clone is on `main` with nothing uncommitted. The run passes no `-e`, so the `ikeward` role
+leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)).
+
 ## What stays by hand
 
+After a run in which a stage acted, the wizard lists each of these that applies:
+
 - The Mac's tunnel: the keys' exchange of [The Mac's tunnel](mac.md#the-macs-tunnel), then
-  `WS_PUBLIC_KEY` in `mac.conf`, then the wizard again.
+  `WS_PUBLIC_KEY` in `mac.conf`, then the wizard again. Its `setup.sh` loads ws-tunnel: allow it in
+  the Background where macOS asks. Where ws lacks the Mac's key, or `wg0`'s key isn't
+  `WS_PUBLIC_KEY`, as once ws is installed again, the exchange again.
+- gh's login on ws, then `bootstrap.sh --tags devtools`, and claude's login, as root on ws
+  ([By hand](../README.md#by-hand)).
+- With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
+  console ([Secure Boot](fans.md#secure-boot)).
 - What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, and
   Gateway's connection to ws.
+- ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
+  where `mac.conf` has `WS_REMOTE` ([The router](router.md)).

@@ -118,9 +118,10 @@ or `dockerd --validate`, only as it writes the file.
 
 ## By hand
 
-Secrets are never in this repository. On a new machine, these stay manual:
+Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
+copies root's key and runs `bootstrap.sh`. These stay manual:
 
-- `gh auth login`, before `bootstrap.sh` as above, and `gh auth setup-git`;
+- `gh auth login`, before `bootstrap.sh` or a later `--tags devtools` run, and `gh auth setup-git`;
 - the claude login;
 - each peer's public key in `/etc/wireguard`, as in [The tunnel](docs/wireguard.md#the-tunnel);
 - the VPN's profile and the `ikeward` role's variables, vault-encrypted on the server, as in
