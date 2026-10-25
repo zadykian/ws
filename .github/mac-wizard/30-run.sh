@@ -9,6 +9,8 @@
 # own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
 # host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. As the runner's user, the
 # installer's for WS_INSTALLER_USER, it must add the Mac's key to root's authorized_keys with sudo.
+# It must run ws's playbook once, bootstrap.sh without arguments in a unit with root's HOME, and
+# stamp its status 0.
 
 set -u
 
@@ -51,6 +53,11 @@ grep -qxF "ws $(cut -d ' ' -f 1-2 "$RUNNER_TEMP/ws/host_key.pub")" ~/.ssh/known_
 if ! sudo grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ~root/.ssh/authorized_keys ||
     ! grep -q "^$USER: sudo sh -c " "$RUNNER_TEMP/ws/log"; then
     error "wizard.sh added no ~/.ssh/id_ed25519.pub to root's authorized_keys, as $USER with sudo"
+fi
+if ! printf '\n' | cmp -s - "$RUNNER_TEMP/ws/bootstrap.log" ||
+    ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
+    ! grep -q ' 0$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
+    error "wizard.sh ran no bootstrap.sh on ws, once, in a unit with root's HOME, that exited 0"
 fi
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded the daemon without ws's key"

@@ -110,6 +110,13 @@ Mac's key for it, gh's and claude's logins, and Secure Boot that refuses the fan
 after it must start its own unit and leave that stamp. A run during another's unit must follow it.
 A full run cut off must remove the stamp of the one before, so that the next starts a unit again.
 
+The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
+the playbook through the remote script, and each run since must read ws's `status` alone. A run must
+read it once, and once more after a run of the playbook. Once the stamp is gone, a run whose unit is
+cut off must stop at the stage, and the next must start a unit of its own. That run must end with
+what stays by hand, with the fans' driver and the router's forwards. A run while a unit runs, as one
+that a dropped ssh left, must follow that unit.
+
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
 `--check`, with the form the key takes. `--check` must show the environment's answers as the lines
