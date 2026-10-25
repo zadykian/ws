@@ -12,7 +12,7 @@
 # in order, after the Tools and Clone of mac/bootstrap.sh, which runs the wizard on a new Mac:
 #
 # - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
-# - Mac key: the key that ssh offers ws, made where missing;
+# - Mac key: the key that ssh offers ws, made where missing, in Secretive or a file of ssh-keygen's;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md).
 #
 # shellcheck source-path=SCRIPTDIR

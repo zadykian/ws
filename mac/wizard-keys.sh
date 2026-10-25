@@ -1,9 +1,10 @@
 # shellcheck shell=sh
 # The wizard's Mac key stage: the key that ssh offers ws, which setup-identity.sh's ws_identity
 # finds from mac.conf, made where missing. wizard.sh sources it, and runs the stage after Answers
-# and before setup.sh, which names the key in ~/.ssh/config.d/ws. Without WS_IDENTITY, ssh-keygen
-# makes ~/.ssh/id_ed25519, whose passphrase it asks at the terminal. It calls the functions of
-# lib.sh and setup-lib.sh, and reads wizard.sh's lock and WS_CONF, mac.conf's path.
+# and before setup.sh, which names the key in ~/.ssh/config.d/ws. Without WS_IDENTITY, the key is
+# Secretive's, in the Mac's Secure Enclave, unless the answer at the terminal is no: then ssh-keygen
+# makes ~/.ssh/id_ed25519. It calls the functions of lib.sh, setup-lib.sh and wizard-ask.sh, and
+# reads wizard.sh's lock and WS_CONF, mac.conf's path.
 
 # keys_done succeeds where the key that ssh offers ws is there: in a file beside the .pub whose
 # fingerprint it shares, or listed by the agent that holds it.
@@ -98,13 +99,81 @@ keys_make() {
         "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
 }
 
-# keys_choose makes ws's key where it has none, in keys_pub's file, by keys_make, where the terminal
-# can take its passphrase. With no terminal, it stops, naming the key that answers.
+# keys_choose makes ws's key where it has none: in Secretive, where the answer at the terminal is
+# other than no, else in keys_pub's file, by keys_make. --check asks nothing, and says what each
+# answer would do. With no terminal, it stops, naming the key that answers.
 keys_choose() {
-    ws_checking || [ -t 0 ] || ws_die "Mac key: no terminal for the passphrase of" \
-        "${keys_pub%.pub}: set WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for a key without" \
-        "one, or run the wizard at a terminal"
-    keys_make "${keys_pub%.pub}"
+    if ws_checking; then
+        ws_say "Mac key: would ask whether Secretive keeps the Mac's key: yes installs its cask," \
+            "no makes ${keys_pub%.pub} with ssh-keygen"
+    else
+        [ -t 0 ] || ws_die "Mac key: no terminal to ask whether Secretive keeps the Mac's key:" \
+            "set WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for ssh-keygen's, or run the" \
+            "wizard at a terminal"
+        printf "Keep the Mac's ssh key in Secretive, in the Secure Enclave? [Y/n]: " >&2
+        read -r keys_answer || ws_die "Mac key: the terminal ended before the answer"
+        case $keys_answer in
+        [Nn]*) keys_make "${keys_pub%.pub}" ;;
+        *) keys_secretive ;;
+        esac
+    fi
+}
+
+# keys_secretive has the user make ws's key in Secretive's app, installed where missing, at its
+# default protection, which asks for Touch ID at each use. It writes the key's .pub and the agent
+# into mac.conf, as a second key there would stop ws_identity's default, and the agent must list it.
+keys_secretive() {
+    keys_agent=\~/${ws_secretive#"$HOME"/}/socket.ssh
+    if ws_checking; then
+        keys_app || ws_say "Mac key: would run brew install --cask secretive"
+        ws_say "Mac key: would open Secretive, and wait for ws's key made there"
+        return 0
+    fi
+    keys_app || brew install --cask secretive >&2 || ws_die "Mac key: brew install --cask" \
+        "secretive failed; install Secretive, or answer no for ssh-keygen's key"
+    open -a Secretive || ws_say "Mac key: warning: open cannot find Secretive: open it by hand"
+    keys_skip=$(keys_home "$WS_GIT_SIGNING_KEY")
+    keys_pick "a P-256 key for ws's login, at its default protection"
+    keys_login=\~/${keys_got#"$HOME"/}
+    ! ask_lacks WS_IDENTITY || ask_write "$(ask_line WS_IDENTITY "$keys_login")
+$(ask_line WS_IDENTITY_AGENT "$keys_agent")
+" "Mac key" || return 1
+    ws_conf "$WS_CONF"
+    ws_identity
+    keys_there || ws_die "Mac key: Secretive's agent lists no key of $keys_pub: finish" \
+        "Secretive's setup, then run the wizard again"
+}
+
+# keys_pick WHAT sets keys_got to the .pub in PublicKeys other than keys_skip's. Where none is
+# there, it says to make WHAT in Secretive's app, and waits up to 15 minutes for one.
+keys_pick() {
+    if ! keys_other; then
+        ws_say "Mac key: in Secretive, make $1; the wizard waits up to 15 minutes for it"
+        keys_left=450
+        until keys_other; do
+            [ "$((keys_left -= 1))" -ge 0 ] || ws_die "Mac key: Secretive made no key in 15" \
+                "minutes: make $1, then run the wizard again"
+            sleep 2
+        done
+    fi
+}
+
+# keys_other succeeds where PublicKeys holds a .pub other than keys_skip's, as Secretive writes one
+# for each key, and sets keys_got to it.
+keys_other() {
+    keys_got=
+    for keys_each in "$ws_secretive"/PublicKeys/*.pub; do
+        case $keys_each in "$keys_skip" | *-cert.pub) continue ;; esac
+        [ -f "$keys_each" ] || continue
+        keys_got=$keys_each
+    done
+    [ -n "$keys_got" ]
+}
+
+# keys_app succeeds where Secretive's app is in /Applications, where its cask puts it, or in
+# ~/Applications.
+keys_app() {
+    [ -d /Applications/Secretive.app ] || [ -d "$HOME/Applications/Secretive.app" ]
 }
 
 # keys_fail says what to do where the Mac's key is still missing after keys_do.
