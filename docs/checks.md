@@ -155,7 +155,11 @@ For the Hook on the Mac stage, the stand-in `gh` on the Mac clones it, with `.gi
 empty `Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git`
 by hand, unless git's config names gh's credential command. The next run must print nothing. The
 stand-in ws's word list, of stand-in words, must go to the Mac once, mode 600, and none of it be
-printed. Once the Mac's differs, `--check` must show no diff.
+printed. Once the Mac's differs, `--check` must show no diff. For the Cable stage, ws's ports are a
+stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and `WS_CABLE_PORT`
+end the wait. Docked, a run must stop with no terminal, and with `WS_CABLE_PORT` name the port in
+`host_vars`, run the roles, and stop at the service. An empty `WS_CABLE_SERVICE` must be written
+alone.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

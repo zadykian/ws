@@ -4,9 +4,9 @@
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, runs ws's playbook
 there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, runs another
-repository's `apply.sh` on ws, and clones that repository on the Mac, with ws's word list. On a new
-Mac with Apple silicon, one line installs what it needs, clones the repository and runs the wizard,
-as yourself:
+repository's `apply.sh` on ws, and clones that repository on the Mac, with ws's word list. Last, it
+names ws's port of the cable from the Mac's display. On a new Mac with Apple silicon, one line
+installs what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -43,6 +43,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
 14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`,
     and ws's word list, below.
+15. Cable: ws's port of the cable in its `host_vars`, below.
 
 ## The answers
 
@@ -229,6 +230,25 @@ differs by git's hash or can't be read, the files script, `mac/wizard-remote-fil
 from ws. It replaces the Mac's, mode 600. The wizard never prints the list: `--check` says it would
 copy it, with no diff.
 
+## The cable
+
+The stage sets up the cable from the Mac's display to a port of ws's, outside the router
+([The direct link](network.md#the-direct-link)). The wizard's files script lists ws's wired ports
+but the uplink, each with its carrier and IPv4 addresses. Where none has carrier, as the Mac isn't
+docked, the stage waits, and the closing list says to dock the Mac and run the line again. Docked,
+the stage asks ws's port of the cable, the one with carrier by default. It names the port in
+`host_vars/localhost.yml` on ws, then runs `bootstrap.sh --tags network,wireguard` there, as both
+roles read it. Once the port holds `10.77.0.1`, the stage stops, naming `WS_CABLE_SERVICE`, the
+Mac's service of the cable, for `mac.conf` ([The cable](mac.md#the-cable)).
+
+`none` as the answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks no more, as where ws has
+no cable. From the environment, at a terminal too, `WS_CABLE_PORT` gives the port, and an empty
+`WS_CABLE_SERVICE` none. `--check` asks nothing, and says what the stage would do.
+
+Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
+So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files
+script can't read its carrier. The roles' run brings it up.
+
 ## What stays by hand
 
 After a run in which a stage acted, the wizard lists each of these that applies:
@@ -244,3 +264,5 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as
   `setup.sh`'s does with git's name ([git](mac-git.md)). Through it, pushes from the Mac's clones
   take gh's login.
+- The cable, where no port of ws's had carrier: the line again, docked, or with `WS_CABLE_PORT` for
+  a port that ws keeps down. Without the cable, the line once with an empty `WS_CABLE_SERVICE`.
