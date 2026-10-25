@@ -2,8 +2,9 @@
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
-then runs `setup.sh` and takes ws's host key. On a new Mac with Apple silicon, one line installs
-what it needs, clones the repository and runs the wizard, as yourself:
+then runs `setup.sh`. It takes ws's host key, and gives root on ws the Mac's key. On a new Mac with
+Apple silicon, one line installs what it needs, clones the repository and runs the wizard, as
+yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -33,6 +34,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 6. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
    wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
 7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
+8. Root's key: the Mac's key in root's `authorized_keys` on ws, by the installer's user, below.
 
 ## The answers
 
@@ -101,7 +103,9 @@ signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the c
 Ubuntu's installer imports the account's keys for ws's user. So run the line before Ubuntu's
 install, or at any time. A run before the install stops at the Host key stage, as ws doesn't answer
 yet. Leave ws's address empty there, and run the wizard again once Ubuntu is installed. In the
-installer, turn OpenSSH on, import the keys from GitHub, and leave password login off.
+installer, turn OpenSSH on, import the keys from GitHub, and leave password login off. Where the
+installer's user lacks the Mac's key, the Root's key stage runs `ssh-copy-id`, which needs password
+login on.
 
 ## ws's host key
 
@@ -119,6 +123,18 @@ prints. Any other answer stops the run. The key goes in `known_hosts` as `ws`, t
 forward, the stage warns that a new ws faces the internet until its run sets up the `security` role
 ([security](security.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
 answers.
+
+## Root's key
+
+The stage is done where `ssh ws-ssh` logs in as root by the Mac's key. Else it asks the user that
+Ubuntu's installer made, the Mac's user by default, who must log in by the key too. One `ssh -t`
+session as that user then asks sudo's password once. It removes root's lines for the key, such as
+one with cloud-init's forced command, matched on the key's base64. It adds the bare key, and keeps
+root's other keys. The stage stops where neither user takes the key, and where `WS_USER` isn't root:
+the [README](../README.md#a-new-machine)'s steps are then by hand. Where ws offers another host key
+than `known_hosts` holds, as once ws is installed again, it stops, naming `ssh-keygen -R ws`. It
+does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and its logins add nothing to
+`known_hosts`. With no terminal, `WS_INSTALLER_USER` gives the user.
 
 ## What stays by hand
 
