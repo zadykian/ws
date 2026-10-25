@@ -18,7 +18,8 @@
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
 # - Root's key: the Mac's key in root's authorized_keys on ws, added by the installer's user;
 # - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
-# - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account.
+# - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
+# - claude on ws: root's claude there, logged in over ssh -t.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -182,6 +183,7 @@ main() {
     stage "Root's key" root
     stage "ws's run" run
     stage "gh on ws" wsgh
+    stage "claude on ws" wsclaude
     run_hand
     closing
 }

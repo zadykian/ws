@@ -3,9 +3,10 @@
 # script that the wizard sends to root there over ssh, wizard-remote.sh, starts it and follows it. A
 # run goes on where ssh drops, and the next run of the wizard follows it. Then the stage gh on ws:
 # root's gh there, logged in to GitHub in a session of ssh -t, and ws's signing key on the account.
-# Last, what stays by hand of ws, the router and the Mac, for the closing list. wizard.sh sources
-# it, and runs the stages after Root's key. It calls the functions of lib.sh and wizard-host.sh, and
-# reads wizard.sh's dir, lock, update and acted, and the values of mac.conf that ws_conf set.
+# The stage claude on ws logs root's claude in the same way. Last, what stays by hand of ws, the
+# router and the Mac, for the closing list. wizard.sh sources it, and runs the stages after Root's
+# key. It calls the functions of lib.sh and wizard-host.sh, and reads wizard.sh's dir, lock, update
+# and acted, and the values of mac.conf that ws_conf set.
 
 # remote_st holds what the remote script's status printed, once remote_got is 1. run_ran becomes 1
 # once the stage ran the playbook in this run.
@@ -141,16 +142,44 @@ wsgh_fail() {
         "what gh or bootstrap.sh printed, then run the wizard again"
 }
 
+# wsclaude_after prints ws's run, which installs claude on ws, where that stage isn't done.
+wsclaude_after() {
+    run_done || echo "ws's run"
+}
+
+# wsclaude_done succeeds where root's claude on ws has a login, as wsgh_done reads gh's state.
+wsclaude_done() {
+    [ "$root_in" = 1 ] && remote_read && [ "$(remote_get claude)" = ok ]
+}
+
+# wsclaude_do runs claude auth login as root on ws, in a session of ssh -t at the terminal, through
+# a login shell, whose PATH has ~/.local/bin, where claude is. --check says it would.
+wsclaude_do() {
+    [ "$(remote_get claude)" != none ] || ws_die "claude on ws: ws lacks root's claude, which its" \
+        "run installs: run the wizard with --update"
+    if ws_checking; then
+        ws_say "claude on ws: would run claude auth login as root on ws, at the terminal"
+        return 0
+    fi
+    [ -t 0 ] || ws_die "claude on ws: root's claude has no login, and no terminal is there for" \
+        "claude auth login: run it on ws, then the wizard again"
+    ws_say "claude on ws: claude auth login runs as root on ws: take its steps at this terminal," \
+        "and open the address it shows in the Mac's browser"
+    remote_got=0
+    host_ssh -t ws-ssh 'exec bash -lc "claude auth login"'
+}
+
+# wsclaude_fail says what to do where root's claude on ws still has no login.
+wsclaude_fail() {
+    echo "root's claude on ws still has no login, as above; run the wizard again"
+}
+
 # run_hand adds what stays by hand of ws, the router and the Mac to the closing list, after a run in
 # which a stage acted. ws's part comes from the remote script's status, which the stage read.
 # shellcheck disable=SC2154 # acted is wizard.sh's, host_first wizard-host.sh's
 run_hand() {
     [ "$acted" = 1 ] || return 0
     remote_read || true
-    case $(remote_get claude) in login | none)
-        by_hand "claude on ws: claude auth login, as root there (README, By hand)."
-        ;;
-    esac
     [ "$(remote_get fans)" != refused ] || by_hand "ws's fans' driver: with Secure Boot on," \
         "DKMS's key, enrolled at ws's console (docs/fans.md, Secure Boot)."
     if [ -n "$WS_PUBLIC_KEY" ] && { [ "$(remote_get mac.pub)" = - ] ||
