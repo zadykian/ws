@@ -1,12 +1,12 @@
 #!/bin/sh
 # The Cable stage, on the Mac that 48-hook-mac.sh leaves. ws's ports are a sysfs of the stand-in's,
 # as in 41-remote.sh. While no port has carrier, a run and --check must print nothing, and a run
-# read link once, and --update's closing list name the dock. WS_CABLE_PORT must end the wait:
-# enp7s0, which is down, must go in host_vars, and lack 10.77.0.1 after the roles' run.
-# --update's dock must name enp7s0 too, for WS_CABLE_PORT.
-# Once enp5s0 has carrier, a run with no terminal must stop, naming WS_CABLE_PORT, and --check say
-# what it would do, neither writing ws's host_vars. With WS_CABLE_PORT, a run must name enp5s0
-# there, run bootstrap.sh --tags network,wireguard, and stop at the Mac's service.
+# read link once. The closing list of --update must name the dock, and enp7s0, which is down, for
+# WS_CABLE_PORT. WS_CABLE_PORT must end the wait: enp7s0 must go in host_vars, and lack 10.77.0.1
+# after the roles' run. The uplink there must stop a run, and none write an empty WS_CABLE_SERVICE
+# alone. Once enp5s0 has carrier, a run with no terminal must stop, naming WS_CABLE_PORT, and
+# --check say what it would do, neither writing ws's host_vars. With WS_CABLE_PORT, a run must name
+# enp5s0 there, run bootstrap.sh --tags network,wireguard, and stop at the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
 # script's after a bad one, an empty line must take the one service with a 169.254 address. setup.sh
@@ -103,6 +103,14 @@ cable plugs into enp7s0, which ws keeps down, run the line with WS_CABLE_PORT=PO
 environment\. Without the cable, run the line once with WS_CABLE_SERVICE= in the environment \
 (docs/mac-wizard\.md, The cable)\." && [ "$status" = 0 ] ||
     error "wizard.sh --update undocked exited $status, or named no dock, or no enp7s0"
+wizard run WS_CABLE_PORT=enp4s0
+printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: WS_CABLE_PORT comes from the environment, and \
+'enp4s0' is none of enp5s0, enp6s0, enp7s0: set it to one, or to nothing for none" &&
+    [ "$status" = 1 ] && [ ! -e "$vars" ] || error "wizard.sh with the uplink's port exited $status"
+wizard run WS_CABLE_PORT=
+[ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] && [ ! -e "$vars" ] ||
+    error "wizard.sh with WS_CABLE_PORT= exited $status, or wrote another line, or host_vars"
+cp "$RUNNER_TEMP/cable.conf" "$conf"
 wizard run WS_CABLE_PORT=enp7s0
 printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
 bootstrap\.sh --tags network,wireguard: plug the Mac's cable into it, or mend what that printed, \
