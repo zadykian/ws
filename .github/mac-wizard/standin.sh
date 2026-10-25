@@ -110,14 +110,22 @@ case $SSH_ORIGINAL_COMMAND in
 esac
 EOF
 chmod 755 "$ws/ws.sh"
-# ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
+# ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is. ws's
+# clone, root's, holds the stand-in bootstrap.sh alone.
 here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$ws/bin" "$ws/units"
-for each in systemctl wg gh mokutil modinfo; do
+for each in systemd-run systemctl journalctl wg gh mokutil modinfo; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
-sudo mkdir -p "$ws/root/root/.local/bin"
+: >"$ws/run.log"
+: >"$ws/bootstrap.log"
+clone=$ws/root/root/repository/ws
+sudo mkdir -p "$ws/root/root/.local/bin" "$clone"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/root/.local/bin/claude"
+sudo ln -s "$here/ws-standin.sh" "$clone/bootstrap.sh"
+sudo git -C "$clone" init -q -b main
+sudo git -C "$clone" add bootstrap.sh
+sudo git -C "$clone" -c user.name=ws -c user.email=ws@example.com commit -q -m ws
 : >"$ws/log"
 chmod 666 "$ws/log"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
