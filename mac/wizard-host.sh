@@ -4,8 +4,10 @@
 # the stage after setup.sh, which writes config.d/ws. It calls the functions of lib.sh,
 # setup-lib.sh and wizard-keys.sh, and reads wizard.sh's lock and WS_CONF, mac.conf's path.
 
-# The host and port of the last scan of ws's key, which host_scan keeps in host_line.
+# The host and port of the last scan of ws's key, which host_scan keeps in host_line, and ws's
+# address that the run asked, where ws didn't answer at its way.
 host_scanned=
+host_first=
 # The command at ws's console that prints the fingerprint of its ed25519 key.
 host_print='ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub'
 
@@ -22,15 +24,15 @@ host_done() {
 }
 
 # host_do adds the ed25519 key that ws offers at its way to known_hosts, under ws, once WS_HOST_KEY,
-# or the answer at the terminal, says that ws's console shows it. It stops where no way leads to
-# ws, and warns where the way is the router's forward. --check asks nothing, and shows the line it
-# would add.
+# or the answer at the terminal, says that ws's console shows it. Where ws doesn't answer at its
+# way, it reads the key at ws's address now. It stops where no way leads to ws, and warns where the
+# way is the router's forward. --check asks nothing, and shows the line it would add.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 host_do() {
     ws_conf "$WS_CONF"
     host_way || ws_die "Host key: ssh finds no way to ws-ssh from this network: no cable, no" \
         "address in WS_LAN and no WS_REMOTE_PORT; set those in mac.conf as docs/router.md has them"
-    host_scan || ws_die "Host key: ws doesn't answer at $host_name:$host_port with an ed25519 key"
+    host_scan || host_ask || return 0
     # ssh -G prints the host name in lower case, which WS_REMOTE may not be.
     [ "$host_name" != "$(echo "$WS_REMOTE" | tr '[:upper:]' '[:lower:]')" ] ||
         ws_say "Host key: warning: through the router's forward, ws's new sshd faces the" \
@@ -47,10 +49,42 @@ host_do() {
     ws_put "$host_file" "$host_mode" <"$lock/hosts"
 }
 
-# host_way reads ssh's settings for ws-ssh, which setup.sh's config.d/ws gives: the host and port
-# that ssh reaches, and known_hosts. It fails where no way matched, as ws-ssh is then its own host.
+# host_ask asks ws's address now, where ws doesn't answer at its way with an ed25519 key, as a new
+# ws with a lease from the router's pool. WS_FIRST_ADDRESS gives it, else the answer at the
+# terminal, where none stops the run, as before Ubuntu's install. ssh takes it as HostName for the
+# rest of the run, and the stage reads ws's key there. --check asks nothing, and fails.
+host_ask() {
+    host_none="ws doesn't answer at $host_name:$host_port with an ed25519 key"
+    if ws_checking; then
+        ws_say "Host key: $host_none; a run would ask its address now"
+        return 1
+    fi
+    host_first=${WS_FIRST_ADDRESS-}
+    if [ -z "${WS_FIRST_ADDRESS+set}" ]; then
+        [ -t 0 ] || ws_die "Host key: $host_none, and no terminal is there to ask its address" \
+            "now: set WS_FIRST_ADDRESS"
+        ws_say "Host key: $host_none; where Ubuntu isn't installed on ws yet, an empty answer" \
+            "stops the run"
+        until ws_is_ipv4 "$host_first"; do
+            [ -z "$host_first" ] || ws_say "Host key: $host_first is not an IPv4 address"
+            printf "ws's address now, as the router's leases show it: " >&2
+            read -r host_first || ws_die "Host key: the terminal ended before ws's address"
+            [ -n "$host_first" ] || ws_die "Host key: no address for ws; once Ubuntu is installed" \
+                "on it, run the wizard again"
+        done
+    fi
+    ws_is_ipv4 "$host_first" ||
+        ws_die "Host key: WS_FIRST_ADDRESS=$host_first is not an IPv4 address"
+    if ! host_way || ! host_scan; then
+        ws_die "Host key: ws doesn't answer at $host_first:$host_port with an ed25519 key either"
+    fi
+}
+
+# host_way reads ssh's settings for ws-ssh, which setup.sh's config.d/ws gives, with HostName the
+# address that the run asked: the host and port that ssh reaches, and known_hosts. It fails where
+# no way matched, as ws-ssh is then its own host.
 host_way() {
-    host_g=$(ssh -G ws-ssh 2>/dev/null) || return 1
+    host_g=$(ssh -G ${host_first:+-o "HostName=$host_first"} ws-ssh 2>/dev/null) || return 1
     host_name=$(host_get hostname)
     host_port=$(host_get port)
     host_file=$(keys_home "$(host_get userknownhostsfile)")

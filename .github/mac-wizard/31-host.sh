@@ -3,7 +3,8 @@
 # Without that line, a run with no terminal must stop where WS_HOST_KEY is missing or names another
 # key, and --check must show the line it would add. With a mac.conf of no way to ws, a run must
 # stop, naming docs/router.md. None may change known_hosts. WS_HOST_KEY=yes, with the Mac's own
-# mac.conf, must then add the line back as it was.
+# mac.conf, must then add the line back as it was. With a mac.conf whose way to ws doesn't answer,
+# ws's address now must come from WS_FIRST_ADDRESS. The Mac's own mac.conf then puts the way back.
 
 set -u
 
@@ -51,5 +52,22 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "wizard.sh with WS_HOST_KEY=yes exited $status"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "wizard.sh with WS_HOST_KEY=yes wrote another $hosts"
-rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "$none"
+
+conf=$RUNNER_TEMP/first.conf
+sed 's/^WS_REMOTE=.*/WS_REMOTE=192.0.2.1/' ~/.config/ws/mac.conf >"$conf"
+cp "$RUNNER_TEMP/hosts.without" "$hosts"
+out=$(WS_CONF=$conf sh "$wizard" </dev/null 2>&1)
+status=$?
+expect 1 "doesn't answer at 192.0.2.1:22022 with an ed25519 key, and no terminal is there to ask"
+out=$(WS_CONF=$conf WS_FIRST_ADDRESS=ws.test sh "$wizard" </dev/null 2>&1)
+status=$?
+expect 1 'wizard.sh: Host key: WS_FIRST_ADDRESS=ws.test is not an IPv4 address'
+out=$(WS_CONF=$conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp sh "$wizard" </dev/null 2>&1)
+status=$?
+printf '%s\n' "$out"
+[ "$status" = 0 ] || error "wizard.sh with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
+cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "wizard.sh with WS_FIRST_ADDRESS wrote another $hosts"
+sh "$wizard" </dev/null || error "wizard.sh with the Mac's own mac.conf exited $?"
+grep -qx '    HostName localhost' ~/.ssh/config.d/ws || error 'wizard.sh put no way to ws back'
+rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "$none" "$conf"
 exit "$fail"
