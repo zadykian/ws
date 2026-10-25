@@ -7,7 +7,8 @@
 # It must add the .pub to the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
 # own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
-# host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint.
+# host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. As the runner's user, the
+# installer's for WS_INSTALLER_USER, it must add the Mac's key to root's authorized_keys with sudo.
 
 set -u
 
@@ -24,7 +25,8 @@ error() {
     fail=1
 }
 
-WS_HOST_KEY=$(cat "$RUNNER_TEMP/ws/fingerprint") PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" \
+host=$(cat "$RUNNER_TEMP/ws/fingerprint")
+WS_HOST_KEY=$host WS_INSTALLER_USER=$USER PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" \
     >"$RUNNER_TEMP/run.out" 2>"$RUNNER_TEMP/run.err"
 status=$?
 cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
@@ -46,6 +48,10 @@ grep -q "^wizard\.sh: Host key: warning: through the router's forward, " "$RUNNE
     error "wizard.sh gave no warning that ws faces the internet through WS_REMOTE"
 grep -qxF "ws $(cut -d ' ' -f 1-2 "$RUNNER_TEMP/ws/host_key.pub")" ~/.ssh/known_hosts ||
     error "wizard.sh added no line for ws's host key to ~/.ssh/known_hosts"
+if ! sudo grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ~root/.ssh/authorized_keys ||
+    ! grep -q "^$USER: sudo sh -c " "$RUNNER_TEMP/ws/log"; then
+    error "wizard.sh added no ~/.ssh/id_ed25519.pub to root's authorized_keys, as $USER with sudo"
+fi
 ! launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded the daemon without ws's key"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"

@@ -15,7 +15,8 @@
 # - Mac key: the key that ssh offers ws, made where missing, in Secretive or a file of ssh-keygen's;
 # - gh on the Mac: gh's login to GitHub, and the Mac's key among its keys, for Ubuntu's installer;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md);
-# - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws.
+# - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
+# - Root's key: the Mac's key in root's authorized_keys on ws, added by the installer's user.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -175,6 +176,7 @@ main() {
     stage "gh on the Mac" gh
     stage setup.sh setup
     stage "Host key" host
+    stage "Root's key" root
     closing
 }
 

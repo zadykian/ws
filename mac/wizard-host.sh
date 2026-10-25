@@ -1,8 +1,10 @@
 # shellcheck shell=sh
-# The wizard's Host key stage: ws's host key, matched against ws's console, in known_hosts under
-# ws, the name that config.d/ws's HostKeyAlias gives each way to ws. wizard.sh sources it, and runs
-# the stage after setup.sh, which writes config.d/ws. It calls the functions of lib.sh,
-# setup-lib.sh and wizard-keys.sh, and reads wizard.sh's lock and WS_CONF, mac.conf's path.
+# The wizard's Host key and Root's key stages: ws's host key, matched against ws's console, in
+# known_hosts under ws, the name that config.d/ws's HostKeyAlias gives each way to ws. Then the
+# Mac's key in root's authorized_keys on ws, so that ssh ws-ssh logs in as root. wizard.sh sources
+# it, and runs both after setup.sh, which writes config.d/ws. They call the functions of lib.sh,
+# setup-lib.sh, wizard-keys.sh and wizard-gh.sh, and read wizard.sh's lock and WS_CONF, mac.conf's
+# path.
 
 # The host and port of the last scan of ws's key, which host_scan keeps in host_line, and ws's
 # address that the run asked, where ws didn't answer at its way.
@@ -143,4 +145,75 @@ host_ssh() {
 # host_fail says what to do where known_hosts still lacks ws's key.
 host_fail() {
     echo "$host_file still holds no key under ws, as above; run the wizard again"
+}
+
+# What root runs on ws, through sudo, with the key's TYPE and BASE64 as $1 and $2. It replaces
+# root's lines for the key by the bare key, and keeps root's other lines, in a new file renamed
+# over the old.
+# shellcheck disable=SC2016 # $1, $2, $d and $f are root's sh's own, on ws
+root_add='set -e
+umask 077
+d=~root/.ssh
+f=$d/authorized_keys
+mkdir -p "$d"
+touch "$f"
+{ grep -vF -e "$2" "$f" || [ $? = 1 ]; echo "$1 $2"; } >"$f.ws-new"
+mv -f "$f.ws-new" "$f"'
+
+# root_after prints Host key where known_hosts lacks ws's key, without which ssh logs in nowhere.
+root_after() {
+    host_done || echo "Host key"
+}
+
+# root_done succeeds where ssh logs in to ws-ssh as root by the Mac's key, and runs a command. It
+# connects only where known_hosts holds a key under ws, so --check meets ws only once the Host key
+# stage is done.
+root_done() {
+    [ "$(host_get user)" = root ] && ssh-keygen -F ws -f "$host_file" >/dev/null 2>&1 &&
+        [ "$(host_ssh -o BatchMode=yes ws-ssh echo ok 2>/dev/null </dev/null)" = ok ]
+}
+
+# root_do adds the Mac's key for ws to root's authorized_keys on ws, in one ssh -t session as the
+# user of Ubuntu's installer, through sudo. That user takes the key that the installer imported
+# from GitHub. It stops where ssh logs in as another user than root. --check asks nothing.
+# shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub and gh_line
+root_do() {
+    root_as=$(host_get user)
+    [ "$root_as" = root ] || ws_die "Root's key: ssh logs in to ws as $root_as, mac.conf's" \
+        "WS_USER, and the wizard sets ws up as root alone: take the README's steps by hand"
+    if ws_checking; then
+        ws_say "Root's key: would log in to ws as the user of its installer, asked, and add the" \
+            "Mac's key to root's authorized_keys with sudo"
+        return 0
+    fi
+    gh_key || ws_die "Root's key: the Mac's key for ws has no .pub"
+    root_ask
+    root_login || ws_die "Root's key: neither root nor $root_user on ws takes the Mac's key," \
+        "$gh_pub: install Ubuntu with OpenSSH and GitHub's keys, as docs/mac-wizard.md says"
+    ws_say "Root's key: sudo on ws asks $root_user's password, to add the Mac's key to root's" \
+        "authorized_keys"
+    set -- -T
+    [ ! -t 0 ] || set -- -t
+    host_ssh "$@" -l "$root_user" ws-ssh "sudo sh -c '$root_add' sh $gh_line" ||
+        ws_die "Root's key: sudo as $root_user on ws added no key to root's authorized_keys"
+    ws_say "Root's key: added $gh_pub to root's authorized_keys on ws"
+}
+
+# root_ask sets root_user to the user that Ubuntu's installer made on ws, WS_INSTALLER_USER.
+root_ask() {
+    root_user=${WS_INSTALLER_USER-}
+    [ -n "${WS_INSTALLER_USER+set}" ] || ws_die "Root's key: root on ws lacks the Mac's key: set" \
+        "WS_INSTALLER_USER to the user that Ubuntu's installer made"
+    ws_is_user "$root_user" ||
+        ws_die "Root's key: WS_INSTALLER_USER=$root_user is not $(ws_conf_form WS_USER)"
+}
+
+# root_login succeeds where ssh logs in to ws as root_user by the Mac's key, and runs a command.
+root_login() {
+    host_ssh -o BatchMode=yes -l "$root_user" ws-ssh true </dev/null >/dev/null 2>&1
+}
+
+# root_fail says what to do where root still refuses the Mac's key.
+root_fail() {
+    echo "root on ws still refuses the Mac's key: ws's sshd must let root log in by key"
 }
