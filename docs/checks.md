@@ -149,6 +149,9 @@ For the Hook on ws stage, `WS_HOOK` names a repository that the stand-in `gh` cl
 the item, a run with no terminal must stop, naming `security add-generic-password`. At a terminal of
 `script`'s, it must add the item, typed at its prompts, and run `apply.sh` once over plain ssh. Its
 stdin must be the secret, no terminal, and the next run print nothing. A failed run leaves no stamp.
+For the Hook on the Mac stage, the stand-in `gh` on the Mac clones it, with `.githooks` and an
+empty `Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git`
+by hand, unless git's config names gh's credential command. The next run must print nothing.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

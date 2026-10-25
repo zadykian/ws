@@ -3,9 +3,9 @@
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, gives root on ws the Mac's key, runs ws's playbook
-there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, and runs another
-repository's `apply.sh` on ws. On a new Mac with Apple silicon, one line installs what it needs,
-clones the repository and runs the wizard, as yourself:
+there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, runs another
+repository's `apply.sh` on ws, and clones that repository on the Mac. On a new Mac with Apple
+silicon, one line installs what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -40,6 +40,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
+14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`.
 
 ## The answers
 
@@ -213,6 +214,13 @@ That run leaves a stamp, `/var/lib/ws-wizard/hook-REPO` on ws, and the stage is 
 run of the wizard leaves `apply.sh` alone, and `--update` runs it again. A run that fails stops the
 wizard, and the next runs it again. `--check` says what the stage would do, and runs nothing.
 
+The stage Hook on the Mac then clones the repository in `~/repository/REPO` by gh's login on the
+Mac, where missing, and never pulls it. Another repository's clone there stops the stage, as on ws.
+Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute path, as in ws's
+clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose formulae Homebrew lacks,
+as `brew bundle check` finds, with Homebrew's auto-update off, `brew bundle` installs them, and
+upgrades nothing. `--check` names each command that the stage would run.
+
 ## What stays by hand
 
 After a run in which a stage acted, the wizard lists each of these that applies:
@@ -225,3 +233,6 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   where `mac.conf` has `WS_REMOTE` ([The router](router.md)).
 - The tunnel's handshake, where the Host key stage asked ws's address: once ws's lease is static,
   the wizard again, which checks it.
+- `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as
+  `setup.sh`'s does with git's name ([git](mac-git.md)). Through it, pushes from the Mac's clones
+  take gh's login.
