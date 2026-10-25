@@ -17,14 +17,14 @@
 
 set -eu
 
-# The wizard's stamps, ws's clone, the Mac's key for wg0, root's claude, ws's signing key, and the
-# fans' driver as the kernel loaded it. Each is a line NAME=PATH, which CI's stand-in for ws roots
-# in a directory of its own.
+# The wizard's stamps, ws's clone, the Mac's key for wg0, root's claude, root's git config, which
+# names ws's signing key, and the fans' driver as the kernel loaded it. Each is a line NAME=PATH,
+# which CI's stand-in for ws roots in a directory of its own.
 state=/var/lib/ws-wizard
 dir=/root/repository/ws
 peer=/etc/wireguard/mac.pub
 claude=/root/.local/bin/claude
-signing=/root/.ssh/id_ed25519_signing.pub
+gitconfig=/root/.gitconfig
 module=/sys/module/nct6687
 
 # say prints a message of the script's on stderr.
@@ -54,16 +54,16 @@ active() {
         'ws-wizard-*' 2>/dev/null | awk '{ sub(/\.service$/, "", $1); print $1; exit }'
 }
 
-# gh_state prints none without gh, and login without a login to github.com, or where its list of
-# signing keys fails but for a 404. scope is that 404, as the login lacks the scope. key is where
-# ws's signing key is missing or not listed, and ok where it is.
+# gh_state prints none without gh, login without a login to github.com or where its list of signing
+# keys fails but for a 404, and scope at that 404. key is where the list lacks the key that root's
+# git config signs with, and ok where it holds it, or where that config names no key file there.
 gh_state() {
     command -v gh >/dev/null || { echo none && return; }
     gh auth status -h github.com >/dev/null 2>&1 || { echo login && return; }
-    [ -f "$signing" ] || { echo key && return; }
+    pub=$(git config -f "$gitconfig" user.signingkey) && [ -f "$pub" ] || { echo ok && return; }
     if ! keys=$(gh api --paginate user/ssh_signing_keys --jq '.[].key' 2>&1); then
         case $keys in *'HTTP 404'*) echo scope ;; *) echo login ;; esac
-    elif printf '%s\n' "$keys" | grep -qxF -e "$(cut -d ' ' -f 1-2 "$signing")"; then
+    elif printf '%s\n' "$keys" | grep -qxF -e "$(cut -d ' ' -f 1-2 "$pub")"; then
         echo ok
     else
         echo key
