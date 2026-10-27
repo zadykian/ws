@@ -1,7 +1,7 @@
 name: mac
 
 # mac/ on macOS, in a workflow of its own beside ci.yml, on the same events: every pull request,
-# whatever its base, and on main the commits pushed by hand.
+# whatever its base, and on main each pull request's merge.
 on:
   pull_request:
   push:
