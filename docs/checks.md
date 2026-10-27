@@ -172,7 +172,8 @@ fails, as the daemon runs the same wireguard-go.
 `.github/workflows/rules.yml` runs the checks of
 [zadykian/toolkit](https://github.com/zadykian/toolkit/tree/main/actions) on each pull request.
 They check its commits, size and title, its description, and the terms it adds, against the rules
-of the toolkit's skills. Each warns and never blocks, so no ruleset requires it.
+of the toolkit's skills. Each warns and never blocks, so no ruleset requires it. A newer event of a
+pull request cancels its older run, as the two would race to create each check's comment.
 
 The workflows pin the toolkit's actions, and `.claude/settings.json` its marketplace, to one
 release. The toolkit's `tools/pin` moves both, as its
