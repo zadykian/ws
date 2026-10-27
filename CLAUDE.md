@@ -27,7 +27,7 @@ The rest is the docs, the lint gates' tools and CI.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
   `mac`; `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`;
-  `rules.yml`, the checks of zadykian/actions, which warn alone; and `fast-forward.yml`, which
+  `rules.yml`, the checks of zadykian/toolkit, which warn alone; and `fast-forward.yml`, which
   lands a pull request on a `/ff` comment.
 
 ## Commands
@@ -63,7 +63,7 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 - They land on `main` by fast-forward only, as the commits CI checked. GitHub's merge methods are
   all refused: never run `gh pr merge`.
 - A comment `/ff` on the pull request lands it, as
-  [`/flow:land`](https://github.com/zadykian/skills/blob/main/skills/land/SKILL.md) does
+  [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does
   (`.github/workflows/fast-forward.yml`). It pushes the head to `main`, closes the pull request's
   linked issues and deletes the branch.
 - The maintainer pushes a pull request that changes `.github/workflows` by hand,
@@ -112,13 +112,13 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   exclusion or keep a baseline: every file passes every gate outright, and `.yamllint`,
   `.ansible-lint`, `ruff.toml` and `.vale.ini` are never weakened.
 - The caps are those of the
-  [writing](https://github.com/zadykian/skills/blob/main/skills/writing/SKILL.md#the-caps-and-vale)
+  [writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale)
   skill, which `make sizecheck`, `make vale` and `make rumdl` check.
 
 ## Commits
 
 Commits and pull requests follow the
-[atomic-commits](https://github.com/zadykian/skills/blob/main/skills/atomic-commits/SKILL.md)
+[atomic-commits](https://github.com/zadykian/toolkit/blob/main/skills/atomic-commits/SKILL.md)
 skill. Commits are signed, as the ruleset on `main` requires.
 
 ## Where else to look
@@ -126,9 +126,10 @@ skill. Commits are signed, as the ruleset on `main` requires.
 - `.claude/rules/`: the roles' invariants in [roles.md](.claude/rules/roles.md), what each document
   holds in [docs.md](.claude/rules/docs.md), and ws's facts beside the `writing` skill in
   [writing.md](.claude/rules/writing.md), loaded with the files they cover.
-- Plugins of the `zadykian` marketplace, [zadykian/skills](https://github.com/zadykian/skills),
+- Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
-  hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`.
+  hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`. The marketplace's
+  `ref` names the release that the workflows' actions pin ([The rules](docs/checks.md#the-rules)).
 - Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits and
   `make lint-tree` as a turn ends, on a tree the maintainer vouches for. The gate code includes
   what [.claude/lint-gates](.claude/lint-gates) lists

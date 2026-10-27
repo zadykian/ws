@@ -14,7 +14,7 @@ paths:
 # Writing
 
 ws's facts beside the
-[writing](https://github.com/zadykian/skills/blob/main/skills/writing/SKILL.md) skill, which
+[writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md) skill, which
 holds the policy for comments and docs. They cover the Markdown, and the `#` comments of the
 YAML, the shell scripts, the Python and the Jinja templates.
 

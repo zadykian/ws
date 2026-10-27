@@ -134,15 +134,15 @@ The router takes a few steps once, by hand: [The router](docs/router.md).
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
 secrets. It runs the playbook twice in a container, forges SigNoz's compose files again, and sets
 up a Mac on GitHub's macOS runner. The rules workflow warns where a pull request breaks the rules
-of zadykian/skills. The hooks in `.githooks` check each commit before git makes it.
+of zadykian/toolkit's skills. The hooks in `.githooks` check each commit before git makes it.
 [Checks](docs/checks.md) has the details.
 
 ## Pull requests
 
 Pull requests land on `main` by fast-forward only, as the commits CI checked. GitHub's merge methods
 are all refused. A comment `/ff` lands one, as the
-[land](https://github.com/zadykian/skills/blob/main/skills/land/SKILL.md) skill says, through the
-[ff action](https://github.com/zadykian/actions/tree/main/ff) of
+[land](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) skill says, through the
+[ff action](https://github.com/zadykian/toolkit/tree/main/actions/ff) of
 `.github/workflows/fast-forward.yml`.
 
 ## License

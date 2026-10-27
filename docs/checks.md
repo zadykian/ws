@@ -170,10 +170,13 @@ fails, as the daemon runs the same wireguard-go.
 ## The rules
 
 `.github/workflows/rules.yml` runs the checks of
-[zadykian/actions](https://github.com/zadykian/actions) on each pull request. They check its
-commits, size and title, its description, and the terms it adds, against the rules of
-[zadykian/skills](https://github.com/zadykian/skills). Each warns and never blocks, so no ruleset
-requires it.
+[zadykian/toolkit](https://github.com/zadykian/toolkit/tree/main/actions) on each pull request.
+They check its commits, size and title, its description, and the terms it adds, against the rules
+of the toolkit's skills. Each warns and never blocks, so no ruleset requires it.
+
+The workflows pin the toolkit's actions, and `.claude/settings.json` its marketplace, to one
+release. The toolkit's `tools/pin` moves both, as its
+[Pin a release](https://github.com/zadykian/toolkit#pin-a-release) says.
 
 ## The hooks
 
@@ -205,6 +208,6 @@ plugins. ansible-lint's syntax check of `site.yml` runs the lookups in the playb
 the plugin runs them only on a tree the maintainer vouches for, as [the vouch rule][vouch] says.
 The gate code includes what [.claude/lint-gates](../.claude/lint-gates) lists.
 
-[lint]: https://github.com/zadykian/skills/blob/main/docs/lint.md#the-hooks
-[vouch]: https://github.com/zadykian/skills/blob/main/docs/lint.md#the-vouch-rule
-[writing]: https://github.com/zadykian/skills/blob/main/skills/writing/SKILL.md#the-caps-and-vale
+[lint]: https://github.com/zadykian/toolkit/blob/main/docs/lint.md#the-hooks
+[vouch]: https://github.com/zadykian/toolkit/blob/main/docs/lint.md#the-vouch-rule
+[writing]: https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale
