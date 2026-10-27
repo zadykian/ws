@@ -26,9 +26,8 @@ The rest is the docs, the lint gates' tools and CI.
   caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`; `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`;
-  `rules.yml`, the checks of zadykian/toolkit, which warn alone; and `fast-forward.yml`, which
-  lands a pull request on a `/ff` comment.
+  `mac`; `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; and
+  `rules.yml`, the checks of zadykian/toolkit, which warn alone.
 
 ## Commands
 
@@ -60,14 +59,12 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 ## How changes land
 
 - Pull requests are stacked, each on the one below it, and CI runs on each whatever its base.
-- They land on `main` by fast-forward only, as the commits CI checked. GitHub's merge methods are
-  all refused: never run `gh pr merge`.
-- A comment `/ff` on the pull request lands it, as
-  [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does
-  (`.github/workflows/fast-forward.yml`). It pushes the head to `main`, closes the pull request's
-  linked issues and deletes the branch.
-- The maintainer pushes a pull request that changes `.github/workflows` by hand,
-  `git push origin SHA:main`, as the workflow's token may not push such a change.
+- They land on `main` by GitHub's merge commits, as
+  [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull
+  request's signed commits land as they are, under a merge commit that GitHub signs.
+- The ruleset on `main` allows the merge method alone. It requires signed commits, the `lint`
+  check, and branches up to date, so that a merge's tree is the tree CI checked.
+- A pull request that changes `.github/workflows` lands like any other.
 - `.claude/settings.json` denies `gh pr merge` and the usual forms of a push to `main`. A rule
   matches the command as written, so the ruleset on `main` stays the guard.
 
@@ -128,7 +125,8 @@ skill. Commits are signed, as the ruleset on `main` requires.
   [writing.md](.claude/rules/writing.md), loaded with the files they cover.
 - Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
-  hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`. The marketplace's
+  hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`. `flow` links and
+  lands a stack with gh's extension, `gh extension install github/gh-stack`. The marketplace's
   `ref` names the release that the workflows' actions pin ([The rules](docs/checks.md#the-rules)).
 - Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits and
   `make lint-tree` as a turn ends, on a tree the maintainer vouches for. The gate code includes

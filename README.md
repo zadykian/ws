@@ -139,11 +139,10 @@ of zadykian/toolkit's skills. The hooks in `.githooks` check each commit before 
 
 ## Pull requests
 
-Pull requests land on `main` by fast-forward only, as the commits CI checked. GitHub's merge methods
-are all refused. A comment `/ff` lands one, as the
-[land](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) skill says, through the
-[ff action](https://github.com/zadykian/toolkit/tree/main/actions/ff) of
-`.github/workflows/fast-forward.yml`.
+Pull requests land on `main` by GitHub's merge commits, as the
+[land](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) skill says. Their signed
+commits land as they are, under a merge commit that GitHub signs. The ruleset on `main` allows the
+merge method alone, and requires signed commits and branches up to date.
 
 ## License
 

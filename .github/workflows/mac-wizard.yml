@@ -1,7 +1,7 @@
 name: mac-wizard
 
 # mac/wizard.sh on macOS, in a workflow of its own beside mac.yml, on the same events: every pull
-# request, whatever its base, and on main the commits pushed by hand.
+# request, whatever its base, and on main each pull request's merge.
 on:
   pull_request:
   push:

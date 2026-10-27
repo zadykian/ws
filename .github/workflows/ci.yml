@@ -1,7 +1,7 @@
 name: ci
 
 # Every pull request, whatever its base, since pull requests are stacked, each on the one below it.
-# On main, the commits pushed by hand: the fast-forward workflow's pushes start no workflow.
+# On main, each pull request's merge.
 on:
   pull_request:
   push:
@@ -21,9 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # A pull request's own head, which lands as it is, by fast-forward, rather than GitHub's
-          # merge of it. The whole history, every branch's included, as gitleaks scans every
-          # commit.
+          # A pull request's own head, rather than GitHub's test merge of it: its commits land as
+          # they are, and as the ruleset requires branches up to date, the merge's tree is the
+          # head's. The whole history, every branch's included, as gitleaks scans every commit.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
