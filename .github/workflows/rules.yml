@@ -1,9 +1,9 @@
 name: rules
 
-# The checks of zadykian/actions, with their default inputs, against the rules of zadykian/skills:
-# a pull request's commits, size and title, its description, and the banned terms. Each warns, in
+# The checks of zadykian/toolkit, with their default inputs, against the rules of its skills: a
+# pull request's commits, size and title, its description, and the banned terms. Each warns, in
 # annotations and a comment of its own, and its job passes, so no ruleset requires it. Each
-# action's README says what it checks: https://github.com/zadykian/actions.
+# action's README says what it checks: https://github.com/zadykian/toolkit/tree/main/actions.
 
 on:
   pull_request:
@@ -19,6 +19,11 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: zadykian/actions/atomic-commits@9c02fe599a7f620e98cd3d89ba9a0858e2f8b147 # v2.0.0
-      - uses: zadykian/actions/pr-description@9c02fe599a7f620e98cd3d89ba9a0858e2f8b147 # v2.0.0
-      - uses: zadykian/actions/banned-terms@9c02fe599a7f620e98cd3d89ba9a0858e2f8b147 # v2.0.0
+      # Each pin runs past 100 columns, as the comment that names its version stays on its uses:
+      # line, where the toolkit's tools/pin reads it.
+      # yamllint disable-line rule:line-length
+      - uses: zadykian/toolkit/actions/atomic-commits@4c0c6dcb16a67dd4ab7346a8214e93c076dd1402 # v4.0.0
+      # yamllint disable-line rule:line-length
+      - uses: zadykian/toolkit/actions/pr-description@4c0c6dcb16a67dd4ab7346a8214e93c076dd1402 # v4.0.0
+      # yamllint disable-line rule:line-length
+      - uses: zadykian/toolkit/actions/banned-terms@4c0c6dcb16a67dd4ab7346a8214e93c076dd1402 # v4.0.0
