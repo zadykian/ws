@@ -65,8 +65,9 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 - The ruleset on `main` allows the merge method alone. It requires signed commits, the `lint`
   check, and branches up to date, so that a merge's tree is the tree CI checked.
 - A pull request that changes `.github/workflows` lands like any other.
-- `.claude/settings.json` denies `gh pr merge` and the usual forms of a push to `main`. A rule
-  matches the command as written, so the ruleset on `main` stays the guard.
+- `.claude/settings.json` denies the usual forms of a push to `main`, but not `gh pr merge`, which
+  `/flow:land` runs. A rule matches the command as written, so the ruleset on `main` stays the
+  guard.
 
 ## Hard rules
 
