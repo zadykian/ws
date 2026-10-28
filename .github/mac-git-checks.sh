@@ -2,7 +2,7 @@
 # The mac job's checks of mac/setup.sh's git step, which mac-setup-checks.sh sources last, so that
 # they run with its functions and the job's mac.conf. The runner must lack the files the step
 # writes, but ~/.gitconfig, which goes aside. As the script exits, on a signal too, the files go,
-# and the runner's ~/.gitconfig comes back.
+# and the runner's ~/.gitconfig comes back. Last, it sources mac-git-yubikey-checks.sh's cases.
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
@@ -13,7 +13,7 @@ secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 # git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
 git_made() {
     "$@" "$key" "$key.pub" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig.*~ \
-        "$files/secretive-ssh-keygen" "$secretive"
+        "$files/ws-ssh-keygen" "$files/secretive-ssh-keygen" "$secretive"
 }
 
 # git_restore removes the files that git's cases made, and puts the runner's ~/.gitconfig back. It
@@ -296,3 +296,5 @@ prints "setup.sh: installing gh${nl}setup.sh: wrote $files/gitconfig$nl$warning"
 prints "$warning"
 [ "$(cat "$tmp/brew.log")" = 'install gh' ] || error "setup.sh ran brew install gh other than once"
 PATH=$path
+# shellcheck source=.github/mac-git-yubikey-checks.sh
+. .github/mac-git-yubikey-checks.sh

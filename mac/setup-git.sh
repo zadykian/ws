@@ -91,14 +91,16 @@ git_gh() {
 }
 
 # git_files writes ~/.config/ws/allowed_signers, which trusts the key for WS_GIT_EMAIL in git
-# verify-commit, and ~/.config/ws/gitconfig. For a key of Secretive's, git signs through
-# ~/.config/ws/secretive-ssh-keygen, which gives ssh-keygen Secretive's agent. So a terminal and an
-# IDE sign alike, whatever agent the app that runs git has. Under --check, before the key is made,
-# it writes no allowed signers.
+# verify-commit, and ~/.config/ws/gitconfig. For the YubiKey's key, git signs through git_agent's
+# ~/.config/ws/ws-ssh-keygen, which gives ssh-keygen ws's agent. For a key of Secretive's, it signs
+# through ~/.config/ws/secretive-ssh-keygen, which gives ssh-keygen Secretive's agent. So a
+# terminal and an IDE sign alike, whatever agent the app that runs git has. Under --check, before
+# the key is made, it writes no allowed signers.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile, and ws_secretive is setup-conf.sh's
 git_files() {
     git_program=
     case $git_pub in
+    "$git_dir"/keys/*.pub) git_agent ;;
     "$ws_secretive"/PublicKeys/*.pub)
         git_program=$git_dir/secretive-ssh-keygen
         ws_put "$git_program" 755 <<EOF

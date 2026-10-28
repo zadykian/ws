@@ -9,9 +9,12 @@ cable_mask=255.255.255.252
 # The app that Homebrew's cask jetbrains-gateway puts in /Applications.
 gateway_app='JetBrains Gateway.app'
 
-# The git step's functions are setup-git.sh's, sourced from dir, mac/'s path, as setup.sh sets it.
+# The git step's functions are setup-git.sh's, and its signing by ws's agent setup-git-agent.sh's,
+# sourced from dir, mac/'s path, as setup.sh sets it.
 # shellcheck source=setup-git.sh disable=SC2154 # dir is setup.sh's
 . "$dir/setup-git.sh"
+# shellcheck source=setup-git-agent.sh
+. "$dir/setup-git-agent.sh"
 
 # extras runs the Mac's own steps. The cable's and git's leave the Mac alone where mac.conf lacks
 # their keys, and Gateway's needs none.
