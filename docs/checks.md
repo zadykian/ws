@@ -133,10 +133,10 @@ that unit. With `WS_TARGET=cloud`, a run must turn the outbound table off, and t
 a session on ws for a login. A fresh `--check` must show gh on ws and claude on ws after ws's run.
 Without gh's login, a run with no terminal must stop at gh on ws, naming `gh auth login`, and with a
 login that lacks the `write:ssh_signing_key` scope, `gh auth refresh`. `--check` must say it would
-run each. With the key off the account, a run must print nothing where root's git config names no
-signing key. Otherwise it must run `bootstrap.sh --tags devtools`, which adds it. Without claude's
-login, a run must stop at claude on ws, naming `claude auth login`, and `--check` must say it would
-run it. The next run must print nothing.
+run each. Where the key list fails otherwise, both must stop, naming gh's error. With the key off
+the account, a run must print nothing where root's git config names no signing key. Else it must run
+`bootstrap.sh --tags devtools`, which adds it. Without claude's login, a run must stop at claude on
+ws, naming `claude auth login`, and `--check` must say it would run it. The next must print nothing.
 
 The stand-in `bootstrap.sh --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820, with
 the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's run.

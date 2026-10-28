@@ -3,10 +3,11 @@
 # logged both in, so no run of the wizard may have opened a session on ws for a login. Without gh's,
 # a run with no terminal must stop at gh on ws, naming gh auth login, and --check must say it would
 # run it. With a login that lacks the write:ssh_signing_key scope, each must name gh auth refresh.
-# With ws's signing key off the account, a run with no terminal must run bootstrap.sh --tags
-# devtools, which adds it, then list what stays by hand. Without claude's login, a run must stop at
-# claude on ws, naming claude auth login, and --check must say it would run it. The next run must
-# print nothing.
+# With a token that GitHub refuses, a run must name gh auth login. Where the list of the account's
+# keys fails otherwise, each must stop, naming gh's error, if any. With ws's signing key off the
+# account, a run with no terminal must run bootstrap.sh --tags devtools, which adds it, then list
+# what stays by hand. Without claude's login, a run must stop at claude on ws, naming claude auth
+# login, and --check must say it would run it. The next run must print nothing.
 
 set -u
 
@@ -51,6 +52,15 @@ touch "$ws/gh" "$ws/gh.nosign"
 expect 'gh on ws' 1 "no terminal is there for $refresh"
 expect 'gh on ws' 0 "run $refresh on ws, then run $devtools on ws" --check
 rm "$ws/gh.nosign"
+echo 'gh: Bad credentials (HTTP 401)' >"$ws/gh.fail"
+expect 'gh on ws' 1 "no terminal is there for $login"
+echo 'gh: Server Error (HTTP 502)' >"$ws/gh.fail"
+down='gh api user/ssh_signing_keys failed as root on ws: gh: Server Error (HTTP 502); run the'
+expect 'gh on ws' 1 "$down"
+expect 'gh on ws' 1 "$down" --check
+: >"$ws/gh.fail"
+expect 'gh on ws' 1 'failed as root on ws and printed nothing; run the wizard again'
+rm "$ws/gh.fail"
 : >"$ws/gh.keys"
 # Where root's git config names no signing key, as shell_git_signing off leaves it, gh on ws is
 # done, and a run prints nothing.

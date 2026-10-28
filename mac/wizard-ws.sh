@@ -157,10 +157,17 @@ wsgh_done() {
 # where it lacks either, in a session of ssh -t at the terminal. gh's device flow shows a code
 # there, for the page that the Mac's browser opens. So the login is ws's own, never a copy of the
 # Mac's. Then bootstrap.sh --tags devtools, in a unit of its own, adds ws's signing key. --check
-# says what it would do.
+# says what it would do. Both stop where gh's list of the account's signing keys failed otherwise,
+# with gh's error, as a new login would not mend it.
 wsgh_do() {
-    case $(remote_get gh) in
+    wsgh_state=$(remote_get gh)
+    case $wsgh_state in
     none) ws_die "gh on ws: ws lacks gh, which its run installs: run the wizard with --update" ;;
+    error*)
+        wsgh_why=${wsgh_state#error}
+        ws_die "gh on ws: gh api user/ssh_signing_keys failed as root on" \
+            "ws${wsgh_why:+:}${wsgh_why:- and printed nothing}; run the wizard again once it works"
+        ;;
     login) wsgh_how="gh auth login -h github.com -p https -w -s write:ssh_signing_key" ;;
     scope) wsgh_how="gh auth refresh -h github.com -s write:ssh_signing_key" ;;
     *) wsgh_how= ;;

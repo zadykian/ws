@@ -191,8 +191,8 @@ flow as root on ws, in an `ssh -t` session. That is `gh auth refresh` for the sc
 there at that page. So the login is ws's own, never a copy of the Mac's. With no terminal, the stage
 stops, naming the command. Then, or at once where the account lacks the key alone,
 `bootstrap.sh --tags devtools` runs in a unit of its own, as ws's run does, and adds the key. That
-run needs no terminal, page or session. Where ws lacks gh, which its run installs, the stage stops:
-`--update` runs the playbook again.
+run needs no terminal, page or session. The stage stops where ws lacks gh, which a run with
+`--update` installs. It stops with gh's error where gh fails to list the account's keys otherwise.
 
 ## claude on ws
 
