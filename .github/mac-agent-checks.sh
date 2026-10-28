@@ -7,9 +7,11 @@
 # YubiKeys (yubikey-ioreg.sh): as they go out and come in, the agent must take the keys out and load
 # them again, at a replug and with a second YubiKey too, and once ssh-add -D empties it. Stopped, it
 # must take its ssh-agent and its socket with it. The cases leave 30000001 alone in, as they found
-# it.
+# it. Last, the job's own agent, launchd's or the stand-in's (yubikey-agent.sh), which the cases
+# after these use, must list both keys at ~/.ssh/ws-agent.sock and sign with each, and setup.sh then
+# print nothing.
 #
-# shellcheck disable=SC2154 # tmp and error are mac-setup-checks.sh's
+# shellcheck disable=SC2154 # tmp, error and prints are mac-setup-checks.sh's
 keys=$HOME/.config/ws/keys
 socket=$tmp/agent.sock
 standin=.github/yubikey-standin.sh
@@ -110,3 +112,27 @@ wait "$agent_pid" || error "ws-agent exited with $? on SIGTERM: $(cat "$tmp/agen
 if [ -e "$socket" ] || pgrep -f "ssh-agent -D -a $socket" >/dev/null; then
     error "ws-agent, stopped, left its ssh-agent or its socket"
 fi
+
+# launchd's agent, where launchd has gui/UID, must run setup.sh's copy, from a plist of 644 that
+# plutil takes.
+socket=$HOME/.ssh/ws-agent.sock
+if launchctl print "gui/$(id -u)" >/dev/null 2>&1; then
+    plist=$HOME/Library/LaunchAgents/com.github.zadykian.ws-agent.plist
+    launchctl print "gui/$(id -u)/com.github.zadykian.ws-agent" >"$tmp/job" 2>&1 ||
+        error "launchd has no ws-agent in gui/$(id -u): $(cat "$tmp/job")"
+    grep -q "program = $HOME/.config/ws/ws-agent$" "$tmp/job" ||
+        error "launchd's ws-agent runs no ~/.config/ws/ws-agent: $(cat "$tmp/job")"
+    if [ "$(stat -f %Lp "$plist")" != 644 ] || ! plutil -lint "$plist" >/dev/null; then
+        error "$plist is not 644, or plutil refuses it"
+    fi
+fi
+if within 20 listed; then
+    for name in ws git; do
+        signs "$name" || error "ssh-keygen -Y sign with keys/$name.pub through $socket made no" \
+            "signature that verifies: $(cat "$tmp/sign.err")"
+    done
+else
+    error "the job's agent lists no keys of keys/ws.pub and keys/git.pub: $(cat "$tmp/listed")"
+fi
+prints ''
+prints '' --check
