@@ -6,6 +6,7 @@
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 key=$HOME/.ssh/id_ed25519_signing
+pub=$key.pub
 files=$HOME/.config/ws
 secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 
@@ -91,7 +92,7 @@ fi
 # print nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 title=$(hostname -s)
-add="gh ssh-key add $key.pub --type signing --title $title"
+add="gh ssh-key add $pub --type signing --title $title"
 setup --check || error "setup.sh --check failed: $out"
 case $out in
 "setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*"\
@@ -180,7 +181,7 @@ cp "$key" "$tmp/mixed.pub"
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_KEY=$tmp/mixed.pub"
 stops "setup.sh: $tmp/mixed.pub holds no public key alone"
 # So must one it cannot read, where the user cannot, as on the runner: root reads it.
-cp "$key.pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
+cp "$pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
 if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
     with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com \
         "WS_GIT_SIGNING_KEY=$tmp/unread-git.pub"
@@ -188,11 +189,11 @@ if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
 fi
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com
 mv "$key" "$tmp/signing"
-stops "setup.sh: $key.pub is there without its private key"
+stops "setup.sh: $pub is there without its private key"
 mv "$tmp/signing" "$key"
-mv "$key.pub" "$tmp/signing.pub"
-stops "setup.sh: $key.pub is missing beside its key"
-mv "$tmp/signing.pub" "$key.pub"
+mv "$pub" "$tmp/signing.pub"
+stops "setup.sh: $pub is missing beside its key"
+mv "$tmp/signing.pub" "$pub"
 
 # A key of Secretive's, a P-256 key that an agent at Secretive's socket holds, its .pub among
 # Secretive's, named by ~/. --check must show the wrapper and gpg.ssh.program, and write neither.
@@ -236,12 +237,12 @@ rm -rf "$secretive"
 # --check must show the add, a run must add it, and a second run and --check print nothing.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 rm "$tmp/login"
-warning=$(warned "$key.pub")
+warning=$(warned "$pub")
 prints "setup.sh: wrote $files/allowed_signers${nl}setup.sh: wrote $files/gitconfig$nl$warning"
 prints "$warning"
 prints "$warning" --check
 touch "$tmp/login"
-until="Until a later run adds $key.pub, GitHub shows the commits it signs as unverified"
+until="Until a later run adds $pub, GitHub shows the commits it signs as unverified"
 printf '%s\n' 'Post "https://api.github.com/user/ssh_signing_keys": EOF' 'gh: offline.' \
     >"$tmp/error"
 prints "setup.sh: warning: gh failed: gh: offline. $until"
@@ -258,8 +259,8 @@ prints "setup.sh: ran $add"
 prints ''
 prints '' --check
 [ "$(grep '^ssh-key add ' "$tmp/gh.log" | tail -n 1)" = "${add#gh }" ] &&
-    [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
-    error "the stand-in logged another add, or holds other keys, than $key.pub's"
+    [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$pub")" ] ||
+    error "the stand-in logged another add, or holds other keys, than $pub's"
 
 # Where PATH has no gh, setup.sh must leave it so without git's keys. With them, --check must say
 # that Homebrew would install it, name the gh at Homebrew's prefix as git's credential command, and
