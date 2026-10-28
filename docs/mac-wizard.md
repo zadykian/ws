@@ -137,7 +137,7 @@ prints. Any other answer stops the run. The key goes in `known_hosts` as `ws`, t
 `HostKeyAlias` gives each way. From then on, the stage reads nothing from ws. Through the router's
 forward, the stage warns that a new ws faces the internet until its run sets up the `security` role
 ([security](security.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
-answers.
+answers. A linked `known_hosts` stops the stage, and a run prints the key's line for its target.
 
 ## Root's key
 
@@ -241,8 +241,8 @@ upgrades nothing. `--check` names each command that the stage would run.
 The stage copies ws's word list too, root's `~/.config/ws/forbidden-words`, which the hooks read
 ([The hooks](checks.md#the-hooks)), with `WS_HOOK` or without. Where ws has one, and the Mac's
 differs by git's hash or can't be read, the files script, `mac/wizard-remote-files.sh`, sends it
-from ws. It replaces the Mac's, mode 600. The wizard never prints the list: `--check` says it would
-copy it, with no diff.
+from ws. It replaces the Mac's, mode 600, but a link there stops the stage, `--check` too, naming
+its target. The wizard never prints the list: `--check` says it would copy it, with no diff.
 
 ## The cable
 

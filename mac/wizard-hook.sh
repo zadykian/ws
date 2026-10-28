@@ -163,9 +163,9 @@ hook_done() {
 
 # hook_sums sets hook_ws to git's hash of ws's word list, as the files script prints it, and
 # hook_mac to the Mac's, each - where there is none. A Mac's list that the user can't read counts as
-# none, and ws_put replaces it. git hashes from /, as in a repository it takes that repository's
-# hash, which may be SHA-256. It fails where ssh or the files script does, their messages in
-# words.err.
+# none: hook_copy replaces it, or stops at a link. git hashes from /, as in a repository it takes
+# that repository's hash, which may be SHA-256. It fails where ssh or the files script does, their
+# messages in words.err.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 hook_sums() {
     hook_ws=$(remote_files words 2>"$lock/words.err") && [ -n "$hook_ws" ] || return 1
@@ -177,11 +177,16 @@ hook_sums() {
 
 # hook_copy copies ws's word list over the Mac's, mode 600, where ws has one and the Mac's differs.
 # The list goes through the lock, whose files are the user's alone, and is never printed. --check
-# says it would copy it, and shows no diff.
+# says it would copy it, and shows no diff. Where the Mac's is a link, it stops, under --check too,
+# naming its target, as ws_put would replace the link.
 hook_copy() {
     hook_sums || ws_die "Hook on the Mac: the files script read no word list on ws:" \
         "$(tail -n 1 "$lock/words.err")"
     [ "$hook_ws" != - ] && [ "$hook_ws" != "$hook_mac" ] || return 0
+    [ ! -L "$hook_words" ] || ws_die "Hook on the Mac: $hook_words is a link to" \
+        "$(readlink "$hook_words"), which the wizard leaves, and ws's word list differs: remove" \
+        "the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the" \
+        "wizard again"
     if ws_checking; then
         ws_say "Hook on the Mac: would copy ws's word list to $hook_words, mode 600"
         return 0

@@ -2,7 +2,8 @@
 # The Host key stage on the Mac that 30-run.sh leaves, whose known_hosts holds ws's key under ws.
 # Without that line, a run with no terminal must stop where WS_HOST_KEY is missing or names another
 # key. --check, under StrictHostKeyChecking accept-new in ~/.ssh/config, must show the line it would
-# add. With a mac.conf of no way to ws, a run must stop, naming docs/router.md. None may change
+# add. Where known_hosts is a link, it must stop, as a run must, which prints that line for its
+# file. With a mac.conf of no way to ws, a run must stop, naming docs/router.md. None may change
 # known_hosts. WS_HOST_KEY=yes, with the Mac's own mac.conf, must then add the line back as it was.
 # With a mac.conf whose way to ws doesn't answer, ws's address now must come from WS_FIRST_ADDRESS.
 # The Mac's own mac.conf then puts the way back.
@@ -30,6 +31,17 @@ expect() {
     cmp -s "$hosts" "$RUNNER_TEMP/hosts.without" || error "wizard.sh changed $hosts"
 }
 
+# linked WANT [ARG]: the run, with known_hosts a link to a file, must stop, naming that file, then
+# WANT, and leave the link.
+linked() {
+    want=$1
+    shift
+    out=$(WS_HOST_KEY=yes sh "$wizard" "$@" </dev/null 2>&1)
+    status=$?
+    expect 1 "Host key: $hosts is a link to $RUNNER_TEMP/hosts.file, which the wizard leaves: $want"
+    [ -L "$hosts" ] || error "wizard.sh $* replaced the link"
+}
+
 cp "$hosts" "$RUNNER_TEMP/hosts"
 grep -vxF "$line" "$RUNNER_TEMP/hosts" >"$RUNNER_TEMP/hosts.without"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
@@ -45,6 +57,14 @@ out=$(sh "$wizard" --check </dev/null 2>&1)
 status=$?
 cp "$RUNNER_TEMP/ssh.config" ~/.ssh/config
 expect 0 "+$line"
+mv "$hosts" "$RUNNER_TEMP/hosts.file"
+ln -s "$RUNNER_TEMP/hosts.file" "$hosts"
+linked "a run would print ws's line for its file" --check
+! printf '%s\n' "$out" | grep -qF "$line" || error 'wizard.sh --check printed the line for the link'
+linked 'add this line to its file, then run the wizard again'
+printf '%s\n' "$out" | grep -qxF "$line" || error "wizard.sh printed no line for the link's file"
+rm "$hosts"
+mv "$RUNNER_TEMP/hosts.file" "$hosts"
 none=$RUNNER_TEMP/none.conf
 sed -e 's/^WS_REMOTE=.*/WS_REMOTE=/' -e 's/^WS_REMOTE_PORT=.*/WS_REMOTE_PORT=/' \
     ~/.config/ws/mac.conf >"$none"

@@ -90,9 +90,9 @@ alone, it must name `gh auth refresh`. `--check` must say it would run each.
 leads, with a host key made there. A fresh `--check` must show the Host key stage after `setup.sh`.
 The first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as
 `WS_HOST_KEY` gives its fingerprint. Without that line, a run with no terminal must stop without
-`WS_HOST_KEY` and with another fingerprint, and `--check` must show the line. With a `mac.conf`
-of no way to ws, a run must stop, naming [The router](router.md). With one whose `WS_REMOTE`
-doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`.
+`WS_HOST_KEY` and with another fingerprint, and `--check` must show the line, or stop at a link, as
+a run must. With a `mac.conf` of no way to ws, a run must stop, naming [The router](router.md). With
+one whose `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`.
 
 Root logs in to that `sshd` by root's own `authorized_keys`. The cases fill it from the stand-in
 `gh`'s keys, as Ubuntu's installer and the README's step do for ws. Each session runs `ws.sh`, which
@@ -160,13 +160,13 @@ be the secret, no terminal, and the next run print nothing. An unreadable item m
 before `apply.sh`, and a failed run leave no stamp. For the Hook on the Mac stage, the stand-in `gh`
 on the Mac clones it, with `.githooks` and an empty `Brewfile`. A run must clone it once, set its
 `core.hooksPath`, and name `gh auth setup-git` by hand, unless git's config names gh's credential
-command. The next run must print nothing. ws's word list, of stand-in words, must go to the Mac
-once, mode 600, and none of it be printed. Once the Mac's differs, `--check` must show no diff. For
-the Cable stage, ws's ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts
-name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no terminal must stop, one with
-`WS_CABLE_PORT` name the port, run the roles, read its late address, and stop at the service. Typed,
-an empty line must take the `169.254` one, and `ping` answer. The next must read no `link`, and one
-after ws's install or a failed roles' run name it again.
+command. The next run must print nothing. The stand-in ws's word list must go to the Mac once, mode
+600, and none of it be printed. Once the Mac's differs, `--check` must show no diff, or stop at a
+link, as a run must. For the Cable stage, ws's ports are a stand-in sysfs. Undocked, a run must
+print nothing, one that acts name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no
+terminal must stop, one with `WS_CABLE_PORT` name the port, run the roles, read its late address,
+and stop at the service. Typed, an empty line must take the `169.254` one, and `ping` answer. The
+next must read no `link`, and one after ws's install or a failed roles' run name it again.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

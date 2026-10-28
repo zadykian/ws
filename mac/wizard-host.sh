@@ -30,7 +30,10 @@ host_done() {
 # host_do adds the ed25519 key that ws offers at its way to known_hosts, under ws, once WS_HOST_KEY,
 # or the answer at the terminal, says that ws's console shows it. Where ws doesn't answer at its
 # way, it reads the key at ws's address now. It stops where no way leads to ws, and warns where the
-# way is the router's forward. --check asks nothing, and shows the line it would add.
+# way is the router's forward. --check asks nothing, and shows the line it would add. Where
+# known_hosts is a link, as a dotfiles manager makes it, it prints that line, and stops, as
+# ask_write does for mac.conf: ws_put would replace the link. --check, which compared no key with
+# ws's console, stops without it.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 host_do() {
     ws_conf "$WS_CONF"
@@ -46,6 +49,13 @@ host_do() {
     host_fp=$(ssh-keygen -l -f "$lock/host.pub" | awk '{ print $2 }')
     [ -n "$host_fp" ] || ws_die "Host key: ssh-keygen cannot read the key that ws offers"
     host_trust
+    if [ -L "$host_file" ]; then
+        host_link="$host_file is a link to $(readlink "$host_file"), which the wizard leaves"
+        ! ws_checking || ws_die "Host key: $host_link: a run would print ws's line for its file"
+        ws_say "Host key: $host_link: add this line to its file, then run the wizard again"
+        echo "ws $host_line" >&2
+        exit 1
+    fi
     host_mode=$(ws_mode "$host_file" 2>/dev/null) || host_mode=600
     { [ ! -f "$host_file" ] || awk 1 "$host_file"; } >"$lock/hosts" ||
         ws_die "Host key: cannot read $host_file"
