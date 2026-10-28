@@ -44,9 +44,13 @@ curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh |
 
 ## A new machine
 
-Install Ubuntu Server 26.04 by hand from its installer, with an SSH key to log in with. The
-installer gives the key to its own user, and the playbook lets root log in by key only. So copy the
-key to root first, as the installer's user:
+Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
+account's keys, and leave password login off. Neither the Mac's wizard nor the playbook adds a key
+later. So run the Mac's line above first, which puts the Mac's key on the account
+([GitHub and Ubuntu's install](docs/mac-wizard.md#github-and-ubuntus-install)). A cloud VM has no
+installer: it gives its default user the provider's keys, which must be the account's. The
+installer gives the keys to its own user, and the playbook lets root log in by key only. So copy
+them to root first, as that user:
 
 ```sh
 sudo install -d -m 700 /root/.ssh
