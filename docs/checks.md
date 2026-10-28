@@ -185,9 +185,11 @@ must take both back, and spare a script's own. Last, `ws_conf` must read an empt
 must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
 then none. It must warn of a disabled service. It must stop on one networksetup lacks, or one with a
 router outside the cable's `/30`. It must stop too on a `-setmanual` that fails or changes nothing,
-and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). No YubiKey and two
-must each stop `setup.sh`, and one from the factory draw a warning of its defaults. Without ykman
-and yubico-piv-tool, `--check` must name their install
+and name what differs ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). The job's runs must
+write the keys' `.pub`s in `~/.config/ws/keys`, each the stand-in's key, which a fresh `--check`
+must not make. A key the YubiKey lacks, no YubiKey and two must each stop `setup.sh`, and one from
+the factory draw a warning of its defaults first. Without ykman and yubico-piv-tool, `--check` must
+name their install
 ([mac-yubikey-checks.sh](../.github/mac-yubikey-checks.sh)). `ssh -G` must give
 `ws` and `ws-ssh` the file key, by the four lines `config.d/ws` had for it before. It must give
 them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
