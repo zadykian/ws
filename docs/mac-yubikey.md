@@ -83,8 +83,16 @@ ssh and git sign through an agent of ws's own, `mac/ws-agent`. macOS's own agent
 its default providers, in `/usr/lib` and `/usr/local/lib`, leave out Homebrew's libykcs11, which
 lies in the Cellar. `ws-agent` runs Apple's `/usr/bin/ssh-agent` at `~/.ssh/ws-agent.sock`, with
 libykcs11's path in the Cellar as its one provider. It loads the keys by `ssh-add -s`, with the PIN
-`VERIFY_NONE` from `ws-agent-pin`: libykcs11 then verifies no PIN, and the agent stores none. It
-logs to its standard output.
+`VERIFY_NONE` from `ws-agent-pin`: libykcs11 then verifies no PIN, and the agent stores none.
+
+`setup.sh` copies both to `~/.config/ws`. Its LaunchAgent,
+`~/Library/LaunchAgents/com.github.zadykian.ws-agent.plist`, has launchd run the copy in `gui/UID`
+from login on, and log to `~/Library/Logs/ws-agent.log`. A run that changes a copy or the plist
+starts the agent again. So does one where the agent lacks a key of `~/.config/ws/keys`, as after
+`setup.sh` made one. It then waits up to 10 s for the keys, and warns where one is missing still.
+With no login at the screen, as over ssh alone, launchd loads the agent at the next login. macOS
+lists it under System Settings › General › Login Items & Extensions, where "Allow in the
+Background" must stay on, or `setup.sh` stops.
 
 - It holds the keys only while the YubiKey is in. It reads `ioreg` every 5 s, takes the keys out
   when the YubiKey goes, and loads them again after a plug or a replug. No signature tests them.
