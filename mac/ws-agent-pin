@@ -1,0 +1,6 @@
+#!/bin/sh
+# ws-agent-pin is the askpass of ws-agent's ssh-add -s, which logs in to libykcs11 as it loads the
+# YubiKey's keys. It prints the PIN VERIFY_NONE, which yubico-piv-tool's libykcs11, from 2.7.2,
+# takes as a login that verifies nothing (ykcs11/token.c). So the keys, of PIN policy NEVER, load
+# and sign with no PIN, and the agent stores none. A key of another PIN policy then fails to sign.
+echo VERIFY_NONE
