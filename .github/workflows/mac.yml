@@ -71,8 +71,8 @@ jobs:
           cp ~/.ssh/config "$RUNNER_TEMP/ssh-config-before"
       - name: A stand-in YubiKey
         run: sh .github/yubikey-standin.sh
-      # --check must write no file, keep no copy of ~/.ssh/config and install no formula or cask.
-      # The brew installs it would run go to stderr, with setup.sh's other lines.
+      # --check must write no file, keep no copy of ~/.ssh/config, load no agent and install no
+      # formula or cask. The brew installs it would run go to stderr, with setup.sh's other lines.
       - name: --check on a fresh Mac changes nothing
         run: |
           { brew list --formula && brew list --cask; } >"$RUNNER_TEMP/brew"
@@ -84,6 +84,8 @@ jobs:
               /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
               ! sudo test -e "$path" || { echo "::error::setup.sh --check made $path"; fail=1; }
           done
+          ! launchctl print "gui/$(id -u)/com.github.zadykian.ws-agent" >/dev/null 2>&1 ||
+              { echo "::error::setup.sh --check loaded ws's agent"; fail=1; }
           cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
               { echo '::error::setup.sh --check changed ~/.ssh/config'; fail=1; }
           { brew list --formula && brew list --cask; } | cmp -s - "$RUNNER_TEMP/brew" ||

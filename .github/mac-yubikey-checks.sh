@@ -80,8 +80,12 @@ for arg in '' --check; do
     stops "setup.sh: git's key, in slot 83, is ECCP256, not ED25519: $again" $arg
 done
 sh "$standin" key 30000001 83 git NEVER NEVER
+# launchd's ws-agent, where it runs, lacks the new key, and starts again (setup-agent.sh).
+job=gui/$(id -u)/com.github.zadykian.ws-agent
+kick=
+! launchctl print "$job" >/dev/null 2>&1 || kick="${nl}setup.sh: ran launchctl kickstart -k $job"
 prints "setup.sh: warning: $keys/git.pub held another key, of another YubiKey or a reset PIV\
- applet: GitHub and ws need the new one${nl}setup.sh: wrote $keys/git.pub"
+ applet: GitHub and ws need the new one${nl}setup.sh: wrote $keys/git.pub$kick"
 same git 83 || error "setup.sh wrote another key than slot 83's to keys/git.pub"
 # Two slots of one name must stop a run.
 sh "$standin" key 30000001 85 git NEVER NEVER

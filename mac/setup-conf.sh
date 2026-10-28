@@ -6,6 +6,9 @@
 # Secretive's agent: its socket, and a .pub in PublicKeys for each key it holds (Secretive 4.0.0).
 # shellcheck disable=SC2034 # for setup-identity.sh and setup-git.sh
 ws_secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data
+# ws's agent's socket, which mac/ws-agent makes, as its own default, for ssh and git.
+# shellcheck disable=SC2034 # for setup-agent.sh, and the steps that name the agent
+ws_agent_socket=$HOME/.ssh/ws-agent.sock
 
 # ws_conf FILE reads the Mac's settings from FILE, ~/.config/ws/mac.conf, without running it: a
 # KEY=value a line, the value bare or in a pair of quotes, blank lines and lines starting with #
