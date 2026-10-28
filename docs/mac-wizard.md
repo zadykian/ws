@@ -49,6 +49,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 
 | Question | Kept in | Default | Asked |
 |---|---|---|---|
+| The machine ws runs on: `lan`, `cloud` or `mac-vm` | `WS_TARGET` | `lan` | always |
 | ws's home LAN | `WS_LAN` | `10.88.0.0/24` | always |
 | ws's address on the LAN | `WS_LAN_ADDRESS` | `10.88.0.10`, where the LAN holds it | with a LAN |
 | The router's name on the internet | `WS_REMOTE` | none | always |
@@ -61,7 +62,9 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 | The Keychain item of its `apply.sh`'s secret | `WS_HOOK_SECRET` | none | with a repository |
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
-last two, which [Another repository](#another-repository) does. The defaults are
+first and the last two. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
+`WS_REMOTE` and `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`.
+[Another repository](#another-repository) explains the last two. The defaults are
 [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
 from the first of these that has one:
 

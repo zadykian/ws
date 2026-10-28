@@ -80,18 +80,19 @@ typed() {
 }
 
 cp "$conf" "$RUNNER_TEMP/mac.conf"
-quick 'wizard.sh: Answers: no terminal to ask WS_LAN: set WS_LAN' sh "$wizard"
-quick 'wizard.sh: Answers: no terminal to ask WS_LAN: set WS_LAN' sh "$wizard" --check
+quick 'wizard.sh: Answers: no terminal to ask WS_TARGET: set WS_TARGET' sh "$wizard"
+quick 'wizard.sh: Answers: no terminal to ask WS_TARGET: set WS_TARGET' sh "$wizard" --check
+quick 'WS_TARGET=home is not lan, cloud or mac-vm' env WS_TARGET=home sh "$wizard" --check
 quick 'WS_LAN=10.77.0.0/30 is not an IPv4 network, as 10.88.0.0/24, clear of 10.77.0.0/30' \
-    env WS_LAN=10.77.0.0/30 sh "$wizard" --check
+    env WS_TARGET=lan WS_LAN=10.77.0.0/30 sh "$wizard" --check
 quick "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 192.0.2.0/24" \
-    env WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=198.51.100.1 sh "$wizard" --check
+    env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=198.51.100.1 sh "$wizard" --check
 
-printf '%s\n' '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' '+WS_GIT_NAME="Jane Doe"' \
-    '+WS_GIT_EMAIL=jane@example.com' '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' \
-    '+WS_RESOLVERS=example.test=192.0.2.53' '+WS_HOOK=example/hook' '+WS_HOOK_SECRET=ws-hook' \
-    >"$RUNNER_TEMP/added"
-env WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME='Jane Doe' \
+printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
+    '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' \
+    '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' \
+    '+WS_HOOK=example/hook' '+WS_HOOK_SECRET=ws-hook' >"$RUNNER_TEMP/added"
+env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME='Jane Doe' \
     WS_GIT_EMAIL=jane@example.com WS_TUNNEL_NETWORKS='198.51.100.0/24 203.0.113.0/24' \
     WS_RESOLVERS=example.test=192.0.2.53 WS_HOOK=example/hook WS_HOOK_SECRET=ws-hook \
     sh "$wizard" --check </dev/null >"$RUNNER_TEMP/env" 2>&1
@@ -102,10 +103,12 @@ added "$RUNNER_TEMP/env" | cmp -s - "$RUNNER_TEMP/added" ||
     error "wizard.sh --check showed other lines for mac.conf than the environment's answers"
 kept "wizard.sh --check with the environment's answers"
 
-typed 'the answers typed' 10.77.0.0/30 192.0.2.0/24 198.51.100.1 '' 192.0.2.10 '"Jane Doe"' \
-    jane@ jane@example.com '198.51.100.0/24 203.0.113.0/24' example.test=192.0.2.53 hook \
-    example/hook ws-hook
-for asked in 'WS_LAN=10.77.0.0/30 is not an IPv4 network' 'WS_HOOK=hook is not a repository' \
+typed 'the answers typed' home '' 10.77.0.0/30 192.0.2.0/24 198.51.100.1 '' 192.0.2.10 \
+    '"Jane Doe"' jane@ jane@example.com '198.51.100.0/24 203.0.113.0/24' example.test=192.0.2.53 \
+    hook example/hook ws-hook
+for asked in 'WS_TARGET=home is not lan, cloud or mac-vm' \
+    'The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]: ' \
+    'WS_LAN=10.77.0.0/30 is not an IPv4 network' 'WS_HOOK=hook is not a repository' \
     "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 192.0.2.0/24" \
     'Answers: WS_LAN and WS_LAN_ADDRESS go together' 'WS_GIT_EMAIL=jane@ is not an email address' \
     "ws's home LAN (WS_LAN) [10.88.0.0/24, or none]: " \
@@ -115,9 +118,10 @@ done
 [ "$(grep -oF "(WS_LAN_ADDRESS): " "$RUNNER_TEMP/tty" | wc -l)" -eq 3 ] ||
     error 'wizard.sh asked WS_LAN_ADDRESS other than 3 times, for 2 bad answers'
 
-# The defaults: the router's LAN and lease (docs/router.md), and the shell role's git identity.
-printf '%s\n' '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' '+WS_GIT_NAME=zadykian' \
-    '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' '+WS_RESOLVERS=' '+WS_HOOK=' \
-    >"$RUNNER_TEMP/added"
-typed 'seven empty lines' '' '' '' '' '' '' ''
+# The defaults: a machine on the LAN, the router's LAN and lease (docs/router.md), and the shell
+# role's git identity.
+printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' \
+    '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
+    '+WS_RESOLVERS=' '+WS_HOOK=' >"$RUNNER_TEMP/added"
+typed 'eight empty lines' '' '' '' '' '' '' '' ''
 exit "$fail"

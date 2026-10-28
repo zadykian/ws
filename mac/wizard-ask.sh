@@ -6,25 +6,34 @@
 
 # The environment's answers, kept before ws_conf sets each key's variable: ask_set_KEY is 1 where
 # the environment sets KEY, even to nothing, and ask_env_KEY holds its value.
-for ask_key in WS_LAN WS_LAN_ADDRESS WS_REMOTE WS_REMOTE_PORT WS_GIT_NAME WS_GIT_EMAIL \
+for ask_key in WS_TARGET WS_LAN WS_LAN_ADDRESS WS_REMOTE WS_REMOTE_PORT WS_GIT_NAME WS_GIT_EMAIL \
     WS_TUNNEL_NETWORKS WS_RESOLVERS WS_HOOK WS_HOOK_SECRET WS_CABLE_SERVICE WS_CABLE_PORT; do
     eval "ask_set_$ask_key=\${$ask_key+1} ask_env_$ask_key=\${$ask_key-}"
 done
 
-# ask_keys asks the stage's keys in order, each with its question and default. ws's address and
-# git's email are asked only with a LAN and a name, and need a value then; the router's port only
-# with its name, and the Keychain item only with another repository. The address defaults to the
-# router's lease where the LAN holds it (docs/router.md), and git's identity to ws's own.
+# ask_keys asks the stage's keys in order, each with its question and default. The machine that ws
+# runs on comes first. ws's address and git's email are asked only with a LAN and a name, and need a
+# value then; the router's port only with its name, and the Keychain item only with another
+# repository. The address defaults to the router's lease where the LAN holds it (docs/router.md),
+# and git's identity to ws's own.
 ask_keys() {
-    ask WS_LAN "ws's home LAN" 10.88.0.0/24
+    ask WS_TARGET "The machine ws runs on: lan, cloud or mac-vm" lan \
+        "WS_TARGET needs lan, cloud or mac-vm"
+    # A VM on the Mac needs a LAN, and a cloud VM a name and a port.
+    ask_need=
+    [ "$WS_TARGET" != mac-vm ] || ask_need="WS_TARGET=mac-vm needs WS_LAN"
+    ask WS_LAN "ws's home LAN" 10.88.0.0/24 "$ask_need"
     if [ -n "$WS_LAN" ]; then
         ask_default=
         ! ws_lan_host "$WS_LAN" 10.88.0.10 || ask_default=10.88.0.10
         ask WS_LAN_ADDRESS "ws's address on the LAN" "$ask_default" \
             "WS_LAN and WS_LAN_ADDRESS go together"
     fi
-    ask WS_REMOTE "The router's name on the internet" ''
-    [ -z "$WS_REMOTE" ] || ask WS_REMOTE_PORT "The router's port forwarded to ws's 22" 22022
+    ask_need=
+    [ "$WS_TARGET" != cloud ] || ask_need="WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT"
+    ask WS_REMOTE "The router's name on the internet" '' "$ask_need"
+    [ -z "$WS_REMOTE" ] ||
+        ask WS_REMOTE_PORT "The router's port forwarded to ws's 22" 22022 "$ask_need"
     ask WS_GIT_NAME "git's name on the Mac" "$(ask_role shell_git_name)"
     if [ -n "$WS_GIT_NAME" ]; then
         ask WS_GIT_EMAIL "git's email on the Mac" "$(ask_role shell_git_email)" \
