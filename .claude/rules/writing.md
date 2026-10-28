@@ -8,6 +8,8 @@ paths:
   - "**/*.j2"
   - ".githooks/*"
   - "mac/ws-tunnel"
+  - "mac/ws-agent"
+  - "mac/ws-agent-pin"
   - "tools/*"
 ---
 
