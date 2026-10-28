@@ -214,9 +214,10 @@ user become root. A `brew upgrade` reaches the copies at the next run of `setup.
 the daemon where a copy changed.
 
 The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key,
-`tunnel.conf` and `routes.d`, below. `setup.sh` copies `tunnel.conf` from `mac.conf`, so that the
-daemon reads no file the user can write. macOS lists the daemon under System Settings › General ›
-Login Items & Extensions, where "Allow in the Background" must stay on.
+`tunnel.conf` and `routes.d`, below. `setup.sh` keeps the public key in `~/.config/ws/tunnel.pub`,
+which the wizard reads, and copies `tunnel.conf` from `mac.conf`, so the daemon reads no file the
+user can write. In System Settings › General › Login Items & Extensions, its "Allow in the
+Background" must stay on.
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
 The scripts fix both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
@@ -258,8 +259,7 @@ second, to `ws-ssh`, serves where UDP is blocked.
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install
-iperf3 from apt, let its port in on the tunnel and the cable for the test alone, and run the
-server:
+iperf3 from apt, let its port in on the tunnel and the cable for the test alone, and run the server:
 
 ```sh
 ufw allow in on wg0 to any port 5201 proto tcp
