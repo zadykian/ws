@@ -21,7 +21,9 @@
 # Its state is in S, $RUNNER_TEMP/yubikey, where bin/ykman, first on the job's PATH, is its link:
 #
 # - SERIAL/ is a YubiKey: version holds its firmware, in is there while it is plugged in, and access
-#   once its PIN, PUK and management key are no longer the defaults;
+#   once its PIN is 24681357, rather than 123456, and its management key
+#   00112233445566778899aabbccddeeff0011223344556677, rather than a blank answer or
+#   010203040506070801020304050607080102030405060708;
 # - SERIAL/SLOT/ is a slot, 82 to 95: key.pem holds its private key, kept for the token, pub.der its
 #   public key, policy its PIN and touch policies, as NEVER NEVER, and cn its certificate's CN. A
 #   slot with cn and no pub.der holds a certificate alone;
@@ -77,6 +79,29 @@ keygen() {
     echo "$3 $4" >"$dir/policy"
 }
 
+# ask PROMPT VALUE... reads a line at PROMPT, as ykman's prompts do, and fails unless it is a VALUE.
+ask() {
+    prompt=$1
+    shift
+    printf '%s: ' "$prompt" >&2
+    IFS= read -r answer || die 'Aborted!'
+    for each; do
+        [ "$answer" != "$each" ] || return 0
+    done
+    return 1
+}
+
+# management asks the management key, and stops on another.
+management() {
+    if [ -f "$S/$serial/access" ]; then
+        set -- 00112233445566778899aabbccddeeff0011223344556677
+    else
+        set -- '' 010203040506070801020304050607080102030405060708
+    fi
+    ask 'Enter a management key [blank to use default key]' "$@" ||
+        die 'Authentication with management key failed.'
+}
+
 # info prints ykman piv info of the YubiKey serial names.
 info() {
     printf '%-25s %s\n' 'PIV version:' "$(cat "$S/$serial/version")" 'PIN tries remaining:' 3/3 \
@@ -124,6 +149,22 @@ ykman() {
         [ -f "$S/$serial/$6/pub.der" ] || die "No key stored in slot $(name "$6")."
         cp "$S/$serial/$6/pub.der" "$7"
         echo "Public key for slot $(name "$6") written to $7."
+        ;;
+    ?*:'piv keys generate -a ED25519 --pin-policy '?*' --touch-policy '?*' '[89]?' '?*)
+        management
+        keygen "$serial" "${10}" "$7" "$9"
+        "$openssl" pkey -pubin -inform DER -in "$S/$serial/${10}/pub.der" -out "${11}"
+        token "$serial"
+        echo "Private key generated in slot $(name "${10}"), public key written to ${11}."
+        ;;
+    ?*:'piv certificates generate -s CN='?*' -d '[0-9]*' '[89]?' '?*)
+        [ -f "$S/$serial/$8/pub.der" ] || die "No private key in slot $(name "$8")."
+        management
+        pin=123456
+        [ ! -f "$S/$serial/access" ] || pin=24681357
+        ask 'Enter PIN' "$pin" || die 'PIN verification failed, 2 tries left.'
+        echo "${5#CN=}" >"$S/$serial/$8/cn"
+        echo "Certificate generated in slot RETIRED$(($(printf '%d' "0x$8") - 129))."
         ;;
     *)
         echo "ykman: the stand-in takes no ${serial:+--device $serial }$*" >&2
