@@ -234,6 +234,7 @@ wsclaude_fail() {
 
 # run_hand adds what stays by hand of ws, the router and the Mac to the closing list, after a run in
 # which a stage acted. ws's part comes from the remote script's status, which the stage read.
+# mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only with a LAN.
 # shellcheck disable=SC2154 # acted is wizard.sh's, host_first wizard-host.sh's
 run_hand() {
     [ "$acted" = 1 ] || return 0
@@ -247,8 +248,8 @@ run_hand() {
         "devices there, allow it (docs/mac.md, ssh's hosts)."
     by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \
         "config file ~/.ssh/config on (docs/mac.md)."
-    [ -z "$host_first" ] || by_hand "ws's lease: static at ${WS_LAN_ADDRESS:-10.88.0.10}, as" \
-        "docs/router.md has it, as this run reached ws at $host_first."
-    [ -z "$WS_REMOTE" ] || by_hand "The router's forwards to ws, UDP 51820 and TCP" \
+    [ -z "$host_first" ] || by_hand "ws's lease: static${WS_LAN_ADDRESS:+ at $WS_LAN_ADDRESS}," \
+        "as docs/router.md has it, as this run reached ws at $host_first."
+    [ -z "$WS_REMOTE" ] || by_hand "The router's forwards to ws, UDP ${WS_PORT:-51820} and TCP" \
         "${WS_REMOTE_PORT:-22022}, for $WS_REMOTE, as docs/router.md has them."
 }

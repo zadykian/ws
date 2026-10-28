@@ -6,7 +6,8 @@
 # file. With a mac.conf of no way to ws, a run must stop, naming docs/router.md. None may change
 # known_hosts. WS_HOST_KEY=yes, with the Mac's own mac.conf, must then add the line back as it was.
 # With a mac.conf whose way to ws doesn't answer, ws's address now must come from WS_FIRST_ADDRESS.
-# The Mac's own mac.conf then puts the way back.
+# That run's closing list must name mac.conf's WS_PORT in the router's forwards, and ws's lease at
+# no address, as mac.conf has no LAN. The Mac's own mac.conf then puts the way back.
 
 set -u
 
@@ -78,7 +79,10 @@ printf '%s\n' "$out"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "wizard.sh with WS_HOST_KEY=yes wrote another $hosts"
 
 conf=$RUNNER_TEMP/first.conf
-sed 's/^WS_REMOTE=.*/WS_REMOTE=192.0.2.1/' ~/.config/ws/mac.conf >"$conf"
+{
+    sed 's/^WS_REMOTE=.*/WS_REMOTE=192.0.2.1/' ~/.config/ws/mac.conf
+    echo WS_PORT=51821
+} >"$conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
 out=$(WS_CONF=$conf sh "$wizard" </dev/null 2>&1)
 status=$?
@@ -91,6 +95,12 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "wizard.sh with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "wizard.sh with WS_FIRST_ADDRESS wrote another $hosts"
+lease="- ws's lease: static, as docs/router.md has it, as this run reached ws at 127.0.0.1."
+forwards="- The router's forwards to ws, UDP 51821 and TCP 22022, for 192.0.2.1,"
+if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
+    ! printf '%s\n' "$out" | grep -qF -e "$forwards"; then
+    error "wizard.sh with WS_FIRST_ADDRESS listed another lease or forwards by hand"
+fi
 sh "$wizard" </dev/null || error "wizard.sh with the Mac's own mac.conf exited $?"
 grep -qx '    HostName localhost' ~/.ssh/config.d/ws || error 'wizard.sh put no way to ws back'
 rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "$none" "$conf" "$RUNNER_TEMP/ssh.config"
