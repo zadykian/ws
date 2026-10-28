@@ -163,7 +163,7 @@ stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock,
 end the wait. Docked, one with no terminal must stop, and one with `WS_CABLE_PORT` name the port,
 run the roles, and stop at the service. Typed, an empty line must take the `169.254` one, and `ping`
 answer. The next run must read no `link`, and one after ws's install or a failed roles' run name the
-port again.
+port again. An older `mac.conf` must take `host_vars`' port, or wait.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

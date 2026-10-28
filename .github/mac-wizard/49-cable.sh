@@ -14,7 +14,10 @@
 # The next run must print nothing, and read no link. Without host_vars and the roles' netplan file,
 # as after ws's install, and undocked, --check must say what it would do, and a run name enp5s0
 # there again, run the roles, and leave mac.conf. Without the netplan file alone, as after a roles'
-# run that failed, a run must run them again. With no answer from ping, a run must stop, naming
+# run that failed, a run must run them again. A mac.conf without WS_CABLE_PORT must take the port
+# that host_vars names, and run no roles. Without host_vars too, a run must print nothing undocked,
+# stop docked with no terminal, naming WS_CABLE_PORT, and with WS_CABLE_PORT name the port there,
+# keep the service, and ping 10.77.0.1. With no answer from ping, a run must stop, naming
 # WS_CABLE_SERVICE. WS_CABLE_SERVICE= must write that empty line, which the next run keeps. mac.conf
 # and the stand-ins go back, and a run must print nothing.
 
@@ -184,6 +187,27 @@ sudo test -e "$netplan" && [ "$status" = 0 ] &&
     [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 2)) ] ||
     error "wizard.sh without the netplan file exited $status, ran the roles other than once, or" \
         "wrote no netplan file"
+# mac.conf from before WS_CABLE_PORT, undocked.
+sed -i '' '/^WS_CABLE_PORT=/d' "$conf"
+wizard run
+grep -qx WS_CABLE_PORT=enp5s0 "$conf" && [ "$status" = 0 ] &&
+    [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 2)) ] ||
+    error "wizard.sh without WS_CABLE_PORT exited $status, kept no enp5s0, or ran the roles"
+sed -i '' '/^WS_CABLE_PORT=/d' "$conf"
+kept=$(cat "$conf")
+sudo rm -f "$vars" "$netplan"
+wizard run
+[ "$status" = 0 ] && [ -z "$out" ] && [ "$(cat "$conf")" = "$kept" ] ||
+    error "wizard.sh without WS_CABLE_PORT and host_vars, undocked, exited $status, or acted"
+echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
+wizard run
+printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: no terminal to ask WS_CABLE_PORT: set \
+WS_CABLE_PORT, or set it to nothing for none" && [ "$status" = 1 ] && [ ! -e "$vars" ] ||
+    error "wizard.sh without WS_CABLE_PORT and host_vars exited $status, or named no WS_CABLE_PORT"
+wizard run WS_CABLE_PORT=enp5s0
+grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" &&
+    grep -qx WS_CABLE_PORT=enp5s0 "$conf" && [ "$(logged ping.log)" = 2 ] && [ "$status" = 0 ] ||
+    error "wizard.sh with WS_CABLE_PORT, in neither mac.conf nor host_vars, exited $status"
 echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
 cp "$RUNNER_TEMP/cable.conf" "$conf"
 touch "$cable/silent"
@@ -191,13 +215,13 @@ wizard run "WS_CABLE_SERVICE=ws stand-in adapter"
 printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: ping -c 1 -t 3 10\.77\.0\.1, ws's end of the \
 cable, got no answer: mac\.conf's WS_CABLE_SERVICE must name the service of the adapter that the \
 cable plugs into" && [ "$status" = 1 ] &&
-    [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
+    [ "$(logged setmanual.log) $(logged ping.log)" = '1 3' ] ||
     error "wizard.sh with no answer from ping exited $status, or pinged other than once"
 rm "$cable/silent"
 cp "$RUNNER_TEMP/cable.conf" "$conf"
 wizard run WS_CABLE_SERVICE=
 [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] &&
-    [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
+    [ "$(logged setmanual.log) $(logged ping.log)" = '1 3' ] ||
     error "wizard.sh with WS_CABLE_SERVICE= exited $status, or wrote another line, or acted"
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "the run after none exited $status"

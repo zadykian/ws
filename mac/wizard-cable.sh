@@ -21,17 +21,28 @@ cable_after() {
     cable_none || run_done || echo "ws's run"
 }
 
-# cable_done succeeds where mac.conf's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT is empty,
-# missing or the cable that ws's status names, read once a run. Without the service, it succeeds
+# cable_first succeeds where the stage takes ws's port as at its first setup: where mac.conf lacks
+# WS_CABLE_SERVICE, or one from before WS_CABLE_PORT has a service, no line for the port, and ws's
+# status names no cable, as after ws's install.
+# shellcheck disable=SC2154 # root_in is wizard-host.sh's
+cable_first() {
+    ask_lacks WS_CABLE_SERVICE || { [ -n "$WS_CABLE_SERVICE" ] && ask_lacks WS_CABLE_PORT &&
+        [ "$root_in" = 1 ] && remote_read && [ "$(remote_get cable)" = - ]; }
+}
+
+# cable_done succeeds where mac.conf's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT is empty
+# or the cable that ws's status names, read once a run. Where cable_first does, it succeeds
 # too where no port that link lists has carrier, as the Mac isn't docked: the stage waits then, and
 # cable_hand names the dock in the closing list. WS_CABLE_PORT in the environment ends the wait, as
 # for a port that ws keeps down. It reads ws only where root logged in there in this run.
 # shellcheck disable=SC2154 # root_in is wizard-host.sh's
 cable_done() {
     ws_conf "$WS_CONF"
-    if ! ask_lacks WS_CABLE_SERVICE; then
-        [ -z "$WS_CABLE_SERVICE" ] || [ -z "$WS_CABLE_PORT" ] || { [ "$root_in" = 1 ] &&
-            remote_read && [ "$(remote_get cable)" = "$WS_CABLE_PORT" ]; }
+    if ! cable_first; then
+        [ -n "$WS_CABLE_SERVICE" ] || return 0
+        ! ask_lacks WS_CABLE_PORT || return 1
+        [ -z "$WS_CABLE_PORT" ] || { [ "$root_in" = 1 ] && remote_read &&
+            [ "$(remote_get cable)" = "$WS_CABLE_PORT" ]; }
         return
     fi
     [ -z "${ask_set_WS_CABLE_PORT-}" ] && ! cable_none && [ "$root_in" = 1 ] && cable_read &&
@@ -48,15 +59,15 @@ cable_read() {
     cable_ws=$(printf '%s\n' "$cable_ports" | awk '/ 10\.77\.0\.1\// { print $1; exit }')
 }
 
-# cable_do takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
+# cable_do takes ws's port, where status names none that holds ws's end, from WS_CABLE_PORT or the
 # terminal, the one with carrier by default. link names it in host_vars on ws, and bootstrap.sh
 # --tags network,wireguard runs there, as both roles read it: the network role must give it
 # 10.77.0.1. Then cable_service takes the Mac's service. none, as either answer, writes an empty
-# WS_CABLE_SERVICE. --check asks nothing, and says what it would do. Where mac.conf has a service,
+# WS_CABLE_SERVICE. --check asks nothing, and says what it would do. Where cable_first fails,
 # cable_again takes the stage's steps.
 cable_do() {
     cable_value=
-    if ! ask_lacks WS_CABLE_SERVICE; then
+    if ! cable_first; then
         cable_again
         return
     fi
@@ -65,7 +76,7 @@ cable_do() {
         return
     fi
     cable_read || ws_die "Cable: link failed on ws: $(tail -n 1 "$lock/link.err")"
-    if [ -z "$cable_ws" ]; then
+    if [ -z "$cable_ws" ] || ! remote_read || [ "$(remote_get cable)" != "$cable_ws" ]; then
         if ws_checking && [ -z "${ask_set_WS_CABLE_PORT-}" ]; then
             ws_say "Cable: would ask ws's port of the cable, name it in host_vars/localhost.yml" \
                 "on ws, and run bootstrap.sh --tags network,wireguard there"
@@ -99,12 +110,13 @@ cable_do() {
 # cable_service takes the Mac's service of the cable, from WS_CABLE_SERVICE in the environment or
 # the terminal. The default is the one service with a 169.254 address, which an adapter gives
 # itself where no DHCP server answers. It writes it in mac.conf, and runs setup.sh, which gives it
-# 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE.
+# 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE. A
+# mac.conf from before WS_CABLE_PORT keeps its own service, and nothing asks it.
 cable_service() {
     cable_list=$(networksetup -listallnetworkservices) ||
         ws_die "Cable: networksetup -listallnetworkservices failed"
     cable_list=$(printf '%s\n' "$cable_list" | sed -e '/^An asterisk (\*) denotes/d' -e 's/^\*//')
-    if ws_checking && [ -z "${ask_set_WS_CABLE_SERVICE-}" ]; then
+    if ws_checking && ask_lacks WS_CABLE_SERVICE && [ -z "${ask_set_WS_CABLE_SERVICE-}" ]; then
         ws_say "Cable: would ask the Mac's service of the cable, write it in mac.conf as" \
             "WS_CABLE_SERVICE, run mac/setup.sh, which gives it 10.77.0.2, and ping 10.77.0.1"
         return 0
@@ -113,7 +125,9 @@ cable_service() {
         networksetup -getinfo "$each" 2>/dev/null | grep -q '^IP address: 169\.254\.' &&
             printf '%s\n' "$each"
     done)
-    cable_ask WS_CABLE_SERVICE "The Mac's service of the cable, of $(cable_join "$cable_list")" \
+    cable_value=$WS_CABLE_SERVICE
+    ! ask_lacks WS_CABLE_SERVICE || cable_ask WS_CABLE_SERVICE \
+        "The Mac's service of the cable, of $(cable_join "$cable_list")" \
         "$(cable_one "$cable_linked")" "$cable_list"
     cable_write || return 1
     [ -n "$cable_value" ] || return 0
@@ -128,12 +142,18 @@ cable_service() {
 
 # cable_again names WS_CABLE_PORT in host_vars on ws where ws's status names none or another, as
 # after ws's install, a failed roles' run or a change in mac.conf, and runs the roles there, with no
-# question and no dock. It stops on a port that ws lacks. --check says what it would do.
+# question and no dock. It stops on a port that ws lacks. A mac.conf from before the key takes
+# WS_CABLE_PORT from the environment, else the cable that status names, and keeps it. --check says
+# what it would do.
 cable_again() {
     remote_read || ws_die "Cable: status failed on ws: $(tail -n 1 "$lock/remote.err")"
     cable_read || ws_die "Cable: link failed on ws: $(tail -n 1 "$lock/link.err")"
     cable_vars=$(remote_get cable)
     cable_value=$WS_CABLE_PORT
+    if ask_lacks WS_CABLE_PORT; then
+        cable_value=${ask_env_WS_CABLE_PORT-}
+        [ -n "$cable_value" ] || cable_value=$cable_vars
+    fi
     cable_names=$(printf '%s\n' "$cable_ports" | cut -d ' ' -f 1)
     cable_in "$cable_names" || ws_die "Cable: WS_CABLE_PORT=$cable_value names none of ws's wired" \
         "ports, $(cable_join "$cable_names"): set it to one"
@@ -150,6 +170,9 @@ cable_again() {
             remote run --tags network,wireguard >&2 || return 1
         fi
     fi
+    [ "$WS_CABLE_PORT" != "$cable_value" ] || return 0
+    ask_write "WS_CABLE_PORT=$cable_value
+" Cable && ws_conf "$WS_CONF"
 }
 
 # cable_ask KEY QUESTION DEFAULT LIST sets cable_value to KEY's answer: the environment's, else a
@@ -206,11 +229,11 @@ WS_CABLE_SERVICE=\"$cable_value\""
 " Cable && ws_conf "$WS_CONF"
 }
 
-# cable_hand adds the dock to what stays by hand, where mac.conf has no WS_CABLE_SERVICE yet, as no
-# port of ws's had carrier. It names WS_CABLE_PORT for the ports that ws keeps down, whose carrier
-# link can't read, and an empty WS_CABLE_SERVICE for a Mac without the cable.
+# cable_hand adds the dock to what stays by hand, where cable_first succeeds, as no port of ws's had
+# carrier. It names WS_CABLE_PORT for the ports that ws keeps down, whose carrier link can't read,
+# and an empty WS_CABLE_SERVICE for a Mac without the cable.
 cable_hand() {
-    ask_lacks WS_CABLE_SERVICE || return 0
+    cable_first || return 0
     set -- "The cable: dock the Mac at the display that ws's cable plugs into, then run the line" \
         "again, which takes the cable's steps."
     cable_down=$(printf '%s\n' "${cable_ports-}" |
