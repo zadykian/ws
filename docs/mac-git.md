@@ -2,27 +2,26 @@
 
 With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `mac/setup.sh` sets up git on the Mac ([The
 Mac](mac.md)), as the `shell` role does on ws ([Signing](shell.md#signing)). It writes
-`~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_KEY`, which
-`~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
-command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
-Homebrew's gh where `PATH` has none. Without the two keys, the script leaves git alone, and emptying
-them leaves the files and the include as they are.
+`~/.config/ws/gitconfig`: the author, and each commit signed with the YubiKey's key, or
+`WS_GIT_SIGNING_KEY`, which `~/.config/ws/allowed_signers` trusts for the email in
+`git verify-commit`. It names gh's credential command too, as `gh auth setup-git` does, so that
+pushes to GitHub take gh's login, and installs Homebrew's gh where `PATH` has none. Without the two
+keys, the script leaves git alone, and emptying them leaves the files and the include as they are.
 
-Without `WS_GIT_SIGNING_KEY`, the key is `~/.ssh/id_ed25519_signing`, which the script makes once
-with no passphrase, as git signs unattended, in a rebase too. Where its `.pub` is there without the
-private key, as an agent's key leaves it, the script stops rather than replace it: name the `.pub`
-in `WS_GIT_SIGNING_KEY`. A key that `WS_GIT_SIGNING_KEY` names must be there already, as the script
-makes no other: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one. An empty
-`WS_GIT_SIGNING_KEY` gives the script's own instead. A `.pub` that the script cannot read, or that
-holds more than a public key's line, as a private key does, stops it too.
+Without `WS_GIT_SIGNING_KEY`, git signs with the YubiKey's key of `WS_GIT_KEY`, whose `.pub` is
+`~/.config/ws/keys/NAME.pub` ([The YubiKey](mac-yubikey.md)). It signs through
+`~/.config/ws/ws-ssh-keygen`, which gives `ssh-keygen` ws's agent, at `~/.ssh/ws-agent.sock`. So a
+terminal, a JetBrains IDE and other apps sign alike, whatever agent they have. The wrapper takes
+the agent's keys alone (`ssh-keygen -U`). With the YubiKey out, the agent lists none, and a commit
+fails on `Couldn't find key in agent`. Nothing falls back to another key, nor to a key in a file
+beside the `.pub`. Put the YubiKey back, and commit again. The file key that older runs made,
+`~/.ssh/id_ed25519_signing`, signs no more, and stays in place.
 
-Where Secretive holds the Mac's ssh key, give git a key of its own in Secretive's app, at Notify.
-The login key asks for Touch ID at each use by default, so a rebase would ask at each commit. Name
-its `.pub`, in `~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys`, in
-`WS_GIT_SIGNING_KEY`. git then signs through `~/.config/ws/secretive-ssh-keygen`, which gives
-`ssh-keygen` Secretive's agent, so that a terminal, a JetBrains IDE and other apps sign alike. The
-key never leaves the Secure Enclave, and signs only while the Mac is unlocked. ssh then offers ws
-Secretive's other key, or else the file key ([ssh's hosts](mac.md#sshs-hosts)).
+A key that `WS_GIT_SIGNING_KEY` names must be there already, as the script makes none. A `.pub`
+that the script cannot read, or that holds more than a public key's line, as a private key does,
+stops it. A key of Secretive's, in
+`~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys`, signs through
+`~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent.
 
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps

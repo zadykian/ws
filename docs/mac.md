@@ -59,9 +59,8 @@ name the YubiKey's keys for ssh and git: [The YubiKey](mac-yubikey.md).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
-`root` for `WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for
-`WS_GIT_SIGNING_KEY`. Without `WS_IDENTITY`, ssh offers ws the YubiKey's key
-([ssh's hosts](#sshs-hosts)).
+`root` for `WS_USER` and 51820 for `WS_PORT`. Without `WS_IDENTITY` and `WS_GIT_SIGNING_KEY`, ssh
+and git take the YubiKey's keys: [ssh's hosts](#sshs-hosts) and [git on the Mac](mac-git.md).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each

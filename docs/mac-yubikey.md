@@ -171,3 +171,8 @@ ssh -o UseKeychain=yes -i ~/.ssh/id_ed25519 ws-ssh 'cat >>.ssh/authorized_keys' 
 ```
 
 For a key of Secretive's, give ssh its agent and `.pub`: `-o IdentityAgent=SOCKET -i OLD.pub`.
+
+## git's key
+
+git signs with the key of `WS_GIT_KEY` through ws's agent too, and with no other key, as
+[git on the Mac](mac-git.md) says.
