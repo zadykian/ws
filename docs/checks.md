@@ -55,7 +55,8 @@ and fails where they differ from the repository's.
 
 A workflow of its own, `mac-wizard.yml`, runs `mac/wizard.sh` on GitHub's macOS runner, from a copy
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and a user would,
-such as `mac.conf`'s answers, dash, and a `gh` logged in to GitHub, first on the wizard's `PATH`.
+such as `mac.conf`'s answers, dash, and a `gh` logged in to GitHub, first on the wizard's `PATH`. It
+sets up the stand-in YubiKey of [The Mac](#the-mac) too.
 Then `checks.sh` runs the cases beside it in order, and stops at the first that fails
 ([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root,
 and a `WS_HOOK` of `WS`, as the files script must. A run must stop where another holds the lock, and
@@ -214,6 +215,9 @@ draw a warning at each run. Logged in, `setup.sh` must warn of a 404 or another 
 gh's, and of an add that leaves the account without the key. It must add the key where the account
 lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh, `setup.sh` must
 install Homebrew's once, with git's keys alone ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
+
+The job sets up a stand-in YubiKey before its first run. A SoftHSM2 token holds its keys, `ws`'s
+in slot 82 and `git`'s in 83 ([yubikey-standin.sh](../.github/yubikey-standin.sh)).
 
 ## The rules
 

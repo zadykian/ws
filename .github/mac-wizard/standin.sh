@@ -23,6 +23,9 @@ printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed
     >~/.config/ws/mac.conf
 # dash, which macOS has as /bin/dash, from Homebrew where the runner lacks it.
 command -v dash >/dev/null || brew install dash
+# The stand-in YubiKey, whose ykman goes first on PATH, for the cases' PATH below and their step.
+sh "$(dirname "$0")/../yubikey-standin.sh"
+PATH=$RUNNER_TEMP/yubikey/bin:$PATH
 # PATH as a shell that predates Homebrew has it, without the directories that hold brew, for the
 # cases that give it to the wizard.
 path=
