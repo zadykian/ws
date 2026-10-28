@@ -125,12 +125,18 @@ yubikey_slots() {
         END { out() }'
 }
 
-# yubikey_key NAME sets yubikey_slot to the slot of the key NAME, whose certificate is CN=NAME, and
-# stops where none is. It writes the key's .pub.
+# yubikey_key NAME sets yubikey_slot to the slot of the key NAME, whose certificate is CN=NAME. It
+# stops where several slots hold that certificate, and where none does. It writes the key's .pub.
 yubikey_key() {
     yubikey_slot=$(yubikey_slots | awk -v want="CN=$1" '
         { subject = $0; sub(/^[^ ]+ [^ ]+ /, "", subject) }
         subject == want { print $1 }')
+    case $yubikey_slot in
+    *[!0-9A-F]*)
+        ws_die "${yubikey_at}slots $(yubikey_join "$yubikey_slot") each hold the" \
+            "certificate CN=$1: ykman piv certificates delete SLOT drops the name from all but one"
+        ;;
+    esac
     [ -n "$yubikey_slot" ] || ws_die "${yubikey_at}YubiKey $yubikey_serial holds no key $1, whose" \
         "certificate is CN=$1: make it as docs/mac-yubikey.md says"
     yubikey_pub "$1"
