@@ -185,7 +185,7 @@ ykman() {
 }
 
 # setup installs SoftHSM2 and yubico-piv-tool, points libykcs11 and SoftHSM2's config at the
-# stand-in's, and makes the job's YubiKey.
+# stand-in's, makes the job's YubiKey, and starts the job's agent where launchd won't.
 setup() {
     if ! /usr/bin/ssh -V 2>&1 | grep -Eq '^OpenSSH_((1[1-9]|[2-9][0-9])\.|10\.[1-9])'; then
         echo "::error::the runner's ssh is $(/usr/bin/ssh -V 2>&1), which loads no Ed25519 key by" \
@@ -220,6 +220,7 @@ setup() {
     change key 30000001 83 git NEVER NEVER
     "$softhsm" --show-slots | grep -q 'YubiKey PIV #30000001' ||
         { echo "::error::SoftHSM2 lists no token of the stand-in's, as $conf names" && exit 1; }
+    sh "$(dirname "$0")/yubikey-agent.sh" start
 }
 
 # change NAME SERIAL ARG... runs a case's command NAME on the stand-in's YubiKey SERIAL.
