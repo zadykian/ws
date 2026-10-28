@@ -11,7 +11,7 @@ if [ -e "/Applications/$app" ] || ! rmdir ~/Applications/"$app"; then
     exit 1
 fi
 
-# A stand-in brew goes in $tmp/bin, first on PATH. It passes the three calls of setup.sh's tools to
+# A stand-in brew goes in $tmp/bin, first on PATH. It passes the four calls of setup.sh's tools to
 # the runner's brew, and logs any other. Of those, it takes the cask's list, which succeeds where
 # $tmp/cask is, and its install alone. The install makes $tmp/cask and an empty app in
 # ~/Applications. It fails with $tmp/cask.fail, and makes no app with $tmp/cask.none.
@@ -20,7 +20,8 @@ brew=$(command -v brew)
 cat >"$tmp/bin/brew" <<EOF
 #!/bin/sh
 case \$* in
-'list --formula wireguard-tools' | '--prefix wireguard-tools' | '--prefix wireguard-go')
+'list --formula wireguard-tools' | '--prefix wireguard-tools' | '--prefix wireguard-go' | \
+    'list --formula yubico-piv-tool')
     exec '$brew' "\$@"
     ;;
 esac

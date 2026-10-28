@@ -4,7 +4,9 @@
 #
 #   ~/repository/ws/mac/setup.sh [--check]
 #
-# It reads mac.conf without running it, and writes ~/.ssh/config.d/ws. Its host ws goes through the
+# It reads mac.conf without running it. It stops unless one YubiKey is in, which holds the keys of
+# mac.conf's WS_SSH_KEY and WS_GIT_KEY, and installs Homebrew's ykman where missing. Then it
+# writes ~/.ssh/config.d/ws. Its host ws goes through the
 # WireGuard tunnel to ws, and ws-ssh reaches ws over the cable, the home LAN or the router's port
 # forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY and launchd has the
 # tunnel's daemon, ws goes the ways ws-ssh does. It puts `Include config.d/ws` first in
@@ -38,6 +40,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/setup-extras.sh"
 # shellcheck source=setup-ssh.sh
 . "$dir/setup-ssh.sh"
+# shellcheck source=setup-yubikey.sh
+. "$dir/setup-yubikey.sh"
 
 # The daemon's plist. Root's copies are in setup-lib.sh's ws_libexec.
 plist=/Library/LaunchDaemons/$ws_label.plist
@@ -270,6 +274,7 @@ main() {
     if [ -n "$WS_PUBLIC_KEY" ] && { ws_checking || ws_tunnel_loaded; }; then
         via_tunnel=1
     fi
+    yubikey
     ssh_files
     ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
     extras
