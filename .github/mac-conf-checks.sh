@@ -183,7 +183,7 @@ must ws_resolver own.test
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
     WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE= WS_GIT_NAME= WS_GIT_EMAIL= \
     WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_IDENTITY_AGENT= WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan \
-    WS_CABLE_PORT=; do
+    WS_CABLE_PORT= WS_SSH_KEY=ws WS_GIT_KEY=git; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -197,7 +197,8 @@ for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS
     WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
     WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet' 'WS_GIT_NAME=ws"stand-in' \
     WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws' 'WS_IDENTITY=~/.ssh/id_ed25519' \
-    WS_IDENTITY_AGENT=agent.sock WS_HOOK=ws WS_HOOK_SECRET=ws/hook WS_TARGET=Cloud; do
+    WS_IDENTITY_AGENT=agent.sock WS_HOOK=ws WS_HOOK_SECRET=ws/hook WS_TARGET=Cloud WS_SSH_KEY=Ws \
+    WS_GIT_KEY=g_it; do
     refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
@@ -260,5 +261,17 @@ for line in WS_HOOK=example/ws/hook WS_HOOK=/ws WS_HOOK=example/ WS_HOOK=../ws W
     refused "line 1: $line is not" "$line"
 done
 refused 'needs WS_HOOK' WS_HOOK_SECRET=ws-hook
+
+# The names of the YubiKey's keys, which their certificates' CN and their .pubs' files carry: 32 of
+# a-z, 0-9 and - at most. ssh's and git's must differ, a default's too.
+long=$(printf 'k%031d' 0)
+gives WS_SSH_KEY laptop-1 WS_SSH_KEY=laptop-1
+gives WS_GIT_KEY "$long" "WS_GIT_KEY=$long"
+for line in 'WS_SSH_KEY=l ws' WS_SSH_KEY=ws.1 "WS_GIT_KEY=${long}0"; do
+    refused "line 1: $line is not" "$line"
+done
+refused 'WS_SSH_KEY and WS_GIT_KEY both name git' WS_SSH_KEY=git
+refused 'WS_SSH_KEY and WS_GIT_KEY both name ws' WS_GIT_KEY=ws
+refused 'WS_SSH_KEY and WS_GIT_KEY both name key' WS_SSH_KEY=key WS_GIT_KEY=key
 sh .github/mac-setup-checks.sh || fail=1
 exit "$fail"

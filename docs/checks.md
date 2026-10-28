@@ -178,7 +178,8 @@ daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
 must take both back, and spare a script's own. Last, `ws_conf` must read an empty value in
 `mac.conf` as its key's default, and still stop on a value of the wrong form. It must also stop on a
-`WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address
+`WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address. It must take
+`WS_SSH_KEY` and `WS_GIT_KEY` of `a-z`, `0-9` and `-` alone, and stop where both name one key
 ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `setup.sh`
 must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
 then none. It must warn of a disabled service. It must stop on one networksetup lacks, or one with a
