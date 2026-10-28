@@ -31,10 +31,8 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 - `gitleaks`: every commit of the history, for secrets, or those that `LOG_OPTS` picks with git
   log's options.
 
-`tools/sizecheck` leaves out the files nobody writes here. Those are foundryctl's compose files and
-lock, which yamllint and ansible-lint leave out too, and Vale's vendored styles. Data files, such
-as TOML, JSON and conf files, are of no kind it caps. `.editorconfig` sets the files' encoding,
-line ends and indents for editors.
+`tools/sizecheck` names the files it leaves out, those nobody writes here. `.editorconfig` sets the
+files' encoding, line ends and indents for editors.
 
 `tools/run` downloads the other tools into `.cache/tools`, each pinned by version and SHA-256. make
 installs the Python tools of `.github/lint-requirements.txt` into `.cache/venv`, with a Python of
@@ -251,13 +249,11 @@ fails, as the daemon runs the same wireguard-go.
 `.github/workflows/rules.yml` runs the checks of
 [zadykian/toolkit](https://github.com/zadykian/toolkit/tree/main/actions) on each pull request.
 They check its commits, size and title, its description, and the terms it adds, against the rules
-of the toolkit's skills. Each warns and never blocks, so no ruleset requires it. A newer event of a
-pull request cancels its older run, as the two would race to create each check's comment.
+of the toolkit's skills. Each warns and never blocks, so no ruleset requires it.
 
 `.github/workflows/issues.yml` runs the toolkit's issue check as an issue opens or changes. It
 warns where the title is no Conventional Commits header, or the body strays from the issue form's
-fields. It takes a workflow of its own, as a pull request's event names no issue, and runs as
-`main` has it. A newer event of an issue cancels its older run, as with a pull request.
+fields. Each workflow's comments say why a newer event cancels an older run.
 
 The workflows pin the toolkit's actions, and `.claude/settings.json` its marketplace, to one
 release. `.github/` holds that release's templates: the pull request template, and the issue form,
@@ -279,15 +275,9 @@ it: `_` separates words, as `-` does. Where gitleaks is installed, they refuse a
 
 The lint plugin of the `zadykian` marketplace, which `.claude/settings.json` enables, has Claude
 Code run two targets of the `Makefile`, as [its docs][lint] say. After each edit,
-`make lint-file FILES=PATH` runs the gates of the file's kind on that file alone:
-
-- Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
-- YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
-- shell, by extension or shebang: `shell` and `sizecheck`;
-- Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
-
-As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only the
-branch's own commits, from `origin/main`.
+`make lint-file FILES=PATH` runs the gates of the file's kind on that file alone, as the target
+lists them. As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only
+the branch's own commits, from `origin/main`.
 
 Each target runs the work tree's own code, as root on the server. That is its `Makefile` and
 `tools/`, the tools its pins name, and the Python that ansible-lint loads, such as the filter
