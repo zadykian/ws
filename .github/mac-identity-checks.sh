@@ -39,6 +39,13 @@ agented() {
     keyed 'identitiesonly yes' "identityagent $2" "identityfile $1"
 }
 
+# filed KEY: changes, with the file key's lines replaced by those of the file KEY. Then ssh -G must
+# give ws and ws-ssh KEY alone.
+filed() {
+    changes "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $1|"
+    keyed 'identitiesonly yes' "identityfile $1"
+}
+
 # job: with the job's mac.conf, a run must give config.d/ws the job's lines again.
 job() {
     with
@@ -57,8 +64,7 @@ four=$(printf '    %s\n' 'IdentityFile ~/.ssh/id_ed25519' 'IdentitiesOnly yes' '
 # give it the agent at its socket, by a path with a blank here.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$tmp/key"
 with "WS_IDENTITY=$tmp/key.pub"
-changes "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $tmp/key|"
-keyed 'identitiesonly yes' "identityfile $tmp/key"
+filed "$tmp/key"
 socket="$tmp/ws agent.sock"
 with "WS_IDENTITY=$tmp/key.pub" "WS_IDENTITY_AGENT=\"$socket\""
 agented "$tmp/key.pub" "$socket"
@@ -134,7 +140,7 @@ cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
 # WS_IDENTITY names a .pub of its own, or one of Secretive's, which takes its agent unless
 # WS_IDENTITY_AGENT names another.
 with "WS_IDENTITY=$tmp/key.pub"
-changes "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $tmp/key|"
+filed "$tmp/key"
 with "WS_IDENTITY=$sec/PublicKeys/other.pub"
 agented "$sec/PublicKeys/other.pub" "$sec/socket.ssh"
 with "WS_IDENTITY=$sec/PublicKeys/other.pub" "WS_IDENTITY_AGENT=\"$socket\""
