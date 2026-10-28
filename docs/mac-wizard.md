@@ -258,8 +258,10 @@ service `10.77.0.2` ([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must g
 
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
 where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
-`WS_CABLE_SERVICE` give the answers. `mac.conf` keeps the port as `WS_CABLE_PORT`. `--check` asks
-nothing, and says what the stage would do.
+`WS_CABLE_SERVICE` give the answers. `mac.conf` keeps the port as `WS_CABLE_PORT`, to change there.
+Where `host_vars` lacks it, as after ws's install, the stage names it there and runs the roles,
+undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what the stage would
+do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
 So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files

@@ -11,7 +11,10 @@
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
 # script's after a bad one, an empty line must take the one service with a 169.254 address. setup.sh
 # must give it 10.77.0.2, and ping reach 10.77.0.1, once, and mac.conf keep enp5s0 as WS_CABLE_PORT.
-# The next run must print nothing. With no answer from ping, a run must stop, naming
+# The next run must print nothing, and read no link. Without host_vars and the roles' netplan file,
+# as after ws's install, and undocked, --check must say what it would do, and a run name enp5s0
+# there again, run the roles, and leave mac.conf. Without the netplan file alone, as after a roles'
+# run that failed, a run must run them again. With no answer from ping, a run must stop, naming
 # WS_CABLE_SERVICE. WS_CABLE_SERVICE= must write that empty line, which the next run keeps. mac.conf
 # and the stand-ins go back, and a run must print nothing.
 
@@ -23,6 +26,7 @@ ws=$RUNNER_TEMP/ws
 cable=$RUNNER_TEMP/cable
 net=$ws/root/sys/class/net
 vars=$ws/root/root/repository/ws/host_vars/localhost.yml
+netplan=$ws/root/etc/netplan/60-direct-link.yaml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -153,8 +157,34 @@ grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 1' ] ||
     error "wizard.sh at a terminal exited $status, set the adapter or pinged other than once, or" \
         "kept no port"
+links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run
-[ "$status" = 0 ] && [ -z "$out" ] || error "the next run exited $status"
+[ "$status" = 0 ] && [ -z "$out" ] &&
+    [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = "$links" ] ||
+    error "the next run exited $status, or read link"
+# ws's install again, undocked: host_vars and the netplan file go, and enp5s0 loses carrier.
+kept=$(cat "$conf")
+runs=$(grep -c '' "$ws/bootstrap.log")
+sudo rm -f "$vars" "$netplan"
+echo 0 | sudo tee "$net/enp5s0/carrier" >/dev/null
+wizard --check
+printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: would name enp5s0 in host_vars/localhost\.yml \
+on ws again, and run bootstrap\.sh --tags network,wireguard there" && [ "$status" = 0 ] &&
+    [ ! -e "$vars" ] || error "wizard.sh --check without host_vars exited $status"
+wizard run
+printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: enp5s0 goes in host_vars/localhost\.yml on ws \
+again, and bootstrap\.sh --tags network,wireguard runs there in a unit of its own" &&
+    grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
+    [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 1)) ] && [ "$(cat "$conf")" = "$kept" ] ||
+    error "wizard.sh without host_vars exited $status, named no enp5s0, or changed mac.conf"
+sudo rm -f "$netplan"
+wizard run
+# root alone reads the netplan file's tree, which the remote script's peer makes with umask 077.
+sudo test -e "$netplan" && [ "$status" = 0 ] &&
+    [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 2)) ] ||
+    error "wizard.sh without the netplan file exited $status, ran the roles other than once, or" \
+        "wrote no netplan file"
+echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
 cp "$RUNNER_TEMP/cable.conf" "$conf"
 touch "$cable/silent"
 wizard run "WS_CABLE_SERVICE=ws stand-in adapter"
@@ -175,7 +205,7 @@ wizard run
 cp "$RUNNER_TEMP/cable.conf" "$conf"
 rm -rf /opt/homebrew/bin/networksetup /opt/homebrew/bin/ping "$RUNNER_TEMP/cable.conf" \
     "$RUNNER_TEMP/tty" "$ws/uplink"
-sudo rm -rf "$cable" "$ws/root/sys" "$ws/addr" "${vars%/*}"
+sudo rm -rf "$cable" "$ws/root/sys" "$ws/addr" "${vars%/*}" "${netplan%/*}"
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status"
 exit "$fail"
