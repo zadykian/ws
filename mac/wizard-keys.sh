@@ -134,8 +134,8 @@ keys_choose() {
 
 # keys_secretive has the user make ws's key in Secretive's app, installed where missing, at its
 # default protection, which asks for Touch ID at each use. It writes the key's .pub and the agent
-# into mac.conf, as git's key would stop ws_identity's default, and the agent must list it. --check
-# takes the agent as ws's, for keys_signing.
+# into mac.conf, as ws_identity takes a key of Secretive's by name alone, and the agent must list
+# it. --check takes the agent as ws's, for keys_signing.
 keys_secretive() {
     keys_agent=\~/${ws_secretive#"$HOME"/}/socket.ssh
     if ws_checking; then

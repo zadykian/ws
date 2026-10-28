@@ -110,7 +110,7 @@ trap 'secretive_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf";
 mkdir -p "$data/PublicKeys"
 ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/p256"
 cp "$tmp/p256.pub" "$data/PublicKeys/ws.pub"
-# Before Secretive's agent has its socket, ws must keep the file key.
+# Before Secretive's agent has its socket, ws must keep its key.
 with
 prints ''
 secretive_agent=$(ssh-agent -s -a "$data/socket.ssh" |
@@ -124,34 +124,14 @@ rm "$tmp/p256"
 mv "$data/PublicKeys/ws.pub" "$tmp/ws.pub"
 prints ''
 mv "$tmp/ws.pub" "$data/PublicKeys/ws.pub"
-# Without WS_IDENTITY, ws must take Secretive's agent and its one key, as a certificate is none, nor
-# a name with a blank, nor a directory. setup.sh must warn as it replaces the file key. A second key
-# must stop setup.sh, --check too, which must name both.
-cp "$tmp/p256.pub" "$data/PublicKeys/ws-cert.pub"
-cp "$tmp/p256.pub" "$data/PublicKeys/ws key.pub"
-mkdir "$data/PublicKeys/ws-dir.pub"
+# Without WS_IDENTITY, Secretive's agent and its one key must leave ws its key too. The file key's
+# .pub in WS_IDENTITY must give ws the file key, though the runner lacks it.
+prints ''
 sec=\~/${data#"$HOME/"}
-warned="setup.sh: warning: Secretive's key replaces ~/.ssh/id_ed25519 as ws's: add"
-warned="$warned $sec/PublicKeys/ws.pub to ws's authorized_keys, or keep the file key with"
-warned="$warned WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf$nl"
-agented "$sec/PublicKeys/ws.pub" "$sec/socket.ssh"
-# As the warning says, the file key's .pub in WS_IDENTITY keeps the file key, though the runner
-# lacks it: config.d/ws must be the job's again (sed -n p changes nothing).
 with 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
-changes -n p
-with
+prints ''
 cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
-several="setup.sh: Secretive's agent holds several keys, $data/PublicKeys/other.pub,"
-several="$several $data/PublicKeys/ws.pub: name the one for ws in mac.conf's WS_IDENTITY"
-stops "$several"
-stops "$several" --check
-# Where WS_GIT_SIGNING_KEY names one of the two, ws's key must be the other, as git's signing key
-# does not count. ws_identity runs alone here, so that git's step does not.
-got=$(WS_GIT_SIGNING_KEY=$sec/PublicKeys/other.pub sh -c '. mac/lib.sh && dir=mac &&
-    . mac/setup-lib.sh && ws_identity && echo "$ws_identity_pub $ws_identity_agent"' 2>&1) || true
-[ "$got" = "$sec/PublicKeys/ws.pub $sec/socket.ssh" ] ||
-    error "ws_identity gives '$got', not ws.pub, where other.pub is WS_GIT_SIGNING_KEY"
-# WS_IDENTITY wins over them: a .pub of its own, or one of Secretive's, which takes its agent unless
+# WS_IDENTITY names a .pub of its own, or one of Secretive's, which takes its agent unless
 # WS_IDENTITY_AGENT names another.
 with "WS_IDENTITY=$tmp/key.pub"
 changes "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $tmp/key|"
@@ -162,7 +142,7 @@ agented "$sec/PublicKeys/other.pub" "$socket"
 # A key of a type that ws's OpenSSH lacks, as Secretive's ML-DSA, must stop setup.sh, --check too.
 rm "$data/PublicKeys/other.pub"
 echo 'ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws' >"$data/PublicKeys/ws.pub"
-with
+with "WS_IDENTITY=$sec/PublicKeys/ws.pub"
 mldsa="setup.sh: $data/PublicKeys/ws.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
 stops "$mldsa"
 stops "$mldsa" --check

@@ -3,39 +3,17 @@
 # WS_IDENTITY_AGENT, which setup-conf.sh's ws_conf reads. setup-lib.sh sources it after
 # setup-conf.sh, so that a script that sources setup-lib.sh has them too.
 
-# ws_identity [FILE] sets ws_identity_pub to the .pub of the key that ssh offers ws, and
+# ws_identity sets ws_identity_pub to the .pub of the key that ssh offers ws, and
 # ws_identity_agent to its agent's socket, or to nothing for a key in a file. Both are paths as
-# config.d/ws names them. They are mac.conf's WS_IDENTITY and WS_IDENTITY_AGENT, where set. Else,
-# where Secretive's socket is there, the key is its one in PublicKeys. git's signing key, which
-# signs alone, does not count, nor a certificate, -cert.pub, which Secretive kept there before 4.0,
-# nor a name ssh_config would misread, as Secretive's own are hex. Else it is the file key,
-# ~/.ssh/id_ed25519, as before. A key in PublicKeys takes Secretive's agent. It stops where
-# Secretive holds several such keys. It stops too where a .pub but the file key's is missing or
-# unreadable, or holds other than one public key, as a private key or a certificate does. A key
-# that ssh-keygen can't read stops it, as does a type ws's OpenSSH 10.2 lacks (ssh -Q key there),
-# as an ML-DSA key of Secretive's. It warns where FILE, the config.d/ws it would replace, gave ws
-# the file key, as Secretive's takes its place.
+# config.d/ws names them. They are mac.conf's WS_IDENTITY and WS_IDENTITY_AGENT, where set, else the
+# file key, ~/.ssh/id_ed25519, as before. A .pub in Secretive's PublicKeys takes Secretive's agent.
+# It stops where a .pub but the file key's is missing or unreadable, or holds other than one public
+# key, as a private key or a certificate does. A key that ssh-keygen can't read stops it, as does a
+# type ws's OpenSSH 10.2 lacks (ssh -Q key there), as an ML-DSA key of Secretive's.
 # shellcheck disable=SC2153,SC2154 # WS_IDENTITY_AGENT is ws_conf's and ws_secretive setup-conf.sh's
 ws_identity() {
-    ws_identity_pub=$WS_IDENTITY
+    ws_identity_pub=${WS_IDENTITY:-\~/.ssh/id_ed25519.pub}
     ws_identity_agent=$WS_IDENTITY_AGENT
-    if [ -z "$ws_identity_pub" ] && [ -S "$ws_secretive/socket.ssh" ]; then
-        ws_skip=$WS_GIT_SIGNING_KEY
-        [ "${ws_skip#\~/}" = "$ws_skip" ] || ws_skip=$HOME/${ws_skip#\~/}
-        ws_keys=
-        for ws_each in "$ws_secretive"/PublicKeys/*.pub; do
-            case $ws_each in "$ws_skip" | *-cert.pub) continue ;; esac
-            [ -f "$ws_each" ] || continue
-            case ${ws_each##*/} in *[!A-Za-z0-9._@+-]*) continue ;; esac
-            ws_keys="$ws_keys${ws_keys:+, }$ws_each"
-            ws_identity_pub=\~/${ws_each#"$HOME"/}
-        done
-        case $ws_keys in
-        *', '*) ws_die "Secretive's agent holds several keys, $ws_keys: name the one for ws in" \
-            "mac.conf's WS_IDENTITY" ;;
-        esac
-    fi
-    ws_identity_pub=${ws_identity_pub:-\~/.ssh/id_ed25519.pub}
     [ "$ws_identity_pub$ws_identity_agent" != \~/.ssh/id_ed25519.pub ] || return 0
     ws_file=$ws_identity_pub
     [ "${ws_file#\~/}" = "$ws_file" ] || ws_file=$HOME/${ws_file#\~/}
@@ -61,10 +39,6 @@ ws_identity() {
     esac
     ssh-keygen -l -f "$ws_file" >/dev/null 2>&1 || ws_die "ssh-keygen cannot read $ws_file: name" \
         "the .pub of a P-256 or ed25519 key in mac.conf's WS_IDENTITY"
-    [ -n "$WS_IDENTITY" ] || ! grep -qsx '    IdentityFile ~/.ssh/id_ed25519' "${1-/dev/null}" ||
-        ws_say "warning: Secretive's key replaces ~/.ssh/id_ed25519 as ws's: add $ws_identity_pub" \
-            "to ws's authorized_keys, or keep the file key with WS_IDENTITY=~/.ssh/id_ed25519.pub" \
-            "in mac.conf"
 }
 
 # ws_identity_lines prints config.d/ws's lines for the key that ws_identity set, which ssh offers ws
