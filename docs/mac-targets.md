@@ -28,7 +28,7 @@ the Mac's display, if any:
   target needs both.
 - The VM needs a public IPv4 address, as `ws-ssh` and the tunnel take IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
-  that `WS_PORT` sets.
+  that `WS_PORT` sets. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
   ([Root's key](mac-wizard.md#roots-key)).
 - ws's run turns the outbound table off, which would drop the metadata service

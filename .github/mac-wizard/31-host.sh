@@ -7,7 +7,8 @@
 # known_hosts. WS_HOST_KEY=yes, with the Mac's own mac.conf, must then add the line back as it was.
 # With a mac.conf whose way to ws doesn't answer, ws's address now must come from WS_FIRST_ADDRESS.
 # That run's closing list must name mac.conf's WS_PORT in the router's forwards, and ws's lease at
-# no address, as mac.conf has no LAN. The Mac's own mac.conf then puts the way back.
+# no address, as mac.conf has no LAN. A cloud VM's copy must name mac.conf's way to ws, and no
+# lease. The Mac's own mac.conf then puts the way back.
 
 set -u
 
@@ -101,6 +102,19 @@ if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
     ! printf '%s\n' "$out" | grep -qF -e "$forwards"; then
     error "wizard.sh with WS_FIRST_ADDRESS listed another lease or forwards by hand"
 fi
+sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' "$conf" >"$RUNNER_TEMP/cloud.conf"
+cp "$RUNNER_TEMP/hosts.without" "$hosts"
+out=$(WS_CONF=$RUNNER_TEMP/cloud.conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp sh "$wizard" \
+    </dev/null 2>&1)
+status=$?
+printf '%s\n' "$out"
+way="- ws's address: WS_REMOTE in mac.conf must lead to ws, as this run reached it at 127.0.0.1"
+if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (docs/mac-targets.md)." ||
+    printf '%s\n' "$out" | grep -q "^- ws's lease: "; then
+    error "wizard.sh on a cloud VM with WS_FIRST_ADDRESS exited $status, or named its lease"
+fi
+sudo rm -r "$RUNNER_TEMP/ws/root/root/repository/ws/host_vars"
+rm "$RUNNER_TEMP/cloud.conf"
 sh "$wizard" </dev/null || error "wizard.sh with the Mac's own mac.conf exited $?"
 grep -qx '    HostName localhost' ~/.ssh/config.d/ws || error 'wizard.sh put no way to ws back'
 rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "$none" "$conf" "$RUNNER_TEMP/ssh.config"

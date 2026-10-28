@@ -119,8 +119,10 @@ tunnel_check() {
         return 0
     fi
     if [ -n "$host_first" ]; then
+        tunnel_once="ws's lease is static"
+        [ "$WS_TARGET" = lan ] || tunnel_once="mac.conf's way leads to ws"
         by_hand "The tunnel's handshake: ws-tunnel goes to ws's ways, not $host_first, where this" \
-            "run reached ws; once ws's lease is static, run the wizard again, which checks it."
+            "run reached ws; once $tunnel_once, run the wizard again, which checks it."
         return 0
     fi
     if [ "$tunnel_peered" = 1 ] && [ "$tunnel_had" = "$WS_PUBLIC_KEY" ]; then

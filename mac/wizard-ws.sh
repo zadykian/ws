@@ -235,6 +235,7 @@ wsclaude_fail() {
 # run_hand adds what stays by hand of ws, the router and the Mac to the closing list, after a run in
 # which a stage acted. ws's part comes from the remote script's status, which the stage read.
 # mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only with a LAN.
+# Off the LAN, run_away's lines take the router's place.
 # shellcheck disable=SC2154 # acted is wizard.sh's, host_first wizard-host.sh's
 run_hand() {
     [ "$acted" = 1 ] || return 0
@@ -248,8 +249,25 @@ run_hand() {
         "devices there, allow it (docs/mac.md, ssh's hosts)."
     by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \
         "config file ~/.ssh/config on (docs/mac.md)."
+    [ "$WS_TARGET" = lan ] || {
+        run_away
+        return 0
+    }
     [ -z "$host_first" ] || by_hand "ws's lease: static${WS_LAN_ADDRESS:+ at $WS_LAN_ADDRESS}," \
         "as docs/router.md has it, as this run reached ws at $host_first."
     [ -z "$WS_REMOTE" ] || by_hand "The router's forwards to ws, UDP ${WS_PORT:-51820} and TCP" \
         "${WS_REMOTE_PORT:-22022}, for $WS_REMOTE, as docs/router.md has them."
+}
+
+# run_away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
+# run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
+# in (docs/mac-targets.md).
+# shellcheck disable=SC2154 # host_first is wizard-host.sh's
+run_away() {
+    run_way=WS_LAN_ADDRESS
+    [ "$WS_TARGET" != cloud ] || run_way=WS_REMOTE
+    [ -z "$host_first" ] || by_hand "ws's address: $run_way in mac.conf must lead to ws, as this" \
+        "run reached it at $host_first (docs/mac-targets.md)."
+    [ "$WS_TARGET" != cloud ] || by_hand "The provider's firewall: UDP ${WS_PORT:-51820} open to" \
+        "ws, for the tunnel (docs/mac-targets.md)."
 }

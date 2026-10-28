@@ -93,7 +93,7 @@ gives its fingerprint. Without that line, a run with no terminal must stop witho
 with another fingerprint, and `--check` must show the line, or stop at a link, as a run must. With a
 `mac.conf` of no way to ws, a run must stop, naming [The router](router.md). Where `WS_REMOTE`
 doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing list name `WS_PORT`
-and no lease's address.
+and no lease's address. On a cloud VM, it must name `mac.conf`'s way in place of the lease.
 
 Root logs in to that `sshd` by root's own `authorized_keys`. The cases fill it from the stand-in
 `gh`'s keys, as Ubuntu's installer and the README's step do for ws. Each session runs `ws.sh`, which
@@ -168,7 +168,7 @@ print nothing, one that acts name the dock, and `WS_CABLE_PORT` end the wait. Do
 terminal must stop, one with `WS_CABLE_PORT` name the port, run the roles, read its late address,
 and stop at the service. Typed, an empty line must take the `169.254` one, and `ping` answer. The
 next must read no `link`, and one after ws's install or a failed roles' run name it again. Off the
-LAN, a run and `--check` must skip it.
+LAN, a run and `--check` must skip it, a cloud VM's naming its firewall.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

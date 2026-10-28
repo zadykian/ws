@@ -279,11 +279,12 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, and
   Gateway's connection to ws.
 - ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
-  where `mac.conf` has `WS_REMOTE` ([The router](router.md)).
+  where `mac.conf` has `WS_REMOTE` ([The router](router.md)). Off the LAN, `mac.conf`'s way to ws
+  instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](mac-targets.md)).
 - ws's outbound table, which `security_outbound: false` in ws's `host_vars` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
-- The tunnel's handshake, where the Host key stage asked ws's address: once ws's lease is static,
-  the wizard again, which checks it.
+- The tunnel's handshake, where the Host key stage asked ws's address: the wizard again, which
+  checks it, once ws's lease is static. Off the LAN, once `mac.conf`'s way leads to ws.
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as
   `setup.sh`'s does with git's name ([git](mac-git.md)). Through it, pushes from the Mac's clones
   take gh's login.

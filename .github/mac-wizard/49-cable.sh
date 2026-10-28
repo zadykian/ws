@@ -6,10 +6,10 @@
 # after the roles' run. The uplink there must stop a run, and none write an empty WS_CABLE_SERVICE
 # alone. Once enp5s0 has carrier, a run with no terminal must stop, naming WS_CABLE_PORT, and
 # --check say what it would do, neither writing ws's host_vars. With WS_TARGET=cloud, a run must
-# skip the stage, and its closing list name no dock. With WS_TARGET=mac-vm, --check must skip it
-# too. With WS_CABLE_PORT, a run must name enp5s0 there, run bootstrap.sh --tags
-# network,wireguard, read its late 10.77.0.1 in one login of the files script's wait, and stop at
-# the Mac's service.
+# skip the stage, and its closing list name the provider's firewall, but neither the dock nor the
+# router's forwards. With WS_TARGET=mac-vm, --check must skip it too. With WS_CABLE_PORT, a run
+# must name enp5s0 there, run bootstrap.sh --tags network,wireguard, read its late 10.77.0.1 in one
+# login of the files script's wait, and stop at the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
 # script's after a bad one, an empty line must take the one service with a 169.254 address. setup.sh
@@ -131,9 +131,10 @@ WS_CABLE_PORT, or set it to nothing for none" && [ "$status" = 1 ] && [ ! -e "$v
     error "wizard.sh docked with no terminal exited $status, or named no WS_CABLE_PORT"
 sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/cloud.conf"
 wizard run WS_CONF="$RUNNER_TEMP/cloud.conf"
-if [ "$status" != 0 ] ||
-    printf '%s\n' "$out" | grep -q -e '^wizard\.sh: Cable: ' -e '^- The cable: ' ||
-    sudo grep -q '^network_direct_link_interface:' "$vars"; then
+firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (docs/mac-targets.md)."
+if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
+    printf '%s\n' "$out" | grep -q -e '^wizard\.sh: Cable: ' -e '^- The cable: ' \
+        -e '^- The router' || sudo grep -q '^network_direct_link_interface:' "$vars"; then
     error "wizard.sh with WS_TARGET=cloud exited $status, or took the cable's steps"
 fi
 sudo rm -f "$vars"
