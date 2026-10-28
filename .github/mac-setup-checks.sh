@@ -4,8 +4,8 @@
 # set up the Mac (.github/workflows/mac.yml). As it runs setup.sh, sudo included, and edits the
 # job's mac.conf, it stops without the job's TUNNEL, and puts the file back as it exits, on a
 # signal too. Each failure prints an ::error:: line, and any fails the script at its end. Last, it
-# sources the cases of the YubiKey, ws's key, Gateway and git: mac-yubikey-checks.sh,
-# mac-identity-checks.sh, mac-gateway-checks.sh and mac-git-checks.sh.
+# sources the cases of the YubiKey, ws's agent, ws's key, Gateway and git: mac-yubikey-checks.sh,
+# mac-agent-checks.sh, mac-identity-checks.sh, mac-gateway-checks.sh and mac-git-checks.sh.
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
@@ -185,6 +185,8 @@ stops 'setup.sh: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2
 logged
 # shellcheck source=.github/mac-yubikey-checks.sh
 . .github/mac-yubikey-checks.sh
+# shellcheck source=.github/mac-agent-checks.sh
+. .github/mac-agent-checks.sh
 # shellcheck source=.github/mac-identity-checks.sh
 . .github/mac-identity-checks.sh
 # shellcheck source=.github/mac-gateway-checks.sh
