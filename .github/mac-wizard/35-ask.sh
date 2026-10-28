@@ -15,7 +15,7 @@ printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed
 # macOS's script writes its stdin's end to the terminal ahead of the lines it still holds, so the
 # end comes 5 s after them.
 {
-    printf '%s\n' 10.77.0.0/30 none none '' '' ''
+    printf '%s\n' '' 10.77.0.0/30 none none '' '' ''
     sleep 5
 } | script -q /dev/null sh "$wizard" >"$RUNNER_TEMP/tty" 2>&1
 status=$?
