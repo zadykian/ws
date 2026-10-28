@@ -79,7 +79,7 @@ jobs:
           sh mac/setup.sh --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
               { echo '::error::setup.sh --check failed'; exit 1; }
           fail=0
-          for path in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel \
+          for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/ws/keys /etc/ws-tunnel \
               /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
               if sudo test -e "$path"; then
                   echo "::error::setup.sh --check made $path"
