@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The LaunchAgent of ws's ssh agent, which mac/setup.sh copies to ~/Library/LaunchAgents with the
+  home's path in place of each ~, as launchd expands none: launchd runs ws-agent as the user from
+  login on, starts it again 10 s after it exits, and appends its output to
+  ~/Library/Logs/ws-agent.log.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.github.zadykian.ws-agent</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>~/.config/ws/ws-agent</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>StandardOutPath</key>
+	<string>~/Library/Logs/ws-agent.log</string>
+	<key>StandardErrorPath</key>
+	<string>~/Library/Logs/ws-agent.log</string>
+</dict>
+</plist>

@@ -13,7 +13,8 @@
 # ~/.ssh/config. With sudo, it gives the cable's address to the service WS_CABLE_SERVICE names. With
 # WS_GIT_NAME, it makes git's signing key and ~/.config/ws/gitconfig, which it includes at the top
 # of ~/.gitconfig, and installs Homebrew's gh where PATH has none. gh then adds the key to GitHub.
-# It installs JetBrains Gateway from Homebrew's cask where its app is missing.
+# It installs JetBrains Gateway from Homebrew's cask where its app is missing. It copies ws-agent,
+# ws's ssh agent, to ~/.config/ws, with the LaunchAgent through which launchd runs it.
 #
 # Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
 # wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
@@ -42,6 +43,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/setup-ssh.sh"
 # shellcheck source=setup-yubikey.sh
 . "$dir/setup-yubikey.sh"
+# shellcheck source=setup-agent.sh
+. "$dir/setup-agent.sh"
 
 # The daemon's plist. Root's copies are in setup-lib.sh's ws_libexec.
 plist=/Library/LaunchDaemons/$ws_label.plist
@@ -275,6 +278,7 @@ main() {
         via_tunnel=1
     fi
     yubikey
+    agent
     ssh_files
     ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
     extras

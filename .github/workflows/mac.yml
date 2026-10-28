@@ -79,12 +79,10 @@ jobs:
           sh mac/setup.sh --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
               { echo '::error::setup.sh --check failed'; exit 1; }
           fail=0
-          for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/ws/keys /etc/ws-tunnel \
+          for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/ws/keys ~/.config/ws/ws-agent* \
+              ~/Library/LaunchAgents/com.github.zadykian.ws-agent.plist /etc/ws-tunnel \
               /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
-              if sudo test -e "$path"; then
-                  echo "::error::setup.sh --check made $path"
-                  fail=1
-              fi
+              ! sudo test -e "$path" || { echo "::error::setup.sh --check made $path"; fail=1; }
           done
           cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
               { echo '::error::setup.sh --check changed ~/.ssh/config'; fail=1; }
