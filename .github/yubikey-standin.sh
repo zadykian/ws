@@ -25,7 +25,8 @@
 # - SERIAL/ is a YubiKey: version holds its firmware, in is there while it is plugged in, and access
 #   once its PIN is 24681357, rather than 123456, and its management key
 #   00112233445566778899aabbccddeeff0011223344556677, rather than a blank answer or
-#   010203040506070801020304050607080102030405060708;
+#   010203040506070801020304050607080102030405060708. id is its Nano's registry ID, which the
+#   stand-in ioreg, bin/ioreg, prints (yubikey-ioreg.sh);
 # - SERIAL/SLOT/ is a slot, 82 to 95: key.pem holds its private key, kept for the token, pub.der its
 #   public key, policy its PIN and touch policies, as NEVER NEVER, type the key's, as ykman prints
 #   it, ED25519 unless a case says another, and cn its certificate's CN. A slot with cn and no
@@ -34,6 +35,7 @@
 #   as libykcs11 labels its token, with the user PIN VERIFY_NONE. Each key has libykcs11's ID and
 #   label, 05 and Retired Key 1 for slot 82;
 # - env names SoftHSM2's softhsm2-util and an openssl that makes Ed25519 keys, which macOS's lacks;
+# - ids counts the tokens made, so that each gets a new id;
 # - log holds the stand-in ykman's arguments, a call a line.
 
 set -eu
@@ -58,8 +60,12 @@ name() {
 }
 
 # token SERIAL makes the YubiKey's token again from its slots' keys while it is plugged in, and
-# deletes it while it is out, so that the PKCS#11 module lists its keys only while it is in.
+# deletes it while it is out, so that the PKCS#11 module lists its keys only while it is in. It
+# gives the YubiKey a new id, as a replug would.
 token() {
+    ids=$(($(cat "$S/ids" 2>/dev/null || echo 0) + 1))
+    echo "$ids" >"$S/ids"
+    printf '0x%x\n' "$((0x100001000 + ids))" >"$S/$1/id"
     label="YubiKey PIV #$1"
     "$softhsm" --delete-token --token "$label" >/dev/null 2>&1 || true
     [ -f "$S/$1/in" ] || return 0
@@ -205,6 +211,7 @@ setup() {
         'log.level = ERROR' >"$conf"
     ln -sfn "$module" "$(brew --prefix yubico-piv-tool)/lib/libykcs11.dylib"
     ln -sfn "$(cd "$(dirname "$0")" && pwd -P)/yubikey-standin.sh" "$S/bin/ykman"
+    ln -sfn "$(cd "$(dirname "$0")" && pwd -P)/yubikey-ioreg.sh" "$S/bin/ioreg"
     [ -z "${GITHUB_PATH-}" ] || echo "$S/bin" >>"$GITHUB_PATH"
     load
     change new 30000001
