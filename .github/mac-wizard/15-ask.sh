@@ -5,7 +5,9 @@
 # environment must stop --check, with the form the key takes. --check must show the environment's
 # answers as the lines it would add to mac.conf. The same answers, typed at a terminal of script's
 # after bad ones, must show the same lines, each bad one asked again with its form. Empty lines must
-# take the defaults.
+# take the defaults. On a mac.conf of the Mac's key alone, a cloud VM must be asked no LAN, and need
+# its name. A VM on the Mac must be asked no router's name, and need its address. Each must show its
+# defaults. mac-vm on standin.sh's mac.conf, which holds WS_REMOTE, must stop, naming the key.
 
 set -u
 
@@ -87,6 +89,9 @@ quick 'WS_LAN=10.77.0.0/30 is not an IPv4 network, as 10.88.0.0/24, clear of 10.
     env WS_TARGET=lan WS_LAN=10.77.0.0/30 sh "$wizard" --check
 quick "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 192.0.2.0/24" \
     env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=198.51.100.1 sh "$wizard" --check
+quick "WS_TARGET=mac-vm has another target's key: WS_REMOTE" env WS_TARGET=mac-vm \
+    WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
+    WS_HOOK= sh "$wizard" --check
 
 printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
     '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' \
@@ -124,4 +129,29 @@ printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.1
     '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
     '+WS_RESOLVERS=' '+WS_HOOK=' >"$RUNNER_TEMP/added"
 typed 'eight empty lines' '' '' '' '' '' '' '' ''
+
+conf=$RUNNER_TEMP/target.conf
+WS_CONF=$conf
+export WS_CONF
+echo 'WS_IDENTITY=~/.ssh/id_ed25519.pub' >"$conf"
+cp "$conf" "$RUNNER_TEMP/mac.conf"
+quick 'wizard.sh: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
+    env WS_TARGET=cloud sh "$wizard" --check
+printf '%s\n' '+WS_TARGET=cloud' '+WS_REMOTE=ws.example.test' '+WS_REMOTE_PORT=22' \
+    '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
+    '+WS_RESOLVERS=' '+WS_HOOK=' >"$RUNNER_TEMP/added"
+typed 'a cloud VM' cloud '' ws.example.test '' '' '' '' '' ''
+for asked in 'Answers: WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT' \
+    "The VM's SSH port (WS_REMOTE_PORT) [22]: "; do
+    grep -qF "$asked" "$RUNNER_TEMP/tty" || error "wizard.sh asked a cloud VM with no '$asked'"
+done
+printf '%s\n' '+WS_TARGET=mac-vm' '+WS_LAN=192.168.64.0/24' '+WS_LAN_ADDRESS=192.168.64.2' \
+    '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
+    '+WS_RESOLVERS=' '+WS_HOOK=' >"$RUNNER_TEMP/added"
+typed 'a VM on the Mac' mac-vm '' '' 192.168.64.2 '' '' '' '' ''
+for asked in "The Mac's network for its VMs (WS_LAN) [192.168.64.0/24]: " \
+    'Answers: WS_LAN and WS_LAN_ADDRESS go together'; do
+    grep -qF "$asked" "$RUNNER_TEMP/tty" || error "wizard.sh asked a VM on the Mac with no '$asked'"
+done
+rm "$conf"
 exit "$fail"

@@ -205,6 +205,12 @@ ws_conf_pairs() {
     if [ "$WS_TARGET" = mac-vm ] && [ -z "$WS_LAN" ]; then
         ws_die "$1: WS_TARGET=mac-vm needs WS_LAN"
     fi
+    # Another target's way would lead ssh and the tunnel to a host that this target lacks.
+    ws_away=
+    [ "$WS_TARGET" != cloud ] || ws_away=${WS_LAN:+ WS_LAN}
+    [ "$WS_TARGET" != mac-vm ] || ws_away=${WS_REMOTE:+ WS_REMOTE}
+    [ -z "$ws_away" ] || ws_die "$1: WS_TARGET=$WS_TARGET has another target's key:$ws_away" \
+        "(docs/mac-targets.md)"
     case ${WS_GIT_NAME:+name}${WS_GIT_EMAIL:+email} in
     name | email) ws_die "$1: WS_GIT_NAME and WS_GIT_EMAIL go together" ;;
     esac

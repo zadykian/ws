@@ -174,7 +174,7 @@ must stop a run and `--check` within 60 s, naming its key. A bad one from the en
 `--check`, with the form the key takes. `--check` must show the environment's answers as the lines
 it would add to `mac.conf`, and the first run must add them at its end. Typed at a terminal of
 `script`'s after bad ones, each asked again, the same answers must show the same lines, and empty
-lines the defaults. After the first run, they must write the same `mac.conf`.
+lines the defaults, for each target. After the first run, they must write the same `mac.conf`.
 
 Last, `mac/bootstrap.sh`, run by `sh` with the clone's file on stdin, as `curl | sh` runs it, must
 find the runner's Command Line Tools and brew with that `PATH`. It must leave the clone's commit and

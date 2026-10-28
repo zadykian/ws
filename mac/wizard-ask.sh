@@ -12,28 +12,13 @@ for ask_key in WS_TARGET WS_LAN WS_LAN_ADDRESS WS_REMOTE WS_REMOTE_PORT WS_GIT_N
 done
 
 # ask_keys asks the stage's keys in order, each with its question and default. The machine that ws
-# runs on comes first. ws's address and git's email are asked only with a LAN and a name, and need a
-# value then; the router's port only with its name, and the Keychain item only with another
-# repository. The address defaults to the router's lease where the LAN holds it (docs/router.md),
-# and git's identity to ws's own.
+# runs on comes first, as the ways to ws follow it. git's email is asked only with a name, and needs
+# a value then, and the Keychain item only with another repository. git's identity defaults to
+# ws's own.
 ask_keys() {
     ask WS_TARGET "The machine ws runs on: lan, cloud or mac-vm" lan \
         "WS_TARGET needs lan, cloud or mac-vm"
-    # A VM on the Mac needs a LAN, and a cloud VM a name and a port.
-    ask_need=
-    [ "$WS_TARGET" != mac-vm ] || ask_need="WS_TARGET=mac-vm needs WS_LAN"
-    ask WS_LAN "ws's home LAN" 10.88.0.0/24 "$ask_need"
-    if [ -n "$WS_LAN" ]; then
-        ask_default=
-        ! ws_lan_host "$WS_LAN" 10.88.0.10 || ask_default=10.88.0.10
-        ask WS_LAN_ADDRESS "ws's address on the LAN" "$ask_default" \
-            "WS_LAN and WS_LAN_ADDRESS go together"
-    fi
-    ask_need=
-    [ "$WS_TARGET" != cloud ] || ask_need="WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT"
-    ask WS_REMOTE "The router's name on the internet" '' "$ask_need"
-    [ -z "$WS_REMOTE" ] ||
-        ask WS_REMOTE_PORT "The router's port forwarded to ws's 22" 22022 "$ask_need"
+    ask_ways
     ask WS_GIT_NAME "git's name on the Mac" "$(ask_role shell_git_name)"
     if [ -n "$WS_GIT_NAME" ]; then
         ask WS_GIT_EMAIL "git's email on the Mac" "$(ask_role shell_git_email)" \
@@ -43,6 +28,37 @@ ask_keys() {
     ask WS_RESOLVERS "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks" ''
     ask WS_HOOK "Another repository whose apply.sh runs on ws, as OWNER/REPO" ''
     [ -z "$WS_HOOK" ] || ask WS_HOOK_SECRET "The Keychain item of its apply.sh's secret" ''
+}
+
+# ask_ways asks the ways to ws of WS_TARGET's machine (docs/mac-targets.md). A cloud VM has its name
+# or address and its SSH port alone, and a VM on the Mac the Mac's network for its VMs and its
+# address there. On the LAN, ws's address is asked only with a LAN, and the router's port only with
+# its name. They default to the router's lease where the LAN holds it, and its forward
+# (docs/router.md). A cloud VM's name and port, and each address where asked, need a value.
+ask_ways() {
+    case $WS_TARGET in
+    cloud)
+        ask_need="WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT"
+        ask WS_REMOTE "The VM's name or address on the internet" '' "$ask_need"
+        ask WS_REMOTE_PORT "The VM's SSH port" 22 "$ask_need"
+        ;;
+    mac-vm)
+        ask WS_LAN "The Mac's network for its VMs" 192.168.64.0/24 "WS_TARGET=mac-vm needs WS_LAN"
+        [ -z "$WS_LAN" ] || ask WS_LAN_ADDRESS "The VM's address on that network" '' \
+            "WS_LAN and WS_LAN_ADDRESS go together"
+        ;;
+    *)
+        ask WS_LAN "ws's home LAN" 10.88.0.0/24
+        if [ -n "$WS_LAN" ]; then
+            ask_default=
+            ! ws_lan_host "$WS_LAN" 10.88.0.10 || ask_default=10.88.0.10
+            ask WS_LAN_ADDRESS "ws's address on the LAN" "$ask_default" \
+                "WS_LAN and WS_LAN_ADDRESS go together"
+        fi
+        ask WS_REMOTE "The router's name on the internet" ''
+        [ -z "$WS_REMOTE" ] || ask WS_REMOTE_PORT "The router's port forwarded to ws's 22" 22022
+        ;;
+    esac
 }
 
 # ask_role NAME prints the shell role's default NAME, which ws's git takes.
