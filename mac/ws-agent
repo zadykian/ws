@@ -6,9 +6,10 @@
 #
 # It starts Apple's ssh-agent at ~/.ssh/ws-agent.sock, as macOS's own agent takes no -P: its
 # default providers, /usr/lib*/*,/usr/local/lib*/*, matched after realpath, refuse Homebrew's
-# libykcs11, whose link leads into the Cellar. Then ssh-add -s loads the YubiKey's keys. It logs
-# each change and failure to its standard output, launchd's log file, ~/Library/Logs/ws-agent.log,
-# which it starts anew past 1 MiB. Where ssh-agent ends, it exits, and launchd starts it again.
+# libykcs11, whose link leads into the Cellar. Then it has the agent hold the YubiKey's keys while
+# it is in. It logs each change and failure to its standard output, launchd's log file,
+# ~/Library/Logs/ws-agent.log, which it starts anew past 1 MiB. Where ssh-agent ends, or the
+# provider's path in the Cellar changes, it exits, and launchd starts it again.
 # WS_AGENT_SOCKET gives a run beside launchd's, as CI's or a probe by hand, a socket of its own,
 # and WS_AGENT_PROVIDER another provider than /opt/homebrew/lib/libykcs11.dylib.
 
@@ -68,14 +69,74 @@ start() {
     say "started ssh-agent, pid $agent, at $socket for $library"
 }
 
-# load puts the YubiKey's keys in the agent, through the PIN's askpass.
+# yubikeys prints the registry IDs of the USB devices of Yubico's vendor ID, 4176 (0x1050), on a
+# line, split by blanks. ioreg -l lists each entry's properties below the line that names its ID.
+yubikeys() {
+    yk_usb=$(ioreg -p IOUSB -l -w 0) || return 1
+    printf '%s\n' "$yk_usb" | awk '
+        /\+-o / { id = match($0, /, id 0x[0-9a-f]+/) ? substr($0, RSTART + 5, RLENGTH - 5) : "" }
+        /"idVendor" = 4176$/ && id != "" { ids = ids " " id; id = "" }
+        END { print substr(ids, 2) }'
+}
+
+# load puts the YubiKey's keys in the agent, through the PIN's askpass, and sets loaded where it
+# did. ssh-add -e goes first, as the agent refuses -s for a provider it has.
 load() {
+    tries=$((tries + 1))
+    "$bin/ssh-add" -e "$provider" >/dev/null 2>&1
     if out=$(SSH_ASKPASS=$pin SSH_ASKPASS_REQUIRE=force "$bin/ssh-add" -s "$provider" 2>&1 \
         </dev/null); then
+        loaded=1
         say "loaded the YubiKey's keys"
     else
         say "ssh-add -s $provider failed: $out"
     fi
+}
+
+# stop ends the watch's sleep, and ssh-agent, which removes its socket.
+# shellcheck disable=SC2329 # the EXIT trap runs it
+stop() {
+    [ -z "$nap" ] || kill "$nap" 2>/dev/null
+    [ -z "$agent" ] || { kill "$agent" && wait "$agent"; } 2>/dev/null
+}
+
+# watch loads the keys, whatever ioreg lists, as libykcs11 shows no YubiKey that is out. Then it
+# reads the YubiKeys in every 5 s. Where their IDs change, as a replug changes one, ssh-add -e takes
+# the keys out, as the agent lists a key until then, and load runs again where one is in. A load
+# that fails runs twice more while one is in, as a card may answer seconds after its plug. It
+# sleeps in the background, as wait, unlike sleep, ends at once on a signal.
+watch() {
+    seen=$(yubikeys) || say "ioreg -p IOUSB failed"
+    loaded=0
+    tries=0
+    load
+    while kill -0 "$agent" 2>/dev/null; do
+        sleep 5 &
+        nap=$!
+        wait "$nap"
+        nap=
+        if [ ! -e "$provider" ] || [ "$(realpath "$provider" 2>/dev/null)" != "$library" ]; then
+            say "$provider no longer leads to $library, as after a brew upgrade"
+            exit 1
+        fi
+        if ! now=$(yubikeys); then
+            say "ioreg -p IOUSB failed"
+        elif [ "$now" != "$seen" ]; then
+            say "the YubiKeys in, by ioreg's IDs: ${now:-none}"
+            if [ "$loaded" = 1 ]; then
+                "$bin/ssh-add" -e "$provider" >/dev/null 2>&1 ||
+                    say "ssh-add -e $provider failed"
+                say "took out the keys"
+            fi
+            seen=$now
+            loaded=0
+            tries=0
+        fi
+        [ -z "$seen" ] || [ "$loaded" = 1 ] || [ "$tries" -ge 3 ] || load
+    done
+    agent=
+    say "ssh-agent ended"
+    exit 1
 }
 
 [ $# = 0 ] || {
@@ -86,15 +147,10 @@ load() {
     echo "ws-agent: launchd runs it as the user, not root" >&2
     exit 1
 }
-# As it exits, it ends ssh-agent, which removes its socket.
 agent=
-trap '[ -z "$agent" ] || { kill "$agent" && wait "$agent"; } 2>/dev/null' EXIT
+nap=
+trap stop EXIT
 trap 'exit 0' HUP INT TERM
 trim_log
 start
-load
-while kill -0 "$agent" 2>/dev/null; do
-    sleep 5
-done
-say "ssh-agent ended"
-exit 1
+watch
