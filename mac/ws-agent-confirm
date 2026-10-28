@@ -1,0 +1,100 @@
+#!/bin/sh
+# ws-agent-confirm is the askpass that ws's agent runs at each signature of a key that ws-agent
+# loaded with ssh-add -c, as it loads the YubiKey's. It posts a notification naming the key, with
+# Homebrew's terminal-notifier, and allows the signature. mac/setup.sh copies it to
+# ~/.config/ws/ws-agent-confirm. Wherever it runs from, as a probe's ws-agent runs it from the
+# clone, it reads the YubiKey's public keys in ~/.config/ws/keys, and keeps its stamps beside.
+#
+#   SSH_ASKPASS_PROMPT=confirm ws-agent-confirm PROMPT
+#
+# ssh-agent passes the prompt "Allow use of key COMMENT?\nKey fingerprint FP.", and allows the
+# signature where its askpass exits 0 with no output (ssh-agent.c's confirm_key, readpass.c's
+# ask_permission). Any other exit refuses it, as a missing askpass does. So a signature passes
+# whether a notice goes out or not, and the script answers no other prompt, such as a PIN's.
+#
+# The key is WS_SSH_KEY's or WS_GIT_KEY's where its fingerprint is that of keys/NAME.pub. The names
+# come from the environment that ws-agent gives ssh-agent, and are ws and git where unset, as in
+# mac.conf. Another key of the agent's, not named in mac.conf, goes by the agent's comment.
+#
+# No set -e or -u: a slip in here must cost the notice alone, never the signature.
+
+# The notifier is Homebrew's, which launchd's PATH lacks. A stand-in first on PATH goes first.
+PATH=${PATH:-/usr/bin:/bin}:/opt/homebrew/bin
+export PATH
+# A key posts a notice at most once in window seconds: 5, or WS_CONFIRM_WINDOW, as a check sets.
+window=${WS_CONFIRM_WINDOW:-5}
+dir=$HOME/.config/ws
+nl='
+'
+
+# key_is FILE succeeds where FILE is a public key of the fingerprint fp.
+key_is() {
+    [ -f "$1" ] || return 1
+    line=$(ssh-keygen -l -f "$1" 2>/dev/null) || return 1
+    line=${line#* }
+    [ "${line%% *}" = "$fp" ]
+}
+
+# fold ID counts a use of the key ID in its stamp, ~/.config/ws/stamps/ID: the last notice's time
+# as epoch and clock, and the uses since. It succeeds where a notice is due, window seconds or more
+# after the last, and sets count to the uses it stands for and since to the last notice's clock.
+# ssh-agent waits for each askpass, so no two run at once, and the stamps need no lock.
+fold() {
+    stamp=$dir/stamps/$1
+    last=0 since='' count=0
+    [ ! -f "$stamp" ] || read -r last since count <"$stamp"
+    case $last in '' | *[!0-9]* | 0?*) last=0 ;; esac
+    case $count in '' | *[!0-9]* | 0?*) count=0 ;; esac
+    count=$((count + 1))
+    # shellcheck disable=SC2046 # date prints two words, the epoch and the clock
+    set -- $(date '+%s %H:%M:%S')
+    [ -d "$dir/stamps" ] || mkdir -p "$dir/stamps"
+    if [ "$1" -ge "$last" ] && [ $(($1 - last)) -lt "$window" ]; then
+        printf '%s %s %s\n' "$last" "$since" "$count" >"$stamp"
+        return 1
+    fi
+    printf '%s %s 0\n' "$1" "$2" >"$stamp"
+}
+
+# notify ID WHAT MESSAGE runs terminal-notifier, where PATH has it, with -group replacing the key's
+# last notice, its stderr off ws-agent.log, and every descriptor above 2 closed. ssh-agent reads the
+# askpass's output until no process holds its pipe, and the askpass holds the pipe twice: as stdout,
+# and as the descriptor ssh-agent dup2'd it from (readpass.c's ssh_askpass). dash takes only 3 to 9
+# in a redirection, so it closes those; a shell that takes more closes each it lists in /dev/fd.
+notify() {
+    exec 2>/dev/null 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
+    if (eval '{ :; } 10</dev/null') 2>/dev/null; then
+        for fd in /dev/fd/*; do
+            fd=${fd##*/}
+            case $fd in ? | *[!0-9]*) ;; *) eval "exec $fd>&-" ;; esac
+        done
+    fi
+    notifier=$(command -v terminal-notifier) || exit 0
+    exec "$notifier" -title "ws's agent" -subtitle "$2" -message "$3" -group "ws-agent-$1"
+}
+
+main() {
+    [ "${SSH_ASKPASS_PROMPT-}" = confirm ] || exit 1
+    # From here each exit allows the signature, a slip's too; output but yes would refuse it.
+    trap 'exit 0' EXIT
+    exec </dev/null >/dev/null
+    fp=${1##*"${nl}Key fingerprint "}
+    fp=${fp%%"$nl"*}
+    fp=${fp%.}
+    comment=${1#Allow use of key }
+    comment=${comment%%"?${nl}"*}
+    if key_is "$dir/keys/${WS_SSH_KEY:-ws}.pub"; then
+        set -- ssh "ssh key ${WS_SSH_KEY:-ws}"
+    elif key_is "$dir/keys/${WS_GIT_KEY:-git}.pub"; then
+        set -- git "git key ${WS_GIT_KEY:-git}"
+    else
+        set -- other "key $comment"
+    fi
+    fold "$1" || exit 0
+    message="$count signatures since $since"
+    [ -n "$since" ] || message="$count signatures"
+    [ "$count" != 1 ] || message="1 signature"
+    notify "$@" "$message" &
+}
+
+main "$@"
