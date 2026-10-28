@@ -196,8 +196,9 @@ and yubico-piv-tool, `--check` must name their install
 ([mac-yubikey-checks.sh](../.github/mac-yubikey-checks.sh)). `ws-agent`, run at a socket of its
 own, must list both keys as it starts, and sign with each. With the stand-in's `ioreg`, it must
 take them out at an unplug, and load them again at a plug, a replug, a second YubiKey and an
-`ssh-add -D`. Stopped, it must take its `ssh-agent` and socket with it
-([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
+`ssh-add -D`. Stopped, it must take its `ssh-agent` and socket with it. The job's agent must list
+both at `~/.ssh/ws-agent.sock` and sign with each, launchd's from `setup.sh`'s copy, and `setup.sh`
+then print nothing ([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
 `ws` and `ws-ssh` the file key, by the four lines `config.d/ws` had for it before. It must give
 them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
 showing `config.d/ws`'s diff alone. Then it must give them an agent at Secretive's socket, which
@@ -230,7 +231,9 @@ install Homebrew's once, with git's keys alone ([mac-git-checks.sh](../.github/m
 
 The job sets up a stand-in YubiKey before its first run. A SoftHSM2 token holds its keys, `ws`'s in
 slot 82 and `git`'s in 83 ([yubikey-standin.sh](../.github/yubikey-standin.sh)). They are Ed25519,
-so the mac jobs run on `macos-26`, whose ssh loads them through PKCS#11.
+so the mac jobs run on `macos-26`, whose ssh loads them through PKCS#11. The job's ws's agent is
+launchd's where launchd has `gui/UID`, else a run of the stand-in's own, as a notice says. Each
+change of a YubiKey restarts it ([yubikey-agent.sh](../.github/yubikey-agent.sh)).
 
 ## The rules
 
