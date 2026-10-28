@@ -44,8 +44,9 @@ yubikey_serials() {
 }
 
 # yubikey_keys [STAGE] finds the one YubiKey in, which holds the keys of WS_SSH_KEY and WS_GIT_KEY,
-# and stops unless one is in. Under --check before yubikey_tools installs ykman, it says what it
-# would do once it has. Its messages start with STAGE, where the wizard's stage gives one.
+# and warns where its PIV applet keeps a default. It stops unless one YubiKey is in. Under --check
+# before yubikey_tools installs ykman, it says what it would do once it has. Its messages start
+# with STAGE, where the wizard's stage gives one.
 # shellcheck disable=SC2120 # the wizard's stage passes its name
 yubikey_keys() {
     yubikey_at=${1:+$1: }
@@ -55,11 +56,12 @@ yubikey_keys() {
         return 0
     fi
     yubikey_one
+    yubikey_defaults
 }
 
 # yubikey_one sets yubikey_serial to the serial of the one YubiKey in, which each later call of
-# ykman names by --device, so that one plugged in meanwhile changes nothing. It stops on none, on
-# several, and where ykman piv info fails, as on a YubiKey whose PIV applet is off.
+# ykman names by --device, so that one plugged in meanwhile changes nothing. It stops on none, and
+# on several.
 yubikey_one() {
     yubikey_in=$(yubikey_serials) || ws_die "${yubikey_at}ykman list --serials failed"
     case $yubikey_in in
@@ -70,8 +72,27 @@ yubikey_one() {
         ;;
     esac
     yubikey_serial=$yubikey_in
-    "$yubikey_ykman" --device "$yubikey_serial" piv info >/dev/null ||
+    yubikey_read
+}
+
+# yubikey_read sets yubikey_piv to what ykman piv info prints of the YubiKey's PIV applet, which
+# ykman 5.9 prints as text alone.
+yubikey_read() {
+    yubikey_piv=$("$yubikey_ykman" --device "$yubikey_serial" piv info) ||
         ws_die "${yubikey_at}ykman --device $yubikey_serial piv info failed"
+}
+
+# yubikey_defaults warns where ykman piv info reports the PIV applet's default PIN, PUK or
+# management key, with which any program on the Mac could replace or delete the keys. It changes
+# none, as a PUK that setup.sh chose would be lost to the user.
+yubikey_defaults() {
+    yubikey_list=$(printf '%s\n' "$yubikey_piv" | sed -n \
+        -e 's/^WARNING: Using default PIN!$/PIN/p' \
+        -e 's/^WARNING: Using default PUK!$/PUK/p' \
+        -e 's/^WARNING: Using default Management key!$/management key/p')
+    yubikey_list=$(yubikey_join "$yubikey_list")
+    [ -z "$yubikey_list" ] || ws_say "${yubikey_at}warning: YubiKey $yubikey_serial keeps the PIV" \
+        "applet's default $yubikey_list: ykman piv access changes them, as docs/mac-yubikey.md says"
 }
 
 # yubikey_join LINES prints LINES joined by commas, and the last two by and.
