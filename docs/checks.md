@@ -164,9 +164,9 @@ command. The next run must print nothing. ws's word list, of stand-in words, mus
 once, mode 600, and none of it be printed. Once the Mac's differs, `--check` must show no diff. For
 the Cable stage, ws's ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts
 name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no terminal must stop, one with
-`WS_CABLE_PORT` name the port, run the roles, and stop at the service. Typed, an empty line must
-take the `169.254` one, and `ping` answer. The next must read no `link`, and one after ws's install
-or a failed roles' run name it again.
+`WS_CABLE_PORT` name the port, run the roles, read its late address, and stop at the service. Typed,
+an empty line must take the `169.254` one, and `ping` answer. The next must read no `link`, and one
+after ws's install or a failed roles' run name it again.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

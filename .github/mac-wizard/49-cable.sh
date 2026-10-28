@@ -6,7 +6,8 @@
 # after the roles' run. The uplink there must stop a run, and none write an empty WS_CABLE_SERVICE
 # alone. Once enp5s0 has carrier, a run with no terminal must stop, naming WS_CABLE_PORT, and
 # --check say what it would do, neither writing ws's host_vars. With WS_CABLE_PORT, a run must name
-# enp5s0 there, run bootstrap.sh --tags network,wireguard, and stop at the Mac's service.
+# enp5s0 there, run bootstrap.sh --tags network,wireguard, read its late 10.77.0.1 in one login of
+# the files script's wait, and stop at the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
 # script's after a bad one, an empty line must take the one service with a 169.254 address. setup.sh
@@ -130,13 +131,30 @@ wizard --check
 printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: would ask ws's port of the cable, name it \
 in host_vars/localhost\.yml on ws, and run bootstrap\.sh --tags network,wireguard there" &&
     [ "$status" = 0 ] && [ ! -e "$vars" ] || error "wizard.sh --check docked exited $status"
+# ws's ip, the stand-in's, but that the first read of enp5s0's addresses after the roles' run finds
+# none, as networkd gives it 10.77.0.1 a moment after their networkctl reload. The files script's
+# wait must read ip again in the same login, and find the address.
+mkdir "$cable/bin"
+mv "$ws/bin/ip" "$cable/bin/ip"
+cat >"$ws/bin/ip" <<EOF
+#!/bin/sh
+[ "\$*" != '-o -4 address show dev enp5s0' ] || [ ! -e '$ws/addr/enp5s0' ] ||
+    [ -e '$cable/late' ] || { touch '$cable/late' && exit 0; }
+exec '$cable/bin/ip' "\$@"
+EOF
+chmod 755 "$ws/bin/ip"
+links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run WS_CABLE_PORT=enp5s0
 printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &&
     cmp -s "$conf" "$RUNNER_TEMP/cable.conf" &&
     printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: no terminal to ask WS_CABLE_SERVICE: set \
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
-    [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
-    error "wizard.sh with WS_CABLE_PORT exited $status, or wrote no host_vars, or ran no roles"
+    [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] && [ -e "$cable/late" ] &&
+    [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = $((links + 1)) ] &&
+    [ "$(grep -c '^root: sh -s -- wait enp5s0$' "$ws/log")" = 1 ] ||
+    error "wizard.sh with WS_CABLE_PORT exited $status, or wrote no host_vars, ran no roles, or" \
+        "read link other than once and wait other than once"
+mv -f "$cable/bin/ip" "$ws/bin/ip"
 # On macOS, sudo, which the stages' checks run, takes what the terminal holds, so the lines go in
 # once the question shows, or after 120 s. script's input ends 5 s after them, once it wrote them.
 # shellcheck disable=SC2094 # the loop reads the question that script writes to tty, by design

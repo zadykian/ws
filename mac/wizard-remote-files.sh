@@ -13,6 +13,7 @@
 #   The remote script's status lists the repositories that have a stamp, as OWNER/REPO.
 # - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
 #   read, or - where root has none. words HASH prints the list, while its hash is HASH.
+# - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
 #   or -. link PORT names that port in ws's host_vars/localhost.yml as
@@ -120,6 +121,19 @@ ports() {
     done
 }
 
+# link_wait PORT runs link once PORT holds 10.77.0.1, which networkd gives it a moment after the
+# network role's networkctl reload, and later for a port that was down. It reads ip each second, 10
+# s at most, so that the wizard waits in one login, which a key may take a touch for.
+link_wait() {
+    ports | grep -qxF -- "${1-}" || die "'${1-}' is none of the wired ports that link lists"
+    n=0
+    until ip -o -4 address show dev "$1" 2>/dev/null | grep -q ' 10\.77\.0\.1/' || [ "$n" = 10 ]; do
+        sleep 1
+        n=$((n + 1))
+    done
+    link
+}
+
 # link [PORT] lists the ports, as the header says, with sysfs's carrier, which a port that is down
 # lacks, and ip's IPv4 addresses. Given PORT, one that it lists, it names it in vars, where that
 # names another, by a rename that keeps the file's other lines and its mode. A new file starts with
@@ -157,9 +171,10 @@ main() {
     clone) clone "${2-}" ;;
     stamp) stamp "${2-}" ;;
     words) words "${2-}" ;;
+    wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote-files.sh clone OWNER/REPO |" \
-        "stamp OWNER/REPO | words [HASH] | link [PORT]" ;;
+        "stamp OWNER/REPO | words [HASH] | wait PORT | link [PORT]" ;;
     esac
 }
 

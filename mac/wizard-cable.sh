@@ -40,10 +40,11 @@ cable_done() {
 
 # cable_read sets cable_ports to what link lists on ws, a line per port: its name, its carrier, 1
 # where a cable plugs in, and its IPv4 addresses. It sets cable_up to the ports with carrier, and
-# cable_ws to the one that holds ws's end of the cable, 10.77.0.1. It fails where link did.
+# cable_ws to the one that holds ws's end of the cable, 10.77.0.1. It fails where link did. With
+# wait PORT, the files script lists them once PORT holds 10.77.0.1, or after 10 s, in one login.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 cable_read() {
-    cable_ports=$(remote_files link 2>"$lock/link.err") || return 1
+    cable_ports=$(remote_files "${1:-link}" ${2+"$2"} 2>"$lock/link.err") || return 1
     cable_up=$(printf '%s\n' "$cable_ports" | awk '$2 == 1 { print $1 }')
     cable_ws=$(printf '%s\n' "$cable_ports" | awk '/ 10\.77\.0\.1\// { print $1; exit }')
 }
@@ -89,9 +90,10 @@ cable_do() {
         remote_got=0
         remote_files link "$cable_value" >&2 || return 1
         remote run --tags network,wireguard >&2 || return 1
-        cable_read && [ "$cable_ws" = "$cable_value" ] || ws_die "Cable: ws's $cable_value lacks" \
-            "10.77.0.1 after bootstrap.sh --tags network,wireguard: plug the Mac's cable into" \
-            "it, or mend what that printed, then run the wizard again"
+        cable_read wait "$cable_value" && [ "$cable_ws" = "$cable_value" ] ||
+            ws_die "Cable: ws's $cable_value lacks 10.77.0.1 after bootstrap.sh --tags" \
+                "network,wireguard: plug the Mac's cable into it, or mend what that printed, then" \
+                "run the wizard again"
     fi
     cable_service
 }
