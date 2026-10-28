@@ -17,8 +17,8 @@
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. --update first pulls a clean clone on main. A run whose
 #   ARGs are -e pairs alone is a full one.
-# - outbound names security_outbound: false in ws's host_vars, which keeps the security role's
-#   outbound table off at each run, as a cloud VM's metadata service needs.
+# - outbound names security_outbound: false in ws's host_vars, where a full run's unit with -e
+#   security_outbound=false didn't, which keeps the outbound table off for a cloud VM.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
@@ -127,6 +127,7 @@ pull() {
 # Its last steps write STATE/last as UNIT and the status, each by a rename. A full run, whose ARGs
 # are -e pairs alone, writes STATE/run too: the clone's commit, the status, and off where
 # -e security_outbound=false turned the outbound table off, else on. It removes it as it starts.
+# Such a run that passed first names that in host_vars by STATE/off, so that no ssh comes between.
 job() {
     cat <<'EOF'
 unit=$1 dir=$2 state=$3 full=1 table=on pair=
@@ -150,6 +151,7 @@ else
 fi
 status=$?
 if [ "$full" = 1 ]; then
+    [ "$status$table" != 0off ] || sh "$state/off" write "$dir/host_vars/localhost.yml"
     sha=$(git -C "$dir" rev-parse HEAD 2>/dev/null) || sha=-
     echo "$sha $status $table" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
 fi
@@ -197,6 +199,7 @@ run() {
         mkdir -p "$state"
         job >"$state/job.new"
         mv -f "$state/job.new" "$state/job"
+        off >"$state/off.new" && mv -f "$state/off.new" "$state/off"
         unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
         systemd-run --quiet --unit="$unit" --collect --expand-environment=no \
             --description="ws's playbook, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \

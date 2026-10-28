@@ -8,8 +8,9 @@
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
-# unit of its own, as must one with -e security_outbound=false, which is full too, and stamps off in
-# run. One with another argument, as --diff, must leave that stamp. The files script must clone
+# unit of its own, as must one with -e security_outbound=false, which is full too, stamps off in
+# run, and names security_outbound: false in host_vars itself. One with another argument, as
+# --diff, must leave that stamp. The files script must clone
 # another repository by the stand-in gh, whose apply.sh must run as root over ssh, its stdin empty.
 # Its stamp must follow, which status must list. Its clone again must leave the clone, and remove
 # the stamp, and another owner's must stop. Its words must print git's hash of root's word list, or
@@ -129,6 +130,10 @@ remote run -e security_outbound=false
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '-e security_outbound=false' ] ||
     error "a full run with -e exited $status, with run '$(stamp run)'"
+host_vars=$ws/root/root/repository/ws/host_vars
+sudo grep -qx 'security_outbound: false' "$host_vars/localhost.yml" ||
+    error "a full run with -e named no security_outbound: false in host_vars"
+sudo rm -r "$host_vars"
 remote run --diff
 [ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off" ] || error "a run with --diff stamped run"
 
