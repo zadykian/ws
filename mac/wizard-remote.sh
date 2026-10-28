@@ -5,15 +5,18 @@
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. run is the commit and status of the last full run, and last the unit and status of
-#   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer
+#   is missing. run is the commit and status of the last full run, and off where its -e turned the
+#   outbound table off, else on. last is the unit and status of the last run. active is the run's
+#   unit that runs now. mac.pub is the Mac's key that wg0's peer
 #   takes, and wg0 is wg0's own key. gh is ok, none, login, scope or key, below. claude is ok, none
 #   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok. peer is
 #   ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as OWNER/REPO, whose
-#   apply.sh has a stamp of wizard-remote-files.sh's, the files script.
+#   apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound is off where the
+#   clone's host_vars turns the security role's outbound table off, else on.
 # - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
-#   ends, and exits with the run's status. --update first pulls a clean clone on main.
+#   ends, and exits with the run's status. --update first pulls a clean clone on main. A run whose
+#   ARGs are -e pairs alone is a full one.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
@@ -46,9 +49,9 @@ first() {
     awk 'NR == 1 { print; found = 1 } END { if (!found) print "-" }'
 }
 
-# stamp FILE prints the two words of the stamp FILE, or - where it has none.
+# stamp FILE prints the words of the stamp FILE, two or more, or - where it has none.
 stamp() {
-    awk 'NF == 2 { print; exit }' "$1" 2>/dev/null | first
+    awk 'NF >= 2 { print; exit }' "$1" 2>/dev/null | first
 }
 
 # active prints the run's unit that is active or activating, where there is one.
@@ -99,6 +102,13 @@ status() {
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
     hook=$(cat "$state"/hook-* 2>/dev/null | awk '$3 != "" { printf " %s", $3 }')
     echo "hook${hook:- -}"
+    # YAML's false, as the role reads it: false, no or off, in any case, with a comment or not.
+    if grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]+#.*)?' \
+        "$dir/host_vars/localhost.yml" 2>/dev/null; then
+        echo 'outbound off'
+    else
+        echo 'outbound on'
+    fi
 }
 
 # pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked
@@ -118,13 +128,23 @@ pull() {
 
 # job prints the script of a run's unit, which systemd-run runs with UNIT DIR STATE [ARG...]. It
 # runs bootstrap.sh ARGs from the clone in DIR, or from the README's download where DIR holds none.
-# Its last steps write STATE/last as UNIT and the status, and, without ARGs, STATE/run as the
-# clone's commit and the status, each by a rename. A full run removes STATE/run first, as it starts.
+# Its last steps write STATE/last as UNIT and the status, each by a rename. A full run, whose ARGs
+# are -e pairs alone, writes STATE/run too: the clone's commit, the status, and off where
+# -e security_outbound=false turned the outbound table off, else on. It removes it as it starts.
 job() {
     cat <<'EOF'
-unit=$1 dir=$2 state=$3 full=$(($# - 3))
+unit=$1 dir=$2 state=$3 full=1 table=on pair=
 shift 3
-[ "$full" != 0 ] || rm -f "$state/run"
+for arg; do
+    case $pair:$arg in
+    1:security_outbound=false) table=off pair= ;;
+    1:*) pair= ;;
+    :-e) pair=1 ;;
+    *) full=0 ;;
+    esac
+done
+[ -z "$pair" ] || full=0
+[ "$full" = 0 ] || rm -f "$state/run"
 if [ -e "$dir/.git" ]; then
     sh "$dir/bootstrap.sh" "$@"
 else
@@ -133,9 +153,9 @@ else
         sh "$state/bootstrap.sh" "$@"
 fi
 status=$?
-if [ "$full" = 0 ]; then
+if [ "$full" = 1 ]; then
     sha=$(git -C "$dir" rev-parse HEAD 2>/dev/null) || sha=-
-    echo "$sha $status" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
+    echo "$sha $status $table" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
 fi
 echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
 exit "$status"

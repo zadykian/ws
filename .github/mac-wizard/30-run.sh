@@ -69,7 +69,7 @@ cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 [ "$status" = 0 ] || error "wizard.sh exited $status, with the account's keys in root's file"
 if ! printf '\n%s\n' '--tags wireguard' | cmp -s - "$RUNNER_TEMP/ws/bootstrap.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
-    ! grep -q ' 0$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
+    ! grep -q ' 0 on$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
     error "wizard.sh ran no bootstrap.sh on ws, once, then --tags wireguard, with root's HOME"
 fi
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key)

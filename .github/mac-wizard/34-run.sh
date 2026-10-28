@@ -48,7 +48,7 @@ grep -q "^wizard\.sh: ws's run: ws's playbook stopped, " "$RUNNER_TEMP/run.err" 
     [ "$status" = 1 ] && [ ! -f "$stamp" ] || error "a run cut off exited $status, or stamped run"
 rm "$ws/bootstrap.cut"
 wizard
-grep -q ' 0$' "$stamp" && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
+grep -q ' 0 on$' "$stamp" && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
 if ! grep -q "^- ws's fans' driver: " "$RUNNER_TEMP/run.out" ||
     ! grep -q "^- The router's forwards to ws, UDP 51820 and TCP 22022, for localhost," \
         "$RUNNER_TEMP/run.out"; then
@@ -70,7 +70,7 @@ done
 kill "$first"
 wizard
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
-    grep -q ' 0$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
+    grep -q ' 0 on$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/bootstrap.wait"
 exit "$fail"
