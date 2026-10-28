@@ -1,11 +1,12 @@
 #!/bin/sh
 # The Root's key stage on the Mac that 31-host.sh leaves, where root on the stand-in ws takes the
 # Mac's key. Once root's line for the key carries a forced command, as cloud-init writes it, beside
-# another key, --check must say that a run would log in as the installer's user. A run with no
-# terminal must stop without WS_INSTALLER_USER, and with a user who lacks the key. None may change
-# root's authorized_keys. As the runner's user, a run must replace that line by the bare key, and
-# keep the other. With another host key under ws in known_hosts, a run must stop, naming
-# ssh-keygen -R ws, and change nothing, with StrictHostKeyChecking no in ~/.ssh/config too.
+# another key, --check must say that a run would stop, and a run with no terminal must stop,
+# naming the Mac's key. None may change root's authorized_keys. The wizard adds no key, so the case
+# replaces that file by the stand-in gh's keys, as the README's step copies the installer's user's
+# to root: a run must then say nothing of the stage, and keep the file. With another host key under
+# ws in known_hosts, a run must stop, naming ssh-keygen -R ws, and change nothing, with
+# StrictHostKeyChecking no in ~/.ssh/config too.
 
 set -u
 
@@ -37,21 +38,20 @@ printf '%s\n' "$other other" "no-port-forwarding,command=\"echo no;exit 142\" $p
 sudo cp "$RUNNER_TEMP/root.keys" "$keys"
 out=$(sh "$wizard" --check </dev/null 2>&1)
 status=$?
-expect 0 "wizard.sh: Root's key: would log in to ws as the user of its installer" "$keys" \
-    "$RUNNER_TEMP/root.keys"
+expect 0 "wizard.sh: Root's key: root on ws doesn't log in by the Mac's key; a run would stop" \
+    "$keys" "$RUNNER_TEMP/root.keys"
+stop="wizard.sh: Root's key: root on ws doesn't log in by the Mac's key, $HOME/.ssh/id_ed25519.pub,"
 out=$(sh "$wizard" </dev/null 2>&1)
 status=$?
-expect 1 "wizard.sh: Root's key: root on ws lacks the Mac's key, and no terminal" "$keys" \
-    "$RUNNER_TEMP/root.keys"
-out=$(WS_INSTALLER_USER=nobody sh "$wizard" </dev/null 2>&1)
+expect 1 "$stop" "$keys" "$RUNNER_TEMP/root.keys"
+sudo install -m 600 "$RUNNER_TEMP/gh/keys" "$keys"
+out=$(sh "$wizard" </dev/null 2>&1)
 status=$?
-expect 1 "wizard.sh: Root's key: neither root nor nobody on ws takes the Mac's key" "$keys" \
-    "$RUNNER_TEMP/root.keys"
-out=$(WS_INSTALLER_USER=$USER sh "$wizard" </dev/null 2>&1)
-status=$?
-printf '%s\n' "$other other" "$pub" >"$RUNNER_TEMP/root.keys"
-expect 0 "wizard.sh: Root's key: added $HOME/.ssh/id_ed25519.pub to root's" "$keys" \
-    "$RUNNER_TEMP/root.keys"
+printf '%s\n' "$out"
+if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q "^wizard\.sh: Root's key: "; then
+    error "wizard.sh exited $status, or said of Root's key, with the account's keys in root's file"
+fi
+sudo cmp -s "$keys" "$RUNNER_TEMP/gh/keys" || error "wizard.sh changed $keys"
 
 cp "$hosts" "$RUNNER_TEMP/hosts"
 sed "s|^ws .*|ws $other|" "$RUNNER_TEMP/hosts" >"$hosts"

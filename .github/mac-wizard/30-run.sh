@@ -36,7 +36,7 @@ WS_HOST_KEY=$host PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" </dev/null \
     >"$RUNNER_TEMP/stop.out" 2>"$RUNNER_TEMP/stop.err"
 status=$?
 cat "$RUNNER_TEMP/stop.err" "$RUNNER_TEMP/stop.out"
-stop="wizard.sh: Root's key: root on ws "
+stop="wizard.sh: Root's key: root on ws doesn't log in by the Mac's key, $HOME/.ssh/id_ed25519.pub,"
 if [ "$status" != 1 ] || ! grep -qF "$stop" "$RUNNER_TEMP/stop.err"; then
     error "wizard.sh exited $status, or did not stop at Root's key, where root takes no key"
 fi

@@ -16,7 +16,7 @@
 # - gh on the Mac: gh's login to GitHub, and the Mac's key among its keys, for Ubuntu's installer;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md);
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
-# - Root's key: the Mac's key in root's authorized_keys on ws, added by the installer's user;
+# - Root's key: root's login to ws by the Mac's key, which the wizard checks and never adds;
 # - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
 # - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
 # - claude on ws: root's claude there, logged in over ssh -t;

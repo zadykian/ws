@@ -1,8 +1,8 @@
 # shellcheck shell=sh
 # The wizard's Host key and Root's key stages: ws's host key, matched against ws's console, in
-# known_hosts under ws, the name that config.d/ws's HostKeyAlias gives each way to ws. Then the
-# Mac's key in root's authorized_keys on ws, so that ssh ws-ssh logs in as root. wizard.sh sources
-# it, and runs both after setup.sh, which writes config.d/ws. They call the functions of lib.sh,
+# known_hosts under ws, the name that config.d/ws's HostKeyAlias gives each way to ws. Then a check
+# that root on ws takes the Mac's key, so that ssh ws-ssh logs in as root. wizard.sh sources it, and
+# runs both after setup.sh, which writes config.d/ws. They call the functions of lib.sh,
 # setup-lib.sh, wizard-keys.sh and wizard-gh.sh, and read wizard.sh's lock and WS_CONF, mac.conf's
 # path.
 
@@ -149,19 +149,6 @@ host_fail() {
     echo "$host_file still holds no key under ws, as above; run the wizard again"
 }
 
-# What root runs on ws, through sudo, with the key's TYPE and BASE64 as $1 and $2. It replaces
-# root's lines for the key by the bare key, and keeps root's other lines, in a new file renamed
-# over the old.
-# shellcheck disable=SC2016 # $1, $2, $d and $f are root's sh's own, on ws
-root_add='set -e
-umask 077
-d=~root/.ssh
-f=$d/authorized_keys
-mkdir -p "$d"
-touch "$f"
-{ grep -vF -e "$2" "$f" || [ $? = 1 ]; echo "$1 $2"; } >"$f.ws-new"
-mv -f "$f.ws-new" "$f"'
-
 # root_after prints Host key where known_hosts lacks ws's key, without which ssh logs in nowhere.
 root_after() {
     host_done || echo "Host key"
@@ -177,13 +164,13 @@ root_done() {
         root_in=1
 }
 
-# root_do adds the Mac's key for ws to root's authorized_keys on ws, in one ssh -t session as the
-# user of Ubuntu's installer, through sudo. That user takes the key that the installer imported
-# from GitHub, else ssh-copy-id's, by the password login that the installer allowed. Where ws
-# doesn't answer, the Host key stage's question gives its address now. It stops where ssh logs in
-# as another user than root, and where ws offers another host key than known_hosts holds, which it
-# never removes. --check asks nothing.
-# shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub and gh_line
+# root_do stops, as the wizard adds no key to ws: ws's keys come from the GitHub account at its
+# install, and the stage gh on the Mac has put the Mac's there. It names the Mac's key, and what
+# gives root that key without the wizard, at a terminal or not. Where ws doesn't answer, the Host
+# key stage's question gives its address now, and root may take the key there. It stops where ssh
+# logs in as another user than root, and where ws offers another host key than known_hosts holds,
+# which it never removes. --check asks nothing, and says that a run would stop.
+# shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub
 root_do() {
     root_as=$(host_get user)
     [ "$root_as" = root ] || ws_die "Root's key: ssh logs in to ws as $root_as, mac.conf's" \
@@ -196,20 +183,17 @@ root_do() {
         "$host_name:$host_port offers another host key than known_hosts holds under ws: where" \
         "ws was installed again, run ssh-keygen -R ws, then the wizard again"
     if ws_checking; then
-        ws_say "Root's key: would log in to ws as the user of its installer, asked, and add the" \
-            "Mac's key to root's authorized_keys with sudo"
+        ws_say "Root's key: root on ws doesn't log in by the Mac's key; a run would stop, as the" \
+            "wizard adds no key to ws"
         return 0
     fi
     gh_key || ws_die "Root's key: the Mac's key for ws has no .pub"
-    root_ask
-    root_login || root_copy
-    ws_say "Root's key: sudo on ws asks $root_user's password, to add the Mac's key to root's" \
-        "authorized_keys"
-    set -- -T
-    [ ! -t 0 ] || set -- -t
-    host_ssh "$@" -l "$root_user" ws-ssh "sudo sh -c '$root_add' sh $gh_line" ||
-        ws_die "Root's key: sudo as $root_user on ws added no key to root's authorized_keys"
-    ws_say "Root's key: added $gh_pub to root's authorized_keys on ws"
+    ws_die "Root's key: root on ws doesn't log in by the Mac's key, $gh_pub, and the wizard adds" \
+        "no key to ws. ws takes its keys from the GitHub account at its install: Ubuntu's" \
+        "installer imports them for its user, and on a cloud VM, cloud-init gives its default" \
+        "user the provider's keys, which must be the account's. Copy that user's" \
+        "authorized_keys to root, as the README's \"A new machine\" does: root's file is" \
+        "replaced, so cloud-init's forced command goes. Then run the wizard again"
 }
 
 # root_ask sets root_user to the user that Ubuntu's installer made on ws: WS_INSTALLER_USER, else
