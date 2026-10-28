@@ -1,0 +1,100 @@
+#!/bin/sh
+# ws-agent runs ws's ssh agent, which holds the YubiKey's keys for ssh and git, with no PIN.
+# launchd runs it as the user, from login on, through
+# ~/Library/LaunchAgents/com.github.zadykian.ws-agent.plist, which mac/setup.sh installs with
+# this script's copy, ~/.config/ws/ws-agent, and that of the PIN's askpass, ws-agent-pin.
+#
+# It starts Apple's ssh-agent at ~/.ssh/ws-agent.sock, as macOS's own agent takes no -P: its
+# default providers, /usr/lib*/*,/usr/local/lib*/*, matched after realpath, refuse Homebrew's
+# libykcs11, whose link leads into the Cellar. Then ssh-add -s loads the YubiKey's keys. It logs
+# each change and failure to its standard output, launchd's log file, ~/Library/Logs/ws-agent.log,
+# which it starts anew past 1 MiB. Where ssh-agent ends, it exits, and launchd starts it again.
+# WS_AGENT_SOCKET gives a run beside launchd's, as CI's or a probe by hand, a socket of its own,
+# and WS_AGENT_PROVIDER another provider than /opt/homebrew/lib/libykcs11.dylib.
+
+set -u
+# Apple's ssh-agent and ssh-add, as a pair. Homebrew's openssh would be /opt/homebrew/bin.
+bin=/usr/bin
+socket=${WS_AGENT_SOCKET:-$HOME/.ssh/ws-agent.sock}
+provider=${WS_AGENT_PROVIDER:-/opt/homebrew/lib/libykcs11.dylib}
+log=$HOME/Library/Logs/ws-agent.log
+pin=$(cd "$(dirname "$0")" && pwd -P)/ws-agent-pin
+SSH_AUTH_SOCK=$socket
+export SSH_AUTH_SOCK
+
+# say logs a line, with the time.
+say() {
+    printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
+}
+
+# trim_log starts the log anew past 1 MiB, in launchd's run alone, as one with WS_AGENT_SOCKET logs
+# elsewhere. launchd opens it to append, so the next line goes at its new end.
+trim_log() {
+    if [ -z "${WS_AGENT_SOCKET-}" ] && [ -f "$log" ] && [ "$(wc -c <"$log")" -gt 1048576 ]; then
+        : >"$log"
+        say "started the log anew past 1 MiB"
+    fi
+}
+
+# start starts ssh-agent at the socket, and waits up to 5 s for it. -P allows the provider at its
+# path in the Cellar alone, set as library. A pattern of the Cellar's versions would outlive a brew
+# upgrade, but the agent keys the provider by its old path, which ssh-add -e then misses. A socket
+# that no agent answers, as a killed agent leaves, goes first. One that answers stops it.
+start() {
+    if [ ! -e "$provider" ] || ! library=$(realpath "$provider" 2>/dev/null); then
+        say "$provider is missing: brew install yubico-piv-tool puts it there"
+        exit 1
+    fi
+    if [ -e "$socket" ]; then
+        "$bin/ssh-add" -l >/dev/null 2>&1
+        if [ $? != 2 ]; then
+            say "an agent answers at $socket already"
+            exit 1
+        fi
+        rm -f "$socket"
+    fi
+    [ -d "${socket%/*}" ] || mkdir -m 700 "${socket%/*}"
+    "$bin/ssh-agent" -D -a "$socket" -P "$library" >/dev/null &
+    agent=$!
+    waited=0
+    until [ -S "$socket" ]; do
+        if [ "$waited" -ge 50 ] || ! kill -0 "$agent" 2>/dev/null; then
+            say "ssh-agent made no socket at $socket"
+            exit 1
+        fi
+        sleep 0.1
+        waited=$((waited + 1))
+    done
+    say "started ssh-agent, pid $agent, at $socket for $library"
+}
+
+# load puts the YubiKey's keys in the agent, through the PIN's askpass.
+load() {
+    if out=$(SSH_ASKPASS=$pin SSH_ASKPASS_REQUIRE=force "$bin/ssh-add" -s "$provider" 2>&1 \
+        </dev/null); then
+        say "loaded the YubiKey's keys"
+    else
+        say "ssh-add -s $provider failed: $out"
+    fi
+}
+
+[ $# = 0 ] || {
+    echo "usage: ws-agent" >&2
+    exit 2
+}
+[ "$(id -u)" != 0 ] || {
+    echo "ws-agent: launchd runs it as the user, not root" >&2
+    exit 1
+}
+# As it exits, it ends ssh-agent, which removes its socket.
+agent=
+trap '[ -z "$agent" ] || { kill "$agent" && wait "$agent"; } 2>/dev/null' EXIT
+trap 'exit 0' HUP INT TERM
+trim_log
+start
+load
+while kill -0 "$agent" 2>/dev/null; do
+    sleep 5
+done
+say "ssh-agent ended"
+exit 1
