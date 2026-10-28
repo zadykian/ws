@@ -70,7 +70,7 @@ run_do() {
     if ws_checking; then
         remote_read || true
         run_unit=$(remote_get active) || run_unit=-
-        run_last=$(remote_get run) || run_last='- -'
+        run_last=$(remote_get run | cut -d ' ' -f 1-2) && [ -n "$run_last" ] || run_last='- -'
         case $run_unit:${run_last#* } in
         -:- | -:0) ws_say "ws's run: would $run_how" ;;
         -:*) ws_say "ws's run: would $run_how; its last full run exited ${run_last#* }" ;;
