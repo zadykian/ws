@@ -17,6 +17,8 @@
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. --update first pulls a clean clone on main. A run whose
 #   ARGs are -e pairs alone is a full one.
+# - outbound names security_outbound: false in ws's host_vars, which keeps the security role's
+#   outbound table off at each run, as a cloud VM's metadata service needs.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
@@ -102,13 +104,7 @@ status() {
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
     hook=$(cat "$state"/hook-* 2>/dev/null | awk '$3 != "" { printf " %s", $3 }')
     echo "hook${hook:- -}"
-    # YAML's false, as the role reads it: false, no or off, in any case, with a comment or not.
-    if grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]+#.*)?' \
-        "$dir/host_vars/localhost.yml" 2>/dev/null; then
-        echo 'outbound off'
-    else
-        echo 'outbound on'
-    fi
+    echo "outbound $(off | sh -s -- check "$dir/host_vars/localhost.yml" && echo off || echo on)"
 }
 
 # pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked
@@ -159,6 +155,32 @@ if [ "$full" = 1 ]; then
 fi
 echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
 exit "$status"
+EOF
+}
+
+# off prints the script of host_vars VARS's security_outbound line, which runs as OP VARS. check
+# succeeds where the last such line is false, no or off, in any case, with a comment or not, as YAML
+# reads it. write names security_outbound: false otherwise, by a rename that keeps the file's other
+# lines and mode, so neither through a link nor outside a clone.
+off() {
+    cat <<'EOF'
+vars=$2
+awk '/^security_outbound:/ { line = $0 } END { print line }' "$vars" 2>/dev/null |
+    grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]+#.*)?' && exit 0
+[ "$1" = write ] || exit 1
+dir=${vars%/host_vars/*} why=
+[ ! -L "$vars" ] || why="$vars is a link to $(readlink "$vars"): name the line in its file by hand"
+[ -d "$dir/.git" ] || why="ws has no clone in $dir, which ws's run makes"
+[ -z "$why" ] || { echo "wizard-remote.sh: $why" >&2 && exit 1; }
+mkdir -p "${vars%/*}"
+[ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
+{
+    [ -s "$vars" ] || echo ---
+    cat "$vars" 2>/dev/null | awk '
+        /^security_outbound:/ { if (!done++) print "security_outbound: false"; next }
+        { print }
+        END { if (!done) print "security_outbound: false" }'
+} >"$vars.new" && mv -f "$vars.new" "$vars" && echo "wizard-remote.sh: wrote $vars" >&2
 EOF
 }
 
@@ -232,9 +254,10 @@ main() {
     case ${1-} in
     status) status ;;
     run) shift && run "$@" ;;
+    outbound) off | sh -s -- write "$dir/host_vars/localhost.yml" ;;
     peer) peer "${2-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [--update] [ARG...] |" \
-        "peer KEY" ;;
+        "outbound | peer KEY" ;;
     esac
 }
 
