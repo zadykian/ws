@@ -54,7 +54,8 @@ display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's po
 git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the
 `.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
 `WS_IDENTITY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its
-agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
+agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts). `WS_SSH_KEY` and `WS_GIT_KEY`
+name the YubiKey's keys for ssh and git: [The YubiKey](mac-yubikey.md).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
