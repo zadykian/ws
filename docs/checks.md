@@ -10,9 +10,8 @@ Claude ends its turn, and the maintainer before a push ([Claude's hooks](#claude
 finding fails it, warnings included. A finding is fixed, or justified in place with its linter's
 own inline mechanism and a reason. A Vale alert is always fixed, by a rewrite of the sentence, as
 [the writing skill][writing] allows no exception to its rules. No gate lowers a severity or keeps
-a baseline, and none leaves out a file written here.
-`make -k lint` runs every gate past a failure. Each gate is a target of its own, and those that
-check files take `FILES`, as in `make vale FILES=README.md`:
+a baseline, and none leaves out a file written here. `make -k lint` runs every gate past a failure.
+Each gate is its own target. Those that check files take `FILES`, as `make vale FILES=README.md`:
 
 - `shell`: ShellCheck, which follows a script's sources with `-x`, and `shfmt -d -i 4` on every
   shell script, found by extension or shebang;
