@@ -7,7 +7,8 @@
 # forwards, for WS_REMOTE. A run while another's unit runs, as one that a dropped ssh left, must
 # follow that unit, and start none. With WS_TARGET=cloud, a run that follows such a unit, without
 # -e, must then start one with -e security_outbound=false, and name that in ws's host_vars. The next
-# run must start none. Without the line, a run must write it alone.
+# run must start none. Without the line, a run must write it alone. --check --update, with no
+# WS_TARGET in the environment, and --check on a cloud VM must name the run that each would start.
 
 set -u
 
@@ -76,10 +77,16 @@ grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     grep -q ' 0 on$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/bootstrap.wait"
+out=$(env -u WS_TARGET sh "$wizard" --check --update </dev/null 2>&1)
+printf '%s\n' "$out" | grep -q "^wizard\.sh: ws's run: would pull ws's clone " ||
+    error "wizard.sh --check --update named no run of the playbook: $out"
 
 WS_CONF=$RUNNER_TEMP/cloud.conf
 export WS_CONF
 sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
+out=$(sh "$wizard" --check </dev/null 2>&1)
+printf '%s\n' "$out" | grep -q 'with -e security_outbound=false, then name that in ' ||
+    error "wizard.sh --check on a cloud VM named no run with -e: $out"
 echo 20 >"$ws/bootstrap.wait"
 ssh -o BatchMode=yes ws-ssh sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
 tries=0
