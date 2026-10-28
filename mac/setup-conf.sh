@@ -33,6 +33,7 @@ ws_conf_lines() {
     WS_TUNNEL_NETWORKS=
     WS_RESOLVERS=
     WS_CABLE_SERVICE=
+    WS_CABLE_PORT=
     WS_GIT_NAME=
     WS_GIT_EMAIL=
     WS_GIT_SIGNING_KEY=
@@ -112,6 +113,11 @@ ws_conf_lines() {
             \** | *[[:cntrl:]]*) ws_ok=false ;;
             *' '*) [ "$ws_value" != "${ws_line#*=}" ] || ws_ok=false ;;
             esac
+            ;;
+        WS_CABLE_PORT)
+            WS_CABLE_PORT=$ws_value
+            case $ws_value in *[!A-Za-z0-9_.-]* | -*) ws_ok=false ;; esac
+            [ "${#ws_value}" -le 15 ] || ws_ok=false
             ;;
         WS_GIT_NAME)
             # shellcheck disable=SC2034 # for setup-git.sh
@@ -234,6 +240,7 @@ ws_conf_form() {
         echo "a network service as networksetup -listallnetworkservices prints it, no * first," \
             "in quotes where it holds a blank"
         ;;
+    WS_CABLE_PORT) echo "a port of ws's, as enp5s0: up to 15 letters, digits and ._-, no - first" ;;
     WS_GIT_NAME) echo "a name, in quotes where it holds a blank, with no \" or \\" ;;
     WS_GIT_EMAIL)
         echo "an email address, as ws@example.com: letters, digits and ._%+- before the @, and" \
