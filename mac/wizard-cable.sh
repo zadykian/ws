@@ -158,11 +158,12 @@ cable_join() {
     printf '%s\n' "$1" | awk '{ printf "%s%s", (NR > 1 ? ", " : ""), $0 }'
 }
 
-# cable_write writes cable_value as mac.conf's WS_CABLE_SERVICE, in double quotes, or empty for
-# none, which the wizard never asks again.
+# cable_write writes cable_value as mac.conf's WS_CABLE_SERVICE, in double quotes, after cable_ws as
+# WS_CABLE_PORT, or empty for none, which the wizard never asks again.
 cable_write() {
     cable_line=WS_CABLE_SERVICE=
-    [ -z "$cable_value" ] || cable_line="WS_CABLE_SERVICE=\"$cable_value\""
+    [ -z "$cable_value" ] || cable_line="WS_CABLE_PORT=$cable_ws
+WS_CABLE_SERVICE=\"$cable_value\""
     ask_write "$cable_line
 " Cable && ws_conf "$WS_CONF"
 }
