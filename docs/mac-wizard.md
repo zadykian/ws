@@ -279,8 +279,8 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 
 - With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
   console ([Secure Boot](fans.md#secure-boot)).
-- What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, and
-  Gateway's connection to ws.
+- What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, Gateway's
+  connection to ws, and terminal-notifier's grant of [The notices](mac-yubikey.md#the-notices).
 - ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `mac.conf` has `WS_REMOTE` ([The router](router.md)). Off the LAN, `mac.conf`'s way to ws
   instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](mac-targets.md)).

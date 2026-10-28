@@ -249,6 +249,8 @@ run_hand() {
         "devices there, allow it (docs/mac.md, ssh's hosts)."
     by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \
         "config file ~/.ssh/config on (docs/mac.md)."
+    by_hand "ws's agent's notices: allow terminal-notifier's at its first prompt, as Banners" \
+        "(docs/mac-yubikey.md, The notices)."
     [ "$WS_TARGET" = lan ] || {
         run_away
         return 0
