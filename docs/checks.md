@@ -32,14 +32,11 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 files' encoding, line ends and indents for editors.
 
 `tools/run` downloads the other tools into `.cache/tools`, each pinned by version and SHA-256. make
-installs the Python tools of `.github/lint-requirements.txt` into `.cache/venv`, with a Python of
-3.12 to 3.14, which ansible-core 2.20 supports. That file pins each package with the SHA-256 of
-each of its files. pip takes only the wheels it lists, and builds no package. So the tools install
-where each package has a wheel: on Linux, on amd64 or arm64, and on macOS on arm64, as cryptography
-has none for macOS on amd64. uv writes the file from `.github/lint-requirements.in`, which says
-how, and make stops where the file lacks a pin of the `.in`. make installs the collections of
-`requirements.yml` into `.cache/collections`, as ansible-lint runs offline. It installs each again
-where a file it comes from is newer.
+installs the Python tools into `.cache/venv`, with a Python of 3.12 to 3.14, and the collections of
+`requirements.yml` into `.cache/collections` ([Makefile](../Makefile)). pip takes only the wheels
+that `.github/lint-requirements.txt` lists by SHA-256, which uv writes from its `.in`. So the tools
+install where each package has a wheel: on Linux, on amd64 or arm64, and on macOS on arm64, as
+cryptography has none for macOS on amd64.
 
 ## The playbook
 
