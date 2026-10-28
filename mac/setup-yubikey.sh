@@ -1,10 +1,10 @@
 # shellcheck shell=sh
 # The YubiKey's step of mac/setup.sh: the keys that mac.conf's WS_SSH_KEY and WS_GIT_KEY name,
-# found on the YubiKey's PIV applet, and their .pubs in ~/.config/ws/keys. ykman, which reads
-# them, and yubico-piv-tool, whose libykcs11 the agent loads, come from Homebrew. setup.sh sources
-# it after lib.sh and setup-lib.sh, whose functions it calls, and runs yubikey before ssh's hosts.
-# The wizard can call yubikey_tools, yubikey_serials and yubikey_keys, each with its stage's name
-# for their messages.
+# found on the YubiKey's PIV applet, made where missing, and their .pubs in ~/.config/ws/keys.
+# ykman, which reads and makes them, and yubico-piv-tool, whose libykcs11 the agent loads, come
+# from Homebrew. setup.sh sources it after lib.sh and setup-lib.sh, whose functions it calls, and
+# runs yubikey before ssh's hosts. The wizard can call yubikey_tools, yubikey_serials and
+# yubikey_keys, each with its stage's name for their messages.
 
 # The directory of the keys' .pubs, NAME.pub for each, which ssh and git name.
 yubikey_dir=$HOME/.config/ws/keys
@@ -49,22 +49,23 @@ yubikey_serials() {
     "$yubikey_ykman" list --serials
 }
 
-# yubikey_keys [STAGE] finds the keys of WS_SSH_KEY and WS_GIT_KEY on the one YubiKey in, checks
-# them, and writes their .pubs. It stops unless one YubiKey is in. Under --check before
-# yubikey_tools installs ykman, it says what it would do once it has. Its messages start with
-# STAGE, where the wizard's stage gives one.
+# yubikey_keys [STAGE] finds the keys of WS_SSH_KEY and WS_GIT_KEY on the one YubiKey in, makes
+# those missing, checks them, and writes their .pubs. It stops unless one YubiKey is in. Under
+# --check before yubikey_tools installs ykman, it says what it would do once it has. Its messages
+# start with STAGE, where the wizard's stage gives one.
 # shellcheck disable=SC2120 # the wizard's stage passes its name
 yubikey_keys() {
     yubikey_at=${1:+$1: }
     if [ -z "$yubikey_ykman" ]; then
-        ws_say "${yubikey_at}would find the keys $WS_SSH_KEY and $WS_GIT_KEY on the YubiKey" \
-            "once ykman is installed"
+        ws_say "${yubikey_at}would find or make the keys $WS_SSH_KEY and $WS_GIT_KEY on the" \
+            "YubiKey once ykman is installed"
         return 0
     fi
     yubikey_one
     yubikey_defaults
     [ -d "${yubikey_dir%/*}" ] || ws_dir "${yubikey_dir%/*}" 755
     ws_dir "$yubikey_dir" 755
+    yubikey_taken=
     yubikey_key "$WS_SSH_KEY"
     yubikey_key "$WS_GIT_KEY"
 }
@@ -127,9 +128,9 @@ yubikey_slots() {
         END { out() }'
 }
 
-# yubikey_key NAME sets yubikey_slot to the slot of the key NAME, whose certificate is CN=NAME. It
-# stops where several slots hold that certificate, and where none does, naming the commands that
-# make the key. It checks the key, and writes its .pub.
+# yubikey_key NAME sets yubikey_slot to the slot of the key NAME, whose certificate is CN=NAME, and
+# makes it in the first free retired slot where none is. It stops where several slots hold that
+# certificate. It checks the key, and writes its .pub.
 yubikey_key() {
     yubikey_slot=$(yubikey_slots | awk -v want="CN=$1" '
         { subject = $0; sub(/^[^ ]+ [^ ]+ /, "", subject) }
@@ -142,34 +143,76 @@ yubikey_key() {
     esac
     if [ -z "$yubikey_slot" ]; then
         yubikey_free "$1"
-        yubikey_make "$1"
+        yubikey_make "$1" || return 0
+        yubikey_read
     fi
     yubikey_check "$1"
     yubikey_pub "$1"
 }
 
 # yubikey_free NAME sets yubikey_slot to the first retired slot that holds neither a key nor a
-# certificate. It stops where none is.
+# certificate, and that no key yubikey_make would make under --check took. It stops where none is.
 yubikey_free() {
-    yubikey_used=" $(yubikey_slots | awk '{ printf "%s ", $1 }')"
+    yubikey_used=" $(yubikey_slots | awk '{ printf "%s ", $1 }')$yubikey_taken "
     for yubikey_slot in $yubikey_retired; do
         case $yubikey_used in *" $yubikey_slot "*) continue ;; esac
+        yubikey_taken="$yubikey_taken $yubikey_slot "
         return 0
     done
     ws_die "${yubikey_at}YubiKey $yubikey_serial has no free slot of 82 to 95 for $1's key:" \
         "ykman piv keys delete SLOT and ykman piv certificates delete SLOT free one"
 }
 
-# yubikey_make NAME stops where NAME's key is missing, naming the commands of ykman that make it in
-# yubikey_slot: an Ed25519 key, used with no PIN and no touch, as ws's agent and git ask neither,
-# then its certificate CN=NAME, which names it. ykman asks the management key at each, and the PIN
-# for the certificate.
+# yubikey_make NAME makes NAME's key in yubikey_slot: an Ed25519 key, used with no PIN and no touch,
+# as ws's agent and git ask neither, then its certificate CN=NAME, which names it, valid for 3650
+# days. ssh and git use the key alone and ignore the expiry, but other readers of the PIV
+# certificate, such as macOS's smart-card pairing or Yubico Authenticator, show an expired one, and
+# 10 years outlast the key. ykman asks the management key at each, and the PIN for the certificate,
+# at the terminal: the PIN alone where it protects the management key. With none, it stops, naming
+# both commands. Ed25519 needs firmware 5.7 or later. --check asks nothing, says what it would run,
+# and fails, as the key is not there.
+# shellcheck disable=SC2154 # ws_prog is lib.sh's, and ws_tmp, lib.sh's, sets ws_tmpfile
 yubikey_make() {
+    yubikey_version=$(printf '%s\n' "$yubikey_piv" |
+        awk '$1 == "PIV" && $2 == "version:" { print $3 }')
+    case $yubikey_version in
+    [0-4].* | 5.[0-6].*)
+        ws_die "${yubikey_at}YubiKey $yubikey_serial's firmware, $yubikey_version, makes no" \
+            "Ed25519 key, which came in 5.7: plug in a YubiKey of firmware 5.7 or later"
+        ;;
+    esac
     yubikey_run="ykman piv keys generate -a ED25519 --pin-policy NEVER --touch-policy NEVER"
     yubikey_run="$yubikey_run $yubikey_slot $1.pem, then ykman piv certificates generate -s"
     yubikey_run="$yubikey_run CN=$1 -d 3650 $yubikey_slot $1.pem"
-    ws_die "${yubikey_at}YubiKey $yubikey_serial holds no key $1: make it at a terminal with" \
-        "$yubikey_run, which ask the management key and the PIN"
+    if ws_checking; then
+        ws_say "${yubikey_at}would make $1's key in slot $yubikey_slot of YubiKey" \
+            "$yubikey_serial: $yubikey_run, which ask the PIN, and the management key unless the" \
+            "PIN protects it"
+        ws_say "${yubikey_at}would write $yubikey_dir/$1.pub once the key is made"
+        return 1
+    fi
+    [ -t 0 ] || ws_die "${yubikey_at}no terminal for ykman to make $1's key, as it asks the PIN," \
+        "and the management key unless the PIN protects it: run $ws_prog at a terminal, or make" \
+        "the key with $yubikey_run"
+    ws_say "${yubikey_at}making $1's key in slot $yubikey_slot of YubiKey $yubikey_serial: ykman" \
+        "asks the management key, then it and the PIN again, or the PIN alone where it protects" \
+        "the management key"
+    ws_tmp
+    yubikey_pem=$ws_tmpfile
+    if ! "$yubikey_ykman" --device "$yubikey_serial" piv keys generate -a ED25519 \
+        --pin-policy NEVER --touch-policy NEVER "$yubikey_slot" "$yubikey_pem" >&2; then
+        rm -f "$yubikey_pem"
+        ws_die "${yubikey_at}ykman piv keys generate failed for $1's key"
+    fi
+    if ! "$yubikey_ykman" --device "$yubikey_serial" piv certificates generate -s "CN=$1" \
+        -d 3650 "$yubikey_slot" "$yubikey_pem" >&2; then
+        rm -f "$yubikey_pem"
+        ws_die "${yubikey_at}ykman piv certificates generate failed, which leaves a key with no" \
+            "name in slot $yubikey_slot: ykman --device $yubikey_serial piv certificates generate" \
+            "-s CN=$1 -d 3650 $yubikey_slot names it, or ykman piv keys delete $yubikey_slot" \
+            "frees the slot"
+    fi
+    rm -f "$yubikey_pem"
 }
 
 # yubikey_check NAME stops where NAME's key, in yubikey_slot, is missing beside its certificate, is
