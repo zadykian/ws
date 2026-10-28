@@ -8,8 +8,8 @@
 # them again, at a replug and with a second YubiKey too, and once ssh-add -D empties it. Stopped, it
 # must take its ssh-agent and its socket with it. The cases leave 30000001 alone in, as they found
 # it. Last, the job's own agent, launchd's or the stand-in's (yubikey-agent.sh), which the cases
-# after these use, must list both keys at ~/.ssh/ws-agent.sock and sign with each, and setup.sh then
-# print nothing.
+# after these use, must list both keys at ~/.ssh/ws-agent.sock and sign with each, through
+# ws-agent-confirm, and setup.sh then print nothing.
 #
 # shellcheck disable=SC2154 # tmp, error and prints are mac-setup-checks.sh's
 keys=$HOME/.config/ws/keys
@@ -126,10 +126,16 @@ if launchctl print "gui/$(id -u)" >/dev/null 2>&1; then
         error "$plist is not 644, or plutil refuses it"
     fi
 fi
+# Each signature must run ws-agent-confirm, which counts it in its key's stamp, ssh's or git's.
 if within 20 listed; then
     for name in ws git; do
+        stamp=$HOME/.config/ws/stamps/ssh
+        [ "$name" = ws ] || stamp=$HOME/.config/ws/stamps/git
+        was=$(cat "$stamp" 2>/dev/null) || was=
         signs "$name" || error "ssh-keygen -Y sign with keys/$name.pub through $socket made no" \
             "signature that verifies: $(cat "$tmp/sign.err")"
+        [ "$(cat "$stamp" 2>/dev/null)" != "$was" ] || error "keys/$name.pub signed through" \
+            "$socket, and ws-agent-confirm counted no use in $stamp"
     done
 else
     error "the job's agent lists no keys of keys/ws.pub and keys/git.pub: $(cat "$tmp/listed")"

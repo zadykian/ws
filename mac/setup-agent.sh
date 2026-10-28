@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# The step of mac/setup.sh that installs ws's ssh agent: copies of ws-agent and its PIN's askpass in
+# The step of mac/setup.sh that installs ws's ssh agent: copies of ws-agent and its askpasses in
 # ~/.config/ws, and the LaunchAgent that runs ws-agent, loaded in the gui domain of the user's
 # login. setup.sh sources it after lib.sh, setup-lib.sh and setup-yubikey.sh, whose functions and
 # yubikey_dir it takes, and runs agent after the YubiKey's step, as the wizard's Mac key stage does.
@@ -8,14 +8,16 @@
 agent_label=com.github.zadykian.ws-agent
 agent_plist=$HOME/Library/LaunchAgents/$agent_label.plist
 
-# agent copies ws-agent and ws-agent-pin to ~/.config/ws, and the plist to ~/Library/LaunchAgents,
-# where they differ, then has launchd run the agent. launchd runs the copies, which keep the agent
-# off a clone that moves or changes branch.
+# agent copies ws-agent and its askpasses, ws-agent-pin and ws-agent-confirm, to ~/.config/ws, and
+# the plist to ~/Library/LaunchAgents, where they differ, then has launchd run the agent. launchd
+# runs the copies, which keep the agent off a clone that moves or changes branch. The askpasses go
+# first, so that an agent that starts in between finds them: one with no ws-agent-confirm refuses
+# each signature.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile, and dir is setup.sh's
 agent() {
     [ -d "$HOME/.config/ws" ] || ws_dir "$HOME/.config/ws" 700
     ws_changed=0
-    for each in ws-agent ws-agent-pin; do
+    for each in ws-agent-pin ws-agent-confirm ws-agent; do
         ws_put "$HOME/.config/ws/$each" 755 <"$dir/$each"
     done
     agent_copied=$ws_changed

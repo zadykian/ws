@@ -198,7 +198,8 @@ own, must list both keys as it starts, and sign with each. With the stand-in's `
 take them out at an unplug, and load them again at a plug, a replug, a second YubiKey and an
 `ssh-add -D`. Stopped, it must take its `ssh-agent` and socket with it. The job's agent must list
 both at `~/.ssh/ws-agent.sock` and sign with each, launchd's from `setup.sh`'s copy, and `setup.sh`
-then print nothing ([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
+then print nothing. Each signature must run `ws-agent-confirm`, which counts it in its key's stamp
+([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
 `ws` and `ws-ssh` the file key, by the four lines `config.d/ws` had for it before. It must give
 them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
 showing `config.d/ws`'s diff alone. Then it must give them an agent at Secretive's socket, which

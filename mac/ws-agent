@@ -2,7 +2,8 @@
 # ws-agent runs ws's ssh agent, which holds the YubiKey's keys for ssh and git, with no PIN.
 # launchd runs it as the user, from login on, through
 # ~/Library/LaunchAgents/com.github.zadykian.ws-agent.plist, which mac/setup.sh installs with
-# this script's copy, ~/.config/ws/ws-agent, and that of the PIN's askpass, ws-agent-pin.
+# this script's copy, ~/.config/ws/ws-agent, and those of its askpasses: ws-agent-pin, the PIN's,
+# and ws-agent-confirm, which posts a notice at each signature.
 #
 # It starts Apple's ssh-agent at ~/.ssh/ws-agent.sock, as macOS's own agent takes no -P: its
 # default providers, /usr/lib*/*,/usr/local/lib*/*, matched after realpath, refuse Homebrew's
@@ -20,6 +21,7 @@ socket=${WS_AGENT_SOCKET:-$HOME/.ssh/ws-agent.sock}
 provider=${WS_AGENT_PROVIDER:-/opt/homebrew/lib/libykcs11.dylib}
 log=$HOME/Library/Logs/ws-agent.log
 pin=$(cd "$(dirname "$0")" && pwd -P)/ws-agent-pin
+confirm=$(cd "$(dirname "$0")" && pwd -P)/ws-agent-confirm
 SSH_AUTH_SOCK=$socket
 export SSH_AUTH_SOCK
 
@@ -40,7 +42,10 @@ trim_log() {
 # start starts ssh-agent at the socket, and waits up to 5 s for it. -P allows the provider at its
 # path in the Cellar alone, set as library. A pattern of the Cellar's versions would outlive a brew
 # upgrade, but the agent keys the provider by its old path, which ssh-add -e then misses. A socket
-# that no agent answers, as a killed agent leaves, goes first. One that answers stops it.
+# that no agent answers, as a killed agent leaves, goes first. One that answers stops it. ssh-agent
+# runs SSH_ASKPASS, ws-agent-confirm, at each signature of a key loaded with -c. It needs
+# SSH_ASKPASS_REQUIRE=force: launchd sets no DISPLAY, without which readpass.c's read_passphrase
+# runs no askpass, and ask_permission refuses each signature.
 start() {
     if [ ! -e "$provider" ] || ! library=$(realpath "$provider" 2>/dev/null); then
         say "$provider is missing: brew install yubico-piv-tool puts it there"
@@ -55,7 +60,8 @@ start() {
         rm -f "$socket"
     fi
     [ -d "${socket%/*}" ] || mkdir -m 700 "${socket%/*}"
-    "$bin/ssh-agent" -D -a "$socket" -P "$library" >/dev/null &
+    SSH_ASKPASS=$confirm SSH_ASKPASS_REQUIRE=force "$bin/ssh-agent" -D -a "$socket" -P "$library" \
+        >/dev/null &
     agent=$!
     waited=0
     until [ -S "$socket" ]; do
@@ -80,12 +86,13 @@ yubikeys() {
 }
 
 # load puts the YubiKey's keys in the agent, through the PIN's askpass, and sets loaded where it
-# did. ssh-add -e goes first, as the agent refuses -s for a provider it has. It logs a failure
-# where its words change alone, as each try of again's would repeat it.
+# did. ssh-add -e goes first, as the agent refuses -s for a provider it has. -c has the agent run
+# ws-agent-confirm at each signature by the keys. It logs a failure where its words change alone,
+# as each try of again's would repeat it.
 load() {
     tries=$((tries + 1))
     "$bin/ssh-add" -e "$provider" >/dev/null 2>&1
-    if out=$(SSH_ASKPASS=$pin SSH_ASKPASS_REQUIRE=force "$bin/ssh-add" -s "$provider" 2>&1 \
+    if out=$(SSH_ASKPASS=$pin SSH_ASKPASS_REQUIRE=force "$bin/ssh-add" -c -s "$provider" 2>&1 \
         </dev/null); then
         loaded=1
         failed=
