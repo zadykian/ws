@@ -15,8 +15,11 @@
 # the stamp, and another owner's must stop. Its words must print git's hash of root's word list, or
 # - without one, and the list for that hash alone. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
-# ws's host_vars once, which bootstrap.sh --tags network,wireguard then gives 10.77.0.1. The
-# stand-ins' state goes back.
+# ws's host_vars once, which bootstrap.sh --tags network,wireguard then gives 10.77.0.1. The remote
+# script's outbound must add security_outbound: false there once, which status must then read as
+# off. The last line counts, as in YAML: Off with a comment by hand must read as off, and stay, and
+# true after it as on. Through a link, outbound must stop, but where the linked file holds the line.
+# The stand-ins' state goes back.
 
 set -u
 
@@ -199,6 +202,30 @@ files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
     error "bootstrap.sh --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
+remote outbound
+printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' 'security_outbound: false' |
+    cmp -s - "$vars" && [ "$status" = 0 ] && [ "$out" = "wizard-remote.sh: wrote $vars" ] ||
+    error "the remote script's outbound exited $status"
+remote outbound
+[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound again exited $status"
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no outbound off"
+printf '%s\n' --- 'security_outbound: true' 'security_outbound: Off  # by hand' |
+    sudo tee "$vars" >/dev/null
+remote outbound
+[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound with Off by hand exited $status"
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read Off by hand as on"
+echo 'security_outbound: true' | sudo tee -a "$vars" >/dev/null
+sudo mv "$vars" "$vars.real" && sudo ln -s localhost.yml.real "$vars"
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound on' || error "status read true after Off as off"
+remote outbound
+printf '%s\n' "$out" | grep -qF "$vars is a link to localhost.yml.real" && [ "$status" = 1 ] ||
+    error "its outbound through a link exited $status"
+echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
+remote outbound
+[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
 sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}"
 rm -f "$ws/clone.log" "$ws/apply.log" "$ws/uplink"
 exit "$fail"
