@@ -47,33 +47,64 @@ run_after() {
     [ "$root_in" = 1 ] || echo "Root's key"
 }
 
-# run_done succeeds where ws's last full run exited 0, and no run's unit runs there now. Under
-# --update, only once the stage ran the playbook in this run. It reads ws only where root logged in
-# there in this run.
+# run_done succeeds where ws's last full run exited 0, and no run's unit runs there now. On a cloud
+# VM, that run's -e must have turned the outbound table off, and ws's host_vars must keep it off.
+# Under --update, only once the stage ran the playbook in this run. It reads ws only where root
+# logged in there in this run.
 # shellcheck disable=SC2154 # update is wizard.sh's
 run_done() {
     [ "$update" = 0 ] || [ "$run_ran" = 1 ] || return 1
+    ws_conf "$WS_CONF"
     [ "$root_in" = 1 ] && remote_read && [ "$(remote_get active)" = - ] &&
-        [ "$(remote_get run | cut -d ' ' -f 2)" = 0 ]
+        [ "$(run_status)" = 0 ] &&
+        { [ "$WS_TARGET" != cloud ] || { run_off && [ "$(remote_get outbound)" = off ]; }; }
+}
+
+# run_status prints the status of ws's last full run, as the remote script's status read it, or -.
+run_status() {
+    run_word=$(remote_get run | cut -d ' ' -f 2)
+    echo "${run_word:--}"
+}
+
+# run_off succeeds where ws's last full run turned the outbound table off by its -e.
+run_off() {
+    [ "$(remote_get run | cut -d ' ' -f 3)" = off ]
 }
 
 # run_do runs ws's playbook in a unit of its own on ws through the remote script, or follows the run
 # that goes on there, with its log on stderr. Under --update, the remote script pulls ws's clone
-# first. --check says what it would do.
+# first. On a cloud VM, where the outbound table would drop the provider's metadata service, the
+# run's -e turns it off, and its unit names that in host_vars for the runs after. A unit that the
+# run followed may have lacked that -e: a run of its own follows then. Where the line is missing
+# still, run_outbound writes it, alone where a run with -e passed before. --check says what it would
+# do. It reads mac.conf, which nothing else read before under --check --update.
 run_do() {
+    ws_conf "$WS_CONF"
     set --
     run_how="run bootstrap.sh on ws in a unit of its own, and follow its log"
     if [ "$update" = 1 ]; then
         set -- --update
         run_how="pull ws's clone where it is on main and clean, then $run_how"
     fi
+    if [ "$WS_TARGET" = cloud ]; then
+        set -- "$@" -e security_outbound=false
+        run_how="$run_how, with -e security_outbound=false, then name that in ws's host_vars"
+        if [ "$update" = 0 ] && [ "$(remote_get active)" = - ] && [ "$(run_status)" = 0 ] &&
+            run_off; then
+            run_how="name security_outbound: false in ws's host_vars"
+            ws_checking || {
+                run_outbound
+                return
+            }
+        fi
+    fi
     if ws_checking; then
         remote_read || true
         run_unit=$(remote_get active) || run_unit=-
-        run_last=$(remote_get run | cut -d ' ' -f 1-2) && [ -n "$run_last" ] || run_last='- -'
-        case $run_unit:${run_last#* } in
+        run_last=$(run_status)
+        case $run_unit:$run_last in
         -:- | -:0) ws_say "ws's run: would $run_how" ;;
-        -:*) ws_say "ws's run: would $run_how; its last full run exited ${run_last#* }" ;;
+        -:*) ws_say "ws's run: would $run_how; its last full run exited $run_last" ;;
         *) ws_say "ws's run: would follow $run_unit, which runs on ws" ;;
         esac
         return 0
@@ -83,6 +114,26 @@ run_do() {
     remote_got=0
     remote run "$@" >&2 || return 1
     run_ran=1
+    [ "$WS_TARGET" = cloud ] || return 0
+    remote_read || return 1
+    if ! run_off; then
+        ws_say "ws's run: the unit it followed ran without -e security_outbound=false, so" \
+            "bootstrap.sh runs again with it"
+        remote_got=0
+        remote run "$@" >&2 && remote_read || return 1
+    fi
+    [ "$(remote_get outbound)" = off ] || run_outbound
+}
+
+# run_outbound names security_outbound: false in ws's host_vars by the remote script's outbound op,
+# and stops with its error where that fails. --update runs the playbook, which makes a clone gone.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+run_outbound() {
+    remote_got=0
+    remote outbound 2>"$lock/outbound.err" || ws_die "ws's run: ws's host_vars lacks" \
+        "security_outbound: false: $(tail -n 1 "$lock/outbound.err"); mend that, or run the" \
+        "wizard with --update, which runs ws's playbook again"
+    cat "$lock/outbound.err" >&2
 }
 
 # run_fail says what to do where ws's playbook ran no full run to its end.

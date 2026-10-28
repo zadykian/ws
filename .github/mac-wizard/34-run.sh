@@ -5,7 +5,9 @@
 # its stamp must stop at the stage. The next must start a unit of its own. That one must end with
 # what stays by hand: ws's fans' driver, as the stand-in's Secure Boot refuses it, and the router's
 # forwards, for WS_REMOTE. A run while another's unit runs, as one that a dropped ssh left, must
-# follow that unit, and start none.
+# follow that unit, and start none. With WS_TARGET=cloud, a run that follows such a unit, without
+# -e, must then start one with -e security_outbound=false, and name that in ws's host_vars. The next
+# run must start none. Without the line, a run must write it alone.
 
 set -u
 
@@ -13,6 +15,7 @@ wizard=$HOME/repository/ws/mac/wizard.sh
 remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamp=$ws/root/var/lib/ws-wizard/run
+vars=$ws/root/root/repository/ws/host_vars/localhost.yml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -73,4 +76,30 @@ grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     grep -q ' 0 on$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/bootstrap.wait"
+
+WS_CONF=$RUNNER_TEMP/cloud.conf
+export WS_CONF
+sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
+echo 20 >"$ws/bootstrap.wait"
+ssh -o BatchMode=yes ws-ssh sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
+tries=0
+until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+wizard
+rm "$ws/bootstrap.wait"
+grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
+    [ "$(tail -n 1 "$ws/bootstrap.log")" = '-e security_outbound=false' ] && started 1 3 &&
+    grep -q ' 0 off$' "$stamp" && sudo grep -qx 'security_outbound: false' "$vars" &&
+    [ "$status" = 0 ] || error "a cloud VM's run after a unit without -e exited $status"
+wizard
+started 0 1 && [ "$status" = 0 ] || error "the next run with WS_TARGET=cloud exited $status"
+sudo rm "$vars"
+wizard
+started 0 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
+    error "a cloud VM's run without the line exited $status, or ran a playbook"
+sudo rm -r "${vars%/*}"
+rm "$WS_CONF"
+unset WS_CONF
 exit "$fail"
