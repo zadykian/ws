@@ -8,7 +8,8 @@
 # back, and spare a script's own files. ws_conf's cases each read a file of their own, in a section
 # per rule: they need no daemon, and leave the job's mac.conf alone. The network keys' sections are
 # in mac-conf-net-checks.sh. Each failure prints an ::error:: line, and any fails the script at its
-# end. Last, it runs mac-setup-checks.sh, whose cases run setup.sh's own steps.
+# end. Last, it runs mac-setup-checks.sh, whose cases run setup.sh's own steps, then
+# mac-confirm-checks.sh, whose agents of its own run ws-agent-confirm.
 #
 # shellcheck source-path=SCRIPTDIR/..
 
@@ -274,4 +275,5 @@ refused 'WS_SSH_KEY and WS_GIT_KEY both name git' WS_SSH_KEY=git
 refused 'WS_SSH_KEY and WS_GIT_KEY both name ws' WS_GIT_KEY=ws
 refused 'WS_SSH_KEY and WS_GIT_KEY both name key' WS_SSH_KEY=key WS_GIT_KEY=key
 sh .github/mac-setup-checks.sh || fail=1
+sh .github/mac-confirm-checks.sh || fail=1
 exit "$fail"
