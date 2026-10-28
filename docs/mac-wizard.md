@@ -213,7 +213,7 @@ the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in
 `wg0`'s key, in place of its line, and `setup.sh` runs again, which loads ws-tunnel
 ([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. Then a handshake must come
 within 30 s, and `ssh ws` log in once. Where none came, or the run asked ws's address, the run goes
-on, and the closing list says what to do.
+on, and the closing list says what to do. The stage asks sudo's password only where it acts.
 
 ## Another repository
 

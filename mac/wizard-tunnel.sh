@@ -13,21 +13,29 @@
 tunnel_none=
 
 # tunnel_after prints ws's run, which makes wg0, where that stage isn't done, as gh on ws's does. It
-# prints setup.sh, which makes the Mac's key, where root has none to read.
+# prints setup.sh, which makes the Mac's key and writes it to tunnel.pub, where that holds none.
 tunnel_after() {
     if ! run_done; then
         echo "ws's run"
-    elif ! tunnel_key -n; then
+    elif ! tunnel_pub; then
         echo setup.sh
     fi
 }
 
-# tunnel_key [-n] sets tunnel_mac to the Mac's WireGuard public key, from root's key by root's wg,
-# as setup.sh prints it. With -n, sudo asks for no password. It fails where it reads no key.
+# tunnel_key sets tunnel_mac to the Mac's WireGuard public key, from root's key by root's wg, as
+# setup.sh prints it. It fails where it reads no key.
 # shellcheck disable=SC2154 # ws_etc is lib.sh's, ws_libexec setup-lib.sh's
 tunnel_key() {
-    tunnel_mac=$(sudo ${1+"$1"} sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" \
+    tunnel_mac=$(sudo sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" \
         "$ws_etc/private.key" 2>/dev/null) && ws_is_key "$tunnel_mac"
+}
+
+# tunnel_pub sets tunnel_mac to the Mac's public key in ~/.config/ws/tunnel.pub, which setup.sh
+# writes from root's key at each run, the wizard's setup.sh stage included. So it needs no sudo,
+# whose timestamp lapses during ws's run. It fails where the file holds no key, as before setup.sh
+# first wrote it.
+tunnel_pub() {
+    tunnel_mac=$(cat "$HOME/.config/ws/tunnel.pub" 2>/dev/null) && ws_is_key "$tunnel_mac"
 }
 
 # tunnel_shake TRIES succeeds where ws-tunnel's status shows a handshake within 180 s, past which
@@ -51,18 +59,25 @@ tunnel_via() {
     [ "$(ssh -G ws 2>/dev/null | awk '$1 == "hostname" { print $2; exit }')" = 10.99.0.1 ]
 }
 
+# tunnel_port succeeds where ws's SSH port answers at 10.99.0.1 within 3 s, which takes a handshake
+# in the tunnel. Unlike tunnel_shake, it needs no sudo, and it tries no login. -G bounds macOS nc's
+# connect, and -w that of Homebrew's netcat, which ignores -G and comes first on the wizard's PATH.
+tunnel_port() {
+    nc -z -G 3 -w 3 10.99.0.1 22 >/dev/null 2>&1
+}
+
 # tunnel_done succeeds where ws's wg0 has the Mac's key as its peer, WS_PUBLIC_KEY is wg0's key,
-# and launchd has ws-tunnel loaded. It reads ws only where root logged in there in this run.
-# ws-tunnel must have a handshake too, and ssh ws go through it. Where the run asked ws's address,
-# ws isn't at the ways that ws-tunnel tries, and where tunnel_check set tunnel_none, ws-tunnel has
-# no handshake: a later run checks those two.
+# and launchd has ws-tunnel loaded. It reads ws only where root logged in there in this run, and
+# needs no sudo. ws's SSH port must answer through the tunnel too, and ssh ws go through it. Where
+# the run asked ws's address, ws isn't at the ways that ws-tunnel tries, and where tunnel_check set
+# tunnel_none, ws-tunnel has no handshake: a later run checks those two.
 # shellcheck disable=SC2154 # root_in and host_first are wizard-host.sh's
 tunnel_done() {
     ws_conf "$WS_CONF"
     [ "$root_in" = 1 ] && remote_read && [ -n "$WS_PUBLIC_KEY" ] &&
         [ "$(remote_get wg0)" = "$WS_PUBLIC_KEY" ] && [ "$(remote_get peer)" = ok ] &&
-        tunnel_key -n && [ "$(remote_get mac.pub)" = "$tunnel_mac" ] && ws_tunnel_loaded &&
-        { [ -n "$host_first$tunnel_none" ] || { tunnel_shake 3 && tunnel_via; }; }
+        tunnel_pub && [ "$(remote_get mac.pub)" = "$tunnel_mac" ] && ws_tunnel_loaded &&
+        { [ -n "$host_first$tunnel_none" ] || { tunnel_port && tunnel_via; }; }
 }
 
 # tunnel_do gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it,
@@ -70,7 +85,8 @@ tunnel_done() {
 # --tags wireguard runs in a unit of its own. It sets WS_PUBLIC_KEY to wg0's key through ask_write,
 # where it differs, and runs setup.sh again. --check says what it would do, with mac.conf's diff
 # and setup.sh --check's where it knows wg0's key. Last, it waits for the handshake and logs in, or,
-# where the run asked ws's address, leaves that to a later run.
+# where the run asked ws's address, leaves that to a later run. It takes root's key, by sudo, rather
+# than tunnel.pub, which the user can write, as the key it sends becomes ws's peer.
 tunnel_do() {
     tunnel_peered=0
     tunnel_had=$WS_PUBLIC_KEY

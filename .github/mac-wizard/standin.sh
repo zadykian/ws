@@ -171,5 +171,15 @@ esac
 exec /usr/bin/ssh "\$@"
 EOF
 chmod 755 /opt/homebrew/bin/ssh
+# nc next, for the Tunnel stage's check of ws's SSH port through the tunnel, by its arguments. It
+# goes to the stand-in's sshd, by the runner's nc, where ws-tunnel has a handshake.
+rm -f /opt/homebrew/bin/nc
+cat >/opt/homebrew/bin/nc <<'EOF'
+#!/bin/sh
+[ "$*" = '-z -G 3 -w 3 10.99.0.1 22' ] || exec /usr/bin/nc "$@"
+sudo /usr/local/libexec/ws-tunnel/ws-tunnel status 2>/dev/null |
+    grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 22022
+EOF
+chmod 755 /opt/homebrew/bin/nc
 : >"$ws/log"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
