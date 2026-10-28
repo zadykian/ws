@@ -17,6 +17,8 @@
 # default for Homebrew, $(brew --prefix)/etc/softhsm/softhsm2.conf, or SOFTHSM2_CONF where set,
 # keeps the tokens in the stand-in's. The job's YubiKey, 30000001, has firmware 5.7.1, no default
 # PIN, PUK or management key, and the keys ws and git in slots 82 and 83, of policy NEVER NEVER.
+# Its keys are Ed25519, which OpenSSH loads through PKCS#11 from 10.1 on. The setup stops where the
+# runner's /usr/bin/ssh is older, as the jobs' macos-26 runner's is not.
 #
 # Its state is in S, $RUNNER_TEMP/yubikey, where bin/ykman, first on the job's PATH, is its link:
 #
@@ -176,6 +178,10 @@ ykman() {
 # setup installs SoftHSM2 and yubico-piv-tool, points libykcs11 and SoftHSM2's config at the
 # stand-in's, and makes the job's YubiKey.
 setup() {
+    if ! /usr/bin/ssh -V 2>&1 | grep -Eq '^OpenSSH_((1[1-9]|[2-9][0-9])\.|10\.[1-9])'; then
+        echo "::error::the runner's ssh is $(/usr/bin/ssh -V 2>&1), which loads no Ed25519 key by" \
+            "PKCS#11 before OpenSSH 10.1: the mac jobs pin macos-26, whose ssh does" && exit 1
+    fi
     for formula in softhsm yubico-piv-tool; do
         brew list --formula "$formula" >/dev/null 2>&1 || brew install "$formula"
     done

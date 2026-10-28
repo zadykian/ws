@@ -216,8 +216,9 @@ gh's, and of an add that leaves the account without the key. It must add the key
 lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh, `setup.sh` must
 install Homebrew's once, with git's keys alone ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
 
-The job sets up a stand-in YubiKey before its first run. A SoftHSM2 token holds its keys, `ws`'s
-in slot 82 and `git`'s in 83 ([yubikey-standin.sh](../.github/yubikey-standin.sh)).
+The job sets up a stand-in YubiKey before its first run. A SoftHSM2 token holds its keys, `ws`'s in
+slot 82 and `git`'s in 83 ([yubikey-standin.sh](../.github/yubikey-standin.sh)). They are Ed25519,
+so the mac jobs run on `macos-26`, whose ssh loads them through PKCS#11.
 
 ## The rules
 

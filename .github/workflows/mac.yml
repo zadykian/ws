@@ -19,7 +19,7 @@ jobs:
   # no utun fails the job, as the daemon runs the same wireguard-go. Gated as ci.yml's playbook job.
   mac:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
-    runs-on: macos-latest
+    runs-on: macos-26 # not latest: its ssh must load Ed25519 keys by PKCS#11 (yubikey-standin.sh)
     timeout-minutes: 20
     permissions:
       contents: read
