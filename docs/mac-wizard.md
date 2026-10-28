@@ -211,9 +211,9 @@ another, and `bootstrap.sh --tags wireguard` gives `wg0` that peer. That run goe
 lacks the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
 the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
 `wg0`'s key, in place of its line, and `setup.sh` runs again, which loads ws-tunnel
-([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. It then waits up to 30 s
-for ws-tunnel's handshake, and logs in once by `ssh ws`. Else it stops, naming the UDP port, the
-router's forward and the Background. Where the run asked ws's address, a later run checks it.
+([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. Then a handshake must come
+within 30 s, and `ssh ws` log in once. Where none came, or the run asked ws's address, the run goes
+on, and the closing list says what to do.
 
 ## Another repository
 
@@ -284,8 +284,9 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](mac-targets.md)).
 - ws's outbound table, which `security_outbound: false` in ws's `host_vars` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
-- The tunnel's handshake, where the Host key stage asked ws's address: the wizard again, which
-  checks it, once ws's lease is static. Off the LAN, once `mac.conf`'s way leads to ws.
+- The tunnel's handshake, where the run asked ws's address or none came. A static lease, or off the
+  LAN `mac.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.
+  Then the wizard again, which checks it.
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as
   `setup.sh`'s does with git's name ([git](mac-git.md)). Through it, pushes from the Mac's clones
   take gh's login.

@@ -5,8 +5,8 @@
 # it in place, have ws-tunnel take the key, and log in to ws through the tunnel. Without wg0's peer,
 # as a tagged run that failed leaves it, a run must run bootstrap.sh --tags wireguard and restart
 # ws-tunnel. Without the stand-in's mac.pub too, it must write mac.pub first. Where nothing answers
-# on UDP 51820, a run must stop within a minute, naming it, the router's forward and the Background.
-# Once it answers, a run must exit 0, and the next print nothing.
+# on UDP 51820, a run must exit 0 within a minute, its closing list naming it, the router's forward
+# and the Background. Once it answers, a run must exit 0, and the next print nothing.
 
 set -u
 
@@ -79,10 +79,10 @@ standin_set listen-port 51821
 sudo launchctl kickstart -k system/com.github.zadykian.ws-tunnel
 start=$(date +%s)
 wizard
-printf '%s\n' "$out" |
-    grep -q 'within 30 s\. ws must take UDP 51820, .* router.s forward, .* in the Background' &&
-    [ "$status" = 1 ] && [ $(($(date +%s) - start)) -lt 60 ] ||
-    error "a run with nothing on UDP 51820 exited $status, or named no port, forward and Background"
+listed="^- The tunnel's handshake: .* 30 s, .* UDP 51820, .* router's forward .* Background "
+printf '%s\n' "$out" | grep -qx 'What stays by hand:' && printf '%s\n' "$out" | grep -q "$listed" &&
+    [ "$status" = 0 ] && [ $(($(date +%s) - start)) -lt 60 ] ||
+    error "a run with nothing on UDP 51820 exited $status, or listed no port, forward or Background"
 standin_set listen-port 51820
 wizard
 [ "$status" = 0 ] || error "a run once UDP 51820 answers again exited $status"

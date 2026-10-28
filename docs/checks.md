@@ -142,10 +142,9 @@ ws, naming `claude auth login`, and `--check` must say it would run it. The next
 The stand-in `bootstrap.sh --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820, with
 the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's run.
 The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and load the daemon.
-It must have a handshake, and log in to ws once, by a stand-in `ssh`, as `wg0` has no address.
-With a new key for `wg0`, a run must replace `WS_PUBLIC_KEY`'s line, and without `mac.pub`, write
-it again. Without `wg0`'s peer alone, as a failed tagged run leaves it, a run must run it again.
-With nothing on UDP 51820, a run must stop within a minute, naming it, the forward and Background.
+It must log in once through the tunnel, by a stand-in `ssh`, as `wg0` has no address. A new key for
+`wg0` must replace `WS_PUBLIC_KEY`'s line, and a missing `mac.pub` come back. Without `wg0`'s peer
+alone, a run must run it again. With nothing on UDP 51820, the closing list must name the port.
 
 With both logged out and the key off the account, a run with no terminal must open nothing. At a
 terminal of `script`'s, a run must open `github.com/login/device`, by a stand-in `open`, and run
