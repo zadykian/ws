@@ -160,10 +160,10 @@ by hand, unless git's config names gh's credential command. The next run must pr
 stand-in ws's word list, of stand-in words, must go to the Mac once, mode 600, and none of it be
 printed. Once the Mac's differs, `--check` must show no diff. For the Cable stage, ws's ports are a
 stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and `WS_CABLE_PORT`
-end the wait. Docked, a run must stop with no terminal, and with `WS_CABLE_PORT` name the port in
-`host_vars`, run the roles, and stop at the service. Typed, an empty line must take the `169.254`
-one, which `setup.sh` sets, and `ping` reach `10.77.0.1`. An empty `WS_CABLE_SERVICE` must be
-written alone.
+end the wait. Docked, one with no terminal must stop, and one with `WS_CABLE_PORT` name the port,
+run the roles, and stop at the service. Typed, an empty line must take the `169.254` one, and `ping`
+answer. The next run must read no `link`, and one after ws's install or a failed roles' run name the
+port again.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
