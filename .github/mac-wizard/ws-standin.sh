@@ -18,7 +18,8 @@
 # - apply.log holds a line for each run of apply.sh: tty where its stdin is a terminal, else the
 #   SHA-256 of what it read there, and apply.status its status;
 # - uplink names the port of the default route, and addr/PORT holds a port's IPv4 addresses, which
-#   bootstrap.sh --tags network,wireguard gives the port that host_vars names, with carrier.
+#   bootstrap.sh --tags network,wireguard gives the port that host_vars names, with carrier. That
+#   run writes the port in root's netplan file, as the network role does, or removes the file.
 
 set -u
 
@@ -39,11 +40,15 @@ wg0() {
         peer "$(cat "$s/root/etc/wireguard/mac.pub")" allowed-ips 10.99.0.2/32 || return 1
     ifconfig "$(cat "$s/utun")" up
 }
-# direct gives the port that ws's host_vars names ws's end of the cable, 10.77.0.1/30, as the
-# network role's netplan file does, once networkd sees carrier, which the cases' sysfs shows.
+# direct names the port that ws's host_vars names in the netplan file, as the network role does,
+# or removes the file where host_vars names none. It gives the port ws's end of the cable,
+# 10.77.0.1/30, once networkd sees carrier, which the cases' sysfs shows.
 direct() {
     port=$(sed -n 's/^network_direct_link_interface: "\(.*\)"$/\1/p' \
         "$s/root/root/repository/ws/host_vars/localhost.yml" 2>/dev/null)
+    netplan=$s/root/etc/netplan/60-direct-link.yaml
+    rm -f "$netplan"
+    [ -z "$port" ] || { mkdir -p "${netplan%/*}" && echo "    \"$port\":" >"$netplan"; } || return 1
     [ -n "$port" ] && [ "$(cat "$s/root/sys/class/net/$port/carrier" 2>/dev/null)" = 1 ] ||
         return 0
     mkdir -p "$s/addr"

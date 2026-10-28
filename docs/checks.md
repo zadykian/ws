@@ -109,15 +109,15 @@ must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac'
 its peer, gh's and claude's logins, Secure Boot that refuses the fans' driver, and `host_vars`'
 outbound table. A full `run` must run `bootstrap.sh` with no arguments in a unit of its own, with
 root's `HOME` and a UTF-8 locale. It must print the log, and stamp the clone's commit, 0 and `on`;
-with `-e security_outbound=false`, `off`, and turn the table off in `host_vars`, as its `outbound`
-does but through a link. A tagged run after it must start its own unit and leave that stamp. A run
-during another's unit must follow it. A full run cut off must remove the stamp of the one before, so
-that the next starts a unit again. The files script, `mac/wizard-remote-files.sh`, must clone
-another repository by the stand-in `gh`, whose `apply.sh` must run as root over `ssh`. Its stamp
-must follow, which `status` must list, as `OWNER/REPO`. A clone again must leave it alone and remove
-the stamp, and one of another owner's repository of that name stop. Its `words` must print git's
-hash of root's word list, or `-` without one, and the list for that hash alone. Its `link` must list
-the wired ports, and `link PORT` name one in `host_vars` once, which then takes `10.77.0.1`.
+with `-e security_outbound=false`, `off`, and write the line of its `outbound`, which stops on a
+link. A tagged run after it must start its own unit and leave that stamp. A run during another's
+unit must follow it. A full run cut off must remove the stamp of the one before, so the next starts
+a unit again. The files script, `mac/wizard-remote-files.sh`, must clone another repository by the
+stand-in `gh`, whose `apply.sh` must run as root over `ssh`. Its stamp must follow, which `status`
+must list, as `OWNER/REPO`. A clone again must leave it alone and remove the stamp, and one of
+another owner's repository of that name stop. Its `words` must print git's hash of root's word list,
+or `-` without one, and the list for that hash alone. Its `link` must list the wired ports, and
+`link PORT` name one in `host_vars` once, which `status` names once the roles give `10.77.0.1`.
 
 The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
 the playbook through the remote script, and each run since must read ws's `status` alone, once, and
