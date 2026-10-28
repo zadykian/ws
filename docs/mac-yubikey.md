@@ -2,7 +2,7 @@
 
 The Mac's key for ws and git's signing key live in the PIV applet of a YubiKey 5C Nano. Its firmware
 is 5.7 or later, which makes Ed25519 keys. `mac/setup.sh` finds each key by name on the one YubiKey
-in, and writes its public key in `~/.config/ws/keys` ([The Mac](mac.md)).
+in, makes it where missing, and writes its public key in `~/.config/ws/keys` ([The Mac](mac.md)).
 
 ## mac.conf's names
 
@@ -34,14 +34,13 @@ ykman piv keys delete 82
 ykman piv certificates delete 82
 ```
 
-Then make the key again, as below, and the next run warns of its new public key. While the YubiKey
-is in, any program that runs as the user can sign with the keys, as with the file keys before them.
+The next run then makes the key again, and warns of its new public key. While the YubiKey is in, any
+program that runs as the user can sign with the keys, as with the file keys before them.
 
 ## Making a key
 
-A missing key stops the script, which names ykman's two commands that make it. They put it in the
-first retired slot, of 82 to 95, that holds neither a key nor a certificate. Run them at a terminal,
-as for slot 82:
+A missing key goes in the first retired slot, of 82 to 95, that holds neither a key nor a
+certificate. `setup.sh` runs ykman twice at the terminal, with the slot and a temporary file:
 
 ```sh
 ykman piv keys generate -a ED25519 --pin-policy NEVER --touch-policy NEVER 82 ws.pem
@@ -53,7 +52,14 @@ the certificate's expiry. Other readers of the PIV certificate, such as macOS's 
 or Yubico Authenticator, show an expired one, and 10 years outlast the key.
 
 The first asks the management key, blank for the default. The second asks it again, then the PIN. A
-management key that the PIN protects, as `--protect` sets it, takes the PIN instead.
+management key that the PIN protects, as `--protect` sets it, takes the PIN instead. With no
+terminal, the script stops, naming both commands, which make the key by hand too. `--check` asks
+nothing, and names each key it would make and its slot. A YubiKey of firmware older than 5.7 stops
+the script, as it makes no Ed25519 key. Where the certificate fails, as on a mistyped PIN, the key
+stays in its slot with no name, and a next run would take the next slot. The script stops, naming
+the certificate's step alone,
+`ykman --device SERIAL piv certificates generate -s CN=NAME -d 3650 SLOT`, which names the key, and
+`ykman piv keys delete SLOT`, which frees the slot.
 
 ## The PIV applet's defaults
 
