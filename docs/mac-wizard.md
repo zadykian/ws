@@ -50,9 +50,9 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 | Question | Kept in | Default | Asked |
 |---|---|---|---|
 | The machine ws runs on: `lan`, `cloud` or `mac-vm` | `WS_TARGET` | `lan` | always |
-| ws's home LAN | `WS_LAN` | `10.88.0.0/24` | always |
+| ws's home LAN | `WS_LAN` | `10.88.0.0/24` | but on a cloud VM |
 | ws's address on the LAN | `WS_LAN_ADDRESS` | `10.88.0.10`, where the LAN holds it | with a LAN |
-| The router's name on the internet | `WS_REMOTE` | none | always |
+| The router's name on the internet | `WS_REMOTE` | none | but on a VM on the Mac |
 | The router's port forwarded to ws's 22 | `WS_REMOTE_PORT` | `22022` | with a name |
 | git's name on the Mac | `WS_GIT_NAME` | the `shell` role's, `zadykian` | always |
 | git's email on the Mac | `WS_GIT_EMAIL` | the `shell` role's, `me@zadykian.dev` | with a name |
@@ -63,8 +63,9 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
 first and the last two. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
-`WS_REMOTE` and `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`.
-[Another repository](#another-repository) explains the last two. The defaults are
+`WS_REMOTE` and `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the
+questions on the LAN, and [The wizard's targets](mac-targets.md) the others, with the keys that each
+refuses. [Another repository](#another-repository) explains the last two. The defaults are
 [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
 from the first of these that has one:
 
