@@ -202,11 +202,9 @@ then print nothing. Each signature must run `ws-agent-confirm`, which counts it 
 ([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
 `ws` and `ws-ssh` the file key, by the four lines `config.d/ws` had for it before. It must give
 them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
-showing `config.d/ws`'s diff alone. Then it must give them an agent at Secretive's socket, which
-holds a P-256 key whose `.pub` is in `PublicKeys`, where those keys are empty. It must warn that
-this replaces the file key. A `-cert.pub`, a name with a blank or a directory there must not count.
-A second `.pub` must stop `setup.sh`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key
-must be the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is
+showing `config.d/ws`'s diff alone. Secretive's agent and its one key must leave ws its key, and a
+`.pub` of Secretive's in `WS_IDENTITY` must take its agent. The file key's `.pub` in `WS_IDENTITY`
+must keep the file key. A `.pub` that is
 missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
 `setup.sh` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
 ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).

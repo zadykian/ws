@@ -60,10 +60,8 @@ name the YubiKey's keys for ssh and git: [The YubiKey](mac-yubikey.md).
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
 `root` for `WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for
-`WS_GIT_SIGNING_KEY`. Where Secretive's socket is there and `PublicKeys` holds one key for ws,
-`WS_IDENTITY` and `WS_IDENTITY_AGENT` take that key and the socket. Several stop the script
-([ssh's hosts](#sshs-hosts)). With none, or no socket, `WS_IDENTITY` takes the file key's `.pub`,
-`~/.ssh/id_ed25519.pub`, and `WS_IDENTITY_AGENT` none, as the others do.
+`WS_GIT_SIGNING_KEY`. `WS_IDENTITY` takes the file key's `.pub`, `~/.ssh/id_ed25519.pub`, and
+`WS_IDENTITY_AGENT` none, as the others do ([ssh's hosts](#sshs-hosts)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -96,14 +94,9 @@ the one name `ws` (`HostKeyAlias`). So `known_hosts` has one entry for ws whiche
 host on another network that uses the LAN's subnet then meets a host key mismatch, where ssh stops.
 A session ends after 90 s without word from ws, far longer than a switch of the tunnel takes.
 
-ssh offers ws one key alone (`IdentitiesOnly`). Where Secretive's agent has its socket in
-`~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data`, which stays after Secretive quits,
-the key is its one `.pub` in `Data/PublicKeys`. That leaves out git's signing key, a `-cert.pub` and
-a name of other than letters, digits and `._@+-`. The script stops on several, and names them.
-Without one, or elsewhere, the key is `~/.ssh/id_ed25519`, its passphrase kept in the Keychain.
-Where `config.d/ws` gave ws that key, the script warns as Secretive's replaces it: add Secretive's
-`.pub` to ws's `authorized_keys`, or keep the file key with `WS_IDENTITY=~/.ssh/id_ed25519.pub`.
-`WS_IDENTITY` names any `.pub`, as one of Secretive's. Its agent is the one whose socket
+ssh offers ws one key alone (`IdentitiesOnly`). Without `WS_IDENTITY`, the key is
+`~/.ssh/id_ed25519`, its passphrase kept in the Keychain. `WS_IDENTITY` names any `.pub`, as one of
+Secretive's, in its container's `Data/PublicKeys`. Its agent is the one whose socket
 `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh reads the file
 beside the `.pub`. The script stops where that `.pub`, but the file key's, is missing or unreadable.
 It stops too where the `.pub` holds other than one public key's line, as a private key or a
