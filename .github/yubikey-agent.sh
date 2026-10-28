@@ -5,9 +5,12 @@
 # LaunchAgent at a login alone, and setup.sh then loads none:
 #
 #   sh .github/yubikey-agent.sh start     says which, and starts the stand-in's run where it is
+#   sh .github/yubikey-agent.sh restart   starts the agent again, once a YubiKey's token changed
 #
-# It waits up to 20 s for the agent to list the keys of the YubiKeys in. The stand-in's run takes
-# the stand-in's ioreg, logs to $RUNNER_TEMP/yubikey/agent.log, and keeps its pid in agent.pid.
+# Each waits up to 20 s for the agent to list the keys of the YubiKeys in, so that the case that
+# follows finds it settled: an agent that runs keeps the keys it loaded, as on a Mac, where a
+# replug or setup.sh loads them again. The stand-in's run takes the stand-in's ioreg, logs to
+# $RUNNER_TEMP/yubikey/agent.log, and keeps its pid in agent.pid.
 
 set -eu
 S=${RUNNER_TEMP:?the stand-in YubiKey lives in RUNNER_TEMP}/yubikey
@@ -15,6 +18,7 @@ here=$(cd "$(dirname "$0")" && pwd -P)
 # shellcheck source=mac/setup-yubikey.sh
 . "$here/../mac/setup-yubikey.sh"
 domain=gui/$(id -u)
+job=$domain/com.github.zadykian.ws-agent
 
 # own starts the stand-in's run of ws-agent.
 own() {
@@ -65,8 +69,24 @@ start)
         "mac/ws-agent of the stand-in's own: setup.sh loads no LaunchAgent"
     own
     ;;
+restart)
+    if launchctl print "$job" >/dev/null 2>&1; then
+        launchctl kickstart -k "$job"
+    elif [ -f "$S/agent.pid" ]; then
+        pid=$(cat "$S/agent.pid")
+        kill "$pid" 2>/dev/null || true
+        tries=0
+        while kill -0 "$pid" 2>/dev/null && [ "$tries" -lt 50 ]; do
+            tries=$((tries + 1))
+            sleep 0.1
+        done
+        own
+    else
+        exit 0
+    fi
+    ;;
 *)
-    echo "usage: sh .github/yubikey-agent.sh start" >&2
+    echo "usage: sh .github/yubikey-agent.sh start | restart" >&2
     exit 2
     ;;
 esac

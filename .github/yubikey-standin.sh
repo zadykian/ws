@@ -223,7 +223,8 @@ setup() {
     sh "$(dirname "$0")/yubikey-agent.sh" start
 }
 
-# change NAME SERIAL ARG... runs a case's command NAME on the stand-in's YubiKey SERIAL.
+# change NAME SERIAL ARG... runs a case's command NAME on the stand-in's YubiKey SERIAL, then
+# starts the job's agent again, which takes the tokens as they are now (yubikey-agent.sh).
 change() {
     cmd=$1
     serial=$2
@@ -246,6 +247,7 @@ change() {
     *) echo "yubikey-standin.sh: no command $cmd" >&2 && exit 2 ;;
     esac
     token "$serial"
+    sh "$(dirname "$0")/yubikey-agent.sh" restart
 }
 
 if [ "${0##*/}" = ykman ]; then

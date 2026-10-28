@@ -30,15 +30,20 @@ if ! same ws 82 || ! same git 83 || [ "$(stat -f %Lp "$keys")" != 755 ]; then
 fi
 
 # Without git's key, --check must name its slot and the two commands, and call neither. A run with
-# no terminal must stop, naming them too.
+# no terminal must stop, naming them too. launchd's ws-agent, which the drop started again, lacks
+# git's key, so --check names its kickstart too (setup-agent.sh).
 with
 sh "$standin" drop 30000001 83
 make="ykman piv keys generate -a ED25519 --pin-policy NEVER --touch-policy NEVER 83 git.pem, then\
  ykman piv certificates generate -s CN=git -d 3650 83 git.pem"
 : >"$yubikey/log"
+job=gui/$(id -u)/com.github.zadykian.ws-agent
+kick=
+! launchctl print "$job" >/dev/null 2>&1 ||
+    kick="${nl}setup.sh: would run launchctl kickstart -k $job"
 prints "setup.sh: would make git's key in slot 83 of YubiKey 30000001: $make, which ask the PIN,\
  and the management key unless the PIN protects it${nl}setup.sh: would write $keys/git.pub once\
- the key is made" --check
+ the key is made$kick" --check
 ! grep -q ' generate ' "$yubikey/log" || error "setup.sh --check ran ykman's generate"
 stops "setup.sh: no terminal for ykman to make git's key, as it asks the PIN, and the management\
  key unless the PIN protects it: run setup.sh at a terminal, or make the key with $make"
@@ -80,12 +85,8 @@ for arg in '' --check; do
     stops "setup.sh: git's key, in slot 83, is ECCP256, not ED25519: $again" $arg
 done
 sh "$standin" key 30000001 83 git NEVER NEVER
-# launchd's ws-agent, where it runs, lacks the new key, and starts again (setup-agent.sh).
-job=gui/$(id -u)/com.github.zadykian.ws-agent
-kick=
-! launchctl print "$job" >/dev/null 2>&1 || kick="${nl}setup.sh: ran launchctl kickstart -k $job"
 prints "setup.sh: warning: $keys/git.pub held another key, of another YubiKey or a reset PIV\
- applet: GitHub and ws need the new one${nl}setup.sh: wrote $keys/git.pub$kick"
+ applet: GitHub and ws need the new one${nl}setup.sh: wrote $keys/git.pub"
 same git 83 || error "setup.sh wrote another key than slot 83's to keys/git.pub"
 # Two slots of one name must stop a run.
 sh "$standin" key 30000001 85 git NEVER NEVER
