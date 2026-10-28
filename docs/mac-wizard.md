@@ -164,16 +164,20 @@ wizard prints the unit's log until it ends, and stops where the run fails. A fir
 40 minutes. The unit goes on where ssh drops, as when the Mac sleeps, and the next run of the wizard
 follows it to its end.
 
-Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A run without arguments, as
-the stage's, removes `/var/lib/ws-wizard/run` as it starts, and writes the clone's commit and the
-status there as it ends. The stage is done where that status is 0 and no unit runs. So a second run
-of the wizard runs no playbook, and one after a run cut short starts again. With `--update`, the
-stage runs the playbook again, and the remote script first pulls ws's clone, by fast-forward, where
-the clone is on `main` with nothing uncommitted. The run passes no `-e`, so the `ikeward` role
-leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)). On a cloud VM, the run turns
-on the outbound table, which drops the metadata service. Once it ends, name
-`security_outbound: false` in ws's `host_vars`, then run the wizard with `--update`
-([Outbound](security.md#outbound)).
+Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
+with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes the
+clone's commit and the status there, and `off` where its `-e` turned the outbound table off. The
+stage is done where that status is 0 and no unit runs. So a second run of the wizard runs no
+playbook, and one after a run cut short starts again. With `--update`, the stage runs the playbook
+again, and the remote script first pulls ws's clone, by fast-forward, where the clone is on `main`
+with nothing uncommitted. The run passes no file of the `ikeward` role's variables, so the role
+leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)).
+
+On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
+with `WS_TARGET=cloud`, the run passes `-e security_outbound=false`, and its unit then names that
+in ws's `host_vars`, for each run after. The stage is done there once a run with that `-e` passed
+and `host_vars` has the line. After a unit without it, which the run followed, a run of its own
+goes. Where the line alone is missing, the stage writes it, and runs no playbook.
 
 ## gh on ws
 

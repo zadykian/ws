@@ -120,11 +120,11 @@ hash of root's word list, or `-` without one, and the list for that hash alone. 
 the wired ports, and `link PORT` name one in `host_vars` once, which then takes `10.77.0.1`.
 
 The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
-the playbook through the remote script, and each run since must read ws's `status` alone. A run must
-read it once, and once more after a run of the playbook. Once the stamp is gone, a run whose unit is
-cut off must stop at the stage, and the next must start a unit of its own. That run must end with
-what stays by hand, with the fans' driver and the router's forwards. A run while a unit runs, as one
-that a dropped ssh left, must follow that unit.
+the playbook through the remote script, and each run since must read ws's `status` alone, once, and
+again after a run of the playbook. Without the stamp, a run whose unit is cut off must stop at the
+stage, and the next must start a unit of its own. That run must end with what stays by hand: the
+fans' driver and the router's forwards. A run while a unit runs, as a dropped ssh's, must follow
+that unit. With `WS_TARGET=cloud`, a run must turn the outbound table off, and the next none.
 
 `standin.sh` logs ws's gh and claude in, and gh's account lists ws's signing key, so no run may open
 a session on ws for a login. A fresh `--check` must show gh on ws and claude on ws after ws's run.

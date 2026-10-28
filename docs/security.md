@@ -152,9 +152,10 @@ has made the clone, its `host_vars/localhost.yml` keeps the value for each run a
 security_outbound: false
 ```
 
-A run with it false stops and disables the table's units. It removes the units,
-`/usr/local/lib/ws/security` and the table, even one loaded by hand. A dry run shows each removal.
-Off leaves:
+The Mac's wizard takes both steps where `mac.conf` has `WS_TARGET=cloud`
+([ws's run](mac-wizard.md#wss-run)). A run with `security_outbound` false stops and disables the
+table's units. It removes the units, `/usr/local/lib/ws/security` and the table, even one loaded by
+hand. A dry run shows each removal. Off leaves:
 
 - ufw's default, which allows every outgoing connection;
 - the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`
