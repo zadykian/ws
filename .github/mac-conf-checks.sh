@@ -182,7 +182,8 @@ must ws_resolver own.test
 : >"$tmp/all.conf"
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
     WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE= WS_GIT_NAME= WS_GIT_EMAIL= \
-    WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_IDENTITY_AGENT= WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan; do
+    WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_IDENTITY_AGENT= WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan \
+    WS_CABLE_PORT=; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -234,6 +235,13 @@ gives WS_CABLE_SERVICE Ethernet WS_CABLE_SERVICE=Ethernet
 refused 'line 1: WS_CABLE_SERVICE=USB LAN is not a network service' 'WS_CABLE_SERVICE=USB LAN'
 refused 'is not a network service' "WS_CABLE_SERVICE=\"USB$(printf '\t')LAN\""
 refused 'is not a network service' "WS_CABLE_SERVICE=Ethernet$(printf '\r')"
+# WS_CABLE_PORT, ws's port of the cable, which goes in a command on ws: a name of Linux's. It may
+# stay beside an empty WS_CABLE_SERVICE, as setup.sh's stop tells.
+gives WS_CABLE_PORT enp5s0 WS_CABLE_SERVICE=Ethernet WS_CABLE_PORT=enp5s0
+gives WS_CABLE_PORT enp5s0 WS_CABLE_PORT=enp5s0 WS_CABLE_SERVICE=
+for line in 'WS_CABLE_PORT=enp5s0;id' WS_CABLE_PORT=-enp5s0 WS_CABLE_PORT=enp5s0enp5s0enp5s0; do
+    refused "line 1: $line is not $(ws_conf_form WS_CABLE_PORT)" "$line"
+done
 
 # git's identity and signing key. A name with blanks must pass in quotes, and stop ws_conf bare, as
 # must one with a \. An email takes one @, and a key's file starts at / or ~/ and ends in .pub. The

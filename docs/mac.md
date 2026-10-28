@@ -48,13 +48,13 @@ LAN's network or broadcast address. `WS_REMOTE` is the router's name on the inte
 `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
 router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
 side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
-order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of
-the display's adapter, in quotes where it holds a blank: [The cable](#the-cable). `WS_GIT_NAME`
-and `WS_GIT_EMAIL`, which go together, are the author of git's commits on the Mac, the name in
-quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the `.pub` of the key that signs them, by
-its path from `/` or `~/`: [git on the Mac](mac-git.md). `WS_IDENTITY` is the `.pub` of the key that
-ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blank:
-[ssh's hosts](#sshs-hosts).
+order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
+display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
+[The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
+git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the
+`.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
+`WS_IDENTITY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its
+agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
