@@ -16,8 +16,8 @@ curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh |
 `~/repository/ws/mac/wizard.sh` runs the wizard alone.
 
 Each stage reads what it sets up, acts where that isn't done, and reads it again. So a run takes up
-where the last one stopped, and a second prints nothing. `--check` prints what each stage would do,
-and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`. Both it and
+where the last one stopped, and in a second no stage acts. `--check` prints what each stage would
+do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`. Both it and
 `bootstrap.sh` keep the Mac from idle sleep. A run in which a stage acted ends with what stays by
 hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard starts:
 
@@ -33,7 +33,9 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 3. Answers: the values `mac.conf` lacks, below.
 4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
-6. setup.sh: `mac/setup.sh`, after sudo's password. The wizard drops the Mac's key that it prints.
+6. setup.sh: `mac/setup.sh`, after sudo's password, asked at each run, `--check` too, unless its
+   timestamp is fresh. With no terminal at all, the stage stops, unless sudo needs no password. The
+   wizard shows setup.sh's warnings at each run, and drops the Mac's key that setup.sh prints.
 7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 8. Root's key: root's login to ws by the Mac's key, checked and never added, below.
 9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
@@ -236,8 +238,8 @@ reads, which "Always Allow" answers. `--check` says what the stage would do, and
 The stage Hook on the Mac then clones the repository in `~/repository/REPO` by gh's login on the
 Mac, where missing, and never pulls it. Another repository's clone there stops the stage, as on ws.
 Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute path, as in ws's
-clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose formulae Homebrew lacks,
-as `brew bundle check` finds, with Homebrew's auto-update off, `brew bundle` installs them, and
+clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose entries Homebrew lacks, as
+`brew bundle check`, run with Homebrew's auto-update off, finds, `brew bundle` installs them, and
 upgrades nothing. `--check` names each command that the stage would run.
 
 The stage copies ws's word list too, root's `~/.config/ws/forbidden-words`, which the hooks read
