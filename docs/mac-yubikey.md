@@ -18,16 +18,30 @@ libykcs11 gives ssh's agent the keys, where Homebrew lacks it. `--check` names t
 script stops unless one YubiKey is in, and names each by its serial where several are, as a second
 in the dock would be. Each later call of ykman names the one by `--device SERIAL`.
 
-A key is the slot whose certificate is `CN=NAME` in `ykman piv info`, in any slot. The script
-exports the key with `ykman piv keys export`, and writes it as `ssh-ed25519 KEY NAME@yubikey`, mode
-644, as `ssh-keygen -i` takes no Ed25519 key. Where the file held another key, the script warns:
-another YubiKey's, or the same one's before a reset of its PIV applet. GitHub and ws need the new
-key, as they hold the old one alone.
+A key is the slot whose certificate is `CN=NAME` in `ykman piv info`, in any slot. Two slots of one
+name stop the script. The script exports the key with `ykman piv keys export`, and writes it as
+`ssh-ed25519 KEY NAME@yubikey`, mode 644, as `ssh-keygen -i` takes no Ed25519 key. Where the file
+held another key, the script warns: another YubiKey's, or the same one's before a reset of its PIV
+applet. GitHub and ws need the new key, as they hold the old one alone.
+
+A key must be Ed25519, as ws makes and tests no other, with the PIN policy `NEVER` and the touch
+policy `NEVER`, as `ykman piv keys info SLOT` shows them. ssh and git use it unattended, with no PIN
+typed: in a rebase, and in Root's login, which asks nothing. The script stops on a key with another
+type or policy, and on a certificate without its key, naming the commands that free the slot:
+
+```sh
+ykman piv keys delete 82
+ykman piv certificates delete 82
+```
+
+Then make the key again, as below, and the next run warns of its new public key. While the YubiKey
+is in, any program that runs as the user can sign with the keys, as with the file keys before them.
 
 ## Making a key
 
-A missing key stops the script. Make it at a terminal, in the first retired slot, of 82 to 95, that
-holds neither a key nor a certificate, as slot 82 here:
+A missing key stops the script, which names ykman's two commands that make it. They put it in the
+first retired slot, of 82 to 95, that holds neither a key nor a certificate. Run them at a terminal,
+as for slot 82:
 
 ```sh
 ykman piv keys generate -a ED25519 --pin-policy NEVER --touch-policy NEVER 82 ws.pem
