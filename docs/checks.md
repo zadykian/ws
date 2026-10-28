@@ -228,6 +228,11 @@ draw a warning at each run. Logged in, `setup.sh` must warn of a 404 or another 
 gh's, and of an add that leaves the account without the key. It must add the key where the account
 lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh, `setup.sh` must
 install Homebrew's once, with git's keys alone ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
+`ws-agent-confirm` must sign through the check's agents, with file keys under `ssh-add -c`
+([mac-confirm-checks.sh](../.github/mac-confirm-checks.sh)). 50 signatures in a burst must pass with
+one notice, though the notifier lives 5 s. Under a shell that takes descriptors above 9, the
+askpass's pipe lies there. Each key must post its own, and 5 s on, the next count 50. A refused or
+missing notifier must cost the notice alone, and a missing askpass the signature.
 
 The job sets up a stand-in YubiKey before its first run. A SoftHSM2 token holds its keys, `ws`'s in
 slot 82 and `git`'s in 83 ([yubikey-standin.sh](../.github/yubikey-standin.sh)). They are Ed25519,
