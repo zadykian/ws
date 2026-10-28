@@ -7,7 +7,7 @@
 #   sh .github/yubikey-standin.sh                       the job's YubiKey, with ws's and git's keys
 #   sh .github/yubikey-standin.sh new SERIAL            a YubiKey from the factory, plugged in
 #   sh .github/yubikey-standin.sh access SERIAL         its PIN, PUK and management key changed
-#   sh .github/yubikey-standin.sh key SERIAL SLOT NAME PIN TOUCH   a key, as ykman makes one
+#   sh .github/yubikey-standin.sh key SERIAL SLOT NAME PIN TOUCH [TYPE]   a key, shown as TYPE
 #   sh .github/yubikey-standin.sh drop SERIAL SLOT      a slot's key and certificate gone
 #   sh .github/yubikey-standin.sh plug|unplug SERIAL    a YubiKey in or out
 #
@@ -27,8 +27,9 @@
 #   00112233445566778899aabbccddeeff0011223344556677, rather than a blank answer or
 #   010203040506070801020304050607080102030405060708;
 # - SERIAL/SLOT/ is a slot, 82 to 95: key.pem holds its private key, kept for the token, pub.der its
-#   public key, policy its PIN and touch policies, as NEVER NEVER, and cn its certificate's CN. A
-#   slot with cn and no pub.der holds a certificate alone;
+#   public key, policy its PIN and touch policies, as NEVER NEVER, type the key's, as ykman prints
+#   it, ED25519 unless a case says another, and cn its certificate's CN. A slot with cn and no
+#   pub.der holds a certificate alone;
 # - tokens/ is SoftHSM2's, with a token for each YubiKey plugged in, labelled YubiKey PIV #SERIAL
 #   as libykcs11 labels its token, with the user PIN VERIFY_NONE. Each key has libykcs11's ID and
 #   label, 05 and Retired Key 1 for slot 82;
@@ -72,13 +73,15 @@ token() {
     done
 }
 
-# keygen SERIAL SLOT PIN TOUCH makes an Ed25519 key in the slot, with its policies.
+# keygen SERIAL SLOT PIN TOUCH [TYPE] makes an Ed25519 key in the slot, with its policies. ykman
+# prints it as of TYPE where given, so that a case can show ws a type it stops on.
 keygen() {
     dir=$S/$1/$2
     mkdir -p "$dir"
     (umask 077 && "$openssl" genpkey -algorithm ed25519 -out "$dir/key.pem")
     "$openssl" pkey -in "$dir/key.pem" -pubout -outform DER -out "$dir/pub.der"
     echo "$3 $4" >"$dir/policy"
+    echo "${5:-ED25519}" >"$dir/type"
 }
 
 # ask PROMPT VALUE... reads a line at PROMPT, as ykman's prompts do, and fails unless it is a VALUE.
@@ -114,9 +117,9 @@ info() {
         [ -d "$dir" ] || continue
         echo "Slot $(name "${dir##*/}"):"
         type=EMPTY
-        [ ! -f "$dir/pub.der" ] || type=ED25519
+        [ ! -f "$dir/pub.der" ] || type=$(cat "$dir/type")
         printf '%-19s %s\n' '  Private key type:' "$type"
-        [ ! -f "$dir/cn" ] || printf '%-19s %s\n' '  Public key type:' ED25519 \
+        [ ! -f "$dir/cn" ] || printf '%-19s %s\n' '  Public key type:' "$type" \
             '  Subject DN:' "CN=$(cat "$dir/cn")" '  Issuer DN:' "CN=$(cat "$dir/cn")" \
             '  Serial:' '1 (0x1)' '  Fingerprint:' "$(cksum <"$dir/cn" | tr -d ' ')" \
             '  Not before:' 2026-10-28T00:00:00+00:00 '  Not after:' 2027-10-28T00:00:00+00:00
@@ -143,8 +146,8 @@ ykman() {
     ?*:'piv keys info '[89]?)
         dir=$S/$serial/$4
         [ -f "$dir/pub.der" ] || die "No key stored in slot $(name "$4")."
-        printf '%-23s %s\n' 'Key slot:' "$(name "$4")" Algorithm: ED25519 Origin: GENERATED \
-            'PIN required for use:' "$(cut -d ' ' -f 1 "$dir/policy")" \
+        printf '%-23s %s\n' 'Key slot:' "$(name "$4")" Algorithm: "$(cat "$dir/type")" \
+            Origin: GENERATED 'PIN required for use:' "$(cut -d ' ' -f 1 "$dir/policy")" \
             'Touch required for use:' "$(cut -d ' ' -f 2 "$dir/policy")"
         ;;
     ?*:'piv keys export -F DER '[89]?' '?*)
@@ -225,7 +228,7 @@ change() {
         ;;
     access) touch "$S/$serial/access" ;;
     key)
-        keygen "$serial" "$1" "$3" "$4"
+        keygen "$serial" "$1" "$3" "$4" "${5-}"
         rm -f "$S/$serial/$1/cn"
         [ "$2" = - ] || echo "$2" >"$S/$serial/$1/cn"
         ;;

@@ -29,19 +29,41 @@ if ! same ws 82 || ! same git 83 || [ "$(stat -f %Lp "$keys")" != 755 ]; then
     error "keys/ws.pub and keys/git.pub are not the stand-in's keys, 644, in a directory of 755"
 fi
 
-# Without git's key, a run and --check must stop.
+# Without git's key, a run and --check must stop, naming its slot and the two commands that make
+# it.
 with
 sh "$standin" drop 30000001 83
+make="ykman piv keys generate -a ED25519 --pin-policy NEVER --touch-policy NEVER 83 git.pem, then\
+ ykman piv certificates generate -s CN=git -d 3650 83 git.pem"
 for arg in '' --check; do
-    stops "setup.sh: YubiKey 30000001 holds no key git, whose certificate is CN=git: make it as\
- docs/mac-yubikey.md says" $arg
+    stops "setup.sh: YubiKey 30000001 holds no key git: make it at a terminal with $make, which ask\
+ the management key and the PIN" $arg
 done
 
-# Made again, the key's new .pub draws the warning.
+# A key with a PIN or touch policy, or of another type than Ed25519, must stop a run and --check,
+# naming the commands that free its slot. Made again with none, its new .pub draws the warning.
+again="ykman piv keys delete 83 and ykman piv certificates delete 83 free the slot, and the next\
+ run makes the key again"
+for policy in 'ONCE NEVER' 'NEVER CACHED'; do
+    # shellcheck disable=SC2086 # the two policies, split bare
+    sh "$standin" key 30000001 83 git $policy
+    for arg in '' --check; do
+        stops "setup.sh: git's key, in slot 83, asks for the PIN or a touch at each use, with PIN\
+ policy ${policy% *} and touch policy ${policy#* }: $again" $arg
+    done
+done
+sh "$standin" key 30000001 83 git NEVER NEVER ECCP256
+for arg in '' --check; do
+    stops "setup.sh: git's key, in slot 83, is ECCP256, not ED25519: $again" $arg
+done
 sh "$standin" key 30000001 83 git NEVER NEVER
 prints "setup.sh: warning: $keys/git.pub held another key, of another YubiKey or a reset PIV\
  applet: GitHub and ws need the new one${nl}setup.sh: wrote $keys/git.pub"
 same git 83 || error "setup.sh wrote another key than slot 83's to keys/git.pub"
+# Two slots of one name must stop a run.
+sh "$standin" key 30000001 85 git NEVER NEVER
+stops "setup.sh: slots 83 and 85 each hold the certificate CN=git: ykman piv certificates delete"
+sh "$standin" drop 30000001 85
 
 # No YubiKey, or two, must stop a run and --check. A YubiKey from the factory draws a warning of its
 # defaults, and stops a run at the first key it lacks.
@@ -57,8 +79,8 @@ warning="setup.sh: warning: YubiKey 30000002 keeps the PIV applet's default PIN,
  key: ykman piv access changes them, as docs/mac-yubikey.md says"
 setup && error 'setup.sh went on with a YubiKey from the factory'
 case $out in
-"$warning${nl}setup.sh: YubiKey 30000002 holds no key ws, whose certificate is CN=ws: make it as\
- docs/mac-yubikey.md says") ;;
+"$warning${nl}setup.sh: YubiKey 30000002 holds no key ws: make it at a terminal with ykman piv keys\
+ generate -a ED25519 --pin-policy NEVER --touch-policy NEVER 82 ws.pem, "*) ;;
 *) error "setup.sh with a YubiKey from the factory gave no warning, or another stop: $out" ;;
 esac
 sh "$standin" unplug 30000002
