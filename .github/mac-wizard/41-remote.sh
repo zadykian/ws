@@ -16,11 +16,11 @@
 # the stamp, and another owner's must stop. Its words must print git's hash of root's word list, or
 # - without one, and the list for that hash alone. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
-# ws's host_vars once, which bootstrap.sh --tags network,wireguard then gives 10.77.0.1. The remote
-# script's outbound must add security_outbound: false there once, which status must then read as
-# off. The last line counts, as in YAML: Off with a comment by hand must read as off, and stay, and
-# true after it as on. Through a link, outbound must stop, but where the linked file holds the line.
-# The stand-ins' state goes back.
+# ws's host_vars once, and bootstrap.sh --tags network,wireguard then give it 10.77.0.1, and
+# status's cable name it. The remote script's outbound must add security_outbound: false there once,
+# which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
+# must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
+# the linked file holds the line. The stand-ins' state goes back.
 
 set -u
 
@@ -66,12 +66,12 @@ echo "$key" >"$ws/wg0"
 touch "$ws/sb" "$ws/nct6687"
 echo "$mac" | sudo tee "$peer" >/dev/null
 rm "$ws/gh" "$ws/claude"
-states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'peer -' \
+states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'cable -' 'peer -' \
     'hook -' 'outbound on'
 touch "$ws/gh" "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'peer -' 'hook -' 'outbound on'
+states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'cable -' 'peer -' 'hook -' 'outbound on'
 rm "$ws/nct6687"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
@@ -202,11 +202,15 @@ printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &
     error "its link enp5s0 exited $status"
 files link enp5s0
 [ "$status" = 0 ] && [ -z "$out" ] || error "its link enp5s0 again exited $status"
+remote status
+printf '%s\n' "$out" | grep -qx 'cable -' || error "status named a cable before the roles' run"
 remote run --tags network,wireguard
 files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
     error "bootstrap.sh --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
+remote status
+printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
 remote outbound
 printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' 'security_outbound: false' |
     cmp -s - "$vars" && [ "$status" = 0 ] && [ "$out" = "wizard-remote.sh: wrote $vars" ] ||
@@ -231,6 +235,7 @@ printf '%s\n' "$out" | grep -qF "$vars is a link to localhost.yml.real" && [ "$s
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
-sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}"
+sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
+    "$ws/root/etc/netplan"
 rm -f "$ws/clone.log" "$ws/apply.log" "$ws/uplink"
 exit "$fail"

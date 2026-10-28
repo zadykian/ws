@@ -13,6 +13,7 @@
 #   ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as OWNER/REPO, whose
 #   apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound is off where the
 #   clone's host_vars turns the security role's outbound table off, else on.
+#   cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
 # - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. --update first pulls a clean clone on main. A run whose
@@ -26,14 +27,16 @@
 set -eu
 
 # The wizard's stamps, ws's clone, the Mac's key for wg0, root's claude, root's git config, which
-# names ws's signing key, and the fans' driver as the kernel loaded it. Each is a line NAME=PATH,
-# which CI's stand-in for ws roots in a directory of its own.
+# names ws's signing key, the fans' driver as the kernel loaded it, and the network role's netplan
+# file of the cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of
+# its own.
 state=/var/lib/ws-wizard
 dir=/root/repository/ws
 peer=/etc/wireguard/mac.pub
 claude=/root/.local/bin/claude
 gitconfig=/root/.gitconfig
 module=/sys/module/nct6687
+netplan=/etc/netplan/60-direct-link.yaml
 
 # say prints a message of the script's on stderr.
 say() {
@@ -54,6 +57,23 @@ first() {
 # stamp FILE [N] prints the N words of the stamp FILE, 2 by default, or - where it has none.
 stamp() {
     awk -v n="${2:-2}" 'NF == n { print; exit }' "$1" 2>/dev/null | first
+}
+
+# cable prints the port that host_vars in the clone names as network_direct_link_interface, as
+# link writes it, bare or in either quotes: the last such line, as Ansible reads the file. It
+# prints - for none, and where the network role's netplan file lacks the port, as after a roles'
+# run that failed, so that the Cable stage runs them again.
+cable() {
+    port=$(awk -v q="'" '/^network_direct_link_interface[ \t]*:/ {
+        v = $0
+        sub(/^[^:]*:[ \t]*/, "", v)
+        sub(/[ \t]+#.*$/, "", v)
+        sub(/[ \t\r]+$/, "", v)
+        if (v ~ /^".*"$/ || v ~ ("^" q ".*" q "$")) v = substr(v, 2, length(v) - 2)
+        port = (v ~ /^[A-Za-z0-9_.-]+$/) ? v : ""
+    } END { print port }' "$dir/host_vars/localhost.yml" 2>/dev/null) || port=
+    [ -n "$port" ] && grep -qF "\"$port\":" "$netplan" 2>/dev/null || port=-
+    echo "$port"
 }
 
 # active prints the run's unit that is active or activating, where there is one.
@@ -99,6 +119,7 @@ status() {
     else
         echo 'fans ok'
     fi
+    echo "cable $(cable)"
     mac=$(head -n 1 "$peer" 2>/dev/null) || mac=
     echo "peer $(wg show wg0 peers 2>/dev/null |
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
