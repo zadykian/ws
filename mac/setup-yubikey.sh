@@ -1,10 +1,10 @@
 # shellcheck shell=sh
 # The YubiKey's step of mac/setup.sh: the keys that mac.conf's WS_SSH_KEY and WS_GIT_KEY name,
 # found on the YubiKey's PIV applet, made where missing, and their .pubs in ~/.config/ws/keys.
-# ykman, which reads and makes them, and yubico-piv-tool, whose libykcs11 the agent loads, come
-# from Homebrew. setup.sh sources it after lib.sh and setup-lib.sh, whose functions it calls, and
-# runs yubikey before ssh's hosts. The wizard can call yubikey_tools, yubikey_serials and
-# yubikey_keys, each with its stage's name for their messages.
+# ykman, which reads and makes them, yubico-piv-tool, whose libykcs11 the agent loads, and
+# terminal-notifier, for the agent's notices, come from Homebrew. setup.sh sources it after lib.sh
+# and setup-lib.sh, whose functions it calls, and runs yubikey before ssh's hosts. The wizard can
+# call yubikey_tools, yubikey_serials and yubikey_keys, each with its stage's name for messages.
 
 # The directory of the keys' .pubs, NAME.pub for each, which ssh and git name.
 yubikey_dir=$HOME/.config/ws/keys
@@ -19,8 +19,8 @@ yubikey() {
 
 # yubikey_tools [STAGE] installs Homebrew's ykman where PATH has none, and Homebrew's
 # yubico-piv-tool where Homebrew lacks it, as the agent loads its libykcs11 from Homebrew's Cellar.
-# It sets yubikey_ykman to ykman's path, which --check leaves empty before the install. Its
-# messages start with STAGE, where the wizard's stage gives one.
+# Then yubikey_notifier. It sets yubikey_ykman to ykman's path, which --check leaves empty before
+# the install. Its messages start with STAGE, where the wizard's stage gives one.
 # shellcheck disable=SC2120 # the wizard's stage passes its name
 yubikey_tools() {
     yubikey_at=${1:+$1: }
@@ -36,9 +36,21 @@ yubikey_tools() {
         # shellcheck disable=SC2086 # the formulae's names, split bare
         "$brew" install $yubikey_need >&2 || ws_die "${yubikey_at}brew install $yubikey_need failed"
     fi
+    yubikey_notifier
     yubikey_ykman=$(command -v ykman) || yubikey_ykman=
     ws_checking || [ -n "$yubikey_ykman" ] ||
         ws_die "${yubikey_at}brew install ykman left no ykman on PATH"
+}
+
+# yubikey_notifier installs Homebrew's terminal-notifier where Homebrew lacks it, as
+# ws-agent-confirm runs it from launchd's PATH or /opt/homebrew/bin. A failed install warns alone:
+# it costs the agent's notices, not its signatures, and the next run tries again.
+yubikey_notifier() {
+    "$brew" list --formula terminal-notifier >/dev/null 2>&1 && return 0
+    ws_checking && { ws_say "${yubikey_at}would run brew install terminal-notifier" && return 0; }
+    ws_say "${yubikey_at}installing terminal-notifier"
+    "$brew" install terminal-notifier >&2 || ws_say "${yubikey_at}warning: brew install" \
+        "terminal-notifier failed, so ws's agent posts no notice: the next run tries again"
 }
 
 # yubikey_serials prints the serials of the YubiKeys in, a line each, and nothing where none is in.
