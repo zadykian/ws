@@ -125,18 +125,19 @@ password login off.
 
 ## ws's host key
 
-The stage reads ws's ed25519 key with `ssh-keyscan`, at the host and port that `ssh -G ws-ssh`
-gives ([ssh's hosts](mac.md#sshs-hosts)). Where no way matches, it stops, naming
-[The router](router.md). A new ws has a lease from the router's pool, not its static address. So
-where ws gives no key within 10 s, the stage asks ws's address now, as the router's leases show it.
-ssh takes that address for the rest of the run, and `mac.conf` keeps nothing of it. An empty answer
-stops the run, as before Ubuntu's install.
+The stage reads ws's ed25519 key with `ssh-keyscan`, at the host and port that `ssh -G ws-ssh` gives
+([ssh's hosts](mac.md#sshs-hosts)). Where no way matches, it stops, naming [The router](router.md),
+or off the LAN what the target needs, as a VM on the Mac started. A new ws has a lease from the
+router's pool, not its static address. So where ws gives no key within 10 s, the stage asks ws's
+address now, as the router's leases show it. Off the LAN, [The wizard's targets](mac-targets.md)
+says where it shows. ssh takes that address for the rest of the run, and `mac.conf` keeps nothing of
+it. An empty answer stops the run, as before Ubuntu's install.
 
 The stage shows the key's fingerprint. At ws's console, `ssh-keygen -lf
 /etc/ssh/ssh_host_ed25519_key.pub` prints ws's own: answer `yes` where they match, or paste what it
 prints. Any other answer stops the run. The key goes in `known_hosts` as `ws`, the name that
-`HostKeyAlias` gives each way. From then on, the stage reads nothing from ws. Through the router's
-forward, the stage warns that a new ws faces the internet until its run sets up the `security` role
+`HostKeyAlias` gives each way. From then on, the stage reads nothing from ws. Through `WS_REMOTE`,
+the stage warns that a new ws faces the internet until its run sets up the `security` role
 ([security](security.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
 answers. A linked `known_hosts` stops the stage, and a run prints the key's line for its target.
 

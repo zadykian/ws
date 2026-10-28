@@ -31,6 +31,8 @@ the Mac's display, if any:
   that `WS_PORT` sets. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
   ([Root's key](mac-wizard.md#roots-key)).
+- Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the
+  provider shows it.
 - ws's run turns the outbound table off, which would drop the metadata service
   ([ws's run](mac-wizard.md#wss-run)).
 - The wizard skips the Cable stage.
@@ -46,7 +48,7 @@ the Mac's display, if any:
   Keep it stable, by a static address in the VM or a reservation in its app's DHCP: else ssh goes
   to another host once the lease moves.
 - ssh reaches the VM there while the Mac has an address on that network, as while a VM runs
-  ([ssh's hosts](mac.md#sshs-hosts)).
+  ([ssh's hosts](mac.md#sshs-hosts)). Else the Host key stage stops, and says to start the VM.
 - The wizard asks no `WS_REMOTE`, as only the Mac reaches the VM.
 - The outbound table stays on: ws's DHCP and DNS go to the Mac, which the table lets through
   ([Outbound](security.md#outbound)).

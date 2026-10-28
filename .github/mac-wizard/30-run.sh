@@ -53,7 +53,7 @@ if ! grep -qxF "$added" "$RUNNER_TEMP/gh/log" ||
     ! grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" "$RUNNER_TEMP/gh/keys"; then
     error "wizard.sh added no ~/.ssh/id_ed25519.pub to gh's login, titled with the Mac's name"
 fi
-grep -q "^wizard\.sh: Host key: warning: through the router's forward, " "$RUNNER_TEMP/stop.err" ||
+grep -q '^wizard\.sh: Host key: warning: through WS_REMOTE, ' "$RUNNER_TEMP/stop.err" ||
     error "wizard.sh gave no warning that ws faces the internet through WS_REMOTE"
 grep -qxF "ws $(cut -d ' ' -f 1-2 "$RUNNER_TEMP/ws/host_key.pub")" ~/.ssh/known_hosts ||
     error "wizard.sh added no line for ws's host key to ~/.ssh/known_hosts"
