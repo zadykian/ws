@@ -136,18 +136,25 @@ the files, but skips the check, the comparison and the reload. CI checks the fil
 
 `security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
-instance credentials need. `bootstrap.sh` passes it to `ansible-playbook`, on a new machine and on
-each run after:
+instance credentials need. On a new machine, `bootstrap.sh` passes it to `ansible-playbook`:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh |
     sh -s -- -e security_outbound=false
-/root/repository/ws/bootstrap.sh -e security_outbound=false
 ```
 
-`-e` holds for that run alone, so the next run without it puts the table back. A run with it false
-stops and disables the table's units. It removes the units, `/usr/local/lib/ws/security`
-and the table, even one loaded by hand. A dry run shows each removal. Off leaves:
+`-e` holds for that run alone, so the next run without it puts the table back. So once that run
+has made the clone, its `host_vars/localhost.yml` keeps the value for each run after
+([The direct link](network.md#the-direct-link)):
+
+```yaml
+---
+security_outbound: false
+```
+
+A run with it false stops and disables the table's units. It removes the units,
+`/usr/local/lib/ws/security` and the table, even one loaded by hand. A dry run shows each removal.
+Off leaves:
 
 - ufw's default, which allows every outgoing connection;
 - the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`

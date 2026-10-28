@@ -167,7 +167,10 @@ status there as it ends. The stage is done where that status is 0 and no unit ru
 of the wizard runs no playbook, and one after a run cut short starts again. With `--update`, the
 stage runs the playbook again, and the remote script first pulls ws's clone, by fast-forward, where
 the clone is on `main` with nothing uncommitted. The run passes no `-e`, so the `ikeward` role
-leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)).
+leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)). On a cloud VM, the run turns
+on the outbound table, which drops the metadata service. Once it ends, name
+`security_outbound: false` in ws's `host_vars`, then run the wizard with `--update`
+([Outbound](security.md#outbound)).
 
 ## gh on ws
 
