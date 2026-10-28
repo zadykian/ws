@@ -194,8 +194,10 @@ policy, two slots of one name, no YubiKey and two must each stop `setup.sh`. A Y
 factory must draw a warning of its defaults, and stop `setup.sh` with firmware 5.4.3. Without ykman
 and yubico-piv-tool, `--check` must name their install
 ([mac-yubikey-checks.sh](../.github/mac-yubikey-checks.sh)). `ws-agent`, run at a socket of its
-own, must list both keys as it starts, and sign with each. Stopped, it must take its `ssh-agent`
-and socket with it ([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
+own, must list both keys as it starts, and sign with each. With the stand-in's `ioreg`, it must
+take them out at an unplug, and load them again at a plug, a replug and a second YubiKey. Stopped,
+it must take its `ssh-agent` and socket with it
+([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
 `ws` and `ws-ssh` the file key, by the four lines `config.d/ws` had for it before. It must give
 them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
 showing `config.d/ws`'s diff alone. Then it must give them an agent at Secretive's socket, which

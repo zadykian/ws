@@ -84,7 +84,14 @@ its default providers, in `/usr/lib` and `/usr/local/lib`, leave out Homebrew's 
 lies in the Cellar. `ws-agent` runs Apple's `/usr/bin/ssh-agent` at `~/.ssh/ws-agent.sock`, with
 libykcs11's path in the Cellar as its one provider. It loads the keys by `ssh-add -s`, with the PIN
 `VERIFY_NONE` from `ws-agent-pin`: libykcs11 then verifies no PIN, and the agent stores none. It
-logs to its standard output. To list the keys it holds:
+logs to its standard output.
+
+- It holds the keys only while the YubiKey is in. It reads `ioreg` every 5 s, takes the keys out
+  when the YubiKey goes, and loads them again after a plug or a replug. No signature tests them.
+- With a second YubiKey in, it holds the keys of both: `ssh` and git pick theirs by its `.pub`.
+- After a `brew upgrade yubico-piv-tool`, which moves libykcs11 in the Cellar, it starts again.
+
+To list the keys it holds:
 
 ```sh
 SSH_AUTH_SOCK=~/.ssh/ws-agent.sock ssh-add -L
