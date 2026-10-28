@@ -49,7 +49,9 @@ wshook_done() {
 # wshook_do runs the repository's apply.sh as root on ws, by plain ssh, never ssh -t, at which such
 # a script could prompt and echo its stdin. The files script's clone first clones the repository
 # where ws lacks it, and removes its stamp, which its stamp op writes again once apply.sh exits 0.
-# --check says what it would do.
+# First, security must read the item into /dev/null, so that an item it can't read stops the stage
+# before ssh. --check says what it would do.
+# shellcheck disable=SC2154 # lock is wizard.sh's
 wshook_do() {
     wshook_apply=/root/repository/${WS_HOOK#*/}/apply.sh
     wshook_in=${WS_HOOK_SECRET:+the Keychain item $WS_HOOK_SECRET}
@@ -59,6 +61,9 @@ wshook_do() {
             "then run its apply.sh there, its stdin ${wshook_in:-empty}"
         return 0
     fi
+    [ -z "$WS_HOOK_SECRET" ] ||
+        security find-generic-password -s "$WS_HOOK_SECRET" -w >/dev/null 2>"$lock/hook.err" ||
+        wshook_unread
     ws_say "Hook on ws: $WS_HOOK's apply.sh runs as root on ws, its stdin ${wshook_in:-empty}"
     # shellcheck disable=SC2034 # wizard-ws.sh's remote_read reads it
     remote_got=0
@@ -83,6 +88,17 @@ wshook_item() {
     ws_say "Hook on ws: $wshook_add asks for the secret of $WS_HOOK's apply.sh, twice"
     security add-generic-password -a "$USER" -s "$WS_HOOK_SECRET" -w ||
         ws_die "Hook on ws: $wshook_add failed, as above; run the wizard again"
+}
+
+# wshook_unread stops the stage where security can't read the item, as in a locked Keychain, or
+# where the user denied macOS's prompt for it. It names security's last line of error, where it
+# printed one in hook.err.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+wshook_unread() {
+    wshook_why=$(tail -n 1 "$lock/hook.err" 2>/dev/null)
+    ws_die "Hook on ws: security can't read the item $WS_HOOK_SECRET from the Keychain, so" \
+        "apply.sh didn't run; unlock or allow it, then run the wizard" \
+        "again${wshook_why:+: $wshook_why}"
 }
 
 # wshook_run runs apply.sh on ws, its stdin the item's secret, or /dev/null without an item, and

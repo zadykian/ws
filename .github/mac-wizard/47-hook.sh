@@ -5,9 +5,10 @@
 # none. A run with no terminal must stop, naming security add-generic-password. --update at a
 # terminal of script's must add it, its secret typed at security's prompts, clone the repository,
 # and run apply.sh once over plain ssh. Its stdin must be the secret, and no terminal. It must
-# print no secret, and the next run nothing. Where apply.sh exits 1, --update must stop, and the
-# next run, once it exits 0, run it again. With WS_HOOK_SECRET empty, its stdin must be empty.
-# mac.conf, the clones, the stamp and the keychain go back, and a run must print nothing.
+# print no secret, and the next run nothing. Where security can't read the item, --update must stop,
+# naming its error, before the clone, the stamp kept. Where apply.sh exits 1, --update must stop,
+# and the next run, once it exits 0, run it again. With WS_HOOK_SECRET empty, its stdin must be
+# empty. mac.conf, the clones, the stamp and the keychain go back, and a run must print nothing.
 
 set -u
 
@@ -33,6 +34,19 @@ wizard() {
     out=$(sh "$wizard" "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
+}
+
+# unread N: --update, with security failing each read of the secret from the Nth on, must stop,
+# naming its error, and run no apply.sh.
+unread() {
+    echo 0 >"$RUNNER_TEMP/security.reads"
+    echo "$1" >"$RUNNER_TEMP/security.from"
+    wizard --update
+    [ "$status" = 1 ] && printf '%s\n' "$out" | grep -qxF "wizard.sh: Hook on ws: security can't \
+read the item ws-ci-hook from the Keychain, so apply.sh didn't run; unlock or allow it, then run \
+the wizard again: security: SecKeychainItemCopyContent: User interaction is not allowed." &&
+        [ "$(applied)" = "1 $sha" ] ||
+        error "wizard.sh --update with read $1 of the item failing exited $status, or ran apply.sh"
 }
 
 # applied prints how many times apply.sh ran, then what it logged of its last stdin.
@@ -84,6 +98,28 @@ tr -d '\r' <"$RUNNER_TEMP/tty"
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] && [ "$(applied)" = "1 $sha" ] ||
     error "the next run exited $status"
+# A stand-in security, first on the wizard's PATH, runs macOS's. But reads of a secret fail from
+# the one that security.from counts on, as in a locked Keychain where no prompt can unlock it.
+cat >/opt/homebrew/bin/security <<'EOF'
+#!/bin/sh
+case " $* " in
+*' find-generic-password '*' -w '*)
+    n=$(($(cat "$RUNNER_TEMP/security.reads") + 1))
+    echo "$n" >"$RUNNER_TEMP/security.reads"
+    if [ "$n" -ge "$(cat "$RUNNER_TEMP/security.from")" ]; then
+        echo 'security: SecKeychainItemCopyContent: User interaction is not allowed.' >&2
+        exit 36
+    fi
+    ;;
+esac
+exec /usr/bin/security "$@"
+EOF
+chmod 755 /opt/homebrew/bin/security
+clones=$(grep -c 'sh -s -- clone example/hook$' "$ws/log")
+unread 1
+[ -f "$stamp" ] && [ "$(grep -c 'sh -s -- clone example/hook$' "$ws/log")" = "$clones" ] ||
+    error 'wizard.sh with an unreadable item cloned, or lost the stamp'
+rm /opt/homebrew/bin/security "$RUNNER_TEMP/security.reads" "$RUNNER_TEMP/security.from"
 echo 1 >"$ws/apply.status"
 wizard --update
 [ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'Hook on ws: the clone of example/hook' &&

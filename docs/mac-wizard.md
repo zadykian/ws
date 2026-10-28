@@ -221,10 +221,10 @@ secret that the script reads. `setup.sh` takes both keys, and reads neither. The
 repository in `/root/repository/REPO` on ws by root's gh login, where missing, and never pulls it,
 as the script updates its own clone. A `REPO` of `ws`, ws's own clone, or another repository's clone
 there stops the stage. Where the Keychain lacks the item, it runs `security add-generic-password`,
-which asks for its secret twice at the terminal. Then `apply.sh` runs as root over plain
-`ssh ws-ssh`, never `ssh -t`, so it neither prompts nor echoes its stdin. That stdin is the item's
-secret, as `security find-generic-password -w` prints it, then the end of input, or empty without an
-item. The wizard never reads the secret, and passes the script no arguments.
+which asks for its secret twice at the terminal. Where `security find-generic-password -w` can't
+read it, the stage stops, naming its error. Then `apply.sh` runs as root over `ssh ws-ssh`, never
+`ssh -t`, so it neither prompts nor echoes its stdin: what security prints, then the end of input,
+or empty without an item. The wizard never reads the secret, and passes the script no arguments.
 
 That run leaves a stamp, `/var/lib/ws-wizard/hook-REPO` on ws, and the stage is done. So a second
 run of the wizard leaves `apply.sh` alone, and `--update` runs it again. A run that fails stops the
