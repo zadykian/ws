@@ -11,7 +11,7 @@
 # forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY and launchd has the
 # tunnel's daemon, ws goes the ways ws-ssh does. It puts `Include config.d/ws` first in
 # ~/.ssh/config. With sudo, it gives the cable's address to the service WS_CABLE_SERVICE names. With
-# WS_GIT_NAME, it makes git's signing key and ~/.config/ws/gitconfig, which it includes at the top
+# WS_GIT_NAME, it writes ~/.config/ws/gitconfig, for the YubiKey's key, which it includes at the top
 # of ~/.gitconfig, and installs Homebrew's gh where PATH has none. gh then adds the key to GitHub.
 # It installs JetBrains Gateway from Homebrew's cask where its app is missing. It copies ws-agent,
 # ws's ssh agent, to ~/.config/ws, with the LaunchAgent through which launchd runs it.

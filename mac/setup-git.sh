@@ -10,8 +10,8 @@ git_dir=$HOME/.config/ws
 # git's XDG file, which git reads before ~/.gitconfig.
 git_xdg=${XDG_CONFIG_HOME:-$HOME/.config}/git/config
 
-# git_mac sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_KEY, and leaves
-# it alone without them.
+# git_mac sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL, WS_GIT_KEY and
+# WS_GIT_SIGNING_KEY, and leaves it alone without the first two.
 git_mac() {
     [ -n "$WS_GIT_NAME" ] || return 0
     git_include_ok
@@ -23,32 +23,21 @@ git_mac() {
 }
 
 # git_key sets git_pub to the signing key's .pub, WS_GIT_SIGNING_KEY with its ~/ the home, and
-# git_public to the key's type and base64. Without WS_GIT_SIGNING_KEY, the key is
-# ~/.ssh/id_ed25519_signing, which it makes once with no passphrase, as the shell role does on ws:
-# git signs unattended, in a rebase too. It makes no other key, and replaces no .pub. It stops where
-# the .pub is missing or unreadable, holds more than a public key's line, as a private key does, or
-# ssh-keygen can't read it.
+# git_public to the key's type and base64. Without WS_GIT_SIGNING_KEY, the key is the YubiKey's
+# WS_GIT_KEY, whose .pub setup.sh writes in ~/.config/ws/keys from the YubiKey before this runs,
+# so --check may lack it. It makes no key, and stops where the .pub is missing or unreadable,
+# holds more than a public key's line, as a private key does, or ssh-keygen can't read it.
+# shellcheck disable=SC2153 # WS_GIT_KEY is ws_conf's
 git_key() {
-    git_pub=${WS_GIT_SIGNING_KEY:-$HOME/.ssh/id_ed25519_signing.pub}
+    git_pub=${WS_GIT_SIGNING_KEY:-$git_dir/keys/$WS_GIT_KEY.pub}
     case $git_pub in
     \~/*) git_pub=$HOME/${git_pub#\~/} ;;
     esac
     git_public=
-    if [ -z "$WS_GIT_SIGNING_KEY" ] && [ ! -e "${git_pub%.pub}" ]; then
-        [ ! -e "$git_pub" ] && [ ! -L "$git_pub" ] || ws_die "$git_pub is there without its" \
-            "private key: name it in mac.conf's WS_GIT_SIGNING_KEY where an agent holds the key," \
-            "or remove it"
-        if ws_checking; then
-            ws_say "would make git's signing key, ${git_pub%.pub}"
-            return 0
-        fi
-        ssh-keygen -q -t ed25519 -N '' -f "${git_pub%.pub}" </dev/null >&2 ||
-            ws_die "ssh-keygen cannot make ${git_pub%.pub}"
-        ws_say "made git's signing key, ${git_pub%.pub}"
-    fi
     if [ ! -f "$git_pub" ]; then
-        [ -n "$WS_GIT_SIGNING_KEY" ] || ws_die "$git_pub is missing beside its key:" \
-            "ssh-keygen -y -f ${git_pub%.pub} >$git_pub writes it"
+        [ -n "$WS_GIT_SIGNING_KEY" ] || ! ws_checking || return 0
+        [ -n "$WS_GIT_SIGNING_KEY" ] || ws_die "$git_pub, the .pub of the YubiKey's key" \
+            "$WS_GIT_KEY, is missing"
         ws_die "$git_pub, mac.conf's WS_GIT_SIGNING_KEY, is missing: make the key first, as" \
             "docs/mac-git.md says"
     fi

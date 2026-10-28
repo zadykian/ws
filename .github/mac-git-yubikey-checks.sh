@@ -32,8 +32,8 @@ case $out in
 *"$nl+    signingkey = \"$other\"$nl"*"${nl}setup.sh: would run $add_other") ;;
 *) error "setup.sh --check showed no signing key $other, or no add: $out" ;;
 esac
-prints "setup.sh: wrote $files/ws-ssh-keygen${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: ran $add_other"
+prints "setup.sh: wrote $files/allowed_signers${nl}setup.sh: wrote $files/gitconfig${nl}setup.sh:\
+ ran $add_other"
 prints ''
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
 
