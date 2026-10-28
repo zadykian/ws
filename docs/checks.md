@@ -249,8 +249,10 @@ of the toolkit's skills. Each warns and never blocks, so no ruleset requires it.
 pull request cancels its older run, as the two would race to create each check's comment.
 
 The workflows pin the toolkit's actions, and `.claude/settings.json` its marketplace, to one
-release. The toolkit's `tools/pin` moves both, as its
-[Pin a release](https://github.com/zadykian/toolkit#pin-a-release) says.
+release. `.github/` holds that release's templates: the pull request template, and the issue form,
+whose `config.yml` turns blank issues off. The toolkit's `tools/pin` moves both pins and writes the
+templates, as its [Pin a release](https://github.com/zadykian/toolkit#pin-a-release) says. Each pin
+writes them again, so a change to them goes in the toolkit.
 
 ## The hooks
 
