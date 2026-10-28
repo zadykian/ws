@@ -29,16 +29,39 @@ if ! same ws 82 || ! same git 83 || [ "$(stat -f %Lp "$keys")" != 755 ]; then
     error "keys/ws.pub and keys/git.pub are not the stand-in's keys, 644, in a directory of 755"
 fi
 
-# Without git's key, a run and --check must stop, naming its slot and the two commands that make
-# it.
+# Without git's key, --check must name its slot and the two commands, and call neither. A run with
+# no terminal must stop, naming them too.
 with
 sh "$standin" drop 30000001 83
 make="ykman piv keys generate -a ED25519 --pin-policy NEVER --touch-policy NEVER 83 git.pem, then\
  ykman piv certificates generate -s CN=git -d 3650 83 git.pem"
-for arg in '' --check; do
-    stops "setup.sh: YubiKey 30000001 holds no key git: make it at a terminal with $make, which ask\
- the management key and the PIN" $arg
-done
+: >"$yubikey/log"
+prints "setup.sh: would make git's key in slot 83 of YubiKey 30000001: $make, which ask the PIN,\
+ and the management key unless the PIN protects it${nl}setup.sh: would write $keys/git.pub once\
+ the key is made" --check
+! grep -q ' generate ' "$yubikey/log" || error "setup.sh --check ran ykman's generate"
+stops "setup.sh: no terminal for ykman to make git's key, as it asks the PIN, and the management\
+ key unless the PIN protects it: run setup.sh at a terminal, or make the key with $make"
+
+# At a terminal of script's, with the management key and the PIN typed, a run must make the key in
+# slot 83, its certificate for 3650 days as the stand-in's log shows, and warn that git's .pub held
+# another key. macOS's script writes its stdin's end to the terminal ahead of the lines it still
+# holds, so the end comes 5 s after them.
+mgm=00112233445566778899aabbccddeeff0011223344556677
+{
+    printf '%s\n' "$mgm" "$mgm" 24681357
+    sleep 5
+} | script -q /dev/null sh mac/setup.sh >"$tmp/tty" 2>&1 || error 'setup.sh at a terminal failed'
+tr -d '\r' <"$tmp/tty"
+if ! grep -q "^setup\.sh: making git's key in slot 83 of YubiKey 30000001: " "$tmp/tty" ||
+    ! grep -qF "setup.sh: warning: $keys/git.pub held another key, of another YubiKey or a" \
+        "$tmp/tty" || ! same git 83 || [ "$(cat "$yubikey/30000001/83/cn")" != git ]; then
+    error "setup.sh at a terminal made no key for git in slot 83, its .pub, or no warning"
+fi
+grep -qF ' piv certificates generate -s CN=git -d 3650 83 ' "$yubikey/log" ||
+    error "setup.sh made git's certificate without -d 3650"
+prints ''
+prints '' --check
 
 # A key with a PIN or touch policy, or of another type than Ed25519, must stop a run and --check,
 # naming the commands that free its slot. Made again with none, its new .pub draws the warning.
@@ -66,7 +89,7 @@ stops "setup.sh: slots 83 and 85 each hold the certificate CN=git: ykman piv cer
 sh "$standin" drop 30000001 85
 
 # No YubiKey, or two, must stop a run and --check. A YubiKey from the factory draws a warning of its
-# defaults, and stops a run at the first key it lacks.
+# defaults, and --check names the slots of both keys it would make. Of firmware 5.4.3, it must stop.
 sh "$standin" unplug 30000001
 for arg in '' --check; do
     stops "setup.sh: no YubiKey is in: plug in the one with ws's keys, or a new one" $arg
@@ -77,12 +100,17 @@ stops 'setup.sh: several YubiKeys are in, 30000001 and 30000002: leave in the on
 sh "$standin" unplug 30000001
 warning="setup.sh: warning: YubiKey 30000002 keeps the PIV applet's default PIN, PUK and management\
  key: ykman piv access changes them, as docs/mac-yubikey.md says"
-setup && error 'setup.sh went on with a YubiKey from the factory'
+setup --check || error "setup.sh --check with a YubiKey from the factory failed: $out"
 case $out in
-"$warning${nl}setup.sh: YubiKey 30000002 holds no key ws: make it at a terminal with ykman piv keys\
- generate -a ED25519 --pin-policy NEVER --touch-policy NEVER 82 ws.pem, "*) ;;
-*) error "setup.sh with a YubiKey from the factory gave no warning, or another stop: $out" ;;
+"$warning${nl}setup.sh: would make ws's key in slot 82 of YubiKey 30000002: "*"${nl}setup.sh: would\
+ make git's key in slot 83 of YubiKey 30000002: "*) ;;
+*) error "setup.sh --check with a YubiKey from the factory gave no warning, or other slots: $out" ;;
 esac
+echo 5.4.3 >"$yubikey/30000002/version"
+setup && error 'setup.sh went on with a YubiKey of firmware 5.4.3'
+[ "$out" = "$warning${nl}setup.sh: YubiKey 30000002's firmware, 5.4.3, makes no Ed25519 key, which\
+ came in 5.7: plug in a YubiKey of firmware 5.7 or later" ] ||
+    error "setup.sh stopped on firmware 5.4.3 with '$out'"
 sh "$standin" unplug 30000002
 sh "$standin" plug 30000001
 prints ''
