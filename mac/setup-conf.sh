@@ -23,6 +23,7 @@ ws_conf() {
 # shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
 ws_conf_lines() {
     WS_USER=root
+    WS_TARGET=lan
     WS_PUBLIC_KEY=
     WS_LAN=
     WS_LAN_ADDRESS=
@@ -61,6 +62,10 @@ ws_conf_lines() {
             # shellcheck disable=SC2034 # for setup-ssh.sh and setup.sh
             WS_USER=${ws_value:-root}
             ws_is_user "$ws_value" || ws_ok=false
+            ;;
+        WS_TARGET)
+            WS_TARGET=${ws_value:-lan}
+            case $ws_value in lan | cloud | mac-vm) ;; *) ws_ok=false ;; esac
             ;;
         WS_PUBLIC_KEY)
             # shellcheck disable=SC2034 # for setup-ssh.sh and setup.sh
@@ -186,6 +191,13 @@ ws_conf_pairs() {
     if [ -n "$WS_REMOTE_PORT" ] && [ -z "$WS_REMOTE" ]; then
         ws_die "$1: WS_REMOTE_PORT needs WS_REMOTE"
     fi
+    # A cloud VM is reached at its name or address alone, and a VM on the Mac on its network alone.
+    if [ "$WS_TARGET" = cloud ] && [ -z "$WS_REMOTE_PORT" ]; then
+        ws_die "$1: WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT"
+    fi
+    if [ "$WS_TARGET" = mac-vm ] && [ -z "$WS_LAN" ]; then
+        ws_die "$1: WS_TARGET=mac-vm needs WS_LAN"
+    fi
     case ${WS_GIT_NAME:+name}${WS_GIT_EMAIL:+email} in
     name | email) ws_die "$1: WS_GIT_NAME and WS_GIT_EMAIL go together" ;;
     esac
@@ -205,6 +217,7 @@ ws_conf_pairs() {
 ws_conf_form() {
     case $1 in
     WS_USER) echo "a user name of 32 characters at most: letters, digits, ., _ and -, no - first" ;;
+    WS_TARGET) echo "lan, cloud or mac-vm: a machine on the LAN, a cloud VM or a VM on the Mac" ;;
     WS_PUBLIC_KEY) echo "a WireGuard public key, 43 base64 characters and an =" ;;
     WS_LAN) echo "an IPv4 network, as 10.88.0.0/24, clear of $ws_cable_net and $ws_tunnel_net" ;;
     WS_LAN_ADDRESS) echo "a host's IPv4 address inside WS_LAN" ;;
