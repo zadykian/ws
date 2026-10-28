@@ -97,7 +97,8 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
 # command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
 # and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
-# here. So it roots a command's path from /root, such as another repository's apply.sh.
+# here. So it roots a command's path from /root, such as another repository's apply.sh, alone or
+# after the script of sh -c.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
@@ -115,6 +116,10 @@ export PATH
 case $SSH_ORIGINAL_COMMAND in
 'sh -s -- '*) sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
 /root/*) exec "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
+"sh -c '"*)
+    command=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" | sed "s| /root/| $WS_STANDIN/root/root/|")
+    exec /bin/sh -c "$command"
+    ;;
 *) exec /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
 esac
 EOF

@@ -101,9 +101,15 @@ wshook_unread() {
         "again${wshook_why:+: $wshook_why}"
 }
 
-# wshook_run runs apply.sh on ws, its stdin the item's secret, or /dev/null without an item, and
-# fails where apply.sh or ssh does. Where ssh reached ws, it stops where security can't read the
-# item, as where macOS's prompt for it was denied, even where apply.sh then exited 0.
+# wshook_guard is the script that ssh runs on ws as sh -c GUARD APPLY, where WS_HOOK_SECRET names an
+# item. It runs APPLY, apply.sh, on its stdin, but exits 3 where that is empty. So apply.sh never
+# runs without its secret, even where the read for ssh fails, as a second prompt can deny it.
+# shellcheck disable=SC2016 # sh expands it on ws
+wshook_guard='IFS= read -r l || [ -n "$l" ] || exit 3; { printf %s "$l"; echo; cat; } | exec "$0"'
+
+# wshook_run runs apply.sh on ws, its stdin the item's secret, as security reads it a second time,
+# through wshook_guard, or /dev/null without an item. It fails where apply.sh or ssh does. Where
+# security fails once ssh reached ws, it stops, as wshook_unread does.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 wshook_run() {
     if [ -z "$WS_HOOK_SECRET" ]; then
@@ -112,12 +118,17 @@ wshook_run() {
     fi
     rm -f "$lock/hook.status"
     wshook_status=0
-    { security find-generic-password -s "$WS_HOOK_SECRET" -w || echo $? >"$lock/hook.status"; } |
-        host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh "$wshook_apply" >&2 ||
-        wshook_status=$?
-    [ ! -f "$lock/hook.status" ] || [ "$wshook_status" = 255 ] || ws_die "Hook on ws: security" \
-        "can't read the item $WS_HOOK_SECRET from the Keychain: allow it, then run the wizard again"
+    wshook_read | host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh \
+        "sh -c '$wshook_guard'" "$wshook_apply" >&2 || wshook_status=$?
+    [ ! -f "$lock/hook.status" ] || [ "$wshook_status" = 255 ] || wshook_unread
     return "$wshook_status"
+}
+
+# wshook_read prints the item's secret for ssh, as security reads it. Where security fails, its
+# status goes in hook.status, and its error in hook.err.
+wshook_read() {
+    security find-generic-password -s "$WS_HOOK_SECRET" -w 2>"$lock/hook.err" ||
+        echo $? >"$lock/hook.status"
 }
 
 # wshook_fail says what to do where the clone or apply.sh failed, or ws still lacks the stamp.

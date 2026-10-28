@@ -6,9 +6,10 @@
 # terminal of script's must add it, its secret typed at security's prompts, clone the repository,
 # and run apply.sh once over plain ssh. Its stdin must be the secret, and no terminal. It must
 # print no secret, and the next run nothing. Where security can't read the item, --update must stop,
-# naming its error, before the clone, the stamp kept. Where apply.sh exits 1, --update must stop,
-# and the next run, once it exits 0, run it again. With WS_HOOK_SECRET empty, its stdin must be
-# empty. mac.conf, the clones, the stamp and the keychain go back, and a run must print nothing.
+# naming its error. It must stop before the clone, the stamp kept, or, where the read for ssh fails,
+# before apply.sh runs. Where apply.sh exits 1, --update must stop, and the next run, once it exits
+# 0, run it again. With WS_HOOK_SECRET empty, its stdin must be empty. mac.conf, the clones, the
+# stamp and the keychain go back, and a run must print nothing.
 
 set -u
 
@@ -34,6 +35,12 @@ wizard() {
     out=$(sh "$wizard" "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
+}
+
+# sessions prints how many sessions on ws were to run apply.sh, alone or through wizard-hook.sh's
+# guard.
+sessions() {
+    grep -c ' /root/repository/hook/apply\.sh$' "$ws/log"
 }
 
 # unread N: --update, with security failing each read of the secret from the Nth on, must stop,
@@ -76,7 +83,7 @@ item ws-ci-hook" && [ ! -e "$hook" ] || error "wizard.sh --check exited $status,
 wizard
 [ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF "no terminal is there for $add: run it" &&
     [ ! -e "$hook" ] || error "wizard.sh without the item exited $status, or cloned"
-ran=$(grep -cx 'root: /root/repository/hook/apply.sh' "$ws/log")
+ran=$(sessions)
 # script gives the wizard a terminal, which apply.sh's ssh must not take. The secret goes in at
 # each of security's two prompts, whose echo is off, or after 120 s; script's stdin ends 5 s after.
 # shellcheck disable=SC2094 # the loop reads the prompts that script writes to tty, by design
@@ -91,7 +98,7 @@ done 2>/dev/null | script -q /dev/null sh "$wizard" --update >"$RUNNER_TEMP/tty"
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 [ "$status" = 0 ] && [ "$(applied)" = "1 $sha" ] && [ -f "$stamp" ] &&
-    [ "$(grep -cx 'root: /root/repository/hook/apply.sh' "$ws/log")" = $((ran + 1)) ] &&
+    [ "$(sessions)" = $((ran + 1)) ] &&
     [ "$(cat "$ws/clone.log")" = example/hook ] ||
     error "wizard.sh --update at a terminal exited $status, or ran apply.sh other than once with it"
 ! grep -qF "$secret" "$RUNNER_TEMP/tty" || error 'wizard.sh printed the secret'
@@ -116,9 +123,13 @@ exec /usr/bin/security "$@"
 EOF
 chmod 755 /opt/homebrew/bin/security
 clones=$(grep -c 'sh -s -- clone example/hook$' "$ws/log")
+ran=$(sessions)
 unread 1
-[ -f "$stamp" ] && [ "$(grep -c 'sh -s -- clone example/hook$' "$ws/log")" = "$clones" ] ||
-    error 'wizard.sh with an unreadable item cloned, or lost the stamp'
+[ -f "$stamp" ] && [ "$(grep -c 'sh -s -- clone example/hook$' "$ws/log")" = "$clones" ] &&
+    [ "$(sessions)" = "$ran" ] || error 'wizard.sh with an unreadable item went to ws'
+unread 2
+[ ! -e "$stamp" ] && [ "$(sessions)" = $((ran + 1)) ] ||
+    error "wizard.sh with the read for ssh failing kept the stamp, or didn't reach ws's guard"
 rm /opt/homebrew/bin/security "$RUNNER_TEMP/security.reads" "$RUNNER_TEMP/security.from"
 echo 1 >"$ws/apply.status"
 wizard --update

@@ -227,8 +227,9 @@ read it, the stage stops, naming its error. Then `apply.sh` runs as root over `s
 or empty without an item. The wizard never reads the secret, and passes the script no arguments.
 
 That run leaves a stamp, `/var/lib/ws-wizard/hook-REPO` on ws, and the stage is done. So a second
-run of the wizard leaves `apply.sh` alone, and `--update` runs it again. A run that fails stops the
-wizard, and the next runs it again. `--check` says what the stage would do, and runs nothing.
+run leaves `apply.sh` alone, and `--update` runs it again. A run that fails stops the wizard, and
+the next runs it again. An item whose access list lacks `security` asks at both of the stage's
+reads, which "Always Allow" answers. `--check` says what the stage would do, and runs nothing.
 
 The stage Hook on the Mac then clones the repository in `~/repository/REPO` by gh's login on the
 Mac, where missing, and never pulls it. Another repository's clone there stops the stage, as on ws.
