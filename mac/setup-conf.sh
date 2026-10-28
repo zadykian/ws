@@ -41,6 +41,8 @@ ws_conf_lines() {
     WS_IDENTITY_AGENT=
     WS_HOOK=
     WS_HOOK_SECRET=
+    WS_SSH_KEY=ws
+    WS_GIT_KEY=git
     ws_n=0
     while IFS=' 	' read -r ws_line || [ -n "$ws_line" ]; do
         ws_n=$((ws_n + 1))
@@ -179,6 +181,16 @@ ws_conf_lines() {
             case $ws_value in *[!A-Za-z0-9._-]*) ws_ok=false ;; esac
             [ "${#ws_value}" -le 64 ] || ws_ok=false
             ;;
+        WS_SSH_KEY | WS_GIT_KEY)
+            # A key's name, its CN=NAME and NAME.pub. Letters listed: bash 3.2's a-z takes capitals.
+            if [ "$ws_key" = WS_SSH_KEY ]; then
+                WS_SSH_KEY=${ws_value:-ws}
+            else
+                WS_GIT_KEY=${ws_value:-git}
+            fi
+            case $ws_value in *[!abcdefghijklmnopqrstuvwxyz0123456789-]*) ws_ok=false ;; esac
+            [ "${#ws_value}" -le 32 ] || ws_ok=false
+            ;;
         *) ws_die "$1, line $ws_n: unknown key $ws_key" ;;
         esac
         [ -z "$ws_value" ] || $ws_ok ||
@@ -225,6 +237,9 @@ ws_conf_pairs() {
     if [ -n "$WS_HOOK_SECRET" ] && [ -z "$WS_HOOK" ]; then
         ws_die "$1: WS_HOOK_SECRET needs WS_HOOK"
     fi
+    if [ "$WS_SSH_KEY" = "$WS_GIT_KEY" ]; then
+        ws_die "$1: WS_SSH_KEY and WS_GIT_KEY both name $WS_SSH_KEY: ssh and git take a key each"
+    fi
 }
 
 # ws_conf_form KEY prints the form a value of KEY takes, for ws_conf's message. It names lib.sh's
@@ -266,6 +281,7 @@ ws_conf_form() {
     WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" \
         "in any letter case" ;;
     WS_HOOK_SECRET) echo "a Keychain item's name, 1 to 64 letters, digits and ._-" ;;
+    WS_SSH_KEY | WS_GIT_KEY) echo "a key's name on the YubiKey, 1 to 32 of a-z, 0-9 and -" ;;
     *) echo "a port, 1 to 65535" ;;
     esac
 }
