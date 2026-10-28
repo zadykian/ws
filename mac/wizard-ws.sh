@@ -233,6 +233,9 @@ run_hand() {
     remote_read || true
     [ "$(remote_get fans)" != refused ] || by_hand "ws's fans' driver: with Secure Boot on," \
         "DKMS's key, enrolled at ws's console (docs/fans.md, Secure Boot)."
+    [ "$WS_TARGET" = cloud ] || [ "$(remote_get outbound)" != off ] || by_hand "ws's outbound" \
+        "table: off, as ws's host_vars names security_outbound: false, as for a cloud VM; remove" \
+        "that line, then run the wizard with --update (docs/security.md, Outbound)."
     by_hand "macOS's local network: where it asks whether iTerm2, Gateway or another app may find" \
         "devices there, allow it (docs/mac.md, ssh's hosts)."
     by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \

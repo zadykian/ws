@@ -274,6 +274,8 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   Gateway's connection to ws.
 - ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `mac.conf` has `WS_REMOTE` ([The router](router.md)).
+- ws's outbound table, which `security_outbound: false` in ws's `host_vars` keeps off, where
+  `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
 - The tunnel's handshake, where the Host key stage asked ws's address: once ws's lease is static,
   the wizard again, which checks it.
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as

@@ -9,6 +9,7 @@
 # -e, must then start one with -e security_outbound=false, and name that in ws's host_vars. The next
 # run must start none. Without the line, a run must write it alone. --check --update, with no
 # WS_TARGET in the environment, and --check on a cloud VM must name the run that each would start.
+# Back on the LAN, the closing list of --update must name the table that the line keeps off.
 
 set -u
 
@@ -106,7 +107,10 @@ sudo rm "$vars"
 wizard
 started 0 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
     error "a cloud VM's run without the line exited $status, or ran a playbook"
-sudo rm -r "${vars%/*}"
 rm "$WS_CONF"
 unset WS_CONF
+sh "$wizard" --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
+grep -q "^- ws's outbound table: off, as ws's host_vars names security_outbound: false, " \
+    "$RUNNER_TEMP/run.out" || error "wizard.sh --update on the LAN named no table left off"
+sudo rm -r "${vars%/*}"
 exit "$fail"
