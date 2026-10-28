@@ -1,0 +1,30 @@
+name: issues
+
+# The issue check of zadykian/toolkit, with its default inputs, against section 3 of its issue
+# skill: an issue's title and the fields of its form. It warns, in annotations and a comment of its
+# own, and its job passes, so no ruleset requires it. It takes a workflow of its own, as a pull
+# request's event names no issue, and the issues event runs the workflow as main has it. Its README
+# says what it checks: https://github.com/zadykian/toolkit/tree/main/actions/issue.
+
+# edited checks the issue again once its title or body changes.
+on:
+  issues:
+    types: [opened, edited]
+
+# Two runs of an issue race to create the check's comment, so a newer event's run cancels the
+# older one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  issue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The check reads the issue through GitHub's API and comments on it, so it checks out nothing.
+    permissions:
+      issues: write
+    steps:
+      - uses: zadykian/toolkit/actions/issue@84b430f143a2944891329db62847475d531f877a # v6.0.0

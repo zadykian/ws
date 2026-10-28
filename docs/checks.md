@@ -248,9 +248,16 @@ They check its commits, size and title, its description, and the terms it adds, 
 of the toolkit's skills. Each warns and never blocks, so no ruleset requires it. A newer event of a
 pull request cancels its older run, as the two would race to create each check's comment.
 
+`.github/workflows/issues.yml` runs the toolkit's issue check as an issue opens or changes. It
+warns where the title is no Conventional Commits header, or the body strays from the issue form's
+fields. It takes a workflow of its own, as a pull request's event names no issue, and runs as
+`main` has it. A newer event of an issue cancels its older run, as with a pull request.
+
 The workflows pin the toolkit's actions, and `.claude/settings.json` its marketplace, to one
-release. The toolkit's `tools/pin` moves both, as its
-[Pin a release](https://github.com/zadykian/toolkit#pin-a-release) says.
+release. `.github/` holds that release's templates: the pull request template, and the issue form,
+whose `config.yml` turns blank issues off. The toolkit's `tools/pin` moves both pins and writes the
+templates, as its [Pin a release](https://github.com/zadykian/toolkit#pin-a-release) says. Each pin
+writes them again, so a change to them goes in the toolkit.
 
 ## The hooks
 
