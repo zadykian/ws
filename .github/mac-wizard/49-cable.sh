@@ -10,10 +10,10 @@
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
 # script's after a bad one, an empty line must take the one service with a 169.254 address. setup.sh
-# must give it 10.77.0.2, and ping reach 10.77.0.1, once. The next run must print nothing. With no
-# answer from ping, a run must stop, naming WS_CABLE_SERVICE. WS_CABLE_SERVICE= must write that
-# empty line, which the next run keeps. mac.conf and the stand-ins go back, and a run must print
-# nothing.
+# must give it 10.77.0.2, and ping reach 10.77.0.1, once, and mac.conf keep enp5s0 as WS_CABLE_PORT.
+# The next run must print nothing. With no answer from ping, a run must stop, naming
+# WS_CABLE_SERVICE. WS_CABLE_SERVICE= must write that empty line, which the next run keeps. mac.conf
+# and the stand-ins go back, and a run must print nothing.
 
 set -u
 
@@ -149,8 +149,10 @@ tr -d '\r' <"$RUNNER_TEMP/tty"
 grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty" &&
     grep -qF "wizard.sh: Cable: 'ws stand-in absent' is none of those" "$RUNNER_TEMP/tty" &&
     [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = 'WS_CABLE_SERVICE="ws stand-in adapter"' ] &&
+    grep -qx WS_CABLE_PORT=enp5s0 "$conf" &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 1' ] ||
-    error "wizard.sh at a terminal exited $status, or set the adapter or pinged other than once"
+    error "wizard.sh at a terminal exited $status, set the adapter or pinged other than once, or" \
+        "kept no port"
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "the next run exited $status"
 cp "$RUNNER_TEMP/cable.conf" "$conf"
