@@ -91,14 +91,16 @@ The first run must warn that ws faces the internet, and add ws's key to `known_h
 of no way to ws, a run must stop, naming [The router](router.md). With one whose `WS_REMOTE`
 doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`.
 
-Root logs in to that `sshd` by root's own `authorized_keys`, and the runner's user, as the
-installer's, by the stand-in `gh`'s keys. Each session runs `ws.sh`, which logs the command. The
-first run must add the Mac's key to root's file, as that user, with sudo. Then root's line for the
-key carries a forced command, as cloud-init writes it. A run with no terminal must stop without
-`WS_INSTALLER_USER`, and with a user who lacks the key. As the runner's user, it must replace that
-line by the bare key, and keep root's other key. With another host key under `ws`, a run must stop,
-with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s second host key, an
-ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a line to `known_hosts`.
+Root logs in to that `sshd` by root's own `authorized_keys`. The cases fill it from the stand-in
+`gh`'s keys, as Ubuntu's installer and the README's step do for ws. Each session runs `ws.sh`,
+which logs the command. The wizard adds no key, so the first run must stop at the Root's key stage,
+naming the Mac's key, and add none. The case then gives root the keys, and the wizard runs again.
+Then root's line for the key carries a forced command, as cloud-init writes it. `--check` must say
+that a run would stop. A run must stop, with no terminal and at a terminal of `script`'s, and change
+nothing. With the keys back in root's file, a run must say nothing of the stage. With another host
+key under `ws`, a run must stop, with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither
+the `sshd`'s second host key, an ECDSA one, nor a `--check` under
+`StrictHostKeyChecking accept-new` may add a line to `known_hosts`.
 
 The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
 sends it. `ws.sh` puts stand-ins for ws's programs first on its `PATH`

@@ -119,7 +119,7 @@ or `dockerd --validate`, only as it writes the file.
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
-copies root's key, runs `bootstrap.sh`, logs gh and claude in there, and gives `wg0` the Mac's key.
+checks root's key, runs `bootstrap.sh`, logs gh and claude in there, and gives `wg0` the Mac's key.
 Without it, `gh auth login` comes before `bootstrap.sh` or a later `--tags devtools` run, then
 `gh auth setup-git`, the claude login and the Mac's key. These stay manual:
 
