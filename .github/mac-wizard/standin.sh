@@ -76,9 +76,10 @@ EOF
 chmod 755 /opt/homebrew/bin/gh
 # ws's stand-in: an sshd of its own at 127.0.0.1:22022, where mac.conf's WS_REMOTE and its port
 # lead, with a host key made here. The cases answer the Host key stage with its fingerprint. Root
-# logs in by root's own authorized_keys, and the runner's user, as the user of Ubuntu's installer,
-# by the stand-in gh's keys, which that installer would import. Each session runs ws.sh. A second
-# host key, ECDSA, as ws has more than one, must stay out of known_hosts at each login.
+# logs in by root's own authorized_keys, which the cases fill from the stand-in gh's keys, as
+# Ubuntu's installer imports the account's keys for its user and the README's step copies them to
+# root. Each session runs ws.sh. A second host key, ECDSA, as ws has more than one, must stay out
+# of known_hosts at each login.
 ws=$RUNNER_TEMP/ws
 mkdir -p "$ws"
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/host_key" </dev/null
@@ -92,8 +93,7 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # cases make in a row. The stand-in takes them, where its sshd knows the setting.
 ! sudo /usr/sbin/sshd -G -f "$ws/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
     echo 'PerSourcePenalties no' >>"$ws/sshd_config"
-printf '%s\n' "Match User $USER" "    AuthorizedKeysFile $RUNNER_TEMP/gh/keys" >>"$ws/sshd_config"
-# ws.sh, ws's shell: it logs each command in log, which root and the user both write, then runs it.
+# ws.sh, ws's shell: it logs each command in log, which root writes, then runs it.
 # Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
 # command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
 # and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
@@ -167,5 +167,4 @@ exec /usr/bin/ssh "\$@"
 EOF
 chmod 755 /opt/homebrew/bin/ssh
 : >"$ws/log"
-chmod 666 "$ws/log"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
