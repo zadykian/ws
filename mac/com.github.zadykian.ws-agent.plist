@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   The LaunchAgent of ws's ssh agent, which mac/setup.sh copies to ~/Library/LaunchAgents with the
-  home's path in place of each ~, as launchd expands none: launchd runs ws-agent as the user from
+  home's path in place of each ~, as launchd expands none. mac.conf's names of the keys take the
+  place of $WS_SSH_KEY and $WS_GIT_KEY, for ws-agent-confirm. launchd runs ws-agent as the user from
   login on, starts it again 10 s after it exits, and appends its output to
   ~/Library/Logs/ws-agent.log.
 -->
@@ -14,6 +15,13 @@
 	<array>
 		<string>~/.config/ws/ws-agent</string>
 	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>WS_SSH_KEY</key>
+		<string>$WS_SSH_KEY</string>
+		<key>WS_GIT_KEY</key>
+		<string>$WS_GIT_KEY</string>
+	</dict>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>

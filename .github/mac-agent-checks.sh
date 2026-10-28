@@ -125,6 +125,11 @@ if launchctl print "gui/$(id -u)" >/dev/null 2>&1; then
     if [ "$(stat -f %Lp "$plist")" != 644 ] || ! plutil -lint "$plist" >/dev/null; then
         error "$plist is not 644, or plutil refuses it"
     fi
+    # ws-agent-confirm names the keys by mac.conf's names, the job's defaults, from the plist.
+    for pair in WS_SSH_KEY=ws WS_GIT_KEY=git; do
+        [ "$(plutil -extract "EnvironmentVariables.${pair%=*}" raw -o - "$plist" 2>&1)" = \
+            "${pair#*=}" ] || error "$plist gives ws's agent no $pair"
+    done
 fi
 # Each signature must run ws-agent-confirm, which counts it in its key's stamp, ssh's or git's.
 if within 20 listed; then

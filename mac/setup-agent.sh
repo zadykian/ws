@@ -33,13 +33,17 @@ agent() {
 }
 
 # agent_plist_text prints mac/'s plist with the home's path in place of each ~/ that opens a
-# string, as launchd expands no ~.
+# string, as launchd expands no ~, and WS_SSH_KEY's and WS_GIT_KEY's names in place of theirs.
+# ws-agent-confirm reads the names from the agent's environment. So a new name changes the plist,
+# and agent_launchd starts the agent again with it. ws_conf lets in no character that XML escapes.
 agent_plist_text() {
     while IFS= read -r agent_line; do
         case $agent_line in
         *'<string>~/'*)
             agent_line="${agent_line%%'<string>~/'*}<string>$HOME/${agent_line#*'<string>~/'}"
             ;;
+        *"<string>\$WS_SSH_KEY</string>") agent_line="${agent_line%%<*}<string>$WS_SSH_KEY</string>" ;;
+        *"<string>\$WS_GIT_KEY</string>") agent_line="${agent_line%%<*}<string>$WS_GIT_KEY</string>" ;;
         esac
         printf '%s\n' "$agent_line"
     done <"$dir/$agent_label.plist"
