@@ -76,3 +76,27 @@ ykman piv access change-management-key --protect
 
 The last keeps a new, random management key on the YubiKey, behind the PIN, so that ykman asks the
 PIN alone.
+
+## ws's agent
+
+ssh and git sign through an agent of ws's own, `mac/ws-agent`. macOS's own agent takes no `-P`, and
+its default providers, in `/usr/lib` and `/usr/local/lib`, leave out Homebrew's libykcs11, which
+lies in the Cellar. `ws-agent` runs Apple's `/usr/bin/ssh-agent` at `~/.ssh/ws-agent.sock`, with
+libykcs11's path in the Cellar as its one provider. It loads the keys by `ssh-add -s`, with the PIN
+`VERIFY_NONE` from `ws-agent-pin`: libykcs11 then verifies no PIN, and the agent stores none. It
+logs to its standard output. To list the keys it holds:
+
+```sh
+SSH_AUTH_SOCK=~/.ssh/ws-agent.sock ssh-add -L
+```
+
+`WS_AGENT_SOCKET` gives it another socket, so that a probe by hand runs beside it. Apple's agent
+must load Homebrew's libykcs11, then list the keys and sign with them. Only where library validation
+refused the library would the agent become Homebrew's openssh's:
+
+```sh
+WS_AGENT_SOCKET=/tmp/probe.sock ~/repository/ws/mac/ws-agent &
+SSH_AUTH_SOCK=/tmp/probe.sock ssh-add -L
+SSH_AUTH_SOCK=/tmp/probe.sock ssh-keygen -Y sign -f ~/.config/ws/keys/git.pub -n git FILE
+kill %1
+```
