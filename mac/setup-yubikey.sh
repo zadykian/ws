@@ -8,6 +8,8 @@
 
 # The directory of the keys' .pubs, NAME.pub for each, which ssh and git name.
 yubikey_dir=$HOME/.config/ws/keys
+# The retired slots, where a key is made, in ykman's order.
+yubikey_retired='82 83 84 85 86 87 88 89 8A 8B 8C 8D 8E 8F 90 91 92 93 94 95'
 
 # yubikey runs the step: the tools, then the keys.
 yubikey() {
@@ -126,7 +128,8 @@ yubikey_slots() {
 }
 
 # yubikey_key NAME sets yubikey_slot to the slot of the key NAME, whose certificate is CN=NAME. It
-# stops where several slots hold that certificate, and where none does. It writes the key's .pub.
+# stops where several slots hold that certificate, and where none does, naming the commands that
+# make the key. It writes the key's .pub.
 yubikey_key() {
     yubikey_slot=$(yubikey_slots | awk -v want="CN=$1" '
         { subject = $0; sub(/^[^ ]+ [^ ]+ /, "", subject) }
@@ -137,9 +140,35 @@ yubikey_key() {
             "certificate CN=$1: ykman piv certificates delete SLOT drops the name from all but one"
         ;;
     esac
-    [ -n "$yubikey_slot" ] || ws_die "${yubikey_at}YubiKey $yubikey_serial holds no key $1, whose" \
-        "certificate is CN=$1: make it as docs/mac-yubikey.md says"
+    if [ -z "$yubikey_slot" ]; then
+        yubikey_free "$1"
+        yubikey_make "$1"
+    fi
     yubikey_pub "$1"
+}
+
+# yubikey_free NAME sets yubikey_slot to the first retired slot that holds neither a key nor a
+# certificate. It stops where none is.
+yubikey_free() {
+    yubikey_used=" $(yubikey_slots | awk '{ printf "%s ", $1 }')"
+    for yubikey_slot in $yubikey_retired; do
+        case $yubikey_used in *" $yubikey_slot "*) continue ;; esac
+        return 0
+    done
+    ws_die "${yubikey_at}YubiKey $yubikey_serial has no free slot of 82 to 95 for $1's key:" \
+        "ykman piv keys delete SLOT and ykman piv certificates delete SLOT free one"
+}
+
+# yubikey_make NAME stops where NAME's key is missing, naming the commands of ykman that make it in
+# yubikey_slot: an Ed25519 key, used with no PIN and no touch, as ws's agent and git ask neither,
+# then its certificate CN=NAME, which names it. ykman asks the management key at each, and the PIN
+# for the certificate.
+yubikey_make() {
+    yubikey_run="ykman piv keys generate -a ED25519 --pin-policy NEVER --touch-policy NEVER"
+    yubikey_run="$yubikey_run $yubikey_slot $1.pem, then ykman piv certificates generate -s"
+    yubikey_run="$yubikey_run CN=$1 -d 3650 $yubikey_slot $1.pem"
+    ws_die "${yubikey_at}YubiKey $yubikey_serial holds no key $1: make it at a terminal with" \
+        "$yubikey_run, which ask the management key and the PIN"
 }
 
 # yubikey_pub NAME writes yubikey_dir/NAME.pub, the public key of NAME's key, in yubikey_slot. It
