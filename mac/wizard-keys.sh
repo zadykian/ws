@@ -1,23 +1,33 @@
-# shellcheck shell=sh
+# shellcheck shell=sh source-path=SCRIPTDIR
 # The wizard's Mac key stage: the key that ssh offers ws, which setup-identity.sh's ws_identity
 # finds from mac.conf, made where missing. wizard.sh sources it, and runs the stage after Answers
-# and before setup.sh, which names the key in ~/.ssh/config.d/ws. Without WS_IDENTITY, the key is
-# Secretive's, in the Mac's Secure Enclave, unless the answer at the terminal is no: then ssh-keygen
-# makes ~/.ssh/id_ed25519. It calls the functions of lib.sh, setup-lib.sh and wizard-ask.sh, and
-# reads wizard.sh's lock and WS_CONF, mac.conf's path.
+# and before gh on the Mac, which adds the key to GitHub. Without WS_IDENTITY, the keys are the
+# YubiKey's, which the stage finds or makes as setup.sh does, and ws's agent loads. It calls the
+# functions of lib.sh, setup-lib.sh and wizard-ask.sh, and reads wizard.sh's lock and WS_CONF,
+# mac.conf's path.
+
+# The YubiKey's step and the agent's are setup.sh's, sourced from dir, mac/'s path, as wizard.sh
+# sets it.
+# shellcheck source=setup-yubikey.sh
+. "${dir:?wizard.sh sets dir}/setup-yubikey.sh"
+# shellcheck source=setup-agent.sh
+. "$dir/setup-agent.sh"
 
 # keys_done succeeds where the key that ssh offers ws is there: in a file beside the .pub whose
 # fingerprint it shares, or listed by the agent that holds it. Where it is Secretive's, git, which
 # has a name, needs a key of its own there too, unless mac.conf has a line for WS_GIT_SIGNING_KEY.
+# Without WS_IDENTITY, ws's agent must list git's key of the YubiKey's too.
+# shellcheck disable=SC2154 # yubikey_dir is setup-yubikey.sh's
 keys_done() {
-    (ws_conf "$WS_CONF" && ws_identity && keys_there && ! keys_signing) >/dev/null 2>&1
+    (ws_conf "$WS_CONF" && ws_identity && keys_there && ! keys_signing &&
+        { [ -n "$WS_IDENTITY" ] || keys_there "$yubikey_dir/$WS_GIT_KEY.pub"; }) >/dev/null 2>&1
 }
 
-# keys_there succeeds where the key that ws_identity set is there: the agent lists the key of the
-# .pub, or the file beside the .pub is its private key.
+# keys_there [PUB] succeeds where the key that ws_identity set, or PUB in its agent, is there: the
+# agent lists the .pub's type and base64, or the file beside the .pub is its private key.
 # shellcheck disable=SC2154 # ws_identity sets ws_identity_pub and ws_identity_agent
 keys_there() {
-    keys_pub=$(keys_home "$ws_identity_pub")
+    keys_pub=$(keys_home "${1:-$ws_identity_pub}")
     if [ -z "$ws_identity_agent" ]; then
         keys_same "${keys_pub%.pub}"
         return
@@ -55,12 +65,18 @@ keys_signing() {
         [ -n "$WS_GIT_NAME" ] && ask_lacks WS_GIT_SIGNING_KEY
 }
 
-# keys_do makes the key that keys_done lacks, or says why it can't. A WS_IDENTITY outside
-# Secretive's PublicKeys, with no agent, is a key in a file, which keys_file makes. Without
-# WS_IDENTITY, the key that ws_identity finds is there, or keys_choose makes one. git's key in
-# Secretive follows ws's.
+# keys_do makes the key that keys_done lacks, or says why it can't. Without WS_IDENTITY, it runs
+# setup.sh's YubiKey and agent steps, which find or make the YubiKey's keys and have ws's agent load
+# them, or stop. A WS_IDENTITY outside Secretive's PublicKeys, with no agent, is a key in a file,
+# which keys_file makes. Else its agent must list it. git's key in Secretive follows ws's.
 keys_do() {
     ws_conf "$WS_CONF"
+    if [ -z "$WS_IDENTITY" ]; then
+        yubikey_tools "Mac key"
+        yubikey_keys "Mac key"
+        agent
+        return
+    fi
     keys_pub=$(keys_home "$WS_IDENTITY")
     if [ -n "$keys_pub" ] && [ -z "$WS_IDENTITY_AGENT" ] &&
         [ "${keys_pub#"$ws_secretive"/PublicKeys/}" = "$keys_pub" ]; then
