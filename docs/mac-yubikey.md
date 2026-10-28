@@ -13,10 +13,12 @@ public key goes in `~/.config/ws/keys/NAME.pub`. The wizard asks neither name.
 
 ## The keys
 
-`setup.sh` installs Homebrew's ykman where `PATH` has none, and Homebrew's yubico-piv-tool, whose
-libykcs11 gives ssh's agent the keys, where Homebrew lacks it. `--check` names the install. The
-script stops unless one YubiKey is in, and names each by its serial where several are, as a second
-in the dock would be. Each later call of ykman names the one by `--device SERIAL`.
+`setup.sh` installs Homebrew's ykman where `PATH` has none. It installs Homebrew's yubico-piv-tool,
+whose libykcs11 gives ssh's agent the keys, and terminal-notifier, for [The notices](#the-notices),
+where Homebrew lacks them. `--check` names the install. Where terminal-notifier's install fails,
+the script warns and goes on, as that costs the notices alone. It stops unless one YubiKey is in,
+and names each by its serial where several are, as a second in the dock would be. Each later call
+of ykman names the one by `--device SERIAL`.
 
 A key is the slot whose certificate is `CN=NAME` in `ykman piv info`, in any slot. Two slots of one
 name stop the script. The script exports the key with `ykman piv keys export`, and writes it as
@@ -82,10 +84,10 @@ PIN alone.
 ssh and git sign through an agent of ws's own, `mac/ws-agent`. macOS's own agent takes no `-P`, and
 its default providers, in `/usr/lib` and `/usr/local/lib`, leave out Homebrew's libykcs11, which
 lies in the Cellar. `ws-agent` runs Apple's `/usr/bin/ssh-agent` at `~/.ssh/ws-agent.sock`, with
-libykcs11's path in the Cellar as its one provider. It loads the keys by `ssh-add -s`, with the PIN
-`VERIFY_NONE` from `ws-agent-pin`: libykcs11 then verifies no PIN, and the agent stores none.
+libykcs11's path in the Cellar as its one provider. It loads the keys by `ssh-add -c -s`, with the
+PIN `VERIFY_NONE` from `ws-agent-pin`: libykcs11 then verifies no PIN, and the agent stores none.
 
-`setup.sh` copies both to `~/.config/ws`. Its LaunchAgent,
+`setup.sh` copies both, and `ws-agent-confirm`, to `~/.config/ws`. Its LaunchAgent,
 `~/Library/LaunchAgents/com.github.zadykian.ws-agent.plist`, has launchd run the copy in `gui/UID`
 from login on, and log to `~/Library/Logs/ws-agent.log`. A run that changes a copy or the plist
 starts the agent again. So does one where the agent lacks a key of `~/.config/ws/keys`, as after
@@ -117,3 +119,27 @@ SSH_AUTH_SOCK=/tmp/probe.sock ssh-add -L
 SSH_AUTH_SOCK=/tmp/probe.sock ssh-keygen -Y sign -f ~/.config/ws/keys/git.pub -n git FILE
 kill %1
 ```
+
+## The notices
+
+The agent runs `ws-agent-confirm` at each signature, as `ssh-add -c` asks. It posts a notice through
+terminal-notifier, and allows the signature.
+
+- A notice names the key: `ssh key NAME` for `WS_SSH_KEY`'s, and `git key NAME` for `WS_GIT_KEY`'s.
+  The plist gives the agent both names. Another key of the YubiKey's goes by its label in
+  libykcs11, as `key Public key for Retired Key 3`.
+- A key posts once in 5 s at most. Its next notice counts the signatures since the last, and
+  replaces it. So an ssh login posts one notice, and a rebase of many commits a few.
+- A first run of the wizard opens about 20 connections to ws. Each that comes 5 s or more after the
+  last posts a notice.
+- `~/.config/ws/stamps` holds a stamp per key: the time of its last notice, and the uses since.
+- Without terminal-notifier, or with its notices off, each signature passes with no notice. Without
+  `ws-agent-confirm`, the agent refuses each signature, until `setup.sh` copies it again.
+- Where macOS's `/bin/sh` is dash, a signature can wait for the notifier to exit, as dash closes no
+  descriptor above 9.
+
+By hand, once:
+
+- Allow terminal-notifier's notices at its first prompt, which the first signature brings.
+- In System Settings › Notifications › terminal-notifier, choose Banners or Alerts. Focus and
+  Scheduled Summary can hold the notices back.
