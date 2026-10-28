@@ -1,9 +1,13 @@
 # shellcheck shell=sh
-# The YubiKey's step of mac/setup.sh: the one YubiKey in, whose PIV applet holds the keys that
-# mac.conf's WS_SSH_KEY and WS_GIT_KEY name. ykman, which reads them, and yubico-piv-tool, whose
-# libykcs11 the agent loads, come from Homebrew. setup.sh sources it after lib.sh and
-# setup-lib.sh, whose functions it calls, and runs yubikey before ssh's hosts. The wizard can call
-# yubikey_tools, yubikey_serials and yubikey_keys, each with its stage's name for their messages.
+# The YubiKey's step of mac/setup.sh: the keys that mac.conf's WS_SSH_KEY and WS_GIT_KEY name,
+# found on the YubiKey's PIV applet, and their .pubs in ~/.config/ws/keys. ykman, which reads
+# them, and yubico-piv-tool, whose libykcs11 the agent loads, come from Homebrew. setup.sh sources
+# it after lib.sh and setup-lib.sh, whose functions it calls, and runs yubikey before ssh's hosts.
+# The wizard can call yubikey_tools, yubikey_serials and yubikey_keys, each with its stage's name
+# for their messages.
+
+# The directory of the keys' .pubs, NAME.pub for each, which ssh and git name.
+yubikey_dir=$HOME/.config/ws/keys
 
 # yubikey runs the step: the tools, then the keys.
 yubikey() {
@@ -43,10 +47,10 @@ yubikey_serials() {
     "$yubikey_ykman" list --serials
 }
 
-# yubikey_keys [STAGE] finds the one YubiKey in, which holds the keys of WS_SSH_KEY and WS_GIT_KEY,
-# and warns where its PIV applet keeps a default. It stops unless one YubiKey is in. Under --check
-# before yubikey_tools installs ykman, it says what it would do once it has. Its messages start
-# with STAGE, where the wizard's stage gives one.
+# yubikey_keys [STAGE] finds the keys of WS_SSH_KEY and WS_GIT_KEY on the one YubiKey in, and
+# writes their .pubs. It stops unless one YubiKey is in. Under --check before yubikey_tools installs
+# ykman, it says what it would do once it has. Its messages start with STAGE, where the wizard's
+# stage gives one.
 # shellcheck disable=SC2120 # the wizard's stage passes its name
 yubikey_keys() {
     yubikey_at=${1:+$1: }
@@ -57,6 +61,10 @@ yubikey_keys() {
     fi
     yubikey_one
     yubikey_defaults
+    [ -d "${yubikey_dir%/*}" ] || ws_dir "${yubikey_dir%/*}" 755
+    ws_dir "$yubikey_dir" 755
+    yubikey_key "$WS_SSH_KEY"
+    yubikey_key "$WS_GIT_KEY"
 }
 
 # yubikey_one sets yubikey_serial to the serial of the one YubiKey in, which each later call of
@@ -103,4 +111,67 @@ yubikey_join() {
                 out = out (i == 1 ? "" : i == NR ? " and " : ", ") item[i]
             print out
         }'
+}
+
+# yubikey_slots prints a line for each slot that ykman piv info lists, as it lists those that hold a
+# key or a certificate: SLOT KEY SUBJECT, as 82 ED25519 CN=ws. KEY is EMPTY for a certificate
+# alone, and SUBJECT - for a key alone.
+yubikey_slots() {
+    printf '%s\n' "$yubikey_piv" | awk '
+        function out() { if (slot != "") print slot, key, subject }
+        /^Slot [0-9A-F][0-9A-F] \(/ { out(); slot = $2; key = "EMPTY"; subject = "-"; next }
+        /^  Private key type: / { key = $4 }
+        /^  Subject DN: / { subject = substr($0, index($0, ":") + 1); sub(/^ +/, "", subject) }
+        END { out() }'
+}
+
+# yubikey_key NAME sets yubikey_slot to the slot of the key NAME, whose certificate is CN=NAME, and
+# stops where none is. It writes the key's .pub.
+yubikey_key() {
+    yubikey_slot=$(yubikey_slots | awk -v want="CN=$1" '
+        { subject = $0; sub(/^[^ ]+ [^ ]+ /, "", subject) }
+        subject == want { print $1 }')
+    [ -n "$yubikey_slot" ] || ws_die "${yubikey_at}YubiKey $yubikey_serial holds no key $1, whose" \
+        "certificate is CN=$1: make it as docs/mac-yubikey.md says"
+    yubikey_pub "$1"
+}
+
+# yubikey_pub NAME writes yubikey_dir/NAME.pub, the public key of NAME's key, in yubikey_slot. It
+# warns where the file held another key, as of another YubiKey or a reset PIV applet, which GitHub
+# and ws lack.
+# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
+yubikey_pub() {
+    ws_tmp
+    yubikey_der=$ws_tmpfile
+    if ! "$yubikey_ykman" --device "$yubikey_serial" piv keys export -F DER "$yubikey_slot" \
+        "$yubikey_der" >/dev/null || ! yubikey_line=$(yubikey_openssh "$yubikey_der"); then
+        rm -f "$yubikey_der"
+        ws_die "${yubikey_at}ykman piv keys export $yubikey_slot gave no Ed25519 key" \
+            "for $1"
+    fi
+    rm -f "$yubikey_der"
+    yubikey_file=$yubikey_dir/$1.pub
+    yubikey_old=$(awk 'NF { print $1, $2; exit }' "$yubikey_file" 2>/dev/null) || yubikey_old=
+    if [ -n "$yubikey_old" ] && [ "$yubikey_old" != "$yubikey_line" ]; then
+        ws_say "${yubikey_at}warning: $yubikey_file held another key, of another YubiKey or a" \
+            "reset PIV applet: GitHub and ws need the new one"
+    fi
+    ws_put "$yubikey_file" 644 <<EOF
+$yubikey_line $1@yubikey
+EOF
+}
+
+# yubikey_openssh DER prints the OpenSSH public key, its type and base64, of DER, a key's
+# SubjectPublicKeyInfo: an Ed25519 key's 12 bytes of header and its 32. It fails on any other.
+# ssh-keygen -i takes no Ed25519 key, in OpenSSH 10.3 too, so the key's blob is made here: each of
+# its strings after its length in 4 bytes.
+yubikey_openssh() {
+    yubikey_form=$(wc -c <"$1" | tr -d ' '):$(od -An -tx1 -N12 "$1" | tr -d ' \n')
+    case $yubikey_form in
+    44:302a300506032b6570032100)
+        printf 'ssh-ed25519 %s\n' "$({ printf '\000\000\000\013ssh-ed25519\000\000\000\040' &&
+            tail -c 32 "$1"; } | base64 | tr -d '\n')"
+        ;;
+    *) return 1 ;;
+    esac
 }

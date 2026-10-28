@@ -4,8 +4,8 @@
 #
 #   ~/repository/ws/mac/setup.sh [--check]
 #
-# It reads mac.conf without running it. It stops unless one YubiKey is in, which holds the keys of
-# mac.conf's WS_SSH_KEY and WS_GIT_KEY, and installs Homebrew's ykman where missing. Then it
+# It reads mac.conf without running it. It finds the keys of mac.conf's WS_SSH_KEY and WS_GIT_KEY
+# on the one YubiKey in, by Homebrew's ykman, and writes their .pubs in ~/.config/ws/keys. Then it
 # writes ~/.ssh/config.d/ws. Its host ws goes through the
 # WireGuard tunnel to ws, and ws-ssh reaches ws over the cable, the home LAN or the router's port
 # forward, the first of these the Mac is on. Until mac.conf has WS_PUBLIC_KEY and launchd has the
