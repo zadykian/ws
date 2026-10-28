@@ -15,7 +15,16 @@
 # - Mac key: the key that ssh offers ws, made where missing, in Secretive or a file of ssh-keygen's;
 # - gh on the Mac: gh's login to GitHub, and the Mac's key among its keys, for Ubuntu's installer;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md);
-# - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws.
+# - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
+# - Root's key: root's login to ws by the Mac's key, which the wizard checks and never adds;
+# - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
+# - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
+# - claude on ws: root's claude there, logged in over ssh -t;
+# - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again;
+# - Hook on ws: the repository that WS_HOOK names, cloned on ws, and its apply.sh run there as root;
+# - Hook on the Mac: that repository's clone in ~/repository, its hooks and its Brewfile's formulae,
+#   and ws's word list;
+# - Cable: ws's port of the cable from the Mac's display, in host_vars on ws, and the Mac's service.
 #
 # shellcheck source-path=SCRIPTDIR
 
@@ -34,6 +43,14 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-gh.sh"
 # shellcheck source=wizard-host.sh
 . "$dir/wizard-host.sh"
+# shellcheck source=wizard-ws.sh
+. "$dir/wizard-ws.sh"
+# shellcheck source=wizard-tunnel.sh
+. "$dir/wizard-tunnel.sh"
+# shellcheck source=wizard-hook.sh
+. "$dir/wizard-hook.sh"
+# shellcheck source=wizard-cable.sh
+. "$dir/wizard-cable.sh"
 
 # acted becomes 1 once a stage acts in a run, and hand holds what stays by hand, a line each.
 acted=0
@@ -41,7 +58,6 @@ hand=
 
 # args takes the wizard's arguments: --check sets WS_CHECK, as setup-lib.sh's ws_args does, and
 # --update sets update.
-# shellcheck disable=SC2034 # a stage that skips work by what it kept reads update
 args() {
     update=0
     for arg; do
@@ -121,7 +137,7 @@ setup_after() {
 # lines. setup.sh changes only what differs, and is silent then, so the stage has no setup_done: a
 # run acted where setup.sh printed more than warnings. Until mac.conf has WS_PUBLIC_KEY, setup.sh
 # prints the Mac's key and the commands that make it ws's peer at every run, on stdout. So a run
-# drops that, and leaves the step by hand.
+# drops that, as the Tunnel stage takes that step, and runs setup_do again.
 setup_do() {
     sudo -v || ws_die "setup.sh: sudo -v failed; setup.sh needs sudo, as an admin of the Mac"
     if ws_checking; then
@@ -144,11 +160,6 @@ setup_do() {
         acted=1
     fi
     ws_conf "$WS_CONF"
-    if [ -z "$WS_PUBLIC_KEY" ]; then
-        by_hand "The Mac's tunnel: run mac/setup.sh, which prints the Mac's WireGuard key and the" \
-            "two commands that make it ws's peer. Run those, set WS_PUBLIC_KEY in mac.conf to the" \
-            "key the second prints, then run the wizard again (docs/mac.md, The Mac's tunnel)."
-    fi
 }
 
 # setup_fail says what to do where setup.sh stops.
@@ -175,6 +186,17 @@ main() {
     stage "gh on the Mac" gh
     stage setup.sh setup
     stage "Host key" host
+    stage "Root's key" root
+    stage "ws's run" run
+    stage "gh on ws" wsgh
+    stage "claude on ws" wsclaude
+    stage Tunnel tunnel
+    stage "Hook on ws" wshook
+    stage "Hook on the Mac" hook
+    stage Cable cable
+    run_hand
+    hook_hand
+    cable_hand
     closing
 }
 

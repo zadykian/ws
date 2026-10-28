@@ -124,8 +124,8 @@ ws_dir() {
     fi
 }
 
-# ws_put FILE MODE writes stdin to the user's FILE with MODE where its text or mode differs,
-# through a new file renamed over it.
+# ws_put FILE MODE [NAME] writes stdin to the user's FILE with MODE where its text or mode differs,
+# through a new file renamed over it. NAME, FILE by default, labels WS_CHECK's diff.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 ws_put() {
     ws_tmp
@@ -146,9 +146,9 @@ ws_put() {
     ws_changed=1
     if ws_checking; then
         if [ -f "$1" ]; then
-            ws_diff "$1" "$ws_new" "$1"
+            ws_diff "$1" "$ws_new" "${3:-$1}"
         else
-            ws_diff /dev/null "$ws_new" "$1"
+            ws_diff /dev/null "$ws_new" "${3:-$1}"
         fi
         rm -f "$ws_new"
         return 0

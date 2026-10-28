@@ -20,7 +20,7 @@ error() {
 }
 
 printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= \
-    WS_RESOLVERS= >"$conf"
+    WS_RESOLVERS= WS_HOOK= >"$conf"
 cp "$conf" "$RUNNER_TEMP/key.conf.before"
 out=$(WS_CONF=$conf sh "$wizard" </dev/null 2>&1)
 status=$?

@@ -7,14 +7,14 @@
 # The environment's answers, kept before ws_conf sets each key's variable: ask_set_KEY is 1 where
 # the environment sets KEY, even to nothing, and ask_env_KEY holds its value.
 for ask_key in WS_LAN WS_LAN_ADDRESS WS_REMOTE WS_REMOTE_PORT WS_GIT_NAME WS_GIT_EMAIL \
-    WS_TUNNEL_NETWORKS WS_RESOLVERS; do
+    WS_TUNNEL_NETWORKS WS_RESOLVERS WS_HOOK WS_HOOK_SECRET WS_CABLE_SERVICE WS_CABLE_PORT; do
     eval "ask_set_$ask_key=\${$ask_key+1} ask_env_$ask_key=\${$ask_key-}"
 done
 
 # ask_keys asks the stage's keys in order, each with its question and default. ws's address and
 # git's email are asked only with a LAN and a name, and need a value then; the router's port only
-# with its name. The address defaults to the router's lease where the LAN holds it
-# (docs/router.md), and git's identity to ws's own.
+# with its name, and the Keychain item only with another repository. The address defaults to the
+# router's lease where the LAN holds it (docs/router.md), and git's identity to ws's own.
 ask_keys() {
     ask WS_LAN "ws's home LAN" 10.88.0.0/24
     if [ -n "$WS_LAN" ]; then
@@ -32,6 +32,8 @@ ask_keys() {
     fi
     ask WS_TUNNEL_NETWORKS "More networks through the tunnel, split by blanks" ''
     ask WS_RESOLVERS "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks" ''
+    ask WS_HOOK "Another repository whose apply.sh runs on ws, as OWNER/REPO" ''
+    [ -z "$WS_HOOK" ] || ask WS_HOOK_SECRET "The Keychain item of its apply.sh's secret" ''
 }
 
 # ask_role NAME prints the shell role's default NAME, which ws's git takes.
@@ -117,23 +119,35 @@ ask_line() {
     esac
 }
 
-# ask_write LINES [STAGE] writes mac.conf with LINES at its end, through ws_put, where the whole
-# passes ws_conf: mode 644 for a new file, in a directory it makes. ws_conf's messages name
-# mac.conf, and its own name STAGE, Answers by default. Where mac.conf is a link, as a dotfiles
-# manager makes it, it prints LINES and stops. Under --check, it prints the diff, and points WS_CONF
-# at the file it would write, in the lock, for setup.sh --check.
+# ask_write LINES [STAGE] writes mac.conf with LINES, through ws_put, where the whole passes
+# ws_conf: a line takes the place of mac.conf's lines for its key, else goes at the end. A new file
+# gets mode 644, in a directory it makes. ws_conf's messages name mac.conf, and its own name STAGE,
+# Answers by default. Where mac.conf is a link, as a dotfiles manager makes it, it prints LINES and
+# stops. Under --check, it prints the diff, under mac.conf's own path, and points WS_CONF at the
+# file it would write, in the lock, for setup.sh --check and the stages after.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 ask_write() {
-    ask_file=$lock/mac.conf
+    ask_file=$lock/mac.conf.new
     ask_stage=${2:-Answers}
+    ask_conf=${ask_conf:-$WS_CONF}
     {
         if [ -s "$WS_CONF" ]; then
-            cat "$WS_CONF" || ws_die "$ask_stage: cannot read $WS_CONF"
-            [ -z "$(tail -c 1 "$WS_CONF")" ] || echo
+            ask_lines=$1 awk '
+                function key(l) { sub(/^[ \t]+/, "", l); sub(/=.*/, "", l); return l }
+                BEGIN {
+                    n = split(ENVIRON["ask_lines"], line, "\n")
+                    for (i = 1; i <= n; i++) if ((k[i] = key(line[i])) != "") at[k[i]] = i
+                }
+                { this = key($0) }
+                this in at { if (!(this in done)) print line[at[this]]; done[this] = 1; next }
+                { print }
+                END { for (i = 1; i <= n; i++) if (k[i] != "" && !(k[i] in done)) print line[i] }
+            ' "$WS_CONF" || ws_die "$ask_stage: cannot read $WS_CONF"
+        else
+            printf '%s' "$1"
         fi
-        printf '%s' "$1"
     } >"$ask_file" || ws_die "$ask_stage: cannot write $ask_file"
-    (ws_conf_lines "$ask_file" && ws_conf_pairs "$WS_CONF") || return 1
+    (ws_conf_lines "$ask_file" && ws_conf_pairs "$ask_conf") || return 1
     if [ -L "$WS_CONF" ]; then
         ws_say "$ask_stage: $WS_CONF is a link to $(readlink "$WS_CONF"), which the wizard" \
             "leaves: add these lines to its file, then run the wizard again"
@@ -150,9 +164,9 @@ ask_write() {
     else
         mkdir -p "$ask_dir" || ws_die "$ask_stage: cannot make $ask_dir"
     fi
-    ws_put "$WS_CONF" "$ask_mode" <"$ask_file"
+    ws_put "$WS_CONF" "$ask_mode" "$ask_conf" <"$ask_file"
     if ws_checking; then
-        WS_CONF=$ask_file
+        mv -f "$ask_file" "$lock/mac.conf" && WS_CONF=$lock/mac.conf
     fi
 }
 

@@ -2,7 +2,10 @@
 
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
-then runs `setup.sh` and takes ws's host key. On a new Mac with Apple silicon, one line installs
+then runs `setup.sh`. It takes ws's host key, checks that root on ws takes the Mac's key, runs ws's
+playbook there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, runs another
+repository's `apply.sh` on ws, and clones that repository on the Mac, with ws's word list. Last, it
+sets up the cable from the Mac's display to ws. On a new Mac with Apple silicon, one line installs
 what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
@@ -30,9 +33,17 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 3. Answers: the values `mac.conf` lacks, below.
 4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
-6. setup.sh: `mac/setup.sh`, after sudo's password. Until `mac.conf` has `WS_PUBLIC_KEY`, the
-   wizard drops the Mac's key, which `setup.sh` prints at each run, and leaves the tunnel by hand.
+6. setup.sh: `mac/setup.sh`, after sudo's password. The wizard drops the Mac's key that it prints.
 7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
+8. Root's key: root's login to ws by the Mac's key, checked and never added, below.
+9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
+10. gh on ws: root's gh there, logged in to GitHub, and ws's signing key on the account, below.
+11. claude on ws: root's claude there, logged in, below.
+12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
+13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
+14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`,
+    and ws's word list, below.
+15. Cable: ws's port of the cable in its `host_vars`, and the Mac's service of the cable, below.
 
 ## The answers
 
@@ -46,10 +57,13 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 | git's email on the Mac | `WS_GIT_EMAIL` | the `shell` role's, `me@zadykian.dev` | with a name |
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
+| Another repository whose `apply.sh` runs on ws | `WS_HOOK` | none | always |
+| The Keychain item of its `apply.sh`'s secret | `WS_HOOK_SECRET` | none | with a repository |
 
-Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains. The
-defaults are [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's
-answer comes from the first of these that has one:
+Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
+last two, which [Another repository](#another-repository) does. The defaults are
+[The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
+from the first of these that has one:
 
 - `mac.conf`'s line for the key, even an empty one, so the wizard never asks it again;
 - the environment, under the key's name, as `WS_LAN=10.88.0.0/24`, or `WS_LAN=` for no value;
@@ -62,7 +76,8 @@ stops the run. ws's address and git's email take a value where asked. The wizard
 at the end of `mac.conf`, and keeps its comments and order. It writes the file once `setup.sh` would
 take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that `setup.sh`
 would refuse. Where `mac.conf` is a link, it prints the lines to add to the link's file, and stops.
-The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
+The Cable stage asks `WS_CABLE_SERVICE` ([The cable](#the-cable)). The other keys, such as
+`WS_USER` and `WS_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `setup.sh --check`
 then reads the file it would write, in the lock, which `WS_CONF` names. `WS_CONF` names another
@@ -99,9 +114,10 @@ Mac's key for ws to the account's ssh keys, titled with the Mac's name. `setup.s
 signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the command to run.
 
 Ubuntu's installer imports the account's keys for ws's user. So run the line before Ubuntu's
-install, or at any time. A run before the install stops at the Host key stage, as ws doesn't answer
-yet. Leave ws's address empty there, and run the wizard again once Ubuntu is installed. In the
-installer, turn OpenSSH on, import the keys from GitHub, and leave password login off.
+install, as the wizard adds no key to ws afterwards. A run before the install stops at the Host key
+stage, as ws doesn't answer yet. Leave ws's address empty there, and run the wizard again once
+Ubuntu is installed. In the installer, turn OpenSSH on, import the keys from GitHub, and leave
+password login off.
 
 ## ws's host key
 
@@ -120,9 +136,138 @@ forward, the stage warns that a new ws faces the internet until its run sets up 
 ([security](security.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
 answers.
 
+## Root's key
+
+The stage is done where `ssh ws-ssh` logs in as root by the Mac's key. The wizard adds no key to
+ws: GitHub's account is the only way to give ws its keys. Where root doesn't take the key, the
+stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's installer imports the
+account's keys for its user, and root takes them as the [README](../README.md#a-new-machine) says:
+copy that user's `authorized_keys` to root. That replaces root's file, so cloud-init's forced
+command goes too. A cloud VM gives its default user the provider's keys instead, which must be the
+account's. Then run the wizard again. `--check` says that a run would stop.
+
+The stage stops too where `WS_USER` isn't root: the README's steps are then by hand. Where ws offers
+another host key than `known_hosts` holds, as once ws is installed again, it stops, naming
+`ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and
+its logins add nothing to `known_hosts`.
+
+## ws's run
+
+The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
+So the script is the Mac's clone's, whatever ws's clone holds. It runs `bootstrap.sh` from ws's
+clone in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8
+locale. Where ws has no clone, the unit runs the README's download of `bootstrap.sh` instead. The
+wizard prints the unit's log until it ends, and stops where the run fails. A first run takes 20 to
+40 minutes. The unit goes on where ssh drops, as when the Mac sleeps, and the next run of the wizard
+follows it to its end.
+
+Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A run without arguments, as
+the stage's, removes `/var/lib/ws-wizard/run` as it starts, and writes the clone's commit and the
+status there as it ends. The stage is done where that status is 0 and no unit runs. So a second run
+of the wizard runs no playbook, and one after a run cut short starts again. With `--update`, the
+stage runs the playbook again, and the remote script first pulls ws's clone, by fast-forward, where
+the clone is on `main` with nothing uncommitted. The run passes no `-e`, so the `ikeward` role
+leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)).
+
+## gh on ws
+
+The stage is done where root's gh on ws has a login to github.com, and the account's signing keys
+hold ws's ([The signing key](devtools.md#the-signing-key)). Where root's `~/.gitconfig` names no
+signing key file, as `shell_git_signing: false` leaves it, the login alone does
+([Signing](shell.md#signing)). Where gh lacks its login, or the login the `write:ssh_signing_key`
+scope, the wizard opens `github.com/login/device` in the Mac's browser. Then it runs gh's device
+flow as root on ws, in an `ssh -t` session. That is `gh auth refresh` for the scope alone, else
+`gh auth login -h github.com -p https -w -s write:ssh_signing_key`. Enter the code that gh shows
+there at that page. So the login is ws's own, never a copy of the Mac's. With no terminal, the stage
+stops, naming the command. Then, or at once where the account lacks the key alone,
+`bootstrap.sh --tags devtools` runs in a unit of its own, as ws's run does, and adds the key. That
+run needs no terminal, page or session. Where ws lacks gh, which its run installs, the stage stops:
+`--update` runs the playbook again.
+
+## claude on ws
+
+The stage is done where root's claude on ws has a login, as `claude auth status` says. Else the
+wizard runs `claude auth login` as root on ws, in an `ssh -t` session, through a login shell, whose
+`PATH` has `~/.local/bin`, where claude is ([claude](claude.md)). Take its steps at the terminal,
+with the address it shows opened in the Mac's browser. With no terminal, the stage stops, naming
+`claude auth login`. Where ws lacks claude, it stops, as gh's stage does.
+
+## The tunnel
+
+The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds
+another, and `bootstrap.sh --tags wireguard` gives `wg0` that peer. That run goes again where `wg0`
+lacks the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
+the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
+`wg0`'s key, in place of its line, and `setup.sh` runs again, which loads ws-tunnel
+([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. It then waits up to 30 s
+for ws-tunnel's handshake, and logs in once by `ssh ws`. Else it stops, naming the UDP port, the
+router's forward and the Background. Where the run asked ws's address, a later run checks it.
+
+## Another repository
+
+`WS_HOOK` names another repository on GitHub, as `OWNER/REPO`, whose `apply.sh` sets up more of ws,
+such as values that this public repository leaves out. `WS_HOOK_SECRET` names the Keychain item of a
+secret that the script reads. `setup.sh` takes both keys, and reads neither. The stage clones the
+repository in `/root/repository/REPO` on ws by root's gh login, where missing, and never pulls it,
+as the script updates its own clone. A `REPO` of `ws`, ws's own clone, or another repository's clone
+there stops the stage. Where the Keychain lacks the item, it runs `security add-generic-password`,
+which asks for its secret twice at the terminal. Then `apply.sh` runs as root over plain
+`ssh ws-ssh`, never `ssh -t`, so it neither prompts nor echoes its stdin. That stdin is the item's
+secret, as `security find-generic-password -w` prints it, then the end of input, or empty without an
+item. The wizard never reads the secret, and passes the script no arguments.
+
+That run leaves a stamp, `/var/lib/ws-wizard/hook-REPO` on ws, and the stage is done. So a second
+run of the wizard leaves `apply.sh` alone, and `--update` runs it again. A run that fails stops the
+wizard, and the next runs it again. `--check` says what the stage would do, and runs nothing.
+
+The stage Hook on the Mac then clones the repository in `~/repository/REPO` by gh's login on the
+Mac, where missing, and never pulls it. Another repository's clone there stops the stage, as on ws.
+Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute path, as in ws's
+clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose formulae Homebrew lacks,
+as `brew bundle check` finds, with Homebrew's auto-update off, `brew bundle` installs them, and
+upgrades nothing. `--check` names each command that the stage would run.
+
+The stage copies ws's word list too, root's `~/.config/ws/forbidden-words`, which the hooks read
+([The hooks](checks.md#the-hooks)), with `WS_HOOK` or without. Where ws has one, and the Mac's
+differs by git's hash or can't be read, the files script, `mac/wizard-remote-files.sh`, sends it
+from ws. It replaces the Mac's, mode 600. The wizard never prints the list: `--check` says it would
+copy it, with no diff.
+
+## The cable
+
+The stage sets up the cable from the Mac's display to a port of ws's, outside the router
+([The direct link](network.md#the-direct-link)). The wizard's files script lists ws's wired ports
+but the uplink, each with its carrier and IPv4 addresses. Where none has carrier, as the Mac isn't
+docked, the stage waits, and the closing list says to dock the Mac and run the line again. Docked,
+the stage asks ws's port of the cable, the one with carrier by default. It names the port in
+`host_vars/localhost.yml` on ws, then runs `bootstrap.sh --tags network,wireguard` there, as both
+roles read it. Once the port holds `10.77.0.1`, the stage asks the Mac's service of the cable. The
+default is the one service with a `169.254` address, which an adapter gives itself where no DHCP
+server answers. The answer goes in `mac.conf` as `WS_CABLE_SERVICE`, then `setup.sh` gives the
+service `10.77.0.2` ([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must get an answer.
+
+`none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
+where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
+`WS_CABLE_SERVICE` give the answers. `--check` asks nothing, and says what the stage would do.
+
+Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
+So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files
+script can't read its carrier. The roles' run brings it up. The closing list names such ports.
+
 ## What stays by hand
 
-- The Mac's tunnel: the keys' exchange of [The Mac's tunnel](mac.md#the-macs-tunnel), then
-  `WS_PUBLIC_KEY` in `mac.conf`, then the wizard again.
+After a run in which a stage acted, the wizard lists each of these that applies:
+
+- With Secure Boot on, where the kernel refuses the fans' driver, DKMS's key, enrolled at ws's
+  console ([Secure Boot](fans.md#secure-boot)).
 - What [The Mac](mac.md) leaves by hand: macOS's grant of the local network to an app, and
   Gateway's connection to ws.
+- ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
+  where `mac.conf` has `WS_REMOTE` ([The router](router.md)).
+- The tunnel's handshake, where the Host key stage asked ws's address: once ws's lease is static,
+  the wizard again, which checks it.
+- `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as
+  `setup.sh`'s does with git's name ([git](mac-git.md)). Through it, pushes from the Mac's clones
+  take gh's login.
+- The cable, where no port of ws's had carrier: the line again, docked, or with `WS_CABLE_PORT` for
+  a port that ws keeps down. Without the cable, the line once with an empty `WS_CABLE_SERVICE`.

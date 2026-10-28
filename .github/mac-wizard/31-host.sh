@@ -1,10 +1,11 @@
 #!/bin/sh
 # The Host key stage on the Mac that 30-run.sh leaves, whose known_hosts holds ws's key under ws.
 # Without that line, a run with no terminal must stop where WS_HOST_KEY is missing or names another
-# key, and --check must show the line it would add. With a mac.conf of no way to ws, a run must
-# stop, naming docs/router.md. None may change known_hosts. WS_HOST_KEY=yes, with the Mac's own
-# mac.conf, must then add the line back as it was. With a mac.conf whose way to ws doesn't answer,
-# ws's address now must come from WS_FIRST_ADDRESS. The Mac's own mac.conf then puts the way back.
+# key. --check, under StrictHostKeyChecking accept-new in ~/.ssh/config, must show the line it would
+# add. With a mac.conf of no way to ws, a run must stop, naming docs/router.md. None may change
+# known_hosts. WS_HOST_KEY=yes, with the Mac's own mac.conf, must then add the line back as it was.
+# With a mac.conf whose way to ws doesn't answer, ws's address now must come from WS_FIRST_ADDRESS.
+# The Mac's own mac.conf then puts the way back.
 
 set -u
 
@@ -38,8 +39,11 @@ expect 1 'wizard.sh: Host key: ws at localhost:22022 offers the ed25519 key '
 out=$(WS_HOST_KEY=SHA256:x sh "$wizard" </dev/null 2>&1)
 status=$?
 expect 1 "wizard.sh: Host key: 'SHA256:x' is neither yes nor $fp"
+cp ~/.ssh/config "$RUNNER_TEMP/ssh.config"
+printf '%s\n' 'Host *' '    StrictHostKeyChecking accept-new' >>~/.ssh/config
 out=$(sh "$wizard" --check </dev/null 2>&1)
 status=$?
+cp "$RUNNER_TEMP/ssh.config" ~/.ssh/config
 expect 0 "+$line"
 none=$RUNNER_TEMP/none.conf
 sed -e 's/^WS_REMOTE=.*/WS_REMOTE=/' -e 's/^WS_REMOTE_PORT=.*/WS_REMOTE_PORT=/' \
@@ -69,5 +73,5 @@ printf '%s\n' "$out"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "wizard.sh with WS_FIRST_ADDRESS wrote another $hosts"
 sh "$wizard" </dev/null || error "wizard.sh with the Mac's own mac.conf exited $?"
 grep -qx '    HostName localhost' ~/.ssh/config.d/ws || error 'wizard.sh put no way to ws back'
-rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "$none" "$conf"
+rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "$none" "$conf" "$RUNNER_TEMP/ssh.config"
 exit "$fail"

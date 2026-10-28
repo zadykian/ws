@@ -7,7 +7,7 @@ The `network` role sets up the server's end of a cable to the Mac, `10.77.0.1/30
 
 The Mac can plug into the server with a cable of its own, from its dock's 2.5GbE port to a port of
 the server's, outside the router. Name the server's port in `host_vars/localhost.yml`, in the
-clone, as `ip link` names it:
+clone, as `ip link` names it, or let the Mac's wizard do it ([The cable](mac-wizard.md#the-cable)):
 
 ```yaml
 ---

@@ -1,13 +1,17 @@
 # shellcheck shell=sh
-# The wizard's Host key stage: ws's host key, matched against ws's console, in known_hosts under
-# ws, the name that config.d/ws's HostKeyAlias gives each way to ws. wizard.sh sources it, and runs
-# the stage after setup.sh, which writes config.d/ws. It calls the functions of lib.sh,
-# setup-lib.sh and wizard-keys.sh, and reads wizard.sh's lock and WS_CONF, mac.conf's path.
+# The wizard's Host key and Root's key stages: ws's host key, matched against ws's console, in
+# known_hosts under ws, the name that config.d/ws's HostKeyAlias gives each way to ws. Then a check
+# that root on ws takes the Mac's key, so that ssh ws-ssh logs in as root. wizard.sh sources it, and
+# runs both after setup.sh, which writes config.d/ws. They call the functions of lib.sh,
+# setup-lib.sh, wizard-keys.sh and wizard-gh.sh, and read wizard.sh's lock and WS_CONF, mac.conf's
+# path.
 
 # The host and port of the last scan of ws's key, which host_scan keeps in host_line, and ws's
 # address that the run asked, where ws didn't answer at its way.
 host_scanned=
 host_first=
+# root_in becomes 1 once ssh logs in to ws as root by the Mac's key, in this run.
+root_in=0
 # The command at ws's console that prints the fingerprint of its ed25519 key.
 host_print='ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub'
 
@@ -132,7 +136,67 @@ host_trust() {
     esac
 }
 
+# host_ssh ARG... runs ssh with ARGs, and HostName the address that the Host key stage asked, where
+# it asked one, with 10 s to connect. Whatever the user's ssh_config says, ssh stops where
+# known_hosts lacks ws's key, or holds another, and adds nothing there: no other key, no address.
+host_ssh() {
+    ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o CheckHostIP=no \
+        ${host_first:+-o "HostName=$host_first"} "$@"
+}
+
 # host_fail says what to do where known_hosts still lacks ws's key.
 host_fail() {
     echo "$host_file still holds no key under ws, as above; run the wizard again"
+}
+
+# root_after prints Host key where known_hosts lacks ws's key, without which ssh logs in nowhere.
+root_after() {
+    host_done || echo "Host key"
+}
+
+# root_done succeeds where ssh logs in to ws-ssh as root by the Mac's key, and runs a command, and
+# sets root_in then. It connects only where known_hosts holds a key under ws, so --check meets ws
+# only once the Host key stage is done. ssh's messages go in root.err in the lock.
+# shellcheck disable=SC2034 # wizard-ws.sh reads root_in
+root_done() {
+    [ "$(host_get user)" = root ] && ssh-keygen -F ws -f "$host_file" >/dev/null 2>&1 &&
+        [ "$(host_ssh -o BatchMode=yes ws-ssh echo ok 2>"$lock/root.err" </dev/null)" = ok ] &&
+        root_in=1
+}
+
+# root_do stops, as the wizard adds no key to ws: ws's keys come from the GitHub account at its
+# install, and the stage gh on the Mac has put the Mac's there. It names the Mac's key, and what
+# gives root that key without the wizard, at a terminal or not. Where ws doesn't answer, the Host
+# key stage's question gives its address now, and root may take the key there. It stops where ssh
+# logs in as another user than root, and where ws offers another host key than known_hosts holds,
+# which it never removes. --check asks nothing, and says that a run would stop.
+# shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub
+root_do() {
+    root_as=$(host_get user)
+    [ "$root_as" = root ] || ws_die "Root's key: ssh logs in to ws as $root_as, mac.conf's" \
+        "WS_USER, and the wizard sets ws up as root alone: take the README's steps by hand"
+    if ! host_scan; then
+        host_ask || return 0
+        ! root_done || return 0
+    fi
+    ! grep -q 'Host key verification failed' "$lock/root.err" || ws_die "Root's key: ws at" \
+        "$host_name:$host_port offers another host key than known_hosts holds under ws: where" \
+        "ws was installed again, run ssh-keygen -R ws, then the wizard again"
+    if ws_checking; then
+        ws_say "Root's key: root on ws doesn't log in by the Mac's key; a run would stop, as the" \
+            "wizard adds no key to ws"
+        return 0
+    fi
+    gh_key || ws_die "Root's key: the Mac's key for ws has no .pub"
+    ws_die "Root's key: root on ws doesn't log in by the Mac's key, $gh_pub, and the wizard adds" \
+        "no key to ws. ws takes its keys from the GitHub account at its install: Ubuntu's" \
+        "installer imports them for its user, and on a cloud VM, cloud-init gives its default" \
+        "user the provider's keys, which must be the account's. Copy that user's" \
+        "authorized_keys to root, as the README's \"A new machine\" does: root's file is" \
+        "replaced, so cloud-init's forced command goes. Then run the wizard again"
+}
+
+# root_fail says what to do where root still refuses the Mac's key.
+root_fail() {
+    echo "root on ws still refuses the Mac's key: ws's sshd must let root log in by key"
 }

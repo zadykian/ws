@@ -51,7 +51,7 @@ boot '' --check
 # The wizard, given bootstrap.sh's arguments, shows what it would write to a mac.conf not there.
 conf=$RUNNER_TEMP/boot.conf
 out=$(WS_CONF=$conf WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_GIT_NAME='' \
-    WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path sh -s -- --check <"$bootstrap" 2>&1)
+    WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK='' PATH=$path sh -s -- --check <"$bootstrap" 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||

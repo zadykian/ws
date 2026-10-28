@@ -20,7 +20,8 @@ brew_url=https://github.com/Homebrew/brew/releases/download/$brew_version/Homebr
 brew_sha256=ae13b8b0ac910730d3e982a9e7518288d17fd0ad272e42f412027e8ab4555575
 brew_signer='Developer ID Installer: Patrick Linnane (927JGANW46)'
 # The wizard's stages, split by |, as mac/wizard.sh's main runs them, for --check without a clone.
-stages='Answers|Mac key|gh on the Mac|setup.sh|Host key'
+stages="Answers|Mac key|gh on the Mac|setup.sh|Host key|Root's key|ws's run|\
+gh on ws|claude on ws|Tunnel|Hook on ws|Hook on the Mac|Cable"
 
 # say prints a message of bootstrap.sh's.
 say() {
@@ -134,8 +135,7 @@ update() {
 
 main() {
     # A shell started before Homebrew's install lacks /opt/homebrew/bin, so it goes first here.
-    PATH=/opt/homebrew/bin:$PATH
-    export PATH
+    export PATH="/opt/homebrew/bin:$PATH"
     args "$@"
     [ "$(uname -s)" = Darwin ] || die "it sets up a Mac, not $(uname -s)"
     [ "$(uname -m)" = arm64 ] || die "it sets up a Mac with Apple silicon, not $(uname -m)"
