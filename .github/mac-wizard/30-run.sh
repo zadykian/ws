@@ -6,13 +6,15 @@
 # terminal asked one. It must add the .pub to the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
 # own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
-# host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. As the runner's user, the
-# installer's for WS_INSTALLER_USER, it must add the Mac's key to root's authorized_keys with sudo.
-# It must run ws's playbook once, bootstrap.sh without arguments in a unit with root's HOME, and
-# stamp its status 0. Then the Mac's key must go to the stand-in ws's mac.pub, and bootstrap.sh
-# --tags wireguard run there. wg0's key must end mac.conf as WS_PUBLIC_KEY, and setup.sh, run
-# again, load the daemon, which must have a handshake with the stand-in ws. The wizard must log in
-# to ws through the tunnel once. The closing list must name no step of the tunnel.
+# host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. Root on the stand-in ws
+# takes no key yet, so that run must stop at Root's key, and add none to root's authorized_keys. The
+# case then puts the account's keys there, as Ubuntu's installer imports them for its user and the
+# README's step copies them to root, and the wizard runs again. It must run ws's playbook once,
+# bootstrap.sh without arguments in a unit with root's HOME, and stamp its status 0. Then the Mac's
+# key must go to the stand-in ws's mac.pub, and bootstrap.sh --tags wireguard run there. wg0's key
+# must end mac.conf as WS_PUBLIC_KEY, and setup.sh, run again, load the daemon, which must have a
+# handshake with the stand-in ws. The wizard must log in to ws through the tunnel once. The closing
+# list must name no step of the tunnel.
 
 set -u
 
@@ -30,11 +32,14 @@ error() {
 }
 
 host=$(cat "$RUNNER_TEMP/ws/fingerprint")
-WS_HOST_KEY=$host WS_INSTALLER_USER=$USER PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" \
-    >"$RUNNER_TEMP/run.out" 2>"$RUNNER_TEMP/run.err"
+WS_HOST_KEY=$host PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" </dev/null \
+    >"$RUNNER_TEMP/stop.out" 2>"$RUNNER_TEMP/stop.err"
 status=$?
-cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
-[ "$status" = 0 ] || error "wizard.sh exited $status"
+cat "$RUNNER_TEMP/stop.err" "$RUNNER_TEMP/stop.out"
+stop="wizard.sh: Root's key: root on ws "
+if [ "$status" != 1 ] || ! grep -qF "$stop" "$RUNNER_TEMP/stop.err"; then
+    error "wizard.sh exited $status, or did not stop at Root's key, where root takes no key"
+fi
 brew list --formula wireguard-tools >/dev/null 2>&1 ||
     error 'wizard.sh installed no wireguard-tools'
 for each in /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key ~/.ssh/config.d/ws; do
@@ -48,14 +53,20 @@ if ! grep -qxF "$added" "$RUNNER_TEMP/gh/log" ||
     ! grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" "$RUNNER_TEMP/gh/keys"; then
     error "wizard.sh added no ~/.ssh/id_ed25519.pub to gh's login, titled with the Mac's name"
 fi
-grep -q "^wizard\.sh: Host key: warning: through the router's forward, " "$RUNNER_TEMP/run.err" ||
+grep -q "^wizard\.sh: Host key: warning: through the router's forward, " "$RUNNER_TEMP/stop.err" ||
     error "wizard.sh gave no warning that ws faces the internet through WS_REMOTE"
 grep -qxF "ws $(cut -d ' ' -f 1-2 "$RUNNER_TEMP/ws/host_key.pub")" ~/.ssh/known_hosts ||
     error "wizard.sh added no line for ws's host key to ~/.ssh/known_hosts"
-if ! sudo grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ~root/.ssh/authorized_keys ||
-    ! grep -q "^$USER: sudo sh -c " "$RUNNER_TEMP/ws/log"; then
-    error "wizard.sh added no ~/.ssh/id_ed25519.pub to root's authorized_keys, as $USER with sudo"
+if sudo grep -qF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ~root/.ssh/authorized_keys \
+    2>/dev/null; then
+    error "wizard.sh added ~/.ssh/id_ed25519.pub to root's authorized_keys"
 fi
+sudo install -d -m 700 ~root/.ssh
+sudo install -m 600 "$RUNNER_TEMP/gh/keys" ~root/.ssh/authorized_keys
+PATH=$(cat "$RUNNER_TEMP/path") sh "$wizard" >"$RUNNER_TEMP/run.out" 2>"$RUNNER_TEMP/run.err"
+status=$?
+cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
+[ "$status" = 0 ] || error "wizard.sh exited $status, with the account's keys in root's file"
 if ! printf '\n%s\n' '--tags wireguard' | cmp -s - "$RUNNER_TEMP/ws/bootstrap.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
     ! grep -q ' 0$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
