@@ -1,6 +1,8 @@
 #!/bin/sh
 # The wizard's refusals, which leave the runner as they found it: an unknown argument, root, and a
-# run while another holds the lock, which it must leave. -h prints the usage.
+# run while another holds the lock, which it must leave. So must a WS_HOOK of ws in another letter
+# case, which GitHub ignores, and the files script its clone, run as root as on ws. -h prints the
+# usage.
 
 set -u
 
@@ -33,4 +35,10 @@ mkdir "$lock"
 refused "another run holds $lock" sh "$wizard" --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
+echo WS_HOOK=example/Ws >"$RUNNER_TEMP/refuse.conf"
+refused 'line 1: WS_HOOK=example/Ws is not a repository on GitHub' \
+    env WS_CONF="$RUNNER_TEMP/refuse.conf" sh "$wizard" --check
+rm "$RUNNER_TEMP/refuse.conf"
+refused "'example/WS' is not a repository on GitHub" \
+    sudo sh "${wizard%/*}/wizard-remote-files.sh" clone example/WS
 exit "$fail"

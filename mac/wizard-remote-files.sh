@@ -46,10 +46,10 @@ die() {
 
 # repo OWNER/REPO sets repo to REPO, where OWNER/REPO names a repository on GitHub, as mac.conf's
 # WS_HOOK does. Each side of the / is letters, digits and ._-, and neither . or .. alone, and REPO
-# isn't ws, whose clone is ws's own. It stops otherwise.
+# isn't ws, ws's own clone, in any letter case, which APFS and GitHub ignore. It stops otherwise.
 repo() {
     case $1 in
-    *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */ws) ;;
+    *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */[Ww][Ss]) ;;
     */*)
         repo=${1#*/}
         return 0

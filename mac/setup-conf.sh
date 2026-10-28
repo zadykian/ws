@@ -166,9 +166,10 @@ ws_conf_lines() {
         WS_HOOK)
             WS_HOOK=$ws_value
             # OWNER/REPO on GitHub, as ws's /root/repository/REPO: neither side . or .. alone, and
-            # REPO not ws, whose clone there is ws's own.
+            # REPO not ws, ws's own clone there, in any letter case, which APFS and GitHub ignore.
             case $ws_value in
-            *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */ws) ws_ok=false ;;
+            *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */..) ws_ok=false ;;
+            */[Ww][Ss]) ws_ok=false ;;
             */*) ;;
             *) ws_ok=false ;;
             esac
@@ -254,7 +255,8 @@ ws_conf_form() {
         echo "an agent's socket: a path from / or ~/, of letters, digits, blanks and ._/@+-," \
             "in quotes where it holds a blank"
         ;;
-    WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" ;;
+    WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" \
+        "in any letter case" ;;
     WS_HOOK_SECRET) echo "a Keychain item's name, 1 to 64 letters, digits and ._-" ;;
     *) echo "a port, 1 to 65535" ;;
     esac
