@@ -169,7 +169,8 @@ root_done() {
 # gives root that key without the wizard, at a terminal or not. Where ws doesn't answer, the Host
 # key stage's question gives its address now, and root may take the key there. It stops where ssh
 # logs in as another user than root, and where ws offers another host key than known_hosts holds,
-# which it never removes. --check asks nothing, and says that a run would stop.
+# which it never removes. --check asks nothing, and says that a run would stop. Both show ssh's
+# error, where it printed one.
 # shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub
 root_do() {
     root_as=$(host_get user)
@@ -182,9 +183,13 @@ root_do() {
     ! grep -q 'Host key verification failed' "$lock/root.err" || ws_die "Root's key: ws at" \
         "$host_name:$host_port offers another host key than known_hosts holds under ws: where" \
         "ws was installed again, run ssh-keygen -R ws, then the wizard again"
+    # ssh ends each line with \r\n, and an agent's refusal to sign comes before its last line.
+    root_err=$(awk '{ sub(/\r$/, "") } NF { printf "%s%s", (n++ ? "; " : ""), $0 }' \
+        "$lock/root.err" 2>/dev/null)
+    [ -z "$root_err" ] || root_err=". ssh's error: $root_err"
     if ws_checking; then
         ws_say "Root's key: root on ws doesn't log in by the Mac's key; a run would stop, as the" \
-            "wizard adds no key to ws"
+            "wizard adds no key to ws$root_err"
         return 0
     fi
     gh_key || ws_die "Root's key: the Mac's key for ws has no .pub"
@@ -193,7 +198,7 @@ root_do() {
         "installer imports them for its user, and on a cloud VM, cloud-init gives its default" \
         "user the provider's keys, which must be the account's. Copy that user's" \
         "authorized_keys to root, as the README's \"A new machine\" does: root's file is" \
-        "replaced, so cloud-init's forced command goes. Then run the wizard again"
+        "replaced, so cloud-init's forced command goes. Then run the wizard again$root_err"
 }
 
 # root_fail says what to do where root still refuses the Mac's key.

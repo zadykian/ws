@@ -147,7 +147,7 @@ stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's installe
 account's keys for its user, and root takes them as the [README](../README.md#a-new-machine) says:
 copy that user's `authorized_keys` to root. That replaces root's file, so cloud-init's forced
 command goes too. A cloud VM gives its default user the provider's keys instead, which must be the
-account's. Then run the wizard again. `--check` says that a run would stop.
+account's. Then run the wizard again. `--check` says that a run would stop. Both show any ssh error.
 
 The stage stops too where `WS_USER` isn't root: the README's steps are then by hand. Where ws offers
 another host key than `known_hosts` holds, as once ws is installed again, it stops, naming
