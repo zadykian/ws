@@ -10,6 +10,7 @@ paths:
   - "mac/ws-tunnel"
   - "mac/ws-agent"
   - "mac/ws-agent-pin"
+  - "mac/ws-agent-confirm"
   - "tools/*"
 ---
 
