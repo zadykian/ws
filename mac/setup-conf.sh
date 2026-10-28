@@ -209,6 +209,8 @@ ws_conf_pairs() {
     ws_away=
     [ "$WS_TARGET" != cloud ] || ws_away=${WS_LAN:+ WS_LAN}
     [ "$WS_TARGET" != mac-vm ] || ws_away=${WS_REMOTE:+ WS_REMOTE}
+    [ "$WS_TARGET" = lan ] || ws_away=$ws_away${WS_CABLE_SERVICE:+ WS_CABLE_SERVICE}
+    [ "$WS_TARGET" = lan ] || ws_away=$ws_away${WS_CABLE_PORT:+ WS_CABLE_PORT}
     [ -z "$ws_away" ] || ws_die "$1: WS_TARGET=$WS_TARGET has another target's key:$ws_away" \
         "(docs/mac-targets.md)"
     case ${WS_GIT_NAME:+name}${WS_GIT_EMAIL:+email} in

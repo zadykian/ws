@@ -5,9 +5,11 @@
 # WS_CABLE_PORT. WS_CABLE_PORT must end the wait: enp7s0 must go in host_vars, and lack 10.77.0.1
 # after the roles' run. The uplink there must stop a run, and none write an empty WS_CABLE_SERVICE
 # alone. Once enp5s0 has carrier, a run with no terminal must stop, naming WS_CABLE_PORT, and
-# --check say what it would do, neither writing ws's host_vars. With WS_CABLE_PORT, a run must name
-# enp5s0 there, run bootstrap.sh --tags network,wireguard, read its late 10.77.0.1 in one login of
-# the files script's wait, and stop at the Mac's service.
+# --check say what it would do, neither writing ws's host_vars. With WS_TARGET=cloud, a run must
+# skip the stage, and its closing list name no dock. With WS_TARGET=mac-vm, --check must skip it
+# too. With WS_CABLE_PORT, a run must name enp5s0 there, run bootstrap.sh --tags
+# network,wireguard, read its late 10.77.0.1 in one login of the files script's wait, and stop at
+# the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
 # script's after a bad one, an empty line must take the one service with a 169.254 address. setup.sh
@@ -127,6 +129,23 @@ wizard run
 printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: no terminal to ask WS_CABLE_PORT: set \
 WS_CABLE_PORT, or set it to nothing for none" && [ "$status" = 1 ] && [ ! -e "$vars" ] ||
     error "wizard.sh docked with no terminal exited $status, or named no WS_CABLE_PORT"
+sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/cloud.conf"
+wizard run WS_CONF="$RUNNER_TEMP/cloud.conf"
+if [ "$status" != 0 ] ||
+    printf '%s\n' "$out" | grep -q -e '^wizard\.sh: Cable: ' -e '^- The cable: ' ||
+    sudo grep -q '^network_direct_link_interface:' "$vars"; then
+    error "wizard.sh with WS_TARGET=cloud exited $status, or took the cable's steps"
+fi
+sudo rm -f "$vars"
+rm "$RUNNER_TEMP/cloud.conf"
+sed -e 's/^WS_TARGET=.*/WS_TARGET=mac-vm/' -e 's|^WS_LAN=.*|WS_LAN=192.0.2.0/24|' \
+    -e '/^WS_REMOTE/d' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/vm.conf"
+echo WS_LAN_ADDRESS=192.0.2.10 >>"$RUNNER_TEMP/vm.conf"
+wizard --check WS_CONF="$RUNNER_TEMP/vm.conf"
+if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q '^wizard\.sh: Cable: '; then
+    error "wizard.sh --check with WS_TARGET=mac-vm exited $status, or took the cable's steps"
+fi
+rm "$RUNNER_TEMP/vm.conf"
 wizard --check
 printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: would ask ws's port of the cable, name it \
 in host_vars/localhost\.yml on ws, and run bootstrap\.sh --tags network,wireguard there" &&

@@ -43,7 +43,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
 14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`,
     and ws's word list, below.
-15. Cable: ws's port of the cable in its `host_vars`, and the Mac's service of the cable, below.
+15. Cable: on the LAN, ws's port of the cable in its `host_vars`, and the Mac's service, below.
 
 ## The answers
 
@@ -248,8 +248,9 @@ its target. The wizard never prints the list: `--check` says it would copy it, w
 ## The cable
 
 The stage sets up the cable from the Mac's display to a port of ws's, outside the router
-([The direct link](network.md#the-direct-link)). The wizard's files script lists ws's wired ports
-but the uplink, each with its carrier and IPv4 addresses. Where none has carrier, as the Mac isn't
+([The direct link](network.md#the-direct-link)). A cloud VM and a VM on the Mac skip it. The
+wizard's files script lists ws's wired ports but the uplink, each with its carrier and IPv4
+addresses. Where none has carrier, as the Mac isn't
 docked, the stage waits, and the closing list says to dock the Mac and run the line again. Docked,
 the stage asks ws's port of the cable, the one with carrier by default. It names the port in
 `host_vars/localhost.yml` on ws, then runs `bootstrap.sh --tags network,wireguard` there, as both

@@ -1,5 +1,6 @@
 # shellcheck shell=sh
-# The wizard's Cable stage: the cable from the Mac's display to a port of ws's, outside the router.
+# The wizard's Cable stage: the cable from the Mac's display to a port of ws's, outside the router,
+# on a machine on the LAN alone.
 # Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
 # wired ports. The stage names the port in host_vars/localhost.yml on ws, whose network role gives
 # it 10.77.0.1. Then it names the Mac's service of the cable in mac.conf's WS_CABLE_SERVICE, and
@@ -8,6 +9,12 @@
 # wizard.sh sources it, and runs the stage last. It calls the functions of lib.sh,
 # setup-lib.sh, wizard-ask.sh, wizard-ws.sh, wizard-hook.sh, and wizard.sh's setup_do and by_hand.
 # It reads wizard.sh's lock and WS_CONF, and wizard-host.sh's root_in.
+
+# cable_away succeeds on a cloud VM or a VM on the Mac, which have no cable, so that the stage is
+# done there, and the closing list names no dock.
+cable_away() {
+    [ "$WS_TARGET" != lan ]
+}
 
 # cable_none succeeds where the environment answers none for the Mac's service of the cable, as an
 # empty WS_CABLE_SERVICE does.
@@ -21,13 +28,15 @@ cable_after() {
     cable_none || run_done || echo "ws's run"
 }
 
-# cable_done succeeds where mac.conf's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT is empty
-# or the cable that ws's status names, read once a run. Without the service, it succeeds
-# too where no port that link lists has carrier, as the Mac isn't docked: the stage waits then, and
-# cable_hand names the dock in the closing list. WS_CABLE_PORT in the environment ends the wait, as
-# for a port that ws keeps down. It reads ws only where root logged in there in this run.
+# cable_done succeeds off the LAN, and where mac.conf's WS_CABLE_SERVICE is empty, or its
+# WS_CABLE_PORT is empty or the cable that ws's status names, read once a run. Without the service,
+# it succeeds too where no port that link lists has carrier, as the Mac isn't docked: the stage
+# waits then, and cable_hand names the dock in the closing list. WS_CABLE_PORT in the environment
+# ends the wait, as for a port that ws keeps down. It reads ws only where root logged in there in
+# this run.
 # shellcheck disable=SC2154 # root_in is wizard-host.sh's
 cable_done() {
+    ! cable_away || return 0
     ws_conf "$WS_CONF"
     if ! ask_lacks WS_CABLE_SERVICE; then
         [ -z "$WS_CABLE_SERVICE" ] || [ -z "$WS_CABLE_PORT" ] || { [ "$root_in" = 1 ] &&
@@ -212,6 +221,7 @@ WS_CABLE_SERVICE=\"$cable_value\""
 # port of ws's had carrier. It names WS_CABLE_PORT for the ports that ws keeps down, whose carrier
 # link can't read, and an empty WS_CABLE_SERVICE for a Mac without the cable.
 cable_hand() {
+    ! cable_away || return 0
     ask_lacks WS_CABLE_SERVICE || return 0
     set -- "The cable: dock the Mac at the display that ws's cable plugs into, then run the line" \
         "again, which takes the cable's steps."

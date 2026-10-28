@@ -167,7 +167,8 @@ link, as a run must. For the Cable stage, ws's ports are a stand-in sysfs. Undoc
 print nothing, one that acts name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no
 terminal must stop, one with `WS_CABLE_PORT` name the port, run the roles, read its late address,
 and stop at the service. Typed, an empty line must take the `169.254` one, and `ping` answer. The
-next must read no `link`, and one after ws's install or a failed roles' run name it again.
+next must read no `link`, and one after ws's install or a failed roles' run name it again. Off the
+LAN, a run and `--check` must skip it.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

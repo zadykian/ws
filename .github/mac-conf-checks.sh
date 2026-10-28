@@ -214,6 +214,8 @@ refused "WS_TARGET=cloud has another target's key: WS_LAN" WS_TARGET=cloud \
     WS_REMOTE=ws.example.com WS_REMOTE_PORT=22 WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=10.88.0.10
 refused "WS_TARGET=mac-vm has another target's key: WS_REMOTE" WS_TARGET=mac-vm \
     WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_REMOTE=ws.example.com
+refused "WS_TARGET=cloud has another target's key: WS_CABLE_SERVICE WS_CABLE_PORT" WS_TARGET=cloud \
+    WS_REMOTE=ws.example.com WS_REMOTE_PORT=22 WS_CABLE_SERVICE=Ethernet WS_CABLE_PORT=enp5s0
 
 # WS_LAN_ADDRESS inside WS_LAN, whichever line comes first. A host's address at either end of a /24
 # must pass, as must a /31's first. Its network and broadcast addresses, a /30's too, must stop
