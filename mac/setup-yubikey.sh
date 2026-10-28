@@ -49,10 +49,10 @@ yubikey_serials() {
     "$yubikey_ykman" list --serials
 }
 
-# yubikey_keys [STAGE] finds the keys of WS_SSH_KEY and WS_GIT_KEY on the one YubiKey in, and
-# writes their .pubs. It stops unless one YubiKey is in. Under --check before yubikey_tools installs
-# ykman, it says what it would do once it has. Its messages start with STAGE, where the wizard's
-# stage gives one.
+# yubikey_keys [STAGE] finds the keys of WS_SSH_KEY and WS_GIT_KEY on the one YubiKey in, checks
+# them, and writes their .pubs. It stops unless one YubiKey is in. Under --check before
+# yubikey_tools installs ykman, it says what it would do once it has. Its messages start with
+# STAGE, where the wizard's stage gives one.
 # shellcheck disable=SC2120 # the wizard's stage passes its name
 yubikey_keys() {
     yubikey_at=${1:+$1: }
@@ -129,7 +129,7 @@ yubikey_slots() {
 
 # yubikey_key NAME sets yubikey_slot to the slot of the key NAME, whose certificate is CN=NAME. It
 # stops where several slots hold that certificate, and where none does, naming the commands that
-# make the key. It writes the key's .pub.
+# make the key. It checks the key, and writes its .pub.
 yubikey_key() {
     yubikey_slot=$(yubikey_slots | awk -v want="CN=$1" '
         { subject = $0; sub(/^[^ ]+ [^ ]+ /, "", subject) }
@@ -144,6 +144,7 @@ yubikey_key() {
         yubikey_free "$1"
         yubikey_make "$1"
     fi
+    yubikey_check "$1"
     yubikey_pub "$1"
 }
 
@@ -169,6 +170,37 @@ yubikey_make() {
     yubikey_run="$yubikey_run CN=$1 -d 3650 $yubikey_slot $1.pem"
     ws_die "${yubikey_at}YubiKey $yubikey_serial holds no key $1: make it at a terminal with" \
         "$yubikey_run, which ask the management key and the PIN"
+}
+
+# yubikey_check NAME stops where NAME's key, in yubikey_slot, is missing beside its certificate, is
+# not Ed25519, or has a PIN or touch policy, as ykman piv keys info shows: ws's agent loads it with
+# no PIN, and Root's login asks nothing (mac/wizard-host.sh). The Mac's OpenSSH loads Ed25519 keys
+# through PKCS#11, and ws makes and tests no other.
+yubikey_check() {
+    yubikey_again="ykman piv keys delete $yubikey_slot and ykman piv certificates delete"
+    yubikey_again="$yubikey_again $yubikey_slot free the slot, and the next run makes the key again"
+    yubikey_type=$(yubikey_slots | awk -v slot="$yubikey_slot" '$1 == slot { print $2 }')
+    case $yubikey_type in
+    ED25519) ;;
+    EMPTY)
+        ws_die "${yubikey_at}slot $yubikey_slot holds the certificate CN=$1 without its key:" \
+            "ykman piv certificates delete $yubikey_slot frees the name, and the next run makes" \
+            "the key"
+        ;;
+    *)
+        ws_die "${yubikey_at}$1's key, in slot $yubikey_slot, is $yubikey_type, not ED25519:" \
+            "$yubikey_again"
+        ;;
+    esac
+    yubikey_info=$("$yubikey_ykman" --device "$yubikey_serial" piv keys info "$yubikey_slot") ||
+        ws_die "${yubikey_at}ykman piv keys info $yubikey_slot failed"
+    yubikey_policy=$(printf '%s\n' "$yubikey_info" | awk -F ': +' '
+        $1 == "PIN required for use" { pin = $2 }
+        $1 == "Touch required for use" { touch = $2 }
+        END { print pin " " touch }')
+    [ "$yubikey_policy" = 'NEVER NEVER' ] || ws_die "${yubikey_at}$1's key, in slot" \
+        "$yubikey_slot, asks for the PIN or a touch at each use, with PIN policy" \
+        "${yubikey_policy% *} and touch policy ${yubikey_policy#* }: $yubikey_again"
 }
 
 # yubikey_pub NAME writes yubikey_dir/NAME.pub, the public key of NAME's key, in yubikey_slot. It
