@@ -21,8 +21,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 - `ansible-lint`: its production profile, strict and offline (`.ansible-lint`);
 - `ruff`: `ruff check` and `ruff format --check` on the Python files, as `ruff.toml` sets them;
 - `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python and Jinja templates;
-- `vale`: Vale's three rules (`.vale.ini`) on the Markdown files: sentences of 30 words or fewer,
-  no wordy phrases and no needless variants;
+- `vale`: the three Vale rules of [the writing skill][writing] on the Markdown files (`.vale.ini`);
 - `lychee`: the links to files and their headings in the Markdown files, offline;
 - `rumdl`: `.rumdl.toml`'s rules on Markdown: lines of 100 columns but in code blocks and tables;
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
@@ -39,14 +38,13 @@ cryptography has none for macOS on amd64.
 
 ## The playbook
 
-CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`,
-which need a booted machine. It runs it twice, and the second run must change nothing. Then
-`nft -c`, with the container's NET_ADMIN, checks the outbound table the play wrote and the users
-it names. The run leaves out its own check under `--skip-tags systemd`
-([Outbound](security.md#outbound)). Its swap file is 64 MiB, as the runner's disk has no room for
-one the size of its RAM. It installs no JetBrains backend, `jetbrains_backends: []`, as it has no
-room for those either. Its board is not MSI's, so the `fans` role leaves its fans alone. It gives
-no VPN profile, so the `ikeward` role does nothing.
+CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`, which
+need a booted machine. It runs it twice, and the second run must change nothing. Then `nft -c`, with
+the container's NET_ADMIN, checks the outbound table the play wrote and the users it names. The run
+leaves out its own check under `--skip-tags systemd` ([Outbound](security.md#outbound)). Its swap
+file is 64 MiB, as the runner's disk has no room for one the size of its RAM, nor for a JetBrains
+backend: `jetbrains_backends: []`. Its board is not MSI's, so the `fans` role leaves its fans alone.
+It gives no VPN profile, so the `ikeward` role does nothing.
 
 ## SigNoz's compose files
 
@@ -231,10 +229,9 @@ settings of git's XDG file must be named. With a key that an agent holds at Secr
 must keep the file key, as Secretive's one key is git's. git's credential command for GitHub
 must be a stand-in gh's, which must add the key to its login once. Logged out, gh must
 draw a warning at each run. Logged in, `setup.sh` must warn of a 404 or another error of
-gh's, and of an add that leaves the account without the key. It must add the key where the
-account lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh,
-`setup.sh` must install Homebrew's once, and only with git's keys
-([mac-git-checks.sh](../.github/mac-git-checks.sh)).
+gh's, and of an add that leaves the account without the key. It must add the key where the account
+lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh, `setup.sh` must
+install Homebrew's once, with git's keys alone ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
 
 ## The rules
 
