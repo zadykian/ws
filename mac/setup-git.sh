@@ -81,26 +81,14 @@ git_gh() {
 
 # git_files writes ~/.config/ws/allowed_signers, which trusts the key for WS_GIT_EMAIL in git
 # verify-commit, and ~/.config/ws/gitconfig. For the YubiKey's key, git signs through git_agent's
-# ~/.config/ws/ws-ssh-keygen, which gives ssh-keygen ws's agent. For a key of Secretive's, it signs
-# through ~/.config/ws/secretive-ssh-keygen, which gives ssh-keygen Secretive's agent. So a
-# terminal and an IDE sign alike, whatever agent the app that runs git has. Under --check, before
-# the key is made, it writes no allowed signers.
-# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile, and ws_secretive is setup-conf.sh's
+# ~/.config/ws/ws-ssh-keygen, which gives ssh-keygen ws's agent. So a terminal and an IDE sign
+# alike, whatever agent the app that runs git has. Under --check, before the key is made, it writes
+# no allowed signers.
+# shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 git_files() {
     git_program=
     case $git_pub in
     "$git_dir"/keys/*.pub) git_agent ;;
-    "$ws_secretive"/PublicKeys/*.pub)
-        git_program=$git_dir/secretive-ssh-keygen
-        ws_put "$git_program" 755 <<EOF
-#!/bin/sh
-# Written by ws's mac/setup.sh: git's gpg.ssh.program, ssh-keygen with Secretive's agent, which
-# holds the signing key. Its next run replaces changes made here.
-SSH_AUTH_SOCK='$ws_secretive/socket.ssh'
-export SSH_AUTH_SOCK
-exec ssh-keygen "\$@"
-EOF
-        ;;
     esac
     if [ -n "$git_public" ]; then
         ws_put "$git_dir/allowed_signers" 644 <<EOF

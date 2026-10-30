@@ -7,12 +7,11 @@
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
 files=$HOME/.config/ws
 pub=$files/keys/git.pub
-secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 
 # git_made COMMAND... runs COMMAND with the files that git's cases make as its last arguments.
 git_made() {
     "$@" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig.*~ "$files/ws-ssh-keygen" \
-        "$files/secretive-ssh-keygen" "$secretive"
+        "$files/secretive-ssh-keygen"
 }
 
 # git_restore removes the files that git's cases made, and puts the runner's ~/.gitconfig back. It
@@ -188,41 +187,6 @@ if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
     stops "setup.sh: cannot read $tmp/unread-git.pub"
 fi
 
-# A key of Secretive's, a P-256 key that an agent at Secretive's socket holds, its .pub among
-# Secretive's, named by ~/. --check must show the wrapper and gpg.ssh.program, and write neither.
-# git must sign with the agent, through the wrapper, whatever SSH_AUTH_SOCK names.
-mkdir -p "$secretive/Data/PublicKeys"
-ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/p256"
-cp "$tmp/p256.pub" "$secretive/Data/PublicKeys/ws.pub"
-agent=$(ssh-agent -s -a "$secretive/Data/socket.ssh" | sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p')
-if [ -z "$agent" ] || ! SSH_AUTH_SOCK=$secretive/Data/socket.ssh ssh-add -q "$tmp/p256"; then
-    error "no ssh-agent at Secretive's socket took the key"
-    exit 1
-fi
-rm "$tmp/p256"
-with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com \
-    "WS_GIT_SIGNING_KEY=~/${secretive#"$HOME/"}/Data/PublicKeys/ws.pub"
-setup --check || error "setup.sh --check failed: $out"
-case $out in
-*"+++ $files/secretive-ssh-keygen$nl"*"$nl+    program = \"$files/secretive-ssh-keygen\""*) ;;
-*) error "setup.sh --check showed no wrapper, or no gpg.ssh.program: $out" ;;
-esac
-[ ! -e "$files/secretive-ssh-keygen" ] || error "setup.sh --check wrote $files/secretive-ssh-keygen"
-prints "setup.sh: wrote $files/secretive-ssh-keygen${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran gh ssh-key\
- add $secretive/Data/PublicKeys/ws.pub --type signing --title $title"
-prints ''
-prints '' --check
-# In a subshell, as macOS's sh keeps a variable set for a function's call after it.
-(SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
-# Secretive's one key is git's, and ws keeps the YubiKey's. The agent and Secretive's container
-# then go, so that the cases below give ws no key of theirs.
-[ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.config/ws/keys/ws.pub ] ||
-    error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
-kill "$agent" || true
-agent=
-rm -rf "$secretive"
-
 # Logged out, gh must draw a warning at each run, and nothing else where the files are written.
 # With gh's login, a 404, the answer to a login without the scope of signing keys, must draw a
 # warning that names the scope. Another error must draw its last line, its final period dropped, as
@@ -231,7 +195,7 @@ rm -rf "$secretive"
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 rm "$tmp/login"
 warning=$(warned "$pub")
-prints "setup.sh: wrote $files/allowed_signers${nl}setup.sh: wrote $files/gitconfig$nl$warning"
+prints "setup.sh: wrote $HOME/.gitconfig$nl$warning"
 prints "$warning"
 prints "$warning" --check
 touch "$tmp/login"
