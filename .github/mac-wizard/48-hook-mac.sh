@@ -126,7 +126,7 @@ cp "$before" "$conf"
 rm -f "$mine"
 sudo rm -rf "$ws/root/root/repository/hook" "$ws/root/var/lib/ws-wizard/hook-hook" \
     "$ws/root/root/.config"
-rm -f "$ws/clone.log" "$ws/apply.log" "$before" "$RUNNER_TEMP/gitconfig"
+rm -f "$ws/apply.log" "$before" "$RUNNER_TEMP/gitconfig"
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status"
 exit "$fail"

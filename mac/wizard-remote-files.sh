@@ -8,8 +8,8 @@
 #   hook-REPO.bundle, where /root/repository/REPO is missing, and removes an old one. The wizard
 #   sends the bundle there by a call of its own, as this script takes stdin.
 # - clone OWNER/REPO clones that repository into /root/repository/REPO, where nothing is there, from
-#   that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, or else on GitHub
-#   by root's gh login. It removes the bundle. It never pulls a clone, as the repository's apply.sh
+#   that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, and stops where
+#   the Mac sent none. It removes the bundle. It never pulls a clone, as the repository's apply.sh
 #   updates its own. It stops where the path holds no clone, another repository's, or a clone with
 #   no apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
 #   or is cut short leaves none.
@@ -97,13 +97,7 @@ clone() {
     repo "$1"
     rm -f "$state/hook-$repo"
     if [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ]; then
-        if [ -f "$pack" ]; then
-            unbundle "$1"
-        else
-            command -v gh >/dev/null || die "ws lacks gh, which ws's run installs"
-            mkdir -p "$repos"
-            gh repo clone "$1" "$repos/$repo" -- -q || die "gh repo clone $1 failed, as above"
-        fi
+        unbundle "$1"
         say "cloned $1 into $repos/$repo"
     fi
     rm -f "$pack"

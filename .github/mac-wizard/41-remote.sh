@@ -15,8 +15,8 @@
 # must be on main with its origin on GitHub, remove the bundle, and have an apply.sh that must run
 # as root over ssh, its stdin empty. Its stamp must follow, which status must list. Its clone again
 # must leave the clone, and remove the stamp, and another owner's must stop. Its bundle where ws has
-# the clone must print nothing, and its clone from a bundle cut short must stop, leaving no clone.
-# Its words must print git's hash of root's word list, or
+# the clone must print nothing, and its clone with no bundle, or from one cut short, must stop,
+# leaving no clone. Its words must print git's hash of root's word list, or
 # - without one, and the list for that hash alone. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
 # ws's host_vars once, and bootstrap.sh --tags network,wireguard then give it 10.77.0.1, and
@@ -198,6 +198,9 @@ files clone example/pack
 files bundle example/pack
 [ "$status" = 0 ] && [ -z "$out" ] || error "its bundle where ws has the clone exited $status"
 sudo rm -rf "$pack"
+files clone example/pack
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'sent no bundle' && [ ! -e "$pack" ] ||
+    error "its clone with no bundle exited $status, or made a clone"
 files bundle example/pack
 echo cut | ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out"
 files clone example/pack
@@ -277,5 +280,5 @@ remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
 sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
-rm -f "$ws/clone.log" "$ws/apply.log" "$ws/uplink"
+rm -f "$ws/apply.log" "$ws/uplink"
 exit "$fail"
