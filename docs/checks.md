@@ -54,27 +54,27 @@ and fails where they differ from the repository's.
 
 A workflow of its own, `mac-wizard.yml`, runs `mac/wizard.sh` on GitHub's macOS runner, from a copy
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and a user would,
-such as `mac.conf`'s answers, dash, and a `gh` logged in to GitHub, first on the wizard's `PATH`. It
-sets up the stand-in YubiKey of [The Mac](#the-mac) too. Then `checks.sh` runs the cases beside it
-in order, and stops at the first that fails ([checks.sh](../.github/mac-wizard/checks.sh)). The
-wizard must refuse an unknown argument, root, and a `WS_HOOK` of `WS`, as the files script must. A
-run must stop where another holds the lock, and leave it. A fresh `--check`, by sh and by dash, must
-find brew with its directories taken off `PATH`. As `setup.sh --check` must, it must change nothing,
-and it must leave no lock or temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as the
-ssh key for ws, which `--check` must show it would make. With a `mac.conf` that names none,
-`--check` must show the YubiKey's `.pub`s it would write, and stop with the YubiKey out. A run with
-no terminal and gh logged out must write them, and pass the stage once ws's agent lists them. It
-must stop at gh's stage, and a second say nothing of the Mac key stage. The first run, with that
-`PATH` too, must make that key, with no passphrase, add it to that login, install what `setup.sh`
-installs. It must drop the Mac's key, which `setup.sh` prints, and leave no step of the tunnel by
-hand, as the Tunnel stage, below, takes it. A second run and `--check` must print nothing, by sh and
-by dash. Then a stand-in for Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key,
-whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`. `--check` must print nothing of the Mac
-key stage while the agent lists the key, with git's name too. Once the agent lacks the key, a run
-and `--check` must stop at the stage, naming the socket. Last, without the login of the stand-in
-`gh`, a run with no terminal must stop at gh's stage, naming `gh auth login`. With a login that
-lacks the scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say it
-would run each.
+such as `mac.conf`'s answers and dash. Among them are the stand-in YubiKey of [The Mac](#the-mac),
+and a `gh` logged in to GitHub, first on the wizard's `PATH`. Then
+[checks.sh](../.github/mac-wizard/checks.sh) runs the cases beside it. The wizard must refuse an
+unknown argument, root, and a `WS_HOOK` of `WS`, as the files script must. A run must stop where
+another holds the lock, and leave it. A fresh `--check`, by sh and by dash, must find brew with its
+directories taken off `PATH`. Like `setup.sh --check`, it must change nothing, and leave no lock or
+temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as the ssh key for ws, which
+`--check` must show it would make. With a `mac.conf` that names none, `--check` must show the
+YubiKey's `.pub`s it would write, and stop with the YubiKey out. A run with no terminal and gh
+logged out must write them, and pass the stage once ws's agent lists them. It must stop at gh's
+stage, and a second say nothing of the Mac key stage. The first run, with that `PATH` too, must make
+that key, with no passphrase, add it to that login, install what `setup.sh` installs. It must drop
+the Mac's key, which `setup.sh` prints, and leave no step of the tunnel by hand, as the Tunnel
+stage, below, takes it. A second run and `--check` must print nothing, by sh and by dash. Then a
+stand-in for Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key, whose `.pub` a
+`mac.conf` of its own names in `WS_IDENTITY`. `--check` must print nothing of the Mac key stage
+while the agent lists the key, with git's name too. Once the agent lacks the key, a run and
+`--check` must stop at the stage, naming the socket. Last, without the login of the stand-in `gh`, a
+run with no terminal must stop at gh's stage, naming `gh auth login`. With a login that lacks the
+scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say it would run
+each.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `setup.sh`. The
@@ -89,12 +89,13 @@ Root logs in to that `sshd` by root's own `authorized_keys`. The cases fill it f
 `gh`'s keys, as Ubuntu's installer and the README's step do for ws. Each session runs `ws.sh`, which
 logs the command. The wizard adds no key, so the first run must stop at the Root's key stage, naming
 the Mac's key, and add none. The case then gives root the keys, and the wizard runs again. With
-another key alone in root's file, the stop must show ssh's error. With a forced command on root's
-line for the key, as cloud-init writes it, `--check` must say that a run would stop. A run must
-stop, with no terminal and at a terminal of `script`'s, and change nothing. With the keys back in
-root's file, a run must say nothing of the stage. With another host key under `ws`, a run must stop,
-with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s second host key, an
-ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a line to `known_hosts`.
+another key alone in root's file, the stop must show ssh's error. Then root's line for the key
+carries a forced command, as cloud-init writes it. `--check` must say that a run would stop. A run
+must stop, with no terminal and at a terminal of `script`'s, and change nothing. With the keys back
+in root's file, a run must say nothing of the stage. With another host key under `ws`, a run must
+stop, with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s second host key,
+an ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a line to
+`known_hosts`.
 
 The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
 sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-ins of
@@ -155,9 +156,9 @@ second run and `--check` must print nothing at all. Where `WS_CONF` names no fil
 `bootstrap.sh --check` must show the lines it would write there, from the answers in the
 environment, and write none. In a home without a clone, `--check` must list the clone and the
 wizard's stages, as `wizard.sh` runs them, and make nothing outside macOS's `Library`. Then its
-functions, all but its last line, must download Homebrew's pinned `.pkg` and pass its check of the
-SHA-256 and signer. A run makes that check before the install, which the case never runs. The log
-shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another signer.
+functions must download Homebrew's pinned `.pkg`, pass its check of the SHA-256 and signer, and
+refuse the `.pkg` cut short and another signer
+([60-homebrew.sh](../.github/mac-wizard/60-homebrew.sh)).
 
 ## The Mac
 
