@@ -7,6 +7,8 @@
 ws=$HOME/.ssh/config.d/ws
 cp "$ws" "$tmp/ws"
 warned=
+# The .pub of the key that the job's config.d/ws gives ws.
+jobkey=\~/.ssh/id_ed25519.pub
 
 # keyed LINE... checks that ssh -G gives ws and ws-ssh LINE..., a line each, of its settings for the
 # key. Those are identitiesonly, identityagent and identityfile, a path from the home by ~/.
@@ -46,11 +48,13 @@ filed() {
     keyed 'identitiesonly yes' "identityfile $1"
 }
 
-# job: with the job's mac.conf, a run must give config.d/ws the job's lines again.
+# job OLD: changes back to the job's config.d/ws without WS_IDENTITY (sed -n p changes nothing).
+# setup.sh must warn first that the job's key replaces OLD, which config.d/ws gave ws.
 job() {
     with
-    prints "setup.sh: wrote $ws"
-    cmp -s "$ws" "$tmp/ws" || error "setup.sh left another config.d/ws than the job's"
+    warned="setup.sh: warning: the key of $jobkey replaces $1 as ws's: add that line to ws's"
+    warned="$warned authorized_keys, or keep the old key with WS_IDENTITY=$1 in mac.conf$nl"
+    changes -n p
 }
 
 # The job's runs had no WS_IDENTITY, so ws must take the file key, by the four lines it had before
@@ -94,7 +98,7 @@ for line in 'ws-token AAAA' 'ssh-ws stand-in!'; do
     stops "setup.sh: $tmp/token.pub holds no public key alone"
 done
 # Without them, config.d/ws must be the job's again.
-job
+job "$tmp/key.pub"
 
 # A stand-in for Secretive: ssh-agent at its socket under the runner's HOME, holding a P-256 key,
 # whose .pub is in PublicKeys. The runner must lack Secretive's container, and the file key. As the
@@ -154,4 +158,4 @@ stops "$mldsa"
 stops "$mldsa" --check
 # Without Secretive's agent, config.d/ws must be the job's again.
 secretive_restore
-job
+job "$sec/PublicKeys/other.pub"

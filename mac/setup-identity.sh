@@ -3,17 +3,19 @@
 # WS_IDENTITY_AGENT, which setup-conf.sh's ws_conf reads. setup-lib.sh sources it after
 # setup-conf.sh, so that a script that sources setup-lib.sh has them too.
 
-# ws_identity sets ws_identity_pub to the .pub of the key that ssh offers ws, and
+# ws_identity [FILE] sets ws_identity_pub to the .pub of the key that ssh offers ws, and
 # ws_identity_agent to its agent's socket, or to nothing for a key in a file. Both are paths as
 # config.d/ws names them. They are mac.conf's WS_IDENTITY and WS_IDENTITY_AGENT, where set, else the
 # file key, ~/.ssh/id_ed25519, as before. A .pub in Secretive's PublicKeys takes Secretive's agent.
 # It stops where a .pub but the file key's is missing or unreadable, or holds other than one public
 # key, as a private key or a certificate does. A key that ssh-keygen can't read stops it, as does a
-# type ws's OpenSSH 10.2 lacks (ssh -Q key there), as an ML-DSA key of Secretive's.
+# type ws's OpenSSH 10.2 lacks (ssh -Q key there), as an ML-DSA key of Secretive's. FILE goes to
+# ws_identity_old.
 # shellcheck disable=SC2153,SC2154 # WS_IDENTITY_AGENT is ws_conf's and ws_secretive setup-conf.sh's
 ws_identity() {
     ws_identity_pub=${WS_IDENTITY:-\~/.ssh/id_ed25519.pub}
     ws_identity_agent=$WS_IDENTITY_AGENT
+    ws_identity_old "${1-}"
     [ "$ws_identity_pub$ws_identity_agent" != \~/.ssh/id_ed25519.pub ] || return 0
     ws_file=$ws_identity_pub
     [ "${ws_file#\~/}" = "$ws_file" ] || ws_file=$HOME/${ws_file#\~/}
@@ -39,6 +41,16 @@ ws_identity() {
     esac
     ssh-keygen -l -f "$ws_file" >/dev/null 2>&1 || ws_die "ssh-keygen cannot read $ws_file: name" \
         "the .pub of a P-256 or ed25519 key in mac.conf's WS_IDENTITY"
+}
+
+# ws_identity_old FILE warns where FILE, the config.d/ws that setup.sh replaces, gave ws another key
+# than ws_identity's, with no WS_IDENTITY, as Secretive's key that an older run's search found.
+ws_identity_old() {
+    [ -z "$WS_IDENTITY" ] || return 0
+    ws_old=$(sed -n 's/^    IdentityFile //p' "${1:-/dev/null}" 2>/dev/null) || ws_old=
+    [ -z "$ws_old" ] || [ "${ws_old%.pub}" = "${ws_identity_pub%.pub}" ] ||
+        ws_say "warning: the key of $ws_identity_pub replaces $ws_old as ws's: add that line to" \
+            "ws's authorized_keys, or keep the old key with WS_IDENTITY=$ws_old in mac.conf"
 }
 
 # ws_identity_lines prints config.d/ws's lines for the key that ws_identity set, which ssh offers ws

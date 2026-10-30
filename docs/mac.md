@@ -95,13 +95,15 @@ host on another network that uses the LAN's subnet then meets a host key mismatc
 A session ends after 90 s without word from ws, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`). Without `WS_IDENTITY`, the key is
-`~/.ssh/id_ed25519`, its passphrase kept in the Keychain. `WS_IDENTITY` names any `.pub`, as one of
-Secretive's, in its container's `Data/PublicKeys`. Its agent is the one whose socket
-`WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh reads the file
-beside the `.pub`. The script stops where that `.pub`, but the file key's, is missing or unreadable.
-It stops too where the `.pub` holds other than one public key's line, as a private key or a
-certificate does. So does a key that ssh-keygen cannot read, or one of a type that ws's OpenSSH
-lacks, as Secretive's ML-DSA keys on macOS 26.
+`~/.ssh/id_ed25519`, its passphrase kept in the Keychain. Where `config.d/ws` gave ws another key,
+as Secretive's by an older run's search, the script warns as it replaces that key, naming
+`WS_IDENTITY`, which keeps it. `WS_IDENTITY` names any `.pub`, as one of Secretive's, in its
+container's `Data/PublicKeys`. Its agent is the one whose socket `WS_IDENTITY_AGENT` names, else
+Secretive's where the `.pub` is there. Else ssh reads the file beside the `.pub`. The script stops
+where that `.pub`, but the file key's, is missing or unreadable. It stops too where the `.pub` holds
+other than one public key's line, as a private key or a certificate does. So does a key that
+ssh-keygen cannot read, or one of a type that ws's OpenSSH lacks, as Secretive's ML-DSA keys on
+macOS 26.
 
 The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
 reads for each key. So neither the file's own settings nor the other files of `config.d` override

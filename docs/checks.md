@@ -204,9 +204,9 @@ then print nothing. Each signature must run `ws-agent-confirm`, which counts it 
 them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
 showing `config.d/ws`'s diff alone. Secretive's agent and its one key must leave ws its key, and a
 `.pub` of Secretive's in `WS_IDENTITY` must take its agent. The file key's `.pub` in `WS_IDENTITY`
-must keep the file key. A `.pub` that is
-missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
-`setup.sh` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
+must keep the file key. The job's `mac.conf` must take it back from another key, with a warning. A
+`.pub` that is missing or unreadable, or holds a private key, a certificate or a line that is no
+key, must stop `setup.sh` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
 ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
 Without the stand-in app, `setup.sh` must install Gateway's cask once, through a stand-in brew that
 refuses any other call, and then print nothing. With an app in `/Applications`, it must install
