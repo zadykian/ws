@@ -60,8 +60,8 @@ leaked() {
 # fetch, print and change none of the list, and leave the link.
 linked() {
     wizard "$@"
-    [ "$status" = 1 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Hook on the \
-Mac: $mine is a link to $RUNNER_TEMP/words, which the wizard leaves, and ws's word list differs: \
+    [ "$status" = 1 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Word list: \
+$mine is a link to $RUNNER_TEMP/words, which the wizard leaves, and ws's word list differs: \
 remove the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the \
 wizard again" &&
         [ -L "$mine" ] && [ "$(tail -n 1 "$mine")" = other-word ] &&
@@ -95,7 +95,7 @@ wizard
     [ "$(copies)" = $((copied + 1)) ] || error "the next run exited $status, cloned, or copied"
 echo other-word >>"$mine"
 wizard --check
-[ "$status" = 0 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Hook on the Mac: \
+[ "$status" = 0 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Word list: \
 would copy ws's word list to $mine, mode 600" && [ "$(tail -n 1 "$mine")" = other-word ] ||
     error "wizard.sh --check with the Mac's list changed exited $status, or copied it"
 mv "$mine" "$RUNNER_TEMP/words"
