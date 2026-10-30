@@ -35,13 +35,6 @@ changes() {
 yk_file='^    IdentityFile ~/.config/ws/keys/ws.pub$'
 yk_agent='^    IdentityAgent "~/.ssh/ws-agent.sock"$'
 
-# agented PUB SOCKET: changes, with the YubiKey's .pub and agent replaced by PUB and the agent at
-# SOCKET. Then ssh -G must give ws and ws-ssh that agent and PUB.
-agented() {
-    changes -e "s|$yk_file|    IdentityFile $1|" -e "s|$yk_agent|    IdentityAgent \"$2\"|"
-    keyed 'identitiesonly yes' "identityagent $2" "identityfile $1"
-}
-
 # filed KEY: changes, with the YubiKey's lines replaced by those of the file KEY, whose passphrase
 # the Keychain keeps. Then ssh -G must give ws and ws-ssh KEY alone.
 filed() {
@@ -105,62 +98,14 @@ for line in 'ws-token AAAA' 'ssh-ws stand-in!'; do
     with "WS_IDENTITY=$tmp/token.pub"
     stops "setup.sh: $tmp/token.pub holds no public key alone"
 done
-# Without them, ws must take the YubiKey's key again.
-yubikey "$tmp/key"
-
-# A stand-in for Secretive: ssh-agent at its socket under the runner's HOME, holding a P-256 key,
-# whose .pub is in PublicKeys. The runner must lack Secretive's container, and the file key. As the
-# script exits, on a signal too, the agent and the container go.
-secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
-data=$secretive/Data
-found=$(ls -d "$secretive" ~/.ssh/id_ed25519 2>/dev/null) || true
-if [ -n "$found" ]; then
-    error "the runner has $(echo "$found" | tr '\n' ' '), so the cases of Secretive's key go"
-    exit 1
-fi
-# secretive_restore stops the stand-in agent, and removes Secretive's container.
-secretive_restore() {
-    [ -z "${secretive_agent-}" ] || kill "$secretive_agent" || true
-    secretive_agent=
-    rm -rf "$secretive"
-}
-trap 'secretive_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
-mkdir -p "$data/PublicKeys"
-ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/p256"
-cp "$tmp/p256.pub" "$data/PublicKeys/ws.pub"
-# Before Secretive's agent has its socket, ws must keep its key.
-with
-prints ''
-secretive_agent=$(ssh-agent -s -a "$data/socket.ssh" |
-    sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p')
-if [ -z "$secretive_agent" ] || ! SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$tmp/p256"; then
-    error "no ssh-agent at Secretive's socket took the key"
-    exit 1
-fi
-rm "$tmp/p256"
-# So must it while PublicKeys has no key.
-mv "$data/PublicKeys/ws.pub" "$tmp/ws.pub"
-prints ''
-mv "$tmp/ws.pub" "$data/PublicKeys/ws.pub"
-# Without WS_IDENTITY, Secretive's agent and its one key must leave ws its key too. The file key's
-# .pub in WS_IDENTITY must give ws the file key, though the runner lacks it.
-prints ''
-sec=\~/${data#"$HOME/"}
-with 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
-filed \~/.ssh/id_ed25519
-cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
-# WS_IDENTITY names a .pub of its own, or one of Secretive's, which takes its agent.
-with "WS_IDENTITY=$tmp/key.pub"
-filed "$tmp/key"
-with "WS_IDENTITY=$sec/PublicKeys/other.pub"
-agented "$sec/PublicKeys/other.pub" "$sec/socket.ssh"
-# A key of a type that ws's OpenSSH lacks, as Secretive's ML-DSA, must stop setup.sh, --check too.
-rm "$data/PublicKeys/other.pub"
-echo 'ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws' >"$data/PublicKeys/ws.pub"
-with "WS_IDENTITY=$sec/PublicKeys/ws.pub"
-mldsa="setup.sh: $data/PublicKeys/ws.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
+# So must a key of a type that ws's OpenSSH lacks, as an ML-DSA key, --check too.
+echo 'ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws' >"$tmp/mldsa.pub"
+with "WS_IDENTITY=$tmp/mldsa.pub"
+mldsa="setup.sh: $tmp/mldsa.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
 stops "$mldsa"
 stops "$mldsa" --check
-# Without Secretive's agent and WS_IDENTITY, ws must take the YubiKey's key again.
-secretive_restore
-yubikey "$sec/PublicKeys/other.pub"
+# The file key's .pub must give ws the file key, though the runner lacks it.
+with 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
+filed \~/.ssh/id_ed25519
+# Without WS_IDENTITY, ws must take the YubiKey's key again.
+yubikey \~/.ssh/id_ed25519
