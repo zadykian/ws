@@ -12,7 +12,9 @@ permissions: {}
 jobs:
   # The wizard on a fresh runner, from the clone at ~/repository/ws: standin.sh, then checks.sh's
   # cases. A new stage adds its cases and stand-ins in .github/mac-wizard, and nothing here.
+  # Gated as ci.yml's playbook job.
   mac-wizard:
+    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
     timeout-minutes: 25
     permissions:

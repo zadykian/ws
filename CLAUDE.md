@@ -46,10 +46,10 @@ The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, 
 needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
 collections into `.cache`, and `tools/run` downloads the rest there.
 
-The tests are CI's jobs, which run on each pull request ([Checks](docs/checks.md)). `playbook`
-runs `bootstrap.sh` twice in an Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files
-again. `mac` sets up a Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on
-another. A run of the playbook sets up the machine that runs it, as below.
+The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` runs `bootstrap.sh` twice in an
+Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files again. `mac` sets up a Mac on
+GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. A run of the playbook
+sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
@@ -61,7 +61,9 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 ## How changes land
 
-- Pull requests are stacked, each on the one below it, and CI runs on each whatever its base.
+- Pull requests are stacked, each on the one below it. CI runs `lint` and `signoz` on each,
+  whatever its base, and `playbook`, `mac` and `mac-wizard` on the stack's top one alone
+  ([Checks](docs/checks.md#checks)).
 - They land on `main` by GitHub's merge commits, as
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull
   request's signed commits land as they are, under a merge commit that GitHub signs.

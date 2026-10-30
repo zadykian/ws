@@ -1,5 +1,8 @@
 # Checks
 
+In a stack, CI runs `playbook`, `mac` and `mac-wizard`, its longest jobs, on the top pull request
+alone, as it holds every change below it. `lint` and `signoz` run on each.
+
 ## make lint
 
 `make lint` is the one gate: CI's lint job runs it, the lint plugin through `make lint-tree` as

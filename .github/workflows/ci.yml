@@ -35,7 +35,13 @@ jobs:
 
   # The playbook as on a new machine, but in a container rather than a booted system, so without
   # the tasks tagged systemd. It runs twice, and the second run must change nothing.
+  # In a stack, it runs on the top pull request alone, which holds every change below it, as do
+  # mac.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these jobs kept its pull
+  # requests waiting for runners past 50 minutes. Outside a stack, and on a push, stack is null,
+  # and null == null holds. GitHub's stack metadata:
+  # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
   playbook:
+    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
