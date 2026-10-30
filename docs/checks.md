@@ -56,25 +56,27 @@ and fails where they differ from the repository's.
 A workflow of its own, `mac-wizard.yml`, runs `mac/wizard.sh` on GitHub's macOS runner, from a copy
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and a user would,
 such as `mac.conf`'s answers, dash, and a `gh` logged in to GitHub, first on the wizard's `PATH`. It
-sets up the stand-in YubiKey of [The Mac](#the-mac) too.
-Then `checks.sh` runs the cases beside it in order, and stops at the first that fails
-([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root,
-and a `WS_HOOK` of `WS`, as the files script must. A run must stop where another holds the lock, and
-leave it. A fresh `--check`, by sh and by dash, must find brew with its directories taken off
-`PATH`. As `setup.sh --check` must, it must change nothing, and it must leave no lock or temporary
-file. The job's `mac.conf` names `~/.ssh/id_ed25519` as the ssh key for ws, which `--check` must
-show it would make. With no terminal and a `mac.conf` that names none, a run must stop at the Mac
-key stage, naming `WS_IDENTITY`, and make nothing. The first run, with that `PATH` too, must make
-that key, with no passphrase, add it to that login, install what `setup.sh` installs. It must drop
-the Mac's key, which `setup.sh` prints, and leave no step of the tunnel by hand, as the Tunnel
-stage, below, takes it. A second run and `--check` must print nothing, by sh and by dash. Then a
-stand-in for Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key, whose `.pub` a
-`mac.conf` of its own names in `WS_IDENTITY`. `--check` must print nothing of the Mac key stage
-while the agent lists the key. With git's name, it must say that it would wait for git's key made in
-Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the agent lacks the key, a run and `--check`
-must stop at the stage, naming the socket. Last, without the login of the stand-in `gh`, a run with
-no terminal must stop at gh's stage, naming `gh auth login`. With a login that lacks the scopes, or
-the signing one alone, it must name `gh auth refresh`. `--check` must say it would run each.
+sets up the stand-in YubiKey of [The Mac](#the-mac) too. Then `checks.sh` runs the cases beside it
+in order, and stops at the first that fails ([checks.sh](../.github/mac-wizard/checks.sh)). The
+wizard must refuse an unknown argument, root, and a `WS_HOOK` of `WS`, as the files script must. A
+run must stop where another holds the lock, and leave it. A fresh `--check`, by sh and by dash, must
+find brew with its directories taken off `PATH`. As `setup.sh --check` must, it must change nothing,
+and it must leave no lock or temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as the
+ssh key for ws, which `--check` must show it would make. With a `mac.conf` that names none,
+`--check` must show the YubiKey's `.pub`s it would write, and stop with the YubiKey out. A run with
+no terminal and gh logged out must write them, and pass the stage once ws's agent lists them. It
+must stop at gh's stage, and a second say nothing of the Mac key stage. The first run, with that
+`PATH` too, must make that key, with no passphrase, add it to that login, install what `setup.sh`
+installs. It must drop the Mac's key, which `setup.sh` prints, and leave no step of the tunnel by
+hand, as the Tunnel stage, below, takes it. A second run and `--check` must print nothing, by sh and
+by dash. Then a stand-in for Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key,
+whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`. `--check` must print nothing of the Mac
+key stage while the agent lists the key. With git's name, it must say that it would wait for git's
+key made in Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the agent lacks the key, a run and
+`--check` must stop at the stage, naming the socket. Last, without the login of the stand-in `gh`, a
+run with no terminal must stop at gh's stage, naming `gh auth login`. With a login that lacks the
+scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say it would run
+each.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `setup.sh`. The
@@ -200,14 +202,13 @@ take them out at an unplug, and load them again at a plug, a replug, a second Yu
 both at `~/.ssh/ws-agent.sock` and sign with each, launchd's from `setup.sh`'s copy, and `setup.sh`
 then print nothing. Each signature must run `ws-agent-confirm`, which counts it in its key's stamp
 ([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
-`ws` and `ws-ssh` the file key, by the four lines `config.d/ws` had for it before. It must give
-them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check`
-showing `config.d/ws`'s diff alone. Secretive's agent and its one key must leave ws its key, and a
-`.pub` of Secretive's in `WS_IDENTITY` must take its agent. The file key's `.pub` in `WS_IDENTITY`
-must keep the file key. The job's `mac.conf` must take it back from another key, with a warning. A
-`.pub` that is missing or unreadable, or holds a private key, a certificate or a line that is no
-key, must stop `setup.sh` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
-([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
+`ws` and `ws-ssh` the YubiKey's `.pub` and ws's agent, by three lines of `config.d/ws`. It must give
+them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check` showing
+`config.d/ws`'s diff alone. Back on the YubiKey's key, `setup.sh` must warn once that it replaces
+the other. Secretive's agent and its one key must leave ws its key, and a `.pub` of Secretive's in
+`WS_IDENTITY` must take its agent. A `.pub` that is missing or unreadable, or holds a private key, a
+certificate or a line that is no key, must stop `setup.sh` too. So must a key that ssh-keygen
+cannot read or ws's OpenSSH lacks ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
 Without the stand-in app, `setup.sh` must install Gateway's cask once, through a stand-in brew that
 refuses any other call, and then print nothing. With an app in `/Applications`, it must install
 nothing. A failed install, or one that leaves no app, must draw a warning, and the run go on to the
@@ -221,7 +222,7 @@ lines, and name its own settings. An include below them, or a second one, must s
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket,
 `--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. `ws`
-must keep the file key, as Secretive's one key is git's. git's credential command for GitHub
+must keep the YubiKey's key, as Secretive's one key is git's. git's credential command for GitHub
 must be a stand-in gh's, which must add the key to its login once. Logged out, gh must
 draw a warning at each run. Logged in, `setup.sh` must warn of a 404 or another error of
 gh's, and of an add that leaves the account without the key. It must add the key where the account
