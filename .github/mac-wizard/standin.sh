@@ -133,7 +133,7 @@ chmod 755 "$ws/ws.sh"
 # ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is. ws's
 # clone, root's, holds the stand-in bootstrap.sh alone.
 mkdir -p "$ws/bin" "$ws/units"
-for each in systemd-run systemctl journalctl wg gh mokutil modinfo ip; do
+for each in systemd-run systemctl journalctl wg mokutil modinfo ip; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
 : >"$ws/run.log"
@@ -149,16 +149,15 @@ sudo git -C "$clone" -c user.name=ws -c user.email=ws@example.com commit -q -m w
 sudo git -C "$clone" remote add origin "$clone"
 sudo git -C "$clone" fetch -q origin
 sudo git -C "$clone" branch -q -u origin/main
-# ws's gh and claude, root's, logged in, and ws's signing key, which root's git config names and
-# gh's account lists, as the shell role and the logins' stages leave them. So no run of the wizard
-# opens a session on ws for a login.
+# ws's claude, root's, logged in, and ws's signing key, which root's git config names, as the shell
+# role and the claude on ws stage leave them. So no run of the wizard opens a session on ws for a
+# login.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/signing" </dev/null
 sudo mkdir -p "$ws/root/root/.ssh"
 sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
 sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
-cut -d ' ' -f 1-2 "$ws/signing.pub" >"$ws/gh.keys"
-touch "$ws/gh" "$ws/claude"
+touch "$ws/claude"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws-tunnel has a
 # handshake, and lands in tunnel.log. Any other call is the runner's ssh.
