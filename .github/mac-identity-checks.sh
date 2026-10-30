@@ -71,6 +71,11 @@ three=$(printf '    %s\n' 'IdentityFile ~/.config/ws/keys/ws.pub' 'IdentitiesOnl
     'IdentityAgent "~/.ssh/ws-agent.sock"')
 [ "$(sed -n '/^    IdentityFile /,/^    IdentityAgent /p' "$ws")" = "$three" ] ||
     error "config.d/ws gives the YubiKey's key other lines than its three, in their order"
+# A config.d/ws of an older run, which gave ws the file key, must take the YubiKey's, with the
+# warning.
+sed -e "s|$yk_file|    IdentityFile ~/.ssh/id_ed25519|" \
+    -e "s|$yk_agent|    UseKeychain yes\\$nl    AddKeysToAgent yes|" "$tmp/ws" >"$ws"
+yubikey \~/.ssh/id_ed25519
 # WS_IDENTITY must give ws the file beside the .pub in place of the YubiKey's key. WS_IDENTITY_AGENT
 # must give it the agent at its socket, by a path with a blank here.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$tmp/key"
