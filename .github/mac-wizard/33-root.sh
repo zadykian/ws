@@ -14,7 +14,8 @@ set -u
 wizard=$HOME/repository/ws/mac/wizard.sh
 keys=~root/.ssh/authorized_keys
 hosts=$HOME/.ssh/known_hosts
-pub=$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)
+file=$HOME/.config/ws/keys/ws.pub
+pub=$(cut -d ' ' -f 1-2 "$file")
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -34,7 +35,7 @@ expect() {
 
 ssh-keygen -q -t ed25519 -N '' -C other -f "$RUNNER_TEMP/other" </dev/null
 other=$(cut -d ' ' -f 1-2 "$RUNNER_TEMP/other.pub")
-stop="wizard.sh: Root's key: root on ws doesn't log in by the Mac's key, $HOME/.ssh/id_ed25519.pub,"
+stop="wizard.sh: Root's key: root on ws doesn't log in by the Mac's key, $file,"
 echo "$other other" >"$RUNNER_TEMP/root.keys"
 sudo cp "$RUNNER_TEMP/root.keys" "$keys"
 out=$(sh "$wizard" </dev/null 2>&1)

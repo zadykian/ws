@@ -17,10 +17,9 @@ for dir in /usr/local /usr/local/libexec; do
     fi
 done
 # mac.conf's answers: ws by the router's name and port alone, as a Mac away from home has it. ws's
-# key is the file ~/.ssh/id_ed25519, named, as a run with no terminal to ask for another needs it.
+# key is the stand-in YubiKey's, below.
 mkdir -p ~/.config/ws
-printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
-    >~/.config/ws/mac.conf
+printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 >~/.config/ws/mac.conf
 # dash, which macOS has as /bin/dash, from Homebrew where the runner lacks it.
 command -v dash >/dev/null || brew install dash
 # The stand-in YubiKey, whose ykman goes first on PATH, for the cases' PATH below and their step.

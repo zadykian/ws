@@ -5,9 +5,9 @@
 # environment must stop --check, with the form the key takes. --check must show the environment's
 # answers as the lines it would add to mac.conf. The same answers, typed at a terminal of script's
 # after bad ones, must show the same lines, each bad one asked again with its form. Empty lines must
-# take the defaults. On a mac.conf of the Mac's key alone, a cloud VM must be asked no LAN, and need
-# its name. A VM on the Mac must be asked no router's name, and need its address. Each must show its
-# defaults. mac-vm on standin.sh's mac.conf, which holds WS_REMOTE, must stop, naming the key.
+# take the defaults. On an empty mac.conf, a cloud VM must be asked no LAN, and need its name. A VM
+# on the Mac must be asked no router's name, and need its address. Each must show its defaults.
+# mac-vm on standin.sh's mac.conf, which holds WS_REMOTE, must stop, naming the key.
 
 set -u
 
@@ -133,7 +133,7 @@ typed 'eight empty lines' '' '' '' '' '' '' '' ''
 conf=$RUNNER_TEMP/target.conf
 WS_CONF=$conf
 export WS_CONF
-echo 'WS_IDENTITY=~/.ssh/id_ed25519.pub' >"$conf"
+: >"$conf"
 cp "$conf" "$RUNNER_TEMP/mac.conf"
 quick 'wizard.sh: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
     env WS_TARGET=cloud sh "$wizard" --check

@@ -10,7 +10,7 @@ conf=$HOME/.config/ws/mac.conf
 fail=0
 
 cp "$conf" "$RUNNER_TEMP/mac.conf.env"
-printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' >"$conf"
+printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 >"$conf"
 # script gives the wizard a terminal of its own, its stdin typed there, and its output on stdout.
 # macOS's script writes its stdin's end to the terminal ahead of the lines it still holds, so the
 # end comes 5 s after them.

@@ -1,11 +1,12 @@
 #!/bin/sh
 # A fresh --check, by sh and then by dash, with standin.sh's PATH, which lacks brew. The wizard must
 # still find brew, and show setup.sh's install of wireguard-tools, where Homebrew lacks it, and the
-# Include for ~/.ssh/config. It must show the Mac's key it would make and add to gh's login, and
-# make none. The Host key stage must wait for setup.sh, Root's key for it, ws's run for root's key,
-# and gh on ws, claude on ws, the Tunnel and the Cable for ws's run. It must write none of the paths
-# that mac.yml's --check step lists, keep ~/.ssh/config as it was, and install no formula or cask.
-# It must leave no lock or file of its own in $TMPDIR.
+# Include for ~/.ssh/config. It must show the .pub of the stand-in YubiKey's key it would write for
+# ws, that it would load the keys into ws's agent, and add ws's to gh's login. The Host key stage
+# must wait for setup.sh, Root's key for it, ws's run for root's key, and gh on ws, claude on ws,
+# the Tunnel and the Cable for ws's run. It must write none of the paths that mac.yml's --check
+# step lists, nor the .pubs and ws's agent, nor load the agent's job. It must keep ~/.ssh/config as
+# it was, install no formula or cask, and leave no lock or file of its own in $TMPDIR.
 
 set -u
 
@@ -43,8 +44,10 @@ for shell in sh "$dash"; do
         error "wizard.sh --check by $shell showed no brew install wireguard-tools"
     printf '%s\n' "$out" | grep -qx '+Include config.d/ws' ||
         error "wizard.sh --check by $shell showed no Include for ~/.ssh/config"
-    printf '%s\n' "$out" | grep -q "^wizard\.sh: Mac key: would make $HOME/\.ssh/id_ed25519 " ||
-        error "wizard.sh --check by $shell showed no key it would make"
+    printf '%s\n' "$out" | grep -qxF "+++ $HOME/.config/ws/keys/ws.pub" ||
+        error "wizard.sh --check by $shell showed no .pub of the YubiKey's key for ws"
+    printf '%s\n' "$out" | grep -q "^wizard\.sh: Mac key: would load the keys ws and git into " ||
+        error "wizard.sh --check by $shell showed no load of ws's agent"
     printf '%s\n' "$out" | grep -q '^wizard\.sh: gh on the Mac: would run gh ssh-key add ' ||
         error "wizard.sh --check by $shell showed no key it would add to gh's login"
     printf '%s\n' "$out" | grep -qx 'wizard\.sh: Host key: after setup\.sh' ||
@@ -62,9 +65,13 @@ for shell in sh "$dash"; do
     printf '%s\n' "$out" | grep -qx "wizard\.sh: Cable: after ws's run" ||
         error "wizard.sh --check by $shell showed no Cable stage after ws's run"
     for made in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel /usr/local/libexec/ws-tunnel \
-        ~/.ssh/id_ed25519 /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist; do
+        /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist ~/.config/ws/keys \
+        ~/.config/ws/ws-agent ~/.config/ws/ws-agent-pin ~/.config/ws/ws-agent-confirm \
+        ~/Library/LaunchAgents/com.github.zadykian.ws-agent.plist; do
         ! sudo test -e "$made" || error "wizard.sh --check by $shell made $made"
     done
+    ! launchctl print "gui/$(id -u)/com.github.zadykian.ws-agent" >/dev/null 2>&1 ||
+        error "wizard.sh --check by $shell loaded ws's agent"
     config | cmp -s - "$RUNNER_TEMP/config" ||
         error "wizard.sh --check by $shell changed ~/.ssh/config"
     { brew list --formula && brew list --cask; } | cmp -s - "$RUNNER_TEMP/brew" ||
