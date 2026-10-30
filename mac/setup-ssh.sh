@@ -9,12 +9,12 @@ tunnel_server=10.99.0.1
 # The start of config.d/ws's first line, by which a run knows the file for the script's own.
 header="# Written by ws's mac/setup.sh"
 
-# ssh_config prints ~/.ssh/config.d/ws from mac.conf's values and the IgnoreUnknown patterns $1.
-# ssh keeps the first value it reads for a key, so each Match sets Port 22 before Host ws-ssh sets
-# the forward's port, and the cable comes before the LAN. localnetwork matches the Mac's own
-# addresses, with no probe. originalhost matches the name typed, which a HostName set above does
-# not change, unlike Match host. Until ws goes through the tunnel, via_tunnel=1, ws takes the ways
-# of ws-ssh too, so that an ssh ws that worked before goes on working.
+# ssh_config prints ~/.ssh/config.d/ws from mac.conf's values. ssh keeps the first value it reads
+# for a key, so each Match sets Port 22 before Host ws-ssh sets the forward's port, and the cable
+# comes before the LAN. localnetwork matches the Mac's own addresses, with no probe. originalhost
+# matches the name typed, which a HostName set above does not change, unlike Match host. Until ws
+# goes through the tunnel, via_tunnel=1, ws takes the ways of ws-ssh too, so that an ssh ws that
+# worked before goes on working.
 # shellcheck disable=SC2154 # ws_cable_net is lib.sh's, and via_tunnel setup.sh's
 ssh_config() {
     # The hosts of the direct ways, for Host and for Match originalhost's list.
@@ -26,10 +26,6 @@ ssh_config() {
     fi
     cat <<EOF
 $header from ~/.config/ws/mac.conf: its next run replaces changes made here.
-
-# Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
-# carries the patterns of ~/.ssh/config's own too: run setup.sh again after a change to those.
-IgnoreUnknown $1
 
 # ws over the cable, where the Mac has an address on it.
 Match originalhost $listed localnetwork $ws_cable_net
@@ -108,11 +104,6 @@ ssh_whole() {
             ws_die "ssh refuses the old config.d/ws, which ~/.ssh/config also reads, as $err:" \
                 "move it away, and run setup.sh again"
             ;;
-        *'Bad configuration option'*)
-            ws_die "ssh refuses ~/.ssh/config read after the new config.d/ws, as $err;" \
-                "config.d/ws's IgnoreUnknown, read first, carries only ~/.ssh/config's own" \
-                "patterns, so one for a file it includes must be there too"
-            ;;
         esac
         ws_die "ssh refuses ~/.ssh/config read after the new config.d/ws, as $err"
     fi
@@ -133,11 +124,10 @@ ssh_files() {
         esac
     fi
     at=$(ws_include_ok "$HOME/.ssh/config" config.d/ws) || exit 1
-    patterns=$(ws_ignore_unknown "$HOME/.ssh/config" UseKeychain)
     ws_identity "$conf"
     ws_tmp
     new=$ws_tmpfile
-    ssh_config "$patterns" >"$new"
+    ssh_config >"$new"
     if ! err=$(ssh -G -F "$new" ws-ssh 2>&1 >/dev/null) ||
         ! err=$(ssh -G -F "$new" ws 2>&1 >/dev/null); then
         rm -f "$new"
@@ -234,41 +224,6 @@ EOF
     { printf 'Include %s\n\n' "$2" && cat "$1"; } >"$ws_top" || ws_die "cannot write $ws_top"
     ws_put "$1" "$(ws_mode "$1")" <"$ws_top"
     rm -f "$ws_top"
-}
-
-# ws_ignore_unknown FILE FIRST prints FIRST and the patterns of every IgnoreUnknown of the
-# ssh_config FILE, in any block, each once, joined by commas. ssh keeps the first IgnoreUnknown it
-# reads, so the one in a file included above FILE's settings must carry them all.
-ws_ignore_unknown() {
-    ws_from=/dev/null
-    [ ! -f "$1" ] || ws_from=$1
-    awk -v first="$2" '
-        function add(pattern,  lower) {
-            lower = tolower(pattern)
-            if (pattern == "" || lower in seen)
-                return
-            seen[lower] = 1
-            out = out (out == "" ? "" : ",") pattern
-        }
-        BEGIN { add(first) }
-        {
-            line = $0
-            sub(/^[ \t]+/, "", line)
-            key = line
-            sub(/[ \t=].*/, "", key)
-        }
-        tolower(key) == "ignoreunknown" {
-            patterns = substr(line, length(key) + 1)
-            sub(/^[ \t]*=?[ \t]*/, "", patterns)
-            sub(/[ \t]#.*/, "", patterns)
-            sub(/[ \t\r]+$/, "", patterns)
-            gsub(/"/, "", patterns)
-            n = split(patterns, each, /[, \t]+/)
-            for (i = 1; i <= n; i++)
-                add(each[i])
-        }
-        END { print out }
-    ' "$ws_from" || ws_die "cannot read $1"
 }
 
 # ws_own_hosts FILE NAME... warns of each line of the ssh_config FILE that starts a Host or Match
