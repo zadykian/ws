@@ -5,11 +5,10 @@
 # pulls it. apply.sh then runs by plain ssh, its stdin the Keychain item that WS_HOOK_SECRET names,
 # as security prints it, or else empty. A stamp on ws marks a run of it that exited 0, so that a
 # second run of the wizard leaves it alone. Hook on the Mac clones the repository in
-# ~/repository/REPO by gh's login there, with its hooks and its Brewfile's formulae. It copies ws's
-# word list too, with or without WS_HOOK, where the Mac's differs. Where git lacks gh's credential
-# command, the closing list names gh auth setup-git. wizard.sh sources it, and runs the stages after
-# the Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-gh.sh, wizard-host.sh,
-# wizard-words.sh and wizard-ws.sh, and wizard.sh's by_hand. It reads wizard.sh's dir, lock, update
+# ~/repository/REPO by gh's login there, with its hooks and its Brewfile's formulae. Where git lacks
+# gh's credential command, the closing list names gh auth setup-git. wizard.sh sources it, and runs
+# the stages after the Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-gh.sh,
+# wizard-host.sh and wizard-ws.sh, and wizard.sh's by_hand. It reads wizard.sh's dir, lock, update
 # and WS_CONF, and wizard-host.sh's root_in.
 
 # wshook_ran becomes 1 once the stage ran apply.sh in this run.
@@ -135,29 +134,17 @@ wshook_fail() {
         "then run the wizard again, which runs apply.sh again"
 }
 
-# hook_after prints the stage that this one waits on, where that isn't done: Root's key, without
-# which the wizard reads no word list on ws. Where mac.conf names a repository, then Hook on ws,
-# whose apply.sh may write that list, and gh on the Mac, whose login clones the repository.
+# hook_after prints gh on the Mac, whose login clones the repository, where that isn't done.
 hook_after() {
-    if [ "$root_in" != 1 ]; then
-        echo "Root's key"
-    elif [ -n "$WS_HOOK" ] && ! wshook_done; then
-        echo "Hook on ws"
-    elif [ -n "$WS_HOOK" ] && ! gh_done; then
-        echo "gh on the Mac"
-    fi
+    gh_done || echo "gh on the Mac"
 }
 
 # hook_done succeeds where mac.conf names no repository, or where its clone is in ~/repository/REPO,
-# with core.hooksPath at its .githooks and its Brewfile's formulae installed, where it has them. The
-# Mac's word list must be ws's too, where ws has one. It reads ws only where root logged in there.
-# shellcheck disable=SC2154 # words_ws and words_mac are wizard-words.sh's
+# with core.hooksPath at its .githooks and its Brewfile's formulae installed, where it has them.
 hook_done() {
     ws_conf "$WS_CONF"
     hook_dir=$HOME/repository/${WS_HOOK#*/}
-    [ -z "$WS_HOOK" ] || { [ -e "$hook_dir/.git" ] && hook_origin && hook_hooks && hook_brew; } ||
-        return 1
-    [ "$root_in" = 1 ] && words_sums && { [ "$words_ws" = - ] || [ "$words_ws" = "$words_mac" ]; }
+    [ -z "$WS_HOOK" ] || { [ -e "$hook_dir/.git" ] && hook_origin && hook_hooks && hook_brew; }
 }
 
 # hook_origin succeeds where the clone's origin names WS_HOOK on GitHub, as the files script reads
@@ -188,10 +175,8 @@ hook_brew() {
 # hook_do clones the repository by gh's login, where nothing is there, and stops where the path
 # holds no clone, or another repository's. It points core.hooksPath at the clone's .githooks, and
 # runs brew bundle, which installs what the Brewfile names and Homebrew lacks. --check says what it
-# would run. First it copies ws's word list, where the Mac's differs.
+# would run.
 hook_do() {
-    words_copy
-    [ -n "$WS_HOOK" ] || return 0
     if [ ! -e "$hook_dir" ] && [ ! -L "$hook_dir" ]; then
         if ws_checking; then
             ws_say "Hook on the Mac: would run gh repo clone $WS_HOOK $hook_dir, then set its" \
@@ -217,11 +202,11 @@ hook_run() {
     "$@" >&2 || ws_die "Hook on the Mac: $* failed, as above"
 }
 
-# hook_fail says what to do where the Mac still lacks the clone, its hooks, its Brewfile's formulae
-# or ws's word list.
+# hook_fail says what to do where the Mac still lacks the clone, its hooks or its Brewfile's
+# formulae.
 hook_fail() {
-    echo "the clone of WS_HOOK's repository on the Mac, its hooks, its Brewfile's formulae or" \
-        "ws's word list failed, as above; mend what they printed, then run the wizard again"
+    echo "the clone of WS_HOOK's repository on the Mac, its hooks or its Brewfile's formulae" \
+        "failed, as above; mend what they printed, then run the wizard again"
 }
 
 # hook_hand adds gh auth setup-git to what stays by hand, where git's config names no credential
