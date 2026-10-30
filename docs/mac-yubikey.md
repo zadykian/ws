@@ -133,10 +133,13 @@ terminal-notifier, and allows the signature.
 - A first run of the wizard opens about 20 connections to ws. Each that comes 5 s or more after the
   last posts a notice.
 - `~/.config/ws/stamps` holds a stamp per key: the time of its last notice, and the uses since.
+  Beside it, `ID.pid` names the key's last notifier. While that runs, as terminal-notifier does
+  until its first prompt is answered, the key starts no other, and its uses fold into a later notice.
 - Without terminal-notifier, or with its notices off, each signature passes with no notice. Without
   `ws-agent-confirm`, the agent refuses each signature, until `setup.sh` copies it again.
-- Where macOS's `/bin/sh` is dash, a signature can wait for the notifier to exit, as dash closes no
-  descriptor above 9.
+- Where macOS's `/bin/sh` is dash, which closes no descriptor above 9, the agent can wait for the
+  notifier to exit. Each signature of each client then waits: at the first notice, until its prompt
+  is answered.
 
 By hand, once:
 

@@ -37,8 +37,9 @@ key_is() {
 
 # fold ID counts a use of the key ID in its stamp, ~/.config/ws/stamps/ID: the last notice's time
 # as epoch and clock, and the uses since. It succeeds where a notice is due, window seconds or more
-# after the last, and sets count to the uses it stands for and since to the last notice's clock.
-# ssh-agent waits for each askpass, so no two run at once, and the stamps need no lock.
+# after the last, with the key's last notifier gone (running), and sets count to the uses it stands
+# for and since to the last notice's clock. ssh-agent waits for each askpass, so no two run at once,
+# and the stamps need no lock.
 fold() {
     stamp=$dir/stamps/$1
     last=0 since='' count=0
@@ -49,11 +50,21 @@ fold() {
     # shellcheck disable=SC2046 # date prints two words, the epoch and the clock
     set -- $(date '+%s %H:%M:%S')
     [ -d "$dir/stamps" ] || mkdir -p "$dir/stamps"
-    if [ "$1" -ge "$last" ] && [ $(($1 - last)) -lt "$window" ]; then
+    if [ "$1" -ge "$last" ] && [ $(($1 - last)) -lt "$window" ] || running "$stamp.pid"; then
         printf '%s %s %s\n' "$last" "$since" "$count" >"$stamp"
         return 1
     fi
     printf '%s %s 0\n' "$1" "$2" >"$stamp"
+}
+
+# running FILE succeeds where FILE, a key's stamp's .pid, names a terminal-notifier that still runs.
+# terminal-notifier 3.1.0 waits for its first prompt's answer with no end, so each notice would
+# start one more, of 10 to 20 MB, until fork fails. ps, not kill -0 alone, as another process may
+# have the pid since.
+running() {
+    [ -f "$1" ] && read -r pid <"$1" || return 1
+    case $pid in '' | *[!0-9]*) return 1 ;; esac
+    case $(ps -p "$pid" -o command= 2>/dev/null) in *terminal-notifier*) ;; *) return 1 ;; esac
 }
 
 # notify ID WHAT MESSAGE runs terminal-notifier, where PATH has it, with -group replacing the key's
@@ -95,6 +106,7 @@ main() {
     [ -n "$since" ] || message="$count signatures"
     [ "$count" != 1 ] || message="1 signature"
     notify "$@" "$message" &
+    echo "$!" >"$dir/stamps/$1.pid"
 }
 
 main "$@"

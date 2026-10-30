@@ -233,7 +233,8 @@ install Homebrew's once, with git's keys alone ([mac-git-checks.sh](../.github/m
 ([mac-confirm-checks.sh](../.github/mac-confirm-checks.sh)). 50 signatures in a burst must pass with
 one notice, though the notifier lives 5 s. Under a shell that takes descriptors above 9, the
 askpass's pipe lies there. Each key must post its own, and 5 s on, the next count 50. A refused or
-missing notifier must cost the notice alone, and a missing askpass the signature.
+missing notifier must cost the notice alone, and a missing askpass the signature. While one never
+ends, its key must start no second.
 
 The job sets up a stand-in YubiKey before its first run. A SoftHSM2 token holds its keys, `ws`'s in
 slot 82 and `git`'s in 83 ([yubikey-standin.sh](../.github/yubikey-standin.sh)). They are Ed25519,

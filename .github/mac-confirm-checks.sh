@@ -3,8 +3,8 @@
 # loaded with ssh-add -c. Run it from the repository's root, on macOS or on Linux: it starts agents
 # of its own, with file keys, which -c constrains as it does the YubiKey's. Under /bin/sh, and dash
 # where installed, it runs a copy of the askpass, with a HOME of its own and a stand-in
-# terminal-notifier first on PATH, which logs each call and lives 5 s. Each failure prints an
-# ::error:: line, and any fails the script at its end.
+# terminal-notifier first on PATH, which logs each call and lives 5 s, or while the round's linger
+# is there. Each failure prints an ::error:: line, and any fails the script at its end.
 
 set -eu
 src=$(pwd)/mac/ws-agent-confirm
@@ -70,7 +70,11 @@ round() {
 printf '%s|' "\$@" >>"$PWD/log"
 echo >>"$PWD/log"
 [ ! -f "$PWD/refuse" ] || exit 3
-sleep 5
+if [ -f "$PWD/linger" ]; then
+    while [ -f "$PWD/linger" ]; do sleep 0.2; done
+else
+    sleep 5
+fi
 EOF
     chmod 755 bin/terminal-notifier
     for key in ws git other; do
@@ -138,6 +142,28 @@ EOF
     sign other || error "$1: with the stand-in gone, the other key's signature failed"
     sleep 1
     calls 5 || error "$1: the notifier was called once moved away"
+    kill "$SSH_AGENT_PID"
+
+    # A notifier that never ends, as terminal-notifier's while its first prompt waits, must start no
+    # second one for its key, ws's, whose last refused at once. Through an agent whose window is
+    # 1 s, the use beside it folds into the notice after it ends.
+    agent "$PWD/ws-agent-confirm" 1
+    mv bin/gone bin/terminal-notifier
+    rm refuse
+    touch linger
+    sleep 2
+    sign ws || error "$1: ws's signature with a notifier that lingers failed"
+    calls 6 || error "$1: ws's key posted no notice to the notifier that lingers"
+    sleep 2
+    sign ws || error "$1: ws's signature beside the notifier that lingers failed"
+    sleep 1
+    calls 6 || error "$1: ws's key started a second notifier while its first still ran"
+    rm linger
+    sleep 1
+    sign ws || error "$1: ws's signature once the notifier ended failed"
+    if ! { calls 7 && call 7 '|2 signatures since '; }; then
+        error "$1: the notice once the notifier ended was $(sed -n 7p log), not of 2"
+    fi
     kill "$SSH_AGENT_PID"
 
     agent "$PWD/missing"
