@@ -162,9 +162,50 @@ host_trust() {
 # host_ssh ARG... runs ssh with ARGs, and HostName the address that the Host key stage asked, where
 # it asked one, with 10 s to connect. Whatever the user's ssh_config says, ssh stops where
 # known_hosts lacks ws's key, or holds another, and adds nothing there: no other key, no address.
+# The first call to a host opens a master connection in the lock, and the calls after it use that
+# one. So a key that asks Touch ID at each login, as Secretive's does, asks once a run.
+# - A call that uses a master takes the master's options, not its own. The first call may be
+#   root_done's, so the options that every caller needs are here: ServerAliveInterval, for the
+#   calls that follow a long command. BatchMode stays with the calls, as only a login reads it.
+# - A socket is named for the host that ssh is given, ws-ssh or ws, as %C is 40 characters, too
+#   long for macOS's sun_path (host_room). The address that the Host key stage asked adds .1, so
+#   that a master made before it never carries a call to the new address.
+# - ControlMaster=auto opens a connection of its own where the master or its socket is gone.
+# - A master lives 30 minutes past its last call, which outlasts the Mac's longest step between two
+#   calls, a Homebrew install. host_end ends it with the run, and a run killed by SIGKILL leaves it
+#   until then.
+# shellcheck disable=SC2154 # lock is wizard.sh's
 host_ssh() {
+    if host_room; then
+        set -- -o ControlMaster=auto -o "ControlPath=$lock/%n${host_first:+.1}" \
+            -o ControlPersist=30m "$@"
+    fi
     ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o CheckHostIP=no \
-        ${host_first:+-o "HostName=$host_first"} "$@"
+        -o ServerAliveInterval=15 ${host_first:+-o "HostName=$host_first"} "$@"
+}
+
+# host_room succeeds where host_ssh may share a connection: where the lock's path leaves room for a
+# socket's. A master binds its socket at the path plus a dot and 16 characters, then links it into
+# place (mux.c's muxserver_listen), and macOS's sun_path holds 103 bytes. So a path may hold 86, and
+# the lock, which a slash and ws-ssh.1 follow, 77. A Mac's holds 63. ssh also reads % and $ in a
+# path as its own.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+host_room() {
+    case $lock in
+    *%* | *\$*) return 1 ;;
+    esac
+    [ "$(printf %s "$lock" | wc -c)" -le 77 ]
+}
+
+# host_end ends the masters that host_ssh opened in the lock, before the exit removes it. It
+# succeeds whatever it finds, as the exit trap runs it under set -e.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+host_end() {
+    for host_sock in "$lock"/*; do
+        if [ -S "$host_sock" ]; then
+            ssh -F /dev/null -O exit -o "ControlPath=$host_sock" ws >/dev/null 2>&1 || :
+        fi
+    done
 }
 
 # host_fail says what to do where known_hosts still lacks ws's key.

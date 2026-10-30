@@ -75,7 +75,8 @@ args() {
 }
 
 # lock takes a run's lock, a directory in TMPDIR that holds the run's own files, or stops where
-# another run holds it. The exit removes it, after a signal too.
+# another run holds it. The exit ends the run's ssh masters (host_ssh) and removes the lock, after a
+# signal too.
 lock() {
     lock=${TMPDIR:-/tmp}
     lock=${lock%/}/ws-wizard.lock
@@ -83,7 +84,7 @@ lock() {
         [ -d "$lock" ] || ws_die "cannot make $lock"
         ws_die "another run holds $lock: wait for it to end, or remove it where none runs"
     fi
-    trap 'rm -rf "$lock"' EXIT
+    trap 'host_end; rm -rf "$lock"' EXIT
     trap 'exit 1' HUP INT TERM
 }
 

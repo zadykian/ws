@@ -18,7 +18,7 @@ run_ran=0
 # at the address that the Host key stage asked, where it asked one. No ARG holds a blank or a quote.
 # shellcheck disable=SC2154 # dir is wizard.sh's
 remote() {
-    host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh sh -s -- "$@" \
+    host_ssh -o BatchMode=yes ws-ssh sh -s -- "$@" \
         <"$dir/wizard-remote.sh"
 }
 
