@@ -1,8 +1,8 @@
 #!/bin/sh
 # The stages Hook on the Mac and Word list, on the Mac that 47-hook.sh leaves. WS_HOOK names a
-# repository that the stand-in gh on the Mac clones, with .githooks and an empty Brewfile, as the
-# stand-in ws's gh clones it there. --check must say it would clone it, and clone nothing, and Word
-# list wait for Hook on ws. A run must clone it once
+# repository that the stand-in gh on the Mac clones, with .githooks and an empty Brewfile. --check
+# must say it would clone it, and clone nothing, Hook on ws wait for it, and Word list wait for
+# Hook on ws. A run must clone it once
 # into ~/repository/REPO, and point its core.hooksPath at its .githooks, by an absolute path. brew
 # bundle check must find the Brewfile met. As git's global config names no credential command of
 # gh's, the closing list must name gh auth setup-git, and the next run print nothing. With

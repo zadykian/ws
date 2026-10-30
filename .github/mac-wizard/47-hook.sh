@@ -1,15 +1,18 @@
 #!/bin/sh
 # The stage Hook on ws, on the Mac that 46-gh.sh leaves. WS_HOOK names a repository that the
-# stand-in ws's gh clones, and WS_HOOK_SECRET an item that a throwaway keychain, the default one,
-# lacks. --check must say it would add the item, clone the repository and run its apply.sh, and do
-# none. A run with no terminal must stop, naming security add-generic-password. --update at a
-# terminal of script's must add it, its secret typed at security's prompts, clone the repository,
-# and run apply.sh once over plain ssh. Its stdin must be the secret, and no terminal. It must
-# print no secret, and the next run nothing. Where security can't read the item, --update must stop,
-# naming its error. It must stop before the clone, the stamp kept, or, where the read for ssh fails,
-# before apply.sh runs. Where apply.sh exits 1, --update must stop, and the next run, once it exits
-# 0, run it again. With WS_HOOK_SECRET empty, its stdin must be empty. mac.conf, the clones, the
-# stamp and the keychain go back, and a run must print nothing.
+# stand-in gh on the Mac clones, and WS_HOOK_SECRET an item that a throwaway keychain, the default
+# one, lacks. Without the Mac's clone, --check must say Hook on ws is after Hook on the Mac, and a
+# run with no terminal make the clone. Then --check must say it would add the item, send the clone
+# and run its apply.sh, and do none. A run with no terminal must stop, naming security
+# add-generic-password. --update at a terminal of script's must add it, its secret typed at
+# security's prompts, fetch the repository's newer commit, and send the Mac's clone once, as a
+# bundle of its origin/main. ws must clone it on branch main, with GitHub's URL as origin, keep no
+# bundle and use no gh. apply.sh must run once over plain ssh. Its stdin must be the secret, and no
+# terminal. It must print no secret, and the next run nothing. Where security can't read the item,
+# --update must stop, naming its error. It must stop before the clone, the stamp kept, or, where
+# the read for ssh fails, before apply.sh runs. Where apply.sh exits 1, --update must stop, and the
+# next run, once it exits 0, run it again. With WS_HOOK_SECRET empty, its stdin must be empty.
+# mac.conf, the clones, the stamp and the keychain go back, and a run must print nothing.
 
 set -u
 
