@@ -97,20 +97,10 @@ ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a li
 
 The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
 sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-ins of
-[ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first on its `PATH`. `status`
-must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key for it and as
-its peer, gh's and claude's logins, Secure Boot that refuses the fans' driver, and `host_vars`'
-outbound table. A full `run` must run `bootstrap.sh` with no arguments in a unit of its own, with
-root's `HOME` and a UTF-8 locale. It must print the log, and stamp the clone's commit, 0 and `on`;
-with `-e security_outbound=false`, `off`, and write the line of its `outbound`, which stops on a
-link. A tagged run after it must start its own unit and leave that stamp. A run during another's
-unit must follow it. A full run cut off must remove the stamp of the one before, so the next starts
-a unit again. The files script, `mac/wizard-remote-files.sh`, must clone another repository by the
-stand-in `gh`, whose `apply.sh` must run as root over `ssh`. Its stamp must follow, which `status`
-must list, as `OWNER/REPO`. A clone again must leave it alone and remove the stamp, and one of
-another owner's repository of that name stop. Its `words` must print git's hash of root's word list,
-or `-` without one, and the list for that hash alone. Its `link` must list the wired ports, and
-`link PORT` name one in `host_vars` once, which `status` names once the roles give `10.77.0.1`.
+[ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first on its `PATH`. The
+cases run its `status`, its full and tagged `run`s, and the files script,
+`mac/wizard-remote-files.sh`; [41-remote.sh](../.github/mac-wizard/41-remote.sh) lists what each
+must do.
 
 The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
 the playbook through the remote script, and each run since must read ws's `status` alone, once, and
@@ -142,22 +132,13 @@ terminal of `script`'s, a run must open `github.com/login/device`, by a stand-in
 through `bash -lc` in another session. The stand-ins' logins take a terminal alone, and the next run
 must print nothing.
 
-For the Hook on ws stage, `WS_HOOK` names a repository the stand-in `gh` clones, whose `apply.sh`
-logs its stdin's SHA-256, and `WS_HOOK_SECRET` an item of a throwaway keychain. Without the item, a
-run with no terminal must stop, naming `security add-generic-password`. At a terminal of `script`'s,
-it must add the item, typed at its prompts, and run `apply.sh` once over plain ssh. Its stdin must
-be the secret, no terminal, and the next run print nothing. An unreadable item must stop `--update`
-before `apply.sh`, and a failed run leave no stamp. For the Hook on the Mac stage, the stand-in `gh`
-on the Mac clones it, with `.githooks` and an empty `Brewfile`. A run must clone it once, set its
-`core.hooksPath`, and name `gh auth setup-git` by hand, unless git's config names gh's credential
-command. The next run must print nothing. The stand-in ws's word list must go to the Mac once, mode
-600, and none of it be printed. Once the Mac's differs, `--check` must show no diff, or stop at a
-link, as a run must. For the Cable stage, ws's ports are a stand-in sysfs. Undocked, a run must
-print nothing, one that acts name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no
-terminal must stop, one with `WS_CABLE_PORT` name the port, run the roles, read its late address,
-and stop at the service. Typed, an empty line must take the `169.254` one, and `ping` answer. The
-next must read no `link`, and one after ws's install or a failed roles' run name it again. Off the
-LAN, a run and `--check` must skip it, a cloud VM's naming its firewall.
+The Hook on ws stage clones `WS_HOOK` by the stand-in `gh`, and runs its `apply.sh` as root over
+plain ssh with the secret of a throwaway keychain's item on stdin. It must stop where the item is
+missing or unreadable ([47-hook.sh](../.github/mac-wizard/47-hook.sh)). The Hook on the Mac stage
+clones it on the Mac, sets its `core.hooksPath`, and copies ws's word list
+([48-hook-mac.sh](../.github/mac-wizard/48-hook-mac.sh)). The Cable stage reads ws's ports from a
+stand-in sysfs, and runs the roles for `WS_CABLE_PORT`. Off the LAN, a run and `--check` must skip
+it, a cloud VM's naming its firewall ([49-cable.sh](../.github/mac-wizard/49-cable.sh)).
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
