@@ -91,19 +91,12 @@ then reads the file it would write, in the lock, which `WS_CONF` names. `WS_CONF
 
 ## The Mac's key
 
-ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY` names ([mac.conf](mac.md#macconf)).
-Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.pub` is there,
-`ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
-`ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
-and asks it once more. With no terminal to ask one, the key gets none.
-
-Without `WS_IDENTITY`, the keys are the YubiKey's. The stage runs `setup.sh`'s YubiKey step, which
-finds or makes them and writes their `.pub`s ([The YubiKey](mac-yubikey.md)). With no YubiKey in, a
-run waits up to 5 minutes for one. Several in stop the stage, as does a key to make with no terminal
-for ykman's questions. `--check` says it would wait, and puts the `setup.sh` and Root's key stages
-after this one, as both need the YubiKey. With one in, it names each key it would make, and its
-slot.
-git signs with the YubiKey's key, whatever `WS_IDENTITY` names ([git](mac-git.md)).
+The keys for ssh and git are the YubiKey's ([git](mac-git.md)). The stage runs `setup.sh`'s YubiKey
+step, which finds or makes them and writes their `.pub`s ([The YubiKey](mac-yubikey.md)). With no
+YubiKey in, a run waits up to 5 minutes for one. Several in stop the stage, as does a key to make
+with no terminal for ykman's questions. `--check` says it would wait, and puts the `setup.sh` and
+Root's key stages after this one, as both need the YubiKey. With one in, it names each key it would
+make, and its slot.
 
 Then [ws's agent](mac-yubikey.md#wss-agent) must list both keys, as it does only while the YubiKey
 is in. So a run with the YubiKey out waits at this stage, not at Root's key, and gh's stage finds
@@ -111,9 +104,8 @@ ws's key. Where the agent lacks one, the stage runs `setup.sh`'s agent step, and
 Where it still lacks one, the stage stops with `ssh-add -L`'s own error, or names the `.pub` whose
 key it lacks. The agent's log says why, and a replug has it load the keys again.
 
-The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
-differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
-or Secretive's, must be one that the agent lists, or the stage stops, naming the socket.
+A line of `WS_IDENTITY` or `WS_IDENTITY_AGENT` in `mac.conf`, empty too, stops the wizard, as it
+sets up no other key for ssh ([ssh's key](mac-yubikey.md#sshs-key)).
 
 ## GitHub and Ubuntu's install
 

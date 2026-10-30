@@ -76,9 +76,8 @@ from ykman's answers typed. `--check` must name their slots, and two in must sto
 logged out, a run must pass the stage once ws's agent lists the keys, and stop at gh's, and a second
 say nothing of the stage. With a key out of ws's agent, a run must stop, naming its `.pub`, or pass
 where launchd's agent, started again, loads
-it. Without the agent, a run must stop with `ssh-add`'s own words. A key of another agent's that
-`WS_IDENTITY` names, a stand-in for Secretive's, must pass the stage while that agent lists it, with
-git's name too. Once it lacks the key, the stage must stop, naming the socket.
+it. Without the agent, a run must stop with `ssh-add`'s own words. A line of `WS_IDENTITY` or
+`WS_IDENTITY_AGENT`, empty too, must stop a run and `--check` before `setup.sh`.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `setup.sh`. The
