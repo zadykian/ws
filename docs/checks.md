@@ -65,26 +65,26 @@ and fails where they differ from the repository's.
 ## The Mac's wizard
 
 A workflow of its own, `mac-wizard.yml`, runs `mac/wizard.sh` on GitHub's macOS runner, from a copy
-of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and a user would,
-such as `mac.conf`'s answers, dash, and a `gh` logged in to GitHub, first on the wizard's `PATH`.
-Then `checks.sh` runs the cases beside it in order, and stops at the first that fails
-([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root,
-and a `WS_HOOK` of `WS`, as the files script must. A run must stop where another holds the lock, and
-leave it. A fresh `--check`, by sh and by dash, must find brew with its directories taken off
-`PATH`. As `setup.sh --check` must, it must change nothing, and leave no lock or temporary file. The
-job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `--check` must show it would make.
-With no terminal and a `mac.conf` that names none, a run must stop at the Mac key stage, naming
-`WS_IDENTITY`, and make nothing. A failed `ssh-add` must stop a run, naming it. The first run, with
-that `PATH` too, must make that key, with no passphrase, add it to that login, install what
-`setup.sh` installs. It must drop the Mac's key, which `setup.sh` prints, and leave no tunnel step
-by hand, as the Tunnel stage, below, takes it. A second run and `--check` must print nothing, by sh
-and by dash. Then a stand-in for Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key,
-whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`. `--check` must print nothing of the Mac
-key stage while the agent lists the key. With git's name, it must say that it would wait for git's
-key made in Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the agent lacks the key, a run and
-`--check` must stop at the stage, naming the socket. Last, without the login of the stand-in `gh`, a
-run with no terminal must stop at gh's stage, naming `gh auth login`. With a login that lacks the
-scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say each would run.
+of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and user would,
+such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`. Then
+`checks.sh` runs the cases beside it in order, stopping at the first failure
+([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root and
+a `WS_HOOK` of `WS`, as the files script must. A run must stop where another holds the lock, leaving
+it. A fresh `--check`, by sh and dash, must find brew with its directories off `PATH`. As `setup.sh
+--check` must, it must change nothing, and leave no lock or temporary file. The job's `mac.conf`
+names `~/.ssh/id_ed25519` as ws's key, which `--check` must show it would make. With no terminal and
+a `mac.conf` that names none, a run must stop at the Mac key stage, naming `WS_IDENTITY`, making
+nothing. A file key there with no line must get one, shown by `--check`. A failed `ssh-add` must
+stop a run, naming it. The first run, with that `PATH` too, must make that key with no passphrase,
+add it to that login, install what `setup.sh` installs. It must drop the Mac's key that it prints,
+and leave no tunnel step by hand, as the Tunnel stage below takes it. A second run and `--check`
+must print nothing, by sh and dash. Then a stand-in `ssh-agent` at Secretive's socket holds a P-256
+key, whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`. While it lists the key, `--check`
+must print nothing of the Mac key stage. With git's name, it must say it would wait for git's key
+made in Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the agent lacks it, a run and
+`--check` must stop there, naming the socket. Last, without the stand-in `gh`'s login, a run with no
+terminal must stop at gh's stage, naming `gh auth login`. With a login lacking the scopes, or the
+signing one alone, it must name `gh auth refresh`. `--check` must say each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `setup.sh`. The
