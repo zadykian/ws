@@ -1,13 +1,14 @@
 # shellcheck shell=sh
 # The wizard's stages for another repository, which mac.conf's WS_HOOK names as OWNER/REPO. Hook on
-# ws runs its apply.sh as root on ws. The wizard's files script, wizard-remote-files.sh, clones the
-# repository in /root/repository/REPO there, by root's gh login, where it is missing, and never
-# pulls it. apply.sh then runs by plain ssh, its stdin the Keychain item that WS_HOOK_SECRET names,
-# as security prints it, or else empty. A stamp on ws marks a run of it that exited 0, so that a
-# second run of the wizard leaves it alone. Hook on the Mac clones the repository in
-# ~/repository/REPO by gh's login there, with its hooks and its Brewfile's formulae. Where git lacks
-# gh's credential command, the closing list names gh auth setup-git. wizard.sh sources it, and runs
-# the stages after the Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-gh.sh,
+# the Mac clones the repository in ~/repository/REPO by gh's login there, with its hooks and its
+# Brewfile's formulae. Where git lacks gh's credential command, the closing list names gh auth
+# setup-git. Hook on ws runs its apply.sh as root on ws. Where ws lacks /root/repository/REPO, it
+# sends the Mac's clone there as a git bundle of origin/main, which the wizard's files script,
+# wizard-remote-files.sh, clones on branch main, with origin on GitHub. Root's gh on ws is never
+# used, and a clone there is never pulled. apply.sh then runs by plain ssh, its stdin the Keychain
+# item that WS_HOOK_SECRET names, as security prints it, or else empty. A stamp on ws marks a run of
+# it that exited 0, so that a second run of the wizard leaves it alone. wizard.sh sources it, and
+# runs the stages after the Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-gh.sh,
 # wizard-host.sh and wizard-ws.sh, and wizard.sh's by_hand. It reads wizard.sh's dir, lock, update
 # and WS_CONF, and wizard-host.sh's root_in.
 
