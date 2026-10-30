@@ -36,7 +36,7 @@ there. The script names those of identity and signing as it adds the include.
 
 GitHub verifies a commit by the signing keys of its author's account. Where those of gh's login lack
 the key, the script adds it with `gh ssh-key add --type signing`, titled with the Mac's name. The
-`devtools` role does the same on ws ([The signing key](devtools.md#the-signing-key)). The login
+wizard does the same for ws ([Signing key](mac-wizard.md#signing-key)). The login
 needs the `write:ssh_signing_key` scope. Without a login or the scope, or on another error of gh's,
 the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
 commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,

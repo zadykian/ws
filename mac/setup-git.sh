@@ -2,8 +2,8 @@
 # The git step of mac/setup.sh, which setup-extras.sh sources, as wizard-gh.sh does for git_gh:
 # git's identity and a signing key of the Mac's own. They go in ~/.config/ws/gitconfig, which
 # ~/.gitconfig includes at its top, as the shell role sets them up on ws. gh, from Homebrew where
-# missing, takes git's pushes to GitHub, and registers the key there, as the devtools role does on
-# ws. It calls the functions of lib.sh and setup-lib.sh.
+# missing, takes git's pushes to GitHub, and registers the key there, as the wizard's Signing key
+# stage does for ws. It calls the functions of lib.sh and setup-lib.sh.
 
 # The directory of mac.conf, where the step writes its files.
 git_dir=$HOME/.config/ws
