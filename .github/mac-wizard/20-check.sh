@@ -3,9 +3,9 @@
 # still find brew, and show setup.sh's install of wireguard-tools, where Homebrew lacks it, and the
 # Include for ~/.ssh/config. It must show the Mac's key it would make and add to gh's login, and
 # make none. The Host key stage must wait for setup.sh, Root's key for it, ws's run for root's key,
-# and claude on ws, the Tunnel and the Cable for ws's run. It must write none of the paths
-# that mac.yml's --check step lists, keep ~/.ssh/config as it was, and install no formula or cask.
-# It must leave no lock or file of its own in $TMPDIR.
+# and the Signing key, claude on ws, the Tunnel and the Cable for ws's run. It must write none of
+# the paths that mac.yml's --check step lists, keep ~/.ssh/config as it was, and install no formula
+# or cask. It must leave no lock or file of its own in $TMPDIR.
 
 set -u
 
@@ -53,6 +53,8 @@ for shell in sh "$dash"; do
         error "wizard.sh --check by $shell showed no Root's key stage after the Host key"
     printf '%s\n' "$out" | grep -qx "wizard\.sh: ws's run: after Root's key" ||
         error "wizard.sh --check by $shell showed no ws's run after Root's key"
+    printf '%s\n' "$out" | grep -qx "wizard\.sh: Signing key: after ws's run" ||
+        error "wizard.sh --check by $shell showed no Signing key after ws's run"
     printf '%s\n' "$out" | grep -qx "wizard\.sh: claude on ws: after ws's run" ||
         error "wizard.sh --check by $shell showed no claude on ws after ws's run"
     printf '%s\n' "$out" | grep -qx "wizard\.sh: Tunnel: after ws's run" ||
