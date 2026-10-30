@@ -42,9 +42,9 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
-14. Hook on the Mac: that repository's clone in `~/repository/REPO`, its hooks and its `Brewfile`,
-    and ws's word list, below.
-15. Cable: on the LAN, ws's port of the cable in its `host_vars`, and the Mac's service, below.
+14. Hook on the Mac: its clone in `~/repository/REPO`, its hooks and its `Brewfile`, below.
+15. Word list: ws's, copied to the Mac where it differs, below.
+16. Cable: on the LAN, ws's port of the cable in its `host_vars`, and the Mac's service, below.
 
 ## The answers
 
@@ -247,11 +247,11 @@ clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose entrie
 `brew bundle check`, run with Homebrew's auto-update off, finds, `brew bundle` installs them, and
 upgrades nothing. `--check` names each command that the stage would run.
 
-The stage copies ws's word list too, root's `~/.config/ws/forbidden-words`, which the hooks read
-([The hooks](checks.md#the-hooks)), with `WS_HOOK` or without. Where ws has one, and the Mac's
-differs by git's hash or can't be read, the files script, `mac/wizard-remote-files.sh`, sends it
-from ws. It replaces the Mac's, mode 600, but a link there stops the stage, `--check` too, naming
-its target. The wizard never prints the list: `--check` says it would copy it, with no diff.
+The stage Word list copies ws's word list, which the hooks read ([The hooks](checks.md#the-hooks)),
+with `WS_HOOK` or without, after Hook on ws, whose `apply.sh` may write it. Where ws has one, and
+the Mac's differs by git's hash or can't be read, the files script, `mac/wizard-remote-files.sh`,
+sends it from ws. It replaces the Mac's, mode 600, but a link there stops the stage, `--check` too,
+naming its target. The wizard never prints the list: `--check` says it would copy it, with no diff.
 
 ## The cable
 
