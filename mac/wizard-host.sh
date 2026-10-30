@@ -189,7 +189,8 @@ root_done() {
 
 # root_do stops, as the wizard adds no key to ws: ws's keys come from the GitHub account at its
 # install, and the stage gh on the Mac has put the Mac's there. It names the Mac's key, and what
-# gives root that key without the wizard, at a terminal or not. Where ws doesn't answer, the Host
+# gives root that key without the wizard, at a terminal or not: the account's keys at the install,
+# or, on a ws installed before the key, its line by hand. Where ws doesn't answer, the Host
 # key stage's question gives its address now, and root may take the key there. It stops where ssh
 # logs in as another user than root, and where ws offers another host key than known_hosts holds,
 # which it never removes. --check asks nothing, and says that a run would stop. Both show ssh's
@@ -221,7 +222,8 @@ root_do() {
         "installer imports them for its user, and on a cloud VM, cloud-init gives its default" \
         "user the provider's keys, which must be the account's. Copy that user's" \
         "authorized_keys to root, as the README's \"A new machine\" does: root's file is" \
-        "replaced, so cloud-init's forced command goes. Then run the wizard again$root_err"
+        "replaced, so cloud-init's forced command goes. On a ws installed before the key," \
+        "$(ws_identity_step root). Then run the wizard again$root_err"
 }
 
 # root_fail says what to do where root still refuses the Mac's key.

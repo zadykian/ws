@@ -7,8 +7,8 @@
 # ws_identity_agent to its agent's socket, or to nothing for a key in a file. Both are paths as
 # config.d/ws names them. Without mac.conf's WS_IDENTITY, the key is the YubiKey's WS_SSH_KEY, in
 # ws's agent. setup.sh writes its .pub in ~/.config/ws/keys from the YubiKey before this runs, so
-# it goes unchecked here, and --check may lack it. ws_identity_old warns then where FILE, the
-# config.d/ws it would replace, gave ws another key. Else the key is WS_IDENTITY, and its agent
+# it goes unchecked here, and --check may lack it. It warns then where FILE, the config.d/ws it
+# would replace, gave ws another key. Else the key is WS_IDENTITY, and its agent
 # WS_IDENTITY_AGENT, or Secretive's for a .pub in its PublicKeys. It stops where that .pub, but the
 # file key's, is missing or unreadable, or holds other than one public key, as a private key or a
 # certificate does. A key that ssh-keygen can't read stops it, as does a type ws's OpenSSH 10.2
@@ -20,7 +20,11 @@ ws_identity() {
     if [ -z "$ws_identity_pub" ]; then
         ws_identity_pub=\~/.config/ws/keys/$WS_SSH_KEY.pub
         ws_identity_agent=\~/${ws_agent_socket#"$HOME"/}
-        ws_identity_old "${1-}"
+        ws_old=$(sed -n 's/^    IdentityFile //p' "${1-/dev/null}" 2>/dev/null) || ws_old=
+        [ -z "$ws_old" ] || [ "$ws_old" = "$ws_identity_pub" ] || ws_say "warning: the YubiKey's" \
+            "key, $ws_identity_pub, replaces $ws_old as ws's. The wizard's gh stage puts it on" \
+            "GitHub, whose keys a ws installed later imports. An installed ws takes it by hand:" \
+            "$(ws_identity_step "$WS_USER")"
         return 0
     fi
     [ "$ws_identity_pub$ws_identity_agent" != \~/.ssh/id_ed25519.pub ] || return 0
@@ -50,14 +54,11 @@ ws_identity() {
         "the .pub of a P-256 or ed25519 key in mac.conf's WS_IDENTITY"
 }
 
-# ws_identity_old FILE warns where FILE, the config.d/ws that setup.sh replaces, gave ws another key
-# than ws_identity's, with no WS_IDENTITY, as Secretive's key that an older run's search found.
-ws_identity_old() {
-    [ -z "$WS_IDENTITY" ] || return 0
-    ws_old=$(sed -n 's/^    IdentityFile //p' "${1:-/dev/null}" 2>/dev/null) || ws_old=
-    [ -z "$ws_old" ] || [ "${ws_old%.pub}" = "${ws_identity_pub%.pub}" ] ||
-        ws_say "warning: the key of $ws_identity_pub replaces $ws_old as ws's: add that line to" \
-            "ws's authorized_keys, or keep the old key with WS_IDENTITY=$ws_old in mac.conf"
+# ws_identity_step USER prints the step by hand that gives an installed ws the Mac's new key, named
+# before it, for USER's logins, as ws imports the GitHub account's keys at its install alone.
+ws_identity_step() {
+    echo "add the key's line to $1's ~/.ssh/authorized_keys on ws, at ws's console or over ssh" \
+        "by the old key, as docs/mac-yubikey.md shows, with no reinstall"
 }
 
 # ws_identity_lines prints config.d/ws's lines for the key that ws_identity set, which ssh offers ws

@@ -7,8 +7,6 @@
 ws=$HOME/.ssh/config.d/ws
 cp "$ws" "$tmp/ws"
 warned=
-# The .pub of the key that the job's config.d/ws gives ws.
-jobkey=\~/.config/ws/keys/ws.pub
 
 # keyed LINE... checks that ssh -G gives ws and ws-ssh LINE..., a line each, of its settings for the
 # key. Those are identitiesonly, identityagent and identityfile, a path from the home by ~/.
@@ -52,12 +50,16 @@ filed() {
     keyed 'identitiesonly yes' "identityfile $1"
 }
 
-# job OLD: changes back to the job's config.d/ws without WS_IDENTITY (sed -n p changes nothing).
-# setup.sh must warn first that the job's key replaces OLD, which config.d/ws gave ws.
-job() {
+# yubikey OLD: changes back to the job's config.d/ws without WS_IDENTITY (sed -n p changes nothing).
+# setup.sh must warn first that the YubiKey's key replaces OLD, which config.d/ws gave ws, and name
+# the step that gives an installed ws the new key.
+yubikey() {
     with
-    warned="setup.sh: warning: the key of $jobkey replaces $1 as ws's: add that line to ws's"
-    warned="$warned authorized_keys, or keep the old key with WS_IDENTITY=$1 in mac.conf$nl"
+    warned="setup.sh: warning: the YubiKey's key, ~/.config/ws/keys/ws.pub, replaces $1 as ws's."
+    warned="$warned The wizard's gh stage puts it on GitHub, whose keys a ws installed later"
+    warned="$warned imports. An installed ws takes it by hand: add the key's line to root's"
+    warned="$warned ~/.ssh/authorized_keys on ws, at ws's console or over ssh by the old key, as"
+    warned="$warned docs/mac-yubikey.md shows, with no reinstall$nl"
     changes -n p
 }
 
@@ -102,8 +104,8 @@ for line in 'ws-token AAAA' 'ssh-ws stand-in!'; do
     with "WS_IDENTITY=$tmp/token.pub"
     stops "setup.sh: $tmp/token.pub holds no public key alone"
 done
-# Without them, config.d/ws must be the job's again.
-job "$tmp/key.pub"
+# Without them, ws must take the YubiKey's key again.
+yubikey "$tmp/key.pub"
 
 # A stand-in for Secretive: ssh-agent at its socket under the runner's HOME, holding a P-256 key,
 # whose .pub is in PublicKeys. The runner must lack Secretive's container, and the file key. As the
@@ -161,6 +163,6 @@ with "WS_IDENTITY=$sec/PublicKeys/ws.pub"
 mldsa="setup.sh: $data/PublicKeys/ws.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
 stops "$mldsa"
 stops "$mldsa" --check
-# Without Secretive's agent, config.d/ws must be the job's again.
+# Without Secretive's agent and WS_IDENTITY, ws must take the YubiKey's key again.
 secretive_restore
-job "$sec/PublicKeys/other.pub"
+yubikey "$sec/PublicKeys/other.pub"
