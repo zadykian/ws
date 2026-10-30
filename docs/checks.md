@@ -60,21 +60,23 @@ and a `gh` logged in to GitHub, first on the wizard's `PATH`. Then
 unknown argument, root, and a `WS_HOOK` of `WS`, as the files script must. A run must stop where
 another holds the lock, and leave it. A fresh `--check`, by sh and by dash, must find brew with its
 directories taken off `PATH`. Like `setup.sh --check`, it must change nothing, and leave no lock or
-temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as the ssh key for ws, which
-`--check` must show it would make. The first run, with that `PATH` too, must make that key, with no
-passphrase, add it to that login, install what `setup.sh` installs. It must drop the Mac's key,
-which `setup.sh` prints, and leave no step of the tunnel by hand, as the Tunnel stage, below, takes
-it. A second run and `--check` must print nothing, by sh and by dash. Last, without the login of the
-stand-in `gh`, a run with no terminal must stop at gh's stage, naming `gh auth login`. With a login
-that lacks the scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say
-it would run each.
+temporary file. The job's `mac.conf` names no key for ws, so `--check` must show the YubiKey's
+`.pub`s it would write. The first run, with that `PATH` too, must write them, add ws's to that
+login, and install what `setup.sh` installs. It must drop the Mac's key, which `setup.sh` prints,
+and leave no step of the tunnel by hand, as the Tunnel stage, below, takes it. A second run and
+`--check` must print nothing, by sh and by dash. Last, without the login of the stand-in `gh`, a run
+with no terminal must stop at gh's stage, naming `gh auth login`. With a login that lacks the
+scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say it would run
+each.
 
-At the Mac key stage, with a `mac.conf` that names no key, `--check` must show the YubiKey's `.pub`s
-it would write. With the YubiKey out, it must say that a run would wait, and a run must wait. With
-one from the factory then, a run with no terminal must stop, naming ykman's commands. At a terminal
-of `script`'s, a run must make the keys from ykman's answers typed. `--check` must name their slots,
-and two in must stop a run. With gh logged out, a run must pass the stage once ws's agent lists the
-keys, and stop at gh's, and a second say nothing of the stage. A key of another agent's that
+At the Mac key stage, with the YubiKey out, `--check` must say that a run would wait, and put
+`setup.sh`'s stage after it, and a run must wait. With one from the factory then, a run with no
+terminal must stop, naming ykman's commands. At a terminal of `script`'s, a run must make the keys
+from ykman's answers typed. `--check` must name their slots, and two in must stop a run. With gh
+logged out, a run must pass the stage once ws's agent lists the keys, and stop at gh's, and a second
+say nothing of the stage. With a key out of ws's agent, a run must stop, naming its `.pub`, or pass
+where launchd's agent, started again, loads
+it. Without the agent, a run must stop with `ssh-add`'s own words. A key of another agent's that
 `WS_IDENTITY` names, a stand-in for Secretive's, must pass the stage while that agent lists it, with
 git's name too. Once it lacks the key, the stage must stop, naming the socket.
 
