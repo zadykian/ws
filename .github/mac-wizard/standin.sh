@@ -43,12 +43,13 @@ mkdir -p ~/Applications/"JetBrains Gateway.app"
 # /opt/homebrew/bin first on PATH, so the stand-in replaces the runner's link there. Its state is in
 # $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,
 # which gh api answers with a 404. nosign gives that 404 for the signing keys alone. keys holds its
-# login's keys, and log its calls. Its repo clone clones a repository of its own with .githooks, an
-# empty Brewfile and an apply.sh, a link to ws-standin.sh. Its origin is a path that ends in
+# login's keys, signing its signing keys, and log its calls. Its repo clone clones a repository of
+# its own with .githooks, an empty Brewfile and an apply.sh, a link to ws-standin.sh. Its origin is a path that ends in
 # github.com/OWNER/REPO, which the wizard takes for GitHub's, so that a fetch works offline.
 here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$RUNNER_TEMP/gh"
 : >"$RUNNER_TEMP/gh/keys"
+: >"$RUNNER_TEMP/gh/signing"
 touch "$RUNNER_TEMP/gh/login"
 rm -f /opt/homebrew/bin/gh
 cat >/opt/homebrew/bin/gh <<EOF
@@ -64,7 +65,9 @@ case \$* in
     ;;
 'api --paginate user/ssh_signing_keys --jq .[].key')
     [ ! -f "\$state/nosign" ] || { echo 'gh: Not Found (HTTP 404)' >&2 && exit 1; }
+    cat "\$state/signing"
     ;;
+'ssh-key add '*' --type signing '*) awk 'NF { print \$1, \$2; exit }' "\$3" >>"\$state/signing" ;;
 'ssh-key add '*) awk 'NF { print \$1, \$2; exit }' "\$3" >>"\$state/keys" ;;
 'repo clone '*' -- -q')
     up="\$state/github.com/\$3"
@@ -149,14 +152,15 @@ sudo git -C "$clone" -c user.name=ws -c user.email=ws@example.com commit -q -m w
 sudo git -C "$clone" remote add origin "$clone"
 sudo git -C "$clone" fetch -q origin
 sudo git -C "$clone" branch -q -u origin/main
-# ws's claude, root's, logged in, and ws's signing key, which root's git config names, as the shell
-# role and the claude on ws stage leave them. So no run of the wizard opens a session on ws for a
-# login.
+# ws's claude, root's, logged in, and ws's signing key, which root's git config names and the
+# stand-in gh lists, as the shell role and the stages leave them. So no run of the wizard opens a
+# session on ws for a login.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/signing" </dev/null
 sudo mkdir -p "$ws/root/root/.ssh"
 sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
 sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
+cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
 touch "$ws/claude"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws-tunnel has a
