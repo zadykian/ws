@@ -71,62 +71,17 @@ keys_home() {
     esac
 }
 
-# keys_do makes the key that keys_done lacks, or says why it can't. It stops where keys_new finds
-# a line of a key other than the YubiKey's. Without WS_IDENTITY, it runs setup.sh's YubiKey and
-# agent steps, once one YubiKey is in, which find or make the YubiKey's keys and have ws's agent
-# load them, or stop. A WS_IDENTITY outside Secretive's PublicKeys, with no agent, is a key in a
-# file, which keys_file makes. Else ws_identity names its agent, which must list it.
+# keys_do runs setup.sh's YubiKey and agent steps, once one YubiKey is in, which find or make the
+# YubiKey's keys and have ws's agent load them, or stop. It stops first where keys_new finds a line
+# of a key other than the YubiKey's.
 keys_do() {
     ws_conf "$WS_CONF"
     keys_new || ws_die "Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY alone," \
         "not one that mac.conf's $keys_old names: remove the line, as docs/mac-yubikey.md says"
-    if [ -z "$WS_IDENTITY" ]; then
-        yubikey_tools "Mac key"
-        keys_plugged || return 0
-        yubikey_keys "Mac key"
-        keys_agent
-        return
-    fi
-    keys_pub=$(keys_home "$WS_IDENTITY")
-    if [ -n "$keys_pub" ] && [ -z "$WS_IDENTITY_AGENT" ] &&
-        [ "${keys_pub#"$ws_secretive"/PublicKeys/}" = "$keys_pub" ]; then
-        keys_file "${keys_pub%.pub}"
-        return
-    fi
-    ws_identity
-    keys_pub=$(keys_home "$ws_identity_pub")
-    keys_there || ws_die "Mac key: the agent at $(keys_home "$ws_identity_agent") lists no key" \
-        "of $keys_pub: open Secretive, where it is that agent, or start the agent, then run the" \
-        "wizard again"
-}
-
-# keys_file KEY makes KEY, a key in a file, where neither it nor KEY.pub is there. Else it stops
-# where one is missing, or the two differ, saying how to mend that, and runs ws_identity's checks.
-keys_file() {
-    if [ ! -e "$1" ] && [ ! -e "$1.pub" ]; then
-        keys_make "$1"
-        return
-    fi
-    [ -e "$1" ] || ws_die "Mac key: $1.pub is there without its private key, $1: remove it, or" \
-        "name the agent that holds the key in mac.conf's WS_IDENTITY_AGENT"
-    keys_same "$1" || ws_die "Mac key: $1.pub is not $1's public key: ssh-keygen -y -f $1" \
-        ">$1.pub writes it"
-    ws_identity
-}
-
-# keys_make KEY makes the ed25519 key KEY, whose passphrase ssh-keygen asks at the terminal. It
-# gives the key to ssh's agent, and the passphrase to the Keychain, so that ssh asks no more.
-# Without the agent, ssh asks at the first login instead, and the Keychain keeps it then.
-keys_make() {
-    if ws_checking; then
-        ws_say "Mac key: would make $1 with ssh-keygen -t ed25519 -a 100, then run ssh-add" \
-            "--apple-use-keychain $1"
-        return 0
-    fi
-    ws_say "Mac key: making $1: ssh-keygen asks its passphrase twice, then ssh-add once"
-    ssh-keygen -q -t ed25519 -a 100 -f "$1" >&2 || ws_die "Mac key: ssh-keygen cannot make $1"
-    ssh-add --apple-use-keychain "$1" >&2 || ws_say "Mac key: warning: ssh-add cannot give $1 to" \
-        "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
+    yubikey_tools "Mac key"
+    keys_plugged || return 0
+    yubikey_keys "Mac key"
+    keys_agent
 }
 
 # keys_plugged waits up to 5 minutes for a YubiKey where none is in, as the one with the keys may be
@@ -194,15 +149,10 @@ keys_listed() {
     keys_lacks=
 }
 
-# keys_fail says what to do where the Mac's key is still missing after keys_do. Where ws's agent
-# lacks one of the YubiKey's keys, it gives ssh-add -L's own error, as with no agent at the socket,
-# or names the .pub whose key the agent lacks.
+# keys_fail says what to do where ws's agent still lacks one of the YubiKey's keys after keys_do. It
+# gives ssh-add -L's own error, as with no agent at the socket, or names the .pub whose key the
+# agent lacks.
 keys_fail() {
-    if [ -n "$WS_IDENTITY" ]; then
-        echo "WS_IDENTITY's key, $WS_IDENTITY, is not there: make it, or remove WS_IDENTITY for" \
-            "the YubiKey's, then run the wizard again"
-        return 0
-    fi
     keys_listed || :
     keys_why=" lists no key of $keys_lacks"
     [ "$keys_status" = 0 ] || keys_why=": ssh-add -L: $(printf '%s\n' "$keys_list" | tail -n 1)"
