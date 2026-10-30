@@ -95,7 +95,8 @@ ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY` names ([mac.conf](
 Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.pub` is there,
 `ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
 `ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
-and asks it once more. With no terminal to ask one, the key gets none.
+and asks it once more. With no terminal to ask one, the key gets none. Where `ssh-add` fails, the
+wizard stops, as Root's key logs in with no prompt. Run the command it names, then the wizard again.
 
 Without `WS_IDENTITY`, and with no key yet, the wizard asks whether Secretive keeps the key, in the
 Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and where

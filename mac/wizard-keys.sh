@@ -97,7 +97,9 @@ keys_file() {
 
 # keys_make KEY makes the ed25519 key KEY, whose passphrase ssh-keygen asks at the terminal. It
 # gives the key to ssh's agent, and the passphrase to the Keychain, so that ssh asks no more.
-# Without the agent, ssh asks at the first login instead, and the Keychain keeps it then.
+# Root's key logs in with BatchMode, where ssh asks for no passphrase, so a passphrase that neither
+# holds fails it. Where ssh-add fails, the stage stops. The next run finds the key there and makes
+# no more, so the stop names the command to run by hand.
 keys_make() {
     if ws_checking; then
         ws_say "Mac key: would make $1 with ssh-keygen -t ed25519 -a 100, then run ssh-add" \
@@ -106,8 +108,9 @@ keys_make() {
     fi
     ws_say "Mac key: making $1: ssh-keygen asks its passphrase twice, then ssh-add once"
     ssh-keygen -q -t ed25519 -a 100 -f "$1" >&2 || ws_die "Mac key: ssh-keygen cannot make $1"
-    ssh-add --apple-use-keychain "$1" >&2 || ws_say "Mac key: warning: ssh-add cannot give $1 to" \
-        "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
+    ssh-add --apple-use-keychain "$1" >&2 || ws_die "Mac key: $1 is made, but ssh-add cannot" \
+        "give it to the agent: run ssh-add --apple-use-keychain $1, which asks its passphrase," \
+        "then run the wizard again"
 }
 
 # keys_choose makes ws's key where it has none: in Secretive, where its app is there or the
