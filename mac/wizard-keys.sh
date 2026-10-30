@@ -13,6 +13,13 @@
 # shellcheck source=setup-agent.sh
 . "$dir/setup-agent.sh"
 
+# keys_after prints Tools, bootstrap.sh's stage, where the keys are the YubiKey's, as mac.conf
+# names no WS_IDENTITY, and PATH has no brew to install ykman.
+keys_after() {
+    command -v brew >/dev/null || (ws_conf "$WS_CONF" && [ -n "$WS_IDENTITY" ]) >/dev/null 2>&1 ||
+        echo Tools
+}
+
 # keys_done succeeds where the key that ssh offers ws is there: in a file beside the .pub whose
 # fingerprint it shares, or listed by the agent that holds it. Without WS_IDENTITY, ws's agent must
 # list git's key of the YubiKey's too.
