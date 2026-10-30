@@ -50,6 +50,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-tunnel.sh"
 # shellcheck source=wizard-hook.sh
 . "$dir/wizard-hook.sh"
+# shellcheck source=wizard-words.sh
+. "$dir/wizard-words.sh"
 # shellcheck source=wizard-cable.sh
 . "$dir/wizard-cable.sh"
 
