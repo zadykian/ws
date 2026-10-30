@@ -64,13 +64,15 @@ keys_home() {
 }
 
 # keys_do makes the key that keys_done lacks, or says why it can't. Without WS_IDENTITY, it runs
-# setup.sh's YubiKey and agent steps, which find or make the YubiKey's keys and have ws's agent load
-# them, or stop. A WS_IDENTITY outside Secretive's PublicKeys, with no agent, is a key in a file,
-# which keys_file makes. Else ws_identity names its agent, which must list it.
+# setup.sh's YubiKey and agent steps, once one YubiKey is in, which find or make the YubiKey's keys
+# and have ws's agent load them, or stop. A WS_IDENTITY outside Secretive's PublicKeys, with no
+# agent, is a key in a file, which keys_file makes. Else ws_identity names its agent, which must
+# list it.
 keys_do() {
     ws_conf "$WS_CONF"
     if [ -z "$WS_IDENTITY" ]; then
         yubikey_tools "Mac key"
+        keys_plugged || return 0
         yubikey_keys "Mac key"
         agent
         return
@@ -115,6 +117,37 @@ keys_make() {
     ssh-keygen -q -t ed25519 -a 100 -f "$1" >&2 || ws_die "Mac key: ssh-keygen cannot make $1"
     ssh-add --apple-use-keychain "$1" >&2 || ws_say "Mac key: warning: ssh-add cannot give $1 to" \
         "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
+}
+
+# keys_plugged waits up to 5 minutes for a YubiKey where none is in, as the one with the keys may be
+# out at a run's start. Where several are in, yubikey_keys stops after it. --check waits for none:
+# it says what a run would do, and fails, and sets keys_wait, at which setup.sh's stage and Root's
+# key's come after this one, as both need the YubiKey. Before ykman's install, it passes, as
+# yubikey_keys then says what it would do.
+# shellcheck disable=SC2154 # yubikey_tools sets yubikey_ykman
+keys_plugged() {
+    [ -n "$yubikey_ykman" ] && ! keys_in || return 0
+    if ws_checking; then
+        ws_say "Mac key: no YubiKey is in; a run would wait up to 5 minutes for one, then find" \
+            "or make the keys $WS_SSH_KEY and $WS_GIT_KEY on it"
+        # shellcheck disable=SC2034 # setup_after and root_after read it
+        keys_wait=1
+        return 1
+    fi
+    ws_say "Mac key: no YubiKey is in: plug in the one with ws's keys, or a new one; the wizard" \
+        "waits up to 5 minutes for it"
+    keys_left=150
+    until keys_in; do
+        [ "$((keys_left -= 1))" -ge 0 ] || ws_die "Mac key: no YubiKey came in 5 minutes: plug" \
+            "in the one with ws's keys, or a new one, then run the wizard again"
+        sleep 2
+    done
+}
+
+# keys_in succeeds where a YubiKey is in, as ykman lists its serial. It stops where ykman fails.
+keys_in() {
+    keys_serials=$(yubikey_serials) || ws_die "Mac key: ykman list --serials failed"
+    [ -n "$keys_serials" ]
 }
 
 # keys_fail says what to do where the Mac's key is still missing after keys_do.

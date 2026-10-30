@@ -1,8 +1,9 @@
 #!/bin/sh
 # The Mac key stage on a fresh Mac, with a mac.conf of its own that names no key for ws, so the keys
-# are the YubiKey's. --check must say it would write their .pubs, and stop with the YubiKey out.
-# With it in, a run with no terminal or login of gh's must write them, pass the stage once ws's
-# agent lists the keys, and stop at gh's, before setup.sh's. A second must say nothing of the stage.
+# are the YubiKey's. --check must say it would write their .pubs, and with the YubiKey out, that a
+# run would wait for it. With it in, a run with no terminal or login of gh's must write them, pass
+# the stage once ws's agent lists the keys, and stop at gh's, before setup.sh's. A second must say
+# nothing of the stage.
 # None may make a file key, change that mac.conf, or leave a lock or file in $TMPDIR.
 
 set -u
@@ -38,8 +39,10 @@ keys --check
     error "wizard.sh --check exited $status, showed no $keys/ws.pub it would write, or wrote it"
 sh "$standin" unplug 30000001
 keys --check
-want="wizard.sh: Mac key: no YubiKey is in: plug in the one with ws's keys, or a new one"
-if [ "$status" != 1 ] || ! printf '%s\n' "$mac" | grep -qxF "$want"; then
+want="wizard.sh: Mac key: no YubiKey is in; a run would wait up to 5 minutes for one, then find or"
+want="$want make the keys ws and git on it"
+if [ "$status" != 0 ] || ! printf '%s\n' "$mac" | grep -qxF "$want" ||
+    ! printf '%s\n' "$out" | grep -qxF 'wizard.sh: setup.sh: after Mac key'; then
     error "wizard.sh --check with no YubiKey exited $status, with '$mac'"
 fi
 sh "$standin" plug 30000001

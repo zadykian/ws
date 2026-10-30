@@ -172,9 +172,14 @@ host_fail() {
     echo "$host_file still holds no key under ws, as above; run the wizard again"
 }
 
-# root_after prints Host key where known_hosts lacks ws's key, without which ssh logs in nowhere.
+# root_after prints Host key where known_hosts lacks ws's key, without which ssh logs in nowhere,
+# and Mac key where that stage would wait for a YubiKey (keys_plugged), whose key logs in.
 root_after() {
-    host_done || echo "Host key"
+    if ! host_done; then
+        echo "Host key"
+    elif [ -n "${keys_wait:-}" ]; then
+        echo "Mac key"
+    fi
 }
 
 # root_done succeeds where ssh logs in to ws-ssh as root by the Mac's key, and runs a command, and

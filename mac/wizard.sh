@@ -129,9 +129,14 @@ closing() {
 }
 
 # setup_after prints Tools, bootstrap.sh's stage, where PATH has no brew, at which setup.sh --check
-# would stop.
+# would stop, and Mac key where that stage would wait for a YubiKey (keys_plugged), as setup.sh's
+# YubiKey step stops without one.
 setup_after() {
-    command -v brew >/dev/null || echo Tools
+    if ! command -v brew >/dev/null; then
+        echo Tools
+    elif [ -n "${keys_wait:-}" ]; then
+        echo "Mac key"
+    fi
 }
 
 # setup_do runs mac/setup.sh, or setup.sh --check, after sudo's password rather than amid its
