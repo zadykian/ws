@@ -131,9 +131,13 @@ unit of its own. That run must end with what stays by hand: the fans' driver and
 forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
 `WS_TARGET=cloud`, a run must turn the outbound table off, and the next none.
 
-`standin.sh` logs ws's claude in, so no run may open a session on ws for a login. A fresh `--check`
-must show claude on ws after ws's run. Without claude's login, a run must stop at claude on ws,
-naming `claude auth login`, and `--check` must say it would run it. The next must print nothing.
+`standin.sh` logs ws's claude in, and the Mac's gh lists ws's signing key, so no run may open a
+session on ws for a login. A fresh `--check` must show the Signing key and claude on ws after ws's
+run. With the key off the gh login, `--check` must say it would run `gh ssh-key add --type signing`,
+titled with ws's hostname. A run must add it to the signing keys alone, and list ws's gh login by
+hand without `WS_HOOK`. The next must print nothing, as a run must where root's git config names no
+key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
+`--check` must say it would run it. The next must print nothing.
 
 The stand-in `bootstrap.sh --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820, with
 the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's run.
