@@ -149,11 +149,10 @@ By hand, once:
 
 ## ssh's key
 
-Without `WS_IDENTITY`, `~/.ssh/config.d/ws` gives `ws` and `ws-ssh` the key of `WS_SSH_KEY` alone:
-its `.pub` as `IdentityFile`, and ws's agent as `IdentityAgent`. So ssh signs through ws's agent,
-whatever agent the app that runs it has. Whether JetBrains Gateway's own client takes
-`IdentityAgent` too is a check by hand still. Nothing falls back to Secretive's key or a file key.
-`WS_IDENTITY` still names a file key ([ssh's hosts](mac.md#sshs-hosts)).
+`~/.ssh/config.d/ws` gives `ws` and `ws-ssh` the key of `WS_SSH_KEY` alone: its `.pub` as
+`IdentityFile`, and ws's agent as `IdentityAgent`. So ssh signs through ws's agent, whatever agent
+the app that runs it has. Whether JetBrains Gateway's own client takes `IdentityAgent` too is a
+check by hand still. Nothing falls back to Secretive's key or a file key.
 
 Where ws's agent lacks the key, as with the YubiKey out, ssh reads the `.pub` as a private key. It
 then prints `WARNING: UNPROTECTED PRIVATE KEY FILE!` before `Permission denied`. That calls for the
@@ -188,5 +187,6 @@ git signs with the key of `WS_GIT_KEY` through ws's agent too, and with no other
 Before the YubiKey, `mac.conf` named other keys and agents. A line of such a key, empty too, stops
 `setup.sh`, naming the key that replaced it. Remove the line:
 
-- `WS_IDENTITY_AGENT`, the socket of another agent, as Secretive's: ws's agent holds ssh's key, of
-  `WS_SSH_KEY`.
+- `WS_IDENTITY`, the `.pub` of ssh's key for ws, as `~/.ssh/id_ed25519.pub`: ssh offers ws the
+  key of `WS_SSH_KEY`.
+- `WS_IDENTITY_AGENT`, the socket of another agent, as Secretive's: ws's agent holds ssh's key.

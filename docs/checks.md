@@ -185,7 +185,7 @@ must take both back, and spare a script's own. Last, `ws_conf` must read an empt
 `mac.conf` as its key's default, and still stop on a value of the wrong form. It must also stop on a
 `WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address. It must take
 `WS_SSH_KEY` and `WS_GIT_KEY` of `a-z`, `0-9` and `-` alone, and stop where both name one key. It
-must stop on a line of `WS_IDENTITY_AGENT`, set or empty
+must stop on a line of `WS_IDENTITY` or `WS_IDENTITY_AGENT`, set or empty
 ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `setup.sh`
 must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
 then none. It must warn of a disabled service. It must stop on one networksetup lacks, or one with a
@@ -205,12 +205,10 @@ take them out at an unplug, and load them again at a plug, a replug, a second Yu
 both at `~/.ssh/ws-agent.sock` and sign with each, launchd's from `setup.sh`'s copy, and `setup.sh`
 then print nothing. Each signature must run `ws-agent-confirm`, which counts it in its key's stamp
 ([mac-agent-checks.sh](../.github/mac-agent-checks.sh)). `ssh -G` must give
-`ws` and `ws-ssh` the YubiKey's `.pub` and ws's agent, by three lines of `config.d/ws`. It must give
-them the file that `WS_IDENTITY` names, with `--check` showing `config.d/ws`'s diff alone. Back on
-the YubiKey's key, from it or from an older run's file key, `setup.sh` must warn once that it
-replaces the other. A `.pub` that is missing or unreadable, or holds a private key, a certificate or
-a line that is no key, must stop `setup.sh` too. So must a key that ssh-keygen cannot read or ws's
-OpenSSH lacks ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
+`ws` and `ws-ssh` the YubiKey's `.pub` and ws's agent, by three lines of `config.d/ws`. From an
+older run's, of the file key, `setup.sh` must warn once that the YubiKey's key replaces it, with
+`--check` showing `config.d/ws`'s diff alone
+([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
 Without the stand-in app, `setup.sh` must install Gateway's cask once, through a stand-in brew that
 refuses any other call, and then print nothing. With an app in `/Applications`, it must install
 nothing. A failed install, or one that leaves no app, must draw a warning, and the run go on to the

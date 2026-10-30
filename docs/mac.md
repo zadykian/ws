@@ -53,15 +53,15 @@ display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's po
 [The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
 git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the
 `.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
-`WS_IDENTITY` is the `.pub` of a key in a file that ssh offers ws: [ssh's hosts](#sshs-hosts).
-`WS_SSH_KEY` and `WS_GIT_KEY` name the YubiKey's keys for ssh and git: [The YubiKey](mac-yubikey.md).
+`WS_SSH_KEY` and `WS_GIT_KEY` name the YubiKey's keys for ssh and git:
+[The YubiKey](mac-yubikey.md).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
-`root` for `WS_USER` and 51820 for `WS_PORT`. Without `WS_IDENTITY` and `WS_GIT_SIGNING_KEY`, ssh
-and git take the YubiKey's keys: [ssh's hosts](#sshs-hosts) and [git on the Mac](mac-git.md). A
-line of `WS_IDENTITY_AGENT`, empty too, stops the script
-([From the old keys](mac-yubikey.md#from-the-old-keys)).
+`root` for `WS_USER` and 51820 for `WS_PORT`. ssh takes the YubiKey's key
+([ssh's hosts](#sshs-hosts)), and git too without `WS_GIT_SIGNING_KEY`
+([git on the Mac](mac-git.md)). A line of `WS_IDENTITY` or `WS_IDENTITY_AGENT`, empty too, stops
+the script ([From the old keys](mac-yubikey.md#from-the-old-keys)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -95,11 +95,7 @@ host on another network that uses the LAN's subnet then meets a host key mismatc
 A session ends after 90 s without word from ws, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`): the YubiKey's, through ws's agent, as
-[ssh's key](mac-yubikey.md#sshs-key) says. `WS_IDENTITY` names a key in a file instead, by its
-`.pub`: ssh reads the file beside it, its passphrase kept in the Keychain. The script stops where
-that `.pub`, but the file key's, is missing or unreadable. It stops too where the `.pub` holds other
-than one public key's line, as a private key or a certificate does. So does a key that ssh-keygen
-cannot read, or one of a type that ws's OpenSSH lacks, as an ML-DSA key.
+[ssh's key](mac-yubikey.md#sshs-key) says.
 
 The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
 reads for each key. So neither the file's own settings nor the other files of `config.d` override
@@ -114,12 +110,6 @@ to. It stops where the line is missing there, rather than replace the link with 
 replace it. It warns of a `Host` or `Match` of `~/.ssh/config`'s own for `ws` or `ws-ssh`, whose
 settings come after those of `config.d/ws`. Remove an older `Host ws` there, whose `IdentityFile`
 would add a key to ws's.
-
-ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
-`UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
-patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the script again after a change to those.
-A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as the script
-reads no other file.
 
 Before it writes, the script has `ssh -G`, for `ws` and `ws-ssh`, read the new `config.d/ws` alone.
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
