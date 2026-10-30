@@ -1,8 +1,8 @@
 # shellcheck shell=sh source-path=SCRIPTDIR
 # The wizard's Mac key stage: the YubiKey's keys for ssh and git, which the stage finds or makes as
 # setup.sh does, and ws's agent loads. wizard.sh sources it, and runs the stage after Answers and
-# before gh on the Mac, which adds ssh's key to GitHub. It calls the functions of lib.sh,
-# setup-lib.sh and wizard-ask.sh, and reads WS_CONF, mac.conf's path.
+# before gh on the Mac, which adds ssh's key to GitHub. It calls the functions of lib.sh and
+# setup-lib.sh, and reads WS_CONF, mac.conf's path.
 
 # The YubiKey's step and the agent's are setup.sh's, sourced from dir, mac/'s path, as wizard.sh
 # sets it.
@@ -20,7 +20,7 @@ keys_after() {
 # while the YubiKey is in. So a run with the YubiKey out waits for it here, rather than failing at
 # Root's key.
 keys_done() {
-    (ws_conf "$WS_CONF" && ask_lacks WS_IDENTITY && keys_listed) >/dev/null 2>&1
+    (ws_conf "$WS_CONF" && keys_listed) >/dev/null 2>&1
 }
 
 # keys_home PATH prints PATH with a ~/ first made the home's path.
@@ -32,13 +32,9 @@ keys_home() {
 }
 
 # keys_do runs setup.sh's YubiKey and agent steps, once one YubiKey is in, which find or make the
-# YubiKey's keys and have ws's agent load them, or stop. It stops first where mac.conf has a line of
-# WS_IDENTITY, empty too, which named a key other than the YubiKey's.
+# YubiKey's keys and have ws's agent load them, or stop.
 keys_do() {
     ws_conf "$WS_CONF"
-    ask_lacks WS_IDENTITY || ws_die "Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY" \
-        "alone, not one that mac.conf's WS_IDENTITY names: remove the line, as" \
-        "docs/mac-yubikey.md says"
     yubikey_tools "Mac key"
     keys_plugged || return 0
     yubikey_keys "Mac key"
