@@ -175,13 +175,16 @@ wsclaude_fail() {
 }
 
 # run_hand adds what stays by hand of ws, the router and the Mac to the closing list, after a run in
-# which a stage acted. ws's part comes from the remote script's status, which the stage read.
+# which a stage acted. ws's part comes from the remote script's status, which the stage read. ws's
+# gh has a login by apply.sh of WS_HOOK's repository, or else by hand.
 # mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only with a LAN.
 # Off the LAN, run_away's lines take the router's place.
 # shellcheck disable=SC2154 # acted is wizard.sh's, host_first wizard-host.sh's
 run_hand() {
     [ "$acted" = 1 ] || return 0
     remote_read || true
+    [ -n "$WS_HOOK" ] || by_hand "ws's gh login: gh auth login -h github.com --with-token on" \
+        "ws, with a fine-grained token, as mac.conf names no WS_HOOK (README.md, By hand)."
     [ "$(remote_get fans)" != refused ] || by_hand "ws's fans' driver: with Secure Boot on," \
         "DKMS's key, enrolled at ws's console (docs/fans.md, Secure Boot)."
     [ "$WS_TARGET" = cloud ] || [ "$(remote_get outbound)" != off ] || by_hand "ws's outbound" \
