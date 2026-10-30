@@ -2,9 +2,9 @@
 # The wizard's remote script on the stand-in ws, on the Mac that 40-again.sh leaves, sent to root
 # over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins.
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
-# logins. Then gh's and claude's logins, with ws's signing key listed, and Secure Boot off. A full
-# run must run bootstrap.sh without arguments in a unit of its own, with root's HOME and a UTF-8
-# locale, print its log and exit 0. It must stamp the clone's commit, 0 and on in run, and the unit
+# login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
+# off. A full run must run bootstrap.sh without arguments in a unit of its own, with root's HOME and
+# a UTF-8 locale, print its log and exit 0. It must stamp the clone's commit, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
@@ -68,14 +68,19 @@ mac=$(head -c 32 /dev/urandom | base64)
 echo "$key" >"$ws/wg0"
 touch "$ws/sb" "$ws/nct6687"
 echo "$mac" | sudo tee "$peer" >/dev/null
-rm "$ws/gh" "$ws/claude"
-states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'cable -' 'peer -' \
+rm "$ws/claude"
+states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")" \
+    "hostname $(hostname)" 'claude login' 'fans refused' 'cable -' 'peer -' \
     'hook -' 'outbound on'
-touch "$ws/gh" "$ws/claude"
+touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'cable -' 'peer -' 'hook -' 'outbound on'
+sudo git config -f "$ws/root/root/.gitconfig" --unset user.signingkey
+states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
+    'peer -' 'hook -' 'outbound on'
 rm "$ws/nct6687"
+sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
+    "$ws/root/root/.ssh/id_ed25519_signing.pub"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
 

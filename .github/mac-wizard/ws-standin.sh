@@ -8,11 +8,8 @@
 # - run.log holds systemd-run's arguments, and bootstrap.log bootstrap.sh's, a line each;
 # - bootstrap.wait holds the seconds that bootstrap.sh runs, and bootstrap.status its status;
 # - with bootstrap.cut, bootstrap.sh kills the unit's job, as a stop or a reboot would;
-# - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and gh and
-#   claude log each in;
-# - gh.keys holds the signing keys of gh's account, which bootstrap.sh --tags devtools adds ws's to,
-#   gh.nosign gives their list a 404, as a login without the write:ssh_signing_key scope gets, and
-#   gh.fail fails it with gh's message in the file, as a revoked token's 401 or GitHub's 5xx;
+# - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
+#   in;
 # - ws.key is wg0's key, which bootstrap.sh --tags wireguard makes, and utun names wg0, root's;
 # - apply.log holds a line for each run of apply.sh: tty where its stdin is a terminal, else the
 #   SHA-256 of what it read there, and apply.status its status;
@@ -106,9 +103,6 @@ bootstrap.sh)
         kill -9 "$PPID"
         exit 1
     fi
-    # The devtools role adds ws's signing key to the account, where gh's login has the scope.
-    [ "$*" != '--tags devtools' ] || [ ! -f "$s/gh" ] || [ -f "$s/gh.nosign" ] ||
-        cut -d ' ' -f 1-2 "$s/signing.pub" >>"$s/gh.keys"
     [ "$*" != '--tags wireguard' ] || wg0 || exit 1
     [ "$*" != '--tags network,wireguard' ] || direct
     echo 'PLAY RECAP'
@@ -118,27 +112,6 @@ wg)
     # wg0's key, and with show wg0 peers the peers of wg0's wireguard-go.
     [ "$*" = 'show wg0 peers' ] || exec cat "$s/wg0" 2>/dev/null
     /usr/local/libexec/ws-tunnel/wg show "$(cat "$s/utun")" peers
-    ;;
-gh)
-    # The calls of the wizard's scripts on ws, then the device flow's login and refresh, which the
-    # wizard runs in ssh -t: each fails without a terminal.
-    case $* in
-    'auth token -h github.com') [ -f "$s/gh" ] && echo standin ;;
-    'api --paginate user/ssh_signing_keys --jq .[].key')
-        [ -f "$s/gh" ] || exit 4
-        [ ! -f "$s/gh.nosign" ] || { echo 'gh: Not Found (HTTP 404)' >&2 && exit 1; }
-        # gh prints the error's body on stdout, with no newline, and its own message on stderr.
-        [ ! -f "$s/gh.fail" ] || { printf '{"message":"-"}' && cat "$s/gh.fail" >&2 && exit 1; }
-        cat "$s/gh.keys"
-        ;;
-    'auth login -h github.com -p https -w -s write:ssh_signing_key')
-        [ -t 0 ] || exit 1
-        echo '! First copy your one-time code: 0000-0000'
-        touch "$s/gh" && rm -f "$s/gh.nosign"
-        ;;
-    'auth refresh -h github.com -s write:ssh_signing_key') [ -t 0 ] && rm -f "$s/gh.nosign" ;;
-    *) exit 2 ;;
-    esac
     ;;
 claude)
     case $* in
