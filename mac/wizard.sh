@@ -12,7 +12,7 @@
 # in order, after the Tools and Clone of mac/bootstrap.sh, which runs the wizard on a new Mac:
 #
 # - Answers: the values mac.conf lacks, from the environment or asked at the terminal;
-# - Mac key: the key that ssh offers ws, the YubiKey's, found or made, else WS_IDENTITY's;
+# - Mac key: the YubiKey's keys for ssh and git, found or made, and listed by ws's agent;
 # - gh on the Mac: gh's login to GitHub, and the Mac's key among its keys, for Ubuntu's installer;
 # - setup.sh: mac/setup.sh, which needs Homebrew and mac.conf (docs/mac.md);
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;

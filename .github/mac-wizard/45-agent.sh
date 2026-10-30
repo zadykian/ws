@@ -4,12 +4,9 @@
 # .pub. Where launchd has gui/UID, it runs ws's agent, which the stage starts again, so the run must
 # pass, with both keys listed. With libykcs11's link away, as ws's agent then exits, a run must stop
 # with ssh-add's own words. With the YubiKey out, a run must wait for it, and say no more once it
-# comes back. Then the stand-in for Secretive's agent is an ssh-agent at its socket that holds a
-# P-256 key, whose .pub is in PublicKeys. With a mac.conf of its own that names that .pub in
-# WS_IDENTITY, --check must print nothing of the stage while the agent lists the key, with git's
-# name too, as git's key is the YubiKey's. Once the agent lacks it, a run and --check must stop at
-# the stage, naming the socket, before setup.sh's. None may change the Mac's own or ssh's files.
-# The stand-ins go after.
+# comes back. Then a mac.conf of its own with a line of another key for ssh, of WS_IDENTITY or
+# WS_IDENTITY_AGENT, empty too, must stop a run and --check before setup.sh's, naming WS_SSH_KEY.
+# None may change the Mac's own or ssh's files.
 
 set -u
 
@@ -17,9 +14,6 @@ wizard=$HOME/repository/ws/mac/wizard.sh
 github=$HOME/repository/ws/.github
 socket=$HOME/.ssh/ws-agent.sock
 keys=$HOME/.config/ws/keys
-container=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
-data=$container/Data
-pub=$data/PublicKeys/0123456789abcdef0123456789abcdef.pub
 conf=$HOME/.config/ws/mac.conf
 fail=0
 
@@ -45,6 +39,25 @@ stopped() {
         printf '%s\n' "$out" | grep -q '^setup\.sh: '; then
         error "wizard.sh exited $status, with '$mac', not '$1'"
     fi
+}
+
+# refused WANT LINE...: with the Mac's own mac.conf and LINE..., a run and --check must exit 1 with
+# WANT among their lines, before setup.sh's, and leave conf as it was.
+refused() {
+    want=$1
+    shift
+    { cat ~/.config/ws/mac.conf && printf '%s\n' "$@"; } >"$conf"
+    cp "$conf" "$RUNNER_TEMP/agent.conf.before"
+    for args in '' --check; do
+        keys ${args:+"$args"}
+        case $status:$out in
+        1:*"$want"*) ;;
+        *) error "wizard.sh${args:+ $args} with $* exited $status, not with '$want'" ;;
+        esac
+        ! printf '%s\n' "$out" | grep -q '^setup\.sh: ' ||
+            error "wizard.sh${args:+ $args} with $* ran setup.sh"
+    done
+    cmp -s "$conf" "$RUNNER_TEMP/agent.conf.before" || error "wizard.sh changed $conf"
 }
 
 # files prints the Mac's own mac.conf and ssh's files.
@@ -93,36 +106,12 @@ want="wizard.sh: Mac key: no YubiKey is in: plug in the one with ws's keys, or a
 want="$want wizard waits up to 5 minutes for it"
 [ "$status" = 0 ] && [ "$mac" = "$want" ] || error "wizard.sh exited $status, with '$mac'"
 
-if [ -e "$container" ]; then
-    echo "::error::the runner has $container, which the case makes"
-    exit 1
-fi
-trap 'kill "$agent" 2>/dev/null; rm -rf "$container" "$RUNNER_TEMP"/agent*' EXIT
-mkdir -p "$data/PublicKeys"
-ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$RUNNER_TEMP/agent" </dev/null
-agent=$(ssh-agent -a "$data/socket.ssh" | sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p')
-SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$RUNNER_TEMP/agent"
-cp "$RUNNER_TEMP/agent.pub" "$pub"
+trap 'rm -f "$RUNNER_TEMP"/agent*' EXIT
 conf=$RUNNER_TEMP/agent.conf
-{ cat ~/.config/ws/mac.conf && echo "WS_IDENTITY=~/${pub#"$HOME"/}"; } >"$conf"
-cp "$conf" "$RUNNER_TEMP/agent.conf.before"
-
-keys --check
-[ "$status" = 0 ] && [ -z "$mac" ] || error "wizard.sh --check exited $status, with '$mac'"
-printf '%s\n' 'WS_GIT_NAME="Jane Doe"' WS_GIT_EMAIL=jane@example.com >>"$conf"
-keys --check
-[ "$status" = 0 ] && [ -z "$mac" ] ||
-    error "wizard.sh --check with git's name exited $status, with '$mac'"
-cp "$RUNNER_TEMP/agent.conf.before" "$conf"
-SSH_AUTH_SOCK=$data/socket.ssh ssh-add -D 2>/dev/null
-want="wizard.sh: Mac key: the agent at $data/socket.ssh lists no key of $pub: open Secretive,"
-want="$want where it is that agent, or start the agent, then run the wizard again"
-for args in '' --check; do
-    keys ${args:+"$args"}
-    [ "$status" = 1 ] && [ "$mac" = "$want" ] ||
-        error "wizard.sh${args:+ $args} exited $status, with '$mac', not '$want'"
-    ! printf '%s\n' "$out" | grep -q '^setup\.sh: ' || error "wizard.sh${args:+ $args} ran setup.sh"
-done
-cmp -s "$conf" "$RUNNER_TEMP/agent.conf.before" || error "wizard.sh changed $conf"
+alone="wizard.sh: Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY alone, not one that"
+refused "$alone mac.conf's WS_IDENTITY names" 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
+refused "$alone mac.conf's WS_IDENTITY names" WS_IDENTITY=
+refused "$alone mac.conf's WS_IDENTITY_AGENT names" 'WS_IDENTITY_AGENT=~/.ssh/agent.sock' \
+    'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 files | cmp -s - "$RUNNER_TEMP/agent.files" || error "wizard.sh changed the Mac's own files"
 exit "$fail"

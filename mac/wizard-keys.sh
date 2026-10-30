@@ -25,8 +25,16 @@ keys_after() {
 # list git's key of the YubiKey's too, as it lists both only while the YubiKey is in. So a run with
 # the YubiKey out waits for it here, rather than failing at Root's key.
 keys_done() {
-    (ws_conf "$WS_CONF" && ws_identity && keys_there &&
+    (ws_conf "$WS_CONF" && keys_new && ws_identity && keys_there &&
         { [ -n "$WS_IDENTITY" ] || keys_listed; }) >/dev/null 2>&1
+}
+
+# keys_new succeeds where mac.conf has no line of WS_IDENTITY_AGENT or WS_IDENTITY, empty or not,
+# which named a key other than the YubiKey's. Else it sets keys_old to that key, the agent's first.
+keys_new() {
+    for keys_old in WS_IDENTITY_AGENT WS_IDENTITY; do
+        ask_lacks "$keys_old" || return 1
+    done
 }
 
 # keys_there succeeds where the key that ws_identity set is there: the agent lists the .pub's type
@@ -63,13 +71,15 @@ keys_home() {
     esac
 }
 
-# keys_do makes the key that keys_done lacks, or says why it can't. Without WS_IDENTITY, it runs
-# setup.sh's YubiKey and agent steps, once one YubiKey is in, which find or make the YubiKey's keys
-# and have ws's agent load them, or stop. A WS_IDENTITY outside Secretive's PublicKeys, with no
-# agent, is a key in a file, which keys_file makes. Else ws_identity names its agent, which must
-# list it.
+# keys_do makes the key that keys_done lacks, or says why it can't. It stops where keys_new finds
+# a line of a key other than the YubiKey's. Without WS_IDENTITY, it runs setup.sh's YubiKey and
+# agent steps, once one YubiKey is in, which find or make the YubiKey's keys and have ws's agent
+# load them, or stop. A WS_IDENTITY outside Secretive's PublicKeys, with no agent, is a key in a
+# file, which keys_file makes. Else ws_identity names its agent, which must list it.
 keys_do() {
     ws_conf "$WS_CONF"
+    keys_new || ws_die "Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY alone," \
+        "not one that mac.conf's $keys_old names: remove the line, as docs/mac-yubikey.md says"
     if [ -z "$WS_IDENTITY" ]; then
         yubikey_tools "Mac key"
         keys_plugged || return 0
