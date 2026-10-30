@@ -20,15 +20,7 @@ keys_after() {
 # while the YubiKey is in. So a run with the YubiKey out waits for it here, rather than failing at
 # Root's key.
 keys_done() {
-    (ws_conf "$WS_CONF" && keys_new && keys_listed) >/dev/null 2>&1
-}
-
-# keys_new succeeds where mac.conf has no line of WS_IDENTITY_AGENT or WS_IDENTITY, empty or not,
-# which named a key other than the YubiKey's. Else it sets keys_old to that key, the agent's first.
-keys_new() {
-    for keys_old in WS_IDENTITY_AGENT WS_IDENTITY; do
-        ask_lacks "$keys_old" || return 1
-    done
+    (ws_conf "$WS_CONF" && ask_lacks WS_IDENTITY && keys_listed) >/dev/null 2>&1
 }
 
 # keys_home PATH prints PATH with a ~/ first made the home's path.
@@ -40,12 +32,13 @@ keys_home() {
 }
 
 # keys_do runs setup.sh's YubiKey and agent steps, once one YubiKey is in, which find or make the
-# YubiKey's keys and have ws's agent load them, or stop. It stops first where keys_new finds a line
-# of a key other than the YubiKey's.
+# YubiKey's keys and have ws's agent load them, or stop. It stops first where mac.conf has a line of
+# WS_IDENTITY, empty too, which named a key other than the YubiKey's.
 keys_do() {
     ws_conf "$WS_CONF"
-    keys_new || ws_die "Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY alone," \
-        "not one that mac.conf's $keys_old names: remove the line, as docs/mac-yubikey.md says"
+    ask_lacks WS_IDENTITY || ws_die "Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY" \
+        "alone, not one that mac.conf's WS_IDENTITY names: remove the line, as" \
+        "docs/mac-yubikey.md says"
     yubikey_tools "Mac key"
     keys_plugged || return 0
     yubikey_keys "Mac key"
