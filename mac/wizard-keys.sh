@@ -68,7 +68,8 @@ keys_signing() {
 # keys_do makes the key that keys_done lacks, or says why it can't. Without WS_IDENTITY, it runs
 # setup.sh's YubiKey and agent steps, which find or make the YubiKey's keys and have ws's agent load
 # them, or stop. A WS_IDENTITY outside Secretive's PublicKeys, with no agent, is a key in a file,
-# which keys_file makes. Else its agent must list it. git's key in Secretive follows ws's.
+# which keys_file makes. Else ws_identity names its agent, which must list it. git's key in
+# Secretive follows ws's.
 keys_do() {
     ws_conf "$WS_CONF"
     if [ -z "$WS_IDENTITY" ]; then
@@ -85,15 +86,9 @@ keys_do() {
     fi
     ws_identity
     keys_pub=$(keys_home "$ws_identity_pub")
-    if [ -n "$ws_identity_agent" ]; then
-        keys_there || ws_die "Mac key: the agent at $(keys_home "$ws_identity_agent") lists no" \
-            "key of $keys_pub: open Secretive, where it is that agent, or start the agent, then" \
-            "run the wizard again"
-    elif [ -e "$keys_pub" ] || [ -e "${keys_pub%.pub}" ]; then
-        keys_file "${keys_pub%.pub}"
-    else
-        keys_choose || return 1
-    fi
+    keys_there || ws_die "Mac key: the agent at $(keys_home "$ws_identity_agent") lists no key" \
+        "of $keys_pub: open Secretive, where it is that agent, or start the agent, then run the" \
+        "wizard again"
     ! keys_signing || keys_git
 }
 
@@ -124,55 +119,6 @@ keys_make() {
     ssh-keygen -q -t ed25519 -a 100 -f "$1" >&2 || ws_die "Mac key: ssh-keygen cannot make $1"
     ssh-add --apple-use-keychain "$1" >&2 || ws_say "Mac key: warning: ssh-add cannot give $1 to" \
         "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
-}
-
-# keys_choose makes ws's key where it has none: in Secretive, where its app is there or the
-# terminal's answer is other than no, else in keys_pub's file, by keys_make. --check asks nothing,
-# and says what each answer would do. With no terminal, it stops, naming the key that answers.
-keys_choose() {
-    if keys_app; then
-        keys_secretive
-    elif ws_checking; then
-        ws_say "Mac key: would ask whether Secretive keeps the Mac's key: yes installs its cask," \
-            "no makes ${keys_pub%.pub} with ssh-keygen"
-    else
-        [ -t 0 ] || ws_die "Mac key: no terminal to ask whether Secretive keeps the Mac's key:" \
-            "set WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for ssh-keygen's, or run the" \
-            "wizard at a terminal"
-        printf "Keep the Mac's ssh key in Secretive, in the Secure Enclave? [Y/n]: " >&2
-        read -r keys_answer || ws_die "Mac key: the terminal ended before the answer"
-        case $keys_answer in
-        [Nn]*) keys_make "${keys_pub%.pub}" ;;
-        *) keys_secretive ;;
-        esac
-    fi
-}
-
-# keys_secretive has the user make ws's key in Secretive's app, installed where missing, at its
-# default protection, which asks for Touch ID at each use. It writes the key's .pub and the agent
-# into mac.conf, as ws_identity takes a key of Secretive's by name alone, and the agent must list
-# it. --check takes the agent as ws's, for keys_signing.
-keys_secretive() {
-    keys_agent=\~/${ws_secretive#"$HOME"/}/socket.ssh
-    if ws_checking; then
-        keys_app || ws_say "Mac key: would run brew install --cask secretive"
-        ws_say "Mac key: would open Secretive, and wait for ws's key made there"
-        ws_identity_agent=$keys_agent
-        return 0
-    fi
-    keys_app || brew install --cask secretive >&2 || ws_die "Mac key: brew install --cask" \
-        "secretive failed; install Secretive, or answer no for ssh-keygen's key"
-    open -a Secretive || ws_say "Mac key: warning: open cannot find Secretive: open it by hand"
-    keys_skip=$(keys_home "$WS_GIT_SIGNING_KEY")
-    keys_pick "a P-256 key for ws's login, at its default protection"
-    keys_login=\~/${keys_got#"$HOME"/}
-    ! ask_lacks WS_IDENTITY || ask_write "$(ask_line WS_IDENTITY "$keys_login")
-$(ask_line WS_IDENTITY_AGENT "$keys_agent")
-" "Mac key" || return 1
-    ws_conf "$WS_CONF"
-    ws_identity
-    keys_there || ws_die "Mac key: Secretive's agent lists no key of $keys_pub: finish" \
-        "Secretive's setup, then run the wizard again"
 }
 
 # keys_git has the user make git's signing key in Secretive's app, beside ws's, at Notify, so that
@@ -222,12 +168,6 @@ keys_other() {
         keys_got=$keys_each
     done
     [ -n "$keys_got" ]
-}
-
-# keys_app succeeds where Secretive's app is in /Applications, where its cask puts it, or in
-# ~/Applications.
-keys_app() {
-    [ -d /Applications/Secretive.app ] || [ -d "$HOME/Applications/Secretive.app" ]
 }
 
 # keys_fail says what to do where the Mac's key is still missing after keys_do.
