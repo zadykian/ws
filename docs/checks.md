@@ -181,10 +181,10 @@ files alone, set its `core.hooksPath` once, and run the wizard, which then print
 second run and `--check` must print nothing at all. Where `WS_CONF` names no file, the wizard under
 `bootstrap.sh --check` must show the lines it would write there, from the answers in the
 environment, and write none. In a home without a clone, `--check` must list the clone and the
-wizard's stages, as `wizard.sh` runs them, and make nothing. Then its functions, all but its last
-line, must download Homebrew's pinned `.pkg` and pass its check of the SHA-256 and signer. A run
-makes that check before the install, which the case never runs. The log shows `pkgutil`'s chain. The
-check must refuse the `.pkg` cut short, and another signer.
+wizard's stages, as `wizard.sh` runs them, and make nothing outside macOS's `Library`. Then its
+functions, all but its last line, must download Homebrew's pinned `.pkg` and pass its check of the
+SHA-256 and signer. A run makes that check before the install, which the case never runs. The log
+shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another signer.
 
 ## The Mac
 
