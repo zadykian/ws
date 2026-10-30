@@ -23,7 +23,7 @@ Each role is a tag of `site.yml`, with a page of its own:
   repositories.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
-  rustup. It registers the machine's signing key with GitHub.
+  rustup.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`claude`](docs/claude.md): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
@@ -57,14 +57,11 @@ sudo install -d -m 700 /root/.ssh
 sudo install -m 600 ~/.ssh/authorized_keys /root/.ssh/authorized_keys
 ```
 
-Then, as root, after `sudo -i` if you log in as the installer's user, install gh and log in to
-GitHub. The login's scope lets the run register the machine's signing key
-([Signing](docs/shell.md#signing)). apt waits up to 10 minutes for the lock its daily jobs hold
-after the first boot, as in `bootstrap.sh`. Then run `bootstrap.sh`:
+Then, as root, after `sudo -i` if you log in as the installer's user, run `bootstrap.sh`. It
+installs no gh and logs nothing in before it: the `devtools` role installs gh, and its login comes
+by hand ([By hand](#by-hand)).
 
 ```sh
-apt-get -o DPkg::Lock::Timeout=600 install -y gh
-gh auth login -h github.com -s write:ssh_signing_key
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh | sh
 ```
 
@@ -89,13 +86,6 @@ Its arguments go to `ansible-playbook`: `--tags NAME` runs the role NAME alone.
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home. A cloud VM passes
 `-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). `-e` holds
 for one run: a value every run needs, as that one, goes in the untracked `host_vars/localhost.yml`.
-
-Where gh logged in without the `write:ssh_signing_key` scope, add it once, before the run, so that
-the run registers the machine's signing key ([The signing key](docs/devtools.md#the-signing-key)):
-
-```sh
-gh auth refresh -h github.com -s write:ssh_signing_key
-```
 
 ## Dry runs
 
@@ -123,9 +113,12 @@ or `dockerd --validate`, only as it writes the file.
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
-checks root's key, runs `bootstrap.sh`, logs gh and claude in there, and gives `wg0` the Mac's key.
-Without it, `gh auth login` comes before `bootstrap.sh` or a later `--tags devtools` run, then
-`gh auth setup-git`, the claude login and the Mac's key. These stay manual:
+checks root's key, runs `bootstrap.sh`, adds ws's signing key to GitHub, logs claude in there, and
+gives `wg0` the Mac's key. Without it, the gh login, `gh auth setup-git`, the claude login and the
+Mac's key stay manual. ws's gh takes a fine-grained personal access token, which `WS_HOOK`'s
+repository's vault logs gh in with, or `gh auth login -h github.com --with-token` by hand. Its
+permissions are the account's selected repositories; Metadata and Actions read; Contents, Pull
+requests, Issues and Workflows read and write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](docs/wireguard.md#the-tunnel);
 - the VPN's profile and the `ikeward` role's variables, vault-encrypted on the server, as in

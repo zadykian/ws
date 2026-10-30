@@ -18,12 +18,13 @@
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
 # - Root's key: root's login to ws by the Mac's key, which the wizard checks and never adds;
 # - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
-# - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
+# - Signing key: ws's public signing key among the signing keys of the Mac's gh login;
 # - claude on ws: root's claude there, logged in over ssh -t;
 # - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again;
-# - Hook on ws: the repository that WS_HOOK names, cloned on ws, and its apply.sh run there as root;
-# - Hook on the Mac: that repository's clone in ~/repository, its hooks and its Brewfile's formulae,
-#   and ws's word list;
+# - Hook on the Mac: the repository that WS_HOOK names, cloned in ~/repository, its hooks and its
+#   Brewfile's formulae;
+# - Hook on ws: that repository, cloned on ws, and its apply.sh run there as root;
+# - Word list: ws's, copied to the Mac where it differs;
 # - Cable: on the LAN, ws's port of the cable from the Mac's display, in host_vars on ws, and the
 #   Mac's service.
 #
@@ -46,10 +47,14 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-host.sh"
 # shellcheck source=wizard-ws.sh
 . "$dir/wizard-ws.sh"
+# shellcheck source=wizard-signing.sh
+. "$dir/wizard-signing.sh"
 # shellcheck source=wizard-tunnel.sh
 . "$dir/wizard-tunnel.sh"
 # shellcheck source=wizard-hook.sh
 . "$dir/wizard-hook.sh"
+# shellcheck source=wizard-words.sh
+. "$dir/wizard-words.sh"
 # shellcheck source=wizard-cable.sh
 . "$dir/wizard-cable.sh"
 
@@ -190,11 +195,12 @@ main() {
     stage "Host key" host
     stage "Root's key" root
     stage "ws's run" run
-    stage "gh on ws" wsgh
+    stage "Signing key" signing
     stage "claude on ws" wsclaude
     stage Tunnel tunnel
-    stage "Hook on ws" wshook
     stage "Hook on the Mac" hook
+    stage "Hook on ws" wshook
+    stage "Word list" words
     stage Cable cable
     run_hand
     hook_hand

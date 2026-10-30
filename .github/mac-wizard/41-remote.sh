@@ -2,18 +2,21 @@
 # The wizard's remote script on the stand-in ws, on the Mac that 40-again.sh leaves, sent to root
 # over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins.
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
-# logins. Then gh's and claude's logins, with ws's signing key listed, and Secure Boot off. A full
-# run must run bootstrap.sh without arguments in a unit of its own, with root's HOME and a UTF-8
-# locale, print its log and exit 0. It must stamp the clone's commit, 0 and on in run, and the unit
+# login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
+# off. A full run must run bootstrap.sh without arguments in a unit of its own, with root's HOME and
+# a UTF-8 locale, print its log and exit 0. It must stamp the clone's commit, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
 # unit of its own, as must one with -e security_outbound=false, which is full too, stamps off in
 # run, and names security_outbound: false in host_vars itself. One with another argument, as
-# --diff, must leave that stamp. The files script must clone
-# another repository by the stand-in gh, whose apply.sh must run as root over ssh, its stdin empty.
-# Its stamp must follow, which status must list. Its clone again must leave the clone, and remove
-# the stamp, and another owner's must stop. Its words must print git's hash of root's word list, or
+# --diff, must leave that stamp. The files script's bundle must print the path for a bundle of
+# another repository's origin/main, where ws lacks the clone. Its clone from the bundle sent there
+# must be on main with its origin on GitHub, remove the bundle, and have an apply.sh that must run
+# as root over ssh, its stdin empty. Its stamp must follow, which status must list. Its clone again
+# must leave the clone, and remove the stamp, and another owner's must stop. Its bundle where ws has
+# the clone must print nothing, and its clone with no bundle, or from one cut short, must stop,
+# leaving no clone. Its words must print git's hash of root's word list, or
 # - without one, and the list for that hash alone. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
 # ws's host_vars once, and bootstrap.sh --tags network,wireguard then give it 10.77.0.1, and
@@ -65,14 +68,19 @@ mac=$(head -c 32 /dev/urandom | base64)
 echo "$key" >"$ws/wg0"
 touch "$ws/sb" "$ws/nct6687"
 echo "$mac" | sudo tee "$peer" >/dev/null
-rm "$ws/gh" "$ws/claude"
-states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'cable -' 'peer -' \
+rm "$ws/claude"
+states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")" \
+    "hostname $(hostname)" 'claude login' 'fans refused' 'cable -' 'peer -' \
     'hook -' 'outbound on'
-touch "$ws/gh" "$ws/claude"
+touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'cable -' 'peer -' 'hook -' 'outbound on'
+sudo git config -f "$ws/root/root/.gitconfig" --unset user.signingkey
+states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
+    'peer -' 'hook -' 'outbound on'
 rm "$ws/nct6687"
+sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
+    "$ws/root/root/.ssh/id_ed25519_signing.pub"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
 
@@ -144,7 +152,26 @@ files() {
     printf '%s\n' "$out"
 }
 
+# send REPO: the files script's bundle op names a path on ws for a bundle of example/REPO's
+# origin/main, which goes there as the wizard sends it. Its apply.sh is a link to the stand-in
+# script, as the Mac's stand-in gh makes it.
+send() {
+    src=$RUNNER_TEMP/$1
+    rm -rf "$src"
+    git init -q -b main "$src"
+    ln -s "$(cd "$(dirname "$0")" && pwd)/ws-standin.sh" "$src/apply.sh"
+    git -C "$src" add apply.sh
+    git -C "$src" -c user.name=ws -c user.email=ws@example.com commit -q -m "$1"
+    git -C "$src" update-ref refs/remotes/origin/main HEAD
+    git -C "$src" bundle create -q "$src.bundle" origin/main
+    files bundle "example/$1"
+    [ "$status" = 0 ] && [ "$out" = "$stamps/hook-$1.bundle" ] ||
+        error "the files script's bundle of example/$1 exited $status, printing '$out'"
+    ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out" <"$src.bundle"
+}
+
 hook=$ws/root/root/repository/hook
+send hook
 files clone example/hook
 [ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: cloned example/hook into $hook" ] &&
     [ -x "$hook/apply.sh" ] || error "the files script's clone exited $status"
@@ -159,12 +186,33 @@ files stamp example/hook
 remote status
 printf '%s\n' "$out" | grep -qx 'hook example/hook' || error "status listed no example/hook"
 files clone example/hook
-[ "$status" = 0 ] && [ -z "$out" ] && [ "$(cat "$ws/clone.log")" = example/hook ] &&
-    [ "$(stamp hook-hook)" = - ] || error "the files script's clone again exited $status"
+[ "$status" = 0 ] && [ -z "$out" ] && [ "$(stamp hook-hook)" = - ] ||
+    error "the files script's clone again exited $status"
 files clone other/hook
 [ "$status" = 1 ] && [ "$out" = "wizard-remote-files.sh: $hook is not other/hook's clone, its \
 origin 'https://github.com/example/hook.git': move it aside" ] ||
     error "the files script's clone of another owner's repository exited $status"
+pack=$ws/root/root/repository/pack
+send pack
+files clone example/pack
+[ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: cloned example/pack into $pack" ] &&
+    [ -x "$pack/apply.sh" ] && [ ! -e "$stamps/hook-pack.bundle" ] &&
+    [ "$(sudo git -C "$pack" remote get-url origin)" = https://github.com/example/pack.git ] &&
+    [ "$(sudo git -C "$pack" rev-parse --abbrev-ref 'main@{upstream}')" = origin/main ] ||
+    error "the files script's clone from a bundle exited $status, or made another clone"
+files bundle example/pack
+[ "$status" = 0 ] && [ -z "$out" ] || error "its bundle where ws has the clone exited $status"
+sudo rm -rf "$pack"
+files clone example/pack
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'sent no bundle' && [ ! -e "$pack" ] ||
+    error "its clone with no bundle exited $status, or made a clone"
+files bundle example/pack
+echo cut | ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out"
+files clone example/pack
+[ "$status" = 1 ] && [ ! -e "$pack" ] && [ ! -e "${pack%/*}/.pack.part" ] &&
+    [ ! -e "$stamps/hook-pack.bundle" ] ||
+    error "its clone from a bundle cut short exited $status, or left a clone or the bundle"
+rm -rf "$RUNNER_TEMP"/hook "$RUNNER_TEMP"/hook.bundle "$RUNNER_TEMP"/pack "$RUNNER_TEMP"/pack.bundle
 list=$ws/root/root/.config/ws/forbidden-words
 files words
 [ "$status" = 0 ] && [ "$out" = - ] || error "the files script's words with no list exited $status"
@@ -237,5 +285,5 @@ remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
 sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
-rm -f "$ws/clone.log" "$ws/apply.log" "$ws/uplink"
+rm -f "$ws/apply.log" "$ws/uplink"
 exit "$fail"

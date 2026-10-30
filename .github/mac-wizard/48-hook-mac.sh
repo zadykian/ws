@@ -1,7 +1,8 @@
 #!/bin/sh
-# The stage Hook on the Mac, on the Mac that 47-hook.sh leaves. WS_HOOK names a repository that the
-# stand-in gh on the Mac clones, with .githooks and an empty Brewfile, as the stand-in ws's gh
-# clones it there. --check must wait for Hook on ws, and clone nothing. A run must clone it once
+# The stages Hook on the Mac and Word list, on the Mac that 47-hook.sh leaves. WS_HOOK names a
+# repository that the stand-in gh on the Mac clones, with .githooks and an empty Brewfile. --check
+# must say it would clone it, and clone nothing, Hook on ws wait for it, and Word list wait for
+# Hook on ws. A run must clone it once
 # into ~/repository/REPO, and point its core.hooksPath at its .githooks, by an absolute path. brew
 # bundle check must find the Brewfile met. As git's global config names no credential command of
 # gh's, the closing list must name gh auth setup-git, and the next run print nothing. With
@@ -60,8 +61,8 @@ leaked() {
 # fetch, print and change none of the list, and leave the link.
 linked() {
     wizard "$@"
-    [ "$status" = 1 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Hook on the \
-Mac: $mine is a link to $RUNNER_TEMP/words, which the wizard leaves, and ws's word list differs: \
+    [ "$status" = 1 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Word list: \
+$mine is a link to $RUNNER_TEMP/words, which the wizard leaves, and ws's word list differs: \
 remove the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the \
 wizard again" &&
         [ -L "$mine" ] && [ "$(tail -n 1 "$mine")" = other-word ] &&
@@ -77,8 +78,9 @@ copied=$(copies)
 sudo mkdir -p "${list%/*}"
 printf '%s\n' '# stand-in words' example-word 'stand-in phrase' | sudo tee "$list" >/dev/null
 wizard --check
-[ "$status" = 0 ] && printf '%s\n' "$out" |
-    grep -qx 'wizard\.sh: Hook on the Mac: after Hook on ws' && [ ! -e "$clone" ] ||
+[ "$status" = 0 ] && printf '%s\n' "$out" | grep -qx 'wizard\.sh: Word list: after Hook on ws' &&
+    printf '%s\n' "$out" | grep -qF "wizard.sh: Hook on the Mac: would run gh repo clone \
+example/hook $clone, then " && [ ! -e "$clone" ] ||
     error "wizard.sh --check exited $status, or cloned"
 wizard
 [ "$status" = 0 ] && ! printf '%s\n' "$out" | grep -q 'running brew bundle' &&
@@ -95,7 +97,7 @@ wizard
     [ "$(copies)" = $((copied + 1)) ] || error "the next run exited $status, cloned, or copied"
 echo other-word >>"$mine"
 wizard --check
-[ "$status" = 0 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Hook on the Mac: \
+[ "$status" = 0 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Word list: \
 would copy ws's word list to $mine, mode 600" && [ "$(tail -n 1 "$mine")" = other-word ] ||
     error "wizard.sh --check with the Mac's list changed exited $status, or copied it"
 mv "$mine" "$RUNNER_TEMP/words"
@@ -124,7 +126,7 @@ cp "$before" "$conf"
 rm -f "$mine"
 sudo rm -rf "$ws/root/root/repository/hook" "$ws/root/var/lib/ws-wizard/hook-hook" \
     "$ws/root/root/.config"
-rm -f "$ws/clone.log" "$ws/apply.log" "$before" "$RUNNER_TEMP/gitconfig"
+rm -f "$ws/apply.log" "$before" "$RUNNER_TEMP/gitconfig"
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status"
 exit "$fail"

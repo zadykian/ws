@@ -1,21 +1,19 @@
 # shellcheck shell=sh
 # The wizard's stages for another repository, which mac.conf's WS_HOOK names as OWNER/REPO. Hook on
-# ws runs its apply.sh as root on ws. The wizard's files script, wizard-remote-files.sh, clones the
-# repository in /root/repository/REPO there, by root's gh login, where it is missing, and never
-# pulls it. apply.sh then runs by plain ssh, its stdin the Keychain item that WS_HOOK_SECRET names,
-# as security prints it, or else empty. A stamp on ws marks a run of it that exited 0, so that a
-# second run of the wizard leaves it alone. Hook on the Mac clones the repository in
-# ~/repository/REPO by gh's login there, with its hooks and its Brewfile's formulae. It copies ws's
-# word list too, with or without WS_HOOK, where the Mac's differs. Where git lacks gh's credential
-# command, the closing list names gh auth setup-git. wizard.sh sources it, and runs the stages after
-# the Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-gh.sh, wizard-host.sh and
-# wizard-ws.sh, and wizard.sh's by_hand. It reads wizard.sh's dir, lock, update and WS_CONF, and
-# wizard-host.sh's root_in.
+# the Mac clones the repository in ~/repository/REPO by gh's login there, with its hooks and its
+# Brewfile's formulae. Where git lacks gh's credential command, the closing list names gh auth
+# setup-git. Hook on ws runs its apply.sh as root on ws. Where ws lacks /root/repository/REPO, it
+# sends the Mac's clone there as a git bundle of origin/main, which the wizard's files script,
+# wizard-remote-files.sh, clones on branch main, with origin on GitHub. Root's gh on ws is never
+# used, and a clone there is never pulled. apply.sh then runs by plain ssh, its stdin the Keychain
+# item that WS_HOOK_SECRET names, as security prints it, or else empty. A stamp on ws marks a run of
+# it that exited 0, so that a second run of the wizard leaves it alone. wizard.sh sources it, and
+# runs the stages after the Tunnel. It calls the functions of lib.sh, setup-lib.sh, wizard-gh.sh,
+# wizard-host.sh and wizard-ws.sh, and wizard.sh's by_hand. It reads wizard.sh's dir, lock, update
+# and WS_CONF, and wizard-host.sh's root_in.
 
 # wshook_ran becomes 1 once the stage ran apply.sh in this run.
 wshook_ran=0
-# The Mac's word list, which ws's hooks read in its clone, as another repository's may in theirs.
-hook_words=$HOME/.config/ws/forbidden-words
 
 # remote_files OP [ARG...] runs the files script's OP as root on ws, by host_ssh, as remote does.
 # shellcheck disable=SC2154 # dir is wizard.sh's
@@ -24,13 +22,13 @@ remote_files() {
         <"$dir/wizard-remote-files.sh"
 }
 
-# wshook_after prints the stage that the clone waits on, where that isn't done. That is ws's run,
-# which installs gh on ws, then gh on ws, whose login clones the repository.
+# wshook_after prints the stage that this one waits on, where that isn't done. That is ws's run,
+# which installs git on ws, then Hook on the Mac, whose clone it sends.
 wshook_after() {
     if ! run_done; then
         echo "ws's run"
-    elif ! wsgh_done; then
-        echo "gh on ws"
+    elif ! hook_done; then
+        echo "Hook on the Mac"
     fi
 }
 
@@ -47,18 +45,18 @@ wshook_done() {
 }
 
 # wshook_do runs the repository's apply.sh as root on ws, by plain ssh, never ssh -t, at which such
-# a script could prompt and echo its stdin. The files script's clone first clones the repository
-# where ws lacks it, and removes its stamp, which its stamp op writes again once apply.sh exits 0.
-# First, security must read the item into /dev/null, so that an item it can't read stops the stage
-# before ssh. --check says what it would do.
+# a script could prompt and echo its stdin. wshook_send first sends the Mac's clone where ws lacks
+# its own, which the files script's clone makes from it, and removes its stamp, which its stamp op
+# writes again once apply.sh exits 0. First, security must read the item into /dev/null, so that an
+# item it can't read stops the stage before ssh. --check says what it would do.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 wshook_do() {
     wshook_apply=/root/repository/${WS_HOOK#*/}/apply.sh
     wshook_in=${WS_HOOK_SECRET:+the Keychain item $WS_HOOK_SECRET}
     wshook_item || return 1
     if ws_checking; then
-        ws_say "Hook on ws: would clone $WS_HOOK into ${wshook_apply%/*} on ws, where missing," \
-            "then run its apply.sh there, its stdin ${wshook_in:-empty}"
+        ws_say "Hook on ws: would send the Mac's clone of $WS_HOOK to ${wshook_apply%/*} on ws," \
+            "where missing, then run its apply.sh there, its stdin ${wshook_in:-empty}"
         return 0
     fi
     [ -z "$WS_HOOK_SECRET" ] ||
@@ -67,10 +65,29 @@ wshook_do() {
     ws_say "Hook on ws: $WS_HOOK's apply.sh runs as root on ws, its stdin ${wshook_in:-empty}"
     # shellcheck disable=SC2034 # wizard-ws.sh's remote_read reads it
     remote_got=0
+    wshook_send || return 1
     remote_files clone "$WS_HOOK" >&2 || return 1
     wshook_run || return 1
     remote_files stamp "$WS_HOOK" >&2 || return 1
     wshook_ran=1
+}
+
+# wshook_send sends the Mac's clone to ws, as a git bundle of its origin/main after a fetch, where
+# the files script's bundle op names a path: ws lacks its own clone. The fetch takes gh's login for
+# github.com, whatever git's config names, and never prompts. The bundle goes by an ssh of its own,
+# as the files script is on the first one's stdin.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+wshook_send() {
+    wshook_pack=$(remote_files bundle "$WS_HOOK") || return 1
+    [ -n "$wshook_pack" ] || return 0
+    git_gh "Hook on ws"
+    ws_say "Hook on ws: sending the Mac's clone of $WS_HOOK to ws"
+    GIT_TERMINAL_PROMPT=0 git -C "$hook_dir" -c credential.https://github.com.helper= \
+        -c "credential.https://github.com.helper=!$gh auth git-credential" fetch -q origin >&2 &&
+        git -C "$hook_dir" bundle create -q "$lock/hook.bundle" origin/main >&2 &&
+        host_ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$wshook_pack" <"$lock/hook.bundle" \
+            >&2 || return 1
+    rm -f "$lock/hook.bundle"
 }
 
 # wshook_item adds the Keychain item that WS_HOOK_SECRET names, where the Keychain lacks it, by
@@ -131,72 +148,24 @@ wshook_read() {
         echo $? >"$lock/hook.status"
 }
 
-# wshook_fail says what to do where the clone or apply.sh failed, or ws still lacks the stamp.
+# wshook_fail says what to do where the Mac's clone didn't reach ws, or apply.sh failed, or ws still
+# lacks the stamp.
 wshook_fail() {
-    echo "the clone of $WS_HOOK on ws, or its apply.sh, failed, as above; mend what they printed," \
-        "then run the wizard again, which runs apply.sh again"
+    echo "the clone of $WS_HOOK from the Mac to ws, or its apply.sh, failed, as above; mend what" \
+        "they printed, then run the wizard again, which runs apply.sh again"
 }
 
-# hook_after prints the stage that this one waits on, where that isn't done: Root's key, without
-# which the wizard reads no word list on ws. Where mac.conf names a repository, then Hook on ws,
-# whose apply.sh may write that list, and gh on the Mac, whose login clones the repository.
+# hook_after prints gh on the Mac, whose login clones the repository, where that isn't done.
 hook_after() {
-    if [ "$root_in" != 1 ]; then
-        echo "Root's key"
-    elif [ -n "$WS_HOOK" ] && ! wshook_done; then
-        echo "Hook on ws"
-    elif [ -n "$WS_HOOK" ] && ! gh_done; then
-        echo "gh on the Mac"
-    fi
+    gh_done || echo "gh on the Mac"
 }
 
 # hook_done succeeds where mac.conf names no repository, or where its clone is in ~/repository/REPO,
-# with core.hooksPath at its .githooks and its Brewfile's formulae installed, where it has them. The
-# Mac's word list must be ws's too, where ws has one. It reads ws only where root logged in there.
+# with core.hooksPath at its .githooks and its Brewfile's formulae installed, where it has them.
 hook_done() {
     ws_conf "$WS_CONF"
     hook_dir=$HOME/repository/${WS_HOOK#*/}
-    [ -z "$WS_HOOK" ] || { [ -e "$hook_dir/.git" ] && hook_origin && hook_hooks && hook_brew; } ||
-        return 1
-    [ "$root_in" = 1 ] && hook_sums && { [ "$hook_ws" = - ] || [ "$hook_ws" = "$hook_mac" ]; }
-}
-
-# hook_sums sets hook_ws to git's hash of ws's word list, as the files script prints it, and
-# hook_mac to the Mac's, each - where there is none. A Mac's list that the user can't read counts as
-# none: hook_copy replaces it, or stops at a link. git hashes from /, as in a repository it takes
-# that repository's hash, which may be SHA-256. It fails where ssh or the files script does, their
-# messages in words.err.
-# shellcheck disable=SC2154 # lock is wizard.sh's
-hook_sums() {
-    hook_ws=$(remote_files words 2>"$lock/words.err") && [ -n "$hook_ws" ] || return 1
-    hook_mac=-
-    [ ! -f "$hook_words" ] || [ ! -r "$hook_words" ] ||
-        hook_mac=$(git -C / hash-object --stdin <"$hook_words") ||
-        ws_die "Hook on the Mac: git can't hash the Mac's word list, $hook_words, as above"
-}
-
-# hook_copy copies ws's word list over the Mac's, mode 600, where ws has one and the Mac's differs.
-# The list goes through the lock, whose files are the user's alone, and is never printed. --check
-# says it would copy it, and shows no diff. Where the Mac's is a link, it stops, under --check too,
-# naming its target, as ws_put would replace the link.
-hook_copy() {
-    hook_sums || ws_die "Hook on the Mac: the files script read no word list on ws:" \
-        "$(tail -n 1 "$lock/words.err")"
-    [ "$hook_ws" != - ] && [ "$hook_ws" != "$hook_mac" ] || return 0
-    [ ! -L "$hook_words" ] || ws_die "Hook on the Mac: $hook_words is a link to" \
-        "$(readlink "$hook_words"), which the wizard leaves, and ws's word list differs: remove" \
-        "the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the" \
-        "wizard again"
-    if ws_checking; then
-        ws_say "Hook on the Mac: would copy ws's word list to $hook_words, mode 600"
-        return 0
-    fi
-    (umask 077 && remote_files words "$hook_ws" >"$lock/words") &&
-        [ "$(git -C / hash-object --stdin <"$lock/words")" = "$hook_ws" ] ||
-        ws_die "Hook on the Mac: ws's word list came short or changed, as above; run the" \
-            "wizard again"
-    ws_put "$hook_words" 600 <"$lock/words"
-    rm -f "$lock/words"
+    [ -z "$WS_HOOK" ] || { [ -e "$hook_dir/.git" ] && hook_origin && hook_hooks && hook_brew; }
 }
 
 # hook_origin succeeds where the clone's origin names WS_HOOK on GitHub, as the files script reads
@@ -227,10 +196,8 @@ hook_brew() {
 # hook_do clones the repository by gh's login, where nothing is there, and stops where the path
 # holds no clone, or another repository's. It points core.hooksPath at the clone's .githooks, and
 # runs brew bundle, which installs what the Brewfile names and Homebrew lacks. --check says what it
-# would run. First it copies ws's word list, where the Mac's differs.
+# would run.
 hook_do() {
-    hook_copy
-    [ -n "$WS_HOOK" ] || return 0
     if [ ! -e "$hook_dir" ] && [ ! -L "$hook_dir" ]; then
         if ws_checking; then
             ws_say "Hook on the Mac: would run gh repo clone $WS_HOOK $hook_dir, then set its" \
@@ -256,11 +223,11 @@ hook_run() {
     "$@" >&2 || ws_die "Hook on the Mac: $* failed, as above"
 }
 
-# hook_fail says what to do where the Mac still lacks the clone, its hooks, its Brewfile's formulae
-# or ws's word list.
+# hook_fail says what to do where the Mac still lacks the clone, its hooks or its Brewfile's
+# formulae.
 hook_fail() {
-    echo "the clone of WS_HOOK's repository on the Mac, its hooks, its Brewfile's formulae or" \
-        "ws's word list failed, as above; mend what they printed, then run the wizard again"
+    echo "the clone of WS_HOOK's repository on the Mac, its hooks or its Brewfile's formulae" \
+        "failed, as above; mend what they printed, then run the wizard again"
 }
 
 # hook_hand adds gh auth setup-git to what stays by hand, where git's config names no credential

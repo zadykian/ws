@@ -43,10 +43,13 @@ mkdir -p ~/Applications/"JetBrains Gateway.app"
 # /opt/homebrew/bin first on PATH, so the stand-in replaces the runner's link there. Its state is in
 # $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,
 # which gh api answers with a 404. nosign gives that 404 for the signing keys alone. keys holds its
-# login's keys, and log its calls. Its repo clone makes a repository with .githooks and an empty
-# Brewfile, and its URL on GitHub as origin.
+# login's keys, signing its signing keys, and log its calls. Its repo clone clones a repository of
+# its own with .githooks, an empty Brewfile and an apply.sh, a link to ws-standin.sh. Its origin is a path that ends in
+# github.com/OWNER/REPO, which the wizard takes for GitHub's, so that a fetch works offline.
+here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$RUNNER_TEMP/gh"
 : >"$RUNNER_TEMP/gh/keys"
+: >"$RUNNER_TEMP/gh/signing"
 touch "$RUNNER_TEMP/gh/login"
 rm -f /opt/homebrew/bin/gh
 cat >/opt/homebrew/bin/gh <<EOF
@@ -62,13 +65,17 @@ case \$* in
     ;;
 'api --paginate user/ssh_signing_keys --jq .[].key')
     [ ! -f "\$state/nosign" ] || { echo 'gh: Not Found (HTTP 404)' >&2 && exit 1; }
+    cat "\$state/signing"
     ;;
+'ssh-key add '*' --type signing '*) awk 'NF { print \$1, \$2; exit }' "\$3" >>"\$state/signing" ;;
 'ssh-key add '*) awk 'NF { print \$1, \$2; exit }' "\$3" >>"\$state/keys" ;;
 'repo clone '*' -- -q')
-    git init -q -b main "\$4" && git -C "\$4" remote add origin "https://github.com/\$3.git" &&
-        mkdir "\$4/.githooks" && printf '#!/bin/sh\n' >"\$4/.githooks/pre-commit" &&
-        : >"\$4/Brewfile" && git -C "\$4" add . &&
-        git -C "\$4" -c user.name=ws -c user.email=ws@example.com commit -q -m "\$3"
+    up="\$state/github.com/\$3"
+    [ -d "\$up" ] || { git init -q -b main "\$up" && mkdir "\$up/.githooks" &&
+        printf '#!/bin/sh\n' >"\$up/.githooks/pre-commit" && : >"\$up/Brewfile" &&
+        ln -s '$here/ws-standin.sh' "\$up/apply.sh" && git -C "\$up" add . &&
+        git -C "\$up" -c user.name=ws -c user.email=ws@example.com commit -q -m "\$3"; } &&
+        git clone -q "\$up" "\$4"
     ;;
 *) echo "gh: the stand-in takes no \$*" >&2 && exit 2 ;;
 esac
@@ -128,9 +135,8 @@ EOF
 chmod 755 "$ws/ws.sh"
 # ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is. ws's
 # clone, root's, holds the stand-in bootstrap.sh alone.
-here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$ws/bin" "$ws/units"
-for each in systemd-run systemctl journalctl wg gh mokutil modinfo ip; do
+for each in systemd-run systemctl journalctl wg mokutil modinfo ip; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
 : >"$ws/run.log"
@@ -146,16 +152,16 @@ sudo git -C "$clone" -c user.name=ws -c user.email=ws@example.com commit -q -m w
 sudo git -C "$clone" remote add origin "$clone"
 sudo git -C "$clone" fetch -q origin
 sudo git -C "$clone" branch -q -u origin/main
-# ws's gh and claude, root's, logged in, and ws's signing key, which root's git config names and
-# gh's account lists, as the shell role and the logins' stages leave them. So no run of the wizard
-# opens a session on ws for a login.
+# ws's claude, root's, logged in, and ws's signing key, which root's git config names and the
+# stand-in gh lists, as the shell role and the stages leave them. So no run of the wizard opens a
+# session on ws for a login.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/signing" </dev/null
 sudo mkdir -p "$ws/root/root/.ssh"
 sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
 sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
-cut -d ' ' -f 1-2 "$ws/signing.pub" >"$ws/gh.keys"
-touch "$ws/gh" "$ws/claude"
+cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
+touch "$ws/claude"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws-tunnel has a
 # handshake, and lands in tunnel.log. Any other call is the runner's ssh.
