@@ -19,9 +19,8 @@ beside the `.pub`. Put the YubiKey back, and commit again. The file key that old
 
 A key that `WS_GIT_SIGNING_KEY` names must be there already, as the script makes none. A `.pub`
 that the script cannot read, or that holds more than a public key's line, as a private key does,
-stops it. A key of Secretive's, in
-`~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys`, signs through
-`~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent.
+stops it. git signs with it through its own `ssh-keygen`, with no wrapper. The script removes the
+wrapper that older runs wrote for a key of Secretive's, `~/.config/ws/secretive-ssh-keygen`.
 
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
