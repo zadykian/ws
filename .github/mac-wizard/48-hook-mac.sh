@@ -1,7 +1,8 @@
 #!/bin/sh
-# The stage Hook on the Mac, on the Mac that 47-hook.sh leaves. WS_HOOK names a repository that the
-# stand-in gh on the Mac clones, with .githooks and an empty Brewfile, as the stand-in ws's gh
-# clones it there. --check must wait for Hook on ws, and clone nothing. A run must clone it once
+# The stages Hook on the Mac and Word list, on the Mac that 47-hook.sh leaves. WS_HOOK names a
+# repository that the stand-in gh on the Mac clones, with .githooks and an empty Brewfile, as the
+# stand-in ws's gh clones it there. --check must say it would clone it, and clone nothing, and Word
+# list wait for Hook on ws. A run must clone it once
 # into ~/repository/REPO, and point its core.hooksPath at its .githooks, by an absolute path. brew
 # bundle check must find the Brewfile met. As git's global config names no credential command of
 # gh's, the closing list must name gh auth setup-git, and the next run print nothing. With
@@ -77,8 +78,9 @@ copied=$(copies)
 sudo mkdir -p "${list%/*}"
 printf '%s\n' '# stand-in words' example-word 'stand-in phrase' | sudo tee "$list" >/dev/null
 wizard --check
-[ "$status" = 0 ] && printf '%s\n' "$out" |
-    grep -qx 'wizard\.sh: Hook on the Mac: after Hook on ws' && [ ! -e "$clone" ] ||
+[ "$status" = 0 ] && printf '%s\n' "$out" | grep -qx 'wizard\.sh: Word list: after Hook on ws' &&
+    printf '%s\n' "$out" | grep -qF "wizard.sh: Hook on the Mac: would run gh repo clone \
+example/hook $clone, then " && [ ! -e "$clone" ] ||
     error "wizard.sh --check exited $status, or cloned"
 wizard
 [ "$status" = 0 ] && ! printf '%s\n' "$out" | grep -q 'running brew bundle' &&
