@@ -1,10 +1,8 @@
 # shellcheck shell=sh source-path=SCRIPTDIR
-# The wizard's Mac key stage: the key that ssh offers ws, which setup-identity.sh's ws_identity
-# finds from mac.conf, made where missing. wizard.sh sources it, and runs the stage after Answers
-# and before gh on the Mac, which adds the key to GitHub. Without WS_IDENTITY, the keys are the
-# YubiKey's, which the stage finds or makes as setup.sh does, and ws's agent loads. git's key is the
-# YubiKey's too. It calls the functions of lib.sh and setup-lib.sh, and reads wizard.sh's lock and
-# WS_CONF, mac.conf's path.
+# The wizard's Mac key stage: the YubiKey's keys for ssh and git, which the stage finds or makes as
+# setup.sh does, and ws's agent loads. wizard.sh sources it, and runs the stage after Answers and
+# before gh on the Mac, which adds ssh's key to GitHub. It calls the functions of lib.sh,
+# setup-lib.sh and wizard-ask.sh, and reads WS_CONF, mac.conf's path.
 
 # The YubiKey's step and the agent's are setup.sh's, sourced from dir, mac/'s path, as wizard.sh
 # sets it.
@@ -13,20 +11,16 @@
 # shellcheck source=setup-agent.sh
 . "$dir/setup-agent.sh"
 
-# keys_after prints Tools, bootstrap.sh's stage, where the keys are the YubiKey's, as mac.conf
-# names no WS_IDENTITY, and PATH has no brew to install ykman.
+# keys_after prints Tools, bootstrap.sh's stage, where PATH has no brew to install ykman.
 keys_after() {
-    command -v brew >/dev/null || (ws_conf "$WS_CONF" && [ -n "$WS_IDENTITY" ]) >/dev/null 2>&1 ||
-        echo Tools
+    command -v brew >/dev/null || echo Tools
 }
 
-# keys_done succeeds where the key that ssh offers ws is there: in a file beside the .pub whose
-# fingerprint it shares, or listed by the agent that holds it. Without WS_IDENTITY, ws's agent must
-# list git's key of the YubiKey's too, as it lists both only while the YubiKey is in. So a run with
-# the YubiKey out waits for it here, rather than failing at Root's key.
+# keys_done succeeds where ws's agent lists the YubiKey's keys for ssh and git, as it lists them only
+# while the YubiKey is in. So a run with the YubiKey out waits for it here, rather than failing at
+# Root's key.
 keys_done() {
-    (ws_conf "$WS_CONF" && keys_new && ws_identity && keys_there &&
-        { [ -n "$WS_IDENTITY" ] || keys_listed; }) >/dev/null 2>&1
+    (ws_conf "$WS_CONF" && keys_new && keys_listed) >/dev/null 2>&1
 }
 
 # keys_new succeeds where mac.conf has no line of WS_IDENTITY_AGENT or WS_IDENTITY, empty or not,
@@ -35,32 +29,6 @@ keys_new() {
     for keys_old in WS_IDENTITY_AGENT WS_IDENTITY; do
         ask_lacks "$keys_old" || return 1
     done
-}
-
-# keys_there succeeds where the key that ws_identity set is there: the agent lists the .pub's type
-# and base64, or the file beside the .pub is its private key.
-# shellcheck disable=SC2154 # ws_identity sets ws_identity_pub and ws_identity_agent
-keys_there() {
-    keys_pub=$(keys_home "$ws_identity_pub")
-    if [ -z "$ws_identity_agent" ]; then
-        keys_same "${keys_pub%.pub}"
-        return
-    fi
-    [ -f "$keys_pub" ] || return 1
-    keys_line=$(awk 'NF { print $1, $2; exit }' "$keys_pub")
-    SSH_AUTH_SOCK=$(keys_home "$ws_identity_agent") ssh-add -L 2>/dev/null |
-        awk '{ print $1, $2 }' | grep -qxF -e "$keys_line"
-}
-
-# keys_same KEY succeeds where KEY and KEY.pub are there and share a fingerprint. ssh-keygen reads
-# KEY by a link in the lock, with no .pub beside it: by KEY's name, it would read KEY.pub instead.
-# On macOS, it can't reread KEY from /dev/stdin, whose opens share one offset.
-# shellcheck disable=SC2154 # lock is wizard.sh's
-keys_same() {
-    [ -f "$1" ] && [ -f "$1.pub" ] && ln -sf "$1" "$lock/key" &&
-        keys_fp=$(ssh-keygen -l -f "$lock/key" 2>/dev/null | awk '{ print $2 }') &&
-        rm -f "$lock/key" && [ -n "$keys_fp" ] &&
-        [ "$keys_fp" = "$(ssh-keygen -l -f "$1.pub" 2>/dev/null | awk '{ print $2 }')" ]
 }
 
 # keys_home PATH prints PATH with a ~/ first made the home's path.

@@ -115,7 +115,7 @@ sh "$standin" unplug 30000002
 sh "$standin" plug 30000001
 touch "$RUNNER_TEMP/gh/login"
 rm -rf "$keys"
-for left in ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
+for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
     [ ! -e "$left" ] || error "wizard.sh left $left"
 done
 cmp -s "$conf" "$RUNNER_TEMP/key.conf.before" || error "wizard.sh changed $conf"
