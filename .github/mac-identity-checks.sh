@@ -76,14 +76,10 @@ three=$(printf '    %s\n' 'IdentityFile ~/.config/ws/keys/ws.pub' 'IdentitiesOnl
 sed -e "s|$yk_file|    IdentityFile ~/.ssh/id_ed25519|" \
     -e "s|$yk_agent|    UseKeychain yes\\$nl    AddKeysToAgent yes|" "$tmp/ws" >"$ws"
 yubikey \~/.ssh/id_ed25519
-# WS_IDENTITY must give ws the file beside the .pub in place of the YubiKey's key. WS_IDENTITY_AGENT
-# must give it the agent at its socket, by a path with a blank here.
+# WS_IDENTITY must give ws the file beside the .pub in place of the YubiKey's key.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$tmp/key"
 with "WS_IDENTITY=$tmp/key.pub"
 filed "$tmp/key"
-socket="$tmp/ws agent.sock"
-with "WS_IDENTITY=$tmp/key.pub" "WS_IDENTITY_AGENT=\"$socket\""
-agented "$tmp/key.pub" "$socket"
 # A .pub that is missing, holds a private key or holds no key ssh-keygen reads must stop setup.sh.
 # So must a certificate, and a line that is no key, which setup.sh must not print as a key's type.
 with "WS_IDENTITY=$tmp/none.pub"
@@ -110,7 +106,7 @@ for line in 'ws-token AAAA' 'ssh-ws stand-in!'; do
     stops "setup.sh: $tmp/token.pub holds no public key alone"
 done
 # Without them, ws must take the YubiKey's key again.
-yubikey "$tmp/key.pub"
+yubikey "$tmp/key"
 
 # A stand-in for Secretive: ssh-agent at its socket under the runner's HOME, holding a P-256 key,
 # whose .pub is in PublicKeys. The runner must lack Secretive's container, and the file key. As the
@@ -153,14 +149,11 @@ sec=\~/${data#"$HOME/"}
 with 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 filed \~/.ssh/id_ed25519
 cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
-# WS_IDENTITY names a .pub of its own, or one of Secretive's, which takes its agent unless
-# WS_IDENTITY_AGENT names another.
+# WS_IDENTITY names a .pub of its own, or one of Secretive's, which takes its agent.
 with "WS_IDENTITY=$tmp/key.pub"
 filed "$tmp/key"
 with "WS_IDENTITY=$sec/PublicKeys/other.pub"
 agented "$sec/PublicKeys/other.pub" "$sec/socket.ssh"
-with "WS_IDENTITY=$sec/PublicKeys/other.pub" "WS_IDENTITY_AGENT=\"$socket\""
-agented "$sec/PublicKeys/other.pub" "$socket"
 # A key of a type that ws's OpenSSH lacks, as Secretive's ML-DSA, must stop setup.sh, --check too.
 rm "$data/PublicKeys/other.pub"
 echo 'ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws' >"$data/PublicKeys/ws.pub"

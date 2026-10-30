@@ -183,8 +183,8 @@ must ws_resolver own.test
 : >"$tmp/all.conf"
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
     WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE= WS_GIT_NAME= WS_GIT_EMAIL= \
-    WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_IDENTITY_AGENT= WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan \
-    WS_CABLE_PORT= WS_SSH_KEY=ws WS_GIT_KEY=git; do
+    WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan WS_CABLE_PORT= \
+    WS_SSH_KEY=ws WS_GIT_KEY=git; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -198,8 +198,7 @@ for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS
     WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
     WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet' 'WS_GIT_NAME=ws"stand-in' \
     WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws' 'WS_IDENTITY=~/.ssh/id_ed25519' \
-    WS_IDENTITY_AGENT=agent.sock WS_HOOK=ws WS_HOOK_SECRET=ws/hook WS_TARGET=Cloud WS_SSH_KEY=Ws \
-    WS_GIT_KEY=g_it; do
+    WS_HOOK=ws WS_HOOK_SECRET=ws/hook WS_TARGET=Cloud WS_SSH_KEY=Ws WS_GIT_KEY=g_it; do
     refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
@@ -239,18 +238,11 @@ refused 'go together' WS_GIT_NAME=ws
 refused 'go together' WS_GIT_EMAIL=ws@example.com
 refused 'needs WS_GIT_NAME' 'WS_GIT_SIGNING_KEY=/Users/ws/.ssh/ws.pub'
 
-# ssh's key for ws, by its .pub's path, as git's, and the socket of the agent that holds it, which
-# needs the key. A socket's path with blanks must pass in quotes, and stop ws_conf bare.
-agent='/Users/ws/Library/Group Containers/ws/agent.sock'
-gives WS_IDENTITY_AGENT "$agent" 'WS_IDENTITY=~/.ssh/ws.pub' "WS_IDENTITY_AGENT=\"$agent\""
-gives WS_IDENTITY_AGENT \~/.ssh/agent.sock 'WS_IDENTITY=/Users/ws/.ssh/ws.pub' \
-    'WS_IDENTITY_AGENT=~/.ssh/agent.sock'
-for line in 'WS_IDENTITY=~ws/.ssh/ws.pub' 'WS_IDENTITY=/tmp/%d.pub' 'WS_IDENTITY_AGENT=~/' \
-    'WS_IDENTITY_AGENT=/tmp/ws agent.sock' 'WS_IDENTITY_AGENT=/tmp/%d.sock' \
-    "WS_IDENTITY_AGENT=/tmp/\$HOME.sock"; do
+# ssh's key for ws, by its .pub's path, as git's.
+gives WS_IDENTITY /Users/ws/.ssh/ws.pub 'WS_IDENTITY=/Users/ws/.ssh/ws.pub'
+for line in 'WS_IDENTITY=~ws/.ssh/ws.pub' 'WS_IDENTITY=/tmp/%d.pub'; do
     refused "line 1: $line is not" "$line"
 done
-refused 'needs WS_IDENTITY' 'WS_IDENTITY_AGENT=/tmp/agent.sock'
 
 # Another repository, as OWNER/REPO, which ws clones as /root/repository/REPO, and the Keychain item
 # of its secret, a name of 64 characters at most, which needs it.
@@ -274,6 +266,13 @@ done
 refused 'WS_SSH_KEY and WS_GIT_KEY both name git' WS_SSH_KEY=git
 refused 'WS_SSH_KEY and WS_GIT_KEY both name ws' WS_GIT_KEY=ws
 refused 'WS_SSH_KEY and WS_GIT_KEY both name key' WS_SSH_KEY=key WS_GIT_KEY=key
+
+# The keys that the YubiKey's keys replaced must stop ws_conf, set or empty, on any line, naming the
+# key that replaced them.
+ssh_gone="as ssh offers ws the YubiKey's key alone, which WS_SSH_KEY names: remove the line"
+refused "line 1: WS_IDENTITY_AGENT is gone, $ssh_gone" WS_IDENTITY_AGENT=
+refused "line 2: WS_IDENTITY_AGENT is gone, $ssh_gone" WS_USER=root \
+    'WS_IDENTITY_AGENT="/Users/ws/Library/Group Containers/ws/agent.sock"'
 sh .github/mac-setup-checks.sh || fail=1
 sh .github/mac-confirm-checks.sh || fail=1
 exit "$fail"

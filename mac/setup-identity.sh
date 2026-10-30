@@ -1,22 +1,22 @@
 # shellcheck shell=sh
-# The functions of mac/setup.sh that set the key that ssh offers ws, from mac.conf's WS_SSH_KEY,
-# WS_IDENTITY and WS_IDENTITY_AGENT, which setup-conf.sh's ws_conf reads. setup-lib.sh sources it
-# after setup-conf.sh, so that a script that sources setup-lib.sh has them too.
+# The functions of mac/setup.sh that set the key that ssh offers ws, from mac.conf's WS_SSH_KEY and
+# WS_IDENTITY, which setup-conf.sh's ws_conf reads. setup-lib.sh sources it after setup-conf.sh, so
+# that a script that sources setup-lib.sh has them too.
 
 # ws_identity [FILE] sets ws_identity_pub to the .pub of the key that ssh offers ws, and
 # ws_identity_agent to its agent's socket, or to nothing for a key in a file. Both are paths as
 # config.d/ws names them. Without mac.conf's WS_IDENTITY, the key is the YubiKey's WS_SSH_KEY, in
 # ws's agent. setup.sh writes its .pub in ~/.config/ws/keys from the YubiKey before this runs, so
 # it goes unchecked here, and --check may lack it. It warns then where FILE, the config.d/ws it
-# would replace, gave ws another key. Else the key is WS_IDENTITY, and its agent
-# WS_IDENTITY_AGENT, or Secretive's for a .pub in its PublicKeys. It stops where that .pub, but the
-# file key's, is missing or unreadable, or holds other than one public key, as a private key or a
-# certificate does. A key that ssh-keygen can't read stops it, as does a type ws's OpenSSH 10.2
-# lacks (ssh -Q key there), as an ML-DSA key of Secretive's.
+# would replace, gave ws another key. Else the key is WS_IDENTITY, with Secretive's agent for a .pub
+# in its PublicKeys. It stops where that .pub, but the file key's, is missing or unreadable, or
+# holds other than one public key, as a private key or a certificate does. A key that ssh-keygen
+# can't read stops it, as does a type ws's OpenSSH 10.2 lacks (ssh -Q key there), as an ML-DSA key
+# of Secretive's.
 # shellcheck disable=SC2153,SC2154 # mac.conf's keys are ws_conf's, the sockets setup-conf.sh's
 ws_identity() {
     ws_identity_pub=$WS_IDENTITY
-    ws_identity_agent=$WS_IDENTITY_AGENT
+    ws_identity_agent=
     if [ -z "$ws_identity_pub" ]; then
         ws_identity_pub=\~/.config/ws/keys/$WS_SSH_KEY.pub
         ws_identity_agent=\~/${ws_agent_socket#"$HOME"/}
@@ -27,13 +27,11 @@ ws_identity() {
             "$(ws_identity_step "$WS_USER")"
         return 0
     fi
-    [ "$ws_identity_pub$ws_identity_agent" != \~/.ssh/id_ed25519.pub ] || return 0
+    [ "$ws_identity_pub" != \~/.ssh/id_ed25519.pub ] || return 0
     ws_file=$ws_identity_pub
     [ "${ws_file#\~/}" = "$ws_file" ] || ws_file=$HOME/${ws_file#\~/}
     case $ws_file in
-    "$ws_secretive"/PublicKeys/*)
-        [ -n "$ws_identity_agent" ] || ws_identity_agent=\~/${ws_secretive#"$HOME"/}/socket.ssh
-        ;;
+    "$ws_secretive"/PublicKeys/*) ws_identity_agent=\~/${ws_secretive#"$HOME"/}/socket.ssh ;;
     esac
     [ -f "$ws_file" ] || ws_die "$ws_file, mac.conf's WS_IDENTITY, is missing: make the key first"
     ws_type=$(awk 'NF { n++; t = $1; k = $2 }

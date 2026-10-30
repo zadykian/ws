@@ -14,7 +14,8 @@ ws_agent_socket=$HOME/.ssh/ws-agent.sock
 # KEY=value a line, the value bare or in a pair of quotes, blank lines and lines starting with #
 # skipped. It stops on any other line, any other key, a value of the wrong form, and a
 # WS_LAN_ADDRESS that is not a host's in WS_LAN. An empty value, KEY= or KEY="", is the key's
-# default, as a missing line is, and passes its key's check.
+# default, as a missing line is, and passes its key's check. A key that the YubiKey's keys
+# replaced stops it, whatever its value.
 ws_conf() {
     [ -f "$1" ] || ws_die "$1 is missing: docs/mac.md says what goes in it"
     ws_conf_lines "$1"
@@ -41,7 +42,6 @@ ws_conf_lines() {
     WS_GIT_EMAIL=
     WS_GIT_SIGNING_KEY=
     WS_IDENTITY=
-    WS_IDENTITY_AGENT=
     WS_HOOK=
     WS_HOOK_SECRET=
     WS_SSH_KEY=ws
@@ -158,16 +158,7 @@ ws_conf_lines() {
             *) ws_ok=false ;;
             esac
             ;;
-        WS_IDENTITY_AGENT)
-            WS_IDENTITY_AGENT=$ws_value
-            # An app's socket may hold a blank, which needs quotes, as in a shell's assignment.
-            case ${ws_value#\~} in
-            *[!A-Za-z0-9._/@+\ -]*) ws_ok=false ;;
-            /?*' '*) [ "$ws_value" != "${ws_line#*=}" ] || ws_ok=false ;;
-            /?*) ;;
-            *) ws_ok=false ;;
-            esac
-            ;;
+        WS_IDENTITY_AGENT) ws_die "$1, line $ws_n: $(ws_conf_gone)" ;;
         WS_HOOK)
             WS_HOOK=$ws_value
             # OWNER/REPO on GitHub, as ws's /root/repository/REPO: neither side . or .. alone, and
@@ -234,9 +225,6 @@ ws_conf_pairs() {
     if [ -n "$WS_GIT_SIGNING_KEY" ] && [ -z "$WS_GIT_NAME" ]; then
         ws_die "$1: WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL"
     fi
-    if [ -n "$WS_IDENTITY_AGENT" ] && [ -z "$WS_IDENTITY" ]; then
-        ws_die "$1: WS_IDENTITY_AGENT needs WS_IDENTITY"
-    fi
     if [ -n "$WS_HOOK_SECRET" ] && [ -z "$WS_HOOK" ]; then
         ws_die "$1: WS_HOOK_SECRET needs WS_HOOK"
     fi
@@ -277,16 +265,19 @@ ws_conf_form() {
         echo "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to .pub," \
             "of letters, digits and ._/@+-"
         ;;
-    WS_IDENTITY_AGENT)
-        echo "an agent's socket: a path from / or ~/, of letters, digits, blanks and ._/@+-," \
-            "in quotes where it holds a blank"
-        ;;
     WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" \
         "in any letter case" ;;
     WS_HOOK_SECRET) echo "a Keychain item's name, 1 to 64 letters, digits and ._-" ;;
     WS_SSH_KEY | WS_GIT_KEY) echo "a key's name on the YubiKey, 1 to 32 of a-z, 0-9 and -" ;;
     *) echo "a port, 1 to 65535" ;;
     esac
+}
+
+# ws_conf_gone prints why ws_conf stops on a line of ws_key, a key that the YubiKey's keys replaced,
+# whatever its value, and what to do.
+ws_conf_gone() {
+    echo "$ws_key is gone, as ssh offers ws the YubiKey's key alone, which WS_SSH_KEY names:" \
+        "remove the line, as docs/mac-yubikey.md says"
 }
 
 # ws_lan_host CIDR ADDRESS succeeds where ADDRESS is a host's address in the network CIDR: inside

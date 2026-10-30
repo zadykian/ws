@@ -111,7 +111,7 @@ conf=$RUNNER_TEMP/agent.conf
 alone="wizard.sh: Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY alone, not one that"
 refused "$alone mac.conf's WS_IDENTITY names" 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 refused "$alone mac.conf's WS_IDENTITY names" WS_IDENTITY=
-refused "$alone mac.conf's WS_IDENTITY_AGENT names" 'WS_IDENTITY_AGENT=~/.ssh/agent.sock' \
-    'WS_IDENTITY=~/.ssh/id_ed25519.pub'
+refused "WS_IDENTITY_AGENT is gone, as ssh offers ws the YubiKey's key alone" \
+    'WS_IDENTITY_AGENT=~/.ssh/agent.sock' 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 files | cmp -s - "$RUNNER_TEMP/agent.files" || error "wizard.sh changed the Mac's own files"
 exit "$fail"
