@@ -21,8 +21,9 @@
 # - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
 # - claude on ws: root's claude there, logged in over ssh -t;
 # - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again;
-# - Hook on ws: the repository that WS_HOOK names, cloned on ws, and its apply.sh run there as root;
-# - Hook on the Mac: that repository's clone in ~/repository, its hooks and its Brewfile's formulae;
+# - Hook on the Mac: the repository that WS_HOOK names, cloned in ~/repository, its hooks and its
+#   Brewfile's formulae;
+# - Hook on ws: that repository, cloned on ws, and its apply.sh run there as root;
 # - Word list: ws's, copied to the Mac where it differs;
 # - Cable: on the LAN, ws's port of the cable from the Mac's display, in host_vars on ws, and the
 #   Mac's service.
@@ -195,8 +196,8 @@ main() {
     stage "gh on ws" wsgh
     stage "claude on ws" wsclaude
     stage Tunnel tunnel
-    stage "Hook on ws" wshook
     stage "Hook on the Mac" hook
+    stage "Hook on ws" wshook
     stage "Word list" words
     stage Cable cable
     run_hand
