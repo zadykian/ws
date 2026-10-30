@@ -183,8 +183,7 @@ must ws_resolver own.test
 : >"$tmp/all.conf"
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
     WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE= WS_GIT_NAME= WS_GIT_EMAIL= \
-    WS_GIT_SIGNING_KEY= WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan WS_CABLE_PORT= WS_SSH_KEY=ws \
-    WS_GIT_KEY=git; do
+    WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan WS_CABLE_PORT= WS_SSH_KEY=ws WS_GIT_KEY=git; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -197,8 +196,8 @@ gives WS_REMOTE '' WS_REMOTE=router.example.com WS_REMOTE=
 for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS=10.88.0.1x \
     WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
     WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet' 'WS_GIT_NAME=ws"stand-in' \
-    WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws' WS_HOOK=ws WS_HOOK_SECRET=ws/hook \
-    WS_TARGET=Cloud WS_SSH_KEY=Ws WS_GIT_KEY=g_it; do
+    WS_GIT_EMAIL=ws@-example.com WS_HOOK=ws WS_HOOK_SECRET=ws/hook WS_TARGET=Cloud WS_SSH_KEY=Ws \
+    WS_GIT_KEY=g_it; do
     refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
@@ -221,22 +220,16 @@ refused "WS_TARGET=cloud has another target's key: WS_CABLE_SERVICE WS_CABLE_POR
 # shellcheck source=.github/mac-conf-net-checks.sh
 . .github/mac-conf-net-checks.sh
 
-# git's identity and signing key. A name with blanks must pass in quotes, and stop ws_conf bare, as
-# must one with a \. An email takes one @, and a key's file starts at / or ~/ and ends in .pub. The
-# name and the email go together, and the key needs them.
+# git's identity. A name with blanks must pass in quotes, and stop ws_conf bare, as must one with a
+# \. An email takes one @. The name and the email go together.
 gives WS_GIT_NAME 'ws stand-in' 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws+git@example.com
-gives WS_GIT_SIGNING_KEY \~/.ssh/ws.pub WS_GIT_NAME=ws WS_GIT_EMAIL=ws@example.com \
-    'WS_GIT_SIGNING_KEY=~/.ssh/ws.pub'
 refused 'line 1: WS_GIT_NAME=ws\stand-in is not a name' 'WS_GIT_NAME="ws\stand-in"'
 for line in 'WS_GIT_NAME=ws stand-in' "WS_GIT_NAME=ws$(printf '\r')" WS_GIT_EMAIL=ws \
-    WS_GIT_EMAIL=ws@@example.com 'WS_GIT_EMAIL=ws"@example.com' WS_GIT_EMAIL=@example.com \
-    WS_GIT_SIGNING_KEY=.ssh/ws.pub 'WS_GIT_SIGNING_KEY=~ws/.ssh/ws.pub' \
-    'WS_GIT_SIGNING_KEY=/Users/ws/my key.pub'; do
+    WS_GIT_EMAIL=ws@@example.com 'WS_GIT_EMAIL=ws"@example.com' WS_GIT_EMAIL=@example.com; do
     refused "line 1: $line is not" "$line"
 done
 refused 'go together' WS_GIT_NAME=ws
 refused 'go together' WS_GIT_EMAIL=ws@example.com
-refused 'needs WS_GIT_NAME' 'WS_GIT_SIGNING_KEY=/Users/ws/.ssh/ws.pub'
 
 # Another repository, as OWNER/REPO, which ws clones as /root/repository/REPO, and the Keychain item
 # of its secret, a name of 64 characters at most, which needs it.
@@ -262,13 +255,18 @@ refused 'WS_SSH_KEY and WS_GIT_KEY both name ws' WS_GIT_KEY=ws
 refused 'WS_SSH_KEY and WS_GIT_KEY both name key' WS_SSH_KEY=key WS_GIT_KEY=key
 
 # The keys that the YubiKey's keys replaced must stop ws_conf, set or empty, on any line, naming the
-# key that replaced them.
+# key that replaced them. An empty WS_GIT_SIGNING_KEY, which kept git's file key, must name it too.
 ssh_gone="as ssh offers ws the YubiKey's key alone, which WS_SSH_KEY names: remove the line"
+git_gone="as git signs with the YubiKey's key alone, which WS_GIT_KEY names"
 refused "line 1: WS_IDENTITY is gone, $ssh_gone" 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 refused "line 1: WS_IDENTITY is gone, $ssh_gone" 'WS_IDENTITY=""'
 refused "line 1: WS_IDENTITY_AGENT is gone, $ssh_gone" WS_IDENTITY_AGENT=
 refused "line 2: WS_IDENTITY_AGENT is gone, $ssh_gone" WS_USER=root \
     'WS_IDENTITY_AGENT="/Users/ws/Library/Group Containers/ws/agent.sock"'
+refused "line 3: WS_GIT_SIGNING_KEY is gone, $git_gone: remove the line" WS_GIT_NAME=ws \
+    WS_GIT_EMAIL=ws@example.com 'WS_GIT_SIGNING_KEY=~/.ssh/id_ed25519_signing.pub'
+refused "line 1: WS_GIT_SIGNING_KEY is gone, $git_gone, not with ~/.ssh/id_ed25519_signing, the\
+ file key the empty line kept: remove the line" WS_GIT_SIGNING_KEY=
 sh .github/mac-setup-checks.sh || fail=1
 sh .github/mac-confirm-checks.sh || fail=1
 exit "$fail"

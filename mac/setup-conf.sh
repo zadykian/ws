@@ -137,16 +137,9 @@ ws_conf_lines() {
             *) ws_ok=false ;;
             esac
             ;;
-        WS_GIT_SIGNING_KEY)
-            # shellcheck disable=SC2034 # for setup-git.sh
-            WS_GIT_SIGNING_KEY=$ws_value
-            case ${ws_value#\~} in
-            *[!A-Za-z0-9._/@+-]*) ws_ok=false ;;
-            /*.pub) ;;
-            *) ws_ok=false ;;
-            esac
+        WS_IDENTITY | WS_IDENTITY_AGENT | WS_GIT_SIGNING_KEY)
+            ws_die "$1, line $ws_n: $(ws_conf_gone)"
             ;;
-        WS_IDENTITY | WS_IDENTITY_AGENT) ws_die "$1, line $ws_n: $(ws_conf_gone)" ;;
         WS_HOOK)
             WS_HOOK=$ws_value
             # OWNER/REPO on GitHub, as ws's /root/repository/REPO: neither side . or .. alone, and
@@ -210,9 +203,6 @@ ws_conf_pairs() {
     case ${WS_GIT_NAME:+name}${WS_GIT_EMAIL:+email} in
     name | email) ws_die "$1: WS_GIT_NAME and WS_GIT_EMAIL go together" ;;
     esac
-    if [ -n "$WS_GIT_SIGNING_KEY" ] && [ -z "$WS_GIT_NAME" ]; then
-        ws_die "$1: WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL"
-    fi
     if [ -n "$WS_HOOK_SECRET" ] && [ -z "$WS_HOOK" ]; then
         ws_die "$1: WS_HOOK_SECRET needs WS_HOOK"
     fi
@@ -249,10 +239,6 @@ ws_conf_form() {
         echo "an email address, as ws@example.com: letters, digits and ._%+- before the @, and" \
             "a host name after it"
         ;;
-    WS_GIT_SIGNING_KEY)
-        echo "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to .pub," \
-            "of letters, digits and ._/@+-"
-        ;;
     WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" \
         "in any letter case" ;;
     WS_HOOK_SECRET) echo "a Keychain item's name, 1 to 64 letters, digits and ._-" ;;
@@ -262,10 +248,18 @@ ws_conf_form() {
 }
 
 # ws_conf_gone prints why ws_conf stops on a line of ws_key, a key that the YubiKey's keys replaced,
-# whatever its value, and what to do.
+# whatever its value, ws_value, and what to do. An empty WS_GIT_SIGNING_KEY, as the wizard offered,
+# kept the file key that older runs made for git.
 ws_conf_gone() {
-    echo "$ws_key is gone, as ssh offers ws the YubiKey's key alone, which WS_SSH_KEY names:" \
-        "remove the line, as docs/mac-yubikey.md says"
+    case $ws_key in
+    WS_GIT_SIGNING_KEY)
+        ws_why="git signs with the YubiKey's key alone, which WS_GIT_KEY names"
+        [ -n "$ws_value" ] ||
+            ws_why="$ws_why, not with ~/.ssh/id_ed25519_signing, the file key the empty line kept"
+        ;;
+    *) ws_why="ssh offers ws the YubiKey's key alone, which WS_SSH_KEY names" ;;
+    esac
+    echo "$ws_key is gone, as $ws_why: remove the line, as docs/mac-yubikey.md says"
 }
 
 # ws_lan_host CIDR ADDRESS succeeds where ADDRESS is a host's address in the network CIDR: inside

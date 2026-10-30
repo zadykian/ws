@@ -4,8 +4,9 @@
 # .pub. Where launchd has gui/UID, it runs ws's agent, which the stage starts again, so the run must
 # pass, with both keys listed. With libykcs11's link away, as ws's agent then exits, a run must stop
 # with ssh-add's own words. With the YubiKey out, a run must wait for it, and say no more once it
-# comes back. Then a mac.conf of its own with a line of another key for ssh, of WS_IDENTITY or
-# WS_IDENTITY_AGENT, empty too, must stop a run and --check before setup.sh's, naming WS_SSH_KEY.
+# comes back. Then a mac.conf of its own with a line of another key, of WS_IDENTITY,
+# WS_IDENTITY_AGENT or WS_GIT_SIGNING_KEY, empty too, must stop a run and --check before setup.sh's,
+# naming WS_SSH_KEY or WS_GIT_KEY. An empty WS_GIT_SIGNING_KEY is as the wizard offered it.
 # None may change the Mac's own or ssh's files.
 
 set -u
@@ -113,5 +114,7 @@ refused "WS_IDENTITY is gone, $alone" 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 refused "WS_IDENTITY is gone, $alone" WS_IDENTITY=
 refused "WS_IDENTITY_AGENT is gone, $alone" 'WS_IDENTITY_AGENT=~/.ssh/agent.sock' \
     'WS_IDENTITY=~/.ssh/id_ed25519.pub'
+refused "WS_GIT_SIGNING_KEY is gone, as git signs with the YubiKey's key alone, which WS_GIT_KEY\
+ names, not with ~/.ssh/id_ed25519_signing" WS_GIT_SIGNING_KEY=
 files | cmp -s - "$RUNNER_TEMP/agent.files" || error "wizard.sh changed the Mac's own files"
 exit "$fail"
