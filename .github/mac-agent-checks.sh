@@ -5,8 +5,9 @@
 # keys/git.pub. A run of ws-agent's own, at a socket of its own, must load both as it starts, list
 # them, and sign with each through the socket, as git does. The stand-in's ioreg lists its
 # YubiKeys (yubikey-ioreg.sh): as they go out and come in, the agent must take the keys out and load
-# them again, at a replug and with a second YubiKey too. Stopped, it must take its ssh-agent and its
-# socket with it. The cases leave 30000001 alone in, as they found it.
+# them again, at a replug and with a second YubiKey too, and once ssh-add -D empties it. Stopped, it
+# must take its ssh-agent and its socket with it. The cases leave 30000001 alone in, as they found
+# it.
 #
 # shellcheck disable=SC2154 # tmp and error are mac-setup-checks.sh's
 keys=$HOME/.config/ws/keys
@@ -99,6 +100,11 @@ for act in plug unplug; do
 done
 grep -q "IDs: 0x[0-9a-f]* 0x[0-9a-f]*$" "$tmp/agent.log" ||
     error "ws-agent logged no two YubiKeys in: $(cat "$tmp/agent.log")"
+# Emptied by ssh-add -D, with the YubiKey still in, it must load the keys again.
+line=$(lines)
+SSH_AUTH_SOCK=$socket /usr/bin/ssh-add -D >/dev/null 2>&1
+within 20 loaded "$line" ||
+    error "ws-agent loaded no keys in 20 s after ssh-add -D: $(cat "$tmp/agent.log")"
 kill "$agent_pid" 2>/dev/null || true
 wait "$agent_pid" || error "ws-agent exited with $? on SIGTERM: $(cat "$tmp/agent.log")"
 if [ -e "$socket" ] || pgrep -f "ssh-agent -D -a $socket" >/dev/null; then

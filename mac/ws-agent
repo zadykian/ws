@@ -80,16 +80,33 @@ yubikeys() {
 }
 
 # load puts the YubiKey's keys in the agent, through the PIN's askpass, and sets loaded where it
-# did. ssh-add -e goes first, as the agent refuses -s for a provider it has.
+# did. ssh-add -e goes first, as the agent refuses -s for a provider it has. It logs a failure
+# where its words change alone, as each try of again's would repeat it.
 load() {
     tries=$((tries + 1))
     "$bin/ssh-add" -e "$provider" >/dev/null 2>&1
     if out=$(SSH_ASKPASS=$pin SSH_ASKPASS_REQUIRE=force "$bin/ssh-add" -s "$provider" 2>&1 \
         </dev/null); then
         loaded=1
+        failed=
         say "loaded the YubiKey's keys"
-    else
+    elif [ "$out" != "$failed" ]; then
+        failed=$out
         say "ssh-add -s $provider failed: $out"
+    fi
+}
+
+# again loads the keys again where the agent lists none while a YubiKey is in: at each read of
+# ioreg for a minute from the plug, or from the keys' loss, then at every sixth, 30 s apart.
+again() {
+    if [ "$loaded" = 1 ]; then
+        say "the agent lists no key, as after ssh-add -D or a crash of ssh-pkcs11-helper"
+        loaded=0
+        tries=0
+    fi
+    lacked=$((lacked + 1))
+    if [ "$tries" -lt 12 ] || [ $((lacked % 6)) = 0 ]; then
+        load
     fi
 }
 
@@ -102,13 +119,16 @@ stop() {
 
 # watch loads the keys, whatever ioreg lists, as libykcs11 shows no YubiKey that is out. Then it
 # reads the YubiKeys in every 5 s. Where their IDs change, as a replug changes one, ssh-add -e takes
-# the keys out, as the agent lists a key until then, and load runs again where one is in. A load
-# that fails runs twice more while one is in, as a card may answer seconds after its plug. It
-# sleeps in the background, as wait, unlike sleep, ends at once on a signal.
+# the keys out, as the agent lists a key until then. While one is in, and ssh-add -l, which reads
+# the agent's list alone, with no card and no signature, lists no key, again loads them: a card may
+# answer seconds after its plug, or once Yubico Authenticator lets it go. It sleeps in the
+# background, as wait, unlike sleep, ends at once on a signal.
 watch() {
     seen=$(yubikeys) || say "ioreg -p IOUSB failed"
     loaded=0
     tries=0
+    lacked=0
+    failed=
     load
     while kill -0 "$agent" 2>/dev/null; do
         sleep 5 &
@@ -131,8 +151,9 @@ watch() {
             seen=$now
             loaded=0
             tries=0
+            failed=
         fi
-        [ -z "$seen" ] || [ "$loaded" = 1 ] || [ "$tries" -ge 3 ] || load
+        [ -z "$seen" ] || "$bin/ssh-add" -l >/dev/null 2>&1 || again
     done
     agent=
     say "ssh-agent ended"

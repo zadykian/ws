@@ -88,6 +88,8 @@ logs to its standard output.
 
 - It holds the keys only while the YubiKey is in. It reads `ioreg` every 5 s, takes the keys out
   when the YubiKey goes, and loads them again after a plug or a replug. No signature tests them.
+- While the YubiKey is in and the agent lists no key, as after a failed load or `ssh-add -D`, it
+  loads them again. It tries every 5 s for a minute, then every 30 s, and logs a failure once.
 - With a second YubiKey in, it holds the keys of both: `ssh` and git pick theirs by its `.pub`.
 - After a `brew upgrade yubico-piv-tool`, which moves libykcs11 in the Cellar, it starts again.
 
