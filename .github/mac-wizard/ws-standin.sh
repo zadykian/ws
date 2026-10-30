@@ -14,8 +14,6 @@
 #   gh.nosign gives their list a 404, as a login without the write:ssh_signing_key scope gets, and
 #   gh.fail fails it with gh's message in the file, as a revoked token's 401 or GitHub's 5xx;
 # - ws.key is wg0's key, which bootstrap.sh --tags wireguard makes, and utun names wg0, root's;
-# - clone.log holds the repositories that gh repo clone cloned, each with this script as apply.sh
-#   and its URL on GitHub as origin;
 # - apply.log holds a line for each run of apply.sh: tty where its stdin is a terminal, else the
 #   SHA-256 of what it read there, and apply.status its status;
 # - uplink names the port of the default route, and addr/PORT holds a port's IPv4 addresses, which
@@ -139,13 +137,6 @@ gh)
         touch "$s/gh" && rm -f "$s/gh.nosign"
         ;;
     'auth refresh -h github.com -s write:ssh_signing_key') [ -t 0 ] && rm -f "$s/gh.nosign" ;;
-    'repo clone '*' -- -q')
-        [ -f "$s/gh" ] || exit 4
-        echo "$3" >>"$s/clone.log"
-        git init -q -b main "$4" && ln -s "$(readlink "$0")" "$4/apply.sh" &&
-            git -C "$4" remote add origin "https://github.com/$3.git" && git -C "$4" add apply.sh &&
-            git -C "$4" -c user.name=ws -c user.email=ws@example.com commit -q -m "$3"
-        ;;
     *) exit 2 ;;
     esac
     ;;

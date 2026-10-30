@@ -117,7 +117,7 @@ done 2>/dev/null | script -q /dev/null sh "$wizard" --update >"$RUNNER_TEMP/tty"
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 [ "$status" = 0 ] && [ "$(applied)" = "1 $sha" ] && [ -f "$stamp" ] &&
-    [ "$(sessions)" = $((ran + 1)) ] && [ "$(sends)" = 1 ] && [ ! -e "$ws/clone.log" ] ||
+    [ "$(sessions)" = $((ran + 1)) ] && [ "$(sends)" = 1 ] ||
     error "wizard.sh --update at a terminal exited $status, or ran apply.sh other than once with it"
 [ "$(sudo git -C "$hook" rev-parse HEAD)" = "$(git -C "$up" rev-parse HEAD)" ] &&
     [ "$(sudo git -C "$hook" symbolic-ref --short HEAD)" = main ] &&
@@ -173,7 +173,7 @@ wizard
 cp "$before" "$conf"
 sudo rm -rf "$hook" "$stamp"
 rm -rf "$mac" "$RUNNER_TEMP/gh/github.com"
-rm -f "$ws/clone.log" "$ws/apply.log" "$before" "$RUNNER_TEMP/tty"
+rm -f "$ws/apply.log" "$before" "$RUNNER_TEMP/tty"
 # shellcheck disable=SC2086 # as above
 security list-keychains -d user -s $list
 security default-keychain -d user -s "$default"
