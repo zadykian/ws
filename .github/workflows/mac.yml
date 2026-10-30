@@ -118,6 +118,8 @@ jobs:
           grep -qxF "$give" "$RUNNER_TEMP/first.out" ||
               { echo "::error::setup.sh printed no command that gives ws '$mac'"; fail=1; }
           printf '%s\n' "$key" >"$RUNNER_TEMP/mac.pub"
+          printf '%s\n' "$mac" | cmp -s - ~/.config/ws/tunnel.pub ||
+              { echo "::error::~/.config/ws/tunnel.pub holds no '$mac'"; fail=1; }
           [ "$(sudo stat -f '%Su:%Sg %Lp' /etc/ws-tunnel/private.key)" = "root:wheel 600" ] ||
               { echo "::error::/etc/ws-tunnel/private.key is not root's, 600"; fail=1; }
           for each in ws-tunnel:755 wg:755 wireguard-go:755 \

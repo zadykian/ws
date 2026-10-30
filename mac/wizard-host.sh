@@ -29,23 +29,40 @@ host_done() {
 
 # host_do adds the ed25519 key that ws offers at its way to known_hosts, under ws, once WS_HOST_KEY,
 # or the answer at the terminal, says that ws's console shows it. Where ws doesn't answer at its
-# way, it reads the key at ws's address now. It stops where no way leads to ws, and warns where the
-# way is the router's forward. --check asks nothing, and shows the line it would add.
+# way, it reads the key at ws's address now. It stops where no way leads to ws, naming what ws's
+# target needs, and warns where the way is WS_REMOTE. --check asks nothing, and shows the line it
+# would add. Where known_hosts is a link, as a dotfiles manager makes it, it prints that line, and
+# stops, as ask_write does for mac.conf: ws_put would replace the link. --check, which compared no
+# key with ws's console, stops without it.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 host_do() {
     ws_conf "$WS_CONF"
-    host_way || ws_die "Host key: ssh finds no way to ws-ssh from this network: no cable, no" \
-        "address in WS_LAN and no WS_REMOTE_PORT; set those in mac.conf as docs/router.md has them"
+    if ! host_way; then
+        case $WS_TARGET in
+        lan) host_how="set those in mac.conf as docs/router.md has them" ;;
+        mac-vm) host_how="start the VM, or set WS_LAN to the Mac's network for it" ;;
+        *) host_how="set those in mac.conf" ;;
+        esac
+        [ "$WS_TARGET" = lan ] || host_how="$host_how, as docs/mac-targets.md says"
+        ws_die "Host key: ssh finds no way to ws-ssh from this network: no cable, no address in" \
+            "WS_LAN and no WS_REMOTE_PORT; $host_how"
+    fi
     host_scan || host_ask || return 0
     # ssh -G prints the host name in lower case, which WS_REMOTE may not be.
     [ "$host_name" != "$(echo "$WS_REMOTE" | tr '[:upper:]' '[:lower:]')" ] ||
-        ws_say "Host key: warning: through the router's forward, ws's new sshd faces the" \
-            "internet, with any password login its installer allowed, until ws's run sets up its" \
-            "security role"
+        ws_say "Host key: warning: through WS_REMOTE, ws's new sshd faces the internet, with any" \
+            "password login its installer allowed, until ws's run sets up its security role"
     echo "$host_line" >"$lock/host.pub"
     host_fp=$(ssh-keygen -l -f "$lock/host.pub" | awk '{ print $2 }')
     [ -n "$host_fp" ] || ws_die "Host key: ssh-keygen cannot read the key that ws offers"
     host_trust
+    if [ -L "$host_file" ]; then
+        host_link="$host_file is a link to $(readlink "$host_file"), which the wizard leaves"
+        ! ws_checking || ws_die "Host key: $host_link: a run would print ws's line for its file"
+        ws_say "Host key: $host_link: add this line to its file, then run the wizard again"
+        echo "ws $host_line" >&2
+        exit 1
+    fi
     host_mode=$(ws_mode "$host_file" 2>/dev/null) || host_mode=600
     { [ ! -f "$host_file" ] || awk 1 "$host_file"; } >"$lock/hosts" ||
         ws_die "Host key: cannot read $host_file"
@@ -55,8 +72,9 @@ host_do() {
 
 # host_ask asks ws's address now, where ws doesn't answer at its way with an ed25519 key, as a new
 # ws with a lease from the router's pool. WS_FIRST_ADDRESS gives it, else the answer at the
-# terminal, where none stops the run, as before Ubuntu's install. ssh takes it as HostName for the
-# rest of the run, and the stage reads ws's key there. --check asks nothing, and fails.
+# terminal, where none stops the run, as before Ubuntu's install. The question names where ws's
+# machine shows it (docs/mac-targets.md). ssh takes it as HostName for the rest of the run, and the
+# stage reads ws's key there. --check asks nothing, and fails.
 host_ask() {
     host_none="ws doesn't answer at $host_name:$host_port with an ed25519 key"
     if ws_checking; then
@@ -69,9 +87,14 @@ host_ask() {
             "now: set WS_FIRST_ADDRESS"
         ws_say "Host key: $host_none; where Ubuntu isn't installed on ws yet, an empty answer" \
             "stops the run"
+        case $WS_TARGET in
+        cloud) host_where="as the provider shows the VM's public one" ;;
+        mac-vm) host_where="as ip -4 address prints it at ws's console" ;;
+        *) host_where="as the router's leases show it" ;;
+        esac
         until ws_is_ipv4 "$host_first"; do
             [ -z "$host_first" ] || ws_say "Host key: $host_first is not an IPv4 address"
-            printf "ws's address now, as the router's leases show it: " >&2
+            printf "ws's address now, %s: " "$host_where" >&2
             read -r host_first || ws_die "Host key: the terminal ended before ws's address"
             [ -n "$host_first" ] || ws_die "Host key: no address for ws; once Ubuntu is installed" \
                 "on it, run the wizard again"
@@ -169,7 +192,8 @@ root_done() {
 # gives root that key without the wizard, at a terminal or not. Where ws doesn't answer, the Host
 # key stage's question gives its address now, and root may take the key there. It stops where ssh
 # logs in as another user than root, and where ws offers another host key than known_hosts holds,
-# which it never removes. --check asks nothing, and says that a run would stop.
+# which it never removes. --check asks nothing, and says that a run would stop. Both show ssh's
+# error, where it printed one.
 # shellcheck disable=SC2154 # wizard-gh.sh's gh_key sets gh_pub
 root_do() {
     root_as=$(host_get user)
@@ -182,9 +206,13 @@ root_do() {
     ! grep -q 'Host key verification failed' "$lock/root.err" || ws_die "Root's key: ws at" \
         "$host_name:$host_port offers another host key than known_hosts holds under ws: where" \
         "ws was installed again, run ssh-keygen -R ws, then the wizard again"
+    # ssh ends each line with \r\n, and an agent's refusal to sign comes before its last line.
+    root_err=$(awk '{ sub(/\r$/, "") } NF { printf "%s%s", (n++ ? "; " : ""), $0 }' \
+        "$lock/root.err" 2>/dev/null)
+    [ -z "$root_err" ] || root_err=". ssh's error: $root_err"
     if ws_checking; then
         ws_say "Root's key: root on ws doesn't log in by the Mac's key; a run would stop, as the" \
-            "wizard adds no key to ws"
+            "wizard adds no key to ws$root_err"
         return 0
     fi
     gh_key || ws_die "Root's key: the Mac's key for ws has no .pub"
@@ -193,7 +221,7 @@ root_do() {
         "installer imports them for its user, and on a cloud VM, cloud-init gives its default" \
         "user the provider's keys, which must be the account's. Copy that user's" \
         "authorized_keys to root, as the README's \"A new machine\" does: root's file is" \
-        "replaced, so cloud-init's forced command goes. Then run the wizard again"
+        "replaced, so cloud-init's forced command goes. Then run the wizard again$root_err"
 }
 
 # root_fail says what to do where root still refuses the Mac's key.

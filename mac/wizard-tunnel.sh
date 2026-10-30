@@ -4,26 +4,38 @@
 # wireguard runs there. Both go through the remote script over ws-ssh, as a change of wg0's peers
 # ends the tunnel's sessions. Then mac.conf's WS_PUBLIC_KEY follows wg0's key, and setup.sh runs
 # again, which loads ws-tunnel. Last, ws-tunnel must show a handshake, and ssh ws log in through it.
+# Without a handshake, the closing list says so, and the run goes on.
 # wizard.sh sources it, and runs the stage after claude on ws. It calls the functions of lib.sh,
 # setup-lib.sh, wizard-ask.sh, wizard-host.sh, wizard-ws.sh and wizard.sh's setup_do, and reads
 # wizard.sh's lock and WS_CONF, and wizard-host.sh's root_in and host_first.
 
+# tunnel_none becomes 1 where tunnel_check finds no handshake in this run.
+tunnel_none=
+
 # tunnel_after prints ws's run, which makes wg0, where that stage isn't done, as gh on ws's does. It
-# prints setup.sh, which makes the Mac's key, where root has none to read.
+# prints setup.sh, which makes the Mac's key and writes it to tunnel.pub, where that holds none.
 tunnel_after() {
     if ! run_done; then
         echo "ws's run"
-    elif ! tunnel_key -n; then
+    elif ! tunnel_pub; then
         echo setup.sh
     fi
 }
 
-# tunnel_key [-n] sets tunnel_mac to the Mac's WireGuard public key, from root's key by root's wg,
-# as setup.sh prints it. With -n, sudo asks for no password. It fails where it reads no key.
+# tunnel_key sets tunnel_mac to the Mac's WireGuard public key, from root's key by root's wg, as
+# setup.sh prints it. It fails where it reads no key.
 # shellcheck disable=SC2154 # ws_etc is lib.sh's, ws_libexec setup-lib.sh's
 tunnel_key() {
-    tunnel_mac=$(sudo ${1+"$1"} sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" \
+    tunnel_mac=$(sudo sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" \
         "$ws_etc/private.key" 2>/dev/null) && ws_is_key "$tunnel_mac"
+}
+
+# tunnel_pub sets tunnel_mac to the Mac's public key in ~/.config/ws/tunnel.pub, which setup.sh
+# writes from root's key at each run, the wizard's setup.sh stage included. So it needs no sudo,
+# whose timestamp lapses during ws's run. It fails where the file holds no key, as before setup.sh
+# first wrote it.
+tunnel_pub() {
+    tunnel_mac=$(cat "$HOME/.config/ws/tunnel.pub" 2>/dev/null) && ws_is_key "$tunnel_mac"
 }
 
 # tunnel_shake TRIES succeeds where ws-tunnel's status shows a handshake within 180 s, past which
@@ -47,17 +59,25 @@ tunnel_via() {
     [ "$(ssh -G ws 2>/dev/null | awk '$1 == "hostname" { print $2; exit }')" = 10.99.0.1 ]
 }
 
+# tunnel_port succeeds where ws's SSH port answers at 10.99.0.1 within 3 s, which takes a handshake
+# in the tunnel. Unlike tunnel_shake, it needs no sudo, and it tries no login. -G bounds macOS nc's
+# connect, and -w that of Homebrew's netcat, which ignores -G and comes first on the wizard's PATH.
+tunnel_port() {
+    nc -z -G 3 -w 3 10.99.0.1 22 >/dev/null 2>&1
+}
+
 # tunnel_done succeeds where ws's wg0 has the Mac's key as its peer, WS_PUBLIC_KEY is wg0's key,
-# and launchd has ws-tunnel loaded. It reads ws only where root logged in there in this run.
-# ws-tunnel must have a handshake too, and ssh ws go through it. Where the run asked ws's address,
-# ws isn't at the ways that ws-tunnel tries, so a later run checks those two.
+# and launchd has ws-tunnel loaded. It reads ws only where root logged in there in this run, and
+# needs no sudo. ws's SSH port must answer through the tunnel too, and ssh ws go through it. Where
+# the run asked ws's address, ws isn't at the ways that ws-tunnel tries, and where tunnel_check set
+# tunnel_none, ws-tunnel has no handshake: a later run checks those two.
 # shellcheck disable=SC2154 # root_in and host_first are wizard-host.sh's
 tunnel_done() {
     ws_conf "$WS_CONF"
     [ "$root_in" = 1 ] && remote_read && [ -n "$WS_PUBLIC_KEY" ] &&
         [ "$(remote_get wg0)" = "$WS_PUBLIC_KEY" ] && [ "$(remote_get peer)" = ok ] &&
-        tunnel_key -n && [ "$(remote_get mac.pub)" = "$tunnel_mac" ] && ws_tunnel_loaded &&
-        { [ -n "$host_first" ] || { tunnel_shake 3 && tunnel_via; }; }
+        tunnel_pub && [ "$(remote_get mac.pub)" = "$tunnel_mac" ] && ws_tunnel_loaded &&
+        { [ -n "$host_first$tunnel_none" ] || { tunnel_port && tunnel_via; }; }
 }
 
 # tunnel_do gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it,
@@ -65,7 +85,8 @@ tunnel_done() {
 # --tags wireguard runs in a unit of its own. It sets WS_PUBLIC_KEY to wg0's key through ask_write,
 # where it differs, and runs setup.sh again. --check says what it would do, with mac.conf's diff
 # and setup.sh --check's where it knows wg0's key. Last, it waits for the handshake and logs in, or,
-# where the run asked ws's address, leaves that to a later run.
+# where the run asked ws's address, leaves that to a later run. It takes root's key, by sudo, rather
+# than tunnel.pub, which the user can write, as the key it sends becomes ws's peer.
 tunnel_do() {
     tunnel_peered=0
     tunnel_had=$WS_PUBLIC_KEY
@@ -109,6 +130,8 @@ tunnel_do() {
 # Then it logs in to ws through the tunnel once, by the key that root takes, as fail2ban on ws bans
 # 10.99.0.2 after a few that fail. ws's new key reaches ws-tunnel by setup.sh's SIGHUP, and the
 # Mac's new peer on ws by a restart, so that it handshakes at once. --check names the restart too.
+# Without a handshake, it sets tunnel_none and adds the tunnel to the closing list, and the run goes
+# on, as the later stages reach ws by ws-ssh, outside the tunnel.
 # shellcheck disable=SC2154 # ws_label is lib.sh's, lock wizard.sh's
 tunnel_check() {
     if ws_checking; then
@@ -119,8 +142,10 @@ tunnel_check() {
         return 0
     fi
     if [ -n "$host_first" ]; then
+        tunnel_once="ws's lease is static"
+        [ "$WS_TARGET" = lan ] || tunnel_once="mac.conf's way leads to ws"
         by_hand "The tunnel's handshake: ws-tunnel goes to ws's ways, not $host_first, where this" \
-            "run reached ws; once ws's lease is static, run the wizard again, which checks it."
+            "run reached ws; once $tunnel_once, run the wizard again, which checks it."
         return 0
     fi
     if [ "$tunnel_peered" = 1 ] && [ "$tunnel_had" = "$WS_PUBLIC_KEY" ]; then
@@ -129,9 +154,15 @@ tunnel_check() {
         ws_say "Tunnel: ran launchctl kickstart -k system/$ws_label, for wg0's new peer on ws"
     fi
     sleep 2
-    tunnel_shake 30 || ws_die "Tunnel: ws-tunnel has no handshake with ws within 30 s. ws must" \
-        "take UDP ${WS_PORT:-51820}, where WS_REMOTE leads through the router's forward, and" \
-        "ws-tunnel must stay allowed in the Background (docs/mac.md, The Mac's tunnel)"
+    if ! tunnel_shake 30; then
+        tunnel_none=1
+        by_hand "The tunnel's handshake: ws-tunnel had none with ws within 30 s, so ssh ws fails" \
+            "while ssh ws-ssh works. ws must take UDP ${WS_PORT:-51820}, through the router's" \
+            "forward or a cloud's firewall where WS_REMOTE leads through one, and ws-tunnel must" \
+            "stay allowed in the Background (docs/mac.md, The Mac's tunnel). Then run the wizard" \
+            "again, which checks it."
+        return 0
+    fi
     tunnel_via || ws_die "Tunnel: ssh -G ws gives another host than 10.99.0.1, ws's end of the" \
         "tunnel, which mac/setup.sh's config.d/ws names once launchd has ws-tunnel"
     [ "$(host_ssh -o BatchMode=yes ws echo ok 2>"$lock/tunnel.err" </dev/null)" = ok ] ||

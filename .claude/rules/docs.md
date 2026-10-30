@@ -16,8 +16,9 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - `docs/NAME.md` is the page of the role NAME: what it sets up and the variables that change it.
   It gives the role's caveats too, such as what a run replaces or what a dry run shows.
 - [mac.md](../../docs/mac.md) is the Mac's side, `mac/`, [mac-git.md](../../docs/mac-git.md) its
-  git and [mac-wizard.md](../../docs/mac-wizard.md) its wizard. [router.md](../../docs/router.md) is
-  the router's steps, taken once by hand.
+  git, [mac-wizard.md](../../docs/mac-wizard.md) its wizard and
+  [mac-targets.md](../../docs/mac-targets.md) the wizard's targets.
+  [router.md](../../docs/router.md) is the router's steps, taken once by hand.
 - [checks.md](../../docs/checks.md) says what each gate of `make lint` runs, what CI's other jobs
   check, and what the hooks of `.githooks` and Claude's hooks do.
 - [helix-keymap.md](../../docs/helix-keymap.md) indexes the keymap's pages in

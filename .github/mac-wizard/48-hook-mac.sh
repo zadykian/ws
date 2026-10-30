@@ -9,8 +9,10 @@
 # and name no gh auth setup-git. The stand-in ws holds a word list of stand-in words, which the
 # first run must copy to the Mac's ~/.config/ws/forbidden-words, mode 600, once, printing none of
 # it. The next run must fetch it no more. Once the Mac's list differs, --check must say it would
-# copy it, with no diff, and a run copy it again. Without the Mac's clone, --check must say it would
-# clone it. mac.conf, the clones, the lists and ws's stamp go back, and a run must print nothing.
+# copy it, with no diff, and a run copy it again. Where the Mac's list is a link to a file, --check
+# and a run must stop, naming that file, and leave it. Without the Mac's clone, --check must say it
+# would clone it. mac.conf, the clones, the lists and ws's stamp go back, and a run must print
+# nothing.
 
 set -u
 
@@ -54,6 +56,19 @@ leaked() {
     printf '%s\n' "$out" | grep -q -e example-word -e 'stand-in phrase' -e '^+'
 }
 
+# linked [ARG]: the run, with the Mac's list a link to a file, must stop, naming that file. It must
+# fetch, print and change none of the list, and leave the link.
+linked() {
+    wizard "$@"
+    [ "$status" = 1 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Hook on the \
+Mac: $mine is a link to $RUNNER_TEMP/words, which the wizard leaves, and ws's word list differs: \
+remove the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the \
+wizard again" &&
+        [ -L "$mine" ] && [ "$(tail -n 1 "$mine")" = other-word ] &&
+        [ "$(copies)" = $((copied + 1)) ] ||
+        error "wizard.sh $* with the Mac's list a link exited $status, or replaced it"
+}
+
 cp "$conf" "$before"
 { sed 's|^WS_HOOK=$|WS_HOOK=example/hook|' "$before" && echo WS_HOOK_SECRET=; } >"$conf"
 : >"$RUNNER_TEMP/gitconfig"
@@ -83,6 +98,12 @@ wizard --check
 [ "$status" = 0 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Hook on the Mac: \
 would copy ws's word list to $mine, mode 600" && [ "$(tail -n 1 "$mine")" = other-word ] ||
     error "wizard.sh --check with the Mac's list changed exited $status, or copied it"
+mv "$mine" "$RUNNER_TEMP/words"
+ln -s "$RUNNER_TEMP/words" "$mine"
+linked --check
+linked
+rm "$mine"
+mv "$RUNNER_TEMP/words" "$mine"
 git -C "$clone" config --unset core.hooksPath
 git config -f "$RUNNER_TEMP/gitconfig" credential.https://github.com.helper \
     '!/opt/homebrew/bin/gh auth git-credential'

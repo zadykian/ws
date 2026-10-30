@@ -23,6 +23,7 @@ ws_conf() {
 # shellcheck disable=SC2154 # ws_cable_net and ws_tunnel_net are lib.sh's
 ws_conf_lines() {
     WS_USER=root
+    WS_TARGET=lan
     WS_PUBLIC_KEY=
     WS_LAN=
     WS_LAN_ADDRESS=
@@ -32,6 +33,7 @@ ws_conf_lines() {
     WS_TUNNEL_NETWORKS=
     WS_RESOLVERS=
     WS_CABLE_SERVICE=
+    WS_CABLE_PORT=
     WS_GIT_NAME=
     WS_GIT_EMAIL=
     WS_GIT_SIGNING_KEY=
@@ -61,6 +63,10 @@ ws_conf_lines() {
             # shellcheck disable=SC2034 # for setup-ssh.sh and setup.sh
             WS_USER=${ws_value:-root}
             ws_is_user "$ws_value" || ws_ok=false
+            ;;
+        WS_TARGET)
+            WS_TARGET=${ws_value:-lan}
+            case $ws_value in lan | cloud | mac-vm) ;; *) ws_ok=false ;; esac
             ;;
         WS_PUBLIC_KEY)
             # shellcheck disable=SC2034 # for setup-ssh.sh and setup.sh
@@ -107,6 +113,11 @@ ws_conf_lines() {
             \** | *[[:cntrl:]]*) ws_ok=false ;;
             *' '*) [ "$ws_value" != "${ws_line#*=}" ] || ws_ok=false ;;
             esac
+            ;;
+        WS_CABLE_PORT)
+            WS_CABLE_PORT=$ws_value
+            case $ws_value in *[!A-Za-z0-9_.-]* | -*) ws_ok=false ;; esac
+            [ "${#ws_value}" -le 15 ] || ws_ok=false
             ;;
         WS_GIT_NAME)
             # shellcheck disable=SC2034 # for setup-git.sh
@@ -155,9 +166,10 @@ ws_conf_lines() {
         WS_HOOK)
             WS_HOOK=$ws_value
             # OWNER/REPO on GitHub, as ws's /root/repository/REPO: neither side . or .. alone, and
-            # REPO not ws, whose clone there is ws's own.
+            # REPO not ws, ws's own clone there, in any letter case, which APFS and GitHub ignore.
             case $ws_value in
-            *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */ws) ws_ok=false ;;
+            *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */..) ws_ok=false ;;
+            */[Ww][Ss]) ws_ok=false ;;
             */*) ;;
             *) ws_ok=false ;;
             esac
@@ -186,6 +198,21 @@ ws_conf_pairs() {
     if [ -n "$WS_REMOTE_PORT" ] && [ -z "$WS_REMOTE" ]; then
         ws_die "$1: WS_REMOTE_PORT needs WS_REMOTE"
     fi
+    # A cloud VM is reached at its name or address alone, and a VM on the Mac on its network alone.
+    if [ "$WS_TARGET" = cloud ] && [ -z "$WS_REMOTE_PORT" ]; then
+        ws_die "$1: WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT"
+    fi
+    if [ "$WS_TARGET" = mac-vm ] && [ -z "$WS_LAN" ]; then
+        ws_die "$1: WS_TARGET=mac-vm needs WS_LAN"
+    fi
+    # Another target's way would lead ssh and the tunnel to a host that this target lacks.
+    ws_away=
+    [ "$WS_TARGET" != cloud ] || ws_away=${WS_LAN:+ WS_LAN}
+    [ "$WS_TARGET" != mac-vm ] || ws_away=${WS_REMOTE:+ WS_REMOTE}
+    [ "$WS_TARGET" = lan ] || ws_away=$ws_away${WS_CABLE_SERVICE:+ WS_CABLE_SERVICE}
+    [ "$WS_TARGET" = lan ] || ws_away=$ws_away${WS_CABLE_PORT:+ WS_CABLE_PORT}
+    [ -z "$ws_away" ] || ws_die "$1: WS_TARGET=$WS_TARGET has another target's key:$ws_away" \
+        "(docs/mac-targets.md)"
     case ${WS_GIT_NAME:+name}${WS_GIT_EMAIL:+email} in
     name | email) ws_die "$1: WS_GIT_NAME and WS_GIT_EMAIL go together" ;;
     esac
@@ -205,6 +232,7 @@ ws_conf_pairs() {
 ws_conf_form() {
     case $1 in
     WS_USER) echo "a user name of 32 characters at most: letters, digits, ., _ and -, no - first" ;;
+    WS_TARGET) echo "lan, cloud or mac-vm: a machine on the LAN, a cloud VM or a VM on the Mac" ;;
     WS_PUBLIC_KEY) echo "a WireGuard public key, 43 base64 characters and an =" ;;
     WS_LAN) echo "an IPv4 network, as 10.88.0.0/24, clear of $ws_cable_net and $ws_tunnel_net" ;;
     WS_LAN_ADDRESS) echo "a host's IPv4 address inside WS_LAN" ;;
@@ -221,6 +249,7 @@ ws_conf_form() {
         echo "a network service as networksetup -listallnetworkservices prints it, no * first," \
             "in quotes where it holds a blank"
         ;;
+    WS_CABLE_PORT) echo "a port of ws's, as enp5s0: up to 15 letters, digits and ._-, no - first" ;;
     WS_GIT_NAME) echo "a name, in quotes where it holds a blank, with no \" or \\" ;;
     WS_GIT_EMAIL)
         echo "an email address, as ws@example.com: letters, digits and ._%+- before the @, and" \
@@ -234,7 +263,8 @@ ws_conf_form() {
         echo "an agent's socket: a path from / or ~/, of letters, digits, blanks and ._/@+-," \
             "in quotes where it holds a blank"
         ;;
-    WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" ;;
+    WS_HOOK) echo "a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws" \
+        "in any letter case" ;;
     WS_HOOK_SECRET) echo "a Keychain item's name, 1 to 64 letters, digits and ._-" ;;
     *) echo "a port, 1 to 65535" ;;
     esac

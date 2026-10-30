@@ -4,17 +4,23 @@
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
 # logins. Then gh's and claude's logins, with ws's signing key listed, and Secure Boot off. A full
 # run must run bootstrap.sh without arguments in a unit of its own, with root's HOME and a UTF-8
-# locale, print its log and exit 0. It must stamp the clone's commit and 0 in run, and the unit and
-# 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run as
-# it was. A run during another's unit must follow that unit and start none. A full run whose unit is
-# cut off must exit 1 and remove the run stamp that the one before left. The next must start a unit
-# of its own. The files script must clone another repository by the stand-in gh, whose apply.sh
-# must run as root over ssh, its stdin empty. Its stamp must follow, which status must list. Its
-# clone again must leave the clone, and remove the stamp, and another owner's must stop. Its words
-# must print git's hash of root's word list, or - without one, and the list for that hash alone. Its
-# link must list ws's wired ports but the uplink and a bridge's member, with their carrier and IPv4
-# addresses. link PORT must name one in ws's host_vars once, which bootstrap.sh --tags
-# network,wireguard then gives 10.77.0.1. The stand-ins' state goes back.
+# locale, print its log and exit 0. It must stamp the clone's commit, 0 and on in run, and the unit
+# and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
+# as it was. A run during another's unit must follow that unit and start none. A full run whose unit
+# is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
+# unit of its own, as must one with -e security_outbound=false, which is full too, stamps off in
+# run, and names security_outbound: false in host_vars itself. One with another argument, as
+# --diff, must leave that stamp. The files script must clone
+# another repository by the stand-in gh, whose apply.sh must run as root over ssh, its stdin empty.
+# Its stamp must follow, which status must list. Its clone again must leave the clone, and remove
+# the stamp, and another owner's must stop. Its words must print git's hash of root's word list, or
+# - without one, and the list for that hash alone. Its link must list ws's wired ports but the
+# uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
+# ws's host_vars once, and bootstrap.sh --tags network,wireguard then give it 10.77.0.1, and
+# status's cable name it. The remote script's outbound must add security_outbound: false there once,
+# which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
+# must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
+# the linked file holds the line. The stand-ins' state goes back.
 
 set -u
 
@@ -60,12 +66,12 @@ echo "$key" >"$ws/wg0"
 touch "$ws/sb" "$ws/nct6687"
 echo "$mac" | sudo tee "$peer" >/dev/null
 rm "$ws/gh" "$ws/claude"
-states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'peer -' \
-    'hook -'
+states "mac.pub $mac" "wg0 $key" 'gh login' 'claude login' 'fans refused' 'cable -' 'peer -' \
+    'hook -' 'outbound on'
 touch "$ws/gh" "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'peer -' 'hook -'
+states 'mac.pub -' 'wg0 -' 'gh ok' 'claude ok' 'fans ok' 'cable -' 'peer -' 'hook -' 'outbound on'
 rm "$ws/nct6687"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
@@ -83,14 +89,14 @@ n=$(units)
 remote run
 full=$(unit)
 printf '%s\n' "$out" | grep -qx 'PLAY RECAP' && [ "$status" = 0 ] &&
-    [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 / $full 0" ] &&
+    [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $full 0" ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '' ] || error "a full run exited $status"
 tail -n 1 "$ws/run.log" | grep -q -- '--collect .* --setenv=LC_ALL=C.UTF-8 --setenv=HOME=/root ' ||
     error "a full run's unit lacked root's HOME or a UTF-8 locale"
 echo 3 >"$ws/bootstrap.status"
 remote run --tags devtools
 [ "$status" = 3 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(unit)" != "$full" ] &&
-    [ "$(stamp run) / $(stamp last)" = "$sha 0 / $(unit) 3" ] &&
+    [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $(unit) 3" ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags devtools' ] ||
     error "a tagged run exited $status"
 rm "$ws/bootstrap.status"
@@ -117,8 +123,19 @@ printf '%s\n' "$out" | grep -q ' ended before its run wrote its status' && [ "$s
 rm "$ws/bootstrap.cut"
 n=$(units)
 remote run
-[ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0" ] ||
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on" ] ||
     error "the run after it exited $status, with run '$(stamp run)'"
+sudo rm "$stamps/run"
+remote run -e security_outbound=false
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] &&
+    [ "$(tail -n 1 "$ws/bootstrap.log")" = '-e security_outbound=false' ] ||
+    error "a full run with -e exited $status, with run '$(stamp run)'"
+host_vars=$ws/root/root/repository/ws/host_vars
+sudo grep -qx 'security_outbound: false' "$host_vars/localhost.yml" ||
+    error "a full run with -e named no security_outbound: false in host_vars"
+sudo rm -r "$host_vars"
+remote run --diff
+[ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off" ] || error "a run with --diff stamped run"
 
 # files OP [ARG...]: the files script's OP, as remote runs the remote script's.
 files() {
@@ -185,11 +202,40 @@ printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &
     error "its link enp5s0 exited $status"
 files link enp5s0
 [ "$status" = 0 ] && [ -z "$out" ] || error "its link enp5s0 again exited $status"
+remote status
+printf '%s\n' "$out" | grep -qx 'cable -' || error "status named a cable before the roles' run"
 remote run --tags network,wireguard
 files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
     error "bootstrap.sh --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
-sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}"
+remote status
+printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
+remote outbound
+printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' 'security_outbound: false' |
+    cmp -s - "$vars" && [ "$status" = 0 ] && [ "$out" = "wizard-remote.sh: wrote $vars" ] ||
+    error "the remote script's outbound exited $status"
+remote outbound
+[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound again exited $status"
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no outbound off"
+printf '%s\n' --- 'security_outbound: true' 'security_outbound: Off  # by hand' |
+    sudo tee "$vars" >/dev/null
+remote outbound
+[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound with Off by hand exited $status"
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read Off by hand as on"
+echo 'security_outbound: true' | sudo tee -a "$vars" >/dev/null
+sudo mv "$vars" "$vars.real" && sudo ln -s localhost.yml.real "$vars"
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound on' || error "status read true after Off as off"
+remote outbound
+printf '%s\n' "$out" | grep -qF "$vars is a link to localhost.yml.real" && [ "$status" = 1 ] ||
+    error "its outbound through a link exited $status"
+echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
+remote outbound
+[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
+sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
+    "$ws/root/etc/netplan"
 rm -f "$ws/clone.log" "$ws/apply.log" "$ws/uplink"
 exit "$fail"

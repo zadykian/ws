@@ -24,7 +24,8 @@
 # - Hook on ws: the repository that WS_HOOK names, cloned on ws, and its apply.sh run there as root;
 # - Hook on the Mac: that repository's clone in ~/repository, its hooks and its Brewfile's formulae,
 #   and ws's word list;
-# - Cable: ws's port of the cable from the Mac's display, in host_vars on ws, and the Mac's service.
+# - Cable: on the LAN, ws's port of the cable from the Mac's display, in host_vars on ws, and the
+#   Mac's service.
 #
 # shellcheck source-path=SCRIPTDIR
 

@@ -5,7 +5,11 @@
 # its stamp must stop at the stage. The next must start a unit of its own. That one must end with
 # what stays by hand: ws's fans' driver, as the stand-in's Secure Boot refuses it, and the router's
 # forwards, for WS_REMOTE. A run while another's unit runs, as one that a dropped ssh left, must
-# follow that unit, and start none.
+# follow that unit, and start none. With WS_TARGET=cloud, a run that follows such a unit, without
+# -e, must then start one with -e security_outbound=false, and name that in ws's host_vars. The next
+# run must start none. Without the line, a run must write it alone. --check --update, with no
+# WS_TARGET in the environment, and --check on a cloud VM must name the run that each would start.
+# Back on the LAN, the closing list of --update must name the table that the line keeps off.
 
 set -u
 
@@ -13,6 +17,7 @@ wizard=$HOME/repository/ws/mac/wizard.sh
 remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamp=$ws/root/var/lib/ws-wizard/run
+vars=$ws/root/root/repository/ws/host_vars/localhost.yml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -48,7 +53,7 @@ grep -q "^wizard\.sh: ws's run: ws's playbook stopped, " "$RUNNER_TEMP/run.err" 
     [ "$status" = 1 ] && [ ! -f "$stamp" ] || error "a run cut off exited $status, or stamped run"
 rm "$ws/bootstrap.cut"
 wizard
-grep -q ' 0$' "$stamp" && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
+grep -q ' 0 on$' "$stamp" && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
 if ! grep -q "^- ws's fans' driver: " "$RUNNER_TEMP/run.out" ||
     ! grep -q "^- The router's forwards to ws, UDP 51820 and TCP 22022, for localhost," \
         "$RUNNER_TEMP/run.out"; then
@@ -70,7 +75,42 @@ done
 kill "$first"
 wizard
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
-    grep -q ' 0$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
+    grep -q ' 0 on$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/bootstrap.wait"
+out=$(env -u WS_TARGET sh "$wizard" --check --update </dev/null 2>&1)
+printf '%s\n' "$out" | grep -q "^wizard\.sh: ws's run: would pull ws's clone " ||
+    error "wizard.sh --check --update named no run of the playbook: $out"
+
+WS_CONF=$RUNNER_TEMP/cloud.conf
+export WS_CONF
+sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
+out=$(sh "$wizard" --check </dev/null 2>&1)
+printf '%s\n' "$out" | grep -q 'with -e security_outbound=false, then name that in ' ||
+    error "wizard.sh --check on a cloud VM named no run with -e: $out"
+echo 20 >"$ws/bootstrap.wait"
+ssh -o BatchMode=yes ws-ssh sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
+tries=0
+until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+wizard
+rm "$ws/bootstrap.wait"
+grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
+    [ "$(tail -n 1 "$ws/bootstrap.log")" = '-e security_outbound=false' ] && started 1 3 &&
+    grep -q ' 0 off$' "$stamp" && sudo grep -qx 'security_outbound: false' "$vars" &&
+    [ "$status" = 0 ] || error "a cloud VM's run after a unit without -e exited $status"
+wizard
+started 0 1 && [ "$status" = 0 ] || error "the next run with WS_TARGET=cloud exited $status"
+sudo rm "$vars"
+wizard
+started 0 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
+    error "a cloud VM's run without the line exited $status, or ran a playbook"
+rm "$WS_CONF"
+unset WS_CONF
+sh "$wizard" --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
+grep -q "^- ws's outbound table: off, as ws's host_vars names security_outbound: false, " \
+    "$RUNNER_TEMP/run.out" || error "wizard.sh --update on the LAN named no table left off"
+sudo rm -r "${vars%/*}"
 exit "$fail"

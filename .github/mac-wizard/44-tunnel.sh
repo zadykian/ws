@@ -5,8 +5,11 @@
 # it in place, have ws-tunnel take the key, and log in to ws through the tunnel. Without wg0's peer,
 # as a tagged run that failed leaves it, a run must run bootstrap.sh --tags wireguard and restart
 # ws-tunnel. Without the stand-in's mac.pub too, it must write mac.pub first. Where nothing answers
-# on UDP 51820, a run must stop within a minute, naming it, the router's forward and the Background.
-# Once it answers, a run must exit 0, and the next print nothing.
+# on UDP 51820, a run must exit 0 within a minute, its closing list naming it, the router's forward
+# and the Background. Once it answers, a run must exit 0, and the next print nothing. So must one in
+# which sudo -n fails, as once sudo's timestamp lapsed during ws's run. Without tunnel.pub, --check
+# must show it and the Tunnel stage after setup.sh. A run must then write it at the setup.sh stage,
+# and leave the Tunnel stage alone.
 
 set -u
 
@@ -79,15 +82,42 @@ standin_set listen-port 51821
 sudo launchctl kickstart -k system/com.github.zadykian.ws-tunnel
 start=$(date +%s)
 wizard
-printf '%s\n' "$out" |
-    grep -q 'within 30 s\. ws must take UDP 51820, .* router.s forward, .* in the Background' &&
-    [ "$status" = 1 ] && [ $(($(date +%s) - start)) -lt 60 ] ||
-    error "a run with nothing on UDP 51820 exited $status, or named no port, forward and Background"
+listed="^- The tunnel's handshake: .* 30 s, .* UDP 51820, .* router's forward .* Background "
+printf '%s\n' "$out" | grep -qx 'What stays by hand:' && printf '%s\n' "$out" | grep -q "$listed" &&
+    [ "$status" = 0 ] && [ $(($(date +%s) - start)) -lt 60 ] ||
+    error "a run with nothing on UDP 51820 exited $status, or listed no port, forward or Background"
 standin_set listen-port 51820
 wizard
 [ "$status" = 0 ] || error "a run once UDP 51820 answers again exited $status"
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] ||
     error "the last run exited $status, or printed what it should not"
-rm -f "$RUNNER_TEMP/first"
+
+# A sudo first on PATH that refuses -n, as sudo does once its timestamp lapsed.
+mkdir -p "$RUNNER_TEMP/lapsed"
+cat >"$RUNNER_TEMP/lapsed/sudo" <<'EOF'
+#!/bin/sh
+[ "$1" != -n ] || exit 1
+exec /usr/bin/sudo "$@"
+EOF
+chmod 755 "$RUNNER_TEMP/lapsed/sudo"
+out=$(PATH=$RUNNER_TEMP/lapsed:$PATH sh "$wizard" </dev/null 2>&1)
+status=$?
+printf '%s\n' "$out"
+[ "$status" = 0 ] && [ -z "$out" ] ||
+    error "a run in which sudo -n fails exited $status, or printed what it should not"
+
+pub=$HOME/.config/ws/tunnel.pub
+rm "$pub"
+wizard --check
+printf '%s\n' "$out" | grep -qxF "+$mac" &&
+    printf '%s\n' "$out" | grep -qx 'wizard\.sh: Tunnel: after setup\.sh' &&
+    [ ! -e "$pub" ] && [ "$status" = 0 ] ||
+    error "--check without tunnel.pub exited $status, wrote it, or showed no Tunnel after setup.sh"
+wizard
+printf '%s\n' "$out" | grep -qxF "setup.sh: wrote $pub" &&
+    ! printf '%s\n' "$out" | grep -q '^wizard\.sh: Tunnel: ' &&
+    [ "$(cat "$pub")" = "$mac" ] && [ "$status" = 0 ] ||
+    error "a run without tunnel.pub exited $status, wrote no Mac's key there, or acted at Tunnel"
+rm -rf "$RUNNER_TEMP/first" "$RUNNER_TEMP/lapsed"
 exit "$fail"

@@ -19,6 +19,7 @@
 # WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet. Once
 # launchd has the daemon, it sends WS_TUNNEL_NETWORKS into the tunnel and writes WS_RESOLVERS'
 # files in /etc/resolver.
+# It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
 # A run changes only what differs, so a second prints nothing but warnings once mac.conf has
 # WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make
@@ -112,13 +113,17 @@ key() {
     ws_say "made the Mac's WireGuard key, $ws_etc/private.key"
 }
 
-# tell prints the Mac's public key, with the commands that make it ws's peer, where the key is new
-# or ws's key isn't set yet.
+# tell writes the Mac's public key, once key has made it, to ~/.config/ws/tunnel.pub at each run,
+# where the wizard's Tunnel stage reads it without sudo. It prints the key, with the commands that
+# make it ws's peer, where the key is new or ws's key isn't set yet.
 tell() {
-    [ "$key_made" = 1 ] || [ -z "$WS_PUBLIC_KEY" ] || return 0
-    ws_checking && return 0
+    { [ "$key_made" = 0 ] || ! ws_checking; } || return 0
     public=$(sudo sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" "$ws_etc/private.key") ||
         ws_die "cannot read the Mac's public key"
+    [ -d "$HOME/.config" ] || ws_dir "$HOME/.config" 755
+    [ -d "$HOME/.config/ws" ] || ws_dir "$HOME/.config/ws" 700
+    printf '%s\n' "$public" | ws_put "$HOME/.config/ws/tunnel.pub" 644
+    { [ "$key_made" = 1 ] || [ -z "$WS_PUBLIC_KEY" ]; } && ! ws_checking || return 0
     # /etc/wireguard and bootstrap.sh are root's, so a WS_USER other than root goes through sudo,
     # with a terminal for its password. The key, which is public, goes in the remote command, so
     # that ssh's stdin stays the terminal.

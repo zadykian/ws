@@ -5,7 +5,8 @@
 # The wizard it runs prints nothing, so a second run and --check must print nothing at all. Where
 # WS_CONF names no file, the wizard under bootstrap.sh's --check must show the lines it would write
 # there, from the environment's answers. Writing none shows that --check reached it. In a home
-# without a clone, --check must list the clone and wizard.sh's stages, and make nothing.
+# without a clone, --check must list the clone and wizard.sh's stages, and make nothing outside
+# macOS's Library.
 
 set -u
 
@@ -50,8 +51,9 @@ boot '' --check
 
 # The wizard, given bootstrap.sh's arguments, shows what it would write to a mac.conf not there.
 conf=$RUNNER_TEMP/boot.conf
-out=$(WS_CONF=$conf WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_GIT_NAME='' \
-    WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK='' PATH=$path sh -s -- --check <"$bootstrap" 2>&1)
+out=$(WS_CONF=$conf WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
+    WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK='' PATH=$path \
+    sh -s -- --check <"$bootstrap" 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
@@ -71,6 +73,10 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] && [ "$out" = "$want" ] ||
     error "bootstrap.sh --check without a clone exited $status, printing other than '$want'"
-[ -z "$(ls -A "$home")" ] || error "bootstrap.sh --check made $(ls -A "$home") without a clone"
+# Library is macOS's: a program that bootstrap.sh runs may make it in a new home, as one did on
+# the runner's image 20261026.0455, while bootstrap.sh writes nothing there. The log lists it.
+find "$home/Library" 2>/dev/null
+made=$(find "$home" -mindepth 1 -maxdepth 1 ! -name Library)
+[ -z "$made" ] || error "bootstrap.sh --check made $made without a clone"
 rm -rf "$home"
 exit "$fail"

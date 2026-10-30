@@ -2,10 +2,13 @@
 # The Host key stage on the Mac that 30-run.sh leaves, whose known_hosts holds ws's key under ws.
 # Without that line, a run with no terminal must stop where WS_HOST_KEY is missing or names another
 # key. --check, under StrictHostKeyChecking accept-new in ~/.ssh/config, must show the line it would
-# add. With a mac.conf of no way to ws, a run must stop, naming docs/router.md. None may change
+# add. Where known_hosts is a link, it must stop, as a run must, which prints that line for its
+# file. With a mac.conf of no way to ws, a run must stop, naming docs/router.md. None may change
 # known_hosts. WS_HOST_KEY=yes, with the Mac's own mac.conf, must then add the line back as it was.
 # With a mac.conf whose way to ws doesn't answer, ws's address now must come from WS_FIRST_ADDRESS.
-# The Mac's own mac.conf then puts the way back.
+# That run's closing list must name mac.conf's WS_PORT in the router's forwards, and ws's lease at
+# no address, as mac.conf has no LAN. A cloud VM's copy must name mac.conf's way to ws, and no
+# lease. The Mac's own mac.conf then puts the way back.
 
 set -u
 
@@ -30,6 +33,17 @@ expect() {
     cmp -s "$hosts" "$RUNNER_TEMP/hosts.without" || error "wizard.sh changed $hosts"
 }
 
+# linked WANT [ARG]: the run, with known_hosts a link to a file, must stop, naming that file, then
+# WANT, and leave the link.
+linked() {
+    want=$1
+    shift
+    out=$(WS_HOST_KEY=yes sh "$wizard" "$@" </dev/null 2>&1)
+    status=$?
+    expect 1 "Host key: $hosts is a link to $RUNNER_TEMP/hosts.file, which the wizard leaves: $want"
+    [ -L "$hosts" ] || error "wizard.sh $* replaced the link"
+}
+
 cp "$hosts" "$RUNNER_TEMP/hosts"
 grep -vxF "$line" "$RUNNER_TEMP/hosts" >"$RUNNER_TEMP/hosts.without"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
@@ -45,6 +59,14 @@ out=$(sh "$wizard" --check </dev/null 2>&1)
 status=$?
 cp "$RUNNER_TEMP/ssh.config" ~/.ssh/config
 expect 0 "+$line"
+mv "$hosts" "$RUNNER_TEMP/hosts.file"
+ln -s "$RUNNER_TEMP/hosts.file" "$hosts"
+linked "a run would print ws's line for its file" --check
+! printf '%s\n' "$out" | grep -qF "$line" || error 'wizard.sh --check printed the line for the link'
+linked 'add this line to its file, then run the wizard again'
+printf '%s\n' "$out" | grep -qxF "$line" || error "wizard.sh printed no line for the link's file"
+rm "$hosts"
+mv "$RUNNER_TEMP/hosts.file" "$hosts"
 none=$RUNNER_TEMP/none.conf
 sed -e 's/^WS_REMOTE=.*/WS_REMOTE=/' -e 's/^WS_REMOTE_PORT=.*/WS_REMOTE_PORT=/' \
     ~/.config/ws/mac.conf >"$none"
@@ -58,7 +80,10 @@ printf '%s\n' "$out"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "wizard.sh with WS_HOST_KEY=yes wrote another $hosts"
 
 conf=$RUNNER_TEMP/first.conf
-sed 's/^WS_REMOTE=.*/WS_REMOTE=192.0.2.1/' ~/.config/ws/mac.conf >"$conf"
+{
+    sed 's/^WS_REMOTE=.*/WS_REMOTE=192.0.2.1/' ~/.config/ws/mac.conf
+    echo WS_PORT=51821
+} >"$conf"
 cp "$RUNNER_TEMP/hosts.without" "$hosts"
 out=$(WS_CONF=$conf sh "$wizard" </dev/null 2>&1)
 status=$?
@@ -71,6 +96,25 @@ status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "wizard.sh with WS_FIRST_ADDRESS=127.0.0.1 exited $status"
 cmp -s "$hosts" "$RUNNER_TEMP/hosts" || error "wizard.sh with WS_FIRST_ADDRESS wrote another $hosts"
+lease="- ws's lease: static, as docs/router.md has it, as this run reached ws at 127.0.0.1."
+forwards="- The router's forwards to ws, UDP 51821 and TCP 22022, for 192.0.2.1,"
+if ! printf '%s\n' "$out" | grep -qxF -e "$lease" ||
+    ! printf '%s\n' "$out" | grep -qF -e "$forwards"; then
+    error "wizard.sh with WS_FIRST_ADDRESS listed another lease or forwards by hand"
+fi
+sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' "$conf" >"$RUNNER_TEMP/cloud.conf"
+cp "$RUNNER_TEMP/hosts.without" "$hosts"
+out=$(WS_CONF=$RUNNER_TEMP/cloud.conf WS_FIRST_ADDRESS=127.0.0.1 WS_HOST_KEY=$fp sh "$wizard" \
+    </dev/null 2>&1)
+status=$?
+printf '%s\n' "$out"
+way="- ws's address: WS_REMOTE in mac.conf must lead to ws, as this run reached it at 127.0.0.1"
+if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (docs/mac-targets.md)." ||
+    printf '%s\n' "$out" | grep -q "^- ws's lease: "; then
+    error "wizard.sh on a cloud VM with WS_FIRST_ADDRESS exited $status, or named its lease"
+fi
+sudo rm -r "$RUNNER_TEMP/ws/root/root/repository/ws/host_vars"
+rm "$RUNNER_TEMP/cloud.conf"
 sh "$wizard" </dev/null || error "wizard.sh with the Mac's own mac.conf exited $?"
 grep -qx '    HostName localhost' ~/.ssh/config.d/ws || error 'wizard.sh put no way to ws back'
 rm -f "$RUNNER_TEMP/hosts" "$RUNNER_TEMP/hosts.without" "$none" "$conf" "$RUNNER_TEMP/ssh.config"

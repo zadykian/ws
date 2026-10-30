@@ -15,7 +15,7 @@ tmp=${tmp%/}
 dash=$(command -v dash)
 fail=0
 # mac.conf's answers that standin.sh leaves out, from the environment, each empty for no value.
-export WS_LAN='' WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK=''
+export WS_TARGET=lan WS_LAN='' WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK=''
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {

@@ -97,7 +97,8 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
 # command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
 # and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
-# here. So it roots a command's path from /root, such as another repository's apply.sh.
+# here. So it roots a command's path from /root, such as another repository's apply.sh, alone or
+# after the script of sh -c.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
@@ -115,6 +116,10 @@ export PATH
 case $SSH_ORIGINAL_COMMAND in
 'sh -s -- '*) sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
 /root/*) exec "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
+"sh -c '"*)
+    command=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" | sed "s| /root/| $WS_STANDIN/root/root/|")
+    exec /bin/sh -c "$command"
+    ;;
 *) exec /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
 esac
 EOF
@@ -166,5 +171,15 @@ esac
 exec /usr/bin/ssh "\$@"
 EOF
 chmod 755 /opt/homebrew/bin/ssh
+# nc next, for the Tunnel stage's check of ws's SSH port through the tunnel, by its arguments. It
+# goes to the stand-in's sshd, by the runner's nc, where ws-tunnel has a handshake.
+rm -f /opt/homebrew/bin/nc
+cat >/opt/homebrew/bin/nc <<'EOF'
+#!/bin/sh
+[ "$*" = '-z -G 3 -w 3 10.99.0.1 22' ] || exec /usr/bin/nc "$@"
+sudo /usr/local/libexec/ws-tunnel/ws-tunnel status 2>/dev/null |
+    grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 22022
+EOF
+chmod 755 /opt/homebrew/bin/nc
 : >"$ws/log"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"

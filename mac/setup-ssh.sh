@@ -46,8 +46,8 @@ EOF
     fi
     if [ -n "$WS_REMOTE_PORT" ]; then
         cat <<EOF
-# Elsewhere, through the router's port forward, which takes IPv4 alone, while the router's name
-# may have an AAAA record too.
+# Elsewhere, at WS_REMOTE, through the router's port forward or to a cloud VM, over IPv4 alone, as
+# a forward takes it, while the name may have an AAAA record too.
 Host $direct
     HostName $WS_REMOTE
     Port $WS_REMOTE_PORT

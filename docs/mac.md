@@ -48,13 +48,13 @@ LAN's network or broadcast address. `WS_REMOTE` is the router's name on the inte
 `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
 router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
 side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
-order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of
-the display's adapter, in quotes where it holds a blank: [The cable](#the-cable). `WS_GIT_NAME`
-and `WS_GIT_EMAIL`, which go together, are the author of git's commits on the Mac, the name in
-quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the `.pub` of the key that signs them, by
-its path from `/` or `~/`: [git on the Mac](mac-git.md). `WS_IDENTITY` is the `.pub` of the key that
-ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its agent, in quotes where it holds a blank:
-[ssh's hosts](#sshs-hosts).
+order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
+display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
+[The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
+git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the
+`.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
+`WS_IDENTITY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its
+agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
@@ -214,9 +214,10 @@ user become root. A `brew upgrade` reaches the copies at the next run of `setup.
 the daemon where a copy changed.
 
 The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key,
-`tunnel.conf` and `routes.d`, below. `setup.sh` copies `tunnel.conf` from `mac.conf`, so that the
-daemon reads no file the user can write. macOS lists the daemon under System Settings › General ›
-Login Items & Extensions, where "Allow in the Background" must stay on.
+`tunnel.conf` and `routes.d`, below. `setup.sh` keeps the public key in `~/.config/ws/tunnel.pub`,
+which the wizard reads, and copies `tunnel.conf` from `mac.conf`, so the daemon reads no file the
+user can write. In System Settings › General › Login Items & Extensions, its "Allow in the
+Background" must stay on.
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
 The scripts fix both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
@@ -258,8 +259,7 @@ second, to `ws-ssh`, serves where UDP is blocked.
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install
-iperf3 from apt, let its port in on the tunnel and the cable for the test alone, and run the
-server:
+iperf3 from apt, let its port in on the tunnel and the cable for the test alone, and run the server:
 
 ```sh
 ufw allow in on wg0 to any port 5201 proto tcp

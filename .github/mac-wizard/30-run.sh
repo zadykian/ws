@@ -23,7 +23,7 @@ tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
 # mac.conf's answers that standin.sh leaves out, from the environment, each empty for no value.
-export WS_LAN='' WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK=''
+export WS_TARGET=lan WS_LAN='' WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK=''
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
@@ -53,7 +53,7 @@ if ! grep -qxF "$added" "$RUNNER_TEMP/gh/log" ||
     ! grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" "$RUNNER_TEMP/gh/keys"; then
     error "wizard.sh added no ~/.ssh/id_ed25519.pub to gh's login, titled with the Mac's name"
 fi
-grep -q "^wizard\.sh: Host key: warning: through the router's forward, " "$RUNNER_TEMP/stop.err" ||
+grep -q '^wizard\.sh: Host key: warning: through WS_REMOTE, ' "$RUNNER_TEMP/stop.err" ||
     error "wizard.sh gave no warning that ws faces the internet through WS_REMOTE"
 grep -qxF "ws $(cut -d ' ' -f 1-2 "$RUNNER_TEMP/ws/host_key.pub")" ~/.ssh/known_hosts ||
     error "wizard.sh added no line for ws's host key to ~/.ssh/known_hosts"
@@ -69,7 +69,7 @@ cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 [ "$status" = 0 ] || error "wizard.sh exited $status, with the account's keys in root's file"
 if ! printf '\n%s\n' '--tags wireguard' | cmp -s - "$RUNNER_TEMP/ws/bootstrap.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
-    ! grep -q ' 0$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
+    ! grep -q ' 0 on$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
     error "wizard.sh ran no bootstrap.sh on ws, once, then --tags wireguard, with root's HOME"
 fi
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key)
@@ -81,8 +81,8 @@ sudo /usr/local/libexec/ws-tunnel/ws-tunnel status | grep -q '^latest handshake:
     [ "$(cat "$RUNNER_TEMP/ws/tunnel.log" 2>/dev/null | wc -l)" -eq 1 ] ||
     error "wizard.sh had no handshake, or logged in to ws through the tunnel other than once"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"
-printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' WS_LAN= \
-    WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_HOOK= \
+printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
+    WS_TARGET=lan WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_HOOK= \
     "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" |
     cmp -s - ~/.config/ws/mac.conf ||
     error "wizard.sh wrote another mac.conf than standin.sh's lines, the answers and wg0's key"

@@ -182,7 +182,8 @@ must ws_resolver own.test
 : >"$tmp/all.conf"
 for each in WS_USER=root WS_PUBLIC_KEY= WS_LAN= WS_LAN_ADDRESS= WS_REMOTE= WS_REMOTE_PORT= \
     WS_PORT= WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_CABLE_SERVICE= WS_GIT_NAME= WS_GIT_EMAIL= \
-    WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_IDENTITY_AGENT= WS_HOOK= WS_HOOK_SECRET=; do
+    WS_GIT_SIGNING_KEY= WS_IDENTITY= WS_IDENTITY_AGENT= WS_HOOK= WS_HOOK_SECRET= WS_TARGET=lan \
+    WS_CABLE_PORT=; do
     key=${each%%=*}
     for line in "$key=" "$key=\"\"" "$key=''"; do
         gives "$key" "${each#*=}" "$line"
@@ -196,7 +197,7 @@ for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS
     WS_REMOTE=-oProxyCommand=x WS_REMOTE_PORT=0 WS_PORT=65536 WS_TUNNEL_NETWORKS=10.99.0.0/24 \
     WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet' 'WS_GIT_NAME=ws"stand-in' \
     WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws' 'WS_IDENTITY=~/.ssh/id_ed25519' \
-    WS_IDENTITY_AGENT=agent.sock WS_HOOK=ws WS_HOOK_SECRET=ws/hook; do
+    WS_IDENTITY_AGENT=agent.sock WS_HOOK=ws WS_HOOK_SECRET=ws/hook WS_TARGET=Cloud; do
     refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
@@ -204,6 +205,17 @@ refused 'unknown key WS_NONE' WS_NONE=
 refused 'go together' WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=
 refused 'go together' WS_LAN= WS_LAN_ADDRESS=10.88.0.10
 refused 'needs WS_REMOTE' WS_REMOTE= WS_REMOTE_PORT=22022
+cloud='WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT'
+refused "$cloud" WS_TARGET=cloud
+refused "$cloud" WS_TARGET=cloud WS_REMOTE=ws.example.com
+refused 'WS_TARGET=mac-vm needs WS_LAN' WS_TARGET=mac-vm WS_REMOTE=ws.example.com
+gives WS_TARGET cloud WS_TARGET=cloud WS_REMOTE=ws.example.com WS_REMOTE_PORT=22
+refused "WS_TARGET=cloud has another target's key: WS_LAN" WS_TARGET=cloud \
+    WS_REMOTE=ws.example.com WS_REMOTE_PORT=22 WS_LAN=10.88.0.0/24 WS_LAN_ADDRESS=10.88.0.10
+refused "WS_TARGET=mac-vm has another target's key: WS_REMOTE" WS_TARGET=mac-vm \
+    WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_REMOTE=ws.example.com
+refused "WS_TARGET=cloud has another target's key: WS_CABLE_SERVICE WS_CABLE_PORT" WS_TARGET=cloud \
+    WS_REMOTE=ws.example.com WS_REMOTE_PORT=22 WS_CABLE_SERVICE=Ethernet WS_CABLE_PORT=enp5s0
 
 # WS_LAN_ADDRESS inside WS_LAN, whichever line comes first. A host's address at either end of a /24
 # must pass, as must a /31's first. Its network and broadcast addresses, a /30's too, must stop
@@ -229,6 +241,13 @@ gives WS_CABLE_SERVICE Ethernet WS_CABLE_SERVICE=Ethernet
 refused 'line 1: WS_CABLE_SERVICE=USB LAN is not a network service' 'WS_CABLE_SERVICE=USB LAN'
 refused 'is not a network service' "WS_CABLE_SERVICE=\"USB$(printf '\t')LAN\""
 refused 'is not a network service' "WS_CABLE_SERVICE=Ethernet$(printf '\r')"
+# WS_CABLE_PORT, ws's port of the cable, which goes in a command on ws: a name of Linux's. It may
+# stay beside an empty WS_CABLE_SERVICE, as setup.sh's stop tells.
+gives WS_CABLE_PORT enp5s0 WS_CABLE_SERVICE=Ethernet WS_CABLE_PORT=enp5s0
+gives WS_CABLE_PORT enp5s0 WS_CABLE_PORT=enp5s0 WS_CABLE_SERVICE=
+for line in 'WS_CABLE_PORT=enp5s0;id' WS_CABLE_PORT=-enp5s0 WS_CABLE_PORT=enp5s0enp5s0enp5s0; do
+    refused "line 1: $line is not $(ws_conf_form WS_CABLE_PORT)" "$line"
+done
 
 # git's identity and signing key. A name with blanks must pass in quotes, and stop ws_conf bare, as
 # must one with a \. An email takes one @, and a key's file starts at / or ~/ and ends in .pub. The

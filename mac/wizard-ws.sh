@@ -47,33 +47,64 @@ run_after() {
     [ "$root_in" = 1 ] || echo "Root's key"
 }
 
-# run_done succeeds where ws's last full run exited 0, and no run's unit runs there now. Under
-# --update, only once the stage ran the playbook in this run. It reads ws only where root logged in
-# there in this run.
+# run_done succeeds where ws's last full run exited 0, and no run's unit runs there now. On a cloud
+# VM, that run's -e must have turned the outbound table off, and ws's host_vars must keep it off.
+# Under --update, only once the stage ran the playbook in this run. It reads ws only where root
+# logged in there in this run.
 # shellcheck disable=SC2154 # update is wizard.sh's
 run_done() {
     [ "$update" = 0 ] || [ "$run_ran" = 1 ] || return 1
+    ws_conf "$WS_CONF"
     [ "$root_in" = 1 ] && remote_read && [ "$(remote_get active)" = - ] &&
-        [ "$(remote_get run | cut -d ' ' -f 2)" = 0 ]
+        [ "$(run_status)" = 0 ] &&
+        { [ "$WS_TARGET" != cloud ] || { run_off && [ "$(remote_get outbound)" = off ]; }; }
+}
+
+# run_status prints the status of ws's last full run, as the remote script's status read it, or -.
+run_status() {
+    run_word=$(remote_get run | cut -d ' ' -f 2)
+    echo "${run_word:--}"
+}
+
+# run_off succeeds where ws's last full run turned the outbound table off by its -e.
+run_off() {
+    [ "$(remote_get run | cut -d ' ' -f 3)" = off ]
 }
 
 # run_do runs ws's playbook in a unit of its own on ws through the remote script, or follows the run
 # that goes on there, with its log on stderr. Under --update, the remote script pulls ws's clone
-# first. --check says what it would do.
+# first. On a cloud VM, where the outbound table would drop the provider's metadata service, the
+# run's -e turns it off, and its unit names that in host_vars for the runs after. A unit that the
+# run followed may have lacked that -e: a run of its own follows then. Where the line is missing
+# still, run_outbound writes it, alone where a run with -e passed before. --check says what it would
+# do. It reads mac.conf, which nothing else read before under --check --update.
 run_do() {
+    ws_conf "$WS_CONF"
     set --
     run_how="run bootstrap.sh on ws in a unit of its own, and follow its log"
     if [ "$update" = 1 ]; then
         set -- --update
         run_how="pull ws's clone where it is on main and clean, then $run_how"
     fi
+    if [ "$WS_TARGET" = cloud ]; then
+        set -- "$@" -e security_outbound=false
+        run_how="$run_how, with -e security_outbound=false, then name that in ws's host_vars"
+        if [ "$update" = 0 ] && [ "$(remote_get active)" = - ] && [ "$(run_status)" = 0 ] &&
+            run_off; then
+            run_how="name security_outbound: false in ws's host_vars"
+            ws_checking || {
+                run_outbound
+                return
+            }
+        fi
+    fi
     if ws_checking; then
         remote_read || true
         run_unit=$(remote_get active) || run_unit=-
-        run_last=$(remote_get run) || run_last='- -'
-        case $run_unit:${run_last#* } in
+        run_last=$(run_status)
+        case $run_unit:$run_last in
         -:- | -:0) ws_say "ws's run: would $run_how" ;;
-        -:*) ws_say "ws's run: would $run_how; its last full run exited ${run_last#* }" ;;
+        -:*) ws_say "ws's run: would $run_how; its last full run exited $run_last" ;;
         *) ws_say "ws's run: would follow $run_unit, which runs on ws" ;;
         esac
         return 0
@@ -83,6 +114,26 @@ run_do() {
     remote_got=0
     remote run "$@" >&2 || return 1
     run_ran=1
+    [ "$WS_TARGET" = cloud ] || return 0
+    remote_read || return 1
+    if ! run_off; then
+        ws_say "ws's run: the unit it followed ran without -e security_outbound=false, so" \
+            "bootstrap.sh runs again with it"
+        remote_got=0
+        remote run "$@" >&2 && remote_read || return 1
+    fi
+    [ "$(remote_get outbound)" = off ] || run_outbound
+}
+
+# run_outbound names security_outbound: false in ws's host_vars by the remote script's outbound op,
+# and stops with its error where that fails. --update runs the playbook, which makes a clone gone.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+run_outbound() {
+    remote_got=0
+    remote outbound 2>"$lock/outbound.err" || ws_die "ws's run: ws's host_vars lacks" \
+        "security_outbound: false: $(tail -n 1 "$lock/outbound.err"); mend that, or run the" \
+        "wizard with --update, which runs ws's playbook again"
+    cat "$lock/outbound.err" >&2
 }
 
 # run_fail says what to do where ws's playbook ran no full run to its end.
@@ -106,10 +157,17 @@ wsgh_done() {
 # where it lacks either, in a session of ssh -t at the terminal. gh's device flow shows a code
 # there, for the page that the Mac's browser opens. So the login is ws's own, never a copy of the
 # Mac's. Then bootstrap.sh --tags devtools, in a unit of its own, adds ws's signing key. --check
-# says what it would do.
+# says what it would do. Both stop where gh's list of the account's signing keys failed otherwise,
+# with gh's error, as a new login would not mend it.
 wsgh_do() {
-    case $(remote_get gh) in
+    wsgh_state=$(remote_get gh)
+    case $wsgh_state in
     none) ws_die "gh on ws: ws lacks gh, which its run installs: run the wizard with --update" ;;
+    error*)
+        wsgh_why=${wsgh_state#error}
+        ws_die "gh on ws: gh api user/ssh_signing_keys failed as root on" \
+            "ws${wsgh_why:+:}${wsgh_why:- and printed nothing}; run the wizard again once it works"
+        ;;
     login) wsgh_how="gh auth login -h github.com -p https -w -s write:ssh_signing_key" ;;
     scope) wsgh_how="gh auth refresh -h github.com -s write:ssh_signing_key" ;;
     *) wsgh_how= ;;
@@ -176,18 +234,40 @@ wsclaude_fail() {
 
 # run_hand adds what stays by hand of ws, the router and the Mac to the closing list, after a run in
 # which a stage acted. ws's part comes from the remote script's status, which the stage read.
+# mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only with a LAN.
+# Off the LAN, run_away's lines take the router's place.
 # shellcheck disable=SC2154 # acted is wizard.sh's, host_first wizard-host.sh's
 run_hand() {
     [ "$acted" = 1 ] || return 0
     remote_read || true
     [ "$(remote_get fans)" != refused ] || by_hand "ws's fans' driver: with Secure Boot on," \
         "DKMS's key, enrolled at ws's console (docs/fans.md, Secure Boot)."
+    [ "$WS_TARGET" = cloud ] || [ "$(remote_get outbound)" != off ] || by_hand "ws's outbound" \
+        "table: off, as ws's host_vars names security_outbound: false, as for a cloud VM; remove" \
+        "that line, then run the wizard with --update (docs/security.md, Outbound)."
     by_hand "macOS's local network: where it asks whether iTerm2, Gateway or another app may find" \
         "devices there, allow it (docs/mac.md, ssh's hosts)."
     by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \
         "config file ~/.ssh/config on (docs/mac.md)."
-    [ -z "$host_first" ] || by_hand "ws's lease: static at ${WS_LAN_ADDRESS:-10.88.0.10}, as" \
-        "docs/router.md has it, as this run reached ws at $host_first."
-    [ -z "$WS_REMOTE" ] || by_hand "The router's forwards to ws, UDP 51820 and TCP" \
+    [ "$WS_TARGET" = lan ] || {
+        run_away
+        return 0
+    }
+    [ -z "$host_first" ] || by_hand "ws's lease: static${WS_LAN_ADDRESS:+ at $WS_LAN_ADDRESS}," \
+        "as docs/router.md has it, as this run reached ws at $host_first."
+    [ -z "$WS_REMOTE" ] || by_hand "The router's forwards to ws, UDP ${WS_PORT:-51820} and TCP" \
         "${WS_REMOTE_PORT:-22022}, for $WS_REMOTE, as docs/router.md has them."
+}
+
+# run_away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
+# run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
+# in (docs/mac-targets.md).
+# shellcheck disable=SC2154 # host_first is wizard-host.sh's
+run_away() {
+    run_way=WS_LAN_ADDRESS
+    [ "$WS_TARGET" != cloud ] || run_way=WS_REMOTE
+    [ -z "$host_first" ] || by_hand "ws's address: $run_way in mac.conf must lead to ws, as this" \
+        "run reached it at $host_first (docs/mac-targets.md)."
+    [ "$WS_TARGET" != cloud ] || by_hand "The provider's firewall: UDP ${WS_PORT:-51820} open to" \
+        "ws, for the tunnel (docs/mac-targets.md)."
 }

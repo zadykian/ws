@@ -5,15 +5,21 @@
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. run is the commit and status of the last full run, and last the unit and status of
-#   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer
-#   takes, and wg0 is wg0's own key. gh is ok, none, login, scope or key, below. claude is ok, none
+#   is missing. run is the commit and status of the last full run, and off where its -e turned the
+#   outbound table off, else on. last is the unit and status of the last run. active is the run's
+#   unit that runs now. mac.pub is the Mac's key that wg0's peer
+#   takes, and wg0 is wg0's own key. gh is ok, none, login, scope, key or error. claude is ok, none
 #   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok. peer is
 #   ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as OWNER/REPO, whose
-#   apply.sh has a stamp of wizard-remote-files.sh's, the files script.
+#   apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound is off where the
+#   clone's host_vars turns the security role's outbound table off, else on.
+#   cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
 # - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
-#   ends, and exits with the run's status. --update first pulls a clean clone on main.
+#   ends, and exits with the run's status. --update first pulls a clean clone on main. A run whose
+#   ARGs are -e pairs alone is a full one.
+# - outbound names security_outbound: false in ws's host_vars, where a full run's unit with -e
+#   security_outbound=false didn't, which keeps the outbound table off for a cloud VM.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
@@ -21,14 +27,16 @@
 set -eu
 
 # The wizard's stamps, ws's clone, the Mac's key for wg0, root's claude, root's git config, which
-# names ws's signing key, and the fans' driver as the kernel loaded it. Each is a line NAME=PATH,
-# which CI's stand-in for ws roots in a directory of its own.
+# names ws's signing key, the fans' driver as the kernel loaded it, and the network role's netplan
+# file of the cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of
+# its own.
 state=/var/lib/ws-wizard
 dir=/root/repository/ws
 peer=/etc/wireguard/mac.pub
 claude=/root/.local/bin/claude
 gitconfig=/root/.gitconfig
 module=/sys/module/nct6687
+netplan=/etc/netplan/60-direct-link.yaml
 
 # say prints a message of the script's on stderr.
 say() {
@@ -46,9 +54,26 @@ first() {
     awk 'NR == 1 { print; found = 1 } END { if (!found) print "-" }'
 }
 
-# stamp FILE prints the two words of the stamp FILE, or - where it has none.
+# stamp FILE [N] prints the N words of the stamp FILE, 2 by default, or - where it has none.
 stamp() {
-    awk 'NF == 2 { print; exit }' "$1" 2>/dev/null | first
+    awk -v n="${2:-2}" 'NF == n { print; exit }' "$1" 2>/dev/null | first
+}
+
+# cable prints the port that host_vars in the clone names as network_direct_link_interface, as
+# link writes it, bare or in either quotes: the last such line, as Ansible reads the file. It
+# prints - for none, and where the network role's netplan file lacks the port, as after a roles'
+# run that failed, so that the Cable stage runs them again.
+cable() {
+    port=$(awk -v q="'" '/^network_direct_link_interface[ \t]*:/ {
+        v = $0
+        sub(/^[^:]*:[ \t]*/, "", v)
+        sub(/[ \t]+#.*$/, "", v)
+        sub(/[ \t\r]+$/, "", v)
+        if (v ~ /^".*"$/ || v ~ ("^" q ".*" q "$")) v = substr(v, 2, length(v) - 2)
+        port = (v ~ /^[A-Za-z0-9_.-]+$/) ? v : ""
+    } END { print port }' "$dir/host_vars/localhost.yml" 2>/dev/null) || port=
+    [ -n "$port" ] && grep -qF "\"$port\":" "$netplan" 2>/dev/null || port=-
+    echo "$port"
 }
 
 # active prints the run's unit that is active or activating, where there is one.
@@ -57,30 +82,40 @@ active() {
         'ws-wizard-*' 2>/dev/null | awk '{ sub(/\.service$/, "", $1); print $1; exit }'
 }
 
-# gh_state prints none without gh, login without a login to github.com or where its list of signing
-# keys fails but for a 404, and scope at that 404. key is where the list lacks the key that root's
-# git config signs with, and ok where it holds it, or where that config names no key file there.
+# gh_state prints none without gh, and login where gh holds no token for github.com, or GitHub
+# refuses it with a 401 at the list of signing keys. gh auth token tells the first offline, as gh
+# auth status passes a revoked token in gh 2.46, and fails at a network error in later ones. scope
+# is where the list gets a 404, as a login without the scope does. Where the list fails otherwise,
+# as at a network error or GitHub's 5xx, which a new login would not mend, it prints error and the
+# last line of gh's stderr, if any. key is where the list lacks the key that root's git config signs
+# with, and ok where it holds it, or where that config names no key file there.
 gh_state() {
     command -v gh >/dev/null || { echo none && return; }
-    gh auth status -h github.com >/dev/null 2>&1 || { echo login && return; }
+    gh auth token -h github.com >/dev/null 2>&1 || { echo login && return; }
     pub=$(git config -f "$gitconfig" user.signingkey) && [ -f "$pub" ] || { echo ok && return; }
-    if ! keys=$(gh api --paginate user/ssh_signing_keys --jq '.[].key' 2>&1); then
-        case $keys in *'HTTP 404'*) echo scope ;; *) echo login ;; esac
+    # gh prints an error's body on stdout, so its own message goes in a file, as on the Mac.
+    err=$(mktemp "${TMPDIR:-/tmp}/ws-gh.XXXXXX") || { echo 'error mktemp failed' && return; }
+    if ! keys=$(gh api --paginate user/ssh_signing_keys --jq '.[].key' 2>"$err"); then
+        awk '{ sub(/\r$/, "") } /HTTP 404/ { s = "scope" } /HTTP 401/ { s = "login" }
+            NF { last = $0 } END { print (s != "" ? s : last == "" ? "error" : "error " last) }' \
+            "$err"
     elif printf '%s\n' "$keys" | grep -qxF -e "$(cut -d ' ' -f 1-2 "$pub")"; then
         echo ok
     else
         echo key
     fi
+    rm -f "$err"
 }
 
 # status prints what the wizard reads of ws, as the header says.
 status() {
-    echo "run $(stamp "$state/run")"
+    echo "run $(stamp "$state/run" 3)"
     echo "last $(stamp "$state/last")"
     echo "active $(active | first)"
     echo "mac.pub $(head -n 1 "$peer" 2>/dev/null | first)"
     echo "wg0 $(wg show wg0 public-key 2>/dev/null | first)"
-    echo "gh $(gh_state)"
+    # gh's message may hold a backslash, which dash's echo would read.
+    printf 'gh %s\n' "$(gh_state)"
     if [ ! -x "$claude" ]; then
         echo 'claude none'
     elif "$claude" auth status >/dev/null 2>&1; then
@@ -94,11 +129,13 @@ status() {
     else
         echo 'fans ok'
     fi
+    echo "cable $(cable)"
     mac=$(head -n 1 "$peer" 2>/dev/null) || mac=
     echo "peer $(wg show wg0 peers 2>/dev/null |
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
     hook=$(cat "$state"/hook-* 2>/dev/null | awk '$3 != "" { printf " %s", $3 }')
     echo "hook${hook:- -}"
+    echo "outbound $(off | sh -s -- check "$dir/host_vars/localhost.yml" && echo off || echo on)"
 }
 
 # pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked
@@ -118,13 +155,24 @@ pull() {
 
 # job prints the script of a run's unit, which systemd-run runs with UNIT DIR STATE [ARG...]. It
 # runs bootstrap.sh ARGs from the clone in DIR, or from the README's download where DIR holds none.
-# Its last steps write STATE/last as UNIT and the status, and, without ARGs, STATE/run as the
-# clone's commit and the status, each by a rename. A full run removes STATE/run first, as it starts.
+# Its last steps write STATE/last as UNIT and the status, each by a rename. A full run, whose ARGs
+# are -e pairs alone, writes STATE/run too: the clone's commit, the status, and off where
+# -e security_outbound=false turned the outbound table off, else on. It removes it as it starts.
+# Such a run that passed first names that in host_vars by STATE/off, so that no ssh comes between.
 job() {
     cat <<'EOF'
-unit=$1 dir=$2 state=$3 full=$(($# - 3))
+unit=$1 dir=$2 state=$3 full=1 table=on pair=
 shift 3
-[ "$full" != 0 ] || rm -f "$state/run"
+for arg; do
+    case $pair:$arg in
+    1:security_outbound=false) table=off pair= ;;
+    1:*) pair= ;;
+    :-e) pair=1 ;;
+    *) full=0 ;;
+    esac
+done
+[ -z "$pair" ] || full=0
+[ "$full" = 0 ] || rm -f "$state/run"
 if [ -e "$dir/.git" ]; then
     sh "$dir/bootstrap.sh" "$@"
 else
@@ -133,12 +181,39 @@ else
         sh "$state/bootstrap.sh" "$@"
 fi
 status=$?
-if [ "$full" = 0 ]; then
+if [ "$full" = 1 ]; then
+    [ "$status$table" != 0off ] || sh "$state/off" write "$dir/host_vars/localhost.yml"
     sha=$(git -C "$dir" rev-parse HEAD 2>/dev/null) || sha=-
-    echo "$sha $status" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
+    echo "$sha $status $table" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
 fi
 echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
 exit "$status"
+EOF
+}
+
+# off prints the script of host_vars VARS's security_outbound line, which runs as OP VARS. check
+# succeeds where the last such line is false, no or off, in any case, with a comment or not, as YAML
+# reads it. write names security_outbound: false otherwise, by a rename that keeps the file's other
+# lines and mode, so neither through a link nor outside a clone.
+off() {
+    cat <<'EOF'
+vars=$2
+awk '/^security_outbound:/ { line = $0 } END { print line }' "$vars" 2>/dev/null |
+    grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]+#.*)?' && exit 0
+[ "$1" = write ] || exit 1
+dir=${vars%/host_vars/*} why=
+[ ! -L "$vars" ] || why="$vars is a link to $(readlink "$vars"): name the line in its file by hand"
+[ -d "$dir/.git" ] || why="ws has no clone in $dir, which ws's run makes"
+[ -z "$why" ] || { echo "wizard-remote.sh: $why" >&2 && exit 1; }
+mkdir -p "${vars%/*}"
+[ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
+{
+    [ -s "$vars" ] || echo ---
+    cat "$vars" 2>/dev/null | awk '
+        /^security_outbound:/ { if (!done++) print "security_outbound: false"; next }
+        { print }
+        END { if (!done) print "security_outbound: false" }'
+} >"$vars.new" && mv -f "$vars.new" "$vars" && echo "wizard-remote.sh: wrote $vars" >&2
 EOF
 }
 
@@ -155,6 +230,7 @@ run() {
         mkdir -p "$state"
         job >"$state/job.new"
         mv -f "$state/job.new" "$state/job"
+        off >"$state/off.new" && mv -f "$state/off.new" "$state/off"
         unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
         systemd-run --quiet --unit="$unit" --collect --expand-environment=no \
             --description="ws's playbook, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
@@ -212,9 +288,10 @@ main() {
     case ${1-} in
     status) status ;;
     run) shift && run "$@" ;;
+    outbound) off | sh -s -- write "$dir/host_vars/localhost.yml" ;;
     peer) peer "${2-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [--update] [ARG...] |" \
-        "peer KEY" ;;
+        "outbound | peer KEY" ;;
     esac
 }
 

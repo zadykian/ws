@@ -49,7 +49,9 @@ wshook_done() {
 # wshook_do runs the repository's apply.sh as root on ws, by plain ssh, never ssh -t, at which such
 # a script could prompt and echo its stdin. The files script's clone first clones the repository
 # where ws lacks it, and removes its stamp, which its stamp op writes again once apply.sh exits 0.
-# --check says what it would do.
+# First, security must read the item into /dev/null, so that an item it can't read stops the stage
+# before ssh. --check says what it would do.
+# shellcheck disable=SC2154 # lock is wizard.sh's
 wshook_do() {
     wshook_apply=/root/repository/${WS_HOOK#*/}/apply.sh
     wshook_in=${WS_HOOK_SECRET:+the Keychain item $WS_HOOK_SECRET}
@@ -59,6 +61,9 @@ wshook_do() {
             "then run its apply.sh there, its stdin ${wshook_in:-empty}"
         return 0
     fi
+    [ -z "$WS_HOOK_SECRET" ] ||
+        security find-generic-password -s "$WS_HOOK_SECRET" -w >/dev/null 2>"$lock/hook.err" ||
+        wshook_unread
     ws_say "Hook on ws: $WS_HOOK's apply.sh runs as root on ws, its stdin ${wshook_in:-empty}"
     # shellcheck disable=SC2034 # wizard-ws.sh's remote_read reads it
     remote_got=0
@@ -85,9 +90,26 @@ wshook_item() {
         ws_die "Hook on ws: $wshook_add failed, as above; run the wizard again"
 }
 
-# wshook_run runs apply.sh on ws, its stdin the item's secret, or /dev/null without an item, and
-# fails where apply.sh or ssh does. Where ssh reached ws, it stops where security can't read the
-# item, as where macOS's prompt for it was denied, even where apply.sh then exited 0.
+# wshook_unread stops the stage where security can't read the item, as in a locked Keychain, or
+# where the user denied macOS's prompt for it. It names security's last line of error, where it
+# printed one in hook.err.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+wshook_unread() {
+    wshook_why=$(tail -n 1 "$lock/hook.err" 2>/dev/null)
+    ws_die "Hook on ws: security can't read the item $WS_HOOK_SECRET from the Keychain, so" \
+        "apply.sh didn't run; unlock or allow it, then run the wizard" \
+        "again${wshook_why:+: $wshook_why}"
+}
+
+# wshook_guard is the script that ssh runs on ws as sh -c GUARD APPLY, where WS_HOOK_SECRET names an
+# item. It runs APPLY, apply.sh, on its stdin, but exits 3 where that is empty. So apply.sh never
+# runs without its secret, even where the read for ssh fails, as a second prompt can deny it.
+# shellcheck disable=SC2016 # sh expands it on ws
+wshook_guard='IFS= read -r l || [ -n "$l" ] || exit 3; { printf %s "$l"; echo; cat; } | exec "$0"'
+
+# wshook_run runs apply.sh on ws, its stdin the item's secret, as security reads it a second time,
+# through wshook_guard, or /dev/null without an item. It fails where apply.sh or ssh does. Where
+# security fails once ssh reached ws, it stops, as wshook_unread does.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 wshook_run() {
     if [ -z "$WS_HOOK_SECRET" ]; then
@@ -96,12 +118,17 @@ wshook_run() {
     fi
     rm -f "$lock/hook.status"
     wshook_status=0
-    { security find-generic-password -s "$WS_HOOK_SECRET" -w || echo $? >"$lock/hook.status"; } |
-        host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh "$wshook_apply" >&2 ||
-        wshook_status=$?
-    [ ! -f "$lock/hook.status" ] || [ "$wshook_status" = 255 ] || ws_die "Hook on ws: security" \
-        "can't read the item $WS_HOOK_SECRET from the Keychain: allow it, then run the wizard again"
+    wshook_read | host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh \
+        "sh -c '$wshook_guard'" "$wshook_apply" >&2 || wshook_status=$?
+    [ ! -f "$lock/hook.status" ] || [ "$wshook_status" = 255 ] || wshook_unread
     return "$wshook_status"
+}
+
+# wshook_read prints the item's secret for ssh, as security reads it. Where security fails, its
+# status goes in hook.status, and its error in hook.err.
+wshook_read() {
+    security find-generic-password -s "$WS_HOOK_SECRET" -w 2>"$lock/hook.err" ||
+        echo $? >"$lock/hook.status"
 }
 
 # wshook_fail says what to do where the clone or apply.sh failed, or ws still lacks the stamp.
@@ -136,9 +163,9 @@ hook_done() {
 
 # hook_sums sets hook_ws to git's hash of ws's word list, as the files script prints it, and
 # hook_mac to the Mac's, each - where there is none. A Mac's list that the user can't read counts as
-# none, and ws_put replaces it. git hashes from /, as in a repository it takes that repository's
-# hash, which may be SHA-256. It fails where ssh or the files script does, their messages in
-# words.err.
+# none: hook_copy replaces it, or stops at a link. git hashes from /, as in a repository it takes
+# that repository's hash, which may be SHA-256. It fails where ssh or the files script does, their
+# messages in words.err.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 hook_sums() {
     hook_ws=$(remote_files words 2>"$lock/words.err") && [ -n "$hook_ws" ] || return 1
@@ -150,11 +177,16 @@ hook_sums() {
 
 # hook_copy copies ws's word list over the Mac's, mode 600, where ws has one and the Mac's differs.
 # The list goes through the lock, whose files are the user's alone, and is never printed. --check
-# says it would copy it, and shows no diff.
+# says it would copy it, and shows no diff. Where the Mac's is a link, it stops, under --check too,
+# naming its target, as ws_put would replace the link.
 hook_copy() {
     hook_sums || ws_die "Hook on the Mac: the files script read no word list on ws:" \
         "$(tail -n 1 "$lock/words.err")"
     [ "$hook_ws" != - ] && [ "$hook_ws" != "$hook_mac" ] || return 0
+    [ ! -L "$hook_words" ] || ws_die "Hook on the Mac: $hook_words is a link to" \
+        "$(readlink "$hook_words"), which the wizard leaves, and ws's word list differs: remove" \
+        "the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the" \
+        "wizard again"
     if ws_checking; then
         ws_say "Hook on the Mac: would copy ws's word list to $hook_words, mode 600"
         return 0
