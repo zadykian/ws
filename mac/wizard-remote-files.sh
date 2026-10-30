@@ -4,11 +4,15 @@
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
-# - clone OWNER/REPO clones that repository on GitHub into /root/repository/REPO, by root's gh
-#   login, where nothing is there. It never pulls a clone, as the repository's apply.sh updates its
-#   own. It stops where the path holds no clone, another repository's, or a clone with no apply.sh
-#   that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails or is cut
-#   short leaves none.
+# - bundle OWNER/REPO prints the path for a git bundle of that repository's origin/main, in state as
+#   hook-REPO.bundle, where /root/repository/REPO is missing, and removes an old one. The wizard
+#   sends the bundle there by a call of its own, as this script takes stdin.
+# - clone OWNER/REPO clones that repository into /root/repository/REPO, where nothing is there, from
+#   that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, or else on GitHub
+#   by root's gh login. It removes the bundle. It never pulls a clone, as the repository's apply.sh
+#   updates its own. It stops where the path holds no clone, another repository's, or a clone with
+#   no apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
+#   or is cut short leaves none.
 # - stamp OWNER/REPO stamps REPO's apply.sh, which exited 0, with the clone's commit and OWNER/REPO.
 #   The remote script's status lists the repositories that have a stamp, as OWNER/REPO.
 # - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
@@ -24,9 +28,9 @@
 
 set -eu
 
-# The wizard's stamps, the repositories' clones, root's word list, sysfs's network interfaces and
-# the host_vars file in ws's clone. CI's stand-in for ws roots each, a line NAME=PATH, in a
-# directory of its own.
+# The wizard's stamps and bundles, the repositories' clones, root's word list, sysfs's network
+# interfaces and the host_vars file in ws's clone. CI's stand-in for ws roots each, a line
+# NAME=PATH, in a directory of its own.
 state=/var/lib/ws-wizard
 repos=/root/repository
 list=/root/.config/ws/forbidden-words
@@ -47,15 +51,44 @@ die() {
 # repo OWNER/REPO sets repo to REPO, where OWNER/REPO names a repository on GitHub, as mac.conf's
 # WS_HOOK does. Each side of the / is letters, digits and ._-, and neither . or .. alone, and REPO
 # isn't ws, ws's own clone, in any letter case, which APFS and GitHub ignore. It stops otherwise.
+# It sets pack, REPO's bundle in state, as well.
 repo() {
     case $1 in
     *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */[Ww][Ss]) ;;
     */*)
         repo=${1#*/}
+        pack=$state/hook-$repo.bundle
         return 0
         ;;
     esac
     die "'$1' is not a repository on GitHub, as OWNER/REPO, with a REPO other than ws"
+}
+
+# bundle OWNER/REPO prints the path for REPO's bundle, as the header says.
+bundle() {
+    repo "$1"
+    rm -f "$pack"
+    [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ] || return 0
+    mkdir -p "$state"
+    echo "$pack"
+}
+
+# unbundle OWNER/REPO makes the clone in repos from REPO's bundle. The clone is built beside its
+# place and moved there whole, so that no failure leaves half of one for the next run to take. The
+# bundle holds origin/main, so the branch main is made from it, with that as its upstream.
+unbundle() {
+    [ -f "$pack" ] || die "ws lacks $repos/$repo, and the Mac sent no bundle: run the wizard again"
+    part=$repos/.$repo.part
+    rm -rf "$part"
+    mkdir -p "$repos"
+    if git init -q -b main "$part" &&
+        git -C "$part" remote add origin "https://github.com/$1.git" &&
+        git -C "$part" fetch -q "$pack" +refs/remotes/origin/main:refs/remotes/origin/main &&
+        git -C "$part" checkout -q -B main --track origin/main && mv "$part" "$repos/$repo"; then
+        return 0
+    fi
+    rm -rf "$part" "$pack"
+    die "git cannot make the clone of $1 from its bundle, as above: run the wizard again"
 }
 
 # clone OWNER/REPO clones the repository in repos, as the header says. A clone there must be
@@ -64,11 +97,16 @@ clone() {
     repo "$1"
     rm -f "$state/hook-$repo"
     if [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ]; then
-        command -v gh >/dev/null || die "ws lacks gh, which ws's run installs"
-        mkdir -p "$repos"
-        gh repo clone "$1" "$repos/$repo" -- -q || die "gh repo clone $1 failed, as above"
+        if [ -f "$pack" ]; then
+            unbundle "$1"
+        else
+            command -v gh >/dev/null || die "ws lacks gh, which ws's run installs"
+            mkdir -p "$repos"
+            gh repo clone "$1" "$repos/$repo" -- -q || die "gh repo clone $1 failed, as above"
+        fi
         say "cloned $1 into $repos/$repo"
     fi
+    rm -f "$pack"
     [ -e "$repos/$repo/.git" ] || die "$repos/$repo holds no clone: move it aside"
     origin=$(git -C "$repos/$repo" remote get-url origin 2>/dev/null) || origin=
     case $(printf '%s\n' "${origin%.git}" | tr '[:upper:]' '[:lower:]') in
@@ -168,13 +206,14 @@ link() {
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
     case ${1-} in
+    bundle) bundle "${2-}" ;;
     clone) clone "${2-}" ;;
     stamp) stamp "${2-}" ;;
     words) words "${2-}" ;;
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh clone OWNER/REPO |" \
-        "stamp OWNER/REPO | words [HASH] | wait PORT | link [PORT]" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh bundle OWNER/REPO |" \
+        "clone OWNER/REPO | stamp OWNER/REPO | words [HASH] | wait PORT | link [PORT]" ;;
     esac
 }
 
