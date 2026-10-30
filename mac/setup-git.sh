@@ -83,7 +83,7 @@ git_gh() {
 # verify-commit, and ~/.config/ws/gitconfig. For the YubiKey's key, git signs through git_agent's
 # ~/.config/ws/ws-ssh-keygen, which gives ssh-keygen ws's agent. So a terminal and an IDE sign
 # alike, whatever agent the app that runs git has. Under --check, before the key is made, it writes
-# no allowed signers.
+# no allowed signers. Then git_secretive removes the wrapper that gitconfig named for Secretive.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 git_files() {
     git_program=
@@ -103,6 +103,7 @@ EOF
     git_conf >"$git_new"
     ws_put "$git_dir/gitconfig" 644 <"$git_new"
     rm -f "$git_new"
+    git_secretive
 }
 
 # git_conf prints ~/.config/ws/gitconfig: the identity, and each commit signed with the key, which

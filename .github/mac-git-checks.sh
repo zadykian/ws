@@ -110,6 +110,16 @@ prints "setup.sh: wrote $files/ws-ssh-keygen${nl}setup.sh: wrote $files/allowed_
 setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran $add"
 prints ''
 prints '' --check
+# The wrapper for a key of Secretive's that older runs wrote must go, and --check show that as a
+# diff. A file of that name that setup.sh did not write must stay.
+wrapper=$files/secretive-ssh-keygen
+printf '#!/bin/sh\n%s\n' "# Written by ws's mac/setup.sh: git's gpg.ssh.program" >"$wrapper"
+prints "$(diff -u -L "$wrapper" -L /dev/null "$wrapper" /dev/null)" --check
+prints "setup.sh: removed $wrapper"
+echo '#!/bin/sh' >"$wrapper"
+prints ''
+[ -f "$wrapper" ] || error "setup.sh removed a $wrapper of its own"
+rm -f "$wrapper"
 for host in github.com gist.github.com; do
     [ "$(git config --global --includes --get-all "credential.https://$host.helper")" = \
         "$nl!$tmp/bin/gh auth git-credential" ] ||
