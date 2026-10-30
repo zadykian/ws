@@ -3,7 +3,7 @@
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, checks that root on ws takes the Mac's key, runs ws's
-playbook there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, clones another
+playbook there, and logs claude in on ws. Then it exchanges the tunnel's keys, clones another
 repository on the Mac, sends it to ws and runs its `apply.sh` there, and copies ws's word list.
 Last, it sets up the cable from the Mac's display to ws. On a new Mac with Apple silicon, one line
 installs what it needs, clones the repository and runs the wizard, as yourself:
@@ -38,13 +38,12 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 8. Root's key: root's login to ws by the Mac's key, checked and never added, below.
 9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
-10. gh on ws: root's gh there, logged in to GitHub, and ws's signing key on the account, below.
-11. claude on ws: root's claude there, logged in, below.
-12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
-14. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
-15. Word list: ws's, copied to the Mac where it differs, below.
-16. Cable: on the LAN, ws's port of the cable in its `host_vars`, and the Mac's service, below.
+10. claude on ws: root's claude there, logged in, below.
+11. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
+12. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
+13. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
+14. Word list: ws's, copied to the Mac where it differs, below.
+15. Cable: on the LAN, ws's port of the cable in its `host_vars`, and the Mac's service, below.
 
 ## The answers
 
@@ -188,28 +187,13 @@ in ws's `host_vars`, for each run after. The stage is done there once a run with
 and `host_vars` has the line. After a unit without it, which the run followed, a run of its own
 goes. Where the line alone is missing, the stage writes it, and runs no playbook.
 
-## gh on ws
-
-The stage is done where root's gh on ws has a login to github.com, and the account's signing keys
-hold ws's ([The signing key](devtools.md#the-signing-key)). Where root's `~/.gitconfig` names no
-signing key file, as `shell_git_signing: false` leaves it, the login alone does
-([Signing](shell.md#signing)). Where gh lacks its login, or the login the `write:ssh_signing_key`
-scope, the wizard opens `github.com/login/device` in the Mac's browser. Then it runs gh's device
-flow as root on ws, in an `ssh -t` session. That is `gh auth refresh` for the scope alone, else
-`gh auth login -h github.com -p https -w -s write:ssh_signing_key`. Enter the code that gh shows
-there at that page. So the login is ws's own, never a copy of the Mac's. With no terminal, the stage
-stops, naming the command. Then, or at once where the account lacks the key alone,
-`bootstrap.sh --tags devtools` runs in a unit of its own, as ws's run does, and adds the key. That
-run needs no terminal, page or session. The stage stops where ws lacks gh, which a run with
-`--update` installs. It stops with gh's error where gh fails to list the account's keys otherwise.
-
 ## claude on ws
 
 The stage is done where root's claude on ws has a login, as `claude auth status` says. Else the
 wizard runs `claude auth login` as root on ws, in an `ssh -t` session, through a login shell, whose
 `PATH` has `~/.local/bin`, where claude is ([claude](claude.md)). Take its steps at the terminal,
 with the address it shows opened in the Mac's browser. With no terminal, the stage stops, naming
-`claude auth login`. Where ws lacks claude, it stops, as gh's stage does.
+`claude auth login`. Where ws lacks claude, it stops.
 
 ## The tunnel
 

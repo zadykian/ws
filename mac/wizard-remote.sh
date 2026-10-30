@@ -7,12 +7,12 @@
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
 #   is missing. run is the commit and status of the last full run, and off where its -e turned the
 #   outbound table off, else on. last is the unit and status of the last run. active is the run's
-#   unit that runs now. mac.pub is the Mac's key that wg0's peer
-#   takes, and wg0 is wg0's own key. gh is ok, none, login, scope, key or error. claude is ok, none
-#   or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else ok. peer is
-#   ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as OWNER/REPO, whose
-#   apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound is off where the
-#   clone's host_vars turns the security role's outbound table off, else on.
+#   unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
+#   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
+#   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
+#   ok. peer is ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as
+#   OWNER/REPO, whose apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound
+#   is off where the clone's host_vars turns the security role's outbound table off, else on.
 #   cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
 # - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
@@ -82,29 +82,11 @@ active() {
         'ws-wizard-*' 2>/dev/null | awk '{ sub(/\.service$/, "", $1); print $1; exit }'
 }
 
-# gh_state prints none without gh, and login where gh holds no token for github.com, or GitHub
-# refuses it with a 401 at the list of signing keys. gh auth token tells the first offline, as gh
-# auth status passes a revoked token in gh 2.46, and fails at a network error in later ones. scope
-# is where the list gets a 404, as a login without the scope does. Where the list fails otherwise,
-# as at a network error or GitHub's 5xx, which a new login would not mend, it prints error and the
-# last line of gh's stderr, if any. key is where the list lacks the key that root's git config signs
-# with, and ok where it holds it, or where that config names no key file there.
-gh_state() {
-    command -v gh >/dev/null || { echo none && return; }
-    gh auth token -h github.com >/dev/null 2>&1 || { echo login && return; }
-    pub=$(git config -f "$gitconfig" user.signingkey) && [ -f "$pub" ] || { echo ok && return; }
-    # gh prints an error's body on stdout, so its own message goes in a file, as on the Mac.
-    err=$(mktemp "${TMPDIR:-/tmp}/ws-gh.XXXXXX") || { echo 'error mktemp failed' && return; }
-    if ! keys=$(gh api --paginate user/ssh_signing_keys --jq '.[].key' 2>"$err"); then
-        awk '{ sub(/\r$/, "") } /HTTP 404/ { s = "scope" } /HTTP 401/ { s = "login" }
-            NF { last = $0 } END { print (s != "" ? s : last == "" ? "error" : "error " last) }' \
-            "$err"
-    elif printf '%s\n' "$keys" | grep -qxF -e "$(cut -d ' ' -f 1-2 "$pub")"; then
-        echo ok
-    else
-        echo key
-    fi
-    rm -f "$err"
+# signing_key prints the type and base64 of the public key that root's git config signs with, the
+# .pub that user.signingkey names, or none where that config names no key file.
+signing_key() {
+    pub=$(git config -f "$gitconfig" user.signingkey) && [ -f "$pub" ] || { echo none && return; }
+    cut -d ' ' -f 1-2 "$pub"
 }
 
 # status prints what the wizard reads of ws, as the header says.
@@ -114,8 +96,8 @@ status() {
     echo "active $(active | first)"
     echo "mac.pub $(head -n 1 "$peer" 2>/dev/null | first)"
     echo "wg0 $(wg show wg0 public-key 2>/dev/null | first)"
-    # gh's message may hold a backslash, which dash's echo would read.
-    printf 'gh %s\n' "$(gh_state)"
+    echo "signing $(signing_key | first)"
+    echo "hostname $(hostname | first)"
     if [ ! -x "$claude" ]; then
         echo 'claude none'
     elif "$claude" auth status >/dev/null 2>&1; then

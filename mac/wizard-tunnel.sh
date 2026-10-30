@@ -12,8 +12,8 @@
 # tunnel_none becomes 1 where tunnel_check finds no handshake in this run.
 tunnel_none=
 
-# tunnel_after prints ws's run, which makes wg0, where that stage isn't done, as gh on ws's does. It
-# prints setup.sh, which makes the Mac's key and writes it to tunnel.pub, where that holds none.
+# tunnel_after prints ws's run, which makes wg0, where that stage isn't done, as claude on ws's
+# does. It prints setup.sh, which makes the Mac's key and writes it to tunnel.pub, where that holds none.
 tunnel_after() {
     if ! run_done; then
         echo "ws's run"
