@@ -10,8 +10,8 @@ git_dir=$HOME/.config/ws
 # git's XDG file, which git reads before ~/.gitconfig.
 git_xdg=${XDG_CONFIG_HOME:-$HOME/.config}/git/config
 
-# git_mac sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL, WS_GIT_KEY and
-# WS_GIT_SIGNING_KEY, and leaves it alone without the first two.
+# git_mac sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_KEY, and leaves it alone
+# without the first two.
 git_mac() {
     [ -n "$WS_GIT_NAME" ] || return 0
     git_include_ok
@@ -22,37 +22,19 @@ git_mac() {
     git_register
 }
 
-# git_key sets git_pub to the signing key's .pub, WS_GIT_SIGNING_KEY with its ~/ the home, and
-# git_public to the key's type and base64. Without WS_GIT_SIGNING_KEY, the key is the YubiKey's
-# WS_GIT_KEY, whose .pub setup.sh writes in ~/.config/ws/keys from the YubiKey before this runs,
-# so --check may lack it. It makes no key, and stops where the .pub is missing or unreadable,
-# holds more than a public key's line, as a private key does, or ssh-keygen can't read it.
+# git_key sets git_pub to the .pub of git's signing key, the YubiKey's WS_GIT_KEY, and git_public
+# to the key's type and base64. setup.sh writes the .pub in ~/.config/ws/keys from the YubiKey
+# before this runs, so it goes unchecked here, as ws_identity's does. --check may lack it, and
+# git_public is then empty. In a run, a missing .pub stops it.
 # shellcheck disable=SC2153 # WS_GIT_KEY is ws_conf's
 git_key() {
-    git_pub=${WS_GIT_SIGNING_KEY:-$git_dir/keys/$WS_GIT_KEY.pub}
-    case $git_pub in
-    \~/*) git_pub=$HOME/${git_pub#\~/} ;;
-    esac
+    git_pub=$git_dir/keys/$WS_GIT_KEY.pub
     git_public=
     if [ ! -f "$git_pub" ]; then
-        [ -n "$WS_GIT_SIGNING_KEY" ] || ! ws_checking || return 0
-        [ -n "$WS_GIT_SIGNING_KEY" ] || ws_die "$git_pub, the .pub of the YubiKey's key" \
-            "$WS_GIT_KEY, is missing"
-        ws_die "$git_pub, mac.conf's WS_GIT_SIGNING_KEY, is missing: make the key first, as" \
-            "docs/mac-git.md says"
+        ws_checking || ws_die "$git_pub, the .pub of the YubiKey's key $WS_GIT_KEY, is missing"
+        return 0
     fi
-    git_public=$(awk 'NF { n++; key = $1 " " $2 } END { if (n == 1) print key }' "$git_pub" \
-        2>/dev/null) || ws_die "cannot read $git_pub: make it readable, or name another .pub in" \
-        "mac.conf's WS_GIT_SIGNING_KEY"
-    case $git_public in
-    *' '*[!A-Za-z0-9+/=]*) git_public= ;;
-    ssh-?*' '?* | ecdsa-sha2-?*' '?* | sk-?*' '?*) ;;
-    *) git_public= ;;
-    esac
-    [ -n "$git_public" ] || ws_die "$git_pub holds no public key alone, as ssh-keygen -y prints one"
-    ssh-keygen -l -f "$git_pub" >/dev/null 2>&1 ||
-        ws_die "ssh-keygen cannot read $git_pub: git signs with a key the Mac's ssh-keygen knows," \
-            "as ed25519 or Secretive's P-256"
+    git_public=$(awk 'NF { print $1, $2; exit }' "$git_pub") || ws_die "cannot read $git_pub"
 }
 
 # git_gh [STAGE] sets gh to the path of GitHub's CLI, which Homebrew installs where PATH has none.
@@ -86,10 +68,7 @@ git_gh() {
 # no allowed signers. Then git_secretive removes the wrapper that gitconfig named for Secretive.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile
 git_files() {
-    git_program=
-    case $git_pub in
-    "$git_dir"/keys/*.pub) git_agent ;;
-    esac
+    git_agent
     if [ -n "$git_public" ]; then
         ws_put "$git_dir/allowed_signers" 644 <<EOF
 # Written by ws's mac/setup.sh from ~/.config/ws/mac.conf: its next run replaces changes made here.
@@ -107,9 +86,10 @@ EOF
 }
 
 # git_conf prints ~/.config/ws/gitconfig: the identity, and each commit signed with the key, which
-# the allowed signers file trusts for the email, through git_program where there is one. Then gh's
-# credential command, as gh auth setup-git writes it, after an empty value that drops any set before
-# it. The name and the paths go in quotes, which mac.conf's values cannot end.
+# the allowed signers file trusts for the email, through git_program. Then gh's credential command,
+# as gh auth setup-git writes it, after an empty value that drops any set before it. The name and
+# the paths go in quotes, which mac.conf's values cannot end.
+# shellcheck disable=SC2154 # git_agent, setup-git-agent.sh's, sets git_program
 git_conf() {
     cat <<EOF
 # Written by ws's mac/setup.sh from ~/.config/ws/mac.conf: its next run replaces changes made here.
@@ -130,8 +110,8 @@ git_conf() {
     format = ssh
 [gpg "ssh"]
     allowedSignersFile = "$git_dir/allowed_signers"
+    program = "$git_program"
 EOF
-    [ -z "$git_program" ] || echo "    program = \"$git_program\""
 }
 
 # git_include_ok sets git_included where ~/.gitconfig includes ~/.config/ws/gitconfig, first and

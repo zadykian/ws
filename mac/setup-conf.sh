@@ -37,7 +37,6 @@ ws_conf_lines() {
     WS_CABLE_PORT=
     WS_GIT_NAME=
     WS_GIT_EMAIL=
-    WS_GIT_SIGNING_KEY=
     WS_HOOK=
     WS_HOOK_SECRET=
     WS_SSH_KEY=ws
