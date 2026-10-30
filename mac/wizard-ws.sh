@@ -1,9 +1,8 @@
 # shellcheck shell=sh
 # The wizard's stage ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws. The remote
 # script that the wizard sends to root there over ssh, wizard-remote.sh, starts it and follows it. A
-# run goes on where ssh drops, and the next run of the wizard follows it. Then the stage gh on ws:
-# root's gh there, logged in to GitHub in a session of ssh -t, and ws's signing key on the account.
-# The stage claude on ws logs root's claude in the same way. Last, what stays by hand of ws, the
+# run goes on where ssh drops, and the next run of the wizard follows it. Then the stage claude on
+# ws, which logs root's claude in, in a session of ssh -t. Last, what stays by hand of ws, the
 # router and the Mac, for the closing list. wizard.sh sources it, and runs the stages after Root's
 # key. It calls the functions of lib.sh and wizard-host.sh, and reads wizard.sh's dir, lock, update
 # and acted, and the values of mac.conf that ws_conf set.
@@ -142,70 +141,13 @@ run_fail() {
         "then run the wizard again, which follows a run that goes on"
 }
 
-# wsgh_after prints ws's run, which installs gh on ws, where that stage isn't done.
-wsgh_after() {
-    run_done || echo "ws's run"
-}
-
-# wsgh_done succeeds where root's gh on ws has a login to github.com, and the account holds ws's
-# signing key, or root's git config there names no key file. It reads ws only where root logged in.
-wsgh_done() {
-    [ "$root_in" = 1 ] && remote_read && [ "$(remote_get gh)" = ok ]
-}
-
-# wsgh_do logs root's gh on ws in to github.com, or gives its login the write:ssh_signing_key scope,
-# where it lacks either, in a session of ssh -t at the terminal. gh's device flow shows a code
-# there, for the page that the Mac's browser opens. So the login is ws's own, never a copy of the
-# Mac's. Then bootstrap.sh --tags devtools, in a unit of its own, adds ws's signing key. --check
-# says what it would do. Both stop where gh's list of the account's signing keys failed otherwise,
-# with gh's error, as a new login would not mend it.
-wsgh_do() {
-    wsgh_state=$(remote_get gh)
-    case $wsgh_state in
-    none) ws_die "gh on ws: ws lacks gh, which its run installs: run the wizard with --update" ;;
-    error*)
-        wsgh_why=${wsgh_state#error}
-        ws_die "gh on ws: gh api user/ssh_signing_keys failed as root on" \
-            "ws${wsgh_why:+:}${wsgh_why:- and printed nothing}; run the wizard again once it works"
-        ;;
-    login) wsgh_how="gh auth login -h github.com -p https -w -s write:ssh_signing_key" ;;
-    scope) wsgh_how="gh auth refresh -h github.com -s write:ssh_signing_key" ;;
-    *) wsgh_how= ;;
-    esac
-    wsgh_run="run bootstrap.sh --tags devtools on ws, which adds ws's signing key to GitHub"
-    [ -z "$wsgh_how" ] ||
-        wsgh_run="open github.com/login/device on the Mac, run $wsgh_how on ws, then $wsgh_run"
-    if ws_checking; then
-        ws_say "gh on ws: would $wsgh_run"
-        return 0
-    fi
-    if [ -n "$wsgh_how" ]; then
-        [ -t 0 ] || ws_die "gh on ws: root's gh lacks a login with the write:ssh_signing_key" \
-            "scope, and no terminal is there for $wsgh_how: run it on ws, then the wizard again"
-        open https://github.com/login/device ||
-            ws_say "gh on ws: warning: open github.com/login/device in a browser yourself"
-        ws_say "gh on ws: $wsgh_how runs as root on ws: enter the code it shows at" \
-            "github.com/login/device, which the Mac's browser opened"
-        host_ssh -t ws-ssh "$wsgh_how" || return 1
-    fi
-    ws_say "gh on ws: bootstrap.sh --tags devtools runs on ws in a unit of its own, to add ws's" \
-        "signing key to GitHub"
-    remote_got=0
-    remote run --tags devtools >&2
-}
-
-# wsgh_fail says what to do where the account still lacks ws's signing key.
-wsgh_fail() {
-    echo "root's gh on ws still lacks its login, or the account ws's signing key, as above; mend" \
-        "what gh or bootstrap.sh printed, then run the wizard again"
-}
-
 # wsclaude_after prints ws's run, which installs claude on ws, where that stage isn't done.
 wsclaude_after() {
     run_done || echo "ws's run"
 }
 
-# wsclaude_done succeeds where root's claude on ws has a login, as wsgh_done reads gh's state.
+# wsclaude_done succeeds where root's claude on ws has a login. It reads ws only where root logged
+# in there.
 wsclaude_done() {
     [ "$root_in" = 1 ] && remote_read && [ "$(remote_get claude)" = ok ]
 }

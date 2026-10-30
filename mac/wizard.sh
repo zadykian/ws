@@ -18,7 +18,6 @@
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
 # - Root's key: root's login to ws by the Mac's key, which the wizard checks and never adds;
 # - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
-# - gh on ws: root's gh there, logged in to GitHub over ssh -t, and ws's signing key on the account;
 # - claude on ws: root's claude there, logged in over ssh -t;
 # - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again;
 # - Hook on the Mac: the repository that WS_HOOK names, cloned in ~/repository, its hooks and its
@@ -193,7 +192,6 @@ main() {
     stage "Host key" host
     stage "Root's key" root
     stage "ws's run" run
-    stage "gh on ws" wsgh
     stage "claude on ws" wsclaude
     stage Tunnel tunnel
     stage "Hook on the Mac" hook
