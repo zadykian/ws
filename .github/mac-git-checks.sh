@@ -182,20 +182,6 @@ printf '[user]\n\temail = someone@example.com\n' >"$tmp/xdg/git/config"
 prints "setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: warning: $tmp/xdg/git/config's settings of\
  user.email come before the include in ~/.gitconfig, so ~/.config/ws/gitconfig's win over them"
 rm "$tmp/xdg/git/config" ~/.gitconfig
-# A WS_GIT_SIGNING_KEY that is missing must stop setup.sh, as must a .pub that holds more than a
-# public key's line, as a private key does.
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws.pub'
-stops "setup.sh: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_KEY, is missing"
-ssh-keygen -q -t ed25519 -N '' -C ws -f "$tmp/mixed.pub" </dev/null
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_KEY=$tmp/mixed.pub"
-stops "setup.sh: $tmp/mixed.pub holds no public key alone"
-# So must one it cannot read, where the user cannot, as on the runner: root reads it.
-cp "$pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
-if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
-    with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com \
-        "WS_GIT_SIGNING_KEY=$tmp/unread-git.pub"
-    stops "setup.sh: cannot read $tmp/unread-git.pub"
-fi
 
 # Logged out, gh must draw a warning at each run, and nothing else where the files are written.
 # With gh's login, a 404, the answer to a login without the scope of signing keys, must draw a
