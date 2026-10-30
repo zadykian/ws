@@ -108,10 +108,10 @@ want="$want wizard waits up to 5 minutes for it"
 
 trap 'rm -f "$RUNNER_TEMP"/agent*' EXIT
 conf=$RUNNER_TEMP/agent.conf
-alone="wizard.sh: Mac key: the wizard sets up the YubiKey's key of WS_SSH_KEY alone, not one that"
-refused "$alone mac.conf's WS_IDENTITY names" 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
-refused "$alone mac.conf's WS_IDENTITY names" WS_IDENTITY=
-refused "WS_IDENTITY_AGENT is gone, as ssh offers ws the YubiKey's key alone" \
-    'WS_IDENTITY_AGENT=~/.ssh/agent.sock' 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
+alone="as ssh offers ws the YubiKey's key alone, which WS_SSH_KEY names"
+refused "WS_IDENTITY is gone, $alone" 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
+refused "WS_IDENTITY is gone, $alone" WS_IDENTITY=
+refused "WS_IDENTITY_AGENT is gone, $alone" 'WS_IDENTITY_AGENT=~/.ssh/agent.sock' \
+    'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 files | cmp -s - "$RUNNER_TEMP/agent.files" || error "wizard.sh changed the Mac's own files"
 exit "$fail"

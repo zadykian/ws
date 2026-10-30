@@ -150,15 +150,7 @@ ws_conf_lines() {
             *) ws_ok=false ;;
             esac
             ;;
-        WS_IDENTITY)
-            WS_IDENTITY=$ws_value
-            case ${ws_value#\~} in
-            *[!A-Za-z0-9._/@+-]*) ws_ok=false ;;
-            /*.pub) ;;
-            *) ws_ok=false ;;
-            esac
-            ;;
-        WS_IDENTITY_AGENT) ws_die "$1, line $ws_n: $(ws_conf_gone)" ;;
+        WS_IDENTITY | WS_IDENTITY_AGENT) ws_die "$1, line $ws_n: $(ws_conf_gone)" ;;
         WS_HOOK)
             WS_HOOK=$ws_value
             # OWNER/REPO on GitHub, as ws's /root/repository/REPO: neither side . or .. alone, and
@@ -261,7 +253,7 @@ ws_conf_form() {
         echo "an email address, as ws@example.com: letters, digits and ._%+- before the @, and" \
             "a host name after it"
         ;;
-    WS_GIT_SIGNING_KEY | WS_IDENTITY)
+    WS_GIT_SIGNING_KEY)
         echo "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to .pub," \
             "of letters, digits and ._/@+-"
         ;;
