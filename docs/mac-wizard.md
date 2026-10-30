@@ -26,10 +26,9 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
    that `bootstrap.sh` pins, checked by its SHA-256 and signer, through `sudo installer`. The
    `.pkg` puts `/opt/homebrew/bin` on new shells' `PATH`.
 2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
-   found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)).
-   With `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone,
-   and warns of any other. Without a clone, `--check` lists the wizard's stages, each after this
-   one.
+   found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)). With
+   `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone, and warns
+   of any other. Without a clone, `--check` lists the wizard's stages, each after this one.
 3. Answers: the values `mac.conf` lacks, below.
 4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
@@ -161,6 +160,9 @@ another host key than `known_hosts` holds, as once ws is installed again, it sto
 `ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and
 its logins add nothing to `known_hosts`.
 
+A run shares one ssh connection to `ws-ssh`, and one to `ws` in the Tunnel stage, so Secretive's
+key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.
+
 ## ws's run
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
@@ -269,8 +271,7 @@ service `10.77.0.2` ([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must g
 where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
 `WS_CABLE_SERVICE` give the answers. `mac.conf` keeps the port as `WS_CABLE_PORT`, to change there.
 Where `host_vars` lacks it, as after ws's install, the stage names it there and runs the roles,
-undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what the stage would
-do.
+undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what it would do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
 So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files
