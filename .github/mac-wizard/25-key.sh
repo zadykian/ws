@@ -6,7 +6,8 @@
 # both keys it would make there, and with the job's YubiKey in too, a run must stop, naming both.
 # With the job's alone, a run with no terminal or login of gh's must write the .pubs, pass the stage
 # once ws's agent lists the keys, and stop at gh's, before setup.sh's. A second must say nothing of
-# the stage.
+# the stage. With 30000002 alone, a run at a terminal, with ykman's answers typed, must make both
+# keys there, and stop at gh's once ws's agent lists them.
 # None may make a file key, change that mac.conf, or leave a lock or file in $TMPDIR.
 
 set -u
@@ -88,8 +89,32 @@ for run in 1 2; do
     [ "$run" = 1 ] || [ -z "$mac" ] || error "wizard.sh run 2 said of the Mac key stage: '$mac'"
     ! printf '%s\n' "$out" | grep -q '^setup\.sh: ' || error "wizard.sh run $run ran setup.sh"
 done
-touch "$RUNNER_TEMP/gh/login"
 [ -s "$keys/ws.pub" ] && [ -s "$keys/git.pub" ] || error "wizard.sh wrote no .pubs in $keys"
+
+# script gives the wizard a terminal of its own, its stdin typed there: ykman's management key and
+# PIN at their defaults, for each key. macOS's script writes its stdin's end to the terminal ahead
+# of the lines it still holds, so the end comes 10 s after them. The .pubs then go, as the first
+# run writes the job's YubiKey's.
+sh "$standin" unplug 30000001
+sh "$standin" plug 30000002
+{
+    printf '%s\n' '' '' 123456 '' '' 123456
+    sleep 10
+} | WS_CONF=$conf script -q /dev/null sh "$wizard" >"$RUNNER_TEMP/key.tty" 2>&1
+status=$?
+out=$(tr -d '\r' <"$RUNNER_TEMP/key.tty")
+printf '%s\n' "$out"
+listed=$(SSH_AUTH_SOCK=$HOME/.ssh/ws-agent.sock ssh-add -L | cut -d ' ' -f 1-2)
+if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -q '^wizard\.sh: gh on the Mac: gh auth ' ||
+    [ "$(cat "$RUNNER_TEMP"/yubikey/30000002/8[23]/cn)" != "$(printf 'ws\ngit')" ] ||
+    ! printf '%s\n' "$listed" | grep -qxF "$(cut -d ' ' -f 1-2 "$keys/ws.pub")" ||
+    ! printf '%s\n' "$listed" | grep -qxF "$(cut -d ' ' -f 1-2 "$keys/git.pub")"; then
+    error "wizard.sh at a terminal exited $status, or made no keys in 30000002 that the agent lists"
+fi
+sh "$standin" unplug 30000002
+sh "$standin" plug 30000001
+touch "$RUNNER_TEMP/gh/login"
+rm -rf "$keys"
 for left in ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
     [ ! -e "$left" ] || error "wizard.sh left $left"
 done
