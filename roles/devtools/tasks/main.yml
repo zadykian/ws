@@ -92,10 +92,6 @@
   register: devtools_install
   ignore_errors: "{{ ansible_check_mode and devtools_sources is changed }}"
 
-# Right after gh's install, which it runs.
-- name: Register the signing key with GitHub
-  ansible.builtin.import_tasks: signing_key.yml
-
 - name: Install the libraries headless Chromium needs
   ansible.builtin.apt:
     name: "{{ devtools_chromium_libraries }}"
