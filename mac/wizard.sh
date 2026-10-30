@@ -18,6 +18,7 @@
 # - Host key: ws's host key, matched against ws's console, in known_hosts under the name ws;
 # - Root's key: root's login to ws by the Mac's key, which the wizard checks and never adds;
 # - ws's run: ws's playbook, bootstrap.sh, in a unit of its own on ws, followed to its end;
+# - Signing key: ws's public signing key among the signing keys of the Mac's gh login;
 # - claude on ws: root's claude there, logged in over ssh -t;
 # - Tunnel: the Mac's WireGuard key as wg0's peer on ws, WS_PUBLIC_KEY wg0's, and setup.sh again;
 # - Hook on the Mac: the repository that WS_HOOK names, cloned in ~/repository, its hooks and its
@@ -46,6 +47,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/wizard-host.sh"
 # shellcheck source=wizard-ws.sh
 . "$dir/wizard-ws.sh"
+# shellcheck source=wizard-signing.sh
+. "$dir/wizard-signing.sh"
 # shellcheck source=wizard-tunnel.sh
 . "$dir/wizard-tunnel.sh"
 # shellcheck source=wizard-hook.sh
@@ -192,6 +195,7 @@ main() {
     stage "Host key" host
     stage "Root's key" root
     stage "ws's run" run
+    stage "Signing key" signing
     stage "claude on ws" wsclaude
     stage Tunnel tunnel
     stage "Hook on the Mac" hook
