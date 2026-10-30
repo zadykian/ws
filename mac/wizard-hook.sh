@@ -21,13 +21,13 @@ remote_files() {
         <"$dir/wizard-remote-files.sh"
 }
 
-# wshook_after prints the stage that the clone waits on, where that isn't done. That is ws's run,
-# which installs gh on ws, then gh on ws, whose login clones the repository.
+# wshook_after prints the stage that this one waits on, where that isn't done. That is ws's run,
+# which installs git on ws, then Hook on the Mac, whose clone it sends.
 wshook_after() {
     if ! run_done; then
         echo "ws's run"
-    elif ! wsgh_done; then
-        echo "gh on ws"
+    elif ! hook_done; then
+        echo "Hook on the Mac"
     fi
 }
 
@@ -44,18 +44,18 @@ wshook_done() {
 }
 
 # wshook_do runs the repository's apply.sh as root on ws, by plain ssh, never ssh -t, at which such
-# a script could prompt and echo its stdin. The files script's clone first clones the repository
-# where ws lacks it, and removes its stamp, which its stamp op writes again once apply.sh exits 0.
-# First, security must read the item into /dev/null, so that an item it can't read stops the stage
-# before ssh. --check says what it would do.
+# a script could prompt and echo its stdin. wshook_send first sends the Mac's clone where ws lacks
+# its own, which the files script's clone makes from it, and removes its stamp, which its stamp op
+# writes again once apply.sh exits 0. First, security must read the item into /dev/null, so that an
+# item it can't read stops the stage before ssh. --check says what it would do.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 wshook_do() {
     wshook_apply=/root/repository/${WS_HOOK#*/}/apply.sh
     wshook_in=${WS_HOOK_SECRET:+the Keychain item $WS_HOOK_SECRET}
     wshook_item || return 1
     if ws_checking; then
-        ws_say "Hook on ws: would clone $WS_HOOK into ${wshook_apply%/*} on ws, where missing," \
-            "then run its apply.sh there, its stdin ${wshook_in:-empty}"
+        ws_say "Hook on ws: would send the Mac's clone of $WS_HOOK to ${wshook_apply%/*} on ws," \
+            "where missing, then run its apply.sh there, its stdin ${wshook_in:-empty}"
         return 0
     fi
     [ -z "$WS_HOOK_SECRET" ] ||
@@ -64,10 +64,29 @@ wshook_do() {
     ws_say "Hook on ws: $WS_HOOK's apply.sh runs as root on ws, its stdin ${wshook_in:-empty}"
     # shellcheck disable=SC2034 # wizard-ws.sh's remote_read reads it
     remote_got=0
+    wshook_send || return 1
     remote_files clone "$WS_HOOK" >&2 || return 1
     wshook_run || return 1
     remote_files stamp "$WS_HOOK" >&2 || return 1
     wshook_ran=1
+}
+
+# wshook_send sends the Mac's clone to ws, as a git bundle of its origin/main after a fetch, where
+# the files script's bundle op names a path: ws lacks its own clone. The fetch takes gh's login for
+# github.com, whatever git's config names, and never prompts. The bundle goes by an ssh of its own,
+# as the files script is on the first one's stdin.
+# shellcheck disable=SC2154 # lock is wizard.sh's
+wshook_send() {
+    wshook_pack=$(remote_files bundle "$WS_HOOK") || return 1
+    [ -n "$wshook_pack" ] || return 0
+    git_gh "Hook on ws"
+    ws_say "Hook on ws: sending the Mac's clone of $WS_HOOK to ws"
+    GIT_TERMINAL_PROMPT=0 git -C "$hook_dir" -c credential.https://github.com.helper= \
+        -c "credential.https://github.com.helper=!$gh auth git-credential" fetch -q origin >&2 &&
+        git -C "$hook_dir" bundle create -q "$lock/hook.bundle" origin/main >&2 &&
+        host_ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$wshook_pack" <"$lock/hook.bundle" \
+            >&2 || return 1
+    rm -f "$lock/hook.bundle"
 }
 
 # wshook_item adds the Keychain item that WS_HOOK_SECRET names, where the Keychain lacks it, by
@@ -128,10 +147,11 @@ wshook_read() {
         echo $? >"$lock/hook.status"
 }
 
-# wshook_fail says what to do where the clone or apply.sh failed, or ws still lacks the stamp.
+# wshook_fail says what to do where the Mac's clone didn't reach ws, or apply.sh failed, or ws still
+# lacks the stamp.
 wshook_fail() {
-    echo "the clone of $WS_HOOK on ws, or its apply.sh, failed, as above; mend what they printed," \
-        "then run the wizard again, which runs apply.sh again"
+    echo "the clone of $WS_HOOK from the Mac to ws, or its apply.sh, failed, as above; mend what" \
+        "they printed, then run the wizard again, which runs apply.sh again"
 }
 
 # hook_after prints gh on the Mac, whose login clones the repository, where that isn't done.
