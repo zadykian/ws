@@ -105,8 +105,10 @@ a P-256 key made there, at its default protection, which asks for Touch ID at ea
 has a name, a second key follows, for git's signing, at Notify, which signs with no prompt while
 the Mac is unlocked ([git](mac-git.md)). Their `.pub` files and Secretive's agent go in `mac.conf`,
 as `WS_IDENTITY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_KEY`. An empty `WS_GIT_SIGNING_KEY`
-keeps `setup.sh`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above. With
-no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
+keeps `setup.sh`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above.
+Where `mac.conf` has no `WS_IDENTITY` line, the wizard writes `WS_IDENTITY=~/.ssh/id_ed25519.pub`
+for a file key, made now or found there. A Secretive key made later then does not take its place.
+With no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
