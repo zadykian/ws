@@ -26,10 +26,9 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
    that `bootstrap.sh` pins, checked by its SHA-256 and signer, through `sudo installer`. The
    `.pkg` puts `/opt/homebrew/bin` on new shells' `PATH`.
 2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
-   found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)).
-   With `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone,
-   and warns of any other. Without a clone, `--check` lists the wizard's stages, each after this
-   one.
+   found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)). With
+   `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone, and warns
+   of any other. Without a clone, `--check` lists the wizard's stages, each after this one.
 3. Answers: the values `mac.conf` lacks, below.
 4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
@@ -95,7 +94,8 @@ ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY` names ([mac.conf](
 Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.pub` is there,
 `ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
 `ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
-and asks it once more. With no terminal to ask one, the key gets none.
+and asks it once more. With no terminal to ask one, the key gets none. Where `ssh-add` fails, the
+wizard stops, as Root's key logs in with no prompt. Run the command it names, then the wizard again.
 
 Without `WS_IDENTITY`, and with no key yet, the wizard asks whether Secretive keeps the key, in the
 Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and where
@@ -104,8 +104,10 @@ a P-256 key made there, at its default protection, which asks for Touch ID at ea
 has a name, a second key follows, for git's signing, at Notify, which signs with no prompt while
 the Mac is unlocked ([git](mac-git.md)). Their `.pub` files and Secretive's agent go in `mac.conf`,
 as `WS_IDENTITY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_KEY`. An empty `WS_GIT_SIGNING_KEY`
-keeps `setup.sh`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above. With
-no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
+keeps `setup.sh`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above.
+Where `mac.conf` has no `WS_IDENTITY` line, the wizard writes `WS_IDENTITY=~/.ssh/id_ed25519.pub`
+for a file key, made now or found there. A Secretive key made later then does not take its place.
+With no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
@@ -157,6 +159,9 @@ The stage stops too where `WS_USER` isn't root: the README's steps are then by h
 another host key than `known_hosts` holds, as once ws is installed again, it stops, naming
 `ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and
 its logins add nothing to `known_hosts`.
+
+A run shares one ssh connection to `ws-ssh`, and one to `ws` in the Tunnel stage, so Secretive's
+key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.
 
 ## ws's run
 
@@ -266,8 +271,7 @@ service `10.77.0.2` ([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must g
 where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
 `WS_CABLE_SERVICE` give the answers. `mac.conf` keeps the port as `WS_CABLE_PORT`, to change there.
 Where `host_vars` lacks it, as after ws's install, the stage names it there and runs the roles,
-undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what the stage would
-do.
+undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what it would do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
 So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files

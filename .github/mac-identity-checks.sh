@@ -131,9 +131,9 @@ cp "$tmp/p256.pub" "$data/PublicKeys/ws-cert.pub"
 cp "$tmp/p256.pub" "$data/PublicKeys/ws key.pub"
 mkdir "$data/PublicKeys/ws-dir.pub"
 sec=\~/${data#"$HOME/"}
-warned="setup.sh: warning: Secretive's key replaces ~/.ssh/id_ed25519 as ws's: add"
-warned="$warned $sec/PublicKeys/ws.pub to ws's authorized_keys, or keep the file key with"
-warned="$warned WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf$nl"
+warned="setup.sh: warning: Secretive's key replaces ~/.ssh/id_ed25519 as ws's: keep the file key"
+warned="$warned with WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the"
+warned="$warned key of $sec/PublicKeys/ws.pub on GitHub before ws's next install$nl"
 agented "$sec/PublicKeys/ws.pub" "$sec/socket.ssh"
 # As the warning says, the file key's .pub in WS_IDENTITY keeps the file key, though the runner
 # lacks it: config.d/ws must be the job's again (sed -n p changes nothing).

@@ -62,9 +62,9 @@ ws_identity() {
     ssh-keygen -l -f "$ws_file" >/dev/null 2>&1 || ws_die "ssh-keygen cannot read $ws_file: name" \
         "the .pub of a P-256 or ed25519 key in mac.conf's WS_IDENTITY"
     [ -n "$WS_IDENTITY" ] || ! grep -qsx '    IdentityFile ~/.ssh/id_ed25519' "${1-/dev/null}" ||
-        ws_say "warning: Secretive's key replaces ~/.ssh/id_ed25519 as ws's: add $ws_identity_pub" \
-            "to ws's authorized_keys, or keep the file key with WS_IDENTITY=~/.ssh/id_ed25519.pub" \
-            "in mac.conf"
+        ws_say "warning: Secretive's key replaces ~/.ssh/id_ed25519 as ws's: keep the file key" \
+            "with WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the" \
+            "key of $ws_identity_pub on GitHub before ws's next install"
 }
 
 # ws_identity_lines prints config.d/ws's lines for the key that ws_identity set, which ssh offers ws

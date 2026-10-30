@@ -93,7 +93,8 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # cases make in a row. The stand-in takes them, where its sshd knows the setting.
 ! sudo /usr/sbin/sshd -G -f "$ws/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
     echo 'PerSourcePenalties no' >>"$ws/sshd_config"
-# ws.sh, ws's shell: it logs each command in log, which root writes, then runs it.
+# ws.sh, ws's shell: it logs each command in log, which root writes, and the connection it came in
+# by in conns, then runs it.
 # Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
 # command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
 # and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
@@ -102,6 +103,7 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
+echo "$SSH_CONNECTION" >>"$WS_STANDIN/conns"
 key=$(awk '$1 == "publickey" { print $3 }' "${SSH_USER_AUTH:-/dev/null}")
 line=$(awk -v key="$key" 'key != "" && index($0, key) { print; exit }' \
     ~/.ssh/authorized_keys 2>/dev/null)
@@ -182,4 +184,5 @@ sudo /usr/local/libexec/ws-tunnel/ws-tunnel status 2>/dev/null |
 EOF
 chmod 755 /opt/homebrew/bin/nc
 : >"$ws/log"
+: >"$ws/conns"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"

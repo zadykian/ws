@@ -3,14 +3,17 @@
 # finds from mac.conf, made where missing. wizard.sh sources it, and runs the stage after Answers
 # and before setup.sh, which names the key in ~/.ssh/config.d/ws. Without WS_IDENTITY, the key is
 # Secretive's, in the Mac's Secure Enclave, unless the answer at the terminal is no: then ssh-keygen
-# makes ~/.ssh/id_ed25519. It calls the functions of lib.sh, setup-lib.sh and wizard-ask.sh, and
-# reads wizard.sh's lock and WS_CONF, mac.conf's path.
+# makes ~/.ssh/id_ed25519. It writes the key into mac.conf as WS_IDENTITY, so that a Secretive key
+# made later does not take the file key's place. It calls the functions of lib.sh, setup-lib.sh and
+# wizard-ask.sh, and reads wizard.sh's lock and WS_CONF, mac.conf's path.
 
 # keys_done succeeds where the key that ssh offers ws is there: in a file beside the .pub whose
-# fingerprint it shares, or listed by the agent that holds it. Where it is Secretive's, git, which
-# has a name, needs a key of its own there too, unless mac.conf has a line for WS_GIT_SIGNING_KEY.
+# fingerprint it shares, or listed by the agent that holds it. A file key needs a line for it in
+# mac.conf too. Where it is Secretive's, git, which has a name, needs a key of its own there too,
+# unless mac.conf has a line for WS_GIT_SIGNING_KEY.
 keys_done() {
-    (ws_conf "$WS_CONF" && ws_identity && keys_there && ! keys_signing) >/dev/null 2>&1
+    (ws_conf "$WS_CONF" && ws_identity && keys_there && ! keys_signing && ! keys_loose) \
+        >/dev/null 2>&1
 }
 
 # keys_there succeeds where the key that ws_identity set is there: the agent lists the key of the
@@ -47,6 +50,13 @@ keys_home() {
     esac
 }
 
+# keys_loose succeeds where ws's key is a file, and mac.conf has no line for WS_IDENTITY: a Secretive
+# key made later would take its place.
+# shellcheck disable=SC2154 # ws_identity sets ws_identity_agent
+keys_loose() {
+    [ -z "$ws_identity_agent" ] && ask_lacks WS_IDENTITY
+}
+
 # keys_signing succeeds where ws's key is Secretive's, and git, which has a name, lacks a key of its
 # own there, as mac.conf has no line for WS_GIT_SIGNING_KEY. An empty one keeps setup.sh's key.
 # shellcheck disable=SC2154 # ws_secretive is setup-conf.sh's
@@ -57,8 +67,8 @@ keys_signing() {
 
 # keys_do makes the key that keys_done lacks, or says why it can't. A WS_IDENTITY outside
 # Secretive's PublicKeys, with no agent, is a key in a file, which keys_file makes. Without
-# WS_IDENTITY, the key that ws_identity finds is there, or keys_choose makes one. git's key in
-# Secretive follows ws's.
+# WS_IDENTITY, the key that ws_identity finds is there, and keys_pin names it if it is a file, or
+# keys_choose makes one. git's key in Secretive follows ws's.
 keys_do() {
     ws_conf "$WS_CONF"
     keys_pub=$(keys_home "$WS_IDENTITY")
@@ -75,6 +85,7 @@ keys_do() {
             "run the wizard again"
     elif [ -e "$keys_pub" ] || [ -e "${keys_pub%.pub}" ]; then
         keys_file "${keys_pub%.pub}"
+        keys_pin || return 1
     else
         keys_choose || return 1
     fi
@@ -97,7 +108,9 @@ keys_file() {
 
 # keys_make KEY makes the ed25519 key KEY, whose passphrase ssh-keygen asks at the terminal. It
 # gives the key to ssh's agent, and the passphrase to the Keychain, so that ssh asks no more.
-# Without the agent, ssh asks at the first login instead, and the Keychain keeps it then.
+# Root's key logs in with BatchMode, where ssh asks for no passphrase, so a passphrase that neither
+# holds fails it. Where ssh-add fails, the stage stops. The next run finds the key there and makes
+# no more, so the stop names the command to run by hand.
 keys_make() {
     if ws_checking; then
         ws_say "Mac key: would make $1 with ssh-keygen -t ed25519 -a 100, then run ssh-add" \
@@ -106,8 +119,9 @@ keys_make() {
     fi
     ws_say "Mac key: making $1: ssh-keygen asks its passphrase twice, then ssh-add once"
     ssh-keygen -q -t ed25519 -a 100 -f "$1" >&2 || ws_die "Mac key: ssh-keygen cannot make $1"
-    ssh-add --apple-use-keychain "$1" >&2 || ws_say "Mac key: warning: ssh-add cannot give $1 to" \
-        "the agent, so ssh asks its passphrase at the first login, and the Keychain keeps it then"
+    ssh-add --apple-use-keychain "$1" >&2 || ws_die "Mac key: $1 is made, but ssh-add cannot" \
+        "give it to the agent: run ssh-add --apple-use-keychain $1, which asks its passphrase," \
+        "then run the wizard again"
 }
 
 # keys_choose makes ws's key where it has none: in Secretive, where its app is there or the
@@ -118,7 +132,7 @@ keys_choose() {
         keys_secretive
     elif ws_checking; then
         ws_say "Mac key: would ask whether Secretive keeps the Mac's key: yes installs its cask," \
-            "no makes ${keys_pub%.pub} with ssh-keygen"
+            "no makes ${keys_pub%.pub} with ssh-keygen, and names it in WS_IDENTITY"
     else
         [ -t 0 ] || ws_die "Mac key: no terminal to ask whether Secretive keeps the Mac's key:" \
             "set WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for ssh-keygen's, or run the" \
@@ -126,10 +140,21 @@ keys_choose() {
         printf "Keep the Mac's ssh key in Secretive, in the Secure Enclave? [Y/n]: " >&2
         read -r keys_answer || ws_die "Mac key: the terminal ended before the answer"
         case $keys_answer in
-        [Nn]*) keys_make "${keys_pub%.pub}" ;;
+        [Nn]*)
+            keys_make "${keys_pub%.pub}"
+            keys_pin
+            ;;
         *) keys_secretive ;;
         esac
     fi
+}
+
+# keys_pin writes ws's file key into mac.conf as WS_IDENTITY, where mac.conf has no line for it, so
+# that a Secretive key made later does not take its place in ws_identity. --check shows the line.
+# shellcheck disable=SC2154 # ws_identity sets ws_identity_pub
+keys_pin() {
+    ! ask_lacks WS_IDENTITY || ask_write "$(ask_line WS_IDENTITY "$ws_identity_pub")
+" "Mac key"
 }
 
 # keys_secretive has the user make ws's key in Secretive's app, installed where missing, at its

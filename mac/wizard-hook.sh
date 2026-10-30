@@ -20,7 +20,7 @@ hook_words=$HOME/.config/ws/forbidden-words
 # remote_files OP [ARG...] runs the files script's OP as root on ws, by host_ssh, as remote does.
 # shellcheck disable=SC2154 # dir is wizard.sh's
 remote_files() {
-    host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh sh -s -- "$@" \
+    host_ssh -o BatchMode=yes ws-ssh sh -s -- "$@" \
         <"$dir/wizard-remote-files.sh"
 }
 
@@ -113,12 +113,12 @@ wshook_guard='IFS= read -r l || [ -n "$l" ] || exit 3; { printf %s "$l"; echo; c
 # shellcheck disable=SC2154 # lock is wizard.sh's
 wshook_run() {
     if [ -z "$WS_HOOK_SECRET" ]; then
-        host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh "$wshook_apply" </dev/null >&2
+        host_ssh -o BatchMode=yes ws-ssh "$wshook_apply" </dev/null >&2
         return
     fi
     rm -f "$lock/hook.status"
     wshook_status=0
-    wshook_read | host_ssh -o BatchMode=yes -o ServerAliveInterval=15 ws-ssh \
+    wshook_read | host_ssh -o BatchMode=yes ws-ssh \
         "sh -c '$wshook_guard'" "$wshook_apply" >&2 || wshook_status=$?
     [ ! -f "$lock/hook.status" ] || [ "$wshook_status" = 255 ] || wshook_unread
     return "$wshook_status"
