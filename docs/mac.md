@@ -51,17 +51,15 @@ side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has th
 order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
 display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
 [The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
-git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the
-`.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
+git's commits on the Mac, the name in quotes where it holds a blank: [git on the Mac](mac-git.md).
 `WS_SSH_KEY` and `WS_GIT_KEY` name the YubiKey's keys for ssh and git:
 [The YubiKey](mac-yubikey.md).
 
 `WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
-`root` for `WS_USER` and 51820 for `WS_PORT`. ssh takes the YubiKey's key
-([ssh's hosts](#sshs-hosts)), and git too without `WS_GIT_SIGNING_KEY`
-([git on the Mac](mac-git.md)). A line of `WS_IDENTITY` or `WS_IDENTITY_AGENT`, empty too, stops
-the script ([From the old keys](mac-yubikey.md#from-the-old-keys)).
+`root` for `WS_USER` and 51820 for `WS_PORT`. ssh and git take the YubiKey's keys alone. A line of
+`WS_IDENTITY`, `WS_IDENTITY_AGENT` or `WS_GIT_SIGNING_KEY`, empty too, stops the script
+([From the old keys](mac-yubikey.md#from-the-old-keys)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each

@@ -76,8 +76,9 @@ from ykman's answers typed. `--check` must name their slots, and two in must sto
 logged out, a run must pass the stage once ws's agent lists the keys, and stop at gh's, and a second
 say nothing of the stage. With a key out of ws's agent, a run must stop, naming its `.pub`, or pass
 where launchd's agent, started again, loads
-it. Without the agent, a run must stop with `ssh-add`'s own words. A line of `WS_IDENTITY` or
-`WS_IDENTITY_AGENT`, empty too, must stop a run and `--check` before `setup.sh`.
+it. Without the agent, a run must stop with `ssh-add`'s own words. A line of `WS_IDENTITY`,
+`WS_IDENTITY_AGENT` or `WS_GIT_SIGNING_KEY`, empty too, must stop a run and `--check` before
+`setup.sh`.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `setup.sh`. The
@@ -185,7 +186,8 @@ must take both back, and spare a script's own. Last, `ws_conf` must read an empt
 `mac.conf` as its key's default, and still stop on a value of the wrong form. It must also stop on a
 `WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address. It must take
 `WS_SSH_KEY` and `WS_GIT_KEY` of `a-z`, `0-9` and `-` alone, and stop where both name one key. It
-must stop on a line of `WS_IDENTITY` or `WS_IDENTITY_AGENT`, set or empty
+must stop on a line of `WS_IDENTITY`, `WS_IDENTITY_AGENT` or `WS_GIT_SIGNING_KEY`, set or empty,
+and name the file key that an empty `WS_GIT_SIGNING_KEY` kept
 ([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `setup.sh`
 must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
 then none. It must warn of a disabled service. It must stop on one networksetup lacks, or one with a
@@ -216,19 +218,17 @@ tunnel. So must a cask that Homebrew has without its app, which neither a run no
 install again ([mac-gateway-checks.sh](../.github/mac-gateway-checks.sh)). With `WS_GIT_NAME` and
 `WS_GIT_EMAIL`, git must sign a commit with the YubiKey's key through the wrapper `ws-ssh-keygen`,
 whatever `SSH_AUTH_SOCK` names, and verify it. The wrapper that older runs wrote for Secretive must
-go, shown first by `--check`, and a file of its name that `setup.sh` did not write stay. `setup.sh`
-must stop on a `WS_GIT_SIGNING_KEY` that is missing or unreadable, or a `.pub` that holds more than
-a public key. A `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once,
-keep its own lines, and name its own settings. An include below them, or a second one, must stop
-`setup.sh` before it writes a file, as must a link that lacks the include. One whose file has it
-must pass. The settings of git's XDG file must be named. git's credential command for GitHub must be
-a stand-in gh's, which must add the key to its login once. Logged out, gh must draw a warning at
-each run. Logged in, `setup.sh` must warn of a 404, another error of gh's, and an add that leaves
-the account without the key. It must add a key the account lacks. Where `PATH` has no gh, `setup.sh`
-must install Homebrew's once, with git's keys alone
-([mac-git-checks.sh](../.github/mac-git-checks.sh)). A `.pub` of `~/.config/ws/keys` in
-`WS_GIT_SIGNING_KEY` must take the wrapper too. With the stand-in YubiKey out, git must make no
-commit, and sign again once it comes back. Nor may a file key sign from an agent of the case's own
+go, shown first by `--check`, and a file of its name that `setup.sh` did not write stay. A
+`~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
+lines, and name its own settings. An include below them, or a second one, must stop `setup.sh`
+before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
+settings of git's XDG file must be named. git's credential command for GitHub must be a stand-in
+gh's, which must add the key to its login once. Logged out, gh must draw a warning at each run.
+Logged in, `setup.sh` must warn of a 404, another error of gh's, and an add that leaves the account
+without the key. It must add a key the account lacks. Where `PATH` has no gh, `setup.sh` must
+install Homebrew's once, with git's keys alone ([mac-git-checks.sh](../.github/mac-git-checks.sh)).
+With the stand-in YubiKey out, git must make no commit, and sign again once it comes back. Nor may a
+file key sign from an agent of the case's own
 ([mac-git-yubikey-checks.sh](../.github/mac-git-yubikey-checks.sh)).
 `ws-agent-confirm` must sign through the check's agents, with file keys under `ssh-add -c`
 ([mac-confirm-checks.sh](../.github/mac-confirm-checks.sh)). 50 signatures in a burst must pass with

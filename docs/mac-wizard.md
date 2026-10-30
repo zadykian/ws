@@ -104,8 +104,8 @@ ws's key. Where the agent lacks one, the stage runs `setup.sh`'s agent step, and
 Where it still lacks one, the stage stops with `ssh-add -L`'s own error, or names the `.pub` whose
 key it lacks. The agent's log says why, and a replug has it load the keys again.
 
-A line of `WS_IDENTITY` or `WS_IDENTITY_AGENT` in `mac.conf`, empty too, stops the wizard, as it
-sets up no other key for ssh ([ssh's key](mac-yubikey.md#sshs-key)).
+A line of `WS_IDENTITY`, `WS_IDENTITY_AGENT` or `WS_GIT_SIGNING_KEY` in `mac.conf`, empty too,
+stops the wizard, as it stops `setup.sh` ([From the old keys](mac-yubikey.md#from-the-old-keys)).
 
 ## GitHub and Ubuntu's install
 

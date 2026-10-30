@@ -190,3 +190,16 @@ Before the YubiKey, `mac.conf` named other keys and agents. A line of such a key
 - `WS_IDENTITY`, the `.pub` of ssh's key for ws, as `~/.ssh/id_ed25519.pub`: ssh offers ws the
   key of `WS_SSH_KEY`.
 - `WS_IDENTITY_AGENT`, the socket of another agent, as Secretive's: ws's agent holds ssh's key.
+- `WS_GIT_SIGNING_KEY`, the `.pub` of git's signing key: git signs with the key of `WS_GIT_KEY`. An
+  empty one, as the wizard offered, kept the file key `~/.ssh/id_ed25519_signing`, which signs no
+  more.
+
+The old keys stay where they are. Once GitHub lists the new keys, which the wizard's gh stage and
+`setup.sh` add, and ws takes ssh's key ([ssh's key](#sshs-key)), check `ssh ws-ssh true`. Then
+remove the old keys by hand:
+
+- Secretive's app, and the keys in it;
+- `~/.ssh/id_ed25519` and `~/.ssh/id_ed25519_signing`, each with its `.pub`;
+- the old keys in the GitHub account's settings, under SSH and GPG keys: ssh's key, and git's
+  signing key;
+- ws's line of the old key in root's `~/.ssh/authorized_keys`, or `WS_USER`'s.
