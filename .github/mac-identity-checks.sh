@@ -8,7 +8,7 @@ ws=$HOME/.ssh/config.d/ws
 cp "$ws" "$tmp/ws"
 warned=
 # The .pub of the key that the job's config.d/ws gives ws.
-jobkey=\~/.ssh/id_ed25519.pub
+jobkey=\~/.config/ws/keys/ws.pub
 
 # keyed LINE... checks that ssh -G gives ws and ws-ssh LINE..., a line each, of its settings for the
 # key. Those are identitiesonly, identityagent and identityfile, a path from the home by ~/.
@@ -33,18 +33,22 @@ changes() {
     cmp -s "$ws" "$tmp/want" || error "setup.sh wrote another config.d/ws than --check showed"
 }
 
-# agented PUB SOCKET: changes, with the file key's lines replaced by those of the agent at SOCKET,
-# which holds the key of PUB. Then ssh -G must give ws and ws-ssh that agent and PUB.
+# The YubiKey's lines in the job's config.d/ws, as sed's patterns: its .pub, and ws's agent.
+yk_file='^    IdentityFile ~/.config/ws/keys/ws.pub$'
+yk_agent='^    IdentityAgent "~/.ssh/ws-agent.sock"$'
+
+# agented PUB SOCKET: changes, with the YubiKey's .pub and agent replaced by PUB and the agent at
+# SOCKET. Then ssh -G must give ws and ws-ssh that agent and PUB.
 agented() {
-    changes -e "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $1|" \
-        -e '/^    UseKeychain yes$/d' -e "s|^    AddKeysToAgent yes\$|    IdentityAgent \"$2\"|"
+    changes -e "s|$yk_file|    IdentityFile $1|" -e "s|$yk_agent|    IdentityAgent \"$2\"|"
     keyed 'identitiesonly yes' "identityagent $2" "identityfile $1"
 }
 
-# filed KEY: changes, with the file key's lines replaced by those of the file KEY. Then ssh -G must
-# give ws and ws-ssh KEY alone.
+# filed KEY: changes, with the YubiKey's lines replaced by those of the file KEY, whose passphrase
+# the Keychain keeps. Then ssh -G must give ws and ws-ssh KEY alone.
 filed() {
-    changes "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $1|"
+    changes -e "s|$yk_file|    IdentityFile $1|" \
+        -e "s|$yk_agent|    UseKeychain yes\\$nl    AddKeysToAgent yes|"
     keyed 'identitiesonly yes' "identityfile $1"
 }
 
@@ -57,15 +61,16 @@ job() {
     changes -n p
 }
 
-# The job's runs had no WS_IDENTITY, so ws must take the file key, by the four lines it had before
-# WS_IDENTITY, in their order.
-keyed 'identitiesonly yes' 'identityfile ~/.ssh/id_ed25519'
-four=$(printf '    %s\n' 'IdentityFile ~/.ssh/id_ed25519' 'IdentitiesOnly yes' 'UseKeychain yes' \
-    'AddKeysToAgent yes')
-[ "$(sed -n '/^    IdentityFile /,/^    AddKeysToAgent /p' "$ws")" = "$four" ] ||
-    error "config.d/ws gives the file key other lines than its four, in their order"
-# WS_IDENTITY must give ws the file beside the .pub in place of the file key. WS_IDENTITY_AGENT must
-# give it the agent at its socket, by a path with a blank here.
+# The job's runs had no WS_IDENTITY, so ws must take the YubiKey's key, ws, through ws's agent, by
+# three lines in their order.
+keyed 'identitiesonly yes' 'identityagent ~/.ssh/ws-agent.sock' \
+    'identityfile ~/.config/ws/keys/ws.pub'
+three=$(printf '    %s\n' 'IdentityFile ~/.config/ws/keys/ws.pub' 'IdentitiesOnly yes' \
+    'IdentityAgent "~/.ssh/ws-agent.sock"')
+[ "$(sed -n '/^    IdentityFile /,/^    IdentityAgent /p' "$ws")" = "$three" ] ||
+    error "config.d/ws gives the YubiKey's key other lines than its three, in their order"
+# WS_IDENTITY must give ws the file beside the .pub in place of the YubiKey's key. WS_IDENTITY_AGENT
+# must give it the agent at its socket, by a path with a blank here.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$tmp/key"
 with "WS_IDENTITY=$tmp/key.pub"
 filed "$tmp/key"
@@ -139,7 +144,7 @@ mv "$tmp/ws.pub" "$data/PublicKeys/ws.pub"
 prints ''
 sec=\~/${data#"$HOME/"}
 with 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
-prints ''
+filed \~/.ssh/id_ed25519
 cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
 # WS_IDENTITY names a .pub of its own, or one of Secretive's, which takes its agent unless
 # WS_IDENTITY_AGENT names another.

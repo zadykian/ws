@@ -221,9 +221,9 @@ prints ''
 prints '' --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
-# Secretive's one key is git's, and ws keeps the file key. The agent and Secretive's container then
-# go, so that the cases below give ws no key of theirs.
-[ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
+# Secretive's one key is git's, and ws keeps the YubiKey's. The agent and Secretive's container
+# then go, so that the cases below give ws no key of theirs.
+[ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.config/ws/keys/ws.pub ] ||
     error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
 kill "$agent" || true
 agent=
