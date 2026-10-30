@@ -146,3 +146,28 @@ By hand, once:
 - Allow terminal-notifier's notices at its first prompt, which the first signature brings.
 - In System Settings › Notifications › terminal-notifier, choose Banners or Alerts. Focus and
   Scheduled Summary can hold the notices back.
+
+## ssh's key
+
+Without `WS_IDENTITY`, `~/.ssh/config.d/ws` gives `ws` and `ws-ssh` the key of `WS_SSH_KEY` alone:
+its `.pub` as `IdentityFile`, and ws's agent as `IdentityAgent`. So ssh signs through ws's agent,
+whatever agent the app that runs it has. Whether JetBrains Gateway's own client takes
+`IdentityAgent` too is a check by hand still. Nothing falls back to Secretive's key or a file key.
+`WS_IDENTITY` still names another ([ssh's hosts](mac.md#sshs-hosts)).
+
+Where ws's agent lacks the key, as with the YubiKey out, ssh reads the `.pub` as a private key. It
+then prints `WARNING: UNPROTECTED PRIVATE KEY FILE!` before `Permission denied`. That calls for the
+YubiKey, or ws's agent, and no `chmod`: plug the YubiKey in again.
+
+ws takes the GitHub account's keys at its install alone. The wizard's gh stage puts the YubiKey's
+key there, so a ws installed after that takes it. Where `config.d/ws` gave ws another key, as the
+file key or Secretive's, `setup.sh` warns once, as it replaces that key. An installed ws then takes
+the new key by hand, with no reinstall. Add the `.pub`'s line to root's `~/.ssh/authorized_keys`,
+or `WS_USER`'s, at ws's console or over ssh by the old key. The wizard's Root's key stage gives the
+same step. From the file key:
+
+```sh
+ssh -o UseKeychain=yes -i ~/.ssh/id_ed25519 ws-ssh 'cat >>.ssh/authorized_keys' <~/.config/ws/keys/ws.pub
+```
+
+For a key of Secretive's, give ssh its agent and `.pub`: `-o IdentityAgent=SOCKET -i OLD.pub`.

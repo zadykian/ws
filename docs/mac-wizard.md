@@ -31,7 +31,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
    and warns of any other. Without a clone, `--check` lists the wizard's stages, each after this
    one.
 3. Answers: the values `mac.conf` lacks, below.
-4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
+4. Mac key: the ssh key that the Mac offers ws, the YubiKey's by default, found or made, below.
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
 6. setup.sh: `mac/setup.sh`, after sudo's password, asked at each run, `--check` too, unless its
    timestamp is fresh. With no terminal at all, the stage stops, unless sudo needs no password. The
@@ -97,15 +97,12 @@ Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.
 `ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
 and asks it once more. With no terminal to ask one, the key gets none.
 
-Without `WS_IDENTITY`, and with no key yet, the wizard asks whether Secretive keeps the key, in the
-Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and where
-its app is there already, the wizard asks nothing. It opens the app, and waits up to 15 minutes for
-a P-256 key made there, at its default protection, which asks for Touch ID at each login. Where git
-has a name, a second key follows, for git's signing, at Notify, which signs with no prompt while
-the Mac is unlocked ([git](mac-git.md)). Their `.pub` files and Secretive's agent go in `mac.conf`,
-as `WS_IDENTITY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_KEY`. An empty `WS_GIT_SIGNING_KEY`
-keeps `setup.sh`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above. With
-no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
+Without `WS_IDENTITY`, the keys are the YubiKey's. The stage runs `setup.sh`'s YubiKey step, which
+finds or makes them and writes their `.pub`s, then its agent step, which has ws's agent load them
+([The YubiKey](mac-yubikey.md)). So gh's stage finds ws's key. With no YubiKey in, or several, the
+stage stops, as with a key to make and no terminal for ykman's questions. Where `WS_IDENTITY` names
+a key of Secretive's, git has a name, and `mac.conf` no line for `WS_GIT_SIGNING_KEY`, the stage
+waits for git's key made in Secretive's app, at Notify ([git](mac-git.md)).
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
