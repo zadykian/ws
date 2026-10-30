@@ -3,10 +3,10 @@
 `mac/wizard.sh` sets up the Mac in stages, around `mac/setup.sh` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `setup.sh`. It takes ws's host key, checks that root on ws takes the Mac's key, runs ws's
-playbook there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, runs another
-repository's `apply.sh` on ws, and clones that repository on the Mac, with ws's word list. Last, it
-sets up the cable from the Mac's display to ws. On a new Mac with Apple silicon, one line installs
-what it needs, clones the repository and runs the wizard, as yourself:
+playbook there, and logs gh and claude in on ws. Then it exchanges the tunnel's keys, clones another
+repository on the Mac, sends it to ws and runs its `apply.sh` there, and copies ws's word list.
+Last, it sets up the cable from the Mac's display to ws. On a new Mac with Apple silicon, one line
+installs what it needs, clones the repository and runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -41,8 +41,8 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 10. gh on ws: root's gh there, logged in to GitHub, and ws's signing key on the account, below.
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-13. Hook on ws: another repository's `apply.sh`, as root on ws, where `mac.conf` names one, below.
-14. Hook on the Mac: its clone in `~/repository/REPO`, its hooks and its `Brewfile`, below.
+13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
+14. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
 15. Word list: ws's, copied to the Mac where it differs, below.
 16. Cable: on the LAN, ws's port of the cable in its `host_vars`, and the Mac's service, below.
 
@@ -225,27 +225,27 @@ on, and the closing list says what to do. The stage asks sudo's password only wh
 ## Another repository
 
 `WS_HOOK` names another repository on GitHub, as `OWNER/REPO`, whose `apply.sh` sets up more of ws,
-such as values that this public repository leaves out. `WS_HOOK_SECRET` names the Keychain item of a
-secret that the script reads. `setup.sh` takes both keys, and reads neither. The stage clones the
-repository in `/root/repository/REPO` on ws by root's gh login, where missing, and never pulls it,
-as the script updates its own clone. A `REPO` of `ws`, ws's own clone, or another repository's clone
-there stops the stage. Where the Keychain lacks the item, it runs `security add-generic-password`,
-which asks for its secret twice at the terminal. Where `security find-generic-password -w` can't
-read it, the stage stops, naming its error. Then `apply.sh` runs as root over `ssh ws-ssh`, never
-`ssh -t`, so it neither prompts nor echoes its stdin: what security prints, then the end of input,
-or empty without an item. The wizard never reads the secret, and passes the script no arguments.
+such as what this public repository leaves out. `WS_HOOK_SECRET` names the Keychain item of a secret
+that the script reads. `setup.sh` takes both keys, and reads neither. Where ws lacks
+`/root/repository/REPO`, the stage sends it the Mac's `origin/main` as a git bundle, which the files
+script clones on branch `main` with no gh, `origin` at its GitHub URL. It never pulls one, as the
+script updates its own. A `REPO` of `ws`, or another repository's clone there, stops the stage.
 
-That run leaves a stamp, `/var/lib/ws-wizard/hook-REPO` on ws, and the stage is done. So a second
-run leaves `apply.sh` alone, and `--update` runs it again. A run that fails stops the wizard, and
-the next runs it again. An item whose access list lacks `security` asks at both of the stage's
-reads, which "Always Allow" answers. `--check` says what the stage would do, and runs nothing.
+Where the Keychain lacks the item, it runs `security add-generic-password`, which asks for its
+secret twice at the terminal. Where `security find-generic-password -w` can't read it, the stage
+stops, naming its error. Then `apply.sh` runs as root over `ssh ws-ssh`, never `ssh -t`, so it
+neither prompts nor echoes its stdin: what security prints, then the end of input, or empty without
+an item. The wizard never reads the secret, and passes no arguments. That run leaves a stamp,
+`/var/lib/ws-wizard/hook-REPO` on ws, and the stage is done. A second run leaves `apply.sh` alone,
+but `--update` runs it again. A run that fails stops the wizard, and the next runs it again. An item
+whose access list lacks `security` asks at both of the stage's reads, which "Always Allow" answers.
 
-The stage Hook on the Mac then clones the repository in `~/repository/REPO` by gh's login on the
-Mac, where missing, and never pulls it. Another repository's clone there stops the stage, as on ws.
-Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute path, as in ws's
-clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose entries Homebrew lacks, as
-`brew bundle check`, run with Homebrew's auto-update off, finds, `brew bundle` installs them, and
-upgrades nothing. `--check` names each command that the stage would run.
+The stage Hook on the Mac comes first. It clones the repository in `~/repository/REPO` by gh's login
+on the Mac, where missing, and never pulls it. Another repository's clone there stops the stage, as
+on ws. Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute path, as in
+ws's clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose entries Homebrew
+lacks, as `brew bundle check`, run with Homebrew's auto-update off, finds, `brew bundle` installs
+them, and upgrades nothing. `--check` names each command that the stage would run.
 
 The stage Word list copies ws's word list, which the hooks read ([The hooks](checks.md#the-hooks)),
 with `WS_HOOK` or without, after Hook on ws, whose `apply.sh` may write it. Where ws has one, and
