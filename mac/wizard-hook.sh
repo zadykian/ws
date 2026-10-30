@@ -151,13 +151,13 @@ hook_after() {
 # hook_done succeeds where mac.conf names no repository, or where its clone is in ~/repository/REPO,
 # with core.hooksPath at its .githooks and its Brewfile's formulae installed, where it has them. The
 # Mac's word list must be ws's too, where ws has one. It reads ws only where root logged in there.
-# shellcheck disable=SC2154 # hook_ws and hook_mac are wizard-words.sh's
+# shellcheck disable=SC2154 # words_ws and words_mac are wizard-words.sh's
 hook_done() {
     ws_conf "$WS_CONF"
     hook_dir=$HOME/repository/${WS_HOOK#*/}
     [ -z "$WS_HOOK" ] || { [ -e "$hook_dir/.git" ] && hook_origin && hook_hooks && hook_brew; } ||
         return 1
-    [ "$root_in" = 1 ] && hook_sums && { [ "$hook_ws" = - ] || [ "$hook_ws" = "$hook_mac" ]; }
+    [ "$root_in" = 1 ] && words_sums && { [ "$words_ws" = - ] || [ "$words_ws" = "$words_mac" ]; }
 }
 
 # hook_origin succeeds where the clone's origin names WS_HOOK on GitHub, as the files script reads
@@ -190,7 +190,7 @@ hook_brew() {
 # runs brew bundle, which installs what the Brewfile names and Homebrew lacks. --check says what it
 # would run. First it copies ws's word list, where the Mac's differs.
 hook_do() {
-    hook_copy
+    words_copy
     [ -n "$WS_HOOK" ] || return 0
     if [ ! -e "$hook_dir" ] && [ ! -L "$hook_dir" ]; then
         if ws_checking; then
