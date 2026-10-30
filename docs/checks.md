@@ -16,20 +16,17 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 
 - `shell`: ShellCheck, which follows a script's sources with `-x`, and `shfmt -d -i 4` on every
   shell script, found by extension or shebang;
-- `yamllint`: `yamllint --strict`, as `.yamllint` sets it, on the YAML files it finds itself.
-  Those include `host_vars/localhost.yml`, which git ignores, so that file starts with `---`
-  ([The direct link](network.md#the-direct-link));
+- `yamllint`: `--strict` (`.yamllint`) on the YAML files it finds, `host_vars/localhost.yml`
+  too, which git ignores, so it starts with `---` ([The direct link](network.md#the-direct-link));
 - `ansible-lint`: its production profile, strict and offline (`.ansible-lint`);
 - `ruff`: `ruff check` and `ruff format --check` on the Python files, as `ruff.toml` sets them;
 - `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python and Jinja templates;
 - `vale`: Vale's three rules (`.vale.ini`) on the Markdown files: sentences of 30 words or fewer,
   no wordy phrases and no needless variants;
 - `lychee`: the links to files and their headings in the Markdown files, offline;
-- `rumdl`: rumdl's rules on the Markdown files, with lines of 100 columns but in code blocks and
-  tables (`.rumdl.toml`);
+- `rumdl`: `.rumdl.toml`'s rules on Markdown: lines of 100 columns but in code blocks and tables;
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
-- `gitleaks`: every commit of the history, for secrets, or those that `LOG_OPTS` picks with git
-  log's options.
+- `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options.
 
 `tools/sizecheck` names the files it leaves out, those nobody writes here. `.editorconfig` sets the
 files' encoding, line ends and indents for editors.
