@@ -98,10 +98,18 @@ Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.
 and asks it once more. With no terminal to ask one, the key gets none.
 
 Without `WS_IDENTITY`, the keys are the YubiKey's. The stage runs `setup.sh`'s YubiKey step, which
-finds or makes them and writes their `.pub`s, then its agent step, which has ws's agent load them
-([The YubiKey](mac-yubikey.md)). So gh's stage finds ws's key. With no YubiKey in, or several, the
-stage stops, as with a key to make and no terminal for ykman's questions. git signs with the
-YubiKey's key, whatever `WS_IDENTITY` names ([git](mac-git.md)).
+finds or makes them and writes their `.pub`s ([The YubiKey](mac-yubikey.md)). With no YubiKey in, a
+run waits up to 5 minutes for one. Several in stop the stage, as does a key to make with no terminal
+for ykman's questions. `--check` says it would wait, and puts the `setup.sh` and Root's key stages
+after this one, as both need the YubiKey. With one in, it names each key it would make, and its
+slot.
+git signs with the YubiKey's key, whatever `WS_IDENTITY` names ([git](mac-git.md)).
+
+Then [ws's agent](mac-yubikey.md#wss-agent) must list both keys, as it does only while the YubiKey
+is in. So a run with the YubiKey out waits at this stage, not at Root's key, and gh's stage finds
+ws's key. Where the agent lacks one, the stage runs `setup.sh`'s agent step, and waits up to 15 s.
+Where it still lacks one, the stage stops with `ssh-add -L`'s own error, or names the `.pub` whose
+key it lacks. The agent's log says why, and a replug has it load the keys again.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
