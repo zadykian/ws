@@ -161,14 +161,14 @@ be the secret, no terminal, and the next run print nothing. An unreadable item m
 before `apply.sh`, and a failed run leave no stamp. For the Hook on the Mac stage, the stand-in `gh`
 on the Mac clones it, with `.githooks` and an empty `Brewfile`. A run must clone it once, set its
 `core.hooksPath`, and name `gh auth setup-git` by hand, unless git's config names gh's credential
-command. The next run must print nothing. The stand-in ws's word list must go to the Mac once, mode
-600, and none of it be printed. Once the Mac's differs, `--check` must show no diff, or stop at a
-link, as a run must. For the Cable stage, ws's ports are a stand-in sysfs. Undocked, a run must
-print nothing, one that acts name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no
-terminal must stop, one with `WS_CABLE_PORT` name the port, run the roles, read its late address,
-and stop at the service. Typed, an empty line must take the `169.254` one, and `ping` answer. The
-next must read no `link`, and one after ws's install or a failed roles' run name it again. Off the
-LAN, a run and `--check` must skip it, a cloud VM's naming its firewall.
+command. The next run must print nothing. For the Word list stage, the stand-in ws's list must go to
+the Mac once, mode 600, and none of it be printed. Once the Mac's differs, `--check` must show no
+diff, or stop at a link, as a run must. For the Cable stage, ws's ports are a stand-in sysfs.
+Undocked, a run must print nothing, one that acts name the dock, and `WS_CABLE_PORT` end the wait.
+Docked, one with no terminal must stop, one with `WS_CABLE_PORT` name the port, run the roles, read
+its late address, and stop at the service. Typed, an empty line must take the `169.254` one, and
+`ping` answer. The next must read no `link`, and one after ws's install or a failed roles' run name
+it again. Off the LAN, a run and `--check` must skip it, a cloud VM's naming its firewall.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
