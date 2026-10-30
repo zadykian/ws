@@ -70,12 +70,11 @@ installs. It must drop the Mac's key, which `setup.sh` prints, and leave no step
 hand, as the Tunnel stage, below, takes it. A second run and `--check` must print nothing, by sh and
 by dash. Then a stand-in for Secretive's agent, an `ssh-agent` at its socket, holds a P-256 key,
 whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`. `--check` must print nothing of the Mac
-key stage while the agent lists the key. With git's name, it must say that it would wait for git's
-key made in Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the agent lacks the key, a run and
-`--check` must stop at the stage, naming the socket. Last, without the login of the stand-in `gh`, a
-run with no terminal must stop at gh's stage, naming `gh auth login`. With a login that lacks the
-scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say it would run
-each.
+key stage while the agent lists the key, with git's name too. Once the agent lacks the key, a run
+and `--check` must stop at the stage, naming the socket. Last, without the login of the stand-in
+`gh`, a run with no terminal must stop at gh's stage, naming `gh auth login`. With a login that
+lacks the scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say it
+would run each.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `setup.sh`. The

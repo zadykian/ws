@@ -100,9 +100,8 @@ and asks it once more. With no terminal to ask one, the key gets none.
 Without `WS_IDENTITY`, the keys are the YubiKey's. The stage runs `setup.sh`'s YubiKey step, which
 finds or makes them and writes their `.pub`s, then its agent step, which has ws's agent load them
 ([The YubiKey](mac-yubikey.md)). So gh's stage finds ws's key. With no YubiKey in, or several, the
-stage stops, as with a key to make and no terminal for ykman's questions. Where `WS_IDENTITY` names
-a key of Secretive's, git has a name, and `mac.conf` no line for `WS_GIT_SIGNING_KEY`, the stage
-waits for git's key made in Secretive's app, at Notify ([git](mac-git.md)).
+stage stops, as with a key to make and no terminal for ykman's questions. git signs with the
+YubiKey's key, whatever `WS_IDENTITY` names ([git](mac-git.md)).
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
