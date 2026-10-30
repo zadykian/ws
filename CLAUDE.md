@@ -131,10 +131,13 @@ skill. Commits are signed, as the ruleset on `main` requires.
   [writing.md](.claude/rules/writing.md), loaded with the files they cover.
 - Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
-  hand only; `docs`, with `/docs:trim`; and `lint`, with `/lint:split-file`. `flow` links and
-  lands a stack with gh's extension, `gh extension install github/gh-stack`. The marketplace's
-  `ref` names the release that the workflows' actions pin ([The rules](docs/checks.md#the-rules)).
+  hand only; `docs`, with `/docs:trim`; `lint`, with `/lint:split-file`; and `lean`, with
+  `/lean:cost`, run by hand only. `flow` links and lands a stack with gh's extension,
+  `gh extension install github/gh-stack`. The marketplace's `ref` names the release that the
+  workflows' actions pin ([The rules](docs/checks.md#the-rules)).
 - Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits and
   `make lint-tree` as a turn ends, on a tree the maintainer vouches for. The gate code includes
   what [.claude/lint-gates](.claude/lint-gates) lists
-  ([Claude's hooks](docs/checks.md#claudes-hooks)).
+  ([Claude's hooks](docs/checks.md#claudes-hooks)). The
+  [lean plugin's](https://github.com/zadykian/toolkit/blob/main/docs/lean.md) deny a workflow
+  agent with no tier, and a foreground poll that no timeout bounds.
