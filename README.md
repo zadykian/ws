@@ -133,8 +133,8 @@ CI runs `make lint`, which lints the code, the docs and the workflows, and scans
 secrets. It runs the playbook twice in a container, forges SigNoz's compose files again, and sets
 up a Mac on GitHub's macOS runner. The rules workflow warns where a pull request breaks the rules
 of zadykian/toolkit's skills, and the issues workflow where an issue strays from its issue form.
-The hooks in `.githooks` check each commit before git makes it. [Checks](docs/checks.md) has the
-details.
+The hooks in `.githooks` check each commit before git makes it. [Checks](docs/checks.md) and
+[The gates](docs/gates.md) have the details.
 
 ## Pull requests
 
