@@ -21,11 +21,11 @@
 # files in /etc/resolver.
 # It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
-# Before the tunnel, it sets up Ghostty: its app from Homebrew's cask, where missing, and
-# ws.ghostty, its settings. It sets up cld, for cld restore tabs: cld in ~/.local/bin, installed
-# where missing and updated. Once cld has restore tabs, and where Ghostty's app is there, config.d/ws
-# gets the watcher's lines. It warns of what it can't install, update or write, and goes on
-# (setup-ghostty.sh, setup-cld.sh).
+# Before the tunnel, it sets up Ghostty: its app and its settings' font from Homebrew's casks, where
+# missing, and ws.ghostty, those settings. It sets up cld, for cld restore tabs: cld in
+# ~/.local/bin, installed where missing and updated. Once cld has restore tabs, and where Ghostty's
+# app is there, config.d/ws gets the watcher's lines. It warns of what it can't install, update or
+# write, and goes on (setup-ghostty.sh, setup-cld.sh).
 #
 # A run changes only what differs, so a second prints nothing but warnings once mac.conf has
 # WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make

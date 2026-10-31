@@ -1,17 +1,27 @@
 # shellcheck shell=sh
-# The part of mac/setup.sh that sets up Ghostty, the Mac's terminal: Ghostty from Homebrew's cask
-# where missing, and ws.ghostty, its settings, which Ghostty's config reads. setup.sh sources it after setup-ssh.sh, whose header it uses, and calls
+# The part of mac/setup.sh that sets up Ghostty, the Mac's terminal: Ghostty and the font its
+# settings name, from Homebrew's casks where missing, and ws.ghostty, those settings, which
+# Ghostty's config reads. setup.sh sources it after setup-ssh.sh, whose header it uses, and calls
 # ghostty_mac before cld_mac. ghostty_mac warns where Ghostty can't be installed, or Ghostty's
 # config is not the script's to change, so that the run goes on to the tunnel. It stops where it
 # can't write a file. Ghostty then updates itself, as ws.ghostty says.
 
 # 1 where Ghostty's app is there, or where --check would install it, as ghostty_mac sets it.
 ghostty_ok=0
+# The cask of the font that ws.ghostty names, and the file of its regular style.
+ghostty_font=font-jetbrains-mono-nerd-font
+ghostty_font_file=JetBrainsMonoNerdFontMono-Regular.ttf
 
 # ghostty_there succeeds where Ghostty's app is there: Ghostty.app in /Applications, where its cask
 # puts it, or in ~/Applications.
 ghostty_there() {
     [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ]
+}
+
+# ghostty_font_there succeeds where the font's regular style is in ~/Library/Fonts, where its cask
+# puts it, or in /Library/Fonts.
+ghostty_font_there() {
+    [ -f "$HOME/Library/Fonts/$ghostty_font_file" ] || [ -f "/Library/Fonts/$ghostty_font_file" ]
 }
 
 # ghostty_cask CASK THERE MISSING installs Homebrew's CASK where the function THERE finds its files
@@ -163,13 +173,16 @@ EOF
     rm -f "$ghostty_new"
 }
 
-# ghostty_mac installs Ghostty where its app is missing, and writes ws.ghostty. Where the app is
-# still missing, as after a failed install, it writes nothing, unless --check would install it. It sets ghostty_ok, which cld_would_tabs reads.
+# ghostty_mac installs Ghostty where its app is missing, then its font where missing, and writes
+# ws.ghostty. Where the app is still missing, as after a failed install, it does neither, unless
+# --check would install it. It sets ghostty_ok, which cld_would_tabs reads.
 # shellcheck disable=SC2034 # setup-cld.sh's cld_would_tabs reads ghostty_ok
 ghostty_mac() {
     ghostty_ok=0
     ghostty_cask ghostty ghostty_there "no Ghostty.app is in /Applications or ~/Applications" ||
         return 0
     ghostty_ok=1
+    ghostty_cask "$ghostty_font" ghostty_font_there \
+        "no $ghostty_font_file is in ~/Library/Fonts or /Library/Fonts" || true
     ghostty_files
 }

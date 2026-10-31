@@ -15,12 +15,12 @@ jobs:
   # Ghostty and cld on a Mac, in docs/mac-ghostty.md's order. mac/setup.sh runs with a stand-in for
   # ws's key, so that the tunnel's daemon loads and a second run prints nothing, and one for
   # JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. On a runner
-  # without Ghostty or cld, --check must change nothing. Where Ghostty's cask fails, a run must
-  # install cld alone. A run must then install Ghostty from Homebrew's cask, and Ghostty's settings,
-  # which Ghostty must take. ssh's LocalCommand must follow whether cld has restore tabs and
-  # Ghostty's app. Stubs then stand in for cld. The first gains restore tabs as it updates, so that
-  # one run adds the lines, and the line runs here before a release of cld has it. Under the second,
-  # which lacks it, a run drops them. Gated as ci.yml's playbook job.
+  # without Ghostty, its font or cld, --check must change nothing. Where Ghostty's cask fails, a run
+  # must install cld alone. A run must then install Ghostty and the font from Homebrew's casks, and
+  # Ghostty's settings, which Ghostty must take. ssh's LocalCommand must follow whether cld has
+  # restore tabs and Ghostty's app. Stubs then stand in for cld. The first gains restore tabs as it
+  # updates, so that one run adds the lines, and the line runs here before a release of cld has it.
+  # Under the second, which lacks it, a run drops them. Gated as ci.yml's playbook job.
   mac-cld:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
@@ -36,6 +36,8 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: "1"
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
       HOMEBREW_NO_ENV_HINTS: "1"
+      # The file of the regular style of the font that ws.ghostty names.
+      FONT: JetBrainsMonoNerdFontMono-Regular.ttf
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -52,11 +54,12 @@ jobs:
               fi
           done
       # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed.
-      - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty or cld
+      - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty, its font or cld
         run: |
           fail=0
           for path in /Applications/Ghostty.app ~/Applications/Ghostty.app ~/.local/bin/cld \
-              ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+              ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty" \
+              ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT"; do
               if [ -e "$path" ]; then
                   echo "::error::the runner has $path already"
                   fail=1
@@ -65,14 +68,14 @@ jobs:
           mkdir -p ~/.config/ws ~/Applications/"JetBrains Gateway.app"
           echo "WS_PUBLIC_KEY=$(openssl rand -base64 32)" >~/.config/ws/mac.conf
           exit "$fail"
-      # --check shows the cask's install, cld's, the ssh lines that may follow, and both of
+      # --check shows the casks' installs, cld's, the ssh lines that may follow, and both of
       # Ghostty's files, and writes none of them.
       - name: --check without Ghostty changes nothing
         run: |
           sh mac/setup.sh --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
               { echo '::error::setup.sh --check failed'; exit 1; }
           fail=0
-          for path in /Applications/Ghostty.app ~/.local/bin/cld \
+          for path in /Applications/Ghostty.app ~/Library/Fonts/"$FONT" ~/.local/bin/cld \
               ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
                   echo "::error::setup.sh --check made $path"
@@ -80,6 +83,7 @@ jobs:
               fi
           done
           for line in ': would run brew install --cask ghostty$' \
+              ': would run brew install --cask font-jetbrains-mono-nerd-font$' \
               ': would install cld into ~/.local/bin ' \
               ": would add the lines that start cld's watcher to config.d/ws, " \
               '^+window-save-state = always$' '^+config-file = ?ws.ghostty$'; do
@@ -115,10 +119,12 @@ jobs:
           sh .github/mac-cld-checks.sh lines no || fail=1
           exit "$fail"
       # Ghostty's +validate-config reads its config as the app does, ws.ghostty and its theme
-      # included, and names each line it refuses.
+      # included, and names each line it refuses. It leaves the fonts alone, and a font-family that
+      # names no font falls back to Ghostty's own JetBrains Mono, which looks the same. So
+      # +list-fonts, which looks a family up as the config does, must find ws.ghostty's last one.
       # The release of cld that install.sh installed has restore tabs, or not yet: ssh's lines must
       # follow it either way.
-      - name: setup.sh installs Ghostty and Ghostty's settings
+      - name: setup.sh installs Ghostty, its font and Ghostty's settings
         run: |
           sh mac/setup.sh || { echo '::error::setup.sh failed'; exit 1; }
           fail=0
@@ -127,6 +133,7 @@ jobs:
               { echo '::error::setup.sh installed no /Applications/Ghostty.app'; fail=1; }
           brew list --cask ghostty >/dev/null ||
               { echo "::error::Ghostty is not brew's cask ghostty"; fail=1; }
+          [ -f ~/Library/Fonts/"$FONT" ] || { echo "::error::setup.sh installed no $FONT"; fail=1; }
           version=$(~/.local/bin/cld version) ||
               { echo '::error::~/.local/bin/cld version failed'; exit 1; }
           echo "$version"
@@ -139,6 +146,12 @@ jobs:
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }
+          family=$(sed -n 's/^font-family = \(..*\)$/\1/p' mac/ws.ghostty | tail -n 1)
+          fonts=$("$ghostty" +list-fonts --family="$family") ||
+              { echo "::error::ghostty +list-fonts --family='$family' failed"; fail=1; }
+          printf '%s\n' "$fonts"
+          [ -n "$fonts" ] ||
+              { echo "::error::Ghostty finds no font of the family '$family'"; fail=1; }
           tabs=no
           if ~/.local/bin/cld help restore tabs >/dev/null 2>&1; then
               tabs=yes

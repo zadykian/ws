@@ -15,6 +15,13 @@ window-vsync = true
 window-height = 60
 window-width = 200
 window-new-tab-position = end
+# setup.sh installs the font from Homebrew's cask where it is missing. A later font-family adds a
+# fallback to the config's own, so the empty one clears those first. font-family takes a family, as
+# ghostty +list-fonts heads it: a face, as JetBrainsMono NFM Regular, finds no font.
+font-thicken = true
+font-family = ""
+font-family = JetBrainsMono Nerd Font Mono
+font-size = 16
 theme = Starlight
 macos-titlebar-style = transparent
 macos-titlebar-proxy-icon = hidden
