@@ -262,9 +262,9 @@ step_ws() {
 # step NAME runs the step NAME of ws setup, which prints its changes under --check and makes none.
 step() {
     if ws_checking; then
-        WS_PROG=$ws_prog "$step_dir/ws" setup --check "$1" || exit 1
+        WS_MAC_DIR=$dir WS_PROG=$ws_prog "$step_dir/ws" setup --check "$1" || exit 1
     else
-        WS_PROG=$ws_prog "$step_dir/ws" setup "$1" || exit 1
+        WS_MAC_DIR=$dir WS_PROG=$ws_prog "$step_dir/ws" setup "$1" || exit 1
     fi
 }
 

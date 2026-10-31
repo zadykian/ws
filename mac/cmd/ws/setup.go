@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
-const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n"
+const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n  ghostty  install Ghostty and its font, and write ws.ghostty\n"
 
 // progOut prefixes a line with the program that prints it, as setup.sh's lines are, and says each
 // warning once, as a step plans again after it applies. setup.sh sets the prefix in WS_PROG, so
@@ -61,12 +61,13 @@ func (o progOut) Warn(format string, a ...any) {
 }
 
 // setupSteps returns the steps of ws setup, in the order setup.sh runs them.
-func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out, check bool) []step.Step {
+func setupSteps(c conf.Conf, home, xdg, macDir string, m effect.Machine, out effect.Out, check bool) []step.Step {
 	return []step.Step{
 		setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, AssumeTunnel: check},
 		setup.Cable{Conf: c, M: m, Out: out},
 		&setup.Git{Conf: c, Home: home, XDG: xdg, M: m, Out: out},
 		&setup.Gateway{Home: home, M: m, Out: out},
+		&setup.Ghostty{Home: home, Settings: macDir + "/ws.ghostty", M: m, Out: out},
 	}
 }
 
@@ -116,7 +117,7 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 	term := effect.NewTerminal(strings.NewReader(""), stderr)
 	out := progOut{term, prog, map[string]bool{}}
 	var chosen []step.Step
-	for _, s := range setupSteps(c, home, getenv("XDG_CONFIG_HOME"), m, out, check) {
+	for _, s := range setupSteps(c, home, getenv("XDG_CONFIG_HOME"), getenv("WS_MAC_DIR"), m, out, check) {
 		if s.Name() == args[0] {
 			chosen = append(chosen, s)
 		}
