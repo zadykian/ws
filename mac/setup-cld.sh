@@ -1,7 +1,7 @@
 # shellcheck shell=sh
 # The part of mac/setup.sh that sets up cld, for cld restore tabs, which reopens Ghostty's tabs of
 # cld's sessions. setup.sh sources it after setup-ghostty.sh, whose functions it uses, and calls
-# cld_mac after ghostty_mac. ssh_config calls cld_ssh_lines. cld_mac installs and updates cld
+# cld_mac after ghostty_mac. cld_mac installs and updates cld
 # wherever setup.sh runs. The lines of ssh's hosts need Ghostty's app, or under --check its install.
 # cld_mac warns where cld can't be set up, so that the run goes on to the tunnel.
 
@@ -21,19 +21,6 @@ cld_tabs_check() {
     if ghostty_there && [ -x "$cld_bin" ] && "$cld_bin" help restore tabs >/dev/null 2>&1; then
         cld_tabs=1
     fi
-}
-
-# cld_ssh_lines prints the lines of Host ws ws-ssh that start cld's watcher, where cld_tabs is 1.
-# ssh runs LocalCommand through the user's shell once it has connected, with %d as the Mac's home
-# (ssh_config(5)). The line starts the watcher in a Ghostty pane alone, so that macOS charges its
-# Apple Events to Ghostty. Elsewhere, or without cld, it does nothing and exits 0.
-cld_ssh_lines() {
-    [ "$cld_tabs" = 1 ] || return 0
-    cat <<'EOF'
-    # In a Ghostty pane, start cld's watcher, unless one runs, for cld restore tabs.
-    PermitLocalCommand yes
-    LocalCommand [ "$TERM_PROGRAM" != ghostty ] || [ ! -x %d/.local/bin/cld ] || %d/.local/bin/cld restore tabs --watch
-EOF
 }
 
 # cld_would_tabs says, under --check, that config.d/ws would gain the lines that start cld's

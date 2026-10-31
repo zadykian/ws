@@ -44,8 +44,6 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/build.sh"
 # shellcheck source=setup-extras.sh
 . "$dir/setup-extras.sh"
-# shellcheck source=setup-ssh.sh
-. "$dir/setup-ssh.sh"
 # shellcheck source=setup-ghostty.sh
 . "$dir/setup-ghostty.sh"
 # shellcheck source=setup-cld.sh
@@ -255,33 +253,45 @@ tunnel() {
     tell
 }
 
+# step_ws builds ws from the clone into a scratch directory, which the run removes, for the steps
+# that ws setup runs. Its bytes are those of the ws that program builds into ~/.local/bin.
+step_ws() {
+    step_dir=$(mktemp -d "${TMPDIR:-/tmp}/ws.XXXXXXXX") || ws_die "cannot make a scratch directory"
+    trap 'rm -rf "$step_dir"' EXIT
+    ws_build "${dir%/*}" "$step_dir/ws" || ws_die "cannot build ws"
+}
+
+# step NAME runs the step NAME of ws setup, which prints its changes under --check and makes none.
+step() {
+    if ws_checking; then
+        WS_PROG=$ws_prog "$step_dir/ws" setup --check "$1" || exit 1
+    else
+        WS_PROG=$ws_prog "$step_dir/ws" setup "$1" || exit 1
+    fi
+}
+
 main() {
     ws_args "$@"
     [ "$(uname -s)" = Darwin ] || ws_die "it sets up a Mac, not $(uname -s)"
     [ "$(id -u)" != 0 ] || ws_die "run it as yourself, not root: it asks sudo where it needs root"
     ws_conf "${WS_CONF:-$HOME/.config/ws/mac.conf}"
-    # ssh_files sends ws through the tunnel once launchd has its daemon, so that a run that stops
-    # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon writes config.d/ws
-    # again, and --check shows the file of such a run. ws_own_hosts warns once, between the two.
+    # The ssh step sends ws through the tunnel once launchd has its daemon, so that a run that stops
+    # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon, or installs a cld
+    # with restore tabs, needs config.d/ws again, so the step runs once more after them.
     # ghostty_mac and cld_mac warn rather than stop, and come before the tunnel, so that brew's and
-    # install.sh's output comes before the Mac's key. A cld with restore tabs that cld_mac installs
-    # changes cld_tabs, so config.d/ws is written again; --check notes it.
+    # install.sh's output comes before the Mac's key.
     via_tunnel=0
-    if [ -n "$WS_PUBLIC_KEY" ] && { ws_checking || ws_tunnel_loaded; }; then
-        via_tunnel=1
-    fi
+    [ -z "$WS_PUBLIC_KEY" ] || ! { ws_checking || ws_tunnel_loaded; } || via_tunnel=1
     cld_tabs_check
-    ssh_files
-    ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
+    step_ws
+    step ssh
     was=$via_tunnel$cld_tabs
     extras
     ghostty_mac
     cld_mac
     tunnel
-    if [ "$via_tunnel" = 0 ] && [ -n "$WS_PUBLIC_KEY" ] && ws_tunnel_loaded; then
-        via_tunnel=1
-    fi
-    [ "$via_tunnel$cld_tabs" = "$was" ] || ssh_files
+    [ "$via_tunnel" != 0 ] || [ -z "$WS_PUBLIC_KEY" ] || ! ws_tunnel_loaded || via_tunnel=1
+    [ "$via_tunnel$cld_tabs" = "$was" ] || step ssh
 }
 
 main "$@"
