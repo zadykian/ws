@@ -22,3 +22,11 @@ func (d *Daemon) tick(ctx context.Context) {
 	}
 	d.choose(ctx)
 }
+
+// settleChange runs 2 s after a network change, as one change brings several and DHCP takes a
+// moment. It runs the paths again where the Mac's addresses changed, which Decide sees.
+func (d *Daemon) settleChange(ctx context.Context) {
+	if len(d.round) == 0 {
+		d.choose(ctx)
+	}
+}
