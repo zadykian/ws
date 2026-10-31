@@ -84,3 +84,16 @@ func (OSMachine) Stat(path string) (Info, error) {
 	info.Mode = fi.Mode()
 	return info, nil
 }
+
+// ReadDir returns the names in the directory, sorted.
+func (OSMachine) ReadDir(path string) ([]string, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, len(entries))
+	for i, e := range entries {
+		names[i] = e.Name()
+	}
+	return names, nil
+}

@@ -48,3 +48,13 @@ func TestOSMachineStat(t *testing.T) {
 		t.Errorf("Stat(missing) err = %v, want ErrNotExist", err)
 	}
 }
+
+func TestOSMachineReadDir(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "b"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if names, err := (effect.OSMachine{}).ReadDir(dir); err != nil || len(names) != 1 || names[0] != "b" {
+		t.Errorf("ReadDir = %v, %v; want [b]", names, err)
+	}
+}

@@ -49,6 +49,8 @@ type Info struct {
 type Machine interface {
 	// Stat returns fs.ErrNotExist where the path is missing, and describes a dangling link.
 	Stat(path string) (Info, error)
+	// ReadDir returns the names in a directory, sorted, and fs.ErrNotExist where it is missing.
+	ReadDir(path string) ([]string, error)
 	// ReadFile returns fs.ErrNotExist where the file is missing.
 	ReadFile(path string) ([]byte, error)
 	WriteFile(path string, data []byte, perm fs.FileMode) error

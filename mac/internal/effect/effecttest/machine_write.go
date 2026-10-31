@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"sort"
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/effect"
@@ -81,4 +82,22 @@ func (m *Machine) Stat(path string) (effect.Info, error) {
 		return info, nil
 	}
 	return effect.Info{}, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
+}
+
+// ReadDir returns the names of the files directly under the directory.
+func (m *Machine) ReadDir(path string) ([]string, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Calls = append(m.Calls, "readdir "+path)
+	if _, ok := m.Dirs[path]; !ok {
+		return nil, &fs.PathError{Op: "open", Path: path, Err: fs.ErrNotExist}
+	}
+	var names []string
+	for f := range m.Files {
+		if dir, name := f[:strings.LastIndex(f, "/")], f[strings.LastIndex(f, "/")+1:]; dir == path {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	return names, nil
 }
