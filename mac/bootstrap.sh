@@ -5,7 +5,7 @@
 #
 # It installs Apple's Command Line Tools through their dialog, and Homebrew from the Homebrew.pkg
 # pinned below. It clones the repository into ~/repository/ws, or leaves a clone there as it is,
-# which --update pulls. Then it runs the clone's mac/wizard.sh (docs/mac-wizard.md) with its own
+# which --update pulls. Then it runs the clone's ws wizard (docs/mac-wizard.md) with its own
 # arguments, given as `sh -s -- --check`, under which neither changes anything. Before the wizard it
 # builds ws, the Go CLI in mac/, into ~/.local/bin with the Go that tools/run pins. A second run
 # prints nothing. caffeinate keeps the Mac from idle sleep while it runs.
@@ -170,7 +170,13 @@ main() {
     fi
     [ -f "$dir/mac/wizard.sh" ] || die "Clone: $dir has no mac/wizard.sh: pull it first"
     build
-    sh "$dir/mac/wizard.sh" "$@"
+    # Under --check, ws is missing until the build, which the check only names, so that the wizard
+    # script, whose setup.sh stage would build it, shows the stages.
+    if [ -x "$bin" ]; then
+        WS_REPO=$dir "$bin" wizard "$@"
+    else
+        sh "$dir/mac/wizard.sh" "$@"
+    fi
 }
 
 # Under curl | sh, stdin is the rest of this script, so main reads the terminal, or nothing where
