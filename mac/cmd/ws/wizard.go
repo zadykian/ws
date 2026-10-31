@@ -85,16 +85,19 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, che
 		later = scratch
 	}
 	lock := strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName
+	gh := &wizard.Gh{Conf: later, Home: e.getenv("HOME"), Tty: e.tty, M: e.m, Out: out}
+	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: e.tty, Check: check, Env: e.lookup,
+		SSH: wizard.SSH{M: e.m, Lock: lock, Home: e.getenv("HOME")}, M: e.m, P: p, Out: out}
 	return []step.Step{
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
 		&wizard.MacKey{Conf: later, Home: e.getenv("HOME"),
 			Lock: lock, Tty: e.tty,
 			M: e.m, P: p, Out: out, Sleep: time.Sleep},
-		&wizard.Gh{Conf: later, Home: e.getenv("HOME"), Tty: e.tty, M: e.m, Out: out},
+		gh,
 		wizardSetup(e, out, later),
-		&wizard.HostKey{Conf: later, Lock: lock, Tty: e.tty, Check: check, Env: e.lookup,
-			SSH: wizard.SSH{M: e.m, Lock: lock, Home: e.getenv("HOME")}, M: e.m, P: p, Out: out},
+		host,
+		&wizard.RootKey{Host: host, Gh: gh},
 	}
 }
 
