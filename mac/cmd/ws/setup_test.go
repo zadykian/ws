@@ -22,7 +22,6 @@ func TestSetupCommand(t *testing.T) {
 		wantStatus int
 		wantErr    string
 	}{
-		{"no step", nil, 2, "usage: ws setup [--check] STEP"},
 		{"unknown step", []string{"nope"}, 2, `unknown step "nope"`},
 		{"two steps", []string{"ssh", "git"}, 2, "usage: ws setup"},
 	}
@@ -75,5 +74,34 @@ func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
 	want := []string{"ssh", "cable", "git", "gateway", "ghostty", "cld", "tunnel", "networks"}
 	if !reflect.DeepEqual(names, want) {
 		t.Errorf("steps = %q; want %q", names, want)
+	}
+}
+
+func TestSetupWithNoStepRunsThemAll(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	var stderr bytes.Buffer
+	got := setupCommand(context.Background(), nil, 501, m, func(k string) string { return map[string]string{"HOME": "/h"}[k] },
+		&bytes.Buffer{}, &stderr)
+	if got == 2 || strings.Contains(stderr.String(), "usage:") {
+		t.Errorf("status = %d, stderr = %q; want the steps run, not the usage", got, stderr.String())
+	}
+}
+
+func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
+	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
+	for _, file := range []string{"new", "whole"} {
+		for _, host := range []string{"ws", "ws-ssh"} {
+			m.Results["ssh -G -F /tmp/x/"+file+" "+host] = effecttest.Result{}
+		}
+	}
+	var stdout, stderr bytes.Buffer
+	setupCommand(context.Background(), []string{"--check"}, 501, m, func(k string) string { return map[string]string{"HOME": "/h"}[k] },
+		&stdout, &stderr)
+	if n := strings.Count(stdout.String()+stderr.String(), "+++ /h/.ssh/config.d/ws"); n != 1 {
+		t.Errorf("the config.d/ws diff prints %d times; want 1\n%s%s", n, &stdout, &stderr)
 	}
 }
