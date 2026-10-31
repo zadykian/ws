@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const usage = "usage: ws COMMAND\n\nCommands:\n  tunnel run  keep the tunnel to ws up, as root\n"
+const usage = "usage: ws COMMAND\n\nCommands:\n  tunnel run     keep the tunnel to ws up, as root\n  tunnel status  print the way in use and the peer, as root\n"
 
 // run executes the command line args, writes to stdout and stderr, and returns the exit status.
 func run(args []string, stdout, stderr io.Writer) int {

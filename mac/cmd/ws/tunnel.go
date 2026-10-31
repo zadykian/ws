@@ -11,10 +11,11 @@ import (
 
 	"github.com/zadykian/ws/mac/internal/daemon"
 	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/mac/internal/uapi"
 	"github.com/zadykian/ws/mac/internal/wgdev"
 )
 
-const tunnelUsage = "usage: ws tunnel run\n"
+const tunnelUsage = "usage: ws tunnel run | status\n"
 
 // stateFile is what the daemon writes for status, and removes where it stops.
 const stateFile = "/var/run/ws-tunnel.state"
@@ -25,10 +26,16 @@ const logFile = "/var/log/ws-tunnel.log"
 // watchWait is how long the watch of network changes waits before it starts notifyutil again.
 const watchWait = 5 * time.Second
 
+// statusWait is how long status waits for the device's socket.
+const statusWait = 5 * time.Second
+
 // tunnel runs ws tunnel's subcommands.
 func tunnel(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 1 && args[0] == "run" {
 		return tunnelRun(stdout, stderr)
+	}
+	if len(args) == 1 && args[0] == "status" {
+		return tunnelStatus(os.Geteuid(), stdout, stderr)
 	}
 	_, _ = io.WriteString(stderr, tunnelUsage)
 	return 2
@@ -57,5 +64,23 @@ func tunnelRun(stdout, stderr io.Writer) int {
 	if err := d.Run(ctx); err != nil {
 		return 1
 	}
+	return 0
+}
+
+// tunnelStatus prints the way in use and the peer's handshake and bytes. The state file and the
+// device's socket are root's, so it needs root, as ws-tunnel status did.
+func tunnelStatus(uid int, stdout, stderr io.Writer) int {
+	if uid != 0 {
+		_, _ = io.WriteString(stderr, "ws tunnel status: run it as root, with sudo\n")
+		return 1
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), statusWait)
+	defer cancel()
+	text, err := daemon.Status(ctx, effect.OSMachine{}, uapi.Get, daemon.Dir, stateFile, time.Now())
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "ws: %v\n", err)
+		return 1
+	}
+	_, _ = io.WriteString(stdout, text)
 	return 0
 }
