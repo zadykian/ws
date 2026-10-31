@@ -65,3 +65,17 @@ func TestTickWaitsForARound(t *testing.T) {
 		t.Errorf("commands = %q, want none in a round", r.m.runs[runs:])
 	}
 }
+
+func TestSettleChangeTriesAgainWhereTheAddressesChanged(t *testing.T) {
+	r := onTheCable(t)
+	ctx := context.Background()
+	r.settleChange(ctx)
+	if got := added(r); len(got) != 1 {
+		t.Fatalf("endpoints = %q, want the way kept where nothing changed", got)
+	}
+	r.m.table["ifconfig"] = effecttest.Result{Out: []byte(strings.Replace(ifaces, "192.168.1.20", "192.168.1.21", 1))}
+	r.settleChange(ctx)
+	if got := added(r); len(got) != 2 {
+		t.Errorf("endpoints = %q, want the paths tried again", got)
+	}
+}
