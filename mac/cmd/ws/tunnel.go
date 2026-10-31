@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"os"
@@ -15,7 +16,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/wgdev"
 )
 
-const tunnelUsage = "usage: ws tunnel run | status\n"
+const tunnelUsage = "usage: ws tunnel run | status | key\n"
 
 // stateFile is what the daemon writes for status, and removes where it stops.
 const stateFile = "/var/run/ws-tunnel.state"
@@ -36,6 +37,9 @@ func tunnel(args []string, stdout, stderr io.Writer) int {
 	}
 	if len(args) == 1 && args[0] == "status" {
 		return tunnelStatus(os.Geteuid(), stdout, stderr)
+	}
+	if len(args) == 1 && args[0] == "key" {
+		return tunnelKey(os.Geteuid(), stdout, stderr)
 	}
 	_, _ = io.WriteString(stderr, tunnelUsage)
 	return 2
@@ -82,5 +86,21 @@ func tunnelStatus(uid int, stdout, stderr io.Writer) int {
 		return 1
 	}
 	_, _ = io.WriteString(stdout, text)
+	return 0
+}
+
+// tunnelKey makes the Mac's private key where none is, and prints the public key. The private key
+// stays in root's file, which only root can write, so setup runs this through sudo.
+func tunnelKey(uid int, stdout, stderr io.Writer) int {
+	if uid != 0 {
+		_, _ = io.WriteString(stderr, "ws tunnel key: run it as root, with sudo\n")
+		return 1
+	}
+	public, err := daemon.Key(context.Background(), effect.OSMachine{}, rand.Reader, daemon.Dir)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "ws: %v\n", err)
+		return 1
+	}
+	_, _ = fmt.Fprintln(stdout, public)
 	return 0
 }
