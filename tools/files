@@ -3,8 +3,8 @@
 #
 #   tools/files KIND [FILE...]
 #
-# KIND is md, py, sh, yaml or j2. Without a FILE, the files are those git lists, new ones included
-# but not those it ignores. With FILEs, they are those of the FILEs of the KIND, so that any list
+# KIND is go, md, py, sh, yaml or j2. Without a FILE, the files are those git lists, new ones
+# included but not those it ignores. With FILEs, they are those of the FILEs of the KIND, so that any list
 # of files will do. A shell script is found by its extension or its shebang, as shfmt -f finds it,
 # since the hooks in .githooks have no extension. The gates split the list at whitespace, so a
 # name that holds any fails here. So does a name git quotes, one that holds a control character, a
@@ -47,12 +47,13 @@ main() {
     kind=$1
     shift
     case $kind in
+    go) pattern='\.go$' ;;
     md) pattern='\.md$' ;;
     py) pattern='\.py$' ;;
     yaml) pattern='\.ya?ml$' ;;
     j2) pattern='\.j2$' ;;
     sh) pattern= ;;
-    *) die "no kind $kind: md, py, sh, yaml or j2" ;;
+    *) die "no kind $kind: go, md, py, sh, yaml or j2" ;;
     esac
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
