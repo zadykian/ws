@@ -45,7 +45,7 @@ make shell                        # ShellCheck and shfmt -d -i 4 on every shell 
 ```
 
 The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, `lychee`, `rumdl`,
-`actionlint`, `zizmor` and `gitleaks` ([Checks](docs/checks.md#make-lint)). `make lint`
+`actionlint`, `zizmor` and `gitleaks` ([The gates](docs/gates.md)). `make lint`
 needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
 collections into `.cache`, and `tools/run` downloads the rest there.
 
@@ -112,7 +112,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   print the list or a word of it, and never pass `--no-verify`
   ([The hooks](docs/checks.md#the-hooks)).
 - `make lint` fails on any finding, warnings included, in any line of any file
-  ([make lint](docs/checks.md#make-lint); #47).
+  ([The gates](docs/gates.md); #47).
 - Fix a finding, or justify it in place with its linter's own mechanism and a reason: ruff's and
   ansible-lint's `# noqa: CODE`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
