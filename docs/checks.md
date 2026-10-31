@@ -1,7 +1,8 @@
 # Checks
 
-In a stack, CI runs `playbook`, `mac` and `mac-wizard`, its longest jobs, on the top pull request
-alone, as it holds every change below it. `lint` and `signoz` run on each.
+In a stack, CI runs `playbook`, `mac`, `mac-cld` and `mac-wizard`, its longest jobs, on the top
+pull request alone, as it holds every change below it. `lint` and `signoz` run on each.
+The `mac-cld` job's checks are on [their own page](checks-mac-cld.md).
 
 ## make lint
 
@@ -104,6 +105,7 @@ stop, with no terminal and at a terminal of `script`'s, and change nothing. With
 root's file, a run must say nothing of the stage. With another host key under `ws`, a run must stop,
 with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s second host key, an
 ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a line to `known_hosts`.
+A `LocalCommand` that touches a file must run for a plain ssh to ws, not for the wizard's.
 
 The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
 sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-ins of
@@ -190,9 +192,9 @@ shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another
 
 CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
 `mac/setup.sh --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
-installs no formula or cask. It must note the install of JetBrains Gateway's cask. A stand-in
-`JetBrains Gateway.app`, an empty directory in `~/Applications`, then spares the job's runs the
-download. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
+installs no formula or cask. It must note the install of JetBrains Gateway's cask. Stand-ins for
+Gateway's and Ghostty's apps, the font and cld, which `setup.sh` leaves alone, spare the job's runs
+their downloads. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
 `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key in the
 command that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a
 second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their

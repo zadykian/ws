@@ -36,9 +36,9 @@ if (PATH=$path && command -v brew); then
     exit 1
 fi
 echo "$path" >"$RUNNER_TEMP/path"
-# A stand-in JetBrains Gateway.app, an empty directory, spares the runs the cask's download, as in
-# mac.yml.
-mkdir -p ~/Applications/"JetBrains Gateway.app"
+# Stand-ins for the apps of JetBrains Gateway and Ghostty, Ghostty's font and cld spare the runs
+# their downloads, as in mac.yml.
+sh "$(dirname "$0")/../mac-standins.sh"
 # A stand-in gh, logged in to github.com, for the runner's, which has no login. The wizard puts
 # /opt/homebrew/bin first on PATH, so the stand-in replaces the runner's link there. Its state is in
 # $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,

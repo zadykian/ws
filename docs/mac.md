@@ -13,8 +13,9 @@ Homebrew ([The Mac's tunnel](#the-macs-tunnel)) and two hosts for ssh:
   tunnel's UDP.
 
 The script is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone, with sudo
-where it needs root. It installs WireGuard's tools from Homebrew, which is
-[installed](https://brew.sh) by hand first:
+where it needs root. It sets up Ghostty, the Mac's terminal, with its settings, and cld, for
+`cld restore tabs` ([Ghostty and cld on the Mac](mac-ghostty.md)). It installs WireGuard's tools,
+Ghostty and a font from Homebrew, which is [installed](https://brew.sh) by hand first:
 
 ```sh
 git clone https://github.com/zadykian/ws ~/repository/ws
@@ -149,7 +150,7 @@ DHCP and DNS still go to the Mac, which serves them.
 
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,
-macOS asks once whether iTerm2, Gateway or another app may find devices on the local network: allow
+macOS asks once whether Ghostty, Gateway or another app may find devices on the local network: allow
 it. It asks for `ws-ssh`, and for `ws` until it goes through the tunnel. ssh run from Terminal needs
 no such grant, and neither does `ws` through the tunnel. The tunnel's utun is no local network, and
 macOS lets daemons that run as root reach one anyway (Apple's TN3179). To see which way `ws-ssh`

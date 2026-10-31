@@ -21,6 +21,12 @@
 # files in /etc/resolver.
 # It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
+# Before the tunnel, it sets up Ghostty: its app and its settings' font from Homebrew's casks, where
+# missing, and ws.ghostty, those settings. It sets up cld, for cld restore tabs: cld in
+# ~/.local/bin, installed where missing and updated. Once cld has restore tabs, and where Ghostty's
+# app is there, config.d/ws gets the watcher's lines. It warns of what it can't install, update or
+# write, and goes on (setup-ghostty.sh, setup-cld.sh).
+#
 # A run changes only what differs, so a second prints nothing but warnings once mac.conf has
 # WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make
 # it ws's peer. --check prints each change as a diff and makes none. docs/mac.md has the rest.
@@ -38,6 +44,10 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/setup-extras.sh"
 # shellcheck source=setup-ssh.sh
 . "$dir/setup-ssh.sh"
+# shellcheck source=setup-ghostty.sh
+. "$dir/setup-ghostty.sh"
+# shellcheck source=setup-cld.sh
+. "$dir/setup-cld.sh"
 
 # The daemon's plist. Root's copies are in setup-lib.sh's ws_libexec.
 plist=/Library/LaunchDaemons/$ws_label.plist
@@ -266,18 +276,25 @@ main() {
     # ssh_files sends ws through the tunnel once launchd has its daemon, so that a run that stops
     # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon writes config.d/ws
     # again, and --check shows the file of such a run. ws_own_hosts warns once, between the two.
+    # ghostty_mac and cld_mac warn rather than stop, and come before the tunnel, so that brew's and
+    # install.sh's output comes before the Mac's key. A cld with restore tabs that cld_mac installs
+    # changes cld_tabs, so config.d/ws is written again; --check notes it.
     via_tunnel=0
     if [ -n "$WS_PUBLIC_KEY" ] && { ws_checking || ws_tunnel_loaded; }; then
         via_tunnel=1
     fi
+    cld_tabs_check
     ssh_files
     ws_own_hosts "$HOME/.ssh/config" ws ws-ssh
+    was=$via_tunnel$cld_tabs
     extras
+    ghostty_mac
+    cld_mac
     tunnel
     if [ "$via_tunnel" = 0 ] && [ -n "$WS_PUBLIC_KEY" ] && ws_tunnel_loaded; then
         via_tunnel=1
-        ssh_files
     fi
+    [ "$via_tunnel$cld_tabs" = "$was" ] || ssh_files
 }
 
 main "$@"

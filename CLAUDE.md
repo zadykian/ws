@@ -19,16 +19,18 @@ The rest is the docs, the lint gates' tools and CI.
   yamllint, which finds its files itself, checks it too.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
-- `mac/`: the Mac's side, POSIX sh, run on the Mac ([The Mac](docs/mac.md)).
-- `docs/`: a page per role; `mac.md`, `mac-git.md`, `mac-wizard.md`, `mac-targets.md`, `router.md`
-  and `checks.md`; `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`.
+- `mac/`: the Mac's side, POSIX sh run on the Mac, and `ws.ghostty`, Ghostty's settings
+  ([The Mac](docs/mac.md)).
+- `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
+  `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index of the keymap's pages
+  in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`; `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`;
-  `rules.yml`, the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an
-  issue. The toolkit's checks warn alone.
+  `mac`; `mac-cld.yml`, with `mac-cld`; `mac-wizard.yml`, with `mac-wizard`, whose cases are
+  `.github/mac-wizard/NN-*.sh`; `rules.yml`, the checks of zadykian/toolkit on a pull request; and
+  `issues.yml`, its check of an issue. The toolkit's checks warn alone.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
 
@@ -48,8 +50,9 @@ collections into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` runs `bootstrap.sh` twice in an
 Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files again. `mac` sets up a Mac on
-GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. A run of the playbook
-sets up the machine that runs it, as below.
+GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up Ghostty
+and cld on a third ([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run
+of the playbook sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
@@ -62,7 +65,7 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 ## How changes land
 
 - Pull requests are stacked, each on the one below it. CI runs `lint` and `signoz` on each,
-  whatever its base, and `playbook`, `mac` and `mac-wizard` on the stack's top one alone
+  whatever its base, and `playbook`, `mac`, `mac-cld` and `mac-wizard` on the stack's top one alone
   ([Checks](docs/checks.md#checks)).
 - They land on `main` by GitHub's merge commits, as
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull

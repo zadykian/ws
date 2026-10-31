@@ -98,11 +98,11 @@ jobs:
           exit "$fail"
       # The key it prints, and the command that makes it ws's peer, must hold the Mac's public key,
       # which the stand-in ws below takes as its peer. Root's daemon runs the three programs and
-      # sources the two files, so they must be root's alone. A stand-in JetBrains Gateway.app, an
-      # empty directory, spares this run and the later ones the download of Gateway's cask.
+      # sources the two files, so they must be root's alone. Stand-ins for the apps of Gateway and
+      # Ghostty, its font and cld spare this run and later ones their downloads (mac-standins.sh).
       - name: Without ws's key, setup.sh makes the Mac's key and installs no daemon
         run: |
-          mkdir -p ~/Applications/"JetBrains Gateway.app"
+          sh .github/mac-standins.sh
           sh mac/setup.sh | tee "$RUNNER_TEMP/first.out" ||
               { echo "::error::setup.sh without ws's key failed"; exit 1; }
           fail=0
