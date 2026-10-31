@@ -19,8 +19,9 @@ if [ -z "${TUNNEL-}" ]; then
 fi
 # shellcheck source=mac/lib.sh
 . mac/lib.sh
-# setup-lib.sh sources setup-conf.sh, ws_conf's, from dir, as setup.sh sets it.
-dir=mac
+# setup-lib.sh sources setup-conf.sh, ws_conf's, from dir. dir is absolute, as setup.sh sets it:
+# ws_conf_run builds ws from the clone above it.
+dir=$PWD/mac
 # shellcheck source=mac/setup-lib.sh
 . mac/setup-lib.sh
 conf=$HOME/.config/ws/mac.conf
