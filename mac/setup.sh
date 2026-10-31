@@ -21,8 +21,8 @@
 # files in /etc/resolver.
 # It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
-# Before the tunnel, it installs cld into ~/.local/bin, for cld restore tabs, where it is missing.
-# Where cld can't be installed, it warns and goes on (setup-cld.sh).
+# Before the tunnel, it sets up cld, for cld restore tabs: cld in ~/.local/bin, installed where
+# missing and updated. Where cld can't be set up, it warns and goes on (setup-cld.sh).
 #
 # A run changes only what differs, so a second prints nothing but warnings once mac.conf has
 # WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make
