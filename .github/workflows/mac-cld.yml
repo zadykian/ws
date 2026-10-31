@@ -15,7 +15,8 @@ jobs:
   # ws's key, so that the tunnel's daemon loads and a second run prints nothing, and one for
   # JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. --check must
   # change nothing, without Ghostty's app and with a stand-in app, an empty directory, which
-  # WS_GHOSTTY_APP names. Gated as ci.yml's playbook job.
+  # WS_GHOSTTY_APP names. Without Ghostty's app, a run must install cld alone and print nothing the
+  # second time. Gated as ci.yml's playbook job.
   mac-cld:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
@@ -90,6 +91,22 @@ jobs:
               grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
                   { echo "::error::setup.sh --check showed no line '$line'"; fail=1; }
           done
+          exit "$fail"
+      # Without Ghostty's app, ssh gets no lines, whether or not the release has restore tabs.
+      - name: Without Ghostty's app, setup.sh installs cld alone, and a second run prints nothing
+        run: |
+          sh mac/setup.sh || { echo '::error::setup.sh without Ghostty failed'; exit 1; }
+          fail=0
+          ~/.local/bin/cld version || { echo '::error::~/.local/bin/cld version failed'; fail=1; }
+          for path in ~/.config/ghostty \
+              "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+              if [ -e "$path" ]; then
+                  echo "::error::setup.sh without Ghostty made $path"
+                  fail=1
+              fi
+          done
+          sh .github/mac-cld-checks.sh lines no || fail=1
+          sh .github/mac-cld-checks.sh quiet || fail=1
           exit "$fail"
       - name: The files written
         if: always()
