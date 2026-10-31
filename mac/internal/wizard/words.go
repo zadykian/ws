@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -51,8 +52,11 @@ func (w *Words) file() string { return w.Home + "/.config/ws/forbidden-words" }
 func (w *Words) sums(ctx context.Context) (remote, mac string, err error) {
 	out, err := w.Files.Do(ctx, "words")
 	remote = strings.TrimSpace(string(out))
-	if err != nil || remote == "" {
-		return "", "", fmt.Errorf("%s: the files script read no word list on ws: %v", wordsStage, err)
+	if err != nil {
+		return "", "", fmt.Errorf("%s: the files script read no word list on ws: %w", wordsStage, err)
+	}
+	if remote == "" {
+		return "", "", errors.New(wordsStage + ": the files script read no word list on ws")
 	}
 	mac = "-"
 	if info, err := w.M.Stat(w.file()); err == nil && info.Mode.IsRegular() {
@@ -73,7 +77,7 @@ func (w *Words) sums(ctx context.Context) (remote, mac string, err error) {
 func (w *Words) Plan(ctx context.Context) (step.Plan, error) {
 	way, err := w.Host.SSH.Way(ctx)
 	if err != nil {
-		return step.Plan{}, fmt.Errorf("%s: %v", wordsStage, err)
+		return step.Plan{}, fmt.Errorf("%s: %w", wordsStage, err)
 	}
 	if ok, _ := w.Root.login(ctx, way); !ok {
 		w.Out.Say("%s: after %s", wordsStage, rootStage)
