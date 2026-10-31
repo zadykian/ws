@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect/effecttest"
@@ -235,24 +236,27 @@ func mustPlan(t *testing.T, g *setup.Git) step.Plan {
 	return p
 }
 
-func gitWithConfig(text, paths, names string) (*effecttest.Machine, *setup.Git) {
+func gitWithConfig(text, paths, names string) (*effecttest.Machine, *effecttest.Out, *setup.Git) {
 	m, g := gitReady()
 	delete(m.Files, gitConfigFile)
 	if text != "" {
 		gitConfig(m, text, paths, names)
 	}
-	return m, g
+	out := &effecttest.Out{}
+	g.Out = out
+	g.Now = func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) }
+	return m, out, g
 }
 
 func TestGitStopsAtAnIncludeBelowSettings(t *testing.T) {
-	_, g := gitWithConfig("x", gitHome+"/.config/ws/gitconfig\n", "user.name\ninclude.path\n")
+	_, _, g := gitWithConfig("x", gitHome+"/.config/ws/gitconfig\n", "user.name\ninclude.path\n")
 	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "below its own settings") {
 		t.Errorf("err = %v; want an include below the file's settings", err)
 	}
 }
 
 func TestGitStopsAtALinkAndAtGitConfigFailing(t *testing.T) {
-	m, g := gitWithConfig("x", "", "user.name\n")
+	m, _, g := gitWithConfig("x", "", "user.name\n")
 	m.Links[gitConfigFile] = "/dotfiles/gitconfig"
 	m.Files["/dotfiles/gitconfig"] = []byte("x")
 	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "is a link to /dotfiles/gitconfig") {
