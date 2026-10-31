@@ -12,8 +12,8 @@ func TestParse(t *testing.T) {
 		errs       []Error
 	}{
 		{"empty", "", Conf{User: "root", Target: "lan"}, nil},
-		{"values", "WS_USER=ada\nWS_TARGET='cloud'\n  WS_PORT=1\n",
-			Conf{User: "ada", Target: "cloud", Port: "1"}, nil},
+		{"values", "WS_USER=ada\nWS_TARGET='lan'\n  WS_PORT=1\n",
+			Conf{User: "ada", Target: "lan", Port: "1"}, nil},
 		{"quotes", "WS_GIT_NAME=\"Ada L\"\nWS_GIT_EMAIL='a@b.c'", Conf{User: "root", Target: "lan",
 			GitName: "Ada L", GitEmail: "a@b.c"}, nil},
 		{"comments", "# a\n\n  \t# b\n", Conf{User: "root", Target: "lan"}, nil},
