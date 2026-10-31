@@ -19,8 +19,8 @@ The rest is the docs, the lint gates' tools and CI.
   yamllint, which finds its files itself, checks it too.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
-- `mac/`: the Mac's side, POSIX sh run on the Mac, and `ws.ghostty`, Ghostty's settings
-  ([The Mac](docs/mac.md)).
+- `mac/`: the Mac's side: POSIX sh run on the Mac, the ws CLI in Go beside it, and `ws.ghostty`,
+  Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
   `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index of the keymap's pages
   in `docs/helix-keymap/`.
@@ -132,9 +132,10 @@ skill. Commits are signed, as the ruleset on `main` requires.
 
 ## Where else to look
 
-- `.claude/rules/`: the roles' invariants in [roles.md](.claude/rules/roles.md), what each document
-  holds in [docs.md](.claude/rules/docs.md), and ws's facts beside the `writing` skill in
-  [writing.md](.claude/rules/writing.md), loaded with the files they cover.
+- `.claude/rules/`, loaded with the files they cover. [roles.md](.claude/rules/roles.md) has the
+  roles' invariants and [mac.md](.claude/rules/mac.md) the ws CLI's.
+  [docs.md](.claude/rules/docs.md) says what each document holds. [writing.md](.claude/rules/writing.md)
+  has ws's facts beside the `writing` skill.
 - Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
   hand only; `docs`, with `/docs:trim`; `lint`, with `/lint:split-file`; and `lean`, with
