@@ -28,8 +28,18 @@ func confPath(getenv func(string) string, pwd string) string {
 func wizardMain(args []string, stderr io.Writer) int {
 	pwd, _ := os.Getwd()
 	e := wizardEnv{goos: runtime.GOOS, uid: os.Geteuid(), pid: os.Getpid(), m: effect.OSMachine{},
-		getenv: os.Getenv, stdin: os.Stdin, stderr: stderr}
+		getenv: os.Getenv, lookup: os.LookupEnv, pwd: pwd, stdin: os.Stdin, tty: isTerminal(os.Stdin), stderr: stderr}
 	_ = os.Setenv("PATH", "/opt/homebrew/bin:"+os.Getenv("PATH"))
 	_ = os.Setenv("WS_CONF", confPath(os.Getenv, pwd))
 	return wizardCommand(context.Background(), args, e)
+}
+
+// isTerminal tells a terminal from a pipe, a file and /dev/null, as sh's [ -t 0 ] does.
+func isTerminal(f *os.File) bool {
+	info, err := f.Stat()
+	if err != nil || info.Mode()&os.ModeCharDevice == 0 {
+		return false
+	}
+	null, err := os.Stat(os.DevNull)
+	return err != nil || !os.SameFile(info, null)
 }

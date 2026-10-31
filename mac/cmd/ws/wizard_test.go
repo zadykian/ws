@@ -12,7 +12,8 @@ import (
 func testWizardEnv(goos string, uid int, stderr *bytes.Buffer) wizardEnv {
 	env := map[string]string{"TMPDIR": "/t/"}
 	return wizardEnv{goos: goos, uid: uid, pid: 7, m: effecttest.NewMachine(),
-		getenv: func(k string) string { return env[k] }, stdin: strings.NewReader(""), stderr: stderr}
+		getenv: func(k string) string { return env[k] },
+		lookup: func(k string) (string, bool) { v, ok := env[k]; return v, ok }, pwd: "/p", stdin: strings.NewReader(""), stderr: stderr}
 }
 
 func TestWizardCommandRefuses(t *testing.T) {
@@ -38,10 +39,25 @@ func TestWizardCommandRefuses(t *testing.T) {
 func TestWizardCommandRuns(t *testing.T) {
 	var stderr bytes.Buffer
 	e := testWizardEnv("darwin", 501, &stderr)
-	if got := wizardCommand(context.Background(), []string{"--check"}, e); got != 0 || stderr.Len() != 0 {
-		t.Errorf("status = %d, stderr = %q; want a silent run", got, stderr.String())
+	if got := wizardCommand(context.Background(), []string{"--check"}, e); got != 1 ||
+		!strings.Contains(stderr.String(), "Answers: no terminal to ask WS_TARGET: set WS_TARGET") {
+		t.Errorf("status = %d, stderr = %q; want the refusal to ask with no terminal", got, stderr.String())
 	}
 	if calls := e.m.(*effecttest.Machine).Calls; len(calls) == 0 || calls[0] != "mkdir /t/ws-wizard.lock 700" {
 		t.Errorf("calls = %v; want the lock first", calls)
+	}
+}
+
+func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
+	var stderr bytes.Buffer
+	e := testWizardEnv("darwin", 501, &stderr)
+	env := map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example", "WS_REMOTE_PORT": "22", "WS_GIT_NAME": "",
+		"WS_TUNNEL_NETWORKS": "", "WS_RESOLVERS": "", "WS_HOOK": ""}
+	e.lookup = func(k string) (string, bool) { v, ok := env[k]; return v, ok }
+	if got := wizardCommand(context.Background(), []string{"--check"}, e); got != 0 || !strings.Contains(stderr.String(), "+WS_TARGET=cloud") {
+		t.Errorf("status = %d, stderr = %q; want the diff of mac.conf", got, stderr.String())
+	}
+	if got := string(e.m.(*effecttest.Machine).Files["/t/ws-wizard.lock/mac.conf"]); !strings.HasPrefix(got, "WS_TARGET=cloud\n") {
+		t.Errorf("scratch mac.conf = %q", got)
 	}
 }

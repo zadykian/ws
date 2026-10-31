@@ -24,7 +24,13 @@ type wizardEnv struct {
 	pid    int
 	m      effect.Machine
 	getenv func(string) string
-	stdin  io.Reader
+	// lookup tells a variable set to nothing from one that is not set.
+	lookup func(string) (string, bool)
+	// pwd is the directory a relative WS_CONF is taken from.
+	pwd   string
+	stdin io.Reader
+	// tty tells whether stdin is a terminal, which the questions need.
+	tty    bool
 	stderr io.Writer
 }
 
@@ -59,9 +65,20 @@ func wizardRefusal(e wizardEnv) string {
 	return ""
 }
 
+// repoDir returns the clone that holds the roles, which wizard.sh found from its own path: WS_REPO,
+// else where bootstrap.sh clones it.
+func repoDir(getenv func(string) string) string {
+	return cmp.Or(getenv("WS_REPO"), getenv("HOME")+"/repository/ws")
+}
+
 // wizardStages returns the stages of ws wizard, in order.
-func wizardStages(wizardEnv, wizardOptions) []step.Step {
-	return nil
+func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, check bool) []step.Step {
+	conf := confPath(e.getenv, e.pwd)
+	scratch := strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
+	return []step.Step{
+		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
+			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
+	}
 }
 
 // wizardCommand runs ws wizard: its stages under a lock, and what stays by hand after a run in
@@ -85,7 +102,8 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	term := effect.NewTerminal(e.stdin, e.stderr)
-	changed, err := wizard.Run(ctx, e.m, progOut{term, prog, map[string]bool{}}, wizardStages(e, o), o.check, tmp, e.pid)
+	out := progOut{term, prog, map[string]bool{}}
+	changed, err := wizard.Run(ctx, e.m, out, wizardStages(e, signalPrompt{term}, out, prog, o.check), o.check, tmp, e.pid)
 	if err != nil {
 		// The runner names the stage before the stage's own message, which wizard.sh printed alone.
 		if inner := errors.Unwrap(err); inner != nil {
