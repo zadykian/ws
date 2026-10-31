@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
 	"github.com/zadykian/ws/mac/internal/wizard"
@@ -75,7 +76,8 @@ func repoDir(getenv func(string) string) string {
 }
 
 // wizardStages returns the stages of ws wizard, in order.
-func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, check bool) []step.Step {
+func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o wizardOptions) []step.Step {
+	check := o.check
 	conf := confPath(e.getenv, e.pwd)
 	scratch := strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
@@ -98,6 +100,8 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, che
 		wizardSetup(e, out, later),
 		host,
 		&wizard.RootKey{Host: host, Gh: gh},
+		&wizard.WsRun{Host: host, Update: o.update,
+			Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}},
 	}
 }
 
@@ -123,7 +127,7 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 	defer stop()
 	term := effect.NewTerminal(e.stdin, e.stderr)
 	out := progOut{term, prog, map[string]bool{}}
-	changed, err := wizard.Run(ctx, e.m, out, wizardStages(e, signalPrompt{term}, out, prog, o.check), o.check, tmp, e.pid)
+	changed, err := wizard.Run(ctx, e.m, out, wizardStages(e, signalPrompt{term}, out, prog, o), o.check, tmp, e.pid)
 	if err != nil {
 		// The runner names the stage before the stage's own message, which wizard.sh printed alone.
 		if inner := errors.Unwrap(err); inner != nil {
