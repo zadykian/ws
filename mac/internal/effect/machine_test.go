@@ -27,6 +27,28 @@ func TestOSMachineRun(t *testing.T) {
 	}
 }
 
+func TestOSMachineRunShownAndPass(t *testing.T) {
+	ctx := context.Background()
+	var stderr strings.Builder
+	m := effect.OSMachine{Sudo: []string{"env", "WS_TEST=1"}, Stderr: &stderr}
+	if out, err := m.RunShown(ctx, false, "sh", "-c", "echo out; echo err >&2"); err != nil || string(out) != "out\n" {
+		t.Errorf("RunShown = %q, %v; want out", out, err)
+	}
+	if stderr.String() != "err\n" {
+		t.Errorf("RunShown passed %q, want err", stderr.String())
+	}
+	stderr.Reset()
+	if err := m.Pass(ctx, true, "sh", "-c", "echo out; echo $WS_TEST >&2"); err != nil {
+		t.Errorf("Pass: %v", err)
+	}
+	if stderr.String() != "out\n1\n" {
+		t.Errorf("Pass passed %q, want out and 1", stderr.String())
+	}
+	if err := m.Pass(ctx, false, "false"); err == nil {
+		t.Error("Pass of a failing command: no error")
+	}
+}
+
 func TestOSMachineStat(t *testing.T) {
 	m := effect.OSMachine{}
 	dir := t.TempDir()

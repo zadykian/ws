@@ -70,4 +70,10 @@ type Machine interface {
 	Run(ctx context.Context, name string, args ...string) ([]byte, error)
 	// RunRoot runs the command through sudo.
 	RunRoot(ctx context.Context, name string, args ...string) ([]byte, error)
+	// RunShown is Run, or RunRoot where root is set, with the command's standard error passed to
+	// ws's own, as a shell script lets it through.
+	RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error)
+	// Pass runs the command, through sudo where root is set, and passes its standard output and
+	// error to ws's standard error, as a script's command with its output sent to stderr does.
+	Pass(ctx context.Context, root bool, name string, args ...string) error
 }

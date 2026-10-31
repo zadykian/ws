@@ -69,6 +69,10 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 			return fmt.Errorf("cannot keep %s as %s: %w", c.Path, c.To, err)
 		}
 		out.Say("kept the old %s as %s", c.Path, c.To)
+	case Run:
+		if err := m.Pass(ctx, c.Root, c.Name, c.Args...); err != nil {
+			return fmt.Errorf("%s failed: %w", c.line(), err)
+		}
 	default:
 		return fmt.Errorf("unknown change %T", c)
 	}
