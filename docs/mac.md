@@ -13,7 +13,8 @@ reaches it over the LAN, or elsewhere through the router's port forwards.
 
 The script is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone, with sudo
 where it needs root. It sets up Ghostty and cld ([Ghostty and cld on the Mac](mac-ghostty.md)), and
-installs WireGuard's tools, Ghostty and a font from Homebrew, [installed](https://brew.sh) first:
+builds `ws`, the Go CLI in `mac/`. It installs Ghostty and a font from Homebrew,
+[installed](https://brew.sh) first:
 
 ```sh
 git clone https://github.com/zadykian/ws ~/repository/ws
@@ -206,22 +207,21 @@ With ws's key as `WS_PUBLIC_KEY`, `setup.sh` again installs the tunnel's daemon.
 rebuilt server changes one file on each side, and nothing in the repository. The wizard's Tunnel
 stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#the-tunnel)).
 
-The daemon, `ws-tunnel`, runs as root from launchd, from boot and before any login, through
-`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. Its functions, `tunnel-conf.sh` and
-`tunnel-paths.sh`, sit beside it in `/usr/local/libexec/ws-tunnel`, as root's copies too. It runs
-root's copies of Homebrew's `wg` and `wireguard-go`, which sit there as well. The user owns
-Homebrew's prefix, so a root daemon that ran Homebrew's files would let anything that runs as the
-user become root. A `brew upgrade` reaches the copies at the next run of `setup.sh`, which restarts
-the daemon where a copy changed.
+The daemon, `ws tunnel run`, runs as root from launchd, from boot and before any login, through
+`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `setup.sh` builds `ws` into
+`~/.local/bin`, as `bootstrap.sh` does, and copies it to `/usr/local/libexec/ws-tunnel/ws` as
+root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
+runs as the user become root. The daemon holds WireGuard's device in its own process, so it
+needs no `wg` or `wireguard-go`. `setup.sh` restarts it where a rebuilt `ws` changed the copy.
 
-The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key,
-`tunnel.conf` and `routes.d`, below. `setup.sh` keeps the public key in `~/.config/ws/tunnel.pub`,
-which the wizard reads, and copies `tunnel.conf` from `mac.conf`, so the daemon reads no file the
-user can write. In System Settings › General › Login Items & Extensions, its "Allow in the
-Background" must stay on.
+The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key, which
+`ws tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `setup.sh` keeps the public key in
+`~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from `mac.conf`, so the
+daemon reads no file the user can write. In System Settings › General › Login Items & Extensions,
+its "Allow in the Background" must stay on.
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
-The scripts fix both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
+The daemon fixes both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
 variables give either end another address ([The tunnel](wireguard.md#the-tunnel)). The daemon
 points the Mac's end at the first of these that answers, each on UDP 51820:
 
@@ -242,7 +242,7 @@ to 5 s a way. A way that comes back while the Mac's addresses stay as they were 
 next change or failure.
 
 ```sh
-sudo /usr/local/libexec/ws-tunnel/ws-tunnel status
+sudo /usr/local/libexec/ws-tunnel/ws tunnel status
 ```
 
 prints the way in use, its endpoint, the latest handshake and the bytes moved.
@@ -270,7 +270,7 @@ iperf3 -s
 
 then, on the Mac, compare `iperf3 -c 10.99.0.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
 delete the two rules after. Bulk copies can go to `ws-ssh`, outside the tunnel, which is the cable
-when the Mac is docked: `rsync -a DIR ws-ssh:`. Besides, check `ws-tunnel status` docked, on the
+when the Mac is docked: `rsync -a DIR ws-ssh:`. Besides, check `ws tunnel status` docked, on the
 home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on ws, for 2500Mb/s.
 
 ## Routes and resolvers of another repository
