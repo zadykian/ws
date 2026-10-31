@@ -61,6 +61,9 @@ func TestChooseTakesTheFirstWayThatAnswers(t *testing.T) {
 	if state.Tier != tunnel.TierCable || state.Endpoint != "10.77.0.1:51820" || !state.Since.Equal(t0) {
 		t.Errorf("state = %+v", state)
 	}
+	if got := r.lines()[1]; got != "on the cable tier, 10.77.0.1:51820" {
+		t.Errorf("log = %q", r.lines())
+	}
 }
 
 func TestChooseMovesOnFromAWayThatIsSilent(t *testing.T) {
@@ -83,5 +86,49 @@ func TestChooseMovesOnFromAWayThatIsSilent(t *testing.T) {
 	}
 	if state, _ := tunnel.ParseState(string(r.m.Files[r.StateFile])); state.Tier != tunnel.TierNone {
 		t.Errorf("state = %+v, want tier none", state)
+	}
+}
+
+func TestChooseDistrustsAHandshakeFromAnotherEndpoint(t *testing.T) {
+	r := started(t)
+	ctx := context.Background()
+	r.choose(ctx)
+	r.dev.get = peerText("192.168.1.7:51820", t0) // ws started it over the LAN
+	r.choose(ctx)
+	if got := added(r); !slices.Equal(got, []string{"10.77.0.1:51820", "192.168.1.7:51820"}) {
+		t.Errorf("endpoints = %q, want the LAN tried next", got)
+	}
+	if got, want := r.lines(), "the handshake came from 192.168.1.7:51820, not 10.77.0.1:51820"; got[0] != want {
+		t.Errorf("log = %q, want %q first", got, want)
+	}
+}
+
+func TestChooseKeepsTheWayInUse(t *testing.T) {
+	r := started(t)
+	ctx := context.Background()
+	r.dev.get = peerText("10.77.0.1:51820", t0)
+	r.choose(ctx)
+	r.choose(ctx)
+	sets, runs := len(r.dev.sets), len(r.m.runs)
+	r.choose(ctx) // between rounds, and nothing changed
+	if len(r.dev.sets) != sets {
+		t.Errorf("the device got %q more", r.dev.sets[sets:])
+	}
+	if got := r.m.runs[runs:]; !slices.Equal(got, []string{"ifconfig"}) {
+		t.Errorf("commands = %q, want ifconfig alone", got)
+	}
+}
+
+func TestChooseCountsAFailedIfconfigAsNoAddresses(t *testing.T) {
+	r := started(t)
+	ctx := context.Background()
+	r.choose(ctx) // tries the cable
+	r.m.table["ifconfig"] = effecttest.Result{Err: errTest}
+	for range 4 {
+		r.now = r.now.Add(tunnel.Patience)
+		r.choose(ctx)
+	}
+	if len(r.round) != 0 {
+		t.Errorf("round = %+v, want it ended", r.round)
 	}
 }
