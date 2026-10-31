@@ -1,9 +1,13 @@
 package wgdev
 
 import (
+	"bytes"
+	"errors"
 	"io"
+	"net"
 	"net/netip"
 	"testing"
+	"time"
 
 	"golang.zx2c4.com/wireguard/tun/tuntest"
 
@@ -55,5 +59,28 @@ func TestDeviceKeepsThePeerThatIpcSetGave(t *testing.T) {
 	}
 	if tn.Name() != "utun7" {
 		t.Errorf("name = %q", tn.Name())
+	}
+}
+
+// failingListener fails at its first Accept.
+type failingListener struct{ net.Listener }
+
+func (failingListener) Accept() (net.Conn, error) { return nil, errors.New("socket removed") }
+
+func TestAcceptClosesTheDeviceWhereTheListenerFails(t *testing.T) {
+	var log bytes.Buffer
+	tn, err := New(tuntest.NewChannelTUN().TUN(), "utun7", &log)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tn.Close()
+	tn.accept(failingListener{})
+	select {
+	case <-tn.Done():
+	case <-time.After(time.Second):
+		t.Fatal("the device stays open")
+	}
+	if !bytes.Contains(log.Bytes(), []byte("socket removed")) {
+		t.Errorf("log = %q, want the listener's error", log.String())
 	}
 }
