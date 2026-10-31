@@ -7,7 +7,9 @@
 # there, from the environment's answers. Writing none shows that --check reached it. In a home
 # without a clone, --check must list the clone and wizard.sh's stages, and make nothing outside
 # macOS's Library. The first run builds ws into ~/.local/bin, and tools/run's download of Go, which
-# the log shows, is not counted in what it prints.
+# the log shows, is not counted in what it prints. setup.sh built ws there in an earlier case, so
+# the case removes it first, as on a Mac that has none. --check then shows the wizard's setup.sh,
+# which would build ws, copy it for root, and restart the daemon.
 
 set -u
 
@@ -45,8 +47,12 @@ status=$?
 [ "$status" = 1 ] && [ "$out" = "bootstrap.sh: unknown argument '--bogus'; usage: bootstrap.sh \
 [--check] [--update]" ] || error "bootstrap.sh --bogus exited $status, printing '$out'"
 ws=$HOME/.local/bin/ws
+rm -f "$ws"
 boot "bootstrap.sh: Clone: would set core.hooksPath to $clone/.githooks
-bootstrap.sh: Ws: would build ws into $ws with the Go that tools/run pins" --check
+bootstrap.sh: Ws: would build ws into $ws with the Go that tools/run pins
+setup.sh: would build ws into $ws
+setup.sh: would copy $ws to /usr/local/libexec/ws-tunnel/ws
+setup.sh: would run launchctl kickstart -k system/com.github.zadykian.ws-tunnel" --check
 [ ! -e "$ws" ] || error 'bootstrap.sh --check built ws'
 boot "bootstrap.sh: Clone: set core.hooksPath to $clone/.githooks
 bootstrap.sh: Ws: building ws into $ws"
