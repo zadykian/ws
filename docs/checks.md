@@ -162,7 +162,9 @@ peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws tunnel 
 handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and `routes.d`
 in place, with the same pid. Then a network that `ws_tunnel_routes` adds must be routed into the
 daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
-([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). Next, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
+([mac-lib-checks.sh](../.github/mac-lib-checks.sh)). `ws tunnel loaded`, `ws tunnel routes` and
+`ws resolver` must do the same, with `--check` showing the diff and writing nothing
+([mac-ws-checks.sh](../.github/mac-ws-checks.sh)). Next, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
 must take both back, and spare a script's own. Last, `ws_conf` must read an empty value in
