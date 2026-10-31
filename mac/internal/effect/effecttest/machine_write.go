@@ -116,11 +116,14 @@ func (m *Machine) ReadDir(path string) ([]string, error) {
 	return names, nil
 }
 
-// Mkdir makes the directory.
+// Mkdir makes the directory, or fails with fs.ErrExist where it is there.
 func (m *Machine) Mkdir(path string, perm fs.FileMode) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Calls = append(m.Calls, fmt.Sprintf("mkdir %s %o", path, perm))
+	if _, ok := m.Dirs[path]; ok {
+		return &fs.PathError{Op: "mkdir", Path: path, Err: fs.ErrExist}
+	}
 	m.Dirs[path] = perm.Perm()
 	return nil
 }
