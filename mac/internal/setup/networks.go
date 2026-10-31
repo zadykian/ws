@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
+	"time"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
@@ -35,7 +36,7 @@ func (*Networks) Name() string { return "networks" }
 // WaitsOn is nothing: a check before the tunnel step has run says what would go in routes.d.
 func (*Networks) WaitsOn() string { return "" }
 
-// Plan plans routes.d/mac-conf.
+// Plan plans routes.d/mac-conf and the signal that has the daemon read it.
 func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
 	cs, err := n.routes(ctx)
 	if err != nil {
@@ -67,7 +68,14 @@ func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
 	if err != nil || c == nil {
 		return nil, err
 	}
-	return []step.Change{c}, nil
+	cs := []step.Change{c}
+	if _, ok := c.(RootFix); ok || n.Check {
+		return cs, nil
+	}
+	if _, err := n.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel); err == nil {
+		cs = append(cs, Launchctl{Args: []string{"kill", "SIGHUP", "system/" + daemonLabel}, Routes: true})
+	}
+	return cs, nil
 }
 
 // remove plans the removal of root's file, if it is there.
@@ -82,10 +90,16 @@ func (n *Networks) remove(file string) (step.Change, error) {
 	return RootRemove{file, have}, nil
 }
 
-// Apply applies the changes in order.
+// Apply applies the changes in order, so that routes.d is written before the daemon reads it.
 func (n *Networks) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
-		if err := Apply(ctx, n.M, n.Out, c); err != nil {
+		var err error
+		if l, ok := c.(Launchctl); ok {
+			err = launchctl(ctx, n.M, n.Out, time.Sleep, l)
+		} else {
+			err = Apply(ctx, n.M, n.Out, c)
+		}
+		if err != nil {
 			return err
 		}
 	}

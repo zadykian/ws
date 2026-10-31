@@ -19,6 +19,9 @@ type Launchctl struct {
 	// Signal marks `kill SIGHUP`, which a daemon that is not running refuses: kickstart starts it
 	// then, and it reads tunnel.conf as it starts.
 	Signal bool
+	// Routes marks the SIGHUP that has the daemon read routes.d again. A daemon that is not running
+	// reads it as it starts, so a failure warns.
+	Routes bool
 }
 
 func (l Launchctl) String() string { return "would run launchctl " + strings.Join(l.Args, " ") }
@@ -77,6 +80,10 @@ func launchctl(ctx context.Context, m effect.Machine, out effect.Out, sleep func
 		_, err = m.RunRoot(ctx, "launchctl", l.Args...)
 		if err == nil {
 			break
+		}
+		if l.Routes {
+			out.Warn("cannot signal %s, which reads routes.d when it next starts", daemonLabel)
+			return nil
 		}
 		if l.Signal {
 			return launchctl(ctx, m, out, sleep, Launchctl{Args: []string{"kickstart", "-k", "system/" + daemonLabel}})
