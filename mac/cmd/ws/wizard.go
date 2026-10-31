@@ -76,7 +76,7 @@ func repoDir(getenv func(string) string) string {
 }
 
 // wizardStages returns the stages of ws wizard, in order.
-func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o wizardOptions) []step.Step {
+func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
 	check := o.check
 	conf := confPath(e.getenv, e.pwd)
 	scratch := strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
@@ -92,6 +92,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		SSH: wizard.SSH{M: e.m, Lock: lock, Home: e.getenv("HOME")}, M: e.m, P: p, Out: out}
 	run := &wizard.WsRun{Host: host, Update: o.update,
 		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
+	hand.Late(run.Hand)
 	return []step.Step{
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
@@ -130,7 +131,14 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 	defer stop()
 	term := effect.NewTerminal(e.stdin, e.stderr)
 	out := progOut{term, prog, map[string]bool{}}
-	changed, err := wizard.Run(ctx, e.m, out, wizardStages(e, signalPrompt{term}, out, prog, o), o.check, tmp, e.pid)
+	hand := &wizard.Hand{}
+	closing := func(ctx context.Context) {
+		if e.stdout != nil {
+			hand.Close(ctx, e.stdout)
+		}
+		term.Flush()
+	}
+	_, err = wizard.Run(ctx, e.m, out, wizardStages(e, signalPrompt{term}, out, prog, o, hand), o.check, tmp, e.pid, closing)
 	if err != nil {
 		// The runner names the stage before the stage's own message, which wizard.sh printed alone.
 		if inner := errors.Unwrap(err); inner != nil {
@@ -138,9 +146,6 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 		}
 		_, _ = fmt.Fprintf(e.stderr, "%s: %v\n", prog, err)
 		return 1
-	}
-	if changed && !o.check {
-		term.Flush()
 	}
 	return 0
 }

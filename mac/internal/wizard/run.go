@@ -10,8 +10,9 @@ import (
 
 // Run runs the stages in order under the run's lock, with the Mac kept from idle sleep until it
 // ends: a stage may wait on a download or an answer. pid is the process caffeinate waits on. It
-// reports whether any stage had changes to make, as step.Run does.
-func Run(ctx context.Context, m effect.Machine, out effect.Out, stages []step.Step, check bool, tmp string, pid int) (bool, error) {
+// reports whether any stage had changes to make, as step.Run does. closing runs after a run that
+// changed something, outside --check, while the lock stands: the stages' files in it are still there.
+func Run(ctx context.Context, m effect.Machine, out effect.Out, stages []step.Step, check bool, tmp string, pid int, closing func(context.Context)) (bool, error) {
 	lock, release, err := Lock(ctx, m, tmp)
 	if err != nil {
 		return false, err
@@ -30,5 +31,9 @@ func Run(ctx context.Context, m effect.Machine, out effect.Out, stages []step.St
 		cancel()
 		<-done
 	}()
-	return step.Run(ctx, stages, out, check)
+	changed, err := step.Run(ctx, stages, out, check)
+	if err == nil && changed && !check && closing != nil {
+		closing(ctx)
+	}
+	return changed, err
 }
