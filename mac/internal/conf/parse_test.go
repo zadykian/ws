@@ -38,3 +38,12 @@ func TestParse(t *testing.T) {
 		}
 	}
 }
+
+func TestLines(t *testing.T) {
+	if _, errs := Lines("WS_LAN=10.88.0.0/24\n"); len(errs) != 0 {
+		t.Errorf("Lines refused a key that goes with another: %v", errs)
+	}
+	if _, errs := Parse("WS_LAN=10.88.0.0/24\n"); len(errs) != 1 {
+		t.Errorf("Parse took a key that goes with another: %v", errs)
+	}
+}
