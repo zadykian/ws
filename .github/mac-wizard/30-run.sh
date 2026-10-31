@@ -1,7 +1,7 @@
 #!/bin/sh
 # The first run, by sh, with standin.sh's PATH, which lacks brew. The wizard must still find brew,
-# so that setup.sh installs wireguard-tools, root's copies and the Mac's key, and writes ssh's
-# files. Without WS_PUBLIC_KEY, setup.sh prints the Mac's key, which the wizard drops. It must make
+# so that setup.sh builds ws, copies it for root, makes the Mac's key, and writes ssh's files.
+# Without WS_PUBLIC_KEY, setup.sh prints the Mac's key, which the wizard drops. It must make
 # the ssh key that mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no
 # terminal asked one. It must add the .pub to the stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
@@ -40,9 +40,7 @@ stop="wizard.sh: Root's key: root on ws doesn't log in by the Mac's key, $HOME/.
 if [ "$status" != 1 ] || ! grep -qF "$stop" "$RUNNER_TEMP/stop.err"; then
     error "wizard.sh exited $status, or did not stop at Root's key, where root takes no key"
 fi
-brew list --formula wireguard-tools >/dev/null 2>&1 ||
-    error 'wizard.sh installed no wireguard-tools'
-for each in /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key ~/.ssh/config.d/ws; do
+for each in /usr/local/libexec/ws-tunnel/ws /etc/ws-tunnel/private.key ~/.ssh/config.d/ws; do
     sudo test -f "$each" || error "wizard.sh made no $each"
 done
 [ "$(ssh-keygen -y -P '' -f ~/.ssh/id_ed25519 | cut -d ' ' -f 1-2)" = \
@@ -72,12 +70,12 @@ if ! printf '\n%s\n' '--tags wireguard' | cmp -s - "$RUNNER_TEMP/ws/bootstrap.lo
     ! grep -q ' 0 on$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
     error "wizard.sh ran no bootstrap.sh on ws, once, then --tags wireguard, with root's HOME"
 fi
-mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /usr/local/libexec/ws-tunnel/wg /etc/ws-tunnel/private.key)
+mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||
     error "wizard.sh gave the stand-in ws no mac.pub of the Mac's key, $mac"
 launchctl print system/com.github.zadykian.ws-tunnel >/dev/null 2>&1 ||
     error "wizard.sh loaded no daemon with wg0's key"
-sudo /usr/local/libexec/ws-tunnel/ws-tunnel status | grep -q '^latest handshake: [0-9]' &&
+sudo /usr/local/libexec/ws-tunnel/ws tunnel status | grep -q '^latest handshake: [0-9]' &&
     [ "$(cat "$RUNNER_TEMP/ws/tunnel.log" 2>/dev/null | wc -l)" -eq 1 ] ||
     error "wizard.sh had no handshake, or logged in to ws through the tunnel other than once"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "wizard.sh printed setup.sh's key"

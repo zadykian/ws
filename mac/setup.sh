@@ -13,9 +13,9 @@
 # of ~/.gitconfig, and installs Homebrew's gh where PATH has none. gh then adds the key to GitHub.
 # It installs JetBrains Gateway from Homebrew's cask where its app is missing.
 #
-# Then, with sudo, the tunnel: Homebrew's wireguard-tools where missing; root's copies of wg,
-# wireguard-go, ws-tunnel and its functions in /usr/local/libexec/ws-tunnel; the Mac's key, made
-# once, and tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs ws-tunnel. Without
+# Then, with sudo, the tunnel: ws, the Go CLI in mac/, built into ~/.local/bin and copied to
+# /usr/local/libexec/ws-tunnel as root's; the Mac's key, made once by `ws tunnel key`, and
+# tunnel.conf in /etc/ws-tunnel; and the LaunchDaemon that runs `ws tunnel run`. Without
 # WS_PUBLIC_KEY, ws's key, it makes the Mac's key, prints it, and installs no daemon yet. Once
 # launchd has the daemon, it sends WS_TUNNEL_NETWORKS into the tunnel and writes WS_RESOLVERS'
 # files in /etc/resolver.
@@ -40,6 +40,8 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/lib.sh"
 # shellcheck source=setup-lib.sh
 . "$dir/setup-lib.sh"
+# shellcheck source=build.sh
+. "$dir/build.sh"
 # shellcheck source=setup-extras.sh
 . "$dir/setup-extras.sh"
 # shellcheck source=setup-ssh.sh
@@ -55,28 +57,21 @@ plist=/Library/LaunchDaemons/$ws_label.plist
 # script that sources lib.sh alone each replace and remove only their own.
 ws_resolver_header="# Written by ws's mac/setup.sh from WS_RESOLVERS in ~/.config/ws/mac.conf."
 
-# tools installs Homebrew's wireguard-tools where missing, which brings wireguard-go, and sets
-# wg_from and go_from to their programs.
-tools() {
-    brew=$(command -v brew) || ws_die "install Homebrew first: https://brew.sh"
-    if ! "$brew" list --formula wireguard-tools >/dev/null 2>&1; then
-        if ws_checking; then
-            ws_say "would run brew install wireguard-tools"
-        else
-            ws_say "installing wireguard-tools"
-            "$brew" install wireguard-tools >&2 || ws_die "brew install wireguard-tools failed"
-        fi
+# program builds ws from the clone into ~/.local/bin, as bootstrap.sh does, so that the copy for
+# root has this clone's source, and sets ws_bin. Under --check, it says so where ws is missing.
+program() {
+    ws_bin=$HOME/.local/bin/ws
+    if ws_checking; then
+        [ -x "$ws_bin" ] || ws_say "would build ws into $ws_bin"
+        return 0
     fi
-    wg_from=$("$brew" --prefix wireguard-tools 2>/dev/null)/bin/wg
-    go_from=$("$brew" --prefix wireguard-go 2>/dev/null)/bin/wireguard-go
+    ws_build "${dir%/*}" "$ws_bin" || ws_die "cannot build ws"
 }
 
-# copies puts root's copies of ws-tunnel, its functions, wg and wireguard-go in
-# /usr/local/libexec/ws-tunnel. The user owns Homebrew's prefix, so a root daemon that ran
-# Homebrew's files would let anything that runs as the user become root at its next start.
-# /usr/local/libexec is made where missing; every directory above the copies must be root's and
-# writable by root alone. A brew upgrade reaches the copies at the next run. The functions go
-# first, so that a daemon that starts in between finds those its copy sources.
+# copies puts root's copy of ws in /usr/local/libexec/ws-tunnel. The user owns ~/.local/bin, so a
+# root daemon that ran that file would let anything that runs as the user become root at its next
+# start. /usr/local/libexec is made where missing; every directory above the copy must be root's and
+# writable by root alone. A rebuilt ws reaches the copy at the next run.
 copies() {
     [ -n "$(ws_root_attrs /usr/local)" ] || ws_dir_root /usr/local 755
     [ -n "$(ws_root_attrs /usr/local/libexec)" ] || ws_dir_root /usr/local/libexec 755
@@ -85,26 +80,17 @@ copies() {
         [ -n "$attrs" ] || continue
         case $attrs in
         0:*' '[0-7][0145][0145]) ;;
-        *) ws_die "$each, above root's copies, is not root's alone: owner, group and mode $attrs" ;;
+        *) ws_die "$each, above root's copy, is not root's alone: owner, group and mode $attrs" ;;
         esac
     done
     ws_dir_root "$ws_libexec" 755
     ws_changed=0
-    for each in tunnel-conf.sh tunnel-paths.sh; do
-        ws_put_root "$ws_libexec/$each" 644 <"$dir/$each"
-    done
-    ws_put_root "$ws_libexec/ws-tunnel" 755 <"$dir/ws-tunnel"
-    if [ -e "$wg_from" ]; then
-        ws_copy_root "$wg_from" "$ws_libexec/wg" 755
-        ws_copy_root "$go_from" "$ws_libexec/wireguard-go" 755
-    else
-        ws_say "would copy wg and wireguard-go once wireguard-tools is installed"
-    fi
+    ws_copy_root "$ws_bin" "$ws_libexec/ws" 755
     programs_changed=$ws_changed
 }
 
-# key makes the Mac's WireGuard key where it is missing, never shown, under umask 077, with root's
-# wg, and sets key_made.
+# key makes the Mac's WireGuard key where it is missing, never shown, with root's ws, which keeps
+# it in a file only root reads, and sets key_made.
 key() {
     ws_dir_root "$ws_etc" 700
     ws_dir_root "$ws_etc/routes.d" 755
@@ -118,8 +104,7 @@ key() {
         ws_say "would make the Mac's WireGuard key, $ws_etc/private.key"
         return 0
     fi
-    sudo sh -c 'umask 077 && "$1" genkey >"$2.new" && mv -f "$2.new" "$2"' \
-        sh "$ws_libexec/wg" "$ws_etc/private.key" || ws_die "cannot make $ws_etc/private.key"
+    sudo "$ws_libexec/ws" tunnel key >/dev/null || ws_die "cannot make the Mac's WireGuard key"
     ws_say "made the Mac's WireGuard key, $ws_etc/private.key"
 }
 
@@ -128,7 +113,9 @@ key() {
 # make it ws's peer, where the key is new or ws's key isn't set yet.
 tell() {
     { [ "$key_made" = 0 ] || ! ws_checking; } || return 0
-    public=$(sudo sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" "$ws_etc/private.key") ||
+    # A check before the first run has no copy of ws to ask.
+    { ! ws_checking || [ -x "$ws_libexec/ws" ]; } || return 0
+    public=$(sudo "$ws_libexec/ws" tunnel key) ||
         ws_die "cannot read the Mac's public key"
     [ -d "$HOME/.config" ] || ws_dir "$HOME/.config" 755
     [ -d "$HOME/.config/ws" ] || ws_dir "$HOME/.config/ws" 700
@@ -248,7 +235,7 @@ networks() {
 
 # tunnel sets up the tunnel's daemon, then the networks and resolvers of mac.conf.
 tunnel() {
-    tools
+    program
     copies
     key
     if [ -n "$WS_PUBLIC_KEY" ]; then

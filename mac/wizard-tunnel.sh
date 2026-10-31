@@ -22,12 +22,11 @@ tunnel_after() {
     fi
 }
 
-# tunnel_key sets tunnel_mac to the Mac's WireGuard public key, from root's key by root's wg, as
-# setup.sh prints it. It fails where it reads no key.
-# shellcheck disable=SC2154 # ws_etc is lib.sh's, ws_libexec setup-lib.sh's
+# tunnel_key sets tunnel_mac to the Mac's WireGuard public key, which root's `ws tunnel key`
+# prints, as setup.sh does. It fails where it reads no key.
+# shellcheck disable=SC2154 # ws_libexec is setup-lib.sh's
 tunnel_key() {
-    tunnel_mac=$(sudo sh -c '"$1" pubkey <"$2"' sh "$ws_libexec/wg" \
-        "$ws_etc/private.key" 2>/dev/null) && ws_is_key "$tunnel_mac"
+    tunnel_mac=$(sudo "$ws_libexec/ws" tunnel key 2>/dev/null) && ws_is_key "$tunnel_mac"
 }
 
 # tunnel_pub sets tunnel_mac to the Mac's public key in ~/.config/ws/tunnel.pub, which setup.sh
@@ -91,7 +90,7 @@ tunnel_do() {
     tunnel_peered=0
     tunnel_had=$WS_PUBLIC_KEY
     sudo -v || ws_die "Tunnel: sudo -v failed; the Mac's key is root's, as an admin of the Mac"
-    tunnel_key || ws_die "Tunnel: root's wg reads no key in $ws_etc/private.key: run" \
+    tunnel_key || ws_die "Tunnel: root's ws tunnel key prints no key: run" \
         "mac/setup.sh, which makes both"
     if [ "$(remote_get mac.pub)" != "$tunnel_mac" ] || [ "$(remote_get peer)" != ok ]; then
         tunnel_peered=1

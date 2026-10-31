@@ -2,7 +2,7 @@
 # The mac job's checks of mac.conf's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which setup.sh hands to
 # lib.sh's functions, then of how mac/setup.sh's ws_conf reads mac.conf. The job runs it from the
 # repository's root after mac-lib-checks.sh, with the tunnel's daemon loaded and WS_PUBLIC_KEY in
-# mac.conf (.github/workflows/mac.yml). It takes ws-tunnel's path from the job's TUNNEL, and stops
+# mac.conf (.github/workflows/mac.yml). It takes ws's path from the job's TUNNEL, and stops
 # without it. The keys' network must go into the daemon's utun, and their domain show in scutil
 # --dns. A second run and --check must print nothing. Emptied or removed, the keys must take both
 # back, and spare a script's own files. ws_conf's cases each read a file of their own, in a section
@@ -14,7 +14,7 @@
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
-    echo "::error::TUNNEL, ws-tunnel's path, is unset: mac.yml's job sets it"
+    echo "::error::TUNNEL, ws's path, is unset: mac.yml's job sets it"
     exit 1
 fi
 # shellcheck source=mac/lib.sh
@@ -115,7 +115,7 @@ gives() {
     fi
 }
 
-utun=$(sudo "$TUNNEL" status | awk -F': ' '$1 == "interface" { print $2 }')
+utun=$(sudo "$TUNNEL" tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
 # A script's own route and resolver, under lib.sh's header, which the keys must spare.
 must ws_tunnel_routes own 198.51.100.0/24
 must ws_resolver own.test 198.51.100.53

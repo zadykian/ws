@@ -2,9 +2,9 @@
 # The Tunnel stage on the Mac that 43-terminal.sh leaves, whose tunnel has a handshake with the
 # stand-in ws. mac.conf's WS_PUBLIC_KEY goes first. With a new key for the stand-in's wg0, as a ws
 # installed again has, --check must show that line replaced, and change nothing. A run must replace
-# it in place, have ws-tunnel take the key, and log in to ws through the tunnel. Without wg0's peer,
+# it in place, have ws tunnel take the key, and log in to ws through the tunnel. Without wg0's peer,
 # as a tagged run that failed leaves it, a run must run bootstrap.sh --tags wireguard and restart
-# ws-tunnel. Without the stand-in's mac.pub too, it must write mac.pub first. Where nothing answers
+# the daemon. Without the stand-in's mac.pub too, it must write mac.pub first. Where nothing answers
 # on UDP 51820, a run must exit 0 within a minute, its closing list naming it, the router's forward
 # and the Background. Once it answers, a run must exit 0, and the next print nothing. So must one in
 # which sudo -n fails, as once sudo's timestamp lapsed during ws's run. Without tunnel.pub, --check
@@ -17,7 +17,7 @@ wizard=$HOME/repository/ws/mac/wizard.sh
 conf=$HOME/.config/ws/mac.conf
 ws=$RUNNER_TEMP/ws
 peer=$ws/root/etc/wireguard/mac.pub
-wg=/usr/local/libexec/ws-tunnel/wg
+wg=/opt/homebrew/bin/wg
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -76,7 +76,7 @@ wizard
 printf '%s\n' "$out" | grep -q '^wizard\.sh: Tunnel: ran launchctl kickstart -k ' &&
     [ "$(sudo cat "$peer")" = "$mac" ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags wireguard' ] && [ "$status" = 0 ] ||
-    error "a run without mac.pub on ws exited $status, or gave wg0 no peer and ws-tunnel no restart"
+    error "a run without mac.pub on ws exited $status, or gave wg0 no peer and the daemon no restart"
 
 standin_set listen-port 51821
 sudo launchctl kickstart -k system/com.github.zadykian.ws-tunnel

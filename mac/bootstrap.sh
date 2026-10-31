@@ -11,6 +11,8 @@
 # prints nothing. caffeinate keeps the Mac from idle sleep while it runs.
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
+# shellcheck source-path=SCRIPTDIR
+
 set -eu
 
 repository=https://github.com/zadykian/ws
@@ -145,14 +147,9 @@ build() {
     elif [ "$check" = 1 ]; then
         return 0
     fi
-    go=$(cd "$dir" && sh tools/run -path go) || die "Ws: cannot get the pinned Go"
-    mkdir -p "${bin%/*}" || die "Ws: cannot make ${bin%/*}"
-    (
-        cd "$dir/mac" &&
-            GOPATH=$dir/.cache/go GOCACHE=$dir/.cache/go-build GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=0 \
-                "$go" build -o "$bin.new" ./cmd/ws
-    ) || die "Ws: cannot build ws"
-    mv -f "$bin.new" "$bin" || die "Ws: cannot install $bin"
+    # shellcheck source=build.sh
+    . "$dir/mac/build.sh"
+    ws_build "$dir" "$bin" || die "Ws: the build failed"
 }
 
 main() {

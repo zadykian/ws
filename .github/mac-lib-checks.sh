@@ -1,7 +1,7 @@
 #!/bin/sh
 # The mac job's checks of the functions that mac/lib.sh offers a private repository's own script.
 # The job runs it from the repository's root once setup.sh has loaded the tunnel's daemon
-# (.github/workflows/mac.yml). It takes ws-tunnel's path from the job's TUNNEL, and stops without
+# (.github/workflows/mac.yml). It takes ws's path from the job's TUNNEL, and stops without
 # it. A network that ws_tunnel_routes adds must go into the daemon's utun and out again, with the
 # daemon reading routes.d in place. A domain that ws_resolver adds must show in scutil --dns. Each
 # failure prints an ::error:: line, and any fails the script at its end.
@@ -10,7 +10,7 @@
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
-    echo "::error::TUNNEL, ws-tunnel's path, is unset: mac.yml's job sets it"
+    echo "::error::TUNNEL, ws's path, is unset: mac.yml's job sets it"
     exit 1
 fi
 # shellcheck source=mac/lib.sh
@@ -65,7 +65,7 @@ fi
 was=$(pid)
 lines=$(sudo awk 'END { print NR }' "$log")
 must ws_tunnel_routes test 198.51.100.0/24
-utun=$(sudo "$TUNNEL" status | awk -F': ' '$1 == "interface" { print $2 }')
+utun=$(sudo "$TUNNEL" tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
 # shellcheck disable=SC2329 # called through until_ok
 routed() { route -n get 198.51.100.1 | grep -q "interface: $utun\$"; }
 until_ok 20 routed || error "198.51.100.1 is not routed into the daemon's $utun"
