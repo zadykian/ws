@@ -15,6 +15,7 @@ func TestRunSetsUpTheUtun(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{
+		"rm -f /var/run/ws-tunnel.state /var/run/ws-tunnel.state.new",
 		"ls -1 /etc/ws-tunnel/routes.d",
 		"ifconfig utun4 inet 10.99.0.2/32 10.99.0.2 alias",
 		"ifconfig utun4 up",
