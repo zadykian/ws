@@ -99,3 +99,41 @@ func TestAnswersFromEnvironment(t *testing.T) {
 		t.Errorf("mac.conf = %q", got)
 	}
 }
+
+func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
+	a, out := newAnswers(t, "")
+	a.Check, a.Scratch = true, "/lock/mac.conf"
+	a.Env = func(k string) (string, bool) {
+		return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
+	}
+	m := a.M.(*effecttest.Machine)
+	m.Files[confPathForTest] = []byte("WS_USER=ada\n")
+	a.P.(*effecttest.Prompt).Answers = map[string]string{
+		"The VM's SSH port (WS_REMOTE_PORT) [22]":                                                 "",
+		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                      "none",
+		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
+		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
+		"Another repository whose apply.sh runs on ws, as OWNER/REPO (WS_HOOK) [none]":            "",
+	}
+	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
+		t.Fatalf("Plan = %v, %v", p, err)
+	}
+	if got := string(m.Files["/lock/mac.conf"]); !strings.HasPrefix(got, "WS_USER=ada\nWS_TARGET=cloud\n") {
+		t.Errorf("scratch = %q", got)
+	}
+	if got := string(m.Files[confPathForTest]); got != "WS_USER=ada\n" {
+		t.Errorf("mac.conf changed to %q", got)
+	}
+	if len(out.Lines) == 0 || !strings.HasPrefix(out.Lines[len(out.Lines)-1], "diff: "+confPathForTest) {
+		t.Errorf("out = %q, want the diff of mac.conf last", out.Lines)
+	}
+}
+
+func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
+	a, _ := newAnswers(t, "")
+	a.Check, a.Scratch = true, "/lock/mac.conf"
+	a.Env = func(k string) (string, bool) { return "home", k == "WS_TARGET" }
+	if _, err := a.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_TARGET comes from the environment") {
+		t.Errorf("Plan = %v", err)
+	}
+}

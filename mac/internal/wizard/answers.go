@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/conf"
@@ -23,9 +24,13 @@ type Answers struct {
 	Prog string
 	// Tty tells whether stdin is a terminal, which the questions need.
 	Tty bool
-	M   effect.Machine
-	P   effect.Prompt
-	Out effect.Out
+	// Check makes Plan rehearse the stage: it asks, shows the diff of mac.conf, and writes what mac.conf
+	// would be to Scratch, the file that the stages after it read.
+	Check   bool
+	Scratch string
+	M       effect.Machine
+	P       effect.Prompt
+	Out     effect.Out
 	// Env looks a variable up, telling one set to nothing from one that is not set.
 	Env func(string) (string, bool)
 }
@@ -74,10 +79,13 @@ func (a *Answers) sequence(c conf.Conf, text string, ask func(question) (string,
 }
 
 // Plan finds the first key that mac.conf lacks, or that mac.conf with all its keys is refused.
-func (a *Answers) Plan(context.Context) (step.Plan, error) {
+func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 	text, c, err := a.load()
 	if err != nil {
 		return step.Plan{}, err
+	}
+	if a.Check {
+		return step.Plan{}, a.rehearse(ctx, text, c)
 	}
 	first := ""
 	err = a.sequence(c, text, func(q question) (string, error) { first = q.key; return "", errMissing }).run()
@@ -128,6 +136,31 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 		return a.refusal(lines)
 	}
 	return err
+}
+
+// rehearse does Apply's asking under --check, and shows the diff of mac.conf instead of writing it.
+// The stages after read the file it writes to Scratch, as wizard.sh pointed WS_CONF at a file in the
+// lock, so that they check against the mac.conf that the run would make.
+func (a *Answers) rehearse(ctx context.Context, text string, c conf.Conf) error {
+	lines, err := a.collect(ctx, text, c)
+	if err != nil {
+		return err
+	}
+	before, after, err := a.file().compose(lines)
+	if errors.Is(err, errRefused) {
+		return a.refusal(lines)
+	}
+	if err != nil {
+		return err
+	}
+	if _, err := a.M.Stat(path.Dir(a.Conf)); err != nil {
+		a.Out.Say("would make %s", path.Dir(a.Conf))
+	}
+	a.Out.Diff(a.Conf, []byte(before), []byte(after))
+	if err := a.M.WriteFile(a.Scratch, []byte(after), 0o600); err != nil {
+		return fmt.Errorf("%s: cannot write %s", answers, a.Scratch)
+	}
+	return nil
 }
 
 var _ step.Step = (*Answers)(nil)
