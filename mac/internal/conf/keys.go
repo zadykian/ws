@@ -35,6 +35,10 @@ var keptNames = tunnel.CableNet.String() + " and " + tunnel.TunnelNet.String()
 // port is the form of both ports.
 const port = "a port, 1 to 65535"
 
+// keyFile is the form of both keys' files.
+const keyFile = "a public key's file, as ~/.ssh/NAME.pub: a path from / or ~/ to .pub, " +
+	"of letters, digits and ._/@+-"
+
 // keys is mac.conf's keys in the order of the file's docs, with their checks.
 var keys = []key{
 	{"WS_USER", func(c *Conf) *string { return &c.User }, plain(check.User),
@@ -52,6 +56,32 @@ var keys = []key{
 		"a host name or an IPv4 address"},
 	{"WS_REMOTE_PORT", func(c *Conf) *string { return &c.RemotePort }, plain(check.Port), port},
 	{"WS_PORT", func(c *Conf) *string { return &c.Port }, plain(check.Port), port},
+	{"WS_TUNNEL_NETWORKS", func(c *Conf) *string { return &c.TunnelNetworks },
+		plain(func(v string) bool { return check.Networks(v, tunnel.CableNet, tunnel.TunnelNet) }),
+		"IPv4 networks split by blanks, as 10.20.0.0/16, each clear of " + keptNames},
+	{"WS_RESOLVERS", func(c *Conf) *string { return &c.Resolvers }, plain(check.Resolvers),
+		"DOMAIN=ADDRESS[,ADDRESS...] split by blanks, as example.internal=10.20.0.53, each " +
+			"domain once and in lower case, with up to 3 IPv4 addresses"},
+	{"WS_CABLE_SERVICE", func(c *Conf) *string { return &c.CableService }, check.CableService,
+		"a network service as networksetup -listallnetworkservices prints it, no * first, " +
+			"in quotes where it holds a blank"},
+	{"WS_CABLE_PORT", func(c *Conf) *string { return &c.CablePort }, plain(check.CablePort),
+		"a port of ws's, as enp5s0: up to 15 letters, digits and ._-, no - first"},
+	{"WS_GIT_NAME", func(c *Conf) *string { return &c.GitName }, check.GitName,
+		`a name, in quotes where it holds a blank, with no " or \`},
+	{"WS_GIT_EMAIL", func(c *Conf) *string { return &c.GitEmail }, plain(check.GitEmail),
+		"an email address, as ws@example.com: letters, digits and ._%+- before the @, and " +
+			"a host name after it"},
+	{"WS_GIT_SIGNING_KEY", func(c *Conf) *string { return &c.GitSigningKey }, plain(check.KeyFile), keyFile},
+	{"WS_IDENTITY", func(c *Conf) *string { return &c.Identity }, plain(check.KeyFile), keyFile},
+	{"WS_IDENTITY_AGENT", func(c *Conf) *string { return &c.IdentityAgent }, check.Socket,
+		"an agent's socket: a path from / or ~/, of letters, digits, blanks and ._/@+-, " +
+			"in quotes where it holds a blank"},
+	{"WS_HOOK", func(c *Conf) *string { return &c.Hook }, plain(check.Hook),
+		"a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws " +
+			"in any letter case"},
+	{"WS_HOOK_SECRET", func(c *Conf) *string { return &c.HookSecret }, plain(check.HookSecret),
+		"a Keychain item's name, 1 to 64 letters, digits and ._-"},
 }
 
 // isLAN reports whether v is a network clear of the cable's and the tunnel's.
