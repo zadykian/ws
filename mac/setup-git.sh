@@ -158,7 +158,7 @@ EOF
 # once. It stops where git can't read the file, and where the include comes twice or sits below the
 # file's own settings, which it then overrides. It stops too where the file is a link that lacks the
 # include, rather than replace the link with a file. It writes nothing, so that the step stops
-# before it acts, as setup-ssh.sh's ws_include_ok does for ssh's Include.
+# before it acts, as the ssh step does for ssh's Include.
 git_include_ok() {
     git_file=$HOME/.gitconfig
     git_included=
@@ -184,7 +184,7 @@ git_include_ok() {
 
 # git_include puts an include of ~/.config/ws/gitconfig at the top of ~/.gitconfig where
 # git_include_ok found none, so that the file's own settings come after it and win. It makes the
-# file where missing, and keeps the old one as ~/.gitconfig.TIME~, as setup-ssh.sh keeps
+# file where missing, and keeps the old one as ~/.gitconfig.TIME~, as the ssh step keeps
 # ~/.ssh/config. It names the file's own settings of identity and signing, which win, and those of
 # git's XDG file, which lose.
 # shellcheck disable=SC2154 # ws_tmp, lib.sh's, sets ws_tmpfile

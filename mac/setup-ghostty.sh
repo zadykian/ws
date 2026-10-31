@@ -1,10 +1,13 @@
 # shellcheck shell=sh
 # The part of mac/setup.sh that sets up Ghostty, the Mac's terminal: Ghostty and the font its
 # settings name, from Homebrew's casks where missing, and ws.ghostty, those settings, which
-# Ghostty's config reads. setup.sh sources it after setup-ssh.sh, whose header it uses, and calls
+# Ghostty's config reads. setup.sh sources it and calls
 # ghostty_mac before cld_mac. ghostty_mac warns where Ghostty can't be installed, or Ghostty's
 # config is not the script's to change, so that the run goes on to the tunnel. It stops where it
 # can't write a file. Ghostty then updates itself, as ws.ghostty says.
+
+# The start of ws.ghostty's first line, by which a run knows a file for its own.
+header="# Written by ws's mac/setup.sh"
 
 # 1 where Ghostty's app is there, or where --check would install it, as ghostty_mac sets it.
 ghostty_ok=0
@@ -118,7 +121,7 @@ EOF
 # the file that names it (Config.zig's config-file), so ws.ghostty's settings win over the
 # config's own. It warns, and leaves the config unchanged, where ws.ghostty is not its own, the
 # config can't be read, or the config is a link that lacks the line.
-# shellcheck disable=SC2154 # header is setup-ssh.sh's, dir setup.sh's, ws_tmpfile lib.sh's
+# shellcheck disable=SC2154 # dir setup.sh's, ws_tmpfile lib.sh's
 ghostty_files() {
     ghostty_config=$(ghostty_conf)
     ghostty_dir=${ghostty_config%/*}
