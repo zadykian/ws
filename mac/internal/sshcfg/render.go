@@ -20,6 +20,8 @@ type Inputs struct {
 	RemotePort string // empty where mac.conf has no forward
 	// ViaTunnel is whether ws goes through the tunnel. Until it does, ws takes the ways of ws-ssh.
 	ViaTunnel bool
+	// CldTabs is whether ssh's hosts start cld's tab restorer.
+	CldTabs bool
 	// Patterns are the IgnoreUnknown patterns, joined by commas.
 	Patterns string
 	// IdentityPub is the .pub of the key ssh offers ws, as the file names it.
@@ -82,6 +84,9 @@ Host ws ws-ssh
     HostKeyAlias ws
 %s    ServerAliveInterval 30
 `, in.User, identityLines(in))
+	if in.CldTabs {
+		b.WriteString(cldLines)
+	}
 	return b.String()
 }
 
@@ -96,3 +101,12 @@ func identityLines(in Inputs) string {
 	return fmt.Sprintf("    IdentityFile %s\n    IdentitiesOnly yes\n    UseKeychain yes\n    AddKeysToAgent yes\n",
 		strings.TrimSuffix(in.IdentityPub, ".pub"))
 }
+
+// cldLines end the last block with the lines that start cld's tab restorer. ssh runs LocalCommand
+// through the user's shell once it has connected, with %d as the Mac's home (ssh_config(5)). The
+// line starts it in a Ghostty pane alone, so that macOS charges its Apple Events to Ghostty.
+// Elsewhere, or without cld, it does nothing and exits 0.
+const cldLines = `    # In a Ghostty pane, start cld's watcher, unless one runs, for cld restore tabs.
+    PermitLocalCommand yes
+    LocalCommand [ "$TERM_PROGRAM" != ghostty ] || [ ! -x %d/.local/bin/cld ] || %d/.local/bin/cld restore tabs --watch
+`

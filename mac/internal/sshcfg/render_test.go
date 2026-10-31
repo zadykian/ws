@@ -50,3 +50,12 @@ func TestConfigViaTunnelWithAgent(t *testing.T) {
 		t.Errorf("Config holds a LAN or a forward that mac.conf lacks:\n%s", got)
 	}
 }
+
+func TestConfigCldTabs(t *testing.T) {
+	in := inputs()
+	in.CldTabs = true
+	got := sshcfg.Config(in)
+	if !strings.Contains(got, "    PermitLocalCommand yes\n    LocalCommand [ \"$TERM_PROGRAM\" != ghostty ]") {
+		t.Errorf("Config lacks cld's lines:\n%s", got)
+	}
+}
