@@ -4,8 +4,8 @@
 #   tools/run NAME [ARG...]   runs the tool with the ARGs
 #   tools/run -path NAME      prints the path of the tool's executable
 #
-# Each tool comes from its GitHub release for Linux or macOS on amd64 or arm64. The first run
-# downloads it into .cache/tools and checks its SHA-256. A bump changes a tool's version and its
+# Each tool comes from its GitHub release, and Go from go.dev, for Linux or macOS on amd64 or
+# arm64. The first run downloads it into .cache/tools and checks its SHA-256. A bump changes a tool's version and its
 # four sums, which the release's checksums file or GitHub's asset digests give. It needs curl,
 # tar, and sha256sum or shasum. The Python tools are pinned in .github/lint-requirements.txt.
 
@@ -48,9 +48,12 @@ pick() {
 }
 
 # pin sets version, url, sum and member for the tool $1. member is the executable's path in the
-# archive, or empty where the download is the executable itself.
+# archive, or empty where the download is the executable itself. exe is the executable's path in
+# the tool's directory, .cache/tools/NAME-VERSION. tree is true where the tool is the whole
+# archive, as Go's is, and then exe is the path inside it.
 pin() {
     gh=https://github.com
+    exe=$1 tree=false
     case $1 in
     actionlint)
         version=1.7.12
@@ -61,6 +64,17 @@ pin() {
             325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6 \
             5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644 \
             aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f
+        ;;
+    go)
+        # Go's four sums are those of go.dev/dl/?mode=json&include=all. Its whole tree is the tool.
+        version=1.27.1
+        url=https://go.dev/dl/go$version.$os-$arch.tar.gz
+        member=
+        exe=go/bin/go tree=true
+        pick 63d339f0da5ab53635a56f2490a7984dfe12dfcff22ad749f63edaf590168445 \
+            3450b45a3f9ee8568792736a5c5e70a1f2e9b36c35a8f74958c03e51d7d92bec \
+            8f8f52c6649542cf027bbc9b9c68d1ec042f9f34808a40413f0b8b3f66f3caa4 \
+            ee215d57e0ec269c60cc9ceca68e6bda321ba9ee5afe24f4b0988703c2d87d12
         ;;
     gitleaks)
         # gitleaks names amd64 x64.
@@ -76,6 +90,16 @@ pin() {
             e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080 \
             dfe101a4db2255fc85120ac7f3d25e4342c3c20cf749f2c20a18081af1952709 \
             b40ab0ae55c505963e365f271a8d3846efbc170aa17f2607f13df610a9aeb6a5
+        ;;
+    golangci-lint)
+        version=2.15.0
+        member=golangci-lint-$version-$os-$arch
+        url=$gh/golangci/golangci-lint/releases/download/v$version/$member.tar.gz
+        member=$member/golangci-lint
+        pick 9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea \
+            b4d8f17068b35ee6060cc2f69a16fb48740d706fbba81661c318649c114a6998 \
+            767b899a28285e88ded2823d5dcc4bc5ef681173eb2d80f029a7b17ee4ece3b8 \
+            d1e409481a8ca846c4bc97e781eb5cb1bd5c23353a0b3977a1cbda1b1b6447d5
         ;;
     lychee)
         # Linux's build is musl's, which links statically.
@@ -153,7 +177,7 @@ pin() {
             e28d22b087f9ebb8d99da6e740d348c930f559961c7c3f12badda54f882195a2
         ;;
     *)
-        die "no tool $1: actionlint, gitleaks, lychee, rumdl, shellcheck, shfmt, vale or zizmor"
+        die "no tool $1: actionlint, go, gitleaks, golangci-lint, lychee, rumdl, shellcheck, shfmt, vale or zizmor"
         ;;
     esac
 }
@@ -179,6 +203,14 @@ fetch() {
         die "cannot download $url"
     [ "$(sha256 "$tmp/download")" = "$sum" ] ||
         die "$url does not match the SHA-256 pinned in tools/run"
+    if $tree; then
+        mkdir "$tmp/tree"
+        tar -xzf "$tmp/download" -C "$tmp/tree" || die "cannot unpack $url"
+        mv "$tmp/tree" "$cache/$name-$version"
+        rm -rf "$tmp"
+        trap - EXIT HUP INT TERM
+        return
+    fi
     if [ -n "$member" ]; then
         tar -xzf "$tmp/download" -C "$tmp" "$member" || die "$url has no $member"
         mv "$tmp/$member" "$tmp/download"
@@ -202,7 +234,7 @@ main() {
     platform
     pin "$name"
     cache=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)/.cache/tools
-    bin=$cache/$name-$version/$name
+    bin=$cache/$name-$version/$exe
     [ -x "$bin" ] || fetch "$name"
     if $path; then
         printf '%s\n' "$bin"

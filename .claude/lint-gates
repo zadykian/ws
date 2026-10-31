@@ -1,12 +1,18 @@
 # The gate code beyond the lint plugin's defaults, which no gate runs while it differs from HEAD:
 # the pins of the Python tools and collections, the settings of ansible and ansible-lint, the
-# inventory, and any Python, bytecode or extension module. ansible-lint loads them, and
-# python3 -m venv imports them from the tree's root.
+# inventory, the Go linters' settings, module and workspace, and any Python, Go, bytecode or
+# extension module. ansible-lint loads them, and python3 -m venv imports them from the tree's root.
 .github/lint-requirements.in
 .github/lint-requirements.txt
 requirements.yml
 ansible.cfg
 .ansible-lint*
+mac/.golangci*
+mac/go.mod
+mac/go.sum
+*.go
+*go.work
+*go.work.sum
 .config
 inventory.ini
 *.py
