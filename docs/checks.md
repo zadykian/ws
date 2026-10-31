@@ -104,6 +104,7 @@ stop, with no terminal and at a terminal of `script`'s, and change nothing. With
 root's file, a run must say nothing of the stage. With another host key under `ws`, a run must stop,
 with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s second host key, an
 ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a line to `known_hosts`.
+A `LocalCommand` that touches a file must run for a plain ssh to ws, not for the wizard's.
 
 The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
 sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-ins of

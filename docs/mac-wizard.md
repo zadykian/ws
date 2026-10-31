@@ -159,7 +159,8 @@ account's. Then run the wizard again. `--check` says that a run would stop. Both
 The stage stops too where `WS_USER` isn't root: the README's steps are then by hand. Where ws offers
 another host key than `known_hosts` holds, as once ws is installed again, it stops, naming
 `ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and
-its logins add nothing to `known_hosts`.
+its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line that
+starts cld's watcher.
 
 A run shares one ssh connection to `ws-ssh`, and one to `ws` in the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.

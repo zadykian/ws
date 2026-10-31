@@ -174,6 +174,9 @@ host_trust() {
 # - A master lives 30 minutes past its last call, which outlasts the Mac's longest step between two
 #   calls, a Homebrew install. host_end ends it with the run, and a run killed by SIGKILL leaves it
 #   until then.
+# - It runs no LocalCommand, as config.d/ws's that starts cld's watcher in a Ghostty pane, so that
+#   neither that nor the user's shell writes to what a stage reads. The option is among the master's
+#   too, as the first call may be any caller's.
 # shellcheck disable=SC2154 # lock is wizard.sh's
 host_ssh() {
     if host_room; then
@@ -181,7 +184,8 @@ host_ssh() {
             -o ControlPersist=30m "$@"
     fi
     ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o CheckHostIP=no \
-        -o ServerAliveInterval=15 ${host_first:+-o "HostName=$host_first"} "$@"
+        -o ServerAliveInterval=15 -o PermitLocalCommand=no \
+        ${host_first:+-o "HostName=$host_first"} "$@"
 }
 
 # host_room succeeds where host_ssh may share a connection: where the lock's path leaves room for a
