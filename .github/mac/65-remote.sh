@@ -22,7 +22,7 @@ grep -q "ran launchctl kill SIGHUP system/$LABEL" "$RUNNER_TEMP/hup.out" ||
         exit 1
     }
 remote() {
-    status=$(sudo "$TUNNEL" status 2>&1) || true
+    status=$(sudo "$TUNNEL" tunnel status 2>&1) || true
     printf '%s\n' "$status" | grep -qx 'tier: remote' &&
         printf '%s\n' "$status" | grep -qx 'endpoint: 127.0.0.1:51820' &&
         printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$'

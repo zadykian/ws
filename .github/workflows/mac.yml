@@ -16,7 +16,7 @@ jobs:
   # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on
   # loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost), and the daemon's status must
   # show each in turn. Last, lib.sh's routes and resolvers, then mac.conf's. A stand-in that makes
-  # no utun fails the job, as the daemon runs the same wireguard-go. Gated as ci.yml's playbook job.
+  # no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's playbook job.
   mac:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
@@ -33,7 +33,7 @@ jobs:
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
       HOMEBREW_NO_ENV_HINTS: "1"
       LABEL: com.github.zadykian.ws-tunnel
-      TUNNEL: /usr/local/libexec/ws-tunnel/ws-tunnel
+      TUNNEL: /usr/local/libexec/ws-tunnel/ws
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -45,5 +45,5 @@ jobs:
       - name: The daemon's status and log
         if: always()
         run: |
-          sudo "$TUNNEL" status || true
+          sudo "$TUNNEL" tunnel status || true
           sudo cat /var/log/ws-tunnel.log || true
