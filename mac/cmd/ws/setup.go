@@ -18,6 +18,48 @@ import (
 
 const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh  write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n"
 
+// progOut prefixes a line with the program that prints it, as setup.sh's lines are, and says each
+// warning once, as a step plans again after it applies. setup.sh sets the prefix in WS_PROG, so
+// that the lines of a step that it runs read as its own.
+type progOut struct {
+	effect.Out
+	prog string
+	seen map[string]bool
+}
+
+// Say prints the line after the prefix. It drops the runner's line that a step is applying, which
+// the step's own lines follow, and the step's name that starts a line of --check.
+func (o progOut) Say(format string, a ...any) {
+	switch {
+	case format == "%s: applying %d change(s)":
+		return
+	case format == "%s: %s" && len(a) == 2:
+		o.sayChange(a[1]) //nolint:gosec // len(a) is 2 in this case
+	default:
+		o.Out.Say("%s: "+format, append([]any{o.prog}, a...)...)
+	}
+}
+
+// sayChange prints a change under --check. setup.sh printed a diff as diff -u does, with no prefix and
+// no blank line after it, and said nothing of the backup of a file.
+func (o progOut) sayChange(c any) {
+	switch c := c.(type) {
+	case setup.Write:
+		o.Out.Say("%s", strings.TrimSuffix(c.String(), "\n"))
+	case setup.Backup:
+	default:
+		o.Out.Say("%s: %v", o.prog, c)
+	}
+}
+
+func (o progOut) Warn(format string, a ...any) {
+	line := fmt.Sprintf(format, a...)
+	if !o.seen[line] {
+		o.seen[line] = true
+		o.Out.Say("%s: warning: %s", o.prog, line)
+	}
+}
+
 // setupSteps returns the steps of ws setup, in the order setup.sh runs them.
 func setupSteps(c conf.Conf, home string, m effect.Machine, out effect.Out, check bool) []step.Step {
 	return []step.Step{
@@ -69,7 +111,7 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 		return 1
 	}
 	term := effect.NewTerminal(strings.NewReader(""), stderr)
-	out := effect.Out(term)
+	out := progOut{term, prog, map[string]bool{}}
 	var chosen []step.Step
 	for _, s := range setupSteps(c, home, m, out, check) {
 		if s.Name() == args[0] {
