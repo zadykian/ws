@@ -13,9 +13,9 @@ Homebrew ([The Mac's tunnel](#the-macs-tunnel)) and two hosts for ssh:
   tunnel's UDP.
 
 The script is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone, with sudo
-where it needs root. It sets up cld too, for `cld restore tabs`, with Ghostty's part where its app
-is ([cld and Ghostty](mac-ghostty.md)). It installs WireGuard's tools from Homebrew, which is
-[installed](https://brew.sh) by hand first:
+where it needs root. It sets up Ghostty, the Mac's terminal, with its settings, and cld, for
+`cld restore tabs` ([Ghostty and cld on the Mac](mac-ghostty.md)). It installs WireGuard's tools,
+Ghostty and a font from Homebrew, which is [installed](https://brew.sh) by hand first:
 
 ```sh
 git clone https://github.com/zadykian/ws ~/repository/ws

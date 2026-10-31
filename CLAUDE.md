@@ -19,7 +19,8 @@ The rest is the docs, the lint gates' tools and CI.
   yamllint, which finds its files itself, checks it too.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
-- `mac/`: the Mac's side, POSIX sh, run on the Mac ([The Mac](docs/mac.md)).
+- `mac/`: the Mac's side, POSIX sh run on the Mac, and `ws.ghostty`, Ghostty's settings
+  ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
   `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index of the keymap's pages
   in `docs/helix-keymap/`.
@@ -49,9 +50,9 @@ collections into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` runs `bootstrap.sh` twice in an
 Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files again. `mac` sets up a Mac on
-GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up cld and
-Ghostty's settings on a third ([cld on the Mac](docs/checks-mac-cld.md)). A run of the
-playbook sets up the machine that runs it, as below.
+GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up Ghostty
+and cld on a third ([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run
+of the playbook sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
