@@ -17,6 +17,8 @@ func TestRun(t *testing.T) {
 		{"no command", nil, 0, "usage: ws", ""},
 		{"help", []string{"help"}, 0, "usage: ws", ""},
 		{"flag", []string{"--help"}, 0, "usage: ws", ""},
+		{"tunnel alone", []string{"tunnel"}, 2, "", "usage: ws tunnel run"},
+		{"tunnel unknown", []string{"tunnel", "nope"}, 2, "", "usage: ws tunnel run"},
 		{"unknown", []string{"nope"}, 2, "", `unknown command "nope"`},
 	}
 	for _, tt := range tests {
