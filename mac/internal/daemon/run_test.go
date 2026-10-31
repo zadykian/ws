@@ -20,6 +20,8 @@ func TestRunSetsUpTheUtun(t *testing.T) {
 		"ifconfig utun4 inet 10.99.0.2/32 10.99.0.2 alias",
 		"ifconfig utun4 up",
 		"route -q -n add -inet 10.99.0.1/32 -interface utun4",
+		"ifconfig",
+		"mv -f /var/run/ws-tunnel.state.new /var/run/ws-tunnel.state",
 		"rm -f /var/run/ws-tunnel.state /var/run/ws-tunnel.state.new",
 	}
 	if !slices.Equal(r.m.runs, want) {
@@ -28,7 +30,10 @@ func TestRunSetsUpTheUtun(t *testing.T) {
 	if key, _ := uapi.SetPrivateKey(macKey); !slices.Equal(r.dev.sets, []string{key}) {
 		t.Errorf("device got %q, want the Mac's key alone", r.dev.sets)
 	}
-	if got, want := r.lines(), []string{"started on utun4, 10.99.0.2", "stopped"}; !slices.Equal(got, want) {
+	if got, want := r.lines(), []string{
+		"started on utun4, 10.99.0.2", "no path to ws answers, as the Mac is on none; trying again 10 s after each round",
+		"stopped",
+	}; !slices.Equal(got, want) {
 		t.Errorf("log = %q, want %q", got, want)
 	}
 }

@@ -87,7 +87,9 @@ func (r *rig) play(events ...Event) error {
 func (r *rig) lines() []string {
 	var out []string
 	for _, l := range strings.Split(strings.TrimSpace(r.log.String()), "\n") {
-		out = append(out, strings.TrimPrefix(l, r.now.Format("2006-01-02 15:04:05")+" "))
+		if l != "" {
+			out = append(out, l[len("2006-01-02 15:04:05 "):])
+		}
 	}
 	return out
 }
