@@ -23,12 +23,15 @@ func TestConfCommand(t *testing.T) {
 		{"argument", []string{"/a/mac.conf"}, "/e/mac.conf", 0, "WS_USER='amy'\n", ""},
 		{"missing", []string{"/none"}, "", 1, "", "ws conf: /none is missing: docs/mac.md"},
 		{"refused", []string{"/bad"}, "", 1, "", "ws conf: /bad, line 2: unknown key WS_NOPE"},
-		{"two files", []string{"a", "b"}, "", 2, "", "usage: ws conf [FILE]"},
+		{"lines", []string{"--lines", "/pair"}, "", 0, "WS_USER='root'\nWS_TARGET='lan'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
+		{"pair", []string{"/pair"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
+		{"two files", []string{"a", "b"}, "", 2, "", "usage: ws conf [--lines] [FILE]"},
 	}
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
 	m.Files["/e/mac.conf"] = []byte("WS_USER=eve\n")
 	m.Files["/a/mac.conf"] = []byte("WS_USER=amy\n")
+	m.Files["/pair"] = []byte("WS_LAN=10.88.0.0/24\n")
 	m.Files["/bad"] = []byte("WS_USER=ada\nWS_NOPE=1\n")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

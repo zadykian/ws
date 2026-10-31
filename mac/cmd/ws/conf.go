@@ -11,13 +11,18 @@ import (
 	"github.com/zadykian/ws/mac/internal/effect"
 )
 
-const confUsage = "usage: ws conf [FILE]\n"
+const confUsage = "usage: ws conf [--lines] [FILE]\n"
 
 const confFile = ".config/ws/mac.conf"
 
 // confCommand runs ws conf: it reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and prints
-// the checked settings as shell assignments, or the errors of a file it refuses.
+// the checked settings as shell assignments, or the errors of a file it refuses. With --lines it
+// checks each line alone, as a wizard checks an answer before the file holds the key it goes with.
 func confCommand(args []string, m effect.Machine, getenv func(string) string, stdout, stderr io.Writer) int {
+	parse := conf.Parse
+	if len(args) > 0 && args[0] == "--lines" {
+		parse, args = conf.Lines, args[1:]
+	}
 	if len(args) > 1 {
 		_, _ = io.WriteString(stderr, confUsage)
 		return 2
@@ -38,7 +43,7 @@ func confCommand(args []string, m effect.Machine, getenv func(string) string, st
 		_, _ = fmt.Fprintf(stderr, "ws conf: %v\n", err)
 		return 1
 	}
-	c, errs := conf.Parse(string(text))
+	c, errs := parse(string(text))
 	for _, e := range errs {
 		_, _ = fmt.Fprintf(stderr, "ws conf: %s\n", e.In(file))
 	}
