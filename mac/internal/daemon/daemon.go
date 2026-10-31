@@ -27,9 +27,9 @@ type Daemon struct {
 	Tun, StateFile, Dir string
 	Out                 io.Writer // the log
 	Now                 func() time.Time
-	// CheckEvery is how often a round looks for the handshake, and TickEvery how long a tick comes
-	// after the last event's work ended.
-	CheckEvery, TickEvery time.Duration
+	// CheckEvery is how often a round looks for the handshake, TickEvery how long a tick comes
+	// after the last tick ended, and ChangeWait how long the loop waits after a network change.
+	CheckEvery, TickEvery, ChangeWait time.Duration
 	// Events is the channel of the loop. Signals, timers and the watch of network changes send to
 	// it through Send.
 	Events chan Event
@@ -55,18 +55,20 @@ type Event int
 
 // The events.
 const (
-	Tick   Event = iota // TickEvery after the last tick ended
-	Check               // look again at the choice, as a round waits for a handshake
-	Reload              // SIGHUP
-	Stop                // SIGTERM
-	Exited              // wireguard-go has exited
+	Tick    Event = iota // TickEvery after the last tick ended
+	Check                // look again at the choice, as a round waits for a handshake
+	Reload               // SIGHUP
+	Changed              // configd posted a network change
+	Settled              // ChangeWait after a change
+	Stop                 // SIGTERM
+	Exited               // wireguard-go has exited
 )
 
 // New returns a Daemon with an Events channel, for the settings in dir.
 func New(m effect.Machine, dev Device, tun, dir, stateFile string, out io.Writer) *Daemon {
 	return &Daemon{
 		M: m, Dev: dev, Tun: tun, Dir: dir, StateFile: stateFile, Out: out, Now: time.Now,
-		CheckEvery: time.Second, TickEvery: 10 * time.Second, Events: make(chan Event, 64),
+		CheckEvery: time.Second, TickEvery: 10 * time.Second, ChangeWait: 2 * time.Second, Events: make(chan Event, 64),
 	}
 }
 
