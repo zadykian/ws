@@ -9,13 +9,16 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
-// Apply applies the changes of the plan in order.
+// Apply applies the changes of the plan in order, so that root's copy of ws is there when the key
+// is made.
 func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
 		var err error
 		switch c := c.(type) {
 		case Install:
 			err = t.install(ctx, c)
+		case KeyMake:
+			err = t.makeKey(ctx)
 		default:
 			err = Apply(ctx, t.M, t.Out, c)
 		}
