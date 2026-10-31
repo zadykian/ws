@@ -55,3 +55,6 @@ func (r *Remote) Status(ctx context.Context) bool {
 
 // Get returns the value of NAME in what Status read, or an empty string.
 func (r *Remote) Get(name string) string { return r.status[name] }
+
+// Forget has the next Status read ws again, as after a session that changed it.
+func (r *Remote) Forget() { r.read = false }

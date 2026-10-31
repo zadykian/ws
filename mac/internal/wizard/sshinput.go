@@ -12,3 +12,9 @@ func (s SSH) RunInput(ctx context.Context, stdin []byte, args ...string) ([]byte
 func (s SSH) PassInput(ctx context.Context, stdin []byte, args ...string) error {
 	return s.M.PassInput(ctx, stdin, "ssh", s.argv(args)...)
 }
+
+// Pass runs ssh with the arguments, with its output passed to Stderr and standard input kept, for a
+// session at the terminal.
+func (s SSH) Pass(ctx context.Context, args ...string) error {
+	return s.M.Pass(ctx, false, "ssh", s.argv(args)...)
+}
