@@ -71,14 +71,15 @@ func (t *Terminal) ByHand(format string, a ...any) {
 	t.byHand = append(t.byHand, fmt.Sprintf(format, a...))
 }
 
-// Flush prints the lines that ByHand kept, once, and forgets them.
+// Flush prints the lines that ByHand kept, once, and forgets them, under a blank line and the title
+// that wizard.sh's closing list has.
 func (t *Terminal) Flush() {
 	if len(t.byHand) == 0 {
 		return
 	}
-	_, _ = io.WriteString(t.w, "To do by hand:\n")
+	_, _ = io.WriteString(t.w, "\nWhat stays by hand:\n")
 	for _, l := range t.byHand {
-		_, _ = fmt.Fprintf(t.w, "  - %s\n", l)
+		_, _ = fmt.Fprintf(t.w, "- %s\n", l)
 	}
 	t.byHand = nil
 }
