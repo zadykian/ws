@@ -122,7 +122,14 @@ func (w *Words) Apply(ctx context.Context, p step.Plan) error {
 		for _, d := range []string{w.Home + "/.config", w.Home + "/.config/ws"} {
 			_ = w.M.Mkdir(d, 0o700) // exists mostly; WriteFile fails where the directory is missing
 		}
-		if err := w.M.WriteFile(c.file, data, 0o600); err != nil {
+		// A new file renamed over the old one, as ws_put did, so that a list the Mac's user can't
+		// write, such as a mode 400 one, is replaced all the same.
+		tmp := c.file + ".new"
+		if err := w.M.WriteFile(tmp, data, 0o600); err != nil {
+			return err
+		}
+		if _, err := w.M.Run(ctx, "mv", "-f", tmp, c.file); err != nil {
+			_, _ = w.M.Run(ctx, "rm", "-f", tmp)
 			return err
 		}
 	}
