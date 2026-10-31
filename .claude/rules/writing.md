@@ -7,7 +7,6 @@ paths:
   - "**/*.py"
   - "**/*.j2"
   - ".githooks/*"
-  - "mac/ws-tunnel"
   - "tools/*"
 ---
 
