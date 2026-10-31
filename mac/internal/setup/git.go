@@ -37,6 +37,8 @@ type Git struct {
 
 	notes []string        // the warnings of the plan in the making
 	said  map[string]bool // the warnings said in this run
+	// addErr is why the key's add failed in this run.
+	addErr error
 }
 
 // Name is git.
@@ -82,11 +84,13 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	cs = append(append(cs, files...), g.includeChanges(ctx, in)...)
-	waits, err := g.register(ctx, key, gh, install != nil)
+	reg, waits, err := g.register(ctx, key, gh, install != nil)
 	if err != nil {
 		return step.Plan{}, err
 	}
-	if waits != "" {
+	if reg != nil {
+		cs = append(cs, *reg)
+	} else if waits != "" {
 		cs = append(cs, Pending(waits))
 	}
 	return step.Plan{Changes: g.withNotes(cs)}, nil
@@ -125,6 +129,9 @@ func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 			continue
 		case Notice:
 			g.say(string(c))
+			continue
+		case Register:
+			g.add(ctx, c)
 			continue
 		}
 		if err := Apply(ctx, g.M, g.Out, c); err != nil {
