@@ -90,3 +90,29 @@ func (g *Ghostty) Plan(_ context.Context) (step.Plan, error) {
 	}
 	return step.Plan{Changes: append(app, font...)}, nil
 }
+
+// Apply installs the casks. A failed install is a warning, and the next run tries again; where
+// the app's fails, the files wait for it.
+func (g *Ghostty) Apply(ctx context.Context, p step.Plan) error {
+	if g.failed == nil {
+		g.failed = map[string]bool{}
+	}
+	for _, c := range p.Changes {
+		if r, ok := c.(Run); ok {
+			cask := r.Args[len(r.Args)-1]
+			g.Out.Say("installing %s", cask)
+			if err := Apply(ctx, g.M, g.Out, c); err != nil {
+				g.Out.Warn("brew install --cask %s failed", cask)
+				g.failed[cask] = true
+			}
+			continue
+		}
+		if g.failed["ghostty"] {
+			continue
+		}
+		if err := Apply(ctx, g.M, g.Out, c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
