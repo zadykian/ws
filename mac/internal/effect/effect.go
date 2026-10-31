@@ -75,6 +75,9 @@ type Machine interface {
 	// RunShown is Run, or RunRoot where root is set, with the command's standard error passed to
 	// ws's own, as a shell script lets it through.
 	RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error)
+	// PassInput is Run with the bytes as standard input, and with standard output and error sent to
+	// Stderr as they come, for a command that goes on for minutes.
+	PassInput(ctx context.Context, stdin []byte, name string, args ...string) error
 	// Pass runs the command, through sudo where root is set, and passes its standard output and
 	// error to ws's standard error, as a script's command with its output sent to stderr does.
 	Pass(ctx context.Context, root bool, name string, args ...string) error

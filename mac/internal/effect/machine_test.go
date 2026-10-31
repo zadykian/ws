@@ -1,6 +1,7 @@
 package effect_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io/fs"
@@ -100,5 +101,16 @@ func TestOSMachineRunInput(t *testing.T) {
 	out, err := m.RunInput(context.Background(), []byte("echo $1\n"), "sh", "-s", "--", "ok")
 	if err != nil || string(out) != "ok\n" {
 		t.Errorf("RunInput = %q, %v; want ok", out, err)
+	}
+}
+
+func TestOSMachinePassInput(t *testing.T) {
+	var stderr bytes.Buffer
+	m := effect.OSMachine{Stderr: &stderr}
+	if err := m.PassInput(context.Background(), []byte("echo $1; echo err >&2\n"), "sh", "-s", "--", "ok"); err != nil {
+		t.Fatal(err)
+	}
+	if got := stderr.String(); got != "ok\nerr\n" {
+		t.Errorf("PassInput passed %q; want ok and err", got)
 	}
 }

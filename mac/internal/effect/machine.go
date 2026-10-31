@@ -17,7 +17,7 @@ type OSMachine struct {
 	Sudo []string
 	// Owner is the uid:gid that root files get. Empty means 0:0; tests set their own.
 	Owner string
-	// Stderr takes what RunShown and Pass pass on. Nil means os.Stderr.
+	// Stderr takes what RunShown, PassInput and Pass pass on. Nil means os.Stderr.
 	Stderr io.Writer
 }
 
@@ -70,6 +70,17 @@ func (m OSMachine) RunShown(ctx context.Context, root bool, name string, args ..
 	cmd := m.command(ctx, m.argv(root, name, args))
 	cmd.Stderr = m.stderr()
 	return output(cmd)
+}
+
+// PassInput runs the command with stdin as its standard input, and its standard output and error
+// sent to Stderr.
+func (m OSMachine) PassInput(ctx context.Context, stdin []byte, name string, args ...string) error {
+	cmd := m.command(ctx, append([]string{name}, args...))
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = bytes.NewReader(stdin), m.stderr(), m.stderr()
+	if err := cmd.Run(); err != nil {
+		return commandError(cmd, err)
+	}
+	return nil
 }
 
 // Pass runs the command with its standard output and error sent to Stderr, and standard input kept,

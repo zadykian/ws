@@ -48,6 +48,12 @@ func (m *Machine) RunInput(_ context.Context, stdin []byte, name string, args ..
 	return m.run("run", name, args)
 }
 
+// PassInput records the command as RunInput does, and returns the error of its result.
+func (m *Machine) PassInput(ctx context.Context, stdin []byte, name string, args ...string) error {
+	_, err := m.RunInput(ctx, stdin, name, args...)
+	return err
+}
+
 // RunRoot records the command as root's and returns its result from the table.
 func (m *Machine) RunRoot(_ context.Context, name string, args ...string) ([]byte, error) {
 	return m.run("root", name, args)
