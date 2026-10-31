@@ -33,33 +33,42 @@ func (f confFile) read() (string, error) {
 	return string(text), err
 }
 
-// add appends the lines, whose keys mac.conf lacks, where the whole passes conf's checks. A new file
-// gets mode 644, in a directory it makes. Where mac.conf is a link, as a dotfiles manager makes it,
-// it says the lines and stops. f.stage names the stage in the messages.
-func (f confFile) add(ctx context.Context, lines string) error {
-	text, err := f.read()
+// compose returns mac.conf's text, and its text with the lines appended, whose keys mac.conf lacks,
+// where the whole passes conf's checks. Where mac.conf is a link, as a dotfiles manager makes it, it
+// says the lines and stops. f.stage names the stage in the messages.
+func (f confFile) compose(lines string) (before, after string, err error) {
+	before, err = f.read()
 	if err != nil {
-		return fmt.Errorf("%s: cannot read %s", f.stage, f.path)
+		return "", "", fmt.Errorf("%s: cannot read %s", f.stage, f.path)
 	}
-	if text != "" && !strings.HasSuffix(text, "\n") {
-		text += "\n"
+	after = before
+	if after != "" && !strings.HasSuffix(after, "\n") {
+		after += "\n"
 	}
-	text += lines
-	if _, errs := conf.Parse(text); len(errs) > 0 {
+	after += lines
+	if _, errs := conf.Parse(after); len(errs) > 0 {
 		for _, e := range errs {
 			f.out.Say("%s", e.In(f.path))
 		}
-		return errRefused
+		return "", "", errRefused
 	}
-	info, err := f.m.Stat(f.path)
-	if err == nil && info.Link != "" {
+	if info, err := f.m.Stat(f.path); err == nil && info.Link != "" {
 		f.out.Say("%s: %s is a link to %s, which the wizard leaves: add these lines to its file, then run the wizard again",
 			f.stage, f.path, info.Link)
 		f.out.Say("%s", strings.TrimSuffix(lines, "\n"))
-		return fmt.Errorf("%s: %s is a link", f.stage, f.path)
+		return "", "", fmt.Errorf("%s: %s is a link", f.stage, f.path)
+	}
+	return before, after, nil
+}
+
+// add appends the lines as compose does. A new file gets mode 644, in a directory it makes.
+func (f confFile) add(ctx context.Context, lines string) error {
+	_, text, err := f.compose(lines)
+	if err != nil {
+		return err
 	}
 	mode := fs.FileMode(0o644)
-	if err == nil {
+	if info, err := f.m.Stat(f.path); err == nil {
 		mode = info.Mode.Perm()
 	}
 	if _, err := f.m.Run(ctx, "mkdir", "-p", path.Dir(f.path)); err != nil {
