@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# The git step of mac/setup.sh, which setup-extras.sh sources, as wizard-gh.sh does for git_gh:
+# The git step of mac/setup.sh, which setup.sh sources, as wizard-gh.sh does for git_gh:
 # git's identity and a signing key of the Mac's own. They go in ~/.config/ws/gitconfig, which
 # ~/.gitconfig includes at its top, as the shell role sets them up on ws. gh, from Homebrew where
 # missing, takes git's pushes to GitHub, and registers the key there, as the wizard's Signing key
