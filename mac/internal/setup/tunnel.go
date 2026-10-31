@@ -18,6 +18,8 @@ const (
 	// root daemon that ran that file would let anything that runs as the user become root at its
 	// next start.
 	tunnelLibexec = "/usr/local/libexec/ws-tunnel"
+	// tunnelEtc holds the Mac's key, tunnel.conf and routes.d, which only root can write.
+	tunnelEtc = "/etc/ws-tunnel"
 )
 
 // Tunnel sets up the tunnel to ws: ws in ~/.local/bin and root's copy of it, the Mac's WireGuard
@@ -36,7 +38,8 @@ type Tunnel struct {
 	// Check is set under --check.
 	Check bool
 
-	copied bool // root's copy of ws is to change, which the daemon restarts for
+	copied  bool // root's copy of ws is to change, which the daemon restarts for
+	keyMade bool // the Mac's key is to be made, which the daemon restarts for
 	// untrusted is set while the directories above root's copy, or the copy, are planned to change:
 	// the copy is not run as root until then.
 	untrusted bool
@@ -81,15 +84,20 @@ func (t *Tunnel) program(self []byte) (step.Change, error) {
 	return Install{path, self}, nil
 }
 
-// Plan plans ws and root's copy.
+// Plan plans ws, root's copy and the Mac's key.
 func (t *Tunnel) Plan(_ context.Context) (step.Plan, error) {
 	self, err := t.self()
 	if err != nil {
 		return step.Plan{}, fmt.Errorf("cannot read ws: %w", err)
 	}
-	cs, err := t.programAndCopy(self)
+	var cs []step.Change
+	copied, err := t.programAndCopy(self)
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: cs}, nil
+	key, err := t.key()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: append(append(cs, copied...), key...)}, nil
 }
