@@ -17,8 +17,8 @@ func TestRun(t *testing.T) {
 		{"no command", nil, 0, "usage: ws", ""},
 		{"help", []string{"help"}, 0, "usage: ws", ""},
 		{"flag", []string{"--help"}, 0, "usage: ws", ""},
-		{"tunnel alone", []string{"tunnel"}, 2, "", "usage: ws tunnel run | status"},
-		{"tunnel unknown", []string{"tunnel", "nope"}, 2, "", "usage: ws tunnel run | status"},
+		{"tunnel alone", []string{"tunnel"}, 2, "", "usage: ws tunnel run | status | key"},
+		{"tunnel unknown", []string{"tunnel", "nope"}, 2, "", "usage: ws tunnel run | status | key"},
 		{"tunnel status extra", []string{"tunnel", "status", "x"}, 2, "", "usage: ws tunnel run"},
 		{"unknown", []string{"nope"}, 2, "", `unknown command "nope"`},
 	}
@@ -42,6 +42,16 @@ func TestRun(t *testing.T) {
 func TestTunnelStatusNeedsRoot(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if got := tunnelStatus(501, &stdout, &stderr); got != 1 {
+		t.Errorf("status = %d, want 1", got)
+	}
+	if !strings.Contains(stderr.String(), "run it as root, with sudo") || stdout.Len() != 0 {
+		t.Errorf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
+	}
+}
+
+func TestTunnelKeyNeedsRoot(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if got := tunnelKey(501, &stdout, &stderr); got != 1 {
 		t.Errorf("status = %d, want 1", got)
 	}
 	if !strings.Contains(stderr.String(), "run it as root, with sudo") || stdout.Len() != 0 {
