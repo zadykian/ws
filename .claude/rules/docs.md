@@ -22,6 +22,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [router.md](../../docs/router.md) is the router's steps, taken once by hand.
 - [checks.md](../../docs/checks.md) says what each gate of `make lint` runs, what CI's other jobs
   check, and what the hooks of `.githooks` and Claude's hooks do.
+  [checks-mac-cld.md](../../docs/checks-mac-cld.md) says what the job `mac-cld` checks.
 - [helix-keymap.md](../../docs/helix-keymap.md) indexes the keymap's pages in
   `docs/helix-keymap/`.
 - [The dashboards](../../roles/signoz/files/dashboards/README.md) says what each dashboard reads,

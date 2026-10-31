@@ -1,7 +1,8 @@
 # Checks
 
-In a stack, CI runs `playbook`, `mac` and `mac-wizard`, its longest jobs, on the top pull request
-alone, as it holds every change below it. `lint` and `signoz` run on each.
+In a stack, CI runs `playbook`, `mac`, `mac-cld` and `mac-wizard`, its longest jobs, on the top
+pull request alone, as it holds every change below it. `lint` and `signoz` run on each.
+The `mac-cld` job's checks are on [their own page](checks-mac-cld.md).
 
 ## make lint
 
