@@ -20,6 +20,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 	defer d.stop()
 	d.say("started on %s, %s", d.Tun, tunnel.Address)
 	d.choose(ctx)
+	d.later(Tick, d.TickEvery)
 	for {
 		select {
 		case <-ctx.Done():
@@ -28,6 +29,9 @@ func (d *Daemon) Run(ctx context.Context) error {
 			switch e {
 			case Check:
 				d.choose(ctx)
+			case Tick:
+				d.tick(ctx)
+				d.later(Tick, d.TickEvery)
 			case Stop:
 				return nil
 			case Exited:
