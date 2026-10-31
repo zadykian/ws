@@ -138,6 +138,48 @@ jobs:
         env:
           WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
         run: sh .github/mac-cld-checks.sh quiet
+      # The stub has restore tabs once its update has run, which prints an Updated line. It runs the
+      # release for the rest.
+      - name: With a cld that gains restore tabs, one run adds ssh's lines
+        env:
+          WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
+        run: |
+          mv ~/.local/bin/cld "$RUNNER_TEMP/cld-release"
+          cat >~/.local/bin/cld <<EOF
+          #!/bin/sh
+          case \$* in
+          'help restore tabs') [ -e "$RUNNER_TEMP/updated" ] || exit 2 ;;
+          update)
+              if [ -e "$RUNNER_TEMP/updated" ]; then
+                  echo 'cld 0.14.0 is the latest release'
+              else
+                  touch "$RUNNER_TEMP/updated"
+                  echo "Updated cld 0.13.0 to 0.14.0: \$0"
+              fi
+              ;;
+          *) exec "$RUNNER_TEMP/cld-release" "\$@" ;;
+          esac
+          EOF
+          chmod 755 ~/.local/bin/cld
+          sh mac/setup.sh 2>&1 | tee "$RUNNER_TEMP/gain.out" ||
+              { echo '::error::setup.sh with the stub failed'; exit 1; }
+          fail=0
+          grep -q ': Updated cld 0.13.0 to 0.14.0: ' "$RUNNER_TEMP/gain.out" ||
+              { echo '::error::setup.sh printed no Updated line of the stub'; fail=1; }
+          sh .github/mac-cld-checks.sh lines yes || fail=1
+          sh .github/mac-cld-checks.sh quiet || fail=1
+          exit "$fail"
+      # The stub has restore tabs now, so only Ghostty's app keeps ssh's lines out: a run without it
+      # must drop them, and a run with the stand-in again add them back.
+      - name: Without Ghostty's app, a cld with restore tabs gives ssh no lines
+        run: |
+          sh mac/setup.sh || { echo '::error::setup.sh without Ghostty failed'; exit 1; }
+          fail=0
+          sh .github/mac-cld-checks.sh lines no || fail=1
+          WS_GHOSTTY_APP=$RUNNER_TEMP/Ghostty.app sh mac/setup.sh ||
+              { echo '::error::setup.sh with Ghostty failed'; exit 1; }
+          sh .github/mac-cld-checks.sh lines yes || fail=1
+          exit "$fail"
       - name: The files written
         if: always()
         run: |
