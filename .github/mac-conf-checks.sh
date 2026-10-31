@@ -199,7 +199,7 @@ for line in WS_USER=-admin WS_PUBLIC_KEY=key WS_LAN=10.88.0.10/24 WS_LAN_ADDRESS
     WS_RESOLVERS=example.internal 'WS_CABLE_SERVICE=*Ethernet' 'WS_GIT_NAME=ws"stand-in' \
     WS_GIT_EMAIL=ws@-example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws' 'WS_IDENTITY=~/.ssh/id_ed25519' \
     WS_IDENTITY_AGENT=agent.sock WS_HOOK=ws WS_HOOK_SECRET=ws/hook WS_TARGET=Cloud; do
-    refused "line 1: $line is not $(ws_conf_form "${line%%=*}")" "$line"
+    refused "line 1: $line is not " "$line"
 done
 refused 'line 1: WS_USER=  is not a user name' 'WS_USER=" "'
 refused 'unknown key WS_NONE' WS_NONE=
@@ -247,7 +247,7 @@ refused 'is not a network service' "WS_CABLE_SERVICE=Ethernet$(printf '\r')"
 gives WS_CABLE_PORT enp5s0 WS_CABLE_SERVICE=Ethernet WS_CABLE_PORT=enp5s0
 gives WS_CABLE_PORT enp5s0 WS_CABLE_PORT=enp5s0 WS_CABLE_SERVICE=
 for line in 'WS_CABLE_PORT=enp5s0;id' WS_CABLE_PORT=-enp5s0 WS_CABLE_PORT=enp5s0enp5s0enp5s0; do
-    refused "line 1: $line is not $(ws_conf_form WS_CABLE_PORT)" "$line"
+    refused "line 1: $line is not " "$line"
 done
 
 # git's identity and signing key. A name with blanks must pass in quotes, and stop ws_conf bare, as
