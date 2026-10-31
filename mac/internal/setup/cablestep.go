@@ -26,6 +26,9 @@ type Cable struct {
 // Name is cable.
 func (Cable) Name() string { return "cable" }
 
+// WaitsOn is nothing.
+func (Cable) WaitsOn() string { return "" }
+
 // Plan reads the service with networksetup.
 func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 	service := c.Conf.CableService
@@ -73,4 +76,31 @@ func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 			Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
 		},
 	}}, nil
+}
+
+// Apply runs networksetup -setmanual, then reads the service again. Where it still shows other
+// settings, as a profile that manages it would leave them, the run stops with the remedy: set it by
+// hand in System Settings › Network, as docs/mac.md's The cable says, or empty mac.conf's
+// WS_CABLE_SERVICE.
+func (c Cable) Apply(ctx context.Context, p step.Plan) error {
+	for _, ch := range p.Changes {
+		if err := Apply(ctx, c.M, c.Out, ch); err != nil {
+			return err
+		}
+		run, ok := ch.(Run)
+		if !ok {
+			continue
+		}
+		info, err := c.M.RunShown(ctx, false, run.Name, "-getinfo", c.Conf.CableService)
+		if err != nil {
+			return fmt.Errorf("networksetup -getinfo %q failed: %w", c.Conf.CableService, err)
+		}
+		if other := cableOther(string(info)); other != "" {
+			return fmt.Errorf("networksetup -getinfo %q shows %s after %v: set it by hand in System "+
+				"Settings › Network, as docs/mac.md's The cable says, or empty mac.conf's WS_CABLE_SERVICE",
+				c.Conf.CableService, other, run.line())
+		}
+		c.Out.Say("ran %s", run.line())
+	}
+	return nil
 }
