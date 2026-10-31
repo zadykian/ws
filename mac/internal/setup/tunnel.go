@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"time"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
@@ -37,6 +38,8 @@ type Tunnel struct {
 	Out  effect.Out
 	// Check is set under --check.
 	Check bool
+	// Sleep waits between launchctl's tries. Nil means time.Sleep.
+	Sleep func(time.Duration)
 
 	copied  bool // root's copy of ws is to change, which the daemon restarts for
 	keyMade bool // the Mac's key is to be made, which the daemon restarts for
@@ -100,4 +103,12 @@ func (t *Tunnel) Plan(_ context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	return step.Plan{Changes: append(append(cs, copied...), key...)}, nil
+}
+
+func (t *Tunnel) sleep(d time.Duration) {
+	if t.Sleep != nil {
+		t.Sleep(d)
+		return
+	}
+	time.Sleep(d)
 }
