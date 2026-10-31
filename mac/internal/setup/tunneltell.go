@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"strings"
 
@@ -77,6 +78,34 @@ func (t *Tunnel) publish(ctx context.Context) error {
 		if err := Apply(ctx, t.M, t.Out, c); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// Finish prints the Mac's public key, with the commands that make it ws's peer, where the key is new
+// or mac.conf has no WS_PUBLIC_KEY yet. A check prints nothing of it.
+func (t *Tunnel) Finish(ctx context.Context) error {
+	if t.Check || (!t.madeKey && t.Conf.PublicKey != "") {
+		return nil
+	}
+	t.keyMade = false
+	public, err := t.publicKey(ctx)
+	if err != nil {
+		return err
+	}
+	// /etc/wireguard and bootstrap.sh are root's, so a WS_USER other than root goes through sudo,
+	// with a terminal for its password. The key, which is public, goes in the remote command, so
+	// that ssh's stdin stays the terminal.
+	sudo, tty := "", ""
+	if t.Conf.User != "root" {
+		sudo, tty = "sudo ", "-t "
+	}
+	_, _ = fmt.Fprintf(t.Text, "The Mac's WireGuard public key is %s\nMake it ws's peer, mac, through ws-ssh:\n\n"+
+		"    ssh %sws-ssh \"printf '%%s\\n' '%s' | %stee /etc/wireguard/mac.pub >/dev/null\"\n"+
+		"    ssh %sws-ssh %s/root/repository/ws/bootstrap.sh --tags wireguard\n", public, tty, public, sudo, tty, sudo)
+	if t.Conf.PublicKey == "" {
+		_, _ = io.WriteString(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/mac.conf to ws's key, which that run prints, and run\n"+
+			"mac/setup.sh again, which installs the tunnel's daemon.\n")
 	}
 	return nil
 }
