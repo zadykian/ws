@@ -19,10 +19,13 @@ const (
 	gitHome = "/Users/me"
 	gitPub  = gitHome + "/.ssh/id_ed25519_signing.pub"
 	gitKey  = "ssh-ed25519 AAAAC3Nz me@mac\n"
+	gitList = "/opt/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"
 )
 
 func gitStep(m *effecttest.Machine, look func(string) (string, error)) *setup.Git {
 	m.Results["ssh-keygen -l -f "+gitPub] = effecttest.Result{}
+	m.Results["hostname -s"] = effecttest.Result{Out: []byte("mac\n")}
+	m.Results[gitList] = effecttest.Result{Out: []byte("ssh-ed25519 AAAAC3Nz\n")}
 	if look == nil {
 		look = func(name string) (string, error) { return "/opt/bin/" + name, nil }
 	}
@@ -223,8 +226,8 @@ func TestGitWaitsForTheKeyBeforeAllowedSigners(t *testing.T) {
 	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
 	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
 	p, err := gitStep(m, nil).Plan(context.Background())
-	if err != nil || len(p.Changes) != 3 || !strings.HasSuffix(p.Changes[1].String(), "allowed_signers once the key is made") {
-		t.Errorf("Plan = %v, %v; want the key, a wait and gitconfig", p.Changes, err)
+	if err != nil || len(p.Changes) != 4 || !strings.HasSuffix(p.Changes[1].String(), "allowed_signers once the key is made") {
+		t.Errorf("Plan = %v, %v; want the key, two waits and gitconfig", p.Changes, err)
 	}
 }
 
