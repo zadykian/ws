@@ -25,3 +25,17 @@ func TestGhosttyIncludes(t *testing.T) {
 		}
 	}
 }
+
+func TestGhosttyIncludesResolvesLinks(t *testing.T) {
+	resolve := func(p string) (string, error) {
+		if p == "/dots" {
+			return "/h/.config/ghostty", nil
+		}
+		return p, nil
+	}
+	got := ghosttyIncludes("/h/.config/ghostty/config", "config-file = /dots/ws.ghostty",
+		"/h/.config/ghostty/ws.ghostty", "/h", resolve)
+	if !got {
+		t.Error("a path through a link did not count")
+	}
+}
