@@ -22,6 +22,7 @@ type Machine struct {
 	Dirs    map[string]fs.FileMode  // the directories, with their modes
 	Links   map[string]string       // the links, to the paths they point to
 	Modes   map[string]fs.FileMode  // the modes set on files, where not 0644
+	Inputs  []string                // the standard input of each RunInput
 	Calls   []string                // each call, as "run NAME ARG", "root NAME ARG", "write PATH" ...
 }
 

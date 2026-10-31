@@ -53,6 +53,13 @@ func (m OSMachine) Run(ctx context.Context, name string, args ...string) ([]byte
 	return output(m.command(ctx, append([]string{name}, args...)))
 }
 
+// RunInput runs the command with stdin as its standard input and returns its standard output.
+func (m OSMachine) RunInput(ctx context.Context, stdin []byte, name string, args ...string) ([]byte, error) {
+	cmd := m.command(ctx, append([]string{name}, args...))
+	cmd.Stdin = bytes.NewReader(stdin)
+	return output(cmd)
+}
+
 // RunRoot runs the command through sudo.
 func (m OSMachine) RunRoot(ctx context.Context, name string, args ...string) ([]byte, error) {
 	return output(m.command(ctx, append(append(m.sudo(), name), args...)))

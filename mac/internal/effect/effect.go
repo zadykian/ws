@@ -70,6 +70,8 @@ type Machine interface {
 	Run(ctx context.Context, name string, args ...string) ([]byte, error)
 	// RunRoot runs the command through sudo.
 	RunRoot(ctx context.Context, name string, args ...string) ([]byte, error)
+	// RunInput is Run with the bytes as standard input.
+	RunInput(ctx context.Context, stdin []byte, name string, args ...string) ([]byte, error)
 	// RunShown is Run, or RunRoot where root is set, with the command's standard error passed to
 	// ws's own, as a shell script lets it through.
 	RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error)

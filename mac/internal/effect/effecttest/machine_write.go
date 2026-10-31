@@ -40,6 +40,14 @@ func (m *Machine) Run(_ context.Context, name string, args ...string) ([]byte, e
 	return m.run("run", name, args)
 }
 
+// RunInput records the command as Run's, and its input in Inputs, and returns its result from the table.
+func (m *Machine) RunInput(_ context.Context, stdin []byte, name string, args ...string) ([]byte, error) {
+	m.mu.Lock()
+	m.Inputs = append(m.Inputs, string(stdin))
+	m.mu.Unlock()
+	return m.run("run", name, args)
+}
+
 // RunRoot records the command as root's and returns its result from the table.
 func (m *Machine) RunRoot(_ context.Context, name string, args ...string) ([]byte, error) {
 	return m.run("root", name, args)

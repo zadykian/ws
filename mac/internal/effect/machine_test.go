@@ -94,3 +94,11 @@ func TestOSMachineMkdirChmod(t *testing.T) {
 		t.Errorf("Stat after Mkdir and Chmod = %+v, %v; want 750", info, err)
 	}
 }
+
+func TestOSMachineRunInput(t *testing.T) {
+	m := effect.OSMachine{}
+	out, err := m.RunInput(context.Background(), []byte("echo $1\n"), "sh", "-s", "--", "ok")
+	if err != nil || string(out) != "ok\n" {
+		t.Errorf("RunInput = %q, %v; want ok", out, err)
+	}
+}
