@@ -26,3 +26,10 @@ func TestDiff(t *testing.T) {
 		})
 	}
 }
+
+func TestDiffAs(t *testing.T) {
+	got := effect.DiffAs("/dev/null", "f", nil, []byte("a\nb\n"))
+	if want := "--- /dev/null\n+++ f\n@@ -0,0 +1,2 @@\n+a\n+b\n"; got != want {
+		t.Errorf("DiffAs = %q, want %q", got, want)
+	}
+}

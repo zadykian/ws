@@ -10,9 +10,14 @@ import (
 // contextLines is the unchanged lines that diff -u keeps on each side of a change.
 const contextLines = 3
 
-// Diff returns the unified diff of the lines of before and after, as diff -u prints it, and "" where
-// they are equal.
+// Diff returns the unified diff of the lines of before and after, as diff -u prints it with the
+// same name on both sides, and "" where they are equal.
 func Diff(name string, before, after []byte) string {
+	return DiffAs(name, name, before, after)
+}
+
+// DiffAs is Diff with a label for each side, such as /dev/null for a file that is new.
+func DiffAs(from, to string, before, after []byte) string {
 	a, b := splitLines(before), splitLines(after)
 	if slicesEqual(a, b) {
 		return ""
@@ -49,7 +54,7 @@ func Diff(name string, before, after []byte) string {
 		}
 	}
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "--- %s\n+++ %s\n", name, name)
+	fmt.Fprintf(&sb, "--- %s\n+++ %s\n", from, to)
 	for _, h := range hunks(ops) {
 		writeHunk(&sb, ops, h)
 	}
