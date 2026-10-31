@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/effect"
 )
 
-const usage = "usage: ws COMMAND\n\nCommands:\n  conf [--lines] [FILE]  print mac.conf's checked settings as shell assignments\n  setup [--check] STEP  set up one part of the Mac, as setup.sh does\n  tunnel run     keep the tunnel to ws up, as root\n  tunnel status  print the way in use and the peer, as root\n  tunnel key     make the Mac's key where none is, and print the public key, as root\n  tunnel loaded  succeed where launchd has the daemon loaded\n"
+const usage = "usage: ws COMMAND\n\nCommands:\n  conf [--lines] [FILE]  print mac.conf's checked settings as shell assignments\n  setup [--check] STEP  set up one part of the Mac, as setup.sh does\n  tunnel run     keep the tunnel to ws up, as root\n  tunnel status  print the way in use and the peer, as root\n  tunnel key     make the Mac's key where none is, and print the public key, as root\n  tunnel loaded  succeed where launchd has the daemon loaded\n  tunnel routes [--check] NAME [CIDR...]  route the networks into the tunnel, or drop NAME\n"
 
 // run executes the command line args, writes to stdout and stderr, and returns the exit status.
 func run(args []string, stdout, stderr io.Writer) int {
@@ -29,6 +29,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "tunnel":
 		if len(args) > 1 && args[1] == "loaded" {
 			return tunnelLoaded(context.Background(), args[2:], effect.OSMachine{}, stderr)
+		}
+		if len(args) > 1 && args[1] == "routes" {
+			return tunnelRoutes(context.Background(), args[2:], effect.OSMachine{}, stderr)
 		}
 		return tunnel(args[1:], stdout, stderr)
 	}

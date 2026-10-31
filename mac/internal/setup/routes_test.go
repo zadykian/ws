@@ -32,3 +32,10 @@ func TestRoutesRefusesWhatTheShellRefused(t *testing.T) {
 		}
 	}
 }
+
+func TestRoutesAloneRefusesAMissingRoutesDirUnderCheck(t *testing.T) {
+	r := &setup.Routes{Set: "lab", Networks: []string{"10.1.0.0/24"}, M: effecttest.NewMachine(), Check: true, Alone: true}
+	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "routes.d is missing") {
+		t.Errorf("Plan error = %v", err)
+	}
+}

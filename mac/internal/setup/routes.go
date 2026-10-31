@@ -24,6 +24,9 @@ type Routes struct {
 	Out      effect.Out
 	// Check is set under --check, which signals no daemon.
 	Check bool
+	// Alone is set where no step makes routes.d first: a missing routes.d is an error even under
+	// --check, as lib.sh's was.
+	Alone bool
 }
 
 // Name is tunnel routes.
@@ -54,7 +57,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 		switch {
 		case len(networks) == 0:
 			return nil, nil
-		case r.Check:
+		case r.Check && !r.Alone:
 			return []step.Change{Pending("would put " + strings.Join(networks, " ") + " in " + file + " " + routesAbsent)}, nil
 		}
 		return nil, fmt.Errorf("%s/routes.d is missing: run ws's mac/setup.sh first", tunnelDir)
