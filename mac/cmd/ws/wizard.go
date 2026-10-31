@@ -90,6 +90,8 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	gh := &wizard.Gh{Conf: later, Home: e.getenv("HOME"), Tty: e.tty, M: e.m, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: e.tty, Check: check, Env: e.lookup,
 		SSH: wizard.SSH{M: e.m, Lock: lock, Home: e.getenv("HOME")}, M: e.m, P: p, Out: out}
+	run := &wizard.WsRun{Host: host, Update: o.update,
+		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
 	return []step.Step{
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
@@ -100,8 +102,8 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		wizardSetup(e, out, later),
 		host,
 		&wizard.RootKey{Host: host, Gh: gh},
-		&wizard.WsRun{Host: host, Update: o.update,
-			Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}},
+		run,
+		&wizard.WsClaude{Run: run, Tty: e.tty},
 	}
 }
 
