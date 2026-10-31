@@ -1,6 +1,7 @@
 package setup_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -83,5 +84,40 @@ func TestTunnelKicksTheDaemonWhereWsChanged(t *testing.T) {
 	want := "would run launchctl kickstart -k system/com.github.zadykian.ws-tunnel"
 	if len(got) != 2 || got[1] != want {
 		t.Errorf("Plan = %q; want the copy and a kickstart", got)
+	}
+}
+
+func TestTunnelStartsTheDaemonWhereSIGHUPFails(t *testing.T) {
+	m := daemonMachine()
+	m.Files["/etc/ws-tunnel/tunnel.conf"] = []byte("old\n")
+	m.Results["launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel"] = effecttest.Result{Err: errors.New("no")}
+	m.Results["launchctl kickstart -k system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
+	s := daemonStep(m)
+	p, err := s.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	out := s.Out.(*effecttest.Out).Lines
+	if last := out[len(out)-1]; last != "say: ran launchctl kickstart -k system/com.github.zadykian.ws-tunnel" {
+		t.Errorf("out = %q; want the kickstart", out)
+	}
+}
+
+func TestTunnelTriesABootstrapTenTimes(t *testing.T) {
+	m := daemonMachine()
+	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{Err: errors.New("no")}
+	m.Results["launchctl bootstrap system /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist"] =
+		effecttest.Result{Err: errors.New("busy")}
+	s := daemonStep(m)
+	p, err := s.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = s.Apply(context.Background(), p)
+	if err == nil || len(m.Calls) < 10 {
+		t.Errorf("Apply = %v after %d calls; want an error after 10 tries", err, len(m.Calls))
 	}
 }
