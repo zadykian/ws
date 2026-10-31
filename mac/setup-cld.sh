@@ -1,7 +1,9 @@
 # shellcheck shell=sh
 # The part of mac/setup.sh that sets up cld, for cld restore tabs, which reopens Ghostty's tabs of
-# cld's sessions. setup.sh sources it after setup-ssh.sh and calls cld_mac after extras. cld_mac
-# warns where cld can't be set up, so that the run goes on to the tunnel.
+# cld's sessions. setup.sh sources it after setup-ssh.sh, whose header it uses, and calls cld_mac
+# after extras. cld_mac installs and updates cld wherever setup.sh runs. Ghostty's part, cld.ghostty,
+# needs Ghostty's app. cld_mac warns where cld or Ghostty's files can't be set up, so that the run
+# goes on to the tunnel.
 
 # cld where its install.sh puts it, and the releases whose latest has that script.
 cld_bin=$HOME/.local/bin/cld
@@ -76,6 +78,16 @@ cld_update() {
     ws_say "would run cld update: cld $cld_have, the latest $cld_latest"
 }
 
+# cld_ghostty succeeds where Ghostty's app is there: Ghostty.app in /Applications or
+# ~/Applications. Where WS_GHOSTTY_APP is set, as on CI, the path it names stands in for both.
+cld_ghostty() {
+    if [ -n "${WS_GHOSTTY_APP-}" ]; then
+        [ -d "$WS_GHOSTTY_APP" ]
+    else
+        [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ]
+    fi
+}
+
 # cld_ghostty_conf prints the config file that Ghostty's menu opens (src/config/edit.zig, 1.3.1
 # and main). It tries config.ghostty and config in Application Support's com.mitchellh.ghostty,
 # then in ~/.config/ghostty. The first that holds anything wins, else the first that exists, else
@@ -140,11 +152,73 @@ EOF
     return 1
 }
 
-# cld_mac sets up cld, itself and its update, wherever setup.sh runs.
+# cld_ghostty_files writes cld.ghostty beside Ghostty's config, and adds the line that reads it at
+# the end of that config, once. Ghostty reads a config-file after the file that names it
+# (Config.zig's config-file), so window-save-state there wins over the config's own. Ghostty then
+# brings its windows back after every quit. It warns, and leaves the config unchanged, where
+# cld.ghostty is not its own, the config can't be read, or the config is a link that lacks the line.
+# shellcheck disable=SC2154 # header is setup-ssh.sh's, and ws_tmp, lib.sh's, sets ws_tmpfile
+cld_ghostty_files() {
+    cld_conf=$(cld_ghostty_conf)
+    cld_dir=${cld_conf%/*}
+    cld_file=$cld_dir/cld.ghostty
+    if [ -e "$cld_file" ] || [ -L "$cld_file" ]; then
+        case $(head -n 1 "$cld_file" 2>/dev/null) in
+        "$header"*) ;;
+        *)
+            ws_say "warning: $cld_file is not mac/setup.sh's: move it away, as the script" \
+                "writes its own"
+            return 0
+            ;;
+        esac
+    fi
+    if [ -e "$cld_conf" ] && [ ! -r "$cld_conf" ]; then
+        ws_say "warning: cannot read $cld_conf, Ghostty's config, so cld.ghostty stays out"
+        return 0
+    fi
+    ws_tmp
+    cld_new=$ws_tmpfile
+    cat >"$cld_new" <<EOF || ws_die "cannot write $cld_new"
+$header: its next run replaces changes made here.
+# Ghostty brings back its windows after every quit, which cld restore tabs builds on.
+window-save-state = always
+EOF
+    cld_has=0
+    ! cld_includes "$cld_conf" "$cld_file" || cld_has=1
+    # A linked directory, as GNU stow's folding makes, gets the warning ssh_files gives for
+    # ~/.ssh/config.d.
+    if [ -L "$cld_dir" ] && { [ "$cld_has" = 0 ] || ! cmp -s "$cld_file" "$cld_new"; }; then
+        ws_say "warning: $cld_dir is a link to $(readlink "$cld_dir"): cld.ghostty and the" \
+            "line that reads it go there"
+    fi
+    [ -d "$cld_dir" ] || ws_dir "$cld_dir" 755
+    ws_put "$cld_file" 644 <"$cld_new"
+    rm -f "$cld_new"
+    [ "$cld_has" = 0 ] || return 0
+    if [ -L "$cld_conf" ]; then
+        ws_say "warning: $cld_conf is a link to $(readlink "$cld_conf"): add" \
+            "'config-file = ?cld.ghostty' at the end of that file"
+        return 0
+    fi
+    cld_mode=644
+    [ ! -f "$cld_conf" ] || cld_mode=$(ws_mode "$cld_conf")
+    ws_tmp
+    cld_new=$ws_tmpfile
+    if [ -s "$cld_conf" ]; then
+        cat "$cld_conf" >"$cld_new" || ws_die "cannot read $cld_conf"
+        [ -z "$(tail -c 1 "$cld_conf")" ] || echo >>"$cld_new"
+    fi
+    echo 'config-file = ?cld.ghostty' >>"$cld_new" || ws_die "cannot write $cld_new"
+    ws_put "$cld_conf" "$cld_mode" <"$cld_new"
+    rm -f "$cld_new"
+}
+
+# cld_mac sets up cld, itself and its update, and Ghostty's settings where Ghostty's app is there.
 cld_mac() {
     if [ -x "$cld_bin" ]; then
         cld_update
     else
         cld_install
     fi
+    ! cld_ghostty || cld_ghostty_files
 }

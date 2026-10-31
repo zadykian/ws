@@ -22,7 +22,8 @@
 # It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
 # Before the tunnel, it sets up cld, for cld restore tabs: cld in ~/.local/bin, installed where
-# missing and updated. Where cld can't be set up, it warns and goes on (setup-cld.sh).
+# missing and updated. Where Ghostty's app is there, it writes cld.ghostty, which Ghostty's config
+# reads. Where cld or Ghostty's files can't be set up, it warns and goes on (setup-cld.sh).
 #
 # A run changes only what differs, so a second prints nothing but warnings once mac.conf has
 # WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make

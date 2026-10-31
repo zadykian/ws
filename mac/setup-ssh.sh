@@ -6,7 +6,7 @@
 # ws's end of the cable, and its address in the tunnel.
 cable_server=10.77.0.1
 tunnel_server=10.99.0.1
-# The start of config.d/ws's first line, by which a run knows the file for the script's own.
+# The start of config.d/ws's and cld.ghostty's first line, by which a run knows a file for its own.
 header="# Written by ws's mac/setup.sh"
 
 # ssh_config prints ~/.ssh/config.d/ws from mac.conf's values and the IgnoreUnknown patterns $1.
