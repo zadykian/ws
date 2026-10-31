@@ -1,6 +1,6 @@
 name: mac-cld
 
-# mac/setup-ghostty.sh and mac/setup-cld.sh on macOS, in a workflow of its own beside mac.yml, which
+# ws setup's ghostty and cld steps on macOS, in a workflow of its own beside mac.yml, which
 # nears its 300 lines. It runs on mac.yml's events: every pull request, whatever its base, and on
 # main each pull request's merge. The job runs on a stack's top pull request alone, as mac.yml's
 # does.
