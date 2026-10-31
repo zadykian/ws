@@ -30,6 +30,18 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *setup.Gi
 	}
 }
 
+// prereqs returns the changes that make the key or install gh, which the files wait on.
+func prereqs(p step.Plan) []step.Change {
+	var cs []step.Change
+	for _, c := range p.Changes {
+		switch c.(type) {
+		case setup.MakeKey, setup.Run:
+			cs = append(cs, c)
+		}
+	}
+	return cs
+}
+
 func TestGitWithoutNameLeavesGitAlone(t *testing.T) {
 	p, err := (&setup.Git{M: effecttest.NewMachine(), Out: &effecttest.Out{}}).Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 {
@@ -60,19 +72,19 @@ func TestGitPlansGh(t *testing.T) {
 		p, err := gitStep(m, tc.look).Plan(context.Background())
 		if (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
-		} else if len(p.Changes) != tc.want {
+		} else if len(prereqs(p)) != tc.want {
 			t.Errorf("%s: changes = %v, want %d", name, p.Changes, tc.want)
 		}
 	}
 }
 
 func TestGitApplyInstallsGh(t *testing.T) {
-	m := effecttest.NewMachine()
+	m, _ := gitReady()
 	m.Results["brew install gh"] = effecttest.Result{}
 	install := setup.Run{Name: "brew", Args: []string{"install", "gh"}}
 	err := gitStep(m, nil).Apply(context.Background(), step.Plan{Changes: []step.Change{install}})
-	if err != nil || len(m.Calls) != 1 {
-		t.Errorf("Apply = %v, calls %q; want one call", err, m.Calls)
+	if err != nil || m.Calls[0] != "run brew install gh" {
+		t.Errorf("Apply = %v, calls %q; want brew install gh first", err, m.Calls)
 	}
 }
 
@@ -97,7 +109,7 @@ func TestGitPlansTheSigningKey(t *testing.T) {
 		p, err := gitStep(m, nil).Plan(context.Background())
 		if (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
-		} else if got := fmt.Sprint(p.Changes); (tc.want == "") != (len(p.Changes) == 0) || (tc.want != "" && got != "["+tc.want+"]") {
+		} else if got := fmt.Sprint(prereqs(p)); (tc.want == "") != (len(prereqs(p)) == 0) || (tc.want != "" && got != "["+tc.want+"]") {
 			t.Errorf("%s: changes = %v, want %q", name, p.Changes, tc.want)
 		}
 	}
@@ -116,16 +128,68 @@ func TestGitChecksAKeyNamedInMacConf(t *testing.T) {
 		t.Errorf("a key ssh-keygen rejects: err = %v", err)
 	}
 	m.Results["ssh-keygen -l -f "+gitHome+"/k.pub"] = effecttest.Result{}
-	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
+	if p, err := g.Plan(context.Background()); err != nil || len(prereqs(p)) != 0 {
 		t.Errorf("a good key: Plan = %v, %v", p.Changes, err)
 	}
 }
 
 func TestGitApplyMakesTheKey(t *testing.T) {
-	m := effecttest.NewMachine()
+	m, _ := gitReady() // the key that ssh-keygen makes is there when Apply plans again
 	m.Results["ssh-keygen -q -t ed25519 -N  -f /k"] = effecttest.Result{}
 	err := gitStep(m, nil).Apply(context.Background(), step.Plan{Changes: []step.Change{setup.MakeKey{Path: "/k"}}})
-	if err != nil || len(m.Calls) != 1 {
-		t.Errorf("Apply = %v, calls %q; want one call", err, m.Calls)
+	if err != nil || m.Calls[0] != "run ssh-keygen -q -t ed25519 -N  -f /k" {
+		t.Errorf("Apply = %v, calls %q; want ssh-keygen first", err, m.Calls)
 	}
+}
+
+// gitReady is a Mac with the key and gh there.
+func gitReady() (*effecttest.Machine, *setup.Git) {
+	m := effecttest.NewMachine()
+	m.Files[gitPub], m.Files[gitHome+"/.ssh/id_ed25519_signing"] = []byte(gitKey), []byte("private")
+	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
+	return m, gitStep(m, nil)
+}
+
+func TestGitWritesGitconfig(t *testing.T) {
+	m, g := gitReady()
+	p, err := g.Plan(context.Background())
+	if err != nil || len(p.Changes) != 1 {
+		t.Fatalf("Plan = %v, %v; want one write", p.Changes, err)
+	}
+	if err := g.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	dir := gitHome + "/.config/ws/"
+	if got := string(m.Files[dir+"gitconfig"]); !strings.Contains(got, "signingkey = \""+gitPub+"\"") ||
+		!strings.Contains(got, "helper = !/opt/bin/gh auth git-credential") {
+		t.Errorf("gitconfig = %q", got)
+	}
+	if again, err := g.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
+		t.Errorf("Plan after Apply = %v, %v; want nothing", again.Changes, err)
+	}
+}
+
+func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
+	m, g := gitReady()
+	delete(m.Dirs, gitHome+"/.config/ws")
+	p, err := g.Plan(context.Background())
+	if err != nil || len(p.Changes) != 2 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
+		t.Fatalf("Plan = %v, %v; want the directory and a write", p.Changes, err)
+	}
+	m, g = gitReady()
+	if err := g.Apply(context.Background(), mustPlan(t, g)); err != nil {
+		t.Fatal(err)
+	}
+	m.Modes[gitHome+"/.config/ws/gitconfig"] = 0o600
+	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 1 {
+		t.Errorf("Plan with a wrong mode = %v, %v; want one change", p.Changes, err)
+	}
+}
+
+func mustPlan(t *testing.T, g *setup.Git) step.Plan {
+	p, err := g.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
 }
