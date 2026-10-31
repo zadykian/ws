@@ -55,7 +55,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	_, install, err := g.gh(ctx)
+	gh, install, err := g.gh(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -66,23 +66,40 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if install != nil {
 		cs = append(cs, *install)
 	}
-	return step.Plan{Changes: cs}, nil
+	files, err := g.files(key, gh)
+	return step.Plan{Changes: append(cs, files...)}, err
 }
 
-// Apply makes the key and installs gh.
+// Apply makes the key and installs gh first, plans again with them there, then applies the rest.
 func (g *Git) Apply(ctx context.Context, p step.Plan) error {
-	for _, c := range p.Changes {
-		switch c := c.(type) {
+	n := 0
+	for ; n < len(p.Changes); n++ {
+		switch c := p.Changes[n].(type) {
 		case MakeKey:
 			if _, err := g.M.Run(ctx, "ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", c.Path); err != nil {
 				return fmt.Errorf("ssh-keygen cannot make %s: %w", c.Path, err)
 			}
 			g.Out.Say("made git's signing key, %s", c.Path)
+			continue
 		case Run:
 			g.Out.Say("installing gh")
 			if err := Apply(ctx, g.M, g.Out, c); err != nil {
 				return err
 			}
+			continue
+		}
+		break
+	}
+	if n > 0 {
+		var err error
+		if p, err = g.Plan(ctx); err != nil {
+			return err
+		}
+		n = 0
+	}
+	for _, c := range p.Changes[n:] {
+		if err := Apply(ctx, g.M, g.Out, c); err != nil {
+			return err
 		}
 	}
 	return nil
