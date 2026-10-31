@@ -17,7 +17,10 @@ jobs:
   # change nothing, without Ghostty's app and with a stand-in app, an empty directory, which
   # WS_GHOSTTY_APP names. Without Ghostty's app, a run must install cld alone and print nothing the
   # second time. With the stand-in, a run must add Ghostty's settings. ssh's LocalCommand must
-  # follow whether cld has restore tabs and Ghostty's app. Gated as ci.yml's playbook job.
+  # follow whether cld has restore tabs and Ghostty's app. Stubs then stand in for cld. The first
+  # gains restore tabs as it updates, so that one run adds the lines, and the line runs here before
+  # a release of cld has it. Under the second, which lacks it, a run drops them. Gated as ci.yml's
+  # playbook job.
   mac-cld:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
@@ -138,9 +141,9 @@ jobs:
         env:
           WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
         run: sh .github/mac-cld-checks.sh quiet
-      # The stub has restore tabs once its update has run, which prints an Updated line. It runs the
-      # release for the rest.
-      - name: With a cld that gains restore tabs, one run adds ssh's lines
+      # The stub has restore tabs once its update has run, which prints an Updated line. It logs
+      # each restore tabs --watch, with its TERM_PROGRAM, and runs the release for the rest.
+      - name: With a cld that gains restore tabs, one run adds ssh's lines, which start its watcher
         env:
           WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
         run: |
@@ -157,6 +160,7 @@ jobs:
                   echo "Updated cld 0.13.0 to 0.14.0: \$0"
               fi
               ;;
+          'restore tabs --watch') echo "\$TERM_PROGRAM" >>"$RUNNER_TEMP/watch.log" ;;
           *) exec "$RUNNER_TEMP/cld-release" "\$@" ;;
           esac
           EOF
@@ -167,6 +171,7 @@ jobs:
           grep -q ': Updated cld 0.13.0 to 0.14.0: ' "$RUNNER_TEMP/gain.out" ||
               { echo '::error::setup.sh printed no Updated line of the stub'; fail=1; }
           sh .github/mac-cld-checks.sh lines yes || fail=1
+          sh .github/mac-cld-checks.sh watch "$RUNNER_TEMP/watch.log" || fail=1
           sh .github/mac-cld-checks.sh quiet || fail=1
           exit "$fail"
       # The stub has restore tabs now, so only Ghostty's app keeps ssh's lines out: a run without it
@@ -179,6 +184,22 @@ jobs:
           WS_GHOSTTY_APP=$RUNNER_TEMP/Ghostty.app sh mac/setup.sh ||
               { echo '::error::setup.sh with Ghostty failed'; exit 1; }
           sh .github/mac-cld-checks.sh lines yes || fail=1
+          exit "$fail"
+      # This stub's help restore tabs exits 2, as cld 0.13.0's does, whatever the release has.
+      - name: With a cld without restore tabs, setup.sh drops ssh's lines
+        env:
+          WS_GHOSTTY_APP: ${{ runner.temp }}/Ghostty.app
+        run: |
+          cat >~/.local/bin/cld <<EOF
+          #!/bin/sh
+          [ "\$*" != 'help restore tabs' ] || exit 2
+          exec "$RUNNER_TEMP/cld-release" "\$@"
+          EOF
+          sh mac/setup.sh ||
+              { echo '::error::setup.sh with a cld without restore tabs failed'; exit 1; }
+          fail=0
+          sh .github/mac-cld-checks.sh lines no || fail=1
+          sh .github/mac-cld-checks.sh quiet || fail=1
           exit "$fail"
       - name: The files written
         if: always()
