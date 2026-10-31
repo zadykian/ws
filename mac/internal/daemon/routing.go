@@ -61,3 +61,11 @@ func (d *Daemon) writeState(ctx context.Context) {
 		d.say("cannot write %s: %v", d.StateFile, err)
 	}
 }
+
+func hostsOf(round []tunnel.Attempt) []netip.Addr {
+	var hosts []netip.Addr
+	for _, a := range round {
+		hosts = append(hosts, a.Candidate.Host)
+	}
+	return hosts
+}

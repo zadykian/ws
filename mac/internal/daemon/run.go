@@ -19,12 +19,15 @@ func (d *Daemon) Run(ctx context.Context) error {
 	}
 	defer d.stop()
 	d.say("started on %s, %s", d.Tun, tunnel.Address)
+	d.choose(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case e := <-d.Events:
 			switch e {
+			case Check:
+				d.choose(ctx)
 			case Stop:
 				return nil
 			case Exited:
@@ -66,6 +69,7 @@ func (d *Daemon) start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("cannot set up %s: %w", d.Tun, err)
 	}
+	d.since, d.peerConf = d.Now(), d.set.Conf
 	return nil
 }
 
