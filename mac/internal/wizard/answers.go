@@ -48,17 +48,7 @@ func (c todo) String() string { return string(c) }
 func (a *Answers) file() confFile { return confFile{a.Conf, answers, a.M, a.Out} }
 
 // load reads mac.conf and says each line that conf refuses, which setup.sh would stop at.
-func (a *Answers) load() (string, conf.Conf, error) {
-	text, err := a.file().read()
-	c, errs := conf.Lines(text)
-	for _, e := range errs {
-		a.Out.Say("%s", e.In(a.Conf))
-	}
-	if err != nil || len(errs) > 0 {
-		return "", c, fmt.Errorf("%s: cannot read %s; make it readable, then run the wizard again", answers, a.Conf)
-	}
-	return text, c, nil
-}
+func (a *Answers) load() (string, conf.Conf, error) { return loadConf(a.file()) }
 
 // role gives the shell role's default of that name, as the role's file has it, or nothing.
 func (a *Answers) role(name string) string {

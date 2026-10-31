@@ -80,3 +80,16 @@ func (f confFile) add(ctx context.Context, lines string) error {
 	f.out.Say("wrote %s", f.path)
 	return nil
 }
+
+// loadConf reads mac.conf and says each line that conf refuses, which setup.sh would stop at.
+func loadConf(f confFile) (string, conf.Conf, error) {
+	text, err := f.read()
+	c, errs := conf.Lines(text)
+	for _, e := range errs {
+		f.out.Say("%s", e.In(f.path))
+	}
+	if err != nil || len(errs) > 0 {
+		return "", c, fmt.Errorf("%s: cannot read %s; make it readable, then run the wizard again", f.stage, f.path)
+	}
+	return text, c, nil
+}
