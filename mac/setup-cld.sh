@@ -76,6 +76,70 @@ cld_update() {
     ws_say "would run cld update: cld $cld_have, the latest $cld_latest"
 }
 
+# cld_ghostty_conf prints the config file that Ghostty's menu opens (src/config/edit.zig, 1.3.1
+# and main). It tries config.ghostty and config in Application Support's com.mitchellh.ghostty,
+# then in ~/.config/ghostty. The first that holds anything wins, else the first that exists, else
+# the first. Ghostty reads all four. Its app, which launchd starts, sees no XDG_CONFIG_HOME of a
+# shell's.
+cld_ghostty_conf() {
+    cld_support="$HOME/Library/Application Support/com.mitchellh.ghostty"
+    cld_found=
+    for cld_each in "$cld_support/config.ghostty" "$cld_support/config" \
+        "$HOME/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config"; do
+        if [ -f "$cld_each" ] && [ -s "$cld_each" ]; then
+            echo "$cld_each"
+            return 0
+        fi
+        [ -n "$cld_found" ] || [ ! -f "$cld_each" ] || cld_found=$cld_each
+    done
+    echo "${cld_found:-$cld_support/config.ghostty}"
+}
+
+# cld_includes CONF FILE succeeds where Ghostty's config CONF has a config-file line that names
+# FILE. The line counts with or without the ? and the quotes Ghostty takes, and its path may be
+# relative to CONF's directory, under ~/ or full (src/cli/args.zig's LineIterator). A path counts
+# by its directory with links resolved, as Ghostty resolves a relative one (src/config/path.zig).
+cld_includes() {
+    [ -f "$1" ] || return 1
+    cld_want=$(cd -P "${2%/*}" 2>/dev/null && pwd -P) || return 1
+    cld_paths=$(awk -v dir="${1%/*}" -v home="$HOME" '
+        {
+            line = $0
+            sub(/^[ \t]+/, "", line)
+            sub(/[ \t\r]+$/, "", line)
+            at = index(line, "=")
+        }
+        line ~ /^#/ || at == 0 { next }
+        {
+            key = substr(line, 1, at - 1)
+            sub(/[ \t]+$/, "", key)
+        }
+        key != "config-file" { next }
+        {
+            path = substr(line, at + 1)
+            sub(/^[ \t]+/, "", path)
+            if (path ~ /^".*"$/)
+                path = substr(path, 2, length(path) - 2)
+            sub(/^[?]/, "", path)
+            if (path ~ /^".*"$/)
+                path = substr(path, 2, length(path) - 2)
+            if (index(path, "~/") == 1)
+                path = home substr(path, 2)
+            else if (substr(path, 1, 1) != "/")
+                path = dir "/" path
+            print path
+        }
+    ' "$1") || ws_die "cannot read $1"
+    while IFS= read -r cld_path; do
+        [ "${cld_path##*/}" = "${2##*/}" ] || continue
+        cld_at=$(cd -P "${cld_path%/*}" 2>/dev/null && pwd -P) || continue
+        [ "$cld_at" != "$cld_want" ] || return 0
+    done <<EOF
+$cld_paths
+EOF
+    return 1
+}
+
 # cld_mac sets up cld, itself and its update, wherever setup.sh runs.
 cld_mac() {
     if [ -x "$cld_bin" ]; then
