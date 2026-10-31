@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"time"
@@ -38,11 +39,14 @@ type Tunnel struct {
 	Out  effect.Out
 	// Check is set under --check.
 	Check bool
+	// Text takes the instructions that make the Mac's key ws's peer, as setup.sh printed them.
+	Text io.Writer
 	// Sleep waits between launchctl's tries. Nil means time.Sleep.
 	Sleep func(time.Duration)
 
 	copied  bool // root's copy of ws is to change, which the daemon restarts for
 	keyMade bool // the Mac's key is to be made, which the daemon restarts for
+	madeKey bool // this run made the key
 	public  string
 	// untrusted is set while the directories above root's copy, or the copy, are planned to change:
 	// the copy is not run as root until then.

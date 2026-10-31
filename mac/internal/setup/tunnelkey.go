@@ -51,6 +51,7 @@ func (t *Tunnel) makeKey(ctx context.Context) error {
 	if _, err := t.M.RunRoot(ctx, tunnelLibexec+"/ws", "tunnel", "key"); err != nil {
 		return fmt.Errorf("cannot make the Mac's WireGuard key: %w", err)
 	}
+	t.madeKey = true
 	t.Out.Say("made the Mac's WireGuard key, %s", tunnelKeyFile)
 	return nil
 }
