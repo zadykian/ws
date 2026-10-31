@@ -7,8 +7,10 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/mac/internal/check"
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/mac/internal/tunnel"
 )
 
 const routesAbsent = "once routes.d is made"
@@ -32,6 +34,9 @@ func (*Routes) WaitsOn() string { return "" }
 
 // Plan plans routes.d/Set.
 func (r *Routes) Plan(ctx context.Context) (step.Plan, error) {
+	if err := r.validate(); err != nil {
+		return step.Plan{}, err
+	}
 	cs, err := r.changes(ctx)
 	return step.Plan{Changes: cs}, err
 }
@@ -74,4 +79,25 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 		cs = append(cs, Launchctl{Args: []string{"kill", "SIGHUP", "system/" + daemonLabel}, Routes: true})
 	}
 	return cs, nil
+}
+
+// validate refuses a set that is not of a-z, 0-9 and -, and a network that is not an IPv4 network
+// or that overlaps the tunnel's or the cable's, which 0.0.0.0/0 does too.
+func (r *Routes) validate() error {
+	if r.Set == "" || strings.Trim(r.Set, "abcdefghijklmnopqrstuvwxyz0123456789-") != "" {
+		return fmt.Errorf("ws tunnel routes: '%s' is not a name of a-z, 0-9 and -", r.Set)
+	}
+	for _, n := range r.Networks {
+		p, ok := check.CIDR(n)
+		if !ok {
+			return fmt.Errorf("ws tunnel routes %s: '%s' is not an IPv4 network, as 192.0.2.0/24", r.Set, n)
+		}
+		if p.Overlaps(tunnel.TunnelNet) {
+			return fmt.Errorf("ws tunnel routes %s: %s overlaps the tunnel's %s", r.Set, n, tunnel.TunnelNet)
+		}
+		if p.Overlaps(tunnel.CableNet) {
+			return fmt.Errorf("ws tunnel routes %s: %s overlaps the cable's %s", r.Set, n, tunnel.CableNet)
+		}
+	}
+	return nil
 }

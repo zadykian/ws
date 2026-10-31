@@ -22,3 +22,13 @@ func TestRoutesPutsTheNetworksInTheFileOfTheirSet(t *testing.T) {
 		t.Errorf("Plan = %v, %v", p, err)
 	}
 }
+
+func TestRoutesRefusesWhatTheShellRefused(t *testing.T) {
+	for set, networks := range map[string]string{"Lab": "10.1.0.0/24", "lab": "10.1.0.5/24", "a_b": "10.99.0.0/16",
+		"x": "10.77.0.0/29", "y": "0.0.0.0/0", "z": "10.1.0.0"} {
+		r := &setup.Routes{Set: set, Networks: []string{networks}, M: effecttest.NewMachine()}
+		if _, err := r.Plan(context.Background()); err == nil {
+			t.Errorf("Plan of %q %q succeeded", set, networks)
+		}
+	}
+}
