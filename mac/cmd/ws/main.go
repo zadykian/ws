@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const usage = "usage: ws COMMAND\n\nws has no commands yet.\n"
+const usage = "usage: ws COMMAND\n\nCommands:\n  tunnel run  keep the tunnel to ws up, as root\n"
 
 // run executes the command line args, writes to stdout and stderr, and returns the exit status.
 func run(args []string, stdout, stderr io.Writer) int {
@@ -19,6 +19,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "-h", "--help", "help":
 		_, _ = io.WriteString(stdout, usage)
 		return 0
+	case "tunnel":
+		return tunnel(args[1:], stdout, stderr)
 	}
 	_, _ = fmt.Fprintf(stderr, "ws: unknown command %q\n\n%s", args[0], usage)
 	return 2
