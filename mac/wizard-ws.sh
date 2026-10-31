@@ -190,7 +190,7 @@ run_hand() {
     [ "$WS_TARGET" = cloud ] || [ "$(remote_get outbound)" != off ] || by_hand "ws's outbound" \
         "table: off, as ws's host_vars names security_outbound: false, as for a cloud VM; remove" \
         "that line, then run the wizard with --update (docs/security.md, Outbound)."
-    by_hand "macOS's local network: where it asks whether iTerm2, Gateway or another app may find" \
+    by_hand "macOS's local network: where it asks whether Ghostty, Gateway or another app may find" \
         "devices there, allow it (docs/mac.md, ssh's hosts)."
     by_hand "Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse" \
         "config file ~/.ssh/config on (docs/mac.md)."
