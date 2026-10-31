@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
-	"time"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
@@ -87,16 +86,7 @@ func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
 }
 
 // remove plans the removal of root's file, if it is there.
-func (n *Networks) remove(file string) (step.Change, error) {
-	have, err := n.M.ReadRootFile(file)
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return RootRemove{file, have}, nil
-}
+func (n *Networks) remove(file string) (step.Change, error) { return removeRoot(n.M, file) }
 
 func (n *Networks) resolvers() ([]step.Change, error) {
 	var cs []step.Change
@@ -169,16 +159,5 @@ func (n *Networks) ownsFile(file string) (bool, error) {
 
 // Apply applies the changes in order, so that routes.d is written before the daemon reads it.
 func (n *Networks) Apply(ctx context.Context, p step.Plan) error {
-	for _, c := range p.Changes {
-		var err error
-		if l, ok := c.(Launchctl); ok {
-			err = launchctl(ctx, n.M, n.Out, time.Sleep, l)
-		} else {
-			err = Apply(ctx, n.M, n.Out, c)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return applyInOrder(ctx, n.M, n.Out, p)
 }
