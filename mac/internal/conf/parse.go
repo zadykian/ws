@@ -9,7 +9,7 @@ import (
 
 // Parse reads the text of mac.conf: a KEY=value a line, the value bare or in a pair of quotes, blank
 // lines and lines starting with # skipped. It returns the error of every other line, of any other
-// key and of a value of the wrong form. An empty value, KEY= or KEY="", is the key's default, as a
+// key and of a value of the wrong form, else the first refusal of the keys that go together. An empty value, KEY= or KEY="", is the key's default, as a
 // missing line is. A later line of a key replaces an earlier one.
 func Parse(text string) (Conf, []Error) {
 	c := Conf{User: "root", Target: "lan"}
@@ -38,6 +38,9 @@ func Parse(text string) (Conf, []Error) {
 		if value == "" {
 			c.defaults()
 		}
+	}
+	if len(errs) == 0 {
+		errs = pairs(c)
 	}
 	return c, errs
 }
