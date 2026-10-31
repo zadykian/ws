@@ -78,3 +78,14 @@ func TestSSHRefusesAnIncludeBelowASetting(t *testing.T) {
 		t.Errorf("Plan err = %v, want a refusal of the Include below a setting", err)
 	}
 }
+
+func TestSSHWarnsOfBlocksForWs(t *testing.T) {
+	m, out := sshMachine(), &effecttest.Out{}
+	m.Files["/h/.ssh/config"] = []byte("Include config.d/ws\nHost ws\n  User x\n")
+	if _, err := sshStep(m, out).Plan(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "warn: line 2 of ~/.ssh/config, Host ws, sets its own values for ws:") {
+		t.Errorf("said %q, want a warning of line 2", out.Lines)
+	}
+}
