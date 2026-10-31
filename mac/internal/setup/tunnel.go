@@ -13,6 +13,13 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
+const (
+	// tunnelLibexec holds root's copy of ws, which the daemon runs. The user owns ~/.local/bin, so a
+	// root daemon that ran that file would let anything that runs as the user become root at its
+	// next start.
+	tunnelLibexec = "/usr/local/libexec/ws-tunnel"
+)
+
 // Tunnel sets up the tunnel to ws: ws in ~/.local/bin and root's copy of it, the Mac's WireGuard
 // key, and with WS_PUBLIC_KEY, tunnel.conf and the LaunchDaemon that runs `ws tunnel run`. Without
 // WS_PUBLIC_KEY, ws's key, it installs no daemon yet.
@@ -28,6 +35,11 @@ type Tunnel struct {
 	Out  effect.Out
 	// Check is set under --check.
 	Check bool
+
+	copied bool // root's copy of ws is to change, which the daemon restarts for
+	// untrusted is set while the directories above root's copy, or the copy, are planned to change:
+	// the copy is not run as root until then.
+	untrusted bool
 }
 
 // Name is tunnel.
@@ -69,15 +81,15 @@ func (t *Tunnel) program(self []byte) (step.Change, error) {
 	return Install{path, self}, nil
 }
 
-// Plan plans ws.
+// Plan plans ws and root's copy.
 func (t *Tunnel) Plan(_ context.Context) (step.Plan, error) {
 	self, err := t.self()
 	if err != nil {
 		return step.Plan{}, fmt.Errorf("cannot read ws: %w", err)
 	}
-	c, err := t.program(self)
-	if err != nil || c == nil {
+	cs, err := t.programAndCopy(self)
+	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: []step.Change{c}}, nil
+	return step.Plan{Changes: cs}, nil
 }
