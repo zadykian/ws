@@ -28,9 +28,10 @@ The rest is the docs, the lint gates' tools and CI.
   caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`; `mac-cld.yml`, with `mac-cld`; `mac-wizard.yml`, with `mac-wizard`, whose cases are
-  `.github/mac-wizard/NN-*.sh`; `rules.yml`, the checks of zadykian/toolkit on a pull request; and
-  `issues.yml`, its check of an issue. The toolkit's checks warn alone.
+  `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`; `mac-wizard.yml`,
+  with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`, the checks of
+  zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The toolkit's checks
+  warn alone.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
 
