@@ -2,7 +2,6 @@ package wizard
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -56,7 +55,7 @@ func (w *Words) sums(ctx context.Context) (remote, mac string, err error) {
 		return "", "", fmt.Errorf("%s: the files script read no word list on ws: %w", wordsStage, err)
 	}
 	if remote == "" {
-		return "", "", errors.New(wordsStage + ": the files script read no word list on ws")
+		return "", "", fmt.Errorf("%s: the files script read no word list on ws", wordsStage)
 	}
 	mac = "-"
 	if info, err := w.M.Stat(w.file()); err == nil && info.Mode.IsRegular() {
