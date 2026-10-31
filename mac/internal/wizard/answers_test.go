@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/mac/internal/step"
 )
 
 const confPathForTest = "/h/.config/ws/mac.conf"
@@ -17,7 +18,7 @@ func newAnswers(t *testing.T, text string) (*Answers, *effecttest.Out) {
 	}
 	m.Files["/r/defaults.yml"] = []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n")
 	out := &effecttest.Out{}
-	return &Answers{Conf: confPathForTest, Roles: "/r/defaults.yml", Prog: "ws wizard", M: m, P: &effecttest.Prompt{T: t}, Out: out,
+	return &Answers{Conf: confPathForTest, Roles: "/r/defaults.yml", Prog: "ws wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
 		Env: func(string) (string, bool) { return "", false }}, out
 }
 
@@ -53,5 +54,31 @@ func TestAnswersPlan(t *testing.T) {
 		if err != nil || !strings.Contains(got, tc.want) || (tc.want == "" && got != "") {
 			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
 		}
+	}
+}
+
+func TestAnswersAskAndWrite(t *testing.T) {
+	a, out := newAnswers(t, "# mine\nWS_USER=ada")
+	a.P.(*effecttest.Prompt).Answers = map[string]string{
+		"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                          "",
+		"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                          "",
+		"ws's address on the LAN (WS_LAN_ADDRESS) [10.88.0.10]":                                   "",
+		"The router's name on the internet (WS_REMOTE) [none]":                                    "none",
+		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                      "",
+		"git's email on the Mac (WS_GIT_EMAIL) [ada@example.com]":                                 "",
+		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
+		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
+		"Another repository whose apply.sh runs on ws, as OWNER/REPO (WS_HOOK) [none]":            "",
+	}
+	m := a.M.(*effecttest.Machine)
+	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+	changed, err := step.Run(context.Background(), []step.Step{a}, out, false)
+	if err != nil || !changed {
+		t.Fatalf("Run = %v, %v", changed, err)
+	}
+	want := "# mine\nWS_USER=ada\nWS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\n" +
+		"WS_GIT_NAME=ada\nWS_GIT_EMAIL=ada@example.com\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\nWS_HOOK=\n"
+	if got := string(m.Files[confPathForTest]); got != want {
+		t.Errorf("mac.conf = %q, want %q", got, want)
 	}
 }

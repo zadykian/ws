@@ -21,9 +21,11 @@ type Answers struct {
 	Conf, Roles string
 	// Prog prefixes the messages of a refused answer.
 	Prog string
-	M    effect.Machine
-	P    effect.Prompt
-	Out  effect.Out
+	// Tty tells whether stdin is a terminal, which the questions need.
+	Tty bool
+	M   effect.Machine
+	P   effect.Prompt
+	Out effect.Out
 	// Env looks a variable up, telling one set to nothing from one that is not set.
 	Env func(string) (string, bool)
 }
@@ -91,3 +93,41 @@ func (a *Answers) Plan(context.Context) (step.Plan, error) {
 	}
 	return step.Plan{}, nil
 }
+
+// collect asks for the values that mac.conf lacks, in order, and returns their lines.
+func (a *Answers) collect(ctx context.Context, text string, c conf.Conf) (string, error) {
+	ask := &asker{conf: a.Conf, prog: a.Prog, env: a.Env, p: a.P, tty: a.Tty, out: a.Out}
+	seq := a.sequence(c, text, func(q question) (string, error) { return ask.ask(ctx, q) })
+	ask.lan = func() string { return seq.vals["WS_LAN"] }
+	err := seq.run()
+	return ask.lines, err
+}
+
+// refusal words conf's refusal of mac.conf with the lines.
+func (a *Answers) refusal(lines string) error {
+	with := ""
+	if lines != "" {
+		with = " with the answers"
+	}
+	return fmt.Errorf("%s: setup.sh would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
+}
+
+// Apply asks for the values that mac.conf lacks, in order, and adds them to it. A mac.conf that
+// setup.sh would refuse with them is left alone.
+func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
+	text, c, err := a.load()
+	if err != nil {
+		return err
+	}
+	lines, err := a.collect(ctx, text, c)
+	if err != nil {
+		return err
+	}
+	err = a.file().add(ctx, lines)
+	if errors.Is(err, errRefused) {
+		return a.refusal(lines)
+	}
+	return err
+}
+
+var _ step.Step = (*Answers)(nil)
