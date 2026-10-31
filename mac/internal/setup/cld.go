@@ -2,10 +2,14 @@ package setup
 
 import (
 	"context"
+	"strings"
 
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
 )
+
+// cldReleases is the page of cld's releases, whose latest has the install.sh that installs cld.
+const cldReleases = "https://github.com/zadykian/cld/releases"
 
 // Cld sets up cld, for cld restore tabs, which reopens Ghostty's tabs of cld's sessions: it installs
 // cld into ~/.local/bin where missing, and updates it where a newer release is out, wherever it
@@ -34,6 +38,11 @@ type cldInstall struct{}
 func (cldInstall) String() string {
 	return "would install cld into ~/.local/bin with the install.sh of its latest release"
 }
+
+// cldUpdate has cld replace itself where a newer release is out.
+type cldUpdate struct{}
+
+func (cldUpdate) String() string { return "would run cld update" }
 
 // Remark is a line that --check prints in the form of a change, which a run does not apply.
 type Remark string
@@ -80,7 +89,7 @@ func (c *Cld) gains(ctx context.Context) bool {
 	return err != nil
 }
 
-// Plan plans cld's install where it is missing. Under Check, a cld that is or will
+// Plan plans cld's install where it is missing, else its update. Under Check, a cld that is or will
 // be there with restore tabs may bring the lines of ssh's file.
 func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 	if c.tried {
@@ -88,7 +97,10 @@ func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	var cs []step.Change
 	tabs := false
-	if !c.has() {
+	if c.has() {
+		cs, tabs = c.update(ctx)
+		tabs = tabs || (c.Check && c.restoreTabs(ctx))
+	} else {
 		cs, tabs = []step.Change{cldInstall{}}, c.Check
 	}
 	if tabs && c.gains(ctx) {
@@ -96,4 +108,39 @@ func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 			"where that cld has restore tabs"))
 	}
 	return step.Plan{Changes: cs}, nil
+}
+
+// update plans the update of the cld there, and says whether the cld to come may have restore tabs.
+// A release before 0.6.0 lacks cld update, so install.sh replaces it. A cld built from a clone, of
+// no release's version, is left alone, as cld update refuses it. Only a run can ask cld to update,
+// so --check reads the release that releases/latest leads to, as cld update does.
+func (c *Cld) update(ctx context.Context) ([]step.Change, bool) {
+	out, err := c.M.Run(ctx, c.bin(), "--version")
+	have, ok := cldVersion(string(out))
+	if err != nil || !ok {
+		if err != nil || have == "" {
+			c.Out.Warn("%s --version failed", c.bin())
+		}
+		return nil, false
+	}
+	if _, err := c.M.Run(ctx, c.bin(), "help", "update"); err != nil {
+		return []step.Change{cldInstall{}}, c.Check
+	}
+	if !c.Check {
+		return []step.Change{cldUpdate{}}, false
+	}
+	out, err = c.M.Run(ctx, "curl", "-fsSIL", "--retry", "3", "-o", "/dev/null", "-w", "%{url_effective}",
+		cldReleases+"/latest")
+	if err != nil {
+		c.Out.Warn("cannot read cld's latest release from %s/latest", cldReleases)
+		return nil, false
+	}
+	latest := string(out)
+	if i := strings.LastIndex(latest, "/v"); i >= 0 {
+		latest = latest[i+2:]
+	}
+	if !cldRelease.MatchString(latest) || !cldOlder(have, latest) {
+		return nil, false
+	}
+	return []step.Change{Remark("would run cld update: cld " + have + ", the latest " + latest)}, true
 }
