@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect/effecttest"
 	"github.com/zadykian/ws/mac/internal/setup"
+	"github.com/zadykian/ws/mac/internal/sshcfg"
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
@@ -150,16 +151,19 @@ func gitReady() (*effecttest.Machine, *setup.Git) {
 	return m, gitStep(m, nil)
 }
 
-func TestGitWritesGitconfig(t *testing.T) {
+func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 	m, g := gitReady()
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 1 {
-		t.Fatalf("Plan = %v, %v; want one write", p.Changes, err)
+	if err != nil || len(p.Changes) != 2 {
+		t.Fatalf("Plan = %v, %v; want two writes", p.Changes, err)
 	}
 	if err := g.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	dir := gitHome + "/.config/ws/"
+	if got := string(m.Files[dir+"allowed_signers"]); !strings.HasSuffix(got, "\na@b.c ssh-ed25519 AAAAC3Nz\n") {
+		t.Errorf("allowed_signers = %q", got)
+	}
 	if got := string(m.Files[dir+"gitconfig"]); !strings.Contains(got, "signingkey = \""+gitPub+"\"") ||
 		!strings.Contains(got, "helper = !/opt/bin/gh auth git-credential") {
 		t.Errorf("gitconfig = %q", got)
@@ -173,8 +177,8 @@ func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 	m, g := gitReady()
 	delete(m.Dirs, gitHome+"/.config/ws")
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 2 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
-		t.Fatalf("Plan = %v, %v; want the directory and a write", p.Changes, err)
+	if err != nil || len(p.Changes) != 3 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
+		t.Fatalf("Plan = %v, %v; want the directory and two writes", p.Changes, err)
 	}
 	m, g = gitReady()
 	if err := g.Apply(context.Background(), mustPlan(t, g)); err != nil {
@@ -183,6 +187,27 @@ func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 	m.Modes[gitHome+"/.config/ws/gitconfig"] = 0o600
 	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 1 {
 		t.Errorf("Plan with a wrong mode = %v, %v; want one change", p.Changes, err)
+	}
+}
+
+func TestGitTrustsSecretivesKeyThroughItsScript(t *testing.T) {
+	m, g := gitReady()
+	pub := gitHome + "/" + sshcfg.SecretiveData + "/PublicKeys/a.pub"
+	g.Conf.GitSigningKey = pub
+	m.Files[pub] = []byte(gitKey)
+	m.Results["ssh-keygen -l -f "+pub] = effecttest.Result{}
+	p, err := g.Plan(context.Background())
+	if err != nil || len(p.Changes) != 3 || !strings.Contains(p.Changes[0].String(), "secretive-ssh-keygen") {
+		t.Errorf("Plan = %v, %v; want the script, allowed signers and gitconfig", p.Changes, err)
+	}
+}
+
+func TestGitWaitsForTheKeyBeforeAllowedSigners(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
+	p, err := gitStep(m, nil).Plan(context.Background())
+	if err != nil || len(p.Changes) != 3 || !strings.HasSuffix(p.Changes[1].String(), "allowed_signers once the key is made") {
+		t.Errorf("Plan = %v, %v; want the key, a wait and gitconfig", p.Changes, err)
 	}
 }
 
