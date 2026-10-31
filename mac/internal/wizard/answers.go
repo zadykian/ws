@@ -1,12 +1,18 @@
 package wizard
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/mac/internal/step"
 )
+
+// errMissing stops Plan's walk over the keys at the first that mac.conf lacks.
+var errMissing = errors.New("mac.conf lacks a key")
 
 // Answers is the stage that gives mac.conf the values it lacks, each from the environment, under
 // its key's name, or asked at the terminal. It runs before any stage that reads mac.conf.
@@ -27,6 +33,10 @@ func (*Answers) Name() string { return answers }
 
 // WaitsOn is empty: nothing is set up before mac.conf.
 func (*Answers) WaitsOn() string { return "" }
+
+type todo string
+
+func (c todo) String() string { return string(c) }
 
 func (a *Answers) file() confFile { return confFile{a.Conf, answers, a.M, a.Out} }
 
@@ -52,4 +62,32 @@ func (a *Answers) role(name string) string {
 		}
 	}
 	return ""
+}
+
+// sequence returns the walk over the keys, which gets the value of a key that mac.conf lacks from ask.
+func (a *Answers) sequence(c conf.Conf, text string, ask func(question) (string, error)) *sequence {
+	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_GIT_NAME": c.GitName, "WS_REMOTE": c.Remote,
+		"WS_HOOK": c.Hook}
+	return &sequence{vals: vals, lacks: func(key string) bool { return !hasLine(text, key) }, ask: ask, role: a.role}
+}
+
+// Plan finds the first key that mac.conf lacks, or that mac.conf with all its keys is refused.
+func (a *Answers) Plan(context.Context) (step.Plan, error) {
+	text, c, err := a.load()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	first := ""
+	err = a.sequence(c, text, func(q question) (string, error) { first = q.key; return "", errMissing }).run()
+	switch {
+	case errors.Is(err, errMissing):
+		return step.Plan{Changes: []step.Change{todo(fmt.Sprintf(
+			"%s: would ask for the values that %s lacks, from %s on, and add them", answers, a.Conf, first))}}, nil
+	case err != nil:
+		return step.Plan{}, err
+	}
+	if _, errs := conf.Parse(text); len(errs) > 0 {
+		return step.Plan{Changes: []step.Change{todo(answers + ": setup.sh would refuse " + a.Conf)}}, nil
+	}
+	return step.Plan{}, nil
 }

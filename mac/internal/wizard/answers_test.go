@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -32,5 +33,25 @@ func TestAnswersRole(t *testing.T) {
 	a, _ := newAnswers(t, "")
 	if got := a.role("shell_git_email"); got != "ada@example.com" || a.role("shell_other") != "" {
 		t.Errorf("role = %q", got)
+	}
+}
+
+func TestAnswersPlan(t *testing.T) {
+	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_GIT_NAME=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\nWS_HOOK=\n"
+	for name, tc := range map[string]struct{ text, want string }{
+		"no file":  {"", "would ask for the values that /h/.config/ws/mac.conf lacks, from WS_TARGET on"},
+		"a gap":    {strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
+		"complete": {all, ""},
+		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "setup.sh would refuse"},
+	} {
+		a, _ := newAnswers(t, tc.text)
+		p, err := a.Plan(context.Background())
+		got := ""
+		if len(p.Changes) > 0 {
+			got = p.Changes[0].String()
+		}
+		if err != nil || !strings.Contains(got, tc.want) || (tc.want == "" && got != "") {
+			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
+		}
 	}
 }
