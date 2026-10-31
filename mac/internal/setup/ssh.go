@@ -66,6 +66,10 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws, with mac.conf's addresses, goes there",
 			f.ConfigDirLink)
 	}
+	for _, h := range sshcfg.OwnHosts(string(f.UserConfig.Text), "ws", "ws-ssh") {
+		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
+			"read first, win where both set a key", h.Line, h.Text, h.Names)
+	}
 	return step.Plan{Changes: sshChanges(f, text)}, nil
 }
 
