@@ -14,8 +14,8 @@ func TestDiff(t *testing.T) {
 	}{
 		{"equal", "a\nb\n", "a\nb\n", ""},
 		{"empty", "", "", ""},
-		{"added file", "", "a\n", "--- f\n+++ f\n@@ -1,0 +1,1 @@\n+a\n"},
-		{"removed line", "a\nb\n", "a\n", "--- f\n+++ f\n@@ -1,2 +1,1 @@\n a\n-b\n"},
+		{"added file", "", "a\n", "--- f\n+++ f\n@@ -0,0 +1 @@\n+a\n"},
+		{"removed line", "a\nb\n", "a\n", "--- f\n+++ f\n@@ -1,2 +1 @@\n a\n-b\n"},
 		{"changed line", "a\nb\nc\n", "a\nx\nc\n", "--- f\n+++ f\n@@ -1,3 +1,3 @@\n a\n-b\n+x\n c\n"},
 	}
 	for _, tt := range tests {
