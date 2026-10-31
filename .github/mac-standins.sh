@@ -7,7 +7,7 @@
 #
 # - JetBrains Gateway.app, an empty directory in ~/Applications, which spares its cask;
 # - ~/.local/bin/cld, whose version names no release, so that setup.sh neither installs nor updates
-#   it, as a cld built from a clone.
+#   it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no LocalCommand.
 
 set -eu
 

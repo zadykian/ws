@@ -1,13 +1,57 @@
 # shellcheck shell=sh
 # The part of mac/setup.sh that sets up cld, for cld restore tabs, which reopens Ghostty's tabs of
 # cld's sessions. setup.sh sources it after setup-ssh.sh, whose header it uses, and calls cld_mac
-# after extras. cld_mac installs and updates cld wherever setup.sh runs. Ghostty's part, cld.ghostty,
-# needs Ghostty's app. cld_mac warns where cld or Ghostty's files can't be set up, so that the run
-# goes on to the tunnel.
+# after ssh_files. ssh_config calls cld_ssh_lines. cld_mac installs and updates cld wherever
+# setup.sh runs. Ghostty's part, cld.ghostty and the lines of ssh's hosts, needs Ghostty's app.
+# cld_mac warns where cld or Ghostty's files can't be set up, so that the run goes on to the tunnel.
 
 # cld where its install.sh puts it, and the releases whose latest has that script.
 cld_bin=$HOME/.local/bin/cld
 cld_releases=https://github.com/zadykian/cld/releases
+# 1 where ssh's hosts start cld's watcher, as cld_tabs_check sets it.
+cld_tabs=0
+
+# cld_ghostty succeeds where Ghostty's app is there: Ghostty.app in /Applications or
+# ~/Applications. Where WS_GHOSTTY_APP is set, as on CI, the path it names stands in for both.
+cld_ghostty() {
+    if [ -n "${WS_GHOSTTY_APP-}" ]; then
+        [ -d "$WS_GHOSTTY_APP" ]
+    else
+        [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ]
+    fi
+}
+
+# cld_tabs_check sets cld_tabs to 1 where Ghostty's app is there and the cld in ~/.local/bin has
+# restore tabs, else 0. cld help restore tabs fails in a cld without it, so that ssh never runs a
+# cld that would refuse restore tabs --watch at each connection.
+cld_tabs_check() {
+    cld_tabs=0
+    if cld_ghostty && [ -x "$cld_bin" ] && "$cld_bin" help restore tabs >/dev/null 2>&1; then
+        cld_tabs=1
+    fi
+}
+
+# cld_ssh_lines prints the lines of Host ws ws-ssh that start cld's watcher, where cld_tabs is 1.
+# ssh runs LocalCommand through the user's shell once it has connected, with %d as the Mac's home
+# (ssh_config(5)). The line starts the watcher in a Ghostty pane alone, so that macOS charges its
+# Apple Events to Ghostty. Elsewhere, or without cld, it does nothing and exits 0.
+cld_ssh_lines() {
+    [ "$cld_tabs" = 1 ] || return 0
+    cat <<'EOF'
+    # In a Ghostty pane, start cld's watcher, unless one runs, for cld restore tabs.
+    PermitLocalCommand yes
+    LocalCommand [ "$TERM_PROGRAM" != ghostty ] || [ ! -x %d/.local/bin/cld ] || %d/.local/bin/cld restore tabs --watch
+EOF
+}
+
+# cld_would_tabs says, under --check, that config.d/ws would gain the lines that start cld's
+# watcher where Ghostty's app is there and the cld to come has restore tabs. --check cannot run a
+# cld it has not installed.
+cld_would_tabs() {
+    [ "$cld_tabs" = 0 ] && cld_ghostty || return 0
+    ws_say "would add the lines that start cld's watcher to config.d/ws," \
+        "where that cld has restore tabs"
+}
 
 # cld_install installs cld into ~/.local/bin, replacing any cld there, with the install.sh of cld's
 # latest release, as the claude role does on ws. install.sh checks the binary against the
@@ -16,6 +60,7 @@ cld_releases=https://github.com/zadykian/cld/releases
 cld_install() {
     if ws_checking; then
         ws_say "would install cld into ~/.local/bin with the install.sh of its latest release"
+        cld_would_tabs
         return 0
     fi
     ws_tmp
@@ -76,16 +121,7 @@ cld_update() {
     cld_latest=${cld_latest##*/v}
     cld_release "$cld_latest" && cld_older "$cld_have" "$cld_latest" || return 0
     ws_say "would run cld update: cld $cld_have, the latest $cld_latest"
-}
-
-# cld_ghostty succeeds where Ghostty's app is there: Ghostty.app in /Applications or
-# ~/Applications. Where WS_GHOSTTY_APP is set, as on CI, the path it names stands in for both.
-cld_ghostty() {
-    if [ -n "${WS_GHOSTTY_APP-}" ]; then
-        [ -d "$WS_GHOSTTY_APP" ]
-    else
-        [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ]
-    fi
+    cld_would_tabs
 }
 
 # cld_ghostty_conf prints the config file that Ghostty's menu opens (src/config/edit.zig, 1.3.1
@@ -214,6 +250,7 @@ EOF
 }
 
 # cld_mac sets up cld, itself and its update, and Ghostty's settings where Ghostty's app is there.
+# Then it sets cld_tabs again, which main compares, to write config.d/ws again where it changed.
 cld_mac() {
     if [ -x "$cld_bin" ]; then
         cld_update
@@ -221,4 +258,5 @@ cld_mac() {
         cld_install
     fi
     ! cld_ghostty || cld_ghostty_files
+    cld_tabs_check
 }

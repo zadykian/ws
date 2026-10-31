@@ -14,7 +14,8 @@ header="# Written by ws's mac/setup.sh"
 # the forward's port, and the cable comes before the LAN. localnetwork matches the Mac's own
 # addresses, with no probe. originalhost matches the name typed, which a HostName set above does
 # not change, unlike Match host. Until ws goes through the tunnel, via_tunnel=1, ws takes the ways
-# of ws-ssh too, so that an ssh ws that worked before goes on working.
+# of ws-ssh too, so that an ssh ws that worked before goes on working. setup-cld.sh's
+# cld_ssh_lines ends the last block with the lines that start cld's watcher, where they apply.
 # shellcheck disable=SC2154 # ws_cable_net is lib.sh's, and via_tunnel setup.sh's
 ssh_config() {
     # The hosts of the direct ways, for Host and for Match originalhost's list.
@@ -74,6 +75,7 @@ Host ws ws-ssh
 $(ws_identity_lines)
     ServerAliveInterval 30
 EOF
+    cld_ssh_lines
 }
 
 # ssh_whole stops where ssh refuses the new config.d/ws, $1, read first, then ~/.ssh/config, then
