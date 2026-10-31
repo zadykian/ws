@@ -88,5 +88,11 @@ func (h *HostKey) Plan(ctx context.Context) (step.Plan, error) {
 	if h.known(ctx, way.KnownHosts) {
 		return step.Plan{}, nil
 	}
+	if h.Check {
+		// Under --check the plan shows what a run would ask, and the line it would add.
+		if err := h.add(ctx); err != nil {
+			return step.Plan{}, err
+		}
+	}
 	return step.Plan{Changes: []step.Change{hostAdd{way.KnownHosts}}}, nil
 }
