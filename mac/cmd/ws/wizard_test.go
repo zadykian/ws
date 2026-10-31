@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -59,5 +60,16 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	}
 	if got := string(e.m.(*effecttest.Machine).Files["/t/ws-wizard.lock/mac.conf"]); !strings.HasPrefix(got, "WS_TARGET=cloud\n") {
 		t.Errorf("scratch mac.conf = %q", got)
+	}
+}
+
+func TestIsTerminalIsNotDevNull(t *testing.T) {
+	null, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = null.Close() }()
+	if isTerminal(null) {
+		t.Error("isTerminal(/dev/null) = true")
 	}
 }

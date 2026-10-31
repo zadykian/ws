@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
@@ -75,9 +76,18 @@ func repoDir(getenv func(string) string) string {
 func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, check bool) []step.Step {
 	conf := confPath(e.getenv, e.pwd)
 	scratch := strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
+	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
+	// as wizard.sh pointed WS_CONF there.
+	later := conf
+	if check {
+		later = scratch
+	}
 	return []step.Step{
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
+		&wizard.MacKey{Conf: later, Home: e.getenv("HOME"),
+			Lock: strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName, Tty: e.tty,
+			M: e.m, P: p, Out: out, Sleep: time.Sleep},
 	}
 }
 
