@@ -27,6 +27,8 @@ type Daemon struct {
 	Tun, StateFile, Dir string
 	Out                 io.Writer // the log
 	Now                 func() time.Time
+	// CheckEvery is how often a round looks for the handshake.
+	CheckEvery time.Duration
 	// Events is the channel of the loop. Signals, timers and the watch of network changes send to
 	// it through Send.
 	Events chan Event
@@ -35,6 +37,11 @@ type Daemon struct {
 	key        string
 	inUse      tunnel.Candidate // Tier TierNone where no path answers; empty before the first round
 	since      time.Time        // when inUse began
+	peerConf   tunnel.Conf      // the settings that the last round used
+	seen       []tunnel.Iface   // the Mac's addresses at the start of the last round
+	resolved   netip.Addr       // ws's name as the last round resolved it
+	misses     int              // pings of ws missed in a row
+	round      []tunnel.Attempt // the endpoints tried since the round began, empty between rounds
 	allowed    tunnel.Allowed   // what the last try left out
 	routed     []netip.Prefix
 	unroutable []netip.Prefix
@@ -47,6 +54,7 @@ type Event int
 // The events.
 const (
 	Tick   Event = iota // TickEvery after the last tick or reload ended
+	Check               // look again at the choice, as a round waits for a handshake
 	Stop                // SIGTERM
 	Exited              // wireguard-go has exited
 )
@@ -55,7 +63,7 @@ const (
 func New(m effect.Machine, dev Device, tun, dir, stateFile string, out io.Writer) *Daemon {
 	return &Daemon{
 		M: m, Dev: dev, Tun: tun, Dir: dir, StateFile: stateFile, Out: out, Now: time.Now,
-		Events: make(chan Event, 64),
+		CheckEvery: time.Second, Events: make(chan Event, 64),
 	}
 }
 
@@ -65,6 +73,10 @@ func (d *Daemon) Send(e Event) { d.Events <- e }
 // say logs a line, with the time.
 func (d *Daemon) say(format string, a ...any) {
 	_, _ = fmt.Fprintf(d.Out, "%s %s\n", d.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, a...))
+}
+
+func (d *Daemon) later(e Event, after time.Duration) {
+	time.AfterFunc(after, func() { d.Send(e) })
 }
 
 func (d *Daemon) run(ctx context.Context, name string, args ...string) error {
