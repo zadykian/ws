@@ -45,6 +45,20 @@ func (m *Machine) RunRoot(_ context.Context, name string, args ...string) ([]byt
 	return m.run("root", name, args)
 }
 
+// RunShown records the command as Run's or RunRoot's and returns its result from the table.
+func (m *Machine) RunShown(_ context.Context, root bool, name string, args ...string) ([]byte, error) {
+	if root {
+		return m.run("root", name, args)
+	}
+	return m.run("run", name, args)
+}
+
+// Pass records the command as Run's or RunRoot's and returns the error of its result.
+func (m *Machine) Pass(ctx context.Context, root bool, name string, args ...string) error {
+	_, err := m.RunShown(ctx, root, name, args...)
+	return err
+}
+
 func (m *Machine) run(kind, name string, args []string) ([]byte, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

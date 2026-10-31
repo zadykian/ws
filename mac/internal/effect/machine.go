@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -16,6 +17,15 @@ type OSMachine struct {
 	Sudo []string
 	// Owner is the uid:gid that root files get. Empty means 0:0; tests set their own.
 	Owner string
+	// Stderr takes what RunShown and Pass pass on. Nil means os.Stderr.
+	Stderr io.Writer
+}
+
+func (m OSMachine) stderr() io.Writer {
+	if m.Stderr == nil {
+		return os.Stderr
+	}
+	return m.Stderr
 }
 
 func (m OSMachine) sudo() []string {
@@ -46,6 +56,31 @@ func (m OSMachine) Run(ctx context.Context, name string, args ...string) ([]byte
 // RunRoot runs the command through sudo.
 func (m OSMachine) RunRoot(ctx context.Context, name string, args ...string) ([]byte, error) {
 	return output(m.command(ctx, append(append(m.sudo(), name), args...)))
+}
+
+// RunShown runs the command and returns its standard output. Its standard error goes to Stderr.
+func (m OSMachine) RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error) {
+	cmd := m.command(ctx, m.argv(root, name, args))
+	cmd.Stderr = m.stderr()
+	return output(cmd)
+}
+
+// Pass runs the command with its standard output and error sent to Stderr, and standard input kept,
+// so that sudo can ask for a password.
+func (m OSMachine) Pass(ctx context.Context, root bool, name string, args ...string) error {
+	cmd := m.command(ctx, m.argv(root, name, args))
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, m.stderr(), m.stderr()
+	if err := cmd.Run(); err != nil {
+		return commandError(cmd, err)
+	}
+	return nil
+}
+
+func (m OSMachine) argv(root bool, name string, args []string) []string {
+	if root {
+		return append(append(m.sudo(), name), args...)
+	}
+	return append([]string{name}, args...)
 }
 
 func (OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
