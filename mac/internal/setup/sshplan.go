@@ -32,6 +32,8 @@ type sshFacts struct {
 	UserConfig path // ~/.ssh/config, whose text is the file a link points to
 	// UserConfigNeedsInclude is whether it lacks the Include.
 	UserConfigNeedsInclude bool
+	// IncludeLine is the line of its Include of config.d/ws, or 0.
+	IncludeLine int
 	// ConfigDirLink is where ~/.ssh/config.d points, or empty.
 	ConfigDirLink string
 	// Stamp is the time suffix of the copy of the old ~/.ssh/config.
