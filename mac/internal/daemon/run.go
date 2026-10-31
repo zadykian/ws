@@ -38,6 +38,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 // start reads the settings and gives the device its key, the utun its address, and ws's address a
 // route into the utun.
 func (d *Daemon) start(ctx context.Context) error {
+	_ = d.run(ctx, "rm", "-f", d.StateFile, d.StateFile+".new") // a dead run's state would mislead status
 	var err error
 	if d.set, err = ReadSettings(ctx, d.M, d.Dir); err != nil {
 		return err
