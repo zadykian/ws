@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	routesUsage = "usage: ws tunnel routes [--check] NAME [CIDR...]\n"
-	loadedUsage = "usage: ws tunnel loaded\n"
-	daemonLabel = "com.github.zadykian.ws-tunnel"
+	routesUsage   = "usage: ws tunnel routes [--check] NAME [CIDR...]\n"
+	resolverUsage = "usage: ws resolver [--check] DOMAIN [ADDRESS...]\n"
+	loadedUsage   = "usage: ws tunnel loaded\n"
+	daemonLabel   = "com.github.zadykian.ws-tunnel"
 )
 
 // tunnelLoaded succeeds where launchd has the tunnel's daemon loaded. Anyone may read launchd's
@@ -41,6 +42,18 @@ func tunnelRoutes(ctx context.Context, args []string, m effect.Machine, stderr i
 	out, flush := routeOut(stderr)
 	defer flush()
 	return runRoute(ctx, &setup.Routes{Set: args[0], Networks: args[1:], M: m, Out: out, Check: check, Alone: true}, out, check, stderr)
+}
+
+// resolverCommand has macOS ask the nameservers for DOMAIN, or drop its file with none.
+func resolverCommand(ctx context.Context, args []string, m effect.Machine, stderr io.Writer) int {
+	check, args := checkFlag(args)
+	if len(args) == 0 {
+		_, _ = io.WriteString(stderr, resolverUsage)
+		return 2
+	}
+	out, flush := routeOut(stderr)
+	defer flush()
+	return runRoute(ctx, &setup.Resolver{Domain: args[0], Addresses: args[1:], M: m, Out: out}, out, check, stderr)
 }
 
 // checkFlag takes a leading --check off the arguments.

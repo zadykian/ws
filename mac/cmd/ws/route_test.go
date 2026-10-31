@@ -44,4 +44,9 @@ func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
 		stderr.String() != "ws: ws tunnel routes test: 0.0.0.0/0 overlaps the tunnel's 10.99.0.0/24\n" {
 		t.Errorf("routes: status = %d, stderr = %q", got, stderr.String())
 	}
+	stderr.Reset()
+	if got := resolverCommand(context.Background(), nil, effecttest.NewMachine(), &stderr); got != 2 ||
+		!strings.HasPrefix(stderr.String(), "usage: ws resolver") {
+		t.Errorf("resolver: status = %d, stderr = %q", got, stderr.String())
+	}
 }
