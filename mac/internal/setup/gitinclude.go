@@ -7,9 +7,15 @@ import (
 	"io/fs"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/zadykian/ws/mac/internal/gitcfg"
+	"github.com/zadykian/ws/mac/internal/step"
 )
+
+// includeText is what goes at the top of ~/.gitconfig, so that the file's own settings come after
+// the include and win.
+const includeText = "[include]\n    path = ~/.config/ws/gitconfig\n"
 
 // gitInclude is what the step read of ~/.gitconfig.
 type gitInclude struct {
@@ -74,4 +80,43 @@ func (g *Git) include(ctx context.Context) (gitInclude, error) {
 		return in, fmt.Errorf("cannot read %s: %w", file, err)
 	}
 	return in, nil
+}
+
+// includeChanges puts an include of ~/.config/ws/gitconfig at the top of ~/.gitconfig where there is
+// none. It makes the file where missing, and keeps the old one as ~/.gitconfig.TIME~, as the ssh step
+// keeps ~/.ssh/config. It warns of the settings of identity and signing in the file itself, which
+// win, and in git's XDG file, which lose.
+func (g *Git) includeChanges(ctx context.Context, in gitInclude) []step.Change {
+	if in.Included {
+		return nil
+	}
+	now := time.Now
+	if g.Now != nil {
+		now = g.Now
+	}
+	mode := fs.FileMode(0o644)
+	var cs []step.Change
+	text := includeText
+	if in.Exists {
+		mode = in.Mode
+		cs = append(cs, Backup{in.Path, in.Path + "." + now().Format("20060102150405") + "~"})
+		text += "\n" + string(in.Text)
+	}
+	cs = append(cs, Write{in.Path, in.Text, []byte(text), in.Exists, mode})
+	if in.Own != "" {
+		g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
+			in.Path, in.Own)
+	}
+	xdg := g.XDG
+	if xdg == "" {
+		xdg = g.Home + "/.config"
+	}
+	if _, err := g.M.Stat(xdg + "/git/config"); err == nil {
+		names, _ := g.lines(ctx, xdg+"/git/config", "--name-only", "--list")
+		if own := gitcfg.Own(names); own != "" {
+			g.note("%s/git/config's settings of %s come before the include in ~/.gitconfig, so "+
+				"~/.config/ws/gitconfig's win over them", xdg, own)
+		}
+	}
+	return cs
 }
