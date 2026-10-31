@@ -17,6 +17,8 @@ func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 		switch c := c.(type) {
 		case Install:
 			err = t.install(ctx, c)
+		case Launchctl:
+			err = t.launchctl(ctx, c)
 		case KeyMake:
 			err = t.makeKey(ctx)
 		default:

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"time"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
@@ -37,6 +38,8 @@ type Tunnel struct {
 	Out  effect.Out
 	// Check is set under --check.
 	Check bool
+	// Sleep waits between launchctl's tries. Nil means time.Sleep.
+	Sleep func(time.Duration)
 
 	copied  bool // root's copy of ws is to change, which the daemon restarts for
 	keyMade bool // the Mac's key is to be made, which the daemon restarts for
@@ -85,7 +88,7 @@ func (t *Tunnel) program(self []byte) (step.Change, error) {
 }
 
 // Plan plans ws, root's copy and the Mac's key.
-func (t *Tunnel) Plan(_ context.Context) (step.Plan, error) {
+func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	self, err := t.self()
 	if err != nil {
 		return step.Plan{}, fmt.Errorf("cannot read ws: %w", err)
@@ -99,5 +102,21 @@ func (t *Tunnel) Plan(_ context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: append(append(cs, copied...), key...)}, nil
+	cs = append(append(cs, copied...), key...)
+	if t.Conf.PublicKey != "" {
+		d, err := t.daemon(ctx)
+		if err != nil {
+			return step.Plan{}, err
+		}
+		cs = append(cs, d...)
+	}
+	return step.Plan{Changes: cs}, nil
+}
+
+func (t *Tunnel) sleep(d time.Duration) {
+	if t.Sleep != nil {
+		t.Sleep(d)
+		return
+	}
+	time.Sleep(d)
 }
