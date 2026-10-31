@@ -13,8 +13,8 @@ Homebrew ([The Mac's tunnel](#the-macs-tunnel)) and two hosts for ssh:
   tunnel's UDP.
 
 The script is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone, with sudo
-where it needs root. It installs WireGuard's tools from Homebrew, which is
-[installed](https://brew.sh) by hand first:
+where it needs root. It installs cld into `~/.local/bin` too, for `cld restore tabs`. It installs
+WireGuard's tools from Homebrew, which is [installed](https://brew.sh) by hand first:
 
 ```sh
 git clone https://github.com/zadykian/ws ~/repository/ws
