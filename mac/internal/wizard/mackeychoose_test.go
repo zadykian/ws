@@ -30,3 +30,21 @@ func TestMacKeyChooseNo(t *testing.T) {
 		t.Errorf("mac.conf = %q", got)
 	}
 }
+
+func TestMacKeyGit(t *testing.T) {
+	k, m, out := newMacKey(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\nWS_IDENTITY=~/k.pub\nWS_IDENTITY_AGENT=/s\n")
+	m.Dirs[keys] = 0o755
+	m.Files["/h/k.pub"], m.Files[keys+"/git.pub"] = []byte(pubText), []byte(p256)
+	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
+	m.Results["open -a Secretive"] = effecttest.Result{}
+	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+	if err := k.git(context.Background(), true); err != nil {
+		t.Fatalf("git = %v, saying %q", err, out.Lines)
+	}
+	if got := string(m.Files[confPathForTest]); !strings.HasSuffix(got, "\nWS_GIT_SIGNING_KEY=~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/git.pub\n") {
+		t.Errorf("mac.conf = %q", got)
+	}
+	if err := k.git(context.Background(), true); err != nil {
+		t.Errorf("git again = %v", err)
+	}
+}
