@@ -117,7 +117,7 @@ ask_read() {
 }
 
 # ask_check KEY VALUE [NEED] succeeds where mac.conf can take VALUE for KEY, and otherwise says why:
-# NEED where VALUE is empty, ws_conf's check of the line, and WS_LAN_ADDRESS inside WS_LAN. A
+# NEED where VALUE is empty, ws conf's check of the line, and WS_LAN_ADDRESS inside WS_LAN. A
 # newline in VALUE fails that check, as it would add a line of its own.
 ask_check() {
     if [ -z "$2" ]; then
@@ -125,15 +125,22 @@ ask_check() {
         ws_say "Answers: $3"
         return 1
     fi
-    if [ "$(ask_line "$1" "$2" | wc -l)" -ne 1 ] ||
-        ! ask_line "$1" "$2" | (ws_conf_lines /dev/stdin) 2>/dev/null; then
-        ws_say "Answers: $1=$2 is not $(ws_conf_form "$1")"
+    if [ "$(ask_line "$1" "$2" | wc -l)" -ne 1 ]; then
+        ws_say "Answers: $1 holds a newline, which would add a line of its own"
         return 1
     fi
-    if [ "$1" = WS_LAN_ADDRESS ] && ! ws_lan_host "$WS_LAN" "$2"; then
-        ws_say "Answers: $1=$2 is not $(ws_conf_form "$1"), $WS_LAN"
+    # WS_LAN_ADDRESS goes with WS_LAN, which ws conf reads beside it; the rest are lines alone.
+    ask_flag=--lines
+    [ "$1" != WS_LAN_ADDRESS ] || ask_flag=
+    ask_why=$({
+        [ -n "$ask_flag" ] || printf 'WS_LAN=%s\n' "$WS_LAN"
+        ask_line "$1" "$2"
+    } |
+        ws_conf_run ${ask_flag:+"$ask_flag"} /dev/stdin 2>&1 >/dev/null) || {
+        ws_say "Answers: $(printf '%s' "$ask_why" | sed -e 's/^ws conf: [^ ]*, line [0-9]*: //' \
+            -e 's/^ws conf: [^ ]*: //')"
         return 1
-    fi
+    }
 }
 
 # ask_line KEY VALUE prints KEY's line for mac.conf, VALUE in quotes where it holds a blank.
@@ -172,7 +179,7 @@ ask_write() {
             printf '%s' "$1"
         fi
     } >"$ask_file" || ws_die "$ask_stage: cannot write $ask_file"
-    (ws_conf_lines "$ask_file" && ws_conf_pairs "$ask_conf") || return 1
+    (ws_conf "$ask_file") || return 1
     if [ -L "$WS_CONF" ]; then
         ws_say "$ask_stage: $WS_CONF is a link to $(readlink "$WS_CONF"), which the wizard" \
             "leaves: add these lines to its file, then run the wizard again"

@@ -207,7 +207,7 @@ launchd_do() {
 # setup.sh's header stops the run, with a way out that ws_resolver's message lacks. A resolver
 # with the header goes once WS_RESOLVERS no longer names its domain. Under --check, key makes no
 # routes.d, where ws_tunnel_routes would stop, so a line says what would go there.
-# shellcheck disable=SC2046,SC2086 # ws_conf let in no character that globs, so the lists split bare
+# shellcheck disable=SC2046,SC2086,SC2153 # WS_RESOLVERS is ws_conf's, with no character that globs
 networks() {
     if ws_checking && [ -z "$(ws_root_attrs "$ws_etc/routes.d")" ]; then
         [ -z "$WS_TUNNEL_NETWORKS" ] || ws_say would put $WS_TUNNEL_NETWORKS in \
