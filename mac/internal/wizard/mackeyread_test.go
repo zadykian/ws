@@ -36,3 +36,23 @@ func TestMacKeyListed(t *testing.T) {
 		t.Errorf("listed said %q", out.Lines)
 	}
 }
+
+func TestMacKeySame(t *testing.T) {
+	k, m, _ := newMacKey(t, "")
+	m.Files["/h/k"], m.Files["/h/k.pub"] = []byte("private"), []byte(pubText)
+	m.Results["ln -sf /h/k "+lockDir+"/key"] = effecttest.Result{}
+	m.Results["rm -f "+lockDir+"/key"] = effecttest.Result{}
+	m.Results["ssh-keygen -l -f "+lockDir+"/key"] = effecttest.Result{Out: []byte("256 SHA256:aa me (ED25519)\n")}
+	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me (ED25519)\n")}
+	if !k.same(context.Background(), "/h/k") {
+		t.Error("same = false for one fingerprint")
+	}
+	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:bb me (ED25519)\n")}
+	if k.same(context.Background(), "/h/k") {
+		t.Error("same = true for two fingerprints")
+	}
+	delete(m.Files, "/h/k")
+	if k.same(context.Background(), "/h/k") {
+		t.Error("same = true without the private key")
+	}
+}
