@@ -158,7 +158,7 @@ their downloads. Without ws's key, `setup.sh` must make the Mac's key and load n
 command that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a
 second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their
 addresses. The stand-in for ws is a second wireguard-go on the runner, with the printed key as its
-peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws-tunnel status` must show a
+peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws tunnel status` must show a
 handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and `routes.d`
 in place, with the same pid. Then a network that `ws_tunnel_routes` adds must be routed into the
 daemon's utun, and a domain `ws_resolver` adds must show in `scutil --dns`
@@ -203,7 +203,7 @@ gh's, and of an add that leaves the account without the key. It must add the key
 account lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh,
 `setup.sh` must install Homebrew's once, and only with git's keys
 ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun, the job
-fails, as the daemon runs the same wireguard-go.
+fails, as the daemon's device makes a utun too.
 
 ## The rules
 
