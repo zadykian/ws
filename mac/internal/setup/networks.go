@@ -12,11 +12,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
-const (
-	routesFile   = tunnelDir + "/routes.d/mac-conf"
-	resolverDir  = "/etc/resolver"
-	routesAbsent = "once routes.d is made"
-)
+const resolverDir = "/etc/resolver"
 
 // Networks has the daemon route WS_TUNNEL_NETWORKS, from routes.d/mac-conf, and macOS ask the
 // nameservers of WS_RESOLVERS for their domains. A domain whose file lacks ws's header stops the
@@ -53,36 +49,8 @@ func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
-	networks := strings.Fields(n.Conf.TunnelNetworks)
-	if _, err := n.M.RootAttrs(tunnelDir + "/routes.d"); errors.Is(err, fs.ErrNotExist) {
-		switch {
-		case len(networks) == 0:
-			return nil, nil
-		case n.Check:
-			return []step.Change{Pending("would put " + strings.Join(networks, " ") + " in " + routesFile + " " + routesAbsent)}, nil
-		}
-		return nil, fmt.Errorf("%s/routes.d is missing: run ws's mac/setup.sh first", tunnelDir)
-	} else if err != nil {
-		return nil, err
-	}
-	var c step.Change
-	var err error
-	if len(networks) > 0 {
-		c, err = rootFile(n.M, routesFile, 0o644, []byte(routesText(networks)))
-	} else {
-		c, err = n.remove(routesFile)
-	}
-	if err != nil || c == nil {
-		return nil, err
-	}
-	cs := []step.Change{c}
-	if _, ok := c.(RootFix); ok || n.Check {
-		return cs, nil
-	}
-	if _, err := n.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel); err == nil {
-		cs = append(cs, Launchctl{Args: []string{"kill", "SIGHUP", "system/" + daemonLabel}, Routes: true})
-	}
-	return cs, nil
+	r := Routes{Set: "mac-conf", Networks: strings.Fields(n.Conf.TunnelNetworks), M: n.M, Check: n.Check}
+	return r.changes(ctx)
 }
 
 // remove plans the removal of root's file, if it is there.

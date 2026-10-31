@@ -11,6 +11,8 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
+const routesAbsent = "once routes.d is made"
+
 // Routes has the daemon route Networks, from the file Set in routes.d: a network a line. With no
 // network, it removes the file. The file outlives the daemon, but its routes go with its utun.
 type Routes struct {
