@@ -18,6 +18,8 @@ const signingStage = "Signing key"
 type Signing struct {
 	Gh  *Gh
 	Run *WsRun
+	// Check is set under --check, where the gh stage is pending and has not made the login yet.
+	Check bool
 }
 
 // Name is the stage's name.
@@ -59,6 +61,10 @@ func (s *Signing) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	if _, err := s.Gh.M.Run(ctx, path, "auth", "status", "-h", "github.com"); err != nil {
+		if s.Check {
+			s.Gh.Out.Say("%s: after %s on the Mac", signingStage, ghStage)
+			return step.Plan{}, nil
+		}
 		return step.Plan{}, errors.New(signingStage + ": the Mac's gh has no login: the stage " + ghStage + " mends it")
 	}
 	keys, err := s.Gh.api(ctx, path, "user/ssh_signing_keys")

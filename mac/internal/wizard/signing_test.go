@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -48,5 +49,20 @@ func TestSigningApply(t *testing.T) {
 	}
 	if !strings.Contains(strings.Join(m.Calls, "\n"), "gh ssh-key add /l/signing.pub --type signing --title ws1") {
 		t.Errorf("calls = %q", m.Calls)
+	}
+}
+
+func TestSigningPlanWaitsOnGhUnderCheck(t *testing.T) {
+	s, m := newSigning("signing ssh-ed25519 AAA\n", "")
+	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{Err: errors.New("logged out")}
+	out := &effecttest.Out{}
+	s.Gh.Out = out
+	if _, err := s.Plan(context.Background()); err == nil {
+		t.Fatal("Plan without --check passed a gh with no login")
+	}
+	s.Check = true
+	p, err := s.Plan(context.Background())
+	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "after gh on the Mac") {
+		t.Errorf("Plan = %v, %v; out %q", p, err, out.Lines)
 	}
 }

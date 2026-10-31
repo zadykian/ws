@@ -104,7 +104,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		&wizard.RootKey{Host: host, Gh: gh},
 		run,
 		&wizard.WsClaude{Run: run, Tty: e.tty},
-		&wizard.Signing{Gh: gh, Run: run},
+		&wizard.Signing{Gh: gh, Run: run, Check: check},
 	}
 }
 
