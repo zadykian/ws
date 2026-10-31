@@ -12,6 +12,7 @@ import (
 )
 
 func TestRun(t *testing.T) {
+	boom := errors.New("boom")
 	tests := []struct {
 		name        string
 		check       bool
@@ -98,6 +99,44 @@ func TestRun(t *testing.T) {
 			wantChanged: true,
 			wantLog:     []string{"plan a", "plan b"},
 			wantOut:     []string{"say: b: y"},
+		},
+		{
+			name: "a wait on a later step",
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{
+					&fake{name: "a", waitsOn: "b", log: l},
+					&fake{name: "b", log: l},
+				}
+			},
+			wantErr: `a waits on "b", which is not an earlier step`,
+		},
+		{
+			name: "a wait on itself",
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{&fake{name: "a", waitsOn: "a", log: l}}
+			},
+			wantErr: `a waits on "a", which is not an earlier step`,
+		},
+		{
+			name: "a plan fails",
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{&fake{name: "a", planErr: boom, log: l}}
+			},
+			wantErr: "a: planning: boom",
+			wantLog: []string{"plan a"},
+		},
+		{
+			name: "an apply fails",
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{
+					&fake{name: "a", todo: []step.Change{change("x")}, applyErr: boom, log: l},
+					&fake{name: "b", log: l},
+				}
+			},
+			wantChanged: true,
+			wantErr:     "a: applying: boom",
+			wantLog:     []string{"plan a", "apply a"},
+			wantOut:     []string{"say: a: applying 1 change(s)"},
 		},
 	}
 	for _, tt := range tests {
