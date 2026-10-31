@@ -10,7 +10,7 @@ ws_git_signing_key: "{{ ws_home }}/.ssh/id_ed25519_signing"
 # Versions, each named for the role that installs it.
 
 # Go, in /usr/local/go.
-devtools_go_version: "1.27.1"
+devtools_go_version: "1.27.3"
 # Node's major version: NodeSource's repository node_MAJOR.x.
 devtools_node_major: 24
 # The .NET SDKs, from Ubuntu's archive or, for those it lacks, the dotnet/backports PPA.
