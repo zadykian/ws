@@ -96,6 +96,9 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	setup := wizardSetup(e, out, later)
 	hook := &wizard.HookMac{Host: host, Gh: gh, Home: e.getenv("HOME"), M: e.m, Out: out}
 	hand.Late(hook.Hand)
+	root := &wizard.RootKey{Host: host, Gh: gh}
+	hookWs := &wizard.HookWs{Host: host, Run: run, Mac: hook, User: e.getenv("USER"), Tty: e.tty, M: e.m, Out: out,
+		Files: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}}
 	return []step.Step{
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
@@ -105,15 +108,15 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		gh,
 		setup,
 		host,
-		&wizard.RootKey{Host: host, Gh: gh},
+		root,
 		run,
 		&wizard.WsClaude{Run: run, Tty: e.tty},
 		&wizard.Signing{Gh: gh, Run: run, Check: check},
 		&wizard.Tunnel{Host: host, Run: run, Setup: setup, Hand: hand, Home: e.getenv("HOME"),
 			Sleep: time.Sleep, M: e.m, Out: out},
 		hook,
-		&wizard.HookWs{Host: host, Run: run, Mac: hook, User: e.getenv("USER"), Tty: e.tty, M: e.m, Out: out,
-			Files: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}},
+		hookWs,
+		&wizard.Words{Host: host, Root: root, Hook: hookWs, Files: hookWs.Files, Home: e.getenv("HOME"), M: e.m, Out: out},
 	}
 }
 
