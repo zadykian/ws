@@ -84,3 +84,17 @@ func TestCableApplyEnvPortOutsideList(t *testing.T) {
 		t.Errorf("Apply = %v; want a refusal of the environment's port", err)
 	}
 }
+
+func TestCableHand(t *testing.T) {
+	c, _, _ := newCable(t, "", "eth0 - -\n", nil)
+	c.ports = []cablePort{{"eth0", "-", "-"}}
+	var h Hand
+	c.Hand(context.Background(), &h)
+	var b strings.Builder
+	h.Close(context.Background(), &b)
+	for _, want := range []string{"dock the Mac", "plugs into eth0, which ws keeps down", "WS_CABLE_SERVICE="} {
+		if !strings.Contains(b.String(), want) {
+			t.Errorf("list %q lacks %q", b.String(), want)
+		}
+	}
+}
