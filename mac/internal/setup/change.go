@@ -74,7 +74,7 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 			return fmt.Errorf("%s failed: %w", c.line(), err)
 		}
 	default:
-		return applyRoot(ctx, m, c)
+		return applyRootFile(ctx, m, out, c)
 	}
 	return nil
 }
