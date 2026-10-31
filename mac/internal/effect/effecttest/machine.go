@@ -19,12 +19,16 @@ type Machine struct {
 	Files   map[string][]byte
 	Root    map[string]effect.Attrs // the files root owns: ReadFile cannot read them
 	Results map[string]Result       // by the command line, as "name arg arg"
+	Dirs    map[string]fs.FileMode  // the directories, with their modes
+	Links   map[string]string       // the links, to the paths they point to
+	Modes   map[string]fs.FileMode  // the modes set on files, where not 0644
 	Calls   []string                // each call, as "run NAME ARG", "root NAME ARG", "write PATH" ...
 }
 
 // NewMachine returns an empty Machine.
 func NewMachine() *Machine {
-	return &Machine{Files: map[string][]byte{}, Root: map[string]effect.Attrs{}, Results: map[string]Result{}}
+	return &Machine{Files: map[string][]byte{}, Root: map[string]effect.Attrs{}, Results: map[string]Result{},
+		Dirs: map[string]fs.FileMode{}, Links: map[string]string{}, Modes: map[string]fs.FileMode{}}
 }
 
 // ReadFile returns the file, or fs.ErrNotExist.

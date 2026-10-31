@@ -30,6 +30,7 @@ func (m *Machine) write(kind, path string, data []byte, perm fs.FileMode) error 
 	defer m.mu.Unlock()
 	m.Calls = append(m.Calls, fmt.Sprintf("%s %s %o", kind, path, perm))
 	m.Files[path] = append([]byte(nil), data...)
+	m.Modes[path] = perm.Perm()
 	return nil
 }
 
@@ -53,4 +54,31 @@ func (m *Machine) run(kind, name string, args []string) ([]byte, error) {
 		return nil, fmt.Errorf("effecttest: no result for %q", line)
 	}
 	return r.Out, r.Err
+}
+
+// Stat describes a directory, a link or a file of the maps. A file's mode is 0644 unless Modes has it.
+func (m *Machine) Stat(path string) (effect.Info, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Calls = append(m.Calls, "stat "+path)
+	info := effect.Info{Link: m.Links[path]}
+	target := path
+	if info.Link != "" {
+		target = info.Link
+	}
+	if mode, ok := m.Dirs[target]; ok {
+		info.Mode = mode | fs.ModeDir
+		return info, nil
+	}
+	if _, ok := m.Files[target]; ok {
+		info.Mode = 0o644
+		if mode, ok := m.Modes[target]; ok {
+			info.Mode = mode
+		}
+		return info, nil
+	}
+	if info.Link != "" {
+		return info, nil
+	}
+	return effect.Info{}, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
 }

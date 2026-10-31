@@ -37,8 +37,18 @@ type Attrs struct {
 	Mode     fs.FileMode
 }
 
+// Info is what Stat finds of a path.
+type Info struct {
+	// Mode is the mode of the file a link points to, with its type bits.
+	Mode fs.FileMode
+	// Link is where the path points, or empty where it is no link.
+	Link string
+}
+
 // Machine reads and changes the Mac.
 type Machine interface {
+	// Stat returns fs.ErrNotExist where the path is missing, and describes a dangling link.
+	Stat(path string) (Info, error)
 	// ReadFile returns fs.ErrNotExist where the file is missing.
 	ReadFile(path string) ([]byte, error)
 	WriteFile(path string, data []byte, perm fs.FileMode) error

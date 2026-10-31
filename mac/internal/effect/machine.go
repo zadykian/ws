@@ -67,3 +67,20 @@ func commandError(cmd *exec.Cmd, err error) error {
 	}
 	return fmt.Errorf("%v: %w", cmd.Args, err)
 }
+
+// Stat describes the path. A link that points nowhere has a Link and no Mode.
+func (OSMachine) Stat(path string) (Info, error) {
+	var info Info
+	if l, err := os.Readlink(path); err == nil {
+		info.Link = l
+	}
+	fi, err := os.Stat(path)
+	if err != nil {
+		if info.Link != "" && errors.Is(err, fs.ErrNotExist) {
+			return info, nil
+		}
+		return Info{}, err
+	}
+	info.Mode = fi.Mode()
+	return info, nil
+}
