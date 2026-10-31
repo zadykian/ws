@@ -143,11 +143,26 @@ func TestGitApplyMakesTheKey(t *testing.T) {
 	}
 }
 
+const (
+	includeText   = "[include]\n    path = ~/.config/ws/gitconfig\n"
+	gitConfigFile = gitHome + "/.gitconfig"
+)
+
+// gitConfig has ~/.gitconfig hold text, and git config answer with the include paths and the names
+// of the settings in it.
+func gitConfig(m *effecttest.Machine, text, paths, names string) {
+	m.Files[gitConfigFile] = []byte(text)
+	const cmd = "git config --file " + gitConfigFile
+	m.Results[cmd+" --type path --get-all include.path"] = effecttest.Result{Out: []byte(paths)}
+	m.Results[cmd+" --name-only --list"] = effecttest.Result{Out: []byte(names)}
+}
+
 // gitReady is a Mac with the key and gh there.
 func gitReady() (*effecttest.Machine, *setup.Git) {
 	m := effecttest.NewMachine()
 	m.Files[gitPub], m.Files[gitHome+"/.ssh/id_ed25519_signing"] = []byte(gitKey), []byte("private")
 	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
+	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
 	return m, gitStep(m, nil)
 }
 
@@ -205,6 +220,7 @@ func TestGitTrustsSecretivesKeyThroughItsScript(t *testing.T) {
 func TestGitWaitsForTheKeyBeforeAllowedSigners(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
+	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
 	p, err := gitStep(m, nil).Plan(context.Background())
 	if err != nil || len(p.Changes) != 3 || !strings.HasSuffix(p.Changes[1].String(), "allowed_signers once the key is made") {
 		t.Errorf("Plan = %v, %v; want the key, a wait and gitconfig", p.Changes, err)
@@ -217,4 +233,33 @@ func mustPlan(t *testing.T, g *setup.Git) step.Plan {
 		t.Fatal(err)
 	}
 	return p
+}
+
+func gitWithConfig(text, paths, names string) (*effecttest.Machine, *setup.Git) {
+	m, g := gitReady()
+	delete(m.Files, gitConfigFile)
+	if text != "" {
+		gitConfig(m, text, paths, names)
+	}
+	return m, g
+}
+
+func TestGitStopsAtAnIncludeBelowSettings(t *testing.T) {
+	_, g := gitWithConfig("x", gitHome+"/.config/ws/gitconfig\n", "user.name\ninclude.path\n")
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "below its own settings") {
+		t.Errorf("err = %v; want an include below the file's settings", err)
+	}
+}
+
+func TestGitStopsAtALinkAndAtGitConfigFailing(t *testing.T) {
+	m, g := gitWithConfig("x", "", "user.name\n")
+	m.Links[gitConfigFile] = "/dotfiles/gitconfig"
+	m.Files["/dotfiles/gitconfig"] = []byte("x")
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "is a link to /dotfiles/gitconfig") {
+		t.Errorf("a link: err = %v", err)
+	}
+	m.Results["git config --file "+gitConfigFile+" --name-only --list"] = effecttest.Result{Err: errors.New("bad")}
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "git config cannot read") {
+		t.Errorf("git config failing: err = %v", err)
+	}
 }
