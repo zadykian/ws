@@ -5,6 +5,8 @@ import (
 	"net/netip"
 	"strconv"
 	"strings"
+
+	"github.com/zadykian/ws/mac/internal/check"
 )
 
 // The tunnel's two ends and its subnet, and the cable's subnet and ws's end of it.
@@ -55,9 +57,9 @@ func (c *Conf) set(name, value string) bool {
 	switch name {
 	case "WS_PUBLIC_KEY":
 		c.Key = value
-		return isKey(value)
+		return check.Key(value)
 	case "WS_LAN":
-		p, ok := parseCIDR(value)
+		p, ok := check.CIDR(value)
 		c.LAN = p
 		return ok
 	case "WS_LAN_ADDRESS":
@@ -66,11 +68,11 @@ func (c *Conf) set(name, value string) bool {
 		return err == nil && a.Is4()
 	case "WS_REMOTE":
 		c.Remote = value
-		return isName(value)
+		return check.Name(value)
 	case "WS_PORT":
 		n, err := strconv.ParseUint(value, 10, 16)
 		c.Port = uint16(n)
-		return isPort(value) && err == nil
+		return check.Port(value) && err == nil
 	}
 	return false
 }
