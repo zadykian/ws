@@ -47,15 +47,19 @@ func (h *HookWs) Apply(ctx context.Context, p step.Plan) error {
 	return nil
 }
 
-// deploy sends the clone, clones it on ws, runs apply.sh and stamps it.
+// deploy reads the secret, sends the clone, clones it on ws, runs apply.sh and stamps it.
 func (h *HookWs) deploy(ctx context.Context, hook, secret string) error {
+	in, err := h.read(ctx, secret)
+	if err != nil {
+		return err
+	}
 	if err := h.send(ctx, hook); err != nil {
 		return err
 	}
 	if err := h.Files.Pass(ctx, "clone", hook); err != nil {
 		return err
 	}
-	if err := h.apply(ctx, hook, secret); err != nil {
+	if err := h.apply(ctx, hook, secret, in); err != nil {
 		return err
 	}
 	return h.Files.Pass(ctx, "stamp", hook)

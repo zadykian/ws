@@ -22,7 +22,7 @@ func (h *HookWs) send(ctx context.Context, hook string) error {
 	h.Out.Say("%s: sending the Mac's clone of %s to ws", hookWsStage, hook)
 	dir := h.Mac.Home + "/repository/" + hook[strings.Index(hook, "/")+1:]
 	file := h.Host.Lock + "/hook.bundle"
-	cred := "credential.https://github.com.helper="
+	cred := "credential.https://github.com.helper=" //nolint:gosec // a git config key, not a credential
 	if err := h.M.Pass(ctx, false, "env", "GIT_TERMINAL_PROMPT=0", "git", "-C", dir, "-c", cred, "-c",
 		cred+"!"+gh+" auth git-credential", "fetch", "-q", "origin"); err != nil {
 		return err
@@ -41,17 +41,26 @@ func (h *HookWs) send(ctx context.Context, hook string) error {
 	return err
 }
 
-// apply runs apply.sh on ws, its stdin the item's secret, as security reads it, through hookGuard,
-// or empty without an item. Where security fails, it stops, as in unread.
-func (h *HookWs) apply(ctx context.Context, hook, secret string) error {
+// read reads the item's secret by security, or nothing without an item. It runs before anything
+// is sent, so that a locked Keychain, or a denial, stops with ws untouched. Where security fails,
+// it stops, as in unread.
+func (h *HookWs) read(ctx context.Context, secret string) ([]byte, error) {
+	if secret == "" {
+		return nil, nil
+	}
+	in, err := h.M.Run(ctx, "security", "find-generic-password", "-s", secret, "-w")
+	if err != nil {
+		return nil, h.unread(secret, err)
+	}
+	return in, nil
+}
+
+// apply runs apply.sh on ws, its stdin the item's secret, as read gave it, through hookGuard, or
+// empty without an item.
+func (h *HookWs) apply(ctx context.Context, hook, secret string, in []byte) error {
 	script := "/root/repository/" + hook[strings.Index(hook, "/")+1:] + "/apply.sh"
 	args := []string{"-o", "BatchMode=yes", "ws-ssh", script}
-	var in []byte
 	if secret != "" {
-		var err error
-		if in, err = h.M.Run(ctx, "security", "find-generic-password", "-s", secret, "-w"); err != nil {
-			return h.unread(secret, err)
-		}
 		args = []string{"-o", "BatchMode=yes", "ws-ssh", "sh -c '" + hookGuard + "'", script}
 	}
 	return h.Host.SSH.PassInput(ctx, in, args...)
