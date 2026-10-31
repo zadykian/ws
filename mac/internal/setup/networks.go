@@ -15,6 +15,7 @@ import (
 
 const (
 	routesFile   = tunnelEtc + "/routes.d/mac-conf"
+	resolverDir  = "/etc/resolver"
 	routesAbsent = "once routes.d is made"
 )
 
@@ -36,13 +37,17 @@ func (*Networks) Name() string { return "networks" }
 // WaitsOn is nothing: a check before the tunnel step has run says what would go in routes.d.
 func (*Networks) WaitsOn() string { return "" }
 
-// Plan plans routes.d/mac-conf and the signal that has the daemon read it.
+// Plan plans routes.d/mac-conf, the signal that has the daemon read it, and /etc/resolver.
 func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
 	cs, err := n.routes(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: cs}, nil
+	rs, err := n.resolvers()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: append(cs, rs...)}, nil
 }
 
 func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
@@ -88,6 +93,75 @@ func (n *Networks) remove(file string) (step.Change, error) {
 		return nil, err
 	}
 	return RootRemove{file, have}, nil
+}
+
+func (n *Networks) resolvers() ([]step.Change, error) {
+	var cs []step.Change
+	named := map[string]bool{}
+	dirPlanned := false
+	for _, r := range resolvers(n.Conf.Resolvers) {
+		file := resolverDir + "/" + r.Domain
+		named[r.Domain] = true
+		if own, err := n.ownsFile(file); err != nil {
+			return nil, err
+		} else if !own {
+			return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
+				"ws tunnel resolver %s with no address, or move the file away", file, r.Domain)
+		}
+		// The directory is planned once: a second mkdir, with no -p, would fail where it is new.
+		var dir step.Change
+		if !dirPlanned {
+			dirPlanned = true
+			var err error
+			if dir, err = rootDir(n.M, resolverDir, 0o755); err != nil {
+				return nil, err
+			}
+		}
+		file1, err := rootFile(n.M, file, 0o644, []byte(resolverText(r.Addresses)))
+		if err != nil {
+			return nil, err
+		}
+		for _, c := range []step.Change{dir, file1} {
+			if c != nil {
+				cs = append(cs, c)
+			}
+		}
+	}
+	names, err := n.M.ReadDir(resolverDir)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	for _, name := range names {
+		file := resolverDir + "/" + name
+		if named[name] {
+			continue
+		}
+		if own, err := n.ownsFile(file); err != nil {
+			return nil, err
+		} else if own {
+			c, err := n.remove(file)
+			if err != nil {
+				return nil, err
+			}
+			if c != nil {
+				cs = append(cs, c)
+			}
+		}
+	}
+	return cs, nil
+}
+
+// ownsFile is whether the file is missing or starts with ws's header.
+func (n *Networks) ownsFile(file string) (bool, error) {
+	have, err := n.M.ReadRootFile(file)
+	if errors.Is(err, fs.ErrNotExist) {
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	first, _, _ := strings.Cut(string(have), "\n")
+	return first == resolverHeader, nil
 }
 
 // Apply applies the changes in order, so that routes.d is written before the daemon reads it.
