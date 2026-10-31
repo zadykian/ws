@@ -101,3 +101,25 @@ func (m *Machine) ReadDir(path string) ([]string, error) {
 	sort.Strings(names)
 	return names, nil
 }
+
+// Mkdir makes the directory.
+func (m *Machine) Mkdir(path string, perm fs.FileMode) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Calls = append(m.Calls, fmt.Sprintf("mkdir %s %o", path, perm))
+	m.Dirs[path] = perm.Perm()
+	return nil
+}
+
+// Chmod sets the mode of the directory or the file.
+func (m *Machine) Chmod(path string, perm fs.FileMode) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Calls = append(m.Calls, fmt.Sprintf("chmod %s %o", path, perm))
+	if _, ok := m.Dirs[path]; ok {
+		m.Dirs[path] = perm.Perm()
+	} else {
+		m.Modes[path] = perm.Perm()
+	}
+	return nil
+}

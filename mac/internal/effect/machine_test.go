@@ -58,3 +58,17 @@ func TestOSMachineReadDir(t *testing.T) {
 		t.Errorf("ReadDir = %v, %v; want [b]", names, err)
 	}
 }
+
+func TestOSMachineMkdirChmod(t *testing.T) {
+	m := effect.OSMachine{}
+	dir := filepath.Join(t.TempDir(), "d")
+	if err := m.Mkdir(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Chmod(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if info, err := m.Stat(dir); err != nil || info.Mode.Perm() != 0o750 {
+		t.Errorf("Stat after Mkdir and Chmod = %+v, %v; want 750", info, err)
+	}
+}

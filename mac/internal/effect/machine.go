@@ -97,3 +97,14 @@ func (OSMachine) ReadDir(path string) ([]string, error) {
 	}
 	return names, nil
 }
+
+// Mkdir makes the directory with exactly perm, whatever the umask.
+func (m OSMachine) Mkdir(path string, perm fs.FileMode) error {
+	if err := os.Mkdir(path, perm); err != nil {
+		return err
+	}
+	return m.Chmod(path, perm)
+}
+
+// Chmod sets the mode of the file a link points to.
+func (OSMachine) Chmod(path string, perm fs.FileMode) error { return os.Chmod(path, perm) }

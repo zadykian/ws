@@ -63,6 +63,10 @@ type Machine interface {
 	// RootAttrs returns the owner and mode of a file, read through sudo, and fs.ErrNotExist where
 	// it is missing.
 	RootAttrs(path string) (Attrs, error)
+	// Mkdir makes the directory with exactly perm, whatever the umask.
+	Mkdir(path string, perm fs.FileMode) error
+	// Chmod sets the mode of the file a link points to.
+	Chmod(path string, perm fs.FileMode) error
 	Run(ctx context.Context, name string, args ...string) ([]byte, error)
 	// RunRoot runs the command through sudo.
 	RunRoot(ctx context.Context, name string, args ...string) ([]byte, error)
