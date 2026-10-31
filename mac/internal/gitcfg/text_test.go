@@ -36,6 +36,7 @@ func TestAllowedSignersTrustsTheKeyForTheEmail(t *testing.T) {
 		t.Errorf("AllowedSigners = %q", got)
 	}
 }
+
 func TestWrapperSetsSecretivesSocket(t *testing.T) {
 	got := gitcfg.Wrapper("/S/Data")
 	if !strings.Contains(got, "SSH_AUTH_SOCK='/S/Data/socket.ssh'\nexport SSH_AUTH_SOCK\nexec ssh-keygen \"$@\"\n") {

@@ -48,6 +48,7 @@ func Config(in Inputs) string {
 func AllowedSigners(email, public string) string {
 	return Header + "\n" + email + " " + public + "\n"
 }
+
 // Wrapper returns the script that gives ssh-keygen Secretive's agent, for a key that Secretive
 // holds. So a terminal and an IDE sign alike, whatever agent the app that runs git has.
 func Wrapper(secretive string) string {
