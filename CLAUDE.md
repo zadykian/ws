@@ -42,10 +42,12 @@ make lint                         # every gate, as CI's lint job runs it; -k goe
 make vale FILES=README.md         # one gate alone; the gates that check files take FILES
 make ansible-lint FILES=roles/base/tasks/main.yml   # this file alone: no syntax check of site.yml
 make shell                        # ShellCheck and shfmt -d -i 4 on every shell script
+make gotest                       # the Go gates run in mac/, the module; so do govet and gofmt
 ```
 
 The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, `lychee`, `rumdl`,
-`actionlint`, `zizmor` and `gitleaks` ([The gates](docs/gates.md)). `make lint`
+`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
+([The gates](docs/gates.md)). `make lint`
 needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
 collections into `.cache`, and `tools/run` downloads the rest there.
 

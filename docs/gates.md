@@ -16,21 +16,30 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   ([The direct link](network.md#the-direct-link));
 - `ansible-lint`: its production profile, strict and offline (`.ansible-lint`);
 - `ruff`: `ruff check` and `ruff format --check` on the Python files, as `ruff.toml` sets them;
-- `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python and Jinja templates;
+- `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python, Go and Jinja templates;
 - `vale`: Vale's three rules (`.vale.ini`) on the Markdown files: sentences of 30 words or fewer,
   no wordy phrases and no needless variants;
 - `lychee`: the links to files and their headings in the Markdown files, offline;
 - `rumdl`: rumdl's rules on the Markdown files, with lines of 100 columns but in code blocks and
   tables (`.rumdl.toml`);
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
-- `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options.
+- `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options;
+- `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module in `mac/`.
+  `gofmt` fails where `gofmt -l` lists a file, and `golangci-lint` runs a strict set of linters
+  (`mac/.golangci.yml`). A finding is justified with `//nolint:NAME // reason` alone.
+  `govulncheck` is the module's `tool` directive, so go.mod pins it. `gotest` runs
+  `go test -race -count=1 ./...`, and cgo is on for the race detector alone, as ws builds with
+  `CGO_ENABLED=0`.
 
 `tools/sizecheck` leaves out the files nobody writes here. Those are foundryctl's compose files and
 lock, which yamllint and ansible-lint leave out too, and Vale's vendored styles. Data files, such
 as TOML, JSON and conf files, are of no kind it caps. `.editorconfig` sets the files' encoding,
 line ends and indents for editors.
 
-`tools/run` downloads the other tools into `.cache/tools`, each pinned by version and SHA-256. make
+`tools/run` downloads the other tools into `.cache/tools`, each pinned by version and SHA-256.
+Go comes from go.dev, with the four sums of its listing, and golangci-lint from its release. The
+Go gates keep GOPATH and the caches in `.cache`, and `GOTOOLCHAIN=local` stops a download of
+another Go. make
 installs the Python tools of `.github/lint-requirements.txt` into `.cache/venv`, with a Python of
 3.12 to 3.14, which ansible-core 2.20 supports. That file pins each package with the SHA-256 of
 each of its files. pip takes only the wheels it lists, and builds no package. So the tools install
