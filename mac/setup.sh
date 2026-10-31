@@ -22,7 +22,7 @@
 # It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
 # Before the tunnel, it sets up Ghostty: its app from Homebrew's cask, where missing, and
-# cld.ghostty, its settings. It sets up cld, for cld restore tabs: cld in ~/.local/bin, installed
+# ws.ghostty, its settings. It sets up cld, for cld restore tabs: cld in ~/.local/bin, installed
 # where missing and updated. Once cld has restore tabs, and where Ghostty's app is there, config.d/ws
 # gets the watcher's lines. It warns of what it can't install, update or write, and goes on
 # (setup-ghostty.sh, setup-cld.sh).

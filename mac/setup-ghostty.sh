@@ -1,9 +1,9 @@
 # shellcheck shell=sh
 # The part of mac/setup.sh that sets up Ghostty, the Mac's terminal: Ghostty from Homebrew's cask
-# where missing, and cld.ghostty, settings that Ghostty's config reads. setup.sh sources it after
-# setup-ssh.sh, whose header it uses, and calls ghostty_mac before cld_mac. ghostty_mac warns where
-# Ghostty can't be installed, or Ghostty's config is not the script's to change, so that the run
-# goes on to the tunnel. It stops where it can't write a file.
+# where missing, and ws.ghostty, its settings, which Ghostty's config reads. setup.sh sources it after setup-ssh.sh, whose header it uses, and calls
+# ghostty_mac before cld_mac. ghostty_mac warns where Ghostty can't be installed, or Ghostty's
+# config is not the script's to change, so that the run goes on to the tunnel. It stops where it
+# can't write a file. Ghostty then updates itself, as ws.ghostty says.
 
 # 1 where Ghostty's app is there, or where --check would install it, as ghostty_mac sets it.
 ghostty_ok=0
@@ -103,16 +103,16 @@ EOF
     return 1
 }
 
-# ghostty_files writes cld.ghostty beside Ghostty's config, and adds the line that reads it at
-# the end of that config, once. Ghostty reads a config-file after the file that names it
-# (Config.zig's config-file), so window-save-state there wins over the config's own. Ghostty then
-# brings its windows back after every quit. It warns, and leaves the config unchanged, where
-# cld.ghostty is not its own, the config can't be read, or the config is a link that lacks the line.
-# shellcheck disable=SC2154 # header is setup-ssh.sh's, and ws_tmp, lib.sh's, sets ws_tmpfile
+# ghostty_files writes ws.ghostty beside Ghostty's config, mac/ws.ghostty under the header, and
+# adds the line that reads it at the end of that config, once. Ghostty reads a config-file after
+# the file that names it (Config.zig's config-file), so ws.ghostty's settings win over the
+# config's own. It warns, and leaves the config unchanged, where ws.ghostty is not its own, the
+# config can't be read, or the config is a link that lacks the line.
+# shellcheck disable=SC2154 # header is setup-ssh.sh's, dir setup.sh's, ws_tmpfile lib.sh's
 ghostty_files() {
-    ghostty_conf=$(ghostty_conf)
-    ghostty_dir=${ghostty_conf%/*}
-    ghostty_file=$ghostty_dir/cld.ghostty
+    ghostty_config=$(ghostty_conf)
+    ghostty_dir=${ghostty_config%/*}
+    ghostty_file=$ghostty_dir/ws.ghostty
     if [ -e "$ghostty_file" ] || [ -L "$ghostty_file" ]; then
         case $(head -n 1 "$ghostty_file" 2>/dev/null) in
         "$header"*) ;;
@@ -123,50 +123,48 @@ ghostty_files() {
             ;;
         esac
     fi
-    if [ -e "$ghostty_conf" ] && [ ! -r "$ghostty_conf" ]; then
-        ws_say "warning: cannot read $ghostty_conf, Ghostty's config, so cld.ghostty stays out"
+    if [ -e "$ghostty_config" ] && [ ! -r "$ghostty_config" ]; then
+        ws_say "warning: cannot read $ghostty_config, Ghostty's config, so ws.ghostty stays out"
         return 0
     fi
     ws_tmp
     ghostty_new=$ws_tmpfile
-    cat >"$ghostty_new" <<EOF || ws_die "cannot write $ghostty_new"
+    cat - "$dir/ws.ghostty" >"$ghostty_new" <<EOF || ws_die "cannot write $ghostty_new"
 $header: its next run replaces changes made here.
-# Ghostty brings back its windows after every quit, which cld restore tabs builds on.
-window-save-state = always
 EOF
     ghostty_has=0
-    ! ghostty_includes "$ghostty_conf" "$ghostty_file" || ghostty_has=1
+    ! ghostty_includes "$ghostty_config" "$ghostty_file" || ghostty_has=1
     # A linked directory, as GNU stow's folding makes, gets the warning ssh_files gives for
     # ~/.ssh/config.d.
-    if [ -L "$ghostty_dir" ] && { [ "$ghostty_has" = 0 ] || ! cmp -s "$ghostty_file" "$ghostty_new"; }; then
-        ws_say "warning: $ghostty_dir is a link to $(readlink "$ghostty_dir"): cld.ghostty and the" \
-            "line that reads it go there"
+    if [ -L "$ghostty_dir" ] &&
+        { [ "$ghostty_has" = 0 ] || ! cmp -s "$ghostty_file" "$ghostty_new"; }; then
+        ws_say "warning: $ghostty_dir is a link to $(readlink "$ghostty_dir"): ws.ghostty and" \
+            "the line that reads it go there"
     fi
     [ -d "$ghostty_dir" ] || ws_dir "$ghostty_dir" 755
     ws_put "$ghostty_file" 644 <"$ghostty_new"
     rm -f "$ghostty_new"
     [ "$ghostty_has" = 0 ] || return 0
-    if [ -L "$ghostty_conf" ]; then
-        ws_say "warning: $ghostty_conf is a link to $(readlink "$ghostty_conf"): add" \
-            "'config-file = ?cld.ghostty' at the end of that file"
+    if [ -L "$ghostty_config" ]; then
+        ws_say "warning: $ghostty_config is a link to $(readlink "$ghostty_config"): add" \
+            "'config-file = ?ws.ghostty' at the end of that file"
         return 0
     fi
     ghostty_mode=644
-    [ ! -f "$ghostty_conf" ] || ghostty_mode=$(ws_mode "$ghostty_conf")
+    [ ! -f "$ghostty_config" ] || ghostty_mode=$(ws_mode "$ghostty_config")
     ws_tmp
     ghostty_new=$ws_tmpfile
-    if [ -s "$ghostty_conf" ]; then
-        cat "$ghostty_conf" >"$ghostty_new" || ws_die "cannot read $ghostty_conf"
-        [ -z "$(tail -c 1 "$ghostty_conf")" ] || echo >>"$ghostty_new"
+    if [ -s "$ghostty_config" ]; then
+        cat "$ghostty_config" >"$ghostty_new" || ws_die "cannot read $ghostty_config"
+        [ -z "$(tail -c 1 "$ghostty_config")" ] || echo >>"$ghostty_new"
     fi
-    echo 'config-file = ?cld.ghostty' >>"$ghostty_new" || ws_die "cannot write $ghostty_new"
-    ws_put "$ghostty_conf" "$ghostty_mode" <"$ghostty_new"
+    echo 'config-file = ?ws.ghostty' >>"$ghostty_new" || ws_die "cannot write $ghostty_new"
+    ws_put "$ghostty_config" "$ghostty_mode" <"$ghostty_new"
     rm -f "$ghostty_new"
 }
 
-# ghostty_mac installs Ghostty where its app is missing, and writes cld.ghostty. Where the app is
-# still missing, as after a failed install, it writes nothing, unless --check would install it. It
-# sets ghostty_ok, which cld_would_tabs reads.
+# ghostty_mac installs Ghostty where its app is missing, and writes ws.ghostty. Where the app is
+# still missing, as after a failed install, it writes nothing, unless --check would install it. It sets ghostty_ok, which cld_would_tabs reads.
 # shellcheck disable=SC2034 # setup-cld.sh's cld_would_tabs reads ghostty_ok
 ghostty_mac() {
     ghostty_ok=0

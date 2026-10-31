@@ -16,11 +16,11 @@ jobs:
   # ws's key, so that the tunnel's daemon loads and a second run prints nothing, and one for
   # JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. On a runner
   # without Ghostty or cld, --check must change nothing. Where Ghostty's cask fails, a run must
-  # install cld alone. A run must then install Ghostty from Homebrew's cask, and Ghostty's settings.
-  # ssh's LocalCommand must follow whether cld has restore tabs and Ghostty's app. Stubs then stand
-  # in for cld. The first gains restore tabs as it updates, so that one run adds the lines, and the
-  # line runs here before a release of cld has it. Under the second, which lacks it, a run drops
-  # them. Gated as ci.yml's playbook job.
+  # install cld alone. A run must then install Ghostty from Homebrew's cask, and Ghostty's settings,
+  # which Ghostty must take. ssh's LocalCommand must follow whether cld has restore tabs and
+  # Ghostty's app. Stubs then stand in for cld. The first gains restore tabs as it updates, so that
+  # one run adds the lines, and the line runs here before a release of cld has it. Under the second,
+  # which lacks it, a run drops them. Gated as ci.yml's playbook job.
   mac-cld:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
@@ -82,7 +82,7 @@ jobs:
           for line in ': would run brew install --cask ghostty$' \
               ': would install cld into ~/.local/bin ' \
               ": would add the lines that start cld's watcher to config.d/ws, " \
-              '^+window-save-state = always$' '^+config-file = ?cld.ghostty$'; do
+              '^+window-save-state = always$' '^+config-file = ?ws.ghostty$'; do
               grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
                   { echo "::error::setup.sh --check showed no line '$line'"; fail=1; }
           done
@@ -114,6 +114,8 @@ jobs:
           done
           sh .github/mac-cld-checks.sh lines no || fail=1
           exit "$fail"
+      # Ghostty's +validate-config reads its config as the app does, ws.ghostty and its theme
+      # included, and names each line it refuses.
       # The release of cld that install.sh installed has restore tabs, or not yet: ssh's lines must
       # follow it either way.
       - name: setup.sh installs Ghostty and Ghostty's settings
@@ -128,12 +130,15 @@ jobs:
           version=$(~/.local/bin/cld version) ||
               { echo '::error::~/.local/bin/cld version failed'; exit 1; }
           echo "$version"
-          head -n 1 "$support/cld.ghostty" | grep -q "^# Written by ws's mac/setup.sh" ||
-              { echo "::error::cld.ghostty has no mac/ header"; fail=1; }
-          grep -qx 'window-save-state = always' "$support/cld.ghostty" ||
-              { echo '::error::cld.ghostty has no window-save-state = always'; fail=1; }
-          [ "$(grep -cx 'config-file = ?cld.ghostty' "$support/config.ghostty")" = 1 ] ||
-              { echo '::error::config.ghostty does not read cld.ghostty once'; fail=1; }
+          head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws's mac/setup.sh" ||
+              { echo "::error::ws.ghostty has no mac/ header"; fail=1; }
+          tail -n +2 "$support/ws.ghostty" | cmp -s - mac/ws.ghostty ||
+              { echo '::error::ws.ghostty is not mac/ws.ghostty under the header'; fail=1; }
+          [ "$(grep -cx 'config-file = ?ws.ghostty' "$support/config.ghostty")" = 1 ] ||
+              { echo '::error::config.ghostty does not read ws.ghostty once'; fail=1; }
+          ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
+          "$ghostty" +validate-config ||
+              { echo '::error::Ghostty refuses its config, above'; fail=1; }
           tabs=no
           if ~/.local/bin/cld help restore tabs >/dev/null 2>&1; then
               tabs=yes

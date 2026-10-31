@@ -7,7 +7,7 @@
 #
 # - JetBrains Gateway.app and Ghostty.app, empty directories in ~/Applications, and the regular
 #   style of Ghostty's font, an empty file in ~/Library/Fonts, which spare their casks. setup.sh
-#   writes Ghostty's settings, as on a Mac with Ghostty;
+#   writes ws.ghostty, as on a Mac with Ghostty;
 # - ~/.local/bin/cld, whose version names no release, so that setup.sh neither installs nor updates
 #   it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no LocalCommand.
 
