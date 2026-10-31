@@ -37,13 +37,13 @@ tunnel_pub() {
     tunnel_mac=$(cat "$HOME/.config/ws/tunnel.pub" 2>/dev/null) && ws_is_key "$tunnel_mac"
 }
 
-# tunnel_shake TRIES succeeds where ws-tunnel's status shows a handshake within 180 s, past which
+# tunnel_shake TRIES succeeds where ws tunnel status shows a handshake within 180 s, past which
 # WireGuard drops the session. It reads up to TRIES times, a second apart, as a switch of the
 # tunnel's way removes the peer and adds it again. sudo asks for no password.
 tunnel_shake() {
     tunnel_try=1
     while :; do
-        tunnel_age=$(sudo -n "$ws_libexec/ws-tunnel" status 2>/dev/null |
+        tunnel_age=$(sudo -n "$ws_libexec/ws" tunnel status 2>/dev/null |
             sed -n 's/^latest handshake: \([0-9]*\) s ago$/\1/p')
         [ -z "$tunnel_age" ] || [ "$tunnel_age" -gt 180 ] || return 0
         [ "$tunnel_try" -lt "$1" ] || return 1
