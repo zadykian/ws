@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/mac/internal/conf"
+	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/sshcfg"
 )
 
@@ -16,22 +18,37 @@ const daemonLabel = "com.github.zadykian.ws-tunnel"
 // identity picks the key that ssh offers ws and checks its .pub. It warns where Secretive's key
 // takes the place of the file key that the old config.d/ws gave ws.
 func (s SSH) identity(ctx context.Context, f sshFacts) (sshcfg.Identity, error) {
-	secretive := s.Home + "/" + sshcfg.SecretiveData
-	var keys []string
-	info, err := s.M.Stat(secretive + "/socket.ssh")
-	socket := err == nil && info.Mode&fs.ModeSocket != 0
-	if socket && s.Conf.Identity == "" {
-		if keys, err = s.M.ReadDir(secretive + "/PublicKeys"); err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return sshcfg.Identity{}, err
-		}
-		keys = s.files(secretive+"/PublicKeys", keys)
-	}
-	id, err := sshcfg.PickIdentity(s.Conf.Identity, s.Conf.IdentityAgent, s.Conf.GitSigningKey, s.Home, socket, keys)
+	id, err := PickKey(ctx, s.M, s.Conf, s.Home)
 	if err != nil || !id.Check {
 		return id, err
 	}
-	file := sshcfg.Expand(id.Pub, s.Home)
-	text, err := s.M.ReadFile(file)
+	if s.Conf.Identity == "" && strings.Contains(string(f.Ws.Text), "\n    IdentityFile ~/.ssh/id_ed25519\n") {
+		s.Out.Warn("Secretive's key replaces ~/.ssh/id_ed25519 as ws's: keep the file key with "+
+			"WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the key of %s on GitHub "+
+			"before ws's next install", id.Pub)
+	}
+	return id, nil
+}
+
+// PickKey picks the key that ssh offers ws from mac.conf and Secretive's keys, and checks its .pub
+// where mac.conf or Secretive names one.
+func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (sshcfg.Identity, error) {
+	secretive := home + "/" + sshcfg.SecretiveData
+	var keys []string
+	info, err := m.Stat(secretive + "/socket.ssh")
+	socket := err == nil && info.Mode&fs.ModeSocket != 0
+	if socket && c.Identity == "" {
+		if keys, err = m.ReadDir(secretive + "/PublicKeys"); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return sshcfg.Identity{}, err
+		}
+		keys = files(m, secretive+"/PublicKeys", keys)
+	}
+	id, err := sshcfg.PickIdentity(c.Identity, c.IdentityAgent, c.GitSigningKey, home, socket, keys)
+	if err != nil || !id.Check {
+		return id, err
+	}
+	file := sshcfg.Expand(id.Pub, home)
+	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return id, fmt.Errorf("%s, mac.conf's WS_IDENTITY, is missing: make the key first", file)
 	}
@@ -41,14 +58,9 @@ func (s SSH) identity(ctx context.Context, f sshFacts) (sshcfg.Identity, error) 
 	if err := sshcfg.CheckKeyFile(file, string(text)); err != nil {
 		return id, err
 	}
-	if _, err := s.M.Run(ctx, "ssh-keygen", "-l", "-f", file); err != nil {
+	if _, err := m.Run(ctx, "ssh-keygen", "-l", "-f", file); err != nil {
 		return id, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
 			"mac.conf's WS_IDENTITY", file)
-	}
-	if s.Conf.Identity == "" && strings.Contains(string(f.Ws.Text), "\n    IdentityFile ~/.ssh/id_ed25519\n") {
-		s.Out.Warn("Secretive's key replaces ~/.ssh/id_ed25519 as ws's: keep the file key with "+
-			"WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the key of %s on GitHub "+
-			"before ws's next install", id.Pub)
 	}
 	return id, nil
 }
@@ -89,12 +101,12 @@ func (s SSH) cldTabs(ctx context.Context) bool {
 
 // files keeps the names in dir that are files, or links to files: setup-identity.sh skipped a
 // directory named like a key.
-func (s SSH) files(dir string, names []string) []string {
-	var files []string
+func files(m effect.Machine, dir string, names []string) []string {
+	var found []string
 	for _, name := range names {
-		if info, err := s.M.Stat(dir + "/" + name); err == nil && info.Mode.IsRegular() {
-			files = append(files, name)
+		if info, err := m.Stat(dir + "/" + name); err == nil && info.Mode.IsRegular() {
+			found = append(found, name)
 		}
 	}
-	return files
+	return found
 }
