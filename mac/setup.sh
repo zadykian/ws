@@ -21,11 +21,10 @@
 # files in /etc/resolver.
 # It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
-# Before the tunnel, it sets up Ghostty: its app and its settings' font from Homebrew's casks, where
-# missing, and ws.ghostty, those settings. It sets up cld, for cld restore tabs: cld in
-# ~/.local/bin, installed where missing and updated. Once cld has restore tabs, and where Ghostty's
-# app is there, config.d/ws gets the watcher's lines. It warns of what it can't install, update or
-# write, and goes on (setup-ghostty.sh, setup-cld.sh).
+# Before the tunnel, it sets up Ghostty, its app, font and ws.ghostty, and cld in ~/.local/bin, for
+# cld restore tabs: once cld has them, and where Ghostty's app is there, config.d/ws gets the
+# watcher's lines. It warns of what it can't install, update or write, and goes on (ws setup
+# ghostty, ws setup cld).
 #
 # A run changes only what differs, so a second prints nothing but warnings once mac.conf has
 # WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make
@@ -42,10 +41,6 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/setup-lib.sh"
 # shellcheck source=build.sh
 . "$dir/build.sh"
-# shellcheck source=setup-ghostty.sh
-. "$dir/setup-ghostty.sh"
-# shellcheck source=setup-cld.sh
-. "$dir/setup-cld.sh"
 
 # The daemon's plist. Root's copies are in setup-lib.sh's ws_libexec.
 plist=/Library/LaunchDaemons/$ws_label.plist
@@ -251,6 +246,13 @@ tunnel() {
     tell
 }
 
+# cld_tabs_check sets cld_tabs to 1 where Ghostty's app and a cld with restore tabs are there.
+cld_tabs_check() {
+    cld_tabs=0
+    [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ] || return 0
+    ! "$HOME/.local/bin/cld" help restore tabs >/dev/null 2>&1 || cld_tabs=1
+}
+
 # step_ws builds ws from the clone into a scratch directory, which the run removes, for the steps
 # that ws setup runs. Its bytes are those of the ws that program builds into ~/.local/bin.
 step_ws() {
@@ -276,8 +278,8 @@ main() {
     # The ssh step sends ws through the tunnel once launchd has its daemon, so that a run that stops
     # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon, or installs a cld
     # with restore tabs, needs config.d/ws again, so the step runs once more after them.
-    # ghostty_mac and cld_mac warn rather than stop, and come before the tunnel, so that brew's and
-    # install.sh's output comes before the Mac's key.
+    # The ghostty and cld steps warn rather than stop, and come before the tunnel, so that their
+    # output comes before the Mac's key.
     via_tunnel=0
     [ -z "$WS_PUBLIC_KEY" ] || ! { ws_checking || ws_tunnel_loaded; } || via_tunnel=1
     cld_tabs_check
@@ -287,8 +289,9 @@ main() {
     step cable
     step git
     step gateway
-    ghostty_mac
-    cld_mac
+    step ghostty
+    step cld
+    cld_tabs_check
     tunnel
     [ "$via_tunnel" != 0 ] || [ -z "$WS_PUBLIC_KEY" ] || ! ws_tunnel_loaded || via_tunnel=1
     [ "$via_tunnel$cld_tabs" = "$was" ] || step ssh
