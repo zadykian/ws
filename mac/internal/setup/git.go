@@ -98,6 +98,9 @@ func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 		n = 0
 	}
 	for _, c := range p.Changes[n:] {
+		if _, wait := c.(Pending); wait {
+			continue
+		}
 		if err := Apply(ctx, g.M, g.Out, c); err != nil {
 			return err
 		}

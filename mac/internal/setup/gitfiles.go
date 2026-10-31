@@ -3,10 +3,17 @@ package setup
 import (
 	"fmt"
 	"io/fs"
+	"strings"
 
 	"github.com/zadykian/ws/mac/internal/gitcfg"
+	"github.com/zadykian/ws/mac/internal/sshcfg"
 	"github.com/zadykian/ws/mac/internal/step"
 )
+
+// Pending is a change that waits on another, such as the key: the line says on what.
+type Pending string
+
+func (p Pending) String() string { return string(p) }
 
 // put returns the change that makes the user's file hold text, with mode, or nil.
 func (g *Git) put(file string, text string, mode fs.FileMode) (step.Change, error) {
@@ -47,9 +54,30 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 		}
 	}
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.Pub, Gh: gh, Dir: dir}
-	c, err := g.put(dir+"/gitconfig", gitcfg.Config(in), 0o644)
-	if c != nil {
-		cs = append(cs, c)
+	secretive := g.Home + "/" + sshcfg.SecretiveData
+	type file struct {
+		path, text string
+		mode       fs.FileMode
 	}
-	return cs, err
+	var list []file
+	if strings.HasPrefix(key.Pub, secretive+"/PublicKeys/") && strings.HasSuffix(key.Pub, ".pub") {
+		in.Program = dir + "/secretive-ssh-keygen"
+		list = append(list, file{in.Program, gitcfg.Wrapper(secretive), 0o755})
+	}
+	if key.Public != "" {
+		list = append(list, file{dir + "/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644})
+	} else {
+		cs = append(cs, Pending("would write "+dir+"/allowed_signers once the key is made"))
+	}
+	list = append(list, file{dir + "/gitconfig", gitcfg.Config(in), 0o644})
+	for _, f := range list {
+		c, err := g.put(f.path, f.text, f.mode)
+		if err != nil {
+			return nil, err
+		}
+		if c != nil {
+			cs = append(cs, c)
+		}
+	}
+	return cs, nil
 }
