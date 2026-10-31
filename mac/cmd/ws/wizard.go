@@ -33,6 +33,8 @@ type wizardEnv struct {
 	// tty tells whether stdin is a terminal, which the questions need.
 	tty    bool
 	stderr io.Writer
+	// stdout gets the text that the Tunnel step prints once mac.conf names ws's key.
+	stdout io.Writer
 }
 
 type wizardOptions struct{ check, update bool }
