@@ -6,7 +6,8 @@
 # WS_CONF names no file, the wizard under bootstrap.sh's --check must show the lines it would write
 # there, from the environment's answers. Writing none shows that --check reached it. In a home
 # without a clone, --check must list the clone and wizard.sh's stages, and make nothing outside
-# macOS's Library.
+# macOS's Library. The first run builds ws into ~/.local/bin, and tools/run's download of Go, which
+# the log shows, is not counted in what it prints.
 
 set -u
 
@@ -28,6 +29,7 @@ boot() {
     shift
     out=$(PATH=$path sh -s -- "$@" <"$bootstrap" 2>&1)
     status=$?
+    out=$(printf '%s\n' "$out" | grep -v '^tools/run: downloading ')
     printf '%s\n' "$out"
     [ "$status" = 0 ] || error "bootstrap.sh $* exited $status"
     [ "$out" = "$want" ] || error "bootstrap.sh $* printed other than '$want'"
@@ -42,8 +44,12 @@ out=$(sh -s -- --bogus <"$bootstrap" 2>&1)
 status=$?
 [ "$status" = 1 ] && [ "$out" = "bootstrap.sh: unknown argument '--bogus'; usage: bootstrap.sh \
 [--check] [--update]" ] || error "bootstrap.sh --bogus exited $status, printing '$out'"
-boot "bootstrap.sh: Clone: would set core.hooksPath to $clone/.githooks" --check
-boot "bootstrap.sh: Clone: set core.hooksPath to $clone/.githooks"
+ws=$HOME/.local/bin/ws
+boot "bootstrap.sh: Clone: would set core.hooksPath to $clone/.githooks
+bootstrap.sh: Ws: would build ws into $ws with the Go that tools/run pins" --check
+[ ! -e "$ws" ] || error 'bootstrap.sh --check built ws'
+boot "bootstrap.sh: Clone: set core.hooksPath to $clone/.githooks
+bootstrap.sh: Ws: building ws into $ws"
 [ "$(git -C "$clone" config core.hooksPath)" = "$clone/.githooks" ] ||
     error 'bootstrap.sh set no core.hooksPath'
 boot ''

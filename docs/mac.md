@@ -1,10 +1,9 @@
 # The Mac
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
-reaches it over the home LAN too, or from elsewhere through the router's port forwards.
-`mac/setup.sh` is the one part of the repository that runs on the Mac. It sets up the Mac's end of
-the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), JetBrains Gateway from
-Homebrew ([The Mac's tunnel](#the-macs-tunnel)) and two hosts for ssh:
+reaches it over the LAN, or elsewhere through the router's port forwards.
+`mac/setup.sh` sets up its end of the cable ([The cable](#the-cable)), git
+([git on the Mac](mac-git.md)), JetBrains Gateway ([The Mac's tunnel](#the-macs-tunnel)) and two hosts for ssh:
 
 - `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
   The sessions of `ssh ws` and JetBrains Gateway then stay open while the Mac moves between the
@@ -13,9 +12,8 @@ Homebrew ([The Mac's tunnel](#the-macs-tunnel)) and two hosts for ssh:
   tunnel's UDP.
 
 The script is POSIX sh, as the Mac has no Ansible, and runs as the user, from a clone, with sudo
-where it needs root. It sets up Ghostty, the Mac's terminal, with its settings, and cld, for
-`cld restore tabs` ([Ghostty and cld on the Mac](mac-ghostty.md)). It installs WireGuard's tools,
-Ghostty and a font from Homebrew, which is [installed](https://brew.sh) by hand first:
+where it needs root. It sets up Ghostty and cld ([Ghostty and cld on the Mac](mac-ghostty.md)), and
+installs WireGuard's tools, Ghostty and a font from Homebrew, [installed](https://brew.sh) first:
 
 ```sh
 git clone https://github.com/zadykian/ws ~/repository/ws
@@ -23,6 +21,8 @@ git clone https://github.com/zadykian/ws ~/repository/ws
 ```
 
 `mac/wizard.sh`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
+Its `mac/bootstrap.sh` first builds the Go CLI `ws` into `~/.local/bin` (put it on `PATH` by hand)
+with the Go that `tools/run` pins, checked by SHA-256.
 
 ## mac.conf
 
