@@ -4,8 +4,7 @@
 # programs into root's. They call lib.sh's functions and read and set its variables, as those of
 # lib.sh do.
 
-# The directory of root's copies of ws-tunnel, its functions, wg and wireguard-go, which setup.sh
-# makes and the tunnel's daemon runs.
+# The directory of root's copy of ws, which setup.sh makes and the tunnel's daemon runs.
 # shellcheck disable=SC2034 # for setup.sh
 ws_libexec=/usr/local/libexec/ws-tunnel
 

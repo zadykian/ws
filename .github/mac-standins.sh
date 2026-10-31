@@ -8,6 +8,8 @@
 # - JetBrains Gateway.app and Ghostty.app, empty directories in ~/Applications, and the regular
 #   style of Ghostty's font, an empty file in ~/Library/Fonts, which spare their casks. setup.sh
 #   writes ws.ghostty, as on a Mac with Ghostty;
+# - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws:
+#   the daemon needs neither, so this is the one download, a small formula, that the jobs make;
 # - ~/.local/bin/cld, whose version names no release, so that setup.sh neither installs nor updates
 #   it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no LocalCommand.
 
@@ -17,6 +19,7 @@ if [ -e ~/.local/bin/cld ]; then
     echo '::error::the runner has ~/.local/bin/cld already'
     exit 1
 fi
+brew list --formula wireguard-tools >/dev/null 2>&1 || brew install wireguard-tools
 mkdir -p ~/Applications/"JetBrains Gateway.app" ~/Applications/Ghostty.app ~/Library/Fonts \
     ~/.local/bin
 : >~/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf

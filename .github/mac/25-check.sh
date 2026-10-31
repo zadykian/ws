@@ -29,12 +29,6 @@ cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
         echo '::error::setup.sh --check installed a formula or a cask'
         fail=1
     }
-grep -qx wireguard-tools "$RUNNER_TEMP/brew" ||
-    grep -q ': would run brew install wireguard-tools$' "$RUNNER_TEMP/check.out" ||
-    {
-        echo '::error::setup.sh --check showed no brew install wireguard-tools'
-        fail=1
-    }
 grep -q ': would run brew install --cask jetbrains-gateway$' "$RUNNER_TEMP/check.out" ||
     {
         echo "::error::setup.sh --check showed no brew install of Gateway's cask"

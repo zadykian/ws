@@ -11,19 +11,13 @@ if [ -e "/Applications/$app" ] || ! rmdir ~/Applications/"$app"; then
     exit 1
 fi
 
-# A stand-in brew goes in $tmp/bin, first on PATH. It passes the three calls of setup.sh's tools to
-# the runner's brew, and logs any other. Of those, it takes the cask's list, which succeeds where
-# $tmp/cask is, and its install alone. The install makes $tmp/cask and an empty app in
-# ~/Applications. It fails with $tmp/cask.fail, and makes no app with $tmp/cask.none.
-brew=$(command -v brew)
+# A stand-in brew goes in $tmp/bin, first on PATH. It logs each call. Of those, it takes the cask's
+# list, which succeeds where $tmp/cask is, and its install alone. The install makes $tmp/cask and
+# an empty app in ~/Applications. It fails with $tmp/cask.fail, and makes no app with
+# $tmp/cask.none.
 : >"$tmp/cask.log"
 cat >"$tmp/bin/brew" <<EOF
 #!/bin/sh
-case \$* in
-'list --formula wireguard-tools' | '--prefix wireguard-tools' | '--prefix wireguard-go')
-    exec '$brew' "\$@"
-    ;;
-esac
 echo "\$*" >>'$tmp/cask.log'
 case \$* in
 'list --cask jetbrains-gateway') [ -f '$tmp/cask' ] ;;

@@ -1,8 +1,8 @@
 #!/bin/bash
 # Without ws's key, setup.sh makes the Mac's key and installs no daemon.
 # The key it prints, and the command that makes it ws's peer, must hold the Mac's public key,
-# which the stand-in ws below takes as its peer. Root's daemon runs the three programs and
-# sources the two files, so they must be root's alone. Stand-ins for the apps of Gateway and
+# which the stand-in ws below takes as its peer. Root's daemon runs the copy of ws, so it must be
+# root's alone. Stand-ins for the apps of Gateway and
 # Ghostty, its font and cld spare this run and later ones their downloads (mac-standins.sh).
 
 set -eo pipefail
@@ -42,15 +42,11 @@ printf '%s\n' "$mac" | cmp -s - ~/.config/ws/tunnel.pub ||
         echo "::error::/etc/ws-tunnel/private.key is not root's, 600"
         fail=1
     }
-for each in ws-tunnel:755 wg:755 wireguard-go:755 \
-    tunnel-conf.sh:644 tunnel-paths.sh:644; do
-    file=/usr/local/libexec/ws-tunnel/${each%:*}
-    [ "$(stat -f '%Su:%Sg %Lp' "$file")" = "root:wheel ${each#*:}" ] ||
-        {
-            echo "::error::$file is not root's, ${each#*:}"
-            fail=1
-        }
-done
+[ "$(stat -f '%Su:%Sg %Lp' /usr/local/libexec/ws-tunnel/ws)" = "root:wheel 755" ] ||
+    {
+        echo "::error::/usr/local/libexec/ws-tunnel/ws is not root's, 755"
+        fail=1
+    }
 if launchctl print "system/$LABEL" >/dev/null 2>&1; then
     echo "::error::setup.sh loaded the daemon without ws's key"
     fail=1
