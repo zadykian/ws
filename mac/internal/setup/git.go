@@ -2,13 +2,20 @@ package setup
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
 )
+
+// MakeKey makes git's signing key, with no passphrase, so that git signs unattended, in a rebase too.
+type MakeKey struct{ Path string }
+
+func (k MakeKey) String() string { return "would make git's signing key, " + k.Path }
 
 // Git sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_KEY, and leaves it
 // alone without them: git's identity and a signing key of the Mac's own, in ~/.config/ws/gitconfig,
@@ -39,28 +46,41 @@ func (g *Git) look(name string) (string, error) {
 	return exec.LookPath(name)
 }
 
-// Plan reads gh, and plans to install it.
+// Plan reads the signing key and gh, and plans to make the key and install gh.
 func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if g.Conf.GitName == "" {
 		return step.Plan{}, nil
+	}
+	key, err := g.key(ctx)
+	if err != nil {
+		return step.Plan{}, err
 	}
 	_, install, err := g.gh(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
 	var cs []step.Change
+	if key.Make {
+		cs = append(cs, MakeKey{strings.TrimSuffix(key.Pub, ".pub")})
+	}
 	if install != nil {
 		cs = append(cs, *install)
 	}
 	return step.Plan{Changes: cs}, nil
 }
 
-// Apply installs gh.
+// Apply makes the key and installs gh.
 func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
-		if run, ok := c.(Run); ok {
+		switch c := c.(type) {
+		case MakeKey:
+			if _, err := g.M.Run(ctx, "ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", c.Path); err != nil {
+				return fmt.Errorf("ssh-keygen cannot make %s: %w", c.Path, err)
+			}
+			g.Out.Say("made git's signing key, %s", c.Path)
+		case Run:
 			g.Out.Say("installing gh")
-			if err := Apply(ctx, g.M, g.Out, run); err != nil {
+			if err := Apply(ctx, g.M, g.Out, c); err != nil {
 				return err
 			}
 		}
