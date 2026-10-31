@@ -1,12 +1,21 @@
 package setup
 
-import "github.com/zadykian/ws/mac/internal/step"
+import (
+	"fmt"
+
+	"github.com/zadykian/ws/mac/internal/step"
+)
 
 // Notice is a warning that a plan carries after its changes, so that it prints after them: --check
 // lists it last, and Apply says it once the changes are made.
 type Notice string
 
 func (n Notice) String() string { return "warning: " + string(n) }
+
+// note keeps a warning that Plan found.
+func (g *Git) note(format string, args ...any) {
+	g.notes = append(g.notes, fmt.Sprintf(format, args...))
+}
 
 // withNotes ends a plan. Where it holds changes, it carries the warnings after them. Where it holds
 // none, nothing follows them, so they print now.

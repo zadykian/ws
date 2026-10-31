@@ -58,7 +58,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	g.notes = nil
-	_, err := g.include(ctx)
+	in, err := g.include(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -81,7 +81,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: g.withNotes(append(cs, files...))}, nil
+	return step.Plan{Changes: g.withNotes(append(append(cs, files...), g.includeChanges(ctx, in)...))}, nil
 }
 
 // Apply makes the key and installs gh first, plans again with them there, then applies the rest.
