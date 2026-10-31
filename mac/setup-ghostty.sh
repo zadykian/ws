@@ -1,23 +1,48 @@
 # shellcheck shell=sh
-# The part of mac/setup.sh that sets up Ghostty, the Mac's terminal: cld.ghostty, its settings,
-# which Ghostty's config reads. setup.sh sources it after setup-ssh.sh, whose header it uses, and
-# calls ghostty_mac before cld_mac. ghostty_mac warns where Ghostty's config is not the script's to
-# change, so that the run goes on to the tunnel. It needs Ghostty's app.
+# The part of mac/setup.sh that sets up Ghostty, the Mac's terminal: Ghostty from Homebrew's cask
+# where missing, and cld.ghostty, settings that Ghostty's config reads. setup.sh sources it after
+# setup-ssh.sh, whose header it uses, and calls ghostty_mac before cld_mac. ghostty_mac warns where
+# Ghostty can't be installed, or Ghostty's config is not the script's to change, so that the run
+# goes on to the tunnel. It stops where it can't write a file.
 
-# ghostty_there succeeds where Ghostty's app is there: Ghostty.app in /Applications or
-# ~/Applications. Where WS_GHOSTTY_APP is set, as on CI, the path it names stands in for both.
+# 1 where Ghostty's app is there, or where --check would install it, as ghostty_mac sets it.
+ghostty_ok=0
+
+# ghostty_there succeeds where Ghostty's app is there: Ghostty.app in /Applications, where its cask
+# puts it, or in ~/Applications.
 ghostty_there() {
-    if [ -n "${WS_GHOSTTY_APP-}" ]; then
-        [ -d "$WS_GHOSTTY_APP" ]
-    else
-        [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ]
-    fi
+    [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ]
 }
 
-# ghostty_conf prints the config file that Ghostty's menu opens (src/config/edit.zig, 1.3.1
-# and main). It tries config.ghostty and config in Application Support's com.mitchellh.ghostty,
-# then in ~/.config/ghostty. The first that holds anything wins, else the first that exists, else
-# the first. Ghostty reads all four. Its app, which launchd starts, sees no XDG_CONFIG_HOME of a
+# ghostty_cask CASK THERE MISSING installs Homebrew's CASK where the function THERE finds its files
+# missing, and then looks again. A failed install is a warning, as where brew finds files of the
+# cask's that a copy by hand put there, and the next run tries again. Where Homebrew has the cask
+# but THERE finds nothing, it warns instead, MISSING saying what is gone, as gateway does: brew
+# install would upgrade the cask. It succeeds where the files are there, or where --check would
+# install them. Without Homebrew it stops, as tools does.
+ghostty_cask() {
+    "$2" && return 0
+    ghostty_brew=$(command -v brew) || ws_die "install Homebrew first: https://brew.sh"
+    if ! "$ghostty_brew" list --cask "$1" >/dev/null 2>&1; then
+        if ws_checking; then
+            ws_say "would run brew install --cask $1"
+            return 0
+        fi
+        ws_say "installing $1"
+        if ! "$ghostty_brew" install --cask "$1" >&2; then
+            ws_say "warning: brew install --cask $1 failed"
+            return 1
+        fi
+        "$2" && return 0
+    fi
+    ws_say "warning: Homebrew has the cask $1, but $3: brew reinstall --cask $1 puts it back"
+    return 1
+}
+
+# ghostty_conf prints the config file that Ghostty's menu opens (src/config/edit.zig, 1.3.1 and
+# main). It tries config.ghostty and config in Application Support's com.mitchellh.ghostty, then
+# in ~/.config/ghostty. The first that holds anything wins, else the first that exists, else the
+# first. Ghostty reads all four. Its app, which launchd starts, sees no XDG_CONFIG_HOME of a
 # shell's.
 ghostty_conf() {
     ghostty_support="$HOME/Library/Application Support/com.mitchellh.ghostty"
@@ -139,7 +164,14 @@ EOF
     rm -f "$ghostty_new"
 }
 
-# ghostty_mac writes Ghostty's settings where Ghostty's app is there.
+# ghostty_mac installs Ghostty where its app is missing, and writes cld.ghostty. Where the app is
+# still missing, as after a failed install, it writes nothing, unless --check would install it. It
+# sets ghostty_ok, which cld_would_tabs reads.
+# shellcheck disable=SC2034 # setup-cld.sh's cld_would_tabs reads ghostty_ok
 ghostty_mac() {
-    ! ghostty_there || ghostty_files
+    ghostty_ok=0
+    ghostty_cask ghostty ghostty_there "no Ghostty.app is in /Applications or ~/Applications" ||
+        return 0
+    ghostty_ok=1
+    ghostty_files
 }

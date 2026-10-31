@@ -1,15 +1,17 @@
 # shellcheck shell=sh
 # The part of mac/setup.sh that sets up cld, for cld restore tabs, which reopens Ghostty's tabs of
-# cld's sessions. setup.sh sources it after setup-ghostty.sh, whose ghostty_there it uses, and
-# calls cld_mac after ghostty_mac. ssh_config calls cld_ssh_lines. cld_mac installs and updates cld
-# wherever setup.sh runs. The lines of ssh's hosts need Ghostty's app. cld_mac warns where cld can't
-# be set up, so that the run goes on to the tunnel.
+# cld's sessions. setup.sh sources it after setup-ghostty.sh, whose functions it uses, and calls
+# cld_mac after ghostty_mac. ssh_config calls cld_ssh_lines. cld_mac installs and updates cld
+# wherever setup.sh runs. The lines of ssh's hosts need Ghostty's app, or under --check its install.
+# cld_mac warns where cld can't be set up, so that the run goes on to the tunnel.
 
 # cld where its install.sh puts it, and the releases whose latest has that script.
 cld_bin=$HOME/.local/bin/cld
 cld_releases=https://github.com/zadykian/cld/releases
-# 1 where ssh's hosts start cld's watcher, as cld_tabs_check sets it.
+# 1 where ssh's hosts start cld's watcher, as cld_tabs_check sets it, and 1 once --check noted
+# that they may come.
 cld_tabs=0
+cld_noted=0
 
 # cld_tabs_check sets cld_tabs to 1 where Ghostty's app is there and the cld in ~/.local/bin has
 # restore tabs, else 0. cld help restore tabs fails in a cld without it, so that ssh never runs a
@@ -35,10 +37,12 @@ EOF
 }
 
 # cld_would_tabs says, under --check, that config.d/ws would gain the lines that start cld's
-# watcher where Ghostty's app is there and the cld to come has restore tabs. --check cannot run a
-# cld it has not installed.
+# watcher where ghostty_mac found Ghostty's app, or would install it, and the cld to come has
+# restore tabs. --check can run neither a cld nor a Ghostty that it would install. It says so once.
+# shellcheck disable=SC2154 # ghostty_ok is setup-ghostty.sh's
 cld_would_tabs() {
-    [ "$cld_tabs" = 0 ] && ghostty_there || return 0
+    [ "$cld_tabs" = 0 ] && [ "$ghostty_ok" = 1 ] && [ "$cld_noted" = 0 ] || return 0
+    cld_noted=1
     ws_say "would add the lines that start cld's watcher to config.d/ws," \
         "where that cld has restore tabs"
 }
@@ -114,8 +118,9 @@ cld_update() {
     cld_would_tabs
 }
 
-# cld_mac sets up cld, itself and its update, wherever setup.sh runs.
-# Then it sets cld_tabs again, which main compares, to write config.d/ws again where it changed.
+# cld_mac sets up cld, itself and its update, wherever setup.sh runs. Then it sets cld_tabs again,
+# which main compares, to write config.d/ws again where it changed. Under --check, a cld there may
+# have restore tabs already, while ghostty_mac would install Ghostty's app: the lines come then too.
 cld_mac() {
     if [ -x "$cld_bin" ]; then
         cld_update
@@ -123,4 +128,5 @@ cld_mac() {
         cld_install
     fi
     cld_tabs_check
+    ! ws_checking || ! "$cld_bin" help restore tabs >/dev/null 2>&1 || cld_would_tabs
 }

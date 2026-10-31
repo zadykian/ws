@@ -5,8 +5,9 @@ After Ghostty quits or a window closes, a restore joins each pane's cld session 
 what Ghostty did not bring back
 ([Ghostty's tabs on a Mac](https://github.com/zadykian/cld/blob/main/docs/guide/ghostty-tabs.md)).
 A restore needs Ghostty 1.4 or newer, which cld checks, by Ghostty's AppleScript rather than its
-version. Ghostty's part needs its app: `Ghostty.app` in `/Applications` or `~/Applications`, or the
-path `WS_GHOSTTY_APP` names. Without it, the script writes none of that part. Before the tunnel, it:
+version. Ghostty's part needs its app: `Ghostty.app` in `/Applications` or `~/Applications`, which
+the script installs from Homebrew's cask `ghostty` where missing. Where that fails, it warns and
+writes none of that part. Before the tunnel, it:
 
 - installs cld into `~/.local/bin` where cld is missing, with the `install.sh` of cld's latest
   release, which checks the binary's SHA-256. Each run then has `cld update` replace it where a

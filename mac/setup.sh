@@ -21,10 +21,11 @@
 # files in /etc/resolver.
 # It keeps the Mac's public key in ~/.config/ws/tunnel.pub too, which the wizard reads.
 #
-# Before the tunnel, it sets up cld, for cld restore tabs: cld in ~/.local/bin, installed where
-# missing and updated. Where Ghostty's app is there, it writes cld.ghostty, which Ghostty's config
-# reads, and once cld has restore tabs, config.d/ws gets the lines that start its watcher. Where cld
-# or Ghostty's files can't be set up, it warns and goes on (setup-ghostty.sh, setup-cld.sh).
+# Before the tunnel, it sets up Ghostty: its app from Homebrew's cask, where missing, and
+# cld.ghostty, its settings. It sets up cld, for cld restore tabs: cld in ~/.local/bin, installed
+# where missing and updated. Once cld has restore tabs, and where Ghostty's app is there, config.d/ws
+# gets the watcher's lines. It warns of what it can't install, update or write, and goes on
+# (setup-ghostty.sh, setup-cld.sh).
 #
 # A run changes only what differs, so a second prints nothing but warnings once mac.conf has
 # WS_PUBLIC_KEY. Until then, each run prints the Mac's public key again, with the commands that make
@@ -275,9 +276,9 @@ main() {
     # ssh_files sends ws through the tunnel once launchd has its daemon, so that a run that stops
     # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon writes config.d/ws
     # again, and --check shows the file of such a run. ws_own_hosts warns once, between the two.
-    # ghostty_mac and cld_mac warn rather than stop, and come before the tunnel, so that
-    # install.sh's output comes before the Mac's key. Where it changes cld_tabs, as by installing a cld with restore
-    # tabs, config.d/ws is written again. --check notes that change, as it runs no new cld.
+    # ghostty_mac and cld_mac warn rather than stop, and come before the tunnel, so that brew's and
+    # install.sh's output comes before the Mac's key. A cld with restore tabs that cld_mac installs
+    # changes cld_tabs, so config.d/ws is written again; --check notes it.
     via_tunnel=0
     if [ -n "$WS_PUBLIC_KEY" ] && { ws_checking || ws_tunnel_loaded; }; then
         via_tunnel=1
