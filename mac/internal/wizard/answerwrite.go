@@ -34,7 +34,8 @@ func (f confFile) read() (string, error) {
 }
 
 // add appends the lines, whose keys mac.conf lacks, where the whole passes conf's checks. A new file
-// gets mode 644, in a directory it makes. f.stage names the stage in the messages.
+// gets mode 644, in a directory it makes. Where mac.conf is a link, as a dotfiles manager makes it,
+// it says the lines and stops. f.stage names the stage in the messages.
 func (f confFile) add(ctx context.Context, lines string) error {
 	text, err := f.read()
 	if err != nil {
@@ -50,7 +51,17 @@ func (f confFile) add(ctx context.Context, lines string) error {
 		}
 		return errRefused
 	}
+	info, err := f.m.Stat(f.path)
+	if err == nil && info.Link != "" {
+		f.out.Say("%s: %s is a link to %s, which the wizard leaves: add these lines to its file, then run the wizard again",
+			f.stage, f.path, info.Link)
+		f.out.Say("%s", strings.TrimSuffix(lines, "\n"))
+		return fmt.Errorf("%s: %s is a link", f.stage, f.path)
+	}
 	mode := fs.FileMode(0o644)
+	if err == nil {
+		mode = info.Mode.Perm()
+	}
 	if _, err := f.m.Run(ctx, "mkdir", "-p", path.Dir(f.path)); err != nil {
 		return fmt.Errorf("%s: cannot make %s", f.stage, path.Dir(f.path))
 	}

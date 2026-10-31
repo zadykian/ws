@@ -25,7 +25,7 @@ func TestConfFileAdd(t *testing.T) {
 	}
 }
 
-func TestConfFileRefuses(t *testing.T) {
+func TestConfFileRefusesAndLeavesLinks(t *testing.T) {
 	m := effecttest.NewMachine()
 	var out effecttest.Out
 	f := confFile{"/h/mac.conf", "Answers", m, &out}
@@ -34,5 +34,10 @@ func TestConfFileRefuses(t *testing.T) {
 	}
 	if !strings.Contains(out.Lines[0], "/h/mac.conf: ") || len(m.Files) != 0 {
 		t.Errorf("out = %v, files = %v; want a message that names mac.conf and no file", out.Lines, m.Files)
+	}
+	m.Links[f.path] = "/dot/mac.conf"
+	out.Lines = nil
+	if err := f.add(context.Background(), "WS_TARGET=lan\n"); err == nil || len(out.Lines) != 2 || len(m.Files) != 0 {
+		t.Errorf("a link: %v, out = %v, files = %v", err, out.Lines, m.Files)
 	}
 }
