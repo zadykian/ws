@@ -22,7 +22,7 @@ func (h *HookWs) send(ctx context.Context, hook string) error {
 	h.Out.Say("%s: sending the Mac's clone of %s to ws", hookWsStage, hook)
 	dir := h.Mac.Home + "/repository/" + hook[strings.Index(hook, "/")+1:]
 	file := h.Host.Lock + "/hook.bundle"
-	cred := "credential.https://github.com.helper=" //nolint:gosec // a git config key, not a credential
+	cred := "credential.https://github.com.helper="
 	if err := h.M.Pass(ctx, false, "env", "GIT_TERMINAL_PROMPT=0", "git", "-C", dir, "-c", cred, "-c",
 		cred+"!"+gh+" auth git-credential", "fetch", "-q", "origin"); err != nil {
 		return err

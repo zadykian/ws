@@ -112,6 +112,8 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		&wizard.Tunnel{Host: host, Run: run, Setup: setup, Hand: hand, Home: e.getenv("HOME"),
 			Sleep: time.Sleep, M: e.m, Out: out},
 		hook,
+		&wizard.HookWs{Host: host, Run: run, Mac: hook, User: e.getenv("USER"), Tty: e.tty, M: e.m, Out: out,
+			Files: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}},
 	}
 }
 
