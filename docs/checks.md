@@ -190,7 +190,7 @@ shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another
 
 ## The Mac
 
-CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
+CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First,
 `mac/setup.sh --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
 installs no formula or cask. It must note the install of JetBrains Gateway's cask. Stand-ins for
 Gateway's and Ghostty's apps, the font and cld, which `setup.sh` leaves alone, spare the job's runs
