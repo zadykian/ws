@@ -37,8 +37,11 @@ func (*Networks) Name() string { return "networks" }
 // WaitsOn is nothing: a check before the tunnel step has run says what would go in routes.d.
 func (*Networks) WaitsOn() string { return "" }
 
-// Plan plans routes.d/mac-conf, the signal that has the daemon read it, and /etc/resolver.
+// Plan plans, once mac.conf has WS_PUBLIC_KEY and the daemon is to run, routes.d/mac-conf, the signal that has the daemon read it, and /etc/resolver.
 func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
+	if n.Conf.PublicKey == "" {
+		return step.Plan{}, nil
+	}
 	cs, err := n.routes(ctx)
 	if err != nil {
 		return step.Plan{}, err
