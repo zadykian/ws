@@ -10,6 +10,7 @@ import (
 // Mac's addresses changed, where no path answered, or where ws missed pings in a row. A tick waits
 // while a round is under way, as the round's own checks go on.
 func (d *Daemon) tick(ctx context.Context) {
+	d.trimLog()
 	if len(d.round) > 0 {
 		return
 	}

@@ -19,6 +19,9 @@ const tunnelUsage = "usage: ws tunnel run\n"
 // stateFile is what the daemon writes for status, and removes where it stops.
 const stateFile = "/var/run/ws-tunnel.state"
 
+// logFile is launchd's file for the daemon's output, which the daemon starts anew past a size.
+const logFile = "/var/log/ws-tunnel.log"
+
 // watchWait is how long the watch of network changes waits before it starts notifyutil again.
 const watchWait = 5 * time.Second
 
@@ -45,6 +48,7 @@ func tunnelRun(stdout, stderr io.Writer) int {
 	}
 	defer tn.Close()
 	d := daemon.New(effect.OSMachine{}, tn, tn.Name(), daemon.Dir, stateFile, stdout)
+	d.Log = logFile
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go d.Signals(ctx, sigs)

@@ -26,6 +26,7 @@ type Daemon struct {
 	// Tun is the utun's name, StateFile the file that status reads, and Dir the settings' directory.
 	Tun, StateFile, Dir string
 	Out                 io.Writer // the log
+	Log                 string    // the log's file, which trimLog starts anew past LogLimit; empty for none
 	Now                 func() time.Time
 	// CheckEvery is how often a round looks for the handshake, TickEvery how long a tick comes
 	// after the last tick ended, and ChangeWait how long the loop waits after a network change.
