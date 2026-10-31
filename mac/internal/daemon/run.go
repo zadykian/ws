@@ -32,6 +32,8 @@ func (d *Daemon) Run(ctx context.Context) error {
 			case Tick:
 				d.tick(ctx)
 				d.later(Tick, d.TickEvery)
+			case Reload:
+				d.reload(ctx)
 			case Stop:
 				return nil
 			case Exited:

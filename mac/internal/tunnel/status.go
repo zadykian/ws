@@ -33,9 +33,9 @@ func (s State) Format(now time.Time, peer Stats) string {
 	if peer.Known {
 		fmt.Fprintf(&b, "transfer: %d B received, %d B sent\n", peer.Received, peer.Sent)
 	}
-	fmt.Fprintf(&b, "routes: %s\n", orNone(joinNets(s.Routes)))
+	fmt.Fprintf(&b, "routes: %s\n", orNone(JoinNets(s.Routes)))
 	if len(s.LeftOut) > 0 {
-		fmt.Fprintf(&b, "left out, as they hold the endpoint: %s\n", joinNets(s.LeftOut))
+		fmt.Fprintf(&b, "left out, as they hold the endpoint: %s\n", JoinNets(s.LeftOut))
 	}
 	return b.String()
 }

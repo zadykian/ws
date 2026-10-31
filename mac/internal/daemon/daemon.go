@@ -44,6 +44,7 @@ type Daemon struct {
 	misses     int              // pings of ws missed in a row
 	round      []tunnel.Attempt // the endpoints tried since the round began, empty between rounds
 	allowed    tunnel.Allowed   // what the last try left out
+	ends       []netip.Addr     // the endpoints of the last round, which the routes stay clear of
 	routed     []netip.Prefix
 	unroutable []netip.Prefix
 	told       []netip.Prefix
@@ -56,6 +57,7 @@ type Event int
 const (
 	Tick   Event = iota // TickEvery after the last tick ended
 	Check               // look again at the choice, as a round waits for a handshake
+	Reload              // SIGHUP
 	Stop                // SIGTERM
 	Exited              // wireguard-go has exited
 )

@@ -24,7 +24,7 @@ type State struct {
 // Encode is the state file's text: a key=value line each, the networks joined by spaces.
 func (s State) Encode() string {
 	return fmt.Sprintf("tier=%s\nendpoint=%s\ninterface=%s\nsince=%d\nroutes=%s\nleft_out=%s\n",
-		s.Tier, s.Endpoint, s.Interface, s.Since.Unix(), joinNets(s.Routes), joinNets(s.LeftOut))
+		s.Tier, s.Endpoint, s.Interface, s.Since.Unix(), JoinNets(s.Routes), JoinNets(s.LeftOut))
 }
 
 // ParseState reads what Encode wrote. It leaves out a line it does not know.
@@ -63,7 +63,8 @@ func ParseState(text string) (s State, err error) {
 	return s, nil
 }
 
-func joinNets(nets []netip.Prefix) string {
+// JoinNets joins the networks with spaces, as the state file and the log list them.
+func JoinNets(nets []netip.Prefix) string {
 	parts := make([]string, len(nets))
 	for i, each := range nets {
 		parts[i] = each.String()
