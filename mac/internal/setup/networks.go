@@ -67,7 +67,7 @@ func (n *Networks) resolvers() ([]step.Change, error) {
 			return nil, err
 		} else if !own {
 			return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
-				"ws tunnel resolver %s with no address, or move the file away", file, r.Domain)
+				"ws resolver %s with no address, or move the file away", file, r.Domain)
 		}
 		// The directory is planned once: a second mkdir, with no -p, would fail where it is new.
 		var dir step.Change

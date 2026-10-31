@@ -2,7 +2,9 @@ package setup
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/check"
@@ -15,7 +17,9 @@ import (
 const resolverCmdHeader = "# Written by ws resolver, which removes this file when given no address."
 
 // Resolver has macOS ask the nameservers Addresses, up to 3, for Domain and the names under it, and
-// the Mac's own for the rest: it writes /etc/resolver/Domain (resolver(5)).
+// the Mac's own for the rest: it writes /etc/resolver/Domain (resolver(5)). With no address, it
+// removes the file, but only one that has the header; it stops rather than replace such a file of
+// another's.
 type Resolver struct {
 	Domain    string
 	Addresses []string
@@ -44,8 +48,24 @@ func (r *Resolver) Plan(context.Context) (step.Plan, error) {
 			r.Domain, len(r.Addresses))
 	}
 	file := resolverDir + "/" + r.Domain
-	if len(r.Addresses) == 0 {
+	text, err := r.M.ReadRootFile(file)
+	exists := !errors.Is(err, fs.ErrNotExist)
+	if err != nil && exists {
+		return step.Plan{}, err
+	}
+	if first, _, _ := strings.Cut(string(text), "\n"); exists && first != resolverCmdHeader {
+		if len(r.Addresses) > 0 {
+			return step.Plan{}, fmt.Errorf("%s is there, and ws resolver didn't write it: move it away first", file)
+		}
+		r.Out.Say("leaves %s, which ws resolver didn't write", file)
 		return step.Plan{}, nil
+	}
+	if len(r.Addresses) == 0 {
+		c, err := removeRoot(r.M, file)
+		if c == nil {
+			return step.Plan{}, err
+		}
+		return step.Plan{Changes: []step.Change{c}}, err
 	}
 	dir, err := rootDir(r.M, resolverDir, 0o755)
 	if err != nil {
