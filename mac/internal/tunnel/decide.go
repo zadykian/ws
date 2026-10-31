@@ -43,15 +43,21 @@ func Decide(now time.Time, ifaces []Iface, c Conf, resolved netip.Addr, p Peer) 
 	return next(found, missing, p.Round, c.Port, "")
 }
 
+// The reasons for a new round that the daemon does not log, as they are no news.
+const (
+	WhyAddresses = "the Mac's addresses changed"
+	WhyNone      = "no path answered"
+)
+
 // retryReason says why the paths are tried again between rounds, or is empty.
 func retryReason(ifaces []Iface, c Conf, p Peer) string {
 	switch {
 	case p.Conf != c:
 		return "read new settings; trying the paths again"
 	case !slices.Equal(ifaces, p.Seen):
-		return "the Mac's addresses changed"
+		return WhyAddresses
 	case !p.InUse.Host.IsValid():
-		return "no path answered"
+		return WhyNone
 	case p.Misses >= MissedPings:
 		return fmt.Sprintf("ws missed %d pings in a row; trying the paths again", MissedPings)
 	}
