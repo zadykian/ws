@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/step"
@@ -102,4 +103,10 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		}
 	}
 	return step.Plan{Changes: []step.Change{runChange{text: how, args: args, cloud: c.Target == "cloud"}}}, nil
+}
+
+// fail says what to do where ws's playbook ran no full run to its end.
+func fail(err error) error {
+	return errors.New(runStage + ": " + err.Error() + ": ws's playbook stopped, as above, or ssh dropped while " +
+		"it goes on; mend what it printed, then run the wizard again, which follows a run that goes on")
 }
