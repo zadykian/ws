@@ -13,7 +13,10 @@ if [ -z "${TUNNEL-}" ]; then
     exit 1
 fi
 conf=$HOME/.config/ws/mac.conf
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/mac-setup-checks.XXXXXXXX")
+# macOS's TMPDIR ends in a slash, which would put // in $tmp. ws setup git finds gh by Go's
+# exec.LookPath, which drops it, so git's credential command would not read "$tmp/bin/gh".
+tmpdir=${TMPDIR:-/tmp}
+tmp=$(mktemp -d "${tmpdir%/}/mac-setup-checks.XXXXXXXX")
 trap '[ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
 trap 'exit 1' HUP INT TERM
 cp "$conf" "$tmp/job.conf"
