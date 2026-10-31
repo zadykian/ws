@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect/effecttest"
 	"github.com/zadykian/ws/mac/internal/setup"
 )
@@ -28,14 +29,14 @@ func TestSetupCommand(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var stderr bytes.Buffer
-			got := setupCommand(context.Background(), tt.args, 501, m, func(k string) string { return env[k] }, &stderr)
+			got := setupCommand(context.Background(), tt.args, 501, m, func(k string) string { return env[k] }, &bytes.Buffer{}, &stderr)
 			if got != tt.wantStatus || !strings.Contains(stderr.String(), tt.wantErr) {
 				t.Errorf("status = %d, stderr = %q; want %d, %q", got, stderr.String(), tt.wantStatus, tt.wantErr)
 			}
 		})
 	}
 	var stderr bytes.Buffer
-	if got := setupCommand(context.Background(), []string{"ssh"}, 501, m, func(string) string { return "" }, &stderr); got != 1 ||
+	if got := setupCommand(context.Background(), []string{"ssh"}, 501, m, func(string) string { return "" }, &bytes.Buffer{}, &stderr); got != 1 ||
 		!strings.Contains(stderr.String(), "is missing") {
 		t.Errorf("without HOME: status = %d, stderr = %q; want a missing mac.conf", got, stderr.String())
 	}
@@ -45,7 +46,7 @@ func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 	m := effecttest.NewMachine()
 	env := map[string]string{"WS_PROG": "setup.sh"}
 	var stderr bytes.Buffer
-	if got := setupCommand(context.Background(), []string{"ssh"}, 0, m, func(k string) string { return env[k] }, &stderr); got != 1 ||
+	if got := setupCommand(context.Background(), []string{"ssh"}, 0, m, func(k string) string { return env[k] }, &bytes.Buffer{}, &stderr); got != 1 ||
 		!strings.HasPrefix(stderr.String(), "setup.sh: run it as yourself, not root") {
 		t.Errorf("as root: status = %d, stderr = %q", got, stderr.String())
 	}
@@ -63,5 +64,16 @@ func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)
+	}
+}
+
+func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
+	var names []string
+	for _, s := range setupSteps(conf.Conf{}, "/h", "", "/m", effecttest.NewMachine(), &effecttest.Out{}, &bytes.Buffer{}, false) {
+		names = append(names, s.Name())
+	}
+	want := []string{"ssh", "cable", "git", "gateway", "ghostty", "cld", "tunnel", "networks"}
+	if !reflect.DeepEqual(names, want) {
+		t.Errorf("steps = %q; want %q", names, want)
 	}
 }
