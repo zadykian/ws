@@ -43,6 +43,7 @@ type Tunnel struct {
 
 	copied  bool // root's copy of ws is to change, which the daemon restarts for
 	keyMade bool // the Mac's key is to be made, which the daemon restarts for
+	public  string
 	// untrusted is set while the directories above root's copy, or the copy, are planned to change:
 	// the copy is not run as root until then.
 	untrusted bool
@@ -103,6 +104,11 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	cs = append(append(cs, copied...), key...)
+	told, err := t.tell(ctx)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	cs = append(cs, told...)
 	if t.Conf.PublicKey != "" {
 		d, err := t.daemon(ctx)
 		if err != nil {
