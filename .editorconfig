@@ -20,3 +20,7 @@ indent_style = tab
 
 [*.plist]
 indent_style = tab
+
+# gofmt indents with tabs.
+[*.go]
+indent_style = tab
