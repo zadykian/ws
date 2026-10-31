@@ -29,7 +29,8 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
    found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)). With
    `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone, and warns
-   of any other. Without a clone, `--check` lists the wizard's stages, each after this one.
+   of any other. Without a clone, `--check` lists the wizard's stages, each after this one. Then it
+   builds `ws` ([The Mac](mac.md)).
 3. Answers: the values `mac.conf` lacks, below.
 4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.

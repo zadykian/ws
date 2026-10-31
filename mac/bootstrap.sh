@@ -6,8 +6,9 @@
 # It installs Apple's Command Line Tools through their dialog, and Homebrew from the Homebrew.pkg
 # pinned below. It clones the repository into ~/repository/ws, or leaves a clone there as it is,
 # which --update pulls. Then it runs the clone's mac/wizard.sh (docs/mac-wizard.md) with its own
-# arguments, given as `sh -s -- --check`, under which neither changes anything. A second run prints
-# nothing. caffeinate keeps the Mac from idle sleep while it runs.
+# arguments, given as `sh -s -- --check`, under which neither changes anything. Before the wizard it
+# builds ws, the Go CLI in mac/, into ~/.local/bin with the Go that tools/run pins. A second run
+# prints nothing. caffeinate keeps the Mac from idle sleep while it runs.
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
 set -eu
@@ -133,6 +134,27 @@ update() {
     fi
 }
 
+# build builds ws from the clone into ~/.local/bin, with the Go that tools/run downloads and checks
+# into the clone's .cache, without cgo. Once ws is there, it builds again silently, so that
+# --update's pull reaches the binary. Under --check, it says what it would do where ws is missing.
+build() {
+    bin=$HOME/.local/bin/ws
+    if [ ! -x "$bin" ]; then
+        would Ws "build ws into $bin with the Go that tools/run pins" && return 0
+        say "Ws: building ws into $bin"
+    elif [ "$check" = 1 ]; then
+        return 0
+    fi
+    go=$(cd "$dir" && sh tools/run -path go) || die "Ws: cannot get the pinned Go"
+    mkdir -p "${bin%/*}" || die "Ws: cannot make ${bin%/*}"
+    (
+        cd "$dir/mac" &&
+            GOPATH=$dir/.cache/go GOCACHE=$dir/.cache/go-build GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=0 \
+                "$go" build -o "$bin.new" ./cmd/ws
+    ) || die "Ws: cannot build ws"
+    mv -f "$bin.new" "$bin" || die "Ws: cannot install $bin"
+}
+
 main() {
     # A shell started before Homebrew's install lacks /opt/homebrew/bin, so it goes first here.
     export PATH="/opt/homebrew/bin:$PATH"
@@ -150,6 +172,7 @@ main() {
         return 0
     fi
     [ -f "$dir/mac/wizard.sh" ] || die "Clone: $dir has no mac/wizard.sh: pull it first"
+    build
     sh "$dir/mac/wizard.sh" "$@"
 }
 
