@@ -20,6 +20,10 @@ func TestPairs(t *testing.T) {
 			"WS_LAN_ADDRESS=10.88.0.2\nWS_CABLE_PORT=en1", "has another target's key: WS_LAN WS_CABLE_PORT (docs"},
 		{"mac-vm with remote", "WS_TARGET=mac-vm\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.2\nWS_REMOTE=a.b",
 			"has another target's key: WS_REMOTE ("},
+		{"name alone", "WS_GIT_NAME=Ada", "WS_GIT_NAME and WS_GIT_EMAIL go together"},
+		{"signing alone", "WS_GIT_SIGNING_KEY=~/k.pub", "WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL"},
+		{"agent alone", "WS_IDENTITY_AGENT=~/a.sock", "WS_IDENTITY_AGENT needs WS_IDENTITY"},
+		{"secret alone", "WS_HOOK_SECRET=x", "WS_HOOK_SECRET needs WS_HOOK"},
 	}
 	for _, tt := range tests {
 		_, errs := Parse(tt.text + "\n")

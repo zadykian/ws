@@ -29,6 +29,16 @@ func pairs(c Conf) []Error {
 		return refuse("WS_TARGET=" + c.Target + " has another target's key: " +
 			strings.Join(away, " ") + " (docs/mac-targets.md)")
 	}
+	switch {
+	case (c.GitName == "") != (c.GitEmail == ""):
+		return refuse("WS_GIT_NAME and WS_GIT_EMAIL go together")
+	case c.GitSigningKey != "" && c.GitName == "":
+		return refuse("WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL")
+	case c.IdentityAgent != "" && c.Identity == "":
+		return refuse("WS_IDENTITY_AGENT needs WS_IDENTITY")
+	case c.HookSecret != "" && c.Hook == "":
+		return refuse("WS_HOOK_SECRET needs WS_HOOK")
+	}
 	return nil
 }
 
