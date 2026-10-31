@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
-const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n  ghostty  install Ghostty and its font, and write ws.ghostty\n  cld  install cld, and update it\n"
+const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n  ghostty  install Ghostty and its font, and write ws.ghostty\n  cld  install cld, and update it\n  tunnel  set up the tunnel: ws, the key, tunnel.conf and the daemon\n  networks  route WS_TUNNEL_NETWORKS and write the resolvers of WS_RESOLVERS\n"
 
 // progOut prefixes a line with the program that prints it, as setup.sh's lines are, and says each
 // warning once, as a step plans again after it applies. setup.sh sets the prefix in WS_PROG, so
@@ -61,7 +61,7 @@ func (o progOut) Warn(format string, a ...any) {
 }
 
 // setupSteps returns the steps of ws setup, in the order setup.sh runs them.
-func setupSteps(c conf.Conf, home, xdg, macDir string, m effect.Machine, out effect.Out, check bool) []step.Step {
+func setupSteps(c conf.Conf, home, xdg, macDir string, m effect.Machine, out effect.Out, text io.Writer, check bool) []step.Step {
 	return []step.Step{
 		setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, AssumeTunnel: check},
 		setup.Cable{Conf: c, M: m, Out: out},
@@ -69,12 +69,15 @@ func setupSteps(c conf.Conf, home, xdg, macDir string, m effect.Machine, out eff
 		&setup.Gateway{Home: home, M: m, Out: out},
 		&setup.Ghostty{Home: home, Settings: macDir + "/ws.ghostty", M: m, Out: out},
 		&setup.Cld{Home: home, M: m, Out: out, Check: check},
+		&setup.Tunnel{Conf: c, Home: home, Plist: macDir + "/com.github.zadykian.ws-tunnel.plist", M: m, Out: out, Text: text,
+			Check: check},
+		&setup.Networks{Conf: c, M: m, Out: out, Check: check},
 	}
 }
 
 // setupCommand runs ws setup: the steps it names, from mac.conf, in the order of setupSteps. Under
 // --check it prints each change and makes none.
-func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine, getenv func(string) string,
+func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine, getenv func(string) string, stdout,
 	stderr io.Writer) int {
 	check := len(args) > 0 && args[0] == "--check"
 	if check {
@@ -118,7 +121,7 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 	term := effect.NewTerminal(strings.NewReader(""), stderr)
 	out := progOut{term, prog, map[string]bool{}}
 	var chosen []step.Step
-	for _, s := range setupSteps(c, home, getenv("XDG_CONFIG_HOME"), getenv("WS_MAC_DIR"), m, out, check) {
+	for _, s := range setupSteps(c, home, getenv("XDG_CONFIG_HOME"), getenv("WS_MAC_DIR"), m, out, stdout, check) {
 		if s.Name() == args[0] {
 			chosen = append(chosen, s)
 		}
@@ -128,6 +131,11 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 		return 2
 	}
 	_, err = step.Run(ctx, chosen, out, check)
+	for _, s := range chosen {
+		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil {
+			err = f.Finish(ctx)
+		}
+	}
 	term.Flush()
 	if err != nil {
 		// The runner names the step and its stage before the step's own error, which setup.sh

@@ -25,7 +25,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "conf":
 		return confCommand(args[1:], effect.OSMachine{}, os.Getenv, stdout, stderr)
 	case "setup":
-		return setupCommand(context.Background(), args[1:], os.Geteuid(), effect.OSMachine{}, os.Getenv, stderr)
+		return setupCommand(context.Background(), args[1:], os.Geteuid(), effect.OSMachine{}, os.Getenv, stdout, stderr)
 	case "tunnel":
 		return tunnel(args[1:], stdout, stderr)
 	}
