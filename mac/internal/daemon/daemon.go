@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/netip"
 	"time"
 
 	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/mac/internal/tunnel"
 )
 
 // Device is the wireguard-go device, as the daemon sees it: its UAPI.
@@ -29,8 +31,14 @@ type Daemon struct {
 	// it through Send.
 	Events chan Event
 
-	set Settings
-	key string
+	set        Settings
+	key        string
+	inUse      tunnel.Candidate // Tier TierNone where no path answers; empty before the first round
+	since      time.Time        // when inUse began
+	allowed    tunnel.Allowed   // what the last try left out
+	routed     []netip.Prefix
+	unroutable []netip.Prefix
+	told       []netip.Prefix
 }
 
 // Event is what the loop reacts to.
