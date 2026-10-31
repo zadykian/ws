@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
-const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n  ghostty  install Ghostty and its font, and write ws.ghostty\n  cld  install cld, and update it\n  tunnel  set up the tunnel: ws, the key, tunnel.conf and the daemon\n  networks  route WS_TUNNEL_NETWORKS and write the resolvers of WS_RESOLVERS\n"
+const setupUsage = "usage: ws setup [--check] [STEP]\n\nWith no STEP, it runs every step in this order, and ssh again, whose plan is empty unless the\ndaemon or cld changed ssh ws's ways.\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n  ghostty  install Ghostty and its font, and write ws.ghostty\n  cld  install cld, and update it\n  tunnel  set up the tunnel: ws, the key, tunnel.conf and the daemon\n  networks  route WS_TUNNEL_NETWORKS and write the resolvers of WS_RESOLVERS\n"
 
 // progOut prefixes a line with the program that prints it, as setup.sh's lines are, and says each
 // warning once, as a step plans again after it applies. setup.sh sets the prefix in WS_PROG, so
@@ -60,10 +61,14 @@ func (o progOut) Warn(format string, a ...any) {
 	}
 }
 
+func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, check, again bool) step.Step {
+	return setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, AssumeTunnel: check, Again: again}
+}
+
 // setupSteps returns the steps of ws setup, in the order setup.sh runs them.
 func setupSteps(c conf.Conf, home, xdg, macDir string, m effect.Machine, out effect.Out, text io.Writer, check bool) []step.Step {
 	return []step.Step{
-		setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, AssumeTunnel: check},
+		sshStep(c, home, m, out, check, false),
 		setup.Cable{Conf: c, M: m, Out: out},
 		&setup.Git{Conf: c, Home: home, XDG: xdg, M: m, Out: out},
 		&setup.Gateway{Home: home, M: m, Out: out},
@@ -83,7 +88,7 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 	if check {
 		args = args[1:]
 	}
-	if len(args) != 1 {
+	if len(args) > 1 {
 		_, _ = io.WriteString(stderr, setupUsage)
 		return 2
 	}
@@ -121,8 +126,17 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 	term := effect.NewTerminal(strings.NewReader(""), stderr)
 	out := progOut{term, prog, map[string]bool{}}
 	var chosen []step.Step
-	for _, s := range setupSteps(c, home, getenv("XDG_CONFIG_HOME"), getenv("WS_MAC_DIR"), m, out, stdout, check) {
-		if s.Name() == args[0] {
+	steps := setupSteps(c, home, getenv("XDG_CONFIG_HOME"), getenv("WS_MAC_DIR"), m, out, stdout, check)
+	if len(args) == 0 {
+		chosen = steps
+		if !check {
+			// The tunnel's daemon and cld's restore tabs change ssh ws's ways, so ssh runs once more.
+			// Under --check nothing is applied, so a second plan would only repeat the first.
+			chosen = slices.Concat(steps, []step.Step{sshStep(c, home, m, out, check, true)})
+		}
+	}
+	for _, s := range steps {
+		if len(args) == 1 && s.Name() == args[0] {
 			chosen = append(chosen, s)
 		}
 	}

@@ -42,27 +42,17 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 # shellcheck source=build.sh
 . "$dir/build.sh"
 
-# cld_tabs_check sets cld_tabs to 1 where Ghostty's app and a cld with restore tabs are there.
-cld_tabs_check() {
-    cld_tabs=0
-    [ -d /Applications/Ghostty.app ] || [ -d "$HOME/Applications/Ghostty.app" ] || return 0
-    ! "$HOME/.local/bin/cld" help restore tabs >/dev/null 2>&1 || cld_tabs=1
-}
-
-# step_ws builds ws from the clone into a scratch directory, which the run removes, for the steps
-# that ws setup runs. The tunnel step puts its bytes in ~/.local/bin/ws and root's copy.
-step_ws() {
+# run builds ws from the clone into a scratch directory, which the run removes, and has it run every
+# step of ws setup in setup.sh's order: ssh, the cable, git, Gateway, Ghostty, cld, the tunnel, the
+# networks, and ssh again. Under --check, each step prints its changes and makes none.
+run() {
     step_dir=$(mktemp -d "${TMPDIR:-/tmp}/ws.XXXXXXXX") || ws_die "cannot make a scratch directory"
     trap 'rm -rf "$step_dir"' EXIT
     ws_build "${dir%/*}" "$step_dir/ws" || ws_die "cannot build ws"
-}
-
-# step NAME runs the step NAME of ws setup, which prints its changes under --check and makes none.
-step() {
     if ws_checking; then
-        WS_MAC_DIR=$dir WS_PROG=$ws_prog "$step_dir/ws" setup --check "$1" || exit 1
+        WS_MAC_DIR=$dir WS_PROG=$ws_prog "$step_dir/ws" setup --check || exit 1
     else
-        WS_MAC_DIR=$dir WS_PROG=$ws_prog "$step_dir/ws" setup "$1" || exit 1
+        WS_MAC_DIR=$dir WS_PROG=$ws_prog "$step_dir/ws" setup || exit 1
     fi
 }
 
@@ -70,28 +60,7 @@ main() {
     ws_args "$@"
     [ "$(uname -s)" = Darwin ] || ws_die "it sets up a Mac, not $(uname -s)"
     [ "$(id -u)" != 0 ] || ws_die "run it as yourself, not root: it asks sudo where it needs root"
-    ws_conf "${WS_CONF:-$HOME/.config/ws/mac.conf}"
-    # The ssh step sends ws through the tunnel once launchd has its daemon, so that a run that stops
-    # in tunnel leaves ssh ws on the ways of ws-ssh. A run that loads the daemon, or installs a cld
-    # with restore tabs, needs config.d/ws again, so the step runs once more after them.
-    # The ghostty and cld steps warn rather than stop, and come before the tunnel, so that their
-    # output comes before the Mac's key.
-    via_tunnel=0
-    [ -z "$WS_PUBLIC_KEY" ] || ! { ws_checking || ws_tunnel_loaded; } || via_tunnel=1
-    cld_tabs_check
-    step_ws
-    step ssh
-    was=$via_tunnel$cld_tabs
-    step cable
-    step git
-    step gateway
-    step ghostty
-    step cld
-    cld_tabs_check
-    step tunnel
-    step networks
-    [ "$via_tunnel" != 0 ] || [ -z "$WS_PUBLIC_KEY" ] || ! ws_tunnel_loaded || via_tunnel=1
-    [ "$via_tunnel$cld_tabs" = "$was" ] || step ssh
+    run
 }
 
 main "$@"
