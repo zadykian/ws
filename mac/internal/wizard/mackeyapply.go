@@ -48,7 +48,11 @@ func (k *MacKey) make(ctx context.Context, key string) error {
 // take the place of a file key.
 func (k *MacKey) pin(ctx context.Context, w setup.Write) error {
 	after := strings.TrimSuffix(string(w.After), "\n")
-	err := k.file().add(ctx, after[strings.LastIndex(after, "\n")+1:]+"\n")
+	return refused(k.file().add(ctx, after[strings.LastIndex(after, "\n")+1:]+"\n"))
+}
+
+// refused words the stop where mac.conf with a new line would be refused.
+func refused(err error) error {
 	if errors.Is(err, errRefused) {
 		return fmt.Errorf("%s: ssh has no usable key for ws, as above; mend that, then run the wizard again", macKey)
 	}
