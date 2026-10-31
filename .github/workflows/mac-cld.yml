@@ -1,0 +1,98 @@
+name: mac-cld
+
+# mac/setup-cld.sh on macOS, in a workflow of its own beside mac.yml, which nears its 300 lines.
+# It runs on mac.yml's events: every pull request, whatever its base, and on main each pull
+# request's merge. The job runs on a stack's top pull request alone, as mac.yml's does.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  # cld on a Mac with Ghostty, in docs/mac-ghostty.md's order. mac/setup.sh runs with a stand-in for
+  # ws's key, so that the tunnel's daemon loads and a second run prints nothing, and one for
+  # JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. --check must
+  # change nothing, without Ghostty's app and with a stand-in app, an empty directory, which
+  # WS_GHOSTTY_APP names. Gated as ci.yml's playbook job.
+  mac-cld:
+    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    runs-on: macos-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    # bash with pipefail, rather than the default bash -e, so that a failing setup.sh fails its
+    # step through a tee too.
+    defaults:
+      run:
+        shell: bash
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_ENV_HINTS: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # As in mac.yml: setup.sh stops where a directory above root's copies isn't root's alone.
+      - name: Make /usr/local root's, as on a Mac
+        run: |
+          for dir in /usr/local /usr/local/libexec; do
+              [ -d "$dir" ] || continue
+              if [ "$(stat -f '%u %Lp' "$dir")" != "0 755" ]; then
+                  echo "::warning::$dir was $(stat -f '%Su:%Sg %Lp' "$dir"); made root's, 755"
+                  sudo chown root:wheel "$dir"
+                  sudo chmod 755 "$dir"
+              fi
+          done
+      # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed.
+      - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty or cld
+        run: |
+          fail=0
+          for path in /Applications/Ghostty.app ~/Applications/Ghostty.app ~/.local/bin/cld \
+              ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+              if [ -e "$path" ]; then
+                  echo "::error::the runner has $path already"
+                  fail=1
+              fi
+          done
+          mkdir -p ~/.config/ws ~/Applications/"JetBrains Gateway.app"
+          echo "WS_PUBLIC_KEY=$(openssl rand -base64 32)" >~/.config/ws/mac.conf
+          exit "$fail"
+      # Before the first run, --check shows cld's install, and nothing of Ghostty's without its app.
+      # With a stand-in Ghostty, it shows the ssh lines that may follow and both of Ghostty's files
+      # too. It writes none of them.
+      - name: --check without Ghostty's app and with a stand-in changes nothing
+        env:
+          APP: ${{ runner.temp }}/Ghostty.app
+        run: |
+          mkdir -p "$APP"
+          sh mac/setup.sh --check 2>&1 | tee "$RUNNER_TEMP/bare.out" ||
+              { echo '::error::setup.sh --check without Ghostty failed'; exit 1; }
+          WS_GHOSTTY_APP=$APP sh mac/setup.sh --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
+              { echo '::error::setup.sh --check failed'; exit 1; }
+          fail=0
+          grep -q ': would install cld into ~/.local/bin ' "$RUNNER_TEMP/bare.out" ||
+              { echo '::error::setup.sh --check without Ghostty showed no install of cld'; fail=1; }
+          ! grep -q -e "cld's watcher" -e 'cld\.ghostty' "$RUNNER_TEMP/bare.out" ||
+              { echo "::error::setup.sh --check without Ghostty showed Ghostty's part"; fail=1; }
+          for path in ~/.local/bin/cld ~/.config/ghostty \
+              "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+              if [ -e "$path" ]; then
+                  echo "::error::setup.sh --check made $path"
+                  fail=1
+              fi
+          done
+          for line in ': would install cld into ~/.local/bin ' \
+              ": would add the lines that start cld's watcher to config.d/ws, " \
+              '^+window-save-state = always$' '^+config-file = ?cld.ghostty$'; do
+              grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
+                  { echo "::error::setup.sh --check showed no line '$line'"; fail=1; }
+          done
+          exit "$fail"
+      - name: The files written
+        if: always()
+        run: |
+          cat ~/.ssh/config.d/ws || true
+          cat "$HOME/Library/Application Support/com.mitchellh.ghostty/"* || true
