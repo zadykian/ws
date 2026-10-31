@@ -5,6 +5,8 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
+
+	"github.com/zadykian/ws/mac/internal/check"
 )
 
 // ParseRoutes reads the files of routes.d, a map of file name to contents, into the networks to
@@ -22,7 +24,7 @@ func ParseRoutes(files map[string][]byte) (nets []netip.Prefix, warnings []strin
 			if line == "" || line[0] == '#' {
 				continue
 			}
-			p, ok := parseCIDR(line)
+			p, ok := check.CIDR(line)
 			if !ok || p.Overlaps(TunnelNet) || p.Overlaps(CableNet) {
 				warnings = append(warnings,
 					fmt.Sprintf("routes.d/%s: leaves out '%s', not a network it can route", name, line))
