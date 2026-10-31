@@ -11,20 +11,22 @@ import (
 )
 
 const (
+	cldLatest = "curl -fsSIL --retry 3 -o /dev/null -w %{url_effective} " +
+		"https://github.com/zadykian/cld/releases/latest"
 	cldBin  = "/h/.local/bin/cld"
 	cldLine = "would add the lines that start cld's watcher to config.d/ws, where that cld has restore tabs"
 	cldNo   = "no"
 )
 
-func cldStep(check bool) (*setup.Cld, *effecttest.Machine) {
-	m := effecttest.NewMachine()
+func cldStep(check bool) (*setup.Cld, *effecttest.Machine, *effecttest.Out) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Modes[cldBin] = 0o755
 	m.Files[cldBin] = nil
 	m.Results[cldBin+" --version"] = effecttest.Result{Out: []byte("cld 0.13.0\n")}
 	m.Results[cldBin+" help update"] = effecttest.Result{}
 	m.Results[cldBin+" help restore tabs"] = effecttest.Result{Err: errors.New(cldNo)}
 	m.Results["brew list --cask ghostty"] = effecttest.Result{Err: errors.New(cldNo)}
-	return &setup.Cld{Home: "/h", M: m, Out: &effecttest.Out{}, Check: check}, m
+	return &setup.Cld{Home: "/h", M: m, Out: out, Check: check}, m, out
 }
 
 func cldChanges(t *testing.T, s *setup.Cld) []string {
@@ -40,7 +42,7 @@ func cldChanges(t *testing.T, s *setup.Cld) []string {
 }
 
 func TestCldMissingIsInstalled(t *testing.T) {
-	s, m := cldStep(true)
+	s, m, _ := cldStep(true)
 	delete(m.Files, cldBin)
 	got := strings.Join(cldChanges(t, s), "\n")
 	want := "would install cld into ~/.local/bin with the install.sh of its latest release\n" + cldLine
@@ -50,7 +52,7 @@ func TestCldMissingIsInstalled(t *testing.T) {
 }
 
 func TestCldRunInstallsWithoutTheNote(t *testing.T) {
-	s, m := cldStep(false)
+	s, m, _ := cldStep(false)
 	delete(m.Files, cldBin)
 	if got := cldChanges(t, s); len(got) != 1 {
 		t.Errorf("Plan = %q; want the install alone", got)
