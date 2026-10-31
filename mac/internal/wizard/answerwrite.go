@@ -67,6 +67,11 @@ func (f confFile) add(ctx context.Context, lines string) error {
 	if err != nil {
 		return err
 	}
+	return f.write(ctx, text)
+}
+
+// write puts the text in mac.conf, keeping its mode.
+func (f confFile) write(ctx context.Context, text string) error {
 	mode := fs.FileMode(0o644)
 	if info, err := f.m.Stat(f.path); err == nil {
 		mode = info.Mode.Perm()
