@@ -41,6 +41,8 @@ func (k *MacKey) isFile(path string) bool {
 // pick returns the .pub in PublicKeys other than skip. Where none is there, it says to make what in
 // Secretive's app, adds extra, and waits up to 15 minutes for one. It fails on a key other than
 // P-256, as an ML-DSA one, which ws's OpenSSH lacks.
+//
+//nolint:unparam // the tests alone call it until the Mac key stage does, for other keys
 func (k *MacKey) pick(ctx context.Context, skip, what, extra string) (string, error) {
 	got, err := k.other(skip)
 	if err == nil && got == "" {

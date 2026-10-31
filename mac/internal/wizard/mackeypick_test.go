@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 )
@@ -41,5 +42,18 @@ func TestMacKeyPickStopsWithTheContext(t *testing.T) {
 	}
 	if _, err := k.pick(ctx, "", reason, ""); !errors.Is(err, context.Canceled) || naps != 2 {
 		t.Errorf("pick after a signal = %v after %d naps", err, naps)
+	}
+}
+
+func TestMacKeyPickRefuses(t *testing.T) {
+	k, m, _ := newMacKey(t, "")
+	m.Dirs[keys] = 0o755
+	m.Files[keys+"/a.pub"] = []byte("ssh-mldsa65 AAAA me\n")
+	if _, err := k.pick(context.Background(), "", reason, ""); err == nil || !strings.Contains(err.Error(), "is not the P-256 key") {
+		t.Errorf("pick of an ML-DSA key = %v", err)
+	}
+	m.Files[keys+"/b.pub"] = []byte(p256)
+	if _, err := k.pick(context.Background(), "", reason, ""); err == nil || !strings.Contains(err.Error(), "holds several keys") {
+		t.Errorf("pick of two keys = %v", err)
 	}
 }
