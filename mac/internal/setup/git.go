@@ -26,9 +26,12 @@ func (k MakeKey) String() string { return "would make git's signing key, " + k.P
 type Git struct {
 	Conf conf.Conf
 	Home string
-	M    effect.Machine
-	Out  effect.Out
-	Now  func() time.Time
+	// XDG is git's XDG config directory, XDG_CONFIG_HOME or ~/.config, whose git/config git reads
+	// before ~/.gitconfig.
+	XDG string
+	M   effect.Machine
+	Out effect.Out
+	Now func() time.Time
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.
 	LookPath func(string) (string, error)
 }
@@ -51,6 +54,10 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if g.Conf.GitName == "" {
 		return step.Plan{}, nil
 	}
+	_, err := g.include(ctx)
+	if err != nil {
+		return step.Plan{}, err
+	}
 	key, err := g.key(ctx)
 	if err != nil {
 		return step.Plan{}, err
@@ -67,7 +74,10 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 		cs = append(cs, *install)
 	}
 	files, err := g.files(key, gh)
-	return step.Plan{Changes: append(cs, files...)}, err
+	if err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: append(cs, files...)}, nil
 }
 
 // Apply makes the key and installs gh first, plans again with them there, then applies the rest.
