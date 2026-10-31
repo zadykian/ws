@@ -46,3 +46,20 @@ func TestSequenceLanWays(t *testing.T) {
 		t.Errorf("without a LAN or a router: asked %v, %v", asked, err)
 	}
 }
+
+func TestSequenceWays(t *testing.T) {
+	for name, tc := range map[string]struct {
+		answers map[string]string
+		want    []string
+	}{
+		"cloud":  {map[string]string{"WS_TARGET": "cloud"}, []string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT"}},
+		"mac-vm": {map[string]string{"WS_TARGET": "mac-vm", "WS_LAN": "192.168.64.0/24"}, []string{"WS_TARGET", "WS_LAN", "WS_LAN_ADDRESS"}},
+		"no lan": {map[string]string{"WS_TARGET": "mac-vm"}, []string{"WS_TARGET", "WS_LAN"}},
+		"lan":    {map[string]string{"WS_TARGET": "lan"}, []string{"WS_TARGET", "WS_LAN", "WS_REMOTE"}},
+	} {
+		var asked []string
+		if err := newSequence(nil, scripted(&asked, tc.answers)).ways(); err != nil || !reflect.DeepEqual(asked, tc.want) {
+			t.Errorf("%s: asked %v, %v; want %v", name, asked, err, tc.want)
+		}
+	}
+}

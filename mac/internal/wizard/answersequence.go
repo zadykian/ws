@@ -27,6 +27,40 @@ func (s *sequence) get(q question) (string, error) {
 	return v, err
 }
 
+// ways asks the machine, then the ways to it (docs/mac-targets.md). A cloud VM has its name or
+// address and its SSH port alone, and a VM on the Mac the Mac's network for its VMs and its address
+// there. On the LAN, ws's address is asked only with a LAN, and the router's port only with its
+// name. They default to the router's lease where the LAN holds it, and its forward (docs/router.md).
+// A cloud VM's name and port, and each address where asked, need a value.
+func (s *sequence) ways() error {
+	target, err := s.get(question{"WS_TARGET", "The machine ws runs on: lan, cloud or mac-vm", "lan",
+		"WS_TARGET needs lan, cloud or mac-vm"})
+	if err != nil {
+		return err
+	}
+	var qs []question
+	switch target {
+	case "cloud":
+		need := "WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT"
+		qs = []question{{"WS_REMOTE", "The VM's name or address on the internet", "", need},
+			{"WS_REMOTE_PORT", "The VM's SSH port", "22", need}}
+	case "mac-vm":
+		lan, err := s.get(question{"WS_LAN", "The Mac's network for its VMs", "192.168.64.0/24", "WS_TARGET=mac-vm needs WS_LAN"})
+		if err != nil || lan == "" {
+			return err
+		}
+		qs = []question{{"WS_LAN_ADDRESS", "The VM's address on that network", "", "WS_LAN and WS_LAN_ADDRESS go together"}}
+	default:
+		return s.lanWays()
+	}
+	for _, q := range qs {
+		if _, err := s.get(q); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // lanWays asks the ways to a ws on the LAN.
 func (s *sequence) lanWays() error {
 	lan, err := s.get(question{"WS_LAN", "ws's home LAN", "10.88.0.0/24", ""})
