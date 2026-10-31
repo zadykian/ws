@@ -1,0 +1,62 @@
+package wizard
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io/fs"
+	"path"
+	"strings"
+
+	"github.com/zadykian/ws/mac/internal/conf"
+	"github.com/zadykian/ws/mac/internal/effect"
+)
+
+// errRefused is returned where mac.conf with the new lines would fail conf's checks, which Out has
+// said.
+var errRefused = errors.New("mac.conf would be refused")
+
+// confFile is mac.conf, which the Answers and Mac key stages add lines to.
+type confFile struct {
+	path  string
+	stage string
+	m     effect.Machine
+	out   effect.Out
+}
+
+// read returns the text of mac.conf, empty where it is missing.
+func (f confFile) read() (string, error) {
+	text, err := f.m.ReadFile(f.path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return "", nil
+	}
+	return string(text), err
+}
+
+// add appends the lines, whose keys mac.conf lacks, where the whole passes conf's checks. A new file
+// gets mode 644, in a directory it makes. f.stage names the stage in the messages.
+func (f confFile) add(ctx context.Context, lines string) error {
+	text, err := f.read()
+	if err != nil {
+		return fmt.Errorf("%s: cannot read %s", f.stage, f.path)
+	}
+	if text != "" && !strings.HasSuffix(text, "\n") {
+		text += "\n"
+	}
+	text += lines
+	if _, errs := conf.Parse(text); len(errs) > 0 {
+		for _, e := range errs {
+			f.out.Say("%s", e.In(f.path))
+		}
+		return errRefused
+	}
+	mode := fs.FileMode(0o644)
+	if _, err := f.m.Run(ctx, "mkdir", "-p", path.Dir(f.path)); err != nil {
+		return fmt.Errorf("%s: cannot make %s", f.stage, path.Dir(f.path))
+	}
+	if err := f.m.WriteFile(f.path, []byte(text), mode); err != nil {
+		return fmt.Errorf("cannot write %s", f.path)
+	}
+	f.out.Say("wrote %s", f.path)
+	return nil
+}
