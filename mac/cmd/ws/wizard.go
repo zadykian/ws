@@ -93,6 +93,9 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	run := &wizard.WsRun{Host: host, Update: o.update,
 		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
 	hand.Late(run.Hand)
+	setup := wizardSetup(e, out, later)
+	hook := &wizard.HookMac{Host: host, Gh: gh, Home: e.getenv("HOME"), M: e.m, Out: out}
+	hand.Late(hook.Hand)
 	return []step.Step{
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
@@ -100,12 +103,15 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 			Lock: lock, Tty: e.tty,
 			M: e.m, P: p, Out: out, Sleep: time.Sleep},
 		gh,
-		wizardSetup(e, out, later),
+		setup,
 		host,
 		&wizard.RootKey{Host: host, Gh: gh},
 		run,
 		&wizard.WsClaude{Run: run, Tty: e.tty},
 		&wizard.Signing{Gh: gh, Run: run, Check: check},
+		&wizard.Tunnel{Host: host, Run: run, Setup: setup, Hand: hand, Home: e.getenv("HOME"),
+			Sleep: time.Sleep, M: e.m, Out: out},
+		hook,
 	}
 }
 
