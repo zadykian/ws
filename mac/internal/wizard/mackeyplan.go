@@ -55,6 +55,15 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 		if _, err := k.fileKey(ctx, key); err != nil {
 			return nil, err
 		}
+		// A Secretive key made later would take the file key's place.
+		if !hasLine(text, "WS_IDENTITY") {
+			after := text
+			if after != "" && !strings.HasSuffix(after, "\n") {
+				after += "\n"
+			}
+			return []step.Change{setup.Write{Path: k.Conf, Before: []byte(text), After: []byte(after + line("WS_IDENTITY", id.Pub) + "\n"),
+				Exists: text != "", Mode: 0o644}}, nil
+		}
 	}
 	// git, which has a name, needs a key of its own beside ws's in Secretive, unless mac.conf has a
 	// line for WS_GIT_SIGNING_KEY. An empty one keeps setup.sh's key.
