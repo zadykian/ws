@@ -5,6 +5,18 @@ import (
 	"strings"
 )
 
+// ghosttyConfigs lists the config files that Ghostty reads under home, in the order the menu's
+// Open Config tries them (src/config/edit.zig, 1.3.1 and main): config.ghostty and config in
+// Application Support's com.mitchellh.ghostty, then in ~/.config/ghostty. Ghostty's app, which
+// launchd starts, sees no XDG_CONFIG_HOME of a shell's.
+func ghosttyConfigs(home string) []string {
+	support := home + "/Library/Application Support/com.mitchellh.ghostty"
+	return []string{
+		support + "/config.ghostty", support + "/config",
+		home + "/.config/ghostty/config.ghostty", home + "/.config/ghostty/config",
+	}
+}
+
 // ghosttyIncludes reports whether Ghostty's config, at conf with the text given, has a config-file
 // line that names file. The line counts with or without the ? and the quotes Ghostty takes, and
 // its path may be relative to conf's directory, under ~/ or full (src/cli/args.zig's

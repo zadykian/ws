@@ -25,10 +25,10 @@ func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *setup.Ghostty {
 func TestGhosttyAppAndFontThereNeedNoBrew(t *testing.T) {
 	m := effecttest.NewMachine()
 	p, err := ghosttyStep(m, &effecttest.Out{}).Plan(context.Background())
-	if err != nil || len(p.Changes) != 0 || slices.ContainsFunc(m.Calls, func(c string) bool {
+	if err != nil || slices.ContainsFunc(m.Calls, func(c string) bool {
 		return strings.HasPrefix(c, "run ")
 	}) {
-		t.Errorf("Plan = %v, %v, calls %v; want none", p.Changes, err, m.Calls)
+		t.Errorf("Plan = %v, %v, calls %v; want no brew", p.Changes, err, m.Calls)
 	}
 }
 
@@ -40,8 +40,8 @@ func TestGhosttyFailedInstallIsAWarningAndStopsTheRun(t *testing.T) {
 	m.Results["brew list --cask font-jetbrains-mono-nerd-font"] = effecttest.Result{Err: errors.New("no")}
 	m.Results["brew install --cask ghostty"] = effecttest.Result{Err: errors.New("down")}
 	p, err := s.Plan(context.Background())
-	if err != nil || len(p.Changes) != 1 {
-		t.Fatalf("Plan = %v, %v; want the install", p.Changes, err)
+	if err != nil || len(p.Changes) != 4 {
+		t.Fatalf("Plan = %v, %v; want the install and the files", p.Changes, err)
 	}
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
