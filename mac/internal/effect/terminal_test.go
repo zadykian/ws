@@ -63,7 +63,7 @@ func TestTerminalOut(t *testing.T) {
 	term.Diff("f", []byte("a\n"), []byte("b\n"))
 	term.Flush()
 	term.Flush()
-	want := "hello mac\nwarning: careful\n--- f\n+++ f\n@@ -1,1 +1,1 @@\n-a\n+b\n" +
+	want := "hello mac\nwarning: careful\n--- f\n+++ f\n@@ -1 +1 @@\n-a\n+b\n" +
 		"To do by hand:\n  - open System Settings\n"
 	if w.String() != want {
 		t.Errorf("output = %q, want %q", w.String(), want)
