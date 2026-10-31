@@ -1,9 +1,11 @@
 package wizard
 
 import (
+	"context"
 	"time"
 
 	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/mac/internal/step"
 )
 
 // tunnelStage names the stage in its messages.
@@ -40,3 +42,43 @@ func (*Tunnel) Name() string { return tunnelStage }
 
 // WaitsOn is ws's run, which makes wg0.
 func (*Tunnel) WaitsOn() string { return runStage }
+
+type tunnelChange string
+
+func (c tunnelChange) String() string { return tunnelStage + ": would " + string(c) }
+
+// Plan is empty where ws's wg0 has the Mac's key as its peer, WS_PUBLIC_KEY is wg0's key, and
+// launchd has ws-tunnel loaded. ws's SSH port must answer through the tunnel too, and ssh ws go
+// through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries, and where
+// the check found no handshake, ws-tunnel has none: a later run checks those two.
+func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
+	c, err := t.Host.conf()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	mac := t.pub()
+	if mac == "" && t.Host.Check {
+		t.Out.Say("%s: after ws setup", tunnelStage)
+		return step.Plan{}, nil
+	}
+	if t.Run.Remote.Status(ctx) && c.PublicKey != "" && t.Run.Remote.Get("wg0") == c.PublicKey &&
+		t.Run.Remote.Get("peer") == "ok" && mac != "" && t.Run.Remote.Get("mac.pub") == mac &&
+		t.loaded(ctx) && (t.Host.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
+		return step.Plan{}, nil
+	}
+	var ch []step.Change
+	if t.Run.Remote.Get("mac.pub") != mac {
+		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on ws"))
+	}
+	if t.Run.Remote.Get("mac.pub") != mac || t.Run.Remote.Get("peer") != "ok" {
+		ch = append(ch, tunnelChange("run bootstrap.sh --tags wireguard on ws, for wg0's peer"))
+	}
+	switch wg0 := t.Run.Remote.Get("wg0"); {
+	case wg0 == "":
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, which that run makes"))
+	case wg0 != c.PublicKey:
+		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, "+wg0))
+	}
+	return step.Plan{Changes: append(ch, tunnelChange("run ws setup again, which loads ws-tunnel, and wait up "+
+		"to 30 s for ws-tunnel's handshake, then log in to ws through it"))}, nil
+}
