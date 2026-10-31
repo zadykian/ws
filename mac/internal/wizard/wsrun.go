@@ -3,6 +3,8 @@ package wizard
 import (
 	"context"
 	"strings"
+
+	"github.com/zadykian/ws/mac/internal/step"
 )
 
 // runStage names the stage in its messages.
@@ -53,4 +55,51 @@ func (r *WsRun) runDone(ctx context.Context, target string) bool {
 		return false
 	}
 	return r.idle(ctx) && (target != "cloud" || (r.off() && r.Remote.Get("outbound") == "off"))
+}
+
+// runChange is the change that runs the playbook, or that names the outbound table's state in host_vars.
+type runChange struct {
+	text string
+	// args are the remote script's run arguments. outbound has the stage name the state alone.
+	args     []string
+	outbound bool
+	// cloud is set for a cloud VM, whose run turns the outbound table off.
+	cloud bool
+}
+
+func (c runChange) String() string { return runStage + ": would " + c.text }
+
+// Plan reads ws's last run, and finds whether the playbook is to run, to be followed, or whether
+// host_vars alone lacks the outbound line. Under --check it says what would happen.
+func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
+	c, err := r.Host.conf()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	if r.runDone(ctx, c.Target) {
+		return step.Plan{}, nil
+	}
+	how := "run bootstrap.sh on ws in a unit of its own, and follow its log"
+	var args []string
+	if r.Update {
+		args = []string{"--update"}
+		how = "pull ws's clone where it is on main and clean, then " + how
+	}
+	if c.Target == "cloud" {
+		args = append(args, "-e", "security_outbound=false")
+		how += ", with -e security_outbound=false, then name that in ws's host_vars"
+		if !r.Update && r.idle(ctx) && r.off() {
+			return step.Plan{Changes: []step.Change{runChange{text: "name security_outbound: false in ws's host_vars",
+				outbound: true}}}, nil
+		}
+	}
+	if r.Host.Check {
+		unit, last := r.Remote.Get("active"), r.lastRun()
+		if unit != "" && unit != "-" {
+			how = "follow " + unit + ", which runs on ws"
+		} else if last != "-" && last != "0" {
+			how += "; its last full run exited " + last
+		}
+	}
+	return step.Plan{Changes: []step.Change{runChange{text: how, args: args, cloud: c.Target == "cloud"}}}, nil
 }
