@@ -14,6 +14,8 @@ const (
 	// regular style.
 	ghosttyFont     = "font-jetbrains-mono-nerd-font"
 	ghosttyFontFile = "JetBrainsMonoNerdFontMono-Regular.ttf"
+	// ghosttyLine is the line of Ghostty's config that reads ws.ghostty.
+	ghosttyLine = "config-file = ?ws.ghostty"
 )
 
 // Ghostty sets up Ghostty, the Mac's terminal: Ghostty and the font its settings name, from
