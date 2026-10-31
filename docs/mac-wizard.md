@@ -160,7 +160,7 @@ The stage stops too where `WS_USER` isn't root: the README's steps are then by h
 another host key than `known_hosts` holds, as once ws is installed again, it stops, naming
 `ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and
 its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line that
-starts cld's watcher.
+starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
 
 A run shares one ssh connection to `ws-ssh`, and one to `ws` in the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.

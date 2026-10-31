@@ -20,8 +20,9 @@ The rest is the docs, the lint gates' tools and CI.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
 - `mac/`: the Mac's side, POSIX sh, run on the Mac ([The Mac](docs/mac.md)).
-- `docs/`: a page per role; `mac.md`, `mac-git.md`, `mac-wizard.md`, `mac-targets.md`, `router.md`
-  and `checks.md`; `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`.
+- `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
+  `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index of the keymap's pages
+  in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
