@@ -28,7 +28,7 @@ func confPath(getenv func(string) string, pwd string) string {
 func wizardMain(args []string, stderr io.Writer) int {
 	pwd, _ := os.Getwd()
 	e := wizardEnv{goos: runtime.GOOS, uid: os.Geteuid(), pid: os.Getpid(), m: effect.OSMachine{},
-		getenv: os.Getenv, lookup: os.LookupEnv, pwd: pwd, stdin: os.Stdin, tty: isTerminal(os.Stdin), stderr: stderr}
+		getenv: os.Getenv, lookup: os.LookupEnv, pwd: pwd, stdin: os.Stdin, tty: isTerminal(os.Stdin), stderr: stderr, stdout: os.Stdout}
 	_ = os.Setenv("PATH", "/opt/homebrew/bin:"+os.Getenv("PATH"))
 	_ = os.Setenv("WS_CONF", confPath(os.Getenv, pwd))
 	return wizardCommand(context.Background(), args, e)

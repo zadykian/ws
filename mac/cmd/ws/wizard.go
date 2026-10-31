@@ -91,6 +91,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, che
 			Lock: strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName, Tty: e.tty,
 			M: e.m, P: p, Out: out, Sleep: time.Sleep},
 		&wizard.Gh{Conf: later, Home: e.getenv("HOME"), Tty: e.tty, M: e.m, Out: out},
+		wizardSetup(e, out, later),
 	}
 }
 

@@ -14,10 +14,10 @@ import (
 
 // wizardSetup returns the stage that runs the steps of ws setup in the wizard's process. Until
 // mac.conf has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands that make it
-// ws's peer at every run, which the Tunnel stage takes over: the text goes nowhere then.
-func wizardSetup(e wizardEnv, out effect.Out) *wizard.Setup {
+// ws's peer at every run, which the Tunnel stage takes over: the text goes nowhere then. file is the
+// mac.conf to read, which is Answers' would-be file under --check.
+func wizardSetup(e wizardEnv, out effect.Out, file string) *wizard.Setup {
 	return &wizard.Setup{M: e.m, Run: func(ctx context.Context, check bool) (bool, error) {
-		file := confPath(e.getenv, e.pwd)
 		text, err := e.m.ReadFile(file)
 		if err != nil {
 			return false, err
