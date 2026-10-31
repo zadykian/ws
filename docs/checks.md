@@ -193,8 +193,8 @@ shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another
 CI also sets up a Mac, on GitHub's macOS runner, in the order of [The Mac](mac.md). First,
 `mac/setup.sh --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
 installs no formula or cask. It must note the install of JetBrains Gateway's cask. Stand-ins for
-Gateway's app and for cld, which `setup.sh` leaves alone, then spare the job's runs their
-downloads. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
+Gateway's and Ghostty's apps, the font and cld, which `setup.sh` leaves alone, spare the job's runs
+their downloads. Without ws's key, `setup.sh` must make the Mac's key and load no daemon, while
 `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key in the
 command that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a
 second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their

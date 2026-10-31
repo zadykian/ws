@@ -5,7 +5,9 @@
 #
 #   sh .github/mac-standins.sh
 #
-# - JetBrains Gateway.app, an empty directory in ~/Applications, which spares its cask;
+# - JetBrains Gateway.app and Ghostty.app, empty directories in ~/Applications, and the regular
+#   style of Ghostty's font, an empty file in ~/Library/Fonts, which spare their casks. setup.sh
+#   writes Ghostty's settings, as on a Mac with Ghostty;
 # - ~/.local/bin/cld, whose version names no release, so that setup.sh neither installs nor updates
 #   it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no LocalCommand.
 
@@ -15,7 +17,9 @@ if [ -e ~/.local/bin/cld ]; then
     echo '::error::the runner has ~/.local/bin/cld already'
     exit 1
 fi
-mkdir -p ~/Applications/"JetBrains Gateway.app" ~/.local/bin
+mkdir -p ~/Applications/"JetBrains Gateway.app" ~/Applications/Ghostty.app ~/Library/Fonts \
+    ~/.local/bin
+: >~/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf
 cat >~/.local/bin/cld <<'EOS'
 #!/bin/sh
 # A stand-in cld: it answers --version with no release's, and fails at anything else.
