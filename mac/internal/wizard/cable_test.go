@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/mac/internal/step"
 )
 
 const cableLink = "eth0 - -\neth1 1 -\n"
@@ -47,5 +48,39 @@ func TestCablePlan(t *testing.T) {
 		if !strings.Contains(got, tc.want) || (tc.want == "" && got != "") {
 			t.Errorf("%s: Plan = %q; want %q", name, got, tc.want)
 		}
+	}
+}
+
+func TestCableApplyAsksPortAndService(t *testing.T) {
+	c, m, p := newCable(t, "", cableLink, nil)
+	m.Results[remoteLine(c.Files, "link", "eth1")] = effecttest.Result{}
+	m.Results[remoteLine(c.Run.Remote, "run", "--tags", "network,wireguard")] = effecttest.Result{}
+	m.Results[remoteLine(c.Files, "wait", "eth1")] = effecttest.Result{Out: []byte("eth1 1 10.77.0.1/24\n")}
+	m.Results["networksetup -listallnetworkservices"] = effecttest.Result{Out: []byte("An asterisk (*) denotes that a network service is disabled.\nWi-Fi\nUSB LAN\n")}
+	m.Results["networksetup -getinfo Wi-Fi"] = effecttest.Result{Out: []byte("IP address: 10.0.0.2\n")}
+	m.Results["networksetup -getinfo USB LAN"] = effecttest.Result{Out: []byte("IP address: 169.254.3.4\n")}
+	m.Results["ping -c 1 -t 3 10.77.0.1"] = effecttest.Result{}
+	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT, or none)"] = "eth1"
+	p.Answers["The Mac's service of the cable, of Wi-Fi, USB LAN (WS_CABLE_SERVICE, or none)"] = "USB LAN"
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/mac.conf"]); !strings.Contains(got, "WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB LAN\"\n") {
+		t.Errorf("mac.conf = %q; want the port and the service", got)
+	}
+}
+
+func TestCableApplyNone(t *testing.T) {
+	c, m, p := newCable(t, "", cableLink, nil)
+	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT, or none)"] = "none"
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_CABLE_SERVICE=\n") {
+		t.Errorf("Apply with none = %v, mac.conf %q; want an empty service", err, m.Files["/h/mac.conf"])
+	}
+}
+
+func TestCableApplyEnvPortOutsideList(t *testing.T) {
+	c, _, _ := newCable(t, "", cableLink, map[string]string{"WS_CABLE_PORT": "eth9"})
+	if err := c.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "none of eth0, eth1") {
+		t.Errorf("Apply = %v; want a refusal of the environment's port", err)
 	}
 }
