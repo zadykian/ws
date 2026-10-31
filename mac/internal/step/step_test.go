@@ -2,6 +2,7 @@ package step_test
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -31,6 +32,72 @@ func TestRun(t *testing.T) {
 			wantChanged: true,
 			wantLog:     []string{"plan a", "apply a", "plan a", "plan b"},
 			wantOut:     []string{"say: a: applying 1 change(s)"},
+		},
+		{
+			name:  "check prints and applies nothing",
+			check: true,
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{&fake{name: "a", todo: []step.Change{change("x"), change("y")}, log: l}}
+			},
+			wantChanged: true,
+			wantLog:     []string{"plan a"},
+			wantOut:     []string{"say: a: x", "say: a: y"},
+		},
+		{
+			name:    "check of a done step is silent",
+			check:   true,
+			steps:   func(l *[]string) []step.Step { return []step.Step{&fake{name: "a", log: l}} },
+			wantLog: []string{"plan a"},
+		},
+		{
+			name: "a plan not empty after apply",
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{&fake{name: "a", todo: []step.Change{change("x")}, sticky: true, log: l}}
+			},
+			wantChanged: true,
+			wantErr:     "a: still has 1 change(s) after applying, the first: x",
+			wantLog:     []string{"plan a", "apply a", "plan a"},
+			wantOut:     []string{"say: a: applying 1 change(s)"},
+		},
+		{
+			name:  "check says a step waits",
+			check: true,
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{
+					&fake{name: "a", todo: []step.Change{change("x")}, log: l},
+					&fake{name: "b", todo: []step.Change{change("y")}, waitsOn: "a", log: l},
+				}
+			},
+			wantChanged: true,
+			wantLog:     []string{"plan a"},
+			wantOut:     []string{"say: a: x", "say: b: waits on a"},
+		},
+		{
+			name:  "check skips a step whose plan would fail",
+			check: true,
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{
+					&fake{name: "a", todo: []step.Change{change("x")}, log: l},
+					&fake{name: "b", waitsOn: "a", planErr: errors.New("no gh"), log: l},
+					&fake{name: "c", waitsOn: "b", log: l},
+				}
+			},
+			wantChanged: true,
+			wantLog:     []string{"plan a"},
+			wantOut:     []string{"say: a: x", "say: b: waits on a", "say: c: waits on b"},
+		},
+		{
+			name:  "check of a step whose awaited step is done",
+			check: true,
+			steps: func(l *[]string) []step.Step {
+				return []step.Step{
+					&fake{name: "a", log: l},
+					&fake{name: "b", todo: []step.Change{change("y")}, waitsOn: "a", log: l},
+				}
+			},
+			wantChanged: true,
+			wantLog:     []string{"plan a", "plan b"},
+			wantOut:     []string{"say: b: y"},
 		},
 	}
 	for _, tt := range tests {
