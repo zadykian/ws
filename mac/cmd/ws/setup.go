@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
-const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n"
+const setupUsage = "usage: ws setup [--check] STEP\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  gateway  install JetBrains Gateway\n"
 
 // progOut prefixes a line with the program that prints it, as setup.sh's lines are, and says each
 // warning once, as a step plans again after it applies. setup.sh sets the prefix in WS_PROG, so
@@ -65,6 +65,7 @@ func setupSteps(c conf.Conf, home string, m effect.Machine, out effect.Out, chec
 	return []step.Step{
 		setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, AssumeTunnel: check},
 		setup.Cable{Conf: c, M: m, Out: out},
+		&setup.Gateway{Home: home, M: m, Out: out},
 	}
 }
 
