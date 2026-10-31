@@ -42,8 +42,6 @@ dir=$(cd "$(dirname "$0")" && pwd -P)
 . "$dir/setup-lib.sh"
 # shellcheck source=build.sh
 . "$dir/build.sh"
-# shellcheck source=setup-git.sh
-. "$dir/setup-git.sh"
 # shellcheck source=setup-ghostty.sh
 . "$dir/setup-ghostty.sh"
 # shellcheck source=setup-cld.sh
@@ -287,7 +285,7 @@ main() {
     step ssh
     was=$via_tunnel$cld_tabs
     step cable
-    git_mac
+    step git
     step gateway
     ghostty_mac
     cld_mac
