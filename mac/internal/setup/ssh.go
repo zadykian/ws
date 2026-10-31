@@ -1,11 +1,13 @@
 package setup
 
 import (
+	"bytes"
 	"context"
 	"time"
 
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/mac/internal/sshcfg"
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
@@ -39,6 +41,32 @@ func (s SSH) WaitsOn() string {
 		return "tunnel"
 	}
 	return ""
+}
+
+// Plan reads ~/.ssh and the Mac, and checks the new file with ssh.
+func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
+	f, err := s.read()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	id, err := s.identity(ctx, f)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	in := sshcfg.Inputs{
+		User: s.Conf.User, LAN: s.Conf.LAN, LANAddress: s.Conf.LANAddress, Remote: s.Conf.Remote,
+		RemotePort: s.Conf.RemotePort, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
+		IdentityPub: id.Pub, IdentityAgent: id.Agent, ViaTunnel: s.viaTunnel(ctx), CldTabs: s.cldTabs(ctx),
+	}
+	text := []byte(sshcfg.Config(in))
+	if err := s.validate(ctx, f, text); err != nil {
+		return step.Plan{}, err
+	}
+	if f.ConfigDirLink != "" && !bytes.Equal(f.Ws.Text, text) {
+		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws, with mac.conf's addresses, goes there",
+			f.ConfigDirLink)
+	}
+	return step.Plan{Changes: sshChanges(f, text)}, nil
 }
 
 // Apply applies the changes in order.
