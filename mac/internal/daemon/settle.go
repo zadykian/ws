@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"net/netip"
 	"time"
 
 	"github.com/zadykian/ws/mac/internal/tunnel"
@@ -15,7 +16,8 @@ func (d *Daemon) settle(ctx context.Context, dec tunnel.Decision) {
 		d.say("%s", dec.Why)
 		d.inUse, d.since = c, d.Now()
 	}
-	d.round, d.misses = nil, 0
+	// The routes stay clear of the endpoint in use alone, as a failed tier's network may be routed.
+	d.ends, d.round, d.misses = []netip.Addr{c.Host}, nil, 0
 	d.writeState(ctx)
 }
 
@@ -30,6 +32,6 @@ func (d *Daemon) fail(ctx context.Context, dec tunnel.Decision, now time.Time) {
 		d.say("%s; trying again 10 s after each round", dec.Why)
 		d.inUse, d.since = tunnel.Candidate{Tier: tunnel.TierNone}, now
 	}
-	d.round, d.misses = nil, 0
+	d.ends, d.round, d.misses = hostsOf(d.round), nil, 0
 	d.writeState(ctx)
 }
