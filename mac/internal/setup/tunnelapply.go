@@ -28,7 +28,7 @@ func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 			return err
 		}
 	}
-	return nil
+	return t.publish(ctx)
 }
 
 func (t *Tunnel) install(ctx context.Context, i Install) error {
