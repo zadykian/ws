@@ -3,6 +3,7 @@ package wizard
 import (
 	"errors"
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -61,5 +62,21 @@ func TestSequenceWays(t *testing.T) {
 		if err := newSequence(nil, scripted(&asked, tc.answers)).ways(); err != nil || !reflect.DeepEqual(asked, tc.want) {
 			t.Errorf("%s: asked %v, %v; want %v", name, asked, err, tc.want)
 		}
+	}
+}
+
+func TestSequenceRun(t *testing.T) {
+	var asked []string
+	answers := map[string]string{"WS_TARGET": "cloud", "WS_GIT_NAME": "Ada", "WS_HOOK": "me/hook"}
+	if err := newSequence(map[string]bool{"WS_TUNNEL_NETWORKS": true}, scripted(&asked, answers)).run(); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_NAME", "WS_GIT_EMAIL", "WS_RESOLVERS", "WS_HOOK", "WS_HOOK_SECRET"}
+	if !reflect.DeepEqual(asked, want) {
+		t.Errorf("asked %v, want %v", asked, want)
+	}
+	asked = nil
+	if err := newSequence(nil, scripted(&asked, nil)).run(); err != nil || slices.Contains(asked, "WS_GIT_EMAIL") || slices.Contains(asked, "WS_HOOK_SECRET") {
+		t.Errorf("without a name or a hook: asked %v, %v", asked, err)
 	}
 }

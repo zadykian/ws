@@ -27,6 +27,38 @@ func (s *sequence) get(q question) (string, error) {
 	return v, err
 }
 
+// run asks the keys in order. git's email is asked only with a name, and needs a value then, and the
+// Keychain item only with another repository. git's identity defaults to ws's own.
+func (s *sequence) run() error {
+	if err := s.ways(); err != nil {
+		return err
+	}
+	name, err := s.get(question{"WS_GIT_NAME", "git's name on the Mac", s.role("shell_git_name"), ""})
+	if err != nil {
+		return err
+	}
+	if name != "" {
+		if _, err := s.get(question{"WS_GIT_EMAIL", "git's email on the Mac", s.role("shell_git_email"),
+			"WS_GIT_NAME and WS_GIT_EMAIL go together"}); err != nil {
+			return err
+		}
+	}
+	for _, q := range []question{
+		{"WS_TUNNEL_NETWORKS", "More networks through the tunnel, split by blanks", "", ""},
+		{"WS_RESOLVERS", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks", "", ""},
+		{"WS_HOOK", "Another repository whose apply.sh runs on ws, as OWNER/REPO", "", ""},
+	} {
+		if _, err := s.get(q); err != nil {
+			return err
+		}
+	}
+	if s.vals["WS_HOOK"] == "" {
+		return nil
+	}
+	_, err = s.get(question{"WS_HOOK_SECRET", "The Keychain item of its apply.sh's secret", "", ""})
+	return err
+}
+
 // ways asks the machine, then the ways to it (docs/mac-targets.md). A cloud VM has its name or
 // address and its SSH port alone, and a VM on the Mac the Mac's network for its VMs and its address
 // there. On the LAN, ws's address is asked only with a LAN, and the router's port only with its
