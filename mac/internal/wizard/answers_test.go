@@ -82,3 +82,20 @@ func TestAnswersAskAndWrite(t *testing.T) {
 		t.Errorf("mac.conf = %q, want %q", got, want)
 	}
 }
+
+func TestAnswersFromEnvironment(t *testing.T) {
+	a, out := newAnswers(t, "")
+	a.Env = func(k string) (string, bool) {
+		return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
+	}
+	a.P.(*effecttest.Prompt).Answers = map[string]string{"The VM's SSH port (WS_REMOTE_PORT) [22]": "", "git's name on the Mac (WS_GIT_NAME) [ada, or none]": "none",
+		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]": "", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
+		"Another repository whose apply.sh runs on ws, as OWNER/REPO (WS_HOOK) [none]": ""}
+	a.M.(*effecttest.Machine).Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+	if _, err := step.Run(context.Background(), []step.Step{a}, out, false); err != nil {
+		t.Fatalf("Run = %v", err)
+	}
+	if got := string(a.M.(*effecttest.Machine).Files[confPathForTest]); !strings.HasPrefix(got, "WS_TARGET=cloud\nWS_REMOTE=r.example\n") {
+		t.Errorf("mac.conf = %q", got)
+	}
+}
