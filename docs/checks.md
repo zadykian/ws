@@ -84,19 +84,19 @@ sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-
 [ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first on its `PATH`. `status`
 must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key for it and as
 its peer, and ws's signing key or `none`. They are also its hostname, claude's login, Secure Boot
-that refuses the fans' driver, and `host_vars.yml`'s outbound table. A full `run` must run `bootstrap.sh`
-with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It must print the
-log, and stamp ws's version, `-` here, 0 and `on`; with `-e security_outbound=false`, `off`, and write
-the line of its `outbound`, which stops on a link. A tagged run after it must start its own unit and
-leave that stamp. A run during another's unit must follow it. A full run cut off must remove the
-stamp of the one before, so the next starts a unit again. The files script,
+that refuses the fans' driver, and `host_vars.yml`'s outbound table. A full `run` must run `ws
+server apply --` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It
+must print the log, and stamp ws's version, `-` here, 0 and `on`; with `-e security_outbound=false`,
+`off`, and write the line of its `outbound`, which stops on a link. A tagged run after it must start
+its own unit and leave that stamp. A run during another's unit must follow it. A full run cut off
+must remove the stamp of the one before, so the next starts a unit again. The files script,
 `mac/wizard-remote-files.sh`, must clone another repository from a bundle sent to it, whose
 `apply.sh` must run as root over `ssh`. Its stamp must follow, which `status` must list, as
 `OWNER/REPO`. A clone again must leave it alone and remove the stamp, and one of another owner's
 repository of that name stop. Its `words` must print git's hash of root's word list, or `-` without
 one, and the list for that hash alone. Its `link` must list the wired ports, and `link PORT` name
-one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles
-give `10.77.0.1`.
+one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
+`10.77.0.1`.
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
@@ -117,13 +117,14 @@ hand without `WS_HOOK`. The next must print nothing, as a run must where root's 
 key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
 `--check` must say it would run it. The next must print nothing.
 
-The stand-in `bootstrap.sh --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820, with
-the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's run.
-The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and load the daemon.
-It must log in once through the tunnel, by stand-ins of `ssh` and `nc`, as `wg0` has no address. A
-new key for `wg0` must replace `WS_PUBLIC_KEY`'s line, and a missing `mac.pub` come back. Without
-`wg0`'s peer alone, a run must run it again. With nothing on UDP 51820, the closing list must name
-the port. Where `sudo -n` fails, a run must print nothing, and without `tunnel.pub`, write it first.
+The stand-in `ws server apply -- --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820,
+with the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's
+run. The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and load the
+daemon. It must log in once through the tunnel, by stand-ins of `ssh` and `nc`, as `wg0` has no
+address. A new key for `wg0` must replace `WS_PUBLIC_KEY`'s line, and a missing `mac.pub` come back.
+Without `wg0`'s peer alone, a run must run it again. With nothing on UDP 51820, the closing list
+must name the port. Where `sudo -n` fails, a run must print nothing, and without `tunnel.pub`, write
+it first.
 
 With claude logged out, a run at a terminal of `script`'s must run `claude auth login` through
 `bash -lc` in an `ssh -t` session. The stand-in takes a terminal alone, and the next run must print
@@ -242,9 +243,9 @@ writes them again, so a change to them goes in the toolkit.
 ## The hooks
 
 The hooks in `.githooks` check each commit before git makes it. Enable them in a clone, and so in
-its worktrees, with `git config core.hooksPath "$PWD/.githooks"` in its checkout, as `bootstrap.sh`
-does in its clone. The path is absolute, so that each worktree runs the checkout's hooks, never
-those of the branch it holds, such as an outside pull request's. Where
+its worktrees, with `git config core.hooksPath "$PWD/.githooks"` in its checkout. The path is
+absolute, so that each worktree runs the checkout's hooks, never those of the branch it holds, such
+as an outside pull request's. Where
 `~/.config/ws/forbidden-words` exists, a word or phrase a line, they refuse a commit whose added
 lines, file names or message hold one. Case aside, a word matches where no letter or digit touches
 it: `_` separates words, as `-` does. Where gitleaks is installed, they refuse a staged secret too.

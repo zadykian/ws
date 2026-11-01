@@ -34,7 +34,7 @@ the first two of which install what the rest needs:
 6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 7. Root's key: root's login to ws by the Mac's key, checked and never added, below.
 8. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
-9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
+9. ws's run: `ws server apply` on ws, in a unit of its own, which the wizard follows, below.
 10. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
@@ -172,10 +172,9 @@ is no release: put a Linux build of the tree at `/usr/local/bin/ws` (`tools/buil
 ## ws's run
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
-So the script is the Mac's clone's, whatever ws's clone holds. It runs `bootstrap.sh` from ws's
-clone in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8
-locale, or main's `bootstrap.sh` where ws has no clone. It installs the latest ws, which runs the
-playbook it embeds ([The playbook](checks.md#the-playbook)). The wizard prints the unit's log until
+It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
+root's `HOME` and a UTF-8 locale. That ws runs the playbook it embeds
+([The playbook](checks.md#the-playbook)). The wizard prints the unit's log until
 it ends, and stops where the run fails. A first run takes 20 to 40 minutes. The unit goes on where
 ssh drops, as when the Mac sleeps, and the next run of the wizard follows it to its end.
 
@@ -184,7 +183,7 @@ with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends
 version, or `-` where it has none, and the status there, and `off` where its `-e` turned the
 outbound table off. The stage is done where that status is 0, the version is this ws's, and no unit
 runs. So a second run of the wizard runs no playbook, and one after a run cut short starts again.
-With `--update`, the stage runs the playbook once more, which installs the latest ws first. The run
+With `--update`, the stage runs the playbook once more with the ws installed there. The run
 passes no file of the `ikeward` role's variables, so the role leaves the VPN as it finds it ([The
 profile](ikeward.md#the-profile)).
 
@@ -213,9 +212,9 @@ with the address it shows opened in the Mac's browser. With no terminal, the sta
 
 ## The tunnel
 
-The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds
-another, and `bootstrap.sh --tags wireguard` gives `wg0` that peer. That run goes again where `wg0`
-lacks the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
+The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds another, and
+`ws server apply -- --tags wireguard` gives `wg0` that peer. That run goes again where `wg0` lacks
+the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
 the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
 `wg0`'s key, in place of its line, and `ws mac apply` runs again, which loads ws-tunnel
 ([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. Then a handshake must come
@@ -243,7 +242,7 @@ whose access list lacks `security` asks at both of the stage's reads, which "Alw
 The stage Hook on the Mac comes first. It clones the repository in `~/repository/REPO` by gh's login
 on the Mac, where missing, and never pulls it. Another repository's clone there stops the stage, as
 on ws. Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute path, as in
-ws's clone ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose entries Homebrew
+a clone of ws ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose entries Homebrew
 lacks, as `brew bundle check`, run with Homebrew's auto-update off, finds, `brew bundle` installs
 them, and upgrades nothing. `--check` names each command that the stage would run.
 
@@ -261,7 +260,7 @@ wizard's files script lists ws's wired ports but the uplink, each with its carri
 addresses. Where none has carrier, as the Mac isn't
 docked, the stage waits, and the closing list says to dock the Mac and run the line again. Docked,
 the stage asks ws's port of the cable, the one with carrier by default. It names the port in
-`/etc/ws/host_vars.yml` on ws, then runs `bootstrap.sh --tags network,wireguard` there, as both
+`/etc/ws/host_vars.yml` on ws, then runs `ws server apply -- --tags network,wireguard` there, as both
 roles read it. Once the port holds `10.77.0.1`, the stage asks the Mac's service of the cable. The
 default is the one service with a `169.254` address, which an adapter gives itself where no DHCP
 server answers. The answer goes in `mac.conf` as `WS_CABLE_SERVICE`, then `ws mac apply` gives the
