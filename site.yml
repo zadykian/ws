@@ -13,10 +13,6 @@
       tags: [ikeward]
     - role: fans
       tags: [fans]
-    - role: shell
-      tags: [shell]
-    - role: tmux
-      tags: [tmux]
     - role: claude
       tags: [claude]
     - role: helix

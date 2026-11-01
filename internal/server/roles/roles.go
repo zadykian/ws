@@ -11,7 +11,9 @@ import (
 	"github.com/zadykian/ws/internal/server/docker"
 	"github.com/zadykian/ws/internal/server/otelcol"
 	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/server/shell"
 	"github.com/zadykian/ws/internal/server/signoz"
+	"github.com/zadykian/ws/internal/server/tmux"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -38,8 +40,8 @@ var all = []Role{
 	{Name: "wireguard"},
 	{Name: "ikeward"},
 	{Name: "fans"},
-	{Name: "shell"},
-	{Name: "tmux"},
+	{Name: "shell", Steps: shell.Steps},
+	{Name: "tmux", Steps: tmux.Steps},
 	{Name: "devtools", Steps: devtools.Steps},
 	{Name: "docker", Steps: docker.Steps},
 	{Name: "claude"},
