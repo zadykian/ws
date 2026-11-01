@@ -14,7 +14,6 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 ```
 
 Then `~/.local/bin/ws mac wizard` runs the wizard, with `--check` to see what it would do.
-
 Each stage reads what it sets up, acts where that isn't done, and reads it again. So a run takes up
 where the last one stopped, and in a second no stage acts. `--check` prints what each stage would
 do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`, and keeps the Mac
@@ -34,14 +33,15 @@ the first two of which install what the rest needs:
    prints.
 6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 7. Root's key: root's login to ws by the Mac's key, checked and never added, below.
-8. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
-9. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
-10. claude on ws: root's claude there, logged in, below.
-11. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-12. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
-13. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
-14. Word list: ws's, copied to the Mac where it differs, below.
-15. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+8. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
+9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
+10. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
+11. claude on ws: root's claude there, logged in, below.
+12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
+13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
+14. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
+15. Word list: ws's, copied to the Mac where it differs, below.
+16. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
 ## The answers
 
@@ -76,11 +76,10 @@ from the first of these that has one:
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
 the end of `mac.conf`, and keeps its comments and order. It writes the file once `ws mac apply`
-would take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that
-`ws mac apply` would refuse. Where `mac.conf` is a link, it prints the lines to add to the link's
-file, and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The
-cable](#the-cable)). The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set
-by hand.
+would take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that `ws mac
+apply` would refuse. Where `mac.conf` is a link, it prints the lines to add to the link's file,
+and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cable](#the-cable)).
+The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff.
 `ws mac apply --check` then reads the file it would write, in the lock, which `WS_CONF` names.
@@ -162,25 +161,32 @@ starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
 A run shares one ssh connection to `ws-ssh`, and one to `ws` in the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.
 
+## ws on ws
+
+The stage is done where the remote script's `status` prints this ws's version as `ws`. Else the
+script's `install TAG URL` runs the `install.sh` of `WS_RELEASES_URL` or
+[GitHub's releases](https://github.com/zadykian/ws/releases), which checks the binary against
+`ws.sha256`. The address starts with `https://`, or `http://127.0.0.1:` in CI. A build of a clone
+is no release: put a Linux build of the tree at `/usr/local/bin/ws` (`tools/build`), then run again.
+
 ## ws's run
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
 So the script is the Mac's clone's, whatever ws's clone holds. It runs `bootstrap.sh` from ws's
 clone in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8
 locale, or main's `bootstrap.sh` where ws has no clone. It installs the latest ws, which runs the
-playbook it embeds ([The playbook](checks.md#the-playbook)). The
-wizard prints the unit's log until it ends, and stops where the run fails. A first run takes 20 to
-40 minutes. The unit goes on where ssh drops, as when the Mac sleeps, and the next run of the wizard
-follows it to its end.
+playbook it embeds ([The playbook](checks.md#the-playbook)). The wizard prints the unit's log until
+it ends, and stops where the run fails. A first run takes 20 to 40 minutes. The unit goes on where
+ssh drops, as when the Mac sleeps, and the next run of the wizard follows it to its end.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
-with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes
-ws's version, or `-` where it has none, and the status there, and `off` where its `-e` turned the
-outbound table off. The stage is done where that status is 0 and no unit runs. So a second run of
-the wizard runs no playbook, and one after a run cut short starts again. With `--update`, the stage
-runs the playbook once more, which installs the latest ws first. The run passes no file of the
-`ikeward` role's variables, so the role leaves the VPN as it finds it
-([The profile](ikeward.md#the-profile)).
+with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes ws's
+version, or `-` where it has none, and the status there, and `off` where its `-e` turned the
+outbound table off. The stage is done where that status is 0, the version is this ws's, and no unit
+runs. So a second run of the wizard runs no playbook, and one after a run cut short starts again.
+With `--update`, the stage runs the playbook once more, which installs the latest ws first. The run
+passes no file of the `ikeward` role's variables, so the role leaves the VPN as it finds it ([The
+profile](ikeward.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
 with `WS_TARGET=cloud`, the run passes `-e security_outbound=false`, and its unit then names that

@@ -98,7 +98,10 @@ one, and the list for that hash alone. Its `link` must list the wired ports, and
 one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles
 give `10.77.0.1`.
 
-The wizard's stage ws's run must wait for Root's key under a fresh `--check`. The first run must run
+The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
+`ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
+on ws, with a full run of its own, a run must install v0.0.0 and run the playbook again.
+The wizard's stage ws's run must wait for ws on ws under a fresh `--check`. The first run must run
 the playbook through the remote script, and each run since must read ws's `status` alone, once, and
 again after a run of the playbook. A run's calls to ws share one connection, which its end closes.
 Without the stamp, a run whose unit is cut off must stop at the stage, and the next must start a
