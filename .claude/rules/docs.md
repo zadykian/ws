@@ -20,6 +20,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [mac-targets.md](../../docs/mac-targets.md) the wizard's targets, and
   [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld.
   [router.md](../../docs/router.md) is the router's steps, taken once by hand.
+- [releases.md](../../docs/releases.md) says how to install ws, and how a release is cut.
 - [gates.md](../../docs/gates.md) says what each gate of `make lint` runs.
   [checks.md](../../docs/checks.md) says what CI's other jobs check, and what the hooks of
   `.githooks` and Claude's hooks do.
