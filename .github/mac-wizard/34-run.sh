@@ -17,7 +17,7 @@ wsbin=$HOME/.local/bin/ws
 remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamp=$ws/root/var/lib/ws-wizard/run
-vars=$ws/root/root/repository/ws/host_vars/localhost.yml
+vars="$ws/root"/etc/ws/host_vars.yml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
