@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/mac/internal/step"
 )
 
 // cableStage names the stage in its messages.
@@ -100,4 +101,53 @@ func (c *Cable) end() string {
 func (c *Cable) lacks() bool {
 	text, _ := c.M.ReadFile(c.Host.Conf)
 	return !regexp.MustCompile(`(?m)^[ \t]*WS_CABLE_SERVICE=`).Match(text)
+}
+
+// Plan is empty off the LAN, and where mac.conf's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT is
+// empty or the cable that ws's status names. Without the service, it is empty too where no port that
+// link lists has carrier, as the Mac isn't docked: the stage waits then, and Hand names the dock in
+// the closing list. WS_CABLE_PORT in the environment ends the wait, as for a port that ws keeps
+// down. It reads ws only where root logged in there in this run.
+func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
+	cf, err := c.Host.conf()
+	if err != nil || cf.Target != "lan" {
+		return step.Plan{}, err
+	}
+	w, err := c.Host.SSH.Way(ctx)
+	if err != nil {
+		return step.Plan{}, fmt.Errorf("%s: %w", cableStage, err)
+	}
+	in, _ := c.Root.login(ctx, w)
+	if !c.lacks() {
+		if cf.CableService == "" || cf.CablePort == "" ||
+			in && c.Run.Remote.Status(ctx) && c.Run.Remote.Get("cable") == cf.CablePort {
+			return step.Plan{}, nil
+		}
+		return c.change("name " + cf.CablePort + " in host_vars/localhost.yml on ws again, and run " +
+			"bootstrap.sh --tags network,wireguard there, where ws's status names another port")
+	}
+	_, portSet := c.Env("WS_CABLE_PORT")
+	svc, svcSet := c.Env("WS_CABLE_SERVICE")
+	if svcSet && svc == "" {
+		return c.change("write an empty WS_CABLE_SERVICE in mac.conf, for no cable")
+	}
+	if !in {
+		return c.change("ask for the cable's port and service")
+	}
+	if err := c.read(ctx, "link"); err != nil {
+		return step.Plan{}, err
+	}
+	if !portSet && len(c.up()) == 0 {
+		return step.Plan{}, nil
+	}
+	if c.end() == "" {
+		return c.change("ask ws's port of the cable, name it in host_vars/localhost.yml on ws, run " +
+			"bootstrap.sh --tags network,wireguard there, then ask the Mac's service")
+	}
+	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
+		"ws setup, which gives it 10.77.0.2, and ping " + cableEnd)
+}
+
+func (*Cable) change(text string) (step.Plan, error) {
+	return step.Plan{Changes: []step.Change{cableChange(text)}}, nil
 }
