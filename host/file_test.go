@@ -55,3 +55,24 @@ func TestFileSecretShowsNoDiff(t *testing.T) {
 		t.Errorf("plan = %q, want no content", got)
 	}
 }
+
+func TestFileBackupKeepsTheOldFileOnce(t *testing.T) {
+	defer host.FixBackupName("1")()
+	m := effecttest.NewMachine()
+	m.Files["/srv/a"] = []byte("old\n")
+	m.Modes["/srv/a"], m.Owners["/srv/a"] = 0o640, [2]int{5, 6}
+	f := host.File{M: m, Path: "/srv/a", Content: []byte("new\n"), Mode: 0o600, UID: 5, GID: 6, Backup: true}
+	applyAll(t, f)
+	if got := string(m.Files["/srv/a.1~"]); got != "old\n" {
+		t.Errorf("backup = %q, want the old content", got)
+	}
+	delete(m.Files, "/srv/a.1~")
+	if got := applyAll(t, f); got != nil || len(m.Files) != 1 {
+		t.Errorf("second plan = %q, files %d; want none and no backup", got, len(m.Files))
+	}
+	f.Path = "/srv/b"
+	applyAll(t, f)
+	if _, ok := m.Files["/srv/b.1~"]; ok {
+		t.Error("a new file has a backup")
+	}
+}
