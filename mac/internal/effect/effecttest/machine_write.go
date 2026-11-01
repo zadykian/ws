@@ -73,6 +73,14 @@ func (m *Machine) Pass(ctx context.Context, root bool, name string, args ...stri
 	return err
 }
 
+// Exec records "exec NAME ARGS" and returns nothing, as a command that ended ws would.
+func (m *Machine) Exec(name string, args, _ []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Calls = append(m.Calls, "exec "+strings.Join(append([]string{name}, args...), " "))
+	return nil
+}
+
 func (m *Machine) run(kind, name string, args []string) ([]byte, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

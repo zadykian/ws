@@ -83,4 +83,7 @@ type Machine interface {
 	// Pass runs the command, through sudo where root is set, and passes its standard output and
 	// error to ws's standard error, as a script's command with its output sent to stderr does.
 	Pass(ctx context.Context, root bool, name string, args ...string) error
+	// Exec replaces ws with the command, whose environment is ws's with env's entries set. It
+	// returns only where it fails to start the command.
+	Exec(name string, args, env []string) error
 }
