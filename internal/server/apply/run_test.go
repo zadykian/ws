@@ -94,3 +94,20 @@ func TestRunWithoutRecap(t *testing.T) {
 		t.Errorf("err = %v, want no recap", err)
 	}
 }
+
+func TestSummary(t *testing.T) {
+	for _, tc := range []struct {
+		changed []string
+		check   bool
+		want    string
+	}{
+		{nil, false, "changed: none"},
+		{[]string{"base", "fans"}, false, "changed: base, fans"},
+		{[]string{"base"}, true, "would change: base"},
+		{nil, true, "would change: none"},
+	} {
+		if got := Summary(tc.changed, tc.check); got != tc.want {
+			t.Errorf("Summary(%q, %v) = %q, want %q", tc.changed, tc.check, got, tc.want)
+		}
+	}
+}

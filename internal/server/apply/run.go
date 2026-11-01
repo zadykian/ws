@@ -100,3 +100,16 @@ func (c Config) runPlaybook(ctx context.Context, names []string) (bool, error) {
 	n, _ := strconv.Atoi(string(m[1]))
 	return n > 0, nil
 }
+
+// Summary is ws's last line: the roles that changed, or that --check would change, and none on a
+// second run.
+func Summary(changed []string, check bool) string {
+	verb := "changed"
+	if check {
+		verb = "would change"
+	}
+	if len(changed) == 0 {
+		return verb + ": none"
+	}
+	return verb + ": " + strings.Join(changed, ", ")
+}
