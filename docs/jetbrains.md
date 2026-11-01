@@ -8,7 +8,7 @@ the builds it replaces, and a weekly timer does the same between runs.
 ## Installs
 
 The Mac opens Rider and GoLand on the server through JetBrains Gateway, which runs each IDE's
-backend here. `ws setup` installs Gateway on the Mac
+backend here. `ws mac apply` installs Gateway on the Mac
 ([The Mac's tunnel](mac.md#the-macs-tunnel)). Left to itself, Gateway downloads a backend on the
 first connect, 2.4 GB for Rider and 1.2 GB for GoLand, and never updates it. So each run of the role
 asks JetBrains' list of releases, which Gateway reads too, for the latest release of each. It

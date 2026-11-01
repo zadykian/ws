@@ -1,6 +1,6 @@
 # Ghostty and cld on the Mac
 
-Before the tunnel ([The Mac](mac.md)), `ws setup` sets up Ghostty, the Mac's terminal: Ghostty
+Before the tunnel ([The Mac](mac.md)), `ws mac apply` sets up Ghostty, the Mac's terminal: Ghostty
 and the font its settings name, from Homebrew's casks, and the settings, `ws.ghostty`. Then it sets
 up [cld](https://github.com/zadykian/cld) wherever it runs, for `cld restore tabs`. After Ghostty
 quits or a window closes, a restore joins each pane's cld session again, and reopens what Ghostty

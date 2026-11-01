@@ -23,19 +23,19 @@ and fails where they differ from the repository's.
 
 ## The Mac's wizard
 
-A workflow of its own, `mac-wizard.yml`, runs `ws wizard` on GitHub's macOS runner, from a copy
+A workflow of its own, `mac-wizard.yml`, runs `ws mac wizard` on GitHub's macOS runner, from a copy
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and user would,
 such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`. Then
 `checks.sh` runs the cases beside it in order, stopping at the first failure
 ([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root and
 a `WS_HOOK` of `WS`, as the files script must. A run must stop where another holds the lock, leaving
-it. A fresh `--check`, by sh and dash, must find brew with its directories off `PATH`. As `ws setup
+it. A fresh `--check`, by sh and dash, must find brew with its directories off `PATH`. As `ws mac apply
 --check` must, it must change nothing, and leave no lock or temporary file. The job's `mac.conf`
 names `~/.ssh/id_ed25519` as ws's key, which `--check` must show it would make. With no terminal and
 a `mac.conf` that names none, a run must stop at the Mac key stage, naming `WS_IDENTITY`, making
 nothing. A file key there with no line must get one, shown by `--check`. A failed `ssh-add` must
 stop a run, naming it. The first run, with that `PATH` too, must make that key with no passphrase,
-add it to that login, install what `ws setup` installs. It must drop the Mac's key that it prints,
+add it to that login, install what `ws mac apply` installs. It must drop the Mac's key that it prints,
 and leave no tunnel step by hand, as the Tunnel stage below takes it. A second run and `--check`
 must print nothing, by sh and dash. Then a stand-in `ssh-agent` at Secretive's socket holds a P-256
 key, whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`. While it lists the key, `--check`
@@ -46,7 +46,7 @@ terminal must stop at gh's stage, naming `gh auth login`. With a login lacking t
 signing one alone, it must name `gh auth refresh`. `--check` must say each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
-leads, with its own host key. A fresh `--check` must show the Host key stage after `ws setup`. The
+leads, with its own host key. A fresh `--check` must show the Host key stage after `ws mac apply`. The
 first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as `WS_HOST_KEY`
 gives its fingerprint. Without that line, a run with no terminal must stop without `WS_HOST_KEY` and
 with another fingerprint, and `--check` must show the line, or stop at a link, as a run must. With a
@@ -142,7 +142,7 @@ files alone, set its `core.hooksPath` once, and run the wizard, which then print
 second run and `--check` must print nothing at all. Where `WS_CONF` names no file, the wizard under
 `bootstrap.sh --check` must show the lines it would write there, from the answers in the
 environment, and write none. In a home without a clone, `--check` must list the clone and the
-wizard's stages, as `ws wizard` runs them, and make nothing outside macOS's `Library`. Then its
+wizard's stages, as `ws mac wizard` runs them, and make nothing outside macOS's `Library`. Then its
 functions, all but its last line, must download Homebrew's pinned `.pkg` and pass its check of the
 SHA-256 and signer. A run makes that check before the install, which the case never runs. The log
 shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another signer.
@@ -150,26 +150,26 @@ shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another
 ## The Mac
 
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First,
-`ws setup --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
+`ws mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
 installs no formula or cask. It must note the install of JetBrains Gateway's cask. Stand-ins for
-Gateway's and Ghostty's apps, the font and cld, which `ws setup` leaves alone, spare the job's runs
-their downloads. Without ws's key, `ws setup` must make the Mac's key and load no daemon, while
+Gateway's and Ghostty's apps, the font and cld, which `ws mac apply` leaves alone, spare the job's runs
+their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no daemon, while
 `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key in the
 command that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a
 second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their
 addresses. The stand-in for ws is a second wireguard-go on the runner, with the printed key as its
-peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws tunnel status` must show a
+peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws mac tunnel status` must show a
 handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and `routes.d`
-in place, with the same pid. Then a network that `ws tunnel routes` adds must be routed into the
-daemon's utun, and a domain `ws resolver` adds must show in `scutil --dns`. `ws tunnel loaded`,
-`ws tunnel routes` and `ws resolver` must do the same, with `--check` showing the diff and writing nothing
+in place, with the same pid. Then a network that `ws mac tunnel routes` adds must be routed into the
+daemon's utun, and a domain `ws mac resolver` adds must show in `scutil --dns`. `ws mac tunnel loaded`,
+`ws mac tunnel routes` and `ws mac resolver` must do the same, with `--check` showing the diff and writing nothing
 ([mac-ws-checks.sh](../.github/mac-ws-checks.sh)). Next, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
-must take both back, and spare a script's own. Last, `ws setup` must read an empty value in
+must take both back, and spare a script's own. Last, `ws mac apply` must read an empty value in
 `mac.conf` as its key's default, and still stop on a value of the wrong form. It must also stop on a
 `WS_LAN_ADDRESS` outside `WS_LAN`, and on the LAN's network or broadcast address
-([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `ws setup`
+([mac-conf-checks.sh](../.github/mac-conf-checks.sh)). With `WS_CABLE_SERVICE` empty, `ws mac apply`
 must print nothing. Set, it must run one `networksetup -setmanual`, a stand-in's, through sudo, and
 then none. It must warn of a disabled service. It must stop on one networksetup lacks, or one with a
 router outside the cable's `/30`. It must stop too on a `-setmanual` that fails or changes nothing,
@@ -179,12 +179,12 @@ them the file or the agent that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with
 showing `config.d/ws`'s diff alone. Then it must give them an agent at Secretive's socket, which
 holds a P-256 key whose `.pub` is in `PublicKeys`, where those keys are empty. It must warn that
 this replaces the file key. A `-cert.pub`, a name with a blank or a directory there must not count.
-A second `.pub` must stop `ws setup`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key
+A second `.pub` must stop `ws mac apply`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key
 must be the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is
 missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
-`ws setup` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
+`ws mac apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
 ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)).
-Without the stand-in app, `ws setup` must install Gateway's cask once, through a stand-in brew that
+Without the stand-in app, `ws mac apply` must install Gateway's cask once, through a stand-in brew that
 refuses any other call, and then print nothing. With an app in `/Applications`, it must install
 nothing. A failed install, or one that leaves no app, must draw a warning, and the run go on to the
 tunnel. So must a cask that Homebrew has without its app, which neither a run nor `--check` may
@@ -193,16 +193,16 @@ and `WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no 
 stop on a `WS_GIT_SIGNING_KEY` that is missing or unreadable, or a `.pub` that holds more than a
 public key. So must the default key or its `.pub` alone. git must then sign a commit and verify it.
 A `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
-lines, and name its own settings. An include below them, or a second one, must stop `ws setup`
+lines, and name its own settings. An include below them, or a second one, must stop `ws mac apply`
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket,
 `--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. `ws`
 must keep the file key, as Secretive's one key is git's. git's credential command for GitHub
 must be a stand-in gh's, which must add the key to its login once. Logged out, gh must
-draw a warning at each run. Logged in, `ws setup` must warn of a 404 or another error of
+draw a warning at each run. Logged in, `ws mac apply` must warn of a 404 or another error of
 gh's, and of an add that leaves the account without the key. It must add the key where the
 account lacks it, and `--check` name the add before the key is made. Where `PATH` has no gh,
-`ws setup` must install Homebrew's once, and only with git's keys
+`ws mac apply` must install Homebrew's once, and only with git's keys
 ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun, the job
 fails, as the daemon's device makes a utun too.
 

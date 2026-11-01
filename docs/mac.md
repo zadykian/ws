@@ -2,7 +2,7 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the LAN, or elsewhere through the router's port forwards.
-`ws setup` sets up its end of the cable ([The cable](#the-cable)), git
+`ws mac apply` sets up its end of the cable ([The cable](#the-cable)), git
 ([git on the Mac](mac-git.md)), JetBrains Gateway ([The Mac's tunnel](#the-macs-tunnel)) and two
 hosts for ssh:
 
@@ -20,12 +20,13 @@ into `~/.local/bin` (put it on `PATH` by hand) with the Go that `tools/run` pins
 SHA-256. Then, with the clone at `~/repository/ws`:
 
 ```sh
-ws setup
+ws mac apply
 ```
 
-`ws wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
-`ws setup STEP` runs one step, and `--check` shows each change and makes none. `ws version` prints
-the version that Go stamped into the binary, or `devel` for a build with none.
+`ws mac wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
+`ws mac apply STEP` runs one step, and `--check` shows each change and makes none. The Mac's
+commands are `ws mac conf`, `apply`, `tunnel`, `resolver` and `wizard`, built for darwin alone: on
+Linux `ws mac` is unknown. `ws version` prints the version that Go stamped in, or `devel`.
 
 ## mac.conf
 
@@ -71,11 +72,11 @@ another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a mis
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
 domain comes once and in lower case, with up to 3 addresses split by commas. Once launchd has the
-tunnel's daemon, `ws setup` hands both to the same code as `ws tunnel routes` and `ws resolver`,
+tunnel's daemon, `ws mac apply` hands both to the same code as `ws mac tunnel routes` and `ws mac resolver`,
 whose caveats hold ([their section](#routes-and-resolvers-of-another-repository)). The networks go
 in `/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver starts with a
-line of `ws setup`'s own, so a domain whose file is another script's, or written by hand, stops the
-run. To move a domain from such a script, have it remove its file first, with `ws resolver DOMAIN`
+line of `ws mac apply`'s own, so a domain whose file is another script's, or written by hand, stops the
+run. To move a domain from such a script, have it remove its file first, with `ws mac resolver DOMAIN`
 and no address. A key emptied or removed takes back what earlier runs wrote, and only that.
 `--check` shows each change: a diff, or a line for the networks where `routes.d` is still missing.
 
@@ -194,7 +195,7 @@ in order.
 ## The Mac's tunnel
 
 The keys come first, in this order. A run of the `wireguard` role makes ws's key and prints its
-public key. `ws setup`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only root reads. It
+public key. `ws mac apply`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only root reads. It
 prints its public key with the two commands that make the Mac ws's peer, over `ws-ssh`:
 
 ```sh
@@ -204,19 +205,19 @@ ssh ws-ssh /root/repository/ws/bootstrap.sh --tags wireguard
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
 
-With ws's key as `WS_PUBLIC_KEY`, `ws setup` again installs the tunnel's daemon. A new Mac or a
+With ws's key as `WS_PUBLIC_KEY`, `ws mac apply` again installs the tunnel's daemon. A new Mac or a
 rebuilt server changes one file on each side, and nothing in the repository. The wizard's Tunnel
 stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#the-tunnel)).
 
-The daemon, `ws tunnel run`, runs as root from launchd, from boot and before any login, through
-`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws setup` builds `ws` into
+The daemon, `ws mac tunnel run`, runs as root from launchd, from boot and before any login, through
+`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws mac apply` builds `ws` into
 `~/.local/bin`, as `bootstrap.sh` does, and copies it to `/usr/local/libexec/ws-tunnel/ws` as
 root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
 runs as the user become root. The daemon holds WireGuard's device in its own process, so it
-needs no `wg` or `wireguard-go`. `ws setup` restarts it where a rebuilt `ws` changed the copy.
+needs no `wg` or `wireguard-go`. `ws mac apply` restarts it where a rebuilt `ws` changed the copy.
 
 The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key, which
-`ws tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `ws setup` keeps the public key in
+`ws mac tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `ws mac apply` keeps the public key in
 `~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from `mac.conf`, so the
 daemon reads no file the user can write. In System Settings › General › Login Items & Extensions,
 its "Allow in the Background" must stay on.
@@ -243,13 +244,13 @@ to 5 s a way. A way that comes back while the Mac's addresses stay as they were 
 next change or failure.
 
 ```sh
-sudo /usr/local/libexec/ws-tunnel/ws tunnel status
+sudo /usr/local/libexec/ws-tunnel/ws mac tunnel status
 ```
 
 prints the way in use, its endpoint, the latest handshake and the bytes moved.
 `/var/log/ws-tunnel.log` has a line for each switch and failure.
 
-`ws setup` installs JetBrains Gateway from Homebrew's cask where `JetBrains Gateway.app` is in
+`ws mac apply` installs JetBrains Gateway from Homebrew's cask where `JetBrains Gateway.app` is in
 neither `/Applications` nor `~/Applications`, and runs no `brew upgrade`, as Gateway updates
 itself. A failed install draws a warning, and the next run tries again, with brew's output. Where
 Homebrew has the cask but not the app, the script warns instead, and installs nothing:
@@ -271,7 +272,7 @@ iperf3 -s
 
 then, on the Mac, compare `iperf3 -c 10.99.0.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
 delete the two rules after. Bulk copies can go to `ws-ssh`, outside the tunnel, which is the cable
-when the Mac is docked: `rsync -a DIR ws-ssh:`. Besides, check `ws tunnel status` docked, on the
+when the Mac is docked: `rsync -a DIR ws-ssh:`. Besides, check `ws mac tunnel status` docked, on the
 home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on ws, for 2500Mb/s.
 
 ## Routes and resolvers of another repository
@@ -280,18 +281,18 @@ A private repository's own script for the Mac can send more networks through the
 domain's names to nameservers behind it. It calls `ws`, which changes only what you give it.
 `--check` makes each print its diffs and change nothing:
 
-- `ws tunnel routes [--check] NAME CIDR...`, which writes the IPv4 networks to
+- `ws mac tunnel routes [--check] NAME CIDR...`, which writes the IPv4 networks to
 `/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
 peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for the
 time being one that holds the endpoint in use, or one that holds a way's endpoint while none
 answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the tunnel's
-`10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in `ws tunnel
-routes example 198.51.100.0/24`. - `ws resolver [--check] DOMAIN ADDRESS...`, which writes
+`10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in `ws mac tunnel
+routes example 198.51.100.0/24`. - `ws mac resolver [--check] DOMAIN ADDRESS...`, which writes
 `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks them for the domain's names
-(resolver(5)), and takes the file at once. - `ws tunnel loaded`, which says whether the daemon is
-loaded, so that the script can stop with "run ws setup first".
+(resolver(5)), and takes the file at once. - `ws mac tunnel loaded`, which says whether the daemon is
+loaded, so that the script can stop with "run ws mac apply first".
 
-With no network or address, each removes its file, `ws resolver` only a file it wrote. The files
+With no network or address, each removes its file, `ws mac resolver` only a file it wrote. The files
 outlive the daemon. While the daemon is stopped, the routes go with its utun, and the domain's
 lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only ping, and
 what the `ikeward` role lets through to its VPN ([Forwarding](ikeward.md#forwarding)). Any other
