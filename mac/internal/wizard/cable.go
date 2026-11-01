@@ -1,7 +1,10 @@
 package wizard
 
 import (
+	"context"
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/zadykian/ws/mac/internal/effect"
 )
@@ -55,3 +58,46 @@ func (*Cable) WaitsOn() string { return runStage }
 type cableChange string
 
 func (c cableChange) String() string { return cableStage + ": would " + string(c) }
+
+// read sets the ports to what the files script's op lists on ws: link, or wait PORT, which lists
+// them once PORT holds 10.77.0.1, or after 10 s, in one login.
+func (c *Cable) read(ctx context.Context, op ...string) error {
+	out, err := c.Files.Do(ctx, op...)
+	if err != nil {
+		return fmt.Errorf("%s: link failed on ws: %w", cableStage, err)
+	}
+	c.ports = nil
+	for _, l := range strings.Split(string(out), "\n") {
+		if f := strings.Fields(l); len(f) >= 2 {
+			c.ports = append(c.ports, cablePort{f[0], f[1], strings.Join(f[2:], " ")})
+		}
+	}
+	return nil
+}
+
+// up returns the ports with carrier.
+func (c *Cable) up() []string {
+	var n []string
+	for _, p := range c.ports {
+		if p.carrier == "1" {
+			n = append(n, p.name)
+		}
+	}
+	return n
+}
+
+// end returns the port that holds ws's end of the cable, or an empty string.
+func (c *Cable) end() string {
+	for _, p := range c.ports {
+		if cableEndAt.MatchString(p.name + " " + p.carrier + " " + p.addrs) {
+			return p.name
+		}
+	}
+	return ""
+}
+
+// lacks tells whether mac.conf has no line of WS_CABLE_SERVICE yet.
+func (c *Cable) lacks() bool {
+	text, _ := c.M.ReadFile(c.Host.Conf)
+	return !regexp.MustCompile(`(?m)^[ \t]*WS_CABLE_SERVICE=`).Match(text)
+}
