@@ -2,6 +2,7 @@ package effecttest
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io/fs"
 	"sort"
@@ -201,4 +202,20 @@ func (m *Machine) Symlink(target, path string) error {
 	m.Calls = append(m.Calls, "symlink "+target+" "+path)
 	m.Links[path] = target
 	return nil
+}
+
+// Download stores the page of Pages at the URL, or fails and stores nothing on a missing page or a
+// sum that differs.
+func (m *Machine) Download(_ context.Context, url, path, sum string, a effect.Attrs) error {
+	m.mu.Lock()
+	body, ok := m.Pages[url]
+	m.Calls = append(m.Calls, "download "+url)
+	m.mu.Unlock()
+	if !ok {
+		return fmt.Errorf("download %s: 404 Not Found", url)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256(body)); got != sum {
+		return fmt.Errorf("download %s: SHA-256 is %s, want %s", url, got, sum)
+	}
+	return m.WriteAtomic(path, body, a)
 }

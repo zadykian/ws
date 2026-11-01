@@ -22,6 +22,7 @@ type Machine struct {
 	Dirs    map[string]fs.FileMode  // the directories, with their modes
 	Links   map[string]string       // the links, to the paths they point to
 	Modes   map[string]fs.FileMode  // the modes set on files, where not 0644
+	Pages   map[string][]byte       // the bodies Download serves, by URL
 	Owners  map[string][2]int       // the uid and gid set on files and directories, where not root's
 	Inputs  []string                // the standard input of each RunInput
 	ExecEnv [][]string              // the env of each Exec
@@ -32,7 +33,7 @@ type Machine struct {
 func NewMachine() *Machine {
 	return &Machine{Files: map[string][]byte{}, Root: map[string]effect.Attrs{}, Results: map[string]Result{},
 		Dirs: map[string]fs.FileMode{}, Links: map[string]string{}, Modes: map[string]fs.FileMode{},
-		Owners: map[string][2]int{}}
+		Owners: map[string][2]int{}, Pages: map[string][]byte{}}
 }
 
 // ReadFile returns the file, or fs.ErrNotExist.
