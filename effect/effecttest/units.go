@@ -29,6 +29,20 @@ func (u *Units) Enable(_ context.Context, names ...string) error {
 	return nil
 }
 
+// Disable disables the units.
+func (u *Units) Disable(_ context.Context, names ...string) error {
+	for _, n := range names {
+		u.change("disable", n, func(s *effect.UnitState) { s.Enabled = false })
+	}
+	return nil
+}
+
+// Reload records the reload of a unit's configuration.
+func (u *Units) Reload(_ context.Context, name string) error {
+	u.change("reload", name, func(*effect.UnitState) {})
+	return nil
+}
+
 // Start runs the unit.
 func (u *Units) Start(_ context.Context, name string) error {
 	u.change("start", name, func(s *effect.UnitState) { s.Active, s.Failed = true, false })

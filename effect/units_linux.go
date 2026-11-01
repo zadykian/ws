@@ -70,6 +70,17 @@ func (OSUnits) Enable(ctx context.Context, names ...string) error {
 	return err
 }
 
+// Disable disables the units' files.
+func (OSUnits) Disable(ctx context.Context, names ...string) error {
+	c, err := dbus.NewSystemConnectionContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+	_, err = c.DisableUnitFilesContext(ctx, names, false)
+	return err
+}
+
 // Start starts the unit, replacing the jobs that conflict, and waits for the job.
 func (OSUnits) Start(ctx context.Context, name string) error {
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.StartUnitContext })
@@ -78,6 +89,11 @@ func (OSUnits) Start(ctx context.Context, name string) error {
 // Restart restarts the unit and waits for the job.
 func (OSUnits) Restart(ctx context.Context, name string) error {
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.RestartUnitContext })
+}
+
+// Reload asks the unit to read its configuration again and waits for the job.
+func (OSUnits) Reload(ctx context.Context, name string) error {
+	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.ReloadUnitContext })
 }
 
 // Stop stops the unit and waits for the job.

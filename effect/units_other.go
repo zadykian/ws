@@ -16,6 +16,10 @@ func (OSUnits) State(context.Context, string) (UnitState, error) { return UnitSt
 
 func (OSUnits) Enable(context.Context, ...string) error { return errNoSystemd }
 
+func (OSUnits) Disable(context.Context, ...string) error { return errNoSystemd }
+
+func (OSUnits) Reload(context.Context, string) error { return errNoSystemd }
+
 func (OSUnits) Start(context.Context, string) error { return errNoSystemd }
 
 func (OSUnits) Restart(context.Context, string) error { return errNoSystemd }
