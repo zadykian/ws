@@ -18,8 +18,10 @@ var errMissing = errors.New("mac.conf lacks a key")
 // Answers is the stage that gives mac.conf the values it lacks, each from the environment, under
 // its key's name, or asked at the terminal. It runs before any stage that reads mac.conf.
 type Answers struct {
-	// Conf is mac.conf's path, and Roles the shell role's defaults, whose git identity ws's git takes.
-	Conf, Roles string
+	// Conf is mac.conf's path.
+	Conf string
+	// Defaults is the text of the shell role's defaults, whose git identity ws's git takes.
+	Defaults []byte
 	// Prog prefixes the messages of a refused answer.
 	Prog string
 	// Tty tells whether stdin is a terminal, which the questions need.
@@ -52,8 +54,7 @@ func (a *Answers) load() (string, conf.Conf, error) { return loadConf(a.file()) 
 
 // role gives the shell role's default of that name, as the role's file has it, or nothing.
 func (a *Answers) role(name string) string {
-	data, _ := a.M.ReadFile(a.Roles)
-	for _, l := range strings.Split(string(data), "\n") {
+	for _, l := range strings.Split(string(a.Defaults), "\n") {
 		if v, ok := strings.CutPrefix(l, name+":"); ok {
 			return strings.TrimLeft(v, " ")
 		}

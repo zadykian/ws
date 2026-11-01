@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zadykian/ws"
 	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
@@ -70,12 +71,6 @@ func wizardRefusal(e wizardEnv) string {
 	return ""
 }
 
-// repoDir returns the clone that holds the roles: WS_REPO,
-// else where bootstrap.sh clones it.
-func repoDir(getenv func(string) string) string {
-	return cmp.Or(getenv("WS_REPO"), getenv("HOME")+"/repository/ws")
-}
-
 // wizardStages returns the stages of ws mac wizard, in order.
 func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
 	check := o.check
@@ -106,7 +101,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	return []step.Step{
 		&wizard.Tools{M: e.m, Out: out, Sleep: time.Sleep},
 		&wizard.Homebrew{Lock: lock, M: e.m, Out: out},
-		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
+		&wizard.Answers{Conf: conf, Defaults: ws.ShellDefaults,
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
 		&wizard.MacKey{Conf: later, Home: e.getenv("HOME"),
 			Lock: lock, Tty: e.tty,

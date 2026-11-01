@@ -16,9 +16,8 @@ func newAnswers(t *testing.T, text string) (*Answers, *effecttest.Out) {
 	if text != "" {
 		m.Files[confPathForTest] = []byte(text)
 	}
-	m.Files["/r/defaults.yml"] = []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n")
 	out := &effecttest.Out{}
-	return &Answers{Conf: confPathForTest, Roles: "/r/defaults.yml", Prog: "ws mac wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
+	return &Answers{Conf: confPathForTest, Defaults: []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n"), Prog: "ws mac wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
 		Env: func(string) (string, bool) { return "", false }}, out
 }
 

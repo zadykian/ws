@@ -167,7 +167,7 @@ main() {
     build
     # Under --check, ws is missing until the build, which the check only names.
     [ -x "$bin" ] || return 0
-    WS_REPO=$dir "$bin" mac wizard "$@"
+    "$bin" mac wizard "$@"
 }
 
 # Under curl | sh, stdin is the rest of this script, so main reads the terminal, or nothing where
