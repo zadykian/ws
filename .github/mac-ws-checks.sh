@@ -1,8 +1,9 @@
 #!/bin/sh
-# The mac job's checks of ws tunnel loaded, ws tunnel routes and ws resolver, which replace what
-# mac/lib.sh offers another script. The job runs it from the repository's root once ws setup has
-# loaded the daemon (.github/workflows/mac.yml), with ws's path in TUNNEL. A network that ws tunnel
-# routes adds must reach the daemon's utun; a domain that ws resolver adds, scutil --dns.
+# The mac job's checks of ws tunnel loaded, ws tunnel routes and ws resolver, which replaced the
+# functions of a script that another repository sourced. The job runs it from the repository's root
+# once ws setup has loaded the daemon (.github/workflows/mac.yml), with ws's path in TUNNEL. A
+# network that ws tunnel routes adds must reach the daemon's utun; a domain that ws resolver adds,
+# scutil --dns.
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then

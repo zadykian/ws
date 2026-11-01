@@ -1,6 +1,6 @@
 #!/bin/sh
 # ws_build builds ws, the Go CLI in the clone's mac/, which bootstrap.sh and the mac and mac-wizard
-# jobs source from the clone. It is POSIX sh, and has no functions of lib.sh, as bootstrap.sh runs before it.
+# jobs source from the clone. It is POSIX sh, as bootstrap.sh runs before ws is there.
 
 # ws_build CLONE FILE builds ws from CLONE into FILE, with the Go that tools/run downloads and
 # checks into the clone's .cache, without cgo. It leaves out the commit's stamp, so that a new

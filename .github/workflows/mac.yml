@@ -15,8 +15,9 @@ jobs:
   # and --check must print nothing. ssh -G must give each host's address. A stand-in ws, a second
   # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on
   # loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost), and the daemon's status must
-  # show each in turn. Last, lib.sh's routes and resolvers, then mac.conf's. A stand-in that makes
-  # no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's playbook job.
+  # show each in turn. Last, ws tunnel routes and ws resolver, then mac.conf's. A stand-in that
+  # makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's playbook
+  # job.
   mac:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
