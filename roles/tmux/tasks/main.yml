@@ -1,6 +1,6 @@
 ---
 # No config goes with it: cld runs tmux with -f /dev/null. apt's daily jobs hold its lock for a
-# while after a new machine's first boot, as in internal/server/packages.go. Where cld's
+# while after a new machine's first boot, as in host/packages.go. Where cld's
 # sessions run the snap's tmux, end them before a real run: cld then finds /usr/bin/tmux first on
 # the PATH, and their key bindings call /snap/bin/tmux, which the removal below takes away.
 - name: Install tmux

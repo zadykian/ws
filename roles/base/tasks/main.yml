@@ -1,6 +1,6 @@
 ---
 # apt's daily jobs hold its lock for a while after a new machine's first boot, as in
-# internal/server/packages.go.
+# host/packages.go.
 - name: Install the base packages
   ansible.builtin.apt:
     name: "{{ base_packages }}"

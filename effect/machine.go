@@ -15,7 +15,7 @@ import (
 
 // OSMachine is the Machine of the machine that ws runs on.
 type OSMachine struct {
-	// Sudo is the command that runs another as root. Nil means sudo.
+	// Sudo is the command that runs another as root. Nil means sudo; empty, for root itself, runs it as it is.
 	Sudo []string
 	// Owner is the uid:gid that root files get. Empty means 0:0; tests set their own.
 	Owner string

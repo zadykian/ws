@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server"
 	"github.com/zadykian/ws/step"
 )
@@ -87,8 +88,14 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 	}
 	term := effect.NewTerminal(strings.NewReader(""), stderr)
 	out := progOut{term, "ws server apply", map[string]bool{}}
+	// What the playbook needs. ansible-core's recommends bring Ubuntu's ansible package, whose
+	// collections would stand in for any requirements.yml lacks. python3-apt is named because
+	// Ansible's apt module installs it itself only in a real run, not a dry one. ca-certificates
+	// serves the playbook's downloads over HTTPS.
 	steps := []step.Step{
-		server.Packages{M: m, Out: out},
+		host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
+			M: m, Out: out, Names: []string{"ansible-core", "ca-certificates", "python3-apt"},
+		}}},
 		server.Playbook{FS: playbook, Version: version, Lib: serverLib, Vars: serverVars, M: m, Out: out},
 	}
 	// Not a check, even under the playbook's --check: ansible-playbook cannot run without them.
