@@ -14,9 +14,8 @@ server, as `ip link` names it, or let the Mac's wizard do it ([The cable](mac-wi
 network_direct_link_interface: enp5s0
 ```
 
-git ignores that file, so the clone stays clean for the pull before a run
-([Running it again](../README.md#running-it-again)). Every run from the clone reads it, so none
-removes the direct link for want of the value.
+The file lives outside the playbook that ws embeds, so a new release keeps it. Every run reads it,
+so none removes the direct link for want of the value.
 
 The `network` role then writes `/etc/netplan/60-direct-link.yaml`, which gives that interface
 `10.77.0.1/30` (`network_direct_link_address`), and no DHCP, gateway or DNS. netplan merges the
