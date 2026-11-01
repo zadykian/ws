@@ -36,8 +36,9 @@ type Gh struct {
 // Name is the stage's name.
 func (*Gh) Name() string { return ghStage }
 
-// WaitsOn is the Mac key, whose .pub this stage adds to the login's keys.
-func (*Gh) WaitsOn() string { return macKey }
+// WaitsOn is empty: under --check, where the Mac key is still to be made, Plan says it would add the
+// key once it is made, as wizard-gh.sh did.
+func (*Gh) WaitsOn() string { return "" }
 
 // ghLogin is the change that has gh log in, or refresh the scopes of its login. Its device flow
 // shows a code to enter in the browser, at github.com/login/device.
@@ -57,6 +58,14 @@ type ghAdd struct{ pub, title string }
 func (c ghAdd) line() string { return "gh ssh-key add " + c.pub + " --title " + c.title }
 
 func (c ghAdd) String() string { return fmt.Sprintf("%s: would run %s", ghStage, c.line()) }
+
+// ghLater is the change that adds the Mac's key once it is made. Where the key is still missing at
+// Apply, it fails with the reason.
+type ghLater struct{ err error }
+
+func (c ghLater) String() string {
+	return ghStage + ": would run gh ssh-key add for the Mac's key, once it is made"
+}
 
 // ghPath returns the path of gh, and the change that installs it where PATH has none.
 func (g *Gh) ghPath(ctx context.Context) (string, []step.Change, error) {

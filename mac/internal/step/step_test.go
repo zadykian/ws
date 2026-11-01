@@ -71,7 +71,7 @@ func TestRun(t *testing.T) {
 			},
 			wantChanged: true,
 			wantLog:     []string{"plan a"},
-			wantOut:     []string{"say: a: x", "say: b: waits on a"},
+			wantOut:     []string{"say: a: x", "say: b: after a"},
 		},
 		{
 			name:  "check skips a step whose plan would fail",
@@ -85,7 +85,7 @@ func TestRun(t *testing.T) {
 			},
 			wantChanged: true,
 			wantLog:     []string{"plan a"},
-			wantOut:     []string{"say: a: x", "say: b: waits on a", "say: c: waits on b"},
+			wantOut:     []string{"say: a: x", "say: b: after a", "say: c: after b"},
 		},
 		{
 			name:  "check of a step whose awaited step is done",

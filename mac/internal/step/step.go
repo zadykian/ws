@@ -43,7 +43,7 @@ func Run(ctx context.Context, steps []Step, out effect.Out, check bool) (changed
 				return changed, fmt.Errorf("%s waits on %q, which is not an earlier step", name, waitsOn)
 			}
 			if check && pending[waitsOn] {
-				out.Say("%s: waits on %s", name, waitsOn)
+				out.Say("%s: after %s", name, waitsOn)
 				changed, pending[name] = true, true
 				continue
 			}

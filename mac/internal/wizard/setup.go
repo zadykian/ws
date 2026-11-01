@@ -31,8 +31,9 @@ type Setup struct {
 // Name is the stage's name.
 func (*Setup) Name() string { return setupStage }
 
-// WaitsOn is the gh stage, whose login the git step of ws setup adds git's signing key with.
-func (*Setup) WaitsOn() string { return ghStage }
+// WaitsOn is empty: under --check, ws setup's plan stands alone, as setup_after in sh did, and the
+// git step says itself what waits on the login.
+func (*Setup) WaitsOn() string { return "" }
 
 // Plan runs ws setup's plan, which prints each change it finds. Where PATH has no brew, ws setup
 // would stop, so the plan waits on Tools, bootstrap.sh's stage.

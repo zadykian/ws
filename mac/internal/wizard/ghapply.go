@@ -21,6 +21,8 @@ func (g *Gh) Apply(ctx context.Context, p step.Plan) error {
 			err = g.login(ctx, c)
 		case ghAdd:
 			err = g.add(ctx, c)
+		case ghLater:
+			err = c.err
 		}
 		if err != nil {
 			return err

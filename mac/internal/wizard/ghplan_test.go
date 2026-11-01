@@ -81,3 +81,24 @@ func TestGhPlanOtherError(t *testing.T) {
 		t.Errorf("Plan = %v", err)
 	}
 }
+
+func TestGhPlanMissingKey(t *testing.T) {
+	for name, login := range map[string]bool{"login": true, "no login": false} {
+		g, m := newGh(found)
+		delete(m.Files, "/h/k.pub")
+		if login {
+			m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
+		} else {
+			m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{Err: errors.New("no login")}
+		}
+		p, err := g.Plan(context.Background())
+		got := fmt.Sprint(p.Changes)
+		want := "gh on the Mac: would run gh ssh-key add for the Mac's key, once it is made"
+		if err != nil || !strings.HasSuffix(got, want+"]") || strings.Contains(got, "gh auth login") != !login {
+			t.Errorf("%s: Plan = %q, %v; want the later add, and a login without one", name, got, err)
+		}
+		if err := g.Apply(context.Background(), p); err == nil {
+			t.Errorf("%s: Apply = nil; want the key's absence", name)
+		}
+	}
+}
