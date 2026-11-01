@@ -20,7 +20,8 @@ The rest is the docs, the lint gates' tools and CI.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. Its
-  packages are in `mac/`.
+  packages are in `mac/`. The root package `ws` embeds the playbook on Linux (`playbook_linux.go`),
+  with the tarballs of `collections/`.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side: the ws CLI in Go, with `bootstrap.sh` and the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
@@ -28,7 +29,7 @@ The rest is the docs, the lint gates' tools and CI.
   `mac-targets.md` and `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index
   of the keymap's pages in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
-  caps them.
+  caps them. `build` builds ws for a target and `collections` fetches the pinned tarballs.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `install` and `signoz`;
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
@@ -104,9 +105,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   the gates' tools ([tools/run](tools/run)). So is ws's binary, against its release's `ws.sha256`
   ([install.sh](install.sh)), and so are the Python tools
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([mac/bootstrap.sh](mac/bootstrap.sh)). Go, the JetBrains backends and the
-  collections are checked against the SHA-256 their publishers list ([devtools](docs/devtools.md),
-  [jetbrains](docs/jetbrains.md), [requirements.yml](requirements.yml)). roslyn-language-server is
+  ([mac/bootstrap.sh](mac/bootstrap.sh)). The collections are checked by
+  [tools/collections](tools/collections) against the SHA-256 that Galaxy's API lists for the pins.
+  Go and the JetBrains backends are checked against the SHA-256 their publishers list
+  ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)). roslyn-language-server is
   pinned by version alone ([group_vars/all.yml](group_vars/all.yml)).
 - The collections are pinned in `requirements.yml`, and ansible-lint runs offline on those pins
   ([.ansible-lint](.ansible-lint)).

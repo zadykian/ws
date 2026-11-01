@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: read
 
-  # The binaries with the Go that tools/run pins, without cgo and without paths of this machine.
+  # The binaries, built by tools/build.
   # Go stamps the tag into ws version from the clean tree at the tag: the files go outside it.
   build:
     needs: check
@@ -58,10 +58,6 @@ jobs:
       contents: read
     env:
       TAG: ${{ github.ref_name }}
-      GOPATH: ${{ github.workspace }}/.cache/go
-      GOTOOLCHAIN: local
-      GOWORK: "off"
-      CGO_ENABLED: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -69,12 +65,9 @@ jobs:
           persist-credentials: false
       - name: Build
         run: |
-          go=$(sh tools/run -path go)
-          export GOCACHE="$RUNNER_TEMP/go-build"
           mkdir "$RUNNER_TEMP/dist"
           for target in darwin-arm64 linux-amd64 linux-arm64; do
-              GOOS=${target%-*} GOARCH=${target#*-} "$go" build -trimpath -buildvcs=true \
-                  -o "$RUNNER_TEMP/dist/ws-$target" ./mac/cmd/ws
+              tools/build "${target%-*}" "${target#*-}" "$RUNNER_TEMP/dist/ws-$target"
           done
           (cd "$RUNNER_TEMP/dist" && sha256sum ws-* >ws.sha256)
           cp install.sh "$RUNNER_TEMP/dist/install.sh"

@@ -1,7 +1,7 @@
 #!/bin/bash
 # The install job's cases: install.sh against a release laid out in a temporary directory and
-# served on loopback as GitHub serves it. Run it from the repository's root, with the pinned Go on
-# PATH. The releases are of HEAD, built at tags that a copy of it makes and removes again.
+# served on loopback as GitHub serves it. Run it from the repository's root; tools/build gets the Go.
+# The releases are of HEAD, built at tags that a copy of it makes and removes again.
 #
 #   v0.1.0 and v0.2.0  good; v0.2.0 is the latest
 #   v0.3.0             ws.sha256 holds another binary's sum
@@ -22,12 +22,17 @@ git archive HEAD | tar -x -C "$src"
 git -C "$src" init -q
 git -C "$src" add -A
 git -C "$src" -c user.name=ws -c user.email=ws@localhost -c commit.gpgsign=false commit -q -m tree
+# The build shares this tree's .cache, with the pinned Go in it. The link is excluded, as git's
+# ignore of a directory does not match a link: else the build is +dirty and prints another version.
+mkdir -p "$root/.cache"
+ln -s "$root/.cache" "$src/.cache"
+echo /.cache >>"$src/.git/info/exclude"
 
 # build_release TAG makes release TAG's directory, with the tree's ws as the tag stamps it.
 build_release() {
     local dir=$tmp/releases/download/$1
     mkdir -p "$dir"
-    (cd "$src" && git tag "$1" && CGO_ENABLED=0 go build -buildvcs=true -trimpath -o "$dir/ws-linux-amd64" ./mac/cmd/ws && git tag -d "$1" >/dev/null)
+    (cd "$src" && git tag "$1" && tools/build linux amd64 "$dir/ws-linux-amd64" && git tag -d "$1" >/dev/null)
     [ "$("$dir/ws-linux-amd64" version)" = "$1" ] || fail "the build at $1 prints another version"
     (cd "$dir" && sha256sum ws-linux-amd64 >ws.sha256)
 }
