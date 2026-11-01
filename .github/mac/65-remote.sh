@@ -1,6 +1,6 @@
 #!/bin/bash
 # With nothing at WS_LAN_ADDRESS, the remote tier.
-# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as setup.sh requires, where nothing answers:
+# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as ws setup requires, where nothing answers:
 # macOS's lo0 has 127.0.0.1 alone, and a handshake on the LAN tier fails the step. The daemon
 # takes the new tunnel.conf on SIGHUP, in place: it keeps its pid and logs a reload. A daemon
 # that died of the SIGHUP, and that launchd started again, would log a start.
@@ -11,14 +11,14 @@ pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit
 was=$(pid) || true
 lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.log)
 sed -i '' 's/^WS_LAN_ADDRESS=.*/WS_LAN_ADDRESS=127.0.0.2/' ~/.config/ws/mac.conf
-sh mac/setup.sh 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
+ws setup 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
     {
-        echo '::error::setup.sh with a new WS_LAN_ADDRESS failed'
+        echo '::error::ws setup with a new WS_LAN_ADDRESS failed'
         exit 1
     }
 grep -q "ran launchctl kill SIGHUP system/$LABEL" "$RUNNER_TEMP/hup.out" ||
     {
-        echo '::error::setup.sh sent the daemon no SIGHUP for a new tunnel.conf'
+        echo '::error::ws setup sent the daemon no SIGHUP for a new tunnel.conf'
         exit 1
     }
 remote() {

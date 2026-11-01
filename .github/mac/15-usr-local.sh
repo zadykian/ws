@@ -1,6 +1,6 @@
 #!/bin/bash
 # Make /usr/local root's, as on a Mac.
-# setup.sh stops where a directory above root's copies isn't root's alone, as on a Mac whose
+# ws setup stops where a directory above root's copies isn't root's alone, as on a Mac whose
 # /usr/local an old Homebrew took. Where the runner's image gave /usr/local or its libexec to
 # its user, they become root's, as on a Mac with Homebrew in /opt/homebrew: their contents
 # stay as they are.

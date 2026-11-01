@@ -1,12 +1,12 @@
 #!/bin/bash
-# With ws's key, setup.sh installs the daemon.
+# With ws's key, ws setup installs the daemon.
 # The daemon must run: launchd gives it a pid, and its state names the utun it set up.
 
 set -eo pipefail
 
 echo "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws.pub")" >>~/.config/ws/mac.conf
-sh mac/setup.sh || {
-    echo "::error::setup.sh with ws's key failed"
+ws setup || {
+    echo "::error::ws setup with ws's key failed"
     exit 1
 }
 launchctl print "system/$LABEL" >/dev/null ||

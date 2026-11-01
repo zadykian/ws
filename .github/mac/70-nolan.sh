@@ -4,8 +4,8 @@
 set -eo pipefail
 
 sed -i '' '/^WS_LAN/d' ~/.config/ws/mac.conf
-sh mac/setup.sh || {
-    echo '::error::setup.sh without the LAN failed'
+ws setup || {
+    echo '::error::ws setup without the LAN failed'
     exit 1
 }
 fail=0

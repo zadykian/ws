@@ -17,7 +17,7 @@ tail -n +3 ~/.ssh/config | cmp -s - "$RUNNER_TEMP/ssh-config-before" ||
     }
 ls ~/.ssh/config.*~ ||
     {
-        echo '::error::setup.sh kept no copy of the old ~/.ssh/config'
+        echo '::error::ws setup kept no copy of the old ~/.ssh/config'
         exit 1
     }
 [ "$(stat -f %Lp ~/.ssh/config.d)" = 700 ] ||

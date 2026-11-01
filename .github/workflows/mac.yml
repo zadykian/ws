@@ -10,7 +10,7 @@ on:
 permissions: {}
 
 jobs:
-  # The Mac's side on macOS, in docs/mac.md's order: mac/setup.sh without ws's key makes the Mac's
+  # The Mac's side on macOS, in docs/mac.md's order: ws setup without ws's key makes the Mac's
   # key and installs no daemon; with a stand-in ws's key it installs the daemon; then a second run
   # and --check must print nothing. ssh -G must give each host's address. A stand-in ws, a second
   # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on
@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-    # bash with pipefail, rather than the default bash -e, so that a failing setup.sh fails its
+    # bash with pipefail, rather than the default bash -e, so that a failing ws setup fails its
     # step through a tee too. The cases set the same options.
     defaults:
       run:
@@ -38,6 +38,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # ws, built into ~/.local/bin as bootstrap.sh builds it, which the cases run as ws setup.
+      # WS_MAC_DIR is where ws setup finds the plist and ws.ghostty.
+      - name: Build ws
+        run: |
+          . mac/build.sh
+          ws_build "$PWD" ~/.local/bin/ws
+          echo ~/.local/bin >>"$GITHUB_PATH"
+          echo "WS_MAC_DIR=$PWD/mac" >>"$GITHUB_ENV"
       # The cases, in .github/mac, run in order from the clone: a new step adds a case there and
       # nothing here.
       - name: The cases

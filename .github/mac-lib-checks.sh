@@ -1,6 +1,6 @@
 #!/bin/sh
 # The mac job's checks of the functions that mac/lib.sh offers a private repository's own script.
-# The job runs it from the repository's root once setup.sh has loaded the tunnel's daemon
+# The job runs it from the repository's root once ws setup has loaded the tunnel's daemon
 # (.github/workflows/mac.yml). It takes ws's path from the job's TUNNEL, and stops without
 # it. A network that ws_tunnel_routes adds must go into the daemon's utun and out again, with the
 # daemon reading routes.d in place. A domain that ws_resolver adds must show in scutil --dns. Each
