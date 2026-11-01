@@ -60,8 +60,8 @@ func TestCableApplyAsksPortAndService(t *testing.T) {
 	m.Results["networksetup -getinfo Wi-Fi"] = effecttest.Result{Out: []byte("IP address: 10.0.0.2\n")}
 	m.Results["networksetup -getinfo USB LAN"] = effecttest.Result{Out: []byte("IP address: 169.254.3.4\n")}
 	m.Results["ping -c 1 -t 3 10.77.0.1"] = effecttest.Result{}
-	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT, or none)"] = "eth1"
-	p.Answers["The Mac's service of the cable, of Wi-Fi, USB LAN (WS_CABLE_SERVICE, or none)"] = "USB LAN"
+	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "eth1"
+	p.Answers["The Mac's service of the cable, of Wi-Fi, USB LAN (WS_CABLE_SERVICE) [USB LAN, or none]"] = "USB LAN"
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestCableApplyAsksPortAndService(t *testing.T) {
 
 func TestCableApplyNone(t *testing.T) {
 	c, m, p := newCable(t, "", cableLink, nil)
-	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT, or none)"] = "none"
+	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "none"
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_CABLE_SERVICE=\n") {
 		t.Errorf("Apply with none = %v, mac.conf %q; want an empty service", err, m.Files["/h/mac.conf"])
 	}
@@ -96,5 +96,25 @@ func TestCableHand(t *testing.T) {
 		if !strings.Contains(b.String(), want) {
 			t.Errorf("list %q lacks %q", b.String(), want)
 		}
+	}
+}
+
+func TestCablePlanAfterRunUnderCheck(t *testing.T) {
+	c, m, _ := newCable(t, "", cableLink, nil)
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	c.Host.Check = true
+	delete(m.Results, remoteLine(c.Run.Remote, "status"))
+	p, err := c.Plan(context.Background())
+	out := strings.Join(c.Out.(*effecttest.Out).Lines, "\n")
+	if err != nil || len(p.Changes) != 0 || out != "say: Cable: after ws's run" {
+		t.Errorf("Plan = %v, %v, said %q; want the stage after ws's run", p, err, out)
+	}
+}
+
+func TestCablePlanReadsNoPortsWhereTheEnvironmentNamesOne(t *testing.T) {
+	c, m, _ := newCable(t, "", cableLink, map[string]string{"WS_CABLE_PORT": "eth1"})
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	if _, err := c.Plan(context.Background()); err != nil || len(c.ports) != 0 {
+		t.Errorf("Plan = %v, read ports %v; want no read of link", err, c.ports)
 	}
 }

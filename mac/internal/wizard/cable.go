@@ -36,9 +36,11 @@ type Cable struct {
 	// Env looks up a variable of the environment.
 	Env func(string) (string, bool)
 	P   effect.Prompt
-	Tty bool
-	M   effect.Machine
-	Out effect.Out
+	// Prog prefixes the messages of a refused answer.
+	Prog string
+	Tty  bool
+	M    effect.Machine
+	Out  effect.Out
 
 	// ports is what link listed on ws at the last read: a line per port.
 	ports []cablePort
@@ -53,8 +55,9 @@ var cableEndAt = regexp.MustCompile(`(^| )` + regexp.QuoteMeta(cableEnd) + `/`)
 // Name is the stage's name.
 func (*Cable) Name() string { return cableStage }
 
-// WaitsOn is ws's run, which makes the clone that holds host_vars on ws.
-func (*Cable) WaitsOn() string { return runStage }
+// WaitsOn is empty: Plan says itself that the stage is after ws's run, which makes the clone that
+// holds host_vars on ws, where it has no cable to see off the LAN, as wizard-cable.sh's cable_after.
+func (*Cable) WaitsOn() string { return "" }
 
 type cableChange string
 
@@ -116,7 +119,8 @@ func (c *Cable) lacks() bool {
 // empty or the cable that ws's status names. Without the service, it is empty too where no port that
 // link lists has carrier, as the Mac isn't docked: the stage waits then, and Hand names the dock in
 // the closing list. WS_CABLE_PORT in the environment ends the wait, as for a port that ws keeps
-// down. It reads ws only where root logged in there in this run.
+// down. It reads ws only where root logged in there in this run. Under --check it says that it is
+// after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	cf, err := c.Host.conf()
 	if err != nil || cf.Target != "lan" {
@@ -127,21 +131,31 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, fmt.Errorf("%s: %w", cableStage, err)
 	}
 	in, _ := c.Root.login(ctx, w)
-	if !c.lacks() {
-		if cf.CableService == "" || cf.CablePort == "" ||
-			in && c.Run.Remote.Status(ctx) && c.Run.Remote.Get("cable") == cf.CablePort {
-			return step.Plan{}, nil
-		}
-		return c.change("name " + cf.CablePort + " in host_vars/localhost.yml on ws again, and run " +
-			"bootstrap.sh --tags network,wireguard there, where ws's status names another port")
-	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")
-	if svcSet && svc == "" {
+	none := svcSet && svc == ""
+	if !c.lacks() && (cf.CableService == "" || cf.CablePort == "" ||
+		in && c.Run.Remote.Status(ctx) && c.Run.Remote.Get("cable") == cf.CablePort) {
+		return step.Plan{}, nil
+	}
+	if c.Host.Check && !none && (!in || !c.Run.runDone(ctx, cf.Target)) {
+		c.Out.Say("%s: after %s", cableStage, runStage)
+		return step.Plan{}, nil
+	}
+	if !c.lacks() {
+		return c.change("name " + cf.CablePort + " in host_vars/localhost.yml on ws again, and run " +
+			"bootstrap.sh --tags network,wireguard there")
+	}
+	if none {
 		return c.change("write an empty WS_CABLE_SERVICE in mac.conf, for no cable")
 	}
 	if !in {
 		return c.change("ask for the cable's port and service")
+	}
+	if portSet && !c.Host.Check {
+		// Apply reads the ports once, and names the port that the environment gives.
+		return c.change("ask ws's port of the cable, name it in host_vars/localhost.yml on ws, and run " +
+			"bootstrap.sh --tags network,wireguard there")
 	}
 	if err := c.read(ctx, "link"); err != nil {
 		return step.Plan{}, err
@@ -150,8 +164,8 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if c.end() == "" {
-		return c.change("ask ws's port of the cable, name it in host_vars/localhost.yml on ws, run " +
-			"bootstrap.sh --tags network,wireguard there, then ask the Mac's service")
+		return c.change("ask ws's port of the cable, name it in host_vars/localhost.yml on ws, and run " +
+			"bootstrap.sh --tags network,wireguard there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
 		"ws setup, which gives it 10.77.0.2, and ping " + cableEnd)

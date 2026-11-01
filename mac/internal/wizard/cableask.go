@@ -39,10 +39,15 @@ func (c *Cable) ask(ctx context.Context, key, text, def string, list []string) (
 	if !c.Tty {
 		return "", fmt.Errorf("%s: no terminal to ask %s: set %s, or set it to nothing for none", cableStage, key, key)
 	}
-	raw, err := c.P.Ask(ctx, effect.Question{Text: text + " (" + key + ", or none)", Default: def,
+	hint := "none"
+	if def != "" {
+		hint = def + ", or none"
+	}
+	// An empty line takes def in cableAnswer, so the question has no default of its own to print.
+	raw, err := c.P.Ask(ctx, effect.Question{Text: text + " (" + key + ") [" + hint + "]",
 		Valid: func(raw string) error {
 			if v := cableAnswer(raw, def); v != "" && !slices.Contains(list, v) {
-				return fmt.Errorf("%s: '%s' is none of those", cableStage, v)
+				return fmt.Errorf("%s: %s: '%s' is none of those", c.Prog, cableStage, v)
 			}
 			return nil
 		}})

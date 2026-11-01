@@ -100,7 +100,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	hookWs := &wizard.HookWs{Host: host, Run: run, Mac: hook, User: e.getenv("USER"), Tty: e.tty, M: e.m, Out: out,
 		Files: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}}
 	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: hookWs.Files, Setup: setup, Env: e.lookup,
-		P: p, Tty: e.tty, M: e.m, Out: out}
+		P: p, Prog: prog, Tty: e.tty, M: e.m, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
