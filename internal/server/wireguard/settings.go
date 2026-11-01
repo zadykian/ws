@@ -44,6 +44,7 @@ func Settings(w values.Wireguard) error {
 	if !isHost(server.Addr(), subnet) {
 		problems = append(problems, fmt.Sprintf("wireguard_address is %s, not a host's address in %s.", w.Address, subnet))
 	}
+	problems = append(problems, peerProblems(w, server)...)
 	if len(problems) == 0 {
 		return nil
 	}
