@@ -86,9 +86,10 @@ ws server apply
 `--` go to `ansible-playbook`, except `-C`, `--check`, `-t` and `--tags`, which ws refuses.
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home. A cloud VM passes
-`-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). `-e` holds
-for one run: a value every run needs, as that one, goes in `/etc/ws/host_vars.yml`, which only
-root reads. ws's last line names the roles that changed, `changed: none` on a second run. The
+`-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). An `-e` of
+`KEY=VALUE` sets a value over `/etc/ws/host_vars.yml` for ws's own steps too. It holds for one run:
+a value every run needs, as that one, goes in `host_vars.yml`, which only root reads.
+ws's last line names the roles that changed, `changed: none` on a second run. The
 playbook's roles count together, as its recap names no role.
 
 ## Dry runs

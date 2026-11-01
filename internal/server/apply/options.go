@@ -63,3 +63,24 @@ func refuseArgs(args []string) error {
 	}
 	return nil
 }
+
+// ExtraVars returns the KEY=VALUE pairs that the arguments after -- set with -e or --extra-vars. A
+// file (@FILE) or a JSON object holds none that can be read here.
+func ExtraVars(args []string) []string {
+	var pairs []string
+	for i, a := range args {
+		var val string
+		switch {
+		case (a == "-e" || a == "--extra-vars") && i+1 < len(args):
+			val = args[i+1]
+		case strings.HasPrefix(a, "--extra-vars="):
+			val = strings.TrimPrefix(a, "--extra-vars=")
+		case strings.HasPrefix(a, "-e") && len(a) > 2 && a != "--extra-vars":
+			val = a[2:]
+		}
+		if !strings.HasPrefix(val, "@") && !strings.HasPrefix(val, "{") {
+			pairs = append(pairs, strings.Fields(val)...)
+		}
+	}
+	return pairs
+}

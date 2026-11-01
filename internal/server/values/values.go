@@ -58,11 +58,17 @@ func Parse(data []byte) (Values, error) {
 	return v, nil
 }
 
-// Load reads the values at path on m. A file that does not exist gives Default.
-func Load(m effect.Machine, path string) (Values, error) {
+// Load reads the values at path on m, with the KEY=VALUE pairs set over them, as Override does. A
+// file that does not exist gives Default.
+func Load(m effect.Machine, path string, pairs ...string) (Values, error) {
 	data, err := m.ReadFile(path)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return Values{}, err
+	}
+	if len(pairs) > 0 {
+		if data, err = Override(data, pairs); err != nil {
+			return Values{}, fmt.Errorf("%s: %w", path, err)
+		}
 	}
 	v, err := Parse(data)
 	if err != nil {
