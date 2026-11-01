@@ -5,8 +5,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/effect/effecttest"
 )
 
 func TestInstallLeavesABuildInPlace(t *testing.T) {
@@ -33,7 +31,6 @@ func TestInstallRemovesTheDownloadsWhereItFails(t *testing.T) {
 
 func TestInstallDownloadsThenUnpacksUnderTheLock(t *testing.T) {
 	m, s, c := fixture(1 << 30)
-	m.Results["chown -R -h 1000:1000 -- "+testDir+".part"] = effecttest.Result{}
 	var locked int
 	s.Lock = func(_ string, fn func() error) error { locked++; return fn() }
 	c.s = s

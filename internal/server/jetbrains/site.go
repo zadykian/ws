@@ -26,8 +26,10 @@ type Site struct {
 	Prune bool
 	// Avail returns the bytes free to the user on the filesystem that holds a path.
 	Avail func(path string) (uint64, error)
-	// Unpack extracts an archive into a directory, dropping the first strip components of names.
-	Unpack func(archive, dir string, strip int) error
+	// AsUser runs a command as the user. Everything under the home is the user's to change, so
+	// root makes, unpacks and removes nothing there itself: a link put in place of a directory
+	// would lead root's command elsewhere.
+	AsUser func(ctx context.Context, name string, args ...string) ([]byte, error)
 	// Lock runs fn under the exclusive lock of a directory, as withLock does.
 	Lock func(dir string, fn func() error) error
 	// Wait is the pause between the five tries of a request or a download.

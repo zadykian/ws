@@ -37,8 +37,12 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 		}}}
 	}
 	site := Site{
-		M: m, Out: out, Prune: v.JetBrains.Prune, Avail: StatfsAvail, Unpack: host.UnpackFile,
+		M: m, Out: out, Prune: v.JetBrains.Prune, Avail: StatfsAvail,
 		Lock: withLock, Wait: 10 * time.Second,
+	}
+	owner := host.User{Name: v.User, Home: v.Home}
+	site.AsUser = func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		return owner.Output(ctx, m, name, args...)
 	}
 	return steps(v, site, effect.OSUnits{}, exe, os.Getenv("WS_JETBRAINS_RUN"), user.Lookup)
 }
