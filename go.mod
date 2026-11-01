@@ -6,6 +6,7 @@ tool golang.org/x/vuln/cmd/govulncheck
 
 require (
 	filippo.io/age v1.3.2
+	github.com/ProtonMail/go-crypto v1.5.2
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/google/renameio/v2 v2.0.2
 	go.yaml.in/yaml/v3 v3.0.6
@@ -16,6 +17,7 @@ require (
 
 require (
 	filippo.io/hpke v0.4.0 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/mod v0.42.0 // indirect
