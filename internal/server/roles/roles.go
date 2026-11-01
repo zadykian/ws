@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/server/base"
 	"github.com/zadykian/ws/internal/server/devtools"
+	"github.com/zadykian/ws/internal/server/docker"
 	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
@@ -38,7 +39,7 @@ var all = []Role{
 	{Name: "shell"},
 	{Name: "tmux"},
 	{Name: "devtools", Steps: devtools.Steps},
-	{Name: "docker"},
+	{Name: "docker", Steps: docker.Steps},
 	{Name: "claude"},
 	{Name: "signoz"},
 	{Name: "otelcol"},

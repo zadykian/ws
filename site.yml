@@ -17,8 +17,6 @@
       tags: [shell]
     - role: tmux
       tags: [tmux]
-    - role: docker
-      tags: [docker]
     - role: claude
       tags: [claude]
     - role: signoz
