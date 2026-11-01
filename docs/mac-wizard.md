@@ -18,14 +18,14 @@ curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh |
 
 Each stage reads what it sets up, acts where that isn't done, and reads it again. So a run takes up
 where the last one stopped, and in a second no stage acts. `--check` prints what each stage would
-do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`. Both it and
-`bootstrap.sh` keep the Mac from idle sleep. A run in which a stage acted ends with what stays by
-hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard starts:
+do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`, and keeps the Mac
+from idle sleep. A run in which a stage acted ends with what stays by hand. The stages, in order,
+the first of which `bootstrap.sh` also runs before the wizard starts:
 
-1. Tools: the Command Line Tools, through the dialog that `xcode-select --install` opens, waited
-   on for up to 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` of a release
-   that `bootstrap.sh` pins, checked by its SHA-256 and signer, through `sudo installer`. The
-   `.pkg` puts `/opt/homebrew/bin` on new shells' `PATH`.
+1. Tools, then Homebrew: the Command Line Tools, through the dialog that `xcode-select --install`
+   opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
+   `mac/internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
+   installer`. On a new Mac, `--check` stops there.
 2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
    found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)). With
    `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone, and warns
