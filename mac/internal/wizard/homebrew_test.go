@@ -37,6 +37,17 @@ func TestBrewSHA256IsHex(t *testing.T) {
 	}
 }
 
+func TestHomebrewWaitsOnTools(t *testing.T) {
+	if got := (&Homebrew{}).WaitsOn(); got != toolsStage {
+		t.Errorf("WaitsOn = %q, want %q", got, toolsStage)
+	}
+	for _, s := range []step.Step{&Answers{}, &Gh{}, &Setup{}, &Cable{}} {
+		if got := s.WaitsOn(); got != homebrewStage {
+			t.Errorf("%s waits on %q, want %q", s.Name(), got, homebrewStage)
+		}
+	}
+}
+
 func TestHomebrewPlan(t *testing.T) {
 	m := effecttest.NewMachine()
 	h := &Homebrew{Lock: "/t/lock", M: m, Out: &effecttest.Out{}}

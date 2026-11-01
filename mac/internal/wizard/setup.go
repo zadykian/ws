@@ -31,12 +31,12 @@ type Setup struct {
 // Name is the stage's name.
 func (*Setup) Name() string { return setupStage }
 
-// WaitsOn is empty: under --check, ws mac apply's plan stands alone, as setup_after in sh did, and the
-// git step says itself what waits on the login.
-func (*Setup) WaitsOn() string { return "" }
+// WaitsOn is Homebrew, which ws mac apply needs. Under --check, ws mac apply's plan stands alone, as
+// setup_after in sh did, and the git step says itself what waits on the login.
+func (*Setup) WaitsOn() string { return homebrewStage }
 
 // Plan runs ws mac apply's plan, which prints each change it finds. Where PATH has no brew, ws mac apply
-// would stop, so the plan waits on Tools, bootstrap.sh's stage.
+// would stop, so the plan waits on Homebrew.
 func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 	if s.applied {
 		return step.Plan{}, nil
@@ -46,7 +46,7 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 		look = exec.LookPath
 	}
 	if _, err := look("brew"); err != nil {
-		return step.Plan{Changes: []step.Change{todo(setupStage + ": after Tools")}}, nil
+		return step.Plan{Changes: []step.Change{todo(setupStage + ": after Homebrew")}}, nil
 	}
 	if !s.sudoed {
 		if err := s.M.Pass(ctx, false, "sudo", "-v"); err != nil {

@@ -38,8 +38,8 @@ type Answers struct {
 // Name is the stage's name.
 func (*Answers) Name() string { return answers }
 
-// WaitsOn is empty: nothing is set up before mac.conf.
-func (*Answers) WaitsOn() string { return "" }
+// WaitsOn is Homebrew: on a new Mac, a --check run stops there, as the install does.
+func (*Answers) WaitsOn() string { return homebrewStage }
 
 type todo string
 

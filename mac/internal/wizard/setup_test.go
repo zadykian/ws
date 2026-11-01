@@ -15,7 +15,7 @@ func TestSetup(t *testing.T) {
 		brew, sudo, changed bool
 		want                string
 	}{
-		"no brew": {false, true, true, "after Tools"},
+		"no brew": {false, true, true, "after Homebrew"},
 		"no sudo": {true, false, true, "sudo -v failed"},
 		"changes": {true, true, true, "would apply the steps above"},
 		"nothing": {true, true, false, ""},

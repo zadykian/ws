@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -86,5 +87,22 @@ func TestIsTerminalIsNotDevNull(t *testing.T) {
 	defer func() { _ = null.Close() }()
 	if isTerminal(null) {
 		t.Error("isTerminal(/dev/null) = true")
+	}
+}
+
+func TestWizardCheckOnANewMacStopsAtHomebrew(t *testing.T) {
+	var stderr bytes.Buffer
+	e := testWizardEnv("darwin", 501, &stderr)
+	m := e.m.(*effecttest.Machine)
+	m.Results["xcode-select -p"] = effecttest.Result{Err: errors.New("exit status 2")}
+	m.Results["/opt/homebrew/bin/brew --version"] = effecttest.Result{Err: errors.New("no brew")}
+	if got := wizardCommand(context.Background(), []string{"--check"}, e); got != 0 {
+		t.Fatalf("status = %d, stderr = %q", got, stderr.String())
+	}
+	for _, want := range []string{"Tools: would run xcode-select --install", "Homebrew: after Tools", "Answers: after Homebrew",
+		"gh on the Mac: after Homebrew", "ws mac apply: after Homebrew"} {
+		if !strings.Contains(stderr.String(), want) {
+			t.Errorf("stderr = %q, want %q", stderr.String(), want)
+		}
 	}
 }

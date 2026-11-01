@@ -55,9 +55,10 @@ var cableEndAt = regexp.MustCompile(`(^| )` + regexp.QuoteMeta(cableEnd) + `/`)
 // Name is the stage's name.
 func (*Cable) Name() string { return cableStage }
 
-// WaitsOn is empty: Plan says itself that the stage is after ws's run, which makes
-// /etc/ws/host_vars.yml on ws, where it has no cable to see off the LAN, as wizard-cable.sh's cable_after.
-func (*Cable) WaitsOn() string { return "" }
+// WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to read.
+// Plan says itself that the stage is after ws's run, which makes /etc/ws/host_vars.yml on ws, where
+// it has no cable to see off the LAN, as wizard-cable.sh's cable_after.
+func (*Cable) WaitsOn() string { return homebrewStage }
 
 type cableChange string
 
