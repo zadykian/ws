@@ -19,7 +19,7 @@ func stepNames(v values.Values, s secrets.Secrets) []string {
 
 func TestStepsAreTheRolesInOrder(t *testing.T) {
 	got := stepNames(values.Default(), secrets.Secrets{})
-	if want := []string{"Shell packages", "Shell files", keyStep, "Shell allowed signers", "Shell git config", "Shell secret env", "Shell git tokens"}; !slices.Equal(got, want) {
+	if want := []string{"Shell packages", "Shell files", keyStep, "Shell allowed signers", "Shell git config", "Shell secret env", "Shell git tokens", "Shell clones"}; !slices.Equal(got, want) {
 		t.Errorf("steps = %v, want %v", got, want)
 	}
 	v := values.Default()
