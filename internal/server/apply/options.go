@@ -26,7 +26,7 @@ func Parse(args []string) (Options, error) {
 		switch {
 		case a == "--":
 			o.Args = args[i+1:]
-			return o, nil
+			return o, refuseArgs(o.Args)
 		case a == "--check":
 			o.Check = true
 		case a == "--only" || strings.HasPrefix(a, "--only="):
@@ -48,4 +48,18 @@ func Parse(args []string) (Options, error) {
 		}
 	}
 	return o, nil
+}
+
+// refuseArgs refuses what ws sets itself, or what --only replaces, among the playbook's arguments.
+func refuseArgs(args []string) error {
+	for _, a := range args {
+		switch {
+		case a == "-C" || a == "--check":
+			return fmt.Errorf("%s after --: use ws server apply --check", a)
+		case a == "-t" || a == "--tags" || strings.HasPrefix(a, "--tags=") ||
+			(len(a) > 2 && a[0] == '-' && a[1] == 't'):
+			return fmt.Errorf("%s after --: use ws server apply --only with role names", a)
+		}
+	}
+	return nil
 }

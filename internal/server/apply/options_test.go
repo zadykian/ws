@@ -23,6 +23,13 @@ func TestParse(t *testing.T) {
 		{"only needs names", []string{"--only"}, Options{}, "needs role names"},
 		{"empty name", []string{"--only", "base,"}, Options{}, "empty role name"},
 		{"unknown", []string{"--tags", "base"}, Options{}, `unknown argument "--tags"`},
+		{"-C after --", []string{"--", "-C"}, Options{}, "use ws server apply --check"},
+		{"--check after --", []string{"--", "--check"}, Options{}, "use ws server apply --check"},
+		{"-t after --", []string{"--", "-t", "base"}, Options{}, "--only"},
+		{"-tX after --", []string{"--", "-tbase"}, Options{}, "--only"},
+		{"--tags after --", []string{"--", "--tags", "base"}, Options{}, "--only"},
+		{"--tags= after --", []string{"--", "--tags=base"}, Options{}, "--only"},
+		{"-e of a path with t", []string{"--", "-e@/tmp/x.yml"}, Options{Args: []string{"-e@/tmp/x.yml"}}, ""},
 	} {
 		got, err := Parse(tc.args)
 		if tc.err != "" {
