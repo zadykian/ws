@@ -32,27 +32,8 @@ func TestServerRefusal(t *testing.T) {
 	}
 }
 
-func TestServerApplyArgs(t *testing.T) {
-	for _, tc := range []struct {
-		args []string
-		want []string
-		ok   bool
-	}{
-		{nil, nil, true},
-		{[]string{"--"}, []string{}, true},
-		{[]string{"--", "--check", "-e", "@f"}, []string{"--check", "-e", "@f"}, true},
-		{[]string{"--check"}, nil, false},
-		{[]string{"x", "--"}, nil, false},
-	} {
-		got, ok := serverApplyArgs(tc.args)
-		if ok != tc.ok || !slices.Equal(got, tc.want) {
-			t.Errorf("serverApplyArgs(%q) = %q, %v, want %q, %v", tc.args, got, ok, tc.want, tc.ok)
-		}
-	}
-}
-
 func TestServerCommandRefusesOtherArgs(t *testing.T) {
-	for _, args := range [][]string{{"apply", "--check"}, {"other"}} {
+	for _, args := range [][]string{{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--", "-C"}, {"other"}} {
 		var stdout, stderr bytes.Buffer
 		m := effecttest.NewMachine()
 		if got := serverCommand(context.Background(), args, 0, fstest.MapFS{}, "devel", m, &stdout, &stderr); got != 2 ||
@@ -72,21 +53,5 @@ func TestServerCommandRefusesNonRoot(t *testing.T) {
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "exec ") }) {
 		t.Errorf("calls = %q, want no exec", m.Calls)
-	}
-}
-
-func TestExecPlaybook(t *testing.T) {
-	m := effecttest.NewMachine()
-	if err := execPlaybook(m, "v1.2.3", []string{"--check", "-e", "@x.yml"}); err != nil {
-		t.Fatal(err)
-	}
-	d := "/var/lib/ws/v1.2.3"
-	want := "exec ansible-playbook -i " + d + "/inventory.ini " + d + "/site.yml --check -e @x.yml"
-	if !slices.Equal(m.Calls, []string{want}) {
-		t.Errorf("calls = %q, want %q", m.Calls, want)
-	}
-	wantEnv := []string{"LC_ALL=C.UTF-8", "ANSIBLE_CONFIG=" + d + "/ansible.cfg", "ANSIBLE_COLLECTIONS_PATH=" + d + "/collections"}
-	if len(m.ExecEnv) != 1 || !slices.Equal(m.ExecEnv[0], wantEnv) {
-		t.Errorf("env = %q, want %q", m.ExecEnv, wantEnv)
 	}
 }

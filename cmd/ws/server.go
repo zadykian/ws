@@ -13,14 +13,18 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server"
+	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
-const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  apply [-- ARG...]  set the server up from the playbook that this ws embeds; ARG... go to ansible-playbook\n"
+const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  apply [--check] [--only NAME,...] [-- ARG...]  set the server up, each role as Go steps or by the playbook that this ws embeds\n\n--check plans the steps and passes --check --diff to ansible-playbook. --only runs the named roles. ARG... go to\nansible-playbook; -C, --check, -t and --tags are refused there. The last line names the roles that changed.\n"
 
 const (
 	serverLib  = "/var/lib/ws"
 	serverVars = "/etc/ws/host_vars.yml"
+	serverLog  = "/var/log/ws-ansible.log"
 	osRelease  = "/etc/os-release"
 )
 
@@ -51,18 +55,6 @@ func serverRefusal(euid int, osRelease []byte) string {
 	return ""
 }
 
-// serverApplyArgs returns the arguments for ansible-playbook: those after "--". Anything else
-// before it is not accepted.
-func serverApplyArgs(args []string) ([]string, bool) {
-	if len(args) == 0 {
-		return nil, true
-	}
-	if args[0] != "--" {
-		return nil, false
-	}
-	return args[1:], true
-}
-
 // serverCommand runs the commands of ws server, the server's side of ws. Only its entry in the
 // table of groups is built for Linux alone: this function is built everywhere, so that the tests
 // run anywhere. playbook is the playbook that this ws embeds and version is what ws version prints.
@@ -72,8 +64,15 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 		_, _ = io.WriteString(stdout, serverUsage)
 		return 0
 	}
-	rest, ok := serverApplyArgs(args[1:])
-	if args[0] != "apply" || !ok {
+	opts, err := apply.Parse(args[1:])
+	var segs []apply.Segment
+	if err == nil && args[0] == "apply" {
+		segs, err = apply.Segments(roles.List(), opts.Only)
+	}
+	if args[0] != "apply" || err != nil {
+		if err != nil {
+			_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
+		}
 		_, _ = io.WriteString(stderr, serverUsage)
 		return 2
 	}
@@ -92,33 +91,24 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 	// collections would stand in for any requirements.yml lacks. python3-apt is named because
 	// Ansible's apt module installs it itself only in a real run, not a dry one. ca-certificates
 	// serves the playbook's downloads over HTTPS.
-	steps := []step.Step{
+	prepare := []step.Step{
 		host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
 			M: m, Out: out, Names: []string{"ansible-core", "ca-certificates", "python3-apt"},
 		}}},
 		server.Playbook{FS: playbook, Version: version, Lib: serverLib, Vars: serverVars, M: m, Out: out},
 	}
-	// Not a check, even under the playbook's --check: ansible-playbook cannot run without them.
-	_, err = step.Run(ctx, steps, out, false)
+	v, err := values.Load(m, serverVars)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
+		return 1
+	}
+	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, M: m, Out: out, Prepare: prepare,
+		Dir: serverLib + "/" + version, Log: serverLog}, segs)
 	term.Flush()
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1
 	}
-	if err := execPlaybook(m, version, rest); err != nil {
-		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
-		return 1
-	}
-	// Exec returns only where it failed, or in a fake.
+	out.Say("%s", apply.Summary(changed, opts.Check))
 	return 0
-}
-
-// execPlaybook replaces ws with ansible-playbook, which runs the version's unpacked site.yml.
-// There is no chdir and stdin is untouched: -e @FILE and --vault-password-file /dev/fd/3 keep the
-// caller's directory and descriptors.
-func execPlaybook(m effect.Machine, version string, rest []string) error {
-	dir := serverLib + "/" + version
-	argv := append([]string{"-i", dir + "/inventory.ini", dir + "/site.yml"}, rest...)
-	env := []string{"LC_ALL=C.UTF-8", "ANSIBLE_CONFIG=" + dir + "/ansible.cfg", "ANSIBLE_COLLECTIONS_PATH=" + dir + "/collections"}
-	return m.Exec("ansible-playbook", argv, env)
 }
