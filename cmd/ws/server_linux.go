@@ -22,5 +22,5 @@ func groups() []group {
 func runServer(args []string, stdout, stderr io.Writer) int {
 	info, ok := debug.ReadBuildInfo()
 	return serverCommand(context.Background(), args, os.Geteuid(), ws.Playbook, versionOf(info, ok),
-		effect.OSMachine{Sudo: []string{}}, stdout, stderr)
+		effect.OSMachine{Sudo: []string{}}, os.Stdin, stdout, stderr)
 }

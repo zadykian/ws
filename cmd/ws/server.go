@@ -15,11 +15,12 @@ import (
 	"github.com/zadykian/ws/internal/server"
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
-const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  apply [--check] [--only NAME,...] [-- ARG...]  set the server up, each role as Go steps or by the playbook that this ws embeds\n\n--check plans the steps and passes --check --diff to ansible-playbook. --only runs the named roles. ARG... go to\nansible-playbook; -C, --check, -t and --tags are refused there. The last line names the roles that changed.\n"
+const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  apply [--check] [--only NAME,...] [--secrets FILE] [-- ARG...]  set the server up, each role as Go steps or by the playbook that this ws embeds\n\n--check plans the steps and passes --check --diff to ansible-playbook. --only runs the named roles. --secrets reads an age-encrypted YAML file with the secrets; the X25519 identity comes on stdin or at the terminal. ARG... go to\nansible-playbook; -C, --check, -t and --tags are refused there. The last line names the roles that changed.\n"
 
 const (
 	serverLib  = "/var/lib/ws"
@@ -59,7 +60,7 @@ func serverRefusal(euid int, osRelease []byte) string {
 // table of groups is built for Linux alone: this function is built everywhere, so that the tests
 // run anywhere. playbook is the playbook that this ws embeds and version is what ws version prints.
 func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS, version string, m effect.Machine,
-	stdout, stderr io.Writer) int {
+	stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
 		_, _ = io.WriteString(stdout, serverUsage)
 		return 0
@@ -102,7 +103,12 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1
 	}
-	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, M: m, Out: out, Prepare: prepare,
+	sec, vars, err := loadSecrets(m, opts.Secrets, stdin, stderr)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
+		return 1
+	}
+	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, Secrets: sec, Vars: vars, M: m, Out: out, Prepare: prepare,
 		Dir: serverLib + "/" + version, Log: serverLog}, segs)
 	term.Flush()
 	if err != nil {
@@ -111,4 +117,22 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 	}
 	out.Say("%s", apply.Summary(changed, opts.Check))
 	return 0
+}
+
+// loadSecrets reads the identity from stdin and decrypts the file, or returns no secrets where path
+// is empty. vars are the secrets as the playbook's extra variables.
+func loadSecrets(m effect.Machine, path string, stdin io.Reader, prompt io.Writer) (secrets.Secrets, []byte, error) {
+	if path == "" {
+		return secrets.Secrets{}, nil, nil
+	}
+	id, err := secrets.ReadIdentity(stdin, prompt)
+	if err != nil {
+		return secrets.Secrets{}, nil, err
+	}
+	s, err := secrets.Load(m, path, id)
+	if err != nil {
+		return secrets.Secrets{}, nil, err
+	}
+	vars, err := s.Vars()
+	return s, vars, err
 }
