@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/server/base"
 	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
@@ -27,7 +28,7 @@ func (r Role) Ported() bool { return r.Steps != nil }
 // all is every role, in the order of site.yml. A port sets its role's Steps and removes the role
 // from site.yml, which TestPlaybookRolesAreSiteYml checks.
 var all = []Role{
-	{Name: "base"},
+	{Name: "base", Steps: base.Steps},
 	{Name: "security"},
 	{Name: "network"},
 	{Name: "wireguard"},
