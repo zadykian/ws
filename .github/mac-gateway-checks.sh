@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# The mac job's checks of mac/setup.sh's Gateway step, which needs no key. mac-setup-checks.sh
+# The mac job's checks of ws setup's Gateway step, which needs no key. mac-setup-checks.sh
 # sources them before git's, so that they run with its functions and the job's mac.conf. The job
 # made ~/Applications/JetBrains Gateway.app, an empty directory, which spares its runs the cask:
 # the cases take it away, and put it back as they end.
@@ -47,9 +47,9 @@ brewed() {
 with
 list='list --cask jetbrains-gateway'
 install='install --cask jetbrains-gateway'
-prints "setup.sh: would run brew $install" --check
+prints "ws setup: would run brew $install" --check
 brewed "$list"
-prints 'setup.sh: installing jetbrains-gateway'
+prints 'ws setup: installing jetbrains-gateway'
 brewed "$list" "$install"
 prints ''
 prints '' --check
@@ -65,19 +65,19 @@ sudo rmdir "/Applications/$app"
 
 # A failed install, and one that leaves no app, must each draw a warning, and the run go on to the
 # tunnel. WS_PORT changes before each, so that the run ends with tunnel.conf's write and a SIGHUP.
-tunnel="setup.sh: wrote /etc/ws-tunnel/tunnel.conf${nl}setup.sh: ran launchctl kill SIGHUP\
+tunnel="ws setup: wrote /etc/ws-tunnel/tunnel.conf${nl}ws setup: ran launchctl kill SIGHUP\
  system/$LABEL"
-kept="setup.sh: warning: Homebrew has the cask jetbrains-gateway, but no $app is in /Applications\
+kept="ws setup: warning: Homebrew has the cask jetbrains-gateway, but no $app is in /Applications\
  or ~/Applications: brew reinstall --cask jetbrains-gateway puts it in /Applications, unless\
  HOMEBREW_CASK_OPTS names another --appdir"
 rm "$tmp/cask"
 touch "$tmp/cask.fail"
 with WS_PORT=51821
-prints "setup.sh: installing jetbrains-gateway${nl}Error: the stand-in fails${nl}setup.sh: warning:\
+prints "ws setup: installing jetbrains-gateway${nl}Error: the stand-in fails${nl}ws setup: warning:\
  brew $install failed, so the Mac has no JetBrains Gateway: the next run tries again$nl$tunnel"
 mv "$tmp/cask.fail" "$tmp/cask.none"
 with
-prints "setup.sh: installing jetbrains-gateway$nl$kept$nl$tunnel"
+prints "ws setup: installing jetbrains-gateway$nl$kept$nl$tunnel"
 brewed "$list" "$install" "$list" "$install"
 
 # Homebrew has the cask now, without its app. A run must warn and go on to the tunnel, and --check
