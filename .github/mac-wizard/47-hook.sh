@@ -129,12 +129,11 @@ status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 [ "$status" = 0 ] && [ "$(applied)" = "1 $sha" ] && [ -f "$stamp" ] &&
     [ "$(sessions)" = $((ran + 1)) ] && [ "$(sends)" = 1 ] ||
-    error "ws mac wizard --update at a terminal exited $status, or ran apply.sh other than once with it"
-[ "$(sudo git -C "$hook" rev-parse HEAD)" = "$(git -C "$up" rev-parse HEAD)" ] &&
-    [ "$(sudo git -C "$hook" symbolic-ref --short HEAD)" = main ] &&
-    [ "$(sudo git -C "$hook" remote get-url origin)" = https://github.com/example/hook.git ] &&
-    [ ! -e "$ws/root/var/lib/ws-wizard/hook-hook.bundle" ] ||
-    error "ws's clone is not the Mac's origin/main on branch main, or the bundle stayed"
+    error "ws mac wizard --update at a terminal exited $status, or ran the command other than once with it"
+[ "$(sudo stat -f '%Lp %Su' "$bin/hook-v1.0.0")" = '700 root' ] && [ "$(sudo stat -f %Lp "$bin")" = 700 ] &&
+    [ ! -e "$hook" ] && ! sudo test -e "$ws/root/var/lib/ws-wizard/hook-hook.bin" &&
+    [ -f "$stamp" ] || error "the command is not root's alone at bin, or ws made a clone"
+! tail -n "+$((logged + 1))" "$ws/log" | grep -q 'clone\|gh ' || error 'ws made a clone, or used gh'
 ! grep -qF "$secret" "$RUNNER_TEMP/tty" || error 'ws mac wizard printed the secret'
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] && [ "$(applied)" = "1 $sha" ] ||
@@ -156,18 +155,23 @@ esac
 exec /usr/bin/security "$@"
 EOF
 chmod 755 /opt/homebrew/bin/security
-clones=$(grep -c 'sh -s -- clone example/hook$' "$ws/log")
+installs=$(grep -c 'sh -s -- install ' "$ws/log")
 ran=$(sessions)
 unread 1
-[ -f "$stamp" ] && [ "$(grep -c 'sh -s -- clone example/hook$' "$ws/log")" = "$clones" ] &&
+[ -f "$stamp" ] && [ "$(grep -c 'sh -s -- install ' "$ws/log")" = "$installs" ] &&
     [ "$(sessions)" = "$ran" ] || error 'ws mac wizard with an unreadable item went to ws'
 rm /opt/homebrew/bin/security "$RUNNER_TEMP/security.reads" "$RUNNER_TEMP/security.from"
 echo 1 >"$ws/apply.status"
 wizard --update
-[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'Hook on ws: the clone of example/hook' &&
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'Hook on ws: the release of example/hook@v1.0.0' &&
     [ "$(applied)" = "2 $sha" ] && [ ! -e "$stamp" ] ||
-    error "ws mac wizard --update with apply.sh exiting 1 exited $status, or kept the stamp"
+    error "ws mac wizard --update with the command exiting 1 exited $status, or kept the stamp"
 rm "$ws/apply.status"
+sudo rm -f "$stamp"
+wizard --check
+[ "$status" = 0 ] && [ "$(tail -n 1 "$ws/hook.args")" = 'apply --check' ] &&
+    [ "$(wc -l <"$ws/check.log" | tr -d ' ')" = 1 ] && [ "$(applied)" = "2 $sha" ] ||
+    error "ws mac wizard --check with the command held exited $status, or ran it other than once with --check"
 wizard
 [ "$status" = 0 ] && [ "$(applied)" = "3 $sha" ] && [ -f "$stamp" ] ||
     error "the run after it exited $status"
@@ -175,51 +179,35 @@ wizard
 sudo rm "$stamp"
 wizard
 [ "$status" = 0 ] && [ "$(applied)" = "4 $empty" ] ||
-    error "ws mac wizard without WS_HOOK_SECRET exited $status, with apply.sh's log '$(applied)'"
-[ "$(sends)" = 1 ] || error "ws mac wizard sent the clone other than once"
+    error "ws mac wizard without WS_HOOK_SECRET exited $status, with the command's log '$(applied)'"
+[ "$(sends)" = 4 ] || error "ws mac wizard sent the build other than once for each run"
 
-# A tag: ws's clone moves from main to the stand-in gh's v1.0.0, which is not its HEAD.
-tagged() {
-    {
-        sed "s|^WS_HOOK=\$|WS_HOOK=example/hook@$1|" "$before"
-        echo WS_HOOK_SECRET=
-    } >"$conf"
-}
-tagged v1.0.0
-wizard
-[ "$status" = 0 ] && [ "$(applied)" = "5 $empty" ] && [ "$(sends)" = 2 ] &&
-    [ "$(sudo git -C "$hook" describe --tags --exact-match)" = v1.0.0 ] &&
-    ! sudo git -C "$hook" symbolic-ref -q HEAD >/dev/null &&
-    [ "$(cut -d ' ' -f 3 "$stamp")" = example/hook@v1.0.0 ] ||
-    error "ws mac wizard with the tag exited $status, or ws's clone is not detached at it"
-wizard
-[ "$status" = 0 ] && [ -z "$out" ] || error "the next run with the tag exited $status"
-# A new tag with a change in the clone: the clone is refused, and stays at v1.0.0 with its change.
-git -C "$up" -c user.name=ws -c user.email=ws@example.com commit -q --allow-empty -m tagged
-git -C "$up" tag v1.1.0
-echo changed | sudo tee -a "$hook/Brewfile" >/dev/null
+# A new tag: the build of v1.1.0 replaces v1.0.0 on ws, and the stamp names the tag.
 tagged v1.1.0
 wizard
-[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'Hook on ws: the clone of example/hook@v1.1.0' &&
-    [ "$(sudo git -C "$hook" describe --tags --exact-match)" = v1.0.0 ] &&
-    [ -n "$(sudo git -C "$hook" status --porcelain --untracked-files=no)" ] ||
-    error "ws mac wizard with a changed clone exited $status, or changed it"
-sudo git -C "$hook" checkout -q -- Brewfile
+[ "$status" = 0 ] && [ "$(applied)" = "5 $empty" ] && [ "$(sends)" = 5 ] &&
+    sudo test -x "$bin/hook-v1.1.0" && ! sudo test -e "$bin/hook-v1.0.0" &&
+    [ "$(cut -d ' ' -f 3 "$stamp")" = example/hook@v1.1.0 ] ||
+    error "ws mac wizard with v1.1.0 exited $status, or ws holds other than its build"
 wizard
-[ "$status" = 0 ] && [ "$(sudo git -C "$hook" describe --tags --exact-match)" = v1.1.0 ] ||
-    error "ws mac wizard with the tag v1.1.0 exited $status, or ws's clone is not at it"
-# GitHub moves v1.1.0, which the Mac fetched: ws, with no clone, stops the stage.
-git -C "$up" -c user.name=ws -c user.email=ws@example.com commit -q --allow-empty -m moved
-git -C "$up" tag -f v1.1.0 >/dev/null
-sudo rm -rf "$hook" "$stamp"
+[ "$status" = 0 ] && [ -z "$out" ] || error "the next run with the tag exited $status"
+# Sums that list another SHA-256 stop the stage with nothing sent, and so does a tag with no release.
+touch "$RUNNER_TEMP/gh/badsum"
+tagged v1.2.0
 wizard
-[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'git cannot fetch the tag v1.1.0 of example/hook' &&
-    [ ! -e "$hook" ] || error "ws mac wizard with a moved tag exited $status, or made a clone"
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'is not the one that hook.sha256 lists' &&
+    ! sudo test -e "$bin/hook-v1.2.0" && [ "$(sends)" = 5 ] || error "ws mac wizard with bad sums exited $status, or sent a build"
+rm "$RUNNER_TEMP/gh/badsum"
+touch "$RUNNER_TEMP/gh/norelease"
+wizard
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'gh cannot download v1.2.0 of example/hook' &&
+    [ "$(sends)" = 5 ] || error "ws mac wizard with no release exited $status, or sent a build"
+rm "$RUNNER_TEMP/gh/norelease"
 
 cp "$before" "$conf"
-sudo rm -rf "$hook" "$stamp"
+sudo rm -rf "$bin" "$stamp"
 rm -rf "$mac" "$RUNNER_TEMP/gh/github.com"
-rm -f "$ws/apply.log" "$before" "$RUNNER_TEMP/tty"
+rm -f "$ws/apply.log" "$ws/check.log" "$ws/hook.args" "$before" "$RUNNER_TEMP/tty"
 # shellcheck disable=SC2086 # as above
 security list-keychains -d user -s $list
 security default-keychain -d user -s "$default"
