@@ -12,7 +12,7 @@ NAME = re.compile(r"[a-z0-9-]+")
 LONGEST_BROADCAST_PREFIX = 30
 MAX_PORT = 65535
 # The Mac's daemon, in mac/internal/tunnel, fixes the tunnel's ends, the server and the address,
-# and the peer's name, as the mac.pub that mac/setup.sh has the user write on the server.
+# and the peer's name, as the mac.pub that `ws setup` has the user write on the server.
 MAC = "mac"
 MAC_SERVER = ipaddress.IPv4Interface("10.99.0.1/24")
 MAC_ADDRESS = ipaddress.IPv4Address("10.99.0.2")
