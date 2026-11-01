@@ -20,9 +20,9 @@ func newHookWs(conf, status string) (*HookWs, *effecttest.Machine) {
 func TestHookWsPlan(t *testing.T) {
 	for name, tc := range map[string]struct{ conf, status, want string }{
 		"no hook":  {"", "", ""},
-		"stamped":  {"WS_HOOK=me/tools\n", "hook other/x me/tools\n", ""},
-		"run":      {"WS_HOOK=me/tools\n", "", "run its apply.sh there, its stdin empty"},
-		"keychain": {"WS_HOOK=me/tools\nWS_HOOK_SECRET=tok\n", "", "security add-generic-password -a me -s tok -w"},
+		"stamped":  {"WS_HOOK=me/tools@v1.0.0\n", "hook other/x me/tools@v1.0.0\n", ""},
+		"run":      {"WS_HOOK=me/tools@v1.0.0\n", "", "run its apply.sh there, its stdin empty"},
+		"keychain": {"WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "", "security add-generic-password -a me -s tok -w"},
 	} {
 		h, m := newHookWs(tc.conf, tc.status)
 		m.Results["security find-generic-password -s tok"] = effecttest.Result{Err: context.Canceled}
@@ -38,22 +38,22 @@ func TestHookWsPlan(t *testing.T) {
 }
 
 func TestHookWsApply(t *testing.T) {
-	h, m := newHookWs("WS_HOOK=me/tools\n", "")
+	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
 	apply := "ssh " + strings.Join(h.Host.SSH.argv([]string{"-o", "BatchMode=yes", "ws-ssh", "/root/repository/tools/apply.sh"}), " ")
-	m.Results[remoteLine(h.Files, "bundle", "me/tools")] = effecttest.Result{}
+	m.Results[remoteLine(h.Files, "bundle", "me/tools@v1.0.0")] = effecttest.Result{}
 	m.Results[apply] = effecttest.Result{}
-	m.Results[remoteLine(h.Files, "stamp", "me/tools")] = effecttest.Result{}
+	m.Results[remoteLine(h.Files, "stamp", "me/tools@v1.0.0")] = effecttest.Result{}
 	if err := h.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "failed, as above") {
 		t.Errorf("Apply where the clone op fails = %v", err)
 	}
-	m.Results[remoteLine(h.Files, "clone", "me/tools")] = effecttest.Result{}
+	m.Results[remoteLine(h.Files, "clone", "me/tools@v1.0.0")] = effecttest.Result{}
 	if err := h.Apply(context.Background(), step.Plan{}); err != nil || !h.ran {
 		t.Errorf("Apply = %v, ran %v", err, h.ran)
 	}
 }
 
 func TestHookWsApplyUnreadItem(t *testing.T) {
-	h, m := newHookWs("WS_HOOK=me/tools\nWS_HOOK_SECRET=tok\n", "")
+	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "")
 	m.Results["security find-generic-password -s tok -w"] = effecttest.Result{Err: context.Canceled}
 	if err := h.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "can't read the item") {
 		t.Errorf("Apply with an unreadable item = %v", err)

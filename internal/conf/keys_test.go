@@ -40,8 +40,8 @@ func TestKeys(t *testing.T) {
 		{"WS_GIT_EMAIL", "ws", false},
 		{"WS_GIT_SIGNING_KEY", "~/.ssh/ws.pub", true},
 		{"WS_IDENTITY", "~/.ssh/ws", false},
-		{"WS_HOOK", "zadykian/tools", true},
-		{"WS_HOOK", "zadykian/ws", false},
+		{"WS_HOOK", "zadykian/tools@v1.0.0", true},
+		{"WS_HOOK", "zadykian/ws@v1.0.0", false},
 		{"WS_HOOK_SECRET", "ws-hook", true},
 	}
 	for _, tt := range tests {

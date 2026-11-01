@@ -20,12 +20,12 @@ func Socket(s string, quoted bool) bool {
 	return quoted || !strings.Contains(p, " ")
 }
 
-// Hook reports whether s is OWNER/REPO on GitHub, or OWNER/REPO@TAG with a release's TAG, as ws's
-// /root/repository/REPO: neither side . or .. alone, and REPO not ws, ws's own clone there, in any
-// letter case, which APFS and GitHub ignore.
+// Hook reports whether s is OWNER/REPO@TAG, a release of a repository on GitHub, whose command
+// REPO ws runs: neither side of the / is . or .. alone, and REPO is not ws, in any letter case,
+// which APFS and GitHub ignore. The tag is required.
 func Hook(s string) bool {
 	s, tag, tagged := strings.Cut(s, "@")
-	if tagged && !Release(tag) {
+	if !tagged || !Release(tag) {
 		return false
 	}
 	owner, repo, found := strings.Cut(s, "/")
