@@ -9,9 +9,9 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Apply adds the Keychain item, where the Keychain lacks it, then sends the Mac's clone where ws
-// lacks its own, runs apply.sh, and stamps it. The files script's clone op removes the old stamp, so
-// that a run that fails or is cut short leaves none.
+// Apply adds the Keychain item, where the Keychain lacks it, then downloads the release, sends its
+// build, runs it, and stamps it. The files script's install removes the old stamp, so that a run
+// that fails or is cut short leaves none.
 func (h *HookWs) Apply(ctx context.Context, p step.Plan) error {
 	c, err := h.Host.conf()
 	if err != nil {
@@ -35,14 +35,14 @@ func (h *HookWs) Apply(ctx context.Context, p step.Plan) error {
 		if errors.As(err, &stop) {
 			return err
 		}
-		return fmt.Errorf("%s: the clone of %s from the Mac to ws, or its apply.sh, failed, as above; mend "+
-			"what they printed, then run the wizard again, which runs apply.sh again", hookWsStage, c.Hook)
+		return fmt.Errorf("%s: the release of %s from the Mac to ws, or its command, failed, as above; mend "+
+			"what they printed, then run the wizard again, which runs it again", hookWsStage, c.Hook)
 	}
 	h.ran = true
 	return nil
 }
 
-// deploy reads the secret, sends the clone, clones it on ws, runs apply.sh and stamps it.
+// deploy reads the secret, downloads and checks the build, sends it, runs it and stamps it.
 func (h *HookWs) deploy(ctx context.Context, hook, secret string) error {
 	in, err := h.read(ctx, secret)
 	if err != nil {
@@ -71,7 +71,7 @@ func (h *HookWs) addItem(ctx context.Context, cmd string) error {
 		return fmt.Errorf("%s: the Keychain lacks the item, and no terminal is there for %s: run it, then "+
 			"the wizard again", hookWsStage, cmd)
 	}
-	h.Out.Say("%s: %s asks for the secret of the apply.sh, twice", hookWsStage, cmd)
+	h.Out.Say("%s: %s asks for the secret of the command, twice", hookWsStage, cmd)
 	f := strings.Fields(cmd)
 	if err := h.M.Pass(ctx, false, f[0], f[1:]...); err != nil {
 		return fmt.Errorf("%s: %s failed, as above; run the wizard again", hookWsStage, cmd)
@@ -87,5 +87,5 @@ func (h *HookWs) unread(secret string, err error) error {
 		why = ": " + lines[len(lines)-1]
 	}
 	return hookStop{errors.New(hookWsStage + ": security can't read the item " + secret + " from the Keychain, so " +
-		"apply.sh didn't run; unlock or allow it, then run the wizard again" + why)}
+		"the command didn't run; unlock or allow it, then run the wizard again" + why)}
 }

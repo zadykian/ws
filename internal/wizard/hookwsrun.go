@@ -11,8 +11,8 @@ import (
 const hookGuard = `IFS= read -r l || [ -n "$l" ] || exit 3; { printf %s "$l"; echo; cat; } | exec "$0" "$@"`
 
 // read reads the item's secret by security, or nothing without an item. It runs before anything
-// is sent, so that a locked Keychain, or a denial, stops with ws untouched. Where security fails,
-// it stops, as in unread.
+// is downloaded or sent, so that a locked Keychain, or a denial, stops with ws untouched. Where
+// security fails, it stops, as in unread.
 func (h *HookWs) read(ctx context.Context, secret string) ([]byte, error) {
 	if secret == "" {
 		return nil, nil

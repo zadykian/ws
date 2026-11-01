@@ -14,15 +14,17 @@ const hookWsStage = "Hook on ws"
 // hookState is the wizard's state on ws, where the files script installs the commands.
 const hookState = "/var/lib/ws-wizard"
 
-// HookWs is the stage that runs the apply.sh of WS_HOOK's repository as root on ws, by plain ssh,
-// never ssh -t, at which such a script could prompt and echo its stdin. Where ws lacks
-// /root/repository/REPO, the Mac's clone goes there first, as a git bundle of origin/main, which the
-// files script clones on branch main, with origin on GitHub. Root's gh on ws is never used, and a
-// clone there is never pulled. apply.sh's stdin is the Keychain item that WS_HOOK_SECRET names, or
-// else empty. A stamp on ws marks a run of it that exited 0, so that a second run leaves it alone.
+// HookWs is the stage that runs the released command of WS_HOOK's repository as root on ws. The
+// Mac's gh downloads the release's build for ws's architecture and its sums, by the Mac's login,
+// and the stage checks the SHA-256 here, then sends the binary to ws, root's alone. REPO apply runs
+// there over plain ssh, never ssh -t, at which it could prompt and echo its stdin. ws's gh is never
+// used, and nothing is cloned or built on ws. The command's stdin is the Keychain item that
+// WS_HOOK_SECRET names, or else empty. Under --check, a command that ws already holds runs with
+// --check. A stamp on ws marks a run of it that exited 0, with the tag, so that a second run leaves
+// it alone.
 type HookWs struct {
 	Host *HostKey
-	// Run is ws's run stage, which installs git on ws. Mac is the clone's stage.
+	// Run is ws's run stage, which comes first. Mac is the clone's stage.
 	Run *WsRun
 	Mac *HookMac
 	// Files runs the files script's operations as root on ws.
@@ -32,15 +34,14 @@ type HookWs struct {
 	Tty  bool
 	M    effect.Machine
 	Out  effect.Out
-	// ran is set once the stage ran apply.sh in this run.
+	// ran is set once the stage ran the command in this run.
 	ran bool
 }
 
 // Name is the stage's name.
 func (*HookWs) Name() string { return hookWsStage }
 
-// WaitsOn is Hook on the Mac, whose clone it sends. ws's run, which installs git on ws, comes first
-// in Plan.
+// WaitsOn is Hook on the Mac. ws's run comes first in Plan.
 func (*HookWs) WaitsOn() string { return hookMacStage }
 
 // hookWsItem is the change that adds the Keychain item that WS_HOOK_SECRET names, by security.
@@ -69,8 +70,9 @@ func (h *HookWs) item(ctx context.Context, secret string) string {
 	return "security add-generic-password -a " + h.User + " -s " + secret + " -w"
 }
 
-// Plan is empty where mac.conf names no repository, or where ws has the stamp of its apply.sh, which
-// names it as OWNER/REPO. Under --update, only once the stage ran apply.sh in this run.
+// Plan is empty where mac.conf names no repository, or where ws has the stamp of its command, which
+// names it as OWNER/REPO@TAG. Under --update, only once the stage ran the command in this run. Under
+// --check, a command that ws holds runs with --check, its output the plan.
 func (h *HookWs) Plan(ctx context.Context) (step.Plan, error) {
 	c, err := h.Host.conf()
 	if err != nil || c.Hook == "" {
