@@ -72,7 +72,8 @@ case \$* in
     [ -d "\$up" ] || { git init -q -b main "\$up" && mkdir "\$up/.githooks" &&
         printf '#!/bin/sh\n' >"\$up/.githooks/pre-commit" && : >"\$up/Brewfile" &&
         ln -s '$here/ws-standin.sh' "\$up/apply.sh" && git -C "\$up" add . &&
-        git -C "\$up" -c user.name=ws -c user.email=ws@example.com commit -q -m "\$3"; } &&
+        git -C "\$up" -c user.name=ws -c user.email=ws@example.com commit -q -m "\$3" &&
+        git -C "\$up" tag v1.0.0; } &&
         git clone -q "\$up" "\$4"
     ;;
 *) echo "gh: the stand-in takes no \$*" >&2 && exit 2 ;;

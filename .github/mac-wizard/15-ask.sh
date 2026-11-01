@@ -96,10 +96,10 @@ quick "WS_TARGET=mac-vm has another target's key: WS_REMOTE" env WS_TARGET=mac-v
 printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
     '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' \
     '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' \
-    '+WS_HOOK=example/hook' '+WS_HOOK_SECRET=ws-hook' >"$RUNNER_TEMP/added"
+    '+WS_HOOK=example/hook@v1.0.0' '+WS_HOOK_SECRET=ws-hook' >"$RUNNER_TEMP/added"
 env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME='Jane Doe' \
     WS_GIT_EMAIL=jane@example.com WS_TUNNEL_NETWORKS='198.51.100.0/24 203.0.113.0/24' \
-    WS_RESOLVERS=example.test=192.0.2.53 WS_HOOK=example/hook WS_HOOK_SECRET=ws-hook \
+    WS_RESOLVERS=example.test=192.0.2.53 WS_HOOK=example/hook@v1.0.0 WS_HOOK_SECRET=ws-hook \
     "$wsbin" mac wizard --check </dev/null >"$RUNNER_TEMP/env" 2>&1
 status=$?
 cat "$RUNNER_TEMP/env"
@@ -110,7 +110,7 @@ kept "ws mac wizard --check with the environment's answers"
 
 typed 'the answers typed' home '' 10.77.0.0/30 192.0.2.0/24 198.51.100.1 '' 192.0.2.10 \
     '"Jane Doe"' jane@ jane@example.com '198.51.100.0/24 203.0.113.0/24' example.test=192.0.2.53 \
-    hook example/hook ws-hook
+    hook example/hook@v1.0.0 ws-hook
 for asked in 'WS_TARGET=home is not lan, cloud or mac-vm' \
     'The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]: ' \
     'WS_LAN=10.77.0.0/30 is not an IPv4 network' 'WS_HOOK=hook is not a repository' \

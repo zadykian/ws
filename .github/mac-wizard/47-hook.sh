@@ -12,6 +12,9 @@
 # --update must stop, naming its error. It must stop before the clone, the stamp kept: ws reads the
 # secret once, before it sends anything. Where apply.sh exits 1, --update must stop, and the
 # next run, once it exits 0, run it again. With WS_HOOK_SECRET empty, its stdin must be empty.
+# With WS_HOOK=example/hook@v1.0.0, the stand-in gh's tag, ws's clone must be detached at it, and
+# the stamp hold the value. A clone with a change must be refused, and stay as it is. A tag that
+# GitHub moved after the Mac fetched it must stop the stage, naming it, with no clone on ws.
 # mac.conf, the clones, the stamp and the keychain go back, and a run must print nothing.
 
 set -u
@@ -165,6 +168,44 @@ wizard
 [ "$status" = 0 ] && [ "$(applied)" = "4 $empty" ] ||
     error "ws mac wizard without WS_HOOK_SECRET exited $status, with apply.sh's log '$(applied)'"
 [ "$(sends)" = 1 ] || error "ws mac wizard sent the clone other than once"
+
+# A tag: ws's clone moves from main to the stand-in gh's v1.0.0, which is not its HEAD.
+tagged() {
+    {
+        sed "s|^WS_HOOK=\$|WS_HOOK=example/hook@$1|" "$before"
+        echo WS_HOOK_SECRET=
+    } >"$conf"
+}
+tagged v1.0.0
+wizard
+[ "$status" = 0 ] && [ "$(applied)" = "5 $empty" ] && [ "$(sends)" = 2 ] &&
+    [ "$(sudo git -C "$hook" describe --tags --exact-match)" = v1.0.0 ] &&
+    ! sudo git -C "$hook" symbolic-ref -q HEAD >/dev/null &&
+    [ "$(cut -d ' ' -f 3 "$stamp")" = example/hook@v1.0.0 ] ||
+    error "ws mac wizard with the tag exited $status, or ws's clone is not detached at it"
+wizard
+[ "$status" = 0 ] && [ -z "$out" ] || error "the next run with the tag exited $status"
+# A new tag with a change in the clone: the clone is refused, and stays at v1.0.0 with its change.
+git -C "$up" -c user.name=ws -c user.email=ws@example.com commit -q --allow-empty -m tagged
+git -C "$up" tag v1.1.0
+echo changed | sudo tee -a "$hook/Brewfile" >/dev/null
+tagged v1.1.0
+wizard
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'Hook on ws: the clone of example/hook@v1.1.0' &&
+    [ "$(sudo git -C "$hook" describe --tags --exact-match)" = v1.0.0 ] &&
+    [ -n "$(sudo git -C "$hook" status --porcelain --untracked-files=no)" ] ||
+    error "ws mac wizard with a changed clone exited $status, or changed it"
+sudo git -C "$hook" checkout -q -- Brewfile
+wizard
+[ "$status" = 0 ] && [ "$(sudo git -C "$hook" describe --tags --exact-match)" = v1.1.0 ] ||
+    error "ws mac wizard with the tag v1.1.0 exited $status, or ws's clone is not at it"
+# GitHub moves v1.1.0, which the Mac fetched: ws, with no clone, stops the stage.
+git -C "$up" -c user.name=ws -c user.email=ws@example.com commit -q --allow-empty -m moved
+git -C "$up" tag -f v1.1.0 >/dev/null
+sudo rm -rf "$hook" "$stamp"
+wizard
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'git cannot fetch the tag v1.1.0 of example/hook' &&
+    [ ! -e "$hook" ] || error "ws mac wizard with a moved tag exited $status, or made a clone"
 
 cp "$before" "$conf"
 sudo rm -rf "$hook" "$stamp"
