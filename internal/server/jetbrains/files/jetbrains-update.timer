@@ -1,0 +1,12 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. Once a week, at
+# a time up to an hour after Monday's midnight, or at boot where the machine was off then.
+[Unit]
+Description=Update JetBrains Gateway's backends weekly
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target
