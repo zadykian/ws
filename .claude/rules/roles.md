@@ -34,9 +34,9 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
   `changed_when: false`.
 - A dry run, `--check --diff`, changes nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A read, such as a GET, runs in a dry run too,
-  `check_mode: false` ([devtools' tasks](../../roles/devtools/tasks/main.yml)).
-- Where a dry run skips a task, a task beside it shows what the run would change, as Go's move into
-  `/usr/local/go` does ([devtools' tasks](../../roles/devtools/tasks/main.yml)).
+  `check_mode: false`; a Go step reads in its Plan
+  ([devtools](../../internal/server/devtools/golang_plan.go)).
+- Where a dry run skips a task, a task beside it shows what the run would change.
 - A task that needs a booted machine's systemd is tagged `systemd`, which CI's container run skips.
   An include tagged `systemd` gives its tasks the tag through `apply`, so that `--tags systemd`
   runs them too ([signoz's tasks](../../roles/signoz/tasks/main.yml)).
@@ -53,9 +53,9 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 
 - get_url checks a download against its SHA-256, `checksum: sha256:...`, before it writes `dest`,
   and downloads again where `dest` holds another
-  ([devtools' tasks](../../roles/devtools/tasks/main.yml)).
+  ([otelcol's tasks](../../roles/otelcol/tasks/main.yml)).
 - An apt repository's key goes in only with the primary fingerprint its entry pins
-  ([devtools' vars](../../roles/devtools/vars/main.yml)). Docker's key goes in only with the
+  ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
   checksum its task pins, so that a changed key fails the run
   ([docker's tasks](../../roles/docker/tasks/main.yml)).
 
