@@ -19,6 +19,7 @@ const (
 	keysStep     = "SSH keys"
 	sshdStep     = "sshd"
 	ufwStep      = "ufw"
+	fail2banStep = "fail2ban"
 )
 
 // Steps returns the role's steps in order: the packages, the check of the user's keys, sshd, ufw,
@@ -41,5 +42,8 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 			return sshd(m, u, out)
 		}},
 		host.Group{Title: ufwStep, After: packagesStep, Parts: firewall(m, u, out)},
+		host.Lazy{Title: fail2banStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+			return fail2ban(m, u, out)
+		}},
 	}
 }
