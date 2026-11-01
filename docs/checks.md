@@ -1,7 +1,7 @@
 # Checks
 
 In a stack, CI runs `playbook`, `mac`, `mac-cld` and `mac-wizard`, its longest jobs, on the top
-pull request alone, as it holds every change below it. `lint` and `signoz` run on each.
+pull request alone, as it holds every change below it. `lint`, `install` and `signoz` run on each.
 The `mac-cld` job's checks are on [their own page](checks-mac-cld.md), and the gates of `make lint`
 on [theirs](gates.md).
 
@@ -15,6 +15,11 @@ it names. The run leaves out its own check under `--skip-tags systemd`
 one the size of its RAM. It installs no JetBrains backend, `jetbrains_backends: []`, as it has no
 room for those either. Its board is not MSI's, so the `fans` role leaves its fans alone. It gives
 no VPN profile, so the `ikeward` role does nothing.
+
+## The install script
+
+CI runs `install.sh` against releases it lays out and serves on loopback, and checks that it
+installs, updates and refuses what it should ([The install job](releases.md#the-install-job)).
 
 ## SigNoz's compose files
 

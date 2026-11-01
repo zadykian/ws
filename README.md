@@ -130,7 +130,8 @@ The router takes a few steps once, by hand: [The router](docs/router.md).
 ## Checks
 
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
-secrets. It runs the playbook twice in a container, forges SigNoz's compose files again, and sets
+secrets. It runs the playbook twice in a container, tries `install.sh`, forges SigNoz's compose files
+again, and sets
 up a Mac on GitHub's macOS runner. The rules workflow warns where a pull request breaks the rules
 of zadykian/toolkit's skills, and the issues workflow where an issue strays from its issue form.
 The hooks in `.githooks` check each commit before git makes it. [Checks](docs/checks.md) and

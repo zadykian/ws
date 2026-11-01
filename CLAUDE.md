@@ -21,19 +21,20 @@ The rest is the docs, the lint gates' tools and CI.
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. Its
   packages are in `mac/`.
+- `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side: the ws CLI in Go, with `bootstrap.sh` and the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
-- `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
-  `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index of the keymap's pages
-  in `docs/helix-keymap/`.
+- `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
+  `mac-targets.md` and `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index
+  of the keymap's pages in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
-- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`; `mac-wizard.yml`,
-  with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`, the checks of
-  zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The toolkit's checks
-  warn alone.
+- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `install` and `signoz`;
+  `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
+  `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
+  the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
+  toolkit's checks warn alone.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
 
@@ -54,10 +55,10 @@ needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python
 collections into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` runs `bootstrap.sh` twice in an
-Ubuntu 26.04 container, and `signoz` forges SigNoz's compose files again. `mac` sets up a Mac on
-GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up Ghostty
-and cld on a third ([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run
-of the playbook sets up the machine that runs it, as below.
+Ubuntu 26.04 container, `signoz` forges SigNoz's compose files again, and `install` tries
+`install.sh`. `mac` sets up a Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard
+on another. `mac-cld` sets up Ghostty and cld on a third
+([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of the playbook sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
@@ -96,7 +97,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A pinned download is checked against its SHA-256 before use: otelcol's `.deb` and ikeward's
   binary ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
   ([its task](roles/docker/tasks/main.yml)), foundryctl ([ci.yml](.github/workflows/ci.yml)) and
-  the gates' tools ([tools/run](tools/run)). So are the Python tools
+  the gates' tools ([tools/run](tools/run)). So is ws's binary, against its release's `ws.sha256`
+  ([install.sh](install.sh)), and so are the Python tools
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
   ([mac/bootstrap.sh](mac/bootstrap.sh)). Go, the JetBrains backends and the
   collections are checked against the SHA-256 their publishers list ([devtools](docs/devtools.md),
