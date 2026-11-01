@@ -11,7 +11,7 @@ import (
 
 // Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it: the
 // peer op writes the key, then bootstrap.sh --tags wireguard runs in a unit of its own. It sets
-// WS_PUBLIC_KEY to wg0's key, where it differs, and runs ws setup again. Last, it waits for the
+// WS_PUBLIC_KEY to wg0's key, where it differs, and runs ws mac apply again. Last, it waits for the
 // handshake and logs in, or, where the run asked ws's address, leaves that to a later run. It takes
 // root's key rather than tunnel.pub, which the user can write, as the key it sends becomes ws's peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
@@ -22,10 +22,10 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	if err := t.M.Pass(ctx, false, "sudo", "-v"); err != nil {
 		return errors.New(tunnelStage + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
 	}
-	out, err := t.M.RunRoot(ctx, libexec, "tunnel", "key")
+	out, err := t.M.RunRoot(ctx, libexec, "mac", "tunnel", "key")
 	mac := strings.TrimSpace(string(out))
 	if err != nil || !check.Key(mac) {
-		return errors.New(tunnelStage + ": root's ws tunnel key prints no key: run ws setup, which makes both")
+		return errors.New(tunnelStage + ": root's ws mac tunnel key prints no key: run ws mac apply, which makes both")
 	}
 	r := t.Run.Remote
 	r.Status(ctx)

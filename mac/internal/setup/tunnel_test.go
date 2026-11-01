@@ -54,7 +54,7 @@ func TestTunnelPlansNothingOnceDone(t *testing.T) {
 	} {
 		m.Root[path] = mode
 	}
-	m.Results["/usr/local/libexec/ws-tunnel/ws tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
+	m.Results["/usr/local/libexec/ws-tunnel/ws mac tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte("PUB\n")
 	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
 	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("ws")
@@ -77,7 +77,7 @@ func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := tunnelStep(m)
 	for _, line := range []string{"mkdir -p /h/.local/bin", "mv -f /h/.local/bin/ws.new /h/.local/bin/ws",
-		"/usr/local/libexec/ws-tunnel/ws tunnel key"} {
+		"/usr/local/libexec/ws-tunnel/ws mac tunnel key"} {
 		m.Results[line] = effecttest.Result{}
 	}
 	for _, dir := range []string{"/usr/local", "/usr/local/libexec", "/usr/local/libexec/ws-tunnel", "/etc/ws-tunnel", "/etc/ws-tunnel/routes.d"} {

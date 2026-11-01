@@ -18,7 +18,7 @@ func TestTunnelShake(t *testing.T) {
 		"none":  {"peer: x\n", false},
 	} {
 		tun, m := newTunnel(keyA, "", false)
-		m.Results[libexec+" tunnel status"] = effecttest.Result{Out: []byte(tc.status)}
+		m.Results[libexec+" mac tunnel status"] = effecttest.Result{Out: []byte(tc.status)}
 		tun.Sleep = func(time.Duration) {}
 		if got := tun.shake(context.Background(), 3); got != tc.want {
 			t.Errorf("%s: shake = %v; want %v", name, got, tc.want)

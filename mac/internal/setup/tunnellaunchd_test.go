@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/setup"
 )
 
-const doneConf = "# Written by ws setup from ~/.config/ws/mac.conf.\nWS_PUBLIC_KEY=K\nWS_PORT=51820\n"
+const doneConf = "# Written by ws mac apply from ~/.config/ws/mac.conf.\nWS_PUBLIC_KEY=K\nWS_PORT=51820\n"
 
 // daemonMachine is a Mac with ws, root's copy, the key, tunnel.conf and the plist in place.
 func daemonMachine() *effecttest.Machine {
@@ -31,7 +31,7 @@ func daemonMachine() *effecttest.Machine {
 	} {
 		m.Root[path] = mode
 	}
-	m.Results["/usr/local/libexec/ws-tunnel/ws tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
+	m.Results["/usr/local/libexec/ws-tunnel/ws mac tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte("PUB\n")
 	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
 	m.Results["launchctl print system/com.github.zadykian.ws-tunnel"] = effecttest.Result{}
