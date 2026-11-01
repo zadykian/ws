@@ -17,6 +17,7 @@ func TestTimezone(t *testing.T) {
 	}{{"no /etc/timezone", false, ""}, {"with /etc/timezone", true, "Europe/Paris\n"}} {
 		m := effecttest.NewMachine()
 		m.Links["/etc/localtime"] = "/usr/share/zoneinfo/Etc/UTC"
+		m.Files["/usr/share/zoneinfo/Europe/Paris"] = []byte("tz")
 		if tt.legacy {
 			m.Files["/etc/timezone"] = []byte("Etc/UTC\n")
 		}
@@ -35,8 +36,10 @@ func TestTimezone(t *testing.T) {
 }
 
 func TestTimezoneRefusals(t *testing.T) {
-	for _, zone := range []string{"", "/Etc/UTC", "../x", "Etc/../../x", "Etc//UTC"} {
-		g := host.Group{Title: "Timezone", Parts: timezoneParts(effecttest.NewMachine(), zone)}
+	for _, zone := range []string{"", "/Etc/UTC", "../x", "Etc/../../x", "Etc//UTC", "Europe/Pariss", "Europe"} {
+		m := effecttest.NewMachine()
+		m.Files["/usr/share/zoneinfo/Europe/Paris"] = []byte("tz")
+		g := host.Group{Title: "Timezone", Parts: timezoneParts(m, zone)}
 		if _, err := g.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "base_timezone") {
 			t.Errorf("zone %q: error = %v, want a refusal naming base_timezone", zone, err)
 		}

@@ -27,12 +27,18 @@ type zoneLink struct {
 	Zone string
 }
 
-// Plan refuses a zone that is no name under /usr/share/zoneinfo.
+// Plan refuses a zone that is no file under /usr/share/zoneinfo.
 func (z zoneLink) Plan(ctx context.Context) ([]host.Change, error) {
 	if z.Zone == "" || path.IsAbs(z.Zone) || path.Clean(z.Zone) != z.Zone || strings.HasPrefix(z.Zone, "../") {
 		return nil, fmt.Errorf("base_timezone is %q: it takes a name under /usr/share/zoneinfo, such as Etc/UTC", z.Zone)
 	}
-	return host.Link{M: z.M, Path: "/etc/localtime", Target: "/usr/share/zoneinfo/" + z.Zone}.Plan(ctx)
+	target := "/usr/share/zoneinfo/" + z.Zone
+	if info, err := z.M.Stat(target); errors.Is(err, fs.ErrNotExist) || (err == nil && info.Mode.IsDir()) {
+		return nil, fmt.Errorf("base_timezone is %q: %s is no zone file", z.Zone, target)
+	} else if err != nil {
+		return nil, err
+	}
+	return host.Link{M: z.M, Path: "/etc/localtime", Target: target}.Plan(ctx)
 }
 
 // legacyZone is /etc/timezone. tzdata no longer uses it, but a machine installed with it may keep
