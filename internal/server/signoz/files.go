@@ -11,7 +11,9 @@ import (
 
 // Files is the step that copies the forged compose files into the project's directory. Compose
 // resolves their relative bind mounts against it. The containers read them as users other than
-// root, so they stay world-readable, as foundryctl writes them.
+// root, so they stay world-readable, as foundryctl writes them. Compose recreates a container
+// whose settings changed, but not one whose bind-mounted file did, so a change of the files
+// marks all containers for recreation.
 func Files(m effect.Machine, dir string) host.Group {
 	g := host.Group{Title: "signoz files", Parts: []host.Resource{host.Dir{M: m, Path: dir, Mode: 0o755}}}
 	var copies []host.Resource
@@ -31,6 +33,7 @@ func Files(m effect.Machine, dir string) host.Group {
 	if err != nil {
 		copies = []host.Resource{failed{err}}
 	}
+	g.Parts = append(g.Parts, mark{M: m, Path: markPath(dir), Watch: copies})
 	g.Parts = append(g.Parts, copies...)
 	return g
 }
