@@ -1,7 +1,11 @@
 # docker
 
 The `docker` role installs Docker Engine with its buildx and compose plugins, from Docker's apt
-repository, and writes `/etc/docker/daemon.json`.
+repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `internal/server/docker`, as
+steps of `ws server apply`: the repository, the packages, the check of the routes, the user's
+group, the configuration and the check of `docker0`. Docker's apt key is pinned by its SHA-256 in
+`repository.go`: a changed key fails the run. Without systemd booted, as in CI's container, the
+steps that need it skip and say so.
 
 ## Logs and restarts
 
@@ -26,7 +30,7 @@ when it next starts. The role deletes the rules it gave ufw for a former `docker
 `docker0` takes a new `docker_bridge_ip` or `docker_bridge_prefix_length` only when Docker starts
 with no container running, as after a reboot. Until then lookups to a new address get no answers,
 and the role stops after it restarts Docker. Reboot, or stop every container and restart Docker,
-then run the playbook again. A dry run shows the move.
+then apply again. `--check` shows the move.
 
 ## The address pool
 
