@@ -17,8 +17,6 @@
       tags: [shell]
     - role: tmux
       tags: [tmux]
-    - role: devtools
-      tags: [devtools]
     - role: docker
       tags: [docker]
     - role: claude
