@@ -4,9 +4,9 @@
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
 runs ws's playbook there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on ws.
-Then it exchanges the tunnel's keys, clones another repository on the Mac, sends it to ws and runs
-its `apply.sh` there, and copies ws's word list. Last, it sets up the cable from the Mac's display
-to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
+Then it exchanges the tunnel's keys, clones another repository on the Mac, downloads its release
+with gh, runs its command on ws, and copies ws's word list. Last, it sets up the cable from the Mac's
+display to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
 what else it needs, as yourself:
 
 ```sh
@@ -38,7 +38,7 @@ the first two of which install what the rest needs:
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, in [Another repository](mac-hook.md).
-14. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, in [Another repository](mac-hook.md).
+14. Hook on ws: that release's build, sent to ws, and its `apply` run there as root, in [Another repository](mac-hook.md).
 15. Word list: ws's, copied to the Mac where it differs, in [Another repository](mac-hook.md).
 16. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
@@ -55,8 +55,8 @@ the first two of which install what the rest needs:
 | git's email on the Mac | `WS_GIT_EMAIL` | the `shell` role's, `me@zadykian.dev` | with a name |
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
-| Another repository whose `apply.sh` runs on ws | `WS_HOOK` | none | always |
-| The Keychain item of its `apply.sh`'s secret | `WS_HOOK_SECRET` | none | with a repository |
+| A release of another repository whose command runs on ws, as `OWNER/REPO@vX.Y.Z` | `WS_HOOK` | none | always |
+| The Keychain item of its command's secret | `WS_HOOK_SECRET` | none | with a repository |
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
 first and the last two. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs

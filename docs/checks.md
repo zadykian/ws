@@ -90,10 +90,10 @@ must print the log, and stamp ws's version, `-` here, 0 and `on`; with `-e secur
 `off`, and write the line of its `outbound`, which stops on a link. A tagged run after it must start
 its own unit and leave that stamp. A run during another's unit must follow it. A full run cut off
 must remove the stamp of the one before, so the next starts a unit again. The files script,
-`mac/wizard-remote-files.sh`, must clone another repository from a bundle sent to it, whose
-`apply.sh` must run as root over `ssh`. Its stamp must follow, which `status` must list, as
-`OWNER/REPO`. A clone again must leave it alone and remove the stamp, and one of another owner's
-repository of that name stop. Its `words` must print git's hash of root's word list, or `-` without
+`mac/wizard-remote-files.sh`, must install a command sent to it, root's alone, after a check
+of its SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
+`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop.
+Its `words` must print git's hash of root's word list, or `-` without
 one, and the list for that hash alone. Its `link` must list the wired ports, and `link PORT` name
 one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
 `10.77.0.1`.
@@ -134,17 +134,17 @@ With claude logged out, a run at a terminal of `script`'s must run `claude auth 
 `bash -lc` in an `ssh -t` session. The stand-in takes a terminal alone, and the next run must print
 nothing.
 
-For the Hook on the Mac stage, the stand-in `gh` clones `WS_HOOK` with `.githooks`, an empty
-`Brewfile` and an `apply.sh` that logs its stdin's SHA-256. A run must clone it once, set its
-`core.hooksPath`, and name `gh auth setup-git` by hand, unless git's config names gh's credential
-command. For the Hook on ws stage, `WS_HOOK_SECRET` names an item of a throwaway keychain. Without
-the item, a run with no terminal must stop, naming `security add-generic-password`. At a terminal of
-`script`'s, it must add the item at its prompts, send the clone's newer commit once as a bundle that
-ws clones on `main` with GitHub's `origin`. It must run `apply.sh` once over plain ssh, its stdin
-the secret and no terminal. The next run must print nothing. An unreadable item must stop `--update`
-before `apply.sh`, and a failed run leave no stamp. With `@v1.0.0`, the tag that the stand-in `gh`
-gives its repository, ws's clone must be detached at it and the stamp hold the value. A changed
-clone must be refused, and a tag that GitHub moved stop the stage. For the Word list stage, the
+For the Hook on the Mac stage, the stand-in `gh` clones `WS_HOOK` with `.githooks` and an empty
+`Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git` by
+hand, unless git's config names gh's credential command. For the Hook on ws stage, the stand-in
+`gh` serves a release, a command that logs its stdin's SHA-256, and its sums. `WS_HOOK_SECRET`
+names an item of a throwaway keychain. Without the item, a run with no terminal must stop, naming
+`security add-generic-password`. At a terminal of `script`'s, it must add the item at its prompts,
+and send the build once, root's alone. It must run `apply` once over plain ssh, its stdin the
+secret and no terminal, and ws must make no clone and use no gh. The next run must print nothing,
+and `--check` must run `apply --check`. An unreadable item must stop `--update` before `apply`, and
+a failed run leave no stamp. A new tag must replace the build and the stamp hold the tag. A bad
+sum or a missing release must stop the stage, sending nothing. For the Word list stage, the
 stand-in ws's list must go to the Mac once, mode 600, and none of it be printed. Once the Mac's
 differs, `--check` must show no diff, or stop at a link, as a run must. For the Cable stage, ws's
 ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and

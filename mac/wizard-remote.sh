@@ -11,7 +11,7 @@
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as
-#   OWNER/REPO, whose apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound
+#   OWNER/REPO, whose command has a stamp of wizard-remote-files.sh's, the files script. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
 # - run [ARG...] runs ws server apply ARGs in a unit of its own, ws-wizard-STAMP, which goes
