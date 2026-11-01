@@ -28,7 +28,8 @@ type Rule struct {
 const tupleFields = 7
 
 // Parse returns the rules of user.rules' text. It skips every line that is no IPv4 rule tuple,
-// such as a rule that names applications or routes, and a rule with no comment.
+// such as a rule that names applications, and a rule with no comment. A route rule has the action
+// route:allow, say, and the interfaces in_IN!out_OUT, which Rule keeps as Interface IN!out_OUT.
 func Parse(text string) []Rule {
 	var rules []Rule
 	for line := range strings.Lines(text) {

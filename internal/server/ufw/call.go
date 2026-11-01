@@ -2,6 +2,7 @@ package ufw
 
 import (
 	"context"
+	"strings"
 
 	"github.com/zadykian/ws/effect"
 )
@@ -13,18 +14,11 @@ type ufwCall struct {
 }
 
 func (c ufwCall) String() string {
-	if c.delete {
-		return "ufw delete " + c.rule.String()
-	}
-	return "ufw " + c.rule.String()
+	return "ufw " + strings.Join(c.rule.command(c.delete), " ")
 }
 
 func (c ufwCall) Apply(ctx context.Context) error {
-	args := []string{"--force"}
-	if c.delete {
-		args = append(args, "delete")
-	}
-	args = append(args, c.rule.args()...)
+	args := append([]string{"--force"}, c.rule.command(c.delete)...)
 	_, err := c.m.RunRoot(ctx, "ufw", append(args, "comment", c.rule.Comment)...)
 	return err
 }

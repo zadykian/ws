@@ -30,3 +30,11 @@ func TestParseReadsTheCommentedIPv4Tuples(t *testing.T) {
 		t.Errorf("Parse = %+v, want %+v", got, want)
 	}
 }
+
+func TestParseReadsARouteRuleAsRouteDoes(t *testing.T) {
+	text := "### tuple ### route:allow any any 0.0.0.0/0 any 10.99.0.2 in_wg0!out_ikeward0 comment=696b6577617264\n"
+	got := ufw.Parse(text)
+	if want := []ufw.Rule{ufw.Route("allow", "wg0", "ikeward0", "10.99.0.2", "ikeward")}; !slices.Equal(got, want) {
+		t.Errorf("Parse = %+v, want %+v", got, want)
+	}
+}

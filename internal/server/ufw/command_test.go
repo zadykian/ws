@@ -30,3 +30,13 @@ func TestValidRefusesAnIncompleteRule(t *testing.T) {
 		}
 	}
 }
+
+func TestRouteIsTheRouteCommand(t *testing.T) {
+	r := ufw.Route("allow", "wg0", "ikeward0", "10.99.0.2", "ikeward")
+	if got, want := r.String(), "route allow in on wg0 out on ikeward0 from 10.99.0.2 to any"; got != want {
+		t.Errorf("String = %q, want %q", got, want)
+	}
+	if err := r.Valid(); err != nil {
+		t.Error(err)
+	}
+}

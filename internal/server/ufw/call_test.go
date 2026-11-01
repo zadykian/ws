@@ -23,3 +23,16 @@ func TestCallsRunUfwAsRootWithTheComment(t *testing.T) {
 		t.Errorf("calls = %q, want %q", m.Calls, want)
 	}
 }
+
+func TestCallsDeleteARouteWithRouteFirst(t *testing.T) {
+	r := Route("allow", "wg0", "ikeward0", "10.99.0.2", "ikeward")
+	m := effecttest.NewMachine()
+	del := "ufw --force route delete allow in on wg0 out on ikeward0 from 10.99.0.2 to any comment ikeward"
+	m.Results[del] = effecttest.Result{}
+	if err := (ufwCall{m, true, r}).Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"root " + del}; !slices.Equal(m.Calls, want) {
+		t.Errorf("calls = %q, want %q", m.Calls, want)
+	}
+}
