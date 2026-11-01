@@ -23,6 +23,7 @@ const (
 	boardStep    = "Fans' board"
 	packagesStep = "Fans' packages"
 	sourceStep   = "Fans' driver source"
+	driverStep   = "Fans' driver"
 )
 
 // Steps returns the role's steps in order: the check of the board, the driver's packages and
@@ -53,6 +54,9 @@ func steps(f values.Fans, m effect.Machine, out effect.Out) []step.Step {
 				source{m: m, sum: nct6687SHA256},
 				host.File{M: m, Path: sourceDir + "/dkms.conf", Content: conf, Mode: 0o644},
 			}, nil
+		})},
+		host.Lazy{Title: driverStep, After: sourceStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
+			return []host.Resource{driver{m}}, nil
 		})},
 	}
 }
