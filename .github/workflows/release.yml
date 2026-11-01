@@ -1,8 +1,8 @@
 name: release
 
-# A pushed tag vX.Y.Z on a commit of main starts ws's release: ci.yml and mac.yml run on the tag,
-# and three binaries, ws.sha256 and install.sh are built. docs/releases.md says how a release is
-# cut.
+# A pushed tag vX.Y.Z on a commit of main publishes ws's release: ci.yml and mac.yml run on the tag
+# first, then three binaries, ws.sha256 and install.sh are published, all checked for the local
+# list's words. docs/releases.md says how a release is cut.
 on:
   push:
     tags: ["v*"]
@@ -90,3 +90,55 @@ jobs:
           name: release
           path: ${{ runner.temp }}/dist
           if-no-files-found: error
+
+  # The release, once the checks and the build passed. Its files and notes are checked for the
+  # local list's words, as the hooks check a commit. The list is the secret WS_WORDS, which must
+  # not be empty.
+  publish:
+    needs: [ci, mac, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: ${{ runner.temp }}/dist
+      - name: Notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/$GH_REPO/releases/generate-notes" -f tag_name="$TAG" \
+              --jq .body >"$RUNNER_TEMP/notes.md"
+      - name: The local list's words
+        env:
+          WS_WORDS: ${{ secrets.WS_WORDS }}
+        run: |
+          [ -n "$WS_WORDS" ] || {
+              echo "the secret WS_WORDS is empty" >&2
+              exit 1
+          }
+          printf '%s\n' "$WS_WORDS" | sed -e 'y/_/ /' -e 's/^[[:space:]]*//' \
+              -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' >"$RUNNER_TEMP/words"
+          [ -s "$RUNNER_TEMP/words" ] || {
+              echo "the secret WS_WORDS holds no word" >&2
+              exit 1
+          }
+          found=0
+          for f in "$RUNNER_TEMP"/dist/* "$RUNNER_TEMP/notes.md"; do
+              if LC_ALL=C tr _ ' ' <"$f" | grep -aqiwF -f "$RUNNER_TEMP/words"; then
+                  echo "$f holds a word of the list" >&2
+                  found=1
+              fi
+          done
+          [ "$found" = 0 ]
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" "$RUNNER_TEMP"/dist/* --title "$TAG" \
+              --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
