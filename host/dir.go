@@ -16,6 +16,8 @@ type Dir struct {
 	Mode fs.FileMode
 	// UID and GID are the owner, root's by default.
 	UID, GID int
+	// CreateOnly leaves an existing directory as it is, whatever its mode and owner.
+	CreateOnly bool
 }
 
 type setDir struct {
@@ -50,6 +52,9 @@ func (d Dir) Plan(context.Context) ([]Change, error) {
 	}
 	if err != nil {
 		return nil, err
+	}
+	if d.CreateOnly {
+		return nil, nil
 	}
 	if got.UID != d.UID || got.GID != d.GID || got.Mode != d.Mode.Perm() {
 		return []Change{setDir{d, true}}, nil

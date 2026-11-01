@@ -25,3 +25,15 @@ func TestDir(t *testing.T) {
 		t.Errorf("mode = %o, want 700", m.Dirs["/srv/d"])
 	}
 }
+
+func TestDirCreateOnlyLeavesAnExistingOne(t *testing.T) {
+	m := effecttest.NewMachine()
+	d := host.Dir{M: m, Path: "/srv/d", Mode: 0o755, CreateOnly: true}
+	if got := applyAll(t, d); len(got) != 1 {
+		t.Errorf("first plan = %q, want a create", got)
+	}
+	m.Dirs["/srv/d"] = 0o700
+	if got := applyAll(t, d); got != nil || m.Dirs["/srv/d"] != 0o700 {
+		t.Errorf("second plan = %q, mode %o; want none and 700", got, m.Dirs["/srv/d"])
+	}
+}
