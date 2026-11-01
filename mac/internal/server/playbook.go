@@ -162,3 +162,35 @@ func (p Playbook) Plan(_ context.Context) (step.Plan, error) {
 	}
 	return step.Plan{Changes: changes(p.Lib, p.Vars, p.Version, digest, s)}, nil
 }
+
+// Apply makes the changes in the order of the plan: the values, the unpacking, the pruning.
+func (p Playbook) Apply(ctx context.Context, pl step.Plan) error {
+	for _, c := range pl.Changes {
+		var err error
+		switch c := c.(type) {
+		case varsChange:
+			err = p.writeVars(c)
+		case unpackChange:
+			err = p.unpack(ctx, c)
+		case pruneChange:
+			for _, e := range c.paths {
+				if err = p.M.Pass(ctx, false, "rm", "-rf", e); err != nil {
+					break
+				}
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p Playbook) writeVars(c varsChange) error {
+	if c.makeDir {
+		if err := p.M.Mkdir(path.Dir(c.path), 0o755); err != nil {
+			return err
+		}
+	}
+	return p.M.WriteFile(c.path, []byte("---\n"), 0o600)
+}

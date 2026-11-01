@@ -8,6 +8,7 @@ import (
 	"testing/fstest"
 
 	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/mac/internal/step"
 )
 
 const (
@@ -114,4 +115,53 @@ func TestPlaybookRefusals(t *testing.T) {
 			t.Errorf("%s: got %v, want %q", tt.name, err, tt.want)
 		}
 	}
+}
+
+func TestPlaybookApply(t *testing.T) {
+	p, m, digest := testPlaybook(t, testFS(), "v0.1.0")
+	d, n := testLib+"/v0.1.0", testLib+"/v0.1.0.new"
+	for _, cmd := range []string{
+		"rm -rf " + n,
+		"env LC_ALL=C.UTF-8 ANSIBLE_COLLECTIONS_PATH=" + n + "/collections ansible-galaxy collection install --offline -p " +
+			n + "/collections " + n + "/collections/a-one-1.0.0.tar.gz",
+		"ln -s " + testVars + " " + n + "/host_vars/localhost.yml",
+		"rm -rf " + d, "mv " + n + " " + d, "rm -rf " + testLib + "/old",
+	} {
+		m.Results[cmd] = effecttest.Result{}
+	}
+	pl := planOf(t, p, "old")
+	if err := p.Apply(context.Background(), pl); err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, c := range m.Calls {
+		if !strings.HasPrefix(c, "stat ") && !strings.HasPrefix(c, "read") {
+			got = append(got, c)
+		}
+	}
+	joined := strings.Join(got, "\n")
+	for _, w := range []string{
+		"mkdir /etc/ws 755\nwrite /etc/ws/host_vars.yml 600\nmkdir /var/lib/ws 755\nrun rm -rf " + n + "\nmkdir " + n + " 755",
+		"write " + n + "/collections/a-one-1.0.0.tar.gz 644",
+		"write " + n + "/roles/base/tasks/main.yml 644",
+		"mkdir " + n + "/host_vars 755\nrun ln -s " + testVars + " " + n + "/host_vars/localhost.yml\nwrite " + n + "/.unpacked 644\nrun rm -rf " + d + "\nrun mv " + n + " " + d + "\nrun rm -rf " + testLib + "/old",
+	} {
+		if !strings.Contains(joined, w) {
+			t.Errorf("calls lack %q:\n%s", w, joined)
+		}
+	}
+	if string(m.Files[n+"/.unpacked"]) != digest {
+		t.Errorf(".unpacked is %q, want the digest", m.Files[n+"/.unpacked"])
+	}
+}
+
+// planOf returns the plan of a new machine with one leftover version.
+func planOf(t *testing.T, p Playbook, leftover string) (pl step.Plan) {
+	digest, err := Digest(p.FS)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := state{varsMissing: true, varsDirMissing: true, libMissing: true, entries: []string{leftover}}
+	pl.Changes = changes(p.Lib, p.Vars, p.Version, digest, s)
+	return pl
 }
