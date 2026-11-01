@@ -5,7 +5,7 @@ paths:
 
 # mac
 
-The rules a change to the ws CLI in `mac/` keeps, each linking its reason
+The rules a change to the ws CLI in `mac/` keeps (its module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too.
 

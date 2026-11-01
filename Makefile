@@ -118,26 +118,26 @@ gitleaks:
 	tools/run gitleaks git --no-banner --redact --verbose \
 		$(if $(LOG_OPTS),--log-opts='$(LOG_OPTS)') .
 
-# The Go gates run in mac/, the module, with the Go that tools/run pins first on the PATH.
+# The Go gates run at the root, the module, with the Go that tools/run pins first on the PATH.
 # gofmt fails where it lists a file.
 gofmt:
-	@set -ef; go=$$(tools/run -path go); cd mac; out=$$("$${go%/go}/gofmt" -l .); \
+	@set -ef; go=$$(tools/run -path go); out=$$(git ls-files -z "*.go" | xargs -0 "$${go%/go}/gofmt" -l); \
 		[ -z "$$out" ] || { echo "$$out"; echo "gofmt lists these files"; exit 1; }
 
 govet:
-	@set -ef; go=$$(tools/run -path go); cd mac && "$$go" vet ./...
+	@set -ef; go=$$(tools/run -path go); "$$go" vet ./...
 
 golangci-lint:
 	@set -ef; go=$$(tools/run -path go); lint=$$(tools/run -path golangci-lint); \
-		cd mac && PATH="$${go%/go}:$$PATH" "$$lint" run ./...
+		PATH="$${go%/go}:$$PATH" "$$lint" run ./...
 
 # govulncheck is the module's tool directive, at the version go.mod pins.
 govulncheck:
-	@set -ef; go=$$(tools/run -path go); cd mac && "$$go" tool govulncheck ./...
+	@set -ef; go=$$(tools/run -path go); "$$go" tool govulncheck ./...
 
 # The race detector needs cgo, for the tests alone.
 gotest:
-	@set -ef; go=$$(tools/run -path go); cd mac && CGO_ENABLED=1 "$$go" test -race -count=1 ./...
+	@set -ef; go=$$(tools/run -path go); CGO_ENABLED=1 "$$go" test -race -count=1 ./...
 
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
 # file (docs/checks.md). A workflow takes actionlint and zizmor too. A file of no kind passes, as
@@ -150,7 +150,7 @@ lint-file:
 			gates='yamllint ansible-lint actionlint zizmor sizecheck' ;; \
 		*.yml | *.yaml) gates='yamllint ansible-lint sizecheck' ;; \
 		*.py) gates='ruff sizecheck' ;; \
-		*.go | mac/go.mod | mac/go.sum) gates='gofmt govet golangci-lint govulncheck gotest sizecheck' ;; \
+		*.go | go.mod | go.sum) gates='gofmt govet golangci-lint govulncheck gotest sizecheck' ;; \
 		*.j2) gates=sizecheck ;; \
 		*) gates='shell sizecheck' ;; \
 		esac; \

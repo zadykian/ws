@@ -24,9 +24,9 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   tables (`.rumdl.toml`);
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
 - `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options;
-- `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module in `mac/`.
+- `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module at the root.
   `gofmt` fails where `gofmt -l` lists a file, and `golangci-lint` runs a strict set of linters
-  (`mac/.golangci.yml`). A finding is justified with `//nolint:NAME // reason` alone.
+  (`.golangci.yml`). A finding is justified with `//nolint:NAME // reason` alone.
   `govulncheck` is the module's `tool` directive, so go.mod pins it. `gotest` runs
   `go test -race -count=1 ./...`, and cgo is on for the race detector alone, as ws builds with
   `CGO_ENABLED=0`.

@@ -1,5 +1,5 @@
 #!/bin/sh
-# ws_build builds ws, the Go CLI in the clone's mac/, which bootstrap.sh and the mac and mac-wizard
+# ws_build builds ws, the Go CLI in the clone's mac/cmd/ws, which bootstrap.sh and the mac and mac-wizard
 # jobs source from the clone. It is POSIX sh, as bootstrap.sh runs before ws is there.
 
 # ws_build CLONE FILE builds ws from CLONE into FILE, with the Go that tools/run downloads and
@@ -17,9 +17,9 @@ ws_build() {
         return 1
     }
     (
-        cd "$1/mac" &&
+        cd "$1" &&
             GOPATH=$1/.cache/go GOCACHE=$1/.cache/go-build GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=0 \
-                "$ws_go" build -buildvcs=false -o "$2.new" ./cmd/ws
+                "$ws_go" build -buildvcs=false -o "$2.new" ./mac/cmd/ws
     ) || {
         echo "cannot build ws" >&2
         return 1

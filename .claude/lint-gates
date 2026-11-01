@@ -7,9 +7,9 @@
 requirements.yml
 ansible.cfg
 .ansible-lint*
-mac/.golangci*
-mac/go.mod
-mac/go.sum
+.golangci*
+go.mod
+go.sum
 *.go
 *go.work
 *go.work.sum

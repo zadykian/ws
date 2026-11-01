@@ -19,6 +19,8 @@ The rest is the docs, the lint gates' tools and CI.
   yamllint, which finds its files itself, checks it too.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
+- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. Its
+  packages are in `mac/`.
 - `mac/`: the Mac's side: the ws CLI in Go, with `bootstrap.sh` and the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
@@ -42,7 +44,7 @@ make lint                         # every gate, as CI's lint job runs it; -k goe
 make vale FILES=README.md         # one gate alone; the gates that check files take FILES
 make ansible-lint FILES=roles/base/tasks/main.yml   # this file alone: no syntax check of site.yml
 make shell                        # ShellCheck and shfmt -d -i 4 on every shell script
-make gotest                       # the Go gates run in mac/, the module; so do govet and gofmt
+make gotest                       # the Go gates run at the root, the module; so do govet and gofmt
 ```
 
 The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, `lychee`, `rumdl`,
