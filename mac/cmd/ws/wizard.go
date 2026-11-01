@@ -34,7 +34,8 @@ type wizardEnv struct {
 	// tty tells whether stdin is a terminal, which the questions need.
 	tty    bool
 	stderr io.Writer
-	// stdout gets the text that the Tunnel step prints once mac.conf names ws's key.
+	// stdout gets the usage that -h asks for, as wizard.sh printed it, and the text that the Tunnel
+	// step prints once mac.conf names ws's key.
 	stdout io.Writer
 }
 
@@ -130,7 +131,7 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 	prog := cmp.Or(e.getenv("WS_PROG"), "ws wizard")
 	o, help, err := wizardOptionsOf(args)
 	if help {
-		_, _ = fmt.Fprintln(e.stderr, strings.Replace(wizardUsage, "ws wizard", prog, 1))
+		_, _ = fmt.Fprintln(e.stdout, strings.Replace(wizardUsage, "ws wizard", prog, 1))
 		return 0
 	}
 	if err == nil && wizardRefusal(e) != "" {
