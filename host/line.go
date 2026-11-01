@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/fs"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -19,7 +20,10 @@ type Line struct {
 	// Match is a regular expression for the line Text replaces. Without it, or where no line
 	// matches, Text is appended unless a line is Text already.
 	Match string
-	Mode  fs.FileMode
+	// Absent removes each line that is Text or matches Match instead, and leaves the file's mode
+	// and owner, which Mode, UID and GID then don't give. A missing file stays missing.
+	Absent bool
+	Mode   fs.FileMode
 	// UID and GID are the owner, root's by default.
 	UID, GID int
 }
@@ -34,8 +38,23 @@ func (l Line) Plan(ctx context.Context) ([]Change, error) {
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-	return File{M: l.M, Path: l.Path, Content: l.edit(re, before), Mode: l.Mode, UID: l.UID, GID: l.GID,
-		edit: func(now []byte) []byte { return l.edit(re, now) }}.Plan(ctx)
+	f := File{M: l.M, Path: l.Path, Content: l.edit(re, before), Mode: l.Mode, UID: l.UID, GID: l.GID,
+		edit: func(now []byte) []byte { return l.edit(re, now) }}
+	if l.Absent {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		a, err := l.M.RootAttrs(l.Path)
+		if err != nil {
+			return nil, err
+		}
+		f.Mode, f.UID, f.GID = a.Mode, a.UID, a.GID
+	}
+	return f.Plan(ctx)
+}
+
+func (l Line) matches(re *regexp.Regexp, line string) bool {
+	return strings.TrimSuffix(line, "\n") == l.Text || (l.Match != "" && re.MatchString(line))
 }
 
 // edit returns the file's content with the line replaced or appended.
@@ -44,9 +63,12 @@ func (l Line) edit(re *regexp.Regexp, before []byte) []byte {
 	if lines[len(lines)-1] == "" {
 		lines = lines[:len(lines)-1]
 	}
+	if l.Absent {
+		return []byte(strings.Join(slices.DeleteFunc(lines, func(line string) bool { return l.matches(re, line) }), ""))
+	}
 	at := -1
 	for i, line := range lines {
-		if strings.TrimSuffix(line, "\n") == l.Text || (l.Match != "" && re.MatchString(line)) {
+		if l.matches(re, line) {
 			at = i
 			break
 		}
