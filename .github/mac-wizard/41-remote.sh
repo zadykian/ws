@@ -180,6 +180,23 @@ send() {
     ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out" <"$src.bundle"
 }
 
+# send_command REPO: the files script's stage op names a path on ws for the command of example/REPO@v1.0.0,
+# which goes there as the wizard sends it. The command is a script that logs its arguments and the
+# SHA-256 of its stdin, as the Mac's stand-in gh makes it. It prints the command's SHA-256 as sum.
+send_command() {
+    src=$RUNNER_TEMP/$1
+    cat >"$src" <<'EOF'
+#!/bin/sh
+echo "$*" >>"$WS_STANDIN/hook.args"
+shasum -a 256 | cut -d " " -f 1 >>"$WS_STANDIN/apply.log"
+EOF
+    sum=$(shasum -a 256 <"$src" | cut -d ' ' -f 1)
+    files stage "example/$1@v1.0.0"
+    [ "$status" = 0 ] && [ "$out" = "$stamps/hook-$1.bin" ] ||
+        error "the files script's stage of example/$1 exited $status, printing '$out'"
+    ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out" <"$src"
+}
+
 hook=$ws/root/root/repository/hook
 send hook
 files clone example/hook
@@ -223,6 +240,45 @@ files clone example/pack
     [ ! -e "$stamps/hook-pack.bundle" ] ||
     error "its clone from a bundle cut short exited $status, or left a clone or the bundle"
 rm -rf "$RUNNER_TEMP"/hook "$RUNNER_TEMP"/hook.bundle "$RUNNER_TEMP"/pack "$RUNNER_TEMP"/pack.bundle
+bin=$stamps/bin/hook-v1.0.0
+files arch
+case $out in amd64 | arm64) ;; *) error "the files script's arch printed '$out'" ;; esac
+files stage example/hook
+printf '%s\n' "$out" | grep -qF "is not a release" && [ "$status" = 1 ] ||
+    error "the files script's stage with no tag exited $status"
+send_command hook
+files install example/hook@v1.0.0 "$(printf %s bad | shasum -a 256 | cut -d ' ' -f 1)"
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'not the one the Mac checked' &&
+    [ ! -e "$stamps/hook-hook.bin" ] && [ ! -e "$bin" ] ||
+    error "the files script's install of another sum exited $status, or installed"
+send_command hook
+files install example/hook@v1.0.0 "$sum"
+[ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: installed example/hook@v1.0.0 at $bin" ] &&
+    [ "$(sudo stat -f '%Lp %Su' "$bin")" = '700 root' ] &&
+    [ "$(sudo stat -f '%Lp' "${bin%/*}")" = 700 ] && [ ! -e "$stamps/hook-hook.bin" ] ||
+    error "the files script's install exited $status, or left the command other than root's alone"
+ssh -o BatchMode=yes ws-ssh /var/lib/ws-wizard/bin/hook-v1.0.0 apply </dev/null &&
+    grep -qx 'root: /var/lib/ws-wizard/bin/hook-v1.0.0 apply' "$ws/log" &&
+    [ "$(cat "$ws/hook.args")" = apply ] &&
+    [ "$(cat "$ws/apply.log")" = "$(shasum -a 256 </dev/null | cut -d ' ' -f 1)" ] ||
+    error "the command ran other than as root, once, with its stdin empty"
+files stamp example/hook@v1.0.0
+[ "$status" = 0 ] && [ "$(stamp hook-hook)" = "$sum 0 example/hook@v1.0.0" ] ||
+    error "the files script's stamp exited $status, leaving '$(stamp hook-hook)'"
+files have example/hook@v1.0.0
+[ "$out" = "$bin" ] || error "the files script's have printed '$out'"
+remote status
+printf '%s\n' "$out" | grep -qx 'hook example/hook@v1.0.0' || error "status listed no example/hook"
+send_command hook
+files install example/hook@v1.0.0 "$sum"
+[ "$status" = 0 ] && [ "$(stamp hook-hook)" = - ] ||
+    error "the files script's install again exited $status, or left the stamp"
+files install example/hook@v1.0.0 "$sum"
+printf '%s\n' "$out" | grep -qF 'the Mac sent none' && [ "$status" = 1 ] ||
+    error "the files script's install with nothing sent exited $status"
+files have example/hook@v1.0.1
+[ "$status" = 0 ] && [ -z "$out" ] || error "the files script's have of another tag exited $status, printing '$out'"
+rm -f "$RUNNER_TEMP/hook"
 list=$ws/root/root/.config/ws/forbidden-words
 files words
 [ "$status" = 0 ] && [ "$out" = - ] || error "the files script's words with no list exited $status"
@@ -293,7 +349,7 @@ printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$s
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
-sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
+sudo rm -rf "$hook" "$stamps/bin" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
-rm -f "$ws/apply.log" "$ws/uplink"
+rm -f "$ws/apply.log" "$ws/hook.args" "$ws/uplink"
 exit "$fail"
