@@ -4,18 +4,6 @@
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
-# - bundle OWNER/REPO[@TAG] prints the path for a git bundle of that repository's origin/main, or
-#   given a tag, vX.Y.Z, of that tag, in state as hook-REPO.bundle, where /root/repository/REPO is
-#   missing, or the tag is not its HEAD, and removes an old one. The wizard sends the bundle there
-#   by a call of its own, as this script takes stdin.
-# - clone OWNER/REPO[@TAG] clones that repository into /root/repository/REPO, where nothing is
-#   there, from that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, and
-#   stops where the Mac sent none. Given a tag, the clone is detached at it, and so is an existing
-#   one, from a bundle, where it changed nothing tracked and the tag is not another commit there.
-#   Without a tag, it never pulls a clone, as the repository's apply.sh updates its own. It removes
-#   the bundle. It stops where the path holds no clone, another repository's, or a clone with no
-#   apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
-#   or is cut short leaves none.
 # - arch prints ws's architecture as a release names it, amd64 or arm64, and stops on another.
 # - stage OWNER/REPO@TAG prints the path where the wizard sends REPO's command, in state as
 #   hook-REPO.bin, and removes an old one. The wizard sends it by a call of its own, as this script
@@ -44,7 +32,6 @@ set -eu
 # interfaces and the machine's values for ws's playbook. CI's stand-in for ws roots each, a line
 # NAME=PATH, in a directory of its own.
 state=/var/lib/ws-wizard
-repos=/root/repository
 list=/root/.config/ws/forbidden-words
 net=/sys/class/net
 vars=/etc/ws/host_vars.yml
@@ -132,79 +119,6 @@ install() {
 have() {
     repo "$1"
     [ ! -f "$bin" ] || echo "$bin"
-}
-
-# bundle OWNER/REPO[@TAG] prints the path for REPO's bundle, as the header says.
-bundle() {
-    repo "$1"
-    rm -f "$pack"
-    if [ -e "$repos/$repo" ] || [ -L "$repos/$repo" ]; then
-        [ -n "$tag" ] || return 0
-        cur=$(git -C "$repos/$repo" rev-parse -q --verify HEAD 2>/dev/null) || cur=
-        [ -z "$cur" ] || [ "$(git -C "$repos/$repo" rev-parse -q --verify "refs/tags/$tag^{commit}" \
-            2>/dev/null)" != "$cur" ] || return 0
-    fi
-    mkdir -p "$state"
-    echo "$pack"
-}
-
-# unbundle OWNER/REPO[@TAG] makes the clone in repos from REPO's bundle. The clone is built beside
-# its place and moved there whole, so that no failure leaves half of one for the next run to take.
-# The bundle holds origin/main, so the branch main is made from it, with that as its upstream. Given
-# a tag, it holds that tag alone, which the clone is detached at.
-unbundle() {
-    [ -f "$pack" ] || die "ws lacks $repos/$repo, and the Mac sent no bundle: run the wizard again"
-    part=$repos/.$repo.part
-    rm -rf "$part"
-    mkdir -p "$repos"
-    if git init -q -b main "$part" &&
-        git -C "$part" remote add origin "https://github.com/$slug.git" &&
-        if [ -n "$tag" ]; then
-            git -C "$part" fetch -q "$pack" "refs/tags/$tag:refs/tags/$tag" &&
-                git -C "$part" checkout -q --detach "$tag"
-        else
-            git -C "$part" fetch -q "$pack" +refs/remotes/origin/main:refs/remotes/origin/main &&
-                git -C "$part" checkout -q -B main --track origin/main
-        fi && mv "$part" "$repos/$repo"; then
-        return 0
-    fi
-    rm -rf "$part" "$pack"
-    die "git cannot make the clone of $slug from its bundle, as above: run the wizard again"
-}
-
-# retag detaches REPO's clone at the tag, from the bundle, where the clone changed nothing tracked.
-# The fetch never moves a tag the clone has, so that a tag moved on GitHub stops it.
-retag() {
-    if [ -n "$(git -C "$repos/$repo" status --porcelain --untracked-files=no)" ]; then
-        rm -f "$pack"
-        die "$repos/$repo has changes, so $tag can't be checked out: commit or reset them"
-    fi
-    git -C "$repos/$repo" fetch "$pack" "refs/tags/$tag:refs/tags/$tag" &&
-        git -C "$repos/$repo" checkout -q --detach "$tag" && return 0
-    rm -f "$pack"
-    die "git cannot check out $tag of $slug in $repos/$repo, as above, where a tag moved on GitHub stops it"
-}
-
-# clone OWNER/REPO[@TAG] clones the repository in repos, as the header says. A clone there must be
-# OWNER/REPO's: its origin, by https or ssh as gh sets it, names it on GitHub, letter case aside.
-clone() {
-    repo "$1"
-    rm -f "$state/hook-$repo"
-    fresh=
-    if [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ]; then
-        unbundle
-        say "cloned $slug into $repos/$repo"
-        fresh=1
-    fi
-    [ -e "$repos/$repo/.git" ] || die "$repos/$repo holds no clone: move it aside"
-    origin=$(git -C "$repos/$repo" remote get-url origin 2>/dev/null) || origin=
-    case $(printf '%s\n' "${origin%.git}" | tr '[:upper:]' '[:lower:]') in
-    *[/@]github.com[/:]"$(printf '%s\n' "${slug%.git}" | tr '[:upper:]' '[:lower:]')") ;;
-    *) die "$repos/$repo is not $slug's clone, its origin '$origin': move it aside" ;;
-    esac
-    [ -z "$fresh" ] && [ -n "$tag" ] && [ -f "$pack" ] && retag
-    rm -f "$pack"
-    [ -x "$repos/$repo/apply.sh" ] || die "$repos/$repo has no apply.sh that runs"
 }
 
 # stamp OWNER/REPO@TAG writes REPO's stamp, hook-REPO in state, by a rename: the command's SHA-256,
@@ -296,8 +210,6 @@ link() {
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
     case ${1-} in
-    bundle) bundle "${2-}" ;;
-    clone) clone "${2-}" ;;
     arch) arch ;;
     stage) stage "${2-}" ;;
     install) install "${2-}" "${3-}" ;;
@@ -306,7 +218,7 @@ main() {
     words) words "${2-}" ;;
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh bundle OWNER/REPO@TAG | clone OWNER/REPO@TAG | arch | stage OWNER/REPO@TAG |" \
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh arch | stage OWNER/REPO@TAG |" \
         "install OWNER/REPO@TAG SHA256 | have OWNER/REPO@TAG | stamp OWNER/REPO@TAG | words [HASH] | wait PORT | link [PORT]" ;;
     esac
 }
