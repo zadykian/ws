@@ -11,11 +11,11 @@ import (
 	"github.com/zadykian/ws/mac/internal/effect"
 )
 
-const confUsage = "usage: ws conf [--lines] [FILE]\n"
+const confUsage = "usage: ws mac conf [--lines] [FILE]\n"
 
 const confFile = ".config/ws/mac.conf"
 
-// confCommand runs ws conf: it reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and prints
+// confCommand runs ws mac conf: it reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and prints
 // the checked settings as shell assignments, or the errors of a file it refuses. With --lines it
 // checks each line alone, as a wizard checks an answer before the file holds the key it goes with.
 func confCommand(args []string, m effect.Machine, getenv func(string) string, stdout, stderr io.Writer) int {
@@ -36,16 +36,16 @@ func confCommand(args []string, m effect.Machine, getenv func(string) string, st
 	}
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		_, _ = fmt.Fprintf(stderr, "ws conf: %s is missing: docs/mac.md says what goes in it\n", file)
+		_, _ = fmt.Fprintf(stderr, "ws mac conf: %s is missing: docs/mac.md says what goes in it\n", file)
 		return 1
 	}
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "ws conf: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "ws mac conf: %v\n", err)
 		return 1
 	}
 	c, errs := parse(string(text))
 	for _, e := range errs {
-		_, _ = fmt.Fprintf(stderr, "ws conf: %s\n", e.In(file))
+		_, _ = fmt.Fprintf(stderr, "ws mac conf: %s\n", e.In(file))
 	}
 	if len(errs) > 0 {
 		return 1

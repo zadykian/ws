@@ -16,7 +16,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/wgdev"
 )
 
-const tunnelUsage = "usage: ws tunnel run | status | key\n"
+const tunnelUsage = "usage: ws mac tunnel run | status | key\n"
 
 // stateFile is what the daemon writes for status, and removes where it stops.
 const stateFile = "/var/run/ws-tunnel.state"
@@ -30,7 +30,7 @@ const watchWait = 5 * time.Second
 // statusWait is how long status waits for the device's socket.
 const statusWait = 5 * time.Second
 
-// tunnel runs ws tunnel's subcommands.
+// tunnel runs ws mac tunnel's subcommands.
 func tunnel(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 1 && args[0] == "run" {
 		return tunnelRun(stdout, stderr)
@@ -75,7 +75,7 @@ func tunnelRun(stdout, stderr io.Writer) int {
 // device's socket are root's, so it needs root, as ws-tunnel status did.
 func tunnelStatus(uid int, stdout, stderr io.Writer) int {
 	if uid != 0 {
-		_, _ = io.WriteString(stderr, "ws tunnel status: run it as root, with sudo\n")
+		_, _ = io.WriteString(stderr, "ws mac tunnel status: run it as root, with sudo\n")
 		return 1
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), statusWait)
@@ -93,7 +93,7 @@ func tunnelStatus(uid int, stdout, stderr io.Writer) int {
 // stays in root's file, which only root can write, so setup runs this through sudo.
 func tunnelKey(uid int, stdout, stderr io.Writer) int {
 	if uid != 0 {
-		_, _ = io.WriteString(stderr, "ws tunnel key: run it as root, with sudo\n")
+		_, _ = io.WriteString(stderr, "ws mac tunnel key: run it as root, with sudo\n")
 		return 1
 	}
 	public, err := daemon.Key(context.Background(), effect.OSMachine{}, rand.Reader, daemon.Dir)

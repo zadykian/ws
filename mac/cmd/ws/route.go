@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	routesUsage   = "usage: ws tunnel routes [--check] NAME [CIDR...]\n"
-	resolverUsage = "usage: ws resolver [--check] DOMAIN [ADDRESS...]\n"
-	loadedUsage   = "usage: ws tunnel loaded\n"
+	routesUsage   = "usage: ws mac tunnel routes [--check] NAME [CIDR...]\n"
+	resolverUsage = "usage: ws mac resolver [--check] DOMAIN [ADDRESS...]\n"
+	loadedUsage   = "usage: ws mac tunnel loaded\n"
 	daemonLabel   = "com.github.zadykian.ws-tunnel"
 )
 

@@ -17,9 +17,9 @@ import (
 	"github.com/zadykian/ws/mac/internal/wizard"
 )
 
-const wizardUsage = "usage: ws wizard [--check] [--update]"
+const wizardUsage = "usage: ws mac wizard [--check] [--update]"
 
-// wizardEnv is what ws wizard takes from the process, so that a test gives it another.
+// wizardEnv is what ws mac wizard takes from the process, so that a test gives it another.
 type wizardEnv struct {
 	goos   string
 	uid    int
@@ -58,7 +58,7 @@ func wizardOptionsOf(args []string) (o wizardOptions, help bool, err error) {
 	return o, false, nil
 }
 
-// wizardRefusal returns why ws wizard does not run here, or an empty string. It names the system
+// wizardRefusal returns why ws mac wizard does not run here, or an empty string. It names the system
 // as uname -s does.
 func wizardRefusal(e wizardEnv) string {
 	switch {
@@ -76,7 +76,7 @@ func repoDir(getenv func(string) string) string {
 	return cmp.Or(getenv("WS_REPO"), getenv("HOME")+"/repository/ws")
 }
 
-// wizardStages returns the stages of ws wizard, in order.
+// wizardStages returns the stages of ws mac wizard, in order.
 func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
 	check := o.check
 	conf := confPath(e.getenv, e.pwd)
@@ -125,13 +125,13 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	}
 }
 
-// wizardCommand runs ws wizard: its stages under a lock, and what stays by hand after a run in
+// wizardCommand runs ws mac wizard: its stages under a lock, and what stays by hand after a run in
 // which a stage acted. Under --check it prints what each stage would do and changes nothing.
 func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
-	prog := cmp.Or(e.getenv("WS_PROG"), "ws wizard")
+	prog := cmp.Or(e.getenv("WS_PROG"), "ws mac wizard")
 	o, help, err := wizardOptionsOf(args)
 	if help {
-		_, _ = fmt.Fprintln(e.stdout, strings.Replace(wizardUsage, "ws wizard", prog, 1))
+		_, _ = fmt.Fprintln(e.stdout, strings.Replace(wizardUsage, "ws mac wizard", prog, 1))
 		return 0
 	}
 	if err == nil && wizardRefusal(e) != "" {

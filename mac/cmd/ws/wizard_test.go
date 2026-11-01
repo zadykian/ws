@@ -24,8 +24,8 @@ func TestWizardCommandRefuses(t *testing.T) {
 		uid, status int
 		message     string
 	}{
-		"argument": {[]string{"--now"}, "darwin", 501, 1, "ws wizard: unknown argument '--now'; usage: ws wizard"},
-		"linux":    {nil, "linux", 501, 1, "ws wizard: it sets up a Mac, not Linux"},
+		"argument": {[]string{"--now"}, "darwin", 501, 1, "ws mac wizard: unknown argument '--now'; usage: ws mac wizard"},
+		"linux":    {nil, "linux", 501, 1, "ws mac wizard: it sets up a Mac, not Linux"},
 		"root":     {nil, "darwin", 0, 1, "run it as yourself, not root: it asks sudo where it needs root"},
 	} {
 		var stderr bytes.Buffer
@@ -41,7 +41,7 @@ func TestWizardCommandHelp(t *testing.T) {
 	e := testWizardEnv("darwin", 501, &stderr)
 	e.stdout = &stdout
 	if got := wizardCommand(context.Background(), []string{"-h"}, e); got != 0 ||
-		stdout.String() != "usage: ws wizard [--check] [--update]\n" || stderr.Len() != 0 {
+		stdout.String() != "usage: ws mac wizard [--check] [--update]\n" || stderr.Len() != 0 {
 		t.Errorf("status = %d, stdout = %q, stderr = %q; want the usage on stdout", got, stdout.String(), stderr.String())
 	}
 }

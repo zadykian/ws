@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/wizard"
 )
 
-// wizardSetup returns the stage that runs the steps of ws setup in the wizard's process. Until
+// wizardSetup returns the stage that runs the steps of ws mac apply in the wizard's process. Until
 // mac.conf has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands that make it
 // ws's peer at every run, which the Tunnel stage takes over: the text goes nowhere then. file is the
 // mac.conf to read, which is Answers' would-be file under --check.

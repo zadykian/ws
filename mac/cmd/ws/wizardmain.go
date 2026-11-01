@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/effect"
 )
 
-// confPath returns mac.conf's path from WS_CONF, a path from / as ws setup gets it, else from the
+// confPath returns mac.conf's path from WS_CONF, a path from / as ws mac apply gets it, else from the
 // home.
 func confPath(getenv func(string) string, pwd string) string {
 	switch file := getenv("WS_CONF"); {
@@ -23,7 +23,7 @@ func confPath(getenv func(string) string, pwd string) string {
 	}
 }
 
-// wizardMain runs ws wizard in the process: with /opt/homebrew/bin first in PATH, as a shell
+// wizardMain runs ws mac wizard in the process: with /opt/homebrew/bin first in PATH, as a shell
 // started before Homebrew's install lacks it, and WS_CONF set for the scripts that stages run.
 func wizardMain(args []string, stderr io.Writer) int {
 	pwd, _ := os.Getwd()

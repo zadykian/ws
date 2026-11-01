@@ -16,11 +16,11 @@ func TestMacCommand(t *testing.T) {
 	}{
 		{"no command", nil, 0, "usage: ws mac COMMAND", ""},
 		{"help", []string{"help"}, 0, "usage: ws mac COMMAND", ""},
-		{"tunnel alone", []string{"tunnel"}, 2, "", "usage: ws tunnel run | status | key"},
-		{"tunnel status extra", []string{"tunnel", "status", "x"}, 2, "", "usage: ws tunnel run"},
-		{"tunnel loaded extra", []string{"tunnel", "loaded", "x"}, 2, "", "usage: ws tunnel loaded"},
-		{"tunnel routes alone", []string{"tunnel", "routes"}, 2, "", "usage: ws tunnel routes"},
-		{"resolver alone", []string{"resolver"}, 2, "", "usage: ws resolver"},
+		{"tunnel alone", []string{"tunnel"}, 2, "", "usage: ws mac tunnel run | status | key"},
+		{"tunnel status extra", []string{"tunnel", "status", "x"}, 2, "", "usage: ws mac tunnel run"},
+		{"tunnel loaded extra", []string{"tunnel", "loaded", "x"}, 2, "", "usage: ws mac tunnel loaded"},
+		{"tunnel routes alone", []string{"tunnel", "routes"}, 2, "", "usage: ws mac tunnel routes"},
+		{"resolver alone", []string{"resolver"}, 2, "", "usage: ws mac resolver"},
 		{"unknown", []string{"nope"}, 2, "", `ws mac: unknown command "nope"`},
 	}
 	for _, tt := range tests {
