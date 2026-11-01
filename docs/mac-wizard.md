@@ -2,12 +2,12 @@
 
 `ws mac wizard` sets up the Mac in stages, around `ws mac apply` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
-then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It runs
-ws's playbook there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on ws. Then
-it exchanges the tunnel's keys, clones another repository on the Mac, sends it to ws and runs its
-`apply.sh` there, and copies ws's word list. Last, it sets up the cable from the Mac's display to
-ws. On a new Mac with Apple silicon, one line installs what it needs, clones the repository and runs
-the wizard, as yourself:
+then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
+runs ws's playbook there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on ws.
+Then it exchanges the tunnel's keys, clones another repository on the Mac, sends it to ws and runs
+its `apply.sh` there, and copies ws's word list. Last, it sets up the cable from the Mac's display
+to ws. On a new Mac with Apple silicon, one line installs what it needs, clones the repository and
+runs the wizard, as yourself:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
@@ -36,7 +36,8 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
 6. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
    timestamp is fresh. With no terminal at all, the stage stops, unless sudo needs no password. The
-   wizard shows ws mac apply's warnings at each run, and drops the Mac's key that ws mac apply prints.
+   wizard shows ws mac apply's warnings at each run, and drops the Mac's key that ws mac apply
+   prints.
 7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 8. Root's key: root's login to ws by the Mac's key, checked and never added, below.
 9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
@@ -79,16 +80,17 @@ from the first of these that has one:
 - else nothing: the run stops with `no terminal to ask KEY: set KEY`.
 
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
-stops the run. ws's address and git's email take a value where asked. The wizard adds the answers
-at the end of `mac.conf`, and keeps its comments and order. It writes the file once `ws mac apply` would
-take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that `ws mac apply`
-would refuse. Where `mac.conf` is a link, it prints the lines to add to the link's file, and stops.
-The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cable](#the-cable)). The other
-keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
+stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
+the end of `mac.conf`, and keeps its comments and order. It writes the file once `ws mac apply`
+would take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that
+`ws mac apply` would refuse. Where `mac.conf` is a link, it prints the lines to add to the link's
+file, and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The
+cable](#the-cable)). The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set
+by hand.
 
-Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `ws mac apply --check`
-then reads the file it would write, in the lock, which `WS_CONF` names. `WS_CONF` names another
-`mac.conf` for both scripts.
+Under `--check`, the wizard asks too, and shows the lines it would add as a diff.
+`ws mac apply --check` then reads the file it would write, in the lock, which `WS_CONF` names.
+`WS_CONF` names another `mac.conf` for both scripts.
 
 ## The Mac's key
 
@@ -119,8 +121,8 @@ or Secretive's, must be one that the agent lists, or the stage stops, naming the
 
 gh, from Homebrew where missing, logs in to github.com by its device flow, which shows a code to
 enter at `github.com/login/device`. Its scopes, `write:public_key` and `write:ssh_signing_key`, let
-it add the Mac's keys, and a login without them is refreshed the same way. The wizard adds the
-Mac's key for ws to the account's ssh keys, titled with the Mac's name. `ws mac apply` then adds git's
+it add the Mac's keys, and a login without them is refreshed the same way. The wizard adds the Mac's
+key for ws to the account's ssh keys, titled with the Mac's name. `ws mac apply` then adds git's
 signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the command to run.
 
 Ubuntu's installer imports the account's keys for ws's user. So run the line before Ubuntu's
@@ -291,7 +293,7 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   LAN `mac.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.
   Then the wizard again, which checks it.
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as
-  `ws mac apply`'s does with git's name ([git](mac-git.md)). Through it, pushes from the Mac's clones
-  take gh's login.
+  `ws mac apply`'s does with git's name ([git](mac-git.md)). Through it, pushes from the Mac's
+  clones take gh's login.
 - The cable, where no port of ws's had carrier: the line again, docked, or with `WS_CABLE_PORT` for
   a port that ws keeps down. Without the cable, the line once with an empty `WS_CABLE_SERVICE`.
