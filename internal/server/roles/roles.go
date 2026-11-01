@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/internal/server/docker"
 	"github.com/zadykian/ws/internal/server/ikeward"
 	"github.com/zadykian/ws/internal/server/jetbrains"
+	"github.com/zadykian/ws/internal/server/network"
 	"github.com/zadykian/ws/internal/server/otelcol"
 	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/security"
@@ -39,7 +40,7 @@ func (r Role) Ported() bool { return r.Steps != nil }
 var all = []Role{
 	{Name: "base", Steps: base.Steps},
 	{Name: "security", Steps: security.Steps},
-	{Name: "network"},
+	{Name: "network", Steps: network.Steps},
 	{Name: "wireguard"},
 	{Name: "ikeward", Steps: ikeward.Steps},
 	{Name: "fans"},
