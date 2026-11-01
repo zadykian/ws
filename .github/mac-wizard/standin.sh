@@ -182,3 +182,18 @@ chmod 755 /opt/homebrew/bin/nc
 : >"$ws/log"
 : >"$ws/conns"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
+# The releases of ws, at 127.0.0.1:22080, which WS_RELEASES_URL names job-wide: the job's build is
+# release v0.0.0, the latest, so that --update finds this ws and stays. A case that adds another
+# release writes the tag to latest. The server goes on after this step.
+releases=$RUNNER_TEMP/releases
+mkdir -p "$releases/download/v0.0.0"
+cp ~/.local/bin/ws "$releases/download/v0.0.0/ws-darwin-arm64"
+cp ~/repository/ws/install.sh "$releases/download/v0.0.0/install.sh"
+(cd "$releases/download/v0.0.0" && shasum -a 256 ws-darwin-arm64 >ws.sha256)
+echo v0.0.0 >"$releases/latest"
+nohup python3 -I "$here/../release-standin.py" "$releases" 22080 >"$RUNNER_TEMP/releases.log" 2>&1 &
+for _ in $(seq 50); do
+    curl -fsS -o /dev/null -w '%{redirect_url}' http://127.0.0.1:22080/latest >/dev/null 2>&1 && break
+    sleep 0.1
+done
+curl -fsS -o /dev/null -w '%{redirect_url}' http://127.0.0.1:22080/latest | grep -qx 'http://127.0.0.1:22080/tag/v0.0.0'
