@@ -56,3 +56,17 @@ func TestTunnelPlanWaits(t *testing.T) {
 		t.Errorf("Plan = %v, %v; want it to wait on ws setup", p, err)
 	}
 }
+
+func TestTunnelPlanShowsConfsDiffUnderCheck(t *testing.T) {
+	for _, check := range []bool{true, false} {
+		tun, m := newTunnel(keyA, "wg0 "+keyB+"\npeer ok\nmac.pub "+keyA+"\n", check)
+		if _, err := tun.Plan(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		out := strings.Join(tun.Out.(*effecttest.Out).Lines, "\n")
+		shown := strings.Contains(out, "-WS_PUBLIC_KEY="+keyA+"\n+WS_PUBLIC_KEY="+keyB)
+		if shown != check || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_PUBLIC_KEY="+keyA) {
+			t.Errorf("check %v: diff shown %v, mac.conf %q", check, shown, m.Files["/h/mac.conf"])
+		}
+	}
+}

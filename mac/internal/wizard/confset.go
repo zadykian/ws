@@ -34,22 +34,43 @@ func replace(text, key, value string) string {
 	return strings.Join(out, "")
 }
 
-// set gives key the value in mac.conf, where the whole passes conf's checks and mac.conf is no link.
-func (f confFile) set(ctx context.Context, key, value string) error {
-	before, err := f.read()
+// change returns mac.conf's text, and its text with key set to value, where the whole passes
+// conf's checks and mac.conf is no link.
+func (f confFile) change(key, value string) (before, after string, err error) {
+	before, err = f.read()
 	if err != nil {
-		return err
+		return "", "", err
 	}
-	if _, errs := conf.Parse(replace(before, key, value)); len(errs) > 0 {
+	after = replace(before, key, value)
+	if _, errs := conf.Parse(after); len(errs) > 0 {
 		for _, e := range errs {
 			f.out.Say("%s", e.In(f.path))
 		}
-		return errRefused
+		return "", "", errRefused
 	}
 	if info, err := f.m.Stat(f.path); err == nil && info.Link != "" {
 		f.out.Say("%s: %s is a link to %s, which the wizard leaves: set %s=%s in its file, then run "+
 			"the wizard again", f.stage, f.path, info.Link, key, value)
-		return errRefused
+		return "", "", errRefused
 	}
-	return f.write(ctx, replace(before, key, value))
+	return before, after, nil
+}
+
+// set gives key the value in mac.conf, as change checks.
+func (f confFile) set(ctx context.Context, key, value string) error {
+	_, after, err := f.change(key, value)
+	if err != nil {
+		return err
+	}
+	return f.write(ctx, after)
+}
+
+// show prints the diff that set would write, under --check.
+func (f confFile) show(key, value string) error {
+	before, after, err := f.change(key, value)
+	if err != nil {
+		return err
+	}
+	f.out.Diff(f.path, []byte(before), []byte(after))
+	return nil
 }
