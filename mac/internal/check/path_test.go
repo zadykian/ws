@@ -33,6 +33,11 @@ func TestPath(t *testing.T) {
 		{"hook dot repo", Hook("a/."), false},
 		{"hook dotdot repo", Hook("a/.."), false},
 		{"hook colon", Hook("a:b/c"), false},
+		{"hook tag", Hook("a/b@v1.0.0"), true},
+		{"hook tag not a release", Hook("a/b@main"), false},
+		{"hook empty tag", Hook("a/b@"), false},
+		{"hook two tags", Hook("a/b@v1.0.0@v1.0.1"), false},
+		{"hook tag on ws", Hook("a/ws@v1.0.0"), false},
 	}
 	for _, tt := range tests {
 		if tt.got != tt.want {

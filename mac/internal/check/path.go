@@ -20,9 +20,14 @@ func Socket(s string, quoted bool) bool {
 	return quoted || !strings.Contains(p, " ")
 }
 
-// Hook reports whether s is OWNER/REPO on GitHub, as ws's /root/repository/REPO: neither side . or
-// .. alone, and REPO not ws, ws's own clone there, in any letter case, which APFS and GitHub ignore.
+// Hook reports whether s is OWNER/REPO on GitHub, or OWNER/REPO@TAG with a release's TAG, as ws's
+// /root/repository/REPO: neither side . or .. alone, and REPO not ws, ws's own clone there, in any
+// letter case, which APFS and GitHub ignore.
 func Hook(s string) bool {
+	s, tag, tagged := strings.Cut(s, "@")
+	if tagged && !Release(tag) {
+		return false
+	}
 	owner, repo, found := strings.Cut(s, "/")
 	return found && only(s, letters+digits+"._/-") && owner != "" && repo != "" &&
 		!strings.Contains(repo, "/") && owner != "." && owner != ".." &&
