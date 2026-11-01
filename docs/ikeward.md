@@ -2,10 +2,10 @@
 
 The `ikeward` role keeps the server on an IKEv2 VPN with
 [ikeward](https://github.com/zadykian/ikeward), from a client profile that hwdsl2's `ikev2setup.sh`
-makes. It lets the WireGuard peers it names reach the VPN through the server too. Without a
-profile, it does nothing, as in CI's container. Unless `security_outbound` is false, the
-`security` role keeps what the server and its containers start off the LAN, but what the network
-needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](security.md#outbound)).
+makes. It lets the WireGuard peers it names reach the VPN through the server too. Its steps are Go
+code in `internal/server/ikeward`. Without a profile, it does nothing, as in CI's container. Unless
+`security_outbound` is false, the `security` role keeps what the server and its containers start off
+the LAN, but what the network needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](security.md#outbound)).
 
 ## The profile
 
@@ -44,13 +44,14 @@ the `.p12`.
 
 ## A run
 
-- `group_vars/all.yml` pins ikeward's version, and the SHA-256 of its binary for each
+- `internal/server/ikeward/binary.go` pins ikeward's version, and the SHA-256 of its binary for each
   architecture, as the release's `ikeward.sha256` gives it. The run downloads the binary into
   `/usr/local/sbin/ikeward`, where ikeward's `install.sh` would put it, checked against the pin. A
   new pin replaces it.
 - It writes the two files, which the secrets file gives, under their names, into
   `/run/ikeward-profile`, which only root may enter. It removes them once `install` has run, whether
-  a task failed or not.
+  a step failed or not. Where `ikeward_profile` is set and the secrets hold no profile, the run
+  fails before anything changes.
 - `ikeward install --dry-run` reads them, with the password on its standard input. The run stops
   where ikeward refuses the profile or a value, and shows ikeward's error.
 - `ikeward install` runs where the dry run, with `--exit-code`, exits 4: where install would
@@ -59,15 +60,15 @@ the `.p12`.
   ikeward's found stopped.
 - The run then waits about 2 minutes for `ikeward status` to pass, and fails otherwise. A later
   role may need the VPN, as for a clone from the remote network. While the VPN's server is down,
-  `--skip-tags ikeward` leaves the role out.
+  `--only` with the other roles' names leaves the role out.
 
-The password goes into no output: the tasks that run `install` hide their arguments and output.
-Where `install` fails, the run shows ikeward's error, which holds no key and no password.
-`ikeward status` and `journalctl -u strongswan.service` show the rest.
+The password goes on `install`'s standard input, into no argument and no output. Where `install`
+fails, the run shows ikeward's error, which holds no key and no password. `ikeward status` and
+`journalctl -u strongswan.service` show the rest.
 
-`install`, the wait, and the forwarding's ufw rules and setting in force need a booted machine, so
-they carry the tag `systemd`. In a container, with `--skip-tags systemd`, the role downloads
-ikeward, writes the forwarding's file and runs the dry run, and no more.
+`install`, the wait, and the forwarding's ufw rules and setting in force need a booted machine.
+Where systemd is not running, as in CI's container, each step says so and plans nothing, and the
+role downloads ikeward and writes the forwarding's file, no more.
 
 ## Forwarding
 
@@ -93,10 +94,10 @@ says. The Mac sends the VPN's networks and domains into the tunnel with `WS_TUNN
 
 ## Dry runs
 
-With `--check`, the role decrypts the files and runs `ikeward install --dry-run` all the same, then
+With `--check`, the role writes the files and runs `ikeward install --dry-run` all the same, then
 removes them. Where `install` would run, it shows the dry run's lines: what the profile gives, and
-each file as a diff, but for those only root may read. Where the binary would be downloaded, it
-says so alone, as it has no binary to ask. It skips the wait for `ikeward status`.
+each file as a diff, but for those only root may read. Where the binary would be downloaded, the
+step waits on the download and shows nothing more, as it has no binary to ask.
 
 ## By hand
 
