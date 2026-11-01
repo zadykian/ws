@@ -1,15 +1,13 @@
 #!/bin/sh
-# Homebrew's pinned .pkg, which bootstrap.sh's runs leave alone on the runner, whose brew runs.
-# bootstrap.sh's functions, all but its last line, which runs main, must download it and pass its
-# brew_check. That is the SHA-256 and signer that a run checks before sudo installer, which this
-# never runs. brew_check must refuse the .pkg cut short, and another signer than pkgutil's, which
-# the log shows.
+# Homebrew's pinned .pkg, which the Homebrew stage leaves alone on the runner, whose brew runs. The
+# pins come from homebrew.go by sed. The real .pkg must pass the SHA-256 check and give the pinned
+# signer through pkgutil, whose output pkgSigner reads as the sed below does, which the log shows.
+# The .pkg cut short must fail the sum, and another signer than pkgutil's must differ from the pin.
 
 set -u
 
-bootstrap=$HOME/repository/ws/mac/bootstrap.sh
+source=$HOME/repository/ws/mac/internal/wizard/homebrew.go
 tmp=$(mktemp -d "$RUNNER_TEMP/homebrew.XXXXXX")
-pinned=$(sed -n "s/^brew_signer='\(.*\)'\$/\1/p" "$bootstrap")
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -18,37 +16,33 @@ error() {
     fail=1
 }
 
-# refused WHY PKG [SIGNER]: brew_check must exit 1, with WHY in what it prints.
-refused() {
-    why=$1
-    shift
-    out=$(SIGNER=${2-} sh "$tmp/check.sh" "$1" 2>&1)
-    status=$?
-    if [ "$status" != 1 ] || ! printf '%s\n' "$out" | grep -qF "$why"; then
-        error "brew_check $* exited $status, printing '$out', where 1 and '$why' were due"
-    fi
+# pin NAME prints the value of the constant NAME in homebrew.go.
+pin() {
+    sed -n "s/^[[:space:]]*$1 *= *\"\(.*\)\"\$/\1/p" "$source"
 }
 
-# check.sh PKG: bootstrap.sh's functions and values, then brew_check PKG, with the pinned signer or
-# SIGNER's. Its functions and values, piped to sh, print the .pkg's URL too.
-# shellcheck disable=SC2016 # the scripts expand them
-{
-    sed '$d' "$bootstrap"
-    echo 'brew_signer=${SIGNER:-$brew_signer}'
-    echo 'brew_check "$1"'
-} >"$tmp/check.sh"
-# shellcheck disable=SC2016 # sh expands it
-url=$({
-    sed '$d' "$bootstrap"
-    echo 'echo "$brew_url"'
-} | sh)
+# signer prints the first of the chain that pkgutil prints for the .pkg in $1, after a status of
+# Apple's Developer ID: pkgSigner's rule.
+signer() {
+    pkgutil --check-signature "$1" |
+        sed -n '/^ *Status: .* issued by Apple for distribution$/,$s/^ *1\. //p'
+}
+
+version=$(pin brewVersion)
+sum=$(pin brewSHA256)
+pinned=$(pin brewSigner)
+# brewURL is a literal, brewVersion and a literal.
+url=$(sed -n "s|^[[:space:]]*brewURL *= *\"\([^\"]*\)\" + brewVersion + \"\([^\"]*\)\"\$|\1$version\2|p" "$source")
+[ -n "$version" ] && [ -n "$sum" ] && [ -n "$pinned" ] && [ -n "$url" ] || error "homebrew.go lacks a pin"
 curl -fsSL -o "$tmp/Homebrew.pkg" "$url" || error "cannot download $url"
 pkgutil --check-signature "$tmp/Homebrew.pkg"
-sh "$tmp/check.sh" "$tmp/Homebrew.pkg" ||
-    error "the pinned Homebrew.pkg failed brew_check, with status $?"
+got=$(shasum -a 256 "$tmp/Homebrew.pkg")
+[ "${got%% *}" = "$sum" ] || error "the pinned Homebrew.pkg has the SHA-256 ${got%% *}, not $sum"
+[ "$(signer "$tmp/Homebrew.pkg")" = "$pinned" ] ||
+    error "the pinned Homebrew.pkg is signed by '$(signer "$tmp/Homebrew.pkg")', not '$pinned'"
 head -c 1000000 "$tmp/Homebrew.pkg" >"$tmp/cut.pkg"
-refused "$tmp/cut.pkg's SHA-256 is " "$tmp/cut.pkg"
-refused "is signed by '$pinned', not 'Developer ID Installer: Jane Doe (ABCDE12345)'" \
-    "$tmp/Homebrew.pkg" 'Developer ID Installer: Jane Doe (ABCDE12345)'
+got=$(shasum -a 256 "$tmp/cut.pkg")
+[ "${got%% *}" != "$sum" ] || error "the cut .pkg has the pinned SHA-256"
+[ "$pinned" != 'Developer ID Installer: Jane Doe (ABCDE12345)' ] || error "the pinned signer is the test's"
 rm -rf "$tmp"
 exit "$fail"

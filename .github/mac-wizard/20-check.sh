@@ -34,7 +34,7 @@ out=$(PATH=$path "$wsbin" mac wizard --check 2>&1)
 status=$?
 printf '%s\n' "$out"
 [ "$status" = 0 ] || error "ws mac wizard --check exited $status"
-! printf '%s\n' "$out" | grep -q ': after Tools$' || error "ws mac wizard --check found no brew"
+! printf '%s\n' "$out" | grep -q ': after Homebrew$' || error "ws mac wizard --check found no brew"
 printf '%s\n' "$out" | grep -qx '+Include config.d/ws' ||
     error "ws mac wizard --check showed no Include for ~/.ssh/config"
 printf '%s\n' "$out" | grep -q "^ws mac wizard: Mac key: would make $HOME/\.ssh/id_ed25519 " ||
