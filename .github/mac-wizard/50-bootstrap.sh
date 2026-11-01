@@ -5,12 +5,11 @@
 # The wizard it runs prints nothing, so a second run and --check must print nothing at all. Where
 # WS_CONF names no file, the wizard under bootstrap.sh's --check must show the lines it would write
 # there, from the environment's answers. Writing none shows that --check reached it. In a home
-# without a clone, --check must list the clone and wizard.sh's stages, and make nothing outside
+# without a clone, --check must name the clone, and make nothing outside
 # macOS's Library. The first run builds ws into ~/.local/bin, and tools/run's download of Go, which
-# the log shows, is not counted in what it prints. setup.sh built ws there in an earlier case, so
-# the case removes it first, as on a Mac that has none. --check then shows the wizard's setup.sh,
-# which would build ws. Root's copy is that same build, from an earlier case, so it
-# would copy nothing for root, and leave the daemon running.
+# the log shows, is not counted in what it prints. The workflow built ws there, so
+# the case removes it first, as on a Mac that has none. --check then names the build, and runs no
+# wizard.
 
 set -u
 
@@ -50,8 +49,7 @@ status=$?
 ws=$HOME/.local/bin/ws
 rm -f "$ws"
 boot "bootstrap.sh: Clone: would set core.hooksPath to $clone/.githooks
-bootstrap.sh: Ws: would build ws into $ws with the Go that tools/run pins
-setup.sh: would build ws into $ws" --check
+bootstrap.sh: Ws: would build ws into $ws with the Go that tools/run pins" --check
 [ ! -e "$ws" ] || error 'bootstrap.sh --check built ws'
 boot "bootstrap.sh: Clone: set core.hooksPath to $clone/.githooks
 bootstrap.sh: Ws: building ws into $ws"
@@ -72,13 +70,9 @@ printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
 [ ! -e "$conf" ] || error "bootstrap.sh --check let the wizard write $conf"
 rm -f "$conf"
 
-# The wizard's stages, as its main runs them, by name, in quotes where they hold a blank.
+# Without a clone, --check names the clone alone: there is no ws to run.
 home=$(mktemp -d "$RUNNER_TEMP/home.XXXXXX")
-want=$(
-    echo "bootstrap.sh: Clone: would clone https://github.com/zadykian/ws into $home/repository/ws"
-    sed -n -e 's/^    stage "\(.*\)" [a-z_]*$/\1/p' -e 's/^    stage \([^ "]*\) [a-z_]*$/\1/p' \
-        "$clone/mac/wizard.sh" | sed 's/.*/wizard.sh: &: after Clone/'
-)
+want="bootstrap.sh: Clone: would clone https://github.com/zadykian/ws into $home/repository/ws"
 out=$(HOME=$home PATH=$path sh -s -- --check <"$bootstrap" 2>&1)
 status=$?
 printf '%s\n' "$out"

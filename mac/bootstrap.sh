@@ -22,10 +22,6 @@ brew_version=7.0.10
 brew_url=https://github.com/Homebrew/brew/releases/download/$brew_version/Homebrew.pkg
 brew_sha256=ae13b8b0ac910730d3e982a9e7518288d17fd0ad272e42f412027e8ab4555575
 brew_signer='Developer ID Installer: Patrick Linnane (927JGANW46)'
-# The wizard's stages, split by |, as mac/wizard.sh's main runs them, for --check without a clone.
-stages="Answers|Mac key|gh on the Mac|setup.sh|Host key|Root's key|ws's run|\
-Signing key|claude on ws|Tunnel|Hook on the Mac|Hook on ws|Word list|Cable"
-
 # say prints a message of bootstrap.sh's.
 say() {
     printf 'bootstrap.sh: %s\n' "$*" >&2
@@ -163,20 +159,15 @@ main() {
     clt
     homebrew
     clone
+    # Under --check, the clone or its git may be missing, so that there is no ws to build or run.
     if [ ! -e "$dir/.git" ] || ! clt_done; then
-        # Under --check, the clone or its git is missing, so the wizard's stages wait for them.
-        echo "$stages" | tr '|' '\n' | sed 's/.*/wizard.sh: &: after Clone/' >&2
         return 0
     fi
-    [ -f "$dir/mac/wizard.sh" ] || die "Clone: $dir has no mac/wizard.sh: pull it first"
+    [ -f "$dir/mac/build.sh" ] || die "Clone: $dir has no mac/build.sh: pull it first"
     build
-    # Under --check, ws is missing until the build, which the check only names, so that the wizard
-    # script, whose setup.sh stage would build it, shows the stages.
-    if [ -x "$bin" ]; then
-        WS_REPO=$dir "$bin" wizard "$@"
-    else
-        sh "$dir/mac/wizard.sh" "$@"
-    fi
+    # Under --check, ws is missing until the build, which the check only names.
+    [ -x "$bin" ] || return 0
+    WS_REPO=$dir "$bin" wizard "$@"
 }
 
 # Under curl | sh, stdin is the rest of this script, so main reads the terminal, or nothing where
