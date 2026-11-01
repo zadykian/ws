@@ -108,7 +108,7 @@ or `dockerd --validate`, only as it writes the file.
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
-checks root's key and runs `bootstrap.sh`, which installs the latest ws and applies it. Then it
+checks root's key and installs its own ws on ws and runs `ws server apply`. Then it
 adds ws's signing key to GitHub, logs claude in there, and gives `wg0` the Mac's key. Without the
 wizard, the gh login, `gh auth setup-git`, the claude login and the Mac's key stay manual.
 ws's gh takes a fine-grained personal access token, which `WS_HOOK`'s repository's vault logs gh
