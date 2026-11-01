@@ -46,7 +46,7 @@ The rest is the docs, the lint gates' tools and CI.
 ```sh
 make lint                         # every gate, as CI's lint job runs it; -k goes past a failure
 make vale FILES=README.md         # one gate alone; the gates that check files take FILES
-make ansible-lint FILES=roles/security/tasks/main.yml   # this file alone: no syntax check of site.yml
+make ansible-lint FILES=roles/network/tasks/main.yml   # this file alone: no syntax check of site.yml
 make shell                        # ShellCheck and shfmt -d -i 4 on every shell script
 make gotest                       # the Go gates run at the root, the module; so do govet and gofmt
 ```

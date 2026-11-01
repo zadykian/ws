@@ -13,6 +13,7 @@ import (
 	"github.com/zadykian/ws/internal/server/jetbrains"
 	"github.com/zadykian/ws/internal/server/otelcol"
 	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/server/security"
 	"github.com/zadykian/ws/internal/server/shell"
 	"github.com/zadykian/ws/internal/server/signoz"
 	"github.com/zadykian/ws/internal/server/tmux"
@@ -37,7 +38,7 @@ func (r Role) Ported() bool { return r.Steps != nil }
 // from site.yml, which TestPlaybookRolesAreSiteYml checks.
 var all = []Role{
 	{Name: "base", Steps: base.Steps},
-	{Name: "security"},
+	{Name: "security", Steps: security.Steps},
 	{Name: "network"},
 	{Name: "wireguard"},
 	{Name: "ikeward", Steps: ikeward.Steps},
