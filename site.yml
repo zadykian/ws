@@ -21,8 +21,6 @@
       tags: [claude]
     - role: signoz
       tags: [signoz]
-    - role: otelcol
-      tags: [otelcol]
     - role: helix
       tags: [helix]
     - role: jetbrains

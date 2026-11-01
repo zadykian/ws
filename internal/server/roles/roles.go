@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/internal/server/base"
 	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/docker"
+	"github.com/zadykian/ws/internal/server/otelcol"
 	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
@@ -42,7 +43,7 @@ var all = []Role{
 	{Name: "docker", Steps: docker.Steps},
 	{Name: "claude"},
 	{Name: "signoz"},
-	{Name: "otelcol"},
+	{Name: "otelcol", Steps: otelcol.Steps},
 	{Name: "helix"},
 	{Name: "jetbrains"},
 }
