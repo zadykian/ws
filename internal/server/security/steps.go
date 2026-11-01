@@ -3,6 +3,8 @@
 package security
 
 import (
+	"context"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server/secrets"
@@ -15,6 +17,7 @@ import (
 const (
 	packagesStep = "Security packages"
 	keysStep     = "SSH keys"
+	sshdStep     = "sshd"
 )
 
 // Steps returns the role's steps in order: the packages, the check of the user's keys, sshd, ufw,
@@ -24,7 +27,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 }
 
 // steps is Steps with the units given, for a test to fake.
-func steps(v values.Values, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
+func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
 	return []step.Step{
 		// nftables brings nft, which loads the outbound table. Its own service stays off, as the
 		// package leaves it. Recommends: apt's default, as the role installed them.
@@ -33,5 +36,8 @@ func steps(v values.Values, m effect.Machine, _ effect.Units, out effect.Out) []
 				Names: []string{"openssh-server", "ufw", "fail2ban", "nftables"}},
 		}},
 		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, v.Home}}},
+		host.Lazy{Title: sshdStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+			return sshd(m, u, out)
+		}},
 	}
 }
