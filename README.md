@@ -83,7 +83,9 @@ ws server apply
 ```
 
 `ws server apply --only NAME,...` runs the roles named, in the order of `site.yml`. Arguments after
-`--` go to `ansible-playbook`, except `-C`, `--check`, `-t` and `--tags`, which ws refuses.
+`--` go to `ansible-playbook`, except `-C`, `--check`, `-t`, `--tags`, `-e @FILE` and the vault
+options, which ws refuses. `--secrets FILE` gives the roles their secrets
+([The secrets file](docs/shell.md#the-secrets-file)).
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home. A cloud VM passes
 `-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). An `-e` of
@@ -121,7 +123,7 @@ permissions are the account's selected repositories; Metadata and Actions read; 
 requests, Issues and Workflows read and write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](docs/wireguard.md#the-tunnel);
-- the VPN's profile and the `ikeward` role's variables, vault-encrypted on the server, as in
+- the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
   [The profile](docs/ikeward.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot).
 

@@ -11,32 +11,32 @@ needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](secur
 
 ikeward reads two of the profile's files, `NAME.p12` and `NAME.sswan`, as
 [its page on the profile](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/profile.md) says.
-They hold the client's key, so they stay out of this repository, vault-encrypted, on the server. So
-does a file of the role's variables, such as `/root/vpn/ikeward.yml`:
+They hold the client's key, so they stay out of this repository, age-encrypted, on the server. The
+role's variables go in the machine's `host_vars.yml` ([Values](../README.md#running-it-again)):
 
 ```yaml
 ikeward_profile: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
-ikeward_p12_password: PASSWORD          # empty where the .p12 has none
 ikeward_dns: 10.20.0.53                 # the remote network's resolver
 ikeward_domains: [example.internal]     # the domains whose names go to it alone
 ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from boot on
 ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
 ```
 
-Encrypt the three with one vault password, then run the playbook with them:
+Encrypt the two files, in armor, to the recipient of [the secrets file](shell.md#the-secrets-file),
+name them there with the `.p12`'s password, empty where it has none, and run. The server has no
+`age`: encrypt on the Mac, and copy the `.age` files back. Then remove the plain files, which hold
+the client's key:
 
 ```sh
-ansible-vault encrypt /root/vpn/vpnclient.p12 /root/vpn/vpnclient.sswan /root/vpn/ikeward.yml
-ws server apply -- -e @/root/vpn/ikeward.yml --ask-vault-pass
+age -r RECIPIENT -a -o vpnclient.p12.age vpnclient.p12
+age -r RECIPIENT -a -o vpnclient.sswan.age vpnclient.sswan
+ws server apply --secrets /root/secrets.age
 ```
 
-`--ask-vault-pass` reads the password from the terminal.
-The variables may go in the vault that holds `shell_secret_env` instead, the two
-files encrypted with its password ([Secrets](shell.md#secrets)).
-
-`ikeward_profile` is an absolute path, less the extension. The values go to `ikeward install`'s
-flags: `--dns`, a `--domain` for each domain and a `--floor` for each range. A profile needs the
-resolver and a domain, or the run stops before it changes anything; the floors may be left out.
+`ikeward_profile` is an absolute path, less the extension, that names the files `install` writes.
+The values go to `ikeward install`'s flags: `--dns`, a `--domain` for each domain and a `--floor`
+for each range. A profile needs the resolver and a domain, or the run stops before it changes
+anything; the floors may be left out.
 ikeward's [Set up](https://github.com/zadykian/ikeward/blob/v0.3.0/README.md#set-up) says what each
 means. `--probe` stays ikeward's default, the first domain. `--mobileconfig` is left out: ikeward
 reads it only where neither of the other files holds the CA, which `ikev2setup.sh` always puts in
@@ -48,8 +48,9 @@ the `.p12`.
   architecture, as the release's `ikeward.sha256` gives it. The run downloads the binary into
   `/usr/local/sbin/ikeward`, where ikeward's `install.sh` would put it, checked against the pin. A
   new pin replaces it.
-- It decrypts the two files, under their names, into `/run/ikeward-profile`, which only root may
-  enter. It removes them once `install` has run, whether a task failed or not.
+- It writes the two files, which the secrets file gives, under their names, into
+  `/run/ikeward-profile`, which only root may enter. It removes them once `install` has run, whether
+  a task failed or not.
 - `ikeward install --dry-run` reads them, with the password on its standard input. The run stops
   where ikeward refuses the profile or a value, and shows ikeward's error.
 - `ikeward install` runs where the dry run, with `--exit-code`, exits 4: where install would

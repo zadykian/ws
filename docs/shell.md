@@ -47,10 +47,8 @@ one it shows the key's creation and skips the allowed signers file.
 
 ## Secrets
 
-`shell_secret_env`, empty by default, maps names to values for `~/.secrets/env`. A private
-repository passes it from its Ansible Vault, with `-e @/ABS/PATH/vault.yml` and
-`--vault-password-file /dev/fd/3`. `ws server apply` keeps the caller's directory and descriptors,
-hence the absolute path and the password on descriptor 3.
+`shell_secret_env`, empty by default, maps names to values for `~/.secrets/env`. It comes from
+[the secrets file](#the-secrets-file).
 
 With it set, the role makes `~/.secrets` 0700 and writes `env` 0600, both owned by `ws_user`.
 The file opens with a `# Written by github.com/zadykian/ws` line, then `export NAME=VALUE` for
@@ -68,14 +66,42 @@ variable. The `otelcol` role reads the file later in the same run:
 - The role neither prints nor diffs the file, so a dry run says only that it would change.
 
 Empty, the variable leaves `~/.secrets` alone, even a file the role wrote, so that a run
-without the vault, as CI's, changes nothing. A null, as from a vault whose entries are all
-commented out, counts as empty. To drop the file, remove it by hand.
+without the secrets file, as CI's, changes nothing. A null counts as empty. To drop the file,
+remove it by hand.
+
+## The secrets file
+
+`ws server apply --secrets FILE` takes the secrets of the roles from a YAML file that age encrypts,
+in armor. `ws` decrypts it in its process with an X25519 identity. A run without `--secrets`, as
+CI's, has no secrets. `-e @FILE` and the Ansible Vault options after `--` are refused. These keys
+are in no other file: `host_vars.yml` refuses them, and a value reaches Ansible as written, never as
+a template. A bare `0123`, `on` or `~` is the string as written, and `~` is empty.
+
+The identity stays in the Mac's Keychain. `ws server apply` reads it from its standard input, as
+piped over ssh, or at a terminal with no echo. Encrypting needs the public recipient alone:
+
+```sh
+age-keygen -o identity.txt        # keep the file in the Keychain, then delete it
+age -r RECIPIENT -a -o secrets.age secrets.yml
+security find-generic-password -s NAME -w | ssh ws ws server apply --secrets /root/secrets.age
+```
+
+The file holds these keys, and ws refuses any other:
+
+- `shell_secret_env`: names to values, as [Secrets](#secrets) says;
+- `shell_git_credentials`: the entries of [Git credentials](#git-credentials);
+- `ikeward_p12_file` and `ikeward_sswan_file`: the profile's two files, each encrypted by age to
+  the same recipient. A relative name is relative to the file;
+- `ikeward_p12_password`: the `.p12`'s password ([The profile](ikeward.md#the-profile)).
+
+No message, `--check` and `--diff` included, shows a value. Roles that are still Ansible's get the
+secrets as extra variables on a pipe, `-e @/dev/fd/3`, so nothing plain reaches the disk but the
+files that the roles write.
 
 ## Git credentials
 
-`shell_git_credentials`, empty by default, gives git a token for each server besides GitHub. A
-private repository passes it in its extra vars, from the vault of `shell_secret_env`, say:
-[Secrets](#secrets). Each entry takes:
+`shell_git_credentials`, empty by default, gives git a token for each server besides GitHub. It
+comes from [the secrets file](#the-secrets-file). Each entry takes:
 
 - `url`: the server, as `https://git.example.com`, or a path on it, which covers the repositories
   below it;
@@ -95,10 +121,9 @@ answers for GitHub, except below an entry's URL there.
 
 A run removes a token and its helper only where its entry says `state: absent`. A URL dropped from
 the list keeps both. Empty, the list leaves the tokens and `tokens.gitconfig` as they are, so that
-a run without the extra vars, as CI's, keeps them. A null, as from a vault whose entries are all
-commented out, counts as empty. No token reaches `tokens.gitconfig`, `~/.gitconfig` or the run's
-output, `-v` and `--diff` included: a dry run shows the helpers' diff, and that a token would
-change, not which.
+a run without the secrets file, as CI's, keeps them. A null counts as empty. No token reaches
+`tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` and `--diff` included: a dry run shows
+the diff of the credential lines, and that a token would change, not which.
 
 To revoke a token, revoke it on the server first. Then set `state: absent` on its entry, and keep
 the entry until each machine has run with it.
