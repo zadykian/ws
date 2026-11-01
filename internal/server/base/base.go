@@ -18,5 +18,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 		host.Group{Title: "Locale", Parts: localeParts(m, v.Base.Locale)},
 		host.Group{Title: "Timezone", Parts: timezoneParts(m, v.Base.Timezone)},
 		host.Group{Title: "Upgrades", Parts: upgradesParts(m, effect.OSUnits{}, out)},
+		host.Group{Title: "Swap", Parts: swapParts(m, out, osDisk{}, swapSetting{SizeMiB: v.Base.SwapSizeMB, Swappiness: v.Base.Swappiness})},
+		host.Group{Title: "Swappiness", Parts: swappinessParts(m, out, v.Base.Swappiness)},
 	}
 }
