@@ -131,23 +131,17 @@ case $SSH_ORIGINAL_COMMAND in
 esac
 EOF
 chmod 755 "$ws/ws.sh"
-# ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is. ws's
-# clone, root's, holds the stand-in bootstrap.sh alone.
+# ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
 mkdir -p "$ws/bin" "$ws/units"
 for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
 : >"$ws/run.log"
-: >"$ws/bootstrap.log"
+: >"$ws/server.log"
 : >"$ws/install.log"
-clone=$ws/root/root/repository/ws
-sudo mkdir -p "$ws/root/root/.local/bin" "$ws/root/usr/local/bin" "$clone"
+sudo mkdir -p "$ws/root/root/.local/bin" "$ws/root/usr/local/bin"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/usr/local/bin/ws"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/root/.local/bin/claude"
-sudo ln -s "$here/ws-standin.sh" "$clone/bootstrap.sh"
-sudo git -C "$clone" init -q -b main
-sudo git -C "$clone" add bootstrap.sh
-sudo git -C "$clone" -c user.name=ws -c user.email=ws@example.com commit -q -m ws
 # ws's claude, root's, logged in, and ws's signing key, which root's git config names and the
 # stand-in gh lists, as the shell role and the stages leave them. So no run of the wizard opens a
 # session on ws for a login.
