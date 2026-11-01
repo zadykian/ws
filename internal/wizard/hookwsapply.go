@@ -9,11 +9,6 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// hookGuard is the script that ssh runs on ws as sh -c GUARD APPLY, where WS_HOOK_SECRET names an
-// item. It runs APPLY, apply.sh, on its stdin, but exits 3 where that is empty. So apply.sh never
-// runs without its secret.
-const hookGuard = `IFS= read -r l || [ -n "$l" ] || exit 3; { printf %s "$l"; echo; cat; } | exec "$0"`
-
 // Apply adds the Keychain item, where the Keychain lacks it, then sends the Mac's clone where ws
 // lacks its own, runs apply.sh, and stamps it. The files script's clone op removes the old stamp, so
 // that a run that fails or is cut short leaves none.
