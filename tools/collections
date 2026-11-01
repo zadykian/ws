@@ -1,0 +1,59 @@
+#!/bin/sh
+# Fills collections/ with the tarball of each collection that requirements.yml pins, and removes
+# every other one, so that the playbook ws embeds carries the collections it needs:
+#
+#   tools/collections
+#
+# Galaxy's API lists each version's file name and SHA-256. A tarball already in collections/ with
+# that name and sum stays; any other is downloaded and checked against the sum before it is used.
+# It needs curl, awk and sha256sum or shasum. Run it from anywhere.
+
+set -eu
+
+base=https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections
+
+# die prints a message of the script's and exits with status 1.
+die() {
+    printf 'tools/collections: %s\n' "$*" >&2
+    exit 1
+}
+
+# sum prints the SHA-256 of the file $1.
+sum() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1"
+    else
+        shasum -a 256 "$1"
+    fi | awk '{ print $1 }'
+}
+
+# pins prints a line NS/NAME/VERSION for each collection in requirements.yml.
+pins() {
+    awk '
+        function clean(s) { gsub(/["\047]/, "", s); sub(/[ \t]+$/, "", s); return s }
+        /^[ \t]*- name:/ { sub(/^[ \t]*- name:[ \t]*/, ""); name = clean($0); next }
+        /^[ \t]*version:/ {
+            sub(/^[ \t]*version:[ \t]*/, ""); version = clean($0)
+            if (name == "") exit 1
+            sub(/\./, "/", name)
+            print name "/" version
+            name = ""
+        }
+        END { if (name != "") exit 1 }
+    ' requirements.yml
+}
+
+# field prints the value of the string key $1 in the JSON text on stdin.
+field() {
+    sed -n 's/.*"'"$1"'":"\([^"]*\)".*/\1/p'
+}
+
+main() {
+    cd "$(dirname "$0")/.."
+    [ -f requirements.yml ] || die "requirements.yml is missing"
+    list=$(pins) || die "requirements.yml holds a collection with no version"
+    [ -n "$list" ] || die "requirements.yml pins no collection"
+    printf '%s\n' "$list"
+}
+
+main "$@"
