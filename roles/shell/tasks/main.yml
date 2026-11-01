@@ -87,8 +87,7 @@
   ansible.builtin.import_tasks: secret_env.yml
 
 # Empty, the list leaves the tokens and their helpers as they are, so that a run without another
-# repository's values changes nothing. A null, as from a vault whose entries are all commented out,
-# counts as empty.
+# repository's values changes nothing. A null counts as empty.
 - name: Write git's tokens for hosts besides GitHub
   ansible.builtin.import_tasks: git_credentials.yml
   when: shell_git_credentials | default([], true) | length > 0

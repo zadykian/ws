@@ -34,6 +34,10 @@ module is at the root), each linking its reason
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's steps read it and add no key without a commit of their own
   ([values.go](../../internal/server/values/values.go)).
+- The secrets are one struct, `secrets.Secrets`, beside the values: decrypted from age's armor in
+  ws's process, unknown keys refused, no error or output showing a value. Steps take it as their
+  second argument, and the roles left to the playbook get it on a pipe, `-e @/dev/fd/3`, never a
+  file ([secrets.go](../../internal/server/secrets/secrets.go)).
 - `roles.List` is the server's roles in `site.yml`'s order. A port sets its role's `Steps` there
   and removes the role from `site.yml`, which a test checks
   ([roles.go](../../internal/server/roles/roles.go)).
