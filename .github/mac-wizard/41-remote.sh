@@ -53,10 +53,15 @@ stamp() {
     cat "$stamps/$1" 2>/dev/null || echo -
 }
 
-# states WANT...: status must print the stamps, no unit that runs, then the lines WANT.
+# wsv prints the version that the stand-in ws prints, or - where it prints none.
+wsv() {
+    cat "$ws/ws.version" 2>/dev/null || echo -
+}
+
+# states WANT...: status must print the stamps, no unit that runs, ws's version, then the lines WANT.
 states() {
     remote status
-    want=$(printf '%s\n' "run $(stamp run)" "last $(stamp last)" 'active -' "$@")
+    want=$(printf '%s\n' "run $(stamp run)" "last $(stamp last)" 'active -' "ws $(wsv)" "$@")
     [ "$status" = 0 ] && [ "$out" = "$want" ] ||
         error "status exited $status, printing other than '$want'"
 }
@@ -93,8 +98,8 @@ unit() {
     sed -n 's/.* --unit=\([^ ]*\) .*/\1/p' "$ws/run.log" | tail -n 1
 }
 
-# The stand-in ws holds no ws binary, so a stamp's version is -.
-sha=-
+# The stamp's version is the stand-in ws's, which the wizard's install left in ws.version.
+sha=$(wsv)
 n=$(units)
 remote run
 full=$(unit)
