@@ -14,9 +14,9 @@
 #   OWNER/REPO, whose apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
-# - run [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
+# - run [ARG...] runs ws server apply -- ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
-#   ends, and exits with the run's status. Each run installs the latest ws. A run whose
+#   ends, and exits with the run's status. A run whose
 #   ARGs are -e pairs alone is a full one.
 # - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
 #   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
@@ -29,13 +29,12 @@
 
 set -eu
 
-# The wizard's stamps, ws's clone, ws's binary, the machine's values that ws's playbook reads, the
+# The wizard's stamps, ws's binary, the machine's values that ws's playbook reads, the
 # Mac's key for wg0, root's claude, root's git config, which
 # names ws's signing key, the fans' driver as the kernel loaded it, and the network role's netplan
 # file of the cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of
 # its own.
 state=/var/lib/ws-wizard
-dir=/root/repository/ws
 ws=/usr/local/bin/ws
 vars=/etc/ws/host_vars.yml
 peer=/etc/wireguard/mac.pub
@@ -127,17 +126,16 @@ status() {
     echo "outbound $(off | sh -s -- check "$vars" && echo off || echo on)"
 }
 
-# job prints the script of a run's unit, which systemd-run runs with UNIT DIR VARS WS STATE
-# [ARG...]. It runs bootstrap.sh ARGs from the clone in DIR, or from the README's download where DIR
-# holds none. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
-# whose ARGs are -e pairs alone, writes STATE/run too: the version that WS prints, or - where WS
+# job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE [ARG...].
+# It runs WS server apply -- ARGs. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
+# whose ARGs are -e pairs alone, writes STATE/run too: the version that WS printed before the run, or - where WS
 # prints none, the status, and off where -e security_outbound=false turned the outbound table off,
 # else on. It removes it as it starts.
 # Such a run that passed first names that in host_vars by STATE/off, so that no ssh comes between.
 job() {
     cat <<'EOF'
-unit=$1 dir=$2 vars=$3 ws=$4 state=$5 full=1 table=on pair=
-shift 5
+unit=$1 vars=$2 ws=$3 state=$4 full=1 table=on pair=
+shift 4
 for arg; do
     case $pair:$arg in
     1:security_outbound=false) table=off pair= ;;
@@ -148,17 +146,11 @@ for arg; do
 done
 [ -z "$pair" ] || full=0
 [ "$full" = 0 ] || rm -f "$state/run"
-if [ -e "$dir/.git" ]; then
-    sh "$dir/bootstrap.sh" "$@"
-else
-    curl -fsSL --retry 3 -o "$state/bootstrap.sh" \
-        https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh &&
-        sh "$state/bootstrap.sh" "$@"
-fi
+version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version=-
+"$ws" server apply -- "$@"
 status=$?
 if [ "$full" = 1 ]; then
     [ "$status$table" != 0off ] || sh "$state/off" write "$vars"
-    version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version=-
     echo "$version $status $table" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
 fi
 echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
@@ -208,7 +200,7 @@ run() {
         unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
         systemd-run --quiet --unit="$unit" --collect --expand-environment=no \
             --description="ws's playbook, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
-            --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$dir" "$vars" "$ws" "$state" "$@" ||
+            --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$vars" "$ws" "$state" "$@" ||
             die "systemd-run cannot start $unit"
         say "started $unit, which goes on where ssh drops: journalctl -u $unit shows its log"
     fi
