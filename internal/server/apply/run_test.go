@@ -13,6 +13,14 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
+// passMachine records the playbook's run.
+type passMachine struct{ *effecttest.Machine }
+
+func (m passMachine) Pass(_ context.Context, _ bool, name string, args ...string) error {
+	m.Calls = append(m.Calls, "run "+strings.Join(append([]string{name}, args...), " "))
+	return nil
+}
+
 type change string
 
 func (c change) String() string { return string(c) }
@@ -30,27 +38,41 @@ func (t todo) Plan(context.Context) (step.Plan, error) {
 }
 func (t todo) Apply(context.Context, step.Plan) error { *t.done = true; return nil }
 
-func TestRunSteps(t *testing.T) {
+func TestRun(t *testing.T) {
 	var done bool
 	ported := func(values.Values, effect.Machine, effect.Out) []step.Step { return []step.Step{todo{&done}} }
-	segs, err := Segments([]roles.Role{{Name: "c", Steps: ported}}, nil)
+	list := []roles.Role{{Name: "a"}, {Name: "b"}, {Name: "c", Steps: ported}, {Name: "d"}}
+	segs, err := Segments(list, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, check := range []bool{false, true} {
+	for _, tc := range []struct {
+		name  string
+		check bool
+		want  []string
+	}{
+		{"run", false, []string{"a", "b", "c", "d"}},
+		{"check", true, []string{"a", "b", "c", "d"}},
+	} {
 		done = false
-		c := Config{Options: Options{Check: check}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
+		m := passMachine{effecttest.NewMachine()}
+		c := Config{Options: Options{Check: tc.check, Args: []string{"--skip-tags", "systemd"}}, M: m, Out: &effecttest.Out{}, Dir: "/d"}
 		got, err := Run(context.Background(), c, segs)
-		if err != nil || !slices.Equal(got, []string{"c"}) || done == check {
-			t.Errorf("check %v: Run = %q, %v, applied %v", check, got, err, done)
+		if err != nil {
+			t.Fatalf("%s: %v", tc.name, err)
 		}
-	}
-}
-
-func TestRunRefusesAPlaybookSegment(t *testing.T) {
-	segs, _ := Segments([]roles.Role{{Name: "a"}}, nil)
-	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}}
-	if _, err := Run(context.Background(), c, segs); err == nil || !strings.Contains(err.Error(), "not run yet") {
-		t.Errorf("err = %v, want not run yet", err)
+		if !slices.Equal(got, tc.want) {
+			t.Errorf("%s: changed = %q, want %q", tc.name, got, tc.want)
+		}
+		var pass []string
+		for _, call := range m.Calls {
+			if strings.HasPrefix(call, "run env ") || strings.HasPrefix(call, "root env ") {
+				pass = append(pass, call)
+			}
+		}
+		if len(pass) != 2 || !strings.Contains(pass[0], "site.yml --tags a,b ") || !strings.Contains(pass[1], "site.yml --tags d ") ||
+			!strings.HasSuffix(pass[0], "--skip-tags systemd") || strings.Contains(pass[0], "--check --diff") != tc.check {
+			t.Errorf("%s: playbook runs = %q", tc.name, pass)
+		}
 	}
 }
