@@ -13,7 +13,7 @@
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamp=$ws/root/var/lib/ws-wizard/run
@@ -32,7 +32,7 @@ error() {
 wizard() {
     units=$(wc -l <"$ws/run.log")
     reads=$(grep -c '^root: sh -s -- status$' "$ws/log")
-    sh "$wizard" </dev/null >"$RUNNER_TEMP/run.out" 2>"$RUNNER_TEMP/run.err"
+    "$wsbin" wizard </dev/null >"$RUNNER_TEMP/run.out" 2>"$RUNNER_TEMP/run.err"
     status=$?
     cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 }
@@ -49,7 +49,7 @@ grep -q '^root: sh -s -- status$' "$ws/log" &&
 sudo rm "$stamp"
 touch "$ws/bootstrap.cut" "$ws/sb" "$ws/nct6687"
 wizard
-grep -q "^wizard\.sh: ws's run: ws's playbook stopped, " "$RUNNER_TEMP/run.err" && started 1 1 &&
+grep -q "^ws wizard: ws's run: ws's playbook stopped, " "$RUNNER_TEMP/run.err" && started 1 1 &&
     [ "$status" = 1 ] && [ ! -f "$stamp" ] || error "a run cut off exited $status, or stamped run"
 rm "$ws/bootstrap.cut"
 wizard
@@ -78,16 +78,16 @@ grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     grep -q ' 0 on$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/bootstrap.wait"
-out=$(env -u WS_TARGET sh "$wizard" --check --update </dev/null 2>&1)
-printf '%s\n' "$out" | grep -q "^wizard\.sh: ws's run: would pull ws's clone " ||
-    error "wizard.sh --check --update named no run of the playbook: $out"
+out=$(env -u WS_TARGET "$wsbin" wizard --check --update </dev/null 2>&1)
+printf '%s\n' "$out" | grep -q "^ws wizard: ws's run: would pull ws's clone " ||
+    error "ws wizard --check --update named no run of the playbook: $out"
 
 WS_CONF=$RUNNER_TEMP/cloud.conf
 export WS_CONF
 sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
-out=$(sh "$wizard" --check </dev/null 2>&1)
+out=$("$wsbin" wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'with -e security_outbound=false, then name that in ' ||
-    error "wizard.sh --check on a cloud VM named no run with -e: $out"
+    error "ws wizard --check on a cloud VM named no run with -e: $out"
 echo 20 >"$ws/bootstrap.wait"
 ssh -o BatchMode=yes ws-ssh sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
 tries=0
@@ -109,8 +109,8 @@ started 0 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" =
     error "a cloud VM's run without the line exited $status, or ran a playbook"
 rm "$WS_CONF"
 unset WS_CONF
-sh "$wizard" --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
+"$wsbin" wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
 grep -q "^- ws's outbound table: off, as ws's host_vars names security_outbound: false, " \
-    "$RUNNER_TEMP/run.out" || error "wizard.sh --update on the LAN named no table left off"
+    "$RUNNER_TEMP/run.out" || error "ws wizard --update on the LAN named no table left off"
 sudo rm -r "${vars%/*}"
 exit "$fail"
