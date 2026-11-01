@@ -28,16 +28,16 @@ refused() {
     fi
 }
 
-[ "$("$wsbin" wizard -h)" = 'usage: ws wizard [--check] [--update]' ] || error 'no usage from -h'
-refused "unknown argument '--bogus'" "$wsbin" wizard --bogus
-refused 'run it as yourself, not root' sudo "$wsbin" wizard --check
+[ "$("$wsbin" mac wizard -h)" = 'usage: ws mac wizard [--check] [--update]' ] || error 'no usage from -h'
+refused "unknown argument '--bogus'" "$wsbin" mac wizard --bogus
+refused 'run it as yourself, not root' sudo "$wsbin" mac wizard --check
 mkdir "$lock"
-refused "another run holds $lock" "$wsbin" wizard --check
+refused "another run holds $lock" "$wsbin" mac wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
 echo WS_HOOK=example/Ws >"$RUNNER_TEMP/refuse.conf"
 refused 'line 1: WS_HOOK=example/Ws is not a repository on GitHub' \
-    env WS_CONF="$RUNNER_TEMP/refuse.conf" "$wsbin" wizard --check
+    env WS_CONF="$RUNNER_TEMP/refuse.conf" "$wsbin" mac wizard --check
 rm "$RUNNER_TEMP/refuse.conf"
 refused "'example/WS' is not a repository on GitHub" \
     sudo sh "$HOME/repository/ws/mac/wizard-remote-files.sh" clone example/WS
