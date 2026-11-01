@@ -26,5 +26,30 @@ func (s Secrets) Vars() ([]byte, error) {
 	if s.Files.Sswan != nil {
 		v.Sswan = b64(s.Files.Sswan)
 	}
-	return yaml.Marshal(v)
+	var doc yaml.Node
+	if err := doc.Encode(v); err != nil {
+		return nil, err
+	}
+	unsafe(&doc, false)
+	return yaml.Marshal(&doc)
+}
+
+// unsafe tags every string that is a value, so that Ansible takes it as written and never as a
+// template: a secret may hold {{, {% or {#. A key stays plain.
+func unsafe(n *yaml.Node, key bool) {
+	switch n.Kind {
+	case yaml.ScalarNode:
+		if !key && n.Tag == "!!str" {
+			n.Tag = "!unsafe"
+			n.Style |= yaml.TaggedStyle
+		}
+	case yaml.MappingNode:
+		for i, c := range n.Content {
+			unsafe(c, i%2 == 0)
+		}
+	default:
+		for _, c := range n.Content {
+			unsafe(c, false)
+		}
+	}
 }

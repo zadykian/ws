@@ -34,3 +34,20 @@ func TestVarsOfNothingIsEmpty(t *testing.T) {
 		t.Errorf("got %q, %v", data, err)
 	}
 }
+
+func TestVarsMarkEachValueUnsafe(t *testing.T) {
+	s := Secrets{Shell: Shell{SecretEnv: map[string]string{"A": "x{{y}}", "B": "{#z"}}}
+	data, err := s.Vars()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"A: !unsafe x{{y}}", "B: !unsafe '{#z'"} {
+		if !strings.Contains(string(data), want) {
+			t.Errorf("no %q in %s", want, data)
+		}
+	}
+	var got map[string]map[string]string
+	if err := yaml.Unmarshal(data, &got); err != nil || got["shell_secret_env"]["A"] != "x{{y}}" {
+		t.Errorf("got %v, %v", got, err)
+	}
+}
