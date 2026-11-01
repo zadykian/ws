@@ -62,12 +62,13 @@ and reports each build it would install and each it would remove; it downloads n
 Between runs of the playbook, `jetbrains-update.timer` runs the role once a week, in the hour after
 Monday's midnight, or at boot where the machine was off then. Its service applies the role as the
 last run of the playbook left it. Each run copies the role, and a playbook with that run's
-variables, into `/usr/local/lib/ws/jetbrains`, and removes from the copy what the clone has
-dropped. So a change in the clone reaches the timer with the next run alone. A run sets the timer
+variables, into `/usr/local/lib/ws/jetbrains`, and removes from the copy what the playbook has
+dropped. The copy outlives `/var/lib/ws/VERSION`, which the next ws replaces, so a change reaches
+the timer with the next run alone. A run sets the timer
 up before the backends, so that a run that fails at one leaves the timer to try again.
 
 The service runs `/usr/bin/ansible-playbook`, from Ubuntu's ansible-core, which the role installs
-where bootstrap.sh hasn't. Its output goes to the journal, and so to SigNoz.
+where `ws server apply` hasn't. Its output goes to the journal, and so to SigNoz.
 `systemctl list-timers jetbrains-update.timer` shows when it runs next,
 `journalctl -u jetbrains-update` what it did, and `systemctl start jetbrains-update` runs it now. A
 backend open in Gateway as it runs keeps its build until a later run.

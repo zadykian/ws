@@ -10,7 +10,7 @@
   block:
     # claude updates itself in the background, so it is installed only where it is missing. The
     # installer refuses root where SUDO_USER is set, as under `sudo -i`, from which the README
-    # runs bootstrap.sh; root is meant here.
+    # runs ws server apply; root is meant here.
     - name: Install claude
       ansible.builtin.shell:
         cmd: set -o pipefail && curl -fsSL --retry 3 https://claude.ai/install.sh | bash
