@@ -1,9 +1,12 @@
 package shell
 
 import (
+	"context"
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/zadykian/ws/effect"
 )
 
 // lines returns the non-empty lines of a command's output.
@@ -66,3 +69,9 @@ func signingKeyOf(list []string, home string) (string, bool) {
 
 // join lists names as prose does.
 func join(names []string) string { return strings.Join(names, ", ") }
+
+// gitNames lists the keys of a config's content, by git, without their values.
+func gitNames(ctx context.Context, m effect.Machine, content []byte) ([]string, error) {
+	out, err := m.RunInput(ctx, content, "git", "config", "--file", "-", "--name-only", "--list")
+	return lines(out), err
+}

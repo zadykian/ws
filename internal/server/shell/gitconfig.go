@@ -33,12 +33,6 @@ func (g gitconfig) content() ([]byte, error) {
 	}{g.Name, g.Email, g.Key, g.Signers, g.Signing})
 }
 
-// names lists the keys of a config's content, by git, without their values.
-func (g gitconfig) names(ctx context.Context, content []byte) ([]string, error) {
-	out, err := g.M.RunInput(ctx, content, "git", "config", "--file", "-", "--name-only", "--list")
-	return lines(out), err
-}
-
 // Plan says what the rewrite loses or replaces, then plans the file. Git must accept the new file
 // before it replaces the old one.
 func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
@@ -54,9 +48,7 @@ func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
 			M: g.M, Path: g.path(), Content: content, Mode: 0o600, UID: g.A.UID, GID: g.A.GID,
 			Secret: true, Backup: true,
 		},
-		Check: func(path string) (string, []string) {
-			return "git", []string{"config", "--file", path, "--name-only", "--list"}
-		},
+		Check: configCheck,
 	}.Plan(ctx)
 }
 
@@ -73,11 +65,11 @@ func (g gitconfig) notes(ctx context.Context, content []byte) error {
 			return err
 		}
 	}
-	oldKeys, err := g.names(ctx, old)
+	oldKeys, err := gitNames(ctx, g.M, old)
 	if err != nil {
 		return err
 	}
-	wantKeys, err := g.names(ctx, content)
+	wantKeys, err := gitNames(ctx, g.M, content)
 	if err != nil {
 		return err
 	}
@@ -105,7 +97,7 @@ func (g gitconfig) signingNotes(ctx context.Context, old []byte) error {
 	if err != nil {
 		return err
 	}
-	keys, err := g.names(ctx, local)
+	keys, err := gitNames(ctx, g.M, local)
 	if err != nil {
 		return err
 	}
@@ -113,4 +105,9 @@ func (g gitconfig) signingNotes(ctx context.Context, old []byte) error {
 		g.Out.Warn("~/.config/git/local sets %s, which win over the role's signing in ~/.gitconfig. Remove them to sign with %s.", join(found), g.Key)
 	}
 	return nil
+}
+
+// configCheck is the command that has git read a config file before it replaces the old one.
+func configCheck(path string) (string, []string) {
+	return "git", []string{"config", "--file", path, "--name-only", "--list"}
 }

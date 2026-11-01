@@ -17,9 +17,9 @@ import (
 const signersHeader = "# Written by github.com/zadykian/ws, whose next run replaces any change made here.\n"
 
 // treeTo returns the directories from below home down to dir, in order. Each is made with mode;
-// the ones above dir are left as they are where they exist, as the file module leaves them. A dir
-// outside home is alone, and its parent must exist.
-func treeTo(m effect.Machine, a account, dir string, mode fs.FileMode) []host.Resource {
+// the ones above dir are left as they are where they exist, as the file module leaves them, and dir
+// too where keep is set. A dir outside home is alone, and its parent must exist.
+func treeTo(m effect.Machine, a account, dir string, mode fs.FileMode, keep bool) []host.Resource {
 	var chain []string
 	for d := dir; strings.HasPrefix(d, a.Home+"/"); d = path.Dir(d) {
 		chain = append([]string{d}, chain...)
@@ -29,7 +29,7 @@ func treeTo(m effect.Machine, a account, dir string, mode fs.FileMode) []host.Re
 	}
 	var dirs []host.Resource
 	for _, d := range chain {
-		dirs = append(dirs, host.Dir{M: m, Path: d, Mode: mode, UID: a.UID, GID: a.GID, CreateOnly: d != dir})
+		dirs = append(dirs, host.Dir{M: m, Path: d, Mode: mode, UID: a.UID, GID: a.GID, CreateOnly: keep || d != dir})
 	}
 	return dirs
 }
@@ -66,6 +66,6 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 
 // allowedSigners returns the directory of the allowed signers file and the file.
 func allowedSigners(m effect.Machine, a account, key, file, email string) []host.Resource {
-	dir := treeTo(m, a, path.Dir(file), 0o755)
+	dir := treeTo(m, a, path.Dir(file), 0o755, false)
 	return append(dir, signers{M: m, A: a, Key: key, Path: file, Email: email})
 }
