@@ -76,6 +76,15 @@ func (c *Cable) read(ctx context.Context, op ...string) error {
 	return nil
 }
 
+// names returns the ports' names.
+func (c *Cable) names() []string {
+	var n []string
+	for _, p := range c.ports {
+		n = append(n, p.name)
+	}
+	return n
+}
+
 // up returns the ports with carrier.
 func (c *Cable) up() []string {
 	var n []string
