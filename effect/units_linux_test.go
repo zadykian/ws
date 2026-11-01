@@ -31,3 +31,5 @@ func TestUnitState(t *testing.T) {
 		}
 	}
 }
+
+var _ Units = OSUnits{}
