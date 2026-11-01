@@ -1,0 +1,6 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# node_exporter reads temperatures and fans alone, for the collector, which scrapes it: the host's
+# other metrics come from the collector's own host_metrics. It listens on loopback only, and leaves
+# out its own Go and process metrics.
+ARGS="--collector.disable-defaults --collector.hwmon --collector.thermal_zone --web.listen-address=127.0.0.1:9100 --web.disable-exporter-metrics"
