@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/effect"

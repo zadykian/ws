@@ -18,7 +18,7 @@ func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Mach
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\n" + extra[target])
 	h := &HostKey{Conf: "/h/mac.conf", Lock: "/l", Check: check, M: m, Out: &effecttest.Out{},
 		SSH: SSH{M: m, Lock: "/l"}}
-	r := &WsRun{Host: h, Update: update, Remote: &Remote{SSH: h.SSH, Script: []byte("x")}}
+	r := &WsRun{Host: h, Version: "v1.2.3", Update: update, Remote: &Remote{SSH: h.SSH, Script: []byte("x")}}
 	m.Results[remoteLine(r.Remote, "status")] = effecttest.Result{Out: []byte(status)}
 	return r, m
 }
@@ -28,15 +28,16 @@ func TestWsRunPlan(t *testing.T) {
 		target, status, want string
 		update, check        bool
 	}{
-		"done":       {"lan", "run abc 0 on\nactive -\n", "", false, false},
+		"done":       {"lan", "run v1.2.3 0 on\nactive -\n", "", false, false},
+		"older ws":   {"lan", "run v1.2.2 0 on\nactive -\n", "run bootstrap.sh on ws", false, false},
 		"first run":  {"lan", "run - -\nactive -\n", "run bootstrap.sh on ws", false, false},
-		"update":     {"lan", "run abc 0 on\nactive -\n", "installs the latest ws", true, false},
-		"cloud done": {"cloud", "run abc 0 off\nactive -\noutbound off\n", "", false, false},
-		"cloud host_vars": {"cloud", "run abc 0 off\nactive -\noutbound on\n",
+		"update":     {"lan", "run v1.2.3 0 on\nactive -\n", "installs the latest ws", true, false},
+		"cloud done": {"cloud", "run v1.2.3 0 off\nactive -\noutbound off\n", "", false, false},
+		"cloud host_vars": {"cloud", "run v1.2.3 0 off\nactive -\noutbound on\n",
 			"name security_outbound: false in ws's host_vars", false, false},
-		"cloud run": {"cloud", "run abc 0 on\nactive -\n", "with -e security_outbound=false", false, false},
+		"cloud run": {"cloud", "run v1.2.3 0 on\nactive -\n", "with -e security_outbound=false", false, false},
 		"follows":   {"lan", "run - -\nactive ws-wizard-1\n", "follow ws-wizard-1, which runs on ws", false, true},
-		"failed":    {"lan", "run abc 1 on\nactive -\n", "its last full run exited 1", false, true},
+		"failed":    {"lan", "run v1.2.3 1 on\nactive -\n", "its last full run exited 1", false, true},
 	} {
 		r, _ := newRun(tc.target, tc.status, tc.update, tc.check)
 		p, err := r.Plan(context.Background())
@@ -51,7 +52,7 @@ func TestWsRunPlan(t *testing.T) {
 }
 
 func TestWsRunUpdateWaitsForTheRun(t *testing.T) {
-	r, _ := newRun("lan", "run abc 0 on\nactive -\n", true, false)
+	r, _ := newRun("lan", "run v1.2.3 0 on\nactive -\n", true, false)
 	r.ran = true
 	if p, err := r.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan after the run = %v, %v; want none", p, err)
@@ -71,7 +72,7 @@ func TestWsRunApply(t *testing.T) {
 }
 
 func TestWsRunApplyCloudAgain(t *testing.T) {
-	r, m := newRun("cloud", "run abc 0 on\nactive -\noutbound on\n", false, false)
+	r, m := newRun("cloud", "run v1.2.3 0 on\nactive -\noutbound on\n", false, false)
 	p, _ := r.Plan(context.Background())
 	m.Results[remoteLine(r.Remote, "run", "-e", "security_outbound=false")] = effecttest.Result{}
 	m.Results[remoteLine(r.Remote, "outbound")] = effecttest.Result{}

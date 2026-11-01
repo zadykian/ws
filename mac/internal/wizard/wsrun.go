@@ -17,6 +17,8 @@ type WsRun struct {
 	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
 	Host   *HostKey
 	Remote *Remote
+	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
+	Version string
 	// Update has the stage run the playbook once more, which installs the latest ws first.
 	Update bool
 	// ran is set once the stage ran the playbook in this run.
@@ -43,9 +45,11 @@ func (r *WsRun) off() bool {
 	return len(f) > 2 && f[2] == "off"
 }
 
-// idle tells whether ws's last full run exited 0, and no run's unit runs there now.
+// idle tells whether ws's last full run exited 0, made by a ws of this version, and no run's unit
+// runs there now.
 func (r *WsRun) idle(ctx context.Context) bool {
-	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0"
+	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
+		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ")
 }
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,

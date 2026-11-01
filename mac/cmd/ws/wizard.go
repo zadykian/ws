@@ -90,7 +90,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	gh := &wizard.Gh{Conf: later, Home: e.getenv("HOME"), Tty: e.tty, M: e.m, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: e.tty, Check: check, Env: e.lookup,
 		SSH: wizard.SSH{M: e.m, Lock: lock, Home: e.getenv("HOME")}, M: e.m, P: p, Out: out}
-	run := &wizard.WsRun{Host: host, Update: o.update,
+	run := &wizard.WsRun{Host: host, Version: e.version, Update: o.update,
 		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
 	hand.Late(run.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: e.version, URL: e.releases, Out: out}

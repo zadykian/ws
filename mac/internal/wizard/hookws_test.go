@@ -10,7 +10,7 @@ import (
 )
 
 func newHookWs(conf, status string) (*HookWs, *effecttest.Machine) {
-	r, m := newRun("lan", "run abc 0 on\nactive -\n"+status, false, false)
+	r, m := newRun("lan", "run v1.2.3 0 on\nactive -\n"+status, false, false)
 	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte(conf)...)
 	mac := &HookMac{Home: "/h", Gh: &Gh{LookPath: func(string) (string, error) { return "/bin/gh", nil }, M: m}}
 	files := &Remote{SSH: r.Host.SSH, Script: []byte("y")}
