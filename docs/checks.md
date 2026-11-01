@@ -29,30 +29,32 @@ such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's 
 `checks.sh` runs the cases beside it in order, stopping at the first failure
 ([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root and
 a `WS_HOOK` of `WS`, as the files script must. A run must stop where another holds the lock, leaving
-it. A fresh `--check`, by sh and dash, must find brew with its directories off `PATH`. As `ws mac apply
---check` must, it must change nothing, and leave no lock or temporary file. The job's `mac.conf`
-names `~/.ssh/id_ed25519` as ws's key, which `--check` must show it would make. With no terminal and
-a `mac.conf` that names none, a run must stop at the Mac key stage, naming `WS_IDENTITY`, making
-nothing. A file key there with no line must get one, shown by `--check`. A failed `ssh-add` must
-stop a run, naming it. The first run, with that `PATH` too, must make that key with no passphrase,
-add it to that login, install what `ws mac apply` installs. It must drop the Mac's key that it prints,
-and leave no tunnel step by hand, as the Tunnel stage below takes it. A second run and `--check`
-must print nothing, by sh and dash. Then a stand-in `ssh-agent` at Secretive's socket holds a P-256
-key, whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`. While it lists the key, `--check`
-must print nothing of the Mac key stage. With git's name, it must say it would wait for git's key
-made in Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the agent lacks it, a run and
-`--check` must stop there, naming the socket. Last, without the stand-in `gh`'s login, a run with no
-terminal must stop at gh's stage, naming `gh auth login`. With a login lacking the scopes, or the
-signing one alone, it must name `gh auth refresh`. `--check` must say each would run.
+it. A fresh `--check`, by sh and dash, must find brew with its directories off `PATH`. As
+`ws mac apply --check` must, it must change nothing, and leave no lock or temporary file. The job's
+`mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `--check` must show it would make. With no
+terminal and a `mac.conf` that names none, a run must stop at the Mac key stage, naming
+`WS_IDENTITY`, making nothing. A file key there with no line must get one, shown by `--check`. A
+failed `ssh-add` must stop a run, naming it. The first run, with that `PATH` too, must make that key
+with no passphrase, add it to that login, install what `ws mac apply` installs. It must drop the
+Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel stage below takes it. A
+second run and `--check` must print nothing, by sh and dash. Then a stand-in `ssh-agent` at
+Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`.
+While it lists the key, `--check` must print nothing of the Mac key stage. With git's name, it must
+say it would wait for git's key made in Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the
+agent lacks it, a run and `--check` must stop there, naming the socket. Last, without the stand-in
+`gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth login`. With a login
+lacking the scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say
+each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
-leads, with its own host key. A fresh `--check` must show the Host key stage after `ws mac apply`. The
-first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as `WS_HOST_KEY`
-gives its fingerprint. Without that line, a run with no terminal must stop without `WS_HOST_KEY` and
-with another fingerprint, and `--check` must show the line, or stop at a link, as a run must. With a
-`mac.conf` of no way to ws, a run must stop, naming [The router](router.md). Where `WS_REMOTE`
-doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing list name `WS_PORT`
-and no lease's address. On a cloud VM, it must name `mac.conf`'s way in place of the lease.
+leads, with its own host key. A fresh `--check` must show the Host key stage after `ws mac apply`.
+The first run must warn that ws faces the internet, and add ws's key to `known_hosts`, as
+`WS_HOST_KEY` gives its fingerprint. Without that line, a run with no terminal must stop without
+`WS_HOST_KEY` and with another fingerprint, and `--check` must show the line, or stop at a link, as
+a run must. With a `mac.conf` of no way to ws, a run must stop, naming [The router](router.md).
+Where `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`, and the closing
+list name `WS_PORT` and no lease's address. On a cloud VM, it must name `mac.conf`'s way in place of
+the lease.
 
 Root logs in to that `sshd` by root's own `authorized_keys`. The cases fill it from the stand-in
 `gh`'s keys, as Ubuntu's installer and the README's step do for ws. Each session runs `ws.sh`, which
@@ -152,11 +154,11 @@ shows `pkgutil`'s chain. The check must refuse the `.pkg` cut short, and another
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First,
 `ws mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
 installs no formula or cask. It must note the install of JetBrains Gateway's cask. Stand-ins for
-Gateway's and Ghostty's apps, the font and cld, which `ws mac apply` leaves alone, spare the job's runs
-their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no daemon, while
-`ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key in the
-command that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a
-second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their
+Gateway's and Ghostty's apps, the font and cld, which `ws mac apply` leaves alone, spare the job's
+runs their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no daemon,
+while `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key
+in the command that gives it to ws. With a stand-in's key it must load the daemon, which must run.
+Then a second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their
 addresses. The stand-in for ws is a second wireguard-go on the runner, with the printed key as its
 peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws mac tunnel status` must show a
 handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and `routes.d`
