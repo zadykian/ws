@@ -17,5 +17,6 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 		host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{M: m, Out: out, Recommends: true, Names: v.Base.Packages}}},
 		host.Group{Title: "Locale", Parts: localeParts(m, v.Base.Locale)},
 		host.Group{Title: "Timezone", Parts: timezoneParts(m, v.Base.Timezone)},
+		host.Group{Title: "Upgrades", Parts: upgradesParts(m, effect.OSUnits{}, out)},
 	}
 }
