@@ -6,8 +6,8 @@
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
 #   is missing. run is the ws version and status of the last full run, and off where its -e turned the
-#   outbound table off, else on. last is the unit and status of the last run. active is the run's
-#   unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
+#   outbound table off, else on. ws is the version that ws prints. last is the unit and status of
+#   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as
@@ -18,6 +18,9 @@
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. Each run installs the latest ws. A run whose
 #   ARGs are -e pairs alone is a full one.
+# - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
+#   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
+#   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
 # - outbound names security_outbound: false in ws's host_vars, where a full run's unit with -e
 #   security_outbound=false didn't, which keeps the outbound table off for a cloud VM.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
@@ -97,6 +100,7 @@ status() {
     echo "run $(stamp "$state/run" 3)"
     echo "last $(stamp "$state/last")"
     echo "active $(active | first)"
+    echo "ws $("$ws" version 2>/dev/null | first)"
     echo "mac.pub $(head -n 1 "$peer" 2>/dev/null | first)"
     echo "wg0 $(wg show wg0 public-key 2>/dev/null | first)"
     echo "signing $(signing_key | first)"
@@ -230,6 +234,19 @@ follow() {
     exit "${last#* }"
 }
 
+# install TAG URL installs ws's release TAG from the releases at URL, as the header says. It
+# downloads that release's install.sh, which runs as root here, so both arguments are checked first.
+install() {
+    printf '%s\n' "$1" | grep -Eqx 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' ||
+        die "'$1' is not a release, vX.Y.Z"
+    printf '%s\n' "$2" | grep -Eqx '(https://|http://127\.0\.0\.1:)[A-Za-z0-9._~:/-]+' ||
+        die "'$2' is not an address of releases: https://, or http://127.0.0.1:"
+    mkdir -p "$state" || die "cannot make $state"
+    curl -fsSL --retry 3 --proto-redir =https -o "$state/install.sh" "$2/download/$1/install.sh" ||
+        die "cannot download $2/download/$1/install.sh"
+    WS_VERSION=$1 WS_RELEASES_URL=$2 sh "$state/install.sh"
+}
+
 # peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
 # wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
 # wireguard-tools makes it.
@@ -259,9 +276,10 @@ main() {
     status) status ;;
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$vars" ;;
+    install) install "${2-}" "${3-}" ;;
     peer) peer "${2-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...] |" \
-        "outbound | peer KEY" ;;
+        "install TAG URL | outbound | peer KEY" ;;
     esac
 }
 
