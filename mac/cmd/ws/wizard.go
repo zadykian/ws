@@ -70,7 +70,7 @@ func wizardRefusal(e wizardEnv) string {
 	return ""
 }
 
-// repoDir returns the clone that holds the roles, which wizard.sh found from its own path: WS_REPO,
+// repoDir returns the clone that holds the roles: WS_REPO,
 // else where bootstrap.sh clones it.
 func repoDir(getenv func(string) string) string {
 	return cmp.Or(getenv("WS_REPO"), getenv("HOME")+"/repository/ws")
@@ -82,7 +82,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	conf := confPath(e.getenv, e.pwd)
 	scratch := strings.TrimRight(cmp.Or(e.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
-	// as wizard.sh pointed WS_CONF there.
+	// as the old script pointed WS_CONF there.
 	later := conf
 	if check {
 		later = scratch
@@ -156,7 +156,7 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 	}
 	_, err = wizard.Run(ctx, e.m, out, wizardStages(e, signalPrompt{term}, out, prog, o, hand), o.check, tmp, e.pid, closing)
 	if err != nil {
-		// The runner names the stage before the stage's own message, which wizard.sh printed alone.
+		// The runner names the stage before the stage's own message, which the old script printed alone.
 		if inner := errors.Unwrap(err); inner != nil {
 			err = inner
 		}

@@ -37,6 +37,7 @@ jobs:
       # it as ws wizard.
       - name: Build ws
         run: |
+          # shellcheck source=/dev/null # the clone is copied to ~/repository/ws above
           . ~/repository/ws/mac/build.sh
           ws_build ~/repository/ws ~/.local/bin/ws
       - name: The stand-ins

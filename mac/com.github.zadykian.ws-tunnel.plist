@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  The tunnel's LaunchDaemon, which mac/setup.sh copies to /Library/LaunchDaemons: launchd runs
+  The tunnel's LaunchDaemon, which ws setup copies to /Library/LaunchDaemons: launchd runs
   `ws tunnel run` as root from boot, before any login, starts it again 10 s after it exits, and
   appends its output to /var/log/ws-tunnel.log.
 -->

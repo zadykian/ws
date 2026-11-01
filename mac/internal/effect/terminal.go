@@ -77,7 +77,7 @@ func (t *Terminal) ByHand(format string, a ...any) {
 }
 
 // Flush prints the lines that ByHand kept, once, and forgets them, under a blank line and the title
-// that wizard.sh's closing list has.
+// that the wizard's closing list has.
 func (t *Terminal) Flush() {
 	if len(t.byHand) == 0 {
 		return

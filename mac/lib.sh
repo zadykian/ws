@@ -1,12 +1,11 @@
 # shellcheck shell=sh
-# The functions of mac/setup.sh and of a private repository's own script for the Mac, which sources
-# lib.sh alone. That script may call any of them, as ws_tunnel_routes, ws_resolver and
-# ws_tunnel_loaded below. setup.sh's own functions are in the setup-*.sh files beside it. Sourcing
+# The functions of a private repository's own script for the Mac, which sources lib.sh alone. That
+# script may call any of them, as ws_tunnel_routes, ws_resolver and ws_tunnel_loaded below. Sourcing
 # lib.sh defines names that start with ws_, and changes nothing else. Under WS_CHECK, set to
 # anything but empty or 0, a function that writes makes no change. It prints each change, as a diff
-# or, with no text to compare, as a line. setup.sh's --check sets WS_CHECK through setup-lib.sh's
-# ws_args, and a script that sources lib.sh alone sets it itself. An error exits with status 1 and a
-# message on stderr. Files outside the user's home are written through sudo, owned by root.
+# or, with no text to compare, as a line. A script that sources lib.sh alone sets WS_CHECK itself.
+# An error exits with status 1 and a message on stderr. Files outside the user's home are written
+# through sudo, owned by root.
 
 ws_prog=${0##*/}
 # The subnets of the cable and of the tunnel, which the home LAN and the routes stay clear of.
@@ -211,7 +210,7 @@ ws_rm_root() {
     fi
 }
 
-# ws_tunnel_loaded succeeds where launchd has the tunnel's daemon loaded, as once mac/setup.sh has
+# ws_tunnel_loaded succeeds where launchd has the tunnel's daemon loaded, as once ws setup has
 # run with WS_PUBLIC_KEY. Anyone may read launchd's system domain, so it needs no sudo.
 ws_tunnel_loaded() {
     launchctl print "system/$ws_label" >/dev/null 2>&1
@@ -241,7 +240,7 @@ ws_tunnel_routes() {
     done
     if [ -z "$(ws_root_attrs "$ws_etc/routes.d")" ]; then
         [ $# != 0 ] || return 0
-        ws_die "$ws_etc/routes.d is missing: run ws's mac/setup.sh first"
+        ws_die "$ws_etc/routes.d is missing: run ws setup first"
     fi
     ws_was=$ws_changed
     ws_changed=0

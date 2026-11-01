@@ -42,8 +42,7 @@ wizard() {
     printf '%s\n' "$out"
 }
 
-# sessions prints how many sessions on ws were to run apply.sh, alone or through wizard-hook.sh's
-# guard.
+# sessions prints how many sessions on ws were to run apply.sh, alone or through the guard of ws wizard.
 sessions() {
     grep -c ' /root/repository/hook/apply\.sh$' "$ws/log"
 }

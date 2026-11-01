@@ -99,7 +99,7 @@ func (s SSH) cldTabs(ctx context.Context) bool {
 	return err == nil
 }
 
-// files keeps the names in dir that are files, or links to files: setup-identity.sh skipped a
+// files keeps the names in dir that are files, or links to files: the old script skipped a
 // directory named like a key.
 func files(m effect.Machine, dir string, names []string) []string {
 	var found []string

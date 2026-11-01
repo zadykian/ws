@@ -49,7 +49,7 @@ func (k *MacKey) pick(ctx context.Context, skip, what, extra string) (string, er
 		}
 		k.Out.Say("%s: in Secretive, make %s; the wizard waits up to 15 minutes for it%s", macKey, what, extra)
 		for left := 450; got == "" && err == nil; got, err = k.other(skip) {
-			// A signal ends the wait at once, as wizard.sh's trap did.
+			// A signal ends the wait at once, as a trap did in sh.
 			if err := ctx.Err(); err != nil {
 				return "", err
 			}

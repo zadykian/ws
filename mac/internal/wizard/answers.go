@@ -129,7 +129,7 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 }
 
 // rehearse does Apply's asking under --check, and shows the diff of mac.conf instead of writing it.
-// The stages after read the file it writes to Scratch, as wizard.sh pointed WS_CONF at a file in the
+// The stages after read the file it writes to Scratch, as the old script pointed WS_CONF at a file in the
 // lock, so that they check against the mac.conf that the run would make.
 func (a *Answers) rehearse(ctx context.Context, text string, c conf.Conf) error {
 	lines, err := a.collect(ctx, text, c)
