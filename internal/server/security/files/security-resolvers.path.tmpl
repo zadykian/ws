@@ -1,0 +1,16 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Starts security-resolvers.service on each change of resolv.conf, which resolved renames into
+# place, as resolvers.sh says. It watches from before the table's load, which reads what came first.
+[Unit]
+Description=Watch resolved's DNS servers for the outbound table
+Documentation=https://github.com/zadykian/ws/blob/main/docs/security.md#outbound
+DefaultDependencies=no
+Before=security-outbound.service shutdown.target
+Conflicts=shutdown.target
+
+[Path]
+PathChanged=/run/systemd/resolve/resolv.conf
+
+[Install]
+WantedBy=sysinit.target

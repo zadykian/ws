@@ -1,0 +1,14 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# Starts security-resolvers.service a minute after each run, as resolvers.sh says.
+[Unit]
+Description=Fill the outbound table's sets of DNS servers again, a minute on
+Documentation=https://github.com/zadykian/ws/blob/main/docs/security.md#outbound
+
+[Timer]
+OnActiveSec=1min
+OnUnitActiveSec=1min
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
