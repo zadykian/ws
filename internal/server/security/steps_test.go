@@ -28,6 +28,10 @@ func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.
 	m.Files[ufw.DefaultFile] = []byte("DEFAULT_INPUT_POLICY=\"DROP\"\nDEFAULT_OUTPUT_POLICY=\"ACCEPT\"\n")
 	m.Files[ufw.ConfFile] = []byte("ENABLED=yes\n")
 	m.Results["ufw status"] = effecttest.Result{Out: []byte("Status: active\n")}
+	m.Results[unshare] = effecttest.Result{Out: []byte("table\n")}
+	m.Results["nft -s list table inet ws"] = effecttest.Result{Out: []byte("table\n")}
+	m.Results["/usr/sbin/nft -c -f "+tableFile+".ws-check"] = effecttest.Result{}
+	m.Results["rm -f "+tableFile+".ws-check"] = effecttest.Result{}
 	u := &effecttest.Units{}
 	u.States = map[string]effect.UnitState{"ufw.service": {Enabled: true}, "fail2ban.service": {Enabled: true, Active: true}}
 	return m, u, steps(v, m, u, &effecttest.Out{})

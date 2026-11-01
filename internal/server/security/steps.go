@@ -20,6 +20,7 @@ const (
 	sshdStep     = "sshd"
 	ufwStep      = "ufw"
 	fail2banStep = "fail2ban"
+	outboundStep = "Outbound table"
 )
 
 // Steps returns the role's steps in order: the packages, the check of the user's keys, sshd, ufw,
@@ -30,7 +31,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 
 // steps is Steps with the units given, for a test to fake.
 func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
-	return []step.Step{
+	ss := []step.Step{
 		// nftables brings nft, which loads the outbound table. Its own service stays off, as the
 		// package leaves it. Recommends: apt's default, as the role installed them.
 		host.Group{Title: packagesStep, Parts: []host.Resource{
@@ -46,4 +47,10 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 			return fail2ban(m, u, out)
 		}},
 	}
+	if v.Security.Outbound {
+		ss = append(ss, host.Lazy{Title: outboundStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+			return outbound(m, u, out)
+		}})
+	}
+	return ss
 }
