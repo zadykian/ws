@@ -10,21 +10,21 @@ on:
 permissions: {}
 
 jobs:
-  # The Mac's side on macOS, in docs/mac.md's order: ws setup without ws's key makes the Mac's
+  # The Mac's side on macOS, in docs/mac.md's order: ws mac apply without ws's key makes the Mac's
   # key and installs no daemon; with a stand-in ws's key it installs the daemon; then a second run
   # and --check must print nothing. ssh -G must give each host's address. A stand-in ws, a second
   # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on
   # loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost), and the daemon's status must
-  # show each in turn. Last, ws tunnel routes and ws resolver, then mac.conf's. A stand-in that
-  # makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's playbook
-  # job.
+  # show each in turn. Last, ws mac tunnel routes and ws mac resolver, then mac.conf's. A stand-in
+  # that makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's
+  # playbook job.
   mac:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
     timeout-minutes: 20
     permissions:
       contents: read
-    # bash with pipefail, rather than the default bash -e, so that a failing ws setup fails its
+    # bash with pipefail, rather than the default bash -e, so that a failing ws mac apply fails its
     # step through a tee too. The cases set the same options.
     defaults:
       run:
@@ -39,8 +39,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # ws, built into ~/.local/bin as bootstrap.sh builds it, which the cases run as ws setup.
-      # WS_MAC_DIR is where ws setup finds the plist and ws.ghostty.
+      # ws, built into ~/.local/bin as bootstrap.sh builds it, which the cases run as ws mac apply.
+      # WS_MAC_DIR is where ws mac apply finds the plist and ws.ghostty.
       - name: Build ws
         run: |
           . mac/build.sh
@@ -54,5 +54,5 @@ jobs:
       - name: The daemon's status and log
         if: always()
         run: |
-          sudo "$TUNNEL" tunnel status || true
+          sudo "$TUNNEL" mac tunnel status || true
           sudo cat /var/log/ws-tunnel.log || true

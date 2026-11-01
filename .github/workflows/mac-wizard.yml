@@ -1,6 +1,6 @@
 name: mac-wizard
 
-# ws wizard on macOS, in a workflow of its own beside mac.yml, on the same events: every pull
+# ws mac wizard on macOS, in a workflow of its own beside mac.yml, on the same events: every pull
 # request, whatever its base, and on main each pull request's merge.
 on:
   pull_request:
@@ -34,7 +34,7 @@ jobs:
           mkdir -p ~/repository
           cp -R "$GITHUB_WORKSPACE" ~/repository/ws
       # ws is built from the clone into ~/.local/bin, as bootstrap.sh builds it, and the cases run
-      # it as ws wizard.
+      # it as ws mac wizard.
       - name: Build ws
         run: |
           # shellcheck source=/dev/null # the clone is copied to ~/repository/ws above
