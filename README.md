@@ -7,9 +7,11 @@ collector for the machine's telemetry, and the backends of Rider and GoLand that
 connects to. Running it again is safe, and `--check --diff` shows how a machine differs from the
 repository.
 
-Each role is a tag of `site.yml`, with a page of its own:
+Each role has a page of its own. A role is a tag of `site.yml`, or runs as Go steps of ws where it
+is ported:
 
-- [`base`](docs/base.md): packages, the locale, the timezone, security updates and a swap file.
+- [`base`](docs/base.md): packages, the locale, the timezone, security updates and a swap file,
+  as Go steps.
 - [`security`](docs/security.md): SSH by key only, ufw and fail2ban, and a table that keeps what
   ws starts to the internet and ikeward, but what the network needs, such as DHCP and DNS. The
   table is off where `security_outbound` is false, as a cloud VM wants.
