@@ -4,8 +4,7 @@
 ikeward_binary: /usr/local/sbin/ikeward
 
 # The profile's files, decrypted for the run alone, less their extension. They keep their names,
-# which name the files install writes. copy writes a file that all may read, then sets its mode, so
-# they go in a directory only root may enter.
+# which name the files install writes. They go in a directory only root may enter.
 ikeward_run_dir: /run/ikeward-profile
 ikeward_run_profile: "{{ ikeward_run_dir }}/{{ ikeward_profile | basename }}"
 

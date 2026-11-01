@@ -4,7 +4,7 @@
 - name: Set up the VPN from its profile
   when: ikeward_profile | length > 0
   block:
-    # Checked before anything changes. A relative path would have copy look in the role's files.
+    # Checked before anything changes. The path names the files that install writes.
     - name: Check the profile's path
       ansible.builtin.assert:
         that: ikeward_profile is abs

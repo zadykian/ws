@@ -25,18 +25,29 @@
       changed_when: false
       check_mode: false
 
-    # copy decrypts the vault-encrypted files. The diff is off: the .sswan holds the .p12.
-    - name: Decrypt the profile's files
-      ansible.builtin.copy:
-        src: "{{ ikeward_profile }}.{{ item }}"
-        dest: "{{ ikeward_run_profile }}.{{ item }}"
-        owner: root
-        group: root
-        mode: "0600"
+    # ws server apply --secrets gives the files as base64, decrypted from age files in its process.
+    # base64 writes them as bytes, which copy's content could not. The diff is off: the .sswan holds
+    # the .p12. The names and the bytes stay out of the output.
+    - name: Check that the secrets hold the profile's files
+      ansible.builtin.assert:
+        that:
+          - ikeward_p12_base64 | default('') | length > 0
+          - ikeward_sswan_base64 | default('') | length > 0
+        fail_msg: >-
+          ikeward_profile needs ikeward_p12_file and ikeward_sswan_file in the file of
+          ws server apply --secrets.
+        quiet: true
+
+    - name: Write the profile's files
+      ansible.builtin.shell:
+        cmd: umask 077 && base64 -d > "$DEST"
+        stdin: "{{ lookup('vars', 'ikeward_' ~ item ~ '_base64') }}"
+      environment:
+        DEST: "{{ ikeward_run_profile }}.{{ item }}"
       loop: [p12, sswan]
       changed_when: false
       check_mode: false
-      diff: false
+      no_log: true
 
     # The password goes on stdin, one of the task's arguments, which no_log keeps out of the output
     # with the rest of the result. ikeward prints no password and no key, so the checks below show
