@@ -28,51 +28,51 @@ error() {
 expect() {
     printf '%s\n' "$out"
     printf '%s\n' "$out" | grep -qF -e "$2" && [ "$status" = "$1" ] ||
-        error "ws wizard exited $status, where $1 and '$2' were due"
-    sudo cmp -s "$3" "$4" || error "ws wizard changed $3"
+        error "ws mac wizard exited $status, where $1 and '$2' were due"
+    sudo cmp -s "$3" "$4" || error "ws mac wizard changed $3"
 }
 
 ssh-keygen -q -t ed25519 -N '' -C other -f "$RUNNER_TEMP/other" </dev/null
 other=$(cut -d ' ' -f 1-2 "$RUNNER_TEMP/other.pub")
-stop="ws wizard: Root's key: root on ws doesn't log in by the Mac's key, $HOME/.ssh/id_ed25519.pub,"
+stop="ws mac wizard: Root's key: root on ws doesn't log in by the Mac's key, $HOME/.ssh/id_ed25519.pub,"
 echo "$other other" >"$RUNNER_TEMP/root.keys"
 sudo cp "$RUNNER_TEMP/root.keys" "$keys"
-out=$("$wsbin" wizard </dev/null 2>&1)
+out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 expect 1 "$stop" "$keys" "$RUNNER_TEMP/root.keys"
 printf '%s\n' "$out" | grep -F "$stop" |
     grep -q "again\. ssh's error: .*Permission denied (.*)\.\$" ||
-    error "ws wizard's stop at Root's key ended in no error of ssh's, or kept its \\r"
+    error "ws mac wizard's stop at Root's key ended in no error of ssh's, or kept its \\r"
 printf '%s\n' "$other other" "no-port-forwarding,command=\"echo no;exit 142\" $pub mac" \
     >"$RUNNER_TEMP/root.keys"
 sudo cp "$RUNNER_TEMP/root.keys" "$keys"
-out=$("$wsbin" wizard --check </dev/null 2>&1)
+out=$("$wsbin" mac wizard --check </dev/null 2>&1)
 status=$?
-expect 0 "ws wizard: Root's key: root on ws doesn't log in by the Mac's key; a run would stop" \
+expect 0 "ws mac wizard: Root's key: root on ws doesn't log in by the Mac's key; a run would stop" \
     "$keys" "$RUNNER_TEMP/root.keys"
-out=$("$wsbin" wizard </dev/null 2>&1)
+out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 expect 1 "$stop" "$keys" "$RUNNER_TEMP/root.keys"
 # script gives the wizard a terminal of its own, at which the stage asks nothing.
-{ sleep 5; } | script -q /dev/null "$wsbin" wizard >"$RUNNER_TEMP/tty" 2>&1
+{ sleep 5; } | script -q /dev/null "$wsbin" mac wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 out=$(tr -d '\r' <"$RUNNER_TEMP/tty")
 expect 1 "$stop" "$keys" "$RUNNER_TEMP/root.keys"
 sudo install -m 600 "$RUNNER_TEMP/gh/keys" "$keys"
-out=$("$wsbin" wizard </dev/null 2>&1)
+out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q "^ws wizard: Root's key: "; then
-    error "ws wizard exited $status, or said of Root's key, with the account's keys in root's file"
+if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q "^ws mac wizard: Root's key: "; then
+    error "ws mac wizard exited $status, or said of Root's key, with the account's keys in root's file"
 fi
-sudo cmp -s "$keys" "$RUNNER_TEMP/gh/keys" || error "ws wizard changed $keys"
+sudo cmp -s "$keys" "$RUNNER_TEMP/gh/keys" || error "ws mac wizard changed $keys"
 
 cp "$hosts" "$RUNNER_TEMP/hosts"
 sed "s|^ws .*|ws $other|" "$RUNNER_TEMP/hosts" >"$hosts"
 cp "$hosts" "$RUNNER_TEMP/hosts.other"
 cp ~/.ssh/config "$RUNNER_TEMP/ssh.config"
 printf '%s\n' 'Host *' '    StrictHostKeyChecking no' >>~/.ssh/config
-out=$("$wsbin" wizard </dev/null 2>&1)
+out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 cp "$RUNNER_TEMP/ssh.config" ~/.ssh/config
 expect 1 'offers another host key than known_hosts holds under ws: where ws was installed again,' \

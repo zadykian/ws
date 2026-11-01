@@ -37,12 +37,12 @@ error() {
 
 # wizard [ARG]: a run of the wizard with no terminal. It prints the output, and sets out and status.
 wizard() {
-    out=$("$wsbin" wizard "$@" </dev/null 2>&1)
+    out=$("$wsbin" mac wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
 
-# sessions prints how many sessions on ws were to run apply.sh, alone or through the guard of ws wizard.
+# sessions prints how many sessions on ws were to run apply.sh, alone or through the guard of ws mac wizard.
 sessions() {
     grep -c ' /root/repository/hook/apply\.sh$' "$ws/log"
 }
@@ -59,11 +59,11 @@ unread() {
     echo 0 >"$RUNNER_TEMP/security.reads"
     echo "$1" >"$RUNNER_TEMP/security.from"
     wizard --update
-    [ "$status" = 1 ] && printf '%s\n' "$out" | grep -qxF "ws wizard: Hook on ws: security can't \
+    [ "$status" = 1 ] && printf '%s\n' "$out" | grep -qxF "ws mac wizard: Hook on ws: security can't \
 read the item ws-ci-hook from the Keychain, so apply.sh didn't run; unlock or allow it, then run \
 the wizard again: security: SecKeychainItemCopyContent: User interaction is not allowed." &&
         [ "$(applied)" = "1 $sha" ] ||
-        error "ws wizard --update with read $1 of the item failing exited $status, or ran apply.sh"
+        error "ws mac wizard --update with read $1 of the item failing exited $status, or ran apply.sh"
 }
 
 # applied prints how many times apply.sh ran, then what it logged of its last stdin.
@@ -87,19 +87,19 @@ security default-keychain -d user -s "$keychain"
 
 wizard --check
 [ "$status" = 0 ] &&
-    printf '%s\n' "$out" | grep -qxF 'ws wizard: Hook on ws: after Hook on the Mac' &&
-    [ ! -e "$mac" ] && [ ! -e "$hook" ] || error "ws wizard --check exited $status, or cloned"
+    printf '%s\n' "$out" | grep -qxF 'ws mac wizard: Hook on ws: after Hook on the Mac' &&
+    [ ! -e "$mac" ] && [ ! -e "$hook" ] || error "ws mac wizard --check exited $status, or cloned"
 wizard
 add="security add-generic-password -a $USER -s ws-ci-hook -w"
 [ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF "no terminal is there for $add: run it" &&
     [ -d "$mac/.git" ] && [ ! -e "$hook" ] && [ "$(sends)" = 0 ] ||
-    error "ws wizard without the item exited $status, made no clone on the Mac, or sent one"
+    error "ws mac wizard without the item exited $status, made no clone on the Mac, or sent one"
 wizard --check
 [ "$status" = 0 ] && printf '%s\n' "$out" | grep -qF "Hook on ws: would run $add, which asks " &&
-    printf '%s\n' "$out" | grep -qxF "ws wizard: Hook on ws: would send the Mac's clone of \
+    printf '%s\n' "$out" | grep -qxF "ws mac wizard: Hook on ws: would send the Mac's clone of \
 example/hook to /root/repository/hook on ws, where missing, then run its apply.sh there, its stdin \
 the Keychain item ws-ci-hook" && [ ! -e "$hook" ] && [ "$(sends)" = 0 ] ||
-    error "ws wizard --check with the Mac's clone exited $status, or sent it"
+    error "ws mac wizard --check with the Mac's clone exited $status, or sent it"
 ran=$(sessions)
 git -C "$up" -c user.name=ws -c user.email=ws@example.com commit -q --allow-empty -m newer
 # script gives the wizard a terminal, which apply.sh's ssh must not take. The secret goes in at
@@ -112,18 +112,18 @@ for n in 1 2; do
     done
     printf '%s\n' "$secret"
     sleep 5
-done 2>/dev/null | script -q /dev/null "$wsbin" wizard --update >"$RUNNER_TEMP/tty" 2>&1
+done 2>/dev/null | script -q /dev/null "$wsbin" mac wizard --update >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 [ "$status" = 0 ] && [ "$(applied)" = "1 $sha" ] && [ -f "$stamp" ] &&
     [ "$(sessions)" = $((ran + 1)) ] && [ "$(sends)" = 1 ] ||
-    error "ws wizard --update at a terminal exited $status, or ran apply.sh other than once with it"
+    error "ws mac wizard --update at a terminal exited $status, or ran apply.sh other than once with it"
 [ "$(sudo git -C "$hook" rev-parse HEAD)" = "$(git -C "$up" rev-parse HEAD)" ] &&
     [ "$(sudo git -C "$hook" symbolic-ref --short HEAD)" = main ] &&
     [ "$(sudo git -C "$hook" remote get-url origin)" = https://github.com/example/hook.git ] &&
     [ ! -e "$ws/root/var/lib/ws-wizard/hook-hook.bundle" ] ||
     error "ws's clone is not the Mac's origin/main on branch main, or the bundle stayed"
-! grep -qF "$secret" "$RUNNER_TEMP/tty" || error 'ws wizard printed the secret'
+! grep -qF "$secret" "$RUNNER_TEMP/tty" || error 'ws mac wizard printed the secret'
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] && [ "$(applied)" = "1 $sha" ] ||
     error "the next run exited $status"
@@ -148,13 +148,13 @@ clones=$(grep -c 'sh -s -- clone example/hook$' "$ws/log")
 ran=$(sessions)
 unread 1
 [ -f "$stamp" ] && [ "$(grep -c 'sh -s -- clone example/hook$' "$ws/log")" = "$clones" ] &&
-    [ "$(sessions)" = "$ran" ] || error 'ws wizard with an unreadable item went to ws'
+    [ "$(sessions)" = "$ran" ] || error 'ws mac wizard with an unreadable item went to ws'
 rm /opt/homebrew/bin/security "$RUNNER_TEMP/security.reads" "$RUNNER_TEMP/security.from"
 echo 1 >"$ws/apply.status"
 wizard --update
 [ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'Hook on ws: the clone of example/hook' &&
     [ "$(applied)" = "2 $sha" ] && [ ! -e "$stamp" ] ||
-    error "ws wizard --update with apply.sh exiting 1 exited $status, or kept the stamp"
+    error "ws mac wizard --update with apply.sh exiting 1 exited $status, or kept the stamp"
 rm "$ws/apply.status"
 wizard
 [ "$status" = 0 ] && [ "$(applied)" = "3 $sha" ] && [ -f "$stamp" ] ||
@@ -163,8 +163,8 @@ wizard
 sudo rm "$stamp"
 wizard
 [ "$status" = 0 ] && [ "$(applied)" = "4 $empty" ] ||
-    error "ws wizard without WS_HOOK_SECRET exited $status, with apply.sh's log '$(applied)'"
-[ "$(sends)" = 1 ] || error "ws wizard sent the clone other than once"
+    error "ws mac wizard without WS_HOOK_SECRET exited $status, with apply.sh's log '$(applied)'"
+[ "$(sends)" = 1 ] || error "ws mac wizard sent the clone other than once"
 
 cp "$before" "$conf"
 sudo rm -rf "$hook" "$stamp"
@@ -175,5 +175,5 @@ security list-keychains -d user -s $list
 security default-keychain -d user -s "$default"
 security delete-keychain "$keychain"
 wizard
-[ "$status" = 0 ] && [ -z "$out" ] || error "ws wizard after it exited $status"
+[ "$status" = 0 ] && [ -z "$out" ] || error "ws mac wizard after it exited $status"
 exit "$fail"
