@@ -15,9 +15,11 @@ const percentFull = 100
 // Config is /etc/ws-fans.json. Interval is the tick in seconds and Step the most a fan's speed
 // moves in a tick, in %.
 type Config struct {
-	Interval float64        `json:"interval"`
-	Step     Pair           `json:"step"`
-	Sensors  []SensorConfig `json:"sensors"`
+	Interval float64         `json:"interval"`
+	Step     Pair            `json:"step"`
+	Sensors  []SensorConfig  `json:"sensors"`
+	Curves   []CurveConfig   `json:"curves"`
+	Controls []ControlConfig `json:"controls"`
 }
 
 // Pair is a value for rising and a value for falling.
@@ -37,6 +39,25 @@ type SensorConfig struct {
 	Average string   `json:"average,omitempty"`
 	Seconds float64  `json:"seconds,omitempty"`
 	Max     []string `json:"max,omitempty"`
+}
+
+// CurveConfig is a graph of speed by temperature. Each point is [°C, %].
+type CurveConfig struct {
+	Name       string       `json:"name"`
+	Sensor     string       `json:"sensor"`
+	Points     [][2]float64 `json:"points"`
+	Hysteresis Pair         `json:"hysteresis"`
+	Response   Pair         `json:"response"`
+}
+
+// ControlConfig is a fan, the header of the hwmon device whose fan channel is labelled Label. It
+// runs on the curve named Curve, or at Percent.
+type ControlConfig struct {
+	Name    string   `json:"name"`
+	Hwmon   string   `json:"hwmon"`
+	Label   string   `json:"label"`
+	Curve   string   `json:"curve,omitempty"`
+	Percent *float64 `json:"percent,omitempty"`
 }
 
 // Parse reads and checks a config. It refuses a key it does not know.
@@ -67,6 +88,18 @@ func (c Config) Check() error {
 			return fmt.Errorf("sensor %s: %w", s.Name, err)
 		}
 		sensors[s.Name] = true
+	}
+	curves := map[string]bool{}
+	for _, cv := range c.Curves {
+		if err := cv.check(sensors); err != nil {
+			return fmt.Errorf("curve %s: %w", cv.Name, err)
+		}
+		curves[cv.Name] = true
+	}
+	for _, ct := range c.Controls {
+		if err := ct.check(curves); err != nil {
+			return fmt.Errorf("fan %s: %w", ct.Name, err)
+		}
 	}
 	return nil
 }
@@ -99,6 +132,49 @@ func (s SensorConfig) check(above map[string]bool) error {
 		if !above[name] {
 			return fmt.Errorf("no %s above it", name)
 		}
+	}
+	return nil
+}
+
+// check refuses a curve with no name or no sensor of its own, points whose temperatures do not
+// rise, or a speed outside 0-100%.
+func (cv CurveConfig) check(sensors map[string]bool) error {
+	if cv.Name == "" {
+		return errors.New("no name")
+	}
+	if !sensors[cv.Sensor] {
+		return fmt.Errorf("no sensor %s", cv.Sensor)
+	}
+	if len(cv.Points) == 0 {
+		return errors.New("no points")
+	}
+	for i, p := range cv.Points {
+		if i > 0 && p[0] <= cv.Points[i-1][0] {
+			return errors.New("its points' temperatures do not rise")
+		}
+		if p[1] < 0 || p[1] > percentFull {
+			return errors.New("a speed outside 0-100%")
+		}
+	}
+	if cv.Hysteresis.Up < 0 || cv.Hysteresis.Down < 0 || cv.Response.Up < 0 || cv.Response.Down < 0 {
+		return errors.New("a hysteresis or response time below 0")
+	}
+	return nil
+}
+
+// check refuses a fan with no header, or not exactly one of a curve that exists and a percent.
+func (ct ControlConfig) check(curves map[string]bool) error {
+	if ct.Name == "" || ct.Hwmon == "" || ct.Label == "" {
+		return errors.New("a name, a hwmon device and a label")
+	}
+	if (ct.Curve == "") == (ct.Percent == nil) {
+		return errors.New("a curve that exists, or a percent, and not both")
+	}
+	if ct.Curve != "" && !curves[ct.Curve] {
+		return fmt.Errorf("no curve %s", ct.Curve)
+	}
+	if ct.Percent != nil && (*ct.Percent < 0 || *ct.Percent > percentFull) {
+		return errors.New("a percent outside 0-100%")
 	}
 	return nil
 }
