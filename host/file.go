@@ -20,6 +20,9 @@ type File struct {
 	UID, GID int
 	// Secret keeps the content out of --check's diff, for a password or a key.
 	Secret bool
+	// edit, where set, makes the content from the file as Apply finds it, so that two resources
+	// of one file, planned together, keep each other's edit.
+	edit func(before []byte) []byte
 }
 
 func (f File) attrs() effect.Attrs { return effect.Attrs{UID: f.UID, GID: f.GID, Mode: f.Mode.Perm()} }
@@ -38,6 +41,13 @@ func (c writeFile) String() string {
 }
 
 func (c writeFile) Apply(context.Context) error {
+	if c.f.edit != nil {
+		before, err := c.f.M.ReadRootFile(c.f.Path)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+		c.f.Content = c.f.edit(before)
+	}
 	return c.f.M.WriteAtomic(c.f.Path, c.f.Content, c.f.attrs())
 }
 
