@@ -24,7 +24,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 		}},
 		host.Group{Title: "Devtools Go", Parts: []host.Resource{Go{M: m}}},
 		host.Group{Title: "Devtools rustup", Parts: []host.Resource{
-			Rustup{M: m, User: v.Shared.User, Home: v.Shared.Home},
+			Rustup{M: m, User: v.User, Home: v.Home},
 		}},
 	}
 }

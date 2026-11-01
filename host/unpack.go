@@ -29,7 +29,7 @@ func Unpack(r io.Reader, root *os.Root, strip int) error {
 		if err != nil {
 			return err
 		}
-		defer zr.Close()
+		defer func() { _ = zr.Close() }() // a read only stream
 		r = zr
 	} else {
 		r = br
@@ -55,7 +55,7 @@ func UnpackFile(archive, dir string, strip int) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()                // read only
 	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // a tree for all users to read
 		return err
 	}
@@ -63,7 +63,7 @@ func UnpackFile(archive, dir string, strip int) error {
 	if err != nil {
 		return err
 	}
-	defer root.Close()
+	defer func() { _ = root.Close() }() // the tree is written through Unpack, which reports its errors
 	return Unpack(f, root, strip)
 }
 
@@ -90,7 +90,7 @@ func extract(r io.Reader, hdr *tar.Header, root *os.Root, strip int) error {
 	if err != nil || !ok {
 		return err
 	}
-	perm := fs.FileMode(hdr.Mode).Perm()
+	perm := fs.FileMode(uint32(hdr.Mode & 0o777))
 	if dir := path.Dir(name); dir != "." {
 		if err := root.MkdirAll(dir, 0o755); err != nil {
 			return err
@@ -107,7 +107,7 @@ func extract(r io.Reader, hdr *tar.Header, root *os.Root, strip int) error {
 		if err != nil {
 			return err
 		}
-		_, err = io.Copy(f, r) //nolint:gosec // an archive checked against its SHA-256 before it is unpacked
+		_, err = io.Copy(f, r)
 		if err := errors.Join(err, f.Close()); err != nil {
 			return err
 		}

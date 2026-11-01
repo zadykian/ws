@@ -51,14 +51,14 @@ func archive(t *testing.T, zipped bool, entries ...entry) []byte {
 
 func unpack(t *testing.T, data []byte, strip int) (string, error) {
 	dir := filepath.Join(t.TempDir(), "tree")
-	if err := os.Mkdir(dir, 0o755); err != nil {
+	if err := os.Mkdir(dir, 0o750); err != nil {
 		t.Fatal(err)
 	}
 	root, err := os.OpenRoot(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer root.Close()
+	defer func() { _ = root.Close() }() // the test reads through paths
 	return dir, host.Unpack(bytes.NewReader(data), root, strip)
 }
 
@@ -76,7 +76,7 @@ func TestUnpackStripsTheTopDirectory(t *testing.T) {
 		if err != nil {
 			t.Fatalf("zipped %v: %v", zipped, err)
 		}
-		got, err := os.ReadFile(filepath.Join(dir, "VERSION"))
+		got, err := os.ReadFile(filepath.Join(dir, "VERSION")) //nolint:gosec // a path in the test's own temp tree
 		if err != nil || string(got) != "go1.27.3\n" {
 			t.Errorf("zipped %v: VERSION is %q, %v", zipped, got, err)
 		}
@@ -86,7 +86,7 @@ func TestUnpackStripsTheTopDirectory(t *testing.T) {
 		if l, err := os.Readlink(filepath.Join(dir, "bin", "gofmt")); err != nil || l != "go" {
 			t.Errorf("zipped %v: gofmt links to %q, %v", zipped, l, err)
 		}
-		if b, err := os.ReadFile(filepath.Join(dir, "bin", "again")); err != nil || string(b) != "#!" {
+		if b, err := os.ReadFile(filepath.Join(dir, "bin", "again")); err != nil || string(b) != "#!" { //nolint:gosec // a path in the test's own temp tree
 			t.Errorf("zipped %v: the hard link reads %q, %v", zipped, b, err)
 		}
 		if _, err := os.Stat(filepath.Join(dir, "go")); err == nil {
@@ -157,7 +157,7 @@ func TestUnpackFile(t *testing.T) {
 	if err := host.UnpackFile(file, dir, 1); err != nil {
 		t.Fatal(err)
 	}
-	if b, err := os.ReadFile(filepath.Join(dir, "f")); err != nil || string(b) != "y" {
+	if b, err := os.ReadFile(filepath.Join(dir, "f")); err != nil || string(b) != "y" { //nolint:gosec // a path in the test's own temp tree
 		t.Errorf("f is %q, %v", b, err)
 	}
 	if err := host.UnpackFile(filepath.Join(dir, "missing"), dir, 1); err == nil {
