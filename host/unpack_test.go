@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/host"
@@ -93,5 +94,38 @@ func TestUnpackKeepsTheNamesWithNoStrip(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, "a", "b")); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestUnpackRefuses(t *testing.T) {
+	tests := []struct {
+		name    string
+		entries []entry
+		want    string
+	}{
+		{"an absolute name", []entry{{name: "/etc/x", body: "x"}}, "absolute"},
+		{"a name that goes up", []entry{{name: "a/../../x", body: "x"}}, "leaves the directory"},
+		{"a device", []entry{{name: "a/d", typ: tar.TypeChar}}, "type"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir, err := unpack(t, archive(t, true, tt.entries...), 1)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("got %v, want an error with %q", err, tt.want)
+			}
+			if _, err := os.Stat(filepath.Join(filepath.Dir(dir), "x")); err == nil {
+				t.Error("a file was written beside the tree")
+			}
+		})
+	}
+}
+
+func TestUnpackFailsOnACutArchive(t *testing.T) {
+	data := archive(t, true, entry{name: "a/b", body: strings.Repeat("x", 5000)})
+	if _, err := unpack(t, data[:len(data)/2], 1); err == nil {
+		t.Error("a cut archive unpacked")
+	}
+	if _, err := unpack(t, []byte("not a tarball at all, 512 bytes needed"), 1); err == nil {
+		t.Error("garbage unpacked")
 	}
 }
