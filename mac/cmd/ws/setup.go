@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -126,7 +127,9 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 	term := effect.NewTerminal(strings.NewReader(""), stderr)
 	out := progOut{term, prog, map[string]bool{}}
 	var chosen []step.Step
-	steps := setupSteps(c, home, getenv("XDG_CONFIG_HOME"), getenv("WS_MAC_DIR"), m, out, stdout, check)
+	// WS_MAC_DIR names the mac/ that holds ws.ghostty and the daemon's plist, else the clone's.
+	macDir := cmp.Or(getenv("WS_MAC_DIR"), repoDir(getenv)+"/mac")
+	steps := setupSteps(c, home, getenv("XDG_CONFIG_HOME"), macDir, m, out, stdout, check)
 	if len(args) == 0 {
 		chosen = steps
 		if !check {
