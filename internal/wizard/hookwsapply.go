@@ -28,7 +28,7 @@ func (h *HookWs) Apply(ctx context.Context, p step.Plan) error {
 	if c.HookSecret != "" {
 		in = "the Keychain item " + c.HookSecret
 	}
-	h.Out.Say("%s: %s's apply.sh runs as root on ws, its stdin %s", hookWsStage, c.Hook, in)
+	h.Out.Say("%s: %s apply runs as root on ws, its stdin %s", hookWsStage, hookName(c.Hook), in)
 	h.Run.Remote.Forget()
 	if err := h.deploy(ctx, c.Hook, c.HookSecret); err != nil {
 		var stop hookStop
@@ -48,10 +48,11 @@ func (h *HookWs) deploy(ctx context.Context, hook, secret string) error {
 	if err != nil {
 		return err
 	}
-	if err := h.send(ctx, hook); err != nil {
+	data, sum, err := h.release(ctx, hook)
+	if err != nil {
 		return err
 	}
-	if err := h.Files.Pass(ctx, "clone", hook); err != nil {
+	if err := h.upload(ctx, hook, data, sum); err != nil {
 		return err
 	}
 	if err := h.apply(ctx, hook, secret, in); err != nil {

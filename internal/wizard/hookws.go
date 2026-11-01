@@ -11,6 +11,9 @@ import (
 // hookWsStage names the stage in its messages.
 const hookWsStage = "Hook on ws"
 
+// hookState is the wizard's state on ws, where the files script installs the commands.
+const hookState = "/var/lib/ws-wizard"
+
 // HookWs is the stage that runs the apply.sh of WS_HOOK's repository as root on ws, by plain ssh,
 // never ssh -t, at which such a script could prompt and echo its stdin. Where ws lacks
 // /root/repository/REPO, the Mac's clone goes there first, as a git bundle of origin/main, which the
@@ -47,11 +50,12 @@ func (c hookWsItem) String() string {
 	return hookWsStage + ": would run " + c.cmd + ", which asks for the item's secret at the terminal"
 }
 
-type hookWsRun struct{ hook, dir, in string }
+type hookWsRun struct{ hook, in string }
 
 func (c hookWsRun) String() string {
-	return hookWsStage + ": would send the Mac's clone of " + c.hook + " to " + c.dir + " on ws, where " +
-		"missing, then run its apply.sh there, its stdin " + c.in
+	return hookWsStage + ": would download " + hookRepo(c.hook) + "'s release " + hookTag(c.hook) +
+		" with the Mac's gh, check its SHA-256, send it to ws, then run " + hookName(c.hook) +
+		" apply there as root, its stdin " + c.in
 }
 
 // item returns the command that adds the Keychain item, or an empty string where the Keychain has it.
@@ -88,7 +92,8 @@ func (h *HookWs) Plan(ctx context.Context) (step.Plan, error) {
 	if cmd := h.item(ctx, c.HookSecret); cmd != "" {
 		cs = append(cs, hookWsItem{cmd})
 	}
-	repo := hookRepo(c.Hook)
-	dir := "/root/repository/" + repo[strings.Index(repo, "/")+1:]
-	return step.Plan{Changes: append(cs, hookWsRun{c.Hook, dir, in})}, nil
+	return step.Plan{Changes: append(cs, hookWsRun{c.Hook, in})}, nil
 }
+
+// hookBin returns the path of the command on ws that the files script installs.
+func hookBin(v string) string { return hookState + "/bin/" + hookName(v) + "-" + hookTag(v) }

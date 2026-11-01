@@ -2,6 +2,9 @@ package wizard
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -21,7 +24,8 @@ func TestHookWsPlan(t *testing.T) {
 	for name, tc := range map[string]struct{ conf, status, want string }{
 		"no hook":  {"", "", ""},
 		"stamped":  {"WS_HOOK=me/tools@v1.0.0\n", "hook other/x me/tools@v1.0.0\n", ""},
-		"run":      {"WS_HOOK=me/tools@v1.0.0\n", "", "run its apply.sh there, its stdin empty"},
+		"old tag":  {"WS_HOOK=me/tools@v1.0.1\n", "hook me/tools@v1.0.0\n", "release v1.0.1 with the Mac's gh"},
+		"run":      {"WS_HOOK=me/tools@v1.0.0\n", "", "then run tools apply there as root, its stdin empty"},
 		"keychain": {"WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "", "security add-generic-password -a me -s tok -w"},
 	} {
 		h, m := newHookWs(tc.conf, tc.status)
@@ -37,18 +41,50 @@ func TestHookWsPlan(t *testing.T) {
 	}
 }
 
+// sshLine returns the call that the machine records for an ssh of the arguments.
+func sshLine(h *HookWs, args ...string) string {
+	return "ssh " + strings.Join(h.Host.SSH.argv(args), " ")
+}
+
+// stubRelease gives the fake machine a release of me/tools@v1.0.0 for arch, and the calls that
+// send and install it. sums is the content of tools.sha256.
+func stubRelease(h *HookWs, m *effecttest.Machine, build, sums string) {
+	m.Results[remoteLine(h.Files, "arch")] = effecttest.Result{Out: []byte("arm64\n")}
+	m.Results["env GH_PROMPT_DISABLED=1 /bin/gh release download v1.0.0 -R me/tools -D /l/hook-release "+
+		"--clobber -p tools-linux-arm64 -p tools.sha256"] = effecttest.Result{}
+	m.Files["/l/hook-release/tools-linux-arm64"] = []byte(build)
+	m.Files["/l/hook-release/tools.sha256"] = []byte(sums)
+	m.Results[remoteLine(h.Files, "stage", "me/tools@v1.0.0")] = effecttest.Result{Out: []byte("/s/hook-tools.bin\n")}
+	m.Results[sshLine(h, "-o", "BatchMode=yes", "ws-ssh", "umask 077 && cat >/s/hook-tools.bin")] = effecttest.Result{}
+}
+
+func sumLine(build, name string) string {
+	return fmt.Sprintf("%x  %s\n", sha256.Sum256([]byte(build)), name)
+}
+
 func TestHookWsApply(t *testing.T) {
 	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
-	apply := "ssh " + strings.Join(h.Host.SSH.argv([]string{"-o", "BatchMode=yes", "ws-ssh", "/root/repository/tools/apply.sh"}), " ")
-	m.Results[remoteLine(h.Files, "bundle", "me/tools@v1.0.0")] = effecttest.Result{}
-	m.Results[apply] = effecttest.Result{}
+	bin := hookState + "/bin/tools-v1.0.0"
+	sums := sumLine("build", "tools-linux-arm64") + sumLine("other", "tools-linux-amd64")
+	stubRelease(h, m, "build", sums)
+	sum := fmt.Sprintf("%x", sha256.Sum256([]byte("build")))
+	install := remoteLine(h.Files, "install", "me/tools@v1.0.0", sum)
+	run := sshLine(h, "-o", "BatchMode=yes", "ws-ssh", bin, "apply")
+	m.Results[run] = effecttest.Result{}
 	m.Results[remoteLine(h.Files, "stamp", "me/tools@v1.0.0")] = effecttest.Result{}
 	if err := h.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "failed, as above") {
-		t.Errorf("Apply where the clone op fails = %v", err)
+		t.Errorf("Apply where install fails = %v", err)
 	}
-	m.Results[remoteLine(h.Files, "clone", "me/tools@v1.0.0")] = effecttest.Result{}
+	m.Results[install] = effecttest.Result{}
 	if err := h.Apply(context.Background(), step.Plan{}); err != nil || !h.ran {
 		t.Errorf("Apply = %v, ran %v", err, h.ran)
+	}
+	calls := strings.Join(m.Calls, "\n")
+	if !strings.Contains(calls, "\n"+"run "+run+"\n") || strings.Contains(calls, "clone") || strings.Contains(calls, " -t ") {
+		t.Errorf("Apply ran\n%s", calls)
+	}
+	if !slices.Contains(m.Inputs, "build") {
+		t.Errorf("Apply sent %q; want the build", m.Inputs)
 	}
 }
 
@@ -59,8 +95,8 @@ func TestHookWsApplyUnreadItem(t *testing.T) {
 		t.Errorf("Apply with an unreadable item = %v", err)
 	}
 	for _, c := range m.Calls {
-		if strings.Contains(c, "ssh") || strings.Contains(c, "bundle") {
-			t.Errorf("Apply touched ws before reading the item: %q", c)
+		if strings.Contains(c, "ssh") || strings.Contains(c, "release") {
+			t.Errorf("Apply touched ws or GitHub before reading the item: %q", c)
 		}
 	}
 }
