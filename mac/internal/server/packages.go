@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
@@ -16,10 +18,19 @@ import (
 // only in a real run, not a dry one. ca-certificates serves the playbook's downloads over HTTPS.
 var packages = []string{"ansible-core", "ca-certificates", "python3-apt"}
 
+// updateTries is how often apt-get update runs before the step fails.
+const updateTries = 60
+
 // Packages installs the system packages that the playbook needs.
+//
+// On a new machine, apt's daily timers run soon after the first boot and hold apt's locks for a
+// while. apt-get update has no option to wait for its lock, so it tries again for 10 minutes;
+// apt-get install waits as long for dpkg's.
 type Packages struct {
 	M   effect.Machine
 	Out effect.Out
+	// Sleep waits between the tries of apt-get update. Nil means time.Sleep.
+	Sleep func(time.Duration)
 }
 
 // Name returns the step's name.
@@ -64,4 +75,32 @@ func missingPackages(out string, want []string) []string {
 		}
 	}
 	return missing
+}
+
+// Apply updates apt's lists, then installs the missing packages.
+func (p Packages) Apply(ctx context.Context, pl step.Plan) error {
+	missing := pl.Changes[0].(installChange).missing
+	update := []string{"DEBIAN_FRONTEND=noninteractive", "apt-get", "update"}
+	for try := 1; ; try++ {
+		err := p.M.Pass(ctx, false, "env", update...)
+		if err == nil {
+			break
+		}
+		if try == updateTries {
+			return fmt.Errorf("apt-get update failed %d times: %w", try, err)
+		}
+		p.Out.Say("apt-get update failed, trying again in 10 seconds")
+		p.wait(10 * time.Second)
+	}
+	args := append([]string{"DEBIAN_FRONTEND=noninteractive", "apt-get", "-o", "DPkg::Lock::Timeout=600",
+		"install", "-y", "--no-install-recommends"}, missing...)
+	return p.M.Pass(ctx, false, "env", args...)
+}
+
+func (p Packages) wait(d time.Duration) {
+	if p.Sleep != nil {
+		p.Sleep(d)
+		return
+	}
+	time.Sleep(d)
 }
