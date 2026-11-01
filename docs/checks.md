@@ -7,8 +7,9 @@ on [theirs](gates.md).
 
 ## The playbook
 
-CI also runs `bootstrap.sh` in an Ubuntu 26.04 container, without the tasks tagged `systemd`,
-which need a booted machine. It runs it twice, and the second run must change nothing. Then
+CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
+that the build is `devel`. It runs `ws server apply` twice, without the tasks tagged `systemd`,
+which need a booted machine, and the second run must change nothing. Then
 `nft -c`, with the container's NET_ADMIN, checks the outbound table the play wrote and the users
 it names. The run leaves out its own check under `--skip-tags systemd`
 ([Outbound](security.md#outbound)). Its swap file is 64 MiB, as the runner's disk has no room for

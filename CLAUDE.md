@@ -55,12 +55,12 @@ The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, 
 ([The gates](docs/gates.md)). `make lint`
 needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
 collections into `.cache`, and `tools/run` downloads the rest there.
-
-The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` runs `bootstrap.sh` twice in an
-Ubuntu 26.04 container, `signoz` forges SigNoz's compose files again, and `install` tries
-`install.sh`. `mac` sets up a Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard
-on another. `mac-cld` sets up Ghostty and cld on a third
-([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of the playbook sets up the machine that runs it, as below.
+The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` builds ws and runs `ws server apply`
+twice in an Ubuntu 26.04 container, `signoz` forges SigNoz's compose files again, and `install`
+tries `install.sh`. `mac` sets up a Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's
+wizard on another. `mac-cld` sets up Ghostty and cld on a third
+([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of the playbook sets up the machine
+that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
