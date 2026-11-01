@@ -1,6 +1,7 @@
 package effect
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/google/renameio/v2"
@@ -26,4 +27,22 @@ func (OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
 		return err
 	}
 	return f.CloseAtomicallyReplace()
+}
+
+// Chown sets the owner of the file a link points to. It needs root for another owner than ws's.
+func (OSMachine) Chown(path string, uid, gid int) error { return os.Chown(path, uid, gid) }
+
+// Symlink makes path a link to target, replacing a file or link there through a new link renamed
+// over it.
+func (OSMachine) Symlink(target, path string) error {
+	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
+	_ = os.Remove(tmp)
+	if err := os.Symlink(target, tmp); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	return nil
 }

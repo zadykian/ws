@@ -68,6 +68,10 @@ type Machine interface {
 	// WriteAtomic replaces a file through a pending file, so that a reader sees the old file or the
 	// new one whole, and sets the owner and mode of a. Another owner than ws's own needs root.
 	WriteAtomic(path string, data []byte, a Attrs) error
+	// Chown sets the owner of the file a link points to.
+	Chown(path string, uid, gid int) error
+	// Symlink makes path a link to target, and replaces a file or link there.
+	Symlink(target, path string) error
 	// Mkdir makes the directory with exactly perm, whatever the umask.
 	Mkdir(path string, perm fs.FileMode) error
 	// Chmod sets the mode of the file a link points to.

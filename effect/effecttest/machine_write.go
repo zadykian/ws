@@ -165,19 +165,40 @@ func (m *Machine) Chmod(path string, perm fs.FileMode) error {
 	m.Calls = append(m.Calls, fmt.Sprintf("chmod %s %o", path, perm))
 	if _, ok := m.Dirs[path]; ok {
 		m.Dirs[path] = perm.Perm()
+	} else if a, ok := m.Root[path]; ok {
+		a.Mode = perm.Perm()
+		m.Root[path] = a
 	} else {
 		m.Modes[path] = perm.Perm()
 	}
 	return nil
 }
 
-// WriteAtomic stores the file with its owner and mode, as root's attributes.
+// WriteAtomic stores the file with its mode and owner.
 func (m *Machine) WriteAtomic(path string, data []byte, a effect.Attrs) error {
 	if err := m.write("atomic", path, data, a.Mode); err != nil {
 		return err
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.Root[path] = effect.Attrs{UID: a.UID, GID: a.GID, Mode: a.Mode.Perm()}
+	m.Owners[path] = [2]int{a.UID, a.GID}
+	return nil
+}
+
+// Chown records the owner of the file or directory.
+func (m *Machine) Chown(path string, uid, gid int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Calls = append(m.Calls, fmt.Sprintf("chown %s %d:%d", path, uid, gid))
+	m.Owners[path] = [2]int{uid, gid}
+	return nil
+}
+
+// Symlink stores the link.
+func (m *Machine) Symlink(target, path string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Calls = append(m.Calls, "symlink "+target+" "+path)
+	m.Links[path] = target
 	return nil
 }

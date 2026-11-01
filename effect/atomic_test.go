@@ -28,3 +28,20 @@ func TestWriteAtomic(t *testing.T) {
 		t.Errorf("files beside the target: %v, want the target alone", left)
 	}
 }
+
+func TestSymlinkReplaces(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "l")
+	if err := os.WriteFile(path, []byte("file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m := effect.OSMachine{}
+	for _, target := range []string{"/a", "/b"} {
+		if err := m.Symlink(target, path); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := os.Readlink(path); err != nil || got != target {
+			t.Errorf("Readlink = %q, %v; want %q", got, err, target)
+		}
+	}
+}
