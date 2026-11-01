@@ -43,3 +43,19 @@ func TestReadyWaitsForTheAnswer(t *testing.T) {
 		t.Errorf("apply: %v, want the third try to answer", err)
 	}
 }
+
+func TestReadyGivesUp(t *testing.T) {
+	r, _ := readyFixture(t, 100)
+	p, _ := r.Plan(t.Context())
+	if err := r.Apply(t.Context(), p); err == nil {
+		t.Error("apply succeeded, want it to give up")
+	}
+}
+
+func TestReadySkipsWithoutSystemd(t *testing.T) {
+	r, out := readyFixture(t, 100)
+	delete(r.M.(*effecttest.Machine).Dirs, "/run/systemd/system")
+	if p, err := r.Plan(t.Context()); err != nil || len(p.Changes) != 0 || len(out.Lines) != 1 {
+		t.Errorf("plan = %v, %v, said %q; want a skip said once", p.Changes, err, out.Lines)
+	}
+}
