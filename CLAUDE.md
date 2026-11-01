@@ -101,7 +101,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   them. The list is the secret `WS_WORDS`, and the job fails on an empty one
   ([Cutting a release](docs/releases.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
-  binary ([group_vars/all.yml](group_vars/all.yml)), otelcol's `.deb`
+  binary ([binary.go](internal/server/ikeward/binary.go)), otelcol's `.deb`
   ([download.go](internal/server/otelcol/download.go)) and Docker's apt key
   ([repository.go](internal/server/docker/repository.go)). So are foundryctl
   ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
