@@ -40,3 +40,38 @@ The cases:
 - a wrong `ws.sha256`, and a binary that prints another version, are refused, install nothing and
   keep the installed ws;
 - root installs to `/usr/local/bin`.
+
+## Cutting a release
+
+A release is a tag on `main`, after a stack has landed. ws is at 0.y.z: a change that breaks a
+caller, marked `!`, bumps y, and any other bumps z. Tag the merge commit and push the tag:
+
+```sh
+git switch main && git pull --ff-only
+git tag -s v0.2.0 && git push origin v0.2.0
+```
+
+Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
+
+1. `check`: the tag is `vX.Y.Z`, and `origin/main` holds its commit.
+1. `ci` and `mac`: [ci.yml](../.github/workflows/ci.yml) and
+   [mac.yml](../.github/workflows/mac.yml), called on the tag. Their `playbook` and `mac` jobs run,
+   as on a push to `main`.
+1. `build`: `ws-darwin-arm64`, `ws-linux-amd64` and `ws-linux-arm64` with the Go that
+   [tools/run](../tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
+   `ws.sha256`. The job fails unless `ws version` of the amd64 binary prints the tag.
+1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256` and
+   `install.sh` for the local list's words (CLAUDE.md), from the secret `WS_WORDS`. It fails where
+   the secret is empty, and names a file that holds a word, never the word. Then
+   `gh release create --verify-tag`. Only this job has `contents: write`.
+
+A tag that fails a job publishes nothing. The ruleset below keeps the tag: fix main, and tag the
+next patch version.
+
+## Settings
+
+Three settings are not files, so set them by hand once:
+
+- the secret `WS_WORDS`, the lines of `~/.config/ws/forbidden-words`;
+- a ruleset on the tags `v*` that blocks their update and deletion;
+- immutable releases, so that a published release's files and tag never change.

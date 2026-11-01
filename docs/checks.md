@@ -21,6 +21,11 @@ no VPN profile, so the `ikeward` role does nothing.
 CI runs `install.sh` against releases it lays out and serves on loopback, and checks that it
 installs, updates and refuses what it should ([The install job](releases.md#the-install-job)).
 
+## The release
+
+`release.yml` runs `ci.yml` and `mac.yml` on a tag before it publishes
+([Cutting a release](releases.md#cutting-a-release)).
+
 ## SigNoz's compose files
 
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,

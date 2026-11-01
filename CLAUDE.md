@@ -34,7 +34,8 @@ The rest is the docs, the lint gates' tools and CI.
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
   `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
-  toolkit's checks warn alone.
+  toolkit's checks warn alone. `release.yml`, on a tag `v*`, has `check`, `ci`, `mac`, `build` and
+  `publish`.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
 
@@ -94,6 +95,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   reports a change ([ci.yml](.github/workflows/ci.yml)).
 - A task that needs a booted machine's systemd carries the tag `systemd`, which CI's container run
   skips ([The playbook](docs/checks.md#the-playbook)).
+- `release.yml` checks a release's files and notes for the local list's words before it publishes
+  them. The list is the secret `WS_WORDS`, and the job fails on an empty one
+  ([Cutting a release](docs/releases.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: otelcol's `.deb` and ikeward's
   binary ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
   ([its task](roles/docker/tasks/main.yml)), foundryctl ([ci.yml](.github/workflows/ci.yml)) and
