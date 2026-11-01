@@ -17,7 +17,7 @@ request. It runs as the user, with sudo where it needs root. It sets up Ghostty 
 and cld on the Mac](mac-ghostty.md)), and installs Ghostty and a font from Homebrew,
 [installed](https://brew.sh) first. `mac/bootstrap.sh`, in sh as the Mac has no Go yet, builds `ws`
 into `~/.local/bin` (put it on `PATH` by hand) with the Go that `tools/run` pins, checked by
-SHA-256. Then, with the clone at `~/repository/ws`:
+SHA-256. `ws` embeds the files it installs, so it needs no clone. Then:
 
 ```sh
 ws mac apply

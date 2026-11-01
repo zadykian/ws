@@ -17,11 +17,10 @@ const (
 )
 
 func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *setup.Ghostty {
-	m.Files["/mac/ws.ghostty"] = []byte("font-size = 13\n")
 	m.Dirs["/h/Applications/Ghostty.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
 	return &setup.Ghostty{
-		Home: "/h", Settings: "/mac/ws.ghostty", M: m, Out: out,
+		Home: "/h", Settings: []byte("font-size = 13\n"), M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 		Real:     func(p string) (string, error) { return p, nil },
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/setup"
@@ -67,15 +67,15 @@ func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, check, 
 }
 
 // setupSteps returns the steps of ws mac apply, in the order ws mac apply runs them.
-func setupSteps(c conf.Conf, home, xdg, macDir string, m effect.Machine, out effect.Out, text io.Writer, check bool) []step.Step {
+func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out, text io.Writer, check bool) []step.Step {
 	return []step.Step{
 		sshStep(c, home, m, out, check, false),
 		setup.Cable{Conf: c, M: m, Out: out},
 		&setup.Git{Conf: c, Home: home, XDG: xdg, M: m, Out: out},
 		&setup.Gateway{Home: home, M: m, Out: out},
-		&setup.Ghostty{Home: home, Settings: macDir + "/ws.ghostty", M: m, Out: out},
+		&setup.Ghostty{Home: home, Settings: mac.Ghostty, M: m, Out: out},
 		&setup.Cld{Home: home, M: m, Out: out, Check: check},
-		&setup.Tunnel{Conf: c, Home: home, Plist: macDir + "/com.github.zadykian.ws-tunnel.plist", M: m, Out: out, Text: text,
+		&setup.Tunnel{Conf: c, Home: home, Plist: mac.TunnelPlist, M: m, Out: out, Text: text,
 			Check: check},
 		&setup.Networks{Conf: c, M: m, Out: out, Check: check},
 	}
@@ -127,9 +127,7 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 	term := effect.NewTerminal(strings.NewReader(""), stderr)
 	out := progOut{term, prog, map[string]bool{}}
 	var chosen []step.Step
-	// WS_MAC_DIR names the mac/ that holds ws.ghostty and the daemon's plist, else the clone's.
-	macDir := cmp.Or(getenv("WS_MAC_DIR"), repoDir(getenv)+"/mac")
-	steps := setupSteps(c, home, getenv("XDG_CONFIG_HOME"), macDir, m, out, stdout, check)
+	steps := setupSteps(c, home, getenv("XDG_CONFIG_HOME"), m, out, stdout, check)
 	if len(args) == 0 {
 		chosen = steps
 		if !check {

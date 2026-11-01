@@ -21,7 +21,6 @@ func daemonMachine() *effecttest.Machine {
 	m.Files["/usr/local/libexec/ws-tunnel/ws"] = []byte("ws")
 	m.Files["/etc/ws-tunnel/tunnel.conf"] = []byte(doneConf)
 	m.Files["/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist"] = []byte("plist")
-	m.Files["/m/plist"] = []byte("plist")
 	for path, mode := range map[string]effect.Attrs{
 		"/usr/local": {Mode: 0o755}, "/usr/local/libexec": {Mode: 0o755}, "/usr/local/libexec/ws-tunnel": {Mode: 0o755},
 		"/usr/local/libexec/ws-tunnel/ws": {Mode: 0o755}, "/etc/ws-tunnel": {Mode: 0o700},
@@ -41,7 +40,7 @@ func daemonMachine() *effecttest.Machine {
 func daemonStep(m *effecttest.Machine) *setup.Tunnel {
 	s := tunnelStep(m)
 	s.Conf = conf.Conf{PublicKey: "K"}
-	s.Plist = "/m/plist"
+	s.Plist = []byte("plist")
 	s.Sleep = func(time.Duration) {}
 	return s
 }
@@ -72,9 +71,9 @@ func TestTunnelSignalsTheDaemonWhereTunnelConfAloneChanged(t *testing.T) {
 }
 
 func TestTunnelBootsTheDaemonOutAndInWherePlistChanged(t *testing.T) {
-	m := daemonMachine()
-	m.Files["/m/plist"] = []byte("new")
-	got := tunnelChanges(t, daemonStep(m))
+	s := daemonStep(daemonMachine())
+	s.Plist = []byte("new")
+	got := tunnelChanges(t, s)
 	if len(got) != 3 || got[1] != "would run launchctl bootout system/com.github.zadykian.ws-tunnel" {
 		t.Errorf("Plan = %q; want the plist, bootout and bootstrap", got)
 	}

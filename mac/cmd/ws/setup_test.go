@@ -68,7 +68,7 @@ func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 
 func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
 	var names []string
-	for _, s := range setupSteps(conf.Conf{}, "/h", "", "/m", effecttest.NewMachine(), &effecttest.Out{}, &bytes.Buffer{}, false) {
+	for _, s := range setupSteps(conf.Conf{}, "/h", "", effecttest.NewMachine(), &effecttest.Out{}, &bytes.Buffer{}, false) {
 		names = append(names, s.Name())
 	}
 	want := []string{"ssh", "cable", "git", "gateway", "ghostty", "cld", "tunnel", "networks"}

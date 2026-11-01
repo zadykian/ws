@@ -42,13 +42,11 @@ jobs:
         with:
           persist-credentials: false
       # ws, built into ~/.local/bin as bootstrap.sh builds it, which the cases run as ws mac apply.
-      # WS_MAC_DIR is where ws mac apply finds the plist and ws.ghostty.
       - name: Build ws
         run: |
           . mac/build.sh
           ws_build "$PWD" ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
-          echo "WS_MAC_DIR=$PWD/mac" >>"$GITHUB_ENV"
       # The cases, in .github/mac, run in order from the clone: a new step adds a case there and
       # nothing here.
       - name: The cases

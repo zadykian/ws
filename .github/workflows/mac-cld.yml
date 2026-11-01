@@ -48,7 +48,6 @@ jobs:
           . mac/build.sh
           ws_build "$PWD" ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
-          echo "WS_MAC_DIR=$PWD/mac" >>"$GITHUB_ENV"
       # As in mac.yml: ws mac apply stops where a directory above root's copies isn't root's alone.
       - name: Make /usr/local root's, as on a Mac
         run: |
