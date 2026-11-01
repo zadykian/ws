@@ -24,9 +24,8 @@ ws mac apply
 ```
 
 `ws mac wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
-`ws mac apply STEP` runs one step, and `--check` shows each change and makes none. The Mac's
-commands are `ws mac conf`, `apply`, `tunnel`, `resolver` and `wizard`, built for darwin alone: on
-Linux `ws mac` is unknown. `ws version` prints the version that Go stamped in, or `devel`.
+`ws mac apply STEP` runs one step, and `--check` shows each change and makes none. `ws mac` holds the
+Mac's commands, and darwin alone has it. `ws version` prints the version that Go stamped in.
 
 ## mac.conf
 
@@ -72,13 +71,14 @@ another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a mis
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
 domain comes once and in lower case, with up to 3 addresses split by commas. Once launchd has the
-tunnel's daemon, `ws mac apply` hands both to the same code as `ws mac tunnel routes` and `ws mac resolver`,
-whose caveats hold ([their section](#routes-and-resolvers-of-another-repository)). The networks go
-in `/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver starts with a
-line of `ws mac apply`'s own, so a domain whose file is another script's, or written by hand, stops the
-run. To move a domain from such a script, have it remove its file first, with `ws mac resolver DOMAIN`
-and no address. A key emptied or removed takes back what earlier runs wrote, and only that.
-`--check` shows each change: a diff, or a line for the networks where `routes.d` is still missing.
+tunnel's daemon, `ws mac apply` hands both to the code of `ws mac tunnel routes` and
+`ws mac resolver`, whose caveats hold
+([their section](#routes-and-resolvers-of-another-repository)). The networks go in
+`/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver starts with a
+line of `ws mac apply`'s own, so a domain whose file is another script's, or written by hand, stops
+the run. To move a domain from such a script, have it remove its file first, with
+`ws mac resolver DOMAIN` and no address. A key emptied or removed takes back what earlier runs
+wrote, and only that. `--check` shows each change: a diff, or a line where `routes.d` is missing.
 
 ## ssh's hosts
 
@@ -217,10 +217,10 @@ runs as the user become root. The daemon holds WireGuard's device in its own pro
 needs no `wg` or `wireguard-go`. `ws mac apply` restarts it where a rebuilt `ws` changed the copy.
 
 The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key, which
-`ws mac tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `ws mac apply` keeps the public key in
-`~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from `mac.conf`, so the
-daemon reads no file the user can write. In System Settings › General › Login Items & Extensions,
-its "Allow in the Background" must stay on.
+`ws mac tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `ws mac apply` keeps the public
+key in `~/.config/ws/tunnel.pub`, which the wizard reads, and copies `tunnel.conf` from `mac.conf`,
+so the daemon reads no file the user can write. In System Settings › General › Login Items &
+Extensions, its "Allow in the Background" must stay on.
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
 The daemon fixes both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
@@ -282,15 +282,15 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
 `--check` makes each print its diffs and change nothing:
 
 - `ws mac tunnel routes [--check] NAME CIDR...`, which writes the IPv4 networks to
-`/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
-peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for the
-time being one that holds the endpoint in use, or one that holds a way's endpoint while none
-answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the tunnel's
-`10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in `ws mac tunnel
-routes example 198.51.100.0/24`. - `ws mac resolver [--check] DOMAIN ADDRESS...`, which writes
-`/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks them for the domain's names
-(resolver(5)), and takes the file at once. - `ws mac tunnel loaded`, which says whether the daemon is
-loaded, so that the script can stop with "run ws mac apply first".
+  `/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
+  peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for
+  the time being one that holds the endpoint in use, or one that holds a way's endpoint while none
+  answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the tunnel's
+  `10.99.0.0/24` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in
+  `ws mac tunnel routes example 198.51.100.0/24`. - `ws mac resolver [--check] DOMAIN ADDRESS...`,
+  which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks them for the
+  domain's names (resolver(5)), and takes the file at once. - `ws mac tunnel loaded`, which says
+  whether the daemon is loaded, so that the script can stop with "run ws mac apply first".
 
 With no network or address, each removes its file, `ws mac resolver` only a file it wrote. The files
 outlive the daemon. While the daemon is stopped, the routes go with its utun, and the domain's
