@@ -14,7 +14,7 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 - A role is a tag of `site.yml` of its name, with its page, `docs/NAME.md`, and a line in the
   README ([README](../../README.md)).
 - The play runs on localhost, where the controller's test of a path, such as `is file`, sees the
-  machine's own files ([otelcol's tasks](../../roles/otelcol/tasks/main.yml)).
+  machine's own files ([fans' tasks](../../roles/fans/tasks/service.yml)).
 - The roles set the machine up for `ws_user`, root by default, in `ws_home`
   ([group_vars/all.yml](../../group_vars/all.yml)). A task run as `ws_user` takes
   `become: "{{ ws_user != 'root' }}"` and sets `HOME`. root needs no become, a container has no
@@ -36,7 +36,8 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
   ([Dry runs](../../README.md#dry-runs)). A read, such as a GET, runs in a dry run too,
   `check_mode: false`; a Go step reads in its Plan
   ([devtools](../../internal/server/devtools/golang_plan.go)).
-- Where a dry run skips a task, a task beside it shows what the run would change.
+- Where a dry run skips a task, a task beside it shows what the run would change, as Go's move into
+  `/usr/local/go` does ([fans' tasks](../../roles/fans/tasks/service.yml)).
 - A task that needs a booted machine's systemd is tagged `systemd`, which CI's container run skips.
   An include tagged `systemd` gives its tasks the tag through `apply`, so that `--tags systemd`
   runs them too ([signoz's tasks](../../roles/signoz/tasks/main.yml)).
@@ -53,11 +54,11 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 
 - get_url checks a download against its SHA-256, `checksum: sha256:...`, before it writes `dest`,
   and downloads again where `dest` holds another
-  ([otelcol's tasks](../../roles/otelcol/tasks/main.yml)).
+  ([fans' tasks](../../roles/fans/tasks/service.yml)).
 - An apt repository's key goes in only with the primary fingerprint its entry pins
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
-  checksum its task pins, so that a changed key fails the run
-  ([docker's tasks](../../roles/docker/tasks/main.yml)).
+  checksum its code pins, so that a changed key fails the run
+  ([docker's repository](../../internal/server/docker/repository.go)).
 
 ## signoz and the filter plugins
 

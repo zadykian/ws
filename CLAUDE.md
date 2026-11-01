@@ -100,11 +100,12 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `WS_WORDS`, and the job fails on an empty one
   ([Cutting a release](docs/releases.md#cutting-a-release)).
-- A pinned download is checked against its SHA-256 before use: otelcol's `.deb` and ikeward's
-  binary ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
-  ([its task](roles/docker/tasks/main.yml)), foundryctl ([ci.yml](.github/workflows/ci.yml)) and
-  the gates' tools ([tools/run](tools/run)). So is ws's binary, against its release's `ws.sha256`
-  ([install.sh](install.sh)), and so are the Python tools
+- A pinned download is checked against its SHA-256 before use: ikeward's
+  binary ([group_vars/all.yml](group_vars/all.yml)), otelcol's `.deb`
+  ([download.go](internal/server/otelcol/download.go)) and Docker's apt key
+  ([repository.go](internal/server/docker/repository.go)). So are foundryctl
+  ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
+  binary, against its release's `ws.sha256` ([install.sh](install.sh)), and so are the Python tools
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
   ([homebrew.go](internal/wizard/homebrew.go)). The collections are checked by
   [tools/collections](tools/collections) against the SHA-256 that Galaxy's API lists for the pins.
