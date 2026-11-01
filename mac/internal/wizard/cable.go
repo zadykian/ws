@@ -126,11 +126,16 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
 	}
+	// Under --check, no way to ws-ssh yet means that ws's run is not done either: in stays false,
+	// and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.
 	w, err := c.Host.SSH.Way(ctx)
-	if err != nil {
+	if err != nil && !c.Host.Check {
 		return step.Plan{}, fmt.Errorf("%s: %w", cableStage, err)
 	}
-	in, _ := c.Root.login(ctx, w)
+	in := false
+	if err == nil {
+		in, _ = c.Root.login(ctx, w)
+	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")
 	none := svcSet && svc == ""

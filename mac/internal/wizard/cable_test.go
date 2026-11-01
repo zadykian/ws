@@ -111,6 +111,22 @@ func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 	}
 }
 
+func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
+	c, m, _ := newCable(t, "", cableLink, nil)
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	c.Host.Check = true
+	for k := range m.Results {
+		if strings.HasPrefix(k, "ssh -G") {
+			delete(m.Results, k)
+		}
+	}
+	p, err := c.Plan(context.Background())
+	out := strings.Join(c.Out.(*effecttest.Out).Lines, "\n")
+	if err != nil || len(p.Changes) != 0 || out != "say: Cable: after ws's run" {
+		t.Errorf("Plan = %v, %v, said %q; want the stage after ws's run", p, err, out)
+	}
+}
+
 func TestCablePlanReadsNoPortsWhereTheEnvironmentNamesOne(t *testing.T) {
 	c, m, _ := newCable(t, "", cableLink, map[string]string{"WS_CABLE_PORT": "eth1"})
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
