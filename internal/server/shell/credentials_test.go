@@ -3,6 +3,7 @@ package shell
 import (
 	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/internal/server/values"
@@ -50,5 +51,37 @@ func TestTokensConfigIsTheRolesRendering(t *testing.T) {
 	want, rerr := os.ReadFile("testdata/tokens.gitconfig")
 	if err != nil || rerr != nil || string(got) != string(want) {
 		t.Errorf("got %q (%v), want the role's rendering (%v)", got, err, rerr)
+	}
+}
+
+func TestCheckCredentials(t *testing.T) {
+	ok := values.GitCredential{URL: "https://a.example/x", Token: "t"}
+	kept := []string{"credential.https://a.example_x.helper"}
+	cases := map[string]struct {
+		creds []values.GitCredential
+		keys  []string
+		bad   bool
+	}{
+		"good":                  {[]values.GitCredential{ok, {URL: "https://b.example", Token: "t", Username: "u", State: "present"}}, nil, false},
+		"absent needs no token": {[]values.GitCredential{{URL: "https://b.example", State: "absent"}}, nil, false},
+		"http":                  {[]values.GitCredential{{URL: "http://a.example", Token: "t"}}, nil, true},
+		"quote in url":          {[]values.GitCredential{{URL: `https://a"b`, Token: "t"}}, nil, true},
+		"space in url":          {[]values.GitCredential{{URL: "https://a b", Token: "t"}}, nil, true},
+		"state":                 {[]values.GitCredential{{URL: "https://a.b", Token: "t", State: "gone"}}, nil, true},
+		"no token":              {[]values.GitCredential{{URL: "https://a.b"}}, nil, true},
+		"token space":           {[]values.GitCredential{{URL: "https://a.b", Token: "a b"}}, nil, true},
+		"username":              {[]values.GitCredential{{URL: "https://a.b", Token: "t", Username: "a\tb"}}, nil, true},
+		"same url twice":        {[]values.GitCredential{ok, ok}, nil, true},
+		"same file":             {[]values.GitCredential{{URL: "https://a.b/c", Token: "t"}, {URL: "https://a.b?c", Token: "t"}}, nil, true},
+		"kept clash":            {[]values.GitCredential{{URL: "https://a.example/x", Token: "t", State: "absent"}, {URL: "https://z", Token: "t"}}, kept, true},
+	}
+	for name, c := range cases {
+		err := checkCredentials(c.creds, c.keys)
+		if (err != nil) != c.bad {
+			t.Errorf("%s: %v, want an error: %v", name, err, c.bad)
+		}
+		if err != nil && strings.Contains(err.Error(), "hunter") {
+			t.Errorf("%s: the message shows a token", name)
+		}
 	}
 }
