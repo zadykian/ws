@@ -13,8 +13,8 @@
 #   updates its own. It stops where the path holds no clone, another repository's, or a clone with
 #   no apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
 #   or is cut short leaves none.
-# - stamp OWNER/REPO stamps REPO's apply.sh, which exited 0, with the clone's commit and OWNER/REPO.
-#   The remote script's status lists the repositories that have a stamp, as OWNER/REPO.
+# - stamp OWNER/REPO[@TAG] stamps REPO's apply.sh, which exited 0, with the clone's commit and the
+#   value. The remote script's status lists the repositories that have a stamp, as the value.
 # - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
 #   read, or - where root has none. words HASH prints the list, while its hash is HASH.
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
@@ -48,35 +48,46 @@ die() {
     exit 1
 }
 
-# repo OWNER/REPO[@TAG] sets repo to REPO, where OWNER/REPO names a repository on GitHub, as mac.conf's
-# WS_HOOK does, and drops the @TAG. Each side of the / is letters, digits and ._-, and neither . or .. alone,
-# and REPO isn't ws, ws's own clone, in any letter case, which APFS and GitHub ignore. It stops otherwise.
-# It sets pack, REPO's bundle in state, as well.
+# repo OWNER/REPO[@TAG] sets slug to OWNER/REPO and repo to REPO, where OWNER/REPO names a repository on
+# GitHub, as mac.conf's WS_HOOK does, and tag to TAG, or nothing. Each side of the / is letters, digits
+# and ._-, and neither . or .. alone, and REPO isn't ws, ws's own clone, in any letter case, which APFS
+# and GitHub ignore. TAG is a release, vX.Y.Z. It stops otherwise. It sets pack, REPO's bundle in
+# state, as well.
 repo() {
-    set -- "${1%%@*}"
-    case $1 in
+    slug=${1%%@*}
+    tag=
+    case $1 in *@*) tag=${1#*@} ;; esac
+    case $slug in
     *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */[Ww][Ss]) ;;
     */*)
-        repo=${1#*/}
+        repo=${slug#*/}
         pack=$state/hook-$repo.bundle
         return 0
         ;;
     esac
-    die "'$1' is not a repository on GitHub, as OWNER/REPO, with a REPO other than ws"
+        [ -z "$tag" ] || printf '%s\n' "$tag" | grep -Eqx 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' ||
+            die "'$tag' is not a release, as vX.Y.Z"
+    die "'$slug' is not a repository on GitHub, as OWNER/REPO, with a REPO other than ws"
 }
 
-# bundle OWNER/REPO prints the path for REPO's bundle, as the header says.
+# bundle OWNER/REPO[@TAG] prints the path for REPO's bundle, as the header says.
 bundle() {
     repo "$1"
     rm -f "$pack"
-    [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ] || return 0
+    if [ -e "$repos/$repo" ] || [ -L "$repos/$repo" ]; then
+        [ -n "$tag" ] || return 0
+        cur=$(git -C "$repos/$repo" rev-parse -q --verify HEAD 2>/dev/null) || cur=
+        [ -z "$cur" ] || [ "$(git -C "$repos/$repo" rev-parse -q --verify "refs/tags/$tag^{commit}" \
+            2>/dev/null)" != "$cur" ] || return 0
+    fi
     mkdir -p "$state"
     echo "$pack"
 }
 
-# unbundle OWNER/REPO makes the clone in repos from REPO's bundle. The clone is built beside its
-# place and moved there whole, so that no failure leaves half of one for the next run to take. The
-# bundle holds origin/main, so the branch main is made from it, with that as its upstream.
+# unbundle OWNER/REPO[@TAG] makes the clone in repos from REPO's bundle. The clone is built beside
+# its place and moved there whole, so that no failure leaves half of one for the next run to take.
+# The bundle holds origin/main, so the branch main is made from it, with that as its upstream. Given
+# a tag, it holds that tag alone, which the clone is detached at.
 unbundle() {
     [ -f "$pack" ] || die "ws lacks $repos/$repo, and the Mac sent no bundle: run the wizard again"
     part=$repos/.$repo.part
@@ -206,8 +217,8 @@ main() {
     words) words "${2-}" ;;
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh bundle OWNER/REPO |" \
-        "clone OWNER/REPO | stamp OWNER/REPO | words [HASH] | wait PORT | link [PORT]" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh bundle OWNER/REPO[@TAG] |" \
+        "clone OWNER/REPO[@TAG] | stamp OWNER/REPO[@TAG] | words [HASH] | wait PORT | link [PORT]" ;;
     esac
 }
 
