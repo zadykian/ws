@@ -42,7 +42,7 @@ func TestHostKeyLink(t *testing.T) {
 		m.Modes[hostsOf] = fs.ModeSymlink
 		err := h.add(context.Background())
 		said := strings.Join(h.Out.(*effecttest.Out).Lines, "\n")
-		if err == nil || strings.Contains(said, "say: ws "+hostLine) == check {
+		if err == nil || strings.Contains(said, "raw: ws "+hostLine) == check {
 			t.Errorf("check %v: add = %v, said %q; want a stop, and the line unless checking", check, err, said)
 		}
 	}

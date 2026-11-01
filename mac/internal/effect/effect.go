@@ -27,6 +27,8 @@ type Out interface {
 	Warn(format string, a ...any)
 	// Diff shows a unified diff of the lines of before and after.
 	Diff(name string, before, after []byte)
+	// Raw prints a line as it is, with no prefix of the program, such as a line to copy.
+	Raw(format string, a ...any)
 	// ByHand keeps a line, and prints it once the run ends.
 	ByHand(format string, a ...any)
 }

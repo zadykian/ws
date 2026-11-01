@@ -61,7 +61,7 @@ func (h *HostKey) write(file, line string) error {
 			return fmt.Errorf("%s: %s: a run would print ws's line for its file", hostStage, why)
 		}
 		h.Out.Say("%s: %s: add this line to its file, then run the wizard again", hostStage, why)
-		h.Out.Say("ws %s", line)
+		h.Out.Raw("ws %s", line)
 		return fmt.Errorf("%s: %s", hostStage, "known_hosts is left as it is")
 	}
 	mode := fs.FileMode(0o600)

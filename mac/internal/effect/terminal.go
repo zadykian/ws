@@ -56,6 +56,11 @@ func (t *Terminal) Say(format string, a ...any) {
 	_, _ = fmt.Fprintf(t.w, format+"\n", a...)
 }
 
+// Raw prints a line as it is.
+func (t *Terminal) Raw(format string, a ...any) {
+	_, _ = fmt.Fprintf(t.w, format+"\n", a...)
+}
+
 // Warn prints a line that starts with "warning: ".
 func (t *Terminal) Warn(format string, a ...any) {
 	_, _ = fmt.Fprintf(t.w, "warning: "+format+"\n", a...)

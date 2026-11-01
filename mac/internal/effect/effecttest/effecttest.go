@@ -34,7 +34,7 @@ func (p *Prompt) Ask(_ context.Context, q effect.Question) (string, error) {
 	return answer, nil
 }
 
-// Out records what is said, one entry per call, as "say: ...", "warn: ...", "diff: NAME" or
+// Out records what is said, one entry per call, as "say: ...", "raw: ...", "warn: ...", "diff: NAME" or
 // "by hand: ...".
 type Out struct {
 	Lines []string
@@ -42,6 +42,9 @@ type Out struct {
 
 // Say records a line.
 func (o *Out) Say(format string, a ...any) { o.add("say: ", format, a) }
+
+// Raw records a line that has no prefix.
+func (o *Out) Raw(format string, a ...any) { o.add("raw: ", format, a) }
 
 // Warn records a warning.
 func (o *Out) Warn(format string, a ...any) { o.add("warn: ", format, a) }
