@@ -41,11 +41,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # ws, built into ~/.local/bin as bootstrap.sh builds it, which the cases run as ws mac apply.
+      # ws, built into ~/.local/bin by tools/build, which the cases run as ws mac apply.
       - name: Build ws
         run: |
-          . mac/build.sh
-          ws_build "$PWD" ~/.local/bin/ws
+          sh tools/build darwin arm64 ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
       # The cases, in .github/mac, run in order from the clone: a new step adds a case there and
       # nothing here.

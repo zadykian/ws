@@ -33,13 +33,10 @@ jobs:
         run: |
           mkdir -p ~/repository
           cp -R "$GITHUB_WORKSPACE" ~/repository/ws
-      # ws is built from the clone into ~/.local/bin, as bootstrap.sh builds it, and the cases run
-      # it as ws mac wizard.
+      # ws is built from the clone into ~/.local/bin by tools/build, and the cases run it as
+      # ws mac wizard.
       - name: Build ws
-        run: |
-          # shellcheck source=/dev/null # the clone is copied to ~/repository/ws above
-          . ~/repository/ws/mac/build.sh
-          ws_build ~/repository/ws ~/.local/bin/ws
+        run: sh ~/repository/ws/tools/build darwin arm64 ~/.local/bin/ws
       - name: The stand-ins
         run: sh ~/repository/ws/.github/mac-wizard/standin.sh
       - name: The cases
