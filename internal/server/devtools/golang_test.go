@@ -3,6 +3,7 @@ package devtools
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -77,5 +78,42 @@ func TestGoKeepsTheTarballThatIsRight(t *testing.T) {
 	changes, err := f.g.Plan(context.Background())
 	if err != nil || len(changes) != 1 || !strings.HasPrefix(changes[0].String(), "install Go") {
 		t.Errorf("got %v, %v", changes, err)
+	}
+}
+
+func TestGoRemovesWhatARunCutShortLeft(t *testing.T) {
+	f := newGoFixture(t, goFile)
+	f.m.Files[goDir+"/VERSION"] = []byte("go1.27.3\n")
+	f.m.Files[goTarball] = []byte("x")
+	f.m.Files[goStaging] = []byte("x") // the fake removes files alone, not directories
+	changes, err := f.g.Plan(context.Background())
+	if err != nil || len(changes) != 2 {
+		t.Fatalf("got %d changes, %v", len(changes), err)
+	}
+	apply(t, changes)
+	if changes, err := f.g.Plan(context.Background()); err != nil || len(changes) != 0 {
+		t.Errorf("a second plan has %v, %v", changes, err)
+	}
+}
+
+func TestGoFails(t *testing.T) {
+	f := newGoFixture(t, "go1.27.3.linux-arm64.tar.gz")
+	if _, err := f.g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "lists no "+goFile) {
+		t.Errorf("a list without the file: %v", err)
+	}
+	f = newGoFixture(t, goFile)
+	f.m.Results[curl+goReleases] = effecttest.Result{Err: errors.New("503")}
+	if _, err := f.g.Plan(context.Background()); err == nil {
+		t.Error("a failed fetch planned")
+	}
+	f = newGoFixture(t, goFile)
+	f.g.unpack = func(string, string, int) error { return errors.New("cut short") }
+	changes, _ := f.g.Plan(context.Background())
+	apply(t, changes[:1])
+	if err := changes[1].Apply(context.Background()); err == nil {
+		t.Error("an unpack that failed went on")
+	}
+	if slices.Contains(f.m.Calls, "root mv "+goStaging+" "+goDir) {
+		t.Error("a tree cut short was moved into place")
 	}
 }
