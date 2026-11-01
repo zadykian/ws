@@ -38,6 +38,8 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 		}}, nil
 	}), owned(user, m, "Shell secret env", "", func(a account) ([]host.Resource, error) {
 		return []host.Resource{secretEnv{M: m, A: a, Env: s.Shell.SecretEnv}}, nil
+	}), owned(user, m, "Shell git tokens", "", func(a account) ([]host.Resource, error) {
+		return []host.Resource{tokens{M: m, A: a, Creds: s.Shell.GitCredentials}}, nil
 	}))
 }
 
