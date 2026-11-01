@@ -31,7 +31,12 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 			return allowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners, v.Shell.GitEmail), nil
 		}))
 	}
-	return steps
+	return append(steps, owned(user, m, "Shell git config", "", func(a account) ([]host.Resource, error) {
+		return []host.Resource{gitconfig{
+			M: m, Out: out, A: a, Name: v.Shell.GitName, Email: v.Shell.GitEmail, Signing: v.Shell.GitSigning,
+			Key: v.GitSigningKey, Signers: v.Shell.GitAllowedSigners,
+		}}, nil
+	}))
 }
 
 const keyStep = "Shell signing key"
