@@ -3,6 +3,8 @@
 package shell
 
 import (
+	"runtime"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server/secrets"
@@ -12,10 +14,14 @@ import (
 
 // Steps returns the role's steps in order. Packages come first, as ble.sh and bash-completion
 // serve the files after.
-func Steps(_ values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: "Shell packages", Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"bash-completion", "ble.sh"}},
 		}},
+		owned(user, m, "Shell files", "", func(a account) ([]host.Resource, error) {
+			return dotfiles(m, a, runtime.GOARCH)
+		}),
 	}
 }
