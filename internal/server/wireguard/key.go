@@ -76,3 +76,17 @@ func (k key) Plan(context.Context) ([]host.Change, error) {
 	}
 	return nil, nil
 }
+
+// serverPublicKey returns the public key of the private key in the file, and whether the file
+// exists.
+func serverPublicKey(m effect.Machine) (string, bool, error) {
+	text, err := m.ReadRootFile(keyFile)
+	if errors.Is(err, fs.ErrNotExist) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+	public, err := wgkey.Public(strings.TrimSpace(string(text)))
+	return public, err == nil, err
+}
