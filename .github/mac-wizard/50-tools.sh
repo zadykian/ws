@@ -1,20 +1,12 @@
 #!/bin/sh
-# bootstrap.sh on the Mac that 40-again.sh leaves, by sh from the clone's file on stdin, as
-# curl | sh runs it, with standin.sh's PATH, which lacks brew. It must find the runner's Command
-# Line Tools and brew, use the clone as it is, and point its core.hooksPath at its .githooks once.
-# The wizard it runs prints nothing, so a second run and --check must print nothing at all. Where
-# WS_CONF names no file, the wizard under bootstrap.sh's --check must show the lines it would write
-# there, from the environment's answers. Writing none shows that --check reached it. In a home
-# without a clone, --check must name the clone, and make nothing outside
-# macOS's Library. The first run builds ws into ~/.local/bin, and tools/run's download of Go, which
-# the log shows, is not counted in what it prints. The workflow built ws there, so
-# the case removes it first, as on a Mac that has none. --check then names the build, and runs no
-# wizard.
+# The wizard on the Mac that 40-again.sh leaves, with standin.sh's PATH, which lacks brew. Its Tools
+# and Homebrew stages must find the runner's Command Line Tools and brew, so that a run and
+# --check print nothing at all. Where WS_CONF names no file, --check must show the lines the wizard
+# would write there, from the environment's answers, and write none.
 
 set -u
 
-clone=$HOME/repository/ws
-bootstrap=$clone/mac/bootstrap.sh
+wsbin=$HOME/.local/bin/ws
 path=$(cat "$RUNNER_TEMP/path")
 fail=0
 
@@ -24,64 +16,22 @@ error() {
     fail=1
 }
 
-# boot WANT ARG...: bootstrap.sh by stdin, with ARGs, must exit 0 and print WANT alone. It must
-# leave the clone's HEAD and files as they were.
-boot() {
-    want=$1
-    shift
-    out=$(PATH=$path sh -s -- "$@" <"$bootstrap" 2>&1)
+for args in '' --check; do
+    out=$(PATH=$path "$wsbin" mac wizard ${args:+"$args"} 2>&1)
     status=$?
-    out=$(printf '%s\n' "$out" | grep -v '^tools/run: downloading ')
     printf '%s\n' "$out"
-    [ "$status" = 0 ] || error "bootstrap.sh $* exited $status"
-    [ "$out" = "$want" ] || error "bootstrap.sh $* printed other than '$want'"
-    [ "$(git -C "$clone" rev-parse HEAD) $(git -C "$clone" status --porcelain)" = "$kept" ] ||
-        error "bootstrap.sh $* changed the clone"
-}
+    [ "$status" = 0 ] || error "ws mac wizard${args:+ $args} exited $status"
+    [ -z "$out" ] || error "ws mac wizard${args:+ $args} printed what it should not"
+done
 
-# The checkout sets no core.hooksPath, and none is set here, so that the first run sets it.
-git -C "$clone" config --unset core.hooksPath
-kept="$(git -C "$clone" rev-parse HEAD) $(git -C "$clone" status --porcelain)"
-out=$(sh -s -- --bogus <"$bootstrap" 2>&1)
-status=$?
-[ "$status" = 1 ] && [ "$out" = "bootstrap.sh: unknown argument '--bogus'; usage: bootstrap.sh \
-[--check] [--update]" ] || error "bootstrap.sh --bogus exited $status, printing '$out'"
-ws=$HOME/.local/bin/ws
-rm -f "$ws"
-boot "bootstrap.sh: Clone: would set core.hooksPath to $clone/.githooks
-bootstrap.sh: Ws: would build ws into $ws with the Go that tools/run pins" --check
-[ ! -e "$ws" ] || error 'bootstrap.sh --check built ws'
-boot "bootstrap.sh: Clone: set core.hooksPath to $clone/.githooks
-bootstrap.sh: Ws: building ws into $ws"
-[ "$(git -C "$clone" config core.hooksPath)" = "$clone/.githooks" ] ||
-    error 'bootstrap.sh set no core.hooksPath'
-boot ''
-boot '' --check
-
-# The wizard, given bootstrap.sh's arguments, shows what it would write to a mac.conf not there.
-conf=$RUNNER_TEMP/boot.conf
+conf=$RUNNER_TEMP/tools.conf
 out=$(WS_CONF=$conf WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' WS_HOOK='' PATH=$path \
-    sh -s -- --check <"$bootstrap" 2>&1)
+    "$wsbin" mac wizard --check 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
-    error "bootstrap.sh --check exited $status, with no line the wizard would write to $conf"
-[ ! -e "$conf" ] || error "bootstrap.sh --check let the wizard write $conf"
+    error "ws mac wizard --check exited $status, with no line the wizard would write to $conf"
+[ ! -e "$conf" ] || error "ws mac wizard --check wrote $conf"
 rm -f "$conf"
-
-# Without a clone, --check names the clone alone: there is no ws to run.
-home=$(mktemp -d "$RUNNER_TEMP/home.XXXXXX")
-want="bootstrap.sh: Clone: would clone https://github.com/zadykian/ws into $home/repository/ws"
-out=$(HOME=$home PATH=$path sh -s -- --check <"$bootstrap" 2>&1)
-status=$?
-printf '%s\n' "$out"
-[ "$status" = 0 ] && [ "$out" = "$want" ] ||
-    error "bootstrap.sh --check without a clone exited $status, printing other than '$want'"
-# Library is macOS's: a program that bootstrap.sh runs may make it in a new home, as one did on
-# the runner's image 20261026.0455, while bootstrap.sh writes nothing there. The log lists it.
-find "$home/Library" 2>/dev/null
-made=$(find "$home" -mindepth 1 -maxdepth 1 ! -name Library)
-[ -z "$made" ] || error "bootstrap.sh --check made $made without a clone"
-rm -rf "$home"
 exit "$fail"
