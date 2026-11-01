@@ -14,7 +14,7 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 - A role is a tag of `site.yml` of its name, with its page, `docs/NAME.md`, and a line in the
   README ([README](../../README.md)).
 - The play runs on localhost, where the controller's test of a path, such as `is file`, sees the
-  machine's own files ([fans' tasks](../../roles/fans/tasks/service.yml)).
+  machine's own files ([claude's telemetry](../../roles/claude/tasks/telemetry.yml)).
 - The roles set the machine up for `ws_user`, root by default, in `ws_home`
   ([group_vars/all.yml](../../group_vars/all.yml)). A task run as `ws_user` takes
   `become: "{{ ws_user != 'root' }}"` and sets `HOME`. root needs no become, a container has no
@@ -37,7 +37,7 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
   `check_mode: false`; a Go step reads in its Plan
   ([devtools](../../internal/server/devtools/golang_plan.go)).
 - Where a dry run skips a task, a task beside it shows what the run would change, as Go's move into
-  `/usr/local/go` does ([fans' tasks](../../roles/fans/tasks/service.yml)).
+  `/usr/local/go` does ([claude's marketplaces](../../roles/claude/tasks/marketplaces.yml)).
 - A task that needs a booted machine's systemd is tagged `systemd`, which CI's container run skips.
 - A file a role writes has a `# Written by github.com/zadykian/ws` line at its top, where its format
   takes comments, as the roles' templates and files do. Each run replaces a change made to it by
@@ -52,7 +52,7 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 
 - get_url checks a download against its SHA-256, `checksum: sha256:...`, before it writes `dest`,
   and downloads again where `dest` holds another
-  ([fans' tasks](../../roles/fans/tasks/service.yml)).
+  ([the Go download](../../host/download.go)).
 - An apt repository's key goes in only with the primary fingerprint its entry pins
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
   checksum its code pins, so that a changed key fails the run

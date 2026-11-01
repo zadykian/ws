@@ -11,8 +11,8 @@ The rest is the docs, the lint gates' tools and CI.
 - `site.yml`: the play, on localhost, each role a tag of its name. `ws server apply`
   installs ansible-core and runs the play that the installed ws embeds, by `--only` for some roles.
 - `roles/NAME`: a role per tag, each with its page, `docs/NAME.md`, and a line in the README. The
-  filter plugins, in Python, are in `roles/NAME/filter_plugins`; ws-fans, the fans' service, is
-  Python too, in `roles/fans/files`.
+  filter plugins, in Python, are in `roles/NAME/filter_plugins`. A ported role is Go steps in
+  `internal/server/NAME`; ws-fans, the fans' service, is `ws server fans`, in `internal/fans`.
 - `group_vars/all.yml`: what roles share, `ws_user`, `ws_home` and `ws_git_signing_key`, and the
   versions, each named for its role. `/etc/ws/host_vars.yml`, on the machine alone: its own
   values, such as the cable's port ([The direct link](docs/network.md#the-direct-link)).
