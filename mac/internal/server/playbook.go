@@ -8,6 +8,7 @@ import (
 	"path"
 	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
@@ -36,6 +37,56 @@ func (Playbook) Name() string { return playbookStage }
 
 // WaitsOn returns the packages, as ansible-galaxy comes with them.
 func (Playbook) WaitsOn() string { return packagesStage }
+
+// varsChange makes the machine's values, empty, where there are none.
+type varsChange struct {
+	path    string
+	makeDir bool // the directory of the file is missing
+}
+
+func (c varsChange) String() string { return "write " + c.path + " with no values" }
+
+// unpackChange unpacks the playbook into dir, which holds another content or none.
+type unpackChange struct {
+	dir, digest string
+	makeLib     bool // the directory of dir is missing
+}
+
+func (c unpackChange) String() string { return "unpack the playbook into " + c.dir }
+
+// pruneChange removes the entries of Lib that are not the version's.
+type pruneChange struct{ paths []string }
+
+func (c pruneChange) String() string { return "remove " + strings.Join(c.paths, ", ") }
+
+// state is what Plan reads of the machine.
+type state struct {
+	varsMissing, varsDirMissing, libMissing bool
+	unpacked                                string // the digest of Lib/VERSION, empty where none
+	entries                                 []string
+}
+
+// changes decides what to do, from the digest of the embedded playbook and the state.
+func changes(lib, vars, version, digest string, s state) []step.Change {
+	var out []step.Change
+	if s.varsMissing {
+		out = append(out, varsChange{path: vars, makeDir: s.varsDirMissing})
+	}
+	dir := path.Join(lib, version)
+	if s.unpacked != digest {
+		out = append(out, unpackChange{dir: dir, digest: digest, makeLib: s.libMissing})
+	}
+	var others []string
+	for _, e := range s.entries {
+		if e != version {
+			others = append(others, path.Join(lib, e))
+		}
+	}
+	if len(others) > 0 {
+		out = append(out, pruneChange{paths: others})
+	}
+	return out
+}
 
 // checkVersion refuses a version that is no directory name.
 func checkVersion(v string) error {
@@ -71,7 +122,7 @@ func checkCollections(fsys fs.FS) error {
 	return nil
 }
 
-// Plan checks the version and the collections.
+// Plan reads the machine and makes the changes.
 func (p Playbook) Plan(_ context.Context) (step.Plan, error) {
 	if err := checkVersion(p.Version); err != nil {
 		return step.Plan{}, err
@@ -79,5 +130,35 @@ func (p Playbook) Plan(_ context.Context) (step.Plan, error) {
 	if err := checkCollections(p.FS); err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{}, nil
+	digest, err := Digest(p.FS)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	var s state
+	if _, err := p.M.Stat(p.Vars); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return step.Plan{}, err
+		}
+		s.varsMissing = true
+		if _, err := p.M.Stat(path.Dir(p.Vars)); errors.Is(err, fs.ErrNotExist) {
+			s.varsDirMissing = true
+		} else if err != nil {
+			return step.Plan{}, err
+		}
+	}
+	switch data, err := p.M.ReadFile(path.Join(p.Lib, p.Version, ".unpacked")); {
+	case err == nil:
+		s.unpacked = strings.TrimSpace(string(data))
+	case !errors.Is(err, fs.ErrNotExist):
+		return step.Plan{}, err
+	}
+	switch names, err := p.M.ReadDir(p.Lib); {
+	case err == nil:
+		s.entries = names
+	case errors.Is(err, fs.ErrNotExist):
+		s.libMissing = true
+	default:
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: changes(p.Lib, p.Vars, p.Version, digest, s)}, nil
 }
