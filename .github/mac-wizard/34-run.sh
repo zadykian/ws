@@ -110,7 +110,7 @@ started 0 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" =
 rm "$WS_CONF"
 unset WS_CONF
 "$wsbin" mac wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
-grep -q "^- ws's outbound table: off, as ws's host_vars names security_outbound: false, " \
+grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, " \
     "$RUNNER_TEMP/run.out" || error "ws mac wizard --update on the LAN named no table left off"
 sudo rm -r "${vars%/*}"
 exit "$fail"

@@ -41,7 +41,7 @@ wg0() {
 # 10.77.0.1/30, once networkd sees carrier, which the cases' sysfs shows.
 direct() {
     port=$(sed -n 's/^network_direct_link_interface: "\(.*\)"$/\1/p' \
-        "$s/root/root/repository/ws/host_vars/localhost.yml" 2>/dev/null)
+        "$s/root"/etc/ws/host_vars.yml 2>/dev/null)
     netplan=$s/root/etc/netplan/60-direct-link.yaml
     rm -f "$netplan"
     [ -z "$port" ] || { mkdir -p "${netplan%/*}" && echo "    \"$port\":" >"$netplan"; } || return 1

@@ -20,7 +20,7 @@
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
-#   or -. link PORT names that port in ws's host_vars/localhost.yml as
+#   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
 #   network_direct_link_interface, the port of the Mac's cable, which the network and wireguard
 #   roles read.
 #
@@ -29,13 +29,13 @@
 set -eu
 
 # The wizard's stamps and bundles, the repositories' clones, root's word list, sysfs's network
-# interfaces and the host_vars file in ws's clone. CI's stand-in for ws roots each, a line
+# interfaces and the machine's values for ws's playbook. CI's stand-in for ws roots each, a line
 # NAME=PATH, in a directory of its own.
 state=/var/lib/ws-wizard
 repos=/root/repository
 list=/root/.config/ws/forbidden-words
 net=/sys/class/net
-vars=/root/repository/ws/host_vars/localhost.yml
+vars=/etc/ws/host_vars.yml
 
 # say prints a message of the script's on stderr.
 say() {
@@ -168,8 +168,8 @@ link_wait() {
 
 # link [PORT] lists the ports, as the header says, with sysfs's carrier, which a port that is down
 # lacks, and ip's IPv4 addresses. Given PORT, one that it lists, it names it in vars, where that
-# names another, by a rename that keeps the file's other lines and its mode. A new file starts with
-# ---, as yamllint asks of the clone's YAML.
+# names another, by a rename that keeps the file's other lines and its mode. A new file is 0600 in
+# a 0755 directory, and starts with ---, as yamllint asks of YAML.
 link() {
     if [ -z "${1-}" ]; then
         for port in $(ports); do
@@ -180,11 +180,10 @@ link() {
         return 0
     fi
     ports | grep -qxF -- "$1" || die "'$1' is none of the wired ports that link lists"
-    dir=${vars%/host_vars/*}
-    [ -d "$dir/.git" ] || die "ws has no clone in $dir, which ws's run makes"
     [ "$(sed -n 's/^network_direct_link_interface: *"\{0,1\}\([A-Za-z0-9_.-]*\).*/\1/p' "$vars" \
         2>/dev/null)" != "$1" ] || return 0
-    mkdir -p "${vars%/*}"
+    [ -d "${vars%/*}" ] || { mkdir -p "${vars%/*}" && chmod 755 "${vars%/*}"; }
+    umask 077
     [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
     {
         [ -s "$vars" ] || echo ---

@@ -28,7 +28,7 @@ conf=$HOME/.config/ws/mac.conf
 ws=$RUNNER_TEMP/ws
 cable=$RUNNER_TEMP/cable
 net=$ws/root/sys/class/net
-vars=$ws/root/root/repository/ws/host_vars/localhost.yml
+vars="$ws/root"/etc/ws/host_vars.yml
 netplan=$ws/root/etc/netplan/60-direct-link.yaml
 fail=0
 
@@ -121,7 +121,7 @@ cp "$RUNNER_TEMP/cable.conf" "$conf"
 wizard run WS_CABLE_PORT=enp7s0
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
 bootstrap\.sh --tags network,wireguard: plug the Mac's cable into it, or mend what that printed, \
-then run the wizard again" && grep -qx 'network_direct_link_interface: "enp7s0"' "$vars" &&
+then run the wizard again" && sudo grep -qx 'network_direct_link_interface: "enp7s0"' "$vars" &&
     [ "$status" = 1 ] || error "ws mac wizard with WS_CABLE_PORT=enp7s0 exited $status, or no host_vars"
 sudo rm -f "$vars"
 echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
@@ -149,7 +149,7 @@ fi
 rm "$RUNNER_TEMP/vm.conf"
 wizard --check
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: would ask ws's port of the cable, name it \
-in host_vars/localhost\.yml on ws, and run bootstrap\.sh --tags network,wireguard there" &&
+in /etc/ws/host_vars\.yml on ws, and run bootstrap\.sh --tags network,wireguard there" &&
     [ "$status" = 0 ] && [ ! -e "$vars" ] || error "ws mac wizard --check docked exited $status"
 # ws's ip, the stand-in's, but that the first read of enp5s0's addresses after the roles' run finds
 # none, as networkd gives it 10.77.0.1 a moment after their networkctl reload. The files script's
@@ -165,7 +165,7 @@ EOF
 chmod 755 "$ws/bin/ip"
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run WS_CABLE_PORT=enp5s0
-printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &&
+printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | sudo cmp -s - "$vars" &&
     cmp -s "$conf" "$RUNNER_TEMP/cable.conf" &&
     printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: no terminal to ask WS_CABLE_SERVICE: set \
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
@@ -206,13 +206,13 @@ runs=$(grep -c '' "$ws/bootstrap.log")
 sudo rm -f "$vars" "$netplan"
 echo 0 | sudo tee "$net/enp5s0/carrier" >/dev/null
 wizard --check
-printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: would name enp5s0 in host_vars/localhost\.yml \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: would name enp5s0 in /etc/ws/host_vars\.yml \
 on ws again, and run bootstrap\.sh --tags network,wireguard there" && [ "$status" = 0 ] &&
     [ ! -e "$vars" ] || error "ws mac wizard --check without host_vars exited $status"
 wizard run
-printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: enp5s0 goes in host_vars/localhost\.yml on ws \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: enp5s0 goes in /etc/ws/host_vars\.yml on ws \
 again, and bootstrap\.sh --tags network,wireguard runs there in a unit of its own" &&
-    grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
+    sudo grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
     [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 1)) ] && [ "$(cat "$conf")" = "$kept" ] ||
     error "ws mac wizard without host_vars exited $status, named no enp5s0, or changed mac.conf"
 sudo rm -f "$netplan"
