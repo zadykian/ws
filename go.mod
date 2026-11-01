@@ -5,14 +5,16 @@ go 1.27.3
 tool golang.org/x/vuln/cmd/govulncheck
 
 require (
+	filippo.io/age v1.3.2
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/google/renameio/v2 v2.0.2
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.zx2c4.com/wireguard v0.0.0-20261024220952-b3bc704ef0ee
 )
 
 require (
+	filippo.io/hpke v0.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
