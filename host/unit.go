@@ -15,6 +15,9 @@ const (
 	Leave Run = iota
 	Running
 	Stopped
+	// Triggered restarts a unit on a watched change and never starts it, for a oneshot unit that a
+	// timer or a path unit starts.
+	Triggered
 )
 
 // Unit is a systemd unit that is enabled or not, and running or not. Without systemd booted, as in
@@ -110,8 +113,21 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		case changed || owed:
 			call("restart", u.U.Restart)
 		}
+	case u.Run == Triggered:
+		changed, err := anyChange(ctx, u.Watch)
+		if err != nil {
+			return nil, err
+		}
+		if changed && !owed {
+			cs = append(cs, owe{u})
+		}
+		if changed || owed {
+			call("restart", u.U.Restart)
+		}
 	case u.Run == Stopped && s.Active:
 		call("stop", u.U.Stop)
+	case u.Run == Stopped && s.Failed:
+		call("reset failed state of", u.U.ResetFailed)
 	}
 	return cs, nil
 }

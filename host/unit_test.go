@@ -170,3 +170,29 @@ func TestUnitFailedRestartStaysOwed(t *testing.T) {
 type failingRestart struct{ *effecttest.Units }
 
 func (failingRestart) Restart(context.Context, string) error { return errors.New("boom") }
+
+func TestUnitTriggeredRestartsOnAWatchedChangeAlone(t *testing.T) {
+	m, u, out := unitFixture(true)
+	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	unit := host.Unit{M: m, U: u, Out: out, Name: "a.service", Run: host.Triggered}
+	if got := applyAll(t, unit); got != nil {
+		t.Fatalf("plan = %q, want none: nothing is watched", got)
+	}
+	unit.Watch = []host.Resource{conf}
+	g := host.Group{Title: "A", Parts: []host.Resource{conf, unit}}
+	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(u.Calls, []string{"restart a.service"}) {
+		t.Errorf("calls = %q, want one restart", u.Calls)
+	}
+}
+
+func TestUnitStoppedResetsAFailure(t *testing.T) {
+	m, u, out := unitFixture(true)
+	u.States = map[string]effect.UnitState{"a.service": {Failed: true}}
+	unit := host.Unit{M: m, U: u, Out: out, Name: "a.service", Run: host.Stopped}
+	if got := applyAll(t, unit); !slices.Equal(got, []string{"reset failed state of a.service"}) {
+		t.Errorf("plan = %q, want a reset", got)
+	}
+}
