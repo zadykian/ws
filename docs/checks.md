@@ -150,13 +150,9 @@ it would add to `mac.conf`, and the first run must add them at its end. Typed at
 `script`'s after bad ones, each asked again, the same answers must show the same lines, and empty
 lines the defaults, for each target. After the first run, they must write the same `mac.conf`.
 
-Last, `mac/bootstrap.sh`, run by `sh` with the clone's file on stdin, as `curl | sh` runs it, must
-find the runner's Command Line Tools and brew with that `PATH`. It must leave the clone's commit and
-files alone, set its `core.hooksPath` once, and run the wizard, which then prints nothing. So a
-second run and `--check` must print nothing at all. Where `WS_CONF` names no file, the wizard under
-`bootstrap.sh --check` must show the lines it would write there, from the answers in the
-environment, and write none. In a home without a clone, `--check` must list the clone and the
-wizard's stages, as `ws mac wizard` runs them, and make nothing outside macOS's `Library`. Then the
+Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
+second run and `--check` print nothing at all. Where `WS_CONF` names no file, `--check` must show
+the lines it would write there, from the answers in the environment, and write none. The
 case that reads [`homebrew.go`](../mac/internal/wizard/homebrew.go)'s pins must download Homebrew's
 `.pkg` and match its SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows
 `pkgutil`'s chain. The `.pkg` cut short must fail the sum. A run checks it before the install,

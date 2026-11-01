@@ -35,11 +35,12 @@ Each role is a tag of `site.yml`, with a page of its own:
 
 `mac/` sets up the Mac that works on the server, and Ghostty on it: [The Mac](docs/mac.md).
 
-On a new Mac with Apple silicon, one line installs Apple's Command Line Tools and Homebrew, clones
-this repository and runs the Mac's wizard ([The Mac's wizard](docs/mac-wizard.md)):
+On a new Mac with Apple silicon, one line installs ws's binary. Then `ws mac wizard` installs
+Apple's Command Line Tools and Homebrew, and sets up the rest ([The Mac's wizard](docs/mac-wizard.md)):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
+curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
+~/.local/bin/ws mac wizard
 ```
 
 ## A new machine

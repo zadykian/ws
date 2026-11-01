@@ -15,9 +15,9 @@ hosts for ssh:
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
 request. It runs as the user, with sudo where it needs root. It sets up Ghostty and cld ([Ghostty
 and cld on the Mac](mac-ghostty.md)), and installs Ghostty and a font from Homebrew,
-[installed](https://brew.sh) first. `mac/bootstrap.sh`, in sh as the Mac has no Go yet, builds `ws`
-into `~/.local/bin` (put it on `PATH` by hand) with the Go that `tools/run` pins, checked by
-SHA-256. `ws` embeds the files it installs, so it needs no clone. Then:
+[installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on `PATH` by
+hand) from a release ([Releases](releases.md)). `ws` embeds the files it installs, so it needs no
+clone. Then:
 
 ```sh
 ws mac apply
@@ -210,8 +210,8 @@ rebuilt server changes one file on each side, and nothing in the repository. The
 stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#the-tunnel)).
 
 The daemon, `ws mac tunnel run`, runs as root from launchd, from boot and before any login, through
-`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws mac apply` builds `ws` into
-`~/.local/bin`, as `bootstrap.sh` does, and copies it to `/usr/local/libexec/ws-tunnel/ws` as
+`/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws mac apply` copies
+`ws` from `~/.local/bin` to `/usr/local/libexec/ws-tunnel/ws` as
 root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
 runs as the user become root. The daemon holds WireGuard's device in its own process, so it
 needs no `wg` or `wireguard-go`. `ws mac apply` restarts it where a rebuilt `ws` changed the copy.

@@ -6,48 +6,42 @@ then runs `ws mac apply`. It takes ws's host key and checks that root on ws take
 runs ws's playbook there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on ws.
 Then it exchanges the tunnel's keys, clones another repository on the Mac, sends it to ws and runs
 its `apply.sh` there, and copies ws's word list. Last, it sets up the cable from the Mac's display
-to ws. On a new Mac with Apple silicon, one line installs what it needs, clones the repository and
-runs the wizard, as yourself:
+to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
+what else it needs, as yourself:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
+curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
 ```
 
-`mac/bootstrap.sh` hands its arguments to the wizard, given as `sh -s -- --check`. It builds ws into
-`~/.local/bin`, so `~/.local/bin/ws mac wizard` runs the wizard alone.
+Then `~/.local/bin/ws mac wizard` runs the wizard, with `--check` to see what it would do.
 
 Each stage reads what it sets up, acts where that isn't done, and reads it again. So a run takes up
 where the last one stopped, and in a second no stage acts. `--check` prints what each stage would
 do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`, and keeps the Mac
 from idle sleep. A run in which a stage acted ends with what stays by hand. The stages, in order,
-the first of which `bootstrap.sh` also runs before the wizard starts:
+the first two of which install what the rest needs:
 
 1. Tools, then Homebrew: the Command Line Tools, through the dialog that `xcode-select --install`
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
    `mac/internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
-2. Clone: the repository's clone in `~/repository/ws`, made where missing and otherwise left as
-   found, with git's `core.hooksPath` at its `.githooks` ([The hooks](checks.md#the-hooks)). With
-   `--update`, it pulls a clone on `main` with nothing uncommitted, by fast-forward alone, and warns
-   of any other. Without a clone, `--check` lists the wizard's stages, each after this one. Then it
-   builds `ws` ([The Mac](mac.md)).
-3. Answers: the values `mac.conf` lacks, below.
-4. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
-5. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
-6. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
+2. Answers: the values `mac.conf` lacks, below.
+3. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
+4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
+5. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
    timestamp is fresh. With no terminal at all, the stage stops, unless sudo needs no password. The
    wizard shows ws mac apply's warnings at each run, and drops the Mac's key that ws mac apply
    prints.
-7. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
-8. Root's key: root's login to ws by the Mac's key, checked and never added, below.
-9. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
-10. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
-11. claude on ws: root's claude there, logged in, below.
-12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
-14. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
-15. Word list: ws's, copied to the Mac where it differs, below.
-16. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
+7. Root's key: root's login to ws by the Mac's key, checked and never added, below.
+8. ws's run: `bootstrap.sh` on ws, in a unit of its own, which the wizard follows, below.
+9. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
+10. claude on ws: root's claude there, logged in, below.
+11. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
+12. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
+13. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
+14. Word list: ws's, copied to the Mac where it differs, below.
+15. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
 ## The answers
 

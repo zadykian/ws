@@ -22,7 +22,7 @@ The rest is the docs, the lint gates' tools and CI.
   packages are in `mac/`. The root package `ws` embeds the playbook on Linux (`playbook_linux.go`),
   with the tarballs of `collections/`.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
-- `mac/`: the Mac's side: the ws CLI in Go, with `bootstrap.sh` and the wizard's scripts for ws in
+- `mac/`: the Mac's side: the ws CLI in Go, with the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
   `mac-targets.md` and `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index
@@ -104,7 +104,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   the gates' tools ([tools/run](tools/run)). So is ws's binary, against its release's `ws.sha256`
   ([install.sh](install.sh)), and so are the Python tools
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([mac/bootstrap.sh](mac/bootstrap.sh)). The collections are checked by
+  ([homebrew.go](mac/internal/wizard/homebrew.go)). The collections are checked by
   [tools/collections](tools/collections) against the SHA-256 that Galaxy's API lists for the pins.
   Go and the JetBrains backends are checked against the SHA-256 their publishers list
   ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)). roslyn-language-server is
