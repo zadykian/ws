@@ -5,7 +5,7 @@ import "strings"
 // routesText is routes.d/mac-conf: the networks of WS_TUNNEL_NETWORKS, a network a line, which the
 // daemon adds to the peer's AllowedIPs and routes into its utun.
 func routesText(networks []string) string {
-	return "# Written by ws's mac/lib.sh: ws_tunnel_routes mac-conf.\n" + strings.Join(networks, "\n") + "\n"
+	return "# Written by ws setup: ws tunnel routes mac-conf.\n" + strings.Join(networks, "\n") + "\n"
 }
 
 // resolverHeader is the first line of the files in /etc/resolver that ws writes, by which a run

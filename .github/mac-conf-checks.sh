@@ -1,12 +1,12 @@
 #!/bin/sh
-# The mac job's checks of mac.conf's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws setup hands to
-# lib.sh's functions. The job runs it from the repository's root after mac-lib-checks.sh, with the
-# tunnel's daemon loaded and WS_PUBLIC_KEY in mac.conf (.github/workflows/mac.yml). It takes ws's
-# path from the job's TUNNEL, and stops without it. The keys' network must go into the daemon's
-# utun, and their domain show in scutil --dns. A second run and --check must print nothing. Emptied
-# or removed, the keys must take both back, and spare a script's own files. Each failure prints an
-# ::error:: line, and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose
-# cases run ws setup's own steps. mac.conf's rules are go test's (mac/internal/conf).
+# The mac job's checks of mac.conf's WS_TUNNEL_NETWORKS and WS_RESOLVERS, which ws setup writes.
+# The job runs it from the repository's root after mac-ws-checks.sh, with the tunnel's daemon
+# loaded and WS_PUBLIC_KEY in mac.conf (.github/workflows/mac.yml). It takes ws's path from the
+# job's TUNNEL, and stops without it. The keys' network must go into the daemon's utun, and their
+# domain show in scutil --dns. A second run and --check must print nothing. Emptied or removed, the
+# keys must take both back, and spare a script's own files. Each failure prints an ::error:: line,
+# and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose cases run ws
+# setup's own steps. mac.conf's rules are go test's (mac/internal/conf).
 #
 # shellcheck source-path=SCRIPTDIR/..
 
@@ -15,8 +15,8 @@ if [ -z "${TUNNEL-}" ]; then
     echo "::error::TUNNEL, ws's path, is unset: mac.yml's job sets it"
     exit 1
 fi
-# shellcheck source=mac/lib.sh
-. mac/lib.sh
+tunnel_dir=/etc/ws-tunnel
+ws_resolvers=/etc/resolver
 conf=$HOME/.config/ws/mac.conf
 fail=0
 
@@ -26,8 +26,7 @@ error() {
     fail=1
 }
 
-# must COMMAND... runs a function of mac/'s in a subshell, as one exits on an error, so that the
-# failure is an ::error:: too.
+# must COMMAND... runs COMMAND in a subshell, so that its failure is an ::error:: too.
 must() {
     ("$@") || error "$* failed, as above"
 }
@@ -71,9 +70,9 @@ shown() {
 }
 
 utun=$(sudo "$TUNNEL" tunnel status | awk -F': ' '$1 == "interface" { print $2 }')
-# A script's own route and resolver, under lib.sh's header, which the keys must spare.
-must ws_tunnel_routes own 198.51.100.0/24
-must ws_resolver own.test 198.51.100.53
+# A script's own route and resolver, which the keys must spare.
+must "$TUNNEL" tunnel routes own 198.51.100.0/24
+must "$TUNNEL" resolver own.test 198.51.100.53
 
 keys 'WS_TUNNEL_NETWORKS="203.0.113.0/24"' 'WS_RESOLVERS="conf.test=203.0.113.53,203.0.113.54"'
 if ! setup --check; then
@@ -85,7 +84,7 @@ else
     *) error "--check showed no resolver: $out" ;;
     esac
 fi
-! sudo test -e "$ws_etc/routes.d/mac-conf" || error '--check wrote routes.d/mac-conf'
+! sudo test -e "$tunnel_dir/routes.d/mac-conf" || error '--check wrote routes.d/mac-conf'
 ! test -e "$ws_resolvers/conf.test" || error "--check wrote $ws_resolvers/conf.test"
 
 setup || error "ws setup with the keys failed: $out"
@@ -120,15 +119,15 @@ setup || error "ws setup with the keys emptied failed: $out"
 printf '%s\n' "$out"
 until_ok 20 eval '! routed 203.0.113.1' || error "203.0.113.1 is still routed into $utun"
 until_ok 20 eval '! shown conf.test 203.0.113.53' || error 'scutil --dns still shows conf.test'
-! sudo test -e "$ws_etc/routes.d/mac-conf" || error 'routes.d/mac-conf outlived its key'
+! sudo test -e "$tunnel_dir/routes.d/mac-conf" || error 'routes.d/mac-conf outlived its key'
 ! test -e "$ws_resolvers/conf.test" || error "$ws_resolvers/conf.test outlived its key"
-sudo test -e "$ws_etc/routes.d/own" || error 'the emptied key took routes.d/own too'
+sudo test -e "$tunnel_dir/routes.d/own" || error 'the emptied key took routes.d/own too'
 routed 198.51.100.1 || error "198.51.100.1, routes.d/own's, left $utun"
 shown own.test 198.51.100.53 || error 'the removed key took own.test too'
 
 keys
-must ws_tunnel_routes own
-must ws_resolver own.test
+must "$TUNNEL" tunnel routes own
+must "$TUNNEL" resolver own.test
 
 sh .github/mac-setup-checks.sh || fail=1
 exit "$fail"

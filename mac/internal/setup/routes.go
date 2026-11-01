@@ -25,7 +25,7 @@ type Routes struct {
 	// Check is set under --check, which signals no daemon.
 	Check bool
 	// Alone is set where no step makes routes.d first: a missing routes.d is an error even under
-	// --check, as lib.sh's was.
+	// --check, as the old script's was.
 	Alone bool
 }
 
