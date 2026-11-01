@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/docker"
 	"github.com/zadykian/ws/internal/server/ikeward"
+	"github.com/zadykian/ws/internal/server/jetbrains"
 	"github.com/zadykian/ws/internal/server/otelcol"
 	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/shell"
@@ -49,7 +50,7 @@ var all = []Role{
 	{Name: "signoz", Steps: signoz.Steps},
 	{Name: "otelcol", Steps: otelcol.Steps},
 	{Name: "helix"},
-	{Name: "jetbrains"},
+	{Name: "jetbrains", Steps: jetbrains.Steps},
 }
 
 // List returns every role, in the order that they run.

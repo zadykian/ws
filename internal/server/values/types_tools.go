@@ -28,8 +28,6 @@ type JetBrains struct {
 	Backends []string `yaml:"jetbrains_backends"`
 	// Prune removes the other builds of each product installed.
 	Prune bool `yaml:"jetbrains_prune"`
-	// FromTimer is set by the playbook that jetbrains-update.service runs.
-	FromTimer bool `yaml:"jetbrains_from_timer"`
 }
 
 // Network is roles/network's keys.
