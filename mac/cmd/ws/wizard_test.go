@@ -10,9 +10,14 @@ import (
 	"github.com/zadykian/ws/mac/internal/effect/effecttest"
 )
 
+// testWizardEnv returns the environment of a Mac whose Command Line Tools are there.
 func testWizardEnv(goos string, uid int, stderr *bytes.Buffer) wizardEnv {
 	env := map[string]string{"TMPDIR": "/t/"}
-	return wizardEnv{goos: goos, uid: uid, pid: 7, m: effecttest.NewMachine(),
+	m := effecttest.NewMachine()
+	m.Results["xcode-select -p"] = effecttest.Result{Out: []byte("/clt\n")}
+	m.Files["/clt/usr/bin/git"] = nil
+	m.Modes["/clt/usr/bin/git"] = 0o755
+	return wizardEnv{goos: goos, uid: uid, pid: 7, m: m,
 		getenv: func(k string) string { return env[k] },
 		lookup: func(k string) (string, bool) { v, ok := env[k]; return v, ok }, pwd: "/p", stdin: strings.NewReader(""), stderr: stderr}
 }
