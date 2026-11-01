@@ -46,3 +46,30 @@ func TestDaemonJSONHasTheDefaultValues(t *testing.T) {
 		t.Errorf("pool = %v, want 172.16.0.0/12 and /20", pool)
 	}
 }
+
+func policy(t *testing.T, j map[string]any) []any {
+	gc := j["builder"].(map[string]any)["gc"].(map[string]any)
+	if gc["enabled"] != true {
+		t.Errorf("gc = %v, want enabled", gc)
+	}
+	return gc["policy"].([]any)
+}
+
+func TestDaemonJSONPolicyHasTheAgeInHours(t *testing.T) {
+	p := policy(t, daemon(t, 90))
+	if len(p) != 3 {
+		t.Fatalf("policy = %v, want an age rule and two limits", p)
+	}
+	if age := p[0].(map[string]any); age["all"] != true || age["filter"].([]any)[0] != "until=2160h" {
+		t.Errorf("first rule = %v, want all with until=2160h", age)
+	}
+	if p[2].(map[string]any)["maxUsedSpace"] != "9GB" {
+		t.Errorf("last rule = %v, want the limits", p[2])
+	}
+}
+
+func TestDaemonJSONLeavesOutTheAgeOfZeroDays(t *testing.T) {
+	if p := policy(t, daemon(t, 0)); len(p) != 2 {
+		t.Errorf("policy = %v, want the two limits alone", p)
+	}
+}
