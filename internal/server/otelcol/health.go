@@ -21,10 +21,11 @@ const (
 
 // answer checks that the collector answers its health check. systemctl returns once the
 // collector runs, before its receivers start. One that cannot, such as OTLP's on a port another
-// process holds, stops the collector, which then never answers. Without systemd booted it plans
-// nothing.
+// process holds, stops the collector, which then never answers. Without systemd booted it says so and
+// plans nothing.
 type answer struct {
 	m     effect.Machine
+	out   effect.Out
 	url   string
 	tries int
 	wait  time.Duration
@@ -67,7 +68,11 @@ func (a answer) get(ctx context.Context) error {
 
 // Plan plans the wait where the collector does not answer now.
 func (a answer) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(a.m) || a.get(ctx) == nil {
+	if !host.Booted(a.m) {
+		a.out.Say("collector health: skipped, systemd is not running")
+		return nil, nil
+	}
+	if a.get(ctx) == nil {
 		return nil, nil
 	}
 	return []host.Change{await{a}}, nil

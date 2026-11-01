@@ -27,10 +27,10 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, he
 	return []step.Step{
 		host.Lazy{Title: exporterStep, Parts: exporter(m, u, out)},
 		host.Lazy{Title: downloadStep, Parts: download(m)},
-		host.Lazy{Title: installStep, After: downloadStep, Parts: install(m, u)},
+		host.Lazy{Title: installStep, After: downloadStep, Parts: install(m, u, out)},
 		host.Lazy{Title: configStep, After: installStep, Parts: configuration(m, u, out, v.Home)},
 		host.Group{Title: healthStep, After: configStep, Parts: []host.Resource{
-			answer{m: m, url: health, tries: healthTries, wait: healthWait},
+			answer{m: m, out: out, url: health, tries: healthTries, wait: healthWait},
 		}},
 	}
 }
