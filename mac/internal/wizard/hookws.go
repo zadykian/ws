@@ -88,6 +88,7 @@ func (h *HookWs) Plan(ctx context.Context) (step.Plan, error) {
 	if cmd := h.item(ctx, c.HookSecret); cmd != "" {
 		cs = append(cs, hookWsItem{cmd})
 	}
-	dir := "/root/repository/" + c.Hook[strings.Index(c.Hook, "/")+1:]
+	repo := hookRepo(c.Hook)
+	dir := "/root/repository/" + repo[strings.Index(repo, "/")+1:]
 	return step.Plan{Changes: append(cs, hookWsRun{c.Hook, dir, in})}, nil
 }

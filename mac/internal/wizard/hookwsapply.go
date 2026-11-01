@@ -56,7 +56,7 @@ func (h *HookWs) deploy(ctx context.Context, hook, secret string) error {
 	if err := h.send(ctx, hook); err != nil {
 		return err
 	}
-	if err := h.Files.Pass(ctx, "clone", hook); err != nil {
+	if err := h.Files.Pass(ctx, "clone", hookRepo(hook)); err != nil {
 		return err
 	}
 	if err := h.apply(ctx, hook, secret, in); err != nil {

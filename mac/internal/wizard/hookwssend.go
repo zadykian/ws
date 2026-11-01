@@ -10,7 +10,7 @@ import (
 // github.com, whatever git's config names, and never prompts. The bundle goes by an ssh of its own,
 // as the files script is on the first one's stdin.
 func (h *HookWs) send(ctx context.Context, hook string) error {
-	out, err := h.Files.Do(ctx, "bundle", hook)
+	out, err := h.Files.Do(ctx, "bundle", hookRepo(hook))
 	pack := strings.TrimSpace(string(out))
 	if err != nil || pack == "" {
 		return err
@@ -20,7 +20,8 @@ func (h *HookWs) send(ctx context.Context, hook string) error {
 		return err
 	}
 	h.Out.Say("%s: sending the Mac's clone of %s to ws", hookWsStage, hook)
-	dir := h.Mac.Home + "/repository/" + hook[strings.Index(hook, "/")+1:]
+	repo := hookRepo(hook)
+	dir := h.Mac.Home + "/repository/" + repo[strings.Index(repo, "/")+1:]
 	file := h.Host.Lock + "/hook.bundle"
 	cred := "credential.https://github.com.helper=" //nolint:gosec // a git config key, not a credential
 	if err := h.M.Pass(ctx, false, "env", "GIT_TERMINAL_PROMPT=0", "git", "-C", dir, "-c", cred, "-c",
@@ -58,7 +59,8 @@ func (h *HookWs) read(ctx context.Context, secret string) ([]byte, error) {
 // apply runs apply.sh on ws, its stdin the item's secret, as read gave it, through hookGuard, or
 // empty without an item.
 func (h *HookWs) apply(ctx context.Context, hook, secret string, in []byte) error {
-	script := "/root/repository/" + hook[strings.Index(hook, "/")+1:] + "/apply.sh"
+	repo := hookRepo(hook)
+	script := "/root/repository/" + repo[strings.Index(repo, "/")+1:] + "/apply.sh"
 	args := []string{"-o", "BatchMode=yes", "ws-ssh", script}
 	if secret != "" {
 		args = []string{"-o", "BatchMode=yes", "ws-ssh", "sh -c '" + hookGuard + "'", script}

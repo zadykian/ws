@@ -48,11 +48,12 @@ die() {
     exit 1
 }
 
-# repo OWNER/REPO sets repo to REPO, where OWNER/REPO names a repository on GitHub, as mac.conf's
-# WS_HOOK does. Each side of the / is letters, digits and ._-, and neither . or .. alone, and REPO
-# isn't ws, ws's own clone, in any letter case, which APFS and GitHub ignore. It stops otherwise.
+# repo OWNER/REPO[@TAG] sets repo to REPO, where OWNER/REPO names a repository on GitHub, as mac.conf's
+# WS_HOOK does, and drops the @TAG. Each side of the / is letters, digits and ._-, and neither . or .. alone,
+# and REPO isn't ws, ws's own clone, in any letter case, which APFS and GitHub ignore. It stops otherwise.
 # It sets pack, REPO's bundle in state, as well.
 repo() {
+    set -- "${1%%@*}"
     case $1 in
     *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */[Ww][Ss]) ;;
     */*)
