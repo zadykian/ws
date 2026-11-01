@@ -88,6 +88,35 @@ func TestHookWsApply(t *testing.T) {
 	}
 }
 
+func TestHookWsApplyBadSum(t *testing.T) {
+	for name, sums := range map[string]string{
+		"differs": sumLine("other", "tools-linux-arm64"),
+		"absent":  sumLine("build", "tools-linux-amd64"),
+		"none":    "",
+	} {
+		h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
+		stubRelease(h, m, "build", sums)
+		err := h.Apply(context.Background(), step.Plan{})
+		if err == nil || !strings.Contains(err.Error(), "is not the one that tools.sha256 lists") {
+			t.Errorf("%s: Apply = %v", name, err)
+		}
+		for _, c := range m.Calls {
+			if strings.Contains(c, "stage") || strings.Contains(c, "cat >") {
+				t.Errorf("%s: Apply went on to ws: %q", name, c)
+			}
+		}
+	}
+}
+
+func TestHookWsApplyNoRelease(t *testing.T) {
+	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
+	m.Results[remoteLine(h.Files, "arch")] = effecttest.Result{Out: []byte("amd64\n")}
+	err := h.Apply(context.Background(), step.Plan{})
+	if err == nil || !strings.Contains(err.Error(), "needs tools-linux-amd64 and tools.sha256") {
+		t.Errorf("Apply where gh fails = %v", err)
+	}
+}
+
 func TestHookWsApplyUnreadItem(t *testing.T) {
 	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "")
 	m.Results["security find-generic-password -s tok -w"] = effecttest.Result{Err: context.Canceled}
@@ -156,5 +185,22 @@ func TestHookWsCheck(t *testing.T) {
 	p, err := h.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 || !slices.Contains(m.Calls, "run "+sshLine(h, "-o", "BatchMode=yes", "ws-ssh", bin, "apply", "--check")) {
 		t.Errorf("Plan where ws holds the command = %v, %v, calls %q", p, err, m.Calls)
+	}
+}
+
+func TestHookWsApplyGuard(t *testing.T) {
+	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "")
+	m.Results["security find-generic-password -s tok -w"] = effecttest.Result{Out: []byte("s3cret\n")}
+	stubRelease(h, m, "build", sumLine("build", "tools-linux-arm64"))
+	sum := fmt.Sprintf("%x", sha256.Sum256([]byte("build")))
+	m.Results[remoteLine(h.Files, "install", "me/tools@v1.0.0", sum)] = effecttest.Result{}
+	bin := hookState + "/bin/tools-v1.0.0"
+	m.Results[sshLine(h, "-o", "BatchMode=yes", "ws-ssh", "sh -c '"+hookGuard+"'", bin, "apply")] = effecttest.Result{}
+	m.Results[remoteLine(h.Files, "stamp", "me/tools@v1.0.0")] = effecttest.Result{}
+	if err := h.Apply(context.Background(), step.Plan{}); err != nil {
+		t.Fatalf("Apply = %v", err)
+	}
+	if !slices.Contains(m.Inputs, "s3cret\n") {
+		t.Errorf("the command's stdin was none of %q; want the item's secret", m.Inputs)
 	}
 }
