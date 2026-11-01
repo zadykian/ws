@@ -89,6 +89,16 @@ func (m *Machine) run(kind, name string, args []string) ([]byte, error) {
 	line := strings.Join(append([]string{name}, args...), " ")
 	m.Calls = append(m.Calls, kind+" "+line)
 	r, ok := m.Results[line]
+	if !ok && kind == "root" && name == "rm" {
+		for _, a := range args {
+			delete(m.Files, a)
+			delete(m.Root, a)
+		}
+		return nil, nil
+	}
+	if !ok && kind == "root" && name == "mkdir" {
+		return nil, nil
+	}
 	if !ok {
 		return nil, fmt.Errorf("effecttest: no result for %q", line)
 	}
