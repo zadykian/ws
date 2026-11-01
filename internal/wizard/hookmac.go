@@ -109,3 +109,9 @@ func hookTag(v string) string {
 	_, tag, _ := strings.Cut(v, "@")
 	return tag
 }
+
+// hookName returns REPO of WS_HOOK's value.
+func hookName(v string) string {
+	repo := hookRepo(v)
+	return repo[strings.Index(repo, "/")+1:]
+}
