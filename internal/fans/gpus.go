@@ -19,6 +19,8 @@ type reading struct {
 type GPUs struct {
 	// Now returns the time. Nil means time.Now.
 	Now func() time.Time
+	// Retry is how long Run waits to start the stream again. Zero means 5 s.
+	Retry time.Duration
 
 	mu      sync.Mutex
 	temps   map[int]reading
