@@ -46,9 +46,60 @@ platform() {
     esac
 }
 
+# is_version succeeds where $1 is a version X.Y.Z, as a tag vX.Y.Z holds it: three numbers, none
+# empty or with a leading zero.
+is_version() {
+    case $1 in
+    *[!0-9.]* | .* | *. | *..* | *.*.*.* | 0[0-9]* | *.0[0-9]*) return 1 ;;
+    *.*.*) return 0 ;;
+    *) return 1 ;;
+    esac
+}
+
+# release sets releases to the address of ws's releases, and tag to the release to install,
+# WS_VERSION's, or none for the latest until latest finds it, and where to name it in messages.
+release() {
+    releases=${WS_RELEASES_URL:-https://github.com/zadykian/ws/releases}
+    version=${WS_VERSION:-}
+    tag=
+    if [ -n "$version" ]; then
+        # A typo stops here, not at a download that is not found.
+        is_version "${version#v}" || die "WS_VERSION is not a version, X.Y.Z: $version"
+        tag=v${version#v}
+    fi
+    where="the ${tag:-latest} release of ws"
+}
+
+# fetch runs curl over HTTPS alone, TLS 1.2 or later, with the options $@. A reply with an HTTP
+# error fails it, rather than its page taking the place of a file. Where WS_RELEASES_URL is set, for
+# a test, plain HTTP is allowed too.
+fetch() {
+    proto='=https'
+    [ -z "${WS_RELEASES_URL:-}" ] || proto='=http,https'
+    curl -fsS --proto "$proto" --tlsv1.2 "$@"
+}
+
+# latest sets tag, where none is set, to the latest release's: GitHub redirects releases/latest to
+# the latest release's page, releases/tag/vX.Y.Z, or to releases where there is none. The tag goes
+# into the downloads' addresses, so anything but vX.Y.Z is refused.
+latest() {
+    [ -z "$tag" ] || return 0
+    page=$(fetch -o /dev/null -w '%{redirect_url}' "$releases/latest") ||
+        die "cannot find $where"
+    found=${page#"$releases"/tag/v}
+    if [ "$found" = "$page" ] || ! is_version "$found"; then
+        die "cannot find $where: GitHub redirects to '$page'"
+    fi
+    tag=v$found
+    where="$where, $tag"
+}
+
 main() {
     platform
-    echo "the binary for this machine is $binary"
+    release
+    command -v curl >/dev/null || die "curl is needed to download ws's releases"
+    latest
+    echo "the release to install is $tag, and its binary $binary"
 }
 
 main
