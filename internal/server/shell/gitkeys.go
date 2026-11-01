@@ -63,3 +63,6 @@ func signingKeyOf(list []string, home string) (string, bool) {
 	}
 	return key, found
 }
+
+// join lists names as prose does.
+func join(names []string) string { return strings.Join(names, ", ") }

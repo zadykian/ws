@@ -2,9 +2,10 @@ package shell
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-
 	"github.com/zadykian/ws/host"
 )
 
@@ -32,11 +33,20 @@ func (g gitconfig) content() ([]byte, error) {
 	}{g.Name, g.Email, g.Key, g.Signers, g.Signing})
 }
 
-// Plan plans the file. Git must accept the new file
+// names lists the keys of a config's content, by git, without their values.
+func (g gitconfig) names(ctx context.Context, content []byte) ([]string, error) {
+	out, err := g.M.RunInput(ctx, content, "git", "config", "--file", "-", "--name-only", "--list")
+	return lines(out), err
+}
+
+// Plan says what the rewrite loses or replaces, then plans the file. Git must accept the new file
 // before it replaces the old one.
 func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
 	content, err := g.content()
 	if err != nil {
+		return nil, err
+	}
+	if err := g.notes(ctx, content); err != nil {
 		return nil, err
 	}
 	return host.Validated{
@@ -48,4 +58,26 @@ func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
 			return "git", []string{"config", "--file", path, "--name-only", "--list"}
 		},
 	}.Plan(ctx)
+}
+
+func (g gitconfig) notes(ctx context.Context, content []byte) error {
+	old, err := g.M.ReadRootFile(g.path())
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	oldKeys, err := g.names(ctx, old)
+	if err != nil {
+		return err
+	}
+	wantKeys, err := g.names(ctx, content)
+	if err != nil {
+		return err
+	}
+	if lost := dropped(oldKeys, wantKeys); len(lost) > 0 {
+		g.Out.Warn("writing ~/.gitconfig drops %s. Move them to ~/.config/git/local first; a real run keeps the old file beside it, as ~/.gitconfig.*~.", join(lost))
+	}
+	return nil
 }
