@@ -35,7 +35,7 @@ func TestWsRunPlan(t *testing.T) {
 		"cloud done": {"cloud", "run v1.2.3 0 off\nactive -\noutbound off\n", "", false, false},
 		"cloud host_vars": {"cloud", "run v1.2.3 0 off\nactive -\noutbound on\n",
 			"name security_outbound: false in ws's host_vars", false, false},
-		"cloud run": {"cloud", "run v1.2.3 0 on\nactive -\n", "with -e security_outbound=false", false, false},
+		"cloud run": {"cloud", "run v1.2.3 0 on\nactive -\n", "after naming security_outbound: false in ws's host_vars", false, false},
 		"follows":   {"lan", "run - -\nactive ws-wizard-1\n", "follow ws-wizard-1, which runs on ws", false, true},
 		"failed":    {"lan", "run v1.2.3 1 on\nactive -\n", "its last full run exited 1", false, true},
 	} {
@@ -74,14 +74,14 @@ func TestWsRunApply(t *testing.T) {
 func TestWsRunApplyCloudAgain(t *testing.T) {
 	r, m := newRun("cloud", "run v1.2.3 0 on\nactive -\noutbound on\n", false, false)
 	p, _ := r.Plan(context.Background())
-	m.Results[remoteLine(r.Remote, "run", "--", "-e", "security_outbound=false")] = effecttest.Result{}
+	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
 	m.Results[remoteLine(r.Remote, "outbound")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	runs := 0
 	for _, c := range m.Calls {
-		if strings.HasSuffix(c, "-- run -- -e security_outbound=false") {
+		if strings.HasSuffix(c, "-- run") {
 			runs++
 		}
 	}

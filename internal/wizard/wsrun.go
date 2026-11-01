@@ -39,7 +39,7 @@ func (r *WsRun) lastRun() string {
 	return "-"
 }
 
-// off tells whether ws's last full run turned the outbound table off by its -e.
+// off tells whether ws's last full run began with host_vars turning the outbound table off.
 func (r *WsRun) off() bool {
 	f := strings.Fields(r.Remote.Get("run"))
 	return len(f) > 2 && f[2] == "off"
@@ -53,7 +53,7 @@ func (r *WsRun) idle(ctx context.Context) bool {
 }
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
-// that run's -e must have turned the outbound table off, and ws's host_vars must keep it off. Under
+// that run must have begun with host_vars turning the outbound table off, and ws's host_vars must keep it off. Under
 // --update, only once the stage ran the playbook in this run.
 func (r *WsRun) runDone(ctx context.Context, target string) bool {
 	if r.Update && !r.ran {
@@ -65,8 +65,7 @@ func (r *WsRun) runDone(ctx context.Context, target string) bool {
 // runChange is the change that runs the playbook, or that names the outbound table's state in host_vars.
 type runChange struct {
 	text string
-	// args are the remote script's run arguments. outbound has the stage name the state alone.
-	args     []string
+	// outbound has the stage name the state alone.
 	outbound bool
 	// cloud is set for a cloud VM, whose run turns the outbound table off.
 	cloud bool
@@ -85,10 +84,8 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	how := "run ws server apply on ws in a unit of its own, and follow its log"
-	var args []string
 	if c.Target == "cloud" {
-		args = append(args, "--", "-e", "security_outbound=false")
-		how += ", with -e security_outbound=false, then name that in ws's host_vars"
+		how += ", after naming security_outbound: false in ws's host_vars"
 		if !r.Update && r.idle(ctx) && r.off() {
 			return step.Plan{Changes: []step.Change{runChange{text: "name security_outbound: false in ws's host_vars",
 				outbound: true}}}, nil
@@ -102,7 +99,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 			how += "; its last full run exited " + last
 		}
 	}
-	return step.Plan{Changes: []step.Change{runChange{text: how, args: args, cloud: c.Target == "cloud"}}}, nil
+	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud"}}}, nil
 }
 
 // fail says what to do where ws's playbook ran no full run to its end. It names no cause, as ssh has

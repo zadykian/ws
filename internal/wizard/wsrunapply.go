@@ -10,9 +10,9 @@ import (
 
 // Apply runs ws's playbook in a unit of its own through the remote script, or follows the run that
 // goes on there, with its log on stderr. On a cloud VM, where the outbound table would drop the
-// provider's metadata service, the run's -e turns it off, and its unit names that in host_vars for
-// the runs after. A unit that the run followed may have lacked that -e: a run of its own follows
-// then. Where the line is missing still, outbound writes it.
+// provider's metadata service, host_vars names security_outbound: false before the run, as ws
+// server apply reads its values from that file. A unit that the run followed may have begun before
+// that line: a run of its own follows then.
 func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	c, ok := p.Changes[0].(runChange)
 	if !ok {
@@ -21,9 +21,14 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if c.outbound {
 		return r.outbound(ctx)
 	}
+	if c.cloud && r.Remote.Get("outbound") != "off" {
+		if err := r.outbound(ctx); err != nil {
+			return err
+		}
+	}
 	r.Host.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
 		"a first run takes 20 to 40 minutes", runStage)
-	if err := r.Remote.Pass(ctx, append([]string{"run"}, c.args...)...); err != nil {
+	if err := r.Remote.Pass(ctx, "run"); err != nil {
 		return fail()
 	}
 	r.ran = true
@@ -34,23 +39,20 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return fail()
 	}
 	if !r.off() {
-		r.Host.Out.Say("%s: the unit it followed ran without -e security_outbound=false, so ws server apply "+
-			"runs again with it", runStage)
-		if err := r.Remote.Pass(ctx, append([]string{"run"}, c.args...)...); err != nil {
+		r.Host.Out.Say("%s: the unit it followed began before host_vars named security_outbound: false, "+
+			"so ws server apply runs again", runStage)
+		if err := r.Remote.Pass(ctx, "run"); err != nil {
 			return fail()
 		}
 		if !r.Remote.Status(ctx) {
 			return fail()
 		}
 	}
-	if r.Remote.Get("outbound") != "off" {
-		return r.outbound(ctx)
-	}
 	return nil
 }
 
 // outbound names security_outbound: false in ws's host_vars by the remote script's outbound op, and
-// stops with its error where that fails. --update runs the playbook, which makes a clone gone.
+// stops with its error where that fails.
 func (r *WsRun) outbound(ctx context.Context) error {
 	if _, err := r.Remote.Do(ctx, "outbound"); err != nil {
 		lines := strings.Split(strings.TrimSpace(err.Error()), "\n")

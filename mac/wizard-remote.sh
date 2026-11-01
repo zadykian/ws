@@ -5,8 +5,8 @@
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. run is the ws version and status of the last full run, and off where its -e turned the
-#   outbound table off, else on. ws is the version that ws prints. last is the unit and status of
+#   is missing. run is the ws version and status of the last full run, and off where host_vars turned the
+#   outbound table off as the run began, else on. ws is the version that ws prints. last is the unit and status of
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
@@ -16,13 +16,12 @@
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
 # - run [ARG...] runs ws server apply ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
-#   ends, and exits with the run's status. A run whose
-#   ARGs are a -- and -e pairs alone is a full one.
+#   ends, and exits with the run's status. A run with no ARG is a full one.
 # - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
 #   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
 #   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
-# - outbound names security_outbound: false in ws's host_vars, where a full run's unit with -e
-#   security_outbound=false didn't, which keeps the outbound table off for a cloud VM.
+# - outbound names security_outbound: false in ws's host_vars, which keeps the outbound table off
+#   for a cloud VM. It runs before the run, as ws server apply reads its values from that file.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
@@ -128,30 +127,20 @@ status() {
 
 # job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE [ARG...].
 # It runs WS server apply ARGs. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
-# whose ARGs are a -- and -e pairs alone, writes STATE/run too: the version that WS printed before the run, or - where WS
-# prints none, the status, and off where -e security_outbound=false turned the outbound table off,
+# which has no ARG, writes STATE/run too: the version that WS printed before the run, or - where WS
+# prints none, the status, and off where host_vars turned the outbound table off as the run began,
 # else on. It removes it as it starts.
-# Such a run that passed first names that in host_vars by STATE/off, so that no ssh comes between.
 job() {
     cat <<'EOF'
-unit=$1 vars=$2 ws=$3 state=$4 full=1 table=on pair=
+unit=$1 vars=$2 ws=$3 state=$4 full=0 table=on
 shift 4
-for arg; do
-    case $pair:$arg in
-    1:security_outbound=false) table=off pair= ;;
-    1:*) pair= ;;
-    :--) ;;
-    :-e) pair=1 ;;
-    *) full=0 ;;
-    esac
-done
-[ -z "$pair" ] || full=0
+[ $# != 0 ] || full=1
+sh "$state/off" check "$vars" && table=off
 [ "$full" = 0 ] || rm -f "$state/run"
 version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version=-
 "$ws" server apply "$@"
 status=$?
 if [ "$full" = 1 ]; then
-    [ "$status$table" != 0off ] || sh "$state/off" write "$vars"
     echo "$version $status $table" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
 fi
 echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
