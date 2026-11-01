@@ -36,7 +36,7 @@ type Signoz struct {
 	Dashboards    []string `yaml:"signoz_dashboards"`
 }
 
-// Wireguard is roles/wireguard's keys.
+// Wireguard is the wireguard role's keys.
 type Wireguard struct {
 	Address string          `yaml:"wireguard_address"`
 	Port    int             `yaml:"wireguard_port"`
