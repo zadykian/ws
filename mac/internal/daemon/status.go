@@ -32,7 +32,7 @@ func Status(ctx context.Context, m effect.Machine, get GetFunc, dir, stateFile s
 	}
 	conf, err := m.ReadFile(path.Join(dir, "tunnel.conf"))
 	if err != nil {
-		return "", fmt.Errorf("cannot read %s/tunnel.conf: run mac/setup.sh", dir)
+		return "", fmt.Errorf("cannot read %s/tunnel.conf: run ws setup", dir)
 	}
 	c, err := tunnel.ParseConf(string(conf))
 	if err != nil {

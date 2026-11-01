@@ -70,7 +70,7 @@ func TestStatusFails(t *testing.T) {
 	}{
 		{"not running", statusMachine(""), "ws tunnel isn't running; its log is /var/log/ws-tunnel.log"},
 		{"bad state", statusMachine("since=x\n"), "state: since is 'x'"},
-		{"no conf", noConf, "run mac/setup.sh"},
+		{"no conf", noConf, "run ws setup"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

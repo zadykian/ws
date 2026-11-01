@@ -38,7 +38,7 @@ func ReadSettings(ctx context.Context, m effect.Machine, dir string) (Settings, 
 	s.Routes, s.Warnings = tunnel.ParseRoutes(files)
 	text, err := m.ReadFile(path.Join(dir, "tunnel.conf"))
 	if err != nil {
-		return s, fmt.Errorf("cannot read %s/tunnel.conf: run mac/setup.sh", dir)
+		return s, fmt.Errorf("cannot read %s/tunnel.conf: run ws setup", dir)
 	}
 	s.Conf, err = tunnel.ParseConf(string(text))
 	return s, err
@@ -48,7 +48,7 @@ func ReadSettings(ctx context.Context, m effect.Machine, dir string) (Settings, 
 func ReadKey(m effect.Machine, dir string) (string, error) {
 	text, err := m.ReadFile(path.Join(dir, "private.key"))
 	if err != nil {
-		return "", fmt.Errorf("cannot read %s/private.key: run mac/setup.sh", dir)
+		return "", fmt.Errorf("cannot read %s/private.key: run ws setup", dir)
 	}
 	key := strings.TrimSpace(string(text))
 	if _, err := wgkey.Decode(key); err != nil {

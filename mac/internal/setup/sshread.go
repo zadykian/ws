@@ -45,7 +45,7 @@ func (s SSH) read() (sshFacts, error) {
 			return f, err
 		}
 		if !strings.HasPrefix(firstLine(f.Ws.Text), sshcfg.Header) {
-			return f, fmt.Errorf("%s is not mac/setup.sh's: move it away, as the script writes its own there", ws)
+			return f, fmt.Errorf("%s is not ws setup's: move it away, as the script writes its own there", ws)
 		}
 	}
 	user := dir + "/config"

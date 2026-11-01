@@ -66,7 +66,7 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 		}
 	}
 	// git, which has a name, needs a key of its own beside ws's in Secretive, unless mac.conf has a
-	// line for WS_GIT_SIGNING_KEY. An empty one keeps setup.sh's key.
+	// line for WS_GIT_SIGNING_KEY. An empty one keeps ws setup's key.
 	if agent == k.secretive()+"/socket.ssh" && c.GitName != "" && !hasLine(text, "WS_GIT_SIGNING_KEY") {
 		cs = append(cs, gitKey{})
 	}

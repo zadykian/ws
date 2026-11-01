@@ -39,7 +39,7 @@ type Tunnel struct {
 	Out  effect.Out
 	// Check is set under --check.
 	Check bool
-	// Text takes the instructions that make the Mac's key ws's peer, as setup.sh printed them.
+	// Text takes the instructions that make the Mac's key ws's peer, as ws setup printed them.
 	Text io.Writer
 	// Sleep waits between launchctl's tries. Nil means time.Sleep.
 	Sleep func(time.Duration)
@@ -71,7 +71,7 @@ func (t *Tunnel) self() ([]byte, error) {
 }
 
 // Install puts the bytes of ws in the user's file, through a new file renamed over it, so that a
-// ws that runs from there keeps running. It stands for the build that setup.sh did.
+// ws that runs from there keeps running. It stands for the build that ws setup did.
 type Install struct {
 	Path string
 	Data []byte

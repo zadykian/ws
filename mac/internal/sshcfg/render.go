@@ -9,7 +9,7 @@ import (
 )
 
 // Header starts config.d/ws's first line, by which a run knows a file for its own.
-const Header = "# Written by ws's mac/setup.sh"
+const Header = "# Written by ws setup"
 
 // Inputs are what config.d/ws's text depends on.
 type Inputs struct {
@@ -43,7 +43,7 @@ func Config(in Inputs) string {
 	fmt.Fprintf(&b, `%s from ~/.config/ws/mac.conf: its next run replaces changes made here.
 
 # Only Apple's ssh knows UseKeychain. ssh keeps the first IgnoreUnknown it reads, this one, so it
-# carries the patterns of ~/.ssh/config's own too: run setup.sh again after a change to those.
+# carries the patterns of ~/.ssh/config's own too: run ws setup again after a change to those.
 IgnoreUnknown %s
 
 # ws over the cable, where the Mac has an address on it.

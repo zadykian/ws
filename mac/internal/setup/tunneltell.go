@@ -105,7 +105,7 @@ func (t *Tunnel) Finish(ctx context.Context) error {
 		"    ssh %sws-ssh %s/root/repository/ws/bootstrap.sh --tags wireguard\n", public, tty, public, sudo, tty, sudo)
 	if t.Conf.PublicKey == "" {
 		_, _ = io.WriteString(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/mac.conf to ws's key, which that run prints, and run\n"+
-			"mac/setup.sh again, which installs the tunnel's daemon.\n")
+			"ws setup again, which installs the tunnel's daemon.\n")
 	}
 	return nil
 }

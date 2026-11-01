@@ -47,7 +47,7 @@ func (c todo) String() string { return string(c) }
 
 func (a *Answers) file() confFile { return confFile{a.Conf, answers, a.M, a.Out} }
 
-// load reads mac.conf and says each line that conf refuses, which setup.sh would stop at.
+// load reads mac.conf and says each line that conf refuses, which ws setup would stop at.
 func (a *Answers) load() (string, conf.Conf, error) { return loadConf(a.file()) }
 
 // role gives the shell role's default of that name, as the role's file has it, or nothing.
@@ -87,7 +87,7 @@ func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	if _, errs := conf.Parse(text); len(errs) > 0 {
-		return step.Plan{Changes: []step.Change{todo(answers + ": setup.sh would refuse " + a.Conf)}}, nil
+		return step.Plan{Changes: []step.Change{todo(answers + ": ws setup would refuse " + a.Conf)}}, nil
 	}
 	return step.Plan{}, nil
 }
@@ -107,11 +107,11 @@ func (a *Answers) refusal(lines string) error {
 	if lines != "" {
 		with = " with the answers"
 	}
-	return fmt.Errorf("%s: setup.sh would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
+	return fmt.Errorf("%s: ws setup would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
 }
 
 // Apply asks for the values that mac.conf lacks, in order, and adds them to it. A mac.conf that
-// setup.sh would refuse with them is left alone.
+// ws setup would refuse with them is left alone.
 func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 	text, c, err := a.load()
 	if err != nil {

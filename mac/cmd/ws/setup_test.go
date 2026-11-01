@@ -43,13 +43,13 @@ func TestSetupCommand(t *testing.T) {
 
 func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 	m := effecttest.NewMachine()
-	env := map[string]string{"WS_PROG": "setup.sh"}
+	env := map[string]string{"WS_PROG": "ws setup"}
 	var stderr bytes.Buffer
 	if got := setupCommand(context.Background(), []string{"ssh"}, 0, m, func(k string) string { return env[k] }, &bytes.Buffer{}, &stderr); got != 1 ||
-		!strings.HasPrefix(stderr.String(), "setup.sh: run it as yourself, not root") {
+		!strings.HasPrefix(stderr.String(), "ws setup: run it as yourself, not root") {
 		t.Errorf("as root: status = %d, stderr = %q", got, stderr.String())
 	}
-	out := progOut{Out: &effecttest.Out{}, prog: "setup.sh", seen: map[string]bool{}}
+	out := progOut{Out: &effecttest.Out{}, prog: "ws setup", seen: map[string]bool{}}
 	out.Say("%s: applying %d change(s)", "ssh", 1)
 	out.Say("%s: %s", "cable", "would run x")
 	out.Say("wrote %s", "f")
@@ -58,8 +58,8 @@ func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 	out.Warn("w %d", 1)
 	out.Warn("w %d", 1)
 	want := []string{
-		"say: setup.sh: would run x", "say: setup.sh: wrote f",
-		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: setup.sh: warning: w 1",
+		"say: ws setup: would run x", "say: ws setup: wrote f",
+		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws setup: warning: w 1",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)

@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/effect"
 )
 
-// confPath returns mac.conf's path from WS_CONF, a path from / as setup.sh gets it, else from the
+// confPath returns mac.conf's path from WS_CONF, a path from / as ws setup gets it, else from the
 // home.
 func confPath(getenv func(string) string, pwd string) string {
 	switch file := getenv("WS_CONF"); {

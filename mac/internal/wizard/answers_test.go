@@ -43,7 +43,7 @@ func TestAnswersPlan(t *testing.T) {
 		"no file":  {"", "would ask for the values that /h/.config/ws/mac.conf lacks, from WS_TARGET on"},
 		"a gap":    {strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
 		"complete": {all, ""},
-		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "setup.sh would refuse"},
+		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws setup would refuse"},
 	} {
 		a, _ := newAnswers(t, tc.text)
 		p, err := a.Plan(context.Background())

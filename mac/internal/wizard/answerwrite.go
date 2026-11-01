@@ -86,7 +86,7 @@ func (f confFile) write(ctx context.Context, text string) error {
 	return nil
 }
 
-// loadConf reads mac.conf and says each line that conf refuses, which setup.sh would stop at.
+// loadConf reads mac.conf and says each line that conf refuses, which ws setup would stop at.
 func loadConf(f confFile) (string, conf.Conf, error) {
 	text, err := f.read()
 	c, errs := conf.Lines(text)
