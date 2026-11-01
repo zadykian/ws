@@ -1,0 +1,58 @@
+// Package roles lists the server's roles in the order of site.yml. A role is either ported, with
+// Go steps that its package's Steps returns, or left to the playbook, which runs it by its tag.
+package roles
+
+import (
+	"slices"
+
+	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/step"
+)
+
+// Role is one role of the server.
+type Role struct {
+	// Name is the role's name, and the tag of its roles/NAME in site.yml.
+	Name string
+	// Steps returns the role's steps, in the order they run. It is nil where the playbook runs
+	// the role. A ported role's package gives it as `Steps: name.Steps`, with Steps declared as
+	// func Steps(v values.Values, m effect.Machine, out effect.Out) []step.Step.
+	Steps func(v values.Values, m effect.Machine, out effect.Out) []step.Step
+}
+
+// Ported reports whether the role runs as Go steps.
+func (r Role) Ported() bool { return r.Steps != nil }
+
+// all is every role, in the order of site.yml. A port sets its role's Steps and removes the role
+// from site.yml, which TestPlaybookRolesAreSiteYml checks.
+var all = []Role{
+	{Name: "base"},
+	{Name: "security"},
+	{Name: "network"},
+	{Name: "wireguard"},
+	{Name: "ikeward"},
+	{Name: "fans"},
+	{Name: "shell"},
+	{Name: "tmux"},
+	{Name: "devtools"},
+	{Name: "docker"},
+	{Name: "claude"},
+	{Name: "signoz"},
+	{Name: "otelcol"},
+	{Name: "helix"},
+	{Name: "jetbrains"},
+}
+
+// List returns every role, in the order that they run.
+func List() []Role { return slices.Clone(all) }
+
+// Playbook returns the names of the roles that the playbook runs, in site.yml's order.
+func Playbook() []string {
+	var names []string
+	for _, r := range all {
+		if !r.Ported() {
+			names = append(names, r.Name)
+		}
+	}
+	return names
+}
