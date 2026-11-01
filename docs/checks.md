@@ -9,13 +9,13 @@ on [theirs](gates.md).
 
 CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
 that the build is `devel`. It runs `ws server apply` twice, without the tasks tagged `systemd`,
-which need a booted machine, and the second run must change nothing. Then
+which need a booted machine, and the second run's last line must be `changed: none`. Then
 `nft -c`, with the container's NET_ADMIN, checks the outbound table the play wrote and the users
 it names. The run leaves out its own check under `--skip-tags systemd`
-([Outbound](security.md#outbound)). Its swap file is 64 MiB, as the runner's disk has no room for
-one the size of its RAM. It installs no JetBrains backend, `jetbrains_backends: []`, as it has no
-room for those either. Its board is not MSI's, so the `fans` role leaves its fans alone. It gives
-no VPN profile, so the `ikeward` role does nothing.
+([Outbound](security.md#outbound)). Its `/etc/ws/host_vars.yml` gives a swap file of 64 MiB, as the
+runner's disk has no room for one the size of its RAM. It names no JetBrains backend,
+`jetbrains_backends: []`, as it has no room for those either. Its board is not MSI's, so the `fans`
+role leaves its fans alone. It gives no VPN profile, so the `ikeward` role does nothing.
 
 ## The install script
 
@@ -121,7 +121,7 @@ hand without `WS_HOOK`. The next must print nothing, as a run must where root's 
 key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
 `--check` must say it would run it. The next must print nothing.
 
-The stand-in `ws server apply -- --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820,
+The stand-in `ws server apply --only wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820,
 with the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's
 run. The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and load the
 daemon. It must log in once through the tunnel, by stand-ins of `ssh` and `nc`, as `wg0` has no

@@ -82,19 +82,22 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 ws server apply
 ```
 
-Arguments after `--` go to `ansible-playbook`: `ws server apply -- --tags NAME` runs the role NAME alone.
+`ws server apply --only NAME,...` runs the roles named, in the order of `site.yml`. Arguments after
+`--` go to `ansible-playbook`, except `-C`, `--check`, `-t` and `--tags`, which ws refuses.
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home. A cloud VM passes
 `-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). `-e` holds
 for one run: a value every run needs, as that one, goes in `/etc/ws/host_vars.yml`, which only
-root reads.
+root reads. ws's last line names the roles that changed, `changed: none` on a second run. The
+playbook's roles count together, as its recap names no role.
 
 ## Dry runs
 
-With `--check --diff`, the playbook shows what it would change and changes nothing:
+With `--check`, ws plans its steps and the playbook shows what it would change, as `--check --diff`
+does, and nothing changes:
 
 ```sh
-ws server apply -- --check --diff
+ws server apply --check
 ```
 
 It still installs ansible-core and unpacks the playbook, as the playbook cannot run without them.

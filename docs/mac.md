@@ -200,7 +200,7 @@ prints its public key with the two commands that make the Mac ws's peer, over `w
 
 ```sh
 ssh ws-ssh "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh ws-ssh ws server apply -- --tags wireguard
+ssh ws-ssh ws server apply --only wireguard
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.

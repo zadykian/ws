@@ -214,7 +214,7 @@ with the address it shows opened in the Mac's browser. With no terminal, the sta
 ## The tunnel
 
 The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds another, and
-`ws server apply -- --tags wireguard` gives `wg0` that peer. That run goes again where `wg0` lacks
+`ws server apply --only wireguard` gives `wg0` that peer. That run goes again where `wg0` lacks
 the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
 the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
 `wg0`'s key, in place of its line, and `ws mac apply` runs again, which loads ws-tunnel
@@ -230,7 +230,7 @@ wizard's files script lists ws's wired ports but the uplink, each with its carri
 addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the closing list
 says to dock the Mac and run the line again. Docked, the stage asks ws's port of the cable, the one
 with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which both roles
-read, then runs `ws server apply -- --tags network,wireguard` there. Once the port holds
+read, then runs `ws server apply --only network,wireguard` there. Once the port holds
 `10.77.0.1`, the stage asks the Mac's service of the cable. The default is the one service with a
 `169.254` address, which an adapter gives itself where no DHCP server answers. The answer goes in
 `mac.conf` as `WS_CABLE_SERVICE`, then `ws mac apply` gives the service `10.77.0.2`

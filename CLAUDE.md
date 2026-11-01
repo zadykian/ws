@@ -9,7 +9,7 @@ The rest is the docs, the lint gates' tools and CI.
 ## Layout
 
 - `site.yml`: the play, on localhost, each role a tag of its name. `ws server apply`
-  installs ansible-core and runs the play that the installed ws embeds.
+  installs ansible-core and runs the play that the installed ws embeds, by `--only` for some roles.
 - `roles/NAME`: a role per tag, each with its page, `docs/NAME.md`, and a line in the README. The
   filter plugins, in Python, are in `roles/NAME/filter_plugins`; ws-fans, the fans' service, is
   Python too, in `roles/fans/files`.
