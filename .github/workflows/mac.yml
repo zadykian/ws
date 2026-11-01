@@ -1,11 +1,13 @@
 name: mac
 
 # mac/ on macOS, in a workflow of its own beside ci.yml, on the same events: every pull request,
-# whatever its base, and on main each pull request's merge.
+# whatever its base, and on main each pull request's merge. release.yml calls it on a tag, where
+# the event is the push and stack is null, so that mac runs in the call as it runs on a push.
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_call:
 
 permissions: {}
 

@@ -1,11 +1,13 @@
 name: ci
 
 # Every pull request, whatever its base, since pull requests are stacked, each on the one below it.
-# On main, each pull request's merge.
+# On main, each pull request's merge. release.yml calls it on a tag, where the event is the push
+# and stack is null, so that playbook runs in the call as it runs on a push.
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_call:
 
 permissions: {}
 
