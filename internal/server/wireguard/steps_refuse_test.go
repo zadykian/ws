@@ -20,7 +20,7 @@ func TestStepsStopOnTheSettings(t *testing.T) {
 }
 
 func TestStepsInAContainerSkipWhatNeedsSystemd(t *testing.T) {
-	m, ss := fakeSteps(t)
+	m, ss := fakeSteps()
 	delete(m.Dirs, "/run/systemd/system")
 	delete(m.Files, ufwRules)
 	out := &effecttest.Out{}

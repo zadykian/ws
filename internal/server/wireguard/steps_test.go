@@ -19,7 +19,7 @@ const peerKey = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
 
 // fakeSteps returns steps on a machine that systemd booted, with the packages installed, the
 // peer mac's key in place and the firewall rule let in.
-func fakeSteps(t *testing.T) (*effecttest.Machine, []step.Step) {
+func fakeSteps() (*effecttest.Machine, []step.Step) {
 	m := effecttest.NewMachine()
 	m.Dirs["/run/systemd/system"] = 0o755
 	m.Files["/etc/group"] = []byte("systemd-network:x:998:\n")
@@ -38,7 +38,7 @@ func fakeSteps(t *testing.T) (*effecttest.Machine, []step.Step) {
 const ufwRules = "/etc/ufw/user.rules"
 
 func TestStepsAreInOrderAndWaitOnTheirPredecessors(t *testing.T) {
-	_, ss := fakeSteps(t)
+	_, ss := fakeSteps()
 	var names, after []string
 	for _, s := range ss {
 		names, after = append(names, s.Name()), append(after, s.WaitsOn())
@@ -51,7 +51,7 @@ func TestStepsAreInOrderAndWaitOnTheirPredecessors(t *testing.T) {
 }
 
 func TestStepsMakeTheKeyAndTheFilesOnceAndThenPlanNothing(t *testing.T) {
-	m, ss := fakeSteps(t)
+	m, ss := fakeSteps()
 	m.Dirs["/sys/class/net/wg0"] = 0o755
 	// wg0 holds the key that the first run makes, from the five bytes the fake reads.
 	private, _ := wgkey.Generate(bytes.NewReader(bytes.Repeat([]byte{5}, 32)))

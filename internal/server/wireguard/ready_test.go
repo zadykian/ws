@@ -14,7 +14,7 @@ func newReady(m *effecttest.Machine, out *effecttest.Out, slept *int) ready {
 }
 
 func TestReadyShowsTheKeyAndWaitsForWg0(t *testing.T) {
-	m, public := machine(t, "OTHER")
+	m, public := machine("OTHER")
 	out, slept := &effecttest.Out{}, 0
 	cs, err := newReady(m, out, &slept).Plan(t.Context())
 	if err != nil || len(cs) != 1 {
@@ -29,7 +29,7 @@ func TestReadyShowsTheKeyAndWaitsForWg0(t *testing.T) {
 }
 
 func TestReadyIsDoneWhereWg0HoldsTheKey(t *testing.T) {
-	m, public := machine(t, "")
+	m, public := machine("")
 	m.Results["wg show wg0 public-key"] = effecttest.Result{Out: []byte(public + "\n")}
 	if cs, err := newReady(m, &effecttest.Out{}, new(int)).Plan(t.Context()); err != nil || len(cs) != 0 {
 		t.Errorf("Plan = %v, %v; want nothing", cs, err)
@@ -37,7 +37,7 @@ func TestReadyIsDoneWhereWg0HoldsTheKey(t *testing.T) {
 }
 
 func TestReadyWaitsThroughAMissingWg0(t *testing.T) {
-	m, public := machine(t, "")
+	m, public := machine("")
 	m.Results["wg show wg0 public-key"] = effecttest.Result{Err: errors.New("no such device")}
 	slept := 0
 	cs, err := newReady(m, &effecttest.Out{}, &slept).Plan(t.Context())
@@ -62,7 +62,7 @@ func TestReadySaysThatADryRunMakesNoKey(t *testing.T) {
 }
 
 func TestReadyChecksNothingWithoutSystemd(t *testing.T) {
-	m, public := machine(t, "OTHER")
+	m, public := machine("OTHER")
 	delete(m.Dirs, "/run/systemd/system")
 	out := &effecttest.Out{}
 	if cs, err := newReady(m, out, new(int)).Plan(t.Context()); err != nil || len(cs) != 0 {

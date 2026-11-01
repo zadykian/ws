@@ -9,7 +9,7 @@ import (
 )
 
 func TestWg0AppliesTheCommands(t *testing.T) {
-	m, _ := machine(t, "OTHER")
+	m, _ := machine("OTHER")
 	m.Results["ip link delete wg0"] = effecttest.Result{}
 	m.Results["networkctl reload"] = effecttest.Result{}
 	cs, _ := wg0{m: m}.Plan(t.Context())
@@ -24,7 +24,7 @@ func TestWg0AppliesTheCommands(t *testing.T) {
 }
 
 func TestWg0SkipsWithoutSystemd(t *testing.T) {
-	m, _ := machine(t, "OTHER")
+	m, _ := machine("OTHER")
 	delete(m.Dirs, "/run/systemd/system")
 	if got := descriptions(t, wg0{m: m}); len(got) != 0 {
 		t.Errorf("plan = %q, want nothing", got)
@@ -32,7 +32,7 @@ func TestWg0SkipsWithoutSystemd(t *testing.T) {
 }
 
 func TestWg0ReportsWhereWgShowFails(t *testing.T) {
-	m, _ := machine(t, "OTHER")
+	m, _ := machine("OTHER")
 	m.Results["wg show wg0 public-key"] = effecttest.Result{Err: errors.New("no device")}
 	if _, err := (wg0{m: m}).Plan(t.Context()); err == nil {
 		t.Error("Plan = nil, want the error")
