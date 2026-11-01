@@ -31,3 +31,9 @@ module is at the root), each linking its reason
 - A restart or a reload that a watched change calls for is `host.Forced`. `Group.Apply` still runs
   it after a failed change, as `force_handlers` did, as the next run finds the file right and
   plans none ([ansible.cfg](../../ansible.cfg)).
+- The server's values are one struct, `values.Values`, parsed once from the machine's file with
+  unknown keys refused. A role's steps read it and add no key without a commit of their own
+  ([values.go](../../internal/server/values/values.go)).
+- `roles.List` is the server's roles in `site.yml`'s order. A port sets its role's `Steps` there
+  and removes the role from `site.yml`, which a test checks
+  ([roles.go](../../internal/server/roles/roles.go)).
