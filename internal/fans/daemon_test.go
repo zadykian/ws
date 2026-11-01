@@ -48,6 +48,10 @@ func TestTickFollowsTheCurve(t *testing.T) {
 	if got := file(t, root, "pwm2_enable"); got != "1\n" {
 		t.Errorf("pwm2_enable = %q, want 1", got)
 	}
+	d.Release()
+	if got := file(t, root, "pwm2_enable"); got != "2\n" {
+		t.Errorf("after Release pwm2_enable = %q, want 2", got)
+	}
 	if len(logs) != 0 {
 		t.Errorf("logs = %q, want none", logs)
 	}
