@@ -58,7 +58,7 @@ func TestReadSettingsNoRoutes(t *testing.T) {
 
 func TestReadSettingsFails(t *testing.T) {
 	tests := []struct{ name, conf, want string }{
-		{"missing", "", "cannot read /etc/ws-tunnel/tunnel.conf: run ws setup"},
+		{"missing", "", "cannot read /etc/ws-tunnel/tunnel.conf: run ws mac apply"},
 		{"bad line", "WS_PORT=0\n", "tunnel.conf: cannot take 'WS_PORT=0'"},
 		{"no key", "WS_REMOTE=a.b\n", "no WS_PUBLIC_KEY"},
 	}

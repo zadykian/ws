@@ -19,7 +19,7 @@ const (
 	ghosttyFont     = "font-jetbrains-mono-nerd-font"
 	ghosttyFontFile = "JetBrainsMonoNerdFontMono-Regular.ttf"
 	// ghosttyHeader starts ws.ghostty's first line, by which a run knows a file for its own.
-	ghosttyHeader = "# Written by ws setup"
+	ghosttyHeader = "# Written by ws mac apply"
 	// ghosttyLine is the line of Ghostty's config that reads ws.ghostty.
 	ghosttyLine = "config-file = ?ws.ghostty"
 )
@@ -167,7 +167,7 @@ func (g *Ghostty) files() ([]step.Change, error) {
 	if exists {
 		old, _ = g.M.ReadFile(file)
 		if first, _, _ := strings.Cut(string(old), "\n"); !strings.HasPrefix(first, ghosttyHeader) {
-			g.Out.Warn("%s is not ws setup's: move it away, as the script writes its own", file)
+			g.Out.Warn("%s is not ws mac apply's: move it away, as the script writes its own", file)
 			return nil, nil
 		}
 	}

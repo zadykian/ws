@@ -25,7 +25,7 @@ const (
 )
 
 // Tunnel sets up the tunnel to ws: ws in ~/.local/bin and root's copy of it, the Mac's WireGuard
-// key, and with WS_PUBLIC_KEY, tunnel.conf and the LaunchDaemon that runs `ws tunnel run`. Without
+// key, and with WS_PUBLIC_KEY, tunnel.conf and the LaunchDaemon that runs `ws mac tunnel run`. Without
 // WS_PUBLIC_KEY, ws's key, it installs no daemon yet.
 type Tunnel struct {
 	Conf conf.Conf
@@ -39,7 +39,7 @@ type Tunnel struct {
 	Out  effect.Out
 	// Check is set under --check.
 	Check bool
-	// Text takes the instructions that make the Mac's key ws's peer, as ws setup printed them.
+	// Text takes the instructions that make the Mac's key ws's peer, as ws mac apply printed them.
 	Text io.Writer
 	// Sleep waits between launchctl's tries. Nil means time.Sleep.
 	Sleep func(time.Duration)
@@ -71,7 +71,7 @@ func (t *Tunnel) self() ([]byte, error) {
 }
 
 // Install puts the bytes of ws in the user's file, through a new file renamed over it, so that a
-// ws that runs from there keeps running. It stands for the build that ws setup did.
+// ws that runs from there keeps running. It stands for the build that ws mac apply did.
 type Install struct {
 	Path string
 	Data []byte

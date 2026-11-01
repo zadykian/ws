@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/setup"
 )
 
-const resolverCmdHeader = "# Written by ws resolver, which removes this file when given no address."
+const resolverCmdHeader = "# Written by ws mac resolver, which removes this file when given no address."
 
 func resolverPlan(m *effecttest.Machine, domain string, addresses ...string) (string, error) {
 	p, err := (&setup.Resolver{Domain: domain, Addresses: addresses, M: m, Out: &effecttest.Out{}}).Plan(context.Background())

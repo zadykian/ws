@@ -1,11 +1,11 @@
-// Package gitcfg holds the texts of the git step of ws setup, as pure functions: the files it
+// Package gitcfg holds the texts of the git step of ws mac apply, as pure functions: the files it
 // writes, and what it makes of git's answers.
 package gitcfg
 
 import "strings"
 
 // Header is the first line of each file the step writes.
-const Header = "# Written by ws setup from ~/.config/ws/mac.conf: its next run replaces changes " +
+const Header = "# Written by ws mac apply from ~/.config/ws/mac.conf: its next run replaces changes " +
 	"made here."
 
 // Inputs are the values of ~/.config/ws/gitconfig.
@@ -53,7 +53,7 @@ func AllowedSigners(email, public string) string {
 // holds. So a terminal and an IDE sign alike, whatever agent the app that runs git has.
 func Wrapper(secretive string) string {
 	return "#!/bin/sh\n" +
-		"# Written by ws setup: git's gpg.ssh.program, ssh-keygen with Secretive's agent, which\n" +
+		"# Written by ws mac apply: git's gpg.ssh.program, ssh-keygen with Secretive's agent, which\n" +
 		"# holds the signing key. Its next run replaces changes made here.\n" +
 		"SSH_AUTH_SOCK='" + secretive + "/socket.ssh'\n" +
 		"export SSH_AUTH_SOCK\n" +
