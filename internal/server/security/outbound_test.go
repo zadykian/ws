@@ -1,12 +1,15 @@
 package security
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/step"
 )
 
 func TestOutboundWritesTheFillAndTheTableThenLoadsThem(t *testing.T) {
@@ -77,5 +80,69 @@ func TestOutboundReloadsWhereTheKernelsTableIsNotTheFiles(t *testing.T) {
 				t.Errorf("changes = %q, want %q", got, want)
 			}
 		}
+	}
+}
+
+// offFixture is a machine that an earlier run left the table and its units on.
+func offFixture() (*effecttest.Machine, *effecttest.Units, []step.Step) {
+	v := values.Default()
+	v.Home, v.Security.Outbound = "/root", false
+	m, u, ss := fakeSteps(v)
+	for _, n := range outboundUnits {
+		m.Files["/etc/systemd/system/"+n] = []byte("[Unit]\n")
+	}
+	m.Dirs["/etc/systemd/system"] = 0o755
+	m.Dirs["/etc/systemd/system/sysinit.target.wants"] = 0o755
+	m.Links["/etc/systemd/system/sysinit.target.wants/"+pathUnit] = "/etc/systemd/system/" + pathUnit
+	m.Files[tableFile] = []byte("table\n")
+	m.Results["nft list table inet ws"] = effecttest.Result{Out: []byte("table\n")}
+	m.Dirs[tableDir] = 0o755
+	u.States = map[string]effect.UnitState{
+		outboundUnit: {Active: true}, pathUnit: {Active: true, Enabled: true}, fillUnit: {Failed: true},
+	}
+	return m, u, ss
+}
+
+// offChanges plans the step that takes the table off.
+func offChanges(t *testing.T, ss []step.Step) []string {
+	for _, s := range ss {
+		if s.Name() != offStep {
+			continue
+		}
+		p, err := s.Plan(t.Context())
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got []string
+		for _, c := range p.Changes {
+			got = append(got, c.String())
+		}
+		return got
+	}
+	t.Fatal("no step takes the table off")
+	return nil
+}
+
+func TestOutboundOffStopsTheUnitsThenRemovesThemAndTheTable(t *testing.T) {
+	_, _, ss := offFixture()
+	got := offChanges(t, ss)
+	for _, want := range []string{"stop " + pathUnit, "stop " + outboundUnit, "reset failed state of " + fillUnit,
+		"remove /etc/systemd/system/" + outboundUnit, "remove " + tableDir,
+		"remove /etc/systemd/system/sysinit.target.wants/" + pathUnit,
+		"reload systemd's unit files", "remove the outbound table"} {
+		if !slices.Contains(got, want) {
+			t.Errorf("changes = %q, want %q", got, want)
+		}
+	}
+}
+
+func TestOutboundOffPlansNothingOnceTheUnitsAreGone(t *testing.T) {
+	v := values.Default()
+	v.Home, v.Security.Outbound = "/root", false
+	m, _, ss := fakeSteps(v)
+	m.Dirs["/etc/systemd/system"] = 0o755
+	m.Results["nft list table inet ws"] = effecttest.Result{Err: errors.New("no table")}
+	if got := offChanges(t, ss); len(got) > 0 {
+		t.Errorf("changes = %q, want none", got)
 	}
 }
