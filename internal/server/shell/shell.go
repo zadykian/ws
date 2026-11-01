@@ -27,6 +27,8 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 	if v.Shell.GitSigning {
 		steps = append(steps, owned(user, m, keyStep, "", func(a account) ([]host.Resource, error) {
 			return signingKey(m, a, v.GitSigningKey), nil
+		}), owned(user, m, "Shell allowed signers", keyStep, func(a account) ([]host.Resource, error) {
+			return allowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners, v.Shell.GitEmail), nil
 		}))
 	}
 	return steps
