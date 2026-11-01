@@ -29,15 +29,10 @@ func (c runRustup) String() string {
 	return "install rustup and Rust's stable toolchain for " + c.r.User
 }
 
-// Apply runs the installer as the user. HOME is set, as without the user's login it would be the
-// caller's. root needs no switch of user, and a container has no sudo.
+// Apply runs the installer as the user, with the user's HOME.
 func (c runRustup) Apply(ctx context.Context) error {
 	r := c.r
-	run := []string{"env", "HOME=" + r.Home, "bash", "-c", installRustup}
-	if r.User == "root" {
-		return r.M.Pass(ctx, false, run[0], run[1:]...)
-	}
-	return r.M.Pass(ctx, true, "runuser", append([]string{"-u", r.User, "--"}, run...)...)
+	return host.User{Name: r.User, Home: r.Home}.Pass(ctx, r.M, "bash", "-c", installRustup)
 }
 
 // Plan installs rustup where ~/.cargo/bin/rustup is missing.
