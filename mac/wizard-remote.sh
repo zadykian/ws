@@ -14,9 +14,9 @@
 #   OWNER/REPO, whose apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound
 #   is off where the clone's host_vars turns the security role's outbound table off, else on.
 #   cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
-# - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
+# - run [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
-#   ends, and exits with the run's status. --update first pulls a clean clone on main. A run whose
+#   ends, and exits with the run's status. Each run installs the latest ws. A run whose
 #   ARGs are -e pairs alone is a full one.
 # - outbound names security_outbound: false in ws's host_vars, where a full run's unit with -e
 #   security_outbound=false didn't, which keeps the outbound table off for a cloud VM.
@@ -120,21 +120,6 @@ status() {
     echo "outbound $(off | sh -s -- check "$dir/host_vars/localhost.yml" && echo off || echo on)"
 }
 
-# pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked
-# files aside. Otherwise it warns, and leaves it as it is.
-pull() {
-    [ -e "$dir/.git" ] || return 0
-    if [ "$(git -C "$dir" symbolic-ref -q --short HEAD)" != main ] ||
-        [ -n "$(git -C "$dir" status --porcelain --untracked-files=no)" ]; then
-        say "warning: leaves $dir as it is, not on main or not clean: pull it by hand"
-        return 0
-    fi
-    head=$(git -C "$dir" rev-parse --short HEAD)
-    git -C "$dir" pull -q --ff-only || die "git pull --ff-only failed in $dir; mend the clone"
-    [ "$(git -C "$dir" rev-parse --short HEAD)" = "$head" ] ||
-        say "pulled $dir to $(git -C "$dir" rev-parse --short HEAD)"
-}
-
 # job prints the script of a run's unit, which systemd-run runs with UNIT DIR STATE [ARG...]. It
 # runs bootstrap.sh ARGs from the clone in DIR, or from the README's download where DIR holds none.
 # Its last steps write STATE/last as UNIT and the status, each by a rename. A full run, whose ARGs
@@ -202,13 +187,10 @@ EOF
 # run starts a run's unit, or follows the one that runs, as the header says. The unit takes root's
 # HOME, which systemd gives a unit only with a user, and the locale that Ansible needs.
 run() {
-    update=0
-    [ "${1-}" != --update ] || { update=1 && shift; }
     unit=$(active)
     if [ -n "$unit" ]; then
         say "following $unit, which runs on ws already"
     else
-        [ "$update" = 0 ] || pull
         mkdir -p "$state"
         job >"$state/job.new"
         mv -f "$state/job.new" "$state/job"
@@ -272,7 +254,7 @@ main() {
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$dir/host_vars/localhost.yml" ;;
     peer) peer "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [--update] [ARG...] |" \
+    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...] |" \
         "outbound | peer KEY" ;;
     esac
 }

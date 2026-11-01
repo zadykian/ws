@@ -173,7 +173,8 @@ key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `S
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
 So the script is the Mac's clone's, whatever ws's clone holds. It runs `bootstrap.sh` from ws's
 clone in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8
-locale. Where ws has no clone, the unit runs the README's download of `bootstrap.sh` instead. The
+locale, or main's `bootstrap.sh` where ws has no clone. It installs the latest ws, which runs the
+playbook it embeds ([The playbook](checks.md#the-playbook)). The
 wizard prints the unit's log until it ends, and stops where the run fails. A first run takes 20 to
 40 minutes. The unit goes on where ssh drops, as when the Mac sleeps, and the next run of the wizard
 follows it to its end.
@@ -183,9 +184,8 @@ with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends
 clone's commit and the status there, and `off` where its `-e` turned the outbound table off. The
 stage is done where that status is 0 and no unit runs. So a second run of the wizard runs no
 playbook, and one after a run cut short starts again. With `--update`, the stage runs the playbook
-again, and the remote script first pulls ws's clone, by fast-forward, where the clone is on `main`
-with nothing uncommitted. The run passes no file of the `ikeward` role's variables, so the role
-leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)).
+once more, which installs the latest ws first. The run passes no file of the `ikeward` role's
+variables, so the role leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
 with `WS_TARGET=cloud`, the run passes `-e security_outbound=false`, and its unit then names that

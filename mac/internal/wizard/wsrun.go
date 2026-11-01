@@ -17,7 +17,7 @@ type WsRun struct {
 	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
 	Host   *HostKey
 	Remote *Remote
-	// Update has the stage run the playbook again, after the remote script pulls ws's clone.
+	// Update has the stage run the playbook once more, which installs the latest ws first.
 	Update bool
 	// ran is set once the stage ran the playbook in this run.
 	ran bool
@@ -80,12 +80,8 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.runDone(ctx, c.Target) {
 		return step.Plan{}, nil
 	}
-	how := "run bootstrap.sh on ws in a unit of its own, and follow its log"
+	how := "run bootstrap.sh on ws, which installs the latest ws, in a unit of its own, and follow its log"
 	var args []string
-	if r.Update {
-		args = []string{"--update"}
-		how = "pull ws's clone where it is on main and clean, then " + how
-	}
 	if c.Target == "cloud" {
 		args = append(args, "-e", "security_outbound=false")
 		how += ", with -e security_outbound=false, then name that in ws's host_vars"

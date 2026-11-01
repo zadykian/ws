@@ -30,7 +30,7 @@ func TestWsRunPlan(t *testing.T) {
 	}{
 		"done":       {"lan", "run abc 0 on\nactive -\n", "", false, false},
 		"first run":  {"lan", "run - -\nactive -\n", "run bootstrap.sh on ws", false, false},
-		"update":     {"lan", "run abc 0 on\nactive -\n", "pull ws's clone", true, false},
+		"update":     {"lan", "run abc 0 on\nactive -\n", "installs the latest ws", true, false},
 		"cloud done": {"cloud", "run abc 0 off\nactive -\noutbound off\n", "", false, false},
 		"cloud host_vars": {"cloud", "run abc 0 off\nactive -\noutbound on\n",
 			"name security_outbound: false in ws's host_vars", false, false},
