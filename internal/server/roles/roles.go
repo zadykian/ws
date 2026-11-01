@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/internal/server/base"
 	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/docker"
+	"github.com/zadykian/ws/internal/server/fans"
 	"github.com/zadykian/ws/internal/server/ikeward"
 	"github.com/zadykian/ws/internal/server/jetbrains"
 	"github.com/zadykian/ws/internal/server/network"
@@ -44,7 +45,7 @@ var all = []Role{
 	{Name: "network", Steps: network.Steps},
 	{Name: "wireguard", Steps: wireguard.Steps},
 	{Name: "ikeward", Steps: ikeward.Steps},
-	{Name: "fans"},
+	{Name: "fans", Steps: fans.Steps},
 	{Name: "shell", Steps: shell.Steps},
 	{Name: "tmux", Steps: tmux.Steps},
 	{Name: "devtools", Steps: devtools.Steps},
