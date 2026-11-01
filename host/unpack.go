@@ -20,7 +20,8 @@ var gzipMagic = []byte{0x1f, 0x8b}
 // Unpack extracts a tar archive, gzip-compressed or plain, into root. It drops the first strip
 // components of each name, such as the one directory that a release tarball holds, and skips an
 // entry that has no more. It writes through root alone, so no entry leaves it, whatever its name
-// or the links it made before. It handles directories and files, and fails on any other entry.
+// or the links it made before. It handles directories, files, symlinks and hard links, and fails on
+// any other entry.
 func Unpack(r io.Reader, root *os.Root, strip int) error {
 	br := bufio.NewReader(r)
 	if head, err := br.Peek(len(gzipMagic)); err == nil && string(head) == string(gzipMagic) {
@@ -46,6 +47,24 @@ func Unpack(r io.Reader, root *os.Root, strip int) error {
 			return fmt.Errorf("%s: %w", hdr.Name, err)
 		}
 	}
+}
+
+// UnpackFile makes dir with mode 0755, and unpacks the archive file in it as Unpack does.
+func UnpackFile(archive, dir string, strip int) error {
+	f, err := os.Open(archive) //nolint:gosec // the step names the archive
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // a tree for all users to read
+		return err
+	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+	return Unpack(f, root, strip)
 }
 
 // stripped returns the name without its first strip components, and whether any are left.
@@ -93,6 +112,14 @@ func extract(r io.Reader, hdr *tar.Header, root *os.Root, strip int) error {
 			return err
 		}
 		return root.Chmod(name, perm)
+	case tar.TypeSymlink:
+		return root.Symlink(hdr.Linkname, name)
+	case tar.TypeLink:
+		target, ok, err := stripped(hdr.Linkname, strip)
+		if err != nil || !ok {
+			return errors.Join(err, errors.New("a hard link to a name outside the tree"))
+		}
+		return root.Link(target, name)
 	default:
 		return fmt.Errorf("an entry of type %q", hdr.Typeflag)
 	}
