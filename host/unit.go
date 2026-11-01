@@ -61,8 +61,24 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		return nil, fmt.Errorf("unit %s: %w", u.Name, err)
 	}
 	var cs []Change
+	owed, err := u.owed()
+	if err != nil {
+		return nil, err
+	}
+	// call plans the verb. A restart or reload, or a start that an owed one makes needless, removes
+	// the mark of the watched change once it is done.
 	call := func(verb string, do func(context.Context, string) error) {
-		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error { return do(ctx, u.Name) }, verb == "restart" || verb == "reload"})
+		forced := verb == "restart" || verb == "reload"
+		settle := forced || (verb == "start" && owed)
+		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error {
+			if err := do(ctx, u.Name); err != nil {
+				return err
+			}
+			if settle {
+				return u.settle(ctx)
+			}
+			return nil
+		}, forced})
 	}
 	if s.NeedsReload {
 		// A unit file written by a run that failed before the reload: the next run finds it right.
@@ -85,10 +101,13 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		if err != nil {
 			return nil, err
 		}
+		if changed && !owed {
+			cs = append(cs, owe{u})
+		}
 		switch {
-		case changed && u.Reload:
+		case (changed || owed) && u.Reload:
 			call("reload", u.U.Reload)
-		case changed:
+		case changed || owed:
 			call("restart", u.U.Restart)
 		}
 	case u.Run == Stopped && s.Active:

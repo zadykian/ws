@@ -24,6 +24,12 @@ type Forced interface {
 	Forced() bool
 }
 
+// Early is a Change that Group.Plan puts before the changes of all parts, as the mark of an owed
+// restart must be on disk before the change that owes it.
+type Early interface {
+	Early() bool
+}
+
 // Resource is one part of a machine that a step sets up.
 type Resource interface {
 	// Plan reads alone, and returns no change once the resource is as wanted.
@@ -45,17 +51,21 @@ func (g Group) WaitsOn() string { return g.After }
 
 // Plan joins the changes of the parts.
 func (g Group) Plan(ctx context.Context) (step.Plan, error) {
-	var p step.Plan
+	var early, rest []step.Change
 	for _, part := range g.Parts {
 		changes, err := part.Plan(ctx)
 		if err != nil {
 			return step.Plan{}, err
 		}
 		for _, c := range changes {
-			p.Changes = append(p.Changes, c)
+			if e, ok := c.(Early); ok && e.Early() {
+				early = append(early, c)
+			} else {
+				rest = append(rest, c)
+			}
 		}
 	}
-	return p, nil
+	return step.Plan{Changes: append(early, rest...)}, nil
 }
 
 // Apply applies the changes of a plan that Plan made, in order. After the first failure it applies

@@ -94,8 +94,11 @@ func TestUnitRestartIsForced(t *testing.T) {
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
 	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
 	cs, err := host.Unit{M: m, U: u, Out: out, Name: "a.service", Run: host.Running, Watch: []host.Resource{conf}}.Plan(t.Context())
-	if f, ok := cs[0].(host.Forced); err != nil || len(cs) != 1 || !ok || !f.Forced() {
-		t.Errorf("plan = %v, %v; want a forced restart", cs, err)
+	if err != nil || len(cs) != 2 {
+		t.Fatalf("plan = %v, %v; want the owed mark and a restart", cs, err)
+	}
+	if f, ok := cs[1].(host.Forced); !ok || !f.Forced() {
+		t.Errorf("plan = %v; want a forced restart", cs)
 	}
 }
 
