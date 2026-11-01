@@ -20,8 +20,9 @@ The rest is the docs, the lint gates' tools and CI.
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. The
   root package `ws` embeds the playbook on Linux (`playbook_linux.go`), with the tarballs of
-  `collections/`. `cmd/ws` is the command and `internal/` its packages. `step` and `effect`, with
-  `effect/effecttest`, are public: another module builds steps on them.
+  `collections/`. `cmd/ws` is the command and `internal/` its packages. `step`, `effect`, with
+  `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
+  steps on them.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side, the files that the ws CLI embeds: the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).

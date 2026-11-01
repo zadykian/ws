@@ -5,13 +5,14 @@ paths:
   - "internal/**"
   - "step/**"
   - "effect/**"
+  - "host/**"
 ---
 
 # mac
 
-The rules a change to the ws CLI keeps, in `cmd/`, `internal/`, `step/` and `effect/` (its module is
-at the root), each linking its
-reason ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
+The rules a change to the ws CLI keeps, in `cmd/`, `internal/`, `step/`, `effect/` and `host/` (its
+module is at the root), each linking its reason
+([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too.
 
 - Each step is isolated behind `step.Step`: it plans and applies one part of the setup, and reads
@@ -27,3 +28,6 @@ reason ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 - A group of commands exists on the systems where it runs. `ws mac` is `macCommand`, which is built
   everywhere and tested on Linux. Its entry in the table of groups is in a `//go:build darwin` file
   ([groups_darwin.go](../../cmd/ws/groups_darwin.go)).
+- A restart or a reload that a watched change calls for is `host.Forced`. `Group.Apply` still runs
+  it after a failed change, as `force_handlers` did, as the next run finds the file right and
+  plans none ([ansible.cfg](../../ansible.cfg)).
