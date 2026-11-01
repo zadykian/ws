@@ -28,9 +28,8 @@ the first two of which install what the rest needs:
 3. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
 4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
 5. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
-   timestamp is fresh. With no terminal at all, the stage stops, unless sudo needs no password. The
-   wizard shows ws mac apply's warnings at each run, and drops the Mac's key that ws mac apply
-   prints.
+   timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
+   the warnings of `ws mac apply` and drops the Mac's key that it prints.
 6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 7. Root's key: root's login to ws by the Mac's key, checked and never added, below.
 8. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
@@ -168,15 +167,17 @@ script's `install TAG URL` runs the `install.sh` of `WS_RELEASES_URL` or
 [GitHub's releases](https://github.com/zadykian/ws/releases), which checks the binary against
 `ws.sha256`. The address starts with `https://`, or `http://127.0.0.1:` in CI. A build of a clone
 is no release: put a Linux build of the tree at `/usr/local/bin/ws` (`tools/build`), then run again.
+With `--update`, ws on the Mac comes first, before the lock: where `/latest` names another release,
+its `install.sh` runs, then the command again. A ws that is no release stays, with a warning.
 
 ## ws's run
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
 It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
 root's `HOME` and a UTF-8 locale. That ws runs the playbook it embeds
-([The playbook](checks.md#the-playbook)). The wizard prints the unit's log until
-it ends, and stops where the run fails. A first run takes 20 to 40 minutes. The unit goes on where
-ssh drops, as when the Mac sleeps, and the next run of the wizard follows it to its end.
+([The playbook](checks.md#the-playbook)). The wizard prints the unit's log until it ends, and stops
+where the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when
+the Mac sleeps, and the next run of the wizard follows it to its end.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes ws's
@@ -257,14 +258,14 @@ naming its target. The wizard never prints the list: `--check` says it would cop
 The stage sets up the cable from the Mac's display to a port of ws's, outside the router
 ([The direct link](network.md#the-direct-link)). A cloud VM and a VM on the Mac skip it. The
 wizard's files script lists ws's wired ports but the uplink, each with its carrier and IPv4
-addresses. Where none has carrier, as the Mac isn't
-docked, the stage waits, and the closing list says to dock the Mac and run the line again. Docked,
-the stage asks ws's port of the cable, the one with carrier by default. It names the port in
-`/etc/ws/host_vars.yml` on ws, then runs `ws server apply -- --tags network,wireguard` there, as both
-roles read it. Once the port holds `10.77.0.1`, the stage asks the Mac's service of the cable. The
-default is the one service with a `169.254` address, which an adapter gives itself where no DHCP
-server answers. The answer goes in `mac.conf` as `WS_CABLE_SERVICE`, then `ws mac apply` gives the
-service `10.77.0.2` ([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must get an answer.
+addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the closing list
+says to dock the Mac and run the line again. Docked, the stage asks ws's port of the cable, the one
+with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which both roles
+read, then runs `ws server apply -- --tags network,wireguard` there. Once the port holds
+`10.77.0.1`, the stage asks the Mac's service of the cable. The default is the one service with a
+`169.254` address, which an adapter gives itself where no DHCP server answers. The answer goes in
+`mac.conf` as `WS_CABLE_SERVICE`, then `ws mac apply` gives the service `10.77.0.2`
+([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must get an answer.
 
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
 where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
@@ -274,7 +275,7 @@ undocked too, but stops on a port ws lacks. `--check` asks nothing, and says wha
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
 So does `WS_CABLE_PORT`, for a port that ws keeps down, as no netplan file names it, so the files
-script can't read its carrier. The roles' run brings it up. The closing list names such ports.
+script can't read its carrier. The roles bring it up. The closing list names such ports.
 
 ## What stays by hand
 
