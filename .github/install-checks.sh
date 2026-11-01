@@ -72,6 +72,12 @@ refused() {
 
 build_release v0.1.0
 build_release v0.2.0
+build_release v0.3.0
+build_release v0.4.0
+cp "$tmp/releases/download/v0.1.0/ws-linux-amd64" "$tmp/releases/download/v0.4.0/ws-linux-amd64"
+(cd "$tmp/releases/download/v0.4.0" && sha256sum ws-linux-amd64 >ws.sha256)
+sed -i 's/^[0-9a-f]\{64\}/0000000000000000000000000000000000000000000000000000000000000000/' \
+    "$tmp/releases/download/v0.3.0/ws.sha256"
 
 python3 -I "$root/.github/install-server.py" "$tmp/releases" v0.2.0 "$tmp/port" &
 server=$!
@@ -98,3 +104,29 @@ echo "::group::The latest installs into a new home"
 installs "$tmp/home2"
 has_version "$tmp/home2" v0.2.0
 echo "::endgroup::"
+
+echo "::group::A wrong ws.sha256 is refused, and ws is as it was"
+refused "$tmp/home1" WS_VERSION=0.3.0
+has_version "$tmp/home1" v0.2.0
+only_ws "$tmp/home1"
+mkdir -p "$tmp/home3"
+refused "$tmp/home3" WS_VERSION=v0.3.0
+[ -z "$(ls -A "$tmp/home3/.local/bin")" ] || fail "a refused install left files"
+echo "::endgroup::"
+
+echo "::group::A binary of another version is refused, and ws is as it was"
+refused "$tmp/home1" WS_VERSION=0.4.0
+has_version "$tmp/home1" v0.2.0
+only_ws "$tmp/home1"
+echo "::endgroup::"
+
+echo "::group::A version that is no version is refused"
+refused "$tmp/home1" WS_VERSION=0.2
+echo "::endgroup::"
+
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "::group::Root installs to /usr/local/bin"
+    sudo env WS_RELEASES_URL="$url" sh "$root/install.sh"
+    [ "$(/usr/local/bin/ws version)" = v0.2.0 ] || fail "root's ws is not v0.2.0"
+    echo "::endgroup::"
+fi
