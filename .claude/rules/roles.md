@@ -21,7 +21,7 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
   sudo, and without become `HOME` would be the caller's
   ([claude's tasks](../../roles/claude/tasks/main.yml)).
 - A version goes in `group_vars/all.yml`, named for the role that installs it. SigNoz's images are
-  pinned in `roles/signoz/files/casting.yaml`, as its compose files are forged from it.
+  pinned in `internal/server/signoz/casting.yaml`, as its compose files are forged from it.
 - A role's variables carry its name as a prefix, as ansible-lint's `var-naming` rule asks
   ([.ansible-lint](../../.ansible-lint)).
 - A failed task still runs the handlers it notified, as the next run would not notify them again
@@ -39,8 +39,6 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 - Where a dry run skips a task, a task beside it shows what the run would change, as Go's move into
   `/usr/local/go` does ([fans' tasks](../../roles/fans/tasks/service.yml)).
 - A task that needs a booted machine's systemd is tagged `systemd`, which CI's container run skips.
-  An include tagged `systemd` gives its tasks the tag through `apply`, so that `--tags systemd`
-  runs them too ([signoz's tasks](../../roles/signoz/tasks/main.yml)).
 - A file a role writes has a `# Written by github.com/zadykian/ws` line at its top, where its format
   takes comments, as the roles' templates and files do. Each run replaces a change made to it by
   hand ([shell](../../docs/shell.md)).
@@ -62,10 +60,10 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 
 ## signoz and the filter plugins
 
-- foundryctl's compose files, in `roles/signoz/files/deployment/`, are never edited by hand: change
+- foundryctl's compose files, in `internal/server/signoz/deployment/`, are never edited by hand: change
   `casting.yaml` and forge again ([The compose files](../../docs/signoz.md#the-compose-files)).
-- The dashboards' files are kept as SigNoz's API returns them, so that the role can compare the
+- The dashboards' files are kept as SigNoz's API returns them, so that the step can compare the
   two. After a change of SigNoz's image, refresh them and commit them with the casting
-  ([The dashboards](../../roles/signoz/files/dashboards/README.md#refreshing-them)).
+  ([The dashboards](../../internal/server/signoz/dashboards/README.md#refreshing-them)).
 - The filter plugins are Python that runs on the controller, whose ansible-core 2.20 needs Python
   3.12 or newer, under `make ruff` ([ruff.toml](../../ruff.toml)).

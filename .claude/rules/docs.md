@@ -27,7 +27,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [checks-mac-cld.md](../../docs/checks-mac-cld.md) says what the job `mac-cld` checks.
 - [helix-keymap.md](../../docs/helix-keymap.md) indexes the keymap's pages in
   `docs/helix-keymap/`.
-- [The dashboards](../../roles/signoz/files/dashboards/README.md) says what each dashboard reads,
+- [The dashboards](../../internal/server/signoz/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
 - ws is public, and names no server ([mac.conf](../../docs/mac.md#macconf)). So no doc holds a
   server's address, a secret or a word of the local list (CLAUDE.md).

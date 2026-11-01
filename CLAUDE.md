@@ -114,7 +114,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   pinned by version alone ([group_vars/all.yml](group_vars/all.yml)).
 - The collections are pinned in `requirements.yml`, and ansible-lint runs offline on those pins
   ([.ansible-lint](.ansible-lint)).
-- foundryctl forges SigNoz's compose files, `roles/signoz/files/deployment/` and
+- foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
   ([The compose files](docs/signoz.md#the-compose-files)).
