@@ -94,12 +94,55 @@ latest() {
     where="$where, $tag"
 }
 
+# download writes the file $1 of the release tag to the file $2, or to stdout for -, following
+# GitHub's redirect to where it keeps the file.
+download() {
+    fetch -L -o "$2" "$releases/download/$tag/$1"
+}
+
+# sha256 prints the SHA-256 checksum of the file $1.
+sha256() {
+    if command -v sha256sum >/dev/null; then
+        sha256sum <"$1" | awk '{ print $1 }'
+    else
+        shasum -a 256 <"$1" | awk '{ print $1 }'
+    fi
+}
+
 main() {
     platform
     release
     command -v curl >/dev/null || die "curl is needed to download ws's releases"
+    command -v sha256sum >/dev/null || command -v shasum >/dev/null ||
+        die "sha256sum, or shasum, is needed to check ws's checksum"
+    if [ "$(id -u)" = 0 ]; then
+        dir=/usr/local/bin
+    else
+        [ -n "${HOME:-}" ] || die "HOME is not set: cannot find ~/.local/bin"
+        dir=$HOME/.local/bin
+    fi
+
     latest
-    echo "the release to install is $tag, and its binary $binary"
+    mkdir -p "$dir" || die "cannot create $dir"
+    # The download goes into a directory in the one ws goes to, so that moving it there is a rename
+    # that replaces ws at once, even while ws runs, and so that it runs from where ws will.
+    tmp=
+    trap '[ -z "$tmp" ] || rm -rf "$tmp"' EXIT
+    trap 'exit 1' HUP INT TERM
+    tmp=$(mktemp -d "$dir/.ws.XXXXXX") || die "cannot write to $dir"
+
+    download ws.sha256 "$tmp/ws.sha256" || die "cannot download ws.sha256 from $where"
+    expected=$(awk -v name="$binary" '$2 == name || $2 == "*" name { print $1 }' "$tmp/ws.sha256")
+    [ -n "$expected" ] || die "ws.sha256 of $where has no checksum for $binary"
+    download "$binary" "$tmp/ws" || die "cannot download $binary from $where"
+    [ "$(sha256 "$tmp/ws")" = "$expected" ] ||
+        die "$binary does not match its checksum in ws.sha256 of $where"
+    chmod 755 "$tmp/ws"
+    installed=$("$tmp/ws" version </dev/null) || die "the $binary downloaded does not run"
+    [ "$installed" = "$tag" ] ||
+        die "the $binary downloaded is version '$installed', not $tag of $where"
+    mv -f "$tmp/ws" "$dir/ws" || die "cannot move ws to $dir"
+    echo "installed ws $installed as $dir/ws"
 }
 
 main
