@@ -1,15 +1,16 @@
 #!/bin/sh
-# ws's run on the Mac that 33-root.sh leaves. The first run must have run ws's playbook once, and
-# each run of the wizard since must have read ws's status alone. A run must read it once, and once
-# more after a run of the playbook. Once ws's run stamp is gone, a run whose unit is cut off before
-# its stamp must stop at the stage. The next must start a unit of its own. That one must end with
-# what stays by hand: ws's fans' driver, as the stand-in's Secure Boot refuses it, and the router's
-# forwards, for WS_REMOTE. A run while another's unit runs, as one that a dropped ssh left, must
-# follow that unit, and start none. With WS_TARGET=cloud, a run that follows such a unit, without
-# -e, must then start one with -e security_outbound=false, and name that in ws's host_vars. The next
-# run must start none. Without the line, a run must write it alone. --check --update, with no
-# WS_TARGET in the environment, and --check on a cloud VM must name the run that each would start.
-# Back on the LAN, the closing list of --update must name the table that the line keeps off.
+# ws's run on the Mac that 33-root.sh leaves. The wizard must have run ws's playbook twice by now,
+# once in 30-run.sh and once as 31-host.sh's cloud VM, and each run of the wizard since must have
+# read ws's status alone. A run must read it once, and once more after a run of the playbook. Once
+# ws's run stamp is gone, a run whose unit is cut off before its stamp must stop at the stage. The
+# next must start a unit of its own. That one must end with what stays by hand: ws's fans' driver,
+# as the stand-in's Secure Boot refuses it, and the router's forwards, for WS_REMOTE. A run while
+# another's unit runs, as one that a dropped ssh left, must follow that unit, and start none. With
+# WS_TARGET=cloud, a run must name security_outbound: false in ws's host_vars first. One that
+# follows a unit that began without the line must then start one of its own. The next run must start
+# none. Without the line, a run must write it alone. --check --update, with no WS_TARGET in the
+# environment, and --check on a cloud VM must name the run that each would start. Back on the LAN,
+# the closing list of --update must name the table that the line keeps off.
 
 set -u
 
@@ -44,8 +45,8 @@ started() {
 }
 
 grep -q '^root: sh -s -- status$' "$ws/log" &&
-    [ "$(grep -c '^root: sh -s -- run$' "$ws/log")" = 1 ] ||
-    error "the wizard ran ws's playbook other than once, or read ws's status no time since"
+    [ "$(grep -c '^root: sh -s -- run$' "$ws/log")" = 2 ] ||
+    error "the wizard ran ws's playbook other than twice, or read ws's status no time since"
 sudo rm "$stamp"
 touch "$ws/server.cut" "$ws/sb" "$ws/nct6687"
 wizard
@@ -86,8 +87,8 @@ WS_CONF=$RUNNER_TEMP/cloud.conf
 export WS_CONF
 sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
 out=$("$wsbin" mac wizard --check </dev/null 2>&1)
-printf '%s\n' "$out" | grep -q 'with -e security_outbound=false, then name that in ' ||
-    error "ws mac wizard --check on a cloud VM named no run with -e: $out"
+printf '%s\n' "$out" | grep -q 'after naming security_outbound: false in ' ||
+    error "ws mac wizard --check on a cloud VM named no host_vars line before the run: $out"
 echo 20 >"$ws/server.wait"
 ssh -o BatchMode=yes ws-ssh sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
 tries=0
@@ -98,9 +99,9 @@ done
 wizard
 rm "$ws/server.wait"
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
-    [ "$(tail -n 1 "$ws/server.log")" = '-- -e security_outbound=false' ] && started 1 3 &&
+    started 1 3 &&
     grep -q ' 0 off$' "$stamp" && sudo grep -qx 'security_outbound: false' "$vars" &&
-    [ "$status" = 0 ] || error "a cloud VM's run after a unit without -e exited $status"
+    [ "$status" = 0 ] || error "a cloud VM's run after a unit without the line exited $status"
 wizard
 started 0 1 && [ "$status" = 0 ] || error "the next run with WS_TARGET=cloud exited $status"
 sudo rm "$vars"

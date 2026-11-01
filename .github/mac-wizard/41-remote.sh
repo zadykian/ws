@@ -3,14 +3,13 @@
 # over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins.
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
-# off. A full run must run ws server apply -- without arguments in a unit of its own, with root's HOME and
+# off. A full run must run ws server apply without arguments in a unit of its own, with root's HOME and
 # a UTF-8 locale, print its log and exit 0. It must stamp ws's version, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
-# unit of its own, as must one with -e security_outbound=false, which is full too, stamps off in
-# run, and names security_outbound: false in
-# /etc/ws/host_vars.yml itself, a file of mode 0600 in a directory of 0755. One with another argument, as
+# unit of its own, as must one after outbound, which stamps off in run, as /etc/ws/host_vars.yml,
+# a file of mode 0600 in a directory of 0755, names security_outbound: false. One with an argument, as
 # --diff, must leave that stamp. The files script's arch must print amd64 or arm64. Its stage must
 # stop without a tag, and print the path for a command of another repository's release. Its install
 # of the command sent there must stop where the SHA-256 is another, and else leave the command at
@@ -140,16 +139,16 @@ remote run
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on" ] ||
     error "the run after it exited $status, with run '$(stamp run)'"
 sudo rm "$stamps/run"
-remote run -- -e security_outbound=false
-[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] &&
-    [ "$(tail -n 1 "$ws/server.log")" = '-- -e security_outbound=false' ] ||
-    error "a full run with -e exited $status, with run '$(stamp run)'"
+remote outbound
+remote run
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] ||
+    error "a full run after outbound exited $status, with run '$(stamp run)'"
 host_vars="$ws/root"/etc/ws
 sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
-    error "a full run with -e named no security_outbound: false in host_vars"
+    error "outbound named no security_outbound: false in host_vars"
 [ "$(sudo stat -f %Lp "$host_vars")" = 755 ] &&
     [ "$(sudo stat -f %Lp "$host_vars/host_vars.yml")" = 600 ] ||
-    error "a full run with -e made /etc/ws or its host_vars.yml with another mode"
+    error "outbound made /etc/ws or its host_vars.yml with another mode"
 sudo rm -r "$host_vars"
 remote run --diff
 [ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off" ] || error "a run with --diff stamped run"
