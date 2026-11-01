@@ -7,11 +7,12 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
-func steps(values.Values, effect.Machine, effect.Out) []step.Step { return nil }
+func steps(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step { return nil }
 
 func TestSegments(t *testing.T) {
 	list := []roles.Role{{Name: "a"}, {Name: "b"}, {Name: "c", Steps: steps}, {Name: "d"}, {Name: "e", Steps: steps}}

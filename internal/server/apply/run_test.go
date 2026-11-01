@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -47,7 +48,9 @@ func (t todo) Apply(context.Context, step.Plan) error { *t.done = true; return n
 
 func TestRun(t *testing.T) {
 	var done bool
-	ported := func(values.Values, effect.Machine, effect.Out) []step.Step { return []step.Step{todo{&done}} }
+	ported := func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+		return []step.Step{todo{&done}}
+	}
 	list := []roles.Role{{Name: "a"}, {Name: "b"}, {Name: "c", Steps: ported}, {Name: "d"}}
 	segs, err := Segments(list, nil)
 	if err != nil {

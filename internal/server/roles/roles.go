@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -16,8 +17,8 @@ type Role struct {
 	Name string
 	// Steps returns the role's steps, in the order they run. It is nil where the playbook runs
 	// the role. A ported role's package gives it as `Steps: name.Steps`, with Steps declared as
-	// func Steps(v values.Values, m effect.Machine, out effect.Out) []step.Step.
-	Steps func(v values.Values, m effect.Machine, out effect.Out) []step.Step
+	// func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step.
+	Steps func(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step
 }
 
 // Ported reports whether the role runs as Go steps.

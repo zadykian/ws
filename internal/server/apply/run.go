@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -16,8 +17,10 @@ import (
 type Config struct {
 	Options
 	Values values.Values
-	M      effect.Machine
-	Out    effect.Out
+	// Secrets are the decrypted secrets, for the ported roles.
+	Secrets secrets.Secrets
+	M       effect.Machine
+	Out     effect.Out
 	// Prepare are the steps that come first while a playbook role is left: ansible-playbook's
 	// packages and the playbook itself. They are never a check, as ansible-playbook cannot run
 	// without them.
@@ -42,7 +45,7 @@ func Run(ctx context.Context, c Config, segs []Segment) ([]string, error) {
 	var changed []string
 	for _, s := range segs {
 		if s.Playbook == nil {
-			did, err := step.Run(ctx, s.Role.Steps(c.Values, c.M, c.Out), c.Out, c.Check)
+			did, err := step.Run(ctx, s.Role.Steps(c.Values, c.Secrets, c.M, c.Out), c.Out, c.Check)
 			if err != nil {
 				return changed, fmt.Errorf("%s: %w", s.Role.Name, err)
 			}
