@@ -105,6 +105,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	hand.Late(cable.Hand)
 	return []step.Step{
 		&wizard.Tools{M: e.m, Out: out, Sleep: time.Sleep},
+		&wizard.Homebrew{Lock: lock, M: e.m, Out: out},
 		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
 		&wizard.MacKey{Conf: later, Home: e.getenv("HOME"),
