@@ -46,16 +46,18 @@ func TestGitconfigShowsNoContent(t *testing.T) {
 	}
 }
 
-func TestGitconfigNamesTheKeysARewriteLoses(t *testing.T) {
+func TestGitconfigNamesWhatARewriteLoses(t *testing.T) {
 	m, sm, out, g := gitFixture(true)
 	m.Files["/home/ws/.gitconfig"] = []byte("OLD")
+	m.Files["/home/ws/.config/git/local"] = []byte("LOCAL")
 	sm.answers["OLD"] = "user.name\nhttp.https://x.y.extraheader\nuser.signingkey=/home/ws/other\n"
+	sm.answers["LOCAL"] = "gpg.format\nuser.name\n"
 	sm.answers["# Written"] = "user.name\n"
 	if _, err := g.Plan(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	all := strings.Join(out.Lines, "\n")
-	for _, want := range []string{"drops http.*.extraheader"} {
+	for _, want := range []string{"drops http.*.extraheader", "signing key, /home/ws/other,", "sets gpg.format"} {
 		if !strings.Contains(all, want) {
 			t.Errorf("no %q in %q", want, all)
 		}

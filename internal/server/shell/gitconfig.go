@@ -68,6 +68,11 @@ func (g gitconfig) notes(ctx context.Context, content []byte) error {
 	if err != nil {
 		return err
 	}
+	if g.Signing {
+		if err := g.signingNotes(ctx, old); err != nil {
+			return err
+		}
+	}
 	oldKeys, err := g.names(ctx, old)
 	if err != nil {
 		return err
@@ -78,6 +83,34 @@ func (g gitconfig) notes(ctx context.Context, content []byte) error {
 	}
 	if lost := dropped(oldKeys, wantKeys); len(lost) > 0 {
 		g.Out.Warn("writing ~/.gitconfig drops %s. Move them to ~/.config/git/local first; a real run keeps the old file beside it, as ~/.gitconfig.*~.", join(lost))
+	}
+	return nil
+}
+
+// signingNotes names the signing key that the rewrite replaces, which the note on dropped keys
+// misses as the key's name stays, and the signing settings of ~/.config/git/local, which win over
+// the role's.
+func (g gitconfig) signingNotes(ctx context.Context, old []byte) error {
+	list, err := g.M.RunInput(ctx, old, "git", "config", "--file", "-", "--list")
+	if err != nil {
+		return err
+	}
+	if key, ok := signingKeyOf(lines(list), g.A.Home); ok && key != g.Key+".pub" {
+		g.Out.Warn("writing ~/.gitconfig replaces its signing key, %s, with %s.pub. To sign with the old key, set user.signingkey in ~/.config/git/local first.", key, g.Key)
+	}
+	local, err := g.M.ReadRootFile(g.A.Home + "/.config/git/local")
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	keys, err := g.names(ctx, local)
+	if err != nil {
+		return err
+	}
+	if found := localSigning(keys); len(found) > 0 {
+		g.Out.Warn("~/.config/git/local sets %s, which win over the role's signing in ~/.gitconfig. Remove them to sign with %s.", join(found), g.Key)
 	}
 	return nil
 }
