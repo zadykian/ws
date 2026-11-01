@@ -83,3 +83,43 @@ func TestFingerprintsOfSeveralCertificates(t *testing.T) {
 		t.Errorf("got %v, %v; want %v", got, err, want)
 	}
 }
+
+func TestFingerprintsRefuse(t *testing.T) {
+	e := newKey(t, false)
+	pub := public(t, e)
+	var private bytes.Buffer
+	if err := e.SerializePrivate(&private, nil); err != nil {
+		t.Fatal(err)
+	}
+	// A public key packet of version 3 (tag 6, 12 octets of body).
+	v3 := append([]byte{0xC6, 12, 3}, make([]byte, 11)...)
+	marker := []byte{0xCA, 3, 'P', 'G', 'P'}
+	tests := []struct {
+		name string
+		in   string
+	}{
+		{"a private key", armored(private.Bytes())},
+		{"a key of version 3", armored(v3)},
+		{"a packet cut short", armored(pub[:len(pub)/2])},
+		{"a packet header cut short", armored(pub, []byte{0xC2})},
+		{"data that is no packet", armored([]byte{0x00, 0x01, 0x02})},
+		{"a partial length", armored(pub, []byte{0xC2, 0xE0, 1})},
+		{"an indeterminate length", armored(pub, []byte{0x95, 'x'})},
+		{"a marker before the key", armored(marker, pub)},
+		{"a subkey before the key", armored([]byte{0xCE, 0}, pub)},
+		{"a user ID before the key", armored([]byte{0xCD, 1, 'x'}, pub)},
+		{"a trust packet", armored(pub, []byte{0xCC, 1, 0})},
+		{"a literal data packet", armored(pub, []byte{0xCB, 6, 'b', 0, 0, 0, 0, 0})},
+		{"an unknown tag", armored(pub, []byte{0xFE, 0})},
+		{"a key of version 3 after a good one", armored(pub, v3)},
+		{"no armor", string(pub)},
+		{"a second block", armored(pub) + armored(pub)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got, err := fingerprints(tt.in); err == nil {
+				t.Errorf("got %v, want an error", got)
+			}
+		})
+	}
+}
