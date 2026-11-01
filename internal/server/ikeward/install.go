@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 )
@@ -15,7 +17,11 @@ import (
 // and 0 where not.
 const exitChanged = 4
 
-// Install runs ikeward install from the profile of the secrets.
+// Install runs ikeward install from the profile of the secrets, where its dry run says it would
+// change anything: install a package, write or remove a file, or take a step. So a new version, a
+// new value or a file of ikeward's edited by hand has it run again, and so has an install cut
+// short, or a unit of ikeward's found stopped. Without systemd booted, or a profile in the secrets,
+// it says so and plans nothing.
 type Install struct {
 	M       effect.Machine
 	Out     effect.Out
@@ -53,4 +59,43 @@ func (i Install) run(ctx context.Context, p profile, flags ...string) (int, stri
 		return exitChanged, string(out), nil
 	}
 	return 0, "", fmt.Errorf("ikeward install: %w", err)
+}
+
+type installNow struct {
+	i      Install
+	dryRun string
+}
+
+func (c installNow) String() string {
+	return "run ikeward install, which would change:\n" + strings.TrimRight(c.dryRun, "\n")
+}
+
+func (c installNow) Apply(ctx context.Context) error {
+	p := c.i.profile()
+	return p.with(ctx, func() error {
+		_, _, err := c.i.run(ctx, p)
+		return err
+	})
+}
+
+// Plan asks install what it would change, on the files of the run.
+func (i Install) Plan(ctx context.Context) ([]host.Change, error) {
+	if !host.Booted(i.M) {
+		i.Out.Say("ikeward install: skipped, systemd is not running")
+		return nil, nil
+	}
+	p := i.profile()
+	if !p.present() {
+		i.Out.Say("ikeward install: the secrets hold no profile, so the VPN stays as it is")
+		return nil, nil
+	}
+	var changes []host.Change
+	err := p.with(ctx, func() error {
+		code, dry, err := i.run(ctx, p, "--dry-run")
+		if code == exitChanged {
+			changes = []host.Change{installNow{i, dry}}
+		}
+		return err
+	})
+	return changes, err
 }
