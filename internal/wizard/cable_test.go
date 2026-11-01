@@ -54,7 +54,7 @@ func TestCablePlan(t *testing.T) {
 func TestCableApplyAsksPortAndService(t *testing.T) {
 	c, m, p := newCable(t, "", cableLink, nil)
 	m.Results[remoteLine(c.Files, "link", "eth1")] = effecttest.Result{}
-	m.Results[remoteLine(c.Run.Remote, "run", "--tags", "network,wireguard")] = effecttest.Result{}
+	m.Results[remoteLine(c.Run.Remote, "run", "--only", "network,wireguard")] = effecttest.Result{}
 	m.Results[remoteLine(c.Files, "wait", "eth1")] = effecttest.Result{Out: []byte("eth1 1 10.77.0.1/24\n")}
 	m.Results["networksetup -listallnetworkservices"] = effecttest.Result{Out: []byte("An asterisk (*) denotes that a network service is disabled.\nWi-Fi\nUSB LAN\n")}
 	m.Results["networksetup -getinfo Wi-Fi"] = effecttest.Result{Out: []byte("IP address: 10.0.0.2\n")}

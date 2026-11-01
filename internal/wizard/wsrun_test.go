@@ -74,14 +74,14 @@ func TestWsRunApply(t *testing.T) {
 func TestWsRunApplyCloudAgain(t *testing.T) {
 	r, m := newRun("cloud", "run v1.2.3 0 on\nactive -\noutbound on\n", false, false)
 	p, _ := r.Plan(context.Background())
-	m.Results[remoteLine(r.Remote, "run", "-e", "security_outbound=false")] = effecttest.Result{}
+	m.Results[remoteLine(r.Remote, "run", "--", "-e", "security_outbound=false")] = effecttest.Result{}
 	m.Results[remoteLine(r.Remote, "outbound")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	runs := 0
 	for _, c := range m.Calls {
-		if strings.HasSuffix(c, "-- run -e security_outbound=false") {
+		if strings.HasSuffix(c, "-- run -- -e security_outbound=false") {
 			runs++
 		}
 	}

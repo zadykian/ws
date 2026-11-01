@@ -20,7 +20,7 @@
 # leaving no clone. Its words must print git's hash of root's word list, or
 # - without one, and the list for that hash alone. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
-# ws's /etc/ws/host_vars.yml once, and ws server apply -- --tags network,wireguard then give it 10.77.0.1, and
+# ws's /etc/ws/host_vars.yml once, and ws server apply --only network,wireguard then give it 10.77.0.1, and
 # status's cable name it. The remote script's outbound must add security_outbound: false there once,
 # which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
 # must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
@@ -109,10 +109,10 @@ printf '%s\n' "$out" | grep -qx 'PLAY RECAP' && [ "$status" = 0 ] &&
 tail -n 1 "$ws/run.log" | grep -q -- '--collect .* --setenv=LC_ALL=C.UTF-8 --setenv=HOME=/root ' ||
     error "a full run's unit lacked root's HOME or a UTF-8 locale"
 echo 3 >"$ws/server.status"
-remote run --tags devtools
+remote run --only devtools
 [ "$status" = 3 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(unit)" != "$full" ] &&
     [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $(unit) 3" ] &&
-    [ "$(tail -n 1 "$ws/server.log")" = '--tags devtools' ] ||
+    [ "$(tail -n 1 "$ws/server.log")" = '--only devtools' ] ||
     error "a tagged run exited $status"
 rm "$ws/server.status"
 echo 4 >"$ws/server.wait"
@@ -124,7 +124,7 @@ until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
     tries=$((tries + 1))
 done
 n=$(units)
-remote run --tags other
+remote run --only other
 wait "$first"
 first=$?
 printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: following ws-wizard-' &&
@@ -141,9 +141,9 @@ remote run
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on" ] ||
     error "the run after it exited $status, with run '$(stamp run)'"
 sudo rm "$stamps/run"
-remote run -e security_outbound=false
+remote run -- -e security_outbound=false
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] &&
-    [ "$(tail -n 1 "$ws/server.log")" = '-e security_outbound=false' ] ||
+    [ "$(tail -n 1 "$ws/server.log")" = '-- -e security_outbound=false' ] ||
     error "a full run with -e exited $status, with run '$(stamp run)'"
 host_vars="$ws/root"/etc/ws
 sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
@@ -262,11 +262,11 @@ files link enp5s0
 [ "$status" = 0 ] && [ -z "$out" ] || error "its link enp5s0 again exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable -' || error "status named a cable before the roles' run"
-remote run --tags network,wireguard
+remote run --only network,wireguard
 files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
-    [ "$(tail -n 1 "$ws/server.log")" = '--tags network,wireguard' ] ||
-    error "ws server apply -- --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
+    [ "$(tail -n 1 "$ws/server.log")" = '--only network,wireguard' ] ||
+    error "ws server apply --only network,wireguard gave enp5s0 no 10.77.0.1/30"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
 remote outbound

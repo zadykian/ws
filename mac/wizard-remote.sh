@@ -14,10 +14,10 @@
 #   OWNER/REPO, whose apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
-# - run [ARG...] runs ws server apply -- ARGs in a unit of its own, ws-wizard-STAMP, which goes
+# - run [ARG...] runs ws server apply ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. A run whose
-#   ARGs are -e pairs alone is a full one.
+#   ARGs are a -- and -e pairs alone is a full one.
 # - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
 #   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
 #   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
@@ -127,8 +127,8 @@ status() {
 }
 
 # job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE [ARG...].
-# It runs WS server apply -- ARGs. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
-# whose ARGs are -e pairs alone, writes STATE/run too: the version that WS printed before the run, or - where WS
+# It runs WS server apply ARGs. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
+# whose ARGs are a -- and -e pairs alone, writes STATE/run too: the version that WS printed before the run, or - where WS
 # prints none, the status, and off where -e security_outbound=false turned the outbound table off,
 # else on. It removes it as it starts.
 # Such a run that passed first names that in host_vars by STATE/off, so that no ssh comes between.
@@ -140,6 +140,7 @@ for arg; do
     case $pair:$arg in
     1:security_outbound=false) table=off pair= ;;
     1:*) pair= ;;
+    :--) ;;
     :-e) pair=1 ;;
     *) full=0 ;;
     esac
@@ -147,7 +148,7 @@ done
 [ -z "$pair" ] || full=0
 [ "$full" = 0 ] || rm -f "$state/run"
 version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version=-
-"$ws" server apply -- "$@"
+"$ws" server apply "$@"
 status=$?
 if [ "$full" = 1 ]; then
     [ "$status$table" != 0off ] || sh "$state/off" write "$vars"

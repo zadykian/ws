@@ -98,7 +98,7 @@ done
 wizard
 rm "$ws/server.wait"
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
-    [ "$(tail -n 1 "$ws/server.log")" = '-e security_outbound=false' ] && started 1 3 &&
+    [ "$(tail -n 1 "$ws/server.log")" = '-- -e security_outbound=false' ] && started 1 3 &&
     grep -q ' 0 off$' "$stamp" && sudo grep -qx 'security_outbound: false' "$vars" &&
     [ "$status" = 0 ] || error "a cloud VM's run after a unit without -e exited $status"
 wizard

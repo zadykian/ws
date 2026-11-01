@@ -87,7 +87,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	how := "run ws server apply on ws in a unit of its own, and follow its log"
 	var args []string
 	if c.Target == "cloud" {
-		args = append(args, "-e", "security_outbound=false")
+		args = append(args, "--", "-e", "security_outbound=false")
 		how += ", with -e security_outbound=false, then name that in ws's host_vars"
 		if !r.Update && r.idle(ctx) && r.off() {
 			return step.Plan{Changes: []step.Change{runChange{text: "name security_outbound: false in ws's host_vars",

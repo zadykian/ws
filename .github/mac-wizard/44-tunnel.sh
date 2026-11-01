@@ -3,7 +3,7 @@
 # stand-in ws. mac.conf's WS_PUBLIC_KEY goes first. With a new key for the stand-in's wg0, as a ws
 # installed again has, --check must show that line replaced, and change nothing. A run must replace
 # it in place, have ws mac tunnel take the key, and log in to ws through the tunnel. Without wg0's peer,
-# as a tagged run that failed leaves it, a run must run ws server apply -- --tags wireguard and restart
+# as a tagged run that failed leaves it, a run must run ws server apply --only wireguard and restart
 # the daemon. Without the stand-in's mac.pub too, it must write mac.pub first. Where nothing answers
 # on UDP 51820, a run must exit 0 within a minute, its closing list naming it, the router's forward
 # and the Background. Once it answers, a run must exit 0, and the next print nothing. Without
@@ -62,20 +62,20 @@ sed "1s|.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first" | cmp -s - "$conf" && [ "$s
     error "a run with wg0's new key exited $status, or put no WS_PUBLIC_KEY in its line's place"
 
 mac=$(sudo sh -c '"$0" pubkey <"$1"' "$wg" /etc/ws-tunnel/private.key)
-tagged=$(grep -cx -- '--tags wireguard' "$ws/server.log")
+tagged=$(grep -cx -- '--only wireguard' "$ws/server.log")
 standin_set peer "$mac" remove
 wizard
 printf '%s\n' "$out" | grep -q '^ws mac wizard: Tunnel: ran launchctl kickstart -k ' &&
     ! printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: wrote ' && [ "$status" = 0 ] &&
-    [ "$(grep -cx -- '--tags wireguard' "$ws/server.log")" -eq $((tagged + 1)) ] ||
-    error "a run with mac.pub but without wg0's peer exited $status, or ran no --tags wireguard"
+    [ "$(grep -cx -- '--only wireguard' "$ws/server.log")" -eq $((tagged + 1)) ] ||
+    error "a run with mac.pub but without wg0's peer exited $status, or ran no --only wireguard"
 
 sudo rm "$peer"
 standin_set peer "$mac" remove
 wizard
 printf '%s\n' "$out" | grep -q '^ws mac wizard: Tunnel: ran launchctl kickstart -k ' &&
     [ "$(sudo cat "$peer")" = "$mac" ] &&
-    [ "$(tail -n 1 "$ws/server.log")" = '--tags wireguard' ] && [ "$status" = 0 ] ||
+    [ "$(tail -n 1 "$ws/server.log")" = '--only wireguard' ] && [ "$status" = 0 ] ||
     error "a run without mac.pub on ws exited $status, or gave wg0 no peer and the daemon no restart"
 
 standin_set listen-port 51821
