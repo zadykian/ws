@@ -24,6 +24,7 @@ const (
 	packagesStep = "Fans' packages"
 	sourceStep   = "Fans' driver source"
 	driverStep   = "Fans' driver"
+	modulesStep  = "Fans' modules"
 )
 
 // Steps returns the role's steps in order: the check of the board, the driver's packages and
@@ -58,7 +59,29 @@ func steps(f values.Fans, m effect.Machine, out effect.Out) []step.Step {
 		host.Lazy{Title: driverStep, After: sourceStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
 			return []host.Resource{driver{m}}, nil
 		})},
+		host.Lazy{Title: modulesStep, After: driverStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
+			return moduleParts(m, out)
+		})},
 	}
+}
+
+// moduleParts keeps Linux's own driver off the chip, loads nct6687 at boot and now. The directory
+// of the modules to load at boot is systemd's, which a machine without systemd may lack.
+func moduleParts(m effect.Machine, out effect.Out) ([]host.Resource, error) {
+	blacklist, err := files.ReadFile("files/modprobe.conf")
+	if err != nil {
+		return nil, err
+	}
+	load, err := files.ReadFile("files/modules-load.conf")
+	if err != nil {
+		return nil, err
+	}
+	return []host.Resource{
+		host.File{M: m, Path: "/etc/modprobe.d/ws-fans.conf", Content: blacklist, Mode: 0o644},
+		host.Dir{M: m, Path: "/etc/modules-load.d", Mode: 0o755},
+		host.File{M: m, Path: "/etc/modules-load.d/ws-fans.conf", Content: load, Mode: 0o644},
+		modules{m, out},
+	}, nil
 }
 
 // kernelRelease returns the running kernel's release, as uname -r prints it.

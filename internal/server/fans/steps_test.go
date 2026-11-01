@@ -27,10 +27,10 @@ func TestStepsAreInOrderEachOnTheOneBefore(t *testing.T) {
 	for _, s := range steps(values.Default().Fans, onTheBoard(), &effecttest.Out{}) {
 		names, after = append(names, s.Name()), append(after, s.WaitsOn())
 	}
-	if want := []string{boardStep, packagesStep, sourceStep, driverStep}; !slices.Equal(names, want) {
+	if want := []string{boardStep, packagesStep, sourceStep, driverStep, modulesStep}; !slices.Equal(names, want) {
 		t.Errorf("steps = %q, want %q", names, want)
 	}
-	if want := []string{"", boardStep, packagesStep, sourceStep}; !slices.Equal(after, want) {
+	if want := []string{"", boardStep, packagesStep, sourceStep, driverStep}; !slices.Equal(after, want) {
 		t.Errorf("after = %q, want %q", after, want)
 	}
 }
