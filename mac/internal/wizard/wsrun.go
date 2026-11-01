@@ -26,8 +26,8 @@ type WsRun struct {
 // Name is the stage's name.
 func (*WsRun) Name() string { return runStage }
 
-// WaitsOn is the Root's key stage, which the remote script needs.
-func (*WsRun) WaitsOn() string { return rootStage }
+// WaitsOn is the stage that installs this ws on ws.
+func (*WsRun) WaitsOn() string { return installStage }
 
 // lastRun returns the status of ws's last full run, as the remote script's status read it, or -.
 func (r *WsRun) lastRun() string {

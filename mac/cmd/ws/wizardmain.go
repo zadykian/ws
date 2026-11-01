@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"io"
 	"os"
@@ -27,7 +28,8 @@ func confPath(getenv func(string) string, pwd string) string {
 // started before Homebrew's install lacks it, and WS_CONF set for the scripts that stages run.
 func wizardMain(args []string, stderr io.Writer) int {
 	pwd, _ := os.Getwd()
-	e := wizardEnv{goos: runtime.GOOS, uid: os.Geteuid(), pid: os.Getpid(), m: effect.OSMachine{},
+	info, ok := debug.ReadBuildInfo()
+	e := wizardEnv{goos: runtime.GOOS, uid: os.Geteuid(), pid: os.Getpid(), m: effect.OSMachine{}, version: versionOf(info, ok), releases: releasesURL(os.Getenv),
 		getenv: os.Getenv, lookup: os.LookupEnv, pwd: pwd, stdin: os.Stdin, tty: isTerminal(os.Stdin), stderr: stderr, stdout: os.Stdout}
 	_ = os.Setenv("PATH", "/opt/homebrew/bin:"+os.Getenv("PATH"))
 	_ = os.Setenv("WS_CONF", confPath(os.Getenv, pwd))
@@ -42,4 +44,9 @@ func isTerminal(f *os.File) bool {
 	}
 	null, err := os.Stat(os.DevNull)
 	return err != nil || !os.SameFile(info, null)
+}
+
+// releasesURL returns WS_RELEASES_URL, or GitHub's page of ws's releases, as install.sh does.
+func releasesURL(getenv func(string) string) string {
+	return cmp.Or(getenv("WS_RELEASES_URL"), "https://github.com/zadykian/ws/releases")
 }

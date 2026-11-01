@@ -22,11 +22,15 @@ const wizardUsage = "usage: ws mac wizard [--check] [--update]"
 
 // wizardEnv is what ws mac wizard takes from the process, so that a test gives it another.
 type wizardEnv struct {
-	goos   string
-	uid    int
-	pid    int
-	m      effect.Machine
-	getenv func(string) string
+	goos string
+	uid  int
+	pid  int
+	m    effect.Machine
+	// version is this ws's version, as ws version prints it.
+	version string
+	// releases is the address of ws's releases, WS_RELEASES_URL or GitHub's.
+	releases string
+	getenv   func(string) string
 	// lookup tells a variable set to nothing from one that is not set.
 	lookup func(string) (string, bool)
 	// pwd is the directory a relative WS_CONF is taken from.
@@ -89,6 +93,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	run := &wizard.WsRun{Host: host, Update: o.update,
 		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
 	hand.Late(run.Hand)
+	install := &wizard.WsInstall{Remote: run.Remote, Version: e.version, URL: e.releases, Out: out}
 	setup := wizardSetup(e, out, later)
 	hook := &wizard.HookMac{Host: host, Gh: gh, Home: e.getenv("HOME"), M: e.m, Out: out}
 	hand.Late(hook.Hand)
@@ -110,6 +115,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		setup,
 		host,
 		root,
+		install,
 		run,
 		&wizard.WsClaude{Run: run, Tty: e.tty},
 		&wizard.Signing{Gh: gh, Run: run, Check: check},

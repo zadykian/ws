@@ -45,8 +45,10 @@ printf '%s\n' "$out" | grep -qx 'ws mac wizard: Host key: after ws mac apply' ||
     error "ws mac wizard --check showed no Host key stage after ws mac apply"
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Root's key: after Host key" ||
     error "ws mac wizard --check showed no Root's key stage after the Host key"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: ws's run: after Root's key" ||
-    error "ws mac wizard --check showed no ws's run after Root's key"
+printf '%s\n' "$out" | grep -qx "ws mac wizard: ws on ws: after Root's key" ||
+    error "ws mac wizard --check showed no ws on ws stage after Root's key"
+printf '%s\n' "$out" | grep -qx "ws mac wizard: ws's run: after ws on ws" ||
+    error "ws mac wizard --check showed no ws's run after ws on ws"
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Signing key: after ws's run" ||
     error "ws mac wizard --check showed no Signing key after ws's run"
 printf '%s\n' "$out" | grep -qx "ws mac wizard: claude on ws: after ws's run" ||
