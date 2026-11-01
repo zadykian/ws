@@ -18,10 +18,9 @@ func TestRun(t *testing.T) {
 		{"help", []string{"help"}, 0, "usage: ws", ""},
 		{"version", []string{"version"}, 0, "", ""},
 		{"flag", []string{"--help"}, 0, "usage: ws", ""},
-		{"tunnel alone", []string{"tunnel"}, 2, "", "usage: ws mac tunnel run | status | key"},
-		{"tunnel unknown", []string{"tunnel", "nope"}, 2, "", "usage: ws mac tunnel run | status | key"},
-		{"tunnel status extra", []string{"tunnel", "status", "x"}, 2, "", "usage: ws mac tunnel run"},
 		{"unknown", []string{"nope"}, 2, "", `unknown command "nope"`},
+		{"old setup", []string{"setup", "--check", "ssh"}, 2, "", `unknown command "setup"`},
+		{"old tunnel", []string{"tunnel", "status"}, 2, "", `unknown command "tunnel"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
