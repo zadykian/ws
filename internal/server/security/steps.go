@@ -25,7 +25,7 @@ const (
 )
 
 // Steps returns the role's steps in order: the packages, the check of the user's keys, sshd, ufw,
-// fail2ban, and the outbound table. The role takes no secrets.
+// fail2ban, and the outbound table, or its removal where the value is off. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	return steps(v, m, effect.OSUnits{}, out)
 }

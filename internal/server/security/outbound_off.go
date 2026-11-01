@@ -37,7 +37,7 @@ func outboundOff(m effect.Machine, u effect.Units, out effect.Out) []host.Resour
 		gone = append(gone, host.Absent{M: m, Path: "/etc/systemd/system/" + n})
 	}
 	gone = append(gone, host.Absent{M: m, Path: tableDir}, host.Absent{M: m, Path: fillRecord})
-	return append(append(rs, gone...), host.DaemonReload{M: m, U: u, Watch: gone})
+	return append(append(rs, gone...), host.DaemonReload{M: m, U: u, Watch: gone}, table{m, out})
 }
 
 // links is the removal of the links that enable the outbound table's units, in a directory of
@@ -85,4 +85,32 @@ func (l links) Plan(context.Context) ([]host.Change, error) {
 		}
 	}
 	return cs, nil
+}
+
+// table removes the table of ws's from the kernel where one is loaded. A dry run, which stops no
+// unit, finds the table and shows its removal. Without systemd it plans nothing.
+type table struct {
+	m   effect.Machine
+	out effect.Out
+}
+
+type destroy struct{ m effect.Machine }
+
+func (destroy) String() string { return "remove the outbound table" }
+
+func (c destroy) Apply(ctx context.Context) error {
+	_, err := c.m.RunRoot(ctx, "nft", "destroy", "table", "inet", "ws")
+	return err
+}
+
+// Plan plans the removal where the kernel holds the table. No nft, or no table, is none to remove.
+func (t table) Plan(ctx context.Context) ([]host.Change, error) {
+	if !host.Booted(t.m) {
+		t.out.Say("outbound table: not looked for, systemd is not running")
+		return nil, nil
+	}
+	if _, err := t.m.RunRoot(ctx, "nft", "list", "table", "inet", "ws"); err != nil {
+		return nil, nil //nolint:nilerr // a failed list is no table in force
+	}
+	return []host.Change{destroy{t.m}}, nil
 }
