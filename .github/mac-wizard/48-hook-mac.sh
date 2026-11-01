@@ -71,7 +71,7 @@ wizard again" &&
 }
 
 cp "$conf" "$before"
-{ sed 's|^WS_HOOK=$|WS_HOOK=example/hook|' "$before" && echo WS_HOOK_SECRET=; } >"$conf"
+{ sed 's|^WS_HOOK=$|WS_HOOK=example/hook@v1.0.0|' "$before" && echo WS_HOOK_SECRET=; } >"$conf"
 : >"$RUNNER_TEMP/gitconfig"
 cloned=$(clones)
 copied=$(copies)
@@ -124,9 +124,9 @@ wizard --check
 
 cp "$before" "$conf"
 rm -f "$mine"
-sudo rm -rf "$ws/root/root/repository/hook" "$ws/root/var/lib/ws-wizard/hook-hook" \
+sudo rm -rf "$ws/root/root/repository/hook" "$ws/root/var/lib/ws-wizard/hook-hook" "$ws/root/var/lib/ws-wizard/bin" \
     "$ws/root/root/.config"
-rm -f "$ws/apply.log" "$before" "$RUNNER_TEMP/gitconfig"
+rm -f "$ws/apply.log" "$ws/check.log" "$ws/hook.args" "$before" "$RUNNER_TEMP/gitconfig"
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] || error "ws mac wizard after it exited $status"
 exit "$fail"
