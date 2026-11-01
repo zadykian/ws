@@ -27,8 +27,8 @@ type installDeb struct {
 func (c installDeb) String() string { return "install " + c.name + " from " + c.d.Path }
 
 func (c installDeb) Apply(ctx context.Context) error {
-	return c.d.M.Pass(ctx, false, "env", "DEBIAN_FRONTEND=noninteractive", "apt-get",
-		"-o", "DPkg::Lock::Timeout=600", "install", "-y", "--allow-downgrades", c.d.Path)
+	args := append([]string{"DEBIAN_FRONTEND=noninteractive", "apt-get"}, installOptions...)
+	return c.d.M.Pass(ctx, false, "env", append(args, "install", "-y", "--allow-downgrades", c.d.Path)...)
 }
 
 // Plan reads the file's package and version with dpkg-deb, and the installed version with dpkg.

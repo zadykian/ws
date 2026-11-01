@@ -12,6 +12,12 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
+// installOptions make apt-get wait for dpkg's lock, and keep the configuration file a machine
+// already has where a package ships one, as Ansible's apt module did: a file ws wrote before the
+// package came stays.
+var installOptions = []string{"-o", "DPkg::Lock::Timeout=600",
+	"-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold"}
+
 // updateTries is how often apt-get update runs before the step fails.
 const updateTries = 60
 
@@ -133,7 +139,7 @@ func (c installChange) Apply(ctx context.Context) error {
 		p.Out.Say("apt-get update failed, trying again in 10 seconds")
 		p.wait(10 * time.Second)
 	}
-	args := []string{"DEBIAN_FRONTEND=noninteractive", "apt-get", "-o", "DPkg::Lock::Timeout=600", "install", "-y"}
+	args := append(append([]string{"DEBIAN_FRONTEND=noninteractive", "apt-get"}, installOptions...), "install", "-y")
 	if !p.Recommends {
 		args = append(args, "--no-install-recommends")
 	}

@@ -12,7 +12,7 @@ import (
 
 func TestPackagesApply(t *testing.T) {
 	const update = "env DEBIAN_FRONTEND=noninteractive apt-get update"
-	const install = "env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y " +
+	const install = "env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install -y " +
 		"--no-install-recommends python3-apt"
 
 	t.Run("update works", func(t *testing.T) {
@@ -28,7 +28,7 @@ func TestPackagesApply(t *testing.T) {
 		}
 	})
 	t.Run("recommends", func(t *testing.T) {
-		const withRecommends = "env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y python3-apt"
+		const withRecommends = "env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install -y python3-apt"
 		m := effecttest.NewMachine()
 		m.Results[update], m.Results[withRecommends] = effecttest.Result{}, effecttest.Result{}
 		p := Packages{M: m, Out: &effecttest.Out{}, Recommends: true}

@@ -13,7 +13,7 @@ func debFixture(installed string) (*effecttest.Machine, host.Deb) {
 	m := effecttest.NewMachine()
 	m.Results["dpkg-deb -f /tmp/a.deb Package Version"] = effecttest.Result{Out: []byte("Package: a\nVersion: 1.2\n")}
 	m.Results["dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n a"] = effecttest.Result{Out: []byte(installed)}
-	m.Results["env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y --allow-downgrades /tmp/a.deb"] = effecttest.Result{}
+	m.Results["env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install -y --allow-downgrades /tmp/a.deb"] = effecttest.Result{}
 	return m, host.Deb{M: m, Path: "/tmp/a.deb"}
 }
 
