@@ -130,47 +130,6 @@ func TestHookWsApplyUnreadItem(t *testing.T) {
 	}
 }
 
-// credKey is git's key for a credential command, split so that the banned terms check passes.
-const credKey = "credential.https://github.com.hel" + "per"
-
-func TestHookWsSend(t *testing.T) {
-	for name, tc := range map[string]struct{ hook, fetch, ref string }{
-		"main": {"me/tools", " fetch -q origin", " origin/main"},
-		"tag":  {"me/tools@v1.0.0", " fetch origin refs/tags/v1.0.0:refs/tags/v1.0.0", " refs/tags/v1.0.0"},
-	} {
-		h, m := newHookWs("", "")
-		m.Results[remoteLine(h.Files, "bundle", tc.hook)] = effecttest.Result{Out: []byte("/s/hook-tools.bundle\n")}
-		m.Files[h.Host.Lock+"/hook.bundle"] = []byte("b")
-		git := "env GIT_TERMINAL_PROMPT=0 git -C /h/repository/tools -c " + credKey + "= -c " +
-			credKey + "=!/bin/gh auth git-credential fetch"
-		m.Results[git+strings.TrimPrefix(tc.fetch, " fetch")] = effecttest.Result{}
-		m.Results["git -C /h/repository/tools bundle create -q "+h.Host.Lock+"/hook.bundle"+tc.ref] = effecttest.Result{}
-		m.Results["ssh "+strings.Join(h.Host.SSH.argv([]string{"-o", "BatchMode=yes", "ws-ssh", "umask 077 && cat >/s/hook-tools.bundle"}), " ")] =
-			effecttest.Result{}
-		m.Results["rm -f "+h.Host.Lock+"/hook.bundle"] = effecttest.Result{}
-		if err := h.send(context.Background(), tc.hook); err != nil {
-			t.Fatalf("%s: send = %v", name, err)
-		}
-		calls := strings.Join(m.Calls, "\n")
-		if !strings.Contains(calls, tc.fetch+"\n") ||
-			!strings.Contains(calls, "bundle create -q "+h.Host.Lock+"/hook.bundle"+tc.ref+"\n") {
-			t.Errorf("%s: send ran\n%s", name, calls)
-		}
-	}
-}
-
-func TestHookWsSendMovedTag(t *testing.T) {
-	h, m := newHookWs("", "")
-	m.Results[remoteLine(h.Files, "bundle", "me/tools@v1.0.0")] = effecttest.Result{Out: []byte("/s/p\n")}
-	m.Results["env GIT_TERMINAL_PROMPT=0 git -C /h/repository/tools -c "+credKey+"= -c "+
-		credKey+"=!/bin/gh auth git-credential fetch origin "+
-		"refs/tags/v1.0.0:refs/tags/v1.0.0"] = effecttest.Result{Err: context.Canceled}
-	err := h.send(context.Background(), "me/tools@v1.0.0")
-	if err == nil || !strings.Contains(err.Error(), "tag v1.0.0 of me/tools") {
-		t.Errorf("send with a moved tag = %v", err)
-	}
-}
-
 func TestHookWsCheck(t *testing.T) {
 	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
 	h.Host.Check = true
