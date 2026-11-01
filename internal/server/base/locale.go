@@ -34,23 +34,28 @@ func (c generate) Apply(ctx context.Context) error {
 	return err
 }
 
-// Plan checks the name, enables its line in /etc/locale.gen, and plans locale-gen where that line
-// changed or `locale -a` lacks the locale.
+// Plan checks the name against the locales glibc can generate, as the module did, and plans
+// nothing where `locale -a` lists the locale. Else it enables the line in /etc/locale.gen and
+// plans locale-gen.
 func (g generated) Plan(ctx context.Context) ([]host.Change, error) {
-	if !localeName.MatchString(g.Name) {
-		return nil, fmt.Errorf("base_locale is %q: it takes a glibc locale such as en_US.UTF-8", g.Name)
-	}
-	entry := host.Line{M: g.M, Path: "/etc/locale.gen", Text: entry(g.Name), Match: `^#?\s*` + regexp.QuoteMeta(g.Name) + `\s`, Mode: 0o644}
-	cs, err := entry.Plan(ctx)
+	supported, err := g.M.ReadFile(supportedFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("base_locale %q: reading %s: %w", g.Name, supportedFile, err)
+	}
+	line, ok := entry(string(supported), g.Name)
+	if !ok {
+		return nil, fmt.Errorf("base_locale is %q: %s lacks it; it takes a name such as en_US.UTF-8", g.Name, supportedFile)
 	}
 	have, err := g.M.Run(ctx, "locale", "-a")
 	if err != nil {
 		return nil, err
 	}
-	if len(cs) > 0 || !listed(string(have), g.Name) {
-		cs = append(cs, generate{g})
+	if listed(string(have), g.Name) {
+		return nil, nil
 	}
-	return cs, nil
+	cs, err := host.Line{M: g.M, Path: "/etc/locale.gen", Text: line, Match: `^#?\s*` + regexp.QuoteMeta(g.Name) + `\s`, Mode: 0o644}.Plan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return append(cs, generate{g}), nil
 }

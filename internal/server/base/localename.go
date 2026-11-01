@@ -1,18 +1,21 @@
 package base
 
-import (
-	"regexp"
-	"strings"
-)
+import "strings"
 
-// localeName is a glibc locale: language_TERRITORY.CODESET and an optional @modifier.
-var localeName = regexp.MustCompile(`^[a-z]{2,3}_[A-Z]{2}\.[A-Za-z0-9-]+(@[a-z]+)?$`)
+// supportedFile lists the locales glibc can generate, as the locales package ships it.
+const supportedFile = "/usr/share/i18n/SUPPORTED"
 
-// entry returns the line of /etc/locale.gen: the name and its code set, UTF-8 for en_US.UTF-8.
-func entry(name string) string {
-	_, rest, _ := strings.Cut(name, ".")
-	charset, _, _ := strings.Cut(rest, "@")
-	return name + " " + charset
+// entry returns the line of /etc/locale.gen for the name, which is the line of supportedFile
+// that starts with it: the name and its code set. It reports false where the file has no such
+// locale.
+func entry(supported, name string) (string, bool) {
+	for _, line := range strings.Split(supported, "\n") {
+		f := strings.Fields(line)
+		if len(f) == 2 && f[0] == name {
+			return f[0] + " " + f[1], true
+		}
+	}
+	return "", false
 }
 
 // listed reports whether `locale -a`'s output has the locale under the name glibc gives it: the

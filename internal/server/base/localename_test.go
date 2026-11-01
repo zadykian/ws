@@ -19,13 +19,3 @@ func TestListed(t *testing.T) {
 		t.Error("a code set is not matched as glibc names it")
 	}
 }
-
-func TestEntry(t *testing.T) {
-	for name, want := range map[string]string{
-		"en_US.UTF-8": "en_US.UTF-8 UTF-8", "de_DE.ISO-8859-15@euro": "de_DE.ISO-8859-15@euro ISO-8859-15",
-	} {
-		if got := entry(name); got != want {
-			t.Errorf("entry(%q) = %q, want %q", name, got, want)
-		}
-	}
-}
