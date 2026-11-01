@@ -19,6 +19,7 @@ import (
 	"github.com/zadykian/ws/internal/server/signoz"
 	"github.com/zadykian/ws/internal/server/tmux"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/internal/server/wireguard"
 	"github.com/zadykian/ws/step"
 )
 
@@ -41,7 +42,7 @@ var all = []Role{
 	{Name: "base", Steps: base.Steps},
 	{Name: "security", Steps: security.Steps},
 	{Name: "network", Steps: network.Steps},
-	{Name: "wireguard"},
+	{Name: "wireguard", Steps: wireguard.Steps},
 	{Name: "ikeward", Steps: ikeward.Steps},
 	{Name: "fans"},
 	{Name: "shell", Steps: shell.Steps},

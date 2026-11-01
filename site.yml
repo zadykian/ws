@@ -3,8 +3,6 @@
   hosts: localhost
   connection: local
   roles:
-    - role: wireguard
-      tags: [wireguard]
     - role: fans
       tags: [fans]
     - role: claude
