@@ -142,14 +142,17 @@ the item, a run with no terminal must stop, naming `security add-generic-passwor
 `script`'s, it must add the item at its prompts, send the clone's newer commit once as a bundle that
 ws clones on `main` with GitHub's `origin`. It must run `apply.sh` once over plain ssh, its stdin
 the secret and no terminal. The next run must print nothing. An unreadable item must stop `--update`
-before `apply.sh`, and a failed run leave no stamp. For the Word list stage, the stand-in ws's list
-must go to the Mac once, mode 600, and none of it be printed. Once the Mac's differs, `--check` must
-show no diff, or stop at a link, as a run must. For the Cable stage, ws's ports are a stand-in
-sysfs. Undocked, a run must print nothing, one that acts name the dock, and `WS_CABLE_PORT` end the
-wait. Docked, one with no terminal must stop, one with `WS_CABLE_PORT` name the port, run the roles,
-read its late address, and stop at the service. Typed, an empty line must take the `169.254` one,
-and `ping` answer. The next must read no `link`, and one after ws's install or a failed roles' run
-name it again. Off the LAN, a run and `--check` must skip it, a cloud VM's naming its firewall.
+before `apply.sh`, and a failed run leave no stamp. With `@v1.0.0`, the tag that the stand-in `gh`
+gives its repository, ws's clone must be detached at it and the stamp hold the value. A changed
+clone must be refused, and a tag that GitHub moved stop the stage. For the Word list stage, the
+stand-in ws's list must go to the Mac once, mode 600, and none of it be printed. Once the Mac's
+differs, `--check` must show no diff, or stop at a link, as a run must. For the Cable stage, ws's
+ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and
+`WS_CABLE_PORT` end the wait. Docked, one with no terminal must stop, one with `WS_CABLE_PORT` name
+the port, run the roles, read its late address, and stop at the service. Typed, an empty line must
+take the `169.254` one, and `ping` answer. The next must read no `link`, and one after ws's install
+or a failed roles' run name it again. Off the LAN, a run and `--check` must skip it, a cloud VM's
+naming its firewall.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

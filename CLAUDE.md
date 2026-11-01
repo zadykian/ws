@@ -25,8 +25,8 @@ The rest is the docs, the lint gates' tools and CI.
 - `mac/`: the Mac's side: the ws CLI in Go, with the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
-  `mac-targets.md` and `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index
-  of the keymap's pages in `docs/helix-keymap/`.
+  `mac-hook.md`, `mac-targets.md` and `mac-ghostty.md`; `router.md` and `checks.md`;
+  `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target and `collections` fetches the pinned tarballs.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
