@@ -34,3 +34,11 @@ func TestWithLimitsKeepsTheValuesThatAreSet(t *testing.T) {
 		t.Errorf("WithLimits = %+v, %v; want the values as they were, with no read", got, err)
 	}
 }
+
+func TestWithLimitsFailsOnAnUnreadableMachine(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/proc/meminfo"] = []byte("MemFree: 5 kB\n")
+	if _, err := docker.WithLimits(m, values.Default().Docker); err == nil {
+		t.Error("a /proc/meminfo with no MemTotal passed")
+	}
+}
