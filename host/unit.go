@@ -60,6 +60,10 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 	call := func(verb string, do func(context.Context, string) error) {
 		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error { return do(ctx, u.Name) }, verb == "restart"})
 	}
+	if s.NeedsReload {
+		// A unit file written by a run that failed before the reload: the next run finds it right.
+		cs = append(cs, reload{u.U})
+	}
 	if u.Enabled && !s.Enabled {
 		cs = append(cs, unitCall{u, "enable", func(ctx context.Context) error { return u.U.Enable(ctx, u.Name) }, false})
 	}
@@ -70,7 +74,7 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		}
 		call("start", u.U.Start)
 	case u.Run == Running:
-		changed, err := u.watched(ctx)
+		changed, err := anyChange(ctx, u.Watch)
 		if err != nil {
 			return nil, err
 		}
@@ -83,10 +87,10 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 	return cs, nil
 }
 
-func (u Unit) watched(ctx context.Context) (bool, error) {
-	for _, r := range u.Watch {
-		cs, err := r.Plan(ctx)
-		if err != nil || len(cs) > 0 {
+// anyChange reports whether any of the resources has a change to make.
+func anyChange(ctx context.Context, rs []Resource) (bool, error) {
+	for _, r := range rs {
+		if cs, err := r.Plan(ctx); err != nil || len(cs) > 0 {
 			return len(cs) > 0, err
 		}
 	}

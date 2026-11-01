@@ -63,6 +63,32 @@ func TestUnitResetsAFailureThenStarts(t *testing.T) {
 	}
 }
 
+func TestDaemonReloadFollowsAUnitFile(t *testing.T) {
+	m, u, out := unitFixture(true)
+	unitFile := host.File{M: m, Path: "/srv/systemd/system/a.service", Content: []byte("[Unit]\n"), Mode: 0o644}
+	g := host.Group{Title: "A", Parts: []host.Resource{unitFile, host.DaemonReload{M: m, U: u, Watch: []host.Resource{unitFile}}}}
+	for range 2 {
+		if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !slices.Equal(u.Calls, []string{"daemon-reload"}) {
+		t.Errorf("calls = %q, want one daemon-reload", u.Calls)
+	}
+}
+
+func TestUnitReloadsWhereAFileWasWrittenAfterACutShortRun(t *testing.T) {
+	m, u, out := unitFixture(true)
+	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true, NeedsReload: true}}
+	unit := host.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: host.Running}
+	if got := applyAll(t, unit); !slices.Equal(got, []string{"reload systemd's unit files"}) {
+		t.Errorf("first plan = %q, want a reload", got)
+	}
+	if got := applyAll(t, unit); got != nil {
+		t.Errorf("second plan = %q, want none", got)
+	}
+}
+
 func TestUnitRestartIsForced(t *testing.T) {
 	m, u, out := unitFixture(true)
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
