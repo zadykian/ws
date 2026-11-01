@@ -1,7 +1,7 @@
 ---
 # Ubuntu's package is hx, not helix. git and g++ fetch and build the grammars below. apt's daily
 # jobs hold its lock for a while after a new machine's first boot, as in
-# mac/internal/server/packages.go.
+# internal/server/packages.go.
 - name: Install helix, and git and g++ for its grammars
   ansible.builtin.apt:
     name: [hx, git, g++]

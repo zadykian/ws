@@ -1,6 +1,6 @@
 ---
 # apt's daily jobs hold its lock for a while after a new machine's first boot, as in
-# mac/internal/server/packages.go.
+# internal/server/packages.go.
 - name: Install bash-completion and ble.sh
   ansible.builtin.apt:
     name:
