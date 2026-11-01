@@ -2,12 +2,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/zadykian/ws/mac/internal/effect"
 )
 
 // group is a set of commands that exists on some systems alone, such as ws mac on a Mac.
@@ -42,22 +39,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 0
 	case "version":
 		return versionCommand(stdout)
-	case "conf":
-		return confCommand(args[1:], effect.OSMachine{}, os.Getenv, stdout, stderr)
+	case "conf", "tunnel", "wizard", "resolver":
+		return macCommand(args, stdout, stderr)
 	case "setup":
-		return setupCommand(context.Background(), args[1:], os.Geteuid(), effect.OSMachine{}, os.Getenv, stdout, stderr)
-	case "tunnel":
-		if len(args) > 1 && args[1] == "loaded" {
-			return tunnelLoaded(context.Background(), args[2:], effect.OSMachine{}, stderr)
-		}
-		if len(args) > 1 && args[1] == "routes" {
-			return tunnelRoutes(context.Background(), args[2:], effect.OSMachine{}, stderr)
-		}
-		return tunnel(args[1:], stdout, stderr)
-	case "wizard":
-		return wizardMain(args[1:], stderr)
-	case "resolver":
-		return resolverCommand(context.Background(), args[1:], effect.OSMachine{}, stderr)
+		return macCommand(append([]string{"apply"}, args[1:]...), stdout, stderr)
 	}
 	for _, g := range groups() {
 		if g.name == args[0] {
