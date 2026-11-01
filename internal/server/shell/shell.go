@@ -16,7 +16,7 @@ import (
 // serve the files after.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
-	return []step.Step{
+	steps := []step.Step{
 		host.Group{Title: "Shell packages", Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"bash-completion", "ble.sh"}},
 		}},
@@ -24,4 +24,12 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 			return dotfiles(m, a, runtime.GOARCH)
 		}),
 	}
+	if v.Shell.GitSigning {
+		steps = append(steps, owned(user, m, keyStep, "", func(a account) ([]host.Resource, error) {
+			return signingKey(m, a, v.GitSigningKey), nil
+		}))
+	}
+	return steps
 }
+
+const keyStep = "Shell signing key"
