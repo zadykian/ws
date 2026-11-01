@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 )
@@ -21,5 +22,18 @@ func TestPollStopsWhenDone(t *testing.T) {
 	})
 	if err != nil || calls != 3 || slept != 2 {
 		t.Errorf("err %v, %d calls, %d sleeps; want none, 3, 2", err, calls, slept)
+	}
+}
+
+func TestPollGivesUpWithTheLastReason(t *testing.T) {
+	var slept int
+	err := countingWait(3, &slept).poll(t.Context(), "readyz", func() (bool, string, error) {
+		return false, "status 503", nil
+	})
+	if err == nil || !strings.Contains(err.Error(), "readyz: gave up after 3 tries, last: status 503") {
+		t.Errorf("err = %v, want a give-up with the last reason", err)
+	}
+	if slept != 2 {
+		t.Errorf("slept %d times, want 2", slept)
 	}
 }
