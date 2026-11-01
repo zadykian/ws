@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/step"
@@ -39,4 +40,14 @@ func (r Retention) Plan(ctx context.Context) (step.Plan, error) {
 		p.Changes = append(p.Changes, setLogs{r, logs})
 	}
 	return p, nil
+}
+
+// Apply sets what the plan found due.
+func (Retention) Apply(ctx context.Context, p step.Plan) error {
+	for _, c := range p.Changes {
+		if err := c.(host.Change).Apply(ctx); err != nil {
+			return fmt.Errorf("%s: %w", c, err)
+		}
+	}
+	return nil
 }
