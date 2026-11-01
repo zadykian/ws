@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -36,20 +37,68 @@ type installChange struct {
 
 func (c installChange) String() string { return "install " + strings.Join(c.missing, " ") }
 
-// Plan asks dpkg which of the packages are installed.
+// Plan asks dpkg which of the packages are installed. A name of the form NAME=GLOB, such as
+// nodejs=24.*, is installed only at a version that matches the glob.
 func (p Packages) Plan(ctx context.Context) ([]Change, error) {
-	args := append([]string{"-W", "-f", "${Package} ${db:Status-Abbrev}\n"}, p.Names...)
+	var plain, pinned []string
+	for _, n := range p.Names {
+		if strings.Contains(n, "=") {
+			pinned = append(pinned, n)
+		} else {
+			plain = append(plain, n)
+		}
+	}
+	missing, err := p.missingPlain(ctx, plain)
+	if err != nil {
+		return nil, err
+	}
+	wrong, err := p.missingPinned(ctx, pinned)
+	if err != nil {
+		return nil, err
+	}
+	missing = append(missing, wrong...)
+	if len(missing) == 0 {
+		return nil, nil
+	}
+	return []Change{installChange{p, missing}}, nil
+}
+
+func (p Packages) missingPlain(ctx context.Context, names []string) ([]string, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+	args := append([]string{"-W", "-f", "${Package} ${db:Status-Abbrev}\n"}, names...)
 	out, err := p.M.Run(ctx, "dpkg-query", args...)
 	// dpkg-query exits with 1 for a package it does not know, and prints the others.
 	var ee *exec.ExitError
 	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
 		return nil, err
 	}
-	missing := missingPackages(string(out), p.Names)
-	if len(missing) == 0 {
-		return nil, nil
+	return missingPackages(string(out), names), nil
+}
+
+// missingPinned returns those of the NAME=GLOB specs whose package is not installed at a version
+// that the glob matches.
+func (p Packages) missingPinned(ctx context.Context, specs []string) ([]string, error) {
+	var missing []string
+	for _, spec := range specs {
+		name, glob, _ := strings.Cut(spec, "=")
+		out, err := p.M.Run(ctx, "dpkg-query", "-W", "-f", "${Version} ${db:Status-Abbrev}\n", name)
+		var ee *exec.ExitError
+		if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
+			return nil, err
+		}
+		if f := strings.Fields(string(out)); len(f) != 2 || f[1] != "ii" || !globMatch(glob, f[0]) {
+			missing = append(missing, spec)
+		}
 	}
-	return []Change{installChange{p, missing}}, nil
+	return missing, nil
+}
+
+// globMatch reports whether version matches the glob, whose * stands for any run of characters.
+func globMatch(glob, version string) bool {
+	ok, err := path.Match(glob, version)
+	return err == nil && ok
 }
 
 // missingPackages returns those of want that dpkg-query's output does not list as installed, "ii".
