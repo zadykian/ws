@@ -1,0 +1,92 @@
+name: release
+
+# A pushed tag vX.Y.Z on a commit of main starts ws's release: ci.yml and mac.yml run on the tag,
+# and three binaries, ws.sha256 and install.sh are built. docs/releases.md says how a release is
+# cut.
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  # The tag must be vX.Y.Z, on a commit that main holds, as only a landed stack is released.
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The tag and main
+        run: |
+          printf '%s\n' "$TAG" | grep -Eq '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){2}$' || {
+              echo "the tag is not vX.Y.Z" >&2
+              exit 1
+          }
+          git merge-base --is-ancestor HEAD origin/main || {
+              echo "origin/main does not hold the tag's commit" >&2
+              exit 1
+          }
+
+  # The workflows of a pull request, on the tag's commit. Their playbook and mac jobs run, as the
+  # tag's push event has no stack.
+  ci:
+    needs: check
+    uses: ./.github/workflows/ci.yml # zizmor: ignore[self-repository] actionlint rejects $/
+    permissions:
+      contents: read
+
+  mac:
+    needs: check
+    uses: ./.github/workflows/mac.yml # zizmor: ignore[self-repository] actionlint rejects $/
+    permissions:
+      contents: read
+
+  # The binaries with the Go that tools/run pins, without cgo and without paths of this machine.
+  # Go stamps the tag into ws version from the clean tree at the tag: the files go outside it.
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.ref_name }}
+      GOPATH: ${{ github.workspace }}/.cache/go
+      GOTOOLCHAIN: local
+      GOWORK: "off"
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Build
+        run: |
+          go=$(sh tools/run -path go)
+          export GOCACHE="$RUNNER_TEMP/go-build"
+          mkdir "$RUNNER_TEMP/dist"
+          for target in darwin-arm64 linux-amd64 linux-arm64; do
+              GOOS=${target%-*} GOARCH=${target#*-} "$go" build -trimpath -buildvcs=true \
+                  -o "$RUNNER_TEMP/dist/ws-$target" ./mac/cmd/ws
+          done
+          (cd "$RUNNER_TEMP/dist" && sha256sum ws-* >ws.sha256)
+          cp install.sh "$RUNNER_TEMP/dist/install.sh"
+      - name: ws version prints the tag
+        run: |
+          got=$("$RUNNER_TEMP/dist/ws-linux-amd64" version)
+          [ "$got" = "$TAG" ] || {
+              echo "ws version printed $got, not $TAG" >&2
+              exit 1
+          }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: ${{ runner.temp }}/dist
+          if-no-files-found: error
