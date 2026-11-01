@@ -12,7 +12,7 @@
 # login of the files script's wait, and stop at the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
-# script's after a bad one, an empty line must take the one service with a 169.254 address. ws setup
+# script's after a bad one, an empty line must take the one service with a 169.254 address. ws mac apply
 # must give it 10.77.0.2, and ping reach 10.77.0.1, once, and mac.conf keep enp5s0 as WS_CABLE_PORT.
 # The next run must print nothing, and read no link. Without host_vars and the roles' netplan file,
 # as after ws's install, and undocked, --check must say what it would do, and a run name enp5s0
@@ -43,7 +43,7 @@ error() {
 wizard() {
     mode=${1#run}
     shift
-    out=$(env "$@" "$wsbin" wizard ${mode:+"$mode"} </dev/null 2>&1)
+    out=$(env "$@" "$wsbin" mac wizard ${mode:+"$mode"} </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
@@ -101,41 +101,41 @@ links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] &&
     [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = $((links + 1)) ] ||
-    error "ws wizard with no port with carrier exited $status, or read link other than once"
+    error "ws mac wizard with no port with carrier exited $status, or read link other than once"
 wizard --check
-[ "$status" = 0 ] && [ -z "$out" ] || error "ws wizard --check with no carrier exited $status"
+[ "$status" = 0 ] && [ -z "$out" ] || error "ws mac wizard --check with no carrier exited $status"
 wizard --update
 printf '%s\n' "$out" | grep -qx -e "- The cable: dock the Mac at the display .* steps\. Where the \
 cable plugs into enp7s0, which ws keeps down, run the line with WS_CABLE_PORT=PORT in the \
 environment\. Without the cable, run the line once with WS_CABLE_SERVICE= in the environment \
 (docs/mac-wizard\.md, The cable)\." && [ "$status" = 0 ] ||
-    error "ws wizard --update undocked exited $status, or named no dock, or no enp7s0"
+    error "ws mac wizard --update undocked exited $status, or named no dock, or no enp7s0"
 wizard run WS_CABLE_PORT=enp4s0
-printf '%s\n' "$out" | grep -qx "ws wizard: Cable: WS_CABLE_PORT comes from the environment, and \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: WS_CABLE_PORT comes from the environment, and \
 'enp4s0' is none of enp5s0, enp6s0, enp7s0: set it to one, or to nothing for none" &&
-    [ "$status" = 1 ] && [ ! -e "$vars" ] || error "ws wizard with the uplink's port exited $status"
+    [ "$status" = 1 ] && [ ! -e "$vars" ] || error "ws mac wizard with the uplink's port exited $status"
 wizard run WS_CABLE_PORT=
 [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] && [ ! -e "$vars" ] ||
-    error "ws wizard with WS_CABLE_PORT= exited $status, or wrote another line, or host_vars"
+    error "ws mac wizard with WS_CABLE_PORT= exited $status, or wrote another line, or host_vars"
 cp "$RUNNER_TEMP/cable.conf" "$conf"
 wizard run WS_CABLE_PORT=enp7s0
-printf '%s\n' "$out" | grep -qx "ws wizard: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: ws's enp7s0 lacks 10\.77\.0\.1 after \
 bootstrap\.sh --tags network,wireguard: plug the Mac's cable into it, or mend what that printed, \
 then run the wizard again" && grep -qx 'network_direct_link_interface: "enp7s0"' "$vars" &&
-    [ "$status" = 1 ] || error "ws wizard with WS_CABLE_PORT=enp7s0 exited $status, or no host_vars"
+    [ "$status" = 1 ] || error "ws mac wizard with WS_CABLE_PORT=enp7s0 exited $status, or no host_vars"
 sudo rm -f "$vars"
 echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
 wizard run
-printf '%s\n' "$out" | grep -qx "ws wizard: Cable: no terminal to ask WS_CABLE_PORT: set \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: no terminal to ask WS_CABLE_PORT: set \
 WS_CABLE_PORT, or set it to nothing for none" && [ "$status" = 1 ] && [ ! -e "$vars" ] ||
-    error "ws wizard docked with no terminal exited $status, or named no WS_CABLE_PORT"
+    error "ws mac wizard docked with no terminal exited $status, or named no WS_CABLE_PORT"
 sed -e 's/^WS_TARGET=.*/WS_TARGET=cloud/' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/cloud.conf"
 wizard run WS_CONF="$RUNNER_TEMP/cloud.conf"
 firewall="- The provider's firewall: UDP 51820 open to ws, for the tunnel (docs/mac-targets.md)."
 if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qxF -e "$firewall" ||
-    printf '%s\n' "$out" | grep -q -e '^ws wizard: Cable: ' -e '^- The cable: ' \
+    printf '%s\n' "$out" | grep -q -e '^ws mac wizard: Cable: ' -e '^- The cable: ' \
         -e '^- The router' || sudo grep -q '^network_direct_link_interface:' "$vars"; then
-    error "ws wizard with WS_TARGET=cloud exited $status, or took the cable's steps"
+    error "ws mac wizard with WS_TARGET=cloud exited $status, or took the cable's steps"
 fi
 sudo rm -f "$vars"
 rm "$RUNNER_TEMP/cloud.conf"
@@ -143,14 +143,14 @@ sed -e 's/^WS_TARGET=.*/WS_TARGET=mac-vm/' -e 's|^WS_LAN=.*|WS_LAN=192.0.2.0/24|
     -e '/^WS_REMOTE/d' -e '/^WS_CABLE_/d' "$conf" >"$RUNNER_TEMP/vm.conf"
 echo WS_LAN_ADDRESS=192.0.2.10 >>"$RUNNER_TEMP/vm.conf"
 wizard --check WS_CONF="$RUNNER_TEMP/vm.conf"
-if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q '^ws wizard: Cable: '; then
-    error "ws wizard --check with WS_TARGET=mac-vm exited $status, or took the cable's steps"
+if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q '^ws mac wizard: Cable: '; then
+    error "ws mac wizard --check with WS_TARGET=mac-vm exited $status, or took the cable's steps"
 fi
 rm "$RUNNER_TEMP/vm.conf"
 wizard --check
-printf '%s\n' "$out" | grep -qx "ws wizard: Cable: would ask ws's port of the cable, name it \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: would ask ws's port of the cable, name it \
 in host_vars/localhost\.yml on ws, and run bootstrap\.sh --tags network,wireguard there" &&
-    [ "$status" = 0 ] && [ ! -e "$vars" ] || error "ws wizard --check docked exited $status"
+    [ "$status" = 0 ] && [ ! -e "$vars" ] || error "ws mac wizard --check docked exited $status"
 # ws's ip, the stand-in's, but that the first read of enp5s0's addresses after the roles' run finds
 # none, as networkd gives it 10.77.0.1 a moment after their networkctl reload. The files script's
 # wait must read ip again in the same login, and find the address.
@@ -167,12 +167,12 @@ links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run WS_CABLE_PORT=enp5s0
 printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &&
     cmp -s "$conf" "$RUNNER_TEMP/cable.conf" &&
-    printf '%s\n' "$out" | grep -qx "ws wizard: Cable: no terminal to ask WS_CABLE_SERVICE: set \
+    printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: no terminal to ask WS_CABLE_SERVICE: set \
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] && [ -e "$cable/late" ] &&
     [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = $((links + 1)) ] &&
     [ "$(grep -c '^root: sh -s -- wait enp5s0$' "$ws/log")" = 1 ] ||
-    error "ws wizard with WS_CABLE_PORT exited $status, or wrote no host_vars, ran no roles, or" \
+    error "ws mac wizard with WS_CABLE_PORT exited $status, or wrote no host_vars, ran no roles, or" \
         "read link other than once and wait other than once"
 mv -f "$cable/bin/ip" "$ws/bin/ip"
 # On macOS, sudo, which the stages' checks run, takes what the terminal holds, so the lines go in
@@ -185,15 +185,15 @@ mv -f "$cable/bin/ip" "$ws/bin/ip"
     done
     printf '%s\n' 'ws stand-in absent' ''
     sleep 5
-} | script -q /dev/null "$wsbin" wizard >"$RUNNER_TEMP/tty" 2>&1
+} | script -q /dev/null "$wsbin" mac wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty" &&
-    grep -qF "ws wizard: Cable: 'ws stand-in absent' is none of those" "$RUNNER_TEMP/tty" &&
+    grep -qF "ws mac wizard: Cable: 'ws stand-in absent' is none of those" "$RUNNER_TEMP/tty" &&
     [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = 'WS_CABLE_SERVICE="ws stand-in adapter"' ] &&
     grep -qx WS_CABLE_PORT=enp5s0 "$conf" &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 1' ] ||
-    error "ws wizard at a terminal exited $status, set the adapter or pinged other than once, or" \
+    error "ws mac wizard at a terminal exited $status, set the adapter or pinged other than once, or" \
         "kept no port"
 links=$(grep -c '^root: sh -s -- link$' "$ws/log")
 wizard run
@@ -206,37 +206,37 @@ runs=$(grep -c '' "$ws/bootstrap.log")
 sudo rm -f "$vars" "$netplan"
 echo 0 | sudo tee "$net/enp5s0/carrier" >/dev/null
 wizard --check
-printf '%s\n' "$out" | grep -qx "ws wizard: Cable: would name enp5s0 in host_vars/localhost\.yml \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: would name enp5s0 in host_vars/localhost\.yml \
 on ws again, and run bootstrap\.sh --tags network,wireguard there" && [ "$status" = 0 ] &&
-    [ ! -e "$vars" ] || error "ws wizard --check without host_vars exited $status"
+    [ ! -e "$vars" ] || error "ws mac wizard --check without host_vars exited $status"
 wizard run
-printf '%s\n' "$out" | grep -qx "ws wizard: Cable: enp5s0 goes in host_vars/localhost\.yml on ws \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: enp5s0 goes in host_vars/localhost\.yml on ws \
 again, and bootstrap\.sh --tags network,wireguard runs there in a unit of its own" &&
     grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
     [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 1)) ] && [ "$(cat "$conf")" = "$kept" ] ||
-    error "ws wizard without host_vars exited $status, named no enp5s0, or changed mac.conf"
+    error "ws mac wizard without host_vars exited $status, named no enp5s0, or changed mac.conf"
 sudo rm -f "$netplan"
 wizard run
 # root alone reads the netplan file's tree, which the remote script's peer makes with umask 077.
 sudo test -e "$netplan" && [ "$status" = 0 ] &&
     [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 2)) ] ||
-    error "ws wizard without the netplan file exited $status, ran the roles other than once, or" \
+    error "ws mac wizard without the netplan file exited $status, ran the roles other than once, or" \
         "wrote no netplan file"
 echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
 cp "$RUNNER_TEMP/cable.conf" "$conf"
 touch "$cable/silent"
 wizard run "WS_CABLE_SERVICE=ws stand-in adapter"
-printf '%s\n' "$out" | grep -qx "ws wizard: Cable: ping -c 1 -t 3 10\.77\.0\.1, ws's end of the \
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: ping -c 1 -t 3 10\.77\.0\.1, ws's end of the \
 cable, got no answer: mac\.conf's WS_CABLE_SERVICE must name the service of the adapter that the \
 cable plugs into" && [ "$status" = 1 ] &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
-    error "ws wizard with no answer from ping exited $status, or pinged other than once"
+    error "ws mac wizard with no answer from ping exited $status, or pinged other than once"
 rm "$cable/silent"
 cp "$RUNNER_TEMP/cable.conf" "$conf"
 wizard run WS_CABLE_SERVICE=
 [ "$status" = 0 ] && [ "$(tail -n 1 "$conf")" = WS_CABLE_SERVICE= ] &&
     [ "$(logged setmanual.log) $(logged ping.log)" = '1 2' ] ||
-    error "ws wizard with WS_CABLE_SERVICE= exited $status, or wrote another line, or acted"
+    error "ws mac wizard with WS_CABLE_SERVICE= exited $status, or wrote another line, or acted"
 wizard run
 [ "$status" = 0 ] && [ -z "$out" ] || error "the run after none exited $status"
 
@@ -245,5 +245,5 @@ rm -rf /opt/homebrew/bin/networksetup /opt/homebrew/bin/ping "$RUNNER_TEMP/cable
     "$RUNNER_TEMP/tty" "$ws/uplink"
 sudo rm -rf "$cable" "$ws/root/sys" "$ws/addr" "${vars%/*}" "${netplan%/*}"
 wizard run
-[ "$status" = 0 ] && [ -z "$out" ] || error "ws wizard after it exited $status"
+[ "$status" = 0 ] && [ -z "$out" ] || error "ws mac wizard after it exited $status"
 exit "$fail"
