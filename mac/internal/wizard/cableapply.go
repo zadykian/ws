@@ -97,7 +97,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 
 // service takes the Mac's service of the cable, from WS_CABLE_SERVICE in the environment or the
 // terminal. The default is the one service with a 169.254 address, which an adapter gives itself
-// where no DHCP server answers. It writes it in mac.conf, and runs ws setup, which gives it
+// where no DHCP server answers. It writes it in mac.conf, and runs ws mac apply, which gives it
 // 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE.
 func (c *Cable) service(ctx context.Context) error {
 	out, err := c.M.Run(ctx, "networksetup", "-listallnetworkservices")

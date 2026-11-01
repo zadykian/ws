@@ -7,12 +7,12 @@ import (
 	"github.com/zadykian/ws/mac/internal/check"
 )
 
-// pubFile is the Mac's public key, which ws setup writes from root's key at each run. It needs no
+// pubFile is the Mac's public key, which ws mac apply writes from root's key at each run. It needs no
 // sudo, whose timestamp lapses during ws's run.
 func (t *Tunnel) pubFile() string { return t.Home + "/.config/ws/tunnel.pub" }
 
 // pub returns the Mac's public key from tunnel.pub, or an empty string where it holds none, as
-// before ws setup first wrote it.
+// before ws mac apply first wrote it.
 func (t *Tunnel) pub() string {
 	b, err := t.M.ReadFile(t.pubFile())
 	if key := strings.TrimSpace(string(b)); err == nil && check.Key(key) {

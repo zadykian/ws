@@ -56,7 +56,7 @@ func (k *MacKey) git(ctx context.Context, only bool) error {
 	}
 	k.open(ctx)
 	got, err := k.pick(ctx, sshcfg.Expand(id.Pub, k.Home), "a second P-256 key, for git's signing, at Notify",
-		"An empty WS_GIT_SIGNING_KEY= in mac.conf keeps ws setup's file key for git at the next run")
+		"An empty WS_GIT_SIGNING_KEY= in mac.conf keeps ws mac apply's file key for git at the next run")
 	if err != nil {
 		return err
 	}

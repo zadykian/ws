@@ -30,7 +30,7 @@ type HostKey struct {
 // Name is the stage's name.
 func (*HostKey) Name() string { return hostStage }
 
-// WaitsOn is ws setup, which writes config.d/ws.
+// WaitsOn is ws mac apply, which writes config.d/ws.
 func (*HostKey) WaitsOn() string { return setupStage }
 
 // hostAdd is the change that adds ws's key to known_hosts.

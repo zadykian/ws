@@ -57,7 +57,7 @@ func TestSetupApply(t *testing.T) {
 }
 
 func TestSetupIsDoneOnceApplied(t *testing.T) {
-	// ws setup's own plan still finds a change after it ran: a step that only warned, as cld's install.
+	// ws mac apply's own plan still finds a change after it ran: a step that only warned, as cld's install.
 	s := &Setup{M: effecttest.NewMachine(), LookPath: func(string) (string, error) { return "/brew", nil },
 		Run: func(context.Context, bool) (bool, error) { return true, nil }}
 	s.sudoed = true

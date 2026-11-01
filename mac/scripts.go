@@ -4,7 +4,7 @@ package mac
 
 import _ "embed" // for the scripts' go:embed
 
-// RemoteScript is wizard-remote.sh, which ws wizard sends to root on ws, with sh -s.
+// RemoteScript is wizard-remote.sh, which ws mac wizard sends to root on ws, with sh -s.
 //
 //go:embed wizard-remote.sh
 var RemoteScript []byte

@@ -18,7 +18,7 @@ func newAnswers(t *testing.T, text string) (*Answers, *effecttest.Out) {
 	}
 	m.Files["/r/defaults.yml"] = []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n")
 	out := &effecttest.Out{}
-	return &Answers{Conf: confPathForTest, Roles: "/r/defaults.yml", Prog: "ws wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
+	return &Answers{Conf: confPathForTest, Roles: "/r/defaults.yml", Prog: "ws mac wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
 		Env: func(string) (string, bool) { return "", false }}, out
 }
 
@@ -43,7 +43,7 @@ func TestAnswersPlan(t *testing.T) {
 		"no file":  {"", "would ask for the values that /h/.config/ws/mac.conf lacks, from WS_TARGET on"},
 		"a gap":    {strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
 		"complete": {all, ""},
-		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws setup would refuse"},
+		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws mac apply would refuse"},
 	} {
 		a, _ := newAnswers(t, tc.text)
 		p, err := a.Plan(context.Background())

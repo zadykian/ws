@@ -22,7 +22,7 @@ const cableEnd = "10.77.0.1"
 // Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
 // wired ports. The stage names the port in host_vars/localhost.yml on ws, whose network role gives
 // it 10.77.0.1. Then it names the Mac's service of the cable in mac.conf's WS_CABLE_SERVICE, and
-// ws setup gives that 10.77.0.2, and the port in WS_CABLE_PORT, which the stage names on ws again
+// ws mac apply gives that 10.77.0.2, and the port in WS_CABLE_PORT, which the stage names on ws again
 // after ws's install. Undocked, the first setup waits, and the closing list says to dock the Mac.
 type Cable struct {
 	Host *HostKey
@@ -31,7 +31,7 @@ type Cable struct {
 	Root *RootKey
 	// Files runs the files script's operations as root on ws.
 	Files *Remote
-	// Setup is the ws setup stage, which gives the Mac's service its address.
+	// Setup is the ws mac apply stage, which gives the Mac's service its address.
 	Setup *Setup
 	// Env looks up a variable of the environment.
 	Env func(string) (string, bool)
@@ -173,7 +173,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 			"bootstrap.sh --tags network,wireguard there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
-		"ws setup, which gives it 10.77.0.2, and ping " + cableEnd)
+		"ws mac apply, which gives it 10.77.0.2, and ping " + cableEnd)
 }
 
 func (*Cable) change(text string) (step.Plan, error) {

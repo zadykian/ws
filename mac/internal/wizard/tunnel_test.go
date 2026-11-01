@@ -52,8 +52,8 @@ func TestTunnelPlanWaits(t *testing.T) {
 	tun, m := newTunnel(keyB, "peer ok\n", true)
 	delete(m.Files, "/h/.config/ws/tunnel.pub")
 	p, err := tun.Plan(context.Background())
-	if err != nil || len(p.Changes) != 0 || !strings.Contains(tun.Out.(*effecttest.Out).Lines[0], "after ws setup") {
-		t.Errorf("Plan = %v, %v; want it to wait on ws setup", p, err)
+	if err != nil || len(p.Changes) != 0 || !strings.Contains(tun.Out.(*effecttest.Out).Lines[0], "after ws mac apply") {
+		t.Errorf("Plan = %v, %v; want it to wait on ws mac apply", p, err)
 	}
 }
 
