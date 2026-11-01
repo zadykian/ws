@@ -14,13 +14,13 @@ const wordsStage = "Word list"
 
 // Words is the stage that copies ws's word list, root's ~/.config/ws/forbidden-words there, which
 // the hooks of ws's clone and of another repository's read (docs/checks.md, The hooks), over the
-// Mac's where they differ, with or without WS_HOOK. It runs after Hook on ws, whose apply.sh may
+// Mac's where they differ, with or without WS_HOOK. It runs after Hook on ws, whose command may
 // write the list.
 type Words struct {
 	Host *HostKey
 	// Root is the stage that logs in as root: the list is read only where it did, in this run.
 	Root *RootKey
-	// Hook is Hook on ws, which Plan waits on under --check while WS_HOOK's apply.sh has not run.
+	// Hook is Hook on ws, which Plan waits on under --check while WS_HOOK's command has not run.
 	Hook *HookWs
 	// Files runs the files script's operations as root on ws.
 	Files *Remote
@@ -101,7 +101,7 @@ func (w *Words) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{wordsCopy{w.file(), remote}}}, nil
 }
 
-// hookDone reports whether ws has the stamp of the hook's apply.sh.
+// hookDone reports whether ws has the stamp of the hook's command.
 func (w *Words) hookDone(ctx context.Context, hook string) bool {
 	return w.Hook.Run.Remote.Status(ctx) && strings.Contains(" "+w.Hook.Run.Remote.Get("hook")+" ", " "+hook+" ")
 }

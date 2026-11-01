@@ -8,7 +8,7 @@ import (
 )
 
 // Hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
-// remote script's status. ws's gh has a login by apply.sh of WS_HOOK's repository, or else by hand.
+// remote script's status. ws's gh has a login by the command of WS_HOOK's repository, or else by hand.
 // mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only with a LAN. Off
 // the LAN, away's lines take the router's place.
 func (r *WsRun) Hand(ctx context.Context, h *Hand) {
