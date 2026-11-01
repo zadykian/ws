@@ -38,3 +38,16 @@ func TestBridgeCheckPlansAMoveAsAChangeThatFails(t *testing.T) {
 		}
 	}
 }
+
+func TestBridgeCheckPassesOnTheWantedAddressAndWithoutSystemd(t *testing.T) {
+	m := effecttest.NewMachine()
+	out := &effecttest.Out{}
+	check := bridgeCheck{m: m, out: out, held: held("172.17.0.1/16"), want: "172.17.0.1/16"}
+	if changes, err := check.Plan(t.Context()); err != nil || changes != nil || len(out.Lines) != 1 {
+		t.Errorf("without systemd: %v, %v, said %q; want a skip", changes, err, out.Lines)
+	}
+	m.Dirs["/run/systemd/system"] = 0o755
+	if changes, err := check.Plan(t.Context()); err != nil || changes != nil {
+		t.Errorf("with the address: %v, %v; want none", changes, err)
+	}
+}
