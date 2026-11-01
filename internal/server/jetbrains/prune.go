@@ -23,7 +23,7 @@ func (c prune) Apply(ctx context.Context) error {
 		if _, err := c.s.M.Stat(c.path); errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
-		_, err := c.s.M.Run(ctx, "rm", "-rf", "--", c.path)
+		_, err := c.s.AsUser(ctx, "rm", "-rf", "--", c.path)
 		return err
 	})
 }

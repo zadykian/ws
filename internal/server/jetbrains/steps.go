@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/user"
 	"path/filepath"
 	"slices"
 	"time"
@@ -44,12 +43,12 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 	site.AsUser = func(ctx context.Context, name string, args ...string) ([]byte, error) {
 		return owner.Output(ctx, m, name, args...)
 	}
-	return steps(v, site, effect.OSUnits{}, exe, os.Getenv("WS_JETBRAINS_RUN"), user.Lookup)
+	return steps(v, site, effect.OSUnits{}, exe, os.Getenv("WS_JETBRAINS_RUN"))
 }
 
-// steps is Steps with the site, the units, the path of ws, the kind of run and the look-up of the
-// user given, for a test to fake. Home and the user's ids are the site's to fill.
-func steps(v values.Values, site Site, u effect.Units, exe, run string, lookup func(string) (*user.User, error)) []step.Step {
+// steps is Steps with the site, the units, the path of ws, and the kind of run given, for a test to
+// fake. The site's directories are for the step to fill.
+func steps(v values.Values, site Site, u effect.Units, exe, run string) []step.Step {
 	var out []step.Step
 	timerAfter := ""
 	if slices.Contains(v.JetBrains.Backends, "RD") {
@@ -62,6 +61,6 @@ func steps(v values.Values, site Site, u effect.Units, exe, run string, lookup f
 	}
 	return append(out,
 		host.Lazy{Title: timerStep, After: timerAfter, Parts: timer(site.M, u, site.Out, exe)},
-		host.Lazy{Title: backendsStep, After: timerStep, Parts: backends(v, site, run, lookup)},
+		host.Lazy{Title: backendsStep, After: timerStep, Parts: backends(v, site, run)},
 	)
 }

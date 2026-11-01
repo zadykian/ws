@@ -2,8 +2,6 @@ package jetbrains
 
 import (
 	"context"
-	"errors"
-	"os/user"
 	"strings"
 	"testing"
 
@@ -14,13 +12,6 @@ import (
 
 const goList = "curl -fsSL https://data.services.jetbrains.com/products/releases?code=GO&latest=true&type=release"
 
-func lookupUser(name string) (*user.User, error) {
-	if name != "u" {
-		return nil, errors.New("unknown user " + name)
-	}
-	return &user.User{Uid: "1000", Gid: "1001"}, nil
-}
-
 func stepFixture(codes ...string) (*effecttest.Machine, []step.Step) {
 	m, s, _ := fixture(1 << 30)
 	for _, d := range []string{"/h/.cache", "/h/.cache/JetBrains", "/h/.cache/JetBrains/RemoteDev"} {
@@ -30,7 +21,7 @@ func stepFixture(codes ...string) (*effecttest.Machine, []step.Step) {
 	v.User, v.Home = "u", "/h"
 	v.JetBrains.Backends = codes
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
-	return m, steps(v, s, &effecttest.Units{}, "/usr/local/bin/ws", "", lookupUser)
+	return m, steps(v, s, &effecttest.Units{}, "/usr/local/bin/ws", "")
 }
 
 func names(ss []step.Step) string {

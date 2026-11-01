@@ -3,9 +3,7 @@ package jetbrains
 import (
 	"context"
 	"fmt"
-	"os/user"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/zadykian/ws/host"
@@ -22,19 +20,8 @@ const timerRun = "timer"
 // backends makes the parts that install each backend's latest build, with Gateway's directory
 // made first. The backends in place come first, as their removals need no download, so that each
 // install finds the room that the older builds of those before it took.
-func backends(v values.Values, site Site, run string, lookup func(string) (*user.User, error)) func(context.Context) ([]host.Resource, error) {
+func backends(v values.Values, site Site, run string) func(context.Context) ([]host.Resource, error) {
 	return func(ctx context.Context) ([]host.Resource, error) {
-		u, err := lookup(v.User)
-		if err != nil {
-			return nil, err
-		}
-		site.UID, err = strconv.Atoi(u.Uid)
-		if err != nil {
-			return nil, err
-		}
-		if site.GID, err = strconv.Atoi(u.Gid); err != nil {
-			return nil, err
-		}
 		site.Home = v.Home
 		site.Dist = filepath.Join(v.Home, ".cache/JetBrains/RemoteDev/dist")
 		kind := "apply"
@@ -43,7 +30,7 @@ func backends(v values.Values, site Site, run string, lookup func(string) (*user
 		}
 		site.Downloads = filepath.Join(v.Home, ".cache/ws-jetbrains", kind)
 		// What a run cut short left goes, whatever its code, such as one since dropped.
-		parts := []host.Resource{host.Absent{M: site.M, Path: site.Downloads}}
+		parts := []host.Resource{Stale{S: site, Path: site.Downloads}}
 		if len(v.JetBrains.Backends) == 0 {
 			return parts, nil
 		}

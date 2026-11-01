@@ -18,10 +18,8 @@ type Site struct {
 	// Dist is Gateway's directory of backends, and Downloads where the archives are downloaded
 	// before they are unpacked: the role's own directory, on disk where /tmp may be in memory.
 	Dist, Downloads string
-	// Home is the user's home, which Dist lies under. UID and GID are the user's, the owner of
-	// everything the role makes there.
-	Home     string
-	UID, GID int
+	// Home is the user's home, which Dist lies under.
+	Home string
 	// Prune removes the other builds of each product it installs.
 	Prune bool
 	// Avail returns the bytes free to the user on the filesystem that holds a path.
