@@ -13,6 +13,8 @@ import (
 type Sysfs interface {
 	// Read returns the text of the file, without the space around it.
 	Read(path string) (string, error)
+	// Write replaces the file's text with value and a newline.
+	Write(path, value string) error
 	// Glob returns the paths that match, in order.
 	Glob(pattern string) []string
 }
@@ -36,6 +38,14 @@ func (OSSysfs) Read(path string) (string, error) {
 		return "", missing("cannot read %s: %s", path, reason(err))
 	}
 	return strings.TrimSpace(string(b)), nil
+}
+
+// Write writes the value to the file.
+func (OSSysfs) Write(path, value string) error {
+	if err := os.WriteFile(path, []byte(value+"\n"), 0o644); err != nil { //nolint:gosec // an existing sysfs file
+		return missing("cannot write %s to %s: %s", value, path, reason(err))
+	}
+	return nil
 }
 
 // Glob lists the paths that match, sorted.

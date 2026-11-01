@@ -22,3 +22,19 @@ func TestOSSysfsMissesAFileThatIsNotThere(t *testing.T) {
 		t.Errorf("Read = %v, want a missing error that says no such file", err)
 	}
 }
+
+func TestOSSysfsWrites(t *testing.T) {
+	path := t.TempDir() + "/pwm1"
+	if err := os.WriteFile(path, []byte("128\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := (OSSysfs{}).Write(path, "255"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := (OSSysfs{}).Read(path); got != "255" {
+		t.Errorf("file = %q, want 255", got)
+	}
+	if err := (OSSysfs{}).Write(path+"/none", "1"); !IsMissing(err) {
+		t.Errorf("Write to a file that is not there = %v, want a missing error", err)
+	}
+}
