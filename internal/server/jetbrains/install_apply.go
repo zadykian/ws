@@ -2,8 +2,8 @@ package jetbrains
 
 import (
 	"context"
-
-	"github.com/zadykian/ws/effect"
+	"fmt"
+	"strings"
 )
 
 func (c install) String() string { return c.b.Name + " would be installed in " + c.b.Dir }
@@ -34,7 +34,7 @@ func (c install) Apply(ctx context.Context) (err error) {
 		}
 	}
 	err = c.s.retry(ctx, func() error {
-		return c.s.M.Download(ctx, c.b.Link, c.archive(), c.sum, c.attrs())
+		return c.download(ctx)
 	})
 	if err != nil {
 		return err
@@ -57,4 +57,19 @@ func (c install) clear(ctx context.Context) (done bool, err error) {
 	return done, err
 }
 
-func (c install) attrs() effect.Attrs { return effect.Attrs{Mode: 0o644} }
+// download fetches the archive as the user, and removes it where its SHA-256 is another. The user
+// is the one who unpacks it, so the check holds for what the user's tar reads.
+func (c install) download(ctx context.Context) error {
+	if _, err := c.s.AsUser(ctx, "curl", "-fsSL", "-o", c.archive(), "--url", c.b.Link); err != nil {
+		return err
+	}
+	out, err := c.s.AsUser(ctx, "sha256sum", "--", c.archive())
+	if err != nil {
+		return err
+	}
+	if got, _, _ := strings.Cut(string(out), " "); got != c.sum {
+		_, _ = c.s.AsUser(ctx, "rm", "-f", "--", c.archive())
+		return fmt.Errorf("download %s: SHA-256 is %s, want %s", c.b.Link, got, c.sum)
+	}
+	return nil
+}

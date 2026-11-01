@@ -38,7 +38,10 @@ func fixture(avail uint64) (*effecttest.Machine, Site, install) {
 	} {
 		m.Results[line] = effecttest.Result{}
 	}
-	m.Pages[testLink] = testBody
+	archive := "/h/.cache/ws-jetbrains/playbook/goland-2026.2.3.tar.gz"
+	m.Results["curl -fsSL -o "+archive+" --url "+testLink] = effecttest.Result{}
+	m.Results["sha256sum -- "+archive] = effecttest.Result{Out: []byte(fmt.Sprintf("%x  %s\n", sha256.Sum256(testBody), archive))}
+	m.Results["rm -f -- "+archive] = effecttest.Result{}
 	s := Site{
 		M: m, Out: &effecttest.Out{}, Dist: testDist, Downloads: "/h/.cache/ws-jetbrains/playbook", Home: "/h",
 		Wait:  time.Nanosecond,

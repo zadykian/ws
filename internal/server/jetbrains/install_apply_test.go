@@ -13,7 +13,7 @@ func TestInstallLeavesABuildInPlace(t *testing.T) {
 	if err := c.Apply(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(strings.Join(m.Calls, "\n"), "download") {
+	if strings.Contains(strings.Join(m.Calls, "\n"), "curl") {
 		t.Error("downloaded a build that is in place")
 	}
 }
@@ -41,7 +41,7 @@ func TestInstallDownloadsThenUnpacksUnderTheLock(t *testing.T) {
 		t.Errorf("locked %d times, want 2: to clear, then to unpack", locked)
 	}
 	calls := strings.Join(m.Calls, "\n")
-	for _, want := range []string{"download " + testLink, "run mkdir -m 0755 -- /h/.cache/ws-jetbrains/playbook", "run mv -T --update=none-fail", "run rm -rf -- /h/.cache/ws-jetbrains/playbook"} {
+	for _, want := range []string{"run curl -fsSL -o /h/.cache/ws-jetbrains/playbook/goland-2026.2.3.tar.gz --url " + testLink, "run mkdir -m 0755 -- /h/.cache/ws-jetbrains/playbook", "run mv -T --update=none-fail", "run rm -rf -- /h/.cache/ws-jetbrains/playbook"} {
 		if !strings.Contains(calls, want) {
 			t.Errorf("no call %q in\n%s", want, calls)
 		}
