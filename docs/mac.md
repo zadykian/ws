@@ -24,7 +24,8 @@ ws setup
 ```
 
 `ws wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
-`ws setup STEP` runs one step, and `--check` shows each change and makes none.
+`ws setup STEP` runs one step, and `--check` shows each change and makes none. `ws version` prints
+the version that Go stamped into the binary, or `devel` for a build with none.
 
 ## mac.conf
 

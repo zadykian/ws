@@ -16,6 +16,7 @@ func TestRun(t *testing.T) {
 	}{
 		{"no command", nil, 0, "usage: ws", ""},
 		{"help", []string{"help"}, 0, "usage: ws", ""},
+		{"version", []string{"version"}, 0, "", ""},
 		{"flag", []string{"--help"}, 0, "usage: ws", ""},
 		{"tunnel alone", []string{"tunnel"}, 2, "", "usage: ws tunnel run | status | key"},
 		{"tunnel unknown", []string{"tunnel", "nope"}, 2, "", "usage: ws tunnel run | status | key"},
