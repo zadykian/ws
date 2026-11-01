@@ -57,3 +57,31 @@ func TestPackagesNameTheRunningKernelsHeaders(t *testing.T) {
 		t.Errorf("Plan = %v, %v; want an install naming the kernel's headers", p, err)
 	}
 }
+
+func TestDriverPlansWhatDKMSLacks(t *testing.T) {
+	const status = "nct6687d/old, " + kernel + ", x86_64: installed\n"
+	for _, tc := range []struct {
+		name, status string
+		noDKMS       bool
+		want         []string
+	}{
+		{"nothing yet", "", true, []string{"add the driver to DKMS", "build and install the driver for " + kernel}},
+		{"added", "nct6687d/" + nct6687Short + ": added\n", false, []string{"build and install the driver for " + kernel}},
+		{"installed", "nct6687d/" + nct6687Short + ", " + kernel + ", x86_64: installed\n", false, nil},
+		{"another version", status, false, []string{"remove the driver's version old from DKMS", "remove the source of version old", "add the driver to DKMS", "build and install the driver for " + kernel}},
+	} {
+		m := onTheBoard()
+		m.Results["dkms status nct6687d"] = effecttest.Result{Out: []byte(tc.status)}
+		if !tc.noDKMS {
+			m.Files[dkmsBinary] = []byte("x")
+		}
+		changes, err := driver{m}.Plan(t.Context())
+		var got []string
+		for _, c := range changes {
+			got = append(got, c.String())
+		}
+		if err != nil || !slices.Equal(got, tc.want) {
+			t.Errorf("%s: Plan = %q, %v; want %q", tc.name, got, err, tc.want)
+		}
+	}
+}
