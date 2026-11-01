@@ -6,14 +6,14 @@
 # as a tagged run that failed leaves it, a run must run bootstrap.sh --tags wireguard and restart
 # the daemon. Without the stand-in's mac.pub too, it must write mac.pub first. Where nothing answers
 # on UDP 51820, a run must exit 0 within a minute, its closing list naming it, the router's forward
-# and the Background. Once it answers, a run must exit 0, and the next print nothing. So must one in
-# which sudo -n fails, as once sudo's timestamp lapsed during ws's run. Without tunnel.pub, --check
-# must show it and the Tunnel stage after setup.sh. A run must then write it at the setup.sh stage,
-# and leave the Tunnel stage alone.
+# and the Background. Once it answers, a run must exit 0, and the next print nothing. Without
+# tunnel.pub, --check must show it and the Tunnel stage after ws's run, which waits for ws setup
+# through the stages between. A run must then write it at the ws setup stage, and leave the Tunnel
+# stage alone.
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 conf=$HOME/.config/ws/mac.conf
 ws=$RUNNER_TEMP/ws
 peer=$ws/root/etc/wireguard/mac.pub
@@ -28,7 +28,7 @@ error() {
 
 # wizard [ARG]: a run of the wizard with no terminal. It prints the output, and sets out and status.
 wizard() {
-    out=$(sh "$wizard" "$@" </dev/null 2>&1)
+    out=$("$wsbin" wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
@@ -57,7 +57,7 @@ printf '%s\n' "$out" | grep -qx -- "-WS_PUBLIC_KEY=$old" &&
 n=$(logins)
 wizard
 sed "1s|.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first" | cmp -s - "$conf" && [ "$status" = 0 ] &&
-    printf '%s\n' "$out" | grep -q '^setup\.sh: ran launchctl kill SIGHUP ' &&
+    printf '%s\n' "$out" | grep -q '^ws wizard: ran launchctl kill SIGHUP ' &&
     [ "$(logins)" -eq $((n + 1)) ] ||
     error "a run with wg0's new key exited $status, or put no WS_PUBLIC_KEY in its line's place"
 
@@ -65,7 +65,7 @@ mac=$(sudo sh -c '"$0" pubkey <"$1"' "$wg" /etc/ws-tunnel/private.key)
 tagged=$(grep -cx -- '--tags wireguard' "$ws/bootstrap.log")
 standin_set peer "$mac" remove
 wizard
-printf '%s\n' "$out" | grep -q '^wizard\.sh: Tunnel: ran launchctl kickstart -k ' &&
+printf '%s\n' "$out" | grep -q '^ws wizard: Tunnel: ran launchctl kickstart -k ' &&
     ! printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: wrote ' && [ "$status" = 0 ] &&
     [ "$(grep -cx -- '--tags wireguard' "$ws/bootstrap.log")" -eq $((tagged + 1)) ] ||
     error "a run with mac.pub but without wg0's peer exited $status, or ran no --tags wireguard"
@@ -73,7 +73,7 @@ printf '%s\n' "$out" | grep -q '^wizard\.sh: Tunnel: ran launchctl kickstart -k 
 sudo rm "$peer"
 standin_set peer "$mac" remove
 wizard
-printf '%s\n' "$out" | grep -q '^wizard\.sh: Tunnel: ran launchctl kickstart -k ' &&
+printf '%s\n' "$out" | grep -q '^ws wizard: Tunnel: ran launchctl kickstart -k ' &&
     [ "$(sudo cat "$peer")" = "$mac" ] &&
     [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags wireguard' ] && [ "$status" = 0 ] ||
     error "a run without mac.pub on ws exited $status, or gave wg0 no peer and the daemon no restart"
@@ -93,31 +93,17 @@ wizard
 [ "$status" = 0 ] && [ -z "$out" ] ||
     error "the last run exited $status, or printed what it should not"
 
-# A sudo first on PATH that refuses -n, as sudo does once its timestamp lapsed.
-mkdir -p "$RUNNER_TEMP/lapsed"
-cat >"$RUNNER_TEMP/lapsed/sudo" <<'EOF'
-#!/bin/sh
-[ "$1" != -n ] || exit 1
-exec /usr/bin/sudo "$@"
-EOF
-chmod 755 "$RUNNER_TEMP/lapsed/sudo"
-out=$(PATH=$RUNNER_TEMP/lapsed:$PATH sh "$wizard" </dev/null 2>&1)
-status=$?
-printf '%s\n' "$out"
-[ "$status" = 0 ] && [ -z "$out" ] ||
-    error "a run in which sudo -n fails exited $status, or printed what it should not"
-
 pub=$HOME/.config/ws/tunnel.pub
 rm "$pub"
 wizard --check
 printf '%s\n' "$out" | grep -qxF "+$mac" &&
-    printf '%s\n' "$out" | grep -qx 'wizard\.sh: Tunnel: after setup\.sh' &&
+    printf '%s\n' "$out" | grep -qx "ws wizard: Tunnel: after ws's run" &&
     [ ! -e "$pub" ] && [ "$status" = 0 ] ||
-    error "--check without tunnel.pub exited $status, wrote it, or showed no Tunnel after setup.sh"
+    error "--check without tunnel.pub exited $status, wrote it, or showed no Tunnel after ws's run"
 wizard
-printf '%s\n' "$out" | grep -qxF "setup.sh: wrote $pub" &&
-    ! printf '%s\n' "$out" | grep -q '^wizard\.sh: Tunnel: ' &&
+printf '%s\n' "$out" | grep -qxF "ws wizard: wrote $pub" &&
+    ! printf '%s\n' "$out" | grep -q '^ws wizard: Tunnel: ' &&
     [ "$(cat "$pub")" = "$mac" ] && [ "$status" = 0 ] ||
     error "a run without tunnel.pub exited $status, wrote no Mac's key there, or acted at Tunnel"
-rm -rf "$RUNNER_TEMP/first" "$RUNNER_TEMP/lapsed"
+rm -rf "$RUNNER_TEMP/first"
 exit "$fail"

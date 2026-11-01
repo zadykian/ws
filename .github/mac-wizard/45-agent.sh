@@ -4,12 +4,12 @@
 # PublicKeys. With a mac.conf of its own that names that .pub in WS_IDENTITY, --check must print
 # nothing of the stage while the agent lists the key. With git's name too, it must say it would wait
 # for git's key made in Secretive, unless mac.conf has an empty WS_GIT_SIGNING_KEY. Once the agent
-# lacks ws's key, a run and --check must stop at the stage, naming the socket, before setup.sh's.
+# lacks ws's key, a run and --check must stop at the stage, naming the socket, before ws setup's.
 # None may change that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 container=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 data=$container/Data
 pub=$data/PublicKeys/0123456789abcdef0123456789abcdef.pub
@@ -22,13 +22,13 @@ error() {
     fail=1
 }
 
-# keys ARG...: wizard.sh ARGs, with that mac.conf and no terminal. It prints the output, and sets
+# keys ARG...: ws wizard ARGs, with that mac.conf and no terminal. It prints the output, and sets
 # status, and mac to the Mac key stage's lines.
 keys() {
-    out=$(WS_CONF=$conf sh "$wizard" "$@" </dev/null 2>&1)
+    out=$(WS_CONF=$conf "$wsbin" wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
-    mac=$(printf '%s\n' "$out" | grep '^wizard\.sh: Mac key: ')
+    mac=$(printf '%s\n' "$out" | grep '^ws wizard: Mac key: ')
 }
 
 # files prints the Mac's own mac.conf and ssh's files.
@@ -51,26 +51,26 @@ cp "$conf" "$RUNNER_TEMP/agent.conf.before"
 files >"$RUNNER_TEMP/agent.files"
 
 keys --check
-[ "$status" = 0 ] && [ -z "$mac" ] || error "wizard.sh --check exited $status, with '$mac'"
+[ "$status" = 0 ] && [ -z "$mac" ] || error "ws wizard --check exited $status, with '$mac'"
 printf '%s\n' 'WS_GIT_NAME="Jane Doe"' WS_GIT_EMAIL=jane@example.com >>"$conf"
 keys --check
-want="wizard.sh: Mac key: would open Secretive, and wait for git's signing key made there"
+want="ws wizard: Mac key: would open Secretive, and wait for git's signing key made there"
 [ "$status" = 0 ] && [ "$mac" = "$want" ] ||
-    error "wizard.sh --check with git's name exited $status, with '$mac', not '$want'"
+    error "ws wizard --check with git's name exited $status, with '$mac', not '$want'"
 echo WS_GIT_SIGNING_KEY= >>"$conf"
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] ||
-    error "wizard.sh --check with an empty WS_GIT_SIGNING_KEY exited $status, with '$mac'"
+    error "ws wizard --check with an empty WS_GIT_SIGNING_KEY exited $status, with '$mac'"
 cp "$RUNNER_TEMP/agent.conf.before" "$conf"
 SSH_AUTH_SOCK=$data/socket.ssh ssh-add -D 2>/dev/null
-want="wizard.sh: Mac key: the agent at $data/socket.ssh lists no key of $pub: open Secretive,"
+want="ws wizard: Mac key: the agent at $data/socket.ssh lists no key of $pub: open Secretive,"
 want="$want where it is that agent, or start the agent, then run the wizard again"
 for args in '' --check; do
     keys ${args:+"$args"}
     [ "$status" = 1 ] && [ "$mac" = "$want" ] ||
-        error "wizard.sh${args:+ $args} exited $status, with '$mac', not '$want'"
-    ! printf '%s\n' "$out" | grep -q '^setup\.sh: ' || error "wizard.sh${args:+ $args} ran setup.sh"
+        error "ws wizard${args:+ $args} exited $status, with '$mac', not '$want'"
+    ! printf '%s\n' "$out" | grep -qE '^ws wizard: (ws setup: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)' || error "ws wizard${args:+ $args} ran ws setup"
 done
-cmp -s "$conf" "$RUNNER_TEMP/agent.conf.before" || error "wizard.sh changed $conf"
-files | cmp -s - "$RUNNER_TEMP/agent.files" || error "wizard.sh changed the Mac's own files"
+cmp -s "$conf" "$RUNNER_TEMP/agent.conf.before" || error "ws wizard changed $conf"
+files | cmp -s - "$RUNNER_TEMP/agent.files" || error "ws wizard changed the Mac's own files"
 exit "$fail"
