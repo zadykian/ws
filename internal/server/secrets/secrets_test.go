@@ -35,3 +35,10 @@ func TestParseEmptyGivesNothing(t *testing.T) {
 		t.Errorf("got %+v, %v", s, err)
 	}
 }
+
+func TestParseErrorShowsNoValue(t *testing.T) {
+	_, err := Parse([]byte("shell_secret_env: hunter2\nikeward_p12_file: {a: hunter3}\n"))
+	if err == nil || strings.Contains(err.Error(), "hunter") {
+		t.Errorf("got %v", err)
+	}
+}

@@ -6,7 +6,10 @@ package secrets
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
+	"regexp"
+	"strings"
 
 	"go.yaml.in/yaml/v3"
 
@@ -54,7 +57,27 @@ func Parse(data []byte) (Secrets, error) {
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.KnownFields(true)
 	if err := dec.Decode(&s); err != nil && !errors.Is(err, io.EOF) {
-		return Secrets{}, err
+		return Secrets{}, scrub(err)
 	}
 	return s, nil
+}
+
+// atLine matches a line number in YAML's type errors.
+var atLine = regexp.MustCompile(`line \d+`)
+
+// scrub keeps a value out of a type error, which YAML words with the value it could not read.
+func scrub(err error) error {
+	var te *yaml.TypeError
+	if !errors.As(err, &te) {
+		return err
+	}
+	var lines []string
+	for _, e := range te.Errors {
+		if l := atLine.FindString(e); l != "" && !strings.Contains(e, "not found in type") {
+			lines = append(lines, l)
+		} else {
+			lines = append(lines, e)
+		}
+	}
+	return fmt.Errorf("a value has the wrong type at %s", strings.Join(lines, ", "))
 }
