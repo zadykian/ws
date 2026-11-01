@@ -19,8 +19,6 @@
       tags: [tmux]
     - role: claude
       tags: [claude]
-    - role: signoz
-      tags: [signoz]
     - role: helix
       tags: [helix]
     - role: jetbrains
