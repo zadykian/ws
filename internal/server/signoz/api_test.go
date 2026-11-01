@@ -29,3 +29,19 @@ func TestAPIFailsOnAnotherStatusAndSaysWhatItGot(t *testing.T) {
 		t.Errorf("err = %v, want the status and the body", err)
 	}
 }
+
+func TestAPISendsTheBodyAsJSON(t *testing.T) {
+	var got, kind string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		got, kind = r.Method+" "+string(b), r.Header.Get("Content-Type")
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer srv.Close()
+	if err := (API{URL: srv.URL}).call(t.Context(), http.MethodPost, "/x", []byte(`{"a":1}`), http.StatusCreated, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got != `POST {"a":1}` || kind != "application/json" {
+		t.Errorf("server got %q as %q", got, kind)
+	}
+}
