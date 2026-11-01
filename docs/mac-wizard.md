@@ -189,10 +189,11 @@ passes no file of the `ikeward` role's variables, so the role leaves the VPN as 
 profile](ikeward.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
-with `WS_TARGET=cloud`, the run passes `-e security_outbound=false`, and its unit then names that
-in ws's `/etc/ws/host_vars.yml`, for each run after. The stage is done there once a run with that
-`-e` passed and `host_vars.yml` has the line. After a unit without it, which the run followed, a
-run of its own goes. Where the line alone is missing, the stage writes it, and runs no playbook.
+with `WS_TARGET=cloud`, the stage names `security_outbound: false` in ws's `/etc/ws/host_vars.yml`
+before the run, which reads its values there. The stage is done there once a run that began with
+the line passed and `host_vars.yml` has it. After a unit that began without it, which the run
+followed, a run of its own goes. Where the line alone is missing, the stage writes it, and runs no
+playbook.
 
 ## Signing key
 
