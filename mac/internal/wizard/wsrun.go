@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // runStage names the stage in its messages.

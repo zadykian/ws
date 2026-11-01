@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Apply runs ws's playbook in a unit of its own through the remote script, or follows the run that

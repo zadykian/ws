@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // packages are what the playbook needs of the system. They install without recommends:

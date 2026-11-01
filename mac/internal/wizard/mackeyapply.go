@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/setup"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Apply makes what the plan lists, in order.

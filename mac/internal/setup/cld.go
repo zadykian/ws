@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // cldReleases is the page of cld's releases, whose latest has the install.sh that installs cld.

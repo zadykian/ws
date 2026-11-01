@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // hookGuard is the script that ssh runs on ws as sh -c GUARD APPLY, where WS_HOOK_SECRET names an

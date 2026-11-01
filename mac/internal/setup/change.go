@@ -7,7 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Write puts After in the user's file with Mode. Before is what the file holds, if it exists.

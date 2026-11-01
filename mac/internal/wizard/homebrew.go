@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Homebrew's release: its Homebrew.pkg, that file's SHA-256, and its signer, as pkgutil names it.

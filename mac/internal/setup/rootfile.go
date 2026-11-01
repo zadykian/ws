@@ -8,7 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // RootWrite puts After in root's file, through a new file renamed over it, which --check shows as

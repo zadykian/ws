@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // toolsStage names the stage of the Command Line Tools.

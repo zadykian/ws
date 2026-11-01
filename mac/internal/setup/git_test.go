@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/setup"
 	"github.com/zadykian/ws/mac/internal/sshcfg"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 const (

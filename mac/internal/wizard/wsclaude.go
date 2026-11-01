@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // claudeStage names the stage in its messages.

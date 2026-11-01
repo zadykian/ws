@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // removeRoot plans the removal of root's file, if it is there.

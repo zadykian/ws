@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // fileKey checks the key in a file: it plans to make it where neither it nor its .pub is there,

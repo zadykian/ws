@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Run runs the stages in order under the run's lock, with the Mac kept from idle sleep until it

@@ -12,7 +12,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/server"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  apply [-- ARG...]  set the server up from the playbook that this ws embeds; ARG... go to ansible-playbook\n"

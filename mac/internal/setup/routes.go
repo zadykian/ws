@@ -9,8 +9,8 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/check"
-	"github.com/zadykian/ws/mac/internal/step"
 	"github.com/zadykian/ws/mac/internal/tunnel"
+	"github.com/zadykian/ws/step"
 )
 
 const routesAbsent = "once routes.d is made"

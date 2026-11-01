@@ -14,8 +14,8 @@ import (
 	"github.com/zadykian/ws"
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac"
-	"github.com/zadykian/ws/mac/internal/step"
 	"github.com/zadykian/ws/mac/internal/wizard"
+	"github.com/zadykian/ws/step"
 )
 
 const wizardUsage = "usage: ws mac wizard [--check] [--update]"

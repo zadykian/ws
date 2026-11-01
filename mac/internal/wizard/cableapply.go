@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // file is mac.conf.

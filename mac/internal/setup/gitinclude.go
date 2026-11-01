@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/mac/internal/gitcfg"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // includeText is what goes at the top of ~/.gitconfig, so that the file's own settings come after

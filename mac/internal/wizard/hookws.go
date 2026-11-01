@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // hookWsStage names the stage in its messages.

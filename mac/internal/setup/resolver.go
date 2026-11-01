@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/check"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // resolverCmdHeader is the first line of the files that ws mac resolver writes. Those of the networks

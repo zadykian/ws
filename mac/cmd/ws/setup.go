@@ -15,7 +15,7 @@ import (
 	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/setup"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 const setupUsage = "usage: ws mac apply [--check] [STEP]\n\nWith no STEP, it runs every step in this order, and ssh again, whose plan is empty unless the\ndaemon or cld changed ssh ws's ways.\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n  ghostty  install Ghostty and its font, and write ws.ghostty\n  cld  install cld, and update it\n  tunnel  set up the tunnel: ws, the key, tunnel.conf and the daemon\n  networks  route WS_TUNNEL_NETWORKS and write the resolvers of WS_RESOLVERS\n"

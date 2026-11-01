@@ -9,7 +9,7 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // publicKey asks root's copy of ws for the Mac's public key. It is "" where there is no copy yet,

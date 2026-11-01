@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/check"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it: the

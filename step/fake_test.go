@@ -3,7 +3,7 @@ package step_test
 import (
 	"context"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 type change string

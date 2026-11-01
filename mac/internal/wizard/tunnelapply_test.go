@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 func TestTunnelApply(t *testing.T) {

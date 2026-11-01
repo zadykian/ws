@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Apply runs the remote script's install, which prints install.sh's lines as they come.

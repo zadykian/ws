@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/mac/internal/gitcfg"
 	"github.com/zadykian/ws/mac/internal/sshcfg"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Pending is a change that waits on another, such as the key: the line says on what.

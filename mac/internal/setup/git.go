@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/conf"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // MakeKey makes git's signing key, with no passphrase, so that git signs unattended, in a rebase too.

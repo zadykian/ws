@@ -6,7 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // setupStage names the stage in its messages.

@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/conf"
 	"github.com/zadykian/ws/mac/internal/sshcfg"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // SSH writes ~/.ssh/config.d/ws and puts its Include first in ~/.ssh/config. It stops where

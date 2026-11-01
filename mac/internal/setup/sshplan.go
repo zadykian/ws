@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io/fs"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // The modes of ssh's files.

@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/conf"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of the

@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // The app that Homebrew's cask jetbrains-gateway puts in /Applications.

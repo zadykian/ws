@@ -7,7 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // RootDir makes a root's directory.

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 const queryLine = "dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n ansible-core ca-certificates python3-apt"

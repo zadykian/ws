@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 const cableLink = "eth0 - -\neth1 1 -\n"

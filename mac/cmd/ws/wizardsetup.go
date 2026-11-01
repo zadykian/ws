@@ -8,8 +8,8 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/conf"
-	"github.com/zadykian/ws/mac/internal/step"
 	"github.com/zadykian/ws/mac/internal/wizard"
+	"github.com/zadykian/ws/step"
 )
 
 // wizardSetup returns the stage that runs the steps of ws mac apply in the wizard's process. Until

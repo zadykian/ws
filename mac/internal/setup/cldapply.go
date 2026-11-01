@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Apply installs or updates cld. A failure is a warning, and the next run tries again.

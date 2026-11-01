@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // versionName is what a version may hold, as it becomes a directory name under Lib.

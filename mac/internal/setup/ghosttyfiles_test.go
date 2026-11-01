@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 func fileChanges(m *effecttest.Machine, out *effecttest.Out, text string, has bool) []step.Change {

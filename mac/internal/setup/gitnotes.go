@@ -3,7 +3,7 @@ package setup
 import (
 	"fmt"
 
-	"github.com/zadykian/ws/mac/internal/step"
+	"github.com/zadykian/ws/step"
 )
 
 // Notice is a warning that a plan carries after its changes, so that it prints after them: --check
