@@ -112,7 +112,7 @@ func (m *Machine) Stat(path string) (effect.Info, error) {
 	return effect.Info{}, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
 }
 
-// ReadDir returns the names of the files directly under the directory.
+// ReadDir returns the names of the files and directories directly under the directory.
 func (m *Machine) ReadDir(path string) ([]string, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -121,7 +121,14 @@ func (m *Machine) ReadDir(path string) ([]string, error) {
 		return nil, &fs.PathError{Op: "open", Path: path, Err: fs.ErrNotExist}
 	}
 	var names []string
+	var paths []string
 	for f := range m.Files {
+		paths = append(paths, f)
+	}
+	for d := range m.Dirs {
+		paths = append(paths, d)
+	}
+	for _, f := range paths {
 		if dir, name := f[:strings.LastIndex(f, "/")], f[strings.LastIndex(f, "/")+1:]; dir == path {
 			names = append(names, name)
 		}
