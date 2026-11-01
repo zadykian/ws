@@ -28,7 +28,7 @@ type GitClone struct {
 	Dest string `yaml:"dest,omitempty"`
 }
 
-// Signoz is roles/signoz's keys.
+// Signoz is the signoz role's keys.
 type Signoz struct {
 	Dir           string   `yaml:"signoz_dir"`
 	URL           string   `yaml:"signoz_url"`

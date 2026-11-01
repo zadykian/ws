@@ -22,8 +22,6 @@ ikeward_version: "0.3.0"
 ikeward_sha256:
   amd64: b78ba9456f246ddaa5f08f34706cf96b975ad3717a69f142cbcbd893294b2d23
   arm64: 711b9a1c72b59ce7bc453d94c790855588b529803b8789abc72ed3b405e83e3b
-# SigNoz's images are pinned in roles/signoz/files/casting.yaml, as its compose files are forged
-# from it.
 # gopls, which go install builds for helix.
 helix_gopls_version: "0.23.0"
 # roslyn-language-server, C#'s language server for helix, from nuget.org, where every version is a

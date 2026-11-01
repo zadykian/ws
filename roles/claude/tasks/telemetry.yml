@@ -17,7 +17,7 @@
       - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
       - OTEL_EXPORTER_OTLP_LOGS_PROTOCOL
       # The Claude dashboard counts deltas, claude's default, and would show less of cumulative
-      # sums (roles/signoz/files/dashboards/README.md).
+      # sums (internal/server/signoz/dashboards/README.md).
       - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
     # An empty file holds no settings yet.
     claude_settings: >-

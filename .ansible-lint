@@ -10,5 +10,4 @@ exclude_paths:
   - .cache/
   - .claude/
   - .git/
-  - roles/signoz/files/deployment/
   - internal/server/signoz/deployment/

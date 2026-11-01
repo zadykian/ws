@@ -7,7 +7,7 @@
 # It caps Markdown, YAML, shell scripts, found by extension or shebang, Python, Go and Jinja
 # templates. Data files, such as TOML, JSON, conf files and licenses, are of no kind it caps.
 # Generated and vendored files are exempt, as they are not written here: foundryctl's compose
-# files in roles/signoz/files/deployment/ and its casting.yaml.lock, which yamllint and
+# files in internal/server/signoz/deployment/ and its casting.yaml.lock, which yamllint and
 # ansible-lint leave out too, and the Vale styles in .vale/styles/, errata-ai's word lists. Each
 # finding goes to stdout as PATH: message, and any fails the check. Run it from the root.
 
@@ -19,7 +19,6 @@ max=300
 # exempt says whether the file $1 is generated or vendored.
 exempt() {
     case $1 in
-    roles/signoz/files/deployment/* | roles/signoz/files/casting.yaml.lock) return 0 ;;
     internal/server/signoz/deployment/* | internal/server/signoz/casting.yaml.lock) return 0 ;;
     .vale/styles/*) return 0 ;;
     esac
