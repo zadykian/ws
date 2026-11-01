@@ -26,6 +26,22 @@ type swap struct {
 	active bool // plans the swapon and the swapoff of the installer's file, not the file's own
 }
 
+// swapParts keeps /swapfile, base_swap_size_mb MiB, in /etc/fstab and swapped to; none where the
+// size is 0. It takes the place of /swap.img, which Ubuntu Server's installer makes.
+func swapParts(m effect.Machine, out effect.Out, d disk, want swapSetting) []host.Resource {
+	s := swap{M: m, Out: out, Disk: d, Want: want}
+	on := s
+	on.active = true
+	none := want.SizeMiB != nil && *want.SizeMiB == 0
+	return []host.Resource{
+		s,
+		host.Line{M: m, Path: "/etc/fstab", Text: fstabLine, Match: `^/swapfile\s`, Absent: none, Mode: 0o644},
+		on,
+		host.Line{M: m, Path: "/etc/fstab", Text: installerImg + " none swap sw 0 0", Match: `^/swap\.img\s`, Absent: true},
+		host.Absent{M: m, Path: installerImg},
+	}
+}
+
 // state reads what the plan needs.
 func (s swap) state() (swapState, error) {
 	if sw := s.Want.Swappiness; sw < 0 || sw > 200 {
