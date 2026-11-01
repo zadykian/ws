@@ -4,7 +4,10 @@ go 1.27.3
 
 tool golang.org/x/vuln/cmd/govulncheck
 
-require golang.zx2c4.com/wireguard v0.0.0-20261024220952-b3bc704ef0ee
+require (
+	github.com/google/renameio/v2 v2.0.2
+	golang.zx2c4.com/wireguard v0.0.0-20261024220952-b3bc704ef0ee
+)
 
 require (
 	golang.org/x/crypto v0.58.0 // indirect

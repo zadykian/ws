@@ -65,6 +65,9 @@ type Machine interface {
 	// RootAttrs returns the owner and mode of a file, read through sudo, and fs.ErrNotExist where
 	// it is missing.
 	RootAttrs(path string) (Attrs, error)
+	// WriteAtomic replaces a file through a pending file, so that a reader sees the old file or the
+	// new one whole, and sets the owner and mode of a. Another owner than ws's own needs root.
+	WriteAtomic(path string, data []byte, a Attrs) error
 	// Mkdir makes the directory with exactly perm, whatever the umask.
 	Mkdir(path string, perm fs.FileMode) error
 	// Chmod sets the mode of the file a link points to.

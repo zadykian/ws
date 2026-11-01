@@ -170,3 +170,14 @@ func (m *Machine) Chmod(path string, perm fs.FileMode) error {
 	}
 	return nil
 }
+
+// WriteAtomic stores the file with its owner and mode, as root's attributes.
+func (m *Machine) WriteAtomic(path string, data []byte, a effect.Attrs) error {
+	if err := m.write("atomic", path, data, a.Mode); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Root[path] = effect.Attrs{UID: a.UID, GID: a.GID, Mode: a.Mode.Perm()}
+	return nil
+}
