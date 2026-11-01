@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -84,5 +86,20 @@ func TestLoadSecrets(t *testing.T) {
 	}
 	if _, _, err = loadSecrets(m, "/s.age", strings.NewReader(""), io.Discard); err == nil {
 		t.Error("no identity: no error")
+	}
+}
+
+func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ws-fans.json")
+	if err := os.WriteFile(path, []byte(`{"interval": 0}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	if got := serverCommand(context.Background(), []string{"fans", path}, 0, fstest.MapFS{}, "devel", effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 1 ||
+		!strings.Contains(stderr.String(), "interval") {
+		t.Errorf("status = %d, stderr = %q", got, stderr.String())
+	}
+	if got := serverCommand(context.Background(), []string{"fans", "a", "b"}, 0, fstest.MapFS{}, "devel", effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 2 {
+		t.Errorf("two configs: status = %d, want 2", got)
 	}
 }
