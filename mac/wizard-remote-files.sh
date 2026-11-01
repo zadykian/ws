@@ -4,14 +4,17 @@
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
-# - bundle OWNER/REPO prints the path for a git bundle of that repository's origin/main, in state as
-#   hook-REPO.bundle, where /root/repository/REPO is missing, and removes an old one. The wizard
-#   sends the bundle there by a call of its own, as this script takes stdin.
-# - clone OWNER/REPO clones that repository into /root/repository/REPO, where nothing is there, from
-#   that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, and stops where
-#   the Mac sent none. It removes the bundle. It never pulls a clone, as the repository's apply.sh
-#   updates its own. It stops where the path holds no clone, another repository's, or a clone with
-#   no apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
+# - bundle OWNER/REPO[@TAG] prints the path for a git bundle of that repository's origin/main, or
+#   given a tag, vX.Y.Z, of that tag, in state as hook-REPO.bundle, where /root/repository/REPO is
+#   missing, or the tag is not its HEAD, and removes an old one. The wizard sends the bundle there
+#   by a call of its own, as this script takes stdin.
+# - clone OWNER/REPO[@TAG] clones that repository into /root/repository/REPO, where nothing is
+#   there, from that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, and
+#   stops where the Mac sent none. Given a tag, the clone is detached at it, and so is an existing
+#   one, from a bundle, where it changed nothing tracked and the tag is not another commit there.
+#   Without a tag, it never pulls a clone, as the repository's apply.sh updates its own. It removes
+#   the bundle. It stops where the path holds no clone, another repository's, or a clone with no
+#   apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
 #   or is cut short leaves none.
 # - stamp OWNER/REPO[@TAG] stamps REPO's apply.sh, which exited 0, with the clone's commit and the
 #   value. The remote script's status lists the repositories that have a stamp, as the value.
@@ -62,11 +65,11 @@ repo() {
     */*)
         repo=${slug#*/}
         pack=$state/hook-$repo.bundle
+        [ -z "$tag" ] || printf '%s\n' "$tag" | grep -Eqx 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' ||
+            die "'$tag' is not a release, as vX.Y.Z"
         return 0
         ;;
     esac
-        [ -z "$tag" ] || printf '%s\n' "$tag" | grep -Eqx 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' ||
-            die "'$tag' is not a release, as vX.Y.Z"
     die "'$slug' is not a repository on GitHub, as OWNER/REPO, with a REPO other than ws"
 }
 
@@ -94,36 +97,57 @@ unbundle() {
     rm -rf "$part"
     mkdir -p "$repos"
     if git init -q -b main "$part" &&
-        git -C "$part" remote add origin "https://github.com/$1.git" &&
-        git -C "$part" fetch -q "$pack" +refs/remotes/origin/main:refs/remotes/origin/main &&
-        git -C "$part" checkout -q -B main --track origin/main && mv "$part" "$repos/$repo"; then
+        git -C "$part" remote add origin "https://github.com/$slug.git" &&
+        if [ -n "$tag" ]; then
+            git -C "$part" fetch -q "$pack" "refs/tags/$tag:refs/tags/$tag" &&
+                git -C "$part" checkout -q --detach "$tag"
+        else
+            git -C "$part" fetch -q "$pack" +refs/remotes/origin/main:refs/remotes/origin/main &&
+                git -C "$part" checkout -q -B main --track origin/main
+        fi && mv "$part" "$repos/$repo"; then
         return 0
     fi
     rm -rf "$part" "$pack"
-    die "git cannot make the clone of $1 from its bundle, as above: run the wizard again"
+    die "git cannot make the clone of $slug from its bundle, as above: run the wizard again"
 }
 
-# clone OWNER/REPO clones the repository in repos, as the header says. A clone there must be
+# retag detaches REPO's clone at the tag, from the bundle, where the clone changed nothing tracked.
+# The fetch never moves a tag the clone has, so that a tag moved on GitHub stops it.
+retag() {
+    if [ -n "$(git -C "$repos/$repo" status --porcelain --untracked-files=no)" ]; then
+        rm -f "$pack"
+        die "$repos/$repo has changes, so $tag can't be checked out: commit or reset them"
+    fi
+    git -C "$repos/$repo" fetch "$pack" "refs/tags/$tag:refs/tags/$tag" &&
+        git -C "$repos/$repo" checkout -q --detach "$tag" && return 0
+    rm -f "$pack"
+    die "git cannot check out $tag of $slug in $repos/$repo, as above, where a tag moved on GitHub stops it"
+}
+
+# clone OWNER/REPO[@TAG] clones the repository in repos, as the header says. A clone there must be
 # OWNER/REPO's: its origin, by https or ssh as gh sets it, names it on GitHub, letter case aside.
 clone() {
     repo "$1"
     rm -f "$state/hook-$repo"
+    fresh=
     if [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ]; then
-        unbundle "$1"
-        say "cloned $1 into $repos/$repo"
+        unbundle
+        say "cloned $slug into $repos/$repo"
+        fresh=1
     fi
-    rm -f "$pack"
     [ -e "$repos/$repo/.git" ] || die "$repos/$repo holds no clone: move it aside"
     origin=$(git -C "$repos/$repo" remote get-url origin 2>/dev/null) || origin=
     case $(printf '%s\n' "${origin%.git}" | tr '[:upper:]' '[:lower:]') in
-    *[/@]github.com[/:]"$(printf '%s\n' "${1%.git}" | tr '[:upper:]' '[:lower:]')") ;;
-    *) die "$repos/$repo is not $1's clone, its origin '$origin': move it aside" ;;
+    *[/@]github.com[/:]"$(printf '%s\n' "${slug%.git}" | tr '[:upper:]' '[:lower:]')") ;;
+    *) die "$repos/$repo is not $slug's clone, its origin '$origin': move it aside" ;;
     esac
+    [ -z "$fresh" ] && [ -n "$tag" ] && [ -f "$pack" ] && retag
+    rm -f "$pack"
     [ -x "$repos/$repo/apply.sh" ] || die "$repos/$repo has no apply.sh that runs"
 }
 
-# stamp OWNER/REPO writes REPO's stamp, hook-REPO in state, by a rename: the clone's commit, which
-# apply.sh may have moved, 0, its status, and OWNER/REPO, which the remote script's status lists.
+# stamp OWNER/REPO[@TAG] writes REPO's stamp, hook-REPO in state, by a rename: the clone's commit,
+# which apply.sh may have moved, 0, its status, and the whole value, which the remote script's status lists.
 stamp() {
     repo "$1"
     mkdir -p "$state"
