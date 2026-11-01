@@ -35,6 +35,21 @@ func TestPasswordIsGeneratedOnceAndMarksAnUp(t *testing.T) {
 	}
 }
 
+func TestPasswordKeepsTheFileButFixesItsMode(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/opt/signoz/root.env"] = []byte("SIGNOZ_USER_ROOT_PASSWORD=mine\n")
+	m.Modes["/opt/signoz/root.env"] = 0o644
+	if _, err := step.Run(t.Context(), []step.Step{noWait(Password(m, "/opt/signoz"))}, &effecttest.Out{}, false); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/opt/signoz/root.env"]); got != "SIGNOZ_USER_ROOT_PASSWORD=mine\n" {
+		t.Errorf("root.env = %q, want it kept", got)
+	}
+	if got := m.Modes["/opt/signoz/root.env"]; got != 0o600 {
+		t.Errorf("root.env has mode %o, want 600", got)
+	}
+}
+
 // noWait drops the wait on a step the test does not run.
 func noWait(g host.Group) host.Group {
 	g.After = ""
