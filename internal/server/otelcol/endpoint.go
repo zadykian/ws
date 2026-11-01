@@ -4,7 +4,9 @@
 package otelcol
 
 import (
+	"errors"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -27,4 +29,31 @@ func Endpoint(env []byte) string {
 		value = value[1 : n-1]
 	}
 	return value
+}
+
+var (
+	urlForm = regexp.MustCompile(`^https?://([A-Za-z0-9._-]+|\[[0-9A-Fa-f:.]+\]):([1-9][0-9]{0,4})$`)
+	// receiver is the URL of the collector's own gRPC receiver, on 127.0.0.1, an unspecified
+	// address, either one as IPv6, and localhost or a name under it.
+	receiver = regexp.MustCompile(`(?i)^https?://(127\.0\.0\.1|0\.0\.0\.0|\[[0:]*\]|` +
+		`\[[0:]*:ffff:(127\.0\.0\.1|0\.0\.0\.0)\]|([^/]*\.)?localhost\.?):4317$`)
+)
+
+// errEndpoint leaves the value out, as it is a secret.
+var errEndpoint = errors.New("OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT in ~/.secrets/env is neither " +
+	"http://HOST:PORT nor https://HOST:PORT, with PORT from 1 to 65535, or it leads to the " +
+	"collector's own receiver")
+
+// CheckEndpoint refuses a URL that is no http or https URL with a host and a port, or that leads
+// to the collector's own gRPC receiver, which would send claude's metrics back to both pipelines
+// without end. The collector checks the URL only as it starts. The error leaves the value out.
+func CheckEndpoint(url string) error {
+	m := urlForm.FindStringSubmatch(url)
+	if m == nil {
+		return errEndpoint
+	}
+	if port, _ := strconv.Atoi(m[2]); port > 65535 || receiver.MatchString(url) {
+		return errEndpoint
+	}
+	return nil
 }
