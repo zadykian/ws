@@ -79,7 +79,7 @@ grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/bootstrap.wait"
 out=$(env -u WS_TARGET "$wsbin" mac wizard --check --update </dev/null 2>&1)
-printf '%s\n' "$out" | grep -q "^ws mac wizard: ws's run: would run bootstrap.sh on ws, which installs the latest ws, " ||
+printf '%s\n' "$out" | grep -q "^ws mac wizard: ws's run: would run ws server apply on ws in a unit of its own, " ||
     error "ws mac wizard --check --update named no run of the playbook: $out"
 
 WS_CONF=$RUNNER_TEMP/cloud.conf

@@ -11,7 +11,7 @@ import (
 // runStage names the stage in its messages.
 const runStage = "ws's run"
 
-// WsRun is the stage of ws's playbook, bootstrap.sh, in a unit of its own on ws. The remote script
+// WsRun is the stage of ws's playbook, ws server apply, in a unit of its own on ws. The remote script
 // starts it and follows it. A run goes on where ssh drops, and the next run of the wizard follows it.
 type WsRun struct {
 	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
@@ -19,7 +19,7 @@ type WsRun struct {
 	Remote *Remote
 	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
 	Version string
-	// Update has the stage run the playbook once more, which installs the latest ws first.
+	// Update has the stage run the playbook once more, with the ws installed there.
 	Update bool
 	// ran is set once the stage ran the playbook in this run.
 	ran bool
@@ -84,7 +84,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.runDone(ctx, c.Target) {
 		return step.Plan{}, nil
 	}
-	how := "run bootstrap.sh on ws, which installs the latest ws, in a unit of its own, and follow its log"
+	how := "run ws server apply on ws in a unit of its own, and follow its log"
 	var args []string
 	if c.Target == "cloud" {
 		args = append(args, "-e", "security_outbound=false")

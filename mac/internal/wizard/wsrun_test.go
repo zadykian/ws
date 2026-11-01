@@ -29,9 +29,9 @@ func TestWsRunPlan(t *testing.T) {
 		update, check        bool
 	}{
 		"done":       {"lan", "run v1.2.3 0 on\nactive -\n", "", false, false},
-		"older ws":   {"lan", "run v1.2.2 0 on\nactive -\n", "run bootstrap.sh on ws", false, false},
-		"first run":  {"lan", "run - -\nactive -\n", "run bootstrap.sh on ws", false, false},
-		"update":     {"lan", "run v1.2.3 0 on\nactive -\n", "installs the latest ws", true, false},
+		"older ws":   {"lan", "run v1.2.2 0 on\nactive -\n", "run ws server apply on ws", false, false},
+		"first run":  {"lan", "run - -\nactive -\n", "run ws server apply on ws", false, false},
+		"update":     {"lan", "run v1.2.3 0 on\nactive -\n", "run ws server apply on ws", true, false},
 		"cloud done": {"cloud", "run v1.2.3 0 off\nactive -\noutbound off\n", "", false, false},
 		"cloud host_vars": {"cloud", "run v1.2.3 0 off\nactive -\noutbound on\n",
 			"name security_outbound: false in ws's host_vars", false, false},

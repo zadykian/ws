@@ -13,8 +13,8 @@ import (
 func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, c.Out} }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the terminal,
-// the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws, and bootstrap.sh --tags
-// network,wireguard runs there, as both roles read it: the network role must give it 10.77.0.1. Then
+// the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws, and ws server apply -- --tags network,wireguard
+// runs there, as both roles read it: the network role must give it 10.77.0.1. Then
 // service takes the Mac's service. none, as either answer, writes an empty WS_CABLE_SERVICE. Where
 // mac.conf has a service, again takes the stage's steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
@@ -49,7 +49,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 		if port == "" {
 			return c.write(ctx, "")
 		}
-		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws, and bootstrap.sh --tags network,wireguard "+
+		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws, and ws server apply -- --tags network,wireguard "+
 			"runs there in a unit of its own", cableStage, port)
 		if err := c.name(ctx, port); err != nil {
 			return err
@@ -58,7 +58,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 			return err
 		}
 		if c.end() != port {
-			return fmt.Errorf("%s: ws's %s lacks %s after bootstrap.sh --tags network,wireguard: plug the "+
+			return fmt.Errorf("%s: ws's %s lacks %s after ws server apply -- --tags network,wireguard: plug the "+
 				"Mac's cable into it, or mend what that printed, then run the wizard again", cableStage, port, cableEnd)
 		}
 	}
@@ -90,7 +90,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 	if c.Run.Remote.Get("cable") == port {
 		return nil
 	}
-	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws again, and bootstrap.sh --tags network,wireguard "+
+	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws again, and ws server apply -- --tags network,wireguard "+
 		"runs there in a unit of its own", cableStage, port)
 	return c.name(ctx, port)
 }
