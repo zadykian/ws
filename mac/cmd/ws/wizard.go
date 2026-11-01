@@ -28,6 +28,8 @@ type wizardEnv struct {
 	m    effect.Machine
 	// version is this ws's version, as ws version prints it.
 	version string
+	// argv is ws's arguments, without the program, which --update runs the new ws with.
+	argv []string
 	// releases is the address of ws's releases, WS_RELEASES_URL or GitHub's.
 	releases string
 	getenv   func(string) string
@@ -150,6 +152,14 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 	defer stop()
 	term := effect.NewTerminal(e.stdin, e.stderr)
 	out := progOut{term, prog, map[string]bool{}}
+	if o.update {
+		// Its own step.Run, before the lock: the new ws takes the place of this process, which would leave the lock held.
+		u := &wizard.MacUpdate{M: e.m, Out: out, Version: e.version, URL: e.releases, Home: e.getenv("HOME"), Args: e.argv}
+		if _, err := step.Run(ctx, []step.Step{u}, out, o.check); err != nil {
+			_, _ = fmt.Fprintf(e.stderr, "%s: %v\n", prog, errors.Unwrap(err))
+			return 1
+		}
+	}
 	hand := &wizard.Hand{}
 	closing := func(ctx context.Context) {
 		if e.stdout != nil {

@@ -106,3 +106,39 @@ func TestWizardCheckOnANewMacStopsAtHomebrew(t *testing.T) {
 		}
 	}
 }
+
+func TestWizardUpdateRunsTheNewWs(t *testing.T) {
+	var stderr bytes.Buffer
+	e := testWizardEnv("darwin", 501, &stderr)
+	m := e.m.(*effecttest.Machine)
+	e.version, e.releases, e.argv = "v1.0.0", "http://127.0.0.1:22080", []string{"mac", "wizard", "--update"}
+	env := map[string]string{"HOME": "/h"}
+	e.getenv = func(k string) string { return env[k] }
+	m.Results["curl -fsS -o /dev/null -w %{redirect_url} http://127.0.0.1:22080/latest"] =
+		effecttest.Result{Out: []byte("http://127.0.0.1:22080/tag/v1.1.0")}
+	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/x\n")}
+	for _, c := range []string{
+		"curl -fsSL --retry 3 --proto-redir =https -o /x/install.sh http://127.0.0.1:22080/download/v1.1.0/install.sh",
+		"env WS_VERSION=v1.1.0 WS_RELEASES_URL=http://127.0.0.1:22080 sh /x/install.sh", "rm -rf /x"} {
+		m.Results[c] = effecttest.Result{}
+	}
+	// The fake Exec returns, so the step finds its change again: the command fails, after the exec.
+	got := wizardCommand(context.Background(), []string{"--update"}, e)
+	calls := strings.Join(m.Calls, "\n")
+	if got != 1 || !strings.Contains(calls, "exec /h/.local/bin/ws mac wizard --update") || strings.Contains(calls, "mkdir /t/ws-wizard.lock") {
+		t.Errorf("status = %d, calls = %q; want the exec of the new ws, before the lock", got, calls)
+	}
+}
+
+func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
+	var stderr bytes.Buffer
+	e := testWizardEnv("darwin", 501, &stderr)
+	m := e.m.(*effecttest.Machine)
+	e.version, e.releases = "v1.0.0", "http://127.0.0.1:22080"
+	m.Results["curl -fsS -o /dev/null -w %{redirect_url} http://127.0.0.1:22080/latest"] =
+		effecttest.Result{Out: []byte("http://127.0.0.1:22080/tag/v1.1.0")}
+	wizardCommand(context.Background(), []string{"--check", "--update"}, e)
+	if !strings.Contains(stderr.String(), "ws on the Mac: would install ws v1.1.0 on the Mac") || strings.Contains(strings.Join(m.Calls, "\n"), "exec") {
+		t.Errorf("stderr = %q, calls = %v; want the plan and no exec", stderr.String(), m.Calls)
+	}
+}
