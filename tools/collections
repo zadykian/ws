@@ -48,12 +48,57 @@ field() {
     sed -n 's/.*"'"$1"'":"\([^"]*\)".*/\1/p'
 }
 
+# fetch makes sure collections/ holds the tarball of the pin $1, NS/NAME/VERSION.
+fetch() {
+    ns=${1%%/*}
+    rest=${1#*/}
+    name=${rest%%/*}
+    version=${rest#*/}
+    want=$ns-$name-$version.tar.gz
+    reply=$(curl -fsSL --retry 3 --proto =https --proto-redir =https \
+        "$base/index/$ns/$name/versions/$version/") || die "cannot read Galaxy's entry for $want"
+    artifact=$(printf '%s' "$reply" | sed -n 's/.*"artifact":{\([^}]*\)}.*/\1/p')
+    file=$(printf '%s' "$artifact" | field filename)
+    hash=$(printf '%s' "$artifact" | field sha256)
+    [ "$file" = "$want" ] || die "Galaxy lists the file '$file' for $want"
+    case $hash in
+    *[!0-9a-f]* | '') die "Galaxy's sum for $want is not a SHA-256" ;;
+    esac
+    [ "${#hash}" -eq 64 ] || die "Galaxy's sum for $want is not a SHA-256"
+    keep="$keep $want"
+    if [ -f "collections/$want" ] && [ "$(sum "collections/$want")" = "$hash" ]; then
+        return 0
+    fi
+    url=$(printf '%s' "$reply" | field download_url)
+    case $url in
+    https://galaxy.ansible.com/*) ;;
+    *) die "Galaxy's download URL for $want is not on galaxy.ansible.com" ;;
+    esac
+    curl -fsSL --retry 3 --proto =https --proto-redir =https -o "$tmp/$want" "$url" ||
+        die "cannot download $want"
+    [ "$(sum "$tmp/$want")" = "$hash" ] || die "$want does not match the SHA-256 Galaxy lists"
+    mv -f "$tmp/$want" "collections/$want"
+}
+
 main() {
     cd "$(dirname "$0")/.."
     [ -f requirements.yml ] || die "requirements.yml is missing"
+    mkdir -p collections
     list=$(pins) || die "requirements.yml holds a collection with no version"
     [ -n "$list" ] || die "requirements.yml pins no collection"
-    printf '%s\n' "$list"
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    keep=
+    for pin in $list; do
+        fetch "$pin"
+    done
+    for path in collections/*.tar.gz; do
+        [ -e "$path" ] || continue
+        case "$keep " in
+        *" ${path#collections/} "*) ;;
+        *) rm -f "$path" ;;
+        esac
+    done
 }
 
 main "$@"
