@@ -28,6 +28,8 @@ type Site struct {
 	Avail func(path string) (uint64, error)
 	// Unpack extracts an archive into a directory, dropping the first strip components of names.
 	Unpack func(archive, dir string, strip int) error
+	// Lock runs fn under the exclusive lock of a directory, as withLock does.
+	Lock func(dir string, fn func() error) error
 	// Wait is the pause between the five tries of a request or a download.
 	Wait time.Duration
 }
