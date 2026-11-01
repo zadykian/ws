@@ -64,3 +64,24 @@ func TestStepsWaitOnTheirPackagesInOrder(t *testing.T) {
 		t.Errorf("root has %d steps, want %d: root needs no group", len(ss), len(wantNames)-1)
 	}
 }
+func TestStepsApplyOnceAndThenPlanNothing(t *testing.T) {
+	m, ss := fakeSteps(t, "ws")
+	out := &effecttest.Out{}
+	if changed, err := step.Run(t.Context(), ss, out, false); err != nil || !changed {
+		t.Fatalf("first run = %v, %v; want changes", changed, err)
+	}
+	if changed, err := step.Run(t.Context(), ss, out, false); err != nil || changed {
+		t.Errorf("second run = %v, %v; want nothing to change", changed, err)
+	}
+	for path, want := range map[string]string{
+		"/etc/docker/daemon.json":                            `"cgroup-parent": "docker.slice"`,
+		"/etc/systemd/resolved.conf.d/docker.conf":           "DNSStubListenerExtra=172.17.0.1",
+		"/etc/systemd/system/docker.slice":                   "MemoryMax=8000M",
+		"/etc/systemd/system/docker.service.d/override.conf": "docker.slice",
+		"/etc/apt/sources.list.d/docker.sources":             "Suites: resolute",
+	} {
+		if !strings.Contains(string(m.Files[path]), want) {
+			t.Errorf("%s = %q, want it to hold %q", path, m.Files[path], want)
+		}
+	}
+}
