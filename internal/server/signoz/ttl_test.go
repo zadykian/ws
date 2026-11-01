@@ -61,3 +61,19 @@ func TestSetSignalsSetsThenWaitsForTheTables(t *testing.T) {
 		t.Errorf("status = %v, want both done", f.status)
 	}
 }
+
+func TestSignalsDueWhereTheHoursDifferOrTheLastChangeFailed(t *testing.T) {
+	for _, tc := range []struct {
+		t    ttl
+		want bool
+	}{
+		{ttl{hours: 2160, status: "success"}, false},
+		{ttl{hours: 360, status: "success"}, true},
+		{ttl{hours: 2160, status: "failed"}, true},
+		{ttl{hours: 2160, status: "in_progress"}, false},
+	} {
+		if got := tc.t.due(2160); got != tc.want {
+			t.Errorf("%v due = %v, want %v", tc.t, got, tc.want)
+		}
+	}
+}

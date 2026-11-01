@@ -39,3 +39,18 @@ func TestSetLogsSendsNoRulesAsAList(t *testing.T) {
 		t.Errorf("sent %s, want %s", body, want)
 	}
 }
+
+func TestLogsDueWhereTheDaysDifferOrTheChangeIsNotDone(t *testing.T) {
+	for _, tc := range []struct {
+		l    logsTTL
+		want bool
+	}{
+		{logsTTL{Days: 90, Status: "success"}, false},
+		{logsTTL{Days: 15, Status: "success"}, true},
+		{logsTTL{Days: 90, Status: "failed"}, true},
+	} {
+		if got := tc.l.due(90); got != tc.want {
+			t.Errorf("%v due = %v, want %v", tc.l, got, tc.want)
+		}
+	}
+}

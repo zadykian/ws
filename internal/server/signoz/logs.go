@@ -48,3 +48,6 @@ func (c setLogs) Apply(ctx context.Context) error {
 	}
 	return c.r.API.call(ctx, http.MethodPost, "/api/v2/settings/ttl", body, http.StatusOK, nil)
 }
+
+// due says whether the retention differs from the wanted days, or the last change is not done.
+func (l logsTTL) due(days int) bool { return l.Days != days || l.Status != "success" }

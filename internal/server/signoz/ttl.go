@@ -73,3 +73,6 @@ func (c setSignals) Apply(ctx context.Context) error {
 	}
 	return nil
 }
+
+// due says whether the retention differs from the wanted hours, or its last change failed.
+func (t ttl) due(hours int) bool { return t.hours != hours || t.status == "failed" }
