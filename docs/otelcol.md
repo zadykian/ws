@@ -1,15 +1,18 @@
 # otelcol
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
-the host. It takes OTLP on loopback, and reads the journal, the host's metrics and its temperatures
-from node_exporter. It sends it all to SigNoz, and claude's metrics to another collector where one
-is set.
+the host. Its code is Go, in `internal/server/otelcol`, as steps of `ws server apply`:
+node_exporter, the `.deb`'s download and install, the configuration, and the check that the
+collector answers. It takes OTLP on loopback, and reads the journal, the host's metrics and its
+temperatures from node_exporter. It sends it all to SigNoz, and claude's metrics to another
+collector where one is set.
 
 ## The collector
 
 The OpenTelemetry Collector runs on the host as the service `otelcol-contrib`, from the `.deb` of
-its release, which `group_vars/all.yml` pins by version and SHA-256. Its config,
-`roles/otelcol/templates/config.yaml.j2`, starts from SigNoz's for a collector on a VM. It:
+its release, which `download.go` pins by version and, for each architecture, SHA-256. The file is
+checked before dpkg reads it, and removed after. Its config,
+`internal/server/otelcol/files/config.yaml.tmpl`, starts from SigNoz's for a collector on a VM. It:
 
 - takes OTLP on `127.0.0.1:4317` (gRPC) and `127.0.0.1:4318` (HTTP), and answers its health check
   on `127.0.0.1:13133`;
@@ -49,7 +52,7 @@ enables it again once the role's config is in place.
 ## claude's metrics elsewhere
 
 `~/.secrets/env` is the file of secrets the shell reads, which the `shell` role writes from
-`shell_secret_env` ([Secrets](shell.md#secrets)). Where it sets
+`shell_secret_env` ([Secrets](shell.md#secrets)). The role reads it as it plans. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The
 role refuses any other. It refuses one that leads back to the collector's own receiver on
@@ -65,3 +68,7 @@ The role reads that one variable from the last line of the file that sets it, wi
 which only root reads and a drop-in adds to the service's environment. The config names the
 variable, never its value, and the run's output leaves the value out. Without the variable, the role
 removes that file and the config has no second pipeline. A new value restarts the collector.
+
+The collector answers its health check a few seconds after it starts, at most 60. The last step
+waits for that: a collector that cannot start, such as one whose OTLP port another process holds,
+fails the run there. Without systemd booted, as in CI's container, the units and the wait skip.
