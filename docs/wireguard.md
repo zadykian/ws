@@ -30,7 +30,7 @@ line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
-/root/repository/ws/bootstrap.sh --tags wireguard
+ws server apply -- --tags wireguard
 ```
 
 The Mac's scripts fix the peer's name, `mac`, and the tunnel's addresses: `10.99.0.1` for the
@@ -39,7 +39,7 @@ server and `10.99.0.2` for the Mac ([The Mac's tunnel](mac.md#the-macs-tunnel)).
 `mac`'s address `10.99.0.2`.
 
 The repository holds no peer's key, as access to a machine is granted on the machine, as SSH's
-`authorized_keys` is. Anyone may run `bootstrap.sh`, and a key in the repository would let its peer
+`authorized_keys` is. Anyone may run `ws server apply`, and a key in the repository would let its peer
 into every machine set up from it. A peer without its file is left out of `wg0`, and the run names
 it. The run stops on a peer's name of other than lowercase letters, digits and dashes. It stops on
 an address outside the subnet, on the server's own or another peer's, and on a file that holds no

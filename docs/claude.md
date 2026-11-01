@@ -69,7 +69,7 @@ off GitHub ends in `.git`, as claude reads one without it as a hosted `marketpla
 is the one the marketplace's own `marketplace.json` gives, as `add` takes none:
 
 ```sh
-/root/repository/ws/bootstrap.sh -e '{"claude_marketplaces": [{"name": "acme-plugins",
+ws server apply -- -e '{"claude_marketplaces": [{"name": "acme-plugins",
     "source": "https://git.example.internal/team/plugins.git"}]}'
 ```
 

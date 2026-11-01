@@ -49,7 +49,7 @@ one it shows the key's creation and skips the allowed signers file.
 
 `shell_secret_env`, empty by default, maps names to values for `~/.secrets/env`. A private
 repository passes it from its Ansible Vault, with `-e @/ABS/PATH/vault.yml` and
-`--vault-password-file /dev/fd/3`. `bootstrap.sh` runs from the clone, with `/dev/null` as stdin,
+`--vault-password-file /dev/fd/3`. `ws server apply` keeps the caller's directory and descriptors,
 hence the absolute path and the password on descriptor 3.
 
 With it set, the role makes `~/.secrets` 0700 and writes `env` 0600, both owned by `ws_user`.

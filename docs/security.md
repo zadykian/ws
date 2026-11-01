@@ -136,11 +136,10 @@ the files, but skips the check, the comparison and the reload. CI checks the fil
 
 `security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
-instance credentials need. On a new machine, `bootstrap.sh` passes it to `ansible-playbook`:
+instance credentials need. On a new machine, `ws server apply` passes it on:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh |
-    sh -s -- -e security_outbound=false
+ws server apply -- -e security_outbound=false
 ```
 
 `-e` holds for that run alone, so the next run without it puts the table back. So once that run
