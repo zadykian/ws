@@ -13,10 +13,17 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// passMachine records the playbook's run.
-type passMachine struct{ *effecttest.Machine }
+// recapMachine writes the playbook's log as ansible-playbook does, with the changes it names.
+type recapMachine struct {
+	*effecttest.Machine
+	log     string
+	changed string
+}
 
-func (m passMachine) Pass(_ context.Context, _ bool, name string, args ...string) error {
+func (m *recapMachine) Pass(_ context.Context, _ bool, name string, args ...string) error {
+	if m.changed != "" {
+		m.Files[m.log] = []byte("2026-11-01 INFO| localhost : ok=3 changed=" + m.changed + " unreachable=0 failed=0\n")
+	}
 	m.Calls = append(m.Calls, "run "+strings.Join(append([]string{name}, args...), " "))
 	return nil
 }
@@ -47,16 +54,18 @@ func TestRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tc := range []struct {
-		name  string
-		check bool
-		want  []string
+		name    string
+		check   bool
+		changed string
+		want    []string
 	}{
-		{"run", false, []string{"a", "b", "c", "d"}},
-		{"check", true, []string{"a", "b", "c", "d"}},
+		{"steps changed", false, "0", []string{"c"}},
+		{"playbook changed", false, "2", []string{"a", "b", "c", "d"}},
+		{"check", true, "0", []string{"c"}},
 	} {
 		done = false
-		m := passMachine{effecttest.NewMachine()}
-		c := Config{Options: Options{Check: tc.check, Args: []string{"--skip-tags", "systemd"}}, M: m, Out: &effecttest.Out{}, Dir: "/d"}
+		m := &recapMachine{Machine: effecttest.NewMachine(), log: "/log", changed: tc.changed}
+		c := Config{Options: Options{Check: tc.check, Args: []string{"--skip-tags", "systemd"}}, M: m, Out: &effecttest.Out{}, Dir: "/d", Log: "/log"}
 		got, err := Run(context.Background(), c, segs)
 		if err != nil {
 			t.Fatalf("%s: %v", tc.name, err)
@@ -74,5 +83,14 @@ func TestRun(t *testing.T) {
 			!strings.HasSuffix(pass[0], "--skip-tags systemd") || strings.Contains(pass[0], "--check --diff") != tc.check {
 			t.Errorf("%s: playbook runs = %q", tc.name, pass)
 		}
+	}
+}
+
+func TestRunWithoutRecap(t *testing.T) {
+	segs, _ := Segments([]roles.Role{{Name: "a"}}, nil)
+	m := &recapMachine{Machine: effecttest.NewMachine(), log: "/log"}
+	c := Config{M: m, Out: &effecttest.Out{}, Dir: "/d", Log: "/log"}
+	if _, err := Run(context.Background(), c, segs); err == nil || !strings.Contains(err.Error(), "no recap") {
+		t.Errorf("err = %v, want no recap", err)
 	}
 }
