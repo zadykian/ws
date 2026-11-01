@@ -36,9 +36,49 @@ func TestHwmonFanSpeedIsPwmInPercent(t *testing.T) {
 	}
 }
 
+func TestHwmonFanSetTakesTheFanOnceAndWritesWhatChanges(t *testing.T) {
+	root := driver(t)
+	fan := Hwmon{OSSysfs{}, root}.Fan("nct6687", "Pump Fan")
+	if err := fan.Set(50); err != nil {
+		t.Fatal(err)
+	}
+	if enable, pwm := file(t, root, "pwm2_enable"), file(t, root, "pwm2"); enable != "1\n" || pwm != "128\n" {
+		t.Fatalf("enable = %q, pwm = %q; want 1 and 128 (50%% is 127.5, rounded to even)", enable, pwm)
+	}
+	if err := os.WriteFile(root+"/hwmon3/pwm2_enable", []byte("2\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := fan.Set(50); err != nil {
+		t.Fatal(err)
+	}
+	if enable := file(t, root, "pwm2_enable"); enable != "2\n" {
+		t.Errorf("a second Set at the same speed wrote enable = %q", enable)
+	}
+}
+
+func TestHwmonFanReleaseHandsTheFanBack(t *testing.T) {
+	root := driver(t)
+	fan := Hwmon{OSSysfs{}, root}.Fan("nct6687", "Pump Fan")
+	if err := fan.Set(100); err != nil {
+		t.Fatal(err)
+	}
+	if err := fan.Release(); err != nil {
+		t.Fatal(err)
+	}
+	if enable := file(t, root, "pwm2_enable"); enable != "2\n" {
+		t.Errorf("enable after Release = %q, want 2", enable)
+	}
+}
+
 func TestHwmonFanIsMissingWhereTheHeaderIs(t *testing.T) {
 	fan := Hwmon{OSSysfs{}, driver(t)}.Fan("nct6687", "Gone Fan")
 	if _, err := fan.Speed(); !IsMissing(err) {
 		t.Errorf("Speed = %v, want a missing error", err)
+	}
+	if err := fan.Set(10); !IsMissing(err) {
+		t.Errorf("Set = %v, want a missing error", err)
+	}
+	if err := fan.Release(); !IsMissing(err) {
+		t.Errorf("Release = %v, want a missing error", err)
 	}
 }
