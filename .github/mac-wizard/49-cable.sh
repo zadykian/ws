@@ -8,7 +8,7 @@
 # --check say what it would do, neither writing ws's host_vars. With WS_TARGET=cloud, a run must
 # skip the stage, and its closing list name the provider's firewall, but neither the dock nor the
 # router's forwards. With WS_TARGET=mac-vm, --check must skip it too. With WS_CABLE_PORT, a run
-# must name enp5s0 there, run bootstrap.sh --tags network,wireguard, read its late 10.77.0.1 in one
+# must name enp5s0 there, run ws server apply -- --tags network,wireguard, read its late 10.77.0.1 in one
 # login of the files script's wait, and stop at the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
@@ -169,7 +169,7 @@ printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | sudo cmp -s - "$va
     cmp -s "$conf" "$RUNNER_TEMP/cable.conf" &&
     printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: no terminal to ask WS_CABLE_SERVICE: set \
 WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
-    [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] && [ -e "$cable/late" ] &&
+    [ "$(tail -n 1 "$ws/server.log")" = '--tags network,wireguard' ] && [ -e "$cable/late" ] &&
     [ "$(grep -c '^root: sh -s -- link$' "$ws/log")" = $((links + 1)) ] &&
     [ "$(grep -c '^root: sh -s -- wait enp5s0$' "$ws/log")" = 1 ] ||
     error "ws mac wizard with WS_CABLE_PORT exited $status, or wrote no host_vars, ran no roles, or" \
@@ -202,7 +202,7 @@ wizard run
     error "the next run exited $status, or read link"
 # ws's install again, undocked: host_vars and the netplan file go, and enp5s0 loses carrier.
 kept=$(cat "$conf")
-runs=$(grep -c '' "$ws/bootstrap.log")
+runs=$(grep -c '' "$ws/server.log")
 sudo rm -f "$vars" "$netplan"
 echo 0 | sudo tee "$net/enp5s0/carrier" >/dev/null
 wizard --check
@@ -213,13 +213,13 @@ wizard run
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: enp5s0 goes in /etc/ws/host_vars\.yml on ws \
 again, and ws server apply -- --tags network,wireguard runs there in a unit of its own" &&
     sudo grep -qx 'network_direct_link_interface: "enp5s0"' "$vars" && [ "$status" = 0 ] &&
-    [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 1)) ] && [ "$(cat "$conf")" = "$kept" ] ||
+    [ "$(grep -c '' "$ws/server.log")" = $((runs + 1)) ] && [ "$(cat "$conf")" = "$kept" ] ||
     error "ws mac wizard without host_vars exited $status, named no enp5s0, or changed mac.conf"
 sudo rm -f "$netplan"
 wizard run
 # root alone reads the netplan file's tree, which the remote script's peer makes with umask 077.
 sudo test -e "$netplan" && [ "$status" = 0 ] &&
-    [ "$(grep -c '' "$ws/bootstrap.log")" = $((runs + 2)) ] ||
+    [ "$(grep -c '' "$ws/server.log")" = $((runs + 2)) ] ||
     error "ws mac wizard without the netplan file exited $status, ran the roles other than once, or" \
         "wrote no netplan file"
 echo 1 | sudo tee "$net/enp5s0/carrier" >/dev/null
