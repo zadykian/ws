@@ -19,8 +19,8 @@ The rest is the docs, the lint gates' tools and CI.
   yamllint, which finds its files itself, checks it too.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
-- `mac/`: the Mac's side: POSIX sh run on the Mac, the ws CLI in Go beside it, and `ws.ghostty`,
-  Ghostty's settings ([The Mac](docs/mac.md)).
+- `mac/`: the Mac's side: the ws CLI in Go, with `bootstrap.sh` and the wizard's scripts for ws in
+  POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
   `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index of the keymap's pages
   in `docs/helix-keymap/`.
