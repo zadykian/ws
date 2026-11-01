@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/mac/internal/step"
 )
 
 // wordsStage names the stage in its messages.
@@ -64,4 +65,66 @@ func (w *Words) sums(ctx context.Context) (remote, mac string, err error) {
 		}
 	}
 	return remote, mac, nil
+}
+
+// Plan is empty where ws has no word list, or the Mac's is ws's. It reads ws only where root logged
+// in there in this run. Where the Mac's is a link and ws's list differs, it stops, under --check too,
+// naming the link's target, as Apply would replace the link.
+func (w *Words) Plan(ctx context.Context) (step.Plan, error) {
+	way, err := w.Host.SSH.Way(ctx)
+	if err != nil {
+		return step.Plan{}, fmt.Errorf("%s: %v", wordsStage, err)
+	}
+	if ok, _ := w.Root.login(ctx, way); !ok {
+		w.Out.Say("%s: after %s", wordsStage, rootStage)
+		return step.Plan{}, nil
+	}
+	if c, err := w.Host.conf(); err == nil && c.Hook != "" && w.Host.Check && !w.hookDone(ctx, c.Hook) {
+		w.Out.Say("%s: after %s", wordsStage, hookWsStage)
+		return step.Plan{}, nil
+	}
+	remote, mac, err := w.sums(ctx)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	if remote == "-" || remote == mac {
+		return step.Plan{}, nil
+	}
+	if info, _ := w.M.Stat(w.file()); info.Link != "" {
+		return step.Plan{}, fmt.Errorf("%s: %s is a link to %s, which the wizard leaves, and ws's word list differs: "+
+			"remove the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the "+
+			"wizard again", wordsStage, w.file(), info.Link)
+	}
+	return step.Plan{Changes: []step.Change{wordsCopy{w.file(), remote}}}, nil
+}
+
+// hookDone reports whether ws has the stamp of the hook's apply.sh.
+func (w *Words) hookDone(ctx context.Context, hook string) bool {
+	return w.Hook.Run.Remote.Status(ctx) && strings.Contains(" "+w.Hook.Run.Remote.Get("hook")+" ", " "+hook+" ")
+}
+
+// Apply copies ws's list over the Mac's, mode 600. The list goes through memory alone, is never
+// printed, and is written only if its hash is the one read before.
+func (w *Words) Apply(ctx context.Context, p step.Plan) error {
+	for _, ch := range p.Changes {
+		c, ok := ch.(wordsCopy)
+		if !ok {
+			continue
+		}
+		data, err := w.Files.Do(ctx, "words", c.hash)
+		sum := []byte(nil)
+		if err == nil {
+			sum, err = w.M.RunInput(ctx, data, "git", "-C", "/", "hash-object", "--stdin")
+		}
+		if err != nil || strings.TrimSpace(string(sum)) != c.hash {
+			return fmt.Errorf("%s: ws's word list came short or changed, as above; run the wizard again", wordsStage)
+		}
+		for _, d := range []string{w.Home + "/.config", w.Home + "/.config/ws"} {
+			_ = w.M.Mkdir(d, 0o700) // exists mostly; WriteFile fails where the directory is missing
+		}
+		if err := w.M.WriteFile(c.file, data, 0o600); err != nil {
+			return err
+		}
+	}
+	return nil
 }
