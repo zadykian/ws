@@ -26,7 +26,11 @@ type Unit struct {
 	Name string
 	// Enabled makes the unit start at boot.
 	Enabled bool
-	Run     Run
+	// Disabled stops the unit from starting at boot, and leaves it running. It excludes Enabled.
+	Disabled bool
+	Run      Run
+	// Reload makes a watched change reload a running unit, not restart it, as a reload handler does.
+	Reload bool
 	// Watch restarts a running unit where any of these resources has a change to make, as a
 	// handler does. They come before the unit in the group.
 	Watch []Resource
@@ -36,7 +40,7 @@ type unitCall struct {
 	u    Unit
 	verb string
 	do   func(context.Context) error
-	// forced marks a restart, which Group.Apply still applies after a failure.
+	// forced marks a restart or a reload, which Group.Apply still applies after a failure.
 	forced bool
 }
 
@@ -58,7 +62,7 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 	}
 	var cs []Change
 	call := func(verb string, do func(context.Context, string) error) {
-		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error { return do(ctx, u.Name) }, verb == "restart"})
+		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error { return do(ctx, u.Name) }, verb == "restart" || verb == "reload"})
 	}
 	if s.NeedsReload {
 		// A unit file written by a run that failed before the reload: the next run finds it right.
@@ -66,6 +70,9 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 	}
 	if u.Enabled && !s.Enabled {
 		cs = append(cs, unitCall{u, "enable", func(ctx context.Context) error { return u.U.Enable(ctx, u.Name) }, false})
+	}
+	if u.Disabled && s.Enabled {
+		cs = append(cs, unitCall{u, "disable", func(ctx context.Context) error { return u.U.Disable(ctx, u.Name) }, false})
 	}
 	switch {
 	case u.Run == Running && !s.Active:
@@ -78,7 +85,10 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		if err != nil {
 			return nil, err
 		}
-		if changed {
+		switch {
+		case changed && u.Reload:
+			call("reload", u.U.Reload)
+		case changed:
 			call("restart", u.U.Restart)
 		}
 	case u.Run == Stopped && s.Active:

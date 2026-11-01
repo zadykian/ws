@@ -98,3 +98,30 @@ func TestUnitRestartIsForced(t *testing.T) {
 		t.Errorf("plan = %v, %v; want a forced restart", cs, err)
 	}
 }
+
+func TestUnitReloadsAfterAWatchedChange(t *testing.T) {
+	m, u, out := unitFixture(true)
+	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
+	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	unit := host.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: host.Running, Reload: true,
+		Watch: []host.Resource{conf}}
+	g := host.Group{Title: "A", Parts: []host.Resource{conf, unit}}
+	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(u.Calls, []string{"reload a.service"}) {
+		t.Errorf("calls = %q, want one reload", u.Calls)
+	}
+}
+
+func TestUnitDisables(t *testing.T) {
+	m, u, out := unitFixture(true)
+	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
+	unit := host.Unit{M: m, U: u, Out: out, Name: "a.service", Disabled: true, Run: host.Stopped}
+	if got := applyAll(t, unit); !slices.Equal(got, []string{"disable a.service", "stop a.service"}) {
+		t.Errorf("first plan = %q, want disable and stop", got)
+	}
+	if got := applyAll(t, unit); got != nil {
+		t.Errorf("second plan = %q, want none", got)
+	}
+}
