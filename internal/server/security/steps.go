@@ -21,6 +21,7 @@ const (
 	ufwStep      = "ufw"
 	fail2banStep = "fail2ban"
 	outboundStep = "Outbound table"
+	offStep      = "Outbound table off"
 )
 
 // Steps returns the role's steps in order: the packages, the check of the user's keys, sshd, ufw,
@@ -47,10 +48,10 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 			return fail2ban(m, u, out)
 		}},
 	}
-	if v.Security.Outbound {
-		ss = append(ss, host.Lazy{Title: outboundStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
-			return outbound(m, u, out)
-		}})
+	if !v.Security.Outbound {
+		return append(ss, host.Group{Title: offStep, Parts: outboundOff(m, u, out)})
 	}
-	return ss
+	return append(ss, host.Lazy{Title: outboundStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+		return outbound(m, u, out)
+	}})
 }
