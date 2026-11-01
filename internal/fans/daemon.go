@@ -1,6 +1,9 @@
 package fans
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Daemon drives the fans of a config on the curves, a tick at a time.
 type Daemon struct {
@@ -60,4 +63,43 @@ func (d *Daemon) report(key, problem string) {
 		problem = "back"
 	}
 	d.Log(key + ": " + problem)
+}
+
+// Tick reads the sensors, moves the curves and steps the fans once. An error is a fan or a
+// device that failed for a reason other than being missing.
+func (d *Daemon) Tick() error {
+	now, values := d.now(), map[string]*float64{}
+	for i, read := range d.readers {
+		name := d.names[i]
+		t, err := read(values, now)
+		switch {
+		case err == nil:
+			values[name] = &t
+			d.report(name, "")
+		case IsMissing(err):
+			values[name] = nil
+			d.report(name, err.Error())
+		default:
+			return fmt.Errorf("sensor %s: %w", name, err)
+		}
+	}
+	for i, cv := range d.cfg.Curves {
+		v := values[cv.Sensor]
+		d.curves[i].Update(derefOr(v), v != nil, now)
+	}
+	for _, c := range d.controls {
+		problem, err := c.tick()
+		if err != nil {
+			return fmt.Errorf("fan %s: %w", c.name, err)
+		}
+		d.report(c.name, problem)
+	}
+	return nil
+}
+
+func derefOr(v *float64) float64 {
+	if v == nil {
+		return 0
+	}
+	return *v
 }
