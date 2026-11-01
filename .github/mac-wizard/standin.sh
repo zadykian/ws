@@ -5,7 +5,7 @@
 set -eu
 
 sw_vers
-# setup.sh stops where a directory above root's copies isn't root's alone, as on a Mac whose
+# ws setup stops where a directory above root's copies isn't root's alone, as on a Mac whose
 # /usr/local an old Homebrew took. Where the runner's image gave /usr/local or its libexec to its
 # user, they become root's, as in mac.yml: their contents stay as they are.
 for dir in /usr/local /usr/local/libexec; do
@@ -21,8 +21,6 @@ done
 mkdir -p ~/.config/ws
 printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
     >~/.config/ws/mac.conf
-# dash, which macOS has as /bin/dash, from Homebrew where the runner lacks it.
-command -v dash >/dev/null || brew install dash
 # PATH as a shell that predates Homebrew has it, without the directories that hold brew, for the
 # cases that give it to the wizard.
 path=

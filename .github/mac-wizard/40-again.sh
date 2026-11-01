@@ -1,24 +1,21 @@
 #!/bin/sh
-# A second run and --check after the first, each by sh and by dash: each must print nothing, as
-# setup.sh's own second run does.
+# A second run and --check after the first, each: each must print nothing, as
+# ws setup's own second run does.
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
-dash=$(command -v dash)
+wsbin=$HOME/.local/bin/ws
 fail=0
 
-for shell in sh "$dash"; do
-    for args in '' --check; do
-        if ! out=$("$shell" "$wizard" ${args:+"$args"} 2>&1); then
-            echo "::error::wizard.sh${args:+ $args} by $shell failed:"
-        elif [ -n "$out" ]; then
-            echo "::error::wizard.sh${args:+ $args} by $shell printed what it should not:"
-        else
-            continue
-        fi
-        printf '%s\n' "$out"
-        fail=1
-    done
+for args in '' --check; do
+    if ! out=$("$wsbin" wizard ${args:+"$args"} 2>&1); then
+        echo "::error::ws wizard${args:+ $args} failed:"
+    elif [ -n "$out" ]; then
+        echo "::error::ws wizard${args:+ $args} printed what it should not:"
+    else
+        continue
+    fi
+    printf '%s\n' "$out"
+    fail=1
 done
 exit "$fail"
