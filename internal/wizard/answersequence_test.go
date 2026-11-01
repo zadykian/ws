@@ -67,7 +67,7 @@ func TestSequenceWays(t *testing.T) {
 
 func TestSequenceRun(t *testing.T) {
 	var asked []string
-	answers := map[string]string{"WS_TARGET": "cloud", "WS_GIT_NAME": "Ada", "WS_HOOK": "me/hook"}
+	answers := map[string]string{"WS_TARGET": "cloud", "WS_GIT_NAME": "Ada", "WS_HOOK": "me/hook@v1.0.0"}
 	if err := newSequence(map[string]bool{"WS_TUNNEL_NETWORKS": true}, scripted(&asked, answers)).run(); err != nil {
 		t.Fatal(err)
 	}

@@ -46,7 +46,7 @@ func (s *sequence) run() error {
 	for _, q := range []question{
 		{"WS_TUNNEL_NETWORKS", "More networks through the tunnel, split by blanks", "", ""},
 		{"WS_RESOLVERS", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks", "", ""},
-		{"WS_HOOK", "Another repository whose apply.sh runs on ws, as OWNER/REPO", "", ""},
+		{"WS_HOOK", "A release of another repository whose command runs on ws, as OWNER/REPO@vX.Y.Z", "", ""},
 	} {
 		if _, err := s.get(q); err != nil {
 			return err
@@ -55,7 +55,7 @@ func (s *sequence) run() error {
 	if s.vals["WS_HOOK"] == "" {
 		return nil
 	}
-	_, err = s.get(question{"WS_HOOK_SECRET", "The Keychain item of its apply.sh's secret", "", ""})
+	_, err = s.get(question{"WS_HOOK_SECRET", "The Keychain item of its command's secret", "", ""})
 	return err
 }
 

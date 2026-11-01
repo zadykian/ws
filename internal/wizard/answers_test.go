@@ -67,15 +67,15 @@ func (homebrewDone) Apply(context.Context, step.Plan) error  { return nil }
 func TestAnswersAskAndWrite(t *testing.T) {
 	a, out := newAnswers(t, "# mine\nWS_USER=ada")
 	a.P.(*effecttest.Prompt).Answers = map[string]string{
-		"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                          "",
-		"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                          "",
-		"ws's address on the LAN (WS_LAN_ADDRESS) [10.88.0.10]":                                   "",
-		"The router's name on the internet (WS_REMOTE) [none]":                                    "none",
-		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                      "",
-		"git's email on the Mac (WS_GIT_EMAIL) [ada@example.com]":                                 "",
-		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
-		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
-		"Another repository whose apply.sh runs on ws, as OWNER/REPO (WS_HOOK) [none]":            "",
+		"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                                  "",
+		"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                                  "",
+		"ws's address on the LAN (WS_LAN_ADDRESS) [10.88.0.10]":                                           "",
+		"The router's name on the internet (WS_REMOTE) [none]":                                            "none",
+		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                              "",
+		"git's email on the Mac (WS_GIT_EMAIL) [ada@example.com]":                                         "",
+		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":                   "",
+		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]":         "",
+		"A release of another repository whose command runs on ws, as OWNER/REPO@vX.Y.Z (WS_HOOK) [none]": "",
 	}
 	m := a.M.(*effecttest.Machine)
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
@@ -97,7 +97,7 @@ func TestAnswersFromEnvironment(t *testing.T) {
 	}
 	a.P.(*effecttest.Prompt).Answers = map[string]string{"The VM's SSH port (WS_REMOTE_PORT) [22]": "", "git's name on the Mac (WS_GIT_NAME) [ada, or none]": "none",
 		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]": "", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
-		"Another repository whose apply.sh runs on ws, as OWNER/REPO (WS_HOOK) [none]": ""}
+		"A release of another repository whose command runs on ws, as OWNER/REPO@vX.Y.Z (WS_HOOK) [none]": ""}
 	a.M.(*effecttest.Machine).Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
 	if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false); err != nil {
 		t.Fatalf("Run = %v", err)
@@ -116,11 +116,11 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	m := a.M.(*effecttest.Machine)
 	m.Files[confPathForTest] = []byte("WS_USER=ada\n")
 	a.P.(*effecttest.Prompt).Answers = map[string]string{
-		"The VM's SSH port (WS_REMOTE_PORT) [22]":                                                 "",
-		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                      "none",
-		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
-		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
-		"Another repository whose apply.sh runs on ws, as OWNER/REPO (WS_HOOK) [none]":            "",
+		"The VM's SSH port (WS_REMOTE_PORT) [22]":                                                         "",
+		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                              "none",
+		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":                   "",
+		"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]":         "",
+		"A release of another repository whose command runs on ws, as OWNER/REPO@vX.Y.Z (WS_HOOK) [none]": "",
 	}
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan = %v, %v", p, err)

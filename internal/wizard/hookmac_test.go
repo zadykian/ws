@@ -22,11 +22,11 @@ func TestHookMacPlan(t *testing.T) {
 		brew                   bool
 	}{
 		"no hook": {conf: "", want: ""},
-		"clone":   {conf: "WS_HOOK=me/tools\n", want: "gh repo clone me/tools " + dir + ", then set"},
-		"done":    {conf: "WS_HOOK=me/tools\n", url: "git@github.com:Me/Tools.git", hooks: dir + "/.githooks", brew: true},
-		"hooks":   {conf: "WS_HOOK=me/tools\n", url: "https://github.com/me/tools", hooks: "x", want: "core.hooksPath"},
-		"brew":    {conf: "WS_HOOK=me/tools\n", url: "https://github.com/me/tools", hooks: dir + "/.githooks", want: "brew bundle"},
-		"other":   {conf: "WS_HOOK=me/tools\n", url: "https://github.com/me/other", want: "is not me/tools's clone"},
+		"clone":   {conf: "WS_HOOK=me/tools@v1.0.0\n", want: "gh repo clone me/tools " + dir + ", then set"},
+		"done":    {conf: "WS_HOOK=me/tools@v1.0.0\n", url: "git@github.com:Me/Tools.git", hooks: dir + "/.githooks", brew: true},
+		"hooks":   {conf: "WS_HOOK=me/tools@v1.0.0\n", url: "https://github.com/me/tools", hooks: "x", want: "core.hooksPath"},
+		"brew":    {conf: "WS_HOOK=me/tools@v1.0.0\n", url: "https://github.com/me/tools", hooks: dir + "/.githooks", want: "brew bundle"},
+		"other":   {conf: "WS_HOOK=me/tools@v1.0.0\n", url: "https://github.com/me/other", want: "is not me/tools's clone"},
 	} {
 		h, m := newHookMac(tc.conf)
 		if tc.url != "" {
@@ -53,7 +53,7 @@ func TestHookMacPlan(t *testing.T) {
 
 func TestHookMacApply(t *testing.T) {
 	const dir = "/h/repository/tools"
-	h, m := newHookMac("WS_HOOK=me/tools\n")
+	h, m := newHookMac("WS_HOOK=me/tools@v1.0.0\n")
 	m.Dirs[dir], m.Dirs[dir+"/.git"], m.Dirs[dir+"/.githooks"] = 0o755, 0o755, 0o755
 	m.Results["git -C "+dir+" remote get-url origin"] = effecttest.Result{Out: []byte("https://github.com/me/tools\n")}
 	m.Results["git -C "+dir+" config core.hooksPath"] = effecttest.Result{}

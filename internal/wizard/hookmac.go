@@ -66,7 +66,7 @@ func (h *HookMac) plan(ctx context.Context, hook string) ([]step.Change, error) 
 	url, _ := h.M.Run(ctx, "git", "-C", dir, "remote", "get-url", "origin")
 	u := strings.TrimSuffix(strings.TrimSpace(string(url)), ".git")
 	if !originOf(hook).MatchString(u) {
-		return nil, fmt.Errorf("%s: %s is not %s's clone, its origin '%s': move it aside", hookMacStage, dir, hook, u)
+		return nil, fmt.Errorf("%s: %s is not %s's clone, its origin '%s': move it aside", hookMacStage, dir, hookRepo(hook), u)
 	}
 	var cs []step.Change
 	if _, err := h.M.Stat(dir + "/.githooks"); err == nil {
