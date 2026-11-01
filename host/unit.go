@@ -27,13 +27,20 @@ type Unit struct {
 	// Enabled makes the unit start at boot.
 	Enabled bool
 	Run     Run
+	// Watch restarts a running unit where any of these resources has a change to make, as a
+	// handler does. They come before the unit in the group.
+	Watch []Resource
 }
 
 type unitCall struct {
 	u    Unit
 	verb string
 	do   func(context.Context) error
+	// forced marks a restart, which Group.Apply still applies after a failure.
+	forced bool
 }
+
+func (c unitCall) Forced() bool { return c.forced }
 
 func (c unitCall) String() string { return c.verb + " " + c.u.Name }
 
@@ -51,16 +58,37 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 	}
 	var cs []Change
 	call := func(verb string, do func(context.Context, string) error) {
-		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error { return do(ctx, u.Name) }})
+		cs = append(cs, unitCall{u, verb, func(ctx context.Context) error { return do(ctx, u.Name) }, verb == "restart"})
 	}
 	if u.Enabled && !s.Enabled {
-		cs = append(cs, unitCall{u, "enable", func(ctx context.Context) error { return u.U.Enable(ctx, u.Name) }})
+		cs = append(cs, unitCall{u, "enable", func(ctx context.Context) error { return u.U.Enable(ctx, u.Name) }, false})
 	}
 	switch {
 	case u.Run == Running && !s.Active:
+		if s.Failed {
+			call("reset failed state of", u.U.ResetFailed)
+		}
 		call("start", u.U.Start)
+	case u.Run == Running:
+		changed, err := u.watched(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if changed {
+			call("restart", u.U.Restart)
+		}
 	case u.Run == Stopped && s.Active:
 		call("stop", u.U.Stop)
 	}
 	return cs, nil
+}
+
+func (u Unit) watched(ctx context.Context) (bool, error) {
+	for _, r := range u.Watch {
+		cs, err := r.Plan(ctx)
+		if err != nil || len(cs) > 0 {
+			return len(cs) > 0, err
+		}
+	}
+	return false, nil
 }
