@@ -162,15 +162,11 @@ files() {
 }
 
 # send REPO: the files script's stage op names a path on ws for the command of example/REPO@v1.0.0,
-# which goes there as the wizard sends it. The command is a script that logs its arguments and the
-# SHA-256 of its stdin, as the Mac's stand-in gh makes it. It prints the command's SHA-256 as sum.
+# which goes there as the wizard sends it. The command is hook-standin.sh, as the Mac's stand-in gh
+# downloads it. It sets sum to the command's SHA-256.
 send() {
     src=$RUNNER_TEMP/$1
-    cat >"$src" <<'EOF'
-#!/bin/sh
-echo "$*" >>"$WS_STANDIN/hook.args"
-shasum -a 256 | cut -d " " -f 1 >>"$WS_STANDIN/apply.log"
-EOF
+    cp "$(cd "$(dirname "$0")" && pwd)/hook-standin.sh" "$src"
     sum=$(shasum -a 256 <"$src" | cut -d ' ' -f 1)
     files stage "example/$1@v1.0.0"
     [ "$status" = 0 ] && [ "$out" = "$stamps/hook-$1.bin" ] ||
