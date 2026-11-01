@@ -20,8 +20,8 @@ is ported:
 - [`ikeward`](docs/ikeward.md): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
 - [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
-- [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from a
-  variable, a key that signs commits, git's tokens for servers besides GitHub, and clones of
+- [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
+  secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
   repositories.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
