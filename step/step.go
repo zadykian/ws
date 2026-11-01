@@ -1,4 +1,4 @@
-// Package step holds the Step interface, which each step of the Mac's setup implements, and
+// Package step holds the Step interface, which each step of a machine's setup implements, and
 // the runner that plans and applies the steps in order.
 package step
 
@@ -18,7 +18,7 @@ type Plan struct {
 	Changes []Change
 }
 
-// Step sets up one part of the Mac. A step holds its effects as fields and reads no other step's state.
+// Step sets up one part of a machine's setup. A step holds its effects as fields and reads no other step's state.
 type Step interface {
 	Name() string
 	// WaitsOn names an earlier step that must be done first, or is empty. It is known before Plan,

@@ -18,11 +18,12 @@ The rest is the docs, the lint gates' tools and CI.
   values, such as the cable's port ([The direct link](docs/network.md#the-direct-link)).
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
-- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. Its
-  packages are in `mac/`. The root package `ws` embeds the playbook on Linux (`playbook_linux.go`),
-  with the tarballs of `collections/`.
+- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. The
+  root package `ws` embeds the playbook on Linux (`playbook_linux.go`), with the tarballs of
+  `collections/`. `cmd/ws` is the command and `internal/` its packages. `step` and `effect`, with
+  `effect/effecttest`, are public: another module builds steps on them.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
-- `mac/`: the Mac's side: the ws CLI in Go, with the wizard's scripts for ws in
+- `mac/`: the Mac's side, the files that the ws CLI embeds: the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
   `mac-hook.md`, `mac-targets.md` and `mac-ghostty.md`; `router.md` and `checks.md`;
@@ -104,7 +105,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   the gates' tools ([tools/run](tools/run)). So is ws's binary, against its release's `ws.sha256`
   ([install.sh](install.sh)), and so are the Python tools
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([homebrew.go](mac/internal/wizard/homebrew.go)). The collections are checked by
+  ([homebrew.go](internal/wizard/homebrew.go)). The collections are checked by
   [tools/collections](tools/collections) against the SHA-256 that Galaxy's API lists for the pins.
   Go and the JetBrains backends are checked against the SHA-256 their publishers list
   ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)). roslyn-language-server is

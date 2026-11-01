@@ -1,4 +1,4 @@
-// Package effect holds the effects ws runs through: what it asks, says and does on the Mac. Steps
+// Package effect holds the effects ws runs through: what it asks, says and does on a machine. Steps
 // take these interfaces, so that their tests use the fakes of effecttest.
 package effect
 
@@ -47,7 +47,7 @@ type Info struct {
 	Link string
 }
 
-// Machine reads and changes the Mac.
+// Machine reads and changes a machine.
 type Machine interface {
 	// Stat returns fs.ErrNotExist where the path is missing, and describes a dangling link.
 	Stat(path string) (Info, error)

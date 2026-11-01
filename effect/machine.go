@@ -13,7 +13,7 @@ import (
 	"syscall"
 )
 
-// OSMachine is the Machine of the Mac that ws runs on.
+// OSMachine is the Machine of the machine that ws runs on.
 type OSMachine struct {
 	// Sudo is the command that runs another as root. Nil means sudo.
 	Sudo []string
