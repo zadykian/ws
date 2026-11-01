@@ -41,12 +41,9 @@ func TestInstallDownloadsThenUnpacksUnderTheLock(t *testing.T) {
 		t.Errorf("locked %d times, want 2: to clear, then to unpack", locked)
 	}
 	calls := strings.Join(m.Calls, "\n")
-	for _, want := range []string{"download " + testLink, "run mv -T --update=none-fail", "run rm -rf -- /h/.cache/ws-jetbrains/playbook"} {
+	for _, want := range []string{"download " + testLink, "run mkdir -m 0755 -- /h/.cache/ws-jetbrains/playbook", "run mv -T --update=none-fail", "run rm -rf -- /h/.cache/ws-jetbrains/playbook"} {
 		if !strings.Contains(calls, want) {
 			t.Errorf("no call %q in\n%s", want, calls)
 		}
-	}
-	if m.Owners["/h/.cache/ws-jetbrains/playbook"] != [2]int{1000, 1000} {
-		t.Error("the downloads' directory is not the user's")
 	}
 }

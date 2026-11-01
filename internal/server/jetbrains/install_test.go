@@ -31,7 +31,8 @@ func fixture(avail uint64) (*effecttest.Machine, Site, install) {
 		"rm -rf -- " + testDir + " " + testDir + ".part", "rm -rf -- " + testDir + ".part",
 		"rm -rf -- /h/.cache/ws-jetbrains/playbook",
 		"mv -T --update=none-fail -- " + testDir + ".part " + testDir,
-		"mkdir -m 0755 -- " + testDir + ".part",
+		"mkdir -m 0755 -- " + testDir + ".part", "mkdir -m 0755 -- /h/.cache",
+		"mkdir -m 0755 -- /h/.cache/ws-jetbrains", "mkdir -m 0755 -- /h/.cache/ws-jetbrains/playbook",
 		"tar -xzf /h/.cache/ws-jetbrains/playbook/goland-2026.2.3.tar.gz -C " + testDir + ".part --strip-components=1",
 		"touch -- " + testDir + ".part/" + marker,
 	} {
@@ -40,7 +41,7 @@ func fixture(avail uint64) (*effecttest.Machine, Site, install) {
 	m.Pages[testLink] = testBody
 	s := Site{
 		M: m, Out: &effecttest.Out{}, Dist: testDist, Downloads: "/h/.cache/ws-jetbrains/playbook", Home: "/h",
-		UID: 1000, GID: 1000, Wait: time.Nanosecond,
+		Wait:  time.Nanosecond,
 		Avail: func(string) (uint64, error) { return avail, nil },
 		AsUser: func(ctx context.Context, name string, args ...string) ([]byte, error) {
 			return m.Run(ctx, name, args...)

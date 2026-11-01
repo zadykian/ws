@@ -23,7 +23,7 @@ func (c install) Apply(ctx context.Context) (err error) {
 		return err
 	}
 	defer func() {
-		_, rmErr := c.s.M.Run(ctx, "rm", "-rf", "--", c.s.Downloads)
+		_, rmErr := c.s.AsUser(ctx, "rm", "-rf", "--", c.s.Downloads)
 		if err == nil {
 			err = rmErr
 		}
@@ -51,10 +51,10 @@ func (c install) clear(ctx context.Context) (done bool, err error) {
 			done = true
 			return nil
 		}
-		_, err := c.s.M.Run(ctx, "rm", "-rf", "--", c.b.Dir, c.b.Dir+".part")
+		_, err := c.s.AsUser(ctx, "rm", "-rf", "--", c.b.Dir, c.b.Dir+".part")
 		return err
 	})
 	return done, err
 }
 
-func (c install) attrs() effect.Attrs { return effect.Attrs{UID: c.s.UID, GID: c.s.GID, Mode: 0o644} }
+func (c install) attrs() effect.Attrs { return effect.Attrs{Mode: 0o644} }

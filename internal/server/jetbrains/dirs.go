@@ -11,8 +11,8 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// Dirs is a directory under the user's home, with the missing directories above it. The user owns
-// those it makes, with the mode 0755 that u+rwx gives under the usual umask. A directory that is
+// Dirs is a directory under the user's home, with the missing directories above it. The user makes
+// those it adds, with the mode 0755 that u+rwx gives under the usual umask. A directory that is
 // there keeps its mode and owner, as Gateway may have made it.
 type Dirs struct {
 	S    Site
@@ -25,14 +25,12 @@ type makeDir struct {
 }
 
 func (c makeDir) String() string {
-	return fmt.Sprintf("create directory %s, owner %d:%d, mode 755", c.path, c.s.UID, c.s.GID)
+	return "create directory " + c.path + ", mode 755"
 }
 
-func (c makeDir) Apply(context.Context) error {
-	if err := c.s.M.Mkdir(c.path, 0o755); err != nil {
-		return err
-	}
-	return c.s.M.Chown(c.path, c.s.UID, c.s.GID)
+func (c makeDir) Apply(ctx context.Context) error {
+	_, err := c.s.AsUser(ctx, "mkdir", "-m", "0755", "--", c.path)
+	return err
 }
 
 // Plan makes a change for each directory that is missing, the topmost first.
