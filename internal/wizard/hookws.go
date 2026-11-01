@@ -91,6 +91,10 @@ func (h *HookWs) Plan(ctx context.Context) (step.Plan, error) {
 	var cs []step.Change
 	if cmd := h.item(ctx, c.HookSecret); cmd != "" {
 		cs = append(cs, hookWsItem{cmd})
+	} else if h.Host.Check {
+		if err := h.dryRun(ctx, c.Hook, c.HookSecret); err != nil {
+			return step.Plan{}, err
+		}
 	}
 	return step.Plan{Changes: append(cs, hookWsRun{c.Hook, in})}, nil
 }

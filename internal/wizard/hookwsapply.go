@@ -55,7 +55,7 @@ func (h *HookWs) deploy(ctx context.Context, hook, secret string) error {
 	if err := h.upload(ctx, hook, data, sum); err != nil {
 		return err
 	}
-	if err := h.apply(ctx, hook, secret, in); err != nil {
+	if err := h.apply(ctx, hook, secret, in, nil); err != nil {
 		return err
 	}
 	return h.Files.Pass(ctx, "stamp", hook)

@@ -141,3 +141,20 @@ func TestHookWsSendMovedTag(t *testing.T) {
 		t.Errorf("send with a moved tag = %v", err)
 	}
 }
+
+func TestHookWsCheck(t *testing.T) {
+	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
+	h.Host.Check = true
+	bin := hookState + "/bin/tools-v1.0.0"
+	have := remoteLine(h.Files, "have", "me/tools@v1.0.0")
+	m.Results[have] = effecttest.Result{}
+	if _, err := h.Plan(context.Background()); err != nil || strings.Contains(strings.Join(m.Calls, "\n"), "--check") {
+		t.Errorf("Plan where ws lacks the command = %v, calls %q", err, m.Calls)
+	}
+	m.Results[have] = effecttest.Result{Out: []byte(bin + "\n")}
+	m.Results[sshLine(h, "-o", "BatchMode=yes", "ws-ssh", bin, "apply", "--check")] = effecttest.Result{}
+	p, err := h.Plan(context.Background())
+	if err != nil || len(p.Changes) != 1 || !slices.Contains(m.Calls, "run "+sshLine(h, "-o", "BatchMode=yes", "ws-ssh", bin, "apply", "--check")) {
+		t.Errorf("Plan where ws holds the command = %v, %v, calls %q", p, err, m.Calls)
+	}
+}
