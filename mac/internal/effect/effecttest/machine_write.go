@@ -74,9 +74,10 @@ func (m *Machine) Pass(ctx context.Context, root bool, name string, args ...stri
 }
 
 // Exec records "exec NAME ARGS" and returns nothing, as a command that ended ws would.
-func (m *Machine) Exec(name string, args, _ []string) error {
+func (m *Machine) Exec(name string, args, env []string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.ExecEnv = append(m.ExecEnv, env)
 	m.Calls = append(m.Calls, "exec "+strings.Join(append([]string{name}, args...), " "))
 	return nil
 }
