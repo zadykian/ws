@@ -14,6 +14,9 @@ const (
 	kernel = "7.0.0-38-generic"
 )
 
+// exeAt is the path of the ws that runs.
+func exeAt() (string, error) { return "/usr/bin/ws", nil }
+
 // onTheBoard returns a machine whose board is the vendor's, running the kernel.
 func onTheBoard() *effecttest.Machine {
 	m := effecttest.NewMachine()
@@ -24,13 +27,13 @@ func onTheBoard() *effecttest.Machine {
 
 func TestStepsAreInOrderEachOnTheOneBefore(t *testing.T) {
 	var names, after []string
-	for _, s := range steps(values.Default().Fans, onTheBoard(), &effecttest.Out{}) {
+	for _, s := range steps(values.Default().Fans, onTheBoard(), &effecttest.Units{}, &effecttest.Out{}, exeAt) {
 		names, after = append(names, s.Name()), append(after, s.WaitsOn())
 	}
-	if want := []string{boardStep, packagesStep, sourceStep, driverStep, modulesStep}; !slices.Equal(names, want) {
+	if want := []string{boardStep, packagesStep, sourceStep, driverStep, modulesStep, serviceStep}; !slices.Equal(names, want) {
 		t.Errorf("steps = %q, want %q", names, want)
 	}
-	if want := []string{"", boardStep, packagesStep, sourceStep, driverStep}; !slices.Equal(after, want) {
+	if want := []string{"", boardStep, packagesStep, sourceStep, driverStep, modulesStep}; !slices.Equal(after, want) {
 		t.Errorf("after = %q, want %q", after, want)
 	}
 }
@@ -38,7 +41,7 @@ func TestStepsAreInOrderEachOnTheOneBefore(t *testing.T) {
 func TestStepsPlanNothingOnAnotherBoard(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Files[boardVendorFile] = []byte("QEMU\n")
-	for _, s := range steps(values.Default().Fans, m, out) {
+	for _, s := range steps(values.Default().Fans, m, &effecttest.Units{}, out, exeAt) {
 		p, err := s.Plan(t.Context())
 		if err != nil || len(p.Changes) != 0 {
 			t.Errorf("%s: Plan = %v, %v; want none", s.Name(), p, err)
@@ -52,7 +55,7 @@ func TestStepsPlanNothingOnAnotherBoard(t *testing.T) {
 func TestPackagesNameTheRunningKernelsHeaders(t *testing.T) {
 	m := onTheBoard()
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n dkms linux-headers-generic linux-headers-"+kernel] = effecttest.Result{}
-	p, err := steps(values.Default().Fans, m, &effecttest.Out{})[1].Plan(t.Context())
+	p, err := steps(values.Default().Fans, m, &effecttest.Units{}, &effecttest.Out{}, exeAt)[1].Plan(t.Context())
 	if err != nil || len(p.Changes) == 0 || !strings.Contains(p.Changes[0].String(), "linux-headers-"+kernel) {
 		t.Errorf("Plan = %v, %v; want an install naming the kernel's headers", p, err)
 	}

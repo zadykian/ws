@@ -25,17 +25,18 @@ const (
 	sourceStep   = "Fans' driver source"
 	driverStep   = "Fans' driver"
 	modulesStep  = "Fans' modules"
+	serviceStep  = "Fans' service"
 )
 
 // Steps returns the role's steps in order: the check of the board, the driver's packages and
 // source, and the rest as they come. The role takes no secrets. On a machine with another board
 // the steps after the first plan nothing.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
-	return steps(v.Fans, m, out)
+	return steps(v.Fans, m, effect.OSUnits{}, out, running)
 }
 
-// steps is Steps with the fans' values alone.
-func steps(f values.Fans, m effect.Machine, out effect.Out) []step.Step {
+// steps is Steps with the fans' values, the units and the path of ws given, for a test to fake.
+func steps(f values.Fans, m effect.Machine, u effect.Units, out effect.Out, exe func() (string, error)) []step.Step {
 	vendor := f.BoardVendor
 	return []step.Step{
 		host.Group{Title: boardStep, Parts: []host.Resource{board{m, out, vendor}}},
@@ -62,6 +63,7 @@ func steps(f values.Fans, m effect.Machine, out effect.Out) []step.Step {
 		host.Lazy{Title: modulesStep, After: driverStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
 			return moduleParts(m, out)
 		})},
+		host.Lazy{Title: serviceStep, After: modulesStep, Parts: gated(m, vendor, serviceParts(m, u, out, f, exe))},
 	}
 }
 
