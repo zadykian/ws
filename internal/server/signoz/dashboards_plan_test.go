@@ -83,3 +83,29 @@ func TestDashboardsReplaceOneThatDiffers(t *testing.T) {
 		t.Fatalf("plan = %v, %v; want to replace host", p.Changes, err)
 	}
 }
+
+func TestDashboardsLeaveOneLockedAndSayso(t *testing.T) {
+	d := fromFile(t, "host", "7")
+	d.Tags, d.Locked = json.RawMessage(`[]`), true
+	s, out := dashboardsFixture(t, &fakeDashboards{have: map[string]dashboard{"7": d}}, "host")
+	p, err := s.Plan(t.Context())
+	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "locked") {
+		t.Errorf("plan = %v, %v, said %q; want none and a word on the lock", p.Changes, err, strings.Join(out.Lines, "\n"))
+	}
+}
+
+func TestDashboardsHaveNoChangeWhereTheyMatch(t *testing.T) {
+	f := &fakeDashboards{have: map[string]dashboard{"1": fromFile(t, "host", "1"), "2": fromFile(t, "claude", "2")}}
+	s, _ := dashboardsFixture(t, f, "host", "claude")
+	if p, err := s.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
+		t.Errorf("plan = %v, %v; want none", p.Changes, err)
+	}
+}
+
+func TestDashboardsSkipWithoutSystemd(t *testing.T) {
+	s, out := dashboardsFixture(t, &fakeDashboards{}, "host")
+	delete(s.M.(*effecttest.Machine).Dirs, "/run/systemd/system")
+	if p, err := s.Plan(t.Context()); err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "skipped") {
+		t.Errorf("plan = %v, %v, said %q", p.Changes, err, strings.Join(out.Lines, "\n"))
+	}
+}
