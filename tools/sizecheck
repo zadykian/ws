@@ -20,6 +20,7 @@ max=300
 exempt() {
     case $1 in
     roles/signoz/files/deployment/* | roles/signoz/files/casting.yaml.lock) return 0 ;;
+    internal/server/signoz/deployment/* | internal/server/signoz/casting.yaml.lock) return 0 ;;
     .vale/styles/*) return 0 ;;
     esac
     return 1

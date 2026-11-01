@@ -142,11 +142,11 @@ jobs:
         run: |
           forged="$RUNNER_TEMP/forged"
           mkdir "$forged"
-          cp roles/signoz/files/casting.yaml "$forged"
+          cp internal/server/signoz/casting.yaml "$forged"
           foundryctl forge --no-ledger --no-updater -f "$forged/casting.yaml" -p "$forged"
           status=0
           for file in "$forged"/*; do
-              diff -r "roles/signoz/files/${file##*/}" "$file" || status=1
+              diff -r "internal/server/signoz/${file##*/}" "$file" || status=1
           done
           if [ "$status" -ne 0 ]; then
               echo '::error::foundryctl forges other files from casting.yaml: forge them again.'
