@@ -2,6 +2,7 @@ package values
 
 func defaultFans() Fans {
 	zero := 0
+	idle := 0.0
 	pair := FanPair{Up: 2, Down: 2}
 	resp := FanPair{Up: 5, Down: 5}
 	return Fans{
@@ -14,15 +15,15 @@ func defaultFans() Fans {
 			{Name: "cpu_gpu_max", Max: []string{"cpu_average", "gpu_average"}},
 		},
 		Curves: []FanCurve{
-			{Name: "cpu", Sensor: "cpu_average", Points: [][2]int{{50, 30}, {80, 60}}, Hysteresis: pair, Response: resp},
-			{Name: "gpu", Sensor: "gpu_average", Points: [][2]int{{30, 20}, {50, 20}, {80, 60}}, Hysteresis: pair, Response: resp},
-			{Name: "cpu_gpu_max", Sensor: "cpu_gpu_max", Points: [][2]int{{50, 30}, {80, 60}}, Hysteresis: pair, Response: resp},
+			{Name: "cpu", Sensor: "cpu_average", Points: [][2]float64{{50, 30}, {80, 60}}, Hysteresis: pair, Response: resp},
+			{Name: "gpu", Sensor: "gpu_average", Points: [][2]float64{{30, 20}, {50, 20}, {80, 60}}, Hysteresis: pair, Response: resp},
+			{Name: "cpu_gpu_max", Sensor: "cpu_gpu_max", Points: [][2]float64{{50, 30}, {80, 60}}, Hysteresis: pair, Response: resp},
 		},
 		Controls: []FanControl{
 			{Name: "CPU Pump", Hwmon: "nct6687", Label: "Pump Fan", Curve: "cpu"},
 			{Name: "Exhaust Fans", Hwmon: "nct6687", Label: "CPU Fan", Curve: "cpu_gpu_max"},
 			{Name: "GPU Fans", Hwmon: "nct6687", Label: "System Fan #1", Curve: "gpu"},
-			{Name: "MB Fan", Hwmon: "nct6687", Label: "System Fan #2", Percent: &zero},
+			{Name: "MB Fan", Hwmon: "nct6687", Label: "System Fan #2", Percent: &idle},
 		},
 		Step: FanPair{Up: 10, Down: 10}, Interval: 1,
 	}
