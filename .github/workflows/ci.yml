@@ -93,6 +93,29 @@ jobs:
       - name: Check the outbound table
         run: nft -c -f /usr/local/lib/ws/security/outbound.nft
 
+  # install.sh against releases laid out in a temporary directory and served on loopback, in the
+  # order of .github/install-checks.sh: the latest and a named release install, a second run
+  # updates, a wrong checksum and a binary of another version are refused, and root installs to
+  # /usr/local/bin. The releases are of the tree, built with the Go that tools/run pins.
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      GOPATH: ${{ github.workspace }}/.cache/go
+      GOCACHE: ${{ github.workspace }}/.cache/go-build
+      GOTOOLCHAIN: local
+      GOWORK: "off"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The cases
+        run: |
+          PATH="$(dirname "$(sh tools/run -path go)"):$PATH"
+          .github/install-checks.sh
+
   # SigNoz's compose files in roles/signoz/files are foundryctl's, forged from casting.yaml there.
   # Forged again into an empty directory, as foundryctl never removes a file, they must be the same.
   # Only what it forges is compared, so the role may keep other files beside them.
