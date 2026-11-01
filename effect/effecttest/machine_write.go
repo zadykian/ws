@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // WriteFile stores the file.

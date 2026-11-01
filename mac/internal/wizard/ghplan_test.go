@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 func newGh(look func(string) (string, error)) (*Gh, *effecttest.Machine) {

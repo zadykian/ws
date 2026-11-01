@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 func TestOSMachineRun(t *testing.T) {

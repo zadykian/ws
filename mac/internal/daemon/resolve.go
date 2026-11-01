@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // Resolve returns the IPv4 address of name from the system's resolver, as dscacheutil gives it,

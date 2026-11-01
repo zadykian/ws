@@ -9,7 +9,7 @@ import (
 	"runtime/debug"
 
 	"github.com/zadykian/ws"
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // groups returns the command groups that exist on this system: ws server, on Linux.

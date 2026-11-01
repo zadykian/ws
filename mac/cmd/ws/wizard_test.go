@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 // testWizardEnv returns the environment of a Mac whose Command Line Tools and Homebrew are there.

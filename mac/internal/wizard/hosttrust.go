@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // hostPrint is the command at ws's console that prints the fingerprint of its ed25519 key.

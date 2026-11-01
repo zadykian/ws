@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect"
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 func newAsker(p effect.Prompt, env map[string]string) (*asker, *effecttest.Out) {

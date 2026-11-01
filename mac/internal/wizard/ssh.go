@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // FirstFile is the file in the lock that holds the address the Host key stage asked, where ws did

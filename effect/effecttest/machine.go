@@ -4,7 +4,7 @@ import (
 	"io/fs"
 	"sync"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // Result is what a command returns.

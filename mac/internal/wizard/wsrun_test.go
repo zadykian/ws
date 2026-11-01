@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 // extra is what mac.conf needs besides its target.

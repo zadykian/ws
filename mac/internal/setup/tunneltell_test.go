@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 func TestTunnelWritesThePublicKeyWhereTheWizardReadsIt(t *testing.T) {

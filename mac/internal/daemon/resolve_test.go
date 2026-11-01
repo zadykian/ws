@@ -6,7 +6,7 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 func TestResolve(t *testing.T) {

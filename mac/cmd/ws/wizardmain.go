@@ -9,7 +9,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // confPath returns mac.conf's path from WS_CONF, a path from / as ws mac apply gets it, else from the

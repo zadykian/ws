@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 // peerKey is ws's key in tunnel.conf, and macKey the Mac's own, each 32 equal bytes in base64.

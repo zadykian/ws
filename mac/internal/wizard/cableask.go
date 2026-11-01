@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // cableAnswer is the answer to a question of the Cable stage: a value, empty for none.

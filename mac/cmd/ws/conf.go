@@ -7,8 +7,8 @@ import (
 	"io/fs"
 	"path/filepath"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/conf"
-	"github.com/zadykian/ws/mac/internal/effect"
 )
 
 const confUsage = "usage: ws mac conf [--lines] [FILE]\n"

@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/setup"
 	"github.com/zadykian/ws/mac/internal/step"
 )

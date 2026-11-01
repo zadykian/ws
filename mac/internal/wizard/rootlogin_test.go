@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 const rootLogin = "ssh -o ControlMaster=auto -o ControlPath=/l/%n -o ControlPersist=30m -o ConnectTimeout=10 " +

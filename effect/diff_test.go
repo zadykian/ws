@@ -3,7 +3,7 @@ package effect_test
 import (
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 func TestDiff(t *testing.T) {

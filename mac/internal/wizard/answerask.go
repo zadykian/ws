@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // answers names the stage in its messages.

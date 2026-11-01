@@ -8,8 +8,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/conf"
-	"github.com/zadykian/ws/mac/internal/effect"
 )
 
 // errRefused is returned where mac.conf with the new lines would fail conf's checks, which Out has

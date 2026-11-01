@@ -7,7 +7,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/tunnel"
 	"github.com/zadykian/ws/mac/internal/wgkey"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/check"
-	"github.com/zadykian/ws/mac/internal/effect"
 )
 
 func (*HostKey) none(w Way) string {

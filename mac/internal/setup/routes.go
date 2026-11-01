@@ -7,8 +7,8 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/check"
-	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
 	"github.com/zadykian/ws/mac/internal/tunnel"
 )

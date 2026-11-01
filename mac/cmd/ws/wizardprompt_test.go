@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // blocked never answers, as a read of a terminal that nobody types at.

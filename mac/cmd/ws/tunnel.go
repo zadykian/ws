@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac/internal/daemon"
-	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/uapi"
 	"github.com/zadykian/ws/mac/internal/wgdev"
 )

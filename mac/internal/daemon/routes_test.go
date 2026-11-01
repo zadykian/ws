@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/mac/internal/tunnel"
 )
 

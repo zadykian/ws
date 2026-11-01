@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/mac/internal/conf"
-	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/setup"
 	"github.com/zadykian/ws/mac/internal/step"
 )

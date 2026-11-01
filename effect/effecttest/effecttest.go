@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // Prompt answers from a script, and fails the test on a question it was not given.

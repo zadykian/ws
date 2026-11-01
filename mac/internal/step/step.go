@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zadykian/ws/mac/internal/effect"
+	"github.com/zadykian/ws/effect"
 )
 
 // Change is one change a step would make, as --check prints it.

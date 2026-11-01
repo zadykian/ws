@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 const ping = "ping -c 1 -t 2 -q 10.99.0.1"

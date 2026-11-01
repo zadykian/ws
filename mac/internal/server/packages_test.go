@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/mac/internal/effect/effecttest"
+	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
