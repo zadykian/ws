@@ -143,7 +143,7 @@ ws server apply -- -e security_outbound=false
 ```
 
 `-e` holds for that run alone, so the next run without it puts the table back. So once that run
-has made the clone, its `host_vars/localhost.yml` keeps the value for each run after
+has made `/etc/ws`, its `host_vars.yml` keeps the value for each run after
 ([The direct link](network.md#the-direct-link)):
 
 ```yaml

@@ -47,7 +47,7 @@ hand. The stages, in order, the first two `bootstrap.sh`'s, before the wizard st
 13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, below.
 14. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, below.
 15. Word list: ws's, copied to the Mac where it differs, below.
-16. Cable: on the LAN, ws's port of the cable in its `host_vars`, and the Mac's service, below.
+16. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
 ## The answers
 
@@ -180,18 +180,19 @@ wizard prints the unit's log until it ends, and stops where the run fails. A fir
 follows it to its end.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
-with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes the
-clone's commit and the status there, and `off` where its `-e` turned the outbound table off. The
-stage is done where that status is 0 and no unit runs. So a second run of the wizard runs no
-playbook, and one after a run cut short starts again. With `--update`, the stage runs the playbook
-once more, which installs the latest ws first. The run passes no file of the `ikeward` role's
-variables, so the role leaves the VPN as it finds it ([The profile](ikeward.md#the-profile)).
+with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes
+ws's version, or `-` where it has none, and the status there, and `off` where its `-e` turned the
+outbound table off. The stage is done where that status is 0 and no unit runs. So a second run of
+the wizard runs no playbook, and one after a run cut short starts again. With `--update`, the stage
+runs the playbook once more, which installs the latest ws first. The run passes no file of the
+`ikeward` role's variables, so the role leaves the VPN as it finds it
+([The profile](ikeward.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
 with `WS_TARGET=cloud`, the run passes `-e security_outbound=false`, and its unit then names that
-in ws's `host_vars`, for each run after. The stage is done there once a run with that `-e` passed
-and `host_vars` has the line. After a unit without it, which the run followed, a run of its own
-goes. Where the line alone is missing, the stage writes it, and runs no playbook.
+in ws's `/etc/ws/host_vars.yml`, for each run after. The stage is done there once a run with that
+`-e` passed and `host_vars.yml` has the line. After a unit without it, which the run followed, a
+run of its own goes. Where the line alone is missing, the stage writes it, and runs no playbook.
 
 ## Signing key
 
@@ -260,7 +261,7 @@ wizard's files script lists ws's wired ports but the uplink, each with its carri
 addresses. Where none has carrier, as the Mac isn't
 docked, the stage waits, and the closing list says to dock the Mac and run the line again. Docked,
 the stage asks ws's port of the cable, the one with carrier by default. It names the port in
-`host_vars/localhost.yml` on ws, then runs `bootstrap.sh --tags network,wireguard` there, as both
+`/etc/ws/host_vars.yml` on ws, then runs `bootstrap.sh --tags network,wireguard` there, as both
 roles read it. Once the port holds `10.77.0.1`, the stage asks the Mac's service of the cable. The
 default is the one service with a `169.254` address, which an adapter gives itself where no DHCP
 server answers. The answer goes in `mac.conf` as `WS_CABLE_SERVICE`, then `ws mac apply` gives the
@@ -269,7 +270,7 @@ service `10.77.0.2` ([The cable](mac.md#the-cable)), and `ping 10.77.0.1` must g
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
 where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
 `WS_CABLE_SERVICE` give the answers. `mac.conf` keeps the port as `WS_CABLE_PORT`, to change there.
-Where `host_vars` lacks it, as after ws's install, the stage names it there and runs the roles,
+Where `host_vars.yml` lacks it, as after ws's install, the stage names it there and runs the roles,
 undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what it would do.
 
 Undocked, an empty `WS_CABLE_SERVICE` in the environment ends the wait, for a Mac without the cable.
@@ -287,7 +288,7 @@ After a run in which a stage acted, the wizard lists each of these that applies:
 - ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
   where `mac.conf` has `WS_REMOTE` ([The router](router.md)). Off the LAN, `mac.conf`'s way to ws
   instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](mac-targets.md)).
-- ws's outbound table, which `security_outbound: false` in ws's `host_vars` keeps off, where
+- ws's outbound table, which `security_outbound: false` in ws's `host_vars.yml` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
 - The tunnel's handshake, where the run asked ws's address or none came. A static lease, or off the
   LAN `mac.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.

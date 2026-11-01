@@ -14,9 +14,8 @@ The rest is the docs, the lint gates' tools and CI.
   filter plugins, in Python, are in `roles/NAME/filter_plugins`; ws-fans, the fans' service, is
   Python too, in `roles/fans/files`.
 - `group_vars/all.yml`: what roles share, `ws_user`, `ws_home` and `ws_git_signing_key`, and the
-  versions, each named for its role. `host_vars/localhost.yml`, which git ignores: the machine's
-  own values, such as the cable's port ([The direct link](docs/network.md#the-direct-link)).
-  yamllint, which finds its files itself, checks it too.
+  versions, each named for its role. `/etc/ws/host_vars.yml`, on the machine alone: its own
+  values, such as the cable's port ([The direct link](docs/network.md#the-direct-link)).
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. Its

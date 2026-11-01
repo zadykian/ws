@@ -85,7 +85,8 @@ Arguments after `--` go to `ansible-playbook`: `ws server apply -- --tags NAME` 
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home. A cloud VM passes
 `-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). `-e` holds
-for one run: a value every run needs, as that one, goes in the untracked `host_vars/localhost.yml`.
+for one run: a value every run needs, as that one, goes in `/etc/ws/host_vars.yml`, which only
+root reads.
 
 ## Dry runs
 
