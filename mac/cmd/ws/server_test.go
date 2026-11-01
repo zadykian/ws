@@ -1,8 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"slices"
+	"strings"
 	"testing"
+	"testing/fstest"
+
+	"github.com/zadykian/ws/mac/internal/effect/effecttest"
 )
 
 func TestServerRefusal(t *testing.T) {
@@ -42,5 +48,45 @@ func TestServerApplyArgs(t *testing.T) {
 		if ok != tc.ok || !slices.Equal(got, tc.want) {
 			t.Errorf("serverApplyArgs(%q) = %q, %v, want %q, %v", tc.args, got, ok, tc.want, tc.ok)
 		}
+	}
+}
+
+func TestServerCommandRefusesOtherArgs(t *testing.T) {
+	for _, args := range [][]string{{"apply", "--check"}, {"other"}} {
+		var stdout, stderr bytes.Buffer
+		m := effecttest.NewMachine()
+		if got := serverCommand(context.Background(), args, 0, fstest.MapFS{}, "devel", m, &stdout, &stderr); got != 2 ||
+			!strings.Contains(stderr.String(), "usage: ws server COMMAND") {
+			t.Errorf("%q: status = %d, stderr = %q", args, got, stderr.String())
+		}
+	}
+}
+
+func TestServerCommandRefusesNonRoot(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	m := effecttest.NewMachine()
+	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
+	if got := serverCommand(context.Background(), []string{"apply"}, 1000, fstest.MapFS{}, "devel", m, &stdout, &stderr); got != 1 ||
+		!strings.Contains(stderr.String(), "run it as root") {
+		t.Errorf("status = %d, stderr = %q", got, stderr.String())
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "exec ") }) {
+		t.Errorf("calls = %q, want no exec", m.Calls)
+	}
+}
+
+func TestExecPlaybook(t *testing.T) {
+	m := effecttest.NewMachine()
+	if err := execPlaybook(m, "v1.2.3", []string{"--check", "-e", "@x.yml"}); err != nil {
+		t.Fatal(err)
+	}
+	d := "/var/lib/ws/v1.2.3"
+	want := "exec ansible-playbook -i " + d + "/inventory.ini " + d + "/site.yml --check -e @x.yml"
+	if !slices.Equal(m.Calls, []string{want}) {
+		t.Errorf("calls = %q, want %q", m.Calls, want)
+	}
+	wantEnv := []string{"LC_ALL=C.UTF-8", "ANSIBLE_CONFIG=" + d + "/ansible.cfg", "ANSIBLE_COLLECTIONS_PATH=" + d + "/collections"}
+	if len(m.ExecEnv) != 1 || !slices.Equal(m.ExecEnv[0], wantEnv) {
+		t.Errorf("env = %q, want %q", m.ExecEnv, wantEnv)
 	}
 }
