@@ -5,7 +5,7 @@
 set -eu
 
 sw_vers
-# setup.sh stops where a directory above root's copies isn't root's alone, as on a Mac whose
+# ws setup stops where a directory above root's copies isn't root's alone, as on a Mac whose
 # /usr/local an old Homebrew took. Where the runner's image gave /usr/local or its libexec to its
 # user, they become root's, as in mac.yml: their contents stay as they are.
 for dir in /usr/local /usr/local/libexec; do
@@ -21,8 +21,6 @@ done
 mkdir -p ~/.config/ws
 printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
     >~/.config/ws/mac.conf
-# dash, which macOS has as /bin/dash, from Homebrew where the runner lacks it.
-command -v dash >/dev/null || brew install dash
 # PATH as a shell that predates Homebrew has it, without the directories that hold brew, for the
 # cases that give it to the wizard.
 path=
@@ -163,13 +161,13 @@ sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
 cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
 touch "$ws/claude"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
-# stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws-tunnel has a
+# stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws tunnel has a
 # handshake, and lands in tunnel.log. Any other call is the runner's ssh.
 cat >/opt/homebrew/bin/ssh <<EOF
 #!/bin/sh
 case " \$* " in
 *' ws echo ok ')
-    sudo /usr/local/libexec/ws-tunnel/ws-tunnel status 2>/dev/null |
+    sudo /usr/local/libexec/ws-tunnel/ws tunnel status 2>/dev/null |
         grep -q '^latest handshake: [0-9]' ||
         { echo 'ssh: no handshake in the tunnel' >&2 && exit 255; }
     echo "\$*" >>'$ws/tunnel.log'
@@ -180,12 +178,12 @@ exec /usr/bin/ssh "\$@"
 EOF
 chmod 755 /opt/homebrew/bin/ssh
 # nc next, for the Tunnel stage's check of ws's SSH port through the tunnel, by its arguments. It
-# goes to the stand-in's sshd, by the runner's nc, where ws-tunnel has a handshake.
+# goes to the stand-in's sshd, by the runner's nc, where ws tunnel has a handshake.
 rm -f /opt/homebrew/bin/nc
 cat >/opt/homebrew/bin/nc <<'EOF'
 #!/bin/sh
 [ "$*" = '-z -G 3 -w 3 10.99.0.1 22' ] || exec /usr/bin/nc "$@"
-sudo /usr/local/libexec/ws-tunnel/ws-tunnel status 2>/dev/null |
+sudo /usr/local/libexec/ws-tunnel/ws tunnel status 2>/dev/null |
     grep -q '^latest handshake: [0-9]' && exec /usr/bin/nc -z -G 3 -w 3 127.0.0.1 22022
 EOF
 chmod 755 /opt/homebrew/bin/nc

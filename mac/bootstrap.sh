@@ -5,10 +5,13 @@
 #
 # It installs Apple's Command Line Tools through their dialog, and Homebrew from the Homebrew.pkg
 # pinned below. It clones the repository into ~/repository/ws, or leaves a clone there as it is,
-# which --update pulls. Then it runs the clone's mac/wizard.sh (docs/mac-wizard.md) with its own
-# arguments, given as `sh -s -- --check`, under which neither changes anything. A second run prints
-# nothing. caffeinate keeps the Mac from idle sleep while it runs.
+# which --update pulls. Then it runs the clone's ws wizard (docs/mac-wizard.md) with its own
+# arguments, given as `sh -s -- --check`, under which neither changes anything. Before the wizard it
+# builds ws, the Go CLI in mac/, into ~/.local/bin with the Go that tools/run pins. A second run
+# prints nothing. caffeinate keeps the Mac from idle sleep while it runs.
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
+
+# shellcheck source-path=SCRIPTDIR
 
 set -eu
 
@@ -19,10 +22,6 @@ brew_version=7.0.10
 brew_url=https://github.com/Homebrew/brew/releases/download/$brew_version/Homebrew.pkg
 brew_sha256=ae13b8b0ac910730d3e982a9e7518288d17fd0ad272e42f412027e8ab4555575
 brew_signer='Developer ID Installer: Patrick Linnane (927JGANW46)'
-# The wizard's stages, split by |, as mac/wizard.sh's main runs them, for --check without a clone.
-stages="Answers|Mac key|gh on the Mac|setup.sh|Host key|Root's key|ws's run|\
-Signing key|claude on ws|Tunnel|Hook on the Mac|Hook on ws|Word list|Cable"
-
 # say prints a message of bootstrap.sh's.
 say() {
     printf 'bootstrap.sh: %s\n' "$*" >&2
@@ -133,6 +132,22 @@ update() {
     fi
 }
 
+# build builds ws from the clone into ~/.local/bin, with the Go that tools/run downloads and checks
+# into the clone's .cache, without cgo. Once ws is there, it builds again silently, so that
+# --update's pull reaches the binary. Under --check, it says what it would do where ws is missing.
+build() {
+    bin=$HOME/.local/bin/ws
+    if [ ! -x "$bin" ]; then
+        would Ws "build ws into $bin with the Go that tools/run pins" && return 0
+        say "Ws: building ws into $bin"
+    elif [ "$check" = 1 ]; then
+        return 0
+    fi
+    # shellcheck source=build.sh
+    . "$dir/mac/build.sh"
+    ws_build "$dir" "$bin" || die "Ws: the build failed"
+}
+
 main() {
     # A shell started before Homebrew's install lacks /opt/homebrew/bin, so it goes first here.
     export PATH="/opt/homebrew/bin:$PATH"
@@ -144,13 +159,15 @@ main() {
     clt
     homebrew
     clone
+    # Under --check, the clone or its git may be missing, so that there is no ws to build or run.
     if [ ! -e "$dir/.git" ] || ! clt_done; then
-        # Under --check, the clone or its git is missing, so the wizard's stages wait for them.
-        echo "$stages" | tr '|' '\n' | sed 's/.*/wizard.sh: &: after Clone/' >&2
         return 0
     fi
-    [ -f "$dir/mac/wizard.sh" ] || die "Clone: $dir has no mac/wizard.sh: pull it first"
-    sh "$dir/mac/wizard.sh" "$@"
+    [ -f "$dir/mac/build.sh" ] || die "Clone: $dir has no mac/build.sh: pull it first"
+    build
+    # Under --check, ws is missing until the build, which the check only names.
+    [ -x "$bin" ] || return 0
+    WS_REPO=$dir "$bin" wizard "$@"
 }
 
 # Under curl | sh, stdin is the rest of this script, so main reads the terminal, or nothing where

@@ -22,10 +22,10 @@ set -u
 s=$WS_STANDIN
 
 # wg0 sets up ws's wg0 as the wireguard role does: its key, made once, whose public key goes in
-# wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of root's copy beside the
+# wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of the runner's, beside the
 # Mac's, on UDP 51820, as mac.yml's stand-in ws. It has no address in the tunnel.
 wg0() {
-    bin=/usr/local/libexec/ws-tunnel
+    bin=/opt/homebrew/bin
     [ -f "$s/ws.key" ] || (umask 077 && "$bin/wg" genkey >"$s/ws.key") || return 1
     "$bin/wg" pubkey <"$s/ws.key" >"$s/wg0" || return 1
     if [ ! -f "$s/utun" ] || ! "$bin/wg" show "$(cat "$s/utun")" >/dev/null 2>&1; then
@@ -111,7 +111,7 @@ bootstrap.sh)
 wg)
     # wg0's key, and with show wg0 peers the peers of wg0's wireguard-go.
     [ "$*" = 'show wg0 peers' ] || exec cat "$s/wg0" 2>/dev/null
-    /usr/local/libexec/ws-tunnel/wg show "$(cat "$s/utun")" peers
+    /opt/homebrew/bin/wg show "$(cat "$s/utun")" peers
     ;;
 claude)
     case $* in

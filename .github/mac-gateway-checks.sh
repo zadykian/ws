@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# The mac job's checks of mac/setup.sh's Gateway step, which needs no key. mac-setup-checks.sh
+# The mac job's checks of ws setup's Gateway step, which needs no key. mac-setup-checks.sh
 # sources them before git's, so that they run with its functions and the job's mac.conf. The job
 # made ~/Applications/JetBrains Gateway.app, an empty directory, which spares its runs the cask:
 # the cases take it away, and put it back as they end.
@@ -11,19 +11,13 @@ if [ -e "/Applications/$app" ] || ! rmdir ~/Applications/"$app"; then
     exit 1
 fi
 
-# A stand-in brew goes in $tmp/bin, first on PATH. It passes the three calls of setup.sh's tools to
-# the runner's brew, and logs any other. Of those, it takes the cask's list, which succeeds where
-# $tmp/cask is, and its install alone. The install makes $tmp/cask and an empty app in
-# ~/Applications. It fails with $tmp/cask.fail, and makes no app with $tmp/cask.none.
-brew=$(command -v brew)
+# A stand-in brew goes in $tmp/bin, first on PATH. It logs each call. Of those, it takes the cask's
+# list, which succeeds where $tmp/cask is, and its install alone. The install makes $tmp/cask and
+# an empty app in ~/Applications. It fails with $tmp/cask.fail, and makes no app with
+# $tmp/cask.none.
 : >"$tmp/cask.log"
 cat >"$tmp/bin/brew" <<EOF
 #!/bin/sh
-case \$* in
-'list --formula wireguard-tools' | '--prefix wireguard-tools' | '--prefix wireguard-go')
-    exec '$brew' "\$@"
-    ;;
-esac
 echo "\$*" >>'$tmp/cask.log'
 case \$* in
 'list --cask jetbrains-gateway') [ -f '$tmp/cask' ] ;;
@@ -53,9 +47,9 @@ brewed() {
 with
 list='list --cask jetbrains-gateway'
 install='install --cask jetbrains-gateway'
-prints "setup.sh: would run brew $install" --check
+prints "ws setup: would run brew $install" --check
 brewed "$list"
-prints 'setup.sh: installing jetbrains-gateway'
+prints 'ws setup: installing jetbrains-gateway'
 brewed "$list" "$install"
 prints ''
 prints '' --check
@@ -71,19 +65,19 @@ sudo rmdir "/Applications/$app"
 
 # A failed install, and one that leaves no app, must each draw a warning, and the run go on to the
 # tunnel. WS_PORT changes before each, so that the run ends with tunnel.conf's write and a SIGHUP.
-tunnel="setup.sh: wrote /etc/ws-tunnel/tunnel.conf${nl}setup.sh: ran launchctl kill SIGHUP\
+tunnel="ws setup: wrote /etc/ws-tunnel/tunnel.conf${nl}ws setup: ran launchctl kill SIGHUP\
  system/$LABEL"
-kept="setup.sh: warning: Homebrew has the cask jetbrains-gateway, but no $app is in /Applications\
+kept="ws setup: warning: Homebrew has the cask jetbrains-gateway, but no $app is in /Applications\
  or ~/Applications: brew reinstall --cask jetbrains-gateway puts it in /Applications, unless\
  HOMEBREW_CASK_OPTS names another --appdir"
 rm "$tmp/cask"
 touch "$tmp/cask.fail"
 with WS_PORT=51821
-prints "setup.sh: installing jetbrains-gateway${nl}Error: the stand-in fails${nl}setup.sh: warning:\
+prints "ws setup: installing jetbrains-gateway${nl}Error: the stand-in fails${nl}ws setup: warning:\
  brew $install failed, so the Mac has no JetBrains Gateway: the next run tries again$nl$tunnel"
 mv "$tmp/cask.fail" "$tmp/cask.none"
 with
-prints "setup.sh: installing jetbrains-gateway$nl$kept$nl$tunnel"
+prints "ws setup: installing jetbrains-gateway$nl$kept$nl$tunnel"
 brewed "$list" "$install" "$list" "$install"
 
 # Homebrew has the cask now, without its app. A run must warn and go on to the tunnel, and --check

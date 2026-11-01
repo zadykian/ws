@@ -6,16 +6,16 @@
 #   sh .github/mac-cld-checks.sh watch LOG
 #   sh .github/mac-cld-checks.sh quiet
 #
-# lines: ssh -G gives ws and ws-ssh setup-cld.sh's two lines, with yes, or neither, with no. watch:
+# lines: ssh -G gives ws and ws-ssh the two lines of ws setup ssh, with yes, or neither, with no. watch:
 # ssh -G ws's LocalCommand, run by zsh and by sh as ssh runs it, must start the watcher in a
 # Ghostty pane alone. The job's stub cld writes a line to LOG at each start. Elsewhere, and without
-# cld, the line must start none and exit 0. quiet: mac/setup.sh, and its --check, must print
+# cld, the line must start none and exit 0. quiet: ws setup, and its --check, must print
 # nothing. Each failure is an ::error::, and the status 1.
 
 set -u
 
 fail=0
-# The LocalCommand that setup-cld.sh writes, as ssh -G prints it.
+# The LocalCommand that ws setup ssh writes, as ssh -G prints it.
 # shellcheck disable=SC2016 # the line's $TERM_PROGRAM is for the shell that ssh runs
 want='[ "$TERM_PROGRAM" != ghostty ] || [ ! -x %d/.local/bin/cld ] ||'
 want="$want %d/.local/bin/cld restore tabs --watch"
@@ -84,13 +84,13 @@ watch() {
     rmdir "$empty"
 }
 
-# quiet runs mac/setup.sh, then mac/setup.sh --check, each of which must print nothing.
+# quiet runs ws setup, then ws setup --check, each of which must print nothing.
 quiet() {
     for args in '' --check; do
-        if ! out=$(sh mac/setup.sh ${args:+"$args"} 2>&1); then
-            error "setup.sh${args:+ $args} failed:"
+        if ! out=$(ws setup ${args:+"$args"} 2>&1); then
+            error "ws setup${args:+ $args} failed:"
         elif [ -n "$out" ]; then
-            error "setup.sh${args:+ $args} printed what it should not:"
+            error "ws setup${args:+ $args} printed what it should not:"
         else
             continue
         fi

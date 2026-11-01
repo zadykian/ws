@@ -59,7 +59,7 @@ the Mac's display, if any:
 To move `mac.conf` to another target, set `WS_TARGET`, and remove every key of ws's ways: `WS_LAN`,
 `WS_LAN_ADDRESS`, `WS_REMOTE`, `WS_REMOTE_PORT`, `WS_CABLE_SERVICE` and `WS_CABLE_PORT`. An old way
 would lead to the old machine still. From the LAN to a cloud VM, the router's `WS_REMOTE` would, and
-the cloud VM's run would turn that machine's outbound table off. `setup.sh` refuses a key of another
+the cloud VM's run would turn that machine's outbound table off. `ws setup` refuses a key of another
 target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the Mac, and `WS_CABLE_SERVICE` or
 `WS_CABLE_PORT` off the LAN. Then run the wizard, which asks the new target's ways. A new machine
 offers another host key, so run `ssh-keygen -R ws` first. From a cloud VM, remove

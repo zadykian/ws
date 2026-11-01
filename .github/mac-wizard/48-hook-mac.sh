@@ -17,7 +17,7 @@
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 conf=$HOME/.config/ws/mac.conf
 ws=$RUNNER_TEMP/ws
 clone=$HOME/repository/hook
@@ -36,7 +36,7 @@ error() {
 # wizard [ARG]: a run of the wizard with no terminal, git's global config the file GIT_CONFIG_GLOBAL
 # names. It prints the output, and sets out and status.
 wizard() {
-    out=$(GIT_CONFIG_GLOBAL=$RUNNER_TEMP/gitconfig sh "$wizard" "$@" </dev/null 2>&1)
+    out=$(GIT_CONFIG_GLOBAL=$RUNNER_TEMP/gitconfig "$wsbin" wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
@@ -61,13 +61,13 @@ leaked() {
 # fetch, print and change none of the list, and leave the link.
 linked() {
     wizard "$@"
-    [ "$status" = 1 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Word list: \
+    [ "$status" = 1 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "ws wizard: Word list: \
 $mine is a link to $RUNNER_TEMP/words, which the wizard leaves, and ws's word list differs: \
 remove the link, or copy root's ~/.config/ws/forbidden-words on ws to that file, then run the \
 wizard again" &&
         [ -L "$mine" ] && [ "$(tail -n 1 "$mine")" = other-word ] &&
         [ "$(copies)" = $((copied + 1)) ] ||
-        error "wizard.sh $* with the Mac's list a link exited $status, or replaced it"
+        error "ws wizard $* with the Mac's list a link exited $status, or replaced it"
 }
 
 cp "$conf" "$before"
@@ -78,28 +78,28 @@ copied=$(copies)
 sudo mkdir -p "${list%/*}"
 printf '%s\n' '# stand-in words' example-word 'stand-in phrase' | sudo tee "$list" >/dev/null
 wizard --check
-[ "$status" = 0 ] && printf '%s\n' "$out" | grep -qx 'wizard\.sh: Word list: after Hook on ws' &&
-    printf '%s\n' "$out" | grep -qF "wizard.sh: Hook on the Mac: would run gh repo clone \
+[ "$status" = 0 ] && printf '%s\n' "$out" | grep -qx 'ws wizard: Word list: after Hook on ws' &&
+    printf '%s\n' "$out" | grep -qF "ws wizard: Hook on the Mac: would run gh repo clone \
 example/hook $clone, then " && [ ! -e "$clone" ] ||
-    error "wizard.sh --check exited $status, or cloned"
+    error "ws wizard --check exited $status, or cloned"
 wizard
 [ "$status" = 0 ] && ! printf '%s\n' "$out" | grep -q 'running brew bundle' &&
     [ "$(git -C "$clone" config core.hooksPath)" = "$clone/.githooks" ] &&
     [ "$(clones)" = $((cloned + 1)) ] ||
-    error "wizard.sh exited $status, or cloned other than once, or set no core.hooksPath"
+    error "ws wizard exited $status, or cloned other than once, or set no core.hooksPath"
 printf '%s\n' "$out" | grep -qxF -e "$setup (docs/mac-git.md)." ||
-    error 'wizard.sh named no gh auth setup-git by hand'
+    error 'ws wizard named no gh auth setup-git by hand'
 cmp -s "$list" "$mine" && [ "$(stat -f %Lp "$mine")" = 600 ] && ! leaked &&
     [ "$(copies)" = $((copied + 1)) ] ||
-    error "wizard.sh copied ws's word list other than once, mode 600, or printed it"
+    error "ws wizard copied ws's word list other than once, mode 600, or printed it"
 wizard
 [ "$status" = 0 ] && [ -z "$out" ] && [ "$(clones)" = $((cloned + 1)) ] &&
     [ "$(copies)" = $((copied + 1)) ] || error "the next run exited $status, cloned, or copied"
 echo other-word >>"$mine"
 wizard --check
-[ "$status" = 0 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "wizard.sh: Word list: \
+[ "$status" = 0 ] && ! leaked && printf '%s\n' "$out" | grep -qxF "ws wizard: Word list: \
 would copy ws's word list to $mine, mode 600" && [ "$(tail -n 1 "$mine")" = other-word ] ||
-    error "wizard.sh --check with the Mac's list changed exited $status, or copied it"
+    error "ws wizard --check with the Mac's list changed exited $status, or copied it"
 mv "$mine" "$RUNNER_TEMP/words"
 ln -s "$RUNNER_TEMP/words" "$mine"
 linked --check
@@ -112,15 +112,15 @@ git config -f "$RUNNER_TEMP/gitconfig" credential.https://github.com.helper \
 wizard
 [ "$status" = 0 ] && ! printf '%s\n' "$out" | grep -qF -e "$setup" &&
     [ "$(git -C "$clone" config core.hooksPath)" = "$clone/.githooks" ] ||
-    error "wizard.sh with gh's credential command exited $status, set no core.hooksPath, or" \
+    error "ws wizard with gh's credential command exited $status, set no core.hooksPath, or" \
         "named gh auth setup-git"
 cmp -s "$list" "$mine" && [ "$(copies)" = $((copied + 2)) ] ||
-    error "wizard.sh copied no word list again"
+    error "ws wizard copied no word list again"
 rm -rf "$clone"
 wizard --check
 [ "$status" = 0 ] && printf '%s\n' "$out" |
-    grep -qF "wizard.sh: Hook on the Mac: would run gh repo clone example/hook $clone, then " &&
-    [ ! -e "$clone" ] || error "wizard.sh --check without the Mac's clone exited $status, or cloned"
+    grep -qF "ws wizard: Hook on the Mac: would run gh repo clone example/hook $clone, then " &&
+    [ ! -e "$clone" ] || error "ws wizard --check without the Mac's clone exited $status, or cloned"
 
 cp "$before" "$conf"
 rm -f "$mine"
@@ -128,5 +128,5 @@ sudo rm -rf "$ws/root/root/repository/hook" "$ws/root/var/lib/ws-wizard/hook-hoo
     "$ws/root/root/.config"
 rm -f "$ws/apply.log" "$before" "$RUNNER_TEMP/gitconfig"
 wizard
-[ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status"
+[ "$status" = 0 ] && [ -z "$out" ] || error "ws wizard after it exited $status"
 exit "$fail"

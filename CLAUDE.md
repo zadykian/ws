@@ -19,8 +19,8 @@ The rest is the docs, the lint gates' tools and CI.
   yamllint, which finds its files itself, checks it too.
   `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
   Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
-- `mac/`: the Mac's side, POSIX sh run on the Mac, and `ws.ghostty`, Ghostty's settings
-  ([The Mac](docs/mac.md)).
+- `mac/`: the Mac's side: the ws CLI in Go, with `bootstrap.sh` and the wizard's scripts for ws in
+  POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `mac.md`, with `mac-git.md`, `mac-wizard.md`, `mac-targets.md` and
   `mac-ghostty.md`; `router.md` and `checks.md`; `helix-keymap.md`, the index of the keymap's pages
   in `docs/helix-keymap/`.
@@ -28,9 +28,10 @@ The rest is the docs, the lint gates' tools and CI.
   caps them.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook` and `signoz`; `mac.yml`, with
-  `mac`; `mac-cld.yml`, with `mac-cld`; `mac-wizard.yml`, with `mac-wizard`, whose cases are
-  `.github/mac-wizard/NN-*.sh`; `rules.yml`, the checks of zadykian/toolkit on a pull request; and
-  `issues.yml`, its check of an issue. The toolkit's checks warn alone.
+  `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`; `mac-wizard.yml`,
+  with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`, the checks of
+  zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The toolkit's checks
+  warn alone.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
 
@@ -41,10 +42,12 @@ make lint                         # every gate, as CI's lint job runs it; -k goe
 make vale FILES=README.md         # one gate alone; the gates that check files take FILES
 make ansible-lint FILES=roles/base/tasks/main.yml   # this file alone: no syntax check of site.yml
 make shell                        # ShellCheck and shfmt -d -i 4 on every shell script
+make gotest                       # the Go gates run in mac/, the module; so do govet and gofmt
 ```
 
 The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, `lychee`, `rumdl`,
-`actionlint`, `zizmor` and `gitleaks` ([Checks](docs/checks.md#make-lint)). `make lint`
+`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
+([The gates](docs/gates.md)). `make lint`
 needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
 collections into `.cache`, and `tools/run` downloads the rest there.
 
@@ -111,7 +114,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   print the list or a word of it, and never pass `--no-verify`
   ([The hooks](docs/checks.md#the-hooks)).
 - `make lint` fails on any finding, warnings included, in any line of any file
-  ([make lint](docs/checks.md#make-lint); #47).
+  ([The gates](docs/gates.md); #47).
 - Fix a finding, or justify it in place with its linter's own mechanism and a reason: ruff's and
   ansible-lint's `# noqa: CODE`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
@@ -129,9 +132,10 @@ skill. Commits are signed, as the ruleset on `main` requires.
 
 ## Where else to look
 
-- `.claude/rules/`: the roles' invariants in [roles.md](.claude/rules/roles.md), what each document
-  holds in [docs.md](.claude/rules/docs.md), and ws's facts beside the `writing` skill in
-  [writing.md](.claude/rules/writing.md), loaded with the files they cover.
+- `.claude/rules/`, loaded with the files they cover. [roles.md](.claude/rules/roles.md) has the
+  roles' invariants and [mac.md](.claude/rules/mac.md) the ws CLI's.
+  [docs.md](.claude/rules/docs.md) says what each document holds. [writing.md](.claude/rules/writing.md)
+  has ws's facts beside the `writing` skill.
 - Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
   hand only; `docs`, with `/docs:trim`; `lint`, with `/lint:split-file`; and `lean`, with

@@ -6,7 +6,7 @@
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 ws=$RUNNER_TEMP/ws
 fail=0
 
@@ -16,18 +16,18 @@ error() {
     fail=1
 }
 
-# expect STAGE STATUS WANT ARG...: wizard.sh ARGs, with no terminal, must exit STATUS, with WANT in
+# expect STAGE STATUS WANT ARG...: ws wizard ARGs, with no terminal, must exit STATUS, with WANT in
 # its lines of STAGE.
 expect() {
     stage=$1
     want_status=$2
     want=$3
     shift 3
-    out=$(sh "$wizard" "$@" </dev/null 2>&1)
+    out=$("$wsbin" wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
-    printf '%s\n' "$out" | grep "^wizard\.sh: $stage: " | grep -qF -e "$want" &&
-        [ "$status" = "$want_status" ] || error "wizard.sh $* exited $status, with no '$want'"
+    printf '%s\n' "$out" | grep "^ws wizard: $stage: " | grep -qF -e "$want" &&
+        [ "$status" = "$want_status" ] || error "ws wizard $* exited $status, with no '$want'"
 }
 
 # sessions: no session on ws may have run a login.
@@ -42,7 +42,7 @@ expect 'claude on ws' 1 'no terminal is there for claude auth login'
 expect 'claude on ws' 0 'would run claude auth login as root on ws' --check
 touch "$ws/claude"
 sessions
-out=$(sh "$wizard" </dev/null 2>&1)
+out=$("$wsbin" wizard </dev/null 2>&1)
 status=$?
-[ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status: '$out'"
+[ "$status" = 0 ] && [ -z "$out" ] || error "ws wizard after it exited $status: '$out'"
 exit "$fail"

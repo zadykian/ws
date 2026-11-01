@@ -5,8 +5,11 @@
 # The wizard it runs prints nothing, so a second run and --check must print nothing at all. Where
 # WS_CONF names no file, the wizard under bootstrap.sh's --check must show the lines it would write
 # there, from the environment's answers. Writing none shows that --check reached it. In a home
-# without a clone, --check must list the clone and wizard.sh's stages, and make nothing outside
-# macOS's Library.
+# without a clone, --check must name the clone, and make nothing outside
+# macOS's Library. The first run builds ws into ~/.local/bin, and tools/run's download of Go, which
+# the log shows, is not counted in what it prints. The workflow built ws there, so
+# the case removes it first, as on a Mac that has none. --check then names the build, and runs no
+# wizard.
 
 set -u
 
@@ -28,6 +31,7 @@ boot() {
     shift
     out=$(PATH=$path sh -s -- "$@" <"$bootstrap" 2>&1)
     status=$?
+    out=$(printf '%s\n' "$out" | grep -v '^tools/run: downloading ')
     printf '%s\n' "$out"
     [ "$status" = 0 ] || error "bootstrap.sh $* exited $status"
     [ "$out" = "$want" ] || error "bootstrap.sh $* printed other than '$want'"
@@ -42,8 +46,13 @@ out=$(sh -s -- --bogus <"$bootstrap" 2>&1)
 status=$?
 [ "$status" = 1 ] && [ "$out" = "bootstrap.sh: unknown argument '--bogus'; usage: bootstrap.sh \
 [--check] [--update]" ] || error "bootstrap.sh --bogus exited $status, printing '$out'"
-boot "bootstrap.sh: Clone: would set core.hooksPath to $clone/.githooks" --check
-boot "bootstrap.sh: Clone: set core.hooksPath to $clone/.githooks"
+ws=$HOME/.local/bin/ws
+rm -f "$ws"
+boot "bootstrap.sh: Clone: would set core.hooksPath to $clone/.githooks
+bootstrap.sh: Ws: would build ws into $ws with the Go that tools/run pins" --check
+[ ! -e "$ws" ] || error 'bootstrap.sh --check built ws'
+boot "bootstrap.sh: Clone: set core.hooksPath to $clone/.githooks
+bootstrap.sh: Ws: building ws into $ws"
 [ "$(git -C "$clone" config core.hooksPath)" = "$clone/.githooks" ] ||
     error 'bootstrap.sh set no core.hooksPath'
 boot ''
@@ -61,13 +70,9 @@ printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
 [ ! -e "$conf" ] || error "bootstrap.sh --check let the wizard write $conf"
 rm -f "$conf"
 
-# The wizard's stages, as its main runs them, by name, in quotes where they hold a blank.
+# Without a clone, --check names the clone alone: there is no ws to run.
 home=$(mktemp -d "$RUNNER_TEMP/home.XXXXXX")
-want=$(
-    echo "bootstrap.sh: Clone: would clone https://github.com/zadykian/ws into $home/repository/ws"
-    sed -n -e 's/^    stage "\(.*\)" [a-z_]*$/\1/p' -e 's/^    stage \([^ "]*\) [a-z_]*$/\1/p' \
-        "$clone/mac/wizard.sh" | sed 's/.*/wizard.sh: &: after Clone/'
-)
+want="bootstrap.sh: Clone: would clone https://github.com/zadykian/ws into $home/repository/ws"
 out=$(HOME=$home PATH=$path sh -s -- --check <"$bootstrap" 2>&1)
 status=$?
 printf '%s\n' "$out"

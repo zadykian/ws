@@ -6,7 +6,7 @@
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 lock=${TMPDIR:-/tmp}
 lock=${lock%/}/ws-wizard.lock
 fail=0
@@ -28,17 +28,17 @@ refused() {
     fi
 }
 
-[ "$(sh "$wizard" -h)" = 'usage: wizard.sh [--check] [--update]' ] || error 'no usage from -h'
-refused "unknown argument '--bogus'" sh "$wizard" --bogus
-refused 'run it as yourself, not root' sudo sh "$wizard" --check
+[ "$("$wsbin" wizard -h)" = 'usage: ws wizard [--check] [--update]' ] || error 'no usage from -h'
+refused "unknown argument '--bogus'" "$wsbin" wizard --bogus
+refused 'run it as yourself, not root' sudo "$wsbin" wizard --check
 mkdir "$lock"
-refused "another run holds $lock" sh "$wizard" --check
+refused "another run holds $lock" "$wsbin" wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
 echo WS_HOOK=example/Ws >"$RUNNER_TEMP/refuse.conf"
 refused 'line 1: WS_HOOK=example/Ws is not a repository on GitHub' \
-    env WS_CONF="$RUNNER_TEMP/refuse.conf" sh "$wizard" --check
+    env WS_CONF="$RUNNER_TEMP/refuse.conf" "$wsbin" wizard --check
 rm "$RUNNER_TEMP/refuse.conf"
 refused "'example/WS' is not a repository on GitHub" \
-    sudo sh "${wizard%/*}/wizard-remote-files.sh" clone example/WS
+    sudo sh "$HOME/repository/ws/mac/wizard-remote-files.sh" clone example/WS
 exit "$fail"

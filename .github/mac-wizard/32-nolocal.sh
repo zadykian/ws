@@ -5,7 +5,7 @@
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 marker=$RUNNER_TEMP/localcommand
 fail=0
 
@@ -21,11 +21,11 @@ if [ ! -e "$marker" ]; then
     fail=1
 fi
 rm -f "$marker"
-out=$(sh "$wizard" </dev/null 2>&1)
+out=$("$wsbin" wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 if [ "$status" != 0 ]; then
-    echo "::error::wizard.sh exited $status"
+    echo "::error::ws wizard exited $status"
     fail=1
 fi
 if [ -e "$marker" ]; then

@@ -6,7 +6,7 @@
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 ws=$RUNNER_TEMP/ws
 fail=0
 
@@ -24,21 +24,21 @@ if [ -e /usr/local/bin/claude ]; then
 fi
 sudo ln -s "$(cd "$(dirname "$0")" && pwd)/ws-standin.sh" /usr/local/bin/claude
 rm "$ws/claude"
-sh "$wizard" </dev/null >/dev/null 2>&1
+"$wsbin" wizard </dev/null >/dev/null 2>&1
 lines=$(wc -l <"$ws/log")
 # script gives the wizard a terminal of its own, which the session of ssh -t takes.
-{ sleep 5; } | script -q /dev/null sh "$wizard" >"$RUNNER_TEMP/tty" 2>&1
+{ sleep 5; } | script -q /dev/null "$wsbin" wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 tail -n "+$((lines + 1))" "$ws/log" | tee "$RUNNER_TEMP/sessions"
-[ "$status" = 0 ] || error "wizard.sh at a terminal exited $status"
+[ "$status" = 0 ] || error "ws wizard at a terminal exited $status"
 grep -qxF 'root: exec bash -lc "claude auth login"' "$RUNNER_TEMP/sessions" ||
     error "no session on ws ran claude auth login"
 grep -qF 'What stays by hand:' "$RUNNER_TEMP/tty" && [ -f "$ws/claude" ] ||
-    error "wizard.sh left claude logged out on ws, or listed nothing by hand"
+    error "ws wizard left claude logged out on ws, or listed nothing by hand"
 rm -f "$RUNNER_TEMP/sessions"
 sudo rm /usr/local/bin/claude
-out=$(sh "$wizard" </dev/null 2>&1)
+out=$("$wsbin" wizard </dev/null 2>&1)
 status=$?
-[ "$status" = 0 ] && [ -z "$out" ] || error "wizard.sh after it exited $status: '$out'"
+[ "$status" = 0 ] && [ -z "$out" ] || error "ws wizard after it exited $status: '$out'"
 exit "$fail"

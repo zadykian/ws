@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# The mac job's checks of mac/setup.sh's git step, which mac-setup-checks.sh sources last, so that
+# The mac job's checks of ws setup's git step, which mac-setup-checks.sh sources last, so that
 # they run with its functions and the job's mac.conf. The runner must lack the files the step
 # writes, but ~/.gitconfig, which goes aside. As the script exits, on a signal too, the files go,
 # and the runner's ~/.gitconfig comes back.
@@ -32,7 +32,7 @@ if [ -n "$found" ]; then
 fi
 # The job's runs before these had no git keys, so they must have left ~/.gitconfig alone.
 ! grep -qs config/ws/gitconfig ~/.gitconfig ||
-    error "setup.sh included ~/.config/ws/gitconfig in ~/.gitconfig without git's keys"
+    error "ws setup included ~/.config/ws/gitconfig in ~/.gitconfig without git's keys"
 trap 'git_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
 [ ! -f ~/.gitconfig ] || mv ~/.gitconfig "$tmp/gitconfig"
 gitconfig_aside=1
@@ -51,15 +51,15 @@ signed() {
         error "git log shows '$got' for the commit"
 }
 
-# warned PUB prints setup.sh's warning that gh, logged out, cannot register the key PUB.
+# warned PUB prints ws setup's warning that gh, logged out, cannot register the key PUB.
 warned() {
-    echo "setup.sh: warning: gh has no login: gh auth login -h github.com -s" \
+    echo "ws setup: warning: gh has no login: gh auth login -h github.com -s" \
         "write:ssh_signing_key logs in. Until a later run adds $1, GitHub shows the commits it" \
         "signs as unverified"
 }
 
 # A stand-in gh goes in $tmp/bin, first on PATH, logged in while $tmp/login is there. It logs each
-# call, and lists and adds the account's signing keys in $tmp/keys, for setup.sh's commands alone.
+# call, and lists and adds the account's signing keys in $tmp/keys, for ws setup's commands alone.
 # With $tmp/error, it fails with that text; with $tmp/lost, an add keeps no key.
 : >"$tmp/keys"
 touch "$tmp/login"
@@ -92,17 +92,17 @@ fi
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 title=$(hostname -s)
 add="gh ssh-key add $key.pub --type signing --title $title"
-setup --check || error "setup.sh --check failed: $out"
+setup --check || error "ws setup --check failed: $out"
 case $out in
-"setup.sh: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*"\
-${nl}setup.sh: would run $add once the key is made") ;;
-*) error "setup.sh --check showed no key, gitconfig or add: $out" ;;
+"ws setup: would make git's signing key, $key$nl"*"$nl+++ $files/gitconfig$nl"*"\
+${nl}ws setup: would run $add once the key is made") ;;
+*) error "ws setup --check showed no key, gitconfig or add: $out" ;;
 esac
 for each in "$key" "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig; do
-    [ ! -e "$each" ] || error "setup.sh --check made $each"
+    [ ! -e "$each" ] || error "ws setup --check made $each"
 done
-prints "setup.sh: made git's signing key, $key${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran $add"
+prints "ws setup: made git's signing key, $key${nl}ws setup: wrote $files/allowed_signers${nl}\
+ws setup: wrote $files/gitconfig${nl}ws setup: wrote $HOME/.gitconfig${nl}ws setup: ran $add"
 prints ''
 prints '' --check
 ssh-keygen -y -P '' -f "$key" | grep -q '^ssh-ed25519 ' ||
@@ -113,7 +113,7 @@ for host in github.com gist.github.com; do
         error "git's credential command for $host is not gh's"
 done
 signed
-own_warning="setup.sh: warning: $HOME/.gitconfig's own settings of user.email, user.name,"
+own_warning="ws setup: warning: $HOME/.gitconfig's own settings of user.email, user.name,"
 own_warning="$own_warning commit.gpgsign, below the include, win over ~/.config/ws/gitconfig's"
 # A ~/.gitconfig of the user's own must get the include at its top, once, and keep the old file and
 # its mode. Its own settings of identity and signing, which win, must be named in its order.
@@ -122,76 +122,76 @@ printf '[user]\n\temail = someone@example.com\n\tname = someone\n[commit]\n\tgpg
     >~/.gitconfig
 chmod 600 ~/.gitconfig
 cp ~/.gitconfig "$tmp/own"
-setup --check || error "setup.sh --check failed: $out"
+setup --check || error "ws setup --check failed: $out"
 case $out in
 "--- $HOME/.gitconfig$nl"*"$nl+[include]$nl"*"$nl$own_warning") ;;
-*) error "setup.sh --check printed '$out' for a ~/.gitconfig of its own" ;;
+*) error "ws setup --check printed '$out' for a ~/.gitconfig of its own" ;;
 esac
 cmp -s ~/.gitconfig "$tmp/own" && [ "$(echo ~/.gitconfig.*~)" = "$HOME/.gitconfig.*~" ] ||
-    error "setup.sh --check changed ~/.gitconfig, or kept a copy"
-setup || error "setup.sh failed: $out"
+    error "ws setup --check changed ~/.gitconfig, or kept a copy"
+setup || error "ws setup failed: $out"
 case $out in
-"setup.sh: kept the old $HOME/.gitconfig as $HOME/.gitconfig."*"~${nl}setup.sh: wrote $HOME/\
+"ws setup: kept the old $HOME/.gitconfig as $HOME/.gitconfig."*"~${nl}ws setup: wrote $HOME/\
 .gitconfig$nl$own_warning") ;;
-*) error "setup.sh printed '$out' for a ~/.gitconfig of its own" ;;
+*) error "ws setup printed '$out' for a ~/.gitconfig of its own" ;;
 esac
 prints ''
 [ "$(git config --file ~/.gitconfig --get-all include.path)" = \~/.config/ws/gitconfig ] ||
-    error "setup.sh left ~/.gitconfig with includes other than one of ~/.config/ws/gitconfig"
-tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "setup.sh lost ~/.gitconfig's own lines"
-[ -n "$(find ~/.gitconfig -perm 600)" ] || error "setup.sh changed ~/.gitconfig's mode 600"
+    error "ws setup left ~/.gitconfig with includes other than one of ~/.config/ws/gitconfig"
+tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "ws setup lost ~/.gitconfig's own lines"
+[ -n "$(find ~/.gitconfig -perm 600)" ] || error "ws setup changed ~/.gitconfig's mode 600"
 # An include by a path from the home must pass too. One below the file's own settings, or one at the
-# top and again below them, must stop setup.sh, as must a link that lacks the include. Each must
+# top and again below them, must stop ws setup, as must a link that lacks the include. Each must
 # stop before the step acts: with the key moved aside and another name, the step would make a key
 # and write gitconfig. The link must stay one, and once its file has the include at its top,
-# setup.sh must take it.
+# ws setup must take it.
 printf '[include]\n\tpath = .config/ws/gitconfig\n' >~/.gitconfig
 prints ''
 with 'WS_GIT_NAME="ws stand-in #2"' WS_GIT_EMAIL=ws@example.com
 mv "$key" "$key.pub" "$tmp"
 printf '[user]\n\tname = someone\n[include]\n\tpath = ~/.config/ws/gitconfig\n' >~/.gitconfig
-stops "setup.sh: $HOME/.gitconfig includes ~/.config/ws/gitconfig below its own settings"
+stops "ws setup: $HOME/.gitconfig includes ~/.config/ws/gitconfig below its own settings"
 printf '[include]\n\tpath = %s\n[user]\n\tname = someone\n[include]\n\tpath = %s\n' \
     \~/.config/ws/gitconfig .config/ws/gitconfig >~/.gitconfig
-stops "setup.sh: $HOME/.gitconfig includes ~/.config/ws/gitconfig 2 times: keep the one at the top"
+stops "ws setup: $HOME/.gitconfig includes ~/.config/ws/gitconfig 2 times: keep the one at the top"
 printf '[user]\n\tname = someone\n' >"$tmp/linked"
 rm ~/.gitconfig
 ln -s "$tmp/linked" ~/.gitconfig
-stops "setup.sh: $HOME/.gitconfig is a link to $tmp/linked: put"
+stops "ws setup: $HOME/.gitconfig is a link to $tmp/linked: put"
 mv "$tmp/id_ed25519_signing" "$tmp/id_ed25519_signing.pub" ~/.ssh
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 printf '[include]\n\tpath = ~/.config/ws/gitconfig\n[user]\n\tname = someone\n' >"$tmp/linked"
 prints ''
-[ -L ~/.gitconfig ] || error "setup.sh replaced the link ~/.gitconfig"
+[ -L ~/.gitconfig ] || error "ws setup replaced the link ~/.gitconfig"
 rm ~/.gitconfig
-# git reads its XDG file before ~/.gitconfig, so ws's settings win over that file's: setup.sh must
+# git reads its XDG file before ~/.gitconfig, so ws's settings win over that file's: ws setup must
 # name those of identity and signing as it makes ~/.gitconfig.
 mkdir -p "$tmp/xdg/git"
 printf '[user]\n\temail = someone@example.com\n' >"$tmp/xdg/git/config"
-prints "setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: warning: $tmp/xdg/git/config's settings of\
+prints "ws setup: wrote $HOME/.gitconfig${nl}ws setup: warning: $tmp/xdg/git/config's settings of\
  user.email come before the include in ~/.gitconfig, so ~/.config/ws/gitconfig's win over them"
 rm "$tmp/xdg/git/config" ~/.gitconfig
-# A WS_GIT_SIGNING_KEY that is missing must stop setup.sh, as must a .pub that holds more than a
+# A WS_GIT_SIGNING_KEY that is missing must stop ws setup, as must a .pub that holds more than a
 # public key's line, as a private key does. So must the default key's .pub alone, which a new key
 # would replace, and its private key alone.
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws.pub'
-stops "setup.sh: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_KEY, is missing"
+stops "ws setup: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_KEY=$tmp/mixed.pub"
-stops "setup.sh: $tmp/mixed.pub holds no public key alone"
+stops "ws setup: $tmp/mixed.pub holds no public key alone"
 # So must one it cannot read, where the user cannot, as on the runner: root reads it.
 cp "$key.pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
 if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
     with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com \
         "WS_GIT_SIGNING_KEY=$tmp/unread-git.pub"
-    stops "setup.sh: cannot read $tmp/unread-git.pub"
+    stops "ws setup: cannot read $tmp/unread-git.pub"
 fi
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com
 mv "$key" "$tmp/signing"
-stops "setup.sh: $key.pub is there without its private key"
+stops "ws setup: $key.pub is there without its private key"
 mv "$tmp/signing" "$key"
 mv "$key.pub" "$tmp/signing.pub"
-stops "setup.sh: $key.pub is missing beside its key"
+stops "ws setup: $key.pub is missing beside its key"
 mv "$tmp/signing.pub" "$key.pub"
 
 # A key of Secretive's, a P-256 key that an agent at Secretive's socket holds, its .pub among
@@ -208,14 +208,14 @@ fi
 rm "$tmp/p256"
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com \
     "WS_GIT_SIGNING_KEY=~/${secretive#"$HOME/"}/Data/PublicKeys/ws.pub"
-setup --check || error "setup.sh --check failed: $out"
+setup --check || error "ws setup --check failed: $out"
 case $out in
 *"+++ $files/secretive-ssh-keygen$nl"*"$nl+    program = \"$files/secretive-ssh-keygen\""*) ;;
-*) error "setup.sh --check showed no wrapper, or no gpg.ssh.program: $out" ;;
+*) error "ws setup --check showed no wrapper, or no gpg.ssh.program: $out" ;;
 esac
-[ ! -e "$files/secretive-ssh-keygen" ] || error "setup.sh --check wrote $files/secretive-ssh-keygen"
-prints "setup.sh: wrote $files/secretive-ssh-keygen${nl}setup.sh: wrote $files/allowed_signers${nl}\
-setup.sh: wrote $files/gitconfig${nl}setup.sh: wrote $HOME/.gitconfig${nl}setup.sh: ran gh ssh-key\
+[ ! -e "$files/secretive-ssh-keygen" ] || error "ws setup --check wrote $files/secretive-ssh-keygen"
+prints "ws setup: wrote $files/secretive-ssh-keygen${nl}ws setup: wrote $files/allowed_signers${nl}\
+ws setup: wrote $files/gitconfig${nl}ws setup: wrote $HOME/.gitconfig${nl}ws setup: ran gh ssh-key\
  add $secretive/Data/PublicKeys/ws.pub --type signing --title $title"
 prints ''
 prints '' --check
@@ -237,31 +237,31 @@ rm -rf "$secretive"
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
 rm "$tmp/login"
 warning=$(warned "$key.pub")
-prints "setup.sh: wrote $files/allowed_signers${nl}setup.sh: wrote $files/gitconfig$nl$warning"
+prints "ws setup: wrote $files/allowed_signers${nl}ws setup: wrote $files/gitconfig$nl$warning"
 prints "$warning"
 prints "$warning" --check
 touch "$tmp/login"
 until="Until a later run adds $key.pub, GitHub shows the commits it signs as unverified"
 printf '%s\n' 'Post "https://api.github.com/user/ssh_signing_keys": EOF' 'gh: offline.' \
     >"$tmp/error"
-prints "setup.sh: warning: gh failed: gh: offline. $until"
+prints "ws setup: warning: gh failed: gh: offline. $until"
 echo 'gh: Not Found (HTTP 404)' >"$tmp/error"
-prints "setup.sh: warning: gh's login lacks the write:ssh_signing_key scope: gh auth refresh -h\
+prints "ws setup: warning: gh's login lacks the write:ssh_signing_key scope: gh auth refresh -h\
  github.com -s write:ssh_signing_key adds it. $until"
 rm "$tmp/error"
 : >"$tmp/keys"
 touch "$tmp/lost"
-prints "setup.sh: warning: gh failed: gh api user/ssh_signing_keys lacks the key after $add. $until"
+prints "ws setup: warning: gh failed: gh api user/ssh_signing_keys lacks the key after $add. $until"
 rm "$tmp/lost"
-prints "setup.sh: would run $add" --check
-prints "setup.sh: ran $add"
+prints "ws setup: would run $add" --check
+prints "ws setup: ran $add"
 prints ''
 prints '' --check
 [ "$(grep '^ssh-key add ' "$tmp/gh.log" | tail -n 1)" = "${add#gh }" ] &&
     [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
     error "the stand-in logged another add, or holds other keys, than $key.pub's"
 
-# Where PATH has no gh, setup.sh must leave it so without git's keys. With them, --check must say
+# Where PATH has no gh, ws setup must leave it so without git's keys. With them, --check must say
 # that Homebrew would install it, name the gh at Homebrew's prefix as git's credential command, and
 # name the add. A run must install it, once. The stand-in brew's prefix is $tmp/brew, where its
 # install puts the stand-in gh, and it passes other commands to the runner's brew.
@@ -283,15 +283,15 @@ done)
 with
 prints ''
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com
-setup --check || error "setup.sh --check failed: $out"
+setup --check || error "ws setup --check failed: $out"
 case $out in
-"setup.sh: would run brew install gh$nl"*"$nl+    helper = !$tmp/brew/bin/gh auth\
- git-credential$nl"*"${nl}setup.sh: would run $add once gh is installed, where it has a login\
+"ws setup: would run brew install gh$nl"*"$nl+    helper = !$tmp/brew/bin/gh auth\
+ git-credential$nl"*"${nl}ws setup: would run $add once gh is installed, where it has a login\
  that lacks the key") ;;
-*) error "setup.sh --check showed no install of gh, another credential command, or no add: $out" ;;
+*) error "ws setup --check showed no install of gh, another credential command, or no add: $out" ;;
 esac
-[ ! -f "$tmp/brew.log" ] || error "setup.sh installed gh without git's keys, or under --check"
-prints "setup.sh: installing gh${nl}setup.sh: wrote $files/gitconfig$nl$warning"
+[ ! -f "$tmp/brew.log" ] || error "ws setup installed gh without git's keys, or under --check"
+prints "ws setup: installing gh${nl}ws setup: wrote $files/gitconfig$nl$warning"
 prints "$warning"
-[ "$(cat "$tmp/brew.log")" = 'install gh' ] || error "setup.sh ran brew install gh other than once"
+[ "$(cat "$tmp/brew.log")" = 'install gh' ] || error "ws setup ran brew install gh other than once"
 PATH=$path

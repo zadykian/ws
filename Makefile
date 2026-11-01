@@ -23,10 +23,20 @@ PIP_STAMP = $(VENV)/.installed
 GALAXY_STAMP = $(COLLECTIONS)/.installed
 export ANSIBLE_COLLECTIONS_PATH = $(CURDIR)/$(COLLECTIONS)
 
-.PHONY: lint shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor \
-	gitleaks lint-file lint-tree
+# Go's tools, from tools/run, keep their caches in .cache and never fetch another toolchain. ws
+# builds without cgo; gotest turns it on for the race detector alone.
+export GOPATH = $(CURDIR)/.cache/go
+export GOMODCACHE = $(CURDIR)/.cache/go/pkg/mod
+export GOCACHE = $(CURDIR)/.cache/go-build
+export GOTOOLCHAIN = local
+export GOWORK = off
+export CGO_ENABLED = 0
 
-lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor gitleaks
+.PHONY: lint shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor \
+	gitleaks gofmt govet golangci-lint govulncheck gotest lint-file lint-tree
+
+lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor gitleaks \
+	gofmt govet golangci-lint govulncheck gotest
 
 # Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in, so the install
 # stops where the .txt lacks a pin of the .in, rather than keep the old pin unseen. pip takes a file
@@ -108,6 +118,27 @@ gitleaks:
 	tools/run gitleaks git --no-banner --redact --verbose \
 		$(if $(LOG_OPTS),--log-opts='$(LOG_OPTS)') .
 
+# The Go gates run in mac/, the module, with the Go that tools/run pins first on the PATH.
+# gofmt fails where it lists a file.
+gofmt:
+	@set -ef; go=$$(tools/run -path go); cd mac; out=$$("$${go%/go}/gofmt" -l .); \
+		[ -z "$$out" ] || { echo "$$out"; echo "gofmt lists these files"; exit 1; }
+
+govet:
+	@set -ef; go=$$(tools/run -path go); cd mac && "$$go" vet ./...
+
+golangci-lint:
+	@set -ef; go=$$(tools/run -path go); lint=$$(tools/run -path golangci-lint); \
+		cd mac && PATH="$${go%/go}:$$PATH" "$$lint" run ./...
+
+# govulncheck is the module's tool directive, at the version go.mod pins.
+govulncheck:
+	@set -ef; go=$$(tools/run -path go); cd mac && "$$go" tool govulncheck ./...
+
+# The race detector needs cgo, for the tests alone.
+gotest:
+	@set -ef; go=$$(tools/run -path go); cd mac && CGO_ENABLED=1 "$$go" test -race -count=1 ./...
+
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
 # file (docs/checks.md). A workflow takes actionlint and zizmor too. A file of no kind passes, as
 # each gate passes over the files not of its kind.
@@ -119,6 +150,7 @@ lint-file:
 			gates='yamllint ansible-lint actionlint zizmor sizecheck' ;; \
 		*.yml | *.yaml) gates='yamllint ansible-lint sizecheck' ;; \
 		*.py) gates='ruff sizecheck' ;; \
+		*.go | mac/go.mod | mac/go.sum) gates='gofmt govet golangci-lint govulncheck gotest sizecheck' ;; \
 		*.j2) gates=sizecheck ;; \
 		*) gates='shell sizecheck' ;; \
 		esac; \

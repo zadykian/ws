@@ -7,7 +7,7 @@
 
 set -u
 
-wizard=$HOME/repository/ws/mac/wizard.sh
+wsbin=$HOME/.local/bin/ws
 ws=$RUNNER_TEMP/ws
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
@@ -26,21 +26,21 @@ connected() {
 
 for args in '' --check; do
     before=$(wc -l <"$ws/conns")
-    sh "$wizard" ${args:+"$args"} </dev/null
+    "$wsbin" wizard ${args:+"$args"} </dev/null
     status=$?
     new=$(awk -v n="$before" 'NR > n' "$ws/conns")
     sessions=$(printf '%s\n' "$new" | grep -c .)
     links=$(printf '%s\n' "$new" | sort -u | grep -c .)
-    [ "$status" = 0 ] || error "wizard.sh${args:+ $args} exited $status"
+    [ "$status" = 0 ] || error "ws wizard${args:+ $args} exited $status"
     if [ "$sessions" -lt 2 ] || [ "$links" != 1 ]; then
-        error "wizard.sh${args:+ $args} made $sessions sessions to ws in $links connections"
+        error "ws wizard${args:+ $args} made $sessions sessions to ws in $links connections"
     fi
     tries=0
     until [ "$(connected)" = 0 ] || [ "$tries" = 10 ]; do
         sleep 1
         tries=$((tries + 1))
     done
-    [ "$(connected)" = 0 ] || error "a connection to ws stayed open after wizard.sh${args:+ $args}"
-    [ ! -e "$tmp/ws-wizard.lock" ] || error "wizard.sh${args:+ $args} left $tmp/ws-wizard.lock"
+    [ "$(connected)" = 0 ] || error "a connection to ws stayed open after ws wizard${args:+ $args}"
+    [ ! -e "$tmp/ws-wizard.lock" ] || error "ws wizard${args:+ $args} left $tmp/ws-wizard.lock"
 done
 exit "$fail"

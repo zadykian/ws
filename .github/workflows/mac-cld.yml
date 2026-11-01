@@ -1,6 +1,6 @@
 name: mac-cld
 
-# mac/setup-ghostty.sh and mac/setup-cld.sh on macOS, in a workflow of its own beside mac.yml, which
+# ws setup's ghostty and cld steps on macOS, in a workflow of its own beside mac.yml, which
 # nears its 300 lines. It runs on mac.yml's events: every pull request, whatever its base, and on
 # main each pull request's merge. The job runs on a stack's top pull request alone, as mac.yml's
 # does.
@@ -12,7 +12,7 @@ on:
 permissions: {}
 
 jobs:
-  # Ghostty and cld on a Mac, in docs/mac-ghostty.md's order. mac/setup.sh runs with a stand-in for
+  # Ghostty and cld on a Mac, in docs/mac-ghostty.md's order. ws setup runs with a stand-in for
   # ws's key, so that the tunnel's daemon loads and a second run prints nothing, and one for
   # JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. On a runner
   # without Ghostty, its font or cld, --check must change nothing. Where Ghostty's cask fails, a run
@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-    # bash with pipefail, rather than the default bash -e, so that a failing setup.sh fails its
+    # bash with pipefail, rather than the default bash -e, so that a failing ws setup fails its
     # step through a tee too.
     defaults:
       run:
@@ -42,7 +42,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # As in mac.yml: setup.sh stops where a directory above root's copies isn't root's alone.
+      # As in mac.yml: ws, built into ~/.local/bin, which the steps run as ws setup.
+      - name: Build ws
+        run: |
+          . mac/build.sh
+          ws_build "$PWD" ~/.local/bin/ws
+          echo ~/.local/bin >>"$GITHUB_PATH"
+          echo "WS_MAC_DIR=$PWD/mac" >>"$GITHUB_ENV"
+      # As in mac.yml: ws setup stops where a directory above root's copies isn't root's alone.
       - name: Make /usr/local root's, as on a Mac
         run: |
           for dir in /usr/local /usr/local/libexec; do
@@ -72,13 +79,13 @@ jobs:
       # Ghostty's files, and writes none of them.
       - name: --check without Ghostty changes nothing
         run: |
-          sh mac/setup.sh --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
-              { echo '::error::setup.sh --check failed'; exit 1; }
+          ws setup --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
+              { echo '::error::ws setup --check failed'; exit 1; }
           fail=0
           for path in /Applications/Ghostty.app ~/Library/Fonts/"$FONT" ~/.local/bin/cld \
               ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
-                  echo "::error::setup.sh --check made $path"
+                  echo "::error::ws setup --check made $path"
                   fail=1
               fi
           done
@@ -88,13 +95,13 @@ jobs:
               ": would add the lines that start cld's watcher to config.d/ws, " \
               '^+window-save-state = always$' '^+config-file = ?ws.ghostty$'; do
               grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
-                  { echo "::error::setup.sh --check showed no line '$line'"; fail=1; }
+                  { echo "::error::ws setup --check showed no line '$line'"; fail=1; }
           done
           exit "$fail"
       # A brew whose install of the cask ghostty fails, as where Homebrew can't be reached, comes
-      # first on PATH. setup.sh must warn and go on: cld, whose cld version must run, and nothing of
+      # first on PATH. ws setup must warn and go on: cld, whose cld version must run, and nothing of
       # Ghostty's, nor ssh's lines.
-      - name: Where Ghostty's cask fails, setup.sh installs cld alone
+      - name: Where Ghostty's cask fails, ws setup installs cld alone
         run: |
           mkdir -p "$RUNNER_TEMP/brew"
           cat >"$RUNNER_TEMP/brew/brew" <<EOF
@@ -103,16 +110,16 @@ jobs:
           exec $(command -v brew) "\$@"
           EOF
           chmod 755 "$RUNNER_TEMP/brew/brew"
-          PATH=$RUNNER_TEMP/brew:$PATH sh mac/setup.sh 2>&1 | tee "$RUNNER_TEMP/failed.out" ||
-              { echo '::error::setup.sh with a failed cask failed'; exit 1; }
+          PATH=$RUNNER_TEMP/brew:$PATH ws setup 2>&1 | tee "$RUNNER_TEMP/failed.out" ||
+              { echo '::error::ws setup with a failed cask failed'; exit 1; }
           fail=0
           grep -q ': warning: brew install --cask ghostty failed$' "$RUNNER_TEMP/failed.out" ||
-              { echo '::error::setup.sh gave no warning of the failed cask'; fail=1; }
+              { echo '::error::ws setup gave no warning of the failed cask'; fail=1; }
           ~/.local/bin/cld version || { echo '::error::~/.local/bin/cld version failed'; fail=1; }
           for path in /Applications/Ghostty.app ~/.config/ghostty \
               "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
-                  echo "::error::setup.sh with a failed cask made $path"
+                  echo "::error::ws setup with a failed cask made $path"
                   fail=1
               fi
           done
@@ -124,20 +131,20 @@ jobs:
       # +list-fonts, which looks a family up as the config does, must find ws.ghostty's last one.
       # The release of cld that install.sh installed has restore tabs, or not yet: ssh's lines must
       # follow it either way.
-      - name: setup.sh installs Ghostty, its font and Ghostty's settings
+      - name: ws setup installs Ghostty, its font and Ghostty's settings
         run: |
-          sh mac/setup.sh || { echo '::error::setup.sh failed'; exit 1; }
+          ws setup || { echo '::error::ws setup failed'; exit 1; }
           fail=0
           support="$HOME/Library/Application Support/com.mitchellh.ghostty"
           [ -d /Applications/Ghostty.app ] ||
-              { echo '::error::setup.sh installed no /Applications/Ghostty.app'; fail=1; }
+              { echo '::error::ws setup installed no /Applications/Ghostty.app'; fail=1; }
           brew list --cask ghostty >/dev/null ||
               { echo "::error::Ghostty is not brew's cask ghostty"; fail=1; }
-          [ -f ~/Library/Fonts/"$FONT" ] || { echo "::error::setup.sh installed no $FONT"; fail=1; }
+          [ -f ~/Library/Fonts/"$FONT" ] || { echo "::error::ws setup installed no $FONT"; fail=1; }
           version=$(~/.local/bin/cld version) ||
               { echo '::error::~/.local/bin/cld version failed'; exit 1; }
           echo "$version"
-          head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws's mac/setup.sh" ||
+          head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws setup" ||
               { echo "::error::ws.ghostty has no mac/ header"; fail=1; }
           tail -n +2 "$support/ws.ghostty" | cmp -s - mac/ws.ghostty ||
               { echo '::error::ws.ghostty is not mac/ws.ghostty under the header'; fail=1; }
@@ -183,11 +190,11 @@ jobs:
           esac
           EOF
           chmod 755 ~/.local/bin/cld
-          sh mac/setup.sh 2>&1 | tee "$RUNNER_TEMP/gain.out" ||
-              { echo '::error::setup.sh with the stub failed'; exit 1; }
+          ws setup 2>&1 | tee "$RUNNER_TEMP/gain.out" ||
+              { echo '::error::ws setup with the stub failed'; exit 1; }
           fail=0
           grep -q ': Updated cld 0.13.0 to 0.14.0: ' "$RUNNER_TEMP/gain.out" ||
-              { echo '::error::setup.sh printed no Updated line of the stub'; fail=1; }
+              { echo '::error::ws setup printed no Updated line of the stub'; fail=1; }
           sh .github/mac-cld-checks.sh lines yes || fail=1
           sh .github/mac-cld-checks.sh watch "$RUNNER_TEMP/watch.log" || fail=1
           sh .github/mac-cld-checks.sh quiet || fail=1
@@ -198,24 +205,24 @@ jobs:
       - name: Without Ghostty's app, a cld with restore tabs gives ssh no lines
         run: |
           sudo mv /Applications/Ghostty.app "$RUNNER_TEMP/Ghostty.app"
-          PATH=$RUNNER_TEMP/brew:$PATH sh mac/setup.sh ||
-              { echo '::error::setup.sh without Ghostty failed'; exit 1; }
+          PATH=$RUNNER_TEMP/brew:$PATH ws setup ||
+              { echo '::error::ws setup without Ghostty failed'; exit 1; }
           fail=0
           sh .github/mac-cld-checks.sh lines no || fail=1
           sudo mv "$RUNNER_TEMP/Ghostty.app" /Applications/Ghostty.app
-          sh mac/setup.sh || { echo '::error::setup.sh with Ghostty failed'; exit 1; }
+          ws setup || { echo '::error::ws setup with Ghostty failed'; exit 1; }
           sh .github/mac-cld-checks.sh lines yes || fail=1
           exit "$fail"
       # This stub's help restore tabs exits 2, as cld 0.13.0's does, whatever the release has.
-      - name: With a cld without restore tabs, setup.sh drops ssh's lines
+      - name: With a cld without restore tabs, ws setup drops ssh's lines
         run: |
           cat >~/.local/bin/cld <<EOF
           #!/bin/sh
           [ "\$*" != 'help restore tabs' ] || exit 2
           exec "$RUNNER_TEMP/cld-release" "\$@"
           EOF
-          sh mac/setup.sh ||
-              { echo '::error::setup.sh with a cld without restore tabs failed'; exit 1; }
+          ws setup ||
+              { echo '::error::ws setup with a cld without restore tabs failed'; exit 1; }
           fail=0
           sh .github/mac-cld-checks.sh lines no || fail=1
           sh .github/mac-cld-checks.sh quiet || fail=1
