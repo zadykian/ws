@@ -42,3 +42,36 @@ func (c *Curve) SpeedAt(temperature float64) float64 {
 
 // Speed returns the speed in %, and false where the temperature is missing.
 func (c *Curve) Speed() (float64, bool) { return c.speed, c.known }
+
+// Update moves the speed to the temperature as the hysteresis allows. ok is false where the
+// temperature is missing, which forgets the speed.
+func (c *Curve) Update(temperature float64, ok bool, now time.Time) {
+	if !ok {
+		*c = Curve{name: c.name, sensor: c.sensor, points: c.points, hyst: c.hyst, resp: c.resp}
+		return
+	}
+	last := len(c.points) - 1
+	inside := c.points[0][0] < temperature && temperature < c.points[last][0]
+	if c.known && inside {
+		up := temperature > c.temperature
+		hyst, resp := c.hyst.Down, c.resp.Down
+		if up {
+			hyst, resp = c.hyst.Up, c.resp.Up
+		}
+		diff := temperature - c.temperature
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff < hyst {
+			c.pending = false
+			return
+		}
+		if !c.pending || c.way != up {
+			c.pending, c.way, c.since = true, up, now
+		}
+		if now.Sub(c.since) < time.Duration(resp*float64(time.Second)) {
+			return
+		}
+	}
+	c.temperature, c.speed, c.known, c.pending = temperature, c.SpeedAt(temperature), true, false
+}
