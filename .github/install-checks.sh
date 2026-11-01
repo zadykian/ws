@@ -84,7 +84,8 @@ cp "$tmp/releases/download/v0.1.0/ws-linux-amd64" "$tmp/releases/download/v0.4.0
 sed -i 's/^[0-9a-f]\{64\}/0000000000000000000000000000000000000000000000000000000000000000/' \
     "$tmp/releases/download/v0.3.0/ws.sha256"
 
-python3 -I "$root/.github/install-server.py" "$tmp/releases" v0.2.0 "$tmp/port" &
+echo v0.2.0 >"$tmp/releases/latest"
+python3 -I "$root/.github/release-standin.py" "$tmp/releases" 0 "$tmp/port" &
 server=$!
 for _ in $(seq 50); do
     [ -s "$tmp/port" ] && break
