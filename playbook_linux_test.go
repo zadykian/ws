@@ -14,7 +14,7 @@ import (
 func TestPlaybookHoldsTheFiles(t *testing.T) {
 	for _, name := range []string{
 		"site.yml", "ansible.cfg", "inventory.ini", "requirements.yml",
-		"group_vars/all.yml", "roles/claude/tasks/main.yml", "collections/.gitignore",
+		"group_vars/all.yml", "collections/.gitignore",
 	} {
 		if _, err := fs.Stat(Playbook, name); err != nil {
 			t.Errorf("Playbook lacks %s: %v", name, err)
@@ -26,7 +26,7 @@ func TestPlaybookHoldsTheFiles(t *testing.T) {
 }
 
 func TestPlaybookEqualsTheTree(t *testing.T) {
-	for _, dir := range []string{"roles", "group_vars"} {
+	for _, dir := range []string{"group_vars"} {
 		err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err

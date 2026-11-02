@@ -6,14 +6,3 @@ ws_home: "{{ '/root' if ws_user == 'root' else '/home/' ~ ws_user }}"
 # The user's SSH key that signs git's commits, with its public key beside it as .pub. The shell
 # role makes it, and devtools registers it with GitHub.
 ws_git_signing_key: "{{ ws_home }}/.ssh/id_ed25519_signing"
-
-# Versions, each named for the role that installs it.
-
-# Go, in /usr/local/go: devtools.GoVersion in internal/server/devtools/pins.go. Only the helix role
-# reads this copy, until it is ported too; devtools' tests check that the two agree.
-devtools_go_version: "1.27.3"
-# gopls, which go install builds for helix.
-helix_gopls_version: "0.23.0"
-# roslyn-language-server, C#'s language server for helix, from nuget.org, where every version is a
-# prerelease. The version alone pins it, as nuget.org refuses a version's second upload.
-helix_roslyn_version: "5.12.0-1.26475.2"

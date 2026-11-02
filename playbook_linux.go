@@ -9,5 +9,5 @@ import "embed"
 // collections/.gitignore, so a tree with no tarball still builds. It holds no host_vars: those
 // are a machine's values.
 //
-//go:embed site.yml ansible.cfg inventory.ini requirements.yml group_vars roles all:collections
+//go:embed site.yml ansible.cfg inventory.ini requirements.yml group_vars all:collections
 var Playbook embed.FS

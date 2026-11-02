@@ -2,8 +2,4 @@
 - name: Set up the development server
   hosts: localhost
   connection: local
-  roles:
-    - role: claude
-      tags: [claude]
-    - role: helix
-      tags: [helix]
+  roles: []

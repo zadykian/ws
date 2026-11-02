@@ -7,9 +7,11 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/server/base"
+	"github.com/zadykian/ws/internal/server/claude"
 	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/docker"
 	"github.com/zadykian/ws/internal/server/fans"
+	"github.com/zadykian/ws/internal/server/helix"
 	"github.com/zadykian/ws/internal/server/ikeward"
 	"github.com/zadykian/ws/internal/server/jetbrains"
 	"github.com/zadykian/ws/internal/server/network"
@@ -50,10 +52,10 @@ var all = []Role{
 	{Name: "tmux", Steps: tmux.Steps},
 	{Name: "devtools", Steps: devtools.Steps},
 	{Name: "docker", Steps: docker.Steps},
-	{Name: "claude"},
+	{Name: "claude", Steps: claude.Steps},
 	{Name: "signoz", Steps: signoz.Steps},
 	{Name: "otelcol", Steps: otelcol.Steps},
-	{Name: "helix"},
+	{Name: "helix", Steps: helix.Steps},
 	{Name: "jetbrains", Steps: jetbrains.Steps},
 }
 

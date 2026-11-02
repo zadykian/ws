@@ -4,7 +4,7 @@ import "slices"
 
 // The versions and sources devtools installs from.
 const (
-	// GoVersion is the Go in /usr/local/go. The helix role's gopls is built with it.
+	// GoVersion is the Go in /usr/local/go.
 	GoVersion = "1.27.3"
 	// nodeMajor is Node's major version: NodeSource's repository node_MAJOR.x.
 	nodeMajor = "24"
