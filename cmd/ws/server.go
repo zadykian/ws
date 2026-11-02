@@ -20,7 +20,7 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  fans [CONFIG]  drive the board's fans on the curves of CONFIG, /etc/ws-fans.json, until SIGTERM\n  apply [--check] [--only NAME,...] [--secrets FILE] [-- ARG...]  set the server up, each role as Go steps or by the playbook that this ws embeds\n\n--check plans the steps and passes --check --diff to ansible-playbook. --only runs the named roles. --secrets reads an age-encrypted YAML file with the secrets; the X25519 identity comes on stdin or at the terminal. ARG... go to\nansible-playbook; -C, --check, -t and --tags are refused there. The last line names the roles that changed.\n"
+const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  fans [CONFIG]  drive the board's fans on the curves of CONFIG, /etc/ws-fans.json, until SIGTERM\n  apply [--check] [--only NAME,...] [--secrets FILE]  set the server up, each role as Go steps or by the playbook that this ws embeds\n\n--check plans the steps and passes --check --diff to ansible-playbook. --only runs the named roles. --secrets reads an age-encrypted YAML file with the secrets; the X25519 identity comes on stdin or at the terminal. The last line\nnames the roles that changed.\n"
 
 const (
 	serverLib  = "/var/lib/ws"

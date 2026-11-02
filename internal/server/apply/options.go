@@ -16,19 +16,14 @@ type Options struct {
 	Only []string
 	// Secrets is the age-encrypted file of --secrets, or empty.
 	Secrets string
-	// Args go to ansible-playbook, as the arguments after "--".
-	Args []string
 }
 
-// Parse reads the arguments of ws server apply: [--check] [--only NAME,...] [--secrets FILE] [-- ARG...].
+// Parse reads the arguments of ws server apply: [--check] [--only NAME,...] [--secrets FILE].
 func Parse(args []string) (Options, error) {
 	var o Options
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		switch {
-		case a == "--":
-			o.Args = args[i+1:]
-			return o, refuseArgs(o.Args)
 		case a == "--check":
 			o.Check = true
 		case a == "--secrets" || strings.HasPrefix(a, "--secrets="):
@@ -62,36 +57,4 @@ func Parse(args []string) (Options, error) {
 		}
 	}
 	return o, nil
-}
-
-// refuseArgs refuses what ws sets itself, or what --only replaces, among the playbook's arguments.
-func refuseArgs(args []string) error {
-	for i, a := range args {
-		switch {
-		case isVaultFlag(a):
-			return fmt.Errorf("%s after --: use ws server apply --secrets with an age file", a)
-		case a == "-e" || a == "--extra-vars":
-			if i+1 < len(args) && strings.HasPrefix(args[i+1], "@") {
-				return fmt.Errorf("%s %s after --: use ws server apply --secrets with an age file", a, args[i+1])
-			}
-		case strings.HasPrefix(a, "-e@") || strings.HasPrefix(a, "--extra-vars=@"):
-			return fmt.Errorf("%s after --: use ws server apply --secrets with an age file", a)
-		case a == "-C" || a == "--check":
-			return fmt.Errorf("%s after --: use ws server apply --check", a)
-		case a == "-t" || a == "--tags" || strings.HasPrefix(a, "--tags=") ||
-			(len(a) > 2 && a[0] == '-' && a[1] == 't'):
-			return fmt.Errorf("%s after --: use ws server apply --only with role names", a)
-		}
-	}
-	return nil
-}
-
-// isVaultFlag reports whether the argument is one of ansible-playbook's for an Ansible Vault.
-func isVaultFlag(a string) bool {
-	for _, f := range []string{"--ask-vault-pass", "--ask-vault-password", "--vault-id", "--vault-pass", "--vault-password-file"} {
-		if a == f || strings.HasPrefix(a, f+"=") {
-			return true
-		}
-	}
-	return a == "-J"
 }

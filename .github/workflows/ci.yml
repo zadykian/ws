@@ -79,19 +79,18 @@ jobs:
           printf '%s\n' --- 'base_swap_size_mb: 64' 'jetbrains_backends: []' >/etc/ws/host_vars.yml
           chmod 600 /etc/ws/host_vars.yml
       - name: Apply
-        run: ws server apply -- --skip-tags systemd
-      # ws's last line names the roles that changed, and the playbook's roles count together: while
-      # any remain, a recap with a change names all of them. The second run must name none.
+        run: ws server apply
+      # ws's last line names the roles that changed. The second run must name none.
       - name: Apply again, changing nothing
         shell: bash
         run: |
-          ws server apply -- --skip-tags systemd 2>&1 | tee "$RUNNER_TEMP/again.log"
+          ws server apply 2>&1 | tee "$RUNNER_TEMP/again.log"
           if [ "$(tail -n 1 "$RUNNER_TEMP/again.log")" != 'ws server apply: changed: none' ]; then
               echo '::error::The second run of ws server apply changed something.'
               exit 1
           fi
-      # The run leaves out its own nft -c under --skip-tags systemd. This checks the outbound table
-      # it wrote, and the users the table names, which the play's packages make.
+      # The container has no booted systemd, so the run leaves out its own nft -c. This checks the
+      # outbound table it wrote, and the users the table names, which the steps make.
       - name: Check the outbound table
         run: nft -c -f /usr/local/lib/ws/security/outbound.nft
 

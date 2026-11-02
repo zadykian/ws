@@ -74,7 +74,7 @@ func TestRun(t *testing.T) {
 	} {
 		done = false
 		m := &recapMachine{Machine: effecttest.NewMachine(), log: "/log", changed: tc.changed}
-		c := Config{Options: Options{Check: tc.check, Args: []string{"--skip-tags", "systemd"}}, M: m, Out: &effecttest.Out{}, Dir: "/d", Log: "/log"}
+		c := Config{Options: Options{Check: tc.check}, M: m, Out: &effecttest.Out{}, Dir: "/d", Log: "/log"}
 		got, err := Run(context.Background(), c, segs)
 		if err != nil {
 			t.Fatalf("%s: %v", tc.name, err)
@@ -88,8 +88,8 @@ func TestRun(t *testing.T) {
 				pass = append(pass, call)
 			}
 		}
-		if len(pass) != 2 || !strings.Contains(pass[0], "site.yml --tags a,b ") || !strings.Contains(pass[1], "site.yml --tags d ") ||
-			!strings.HasSuffix(pass[0], "--skip-tags systemd") || strings.Contains(pass[0], "--check --diff") != tc.check {
+		if len(pass) != 2 || !strings.HasSuffix(strings.TrimSuffix(pass[0], " --check --diff"), "site.yml --tags a,b") || !strings.HasSuffix(strings.TrimSuffix(pass[1], " --check --diff"), "site.yml --tags d") ||
+			strings.Contains(pass[0], "--check --diff") != tc.check {
 			t.Errorf("%s: playbook runs = %q", tc.name, pass)
 		}
 	}
@@ -124,7 +124,7 @@ func TestSummary(t *testing.T) {
 func TestRunGivesTheSecretsByAPipe(t *testing.T) {
 	segs, _ := Segments([]roles.Role{{Name: "a"}}, nil)
 	m := &recapMachine{Machine: effecttest.NewMachine(), log: "/log", changed: "0"}
-	c := Config{Options: Options{Args: []string{"-e", "k=v"}}, Vars: []byte("shell_secret_env: {A: b}\n"),
+	c := Config{Vars: []byte("shell_secret_env: {A: b}\n"),
 		M: m, Out: &effecttest.Out{}, Dir: "/d", Log: "/log"}
 	if _, err := Run(context.Background(), c, segs); err != nil {
 		t.Fatal(err)
@@ -132,7 +132,7 @@ func TestRunGivesTheSecretsByAPipe(t *testing.T) {
 	call := m.Calls[len(m.Calls)-2]
 	if len(m.stdin) != 1 || m.stdin[0] != "shell_secret_env: {A: b}\n" ||
 		!strings.Contains(call, `exec "$@" 3<&0 </dev/null sh ansible-playbook `) ||
-		!strings.HasSuffix(call, " -e @/dev/fd/3 -e k=v") || strings.Contains(call, "{A: b}") {
+		!strings.HasSuffix(call, " -e @/dev/fd/3") || strings.Contains(call, "{A: b}") {
 		t.Errorf("stdin %q, call %q", m.stdin, call)
 	}
 }

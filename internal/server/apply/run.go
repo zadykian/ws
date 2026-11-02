@@ -95,10 +95,10 @@ func (c Config) runPlaybook(ctx context.Context, names []string) (bool, error) {
 	if len(c.Vars) > 0 {
 		// The shell moves the pipe from standard input to descriptor 3, and standard input to null.
 		argv = append(argv, "sh", "-c", `exec "$@" 3<&0 </dev/null`, "sh")
-		err = c.M.PassInput(ctx, c.Vars, "env", append(append(argv, play...), append([]string{"-e", "@/dev/fd/3"}, c.Args...)...)...)
+		err = c.M.PassInput(ctx, c.Vars, "env", append(append(argv, play...), "-e", "@/dev/fd/3")...)
 	} else {
 		// env sets the variables of the child alone; Pass sends its output to ws's standard error.
-		err = c.M.Pass(ctx, false, "env", append(append(argv, play...), c.Args...)...)
+		err = c.M.Pass(ctx, false, "env", append(argv, play...)...)
 	}
 	if err != nil {
 		return false, fmt.Errorf("the playbook for %s: %w", strings.Join(names, ", "), err)
