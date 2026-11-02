@@ -19,7 +19,6 @@ type recapMachine struct {
 	*effecttest.Machine
 	log     string
 	changed string
-	stdin   []string
 }
 
 func (m *recapMachine) Pass(_ context.Context, _ bool, name string, args ...string) error {
@@ -28,11 +27,6 @@ func (m *recapMachine) Pass(_ context.Context, _ bool, name string, args ...stri
 	}
 	m.Calls = append(m.Calls, "run "+strings.Join(append([]string{name}, args...), " "))
 	return nil
-}
-
-func (m *recapMachine) PassInput(ctx context.Context, stdin []byte, name string, args ...string) error {
-	m.stdin = append(m.stdin, string(stdin))
-	return m.Pass(ctx, false, name, args...)
 }
 
 type change string
@@ -118,21 +112,5 @@ func TestSummary(t *testing.T) {
 		if got := Summary(tc.changed, tc.check); got != tc.want {
 			t.Errorf("Summary(%q, %v) = %q, want %q", tc.changed, tc.check, got, tc.want)
 		}
-	}
-}
-
-func TestRunGivesTheSecretsByAPipe(t *testing.T) {
-	segs, _ := Segments([]roles.Role{{Name: "a"}}, nil)
-	m := &recapMachine{Machine: effecttest.NewMachine(), log: "/log", changed: "0"}
-	c := Config{Vars: []byte("shell_secret_env: {A: b}\n"),
-		M: m, Out: &effecttest.Out{}, Dir: "/d", Log: "/log"}
-	if _, err := Run(context.Background(), c, segs); err != nil {
-		t.Fatal(err)
-	}
-	call := m.Calls[len(m.Calls)-2]
-	if len(m.stdin) != 1 || m.stdin[0] != "shell_secret_env: {A: b}\n" ||
-		!strings.Contains(call, `exec "$@" 3<&0 </dev/null sh ansible-playbook `) ||
-		!strings.HasSuffix(call, " -e @/dev/fd/3") || strings.Contains(call, "{A: b}") {
-		t.Errorf("stdin %q, call %q", m.stdin, call)
 	}
 }

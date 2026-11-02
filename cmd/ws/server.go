@@ -106,12 +106,12 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1
 	}
-	sec, vars, err := loadSecrets(m, opts.Secrets, stdin, stderr)
+	sec, err := loadSecrets(m, opts.Secrets, stdin, stderr)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1
 	}
-	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, Secrets: sec, Vars: vars, M: m, Out: out, Prepare: prepare,
+	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, Secrets: sec, M: m, Out: out, Prepare: prepare,
 		Dir: serverLib + "/" + version, Log: serverLog}, segs)
 	term.Flush()
 	if err != nil {
@@ -123,19 +123,14 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 }
 
 // loadSecrets reads the identity from stdin and decrypts the file, or returns no secrets where path
-// is empty. vars are the secrets as the playbook's extra variables.
-func loadSecrets(m effect.Machine, path string, stdin io.Reader, prompt io.Writer) (secrets.Secrets, []byte, error) {
+// is empty.
+func loadSecrets(m effect.Machine, path string, stdin io.Reader, prompt io.Writer) (secrets.Secrets, error) {
 	if path == "" {
-		return secrets.Secrets{}, nil, nil
+		return secrets.Secrets{}, nil
 	}
 	id, err := secrets.ReadIdentity(stdin, prompt)
 	if err != nil {
-		return secrets.Secrets{}, nil, err
+		return secrets.Secrets{}, err
 	}
-	s, err := secrets.Load(m, path, id)
-	if err != nil {
-		return secrets.Secrets{}, nil, err
-	}
-	vars, err := s.Vars()
-	return s, vars, err
+	return secrets.Load(m, path, id)
 }

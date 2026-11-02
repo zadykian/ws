@@ -72,19 +72,19 @@ func TestLoadSecrets(t *testing.T) {
 	_ = w.Close()
 	_ = a.Close()
 	m.Files["/s.age"] = buf.Bytes()
-	s, vars, err := loadSecrets(m, "/s.age", strings.NewReader(id.String()+"\n"), io.Discard)
-	if err != nil || s.Shell.SecretEnv["A"] != "hunter2" || !strings.Contains(string(vars), "hunter2") {
-		t.Errorf("got %+v, %q, %v", s, vars, err)
+	s, err := loadSecrets(m, "/s.age", strings.NewReader(id.String()+"\n"), io.Discard)
+	if err != nil || s.Shell.SecretEnv["A"] != "hunter2" {
+		t.Errorf("got %+v, %v", s, err)
 	}
-	if s, vars, err = loadSecrets(m, "", nil, io.Discard); err != nil || vars != nil || s.Shell.SecretEnv != nil {
-		t.Errorf("no file: %+v, %q, %v", s, vars, err)
+	if s, err = loadSecrets(m, "", nil, io.Discard); err != nil || s.Shell.SecretEnv != nil {
+		t.Errorf("no file: %+v, %v", s, err)
 	}
 	other, _ := age.GenerateX25519Identity()
-	if _, _, err = loadSecrets(m, "/s.age", strings.NewReader(other.String()), io.Discard); err == nil ||
+	if _, err = loadSecrets(m, "/s.age", strings.NewReader(other.String()), io.Discard); err == nil ||
 		strings.Contains(err.Error(), "hunter2") {
 		t.Errorf("wrong identity: %v", err)
 	}
-	if _, _, err = loadSecrets(m, "/s.age", strings.NewReader(""), io.Discard); err == nil {
+	if _, err = loadSecrets(m, "/s.age", strings.NewReader(""), io.Discard); err == nil {
 		t.Error("no identity: no error")
 	}
 }
