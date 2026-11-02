@@ -2,7 +2,9 @@ package claude
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"regexp"
 	"strings"
 
@@ -93,4 +95,62 @@ func (s setupRestore) Apply(ctx context.Context) error {
 		return fmt.Errorf("cld setup restore did not say that lingering is on:\n%s", strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+// Plan compares cld-restore.service with what cld writes, and looks for the link that
+// systemctl --user enable makes, as cld enables the unit at every run but reports only whether it
+// wrote its file.
+func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {
+	if !host.Booted(r.M) {
+		r.Out.Say("Claude restore: skipped, systemd is not running")
+		return nil, nil
+	}
+	if _, err := r.M.Stat(r.cld()); errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	name, args := r.loginShell("-c", compare, r.cld())
+	out, err := r.User.Output(ctx, r.M, name, args...)
+	if err != nil {
+		return nil, err
+	}
+	if stale.Match(out) {
+		return []host.Change{setupRestore{r}}, nil
+	}
+	_, err = r.M.Stat(r.User.Home + "/.config/systemd/user/default.target.wants/cld-restore.service")
+	if errors.Is(err, fs.ErrNotExist) {
+		return []host.Change{setupRestore{r}}, nil
+	}
+	return nil, err
+}
+
+// Linger enables lingering for the user, which starts the user's systemd at boot. loginctl starts
+// it now too.
+type Linger struct {
+	M    effect.Machine
+	User host.User
+	Out  effect.Out
+}
+
+type enableLinger struct{ l Linger }
+
+func (c enableLinger) String() string { return "enable lingering for " + c.l.User.Name }
+
+func (c enableLinger) Apply(ctx context.Context) error {
+	_, err := c.l.M.RunRoot(ctx, "loginctl", "enable-linger", c.l.User.Name)
+	return err
+}
+
+// Plan looks for the file that loginctl makes.
+func (l Linger) Plan(context.Context) ([]host.Change, error) {
+	if !host.Booted(l.M) {
+		l.Out.Say("Claude lingering: skipped, systemd is not running")
+		return nil, nil
+	}
+	_, err := l.M.Stat("/var/lib/systemd/linger/" + l.User.Name)
+	if errors.Is(err, fs.ErrNotExist) {
+		return []host.Change{enableLinger{l}}, nil
+	}
+	return nil, err
 }

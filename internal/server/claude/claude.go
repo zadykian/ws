@@ -4,6 +4,8 @@
 package claude
 
 import (
+	"fmt"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server/secrets"
@@ -18,9 +20,14 @@ const (
 
 // Steps returns the role's steps in order. Each of cld's steps comes after the install, as cld is
 // not there to ask until a run has installed it.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+	return steps(v, m, effect.OSUnits{}, out)
+}
+
+// steps is Steps with the units given, for a test to fake.
+func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
-	steps := []step.Step{
+	list := []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{Install{M: m, User: user}}},
 		host.Group{Title: updateStep, After: installStep, Parts: []host.Resource{Update{M: m, User: user}}},
 		host.Group{Title: "Claude cld completion", After: installStep, Parts: []host.Resource{
@@ -40,9 +47,15 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 		}),
 	}
 	if len(v.Claude.Marketplaces) > 0 {
-		steps = append(steps, host.Group{Title: "Claude marketplaces", After: "Claude telemetry", Parts: []host.Resource{
+		list = append(list, host.Group{Title: "Claude marketplaces", After: "Claude telemetry", Parts: []host.Resource{
 			Marketplaces{M: m, User: user, List: v.Claude.Marketplaces},
 		}})
 	}
-	return steps
+	return append(list, user.Owned(m, "Claude restore", "Claude telemetry", func(uid, _ int) ([]host.Resource, error) {
+		return []host.Resource{
+			Linger{M: m, User: user, Out: out},
+			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", uid), Run: host.Running},
+			Restore{M: m, User: user, UID: uid, Out: out},
+		}, nil
+	}))
 }
