@@ -1,5 +1,4 @@
-// Package apply runs the server's roles for ws server apply: each as Go steps or, in runs of
-// consecutive roles, by one ansible-playbook.
+// Package apply runs the server's roles for ws server apply, each as Go steps.
 package apply
 
 import (
@@ -10,7 +9,7 @@ import (
 
 // Options are the arguments of ws server apply.
 type Options struct {
-	// Check plans the steps and passes --check --diff to the playbook.
+	// Check plans the steps and applies none.
 	Check bool
 	// Only names the roles to run, or is empty for all.
 	Only []string

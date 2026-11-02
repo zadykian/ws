@@ -3,8 +3,6 @@ package apply
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -18,22 +16,13 @@ import (
 type Config struct {
 	Options
 	Values values.Values
-	// Secrets are the decrypted secrets, for the ported roles.
+	// Secrets are the decrypted secrets, for the roles that read them.
 	Secrets secrets.Secrets
 	M       effect.Machine
 	Out     effect.Out
-	// Prepare are the steps that come first while a playbook role is left: ansible-playbook's
-	// packages and the playbook itself. They are never a check, as ansible-playbook cannot run
-	// without them.
+	// Prepare are the steps that come first, whatever roles run: what every role needs.
 	Prepare []step.Step
-	// Dir is the unpacked playbook, with site.yml, inventory.ini, ansible.cfg and collections.
-	Dir string
-	// Log is the file that ansible-playbook logs to, for its recap. Each run truncates it.
-	Log string
 }
-
-// recap is the playbook's recap line of localhost, in its log after a timestamp.
-var recap = regexp.MustCompile(`localhost +: ok=\d+ +changed=(\d+) `)
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
 // that would under Check.
@@ -52,46 +41,6 @@ func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
 		}
 	}
 	return changed, nil
-}
-
-func hasPlaybook(segs []Segment) bool {
-	for _, s := range segs {
-		if s.Playbook != nil {
-			return true
-		}
-	}
-	return false
-}
-
-// runPlaybook runs ansible-playbook as a child, for the roles' tags, and reports whether its recap
-// counts a change.
-func (c Config) runPlaybook(ctx context.Context, names []string) (bool, error) {
-	if err := c.M.WriteFile(c.Log, nil, 0o600); err != nil {
-		return false, err
-	}
-	argv := []string{
-		"LC_ALL=C.UTF-8", "ANSIBLE_CONFIG=" + c.Dir + "/ansible.cfg",
-		"ANSIBLE_COLLECTIONS_PATH=" + c.Dir + "/collections", "ANSIBLE_LOG_PATH=" + c.Log,
-	}
-	play := []string{"ansible-playbook", "-i", c.Dir + "/inventory.ini", c.Dir + "/site.yml", "--tags", strings.Join(names, ",")}
-	if c.Check {
-		play = append(play, "--check", "--diff")
-	}
-	// env sets the variables of the child alone; Pass sends its output to ws's standard error.
-	err := c.M.Pass(ctx, false, "env", append(argv, play...)...)
-	if err != nil {
-		return false, fmt.Errorf("the playbook for %s: %w", strings.Join(names, ", "), err)
-	}
-	log, err := c.M.ReadFile(c.Log)
-	if err != nil {
-		return false, err
-	}
-	m := recap.FindSubmatch(log)
-	if m == nil {
-		return false, fmt.Errorf("the playbook for %s: no recap in %s", strings.Join(names, ", "), c.Log)
-	}
-	n, _ := strconv.Atoi(string(m[1]))
-	return n > 0, nil
 }
 
 // Summary is ws's last line: the roles that changed, or that --check would change, and none on a
