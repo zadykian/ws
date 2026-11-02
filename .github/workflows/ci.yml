@@ -13,8 +13,8 @@ permissions: {}
 
 jobs:
   # make lint, the one gate, with the tools it pins: tools/run's binaries, the Python tools of
-  # .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks, and
-  # requirements.yml's collections. Any finding fails it, warnings included.
+  # .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks. Any finding
+  # fails it, warnings included.
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -56,7 +56,7 @@ jobs:
       # The home of root, as on a new machine, rather than the /github/home a container job gets.
       HOME: /root
     steps:
-      # curl fetches the Go and the collections that tools/build needs, and ca-certificates serves
+      # curl fetches the Go that tools/build needs, and ca-certificates serves
       # their HTTPS. There is no git, so the checkout has no .git and the build is devel.
       - name: Install curl
         env:

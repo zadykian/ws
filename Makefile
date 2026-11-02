@@ -9,19 +9,15 @@ BASE = origin/main
 # The commits gitleaks scans, as git log's options, which its --log-opts takes: every commit of
 # the history when empty.
 LOG_OPTS =
-# The Python of the lint tools' venv: 3.12 to 3.14, the Pythons that ansible-core 2.20 supports
-# and that the wheels of .github/lint-requirements.txt cover.
+# The Python of yamllint's venv: 3.12 to 3.14, the Pythons that the wheels of
+# .github/lint-requirements.txt cover.
 PYTHON = python3
 
-# The Python tools, at the pins and SHA-256 sums of .github/lint-requirements.txt, and the
-# collections of requirements.yml, which ansible-lint reads offline (.ansible-lint). Each is
-# installed again where a file it comes from is newer. tools/run downloads the other tools into
+# yamllint, the one Python tool, at the pins and SHA-256 sums of .github/lint-requirements.txt. It
+# is installed again where a file it comes from is newer. tools/run downloads the other tools into
 # .cache/tools.
 VENV = .cache/venv
-COLLECTIONS = .cache/collections
 PIP_STAMP = $(VENV)/.installed
-GALAXY_STAMP = $(COLLECTIONS)/.installed
-export ANSIBLE_COLLECTIONS_PATH = $(CURDIR)/$(COLLECTIONS)
 
 # Go's tools, from tools/run, keep their caches in .cache and never fetch another toolchain. ws
 # builds without cgo; gotest turns it on for the race detector alone.
@@ -32,10 +28,10 @@ export GOTOOLCHAIN = local
 export GOWORK = off
 export CGO_ENABLED = 0
 
-.PHONY: lint shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor \
+.PHONY: lint shell yamllint sizecheck vale lychee rumdl actionlint zizmor \
 	gitleaks gofmt govet golangci-lint govulncheck gotest lint-file lint-tree
 
-lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zizmor gitleaks \
+lint: shell yamllint sizecheck vale lychee rumdl actionlint zizmor gitleaks \
 	gofmt govet golangci-lint govulncheck gotest
 
 # Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in, so the install
@@ -45,7 +41,7 @@ lint: shell yamllint ansible-lint ruff sizecheck vale lychee rumdl actionlint zi
 # build runs here.
 $(PIP_STAMP): .github/lint-requirements.in .github/lint-requirements.txt
 	@$(PYTHON) -c 'import sys; sys.exit(not (3, 12) <= sys.version_info[:2] <= (3, 14))' || \
-		{ echo 'make: the Python tools need Python 3.12 to 3.14, as ansible-core 2.20 supports'; \
+		{ echo 'make: the Python tools need Python 3.12 to 3.14, as the lint wheels cover'; \
 		exit 1; }
 	@awk 'NR == FNR { if (!/^(#|$$)/) pin[$$1] = 1; next } { delete pin[$$1] } \
 		END { for (p in pin) { print "make: lint-requirements.txt lacks " p \
@@ -55,11 +51,6 @@ $(PIP_STAMP): .github/lint-requirements.in .github/lint-requirements.txt
 	$(PYTHON) -m venv $(VENV)
 	$(VENV)/bin/pip install --quiet --disable-pip-version-check --require-hashes \
 		--only-binary :all: -r .github/lint-requirements.txt
-	touch $@
-
-$(GALAXY_STAMP): requirements.yml $(PIP_STAMP)
-	rm -rf $(COLLECTIONS)
-	$(VENV)/bin/ansible-galaxy collection install -r requirements.yml -p $(COLLECTIONS)
 	touch $@
 
 # ShellCheck and shfmt on the shell scripts, found by extension or shebang (tools/files). -x
@@ -73,19 +64,6 @@ shell:
 yamllint: $(PIP_STAMP)
 	@set -ef; if [ -z "$(FILES)" ]; then files=.; else files=$$(tools/files yaml $(FILES)); fi; \
 		[ -z "$$files" ] || $(VENV)/bin/yamllint --strict $$files
-
-# ansible-lint runs ansible-playbook's syntax check, so the venv's bin goes first on the PATH.
-# Without FILES, it finds the files itself, and leaves out those .ansible-lint excludes.
-ansible-lint: $(PIP_STAMP) $(GALAXY_STAMP)
-	@set -ef; files=; if [ -n "$(FILES)" ]; then files=$$(tools/files yaml $(FILES)); \
-		[ -n "$$files" ] || exit 0; fi; \
-		PATH="$(CURDIR)/$(VENV)/bin:$$PATH" $(VENV)/bin/ansible-lint $$files
-
-# ruff's lint and format checks, as ruff.toml sets them.
-ruff: $(PIP_STAMP)
-	@set -ef; if [ -z "$(FILES)" ]; then files=.; else files=$$(tools/files py $(FILES)); fi; \
-		[ -z "$$files" ] || { $(VENV)/bin/ruff check $$files && \
-		$(VENV)/bin/ruff format --check $$files; }
 
 # The size cap: 300 lines a file.
 sizecheck:
@@ -147,9 +125,8 @@ lint-file:
 		case $$file in \
 		*.md) gates='vale lychee rumdl sizecheck' ;; \
 		.github/workflows/*.yml | .github/workflows/*.yaml) \
-			gates='yamllint ansible-lint actionlint zizmor sizecheck' ;; \
-		*.yml | *.yaml) gates='yamllint ansible-lint sizecheck' ;; \
-		*.py) gates='ruff sizecheck' ;; \
+			gates='yamllint actionlint zizmor sizecheck' ;; \
+		*.yml | *.yaml) gates='yamllint sizecheck' ;; \
 		*.go | go.mod | go.sum) gates='gofmt govet golangci-lint govulncheck gotest sizecheck' ;; \
 		*.j2) gates=sizecheck ;; \
 		*) gates='shell sizecheck' ;; \
