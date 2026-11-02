@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/server/roles"
 	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
@@ -34,32 +35,20 @@ type Config struct {
 // recap is the playbook's recap line of localhost, in its log after a timestamp.
 var recap = regexp.MustCompile(`localhost +: ok=\d+ +changed=(\d+) `)
 
-// Run runs the segments in order and returns the roles that changed, or that would under Check.
-// The playbook's roles of a segment count as changed together, as its recap names no role.
-func Run(ctx context.Context, c Config, segs []Segment) ([]string, error) {
-	if hasPlaybook(segs) {
-		if _, err := step.Run(ctx, c.Prepare, c.Out, false); err != nil {
-			return nil, err
-		}
+// Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
+// that would under Check.
+func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
+	if _, err := step.Run(ctx, c.Prepare, c.Out, c.Check); err != nil {
+		return nil, err
 	}
 	var changed []string
-	for _, s := range segs {
-		if s.Playbook == nil {
-			did, err := step.Run(ctx, s.Role.Steps(c.Values, c.Secrets, c.M, c.Out), c.Out, c.Check)
-			if err != nil {
-				return changed, fmt.Errorf("%s: %w", s.Role.Name, err)
-			}
-			if did {
-				changed = append(changed, s.Role.Name)
-			}
-			continue
-		}
-		did, err := c.runPlaybook(ctx, s.Playbook)
+	for _, r := range list {
+		did, err := step.Run(ctx, r.Steps(c.Values, c.Secrets, c.M, c.Out), c.Out, c.Check)
 		if err != nil {
-			return changed, err
+			return changed, fmt.Errorf("%s: %w", r.Name, err)
 		}
 		if did {
-			changed = append(changed, s.Playbook...)
+			changed = append(changed, r.Name)
 		}
 	}
 	return changed, nil

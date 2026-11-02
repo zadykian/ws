@@ -38,12 +38,8 @@ func TestRun(t *testing.T) {
 				return []step.Step{todo{done}}
 			}}
 		}
-		segs, err := Segments([]roles.Role{role("a", &a), role("b", &b)}, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
 		c := Config{Options: Options{Check: check}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
-		got, err := Run(context.Background(), c, segs)
+		got, err := Run(context.Background(), c, []roles.Role{role("a", &a), role("b", &b)})
 		if err != nil || !slices.Equal(got, []string{"a", "b"}) || a == check || b == check {
 			t.Errorf("check %v: changed = %q, a = %v, b = %v, err = %v", check, got, a, b, err)
 		}

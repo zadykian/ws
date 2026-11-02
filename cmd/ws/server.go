@@ -69,9 +69,9 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 		return fansCommand(ctx, args[1:], stderr)
 	}
 	opts, err := apply.Parse(args[1:])
-	var segs []apply.Segment
+	var list []roles.Role
 	if err == nil && args[0] == "apply" {
-		segs, err = apply.Segments(roles.List(), opts.Only)
+		list, err = apply.Select(roles.List(), opts.Only)
 	}
 	if args[0] != "apply" || err != nil {
 		if err != nil {
@@ -111,8 +111,7 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1
 	}
-	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, Secrets: sec, M: m, Out: out, Prepare: prepare,
-		Dir: serverLib + "/" + version, Log: serverLog}, segs)
+	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, Secrets: sec, M: m, Out: out, Prepare: prepare}, list)
 	term.Flush()
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
