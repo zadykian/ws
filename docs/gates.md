@@ -12,7 +12,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 - `shell`: ShellCheck, which follows a script's sources with `-x`, and `shfmt -d -i 4` on every
   shell script, found by extension or shebang;
 - `yamllint`: `yamllint --strict`, as `.yamllint` sets it, on the YAML files it finds itself;
-- `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Go and Jinja templates;
+- `sizecheck`: 300 lines a file, for Markdown, YAML, shell and Go;
 - `vale`: Vale's three rules (`.vale.ini`) on the Markdown files: sentences of 30 words or fewer,
   no wordy phrases and no needless variants;
 - `lychee`: the links to files and their headings in the Markdown files, offline;
@@ -35,13 +35,13 @@ line ends and indents for editors.
 `tools/run` downloads the other tools into `.cache/tools`, each pinned by version and SHA-256.
 Go comes from go.dev, with the four sums of its listing, and golangci-lint from its release. The
 Go gates keep GOPATH and the caches in `.cache`, and `GOTOOLCHAIN=local` stops a download of
-another Go. make
-installs the Python tools of `.github/lint-requirements.txt` into `.cache/venv`, with a Python of
-3.12 to 3.14. That file pins each package with the SHA-256 of
-each of its files. pip takes only the wheels it lists, and builds no package. So the tools install
-where each package has a wheel: on Linux, on amd64 or arm64, and on macOS on arm64, as cryptography
-has none for macOS on amd64. uv writes the file from `.github/lint-requirements.in`, which says
-how, and make stops where the file lacks a pin of the `.in`. make installs the tools again
-where a file they come from is newer.
+another Go.
+
+make installs yamllint, the one Python tool, with its two dependencies, into `.cache/venv`. It
+takes them from `.github/lint-requirements.txt`, with a Python of 3.12 to 3.14. That file pins
+each package with the SHA-256 of each of its files. pip takes only the wheels it lists, and builds
+no package. uv writes the file from `.github/lint-requirements.in`, which says how, and make stops
+where the file lacks a pin of the `.in`. make installs the tools again where a file they come from
+is newer.
 
 [writing]: https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale

@@ -5,17 +5,17 @@ pull request alone, as it holds every change below it. `lint`, `install` and `si
 The `mac-cld` job's checks are on [their own page](checks-mac-cld.md), and the gates of `make lint`
 on [theirs](gates.md).
 
-## The playbook
+## The `playbook` job
 
 CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
-that the build is `devel`. It runs `ws server apply` twice, without the tasks tagged `systemd`,
-which need a booted machine, and the second run's last line must be `changed: none`. Then
-`nft -c`, with the container's NET_ADMIN, checks the outbound table the play wrote and the users
-it names. The run leaves out its own check under `--skip-tags systemd`
-([Outbound](security.md#outbound)). Its `/etc/ws/host_vars.yml` gives a swap file of 64 MiB, as the
-runner's disk has no room for one the size of its RAM. It names no JetBrains backend,
-`jetbrains_backends: []`, as it has no room for those either. Its board is not MSI's, so the `fans`
-role leaves its fans alone. It gives no VPN profile, so the `ikeward` role does nothing.
+that the build is `devel`. It runs `ws server apply` twice. The steps that need a booted systemd
+skip and say so, and the second run's last line must be `changed: none`. Then `nft -c`, with the
+container's NET_ADMIN, checks the outbound table the run wrote and the users it names. The run
+leaves out its own check ([Outbound](security.md#outbound)). Its `/etc/ws/host_vars.yml` gives a
+swap file of 64 MiB, as the runner's disk has no room for one the size of its RAM. It names no
+JetBrains backend, `jetbrains_backends: []`, as it has no room for those either. Its board is not
+MSI's, so the `fans` role leaves its fans alone. It gives no VPN profile, so the `ikeward` role does
+nothing.
 
 ## The install script
 
@@ -100,14 +100,14 @@ one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names 
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
-on ws, with a full run of its own, a run must install v0.0.0 and run the playbook again.
+on ws, with a full run of its own, a run must install v0.0.0 and run the apply again.
 `standin.sh` serves a release v0.0.0, the job's build, as the latest on 127.0.0.1:22080 with
 [serve-releases](../tools/serve-releases/main.go), and the job's `WS_RELEASES_URL` names it. So
 `--update` finds v0.0.0 and stays. A tagged clone built as v0.0.1, the latest, must make
 `--update` leave v0.0.1 as the Mac's `ws version` and as the stand-in ws's (case 59).
 The wizard's stage ws's run must wait for ws on ws under a fresh `--check`. The first run must run
-the playbook through the remote script, and each run since must read ws's `status` alone, once, and
-again after a run of the playbook. A run's calls to ws share one connection, which its end closes.
+ws's apply through the remote script, and each run since must read ws's `status` alone, once, and
+again after a run of apply. A run's calls to ws share one connection, which its end closes.
 Without the stamp, a run whose unit is cut off must stop at the stage, and the next must start a
 unit of its own. That run must end with what stays by hand: the fans' driver and the router's
 forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
@@ -266,7 +266,7 @@ Code run two targets of the `Makefile`, as [its docs][lint] say. After each edit
 - Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
 - YAML: `yamllint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
 - shell, by extension or shebang: `shell` and `sizecheck`;
-- Jinja templates and Python: `sizecheck`.
+- Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest` and `sizecheck`.
 
 As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only the
 branch's own commits, from `origin/main`.

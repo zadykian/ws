@@ -3,8 +3,8 @@
 `ws mac wizard` sets up the Mac in stages, around `ws mac apply` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
-runs ws's playbook there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on ws.
-Then it exchanges the tunnel's keys, clones another repository on the Mac, downloads its release
+runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on
+ws. Then it exchanges the tunnel's keys, clones another repository on the Mac, downloads its release
 with gh, runs its command on ws, and copies ws's word list. Last, it sets up the cable from the Mac's
 display to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
 what else it needs, as yourself:
@@ -174,17 +174,17 @@ its `install.sh` runs, then the command again. A ws that is no release stays, wi
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
 It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
-root's `HOME` and a UTF-8 locale. That ws runs the playbook it embeds
-([The playbook](checks.md#the-playbook)). The wizard prints the unit's log until it ends, and stops
+root's `HOME` and a UTF-8 locale. That ws runs its roles
+([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, and stops
 where the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when
 the Mac sleeps, and the next run of the wizard follows it to its end.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
-with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes ws's
-version, or `-` where it has none, and the status there, and `off` where its `-e` turned the
+with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes ws's
+version, or `-` where it has none, and the status there, and `off` where the values turned the
 outbound table off. The stage is done where that status is 0, the version is this ws's, and no unit
-runs. So a second run of the wizard runs no playbook, and one after a run cut short starts again.
-With `--update`, the stage runs the playbook once more with the ws installed there. The run
+runs. So a second run of the wizard runs no apply, and one after a run cut short starts again.
+With `--update`, the stage runs `ws server apply` once more with the ws installed there. The run
 passes no file of the `ikeward` role's variables, so the role leaves the VPN as it finds it ([The
 profile](ikeward.md#the-profile)).
 
@@ -193,7 +193,7 @@ with `WS_TARGET=cloud`, the stage names `security_outbound: false` in ws's `/etc
 before the run, which reads its values there. The stage is done there once a run that began with
 the line passed and `host_vars.yml` has it. After a unit that began without it, which the run
 followed, a run of its own goes. Where the line alone is missing, the stage writes it, and runs no
-playbook.
+apply.
 
 ## Signing key
 
