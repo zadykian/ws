@@ -57,7 +57,7 @@ and traces ([claude](claude.md#telemetry)). The dashboard was written for this r
 `internal/server/signoz/dashboards` says what it reads.
 
 The role creates each dashboard of `signoz_dashboards` through SigNoz's API, from
-`roles/signoz/files/dashboards/NAME.json`. That file must hold NAME as its `name`, or a run fails,
+`internal/server/signoz/dashboards/NAME.json`. That file must hold NAME as its `name`, or a run fails,
 and a test with it. The role replaces a dashboard where it differs from its file. So a
 change made to it in the UI lasts until the next run, while one made to a copy of it stays. A name
 taken off the list leaves its dashboard in SigNoz. SigNoz refuses to change a dashboard locked in

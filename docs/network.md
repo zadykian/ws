@@ -14,7 +14,7 @@ server, as `ip link` names it, or let the Mac's wizard do it ([The cable](mac-wi
 network_direct_link_interface: enp5s0
 ```
 
-The file lives outside the playbook that ws embeds, so a new release keeps it. Every run reads it,
+The file lives outside ws, so a new release keeps it. Every run reads it,
 so none removes the direct link for want of the value.
 
 The step then writes `/etc/netplan/60-direct-link.yaml`, which gives that interface

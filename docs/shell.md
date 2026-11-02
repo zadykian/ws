@@ -23,7 +23,7 @@ be a URL, which names a host. A real run keeps the old file beside the new one, 
 ## Signing
 
 `~/.gitconfig` signs each commit with an SSH key of the machine's own: `ws_git_signing_key`
-in `group_vars/all.yml`, `~/.ssh/id_ed25519_signing` by default. The role makes it once, an ed25519
+in the values file, `~/.ssh/id_ed25519_signing` by default. The role makes it once, an ed25519
 key with no passphrase, as tools and claude commit unattended. The key only signs. The role does not
 register it with GitHub: [The signing key](devtools.md#the-signing-key).
 
@@ -72,9 +72,8 @@ remove it by hand.
 
 `ws server apply --secrets FILE` takes the secrets of the roles from a YAML file that age encrypts,
 in armor. `ws` decrypts it in its process with an X25519 identity. A run without `--secrets`, as
-CI's, has no secrets. `-e @FILE` and the Ansible Vault options after `--` are refused. These keys
-are in no other file: `host_vars.yml` refuses them, and a value reaches Ansible as written, never as
-a template. A bare `0123`, `on` or `~` is the string as written, and `~` is empty.
+CI's, has no secrets. These keys are in no other file: `host_vars.yml` refuses them. A bare `0123`,
+`on` or `~` is the string as written, and `~` is empty.
 
 The identity stays in the Mac's Keychain. `ws server apply` reads it from its standard input, as
 piped over ssh, or at a terminal with no echo. Encrypting needs the public recipient alone:
@@ -93,8 +92,7 @@ The file holds these keys, and ws refuses any other:
   the same recipient. A relative name is relative to the file;
 - `ikeward_p12_password`: the `.p12`'s password ([The profile](ikeward.md#the-profile)).
 
-No message, `--check` and `--diff` included, shows a value. Roles that are still Ansible's get the
-secrets as extra variables on a pipe, `-e @/dev/fd/3`, so nothing plain reaches the disk but the
+No message, `--check` included, shows a value. Nothing plain reaches the disk but the
 files that the roles write.
 
 ## Git credentials
@@ -121,7 +119,7 @@ answers for GitHub, except below an entry's URL there.
 A run removes a token and its helper only where its entry says `state: absent`. A URL dropped from
 the list keeps both. Empty, the list leaves the tokens and `tokens.gitconfig` as they are, so that
 a run without the secrets file, as CI's, keeps them. A null counts as empty. No token reaches
-`tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` and `--diff` included: a dry run shows
+`tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` included: a dry run shows
 the diff of the credential lines, and that a token would change, not which.
 
 To revoke a token, revoke it on the server first. Then set `state: absent` on its entry, and keep
@@ -129,8 +127,8 @@ the entry until each machine has run with it.
 
 ## Clones
 
-`shell_git_clones` lists repositories to clone once, as a private repository's extra vars set it,
-and is empty by default. Each entry takes:
+`shell_git_clones` lists repositories to clone once, as the machine's `host_vars.yml` sets it, and is
+empty by default. Each entry takes:
 
 - `repo`: the repository's URL or path, with no token, which [Git credentials](#git-credentials)
   give;

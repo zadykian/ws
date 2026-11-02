@@ -60,7 +60,7 @@ git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIG
 `WS_IDENTITY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its
 agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
 
-`WS_USER` is the user ssh logs in as, `root` by default: the playbook's `ws_user`, where a run set
+`WS_USER` is the user ssh logs in as, `root` by default: the server's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
 `root` for `WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for
 `WS_GIT_SIGNING_KEY`. Where Secretive's socket is there and `PublicKeys` holds one key for ws,

@@ -66,7 +66,7 @@ after Monday's midnight, or at boot where the machine was off then. Its service 
 `ws server apply --only jetbrains`, with a copy of the `ws` that the last run found, at
 `/usr/local/lib/ws/jetbrains`, which only root may write, and the values in
 `/etc/ws/host_vars.yml`. The service sets `WS_JETBRAINS_RUN=timer`, which gives its downloads the
-directory `timer`. No copy of the role is kept, and no Ansible is needed. A run sets the timer up
+directory `timer`. No copy of the role is kept. A run sets the timer up
 before the backends, so that a run that fails at one leaves the timer to try again. Without systemd
 booted, as in CI's container, a run writes the unit files and leaves the timer alone.
 

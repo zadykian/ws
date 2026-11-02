@@ -70,13 +70,14 @@ each a `name` and a `source`. The source is what `claude plugin marketplace add`
 off GitHub ends in `.git`, as claude reads one without it as a hosted `marketplace.json`. The name
 is the one the marketplace's own `marketplace.json` gives, as `add` takes none:
 
-```sh
-ws server apply -- -e '{"claude_marketplaces": [{"name": "acme-plugins",
-    "source": "https://git.example.internal/team/plugins.git"}]}'
+```yaml
+claude_marketplaces:
+  - name: acme-plugins
+    source: https://git.example.internal/team/plugins.git
 ```
 
-A source that names a private server stays out of this repository: a private repository passes the
-list in its extra vars, as `-e @FILE`. A private source needs the VPN of the `ikeward` role
+A source that names a private server stays out of this repository: its list goes in the machine's
+`host_vars.yml`. A private source needs the VPN of the `ikeward` role
 ([A run](ikeward.md#a-run)), and a token for its host from the `shell` role
 ([Git credentials](shell.md#git-credentials)). Both roles run before `claude`.
 The sessions' unit needs a booted systemd, so in CI's container the restore step skips.
