@@ -177,7 +177,7 @@ C-A-S-p = "goto_prev_change"          # Previous change
 C-A-z = ":reset-diff-change"          # Rollback lines
 
 # Debugger: helix's debug adapter commands, which need the language's debugger, dlv for Go. The
-# playbook installs none.
+# ws installs none.
 C-b = "dap_toggle_breakpoint"         # Toggle line breakpoint
 A-F9 = "dap_edit_condition"           # Edit breakpoint
 C-A-b = "dap_edit_condition"          # Edit breakpoint
