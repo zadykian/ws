@@ -19,5 +19,6 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{Install{M: m, User: user}}},
+		host.Group{Title: "Claude cld update", After: installStep, Parts: []host.Resource{Update{M: m, User: user}}},
 	}
 }
