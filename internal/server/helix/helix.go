@@ -29,5 +29,8 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 		host.Group{Title: "Helix roslyn-language-server", Parts: []host.Resource{
 			Roslyn{M: m, User: user, Path: v.Helix.Roslyn},
 		}},
+		user.Owned(m, "Helix grammars", "", func(uid, gid int) ([]host.Resource, error) {
+			return []host.Resource{Grammars{M: m, User: user, Names: v.Helix.Grammars, UID: uid, GID: gid}}, nil
+		}),
 	}
 }
