@@ -102,7 +102,7 @@ The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets 
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
 on ws, with a full run of its own, a run must install v0.0.0 and run the playbook again.
 `standin.sh` serves a release v0.0.0, the job's build, as the latest on 127.0.0.1:22080 with
-[release-standin.py](../.github/release-standin.py), and the job's `WS_RELEASES_URL` names it. So
+[serve-releases](../tools/serve-releases/main.go), and the job's `WS_RELEASES_URL` names it. So
 `--update` finds v0.0.0 and stays. A tagged clone built as v0.0.1, the latest, must make
 `--update` leave v0.0.1 as the Mac's `ws version` and as the stand-in ws's (case 59).
 The wizard's stage ws's run must wait for ws on ws under a fresh `--check`. The first run must run
