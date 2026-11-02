@@ -37,3 +37,10 @@ func (u User) Output(ctx context.Context, m effect.Machine, name string, args ..
 	}
 	return m.Run(ctx, cmd, argv...)
 }
+
+// PassInput runs the command as the user with stdin as its standard input, and passes its output
+// to ws's standard error.
+func (u User) PassInput(ctx context.Context, m effect.Machine, stdin []byte, name string, args ...string) error {
+	cmd, argv, _ := u.argv(name, args)
+	return m.PassInput(ctx, stdin, cmd, argv...)
+}

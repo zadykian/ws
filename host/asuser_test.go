@@ -36,3 +36,12 @@ func TestUserRunsWithItsHome(t *testing.T) {
 		}
 	}
 }
+
+func TestUserPassesStdin(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["runuser -u ws -- env HOME=/home/ws bash"] = effecttest.Result{}
+	err := host.User{Name: "ws", Home: "/home/ws"}.PassInput(context.Background(), m, []byte("echo"), "bash")
+	if err != nil || !slices.Equal(m.Inputs, []string{"echo"}) {
+		t.Errorf("err %v, inputs %q", err, m.Inputs)
+	}
+}
