@@ -34,6 +34,9 @@ func unitState(files []dbus.UnitFile, units []dbus.UnitStatus, name string) Unit
 
 // State asks systemd for the unit's file and for its active state.
 func (OSUnits) State(ctx context.Context, name string) (UnitState, error) {
+	if err := CheckUnitName("state", name); err != nil {
+		return UnitState{}, err
+	}
 	c, err := dbus.NewSystemConnectionContext(ctx)
 	if err != nil {
 		return UnitState{}, err
@@ -61,6 +64,11 @@ func (OSUnits) State(ctx context.Context, name string) (UnitState, error) {
 
 // Enable enables the units' files.
 func (OSUnits) Enable(ctx context.Context, names ...string) error {
+	for _, n := range names {
+		if err := CheckUnitName("enable", n); err != nil {
+			return err
+		}
+	}
 	c, err := dbus.NewSystemConnectionContext(ctx)
 	if err != nil {
 		return err
@@ -72,6 +80,11 @@ func (OSUnits) Enable(ctx context.Context, names ...string) error {
 
 // Disable disables the units' files.
 func (OSUnits) Disable(ctx context.Context, names ...string) error {
+	for _, n := range names {
+		if err := CheckUnitName("disable", n); err != nil {
+			return err
+		}
+	}
 	c, err := dbus.NewSystemConnectionContext(ctx)
 	if err != nil {
 		return err
@@ -83,21 +96,33 @@ func (OSUnits) Disable(ctx context.Context, names ...string) error {
 
 // Start starts the unit, replacing the jobs that conflict, and waits for the job.
 func (OSUnits) Start(ctx context.Context, name string) error {
+	if err := CheckUnitName("start", name); err != nil {
+		return err
+	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.StartUnitContext })
 }
 
 // Restart restarts the unit and waits for the job.
 func (OSUnits) Restart(ctx context.Context, name string) error {
+	if err := CheckUnitName("restart", name); err != nil {
+		return err
+	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.RestartUnitContext })
 }
 
 // Reload asks the unit to read its configuration again and waits for the job.
 func (OSUnits) Reload(ctx context.Context, name string) error {
+	if err := CheckUnitName("reload", name); err != nil {
+		return err
+	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.ReloadUnitContext })
 }
 
 // Stop stops the unit and waits for the job.
 func (OSUnits) Stop(ctx context.Context, name string) error {
+	if err := CheckUnitName("stop", name); err != nil {
+		return err
+	}
 	return job(ctx, name, func(c *dbus.Conn) startFunc { return c.StopUnitContext })
 }
 
@@ -126,6 +151,9 @@ func job(ctx context.Context, name string, method func(*dbus.Conn) startFunc) er
 
 // ResetFailed clears the unit's failed state.
 func (OSUnits) ResetFailed(ctx context.Context, name string) error {
+	if err := CheckUnitName("reset-failed", name); err != nil {
+		return err
+	}
 	c, err := dbus.NewSystemConnectionContext(ctx)
 	if err != nil {
 		return err

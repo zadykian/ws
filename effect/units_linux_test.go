@@ -3,6 +3,8 @@
 package effect
 
 import (
+	"context"
+	"strings"
 	"testing"
 
 	"github.com/coreos/go-systemd/v22/dbus"
@@ -33,3 +35,24 @@ func TestUnitState(t *testing.T) {
 }
 
 var _ Units = OSUnits{}
+
+func TestOSUnitsRefuseABareName(t *testing.T) {
+	ctx, u := context.Background(), OSUnits{}
+	_, state := u.State(ctx, "docker")
+	if state == nil || !strings.Contains(state.Error(), "suffix") {
+		t.Errorf("State on a bare name: %v", state)
+	}
+	for call, err := range map[string]error{
+		"enable":       u.Enable(ctx, "docker.service", "docker"),
+		"disable":      u.Disable(ctx, "docker"),
+		"start":        u.Start(ctx, "docker"),
+		"restart":      u.Restart(ctx, "docker"),
+		"reload":       u.Reload(ctx, "docker"),
+		"stop":         u.Stop(ctx, "docker"),
+		"reset-failed": u.ResetFailed(ctx, "docker"),
+	} {
+		if err == nil || !strings.Contains(err.Error(), "suffix") {
+			t.Errorf("%s on a bare name: %v", call, err)
+		}
+	}
+}

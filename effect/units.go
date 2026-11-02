@@ -1,6 +1,10 @@
 package effect
 
-import "context"
+import (
+	"context"
+	"fmt"
+	"strings"
+)
 
 // UnitState is what systemd reports of a unit.
 type UnitState struct {
@@ -28,4 +32,19 @@ type Units interface {
 	ResetFailed(ctx context.Context, name string) error
 	// DaemonReload makes systemd read the unit files again.
 	DaemonReload(ctx context.Context) error
+}
+
+// unitTypes are the suffixes of the unit types that systemd knows.
+var unitTypes = []string{".service", ".socket", ".device", ".mount", ".automount", ".swap", ".target", ".path", ".timer", ".slice", ".scope"}
+
+// CheckUnitName fails where the name has no unit type's suffix. systemd's D-Bus API takes full
+// names: it drops a bare name from a list and refuses to load it, so a call with "docker" reads as
+// a unit that is not installed. The error names the call.
+func CheckUnitName(call, name string) error {
+	for _, t := range unitTypes {
+		if len(name) > len(t) && strings.HasSuffix(name, t) {
+			return nil
+		}
+	}
+	return fmt.Errorf("%s %q: a unit's name needs its type's suffix, such as .service", call, name)
 }
