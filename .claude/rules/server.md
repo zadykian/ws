@@ -1,61 +1,64 @@
 ---
 paths:
-  - "roles/**"
+  - "internal/server/**"
+  - "host/**"
 ---
 
-# roles
+# server
 
 The invariants a change to a role keeps, each linking where the repository gives its reason. The
-hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each role's page in
-`docs/` says what it sets up.
+hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, as do [mac.md](mac.md)'s for
+steps, and each role's page in `docs/` says what it sets up.
 
-## The play
+## The roles
 
-- A role is a tag of `site.yml` of its name, with its page, `docs/NAME.md`, and a line in the
-  README ([README](../../README.md)).
-- The play runs on localhost, where the controller's test of a path, such as `is file`, sees the
-  machine's own files ([claude's telemetry](../../internal/server/claude/telemetry.go)).
-- The roles set the machine up for `ws_user`, root by default, in `ws_home`
-  ([values.go](../../internal/server/values/values.go)). A task run as `ws_user` takes
-  `become: "{{ ws_user != 'root' }}"` and sets `HOME`. root needs no become, a container has no
-  sudo, and without become `HOME` would be the caller's
-  ([claude's tasks](../../internal/server/claude/install.go)).
-- A version goes in `group_vars/all.yml`, named for the role that installs it. SigNoz's images are
-  pinned in `internal/server/signoz/casting.yaml`, as its compose files are forged from it.
-- A failed task still runs the handlers it notified, as the next run would not notify them again.
+- A role is the Go steps of `internal/server/NAME`, with its page, `docs/NAME.md`, and a line in
+  the README ([README](../../README.md)). `roles.List` lists the roles in the order they run
+  ([roles.go](../../internal/server/roles/roles.go)).
+- The server's values are one struct, `values.Values`, parsed once from the machine's file with
+  unknown keys refused. A role's steps read it and add no key without a commit of their own
+  ([values.go](../../internal/server/values/values.go)).
+- The secrets are one struct, `secrets.Secrets`, beside the values: decrypted from age's armor in
+  ws's process, unknown keys refused, no error or output showing a value. Steps take it as their
+  second argument ([secrets.go](../../internal/server/secrets/secrets.go)).
+- The roles set the machine up for `ws_user`, root by default, in `ws_home`. A step run as `ws_user`
+  sets `HOME`: root needs no sudo, a container has none, and `HOME` would otherwise be the
+  caller's ([claude's install](../../internal/server/claude/install.go)).
+- A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
+  `internal/server/signoz/casting.yaml`, as its compose files are forged from it.
+- A restart or a reload that a watched change calls for is `host.Forced`. `Group.Apply` runs it
+  after a failed change too, as the next run finds the file right and plans none.
 
 ## Runs
 
-- A second run changes nothing, which CI's `playbook` job checks
-  ([The playbook](../../docs/checks.md#the-playbook)). A task that only reads reports no change,
-  `changed_when: false`.
-- A dry run, `--check --diff`, changes nothing and shows how the machine differs
-  ([Dry runs](../../README.md#dry-runs)). A read, such as a GET, runs in a dry run too,
-  `check_mode: false`; a Go step reads in its Plan
+- A second run plans nothing, which CI's `playbook` job checks
+  ([The `playbook` job](../../docs/checks.md#the-playbook-job)). A step that only reads plans no change.
+- A dry run, `--check`, applies nothing and shows how the machine differs
+  ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([devtools](../../internal/server/devtools/golang_plan.go)).
-- Where a dry run skips a task, a task beside it shows what the run would change, as Go's move into
+- Where a dry run skips a step, a step beside it shows what the run would change, as Go's move into
   `/usr/local/go` does ([claude's marketplaces](../../internal/server/claude/marketplaces.go)).
-- A task that needs a booted machine's systemd is tagged `systemd`, which CI's container run skips.
+- A step that needs a booted machine's systemd checks `host.Booted`: without one, as in CI's
+  container, it skips and says so.
 - A file a role writes has a `# Written by github.com/zadykian/ws` line at its top, where its format
-  takes comments, as the roles' templates and files do. Each run replaces a change made to it by
-  hand ([shell](../../docs/shell.md)).
-- A tool that updates itself, such as claude or rustup, is installed only where missing,
-  with `creates:` ([claude's tasks](../../internal/server/claude/install.go)).
+  takes comments, as the roles' embedded templates and files do. Each run replaces a change made to
+  it by hand ([shell](../../docs/shell.md)).
+- A tool that updates itself, such as claude or rustup, is installed only where missing
+  ([claude's install](../../internal/server/claude/install.go)).
 - A role given the secrets of `ws server apply --secrets`, changes nothing where they are
   empty, and removes only what an entry's explicit `state: absent` names. So a run without them, as
   CI's, keeps what a run with them made ([Git credentials](../../docs/shell.md#git-credentials)).
 
 ## Downloads and keys
 
-- get_url checks a download against its SHA-256, `checksum: sha256:...`, before it writes `dest`,
-  and downloads again where `dest` holds another
-  ([the Go download](../../host/download.go)).
+- A download is checked against its SHA-256 before it writes `dest`, and downloaded again
+  where `dest` holds another ([the Go download](../../host/download.go)).
 - An apt repository's key goes in only with the primary fingerprint its entry pins
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
   checksum its code pins, so that a changed key fails the run
   ([docker's repository](../../internal/server/docker/repository.go)).
 
-## signoz and the filter plugins
+## signoz
 
 - foundryctl's compose files, in `internal/server/signoz/deployment/`, are never edited by hand: change
   `casting.yaml` and forge again ([The compose files](../../docs/signoz.md#the-compose-files)).
