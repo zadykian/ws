@@ -1,14 +1,18 @@
 # helix
 
-The `helix` role installs the helix editor, `hx`, from Ubuntu's archive. It writes
-`~/.config/helix/config.toml`, set close to GoLand's and Rider's settings, and `languages.toml`.
-Ubuntu's hx ships no tree-sitter grammars, so the role fetches and builds those `helix_grammars`
-lists with `hx --grammar`. Each run replaces changes made to the two files by hand, and keeps the
-old file beside the new one. The keys follow the IDEs' F12 keymap: [helix's keys](#helixs-keys),
-below.
+The `helix` role is Go steps in `internal/server/helix`. It installs the helix editor, `hx`, from
+Ubuntu's archive. It writes `~/.config/helix/config.toml`, set close to GoLand's and Rider's
+settings, and `languages.toml`, both as `ws_user`. Ubuntu's hx ships no tree-sitter grammars, so
+the role fetches and builds those `helix_grammars` lists with `hx --grammar`. A run replaces
+changes made to the two files by hand, and keeps the old file beside the new one. The keys follow
+the IDEs' F12 keymap: [helix's keys](#helixs-keys), below.
 
-Go's language server, gopls, comes from `go install` at the version `group_vars/all.yml` pins, with
-the Go of the `devtools` role, and is built again when either version changes. C#'s,
+Plan cannot see a pending fetch, so the grammars go by a stamp, `~/.config/helix/.ws-grammars`. It
+holds the output of `hx --version` and the list of grammars. The role fetches and builds where
+they differ from the stamp or a grammar's library is missing, and writes the stamp after.
+
+Go's language server, gopls, comes from `go install` at the version `internal/server/helix/pins.go`
+pins, with the Go of the `devtools` role, and is built again when either version changes. C#'s,
 roslyn-language-server, is the server of VS Code's C# extension. It comes from nuget.org with
 `dotnet tool` at the version pinned there too, and runs on the .NET 10 of the `devtools` role:
 [C# in helix](#c-in-helix), below.

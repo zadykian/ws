@@ -18,10 +18,9 @@ libraries for Chromium go in without recommends.
 
 Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it.
 ws unpacks the tarball beside the target and moves the tree into place whole, so that a run cut
-short never passes for the version. A new `GoVersion` in `internal/server/devtools/pins.go`
-replaces the Go there. The helix role reads the same pin from `group_vars/all.yml` until ws ports
-it. rustup installs Rust's stable toolchain in the user's home. Once there, rustup updates itself,
-so ws leaves it alone.
+short never passes for the version. A new `GoVersion` in `internal/server/devtools/pins.go` replaces
+the Go there, and the Go that builds helix's gopls. rustup installs Rust's stable toolchain in the
+user's home. Once there, rustup updates itself, so ws leaves it alone.
 
 ## The signing key
 

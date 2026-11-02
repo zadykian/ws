@@ -14,12 +14,12 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 - A role is a tag of `site.yml` of its name, with its page, `docs/NAME.md`, and a line in the
   README ([README](../../README.md)).
 - The play runs on localhost, where the controller's test of a path, such as `is file`, sees the
-  machine's own files ([claude's telemetry](../../roles/claude/tasks/telemetry.yml)).
+  machine's own files ([claude's telemetry](../../internal/server/claude/telemetry.go)).
 - The roles set the machine up for `ws_user`, root by default, in `ws_home`
   ([group_vars/all.yml](../../group_vars/all.yml)). A task run as `ws_user` takes
   `become: "{{ ws_user != 'root' }}"` and sets `HOME`. root needs no become, a container has no
   sudo, and without become `HOME` would be the caller's
-  ([claude's tasks](../../roles/claude/tasks/main.yml)).
+  ([claude's tasks](../../internal/server/claude/install.go)).
 - A version goes in `group_vars/all.yml`, named for the role that installs it. SigNoz's images are
   pinned in `internal/server/signoz/casting.yaml`, as its compose files are forged from it.
 - A role's variables carry its name as a prefix, as ansible-lint's `var-naming` rule asks
@@ -37,13 +37,13 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
   `check_mode: false`; a Go step reads in its Plan
   ([devtools](../../internal/server/devtools/golang_plan.go)).
 - Where a dry run skips a task, a task beside it shows what the run would change, as Go's move into
-  `/usr/local/go` does ([claude's marketplaces](../../roles/claude/tasks/marketplaces.yml)).
+  `/usr/local/go` does ([claude's marketplaces](../../internal/server/claude/marketplaces.go)).
 - A task that needs a booted machine's systemd is tagged `systemd`, which CI's container run skips.
 - A file a role writes has a `# Written by github.com/zadykian/ws` line at its top, where its format
   takes comments, as the roles' templates and files do. Each run replaces a change made to it by
   hand ([shell](../../docs/shell.md)).
 - A tool that updates itself, such as claude or rustup, is installed only where missing,
-  with `creates:` ([claude's tasks](../../roles/claude/tasks/main.yml)).
+  with `creates:` ([claude's tasks](../../internal/server/claude/install.go)).
 - A role given the secrets of `ws server apply --secrets`, changes nothing where they are
   empty, and removes only what an entry's explicit `state: absent` names. So a run without them, as
   CI's, keeps what a run with them made ([Git credentials](../../docs/shell.md#git-credentials)).
