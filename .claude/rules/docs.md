@@ -12,8 +12,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   requests land, and the license.
 - `CLAUDE.md` holds what Claude needs before a change: the layout, the commands, how changes land,
   and the hard rules, each linking its reason. An area's invariants go in `.claude/rules/`, loaded
-  with the files they cover, as [roles.md](roles.md) is.
-- `docs/NAME.md` is the page of the role NAME: what it sets up and the variables that change it.
+  with the files they cover, as [server.md](server.md) is.
+- `docs/NAME.md` is the page of the role NAME: what it sets up and the values that change it.
   It gives the role's caveats too, such as what a run replaces or what a dry run shows.
 - [mac.md](../../docs/mac.md) is the Mac's side, `mac/` and the ws CLI. [mac-git.md](../../docs/mac-git.md) is its
   git, [mac-wizard.md](../../docs/mac-wizard.md) its wizard, and [mac-hook.md](../../docs/mac-hook.md)
