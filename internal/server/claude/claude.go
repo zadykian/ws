@@ -11,7 +11,10 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-const installStep = "Claude install"
+const (
+	installStep = "Claude install"
+	updateStep  = "Claude cld update"
+)
 
 // Steps returns the role's steps in order. Each of cld's steps comes after the install, as cld is
 // not there to ask until a run has installed it.
@@ -19,9 +22,13 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{Install{M: m, User: user}}},
-		host.Group{Title: "Claude cld update", After: installStep, Parts: []host.Resource{Update{M: m, User: user}}},
+		host.Group{Title: updateStep, After: installStep, Parts: []host.Resource{Update{M: m, User: user}}},
 		host.Group{Title: "Claude cld completion", After: installStep, Parts: []host.Resource{
 			Completion{M: m, User: user},
+		}},
+		// A cld older than setup config user has it once the update is done.
+		host.Group{Title: "Claude user settings", After: updateStep, Parts: []host.Resource{
+			UserSettings{M: m, User: user, Permissions: v.Claude.Permissions, Notifications: v.Claude.Notifications},
 		}},
 	}
 }
