@@ -30,5 +30,13 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 		host.Group{Title: "Claude user settings", After: updateStep, Parts: []host.Resource{
 			UserSettings{M: m, User: user, Permissions: v.Claude.Permissions, Notifications: v.Claude.Notifications},
 		}},
+		user.Owned(m, "Claude telemetry", updateStep, func(uid, gid int) ([]host.Resource, error) {
+			return []host.Resource{
+				// claude's installer makes it, but a dry run on a new machine runs no installer. It
+				// holds claude's credentials, so an existing one keeps its mode.
+				host.Dir{M: m, Path: user.Home + "/.claude", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
+				Telemetry{M: m, User: user, Env: v.Claude.TelemetryEnv},
+			}, nil
+		}),
 	}
 }
