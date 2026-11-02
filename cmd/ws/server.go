@@ -101,7 +101,7 @@ func serverCommand(ctx context.Context, args []string, euid int, playbook fs.FS,
 		}}},
 		server.Playbook{FS: playbook, Version: version, Lib: serverLib, Vars: serverVars, M: m, Out: out},
 	}
-	v, err := values.Load(m, serverVars, apply.ExtraVars(opts.Args)...)
+	v, err := values.Load(m, serverVars)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1

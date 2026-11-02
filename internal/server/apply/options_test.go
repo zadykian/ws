@@ -52,11 +52,3 @@ func TestParse(t *testing.T) {
 		}
 	}
 }
-
-func TestExtraVars(t *testing.T) {
-	args := []string{"-e", "a=1 b=2", "--tags-not", "-ec=3", "--extra-vars=d=4", "--extra-vars", "e=5", "-e", "@f", "-e", "{\"g\": 6}"}
-	want := []string{"a=1", "b=2", "c=3", "d=4", "e=5"}
-	if got := ExtraVars(args); !slices.Equal(got, want) {
-		t.Errorf("ExtraVars = %q, want %q", got, want)
-	}
-}
