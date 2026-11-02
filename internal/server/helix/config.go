@@ -19,6 +19,7 @@ func configFiles(m effect.Machine, v values.Values, uid, gid int) ([]host.Resour
 	}
 	dir := v.Home + "/.config/helix"
 	return []host.Resource{
+		plain{m, []string{v.Home + "/.config", dir, dir + "/config.toml", dir + "/languages.toml"}},
 		host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
 		host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
 		host.File{M: m, Path: dir + "/config.toml", Content: config, Mode: 0o644, UID: uid, GID: gid, Backup: true},

@@ -40,3 +40,21 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 		t.Error("languages.toml is not written")
 	}
 }
+
+func TestConfigRefusesALink(t *testing.T) {
+	for _, link := range []string{"/home/ws/.config/helix", "/home/ws/.config/helix/config.toml"} {
+		m := effecttest.NewMachine()
+		m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
+		m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
+		m.Links[link] = "/srv/target"
+		v := values.Default()
+		v.User, v.Home = "ws", "/home/ws"
+		s := stepNamed(t, m, v, "Helix config")
+		if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err == nil {
+			t.Errorf("%s: no error", link)
+		}
+		if len(m.Owners) != 0 || len(m.Files) != 0 {
+			t.Errorf("%s: changed %v %v", link, m.Owners, m.Files)
+		}
+	}
+}

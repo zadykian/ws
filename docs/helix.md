@@ -2,10 +2,11 @@
 
 The `helix` role is Go steps in `internal/server/helix`. It installs the helix editor, `hx`, from
 Ubuntu's archive. It writes `~/.config/helix/config.toml`, set close to GoLand's and Rider's
-settings, and `languages.toml`, both as `ws_user`. Ubuntu's hx ships no tree-sitter grammars, so
-the role fetches and builds those `helix_grammars` lists with `hx --grammar`. A run replaces
-changes made to the two files by hand, and keeps the old file beside the new one. The keys follow
-the IDEs' F12 keymap: [helix's keys](#helixs-keys), below.
+settings, and `languages.toml`, both owned by `ws_user`. A link at `~/.config`, the directory
+or either file fails the step, since ws writes them as root. Ubuntu's hx ships no tree-sitter
+grammars, so the role fetches and builds those `helix_grammars` lists with `hx --grammar`. A run
+replaces changes made to the two files by hand, and keeps the old file beside the new one. The keys
+follow the IDEs' F12 keymap: [helix's keys](#helixs-keys), below.
 
 Plan cannot see a pending fetch, so the grammars go by a stamp, `~/.config/helix/.ws-grammars`. It
 holds the output of `hx --version` and the list of grammars. The role fetches and builds where
