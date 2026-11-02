@@ -20,7 +20,7 @@ const (
 // not there to ask until a run has installed it.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
-	return []step.Step{
+	steps := []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{Install{M: m, User: user}}},
 		host.Group{Title: updateStep, After: installStep, Parts: []host.Resource{Update{M: m, User: user}}},
 		host.Group{Title: "Claude cld completion", After: installStep, Parts: []host.Resource{
@@ -39,4 +39,10 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 			}, nil
 		}),
 	}
+	if len(v.Claude.Marketplaces) > 0 {
+		steps = append(steps, host.Group{Title: "Claude marketplaces", After: "Claude telemetry", Parts: []host.Resource{
+			Marketplaces{M: m, User: user, List: v.Claude.Marketplaces},
+		}})
+	}
+	return steps
 }

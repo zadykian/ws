@@ -4,7 +4,9 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -88,3 +90,65 @@ func checkSource(all []listed, mk values.Marketplace) error {
 	return nil
 }
 
+type addMarketplace struct {
+	p  Marketplaces
+	mk values.Marketplace
+}
+
+func (c addMarketplace) String() string {
+	return "add the plugin marketplace " + c.mk.Name + " from " + c.mk.Source
+}
+
+// Apply adds the marketplace. --json ends the output with a line of JSON, which names the
+// marketplace as it names itself. claude keeps it all the same, under its own name. It lists the
+// marketplaces after, as claude lists some sources in another form than add took them, such as a
+// relative path made absolute: the next run's check would fail on such a one, so this run fails now.
+func (c addMarketplace) Apply(ctx context.Context) error {
+	out, err := c.p.cli(ctx, "add", "--json", c.mk.Source)
+	if err != nil {
+		return err
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	var added struct {
+		Marketplace string `json:"marketplace"`
+	}
+	if err := json.Unmarshal([]byte(lines[len(lines)-1]), &added); err != nil {
+		return fmt.Errorf("claude plugin marketplace add: %w", err)
+	}
+	if added.Marketplace != c.mk.Name {
+		return fmt.Errorf("the marketplace from %s names itself %s, not %s. claude has added it as %s: give that name in claude_marketplaces",
+			c.mk.Source, added.Marketplace, c.mk.Name, added.Marketplace)
+	}
+	all, err := c.p.list(ctx)
+	if err != nil {
+		return err
+	}
+	return checkSource(all, c.mk)
+}
+
+// Plan lists the marketplaces claude knows, checks each known one against its source, and plans an
+// add for each other. Without claude, as in a dry run on a new machine, it lists none, so the plan
+// names every marketplace.
+func (p Marketplaces) Plan(ctx context.Context) ([]host.Change, error) {
+	var all []listed
+	if _, err := p.M.Stat(p.claude()); err == nil {
+		if all, err = p.list(ctx); err != nil {
+			return nil, err
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	var changes []host.Change
+	for _, mk := range p.List {
+		known := false
+		for _, l := range all {
+			known = known || l.Name == mk.Name
+		}
+		if !known {
+			changes = append(changes, addMarketplace{p, mk})
+		} else if err := checkSource(all, mk); err != nil {
+			return nil, err
+		}
+	}
+	return changes, nil
+}
