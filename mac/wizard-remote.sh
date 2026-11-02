@@ -28,7 +28,7 @@
 
 set -eu
 
-# The wizard's stamps, ws's binary, the machine's values that ws's playbook reads, the
+# The wizard's stamps, ws's binary, the machine's values that ws server apply reads, the
 # Mac's key for wg0, root's claude, root's git config, which
 # names ws's signing key, the fans' driver as the kernel loaded it, and the network role's netplan
 # file of the cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of
@@ -64,7 +64,7 @@ stamp() {
 }
 
 # cable prints the port that host_vars names as network_direct_link_interface, as
-# link writes it, bare or in either quotes: the last such line, as Ansible reads the file. It
+# link writes it, bare or in either quotes: the last such line. It
 # prints - for none, and where the network role's netplan file lacks the port, as after a roles'
 # run that failed, so that the Cable stage runs them again.
 cable() {
@@ -177,7 +177,7 @@ EOF
 }
 
 # run starts a run's unit, or follows the one that runs, as the header says. The unit takes root's
-# HOME, which systemd gives a unit only with a user, and the locale that Ansible needs.
+# HOME, which systemd gives a unit only with a user, and a UTF-8 locale.
 run() {
     unit=$(active)
     if [ -n "$unit" ]; then
@@ -189,7 +189,7 @@ run() {
         off >"$state/off.new" && mv -f "$state/off.new" "$state/off"
         unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
         systemd-run --quiet --unit="$unit" --collect --expand-environment=no \
-            --description="ws's playbook, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
+            --description="ws server apply, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
             --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$vars" "$ws" "$state" "$@" ||
             die "systemd-run cannot start $unit"
         say "started $unit, which goes on where ssh drops: journalctl -u $unit shows its log"

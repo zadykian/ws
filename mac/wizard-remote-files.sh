@@ -29,7 +29,7 @@
 set -eu
 
 # The wizard's stamps, sent commands and installed ones, root's word list, sysfs's network
-# interfaces and the machine's values for ws's playbook. CI's stand-in for ws roots each, a line
+# interfaces and the machine's values for ws server apply. CI's stand-in for ws roots each, a line
 # NAME=PATH, in a directory of its own.
 state=/var/lib/ws-wizard
 list=/root/.config/ws/forbidden-words

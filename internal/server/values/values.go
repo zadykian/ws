@@ -1,6 +1,5 @@
 // Package values holds the machine's values, ws's host_vars.yml, as one typed struct. The file
-// is parsed once; the playbook reads the same file, so a key that no role knows is refused here
-// and there.
+// is parsed once, and a key that no role knows is refused.
 package values
 
 import (
@@ -34,7 +33,7 @@ type Values struct {
 	Wireguard Wireguard `yaml:",inline"`
 }
 
-// Shared holds the keys that group_vars/all.yml shares between the roles.
+// Shared holds the keys that the roles share.
 type Shared struct {
 	// User is the user the roles set the machine up for.
 	User string `yaml:"ws_user"`

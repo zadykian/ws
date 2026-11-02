@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Apply runs ws's playbook in a unit of its own through the remote script, or follows the run that
+// Apply runs ws server apply in a unit of its own through the remote script, or follows the run that
 // goes on there, with its log on stderr. On a cloud VM, where the outbound table would drop the
 // provider's metadata service, host_vars names security_outbound: false before the run, as ws
 // server apply reads its values from that file. A unit that the run followed may have begun before
@@ -57,7 +57,7 @@ func (r *WsRun) outbound(ctx context.Context) error {
 	if _, err := r.Remote.Do(ctx, "outbound"); err != nil {
 		lines := strings.Split(strings.TrimSpace(err.Error()), "\n")
 		return fmt.Errorf("%s: ws's host_vars lacks security_outbound: false: %s; mend that, or run the "+
-			"wizard with --update, which runs ws's playbook again", runStage, lines[len(lines)-1])
+			"wizard with --update, which runs ws server apply again", runStage, lines[len(lines)-1])
 	}
 	return nil
 }

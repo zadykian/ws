@@ -9,8 +9,8 @@
 # host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. Root on the stand-in ws
 # takes no key yet, so that run must stop at Root's key, and add none to root's authorized_keys. The
 # case then puts the account's keys there, as Ubuntu's installer imports them for its user and the
-# README's step copies them to root, and the wizard runs again. It must run ws's playbook once,
-# ws server apply -- without arguments in a unit with root's HOME, and stamp its status 0. Then the Mac's
+# README's step copies them to root, and the wizard runs again. It must run ws server
+# apply once, with no arguments, in a unit with root's HOME, and stamp its status 0. Then the Mac's
 # key must go to the stand-in ws's mac.pub, and ws server apply --only wireguard run there. wg0's key
 # must end mac.conf as WS_PUBLIC_KEY, and ws mac apply, run again, load the daemon, which must have a
 # handshake with the stand-in ws. The wizard must log in to ws through the tunnel once. The closing
@@ -68,7 +68,7 @@ cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 if ! printf '\n%s\n' '--only wireguard' | cmp -s - "$RUNNER_TEMP/ws/server.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
     ! grep -q ' 0 on$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
-    error "ws mac wizard ran no ws server apply on ws, once, then -- --only wireguard, with root's HOME"
+    error "ws mac wizard ran no ws server apply on ws, once, then with --only wireguard, with root's HOME"
 fi
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||

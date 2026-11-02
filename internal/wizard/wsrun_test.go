@@ -62,7 +62,7 @@ func TestWsRunUpdateWaitsForTheRun(t *testing.T) {
 func TestWsRunApply(t *testing.T) {
 	r, m := newRun("lan", "run - -\nactive -\n", false, false)
 	p, _ := r.Plan(context.Background())
-	if err := r.Apply(context.Background(), p); err == nil || !strings.Contains(err.Error(), "ws's playbook stopped") {
+	if err := r.Apply(context.Background(), p); err == nil || !strings.Contains(err.Error(), "ws server apply stopped") {
 		t.Errorf("Apply where ssh has no result = %v; want the stop", err)
 	}
 	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}

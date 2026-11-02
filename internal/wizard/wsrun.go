@@ -11,7 +11,7 @@ import (
 // runStage names the stage in its messages.
 const runStage = "ws's run"
 
-// WsRun is the stage of ws's playbook, ws server apply, in a unit of its own on ws. The remote script
+// WsRun is the stage of ws's run, ws server apply, in a unit of its own on ws. The remote script
 // starts it and follows it. A run goes on where ssh drops, and the next run of the wizard follows it.
 type WsRun struct {
 	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
@@ -19,9 +19,9 @@ type WsRun struct {
 	Remote *Remote
 	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
 	Version string
-	// Update has the stage run the playbook once more, with the ws installed there.
+	// Update has the stage run ws server apply once more, with the ws installed there.
 	Update bool
-	// ran is set once the stage ran the playbook in this run.
+	// ran is set once the stage ran ws server apply in this run.
 	ran bool
 }
 
@@ -54,7 +54,7 @@ func (r *WsRun) idle(ctx context.Context) bool {
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
 // that run must have begun with host_vars turning the outbound table off, and ws's host_vars must keep it off. Under
-// --update, only once the stage ran the playbook in this run.
+// --update, only once the stage ran ws server apply in this run.
 func (r *WsRun) runDone(ctx context.Context, target string) bool {
 	if r.Update && !r.ran {
 		return false
@@ -62,7 +62,7 @@ func (r *WsRun) runDone(ctx context.Context, target string) bool {
 	return r.idle(ctx) && (target != "cloud" || (r.off() && r.Remote.Get("outbound") == "off"))
 }
 
-// runChange is the change that runs the playbook, or that names the outbound table's state in host_vars.
+// runChange is the change that runs ws server apply, or that names the outbound table's state in host_vars.
 type runChange struct {
 	text string
 	// outbound has the stage name the state alone.
@@ -73,7 +73,7 @@ type runChange struct {
 
 func (c runChange) String() string { return runStage + ": would " + c.text }
 
-// Plan reads ws's last run, and finds whether the playbook is to run, to be followed, or whether
+// Plan reads ws's last run, and finds whether ws server apply is to run, to be followed, or whether
 // host_vars alone lacks the outbound line. Under --check it says what would happen.
 func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	c, err := r.Host.conf()
@@ -102,9 +102,9 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud"}}}, nil
 }
 
-// fail says what to do where ws's playbook ran no full run to its end. It names no cause, as ssh has
-// printed it, or the playbook has.
+// fail says what to do where ws server apply ran no full run to its end. It names no cause, as ssh has
+// printed it, or ws has.
 func fail() error {
-	return errors.New(runStage + ": ws's playbook stopped, as above, or ssh dropped while " +
+	return errors.New(runStage + ": ws server apply stopped, as above, or ssh dropped while " +
 		"it goes on; mend what it printed, then run the wizard again, which follows a run that goes on")
 }

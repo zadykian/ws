@@ -2,7 +2,7 @@
 #
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 
-# Where the playbook's roles install tools: claude and cld in ~/.local/bin, Go in
+# Where ws's roles install tools: claude and cld in ~/.local/bin, Go in
 # /usr/local/go/bin, what `go install` builds, gopls among them, in ~/go/bin, and .NET's global
 # tools in ~/.dotnet/tools. Each is added once, as a login shell started from another one, as tmux
 # starts them, inherits a PATH that has it already.

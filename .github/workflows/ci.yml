@@ -35,8 +35,8 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # The playbook as on a new machine, but in a container rather than a booted system, so without
-  # the tasks tagged systemd. It runs twice, and the second run must change nothing.
+  # ws server apply as on a new machine, but in a container rather than a booted system, so without
+  # the steps that need a booted systemd. It runs twice, and the second run must change nothing.
   # In a stack, it runs on the top pull request alone, which holds every change below it, as do
   # mac.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these jobs kept its pull
   # requests waiting for runners past 50 minutes. Outside a stack, and on a push, stack is null,
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # CI builds ws from the tree, never from a release. The binary embeds the playbook.
+      # CI builds ws from the tree, never from a release.
       - name: Build ws
         run: tools/build linux amd64 /usr/local/bin/ws
       # The values file holds what the job changes of the defaults: the swap file is small, as the

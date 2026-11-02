@@ -1,7 +1,7 @@
 package values
 
-// Default returns the values of every role's defaults/main.yml, and of group_vars/all.yml, with
-// the keys that follow ws_home or the machine's size left empty (see derive and each key).
+// Default returns each key's default value, with the keys that follow ws_home or the machine's
+// size left empty (see derive and each key).
 func Default() Values {
 	return Values{
 		Shared: Shared{User: "root"},
