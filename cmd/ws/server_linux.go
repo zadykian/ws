@@ -6,9 +6,7 @@ import (
 	"context"
 	"io"
 	"os"
-	"runtime/debug"
 
-	"github.com/zadykian/ws"
 	"github.com/zadykian/ws/effect"
 )
 
@@ -20,7 +18,5 @@ func groups() []group {
 // runServer runs as root, which serverCommand checks, so the machine's root commands go without
 // sudo: a container has none.
 func runServer(args []string, stdout, stderr io.Writer) int {
-	info, ok := debug.ReadBuildInfo()
-	return serverCommand(context.Background(), args, os.Geteuid(), ws.Playbook, versionOf(info, ok),
-		effect.OSMachine{Sudo: []string{}}, os.Stdin, stdout, stderr)
+	return serverCommand(context.Background(), args, os.Geteuid(), effect.OSMachine{Sudo: []string{}}, os.Stdin, stdout, stderr)
 }

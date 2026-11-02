@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-	"testing/fstest"
 
 	"filippo.io/age"
 	"filippo.io/age/armor"
@@ -27,9 +26,9 @@ func TestServerRefusal(t *testing.T) {
 	}{
 		{"ubuntu 26.04 as root", 0, string(ok), ""},
 		{"not root", 1000, string(ok), "run it as root"},
-		{"older ubuntu", 0, "ID=ubuntu\nVERSION_ID=\"24.04\"\n", "the playbook is for Ubuntu 26.04, not ubuntu 24.04"},
-		{"debian", 0, "ID=debian\nVERSION_ID=\"13\"\n", "the playbook is for Ubuntu 26.04, not debian 13"},
-		{"no file", 0, "", "the playbook is for Ubuntu 26.04, not  "},
+		{"older ubuntu", 0, "ID=ubuntu\nVERSION_ID=\"24.04\"\n", "ws server apply is for Ubuntu 26.04, not ubuntu 24.04"},
+		{"debian", 0, "ID=debian\nVERSION_ID=\"13\"\n", "ws server apply is for Ubuntu 26.04, not debian 13"},
+		{"no file", 0, "", "ws server apply is for Ubuntu 26.04, not  "},
 		{"quoted id", 0, "ID=\"ubuntu\"\nVERSION_ID=26.04\n", ""},
 	} {
 		if got := serverRefusal(tc.euid, []byte(tc.text)); got != tc.want {
@@ -42,7 +41,7 @@ func TestServerCommandRefusesOtherArgs(t *testing.T) {
 	for _, args := range [][]string{{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--", "-C"}, {"other"}} {
 		var stdout, stderr bytes.Buffer
 		m := effecttest.NewMachine()
-		if got := serverCommand(context.Background(), args, 0, fstest.MapFS{}, "devel", m, strings.NewReader(""), &stdout, &stderr); got != 2 ||
+		if got := serverCommand(context.Background(), args, 0, m, strings.NewReader(""), &stdout, &stderr); got != 2 ||
 			!strings.Contains(stderr.String(), "usage: ws server COMMAND") {
 			t.Errorf("%q: status = %d, stderr = %q", args, got, stderr.String())
 		}
@@ -53,7 +52,7 @@ func TestServerCommandRefusesNonRoot(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	m := effecttest.NewMachine()
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	if got := serverCommand(context.Background(), []string{"apply"}, 1000, fstest.MapFS{}, "devel", m, strings.NewReader(""), &stdout, &stderr); got != 1 ||
+	if got := serverCommand(context.Background(), []string{"apply"}, 1000, m, strings.NewReader(""), &stdout, &stderr); got != 1 ||
 		!strings.Contains(stderr.String(), "run it as root") {
 		t.Errorf("status = %d, stderr = %q", got, stderr.String())
 	}
@@ -95,11 +94,11 @@ func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	if got := serverCommand(context.Background(), []string{"fans", path}, 0, fstest.MapFS{}, "devel", effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 1 ||
+	if got := serverCommand(context.Background(), []string{"fans", path}, 0, effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 1 ||
 		!strings.Contains(stderr.String(), "interval") {
 		t.Errorf("status = %d, stderr = %q", got, stderr.String())
 	}
-	if got := serverCommand(context.Background(), []string{"fans", "a", "b"}, 0, fstest.MapFS{}, "devel", effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 2 {
+	if got := serverCommand(context.Background(), []string{"fans", "a", "b"}, 0, effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 2 {
 		t.Errorf("two configs: status = %d, want 2", got)
 	}
 }
