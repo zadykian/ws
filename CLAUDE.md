@@ -91,7 +91,7 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 Each rule links where the repository gives its reason: a doc, a comment or a CI job.
 
 - The playbook sets up the machine that runs it: `site.yml` runs on localhost, over a local
-  connection, with the system's Python ([inventory.ini](inventory.ini)). CI's `playbook` job runs
+  connection, with the system's Python. CI's `playbook` job runs
   it in a container ([The playbook](docs/checks.md#the-playbook)).
 - A second run changes nothing: CI's `playbook` job runs it twice and fails where the second run
   reports a change ([ci.yml](.github/workflows/ci.yml)).
@@ -107,13 +107,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](install.sh)), and so are the Python tools
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([homebrew.go](internal/wizard/homebrew.go)). The collections are checked by
-  [tools/collections](tools/collections) against the SHA-256 that Galaxy's API lists for the pins.
-  Go and the JetBrains backends are checked against the SHA-256 their publishers list
-  ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)). roslyn-language-server is
-  pinned by version alone ([group_vars/all.yml](group_vars/all.yml)).
-- The collections are pinned in `requirements.yml`, and ansible-lint runs offline on those pins
-  ([.ansible-lint](.ansible-lint)).
+  ([homebrew.go](internal/wizard/homebrew.go)). Go and the JetBrains backends are checked against
+  the SHA-256 their publishers list ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)).
+  roslyn-language-server is pinned by version alone
+  ([pins.go](internal/server/helix/pins.go)).
 - foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ

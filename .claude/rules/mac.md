@@ -30,7 +30,7 @@ module is at the root), each linking its reason
   ([groups_darwin.go](../../cmd/ws/groups_darwin.go)).
 - A restart or a reload that a watched change calls for is `host.Forced`. `Group.Apply` still runs
   it after a failed change, as `force_handlers` did, as the next run finds the file right and
-  plans none ([ansible.cfg](../../ansible.cfg)).
+  plans none.
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's steps read it and add no key without a commit of their own
   ([values.go](../../internal/server/values/values.go)).

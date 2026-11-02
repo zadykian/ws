@@ -264,17 +264,16 @@ Code run two targets of the `Makefile`, as [its docs][lint] say. After each edit
 `make lint-file FILES=PATH` runs the gates of the file's kind on that file alone:
 
 - Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
-- YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
+- YAML: `yamllint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
 - shell, by extension or shebang: `shell` and `sizecheck`;
-- Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
+- Jinja templates and Python: `sizecheck`.
 
 As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only the
 branch's own commits, from `origin/main`.
 
 Each target runs the work tree's own code, as root on the server. That is its `Makefile` and
-`tools/`, the tools its pins name, and the Python that ansible-lint loads, such as the filter
-plugins. ansible-lint's syntax check of `site.yml` runs the lookups in the playbook's YAML too. So
-the plugin runs them only on a tree the maintainer vouches for, as [the vouch rule][vouch] says.
+`tools/` and the tools its pins name. So the plugin runs them only on a tree the maintainer
+vouches for, as [the vouch rule][vouch] says.
 The gate code includes what [.claude/lint-gates](../.claude/lint-gates) lists.
 
 [lint]: https://github.com/zadykian/toolkit/blob/main/docs/lint.md#the-hooks

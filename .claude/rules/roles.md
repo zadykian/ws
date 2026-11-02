@@ -16,16 +16,13 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 - The play runs on localhost, where the controller's test of a path, such as `is file`, sees the
   machine's own files ([claude's telemetry](../../internal/server/claude/telemetry.go)).
 - The roles set the machine up for `ws_user`, root by default, in `ws_home`
-  ([group_vars/all.yml](../../group_vars/all.yml)). A task run as `ws_user` takes
+  ([values.go](../../internal/server/values/values.go)). A task run as `ws_user` takes
   `become: "{{ ws_user != 'root' }}"` and sets `HOME`. root needs no become, a container has no
   sudo, and without become `HOME` would be the caller's
   ([claude's tasks](../../internal/server/claude/install.go)).
 - A version goes in `group_vars/all.yml`, named for the role that installs it. SigNoz's images are
   pinned in `internal/server/signoz/casting.yaml`, as its compose files are forged from it.
-- A role's variables carry its name as a prefix, as ansible-lint's `var-naming` rule asks
-  ([.ansible-lint](../../.ansible-lint)).
-- A failed task still runs the handlers it notified, as the next run would not notify them again
-  ([ansible.cfg](../../ansible.cfg)).
+- A failed task still runs the handlers it notified, as the next run would not notify them again.
 
 ## Runs
 
@@ -65,5 +62,3 @@ hard rules of [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too, and each ro
 - The dashboards' files are kept as SigNoz's API returns them, so that the step can compare the
   two. After a change of SigNoz's image, refresh them and commit them with the casting
   ([The dashboards](../../internal/server/signoz/dashboards/README.md#refreshing-them)).
-- The filter plugins are Python that runs on the controller, whose ansible-core 2.20 needs Python
-  3.12 or newer, under `make ruff` ([ruff.toml](../../ruff.toml)).
