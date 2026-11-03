@@ -10,7 +10,33 @@
         "path": {{.Roslyn}},
         "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"]
       }
+    },
+    "postgres-language-server": {
+      "binary": { "path": "/usr/local/bin/postgres-language-server", "arguments": ["lsp-proxy"] }
+    },
+    "docker-language-server": {
+      "binary": { "path": "/usr/local/bin/docker-language-server", "arguments": ["start", "--stdio"] },
+      "initialization_options": {
+        "telemetry": "off",
+        "dockerfileExperimental": { "removeOverlappingIssues": true }
+      }
     }
+  },
+  "languages": {
+    "SQL": {
+      "language_servers": ["postgres-language-server", "..."],
+      "formatter": { "language_server": { "name": "postgres-language-server" } }
+    },
+    "Docker Compose": { "formatter": { "language_server": { "name": "docker-language-server" } } }
+  },
+  "file_types": {
+    "Dockerfile": ["Dockerfile.*", "Containerfile.*"],
+    "Docker Compose": [
+      "compose.*.yaml",
+      "compose.*.yml",
+      "docker-compose.*.yaml",
+      "docker-compose.*.yml"
+    ]
   },
   "dap": { "Delve": { "binary": {{.Dlv}} } }
 }

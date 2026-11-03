@@ -109,3 +109,25 @@ func TestTheServersAreRootsBinariesAtMode0755(t *testing.T) {
 		}
 	}
 }
+
+func TestSettingsNameTheSQLAndDockerServersWithNoDuplicateKey(t *testing.T) {
+	got, err := settingsFile(values.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, body, _ := strings.Cut(string(got), "\n")
+	var top map[string]map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(body), &top); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"postgres-language-server", "docker-language-server"} {
+		if _, ok := top["lsp"][key]; !ok {
+			t.Errorf("lsp lacks %s", key)
+		}
+	}
+	for _, key := range []string{"lsp", "languages", "file_types", "dap"} {
+		if strings.Count(body, "\n  \""+key+"\":") != 1 {
+			t.Errorf("top-level key %s is not unique", key)
+		}
+	}
+}
