@@ -2,7 +2,10 @@ package zed
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -19,11 +22,25 @@ func valuesOf(user, home string) values.Values {
 	return v
 }
 
+// servePins serves a stand-in body at each pinned URL and pins its SHA-256 for the test's length.
+func servePins(t *testing.T, m *effecttest.Machine) {
+	t.Helper()
+	body := []byte("stand-in binary")
+	sum := fmt.Sprintf("%x", sha256.Sum256(body))
+	pgls0, dockerLS0 := pgls, dockerLS
+	t.Cleanup(func() { pgls, dockerLS = pgls0, dockerLS0 })
+	pgls = release{version: pgls0.version, sha256: map[string]string{runtime.GOARCH: sum}}
+	dockerLS = release{version: dockerLS0.version, sha256: map[string]string{runtime.GOARCH: sum}}
+	m.Pages[pglsURL(pgls, runtime.GOARCH)] = body
+	m.Pages[dockerLSURL(dockerLS, runtime.GOARCH)] = body
+}
+
 // run applies the role on a machine with an empty home for the user.
 func run(t *testing.T, user, home string) *effecttest.Machine {
 	t.Helper()
 	m := effecttest.NewMachine()
 	m.Dirs[home] = 0o755
+	servePins(t, m)
 	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
 	steps := Steps(valuesOf(user, home), secrets.Secrets{}, m, &effecttest.Out{})
@@ -81,5 +98,14 @@ func TestTheLimitNamesTheUserAndTheValue(t *testing.T) {
 	}
 	if m.Owners[limitsPath] != [2]int{} {
 		t.Errorf("owner %v", m.Owners[limitsPath])
+	}
+}
+
+func TestTheServersAreRootsBinariesAtMode0755(t *testing.T) {
+	m := run(t, "ws", "/home/ws")
+	for _, p := range []string{"/usr/local/bin/postgres-language-server", "/usr/local/bin/docker-language-server"} {
+		if string(m.Files[p]) != "stand-in binary" || m.Owners[p] != [2]int{} {
+			t.Errorf("%s: owner %v", p, m.Owners[p])
+		}
 	}
 }

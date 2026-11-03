@@ -1,6 +1,12 @@
 package zed
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+
+	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
+)
 
 // A release pins one server's version and the SHA-256 of its binary for each GOARCH.
 type release struct {
@@ -52,4 +58,17 @@ func pglsURL(r release, goarch string) string {
 func dockerLSURL(r release, goarch string) string {
 	return "https://github.com/docker/docker-language-server/releases/download/v" + r.version +
 		"/docker-language-server-linux-" + goarch + "-v" + r.version
+}
+
+// download is the step that puts r's binary at /usr/local/bin/name, root's and mode 0755 so any
+// ws_user can run it. A goarch with no pin fails the step's Plan, before any URL exists.
+func download(m effect.Machine, goarch, name string, r release, url func(release, string) string) host.Lazy {
+	return host.Lazy{Title: "Zed " + name, Parts: func(context.Context) ([]host.Resource, error) {
+		sum, err := r.digest(goarch)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", name, err)
+		}
+		return []host.Resource{host.Download{M: m, URL: url(r, goarch), Path: "/usr/local/bin/" + name,
+			SHA256: sum, Mode: 0o755}}, nil
+	}}
 }

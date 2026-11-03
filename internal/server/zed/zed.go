@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"runtime"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -38,6 +39,8 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 		host.Group{Title: "Zed open-file limit", Parts: []host.Resource{
 			host.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
 		}},
+		download(m, runtime.GOARCH, "postgres-language-server", pgls, pglsURL),
+		download(m, runtime.GOARCH, "docker-language-server", dockerLS, dockerLSURL),
 	}
 }
 
