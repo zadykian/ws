@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
 	"github.com/zadykian/ws/effect"
@@ -41,57 +42,60 @@ func (s secretsStore) edit(ctx context.Context, fn func(*secrets.Secrets) error)
 	return secrets.WriteFile(s.m, s.path, cur, id)
 }
 
-// secretsSet runs set: KIND NAME with the value read, git URL with the flags, or file NAME PATH.
-func secretsSet(ctx context.Context, args []string, s secretsStore, stdin io.Reader, stderr io.Writer) error {
-	if len(args) < 2 {
-		return errUsage
+// newSecretsSetCmd returns ws mac secrets set, with a command per kind.
+func newSecretsSetCmd(p process) *cobra.Command {
+	cmds := []*cobra.Command{newSecretsSetGitCmd(p), newSecretsSetFileCmd(p)}
+	for _, kind := range []string{secrets.KindToken, secrets.KindEnv, secrets.KindPassword} {
+		cmds = append(cmds, &cobra.Command{
+			Use:   kind + " NAME",
+			Short: "set the " + kind + " NAME, from a prompt with no echo or from stdin",
+			Args:  cobra.ExactArgs(1),
+			RunE: func(c *cobra.Command, args []string) error {
+				value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), kind+" "+args[0])
+				if err != nil {
+					return err
+				}
+				return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { return s.Set(kind, args[0], value) })
+			},
+		})
 	}
-	kind, name, rest := args[0], args[1], args[2:]
-	switch kind {
-	case secrets.KindFile:
-		if len(rest) != 1 {
-			return errUsage
-		}
-		data, err := s.m.ReadFile(rest[0])
-		if err != nil {
-			return err
-		}
-		return s.edit(ctx, func(c *secrets.Secrets) error { return c.SetFile(name, data) })
-	case secrets.KindGit:
-		g, err := gitFlags(rest)
-		if err != nil {
-			return err
-		}
-		if g.Token, err = readValue(stdin, stderr, kind+" "+name); err != nil {
-			return err
-		}
-		return s.edit(ctx, func(c *secrets.Secrets) error { c.SetGit(name, g); return nil })
-	}
-	if len(rest) != 0 {
-		return errUsage
-	}
-	value, err := readValue(stdin, stderr, kind+" "+name)
-	if err != nil {
-		return err
-	}
-	return s.edit(ctx, func(c *secrets.Secrets) error { return c.Set(kind, name, value) })
+	return group("set", "set an entry, whose value never goes in an argument", cmds...)
 }
 
-// gitFlags reads --username NAME and --proactive-auth.
-func gitFlags(args []string) (secrets.Git, error) {
+// newSecretsSetGitCmd returns ws mac secrets set git.
+func newSecretsSetGitCmd(p process) *cobra.Command {
 	var g secrets.Git
-	for i := 0; i < len(args); i++ {
-		switch {
-		case args[i] == "--proactive-auth":
-			g.ProactiveAuth = true
-		case args[i] == "--username" && i+1 < len(args):
-			i++
-			g.Username = args[i]
-		default:
-			return g, errUsage
-		}
+	c := &cobra.Command{
+		Use:   "git URL",
+		Short: "set a git server's token, from a prompt with no echo or from stdin",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(c *cobra.Command, args []string) error {
+			var err error
+			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.KindGit+" "+args[0]); err != nil {
+				return err
+			}
+			return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { s.SetGit(args[0], g); return nil })
+		},
 	}
-	return g, nil
+	c.Flags().StringVar(&g.Username, "username", "", "the user name that git sends with the token")
+	c.Flags().BoolVar(&g.ProactiveAuth, "proactive-auth", false, "send the token before the server asks for it")
+	return c
+}
+
+// newSecretsSetFileCmd returns ws mac secrets set file.
+func newSecretsSetFileCmd(p process) *cobra.Command {
+	return &cobra.Command{
+		Use:   "file NAME PATH",
+		Short: "set a profile file (vpn_p12, vpn_sswan) from the file at PATH",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(c *cobra.Command, args []string) error {
+			data, err := p.machine.ReadFile(args[1])
+			if err != nil {
+				return err
+			}
+			return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { return s.SetFile(args[0], data) })
+		},
+	}
 }
 
 // readValue reads a secret: at a terminal, a line with no echo, asked on stderr; else all of stdin,
@@ -120,8 +124,8 @@ func readValue(stdin io.Reader, stderr io.Writer, what string) (string, error) {
 }
 
 // secretsKeys prints each entry as KIND NAME, never a value.
-func secretsKeys(ctx context.Context, s secretsStore, stdout io.Writer) error {
-	id, err := s.k.Identity(ctx)
+func secretsKeys(c *cobra.Command, s secretsStore) error {
+	id, err := s.k.Identity(c.Context())
 	if err != nil {
 		return err
 	}
@@ -130,12 +134,12 @@ func secretsKeys(ctx context.Context, s secretsStore, stdout io.Writer) error {
 		return err
 	}
 	for _, k := range cur.Keys() {
-		_, _ = io.WriteString(stdout, k+"\n")
+		_, _ = io.WriteString(c.OutOrStdout(), k+"\n")
 	}
 	return nil
 }
 
-func newSecretsStore(m effect.Machine, getenv func(string) string) secretsStore {
-	return secretsStore{m: m, k: keychain.Keychain{M: m, User: getenv("USER")},
-		path: filepath.Join(getenv("HOME"), secretsFile)}
+func newSecretsStore(p process) secretsStore {
+	return secretsStore{m: p.machine, k: keychain.Keychain{M: p.machine, User: p.getenv("USER")},
+		path: filepath.Join(p.getenv("HOME"), secretsFile)}
 }

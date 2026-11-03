@@ -1,12 +1,5 @@
 // Command serve-releases serves a release layout as GitHub does, for the cases of CI's jobs that
-// install ws:
-//
-//	serve-releases DIR PORT [PORT_FILE]
-//
-// DIR holds download/TAG/FILE and latest, a file with the tag that /latest answers with: the
-// redirect GitHub gives, to /tag/TAG. A case changes the latest release by writing latest. PORT is
-// the port on loopback, or 0 for the one the system picks. The port goes to PORT_FILE, if given,
-// once the server listens.
+// install ws.
 package main
 
 import (
@@ -17,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
 // handler serves dir's files, and the redirect of /latest.
@@ -36,20 +31,49 @@ func handler(dir string) http.Handler {
 	})
 }
 
+// newCommand returns serve-releases, which serves until it fails.
+func newCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "serve-releases DIR PORT [PORT_FILE]",
+		Short: "serve a release layout as GitHub does",
+		Long: "DIR holds download/TAG/FILE and latest, a file with the tag that /latest answers with: the\n" +
+			"redirect GitHub gives, to /tag/TAG. A case changes the latest release by writing latest. PORT\n" +
+			"is the port on loopback, or 0 for the one the system picks. The port goes to PORT_FILE, if\n" +
+			"given, once the server listens.",
+		Args:          cobra.RangeArgs(2, 3),
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		RunE: func(_ *cobra.Command, args []string) error {
+			portFile := ""
+			if len(args) == 3 {
+				portFile = args[2]
+			}
+			return serve(args[0], args[1], portFile)
+		},
+	}
+}
+
+// serve listens on loopback's port, writes the port it got to portFile where one is given, and
+// serves dir.
+func serve(dir, port, portFile string) error {
+	ln, err := net.Listen("tcp", "127.0.0.1:"+port)
+	if err != nil {
+		return err
+	}
+	if portFile != "" {
+		got := ln.Addr().(*net.TCPAddr).Port
+		if err := os.WriteFile(portFile, fmt.Appendf(nil, "%d\n", got), 0o600); err != nil {
+			_ = ln.Close()
+			return err
+		}
+	}
+	srv := &http.Server{Handler: handler(dir), ReadHeaderTimeout: time.Minute}
+	return srv.Serve(ln)
+}
+
 func main() {
-	if n := len(os.Args); n < 3 || n > 4 {
-		fmt.Fprintln(os.Stderr, "usage: serve-releases DIR PORT [PORT_FILE]")
-		os.Exit(2)
+	if err := newCommand().Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "serve-releases:", err)
+		os.Exit(1)
 	}
-	ln, err := net.Listen("tcp", "127.0.0.1:"+os.Args[2])
-	if err == nil && len(os.Args) == 4 {
-		port := ln.Addr().(*net.TCPAddr).Port
-		err = os.WriteFile(os.Args[3], fmt.Appendf(nil, "%d\n", port), 0o600) //nolint:gosec // the command's own argument
-	}
-	if err == nil {
-		srv := &http.Server{Handler: handler(os.Args[1]), ReadHeaderTimeout: time.Minute}
-		err = srv.Serve(ln)
-	}
-	fmt.Fprintln(os.Stderr, "serve-releases:", err)
-	os.Exit(1)
 }

@@ -2,9 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -25,9 +22,9 @@ func TestServerRefusal(t *testing.T) {
 	}{
 		{"ubuntu 26.04 as root", 0, string(ok), ""},
 		{"not root", 1000, string(ok), "run it as root"},
-		{"older ubuntu", 0, "ID=ubuntu\nVERSION_ID=\"24.04\"\n", "ws server apply is for Ubuntu 26.04, not ubuntu 24.04"},
-		{"debian", 0, "ID=debian\nVERSION_ID=\"13\"\n", "ws server apply is for Ubuntu 26.04, not debian 13"},
-		{"no file", 0, "", "ws server apply is for Ubuntu 26.04, not  "},
+		{"older ubuntu", 0, "ID=ubuntu\nVERSION_ID=\"24.04\"\n", "Ubuntu 26.04 is the one system for this, not ubuntu 24.04"},
+		{"debian", 0, "ID=debian\nVERSION_ID=\"13\"\n", "Ubuntu 26.04 is the one system for this, not debian 13"},
+		{"no file", 0, "", "Ubuntu 26.04 is the one system for this, not  "},
 		{"quoted id", 0, "ID=\"ubuntu\"\nVERSION_ID=26.04\n", ""},
 	} {
 		if got := serverRefusal(tc.euid, []byte(tc.text)); got != tc.want {
@@ -36,27 +33,38 @@ func TestServerRefusal(t *testing.T) {
 	}
 }
 
-func TestServerCommandRefusesOtherArgs(t *testing.T) {
-	for _, args := range [][]string{{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--", "-C"}, {"other"}} {
-		var stdout, stderr bytes.Buffer
-		m := effecttest.NewMachine()
-		if got := serverCommand(context.Background(), args, 0, m, noEnv, &stdout, &stderr); got != 2 ||
-			!strings.Contains(stderr.String(), "usage: ws server COMMAND") {
-			t.Errorf("%q: status = %d, stderr = %q", args, got, stderr.String())
+func TestServerApplyRefusesOtherArgs(t *testing.T) {
+	for _, args := range [][]string{
+		{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--only", "base,"}, {"apply", "--only", ""},
+		{"apply", "--only"}, {"apply", "-C"}, {"apply", "extra"}, {"other"},
+	} {
+		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server"}, args...)...)
+		if status != 2 || !strings.Contains(stderr, "--help' for usage.") {
+			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
 		}
 	}
 }
 
-func TestServerCommandRefusesNonRoot(t *testing.T) {
-	var stdout, stderr bytes.Buffer
-	m := effecttest.NewMachine()
+func TestServerApplyRefusesNonRoot(t *testing.T) {
+	p := fakeProcess()
+	m := p.machine.(*effecttest.Machine)
+	p.euid = 1000
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	if got := serverCommand(context.Background(), []string{"apply"}, 1000, m, noEnv, &stdout, &stderr); got != 1 ||
-		!strings.Contains(stderr.String(), "run it as root") {
-		t.Errorf("status = %d, stderr = %q", got, stderr.String())
+	status, _, stderr := runWs(p, "", "server", "apply")
+	if status != 1 || stderr != "ws server apply: run it as root\n" {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "exec ") }) {
 		t.Errorf("calls = %q, want no exec", m.Calls)
+	}
+}
+
+func TestServerApplyHelp(t *testing.T) {
+	status, stdout, _ := runWs(fakeProcess(), "", "server", "apply", "-h")
+	for _, want := range []string{"--check", "--only", "--secrets", "ws-secrets"} {
+		if status != 0 || !strings.Contains(stdout, want) {
+			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
+		}
 	}
 }
 
@@ -99,17 +107,17 @@ func TestLoadSecrets(t *testing.T) {
 }
 
 func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "ws-fans.json")
-	if err := os.WriteFile(path, []byte(`{"interval": 0}`), 0o600); err != nil {
-		t.Fatal(err)
+	p := fakeProcess()
+	p.machine.(*effecttest.Machine).Files["/ws-fans.json"] = []byte(`{"interval": 0}`)
+	status, _, stderr := runWs(p, "", "server", "fans", "/ws-fans.json")
+	if status != 1 || !strings.HasPrefix(stderr, "ws server fans: /ws-fans.json: ") || !strings.Contains(stderr, "interval") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
-	var stdout, stderr bytes.Buffer
-	if got := serverCommand(context.Background(), []string{"fans", path}, 0, effecttest.NewMachine(), noEnv, &stdout, &stderr); got != 1 ||
-		!strings.Contains(stderr.String(), "interval") {
-		t.Errorf("status = %d, stderr = %q", got, stderr.String())
+	if status, _, _ = runWs(p, "", "server", "fans", "a", "b"); status != 2 {
+		t.Errorf("two configs: status = %d, want 2", status)
 	}
-	if got := serverCommand(context.Background(), []string{"fans", "a", "b"}, 0, effecttest.NewMachine(), noEnv, &stdout, &stderr); got != 2 {
-		t.Errorf("two configs: status = %d, want 2", got)
+	if status, _, stderr = runWs(p, "", "server", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws-fans.json") {
+		t.Errorf("no config: status = %d, stderr = %q", status, stderr)
 	}
 }
 

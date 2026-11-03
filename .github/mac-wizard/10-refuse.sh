@@ -1,7 +1,7 @@
 #!/bin/sh
-# The wizard's refusals, which leave the runner as they found it: an unknown argument, root, and a
+# The wizard's refusals, which leave the runner as they found it: an unknown flag, root, and a
 # run while another holds the lock, which it must leave. So must the removed key WS_HOOK in mac.conf,
-# an unknown one, and a removed op of the files script, run as root as on ws. -h prints the usage.
+# an unknown one, and a removed op of the files script, run as root as on ws. -h prints the help.
 
 set -u
 
@@ -27,8 +27,12 @@ refused() {
     fi
 }
 
-[ "$("$wsbin" mac wizard -h)" = 'usage: ws mac wizard [--check] [--update]' ] || error 'no usage from -h'
-refused "unknown argument '--bogus'" "$wsbin" mac wizard --bogus
+"$wsbin" mac wizard -h | grep -q '^Usage:' || error 'no help from -h'
+out=$("$wsbin" mac wizard --bogus 2>&1)
+status=$?
+if [ "$status" != 2 ] || ! printf '%s\n' "$out" | grep -qF 'ws mac wizard: unknown flag: --bogus'; then
+    error "ws mac wizard --bogus exited $status, printing '$out', where 2 and the unknown flag were due"
+fi
 refused 'run it as yourself, not root' sudo "$wsbin" mac wizard --check
 mkdir "$lock"
 refused "another run holds $lock" "$wsbin" mac wizard --check

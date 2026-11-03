@@ -3,12 +3,12 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -18,8 +18,6 @@ import (
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
-
-const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  fans [CONFIG]  drive the board's fans on the curves of CONFIG, /etc/ws-fans.json, until SIGTERM\n  apply [--check] [--only NAME,...] [--secrets FILE]  set the server up, each role as Go steps\n\n--check plans the steps and applies none. --only runs the named roles. --secrets reads an age-encrypted TOML file with the secrets; the X25519 identity comes from the unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY. The last line\nnames the roles that changed.\n"
 
 const (
 	serverVars = "/etc/ws/host_vars.yml"
@@ -48,68 +46,73 @@ func serverRefusal(euid int, osRelease []byte) string {
 		}
 	}
 	if id != "ubuntu" || version != "26.04" {
-		return fmt.Sprintf("ws server apply is for Ubuntu 26.04, not %s %s", id, version)
+		return fmt.Sprintf("Ubuntu 26.04 is the one system for this, not %s %s", id, version)
 	}
 	return ""
 }
 
-// serverCommand runs the commands of ws server, the server's side of ws. Only its entry in the
-// table of groups is built for Linux alone: this function is built everywhere, so that the tests
-// run anywhere.
-func serverCommand(ctx context.Context, args []string, euid int, m effect.Machine,
-	getenv func(string) string, stdout, stderr io.Writer) int {
-	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		_, _ = io.WriteString(stdout, serverUsage)
-		return 0
+// newServerCmd returns ws server, the server's side of ws. It is built everywhere, so that the
+// tests run anywhere. Only its entry in the groups is built for Linux alone.
+func newServerCmd(p process) *cobra.Command {
+	return group("server", "the server's commands", newApplyCmd(p), newFansCmd(p))
+}
+
+// newApplyCmd returns ws server apply.
+func newApplyCmd(p process) *cobra.Command {
+	var opts apply.Options
+	c := &cobra.Command{
+		Use:   "apply",
+		Short: "set the server up, each role as Go steps",
+		Long: "--secrets reads an age-encrypted TOML file with the secrets. The X25519 identity comes from the " +
+			"unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY.\n\n" +
+			"The last line names the roles that changed.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error { return runApply(c, p, opts) },
 	}
-	if args[0] == "fans" {
-		return fansCommand(ctx, args[1:], stderr)
+	f := c.Flags()
+	f.BoolVar(&opts.Check, "check", false, "plan the steps and apply none")
+	f.StringSliceVar(&opts.Only, "only", nil, "run the named roles alone, as a list or by repeating the flag")
+	f.StringVar(&opts.Secrets, "secrets", "", "read the secrets from the age-encrypted `FILE`")
+	return c
+}
+
+// runApply sets the server up as opts say.
+func runApply(c *cobra.Command, p process, opts apply.Options) error {
+	if c.Flags().Changed("only") && len(opts.Only) == 0 {
+		return usageError{errors.New("--only names no role")}
 	}
-	opts, err := apply.Parse(args[1:])
-	var list []roles.Role
-	if err == nil && args[0] == "apply" {
-		list, err = apply.Select(roles.List(), opts.Only)
+	list, err := apply.Select(roles.List(), opts.Only)
+	if err != nil {
+		return usageError{err}
 	}
-	if args[0] != "apply" || err != nil {
-		if err != nil {
-			_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
-		}
-		_, _ = io.WriteString(stderr, serverUsage)
-		return 2
-	}
-	text, err := m.ReadFile(osRelease)
+	text, err := p.machine.ReadFile(osRelease)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
-		return 1
+		return err
 	}
-	if why := serverRefusal(euid, text); why != "" {
-		_, _ = fmt.Fprintf(stderr, "ws server apply: %s\n", why)
-		return 1
+	if why := serverRefusal(p.euid, text); why != "" {
+		return errors.New(why)
 	}
-	term := effect.NewTerminal(strings.NewReader(""), stderr)
-	out := progOut{term, "ws server apply", map[string]bool{}}
+	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	out := progOut{term, c.CommandPath(), map[string]bool{}}
 	// ca-certificates serves the steps' downloads over HTTPS.
 	prepare := []step.Step{host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
-		M: m, Out: out, Names: []string{"ca-certificates"},
+		M: p.machine, Out: out, Names: []string{"ca-certificates"},
 	}}}}
-	v, err := values.Load(m, serverVars)
+	v, err := values.Load(p.machine, serverVars)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
-		return 1
+		return err
 	}
-	sec, err := loadSecrets(m, opts.Secrets, getenv)
+	sec, err := loadSecrets(p.machine, opts.Secrets, p.getenv)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
-		return 1
+		return err
 	}
-	changed, err := apply.Run(ctx, apply.Config{Options: opts, Values: v, Secrets: sec, M: m, Out: out, Prepare: prepare}, list)
+	changed, err := apply.Run(c.Context(), apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out, Prepare: prepare}, list)
 	term.Flush()
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
-		return 1
+		return err
 	}
 	out.Say("%s", apply.Summary(changed, opts.Check))
-	return 0
+	return nil
 }
 
 // loadSecrets reads the identity from the unit's credential and decrypts the file, or returns no

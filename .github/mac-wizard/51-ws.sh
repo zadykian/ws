@@ -15,7 +15,7 @@ error() {
 
 out=$("$ws" 2>&1) || error "$ws exited $?"
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -q '^usage: ws' || error "$ws printed no usage"
+printf '%s\n' "$out" | grep -q '^Usage:' || error "$ws printed no usage"
 "$ws" nonesuch >/dev/null 2>&1
 status=$?
 [ "$status" = 2 ] || error "$ws nonesuch exited $status, not 2"

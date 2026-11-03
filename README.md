@@ -81,8 +81,8 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 ws server apply
 ```
 
-`ws server apply --only NAME,...` runs the roles named, in the order they run in. ws takes no
-other argument than `--check`, `--only` and `--secrets FILE`, which gives the roles their secrets
+`ws server apply --only NAME,...` runs the roles named, in the order they run in. `--secrets FILE`
+gives the roles their secrets
 ([The secrets file](docs/shell.md#the-secrets-file)).
 The values of a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads
 them. `ws_user: NAME` sets up the user NAME, whose account must exist, instead of root, with

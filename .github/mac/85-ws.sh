@@ -9,7 +9,7 @@ rm -f "$ws"
 sh tools/build darwin arm64 "$ws"
 out=$("$ws")
 echo "$out"
-grep -q '^usage: ws' <<<"$out"
+grep -q '^Usage:' <<<"$out"
 status=0
 "$ws" nonesuch || status=$?
 [ "$status" = 2 ]

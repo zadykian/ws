@@ -28,8 +28,11 @@ func TestResolverMakesTheDirectoryAndWritesTheFile(t *testing.T) {
 func TestResolverRefusesWhatTheShellRefused(t *testing.T) {
 	for domain, addresses := range map[string][]string{"a b": nil, "a.test": {"10.0.0"},
 		"b.test": {"10.0.0.1", "10.0.0.2", "10.0.0.3", "10.0.0.4"}} {
-		if _, err := resolverPlan(effecttest.NewMachine(), domain, addresses...); err == nil {
+		_, err := resolverPlan(effecttest.NewMachine(), domain, addresses...)
+		if err == nil {
 			t.Errorf("Plan of %q %q succeeded", domain, addresses)
+		} else if strings.Contains(err.Error(), "ws mac resolver") {
+			t.Errorf("Plan of %q %q: %v names the command, which execute does", domain, addresses, err)
 		}
 	}
 }

@@ -88,18 +88,18 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 // or that overlaps the tunnel's or the cable's, which 0.0.0.0/0 does too.
 func (r *Routes) validate() error {
 	if r.Set == "" || strings.Trim(r.Set, "abcdefghijklmnopqrstuvwxyz0123456789-") != "" {
-		return fmt.Errorf("ws mac tunnel routes: '%s' is not a name of a-z, 0-9 and -", r.Set)
+		return fmt.Errorf("'%s' is not a name of a-z, 0-9 and -", r.Set)
 	}
 	for _, n := range r.Networks {
 		p, ok := check.CIDR(n)
 		if !ok {
-			return fmt.Errorf("ws mac tunnel routes %s: '%s' is not an IPv4 network, as 192.0.2.0/24", r.Set, n)
+			return fmt.Errorf("%s: '%s' is not an IPv4 network, as 192.0.2.0/24", r.Set, n)
 		}
 		if p.Overlaps(tunnel.TunnelNet) {
-			return fmt.Errorf("ws mac tunnel routes %s: %s overlaps the tunnel's %s", r.Set, n, tunnel.TunnelNet)
+			return fmt.Errorf("%s: %s overlaps the tunnel's %s", r.Set, n, tunnel.TunnelNet)
 		}
 		if p.Overlaps(tunnel.CableNet) {
-			return fmt.Errorf("ws mac tunnel routes %s: %s overlaps the cable's %s", r.Set, n, tunnel.CableNet)
+			return fmt.Errorf("%s: %s overlaps the cable's %s", r.Set, n, tunnel.CableNet)
 		}
 	}
 	return nil
