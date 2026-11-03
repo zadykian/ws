@@ -29,10 +29,10 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 		}},
 		host.Group{Title: "Devtools Go", Parts: []host.Resource{Go{M: m}}},
 		host.Group{Title: "Devtools gopls", After: "Devtools Go", Parts: []host.Resource{
-			Gopls{M: m, User: user, Path: v.Helix.Gopls},
+			goplsTool{M: m, User: user, Path: Gopls(v.Home)},
 		}},
 		host.Group{Title: "Devtools roslyn-language-server", After: "Devtools packages", Parts: []host.Resource{
-			Roslyn{M: m, User: user, Path: v.Helix.Roslyn},
+			roslynTool{M: m, User: user, Path: Roslyn(v.Home)},
 		}},
 		host.Group{Title: "Devtools rustup", Parts: []host.Resource{
 			Rustup{M: m, User: v.User, Home: v.Home},

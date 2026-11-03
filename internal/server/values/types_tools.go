@@ -2,9 +2,6 @@ package values
 
 // Helix is roles/helix's keys.
 type Helix struct {
-	// Gopls and Roslyn are the language servers' paths. Empty, each is under Home.
-	Gopls    string   `yaml:"helix_gopls"`
-	Roslyn   string   `yaml:"helix_roslyn"`
 	Grammars []string `yaml:"helix_grammars"`
 }
 

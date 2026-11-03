@@ -28,7 +28,6 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 	v := values.Default()
 	v.User, v.Home = "ws", "/home/ws"
-	v.Helix.Gopls, v.Helix.Roslyn = "/home/ws/go/bin/gopls", "/home/ws/.dotnet/tools/roslyn-language-server"
 	s := stepNamed(t, m, v, "Helix config")
 	if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
