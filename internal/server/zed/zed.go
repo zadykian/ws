@@ -5,6 +5,7 @@ package zed
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -34,7 +35,21 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 					Backup: true},
 			}, nil
 		}),
+		host.Group{Title: "Zed open-file limit", Parts: []host.Resource{
+			host.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
+		}},
 	}
+}
+
+// limitsPath is where the limit for ws_user's logins lives. limits.conf(5) says a `*` line does
+// not apply to root, ws's default ws_user, so the user is named.
+const limitsPath = "/etc/security/limits.d/ws-zed.conf"
+
+// limitsFile raises ws_user's soft open-file limit: sshd's logins start at 1024, past which Zed's
+// server busy-loops (zed#62995).
+func limitsFile(v values.Values) []byte {
+	return []byte(fmt.Sprintf("# Written by github.com/zadykian/ws, whose next run replaces any change made here.\n"+
+		"%s soft nofile %d\n", v.User, v.Zed.Nofile))
 }
 
 // quote returns the string as a JSON string.

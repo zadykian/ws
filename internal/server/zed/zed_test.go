@@ -72,3 +72,14 @@ func TestASecondRunChangesNothing(t *testing.T) {
 		t.Errorf("second run: %v, %v", changed, err)
 	}
 }
+
+func TestTheLimitNamesTheUserAndTheValue(t *testing.T) {
+	m := run(t, "ws", "/home/ws")
+	_, line, _ := strings.Cut(string(m.Files[limitsPath]), "\n")
+	if line != "ws soft nofile 65536\n" {
+		t.Errorf("limits line %q", line)
+	}
+	if m.Owners[limitsPath] != [2]int{} {
+		t.Errorf("owner %v", m.Owners[limitsPath])
+	}
+}
