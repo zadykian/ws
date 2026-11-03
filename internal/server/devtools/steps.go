@@ -8,10 +8,10 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Steps returns the role's steps: the apt repositories, the packages from them, Go and rustup.
+// Steps returns the role's steps: the apt repositories, the packages from them, gh's login, Go and rustup.
 // The packages wait on the repositories, so a check run says "after Devtools repositories" where a
 // repository is still to come, as apt may not know the packages then.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	const repositories = "Devtools repositories"
 	return []step.Step{
 		host.Group{Title: repositories, Parts: []host.Resource{Repositories{M: m}}},
@@ -21,6 +21,10 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 			host.Packages{M: m, Out: out, Recommends: true, Names: packageNames()},
 			// The libraries go in without recommends: the browser needs the libraries alone.
 			host.Packages{M: m, Out: out, Names: v.Devtools.ChromiumLibraries},
+		}},
+		// gh logs in by token.github, after its package.
+		host.Group{Title: "Devtools gh login", After: "Devtools packages", Parts: []host.Resource{
+			GHLogin{M: m, User: v.User, Home: v.Home, Token: s.Token.GitHub},
 		}},
 		host.Group{Title: "Devtools Go", Parts: []host.Resource{Go{M: m}}},
 		host.Group{Title: "Devtools rustup", Parts: []host.Resource{

@@ -22,6 +22,15 @@ short never passes for the version. A new `GoVersion` in `internal/server/devtoo
 the Go there, and the Go that builds helix's gopls. rustup installs Rust's stable toolchain in the
 user's home. Once there, rustup updates itself, so ws leaves it alone.
 
+## gh
+
+A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
+([The secrets file](shell.md#the-secrets-file)). It compares `gh auth token -h github.com` with the
+token. Where they differ, it runs `gh auth login -h github.com -p https --insecure-storage
+--with-token`, the token on stdin. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode
+0600. `--check` says "log gh in by token.github", never which token. gh's refusal fails the run. With
+no `token.github`, or no secrets file, the step leaves gh's login alone.
+
 ## The signing key
 
 The role does not register the key that signs the machine's commits ([Signing](shell.md#signing)).
