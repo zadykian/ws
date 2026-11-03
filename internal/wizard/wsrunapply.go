@@ -28,8 +28,8 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	}
 	r.Host.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
 		"a first run takes 20 to 40 minutes", runStage)
-	if err := r.Remote.Pass(ctx, "run"); err != nil {
-		return fail()
+	if err := r.run(ctx); err != nil {
+		return err
 	}
 	r.ran = true
 	if !c.cloud {
@@ -41,8 +41,8 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if !r.off() {
 		r.Host.Out.Say("%s: the unit it followed began before host_vars named security_outbound: false, "+
 			"so ws server apply runs again", runStage)
-		if err := r.Remote.Pass(ctx, "run"); err != nil {
-			return fail()
+		if err := r.run(ctx); err != nil {
+			return err
 		}
 		if !r.Remote.Status(ctx) {
 			return fail()

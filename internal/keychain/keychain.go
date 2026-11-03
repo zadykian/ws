@@ -42,20 +42,29 @@ func (k Keychain) Has(ctx context.Context) (bool, error) {
 	return false, fmt.Errorf("security can't find the item %s: %w", Service, err)
 }
 
-// Identity reads the identity from the item. The error names no key.
-func (k Keychain) Identity(ctx context.Context) (age.Identity, error) {
+// Key reads the identity's text from the item, for the one command that sends it over ssh on its
+// stdin. The error names no key.
+func (k Keychain) Key(ctx context.Context) (string, error) {
 	out, err := k.M.Run(ctx, "security", "find-generic-password", "-s", Service, "-w")
 	if err != nil {
 		if missing(err) {
-			return nil, ErrNoItem
+			return "", ErrNoItem
 		}
-		return nil, fmt.Errorf("security can't read the item %s: %w", Service, err)
+		return "", fmt.Errorf("security can't read the item %s: %w", Service, err)
 	}
-	id, err := secrets.ParseIdentity(string(out))
+	if _, err := secrets.ParseIdentity(string(out)); err != nil {
+		return "", errors.New("the item " + Service + " holds no age identity")
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// Identity reads the identity from the item. The error names no key.
+func (k Keychain) Identity(ctx context.Context) (age.Identity, error) {
+	key, err := k.Key(ctx)
 	if err != nil {
-		return nil, errors.New("the item " + Service + " holds no age identity")
+		return nil, err
 	}
-	return id, nil
+	return secrets.ParseIdentity(key)
 }
 
 // Init makes an identity and adds it as the item, by security -i with the command on its stdin. It
