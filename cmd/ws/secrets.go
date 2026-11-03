@@ -18,6 +18,9 @@ var errUsage = errors.New("usage")
 const secretsUsage = "usage: ws mac secrets COMMAND\n\n" +
 	"  init  make ws's age identity in the Keychain, as the item ws-secrets, and an empty\n" +
 	"        ~/.config/ws/secrets.age; an item there stays\n" +
+	"  set token|env|password NAME  set the value, from a prompt with no echo or from stdin\n" +
+	"  set git URL [--username NAME] [--proactive-auth]  set a git server's token, read as above\n" +
+	"  set file NAME PATH  set a profile file (vpn_p12, vpn_sswan) from the file at PATH\n" +
 	"  unset KIND NAME  drop an entry\n" +
 	"  keys  print each entry as KIND NAME, never a value\n"
 
@@ -37,6 +40,8 @@ func secretsCommand(ctx context.Context, args []string, m effect.Machine, getenv
 	switch {
 	case args[0] == "init" && len(args) == 1:
 		return secretsInit(ctx, m, getenv, stdout, stderr)
+	case args[0] == "set":
+		err = secretsSet(ctx, args[1:], store, stdin, stderr)
 	case args[0] == "unset" && len(args) == 3:
 		err = store.edit(ctx, func(c *secrets.Secrets) error { return c.Unset(args[1], args[2]) })
 	case args[0] == "keys" && len(args) == 1:
