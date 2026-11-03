@@ -93,3 +93,102 @@ to J, are in [A to J](lacks-a-j.md). The actions that Zed has are in
 | `SchemaCompare.UpdateTarget` | Shift+Alt+U |  | n/a | database tools |
 | `ScrollTreeToCenter` | Ctrl+M, C; Ctrl+M, Ctrl+C |  | n/a | IDE trees |
 | `SearchEverywhere.CompleteCommand` | Tab |  | n/a | IDE popup: Zed's pickers have their own keys |
+| `SearchEverywhere.NavigateToNextGroup` | PgDn; Ctrl+Down |  | n/a | IDE popup: Zed's pickers have their own keys |
+| `SearchEverywhere.NavigateToPrevGroup` | PgUp; Ctrl+Up |  | n/a | IDE popup: Zed's pickers have their own keys |
+| `SearchEverywhere.NextTab` | Tab |  | n/a | IDE popup: Zed's pickers have their own keys |
+| `SearchEverywhere.PrevTab` | Shift+Tab |  | n/a | IDE popup: Zed's pickers have their own keys |
+| `SearchEverywhere.SelectItem` | Enter |  | n/a | IDE popup: Zed's pickers have their own keys |
+| `SelectVirtualTemplateElement` | Shift+Alt+O |  | none |  |
+| `ServiceView.GroupByContributor` | Ctrl+Alt+T |  | n/a | services window |
+| `ServiceView.JumpToServices` | Ctrl+F2 |  | n/a | services window |
+| `Session.Rename` | Ctrl+R, R | `terminal::RenameTerminal` | skip | Ctrl+R must reach the shell, so no Ctrl+R chord |
+| `ShelveChanges.UnshelveWithDialog` | Shift+Ctrl+U |  | n/a | shelves |
+| `ShowContent` | Alt+Down |  | n/a | IDE UI |
+| `ShowExecutionPoint` | `Alt+numpad *` |  | none |  |
+| `ShowFilterPopup` | Ctrl+Alt+F |  | n/a | IDE trees |
+| `ShowNavBar` | Ctrl+F2 |  | none | Ctrl+F2 is macOS's too |
+| `ShowSearchHistory` | Alt+Down |  | n/a | IDE UI |
+| `ShowUmlDiagram` | Shift+Ctrl+Alt+U |  | n/a | diagrams |
+| `ShowUmlDiagramPopup` | Ctrl+Alt+U |  | n/a | diagrams |
+| `SplitChooser.NextWindow` | Tab |  | n/a | IDE UI |
+| `SplitChooser.PreviousWindow` | Shift+Tab |  | n/a | IDE UI |
+| `SplitChooser.Split` | Enter |  | n/a | IDE UI |
+| `SplitChooser.SplitCenter` | Space |  | n/a | IDE UI |
+| `sql.ExtractFunctionAction` | Ctrl+R, M |  | n/a | database tools |
+| `sql.SelectInDatabaseView` | Shift+Alt+B |  | n/a | database tools |
+| `StopBackgroundProcesses` | Shift+Ctrl+F2 |  | none |  |
+| `StretchSplitToBottom` | Ctrl+Alt+Down |  | none | Zed resizes splits by mouse, or in vim mode |
+| `StretchSplitToLeft` | Ctrl+Alt+Left |  | none | Zed resizes splits by mouse, or in vim mode |
+| `StretchSplitToRight` | Ctrl+Alt+Right |  | none | Zed resizes splits by mouse, or in vim mode |
+| `StretchSplitToTop` | Ctrl+Alt+Up |  | none | Zed resizes splits by mouse, or in vim mode |
+| `SurroundWithLiveTemplate` | Ctrl+K, S; Ctrl+K, Ctrl+S |  | none | Zed has no surround outside vim mode |
+| `SwitchCodeToDesigner` | Shift+F7 |  | n/a | WinForms |
+| `SwitchCoverage` | Ctrl+Alt+F6 |  | n/a | coverage |
+| `SwitchHeaderSource` | Alt+O; Ctrl+K, O; Ctrl+K, Ctrl+O |  | none | editor::SwitchSourceHeader serves clangd alone |
+| `Table-selectNextColumnExtendSelection` | Shift+Right |  | n/a | IDE tables |
+| `Table-selectPreviousColumnExtendSelection` | Shift+Left |  | n/a | IDE tables |
+| `TableResult.GrowSelection` | Shift+Alt+=; Ctrl+W |  | n/a | database tools |
+| `TableResult.SelectAllOccurrences` | Shift+Alt+; |  | n/a | database tools |
+| `TableResult.SelectColumn` | Shift+Alt+=; Ctrl+W |  | n/a | database tools |
+| `TableResult.SelectNextOccurrence` | Shift+Alt+. |  | n/a | database tools |
+| `TableResult.ShrinkSelection` | Shift+Alt+-; Shift+Ctrl+W |  | n/a | database tools |
+| `TableResult.UnselectPreviousOccurrence` | Shift+Alt+, |  | n/a | database tools |
+| `tasks.open.in.browser` | Shift+Alt+B |  | n/a | IDE tasks and contexts |
+| `tasks.switch` | Shift+Alt+T |  | n/a | IDE tasks and contexts |
+| `Terminal.ExpandBlockSelectionAbove` | Shift+Up |  | n/a | the JetBrains terminal's blocks |
+| `Terminal.ExpandBlockSelectionBelow` | Shift+Down |  | n/a | the JetBrains terminal's blocks |
+| `Terminal.GenerateCommandFromText` | Ctrl+/ | `assistant::InlineAssist` | skip | Ctrl+/ reaches the shell; Zed's Ctrl+Enter opens the terminal's inline assistant |
+| `Terminal.SelectBlockAbove` | Up; Ctrl+Up |  | n/a | the JetBrains terminal's blocks |
+| `Terminal.SelectBlockBelow` | Down |  | n/a | the JetBrains terminal's blocks |
+| `Terminal.SelectLastBlock` | Ctrl+Up |  | n/a | the JetBrains terminal's blocks |
+| `Terminal.SelectPrompt` | Ctrl+Down |  | n/a | the JetBrains terminal's blocks |
+| `Terminal.ShowDocumentation` | Ctrl+K, I; Ctrl+K, Ctrl+I; Shift+Ctrl+F1 |  | n/a | the JetBrains terminal's blocks |
+| `TodoViewGroupByFlattenPackage` | Ctrl+Alt+C |  | n/a | TODO window |
+| `TodoViewGroupByShowModules` | Ctrl+Alt+M |  | n/a | TODO window |
+| `TodoViewGroupByShowPackages` | Ctrl+Alt+P |  | n/a | TODO window |
+| `ToggleRenderedDocPresentation` | Ctrl+K, V; Ctrl+K, Ctrl+V |  | none |  |
+| `ToggleTemporaryLineBreakpoint` | Shift+Ctrl+Alt+F8 |  | none |  |
+| `Tree-selectParentExtendSelection` | Shift+Left |  | n/a | IDE trees |
+| `UML.Find` | Cmd+F; Ctrl+F |  | n/a | diagrams |
+| `Uml.NewElement` | Ctrl+N; Alt+Insert |  | n/a | diagrams |
+| `Uml.NodeIntentions` | Alt+Enter; Shift+Enter; Ctrl+Enter |  | n/a | diagrams |
+| `UML.ShowChanges` | Shift+Ctrl+Alt+D |  | n/a | diagrams |
+| `Uml.ShowDiff` | Shift+Ctrl+D |  | n/a | diagrams |
+| `UML.ShowStructure` | Alt+\ |  | n/a | diagrams |
+| `UpdateRunningApplication` | Ctrl+F10 |  | none |  |
+| `UsageFiltering.WriteAccess` | Ctrl+W |  | n/a | usages window |
+| `UsageGrouping.Directory` | Ctrl+Alt+P |  | n/a | usages window |
+| `UsageGrouping.FileStructure` | Ctrl+Alt+F |  | n/a | usages window |
+| `UsageGrouping.FlattenModules` | Ctrl+Alt+O |  | n/a | usages window |
+| `UsageGrouping.Module` | Ctrl+Alt+M |  | n/a | usages window |
+| `UsageGrouping.UsageType` | Ctrl+Alt+T |  | n/a | usages window |
+| `UsageView.Exclude` | Delete |  | n/a | usages window |
+| `UsageView.Include` | Insert |  | n/a | usages window |
+| `Vcs.CombinedDiff.CaretToNextBlock` | Down; Right; PgDn |  | n/a | diff viewer |
+| `Vcs.CombinedDiff.CaretToPrevBlock` | Up; Left; PgUp |  | n/a | diff viewer |
+| `Vcs.CombinedDiff.ToggleCollapseBlock` | Ctrl+Esc |  | n/a | diff viewer |
+| `Vcs.Commit.CloseDialog` | Esc |  | n/a | commit dialog |
+| `Vcs.EditSource` | Alt+S |  | n/a | IDE trees |
+| `Vcs.Log.GoToChild` | Left |  | n/a | the VCS log's tree |
+| `Vcs.Log.GoToParent` | Right |  | n/a | the VCS log's tree |
+| `Vcs.Log.GoToRef` | Cmd+F; Ctrl+F |  | n/a | the VCS log's tree |
+| `Vcs.Log.ShowAllAffected` | Shift+Alt+A |  | n/a | the VCS log's tree |
+| `Vcs.Log.ShowTooltip` | Ctrl+K, I; Ctrl+K, Ctrl+I; Shift+Ctrl+F1 |  | n/a | the VCS log's tree |
+| `Vcs.MoveChangedLinesToChangelist` | Shift+Alt+M |  | n/a | changelists |
+| `Vcs.ReformatCommitMessage` | Ctrl+Alt+Enter; Ctrl+K, F; Ctrl+K, Ctrl+F; Ctrl+K, D; Ctrl+K, Ctrl+D |  | n/a | commit dialog |
+| `Vcs.Shelf.Drop` | Delete |  | n/a | shelves |
+| `Vcs.ShowMessageHistory` | Ctrl+H |  | n/a | commit dialog |
+| `VcsHistory.ShowAllAffected` | Shift+Alt+A |  | n/a | VCS history |
+| `Voice.ActivateVoiceAction` | Shift+Alt+E |  | n/a | voice input |
+| `Voice.ReferenceEntityInChatAction` | Shift+Alt+A |  | n/a | voice input |
+| `WD.UploadCurrentRemoteFileAction` | Shift+Alt+Q |  | n/a | deployment |
+| `WebOpenInAction` | Alt+F2; Ctrl+Alt+F2 |  | n/a | browsers |
+| `WelcomeScreen.RemoveSelected` | Delete |  | n/a | IDE welcome screen |
+| `XDebugger.CopyWatch` | Ctrl+D |  | n/a | debugger trees |
+| `XDebugger.JumpToTypeSource` | Shift+F4 |  | n/a | debugger trees |
+| `XDebugger.MoveWatchDown` | Alt+Down |  | n/a | debugger trees |
+| `XDebugger.MoveWatchUp` | Alt+Up |  | n/a | debugger trees |
+| `XDebugger.NewWatch` | Insert | `variable_list::AddWatch` | skip | Insert: a Mac keyboard has none |
+| `XPathView.Actions.Evaluate` | Ctrl+Alt+X, E |  | n/a | XPath |
+| `XPathView.Actions.FindByExpression` | Ctrl+Alt+X, F |  | n/a | XPath |
+| `XPathView.Actions.ShowPath` | Ctrl+Alt+X, P |  | n/a | XPath |
