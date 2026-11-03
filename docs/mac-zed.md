@@ -72,7 +72,7 @@ server to every YAML file, Ansible's too.
   Alt keys in Zed's terminal, at the cost of Option's special characters.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- Zed's keymap overlay is `docs/zed-keymap.md`, and `docs/zed.md`, its page for the server, says
+- Zed's keymap overlay is [zed-keymap.md](zed-keymap.md), and `docs/zed.md`, its page for the server, says
   what to do when the connection drops.
 
 ## The keymap
@@ -87,7 +87,7 @@ none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as 
 - Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
   run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
 
-`docs/zed-keymap.md` lists every F12 action with its Zed action, or why it has none.
+[zed-keymap.md](zed-keymap.md) lists every F12 action with its Zed action, or why it has none.
 
 ## Changing the settings
 
