@@ -30,3 +30,43 @@ left out. `none` means Zed lacks the action, and `n/a` a tool Zed lacks or needs
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `F12.xml` | 120 | 63 | 16 | 7 | 34 | 283 | 523 |
 | `$default.xml`, untouched | 25 | 17 | 30 | 3 | 11 | 26 | 112 |
+
+## How the keys translate
+
+Zed on macOS, with a US layout:
+
+- Shift with a sign or digit is written as the shifted character without Shift, such as `alt-{`
+  and `ctrl-?`. macOS reports it so, and `shift-alt-[` never matches. Shift with a letter stays.
+- Zed does not tell numpad keys apart ([zed#11948](https://github.com/zed-industries/zed/issues/11948)).
+- A Mac keyboard has no Insert, Pause, Break or menu key, so six F12 keystrokes drop.
+- F-keys need Fn, or a setting of System Settings. [The Mac's page](zed-keymap/macos.md) has both.
+- Alt with a letter matches by key, so an unbound Alt key still types its character.
+
+## How Zed picks a binding
+
+- The deeper context wins, then the later binding. User bindings load after Zed's.
+- A binding with no context counts as the deepest, so the file's global section beats every default.
+- A chord whose first key also has a binding waits 1 s, then runs that binding. A chord defined
+  before a binding of its first key is ignored (zed#30211). So the file unbinds Zed's Ctrl+K,
+  Ctrl+M and Ctrl+R.
+- `unbind` works only where the section's context matches, so Zed's Ctrl+R in the Diagnostics
+  view still waits.
+
+## The file's sections
+
+The file has 264 bindings and 24 unbindings in 10 sections, in this order:
+
+- F12's global keys, with no context.
+- Editing, in every editor: `Editor`.
+- Code, in the full editor alone, so that search bars and pickers keep their keys.
+- The signature popup, the project panel, the git panel and the commit message.
+- A stopped debug session, where the step keys leave the Alt keys to type.
+- Esc, which goes back to the editor from a panel. The terminal keeps its own Esc.
+- The terminal, last.
+
+## The Terminal's rule
+
+In the terminal, a Ctrl or Alt key with a letter or sign, without Shift, reaches the shell
+(zed#26018). The section unbinds 21 global keys, and the chords' first keys go straight
+(zed#28423). F-keys, named keys and digits stay Zed's. Ctrl+C, Ctrl+D and Ctrl+R stay the shell's.
+F12's Ctrl+B is in the editor only, so the terminal gets it.
