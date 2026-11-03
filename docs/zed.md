@@ -197,6 +197,8 @@ reconnect proxies never exit (zed#62995). Zed raises the limit in its GUI alone.
 
 ## Limits
 
+A project's own `.zed/settings.json` is in [zed-projects](zed-projects.md).
+
 - The project panel may not refresh when files change on ws (zed#29242).
 - There is no `zed FILE` from ws's terminal (zed#56057), and files outside the project cannot be
   opened (zed#39695).
