@@ -231,6 +231,8 @@ wireguard-go makes no utun, the job fails, as the daemon's device makes a utun t
 A last case runs `ws mac secrets` on a throwaway keychain that is the default one
 ([90-secrets.sh](../.github/mac/90-secrets.sh)). `init` must make the item `ws-secrets` and the
 secrets file, mode 600 in a directory of 700, and print no key. A second `init` must change nothing.
+`set` from standard input and `keys`, which decrypts the file, must list the entries by kind and
+name, with no output or file that holds the value. `unset` must drop one, and fail on a missing one.
 
 ## The rules
 

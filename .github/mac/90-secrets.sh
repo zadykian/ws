@@ -2,7 +2,9 @@
 # ws mac secrets, on a throwaway keychain that is the default one, so that the runner's own is
 # left alone. init must make the item ws-secrets and ~/.config/ws/secrets.age, mode 600 in a
 # directory of 700, and say so. A second init must keep both, change neither and make no new key.
-# The output must hold no key. The keychain and the file go back.
+# The output must hold no key. set must take a value from stdin, and keys, which decrypts the file,
+# must list it by kind and name alone: no output may hold the value, nor the file in plain text.
+# unset must drop an entry. The keychain and the file go back.
 
 set -u
 
@@ -50,6 +52,21 @@ if [ "$status" != 0 ] || ! grep -qF 'is there, and stays' <<<"$out"; then
     error "the second init exited $status, or did not say that the item stays"
 fi
 [ "$(shasum -a 256 "$file")" = "$sum" ] || error "the second init changed $file"
+
+value='a stand-in value, for the case'
+out=$(printf '%s\n' "$value" | "$wsbin" mac secrets set env MY_TOKEN 2>&1) || error "set env exited $?"
+out+=$(printf '%s\n' "$value" | "$wsbin" mac secrets set token github 2>&1) || error "set token exited $?"
+keys=$("$wsbin" mac secrets keys 2>&1) || error "keys exited $?, so the file did not decrypt"
+echo "$keys"
+[ "$keys" = $'env MY_TOKEN\ntoken github' ] || error "keys listed other entries than env MY_TOKEN and token github"
+grep -qF "$value" <<<"$out$keys" && error "a command printed the value"
+grep -qF "$value" "$file" && error "the file holds the value in plain text"
+"$wsbin" mac secrets unset env MY_TOKEN || error "unset exited $?"
+[ "$("$wsbin" mac secrets keys 2>&1)" = 'token github' ] || error "unset did not drop env MY_TOKEN"
+status=0
+"$wsbin" mac secrets unset env MY_TOKEN 2>/dev/null || status=$?
+[ "$status" = 1 ] || error "unset of an entry that is gone exited $status, not 1"
+[ "$(stat -f %Lp "$file")" = 600 ] || error "a set left $file with a mode other than 600"
 
 rm -f "$file"
 # shellcheck disable=SC2086 # as above
