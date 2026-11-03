@@ -67,15 +67,15 @@ func TestLoadSecrets(t *testing.T) {
 	var buf bytes.Buffer
 	a := armor.NewWriter(&buf)
 	w, _ := age.Encrypt(a, id.Recipient())
-	_, _ = w.Write([]byte("shell_secret_env: {A: hunter2}\n"))
+	_, _ = w.Write([]byte("[env]\nA = \"hunter2\"\n"))
 	_ = w.Close()
 	_ = a.Close()
 	m.Files["/s.age"] = buf.Bytes()
 	s, err := loadSecrets(m, "/s.age", strings.NewReader(id.String()+"\n"), io.Discard)
-	if err != nil || s.Shell.SecretEnv["A"] != "hunter2" {
+	if err != nil || s.Env["A"] != "hunter2" {
 		t.Errorf("got %+v, %v", s, err)
 	}
-	if s, err = loadSecrets(m, "", nil, io.Discard); err != nil || s.Shell.SecretEnv != nil {
+	if s, err = loadSecrets(m, "", nil, io.Discard); err != nil || s.Env != nil {
 		t.Errorf("no file: %+v, %v", s, err)
 	}
 	other, _ := age.GenerateX25519Identity()

@@ -37,9 +37,9 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 			Key: v.GitSigningKey, Signers: v.Shell.GitAllowedSigners,
 		}}, nil
 	}), owned(user, m, "Shell secret env", "", func(a account) ([]host.Resource, error) {
-		return []host.Resource{secretEnv{M: m, A: a, Env: s.Shell.SecretEnv}}, nil
+		return []host.Resource{secretEnv{M: m, A: a, Env: s.Env}}, nil
 	}), owned(user, m, "Shell git tokens", "", func(a account) ([]host.Resource, error) {
-		return []host.Resource{tokens{M: m, A: a, Creds: s.Shell.GitCredentials}}, nil
+		return []host.Resource{tokens{M: m, A: a, Creds: credentials(s.Git)}}, nil
 	}), owned(user, m, "Shell clones", "", func(a account) ([]host.Resource, error) {
 		return []host.Resource{clones{M: m, A: a, Clones: v.Shell.GitClones}}, nil
 	}))

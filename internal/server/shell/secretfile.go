@@ -12,7 +12,7 @@ import (
 )
 
 // secretEnv is ~/.secrets/env, for ~/.bashrc and the otelcol role, from the secrets file's
-// shell_secret_env. Without it, as in CI, ws leaves ~/.secrets alone, even a file it wrote, so that
+// [env] table. Without it, as in CI, ws leaves ~/.secrets alone, even a file it wrote, so that
 // a run without the secrets file changes nothing.
 type secretEnv struct {
 	M   effect.Machine
@@ -36,7 +36,7 @@ func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	if err == nil && !bytes.HasPrefix(old, []byte(envMark)) {
-		return nil, fmt.Errorf("%s lacks the line '%s' at its top, so it was written by hand: move its values into shell_secret_env, remove the file, then run ws again", path, envMark)
+		return nil, fmt.Errorf("%s lacks the line '%s' at its top, so it was written by hand: move its values into the secrets file's [env] table, remove the file, then run ws again", path, envMark)
 	}
 	return planAll(ctx,
 		host.Dir{M: s.M, Path: s.A.Home + "/.secrets", Mode: 0o700, UID: s.A.UID, GID: s.A.GID},

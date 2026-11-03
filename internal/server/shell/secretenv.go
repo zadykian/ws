@@ -11,12 +11,12 @@ import (
 // words.
 const (
 	envMark   = "# Written by github.com/zadykian/ws"
-	envHeader = envMark + " from shell_secret_env. Its next run with that variable replaces\n" +
-		"# any change made here: set a value there.\n"
+	envHeader = envMark + " from the [env] table of the secrets file. Its next run with\n" +
+		"# that file replaces any change made here: set a value in the secrets file.\n"
 )
 
 // envName is a name the shell takes as a variable.
-var envName = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
+var envName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 // unsafeQuote matches a character that shlex.quote quotes.
 var unsafeQuote = regexp.MustCompile(`[^A-Za-z0-9_@%+=:,./-]`)
@@ -44,7 +44,7 @@ func checkEnvNames(env map[string]string) error {
 	}
 	slices.Sort(bad)
 	if len(bad) > 0 {
-		return fmt.Errorf("shell_secret_env names %s: a name takes capitals, digits and underscores, and starts with no digit", strings.Join(bad, ", "))
+		return fmt.Errorf("env names %s: a name takes letters, digits and underscores, and starts with no digit", strings.Join(bad, ", "))
 	}
 	return nil
 }

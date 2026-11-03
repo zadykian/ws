@@ -8,18 +8,17 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/internal/server/values"
 )
 
 // tokens is git's tokens for servers besides GitHub, each URL's in a file of its own, which the
 // URL's helper in ~/.config/git/tokens.gitconfig reads (docs/shell.md#git-credentials). So no token
 // goes in a template, or in the diff a dry run shows. Without entries, as in CI, ws leaves the
-// tokens and their helpers alone, so that a run without the secrets file changes nothing. Only an
-// entry with state absent removes a token or its helper.
+// tokens and their helpers alone, so that a run without the secrets file changes nothing. A URL
+// that the entries omit keeps its token and its helper.
 type tokens struct {
 	M     effect.Machine
 	A     account
-	Creds []values.GitCredential
+	Creds []credential
 }
 
 // Plan reads the keys of tokens.gitconfig, as a URL the entries omit keeps its section there, and
@@ -51,10 +50,6 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 	rs = append(rs, host.Dir{M: t.M, Path: dir, Mode: 0o700, UID: t.A.UID, GID: t.A.GID})
 	for _, c := range t.Creds {
 		file := dir + "/" + credentialFile(c.URL)
-		if c.State == "absent" {
-			rs = append(rs, host.Absent{M: t.M, Path: file})
-			continue
-		}
 		username := c.Username
 		if username == "" {
 			username = "token"

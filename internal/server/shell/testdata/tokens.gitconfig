@@ -1,6 +1,6 @@
-# Written by github.com/zadykian/ws, whose next run with shell_git_credentials replaces any change
+# Written by github.com/zadykian/ws, whose next run with a secrets file replaces any change
 # made here. ~/.gitconfig includes it after gh's helper (docs/shell.md#git-credentials).
-# The tokens of shell_git_credentials, each URL's in a file of the role's. The helper hands it to
+# The tokens of the secrets file's [git] table, each URL's in a file of the role's. The helper hands it to
 # git for get alone, so that store and erase leave the file as written. Of two sections whose URLs
 # match, the last wins, so the URLs go in order, each after those it extends.
 [credential "https://a.example/x"]

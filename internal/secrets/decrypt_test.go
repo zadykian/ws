@@ -1,31 +1,18 @@
 package secrets
 
 import (
-	"bytes"
 	"testing"
 
 	"filippo.io/age"
-	"filippo.io/age/armor"
 )
 
 // encrypt returns plain as an armored age file for the recipient.
 func encrypt(tb testing.TB, plain string, to age.Recipient) []byte {
-	var buf bytes.Buffer
-	a := armor.NewWriter(&buf)
-	w, err := age.Encrypt(a, to)
+	out, err := Encrypt([]byte(plain), to)
 	if err != nil {
 		tb.Fatal(err)
 	}
-	if _, err := w.Write([]byte(plain)); err != nil {
-		tb.Fatal(err)
-	}
-	if err := w.Close(); err != nil {
-		tb.Fatal(err)
-	}
-	if err := a.Close(); err != nil {
-		tb.Fatal(err)
-	}
-	return buf.Bytes()
+	return out
 }
 
 func TestDecryptRoundTrip(t *testing.T) {

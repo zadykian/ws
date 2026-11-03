@@ -22,7 +22,7 @@ type profile struct {
 }
 
 // present reports whether the secrets hold both files.
-func (p profile) present() bool { return len(p.files.P12) > 0 && len(p.files.Sswan) > 0 }
+func (p profile) present() bool { return len(p.files.VPNP12) > 0 && len(p.files.VPNSswan) > 0 }
 
 // base is the path of the written files, less the extension.
 func (p profile) base() string { return path.Join(runDir, path.Base(p.name)) }
@@ -40,7 +40,7 @@ func (p profile) with(ctx context.Context, f func() error) (err error) {
 	if err := p.m.Chmod(runDir, 0o700); err != nil {
 		return err
 	}
-	for ext, data := range map[string][]byte{".p12": p.files.P12, ".sswan": p.files.Sswan} {
+	for ext, data := range map[string][]byte{".p12": p.files.VPNP12, ".sswan": p.files.VPNSswan} {
 		if err := p.m.WriteRootFile(p.base()+ext, data, 0o600); err != nil {
 			return err
 		}

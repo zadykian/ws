@@ -28,8 +28,8 @@ func installOf(m *effecttest.Machine) Install {
 	v := good()
 	v.Floors = []string{"10.20.0.0/16"}
 	return Install{M: m, Out: &effecttest.Out{}, Values: v, Secrets: secrets.Secrets{
-		Ikeward: secrets.Ikeward{P12Password: "hunter2"},
-		Files:   secrets.Files{P12: []byte("p12"), Sswan: []byte("sswan")}}}
+		Password: secrets.Passwords{VPNP12: "hunter2"},
+		File:     secrets.Files{VPNP12: []byte("p12"), VPNSswan: []byte("sswan")}}}
 }
 
 func TestRunPassesThePasswordOnStdinAndReadsExitFourAsAChange(t *testing.T) {
@@ -96,7 +96,7 @@ func TestInstallShowsIkewardsErrorAndLeavesNoFiles(t *testing.T) {
 
 func TestInstallSaysThatTheSecretsHoldNoProfile(t *testing.T) {
 	i := installOf(effecttest.NewMachine())
-	i.Secrets.Files = secrets.Files{}
+	i.Secrets.File = secrets.Files{}
 	out := i.Out.(*effecttest.Out)
 	if changes, err := i.Plan(t.Context()); err != nil || len(changes) != 0 || len(out.Lines) != 1 ||
 		!strings.Contains(out.Lines[0], "no profile") {

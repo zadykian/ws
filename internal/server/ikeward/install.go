@@ -30,7 +30,7 @@ type Install struct {
 }
 
 func (i Install) profile() profile {
-	return profile{m: i.M, name: i.Values.Profile, files: i.Secrets.Files}
+	return profile{m: i.M, name: i.Values.Profile, files: i.Secrets.File}
 }
 
 // args are install's arguments, from the decrypted files and the remote network's values. --probe
@@ -49,7 +49,7 @@ func (i Install) args(p profile) []string {
 // run runs install with the flags, on the password. It returns install's exit code with its output,
 // and an error for any other failure, which shows ikeward's error: it holds no key and no password.
 func (i Install) run(ctx context.Context, p profile, flags ...string) (int, string, error) {
-	out, err := i.M.RunInput(ctx, []byte(i.Secrets.Ikeward.P12Password), binary,
+	out, err := i.M.RunInput(ctx, []byte(i.Secrets.Password.VPNP12), binary,
 		append(i.args(p), append(flags, "--exit-code")...)...)
 	var ee *exec.ExitError
 	switch {

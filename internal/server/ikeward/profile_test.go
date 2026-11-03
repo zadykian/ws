@@ -10,7 +10,7 @@ import (
 )
 
 func newProfile(m *effecttest.Machine) profile {
-	return profile{m: m, name: "/root/vpn/vpnclient", files: secrets.Files{P12: []byte("p12"), Sswan: []byte("sswan")}}
+	return profile{m: m, name: "/root/vpn/vpnclient", files: secrets.Files{VPNP12: []byte("p12"), VPNSswan: []byte("sswan")}}
 }
 
 func TestWithWritesTheFilesUnderTheirNamesAndRemovesThem(t *testing.T) {

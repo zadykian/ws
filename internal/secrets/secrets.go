@@ -1,83 +1,71 @@
-// Package secrets holds the values that ws server apply takes from an age-encrypted file: the
-// secrets that the roles need and that stay out of host_vars.yml. The file is YAML, decrypted in
-// ws's process, and typed beside the values. Nothing here prints a value.
+// Package secrets holds the values that the roles take from ws's secrets file: age-encrypted TOML,
+// a table per kind, decrypted in ws's process. The Mac's commands and ws server apply share this
+// format. Nothing here prints a value: an error names a kind, a name, a key or a line.
 package secrets
 
-import (
-	"bytes"
-	"errors"
-	"fmt"
-	"io"
-	"regexp"
-	"strings"
-
-	"go.yaml.in/yaml/v3"
-
-	"github.com/zadykian/ws/internal/server/values"
-)
-
-// Secrets is every key of the decrypted file. Each role's keys sit in a struct of its name,
-// inlined, as in values.Values.
+// Secrets is the decrypted file. The names of its fields are those of the tables.
 type Secrets struct {
-	Shell   Shell   `yaml:",inline"`
-	Ikeward Ikeward `yaml:",inline"`
-	// Files are the ikeward profile's files, decrypted by Load. They are never in the file itself.
-	Files Files `yaml:"-"`
+	// Token holds the tokens that ws knows by name.
+	Token Tokens
+	// Env is the content of ~/.secrets/env: names to values.
+	Env map[string]string
+	// Git is git's credentials, by the URL of the server, besides GitHub's.
+	Git map[string]Git
+	// File holds the ikeward profile's files, whole.
+	File Files
+	// Password holds the passwords that go with the files.
+	Password Passwords
 }
 
-// Shell is roles/shell's secrets.
-type Shell struct {
-	// SecretEnv is the content of ~/.secrets/env: names to values, all strings.
-	SecretEnv map[string]string `yaml:"shell_secret_env,omitempty"`
-	// GitCredentials are git's tokens for servers besides GitHub. They replace the list of the
-	// values file.
-	GitCredentials []values.GitCredential `yaml:"shell_git_credentials,omitempty"`
+// Tokens are the tokens of the services that ws logs in to.
+type Tokens struct {
+	GitHub      string
+	AzureDevOps string
 }
 
-// Ikeward is roles/ikeward's secrets.
-type Ikeward struct {
-	// P12File and SswanFile name the profile's files, each age-encrypted to the same recipient. A
-	// relative name is relative to the secrets file.
-	P12File   string `yaml:"ikeward_p12_file,omitempty"`
-	SswanFile string `yaml:"ikeward_sswan_file,omitempty"`
-	// P12Password is the .p12's password, empty where it has none.
-	P12Password string `yaml:"ikeward_p12_password,omitempty"`
+// Git is one server's credential in git's store.
+type Git struct {
+	Token         string
+	Username      string
+	ProactiveAuth bool
 }
 
-// Files are the decrypted contents of the files that Ikeward names.
+// Files are the ikeward profile's files, as bytes. The file holds them in base64.
 type Files struct {
-	P12   []byte
-	Sswan []byte
+	VPNP12   []byte
+	VPNSswan []byte
 }
 
-// Parse reads the decrypted file. It refuses a key that no role knows, and a key twice. Empty data
-// gives no secrets.
-func Parse(data []byte) (Secrets, error) {
-	var s Secrets
-	dec := yaml.NewDecoder(bytes.NewReader(data))
-	dec.KnownFields(true)
-	if err := dec.Decode(&s); err != nil && !errors.Is(err, io.EOF) {
-		return Secrets{}, scrub(err)
-	}
-	return s, nil
+// Passwords go with the files; the .p12's is empty where it has none.
+type Passwords struct {
+	VPNP12 string
 }
 
-// atLine matches a line number in YAML's type errors.
-var atLine = regexp.MustCompile(`line \d+`)
+// document is the file as TOML reads and writes it: the files are strings, in base64.
+type document struct {
+	Token    tokenTable        `toml:"token,omitempty"`
+	Env      map[string]string `toml:"env,omitempty"`
+	Git      map[string]gitTab `toml:"git,omitempty"`
+	File     fileTable         `toml:"file,omitempty"`
+	Password passwordTable     `toml:"password,omitempty"`
+}
 
-// scrub keeps a value out of a type error, which YAML words with the value it could not read.
-func scrub(err error) error {
-	var te *yaml.TypeError
-	if !errors.As(err, &te) {
-		return err
-	}
-	var lines []string
-	for _, e := range te.Errors {
-		if l := atLine.FindString(e); l != "" && !strings.Contains(e, "not found in type") {
-			lines = append(lines, l)
-		} else {
-			lines = append(lines, e)
-		}
-	}
-	return fmt.Errorf("a value has the wrong type at %s", strings.Join(lines, ", "))
+type tokenTable struct {
+	GitHub      string `toml:"github,omitempty"`
+	AzureDevOps string `toml:"azure_devops,omitempty"`
+}
+
+type gitTab struct {
+	Token         string `toml:"token,omitempty"`
+	Username      string `toml:"username,omitempty"`
+	ProactiveAuth bool   `toml:"proactive_auth,omitempty"`
+}
+
+type fileTable struct {
+	VPNP12   string `toml:"vpn_p12,omitempty"`
+	VPNSswan string `toml:"vpn_sswan,omitempty"`
+}
+
+type passwordTable struct {
+	VPNP12 string `toml:"vpn_p12,omitempty"`
 }
