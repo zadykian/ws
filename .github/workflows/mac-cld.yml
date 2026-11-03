@@ -171,6 +171,10 @@ jobs:
               { echo '::error::global_settings.json is not mac/zed.json under the header'; fail=1; }
           grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$zed/settings.json" ||
               { echo '::error::settings.json has no seed for the host ws'; fail=1; }
+          head -n 1 "$zed/keymap.json" | grep -q '^// Written by github.com/zadykian/ws' ||
+              { echo '::error::keymap.json has no ws mark'; fail=1; }
+          cmp -s "$zed/keymap.json" mac/zed-keymap.json ||
+              { echo '::error::keymap.json is not mac/zed-keymap.json'; fail=1; }
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }

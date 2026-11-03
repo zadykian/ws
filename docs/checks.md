@@ -160,6 +160,8 @@ which the case never runs.
 
 Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed.json` under the
 header, and a `settings.json` that is there must stay byte for byte.
+Case 48 checks its `keymap.json`: `mac/zed-keymap.json` whole, a foreign file left with one warning,
+and ws's back once the foreign one goes.
 
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First,
 `ws mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
