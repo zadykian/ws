@@ -10,6 +10,9 @@ const (
 	nodeMajor = "24"
 	// goplsVersion is gopls, which go install builds with devtools' Go.
 	goplsVersion = "0.23.0"
+	// dlvVersion is Delve, which go install builds with devtools' Go. Delve 1.27.2 supports Go 1.25
+	// to 1.27 (pkg/goversion/compat.go:14-17 at v1.27.2): a Go 1.28 needs a newer Delve.
+	dlvVersion = "1.27.2"
 	// roslynVersion is roslyn-language-server, C#'s language server, from nuget.org, where every
 	// version is a prerelease. The version alone pins it, as nuget.org refuses a version's second
 	// upload.
