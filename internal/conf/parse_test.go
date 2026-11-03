@@ -21,6 +21,8 @@ func TestParse(t *testing.T) {
 		{"empty values", "WS_USER=\nWS_TARGET=\"\"\nWS_PORT=\n", Conf{User: "root", Target: "lan"}, nil},
 		{"unknown key", "WS_NOPE=1\n", Conf{User: "root", Target: "lan"},
 			[]Error{{1, "unknown key WS_NOPE"}}},
+		{"the removed secret key", "WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=x\n",
+			Conf{User: "root", Target: "lan", Hook: "me/tools@v1.0.0"}, []Error{{2, "unknown key WS_HOOK_SECRET"}}},
 		{"not a line", "ws_user=a\nWS_USER\n=a\n", Conf{User: "root", Target: "lan"},
 			[]Error{{1, "not a KEY=value line"}, {2, "not a KEY=value line"}, {3, "not a KEY=value line"}}},
 		{"bare blank", "WS_GIT_NAME=Ada L\n", Conf{User: "root", Target: "lan"},

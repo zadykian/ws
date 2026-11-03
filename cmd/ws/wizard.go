@@ -101,7 +101,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	hook := &wizard.HookMac{Host: host, Gh: gh, Home: e.getenv("HOME"), M: e.m, Out: out}
 	hand.Late(hook.Hand)
 	root := &wizard.RootKey{Host: host, Gh: gh}
-	hookWs := &wizard.HookWs{Host: host, Run: run, Mac: hook, User: e.getenv("USER"), Tty: e.tty, M: e.m, Out: out,
+	hookWs := &wizard.HookWs{Host: host, Run: run, Mac: hook, M: e.m, Out: out,
 		Files: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}}
 	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: hookWs.Files, Setup: setup, Env: e.lookup,
 		P: p, Prog: prog, Tty: e.tty, M: e.m, Out: out}

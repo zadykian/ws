@@ -71,12 +71,12 @@ func TestSequenceRun(t *testing.T) {
 	if err := newSequence(map[string]bool{"WS_TUNNEL_NETWORKS": true}, scripted(&asked, answers)).run(); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_NAME", "WS_GIT_EMAIL", "WS_RESOLVERS", "WS_HOOK", "WS_HOOK_SECRET"}
+	want := []string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_NAME", "WS_GIT_EMAIL", "WS_RESOLVERS", "WS_HOOK"}
 	if !reflect.DeepEqual(asked, want) {
 		t.Errorf("asked %v, want %v", asked, want)
 	}
 	asked = nil
-	if err := newSequence(nil, scripted(&asked, nil)).run(); err != nil || slices.Contains(asked, "WS_GIT_EMAIL") || slices.Contains(asked, "WS_HOOK_SECRET") {
+	if err := newSequence(nil, scripted(&asked, nil)).run(); err != nil || slices.Contains(asked, "WS_GIT_EMAIL") {
 		t.Errorf("without a name or a hook: asked %v, %v", asked, err)
 	}
 }

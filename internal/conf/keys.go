@@ -11,7 +11,7 @@ type Conf struct {
 	User, Target, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
 	TunnelNetworks, Resolvers, CableService, CablePort                 string
 	GitName, GitEmail, GitSigningKey, Identity, IdentityAgent          string
-	Hook, HookSecret                                                   string
+	Hook                                                               string
 }
 
 // key is one of mac.conf's keys: where its value goes, its check, and the form its message names.
@@ -80,8 +80,6 @@ var keys = []key{
 	{"WS_HOOK", func(c *Conf) *string { return &c.Hook }, plain(check.Hook),
 		"a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws " +
 			"in any letter case, with @vX.Y.Z for a release's tag"},
-	{"WS_HOOK_SECRET", func(c *Conf) *string { return &c.HookSecret }, plain(check.HookSecret),
-		"a Keychain item's name, 1 to 64 letters, digits and ._-"},
 }
 
 // isLAN reports whether v is a network clear of the cable's and the tunnel's.
