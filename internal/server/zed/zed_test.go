@@ -43,6 +43,8 @@ func run(t *testing.T, user, home string) *effecttest.Machine {
 	servePins(t, m)
 	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
+	m.Files[npmBin] = []byte("stand-in npm")
+	m.Results[npmCommand(user, home)] = effecttest.Result{}
 	steps := Steps(valuesOf(user, home), secrets.Secrets{}, m, &effecttest.Out{})
 	if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
