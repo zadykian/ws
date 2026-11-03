@@ -3,17 +3,11 @@ package devtools
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/fs"
-	"path"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 )
-
-// goBin is the go command of devtools' Go.
-const goBin = "/usr/local/go/bin/go"
 
 // goplsTool is gopls at the pinned version, built with devtools' Go. gopls type-checks with the Go it
 // was built with, so a new Go needs a new gopls too.
@@ -47,16 +41,9 @@ func (c buildGopls) String() string {
 	return fmt.Sprintf("build gopls v%s with Go %s at %s", c.g.version(), c.g.goVersion(), c.g.Path)
 }
 
-// Apply builds gopls. GOBIN puts it where languages.toml names it, whatever GOPATH or GOBIN the
-// user's go env sets. GOTOOLCHAIN=local builds it with this Go, never one go would download.
+// Apply builds gopls where languages.toml names it.
 func (c buildGopls) Apply(ctx context.Context) error {
-	if _, err := c.g.M.Stat(goBin); errors.Is(err, fs.ErrNotExist) {
-		return errors.New("gopls is built with the Go in /usr/local/go, which the devtools role installs")
-	} else if err != nil {
-		return err
-	}
-	return c.g.User.Pass(ctx, c.g.M, "env", "GOBIN="+path.Dir(c.g.Path), "GOTOOLCHAIN=local", goBin,
-		"install", "golang.org/x/tools/gopls@v"+c.g.version())
+	return goInstall(ctx, c.g.M, c.g.User, "gopls", c.g.Path, "golang.org/x/tools/gopls@v"+c.g.version())
 }
 
 // Plan reads gopls's version and the Go it was built with. A gopls that is missing fails the
