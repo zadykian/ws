@@ -1,8 +1,7 @@
 #!/bin/sh
 # The wizard's refusals, which leave the runner as they found it: an unknown argument, root, and a
-# run while another holds the lock, which it must leave. So must a WS_HOOK of ws in another letter
-# case, which GitHub ignores, and the files script its stage, run as root as on ws. -h prints the
-# usage.
+# run while another holds the lock, which it must leave. So must the removed key WS_HOOK in mac.conf,
+# an unknown one, and a removed op of the files script, run as root as on ws. -h prints the usage.
 
 set -u
 
@@ -36,9 +35,9 @@ refused "another run holds $lock" "$wsbin" mac wizard --check
 [ -d "$lock" ] || error 'a refused run removed the lock it found'
 rmdir "$lock"
 echo WS_HOOK=example/Ws >"$RUNNER_TEMP/refuse.conf"
-refused 'line 1: WS_HOOK=example/Ws is not a repository on GitHub' \
+refused 'line 1: unknown key WS_HOOK' \
     env WS_CONF="$RUNNER_TEMP/refuse.conf" "$wsbin" mac wizard --check
 rm "$RUNNER_TEMP/refuse.conf"
-refused "'example/WS' is not a repository on GitHub" \
-    sudo sh "$HOME/repository/ws/mac/wizard-remote-files.sh" stage example/WS@v1.0.0
+refused "unknown op 'stage'" \
+    sudo sh "$HOME/repository/ws/mac/wizard-remote-files.sh" stage
 exit "$fail"

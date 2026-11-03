@@ -26,7 +26,7 @@ error() {
 }
 
 printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TARGET=lan WS_LAN= WS_GIT_NAME= \
-    WS_TUNNEL_NETWORKS= WS_RESOLVERS= WS_HOOK= >"$conf"
+    WS_TUNNEL_NETWORKS= WS_RESOLVERS= >"$conf"
 cp "$conf" "$RUNNER_TEMP/key.conf.before"
 out=$(WS_CONF=$conf "$wsbin" mac wizard </dev/null 2>&1)
 status=$?

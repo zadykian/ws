@@ -64,8 +64,7 @@ func (a *Answers) role(name string) string {
 
 // sequence returns the walk over the keys, which gets the value of a key that mac.conf lacks from ask.
 func (a *Answers) sequence(c conf.Conf, text string, ask func(question) (string, error)) *sequence {
-	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_GIT_NAME": c.GitName, "WS_REMOTE": c.Remote,
-		"WS_HOOK": c.Hook}
+	vals := map[string]string{"WS_TARGET": c.Target, "WS_LAN": c.LAN, "WS_GIT_NAME": c.GitName, "WS_REMOTE": c.Remote}
 	return &sequence{vals: vals, lacks: func(key string) bool { return !hasLine(text, key) }, ask: ask, role: a.role}
 }
 

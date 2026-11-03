@@ -91,15 +91,14 @@ quick "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 1
     env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=198.51.100.1 "$wsbin" mac wizard --check
 quick "WS_TARGET=mac-vm has another target's key: WS_REMOTE" env WS_TARGET=mac-vm \
     WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
-    WS_HOOK= "$wsbin" mac wizard --check
+    "$wsbin" mac wizard --check
 
 printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=192.0.2.0/24' '+WS_LAN_ADDRESS=192.0.2.10' \
     '+WS_GIT_NAME="Jane Doe"' '+WS_GIT_EMAIL=jane@example.com' \
-    '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' \
-    '+WS_HOOK=example/hook@v1.0.0' >"$RUNNER_TEMP/added"
+    '+WS_TUNNEL_NETWORKS="198.51.100.0/24 203.0.113.0/24"' '+WS_RESOLVERS=example.test=192.0.2.53' >"$RUNNER_TEMP/added"
 env WS_TARGET=lan WS_LAN=192.0.2.0/24 WS_LAN_ADDRESS=192.0.2.10 WS_GIT_NAME='Jane Doe' \
     WS_GIT_EMAIL=jane@example.com WS_TUNNEL_NETWORKS='198.51.100.0/24 203.0.113.0/24' \
-    WS_RESOLVERS=example.test=192.0.2.53 WS_HOOK=example/hook@v1.0.0 \
+    WS_RESOLVERS=example.test=192.0.2.53 \
     "$wsbin" mac wizard --check </dev/null >"$RUNNER_TEMP/env" 2>&1
 status=$?
 cat "$RUNNER_TEMP/env"
@@ -109,11 +108,10 @@ added "$RUNNER_TEMP/env" | cmp -s - "$RUNNER_TEMP/added" ||
 kept "ws mac wizard --check with the environment's answers"
 
 typed 'the answers typed' home '' 10.77.0.0/30 192.0.2.0/24 198.51.100.1 '' 192.0.2.10 \
-    '"Jane Doe"' jane@ jane@example.com '198.51.100.0/24 203.0.113.0/24' example.test=192.0.2.53 \
-    hook example/hook@v1.0.0
+    '"Jane Doe"' jane@ jane@example.com '198.51.100.0/24 203.0.113.0/24' example.test=192.0.2.53
 for asked in 'WS_TARGET=home is not lan, cloud or mac-vm' \
     'The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]: ' \
-    'WS_LAN=10.77.0.0/30 is not an IPv4 network' 'WS_HOOK=hook is not a repository' \
+    'WS_LAN=10.77.0.0/30 is not an IPv4 network' \
     "WS_LAN_ADDRESS=198.51.100.1 is not a host's IPv4 address inside WS_LAN, 192.0.2.0/24" \
     'Answers: WS_LAN and WS_LAN_ADDRESS go together' 'WS_GIT_EMAIL=jane@ is not an email address' \
     "ws's home LAN (WS_LAN) [10.88.0.0/24, or none]: " \
@@ -127,8 +125,8 @@ done
 # role's git identity.
 printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.10' \
     '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
-    '+WS_RESOLVERS=' '+WS_HOOK=' >"$RUNNER_TEMP/added"
-typed 'eight empty lines' '' '' '' '' '' '' '' ''
+    '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
+typed 'seven empty lines' '' '' '' '' '' '' ''
 
 conf=$RUNNER_TEMP/target.conf
 WS_CONF=$conf
@@ -139,16 +137,16 @@ quick 'ws mac wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
     env WS_TARGET=cloud "$wsbin" mac wizard --check
 printf '%s\n' '+WS_TARGET=cloud' '+WS_REMOTE=ws.example.test' '+WS_REMOTE_PORT=22' \
     '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
-    '+WS_RESOLVERS=' '+WS_HOOK=' >"$RUNNER_TEMP/added"
-typed 'a cloud VM' cloud '' ws.example.test '' '' '' '' '' ''
+    '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
+typed 'a cloud VM' cloud '' ws.example.test '' '' '' '' ''
 for asked in 'Answers: WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT' \
     "The VM's SSH port (WS_REMOTE_PORT) [22]: "; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws mac wizard asked a cloud VM with no '$asked'"
 done
 printf '%s\n' '+WS_TARGET=mac-vm' '+WS_LAN=192.168.64.0/24' '+WS_LAN_ADDRESS=192.168.64.2' \
     '+WS_GIT_NAME=zadykian' '+WS_GIT_EMAIL=me@zadykian.dev' '+WS_TUNNEL_NETWORKS=' \
-    '+WS_RESOLVERS=' '+WS_HOOK=' >"$RUNNER_TEMP/added"
-typed 'a VM on the Mac' mac-vm '' '' 192.168.64.2 '' '' '' '' ''
+    '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
+typed 'a VM on the Mac' mac-vm '' '' 192.168.64.2 '' '' '' ''
 for asked in "The Mac's network for its VMs (WS_LAN) [192.168.64.0/24]: " \
     'Answers: WS_LAN and WS_LAN_ADDRESS go together'; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws mac wizard asked a VM on the Mac with no '$asked'"

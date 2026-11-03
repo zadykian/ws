@@ -17,14 +17,14 @@ func newAsker(p effect.Prompt, env map[string]string) (*asker, *effecttest.Out) 
 }
 
 func TestAskerTakesTheEnvironmentFirst(t *testing.T) {
-	a, out := newAsker(&effecttest.Prompt{T: t}, map[string]string{"WS_REMOTE": "r.example", "WS_HOOK": ""})
+	a, out := newAsker(&effecttest.Prompt{T: t}, map[string]string{"WS_REMOTE": "r.example", "WS_RESOLVERS": ""})
 	if v, err := a.ask(context.Background(), question{key: "WS_REMOTE"}); v != "r.example" || err != nil {
 		t.Errorf("ask = %q, %v", v, err)
 	}
-	if v, err := a.ask(context.Background(), question{key: "WS_HOOK"}); v != "" || err != nil || len(out.Lines) != 0 {
+	if v, err := a.ask(context.Background(), question{key: "WS_RESOLVERS"}); v != "" || err != nil || len(out.Lines) != 0 {
 		t.Errorf("an empty value set: ask = %q, %v, out %v", v, err, out.Lines)
 	}
-	if a.lines != "WS_REMOTE=r.example\nWS_HOOK=\n" {
+	if a.lines != "WS_REMOTE=r.example\nWS_RESOLVERS=\n" {
 		t.Errorf("lines = %q", a.lines)
 	}
 }

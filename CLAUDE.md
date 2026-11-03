@@ -22,7 +22,7 @@ on the server. The rest is the docs, the lint gates' tools and CI.
 - `mac/`: the Mac's side, the files that the ws CLI embeds: the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
-  `mac-hook.md`, `mac-targets.md`, `mac-ghostty.md` and `mac-secrets.md`; `router.md` and `checks.md`;
+  `mac-targets.md`, `mac-ghostty.md` and `mac-secrets.md`; `router.md` and `checks.md`;
   `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target.
@@ -31,8 +31,9 @@ on the server. The rest is the docs, the lint gates' tools and CI.
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
   `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
-  toolkit's checks warn alone. `release.yml`, on a tag `v*`, has `check`, `ci`, `mac`, `build` and
-  `publish`.
+  toolkit's checks warn alone. `words.yml`, with `words`, checks a pull request and an issue for the
+  list's words ([The `words` job](docs/checks.md#the-words-job)).
+  `release.yml`, on a tag `v*`, has `check`, `ci`, `mac`, `build` and `publish`.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
 
@@ -91,7 +92,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A step that needs a booted machine's systemd checks `host.Booted`, and skips without it, as in
   CI's container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
-  them. The list is the secret `WS_WORDS`, and the job fails on an empty one
+  them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](docs/releases.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([binary.go](internal/server/ikeward/binary.go)), otelcol's `.deb`

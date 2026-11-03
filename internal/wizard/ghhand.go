@@ -1,0 +1,21 @@
+package wizard
+
+import (
+	"context"
+	"strings"
+)
+
+// Hand adds gh auth setup-git to what stays by hand, where git's config names no credential command
+// of gh's for github.com, as ws mac apply's gitconfig does where mac.conf gives git a name. Through that
+// command, pushes from the Mac's clones take gh's login.
+func (g *Gh) Hand(ctx context.Context, hand *Hand) {
+	out, _ := g.M.Run(ctx, "git", "config", "--global", "--includes", "--get-all",
+		"credential.https://github.com.helper")
+	for _, l := range strings.Split(string(out), "\n") {
+		if strings.HasSuffix(l, " auth git-credential") {
+			return
+		}
+	}
+	hand.Add("Pushes from the Mac's clones to GitHub: gh auth setup-git, which has git take gh's login " +
+		"(docs/mac-git.md).")
+}

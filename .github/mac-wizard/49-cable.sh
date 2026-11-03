@@ -1,5 +1,5 @@
 #!/bin/sh
-# The Cable stage, on the Mac that 48-hook-mac.sh leaves. ws's ports are a sysfs of the stand-in's,
+# The Cable stage, on the Mac that 46-gh.sh leaves. ws's ports are a sysfs of the stand-in's,
 # as in 41-remote.sh. While no port has carrier, a run and --check must print nothing, and a run
 # read link once. The closing list of --update must name the dock, and enp7s0, which is down, for
 # WS_CABLE_PORT. WS_CABLE_PORT must end the wait: enp7s0 must go in host_vars, and lack 10.77.0.1

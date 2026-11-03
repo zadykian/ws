@@ -16,8 +16,6 @@
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
 #   in;
 # - ws.key is wg0's key, which ws server apply --only wireguard makes, and utun names wg0, root's;
-# - apply.log holds a line for each run of the hook's command, hook-standin.sh, and check.log one
-#   for each with --check; hook.args holds their arguments, and apply.status their status;
 # - uplink names the port of the default route, and addr/PORT holds a port's IPv4 addresses, which
 #   ws server apply --only network,wireguard gives the port that host_vars names, with carrier. That
 #   run writes the port in root's netplan file, as the network role does, or removes the file.

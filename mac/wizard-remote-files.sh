@@ -1,22 +1,9 @@
 #!/bin/sh
-# The wizard's files script on ws, for another repository's command there, root's word list and the
-# cable's port. The Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, for the cable's port. The Mac's wizard sends it to root there
+# over ssh, as it sends wizard-remote.sh:
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
-# - arch prints ws's architecture as a release names it, amd64 or arm64, and stops on another.
-# - stage OWNER/REPO@TAG prints the path where the wizard sends REPO's command, in state as
-#   hook-REPO.bin, and removes an old one. The wizard sends it by a call of its own, as this script
-#   takes stdin.
-# - install OWNER/REPO@TAG SHA256 puts the sent command at bin/REPO-TAG in state, root's alone, mode
-#   700, where its SHA-256 is SHA256, which the Mac checked, and stops where the Mac sent none. It
-#   removes REPO's other commands, and its stamp, as the command runs next, so that a run that
-#   fails or is cut short leaves none.
-# - have OWNER/REPO@TAG prints the installed command's path, or nothing where there is none.
-# - stamp OWNER/REPO@TAG stamps REPO's command, which exited 0, with the command's SHA-256 and the
-#   value. The remote script's status lists the repositories that have a stamp, as the value.
-# - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
-#   read, or - where root has none. words HASH prints the list, while its hash is HASH.
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
@@ -28,11 +15,8 @@
 
 set -eu
 
-# The wizard's stamps, sent commands and installed ones, root's word list, sysfs's network
-# interfaces and the machine's values for ws server apply. CI's stand-in for ws roots each, a line
-# NAME=PATH, in a directory of its own.
-state=/var/lib/ws-wizard
-list=/root/.config/ws/forbidden-words
+# Sysfs's network interfaces and the machine's values for ws server apply. CI's stand-in for ws
+# roots each, a line NAME=PATH, in a directory of its own.
 net=/sys/class/net
 vars=/etc/ws/host_vars.yml
 
@@ -45,104 +29,6 @@ say() {
 die() {
     say "$*"
     exit 1
-}
-
-# repo OWNER/REPO@TAG sets slug to OWNER/REPO, repo to REPO and tag to TAG, where OWNER/REPO names a
-# repository on GitHub, as mac.conf's WS_HOOK does. Each side of the / is letters, digits and ._-,
-# and neither . or .. alone, and REPO isn't ws, in any letter case, which APFS and GitHub ignore.
-# TAG is a release, vX.Y.Z, and required. It stops otherwise. It sets pack, REPO's sent command in
-# state, and bin, where it is installed, as well.
-repo() {
-    slug=${1%%@*}
-    tag=
-    case $1 in *@*) tag=${1#*@} ;; esac
-    case $slug in
-    *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */[Ww][Ss]) ;;
-    */*)
-        repo=${slug#*/}
-        pack=$state/hook-$repo.bin
-        bin=$state/bin/$repo-$tag
-        printf '%s\n' "$tag" | grep -Eqx 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' ||
-            die "'$tag' is not a release, as vX.Y.Z, and WS_HOOK needs one"
-        return 0
-        ;;
-    esac
-    die "'$slug' is not a repository on GitHub, as OWNER/REPO, with a REPO other than ws"
-}
-
-# arch prints ws's architecture as a release names it.
-arch() {
-    case $(uname -m) in
-    x86_64 | amd64) echo amd64 ;;
-    aarch64 | arm64) echo arm64 ;;
-    *) die "ws is a $(uname -m), and the command has a build for amd64 and arm64 alone" ;;
-    esac
-}
-
-# digest FILE prints the SHA-256 of the file.
-digest() {
-    if command -v sha256sum >/dev/null 2>&1; then
-        sha256sum "$1" | cut -d ' ' -f 1
-    else
-        shasum -a 256 "$1" | cut -d ' ' -f 1
-    fi
-}
-
-# stage OWNER/REPO@TAG prints the path for REPO's command, as the header says.
-stage() {
-    repo "$1"
-    rm -f "$pack"
-    mkdir -p "$state"
-    echo "$pack"
-}
-
-# install OWNER/REPO@TAG SHA256 installs the command, as the header says. The file is moved whole,
-# so that no failure leaves half a command for the next run to take.
-install() {
-    repo "$1"
-    rm -f "$state/hook-$repo" "$state/bin/$repo"-v*
-    [ -f "$pack" ] || die "ws lacks $repo's command, and the Mac sent none: run the wizard again"
-    case ${2-} in
-    *[!0-9a-f]* | '') die "'${2-}' is not a SHA-256" ;;
-    esac
-    if [ "$(digest "$pack")" != "$2" ]; then
-        rm -f "$pack"
-        die "the command of $slug@$tag that reached ws is not the one the Mac checked: run the wizard again"
-    fi
-    if ! { (umask 077 && mkdir -p "$state/bin") && chmod 700 "$state/bin" "$pack" && mv -f "$pack" "$bin"; }; then
-        die "cannot install $bin"
-    fi
-    say "installed $slug@$tag at $bin"
-}
-
-# have OWNER/REPO@TAG prints the installed command's path, where there is one.
-have() {
-    repo "$1"
-    [ ! -f "$bin" ] || echo "$bin"
-}
-
-# stamp OWNER/REPO@TAG writes REPO's stamp, hook-REPO in state, by a rename: the command's SHA-256,
-# 0, its status, and the whole value, which the remote script's status lists.
-stamp() {
-    repo "$1"
-    mkdir -p "$state"
-    [ -f "$bin" ] || die "$bin is missing, so there is nothing to stamp"
-    echo "$(digest "$bin") 0 $1" >"$state/.hook-$repo" && mv -f "$state/.hook-$repo" "$state/hook-$repo"
-}
-
-# words [HASH] prints git's hash of the word list, or - where there is none. git hashes from /, as
-# the wizard does. Given HASH, as it printed it, it prints the list instead, and stops where the
-# list's hash is no longer HASH.
-words() {
-    sum=-
-    [ ! -f "$list" ] || sum=$(git -C / hash-object --stdin <"$list")
-    if [ -z "${1-}" ]; then
-        echo "$sum"
-    elif [ "$1" = "$sum" ] && [ "$sum" != - ]; then
-        cat "$list"
-    else
-        die "the word list on ws is no longer $1: run the wizard again"
-    fi
 }
 
 # ports prints ws's wired ports: a device's, of ARPHRD_ETHER's type 1 and not wireless, but those
@@ -210,16 +96,9 @@ link() {
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
     case ${1-} in
-    arch) arch ;;
-    stage) stage "${2-}" ;;
-    install) install "${2-}" "${3-}" ;;
-    have) have "${2-}" ;;
-    stamp) stamp "${2-}" ;;
-    words) words "${2-}" ;;
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh arch | stage OWNER/REPO@TAG |" \
-        "install OWNER/REPO@TAG SHA256 | have OWNER/REPO@TAG | stamp OWNER/REPO@TAG | words [HASH] | wait PORT | link [PORT]" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT]" ;;
     esac
 }
 

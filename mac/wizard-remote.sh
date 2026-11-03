@@ -10,8 +10,7 @@
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
-#   ok. peer is ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as
-#   OWNER/REPO, whose command has a stamp of wizard-remote-files.sh's, the files script. outbound
+#   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
 # - run [ARG...] runs ws server apply ARGs in a unit of its own, ws-wizard-STAMP, which goes
@@ -125,8 +124,6 @@ status() {
     mac=$(head -n 1 "$peer" 2>/dev/null) || mac=
     echo "peer $(wg show wg0 peers 2>/dev/null |
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
-    hook=$(cat "$state"/hook-* 2>/dev/null | awk '$3 != "" { printf " %s", $3 }')
-    echo "hook${hook:- -}"
     echo "outbound $(off | sh -s -- check "$vars" && echo off || echo on)"
 }
 

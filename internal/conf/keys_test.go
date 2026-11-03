@@ -40,8 +40,6 @@ func TestKeys(t *testing.T) {
 		{"WS_GIT_EMAIL", "ws", false},
 		{"WS_GIT_SIGNING_KEY", "~/.ssh/ws.pub", true},
 		{"WS_IDENTITY", "~/.ssh/ws", false},
-		{"WS_HOOK", "zadykian/tools@v1.0.0", true},
-		{"WS_HOOK", "zadykian/ws@v1.0.0", false},
 	}
 	for _, tt := range tests {
 		if got := find(t, tt.key).ok(tt.value, false); got != tt.want {

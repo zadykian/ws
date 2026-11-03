@@ -96,14 +96,12 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		Secrets: e.getenv("HOME") + "/" + secretsFile, User: e.getenv("USER"),
 		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
 	hand.Late(run.Hand)
+	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: e.version, URL: e.releases, Out: out}
 	setup := wizardSetup(e, out, later)
-	hook := &wizard.HookMac{Host: host, Gh: gh, Home: e.getenv("HOME"), M: e.m, Out: out}
-	hand.Late(hook.Hand)
 	root := &wizard.RootKey{Host: host, Gh: gh}
-	hookWs := &wizard.HookWs{Host: host, Run: run, Mac: hook, M: e.m, Out: out,
-		Files: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}}
-	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: hookWs.Files, Setup: setup, Env: e.lookup,
+	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}
+	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: files, Setup: setup, Env: e.lookup,
 		P: p, Prog: prog, Tty: e.tty, M: e.m, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
@@ -124,9 +122,6 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		&wizard.Signing{Gh: gh, Run: run, Check: check},
 		&wizard.Tunnel{Host: host, Run: run, Setup: setup, Hand: hand, Home: e.getenv("HOME"),
 			Sleep: time.Sleep, M: e.m, Out: out},
-		hook,
-		hookWs,
-		&wizard.Words{Host: host, Root: root, Hook: hookWs, Files: hookWs.Files, Home: e.getenv("HOME"), M: e.m, Out: out},
 		cable,
 	}
 }
