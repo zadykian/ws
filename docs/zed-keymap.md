@@ -54,7 +54,7 @@ Zed on macOS, with a US layout:
 
 ## The file's sections
 
-The file has 264 bindings and 24 unbindings in 10 sections, in this order:
+The file has 266 bindings and 24 unbindings in 10 sections, in this order:
 
 - F12's global keys, with no context.
 - Editing, in every editor: `Editor`.
@@ -63,6 +63,17 @@ The file has 264 bindings and 24 unbindings in 10 sections, in this order:
 - A stopped debug session, where the step keys leave the Alt keys to type.
 - Esc, which goes back to the editor from a panel. The terminal keeps its own Esc.
 - The terminal, last.
+
+## Two keys F12 lacks
+
+F12 has no action to restart a language server or to reload Zed, and Zed has no default key for
+either. They are the remedies after a reconnect (`docs/zed.md`, "When the connection drops").
+The file binds both, and both are free in F12's keymap and in Zed's defaults:
+
+- Ctrl+Shift+R is `editor::RestartLanguageServer`, in `Editor && mode == full`.
+- Ctrl+Alt+Shift+Y is `workspace::Reload`, in the global section.
+
+Shift keeps the Terminal's rule below, so Ctrl+Alt+Shift+Y reaches Zed from the terminal too.
 
 ## The Terminal's rule
 

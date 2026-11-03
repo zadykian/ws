@@ -1,5 +1,6 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
-// F12, the IDEs' keymap, for Zed on the Mac: each F12 key that Zed has an action for.
+// F12, the IDEs' keymap, for Zed on the Mac: each F12 key that Zed has an action for,
+// and two keys F12 lacks: Ctrl+Shift+R restarts a language server, Ctrl+Alt+Shift+Y reloads Zed.
 // docs/zed-keymap.md lists every F12 action with its Zed action, or why it has none.
 [
   // F12's global keys. No context, so each beats Zed's defaults wherever focus is.
@@ -88,7 +89,8 @@
       "ctrl-alt-p": "debugger::Start",
       "alt-)": "zed::ResetUiFontSize",
       "ctrl-alt-shift-s": "zed::OpenProjectSettings",
-      "ctrl-alt-s": "zed::OpenSettings"
+      "ctrl-alt-s": "zed::OpenSettings",
+      "ctrl-alt-shift-y": "workspace::Reload"
     }
   },
   // Editing, in every editor, the one-line ones too.
@@ -243,7 +245,8 @@
       "ctrl-u ctrl-y": "task::Rerun",
       "ctrl-f9": "debugger::ToggleEnableBreakpoint",
       "ctrl-b": "editor::ToggleBreakpoint",
-      "ctrl-n": "workspace::NewFile"
+      "ctrl-n": "workspace::NewFile",
+      "ctrl-shift-r": "editor::RestartLanguageServer"
     }
   },
   // The signature popup.
