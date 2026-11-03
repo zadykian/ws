@@ -12,7 +12,7 @@ ws mac apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
         exit 1
     }
 fail=0
-for path in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel \
+for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed /etc/ws-tunnel \
     /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
     if sudo test -e "$path"; then
         echo "::error::ws mac apply --check made $path"
