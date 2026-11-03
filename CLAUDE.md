@@ -3,8 +3,8 @@
 ws sets up the maintainer's development server from code: `ws server apply`, which runs on the
 machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
 links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, helix,
-Docker, claude, SigNoz with its collector, and the IDEs' backends. `mac/` sets up the Mac that works
-on the server. The rest is the docs, the lint gates' tools and CI.
+Docker, claude, SigNoz with its collector, Zed's server, and the IDEs' backends. `mac/` sets up the
+Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
@@ -105,7 +105,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   the SHA-256 their publishers list ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)).
   gopls and Delve are built through Go's checksum database. roslyn-language-server is pinned by
   version alone
-  ([pins.go](internal/server/devtools/pins.go)).
+  ([pins.go](internal/server/devtools/pins.go)). Zed's downloads on ws are outside the rule
+  ([zed](docs/zed.md#zeds-downloads-outside-the-sha-256-rule)).
 - foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ

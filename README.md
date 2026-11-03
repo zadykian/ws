@@ -1,11 +1,11 @@
 # ws
 
-Sets up my development server from code. `ws server apply` runs on the machine itself. It sets up packages,
-SSH by key and a firewall, a direct link and a WireGuard tunnel to the Mac, Docker, the shell, tmux
-and the helix editor. It sets up claude and [cld](https://github.com/zadykian/cld), SigNoz with a
-collector for the machine's telemetry, and the backends of Rider and GoLand that JetBrains Gateway
-connects to. Running it again is safe, and `--check` shows how a machine differs from the
-repository.
+Sets up my development server from code. `ws server apply` runs on the machine itself. It sets up
+packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It sets up
+Docker, the shell, tmux, the helix editor and Zed's server. It sets up claude and
+[cld](https://github.com/zadykian/cld), SigNoz with a collector for the machine's telemetry, and the
+backends of Rider and GoLand that JetBrains Gateway connects to. Running it again is safe, and
+`--check` shows how a machine differs from the repository.
 
 Each role has a page of its own. A role is Go steps of ws:
 
@@ -32,6 +32,8 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
 - [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and its config for the Go and C#
   servers.
+- [`zed`](docs/zed.md): the settings of Zed's server for Go and C#, and the open-file limit that
+  it needs.
 - [`jetbrains`](docs/jetbrains.md): the backends of Rider and GoLand that JetBrains Gateway runs.
 
 `mac/` sets up the Mac that works on the server, and Ghostty on it: [The Mac](docs/mac.md).
