@@ -36,3 +36,21 @@ func TestLoadErrorsNameAFileNeverAValue(t *testing.T) {
 		t.Errorf("bad file: %v", err)
 	}
 }
+
+func TestLoadRawKeepsReferences(t *testing.T) {
+	id, _ := age.GenerateX25519Identity()
+	armored, err := Encrypt([]byte("[token]\ngithub = \"dummy\"\n[env]\nMY_TOKEN = \"${token.github}\"\n"), id.Recipient())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := effecttest.NewMachine()
+	m.Files["/f"] = armored
+	raw, err := LoadRaw(m, "/f", id)
+	if err != nil || raw.Env["MY_TOKEN"] != "${token.github}" {
+		t.Errorf("LoadRaw env = %q, %v; want the reference", raw.Env["MY_TOKEN"], err)
+	}
+	full, err := Load(m, "/f", id)
+	if err != nil || full.Env["MY_TOKEN"] != "dummy" {
+		t.Errorf("Load env = %q, %v; want the value", full.Env["MY_TOKEN"], err)
+	}
+}
