@@ -6,13 +6,36 @@ import (
 	"embed"
 	"encoding/json"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/step"
 )
 
 //go:embed settings.json.tmpl
 var files embed.FS
+
+// Steps returns the role's steps in order.
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
+	user := host.User{Name: v.User, Home: v.Home}
+	return []step.Step{
+		user.Owned(m, "Zed settings", "", func(uid, gid int) ([]host.Resource, error) {
+			settings, err := settingsFile(v)
+			if err != nil {
+				return nil, err
+			}
+			dir := v.Home + "/.config/zed"
+			return []host.Resource{
+				host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
+				host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
+				host.File{M: m, Path: dir + "/settings.json", Content: settings, Mode: 0o644, UID: uid, GID: gid,
+					Backup: true},
+			}, nil
+		}),
+	}
+}
 
 // quote returns the string as a JSON string.
 func quote(s string) string {
