@@ -3,8 +3,8 @@
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the LAN, or elsewhere through the router's port forwards.
 `ws mac apply` sets up its end of the cable ([The cable](#the-cable)), git
-([git on the Mac](mac-git.md)), JetBrains Gateway ([The Mac's tunnel](#the-macs-tunnel)) and two
-hosts for ssh:
+([git on the Mac](mac-git.md)), JetBrains Gateway ([The Mac's tunnel](#the-macs-tunnel)), Zed
+([Zed on the Mac](mac-zed.md)) and two hosts for ssh:
 
 - `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
   The sessions of `ssh ws`, JetBrains Gateway and Zed stay open as the Mac moves between the cable,
@@ -14,7 +14,7 @@ hosts for ssh:
 
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
 request. It runs as the user, with sudo where it needs root. It sets up Ghostty and cld ([Ghostty
-and cld on the Mac](mac-ghostty.md)), and installs Ghostty and a font from Homebrew,
+and cld on the Mac](mac-ghostty.md)), and installs Ghostty, Zed and a font from Homebrew,
 [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on `PATH` by
 hand) from a release ([Releases](releases.md)). `ws` embeds the files it installs, so it needs no
 clone. Then:
@@ -153,11 +153,11 @@ DHCP and DNS still go to the Mac, which serves them.
 
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,
-macOS asks once whether Ghostty, Gateway or another app may find devices on the local network: allow
-it. It asks for `ws-ssh`, and for `ws` until it goes through the tunnel. ssh run from Terminal needs
-no such grant, and neither does `ws` through the tunnel. The tunnel's utun is no local network, and
-macOS lets daemons that run as root reach one anyway (Apple's TN3179). To see which way `ws-ssh`
-went:
+macOS asks once whether Ghostty, Gateway, Zed or another app may find devices on the local
+network: allow it. It asks for `ws-ssh`, and for `ws` until it goes through the tunnel. ssh run
+from Terminal needs no such grant, and neither does `ws` through the tunnel. The tunnel's utun is no
+local network, and macOS lets daemons that run as root reach one anyway (Apple's TN3179). To see
+which way `ws-ssh` went:
 
 ```sh
 ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
@@ -258,7 +258,7 @@ Homebrew has the cask but not the app, the script warns instead, and installs no
 in Gateway, with "Parse config file ~/.ssh/config" on. Gateway then reads `~/.ssh/config` through
 the Mac's `ssh -G`, its default. Through it, open Rider or GoLand, on a backend that the
 `jetbrains` role installed ([jetbrains](jetbrains.md)). A connection to `ws` outlives a switch; a
-second, to `ws-ssh`, serves where UDP is blocked.
+second, to `ws-ssh`, serves where UDP is blocked. Zed has [its page](mac-zed.md).
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install

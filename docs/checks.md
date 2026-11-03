@@ -158,16 +158,19 @@ which the case never runs.
 
 ## The Mac
 
+Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed.json` under the
+header, and a `settings.json` that is there must stay byte for byte.
+
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First,
 `ws mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
 installs no formula or cask. It must note the install of JetBrains Gateway's cask. Stand-ins for
-Gateway's and Ghostty's apps, the font and cld, which `ws mac apply` leaves alone, spare the job's
-runs their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no daemon,
-while `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the key
-in the command that gives it to ws. With a stand-in's key it must load the daemon, which must run.
-Then a second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh` their
-addresses. The stand-in for ws is a second wireguard-go on the runner, with the printed key as its
-peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws mac tunnel status` must
+Gateway's, Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, spare the
+job's runs their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no
+daemon, while `ssh -G ws` takes the LAN's way. The public key it prints must be the Mac's, as must the
+key in the command that gives it to ws. With a stand-in's key it must load the daemon, which must
+run. Then a second run and `--check` must print nothing, and `ssh -G` must give `ws` and `ws-ssh`
+their addresses. The stand-in for ws is a second wireguard-go on the runner, with the printed key as
+its peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws mac tunnel status` must
 show a handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and
 `routes.d` in place, with the same pid. Then a network that `ws mac tunnel routes` adds must be
 routed into the daemon's utun, and a domain `ws mac resolver` adds must show in `scutil --dns`.
