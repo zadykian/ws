@@ -45,3 +45,36 @@ there: no `username`, `port` or `args`.
 
 A linked `~/.config/zed`, as GNU stow's folding makes, draws a warning where the step plans a write:
 Zed's files go through the link.
+
+## A settings.json that exists already
+
+Where Zed wrote `settings.json` before the step ran, the step leaves it and does not warn: the
+file is there on every later run, and the step never reads it. Zed's first write starts from its
+template, whose `theme` (One Light and One Dark, mode `system`) would win over ws's. So:
+
+- delete the `theme` block of `settings.json`, or the theme stays Zed's;
+- add `ws` in Remote Projects by hand, as the seed would have.
+
+## Extensions
+
+`auto_install_extensions` in ws's settings names the extensions that Zed installs at its next start,
+from its own registry. They update unpinned, outside the SHA-256 rule of the downloads. The key
+merges with Zed's default one by one. `docker-compose` is false: its latest release attaches a Compose
+server to every YAML file, Ansible's too.
+
+## Other facts
+
+- `ws` through the tunnel needs no Local Network grant. `ws-ssh` does ([The Mac](mac.md)), so the
+  seed names `ws` alone.
+- The terminal docks right, as the project, git and outline panels dock left. A resize of a terminal
+  docked at a side duplicates its lines (zed#65316, open).
+- `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives helix's
+  Alt keys in Zed's terminal, at the cost of Option's special characters.
+- `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
+  open), and no setting helps.
+- Zed's keymap overlay is `docs/zed-keymap.md`, and `docs/zed.md`, its page for the server, says
+  what to do when the connection drops.
+
+## Changing the settings
+
+Edit [`mac/zed.json`](../mac/zed.json), build `ws` again and run it. `ws` embeds the file.
