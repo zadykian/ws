@@ -2,6 +2,9 @@ package zed
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -71,5 +74,61 @@ func TestNpmPlansAChangeForAMissingNpmOrStamp(t *testing.T) {
 		if err != nil || len(got) != c.want {
 			t.Errorf("%s: %d changes, %v; want %d", c.name, len(got), err, c.want)
 		}
+	}
+}
+
+func TestNpmCiRunsAsTheUserThenWritesTheStamp(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[npmBin] = []byte("x")
+	m.Results[npmCommand("ws", "/home/ws")] = effecttest.Result{}
+	n := newInstall(m)
+	changes, err := n.Plan(context.Background())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("%v, %v", changes, err)
+	}
+	if err := changes[0].Apply(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files[n.stamp()]) != "abc\n" || m.Owners[n.stamp()] != [2]int{1000, 1000} {
+		t.Errorf("stamp %q, owner %v", m.Files[n.stamp()], m.Owners[n.stamp()])
+	}
+	if !slices.Contains(m.Calls, "atomic "+n.stamp()+" 644") {
+		t.Errorf("no stamp write in %v", m.Calls)
+	}
+}
+
+func TestAFailedNpmCiLeavesNoStamp(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[npmBin] = []byte("x")
+	m.Results[npmCommand("ws", "/home/ws")] = effecttest.Result{Err: context.Canceled}
+	n := newInstall(m)
+	changes, _ := n.Plan(context.Background())
+	if err := changes[0].Apply(context.Background()); err == nil || len(m.Files[n.stamp()]) != 0 {
+		t.Errorf("err %v, stamp %q", err, m.Files[n.stamp()])
+	}
+}
+
+func TestNpmApplyNamesDevtoolsWhereNpmIsMissing(t *testing.T) {
+	m := effecttest.NewMachine()
+	changes, _ := newInstall(m).Plan(context.Background())
+	err := changes[0].Apply(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "devtools") {
+		t.Errorf("err %v", err)
+	}
+}
+
+func TestTheStampIsTheDigestOfBothFiles(t *testing.T) {
+	m := effecttest.NewMachine()
+	parts, err := serverFiles(m, host.User{Name: "ws", Home: "/home/ws"}, 1, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := sha256.New()
+	for _, name := range []string{"package.json", "package-lock.json"} {
+		b, _ := serversLock.ReadFile("servers/" + name)
+		h.Write(b)
+	}
+	if got := parts[len(parts)-1].(npmInstall).Digest; got != fmt.Sprintf("%x", h.Sum(nil)) {
+		t.Errorf("digest %s", got)
 	}
 }
