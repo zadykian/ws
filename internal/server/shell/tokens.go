@@ -13,18 +13,21 @@ import (
 // tokens is git's tokens for servers besides GitHub, each URL's in a file of its own, which the
 // URL's helper in ~/.config/git/tokens.gitconfig reads (docs/shell.md#git-credentials). So no token
 // goes in a template, or in the diff a dry run shows. Without entries, as in CI, ws leaves the
-// tokens and their helpers alone, so that a run without the secrets file changes nothing. A URL
-// that the entries omit keeps its token and its helper.
+// tokens and their helpers alone, so that a run without the secrets file changes nothing. With the
+// secrets file as the whole truth, a URL that the entries omit loses its token and its helper;
+// without, it keeps both.
 type tokens struct {
 	M     effect.Machine
 	A     account
 	Creds []credential
+	// Whole removes the tokens and helpers of the URLs that Creds omit.
+	Whole bool
 }
 
-// Plan reads the keys of tokens.gitconfig, as a URL the entries omit keeps its section there, and
-// checks the entries before any token is written.
+// Plan reads the keys of tokens.gitconfig, as a URL the entries omit keeps its section there, or
+// loses it under Whole, and checks the entries before any token is written.
 func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
-	if len(t.Creds) == 0 {
+	if len(t.Creds) == 0 && !t.Whole {
 		return nil, nil
 	}
 	config := t.A.Home + "/.config/git/tokens.gitconfig"
@@ -38,6 +41,13 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 			return nil, err
 		}
 	}
+	dropped := keptURLs(keys, t.Creds)
+	if t.Whole {
+		keys = nil
+	}
+	if len(t.Creds) == 0 && len(dropped) == 0 {
+		return nil, nil
+	}
 	if err := checkCredentials(t.Creds, keys); err != nil {
 		return nil, err
 	}
@@ -48,6 +58,11 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 	dir := t.A.Home + "/.config/git/tokens"
 	rs := treeTo(t.M, t.A, path.Dir(config), 0o755, true)
 	rs = append(rs, host.Dir{M: t.M, Path: dir, Mode: 0o700, UID: t.A.UID, GID: t.A.GID})
+	if t.Whole {
+		for _, u := range dropped {
+			rs = append(rs, host.Absent{M: t.M, Path: dir + "/" + credentialFile(u)})
+		}
+	}
 	for _, c := range t.Creds {
 		file := dir + "/" + credentialFile(c.URL)
 		username := c.Username

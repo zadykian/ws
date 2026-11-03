@@ -25,14 +25,17 @@ type Config struct {
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
-// that would under Check.
+// that would under Check. Given --secrets, the roles take the secrets as the whole truth
+// (secrets.Secrets.Whole).
 func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
 	if _, err := step.Run(ctx, c.Prepare, c.Out, c.Check); err != nil {
 		return nil, err
 	}
 	var changed []string
+	s := c.Secrets
+	s.Whole = c.Options.Secrets != ""
 	for _, r := range list {
-		did, err := step.Run(ctx, r.Steps(c.Values, c.Secrets, c.M, c.Out), c.Out, c.Check)
+		did, err := step.Run(ctx, r.Steps(c.Values, s, c.M, c.Out), c.Out, c.Check)
 		if err != nil {
 			return changed, fmt.Errorf("%s: %w", r.Name, err)
 		}

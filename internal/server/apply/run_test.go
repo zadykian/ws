@@ -46,6 +46,20 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestRunMakesTheSecretsTheWholeTruthWhenGivenAFile(t *testing.T) {
+	for _, file := range []string{"", "/s.age"} {
+		var whole bool
+		r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Out) []step.Step {
+			whole = s.Whole
+			return nil
+		}}
+		c := Config{Options: Options{Secrets: file}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
+		if _, err := Run(context.Background(), c, []roles.Role{r}); err != nil || whole != (file != "") {
+			t.Errorf("--secrets %q: whole = %v, err = %v", file, whole, err)
+		}
+	}
+}
+
 func TestSummary(t *testing.T) {
 	for _, tc := range []struct {
 		changed []string

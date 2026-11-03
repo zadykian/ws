@@ -79,3 +79,47 @@ func TestTokensRefuseBeforeWriting(t *testing.T) {
 		t.Error("a file was written")
 	}
 }
+
+func TestTokensOfADroppedURLGoWithTheWholeTruth(t *testing.T) {
+	m, tk := tokenFixture(credential{URL: "https://a.example", Token: "hunter2"})
+	tk.Whole = true
+	m.Files["/home/ws/.config/git/tokens/kept.example"] = []byte("old")
+	m.Files["/home/ws/.config/git/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
+	for _, s := range applyTokens(t, tk) {
+		if strings.Contains(s, "hunter") {
+			t.Errorf("a change shows a token: %q", s)
+		}
+	}
+	if _, ok := m.Files["/home/ws/.config/git/tokens/kept.example"]; ok {
+		t.Error("the token of a dropped URL stays")
+	}
+	if cfg := string(m.Files["/home/ws/.config/git/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") ||
+		!strings.Contains(cfg, `[credential "https://a.example"]`) {
+		t.Errorf("tokens.gitconfig = %q", cfg)
+	}
+	if again := applyTokens(t, tk); again != nil {
+		t.Errorf("second plan = %q, want none", again)
+	}
+}
+
+func TestTokensWithAnEmptyTableAndNoFileChangeNothing(t *testing.T) {
+	_, tk := tokenFixture()
+	tk.Whole = true
+	if got := applyTokens(t, tk); got != nil {
+		t.Errorf("plan = %q", got)
+	}
+}
+
+func TestTokensWithAnEmptyTableRemoveWhatTheFileHeld(t *testing.T) {
+	m, tk := tokenFixture()
+	tk.Whole = true
+	m.Files["/home/ws/.config/git/tokens/kept.example"] = []byte("old")
+	m.Files["/home/ws/.config/git/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
+	applyTokens(t, tk)
+	if _, ok := m.Files["/home/ws/.config/git/tokens/kept.example"]; ok {
+		t.Error("the token stays")
+	}
+	if cfg := string(m.Files["/home/ws/.config/git/tokens.gitconfig"]); strings.Contains(cfg, "kept.example") {
+		t.Errorf("tokens.gitconfig = %q", cfg)
+	}
+}

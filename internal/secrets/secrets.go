@@ -15,6 +15,10 @@ type Secrets struct {
 	File Files
 	// Password holds the passwords that go with the files.
 	Password Passwords
+	// Whole is true where the run was given a secrets file, as ws server apply sets it: the file
+	// is then the truth of what it names, and a role removes what it lacks. The file does not hold
+	// it.
+	Whole bool
 }
 
 // Tokens are the tokens of the services that ws logs in to.
