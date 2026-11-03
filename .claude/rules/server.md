@@ -20,7 +20,7 @@ steps, and each role's page in `docs/` says what it sets up.
   ([values.go](../../internal/server/values/values.go)).
 - The secrets are one struct, `secrets.Secrets`, beside the values: decrypted from age's armor in
   ws's process, unknown keys refused, no error or output showing a value. Steps take it as their
-  second argument ([secrets.go](../../internal/server/secrets/secrets.go)).
+  second argument ([secrets.go](../../internal/secrets/secrets.go)).
 - The roles set the machine up for `ws_user`, root by default, in `ws_home`. A step run as `ws_user`
   sets `HOME`: root needs no sudo, a container has none, and `HOME` would otherwise be the
   caller's ([claude's install](../../internal/server/claude/install.go)).

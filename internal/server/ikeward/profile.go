@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/secrets"
 )
 
 // runDir is where the profile's files go for one run: in /run, where only root may enter. They keep
