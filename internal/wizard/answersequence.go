@@ -46,7 +46,6 @@ func (s *sequence) run() error {
 	for _, q := range []question{
 		{"WS_TUNNEL_NETWORKS", "More networks through the tunnel, split by blanks", "", ""},
 		{"WS_RESOLVERS", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks", "", ""},
-		{"WS_HOOK", "A release of another repository whose command runs on ws, as OWNER/REPO@vX.Y.Z", "", ""},
 	} {
 		if _, err := s.get(q); err != nil {
 			return err

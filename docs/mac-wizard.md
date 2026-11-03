@@ -4,10 +4,9 @@
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
 runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on
-ws. Then it exchanges the tunnel's keys, clones another repository on the Mac, downloads its release
-with gh, and runs its command on ws. Last, it sets up the cable from the Mac's
-display to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
-what else it needs, as yourself:
+ws. Then it exchanges the tunnel's keys. Last, it sets up the cable from the Mac's display to ws. On
+a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs what else it
+needs, as yourself:
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
@@ -37,9 +36,7 @@ the first two of which install what the rest needs:
 10. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, in [Another repository](mac-hook.md).
-14. Hook on ws: that release's build, sent to ws, and its `apply` run there as root, in [Another repository](mac-hook.md).
-15. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+13. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
 ## The answers
 
@@ -54,13 +51,12 @@ the first two of which install what the rest needs:
 | git's email on the Mac | `WS_GIT_EMAIL` | the `shell` role's, `me@zadykian.dev` | with a name |
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
-| A release of another repository whose command runs on ws, as `OWNER/REPO@vX.Y.Z` | `WS_HOOK` | none | always |
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
-first and the last. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
+first. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
 `WS_REMOTE` and `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the
 questions on the LAN, and [The wizard's targets](mac-targets.md) the others, with the keys that each
-refuses. [Another repository](mac-hook.md) explains the last. The defaults are
+refuses. The defaults are
 [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
 from the first of these that has one:
 

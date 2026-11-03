@@ -22,7 +22,7 @@ on the server. The rest is the docs, the lint gates' tools and CI.
 - `mac/`: the Mac's side, the files that the ws CLI embeds: the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
-  `mac-hook.md`, `mac-targets.md`, `mac-ghostty.md` and `mac-secrets.md`; `router.md` and `checks.md`;
+  `mac-targets.md`, `mac-ghostty.md` and `mac-secrets.md`; `router.md` and `checks.md`;
   `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target.

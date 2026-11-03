@@ -39,23 +39,23 @@ of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new M
 such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`. Then
 `checks.sh` runs the cases beside it in order, stopping at the first failure
 ([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root and
-a `WS_HOOK` of `WS`, as the files script must. A run must stop where another holds the lock, leaving
-it. A fresh `--check`, by sh and dash, must find brew with its directories off `PATH`. As
-`ws mac apply --check` must, it must change nothing, and leave no lock or temporary file. The job's
-`mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `--check` must show it would make. With no
-terminal and a `mac.conf` that names none, a run must stop at the Mac key stage, naming
-`WS_IDENTITY`, making nothing. A file key there with no line must get one, shown by `--check`. A
-failed `ssh-add` must stop a run, naming it. The first run, with that `PATH` too, must make that key
-with no passphrase, add it to that login, install what `ws mac apply` installs. It must drop the
-Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel stage below takes it. A
-second run and `--check` must print nothing, by sh and dash. Then a stand-in `ssh-agent` at
-Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in `WS_IDENTITY`.
-While it lists the key, `--check` must print nothing of the Mac key stage. With git's name, it must
-say it would wait for git's key made in Secretive, unless `WS_GIT_SIGNING_KEY` is empty. Once the
-agent lacks it, a run and `--check` must stop there, naming the socket. Last, without the stand-in
-`gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth login`. With a login
-lacking the scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say
-each would run.
+a removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
+where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find brew with its
+directories off `PATH`. As `ws mac apply --check` must, it must change nothing, and leave no lock or
+temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `--check` must
+show it would make. With no terminal and a `mac.conf` that names none, a run must stop at the Mac
+key stage, naming `WS_IDENTITY`, making nothing. A file key there with no line must get one, shown
+by `--check`. A failed `ssh-add` must stop a run, naming it. The first run, with that `PATH` too,
+must make that key with no passphrase, add it to that login, install what `ws mac apply` installs.
+It must drop the Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel stage
+below takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in
+`ssh-agent` at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
+`WS_IDENTITY`. While it lists the key, `--check` must print nothing of the Mac key stage. With git's
+name, it must say it would wait for git's key made in Secretive, unless `WS_GIT_SIGNING_KEY` is
+empty. Once the agent lacks it, a run and `--check` must stop there, naming the socket. Last,
+without the stand-in `gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth
+login`. With a login lacking the scopes, or the signing one alone, it must name `gh auth refresh`.
+`--check` must say each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `ws mac apply`.
@@ -90,11 +90,9 @@ print the log, and stamp ws's version, `-` here, 0, `on` and `-`, the secrets fi
 `outbound` writes the line, which stops on a link, `off`. A tagged run after it must start its own
 unit and leave that stamp. A run during another's unit must follow it. A full run cut off must
 remove the stamp of the one before, so the next starts a unit again. The files script,
-`mac/wizard-remote-files.sh`, must install a command sent to it, root's alone, after a check of its
-SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
-`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop. Its
-`link` must list the wired ports, and `link PORT` name one in `host_vars.yml`, mode 600 in a 755
-directory, once, which `status` names once the roles give `10.77.0.1`. With the Mac's secrets file,
+`mac/wizard-remote-files.sh`: its `link` must list the wired ports, and `link PORT` name one in
+`host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
+`10.77.0.1`. With the Mac's secrets file,
 in a throwaway keychain, a run must start a unit that loads the identity as a credential and runs
 `--secrets`. It must remove the identity from ws, and stamp the file's SHA-256. A changed file must
 run again, and a removed one run with no secrets
@@ -136,21 +134,12 @@ With claude logged out, a run at a terminal of `script`'s must run `claude auth 
 `bash -lc` in an `ssh -t` session. The stand-in takes a terminal alone, and the next run must print
 nothing.
 
-For the Hook on the Mac stage, the stand-in `gh` clones `WS_HOOK` with `.githooks` and an empty
-`Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git` by
-hand, unless git's config names gh's credential command. For the Hook on ws stage, the stand-in
-`gh` serves a release, a command that logs its stdin's SHA-256, and its sums. A run with no terminal
-must send the build once, root's alone. It must run `apply` once over plain ssh, its stdin empty
-and no terminal, and ws must make no clone and use no gh. The next run must print nothing, and
-`--check` must run `apply --check`. A failed run must leave no stamp. A new tag must replace the
-build and the stamp hold the tag. A bad sum or a missing release must stop the stage, sending
-nothing. For the Cable stage, ws's
-ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and
-`WS_CABLE_PORT` end the wait. Docked, one with no terminal must stop, one with `WS_CABLE_PORT` name
-the port, run the roles, read its late address, and stop at the service. Typed, an empty line must
-take the `169.254` one, and `ping` answer. The next must read no `link`, and one after ws's install
-or a failed roles' run name it again. Off the LAN, a run and `--check` must skip it, a cloud VM's
-naming its firewall.
+For the Cable stage, ws's ports are a stand-in sysfs. Undocked, a run must print nothing, one that
+acts name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no terminal must stop, one
+with `WS_CABLE_PORT` name the port, run the roles, read its late address, and stop at the service.
+Typed, an empty line must take the `169.254` one, and `ping` answer. The next must read no `link`,
+and one after ws's install or a failed roles' run name it again. Off the LAN, a run and `--check`
+must skip it, a cloud VM's naming its firewall.
 
 The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
 must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop

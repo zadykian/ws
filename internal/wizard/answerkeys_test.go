@@ -9,7 +9,7 @@ func TestQuestionPrompt(t *testing.T) {
 	}{
 		{question{"WS_TARGET", "The machine", "lan", "needs"}, "The machine (WS_TARGET) [lan]"},
 		{question{"WS_LAN", "ws's home LAN", "10.88.0.0/24", ""}, "ws's home LAN (WS_LAN) [10.88.0.0/24, or none]"},
-		{question{"WS_HOOK", "Another", "", ""}, "Another (WS_HOOK) [none]"},
+		{question{"WS_RESOLVERS", "Another", "", ""}, "Another (WS_RESOLVERS) [none]"},
 		{question{"WS_REMOTE", "The VM", "", "needs"}, "The VM (WS_REMOTE)"},
 	} {
 		if got := tc.q.prompt(); got != tc.want {

@@ -16,8 +16,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - `docs/NAME.md` is the page of the role NAME: what it sets up and the values that change it.
   It gives the role's caveats too, such as what a run replaces or what a dry run shows.
 - [mac.md](../../docs/mac.md) is the Mac's side, `mac/` and the ws CLI. [mac-git.md](../../docs/mac-git.md) is its
-  git, [mac-wizard.md](../../docs/mac-wizard.md) its wizard, and [mac-hook.md](../../docs/mac-hook.md)
-  its `WS_HOOK` stages. [mac-targets.md](../../docs/mac-targets.md) is the wizard's targets, and
+  git, and [mac-wizard.md](../../docs/mac-wizard.md) its wizard. [mac-targets.md](../../docs/mac-targets.md) is the wizard's targets, and
   [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld, and
   [mac-secrets.md](../../docs/mac-secrets.md) the secrets file.
   [router.md](../../docs/router.md) is the router's steps, taken once by hand.

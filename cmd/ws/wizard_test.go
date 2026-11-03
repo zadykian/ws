@@ -69,7 +69,7 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	var stderr bytes.Buffer
 	e := testWizardEnv("darwin", 501, &stderr)
 	env := map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example", "WS_REMOTE_PORT": "22", "WS_GIT_NAME": "",
-		"WS_TUNNEL_NETWORKS": "", "WS_RESOLVERS": "", "WS_HOOK": ""}
+		"WS_TUNNEL_NETWORKS": "", "WS_RESOLVERS": ""}
 	e.lookup = func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	if got := wizardCommand(context.Background(), []string{"--check"}, e); got != 0 || !strings.Contains(stderr.String(), "+WS_TARGET=cloud") {
 		t.Errorf("status = %d, stderr = %q; want the diff of mac.conf", got, stderr.String())

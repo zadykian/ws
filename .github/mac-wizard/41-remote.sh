@@ -10,12 +10,7 @@
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
 # unit of its own, as must one after outbound, which stamps off in run, as /etc/ws/host_vars.yml,
 # a file of mode 0600 in a directory of 0755, names security_outbound: false. One with an argument, as
-# --diff, must leave that stamp. The files script's arch must print amd64 or arm64. Its stage must
-# stop without a tag, and print the path for a command of another repository's release. Its install
-# of the command sent there must stop where the SHA-256 is another, and else leave the command at
-# bin in state, root's alone, mode 700, which must run as root over ssh, its stdin empty. Its stamp
-# must follow, which status must list. Its install again must remove the stamp, and with nothing
-# sent stop. Its have must print the command's path, but not another tag's. Its link must list ws's wired ports but the
+# --diff, must leave that stamp. The files script's link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
 # ws's /etc/ws/host_vars.yml once, and ws server apply --only network,wireguard then give it 10.77.0.1, and
 # status's cable name it. The remote script's outbound must add security_outbound: false there once,
@@ -74,13 +69,13 @@ echo "$mac" | sudo tee "$peer" >/dev/null
 rm "$ws/claude"
 states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")" \
     "hostname $(hostname)" 'claude login' 'fans refused' 'cable -' 'peer -' \
-    'hook -' 'outbound on'
+    'outbound on'
 touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
 sudo git config -f "$ws/root/root/.gitconfig" --unset user.signingkey
 states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
-    'peer -' 'hook -' 'outbound on'
+    'peer -' 'outbound on'
 rm "$ws/nct6687"
 sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
@@ -159,58 +154,6 @@ files() {
     printf '%s\n' "$out"
 }
 
-# send REPO: the files script's stage op names a path on ws for the command of example/REPO@v1.0.0,
-# which goes there as the wizard sends it. The command is hook-standin.sh, as the Mac's stand-in gh
-# downloads it. It sets sum to the command's SHA-256.
-send() {
-    src=$RUNNER_TEMP/$1
-    cp "$(cd "$(dirname "$0")" && pwd)/hook-standin.sh" "$src"
-    sum=$(shasum -a 256 <"$src" | cut -d ' ' -f 1)
-    files stage "example/$1@v1.0.0"
-    [ "$status" = 0 ] && [ "$out" = "$stamps/hook-$1.bin" ] ||
-        error "the files script's stage of example/$1 exited $status, printing '$out'"
-    ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out" <"$src"
-}
-
-bin=$stamps/bin/hook-v1.0.0
-files arch
-case $out in amd64 | arm64) ;; *) error "the files script's arch printed '$out'" ;; esac
-files stage example/hook
-printf '%s\n' "$out" | grep -qF "is not a release" && [ "$status" = 1 ] ||
-    error "the files script's stage with no tag exited $status"
-send hook
-files install example/hook@v1.0.0 "$(printf %s bad | shasum -a 256 | cut -d ' ' -f 1)"
-[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'not the one the Mac checked' &&
-    [ ! -e "$stamps/hook-hook.bin" ] && [ ! -e "$bin" ] ||
-    error "the files script's install of another sum exited $status, or installed"
-send hook
-files install example/hook@v1.0.0 "$sum"
-[ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: installed example/hook@v1.0.0 at $bin" ] &&
-    [ "$(sudo stat -f '%Lp %Su' "$bin")" = '700 root' ] &&
-    [ "$(sudo stat -f '%Lp' "${bin%/*}")" = 700 ] && [ ! -e "$stamps/hook-hook.bin" ] ||
-    error "the files script's install exited $status, or left the command other than root's alone"
-ssh -o BatchMode=yes ws-ssh /var/lib/ws-wizard/bin/hook-v1.0.0 apply </dev/null &&
-    grep -qx 'root: /var/lib/ws-wizard/bin/hook-v1.0.0 apply' "$ws/log" &&
-    [ "$(cat "$ws/hook.args")" = apply ] &&
-    [ "$(cat "$ws/apply.log")" = "$(shasum -a 256 </dev/null | cut -d ' ' -f 1)" ] ||
-    error "the command ran other than as root, once, with its stdin empty"
-files stamp example/hook@v1.0.0
-[ "$status" = 0 ] && [ "$(stamp hook-hook)" = "$sum 0 example/hook@v1.0.0" ] ||
-    error "the files script's stamp exited $status, leaving '$(stamp hook-hook)'"
-files have example/hook@v1.0.0
-[ "$out" = "$bin" ] || error "the files script's have printed '$out'"
-remote status
-printf '%s\n' "$out" | grep -qx 'hook example/hook@v1.0.0' || error "status listed no example/hook"
-send hook
-files install example/hook@v1.0.0 "$sum"
-[ "$status" = 0 ] && [ "$(stamp hook-hook)" = - ] ||
-    error "the files script's install again exited $status, or left the stamp"
-files install example/hook@v1.0.0 "$sum"
-printf '%s\n' "$out" | grep -qF 'the Mac sent none' && [ "$status" = 1 ] ||
-    error "the files script's install with nothing sent exited $status"
-files have example/hook@v1.0.1
-[ "$status" = 0 ] && [ -z "$out" ] || error "the files script's have of another tag exited $status, printing '$out'"
-rm -f "$RUNNER_TEMP/hook"
 # ws's ports, in a sysfs of the stand-in's, root's: the uplink, a port with carrier, one without and
 # with an address, one that is down, and a wireless one. A member of the bridge br0 has carrier.
 net=$ws/root/sys/class/net
@@ -269,7 +212,7 @@ printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$s
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
-sudo rm -rf "$stamps/bin" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
+sudo rm -rf "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
-rm -f "$ws/apply.log" "$ws/hook.args" "$ws/uplink"
+rm -f "$ws/uplink"
 exit "$fail"
