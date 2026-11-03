@@ -52,7 +52,7 @@ enables it again once the role's config is in place.
 ## claude's metrics elsewhere
 
 `~/.secrets/env` is the file of secrets the shell reads, which the `shell` role writes from
-`shell_secret_env` ([Secrets](shell.md#secrets)). The role reads it as it plans. Where it sets
+the secrets file's `[env]` table ([Secrets](shell.md#secrets)). The role reads it as it plans. Where it sets
 `OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT`, the collector sends claude's metrics there as well, over
 OTLP/gRPC. The value is a URL, `http://HOST:PORT` for gRPC without TLS or `https://HOST:PORT`. The
 role refuses any other. It refuses one that leads back to the collector's own receiver on

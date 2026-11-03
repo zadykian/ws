@@ -47,67 +47,62 @@ one it shows the key's creation and skips the allowed signers file.
 
 ## Secrets
 
-`shell_secret_env`, empty by default, maps names to values for `~/.secrets/env`. It comes from
-[the secrets file](#the-secrets-file).
+The `[env]` table of [the secrets file](#the-secrets-file), empty by default, maps names to values
+for `~/.secrets/env`.
 
 With it set, the role makes `~/.secrets` 0700 and writes `env` 0600, both owned by `ws_user`.
 The file opens with a `# Written by github.com/zadykian/ws` line, then `export NAME=VALUE` for
 each name, the value quoted for the shell. Each run replaces the file, so a change goes in
-`shell_secret_env`. The `otelcol` role reads the file later in the same run:
+`[env]`. The `otelcol` role reads the file later in the same run:
 [claude's metrics elsewhere](otelcol.md#claudes-metrics-elsewhere).
 
-- A name takes capitals, digits and underscores, and starts with no digit. The run refuses any
+- A name takes letters, digits and underscores, and starts with no digit. The run refuses any
   other, and its message names no value.
-- A value is a string. YAML reads a bare `0123`, `12:30`, `on` or `~` as a number, a boolean or
-  null, which the run refuses, naming the name alone: quote it, as `"0123"`.
+- A value is a string, so `"0123"` and `"on"` stay as written.
 - An `env` without that line at its top, as one written by hand, fails the run before the role
-  touches `~/.secrets`, in a dry run too. Move its values into `shell_secret_env`, then remove the file.
+  touches `~/.secrets`, in a dry run too. Move its values into `[env]`, then remove the file.
 - The role neither prints nor diffs the file, so a dry run says only that it would change.
 
-Empty, `shell_secret_env` leaves `~/.secrets` alone, even a file the role wrote, so that a run
-without the secrets file, as CI's, changes nothing. A null counts as empty. To drop the file,
-remove it by hand.
+Without `--secrets`, or with an empty `[env]`, the role leaves `~/.secrets` alone, even a file it
+wrote, so that a run without the secrets file, as CI's, changes nothing. To drop the file, remove
+it by hand.
 
 ## The secrets file
 
-`ws server apply --secrets FILE` takes the secrets of the roles from a YAML file that age encrypts,
+`ws server apply --secrets FILE` takes the secrets of the roles from a TOML file that age encrypts,
 in armor. `ws` decrypts it in its process with an X25519 identity. A run without `--secrets`, as
-CI's, has no secrets. These keys are in no other file: `host_vars.yml` refuses them. A bare `0123`,
-`on` or `~` is the string as written, and `~` is empty.
+CI's, has no secrets. [The Mac's secrets](mac-secrets.md) says the file's tables, its references
+and its values.
 
 The identity stays in the Mac's Keychain. `ws server apply` reads it from its standard input, as
 piped over ssh, or at a terminal with no echo. Encrypting needs the public recipient alone:
 
 ```sh
 age-keygen -o identity.txt        # keep the file in the Keychain, then delete it
-age -r RECIPIENT -a -o secrets.age secrets.yml
+age -r RECIPIENT -a -o secrets.age secrets.toml
 security find-generic-password -s NAME -w | ssh ws ws server apply --secrets /root/secrets.age
 ```
 
-The file holds these keys, and ws refuses any other:
+The roles read these tables, and ws refuses any other key:
 
-- `shell_secret_env`: names to values, as [Secrets](#secrets) says;
-- `shell_git_credentials`: the entries of [Git credentials](#git-credentials);
-- `ikeward_p12_file` and `ikeward_sswan_file`: the profile's two files, each encrypted by age to
-  the same recipient. A relative name is relative to the file;
-- `ikeward_p12_password`: the `.p12`'s password ([The profile](ikeward.md#the-profile)).
+- `[env]`: names to values, as [Secrets](#secrets) says;
+- `[git."URL"]`: the entries of [Git credentials](#git-credentials);
+- `[file]` and `[password]`: the ikeward profile's files and the `.p12`'s password
+  ([The profile](ikeward.md#the-profile)).
 
 No message, `--check` included, shows a value. Nothing plain reaches the disk but the
 files that the roles write.
 
 ## Git credentials
 
-`shell_git_credentials`, empty by default, gives git a token for each server besides GitHub. It
-comes from [the secrets file](#the-secrets-file). Each entry takes:
+The `[git]` table of [the secrets file](#the-secrets-file), empty by default, gives git a token for
+each server besides GitHub. Its key is the server's URL, as `[git."https://git.example.com"]`, or a
+path on it, which covers the repositories below it. Each entry takes:
 
-- `url`: the server, as `https://git.example.com`, or a path on it, which covers the repositories
-  below it;
 - `token`: a personal access token, say;
 - `username`: `token` by default, as such servers take any;
 - `proactive_auth`: `true` for a server that sends no 401, so that git sends the token with its
-  first request, by `http.<url>.proactiveAuth`;
-- `state`: `present` by default, or `absent`, which removes the URL's token and helper, and needs
-  no other key.
+  first request, by `http.<url>.proactiveAuth`.
 
 A URL of `http://` fails the run, as git would send its token in clear. Each token goes in a 0600
 file of `~/.config/git/tokens`, named for its URL. `~/.config/git/tokens.gitconfig`, which
@@ -116,14 +111,12 @@ from that file. The helper ignores git's requests to store or erase one, so a to
 refuses stays until the entry changes. Where two URLs match, the longer one wins. gh's helper still
 answers for GitHub, except below an entry's URL there.
 
-A run removes a token and its helper only where its entry says `state: absent`. A URL dropped from
-the list keeps both. Empty, the list leaves the tokens and `tokens.gitconfig` as they are, so that
-a run without the secrets file, as CI's, keeps them. A null counts as empty. No token reaches
-`tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` included: a dry run shows
-the diff of the credential lines, and that a token would change, not which.
+A URL dropped from the table keeps its token and its helper. Without entries, the role leaves the
+tokens and `tokens.gitconfig` as they are, so that a run without the secrets file, as CI's, keeps
+them. No token reaches `tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` included: a dry
+run shows the diff of the credential lines, and that a token would change, not which.
 
-To revoke a token, revoke it on the server first. Then set `state: absent` on its entry, and keep
-the entry until each machine has run with it.
+To revoke a token, revoke it on the server first, then remove its entry.
 
 ## Clones
 
