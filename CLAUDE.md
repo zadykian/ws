@@ -91,7 +91,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A step that needs a booted machine's systemd checks `host.Booted`, and skips without it, as in
   CI's container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
-  them. The list is the secret `WS_WORDS`, and the job fails on an empty one
+  them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](docs/releases.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([binary.go](internal/server/ikeward/binary.go)), otelcol's `.deb`

@@ -85,8 +85,8 @@ jobs:
           if-no-files-found: error
 
   # The release, once the checks and the build passed. Its files and notes are checked for the
-  # local list's words, as the hooks check a commit. The list is the secret WS_WORDS, which must
-  # not be empty.
+  # local list's words, as the hooks check a commit. The list is the secret
+  # FORBIDDEN_WORDS, which must not be empty.
   publish:
     needs: [ci, mac, build]
     runs-on: ubuntu-latest
@@ -109,16 +109,16 @@ jobs:
               --jq .body >"$RUNNER_TEMP/notes.md"
       - name: The local list's words
         env:
-          WS_WORDS: ${{ secrets.WS_WORDS }}
+          FORBIDDEN_WORDS: ${{ secrets.FORBIDDEN_WORDS }}
         run: |
-          [ -n "$WS_WORDS" ] || {
-              echo "the secret WS_WORDS is empty" >&2
+          [ -n "$FORBIDDEN_WORDS" ] || {
+              echo "the secret FORBIDDEN_WORDS is empty" >&2
               exit 1
           }
-          printf '%s\n' "$WS_WORDS" | sed -e 'y/_/ /' -e 's/^[[:space:]]*//' \
+          printf '%s\n' "$FORBIDDEN_WORDS" | sed -e 'y/_/ /' -e 's/^[[:space:]]*//' \
               -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' >"$RUNNER_TEMP/words"
           [ -s "$RUNNER_TEMP/words" ] || {
-              echo "the secret WS_WORDS holds no word" >&2
+              echo "the secret FORBIDDEN_WORDS holds no word" >&2
               exit 1
           }
           found=0
