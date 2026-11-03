@@ -34,6 +34,11 @@ grep -q ': would run brew install --cask jetbrains-gateway$' "$RUNNER_TEMP/check
         echo "::error::ws mac apply --check showed no brew install of Gateway's cask"
         fail=1
     }
+grep -q ': would run brew install --cask zed$' "$RUNNER_TEMP/check.out" ||
+    {
+        echo "::error::ws mac apply --check showed no brew install of Zed's cask"
+        fail=1
+    }
 grep -q '^+Include config.d/ws$' "$RUNNER_TEMP/check.out" ||
     {
         echo "::error::ws mac apply --check showed no Include for ~/.ssh/config"

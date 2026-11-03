@@ -34,7 +34,7 @@ if (PATH=$path && command -v brew); then
     exit 1
 fi
 echo "$path" >"$RUNNER_TEMP/path"
-# Stand-ins for the apps of JetBrains Gateway and Ghostty, Ghostty's font and cld spare the runs
+# Stand-ins for the apps of JetBrains Gateway, Ghostty and Zed, their font and cld spare the runs
 # their downloads, as in mac.yml.
 sh "$(dirname "$0")/../mac-standins.sh"
 # A stand-in gh, logged in to github.com, for the runner's, which has no login. The wizard puts
