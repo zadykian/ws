@@ -173,3 +173,41 @@ Editing to Folding.
 | `ChangeSignature` | Ctrl+R, S | `ctrl-r s` | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | the server's code actions, of every kind |
 | `ExtractMethod` | Ctrl+R, M | `ctrl-r m` | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | the server's code actions, of every kind |
 | `Generate` | Alt+Insert | (no Insert) | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | Alt+Insert: a Mac keyboard has no Insert |
+| `GoFmtFileAction` | Shift+Ctrl+Alt+F | `ctrl-alt-shift-f` | `editor::Format` | `Editor && mode == full` | bind |  |
+| `ImplementMethods` | Shift+Ctrl+I | `ctrl-shift-i` | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | the server's code actions, of every kind |
+| `IntroduceConstant` | Ctrl+Alt+C | `ctrl-alt-c` | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | the server's code actions, of every kind |
+| `Refactorings.QuickListPopupAction` | Ctrl+T | `ctrl-t` | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | the server's code actions, of every kind |
+| `ReformatCode` | Ctrl+Alt+Enter; Ctrl+K, F; Ctrl+K, Ctrl+F; Ctrl+K, D; Ctrl+K, Ctrl+D | `ctrl-alt-enter`; `ctrl-k f`; `ctrl-k ctrl-f`; `ctrl-k d`; `ctrl-k ctrl-d` | `editor::Format` | `Editor && mode == full` | bind |  |
+| `RenameElement` | Ctrl+R, R | `ctrl-r r` | `editor::Rename` | `Editor && mode == full` | bind | Zed's F2 stays too |
+| `ShowErrorDescription` | Ctrl+E | `ctrl-e` | `editor::Hover` | `Editor && mode == full` | approx | the hover shows the diagnostic |
+| `ShowIntentionActions` | Alt+Enter; Shift+Enter; Ctrl+Enter | `alt-enter`; `shift-enter`; `ctrl-enter` | `editor::ToggleCodeActions` | `Editor && mode == full` | bind | Shift+Enter and Ctrl+Enter only in the full editor |
+| `ShowReformatFileDialog` | Shift+Ctrl+Alt+L | `ctrl-alt-shift-l` | `editor::Format` | `Editor && mode == full` | bind |  |
+| `ToggleInlayHintsGloballyAction` | Ctrl+I | `ctrl-i` | `editor::ToggleInlayHints` | `Editor` | bind |  |
+
+## Folding
+
+| F12 action | Keys | Zed keys | Zed action | Context | Status | Note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `CollapseAll` | Ctrl+numpad -; Ctrl+- | `ctrl--` | `project_panel::CollapseAllEntries` | `ProjectPanel && not_editing` | bind | trees: the project panel |
+| `CollapseAllRegions` | Ctrl+M, A; Ctrl+M, Ctrl+A | `ctrl-m a`; `ctrl-m ctrl-a` | `editor::FoldAll` | `Editor && mode == full` | bind |  |
+| `CollapseRegion` | Ctrl+M, S; Ctrl+M, Ctrl+S | `ctrl-m s`; `ctrl-m ctrl-s` | `editor::Fold` | `Editor && mode == full` | bind |  |
+| `CollapseRegionRecursively` | Ctrl+Alt+numpad -; Ctrl+Alt+- | `ctrl-alt--` | `editor::FoldRecursive` | `Editor && mode == full` | bind | Ctrl+Alt+- in the editor, not the dock's size |
+| `CollapseSelection` | Ctrl+M, H; Ctrl+M, Ctrl+H; Ctrl+M, U; Ctrl+M, Ctrl+U | `ctrl-m h`; `ctrl-m ctrl-h`; `ctrl-m u`; `ctrl-m ctrl-u` | `editor::FoldSelectedRanges` | `Editor && mode == full` | bind |  |
+| `ExpandAll` | Ctrl+numpad + | `ctrl-+` | `project_panel::ExpandAllEntries` | `ProjectPanel && not_editing` | approx | Ctrl+numpad +, which a Mac sees as Ctrl++ |
+| `ExpandAllRegions` | Ctrl+M, X; Ctrl+M, Ctrl+X | `ctrl-m x`; `ctrl-m ctrl-x` | `editor::UnfoldAll` | `Editor && mode == full` | bind |  |
+| `ExpandAllToLevel1` | Shift+Ctrl+`numpad *`, 1; Shift+Ctrl+`numpad *`, numpad 1 | `ctrl-* 1` | `editor::FoldAtLevel_1` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandAllToLevel2` | Shift+Ctrl+`numpad *`, 2; Shift+Ctrl+`numpad *`, numpad 2 | `ctrl-* 2` | `editor::FoldAtLevel_2` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandAllToLevel3` | Shift+Ctrl+`numpad *`, 3; Shift+Ctrl+`numpad *`, numpad 3 | `ctrl-* 3` | `editor::FoldAtLevel_3` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandAllToLevel4` | Shift+Ctrl+`numpad *`, 4; Shift+Ctrl+`numpad *`, numpad 4 | `ctrl-* 4` | `editor::FoldAtLevel_4` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandAllToLevel5` | Shift+Ctrl+`numpad *`, 5; Shift+Ctrl+`numpad *`, numpad 5 | `ctrl-* 5` | `editor::FoldAtLevel_5` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandCollapseToggleAction` | Ctrl+M, M; Ctrl+M, Ctrl+M | `ctrl-m m`; `ctrl-m ctrl-m` | `editor::ToggleFold` | `Editor && mode == full` | bind |  |
+| `ExpandRegion` | Ctrl+M, E; Ctrl+M, Ctrl+E | `ctrl-m e`; `ctrl-m ctrl-e` | `editor::UnfoldLines` | `Editor && mode == full` | bind |  |
+| `ExpandRegionRecursively` | Ctrl+Alt+numpad +; Ctrl+Alt+= | `ctrl-alt-+`; `ctrl-alt-=` | `editor::UnfoldRecursive` | `Editor && mode == full` | bind |  |
+| `ExpandToLevel1` | Ctrl+`numpad *`, 1; Ctrl+`numpad *`, numpad 1 | `ctrl-* 1` | `editor::FoldAtLevel_1` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandToLevel2` | Ctrl+`numpad *`, 2; Ctrl+`numpad *`, numpad 2 | `ctrl-* 2` | `editor::FoldAtLevel_2` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandToLevel3` | Ctrl+`numpad *`, 3; Ctrl+`numpad *`, numpad 3 | `ctrl-* 3` | `editor::FoldAtLevel_3` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandToLevel4` | Ctrl+`numpad *`, 4; Ctrl+`numpad *`, numpad 4 | `ctrl-* 4` | `editor::FoldAtLevel_4` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExpandToLevel5` | Ctrl+`numpad *`, 5; Ctrl+`numpad *`, numpad 5 | `ctrl-* 5` | `editor::FoldAtLevel_5` | `Editor && mode == full` | approx | folds below the level; both chords are Ctrl+* on a Mac |
+| `ExternalSystem.CollapseAll` | Ctrl+numpad -; Ctrl+- | `ctrl--` | `project_panel::CollapseAllEntries` | `ProjectPanel && not_editing` | bind | trees: the project panel |
+| `ExternalSystem.ExpandAll` | Ctrl+numpad + | `ctrl-+` | `project_panel::ExpandAllEntries` | `ProjectPanel && not_editing` | approx | Ctrl+numpad +, which a Mac sees as Ctrl++ |
+| `RiderCollapseToDefinitions` | Ctrl+M, O; Ctrl+M, Ctrl+O | `ctrl-m o`; `ctrl-m ctrl-o` | `editor::FoldFunctionBodies` | `Editor && mode == full` | approx |  |
