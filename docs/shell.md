@@ -75,12 +75,19 @@ CI's, has no secrets. [The Mac's secrets](mac-secrets.md) says the file's tables
 and its values.
 
 The identity stays in the Mac's Keychain, made by `ws mac secrets init`
-([The identity](mac-secrets.md#the-identity)). `ws server apply` reads it from its standard input,
-as piped over ssh, or at a terminal with no echo:
+([The identity](mac-secrets.md#the-identity)). `ws server apply` reads it from the systemd
+credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`, for `--secrets` and `--check` alike. Without
+the credential it fails and names `LoadCredential`. It reads no standard input and no terminal. The
+Mac's wizard starts the run as a unit with `LoadCredential=ws-secrets:PATH`. By hand, on a server:
 
 ```sh
-security find-generic-password -s ws-secrets -w | ssh ws ws server apply --secrets /root/secrets.age
+umask 077 && mkdir -p /run/ws && cat >/run/ws/identity   # the identity on stdin, on a tmpfs
+systemd-run --pty --wait -p LoadCredential=ws-secrets:/run/ws/identity ws server apply --secrets /root/secrets.age
+rm -f /run/ws/identity
 ```
+
+The identity stays on `/run`, a tmpfs, at mode 600, and goes once the run ends. Keep it off the
+disk, where a snapshot or a reboot would keep it.
 
 The roles read these tables, and ws refuses any other key:
 

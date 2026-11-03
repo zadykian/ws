@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -41,7 +40,7 @@ func TestServerCommandRefusesOtherArgs(t *testing.T) {
 	for _, args := range [][]string{{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--", "-C"}, {"other"}} {
 		var stdout, stderr bytes.Buffer
 		m := effecttest.NewMachine()
-		if got := serverCommand(context.Background(), args, 0, m, strings.NewReader(""), &stdout, &stderr); got != 2 ||
+		if got := serverCommand(context.Background(), args, 0, m, noEnv, &stdout, &stderr); got != 2 ||
 			!strings.Contains(stderr.String(), "usage: ws server COMMAND") {
 			t.Errorf("%q: status = %d, stderr = %q", args, got, stderr.String())
 		}
@@ -52,7 +51,7 @@ func TestServerCommandRefusesNonRoot(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	m := effecttest.NewMachine()
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	if got := serverCommand(context.Background(), []string{"apply"}, 1000, m, strings.NewReader(""), &stdout, &stderr); got != 1 ||
+	if got := serverCommand(context.Background(), []string{"apply"}, 1000, m, noEnv, &stdout, &stderr); got != 1 ||
 		!strings.Contains(stderr.String(), "run it as root") {
 		t.Errorf("status = %d, stderr = %q", got, stderr.String())
 	}
@@ -71,20 +70,31 @@ func TestLoadSecrets(t *testing.T) {
 	_ = w.Close()
 	_ = a.Close()
 	m.Files["/s.age"] = buf.Bytes()
-	s, err := loadSecrets(m, "/s.age", strings.NewReader(id.String()+"\n"), io.Discard)
+	env := func(k string) string {
+		if k == "CREDENTIALS_DIRECTORY" {
+			return "/creds"
+		}
+		return ""
+	}
+	m.Files["/creds/ws-secrets"] = []byte("# created: now\n" + id.String() + "\n")
+	s, err := loadSecrets(m, "/s.age", env)
 	if err != nil || s.Env["A"] != "hunter2" {
 		t.Errorf("got %+v, %v", s, err)
 	}
-	if s, err = loadSecrets(m, "", nil, io.Discard); err != nil || s.Env != nil {
+	if s, err = loadSecrets(m, "", noEnv); err != nil || s.Env != nil {
 		t.Errorf("no file: %+v, %v", s, err)
 	}
 	other, _ := age.GenerateX25519Identity()
-	if _, err = loadSecrets(m, "/s.age", strings.NewReader(other.String()), io.Discard); err == nil ||
-		strings.Contains(err.Error(), "hunter2") {
+	m.Files["/creds/ws-secrets"] = []byte(other.String())
+	if _, err = loadSecrets(m, "/s.age", env); err == nil || strings.Contains(err.Error(), "hunter2") {
 		t.Errorf("wrong identity: %v", err)
 	}
-	if _, err = loadSecrets(m, "/s.age", strings.NewReader(""), io.Discard); err == nil {
-		t.Error("no identity: no error")
+	if _, err = loadSecrets(m, "/s.age", noEnv); err == nil || !strings.Contains(err.Error(), "LoadCredential") {
+		t.Errorf("no credential: %v", err)
+	}
+	delete(m.Files, "/creds/ws-secrets")
+	if _, err = loadSecrets(m, "/s.age", env); err == nil {
+		t.Error("no credential file: no error")
 	}
 }
 
@@ -94,11 +104,13 @@ func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
-	if got := serverCommand(context.Background(), []string{"fans", path}, 0, effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 1 ||
+	if got := serverCommand(context.Background(), []string{"fans", path}, 0, effecttest.NewMachine(), noEnv, &stdout, &stderr); got != 1 ||
 		!strings.Contains(stderr.String(), "interval") {
 		t.Errorf("status = %d, stderr = %q", got, stderr.String())
 	}
-	if got := serverCommand(context.Background(), []string{"fans", "a", "b"}, 0, effecttest.NewMachine(), strings.NewReader(""), &stdout, &stderr); got != 2 {
+	if got := serverCommand(context.Background(), []string{"fans", "a", "b"}, 0, effecttest.NewMachine(), noEnv, &stdout, &stderr); got != 2 {
 		t.Errorf("two configs: status = %d, want 2", got)
 	}
 }
+
+func noEnv(string) string { return "" }

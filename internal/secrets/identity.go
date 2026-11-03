@@ -3,22 +3,20 @@ package secrets
 import (
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"strings"
 
 	"filippo.io/age"
-	"golang.org/x/term"
+
+	"github.com/zadykian/ws/effect"
 )
 
-// ReadIdentity reads the X25519 identity. At a terminal it asks on prompt and reads the line with
-// no echo; else it reads all of stdin, as piped over ssh. Comment lines are skipped. The error
-// names no content.
-func ReadIdentity(stdin io.Reader, prompt io.Writer) (age.Identity, error) {
-	text, err := readText(stdin, prompt)
-	if err != nil {
-		return nil, err
-	}
+// CredentialName is the name of the identity's systemd credential: the unit loads it by
+// LoadCredential=CredentialName:PATH, and ws reads it from $CREDENTIALS_DIRECTORY.
+const CredentialName = "ws-secrets"
+
+// ParseIdentity parses text as one X25519 identity. Comment lines are skipped. The error names no
+// content.
+func ParseIdentity(text string) (age.Identity, error) {
 	ids, err := age.ParseIdentities(strings.NewReader(text))
 	if err != nil {
 		return nil, errors.New("the age identity is not valid")
@@ -29,13 +27,17 @@ func ReadIdentity(stdin io.Reader, prompt io.Writer) (age.Identity, error) {
 	return ids[0], nil
 }
 
-func readText(stdin io.Reader, prompt io.Writer) (string, error) {
-	if f, ok := stdin.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
-		_, _ = io.WriteString(prompt, "age identity: ")
-		line, err := term.ReadPassword(int(f.Fd()))
-		_, _ = io.WriteString(prompt, "\n")
-		return string(line), err
+// ReadCredential reads the identity from the credential CredentialName, in the directory that
+// getenv gives as CREDENTIALS_DIRECTORY. Without the directory the error names LoadCredential.
+func ReadCredential(m effect.Machine, getenv func(string) string) (age.Identity, error) {
+	dir := getenv("CREDENTIALS_DIRECTORY")
+	if dir == "" {
+		return nil, errors.New("no credential " + CredentialName + ": run it as a unit with LoadCredential=" +
+			CredentialName + ":PATH to the identity")
 	}
-	data, err := io.ReadAll(stdin)
-	return string(data), err
+	data, err := m.ReadFile(dir + "/" + CredentialName)
+	if err != nil {
+		return nil, fmt.Errorf("read the credential %s: %w", CredentialName, err)
+	}
+	return ParseIdentity(string(data))
 }

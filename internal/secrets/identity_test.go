@@ -1,17 +1,16 @@
 package secrets
 
 import (
-	"io"
 	"strings"
 	"testing"
 
 	"filippo.io/age"
 )
 
-func TestReadIdentityFromAPipe(t *testing.T) {
+func TestParseIdentity(t *testing.T) {
 	id, _ := age.GenerateX25519Identity()
 	in := "# created: now\n" + id.String() + "\n"
-	got, err := ReadIdentity(strings.NewReader(in), io.Discard)
+	got, err := ParseIdentity(in)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,13 +20,13 @@ func TestReadIdentityFromAPipe(t *testing.T) {
 	}
 }
 
-func TestReadIdentityRefuses(t *testing.T) {
+func TestParseIdentityRefuses(t *testing.T) {
 	a, _ := age.GenerateX25519Identity()
 	b, _ := age.GenerateX25519Identity()
 	for name, in := range map[string]string{
 		"empty": "", "garbage": "AGE-SECRET-KEY-nope\n", "two": a.String() + "\n" + b.String() + "\n",
 	} {
-		_, err := ReadIdentity(strings.NewReader(in), io.Discard)
+		_, err := ParseIdentity(in)
 		if err == nil {
 			t.Errorf("%s: no error", name)
 		} else if strings.Contains(err.Error(), "SECRET-KEY") {

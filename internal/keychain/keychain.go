@@ -12,6 +12,7 @@ import (
 	"filippo.io/age"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/secrets"
 )
 
 // Service is the name of the Keychain item.
@@ -50,11 +51,11 @@ func (k Keychain) Identity(ctx context.Context) (age.Identity, error) {
 		}
 		return nil, fmt.Errorf("security can't read the item %s: %w", Service, err)
 	}
-	ids, err := age.ParseIdentities(strings.NewReader(string(out)))
-	if err != nil || len(ids) != 1 {
+	id, err := secrets.ParseIdentity(string(out))
+	if err != nil {
 		return nil, errors.New("the item " + Service + " holds no age identity")
 	}
-	return ids[0], nil
+	return id, nil
 }
 
 // Init makes an identity and adds it as the item, by security -i with the command on its stdin. It
