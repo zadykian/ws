@@ -1,8 +1,8 @@
 # devtools
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
-Go, the language servers gopls and roslyn-language-server, and rustup. It runs as Go steps in
-[internal/server/devtools](../internal/server/devtools): the repositories, the packages, Go, the two
+Go, gopls, Delve, roslyn-language-server and rustup. It runs as Go steps in
+[internal/server/devtools](../internal/server/devtools): the repositories, the packages, Go, the
 servers and rustup, in this order.
 
 Node comes from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's
@@ -27,10 +27,13 @@ user's home. Once there, rustup updates itself, so ws leaves it alone.
 
 - gopls, Go's server, comes from `go install` at the version `pins.go` pins, with the Go of this
   role and Go's checksum database. A change of either version builds it again.
+- Delve, Go's debugger, goes in the same way and a change of either version builds it again.
+  helix's debug keys run it for Go ([helix's keys](helix.md#helixs-keys)).
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
   nuget.org with `dotnet tool` at the version `pins.go` pins, and runs on the .NET 10 of this role.
-- Both go in `ws_user`'s home: `~/go/bin/gopls` and `~/.dotnet/tools/roslyn-language-server`. Their
-  paths follow `ws_home`, so the `helix` role finds them with this role not run.
+- They go in `ws_user`'s home: `~/go/bin/gopls`, `~/go/bin/dlv` and
+  `~/.dotnet/tools/roslyn-language-server`. Their paths follow `ws_home`, so the `helix` role
+  finds them with this role not run.
 
 [helix](helix.md) names both servers in its `languages.toml`. `ws server apply --only helix` does
 not install them: pass `--only devtools,helix`.

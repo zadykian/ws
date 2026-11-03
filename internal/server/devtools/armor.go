@@ -1,5 +1,5 @@
 // Package devtools sets up the tools a development server needs: Node, the .NET SDKs, gh, glow, the
-// libraries headless Chromium needs, Go, gopls, roslyn-language-server and rustup.
+// libraries headless Chromium needs, Go, gopls, Delve, roslyn-language-server and rustup.
 package devtools
 
 import (

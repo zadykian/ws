@@ -23,8 +23,8 @@ Each role has a page of its own. A role is Go steps of ws:
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
   repositories.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
-- [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go, the
-  servers gopls and roslyn-language-server, and rustup.
+- [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
+  gopls, Delve, roslyn-language-server and rustup.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`claude`](docs/claude.md): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
