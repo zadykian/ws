@@ -8,12 +8,14 @@ import (
 )
 
 // Zed sets up Zed, the Mac's editor for ws: Zed and the font its settings name, from Homebrew's
-// casks where missing. It warns where Zed can't be installed, so that the run goes on to the
-// tunnel. Zed then updates itself.
+// casks where missing, and ws's settings in ~/.config/zed. It warns where Zed can't be installed,
+// so that the run goes on to the tunnel. Zed then updates itself.
 type Zed struct {
 	Home string
-	M    effect.Machine
-	Out  effect.Out
+	// Settings is the text of mac/zed.json.
+	Settings []byte
+	M        effect.Machine
+	Out      effect.Out
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.
 	LookPath func(string) (string, error)
 	failed   map[string]bool // the casks whose install failed, so the plan skips them for the run
@@ -30,7 +32,7 @@ func (z *Zed) casks() brewCasks {
 	return brewCasks{m: z.M, out: z.Out, lookPath: z.LookPath, failed: z.failed}
 }
 
-// Plan plans the app, then the font where the app is there or comes.
+// Plan plans the app, then the font where the app is there or comes, and the files.
 func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 	b := z.casks()
 	app, ok, err := b.cask(ctx, "zed", b.has("Zed.app", "/Applications", z.Home+"/Applications"),
@@ -42,10 +44,11 @@ func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: append(app, font...)}, nil
+	return step.Plan{Changes: append(append(app, font...), z.files()...)}, nil
 }
 
-// Apply installs the casks. A failed install is a warning, and the next run tries again.
+// Apply installs the casks. A failed install is a warning, and the next run tries again; where
+// the app's fails, the files wait for it.
 func (z *Zed) Apply(ctx context.Context, p step.Plan) error {
 	if z.failed == nil {
 		z.failed = map[string]bool{}
