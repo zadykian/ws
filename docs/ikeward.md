@@ -22,15 +22,15 @@ ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from bo
 ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
 ```
 
-Encrypt the two files, in armor, to the recipient of [the secrets file](shell.md#the-secrets-file),
-name them there with the `.p12`'s password, empty where it has none, and run. The server has no
-`age`: encrypt on the Mac, and copy the `.age` files back. Then remove the plain files, which hold
+Put the two files in [the secrets file](shell.md#the-secrets-file), whole. Add the `.p12`'s
+password, left out where it has none ([The Mac's secrets](mac-secrets.md#editing)). Run the wizard,
+which sends them ([Sending](mac-secrets.md#sending)). Then remove the plain files, which hold
 the client's key:
 
 ```sh
-age -r RECIPIENT -a -o vpnclient.p12.age vpnclient.p12
-age -r RECIPIENT -a -o vpnclient.sswan.age vpnclient.sswan
-ws server apply --secrets /root/secrets.age
+ws mac secrets set file vpn_p12 vpnclient.p12
+ws mac secrets set file vpn_sswan vpnclient.sswan
+ws mac secrets set password vpn_p12
 ```
 
 `ikeward_profile` is an absolute path, less the extension, that names the files `install` writes.

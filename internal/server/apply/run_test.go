@@ -7,8 +7,8 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/roles"
-	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -42,6 +42,20 @@ func TestRun(t *testing.T) {
 		got, err := Run(context.Background(), c, []roles.Role{role("a", &a), role("b", &b)})
 		if err != nil || !slices.Equal(got, []string{"a", "b"}) || a == check || b == check {
 			t.Errorf("check %v: changed = %q, a = %v, b = %v, err = %v", check, got, a, b, err)
+		}
+	}
+}
+
+func TestRunMakesTheSecretsTheWholeTruthWhenGivenAFile(t *testing.T) {
+	for _, file := range []string{"", "/s.age"} {
+		var whole bool
+		r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Out) []step.Step {
+			whole = s.Whole
+			return nil
+		}}
+		c := Config{Options: Options{Secrets: file}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
+		if _, err := Run(context.Background(), c, []roles.Role{r}); err != nil || whole != (file != "") {
+			t.Errorf("--secrets %q: whole = %v, err = %v", file, whole, err)
 		}
 	}
 }

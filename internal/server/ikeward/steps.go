@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -41,7 +41,7 @@ func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out
 		if err := check(v); err != nil {
 			return err
 		}
-		if !(profile{files: s.Files}).present() {
+		if !(profile{files: s.File}).present() {
 			return fmt.Errorf("ikeward_profile is %s, and the secrets hold no profile for it", v.Profile)
 		}
 		return nil

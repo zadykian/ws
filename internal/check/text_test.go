@@ -30,10 +30,6 @@ func TestText(t *testing.T) {
 		{"email two ats", GitEmail("a@b@example.com"), false},
 		{"email bad host", GitEmail("a@-example.com"), false},
 		{"email bad local", GitEmail("a b@example.com"), false},
-		{"secret", HookSecret("ws-hook_1.x"), true},
-		{"secret of 64", HookSecret(strings.Repeat("a", 64)), true},
-		{"secret of 65", HookSecret(strings.Repeat("a", 65)), false},
-		{"secret blank", HookSecret("a b"), false},
 	}
 	for _, tt := range tests {
 		if tt.got != tt.want {

@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-const macUsage = "usage: ws mac COMMAND\n\nCommands:\n  conf [--lines] [FILE]  print mac.conf's checked settings as shell assignments\n  apply [--check] STEP  set up one part of the Mac\n  tunnel run     keep the tunnel to ws up, as root\n  tunnel status  print the way in use and the peer, as root\n  tunnel key     make the Mac's key where none is, and print the public key, as root\n  tunnel loaded  succeed where launchd has the daemon loaded\n  tunnel routes [--check] NAME [CIDR...]  route the networks into the tunnel, or drop NAME\n  wizard [--check] [--update]  set the Mac up in stages\n  resolver [--check] DOMAIN [ADDRESS...]  send DOMAIN's names to the nameservers, or drop it\n"
+const macUsage = "usage: ws mac COMMAND\n\nCommands:\n  conf [--lines] [FILE]  print mac.conf's checked settings as shell assignments\n  apply [--check] STEP  set up one part of the Mac\n  tunnel run     keep the tunnel to ws up, as root\n  tunnel status  print the way in use and the peer, as root\n  tunnel key     make the Mac's key where none is, and print the public key, as root\n  tunnel loaded  succeed where launchd has the daemon loaded\n  tunnel routes [--check] NAME [CIDR...]  route the networks into the tunnel, or drop NAME\n  wizard [--check] [--update]  set the Mac up in stages\n  resolver [--check] DOMAIN [ADDRESS...]  send DOMAIN's names to the nameservers, or drop it\n  secrets init|set|unset|keys  keep the secrets file, with its identity in the Keychain\n"
 
 // macCommand runs the commands of ws mac, the Mac's side of ws. Only the entry of ws mac in the
 // table of groups is built for darwin alone: this function is built everywhere, so that the tests
@@ -37,6 +37,8 @@ func macCommand(args []string, stdout, stderr io.Writer) int {
 		return tunnel(args[1:], stdout, stderr)
 	case "wizard":
 		return wizardMain(args[1:], stderr)
+	case "secrets":
+		return secretsCommand(context.Background(), args[1:], effect.OSMachine{}, os.Getenv, os.Stdin, stdout, stderr)
 	case "resolver":
 		return resolverCommand(context.Background(), args[1:], effect.OSMachine{}, stderr)
 	}

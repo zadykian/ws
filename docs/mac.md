@@ -25,7 +25,7 @@ ws mac apply
 
 `ws mac wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
 `ws mac apply STEP` runs one step, and `--check` shows each change and makes none. `ws mac` holds the
-Mac's commands, and darwin alone has it. `ws version` prints the version that Go stamped in.
+Mac's commands ([the secrets](mac-secrets.md) too), darwin alone. `ws version` prints its version.
 
 ## mac.conf
 

@@ -19,6 +19,9 @@ type WsRun struct {
 	Remote *Remote
 	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
 	Version string
+	// Secrets is the Mac's secrets file and User the Mac's user, whose Keychain holds its identity. A
+	// run sends the file and the identity, and the run's stamp names the file's SHA-256.
+	Secrets, User string
 	// Update has the stage run ws server apply once more, with the ws installed there.
 	Update bool
 	// ran is set once the stage ran ws server apply in this run.
@@ -45,11 +48,12 @@ func (r *WsRun) off() bool {
 	return len(f) > 2 && f[2] == "off"
 }
 
-// idle tells whether ws's last full run exited 0, made by a ws of this version, and no run's unit
-// runs there now.
+// idle tells whether ws's last full run exited 0, made by a ws of this version, with the Mac's
+// secrets file as it is now, and no run's unit runs there now.
 func (r *WsRun) idle(ctx context.Context) bool {
-	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
-		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ")
+	sum, err := r.localSum()
+	return err == nil && r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
+		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ") && r.stampSum() == sum
 }
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
@@ -80,10 +84,16 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
+	if _, err := r.localSum(); err != nil {
+		return step.Plan{}, err
+	}
 	if r.runDone(ctx, c.Target) {
 		return step.Plan{}, nil
 	}
 	how := "run ws server apply on ws in a unit of its own, and follow its log"
+	if data, _ := r.macSecrets(); data != nil {
+		how += ", after sending the secrets file and the identity"
+	}
 	if c.Target == "cloud" {
 		how += ", after naming security_outbound: false in ws's host_vars"
 		if !r.Update && r.idle(ctx) && r.off() {

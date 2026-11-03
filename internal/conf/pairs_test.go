@@ -23,7 +23,6 @@ func TestPairs(t *testing.T) {
 		{"name alone", "WS_GIT_NAME=Ada", "WS_GIT_NAME and WS_GIT_EMAIL go together"},
 		{"signing alone", "WS_GIT_SIGNING_KEY=~/k.pub", "WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL"},
 		{"agent alone", "WS_IDENTITY_AGENT=~/a.sock", "WS_IDENTITY_AGENT needs WS_IDENTITY"},
-		{"secret alone", "WS_HOOK_SECRET=x", "WS_HOOK_SECRET needs WS_HOOK"},
 	}
 	for _, tt := range tests {
 		_, errs := Parse(tt.text + "\n")

@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
 // held holds the profile's files, as the secrets of a machine with a VPN do.
-var held = secrets.Secrets{Files: secrets.Files{P12: []byte("p12"), Sswan: []byte("sswan")}}
+var held = secrets.Secrets{File: secrets.Files{VPNP12: []byte("p12"), VPNSswan: []byte("sswan")}}
 
 func TestStepsAreNoneWithoutAProfile(t *testing.T) {
 	if got := steps(values.Ikeward{}, secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{}, 1, time.Millisecond); got != nil {

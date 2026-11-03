@@ -85,18 +85,21 @@ sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-
 must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key for it and as
 its peer, and ws's signing key or `none`. They are also its hostname, claude's login, Secure Boot
 that refuses the fans' driver, and `host_vars.yml`'s outbound table. A full `run` must run `ws
-server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It
-must print the log, and stamp ws's version, `-` here, 0 and `on`; after its `outbound` writes the
-line, which stops on a link, `off`. A tagged run after it must start its own unit and leave that
-stamp. A run during another's unit must follow it. A full run cut off must remove the stamp of the
-one before, so the next starts a unit again. The files script, `mac/wizard-remote-files.sh`, must
-install a command sent to it, root's alone, after a check
-of its SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
-`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop.
-Its `words` must print git's hash of root's word list, or `-` without
-one, and the list for that hash alone. Its `link` must list the wired ports, and `link PORT` name
-one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
-`10.77.0.1`.
+server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It must
+print the log, and stamp ws's version, `-` here, 0, `on` and `-`, the secrets file's sum; after its
+`outbound` writes the line, which stops on a link, `off`. A tagged run after it must start its own
+unit and leave that stamp. A run during another's unit must follow it. A full run cut off must
+remove the stamp of the one before, so the next starts a unit again. The files script,
+`mac/wizard-remote-files.sh`, must install a command sent to it, root's alone, after a check of its
+SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
+`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop. Its `words`
+must print git's hash of root's word list, or `-` without one, and the list for that hash alone. Its
+`link` must list the wired ports, and `link PORT` name one in `host_vars.yml`, mode 600 in a 755
+directory, once, which `status` names once the roles give `10.77.0.1`. With the Mac's secrets file,
+in a throwaway keychain, a run must start a unit that loads the identity as a credential and runs
+`--secrets`. It must remove the identity from ws, and stamp the file's SHA-256. A changed file must
+run again, and a removed one run with no secrets
+([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
@@ -116,8 +119,8 @@ forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. Wi
 `standin.sh` logs ws's claude in, and the Mac's gh lists ws's signing key, so no run may open a
 session on ws for a login. A fresh `--check` must show the Signing key and claude on ws after ws's
 run. With the key off the gh login, `--check` must say it would run `gh ssh-key add --type signing`,
-titled with ws's hostname. A run must add it to the signing keys alone, and list ws's gh login by
-hand without `WS_HOOK`. The next must print nothing, as a run must where root's git config names no
+titled with ws's hostname. A run must add it to the signing keys alone, and list what stays by hand
+without ws's gh login. The next must print nothing, as a run must where root's git config names no
 key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
 `--check` must say it would run it. The next must print nothing.
 
@@ -137,14 +140,12 @@ nothing.
 For the Hook on the Mac stage, the stand-in `gh` clones `WS_HOOK` with `.githooks` and an empty
 `Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git` by
 hand, unless git's config names gh's credential command. For the Hook on ws stage, the stand-in
-`gh` serves a release, a command that logs its stdin's SHA-256, and its sums. `WS_HOOK_SECRET`
-names an item of a throwaway keychain. Without the item, a run with no terminal must stop, naming
-`security add-generic-password`. At a terminal of `script`'s, it must add the item at its prompts,
-and send the build once, root's alone. It must run `apply` once over plain ssh, its stdin the
-secret and no terminal, and ws must make no clone and use no gh. The next run must print nothing,
-and `--check` must run `apply --check`. An unreadable item must stop `--update` before `apply`, and
-a failed run leave no stamp. A new tag must replace the build and the stamp hold the tag. A bad
-sum or a missing release must stop the stage, sending nothing. For the Word list stage, the
+`gh` serves a release, a command that logs its stdin's SHA-256, and its sums. A run with no terminal
+must send the build once, root's alone. It must run `apply` once over plain ssh, its stdin empty
+and no terminal, and ws must make no clone and use no gh. The next run must print nothing, and
+`--check` must run `apply --check`. A failed run must leave no stamp. A new tag must replace the
+build and the stamp hold the tag. A bad sum or a missing release must stop the stage, sending
+nothing. For the Word list stage, the
 stand-in ws's list must go to the Mac once, mode 600, and none of it be printed. Once the Mac's
 differs, `--check` must show no diff, or stop at a link, as a run must. For the Cable stage, ws's
 ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and
@@ -227,6 +228,12 @@ leaves the account without the key. It must add the key where the account lacks 
 name the add before the key is made. Where `PATH` has no gh, `ws mac apply` must install Homebrew's
 once, and only with git's keys ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where
 wireguard-go makes no utun, the job fails, as the daemon's device makes a utun too.
+
+A last case runs `ws mac secrets` on a throwaway keychain that is the default one
+([90-secrets.sh](../.github/mac/90-secrets.sh)). `init` must make the item `ws-secrets` and the
+secrets file, mode 600 in a directory of 700, and print no key. A second `init` must change nothing.
+`set` from standard input and `keys`, which decrypts the file, must list the entries by kind and
+name, with no output or file that holds the value. `unset` must drop one, and fail on a missing one.
 
 ## The rules
 

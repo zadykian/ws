@@ -71,7 +71,7 @@ wizard again" &&
 }
 
 cp "$conf" "$before"
-{ sed 's|^WS_HOOK=$|WS_HOOK=example/hook@v1.0.0|' "$before" && echo WS_HOOK_SECRET=; } >"$conf"
+sed 's|^WS_HOOK=$|WS_HOOK=example/hook@v1.0.0|' "$before" >"$conf"
 : >"$RUNNER_TEMP/gitconfig"
 cloned=$(clones)
 copied=$(copies)

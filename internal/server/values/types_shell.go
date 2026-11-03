@@ -12,16 +12,6 @@ type Shell struct {
 	GitClones []GitClone `yaml:"shell_git_clones"`
 }
 
-// GitCredential is a token for one server, in the secrets file: the values file has no token. State
-// is present, the default, or absent.
-type GitCredential struct {
-	URL           string `yaml:"url,omitempty"`
-	Token         string `yaml:"token,omitempty"`
-	Username      string `yaml:"username,omitempty"`
-	ProactiveAuth bool   `yaml:"proactive_auth,omitempty"`
-	State         string `yaml:"state,omitempty"`
-}
-
 // GitClone is a repository, without a token, and where it is cloned.
 type GitClone struct {
 	Repo string `yaml:"repo,omitempty"`

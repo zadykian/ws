@@ -13,23 +13,21 @@ import (
 )
 
 func newHookWs(conf, status string) (*HookWs, *effecttest.Machine) {
-	r, m := newRun("lan", "run v1.2.3 0 on\nactive -\n"+status, false, false)
+	r, m := newRun("lan", "run v1.2.3 0 on -\nactive -\n"+status, false, false)
 	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte(conf)...)
 	mac := &HookMac{Home: "/h", Gh: &Gh{LookPath: func(string) (string, error) { return "/bin/gh", nil }, M: m}}
 	files := &Remote{SSH: r.Host.SSH, Script: []byte("y")}
-	return &HookWs{Host: r.Host, Run: r, Mac: mac, Files: files, User: "me", Tty: true, M: m, Out: r.Host.Out}, m
+	return &HookWs{Host: r.Host, Run: r, Mac: mac, Files: files, M: m, Out: r.Host.Out}, m
 }
 
 func TestHookWsPlan(t *testing.T) {
 	for name, tc := range map[string]struct{ conf, status, want string }{
-		"no hook":  {"", "", ""},
-		"stamped":  {"WS_HOOK=me/tools@v1.0.0\n", "hook other/x me/tools@v1.0.0\n", ""},
-		"old tag":  {"WS_HOOK=me/tools@v1.0.1\n", "hook me/tools@v1.0.0\n", "release v1.0.1 with the Mac's gh"},
-		"run":      {"WS_HOOK=me/tools@v1.0.0\n", "", "then run tools apply there as root, its stdin empty"},
-		"keychain": {"WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "", "security add-generic-password -a me -s tok -w"},
+		"no hook": {"", "", ""},
+		"stamped": {"WS_HOOK=me/tools@v1.0.0\n", "hook other/x me/tools@v1.0.0\n", ""},
+		"old tag": {"WS_HOOK=me/tools@v1.0.1\n", "hook me/tools@v1.0.0\n", "release v1.0.1 with the Mac's gh"},
+		"run":     {"WS_HOOK=me/tools@v1.0.0\n", "", "then run tools apply there as root, its stdin empty"},
 	} {
-		h, m := newHookWs(tc.conf, tc.status)
-		m.Results["security find-generic-password -s tok"] = effecttest.Result{Err: context.Canceled}
+		h, _ := newHookWs(tc.conf, tc.status)
 		p, err := h.Plan(context.Background())
 		got := errText(err)
 		for _, c := range p.Changes {
@@ -117,19 +115,6 @@ func TestHookWsApplyNoRelease(t *testing.T) {
 	}
 }
 
-func TestHookWsApplyUnreadItem(t *testing.T) {
-	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "")
-	m.Results["security find-generic-password -s tok -w"] = effecttest.Result{Err: context.Canceled}
-	if err := h.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "can't read the item") {
-		t.Errorf("Apply with an unreadable item = %v", err)
-	}
-	for _, c := range m.Calls {
-		if strings.Contains(c, "ssh") || strings.Contains(c, "release") {
-			t.Errorf("Apply touched ws or GitHub before reading the item: %q", c)
-		}
-	}
-}
-
 func TestHookWsCheck(t *testing.T) {
 	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
 	h.Host.Check = true
@@ -147,19 +132,27 @@ func TestHookWsCheck(t *testing.T) {
 	}
 }
 
-func TestHookWsApplyGuard(t *testing.T) {
-	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\nWS_HOOK_SECRET=tok\n", "")
-	m.Results["security find-generic-password -s tok -w"] = effecttest.Result{Out: []byte("s3cret\n")}
+func TestHookWsApplyRunsOnEmptyStdin(t *testing.T) {
+	h, m := newHookWs("WS_HOOK=me/tools@v1.0.0\n", "")
 	stubRelease(h, m, "build", sumLine("build", "tools-linux-arm64"))
 	sum := fmt.Sprintf("%x", sha256.Sum256([]byte("build")))
 	m.Results[remoteLine(h.Files, "install", "me/tools@v1.0.0", sum)] = effecttest.Result{}
 	bin := hookState + "/bin/tools-v1.0.0"
-	m.Results[sshLine(h, "-o", "BatchMode=yes", "ws-ssh", "sh -c '"+hookGuard+"'", bin, "apply")] = effecttest.Result{}
+	m.Results[sshLine(h, "-o", "BatchMode=yes", "ws-ssh", bin, "apply")] = effecttest.Result{}
 	m.Results[remoteLine(h.Files, "stamp", "me/tools@v1.0.0")] = effecttest.Result{}
 	if err := h.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatalf("Apply = %v", err)
 	}
-	if !slices.Contains(m.Inputs, "s3cret\n") {
-		t.Errorf("the command's stdin was none of %q; want the item's secret", m.Inputs)
+	for _, c := range m.Calls {
+		if strings.Contains(c, "security") {
+			t.Errorf("the stage read the Keychain: %q", c)
+		}
+	}
+	if i := slices.Index(m.Calls, "run "+sshLine(h, "-o", "BatchMode=yes", "ws-ssh", bin, "apply")); i < 0 {
+		t.Errorf("the command did not run: %q", m.Calls)
+	}
+	// The scripts and the build go to ws on stdin; the command, before the stamp, has none.
+	if want := []string{"y", "y", "build", "y", "", "y"}; !slices.Equal(m.Inputs, want) {
+		t.Errorf("stdins %q, want %q", m.Inputs, want)
 	}
 }

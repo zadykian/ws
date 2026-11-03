@@ -58,3 +58,34 @@ func TestSecretEnvRefusesAFileWrittenByHand(t *testing.T) {
 		t.Errorf("the error shows a value: %v", err)
 	}
 }
+
+func TestSecretEnvGoesWithTheWholeTruthAndAnEmptyTable(t *testing.T) {
+	m, s := envFixture(nil)
+	s.Whole = true
+	m.Files["/home/ws/.secrets/env"] = []byte(envHeader + "export A=hunter2\n")
+	changes, err := s.Plan(context.Background())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("got %v, %v", changes, err)
+	}
+	if strings.Contains(changes[0].String(), "hunter") {
+		t.Errorf("the change shows a value: %q", changes[0])
+	}
+	if err := changes[0].Apply(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := m.Files["/home/ws/.secrets/env"]; ok {
+		t.Error("the file stays")
+	}
+	if changes, err := s.Plan(context.Background()); err != nil || len(changes) != 0 {
+		t.Errorf("second plan = %v, %v", changes, err)
+	}
+}
+
+func TestSecretEnvWithTheWholeTruthKeepsAFileWrittenByHandOutOfTheWay(t *testing.T) {
+	m, s := envFixture(nil)
+	s.Whole = true
+	m.Files["/home/ws/.secrets/env"] = []byte("export A=hunter2\n")
+	if _, err := s.Plan(context.Background()); err == nil || strings.Contains(err.Error(), "hunter2") {
+		t.Errorf("got %v", err)
+	}
+}

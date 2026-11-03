@@ -18,9 +18,10 @@ steps, and each role's page in `docs/` says what it sets up.
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's steps read it and add no key without a commit of their own
   ([values.go](../../internal/server/values/values.go)).
-- The secrets are one struct, `secrets.Secrets`, beside the values: decrypted from age's armor in
-  ws's process, unknown keys refused, no error or output showing a value. Steps take it as their
-  second argument ([secrets.go](../../internal/server/secrets/secrets.go)).
+- The secrets are one struct, `secrets.Secrets`, beside the values. ws decrypts it from age's armor
+  in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
+  and no error or output shows a value. Steps take it as their second argument
+  ([secrets.go](../../internal/secrets/secrets.go), [The Mac's secrets](../../docs/mac-secrets.md)).
 - The roles set the machine up for `ws_user`, root by default, in `ws_home`. A step run as `ws_user`
   sets `HOME`: root needs no sudo, a container has none, and `HOME` would otherwise be the
   caller's ([claude's install](../../internal/server/claude/install.go)).
@@ -46,8 +47,9 @@ steps, and each role's page in `docs/` says what it sets up.
 - A tool that updates itself, such as claude or rustup, is installed only where missing
   ([claude's install](../../internal/server/claude/install.go)).
 - A role given the secrets of `ws server apply --secrets`, changes nothing where they are
-  empty, and removes only what an entry's explicit `state: absent` names. So a run without them, as
-  CI's, keeps what a run with them made ([Git credentials](../../docs/shell.md#git-credentials)).
+  absent. With them, the file is the whole truth: a run removes what it lacks, such as a git token.
+  So a run without them, as CI's, keeps what a run with them made
+  ([Git credentials](../../docs/shell.md#git-credentials)).
 
 ## Downloads and keys
 

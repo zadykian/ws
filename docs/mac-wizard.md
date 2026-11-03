@@ -56,13 +56,12 @@ the first two of which install what the rest needs:
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
 | A release of another repository whose command runs on ws, as `OWNER/REPO@vX.Y.Z` | `WS_HOOK` | none | always |
-| The Keychain item of its command's secret | `WS_HOOK_SECRET` | none | with a repository |
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
-first and the last two. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
+first and the last. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
 `WS_REMOTE` and `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the
 questions on the LAN, and [The wizard's targets](mac-targets.md) the others, with the keys that each
-refuses. [Another repository](mac-hook.md) explains the last two. The defaults are
+refuses. [Another repository](mac-hook.md) explains the last. The defaults are
 [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
 from the first of these that has one:
 
@@ -180,13 +179,24 @@ where the run fails. A first run takes 20 to 40 minutes. The unit goes on where 
 the Mac sleeps, and the next run of the wizard follows it to its end.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
-with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes ws's
-version, or `-` where it has none, and the status there, and `off` where the values turned the
-outbound table off. The stage is done where that status is 0, the version is this ws's, and no unit
-runs. So a second run of the wizard runs no apply, and one after a run cut short starts again.
-With `--update`, the stage runs `ws server apply` once more with the ws installed there. The run
-passes no file of the `ikeward` role's variables, so the role leaves the VPN as it finds it ([The
-profile](ikeward.md#the-profile)).
+with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:
+ws's version, or `-` where it has none, and the status there. Then `off` where the values turned the
+outbound table off, else `on`, and the SHA-256 of the secrets file it used, or `-`. The stage is
+done where that status is 0, the version is this ws's, the sum is that of the Mac's file now, and no
+unit runs. So a second run of the wizard runs no apply, one after a run cut short starts again, and
+so does one after the file changed. With `--update`, the stage runs `ws server apply` once more with
+the ws installed there.
+
+Where the Mac has `~/.config/ws/secrets.age`, the stage sends it to `/var/lib/ws-wizard/secrets.age`
+on ws. It sends the identity from the Keychain to `/run/ws-wizard/identity`, a tmpfs. Both are mode
+600, each sent by its own ssh with the bytes on stdin, never in an argument. The unit runs with
+`-p LoadCredential=ws-secrets:PATH` and `-p Type=exec`, whose start returns after the credential is
+copied. It runs `--secrets` on ws's file ([The secrets file](shell.md#the-secrets-file)). The remote
+script removes the identity as `systemd-run` returns, at once where the run follows a unit, and
+where it ends in error. The wizard removes it where a send or a run fails. Each run sends it again.
+The Keychain item must be there, or the stage names `ws mac secrets init`. Without the Mac's file
+the stage removes ws's, and the run has no secrets. Then the roles leave the VPN as they find it
+([The profile](ikeward.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
 with `WS_TARGET=cloud`, the stage names `security_outbound: false` in ws's `/etc/ws/host_vars.yml`
@@ -202,7 +212,8 @@ The stage is done where root's `~/.gitconfig` on ws names no signing key file, a
 public signing key. ws's `status` prints that key and its hostname. Else it runs `gh ssh-key add
 --type signing --title HOSTNAME` on the Mac, from a file in the lock. The Mac's gh login has the
 scope, and ws's token has no account permission, so ws adds nothing. `--check` says it would.
-Without `WS_HOOK`, the closing list names ws's gh login by hand ([By hand](../README.md#by-hand)).
+The closing list omits ws's gh login: `ws server apply` logs it in by the secrets file's
+`token.github` ([gh](devtools.md#gh)).
 
 ## claude on ws
 

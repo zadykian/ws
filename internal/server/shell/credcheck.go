@@ -3,8 +3,6 @@ package shell
 import (
 	"errors"
 	"regexp"
-
-	"github.com/zadykian/ws/internal/server/values"
 )
 
 // A URL names a section of tokens.gitconfig, which a quote or a backslash would rename or break. A
@@ -17,7 +15,7 @@ var (
 
 // checkCredentials refuses the entries the role refused. The message never holds a token. keys are
 // those of tokens.gitconfig, whose kept URLs take file names too.
-func checkCredentials(creds []values.GitCredential, keys []string) error {
+func checkCredentials(creds []credential, keys []string) error {
 	var bad bool
 	files := map[string]bool{}
 	for _, c := range creds {
@@ -25,11 +23,9 @@ func checkCredentials(creds []values.GitCredential, keys []string) error {
 		switch {
 		case !urlPattern.MatchString(c.URL):
 			bad = true
-		case c.State != "" && c.State != "present" && c.State != "absent":
+		case !wordPattern.MatchString(c.Token):
 			bad = true
-		case c.State != "absent" && !wordPattern.MatchString(c.Token):
-			bad = true
-		case c.State != "absent" && c.Username != "" && !wordPattern.MatchString(c.Username):
+		case c.Username != "" && !wordPattern.MatchString(c.Username):
 			bad = true
 		}
 	}
@@ -38,8 +34,8 @@ func checkCredentials(creds []values.GitCredential, keys []string) error {
 		files[credentialFile(u)] = true
 	}
 	if bad || len(files) != len(creds)+len(kept) {
-		return errors.New("each entry of shell_git_credentials needs a url of https:// without spaces, quotes or backslashes, " +
-			"and a state, if any, of present or absent. A present entry needs a token, and a username, if any, of one word each. " +
+		return errors.New("each [git] entry of the secrets file needs a URL of https:// without spaces, quotes or backslashes, " +
+			"a token, and a username, if any, of one word each. " +
 			"No two URLs, those of tokens.gitconfig included, may give the same file name: the URL without its scheme, " +
 			"each run of other characters than letters, digits, ., _ and - as _")
 	}

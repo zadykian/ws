@@ -52,11 +52,7 @@ func (s *sequence) run() error {
 			return err
 		}
 	}
-	if s.vals["WS_HOOK"] == "" {
-		return nil
-	}
-	_, err = s.get(question{"WS_HOOK_SECRET", "The Keychain item of its command's secret", "", ""})
-	return err
+	return nil
 }
 
 // ways asks the machine, then the ways to it (docs/mac-targets.md). A cloud VM has its name or

@@ -50,8 +50,3 @@ func GitEmail(s string) bool {
 	local, host, found := strings.Cut(s, "@")
 	return found && local != "" && only(local, letters+digits+"._%+-") && Name(host)
 }
-
-// HookSecret reports whether s is a Keychain item's name: 1 to 64 letters, digits and ._-.
-func HookSecret(s string) bool {
-	return s != "" && len(s) <= 64 && only(s, letters+digits+"._-")
-}

@@ -10,6 +10,7 @@ require (
 	github.com/compose-spec/compose-go/v2 v2.16.2
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/google/renameio/v2 v2.0.2
+	github.com/pelletier/go-toml/v2 v2.4.3
 	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/mod v0.42.0
 	golang.org/x/sys v0.49.0

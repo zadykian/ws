@@ -9,7 +9,7 @@ import (
 func TestWsRunHand(t *testing.T) {
 	for name, tc := range map[string]struct{ target, status, want string }{
 		"lan":   {"lan", "fans refused\n", "ws's fans' driver"},
-		"hook":  {"lan", "", "ws's gh login"},
+		"local": {"lan", "", "macOS's local network"},
 		"cloud": {"cloud", "outbound off\n", "The provider's firewall: UDP 51820"},
 		"off":   {"lan", "outbound off\n", "ws's outbound table"},
 	} {

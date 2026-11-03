@@ -1,13 +1,30 @@
 package shell
 
 import (
+	"maps"
 	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/internal/secrets"
 )
+
+// credential is one server's token, from the [git] table of the secrets file.
+type credential struct {
+	URL, Token, Username string
+	ProactiveAuth        bool
+}
+
+// credentials returns the table's entries, sorted by URL.
+func credentials(git map[string]secrets.Git) []credential {
+	var all []credential
+	for _, url := range slices.Sorted(maps.Keys(git)) {
+		g := git[url]
+		all = append(all, credential{URL: url, Token: g.Token, Username: g.Username, ProactiveAuth: g.ProactiveAuth})
+	}
+	return all
+}
 
 // section is one URL's helper in ~/.config/git/tokens.gitconfig.
 type section struct {
@@ -33,11 +50,11 @@ var (
 
 // keptURLs returns the URLs whose helpers tokens.gitconfig holds and the list omits: a run keeps
 // their sections, as it keeps their tokens.
-func keptURLs(keys []string, listed []values.GitCredential) []string {
+func keptURLs(keys []string, listed []credential) []string {
 	var kept []string
 	for _, k := range keys {
 		m := helperKey.FindStringSubmatch(k)
-		if m == nil || slices.ContainsFunc(listed, func(c values.GitCredential) bool { return c.URL == m[1] }) {
+		if m == nil || slices.ContainsFunc(listed, func(c credential) bool { return c.URL == m[1] }) {
 			continue
 		}
 		kept = append(kept, m[1])
@@ -48,7 +65,7 @@ func keptURLs(keys []string, listed []values.GitCredential) []string {
 
 // sections returns the helpers of tokens.gitconfig, sorted by URL: the present entries' and the
 // kept ones'. An entry's proactive auth is as the entry says, a kept one's as it was.
-func sections(keys []string, creds []values.GitCredential) []section {
+func sections(keys []string, creds []credential) []section {
 	kept := keptURLs(keys, creds)
 	proactive := map[string]bool{}
 	for _, k := range keys {
@@ -58,10 +75,8 @@ func sections(keys []string, creds []values.GitCredential) []section {
 	}
 	urls := slices.Clone(kept)
 	for _, c := range creds {
-		if c.State != "absent" {
-			urls = append(urls, c.URL)
-			proactive[c.URL] = c.ProactiveAuth
-		}
+		urls = append(urls, c.URL)
+		proactive[c.URL] = c.ProactiveAuth
 	}
 	slices.Sort(urls)
 	var all []section

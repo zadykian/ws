@@ -12,14 +12,14 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
-	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
-const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  fans [CONFIG]  drive the board's fans on the curves of CONFIG, /etc/ws-fans.json, until SIGTERM\n  apply [--check] [--only NAME,...] [--secrets FILE]  set the server up, each role as Go steps\n\n--check plans the steps and applies none. --only runs the named roles. --secrets reads an age-encrypted YAML file with the secrets; the X25519 identity comes on stdin or at the terminal. The last line\nnames the roles that changed.\n"
+const serverUsage = "usage: ws server COMMAND\n\nCommands:\n  fans [CONFIG]  drive the board's fans on the curves of CONFIG, /etc/ws-fans.json, until SIGTERM\n  apply [--check] [--only NAME,...] [--secrets FILE]  set the server up, each role as Go steps\n\n--check plans the steps and applies none. --only runs the named roles. --secrets reads an age-encrypted TOML file with the secrets; the X25519 identity comes from the unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY. The last line\nnames the roles that changed.\n"
 
 const (
 	serverVars = "/etc/ws/host_vars.yml"
@@ -57,7 +57,7 @@ func serverRefusal(euid int, osRelease []byte) string {
 // table of groups is built for Linux alone: this function is built everywhere, so that the tests
 // run anywhere.
 func serverCommand(ctx context.Context, args []string, euid int, m effect.Machine,
-	stdin io.Reader, stdout, stderr io.Writer) int {
+	getenv func(string) string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
 		_, _ = io.WriteString(stdout, serverUsage)
 		return 0
@@ -97,7 +97,7 @@ func serverCommand(ctx context.Context, args []string, euid int, m effect.Machin
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1
 	}
-	sec, err := loadSecrets(m, opts.Secrets, stdin, stderr)
+	sec, err := loadSecrets(m, opts.Secrets, getenv)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "ws server apply: %v\n", err)
 		return 1
@@ -112,13 +112,13 @@ func serverCommand(ctx context.Context, args []string, euid int, m effect.Machin
 	return 0
 }
 
-// loadSecrets reads the identity from stdin and decrypts the file, or returns no secrets where path
-// is empty.
-func loadSecrets(m effect.Machine, path string, stdin io.Reader, prompt io.Writer) (secrets.Secrets, error) {
+// loadSecrets reads the identity from the unit's credential and decrypts the file, or returns no
+// secrets where path is empty.
+func loadSecrets(m effect.Machine, path string, getenv func(string) string) (secrets.Secrets, error) {
 	if path == "" {
 		return secrets.Secrets{}, nil
 	}
-	id, err := secrets.ReadIdentity(stdin, prompt)
+	id, err := secrets.ReadCredential(m, getenv)
 	if err != nil {
 		return secrets.Secrets{}, err
 	}

@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/base"
 	"github.com/zadykian/ws/internal/server/claude"
 	"github.com/zadykian/ws/internal/server/devtools"
@@ -16,7 +17,6 @@ import (
 	"github.com/zadykian/ws/internal/server/jetbrains"
 	"github.com/zadykian/ws/internal/server/network"
 	"github.com/zadykian/ws/internal/server/otelcol"
-	"github.com/zadykian/ws/internal/server/secrets"
 	"github.com/zadykian/ws/internal/server/security"
 	"github.com/zadykian/ws/internal/server/shell"
 	"github.com/zadykian/ws/internal/server/signoz"

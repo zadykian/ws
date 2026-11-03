@@ -5,8 +5,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/zadykian/ws/internal/server/values"
 )
 
 func TestCredentialFile(t *testing.T) {
@@ -26,8 +24,7 @@ func TestSectionsKeepTheOmittedAndFollowTheEntries(t *testing.T) {
 		"credential.https://old.example.helper", "http.https://old.example.proactiveauth",
 		"credential.https://new.example.helper",
 	}
-	creds := []values.GitCredential{
-		{URL: "https://old.example", State: "absent"},
+	creds := []credential{
 		{URL: "https://new.example", ProactiveAuth: true},
 		{URL: "https://another.example"},
 	}
@@ -35,11 +32,12 @@ func TestSectionsKeepTheOmittedAndFollowTheEntries(t *testing.T) {
 		{"https://another.example", "another.example", false},
 		{"https://kept.example", "kept.example", true},
 		{"https://new.example", "new.example", true},
+		{"https://old.example", "old.example", true},
 	}
 	if got := sections(keys, creds); !slices.Equal(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
-	if got := keptURLs(keys, creds); !slices.Equal(got, []string{"https://kept.example"}) {
+	if got := keptURLs(keys, creds); !slices.Equal(got, []string{"https://kept.example", "https://old.example"}) {
 		t.Errorf("kept = %v", got)
 	}
 }
@@ -55,25 +53,23 @@ func TestTokensConfigIsTheRolesRendering(t *testing.T) {
 }
 
 func TestCheckCredentials(t *testing.T) {
-	ok := values.GitCredential{URL: "https://a.example/x", Token: "t"}
+	ok := credential{URL: "https://a.example/x", Token: "t"}
 	kept := []string{"credential.https://a.example_x.helper"}
 	cases := map[string]struct {
-		creds []values.GitCredential
+		creds []credential
 		keys  []string
 		bad   bool
 	}{
-		"good":                  {[]values.GitCredential{ok, {URL: "https://b.example", Token: "t", Username: "u", State: "present"}}, nil, false},
-		"absent needs no token": {[]values.GitCredential{{URL: "https://b.example", State: "absent"}}, nil, false},
-		"http":                  {[]values.GitCredential{{URL: "http://a.example", Token: "t"}}, nil, true},
-		"quote in url":          {[]values.GitCredential{{URL: `https://a"b`, Token: "t"}}, nil, true},
-		"space in url":          {[]values.GitCredential{{URL: "https://a b", Token: "t"}}, nil, true},
-		"state":                 {[]values.GitCredential{{URL: "https://a.b", Token: "t", State: "gone"}}, nil, true},
-		"no token":              {[]values.GitCredential{{URL: "https://a.b"}}, nil, true},
-		"token space":           {[]values.GitCredential{{URL: "https://a.b", Token: "a b"}}, nil, true},
-		"username":              {[]values.GitCredential{{URL: "https://a.b", Token: "t", Username: "a\tb"}}, nil, true},
-		"same url twice":        {[]values.GitCredential{ok, ok}, nil, true},
-		"same file":             {[]values.GitCredential{{URL: "https://a.b/c", Token: "t"}, {URL: "https://a.b?c", Token: "t"}}, nil, true},
-		"kept clash":            {[]values.GitCredential{{URL: "https://a.example/x", Token: "t", State: "absent"}, {URL: "https://z", Token: "t"}}, kept, true},
+		"good":           {[]credential{ok, {URL: "https://b.example", Token: "t", Username: "u"}}, nil, false},
+		"http":           {[]credential{{URL: "http://a.example", Token: "t"}}, nil, true},
+		"quote in url":   {[]credential{{URL: `https://a"b`, Token: "t"}}, nil, true},
+		"space in url":   {[]credential{{URL: "https://a b", Token: "t"}}, nil, true},
+		"no token":       {[]credential{{URL: "https://a.b"}}, nil, true},
+		"token space":    {[]credential{{URL: "https://a.b", Token: "a b"}}, nil, true},
+		"username":       {[]credential{{URL: "https://a.b", Token: "t", Username: "a\tb"}}, nil, true},
+		"same url twice": {[]credential{ok, ok}, nil, true},
+		"same file":      {[]credential{{URL: "https://a.b/c", Token: "t"}, {URL: "https://a.b?c", Token: "t"}}, nil, true},
+		"kept clash":     {[]credential{{URL: "https://a.example/x", Token: "t"}, {URL: "https://z", Token: "t"}}, kept, true},
 	}
 	for name, c := range cases {
 		err := checkCredentials(c.creds, c.keys)

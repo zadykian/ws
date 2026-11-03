@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/secrets"
 )
 
 func newProfile(m *effecttest.Machine) profile {
-	return profile{m: m, name: "/root/vpn/vpnclient", files: secrets.Files{P12: []byte("p12"), Sswan: []byte("sswan")}}
+	return profile{m: m, name: "/root/vpn/vpnclient", files: secrets.Files{VPNP12: []byte("p12"), VPNSswan: []byte("sswan")}}
 }
 
 func TestWithWritesTheFilesUnderTheirNamesAndRemovesThem(t *testing.T) {

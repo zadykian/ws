@@ -35,8 +35,8 @@ func TestCheckEnvNamesNamesNoValue(t *testing.T) {
 	if err := checkEnvNames(map[string]string{"OK_1": "v", "_X": "v"}); err != nil {
 		t.Error(err)
 	}
-	err := checkEnvNames(map[string]string{"lower": "hunter2", "1A": "hunter3", "A\n": "v"})
-	if err == nil || strings.Contains(err.Error(), "hunter") || !strings.Contains(err.Error(), `"1A", "A\n", "lower"`) {
+	err := checkEnvNames(map[string]string{"a-b": "hunter2", "1A": "hunter3", "A\n": "v"})
+	if err == nil || strings.Contains(err.Error(), "hunter") || !strings.Contains(err.Error(), `"1A", "A\n", "a-b"`) {
 		t.Errorf("got %v", err)
 	}
 }
