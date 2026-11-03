@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/step"
 )
 
 func TestStepsOrderAndWaits(t *testing.T) {
@@ -16,11 +17,20 @@ func TestStepsOrderAndWaits(t *testing.T) {
 	for _, s := range steps {
 		names, waits = append(names, s.Name()), append(waits, s.WaitsOn())
 	}
-	if want := []string{"Devtools repositories", "Devtools packages", "Devtools gh login", "Devtools Go", "Devtools gopls", "Devtools roslyn-language-server", "Devtools rustup"}; !slices.Equal(names, want) {
+	if want := []string{"Devtools repositories", "Devtools packages", "Devtools gh login", "Devtools Go", "Devtools gopls", "Devtools Delve", "Devtools roslyn-language-server", "Devtools rustup"}; !slices.Equal(names, want) {
 		t.Errorf("steps %q, want %q", names, want)
 	}
-	if want := []string{"", "Devtools repositories", "Devtools packages", "", "Devtools Go", "Devtools packages", ""}; !slices.Equal(waits, want) {
+	if want := []string{"", "Devtools repositories", "Devtools packages", "", "Devtools Go", "Devtools Go", "Devtools packages", ""}; !slices.Equal(waits, want) {
 		t.Errorf("waits %q, want %q", waits, want)
+	}
+}
+
+func TestEachStepWaitsOnAnEarlierOne(t *testing.T) {
+	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	for i, s := range steps {
+		if w := s.WaitsOn(); w != "" && !slices.ContainsFunc(steps[:i], func(e step.Step) bool { return e.Name() == w }) {
+			t.Errorf("%q waits on %q, which is not an earlier step", s.Name(), w)
+		}
 	}
 }
 
