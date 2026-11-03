@@ -63,9 +63,9 @@ each name, the value quoted for the shell. Each run replaces the file, so a chan
   touches `~/.secrets`, in a dry run too. Move its values into `[env]`, then remove the file.
 - The role neither prints nor diffs the file, so a dry run says only that it would change.
 
-Without `--secrets`, or with an empty `[env]`, the role leaves `~/.secrets` alone, even a file it
-wrote, so that a run without the secrets file, as CI's, changes nothing. To drop the file, remove
-it by hand.
+Without `--secrets`, the role leaves `~/.secrets` alone, even a file it wrote, so that a run
+without the secrets file, as CI's, changes nothing. With `--secrets` and an empty `[env]`, the run
+removes `~/.secrets/env`, if ws wrote it.
 
 ## The secrets file
 
@@ -111,12 +111,12 @@ from that file. The helper ignores git's requests to store or erase one, so a to
 refuses stays until the entry changes. Where two URLs match, the longer one wins. gh's helper still
 answers for GitHub, except below an entry's URL there.
 
-A URL dropped from the table keeps its token and its helper. Without entries, the role leaves the
-tokens and `tokens.gitconfig` as they are, so that a run without the secrets file, as CI's, keeps
-them. No token reaches `tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` included: a dry
-run shows the diff of the credential lines, and that a token would change, not which.
+With `--secrets`, a URL that the table lacks loses its token and its helper. Without it, as in
+CI's run, the role leaves the tokens and `tokens.gitconfig` as they are. No token reaches
+`tokens.gitconfig`, `~/.gitconfig` or the run's output, `-v` included: a dry run shows the diff of
+the credential lines, and that a token would change, not which.
 
-To revoke a token, revoke it on the server first, then remove its entry.
+To revoke a token, revoke it on the server first, then remove its entry and run again.
 
 ## Clones
 

@@ -44,3 +44,9 @@ and any other `$` fails. A file takes none.
 
 A name that is missing, or a loop, fails the run, naming the names alone, as `env.A refers to
 token.github, which is missing`.
+
+## The whole truth
+
+The file is the truth of what it names. With `--secrets`, a run removes the git tokens for URLs
+the file lacks, and `~/.secrets/env` where `[env]` is empty. Without it, as in CI, a run keeps
+both. So an entry dropped from the file goes with the next run.

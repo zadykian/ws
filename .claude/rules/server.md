@@ -47,8 +47,9 @@ steps, and each role's page in `docs/` says what it sets up.
 - A tool that updates itself, such as claude or rustup, is installed only where missing
   ([claude's install](../../internal/server/claude/install.go)).
 - A role given the secrets of `ws server apply --secrets`, changes nothing where they are
-  empty, and keeps what an entry it dropped made. So a run without them, as CI's, keeps what a
-  run with them made ([Git credentials](../../docs/shell.md#git-credentials)).
+  absent. With them, the file is the whole truth: a run removes what it lacks, such as a git token.
+  So a run without them, as CI's, keeps what a run with them made
+  ([Git credentials](../../docs/shell.md#git-credentials)).
 
 ## Downloads and keys
 
