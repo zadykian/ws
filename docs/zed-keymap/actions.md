@@ -88,3 +88,88 @@ Editing to Folding.
 | `HippieCompletion` | Alt+/ | `alt-/` | `editor::ShowWordCompletions` | `Editor && mode == full` | approx | words of the buffer; takes Alt+/ from which-key in the editor |
 | `InsertNextEditAction` | Tab | `tab` | `editor::AcceptEditPrediction` | `Editor` | zed | Tab accepts Zed's edit prediction |
 | `MethodOverloadSwitchDown` | Ctrl+Down | `ctrl-down` | `editor::SignatureHelpNext` | `Editor && showing_signature_help` | bind |  |
+| `MethodOverloadSwitchUp` | Ctrl+Up | `ctrl-up` | `editor::SignatureHelpPrevious` | `Editor && showing_signature_help` | bind |  |
+| `NextParameter` | Tab | `tab` |  | `Editor` | zed | Zed's completion and snippet keys |
+| `NextTemplateVariable` | Tab; Enter | `tab`; `enter` |  | `Editor` | zed | Zed's completion and snippet keys |
+| `ParameterInfo` | Shift+Ctrl+Space | `ctrl-shift-space` | `editor::ShowSignatureHelp` | `Editor && mode == full` | bind | replaces Zed's ShowWordCompletions |
+| `ParameterInfo.GoToPreviousSignature` | Shift+Ctrl+P | `ctrl-shift-p` | `editor::SignatureHelpPrevious` | `Editor && showing_signature_help` | bind | Pause's key too, outside the popup |
+| `PreviousTemplateVariable` | Shift+Tab | `shift-tab` |  | `Editor` | zed | Zed's completion and snippet keys |
+| `PrevParameter` | Shift+Tab | `shift-tab` |  | `Editor` | zed | Zed's completion and snippet keys |
+| `SmartTypeCompletion` | Ctrl+Alt+Space | `ctrl-alt-space` | `editor::ShowCompletions` | `Editor && mode == full` | approx | one kind of completion |
+
+## Navigation
+
+| F12 action | Keys | Zed keys | Zed action | Context | Status | Note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `Back` | Ctrl+-; Ctrl+numpad - | `ctrl--` | `pane::GoBack` | `(none)` | zed | Ctrl+- is Zed's in a pane; bound globally for the panels |
+| `CallHierarchy` | Ctrl+K, T; Ctrl+K, Ctrl+T | `ctrl-k t`; `ctrl-k ctrl-t` | `call_hierarchy::ShowIncomingCalls` | `Editor && mode == full` | bind |  |
+| `CallHierarchy.BaseOnThisMethod` | Ctrl+K, T; Ctrl+K, Ctrl+T | `ctrl-k t`; `ctrl-k ctrl-t` | `call_hierarchy::ShowIncomingCalls` | `Editor && mode == full` | bind |  |
+| `CopyReference` | Shift+Ctrl+Alt+C | `ctrl-alt-shift-c` | `editor::CopyFileLocation` | `Editor && mode == full` | approx | path:line, not the symbol's name |
+| `EditorCodeBlockStart` | Shift+Alt+[ | `alt-{` | `editor::MoveToStartOfLargerSyntaxNode` | `Editor && mode == full` | bind |  |
+| `EditorDown` | Down | `down` |  | `Editor` | zed | Zed's editor keys |
+| `EditorDownWithSelection` | Shift+Down | `shift-down` |  | `Editor` | zed | Zed's editor keys |
+| `EditorLeft` | Left | `left` |  | `Editor` | zed | Zed's editor keys |
+| `EditorLineEnd` | End | `end` |  | `Editor` | zed | Zed's editor keys |
+| `EditorLineEndWithSelection` | Shift+End | `shift-end` |  | `Editor` | zed | Zed's editor keys |
+| `EditorLineStart` | Home | `home` |  | `Editor` | zed | Zed's editor keys |
+| `EditorLineStartWithSelection` | Shift+Home | `shift-home` |  | `Editor` | zed | Zed's editor keys |
+| `EditorMatchBrace` | Ctrl+] | `ctrl-]` | `editor::MoveToEnclosingBracket` | `Editor && mode == full` | bind | in the full editor, so the inline assistant keeps Ctrl+] for its next alternative |
+| `EditorNextWord` | Ctrl+Right | `ctrl-right` | `editor::MoveToNextWordEnd` | `Editor` | bind | macOS's Spaces take Ctrl+Right by default |
+| `EditorPageDown` | PgDn | `pagedown` |  | `Editor` | zed | Zed's editor keys |
+| `EditorPageDownWithSelection` | Shift+PgDn | `shift-pagedown` |  | `Editor` | zed | Zed's editor keys |
+| `EditorPageUp` | PgUp | `pageup` |  | `Editor` | zed | Zed's editor keys |
+| `EditorPageUpWithSelection` | Shift+PgUp | `shift-pageup` |  | `Editor` | zed | Zed's editor keys |
+| `EditorPreviousWord` | Ctrl+Left | `ctrl-left` | `editor::MoveToPreviousWordStart` | `Editor` | bind | macOS's Spaces take Ctrl+Left by default |
+| `EditorRight` | Right | `right` |  | `Editor` | zed | Zed's editor keys |
+| `EditorScrollDown` | Ctrl+Down | `ctrl-down` | `editor::LineDown` | `Editor` | bind | App windows takes Ctrl+Down by default |
+| `EditorScrollToCenter` | Ctrl+M, C; Ctrl+M, Ctrl+C | `ctrl-m c`; `ctrl-m ctrl-c` | `editor::ScrollCursorCenter` | `Editor` | bind |  |
+| `EditorScrollUp` | Ctrl+Up | `ctrl-up` | `editor::LineUp` | `Editor` | bind | Mission Control takes Ctrl+Up by default |
+| `EditorUp` | Up | `up` |  | `Editor` | zed | Zed's editor keys |
+| `EditorUpWithSelection` | Shift+Up | `shift-up` |  | `Editor` | zed | Zed's editor keys |
+| `ExternalJavaDoc` | Shift+F1 | `shift-f1` | `editor::OpenDocs` | `Editor && mode == full` | approx | where the server gives a docs link |
+| `FindUsages` | Shift+F12 | `shift-f12` | `editor::FindAllReferences` | `Editor && mode == full` | bind | replaces Zed's Shift+F12, GoToImplementation |
+| `Forward` | Ctrl+=; mouse button5 | `ctrl-=` | `pane::GoForward` | `(none)` | bind | mouse button 5 is Zed's already |
+| `GoCallHierarchyPopupMenu.BaseOnThisDeclaration` | Ctrl+K, T; Ctrl+K, Ctrl+T | `ctrl-k t`; `ctrl-k ctrl-t` | `call_hierarchy::ShowIncomingCalls` | `Editor && mode == full` | bind |  |
+| `GotoDeclaration` | Alt+D | `alt-d` | `editor::GoToDefinition` | `Editor && mode == full` | bind | F12 stays Zed's too |
+| `GotoImplementation` | Ctrl+Alt+D | `ctrl-alt-d` | `editor::GoToImplementation` | `Editor && mode == full` | bind |  |
+| `GotoNextBookmark` | Ctrl+K, N; Ctrl+K, Ctrl+N | `ctrl-k n`; `ctrl-k ctrl-n` | `editor::GoToNextBookmark` | `Editor && mode == full` | bind |  |
+| `GotoNextElementUnderCaretUsage` | Shift+Ctrl+Down | `ctrl-shift-down` | `editor::GoToNextDocumentHighlight` | `Editor && mode == full` | bind | Find next's Shift+Ctrl+Down goes here |
+| `GotoPrevElementUnderCaretUsage` | Shift+Ctrl+Up | `ctrl-shift-up` | `editor::GoToPreviousDocumentHighlight` | `Editor && mode == full` | bind |  |
+| `GotoPreviousBookmark` | Ctrl+K, P; Ctrl+K, Ctrl+P | `ctrl-k p`; `ctrl-k ctrl-p` | `editor::GoToPreviousBookmark` | `Editor && mode == full` | bind |  |
+| `GotoSuperMethod` | Alt+Home | `alt-home` | `editor::GoToImplementation` | `Editor && mode == full` | approx | gopls lists a method's interfaces too; C# goes down alone |
+| `GotoTypeDeclaration` | Shift+Ctrl+F11 | `ctrl-shift-f11` | `editor::GoToTypeDefinition` | `Editor && mode == full` | bind |  |
+| `JumpToLastChange` | Shift+Ctrl+Backspace | `ctrl-shift-backspace` | `editor::GoToPreviousChange` | `Editor && mode == full` | approx | the file's own changes, not across files |
+| `QuickImplementations` | Alt+F12 | `alt-f12` | `editor::GoToDefinitionSplit` | `Editor && mode == full` | zed | no popup: Zed's Alt+F12 opens it in a split |
+| `QuickJavaDoc` | Ctrl+K, I; Ctrl+K, Ctrl+I; Shift+Ctrl+F1 | `ctrl-k i`; `ctrl-k ctrl-i`; `ctrl-shift-f1` | `editor::Hover` | `Editor && mode == full` | bind |  |
+| `ReSharperGotoContainingDeclaration` | Ctrl+[ | `ctrl-[` | `["action::Sequence", ["editor::SelectEnclosingSymbol", "editor::MoveLeft"]]` | `Editor && mode == full` | approx | selects the symbol, then collapses to its start |
+| `ShowSettingsAndFindUsages` | Shift+Ctrl+Alt+F12 | `ctrl-alt-shift-f12` | `editor::FindAllReferences` | `Editor && mode == full` | approx | no settings dialog |
+| `ShowUsages` | Shift+Alt+F12 | `alt-shift-f12` | `editor::FindAllReferences` | `Editor && mode == full` | zed | Shift+Alt+F12 is Zed's; a multibuffer, not a popup |
+| `ToggleBookmarkWithMnemonic` | Ctrl+F11 | `ctrl-f11` | `editor::ToggleBookmarkWithLabel` | `Editor && mode == full` | approx | a label, not a mnemonic key |
+
+## Search
+
+| F12 action | Keys | Zed keys | Zed action | Context | Status | Note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `FileStructurePopup` | Alt+\ | `alt-\` | `outline::Toggle` | `Editor && mode == full` | bind |  |
+| `Find` | Cmd+F; Ctrl+F | `cmd-f`; `ctrl-f` | `buffer_search::Deploy` | `(none)` | bind | Cmd+F is Zed's already |
+| `FindInPath` | Shift+Cmd+F; Shift+Ctrl+F | `cmd-shift-f`; `ctrl-shift-f` | `pane::DeploySearch` | `(none)` | bind | Shift+Cmd+F is Zed's already |
+| `FindNext` | Shift+Ctrl+Down; Shift+Alt+/ | (not `ctrl-shift-down`); `alt-?` | `search::SelectNextMatch` | `(none)` | approx | Shift+Alt+/ alone: Shift+Ctrl+Down goes to the next highlighted usage |
+| `FindPrevWordAtCaret` | Shift+Ctrl+F3 | `ctrl-shift-f3` | `editor::FindPreviousMatch` | `Editor` | approx |  |
+| `FindWordAtCaret` | Ctrl+F3 | `ctrl-f3` | `editor::FindNextMatch` | `Editor` | approx | Ctrl+F3: F-keys need Fn or the setting |
+| `GotoAction` | Ctrl+Q | `ctrl-q` | `command_palette::Toggle` | `(none)` | bind |  |
+| `GotoFile` | Shift+Ctrl+T | `ctrl-shift-t` | `file_finder::Toggle` | `(none)` | bind |  |
+| `GotoSymbol` | Shift+Ctrl+Alt+T | `ctrl-alt-shift-t` | `project_symbols::Toggle` | `(none)` | bind |  |
+| `OpenFile` | Ctrl+O | `ctrl-o` | `workspace::Open` | `(none)` | approx | opens a folder; on a remote project, the server's |
+| `Replace` | Ctrl+H | `ctrl-h` | `buffer_search::DeployReplace` | `(none)` | bind | replaces Zed's emacs-style backspace |
+| `ReplaceInPath` | Shift+Ctrl+H | `ctrl-shift-h` | `["pane::DeploySearch", {"replace_enabled": true}]` | `(none)` | bind |  |
+| `SearchEverywhere` | Ctrl+, | `ctrl-,` | `file_finder::Toggle` | `(none)` | approx | files alone, as in helix |
+| `TextSearchAction` | Shift+Ctrl+Alt+E | `ctrl-alt-shift-e` | `text_finder::Toggle` | `(none)` | bind |  |
+
+## Code
+
+| F12 action | Keys | Zed keys | Zed action | Context | Status | Note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `AIAssistant.Editor.AskAiAssistantInEditor` | Ctrl+/ | `ctrl-/` | `assistant::InlineAssist` | `Editor && mode == full` | bind | the inline assistant, whose Ctrl+Enter is F12's code actions here |
+| `ChangeSignature` | Ctrl+R, S | `ctrl-r s` | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | the server's code actions, of every kind |
+| `ExtractMethod` | Ctrl+R, M | `ctrl-r m` | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | the server's code actions, of every kind |
+| `Generate` | Alt+Insert | (no Insert) | `editor::ToggleCodeActions` | `Editor && mode == full` | approx | Alt+Insert: a Mac keyboard has no Insert |
