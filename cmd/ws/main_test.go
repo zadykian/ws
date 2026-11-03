@@ -19,6 +19,8 @@ func fakeProcess() process {
 
 // runWs runs args on the root of the groups that p serves, with stdin, and returns the status,
 // stdout and stderr.
+//
+//nolint:unparam // the commands of ws mac secrets read stdin, in the units that port them
 func runWs(p process, stdin string, args ...string) (status int, stdout, stderr string) {
 	var out, errs bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
