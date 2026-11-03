@@ -1,0 +1,70 @@
+package ikeward
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/step"
+)
+
+// Step names. The install waits on the binary's download, and the wait on the install.
+const (
+	downloadStep = "ikeward download"
+	forwardStep  = "ikeward forwarding"
+	installStep  = "ikeward install"
+	statusStep   = "ikeward status"
+)
+
+// Steps returns the role's steps in order: the binary's download, after the check of the values;
+// the forwarding for the WireGuard peers, so that a peer taken off the list loses its way in even
+// while the VPN is down; the install from the profile of the secrets; and the wait for the VPN.
+// Without ikeward_profile it returns none, as in CI's container: the VPN, the file and ufw's rules
+// stay as they are.
+func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+	return steps(v.Ikeward, s, m, out, statusTries, statusWait)
+}
+
+// steps is Steps with the wait's bounds given, for a test to shorten.
+func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out, tries int,
+	wait time.Duration) []step.Step {
+	if v.Profile == "" {
+		return nil
+	}
+	fetch := download(m)
+	// A profile that the secrets lack fails the run before anything changes, as the values do.
+	ready := func() error {
+		if err := check(v); err != nil {
+			return err
+		}
+		if !(profile{files: s.Files}).present() {
+			return fmt.Errorf("ikeward_profile is %s, and the secrets hold no profile for it", v.Profile)
+		}
+		return nil
+	}
+	return []step.Step{
+		host.Lazy{Title: downloadStep, Parts: func(ctx context.Context) ([]host.Resource, error) {
+			if err := ready(); err != nil {
+				return nil, err
+			}
+			return fetch(ctx)
+		}},
+		// The forwarding needs not the binary, so a check shows its plan while the download is due.
+		host.Lazy{Title: forwardStep, Parts: func(context.Context) ([]host.Resource, error) {
+			if err := ready(); err != nil {
+				return nil, err
+			}
+			return forward(m, out, v.ForwardFrom), nil
+		}},
+		host.Group{Title: installStep, After: downloadStep, Parts: []host.Resource{
+			Install{M: m, Out: out, Values: v, Secrets: s},
+		}},
+		host.Group{Title: statusStep, After: installStep, Parts: []host.Resource{
+			Status{M: m, Out: out, Tries: tries, Wait: wait},
+		}},
+	}
+}

@@ -42,8 +42,11 @@ sh "$(dirname "$0")/../mac-standins.sh"
 # $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,
 # which gh api answers with a 404. nosign gives that 404 for the signing keys alone. keys holds its
 # login's keys, signing its signing keys, and log its calls. Its repo clone clones a repository of
-# its own with .githooks, an empty Brewfile and an apply.sh, a link to ws-standin.sh. Its origin is a path that ends in
-# github.com/OWNER/REPO, which the wizard takes for GitHub's, so that a fetch works offline.
+# its own with .githooks and an empty Brewfile. Its origin is a path that ends in
+# github.com/OWNER/REPO, which the wizard takes for GitHub's, so that a fetch works offline. Its
+# release download of any tag writes the asset that -p names, a copy of hook-standin.sh with the tag
+# on a last line, and REPO.sha256 listing it, as sha256sum prints. With badsum it lists another sum,
+# and with norelease it fails, as a tag with no release does.
 here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$RUNNER_TEMP/gh"
 : >"$RUNNER_TEMP/gh/keys"
@@ -71,10 +74,18 @@ case \$* in
     up="\$state/github.com/\$3"
     [ -d "\$up" ] || { git init -q -b main "\$up" && mkdir "\$up/.githooks" &&
         printf '#!/bin/sh\n' >"\$up/.githooks/pre-commit" && : >"\$up/Brewfile" &&
-        ln -s '$here/ws-standin.sh' "\$up/apply.sh" && git -C "\$up" add . &&
+        git -C "\$up" add . &&
         git -C "\$up" -c user.name=ws -c user.email=ws@example.com commit -q -m "\$3" &&
         git -C "\$up" tag v1.0.0; } &&
         git clone -q "\$up" "\$4"
+    ;;
+'release download '*)
+    [ ! -f "\$state/norelease" ] || { echo "gh: release not found" >&2 && exit 1; }
+    asset=\${10}
+    { cat '$here/hook-standin.sh' && echo "# \$3"; } >"\$7/\$asset" && chmod 755 "\$7/\$asset" &&
+        sum=\$(shasum -a 256 <"\$7/\$asset" | cut -d ' ' -f 1)
+    [ ! -f "\$state/badsum" ] || sum=\$(printf %s bad | shasum -a 256 | cut -d ' ' -f 1)
+    echo "\$sum  \$asset" >"\$7/\${5#*/}.sha256"
     ;;
 *) echo "gh: the stand-in takes no \$*" >&2 && exit 2 ;;
 esac
@@ -104,8 +115,8 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
 # command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
 # and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
-# here. So it roots a command's path from /root, such as another repository's apply.sh, alone or
-# after the script of sh -c.
+# here. So it roots a command's path from /root or the wizard's state, such as another repository's
+# command, alone, with its arguments, or after the script of sh -c.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
@@ -124,8 +135,10 @@ export PATH
 case $SSH_ORIGINAL_COMMAND in
 'sh -s -- '*) sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
 /root/*) exec "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
+/var/lib/ws-wizard/*) exec /bin/sh -c "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
 "sh -c '"*)
-    command=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" | sed "s| /root/| $WS_STANDIN/root/root/|")
+    command=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" |
+        sed "s| /root/| $WS_STANDIN/root/root/|; s| /var/lib/ws-wizard/| $WS_STANDIN/root/var/lib/ws-wizard/|")
     exec /bin/sh -c "$command"
     ;;
 *) exec /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
@@ -192,7 +205,8 @@ cp ~/.local/bin/ws "$releases/download/v0.0.0/ws-darwin-arm64"
 cp ~/repository/ws/install.sh "$releases/download/v0.0.0/install.sh"
 (cd "$releases/download/v0.0.0" && shasum -a 256 ws-darwin-arm64 >ws.sha256)
 echo v0.0.0 >"$releases/latest"
-nohup python3 -I "$here/../release-standin.py" "$releases" 22080 >"$RUNNER_TEMP/releases.log" 2>&1 &
+(cd ~/repository/ws && "$(sh tools/run -path go)" build -o "$RUNNER_TEMP/serve-releases" ./tools/serve-releases)
+nohup "$RUNNER_TEMP/serve-releases" "$releases" 22080 >"$RUNNER_TEMP/releases.log" 2>&1 &
 for _ in $(seq 50); do
     curl -fsS -o /dev/null -w '%{redirect_url}' http://127.0.0.1:22080/latest >/dev/null 2>&1 && break
     sleep 0.1

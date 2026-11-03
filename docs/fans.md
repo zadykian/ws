@@ -1,21 +1,24 @@
 # fans
 
 The `fans` role drives the server's fans on curves of its own. It builds the board's fan driver
-with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables.
+with DKMS, and runs `ws-fans`, a service of its own, on the curves of its variables. Its steps,
+in `internal/server/fans`, are the board's check, the packages, the driver's source, DKMS, the
+modules, and the service with its config.
 
 ## The driver
 
 The board is MSI's, with a Nuvoton NCT6687D for its fan headers. Linux's own `nct6683` reads that
 chip but sets none of its fans on MSI's boards. So the role builds `nct6687`, from
 [Fred78290/nct6687d](https://github.com/Fred78290/nct6687d), with DKMS. That repository tags no
-releases: `group_vars/all.yml` pins a commit, and the SHA-256 of GitHub's tarball of it.
+releases: `internal/server/fans/pins.go` pins a commit, and the SHA-256 of GitHub's tarball of it.
 
-The role unpacks the tarball into `/usr/src/nct6687d-COMMIT`, with the commit's first 12
-characters as DKMS's version, and builds it for the running kernel. DKMS builds it again for each
-new kernel, from the headers `linux-headers-generic` installs beside it. A new pin removes the
-old version from DKMS, and its source. `/etc/modprobe.d/ws-fans.conf` keeps `nct6683` off the chip,
-and `/etc/modules-load.d/ws-fans.conf` loads `nct6687` at boot. The run unloads `nct6683` where it
-is loaded, as after `sensors-detect`, and loads `nct6687`.
+The role downloads the tarball against that SHA-256, unpacks it into `/usr/src/nct6687d-COMMIT`,
+with the commit's first 12 characters as DKMS's version, and builds it for the running kernel.
+DKMS builds it again for each new kernel, from the headers `linux-headers-generic` installs beside
+it. A new pin removes the old version from DKMS, and its source. `dkms status` says which versions
+DKMS holds. `/etc/modprobe.d/ws-fans.conf` keeps `nct6683` off the chip, and `/etc/modules-
+load.d/ws-fans.conf` loads `nct6687` at boot. The run unloads a loaded `nct6683`, as
+after `sensors-detect`, and loads `nct6687`.
 
 The role does all this where DMI names the board's maker `fans_board_vendor`, MSI. A machine with
 another board, as a cloud VM or CI's container, is left alone, and the run says so.
@@ -33,19 +36,22 @@ mokutil --import /var/lib/shim-signed/mok/MOK.der       # asks for a one-time pa
 reboot                                                  # MOK manager: Enroll MOK, the password
 ```
 
-Then run the playbook again, or `modprobe nct6687 && systemctl restart ws-fans`.
+Then run `ws server apply` again, or `modprobe nct6687 && systemctl restart ws-fans`.
 
 ## ws-fans
 
-`ws-fans.service` runs `/usr/local/lib/ws-fans/ws-fans.py`, from `roles/fans/files`, with the
-system's `python3`. It reads `/etc/ws-fans.json`, which the role writes from its variables, below.
-It checks a new config before the service restarts with it. Its log, `journalctl -u ws-fans`, says
-when a sensor or a fan goes missing or comes back.
+`ws-fans.service` runs `ws server fans`, from a copy of ws in `/usr/local/lib/ws-fans`: an update
+of ws leaves the running service alone until the next run. It reads `/etc/ws-fans.json`, which
+the role writes from its variables, below. The daemon's own loader checks a new config before the
+role writes it. A change to the copy, the config or the unit restarts the service. Without systemd
+running, as in CI's container, the role leaves the unit and the modules alone. The log,
+`journalctl -u ws-fans`, says when a sensor or a fan goes missing or comes back.
 
 Every second it reads each sensor, moves each curve, and steps each fan towards its curve's speed:
 
-- **Sensors:** a hwmon channel by its label, an NVIDIA GPU's temperature through NVML, the average
-  of another sensor over a time, or the highest of several.
+- **Sensors:** a hwmon channel by its label, or an NVIDIA GPU's temperature, which one child,
+  `nvidia-smi -l 1`, streams to the daemon. Or the average of another sensor over a time, or the
+  highest of several.
 - **Curves:** a graph of points, `[°C, %]`, flat before the first and past the last. Its speed
   follows the temperature once it has moved the hysteresis, in °C, from where the speed last
   changed, and stayed there for the response time, in seconds. Up and down each have their own. At
@@ -57,16 +63,17 @@ A fan whose temperature or device is missing goes back to the board's own curve 
 So does every fan when the service stops. As it starts, it takes each fan from the speed it runs at.
 
 The RTX 5080's own fans are off the card, which the GPU Fans on the board's System Fan #1 cool. So
-ws-fans sets no fan through NVIDIA's driver: it reads only the GPU's temperature, through NVML.
-That needs NVIDIA's driver, which ws doesn't install yet (#58). Without it, the GPU Fans and the
-Exhaust Fans, on the GPU's temperature, keep the board's curves.
+ws-fans sets no fan through NVIDIA's driver: it reads only the GPU's temperature, by `nvidia-smi`,
+which keeps ws free of NVML's library. That needs NVIDIA's driver, which ws doesn't install yet
+(#58). Without it, the GPU Fans and the Exhaust Fans, on the GPU's temperature, keep the board's
+curves.
 
 ## The defaults
 
-`roles/fans/defaults/main.yml` sets these sensors:
+`internal/server/values/default_fans.go` sets these sensors:
 
 - `cpu`: coretemp's `Package id 0`, the CPU package's temperature;
-- `gpu`: GPU 0's temperature, through NVML;
+- `gpu`: GPU 0's temperature;
 - `cpu_average` and `gpu_average`: each of the two, averaged over 60 s;
 - `cpu_gpu_max`: the higher of the two averages.
 
@@ -97,8 +104,6 @@ System Fan #3 to #6 are left out, so the board's curves drive them.
   above. Each sensor names only sensors above it.
 - `fans_step`: how far a fan's speed moves at most in a tick, up and down, in %.
 - `fans_interval`: the tick, in seconds.
-- `fans_nct6687_commit` and `fans_nct6687_sha256`, in `group_vars/all.yml`: the driver's commit
-  and its tarball's SHA-256.
 
 With `nct6687` loaded, node_exporter reads the fans' speeds too, for SigNoz ([otelcol](otelcol.md)).
-A dry run builds no driver, and says what it would build.
+`ws server apply --check` builds no driver, and says what it would build.

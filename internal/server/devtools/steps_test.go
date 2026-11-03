@@ -1,0 +1,46 @@
+package devtools
+
+import (
+	"context"
+	"slices"
+	"testing"
+
+	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/server/secrets"
+	"github.com/zadykian/ws/internal/server/values"
+)
+
+func TestStepsOrderAndWaits(t *testing.T) {
+	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	var names, waits []string
+	for _, s := range steps {
+		names, waits = append(names, s.Name()), append(waits, s.WaitsOn())
+	}
+	if want := []string{"Devtools repositories", "Devtools packages", "Devtools Go", "Devtools rustup"}; !slices.Equal(names, want) {
+		t.Errorf("steps %q, want %q", names, want)
+	}
+	if want := []string{"", "Devtools repositories", "", ""}; !slices.Equal(waits, want) {
+		t.Errorf("waits %q, want %q", waits, want)
+	}
+}
+
+func TestPackageNames(t *testing.T) {
+	want := []string{"nodejs=24.*", "gh", "glow", "dotnet-sdk-8.0", "dotnet-sdk-10.0"}
+	if got := packageNames(); !slices.Equal(got, want) {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestPackagesPlanChromiumLibrariesWithoutRecommends(t *testing.T) {
+	v := values.Default()
+	v.Devtools.ChromiumLibraries = []string{"libnss3"}
+	m := effecttest.NewMachine()
+	m.Results["dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n nodejs"] = effecttest.Result{Out: []byte("24.1.0 ii\n")}
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n gh glow dotnet-sdk-8.0 dotnet-sdk-10.0"] =
+		effecttest.Result{Out: []byte("gh ii\nglow ii\ndotnet-sdk-8.0 ii\ndotnet-sdk-10.0 ii\n")}
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n libnss3"] = effecttest.Result{Out: []byte("")}
+	plan, err := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})[1].Plan(context.Background())
+	if err != nil || len(plan.Changes) != 1 || plan.Changes[0].String() != "install libnss3" {
+		t.Errorf("got %v, %v", plan.Changes, err)
+	}
+}

@@ -1,17 +1,19 @@
 # security
 
-The `security` role sets up an sshd drop-in that lets everyone log in by key only, ufw, and
-fail2ban for SSH. By default, it keeps what the server and its containers start to the internet
-and ikeward's VPN, but what the network needs, such as DHCP and DNS.
+The `security` role, Go steps in `internal/server/security`, sets up an sshd drop-in that lets
+everyone log in by key only, ufw, and fail2ban for SSH. By default, it keeps what the server and
+its containers start to the internet and ikeward's VPN, but what the network needs, such as DHCP
+and DNS.
 
 ## SSH and the firewall
 
-The playbook turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
+ws turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
 SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](wireguard.md)). It lets in DNS lookups
 from Docker's bridges to the host's resolver too ([docker](docker.md)), and nothing else. fail2ban
 bans an address for 10 minutes after 5 failed logins in 10 minutes. Over SSH, keep the session that
-ran the playbook open until a new one logs in. The playbook stops before it turns passwords off if
-root has no key to log in with.
+ran ws open until a new one logs in. The steps stop before they turn passwords off if
+`ws_user` has no key to log in with, outside a container. sshd's drop-in lands only after
+`sshd -G` accepts it, and sshd reloads after a change.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](docker.md)): reach it through an SSH tunnel. A port published on another
@@ -90,7 +92,7 @@ The caveats:
   delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
   become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
   and the `docker` group's ([The docker group](docker.md#the-docker-group)). `ws_user` is root by
-  default ([group_vars/all.yml](../group_vars/all.yml)), and in the `docker` group otherwise. The
+  default ([values.go](../internal/server/values/values.go)), and in the `docker` group otherwise. The
   table binds the other users and the bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the
   packet leaves by the same gateway. A rule on the router drops it for a machine on the LAN
@@ -121,7 +123,7 @@ The caveats:
   loaded the table without the sets' elements, after which the unit still shows active. A fill says
   which it left out in `journalctl -u security-resolvers`. `systemctl stop security-outbound`
   removes this table alone, until the next boot or run.
-- A dry run checks no file it would write, neither the table nor sshd's drop-in
+- A dry run, `--check`, writes nothing, so it checks neither the table nor sshd's drop-in
   ([Dry runs](../README.md#dry-runs)).
 
 A run checks the file with `nft -c` before it lands. It then loads the file in a network namespace
@@ -130,31 +132,25 @@ of its own, as the unit loads it, and compares that table with the kernel's, as
 and the sets' elements as a load fills them. Where the tables differ, the run reloads the table and
 its sets in one transaction, with no gap. So it does where systemd failed to load a unit of the
 table's, or hasn't read it since it changed. That covers a run cut short before the reload, and a
-table or set flushed or deleted by hand. In a container, with `--skip-tags systemd`, the run writes
-the files, but skips the check, the comparison and the reload. CI checks the file after its runs
-([The playbook](checks.md#the-playbook)).
+table or set flushed or deleted by hand. In a container, where systemd is not running, the run writes
+the files, but skips the check, the comparison, the units and ufw. CI checks the file after its runs
+([The `playbook` job](checks.md#the-playbook-job)).
 
 `security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and
-instance credentials need. On a new machine, `ws server apply` passes it on:
-
-```sh
-ws server apply -- -e security_outbound=false
-```
-
-`-e` holds for that run alone, so the next run without it puts the table back. So once that run
-has made `/etc/ws`, its `host_vars.yml` keeps the value for each run after
-([The direct link](network.md#the-direct-link)):
+instance credentials need. On a new machine, name it in `/etc/ws/host_vars.yml` before the first
+run ([The direct link](network.md#the-direct-link)):
 
 ```yaml
 ---
 security_outbound: false
 ```
 
-The Mac's wizard takes both steps where `mac.conf` has `WS_TARGET=cloud`
-([ws's run](mac-wizard.md#wss-run)). A run with `security_outbound` false stops and disables the
-table's units. It removes the units, `/usr/local/lib/ws/security` and the table, even one loaded by
-hand. A dry run shows each removal. Off leaves:
+The Mac's wizard writes the line before the run where `mac.conf` has `WS_TARGET=cloud`
+([ws's run](mac-wizard.md#wss-run)). A run with `security_outbound` false stops the table's units
+by D-Bus, and resets one that failed, even where its file is gone. It then removes the units, their
+links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--check` shows each
+removal. Off leaves:
 
 - ufw's default, which allows every outgoing connection;
 - the `wireguard` role's chain `WS-MAC`, which drops what Docker's containers send through `wg0`

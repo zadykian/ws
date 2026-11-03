@@ -1,7 +1,7 @@
 #!/bin/sh
 # The wizard's refusals, which leave the runner as they found it: an unknown argument, root, and a
 # run while another holds the lock, which it must leave. So must a WS_HOOK of ws in another letter
-# case, which GitHub ignores, and the files script its clone, run as root as on ws. -h prints the
+# case, which GitHub ignores, and the files script its stage, run as root as on ws. -h prints the
 # usage.
 
 set -u
@@ -40,5 +40,5 @@ refused 'line 1: WS_HOOK=example/Ws is not a repository on GitHub' \
     env WS_CONF="$RUNNER_TEMP/refuse.conf" "$wsbin" mac wizard --check
 rm "$RUNNER_TEMP/refuse.conf"
 refused "'example/WS' is not a repository on GitHub" \
-    sudo sh "$HOME/repository/ws/mac/wizard-remote-files.sh" clone example/WS
+    sudo sh "$HOME/repository/ws/mac/wizard-remote-files.sh" stage example/WS@v1.0.0
 exit "$fail"

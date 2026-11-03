@@ -85,7 +85,9 @@ sed -i 's/^[0-9a-f]\{64\}/000000000000000000000000000000000000000000000000000000
     "$tmp/releases/download/v0.3.0/ws.sha256"
 
 echo v0.2.0 >"$tmp/releases/latest"
-python3 -I "$root/.github/release-standin.py" "$tmp/releases" 0 "$tmp/port" &
+serve=$tmp/serve-releases
+"$(sh "$root/tools/run" -path go)" build -o "$serve" ./tools/serve-releases
+"$serve" "$tmp/releases" 0 "$tmp/port" &
 server=$!
 for _ in $(seq 50); do
     [ -s "$tmp/port" ] && break

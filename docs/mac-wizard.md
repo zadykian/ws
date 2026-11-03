@@ -3,10 +3,10 @@
 `ws mac wizard` sets up the Mac in stages, around `ws mac apply` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
 then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
-runs ws's playbook there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on ws.
-Then it exchanges the tunnel's keys, clones another repository on the Mac, sends it to ws and runs
-its `apply.sh` there, and copies ws's word list. Last, it sets up the cable from the Mac's display
-to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
+runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on
+ws. Then it exchanges the tunnel's keys, clones another repository on the Mac, downloads its release
+with gh, runs its command on ws, and copies ws's word list. Last, it sets up the cable from the Mac's
+display to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
 what else it needs, as yourself:
 
 ```sh
@@ -22,7 +22,7 @@ the first two of which install what the rest needs:
 
 1. Tools, then Homebrew: the Command Line Tools, through the dialog that `xcode-select --install`
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
-   `mac/internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
+   `internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
 2. Answers: the values `mac.conf` lacks, below.
 3. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
@@ -38,7 +38,7 @@ the first two of which install what the rest needs:
 11. claude on ws: root's claude there, logged in, below.
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, in [Another repository](mac-hook.md).
-14. Hook on ws: that clone sent to ws, and its `apply.sh` run there as root, in [Another repository](mac-hook.md).
+14. Hook on ws: that release's build, sent to ws, and its `apply` run there as root, in [Another repository](mac-hook.md).
 15. Word list: ws's, copied to the Mac where it differs, in [Another repository](mac-hook.md).
 16. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
@@ -55,8 +55,8 @@ the first two of which install what the rest needs:
 | git's email on the Mac | `WS_GIT_EMAIL` | the `shell` role's, `me@zadykian.dev` | with a name |
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
-| Another repository whose `apply.sh` runs on ws | `WS_HOOK` | none | always |
-| The Keychain item of its `apply.sh`'s secret | `WS_HOOK_SECRET` | none | with a repository |
+| A release of another repository whose command runs on ws, as `OWNER/REPO@vX.Y.Z` | `WS_HOOK` | none | always |
+| The Keychain item of its command's secret | `WS_HOOK_SECRET` | none | with a repository |
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
 first and the last two. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
@@ -174,25 +174,26 @@ its `install.sh` runs, then the command again. A ws that is no release stays, wi
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
 It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
-root's `HOME` and a UTF-8 locale. That ws runs the playbook it embeds
-([The playbook](checks.md#the-playbook)). The wizard prints the unit's log until it ends, and stops
+root's `HOME` and a UTF-8 locale. That ws runs its roles
+([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, and stops
 where the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when
 the Mac sleeps, and the next run of the wizard follows it to its end.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
-with `-e` pairs alone, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes ws's
-version, or `-` where it has none, and the status there, and `off` where its `-e` turned the
+with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes ws's
+version, or `-` where it has none, and the status there, and `off` where the values turned the
 outbound table off. The stage is done where that status is 0, the version is this ws's, and no unit
-runs. So a second run of the wizard runs no playbook, and one after a run cut short starts again.
-With `--update`, the stage runs the playbook once more with the ws installed there. The run
+runs. So a second run of the wizard runs no apply, and one after a run cut short starts again.
+With `--update`, the stage runs `ws server apply` once more with the ws installed there. The run
 passes no file of the `ikeward` role's variables, so the role leaves the VPN as it finds it ([The
 profile](ikeward.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
-with `WS_TARGET=cloud`, the run passes `-e security_outbound=false`, and its unit then names that
-in ws's `/etc/ws/host_vars.yml`, for each run after. The stage is done there once a run with that
-`-e` passed and `host_vars.yml` has the line. After a unit without it, which the run followed, a
-run of its own goes. Where the line alone is missing, the stage writes it, and runs no playbook.
+with `WS_TARGET=cloud`, the stage names `security_outbound: false` in ws's `/etc/ws/host_vars.yml`
+before the run, which reads its values there. The stage is done there once a run that began with
+the line passed and `host_vars.yml` has it. After a unit that began without it, which the run
+followed, a run of its own goes. Where the line alone is missing, the stage writes it, and runs no
+apply.
 
 ## Signing key
 
@@ -214,7 +215,7 @@ with the address it shows opened in the Mac's browser. With no terminal, the sta
 ## The tunnel
 
 The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds another, and
-`ws server apply -- --tags wireguard` gives `wg0` that peer. That run goes again where `wg0` lacks
+`ws server apply --only wireguard` gives `wg0` that peer. That run goes again where `wg0` lacks
 the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
 the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
 `wg0`'s key, in place of its line, and `ws mac apply` runs again, which loads ws-tunnel
@@ -230,7 +231,7 @@ wizard's files script lists ws's wired ports but the uplink, each with its carri
 addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the closing list
 says to dock the Mac and run the line again. Docked, the stage asks ws's port of the cable, the one
 with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which both roles
-read, then runs `ws server apply -- --tags network,wireguard` there. Once the port holds
+read, then runs `ws server apply --only network,wireguard` there. Once the port holds
 `10.77.0.1`, the stage asks the Mac's service of the cable. The default is the one service with a
 `169.254` address, which an adapter gives itself where no DHCP server answers. The answer goes in
 `mac.conf` as `WS_CABLE_SERVICE`, then `ws mac apply` gives the service `10.77.0.2`

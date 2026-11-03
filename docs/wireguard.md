@@ -5,6 +5,12 @@ The `wireguard` role sets up `wg0`, the server's end of a WireGuard tunnel for t
 each peer's public key is read from `/etc/wireguard`. It keeps Docker's containers from reaching
 the Mac through the tunnel or the cable.
 
+Its code is Go, in `internal/server/wireguard`, as steps of `ws server apply`. They check the
+settings, install `wireguard-tools`, `systemd` and `iptables`, and put in the drops that keep the
+containers off the Mac. Then they make the tunnel: the key, wg0's files, the firewall and the
+reload of networkd. The last step shows the public key and waits for `wg0`. Without systemd booted,
+as in CI's container, the unit, networkd, ufw and the wait skip and say so.
+
 ## The tunnel
 
 The Mac reaches the server through a WireGuard tunnel whichever way it connects: over the cable,
@@ -17,12 +23,13 @@ UDP port 51820 (`wireguard_port`). It does so from networkd's own files,
 `/etc/systemd/network/60-wg0.netdev` and `60-wg0.network`. Boot doesn't wait for `wg0`.
 
 The first run makes the server's private key on the server, in
-`/etc/systemd/network/60-wg0.key`. The playbook never copies, shows or diffs it: only `wg pubkey`
-reads it, on the server. networkd reads it as the user `systemd-network`, so the file is
+`/etc/systemd/network/60-wg0.key`, by ws's own key code. ws never copies, shows or diffs it: only
+the step that derives the public key reads it, on the server. networkd reads it as the user
+`systemd-network`, so the file is
 `root:systemd-network`, mode 0640, as systemd.netdev(5) asks, and each run sets them again. The
-role's last task shows the public key, which the Mac's end of the tunnel needs. It comes last of
-all in `--tags wireguard`, and among the other roles' output in a full run.
-`wg show wg0 public-key` shows it too. A dry run makes no key.
+role's last step shows the public key, which the Mac's end of the tunnel needs. It comes last of
+all in `--only wireguard`, and among the other roles' output in a full run.
+`wg show wg0 public-key` shows it too. A dry run makes no key and says so.
 
 `wireguard_peers` names the peers, each with its address in the tunnel: by default the Mac, `mac`,
 at `10.99.0.2`. The role reads a peer's public key from `/etc/wireguard/NAME.pub` on the server, a
@@ -30,7 +37,7 @@ line as `wg pubkey` prints it, in a directory only root reads:
 
 ```sh
 printf '%s\n' PUBLIC_KEY >/etc/wireguard/mac.pub
-ws server apply -- --tags wireguard
+ws server apply --only wireguard
 ```
 
 The Mac's scripts fix the peer's name, `mac`, and the tunnel's addresses: `10.99.0.1` for the
@@ -75,6 +82,6 @@ a run changes the drops, which last through Docker's restarts. Where the unit fa
 without them, and `systemctl status wireguard-docker-user` shows why.
 
 The drops take a change of `network_direct_link_interface` as the `wireguard` role next runs, so
-run `--tags network,wireguard` after one. Unless `security_outbound` is false, they are a second
-layer: the `security` role's table drops what the containers start through `wg0` or the cable too
-([Outbound](security.md#outbound)).
+run `ws server apply --only network,wireguard` after one. Unless `security_outbound` is false, they
+are a second layer: the `security` role's table drops what the containers start through `wg0` or the
+cable too ([Outbound](security.md#outbound)).

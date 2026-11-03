@@ -13,11 +13,11 @@
 # - with server.cut, ws server apply kills the unit's job, as a stop or a reboot would;
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
 #   in;
-# - ws.key is wg0's key, which ws server apply -- --tags wireguard makes, and utun names wg0, root's;
-# - apply.log holds a line for each run of apply.sh: tty where its stdin is a terminal, else the
-#   SHA-256 of what it read there, and apply.status its status;
+# - ws.key is wg0's key, which ws server apply --only wireguard makes, and utun names wg0, root's;
+# - apply.log holds a line for each run of the hook's command, hook-standin.sh, and check.log one
+#   for each with --check; hook.args holds their arguments, and apply.status their status;
 # - uplink names the port of the default route, and addr/PORT holds a port's IPv4 addresses, which
-#   ws server apply -- --tags network,wireguard gives the port that host_vars names, with carrier. That
+#   ws server apply --only network,wireguard gives the port that host_vars names, with carrier. That
 #   run writes the port in root's netplan file, as the network role does, or removes the file.
 
 set -u
@@ -112,8 +112,8 @@ ws)
     case $1 in
     version) cat "$s/ws.version" 2>/dev/null ;;
     server)
-        [ "$2:$3" = apply:-- ] || exit 2
-        shift 3
+        [ "$2" = apply ] || exit 2
+        shift 2
         echo "$*" >>"$s/server.log"
         echo "ws server apply's stand-in, with '$*'"
         sleep "$(cat "$s/server.wait" 2>/dev/null || echo 0)"
@@ -121,8 +121,8 @@ ws)
             kill -9 "$PPID"
             exit 1
         fi
-        [ "$*" != '--tags wireguard' ] || wg0 || exit 1
-        [ "$*" != '--tags network,wireguard' ] || direct
+        [ "$*" != '--only wireguard' ] || wg0 || exit 1
+        [ "$*" != '--only network,wireguard' ] || direct
         echo 'PLAY RECAP'
         exit "$(cat "$s/server.status" 2>/dev/null || echo 0)"
         ;;
@@ -140,10 +140,6 @@ claude)
     'auth login') [ -t 0 ] && touch "$s/claude" ;;
     *) exit 2 ;;
     esac
-    ;;
-apply.sh)
-    if [ -t 0 ]; then echo tty; else shasum -a 256 | cut -d ' ' -f 1; fi >>"$s/apply.log"
-    exit "$(cat "$s/apply.status" 2>/dev/null || echo 0)"
     ;;
 ip)
     # The default routes, by the port that uplink names, and the IPv4 addresses in addr/PORT.

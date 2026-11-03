@@ -5,17 +5,17 @@ pull request alone, as it holds every change below it. `lint`, `install` and `si
 The `mac-cld` job's checks are on [their own page](checks-mac-cld.md), and the gates of `make lint`
 on [theirs](gates.md).
 
-## The playbook
+## The `playbook` job
 
 CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 container with no git, so
-that the build is `devel`. It runs `ws server apply` twice, without the tasks tagged `systemd`,
-which need a booted machine, and the second run must change nothing. Then
-`nft -c`, with the container's NET_ADMIN, checks the outbound table the play wrote and the users
-it names. The run leaves out its own check under `--skip-tags systemd`
-([Outbound](security.md#outbound)). Its swap file is 64 MiB, as the runner's disk has no room for
-one the size of its RAM. It installs no JetBrains backend, `jetbrains_backends: []`, as it has no
-room for those either. Its board is not MSI's, so the `fans` role leaves its fans alone. It gives
-no VPN profile, so the `ikeward` role does nothing.
+that the build is `devel`. It runs `ws server apply` twice. The steps that need a booted systemd
+skip and say so, and the second run's last line must be `changed: none`. Then `nft -c`, with the
+container's NET_ADMIN, checks the outbound table the run wrote and the users it names. The run
+leaves out its own check ([Outbound](security.md#outbound)). Its `/etc/ws/host_vars.yml` gives a
+swap file of 64 MiB, as the runner's disk has no room for one the size of its RAM. It names no
+JetBrains backend, `jetbrains_backends: []`, as it has no room for those either. Its board is not
+MSI's, so the `fans` role leaves its fans alone. It gives no VPN profile, so the `ikeward` role does
+nothing.
 
 ## The install script
 
@@ -30,7 +30,7 @@ installs, updates and refuses what it should ([The install job](releases.md#the-
 ## SigNoz's compose files
 
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
-and fails where they differ from the repository's.
+and fails where they differ from the repository's, in `internal/server/signoz`.
 
 ## The Mac's wizard
 
@@ -85,29 +85,29 @@ sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-
 must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key for it and as
 its peer, and ws's signing key or `none`. They are also its hostname, claude's login, Secure Boot
 that refuses the fans' driver, and `host_vars.yml`'s outbound table. A full `run` must run `ws
-server apply --` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It
-must print the log, and stamp ws's version, `-` here, 0 and `on`; with `-e security_outbound=false`,
-`off`, and write the line of its `outbound`, which stops on a link. A tagged run after it must start
-its own unit and leave that stamp. A run during another's unit must follow it. A full run cut off
-must remove the stamp of the one before, so the next starts a unit again. The files script,
-`mac/wizard-remote-files.sh`, must clone another repository from a bundle sent to it, whose
-`apply.sh` must run as root over `ssh`. Its stamp must follow, which `status` must list, as
-`OWNER/REPO`. A clone again must leave it alone and remove the stamp, and one of another owner's
-repository of that name stop. Its `words` must print git's hash of root's word list, or `-` without
+server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It
+must print the log, and stamp ws's version, `-` here, 0 and `on`; after its `outbound` writes the
+line, which stops on a link, `off`. A tagged run after it must start its own unit and leave that
+stamp. A run during another's unit must follow it. A full run cut off must remove the stamp of the
+one before, so the next starts a unit again. The files script, `mac/wizard-remote-files.sh`, must
+install a command sent to it, root's alone, after a check
+of its SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
+`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop.
+Its `words` must print git's hash of root's word list, or `-` without
 one, and the list for that hash alone. Its `link` must list the wired ports, and `link PORT` name
 one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
 `10.77.0.1`.
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
-on ws, with a full run of its own, a run must install v0.0.0 and run the playbook again.
+on ws, with a full run of its own, a run must install v0.0.0 and run the apply again.
 `standin.sh` serves a release v0.0.0, the job's build, as the latest on 127.0.0.1:22080 with
-[release-standin.py](../.github/release-standin.py), and the job's `WS_RELEASES_URL` names it. So
+[serve-releases](../tools/serve-releases/main.go), and the job's `WS_RELEASES_URL` names it. So
 `--update` finds v0.0.0 and stays. A tagged clone built as v0.0.1, the latest, must make
 `--update` leave v0.0.1 as the Mac's `ws version` and as the stand-in ws's (case 59).
 The wizard's stage ws's run must wait for ws on ws under a fresh `--check`. The first run must run
-the playbook through the remote script, and each run since must read ws's `status` alone, once, and
-again after a run of the playbook. A run's calls to ws share one connection, which its end closes.
+ws's apply through the remote script, and each run since must read ws's `status` alone, once, and
+again after a run of apply. A run's calls to ws share one connection, which its end closes.
 Without the stamp, a run whose unit is cut off must stop at the stage, and the next must start a
 unit of its own. That run must end with what stays by hand: the fans' driver and the router's
 forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
@@ -121,7 +121,7 @@ hand without `WS_HOOK`. The next must print nothing, as a run must where root's 
 key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
 `--check` must say it would run it. The next must print nothing.
 
-The stand-in `ws server apply -- --tags wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820,
+The stand-in `ws server apply --only wireguard` makes ws's `wg0`, a `wireguard-go` on UDP 51820,
 with the Mac's key in `mac.pub` as its peer. A fresh `--check` must show the Tunnel stage after ws's
 run. The first run must write `mac.pub`, run that, give `WS_PUBLIC_KEY` `wg0`'s key, and load the
 daemon. It must log in once through the tunnel, by stand-ins of `ssh` and `nc`, as `wg0` has no
@@ -134,17 +134,17 @@ With claude logged out, a run at a terminal of `script`'s must run `claude auth 
 `bash -lc` in an `ssh -t` session. The stand-in takes a terminal alone, and the next run must print
 nothing.
 
-For the Hook on the Mac stage, the stand-in `gh` clones `WS_HOOK` with `.githooks`, an empty
-`Brewfile` and an `apply.sh` that logs its stdin's SHA-256. A run must clone it once, set its
-`core.hooksPath`, and name `gh auth setup-git` by hand, unless git's config names gh's credential
-command. For the Hook on ws stage, `WS_HOOK_SECRET` names an item of a throwaway keychain. Without
-the item, a run with no terminal must stop, naming `security add-generic-password`. At a terminal of
-`script`'s, it must add the item at its prompts, send the clone's newer commit once as a bundle that
-ws clones on `main` with GitHub's `origin`. It must run `apply.sh` once over plain ssh, its stdin
-the secret and no terminal. The next run must print nothing. An unreadable item must stop `--update`
-before `apply.sh`, and a failed run leave no stamp. With `@v1.0.0`, the tag that the stand-in `gh`
-gives its repository, ws's clone must be detached at it and the stamp hold the value. A changed
-clone must be refused, and a tag that GitHub moved stop the stage. For the Word list stage, the
+For the Hook on the Mac stage, the stand-in `gh` clones `WS_HOOK` with `.githooks` and an empty
+`Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git` by
+hand, unless git's config names gh's credential command. For the Hook on ws stage, the stand-in
+`gh` serves a release, a command that logs its stdin's SHA-256, and its sums. `WS_HOOK_SECRET`
+names an item of a throwaway keychain. Without the item, a run with no terminal must stop, naming
+`security add-generic-password`. At a terminal of `script`'s, it must add the item at its prompts,
+and send the build once, root's alone. It must run `apply` once over plain ssh, its stdin the
+secret and no terminal, and ws must make no clone and use no gh. The next run must print nothing,
+and `--check` must run `apply --check`. An unreadable item must stop `--update` before `apply`, and
+a failed run leave no stamp. A new tag must replace the build and the stamp hold the tag. A bad
+sum or a missing release must stop the stage, sending nothing. For the Word list stage, the
 stand-in ws's list must go to the Mac once, mode 600, and none of it be printed. Once the Mac's
 differs, `--check` must show no diff, or stop at a link, as a run must. For the Cable stage, ws's
 ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and
@@ -164,7 +164,7 @@ lines the defaults, for each target. After the first run, they must write the sa
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
 second run and `--check` print nothing at all. Where `WS_CONF` names no file, `--check` must show
 the lines it would write there, from the answers in the environment, and write none. The
-case that reads [`homebrew.go`](../mac/internal/wizard/homebrew.go)'s pins must download Homebrew's
+case that reads [`homebrew.go`](../internal/wizard/homebrew.go)'s pins must download Homebrew's
 `.pkg` and match its SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows
 `pkgutil`'s chain. The `.pkg` cut short must fail the sum. A run checks it before the install,
 which the case never runs.
@@ -264,17 +264,16 @@ Code run two targets of the `Makefile`, as [its docs][lint] say. After each edit
 `make lint-file FILES=PATH` runs the gates of the file's kind on that file alone:
 
 - Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
-- YAML: `yamllint`, `ansible-lint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
+- YAML: `yamllint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
 - shell, by extension or shebang: `shell` and `sizecheck`;
-- Python: `ruff` and `sizecheck`; Jinja templates: `sizecheck`.
+- Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest` and `sizecheck`.
 
 As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only the
 branch's own commits, from `origin/main`.
 
 Each target runs the work tree's own code, as root on the server. That is its `Makefile` and
-`tools/`, the tools its pins name, and the Python that ansible-lint loads, such as the filter
-plugins. ansible-lint's syntax check of `site.yml` runs the lookups in the playbook's YAML too. So
-the plugin runs them only on a tree the maintainer vouches for, as [the vouch rule][vouch] says.
+`tools/` and the tools its pins name. So the plugin runs them only on a tree the maintainer
+vouches for, as [the vouch rule][vouch] says.
 The gate code includes what [.claude/lint-gates](../.claude/lint-gates) lists.
 
 [lint]: https://github.com/zadykian/toolkit/blob/main/docs/lint.md#the-hooks

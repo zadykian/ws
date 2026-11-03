@@ -1,34 +1,31 @@
 # CLAUDE.md
 
-ws sets up the maintainer's development server from code: `site.yml`, an Ansible playbook that runs
-on the machine itself. Its roles set up packages, SSH by key and a firewall, the links to the Mac,
-an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, helix, Docker, claude,
-SigNoz with its collector, and the IDEs' backends. `mac/` sets up the Mac that works on the server.
-The rest is the docs, the lint gates' tools and CI.
+ws sets up the maintainer's development server from code: `ws server apply`, which runs on the
+machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
+links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, helix,
+Docker, claude, SigNoz with its collector, and the IDEs' backends. `mac/` sets up the Mac that works
+on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
-- `site.yml`: the play, on localhost, each role a tag of its name. `ws server apply`
-  installs ansible-core and runs the play that the installed ws embeds.
-- `roles/NAME`: a role per tag, each with its page, `docs/NAME.md`, and a line in the README. The
-  filter plugins, in Python, are in `roles/NAME/filter_plugins`; ws-fans, the fans' service, is
-  Python too, in `roles/fans/files`.
-- `group_vars/all.yml`: what roles share, `ws_user`, `ws_home` and `ws_git_signing_key`, and the
-  versions, each named for its role. `/etc/ws/host_vars.yml`, on the machine alone: its own
-  values, such as the cable's port ([The direct link](docs/network.md#the-direct-link)).
-  `requirements.yml`: the collections, each pinned. `inventory.ini`: localhost, with the system's
-  Python. `ansible.cfg`: the inventory, the roles' path, and handlers that run after a failure.
-- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. Its
-  packages are in `mac/`. The root package `ws` embeds the playbook on Linux (`playbook_linux.go`),
-  with the tarballs of `collections/`.
+- `internal/server/NAME`: a role per directory, as Go steps, with its page, `docs/NAME.md`, and a
+  line in the README. `internal/server/roles` lists the roles in the order they run, and
+  `internal/server/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
+  alone, such as the cable's port ([The direct link](docs/network.md#the-direct-link)). Each role
+  holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
+  `ws server fans`, in `internal/fans`.
+- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. `cmd/ws`
+  is the command and `internal/` its packages. `step`, `effect`, with
+  `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
+  steps on them.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
-- `mac/`: the Mac's side: the ws CLI in Go, with the wizard's scripts for ws in
+- `mac/`: the Mac's side, the files that the ws CLI embeds: the wizard's scripts for ws in
   POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
   `mac-hook.md`, `mac-targets.md` and `mac-ghostty.md`; `router.md` and `checks.md`;
   `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
-  caps them. `build` builds ws for a target and `collections` fetches the pinned tarballs.
+  caps them. `build` builds ws for a target.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
 - `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `install` and `signoz`;
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
@@ -44,22 +41,21 @@ The rest is the docs, the lint gates' tools and CI.
 ```sh
 make lint                         # every gate, as CI's lint job runs it; -k goes past a failure
 make vale FILES=README.md         # one gate alone; the gates that check files take FILES
-make ansible-lint FILES=roles/base/tasks/main.yml   # this file alone: no syntax check of site.yml
 make shell                        # ShellCheck and shfmt -d -i 4 on every shell script
 make gotest                       # the Go gates run at the root, the module; so do govet and gofmt
 ```
 
-The gates are `shell`, `yamllint`, `ansible-lint`, `ruff`, `sizecheck`, `vale`, `lychee`, `rumdl`,
-`actionlint`, `zizmor`, `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
-([The gates](docs/gates.md)). `make lint`
-needs Python 3.12 to 3.14, on Linux or on macOS on arm64. It installs the Python tools and the
-collections into `.cache`, and `tools/run` downloads the rest there.
+The gates are `shell`, `yamllint`, `sizecheck`, `vale`, `lychee`, `rumdl`, `actionlint`, `zizmor`,
+`gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
+([The gates](docs/gates.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
+It installs yamllint into `.cache`, and `tools/run` downloads the rest there.
+
 The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` builds ws and runs `ws server apply`
 twice in an Ubuntu 26.04 container, `signoz` forges SigNoz's compose files again, and `install`
 tries `install.sh`. `mac` sets up a Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's
 wizard on another. `mac-cld` sets up Ghostty and cld on a third
-([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of the playbook sets up the machine
-that runs it, as below.
+([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of `ws server apply` sets up the
+machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
 request's body, as they do, and prints 0 where it holds none:
@@ -88,30 +84,27 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 Each rule links where the repository gives its reason: a doc, a comment or a CI job.
 
-- The playbook sets up the machine that runs it: `site.yml` runs on localhost, over a local
-  connection, with the system's Python ([inventory.ini](inventory.ini)). CI's `playbook` job runs
-  it in a container ([The playbook](docs/checks.md#the-playbook)).
+- `ws server apply` sets up the machine that runs it. CI's `playbook` job runs it in a container
+  ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - A second run changes nothing: CI's `playbook` job runs it twice and fails where the second run
   reports a change ([ci.yml](.github/workflows/ci.yml)).
-- A task that needs a booted machine's systemd carries the tag `systemd`, which CI's container run
-  skips ([The playbook](docs/checks.md#the-playbook)).
+- A step that needs a booted machine's systemd checks `host.Booted`, and skips without it, as in
+  CI's container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `WS_WORDS`, and the job fails on an empty one
   ([Cutting a release](docs/releases.md#cutting-a-release)).
-- A pinned download is checked against its SHA-256 before use: otelcol's `.deb` and ikeward's
-  binary ([group_vars/all.yml](group_vars/all.yml)), Docker's apt key
-  ([its task](roles/docker/tasks/main.yml)), foundryctl ([ci.yml](.github/workflows/ci.yml)) and
-  the gates' tools ([tools/run](tools/run)). So is ws's binary, against its release's `ws.sha256`
-  ([install.sh](install.sh)), and so are the Python tools
+- A pinned download is checked against its SHA-256 before use: ikeward's
+  binary ([binary.go](internal/server/ikeward/binary.go)), otelcol's `.deb`
+  ([download.go](internal/server/otelcol/download.go)) and Docker's apt key
+  ([repository.go](internal/server/docker/repository.go)). So are foundryctl
+  ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
+  binary, against its release's `ws.sha256` ([install.sh](install.sh)), and so are yamllint
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([homebrew.go](mac/internal/wizard/homebrew.go)). The collections are checked by
-  [tools/collections](tools/collections) against the SHA-256 that Galaxy's API lists for the pins.
-  Go and the JetBrains backends are checked against the SHA-256 their publishers list
-  ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)). roslyn-language-server is
-  pinned by version alone ([group_vars/all.yml](group_vars/all.yml)).
-- The collections are pinned in `requirements.yml`, and ansible-lint runs offline on those pins
-  ([.ansible-lint](.ansible-lint)).
-- foundryctl forges SigNoz's compose files, `roles/signoz/files/deployment/` and
+  ([homebrew.go](internal/wizard/homebrew.go)). Go and the JetBrains backends are checked against
+  the SHA-256 their publishers list ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)).
+  roslyn-language-server is pinned by version alone
+  ([pins.go](internal/server/helix/pins.go)).
+- foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
   ([The compose files](docs/signoz.md#the-compose-files)).
@@ -124,11 +117,11 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([The hooks](docs/checks.md#the-hooks)).
 - `make lint` fails on any finding, warnings included, in any line of any file
   ([The gates](docs/gates.md); #47).
-- Fix a finding, or justify it in place with its linter's own mechanism and a reason: ruff's and
-  ansible-lint's `# noqa: CODE`, `# yamllint disable-line rule:NAME` or
+- Fix a finding, or justify it in place with its linter's own mechanism and a reason:
+  `//nolint:NAME // reason`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
   exclusion or keep a baseline: every file passes every gate outright, and `.yamllint`,
-  `.ansible-lint`, `ruff.toml` and `.vale.ini` are never weakened.
+  `.golangci.yml` and `.vale.ini` are never weakened.
 - The caps are those of the
   [writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md#the-caps-and-vale)
   skill, which `make sizecheck`, `make vale` and `make rumdl` check.
@@ -141,7 +134,7 @@ skill. Commits are signed, as the ruleset on `main` requires.
 
 ## Where else to look
 
-- `.claude/rules/`, loaded with the files they cover. [roles.md](.claude/rules/roles.md) has the
+- `.claude/rules/`, loaded with the files they cover. [server.md](.claude/rules/server.md) has the
   roles' invariants and [mac.md](.claude/rules/mac.md) the ws CLI's.
   [docs.md](.claude/rules/docs.md) says what each document holds. [writing.md](.claude/rules/writing.md)
   has ws's facts beside the `writing` skill.

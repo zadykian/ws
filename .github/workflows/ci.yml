@@ -13,8 +13,8 @@ permissions: {}
 
 jobs:
   # make lint, the one gate, with the tools it pins: tools/run's binaries, the Python tools of
-  # .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks, and
-  # requirements.yml's collections. Any finding fails it, warnings included.
+  # .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks. Any finding
+  # fails it, warnings included.
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -35,8 +35,8 @@ jobs:
           # zizmor's online audits, which look the actions up on GitHub, need a token.
           GH_TOKEN: ${{ github.token }}
 
-  # The playbook as on a new machine, but in a container rather than a booted system, so without
-  # the tasks tagged systemd. It runs twice, and the second run must change nothing.
+  # ws server apply as on a new machine, but in a container rather than a booted system, so without
+  # the steps that need a booted systemd. It runs twice, and the second run must change nothing.
   # In a stack, it runs on the top pull request alone, which holds every change below it, as do
   # mac.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these jobs kept its pull
   # requests waiting for runners past 50 minutes. Outside a stack, and on a push, stack is null,
@@ -56,7 +56,7 @@ jobs:
       # The home of root, as on a new machine, rather than the /github/home a container job gets.
       HOME: /root
     steps:
-      # curl fetches the Go and the collections that tools/build needs, and ca-certificates serves
+      # curl fetches the Go that tools/build needs, and ca-certificates serves
       # their HTTPS. There is no git, so the checkout has no .git and the build is devel.
       - name: Install curl
         env:
@@ -67,27 +67,30 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # CI builds ws from the tree, never from a release. The binary embeds the playbook.
+      # CI builds ws from the tree, never from a release.
       - name: Build ws
         run: tools/build linux amd64 /usr/local/bin/ws
-      # The swap file is small, as the runner's disk has no room for one the size of its RAM, and
-      # the JetBrains backends are left out, as it has none for their 10 GB either.
-      - name: Apply
+      # The values file holds what the job changes of the defaults: the swap file is small, as the
+      # runner's disk has no room for one the size of its RAM, and the JetBrains backends are left
+      # out, as it has none for their 10 GB either.
+      - name: Write the values
         run: |
-          ws server apply -- --skip-tags systemd -e base_swap_size_mb=64 \
-              -e '{"jetbrains_backends": []}'
+          install -d -m 755 /etc/ws
+          printf '%s\n' --- 'base_swap_size_mb: 64' 'jetbrains_backends: []' >/etc/ws/host_vars.yml
+          chmod 600 /etc/ws/host_vars.yml
+      - name: Apply
+        run: ws server apply
+      # ws's last line names the roles that changed. The second run must name none.
       - name: Apply again, changing nothing
         shell: bash
         run: |
-          ws server apply -- --skip-tags systemd -e base_swap_size_mb=64 \
-              -e '{"jetbrains_backends": []}' | tee "$RUNNER_TEMP/again.log"
-          if ! grep -Eq '^localhost +: ok=[0-9]+ +changed=0 +unreachable=0 +failed=0 ' \
-              "$RUNNER_TEMP/again.log"; then
-              echo '::error::The second run of the playbook changed something.'
+          ws server apply 2>&1 | tee "$RUNNER_TEMP/again.log"
+          if [ "$(tail -n 1 "$RUNNER_TEMP/again.log")" != 'ws server apply: changed: none' ]; then
+              echo '::error::The second run of ws server apply changed something.'
               exit 1
           fi
-      # The run leaves out its own nft -c under --skip-tags systemd. This checks the outbound table
-      # it wrote, and the users the table names, which the play's packages make.
+      # The container has no booted systemd, so the run leaves out its own nft -c. This checks the
+      # outbound table it wrote, and the users the table names, which the steps make.
       - name: Check the outbound table
         run: nft -c -f /usr/local/lib/ws/security/outbound.nft
 
@@ -107,9 +110,10 @@ jobs:
       - name: The cases
         run: .github/install-checks.sh
 
-  # SigNoz's compose files in roles/signoz/files are foundryctl's, forged from casting.yaml there.
-  # Forged again into an empty directory, as foundryctl never removes a file, they must be the same.
-  # Only what it forges is compared, so the role may keep other files beside them.
+  # SigNoz's compose files in internal/server/signoz are foundryctl's, forged from the casting
+  # there. Forged again into an empty directory, as foundryctl never removes a file, they must be
+  # the same.
+  # Only what it forges is compared, so the package may keep other files beside them.
   signoz:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -138,11 +142,11 @@ jobs:
         run: |
           forged="$RUNNER_TEMP/forged"
           mkdir "$forged"
-          cp roles/signoz/files/casting.yaml "$forged"
+          cp internal/server/signoz/casting.yaml "$forged"
           foundryctl forge --no-ledger --no-updater -f "$forged/casting.yaml" -p "$forged"
           status=0
           for file in "$forged"/*; do
-              diff -r "roles/signoz/files/${file##*/}" "$file" || status=1
+              diff -r "internal/server/signoz/${file##*/}" "$file" || status=1
           done
           if [ "$status" -ne 0 ]; then
               echo '::error::foundryctl forges other files from casting.yaml: forge them again.'

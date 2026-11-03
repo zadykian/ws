@@ -1,16 +1,26 @@
 # devtools
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
-Go and rustup.
+Go and rustup. It runs as Go steps in [internal/server/devtools](../internal/server/devtools): the
+repositories, the packages, Go and rustup, in this order.
 
 Node comes from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's
 archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again,
-and a key goes in only where it holds one certificate, whose fingerprint the role pins. A subkey
-added to that certificate passes, and a second certificate fails the run.
+and a key goes in only where it holds one certificate, whose fingerprint the package pins. A subkey
+added to that certificate passes, and a second certificate fails the run. The package reads the
+key's packets itself, as `gpg` is not on every machine. A packet it cannot parse fails the run,
+and only keys of version 4 and 6 pass. A repository that is no longer needed loses its
+`.sources` file and its key, and so do the sources that the repositories' own instructions add.
 
-Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it,
-and is replaced when `group_vars/all.yml` pins another version. rustup installs Rust's stable
-toolchain in the user's home. Once there, it updates itself, so the playbook leaves it alone.
+The packages wait on the repositories: `ws server apply --check` says "after Devtools
+repositories" where a repository is still to come, as apt may not know the packages then. The
+libraries for Chromium go in without recommends.
+
+Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it.
+ws unpacks the tarball beside the target and moves the tree into place whole, so that a run cut
+short never passes for the version. A new `GoVersion` in `internal/server/devtools/pins.go` replaces
+the Go there, and the Go that builds helix's gopls. rustup installs Rust's stable toolchain in the
+user's home. Once there, rustup updates itself, so ws leaves it alone.
 
 ## The signing key
 

@@ -1,7 +1,7 @@
 # network
 
-The `network` role sets up the server's end of a cable to the Mac, `10.77.0.1/30` on the port
-`network_direct_link_interface` names, from a netplan file.
+The `network` role, Go steps in `internal/server/network`, sets up the server's end of a cable to
+the Mac, `10.77.0.1/30` on the port `network_direct_link_interface` names, from a netplan file.
 
 ## The direct link
 
@@ -14,10 +14,10 @@ server, as `ip link` names it, or let the Mac's wizard do it ([The cable](mac-wi
 network_direct_link_interface: enp5s0
 ```
 
-The file lives outside the playbook that ws embeds, so a new release keeps it. Every run reads it,
+The file lives outside ws, so a new release keeps it. Every run reads it,
 so none removes the direct link for want of the value.
 
-The `network` role then writes `/etc/netplan/60-direct-link.yaml`, which gives that interface
+The step then writes `/etc/netplan/60-direct-link.yaml`, which gives that interface
 `10.77.0.1/30` (`network_direct_link_address`), and no DHCP, gateway or DNS. netplan merges the
 file with the other files' entries of the port's name, as the installer's: its settings win, and
 its address joins theirs. Boot doesn't wait for the link, which is up only while the Mac is docked.
@@ -33,7 +33,9 @@ The run stops where the port looks like an uplink: it carries a default route, i
 table, or holds an IPv4 lease outside the direct link's subnet. A static address outside it, as an
 earlier run's, doesn't count, so `network_direct_link_address` can change.
 
-Before the file lands, the role checks it with netplan's other files in a scratch copy, in a dry
+A name with a slash or a space stops the run, as no interface has one.
+
+Before the file lands, the step checks it with netplan's other files in a scratch copy, in a dry
 run too. The run stops where netplan rejects them, and where an entry of another name fits the
 port. It fits by a `match:` of the port's name, MAC address or driver, or by its own name. A name
 counts where it fits the port's name or any of its alternative names, which `ip link` lists.
@@ -47,7 +49,7 @@ Wi-Fi passwords, so the run prints none of them, even with `-v`. A networkd file
 source, in `/etc/systemd/network`, goes unchecked.
 
 A machine without the interface, as a cloud VM or CI's container, is left alone, and the run says
-so. With the variable empty, as by default, the role removes the file, and the address goes.
+so. With the variable empty, as by default, the step removes the file, and the address goes.
 
 A change takes effect through `netplan generate`, then `networkctl reload`. netplan writes
 networkd's files anew for every interface it sets up, so networkd sets up each of those links

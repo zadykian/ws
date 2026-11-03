@@ -2,8 +2,8 @@
 
 The Mac's wizard sets up ws on one of three machines, which `mac.conf`'s `WS_TARGET` names
 ([The answers](mac-wizard.md#the-answers)). Each target sets the questions of ws's ways and their
-defaults, and what a few stages do. ws's playbook is the same on each, but for the outbound table on
-a cloud VM.
+defaults, and what a few stages do. `ws server apply` is the same on each, but for the outbound
+table on a cloud VM.
 
 ## A machine on the LAN
 

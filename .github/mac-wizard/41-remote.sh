@@ -3,24 +3,22 @@
 # over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins.
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
-# off. A full run must run ws server apply -- without arguments in a unit of its own, with root's HOME and
+# off. A full run must run ws server apply without arguments in a unit of its own, with root's HOME and
 # a UTF-8 locale, print its log and exit 0. It must stamp ws's version, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
-# unit of its own, as must one with -e security_outbound=false, which is full too, stamps off in
-# run, and names security_outbound: false in
-# /etc/ws/host_vars.yml itself, a file of mode 0600 in a directory of 0755. One with another argument, as
-# --diff, must leave that stamp. The files script's bundle must print the path for a bundle of
-# another repository's origin/main, where ws lacks the clone. Its clone from the bundle sent there
-# must be on main with its origin on GitHub, remove the bundle, and have an apply.sh that must run
-# as root over ssh, its stdin empty. Its stamp must follow, which status must list. Its clone again
-# must leave the clone, and remove the stamp, and another owner's must stop. Its bundle where ws has
-# the clone must print nothing, and its clone with no bundle, or from one cut short, must stop,
-# leaving no clone. Its words must print git's hash of root's word list, or
+# unit of its own, as must one after outbound, which stamps off in run, as /etc/ws/host_vars.yml,
+# a file of mode 0600 in a directory of 0755, names security_outbound: false. One with an argument, as
+# --diff, must leave that stamp. The files script's arch must print amd64 or arm64. Its stage must
+# stop without a tag, and print the path for a command of another repository's release. Its install
+# of the command sent there must stop where the SHA-256 is another, and else leave the command at
+# bin in state, root's alone, mode 700, which must run as root over ssh, its stdin empty. Its stamp
+# must follow, which status must list. Its install again must remove the stamp, and with nothing
+# sent stop. Its have must print the command's path, but not another tag's. Its words must print git's hash of root's word list, or
 # - without one, and the list for that hash alone. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
-# ws's /etc/ws/host_vars.yml once, and ws server apply -- --tags network,wireguard then give it 10.77.0.1, and
+# ws's /etc/ws/host_vars.yml once, and ws server apply --only network,wireguard then give it 10.77.0.1, and
 # status's cable name it. The remote script's outbound must add security_outbound: false there once,
 # which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
 # must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
@@ -109,10 +107,10 @@ printf '%s\n' "$out" | grep -qx 'PLAY RECAP' && [ "$status" = 0 ] &&
 tail -n 1 "$ws/run.log" | grep -q -- '--collect .* --setenv=LC_ALL=C.UTF-8 --setenv=HOME=/root ' ||
     error "a full run's unit lacked root's HOME or a UTF-8 locale"
 echo 3 >"$ws/server.status"
-remote run --tags devtools
+remote run --only devtools
 [ "$status" = 3 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(unit)" != "$full" ] &&
     [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $(unit) 3" ] &&
-    [ "$(tail -n 1 "$ws/server.log")" = '--tags devtools' ] ||
+    [ "$(tail -n 1 "$ws/server.log")" = '--only devtools' ] ||
     error "a tagged run exited $status"
 rm "$ws/server.status"
 echo 4 >"$ws/server.wait"
@@ -124,7 +122,7 @@ until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
     tries=$((tries + 1))
 done
 n=$(units)
-remote run --tags other
+remote run --only other
 wait "$first"
 first=$?
 printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: following ws-wizard-' &&
@@ -141,16 +139,16 @@ remote run
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on" ] ||
     error "the run after it exited $status, with run '$(stamp run)'"
 sudo rm "$stamps/run"
-remote run -e security_outbound=false
-[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] &&
-    [ "$(tail -n 1 "$ws/server.log")" = '-e security_outbound=false' ] ||
-    error "a full run with -e exited $status, with run '$(stamp run)'"
+remote outbound
+remote run
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] ||
+    error "a full run after outbound exited $status, with run '$(stamp run)'"
 host_vars="$ws/root"/etc/ws
 sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
-    error "a full run with -e named no security_outbound: false in host_vars"
+    error "outbound named no security_outbound: false in host_vars"
 [ "$(sudo stat -f %Lp "$host_vars")" = 755 ] &&
     [ "$(sudo stat -f %Lp "$host_vars/host_vars.yml")" = 600 ] ||
-    error "a full run with -e made /etc/ws or its host_vars.yml with another mode"
+    error "outbound made /etc/ws or its host_vars.yml with another mode"
 sudo rm -r "$host_vars"
 remote run --diff
 [ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off" ] || error "a run with --diff stamped run"
@@ -162,67 +160,58 @@ files() {
     printf '%s\n' "$out"
 }
 
-# send REPO: the files script's bundle op names a path on ws for a bundle of example/REPO's
-# origin/main, which goes there as the wizard sends it. Its apply.sh is a link to the stand-in
-# script, as the Mac's stand-in gh makes it.
+# send REPO: the files script's stage op names a path on ws for the command of example/REPO@v1.0.0,
+# which goes there as the wizard sends it. The command is hook-standin.sh, as the Mac's stand-in gh
+# downloads it. It sets sum to the command's SHA-256.
 send() {
     src=$RUNNER_TEMP/$1
-    rm -rf "$src"
-    git init -q -b main "$src"
-    ln -s "$(cd "$(dirname "$0")" && pwd)/ws-standin.sh" "$src/apply.sh"
-    git -C "$src" add apply.sh
-    git -C "$src" -c user.name=ws -c user.email=ws@example.com commit -q -m "$1"
-    git -C "$src" update-ref refs/remotes/origin/main HEAD
-    git -C "$src" bundle create -q "$src.bundle" origin/main
-    files bundle "example/$1"
-    [ "$status" = 0 ] && [ "$out" = "$stamps/hook-$1.bundle" ] ||
-        error "the files script's bundle of example/$1 exited $status, printing '$out'"
-    ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out" <"$src.bundle"
+    cp "$(cd "$(dirname "$0")" && pwd)/hook-standin.sh" "$src"
+    sum=$(shasum -a 256 <"$src" | cut -d ' ' -f 1)
+    files stage "example/$1@v1.0.0"
+    [ "$status" = 0 ] && [ "$out" = "$stamps/hook-$1.bin" ] ||
+        error "the files script's stage of example/$1 exited $status, printing '$out'"
+    ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out" <"$src"
 }
 
-hook=$ws/root/root/repository/hook
+bin=$stamps/bin/hook-v1.0.0
+files arch
+case $out in amd64 | arm64) ;; *) error "the files script's arch printed '$out'" ;; esac
+files stage example/hook
+printf '%s\n' "$out" | grep -qF "is not a release" && [ "$status" = 1 ] ||
+    error "the files script's stage with no tag exited $status"
 send hook
-files clone example/hook
-[ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: cloned example/hook into $hook" ] &&
-    [ -x "$hook/apply.sh" ] || error "the files script's clone exited $status"
-ssh -o BatchMode=yes ws-ssh /root/repository/hook/apply.sh </dev/null &&
-    grep -qx 'root: /root/repository/hook/apply.sh' "$ws/log" &&
+files install example/hook@v1.0.0 "$(printf %s bad | shasum -a 256 | cut -d ' ' -f 1)"
+[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'not the one the Mac checked' &&
+    [ ! -e "$stamps/hook-hook.bin" ] && [ ! -e "$bin" ] ||
+    error "the files script's install of another sum exited $status, or installed"
+send hook
+files install example/hook@v1.0.0 "$sum"
+[ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: installed example/hook@v1.0.0 at $bin" ] &&
+    [ "$(sudo stat -f '%Lp %Su' "$bin")" = '700 root' ] &&
+    [ "$(sudo stat -f '%Lp' "${bin%/*}")" = 700 ] && [ ! -e "$stamps/hook-hook.bin" ] ||
+    error "the files script's install exited $status, or left the command other than root's alone"
+ssh -o BatchMode=yes ws-ssh /var/lib/ws-wizard/bin/hook-v1.0.0 apply </dev/null &&
+    grep -qx 'root: /var/lib/ws-wizard/bin/hook-v1.0.0 apply' "$ws/log" &&
+    [ "$(cat "$ws/hook.args")" = apply ] &&
     [ "$(cat "$ws/apply.log")" = "$(shasum -a 256 </dev/null | cut -d ' ' -f 1)" ] ||
-    error "the clone's apply.sh ran other than as root, once, with its stdin empty"
-files stamp example/hook
-[ "$status" = 0 ] &&
-    [ "$(stamp hook-hook)" = "$(sudo git -C "$hook" rev-parse HEAD) 0 example/hook" ] ||
+    error "the command ran other than as root, once, with its stdin empty"
+files stamp example/hook@v1.0.0
+[ "$status" = 0 ] && [ "$(stamp hook-hook)" = "$sum 0 example/hook@v1.0.0" ] ||
     error "the files script's stamp exited $status, leaving '$(stamp hook-hook)'"
+files have example/hook@v1.0.0
+[ "$out" = "$bin" ] || error "the files script's have printed '$out'"
 remote status
-printf '%s\n' "$out" | grep -qx 'hook example/hook' || error "status listed no example/hook"
-files clone example/hook
-[ "$status" = 0 ] && [ -z "$out" ] && [ "$(stamp hook-hook)" = - ] ||
-    error "the files script's clone again exited $status"
-files clone other/hook
-[ "$status" = 1 ] && [ "$out" = "wizard-remote-files.sh: $hook is not other/hook's clone, its \
-origin 'https://github.com/example/hook.git': move it aside" ] ||
-    error "the files script's clone of another owner's repository exited $status"
-pack=$ws/root/root/repository/pack
-send pack
-files clone example/pack
-[ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: cloned example/pack into $pack" ] &&
-    [ -x "$pack/apply.sh" ] && [ ! -e "$stamps/hook-pack.bundle" ] &&
-    [ "$(sudo git -C "$pack" remote get-url origin)" = https://github.com/example/pack.git ] &&
-    [ "$(sudo git -C "$pack" rev-parse --abbrev-ref 'main@{upstream}')" = origin/main ] ||
-    error "the files script's clone from a bundle exited $status, or made another clone"
-files bundle example/pack
-[ "$status" = 0 ] && [ -z "$out" ] || error "its bundle where ws has the clone exited $status"
-sudo rm -rf "$pack"
-files clone example/pack
-[ "$status" = 1 ] && printf '%s\n' "$out" | grep -qF 'sent no bundle' && [ ! -e "$pack" ] ||
-    error "its clone with no bundle exited $status, or made a clone"
-files bundle example/pack
-echo cut | ssh -o BatchMode=yes ws-ssh "umask 077 && cat >$out"
-files clone example/pack
-[ "$status" = 1 ] && [ ! -e "$pack" ] && [ ! -e "${pack%/*}/.pack.part" ] &&
-    [ ! -e "$stamps/hook-pack.bundle" ] ||
-    error "its clone from a bundle cut short exited $status, or left a clone or the bundle"
-rm -rf "$RUNNER_TEMP"/hook "$RUNNER_TEMP"/hook.bundle "$RUNNER_TEMP"/pack "$RUNNER_TEMP"/pack.bundle
+printf '%s\n' "$out" | grep -qx 'hook example/hook@v1.0.0' || error "status listed no example/hook"
+send hook
+files install example/hook@v1.0.0 "$sum"
+[ "$status" = 0 ] && [ "$(stamp hook-hook)" = - ] ||
+    error "the files script's install again exited $status, or left the stamp"
+files install example/hook@v1.0.0 "$sum"
+printf '%s\n' "$out" | grep -qF 'the Mac sent none' && [ "$status" = 1 ] ||
+    error "the files script's install with nothing sent exited $status"
+files have example/hook@v1.0.1
+[ "$status" = 0 ] && [ -z "$out" ] || error "the files script's have of another tag exited $status, printing '$out'"
+rm -f "$RUNNER_TEMP/hook"
 list=$ws/root/root/.config/ws/forbidden-words
 files words
 [ "$status" = 0 ] && [ "$out" = - ] || error "the files script's words with no list exited $status"
@@ -262,11 +251,11 @@ files link enp5s0
 [ "$status" = 0 ] && [ -z "$out" ] || error "its link enp5s0 again exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable -' || error "status named a cable before the roles' run"
-remote run --tags network,wireguard
+remote run --only network,wireguard
 files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
-    [ "$(tail -n 1 "$ws/server.log")" = '--tags network,wireguard' ] ||
-    error "ws server apply -- --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
+    [ "$(tail -n 1 "$ws/server.log")" = '--only network,wireguard' ] ||
+    error "ws server apply --only network,wireguard gave enp5s0 no 10.77.0.1/30"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
 remote outbound
@@ -293,7 +282,7 @@ printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$s
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
-sudo rm -rf "$hook" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
+sudo rm -rf "$stamps/bin" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
-rm -f "$ws/apply.log" "$ws/uplink"
+rm -f "$ws/apply.log" "$ws/hook.args" "$ws/uplink"
 exit "$fail"

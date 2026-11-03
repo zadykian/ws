@@ -7,11 +7,9 @@ ignore: |
   .cache/
   .claude/
   .git/
-  roles/signoz/files/deployment/
+  internal/server/signoz/deployment/
 
 rules:
-  # The comments, braces and octal-values settings are those ansible-lint requires of a yamllint
-  # configuration it runs with.
   comments:
     min-spaces-from-content: 1
   comments-indentation: false

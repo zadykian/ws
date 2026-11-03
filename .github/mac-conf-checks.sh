@@ -6,7 +6,7 @@
 # domain show in scutil --dns. A second run and --check must print nothing. Emptied or removed, the
 # keys must take both back, and spare a script's own files. Each failure prints an ::error:: line,
 # and any fails the script at its end. Last, it runs mac-setup-checks.sh, whose cases run ws
-# setup's own steps. mac.conf's rules are go test's (mac/internal/conf).
+# setup's own steps. mac.conf's rules are go test's (internal/conf).
 #
 # shellcheck source-path=SCRIPTDIR/..
 

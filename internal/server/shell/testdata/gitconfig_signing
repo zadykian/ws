@@ -1,0 +1,32 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. Settings of
+# this machine's own go in ~/.config/git/local, included below.
+[user]
+	name = zadykian
+	email = me@zadykian.dev
+# Each commit signed with the machine's SSH key, which the allowed signers file trusts for the
+# email above. The public key's path, so that an agent holding the key signs too; otherwise
+# ssh-keygen reads the private key beside it.
+	signingkey = /home/ws/.ssh/id_ed25519_signing.pub
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = /home/ws/.config/git/allowed_signers
+[commit]
+	gpgsign = true
+# GitHub CLI's credential helper, byte for byte as `gh auth setup-git` writes it, the space after
+# the empty helper's = included, so that running that changes nothing here. The empty helper
+# drops any set before it.
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+# The helpers of git's tokens for servers besides GitHub, in a file of the role's that a run
+# without shell_git_credentials leaves alone. After gh's helper, so that an entry for a path on
+# GitHub wins below it. git skips it where the file is missing.
+[include]
+	path = ~/.config/git/tokens.gitconfig
+# Last, so that its settings win. git skips it where the file is missing.
+[include]
+	path = ~/.config/git/local

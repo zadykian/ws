@@ -33,7 +33,7 @@ Put `~/.local/bin` on `PATH` by hand.
 CI's `install` job runs [install-checks.sh](../.github/install-checks.sh) on each pull request. It
 builds ws for Linux on amd64 at tags it makes and removes again, so that `ws version` prints them. It
 lays four releases out in a temporary directory, and serves them on loopback with
-[release-standin.py](../.github/release-standin.py), which answers `/latest` with GitHub's redirect.
+[serve-releases](../tools/serve-releases/main.go), which answers `/latest` with GitHub's redirect.
 The cases:
 
 - a named release installs, and a second run, for the latest, updates it;
