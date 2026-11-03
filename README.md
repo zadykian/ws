@@ -32,8 +32,8 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
 - [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and its config for the Go and C#
   servers.
-- [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL and Docker, and the open-file
-  limit that it needs.
+- [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the npm
+  servers, and the open-file limit that it needs.
 - [`jetbrains`](docs/jetbrains.md): the backends of Rider and GoLand that JetBrains Gateway runs.
 
 `mac/` sets up the Mac that works on the server, and Ghostty on it: [The Mac](docs/mac.md).

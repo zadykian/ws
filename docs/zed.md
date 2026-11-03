@@ -33,9 +33,12 @@ arguments. It sets `terminal.shell` to `system`, Zed's default. A program set in
 
 - Zed's server, about 39 MB. ws's own curl fetches it from Zed's release server for each Mac
   version, with no checksum from Zed.
-- The extensions, the servers they download other than the two below, and `delve-shim-dap`. Zed
+- The extensions, the servers they download other than those below, and `delve-shim-dap`. Zed
   fetches the shim's latest release from GitHub when the server first needs it, so pinning Delve
   does not remove it.
+- Zed's own JSON, CSS and YAML servers, and Prettier, which Zed fetches at their latest. The
+  pinned `vscode-langservers-extracted` also ships the JSON and CSS servers. Linking their bins
+  onto PATH would serve Zed's adapters, which ws does not do.
 - Zed's Node is not on the list. It uses ws's Node 24 from PATH ([devtools](devtools.md)), and
   downloads its own only where it finds no Node 22 or newer.
 
@@ -46,6 +49,7 @@ ws has the internet ([outbound](security.md#outbound)), so the download works.
 
 The gopls, Delve and Roslyn that ws pins are not on the list ([devtools](devtools.md)). Nor are
 postgres-language-server and docker-language-server, which the role checks against a SHA-256.
+Nor are the npm servers, which the role checks against the sha512 `integrity` of a lockfile.
 
 ## The Go and C# servers
 
@@ -111,6 +115,39 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
   the LAN hangs for `db.connTimeoutSecs`, 10 by default. Loopback, Docker and `ikeward0` work.
 - To bump a pin, read the digests with the `gh api` command in `binaries.go` and check a download
   with `sha256sum`. A bumped postgres-language-server may need its daemon stopped.
+
+## The npm servers
+
+The role installs four packages into `~/.local/lib/zed-servers`, owned by `ws_user`, from the
+`package.json` and `package-lock.json` in `internal/server/zed/servers`:
+
+- `@ansible/ansible-language-server`, for Ansible.
+- `@zed-industries/vscode-langservers-extracted`, whose HTML server Zed installs by default.
+- `dockerfile-language-server-nodejs`, rcjsuen's server, beside Docker's own.
+- `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
+  the bare command.
+
+`npm ci --ignore-scripts` runs as `ws_user`. It fails where the lock and `package.json` disagree or
+a sha512 `integrity` differs, so these downloads are checked, though not against a SHA-256. The
+step keeps `node_modules/.ws-sha256`, the digest of both files, and runs again where it differs. It
+needs the Node packages of the `devtools` role: `--check` before them plans the install, and the run
+fails naming `devtools`.
+
+The settings name the three servers by path, with `--stdio`, so Zed skips its npm lookup of their
+latest versions. They also set `node.path`, so Zed never downloads a Node. HTML formats through its
+server, so Zed installs no Prettier.
+
+To bump a package:
+
+1. Edit its version in `package.json`.
+2. In `internal/server/zed/servers`, run `npm install --package-lock-only --ignore-scripts
+   --no-audit --no-fund`.
+3. Commit both files, after checking each `integrity` against
+   `npm view PACKAGE@VERSION dist.integrity`.
+
+`go test` checks that the lock pins each package at its version. ansible-language-server 26.6.0 is
+npm's latest. It lacks the didSave fix (vscode-ansible#2765), so reopen a file whose lint results
+vanish after an edit.
 
 ## Secrets in ssh's arguments
 
