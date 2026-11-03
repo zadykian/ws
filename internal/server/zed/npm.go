@@ -16,7 +16,13 @@ const npmBin = "/usr/bin/npm"
 // serversDir is where the npm servers install. The steps and the settings both name it.
 func serversDir(home string) string { return home + "/.local/lib/zed-servers" }
 
-// serverFiles returns the directories and the two files of the lock, then the install they feed.
+// formatterLink puts sql-formatter on every PATH, root's, so a project's settings name the bare
+// command. The target exists only after npm ci: Link compares the link alone, so a --check before
+// the first install plans it.
+const formatterLink = "/usr/local/bin/sql-formatter"
+
+// serverFiles returns the directories and the two files of the lock, the install they feed and
+// sql-formatter's link.
 // ~/.local and ~/.local/lib are made only where missing, as root's would break the user's own
 // tools, such as claude and pip --user.
 func serverFiles(m effect.Machine, user host.User, uid, gid int) ([]host.Resource, error) {
@@ -36,7 +42,8 @@ func serverFiles(m effect.Machine, user host.User, uid, gid int) ([]host.Resourc
 		parts = append(parts, host.File{M: m, Path: dir + "/" + name, Content: content, Mode: 0o644,
 			UID: uid, GID: gid})
 	}
-	return append(parts, npmInstall{M: m, User: user, UID: uid, GID: gid, Digest: fmt.Sprintf("%x", sum.Sum(nil))}), nil
+	return append(parts, npmInstall{M: m, User: user, UID: uid, GID: gid, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
+		host.Link{M: m, Path: formatterLink, Target: dir + "/node_modules/.bin/sql-formatter"}), nil
 }
 
 // npmInstall runs npm ci. Plan cannot see the files written earlier in the step, so a stamp of

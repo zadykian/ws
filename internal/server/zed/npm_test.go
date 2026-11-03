@@ -128,7 +128,29 @@ func TestTheStampIsTheDigestOfBothFiles(t *testing.T) {
 		b, _ := serversLock.ReadFile("servers/" + name)
 		h.Write(b)
 	}
-	if got := parts[len(parts)-1].(npmInstall).Digest; got != fmt.Sprintf("%x", h.Sum(nil)) {
+	if got := parts[len(parts)-2].(npmInstall).Digest; got != fmt.Sprintf("%x", h.Sum(nil)) {
 		t.Errorf("digest %s", got)
+	}
+}
+
+func TestTheFormatterLinkPlansBeforeItsTargetExists(t *testing.T) {
+	m := effecttest.NewMachine()
+	parts, err := serverFiles(m, host.User{Name: "ws", Home: "/home/ws"}, 1000, 1000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	link := parts[len(parts)-1]
+	changes, err := link.Plan(context.Background())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("%v, %v", changes, err)
+	}
+	if err := changes[0].Apply(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if m.Links[formatterLink] != wsDir+"/node_modules/.bin/sql-formatter" {
+		t.Errorf("link %q", m.Links[formatterLink])
+	}
+	if again, err := link.Plan(context.Background()); err != nil || len(again) != 0 {
+		t.Errorf("a dangling link plans %v, %v", again, err)
 	}
 }
