@@ -228,6 +228,10 @@ name the add before the key is made. Where `PATH` has no gh, `ws mac apply` must
 once, and only with git's keys ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where
 wireguard-go makes no utun, the job fails, as the daemon's device makes a utun too.
 
+A last case runs `ws mac secrets` on a throwaway keychain that is the default one
+([90-secrets.sh](../.github/mac/90-secrets.sh)). `init` must make the item `ws-secrets` and the
+secrets file, mode 600 in a directory of 700, and print no key. A second `init` must change nothing.
+
 ## The rules
 
 `.github/workflows/rules.yml` runs the checks of

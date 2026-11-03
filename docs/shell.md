@@ -74,13 +74,12 @@ in armor. `ws` decrypts it in its process with an X25519 identity. A run without
 CI's, has no secrets. [The Mac's secrets](mac-secrets.md) says the file's tables, its references
 and its values.
 
-The identity stays in the Mac's Keychain. `ws server apply` reads it from its standard input, as
-piped over ssh, or at a terminal with no echo. Encrypting needs the public recipient alone:
+The identity stays in the Mac's Keychain, made by `ws mac secrets init`
+([The identity](mac-secrets.md#the-identity)). `ws server apply` reads it from its standard input,
+as piped over ssh, or at a terminal with no echo:
 
 ```sh
-age-keygen -o identity.txt        # keep the file in the Keychain, then delete it
-age -r RECIPIENT -a -o secrets.age secrets.toml
-security find-generic-password -s NAME -w | ssh ws ws server apply --secrets /root/secrets.age
+security find-generic-password -s ws-secrets -w | ssh ws ws server apply --secrets /root/secrets.age
 ```
 
 The roles read these tables, and ws refuses any other key:

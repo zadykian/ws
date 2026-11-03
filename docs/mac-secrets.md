@@ -5,6 +5,15 @@ encrypts, in armor. Git never holds it. `ws server apply --secrets` decrypts it 
 ([The secrets file](shell.md#the-secrets-file)). A value is never in an error, a plan or a diff:
 they name kinds, names, keys and paths.
 
+## The identity
+
+`ws mac secrets init` makes the age identity in the process. It adds it to the Keychain as the item
+`ws-secrets`, by `security -i` with its command on the standard input, so the key is in no argument.
+An item that is there stays, and `init` says so. It also makes an empty
+`~/.config/ws/secrets.age` where none is, mode 600 in a directory of 700. Each command reads the
+identity by `security find-generic-password -w` into memory. The Secure Enclave is not used: age
+reads its keys by a plugin to install.
+
 ## The tables
 
 A table per kind. ws refuses a key it does not know, a key twice and a value of the wrong type. A
