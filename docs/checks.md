@@ -140,14 +140,12 @@ nothing.
 For the Hook on the Mac stage, the stand-in `gh` clones `WS_HOOK` with `.githooks` and an empty
 `Brewfile`. A run must clone it once, set its `core.hooksPath`, and name `gh auth setup-git` by
 hand, unless git's config names gh's credential command. For the Hook on ws stage, the stand-in
-`gh` serves a release, a command that logs its stdin's SHA-256, and its sums. `WS_HOOK_SECRET`
-names an item of a throwaway keychain. Without the item, a run with no terminal must stop, naming
-`security add-generic-password`. At a terminal of `script`'s, it must add the item at its prompts,
-and send the build once, root's alone. It must run `apply` once over plain ssh, its stdin the
-secret and no terminal, and ws must make no clone and use no gh. The next run must print nothing,
-and `--check` must run `apply --check`. An unreadable item must stop `--update` before `apply`, and
-a failed run leave no stamp. A new tag must replace the build and the stamp hold the tag. A bad
-sum or a missing release must stop the stage, sending nothing. For the Word list stage, the
+`gh` serves a release, a command that logs its stdin's SHA-256, and its sums. A run with no terminal
+must send the build once, root's alone. It must run `apply` once over plain ssh, its stdin empty
+and no terminal, and ws must make no clone and use no gh. The next run must print nothing, and
+`--check` must run `apply --check`. A failed run must leave no stamp. A new tag must replace the
+build and the stamp hold the tag. A bad sum or a missing release must stop the stage, sending
+nothing. For the Word list stage, the
 stand-in ws's list must go to the Mac once, mode 600, and none of it be printed. Once the Mac's
 differs, `--check` must show no diff, or stop at a link, as a run must. For the Cable stage, ws's
 ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and

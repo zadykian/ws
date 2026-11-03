@@ -56,13 +56,12 @@ the first two of which install what the rest needs:
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
 | A release of another repository whose command runs on ws, as `OWNER/REPO@vX.Y.Z` | `WS_HOOK` | none | always |
-| The Keychain item of its command's secret | `WS_HOOK_SECRET` | none | with a repository |
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
-first and the last two. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
+first and the last. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
 `WS_REMOTE` and `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the
 questions on the LAN, and [The wizard's targets](mac-targets.md) the others, with the keys that each
-refuses. [Another repository](mac-hook.md) explains the last two. The defaults are
+refuses. [Another repository](mac-hook.md) explains the last. The defaults are
 [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
 from the first of these that has one:
 
