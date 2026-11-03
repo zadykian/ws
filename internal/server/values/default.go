@@ -62,6 +62,7 @@ func Default() Values {
 			Address: "10.99.0.1/24", Port: 51820,
 			Peers: []WireguardPeer{{Name: "mac", Address: "10.99.0.2"}},
 		},
+		Zed: Zed{Nofile: 65536},
 	}
 }
 

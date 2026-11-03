@@ -5,6 +5,13 @@ type Helix struct {
 	Grammars []string `yaml:"helix_grammars"`
 }
 
+// Zed is roles/zed's keys.
+type Zed struct {
+	// Nofile is the soft limit of open files for ws_user's logins. Zed's server busy-loops past
+	// 1024 (docs/zed.md).
+	Nofile int `yaml:"zed_nofile"`
+}
+
 // Ikeward is roles/ikeward's keys.
 type Ikeward struct {
 	// Profile is the IKEv2 profile's .p12 file. Empty, the role does nothing.

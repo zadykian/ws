@@ -20,6 +20,15 @@ func TestParseEmptyGivesDefault(t *testing.T) {
 	}
 }
 
+func TestParseReadsZedNofile(t *testing.T) {
+	for in, want := range map[string]int{"": 65536, "zed_nofile: 4096\n": 4096} {
+		got, err := Parse([]byte(in))
+		if err != nil || got.Zed.Nofile != want {
+			t.Errorf("Parse(%q) = %d, %v; want %d", in, got.Zed.Nofile, err, want)
+		}
+	}
+}
+
 func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 	got, err := Parse([]byte("jetbrains_backends: []\nbase_swap_size_mb: 64\nsecurity_outbound: false\n"))
 	if err != nil {

@@ -31,6 +31,7 @@ type Values struct {
 	Shell     Shell     `yaml:",inline"`
 	Signoz    Signoz    `yaml:",inline"`
 	Wireguard Wireguard `yaml:",inline"`
+	Zed       Zed       `yaml:",inline"`
 }
 
 // Shared holds the keys that the roles share.
