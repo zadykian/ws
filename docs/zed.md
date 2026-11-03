@@ -75,3 +75,60 @@ There is no msbuild-lsp yet. Its v0.7.0 of 2026-07-24 is the latest release, and
 (msbuild-project-tools-server#145) is on master, unreleased. When a release has it, pin its
 `language-server.zip` by SHA-256, as otelcol's `.deb` is, name it in
 `lsp.msbuild-project-tools.binary`, and add `msbuild-lsp` to the Mac's extensions.
+
+## Secrets in ssh's arguments
+
+`~/.bashrc` sources `~/.secrets/env` above its interactive guard, so that non-interactive shells
+get the values too ([shell](shell.md)). Zed captures each project's environment with the login
+shell, `bash -l -i -c 'cd DIR; zed --printenv'`. So the capture holds every value of the
+`[env]` table of the secrets file ([Secrets](shell.md#secrets)).
+
+A Zed terminal or task on the Mac then goes out as `ssh -t ws "cd DIR && exec env 'NAME=VALUE' ...
+PROGRAM"`. The values are arguments of the Mac's `ssh`, visible to `ps` there while the terminal
+lives, and a failed command may reach `Zed.log`. Language servers and git stay on ws.
+
+- Keep in `[env]` only what shells need. The page documents this and filters nothing.
+- Nothing above the interactive guard of `.bashrc` may print: Zed's proxy speaks over an ssh whose
+  bash reads `~/.bashrc` non-interactively. `bash -lic 'echo ok'` must print `ok` alone.
+- Not reported upstream yet. Skipping the file where `BASH_EXECUTION_STRING` holds `--printenv`
+  would also keep the values from tasks, debug adapters and language servers (untested).
+
+## Open each project from Remote Projects
+
+A project that the agent panel opens starts no extension's server, gopls aside (zed#59871). The
+issue carries the `stale` label, so it may close with no fix: check before dropping this advice.
+
+## Trust each project
+
+Zed starts no language server for a worktree until you trust it, whatever a `binary.path` says. It
+applies no `.zed/settings.json` of that worktree either. Trust it when Zed asks, once for each
+worktree.
+
+- No per-host setting marks ws as trusted (zed#66313). The answer is stored for the ssh user, the
+  host and the path, and trusting a folder covers its subfolders.
+- `session.trust_all_worktrees` skips the check for every project, local ones too. ws sets none.
+  Whether the Mac's value reaches ws's server is untested.
+- Check trust first when a server never starts. ws's newest
+  `~/.local/share/zed/logs/server-*.log` says `Waiting for worktree ... to be trusted`.
+
+## The open-file limit
+
+`/etc/security/limits.d/ws-zed.conf` gives `ws_user` a soft limit of `zed_nofile` open files. sshd's
+logins start at 1024 on Ubuntu 26.04, and past it Zed's server busy-loops at high CPU while its
+reconnect proxies never exit (zed#62995). Zed raises the limit in its GUI alone.
+
+- The file names the user, as limits.conf(5) says a `*` line does not apply to root.
+- A new ssh login gets the limit through `pam_limits`. A running server keeps 1024 until it
+  restarts, which closing the project or quitting Zed does.
+- `ssh ws 'ulimit -Sn'` prints `zed_nofile` in a new login.
+
+## Limits
+
+- The project panel may not refresh when files change on ws (zed#29242).
+- There is no `zed FILE` from ws's terminal (zed#56057), and files outside the project cannot be
+  opened (zed#39695).
+- Files added outside the editor may need a restart of the language server (csharp#104).
+- gopls stays dead after a workspace load error, such as inconsistent vendoring (zed#54704).
+- Delve's "Rerun session" fails with a broken pipe (zed#62389).
+- After a reconnect that starts a new server, language servers may never start (zed#60923). Run
+  `editor: restart language server`. If all vanish, run `workspace: reload` (zed#60328, untested).
