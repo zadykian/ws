@@ -2,7 +2,7 @@
 # The stage Signing key, through standin.sh's gh and ws, on the Mac that 41-remote.sh leaves. With
 # ws's signing key off the Mac's gh login, --check must say it would run gh ssh-key add --type
 # signing, titled with ws's hostname, and change nothing. A run must add the key to the signing keys
-# alone, and list what stays by hand, with ws's gh login, as mac.conf names no WS_HOOK. The next run
+# alone, and list what stays by hand, which no longer holds ws's gh login. The next run
 # must print nothing. Where root's git config on ws names no signing key, a run must print nothing,
 # with the key off the login.
 
@@ -12,7 +12,7 @@ wsbin=$HOME/.local/bin/ws
 state=$RUNNER_TEMP/gh
 ws=$RUNNER_TEMP/ws
 key=$(cut -d ' ' -f 1-2 "$ws/signing.pub")
-login="- ws's gh login: gh auth login -h github.com --with-token"
+login="- macOS's local network:"
 add="gh ssh-key add --type signing --title $(hostname)"
 fail=0
 
@@ -41,6 +41,7 @@ printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qxF "ws mac wizard: Signing key: ran $add for ws's signing key" &&
     printf '%s\n' "$out" | grep -qx 'What stays by hand:' &&
     printf '%s\n' "$out" | grep -qF -e "$login" &&
+    ! printf '%s\n' "$out" | grep -qF "ws's gh login" &&
     [ "$status" = 0 ] &&
     [ "$(cat "$state/signing")" = "$key" ] && [ "$(grep -cxF "$key" "$state/keys")" = 0 ] ||
     error "ws mac wizard exited $status, adding other than the signing key to the signing keys"

@@ -8,7 +8,7 @@ import (
 )
 
 // Hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
-// remote script's status. ws's gh has a login by the command of WS_HOOK's repository, or else by hand.
+// remote script's status. ws's gh login is a step of ws server apply, by token.github, so it is not here.
 // mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only with a LAN. Off
 // the LAN, away's lines take the router's place.
 func (r *WsRun) Hand(ctx context.Context, h *Hand) {
@@ -16,10 +16,6 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 	_, c, err := loadConf(confFile{r.Host.Conf, runStage, r.Host.M, r.Host.Out})
 	if err != nil {
 		return
-	}
-	if c.Hook == "" {
-		h.Add("ws's gh login: gh auth login -h github.com --with-token on ws, with a fine-grained " +
-			"token, as mac.conf names no WS_HOOK (README.md, By hand).")
 	}
 	if r.Remote.Get("fans") == "refused" {
 		h.Add("ws's fans' driver: with Secure Boot on, DKMS's key, enrolled at ws's console " +

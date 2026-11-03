@@ -119,8 +119,8 @@ forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. Wi
 `standin.sh` logs ws's claude in, and the Mac's gh lists ws's signing key, so no run may open a
 session on ws for a login. A fresh `--check` must show the Signing key and claude on ws after ws's
 run. With the key off the gh login, `--check` must say it would run `gh ssh-key add --type signing`,
-titled with ws's hostname. A run must add it to the signing keys alone, and list ws's gh login by
-hand without `WS_HOOK`. The next must print nothing, as a run must where root's git config names no
+titled with ws's hostname. A run must add it to the signing keys alone, and list what stays by hand
+without ws's gh login. The next must print nothing, as a run must where root's git config names no
 key. Without claude's login, a run must stop at claude on ws, naming `claude auth login`, and
 `--check` must say it would run it. The next must print nothing.
 

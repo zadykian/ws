@@ -213,7 +213,8 @@ The stage is done where root's `~/.gitconfig` on ws names no signing key file, a
 public signing key. ws's `status` prints that key and its hostname. Else it runs `gh ssh-key add
 --type signing --title HOSTNAME` on the Mac, from a file in the lock. The Mac's gh login has the
 scope, and ws's token has no account permission, so ws adds nothing. `--check` says it would.
-Without `WS_HOOK`, the closing list names ws's gh login by hand ([By hand](../README.md#by-hand)).
+The closing list omits ws's gh login: `ws server apply` logs it in by the secrets file's
+`token.github` ([gh](devtools.md#gh)).
 
 ## claude on ws
 
