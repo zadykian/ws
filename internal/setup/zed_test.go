@@ -43,8 +43,9 @@ func TestZedFailedInstallIsAWarningAndTheSecondPlanIsEmpty(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(strings.Join(out.Lines, "\n"), "brew install --cask zed failed") {
-		t.Errorf("out %v; want a warning", out.Lines)
+	_, wrote := m.Files["/h/.config/zed/global_settings.json"]
+	if wrote || !strings.Contains(strings.Join(out.Lines, "\n"), "brew install --cask zed failed") {
+		t.Errorf("out %v, wrote Zed's files %v; want a warning and no files", out.Lines, wrote)
 	}
 	if p, err = s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)
@@ -79,5 +80,31 @@ func TestZedFirstRunMakesTheDirectoriesAndWritesTheFile(t *testing.T) {
 	}
 	if p, err = s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)
+	}
+}
+
+func TestZedWarnsOfAFileNotItsOwn(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := zedStep(m, out)
+	m.Files["/h/.config/zed/global_settings.json"] = []byte("{}\n")
+	p, err := s.Plan(context.Background())
+	if err != nil || !strings.Contains(strings.Join(out.Lines, "\n"), "is not ws's: move it away") {
+		t.Errorf("Plan = %v, %v, out %v; want a warning", p.Changes, err, out.Lines)
+	}
+	for _, c := range p.Changes {
+		if strings.Contains(c.String(), "global_settings.json") {
+			t.Errorf("Plan = %v; want the file left", p.Changes)
+		}
+	}
+}
+
+func TestZedWarnsOfALinkedDirectoryWhereAWriteIsPlanned(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := zedStep(m, out)
+	m.Dirs["/h/.config/zed"] = 0o755
+	m.Links["/h/.config/zed"] = "/dots/zed"
+	if _, err := s.Plan(context.Background()); err != nil || len(out.Lines) != 1 ||
+		!strings.Contains(out.Lines[0], "is a link to /dots/zed: Zed's files go there") {
+		t.Errorf("out %v; want the link's warning", out.Lines)
 	}
 }
