@@ -38,7 +38,7 @@ A workflow of its own, `mac-wizard.yml`, runs `ws mac wizard` on GitHub's macOS 
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and user would,
 such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`. Then
 `checks.sh` runs the cases beside it in order, stopping at the first failure
-([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown argument, root and
+([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and
 a removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
 where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find brew with its
 directories off `PATH`. As `ws mac apply --check` must, it must change nothing, and leave no lock or
