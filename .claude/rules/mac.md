@@ -25,6 +25,10 @@ module is at the root), each linking its reason
   [effecttest](../../effect/effecttest/effecttest.go), never the real ones.
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
-- A group of commands exists on the systems where it runs. `ws mac` is `macCommand`, which is built
-  everywhere and tested on Linux. Its entry in the table of groups is in a `//go:build darwin` file
-  ([groups_darwin.go](../../cmd/ws/groups_darwin.go)).
+- ws is cobra's: a command parses no flag or argument by hand and holds no usage text. ws mac is the
+  exception until its commands are ported: it passes its arguments to `macCommand`.
+  `execute` runs the root, names the command in each error, and returns 2 for a usage error. A
+  group of commands exists on the systems where it runs. `newMacCmd` is built everywhere and tested
+  on Linux, and `groups` lists it in a `//go:build darwin` file
+  ([groups_darwin.go](../../cmd/ws/groups_darwin.go)). Commands take what they need from the
+  process through `process`, which tests build from fakes.
