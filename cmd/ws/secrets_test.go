@@ -27,10 +27,10 @@ func env(k string) string {
 func TestSecretsUsage(t *testing.T) {
 	for _, args := range [][]string{nil, {"init", "x"}, {"nope"}} {
 		var out, errb bytes.Buffer
-		if got := secretsCommand(context.Background(), args, effecttest.NewMachine(), env, &out, &errb); got != 2 {
+		if got := secretsCommand(context.Background(), args, effecttest.NewMachine(), env, strings.NewReader(""), &out, &errb); got != 2 {
 			t.Errorf("%q: status = %d, want 2", args, got)
 		}
-		if !strings.Contains(errb.String(), "usage: ws mac secrets init") {
+		if !strings.Contains(errb.String(), "usage: ws mac secrets COMMAND") {
 			t.Errorf("%q: stderr = %q, want the usage", args, errb.String())
 		}
 	}
@@ -43,7 +43,7 @@ func TestSecretsInitMakesTheItemAndTheFile(t *testing.T) {
 	m.Results["security -i"] = effecttest.Result{}
 	m.Results[kcFind+" -w"] = effecttest.Result{Out: []byte(id.String() + "\n")}
 	var out, errb bytes.Buffer
-	if got := secretsCommand(context.Background(), []string{"init"}, m, env, &out, &errb); got != 0 {
+	if got := secretsCommand(context.Background(), []string{"init"}, m, env, strings.NewReader(""), &out, &errb); got != 0 {
 		t.Fatalf("status = %d, stderr %q", got, errb.String())
 	}
 	if m.Modes[file] != 0o600 || m.Dirs[home+"/.config/ws"] != 0o700 {
@@ -63,7 +63,7 @@ func TestSecretsInitKeepsWhatIsThere(t *testing.T) {
 	m.Results[kcFind] = effecttest.Result{}
 	m.Files[file] = []byte("kept")
 	var out, errb bytes.Buffer
-	if got := secretsCommand(context.Background(), []string{"init"}, m, env, &out, &errb); got != 0 {
+	if got := secretsCommand(context.Background(), []string{"init"}, m, env, strings.NewReader(""), &out, &errb); got != 0 {
 		t.Fatalf("status = %d, stderr %q", got, errb.String())
 	}
 	if string(m.Files[file]) != "kept" || len(m.Inputs) != 0 {

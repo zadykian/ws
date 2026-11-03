@@ -13,9 +13,13 @@ import (
 	"github.com/zadykian/ws/internal/secrets"
 )
 
-const secretsUsage = "usage: ws mac secrets init\n\n" +
+var errUsage = errors.New("usage")
+
+const secretsUsage = "usage: ws mac secrets COMMAND\n\n" +
 	"  init  make ws's age identity in the Keychain, as the item ws-secrets, and an empty\n" +
-	"        ~/.config/ws/secrets.age; an item there stays\n"
+	"        ~/.config/ws/secrets.age; an item there stays\n" +
+	"  unset KIND NAME  drop an entry\n" +
+	"  keys  print each entry as KIND NAME, never a value\n"
 
 //nolint:gosec // G101: the path of the encrypted file, no credential
 const secretsFile = ".config/ws/secrets.age"
@@ -23,20 +27,31 @@ const secretsFile = ".config/ws/secrets.age"
 // secretsCommand runs ws mac secrets, which keeps the secrets file in memory and the identity in
 // the Keychain.
 func secretsCommand(ctx context.Context, args []string, m effect.Machine, getenv func(string) string,
-	stdout, stderr io.Writer) int {
+	stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		_, _ = io.WriteString(stderr, secretsUsage)
 		return 2
 	}
-	if args[0] == "init" && len(args) == 1 {
+	store := newSecretsStore(m, getenv)
+	var err error
+	switch {
+	case args[0] == "init" && len(args) == 1:
 		return secretsInit(ctx, m, getenv, stdout, stderr)
+	case args[0] == "unset" && len(args) == 3:
+		err = store.edit(ctx, func(c *secrets.Secrets) error { return c.Unset(args[1], args[2]) })
+	case args[0] == "keys" && len(args) == 1:
+		err = secretsKeys(ctx, store, stdout)
+	default:
+		err = errUsage
 	}
-	if args[0] == "init" {
+	if errors.Is(err, errUsage) {
 		_, _ = io.WriteString(stderr, secretsUsage)
 		return 2
 	}
-	_, _ = fmt.Fprintf(stderr, "ws mac secrets: unknown command %q\n\n%s", args[0], secretsUsage)
-	return 2
+	if err != nil {
+		return secretsFail(stderr, err)
+	}
+	return 0
 }
 
 // secretsInit makes the identity where the Keychain lacks it, and the file where none is.
