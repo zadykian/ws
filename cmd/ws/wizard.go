@@ -126,7 +126,6 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 			Sleep: time.Sleep, M: e.m, Out: out},
 		hook,
 		hookWs,
-		&wizard.Words{Host: host, Root: root, Hook: hookWs, Files: hookWs.Files, Home: e.getenv("HOME"), M: e.m, Out: out},
 		cable,
 	}
 }

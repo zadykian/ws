@@ -27,9 +27,3 @@ Where the clone has `.githooks`, git's `core.hooksPath` names it by an absolute 
 a clone of ws ([The hooks](checks.md#the-hooks)). Where it has a `Brewfile` whose entries Homebrew
 lacks, as `brew bundle check`, run with Homebrew's auto-update off, finds, `brew bundle` installs
 them, and upgrades nothing. `--check` names each command that the stage would run.
-
-The stage Word list copies ws's word list, which the hooks read ([The hooks](checks.md#the-hooks)),
-with `WS_HOOK` or without, after Hook on ws, whose command may write it. Where ws has one, and
-the Mac's differs by git's hash or can't be read, the files script, `mac/wizard-remote-files.sh`,
-sends it from ws. It replaces the Mac's, mode 600, but a link there stops the stage, `--check` too,
-naming its target. The wizard never prints the list: `--check` says it would copy it, with no diff.

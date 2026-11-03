@@ -92,8 +92,7 @@ unit and leave that stamp. A run during another's unit must follow it. A full ru
 remove the stamp of the one before, so the next starts a unit again. The files script,
 `mac/wizard-remote-files.sh`, must install a command sent to it, root's alone, after a check of its
 SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
-`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop. Its `words`
-must print git's hash of root's word list, or `-` without one, and the list for that hash alone. Its
+`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop. Its
 `link` must list the wired ports, and `link PORT` name one in `host_vars.yml`, mode 600 in a 755
 directory, once, which `status` names once the roles give `10.77.0.1`. With the Mac's secrets file,
 in a throwaway keychain, a run must start a unit that loads the identity as a credential and runs
@@ -145,9 +144,7 @@ must send the build once, root's alone. It must run `apply` once over plain ssh,
 and no terminal, and ws must make no clone and use no gh. The next run must print nothing, and
 `--check` must run `apply --check`. A failed run must leave no stamp. A new tag must replace the
 build and the stamp hold the tag. A bad sum or a missing release must stop the stage, sending
-nothing. For the Word list stage, the
-stand-in ws's list must go to the Mac once, mode 600, and none of it be printed. Once the Mac's
-differs, `--check` must show no diff, or stop at a link, as a run must. For the Cable stage, ws's
+nothing. For the Cable stage, ws's
 ports are a stand-in sysfs. Undocked, a run must print nothing, one that acts name the dock, and
 `WS_CABLE_PORT` end the wait. Docked, one with no terminal must stop, one with `WS_CABLE_PORT` name
 the port, run the roles, read its late address, and stop at the service. Typed, an empty line must

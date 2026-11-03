@@ -1,6 +1,6 @@
 #!/bin/sh
-# The wizard's files script on ws, for another repository's command there, root's word list and the
-# cable's port. The Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, for another repository's command there and the cable's
+# port. The Mac's wizard sends it to root there over ssh, as it sends wizard-remote.sh:
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
@@ -15,8 +15,6 @@
 # - have OWNER/REPO@TAG prints the installed command's path, or nothing where there is none.
 # - stamp OWNER/REPO@TAG stamps REPO's command, which exited 0, with the command's SHA-256 and the
 #   value. The remote script's status lists the repositories that have a stamp, as the value.
-# - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
-#   read, or - where root has none. words HASH prints the list, while its hash is HASH.
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
@@ -28,11 +26,10 @@
 
 set -eu
 
-# The wizard's stamps, sent commands and installed ones, root's word list, sysfs's network
+# The wizard's stamps, sent commands and installed ones, sysfs's network
 # interfaces and the machine's values for ws server apply. CI's stand-in for ws roots each, a line
 # NAME=PATH, in a directory of its own.
 state=/var/lib/ws-wizard
-list=/root/.config/ws/forbidden-words
 net=/sys/class/net
 vars=/etc/ws/host_vars.yml
 
@@ -130,21 +127,6 @@ stamp() {
     echo "$(digest "$bin") 0 $1" >"$state/.hook-$repo" && mv -f "$state/.hook-$repo" "$state/hook-$repo"
 }
 
-# words [HASH] prints git's hash of the word list, or - where there is none. git hashes from /, as
-# the wizard does. Given HASH, as it printed it, it prints the list instead, and stops where the
-# list's hash is no longer HASH.
-words() {
-    sum=-
-    [ ! -f "$list" ] || sum=$(git -C / hash-object --stdin <"$list")
-    if [ -z "${1-}" ]; then
-        echo "$sum"
-    elif [ "$1" = "$sum" ] && [ "$sum" != - ]; then
-        cat "$list"
-    else
-        die "the word list on ws is no longer $1: run the wizard again"
-    fi
-}
-
 # ports prints ws's wired ports: a device's, of ARPHRD_ETHER's type 1 and not wireless, but those
 # that a default route names, in any table, as an uplink's. A bridge's or bond's member, which
 # sysfs's master marks, is left out too, as an uplink may be one. So is a name of other characters
@@ -215,11 +197,10 @@ main() {
     install) install "${2-}" "${3-}" ;;
     have) have "${2-}" ;;
     stamp) stamp "${2-}" ;;
-    words) words "${2-}" ;;
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote-files.sh arch | stage OWNER/REPO@TAG |" \
-        "install OWNER/REPO@TAG SHA256 | have OWNER/REPO@TAG | stamp OWNER/REPO@TAG | words [HASH] | wait PORT | link [PORT]" ;;
+        "install OWNER/REPO@TAG SHA256 | have OWNER/REPO@TAG | stamp OWNER/REPO@TAG | wait PORT | link [PORT]" ;;
     esac
 }
 

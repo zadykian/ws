@@ -15,8 +15,7 @@
 # of the command sent there must stop where the SHA-256 is another, and else leave the command at
 # bin in state, root's alone, mode 700, which must run as root over ssh, its stdin empty. Its stamp
 # must follow, which status must list. Its install again must remove the stamp, and with nothing
-# sent stop. Its have must print the command's path, but not another tag's. Its words must print git's hash of root's word list, or
-# - without one, and the list for that hash alone. Its link must list ws's wired ports but the
+# sent stop. Its have must print the command's path, but not another tag's. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
 # ws's /etc/ws/host_vars.yml once, and ws server apply --only network,wireguard then give it 10.77.0.1, and
 # status's cable name it. The remote script's outbound must add security_outbound: false there once,
@@ -212,18 +211,6 @@ printf '%s\n' "$out" | grep -qF 'the Mac sent none' && [ "$status" = 1 ] ||
 files have example/hook@v1.0.1
 [ "$status" = 0 ] && [ -z "$out" ] || error "the files script's have of another tag exited $status, printing '$out'"
 rm -f "$RUNNER_TEMP/hook"
-list=$ws/root/root/.config/ws/forbidden-words
-files words
-[ "$status" = 0 ] && [ "$out" = - ] || error "the files script's words with no list exited $status"
-sudo mkdir -p "${list%/*}"
-printf '%s\n' '# stand-in words' example-word 'stand-in phrase' | sudo tee "$list" >/dev/null
-sum=$(git hash-object --stdin <"$list")
-files words
-[ "$status" = 0 ] && [ "$out" = "$sum" ] || error "the files script's words exited $status"
-files words "$sum"
-[ "$status" = 0 ] && [ "$out" = "$(cat "$list")" ] || error "its words $sum exited $status"
-files words 0
-[ "$status" = 1 ] || error "its words with another hash exited $status"
 # ws's ports, in a sysfs of the stand-in's, root's: the uplink, a port with carrier, one without and
 # with an address, one that is down, and a wireless one. A member of the bridge br0 has carrier.
 net=$ws/root/sys/class/net
@@ -282,7 +269,7 @@ printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$s
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
-sudo rm -rf "$stamps/bin" "$ws/root/root/.config" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
+sudo rm -rf "$stamps/bin" "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
 rm -f "$ws/apply.log" "$ws/hook.args" "$ws/uplink"
 exit "$fail"

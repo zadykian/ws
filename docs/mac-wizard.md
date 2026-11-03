@@ -5,7 +5,7 @@ the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws an
 then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
 runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on
 ws. Then it exchanges the tunnel's keys, clones another repository on the Mac, downloads its release
-with gh, runs its command on ws, and copies ws's word list. Last, it sets up the cable from the Mac's
+with gh, and runs its command on ws. Last, it sets up the cable from the Mac's
 display to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs
 what else it needs, as yourself:
 
@@ -39,8 +39,7 @@ the first two of which install what the rest needs:
 12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 13. Hook on the Mac: another repository's clone, its hooks and its `Brewfile`, in [Another repository](mac-hook.md).
 14. Hook on ws: that release's build, sent to ws, and its `apply` run there as root, in [Another repository](mac-hook.md).
-15. Word list: ws's, copied to the Mac where it differs, in [Another repository](mac-hook.md).
-16. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+15. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
 ## The answers
 
