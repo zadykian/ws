@@ -197,7 +197,103 @@
       "ctrl-r r": "editor::Rename",
       "ctrl-e": "editor::Hover",
       "alt-enter": "editor::ToggleCodeActions",
-      "shift-enter": "editor::ToggleCodeActions"
+      "shift-enter": "editor::ToggleCodeActions",
+      "ctrl-enter": "editor::ToggleCodeActions",
+      "ctrl-alt-shift-l": "editor::Format",
+      "ctrl-m a": "editor::FoldAll",
+      "ctrl-m ctrl-a": "editor::FoldAll",
+      "ctrl-m s": "editor::Fold",
+      "ctrl-m ctrl-s": "editor::Fold",
+      "ctrl-m h": "editor::FoldSelectedRanges",
+      "ctrl-m ctrl-h": "editor::FoldSelectedRanges",
+      "ctrl-m u": "editor::FoldSelectedRanges",
+      "ctrl-m ctrl-u": "editor::FoldSelectedRanges",
+      "ctrl-m x": "editor::UnfoldAll",
+      "ctrl-m ctrl-x": "editor::UnfoldAll",
+      "ctrl-m m": "editor::ToggleFold",
+      "ctrl-m ctrl-m": "editor::ToggleFold",
+      "ctrl-m e": "editor::UnfoldLines",
+      "ctrl-m ctrl-e": "editor::UnfoldLines",
+      "ctrl-m o": "editor::FoldFunctionBodies",
+      "ctrl-m ctrl-o": "editor::FoldFunctionBodies",
+      "ctrl-alt--": "editor::FoldRecursive",
+      "ctrl-* 1": "editor::FoldAtLevel_1",
+      "ctrl-* 2": "editor::FoldAtLevel_2",
+      "ctrl-* 3": "editor::FoldAtLevel_3",
+      "ctrl-* 4": "editor::FoldAtLevel_4",
+      "ctrl-* 5": "editor::FoldAtLevel_5",
+      "ctrl-alt-+": "editor::UnfoldRecursive",
+      "ctrl-alt-=": "editor::UnfoldRecursive",
+      "alt-pagedown": "editor::GoToDiagnostic",
+      "alt-pageup": "editor::GoToPreviousDiagnostic",
+      "f13": "editor::OpenContextMenu",
+      "f8": "editor::GoToHunk",
+      "shift-f8": "editor::GoToPreviousHunk",
+      "shift-f7": "editor::GoToPreviousHunk",
+      "ctrl-alt-z": "git::Restore",
+      "ctrl-alt-shift-n": "editor::GoToHunk",
+      "ctrl-alt-shift-p": "editor::GoToPreviousHunk",
+      "alt-f9": "editor::EditLogBreakpoint",
+      "ctrl-alt-b": "editor::EditLogBreakpoint",
+      "ctrl-u u": "task::Rerun",
+      "ctrl-u ctrl-u": "task::Rerun",
+      "ctrl-u r": "editor::SpawnNearestTask",
+      "ctrl-u ctrl-r": "editor::SpawnNearestTask",
+      "ctrl-u y": "task::Rerun",
+      "ctrl-u ctrl-y": "task::Rerun",
+      "ctrl-f9": "debugger::ToggleEnableBreakpoint",
+      "ctrl-b": "editor::ToggleBreakpoint",
+      "ctrl-n": "workspace::NewFile"
+    }
+  },
+  // The signature popup.
+  {
+    "context": "Editor && showing_signature_help",
+    "bindings": {
+      "ctrl-shift-p": "editor::SignatureHelpPrevious",
+      "ctrl-down": "editor::SignatureHelpNext",
+      "ctrl-up": "editor::SignatureHelpPrevious"
+    }
+  },
+  // The project panel: F12's tree keys, and F1 hides it again.
+  {
+    "context": "ProjectPanel && not_editing",
+    "bindings": {
+      "ctrl-+": "project_panel::ExpandAllEntries",
+      "ctrl--": "project_panel::CollapseAllEntries",
+      "ctrl-shift-d": "project_panel::DownloadFromRemote",
+      "ctrl-shift-a": "project_panel::NewFile",
+      "ctrl-n": "project_panel::NewFile",
+      "f1": "workspace::CloseActiveDock",
+      "alt-1": "workspace::CloseActiveDock",
+      "ctrl-r r": "project_panel::Rename",
+      "ctrl-c": "project_panel::Copy",
+      "ctrl-x": "project_panel::Cut",
+      "ctrl-v": "project_panel::Paste",
+      "ctrl-z": "project_panel::Undo",
+      "ctrl-y": "project_panel::Redo",
+      "ctrl-shift-f": "project_panel::NewSearchInDirectory"
+    }
+  },
+  // The git panel; F5 hides it again.
+  {
+    "context": "GitPanel",
+    "bindings": {
+      "ctrl-alt-a": "git::ToggleStaged",
+      "ctrl-alt-p": "git_panel::ToggleTreeView",
+      "ctrl-alt-z": "git::RestoreFile",
+      "ctrl-shift-h": "git::StashAll",
+      "ctrl-alt-u": "git::StashPop",
+      "f5": "workspace::CloseActiveDock",
+      "alt-5": "workspace::CloseActiveDock"
+    }
+  },
+  // The commit message.
+  {
+    "context": "CommitEditor > Editor",
+    "bindings": {
+      "alt-c": "git::Commit",
+      "alt-a": "git::Amend"
     }
   }
 ]
