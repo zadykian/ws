@@ -41,6 +41,9 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 		}},
 		download(m, runtime.GOARCH, "postgres-language-server", pgls, pglsURL),
 		download(m, runtime.GOARCH, "docker-language-server", dockerLS, dockerLSURL),
+		user.Owned(m, "Zed npm servers", "", func(uid, gid int) ([]host.Resource, error) {
+			return serverFiles(m, user, uid, gid)
+		}),
 	}
 }
 
