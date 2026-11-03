@@ -1,4 +1,4 @@
-// Package wizard holds ws wizard: the lock and the sleep guard of a run, the closing list of what
+// Package wizard holds ws mac wizard: the lock and the sleep guard of a run, the closing list of what
 // stays by hand, and the stages, each a step.Step.
 package wizard
 

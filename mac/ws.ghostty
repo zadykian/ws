@@ -1,4 +1,4 @@
-# The Mac's Ghostty settings, which ws setup writes to ws.ghostty, beside Ghostty's config.
+# The Mac's Ghostty settings, which ws mac apply writes to ws.ghostty, beside Ghostty's config.
 # Ghostty reads them after the config's own, so each wins over the config's value, and
 # shell-integration-features replaces the config's whole list. Its ssh-terminfo installs Ghostty's
 # terminfo on ws at the first ssh from Ghostty, so ws installs none itself.
@@ -15,7 +15,7 @@ window-vsync = true
 window-height = 60
 window-width = 200
 window-new-tab-position = end
-# ws setup installs the font from Homebrew's cask where it is missing. A later font-family adds a
+# ws mac apply installs the font from Homebrew's cask where it is missing. A later font-family adds a
 # fallback to the config's own, so the empty one clears those first. font-family takes a family, as
 # ghostty +list-fonts heads it: a face, as JetBrainsMono NFM Regular, finds no font.
 font-thicken = true
@@ -26,6 +26,6 @@ theme = Starlight
 macos-titlebar-style = transparent
 macos-titlebar-proxy-icon = hidden
 macos-icon = retro
-# Ghostty updates itself from its stable releases: ws setup installs it only where it is missing.
+# Ghostty updates itself from its stable releases: ws mac apply installs it only where it is missing.
 auto-update = download
 auto-update-channel = stable

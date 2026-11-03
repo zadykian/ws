@@ -1,6 +1,6 @@
 # Ghostty and cld on the Mac
 
-Before the tunnel ([The Mac](mac.md)), `ws setup` sets up Ghostty, the Mac's terminal: Ghostty
+Before the tunnel ([The Mac](mac.md)), `ws mac apply` sets up Ghostty, the Mac's terminal: Ghostty
 and the font its settings name, from Homebrew's casks, and the settings, `ws.ghostty`. Then it sets
 up [cld](https://github.com/zadykian/cld) wherever it runs, for `cld restore tabs`. After Ghostty
 quits or a window closes, a restore joins each pane's cld session again, and reopens what Ghostty
@@ -34,14 +34,14 @@ JetBrains Mono, which looks the same.
 
 ## Ghostty's settings
 
-The settings are in [`mac/ws.ghostty`](../mac/ws.ghostty), which the script writes, under its
-header, to `ws.ghostty`. That file goes beside the config file that Ghostty's menu opens:
+The settings are in [`mac/ws.ghostty`](../mac/ws.ghostty), which `ws` embeds and the script writes,
+under its header, to `ws.ghostty`. That file goes beside the config file that Ghostty's menu opens:
 `config.ghostty` or `config` in `~/Library/Application Support/com.mitchellh.ghostty`, then in
 `~/.config/ghostty`. That is the first that holds anything, else the first that exists. Where none
 exists, the script makes the first. It adds `config-file = ?ws.ghostty` at the end of that file,
 once. Ghostty reads an included file after the file that names it, so each setting of `ws.ghostty`
 wins over the config's own. A later `font-family` adds a fallback rather than replace the list, so
-`ws.ghostty` empties it first. Change the settings in `mac/ws.ghostty`, and run the script again.
+`ws.ghostty` empties it first. Change the settings in `mac/ws.ghostty`, build `ws` again and run it.
 
 The script replaces `ws.ghostty` at each run. It warns and changes neither file where `ws.ghostty`
 is one it did not write, or where it can't read the config. Where the config is a link, as a

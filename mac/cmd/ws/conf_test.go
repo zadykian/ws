@@ -21,11 +21,11 @@ func TestConfCommand(t *testing.T) {
 		{"home", nil, "", 0, "WS_USER='ada'\n", ""},
 		{"env", nil, "/e/mac.conf", 0, "WS_USER='eve'\n", ""},
 		{"argument", []string{"/a/mac.conf"}, "/e/mac.conf", 0, "WS_USER='amy'\n", ""},
-		{"missing", []string{"/none"}, "", 1, "", "ws conf: /none is missing: docs/mac.md"},
-		{"refused", []string{"/bad"}, "", 1, "", "ws conf: /bad, line 2: unknown key WS_NOPE"},
+		{"missing", []string{"/none"}, "", 1, "", "ws mac conf: /none is missing: docs/mac.md"},
+		{"refused", []string{"/bad"}, "", 1, "", "ws mac conf: /bad, line 2: unknown key WS_NOPE"},
 		{"lines", []string{"--lines", "/pair"}, "", 0, "WS_USER='root'\nWS_TARGET='lan'\nWS_PUBLIC_KEY=''\nWS_LAN='10.88.0.0/24'\n", ""},
 		{"pair", []string{"/pair"}, "", 1, "", "WS_LAN and WS_LAN_ADDRESS go together"},
-		{"two files", []string{"a", "b"}, "", 2, "", "usage: ws conf [--lines] [FILE]"},
+		{"two files", []string{"a", "b"}, "", 2, "", "usage: ws mac conf [--lines] [FILE]"},
 	}
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")

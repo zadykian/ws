@@ -27,12 +27,12 @@ Encrypt the three with one vault password, then run the playbook with them:
 
 ```sh
 ansible-vault encrypt /root/vpn/vpnclient.p12 /root/vpn/vpnclient.sswan /root/vpn/ikeward.yml
-/root/repository/ws/bootstrap.sh -e @/root/vpn/ikeward.yml --ask-vault-pass
+ws server apply -- -e @/root/vpn/ikeward.yml --ask-vault-pass
 ```
 
-`--ask-vault-pass` reads the password from the terminal, not stdin, which `bootstrap.sh` makes
-`/dev/null`. The variables may go in the vault that holds `shell_secret_env` instead, the two files
-encrypted with its password ([Secrets](shell.md#secrets)).
+`--ask-vault-pass` reads the password from the terminal.
+The variables may go in the vault that holds `shell_secret_env` instead, the two
+files encrypted with its password ([Secrets](shell.md#secrets)).
 
 `ikeward_profile` is an absolute path, less the extension. The values go to `ikeward install`'s
 flags: `--dns`, a `--domain` for each domain and a `--floor` for each range. A profile needs the

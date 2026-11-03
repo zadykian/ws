@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/mac/internal/wizard"
 )
 
-// wizardSetup returns the stage that runs the steps of ws setup in the wizard's process. Until
+// wizardSetup returns the stage that runs the steps of ws mac apply in the wizard's process. Until
 // mac.conf has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands that make it
 // ws's peer at every run, which the Tunnel stage takes over: the text goes nowhere then. file is the
 // mac.conf to read, which is Answers' would-be file under --check.
@@ -31,8 +31,7 @@ func wizardSetup(e wizardEnv, out effect.Out, file string) *wizard.Setup {
 			w = e.stdout
 		}
 		home := e.getenv("HOME")
-		mac := repoDir(e.getenv) + "/mac"
-		steps := setupSteps(c, home, e.getenv("XDG_CONFIG_HOME"), mac, e.m, out, w, check)
+		steps := setupSteps(c, home, e.getenv("XDG_CONFIG_HOME"), e.m, out, w, check)
 		if !check {
 			// The tunnel's daemon and cld's restore tabs change ssh ws's ways, so ssh runs once more.
 			steps = slices.Concat(steps, []step.Step{sshStep(c, home, e.m, out, check, true)})

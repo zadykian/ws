@@ -65,7 +65,7 @@ func TestSSHRefusesAFileThatIsNotWss(t *testing.T) {
 	m.Dirs["/h/.ssh"], m.Dirs["/h/.ssh/config.d"] = 0o700, 0o700
 	m.Files["/h/.ssh/config.d/ws"] = []byte("Host mine\n")
 	_, err := sshStep(m, &effecttest.Out{}).Plan(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "is not ws setup's") {
+	if err == nil || !strings.Contains(err.Error(), "is not ws mac apply's") {
 		t.Errorf("Plan err = %v, want a refusal of a file that is not ws's", err)
 	}
 }

@@ -1,4 +1,4 @@
-module github.com/zadykian/ws/mac
+module github.com/zadykian/ws
 
 go 1.27.3
 

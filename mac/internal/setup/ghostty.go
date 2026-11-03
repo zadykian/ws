@@ -3,7 +3,6 @@ package setup
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/fs"
 	"os/exec"
 	"path/filepath"
@@ -19,7 +18,7 @@ const (
 	ghosttyFont     = "font-jetbrains-mono-nerd-font"
 	ghosttyFontFile = "JetBrainsMonoNerdFontMono-Regular.ttf"
 	// ghosttyHeader starts ws.ghostty's first line, by which a run knows a file for its own.
-	ghosttyHeader = "# Written by ws setup"
+	ghosttyHeader = "# Written by ws mac apply"
 	// ghosttyLine is the line of Ghostty's config that reads ws.ghostty.
 	ghosttyLine = "config-file = ?ws.ghostty"
 )
@@ -31,8 +30,8 @@ const (
 // itself, as ws.ghostty says.
 type Ghostty struct {
 	Home string
-	// Settings is the path of mac/ws.ghostty.
-	Settings string
+	// Settings is the text of mac/ws.ghostty.
+	Settings []byte
 	M        effect.Machine
 	Out      effect.Out
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.
@@ -96,11 +95,7 @@ func (g *Ghostty) Plan(_ context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	files, err := g.files()
-	if err != nil {
-		return step.Plan{}, err
-	}
-	return step.Plan{Changes: append(append(app, font...), files...)}, nil
+	return step.Plan{Changes: append(append(app, font...), g.files()...)}, nil
 }
 
 // Apply installs the casks. A failed install is a warning, and the next run tries again; where
@@ -157,7 +152,7 @@ func (g *Ghostty) conf() string {
 // names it (Config.zig's config-file), so ws.ghostty's settings win over the config's own. It
 // warns, and leaves the config unchanged, where ws.ghostty is not its own, the config can't be
 // read, or the config is a link that lacks the line.
-func (g *Ghostty) files() ([]step.Change, error) {
+func (g *Ghostty) files() []step.Change {
 	config := g.conf()
 	dir := filepath.Dir(config)
 	file := dir + "/ws.ghostty"
@@ -167,24 +162,20 @@ func (g *Ghostty) files() ([]step.Change, error) {
 	if exists {
 		old, _ = g.M.ReadFile(file)
 		if first, _, _ := strings.Cut(string(old), "\n"); !strings.HasPrefix(first, ghosttyHeader) {
-			g.Out.Warn("%s is not ws setup's: move it away, as the script writes its own", file)
-			return nil, nil
+			g.Out.Warn("%s is not ws mac apply's: move it away, as the script writes its own", file)
+			return nil
 		}
 	}
 	text, err := g.M.ReadFile(config)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		g.Out.Warn("cannot read %s, Ghostty's config, so ws.ghostty stays out", config)
-		return nil, nil
+		return nil
 	}
-	settings, err := g.M.ReadFile(g.Settings)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read %s: %w", g.Settings, err)
-	}
-	want := append([]byte(ghosttyHeader+": its next run replaces changes made here.\n"), settings...)
+	want := append([]byte(ghosttyHeader+": its next run replaces changes made here.\n"), g.Settings...)
 	resolve := g.Real
 	if resolve == nil {
 		resolve = filepath.EvalSymlinks
 	}
 	has := ghosttyIncludes(config, string(text), file, g.Home, resolve)
-	return g.fileChanges(config, text, file, old, want, has), nil
+	return g.fileChanges(config, text, file, old, want, has)
 }

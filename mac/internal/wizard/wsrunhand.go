@@ -26,7 +26,7 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 			"(docs/fans.md, Secure Boot).")
 	}
 	if c.Target != "cloud" && r.Remote.Get("outbound") == "off" {
-		h.Add("ws's outbound table: off, as ws's host_vars names security_outbound: false, as for " +
+		h.Add("ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, as for " +
 			"a cloud VM; remove that line, then run the wizard with --update (docs/security.md, Outbound).")
 	}
 	h.Add("macOS's local network: where it asks whether Ghostty, Gateway or another app may find " +

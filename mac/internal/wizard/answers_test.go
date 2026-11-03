@@ -16,9 +16,8 @@ func newAnswers(t *testing.T, text string) (*Answers, *effecttest.Out) {
 	if text != "" {
 		m.Files[confPathForTest] = []byte(text)
 	}
-	m.Files["/r/defaults.yml"] = []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n")
 	out := &effecttest.Out{}
-	return &Answers{Conf: confPathForTest, Roles: "/r/defaults.yml", Prog: "ws wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
+	return &Answers{Conf: confPathForTest, Defaults: []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n"), Prog: "ws mac wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
 		Env: func(string) (string, bool) { return "", false }}, out
 }
 
@@ -43,7 +42,7 @@ func TestAnswersPlan(t *testing.T) {
 		"no file":  {"", "would ask for the values that /h/.config/ws/mac.conf lacks, from WS_TARGET on"},
 		"a gap":    {strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
 		"complete": {all, ""},
-		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws setup would refuse"},
+		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws mac apply would refuse"},
 	} {
 		a, _ := newAnswers(t, tc.text)
 		p, err := a.Plan(context.Background())
@@ -56,6 +55,14 @@ func TestAnswersPlan(t *testing.T) {
 		}
 	}
 }
+
+// homebrewDone stands in for the Homebrew stage, which Answers waits on.
+type homebrewDone struct{}
+
+func (homebrewDone) Name() string                            { return homebrewStage }
+func (homebrewDone) WaitsOn() string                         { return "" }
+func (homebrewDone) Plan(context.Context) (step.Plan, error) { return step.Plan{}, nil }
+func (homebrewDone) Apply(context.Context, step.Plan) error  { return nil }
 
 func TestAnswersAskAndWrite(t *testing.T) {
 	a, out := newAnswers(t, "# mine\nWS_USER=ada")
@@ -72,7 +79,7 @@ func TestAnswersAskAndWrite(t *testing.T) {
 	}
 	m := a.M.(*effecttest.Machine)
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
-	changed, err := step.Run(context.Background(), []step.Step{a}, out, false)
+	changed, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false)
 	if err != nil || !changed {
 		t.Fatalf("Run = %v, %v", changed, err)
 	}
@@ -92,7 +99,7 @@ func TestAnswersFromEnvironment(t *testing.T) {
 		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]": "", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
 		"Another repository whose apply.sh runs on ws, as OWNER/REPO (WS_HOOK) [none]": ""}
 	a.M.(*effecttest.Machine).Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
-	if _, err := step.Run(context.Background(), []step.Step{a}, out, false); err != nil {
+	if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false); err != nil {
 		t.Fatalf("Run = %v", err)
 	}
 	if got := string(a.M.(*effecttest.Machine).Files[confPathForTest]); !strings.HasPrefix(got, "WS_TARGET=cloud\nWS_REMOTE=r.example\n") {

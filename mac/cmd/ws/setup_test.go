@@ -23,7 +23,7 @@ func TestSetupCommand(t *testing.T) {
 		wantErr    string
 	}{
 		{"unknown step", []string{"nope"}, 2, `unknown step "nope"`},
-		{"two steps", []string{"ssh", "git"}, 2, "usage: ws setup"},
+		{"two steps", []string{"ssh", "git"}, 2, "usage: ws mac apply"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -43,13 +43,13 @@ func TestSetupCommand(t *testing.T) {
 
 func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 	m := effecttest.NewMachine()
-	env := map[string]string{"WS_PROG": "ws setup"}
+	env := map[string]string{"WS_PROG": "ws mac apply"}
 	var stderr bytes.Buffer
 	if got := setupCommand(context.Background(), []string{"ssh"}, 0, m, func(k string) string { return env[k] }, &bytes.Buffer{}, &stderr); got != 1 ||
-		!strings.HasPrefix(stderr.String(), "ws setup: run it as yourself, not root") {
+		!strings.HasPrefix(stderr.String(), "ws mac apply: run it as yourself, not root") {
 		t.Errorf("as root: status = %d, stderr = %q", got, stderr.String())
 	}
-	out := progOut{Out: &effecttest.Out{}, prog: "ws setup", seen: map[string]bool{}}
+	out := progOut{Out: &effecttest.Out{}, prog: "ws mac apply", seen: map[string]bool{}}
 	out.Say("%s: applying %d change(s)", "ssh", 1)
 	out.Say("%s: %s", "cable", "would run x")
 	out.Say("wrote %s", "f")
@@ -58,8 +58,8 @@ func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 	out.Warn("w %d", 1)
 	out.Warn("w %d", 1)
 	want := []string{
-		"say: ws setup: would run x", "say: ws setup: wrote f",
-		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws setup: warning: w 1",
+		"say: ws mac apply: would run x", "say: ws mac apply: wrote f",
+		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws mac apply: warning: w 1",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)
@@ -68,7 +68,7 @@ func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
 
 func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
 	var names []string
-	for _, s := range setupSteps(conf.Conf{}, "/h", "", "/m", effecttest.NewMachine(), &effecttest.Out{}, &bytes.Buffer{}, false) {
+	for _, s := range setupSteps(conf.Conf{}, "/h", "", effecttest.NewMachine(), &effecttest.Out{}, &bytes.Buffer{}, false) {
 		names = append(names, s.Name())
 	}
 	want := []string{"ssh", "cable", "git", "gateway", "ghostty", "cld", "tunnel", "networks"}

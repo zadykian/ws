@@ -3,13 +3,14 @@
 # over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins.
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
-# off. A full run must run bootstrap.sh without arguments in a unit of its own, with root's HOME and
-# a UTF-8 locale, print its log and exit 0. It must stamp the clone's commit, 0 and on in run, and the unit
+# off. A full run must run ws server apply -- without arguments in a unit of its own, with root's HOME and
+# a UTF-8 locale, print its log and exit 0. It must stamp ws's version, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
 # unit of its own, as must one with -e security_outbound=false, which is full too, stamps off in
-# run, and names security_outbound: false in host_vars itself. One with another argument, as
+# run, and names security_outbound: false in
+# /etc/ws/host_vars.yml itself, a file of mode 0600 in a directory of 0755. One with another argument, as
 # --diff, must leave that stamp. The files script's bundle must print the path for a bundle of
 # another repository's origin/main, where ws lacks the clone. Its clone from the bundle sent there
 # must be on main with its origin on GitHub, remove the bundle, and have an apply.sh that must run
@@ -19,7 +20,7 @@
 # leaving no clone. Its words must print git's hash of root's word list, or
 # - without one, and the list for that hash alone. Its link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
-# ws's host_vars once, and bootstrap.sh --tags network,wireguard then give it 10.77.0.1, and
+# ws's /etc/ws/host_vars.yml once, and ws server apply -- --tags network,wireguard then give it 10.77.0.1, and
 # status's cable name it. The remote script's outbound must add security_outbound: false there once,
 # which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
 # must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
@@ -52,10 +53,15 @@ stamp() {
     cat "$stamps/$1" 2>/dev/null || echo -
 }
 
-# states WANT...: status must print the stamps, no unit that runs, then the lines WANT.
+# wsv prints the version that the stand-in ws prints, or - where it prints none.
+wsv() {
+    cat "$ws/ws.version" 2>/dev/null || echo -
+}
+
+# states WANT...: status must print the stamps, no unit that runs, ws's version, then the lines WANT.
 states() {
     remote status
-    want=$(printf '%s\n' "run $(stamp run)" "last $(stamp last)" 'active -' "$@")
+    want=$(printf '%s\n' "run $(stamp run)" "last $(stamp last)" 'active -' "ws $(wsv)" "$@")
     [ "$status" = 0 ] && [ "$out" = "$want" ] ||
         error "status exited $status, printing other than '$want'"
 }
@@ -92,23 +98,24 @@ unit() {
     sed -n 's/.* --unit=\([^ ]*\) .*/\1/p' "$ws/run.log" | tail -n 1
 }
 
-sha=$(sudo git -C "$ws/root/root/repository/ws" rev-parse HEAD)
+# The stamp's version is the stand-in ws's, which the wizard's install left in ws.version.
+sha=$(wsv)
 n=$(units)
 remote run
 full=$(unit)
 printf '%s\n' "$out" | grep -qx 'PLAY RECAP' && [ "$status" = 0 ] &&
     [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $full 0" ] &&
-    [ "$(tail -n 1 "$ws/bootstrap.log")" = '' ] || error "a full run exited $status"
+    [ "$(tail -n 1 "$ws/server.log")" = '' ] || error "a full run exited $status"
 tail -n 1 "$ws/run.log" | grep -q -- '--collect .* --setenv=LC_ALL=C.UTF-8 --setenv=HOME=/root ' ||
     error "a full run's unit lacked root's HOME or a UTF-8 locale"
-echo 3 >"$ws/bootstrap.status"
+echo 3 >"$ws/server.status"
 remote run --tags devtools
 [ "$status" = 3 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(unit)" != "$full" ] &&
     [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $(unit) 3" ] &&
-    [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags devtools' ] ||
+    [ "$(tail -n 1 "$ws/server.log")" = '--tags devtools' ] ||
     error "a tagged run exited $status"
-rm "$ws/bootstrap.status"
-echo 4 >"$ws/bootstrap.wait"
+rm "$ws/server.status"
+echo 4 >"$ws/server.wait"
 ssh -o BatchMode=yes ws-ssh sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
 first=$!
 tries=0
@@ -121,14 +128,14 @@ remote run --tags other
 wait "$first"
 first=$?
 printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: following ws-wizard-' &&
-    ! grep -q other "$ws/bootstrap.log" && [ "$first" = 0 ] && [ "$status" = 0 ] &&
+    ! grep -q other "$ws/server.log" && [ "$first" = 0 ] && [ "$status" = 0 ] &&
     [ "$(units)" -eq "$n" ] || error "a run during another's unit exited $status, or started one"
-rm "$ws/bootstrap.wait" "$RUNNER_TEMP/first"
-touch "$ws/bootstrap.cut"
+rm "$ws/server.wait" "$RUNNER_TEMP/first"
+touch "$ws/server.cut"
 remote run
 printf '%s\n' "$out" | grep -q ' ended before its run wrote its status' && [ "$status" = 1 ] &&
     [ "$(stamp run)" = - ] || error "a full run cut off exited $status, leaving run '$(stamp run)'"
-rm "$ws/bootstrap.cut"
+rm "$ws/server.cut"
 n=$(units)
 remote run
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on" ] ||
@@ -136,11 +143,14 @@ remote run
 sudo rm "$stamps/run"
 remote run -e security_outbound=false
 [ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] &&
-    [ "$(tail -n 1 "$ws/bootstrap.log")" = '-e security_outbound=false' ] ||
+    [ "$(tail -n 1 "$ws/server.log")" = '-e security_outbound=false' ] ||
     error "a full run with -e exited $status, with run '$(stamp run)'"
-host_vars=$ws/root/root/repository/ws/host_vars
-sudo grep -qx 'security_outbound: false' "$host_vars/localhost.yml" ||
+host_vars="$ws/root"/etc/ws
+sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
     error "a full run with -e named no security_outbound: false in host_vars"
+[ "$(sudo stat -f %Lp "$host_vars")" = 755 ] &&
+    [ "$(sudo stat -f %Lp "$host_vars/host_vars.yml")" = 600 ] ||
+    error "a full run with -e made /etc/ws or its host_vars.yml with another mode"
 sudo rm -r "$host_vars"
 remote run --diff
 [ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off" ] || error "a run with --diff stamped run"
@@ -228,7 +238,7 @@ files words 0
 # ws's ports, in a sysfs of the stand-in's, root's: the uplink, a port with carrier, one without and
 # with an address, one that is down, and a wireless one. A member of the bridge br0 has carrier.
 net=$ws/root/sys/class/net
-vars=$ws/root/root/repository/ws/host_vars/localhost.yml
+vars="$ws/root"/etc/ws/host_vars.yml
 for each in enp4s0:1 enp5s0:1 enp6s0:0 enp7s0 wlan0:1 enp8s0:1; do
     sudo mkdir -p "$net/${each%:*}/device"
     echo 1 | sudo tee "$net/${each%:*}/type" >/dev/null
@@ -245,7 +255,7 @@ files link
 files link enp4s0
 [ "$status" = 1 ] && [ ! -e "$vars" ] || error "its link of the uplink exited $status"
 files link enp5s0
-printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | cmp -s - "$vars" &&
+printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | sudo cmp -s - "$vars" &&
     [ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: wrote $vars" ] ||
     error "its link enp5s0 exited $status"
 files link enp5s0
@@ -255,13 +265,13 @@ printf '%s\n' "$out" | grep -qx 'cable -' || error "status named a cable before 
 remote run --tags network,wireguard
 files link
 printf '%s\n' "$out" | grep -qx 'enp5s0 1 10\.77\.0\.1/30' &&
-    [ "$(tail -n 1 "$ws/bootstrap.log")" = '--tags network,wireguard' ] ||
-    error "bootstrap.sh --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
+    [ "$(tail -n 1 "$ws/server.log")" = '--tags network,wireguard' ] ||
+    error "ws server apply -- --tags network,wireguard gave enp5s0 no 10.77.0.1/30"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable enp5s0' || error "status named no cable enp5s0"
 remote outbound
 printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' 'security_outbound: false' |
-    cmp -s - "$vars" && [ "$status" = 0 ] && [ "$out" = "wizard-remote.sh: wrote $vars" ] ||
+    sudo cmp -s - "$vars" && [ "$status" = 0 ] && [ "$out" = "wizard-remote.sh: wrote $vars" ] ||
     error "the remote script's outbound exited $status"
 remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound again exited $status"
@@ -274,11 +284,11 @@ remote outbound
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read Off by hand as on"
 echo 'security_outbound: true' | sudo tee -a "$vars" >/dev/null
-sudo mv "$vars" "$vars.real" && sudo ln -s localhost.yml.real "$vars"
+sudo mv "$vars" "$vars.real" && sudo ln -s host_vars.yml.real "$vars"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound on' || error "status read true after Off as off"
 remote outbound
-printf '%s\n' "$out" | grep -qF "$vars is a link to localhost.yml.real" && [ "$status" = 1 ] ||
+printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$status" = 1 ] ||
     error "its outbound through a link exited $status"
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound

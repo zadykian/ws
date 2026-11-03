@@ -1,6 +1,6 @@
 name: mac-wizard
 
-# ws wizard on macOS, in a workflow of its own beside mac.yml, on the same events: every pull
+# ws mac wizard on macOS, in a workflow of its own beside mac.yml, on the same events: every pull
 # request, whatever its base, and on main each pull request's merge.
 on:
   pull_request:
@@ -23,6 +23,8 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: "1"
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
       HOMEBREW_NO_ENV_HINTS: "1"
+      # The releases of standin.sh's server, which --update and the install of ws on ws use.
+      WS_RELEASES_URL: http://127.0.0.1:22080
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,13 +35,14 @@ jobs:
         run: |
           mkdir -p ~/repository
           cp -R "$GITHUB_WORKSPACE" ~/repository/ws
-      # ws is built from the clone into ~/.local/bin, as bootstrap.sh builds it, and the cases run
-      # it as ws wizard.
+      # ws is built from the clone into ~/.local/bin by tools/build, and the cases run it as
+      # ws mac wizard. The clone is tagged v0.0.0 first, so that ws is a release, as the wizard
+      # installs ws on ws only for a release. The stand-in ws takes the install.
       - name: Build ws
         run: |
-          # shellcheck source=/dev/null # the clone is copied to ~/repository/ws above
-          . ~/repository/ws/mac/build.sh
-          ws_build ~/repository/ws ~/.local/bin/ws
+          git -C ~/repository/ws tag v0.0.0
+          sh ~/repository/ws/tools/build darwin arm64 ~/.local/bin/ws
+          [ "$(~/.local/bin/ws version)" = v0.0.0 ]
       - name: The stand-ins
         run: sh ~/repository/ws/.github/mac-wizard/standin.sh
       - name: The cases

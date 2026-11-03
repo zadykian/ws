@@ -21,7 +21,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if c.outbound {
 		return r.outbound(ctx)
 	}
-	r.Host.Out.Say("%s: bootstrap.sh runs on ws in a unit of its own, which goes on where ssh drops; "+
+	r.Host.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
 		"a first run takes 20 to 40 minutes", runStage)
 	if err := r.Remote.Pass(ctx, append([]string{"run"}, c.args...)...); err != nil {
 		return fail()
@@ -34,7 +34,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return fail()
 	}
 	if !r.off() {
-		r.Host.Out.Say("%s: the unit it followed ran without -e security_outbound=false, so bootstrap.sh "+
+		r.Host.Out.Say("%s: the unit it followed ran without -e security_outbound=false, so ws server apply "+
 			"runs again with it", runStage)
 		if err := r.Remote.Pass(ctx, append([]string{"run"}, c.args...)...); err != nil {
 			return fail()

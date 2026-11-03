@@ -12,9 +12,9 @@ import (
 	"github.com/zadykian/ws/mac/internal/step"
 )
 
-// resolverCmdHeader is the first line of the files that ws resolver writes. Those of the networks
+// resolverCmdHeader is the first line of the files that ws mac resolver writes. Those of the networks
 // step have their own, so each owner leaves the other's.
-const resolverCmdHeader = "# Written by ws resolver, which removes this file when given no address."
+const resolverCmdHeader = "# Written by ws mac resolver, which removes this file when given no address."
 
 // Resolver has macOS ask the nameservers Addresses, up to 3, for Domain and the names under it, and
 // the Mac's own for the rest: it writes /etc/resolver/Domain (resolver(5)). With no address, it
@@ -36,15 +36,15 @@ func (*Resolver) WaitsOn() string { return "" }
 // Plan plans /etc/resolver/Domain.
 func (r *Resolver) Plan(context.Context) (step.Plan, error) {
 	if !check.Name(r.Domain) {
-		return step.Plan{}, fmt.Errorf("ws resolver: '%s' is not a domain of DNS labels joined by dots", r.Domain)
+		return step.Plan{}, fmt.Errorf("ws mac resolver: '%s' is not a domain of DNS labels joined by dots", r.Domain)
 	}
 	for _, a := range r.Addresses {
 		if !check.IPv4(a) {
-			return step.Plan{}, fmt.Errorf("ws resolver %s: '%s' is not an IPv4 address", r.Domain, a)
+			return step.Plan{}, fmt.Errorf("ws mac resolver %s: '%s' is not an IPv4 address", r.Domain, a)
 		}
 	}
 	if len(r.Addresses) > 3 {
-		return step.Plan{}, fmt.Errorf("ws resolver %s: macOS takes 3 nameservers for a domain, not %d",
+		return step.Plan{}, fmt.Errorf("ws mac resolver %s: macOS takes 3 nameservers for a domain, not %d",
 			r.Domain, len(r.Addresses))
 	}
 	file := resolverDir + "/" + r.Domain
@@ -55,9 +55,9 @@ func (r *Resolver) Plan(context.Context) (step.Plan, error) {
 	}
 	if first, _, _ := strings.Cut(string(text), "\n"); exists && first != resolverCmdHeader {
 		if len(r.Addresses) > 0 {
-			return step.Plan{}, fmt.Errorf("%s is there, and ws resolver didn't write it: move it away first", file)
+			return step.Plan{}, fmt.Errorf("%s is there, and ws mac resolver didn't write it: move it away first", file)
 		}
-		r.Out.Say("leaves %s, which ws resolver didn't write", file)
+		r.Out.Say("leaves %s, which ws mac resolver didn't write", file)
 		return step.Plan{}, nil
 	}
 	if len(r.Addresses) == 0 {

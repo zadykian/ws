@@ -20,9 +20,9 @@ const cableEnd = "10.77.0.1"
 // Cable is the stage of the cable from the Mac's display to a port of ws's, outside the router, on a
 // machine on the LAN alone.
 // Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
-// wired ports. The stage names the port in host_vars/localhost.yml on ws, whose network role gives
+// wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose network role gives
 // it 10.77.0.1. Then it names the Mac's service of the cable in mac.conf's WS_CABLE_SERVICE, and
-// ws setup gives that 10.77.0.2, and the port in WS_CABLE_PORT, which the stage names on ws again
+// ws mac apply gives that 10.77.0.2, and the port in WS_CABLE_PORT, which the stage names on ws again
 // after ws's install. Undocked, the first setup waits, and the closing list says to dock the Mac.
 type Cable struct {
 	Host *HostKey
@@ -31,7 +31,7 @@ type Cable struct {
 	Root *RootKey
 	// Files runs the files script's operations as root on ws.
 	Files *Remote
-	// Setup is the ws setup stage, which gives the Mac's service its address.
+	// Setup is the ws mac apply stage, which gives the Mac's service its address.
 	Setup *Setup
 	// Env looks up a variable of the environment.
 	Env func(string) (string, bool)
@@ -55,9 +55,10 @@ var cableEndAt = regexp.MustCompile(`(^| )` + regexp.QuoteMeta(cableEnd) + `/`)
 // Name is the stage's name.
 func (*Cable) Name() string { return cableStage }
 
-// WaitsOn is empty: Plan says itself that the stage is after ws's run, which makes the clone that
-// holds host_vars on ws, where it has no cable to see off the LAN, as wizard-cable.sh's cable_after.
-func (*Cable) WaitsOn() string { return "" }
+// WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to read.
+// Plan says itself that the stage is after ws's run, which makes /etc/ws/host_vars.yml on ws, where
+// it has no cable to see off the LAN, as wizard-cable.sh's cable_after.
+func (*Cable) WaitsOn() string { return homebrewStage }
 
 type cableChange string
 
@@ -148,8 +149,8 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if !c.lacks() {
-		return c.change("name " + cf.CablePort + " in host_vars/localhost.yml on ws again, and run " +
-			"bootstrap.sh --tags network,wireguard there")
+		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on ws again, and run " +
+			"ws server apply -- --tags network,wireguard there")
 	}
 	if none {
 		return c.change("write an empty WS_CABLE_SERVICE in mac.conf, for no cable")
@@ -159,8 +160,8 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if portSet && !c.Host.Check {
 		// Apply reads the ports once, and names the port that the environment gives.
-		return c.change("ask ws's port of the cable, name it in host_vars/localhost.yml on ws, and run " +
-			"bootstrap.sh --tags network,wireguard there")
+		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
+			"ws server apply -- --tags network,wireguard there")
 	}
 	if err := c.read(ctx, "link"); err != nil {
 		return step.Plan{}, err
@@ -169,11 +170,11 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if c.end() == "" {
-		return c.change("ask ws's port of the cable, name it in host_vars/localhost.yml on ws, and run " +
-			"bootstrap.sh --tags network,wireguard there")
+		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
+			"ws server apply -- --tags network,wireguard there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
-		"ws setup, which gives it 10.77.0.2, and ping " + cableEnd)
+		"ws mac apply, which gives it 10.77.0.2, and ping " + cableEnd)
 }
 
 func (*Cable) change(text string) (step.Plan, error) {

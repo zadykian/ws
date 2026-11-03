@@ -5,19 +5,22 @@
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. run is the commit and status of the last full run, and off where its -e turned the
-#   outbound table off, else on. last is the unit and status of the last run. active is the run's
-#   unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
+#   is missing. run is the ws version and status of the last full run, and off where its -e turned the
+#   outbound table off, else on. ws is the version that ws prints. last is the unit and status of
+#   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. hook lists the repositories, as
 #   OWNER/REPO, whose apply.sh has a stamp of wizard-remote-files.sh's, the files script. outbound
-#   is off where the clone's host_vars turns the security role's outbound table off, else on.
-#   cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
-# - run [--update] [ARG...] runs bootstrap.sh ARGs in a unit of its own, ws-wizard-STAMP, which goes
+#   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
+#   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
+# - run [ARG...] runs ws server apply -- ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
-#   ends, and exits with the run's status. --update first pulls a clean clone on main. A run whose
+#   ends, and exits with the run's status. A run whose
 #   ARGs are -e pairs alone is a full one.
+# - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
+#   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
+#   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
 # - outbound names security_outbound: false in ws's host_vars, where a full run's unit with -e
 #   security_outbound=false didn't, which keeps the outbound table off for a cloud VM.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
@@ -26,12 +29,14 @@
 
 set -eu
 
-# The wizard's stamps, ws's clone, the Mac's key for wg0, root's claude, root's git config, which
+# The wizard's stamps, ws's binary, the machine's values that ws's playbook reads, the
+# Mac's key for wg0, root's claude, root's git config, which
 # names ws's signing key, the fans' driver as the kernel loaded it, and the network role's netplan
 # file of the cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of
 # its own.
 state=/var/lib/ws-wizard
-dir=/root/repository/ws
+ws=/usr/local/bin/ws
+vars=/etc/ws/host_vars.yml
 peer=/etc/wireguard/mac.pub
 claude=/root/.local/bin/claude
 gitconfig=/root/.gitconfig
@@ -59,7 +64,7 @@ stamp() {
     awk -v n="${2:-2}" 'NF == n { print; exit }' "$1" 2>/dev/null | first
 }
 
-# cable prints the port that host_vars in the clone names as network_direct_link_interface, as
+# cable prints the port that host_vars names as network_direct_link_interface, as
 # link writes it, bare or in either quotes: the last such line, as Ansible reads the file. It
 # prints - for none, and where the network role's netplan file lacks the port, as after a roles'
 # run that failed, so that the Cable stage runs them again.
@@ -71,7 +76,7 @@ cable() {
         sub(/[ \t\r]+$/, "", v)
         if (v ~ /^".*"$/ || v ~ ("^" q ".*" q "$")) v = substr(v, 2, length(v) - 2)
         port = (v ~ /^[A-Za-z0-9_.-]+$/) ? v : ""
-    } END { print port }' "$dir/host_vars/localhost.yml" 2>/dev/null) || port=
+    } END { print port }' "$vars" 2>/dev/null) || port=
     [ -n "$port" ] && grep -qF "\"$port\":" "$netplan" 2>/dev/null || port=-
     echo "$port"
 }
@@ -94,6 +99,7 @@ status() {
     echo "run $(stamp "$state/run" 3)"
     echo "last $(stamp "$state/last")"
     echo "active $(active | first)"
+    echo "ws $("$ws" version 2>/dev/null | first)"
     echo "mac.pub $(head -n 1 "$peer" 2>/dev/null | first)"
     echo "wg0 $(wg show wg0 public-key 2>/dev/null | first)"
     echo "signing $(signing_key | first)"
@@ -117,34 +123,19 @@ status() {
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
     hook=$(cat "$state"/hook-* 2>/dev/null | awk '$3 != "" { printf " %s", $3 }')
     echo "hook${hook:- -}"
-    echo "outbound $(off | sh -s -- check "$dir/host_vars/localhost.yml" && echo off || echo on)"
+    echo "outbound $(off | sh -s -- check "$vars" && echo off || echo on)"
 }
 
-# pull pulls the clone by fast-forward, where it is on main with nothing uncommitted, untracked
-# files aside. Otherwise it warns, and leaves it as it is.
-pull() {
-    [ -e "$dir/.git" ] || return 0
-    if [ "$(git -C "$dir" symbolic-ref -q --short HEAD)" != main ] ||
-        [ -n "$(git -C "$dir" status --porcelain --untracked-files=no)" ]; then
-        say "warning: leaves $dir as it is, not on main or not clean: pull it by hand"
-        return 0
-    fi
-    head=$(git -C "$dir" rev-parse --short HEAD)
-    git -C "$dir" pull -q --ff-only || die "git pull --ff-only failed in $dir; mend the clone"
-    [ "$(git -C "$dir" rev-parse --short HEAD)" = "$head" ] ||
-        say "pulled $dir to $(git -C "$dir" rev-parse --short HEAD)"
-}
-
-# job prints the script of a run's unit, which systemd-run runs with UNIT DIR STATE [ARG...]. It
-# runs bootstrap.sh ARGs from the clone in DIR, or from the README's download where DIR holds none.
-# Its last steps write STATE/last as UNIT and the status, each by a rename. A full run, whose ARGs
-# are -e pairs alone, writes STATE/run too: the clone's commit, the status, and off where
-# -e security_outbound=false turned the outbound table off, else on. It removes it as it starts.
+# job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE [ARG...].
+# It runs WS server apply -- ARGs. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
+# whose ARGs are -e pairs alone, writes STATE/run too: the version that WS printed before the run, or - where WS
+# prints none, the status, and off where -e security_outbound=false turned the outbound table off,
+# else on. It removes it as it starts.
 # Such a run that passed first names that in host_vars by STATE/off, so that no ssh comes between.
 job() {
     cat <<'EOF'
-unit=$1 dir=$2 state=$3 full=1 table=on pair=
-shift 3
+unit=$1 vars=$2 ws=$3 state=$4 full=1 table=on pair=
+shift 4
 for arg; do
     case $pair:$arg in
     1:security_outbound=false) table=off pair= ;;
@@ -155,18 +146,12 @@ for arg; do
 done
 [ -z "$pair" ] || full=0
 [ "$full" = 0 ] || rm -f "$state/run"
-if [ -e "$dir/.git" ]; then
-    sh "$dir/bootstrap.sh" "$@"
-else
-    curl -fsSL --retry 3 -o "$state/bootstrap.sh" \
-        https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh &&
-        sh "$state/bootstrap.sh" "$@"
-fi
+version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version=-
+"$ws" server apply -- "$@"
 status=$?
 if [ "$full" = 1 ]; then
-    [ "$status$table" != 0off ] || sh "$state/off" write "$dir/host_vars/localhost.yml"
-    sha=$(git -C "$dir" rev-parse HEAD 2>/dev/null) || sha=-
-    echo "$sha $status $table" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
+    [ "$status$table" != 0off ] || sh "$state/off" write "$vars"
+    echo "$version $status $table" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
 fi
 echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
 exit "$status"
@@ -176,18 +161,20 @@ EOF
 # off prints the script of host_vars VARS's security_outbound line, which runs as OP VARS. check
 # succeeds where the last such line is false, no or off, in any case, with a comment or not, as YAML
 # reads it. write names security_outbound: false otherwise, by a rename that keeps the file's other
-# lines and mode, so neither through a link nor outside a clone.
+# lines and mode, and not through a link. It makes the directory 0755 and a new file 0600, as the
+# file may hold secrets.
 off() {
     cat <<'EOF'
 vars=$2
 awk '/^security_outbound:/ { line = $0 } END { print line }' "$vars" 2>/dev/null |
     grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]+#.*)?' && exit 0
 [ "$1" = write ] || exit 1
-dir=${vars%/host_vars/*} why=
-[ ! -L "$vars" ] || why="$vars is a link to $(readlink "$vars"): name the line in its file by hand"
-[ -d "$dir/.git" ] || why="ws has no clone in $dir, which ws's run makes"
-[ -z "$why" ] || { echo "wizard-remote.sh: $why" >&2 && exit 1; }
-mkdir -p "${vars%/*}"
+if [ -L "$vars" ]; then
+    echo "wizard-remote.sh: $vars is a link to $(readlink "$vars"): name the line in its file by hand" >&2
+    exit 1
+fi
+[ -d "${vars%/*}" ] || { mkdir -p "${vars%/*}" && chmod 755 "${vars%/*}"; }
+umask 077
 [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
 {
     [ -s "$vars" ] || echo ---
@@ -202,13 +189,10 @@ EOF
 # run starts a run's unit, or follows the one that runs, as the header says. The unit takes root's
 # HOME, which systemd gives a unit only with a user, and the locale that Ansible needs.
 run() {
-    update=0
-    [ "${1-}" != --update ] || { update=1 && shift; }
     unit=$(active)
     if [ -n "$unit" ]; then
         say "following $unit, which runs on ws already"
     else
-        [ "$update" = 0 ] || pull
         mkdir -p "$state"
         job >"$state/job.new"
         mv -f "$state/job.new" "$state/job"
@@ -216,7 +200,7 @@ run() {
         unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
         systemd-run --quiet --unit="$unit" --collect --expand-environment=no \
             --description="ws's playbook, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
-            --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$dir" "$state" "$@" ||
+            --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$vars" "$ws" "$state" "$@" ||
             die "systemd-run cannot start $unit"
         say "started $unit, which goes on where ssh drops: journalctl -u $unit shows its log"
     fi
@@ -240,6 +224,19 @@ follow() {
         die "$1 ended before its run wrote its status, as where it was stopped: run it again"
     [ "${last#* }" = 0 ] || say "$1's run exited ${last#* }: journalctl -u $1 shows its log"
     exit "${last#* }"
+}
+
+# install TAG URL installs ws's release TAG from the releases at URL, as the header says. It
+# downloads that release's install.sh, which runs as root here, so both arguments are checked first.
+install() {
+    printf '%s\n' "$1" | grep -Eqx 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' ||
+        die "'$1' is not a release, vX.Y.Z"
+    printf '%s\n' "$2" | grep -Eqx '(https://|http://127\.0\.0\.1:)[A-Za-z0-9._~:/-]+' ||
+        die "'$2' is not an address of releases: https://, or http://127.0.0.1:"
+    mkdir -p "$state" || die "cannot make $state"
+    curl -fsSL --retry 3 --proto-redir =https -o "$state/install.sh" "$2/download/$1/install.sh" ||
+        die "cannot download $2/download/$1/install.sh"
+    WS_VERSION=$1 WS_RELEASES_URL=$2 sh "$state/install.sh"
 }
 
 # peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
@@ -270,10 +267,11 @@ main() {
     case ${1-} in
     status) status ;;
     run) shift && run "$@" ;;
-    outbound) off | sh -s -- write "$dir/host_vars/localhost.yml" ;;
+    outbound) off | sh -s -- write "$vars" ;;
+    install) install "${2-}" "${3-}" ;;
     peer) peer "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [--update] [ARG...] |" \
-        "outbound | peer KEY" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...] |" \
+        "install TAG URL | outbound | peer KEY" ;;
     esac
 }
 

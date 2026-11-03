@@ -13,8 +13,8 @@ import (
 func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, c.Out} }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the terminal,
-// the one with carrier by default. link names it in host_vars on ws, and bootstrap.sh --tags
-// network,wireguard runs there, as both roles read it: the network role must give it 10.77.0.1. Then
+// the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws, and ws server apply -- --tags network,wireguard
+// runs there, as both roles read it: the network role must give it 10.77.0.1. Then
 // service takes the Mac's service. none, as either answer, writes an empty WS_CABLE_SERVICE. Where
 // mac.conf has a service, again takes the stage's steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
@@ -49,7 +49,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 		if port == "" {
 			return c.write(ctx, "")
 		}
-		c.Out.Say("%s: %s goes in host_vars/localhost.yml on ws, and bootstrap.sh --tags network,wireguard "+
+		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws, and ws server apply -- --tags network,wireguard "+
 			"runs there in a unit of its own", cableStage, port)
 		if err := c.name(ctx, port); err != nil {
 			return err
@@ -58,14 +58,14 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 			return err
 		}
 		if c.end() != port {
-			return fmt.Errorf("%s: ws's %s lacks %s after bootstrap.sh --tags network,wireguard: plug the "+
+			return fmt.Errorf("%s: ws's %s lacks %s after ws server apply -- --tags network,wireguard: plug the "+
 				"Mac's cable into it, or mend what that printed, then run the wizard again", cableStage, port, cableEnd)
 		}
 	}
 	return c.service(ctx)
 }
 
-// name puts the port in ws's host_vars and runs the network and wireguard roles there.
+// name puts the port in ws's /etc/ws/host_vars.yml and runs the network and wireguard roles there.
 func (c *Cable) name(ctx context.Context, port string) error {
 	if err := c.Files.Pass(ctx, "link", port); err != nil {
 		return err
@@ -73,7 +73,7 @@ func (c *Cable) name(ctx context.Context, port string) error {
 	return c.Run.Remote.Pass(ctx, "run", "--tags", "network,wireguard")
 }
 
-// again names WS_CABLE_PORT in host_vars on ws where ws's status names none or another, as after
+// again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another, as after
 // ws's install, a failed roles' run or a change in mac.conf, and runs the roles there, with no
 // question and no dock. It stops on a port that ws lacks.
 func (c *Cable) again(ctx context.Context, port string) error {
@@ -90,14 +90,14 @@ func (c *Cable) again(ctx context.Context, port string) error {
 	if c.Run.Remote.Get("cable") == port {
 		return nil
 	}
-	c.Out.Say("%s: %s goes in host_vars/localhost.yml on ws again, and bootstrap.sh --tags network,wireguard "+
+	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws again, and ws server apply -- --tags network,wireguard "+
 		"runs there in a unit of its own", cableStage, port)
 	return c.name(ctx, port)
 }
 
 // service takes the Mac's service of the cable, from WS_CABLE_SERVICE in the environment or the
 // terminal. The default is the one service with a 169.254 address, which an adapter gives itself
-// where no DHCP server answers. It writes it in mac.conf, and runs ws setup, which gives it
+// where no DHCP server answers. It writes it in mac.conf, and runs ws mac apply, which gives it
 // 10.77.0.2. Then ping must reach ws's end over it. none writes an empty WS_CABLE_SERVICE.
 func (c *Cable) service(ctx context.Context) error {
 	out, err := c.M.Run(ctx, "networksetup", "-listallnetworkservices")

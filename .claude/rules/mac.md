@@ -5,7 +5,7 @@ paths:
 
 # mac
 
-The rules a change to the ws CLI in `mac/` keeps, each linking its reason
+The rules a change to the ws CLI in `mac/` keeps (its module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too.
 
@@ -19,3 +19,6 @@ The rules a change to the ws CLI in `mac/` keeps, each linking its reason
   [effecttest](../../mac/internal/effect/effecttest/effecttest.go), never the real ones.
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
+- A group of commands exists on the systems where it runs. `ws mac` is `macCommand`, which is built
+  everywhere and tested on Linux. Its entry in the table of groups is in a `//go:build darwin` file
+  ([groups_darwin.go](../../mac/cmd/ws/groups_darwin.go)).

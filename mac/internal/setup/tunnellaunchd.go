@@ -52,11 +52,7 @@ func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	plistText, err := t.M.ReadFile(t.Plist)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read %s: %w", t.Plist, err)
-	}
-	plist, err := rootFile(t.M, tunnelPlist, 0o644, plistText)
+	plist, err := rootFile(t.M, tunnelPlist, 0o644, t.Plist)
 	if err != nil {
 		return nil, err
 	}

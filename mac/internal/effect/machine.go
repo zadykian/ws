@@ -9,6 +9,8 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"strings"
+	"syscall"
 )
 
 // OSMachine is the Machine of the Mac that ws runs on.
@@ -92,6 +94,31 @@ func (m OSMachine) Pass(ctx context.Context, root bool, name string, args ...str
 		return commandError(cmd, err)
 	}
 	return nil
+}
+
+// Exec replaces ws with the command, found on PATH, with ws's environment and env's entries set.
+func (OSMachine) Exec(name string, args, env []string) error {
+	path, err := exec.LookPath(name)
+	if err != nil {
+		return err
+	}
+	return syscall.Exec(path, append([]string{name}, args...), withEnv(os.Environ(), env)) //nolint:gosec // the steps name the command
+}
+
+// withEnv returns base with each KEY=VALUE entry of set added, replacing the entry of its name.
+func withEnv(base, set []string) []string {
+	name := func(e string) string { k, _, _ := strings.Cut(e, "="); return k }
+	replaced := map[string]bool{}
+	for _, e := range set {
+		replaced[name(e)] = true
+	}
+	out := make([]string, 0, len(base)+len(set))
+	for _, e := range base {
+		if !replaced[name(e)] {
+			out = append(out, e)
+		}
+	}
+	return append(out, set...)
 }
 
 func (m OSMachine) argv(root bool, name string, args []string) []string {

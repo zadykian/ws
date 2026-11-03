@@ -41,12 +41,12 @@ func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
 	var stderr bytes.Buffer
 	if got := tunnelRoutes(context.Background(), []string{"test", "0.0.0.0/0"}, effecttest.NewMachine(), &stderr); got != 1 ||
-		stderr.String() != "ws: ws tunnel routes test: 0.0.0.0/0 overlaps the tunnel's 10.99.0.0/24\n" {
+		stderr.String() != "ws: ws mac tunnel routes test: 0.0.0.0/0 overlaps the tunnel's 10.99.0.0/24\n" {
 		t.Errorf("routes: status = %d, stderr = %q", got, stderr.String())
 	}
 	stderr.Reset()
 	if got := resolverCommand(context.Background(), nil, effecttest.NewMachine(), &stderr); got != 2 ||
-		!strings.HasPrefix(stderr.String(), "usage: ws resolver") {
+		!strings.HasPrefix(stderr.String(), "usage: ws mac resolver") {
 		t.Errorf("resolver: status = %d, stderr = %q", got, stderr.String())
 	}
 }

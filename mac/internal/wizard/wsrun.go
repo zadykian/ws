@@ -11,13 +11,15 @@ import (
 // runStage names the stage in its messages.
 const runStage = "ws's run"
 
-// WsRun is the stage of ws's playbook, bootstrap.sh, in a unit of its own on ws. The remote script
+// WsRun is the stage of ws's playbook, ws server apply, in a unit of its own on ws. The remote script
 // starts it and follows it. A run goes on where ssh drops, and the next run of the wizard follows it.
 type WsRun struct {
 	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
 	Host   *HostKey
 	Remote *Remote
-	// Update has the stage run the playbook again, after the remote script pulls ws's clone.
+	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
+	Version string
+	// Update has the stage run the playbook once more, with the ws installed there.
 	Update bool
 	// ran is set once the stage ran the playbook in this run.
 	ran bool
@@ -26,8 +28,8 @@ type WsRun struct {
 // Name is the stage's name.
 func (*WsRun) Name() string { return runStage }
 
-// WaitsOn is the Root's key stage, which the remote script needs.
-func (*WsRun) WaitsOn() string { return rootStage }
+// WaitsOn is the stage that installs this ws on ws.
+func (*WsRun) WaitsOn() string { return installStage }
 
 // lastRun returns the status of ws's last full run, as the remote script's status read it, or -.
 func (r *WsRun) lastRun() string {
@@ -43,9 +45,11 @@ func (r *WsRun) off() bool {
 	return len(f) > 2 && f[2] == "off"
 }
 
-// idle tells whether ws's last full run exited 0, and no run's unit runs there now.
+// idle tells whether ws's last full run exited 0, made by a ws of this version, and no run's unit
+// runs there now.
 func (r *WsRun) idle(ctx context.Context) bool {
-	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0"
+	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
+		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ")
 }
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
@@ -80,12 +84,8 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.runDone(ctx, c.Target) {
 		return step.Plan{}, nil
 	}
-	how := "run bootstrap.sh on ws in a unit of its own, and follow its log"
+	how := "run ws server apply on ws in a unit of its own, and follow its log"
 	var args []string
-	if r.Update {
-		args = []string{"--update"}
-		how = "pull ws's clone where it is on main and clean, then " + how
-	}
 	if c.Target == "cloud" {
 		args = append(args, "-e", "security_outbound=false")
 		how += ", with -e security_outbound=false, then name that in ws's host_vars"

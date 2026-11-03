@@ -41,7 +41,7 @@ func (h *HookMac) Apply(ctx context.Context, p step.Plan) error {
 }
 
 // Hand adds gh auth setup-git to what stays by hand, where git's config names no credential command
-// of gh's for github.com, as ws setup's gitconfig does where mac.conf gives git a name. Through that
+// of gh's for github.com, as ws mac apply's gitconfig does where mac.conf gives git a name. Through that
 // command, pushes from the Mac's clones take gh's login.
 func (h *HookMac) Hand(ctx context.Context, hand *Hand) {
 	out, _ := h.M.Run(ctx, "git", "config", "--global", "--includes", "--get-all",

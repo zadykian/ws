@@ -17,20 +17,20 @@ printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed
 {
     printf '%s\n' '' 10.77.0.0/30 none none '' '' ''
     sleep 5
-} | script -q /dev/null "$wsbin" wizard >"$RUNNER_TEMP/tty" 2>&1
+} | script -q /dev/null "$wsbin" mac wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 if [ "$status" != 0 ]; then
-    echo "::error::ws wizard exited $status with the answers typed"
+    echo "::error::ws mac wizard exited $status with the answers typed"
     fail=1
 fi
 if ! cmp -s "$conf" "$RUNNER_TEMP/mac.conf.env"; then
-    echo "::error::ws wizard wrote another mac.conf from the answers typed than the environment's:"
+    echo "::error::ws mac wizard wrote another mac.conf from the answers typed than the environment's:"
     diff "$RUNNER_TEMP/mac.conf.env" "$conf"
     fail=1
 fi
 if ! tr -d '\r' <"$RUNNER_TEMP/tty" | grep -qF 'WS_LAN=10.77.0.0/30 is not an IPv4 network'; then
-    echo '::error::ws wizard took WS_LAN=10.77.0.0/30, or asked it no more'
+    echo '::error::ws mac wizard took WS_LAN=10.77.0.0/30, or asked it no more'
     fail=1
 fi
 exit "$fail"

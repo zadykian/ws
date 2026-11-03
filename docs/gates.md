@@ -11,9 +11,7 @@ check files take `FILES`, as in `make vale FILES=README.md`:
 
 - `shell`: ShellCheck, which follows a script's sources with `-x`, and `shfmt -d -i 4` on every
   shell script, found by extension or shebang;
-- `yamllint`: `yamllint --strict`, as `.yamllint` sets it, on the YAML files it finds itself.
-  Those include `host_vars/localhost.yml`, which git ignores, so that file starts with `---`
-  ([The direct link](network.md#the-direct-link));
+- `yamllint`: `yamllint --strict`, as `.yamllint` sets it, on the YAML files it finds itself;
 - `ansible-lint`: its production profile, strict and offline (`.ansible-lint`);
 - `ruff`: `ruff check` and `ruff format --check` on the Python files, as `ruff.toml` sets them;
 - `sizecheck`: 300 lines a file, for Markdown, YAML, shell, Python, Go and Jinja templates;
@@ -24,9 +22,9 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   tables (`.rumdl.toml`);
 - `actionlint` and `zizmor`: the workflows, zizmor with its online audits where `GH_TOKEN` is set;
 - `gitleaks`: every commit, for secrets, or those that `LOG_OPTS` picks with git log's options;
-- `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module in `mac/`.
+- `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`: the Go module at the root.
   `gofmt` fails where `gofmt -l` lists a file, and `golangci-lint` runs a strict set of linters
-  (`mac/.golangci.yml`). A finding is justified with `//nolint:NAME // reason` alone.
+  (`.golangci.yml`). A finding is justified with `//nolint:NAME // reason` alone.
   `govulncheck` is the module's `tool` directive, so go.mod pins it. `gotest` runs
   `go test -race -count=1 ./...`, and cgo is on for the race detector alone, as ws builds with
   `CGO_ENABLED=0`.

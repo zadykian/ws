@@ -18,15 +18,15 @@ const (
 )
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
-// Mac's key goes to wg0's mac.pub on ws, where wg0 takes it as its peer, and bootstrap.sh --tags
+// Mac's key goes to wg0's mac.pub on ws, where wg0 takes it as its peer, and ws server apply -- --tags
 // wireguard runs there. Both go through the remote script over ws-ssh, as a change of wg0's peers
-// ends the tunnel's sessions. Then mac.conf's WS_PUBLIC_KEY follows wg0's key, and ws setup runs
+// ends the tunnel's sessions. Then mac.conf's WS_PUBLIC_KEY follows wg0's key, and ws mac apply runs
 // again, which loads ws-tunnel. Last, ws-tunnel must show a handshake, and ssh ws log in through it.
 // Without a handshake, the closing list says so, and the run goes on.
 type Tunnel struct {
 	Host *HostKey
 	Run  *WsRun
-	// Setup is the ws setup stage, which runs again once WS_PUBLIC_KEY is wg0's.
+	// Setup is the ws mac apply stage, which runs again once WS_PUBLIC_KEY is wg0's.
 	Setup *Setup
 	Hand  *Hand
 	Home  string
@@ -58,7 +58,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	mac := t.pub()
 	if mac == "" && t.Host.Check {
-		t.Out.Say("%s: after ws setup", tunnelStage)
+		t.Out.Say("%s: after ws mac apply", tunnelStage)
 		return step.Plan{}, nil
 	}
 	if t.Run.Remote.Status(ctx) && c.PublicKey != "" && t.Run.Remote.Get("wg0") == c.PublicKey &&
@@ -71,7 +71,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on ws"))
 	}
 	if t.Run.Remote.Get("mac.pub") != mac || t.Run.Remote.Get("peer") != "ok" {
-		ch = append(ch, tunnelChange("run bootstrap.sh --tags wireguard on ws, for wg0's peer"))
+		ch = append(ch, tunnelChange("run ws server apply -- --tags wireguard on ws, for wg0's peer"))
 	}
 	switch wg0 := t.Run.Remote.Get("wg0"); {
 	case wg0 == "":
@@ -85,6 +85,6 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		}
 		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, "+wg0))
 	}
-	return step.Plan{Changes: append(ch, tunnelChange("run ws setup again, which loads ws-tunnel, and wait up "+
+	return step.Plan{Changes: append(ch, tunnelChange("run ws mac apply again, which loads ws-tunnel, and wait up "+
 		"to 30 s for ws-tunnel's handshake, then log in to ws through it"))}, nil
 }

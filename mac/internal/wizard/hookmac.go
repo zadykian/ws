@@ -44,20 +44,21 @@ func (c hookClone) String() string {
 
 // originOf returns the pattern of WS_HOOK's origin URL on GitHub, by https or ssh, letter case aside.
 func originOf(hook string) *regexp.Regexp {
-	return regexp.MustCompile(`(?i)[/@]github\.com[/:]` + regexp.QuoteMeta(strings.TrimSuffix(hook, ".git")) + `$`)
+	return regexp.MustCompile(`(?i)[/@]github\.com[/:]` + regexp.QuoteMeta(strings.TrimSuffix(hookRepo(hook), ".git")) + `$`)
 }
 
 // plan returns the changes that the clone lacks. A path with no clone, or another's, stops it.
 func (h *HookMac) plan(ctx context.Context, hook string) ([]step.Change, error) {
-	dir := h.Home + "/repository/" + hook[strings.Index(hook, "/")+1:]
+	repo := hookRepo(hook)
+	dir := h.Home + "/repository/" + repo[strings.Index(repo, "/")+1:]
 	info, err := h.M.Stat(dir)
 	if errors.Is(err, fs.ErrNotExist) && info.Link == "" {
 		path, _, err := h.Gh.ghPath(ctx)
 		if err != nil {
 			return nil, err
 		}
-		argv := []string{path, "repo", "clone", hook, dir, "--", "-q"}
-		return []step.Change{hookClone{hookRun{"gh repo clone " + hook + " " + dir, argv}}}, nil
+		argv := []string{path, "repo", "clone", repo, dir, "--", "-q"}
+		return []step.Change{hookClone{hookRun{"gh repo clone " + repo + " " + dir, argv}}}, nil
 	}
 	if _, err := h.M.Stat(dir + "/.git"); err != nil {
 		return nil, fmt.Errorf("%s: %s holds no clone: move it aside", hookMacStage, dir)
@@ -95,4 +96,16 @@ func (h *HookMac) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	cs, err := h.plan(ctx, c.Hook)
 	return step.Plan{Changes: cs}, err
+}
+
+// hookRepo returns OWNER/REPO of WS_HOOK's value, which is OWNER/REPO or OWNER/REPO@TAG.
+func hookRepo(v string) string {
+	repo, _, _ := strings.Cut(v, "@")
+	return repo
+}
+
+// hookTag returns the TAG of WS_HOOK's value, or "" where it holds none.
+func hookTag(v string) string {
+	_, tag, _ := strings.Cut(v, "@")
+	return tag
 }

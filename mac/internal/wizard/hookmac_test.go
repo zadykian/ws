@@ -83,3 +83,14 @@ func TestHookMacHand(t *testing.T) {
 		}
 	}
 }
+
+func TestHookSplit(t *testing.T) {
+	for _, c := range []struct{ in, repo, tag string }{
+		{"a/b", "a/b", ""},
+		{"a/b@v1.0.0", "a/b", "v1.0.0"},
+	} {
+		if r, g := hookRepo(c.in), hookTag(c.in); r != c.repo || g != c.tag {
+			t.Errorf("split %q = %q, %q, want %q, %q", c.in, r, g, c.repo, c.tag)
+		}
+	}
+}

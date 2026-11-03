@@ -4,23 +4,26 @@
 #
 #   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
-# - bundle OWNER/REPO prints the path for a git bundle of that repository's origin/main, in state as
-#   hook-REPO.bundle, where /root/repository/REPO is missing, and removes an old one. The wizard
-#   sends the bundle there by a call of its own, as this script takes stdin.
-# - clone OWNER/REPO clones that repository into /root/repository/REPO, where nothing is there, from
-#   that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, and stops where
-#   the Mac sent none. It removes the bundle. It never pulls a clone, as the repository's apply.sh
-#   updates its own. It stops where the path holds no clone, another repository's, or a clone with
-#   no apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
+# - bundle OWNER/REPO[@TAG] prints the path for a git bundle of that repository's origin/main, or
+#   given a tag, vX.Y.Z, of that tag, in state as hook-REPO.bundle, where /root/repository/REPO is
+#   missing, or the tag is not its HEAD, and removes an old one. The wizard sends the bundle there
+#   by a call of its own, as this script takes stdin.
+# - clone OWNER/REPO[@TAG] clones that repository into /root/repository/REPO, where nothing is
+#   there, from that bundle, on branch main with origin at https://github.com/OWNER/REPO.git, and
+#   stops where the Mac sent none. Given a tag, the clone is detached at it, and so is an existing
+#   one, from a bundle, where it changed nothing tracked and the tag is not another commit there.
+#   Without a tag, it never pulls a clone, as the repository's apply.sh updates its own. It removes
+#   the bundle. It stops where the path holds no clone, another repository's, or a clone with no
+#   apply.sh that runs. It removes REPO's stamp, as apply.sh runs next, so that a run that fails
 #   or is cut short leaves none.
-# - stamp OWNER/REPO stamps REPO's apply.sh, which exited 0, with the clone's commit and OWNER/REPO.
-#   The remote script's status lists the repositories that have a stamp, as OWNER/REPO.
+# - stamp OWNER/REPO[@TAG] stamps REPO's apply.sh, which exited 0, with the clone's commit and the
+#   value. The remote script's status lists the repositories that have a stamp, as the value.
 # - words prints git's hash of root's word list, ~/.config/ws/forbidden-words, which ws's hooks
 #   read, or - where root has none. words HASH prints the list, while its hash is HASH.
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
 #   line holds the port, its carrier, 1 or 0, or - where the port is down, and its IPv4 addresses,
-#   or -. link PORT names that port in ws's host_vars/localhost.yml as
+#   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
 #   network_direct_link_interface, the port of the Mac's cable, which the network and wireguard
 #   roles read.
 #
@@ -29,13 +32,13 @@
 set -eu
 
 # The wizard's stamps and bundles, the repositories' clones, root's word list, sysfs's network
-# interfaces and the host_vars file in ws's clone. CI's stand-in for ws roots each, a line
+# interfaces and the machine's values for ws's playbook. CI's stand-in for ws roots each, a line
 # NAME=PATH, in a directory of its own.
 state=/var/lib/ws-wizard
 repos=/root/repository
 list=/root/.config/ws/forbidden-words
 net=/sys/class/net
-vars=/root/repository/ws/host_vars/localhost.yml
+vars=/etc/ws/host_vars.yml
 
 # say prints a message of the script's on stderr.
 say() {
@@ -48,70 +51,103 @@ die() {
     exit 1
 }
 
-# repo OWNER/REPO sets repo to REPO, where OWNER/REPO names a repository on GitHub, as mac.conf's
-# WS_HOOK does. Each side of the / is letters, digits and ._-, and neither . or .. alone, and REPO
-# isn't ws, ws's own clone, in any letter case, which APFS and GitHub ignore. It stops otherwise.
-# It sets pack, REPO's bundle in state, as well.
+# repo OWNER/REPO[@TAG] sets slug to OWNER/REPO and repo to REPO, where OWNER/REPO names a repository on
+# GitHub, as mac.conf's WS_HOOK does, and tag to TAG, or nothing. Each side of the / is letters, digits
+# and ._-, and neither . or .. alone, and REPO isn't ws, ws's own clone, in any letter case, which APFS
+# and GitHub ignore. TAG is a release, vX.Y.Z. It stops otherwise. It sets pack, REPO's bundle in
+# state, as well.
 repo() {
-    case $1 in
+    slug=${1%%@*}
+    tag=
+    case $1 in *@*) tag=${1#*@} ;; esac
+    case $slug in
     *[!A-Za-z0-9._/-]* | */*/* | /* | */ | ./* | ../* | */. | */.. | */[Ww][Ss]) ;;
     */*)
-        repo=${1#*/}
+        repo=${slug#*/}
         pack=$state/hook-$repo.bundle
+        [ -z "$tag" ] || printf '%s\n' "$tag" | grep -Eqx 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' ||
+            die "'$tag' is not a release, as vX.Y.Z"
         return 0
         ;;
     esac
-    die "'$1' is not a repository on GitHub, as OWNER/REPO, with a REPO other than ws"
+    die "'$slug' is not a repository on GitHub, as OWNER/REPO, with a REPO other than ws"
 }
 
-# bundle OWNER/REPO prints the path for REPO's bundle, as the header says.
+# bundle OWNER/REPO[@TAG] prints the path for REPO's bundle, as the header says.
 bundle() {
     repo "$1"
     rm -f "$pack"
-    [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ] || return 0
+    if [ -e "$repos/$repo" ] || [ -L "$repos/$repo" ]; then
+        [ -n "$tag" ] || return 0
+        cur=$(git -C "$repos/$repo" rev-parse -q --verify HEAD 2>/dev/null) || cur=
+        [ -z "$cur" ] || [ "$(git -C "$repos/$repo" rev-parse -q --verify "refs/tags/$tag^{commit}" \
+            2>/dev/null)" != "$cur" ] || return 0
+    fi
     mkdir -p "$state"
     echo "$pack"
 }
 
-# unbundle OWNER/REPO makes the clone in repos from REPO's bundle. The clone is built beside its
-# place and moved there whole, so that no failure leaves half of one for the next run to take. The
-# bundle holds origin/main, so the branch main is made from it, with that as its upstream.
+# unbundle OWNER/REPO[@TAG] makes the clone in repos from REPO's bundle. The clone is built beside
+# its place and moved there whole, so that no failure leaves half of one for the next run to take.
+# The bundle holds origin/main, so the branch main is made from it, with that as its upstream. Given
+# a tag, it holds that tag alone, which the clone is detached at.
 unbundle() {
     [ -f "$pack" ] || die "ws lacks $repos/$repo, and the Mac sent no bundle: run the wizard again"
     part=$repos/.$repo.part
     rm -rf "$part"
     mkdir -p "$repos"
     if git init -q -b main "$part" &&
-        git -C "$part" remote add origin "https://github.com/$1.git" &&
-        git -C "$part" fetch -q "$pack" +refs/remotes/origin/main:refs/remotes/origin/main &&
-        git -C "$part" checkout -q -B main --track origin/main && mv "$part" "$repos/$repo"; then
+        git -C "$part" remote add origin "https://github.com/$slug.git" &&
+        if [ -n "$tag" ]; then
+            git -C "$part" fetch -q "$pack" "refs/tags/$tag:refs/tags/$tag" &&
+                git -C "$part" checkout -q --detach "$tag"
+        else
+            git -C "$part" fetch -q "$pack" +refs/remotes/origin/main:refs/remotes/origin/main &&
+                git -C "$part" checkout -q -B main --track origin/main
+        fi && mv "$part" "$repos/$repo"; then
         return 0
     fi
     rm -rf "$part" "$pack"
-    die "git cannot make the clone of $1 from its bundle, as above: run the wizard again"
+    die "git cannot make the clone of $slug from its bundle, as above: run the wizard again"
 }
 
-# clone OWNER/REPO clones the repository in repos, as the header says. A clone there must be
+# retag detaches REPO's clone at the tag, from the bundle, where the clone changed nothing tracked.
+# The fetch never moves a tag the clone has, so that a tag moved on GitHub stops it.
+retag() {
+    if [ -n "$(git -C "$repos/$repo" status --porcelain --untracked-files=no)" ]; then
+        rm -f "$pack"
+        die "$repos/$repo has changes, so $tag can't be checked out: commit or reset them"
+    fi
+    git -C "$repos/$repo" fetch "$pack" "refs/tags/$tag:refs/tags/$tag" &&
+        git -C "$repos/$repo" checkout -q --detach "$tag" && return 0
+    rm -f "$pack"
+    die "git cannot check out $tag of $slug in $repos/$repo, as above, where a tag moved on GitHub stops it"
+}
+
+# clone OWNER/REPO[@TAG] clones the repository in repos, as the header says. A clone there must be
 # OWNER/REPO's: its origin, by https or ssh as gh sets it, names it on GitHub, letter case aside.
 clone() {
     repo "$1"
     rm -f "$state/hook-$repo"
+    fresh=
     if [ ! -e "$repos/$repo" ] && [ ! -L "$repos/$repo" ]; then
-        unbundle "$1"
-        say "cloned $1 into $repos/$repo"
+        unbundle
+        say "cloned $slug into $repos/$repo"
+        fresh=1
     fi
-    rm -f "$pack"
     [ -e "$repos/$repo/.git" ] || die "$repos/$repo holds no clone: move it aside"
     origin=$(git -C "$repos/$repo" remote get-url origin 2>/dev/null) || origin=
     case $(printf '%s\n' "${origin%.git}" | tr '[:upper:]' '[:lower:]') in
-    *[/@]github.com[/:]"$(printf '%s\n' "${1%.git}" | tr '[:upper:]' '[:lower:]')") ;;
-    *) die "$repos/$repo is not $1's clone, its origin '$origin': move it aside" ;;
+    *[/@]github.com[/:]"$(printf '%s\n' "${slug%.git}" | tr '[:upper:]' '[:lower:]')") ;;
+    *) die "$repos/$repo is not $slug's clone, its origin '$origin': move it aside" ;;
     esac
+    [ -z "$fresh" ] && [ -n "$tag" ] && [ -f "$pack" ] && retag
+    rm -f "$pack"
     [ -x "$repos/$repo/apply.sh" ] || die "$repos/$repo has no apply.sh that runs"
 }
 
-# stamp OWNER/REPO writes REPO's stamp, hook-REPO in state, by a rename: the clone's commit, which
-# apply.sh may have moved, 0, its status, and OWNER/REPO, which the remote script's status lists.
+# stamp OWNER/REPO[@TAG] writes REPO's stamp, hook-REPO in state, by a rename: the clone's commit,
+# which apply.sh may have moved, 0, its status, and the whole value, which the remote script's status lists.
 stamp() {
     repo "$1"
     mkdir -p "$state"
@@ -168,8 +204,8 @@ link_wait() {
 
 # link [PORT] lists the ports, as the header says, with sysfs's carrier, which a port that is down
 # lacks, and ip's IPv4 addresses. Given PORT, one that it lists, it names it in vars, where that
-# names another, by a rename that keeps the file's other lines and its mode. A new file starts with
-# ---, as yamllint asks of the clone's YAML.
+# names another, by a rename that keeps the file's other lines and its mode. A new file is 0600 in
+# a 0755 directory, and starts with ---, as yamllint asks of YAML.
 link() {
     if [ -z "${1-}" ]; then
         for port in $(ports); do
@@ -180,11 +216,10 @@ link() {
         return 0
     fi
     ports | grep -qxF -- "$1" || die "'$1' is none of the wired ports that link lists"
-    dir=${vars%/host_vars/*}
-    [ -d "$dir/.git" ] || die "ws has no clone in $dir, which ws's run makes"
     [ "$(sed -n 's/^network_direct_link_interface: *"\{0,1\}\([A-Za-z0-9_.-]*\).*/\1/p' "$vars" \
         2>/dev/null)" != "$1" ] || return 0
-    mkdir -p "${vars%/*}"
+    [ -d "${vars%/*}" ] || { mkdir -p "${vars%/*}" && chmod 755 "${vars%/*}"; }
+    umask 077
     [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
     {
         [ -s "$vars" ] || echo ---
@@ -206,8 +241,8 @@ main() {
     words) words "${2-}" ;;
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh bundle OWNER/REPO |" \
-        "clone OWNER/REPO | stamp OWNER/REPO | words [HASH] | wait PORT | link [PORT]" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh bundle OWNER/REPO[@TAG] |" \
+        "clone OWNER/REPO[@TAG] | stamp OWNER/REPO[@TAG] | words [HASH] | wait PORT | link [PORT]" ;;
     esac
 }
 

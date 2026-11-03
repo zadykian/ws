@@ -1,20 +1,23 @@
 #!/bin/sh
 # ws's programs that the wizard's remote script runs, as stand-ins on GitHub's macOS runner, each by
 # the name it is called by. standin.sh links the names in WS_STANDIN/bin, which ws.sh puts first on
-# PATH, claude where the remote script looks for it, and bootstrap.sh in the stand-in clone. Their
-# state is in WS_STANDIN, which ws's sshd sets:
+# PATH, claude where the remote script looks for it and ws at /usr/local/bin/ws. Their state is in
+# WS_STANDIN, which ws's sshd sets:
 #
+# - ws.version is the version that ws prints, and install.log holds a line for each curl, its URL.
+#   curl writes the release's install.sh, which puts its WS_VERSION in ws.version;
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
-# - run.log holds systemd-run's arguments, and bootstrap.log bootstrap.sh's, a line each;
-# - bootstrap.wait holds the seconds that bootstrap.sh runs, and bootstrap.status its status;
-# - with bootstrap.cut, bootstrap.sh kills the unit's job, as a stop or a reboot would;
+# - run.log holds systemd-run's arguments, and server.log the arguments of ws server apply, a line
+#   each;
+# - server.wait holds the seconds that ws server apply runs, and server.status its status;
+# - with server.cut, ws server apply kills the unit's job, as a stop or a reboot would;
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
 #   in;
-# - ws.key is wg0's key, which bootstrap.sh --tags wireguard makes, and utun names wg0, root's;
+# - ws.key is wg0's key, which ws server apply -- --tags wireguard makes, and utun names wg0, root's;
 # - apply.log holds a line for each run of apply.sh: tty where its stdin is a terminal, else the
 #   SHA-256 of what it read there, and apply.status its status;
 # - uplink names the port of the default route, and addr/PORT holds a port's IPv4 addresses, which
-#   bootstrap.sh --tags network,wireguard gives the port that host_vars names, with carrier. That
+#   ws server apply -- --tags network,wireguard gives the port that host_vars names, with carrier. That
 #   run writes the port in root's netplan file, as the network role does, or removes the file.
 
 set -u
@@ -41,7 +44,7 @@ wg0() {
 # 10.77.0.1/30, once networkd sees carrier, which the cases' sysfs shows.
 direct() {
     port=$(sed -n 's/^network_direct_link_interface: "\(.*\)"$/\1/p' \
-        "$s/root/root/repository/ws/host_vars/localhost.yml" 2>/dev/null)
+        "$s/root"/etc/ws/host_vars.yml 2>/dev/null)
     netplan=$s/root/etc/netplan/60-direct-link.yaml
     rm -f "$netplan"
     [ -z "$port" ] || { mkdir -p "${netplan%/*}" && echo "    \"$port\":" >"$netplan"; } || return 1
@@ -95,18 +98,36 @@ journalctl)
     sed -n "$((at + 1)),${lines}p" "$s/units/$unit"
     echo "$lines" >"$cursor"
     ;;
-bootstrap.sh)
-    echo "$*" >>"$s/bootstrap.log"
-    echo "bootstrap.sh's stand-in, with '$*'"
-    sleep "$(cat "$s/bootstrap.wait" 2>/dev/null || echo 0)"
-    if [ -f "$s/bootstrap.cut" ]; then
-        kill -9 "$PPID"
-        exit 1
-    fi
-    [ "$*" != '--tags wireguard' ] || wg0 || exit 1
-    [ "$*" != '--tags network,wireguard' ] || direct
-    echo 'PLAY RECAP'
-    exit "$(cat "$s/bootstrap.status" 2>/dev/null || echo 0)"
+curl)
+    # The release's install.sh, written to the file that -o names: the URL is its last argument.
+    while [ $# -gt 1 ]; do
+        [ "$1" != -o ] || out=$2
+        shift
+    done
+    echo "$1" >>"$s/install.log"
+    # shellcheck disable=SC2016 # the sh that runs install.sh expands them
+    printf '%s\n' '#!/bin/sh' 'echo "$WS_VERSION" >"$WS_STANDIN/ws.version"' >"$out"
+    ;;
+ws)
+    case $1 in
+    version) cat "$s/ws.version" 2>/dev/null ;;
+    server)
+        [ "$2:$3" = apply:-- ] || exit 2
+        shift 3
+        echo "$*" >>"$s/server.log"
+        echo "ws server apply's stand-in, with '$*'"
+        sleep "$(cat "$s/server.wait" 2>/dev/null || echo 0)"
+        if [ -f "$s/server.cut" ]; then
+            kill -9 "$PPID"
+            exit 1
+        fi
+        [ "$*" != '--tags wireguard' ] || wg0 || exit 1
+        [ "$*" != '--tags network,wireguard' ] || direct
+        echo 'PLAY RECAP'
+        exit "$(cat "$s/server.status" 2>/dev/null || echo 0)"
+        ;;
+    *) exit 2 ;;
+    esac
     ;;
 wg)
     # wg0's key, and with show wg0 peers the peers of wg0's wireguard-go.

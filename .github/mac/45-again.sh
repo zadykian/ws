@@ -5,10 +5,10 @@ set -eo pipefail
 
 fail=0
 for args in '' --check; do
-    if ! out=$(ws setup ${args:+"$args"} 2>&1); then
-        echo "::error::ws setup${args:+ $args} failed:"
+    if ! out=$(ws mac apply ${args:+"$args"} 2>&1); then
+        echo "::error::ws mac apply${args:+ $args} failed:"
     elif [ -n "$out" ]; then
-        echo "::error::ws setup${args:+ $args} printed what it should not:"
+        echo "::error::ws mac apply${args:+ $args} printed what it should not:"
     else
         continue
     fi

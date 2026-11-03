@@ -28,7 +28,7 @@ func TestTunnelPlan(t *testing.T) {
 	for name, tc := range map[string]struct{ pub, status, want string }{
 		"done": {keyB, "wg0 " + keyB + "\npeer ok\nmac.pub " + keyA + "\n", ""},
 		"peer": {keyB, "wg0 " + keyB + "\npeer none\nmac.pub " + keyA + "\n",
-			"run bootstrap.sh --tags wireguard"},
+			"run ws server apply -- --tags wireguard"},
 		"other key": {keyB, "wg0 " + keyB + "\npeer ok\nmac.pub " + keyB + "\n",
 			"write the Mac's key, " + keyA},
 		"new wg0": {keyA, "wg0 " + keyB + "\npeer ok\nmac.pub " + keyA + "\n",
@@ -52,8 +52,8 @@ func TestTunnelPlanWaits(t *testing.T) {
 	tun, m := newTunnel(keyB, "peer ok\n", true)
 	delete(m.Files, "/h/.config/ws/tunnel.pub")
 	p, err := tun.Plan(context.Background())
-	if err != nil || len(p.Changes) != 0 || !strings.Contains(tun.Out.(*effecttest.Out).Lines[0], "after ws setup") {
-		t.Errorf("Plan = %v, %v; want it to wait on ws setup", p, err)
+	if err != nil || len(p.Changes) != 0 || !strings.Contains(tun.Out.(*effecttest.Out).Lines[0], "after ws mac apply") {
+		t.Errorf("Plan = %v, %v; want it to wait on ws mac apply", p, err)
 	}
 }
 

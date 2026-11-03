@@ -11,21 +11,28 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zadykian/ws"
 	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/mac/internal/effect"
 	"github.com/zadykian/ws/mac/internal/step"
 	"github.com/zadykian/ws/mac/internal/wizard"
 )
 
-const wizardUsage = "usage: ws wizard [--check] [--update]"
+const wizardUsage = "usage: ws mac wizard [--check] [--update]"
 
-// wizardEnv is what ws wizard takes from the process, so that a test gives it another.
+// wizardEnv is what ws mac wizard takes from the process, so that a test gives it another.
 type wizardEnv struct {
-	goos   string
-	uid    int
-	pid    int
-	m      effect.Machine
-	getenv func(string) string
+	goos string
+	uid  int
+	pid  int
+	m    effect.Machine
+	// version is this ws's version, as ws version prints it.
+	version string
+	// argv is ws's arguments, without the program, which --update runs the new ws with.
+	argv []string
+	// releases is the address of ws's releases, WS_RELEASES_URL or GitHub's.
+	releases string
+	getenv   func(string) string
 	// lookup tells a variable set to nothing from one that is not set.
 	lookup func(string) (string, bool)
 	// pwd is the directory a relative WS_CONF is taken from.
@@ -58,7 +65,7 @@ func wizardOptionsOf(args []string) (o wizardOptions, help bool, err error) {
 	return o, false, nil
 }
 
-// wizardRefusal returns why ws wizard does not run here, or an empty string. It names the system
+// wizardRefusal returns why ws mac wizard does not run here, or an empty string. It names the system
 // as uname -s does.
 func wizardRefusal(e wizardEnv) string {
 	switch {
@@ -70,13 +77,7 @@ func wizardRefusal(e wizardEnv) string {
 	return ""
 }
 
-// repoDir returns the clone that holds the roles: WS_REPO,
-// else where bootstrap.sh clones it.
-func repoDir(getenv func(string) string) string {
-	return cmp.Or(getenv("WS_REPO"), getenv("HOME")+"/repository/ws")
-}
-
-// wizardStages returns the stages of ws wizard, in order.
+// wizardStages returns the stages of ws mac wizard, in order.
 func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
 	check := o.check
 	conf := confPath(e.getenv, e.pwd)
@@ -91,9 +92,10 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	gh := &wizard.Gh{Conf: later, Home: e.getenv("HOME"), Tty: e.tty, M: e.m, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: e.tty, Check: check, Env: e.lookup,
 		SSH: wizard.SSH{M: e.m, Lock: lock, Home: e.getenv("HOME")}, M: e.m, P: p, Out: out}
-	run := &wizard.WsRun{Host: host, Update: o.update,
+	run := &wizard.WsRun{Host: host, Version: e.version, Update: o.update,
 		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
 	hand.Late(run.Hand)
+	install := &wizard.WsInstall{Remote: run.Remote, Version: e.version, URL: e.releases, Out: out}
 	setup := wizardSetup(e, out, later)
 	hook := &wizard.HookMac{Host: host, Gh: gh, Home: e.getenv("HOME"), M: e.m, Out: out}
 	hand.Late(hook.Hand)
@@ -104,7 +106,9 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		P: p, Prog: prog, Tty: e.tty, M: e.m, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
-		&wizard.Answers{Conf: conf, Roles: repoDir(e.getenv) + "/roles/shell/defaults/main.yml",
+		&wizard.Tools{M: e.m, Out: out, Sleep: time.Sleep},
+		&wizard.Homebrew{Lock: lock, M: e.m, Out: out},
+		&wizard.Answers{Conf: conf, Defaults: ws.ShellDefaults,
 			Prog: prog, Tty: e.tty, Check: check, Scratch: scratch, M: e.m, P: p, Out: out, Env: e.lookup},
 		&wizard.MacKey{Conf: later, Home: e.getenv("HOME"),
 			Lock: lock, Tty: e.tty,
@@ -113,6 +117,7 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 		setup,
 		host,
 		root,
+		install,
 		run,
 		&wizard.WsClaude{Run: run, Tty: e.tty},
 		&wizard.Signing{Gh: gh, Run: run, Check: check},
@@ -125,13 +130,13 @@ func wizardStages(e wizardEnv, p effect.Prompt, out effect.Out, prog string, o w
 	}
 }
 
-// wizardCommand runs ws wizard: its stages under a lock, and what stays by hand after a run in
+// wizardCommand runs ws mac wizard: its stages under a lock, and what stays by hand after a run in
 // which a stage acted. Under --check it prints what each stage would do and changes nothing.
 func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
-	prog := cmp.Or(e.getenv("WS_PROG"), "ws wizard")
+	prog := cmp.Or(e.getenv("WS_PROG"), "ws mac wizard")
 	o, help, err := wizardOptionsOf(args)
 	if help {
-		_, _ = fmt.Fprintln(e.stdout, strings.Replace(wizardUsage, "ws wizard", prog, 1))
+		_, _ = fmt.Fprintln(e.stdout, strings.Replace(wizardUsage, "ws mac wizard", prog, 1))
 		return 0
 	}
 	if err == nil && wizardRefusal(e) != "" {
@@ -147,6 +152,14 @@ func wizardCommand(ctx context.Context, args []string, e wizardEnv) int {
 	defer stop()
 	term := effect.NewTerminal(e.stdin, e.stderr)
 	out := progOut{term, prog, map[string]bool{}}
+	if o.update {
+		// Its own step.Run, before the lock: the new ws takes the place of this process, which would leave the lock held.
+		u := &wizard.MacUpdate{M: e.m, Out: out, Version: e.version, URL: e.releases, Home: e.getenv("HOME"), Args: e.argv}
+		if _, err := step.Run(ctx, []step.Step{u}, out, o.check); err != nil {
+			_, _ = fmt.Fprintf(e.stderr, "%s: %v\n", prog, errors.Unwrap(err))
+			return 1
+		}
+	}
 	hand := &wizard.Hand{}
 	closing := func(ctx context.Context) {
 		if e.stdout != nil {

@@ -1,0 +1,137 @@
+name: release
+
+# A pushed tag vX.Y.Z on a commit of main publishes ws's release: ci.yml and mac.yml run on the tag
+# first, then three binaries, ws.sha256 and install.sh are published, all checked for the local
+# list's words. docs/releases.md says how a release is cut.
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  # The tag must be vX.Y.Z, on a commit that main holds, as only a landed stack is released.
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The tag and main
+        run: |
+          printf '%s\n' "$TAG" | grep -Eq '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){2}$' || {
+              echo "the tag is not vX.Y.Z" >&2
+              exit 1
+          }
+          git merge-base --is-ancestor HEAD origin/main || {
+              echo "origin/main does not hold the tag's commit" >&2
+              exit 1
+          }
+
+  # The workflows of a pull request, on the tag's commit. Their playbook and mac jobs run, as the
+  # tag's push event has no stack.
+  ci:
+    needs: check
+    uses: ./.github/workflows/ci.yml # zizmor: ignore[self-repository] actionlint rejects $/
+    permissions:
+      contents: read
+
+  mac:
+    needs: check
+    uses: ./.github/workflows/mac.yml # zizmor: ignore[self-repository] actionlint rejects $/
+    permissions:
+      contents: read
+
+  # The binaries, built by tools/build.
+  # Go stamps the tag into ws version from the clean tree at the tag: the files go outside it.
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Build
+        run: |
+          mkdir "$RUNNER_TEMP/dist"
+          for target in darwin-arm64 linux-amd64 linux-arm64; do
+              tools/build "${target%-*}" "${target#*-}" "$RUNNER_TEMP/dist/ws-$target"
+          done
+          (cd "$RUNNER_TEMP/dist" && sha256sum ws-* >ws.sha256)
+          cp install.sh "$RUNNER_TEMP/dist/install.sh"
+      - name: ws version prints the tag
+        run: |
+          got=$("$RUNNER_TEMP/dist/ws-linux-amd64" version)
+          [ "$got" = "$TAG" ] || {
+              echo "ws version printed $got, not $TAG" >&2
+              exit 1
+          }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: ${{ runner.temp }}/dist
+          if-no-files-found: error
+
+  # The release, once the checks and the build passed. Its files and notes are checked for the
+  # local list's words, as the hooks check a commit. The list is the secret WS_WORDS, which must
+  # not be empty.
+  publish:
+    needs: [ci, mac, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: ${{ runner.temp }}/dist
+      - name: Notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/$GH_REPO/releases/generate-notes" -f tag_name="$TAG" \
+              --jq .body >"$RUNNER_TEMP/notes.md"
+      - name: The local list's words
+        env:
+          WS_WORDS: ${{ secrets.WS_WORDS }}
+        run: |
+          [ -n "$WS_WORDS" ] || {
+              echo "the secret WS_WORDS is empty" >&2
+              exit 1
+          }
+          printf '%s\n' "$WS_WORDS" | sed -e 'y/_/ /' -e 's/^[[:space:]]*//' \
+              -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#/d' >"$RUNNER_TEMP/words"
+          [ -s "$RUNNER_TEMP/words" ] || {
+              echo "the secret WS_WORDS holds no word" >&2
+              exit 1
+          }
+          found=0
+          for f in "$RUNNER_TEMP"/dist/* "$RUNNER_TEMP/notes.md"; do
+              if LC_ALL=C tr _ ' ' <"$f" | grep -aqiwF -f "$RUNNER_TEMP/words"; then
+                  echo "$f holds a word of the list" >&2
+                  found=1
+              fi
+          done
+          [ "$found" = 0 ]
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" "$RUNNER_TEMP"/dist/* --title "$TAG" \
+              --notes-file "$RUNNER_TEMP/notes.md" --verify-tag

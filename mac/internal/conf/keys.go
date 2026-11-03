@@ -79,7 +79,7 @@ var keys = []key{
 			"in quotes where it holds a blank"},
 	{"WS_HOOK", func(c *Conf) *string { return &c.Hook }, plain(check.Hook),
 		"a repository on GitHub, as OWNER/REPO of letters, digits and ._-, but REPO ws " +
-			"in any letter case"},
+			"in any letter case, with @vX.Y.Z for a release's tag"},
 	{"WS_HOOK_SECRET", func(c *Conf) *string { return &c.HookSecret }, plain(check.HookSecret),
 		"a Keychain item's name, 1 to 64 letters, digits and ._-"},
 }

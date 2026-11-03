@@ -36,9 +36,9 @@ type Gh struct {
 // Name is the stage's name.
 func (*Gh) Name() string { return ghStage }
 
-// WaitsOn is empty: under --check, where the Mac key is still to be made, Plan says it would add the
-// key once it is made, as wizard-gh.sh did.
-func (*Gh) WaitsOn() string { return "" }
+// WaitsOn is Homebrew, which gh comes from. Under --check, where the Mac key is still to be made,
+// Plan says it would add the key once it is made, as wizard-gh.sh did.
+func (*Gh) WaitsOn() string { return homebrewStage }
 
 // ghLogin is the change that has gh log in, or refresh the scopes of its login. Its device flow
 // shows a code to enter in the browser, at github.com/login/device.

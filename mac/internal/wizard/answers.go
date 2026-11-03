@@ -18,8 +18,10 @@ var errMissing = errors.New("mac.conf lacks a key")
 // Answers is the stage that gives mac.conf the values it lacks, each from the environment, under
 // its key's name, or asked at the terminal. It runs before any stage that reads mac.conf.
 type Answers struct {
-	// Conf is mac.conf's path, and Roles the shell role's defaults, whose git identity ws's git takes.
-	Conf, Roles string
+	// Conf is mac.conf's path.
+	Conf string
+	// Defaults is the text of the shell role's defaults, whose git identity ws's git takes.
+	Defaults []byte
 	// Prog prefixes the messages of a refused answer.
 	Prog string
 	// Tty tells whether stdin is a terminal, which the questions need.
@@ -38,8 +40,8 @@ type Answers struct {
 // Name is the stage's name.
 func (*Answers) Name() string { return answers }
 
-// WaitsOn is empty: nothing is set up before mac.conf.
-func (*Answers) WaitsOn() string { return "" }
+// WaitsOn is Homebrew: on a new Mac, a --check run stops there, as the install does.
+func (*Answers) WaitsOn() string { return homebrewStage }
 
 type todo string
 
@@ -47,13 +49,12 @@ func (c todo) String() string { return string(c) }
 
 func (a *Answers) file() confFile { return confFile{a.Conf, answers, a.M, a.Out} }
 
-// load reads mac.conf and says each line that conf refuses, which ws setup would stop at.
+// load reads mac.conf and says each line that conf refuses, which ws mac apply would stop at.
 func (a *Answers) load() (string, conf.Conf, error) { return loadConf(a.file()) }
 
 // role gives the shell role's default of that name, as the role's file has it, or nothing.
 func (a *Answers) role(name string) string {
-	data, _ := a.M.ReadFile(a.Roles)
-	for _, l := range strings.Split(string(data), "\n") {
+	for _, l := range strings.Split(string(a.Defaults), "\n") {
 		if v, ok := strings.CutPrefix(l, name+":"); ok {
 			return strings.TrimLeft(v, " ")
 		}
@@ -87,7 +88,7 @@ func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	if _, errs := conf.Parse(text); len(errs) > 0 {
-		return step.Plan{Changes: []step.Change{todo(answers + ": ws setup would refuse " + a.Conf)}}, nil
+		return step.Plan{Changes: []step.Change{todo(answers + ": ws mac apply would refuse " + a.Conf)}}, nil
 	}
 	return step.Plan{}, nil
 }
@@ -107,11 +108,11 @@ func (a *Answers) refusal(lines string) error {
 	if lines != "" {
 		with = " with the answers"
 	}
-	return fmt.Errorf("%s: ws setup would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
+	return fmt.Errorf("%s: ws mac apply would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
 }
 
 // Apply asks for the values that mac.conf lacks, in order, and adds them to it. A mac.conf that
-// ws setup would refuse with them is left alone.
+// ws mac apply would refuse with them is left alone.
 func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 	text, c, err := a.load()
 	if err != nil {

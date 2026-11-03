@@ -35,11 +35,12 @@ Each role is a tag of `site.yml`, with a page of its own:
 
 `mac/` sets up the Mac that works on the server, and Ghostty on it: [The Mac](docs/mac.md).
 
-On a new Mac with Apple silicon, one line installs Apple's Command Line Tools and Homebrew, clones
-this repository and runs the Mac's wizard ([The Mac's wizard](docs/mac-wizard.md)):
+On a new Mac with Apple silicon, one line installs ws's binary. Then `ws mac wizard` installs
+Apple's Command Line Tools and Homebrew, and sets up the rest ([The Mac's wizard](docs/mac-wizard.md)):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/mac/bootstrap.sh | sh
+curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
+~/.local/bin/ws mac wizard
 ```
 
 ## A new machine
@@ -57,52 +58,46 @@ sudo install -d -m 700 /root/.ssh
 sudo install -m 600 ~/.ssh/authorized_keys /root/.ssh/authorized_keys
 ```
 
-Then, as root, after `sudo -i` if you log in as the installer's user, run `bootstrap.sh`. It
-installs no gh and logs nothing in before it: the `devtools` role installs gh, and its login comes
-by hand ([By hand](#by-hand)).
+Then, as root, after `sudo -i` if you log in as the installer's user, install ws and apply its
+playbook. `ws server apply` logs nothing in before it: the `devtools` role installs gh, and its
+login comes by hand ([By hand](#by-hand)).
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh | sh
+curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
+ws server apply
 ```
 
-It installs ansible-core and git with apt, clones this repository into `/root/repository/ws`,
-installs the Ansible collections of `requirements.yml`, and runs `site.yml`. Then do what stays
-by hand, below.
+It installs ansible-core with apt, unpacks the playbook that ws embeds, with its collections, and
+runs `site.yml`. Then do what stays by hand, below.
 
 The last role, `jetbrains`, needs about 12 GB free on the home's disk for the backends of Rider
 and GoLand. With less, the run fails at that role: [Disk space](docs/jetbrains.md#disk-space).
 
 ## Running it again
 
-`bootstrap.sh` leaves the clone in `/root/repository/ws` as it finds it, so pull first:
+Each ws embeds the playbook of its release, so install the latest ws first, then apply:
 
 ```sh
-git -C /root/repository/ws pull --ff-only
-/root/repository/ws/bootstrap.sh
+curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
+ws server apply
 ```
 
-Its arguments go to `ansible-playbook`: `--tags NAME` runs the role NAME alone.
+Arguments after `--` go to `ansible-playbook`: `ws server apply -- --tags NAME` runs the role NAME alone.
 `-e ws_user=NAME` sets up the user NAME, whose account must exist, instead of root, with
 `ws_home` following it as `/home/NAME`; `-e ws_home=DIR` sets another home. A cloud VM passes
 `-e security_outbound=false` on its first run ([Outbound](docs/security.md#outbound)). `-e` holds
-for one run: a value every run needs, as that one, goes in the untracked `host_vars/localhost.yml`.
+for one run: a value every run needs, as that one, goes in `/etc/ws/host_vars.yml`, which only
+root reads.
 
 ## Dry runs
 
 With `--check --diff`, the playbook shows what it would change and changes nothing:
 
 ```sh
-/root/repository/ws/bootstrap.sh --check --diff
+ws server apply -- --check --diff
 ```
 
-On a new machine, that is:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/zadykian/ws/main/bootstrap.sh | sh -s -- --check --diff
-```
-
-`bootstrap.sh` still installs ansible-core and git, clones the repository and installs the
-collections, as the playbook cannot run without them.
+It still installs ansible-core and unpacks the playbook, as the playbook cannot run without them.
 
 The playbook's dry run adds no apt repository. So where it would add or change a third-party one,
 apt may not know its packages: their install shows that error, and the dry run goes on.
@@ -113,10 +108,11 @@ or `dockerd --validate`, only as it writes the file.
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
-checks root's key, runs `bootstrap.sh`, adds ws's signing key to GitHub, logs claude in there, and
-gives `wg0` the Mac's key. Without it, the gh login, `gh auth setup-git`, the claude login and the
-Mac's key stay manual. ws's gh takes a fine-grained personal access token, which `WS_HOOK`'s
-repository's vault logs gh in with, or `gh auth login -h github.com --with-token` by hand. Its
+checks root's key and installs its own ws on ws and runs `ws server apply`. Then it
+adds ws's signing key to GitHub, logs claude in there, and gives `wg0` the Mac's key. Without the
+wizard, the gh login, `gh auth setup-git`, the claude login and the Mac's key stay manual.
+ws's gh takes a fine-grained personal access token, which `WS_HOOK`'s repository's vault logs gh
+in with, or `gh auth login -h github.com --with-token` by hand. Its
 permissions are the account's selected repositories; Metadata and Actions read; Contents, Pull
 requests, Issues and Workflows read and write; and no account permission. These stay manual:
 
@@ -130,8 +126,9 @@ The router takes a few steps once, by hand: [The router](docs/router.md).
 ## Checks
 
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
-secrets. It runs the playbook twice in a container, forges SigNoz's compose files again, and sets
-up a Mac on GitHub's macOS runner. The rules workflow warns where a pull request breaks the rules
+secrets. It runs the playbook twice in a container, tries `install.sh`, forges SigNoz's compose files
+again, and sets up a Mac on GitHub's macOS runner. A pushed tag `vX.Y.Z` publishes the release that
+`install.sh` installs: [Releases](docs/releases.md). The rules workflow warns where a pull request breaks the rules
 of zadykian/toolkit's skills, and the issues workflow where an issue strays from its issue form.
 The hooks in `.githooks` check each commit before git makes it. [Checks](docs/checks.md) and
 [The gates](docs/gates.md) have the details.

@@ -13,15 +13,14 @@ import (
 
 const (
 	ghosttyDir  = "/h/Library/Application Support/com.mitchellh.ghostty"
-	ghosttyHead = "# Written by ws setup: its next run replaces changes made here.\n"
+	ghosttyHead = "# Written by ws mac apply: its next run replaces changes made here.\n"
 )
 
 func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *setup.Ghostty {
-	m.Files["/mac/ws.ghostty"] = []byte("font-size = 13\n")
 	m.Dirs["/h/Applications/Ghostty.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
 	return &setup.Ghostty{
-		Home: "/h", Settings: "/mac/ws.ghostty", M: m, Out: out,
+		Home: "/h", Settings: []byte("font-size = 13\n"), M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 		Real:     func(p string) (string, error) { return p, nil },
 	}
@@ -110,7 +109,7 @@ func TestGhosttyWarnsOfAFileNotItsOwn(t *testing.T) {
 	s := ghosttyStep(m, out)
 	m.Files[ghosttyDir+"/ws.ghostty"] = []byte("mine\n")
 	p, err := s.Plan(context.Background())
-	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "is not ws setup's") {
+	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "is not ws mac apply's") {
 		t.Errorf("Plan = %v, %v, out %v; want a warning alone", p.Changes, err, out.Lines)
 	}
 }

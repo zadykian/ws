@@ -1,4 +1,4 @@
-// Package setup holds the steps of ws setup, each setting up one part of the Mac.
+// Package setup holds the steps of ws mac apply, each setting up one part of the Mac.
 package setup
 
 import (

@@ -24,26 +24,26 @@ error() {
 
 # quiet: a run with no terminal must print nothing.
 quiet() {
-    out=$("$wsbin" wizard </dev/null 2>&1)
+    out=$("$wsbin" mac wizard </dev/null 2>&1)
     status=$?
-    [ "$status" = 0 ] && [ -z "$out" ] || error "ws wizard $1 exited $status: '$out'"
+    [ "$status" = 0 ] && [ -z "$out" ] || error "ws mac wizard $1 exited $status: '$out'"
 }
 
 : >"$state/signing"
-out=$("$wsbin" wizard --check </dev/null 2>&1)
+out=$("$wsbin" mac wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -qxF "ws wizard: Signing key: would run $add for ws's signing key" &&
-    [ "$status" = 0 ] && [ ! -s "$state/signing" ] || error "ws wizard --check exited $status"
-out=$("$wsbin" wizard </dev/null 2>&1)
+printf '%s\n' "$out" | grep -qxF "ws mac wizard: Signing key: would run $add for ws's signing key" &&
+    [ "$status" = 0 ] && [ ! -s "$state/signing" ] || error "ws mac wizard --check exited $status"
+out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -qxF "ws wizard: Signing key: ran $add for ws's signing key" &&
+printf '%s\n' "$out" | grep -qxF "ws mac wizard: Signing key: ran $add for ws's signing key" &&
     printf '%s\n' "$out" | grep -qx 'What stays by hand:' &&
     printf '%s\n' "$out" | grep -qF -e "$login" &&
     [ "$status" = 0 ] &&
     [ "$(cat "$state/signing")" = "$key" ] && [ "$(grep -cxF "$key" "$state/keys")" = 0 ] ||
-    error "ws wizard exited $status, adding other than the signing key to the signing keys"
+    error "ws mac wizard exited $status, adding other than the signing key to the signing keys"
 quiet 'after the key was added'
 : >"$state/signing"
 sudo git config -f "$ws/root/root/.gitconfig" --unset user.signingkey
