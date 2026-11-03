@@ -14,7 +14,18 @@ import (
 
 // fakeProcess returns a process that touches nothing of the test's own.
 func fakeProcess() process {
-	return process{machine: effecttest.NewMachine(), getenv: noEnv, version: "v1.2.3"}
+	return process{
+		machine: effecttest.NewMachine(), getenv: noEnv, lookup: func(string) (string, bool) { return "", false },
+		setenv: func(string, string) error { return nil }, euid: 501, pid: 7, goos: "darwin", pwd: "/p", version: "v1.2.3",
+	}
+}
+
+// withEnv returns p with the environment env, for getenv, lookup and setenv.
+func withEnv(p process, env map[string]string) process {
+	p.getenv = func(k string) string { return env[k] }
+	p.lookup = func(k string) (string, bool) { v, ok := env[k]; return v, ok }
+	p.setenv = func(k, v string) error { env[k] = v; return nil }
+	return p
 }
 
 // runWs runs args on the root of the groups that p serves, with stdin, and returns the status,
@@ -90,7 +101,7 @@ func TestExecuteFailure(t *testing.T) {
 
 func TestEveryCommandSetsArgs(t *testing.T) {
 	p := fakeProcess()
-	for _, group := range []*cobra.Command{newRoot(p), newServerCmd(p)} {
+	for _, group := range []*cobra.Command{newRoot(p), newMacCmd(p), newServerCmd(p)} {
 		walk(group, func(c *cobra.Command) {
 			if c.Args == nil {
 				t.Errorf("%s: Args is nil", c.CommandPath())
@@ -99,22 +110,45 @@ func TestEveryCommandSetsArgs(t *testing.T) {
 	}
 }
 
-func TestTunnelStatusNeedsRoot(t *testing.T) {
-	var stdout, stderr bytes.Buffer
-	if got := tunnelStatus(501, &stdout, &stderr); got != 1 {
-		t.Errorf("status = %d, want 1", got)
-	}
-	if !strings.Contains(stderr.String(), "run it as root, with sudo") || stdout.Len() != 0 {
-		t.Errorf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
+func TestMacHelpAndErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		args       []string
+		wantStatus int
+		wantOut    string
+		wantErr    string
+	}{
+		{"no command", []string{"mac"}, 0, "Available Commands:", ""},
+		{"help", []string{"mac", "-h"}, 0, "Available Commands:", ""},
+		{"unknown", []string{"mac", "nope"}, 2, "", "ws mac: unknown command \"nope\" for \"ws mac\"\nRun 'ws mac --help' for usage.\n"},
+		{"tunnel alone", []string{"mac", "tunnel"}, 0, "Available Commands:", ""},
+		{"tunnel unknown", []string{"mac", "tunnel", "nope"}, 2, "", "ws mac tunnel: unknown command"},
+		{"tunnel status extra", []string{"mac", "tunnel", "status", "x"}, 2, "", "ws mac tunnel status: unknown command \"x\""},
+		{"tunnel loaded extra", []string{"mac", "tunnel", "loaded", "x"}, 2, "", "ws mac tunnel loaded: unknown command \"x\""},
+		{"tunnel routes alone", []string{"mac", "tunnel", "routes"}, 2, "", "ws mac tunnel routes: requires at least 1 arg(s), only received 0\nRun 'ws mac tunnel routes --help' for usage.\n"},
+		{"resolver alone", []string{"mac", "resolver"}, 2, "", "ws mac resolver: requires at least 1 arg(s)"},
+		{"resolver flag", []string{"mac", "resolver", "--nope", "x"}, 2, "", "ws mac resolver: unknown flag: --nope"},
+		{"wizard flag", []string{"mac", "wizard", "--bogus"}, 2, "", "ws mac wizard: unknown flag: --bogus\nRun 'ws mac wizard --help' for usage.\n"},
+		{"wizard help", []string{"mac", "wizard", "-h"}, 0, "--check", ""},
+		{"conf two files", []string{"mac", "conf", "a", "b"}, 2, "", "ws mac conf: accepts at most 1 arg(s), received 2"},
+		{"apply two steps", []string{"mac", "apply", "ssh", "git"}, 2, "", "ws mac apply: accepts at most 1 arg(s), received 2"},
+		{"apply unknown step", []string{"mac", "apply", "nope"}, 2, "", "ws mac apply: invalid argument \"nope\" for \"ws mac apply\""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			status, stdout, stderr := runWs(fakeProcess(), "", tc.args...)
+			if status != tc.wantStatus || !strings.Contains(stdout, tc.wantOut) || !strings.Contains(stderr, tc.wantErr) {
+				t.Errorf("status = %d, stdout = %q, stderr = %q; want %d, %q, %q", status, stdout, stderr, tc.wantStatus, tc.wantOut, tc.wantErr)
+			}
+		})
 	}
 }
 
-func TestTunnelKeyNeedsRoot(t *testing.T) {
-	var stdout, stderr bytes.Buffer
-	if got := tunnelKey(501, &stdout, &stderr); got != 1 {
-		t.Errorf("status = %d, want 1", got)
-	}
-	if !strings.Contains(stderr.String(), "run it as root, with sudo") || stdout.Len() != 0 {
-		t.Errorf("stdout = %q, stderr = %q", stdout.String(), stderr.String())
+func TestTunnelStatusAndKeyNeedRoot(t *testing.T) {
+	for _, sub := range []string{"status", "key"} {
+		status, stdout, stderr := runWs(fakeProcess(), "", "mac", "tunnel", sub)
+		want := "ws mac tunnel " + sub + ": run it as root, with sudo\n"
+		if status != 1 || stdout != "" || stderr != want {
+			t.Errorf("%s: status = %d, stdout = %q, stderr = %q; want 1, nothing, %q", sub, status, stdout, stderr, want)
+		}
 	}
 }

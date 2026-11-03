@@ -1,84 +1,76 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"io"
 	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/step"
 )
 
-const (
-	routesUsage   = "usage: ws mac tunnel routes [--check] NAME [CIDR...]\n"
-	resolverUsage = "usage: ws mac resolver [--check] DOMAIN [ADDRESS...]\n"
-	loadedUsage   = "usage: ws mac tunnel loaded\n"
-	daemonLabel   = "com.github.zadykian.ws-tunnel"
-)
+const daemonLabel = "com.github.zadykian.ws-tunnel"
 
-// tunnelLoaded succeeds where launchd has the tunnel's daemon loaded. Anyone may read launchd's
-// system domain, so it needs no sudo.
-func tunnelLoaded(ctx context.Context, args []string, m effect.Machine, stderr io.Writer) int {
-	if len(args) != 0 {
-		_, _ = io.WriteString(stderr, loadedUsage)
-		return 2
+// newTunnelLoadedCmd returns ws mac tunnel loaded.
+func newTunnelLoadedCmd(p process) *cobra.Command {
+	return &cobra.Command{
+		Use:   "loaded",
+		Short: "succeed where launchd has the tunnel's daemon loaded",
+		Long:  "Anyone may read launchd's system domain, so it needs no sudo.",
+		Args:  cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error {
+			if _, err := p.machine.Run(c.Context(), "launchctl", "print", "system/"+daemonLabel); err != nil {
+				return fmt.Errorf("launchd has not loaded the daemon %s", daemonLabel)
+			}
+			return nil
+		},
 	}
-	if _, err := m.Run(ctx, "launchctl", "print", "system/"+daemonLabel); err != nil {
-		return 1
-	}
-	return 0
 }
 
-// tunnelRoutes has the tunnel take the networks, or drop the file of NAME with none.
-func tunnelRoutes(ctx context.Context, args []string, m effect.Machine, stderr io.Writer) int {
-	check, args := checkFlag(args)
-	if len(args) == 0 {
-		_, _ = io.WriteString(stderr, routesUsage)
-		return 2
+// newTunnelRoutesCmd returns ws mac tunnel routes.
+func newTunnelRoutesCmd(p process) *cobra.Command {
+	var check bool
+	c := &cobra.Command{
+		Use:   "routes NAME [CIDR...]",
+		Short: "route the networks into the tunnel, or drop NAME",
+		Long:  "It has the tunnel take the networks of NAME, or drop the file of NAME where it gets none.",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(c *cobra.Command, args []string) error {
+			return runRoute(c, check, func(out effect.Out) step.Step {
+				return &setup.Routes{Set: args[0], Networks: args[1:], M: p.machine, Out: out, Check: check, Alone: true}
+			})
+		},
 	}
-	out, flush := routeOut(stderr)
-	defer flush()
-	return runRoute(ctx, &setup.Routes{Set: args[0], Networks: args[1:], M: m, Out: out, Check: check, Alone: true}, out, check, stderr)
+	c.Flags().BoolVar(&check, "check", false, "print each change and make none")
+	return c
 }
 
-// resolverCommand has macOS ask the nameservers for DOMAIN, or drop its file with none.
-func resolverCommand(ctx context.Context, args []string, m effect.Machine, stderr io.Writer) int {
-	check, args := checkFlag(args)
-	if len(args) == 0 {
-		_, _ = io.WriteString(stderr, resolverUsage)
-		return 2
+// newResolverCmd returns ws mac resolver.
+func newResolverCmd(p process) *cobra.Command {
+	var check bool
+	c := &cobra.Command{
+		Use:   "resolver DOMAIN [ADDRESS...]",
+		Short: "send DOMAIN's names to the nameservers, or drop it",
+		Long:  "It has macOS ask the nameservers for DOMAIN, or drop the file of DOMAIN where it gets none.",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(c *cobra.Command, args []string) error {
+			return runRoute(c, check, func(out effect.Out) step.Step {
+				return &setup.Resolver{Domain: args[0], Addresses: args[1:], M: p.machine, Out: out}
+			})
+		},
 	}
-	out, flush := routeOut(stderr)
-	defer flush()
-	return runRoute(ctx, &setup.Resolver{Domain: args[0], Addresses: args[1:], M: m, Out: out}, out, check, stderr)
+	c.Flags().BoolVar(&check, "check", false, "print each change and make none")
+	return c
 }
 
-// checkFlag takes a leading --check off the arguments.
-func checkFlag(args []string) (bool, []string) {
-	if len(args) > 0 && args[0] == "--check" {
-		return true, args[1:]
-	}
-	return false, args
-}
-
-// routeOut prints a line after "ws: ", as setup does, and returns the function that flushes it.
-func routeOut(stderr io.Writer) (effect.Out, func()) {
-	term := effect.NewTerminal(strings.NewReader(""), stderr)
-	return progOut{term, "ws", map[string]bool{}}, term.Flush
-}
-
-// runRoute runs the step alone. Under --check it prints each change and makes none.
-func runRoute(ctx context.Context, s step.Step, out effect.Out, check bool, stderr io.Writer) int {
-	if _, err := step.Run(ctx, []step.Step{s}, out, check); err != nil {
-		// The runner names the step and its stage before the step's own error.
-		if inner := errors.Unwrap(err); inner != nil {
-			err = inner
-		}
-		_, _ = fmt.Fprintf(stderr, "ws: %v\n", err)
-		return 1
-	}
-	return 0
+// runRoute runs the step that build makes, alone, with the command's lines. Under check it prints
+// each change and makes none.
+func runRoute(c *cobra.Command, check bool, build func(effect.Out) step.Step) error {
+	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	defer term.Flush()
+	out := progOut{term, c.CommandPath(), map[string]bool{}}
+	_, err := step.Run(c.Context(), []step.Step{build(out)}, out, check)
+	return unwrapStep(err)
 }

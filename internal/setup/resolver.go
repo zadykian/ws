@@ -36,15 +36,15 @@ func (*Resolver) WaitsOn() string { return "" }
 // Plan plans /etc/resolver/Domain.
 func (r *Resolver) Plan(context.Context) (step.Plan, error) {
 	if !check.Name(r.Domain) {
-		return step.Plan{}, fmt.Errorf("ws mac resolver: '%s' is not a domain of DNS labels joined by dots", r.Domain)
+		return step.Plan{}, fmt.Errorf("'%s' is not a domain of DNS labels joined by dots", r.Domain)
 	}
 	for _, a := range r.Addresses {
 		if !check.IPv4(a) {
-			return step.Plan{}, fmt.Errorf("ws mac resolver %s: '%s' is not an IPv4 address", r.Domain, a)
+			return step.Plan{}, fmt.Errorf("%s: '%s' is not an IPv4 address", r.Domain, a)
 		}
 	}
 	if len(r.Addresses) > 3 {
-		return step.Plan{}, fmt.Errorf("ws mac resolver %s: macOS takes 3 nameservers for a domain, not %d",
+		return step.Plan{}, fmt.Errorf("%s: macOS takes 3 nameservers for a domain, not %d",
 			r.Domain, len(r.Addresses))
 	}
 	file := resolverDir + "/" + r.Domain

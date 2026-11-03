@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"reflect"
 	"strings"
 	"testing"
@@ -13,42 +12,31 @@ import (
 )
 
 func TestSetupCommand(t *testing.T) {
-	env := map[string]string{"HOME": "/h"}
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
-	tests := []struct {
-		name       string
-		args       []string
-		wantStatus int
-		wantErr    string
-	}{
-		{"unknown step", []string{"nope"}, 2, `unknown step "nope"`},
-		{"two steps", []string{"ssh", "git"}, 2, "usage: ws mac apply"},
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.machine = m
+	status, _, stderr := runWs(p, "", "mac", "apply", "ssh", "--bogus")
+	if status != 2 || !strings.Contains(stderr, "ws mac apply: unknown flag: --bogus") {
+		t.Errorf("status = %d, stderr = %q; want a usage error", status, stderr)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var stderr bytes.Buffer
-			got := setupCommand(context.Background(), tt.args, 501, m, func(k string) string { return env[k] }, &bytes.Buffer{}, &stderr)
-			if got != tt.wantStatus || !strings.Contains(stderr.String(), tt.wantErr) {
-				t.Errorf("status = %d, stderr = %q; want %d, %q", got, stderr.String(), tt.wantStatus, tt.wantErr)
-			}
-		})
-	}
-	var stderr bytes.Buffer
-	if got := setupCommand(context.Background(), []string{"ssh"}, 501, m, func(string) string { return "" }, &bytes.Buffer{}, &stderr); got != 1 ||
-		!strings.Contains(stderr.String(), "is missing") {
-		t.Errorf("without HOME: status = %d, stderr = %q; want a missing mac.conf", got, stderr.String())
+	p = fakeProcess()
+	p.machine = m
+	if status, _, stderr = runWs(p, "", "mac", "apply", "ssh"); status != 1 || !strings.Contains(stderr, "is missing") {
+		t.Errorf("without HOME: status = %d, stderr = %q; want a missing mac.conf", status, stderr)
 	}
 }
 
-func TestSetupRefusesRootAndPrefixesWithWsProg(t *testing.T) {
-	m := effecttest.NewMachine()
-	env := map[string]string{"WS_PROG": "ws mac apply"}
-	var stderr bytes.Buffer
-	if got := setupCommand(context.Background(), []string{"ssh"}, 0, m, func(k string) string { return env[k] }, &bytes.Buffer{}, &stderr); got != 1 ||
-		!strings.HasPrefix(stderr.String(), "ws mac apply: run it as yourself, not root") {
-		t.Errorf("as root: status = %d, stderr = %q", got, stderr.String())
+func TestSetupRefusesRoot(t *testing.T) {
+	p := fakeProcess()
+	p.euid = 0
+	if status, _, stderr := runWs(p, "", "mac", "apply", "ssh"); status != 1 ||
+		!strings.HasPrefix(stderr, "ws mac apply: run it as yourself, not root") {
+		t.Errorf("as root: status = %d, stderr = %q", status, stderr)
 	}
+}
+
+func TestProgOutPrefixesAndDropsLines(t *testing.T) {
 	out := progOut{Out: &effecttest.Out{}, prog: "ws mac apply", seen: map[string]bool{}}
 	out.Say("%s: applying %d change(s)", "ssh", 1)
 	out.Say("%s: %s", "cable", "would run x")
@@ -80,11 +68,11 @@ func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
 func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
-	var stderr bytes.Buffer
-	got := setupCommand(context.Background(), nil, 501, m, func(k string) string { return map[string]string{"HOME": "/h"}[k] },
-		&bytes.Buffer{}, &stderr)
-	if got == 2 || strings.Contains(stderr.String(), "usage:") {
-		t.Errorf("status = %d, stderr = %q; want the steps run, not the usage", got, stderr.String())
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.machine = m
+	status, _, stderr := runWs(p, "", "mac", "apply")
+	if status == 2 || strings.Contains(stderr, "Usage") {
+		t.Errorf("status = %d, stderr = %q; want the steps run, not the usage", status, stderr)
 	}
 }
 
@@ -98,10 +86,17 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 			m.Results["ssh -G -F /tmp/x/"+file+" "+host] = effecttest.Result{}
 		}
 	}
-	var stdout, stderr bytes.Buffer
-	setupCommand(context.Background(), []string{"--check"}, 501, m, func(k string) string { return map[string]string{"HOME": "/h"}[k] },
-		&stdout, &stderr)
-	if n := strings.Count(stdout.String()+stderr.String(), "+++ /h/.ssh/config.d/ws"); n != 1 {
-		t.Errorf("the config.d/ws diff prints %d times; want 1\n%s%s", n, &stdout, &stderr)
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.machine = m
+	_, stdout, stderr := runWs(p, "", "mac", "apply", "--check")
+	if n := strings.Count(stdout+stderr, "+++ /h/.ssh/config.d/ws"); n != 1 {
+		t.Errorf("the config.d/ws diff prints %d times; want 1\n%s%s", n, stdout, stderr)
+	}
+}
+
+func TestSetupStepNamesAreTheArguments(t *testing.T) {
+	c := newMacApplyCmd(fakeProcess())
+	if want := []string{"ssh", "cable", "git", "gateway", "ghostty", "cld", "tunnel", "networks"}; !reflect.DeepEqual(c.ValidArgs, want) {
+		t.Errorf("ValidArgs = %q; want %q", c.ValidArgs, want)
 	}
 }

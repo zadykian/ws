@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
@@ -18,11 +20,8 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-const setupUsage = "usage: ws mac apply [--check] [STEP]\n\nWith no STEP, it runs every step in this order, and ssh again, whose plan is empty unless the\ndaemon or cld changed ssh ws's ways.\n\nSteps:\n  ssh    write ~/.ssh/config.d/ws and put its Include first in ~/.ssh/config\n  cable  give the cable's service its address\n  git    set git up with a signing key, and gh\n  gateway  install JetBrains Gateway\n  ghostty  install Ghostty and its font, and write ws.ghostty\n  cld  install cld, and update it\n  tunnel  set up the tunnel: ws, the key, tunnel.conf and the daemon\n  networks  route WS_TUNNEL_NETWORKS and write the resolvers of WS_RESOLVERS\n"
-
-// progOut prefixes a line with the program that prints it, as ws mac apply's lines are, and says each
-// warning once, as a step plans again after it applies. ws mac apply sets the prefix in WS_PROG, so
-// that the lines of a step that it runs read as its own.
+// progOut prefixes a line with the path of the command that prints it, and says each warning once,
+// as a step plans again after it applies.
 type progOut struct {
 	effect.Out
 	prog string
@@ -81,70 +80,73 @@ func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out,
 	}
 }
 
-// setupCommand runs ws mac apply: the steps it names, from mac.conf, in the order of setupSteps. Under
-// --check it prints each change and makes none.
-func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine, getenv func(string) string, stdout,
-	stderr io.Writer) int {
-	check := len(args) > 0 && args[0] == "--check"
-	if check {
-		args = args[1:]
+// newMacApplyCmd returns ws mac apply.
+func newMacApplyCmd(p process) *cobra.Command {
+	var check bool
+	names := setupStepNames(p)
+	c := &cobra.Command{
+		Use:   "apply [STEP]",
+		Short: "set the Mac up from mac.conf",
+		Long: "It runs the steps it names, from mac.conf, in this order: " + strings.Join(names, ", ") + ". " +
+			"With no STEP, it runs every step, and ssh again, whose plan is empty unless the daemon or cld " +
+			"changed ssh ws's ways. It asks sudo where it needs root.",
+		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
+		ValidArgs: names,
+		RunE:      func(c *cobra.Command, args []string) error { return runMacApply(c, p, args, check) },
 	}
-	if len(args) > 1 {
-		_, _ = io.WriteString(stderr, setupUsage)
-		return 2
+	c.Flags().BoolVar(&check, "check", false, "print each change and make none")
+	return c
+}
+
+// setupStepNames returns the names of the steps of ws mac apply, in order.
+func setupStepNames(p process) []string {
+	var names []string
+	for _, s := range setupSteps(conf.Conf{}, "", "", p.machine, nil, io.Discard, false) {
+		names = append(names, s.Name())
 	}
-	prog := getenv("WS_PROG")
-	if prog == "" {
-		prog = "ws mac apply"
-	}
-	if uid == 0 {
+	return names
+}
+
+// runMacApply runs the steps that args name, or all of them, from mac.conf. Under check it prints
+// each change and makes none.
+func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
+	if p.euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
-		_, _ = fmt.Fprintf(stderr, "%s: run it as yourself, not root: it asks sudo where it needs root\n", prog)
-		return 1
+		return errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
-	home := getenv("HOME")
-	file := getenv("WS_CONF")
+	home := p.getenv("HOME")
+	file := p.getenv("WS_CONF")
 	if file == "" {
 		file = filepath.Join(home, confFile)
 	}
-	text, err := m.ReadFile(file)
+	text, err := p.machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		_, _ = fmt.Fprintf(stderr, "%s: %s is missing: docs/mac.md says what goes in it\n", prog, file)
-		return 1
+		return fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
 	}
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "%s: %v\n", prog, err)
-		return 1
+		return err
 	}
-	c, errs := conf.Parse(string(text))
-	for _, e := range errs {
-		_, _ = fmt.Fprintf(stderr, "%s: %s\n", prog, e.In(file))
-	}
+	settings, errs := conf.Parse(string(text))
 	if len(errs) > 0 {
-		return 1
-	}
-	term := effect.NewTerminal(strings.NewReader(""), stderr)
-	out := progOut{term, prog, map[string]bool{}}
-	var chosen []step.Step
-	steps := setupSteps(c, home, getenv("XDG_CONFIG_HOME"), m, out, stdout, check)
-	if len(args) == 0 {
-		chosen = steps
-		if !check {
-			// The tunnel's daemon and cld's restore tabs change ssh ws's ways, so ssh runs once more.
-			// Under --check nothing is applied, so a second plan would only repeat the first.
-			chosen = slices.Concat(steps, []step.Step{sshStep(c, home, m, out, check, true)})
+		var all []error
+		for _, e := range errs {
+			all = append(all, errors.New(e.In(file)))
 		}
+		return errors.Join(all...)
 	}
-	for _, s := range steps {
-		if len(args) == 1 && s.Name() == args[0] {
-			chosen = append(chosen, s)
-		}
+	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	out := progOut{term, c.CommandPath(), map[string]bool{}}
+	steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), p.machine, out, c.OutOrStdout(), check)
+	chosen := steps
+	if len(args) == 1 {
+		chosen = slices.DeleteFunc(slices.Clone(steps), func(s step.Step) bool { return s.Name() != args[0] })
+	} else if !check {
+		// The tunnel's daemon and cld's restore tabs change ssh ws's ways, so ssh runs once more.
+		// Under --check nothing is applied, so a second plan would only repeat the first.
+		chosen = slices.Concat(steps, []step.Step{sshStep(settings, home, p.machine, out, check, true)})
 	}
-	if len(chosen) == 0 {
-		_, _ = fmt.Fprintf(stderr, "%s: unknown step %q\n\n%s", prog, args[0], setupUsage)
-		return 2
-	}
+	ctx := c.Context()
 	_, err = step.Run(ctx, chosen, out, check)
 	for _, s := range chosen {
 		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil {
@@ -152,14 +154,14 @@ func setupCommand(ctx context.Context, args []string, uid int, m effect.Machine,
 		}
 	}
 	term.Flush()
-	if err != nil {
-		// The runner names the step and its stage before the step's own error, which ws mac apply
-		// printed alone.
-		if inner := errors.Unwrap(err); inner != nil {
-			err = inner
-		}
-		_, _ = fmt.Fprintf(stderr, "%s: %v\n", prog, err)
-		return 1
+	return unwrapStep(err)
+}
+
+// unwrapStep returns the error of a step, without the step and stage that the runner names before
+// it: the command names itself.
+func unwrapStep(err error) error {
+	if inner := errors.Unwrap(err); inner != nil {
+		return inner
 	}
-	return 0
+	return err
 }
