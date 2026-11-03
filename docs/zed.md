@@ -195,6 +195,76 @@ reconnect proxies never exit (zed#62995). Zed raises the limit in its GUI alone.
   restarts, which closing the project or quitting Zed does.
 - `ssh ws 'ulimit -Sn'` prints `zed_nofile` in a new login.
 
+## When the connection drops
+
+Zed's heartbeat pings 5 s after the last message from ws, waits 5 s, and gives up after 5 misses:
+about 50 s after ws's last message. An idle session has no ping, so ssh's `ServerAliveInterval 30`
+ends it after 120 s. A reconnect makes 3 attempts back to back, and v1.26 waits up to 30 s in each.
+Terminal output is no traffic to the heartbeat.
+
+What survives depends on the kind of reconnect:
+
+- An automatic reconnect gives the old daemon a new proxy. Language servers, buffers and unsaved
+  edits stay, and the tabs resync. Terminals, tasks, debug sessions and agent threads are lost
+  (zed#20589, zed#65338).
+- A manual Reconnect, a quit or an update of Zed starts a new daemon, which kills the old one.
+  Unsaved edits stay on the Mac. Tabs are often lost (zed#51697), the project panel collapses
+  (zed#56049), and a multi-root project may return with one folder (zed#41708).
+- Zed updates itself about twice a week, and each update costs a new daemon.
+- A move between networks costs a pause of a few seconds, not a reconnect: `ws` is `10.99.0.1` from
+  every network.
+
+### The daemon
+
+- It exits 10 min after its last proxy detaches. No setting changes that.
+- It outlives a dropped ssh. sshd gives the proxy a session of its own, so no SIGHUP comes. Never
+  set logind's `KillUserProcesses`: a user other than root would lose the daemon at every
+  disconnect.
+- It serves one proxy at a time. While ws holds the old connection, the old proxy stays attached,
+  and the new proxy's attempts all time out. This stale proxy is suspected from the source and from
+  zed#59394, and not reproduced. It ends when ws next sends on the old connection and the Mac
+  answers with a reset. A manual Reconnect gets through.
+
+### Sleep
+
+ws keeps a connection with nothing unacknowledged for 2 h 11 min (`tcp_keepalive_time` 7200 s and
+9 probes 75 s apart). With unacknowledged data it gives up 15.5 to 16.5 min after its first send
+that the Mac never acknowledged. Output in a terminal counts as traffic, such as a tmux status
+clock.
+
+- A sleep of up to 2 h 11 min while ws is silent loses nothing, a terminal with no output included.
+- With traffic, a sleep under 15.5 min usually loses nothing. If proxy traffic armed the heartbeat,
+  Zed reconnects first, at 50 s, onto the old daemon.
+- From 15.5 to 25.5 min, ws has aborted the connection and the daemon's timer has started. The
+  automatic reconnect lands on the old daemon.
+- Past 25.5 min, the daemon is gone: a manual Reconnect, with a server restart.
+- This is read from the source and the kernel's defaults, and untested.
+
+### What to run
+
+| Symptom | Remedy |
+| --- | --- |
+| An extension's server never starts for an open buffer (zed#60923) | `editor: restart language server` |
+| All servers gone after a manual Reconnect (zed#60328) | `workspace: reload`, or close and reopen the project |
+| Tabs lost | Reopen the files |
+| An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
+| The Disconnected overlay | Reconnect, at the cost of a new daemon |
+| `ssh ws` fails at once for 10 min | fail2ban banned the tunnel address: wait, or use a `ws-ssh` entry |
+
+Neither command has a default key. Release builds register `remote_debug::SimulateDisconnect`,
+`SimulateTimeout` and `SimulateTimeoutExhausted` in a remote project's workspace. They reproduce
+each path above except the stale proxy.
+
+### What stays unchanged
+
+- Keep `ServerAliveInterval 30`: a lower value brings forward the reconnect that kills terminals.
+- Set no `ConnectTimeout` or Zed `connection_timeout`: each attempt would wait less than 17 s.
+- Add no `ControlMaster` for `ws`, and no sshd `ClientAlive*`: every probe is data, and a sleeping
+  Mac would lose its session at about 15 min. A drop-in with `ClientAliveInterval 15` and
+  `ClientAliveCountMax 60` helps only if the stale proxy is confirmed.
+- Raise `MaxSessions` to 32 only if the eleventh terminal or task is refused. Every terminal, task,
+  debug adapter, agent and proxy of every project shares the default 10.
+
 ## Limits
 
 A project's own `.zed/settings.json` is in [zed-projects](zed-projects.md).
@@ -207,4 +277,4 @@ A project's own `.zed/settings.json` is in [zed-projects](zed-projects.md).
 - Delve's "Rerun session" fails with a broken pipe (zed#62389).
 - After a reconnect that starts a new server, language servers may never start (zed#60923). Run
   `editor: restart language server`. If all vanish, run `workspace: reload` (zed#60328, untested).
-  The section `When the connection drops` of `docs/mac-zed.md` says more.
+  [When the connection drops](#when-the-connection-drops) says more.
