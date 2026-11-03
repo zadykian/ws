@@ -1,0 +1,16 @@
+// Written by github.com/zadykian/ws, whose next run replaces any change made here.
+{
+  "terminal": { "shell": "system" },
+  "lsp": {
+    "gopls": {
+      "binary": { "path": {{.Gopls}}, "arguments": ["-mode=stdio"] }
+    },
+    "roslyn": {
+      "binary": {
+        "path": {{.Roslyn}},
+        "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"]
+      }
+    }
+  },
+  "dap": { "Delve": { "binary": {{.Dlv}} } }
+}
