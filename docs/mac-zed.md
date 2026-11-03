@@ -75,6 +75,21 @@ server to every YAML file, Ansible's too.
 - Zed's keymap overlay is `docs/zed-keymap.md`, and `docs/zed.md`, its page for the server, says
   what to do when the connection drops.
 
+## The keymap
+
+The step also writes `~/.config/zed/keymap.json`, [`mac/zed-keymap.json`](../mac/zed-keymap.json),
+F12's keys for Zed. `base_keymap` stays `Zed`. The file carries its own header, so the step adds
+none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as ws's mark.
+
+- Where the file is missing, or its first line starts with the mark, the step writes it whole.
+- Where the first line does not, the step leaves the file and warns once: move it away, and the
+  next run writes ws's.
+- Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
+  run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
+
+`docs/zed-keymap.md` lists every F12 action with its Zed action, or why it has none.
+
 ## Changing the settings
 
-Edit [`mac/zed.json`](../mac/zed.json), build `ws` again and run it. `ws` embeds the file.
+Edit [`mac/zed.json`](../mac/zed.json) or [`mac/zed-keymap.json`](../mac/zed-keymap.json), build `ws`
+again and run it. `ws` embeds both files.
