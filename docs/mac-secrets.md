@@ -37,6 +37,12 @@ git entry takes the token so, and the flags set its username and proactive auth.
 where the entry is missing. `keys` prints a `KIND NAME` line per entry, sorted, and `git URL` for a
 server: never a value. `set` without the Keychain item fails and names `ws mac secrets init`.
 
+## Sending
+
+`ws mac wizard` sends the file and the identity to ws in its run stage, and the run reads the
+identity as a systemd credential ([ws's run](mac-wizard.md#wss-run)). The file's SHA-256 is in the
+run's stamp, so a changed file runs the stage again.
+
 ## The tables
 
 A table per kind. ws refuses a key it does not know, a key twice and a value of the wrong type. A

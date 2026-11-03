@@ -85,18 +85,21 @@ sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-
 must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key for it and as
 its peer, and ws's signing key or `none`. They are also its hostname, claude's login, Secure Boot
 that refuses the fans' driver, and `host_vars.yml`'s outbound table. A full `run` must run `ws
-server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It
-must print the log, and stamp ws's version, `-` here, 0 and `on`; after its `outbound` writes the
-line, which stops on a link, `off`. A tagged run after it must start its own unit and leave that
-stamp. A run during another's unit must follow it. A full run cut off must remove the stamp of the
-one before, so the next starts a unit again. The files script, `mac/wizard-remote-files.sh`, must
-install a command sent to it, root's alone, after a check
-of its SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
-`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop.
-Its `words` must print git's hash of root's word list, or `-` without
-one, and the list for that hash alone. Its `link` must list the wired ports, and `link PORT` name
-one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
-`10.77.0.1`.
+server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It must
+print the log, and stamp ws's version, `-` here, 0, `on` and `-`, the secrets file's sum; after its
+`outbound` writes the line, which stops on a link, `off`. A tagged run after it must start its own
+unit and leave that stamp. A run during another's unit must follow it. A full run cut off must
+remove the stamp of the one before, so the next starts a unit again. The files script,
+`mac/wizard-remote-files.sh`, must install a command sent to it, root's alone, after a check of its
+SHA-256, and run it as root over `ssh`. Its stamp must follow, which `status` must list, as
+`OWNER/REPO`. A new tag must replace the file and remove the stamp, and a bad sum stop. Its `words`
+must print git's hash of root's word list, or `-` without one, and the list for that hash alone. Its
+`link` must list the wired ports, and `link PORT` name one in `host_vars.yml`, mode 600 in a 755
+directory, once, which `status` names once the roles give `10.77.0.1`. With the Mac's secrets file,
+in a throwaway keychain, a run must start a unit that loads the identity as a credential and runs
+`--secrets`. It must remove the identity from ws, and stamp the file's SHA-256. A changed file must
+run again, and a removed one run with no secrets
+([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9

@@ -22,9 +22,10 @@ ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from bo
 ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
 ```
 
-Put the two files in [the secrets file](shell.md#the-secrets-file), whole, and the `.p12`'s
-password, left out where it has none, and run ([The Mac's secrets](mac-secrets.md#editing)). Then
-remove the plain files, which hold the client's key:
+Put the two files in [the secrets file](shell.md#the-secrets-file), whole. Add the `.p12`'s
+password, left out where it has none ([The Mac's secrets](mac-secrets.md#editing)). Run the wizard,
+which sends them ([Sending](mac-secrets.md#sending)). Then remove the plain files, which hold
+the client's key:
 
 ```sh
 ws mac secrets set file vpn_p12 vpnclient.p12

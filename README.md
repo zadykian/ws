@@ -107,13 +107,13 @@ A dry run checks no file it would write. ws runs a file's check, such as `nft -c
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
-checks root's key and installs its own ws on ws and runs `ws server apply`. Then it
-adds ws's signing key to GitHub, logs claude in there, and gives `wg0` the Mac's key. Without the
-wizard, the gh login, `gh auth setup-git`, the claude login and the Mac's key stay manual.
-ws's gh takes a fine-grained personal access token, which `WS_HOOK`'s repository's vault logs gh
-in with, or `gh auth login -h github.com --with-token` by hand. Its
-permissions are the account's selected repositories; Metadata and Actions read; Contents, Pull
-requests, Issues and Workflows read and write; and no account permission. These stay manual:
+checks root's key and installs its own ws on ws and runs `ws server apply`, with the Mac's secrets
+file. Then it adds ws's signing key to GitHub, logs claude in there, and gives `wg0` the Mac's key.
+Without the wizard, the gh login, `gh auth setup-git`, the claude login and the Mac's key stay
+manual. ws's gh takes a fine-grained personal access token, which `WS_HOOK`'s repository's vault
+logs gh in with, or `gh auth login -h github.com --with-token` by hand. Its permissions are the
+account's selected repositories; Metadata and Actions read; Contents, Pull requests, Issues and
+Workflows read and write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](docs/wireguard.md#the-tunnel);
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
