@@ -1,0 +1,39 @@
+{
+  "theme": { "mode": "dark", "light": "JetBrains Light", "dark": "JetBrains Dark" },
+  "ui_font_family": "JetBrainsMono Nerd Font Mono",
+  "buffer_font_family": "JetBrainsMono Nerd Font Mono",
+  "terminal": {
+    "dock": "right",
+    "font_family": "JetBrainsMono Nerd Font Mono",
+    "option_as_meta": true
+  },
+  "base_keymap": "Zed",
+  "project_panel": { "dock": "left" },
+  "git_panel": { "dock": "left" },
+  "outline_panel": { "dock": "left" },
+  "auto_install_extensions": {
+    "jetbrains-themes": true,
+    "csharp": true,
+    "sql": true,
+    "postgres-language-server": true,
+    "dockerfile": true,
+    "make": true,
+    "ansible": true,
+    "html": true,
+    "docker-compose": false
+  },
+  "languages": {
+    "C# Project File": { "hard_tabs": false, "tab_size": 2 },
+    "MSBuild File": { "hard_tabs": false, "tab_size": 2 },
+    "C# Solution File": { "hard_tabs": false, "tab_size": 2 }
+  },
+  "file_types": {
+    "Dockerfile": ["Dockerfile.*", "Containerfile.*"],
+    "Docker Compose": [
+      "compose.*.yaml",
+      "compose.*.yml",
+      "docker-compose.*.yaml",
+      "docker-compose.*.yml"
+    ]
+  }
+}
