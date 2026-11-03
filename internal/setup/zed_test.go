@@ -149,3 +149,36 @@ func TestZedWarnsOfALinkedDirectoryWhereAWriteIsPlanned(t *testing.T) {
 		t.Errorf("out %v; want the link's warning", out.Lines)
 	}
 }
+
+func TestZedReplacesAKeymapThatStartsWithTheMark(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := zedStep(m, out)
+	m.Dirs["/h/.config/zed"] = 0o755
+	old := "// Written by github.com/zadykian/ws, an older line 1.\n[]\n"
+	m.Files["/h/.config/zed/keymap.json"] = []byte(old)
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/.config/zed/keymap.json"]); got != zedKeymap || strings.Contains(strings.Join(out.Lines, "\n"), "warn") {
+		t.Errorf("keymap.json = %q, out %v; want ws's, with no warning", got, out.Lines)
+	}
+	if p, err := s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
+		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)
+	}
+}
+
+func TestZedLeavesAKeymapWithAnotherFirstLineAndWarnsOnce(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := zedStep(m, out)
+	m.Dirs["/h/.config/zed"] = 0o755
+	m.Files["/h/.config/zed/keymap.json"] = []byte("[]\n")
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/.config/zed/keymap.json"]); got != "[]\n" ||
+		strings.Count(strings.Join(out.Lines, "\n"), "keymap.json is not ws's: move it away") != 1 {
+		t.Errorf("keymap.json = %q, out %v; want it left, with one warning", got, out.Lines)
+	}
+}
