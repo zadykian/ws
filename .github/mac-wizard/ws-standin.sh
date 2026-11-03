@@ -9,6 +9,8 @@
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
 # - run.log holds systemd-run's arguments, and server.log the arguments of ws server apply, a line
 #   each;
+# - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
+#   ws server apply --secrets found, identity and secrets.age;
 # - server.wait holds the seconds that ws server apply runs, and server.status its status;
 # - with server.cut, ws server apply kills the unit's job, as a stop or a reboot would;
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
@@ -56,11 +58,25 @@ direct() {
 case ${0##*/} in
 systemd-run)
     echo "$*" >>"$s/run.log"
-    while [ "${1#--}" != "$1" ]; do
-        case $1 in --unit=*) unit=${1#--unit=} ;; esac
+    cred=
+    while [ "${1#-}" != "$1" ]; do
+        case $1 in
+        --unit=*) unit=${1#--unit=} ;;
+        -p)
+            shift
+            case $1 in LoadCredential=*) cred=${1#LoadCredential=} ;; esac
+            ;;
+        esac
         shift
     done
     touch "$s/units/$unit.on"
+    # A credential is copied before systemd-run returns, as Type=exec has it, to a directory of the
+    # unit's, which only the unit's job sees as CREDENTIALS_DIRECTORY.
+    if [ -n "$cred" ]; then
+        mkdir -p "$s/creds/$unit" && cp "${cred#*:}" "$s/creds/$unit/${cred%%:*}" || exit 1
+        CREDENTIALS_DIRECTORY=$s/creds/$unit
+        export CREDENTIALS_DIRECTORY
+    fi
     # The unit goes on where ssh drops, as systemd's does.
     (
         trap '' HUP
@@ -116,6 +132,15 @@ ws)
         shift 2
         echo "$*" >>"$s/server.log"
         echo "ws server apply's stand-in, with '$*'"
+        # With --secrets, the credential must be there, and the file: they are copied to seen/.
+        case $* in
+        *--secrets*)
+            mkdir -p "$s/seen"
+            for file; do :; done
+            cp "$CREDENTIALS_DIRECTORY/ws-secrets" "$s/seen/identity" &&
+                cp "$file" "$s/seen/secrets.age" || exit 1
+            ;;
+        esac
         sleep "$(cat "$s/server.wait" 2>/dev/null || echo 0)"
         if [ -f "$s/server.cut" ]; then
             kill -9 "$PPID"

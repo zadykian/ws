@@ -102,14 +102,14 @@ n=$(units)
 remote run
 full=$(unit)
 printf '%s\n' "$out" | grep -qx 'PLAY RECAP' && [ "$status" = 0 ] &&
-    [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $full 0" ] &&
+    [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on - / $full 0" ] &&
     [ "$(tail -n 1 "$ws/server.log")" = '' ] || error "a full run exited $status"
 tail -n 1 "$ws/run.log" | grep -q -- '--collect .* --setenv=LC_ALL=C.UTF-8 --setenv=HOME=/root ' ||
     error "a full run's unit lacked root's HOME or a UTF-8 locale"
 echo 3 >"$ws/server.status"
 remote run --only devtools
 [ "$status" = 3 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(unit)" != "$full" ] &&
-    [ "$(stamp run) / $(stamp last)" = "$sha 0 on / $(unit) 3" ] &&
+    [ "$(stamp run) / $(stamp last)" = "$sha 0 on - / $(unit) 3" ] &&
     [ "$(tail -n 1 "$ws/server.log")" = '--only devtools' ] ||
     error "a tagged run exited $status"
 rm "$ws/server.status"
@@ -136,12 +136,12 @@ printf '%s\n' "$out" | grep -q ' ended before its run wrote its status' && [ "$s
 rm "$ws/server.cut"
 n=$(units)
 remote run
-[ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on" ] ||
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on -" ] ||
     error "the run after it exited $status, with run '$(stamp run)'"
 sudo rm "$stamps/run"
 remote outbound
 remote run
-[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off" ] ||
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off -" ] ||
     error "a full run after outbound exited $status, with run '$(stamp run)'"
 host_vars="$ws/root"/etc/ws
 sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
@@ -151,7 +151,7 @@ sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
     error "outbound made /etc/ws or its host_vars.yml with another mode"
 sudo rm -r "$host_vars"
 remote run --diff
-[ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off" ] || error "a run with --diff stamped run"
+[ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off -" ] || error "a run with --diff stamped run"
 
 # files OP [ARG...]: the files script's OP, as remote runs the remote script's.
 files() {

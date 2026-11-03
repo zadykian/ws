@@ -67,7 +67,7 @@ cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 [ "$status" = 0 ] || error "ws mac wizard exited $status, with the account's keys in root's file"
 if ! printf '\n%s\n' '--only wireguard' | cmp -s - "$RUNNER_TEMP/ws/server.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
-    ! grep -q ' 0 on$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
+    ! grep -q ' 0 on -$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
     error "ws mac wizard ran no ws server apply on ws, once, then with --only wireguard, with root's HOME"
 fi
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
