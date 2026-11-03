@@ -1,6 +1,7 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
 {
   "terminal": { "shell": "system" },
+  "node": { "path": "/usr/bin/node", "npm_path": "/usr/bin/npm" },
   "lsp": {
     "gopls": {
       "binary": { "path": {{.Gopls}}, "arguments": ["-mode=stdio"] }
@@ -14,6 +15,15 @@
     "postgres-language-server": {
       "binary": { "path": "/usr/local/bin/postgres-language-server", "arguments": ["lsp-proxy"] }
     },
+    "ansible": {
+      "binary": { "path": {{.AnsibleLS}}, "arguments": ["--stdio"] }
+    },
+    "vscode-html-language-server": {
+      "binary": { "path": {{.HTMLLS}}, "arguments": ["--stdio"] }
+    },
+    "dockerfile-language-server": {
+      "binary": { "path": {{.DockerfileLS}}, "arguments": ["--stdio"] }
+    },
     "docker-language-server": {
       "binary": { "path": "/usr/local/bin/docker-language-server", "arguments": ["start", "--stdio"] },
       "initialization_options": {
@@ -23,6 +33,7 @@
     }
   },
   "languages": {
+    "HTML": { "formatter": "language_server" },
     "SQL": {
       "language_servers": ["postgres-language-server", "..."],
       "formatter": { "language_server": { "name": "postgres-language-server" } }

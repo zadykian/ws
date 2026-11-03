@@ -21,6 +21,9 @@ func serversDir(home string) string { return home + "/.local/lib/zed-servers" }
 // the first install plans it.
 const formatterLink = "/usr/local/bin/sql-formatter"
 
+// serverBin is a bin of the npm servers.
+func serverBin(home, name string) string { return serversDir(home) + "/node_modules/.bin/" + name }
+
 // serverFiles returns the directories and the two files of the lock, the install they feed and
 // sql-formatter's link.
 // ~/.local and ~/.local/lib are made only where missing, as root's would break the user's own
@@ -43,7 +46,7 @@ func serverFiles(m effect.Machine, user host.User, uid, gid int) ([]host.Resourc
 			UID: uid, GID: gid})
 	}
 	return append(parts, npmInstall{M: m, User: user, UID: uid, GID: gid, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
-		host.Link{M: m, Path: formatterLink, Target: dir + "/node_modules/.bin/sql-formatter"}), nil
+		host.Link{M: m, Path: formatterLink, Target: serverBin(user.Home, "sql-formatter")}), nil
 }
 
 // npmInstall runs npm ci. Plan cannot see the files written earlier in the step, so a stamp of

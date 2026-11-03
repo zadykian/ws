@@ -67,9 +67,12 @@ func quote(s string) string {
 // settingsFile renders ~/.config/zed/settings.json: the servers by path, as devtools installs
 // them. The server's file wins over the Mac's, which Zed forwards.
 func settingsFile(v values.Values) ([]byte, error) {
-	return host.Render(files, "settings.json.tmpl", struct{ Gopls, Roslyn, Dlv string }{
-		Gopls:  quote(devtools.Gopls(v.Home)),
-		Roslyn: quote(devtools.Roslyn(v.Home)),
-		Dlv:    quote(devtools.Dlv(v.Home)),
+	return host.Render(files, "settings.json.tmpl", struct{ Gopls, Roslyn, Dlv, AnsibleLS, HTMLLS, DockerfileLS string }{
+		Gopls:        quote(devtools.Gopls(v.Home)),
+		Roslyn:       quote(devtools.Roslyn(v.Home)),
+		Dlv:          quote(devtools.Dlv(v.Home)),
+		AnsibleLS:    quote(serverBin(v.Home, "ansible-language-server")),
+		HTMLLS:       quote(serverBin(v.Home, "vscode-html-language-server")),
+		DockerfileLS: quote(serverBin(v.Home, "docker-langserver")),
 	})
 }

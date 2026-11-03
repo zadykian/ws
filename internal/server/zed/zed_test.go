@@ -133,3 +133,29 @@ func TestSettingsNameTheSQLAndDockerServersWithNoDuplicateKey(t *testing.T) {
 		}
 	}
 }
+
+func TestSettingsNameTheNpmServersForRootAndAnotherUser(t *testing.T) {
+	for home, bin := range map[string]string{"/root": "/root", "/home/ws": "/home/ws"} {
+		v := values.Default()
+		v.Home = home
+		got, err := settingsFile(v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, body, _ := strings.Cut(string(got), "\n")
+		if !json.Valid([]byte(body)) {
+			t.Fatalf("not JSON:\n%s", body)
+		}
+		for _, name := range []string{"ansible-language-server", "vscode-html-language-server", "docker-langserver"} {
+			want := `"` + bin + "/.local/lib/zed-servers/node_modules/.bin/" + name + `"`
+			if !strings.Contains(body, want) {
+				t.Errorf("%s: settings lack %s", home, want)
+			}
+		}
+		for _, key := range []string{"lsp", "languages", "node"} {
+			if strings.Count(body, "\n  \""+key+"\":") != 1 {
+				t.Errorf("top-level key %s is not unique", key)
+			}
+		}
+	}
+}
