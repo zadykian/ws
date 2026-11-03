@@ -70,3 +70,43 @@ In the terminal, a Ctrl or Alt key with a letter or sign, without Shift, reaches
 (zed#26018). The section unbinds 21 global keys, and the chords' first keys go straight
 (zed#28423). F-keys, named keys and digits stay Zed's. Ctrl+C, Ctrl+D and Ctrl+R stay the shell's.
 F12's Ctrl+B is in the editor only, so the terminal gets it.
+
+## Decisions in the file
+
+- **Agent:** F7 and Alt+7 open the agent panel (`agent::ToggleFocus`). Ctrl+/ is the inline
+  assistant (`assistant::InlineAssist`) in the full editor, as F12's Ctrl+Enter there is code
+  actions.
+- **Cmd+Y** leaves F12's Redo for the agent's Allow once and Keep and for `git::StageAndNext`.
+- **Ctrl+]**, matching brace, is in the full editor only, so the inline assistant's prompt keeps it.
+- **Edit predictions:** Tab, Alt+Tab and Ctrl+Cmd+Right and Down stay Zed's.
+- **Left as they are:** F12's global keys win in the agent panel. So its Ctrl+Home and End and
+  Ctrl+Alt+Up, Down, PgUp and PgDn are F12's pane, dock and tab keys there.
+- Ctrl+Cmd+S is Save all, not the agent's steer of a queued message.
+- F7 replaces Zed's F7, step over while stopped, and F10 steps over too.
+- **Keys whose action Zed lacks keep Zed's:** F3 tests, F4 NuGet, F10 build and Alt+Delete safe
+  delete.
+- Ctrl+N in the full editor is New file, so it no longer moves in the completion menu. The arrows
+  do, and pickers keep Ctrl+N and Ctrl+P.
+- **Code actions:** F12's keys for `Refactor this`, `Change signature`, `Extract method`,
+  `Implement methods` and `Generate` all open the full menu, as no binding picks a kind
+  (zed#14470).
+- Last edit location stays in the file (zed#19731). Next error can skip gopls's unused-variable
+  errors (zed#64790).
+
+## How the mapping was made
+
+Each action got a hand-made decision: status, Zed action, context and note. The inputs were:
+
+- `F12.xml`, a user keymap in GoLand 2026.2's settings (76,333 bytes, md5
+  `b00c6c90bdb6bbf84c3db578d1d93a0a`, identical under Rider 2026.2, with `parent` `$default`);
+- `$default.xml` from `lib/intellij.platform.ide.impl.jar` of the GoLand 2026.2.3 backend;
+- Zed's `assets/keymaps/default-macos.json`, as of Zed v1.26.2.
+
+Nothing here was run on a Mac.
+
+## Why F12, not F24
+
+GoLand's synced settings also activate a keymap named `F24` on the Mac. `F24.xml` has 642 actions
+and `parent` `Visual Studio 2022`. Its 627 keystrokes are all F12's, and it has the same 34 Cmd
+keystrokes. The maintainer asked for F12, which helix follows, so F12 stays the source. Nothing
+reads F24, and "Ctrl stays Ctrl" holds either way.
