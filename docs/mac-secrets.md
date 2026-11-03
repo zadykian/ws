@@ -14,6 +14,29 @@ An item that is there stays, and `init` says so. It also makes an empty
 identity by `security find-generic-password -w` into memory. The Secure Enclave is not used: age
 reads its keys by a plugin to install.
 
+## Editing
+
+Each command reads the identity from the Keychain, decrypts the file in memory, edits it, and
+replaces the file through a renamed temporary file, mode 600. No plain file is made, and no editor
+runs. `set` parses the result again and refuses what a parse refuses, before it writes. Its
+references stay as written.
+
+```sh
+ws mac secrets set token github                 # also azure_devops
+ws mac secrets set env MY_TOKEN                 # any shell name
+ws mac secrets set password vpn_p12
+ws mac secrets set git https://git.example.com --username bob --proactive-auth
+ws mac secrets set file vpn_p12 vpnclient.p12   # vpn_sswan too: the file whole
+ws mac secrets unset env MY_TOKEN
+ws mac secrets keys
+```
+
+A value comes from a prompt with no echo at a terminal, else from standard input, less one
+trailing newline. So `set` never takes a value in an argument. `set file` reads its path whole. A
+git entry takes the token so, and the flags set its username and proactive auth. `unset` fails
+where the entry is missing. `keys` prints a `KIND NAME` line per entry, sorted, and `git URL` for a
+server: never a value. `set` without the Keychain item fails and names `ws mac secrets init`.
+
 ## The tables
 
 A table per kind. ws refuses a key it does not know, a key twice and a value of the wrong type. A

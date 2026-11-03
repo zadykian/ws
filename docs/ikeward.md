@@ -22,17 +22,14 @@ ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from bo
 ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
 ```
 
-Put the two files in [the secrets file](shell.md#the-secrets-file), whole, in base64 under `[file]`,
-with the `.p12`'s password under `[password]`, left out where it has none, and run
-([The Mac's secrets](mac-secrets.md)). Then remove the plain files, which hold the client's key:
+Put the two files in [the secrets file](shell.md#the-secrets-file), whole, and the `.p12`'s
+password, left out where it has none, and run ([The Mac's secrets](mac-secrets.md#editing)). Then
+remove the plain files, which hold the client's key:
 
-```toml
-[file]
-vpn_p12 = "BASE64"      # base64 -i vpnclient.p12
-vpn_sswan = "BASE64"
-
-[password]
-vpn_p12 = "${env.VPN_P12_PASSWORD}"
+```sh
+ws mac secrets set file vpn_p12 vpnclient.p12
+ws mac secrets set file vpn_sswan vpnclient.sswan
+ws mac secrets set password vpn_p12
 ```
 
 `ikeward_profile` is an absolute path, less the extension, that names the files `install` writes.
