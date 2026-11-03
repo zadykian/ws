@@ -12,11 +12,9 @@ Plan cannot see a pending fetch, so the grammars go by a stamp, `~/.config/helix
 holds the output of `hx --version` and the list of grammars. The role fetches and builds where
 they differ from the stamp or a grammar's library is missing, and writes the stamp after.
 
-Go's language server, gopls, comes from `go install` at the version `internal/server/helix/pins.go`
-pins, with the Go of the `devtools` role, and is built again when either version changes. C#'s,
-roslyn-language-server, is the server of VS Code's C# extension. It comes from nuget.org with
-`dotnet tool` at the version pinned there too, and runs on the .NET 10 of the `devtools` role:
-[C# in helix](#c-in-helix), below.
+`languages.toml` names the servers for Go and C#, gopls and roslyn-language-server. The `devtools`
+role installs them ([The language servers](devtools.md#the-language-servers)), so `ws server apply
+--only helix` alone does not: pass `--only devtools,helix`. [C# in helix](#c-in-helix), below.
 
 ## helix's keys
 

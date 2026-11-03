@@ -1,8 +1,9 @@
 # devtools
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
-Go and rustup. It runs as Go steps in [internal/server/devtools](../internal/server/devtools): the
-repositories, the packages, Go and rustup, in this order.
+Go, the language servers gopls and roslyn-language-server, and rustup. It runs as Go steps in
+[internal/server/devtools](../internal/server/devtools): the repositories, the packages, Go, the two
+servers and rustup, in this order.
 
 Node comes from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's
 archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again,
@@ -19,8 +20,20 @@ libraries for Chromium go in without recommends.
 Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it.
 ws unpacks the tarball beside the target and moves the tree into place whole, so that a run cut
 short never passes for the version. A new `GoVersion` in `internal/server/devtools/pins.go` replaces
-the Go there, and the Go that builds helix's gopls. rustup installs Rust's stable toolchain in the
+the Go there, and the Go that builds gopls. rustup installs Rust's stable toolchain in the
 user's home. Once there, rustup updates itself, so ws leaves it alone.
+
+## The language servers
+
+- gopls, Go's server, comes from `go install` at the version `pins.go` pins, with the Go of this
+  role and Go's checksum database. A change of either version builds it again.
+- roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
+  nuget.org with `dotnet tool` at the version `pins.go` pins, and runs on the .NET 10 of this role.
+- Both go in `ws_user`'s home: `~/go/bin/gopls` and `~/.dotnet/tools/roslyn-language-server`. Their
+  paths follow `ws_home`, so the `helix` role finds them with this role not run.
+
+[helix](helix.md) names both servers in its `languages.toml`. `ws server apply --only helix` does
+not install them: pass `--only devtools,helix`.
 
 ## gh
 

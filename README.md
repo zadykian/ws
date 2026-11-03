@@ -23,15 +23,15 @@ Each role has a page of its own. A role is Go steps of ws:
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
   repositories.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
-- [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go and
-  rustup.
+- [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go, the
+  servers gopls and roslyn-language-server, and rustup.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json` and a slice for its containers.
 - [`claude`](docs/claude.md): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
 - [`signoz`](docs/signoz.md): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
-- [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and language servers for Go and
-  C#.
+- [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and its config for the Go and C#
+  servers.
 - [`jetbrains`](docs/jetbrains.md): the backends of Rider and GoLand that JetBrains Gateway runs.
 
 `mac/` sets up the Mac that works on the server, and Ghostty on it: [The Mac](docs/mac.md).

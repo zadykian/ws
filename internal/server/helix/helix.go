@@ -1,5 +1,5 @@
-// Package helix is the helix role as Go steps: hx from Ubuntu's archive, its config, the language
-// servers for Go and C#, and the grammars. See docs/helix.md.
+// Package helix is the helix role as Go steps: hx from Ubuntu's archive, its config, which names
+// the language servers of devtools, and the grammars. See docs/helix.md.
 package helix
 
 import (
