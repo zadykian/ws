@@ -295,5 +295,63 @@
       "alt-c": "git::Commit",
       "alt-a": "git::Amend"
     }
+  },
+  // A stopped debug session: the step keys, so Alt keys type otherwise.
+  {
+    "context": "Workspace && debugger_stopped",
+    "bindings": {
+      "alt-f": "debugger::EvaluateSelectedText",
+      "ctrl-alt-r": "debugger::RunToCursor",
+      "ctrl-alt-e": "debugger::StepInto",
+      "ctrl-alt-w": "debugger::StepOver",
+      "alt-r": "debugger::RunToCursor",
+      "alt-e": "debugger::StepInto",
+      "alt-q": "debugger::StepOut",
+      "alt-w": "debugger::StepOver",
+      "ctrl-alt-f8": "debugger::EvaluateSelectedText"
+    }
+  },
+  // Esc goes back to the editor from a panel; the terminal keeps its own Esc.
+  {
+    "context": "Dock || OutlinePanel || ProjectPanel || GitPanel",
+    "bindings": {
+      "escape": "editor::ToggleFocus"
+    }
+  },
+  // The terminal: a Ctrl or Alt key with a letter or sign, without Shift, reaches the shell. The
+  // chords' first keys go to it straight, so that they never wait (zed#28423).
+  {
+    "context": "Terminal",
+    "unbind": {
+      "ctrl-s": "workspace::Save",
+      "ctrl-=": "pane::GoForward",
+      "ctrl-f": "buffer_search::Deploy",
+      "ctrl-q": "command_palette::Toggle",
+      "ctrl-o": "workspace::Open",
+      "ctrl-h": "buffer_search::DeployReplace",
+      "ctrl-,": "file_finder::Toggle",
+      "ctrl-alt-v": "diagnostics::Deploy",
+      "ctrl-alt-]": "workspace::ActivateNextWindow",
+      "ctrl-alt-[": "workspace::ActivatePreviousWindow",
+      "ctrl-alt-k": "git::ToggleCommitEditor",
+      "alt-x": "git::Branch",
+      "ctrl-alt-n": "git::Branch",
+      "alt-z": "git::Fetch",
+      "ctrl-alt-y": "workspace::ReloadActiveItem",
+      "alt-v": "git::Push",
+      "ctrl-alt-g": ["task::Spawn", { "task_name": "go generate" }],
+      "ctrl-alt-p": "debugger::Start",
+      "ctrl-alt-s": "zed::OpenSettings",
+      "alt-left": "pane::ActivatePreviousItem",
+      "alt-right": "pane::ActivateNextItem"
+    },
+    "bindings": {
+      "ctrl-v": "terminal::Paste",
+      "ctrl-k": ["terminal::SendKeystroke", "ctrl-k"],
+      "ctrl-m": ["terminal::SendKeystroke", "ctrl-m"],
+      "ctrl-u": ["terminal::SendKeystroke", "ctrl-u"],
+      "f2": "workspace::CloseActiveDock",
+      "alt-2": "workspace::CloseActiveDock"
+    }
   }
 ]
