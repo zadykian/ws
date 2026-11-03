@@ -16,6 +16,54 @@ const (
 	notIn = "security: SecKeychainSearchCopyNext: The specified item could not be found in the keychain."
 )
 
+func TestInitAddsTheItemByStdin(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[find] = effecttest.Result{Err: errors.New(notIn)}
+	m.Results["security -i"] = effecttest.Result{}
+	made, err := Keychain{M: m, User: "me"}.Init(context.Background())
+	if err != nil || !made {
+		t.Fatalf("Init = %v, %v; want true, nil", made, err)
+	}
+	if len(m.Inputs) != 1 || !strings.HasPrefix(m.Inputs[0], "add-generic-password -s ws-secrets -a me -w AGE-SECRET-KEY-1") {
+		t.Fatalf("stdin = %q, want the add command with a key", m.Inputs)
+	}
+	for _, c := range m.Calls {
+		if strings.Contains(c, "AGE-SECRET-KEY") {
+			t.Errorf("call %q holds the key", c)
+		}
+	}
+}
+
+func TestInitKeepsAnItem(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[find] = effecttest.Result{}
+	made, err := Keychain{M: m, User: "me"}.Init(context.Background())
+	if err != nil || made {
+		t.Fatalf("Init = %v, %v; want false, nil", made, err)
+	}
+	if len(m.Inputs) != 0 {
+		t.Errorf("stdin = %q, want no command", m.Inputs)
+	}
+}
+
+func TestInitRefusesAUserThatNeedsQuoting(t *testing.T) {
+	for _, u := range []string{"", "a b", "a;b"} {
+		if _, err := (Keychain{M: effecttest.NewMachine(), User: u}).Init(context.Background()); err == nil {
+			t.Errorf("Init(%q) = nil, want an error", u)
+		}
+	}
+}
+
+func TestInitScrubsTheKeyFromAnError(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[find] = effecttest.Result{Err: errors.New(notIn)}
+	m.Results["security -i"] = effecttest.Result{Err: errors.New("exit 1")}
+	_, err := Keychain{M: m, User: "me"}.Init(context.Background())
+	if err == nil || strings.Contains(err.Error(), "AGE-SECRET-KEY") {
+		t.Errorf("err = %v, want one with no key", err)
+	}
+}
+
 func TestIdentityReadsTheItem(t *testing.T) {
 	id, _ := age.GenerateX25519Identity()
 	m := effecttest.NewMachine()
