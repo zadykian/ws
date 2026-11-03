@@ -23,12 +23,6 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 		user.Owned(m, "Helix config", "", func(uid, gid int) ([]host.Resource, error) {
 			return configFiles(m, v, uid, gid)
 		}),
-		host.Group{Title: "Helix gopls", Parts: []host.Resource{
-			Gopls{M: m, User: user, Path: v.Helix.Gopls},
-		}},
-		host.Group{Title: "Helix roslyn-language-server", Parts: []host.Resource{
-			Roslyn{M: m, User: user, Path: v.Helix.Roslyn},
-		}},
 		user.Owned(m, "Helix grammars", "", func(uid, gid int) ([]host.Resource, error) {
 			return []host.Resource{Grammars{M: m, User: user, Names: v.Helix.Grammars, UID: uid, GID: gid}}, nil
 		}),

@@ -1,4 +1,4 @@
-package helix
+package devtools
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/internal/server/devtools"
 )
 
 // goBin is the go command of devtools' Go.
@@ -37,7 +36,7 @@ func (g Gopls) version() string {
 
 func (g Gopls) goVersion() string {
 	if g.GoVersion == "" {
-		return devtools.GoVersion
+		return GoVersion
 	}
 	return g.GoVersion
 }
