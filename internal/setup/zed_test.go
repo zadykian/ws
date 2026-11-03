@@ -2,6 +2,7 @@ package setup_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"slices"
 	"strings"
@@ -37,7 +38,7 @@ func TestZedFailedInstallIsAWarningAndTheSecondPlanIsEmpty(t *testing.T) {
 	m.Results["brew list --cask zed"] = effecttest.Result{Err: errors.New("no")}
 	m.Results["brew install --cask zed"] = effecttest.Result{Err: errors.New("down")}
 	p, err := s.Plan(context.Background())
-	if err != nil || len(p.Changes) != 4 {
+	if err != nil || len(p.Changes) != 5 {
 		t.Fatalf("Plan = %v, %v; want the install and the files", p.Changes, err)
 	}
 	if err := s.Apply(context.Background(), p); err != nil {
@@ -68,8 +69,8 @@ func TestZedFirstRunMakesTheDirectoriesAndWritesTheFile(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := zedStep(m, &effecttest.Out{})
 	p, err := s.Plan(context.Background())
-	if err != nil || len(p.Changes) != 3 || !strings.Contains(p.Changes[0].String(), "/h/.config,") {
-		t.Fatalf("Plan = %v, %v; want ~/.config, ~/.config/zed and the file", p.Changes, err)
+	if err != nil || len(p.Changes) != 4 || !strings.Contains(p.Changes[0].String(), "/h/.config,") {
+		t.Fatalf("Plan = %v, %v; want ~/.config, ~/.config/zed and both files", p.Changes, err)
 	}
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
@@ -83,6 +84,41 @@ func TestZedFirstRunMakesTheDirectoriesAndWritesTheFile(t *testing.T) {
 	}
 }
 
+func TestZedSeedIsJSONWithItsCommentsDropped(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := zedStep(m, &effecttest.Out{})
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	var lines []string
+	for _, l := range strings.Split(string(m.Files["/h/.config/zed/settings.json"]), "\n") {
+		if !strings.HasPrefix(l, "//") {
+			lines = append(lines, l)
+		}
+	}
+	var seed struct {
+		Connections []struct{ Host string } `json:"ssh_connections"`
+	}
+	if err := json.Unmarshal([]byte(strings.Join(lines, "\n")), &seed); err != nil ||
+		len(seed.Connections) != 1 || seed.Connections[0].Host != "ws" {
+		t.Errorf("seed = %+v, %v; want the host ws", seed, err)
+	}
+}
+
+func TestZedLeavesAnExistingSettingsFileAlone(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := zedStep(m, out)
+	m.Files["/h/.config/zed/settings.json"] = []byte("{ // mine\n}\n")
+	p, _ := s.Plan(context.Background())
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/.config/zed/settings.json"]); got != "{ // mine\n}\n" || strings.Contains(strings.Join(out.Lines, "\n"), "warn") {
+		t.Errorf("settings.json = %q, out %v; want it left, with no warning", got, out.Lines)
+	}
+}
+
 func TestZedWarnsOfAFileNotItsOwn(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	s := zedStep(m, out)
@@ -92,7 +128,7 @@ func TestZedWarnsOfAFileNotItsOwn(t *testing.T) {
 		t.Errorf("Plan = %v, %v, out %v; want a warning", p.Changes, err, out.Lines)
 	}
 	for _, c := range p.Changes {
-		if strings.Contains(c.String(), "global_settings.json") {
+		if strings.Contains(c.String(), "/zed/global_settings.json") {
 			t.Errorf("Plan = %v; want the file left", p.Changes)
 		}
 	}

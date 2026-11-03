@@ -7,11 +7,21 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// zedHeader is the first line of global_settings.json, by which a run knows a file for its own.
-const zedHeader = "// Written by ws mac apply: its next run replaces changes made here."
+const (
+	// zedHeader is the first line of global_settings.json, by which a run knows a file for its own.
+	zedHeader = "// Written by ws mac apply: its next run replaces changes made here."
+	// zedSeed is settings.json where it is missing. Zed writes that file from its UI and merges it over
+	// global_settings.json, and the connection to ws can sit in no other file, as an opened project is
+	// recorded by its index in this list.
+	zedSeed = `// Zed's own settings, which its UI writes. ws wrote this once, where it was missing; ws's
+// settings are in global_settings.json, and a key set here wins over them.
+{ "ssh_connections": [{ "host": "ws" }] }
+`
+)
 
-// files plans Zed's directory and ws's settings. global_settings.json is the header and
+// files plans Zed's directory and its two files. global_settings.json is the header and
 // mac/zed.json, replaced on each run, and left with a warning where its first line is not ws's.
+// settings.json is written where nothing is there, and never read.
 func (z *Zed) files() []step.Change {
 	conf := z.Home + "/.config"
 	dir := conf + "/zed"
@@ -25,6 +35,9 @@ func (z *Zed) files() []step.Change {
 		cs = append(cs, MakeDir{dir, 0o755})
 	}
 	cs = append(cs, z.global(global)...)
+	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
+		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
+	}
 	if dirErr == nil && dirInfo.Link != "" && len(cs) > 0 {
 		z.Out.Warn("%s is a link to %s: Zed's files go there", dir, dirInfo.Link)
 	}
