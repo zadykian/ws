@@ -64,7 +64,7 @@ jobs:
         run: |
           fail=0
           for path in /Applications/Ghostty.app ~/Applications/Ghostty.app /Applications/Zed.app \
-              ~/Applications/Zed.app ~/.local/bin/cld \
+              ~/Applications/Zed.app ~/.config/zed ~/.local/bin/cld \
               ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty" \
               ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT"; do
               if [ -e "$path" ]; then
@@ -83,7 +83,7 @@ jobs:
               { echo '::error::ws mac apply --check failed'; exit 1; }
           fail=0
           for path in /Applications/Ghostty.app /Applications/Zed.app ~/Library/Fonts/"$FONT" \
-              ~/.local/bin/cld ~/.config/ghostty \
+              ~/.local/bin/cld ~/.config/ghostty ~/.config/zed \
               "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
                   echo "::error::ws mac apply --check made $path"
@@ -121,6 +121,7 @@ jobs:
               { echo '::error::ws mac apply gave no warning of the failed Zed cask'; fail=1; }
           ~/.local/bin/cld version || { echo '::error::~/.local/bin/cld version failed'; fail=1; }
           for path in /Applications/Ghostty.app /Applications/Zed.app ~/.config/ghostty \
+              ~/.config/zed \
               "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
                   echo "::error::ws mac apply with a failed cask made $path"
@@ -163,6 +164,13 @@ jobs:
               { echo '::error::ws.ghostty is not mac/ws.ghostty under the header'; fail=1; }
           [ "$(grep -cx 'config-file = ?ws.ghostty' "$support/config.ghostty")" = 1 ] ||
               { echo '::error::config.ghostty does not read ws.ghostty once'; fail=1; }
+          zed=~/.config/zed
+          head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws mac apply' ||
+              { echo '::error::global_settings.json has no ws header'; fail=1; }
+          tail -n +2 "$zed/global_settings.json" | cmp -s - mac/zed.json ||
+              { echo '::error::global_settings.json is not mac/zed.json under the header'; fail=1; }
+          grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$zed/settings.json" ||
+              { echo '::error::settings.json has no seed for the host ws'; fail=1; }
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }
