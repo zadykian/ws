@@ -23,6 +23,7 @@ import (
 	"github.com/zadykian/ws/internal/server/tmux"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/internal/server/wireguard"
+	"github.com/zadykian/ws/internal/server/zed"
 	"github.com/zadykian/ws/step"
 )
 
@@ -52,6 +53,8 @@ var all = []Role{
 	{Name: "signoz", Steps: signoz.Steps},
 	{Name: "otelcol", Steps: otelcol.Steps},
 	{Name: "helix", Steps: helix.Steps},
+	// zed is described in `docs/zed.md`.
+	{Name: "zed", Steps: zed.Steps},
 	{Name: "jetbrains", Steps: jetbrains.Steps},
 }
 

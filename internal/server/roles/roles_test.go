@@ -1,6 +1,9 @@
 package roles
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestListHasEachRoleOnce(t *testing.T) {
 	seen := map[string]bool{}
@@ -20,5 +23,16 @@ func TestListIsACopy(t *testing.T) {
 	l[0].Name = "changed"
 	if List()[0].Name == "changed" {
 		t.Error("List returns the list itself")
+	}
+}
+
+func TestZedRunsBetweenHelixAndJetbrains(t *testing.T) {
+	var names []string
+	for _, r := range List() {
+		names = append(names, r.Name)
+	}
+	i := slices.Index(names, "zed")
+	if i < 1 || names[i-1] != "helix" || names[i+1] != "jetbrains" {
+		t.Errorf("zed is misplaced in %v", names)
 	}
 }
