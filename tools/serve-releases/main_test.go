@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -40,5 +41,15 @@ func TestMissingLatestFails(t *testing.T) {
 	handler(t.TempDir()).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/latest", nil))
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("got %d", rec.Code)
+	}
+}
+
+func TestCommandTakesTwoOrThreeArguments(t *testing.T) {
+	for _, args := range [][]string{{}, {"dir"}, {"dir", "0", "port", "extra"}} {
+		c := newCommand()
+		c.SetArgs(args)
+		if err := c.Execute(); err == nil || !strings.Contains(err.Error(), "accepts between 2 and 3 arg(s)") {
+			t.Errorf("%q: err = %v, want the count refused", args, err)
+		}
 	}
 }
