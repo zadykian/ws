@@ -30,8 +30,6 @@ func withEnv(p process, env map[string]string) process {
 
 // runWs runs args on the root of the groups that p serves, with stdin, and returns the status,
 // stdout and stderr.
-//
-//nolint:unparam // the commands of ws mac secrets read stdin, in the units that port them
 func runWs(p process, stdin string, args ...string) (status int, stdout, stderr string) {
 	var out, errs bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
@@ -84,18 +82,11 @@ func TestExecuteFailure(t *testing.T) {
 	fail := &cobra.Command{Use: "fail", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
 		return errors.Join(errors.New("one"), errors.New("two"))
 	}}
-	status := &cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
-		return exitStatus(3)
-	}}
 	var out, errs bytes.Buffer
-	root := newRoot(fakeProcess(), fail, status)
+	root := newRoot(fakeProcess(), fail)
 	if got := execute(context.Background(), root, []string{"fail"}, strings.NewReader(""), &out, &errs); got != 1 ||
 		errs.String() != "ws fail: one\nws fail: two\n" {
 		t.Errorf("fail: status = %d, stderr = %q", got, errs.String())
-	}
-	errs.Reset()
-	if got := execute(context.Background(), root, []string{"status"}, strings.NewReader(""), &out, &errs); got != 3 || errs.Len() != 0 {
-		t.Errorf("status: status = %d, stderr = %q", got, errs.String())
 	}
 }
 
@@ -132,6 +123,16 @@ func TestMacHelpAndErrors(t *testing.T) {
 		{"wizard help", []string{"mac", "wizard", "-h"}, 0, "--check", ""},
 		{"conf two files", []string{"mac", "conf", "a", "b"}, 2, "", "ws mac conf: accepts at most 1 arg(s), received 2"},
 		{"apply two steps", []string{"mac", "apply", "ssh", "git"}, 2, "", "ws mac apply: accepts at most 1 arg(s), received 2"},
+		{"secrets alone", []string{"mac", "secrets"}, 0, "Available Commands:", ""},
+		{"secrets unknown", []string{"mac", "secrets", "nope"}, 2, "", "ws mac secrets: unknown command \"nope\""},
+		{"secrets init extra", []string{"mac", "secrets", "init", "x"}, 2, "", "ws mac secrets init: unknown command \"x\""},
+		{"secrets set alone", []string{"mac", "secrets", "set"}, 0, "Available Commands:", ""},
+		{"secrets set no name", []string{"mac", "secrets", "set", "env"}, 2, "", "ws mac secrets set env: accepts 1 arg(s), received 0"},
+		{"secrets set extra", []string{"mac", "secrets", "set", "env", "A", "x"}, 2, "", "ws mac secrets set env: accepts 1 arg(s), received 2"},
+		{"secrets set file no path", []string{"mac", "secrets", "set", "file", "vpn_p12"}, 2, "", "ws mac secrets set file: accepts 2 arg(s), received 1"},
+		{"secrets set git flag", []string{"mac", "secrets", "set", "git", "https://git.example.com", "--bogus"}, 2, "", "ws mac secrets set git: unknown flag: --bogus"},
+		{"secrets unset one", []string{"mac", "secrets", "unset", "env"}, 2, "", "ws mac secrets unset: accepts 2 arg(s), received 1"},
+		{"secrets keys extra", []string{"mac", "secrets", "keys", "x"}, 2, "", "ws mac secrets keys: unknown command \"x\""},
 		{"apply unknown step", []string{"mac", "apply", "nope"}, 2, "", "ws mac apply: invalid argument \"nope\" for \"ws mac apply\""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

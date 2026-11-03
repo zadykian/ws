@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -33,9 +32,9 @@ func editFixture(t *testing.T, toml string) (*effecttest.Machine, *age.X25519Ide
 }
 
 func runSecrets(m *effecttest.Machine, stdin string, args ...string) (int, string, string) {
-	var out, errb bytes.Buffer
-	status := secretsCommand(context.Background(), args, m, env, strings.NewReader(stdin), &out, &errb)
-	return status, out.String(), errb.String()
+	p := withEnv(fakeProcess(), map[string]string{"HOME": home, "USER": "me"})
+	p.machine = m
+	return runWs(p, stdin, append([]string{"mac", "secrets"}, args...)...)
 }
 
 func TestSecretsKeysAndUnset(t *testing.T) {
@@ -64,16 +63,6 @@ func TestSecretsKeysOfNoFile(t *testing.T) {
 	m, _ := editFixture(t, "")
 	if status, out, _ := runSecrets(m, "", "keys"); status != 0 || out != "" {
 		t.Errorf("keys = %d %q, want none", status, out)
-	}
-}
-
-func TestSecretsUsageOfTheForms(t *testing.T) {
-	for _, a := range [][]string{{"set"}, {"set", "env"}, {"set", "env", "A", "x"}, {"set", "file", "vpn_p12"},
-		{"set", "git", "https://git.example.com", "--bogus"}, {"unset", "env"}, {"keys", "x"}} {
-		m, _ := editFixture(t, "")
-		if status, _, errs := runSecrets(m, "dummy\n", a...); status != 2 || !strings.Contains(errs, "usage: ws mac secrets COMMAND") {
-			t.Errorf("%q: status %d, stderr %q; want 2 and the usage", a, status, errs)
-		}
 	}
 }
 

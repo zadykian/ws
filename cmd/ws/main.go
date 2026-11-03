@@ -19,12 +19,6 @@ func (e usageError) Error() string { return e.err.Error() }
 
 func (e usageError) Unwrap() error { return e.err }
 
-// exitStatus is the status of a command that ran outside cobra's parsing and reported for itself.
-// execute returns it as it is and prints nothing.
-type exitStatus int
-
-func (e exitStatus) Error() string { return fmt.Sprintf("exit status %d", int(e)) }
-
 // group returns a command that only holds others. Alone it prints its help, and an unknown
 // subcommand is a usage error.
 func group(use, short string, cmds ...*cobra.Command) *cobra.Command {
@@ -78,10 +72,6 @@ func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.R
 	cmd, err := root.ExecuteContextC(ctx)
 	if err == nil {
 		return 0
-	}
-	var status exitStatus
-	if errors.As(err, &status) {
-		return int(status)
 	}
 	path := cmd.CommandPath()
 	for line := range strings.SplitSeq(err.Error(), "\n") {

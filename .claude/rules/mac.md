@@ -25,9 +25,7 @@ module is at the root), each linking its reason
   [effecttest](../../effect/effecttest/effecttest.go), never the real ones.
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
-- ws is cobra's: a command parses no flag or argument by hand and holds no usage text. ws mac
-  secrets is the exception until its commands are ported: it passes its arguments to
-  `secretsCommand`.
+- ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `execute` runs the root, names the command in each error, and returns 2 for a usage error. A
   group of commands exists on the systems where it runs. `newMacCmd` is built everywhere and tested
   on Linux, and `groups` lists it in a `//go:build darwin` file
