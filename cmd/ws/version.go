@@ -1,8 +1,9 @@
 package main
 
 import (
-	"io"
 	"runtime/debug"
+
+	"github.com/spf13/cobra"
 )
 
 // versionOf returns the version that Go stamped into the build: the tag, or a pseudo-version with
@@ -14,9 +15,15 @@ func versionOf(info *debug.BuildInfo, ok bool) string {
 	return info.Main.Version
 }
 
-// versionCommand prints this binary's version.
-func versionCommand(stdout io.Writer) int {
-	info, ok := debug.ReadBuildInfo()
-	_, _ = io.WriteString(stdout, versionOf(info, ok)+"\n")
-	return 0
+// newVersionCmd returns ws version, which prints this binary's version.
+func newVersionCmd(p process) *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "print the version of this ws",
+		Args:  cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error {
+			_, err := c.OutOrStdout().Write([]byte(p.version + "\n"))
+			return err
+		},
+	}
 }

@@ -3,19 +3,16 @@
 package main
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 )
 
 func TestServerGroupOnLinux(t *testing.T) {
-	var stdout, stderr bytes.Buffer
-	if got := run([]string{"server"}, &stdout, &stderr); got != 0 || !strings.Contains(stdout.String(), "usage: ws server COMMAND") {
-		t.Errorf("status = %d, stdout = %q, stderr = %q", got, stdout.String(), stderr.String())
+	p := fakeProcess()
+	if status, stdout, _ := runGroups(p, "server"); status != 0 || !strings.Contains(stdout, "usage: ws server COMMAND") {
+		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
-	stdout.Reset()
-	run(nil, &stdout, &stderr)
-	if !strings.Contains(stdout.String(), "\n  server  ") {
-		t.Errorf("usage = %q, want a line for server", stdout.String())
+	if _, stdout, _ := runGroups(p); !strings.Contains(stdout, "\n  server ") {
+		t.Errorf("help = %q, want a line for server", stdout)
 	}
 }

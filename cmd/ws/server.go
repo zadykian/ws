@@ -10,6 +10,8 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/secrets"
@@ -123,4 +125,21 @@ func loadSecrets(m effect.Machine, path string, getenv func(string) string) (sec
 		return secrets.Secrets{}, err
 	}
 	return secrets.Load(m, path, id)
+}
+
+// newServerCmd returns ws server. Until its commands are cobra's own, it passes the arguments to
+// serverCommand and the status back as an exitStatus.
+func newServerCmd(p process) *cobra.Command {
+	return &cobra.Command{
+		Use:                "server",
+		Short:              "the server's commands",
+		DisableFlagParsing: true,
+		Args:               cobra.ArbitraryArgs,
+		RunE: func(c *cobra.Command, args []string) error {
+			if status := serverCommand(c.Context(), args, p.euid, p.machine, p.getenv, c.OutOrStdout(), c.ErrOrStderr()); status != 0 {
+				return exitStatus(status)
+			}
+			return nil
+		},
+	}
 }

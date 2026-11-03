@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/zadykian/ws/effect"
 )
 
@@ -44,4 +46,21 @@ func macCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	_, _ = fmt.Fprintf(stderr, "ws mac: unknown command %q\n\n%s", args[0], macUsage)
 	return 2
+}
+
+// newMacCmd returns ws mac. Until its commands are cobra's own, it passes the arguments to
+// macCommand and the status back as an exitStatus.
+func newMacCmd(_ process) *cobra.Command {
+	return &cobra.Command{
+		Use:                "mac",
+		Short:              "the Mac's commands",
+		DisableFlagParsing: true,
+		Args:               cobra.ArbitraryArgs,
+		RunE: func(c *cobra.Command, args []string) error {
+			if status := macCommand(args, c.OutOrStdout(), c.ErrOrStderr()); status != 0 {
+				return exitStatus(status)
+			}
+			return nil
+		},
+	}
 }

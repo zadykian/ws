@@ -3,20 +3,15 @@
 package main
 
 import (
-	"context"
-	"io"
-	"os"
+	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/effect"
 )
 
-// groups returns the command groups that exist on this system: ws server, on Linux.
-func groups() []group {
-	return []group{{name: "server", summary: "the server's commands, run \"ws server help\" for them", run: runServer}}
-}
-
-// runServer runs as root, which serverCommand checks, so the machine's root commands go without
-// sudo: a container has none.
-func runServer(args []string, stdout, stderr io.Writer) int {
-	return serverCommand(context.Background(), args, os.Geteuid(), effect.OSMachine{Sudo: []string{}}, os.Getenv, stdout, stderr)
+// groups returns the command groups that exist on this system: ws server, on Linux. It runs as
+// root, which ws server apply checks, so the machine's root commands go without sudo: a container
+// has none.
+func groups(p process) []*cobra.Command {
+	p.machine = effect.OSMachine{Sudo: []string{}}
+	return []*cobra.Command{newServerCmd(p)}
 }

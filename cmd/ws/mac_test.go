@@ -38,13 +38,3 @@ func TestMacCommand(t *testing.T) {
 		})
 	}
 }
-
-func TestUsageListsGroups(t *testing.T) {
-	g := []group{{name: "mac", summary: "the Mac's commands"}}
-	if got := usageOf(g); !strings.Contains(got, "\n  mac  the Mac's commands\n") {
-		t.Errorf("usage = %q, want a line for mac", got)
-	}
-	if got := usageOf(nil); strings.Contains(got, "\n  mac ") {
-		t.Errorf("usage = %q, want no line for mac", got)
-	}
-}

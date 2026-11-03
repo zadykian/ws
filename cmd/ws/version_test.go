@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"runtime/debug"
 	"testing"
 )
@@ -26,15 +25,5 @@ func TestVersionOf(t *testing.T) {
 				t.Errorf("versionOf = %q, want %q", got, tt.want)
 			}
 		})
-	}
-}
-
-func TestVersionCommand(t *testing.T) {
-	var out bytes.Buffer
-	if got := versionCommand(&out); got != 0 {
-		t.Fatalf("status = %d, want 0", got)
-	}
-	if out.Len() == 0 || out.Bytes()[out.Len()-1] != '\n' {
-		t.Errorf("output = %q, want one line", out.String())
 	}
 }
