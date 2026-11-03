@@ -246,13 +246,13 @@ pull request cancels its older run, as the two would race to create each check's
 `.github/workflows/issues.yml` runs the toolkit's issue check as an issue opens or changes. It
 warns where the title is no Conventional Commits header, or the body strays from the issue form's
 fields. It takes a workflow of its own, as a pull request's event names no issue, and runs as
-`main` has it. A newer event of an issue cancels its older run, as with a pull request.
+`main` has it. A newer event cancels its older run, as with a pull request.
 
 The workflows pin the toolkit's actions, and `.claude/settings.json` its marketplace, to one
 release. `.github/` holds that release's templates: the pull request template, and the issue form,
 whose `config.yml` turns blank issues off. The toolkit's `tools/pin` moves both pins and writes the
-templates, as its [Pin a release](https://github.com/zadykian/toolkit#pin-a-release) says. Each pin
-writes them again, so a change to them goes in the toolkit.
+templates, as its [Pin a release](https://github.com/zadykian/toolkit#pin-a-release) says, so a
+change to them goes in the toolkit.
 
 ## The hooks
 
@@ -263,6 +263,19 @@ as an outside pull request's. Where
 `~/.config/ws/forbidden-words` exists, a word or phrase a line, they refuse a commit whose added
 lines, file names or message hold one. Case aside, a word matches where no letter or digit touches
 it: `_` separates words, as `-` does. Where gitleaks is installed, they refuse a staged secret too.
+The list is a file placed by hand, mode 600, with the lines of the secret `FORBIDDEN_WORDS`.
+
+## The `words` job
+
+`.github/workflows/words.yml` checks the list's words, from the secret `FORBIDDEN_WORDS`, in a
+pull request's commits (added lines, file names, messages), its branch's name, title and body.
+On an issue it checks the title and body. It fails on an empty secret. `main` requires it.
+
+It runs on a pull request from a branch of this repository and on an issue the owner opened. Other
+text skips, as the run's public result would show whether a guessed word is listed. A skipped job
+passes a required check. The trigger is never `pull_request_target`. The log names where a word is,
+such as `message line N` or `body line N`, never a word, a path or a ref's name. No step puts the
+text in `env:` or checks out, as both print it. `words-check-test.sh` tries the script.
 
 ## Claude's hooks
 

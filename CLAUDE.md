@@ -31,8 +31,9 @@ on the server. The rest is the docs, the lint gates' tools and CI.
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
   `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
-  toolkit's checks warn alone. `release.yml`, on a tag `v*`, has `check`, `ci`, `mac`, `build` and
-  `publish`.
+  toolkit's checks warn alone. `words.yml`, with `words`, checks a pull request and an issue for the
+  list's words ([The `words` job](docs/checks.md#the-words-job)).
+  `release.yml`, on a tag `v*`, has `check`, `ci`, `mac`, `build` and `publish`.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
   its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
 

@@ -118,7 +118,10 @@ Workflows read and write; and no account permission. These stay manual:
 - other peers' public keys on the server, as in [The tunnel](docs/wireguard.md#the-tunnel);
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
   [The profile](docs/ikeward.md#the-profile);
-- with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot).
+- with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot);
+- the local list of words: set the secret `FORBIDDEN_WORDS` on GitHub, and place
+  `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
+  ([The hooks](docs/checks.md#the-hooks)).
 
 The router takes a few steps once, by hand: [The router](docs/router.md).
 
