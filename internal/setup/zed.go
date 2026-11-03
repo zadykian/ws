@@ -8,14 +8,16 @@ import (
 )
 
 // Zed sets up Zed, the Mac's editor for ws: Zed and the font its settings name, from Homebrew's
-// casks where missing, and ws's settings in ~/.config/zed. It warns where Zed can't be installed,
+// casks where missing, and ws's settings and keymap in ~/.config/zed. It warns where Zed can't be installed,
 // so that the run goes on to the tunnel. Zed then updates itself.
 type Zed struct {
 	Home string
 	// Settings is the text of mac/zed.json.
 	Settings []byte
-	M        effect.Machine
-	Out      effect.Out
+	// Keymap is the text of mac/zed-keymap.json, written whole as keymap.json.
+	Keymap []byte
+	M      effect.Machine
+	Out    effect.Out
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.
 	LookPath func(string) (string, error)
 	failed   map[string]bool // the casks whose install failed, so the plan skips them for the run

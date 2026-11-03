@@ -10,6 +10,9 @@ import (
 const (
 	// zedHeader is the first line of global_settings.json, by which a run knows a file for its own.
 	zedHeader = "// Written by ws mac apply: its next run replaces changes made here."
+	// zedKeymapMark starts the first line of keymap.json, which carries its own header. It does not
+	// name the command, so the file stays ws's if the command changes.
+	zedKeymapMark = "// Written by github.com/zadykian/ws"
 	// zedSeed is settings.json where it is missing. Zed writes that file from its UI and merges it over
 	// global_settings.json, and the connection to ws can sit in no other file, as an opened project is
 	// recorded by its index in this list.
@@ -19,9 +22,10 @@ const (
 `
 )
 
-// files plans Zed's directory and its two files. global_settings.json is the header and
+// files plans Zed's directory and its three files. global_settings.json is the header and
 // mac/zed.json, replaced on each run, and left with a warning where its first line is not ws's.
-// settings.json is written where nothing is there, and never read.
+// keymap.json is mac/zed-keymap.json as it is, replaced and left on the same terms with its own
+// mark. settings.json is written where nothing is there, and never read.
 func (z *Zed) files() []step.Change {
 	conf := z.Home + "/.config"
 	dir := conf + "/zed"
@@ -34,7 +38,8 @@ func (z *Zed) files() []step.Change {
 		}
 		cs = append(cs, MakeDir{dir, 0o755})
 	}
-	cs = append(cs, z.global(global)...)
+	cs = append(cs, z.owned(global, append([]byte(zedHeader+"\n"), z.Settings...), zedHeader, true)...)
+	cs = append(cs, z.owned(dir+"/keymap.json", z.Keymap, zedKeymapMark, false)...)
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
 	}
@@ -44,15 +49,16 @@ func (z *Zed) files() []step.Change {
 	return cs
 }
 
-// global plans global_settings.json.
-func (z *Zed) global(file string) []step.Change {
-	want := append([]byte(zedHeader+"\n"), z.Settings...)
+// owned plans a file that ws replaces while its first line is ws's: equal to mark, or starting with
+// it where exact is false. A file with another first line is left, with a warning.
+func (z *Zed) owned(file string, want []byte, mark string, exact bool) []step.Change {
 	info, err := z.M.Stat(file)
 	if err != nil {
 		return []step.Change{Write{file, nil, want, false, 0o644}}
 	}
 	old, _ := z.M.ReadFile(file)
-	if first, _, _ := strings.Cut(string(old), "\n"); first != zedHeader {
+	first, _, _ := strings.Cut(string(old), "\n")
+	if first != mark && (exact || !strings.HasPrefix(first, mark)) {
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's", file)
 		return nil
 	}

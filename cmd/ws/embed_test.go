@@ -12,6 +12,7 @@ func TestEmbeddedFilesAreNotEmpty(t *testing.T) {
 		"mac.Ghostty":     mac.Ghostty,
 		"mac.TunnelPlist": mac.TunnelPlist,
 		"mac.Zed":         mac.Zed,
+		"mac.ZedKeymap":   mac.ZedKeymap,
 	} {
 		if len(data) == 0 {
 			t.Errorf("%s is empty", name)
