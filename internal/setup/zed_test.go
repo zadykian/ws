@@ -82,7 +82,7 @@ func TestZedFirstRunMakesTheDirectoriesAndWritesTheFile(t *testing.T) {
 		t.Errorf("global_settings.json = %q", got)
 	}
 	if got := string(m.Files["/h/.config/zed/keymap.json"]); got != zedKeymap {
-		t.Errorf("keymap.json = %q; want mac/zed-keymap.json as it is", got)
+		t.Errorf("keymap.json = %q; want the keymap as it is", got)
 	}
 	if p, err = s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)

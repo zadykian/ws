@@ -2,7 +2,7 @@
 
 F12 is the keymap GoLand and Rider use here: `F12.xml`, 523 actions with keys, over the 112 of
 IntelliJ's default keymap, `$default.xml`, that F12 leaves alone. That makes 635 actions with
-817 keystrokes. [`mac/zed-keymap.json`](../mac/zed-keymap.json) gives Zed the keys of 271 of them,
+817 keystrokes. The golden file [`keymap.json`](../internal/editor/zed/testdata/keymap.json) gives Zed the keys of 271 of them,
 and the pages below say what becomes of the other 364. The Mac step writes the file to
 `~/.config/zed/keymap.json` ([The keymap](mac-zed.md#the-keymap)).
 

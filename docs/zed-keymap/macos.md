@@ -4,7 +4,7 @@ F12's keys reach Zed through a Mac keyboard and macOS. This page lists what stop
 
 ## Keys a Mac keyboard lacks
 
-Six F12 keystrokes drop from `mac/zed-keymap.json`:
+Six F12 keystrokes drop from Zed's keymap:
 
 | F12 action | F12's key | Lacks |
 | --- | --- | --- |

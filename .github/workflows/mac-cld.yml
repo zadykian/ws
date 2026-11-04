@@ -175,8 +175,8 @@ jobs:
               { echo '::error::settings.json has no seed for the host ws'; fail=1; }
           head -n 1 "$zed/keymap.json" | grep -q '^// Written by github.com/zadykian/ws' ||
               { echo '::error::keymap.json has no ws mark'; fail=1; }
-          cmp -s "$zed/keymap.json" mac/zed-keymap.json ||
-              { echo '::error::keymap.json is not mac/zed-keymap.json'; fail=1; }
+          cmp -s "$zed/keymap.json" internal/editor/zed/testdata/keymap.json ||
+              { echo '::error::keymap.json is not the golden file'; fail=1; }
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }
