@@ -62,6 +62,7 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 		return id, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
 			"mac.conf's WS_IDENTITY", file)
 	}
+	id.Text = string(text)
 	return id, nil
 }
 

@@ -17,6 +17,8 @@ type Identity struct {
 	Agent string
 	// Check is whether the .pub must exist and hold a key: all but the default file key.
 	Check bool
+	// Text is what the .pub holds, or would hold as ws's copy, where Check is set.
+	Text string
 }
 
 // DefaultPub is the file key's .pub, which ssh offers ws unless mac.conf or Secretive says other.
