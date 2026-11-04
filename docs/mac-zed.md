@@ -25,7 +25,7 @@ and `zed ssh://ws/PATH` opens a project on ws.
 The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lookup. It makes
 `~/.config` first where missing.
 
-- `global_settings.json` is ws's settings, [`mac/zed.json`](../mac/zed.json), under one header
+- `global_settings.json` is ws's settings, rendered from [`internal/editor`](../internal/editor/), under one header
   line. Each run replaces it, so changes made there are lost. A file whose first line is not the
   header is left, with a warning: move it away, and the next run writes ws's. Zed parses it as it
   parses `settings.json`, so the header comment is valid.
@@ -94,6 +94,4 @@ carries its own header, so the step adds none, and takes the start of line 1,
 
 ## Changing the settings
 
-Edit [`mac/zed.json`](../mac/zed.json), build `ws` again and run it. `ws` embeds it. For the
-keymap, edit the data or the adapter and the golden file: `go test` holds them equal. `ws` renders
-the keymap.
+Edit the data or the adapter and the golden files: `go test` holds them equal. `ws` renders both.
