@@ -47,3 +47,13 @@ func TestTheURLIsTheReleasesDeb(t *testing.T) {
 		t.Errorf("got %s", got)
 	}
 }
+
+func TestInstallOnlyClearsTheDebWhereTheVersionIsInstalled(t *testing.T) {
+	m := machine("amd64", version+" ii\n")
+	m.Files[debPath("amd64")] = []byte("deb")
+	lazy := host.Lazy{Title: installStep, Parts: install(m)}
+	p, err := lazy.Plan(t.Context())
+	if err != nil || len(p.Changes) != 1 || strings.Contains(p.Changes[0].String(), "install") {
+		t.Errorf("plan = %v, %v; want only the .deb's removal", p.Changes, err)
+	}
+}
