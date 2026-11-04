@@ -41,7 +41,7 @@ func Included(paths []string, first, dir string) (bool, error) {
 	return true, nil
 }
 
-var ownSetting = regexp.MustCompile(`^(user\.(name|email|signingkey)|commit\.gpgsign|` +
+var ownSetting = regexp.MustCompile(`^(user\.(name|email|signingkey)|(commit|tag)\.gpgsign|` +
 	`gpg\.(format|ssh\.program|ssh\.allowedsignersfile))$`)
 
 // Own returns the settings of identity and signing among names, once each, in their order, joined

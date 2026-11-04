@@ -42,7 +42,7 @@ func dropped(old, want []string) []string {
 func localSigning(keys []string) []string {
 	var found []string
 	for _, k := range keys {
-		if k == "user.signingkey" || k == "commit.gpgsign" || strings.HasPrefix(k, "gpg.") {
+		if k == "user.signingkey" || k == "commit.gpgsign" || k == "tag.gpgsign" || strings.HasPrefix(k, "gpg.") {
 			found = append(found, k)
 		}
 	}

@@ -12,7 +12,7 @@ func TestConfigSignsWithTheKey(t *testing.T) {
 	got := gitcfg.Config(in)
 	for _, want := range []string{
 		"    name = \"A B\"\n    email = a@b.c\n    signingkey = \"/h/k.pub\"\n",
-		"[commit]\n    gpgsign = true\n",
+		"[commit]\n    gpgsign = true\n[tag]\n    gpgsign = true\n",
 		"[credential \"https://github.com\"]\n    helper =\n    helper = !/opt/gh auth git-credential\n",
 		"[credential \"https://gist.github.com\"]\n    helper =\n",
 		"    allowedSignersFile = \"/h/.config/ws/allowed_signers\"\n",

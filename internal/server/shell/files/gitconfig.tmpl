@@ -4,7 +4,7 @@
 	name = {{ .Name }}
 	email = {{ .Email }}
 {{ if .Signing -}}
-# Each commit signed with the machine's SSH key, which the allowed signers file trusts for the
+# Each commit and tag signed with the machine's SSH key, which the allowed signers file trusts for the
 # email above. The public key's path, so that an agent holding the key signs too; otherwise
 # ssh-keygen reads the private key beside it.
 	signingkey = {{ .Key }}.pub
@@ -13,6 +13,8 @@
 [gpg "ssh"]
 	allowedSignersFile = {{ .Signers }}
 [commit]
+	gpgsign = true
+[tag]
 	gpgsign = true
 {{ end -}}
 # GitHub CLI's credential helper, byte for byte as `gh auth setup-git` writes it, the space after
