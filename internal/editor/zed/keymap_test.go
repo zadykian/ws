@@ -37,3 +37,35 @@ func TestABindingRendersItsArguments(t *testing.T) {
 		t.Errorf("bindings = %q; want %q", got, want)
 	}
 }
+
+func TestASectionRendersItsContextAndUnbinds(t *testing.T) {
+	chord, err := editor.ParseChord("ctrl+a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	keymap := editor.Keymap{editor.Text: {{Action: "a.plain", Keys: []editor.Chord{chord}}}}
+	targets := map[string]editor.Target{"a.plain": {To: "x::Plain"}}
+	l := layout{Header: "Mark\n", Sections: []section{
+		{
+			Scope: editor.Text, Context: "Editor", Comment: "Second.\n",
+			Unbind: []unbind{{Key: "ctrl-k", To: "x::Cut"}},
+		},
+	}}
+	want := `// Mark
+[
+  // Second.
+  {
+    "context": "Editor",
+    "unbind": {
+      "ctrl-k": "x::Cut"
+    },
+    "bindings": {
+      "ctrl-a": "x::Plain"
+    }
+  }
+]
+`
+	if got := string(render(keymap, targets, l)); got != want {
+		t.Errorf("render =\n%s\nwant\n%s", got, want)
+	}
+}
