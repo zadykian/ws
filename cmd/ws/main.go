@@ -41,7 +41,7 @@ func group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 
 // newRoot returns the ws command with the groups of this system.
 func newRoot(p process, groups ...*cobra.Command) *cobra.Command {
-	root := group("ws", "set up the server and the Mac that works on it", newVersionCmd(p))
+	root := group("ws", "set up the server and the Mac that works on it", newVersionCmd(p), newUpdateCmd(p))
 	root.AddCommand(groups...)
 	root.SilenceErrors = true
 	root.SilenceUsage = true

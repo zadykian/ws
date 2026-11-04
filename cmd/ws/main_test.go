@@ -17,7 +17,8 @@ import (
 func fakeProcess() process {
 	return process{
 		machine: effecttest.NewMachine(), getenv: noEnv, lookup: func(string) (string, bool) { return "", false },
-		setenv: func(string, string) error { return nil }, euid: 501, pid: 7, goos: "darwin", pwd: "/p", version: "v1.2.3",
+		setenv: func(string, string) error { return nil }, euid: 501, pid: 7, goos: "darwin", goarch: "arm64", pwd: "/p", version: "v1.2.3",
+		self: func() (string, error) { return "/h/.local/bin/ws", nil },
 	}
 }
 
@@ -72,6 +73,7 @@ func TestRun(t *testing.T) {
 		{"unknown", []string{"nope"}, 2, "", "ws: unknown command \"nope\" for \"ws\"\nRun 'ws --help' for usage.\n"},
 		{"unknown flag", []string{"--nope"}, 2, "", "ws: unknown flag: --nope\nRun 'ws --help' for usage.\n"},
 		{"version takes no argument", []string{"version", "x"}, 2, "", "ws version: unknown command \"x\" for \"ws version\"\nRun 'ws version --help' for usage.\n"},
+		{"update takes no argument", []string{"update", "x"}, 2, "", "ws update: unknown command \"x\" for \"ws update\"\nRun 'ws update --help' for usage.\n"},
 		{"old setup", []string{"setup", "ssh"}, 2, "", `unknown command "setup"`},
 		{"old tunnel", []string{"tunnel", "status"}, 2, "", `unknown command "tunnel"`},
 	}
