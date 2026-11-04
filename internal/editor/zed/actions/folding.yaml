@@ -1,0 +1,23 @@
+---
+# F12's folding keys, as Zed's actions.
+fold.all: {to: editor::FoldAll}
+fold.block: {to: editor::Fold}
+fold.selection: {to: editor::FoldSelectedRanges}
+fold.open-all: {to: editor::UnfoldAll}
+fold.toggle: {to: editor::ToggleFold}
+fold.open: {to: editor::UnfoldLines}
+# RiderCollapseToDefinitions approx
+fold.function-bodies: {to: editor::FoldFunctionBodies}
+# CollapseRegionRecursively: Ctrl+Alt+- in the editor, not the dock's size
+fold.recursive: {to: editor::FoldRecursive}
+# ExpandAllToLevel1, ExpandToLevel1 approx: folds below the level; both chords are Ctrl+* on a Mac
+fold.level-1: {to: editor::FoldAtLevel_1}
+# ExpandAllToLevel2, ExpandToLevel2 approx: folds below the level; both chords are Ctrl+* on a Mac
+fold.level-2: {to: editor::FoldAtLevel_2}
+# ExpandAllToLevel3, ExpandToLevel3 approx: folds below the level; both chords are Ctrl+* on a Mac
+fold.level-3: {to: editor::FoldAtLevel_3}
+# ExpandAllToLevel4, ExpandToLevel4 approx: folds below the level; both chords are Ctrl+* on a Mac
+fold.level-4: {to: editor::FoldAtLevel_4}
+# ExpandAllToLevel5, ExpandToLevel5 approx: folds below the level; both chords are Ctrl+* on a Mac
+fold.level-5: {to: editor::FoldAtLevel_5}
+fold.open-recursive: {to: editor::UnfoldRecursive}

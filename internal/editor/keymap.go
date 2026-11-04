@@ -20,7 +20,7 @@ var keymapFiles embed.FS
 // topics lists keymap/'s files in the order a load reads them. Scopes span files, and a scope's
 // bindings keep this order, which is the order of Zed's file.
 var topics = []string{
-	"editing", "selection", "completion", "navigation", "search", "code", "files", "other",
+	"editing", "selection", "completion", "navigation", "search", "code", "folding", "files", "other",
 }
 
 // Scope says where a binding holds.
