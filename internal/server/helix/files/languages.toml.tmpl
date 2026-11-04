@@ -1,9 +1,5 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 
-# The grammars ws fetches and builds with hx --grammar. Without this list, hx would
-# take every grammar it knows, more than two hundred.
-use-grammars = { only = {{.Grammars}} }
-
 # The gopls that ws installs, at its pinned version, rather than any gopls on PATH.
 [language-server.gopls]
 command = {{.Gopls}}

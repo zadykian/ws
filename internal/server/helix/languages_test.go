@@ -10,13 +10,11 @@ import (
 func TestLanguages(t *testing.T) {
 	v := values.Default()
 	v.Home = "/home/ws"
-	v.Helix.Grammars = []string{"go", "c-sharp"}
 	got, err := languages(v)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, want := range []string{
-		`use-grammars = { only = ["go", "c-sharp"] }`,
 		`command = "/home/ws/go/bin/gopls"`,
 		`command = "/home/ws/.dotnet/tools/roslyn-language-server"`,
 		`args = ["--stdio", "--autoLoadProjects"]`,
