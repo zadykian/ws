@@ -27,8 +27,8 @@ func TestTheKeymapLoads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(keymap[Global]) == 0 || len(keymap[Code]) == 0 {
-		t.Errorf("empty scopes: %d, %d", len(keymap[Global]), len(keymap[Code]))
+	if len(keymap[Global]) == 0 || len(keymap[Text]) == 0 {
+		t.Errorf("empty scopes: %d, %d", len(keymap[Global]), len(keymap[Text]))
 	}
 }
 
