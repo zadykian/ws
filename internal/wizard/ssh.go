@@ -81,6 +81,7 @@ func (s SSH) room() bool {
 //     here. BatchMode stays with the calls, as only a login reads it.
 //   - The way's host and port go before args as options, which win over config.d/ws's whatever the
 //     host's name. The address that the Host key stage asked replaces the way's host.
+//   - AddressFamily=inet goes on every call: the ways are IPv4 by conf and WS_REMOTE takes IPv4 alone.
 //   - A socket is named for the host that ssh is given. The address that the Host key stage asked
 //     adds .1, so that a master made before it never carries a call to the new address.
 //   - A master lives 30 minutes past its last call, which outlasts a Homebrew install between two.
@@ -98,7 +99,7 @@ func (s SSH) argv(ctx context.Context, args []string) []string {
 			a = append(a, "-o", "Port="+d.Port)
 		}
 	}
-	return append(a, args...)
+	return append(append(a, "-o", "AddressFamily=inet"), args...)
 }
 
 // shared returns the options that every call needs, with the master's socket in the lock.

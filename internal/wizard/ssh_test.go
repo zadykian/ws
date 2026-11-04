@@ -17,9 +17,9 @@ func TestSSHArgv(t *testing.T) {
 		"first":   {"/t/l", "", "10.0.0.5", "ControlPath=/t/l/%n.1 -o ControlPersist=30m", ""},
 		"no room": {"/t/%l", "", "", "ConnectTimeout=10", "ControlMaster"},
 		"a way": {"/t/l", "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n", "",
-			"-o HostName=ws.example.org -o Port=22022 ws-ssh", ""},
+			"-o HostName=ws.example.org -o Port=22022 -o AddressFamily=inet ws-ssh", ""},
 		"first over a way": {"/t/l", "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n", "10.0.0.5",
-			"-o HostName=10.0.0.5 -o Port=22022 ws-ssh", ""},
+			"-o HostName=10.0.0.5 -o Port=22022 -o AddressFamily=inet ws-ssh", ""},
 	} {
 		m := effecttest.NewMachine()
 		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
