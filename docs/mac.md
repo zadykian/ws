@@ -1,16 +1,16 @@
 # The Mac
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
-reaches it over the LAN, or elsewhere through the router's port forwards.
-`ws mac apply` sets up its end of the cable ([The cable](#the-cable)), git
-([git on the Mac](mac-git.md)), JetBrains Gateway ([The Mac's tunnel](#the-macs-tunnel)), Zed
-([Zed on the Mac](mac-zed.md)) and two hosts for ssh:
-
-- `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
-  The sessions of `ssh ws`, JetBrains Gateway and Zed stay open as the Mac moves between the cable,
-  the LAN and elsewhere, with a pause of a few seconds ([Zed](zed.md#when-the-connection-drops));
-- `ws-ssh`, plain SSH over whichever of the three the Mac is on, for networks that block the
-  tunnel's UDP.
+reaches it over the LAN, or elsewhere through the router's port forwards. `ws mac apply` sets up its
+end of the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), JetBrains Gateway
+([The Mac's tunnel](#the-macs-tunnel)), Zed ([Zed on the Mac](mac-zed.md)) and one host for ssh,
+`ws`. It goes through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac
+connects. The sessions of `ssh ws`, JetBrains Gateway and Zed stay open as the Mac moves between the
+cable, the LAN and elsewhere, with a pause of a few seconds
+([Zed](zed.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
+while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
+a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
+`WS_REMOTE_PORT` and the router's forward stay for that and for setup.
 
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
 request. It runs as the user, with sudo where it needs root. It sets up Ghostty and cld ([Ghostty
@@ -82,22 +82,11 @@ wrote, and only that. `--check` shows each change: a diff, or a line where `rout
 
 ## ssh's hosts
 
-The script writes `~/.ssh/config.d/ws`. Once `mac.conf` has `WS_PUBLIC_KEY` and launchd has the
-tunnel's daemon, its host `ws` goes to `10.99.0.1` from every network. Where UDP is blocked,
-`ssh ws` times out, and `ssh ws-ssh` serves. Before that, `ws` goes the ways `ws-ssh` does, so that
-`ssh ws` works through the keys' exchange, and after a run that stops before it loads the daemon.
-Set `WS_PUBLIC_KEY` once ws has the Mac's key ([The Mac's tunnel](#the-macs-tunnel)). `ws-ssh`
-goes:
-
-- over the cable, to `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
-- over the LAN, to `WS_LAN_ADDRESS`, where one lies in `WS_LAN`;
-- elsewhere, to `WS_REMOTE` on `WS_REMOTE_PORT`, over IPv4, as the forward takes IPv4 alone.
-
-ssh picks the way from the Mac's own addresses (`Match localnetwork`, OpenSSH 9.4 and later), and
-probes nothing. Both hosts log in as `WS_USER` with the key below, and check ws's host key under
-the one name `ws` (`HostKeyAlias`). So `known_hosts` has one entry for ws whichever way ssh goes. A
-host on another network that uses the LAN's subnet then meets a host key mismatch, where ssh stops.
-A session ends after 120 s without word from ws, far longer than a switch of the tunnel takes.
+The script writes `~/.ssh/config.d/ws`, with one host, `ws`, at the tunnel's `10.99.0.1` from the
+first run, whichever network the Mac is on. So `ssh ws` fails until the keys' exchange ends
+([The Mac's tunnel](#the-macs-tunnel)), where a direct way serves. It logs in as `WS_USER` with the
+key below, and checks ws's host key under the one name `ws` (`HostKeyAlias`). A session ends after
+120 s without word from ws, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`). Where Secretive's agent has its socket in
 `~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data`, the key is the one that the agent
@@ -121,11 +110,10 @@ counts by `~/.ssh/` or the home's full path, in quotes, or as the first of sever
 
 Where `~/.ssh/config` is a link, as a dotfiles manager makes it, the script reads the file it points
 to. It stops where the line is missing there, rather than replace the link with a file. Where
-`~/.ssh/config.d` is a link, the script warns as it writes `config.d/ws` there, as the file holds
-`mac.conf`'s addresses. It stops where `config.d/ws` is a file it did not write, rather than
-replace it. It warns of a `Host` or `Match` of `~/.ssh/config`'s own for `ws` or `ws-ssh`, whose
-settings come after those of `config.d/ws`. Remove an older `Host ws` there, whose `IdentityFile`
-would add a key to ws's.
+`~/.ssh/config.d` is a link, the script warns as it writes `config.d/ws` there. It stops where
+`config.d/ws` is a file it did not write, rather than replace it. It warns of a `Host` or `Match` of
+`~/.ssh/config`'s own for `ws`, whose settings come after those of `config.d/ws`. Remove an older
+`Host ws` there, whose `IdentityFile` would add a key to ws's.
 
 ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
 `UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the
@@ -133,7 +121,7 @@ patterns of every `IgnoreUnknown` in `~/.ssh/config`. Run the script again after
 A pattern in a file that `~/.ssh/config` includes must be in `~/.ssh/config` too, as the script
 reads no other file.
 
-Before it writes, the script has `ssh -G`, for `ws` and `ws-ssh`, read the new `config.d/ws` alone.
+Before it writes, the script has `ssh -G`, for `ws`, read the new `config.d/ws` alone.
 Then it reads it first, `~/.ssh/config` next, without its own Include of the old file, and the
 system's file last. Where ssh refuses either, the script stops and changes nothing, under `--check`
 too. The system's file goes through an Include there, so its relative Includes resolve under
@@ -153,14 +141,9 @@ DHCP and DNS still go to the Mac, which serves them.
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,
 macOS asks once whether Ghostty, Gateway, Zed or another app may find devices on the local
-network: allow it. It asks for `ws-ssh`, and for `ws` until it goes through the tunnel. ssh run
-from Terminal needs no such grant, and neither does `ws` through the tunnel. The tunnel's utun is no
-local network, and macOS lets daemons that run as root reach one anyway (Apple's TN3179). To see
-which way `ws-ssh` went:
-
-```sh
-ssh -v ws-ssh exit 2>&1 | grep 'Connecting to'
-```
+network: allow it. Only a direct way needs it. ssh run from Terminal needs no such grant, and
+neither does `ws` through the tunnel. The tunnel's utun is no local network, and macOS lets daemons
+that run as root reach one anyway (Apple's TN3179).
 
 ## The cable
 
@@ -179,8 +162,8 @@ still shows other settings after `-setmanual`, the script names them and stops. 
 by hand. In System Settings › Network, pick it › Details › TCP/IP, and Configure IPv4 Manually: the
 IP address `10.77.0.2`, the subnet mask `255.255.255.252`, no router. Or empty the key.
 
-Set the key once ws's end is up ([network](network.md)), as `ws-ssh` takes the cable while the Mac
-has an address on it. Then, docked, check once that the uplink keeps the default route:
+Set the key once ws's end is up ([network](network.md)). Then, docked, check once that the uplink
+keeps the default route:
 
 ```sh
 route -n get default | grep interface
@@ -195,11 +178,12 @@ in order.
 
 The keys come first, in this order. A run of the `wireguard` role makes ws's key and prints its
 public key. `ws mac apply`, without `WS_PUBLIC_KEY`, makes the Mac's key, which only root reads. It
-prints its public key with the two commands that make the Mac ws's peer, over `ws-ssh`:
+prints its public key with the two commands that make the Mac ws's peer, over a direct way, as
+`ssh ws` needs this done first. ADDRESS and PORT are that way:
 
 ```sh
-ssh ws-ssh "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh ws-ssh ws server apply --only wireguard
+ssh -o HostName=ADDRESS -o Port=PORT ws "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
+ssh -o HostName=ADDRESS -o Port=PORT ws ws server apply --only wireguard
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.
@@ -250,14 +234,13 @@ prints the way in use, its endpoint, the latest handshake and the bytes moved.
 `/var/log/ws-tunnel.log` has a line for each switch and failure.
 
 `ws mac apply` installs JetBrains Gateway from Homebrew's cask where `JetBrains Gateway.app` is in
-neither `/Applications` nor `~/Applications`, and runs no `brew upgrade`, as Gateway updates
-itself. A failed install draws a warning, and the next run tries again, with brew's output. Where
-Homebrew has the cask but not the app, the script warns instead, and installs nothing:
-`brew reinstall --cask jetbrains-gateway` puts the app back. By hand, add an SSH connection to `ws`
-in Gateway, with "Parse config file ~/.ssh/config" on. Gateway then reads `~/.ssh/config` through
-the Mac's `ssh -G`, its default. Through it, open Rider or GoLand, on a backend that the
-`jetbrains` role installed ([jetbrains](jetbrains.md)). A connection to `ws` outlives a switch; a
-second, to `ws-ssh`, serves where UDP is blocked. Zed has [its page](mac-zed.md).
+neither `/Applications` nor `~/Applications`, and runs no `brew upgrade`, as Gateway updates itself.
+A failed install draws a warning, and the next run tries again, with brew's output. Where Homebrew
+has the cask but not the app, the script warns instead, and installs nothing: `brew reinstall --cask
+jetbrains-gateway` puts the app back. By hand, add an SSH connection to `ws` in Gateway, with "Parse
+config file ~/.ssh/config" on. Gateway then reads `~/.ssh/config` through the Mac's `ssh -G`, its
+default. Through it, open Rider or GoLand, on a backend that the `jetbrains` role installed
+([jetbrains](jetbrains.md)). A connection to `ws` outlives a switch. Zed has [its page](mac-zed.md).
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install
@@ -270,9 +253,10 @@ iperf3 -s
 ```
 
 then, on the Mac, compare `iperf3 -c 10.99.0.1` with `iperf3 -c 10.77.0.1`, each with `-R` too, and
-delete the two rules after. Bulk copies can go to `ws-ssh`, outside the tunnel, which is the cable
-when the Mac is docked: `rsync -a DIR ws-ssh:`. Besides, check `ws mac tunnel status` docked, on the
-home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on ws, for 2500Mb/s.
+delete the two rules after. Bulk copies run at that speed: for faster ones, give rsync a direct way,
+such as `rsync -e 'ssh -o HostName=ADDRESS -o Port=PORT' -a DIR ws:`. Besides, check `ws mac tunnel
+status` docked, on the home Wi-Fi and on a phone's hotspot, and `ethtool CABLE_INTERFACE` on ws, for
+2500Mb/s.
 
 ## Routes and resolvers of another repository
 
