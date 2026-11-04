@@ -25,7 +25,8 @@ The settings layers, lowest first:
 4. ws's `~/.config/zed/settings.json`.
 5. A project's `.zed/settings.json`.
 
-ws's file names the language servers by path. A path makes Zed skip every download and add no
+ws's file names the language servers by path, and ws renders it from
+`internal/editor/servers.yaml`. A path makes Zed skip every download and add no
 arguments. It sets `terminal.shell.program` to ws's terminal wrapper. A program set in the Mac's
 `settings.json` would run on ws too (zed#65548), and fail there if ws lacks it.
 
