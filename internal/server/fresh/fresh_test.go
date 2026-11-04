@@ -2,6 +2,7 @@ package fresh
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -70,5 +71,16 @@ func TestConfigNamesTheHomesServers(t *testing.T) {
 	}
 	if got := string(m.Files["/home/ws/.config/fresh/config.json"]); !strings.Contains(got, `"/home/ws/go/bin/gopls"`) {
 		t.Error("config.json lacks the user's gopls")
+	}
+}
+
+func TestTheActionListNamesThePinnedVersion(t *testing.T) {
+	data, err := os.ReadFile("../../editor/fresh/testdata/actions.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	line, _, _ := strings.Cut(string(data), "\n")
+	if want := "Fresh " + strings.TrimPrefix(tag, "v") + ":"; !strings.Contains(line, want) {
+		t.Errorf("the list's first line %q lacks %q: list the actions of the new version", line, want)
 	}
 }
