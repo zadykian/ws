@@ -191,13 +191,14 @@ must stop too on a `-setmanual` that fails or changes nothing, and name what dif
 ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). `ssh -G` must give `ws` and `ws-ssh` the
 file key, by the four lines `config.d/ws` had for it before. It must give them the file or the agent
 that `WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check` showing `config.d/ws`'s diff alone.
-Then it must give them an agent at Secretive's socket, which holds a P-256 key whose `.pub` is in
-`PublicKeys`, where those keys are empty. It must warn that this replaces the file key. A
-`-cert.pub`, a name with a blank or a directory there must not count. A second `.pub` must stop
-`ws mac apply`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key must be the other. The
-file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is missing or unreadable,
-or holds a private key, a certificate or a line that is no key, must stop `ws mac apply` too. So
-must a key that ssh-keygen cannot read or ws's OpenSSH lacks
+Then it must give them an agent at Secretive's socket, which holds a P-256 key, and ws's copy of
+its `.pub`, where those keys are empty. `PublicKeys` is closed then, as macOS 27 denies ws the files
+of Secretive's container. It must warn that this replaces the file key, and write the copy where it
+is missing. A `.pub` in `PublicKeys` that `WS_IDENTITY` names must become the copy. A second key in
+the agent must stop `ws mac apply`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key must
+be the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is
+missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
+`ws mac apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
 ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). Without the stand-in app,
 `ws mac apply` must install Gateway's cask once, through a stand-in brew that refuses any other
 call, and then print nothing. With an app in `/Applications`, it must install nothing. A failed
@@ -210,8 +211,9 @@ So must the default key or its `.pub` alone. git must then sign a commit and ver
 `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
 lines, and name its own settings. An include below them, or a second one, must stop `ws mac apply`
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
-settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket,
-`--check` must show the wrapper and write none, and git sign whatever `SSH_AUTH_SOCK` names. `ws`
+settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket and
+`PublicKeys` closed, `--check` must show the wrapper and write none. A run must write ws's copy of
+the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names. `ws`
 must keep the file key, as Secretive's one key is git's. git's credential command for GitHub must be
 a stand-in gh's, which must add the key to its login once. Logged out, gh must draw a warning at
 each run. Logged in, `ws mac apply` must warn of a 404 or another error of gh's, and of an add that

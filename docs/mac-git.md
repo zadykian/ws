@@ -18,8 +18,10 @@ holds more than a public key's line, as a private key does, stops it too.
 
 Where Secretive holds the Mac's ssh key, give git a key of its own in Secretive's app, at Notify.
 The login key asks for Touch ID at each use by default, so a rebase would ask at each commit. Name
-its `.pub`, in `~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys`, in
-`WS_GIT_SIGNING_KEY`. git then signs through `~/.config/ws/secretive-ssh-keygen`, which gives
+ws's copy of its `.pub`, `~/.config/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_KEY`. `NAME` is that
+of Secretive's Public Key Path, and the script writes the copy from the agent
+([Secretive's keys](#secretives-keys)). git then signs through
+`~/.config/ws/secretive-ssh-keygen`, which gives
 `ssh-keygen` Secretive's agent, so that a terminal, a JetBrains IDE and other apps sign alike. The
 key never leaves the Secure Enclave, and signs only while the Mac is unlocked. ssh then offers ws
 Secretive's other key, or else the file key ([ssh's hosts](mac.md#sshs-hosts)).
@@ -42,3 +44,15 @@ the script says so at each run, and goes on. Until a run adds the key, GitHub sh
 commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,
 and says what it would add, also before the key is made. Before gh is installed, it says what it
 would add once gh has a login. After an add, the script checks that they list the key.
+
+## Secretive's keys
+
+macOS 27 denies other apps the files of Secretive's container, with no prompt
+([Secretive's issue](https://github.com/maxgoedjen/secretive/issues/839)). Its socket still answers,
+so the script and the wizard ask the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to
+pick it from the agent, so they keep a copy in `~/.config/ws/secretive`, under Secretive's name for
+it. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `mac.conf` names becomes
+that copy where the agent lists the key.
+
+The socket stays after Secretive quits, and nothing answers there. The script then stops, and says
+to open Secretive, unless `WS_IDENTITY` names a key.
