@@ -77,12 +77,14 @@ and GoLand. With less, the run fails at that role: [Disk space](docs/jetbrains.m
 
 ## Running it again
 
-Each ws holds the roles of its release, so install the latest ws first, then apply:
+Each ws holds the roles of its release, so update ws first, then apply:
 
 ```sh
-curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
+ws update
 ws server apply
 ```
+
+A ws before v0.5.1 lacks `ws update`: [Update](docs/releases.md#update).
 
 `ws server apply --only NAME,...` runs the roles named, in the order they run in. `--secrets FILE`
 gives the roles their secrets
