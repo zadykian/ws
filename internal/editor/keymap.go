@@ -2,6 +2,24 @@
 // file types and the language servers. An adapter of each editor renders them.
 package editor
 
+import (
+	"bytes"
+	"embed"
+	"errors"
+	"fmt"
+	"io"
+	"slices"
+
+	"go.yaml.in/yaml/v3"
+)
+
+//go:embed keymap/*.yaml
+var keymapFiles embed.FS
+
+// topics lists keymap/'s files in the order a load reads them. Scopes span files, and a scope's
+// bindings keep this order, which is the order of Zed's file.
+var topics = []string{"other"}
+
 // Scope says where a binding holds.
 type Scope string
 
@@ -31,3 +49,36 @@ type Binding struct {
 
 // Keymap holds each scope's bindings, in the order of topics.
 type Keymap map[Scope][]Binding
+
+// LoadKeymap reads the embedded keymap. It fails on an unknown scope or field.
+func LoadKeymap() (Keymap, error) {
+	keymap := Keymap{}
+	for _, topic := range topics {
+		name := "keymap/" + topic + ".yaml"
+		data, err := keymapFiles.ReadFile(name)
+		if err != nil {
+			return nil, err
+		}
+		var file Keymap
+		if err := decodeStrict(data, &file); err != nil {
+			return nil, fmt.Errorf("%s: %w", name, err)
+		}
+		for scope, bindings := range file {
+			if !slices.Contains(Scopes, scope) {
+				return nil, fmt.Errorf("%s: no scope %q", name, scope)
+			}
+			keymap[scope] = append(keymap[scope], bindings...)
+		}
+	}
+	return keymap, nil
+}
+
+// decodeStrict fails on a field the type lacks, so that a misspelt one is no silent loss.
+func decodeStrict(data []byte, out any) error {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(out); err != nil && !errors.Is(err, io.EOF) {
+		return err
+	}
+	return nil
+}
