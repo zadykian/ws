@@ -3,6 +3,7 @@ package fresh
 import (
 	"bytes"
 	"encoding/json"
+	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/internal/editor"
@@ -75,5 +76,26 @@ func TestAServerWithNoPathFails(t *testing.T) {
 	delete(paths, "gopls")
 	if _, err := Config(paths); err == nil {
 		t.Error("no error")
+	}
+}
+
+func TestAComposeFileTakesItsLanguageID(t *testing.T) {
+	c := rendered(t)
+	langs, _ := c["languages"].(map[string]any)
+	compose, _ := langs["docker-compose"].(map[string]any)
+	names, _ := compose["filenames"].([]any)
+	for _, file := range composeFiles {
+		if !slices.Contains(names, any(file)) {
+			t.Errorf("docker-compose lacks the file %s", file)
+		}
+	}
+	servers, _ := c["lsp"].(map[string]any)
+	for language, list := range servers {
+		for _, entry := range list.([]any) {
+			ids := entry.(map[string]any)["language_id_overrides"]
+			if (ids != nil) != (language == "docker-compose") {
+				t.Errorf("%s: language_id_overrides = %v", language, ids)
+			}
+		}
 	}
 }

@@ -34,6 +34,7 @@ type config struct {
 	SelfUpdate      bool                `json:"self_update"`
 	AutoAttach      bool                `json:"auto_attach"`
 	Editor          editorSettings      `json:"editor"`
+	Languages       map[string]language `json:"languages"`
 	LSP             map[string][]server `json:"lsp"`
 }
 
@@ -51,6 +52,14 @@ func Config(paths map[string]string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	types, err := editor.LoadFileTypes()
+	if err != nil {
+		return nil, err
+	}
+	langs, err := languageEntries(types)
+	if err != nil {
+		return nil, err
+	}
 	var out bytes.Buffer
 	out.WriteString(header)
 	encoder := json.NewEncoder(&out)
@@ -64,7 +73,8 @@ func Config(paths map[string]string) ([]byte, error) {
 			TabsInner: settings.VisibleWhitespace, TabsTrailing: settings.VisibleWhitespace,
 			AutoSave: settings.AutoSaveSeconds > 0, AutoSaveInterval: settings.AutoSaveSeconds,
 		},
-		LSP: servers,
+		Languages: langs,
+		LSP:       servers,
 	})
 	return out.Bytes(), err
 }
