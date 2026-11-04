@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -42,6 +43,18 @@ func runGroups(p process, args ...string) (status int, stdout, stderr string) {
 	var out, errs bytes.Buffer
 	status = execute(context.Background(), newRoot(p, groups(p)...), args, strings.NewReader(""), &out, &errs)
 	return status, out.String(), errs.String()
+}
+
+func TestExecuteExitsAsAShellReportsASignal(t *testing.T) {
+	root := newRoot(fakeProcess())
+	root.AddCommand(&cobra.Command{Use: "cut", RunE: func(*cobra.Command, []string) error {
+		return signalExit{syscall.SIGTERM}
+	}})
+	var out, errs bytes.Buffer
+	status := execute(context.Background(), root, []string{"cut"}, strings.NewReader(""), &out, &errs)
+	if status != 143 || errs.Len() != 0 {
+		t.Errorf("status = %d, stderr = %q; want 143 and nothing printed", status, errs.String())
+	}
 }
 
 func TestRun(t *testing.T) {

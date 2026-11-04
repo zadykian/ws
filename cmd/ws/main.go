@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,12 @@ type usageError struct{ err error }
 func (e usageError) Error() string { return e.err.Error() }
 
 func (e usageError) Unwrap() error { return e.err }
+
+// signalExit is the error of a run that a signal cancelled. ws exits with 128 plus the signal's
+// number, as a shell reports it.
+type signalExit struct{ sig syscall.Signal }
+
+func (e signalExit) Error() string { return e.sig.String() }
 
 // group returns a command that only holds others. Alone it prints its help, and an unknown
 // subcommand is a usage error.
@@ -63,7 +70,7 @@ func walk(c *cobra.Command, f func(*cobra.Command)) {
 
 // execute runs root with args and returns the exit status. An error prints on stderr after the
 // path of the command that returned it: a usage error with a line to the command's help, and
-// status 2, any other error with status 1.
+// status 2, any other error with status 1. A signal's exit prints nothing.
 func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root.SetArgs(append([]string{}, args...))
 	root.SetIn(stdin)
@@ -72,6 +79,10 @@ func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.R
 	cmd, err := root.ExecuteContextC(ctx)
 	if err == nil {
 		return 0
+	}
+	var cut signalExit
+	if errors.As(err, &cut) {
+		return 128 + int(cut.sig)
 	}
 	path := cmd.CommandPath()
 	for line := range strings.SplitSeq(err.Error(), "\n") {
