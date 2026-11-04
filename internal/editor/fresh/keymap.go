@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/zadykian/ws/internal/editor"
 )
@@ -74,6 +75,20 @@ func bindings(keymap editor.Keymap, targets map[string]editor.Target) ([]binding
 		out = append(out, rendered...)
 	}
 	return out, errors.Join(problems...)
+}
+
+// split takes Ctrl+H out of the map. Fresh's default map binds both Ctrl+H and Ctrl+Backspace, a
+// pair it compares as each map binding loads, so a map's Ctrl+H warns at each start. It doesn't
+// compare the config's own keybindings.
+func split(all []binding) (mapped, outside []binding) {
+	for _, b := range all {
+		if b.Key == "h" && slices.Equal(b.Modifiers, []string{"ctrl"}) {
+			outside = append(outside, b)
+		} else {
+			mapped = append(mapped, b)
+		}
+	}
+	return mapped, outside
 }
 
 func entries(chord editor.Chord, target editor.Target, when string) ([]binding, error) {

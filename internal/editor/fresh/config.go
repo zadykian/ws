@@ -41,6 +41,7 @@ type config struct {
 	AutoAttach      bool                     `json:"auto_attach"`
 	ActiveMap       string                   `json:"active_keybinding_map"`
 	Maps            map[string]keybindingMap `json:"keybinding_maps"`
+	Keybindings     []binding                `json:"keybindings"`
 	Editor          editorSettings           `json:"editor"`
 	Languages       map[string]language      `json:"languages"`
 	LSP             map[string][]server      `json:"lsp"`
@@ -59,10 +60,11 @@ func Config(paths map[string]string) ([]byte, error) {
 	if err := keymap.Check(targets); err != nil {
 		return nil, err
 	}
-	mapped, err := bindings(keymap, targets)
+	rendered, err := bindings(keymap, targets)
 	if err != nil {
 		return nil, err
 	}
+	mapped, outside := split(rendered)
 	settings, err := editor.LoadSettings()
 	if err != nil {
 		return nil, err
@@ -89,8 +91,9 @@ func Config(paths map[string]string) ([]byte, error) {
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	err = encoder.Encode(config{
-		ActiveMap: "f12",
-		Maps:      map[string]keybindingMap{"f12": {Inherits: "default", Bindings: mapped}},
+		ActiveMap:   "f12",
+		Maps:        map[string]keybindingMap{"f12": {Inherits: "default", Bindings: mapped}},
+		Keybindings: outside,
 		Editor: editorSettings{
 			Rulers:         []int{settings.Ruler},
 			WhitespaceShow: settings.VisibleWhitespace, SpacesLeading: settings.VisibleWhitespace,
