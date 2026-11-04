@@ -151,3 +151,25 @@ func TestPlanCopy(t *testing.T) {
 		t.Errorf("a copy that holds the key: %v", got)
 	}
 }
+
+func TestSSHWritesTheCopyItNames(t *testing.T) {
+	m, out := agentMachine(sshMachine(), agentKey), &effecttest.Out{}
+	m.Results["mkdir -p /h/.config/ws/secretive"] = effecttest.Result{}
+	s := sshStep(m, out)
+	p, err := s.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files[copyOf(agentKey)]) != agentKey {
+		t.Errorf("the copy holds %q", m.Files[copyOf(agentKey)])
+	}
+	if got := string(m.Files["/h/.ssh/config.d/ws"]); !strings.Contains(got, "IdentityFile "+sshcfg.AgentKeys(agentKey)[0].Pub()+"\n") {
+		t.Errorf("config.d/ws names no copy: %s", got)
+	}
+	if again, err := s.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
+		t.Errorf("second Plan = %v, %v; want none", again.Changes, err)
+	}
+}

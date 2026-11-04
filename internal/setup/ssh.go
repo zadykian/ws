@@ -70,7 +70,8 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}
-	return step.Plan{Changes: sshChanges(f, text)}, nil
+	copied := PlanCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)
+	return step.Plan{Changes: append(copied, sshChanges(f, text)...)}, nil
 }
 
 // Apply applies the changes in order.
