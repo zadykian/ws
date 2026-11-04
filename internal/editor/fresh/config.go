@@ -27,19 +27,42 @@ type editorSettings struct {
 	RainbowBrackets  bool  `json:"rainbow_brackets"`
 }
 
+// keybindingMap is a named map of bindings. It inherits Fresh's default for every key it leaves out.
+type keybindingMap struct {
+	Inherits string    `json:"inherits"`
+	Bindings []binding `json:"bindings"`
+}
+
 // config is config.json. The false fields keep no omitempty: a missing key brings Fresh's default
 // back, which checks for updates, reports telemetry and execs a daemon.
 type config struct {
-	CheckForUpdates bool                `json:"check_for_updates"`
-	SelfUpdate      bool                `json:"self_update"`
-	AutoAttach      bool                `json:"auto_attach"`
-	Editor          editorSettings      `json:"editor"`
-	Languages       map[string]language `json:"languages"`
-	LSP             map[string][]server `json:"lsp"`
+	CheckForUpdates bool                     `json:"check_for_updates"`
+	SelfUpdate      bool                     `json:"self_update"`
+	AutoAttach      bool                     `json:"auto_attach"`
+	ActiveMap       string                   `json:"active_keybinding_map"`
+	Maps            map[string]keybindingMap `json:"keybinding_maps"`
+	Editor          editorSettings           `json:"editor"`
+	Languages       map[string]language      `json:"languages"`
+	LSP             map[string][]server      `json:"lsp"`
 }
 
 // Config renders config.json. paths gives each server of the catalogue its binary.
 func Config(paths map[string]string) ([]byte, error) {
+	keymap, err := editor.LoadKeymap()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := editor.LoadTargets(actionFiles, "actions/*.yaml")
+	if err != nil {
+		return nil, err
+	}
+	if err := keymap.Check(targets); err != nil {
+		return nil, err
+	}
+	mapped, err := bindings(keymap, targets)
+	if err != nil {
+		return nil, err
+	}
 	settings, err := editor.LoadSettings()
 	if err != nil {
 		return nil, err
@@ -66,6 +89,8 @@ func Config(paths map[string]string) ([]byte, error) {
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	err = encoder.Encode(config{
+		ActiveMap: "f12",
+		Maps:      map[string]keybindingMap{"f12": {Inherits: "default", Bindings: mapped}},
 		Editor: editorSettings{
 			Rulers:         []int{settings.Ruler},
 			WhitespaceShow: settings.VisibleWhitespace, SpacesLeading: settings.VisibleWhitespace,

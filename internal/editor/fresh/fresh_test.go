@@ -34,6 +34,20 @@ func rendered(t *testing.T) map[string]any {
 	return c
 }
 
+// typed parses config.json into the struct, to read the bindings.
+func typed(t *testing.T) config {
+	data, err := Config(stubPaths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := bytes.CutPrefix(data, []byte(header))
+	var c config
+	if err := json.Unmarshal(body, &c); err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
 func TestConfigTurnsUpdatesAndSessionsOff(t *testing.T) {
 	c := rendered(t)
 	for _, key := range []string{"check_for_updates", "self_update", "auto_attach"} {
@@ -197,5 +211,27 @@ func TestAnArrivalTakesNoBoundKey(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestTheActiveMapResolves(t *testing.T) {
+	c := typed(t)
+	m, found := c.Maps[c.ActiveMap]
+	if !found || m.Inherits != "default" || len(m.Bindings) == 0 {
+		t.Fatalf("map %q: %+v", c.ActiveMap, m)
+	}
+}
+
+func TestNoKeyFiresTwoActions(t *testing.T) {
+	seen := map[string]string{}
+	for _, b := range typed(t).Maps["f12"].Bindings {
+		form, err := json.Marshal([]any{b.When, b.Key, b.Modifiers, b.Keys})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if other, taken := seen[string(form)]; taken {
+			t.Errorf("%s binds both %s and %s", form, other, b.Action)
+		}
+		seen[string(form)] = b.Action
 	}
 }
