@@ -1,0 +1,36 @@
+---
+# F12's keys for tasks and the debugger, as Zed's actions.
+# BuildWholeSolutionAction approx: a task named build, which tasks.json gives
+task.build: {to: task::Spawn, args: '{ "task_name": "build" }'}
+# ChooseDebugConfiguration: the new session's modal
+# XDebugger.AttachToProcess approx: the modal, on its Attach tab by hand
+debug.start: {to: debugger::Start}
+# Debug approx: the last debug session; Ctrl+F5 is macOS's toolbar key
+debug.rerun: {to: debugger::Rerun}
+# GoGenerateFileAction approx: a task of that name
+task.go-generate: {to: task::Spawn, args: '{ "task_name": "go generate" }'}
+# Pause: Shift+Ctrl+P alone: a Mac has no Pause; global, as the editor's Shift+Ctrl+P would win
+debug.pause: {to: debugger::Pause}
+debug.continue: {to: debugger::Continue}
+debug.clear-breakpoints: {to: debugger::ClearAllBreakpoints}
+# RiderUnitTestRepeatPreviousRunAction, RiderUnitTestRunCurrentSessionAction approx: in the editor
+# alone, as a Ctrl+U chord would hold the shell's Ctrl+U
+# Run approx: the last task
+task.rerun: {to: task::Rerun}
+debug.stop: {to: debugger::Stop}
+# EditBreakpoint approx: a log message; conditions from the gutter's menu
+debug.log-breakpoint: {to: editor::EditLogBreakpoint}
+# RiderUnitTestRunContextAction approx: the test at the cursor, as a task
+task.nearest: {to: editor::SpawnNearestTask}
+debug.enable-breakpoint: {to: debugger::ToggleEnableBreakpoint}
+# ToggleLineBreakpoint: Ctrl+B in the editor alone: tmux's prefix in the terminal
+debug.toggle-breakpoint: {to: editor::ToggleBreakpoint}
+# EvaluateExpression approx: the selection, in the console
+# QuickEvaluateExpression approx
+debug.evaluate: {to: debugger::EvaluateSelectedText}
+debug.run-to-cursor: {to: debugger::RunToCursor}
+debug.step-into: {to: debugger::StepInto}
+# ForceStepOver, StepOver: while stopped, so Alt keys type otherwise
+debug.step-over: {to: debugger::StepOver}
+debug.step-out: {to: debugger::StepOut}
+debug.remove-watch: {why: "Delete is Zed's"}
