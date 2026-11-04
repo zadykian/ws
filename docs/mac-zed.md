@@ -74,14 +74,15 @@ server to every YAML file, Ansible's too.
   reaches a reattached tmux session and whatever runs there.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- Zed's keymap overlay is [zed-keymap.md](zed-keymap.md), and `docs/zed.md`, its page for the server, says
-  what to do when the connection drops.
+- Zed's keymap overlay is [keymap/zed.md](keymap/zed.md), and `docs/zed.md`, its page for the
+  server, says what to do when the connection drops.
 
 ## The keymap
 
-The step also writes `~/.config/zed/keymap.json`, rendered from [`internal/editor`](../internal/editor/),
-F12's keys for Zed. `base_keymap` stays `Zed`. The file carries its own header, so the step adds
-none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as ws's mark.
+The step also writes `~/.config/zed/keymap.json`, rendered from
+[`internal/editor`](../internal/editor/), F12's keys for Zed. `base_keymap` stays `Zed`. The file
+carries its own header, so the step adds none, and takes the start of line 1,
+`// Written by github.com/zadykian/ws`, as ws's mark.
 
 - Where the file is missing, or its first line starts with the mark, the step writes it whole.
 - Where the first line does not, the step leaves the file and warns once: move it away, and the
@@ -89,7 +90,7 @@ none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as 
 - Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
   run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
 
-[zed-keymap.md](zed-keymap.md) lists every F12 action with its Zed action, or why it has none.
+[keymap/zed.md](keymap/zed.md) says which F12 actions Zed has, and why it lacks the others.
 
 ## Changing the settings
 

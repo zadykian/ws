@@ -3,7 +3,7 @@ header: |
   Written by github.com/zadykian/ws, whose next run replaces any change made here.
   F12, the IDEs' keymap, for Zed on the Mac: each F12 key that Zed has an action for,
   and two keys F12 lacks: Ctrl+Shift+R restarts a language server, Ctrl+Alt+Shift+Y reloads Zed.
-  docs/zed-keymap.md lists every F12 action with its Zed action, or why it has none.
+  docs/keymap/zed.md says which F12 actions Zed has, and why it lacks the others.
 sections:
   - scope: global
     comment: |
