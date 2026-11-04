@@ -1,4 +1,4 @@
-package zed
+package devtools
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func (r release) digest(goarch string) (string, error) {
 	return sum, nil
 }
 
-// pgls is postgres-language-server, SQL's language server for Zed, from its release's binary.
+// pgls is postgres-language-server, SQL's language server, from its release's binary.
 // The SHA-256 is GitHub's asset digest, as the release has no checksum file. For another version:
 //
 //	gh api repos/supabase-community/postgres-language-server/releases/tags/TAG \
@@ -37,7 +37,7 @@ var pgls = release{
 	},
 }
 
-// dockerLS is docker-language-server, Dockerfile's and Compose's language server for Zed,
+// dockerLS is docker-language-server, Dockerfile's and Compose's language server, pinned
 // likewise, with repos/docker/docker-language-server in that command.
 var dockerLS = release{
 	version: "0.20.1",
@@ -63,7 +63,7 @@ func dockerLSURL(r release, goarch string) string {
 // download is the step that puts r's binary at /usr/local/bin/name, root's and mode 0755 so any
 // ws_user can run it. A goarch with no pin fails the step's Plan, before any URL exists.
 func download(m effect.Machine, goarch, name string, r release, url func(release, string) string) host.Lazy {
-	return host.Lazy{Title: "Zed " + name, Parts: func(context.Context) ([]host.Resource, error) {
+	return host.Lazy{Title: "Devtools " + name, Parts: func(context.Context) ([]host.Resource, error) {
 		sum, err := r.digest(goarch)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)

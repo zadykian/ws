@@ -1,11 +1,15 @@
-package zed
+package devtools
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"regexp"
+	"runtime"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/step"
 )
 
 func TestTheURLsNameEachServersAssetPerArchitecture(t *testing.T) {
@@ -75,5 +79,42 @@ func TestAnArchitectureWithNoPinFailsThePlan(t *testing.T) {
 	s := download(effecttest.NewMachine(), "riscv64", "docker-language-server", dockerLS, dockerLSURL)
 	if _, err := s.Plan(t.Context()); err == nil {
 		t.Error("no error for riscv64")
+	}
+}
+
+// servePins serves a stand-in body at each pinned URL and pins its SHA-256 for the test's length.
+func servePins(t *testing.T, m *effecttest.Machine) {
+	body := []byte("stand-in binary")
+	sum := fmt.Sprintf("%x", sha256.Sum256(body))
+	pgls0, dockerLS0 := pgls, dockerLS
+	t.Cleanup(func() { pgls, dockerLS = pgls0, dockerLS0 })
+	pgls = release{version: pgls0.version, sha256: map[string]string{runtime.GOARCH: sum}}
+	dockerLS = release{version: dockerLS0.version, sha256: map[string]string{runtime.GOARCH: sum}}
+	m.Pages[pglsURL(pgls, runtime.GOARCH)] = body
+	m.Pages[dockerLSURL(dockerLS, runtime.GOARCH)] = body
+}
+
+func TestTheServersAreRootsBinariesAtMode0755(t *testing.T) {
+	m := effecttest.NewMachine()
+	servePins(t, m)
+	if _, err := step.Run(t.Context(), serverSteps(m), &effecttest.Out{}, false); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{"/usr/local/bin/postgres-language-server", "/usr/local/bin/docker-language-server"} {
+		if string(m.Files[p]) != "stand-in binary" || m.Owners[p] != [2]int{} {
+			t.Errorf("%s: owner %v", p, m.Owners[p])
+		}
+	}
+}
+
+func TestTheServersChangeNothingOnASecondRun(t *testing.T) {
+	m := effecttest.NewMachine()
+	servePins(t, m)
+	if _, err := step.Run(t.Context(), serverSteps(m), &effecttest.Out{}, false); err != nil {
+		t.Fatal(err)
+	}
+	changed, err := step.Run(t.Context(), serverSteps(m), &effecttest.Out{}, true)
+	if err != nil || changed {
+		t.Errorf("second run: %v, %v", changed, err)
 	}
 }
