@@ -1,4 +1,4 @@
-// Package fresh is the fresh role as Go steps: the editor from its release's .deb. See
+// Package fresh is the fresh role as Go steps: the editor from its release's .deb, and its config. See
 // docs/fresh.md.
 package fresh
 
@@ -14,12 +14,17 @@ import (
 const (
 	downloadStep = "Fresh download"
 	installStep  = "Fresh install"
+	configStep   = "Fresh config"
 )
 
 // Steps returns the role's steps in order. The role takes no secrets.
-func Steps(_ values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
+	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Lazy{Title: downloadStep, Parts: download(m)},
 		host.Lazy{Title: installStep, After: downloadStep, Parts: install(m)},
+		user.Owned(m, configStep, "", func(uid, gid int) ([]host.Resource, error) {
+			return configFiles(m, v, uid, gid)
+		}),
 	}
 }
