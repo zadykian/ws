@@ -1,0 +1,22 @@
+---
+# F12's keys for files, tabs and splits.
+global:
+  - {action: panel.toggle-all, keys: [shift+escape], f12: [HideAllWindows]}
+  - {action: tree.reveal, keys: [alt+shift+l], f12: [LocateInSolutionView]}
+  - {action: pane.next, keys: [ctrl+end, alt+shift+right], f12: [NextSplitter]}
+  - {action: tab.next, keys: [ctrl+alt+pagedown, alt+right], f12: [NextTab]}
+  - {action: tab.previous, keys: [ctrl+alt+pageup, alt+left], f12: [PreviousTab]}
+  - {action: pane.previous, keys: [ctrl+home, alt+shift+left], f12: [PrevSplitter]}
+  - {action: panel.shrink, keys: [ctrl+alt+down], f12: [ResizeToolWindowDown]}
+  - {action: panel.shrink, keys: [ctrl+alt+left], f12: [ResizeToolWindowLeft]}
+  - {action: panel.grow, keys: [ctrl+alt+right], f12: [ResizeToolWindowRight]}
+  - {action: panel.grow, keys: [ctrl+alt+up], f12: [ResizeToolWindowUp]}
+  - {action: pane.split-right, keys: [ctrl+alt+shift+r], f12: [SplitVertically]}
+  - {action: window.full-screen, keys: [alt+shift+enter], f12: [ToggleFullScreen]}
+  - {action: panel.hide, keys: [ctrl+shift+f4], f12: [CloseActiveTab]}
+  - {action: tab.close, keys: [ctrl+f4], f12: [CloseContent]}
+  - {action: pane.maximize, keys: [ctrl+shift+'], f12: [MaximizeToolWindow]}
+  - {action: window.next, keys: ['ctrl+alt+]'], f12: [NextProjectWindow]}
+  - {action: window.previous, keys: ['ctrl+alt+['], f12: [PreviousProjectWindow]}
+  - {action: tree.reveal, keys: [alt+f1], f12: [SelectIn]}
+  - {action: tab.switch, keys: [ctrl+shift+tab], f12: [Switcher]}
