@@ -39,7 +39,7 @@ func TestCablePlan(t *testing.T) {
 		"none given": {"", "", cableLink, "empty WS_CABLE_SERVICE", map[string]string{"WS_CABLE_SERVICE": ""}},
 	} {
 		c, m, _ := newCable(t, tc.status, tc.link, tc.env)
-		m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + tc.conf)
+		m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf + tc.conf)
 		p, err := c.Plan(context.Background())
 		got := errText(err)
 		for _, ch := range p.Changes {
@@ -101,7 +101,7 @@ func TestCableHand(t *testing.T) {
 
 func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, "", cableLink, nil)
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	c.Host.Check = true
 	delete(m.Results, remoteLine(c.Run.Remote, "status"))
 	p, err := c.Plan(context.Background())
@@ -113,7 +113,7 @@ func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 
 func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, "", cableLink, nil)
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	c.Host.Check = true
 	for k := range m.Results {
 		if strings.HasPrefix(k, "ssh -G") {
@@ -129,7 +129,7 @@ func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
 
 func TestCablePlanReadsNoPortsWhereTheEnvironmentNamesOne(t *testing.T) {
 	c, m, _ := newCable(t, "", cableLink, map[string]string{"WS_CABLE_PORT": "eth1"})
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	if _, err := c.Plan(context.Background()); err != nil || len(c.ports) != 0 {
 		t.Errorf("Plan = %v, read ports %v; want no read of link", err, c.ports)
 	}

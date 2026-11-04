@@ -33,6 +33,11 @@ func TestSSHArgv(t *testing.T) {
 	}
 }
 
+// wayCall is the ssh -G call that Way makes.
+func wayCall(s SSH) string {
+	return "ssh " + strings.Join(append([]string{"-G"}, s.argv(context.Background(), []string{"ws-ssh"})...), " ")
+}
+
 // tunnelCall is the call that Tunnel makes.
 func tunnelCall(s SSH, args ...string) string {
 	return "ssh " + strings.Join(append(s.shared("%n"), args...), " ")

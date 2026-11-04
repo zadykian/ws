@@ -7,25 +7,24 @@ import (
 	"strings"
 )
 
-// Way is what ssh -G prints for ws-ssh.
+// Way is what ssh -G prints for ws at its direct way.
 type Way struct {
 	Host, Port, User, KnownHosts string
 	// Inet tells that ssh takes IPv4 alone.
 	Inet bool
 }
 
-// errNoWay says that no way matched: ws-ssh is then its own host.
-var errNoWay = errors.New("ssh finds no way to ws-ssh")
+// errNoWay says that no direct way leads to ws: mac.conf gives none and the Host key stage asked no
+// address.
+var errNoWay = errors.New("ssh finds no direct way to ws")
 
-// Way reads ssh's settings for ws-ssh, which setup's config.d/ws gives, with HostName the address
-// that the Host key stage asked: the host and port that ssh reaches, and known_hosts. It fails
-// where no way matched.
+// Way reads ssh's settings for ws at its direct way, as argv gives it: the host and port that ssh
+// reaches, and known_hosts. It fails where no way is given, and where ssh -G fails.
 func (s SSH) Way(ctx context.Context) (Way, error) {
-	args := []string{"-G", "ws-ssh"}
-	if first := s.First(); first != "" {
-		args = []string{"-G", "-o", "HostName=" + first, "ws-ssh"}
+	if _, found := s.way(ctx); !found {
+		return Way{}, errNoWay
 	}
-	out, err := s.M.Run(ctx, "ssh", args...)
+	out, err := s.M.Run(ctx, "ssh", append([]string{"-G"}, s.argv(ctx, []string{"ws-ssh"})...)...)
 	if err != nil {
 		return Way{}, errNoWay
 	}
@@ -42,9 +41,6 @@ func (s SSH) Way(ctx context.Context) (Way, error) {
 		KnownHosts: get("userknownhostsfile"), Inet: get("addressfamily") == "inet"}
 	if rest, ok := strings.CutPrefix(w.KnownHosts, "~/"); ok {
 		w.KnownHosts = s.Home + "/" + rest
-	}
-	if w.Host == "ws-ssh" {
-		return w, errNoWay
 	}
 	return w, nil
 }
