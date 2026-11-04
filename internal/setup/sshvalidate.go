@@ -23,11 +23,8 @@ func (s SSH) validate(ctx context.Context, f sshFacts, text []byte) error {
 	if err := s.M.WriteFile(next, text, 0o600); err != nil {
 		return fmt.Errorf("cannot write %s: %w", next, err)
 	}
-	for _, host := range []string{"ws-ssh", "ws"} {
-		if _, err := s.M.Run(ctx, "ssh", "-G", "-F", next, host); err != nil {
-			return fmt.Errorf("ssh refuses the config it would write, as %s; Match localnetwork needs OpenSSH 9.4",
-				stderrOf(err))
-		}
+	if _, err := s.M.Run(ctx, "ssh", "-G", "-F", next, "ws"); err != nil {
+		return fmt.Errorf("ssh refuses the config it would write, as %s", stderrOf(err))
 	}
 	whole := "Include \"" + next + "\"\n"
 	user := dir + "/user"
@@ -48,20 +45,18 @@ func (s SSH) validate(ctx context.Context, f sshFacts, text []byte) error {
 	if err := s.M.WriteFile(all, []byte(whole), 0o600); err != nil {
 		return fmt.Errorf("cannot write %s: %w", all, err)
 	}
-	for _, host := range []string{"ws", "ws-ssh"} {
-		if _, err := s.M.Run(ctx, "ssh", "-G", "-F", all, host); err != nil {
-			e := strings.ReplaceAll(stderrOf(err), user, s.Home+"/.ssh/config")
-			switch {
-			case strings.Contains(e, s.Home+"/.ssh/config.d/ws"):
-				return fmt.Errorf("ssh refuses the old config.d/ws, which ~/.ssh/config also reads, as %s: "+
-					"move it away, and run ws mac apply again", e)
-			case strings.Contains(e, "Bad configuration option"):
-				return fmt.Errorf("ssh refuses ~/.ssh/config read after the new config.d/ws, as %s; "+
-					"config.d/ws's IgnoreUnknown, read first, carries only ~/.ssh/config's own "+
-					"patterns, so one for a file it includes must be there too", e)
-			}
-			return fmt.Errorf("ssh refuses ~/.ssh/config read after the new config.d/ws, as %s", e)
+	if _, err := s.M.Run(ctx, "ssh", "-G", "-F", all, "ws"); err != nil {
+		e := strings.ReplaceAll(stderrOf(err), user, s.Home+"/.ssh/config")
+		switch {
+		case strings.Contains(e, s.Home+"/.ssh/config.d/ws"):
+			return fmt.Errorf("ssh refuses the old config.d/ws, which ~/.ssh/config also reads, as %s: "+
+				"move it away, and run ws mac apply again", e)
+		case strings.Contains(e, "Bad configuration option"):
+			return fmt.Errorf("ssh refuses ~/.ssh/config read after the new config.d/ws, as %s; "+
+				"config.d/ws's IgnoreUnknown, read first, carries only ~/.ssh/config's own "+
+				"patterns, so one for a file it includes must be there too", e)
 		}
+		return fmt.Errorf("ssh refuses ~/.ssh/config read after the new config.d/ws, as %s", e)
 	}
 	return nil
 }
