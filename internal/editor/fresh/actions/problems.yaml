@@ -1,0 +1,7 @@
+---
+# F12's problems keys, as Fresh's actions.
+# near: opens on the current file; a in the panel shows all
+problem.list: {to: show_diagnostics_panel}
+problem.list-file: {to: show_diagnostics_panel}
+problem.next: {to: jump_to_next_error}
+problem.previous: {to: jump_to_previous_error}

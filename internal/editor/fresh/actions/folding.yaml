@@ -1,0 +1,18 @@
+---
+# F12's folding keys, as Fresh's actions.
+fold.all: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+# near: toggles
+fold.block: {to: toggle_fold}
+fold.selection: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.open-all: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.toggle: {to: toggle_fold}
+# near: toggles
+fold.open: {to: toggle_fold}
+fold.function-bodies: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.recursive: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.level-1: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.level-2: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.level-3: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.level-4: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.level-5: {why: 'one fold action, toggle_fold, for the block at the cursor'}
+fold.open-recursive: {why: 'one fold action, toggle_fold, for the block at the cursor'}
