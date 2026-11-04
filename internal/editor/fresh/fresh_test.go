@@ -133,3 +133,17 @@ func TestEveryTargetIsAnActionOfFresh(t *testing.T) {
 		}
 	}
 }
+
+func TestEveryActionHasATargetOrAReason(t *testing.T) {
+	keymap, err := editor.LoadKeymap()
+	if err != nil {
+		t.Fatal(err)
+	}
+	targets, err := editor.LoadTargets(actionFiles, "actions/*.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := keymap.Check(targets); err != nil {
+		t.Fatal(err)
+	}
+}

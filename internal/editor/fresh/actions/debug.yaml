@@ -1,0 +1,21 @@
+---
+# F12's debug keys, as Fresh's actions.
+task.build: {why: no task runner in Fresh}
+debug.start: {why: no debugger in Fresh}
+debug.rerun: {why: no debugger in Fresh}
+task.go-generate: {why: no task runner in Fresh}
+debug.pause: {why: no debugger in Fresh}
+debug.continue: {why: no debugger in Fresh}
+debug.clear-breakpoints: {why: no debugger in Fresh}
+task.rerun: {why: no task runner in Fresh}
+debug.stop: {why: no debugger in Fresh}
+debug.log-breakpoint: {why: no debugger in Fresh}
+task.nearest: {why: no task runner in Fresh}
+debug.enable-breakpoint: {why: no debugger in Fresh}
+debug.toggle-breakpoint: {why: no debugger in Fresh}
+debug.evaluate: {why: no debugger in Fresh}
+debug.run-to-cursor: {why: no debugger in Fresh}
+debug.step-into: {why: no debugger in Fresh}
+debug.step-over: {why: no debugger in Fresh}
+debug.step-out: {why: no debugger in Fresh}
+debug.remove-watch: {why: no debugger in Fresh}
