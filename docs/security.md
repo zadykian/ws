@@ -10,12 +10,13 @@ and DNS.
 ws turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
 SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](wireguard.md)). It lets in DNS lookups
 from Docker's bridges to the host's resolver too ([docker](docker.md)), and nothing else. fail2ban
-bans an address for 10 minutes after 5 failed logins in 10 minutes, and sshd's own penalties
-slow one that keeps failing. Both leave the tunnel's subnet, `10.99.0.0/24`, clear, as each peer
-of `wg0` holds a key ws lists; the cable, the LAN and the internet stay under both. Over SSH,
-keep the session that ran ws open until a new one logs in. The steps stop before they turn
-passwords off if `ws_user` has no key to log in with, outside a container. sshd's drop-ins land
-only after `sshd -G` accepts them, and sshd reloads after a change.
+bans an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one
+that keeps failing. Both hold on every network, with no peer or network exempt. SSH takes only the
+keys imported from the GitHub account during Ubuntu's install; a cloud VM has no installer
+([A new machine](../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
+new one logs in. The steps stop before they turn passwords off if `ws_user` has no key to log in
+with, outside a container. sshd's drop-in lands only after `sshd -G` accepts it, and sshd reloads
+after a change.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](docker.md)): reach it through an SSH tunnel. A port published on another
