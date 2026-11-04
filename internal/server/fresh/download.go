@@ -67,6 +67,3 @@ func download(m effect.Machine) func(context.Context) ([]host.Resource, error) {
 		return []host.Resource{host.Download{M: m, URL: debURL(arch), Path: debPath(arch), SHA256: sums[arch], Mode: 0o644}}, nil
 	}
 }
-
-// downloadStep names the step that fetches the .deb.
-const downloadStep = "Fresh download"

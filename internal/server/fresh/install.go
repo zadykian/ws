@@ -25,6 +25,3 @@ func install(m effect.Machine) func(context.Context) ([]host.Resource, error) {
 		return []host.Resource{host.Deb{M: m, Path: path}, host.Absent{M: m, Path: path}}, nil
 	}
 }
-
-// installStep names the step that installs the .deb.
-const installStep = "Fresh install"
