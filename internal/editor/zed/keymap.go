@@ -1,11 +1,17 @@
 package zed
 
 import (
+	_ "embed" // sections.yaml
 	"fmt"
 	"strings"
 
+	"go.yaml.in/yaml/v3"
+
 	"github.com/zadykian/ws/internal/editor"
 )
+
+//go:embed sections.yaml
+var sectionsFile []byte
 
 // layout is what Zed's file has that the keymap lacks: its comments, its contexts and its unbinds.
 type layout struct {
@@ -25,6 +31,26 @@ type unbind struct {
 	Key  string `yaml:"key"`
 	To   string `yaml:"to"`
 	Args string `yaml:"args"`
+}
+
+// Keymap renders Zed's keymap.json.
+func Keymap() ([]byte, error) {
+	keymap, err := editor.LoadKeymap()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := editor.LoadTargets(actionFiles, "actions/*.yaml")
+	if err != nil {
+		return nil, err
+	}
+	if err := keymap.Check(targets); err != nil {
+		return nil, err
+	}
+	var l layout
+	if err := yaml.Unmarshal(sectionsFile, &l); err != nil {
+		return nil, err
+	}
+	return render(keymap, targets, l), nil
 }
 
 func render(keymap editor.Keymap, targets map[string]editor.Target, l layout) []byte {
