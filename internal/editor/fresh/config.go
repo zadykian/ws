@@ -36,6 +36,7 @@ type keybindingMap struct {
 // config is config.json. The false fields keep no omitempty: a missing key brings Fresh's default
 // back, which checks for updates, reports telemetry and execs a daemon.
 type config struct {
+	Theme           string                   `json:"theme"`
 	CheckForUpdates bool                     `json:"check_for_updates"`
 	SelfUpdate      bool                     `json:"self_update"`
 	AutoAttach      bool                     `json:"auto_attach"`
@@ -91,6 +92,7 @@ func Config(paths map[string]string) ([]byte, error) {
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	err = encoder.Encode(config{
+		Theme:       settings.Theme.Dark,
 		ActiveMap:   "f12",
 		Maps:        map[string]keybindingMap{"f12": {Inherits: "default", Bindings: mapped}},
 		Keybindings: outside,
