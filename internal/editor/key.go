@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"go.yaml.in/yaml/v3"
 )
 
 // Stroke is a physical key and the modifiers held with it. A shifted sign is its key with Shift, as
@@ -66,4 +68,42 @@ func parseStroke(text string) (Stroke, error) {
 	}
 	s.Key = rest
 	return s, nil
+}
+
+// String spells the stroke as the data does.
+func (s Stroke) String() string {
+	var b strings.Builder
+	for _, m := range []struct {
+		name string
+		on   bool
+	}{{"ctrl+", s.Ctrl}, {"alt+", s.Alt}, {"cmd+", s.Cmd}, {"shift+", s.Shift}} {
+		if m.on {
+			b.WriteString(m.name)
+		}
+	}
+	b.WriteString(s.Key)
+	return b.String()
+}
+
+// String spells the chord as the data does.
+func (c Chord) String() string {
+	parts := make([]string, len(c))
+	for i, s := range c {
+		parts[i] = s.String()
+	}
+	return strings.Join(parts, " ")
+}
+
+// UnmarshalYAML reads a chord from its text.
+func (c *Chord) UnmarshalYAML(node *yaml.Node) error {
+	var text string
+	if err := node.Decode(&text); err != nil {
+		return err
+	}
+	chord, err := ParseChord(text)
+	if err != nil {
+		return err
+	}
+	*c = chord
+	return nil
 }
