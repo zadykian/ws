@@ -13,7 +13,6 @@ import (
 	"github.com/zadykian/ws/internal/server/docker"
 	"github.com/zadykian/ws/internal/server/fans"
 	"github.com/zadykian/ws/internal/server/fresh"
-	"github.com/zadykian/ws/internal/server/helix"
 	"github.com/zadykian/ws/internal/server/ikeward"
 	"github.com/zadykian/ws/internal/server/network"
 	"github.com/zadykian/ws/internal/server/otelcol"
@@ -53,7 +52,6 @@ var all = []Role{
 	{Name: "signoz", Steps: signoz.Steps},
 	{Name: "otelcol", Steps: otelcol.Steps},
 	{Name: "fresh", Steps: fresh.Steps},
-	{Name: "helix", Steps: helix.Steps},
 	// zed is described in `docs/zed.md`.
 	{Name: "zed", Steps: zed.Steps},
 }
