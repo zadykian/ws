@@ -1,0 +1,11 @@
+---
+# F12's other keys, and those that end a scope's list, as Zed's actions.
+view.ui-font-reset: {to: zed::ResetUiFontSize}
+# ShowProjectStructureSettings approx
+app.project-settings: {to: zed::OpenProjectSettings}
+app.settings: {to: zed::OpenSettings}
+app.reload: {to: workspace::Reload}
+# NewElement approx: an untitled buffer; in the project panel (`ProjectPanel && not_editing`),
+# `project_panel::NewFile`, a file there
+file.new: {to: workspace::NewFile}
+code.restart-server: {to: editor::RestartLanguageServer}
