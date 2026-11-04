@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
@@ -73,5 +74,25 @@ func TestUpdateWithoutItsFile(t *testing.T) {
 	status, _, stderr := runWs(p, "", "update")
 	if status != 1 || stderr != "ws update: finding the file ws runs from: no such file\n" {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+}
+
+// TestUpdateSignal sends this process SIGTERM, which ws update catches while it waits for a server.
+func TestUpdateSignal(t *testing.T) {
+	started := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		close(started)
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+	p, m := updateProcess(t)
+	p.releases = srv.URL
+	go func() {
+		<-started
+		_ = syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+	}()
+	status, _, stderr := runWs(p, "", "update")
+	if status != 128+int(syscall.SIGTERM) || stderr != "" || string(m.Files["/h/.local/bin/ws"]) != "old ws" {
+		t.Errorf("status = %d, stderr = %q, file %q", status, stderr, m.Files["/h/.local/bin/ws"])
 	}
 }

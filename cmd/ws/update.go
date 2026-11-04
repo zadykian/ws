@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -35,16 +39,33 @@ func newUpdateCmd(p process) *cobra.Command {
 	}
 }
 
-// runUpdate replaces this ws with the latest release, where it is older.
+// runUpdate runs the update until it returns. A signal before the replace cancels it, and leaves
+// this ws unchanged. One after the replace changes nothing.
 func runUpdate(c *cobra.Command, p process) error {
 	file, err := p.self()
 	if err != nil {
 		return fmt.Errorf("finding the file ws runs from: %w", err)
 	}
+	ctx, cancel := context.WithCancelCause(c.Context())
+	defer cancel(nil)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(signals)
+	go func() {
+		select {
+		case s := <-signals:
+			cancel(signalExit{s.(syscall.Signal)}) //nolint:forcetypeassert // Notify's signals are syscall.Signal
+		case <-ctx.Done():
+		}
+	}()
 	u := update.Updater{M: p.machine, Version: p.version, URL: p.releases, File: file,
 		Binary: "ws-" + p.goos + "-" + p.goarch, PID: p.pid}
-	r, err := u.Run(c.Context())
+	r, err := u.Run(ctx)
 	if err != nil {
+		var cut signalExit
+		if errors.As(context.Cause(ctx), &cut) {
+			return cut
+		}
 		return err
 	}
 	_, err = io.WriteString(c.OutOrStdout(), r.Report())
