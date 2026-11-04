@@ -3,6 +3,7 @@ package editor
 import (
 	"io/fs"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -28,5 +29,27 @@ func TestTheKeymapLoads(t *testing.T) {
 	}
 	if len(keymap[Global]) == 0 || len(keymap[Code]) == 0 {
 		t.Errorf("empty scopes: %d, %d", len(keymap[Global]), len(keymap[Code]))
+	}
+}
+
+func TestAKeyTwiceInAScopeFails(t *testing.T) {
+	key, _ := ParseChord("ctrl+a")
+	keymap := Keymap{Text: {{Action: "edit.one", Keys: []Chord{key}}, {Action: "edit.two", Keys: []Chord{key}}}}
+	if err := keymap.validate(); err == nil || !strings.Contains(err.Error(), "binds both") {
+		t.Errorf("error %v", err)
+	}
+}
+
+func TestAKeyInTwoScopesPasses(t *testing.T) {
+	key, _ := ParseChord("ctrl+a")
+	keymap := Keymap{Text: {{Action: "edit.one", Keys: []Chord{key}}}, Tree: {{Action: "tree.one", Keys: []Chord{key}}}}
+	if err := keymap.validate(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestAMisnamedActionFails(t *testing.T) {
+	if err := (Keymap{Text: {{Action: "Edit Copy"}}}).validate(); err == nil {
+		t.Error("no error")
 	}
 }

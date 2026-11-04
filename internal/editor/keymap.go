@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"slices"
 
 	"go.yaml.in/yaml/v3"
@@ -50,7 +51,10 @@ type Binding struct {
 // Keymap holds each scope's bindings, in the order of topics.
 type Keymap map[Scope][]Binding
 
-// LoadKeymap reads the embedded keymap. It fails on an unknown scope or field.
+var actionName = regexp.MustCompile(`^[a-z]+\.[a-z0-9-]+$`)
+
+// LoadKeymap reads the embedded keymap. It fails on an unknown scope or field, on a misnamed
+// action, and on a key that a scope binds twice.
 func LoadKeymap() (Keymap, error) {
 	keymap := Keymap{}
 	for _, topic := range topics {
@@ -70,7 +74,26 @@ func LoadKeymap() (Keymap, error) {
 			keymap[scope] = append(keymap[scope], bindings...)
 		}
 	}
-	return keymap, nil
+	return keymap, keymap.validate()
+}
+
+func (k Keymap) validate() error {
+	for scope, bindings := range k {
+		seen := map[string]string{}
+		for _, b := range bindings {
+			if !actionName.MatchString(b.Action) {
+				return fmt.Errorf("%s: misnamed action %q", scope, b.Action)
+			}
+			for _, chord := range b.Keys {
+				key := chord.String()
+				if other, taken := seen[key]; taken {
+					return fmt.Errorf("%s: %s binds both %s and %s", scope, key, other, b.Action)
+				}
+				seen[key] = b.Action
+			}
+		}
+	}
+	return nil
 }
 
 // decodeStrict fails on a field the type lacks, so that a misspelt one is no silent loss.
