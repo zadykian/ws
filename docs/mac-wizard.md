@@ -120,8 +120,8 @@ password login off.
 
 ## ws's host key
 
-The stage reads ws's ed25519 key with `ssh-keyscan`, at the host and port that `ssh -G ws-ssh` gives
-([ssh's hosts](mac.md#sshs-hosts)). Where no way matches, it stops, naming [The router](router.md),
+The stage reads ws's ed25519 key with `ssh-keyscan`, at the host and port that `ssh -G` gives
+for a direct way to `ws` ([ssh's hosts](mac.md#sshs-hosts)). Where no way matches, it stops, naming [The router](router.md),
 or off the LAN what the target needs, as a VM on the Mac started. A new ws has a lease from the
 router's pool, not its static address. So where ws gives no key within 10 s, the stage asks ws's
 address now, as the router's leases show it. Off the LAN, [The wizard's targets](mac-targets.md)
@@ -138,11 +138,11 @@ answers. A linked `known_hosts` stops the stage, and a run prints the key's line
 
 ## Root's key
 
-The stage is done where `ssh ws-ssh` logs in as root by the Mac's key. The wizard adds no key to
-ws: GitHub's account is the only way to give ws its keys. Where root doesn't take the key, the
-stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's installer imports the
-account's keys for its user, and root takes them as the [README](../README.md#a-new-machine) says:
-copy that user's `authorized_keys` to root. That replaces root's file, so cloud-init's forced
+The stage is done where ssh logs in to `ws` at a direct way as root by the Mac's key. The wizard
+adds no key to ws: GitHub's account is the only way to give ws its keys. Where root doesn't take the
+key, the stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's installer imports
+the account's keys for its user, and root takes them as the [README](../README.md#a-new-machine)
+says: copy that user's `authorized_keys` to root. That replaces root's file, so cloud-init's forced
 command goes too. A cloud VM gives its default user the provider's keys instead, which must be the
 account's. Then run the wizard again. `--check` says that a run would stop. Both show any ssh error.
 
@@ -152,7 +152,7 @@ another host key than `known_hosts` holds, as once ws is installed again, it sto
 its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line that
 starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
 
-A run shares one ssh connection to `ws-ssh`, and one to `ws` in the Tunnel stage, so Secretive's
+A run shares one ssh connection for its direct calls, and one for the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.
 
 ## ws on ws
@@ -167,8 +167,8 @@ its `install.sh` runs, then the command again. A ws that is no release stays, wi
 
 ## ws's run
 
-The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over `ssh ws-ssh`.
-It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
+The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a direct
+way. It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
 root's `HOME` and a UTF-8 locale. That ws runs its roles
 ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, and stops
 where the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when
@@ -223,7 +223,7 @@ with the address it shows opened in the Mac's browser. With no terminal, the sta
 
 The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds another, and
 `ws server apply --only wireguard` gives `wg0` that peer. That run goes again where `wg0` lacks
-the peer, as after one that failed. Both go over `ws-ssh`, outside the tunnel, whose sessions
+the peer, as after one that failed. Both go over a direct way, outside the tunnel, whose sessions
 the change ends ([The tunnel](wireguard.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf` takes
 `wg0`'s key, in place of its line, and `ws mac apply` runs again, which loads ws-tunnel
 ([The Mac's tunnel](mac.md#the-macs-tunnel)): allow it in the Background. Then a handshake must come
