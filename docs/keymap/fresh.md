@@ -58,3 +58,43 @@ ends Fresh's lookup, so its default map cannot take the key:
 
 Of F12's 266 rows, 105 use Alt, and 59 of those are mapped. On a Mac, left Option sends Alt
 ([Ghostty's settings](../mac-ghostty.md#ghosttys-settings)). Right Option keeps composing.
+
+## What Fresh lacks
+
+The maintainer accepted these. 82 of 186 actions take a reason that Fresh lacks the action:
+
+| Reason | Actions |
+| --- | --- |
+| No debugger | 15 |
+| One fold action, `toggle_fold` | 11 |
+| No syntax-tree selection | 7 |
+| The terminal sets the font size | 6 |
+| No git panel | 6 |
+| No git command | 6 |
+| No task runner | 4 |
+| Others, one to three each | 27 |
+
+## Six keys that fail through tmux
+
+| Key | Action | What happens |
+| --- | --- | --- |
+| ctrl+cmd+s | `file.save-all` | Lands on `open_settings` |
+| ctrl+alt+2 | `problem.list` | Lands on `lsp_completion` |
+| ctrl+backspace | `edit.delete-word-start` | Arrives as ctrl+h, so lands on `replace` |
+| ctrl+shift+backspace | `nav.last-change` | Arrives as ctrl+h, so lands on `replace` |
+| ctrl+f3 | `search.next-word` | Types `13;~5`, as tmux splits it |
+| ctrl+shift+f3 | `search.previous-word` | Types `13;6~`, as tmux splits it |
+
+## Other limits
+
+- 17 keys with no Fresh action keep Fresh's default, such as ctrl+b, `toggle_file_explorer`, and
+  alt+f, `menu_open`, in the editor.
+- Fresh's `normal` passes on only its UI actions: menus, quick open, splits, tabs, the terminal's
+  and the explorer's toggles. With focus in the explorer or a panel, 17 of Global's 37 mapped
+  actions do nothing, such as save, save-all, search, replace and revert. F6 there opens Fresh's
+  remote menu, not the git log.
+- The prefix reaches the editor pressed twice: ctrl+b by default, ctrl+q in cld's sessions. So
+  Fresh's palette on ctrl+q needs it twice in cld's sessions, and ctrl+b is lost in tmux.
+- A folder with a project marker opens Restricted, with every server off
+  ([Trust each project](../fresh.md#trust-each-project)).
+- `.yml` playbooks stay YAML, with no Ansible server.
