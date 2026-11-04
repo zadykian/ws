@@ -36,6 +36,10 @@ Zed merges `settings.json` over `global_settings.json`, so a key in `settings.js
 This is the reverse of Ghostty's order. A key set only in `global_settings.json` shows Zed's
 default in the Settings Editor.
 
+The file sets a ruler at column 120, shows all whitespace, and saves 3 seconds after an edit, from
+`internal/editor/settings.yaml`. CI parses the file but sees no Zed obey it: check the three once on
+a remote project.
+
 The seed holds one connection, `{ "host": "ws" }`. Zed records an opened project by its index in the
 list of `ssh_connections` in `settings.json`, and arrays replace rather than merge, so the
 connection can sit in no other file. Zed's reader of `~/.ssh/config` has no `Include`, so it

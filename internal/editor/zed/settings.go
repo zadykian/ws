@@ -28,14 +28,23 @@ func Settings() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Zed's default is selection.
+	whitespace := "selection"
+	if settings.VisibleWhitespace {
+		whitespace = "all"
+	}
 	return host.Render(templates, "global_settings.json.tmpl", struct {
-		Mode, Light, Dark, Font, FileTypes string
+		Mode, Light, Dark, Font, FileTypes, Whitespace string
+		Ruler, AutoSave                                int
 	}{
-		Mode:      quote(settings.Theme.Mode),
-		Light:     quote(settings.Theme.Light),
-		Dark:      quote(settings.Theme.Dark),
-		Font:      quote(settings.Font),
-		FileTypes: types,
+		Mode:       quote(settings.Theme.Mode),
+		Light:      quote(settings.Theme.Light),
+		Dark:       quote(settings.Theme.Dark),
+		Font:       quote(settings.Font),
+		FileTypes:  types,
+		Whitespace: quote(whitespace),
+		Ruler:      settings.Ruler,
+		AutoSave:   settings.AutoSaveSeconds * 1000,
 	})
 }
 
