@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 )
@@ -38,4 +39,32 @@ func LoadTargets(files fs.FS, pattern string) (map[string]Target, error) {
 		}
 	}
 	return targets, nil
+}
+
+// Check holds an adapter to its contract. Each action of the keymap has a target, which either
+// names the editor's action or says why it has none, and each target names an action of the keymap.
+func (k Keymap) Check(targets map[string]Target) error {
+	used := map[string]bool{}
+	var problems []error
+	for _, scope := range Scopes {
+		for _, b := range k[scope] {
+			if used[b.Action] {
+				continue
+			}
+			used[b.Action] = true
+			target, found := targets[b.Action]
+			switch {
+			case !found:
+				problems = append(problems, fmt.Errorf("%s has no target and no reason", b.Action))
+			case (target.To == "") == (target.Why == ""):
+				problems = append(problems, fmt.Errorf("%s needs a target or a reason", b.Action))
+			}
+		}
+	}
+	for action := range targets {
+		if !used[action] {
+			problems = append(problems, fmt.Errorf("%s: no such action in the keymap", action))
+		}
+	}
+	return errors.Join(problems...)
 }
