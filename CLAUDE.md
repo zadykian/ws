@@ -2,9 +2,9 @@
 
 ws sets up the maintainer's development server from code: `ws server apply`, which runs on the
 machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
-links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, helix,
-Docker, claude, SigNoz with its collector, and Zed's server. `mac/` sets up the Mac that works on
-the server. The rest is the docs, the lint gates' tools and CI.
+links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, Fresh,
+helix, Docker, claude, SigNoz with its collector, and Zed's server. `mac/` sets up the Mac that
+works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
@@ -103,7 +103,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([binary.go](internal/server/ikeward/binary.go)), otelcol's `.deb`
   ([download.go](internal/server/otelcol/download.go)) and Docker's apt key
-  ([repository.go](internal/server/docker/repository.go)). So are foundryctl
+  ([repository.go](internal/server/docker/repository.go)). So is Fresh's `.deb`
+  ([download.go](internal/server/fresh/download.go)), and so are foundryctl
   ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](install.sh),
   [update.go](internal/update/update.go)), and so are yamllint
