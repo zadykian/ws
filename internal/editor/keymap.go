@@ -21,7 +21,7 @@ var keymapFiles embed.FS
 // bindings keep this order, which is the order of Zed's file.
 var topics = []string{
 	"editing", "selection", "completion", "navigation", "search", "code", "folding", "problems",
-	"files", "tools", "git", "debug", "other",
+	"files", "tools", "git", "debug", "terminal", "other",
 }
 
 // Scope says where a binding holds.

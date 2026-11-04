@@ -1,0 +1,7 @@
+---
+# The terminal's keys, as Zed's actions.
+terminal.paste: {to: terminal::Paste}
+terminal.send-key: {to: terminal::SendKeystroke, key_arg: true}
+terminal.hide: {to: workspace::CloseActiveDock}
+terminal.eof: {why: "Ctrl+D reaches the shell"}
+terminal.copy: {why: "Cmd+C is Zed's; Ctrl+C stays the shell's"}

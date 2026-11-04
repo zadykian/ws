@@ -1,0 +1,8 @@
+---
+# The terminal's keys.
+terminal:
+  - {action: terminal.paste, keys: [ctrl+v], f12: [Terminal.Paste]}
+  - {action: terminal.send-key, keys: [ctrl+k, ctrl+m, ctrl+u]}
+  - {action: terminal.hide, keys: [f2, alt+2], f12: [ActivateTerminalToolWindow]}
+  - {action: terminal.eof, keys: [ctrl+d], f12: [SendEOF]}
+  - {action: terminal.copy, keys: [cmd+c], f12: [Terminal.CopySelectedText]}
