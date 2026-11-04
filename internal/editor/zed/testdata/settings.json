@@ -1,0 +1,47 @@
+// Written by github.com/zadykian/ws, whose next run replaces any change made here.
+{
+  "terminal": { "shell": { "program": "/usr/local/lib/ws/zed/terminal" } },
+  "node": { "path": "/usr/bin/node", "npm_path": "/usr/bin/npm" },
+  "lsp": {
+    "gopls": {
+      "binary": { "path": "/home/ws/go/bin/gopls", "arguments": ["-mode=stdio"] }
+    },
+    "roslyn": {
+      "binary": { "path": "/home/ws/.dotnet/tools/roslyn-language-server", "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"] }
+    },
+    "postgres-language-server": {
+      "binary": { "path": "/usr/local/bin/postgres-language-server", "arguments": ["lsp-proxy"] }
+    },
+    "ansible": {
+      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/ansible-language-server", "arguments": ["--stdio"] }
+    },
+    "vscode-html-language-server": {
+      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/vscode-html-language-server", "arguments": ["--stdio"] }
+    },
+    "dockerfile-language-server": {
+      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/docker-langserver", "arguments": ["--stdio"] }
+    },
+    "docker-language-server": {
+      "binary": { "path": "/usr/local/bin/docker-language-server", "arguments": ["start", "--stdio"] },
+      "initialization_options": {"dockerfileExperimental":{"removeOverlappingIssues":true},"telemetry":"off"}
+    }
+  },
+  "languages": {
+    "HTML": { "formatter": "language_server" },
+    "SQL": {
+      "language_servers": ["postgres-language-server", "..."],
+      "formatter": { "language_server": { "name": "postgres-language-server" } }
+    },
+    "Docker Compose": { "formatter": { "language_server": { "name": "docker-language-server" } } }
+  },
+  "file_types": {
+    "Dockerfile": ["Dockerfile.*", "Containerfile.*"],
+    "Docker Compose": [
+      "compose.*.yaml",
+      "compose.*.yml",
+      "docker-compose.*.yaml",
+      "docker-compose.*.yml"
+    ]
+  },
+  "dap": { "Delve": { "binary": "/home/ws/go/bin/dlv" } }
+}

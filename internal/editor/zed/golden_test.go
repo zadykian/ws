@@ -69,6 +69,28 @@ func TestSettingsMatchTheGoldenFileByteForByte(t *testing.T) {
 	golden(t, "global_settings.json", got)
 }
 
+var paths = map[string]string{
+	"gopls":                       "/home/ws/go/bin/gopls",
+	"roslyn-language-server":      "/home/ws/.dotnet/tools/roslyn-language-server",
+	"postgres-language-server":    "/usr/local/bin/postgres-language-server",
+	"ansible-language-server":     "/home/ws/.local/lib/language-servers/node_modules/.bin/ansible-language-server",
+	"vscode-html-language-server": "/home/ws/.local/lib/language-servers/node_modules/.bin/vscode-html-language-server",
+	"dockerfile-language-server":  "/home/ws/.local/lib/language-servers/node_modules/.bin/docker-langserver",
+	"docker-language-server":      "/usr/local/bin/docker-language-server",
+}
+
+func TestServerSettingsMatchTheGoldenFileByteForByte(t *testing.T) {
+	got, err := zed.ServerSettings(paths, "/home/ws/go/bin/dlv", "/usr/local/lib/ws/zed/terminal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden(t, "settings.json", got)
+	_, body, _ := bytes.Cut(got, []byte("\n"))
+	if !json.Valid(body) {
+		t.Fatalf("not JSON:\n%s", body)
+	}
+}
+
 func TestAServerOfTheCatalogueWithNoPathFails(t *testing.T) {
 	if _, err := zed.ServerSettings(map[string]string{}, "dlv", "terminal"); err == nil {
 		t.Fatal("no error")
