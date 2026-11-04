@@ -30,15 +30,24 @@ type editorSettings struct {
 // config is config.json. The false fields keep no omitempty: a missing key brings Fresh's default
 // back, which checks for updates, reports telemetry and execs a daemon.
 type config struct {
-	CheckForUpdates bool           `json:"check_for_updates"`
-	SelfUpdate      bool           `json:"self_update"`
-	AutoAttach      bool           `json:"auto_attach"`
-	Editor          editorSettings `json:"editor"`
+	CheckForUpdates bool                `json:"check_for_updates"`
+	SelfUpdate      bool                `json:"self_update"`
+	AutoAttach      bool                `json:"auto_attach"`
+	Editor          editorSettings      `json:"editor"`
+	LSP             map[string][]server `json:"lsp"`
 }
 
-// Config renders config.json.
-func Config() ([]byte, error) {
+// Config renders config.json. paths gives each server of the catalogue its binary.
+func Config(paths map[string]string) ([]byte, error) {
 	settings, err := editor.LoadSettings()
+	if err != nil {
+		return nil, err
+	}
+	catalogue, err := editor.LoadServers()
+	if err != nil {
+		return nil, err
+	}
+	servers, err := serverEntries(catalogue, paths)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +64,7 @@ func Config() ([]byte, error) {
 			TabsInner: settings.VisibleWhitespace, TabsTrailing: settings.VisibleWhitespace,
 			AutoSave: settings.AutoSaveSeconds > 0, AutoSaveInterval: settings.AutoSaveSeconds,
 		},
+		LSP: servers,
 	})
 	return out.Bytes(), err
 }

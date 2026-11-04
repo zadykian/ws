@@ -4,6 +4,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	editorfresh "github.com/zadykian/ws/internal/editor/fresh"
+	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
 )
 
@@ -11,7 +12,7 @@ import (
 // stays the user's, as Fresh writes its own files there. The old file stays beside the new one as
 // a backup.
 func configFiles(m effect.Machine, v values.Values, uid, gid int) ([]host.Resource, error) {
-	config, err := editorfresh.Config()
+	config, err := editorfresh.Config(devtools.ServerPaths(v.Home))
 	if err != nil {
 		return nil, err
 	}

@@ -8,9 +8,15 @@ import (
 	"github.com/zadykian/ws/internal/editor"
 )
 
+var stubPaths = map[string]string{
+	"gopls": "/g", "roslyn-language-server": "/r", "postgres-language-server": "/p",
+	"ansible-language-server": "/a", "vscode-html-language-server": "/h",
+	"dockerfile-language-server": "/d", "docker-language-server": "/k",
+}
+
 // rendered parses config.json into a map, as a struct's zero value hides a missing key.
 func rendered(t *testing.T) map[string]any {
-	data, err := Config()
+	data, err := Config(stubPaths)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,5 +64,16 @@ func TestTheSharedSettingsReachTheEditor(t *testing.T) {
 	}
 	if table["rainbow_brackets"] != false {
 		t.Errorf("rainbow_brackets = %v", table["rainbow_brackets"])
+	}
+}
+
+func TestAServerWithNoPathFails(t *testing.T) {
+	paths := map[string]string{}
+	for name, path := range stubPaths {
+		paths[name] = path
+	}
+	delete(paths, "gopls")
+	if _, err := Config(paths); err == nil {
+		t.Error("no error")
 	}
 }
