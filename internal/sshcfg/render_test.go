@@ -8,47 +8,33 @@ import (
 )
 
 func inputs() sshcfg.Inputs {
-	return sshcfg.Inputs{
-		User: "me", LAN: "192.168.1.0/24", LANAddress: "192.168.1.5", Remote: "ws.example.org",
-		RemotePort: "2222", Patterns: "UseKeychain", IdentityPub: "~/.ssh/id_ed25519.pub",
-	}
+	return sshcfg.Inputs{User: "me", Patterns: "UseKeychain", IdentityPub: "~/.ssh/id_ed25519.pub"}
 }
 
-func TestConfigHoldsTheWaysAndTheTunnel(t *testing.T) {
+func TestConfigHoldsOneHostAtTheTunnelsEnd(t *testing.T) {
 	got := sshcfg.Config(inputs())
 	for _, want := range []string{
 		"IgnoreUnknown UseKeychain\n",
-		"Match originalhost ws-ssh localnetwork 10.77.0.0/30\n    HostName 10.77.0.1\n    Port 22\n",
-		"Match originalhost ws-ssh localnetwork 192.168.1.0/24\n    HostName 192.168.1.5\n",
-		"Host ws-ssh\n    HostName ws.example.org\n    Port 2222\n    AddressFamily inet\n",
-		"Host ws\n    HostName 10.99.0.1\n    Port 22\n",
+		"Host ws\n    HostName 10.99.0.1\n    Port 22\n    User me\n    HostKeyAlias ws\n",
 		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n",
+		"    ServerAliveInterval 30\n",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("Config lacks %q:\n%s", want, got)
 		}
 	}
-	if strings.Contains(got, "PermitLocalCommand") {
-		t.Errorf("Config holds cld's lines:\n%s", got)
+	if n := strings.Count(got, "\nHost "); n != 1 || strings.Contains(got, "Match") || strings.Contains(got, "PermitLocalCommand") {
+		t.Errorf("Config holds %d hosts, a Match or cld's lines; want one host alone:\n%s", n, got)
 	}
 }
 
 func TestConfigWithAgent(t *testing.T) {
 	in := inputs()
-	in.LAN, in.RemotePort = "", ""
 	in.IdentityPub, in.IdentityAgent = "~/k.pub", "~/agent.sock"
 	got := sshcfg.Config(in)
-	for _, want := range []string{
-		"Match originalhost ws-ssh localnetwork 10.77.0.0/30\n",
-		"Host ws\n    HostName 10.99.0.1\n    Port 22\n",
-		"    IdentityFile ~/k.pub\n    IdentitiesOnly yes\n    IdentityAgent \"~/agent.sock\"\n",
-	} {
-		if !strings.Contains(got, want) {
-			t.Errorf("Config lacks %q:\n%s", want, got)
-		}
-	}
-	if strings.Contains(got, "192.168") || strings.Contains(got, "AddressFamily") {
-		t.Errorf("Config holds a LAN or a forward that mac.conf lacks:\n%s", got)
+	want := "    IdentityFile ~/k.pub\n    IdentitiesOnly yes\n    IdentityAgent \"~/agent.sock\"\n"
+	if !strings.Contains(got, want) {
+		t.Errorf("Config lacks %q:\n%s", want, got)
 	}
 }
 

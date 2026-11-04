@@ -51,8 +51,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	in := sshcfg.Inputs{
-		User: s.Conf.User, LAN: s.Conf.LAN, LANAddress: s.Conf.LANAddress, Remote: s.Conf.Remote,
-		RemotePort: s.Conf.RemotePort, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
+		User: s.Conf.User, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
 		IdentityPub: id.Pub, IdentityAgent: id.Agent, CldTabs: s.cldTabs(ctx),
 	}
 	text := []byte(sshcfg.Config(in))
@@ -60,10 +59,10 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	if f.ConfigDirLink != "" && !bytes.Equal(f.Ws.Text, text) {
-		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws, with mac.conf's addresses, goes there",
+		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there",
 			f.ConfigDirLink)
 	}
-	for _, h := range sshcfg.OwnHosts(string(f.UserConfig.Text), "ws", "ws-ssh") {
+	for _, h := range sshcfg.OwnHosts(string(f.UserConfig.Text), "ws") {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}
