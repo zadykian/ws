@@ -11,8 +11,11 @@ var dataFiles embed.FS
 
 // Settings are the values that every editor takes.
 type Settings struct {
-	Font  string `yaml:"font"`
-	Theme Theme  `yaml:"theme"`
+	Font              string `yaml:"font"`
+	Theme             Theme  `yaml:"theme"`
+	Ruler             int    `yaml:"ruler"`
+	VisibleWhitespace bool   `yaml:"visible_whitespace"`
+	AutoSaveSeconds   int    `yaml:"auto_save_seconds"`
 }
 
 // Theme names the dark and the light theme, and which of them runs.

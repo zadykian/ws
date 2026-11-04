@@ -7,7 +7,7 @@ func TestTheSettingsLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if settings.Font == "" || settings.Theme.Dark == "" {
+	if settings.Font == "" || settings.Theme.Dark == "" || settings.Ruler <= 0 || settings.AutoSaveSeconds <= 0 {
 		t.Errorf("settings %+v", settings)
 	}
 }
