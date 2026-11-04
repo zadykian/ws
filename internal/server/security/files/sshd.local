@@ -1,11 +1,9 @@
 # Written by github.com/zadykian/ws's security role; edit it there.
 #
 # The sshd jail, on the journal, enabled whatever Ubuntu's defaults-debian.conf says. That file
-# still sets its ban action, nftables, and jail.conf its limits: 5 failed logins in 10 minutes ban
-# the address for 10 minutes.
+# still sets its ban action, nftables, and jail.conf its limit of 5 failed logins in 10 minutes.
+# This file sets the ban at an hour.
 [sshd]
 enabled = true
 backend = systemd
-# Each peer of wg0 holds a key that ws lists, so the tunnel's subnet is never banned. ignoreself,
-# fail2ban's default, covers ws's own addresses, loopback included.
-ignoreip = 10.99.0.0/24
+bantime = 1h
