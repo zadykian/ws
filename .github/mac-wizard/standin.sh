@@ -146,10 +146,12 @@ cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
 touch "$ws/claude"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws mac tunnel has a
-# handshake, and lands in tunnel.log. Any other call is the runner's ssh.
+# handshake, and lands in tunnel.log. A direct call, which carries AddressFamily=inet, as Root's key's
+# login, and any other call is the runner's ssh.
 cat >/opt/homebrew/bin/ssh <<EOF
 #!/bin/sh
 case " \$* " in
+*' AddressFamily=inet '*) ;;
 *' ws echo ok ')
     sudo /usr/local/libexec/ws-tunnel/ws mac tunnel status 2>/dev/null |
         grep -q '^latest handshake: [0-9]' ||

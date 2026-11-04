@@ -15,7 +15,7 @@ cp ~/.ssh/config "$RUNNER_TEMP/ssh.config"
     printf '    LocalCommand touch %s\n' "$marker"
 } >>~/.ssh/config
 rm -f "$marker"
-ssh -o BatchMode=yes ws-ssh true </dev/null || echo "::warning::ssh ws-ssh true exited $?"
+ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws true </dev/null || echo "::warning::ssh to ws true exited $?"
 if [ ! -e "$marker" ]; then
     echo '::error::a plain ssh to ws ran no LocalCommand, so this case proves nothing'
     fail=1
