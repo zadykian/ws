@@ -26,7 +26,7 @@ the Mac's display, if any:
 - The wizard asks no LAN.
 - `WS_REMOTE` is the VM's name or address, and `WS_REMOTE_PORT` its SSH port, `22` by default. The
   target needs both.
-- The VM needs a public IPv4 address, as `ws-ssh` and the tunnel take IPv4 alone.
+- The VM needs a public IPv4 address, as the tunnel takes IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_PORT` sets. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's

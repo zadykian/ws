@@ -64,8 +64,8 @@ server to every YAML file, Ansible's too.
 
 ## Other facts
 
-- `ws` through the tunnel needs no Local Network grant. `ws-ssh` does ([The Mac](mac.md)), so the
-  seed names `ws` alone.
+- `ws` through the tunnel needs no Local Network grant. Only a direct way does ([The Mac](mac.md)),
+  so the seed names `ws` alone.
 - The terminal docks right, as the project, git and outline panels dock left. A resize of a terminal
   docked at a side duplicates its lines (zed#65316, open).
 - `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives helix's
