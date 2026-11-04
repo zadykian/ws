@@ -2,6 +2,7 @@ package fresh
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
@@ -58,5 +59,16 @@ func TestConfigRefusesALink(t *testing.T) {
 		if len(m.Owners) != 0 || len(m.Files) != 0 {
 			t.Errorf("%s: changed %v %v", link, m.Owners, m.Files)
 		}
+	}
+}
+
+func TestConfigNamesTheHomesServers(t *testing.T) {
+	m, v := userMachine()
+	s := stepNamed(t, m, v, configStep)
+	if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/home/ws/.config/fresh/config.json"]); !strings.Contains(got, `"/home/ws/go/bin/gopls"`) {
+		t.Error("config.json lacks the user's gopls")
 	}
 }

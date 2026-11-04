@@ -99,3 +99,17 @@ func TestAComposeFileTakesItsLanguageID(t *testing.T) {
 		}
 	}
 }
+
+func TestEveryLanguageHasAName(t *testing.T) {
+	catalogue, err := editor.LoadServers()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range catalogue {
+		for _, language := range s.Languages {
+			if _, found := languages[language]; !found {
+				t.Errorf("%s: %s has no name in Fresh", s.Name, language)
+			}
+		}
+	}
+}
