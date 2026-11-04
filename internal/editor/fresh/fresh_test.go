@@ -3,7 +3,9 @@ package fresh
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/internal/editor"
@@ -110,6 +112,24 @@ func TestEveryLanguageHasAName(t *testing.T) {
 			if _, found := languages[language]; !found {
 				t.Errorf("%s: %s has no name in Fresh", s.Name, language)
 			}
+		}
+	}
+}
+
+func TestEveryTargetIsAnActionOfFresh(t *testing.T) {
+	data, err := os.ReadFile("testdata/actions.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, list, _ := strings.Cut(string(data), "\n")
+	known := strings.Fields(list)
+	targets, err := editor.LoadTargets(actionFiles, "actions/*.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for action, target := range targets {
+		if target.To != "" && !slices.Contains(known, target.To) {
+			t.Errorf("%s: %s isn't an action of Fresh", action, target.To)
 		}
 	}
 }

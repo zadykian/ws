@@ -1,0 +1,18 @@
+---
+# F12's selection keys, as Fresh's actions.
+select.all: {to: select_all}
+select.add-above: {to: add_cursor_above}
+select.add-below: {to: add_cursor_below}
+# near: grows by a word, not by a node
+select.grow: {to: expand_selection}
+select.shrink: {why: no syntax-tree selection or motion in Fresh}
+select.all-matches: {why: no action selects every match}
+select.next-match: {to: add_cursor_next_match}
+select.undo: {why: no selection history}
+# near: a cursor at each line end, not a selection a line
+select.split-lines: {to: add_cursors_to_line_ends}
+select.word-end: {to: select_word_end}
+select.word-start: {to: select_word_left}
+select.node-end: {why: no syntax-tree selection or motion in Fresh}
+select.node-start: {why: no syntax-tree selection or motion in Fresh}
+select.symbol: {why: no syntax-tree selection or motion in Fresh}
