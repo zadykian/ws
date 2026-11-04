@@ -1,6 +1,6 @@
 name: mac-cld
 
-# ws mac apply's ghostty and cld steps on macOS, in a workflow of its own beside mac.yml, which
+# ws mac apply's ghostty, zed and cld steps on macOS, in a workflow of its own beside mac.yml, which
 # nears its 300 lines. It runs on mac.yml's events: every pull request, whatever its base, and on
 # main each pull request's merge. The job runs on a stack's top pull request alone, as mac.yml's
 # does.
@@ -12,15 +12,16 @@ on:
 permissions: {}
 
 jobs:
-  # Ghostty and cld on a Mac, in docs/mac-ghostty.md's order. ws mac apply runs with a stand-in for
-  # ws's key, so that the tunnel's daemon loads and a second run prints nothing, and one for
-  # JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. On a runner
-  # without Ghostty, its font or cld, --check must change nothing. Where Ghostty's cask fails, a run
-  # must install cld alone. A run must then install Ghostty and the font from Homebrew's casks, and
-  # Ghostty's settings, which Ghostty must take. ssh's LocalCommand must follow whether cld has
-  # restore tabs and Ghostty's app. Stubs then stand in for cld. The first gains restore tabs as it
-  # updates, so that one run adds the lines, and the line runs here before a release of cld has it.
-  # Under the second, which lacks it, a run drops them. Gated as ci.yml's playbook job.
+  # Ghostty, Zed and cld on a Mac, in docs/mac-ghostty.md's order. ws mac apply runs with a
+  # stand-in for ws's key, so that the tunnel's daemon loads and a second run prints nothing, and
+  # one for JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. On
+  # a runner without Ghostty, Zed, their font or cld, --check must change nothing. Where their
+  # casks fail, a run must install cld alone. A run must then install Ghostty, Zed and the font
+  # from Homebrew's casks, and Ghostty's settings, which Ghostty must take. ssh's LocalCommand
+  # must follow whether cld has restore tabs and Ghostty's app. Stubs then stand in for cld. The
+  # first gains restore tabs as it updates, so that one run adds the lines, and the line runs here
+  # before a release of cld has it. Under the second, which lacks it, a run drops them. Gated as
+  # ci.yml's playbook job.
   mac-cld:
     if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
@@ -59,10 +60,11 @@ jobs:
               fi
           done
       # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed.
-      - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty, its font or cld
+      - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty, Zed or cld
         run: |
           fail=0
-          for path in /Applications/Ghostty.app ~/Applications/Ghostty.app ~/.local/bin/cld \
+          for path in /Applications/Ghostty.app ~/Applications/Ghostty.app /Applications/Zed.app \
+              ~/Applications/Zed.app ~/.config/zed ~/.local/bin/cld \
               ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty" \
               ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT"; do
               if [ -e "$path" ]; then
@@ -73,21 +75,23 @@ jobs:
           mkdir -p ~/.config/ws ~/Applications/"JetBrains Gateway.app"
           echo "WS_PUBLIC_KEY=$(openssl rand -base64 32)" >~/.config/ws/mac.conf
           exit "$fail"
-      # --check shows the casks' installs, cld's, the ssh lines that may follow, and both of
-      # Ghostty's files, and writes none of them.
-      - name: --check without Ghostty changes nothing
+      # --check shows the casks' installs, Zed's among them, cld's, the ssh lines that may
+      # follow, and both of Ghostty's files, and writes none of them.
+      - name: --check without Ghostty or Zed changes nothing
         run: |
           ws mac apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
               { echo '::error::ws mac apply --check failed'; exit 1; }
           fail=0
-          for path in /Applications/Ghostty.app ~/Library/Fonts/"$FONT" ~/.local/bin/cld \
-              ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
+          for path in /Applications/Ghostty.app /Applications/Zed.app ~/Library/Fonts/"$FONT" \
+              ~/.local/bin/cld ~/.config/ghostty ~/.config/zed \
+              "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
                   echo "::error::ws mac apply --check made $path"
                   fail=1
               fi
           done
           for line in ': would run brew install --cask ghostty$' \
+              ': would run brew install --cask zed$' \
               ': would run brew install --cask font-jetbrains-mono-nerd-font$' \
               ': would install cld into ~/.local/bin ' \
               ": would add the lines that start cld's watcher to config.d/ws, " \
@@ -96,15 +100,15 @@ jobs:
                   { echo "::error::ws mac apply --check showed no line '$line'"; fail=1; }
           done
           exit "$fail"
-      # A brew whose install of the cask ghostty fails, as where Homebrew can't be reached, comes
-      # first on PATH. ws mac apply must warn and go on: cld, whose cld version must run, and
-      # nothing of Ghostty's, nor ssh's lines.
-      - name: Where Ghostty's cask fails, ws mac apply installs cld alone
+      # A brew whose install of the casks ghostty and zed fails, as where Homebrew can't be reached,
+      # comes first on PATH. ws mac apply must warn and go on: cld, whose cld version must run, and
+      # nothing of Ghostty's or Zed's, nor ssh's lines.
+      - name: Where Ghostty's and Zed's casks fail, ws mac apply installs cld alone
         run: |
           mkdir -p "$RUNNER_TEMP/brew"
           cat >"$RUNNER_TEMP/brew/brew" <<EOF
           #!/bin/sh
-          [ "\$*" != 'install --cask ghostty' ] || exit 1
+          case "\$*" in 'install --cask ghostty' | 'install --cask zed') exit 1 ;; esac
           exec $(command -v brew) "\$@"
           EOF
           chmod 755 "$RUNNER_TEMP/brew/brew"
@@ -113,8 +117,11 @@ jobs:
           fail=0
           grep -q ': warning: brew install --cask ghostty failed$' "$RUNNER_TEMP/failed.out" ||
               { echo '::error::ws mac apply gave no warning of the failed cask'; fail=1; }
+          grep -q ': warning: brew install --cask zed failed$' "$RUNNER_TEMP/failed.out" ||
+              { echo '::error::ws mac apply gave no warning of the failed Zed cask'; fail=1; }
           ~/.local/bin/cld version || { echo '::error::~/.local/bin/cld version failed'; fail=1; }
-          for path in /Applications/Ghostty.app ~/.config/ghostty \
+          for path in /Applications/Ghostty.app /Applications/Zed.app ~/.config/ghostty \
+              ~/.config/zed \
               "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
                   echo "::error::ws mac apply with a failed cask made $path"
@@ -129,7 +136,7 @@ jobs:
       # +list-fonts, which looks a family up as the config does, must find ws.ghostty's last one.
       # The release of cld that install.sh installed has restore tabs, or not yet: ssh's lines must
       # follow it either way.
-      - name: ws mac apply installs Ghostty, its font and Ghostty's settings
+      - name: ws mac apply installs Ghostty, Zed, the font and Ghostty's settings
         run: |
           ws mac apply || { echo '::error::ws mac apply failed'; exit 1; }
           fail=0
@@ -138,6 +145,14 @@ jobs:
               { echo '::error::ws mac apply installed no /Applications/Ghostty.app'; fail=1; }
           brew list --cask ghostty >/dev/null ||
               { echo "::error::Ghostty is not brew's cask ghostty"; fail=1; }
+          [ -d /Applications/Zed.app ] ||
+              { echo '::error::ws mac apply installed no /Applications/Zed.app'; fail=1; }
+          brew list --cask zed >/dev/null ||
+              { echo "::error::Zed is not brew's cask zed"; fail=1; }
+          zedv=$(zed --version) || { echo '::error::zed --version failed'; fail=1; }
+          echo "$zedv"
+          printf '%s\n' "$zedv" | grep -Eq '^Zed [0-9.]+ – /Applications/Zed\.app$' ||
+              { echo '::error::zed --version is not Zed N – /Applications/Zed.app'; fail=1; }
           [ -f ~/Library/Fonts/"$FONT" ] ||
               { echo "::error::ws mac apply installed no $FONT"; fail=1; }
           version=$(~/.local/bin/cld version) ||
@@ -149,6 +164,17 @@ jobs:
               { echo '::error::ws.ghostty is not mac/ws.ghostty under the header'; fail=1; }
           [ "$(grep -cx 'config-file = ?ws.ghostty' "$support/config.ghostty")" = 1 ] ||
               { echo '::error::config.ghostty does not read ws.ghostty once'; fail=1; }
+          zed=~/.config/zed
+          head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws mac apply' ||
+              { echo '::error::global_settings.json has no ws header'; fail=1; }
+          tail -n +2 "$zed/global_settings.json" | cmp -s - mac/zed.json ||
+              { echo '::error::global_settings.json is not mac/zed.json under the header'; fail=1; }
+          grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$zed/settings.json" ||
+              { echo '::error::settings.json has no seed for the host ws'; fail=1; }
+          head -n 1 "$zed/keymap.json" | grep -q '^// Written by github.com/zadykian/ws' ||
+              { echo '::error::keymap.json has no ws mark'; fail=1; }
+          cmp -s "$zed/keymap.json" mac/zed-keymap.json ||
+              { echo '::error::keymap.json is not mac/zed-keymap.json'; fail=1; }
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }

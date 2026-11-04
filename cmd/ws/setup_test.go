@@ -59,7 +59,7 @@ func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
 	for _, s := range setupSteps(conf.Conf{}, "/h", "", effecttest.NewMachine(), &effecttest.Out{}, &bytes.Buffer{}, false) {
 		names = append(names, s.Name())
 	}
-	want := []string{"ssh", "cable", "git", "gateway", "ghostty", "cld", "tunnel", "networks"}
+	want := []string{"ssh", "cable", "git", "gateway", "ghostty", "zed", "cld", "tunnel", "networks"}
 	if !reflect.DeepEqual(names, want) {
 		t.Errorf("steps = %q; want %q", names, want)
 	}
@@ -96,7 +96,7 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 
 func TestSetupStepNamesAreTheArguments(t *testing.T) {
 	c := newMacApplyCmd(fakeProcess())
-	if want := []string{"ssh", "cable", "git", "gateway", "ghostty", "cld", "tunnel", "networks"}; !reflect.DeepEqual(c.ValidArgs, want) {
+	if want := []string{"ssh", "cable", "git", "gateway", "ghostty", "zed", "cld", "tunnel", "networks"}; !reflect.DeepEqual(c.ValidArgs, want) {
 		t.Errorf("ValidArgs = %q; want %q", c.ValidArgs, want)
 	}
 }

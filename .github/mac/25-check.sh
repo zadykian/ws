@@ -12,7 +12,7 @@ ws mac apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
         exit 1
     }
 fail=0
-for path in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel \
+for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed /etc/ws-tunnel \
     /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
     if sudo test -e "$path"; then
         echo "::error::ws mac apply --check made $path"
@@ -32,6 +32,11 @@ cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
 grep -q ': would run brew install --cask jetbrains-gateway$' "$RUNNER_TEMP/check.out" ||
     {
         echo "::error::ws mac apply --check showed no brew install of Gateway's cask"
+        fail=1
+    }
+grep -q ': would run brew install --cask zed$' "$RUNNER_TEMP/check.out" ||
+    {
+        echo "::error::ws mac apply --check showed no brew install of Zed's cask"
         fail=1
     }
 grep -q '^+Include config.d/ws$' "$RUNNER_TEMP/check.out" ||

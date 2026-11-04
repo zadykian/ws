@@ -19,11 +19,13 @@ Mac that works on the server. The rest is the docs, the lint gates' tools and CI
   `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
   steps on them.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
-- `mac/`: the Mac's side, the files that the ws CLI embeds: the wizard's scripts for ws in
-  POSIX sh, and `ws.ghostty`, Ghostty's settings ([The Mac](docs/mac.md)).
+- `mac/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
+  wizard's scripts for ws in POSIX sh, `ws.ghostty`, Ghostty's settings, `zed.json`, Zed's
+  settings, and `zed-keymap.json`, its keymap.
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
-  `mac-targets.md`, `mac-ghostty.md` and `mac-secrets.md`; `router.md` and `checks.md`;
-  `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`.
+  `mac-targets.md`, `mac-ghostty.md`, `mac-zed.md` and `mac-secrets.md`; `router.md` and
+  `checks.md`; `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`;
+  `zed-keymap.md`, the same for Zed's, in `docs/zed-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.

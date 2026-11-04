@@ -17,7 +17,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   It gives the role's caveats too, such as what a run replaces or what a dry run shows.
 - [mac.md](../../docs/mac.md) is the Mac's side, `mac/` and the ws CLI. [mac-git.md](../../docs/mac-git.md) is its
   git, and [mac-wizard.md](../../docs/mac-wizard.md) its wizard. [mac-targets.md](../../docs/mac-targets.md) is the wizard's targets, and
-  [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld, and
+  [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld, [mac-zed.md](../../docs/mac-zed.md) its Zed, and
   [mac-secrets.md](../../docs/mac-secrets.md) the secrets file.
   [router.md](../../docs/router.md) is the router's steps, taken once by hand.
 - [releases.md](../../docs/releases.md) says how to install ws, and how a release is cut.
@@ -30,6 +30,8 @@ What each document holds. How to write them is in the `writing` skill and [writi
   for SQL Server and Ansible.
 - [helix-keymap.md](../../docs/helix-keymap.md) indexes the keymap's pages in
   `docs/helix-keymap/`.
+- [zed-keymap.md](../../docs/zed-keymap.md) indexes the pages of Zed's keymap in
+  `docs/zed-keymap/`.
 - [The dashboards](../../internal/server/signoz/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
 - ws is public, and names no server ([mac.conf](../../docs/mac.md#macconf)). So no doc holds a

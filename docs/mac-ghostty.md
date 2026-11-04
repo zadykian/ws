@@ -24,13 +24,13 @@ Ghostty then updates itself, as `ws.ghostty` says: it downloads each stable rele
 install it. The script runs no `brew upgrade`. brew skips a cask that updates itself, and the
 cask's uninstall quits Ghostty, which may be the terminal the script runs in.
 
-The script installs the font that `ws.ghostty` names, JetBrainsMono Nerd Font Mono, from the cask
-`font-jetbrains-mono-nerd-font`. It does so where `JetBrainsMonoNerdFontMono-Regular.ttf` is in
-neither `~/Library/Fonts`, where the cask puts it, nor `/Library/Fonts`, and warns as for the app
-where Homebrew has the cask without the file. `ghostty +list-fonts` lists monospace families alone,
-so it leaves out the cask's other variants. `font-family` takes a family, as `+list-fonts` heads it.
-A face's name, such as `JetBrainsMono NFM Regular`, finds no font, and Ghostty falls back to its own
-JetBrains Mono, which looks the same.
+The step installs the font that `ws.ghostty` names, and [Zed](mac-zed.md) too, JetBrainsMono Nerd
+Font Mono, from the cask `font-jetbrains-mono-nerd-font`. It does so where
+`JetBrainsMonoNerdFontMono-Regular.ttf` is in neither `~/Library/Fonts`, where the cask puts it,
+nor `/Library/Fonts`, and warns as for the app where Homebrew has the cask without the file.
+`ghostty +list-fonts` lists monospace families alone, so it leaves out the cask's other variants.
+`font-family` takes a family, as `+list-fonts` heads it. A face's name, such as `JetBrainsMono NFM
+Regular`, finds no font, and Ghostty falls back to its own JetBrains Mono, which looks the same.
 
 ## Ghostty's settings
 

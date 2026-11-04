@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io/fs"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -13,10 +12,6 @@ import (
 )
 
 const (
-	// ghosttyFont is the cask of the font that ws.ghostty names, and ghosttyFontFile the file of its
-	// regular style.
-	ghosttyFont     = "font-jetbrains-mono-nerd-font"
-	ghosttyFontFile = "JetBrainsMonoNerdFontMono-Regular.ttf"
 	// ghosttyHeader starts ws.ghostty's first line, by which a run knows a file for its own.
 	ghosttyHeader = "# Written by ws mac apply"
 	// ghosttyLine is the line of Ghostty's config that reads ws.ghostty.
@@ -47,51 +42,20 @@ func (*Ghostty) Name() string { return "ghostty" }
 // WaitsOn is nothing.
 func (*Ghostty) WaitsOn() string { return "" }
 
-// has reports whether the first of the files is there, in /Applications or ~/Applications for the
-// app, where its cask puts it, or in ~/Library/Fonts or /Library/Fonts for the font.
-func (g *Ghostty) has(name string, dirs ...string) bool {
-	for _, d := range dirs {
-		if _, err := g.M.Stat(d + "/" + name); err == nil {
-			return true
-		}
-	}
-	return false
-}
-
-// cask plans Homebrew's cask where there is none of its files, and says whether they are there,
-// or would be after the plan. Where Homebrew has the cask but its files are gone, it warns instead,
-// as gateway does: brew install would upgrade the cask. Without Homebrew it stops.
-func (g *Ghostty) cask(name string, there bool, missing string) ([]step.Change, bool, error) {
-	if there {
-		return nil, true, nil
-	}
-	if g.failed[name] {
-		return nil, false, nil
-	}
-	look := g.LookPath
-	if look == nil {
-		look = exec.LookPath
-	}
-	if _, err := look("brew"); err != nil {
-		return nil, false, errors.New("install Homebrew first: https://brew.sh")
-	}
-	if _, err := g.M.Run(context.Background(), "brew", "list", "--cask", name); err != nil {
-		return []step.Change{Run{Name: "brew", Args: []string{"install", "--cask", name}}}, true, nil
-	}
-	g.Out.Warn("Homebrew has the cask %s, but %s: brew reinstall --cask %s puts it back",
-		name, missing, name)
-	return nil, false, nil
+// casks is the cask code that Ghostty shares with Zed, built from the step's fields.
+func (g *Ghostty) casks() brewCasks {
+	return brewCasks{m: g.M, out: g.Out, lookPath: g.LookPath, failed: g.failed}
 }
 
 // Plan plans the app, then the font where the app is there or comes, and the files.
-func (g *Ghostty) Plan(_ context.Context) (step.Plan, error) {
-	app, ok, err := g.cask("ghostty", g.has("Ghostty.app", "/Applications", g.Home+"/Applications"),
+func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
+	b := g.casks()
+	app, ok, err := b.cask(ctx, "ghostty", b.has("Ghostty.app", "/Applications", g.Home+"/Applications"),
 		"no Ghostty.app is in /Applications or ~/Applications")
 	if err != nil || !ok {
 		return step.Plan{}, err
 	}
-	font, _, err := g.cask(ghosttyFont, g.has(ghosttyFontFile, g.Home+"/Library/Fonts", "/Library/Fonts"),
-		"no "+ghosttyFontFile+" is in ~/Library/Fonts or /Library/Fonts")
+	font, err := b.font(ctx, g.Home)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -104,24 +68,7 @@ func (g *Ghostty) Apply(ctx context.Context, p step.Plan) error {
 	if g.failed == nil {
 		g.failed = map[string]bool{}
 	}
-	for _, c := range p.Changes {
-		if r, ok := c.(Run); ok {
-			cask := r.Args[len(r.Args)-1]
-			g.Out.Say("installing %s", cask)
-			if err := Apply(ctx, g.M, g.Out, c); err != nil {
-				g.Out.Warn("brew install --cask %s failed", cask)
-				g.failed[cask] = true
-			}
-			continue
-		}
-		if g.failed["ghostty"] {
-			continue
-		}
-		if err := Apply(ctx, g.M, g.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
+	return g.casks().install(ctx, p, "ghostty")
 }
 
 // conf returns the config file that Ghostty's menu opens: the first of ghosttyConfigs that holds
