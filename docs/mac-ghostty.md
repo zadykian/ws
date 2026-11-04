@@ -61,6 +61,8 @@ Some settings change more than the look:
   as through `tmux refresh-client -l` and `tmux save-buffer -`. With the second on, Ghostty writes
   the window's title to the pane's input. Text that a pane prints can then sit at the prompt, for
   one Enter to run. cld needs neither.
+- `macos-option-as-alt = left` makes left Option act as Alt, for F12's Alt keys in helix and
+  Fresh. Right Option keeps composing characters.
 
 The rest of Ghostty's settings stay the user's. `macos-applescript` stays at its default, on, which
 cld needs.
