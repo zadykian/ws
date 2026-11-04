@@ -79,19 +79,24 @@ func (s SSH) room() bool {
 // calls after it, so a key that asks Touch ID at each login, as Secretive's does, asks once a run.
 //   - A call that uses a master takes the master's options, so those that every caller needs are
 //     here. BatchMode stays with the calls, as only a login reads it.
+//   - The way's host and port go before args as options, which win over config.d/ws's whatever the
+//     host's name. The address that the Host key stage asked replaces the way's host.
 //   - A socket is named for the host that ssh is given. The address that the Host key stage asked
 //     adds .1, so that a master made before it never carries a call to the new address.
 //   - A master lives 30 minutes past its last call, which outlasts a Homebrew install between two.
 //   - It runs no LocalCommand, as config.d/ws's that starts cld's watcher in a Ghostty pane.
-func (s SSH) argv(_ context.Context, args []string) []string {
+func (s SSH) argv(ctx context.Context, args []string) []string {
 	first := s.First()
 	suffix := ""
 	if first != "" {
 		suffix = ".1"
 	}
 	a := s.shared("%n" + suffix)
-	if first != "" {
-		a = append(a, "-o", "HostName="+first)
+	if d, found := s.way(ctx); found {
+		a = append(a, "-o", "HostName="+d.Host)
+		if d.Port != "" {
+			a = append(a, "-o", "Port="+d.Port)
+		}
 	}
 	return append(a, args...)
 }

@@ -10,18 +10,23 @@ import (
 
 func TestSSHArgv(t *testing.T) {
 	for name, tc := range map[string]struct {
-		lock, first, want string
-		notWant           string
+		lock, conf, first, want string
+		notWant                 string
 	}{
-		"shared":  {"/t/l", "", "ControlPath=/t/l/%n ", "HostName"},
-		"first":   {"/t/l", "10.0.0.5", "ControlPath=/t/l/%n.1 -o ControlPersist=30m", ""},
-		"no room": {"/t/%l", "", "ConnectTimeout=10", "ControlMaster"},
+		"shared":  {"/t/l", "", "", "ControlPath=/t/l/%n ", "HostName"},
+		"first":   {"/t/l", "", "10.0.0.5", "ControlPath=/t/l/%n.1 -o ControlPersist=30m", ""},
+		"no room": {"/t/%l", "", "", "ConnectTimeout=10", "ControlMaster"},
+		"a way": {"/t/l", "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n", "",
+			"-o HostName=ws.example.org -o Port=22022 ws-ssh", ""},
+		"first over a way": {"/t/l", "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n", "10.0.0.5",
+			"-o HostName=10.0.0.5 -o Port=22022 ws-ssh", ""},
 	} {
 		m := effecttest.NewMachine()
+		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
 		if tc.first != "" {
 			m.Files[tc.lock+"/"+FirstFile] = []byte(tc.first + "\n")
 		}
-		got := strings.Join(SSH{M: m, Lock: tc.lock}.argv(context.Background(), []string{"ws-ssh"}), " ") + " "
+		got := strings.Join(SSH{M: m, Lock: tc.lock, Conf: "/c"}.argv(context.Background(), []string{"ws-ssh"}), " ") + " "
 		if !strings.Contains(got, tc.want) || (tc.notWant != "" && strings.Contains(got, tc.notWant)) {
 			t.Errorf("%s: argv = %q; want %q, not %q", name, got, tc.want, tc.notWant)
 		}
