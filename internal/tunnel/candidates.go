@@ -32,18 +32,10 @@ type Candidate struct {
 // where the name has no IPv4 address, and then why says so. The caller resolves the name anew
 // before each choice, as an address may change.
 func Candidates(ifaces []Iface, c Conf, resolved netip.Addr) (found []Candidate, why []string) {
-	within := func(n netip.Prefix) bool {
-		for _, each := range ifaces {
-			if n.Contains(each.Addr) {
-				return true
-			}
-		}
-		return false
-	}
-	if within(CableNet) {
+	if within(ifaces, CableNet) {
 		found = append(found, Candidate{TierCable, CableServer})
 	}
-	if c.LAN.IsValid() && c.LANServer.IsValid() && within(c.LAN) {
+	if c.LAN.IsValid() && c.LANServer.IsValid() && within(ifaces, c.LAN) {
 		found = append(found, Candidate{TierLAN, c.LANServer})
 	}
 	if c.Remote != "" {
@@ -54,4 +46,14 @@ func Candidates(ifaces []Iface, c Conf, resolved netip.Addr) (found []Candidate,
 		}
 	}
 	return found, why
+}
+
+// within reports whether the Mac has an address in the net.
+func within(ifaces []Iface, n netip.Prefix) bool {
+	for _, each := range ifaces {
+		if n.Contains(each.Addr) {
+			return true
+		}
+	}
+	return false
 }
