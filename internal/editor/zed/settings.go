@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/internal/editor"
 )
 
-//go:embed global_settings.json.tmpl
+//go:embed global_settings.json.tmpl settings.json.tmpl
 var templates embed.FS
 
 // languages gives each neutral language of the file types Zed's name.

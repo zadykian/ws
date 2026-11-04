@@ -68,3 +68,9 @@ func TestSettingsMatchTheGoldenFileByteForByte(t *testing.T) {
 	}
 	golden(t, "global_settings.json", got)
 }
+
+func TestAServerOfTheCatalogueWithNoPathFails(t *testing.T) {
+	if _, err := zed.ServerSettings(map[string]string{}, "dlv", "terminal"); err == nil {
+		t.Fatal("no error")
+	}
+}
