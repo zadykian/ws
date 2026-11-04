@@ -9,7 +9,7 @@ import (
 // rootStage names the stage in its messages.
 const rootStage = "Root's key"
 
-// RootKey is the stage that checks that root on ws takes the Mac's key, so that ssh ws-ssh logs in
+// RootKey is the stage that checks that root on ws takes the Mac's key, so that ssh logs in to ws
 // as root. The wizard adds no key to ws: ws's keys come from the GitHub account at its install, and
 // the gh on the Mac stage has put the Mac's there. So the stage stops where root refuses the key,
 // and says what to do.
@@ -29,14 +29,14 @@ func (*RootKey) WaitsOn() string { return hostStage }
 // exitStatus is what the machine's error holds before the stderr of a command.
 var exitStatus = regexp.MustCompile(`^.*exit status \d+: `)
 
-// login tells whether ssh logs in to ws-ssh as root by the Mac's key, and runs a command. It
-// connects only where known_hosts holds a key under ws. ssh's error comes back in one line, as ssh
+// login tells whether ssh logs in to ws at its direct way as root by the Mac's key, and runs a
+// command. It connects only where known_hosts holds a key under ws. ssh's error comes back in one line, as ssh
 // ends each line with \r\n and an agent's refusal to sign comes before its last line.
 func (r *RootKey) login(ctx context.Context, w Way) (ok bool, sshErr string) {
 	if w.User != "root" || !r.Host.known(ctx, w.KnownHosts) {
 		return false, ""
 	}
-	out, err := r.Host.SSH.Run(ctx, "-o", "BatchMode=yes", "ws-ssh", "echo", "ok")
+	out, err := r.Host.SSH.Run(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
 	if err == nil && strings.TrimSpace(string(out)) == "ok" {
 		return true, ""
 	}

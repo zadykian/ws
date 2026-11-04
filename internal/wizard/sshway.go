@@ -24,7 +24,7 @@ func (s SSH) Way(ctx context.Context) (Way, error) {
 	if _, found := s.way(ctx); !found {
 		return Way{}, errNoWay
 	}
-	out, err := s.M.Run(ctx, "ssh", append([]string{"-G"}, s.argv(ctx, []string{"ws-ssh"})...)...)
+	out, err := s.M.Run(ctx, "ssh", append([]string{"-G"}, s.argv(ctx, []string{"ws"})...)...)
 	if err != nil {
 		return Way{}, errNoWay
 	}

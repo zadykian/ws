@@ -2,7 +2,7 @@
 # The wizard's files script on ws, for the cable's port. The Mac's wizard sends it to root there
 # over ssh, as it sends wizard-remote.sh:
 #
-#   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
+#   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
 # - wait PORT prints what link prints, below, once PORT holds 10.77.0.1, or after 10 s.
 # - link lists ws's wired ports but the uplinks, those that a default route names, a line each. A
@@ -94,7 +94,7 @@ link() {
 }
 
 main() {
-    [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
+    [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh logs in to ws"
     case ${1-} in
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;

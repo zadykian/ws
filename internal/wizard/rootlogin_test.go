@@ -11,7 +11,7 @@ import (
 const rootLogin = "ssh -o ControlMaster=auto -o ControlPath=/l/direct -o ControlPersist=30m " +
 	"-o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o CheckHostIP=no " +
 	"-o ServerAliveInterval=15 -o PermitLocalCommand=no -o HostName=ws.example.org -o Port=22022 " +
-	"-o AddressFamily=inet -o BatchMode=yes ws-ssh echo ok"
+	"-o AddressFamily=inet -o BatchMode=yes ws echo ok"
 
 // newRoot returns the stage on newHost's machine, where known_hosts holds ws's key.
 func newRoot(login effecttest.Result) (*RootKey, *effecttest.Machine) {

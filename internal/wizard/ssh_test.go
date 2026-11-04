@@ -15,22 +15,22 @@ func TestSSHArgv(t *testing.T) {
 		lock, conf, first, want string
 	}{
 		"a way": {"/t/l", wayConf, "", "-o ControlMaster=auto -o ControlPath=/t/l/direct -o ControlPersist=30m " +
-			shared + " -o HostName=ws.example.org -o Port=22022 -o AddressFamily=inet ws-ssh"},
+			shared + " -o HostName=ws.example.org -o Port=22022 -o AddressFamily=inet ws"},
 		"first with a way": {"/t/l", wayConf, "10.0.0.5", "-o ControlMaster=auto -o ControlPath=/t/l/direct.1 " +
-			"-o ControlPersist=30m " + shared + " -o HostName=10.0.0.5 -o Port=22022 -o AddressFamily=inet ws-ssh"},
+			"-o ControlPersist=30m " + shared + " -o HostName=10.0.0.5 -o Port=22022 -o AddressFamily=inet ws"},
 		"first with no way": {"/t/l", "", "10.0.0.5", "-o ControlMaster=auto -o ControlPath=/t/l/direct.1 " +
-			"-o ControlPersist=30m " + shared + " -o HostName=10.0.0.5 -o AddressFamily=inet ws-ssh"},
+			"-o ControlPersist=30m " + shared + " -o HostName=10.0.0.5 -o AddressFamily=inet ws"},
 		"neither": {"/t/l", "", "", "-o ControlMaster=auto -o ControlPath=/t/l/direct -o ControlPersist=30m " +
-			shared + " -o AddressFamily=inet ws-ssh"},
+			shared + " -o AddressFamily=inet ws"},
 		"no room": {"/t/%l", wayConf, "", shared + " -o HostName=ws.example.org -o Port=22022 " +
-			"-o AddressFamily=inet ws-ssh"},
+			"-o AddressFamily=inet ws"},
 	} {
 		m := effecttest.NewMachine()
 		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
 		if tc.first != "" {
 			m.Files[tc.lock+"/"+FirstFile] = []byte(tc.first + "\n")
 		}
-		got := strings.Join(SSH{M: m, Lock: tc.lock, Conf: "/c"}.argv(context.Background(), []string{"ws-ssh"}), " ")
+		got := strings.Join(SSH{M: m, Lock: tc.lock, Conf: "/c"}.argv(context.Background(), []string{"ws"}), " ")
 		if got != tc.want {
 			t.Errorf("%s: argv = %q; want %q", name, got, tc.want)
 		}
@@ -42,8 +42,8 @@ func TestSSHTunnelTakesNoWayOptions(t *testing.T) {
 	m.Files["/c"] = []byte("WS_TARGET=lan\n" + wayConf)
 	m.Files["/t/l/"+FirstFile] = []byte("10.0.0.5\n")
 	s := SSH{M: m, Lock: "/t/l", Conf: "/c"}
-	m.Results[tunnelCall(s, "ws-ssh", "true")] = effecttest.Result{}
-	if _, err := s.Tunnel(context.Background(), "ws-ssh", "true"); err != nil {
+	m.Results[tunnelCall(s, "ws", "true")] = effecttest.Result{}
+	if _, err := s.Tunnel(context.Background(), "ws", "true"); err != nil {
 		t.Fatal(err)
 	}
 	got := strings.Join(m.Calls, "\n")
@@ -59,7 +59,7 @@ func TestSSHTunnelTakesNoWayOptions(t *testing.T) {
 
 // wayCall is the ssh -G call that Way makes.
 func wayCall(s SSH) string {
-	return "ssh " + strings.Join(append([]string{"-G"}, s.argv(context.Background(), []string{"ws-ssh"})...), " ")
+	return "ssh " + strings.Join(append([]string{"-G"}, s.argv(context.Background(), []string{"ws"})...), " ")
 }
 
 // tunnelCall is the call that Tunnel makes.
@@ -80,7 +80,7 @@ func TestSSHWayFromAddresses(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
 		m.Results["ifconfig"] = effecttest.Result{Out: []byte(tc.ifconfig)}
-		got := strings.Join(SSH{M: m, Lock: "/t/l", Conf: "/c"}.argv(context.Background(), []string{"ws-ssh"}), " ")
+		got := strings.Join(SSH{M: m, Lock: "/t/l", Conf: "/c"}.argv(context.Background(), []string{"ws"}), " ")
 		if !strings.Contains(got, tc.want) {
 			t.Errorf("%s: argv = %q; want %q in it", name, got, tc.want)
 		}

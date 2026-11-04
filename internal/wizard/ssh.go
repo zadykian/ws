@@ -16,7 +16,7 @@ import (
 // with that stage.
 const FirstFile = "first"
 
-// SSH runs ssh to ws-ssh for the stages, with the options every call needs.
+// SSH runs ssh to ws for the stages, with the options every call needs.
 type SSH struct {
 	M effect.Machine
 	// Lock is the run's lock, where the master connections' sockets live.

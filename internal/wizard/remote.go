@@ -18,7 +18,7 @@ type Remote struct {
 
 // args returns ssh's arguments for the operation. No argument holds a blank or a quote.
 func (*Remote) args(op []string) []string {
-	return append([]string{"-o", "BatchMode=yes", "ws-ssh", "sh", "-s", "--"}, op...)
+	return append([]string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--"}, op...)
 }
 
 // Do runs the operation, and has the next Status read ws again, as the operation may change it.

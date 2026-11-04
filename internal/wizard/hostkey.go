@@ -71,7 +71,7 @@ func noWay(c conf.Conf) error {
 	default:
 		how += ", as docs/mac-targets.md says"
 	}
-	return errors.New(hostStage + ": ssh finds no way to ws-ssh from this network: no cable, no address in " +
+	return errors.New(hostStage + ": ssh finds no direct way to ws from this network: no cable, no address in " +
 		"WS_LAN and no WS_REMOTE_PORT; " + how)
 }
 
