@@ -121,3 +121,19 @@ Rules a change keeps:
   panes get it.
 - A killed Fresh runs the reset, as the wrapper outlives it. The pane keeps asking only if the
   wrapper dies too.
+
+## The keys
+
+[Fresh's F12 keymap](keymap/fresh.md) holds the adapter's counts, rules and limits. What stays
+unproven until the maintainer's trial on the Mac:
+
+- Real Ghostty, with left Option as Alt: its encoder was modelled on a US layout.
+- macOS and the ssh leg between Ghostty and tmux, and tmux 3.7c and Ubuntu's own build, as 3.6a
+  is what ran.
+- The arm64 binary: its hash matched, and it never ran.
+- gopls with Fresh, and Roslyn past initialise: diagnostics and navigation.
+- Fresh's terminal keys, known by source alone: the 24 `noop` keys reach the shell, and
+  ctrl+space, ctrl+], F9 and alt+o leave the terminal. Also `self_update` at run time.
+- The wrapper when it dies with Fresh: the pane keeps asking.
+- Italic modifiers in the theme.
+- Press T per repository, and confirm that a worktree inherits it.
