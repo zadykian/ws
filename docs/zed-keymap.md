@@ -17,8 +17,7 @@ No gate notices a drift, and no generator is in `tools/`.
 
 - [The Zed keymap on a Mac](zed-keymap/macos.md): the keys a Mac keyboard lacks, the F-keys and
   Fn, and macOS's own shortcuts on F12's keys.
-- [The actions the keymap binds](zed-keymap/actions.md), Editing to Folding, with Zed's keys.
-- [The same, in the IDE](zed-keymap/actions-ide.md), Problems to Terminal.
+- [The actions the keymap binds](../internal/editor/keymap/): the data, by topic, with F12's ids.
 - The actions the keymap lacks, in the order of their names, upper and lower case alike:
   [A to J](zed-keymap/lacks-a-j.md) and [L to Z](zed-keymap/lacks-l-z.md).
 
