@@ -106,9 +106,8 @@ turn it off. The watcher starts inside Ghostty's pane, so macOS charges its Appl
 Ghostty, which controls itself with no prompt. A `git push` to ws from a Ghostty pane starts the
 watcher too, or finds it running.
 
-A restore opens an ssh connection for each pane it reopens. Where those logins fail, fail2ban bans
-the tunnel's address, `10.99.0.2`, after 5 of them, as [ssh's hosts](mac.md#sshs-hosts) says.
-`ssh ws` then fails for 10 minutes, while `ssh ws-ssh` comes from another address and serves.
+A restore opens an ssh connection for each pane it reopens. Over the tunnel, failed logins bring
+no ban, as [ssh's hosts](mac.md#sshs-hosts) says.
 
 Two open issues meet this. [#56](https://github.com/zadykian/ws/issues/56) plans `mac/ws-join`,
 which joins a session again after ssh drops: cld counts a pane that runs it as an ssh pane.

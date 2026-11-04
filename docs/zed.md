@@ -249,7 +249,6 @@ clock.
 | Tabs lost | Reopen the files |
 | An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
 | The Disconnected overlay | Reconnect, at the cost of a new daemon |
-| `ssh ws` fails at once for 10 min | fail2ban banned the tunnel address: wait, or use a `ws-ssh` entry |
 
 Neither command has a default key. Release builds register `remote_debug::SimulateDisconnect`,
 `SimulateTimeout` and `SimulateTimeoutExhausted` in a remote project's workspace. They reproduce

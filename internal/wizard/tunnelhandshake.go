@@ -9,11 +9,10 @@ import (
 )
 
 // handshake waits up to 30 s for ws-tunnel's handshake, where the run reached ws at its ways. Then
-// it logs in to ws through the tunnel once, by the key that root takes, as fail2ban on ws bans
-// 10.99.0.2 after a few that fail. ws's new key reaches ws-tunnel by ws mac apply's SIGHUP, and the
-// Mac's new peer on ws by a restart, so that it handshakes at once. Without a handshake, it adds
-// the tunnel to the closing list, and the run goes on, as the later stages reach ws by ws-ssh,
-// outside the tunnel.
+// it logs in to ws through the tunnel once, by the key that root takes. ws's new key reaches
+// ws-tunnel by ws mac apply's SIGHUP, and the Mac's new peer on ws by a restart, so that it
+// handshakes at once. Without a handshake, it adds the tunnel to the closing list, and the run
+// goes on, as the later stages reach ws by ws-ssh, outside the tunnel.
 func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) error {
 	if first := t.Host.SSH.First(); first != "" {
 		once := "mac.conf's way leads to ws"
@@ -54,7 +53,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 			last = ": " + strings.TrimSpace(lines[len(lines)-1])
 		}
 		return errors.New(tunnelStage + ": ssh ws failed through the tunnel, where ws's run lets SSH in on " +
-			"wg0, and fail2ban bans 10.99.0.2 for 10 minutes after 5 failures" + last)
+			"wg0" + last)
 	}
 	return nil
 }
