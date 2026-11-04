@@ -32,3 +32,24 @@ func TestSSHArgv(t *testing.T) {
 func tunnelCall(s SSH, args ...string) string {
 	return "ssh " + strings.Join(append(s.shared("%n"), args...), " ")
 }
+
+func TestSSHWayFromAddresses(t *testing.T) {
+	const lan = "WS_LAN=192.168.1.0/24\nWS_LAN_ADDRESS=192.168.1.5\n"
+	const remote = "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n"
+	for name, tc := range map[string]struct{ conf, ifconfig, host, port string }{
+		"lan": {lan, "en0: flags=8863<UP> mtu 1500\n\tinet 192.168.1.20 netmask 0xffffff00\n",
+			"192.168.1.5", "22"},
+		"cable": {lan, "en5: flags=8863<UP> mtu 1500\n\tinet 10.77.0.2 netmask 0xfffffffc\n",
+			"10.77.0.1", "22"},
+		"remote over a lan out of reach": {lan + remote, "en0: flags=8863<UP> mtu 1500\n\tinet 172.16.0.2 netmask 0xffff0000\n",
+			"ws.example.org", "22022"},
+	} {
+		m := effecttest.NewMachine()
+		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
+		m.Results["ifconfig"] = effecttest.Result{Out: []byte(tc.ifconfig)}
+		d, found := SSH{M: m, Lock: "/t/l", Conf: "/c"}.way(context.Background())
+		if !found || d.Host != tc.host || d.Port != tc.port {
+			t.Errorf("%s: way = %+v, %v; want %s:%s", name, d, found, tc.host, tc.port)
+		}
+	}
+}

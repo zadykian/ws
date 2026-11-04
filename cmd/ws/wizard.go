@@ -64,7 +64,7 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, out effect.Out
 	lock := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName
 	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
-		SSH: wizard.SSH{M: p.machine, Lock: lock, Home: p.getenv("HOME")}, M: p.machine, P: ask, Out: out}
+		SSH: wizard.SSH{M: p.machine, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
 	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update,
 		Secrets: p.getenv("HOME") + "/" + secretsFile, User: p.getenv("USER"),
 		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}

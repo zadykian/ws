@@ -2,9 +2,13 @@ package wizard
 
 import (
 	"context"
+	"net/netip"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/internal/daemon"
+	"github.com/zadykian/ws/internal/tunnel"
 )
 
 // FirstFile is the file in the lock that holds the address the Host key stage asked, where ws did
@@ -19,6 +23,8 @@ type SSH struct {
 	Lock string
 	// Home is the user's, which a ~/ in known_hosts' path means.
 	Home string
+	// Conf is mac.conf's path, which the direct way to ws comes from.
+	Conf string
 }
 
 // First returns the address that the Host key stage asked, or an empty string.
@@ -28,6 +34,36 @@ func (s SSH) First() string {
 		return ""
 	}
 	return strings.TrimSpace(string(b))
+}
+
+// way finds the direct way to ws from mac.conf and the Mac's addresses, with the address that the
+// Host key stage asked in place of the way's host. A failed ifconfig counts as no addresses, as in
+// the daemon. A mac.conf that can't be read or parsed leaves no way. With no way and that address,
+// the port stays ssh's own.
+func (s SSH) way(ctx context.Context) (tunnel.Direct, bool) {
+	var d tunnel.Direct
+	var found bool
+	if text, err := s.M.ReadFile(s.Conf); err == nil {
+		if c, errs := conf.Parse(string(text)); len(errs) == 0 {
+			out, err := s.M.Run(ctx, "ifconfig")
+			if err != nil {
+				out = nil
+			}
+			d, found = tunnel.DirectWay(daemon.ParseIfconfig(string(out), ""), tunnelConf(c), c.RemotePort)
+		}
+	}
+	if first := s.First(); first != "" {
+		d.Host, found = first, true
+	}
+	return d, found
+}
+
+// tunnelConf takes the keys of mac.conf that a direct way reads. conf checked them already.
+func tunnelConf(c conf.Conf) tunnel.Conf {
+	t := tunnel.Conf{Remote: c.Remote}
+	t.LAN, _ = netip.ParsePrefix(c.LAN)
+	t.LANServer, _ = netip.ParseAddr(c.LANAddress)
+	return t
 }
 
 // room tells whether the lock's path leaves room for a socket's. A master binds its socket at the
