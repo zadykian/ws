@@ -1,6 +1,7 @@
 #!/bin/bash
-# The install job's cases: install.sh against a release laid out in a temporary directory and
-# served on loopback as GitHub serves it. Run it from the repository's root; tools/build gets the Go.
+# The install job's cases: install.sh and ws update against a release laid out in a temporary
+# directory and served on loopback as GitHub serves it. Run it from the repository's root;
+# tools/build gets the Go.
 # The releases are of HEAD, built at tags that a copy of it makes and removes again.
 #
 #   v0.1.0 and v0.2.0  good; v0.2.0 is the latest
@@ -72,6 +73,23 @@ refused() {
     fi
 }
 
+# updates HOME_DIR runs the ws installed for HOME_DIR as ws update.
+updates() {
+    env HOME="$1" WS_RELEASES_URL="$url" "$1/.local/bin/ws" update
+}
+
+# update_refused HOME_DIR TAG fails where ws update, with TAG the latest release, goes through or
+# changes the v0.1.0 installed for HOME_DIR.
+update_refused() {
+    echo "$2" >"$tmp/releases/latest"
+    if updates "$1"; then
+        fail "ws update went through at $2"
+    fi
+    echo v0.2.0 >"$tmp/releases/latest"
+    has_version "$1" v0.1.0
+    only_ws "$1"
+}
+
 [ "$(id -u)" != 0 ] || fail "run it as a user: as root, install.sh installs to /usr/local/bin"
 [ -z "$(git status --porcelain)" ] || fail "the tree is not clean: the builds would say +dirty"
 
@@ -130,6 +148,31 @@ echo "::endgroup::"
 
 echo "::group::A version that is no version is refused"
 refused "$tmp/home1" WS_VERSION=0.2
+echo "::endgroup::"
+
+echo "::group::ws update moves ws to the latest release, and a second run stays"
+installs "$tmp/home4" WS_VERSION=0.1.0
+updates "$tmp/home4"
+has_version "$tmp/home4" v0.2.0
+only_ws "$tmp/home4"
+updates "$tmp/home4"
+has_version "$tmp/home4" v0.2.0
+echo "::endgroup::"
+
+echo "::group::ws update replaces the file a link leads to"
+installs "$tmp/home5" WS_VERSION=0.1.0
+mkdir "$tmp/home5/other"
+mv "$tmp/home5/.local/bin/ws" "$tmp/home5/other/ws"
+ln -s ../../other/ws "$tmp/home5/.local/bin/ws"
+updates "$tmp/home5"
+[ -L "$tmp/home5/.local/bin/ws" ] || fail "ws update replaced the link"
+[ "$("$tmp/home5/other/ws" version)" = v0.2.0 ] || fail "ws update left the link's file as it was"
+echo "::endgroup::"
+
+echo "::group::ws update refuses what install.sh refuses, and ws is as it was"
+installs "$tmp/home6" WS_VERSION=0.1.0
+update_refused "$tmp/home6" v0.3.0
+update_refused "$tmp/home6" v0.4.0
 echo "::endgroup::"
 
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
