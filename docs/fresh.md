@@ -73,3 +73,23 @@ it, so ws cannot. A folder with no marker is trusted at once.
    0.5.7.
 
 A name with no action loads with no error, so the list is the only check of a target.
+
+## The theme
+
+`Fresh config` also writes `~/.config/fresh/themes/jetbrains-dark.json`, and `config.json` names it
+by its `name`, `JetBrains Dark`, which comes from `internal/editor/settings.yaml`. The values are
+Zed's, from `artemevsevev/zed-theme-jetbrains` at `4385ff2c112e693716badf22e8fb348bede26f93`,
+Apache-2.0, by Artem Evsevev. Only the dark theme is used.
+
+Rules a change keeps:
+
+- The file is strict JSON with no header. A comment makes Fresh fall back to its default theme.
+- Colours are `[r, g, b]` alone. A hex string renders white with no error.
+- No alpha. Two search colours are blended on #1e1f22.
+
+Limits:
+
+- Eleven syntax colours serve fourteen categories, with `syntax.constant` at #2aacb8.
+- Property, attribute, doc comment, tag, `type.builtin` and the active line number have no place.
+- `rainbow_brackets` is off, as the theme has no place for those colours. `after_eof_bg` is named,
+  and the ruler is #393b40.
