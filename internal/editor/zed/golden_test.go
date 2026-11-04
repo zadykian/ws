@@ -50,3 +50,13 @@ func TestTheKeymapHasWsMarkAndIsJSONUnderItsComments(t *testing.T) {
 		t.Error("the keymap is not valid JSON under its comments")
 	}
 }
+
+func TestTheSettingsAreJSON(t *testing.T) {
+	got, err := zed.Settings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !json.Valid(got) {
+		t.Errorf("the settings are not valid JSON:\n%s", got)
+	}
+}
