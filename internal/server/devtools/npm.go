@@ -14,7 +14,7 @@ import (
 const npmBin = "/usr/bin/npm"
 
 // serversDir is where the npm servers install. The steps and the settings both name it.
-func serversDir(home string) string { return home + "/.local/lib/zed-servers" }
+func serversDir(home string) string { return home + "/.local/lib/language-servers" }
 
 // formatterLink puts sql-formatter on every PATH, root's, so a project's settings name the bare
 // command. The target exists only after npm ci: Link compares the link alone, so a --check before

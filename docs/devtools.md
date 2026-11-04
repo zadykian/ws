@@ -75,7 +75,7 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 
 ## The npm servers
 
-The role installs four packages into `~/.local/lib/zed-servers`, owned by `ws_user`, from the
+The role installs four packages into `~/.local/lib/language-servers`, owned by `ws_user`, from the
 `package.json` and `package-lock.json` in `internal/server/devtools/servers`:
 
 - `@ansible/ansible-language-server`, for Ansible.

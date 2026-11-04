@@ -120,7 +120,7 @@ func TestSettingsNameTheNpmServersForRootAndAnotherUser(t *testing.T) {
 			t.Fatalf("not JSON:\n%s", body)
 		}
 		for _, name := range []string{"ansible-language-server", "vscode-html-language-server", "docker-langserver"} {
-			want := `"` + bin + "/.local/lib/zed-servers/node_modules/.bin/" + name + `"`
+			want := `"` + bin + "/.local/lib/language-servers/node_modules/.bin/" + name + `"`
 			if !strings.Contains(body, want) {
 				t.Errorf("%s: settings lack %s", home, want)
 			}

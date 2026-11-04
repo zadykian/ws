@@ -10,7 +10,7 @@ func TestServerPathsNameEachServerOfTheCatalogue(t *testing.T) {
 	for name, want := range map[string]string{
 		"gopls":                      "/srv/x/go/bin/gopls",
 		"postgres-language-server":   "/usr/local/bin/postgres-language-server",
-		"dockerfile-language-server": "/srv/x/.local/lib/zed-servers/node_modules/.bin/docker-langserver",
+		"dockerfile-language-server": "/srv/x/.local/lib/language-servers/node_modules/.bin/docker-langserver",
 	} {
 		if paths[name] != want {
 			t.Errorf("%s: %q, want %q", name, paths[name], want)

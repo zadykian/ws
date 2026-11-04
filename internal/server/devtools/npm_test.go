@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-const wsDir = "/home/ws/.local/lib/zed-servers"
+const wsDir = "/home/ws/.local/lib/language-servers"
 
 // npmCommand is the command line that the fake machine answers for the user's npm ci.
 func npmCommand(user, home string) string {

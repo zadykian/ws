@@ -112,7 +112,7 @@ Check the file:
 - In Zed, `site.yml` and `roles/NAME/tasks/main.yml` say Ansible in the status bar. A workflow
   under `.github/workflows` and `.ansible-lint` say YAML.
 - `dev: open language server logs` lists `ansible`, and `pgrep -af ansible-language-server` on ws
-  shows the binary under `~/.local/lib/zed-servers`.
+  shows the binary under `~/.local/lib/language-servers`.
 
 Limits:
 
