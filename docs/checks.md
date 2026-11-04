@@ -19,8 +19,9 @@ nothing.
 
 ## The install script
 
-CI runs `install.sh` against releases it lays out and serves on loopback, and checks that it
-installs, updates and refuses what it should ([The install job](releases.md#the-install-job)).
+CI runs `install.sh` and `ws update` against releases it lays out and serves on loopback, and checks
+that they install, update and refuse what they should
+([The install job](releases.md#the-install-job)).
 
 ## The release
 

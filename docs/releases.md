@@ -28,6 +28,25 @@ Put `~/.local/bin` on `PATH` by hand.
 | `WS_VERSION` | the latest release | the release to install, `X.Y.Z` or `vX.Y.Z` |
 | `WS_RELEASES_URL` | `https://github.com/zadykian/ws/releases` | where the releases are, for tests |
 
+## Update
+
+`ws update` replaces the ws that runs with the latest release, and changes nothing else. It runs no
+role, so `ws server apply` follows it by hand. It works as `cld update` does:
+
+- It replaces the file ws runs from, the file a link leads to. `install.sh` goes by the user
+  instead, so a ws in another directory stays there.
+- It needs no curl or shell, as Go downloads the release.
+- A failure leaves ws unchanged. So does SIGINT, SIGTERM or SIGHUP before the replace, which exits
+  with 128 plus the signal's number.
+- A ws at the latest release, or newer, downloads nothing.
+- A build of a clone is refused, as it has no version to compare.
+
+It takes `WS_RELEASES_URL` as the table above says. To pick a release, run `install.sh` with
+`WS_VERSION`. A ws before v0.5.1 lacks the command, so `install.sh` updates it once.
+
+`ws mac wizard --update` stays apart: it runs `install.sh`, then the wizard with the new ws
+([The Mac's wizard](mac-wizard.md)).
+
 ## The install job
 
 CI's `install` job runs [install-checks.sh](../.github/install-checks.sh) on each pull request. It
@@ -39,6 +58,9 @@ The cases:
 - a named release installs, and a second run, for the latest, updates it;
 - a wrong `ws.sha256`, and a binary that prints another version, are refused, install nothing and
   keep the installed ws;
+- `ws update` moves an older ws to the latest release, and a second run stays;
+- `ws update` replaces the file a link leads to, and keeps the link;
+- `ws update` refuses a wrong `ws.sha256`, and a binary that prints another version, and keeps ws;
 - root installs to `/usr/local/bin`.
 
 ## Cutting a release

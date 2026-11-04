@@ -101,7 +101,8 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([download.go](internal/server/otelcol/download.go)) and Docker's apt key
   ([repository.go](internal/server/docker/repository.go)). So are foundryctl
   ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
-  binary, against its release's `ws.sha256` ([install.sh](install.sh)), and so are yamllint
+  binary, against its release's `ws.sha256` ([install.sh](install.sh),
+  [update.go](internal/update/update.go)), and so are yamllint
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
   ([homebrew.go](internal/wizard/homebrew.go)). Go and the JetBrains backends are checked against
   the SHA-256 their publishers list ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)).
