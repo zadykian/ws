@@ -20,6 +20,7 @@ works on the server. The rest is the docs, the lint gates' tools and CI.
   steps on them.
 - `internal/editor`: what the editors share, in no editor's terms, with F12's keys by topic in
   `keymap/`. `internal/editor/zed` is Zed's adapter, whose `testdata` holds the golden files.
+  `internal/editor/fresh` is Fresh's, whose `testdata` holds its pinned version's action list.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
   wizard's scripts for ws in POSIX sh and `ws.ghostty`, Ghostty's settings.

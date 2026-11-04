@@ -59,3 +59,17 @@ Fresh opens a folder with a project marker as Restricted, with every server off.
 Enter, once per repository. Fresh stores the answer in
 `~/.local/share/fresh/workspaces/PATH/trust.json`, and a linked worktree inherits it. No key sets
 it, so ws cannot. A folder with no marker is trusted at once.
+
+## A new version
+
+1. Change `version`, `tag` and both sums in `download.go`. Check the `.deb`'s `Depends`.
+2. From the tag's source, take every name of `define_action_str_mapping!` in
+   `crates/fresh-editor/src/input/keybindings.rs`, and the handler names of `registerCommand` at
+   the top level of `plugins/`, leaving out `plugins/examples`.
+3. Write them to `internal/editor/fresh/testdata/actions.txt`, under its first line with the new
+   version. `TestTheActionListNamesThePinnedVersion` fails until then, and
+   `TestEveryTargetIsAnActionOfFresh` names any target that is gone.
+4. Leave out `unbind`, a config word, and the plugin commands made at run time: 65 of those in
+   0.5.7.
+
+A name with no action loads with no error, so the list is the only check of a target.
