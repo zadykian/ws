@@ -114,7 +114,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([binaries.go](internal/server/devtools/binaries.go)). gopls and Delve are built through Go's
   checksum database. roslyn-language-server is pinned by version alone
   ([pins.go](internal/server/devtools/pins.go)). Zed's npm servers are checked against the sha512
-  `integrity` of their lockfile ([zed](docs/zed.md#the-npm-servers)). Zed's other downloads on ws
+  `integrity` of their lockfile ([devtools](docs/devtools.md#the-npm-servers)). Zed's other downloads on ws
   are outside the rule ([zed](docs/zed.md#zeds-downloads-outside-the-sha-256-rule)).
 - foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by

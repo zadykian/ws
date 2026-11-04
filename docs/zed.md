@@ -49,7 +49,7 @@ ws has the internet ([outbound](security.md#outbound)), so the download works.
 
 The gopls, Delve and Roslyn that ws pins are not on the list ([devtools](devtools.md)). Nor are
 postgres-language-server and docker-language-server, which `devtools` checks against a SHA-256.
-Nor are the npm servers, which the role checks against the sha512 `integrity` of a lockfile.
+Nor are the npm servers, which `devtools` checks against the sha512 `integrity` of a lockfile.
 
 ## The Go and C# servers
 
@@ -80,39 +80,6 @@ There is no msbuild-lsp yet. Its v0.7.0 of 2026-07-24 is the latest release, and
 (msbuild-project-tools-server#145) is on master, unreleased. When a release has it, pin its
 `language-server.zip` by SHA-256, as otelcol's `.deb` is, name it in
 `lsp.msbuild-project-tools.binary`, and add `msbuild-lsp` to the Mac's extensions.
-
-## The npm servers
-
-The role installs four packages into `~/.local/lib/zed-servers`, owned by `ws_user`, from the
-`package.json` and `package-lock.json` in `internal/server/zed/servers`:
-
-- `@ansible/ansible-language-server`, for Ansible.
-- `@zed-industries/vscode-langservers-extracted`, whose HTML server Zed installs by default.
-- `dockerfile-language-server-nodejs`, rcjsuen's server, beside Docker's own.
-- `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
-  the bare command.
-
-`npm ci --ignore-scripts` runs as `ws_user`. It fails where the lock and `package.json` disagree or
-a sha512 `integrity` differs, so these downloads are checked, though not against a SHA-256. The
-step keeps `node_modules/.ws-sha256`, the digest of both files, and runs again where it differs. It
-needs the Node packages of the `devtools` role: `--check` before them plans the install, and the run
-fails naming `devtools`.
-
-The settings name the three servers by path, with `--stdio`, so Zed skips its npm lookup of their
-latest versions. They also set `node.path`, so Zed never downloads a Node. HTML formats through its
-server, so Zed installs no Prettier.
-
-To bump a package:
-
-1. Edit its version in `package.json`.
-2. In `internal/server/zed/servers`, run `npm install --package-lock-only --ignore-scripts
-   --no-audit --no-fund`.
-3. Commit both files, after checking each `integrity` against
-   `npm view PACKAGE@VERSION dist.integrity`.
-
-`go test` checks that the lock pins each package at its version. ansible-language-server 26.6.0 is
-npm's latest. It lacks the didSave fix (vscode-ansible#2765), so reopen a file whose lint results
-vanish after an edit.
 
 ## Secrets in ssh's arguments
 

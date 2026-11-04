@@ -73,6 +73,38 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 - To bump a pin, read the digests with the `gh api` command in `binaries.go` and check a download
   with `sha256sum`. A bumped postgres-language-server may need its daemon stopped.
 
+## The npm servers
+
+The role installs four packages into `~/.local/lib/zed-servers`, owned by `ws_user`, from the
+`package.json` and `package-lock.json` in `internal/server/devtools/servers`:
+
+- `@ansible/ansible-language-server`, for Ansible.
+- `@zed-industries/vscode-langservers-extracted`, whose HTML server Zed installs by default.
+- `dockerfile-language-server-nodejs`, rcjsuen's server, beside Docker's own.
+- `sql-formatter`, linked as `/usr/local/bin/sql-formatter`, root's, so a project's settings name
+  the bare command.
+
+`npm ci --ignore-scripts` runs as `ws_user`. It fails where the lock and `package.json` disagree or
+a sha512 `integrity` differs, so these downloads are checked, though not against a SHA-256. The
+step keeps `node_modules/.ws-sha256`, the digest of both files, and runs again where it differs. It
+waits for the step of the Node packages, which sets up npm.
+
+The settings name the three servers by path, with `--stdio`, so Zed skips its npm lookup of their
+latest versions. They also set `node.path`, so Zed never downloads a Node. HTML formats through its
+server, so Zed installs no Prettier.
+
+To bump a package:
+
+1. Edit its version in `package.json`.
+2. In `internal/server/devtools/servers`, run `npm install --package-lock-only --ignore-scripts
+   --no-audit --no-fund`.
+3. Commit both files, after checking each `integrity` against
+   `npm view PACKAGE@VERSION dist.integrity`.
+
+`go test` checks that the lock pins each package at its version. ansible-language-server 26.6.0 is
+npm's latest. It lacks the didSave fix (vscode-ansible#2765), so reopen a file whose lint results
+vanish after an edit.
+
 ## gh
 
 A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
