@@ -13,8 +13,8 @@ func TestSSHArgv(t *testing.T) {
 		lock, conf, first, want string
 		notWant                 string
 	}{
-		"shared":  {"/t/l", "", "", "ControlPath=/t/l/%n ", "HostName"},
-		"first":   {"/t/l", "", "10.0.0.5", "ControlPath=/t/l/%n.1 -o ControlPersist=30m", ""},
+		"shared":  {"/t/l", "", "", "ControlPath=/t/l/direct ", "HostName"},
+		"first":   {"/t/l", "", "10.0.0.5", "ControlPath=/t/l/direct.1 -o ControlPersist=30m", ""},
 		"no room": {"/t/%l", "", "", "ConnectTimeout=10", "ControlMaster"},
 		"a way": {"/t/l", "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n", "",
 			"-o HostName=ws.example.org -o Port=22022 -o AddressFamily=inet ws-ssh", ""},
