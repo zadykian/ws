@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/internal/editor/zed"
+	"github.com/zadykian/ws/mac"
 )
 
 //go:embed testdata/*.json
@@ -58,5 +59,15 @@ func TestTheSettingsAreJSON(t *testing.T) {
 	}
 	if !json.Valid(got) {
 		t.Errorf("the settings are not valid JSON:\n%s", got)
+	}
+}
+
+func TestSettingsMatchTheGoldenFileByteForByte(t *testing.T) {
+	got, err := zed.Settings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, mac.Zed) {
+		t.Fatalf("the settings differ from mac/zed.json: %d bytes, want %d\n%s", len(got), len(mac.Zed), got)
 	}
 }
