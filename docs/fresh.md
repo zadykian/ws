@@ -93,3 +93,31 @@ Limits:
 - Property, attribute, doc comment, tag, `type.builtin` and the active line number have no place.
 - `rainbow_brackets` is off, as the theme has no place for those colours. `after_eof_bg` is named,
   and the ruler is #393b40.
+
+## The wrapper
+
+`Fresh wrapper` writes `/usr/local/bin/fresh`, mode 0755, from `files/fresh`. It comes before the
+`.deb`'s `/usr/bin/fresh` on every `PATH` of Ubuntu's.
+
+Fresh asks for its keys by the kitty protocol, which tmux ignores. With no fix, 0 of 29 Shift+Ctrl
+keys arrive through tmux, and 21 mapped rows land on another key: ctrl+shift+z undoes, for one.
+Both paths pass `--config "$HOME/.config/fresh/config.json"` ahead of the arguments where that file
+exists. Fresh then reads the user's config alone. Without it, a project's `.fresh/config.json` merges
+over it, or a legacy `config.json` in the working directory. A cloned repository could name a
+language server's command. A `config.json` that does not parse drops the user's config for
+Fresh's defaults, with updates and telemetry on. The cost is that a project's own config no longer
+applies, and `/usr/bin/fresh` run directly skips the wrapper and this protection.
+
+The wrapper takes one of two paths:
+
+- With `$TMUX` empty, or stdin or stdout not a terminal, it runs `exec /usr/bin/fresh "$@"`.
+- Else it runs `tmux set -s extended-keys on` where the option reads `off`, silencing errors. It
+  sends `CSI > 4;2m`, runs Fresh, sends `CSI > 4m`, and exits with Fresh's status.
+
+Rules a change keeps:
+
+- The second path never `exec`s, or the reset is never sent.
+- A server at `on` or `always` stays so. From `off`, `on` stays after Fresh exits, and new
+  panes get it.
+- A killed Fresh runs the reset, as the wrapper outlives it. The pane keeps asking only if the
+  wrapper dies too.
