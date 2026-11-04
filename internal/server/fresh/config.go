@@ -17,6 +17,7 @@ func configFiles(m effect.Machine, v values.Values, uid, gid int) ([]host.Resour
 	}
 	dir := v.Home + "/.config/fresh"
 	return []host.Resource{
+		host.Plain{M: m, Home: v.Home, Paths: []string{dir + "/config.json"}},
 		host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
 		host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
 		host.File{M: m, Path: dir + "/config.json", Content: config, Mode: 0o644, UID: uid, GID: gid, Backup: true},

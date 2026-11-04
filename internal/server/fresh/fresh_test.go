@@ -46,3 +46,17 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 		t.Errorf("%s owner %v", path, o)
 	}
 }
+
+func TestConfigRefusesALink(t *testing.T) {
+	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/fresh", "/home/ws/.config/fresh/config.json"} {
+		m, v := userMachine()
+		m.Links[link] = "/srv/target"
+		s := stepNamed(t, m, v, configStep)
+		if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err == nil {
+			t.Errorf("%s: no error", link)
+		}
+		if len(m.Owners) != 0 || len(m.Files) != 0 {
+			t.Errorf("%s: changed %v %v", link, m.Owners, m.Files)
+		}
+	}
+}
