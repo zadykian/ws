@@ -27,7 +27,18 @@ var contexts = map[editor.Scope]string{
 	editor.Tree: "file_explorer", editor.Panel: "file_explorer", editor.Terminal: "terminal",
 }
 
-// bindings renders the keymap's keys, in the order of its scopes.
+// shellKeys are the keys whose action Fresh's terminal yields to, F12's and the default map's. Each
+// takes noop there, which ends the lookup and leaves the key to the shell. The list leaves out
+// Fresh's own ways out of its terminal: ctrl+space and ctrl+] (terminal_escape), F9 (keyboard
+// capture) and alt+o (the dock's focus).
+var shellKeys = []string{
+	"ctrl+q", "ctrl+,", "ctrl+alt+]", "ctrl+alt+[", "alt+x", "ctrl+alt+s", "alt+v", "alt+left",
+	"alt+right",
+	"alt+e", "alt+f", "alt+g", "alt+h", "alt+s", "alt+w", "alt+r", "alt+j", "alt+/", "alt+[",
+	"alt+]", "alt+`", "ctrl+p", "ctrl+;", "ctrl+'",
+}
+
+// bindings renders the keymap's keys, in the order of its scopes, and the terminal's noops.
 func bindings(keymap editor.Keymap, targets map[string]editor.Target) ([]binding, error) {
 	var out []binding
 	var problems []error
@@ -50,6 +61,17 @@ func bindings(keymap editor.Keymap, targets map[string]editor.Target) ([]binding
 				out = append(out, rendered...)
 			}
 		}
+	}
+	for _, key := range shellKeys {
+		chord, err := editor.ParseChord(key)
+		if err != nil {
+			return nil, err
+		}
+		rendered, err := entries(chord, editor.Target{To: "noop"}, "terminal")
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, rendered...)
 	}
 	return out, errors.Join(problems...)
 }

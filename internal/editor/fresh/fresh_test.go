@@ -235,3 +235,39 @@ func TestNoKeyFiresTwoActions(t *testing.T) {
 		seen[string(form)] = b.Action
 	}
 }
+
+// The first nine of shellKeys are F12 keys that its Global scope binds; the rest are the default
+// map's, which F12 leaves alone.
+func TestEachShellKeyIsNoopInTheTerminal(t *testing.T) {
+	keymap, err := editor.LoadKeymap()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var global []string
+	for _, b := range keymap[editor.Global] {
+		for _, chord := range b.Keys {
+			global = append(global, chord.String())
+		}
+	}
+	c := typed(t)
+	for _, way := range []string{"ctrl+space", "ctrl+]", "f9", "alt+o"} {
+		if slices.Contains(shellKeys, way) {
+			t.Errorf("%s is Fresh's way out of its terminal", way)
+		}
+	}
+	for i, key := range shellKeys {
+		chord, err := editor.ParseChord(key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		p := forms(chord[0])[0]
+		noop := false
+		for _, b := range c.Maps["f12"].Bindings {
+			noop = noop || b.When == "terminal" && b.Action == "noop" &&
+				b.Key == p.Key && slices.Equal(b.Modifiers, p.Modifiers)
+		}
+		if !noop || i < 9 && !slices.Contains(global, key) {
+			t.Errorf("%s: noop in terminal %t, global %t", key, noop, slices.Contains(global, key))
+		}
+	}
+}
