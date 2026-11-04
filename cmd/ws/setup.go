@@ -61,14 +61,14 @@ func (o progOut) Warn(format string, a ...any) {
 	}
 }
 
-func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, check, again bool) step.Step {
-	return setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, AssumeTunnel: check, Again: again}
+func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, again bool) step.Step {
+	return setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, Again: again}
 }
 
 // setupSteps returns the steps of ws mac apply, in the order ws mac apply runs them.
 func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out, text io.Writer, check bool) []step.Step {
 	return []step.Step{
-		sshStep(c, home, m, out, check, false),
+		sshStep(c, home, m, out, false),
 		setup.Cable{Conf: c, M: m, Out: out},
 		&setup.Git{Conf: c, Home: home, XDG: xdg, M: m, Out: out},
 		&setup.Gateway{Home: home, M: m, Out: out},
@@ -89,8 +89,8 @@ func newMacApplyCmd(p process) *cobra.Command {
 		Use:   "apply [STEP]",
 		Short: "set the Mac up from mac.conf",
 		Long: "It runs the steps it names, from mac.conf, in this order: " + strings.Join(names, ", ") + ". " +
-			"With no STEP, it runs every step, and ssh again, whose plan is empty unless the daemon or cld " +
-			"changed ssh ws's ways. It asks sudo where it needs root.",
+			"With no STEP, it runs every step, and ssh again, whose plan is empty unless cld " +
+			"changed ssh's file. It asks sudo where it needs root.",
 		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
 		ValidArgs: names,
 		RunE:      func(c *cobra.Command, args []string) error { return runMacApply(c, p, args, check) },
@@ -143,9 +143,9 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 	if len(args) == 1 {
 		chosen = slices.DeleteFunc(slices.Clone(steps), func(s step.Step) bool { return s.Name() != args[0] })
 	} else if !check {
-		// The tunnel's daemon and cld's restore tabs change ssh ws's ways, so ssh runs once more.
+		// cld's restore tabs change ssh's file, so ssh runs once more.
 		// Under --check nothing is applied, so a second plan would only repeat the first.
-		chosen = slices.Concat(steps, []step.Step{sshStep(settings, home, p.machine, out, check, true)})
+		chosen = slices.Concat(steps, []step.Step{sshStep(settings, home, p.machine, out, true)})
 	}
 	ctx := c.Context()
 	_, err = step.Run(ctx, chosen, out, check)

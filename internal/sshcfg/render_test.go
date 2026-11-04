@@ -14,27 +14,28 @@ func inputs() sshcfg.Inputs {
 	}
 }
 
-func TestConfigBeforeTunnel(t *testing.T) {
+func TestConfigHoldsTheWaysAndTheTunnel(t *testing.T) {
 	got := sshcfg.Config(inputs())
 	for _, want := range []string{
 		"IgnoreUnknown UseKeychain\n",
-		"Match originalhost ws,ws-ssh localnetwork 10.77.0.0/30\n    HostName 10.77.0.1\n    Port 22\n",
-		"Match originalhost ws,ws-ssh localnetwork 192.168.1.0/24\n    HostName 192.168.1.5\n",
-		"Host ws ws-ssh\n    HostName ws.example.org\n    Port 2222\n    AddressFamily inet\n",
+		"Match originalhost ws-ssh localnetwork 10.77.0.0/30\n    HostName 10.77.0.1\n    Port 22\n",
+		"Match originalhost ws-ssh localnetwork 192.168.1.0/24\n    HostName 192.168.1.5\n",
+		"Host ws-ssh\n    HostName ws.example.org\n    Port 2222\n    AddressFamily inet\n",
+		"Host ws\n    HostName 10.99.0.1\n    Port 22\n",
 		"    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n    UseKeychain yes\n",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("Config lacks %q:\n%s", want, got)
 		}
 	}
-	if strings.Contains(got, "HostName 10.99.0.1") {
-		t.Errorf("Config holds the tunnel or cld's lines:\n%s", got)
+	if strings.Contains(got, "PermitLocalCommand") {
+		t.Errorf("Config holds cld's lines:\n%s", got)
 	}
 }
 
-func TestConfigViaTunnelWithAgent(t *testing.T) {
+func TestConfigWithAgent(t *testing.T) {
 	in := inputs()
-	in.ViaTunnel, in.LAN, in.RemotePort = true, "", ""
+	in.LAN, in.RemotePort = "", ""
 	in.IdentityPub, in.IdentityAgent = "~/k.pub", "~/agent.sock"
 	got := sshcfg.Config(in)
 	for _, want := range []string{

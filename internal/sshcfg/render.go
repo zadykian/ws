@@ -18,8 +18,6 @@ type Inputs struct {
 	LANAddress string
 	Remote     string
 	RemotePort string // empty where mac.conf has no forward
-	// ViaTunnel is whether ws goes through the tunnel. Until it does, ws takes the ways of ws-ssh.
-	ViaTunnel bool
 	// CldTabs is whether ssh's hosts start cld's tab restorer.
 	CldTabs bool
 	// Patterns are the IgnoreUnknown patterns, joined by commas.
@@ -35,10 +33,6 @@ type Inputs struct {
 // matches the Mac's own addresses, with no probe. originalhost matches the name typed, which a
 // HostName set above does not change, unlike Match host.
 func Config(in Inputs) string {
-	direct, listed := "ws-ssh", "ws-ssh"
-	if !in.ViaTunnel {
-		direct, listed = "ws ws-ssh", "ws,ws-ssh"
-	}
 	var b strings.Builder
 	fmt.Fprintf(&b, `%s from ~/.config/ws/mac.conf: its next run replaces changes made here.
 
@@ -50,13 +44,13 @@ IgnoreUnknown %s
 Match originalhost %s localnetwork %s
     HostName %s
     Port 22
-`, Header, in.Patterns, listed, tunnel.CableNet, tunnel.CableServer)
+`, Header, in.Patterns, "ws-ssh", tunnel.CableNet, tunnel.CableServer)
 	if in.LAN != "" {
 		fmt.Fprintf(&b, `# ws on the home LAN, where the Mac has an address there.
 Match originalhost %s localnetwork %s
     HostName %s
     Port 22
-`, listed, in.LAN, in.LANAddress)
+`, "ws-ssh", in.LAN, in.LANAddress)
 	}
 	if in.RemotePort != "" {
 		fmt.Fprintf(&b, `# Elsewhere, at WS_REMOTE, through the router's port forward or to a cloud VM, over IPv4 alone, as
@@ -65,25 +59,22 @@ Host %s
     HostName %s
     Port %s
     AddressFamily inet
-`, direct, in.Remote, in.RemotePort)
+`, "ws-ssh", in.Remote, in.RemotePort)
 	}
-	if in.ViaTunnel {
-		fmt.Fprintf(&b, `
+	fmt.Fprintf(&b, `
 # ws through the tunnel, at the one address it has there whichever way the Mac is connected, on
 # ws's own port, whatever a Host * of the user's sets.
 Host ws
     HostName %s
     Port 22
-`, tunnel.Server)
-	}
-	fmt.Fprintf(&b, `
+
 # One known_hosts entry, ws's, whichever way ssh goes. 30 s between checks, 3 of them unanswered
 # before ssh gives up.
 Host ws ws-ssh
     User %s
     HostKeyAlias ws
 %s    ServerAliveInterval 30
-`, in.User, identityLines(in))
+`, tunnel.Server, in.User, identityLines(in))
 	if in.CldTabs {
 		b.WriteString(cldLines)
 	}

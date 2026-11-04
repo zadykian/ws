@@ -33,8 +33,8 @@ func wizardSetup(p process, stdout io.Writer, out effect.Out, file string) *wiza
 		home := p.getenv("HOME")
 		steps := setupSteps(c, home, p.getenv("XDG_CONFIG_HOME"), p.machine, out, w, check)
 		if !check {
-			// The tunnel's daemon and cld's restore tabs change ssh ws's ways, so ssh runs once more.
-			steps = slices.Concat(steps, []step.Step{sshStep(c, home, p.machine, out, check, true)})
+			// cld's restore tabs change ssh's file, so ssh runs once more.
+			steps = slices.Concat(steps, []step.Step{sshStep(c, home, p.machine, out, true)})
 		}
 		changed, err := step.Run(ctx, steps, out, check)
 		for _, s := range steps {
