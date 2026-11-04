@@ -1,8 +1,10 @@
 package update
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -89,5 +91,75 @@ func TestDownloadFails(t *testing.T) {
 				t.Errorf("download = %v, calls %v; want an error of %q, and no call", err, m.Calls, tc.fails)
 			}
 		})
+	}
+}
+
+func TestReplace(t *testing.T) {
+	u, m := newUpdater("v1.0.0", release(t, "v2.0.0", good()), "v2.0.0")
+	if err := u.replace(t.Context(), "v2.0.0"); err != nil {
+		t.Fatalf("replace = %v", err)
+	}
+	if got := string(m.Files[file]); got != string(newBinary) {
+		t.Errorf("the file holds %q, want the new binary", got)
+	}
+	if got := m.Modes[file]; got != 0o750 {
+		t.Errorf("the file's mode is %o, want the old one's, 750", got)
+	}
+	if got := m.Owners[file]; got != [2]int{-1, -1} {
+		t.Errorf("the file's owner is %v, want the user who runs ws", got)
+	}
+	want := []string{"stat " + file, "atomic " + copied + " 750", "run " + copied + " version",
+		"atomic " + file + " 750", "run rm -f " + copied}
+	if got := strings.Join(m.Calls, "\n"); got != strings.Join(want, "\n") {
+		t.Errorf("replace made the calls\n%s\nwant\n%s", got, strings.Join(want, "\n"))
+	}
+}
+
+// TestReplaceFails checks that a binary that fails its run leaves ws unchanged, and no copy.
+func TestReplaceFails(t *testing.T) {
+	for name, tc := range map[string]struct {
+		run   effecttest.Result
+		fails string
+	}{
+		"another version": {effecttest.Result{Out: []byte("v1.0.0\n")}, `is version "v1.0.0"`},
+		"does not run":    {effecttest.Result{Err: errors.New("exec format error")}, "does not run"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			u, m := newUpdater("v1.0.0", release(t, "v2.0.0", good()), "")
+			m.Results[copied+" version"] = tc.run
+			err := u.replace(t.Context(), "v2.0.0")
+			calls := strings.Join(m.Calls, "\n")
+			if err == nil || !strings.Contains(err.Error(), tc.fails) {
+				t.Errorf("replace = %v, want an error of %q", err, tc.fails)
+			}
+			if string(m.Files[file]) != string(oldBinary) || !strings.Contains(calls, "rm -f "+copied) {
+				t.Errorf("file %q, calls %q; want the old file and the copy removed", m.Files[file], calls)
+			}
+		})
+	}
+}
+
+// cancelling is a Machine whose run of the copy cancels the update, as a signal does.
+type cancelling struct {
+	*effecttest.Machine
+	cancel context.CancelFunc
+}
+
+func (c cancelling) Run(ctx context.Context, name string, args ...string) ([]byte, error) {
+	if name == copied {
+		c.cancel()
+	}
+	return c.Machine.Run(ctx, name, args...)
+}
+
+func TestReplaceCancelled(t *testing.T) {
+	u, m := newUpdater("v1.0.0", release(t, "v2.0.0", good()), "v2.0.0")
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	u.M = cancelling{m, cancel}
+	err := u.replace(ctx, "v2.0.0")
+	calls := strings.Join(m.Calls, "\n")
+	if !errors.Is(err, context.Canceled) || string(m.Files[file]) != string(oldBinary) || !strings.Contains(calls, "rm -f "+copied) {
+		t.Errorf("replace = %v, file %q, calls %q; want the old file and the copy removed", err, m.Files[file], calls)
 	}
 }
