@@ -3,7 +3,7 @@
 [user]
 	name = zadykian
 	email = me@zadykian.dev
-# Each commit signed with the machine's SSH key, which the allowed signers file trusts for the
+# Each commit and tag signed with the machine's SSH key, which the allowed signers file trusts for the
 # email above. The public key's path, so that an agent holding the key signs too; otherwise
 # ssh-keygen reads the private key beside it.
 	signingkey = /home/ws/.ssh/id_ed25519_signing.pub
@@ -12,6 +12,8 @@
 [gpg "ssh"]
 	allowedSignersFile = /home/ws/.config/git/allowed_signers
 [commit]
+	gpgsign = true
+[tag]
 	gpgsign = true
 # GitHub CLI's credential helper, byte for byte as `gh auth setup-git` writes it, the space after
 # the empty helper's = included, so that running that changes nothing here. The empty helper

@@ -39,7 +39,7 @@ key signed, an older machine's say, though GitHub verifies it by the account's k
 
 A run replaces the signing key a `~/.gitconfig` set up by hand names, and says so: to keep that key,
 set it in `~/.config/git/local` first. A signing setting there, such as `user.signingkey` or
-`commit.gpgsign`, wins over the role's, and the run names any it finds.
+`commit.gpgsign` or `tag.gpgsign`, wins over the role's, and the run names any it finds.
 
 `shell_git_signing: false` turns it all off: no key and no signing in `~/.gitconfig`. A key
 made before stays, on the machine and on GitHub. A dry run makes no key, so on a machine without

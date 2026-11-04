@@ -21,7 +21,7 @@ type Inputs struct {
 	Program string
 }
 
-// Config returns ~/.config/ws/gitconfig: the identity, and each commit signed with the key, which
+// Config returns ~/.config/ws/gitconfig: the identity, and each commit and tag signed with the key, which
 // the allowed signers file trusts for the email, through Program where there is one. Then gh's
 // credential command, as gh auth setup-git writes it, after an empty value that drops any set before
 // it. The name and the paths go in quotes, which mac.conf's values cannot end.
@@ -31,7 +31,7 @@ func Config(in Inputs) string {
 	b.WriteString("# ~/.gitconfig includes it at its top, so that its own settings win where both set one.\n")
 	b.WriteString("[user]\n    name = \"" + in.Name + "\"\n    email = " + in.Email + "\n")
 	b.WriteString("    signingkey = \"" + in.Key + "\"\n")
-	b.WriteString("[commit]\n    gpgsign = true\n")
+	b.WriteString("[commit]\n    gpgsign = true\n[tag]\n    gpgsign = true\n")
 	for _, host := range []string{"github.com", "gist.github.com"} {
 		b.WriteString("[credential \"https://" + host + "\"]\n    helper =\n")
 		b.WriteString("    helper = !" + in.Gh + " auth git-credential\n")
