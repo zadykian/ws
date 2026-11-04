@@ -35,3 +35,27 @@ run replaces a change made to it by hand and keeps the old file beside the new o
 - `~/.config/fresh` stays the user's, as Fresh writes `tsconfig.json` and `types/` there.
 - The step fails where `~/.config`, the directory or `config.json` is a link. The user owns
   `~/.config`, and a link would send ws's root to whatever it names.
+
+## The servers
+
+`lsp` in `config.json` names the language servers of `internal/editor/servers.yaml`, each by the
+path that `devtools.ServerPaths` gives it for the user's home.
+
+- Fresh takes a list of servers for a language, so dockerfile has two.
+- Each entry starts at once (`auto_start`), with the catalogue's arguments and options.
+- Fresh has no docker-compose language. ws adds one on the yaml grammar for `compose.yaml`,
+  `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` and the catalogue's globs. The server
+  sees a compose file by Fresh's key, the extension, mapped to `dockercompose`.
+- Ansible has no entry: no pattern tells a playbook from YAML, and `.yml` playbooks stay YAML.
+- Fresh's csharp plugin answers Roslyn's restore request for csharp-ls alone. Roslyn starts and
+  initialises, but project load and navigation are unverified.
+
+The role needs no server installed to succeed, as it only names paths. The `devtools` role
+installs them, so a user wanting both passes `--only devtools,fresh`.
+
+## Trust each project
+
+Fresh opens a folder with a project marker as Restricted, with every server off. Press T, then
+Enter, once per repository. Fresh stores the answer in
+`~/.local/share/fresh/workspaces/PATH/trust.json`, and a linked worktree inherits it. No key sets
+it, so ws cannot. A folder with no marker is trusted at once.

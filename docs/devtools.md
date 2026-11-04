@@ -44,8 +44,8 @@ postgres-language-server and docker-language-server are release binaries, each p
 `internal/server/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
 role downloads the one for the machine to `/usr/local/bin`, owned by root with mode 0755, so any
 `ws_user` can run it. A machine of another architecture fails the step. The settings name both by
-path, so Zed downloads neither.
-`ws server apply --only zed` does not install them: pass `--only devtools,zed`.
+path, so Zed downloads neither. Fresh names them too.
+`ws server apply --only zed` does not install them: pass `--only devtools,zed`, or `devtools,fresh`.
 
 - docker-language-server's telemetry is off, and its experimental `removeOverlappingIssues` drops
   the diagnostics that rcjsuen's server also gives. Check the option on each bump.

@@ -157,6 +157,8 @@ Workflows read and write; and no account permission. These stay manual:
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
   [The profile](docs/ikeward.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot);
+- Fresh's trust, once per repository: press T, then Enter
+  ([Trust each project](docs/fresh.md#trust-each-project));
 - the local list of words: set the secret `FORBIDDEN_WORDS` on GitHub, and place
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
   ([The hooks](docs/checks.md#the-hooks)).
