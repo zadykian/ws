@@ -58,10 +58,11 @@ The gates are `shell`, `yamllint`, `sizecheck`, `vale`, `lychee`, `rumdl`, `acti
 It installs yamllint into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` builds ws and runs `ws server apply`
-twice in an Ubuntu 26.04 container, `signoz` forges SigNoz's compose files again, and `install`
-tries `install.sh`. `rootless` runs the rootless daemon and the firewall on a booted runner
-([The rootless job](docs/checks-rootless.md)). `mac` sets up a Mac on GitHub's macOS runner, and
-`mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up Ghostty and cld on a third
+twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges SigNoz's
+compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon and the
+firewall on a booted runner ([The rootless job](docs/checks-rootless.md)). `mac` sets up a Mac on
+GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up Ghostty
+and cld on a third
 ([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of `ws server apply` sets up the
 machine that runs it, as below.
 
