@@ -18,7 +18,7 @@ func zedStep(m *effecttest.Machine, out *effecttest.Out) *setup.Zed {
 	m.Dirs["/h/Applications/Zed.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
 	return &setup.Zed{
-		Home: "/h", Settings: []byte("{}\n"), Keymap: []byte(zedKeymap), M: m, Out: out,
+		Home: "/h", Settings: []byte("{}\n"), Keymap: func() ([]byte, error) { return []byte(zedKeymap), nil }, M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 	}
 }
@@ -180,5 +180,18 @@ func TestZedLeavesAKeymapWithAnotherFirstLineAndWarnsOnce(t *testing.T) {
 	if got := string(m.Files["/h/.config/zed/keymap.json"]); got != "[]\n" ||
 		strings.Count(strings.Join(out.Lines, "\n"), "keymap.json is not ws's: move it away") != 1 {
 		t.Errorf("keymap.json = %q, out %v; want it left, with one warning", got, out.Lines)
+	}
+}
+
+func TestARenderThatFailsFailsThePlanAndTheReport(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := zedStep(m, &effecttest.Out{})
+	boom := errors.New("render failed")
+	s.Keymap = func() ([]byte, error) { return nil, boom }
+	if _, err := s.Plan(context.Background()); !errors.Is(err, boom) {
+		t.Errorf("Plan error = %v; want %v", err, boom)
+	}
+	if _, err := s.Report(context.Background()); !errors.Is(err, boom) {
+		t.Errorf("Report error = %v; want %v", err, boom)
 	}
 }

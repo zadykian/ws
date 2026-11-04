@@ -16,6 +16,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/internal/editor/zed"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/mac"
@@ -87,7 +88,7 @@ func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out,
 		setup.Cable{Conf: c, M: m, Out: out},
 		&setup.Git{Conf: c, Home: home, XDG: xdg, M: m, Out: out},
 		&setup.Ghostty{Home: home, Settings: mac.Ghostty, M: m, Out: out},
-		&setup.Zed{Home: home, Settings: mac.Zed, Keymap: mac.ZedKeymap, M: m, Out: out},
+		&setup.Zed{Home: home, Settings: mac.Zed, Keymap: zed.Keymap, M: m, Out: out},
 		&setup.Cld{Home: home, M: m, Out: out, Check: check},
 		&setup.Tunnel{Conf: c, Home: home, Plist: mac.TunnelPlist, M: m, Out: out, Text: text,
 			Check: check},

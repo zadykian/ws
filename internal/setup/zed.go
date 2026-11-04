@@ -14,8 +14,9 @@ type Zed struct {
 	Home string
 	// Settings is the text of mac/zed.json.
 	Settings []byte
-	// Keymap is the text of mac/zed-keymap.json, written whole as keymap.json.
-	Keymap []byte
+	// Keymap renders the keymap, written whole as keymap.json. A render that fails fails the plan
+	// and the report.
+	Keymap func() ([]byte, error)
 	M      effect.Machine
 	Out    effect.Out
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.
@@ -46,17 +47,25 @@ func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: append(append(app, font...), z.files()...)}, nil
+	files, err := z.files()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: append(append(app, font...), files...)}, nil
 }
 
 // Report says how the casks and the files stand. settings.json is Zed's own, which ws writes once
 // and never reads, so a report only finds it.
 func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
+	keymap, err := z.Keymap()
+	if err != nil {
+		return nil, err
+	}
 	dir := z.Home + "/.config/zed"
 	return gather(ctx, z.casks().report(ctx, "zed", "Zed.app", z.Home),
 		userPath{M: z.M, Kind: step.DirItem, Path: dir},
 		userFile{M: z.M, Path: dir + "/global_settings.json", Text: z.global(), Mode: 0o644, Own: zedOwn(zedHeader, true)},
-		userFile{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
+		userFile{M: z.M, Path: dir + "/keymap.json", Text: keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
 		userPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
 
