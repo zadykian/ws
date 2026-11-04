@@ -42,6 +42,6 @@ terminal sends it. "tmux" is tmux's defaults or cld's servers.
 | Ctrl+Q | Go to action | yes | pressed twice in cld's sessions, its prefix there | yes |
 
 helix drops Shift from a character key, space too, whatever the terminal. So Shift+Alt+Space,
-Second basic completion, arrives as Alt+Space, which `config.toml` binds to it as well.
+Second basic completion, arrives as Alt+Space, which the old `config.toml` bound to it as well.
 Shift+Ctrl+Space, Parameter info, arrives as Ctrl+Space, Completion. On a Mac, the Alt keys need
 Option to act as Meta or send Esc+.

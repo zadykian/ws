@@ -1,6 +1,6 @@
 # The actions helix lacks, A to J
 
-helix has no command for these, and `config.toml` binds them no key. Some share a key with an
+helix has no command for these, and the old `config.toml` bound them no key. Some share a key with an
 action of [the actions helix has](actions.md). The rest, from L, are in [L to Z](lacks-l-z.md).
 
 | F12 action | F12's keys |

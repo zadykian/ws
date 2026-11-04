@@ -1,7 +1,7 @@
 # helix's F12 keymap
 
-F12 is the keymap GoLand and Rider use here: `F12.xml`, 736 actions over IntelliJ's default
-keymap, in Visual Studio's style. The `helix` role's `config.toml` binds the keys of each F12
+F12 is the keymap GoLand and Rider use here: `F12.xml`, 736 actions over IntelliJ's default keymap,
+in Visual Studio's style. The `config.toml` that the `helix` role wrote bound the keys of each F12
 action that helix has a command for, in normal and insert mode. These pages list those 109 actions
 by topic, with helix's own key for each, then the 414 that helix has no command for. 107 of the 109
 are bound: Parameter info and Open aren't, and [their tables](helix-keymap/actions.md) say why. The
