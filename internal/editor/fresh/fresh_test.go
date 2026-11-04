@@ -147,3 +147,26 @@ func TestEveryActionHasATargetOrAReason(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestAStrokeIsSpeltAsFreshSpellsIt(t *testing.T) {
+	for _, c := range []struct {
+		stroke string
+		want   press
+	}{
+		{"ctrl+s", press{"s", []string{"ctrl"}}},
+		{"f5", press{"F5", nil}},
+		{"ctrl+alt+shift+pageup", press{"PageUp", []string{"ctrl", "alt", "shift"}}},
+		{"escape", press{"Esc", nil}},
+		{"cmd+space", press{"Space", []string{"super"}}},
+		{"ctrl+[", press{"[", []string{"ctrl"}}},
+	} {
+		chord, err := editor.ParseChord(c.stroke)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := spell(chord[0])
+		if got.Key != c.want.Key || !slices.Equal(got.Modifiers, c.want.Modifiers) {
+			t.Errorf("%s = %+v; want %+v", c.stroke, got, c.want)
+		}
+	}
+}
