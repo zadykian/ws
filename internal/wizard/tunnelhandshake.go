@@ -45,7 +45,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 		return errors.New(tunnelStage + ": ssh -G ws gives another host than " + wsEnd + ", ws's end of the " +
 			"tunnel, which ws mac apply's config.d/ws names once launchd has ws-tunnel")
 	}
-	out, err := t.Host.SSH.Run(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
+	out, err := t.Host.SSH.Tunnel(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
 	if err != nil || strings.TrimSpace(string(out)) != "ok" {
 		last := ""
 		if err != nil {

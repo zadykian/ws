@@ -47,26 +47,37 @@ func (s SSH) room() bool {
 //     adds .1, so that a master made before it never carries a call to the new address.
 //   - A master lives 30 minutes past its last call, which outlasts a Homebrew install between two.
 //   - It runs no LocalCommand, as config.d/ws's that starts cld's watcher in a Ghostty pane.
-func (s SSH) argv(args []string) []string {
+func (s SSH) argv(_ context.Context, args []string) []string {
 	first := s.First()
-	var a []string
-	if s.room() {
-		suffix := ""
-		if first != "" {
-			suffix = ".1"
-		}
-		a = append(a, "-o", "ControlMaster=auto", "-o", "ControlPath="+s.Lock+"/%n"+suffix,
-			"-o", "ControlPersist=30m")
+	suffix := ""
+	if first != "" {
+		suffix = ".1"
 	}
-	a = append(a, "-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=yes", "-o", "UpdateHostKeys=no",
-		"-o", "CheckHostIP=no", "-o", "ServerAliveInterval=15", "-o", "PermitLocalCommand=no")
+	a := s.shared("%n" + suffix)
 	if first != "" {
 		a = append(a, "-o", "HostName="+first)
 	}
 	return append(a, args...)
 }
 
+// shared returns the options that every call needs, with the master's socket in the lock.
+func (s SSH) shared(socket string) []string {
+	var a []string
+	if s.room() {
+		a = append(a, "-o", "ControlMaster=auto", "-o", "ControlPath="+s.Lock+"/"+socket,
+			"-o", "ControlPersist=30m")
+	}
+	return append(a, "-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=yes", "-o", "UpdateHostKeys=no",
+		"-o", "CheckHostIP=no", "-o", "ServerAliveInterval=15", "-o", "PermitLocalCommand=no")
+}
+
+// Tunnel runs ssh through the tunnel, as config.d/ws leads, on a master of its own in the lock, so
+// that it never rides the master of a direct call.
+func (s SSH) Tunnel(ctx context.Context, args ...string) ([]byte, error) {
+	return s.M.Run(ctx, "ssh", append(s.shared("%n"), args...)...)
+}
+
 // Run runs ssh with the arguments, and returns its standard output.
 func (s SSH) Run(ctx context.Context, args ...string) ([]byte, error) {
-	return s.M.Run(ctx, "ssh", s.argv(args)...)
+	return s.M.Run(ctx, "ssh", s.argv(ctx, args)...)
 }

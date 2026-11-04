@@ -35,7 +35,7 @@ func withSecrets(t *testing.T, status string) (*WsRun, *effecttest.Machine, stri
 }
 
 func sendLine(r *WsRun, path string) string {
-	return "ssh " + strings.Join(r.Host.SSH.argv([]string{"-o", "BatchMode=yes", "ws-ssh", "umask 077 && cat >" + path}), " ")
+	return "ssh " + strings.Join(r.Host.SSH.argv(context.Background(), []string{"-o", "BatchMode=yes", "ws-ssh", "umask 077 && cat >" + path}), " ")
 }
 
 func sum(b string) string {

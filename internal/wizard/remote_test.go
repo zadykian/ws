@@ -11,7 +11,7 @@ import (
 
 // remoteLine is the ssh command line that Remote runs for the operation.
 func remoteLine(r *Remote, op ...string) string {
-	return "ssh " + strings.Join(r.SSH.argv(r.args(op)), " ")
+	return "ssh " + strings.Join(r.SSH.argv(context.Background(), r.args(op)), " ")
 }
 
 func TestRemoteStatus(t *testing.T) {

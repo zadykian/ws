@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -20,9 +21,14 @@ func TestSSHArgv(t *testing.T) {
 		if tc.first != "" {
 			m.Files[tc.lock+"/"+FirstFile] = []byte(tc.first + "\n")
 		}
-		got := strings.Join(SSH{M: m, Lock: tc.lock}.argv([]string{"ws-ssh"}), " ") + " "
+		got := strings.Join(SSH{M: m, Lock: tc.lock}.argv(context.Background(), []string{"ws-ssh"}), " ") + " "
 		if !strings.Contains(got, tc.want) || (tc.notWant != "" && strings.Contains(got, tc.notWant)) {
 			t.Errorf("%s: argv = %q; want %q, not %q", name, got, tc.want, tc.notWant)
 		}
 	}
+}
+
+// tunnelCall is the call that Tunnel makes.
+func tunnelCall(s SSH, args ...string) string {
+	return "ssh " + strings.Join(append(s.shared("%n"), args...), " ")
 }
