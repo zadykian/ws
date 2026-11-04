@@ -27,9 +27,9 @@ func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.Change, error) {
-	// A WS_IDENTITY outside Secretive's PublicKeys, with no agent, is a key in a file.
+	// A WS_IDENTITY that is no key of Secretive's, with no agent, is a key in a file.
 	if c.Identity != "" && c.IdentityAgent == "" {
-		if pub := sshcfg.Expand(c.Identity, k.Home); !strings.HasPrefix(pub, k.secretive()+"/PublicKeys/") {
+		if pub := sshcfg.Expand(c.Identity, k.Home); !sshcfg.SecretiveKey(pub, k.Home) {
 			return k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 		}
 	}
@@ -41,10 +41,12 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 	var cs []step.Change
 	switch key := strings.TrimSuffix(pub, ".pub"); {
 	case agent != "":
-		if !k.listed(ctx, pub, agent) {
+		if !k.listed(ctx, id.Text, agent) {
 			return nil, fmt.Errorf("%s: the agent at %s lists no key of %s: open Secretive, where it is that agent, "+
 				"or start the agent, then run the wizard again", macKey, agent, pub)
 		}
+		// The stages after this one offer the key, and ssh reads its .pub for that.
+		cs = append(cs, setup.PlanCopy(k.M, pub, id.Text, k.Home)...)
 	case !k.exists(key) && !k.exists(pub):
 		choose := chooseKey{pub: pub, app: k.app()}
 		if !choose.app {

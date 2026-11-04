@@ -30,27 +30,34 @@ func (s SSH) identity(ctx context.Context, f sshFacts) (sshcfg.Identity, error) 
 	return id, nil
 }
 
-// PickKey picks the key that ssh offers ws from mac.conf and Secretive's keys, and checks its .pub
-// where mac.conf or Secretive names one.
+// PickKey picks the key that ssh offers ws from mac.conf and the keys of Secretive's agent, and
+// checks its .pub where mac.conf or Secretive names one. A key that the agent lists needs no file:
+// it comes as ws's copy, with the copy's text, which a later step writes.
 func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (sshcfg.Identity, error) {
-	secretive := home + "/" + sshcfg.SecretiveData
-	var keys []string
-	info, err := m.Stat(secretive + "/socket.ssh")
-	socket := err == nil && info.Mode&fs.ModeSocket != 0
-	if socket && c.Identity == "" {
-		if keys, err = m.ReadDir(secretive + "/PublicKeys"); err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return sshcfg.Identity{}, err
-		}
-		keys = files(m, secretive+"/PublicKeys", keys)
+	keys, socket, err := SecretiveKeys(ctx, m, home)
+	if err != nil && c.Identity == "" {
+		return sshcfg.Identity{}, err
 	}
-	id, err := sshcfg.PickIdentity(c.Identity, c.IdentityAgent, c.GitSigningKey, home, socket, keys)
+	names := make([]string, 0, len(keys))
+	for _, k := range keys {
+		names = append(names, k.Name)
+	}
+	id, err := sshcfg.PickIdentity(c.Identity, c.IdentityAgent, c.GitSigningKey, home, socket, names)
 	if err != nil || !id.Check {
 		return id, err
 	}
 	file := sshcfg.Expand(id.Pub, home)
+	if k, ok := held(keys, file, home); ok {
+		id.Pub, id.Text = k.Pub(), k.Line+"\n"
+		return id, sshcfg.CheckKeyFile(sshcfg.Expand(id.Pub, home), k.Line)
+	}
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return id, fmt.Errorf("%s, mac.conf's WS_IDENTITY, is missing: make the key first", file)
+	}
+	if errors.Is(err, fs.ErrPermission) && sshcfg.SecretiveKey(file, home) {
+		return id, fmt.Errorf("cannot read %s, and Secretive's agent lists no key of it: open Secretive, "+
+			"or name another in mac.conf's WS_IDENTITY", file)
 	}
 	if err != nil {
 		return id, fmt.Errorf("cannot read %s: make it readable, or name another in mac.conf's WS_IDENTITY", file)
@@ -62,6 +69,7 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 		return id, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
 			"mac.conf's WS_IDENTITY", file)
 	}
+	id.Text = string(text)
 	return id, nil
 }
 
@@ -97,16 +105,4 @@ func (s SSH) cldTabs(ctx context.Context) bool {
 	}
 	_, err = s.M.Run(ctx, cld, "help", "restore", "tabs")
 	return err == nil
-}
-
-// files keeps the names in dir that are files, or links to files: the old script skipped a
-// directory named like a key.
-func files(m effect.Machine, dir string, names []string) []string {
-	var found []string
-	for _, name := range names {
-		if info, err := m.Stat(dir + "/" + name); err == nil && info.Mode.IsRegular() {
-			found = append(found, name)
-		}
-	}
-	return found
 }

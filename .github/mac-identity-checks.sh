@@ -90,9 +90,9 @@ done
 # Without them, config.d/ws must be the job's again.
 job
 
-# A stand-in for Secretive: ssh-agent at its socket under the runner's HOME, holding a P-256 key,
-# whose .pub is in PublicKeys. The runner must lack Secretive's container, and the file key. As the
-# script exits, on a signal too, the agent and the container go.
+# A stand-in for Secretive: ssh-agent at its socket under the runner's HOME, holding a P-256 key.
+# The runner must lack Secretive's container, and the file key. As the script exits, on a signal
+# too, the agent, the container and ws's copies go.
 secretive=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 data=$secretive/Data
 found=$(ls -d "$secretive" ~/.ssh/id_ed25519 2>/dev/null) || true
@@ -100,51 +100,75 @@ if [ -n "$found" ]; then
     error "the runner has $(echo "$found" | tr '\n' ' '), so the cases of Secretive's key go"
     exit 1
 fi
-# secretive_restore stops the stand-in agent, and removes Secretive's container.
+# secretive_restore stops the stand-in agent, and removes Secretive's container and ws's copies.
 secretive_restore() {
     [ -z "${secretive_agent-}" ] || kill "$secretive_agent" || true
     secretive_agent=
-    rm -rf "$secretive"
+    chmod -R u+rwx "$secretive" 2>/dev/null || true
+    rm -rf "$secretive" "$HOME/.config/ws/secretive"
+}
+# pubname PUB prints the name that Secretive gives the .pub, and ws's copy keeps: its MD5 in hex.
+pubname() {
+    ssh-keygen -E md5 -l -f "$1" | sed -e 's/^[0-9]* MD5://' -e 's/ .*//' -e 's/://g' -e 's/$/.pub/'
 }
 trap 'secretive_restore; [ ! -f "$tmp/job.conf" ] || cp "$tmp/job.conf" "$conf"; rm -rf "$tmp"' EXIT
 mkdir -p "$data/PublicKeys"
 ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$tmp/p256"
-cp "$tmp/p256.pub" "$data/PublicKeys/ws.pub"
 # Before Secretive's agent has its socket, ws must keep the file key.
 with
 prints ''
 secretive_agent=$(ssh-agent -s -a "$data/socket.ssh" |
     sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p')
-if [ -z "$secretive_agent" ] || ! SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$tmp/p256"; then
-    error "no ssh-agent at Secretive's socket took the key"
+if [ -z "$secretive_agent" ]; then
+    error "no ssh-agent at Secretive's socket"
+    exit 1
+fi
+# So must it while the agent has no key.
+prints ''
+if ! SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$tmp/p256"; then
+    error "ssh-agent at Secretive's socket took no key"
     exit 1
 fi
 rm "$tmp/p256"
-# So must it while PublicKeys has no key.
-mv "$data/PublicKeys/ws.pub" "$tmp/ws.pub"
-prints ''
-mv "$tmp/ws.pub" "$data/PublicKeys/ws.pub"
-# Without WS_IDENTITY, ws must take Secretive's agent and its one key, as a certificate is none, nor
-# a name with a blank, nor a directory. ws mac apply must warn as it replaces the file key. A second key
-# must stop ws mac apply, --check too, which must name both.
-cp "$tmp/p256.pub" "$data/PublicKeys/ws-cert.pub"
-cp "$tmp/p256.pub" "$data/PublicKeys/ws key.pub"
-mkdir "$data/PublicKeys/ws-dir.pub"
+# Without WS_IDENTITY, ws must take Secretive's agent and its one key, by ws's copy of its .pub.
+# PublicKeys is closed, as macOS 27 denies ws the files of Secretive's container: ws must ask the
+# agent. ws mac apply must warn as it replaces the file key, and write the copy where it is missing,
+# as a run shows and --check says. A second key must stop ws mac apply, --check too, which must name
+# both.
+chmod 000 "$data/PublicKeys"
+name=$(pubname "$tmp/p256.pub")
+copy=$HOME/.config/ws/secretive/$name
+cop=\~/.config/ws/secretive/$name
+mkdir -p "${copy%/*}"
+cp "$tmp/p256.pub" "$copy"
 sec=\~/${data#"$HOME/"}
 warned="ws mac apply: warning: Secretive's key replaces ~/.ssh/id_ed25519 as ws's: keep the file key"
 warned="$warned with WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the"
-warned="$warned key of $sec/PublicKeys/ws.pub on GitHub before ws's next install$nl"
-agented "$sec/PublicKeys/ws.pub" "$sec/socket.ssh"
+warned="$warned key of $cop on GitHub before ws's next install$nl"
+agented "$cop" "$sec/socket.ssh"
+rm "$copy"
+prints "ws mac apply: would write $copy, ws's copy of a key of Secretive's" --check
+[ ! -e "$copy" ] || error "ws mac apply --check wrote $copy"
+prints "ws mac apply: wrote $copy"
+cmp -s "$copy" "$tmp/p256.pub" || error "$copy is not the .pub of the agent's key"
+prints ''
+# A .pub in the container that mac.conf names, as a Mac before macOS 27 wrote, must become ws's copy.
+with "WS_IDENTITY=$sec/PublicKeys/$name"
+prints ''
+with
+chmod 755 "$data/PublicKeys"
 # As the warning says, the file key's .pub in WS_IDENTITY keeps the file key, though the runner
 # lacks it: config.d/ws must be the job's again (sed -n p changes nothing).
 with 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 changes -n p
 with
-cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
-several="ws mac apply: Secretive's agent holds several keys, $data/PublicKeys/other.pub,"
-several="$several $data/PublicKeys/ws.pub: name the one for ws in mac.conf's WS_IDENTITY"
+SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$tmp/key" || error "the agent took no second key"
+several="ws mac apply: Secretive's agent holds several keys, $copy,"
+several="$several $HOME/.config/ws/secretive/$(pubname "$tmp/key.pub"):"
+several="$several name the one for ws in mac.conf's WS_IDENTITY"
 stops "$several"
 stops "$several" --check
+cp "$tmp/key.pub" "$data/PublicKeys/other.pub"
 # WS_IDENTITY wins over them: a .pub of its own, or one of Secretive's, which takes its agent unless
 # WS_IDENTITY_AGENT names another.
 with "WS_IDENTITY=$tmp/key.pub"
@@ -156,7 +180,7 @@ agented "$sec/PublicKeys/other.pub" "$socket"
 # A key of a type that ws's OpenSSH lacks, as Secretive's ML-DSA, must stop ws mac apply, --check too.
 rm "$data/PublicKeys/other.pub"
 echo 'ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws' >"$data/PublicKeys/ws.pub"
-with
+with "WS_IDENTITY=$sec/PublicKeys/ws.pub"
 mldsa="ws mac apply: $data/PublicKeys/ws.pub holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks"
 stops "$mldsa"
 stops "$mldsa" --check

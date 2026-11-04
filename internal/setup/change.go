@@ -56,6 +56,8 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 			return fmt.Errorf("cannot write %s: %w", c.Path, err)
 		}
 		out.Say("wrote %s", c.Path)
+	case KeyCopy:
+		return applyCopy(ctx, m, out, c)
 	case MakeDir:
 		if err := m.Mkdir(c.Path, c.Mode); err != nil {
 			return fmt.Errorf("cannot make %s: %w", c.Path, err)

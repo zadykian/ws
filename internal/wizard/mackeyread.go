@@ -16,11 +16,10 @@ func firstFields(text string) string {
 	return ""
 }
 
-// listed reports whether the agent at the socket lists the key of the .pub file.
-func (k *MacKey) listed(ctx context.Context, pub, socket string) bool {
-	text, err := k.M.ReadFile(pub)
-	want := firstFields(string(text))
-	if err != nil || want == "" {
+// listed reports whether the agent at the socket lists the key that the text of its .pub holds.
+func (k *MacKey) listed(ctx context.Context, text, socket string) bool {
+	want := firstFields(text)
+	if want == "" {
 		return false
 	}
 	out, err := k.M.Run(ctx, "env", "SSH_AUTH_SOCK="+socket, "ssh-add", "-L")

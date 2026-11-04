@@ -92,8 +92,9 @@ Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretiv
 its app is there already, the wizard asks nothing. It opens the app, and waits up to 15 minutes for
 a P-256 key made there, at its default protection, which asks for Touch ID at each login. Where git
 has a name, a second key follows, for git's signing, at Notify, which signs with no prompt while
-the Mac is unlocked ([git](mac-git.md)). Their `.pub` files and Secretive's agent go in `mac.conf`,
-as `WS_IDENTITY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_KEY`. An empty `WS_GIT_SIGNING_KEY`
+the Mac is unlocked ([git](mac-git.md)). The wizard takes each from the agent, and writes a copy of
+its `.pub` ([Secretive's keys](mac-git.md#secretives-keys)). The copies and the agent go in `mac.conf`, as
+`WS_IDENTITY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_KEY`. An empty `WS_GIT_SIGNING_KEY`
 keeps `ws mac apply`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above.
 Where `mac.conf` has no `WS_IDENTITY` line, the wizard writes `WS_IDENTITY=~/.ssh/id_ed25519.pub`
 for a file key, made now or found there. A Secretive key made later then does not take its place.

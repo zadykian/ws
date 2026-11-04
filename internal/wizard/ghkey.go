@@ -28,7 +28,10 @@ func (g *Gh) key(ctx context.Context) (pub, key string, err error) {
 		return "", "", noKey{err}
 	}
 	pub = sshcfg.Expand(id.Pub, g.Home)
-	text, err := g.M.ReadFile(pub)
+	text := []byte(id.Text)
+	if !id.Check { // the default file key, which PickKey does not read
+		text, err = g.M.ReadFile(pub)
+	}
 	if f := strings.Fields(string(text)); err == nil && len(f) >= 2 {
 		return pub, f[0] + " " + f[1], nil
 	}

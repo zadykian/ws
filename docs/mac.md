@@ -63,8 +63,8 @@ agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
 `WS_USER` is the user ssh logs in as, `root` by default: the server's `ws_user`, where a run set
 another. A key with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does:
 `root` for `WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for
-`WS_GIT_SIGNING_KEY`. Where Secretive's socket is there and `PublicKeys` holds one key for ws,
-`WS_IDENTITY` and `WS_IDENTITY_AGENT` take that key and the socket. Several stop the script
+`WS_GIT_SIGNING_KEY`. Where Secretive's agent lists one key for ws, `WS_IDENTITY` and
+`WS_IDENTITY_AGENT` take ws's copy of that key's `.pub` and the socket. Several stop the script
 ([ssh's hosts](#sshs-hosts)). With none, or no socket, `WS_IDENTITY` takes the file key's `.pub`,
 `~/.ssh/id_ed25519.pub`, and `WS_IDENTITY_AGENT` none, as the others do.
 
@@ -100,10 +100,10 @@ host on another network that uses the LAN's subnet then meets a host key mismatc
 A session ends after 120 s without word from ws, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`). Where Secretive's agent has its socket in
-`~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data`, which stays after Secretive quits,
-the key is its one `.pub` in `Data/PublicKeys`. That leaves out git's signing key, a `-cert.pub` and
-a name of other than letters, digits and `._@+-`. The script stops on several, and names them.
-Without one, or elsewhere, the key is `~/.ssh/id_ed25519`, its passphrase kept in the Keychain.
+`~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data`, the key is the one that the agent
+lists, but git's signing key and a certificate ([Secretive's keys](mac-git.md#secretives-keys)). The
+script stops on several, and names them. Without one, or elsewhere, the key is
+`~/.ssh/id_ed25519`, its passphrase kept in the Keychain.
 Where `config.d/ws` gave ws that key, the script warns as Secretive's replaces it. Keep the file key
 with `WS_IDENTITY=~/.ssh/id_ed25519.pub` for an installed ws, or put Secretive's key on GitHub
 before ws's next install. `WS_IDENTITY` names any `.pub`, as one of Secretive's. Its agent is the

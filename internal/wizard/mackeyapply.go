@@ -19,6 +19,8 @@ func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 			err = k.make(ctx, c.path)
 		case setup.Write:
 			err = k.pin(ctx, c)
+		case setup.KeyCopy:
+			err = setup.Apply(ctx, k.M, k.Out, c)
 		case chooseKey:
 			err = k.choose(ctx, c)
 		case gitKey:

@@ -23,13 +23,12 @@ func newMacKey(t *testing.T, conf string) (*MacKey, *effecttest.Machine, *effect
 
 func TestMacKeyListed(t *testing.T) {
 	k, m, out := newMacKey(t, "")
-	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["env SSH_AUTH_SOCK=/s ssh-add -L"] = effecttest.Result{Out: []byte("ssh-rsa BBBB x\nssh-ed25519 AAAAC3 other\n")}
-	if !k.listed(context.Background(), "/h/k.pub", "/s") || k.listed(context.Background(), "/h/none.pub", "/s") {
-		t.Error("listed did not find the key of the .pub, or found a missing one")
+	if !k.listed(context.Background(), pubText, "/s") || k.listed(context.Background(), "", "/s") {
+		t.Error("listed did not find the key of the .pub, or found one in no text")
 	}
 	m.Results["env SSH_AUTH_SOCK=/s ssh-add -L"] = effecttest.Result{Out: []byte("ssh-rsa BBBB x\n")}
-	if k.listed(context.Background(), "/h/k.pub", "/s") {
+	if k.listed(context.Background(), pubText, "/s") {
 		t.Error("listed found a key the agent lacks")
 	}
 	if len(out.Lines) != 0 {

@@ -3,7 +3,6 @@ package setup
 import (
 	"fmt"
 	"io/fs"
-	"strings"
 
 	"github.com/zadykian/ws/internal/gitcfg"
 	"github.com/zadykian/ws/internal/sshcfg"
@@ -53,6 +52,7 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 			cs = append(cs, MakeDir{d.path, d.mode})
 		}
 	}
+	cs = append(cs, PlanCopy(g.M, key.Pub, key.Text, g.Home)...)
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.Pub, Gh: gh, Dir: dir}
 	secretive := g.Home + "/" + sshcfg.SecretiveData
 	type file struct {
@@ -60,7 +60,7 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 		mode       fs.FileMode
 	}
 	var list []file
-	if strings.HasPrefix(key.Pub, secretive+"/PublicKeys/") && strings.HasSuffix(key.Pub, ".pub") {
+	if sshcfg.SecretiveKey(key.Pub, g.Home) {
 		in.Program = dir + "/secretive-ssh-keygen"
 		list = append(list, file{in.Program, gitcfg.Wrapper(secretive), 0o755})
 	}

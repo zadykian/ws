@@ -3,9 +3,11 @@
 # Secretive's agent is an ssh-agent at its socket that holds a P-256 key, whose .pub is in
 # PublicKeys. With a mac.conf of its own that names that .pub in WS_IDENTITY, --check must print
 # nothing of the stage while the agent lists the key. With git's name too, it must say it would wait
-# for git's key made in Secretive, unless mac.conf has an empty WS_GIT_SIGNING_KEY. Once the agent
-# lacks ws's key, a run and --check must stop at the stage, naming the socket, before ws mac apply's.
-# None may change that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
+# for git's key made in Secretive, unless mac.conf has an empty WS_GIT_SIGNING_KEY. With no
+# WS_IDENTITY and PublicKeys closed, as macOS 27 denies ws Secretive's files, --check must take the
+# agent's key, and say it would write ws's copy of its .pub. Once the agent lacks ws's key, a run and
+# --check must stop at the stage, naming the socket, before ws mac apply's. None may change that
+# mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
 
@@ -61,6 +63,16 @@ echo WS_GIT_SIGNING_KEY= >>"$conf"
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] ||
     error "ws mac wizard --check with an empty WS_GIT_SIGNING_KEY exited $status, with '$mac'"
+name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
+    sed -e 's/^[0-9]* MD5://' -e 's/ .*//' -e 's/://g' -e 's/$/.pub/')
+copy=$HOME/.config/ws/secretive/$name
+grep -v '^WS_IDENTITY' ~/.config/ws/mac.conf >"$conf"
+chmod 000 "$data/PublicKeys"
+keys --check
+chmod 755 "$data/PublicKeys"
+want="ws mac wizard: would write $copy, ws's copy of a key of Secretive's"
+printf '%s\n' "$out" | grep -qxF "$want" || error "ws mac wizard --check said no '$want'"
+[ ! -e "$copy" ] || error "ws mac wizard --check wrote $copy"
 cp "$RUNNER_TEMP/agent.conf.before" "$conf"
 SSH_AUTH_SOCK=$data/socket.ssh ssh-add -D 2>/dev/null
 want="ws mac wizard: Mac key: the agent at $data/socket.ssh lists no key of $pub: open Secretive,"

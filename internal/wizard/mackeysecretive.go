@@ -51,7 +51,7 @@ func (k *MacKey) secretiveKey(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if !k.listed(ctx, sshcfg.Expand(id.Pub, k.Home), sshcfg.Expand(id.Agent, k.Home)) {
+	if !k.listed(ctx, id.Text, sshcfg.Expand(id.Agent, k.Home)) {
 		return fmt.Errorf("%s: Secretive's agent lists no key of %s: finish Secretive's setup, then run the wizard "+
 			"again", macKey, sshcfg.Expand(id.Pub, k.Home))
 	}
