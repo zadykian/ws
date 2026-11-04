@@ -21,7 +21,7 @@ func stepNamed(t *testing.T, m *effecttest.Machine, v values.Values, name string
 	return nil
 }
 
-func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
+func TestLanguagesAreWrittenOnceForTheUser(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/home/ws"] = 0o755
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
@@ -32,8 +32,8 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 	if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
-	if o := m.Owners["/home/ws/.config/helix/config.toml"]; o != [2]int{1000, 1000} {
-		t.Errorf("config.toml owner %v", o)
+	if o := m.Owners["/home/ws/.config/helix/languages.toml"]; o != [2]int{1000, 1000} {
+		t.Errorf("languages.toml owner %v", o)
 	}
 	if _, ok := m.Files["/home/ws/.config/helix/languages.toml"]; !ok {
 		t.Error("languages.toml is not written")
@@ -41,7 +41,7 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 }
 
 func TestConfigRefusesALink(t *testing.T) {
-	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/helix", "/home/ws/.config/helix/config.toml"} {
+	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/helix", "/home/ws/.config/helix/languages.toml"} {
 		m := effecttest.NewMachine()
 		m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 		m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
