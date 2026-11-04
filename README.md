@@ -2,7 +2,7 @@
 
 Sets up my development server from code. `ws server apply` runs on the machine itself. It sets up
 packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It sets up
-Docker, the shell, tmux, the Fresh and helix editors and Zed's server. It sets up claude and
+Docker, the shell, tmux, the Fresh editor and Zed's server. It sets up claude and
 [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
 

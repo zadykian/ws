@@ -6,7 +6,6 @@ Where cld's sessions run the snap's tmux, end them before a real run. cld then f
 `/usr/bin/tmux` first on the `PATH`, while their key bindings call `/snap/bin/tmux`, which the
 removal takes away.
 
-The server options that let helix's keys through tmux are in [helix's keys](helix.md#helixs-keys).
 Fresh asks for them by [a wrapper](fresh.md#the-wrapper).
 
 The [zed role](zed.md#terminals-in-tmux) reads a config of its own, with `-f`, on a socket of its

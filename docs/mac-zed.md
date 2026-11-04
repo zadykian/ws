@@ -72,7 +72,7 @@ server to every YAML file, Ansible's too.
   so the seed names `ws` alone.
 - The terminal docks right, as the project, git and outline panels dock left. A resize of a terminal
   docked at a side duplicates its lines (zed#65316, open).
-- `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives helix's
+- `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives the
   Alt keys in Zed's terminal, at the cost of Option's special characters. `detect_venv` is `off`:
   with it on, a venv in the directory has Zed type its activation line into every new tab, which
   reaches a reattached tmux session and whatever runs there.

@@ -5,7 +5,7 @@ ssh. The role writes the settings that Zed's server on ws reads, and raises the 
 that the server needs. The Mac's side is `docs/mac-zed.md`.
 
 `~/.config/zed/settings.json` is owned by `ws_user`. A run replaces a change made to it by hand
-and keeps the old file beside the new one, as [helix](helix.md) does for its files. The key
+and keeps the old file beside the new one. The key
 `zed_nofile` of `/etc/ws/host_vars.yml` sets the limit, 65536 by default.
 
 ## What runs where
@@ -64,7 +64,7 @@ Roslyn takes the first of these as its solution:
 3. Every `.csproj` below it, 500 at most, with `test` and `tests` dropped first.
 
 A `.sln` beside a `.slnx` count as two, which falls to the third. .NET 10's `dotnet new sln`
-writes `.slnx`. helix's root is the git root instead ([helix](helix.md#c-in-helix)).
+writes `.slnx`.
 
 The C# extension types `.csproj`, `.props`, `.targets` and `.slnx`, and offers Restore and Build
 tasks for projects and solutions. `.sln` opens as plain text.
@@ -139,7 +139,7 @@ tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` li
 - A tab that takes over a session keeps that session's shell, and so its environment.
 - The scrollback, and any search of it, are tmux's: the wheel enters tmux's copy mode, not Zed's own
   scrollback.
-- tmux has no prefix, so helix gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
+- tmux has no prefix, so Fresh gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
   has the rest.
 - Without tmux on the `PATH` the tab runs a login shell.
 - A task ignores the wrapper.
