@@ -10,8 +10,8 @@ Zed applies no project settings until the worktree is trusted
 ## A SQL Server project
 
 Zed's SQL language serves PostgreSQL. A T-SQL project turns its language server off and formats
-with sql-formatter, which the `zed` role links to `/usr/local/bin/sql-formatter`. The settings name
-the bare command, so the file stays the same on every machine.
+with sql-formatter, which the `devtools` role links to `/usr/local/bin/sql-formatter`. The
+settings name the bare command, so the file stays the same on every machine.
 
 ```jsonc
 {

@@ -23,7 +23,7 @@ Each role has a page of its own. A role is Go steps of ws:
   repositories.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
-  gopls, Delve, roslyn-language-server and rustup.
+  gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json`, a slice for its containers and
   `ws_user`'s rootless daemon.
 - [`claude`](docs/claude.md): claude, its user settings and telemetry, its sessions after a reboot,
@@ -32,8 +32,8 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
 - [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and its config for the Go and C#
   servers.
-- [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the npm
-  servers, the terminals' tmux wrapper, and the open-file limit that it needs.
+- [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the
+  terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](docs/zed-projects.md) cover SQL Server and Ansible.
 
 `mac/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](docs/mac.md).

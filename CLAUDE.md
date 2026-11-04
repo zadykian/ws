@@ -109,13 +109,14 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   [update.go](internal/update/update.go)), and so are yamllint
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
   ([homebrew.go](internal/wizard/homebrew.go)). Go is checked against the
-  SHA-256 its publisher lists ([devtools](docs/devtools.md)). Zed's postgres-language-server and
+  SHA-256 its publisher lists ([devtools](docs/devtools.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
   ([binaries.go](internal/server/devtools/binaries.go)). gopls and Delve are built through Go's
   checksum database. roslyn-language-server is pinned by version alone
-  ([pins.go](internal/server/devtools/pins.go)). Zed's npm servers are checked against the sha512
-  `integrity` of their lockfile ([devtools](docs/devtools.md#the-npm-servers)). Zed's other downloads on ws
-  are outside the rule ([zed](docs/zed.md#zeds-downloads-outside-the-sha-256-rule)).
+  ([pins.go](internal/server/devtools/pins.go)). The npm servers are checked against the sha512
+  `integrity` of their lockfile ([devtools](docs/devtools.md#the-npm-servers)). Zed's other
+  downloads on ws are outside the rule
+  ([zed](docs/zed.md#zeds-downloads-outside-the-sha-256-rule)).
 - foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
