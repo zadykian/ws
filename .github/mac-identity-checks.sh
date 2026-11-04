@@ -8,14 +8,12 @@ ws=$HOME/.ssh/config.d/ws
 cp "$ws" "$tmp/ws"
 warned=
 
-# keyed LINE... checks that ssh -G gives ws and ws-ssh LINE..., a line each, of its settings for the
-# key. Those are identitiesonly, identityagent and identityfile, a path from the home by ~/.
+# keyed LINE... checks that ssh -G gives ws LINE..., a line each, of its settings for the key.
+# Those are identitiesonly, identityagent and identityfile, a path from the home by ~/.
 keyed() {
-    for host in ws ws-ssh; do
-        got=$(ssh -G "$host" | awk '$1 ~ /^identit(iesonly|yagent|yfile)$/' |
-            sed "s|^\([a-z]*\) $HOME/|\1 ~/|")
-        [ "$got" = "$(printf '%s\n' "$@")" ] || error "ssh -G $host gives '$got', not '$*'"
-    done
+    got=$(ssh -G ws | awk '$1 ~ /^identit(iesonly|yagent|yfile)$/' |
+        sed "s|^\([a-z]*\) $HOME/|\1 ~/|")
+    [ "$got" = "$(printf '%s\n' "$@")" ] || error "ssh -G ws gives '$got', not '$*'"
 }
 
 # changes SED... edits the job's config.d/ws with sed's arguments SED... into the file a run must
@@ -32,7 +30,7 @@ changes() {
 }
 
 # agented PUB SOCKET: changes, with the file key's lines replaced by those of the agent at SOCKET,
-# which holds the key of PUB. Then ssh -G must give ws and ws-ssh that agent and PUB.
+# which holds the key of PUB. Then ssh -G must give ws that agent and PUB.
 agented() {
     changes -e "s|^    IdentityFile ~/.ssh/id_ed25519\$|    IdentityFile $1|" \
         -e '/^    UseKeychain yes$/d' -e "s|^    AddKeysToAgent yes\$|    IdentityAgent \"$2\"|"

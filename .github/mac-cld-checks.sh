@@ -6,7 +6,7 @@
 #   sh .github/mac-cld-checks.sh watch LOG
 #   sh .github/mac-cld-checks.sh quiet
 #
-# lines: ssh -G gives ws and ws-ssh the two lines of ws mac apply ssh, with yes, or neither, with no. watch:
+# lines: ssh -G gives ws the two lines of ws mac apply ssh, with yes, or neither, with no. watch:
 # ssh -G ws's LocalCommand, run by zsh and by sh as ssh runs it, must start the watcher in a
 # Ghostty pane alone. The job's stub cld writes a line to LOG at each start. Elsewhere, and without
 # cld, the line must start none and exit 0. quiet: ws mac apply, and its --check, must print
@@ -26,26 +26,24 @@ error() {
     fail=1
 }
 
-# lines yes|no checks ssh -G's PermitLocalCommand and LocalCommand for ws and ws-ssh. An ssh that
-# printed %d expanded would pass too.
+# lines yes|no checks ssh -G's PermitLocalCommand and LocalCommand for ws. An ssh that printed %d
+# expanded would pass too.
 lines() {
     expanded=$(printf '%s\n' "$want" | sed "s|%d|$HOME|g")
-    for host in ws ws-ssh; do
-        config=$(ssh -G "$host") || {
-            error "ssh -G $host failed"
-            continue
-        }
-        permit=$(printf '%s\n' "$config" | awk '$1 == "permitlocalcommand" { print $2 }')
-        command=$(printf '%s\n' "$config" | sed -n 's/^localcommand //p')
-        if [ "$1" = yes ]; then
-            [ "$permit" = yes ] || error "ssh -G $host gives permitlocalcommand '$permit', not yes"
-            [ "$command" = "$want" ] || [ "$command" = "$expanded" ] ||
-                error "ssh -G $host gives localcommand '$command', not '$want'"
-        else
-            [ "$permit" = no ] || error "ssh -G $host gives permitlocalcommand '$permit', not no"
-            [ -z "$command" ] || error "ssh -G $host gives localcommand '$command', not none"
-        fi
-    done
+    config=$(ssh -G ws) || {
+        error "ssh -G ws failed"
+        return
+    }
+    permit=$(printf '%s\n' "$config" | awk '$1 == "permitlocalcommand" { print $2 }')
+    command=$(printf '%s\n' "$config" | sed -n 's/^localcommand //p')
+    if [ "$1" = yes ]; then
+        [ "$permit" = yes ] || error "ssh -G ws gives permitlocalcommand '$permit', not yes"
+        [ "$command" = "$want" ] || [ "$command" = "$expanded" ] ||
+            error "ssh -G ws gives localcommand '$command', not '$want'"
+    else
+        [ "$permit" = no ] || error "ssh -G ws gives permitlocalcommand '$permit', not no"
+        [ -z "$command" ] || error "ssh -G ws gives localcommand '$command', not none"
+    fi
 }
 
 # try SHELL TERM_PROGRAM COMMAND runs COMMAND as ssh runs a LocalCommand, SHELL -c COMMAND, with
