@@ -131,7 +131,9 @@ too. The system's file goes through an Include there, so its relative Includes r
 
 Through the forward, ws takes logins from the internet: by key alone, as everywhere, with fail2ban
 banning the address of the network the Mac is on after 5 failed ones. Over the tunnel, ws sees
-the Mac as `10.99.0.2`, whom neither fail2ban nor sshd's penalties ban.
+the Mac as `10.99.0.2`. Failed logins over the tunnel ban it, which shuts `ssh ws` out for an
+hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and from there
+`fail2ban-client set sshd unbanip 10.99.0.2` lifts the ban.
 
 Unless `security_outbound` is false, ws opens no connection to the Mac over the cable, the LAN or
 the tunnel ([The firewall](wireguard.md#the-firewall), [Outbound](security.md#outbound)). That
