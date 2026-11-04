@@ -12,16 +12,17 @@ import (
 )
 
 // gitKey is the signing key: its .pub, and the key's type and base64, which are empty before the
-// key is made.
+// key is made. Text is what ws's copy of its .pub holds, for a key that Secretive's agent lists.
 type gitKey struct {
-	Pub, Public string
-	Make        bool
+	Pub, Public, Text string
+	Make              bool
 }
 
 // key finds the signing key, WS_GIT_SIGNING_KEY with its ~/ the home. Without it, the key is
 // ~/.ssh/id_ed25519_signing, made once, as the shell role does on ws. No other key is made, and no
-// .pub replaced. It stops where the .pub is missing or unreadable, holds more than a public key's
-// line, as a private key does, or ssh-keygen can't read it.
+// .pub replaced. A key that Secretive's agent lists needs no file, as macOS 27 denies ws Secretive's
+// (docs/mac.md): git names ws's copy. Else it stops where the .pub is missing or unreadable, holds
+// more than a public key's line, as a private key does, or ssh-keygen can't read it.
 func (g *Git) key(ctx context.Context) (gitKey, error) {
 	pub := sshcfg.Expand(g.Conf.GitSigningKey, g.Home)
 	if g.Conf.GitSigningKey == "" {
@@ -35,6 +36,13 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 					"WS_GIT_SIGNING_KEY where an agent holds the key, or remove it", pub)
 			}
 			return gitKey{Pub: pub, Make: true}, nil
+		}
+	}
+	if sshcfg.SecretiveKey(pub, g.Home) {
+		// An agent that does not answer leaves the .pub to read, as an older macOS allows.
+		keys, _, _ := SecretiveKeys(ctx, g.M, g.Home)
+		if k, ok := held(keys, pub, g.Home); ok {
+			return gitKey{Pub: sshcfg.Expand(k.Pub(), g.Home), Public: gitcfg.PublicKey(k.Line), Text: k.Line + "\n"}, nil
 		}
 	}
 	text, err := g.M.ReadFile(pub)
