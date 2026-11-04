@@ -1,0 +1,37 @@
+---
+# F12's navigation keys.
+global:
+  - {action: nav.forward, keys: [ctrl+=], f12: [Forward]}
+  - {action: nav.back, keys: [ctrl+-], f12: [Back]}
+text:
+  - {action: view.center-cursor, keys: [ctrl+m c, ctrl+m ctrl+c], f12: [EditorScrollToCenter]}
+  - {action: cursor.word-end, keys: [ctrl+right], f12: [EditorNextWord]}
+  - {action: cursor.word-start, keys: [ctrl+left], f12: [EditorPreviousWord]}
+  - {action: view.scroll-down, keys: [ctrl+down], f12: [EditorScrollDown]}
+  - {action: view.scroll-up, keys: [ctrl+up], f12: [EditorScrollUp]}
+code:
+  - action: nav.calls
+    keys: [ctrl+k t, ctrl+k ctrl+t]
+    f12:
+      - CallHierarchy
+      - CallHierarchy.BaseOnThisMethod
+      - GoCallHierarchyPopupMenu.BaseOnThisDeclaration
+  - {action: file.copy-location, keys: [ctrl+alt+shift+c], f12: [CopyReference]}
+  - {action: nav.node-start, keys: ['alt+shift+['], f12: [EditorCodeBlockStart]}
+  - {action: nav.bracket, keys: ['ctrl+]'], f12: [EditorMatchBrace]}
+  - {action: nav.docs, keys: [shift+f1], f12: [ExternalJavaDoc]}
+  - {action: nav.references, keys: [shift+f12], f12: [FindUsages, ShowUsages]}
+  - {action: nav.definition, keys: [alt+d], f12: [GotoDeclaration]}
+  - {action: nav.implementation, keys: [ctrl+alt+d], f12: [GotoImplementation]}
+  - {action: bookmark.next, keys: [ctrl+k n, ctrl+k ctrl+n], f12: [GotoNextBookmark]}
+  - {action: nav.next-usage, keys: [ctrl+shift+down], f12: [GotoNextElementUnderCaretUsage]}
+  - {action: nav.previous-usage, keys: [ctrl+shift+up], f12: [GotoPrevElementUnderCaretUsage]}
+  - {action: bookmark.previous, keys: [ctrl+k p, ctrl+k ctrl+p], f12: [GotoPreviousBookmark]}
+  - {action: nav.implementation, keys: [alt+home], f12: [GotoSuperMethod]}
+  - {action: nav.type-definition, keys: [ctrl+shift+f11], f12: [GotoTypeDeclaration]}
+  - {action: nav.last-change, keys: [ctrl+shift+backspace], f12: [JumpToLastChange]}
+  - {action: nav.hover, keys: [ctrl+k i, ctrl+k ctrl+i, ctrl+shift+f1], f12: [QuickJavaDoc]}
+  - {action: nav.symbol-start, keys: ['ctrl+['], f12: [ReSharperGotoContainingDeclaration]}
+  - {action: nav.references, keys: [ctrl+alt+shift+f12], f12: [ShowSettingsAndFindUsages]}
+  - {action: bookmark.toggle, keys: [ctrl+f11], f12: [ToggleBookmarkWithMnemonic]}
+  - {action: nav.definition-split, keys: [alt+f12], f12: [QuickImplementations]}

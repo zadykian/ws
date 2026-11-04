@@ -1,0 +1,48 @@
+---
+# F12's navigation keys, as Zed's actions.
+# Forward: mouse button 5 is Zed's already
+nav.forward: {to: pane::GoForward}
+view.center-cursor: {to: editor::ScrollCursorCenter}
+# EditorNextWord: macOS's Spaces take Ctrl+Right by default
+cursor.word-end: {to: editor::MoveToNextWordEnd}
+# EditorPreviousWord: macOS's Spaces take Ctrl+Left by default
+cursor.word-start: {to: editor::MoveToPreviousWordStart}
+# EditorScrollDown: App windows takes Ctrl+Down by default
+view.scroll-down: {to: editor::LineDown}
+# EditorScrollUp: Mission Control takes Ctrl+Up by default
+view.scroll-up: {to: editor::LineUp}
+nav.calls: {to: call_hierarchy::ShowIncomingCalls}
+# CopyReference approx: path:line, not the symbol's name
+file.copy-location: {to: editor::CopyFileLocation}
+nav.node-start: {to: editor::MoveToStartOfLargerSyntaxNode}
+# EditorMatchBrace: in the full editor, so the inline assistant keeps Ctrl+] for its next
+# alternative
+nav.bracket: {to: editor::MoveToEnclosingBracket}
+# ExternalJavaDoc approx: where the server gives a docs link
+nav.docs: {to: editor::OpenDocs}
+# FindUsages: replaces Zed's Shift+F12, GoToImplementation
+# ShowSettingsAndFindUsages approx: no settings dialog
+# ShowUsages: Shift+Alt+F12 is Zed's; a multibuffer, not a popup
+nav.references: {to: editor::FindAllReferences}
+# GotoDeclaration: F12 stays Zed's too
+nav.definition: {to: editor::GoToDefinition}
+# GotoSuperMethod approx: gopls lists a method's interfaces too; C# goes down alone
+nav.implementation: {to: editor::GoToImplementation}
+bookmark.next: {to: editor::GoToNextBookmark}
+# GotoNextElementUnderCaretUsage: Find next's Shift+Ctrl+Down goes here
+nav.next-usage: {to: editor::GoToNextDocumentHighlight}
+nav.previous-usage: {to: editor::GoToPreviousDocumentHighlight}
+bookmark.previous: {to: editor::GoToPreviousBookmark}
+nav.type-definition: {to: editor::GoToTypeDefinition}
+# JumpToLastChange approx: the file's own changes, not across files
+nav.last-change: {to: editor::GoToPreviousChange}
+# ShowErrorDescription approx: the hover shows the diagnostic
+nav.hover: {to: editor::Hover}
+# ReSharperGotoContainingDeclaration approx: selects the symbol, then collapses to its start
+nav.symbol-start:
+  to: action::Sequence
+  args: '["editor::SelectEnclosingSymbol", "editor::MoveLeft"]'
+# ToggleBookmarkWithMnemonic approx: a label, not a mnemonic key
+bookmark.toggle: {to: editor::ToggleBookmarkWithLabel}
+nav.back: {why: "Ctrl+- is Zed's in a pane"}
+nav.definition-split: {why: "no popup: Zed's Alt+F12 opens it in a split"}
