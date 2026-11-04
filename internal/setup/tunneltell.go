@@ -100,9 +100,11 @@ func (t *Tunnel) Finish(ctx context.Context) error {
 	if t.Conf.User != "root" {
 		sudo, tty = "sudo ", "-t "
 	}
-	_, _ = fmt.Fprintf(t.Text, "The Mac's WireGuard public key is %s\nMake it ws's peer, mac, through ws-ssh:\n\n"+
-		"    ssh %sws-ssh \"printf '%%s\\n' '%s' | %stee /etc/wireguard/mac.pub >/dev/null\"\n"+
-		"    ssh %sws-ssh %sws server apply --only wireguard\n", public, tty, public, sudo, tty, sudo)
+	ssh := "ssh " + tty + "-o HostName=ADDRESS -o Port=PORT ws"
+	_, _ = fmt.Fprintf(t.Text, "The Mac's WireGuard public key is %s\nMake it ws's peer, mac, with a direct way to ws, "+
+		"as ssh ws needs this done first. ADDRESS and PORT are that way:\n\n"+
+		"    %s \"printf '%%s\\n' '%s' | %stee /etc/wireguard/mac.pub >/dev/null\"\n"+
+		"    %s %sws server apply --only wireguard\n", public, ssh, public, sudo, ssh, sudo)
 	if t.Conf.PublicKey == "" {
 		_, _ = io.WriteString(t.Text, "\nThen set WS_PUBLIC_KEY in ~/.config/ws/mac.conf to ws's key, which that run prints, and run\n"+
 			"ws mac apply again, which installs the tunnel's daemon.\n")

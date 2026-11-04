@@ -25,7 +25,7 @@ if [[ ! $key =~ ^[A-Za-z0-9+/]{43}=$ ]] || [ "$key" != "$mac" ]; then
     echo "::error::ws mac apply printed '$key' as the Mac's public key, not '$mac'"
     fail=1
 fi
-give="    ssh ws-ssh \"printf '%s\\n' '$mac' | tee /etc/wireguard/mac.pub >/dev/null\""
+give="    ssh -o HostName=ADDRESS -o Port=PORT ws \"printf '%s\\n' '$mac' | tee /etc/wireguard/mac.pub >/dev/null\""
 grep -qxF "$give" "$RUNNER_TEMP/first.out" ||
     {
         echo "::error::ws mac apply printed no command that gives ws '$mac'"
