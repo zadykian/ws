@@ -27,9 +27,9 @@ func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.Change, error) {
-	// A WS_IDENTITY outside Secretive's PublicKeys, with no agent, is a key in a file.
+	// A WS_IDENTITY that is no key of Secretive's, with no agent, is a key in a file.
 	if c.Identity != "" && c.IdentityAgent == "" {
-		if pub := sshcfg.Expand(c.Identity, k.Home); !strings.HasPrefix(pub, k.secretive()+"/PublicKeys/") {
+		if pub := sshcfg.Expand(c.Identity, k.Home); !sshcfg.SecretiveKey(pub, k.Home) {
 			return k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 		}
 	}

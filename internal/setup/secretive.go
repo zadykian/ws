@@ -35,6 +35,19 @@ func SecretiveKeys(ctx context.Context, m effect.Machine, home string) ([]sshcfg
 	return sshcfg.AgentKeys(string(out)), true, nil
 }
 
+// held returns the key among keys whose .pub the path names, in Secretive's container or among ws's
+// copies, which share their names.
+func held(keys []sshcfg.AgentKey, pub, home string) (sshcfg.AgentKey, bool) {
+	if sshcfg.SecretiveKey(pub, home) {
+		for _, k := range keys {
+			if k.Name == filepath.Base(pub) {
+				return k, true
+			}
+		}
+	}
+	return sshcfg.AgentKey{}, false
+}
+
 // KeyCopy writes ws's copy of the .pub of a key of Secretive's.
 type KeyCopy struct{ Path, Text string }
 

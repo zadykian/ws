@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/sshcfg"
 )
@@ -50,6 +51,79 @@ func TestSecretiveKeys(t *testing.T) {
 	m.Results[agentList] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
 	if _, socket, err := setup.SecretiveKeys(ctx, m, agentHome); !socket || !errors.Is(err, setup.ErrAgentDown) {
 		t.Errorf("a stale socket: %v, %v", socket, err)
+	}
+}
+
+// macOS 27 denies ws every file in Secretive's container: PickKey must never need one.
+func TestPickKeyTakesTheAgentsKeyWithNoFile(t *testing.T) {
+	m := agentMachine(effecttest.NewMachine(), agentKey)
+	id, err := setup.PickKey(context.Background(), m, conf.Conf{}, agentHome)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := sshcfg.Identity{Pub: sshcfg.AgentKeys(agentKey)[0].Pub(), Agent: "~/" + sshcfg.SecretiveData + "/socket.ssh",
+		Check: true, Text: agentKey}
+	if id != want {
+		t.Errorf("PickKey = %+v, want %+v", id, want)
+	}
+	for _, call := range m.Calls {
+		if strings.Contains(call, "PublicKeys") {
+			t.Errorf("PickKey touched Secretive's container: %s", call)
+		}
+	}
+}
+
+func TestPickKeyLeavesOutGitsKey(t *testing.T) {
+	m := agentMachine(effecttest.NewMachine(), agentKey, agentGit)
+	id, err := setup.PickKey(context.Background(), m, conf.Conf{GitSigningKey: copyOf(agentGit)}, agentHome)
+	if err != nil || id.Text != agentKey {
+		t.Errorf("PickKey = %+v, %v; want ws's key", id, err)
+	}
+	if _, err := setup.PickKey(context.Background(), m, conf.Conf{}, agentHome); err == nil ||
+		!strings.Contains(err.Error(), "several keys") {
+		t.Errorf("two keys and no git's: err = %v", err)
+	}
+}
+
+// A mac.conf from before macOS 27 names the .pub in the container, which its copy replaces.
+func TestPickKeyMovesAContainerKeyToItsCopy(t *testing.T) {
+	name := sshcfg.AgentKeys(agentKey)[0].Name
+	m := agentMachine(effecttest.NewMachine(), agentKey)
+	c := conf.Conf{Identity: "~/" + sshcfg.SecretiveData + "/PublicKeys/" + name}
+	id, err := setup.PickKey(context.Background(), m, c, agentHome)
+	if err != nil || sshcfg.Expand(id.Pub, agentHome) != copyOf(agentKey) || id.Text != agentKey {
+		t.Errorf("PickKey = %+v, %v; want the copy", id, err)
+	}
+}
+
+func TestPickKeyNamesACopyBeforeItIsThere(t *testing.T) {
+	m := agentMachine(effecttest.NewMachine(), agentKey, agentGit)
+	id, err := setup.PickKey(context.Background(), m, conf.Conf{Identity: sshcfg.AgentKeys(agentGit)[0].Pub()}, agentHome)
+	if err != nil || id.Text != agentGit {
+		t.Errorf("PickKey = %+v, %v; want the key that the name gives", id, err)
+	}
+}
+
+func TestPickKeyWithoutAnAgent(t *testing.T) {
+	ctx := context.Background()
+	m := agentMachine(effecttest.NewMachine())
+	m.Results[agentList] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
+	if _, err := setup.PickKey(ctx, m, conf.Conf{}, agentHome); !errors.Is(err, setup.ErrAgentDown) {
+		t.Errorf("no WS_IDENTITY: err = %v", err)
+	}
+	// ws's copy serves while Secretive is closed.
+	pub := copyOf(agentKey)
+	m.Files[pub] = []byte(agentKey)
+	m.Results["ssh-keygen -l -f "+pub] = effecttest.Result{}
+	if id, err := setup.PickKey(ctx, m, conf.Conf{Identity: pub}, agentHome); err != nil || id.Text != agentKey {
+		t.Errorf("a copy: PickKey = %+v, %v", id, err)
+	}
+	// A .pub in the container does not, as macOS denies it.
+	in := agentData + "/PublicKeys/a.pub"
+	m.Root[in] = m.Root[agentSock]
+	if _, err := setup.PickKey(ctx, m, conf.Conf{Identity: in}, agentHome); err == nil ||
+		!strings.Contains(err.Error(), "open Secretive") {
+		t.Errorf("a .pub denied: err = %v", err)
 	}
 }
 

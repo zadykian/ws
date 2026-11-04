@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"regexp"
+	"path"
 	"strings"
 )
 
@@ -69,8 +69,6 @@ func SecretiveKey(pub, home string) bool {
 		strings.HasPrefix(pub, home+"/"+KeyCopies+"/")
 }
 
-var plainName = regexp.MustCompile(`^[A-Za-z0-9._@+-]+$`)
-
 // Expand returns path with a leading ~/ replaced by the home.
 func Expand(path, home string) string {
 	if rest, ok := strings.CutPrefix(path, "~/"); ok {
@@ -80,25 +78,21 @@ func Expand(path, home string) string {
 }
 
 // PickIdentity picks the key from mac.conf's WS_IDENTITY and WS_IDENTITY_AGENT, where set. Else,
-// where Secretive's socket is there, it is the one .pub in publicKeys, the names in Secretive's
-// PublicKeys. git's signing key, which signs alone, does not count, nor a certificate, -cert.pub,
-// which Secretive kept there before 4.0, nor a dotfile, nor a name ssh_config would misread, as
-// Secretive's own are hex. Else it is the file key. A key in PublicKeys takes Secretive's agent. It fails where Secretive
-// holds several such keys.
+// where Secretive's socket is there, it is the one key of publicKeys, the names of those its agent
+// lists, as ws's copy of its .pub. git's signing key, which signs alone, does not count. Else it is
+// the file key. A key of Secretive's takes its agent. It fails where Secretive holds several such
+// keys.
 func PickIdentity(identity, agent, signingKey, home string, socket bool, publicKeys []string) (Identity, error) {
-	secretive := home + "/" + SecretiveData
 	pub := identity
 	if pub == "" && socket {
-		skip := Expand(signingKey, home)
+		skip := path.Base(signingKey)
 		var keys []string
 		for _, name := range publicKeys {
-			full := secretive + "/PublicKeys/" + name
-			if !strings.HasSuffix(name, ".pub") || full == skip || strings.HasSuffix(name, "-cert.pub") ||
-				strings.HasPrefix(name, ".") || !plainName.MatchString(name) {
+			if name == skip {
 				continue
 			}
-			keys = append(keys, full)
-			pub = "~/" + strings.TrimPrefix(full, home+"/")
+			pub = AgentKey{Name: name}.Pub()
+			keys = append(keys, Expand(pub, home))
 		}
 		if len(keys) > 1 {
 			//nolint:staticcheck // Secretive is a name, and mac-identity-checks.sh expects this text
@@ -112,8 +106,8 @@ func PickIdentity(identity, agent, signingKey, home string, socket bool, publicK
 	if pub+agent == DefaultPub {
 		return Identity{Pub: pub}, nil
 	}
-	if agent == "" && strings.HasPrefix(Expand(pub, home), secretive+"/PublicKeys/") {
-		agent = "~/" + strings.TrimPrefix(secretive, home+"/") + "/socket.ssh"
+	if agent == "" && SecretiveKey(Expand(pub, home), home) {
+		agent = "~/" + SecretiveData + "/socket.ssh"
 	}
 	return Identity{Pub: pub, Agent: agent, Check: true}, nil
 }

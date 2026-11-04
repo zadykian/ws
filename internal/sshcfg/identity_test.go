@@ -20,8 +20,12 @@ func TestPickIdentity(t *testing.T) {
 		{"the file key", "", "", false, nil, sshcfg.Identity{Pub: sshcfg.DefaultPub}},
 		{"no socket, so the file key", "", "", false, []string{"a.pub"}, sshcfg.Identity{Pub: sshcfg.DefaultPub}},
 		{"mac.conf's key", "~/k.pub", "", true, []string{"a.pub"}, sshcfg.Identity{Pub: "~/k.pub", Check: true}},
-		{"Secretive's one key", "", "", true, []string{"a.pub", "a-cert.pub", "sign.pub", "b c.pub", ".d.pub", "x"},
-			sshcfg.Identity{Pub: data + "/PublicKeys/a.pub", Agent: data + "/socket.ssh", Check: true}},
+		{"Secretive's one key", "", "", true, []string{"a.pub", "sign.pub"},
+			sshcfg.Identity{Pub: "~/" + sshcfg.KeyCopies + "/a.pub", Agent: data + "/socket.ssh", Check: true}},
+		{"a copy of mac.conf's", "~/" + sshcfg.KeyCopies + "/b.pub", "", true, nil,
+			sshcfg.Identity{Pub: "~/" + sshcfg.KeyCopies + "/b.pub", Agent: data + "/socket.ssh", Check: true}},
+		{"a .pub in the container", data + "/PublicKeys/b.pub", "", true, nil,
+			sshcfg.Identity{Pub: data + "/PublicKeys/b.pub", Agent: data + "/socket.ssh", Check: true}},
 	}
 	for _, tt := range tests {
 		got, err := sshcfg.PickIdentity(tt.identity, tt.agent, "~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/sign.pub",
