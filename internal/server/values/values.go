@@ -31,6 +31,7 @@ type Values struct {
 	Shell     Shell     `yaml:",inline"`
 	Signoz    Signoz    `yaml:",inline"`
 	Wireguard Wireguard `yaml:",inline"`
+	Zed       Zed       `yaml:",inline"`
 }
 
 // Shared holds the keys that the roles share.
@@ -80,12 +81,6 @@ func (v *Values) derive() {
 	}
 	if v.GitSigningKey == "" {
 		v.GitSigningKey = v.Home + "/.ssh/id_ed25519_signing"
-	}
-	if v.Helix.Gopls == "" {
-		v.Helix.Gopls = v.Home + "/go/bin/gopls"
-	}
-	if v.Helix.Roslyn == "" {
-		v.Helix.Roslyn = v.Home + "/.dotnet/tools/roslyn-language-server"
 	}
 	if v.Shell.GitAllowedSigners == "" {
 		v.Shell.GitAllowedSigners = v.Home + "/.config/git/allowed_signers"

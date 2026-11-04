@@ -1,4 +1,4 @@
-package helix
+package devtools
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 
 const goplsRead = "env HOME=/root /root/go/bin/gopls version -json"
 
-func newGopls(m *effecttest.Machine) Gopls {
-	return Gopls{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/gopls",
+func newGopls(m *effecttest.Machine) goplsTool {
+	return goplsTool{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/gopls",
 		Version: "0.23.0", GoVersion: "1.27.3"}
 }
 
@@ -48,7 +48,7 @@ func TestGoplsRefusesAnUnreadableVersion(t *testing.T) {
 func TestGoplsBuildsWithTheLocalGo(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[goplsRead] = effecttest.Result{Err: context.Canceled}
-	build := "env HOME=/root env GOBIN=/root/go/bin GOTOOLCHAIN=local " + goBin + " install golang.org/x/tools/gopls@v0.23.0"
+	build := "env HOME=/root env GOBIN=/root/go/bin GOTOOLCHAIN=local GOENV=off GOSUMDB=sum.golang.org " + goBin + " install golang.org/x/tools/gopls@v0.23.0"
 	m.Results[build] = effecttest.Result{}
 	g := newGopls(m)
 	changes, err := g.Plan(context.Background())

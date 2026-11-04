@@ -20,6 +20,15 @@ func TestParseEmptyGivesDefault(t *testing.T) {
 	}
 }
 
+func TestParseReadsZedNofile(t *testing.T) {
+	for in, want := range map[string]int{"": 65536, "zed_nofile: 4096\n": 4096} {
+		got, err := Parse([]byte(in))
+		if err != nil || got.Zed.Nofile != want {
+			t.Errorf("Parse(%q) = %d, %v; want %d", in, got.Zed.Nofile, err, want)
+		}
+	}
+}
+
 func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 	got, err := Parse([]byte("jetbrains_backends: []\nbase_swap_size_mb: 64\nsecurity_outbound: false\n"))
 	if err != nil {
@@ -34,19 +43,18 @@ func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 }
 
 func TestParseDerivesFromTheUser(t *testing.T) {
-	tests := []struct{ in, home, key, gopls string }{
-		{"", "/root", "/root/.ssh/id_ed25519_signing", "/root/go/bin/gopls"},
-		{"ws_user: dev\n", "/home/dev", "/home/dev/.ssh/id_ed25519_signing", "/home/dev/go/bin/gopls"},
-		{"ws_home: /srv/x\n", "/srv/x", "/srv/x/.ssh/id_ed25519_signing", "/srv/x/go/bin/gopls"},
-		{"helix_gopls: /bin/g\n", "/root", "/root/.ssh/id_ed25519_signing", "/bin/g"},
+	tests := []struct{ in, home, key string }{
+		{"", "/root", "/root/.ssh/id_ed25519_signing"},
+		{"ws_user: dev\n", "/home/dev", "/home/dev/.ssh/id_ed25519_signing"},
+		{"ws_home: /srv/x\n", "/srv/x", "/srv/x/.ssh/id_ed25519_signing"},
 	}
 	for _, tt := range tests {
 		got, err := Parse([]byte(tt.in))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got.Home != tt.home || got.GitSigningKey != tt.key || got.Helix.Gopls != tt.gopls {
-			t.Errorf("Parse(%q) = %q %q %q", tt.in, got.Home, got.GitSigningKey, got.Helix.Gopls)
+		if got.Home != tt.home || got.GitSigningKey != tt.key {
+			t.Errorf("Parse(%q) = %q %q", tt.in, got.Home, got.GitSigningKey)
 		}
 	}
 }

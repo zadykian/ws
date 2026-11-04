@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
 )
 
@@ -26,7 +27,7 @@ func languages(v values.Values) ([]byte, error) {
 	}
 	return host.Render(files, "files/languages.toml.tmpl", struct{ Grammars, Gopls, Roslyn string }{
 		Grammars: "[" + strings.Join(names, ", ") + "]",
-		Gopls:    quote(v.Helix.Gopls),
-		Roslyn:   quote(v.Helix.Roslyn),
+		Gopls:    quote(devtools.Gopls(v.Home)),
+		Roslyn:   quote(devtools.Roslyn(v.Home)),
 	})
 }

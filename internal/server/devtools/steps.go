@@ -13,6 +13,7 @@ import (
 // repository is still to come, as apt may not know the packages then.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	const repositories = "Devtools repositories"
+	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: repositories, Parts: []host.Resource{Repositories{M: m}}},
 		host.Group{Title: "Devtools packages", After: repositories, Parts: []host.Resource{
@@ -27,6 +28,15 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 			GHLogin{M: m, User: v.User, Home: v.Home, Token: s.Token.GitHub},
 		}},
 		host.Group{Title: "Devtools Go", Parts: []host.Resource{Go{M: m}}},
+		host.Group{Title: "Devtools gopls", After: "Devtools Go", Parts: []host.Resource{
+			goplsTool{M: m, User: user, Path: Gopls(v.Home)},
+		}},
+		host.Group{Title: "Devtools Delve", After: "Devtools Go", Parts: []host.Resource{
+			delveTool{M: m, User: user, Path: Dlv(v.Home), Version: dlvVersion, GoVersion: GoVersion},
+		}},
+		host.Group{Title: "Devtools roslyn-language-server", After: "Devtools packages", Parts: []host.Resource{
+			roslynTool{M: m, User: user, Path: Roslyn(v.Home)},
+		}},
 		host.Group{Title: "Devtools rustup", Parts: []host.Resource{
 			Rustup{M: m, User: v.User, Home: v.Home},
 		}},

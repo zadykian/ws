@@ -25,6 +25,9 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [checks.md](../../docs/checks.md) says what CI's other jobs check, and what the hooks of
   `.githooks` and Claude's hooks do.
   [checks-mac-cld.md](../../docs/checks-mac-cld.md) says what the job `mac-cld` checks.
+- [zed.md](../../docs/zed.md) is the page of the `zed` role: what runs on ws, Zed's downloads, trust
+  and the limits. [zed-projects.md](../../docs/zed-projects.md) is a project's `.zed/settings.json`,
+  for SQL Server and Ansible.
 - [helix-keymap.md](../../docs/helix-keymap.md) indexes the keymap's pages in
   `docs/helix-keymap/`.
 - [The dashboards](../../internal/server/signoz/dashboards/README.md) says what each dashboard reads,

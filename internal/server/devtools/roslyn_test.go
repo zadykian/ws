@@ -1,4 +1,4 @@
-package helix
+package devtools
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 
 const roslynStore = "/root/.dotnet/tools/.store/roslyn-language-server"
 
-func newRoslyn(m *effecttest.Machine) Roslyn {
-	return Roslyn{M: m, User: host.User{Name: "root", Home: "/root"},
+func newRoslyn(m *effecttest.Machine) roslynTool {
+	return roslynTool{M: m, User: host.User{Name: "root", Home: "/root"},
 		Path: "/root/.dotnet/tools/roslyn-language-server", Version: "5.12.0-1.26475.2"}
 }
 

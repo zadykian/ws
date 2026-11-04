@@ -7,8 +7,8 @@ reaches it over the LAN, or elsewhere through the router's port forwards.
 hosts for ssh:
 
 - `ws`, through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac connects.
-  The sessions of `ssh ws` and JetBrains Gateway then stay open while the Mac moves between the
-  cable, the LAN and elsewhere, with a pause of a few seconds;
+  The sessions of `ssh ws`, JetBrains Gateway and Zed stay open as the Mac moves between the cable,
+  the LAN and elsewhere, with a pause of a few seconds ([Zed](zed.md#when-the-connection-drops));
 - `ws-ssh`, plain SSH over whichever of the three the Mac is on, for networks that block the
   tunnel's UDP.
 
@@ -97,7 +97,7 @@ ssh picks the way from the Mac's own addresses (`Match localnetwork`, OpenSSH 9.
 probes nothing. Both hosts log in as `WS_USER` with the key below, and check ws's host key under
 the one name `ws` (`HostKeyAlias`). So `known_hosts` has one entry for ws whichever way ssh goes. A
 host on another network that uses the LAN's subnet then meets a host key mismatch, where ssh stops.
-A session ends after 90 s without word from ws, far longer than a switch of the tunnel takes.
+A session ends after 120 s without word from ws, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`). Where Secretive's agent has its socket in
 `~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data`, which stays after Secretive quits,

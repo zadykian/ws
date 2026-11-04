@@ -9,7 +9,7 @@ import (
 
 func TestLanguages(t *testing.T) {
 	v := values.Default()
-	v.Helix.Gopls, v.Helix.Roslyn = "/home/ws/go/bin/gopls", "/home/ws/.dotnet/tools/roslyn-language-server"
+	v.Home = "/home/ws"
 	v.Helix.Grammars = []string{"go", "c-sharp"}
 	got, err := languages(v)
 	if err != nil {

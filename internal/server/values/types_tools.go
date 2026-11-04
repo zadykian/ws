@@ -2,10 +2,14 @@ package values
 
 // Helix is roles/helix's keys.
 type Helix struct {
-	// Gopls and Roslyn are the language servers' paths. Empty, each is under Home.
-	Gopls    string   `yaml:"helix_gopls"`
-	Roslyn   string   `yaml:"helix_roslyn"`
 	Grammars []string `yaml:"helix_grammars"`
+}
+
+// Zed is roles/zed's keys.
+type Zed struct {
+	// Nofile is the soft limit of open files for ws_user's logins. Zed's server busy-loops past
+	// 1024 (docs/zed.md).
+	Nofile int `yaml:"zed_nofile"`
 }
 
 // Ikeward is roles/ikeward's keys.

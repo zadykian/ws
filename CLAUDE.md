@@ -3,8 +3,8 @@
 ws sets up the maintainer's development server from code: `ws server apply`, which runs on the
 machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
 links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, helix,
-Docker, claude, SigNoz with its collector, and the IDEs' backends. `mac/` sets up the Mac that works
-on the server. The rest is the docs, the lint gates' tools and CI.
+Docker, claude, SigNoz with its collector, Zed's server, and the IDEs' backends. `mac/` sets up the
+Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
@@ -103,8 +103,12 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
   ([homebrew.go](internal/wizard/homebrew.go)). Go and the JetBrains backends are checked against
   the SHA-256 their publishers list ([devtools](docs/devtools.md), [jetbrains](docs/jetbrains.md)).
-  roslyn-language-server is pinned by version alone
-  ([pins.go](internal/server/helix/pins.go)).
+  Zed's postgres-language-server and docker-language-server are checked against their SHA-256
+  ([binaries.go](internal/server/zed/binaries.go)). gopls and Delve are built through Go's
+  checksum database. roslyn-language-server is pinned by version alone
+  ([pins.go](internal/server/devtools/pins.go)). Zed's npm servers are checked against the sha512
+  `integrity` of their lockfile ([zed](docs/zed.md#the-npm-servers)). Zed's other downloads on ws
+  are outside the rule ([zed](docs/zed.md#zeds-downloads-outside-the-sha-256-rule)).
 - foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ

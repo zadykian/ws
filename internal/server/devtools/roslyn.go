@@ -1,4 +1,4 @@
-package helix
+package devtools
 
 import (
 	"context"
@@ -16,11 +16,11 @@ import (
 // dotnetBin is the .NET SDK's command, from devtools' packages.
 const dotnetBin = "/usr/bin/dotnet"
 
-// Roslyn is roslyn-language-server at the pinned version, a .NET tool. The tool's store keeps a
+// roslynTool is roslyn-language-server at the pinned version, a .NET tool. The tool's store keeps a
 // directory per installed version. They are read there, and not with dotnet tool list: dotnet's
 // first run with each SDK version writes files into the home, an HTTPS development certificate
 // among them, and a plan must change nothing. NuGet names the directories in lower case.
-type Roslyn struct {
+type roslynTool struct {
 	M    effect.Machine
 	User host.User
 	// Path is where dotnet tool install --global puts the command, and where languages.toml names it.
@@ -29,7 +29,7 @@ type Roslyn struct {
 	Version string
 }
 
-func (r Roslyn) version() string {
+func (r roslynTool) version() string {
 	if r.Version == "" {
 		return roslynVersion
 	}
@@ -37,7 +37,7 @@ func (r Roslyn) version() string {
 }
 
 type installRoslyn struct {
-	r         Roslyn
+	r         roslynTool
 	installed []string
 }
 
@@ -65,7 +65,7 @@ func (c installRoslyn) Apply(ctx context.Context) error {
 }
 
 // Plan reads the store's directories.
-func (r Roslyn) Plan(context.Context) ([]host.Change, error) {
+func (r roslynTool) Plan(context.Context) ([]host.Change, error) {
 	installed, err := r.M.ReadDir(path.Dir(r.Path) + "/.store/roslyn-language-server")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
