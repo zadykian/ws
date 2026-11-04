@@ -1,4 +1,4 @@
-package zed
+package devtools
 
 import (
 	"context"
@@ -70,7 +70,7 @@ func (c runNpm) String() string { return "npm ci --ignore-scripts in " + servers
 func (c runNpm) Apply(ctx context.Context) error {
 	n := c.n
 	if _, err := n.M.Stat(npmBin); err != nil {
-		return fmt.Errorf("the servers install with npm, which the devtools role sets up: %w", err)
+		return fmt.Errorf("the servers install with npm, from the Node package: %w", err)
 	}
 	if err := n.User.Pass(ctx, n.M, npmBin, "ci", "--prefix", serversDir(n.User.Home), "--ignore-scripts",
 		"--no-audit", "--no-fund"); err != nil {

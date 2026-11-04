@@ -1,4 +1,4 @@
-package zed
+package devtools
 
 import (
 	"encoding/json"

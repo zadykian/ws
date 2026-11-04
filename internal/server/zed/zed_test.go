@@ -27,8 +27,6 @@ func run(t *testing.T, user, home string) *effecttest.Machine {
 	m.Dirs[home] = 0o755
 	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
-	m.Files[npmBin] = []byte("stand-in npm")
-	m.Results[npmCommand(user, home)] = effecttest.Result{}
 	steps := Steps(valuesOf(user, home), secrets.Secrets{}, m, &effecttest.Out{})
 	if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
@@ -138,7 +136,6 @@ func TestSettingsNameTheNpmServersForRootAndAnotherUser(t *testing.T) {
 func TestTheStepsRefuseALinkAtAFileRootWrites(t *testing.T) {
 	for _, link := range []string{
 		"/home/ws/.config/zed", "/home/ws/.config/zed/settings.json",
-		"/home/ws/.local/lib/zed-servers", "/home/ws/.local/lib/zed-servers/package.json",
 	} {
 		m := effecttest.NewMachine()
 		m.Dirs["/home/ws"] = 0o755

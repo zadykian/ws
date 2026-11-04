@@ -41,18 +41,21 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 			roslynTool{M: m, User: user, Path: Roslyn(v.Home)},
 		}},
 	}
-	return append(append(steps, serverSteps(m)...), host.Group{Title: "Devtools rustup", Parts: []host.Resource{
+	return append(append(steps, serverSteps(m, user)...), host.Group{Title: "Devtools rustup", Parts: []host.Resource{
 		Rustup{M: m, User: v.User, Home: v.Home},
 	}})
 }
 
 // serverSteps returns the steps of the language servers that editors name by path: the downloads of
-// the SQL and Docker servers. They install apart from Steps so that a test can run them with no
-// stand-ins for Go and the packages.
-func serverSteps(m effect.Machine) []step.Step {
+// the SQL and Docker servers, and the npm servers, which wait on the Node package. They install
+// apart from Steps so that a test can run them with no stand-ins for Go and the packages.
+func serverSteps(m effect.Machine, user host.User) []step.Step {
 	return []step.Step{
 		download(m, runtime.GOARCH, "postgres-language-server", pgls, pglsURL),
 		download(m, runtime.GOARCH, "docker-language-server", dockerLS, dockerLSURL),
+		user.Owned(m, "Devtools npm servers", "Devtools packages", func(uid, gid int) ([]host.Resource, error) {
+			return serverFiles(m, user, uid, gid)
+		}),
 	}
 }
 

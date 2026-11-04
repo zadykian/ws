@@ -94,12 +94,30 @@ func servePins(t *testing.T, m *effecttest.Machine) {
 	m.Pages[dockerLSURL(dockerLS, runtime.GOARCH)] = body
 }
 
-func TestTheServersAreRootsBinariesAtMode0755(t *testing.T) {
+// withPackages returns serverSteps after an empty step of the name that the npm servers wait on.
+func withPackages(m *effecttest.Machine, user, home string) []step.Step {
+	return append([]step.Step{host.Group{Title: "Devtools packages"}},
+		serverSteps(m, host.User{Name: user, Home: home})...)
+}
+
+// runServers applies serverSteps on a machine with an empty home for the user, and returns it.
+func runServers(t *testing.T, user, home string) *effecttest.Machine {
 	m := effecttest.NewMachine()
+	m.Dirs[home] = 0o755
 	servePins(t, m)
-	if _, err := step.Run(t.Context(), serverSteps(m), &effecttest.Out{}, false); err != nil {
+	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
+	m.Files[npmBin] = []byte("stand-in npm")
+	m.Results[npmCommand(user, home)] = effecttest.Result{}
+	steps := withPackages(m, user, home)
+	if _, err := step.Run(t.Context(), steps, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
+	return m
+}
+
+func TestTheServersAreRootsBinariesAtMode0755(t *testing.T) {
+	m := runServers(t, "ws", "/home/ws")
 	for _, p := range []string{"/usr/local/bin/postgres-language-server", "/usr/local/bin/docker-language-server"} {
 		if string(m.Files[p]) != "stand-in binary" || m.Owners[p] != [2]int{} {
 			t.Errorf("%s: owner %v", p, m.Owners[p])
@@ -108,12 +126,8 @@ func TestTheServersAreRootsBinariesAtMode0755(t *testing.T) {
 }
 
 func TestTheServersChangeNothingOnASecondRun(t *testing.T) {
-	m := effecttest.NewMachine()
-	servePins(t, m)
-	if _, err := step.Run(t.Context(), serverSteps(m), &effecttest.Out{}, false); err != nil {
-		t.Fatal(err)
-	}
-	changed, err := step.Run(t.Context(), serverSteps(m), &effecttest.Out{}, true)
+	m := runServers(t, "root", "/root")
+	changed, err := step.Run(t.Context(), withPackages(m, "root", "/root"), &effecttest.Out{}, true)
 	if err != nil || changed {
 		t.Errorf("second run: %v, %v", changed, err)
 	}

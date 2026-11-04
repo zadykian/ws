@@ -50,9 +50,6 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 		host.Group{Title: "Zed open-file limit", Parts: []host.Resource{
 			host.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
 		}},
-		user.Owned(m, "Zed npm servers", "", func(uid, gid int) ([]host.Resource, error) {
-			return serverFiles(m, user, uid, gid)
-		}),
 	}
 }
 
@@ -76,14 +73,15 @@ func quote(s string) string {
 // settingsFile renders ~/.config/zed/settings.json: the servers by path, as devtools installs
 // them. The server's file wins over the Mac's, which Zed forwards.
 func settingsFile(v values.Values) ([]byte, error) {
+	paths := devtools.ServerPaths(v.Home)
 	return host.Render(files, "settings.json.tmpl", struct{ Terminal, Gopls, Roslyn, Dlv, AnsibleLS, HTMLLS, DockerfileLS string }{
 		Terminal:     quote(terminalPath),
-		Gopls:        quote(devtools.Gopls(v.Home)),
-		Roslyn:       quote(devtools.Roslyn(v.Home)),
+		Gopls:        quote(paths["gopls"]),
+		Roslyn:       quote(paths["roslyn-language-server"]),
 		Dlv:          quote(devtools.Dlv(v.Home)),
-		AnsibleLS:    quote(serverBin(v.Home, "ansible-language-server")),
-		HTMLLS:       quote(serverBin(v.Home, "vscode-html-language-server")),
-		DockerfileLS: quote(serverBin(v.Home, "docker-langserver")),
+		AnsibleLS:    quote(paths["ansible-language-server"]),
+		HTMLLS:       quote(paths["vscode-html-language-server"]),
+		DockerfileLS: quote(paths["dockerfile-language-server"]),
 	})
 }
 
