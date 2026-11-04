@@ -48,7 +48,7 @@ pinned too, with auto-update off and a checked download in the Mac's steps, and 
 ws has the internet ([outbound](security.md#outbound)), so the download works.
 
 The gopls, Delve and Roslyn that ws pins are not on the list ([devtools](devtools.md)). Nor are
-postgres-language-server and docker-language-server, which the role checks against a SHA-256.
+postgres-language-server and docker-language-server, which `devtools` checks against a SHA-256.
 Nor are the npm servers, which the role checks against the sha512 `integrity` of a lockfile.
 
 ## The Go and C# servers
@@ -80,40 +80,6 @@ There is no msbuild-lsp yet. Its v0.7.0 of 2026-07-24 is the latest release, and
 (msbuild-project-tools-server#145) is on master, unreleased. When a release has it, pin its
 `language-server.zip` by SHA-256, as otelcol's `.deb` is, name it in
 `lsp.msbuild-project-tools.binary`, and add `msbuild-lsp` to the Mac's extensions.
-
-## The SQL and Docker servers
-
-postgres-language-server and docker-language-server are release binaries, each pinned in
-`internal/server/zed/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The role
-downloads the one for the machine to `/usr/local/bin`, owned by root with mode 0755, so any
-`ws_user` can run it. A machine of another architecture fails the step. The settings name both by
-path, so Zed downloads neither.
-
-- docker-language-server's telemetry is off, and its experimental `removeOverlappingIssues` drops
-  the diagnostics that rcjsuen's server also gives. Check the option on each bump.
-- SQL's formatter is postgres-language-server, as the extension's maintainer advises
-  (zed-postgres-language-server#19). `format_on_save` stays `off`, Zed's default.
-- `file_types` globs make `Dockerfile.dev` a Dockerfile and `compose.override.yaml` a Compose file.
-  The Mac's `file_types` must stay equal, as each side detects languages for itself.
-- Compose's BuildKit lint needs `docker-buildx-plugin`, which the docker role installs.
-
-A project's `postgres-language-server.jsonc` holds `db` fields, never a `connectionString`
-(zed-postgres-language-server#14):
-
-```jsonc
-{ "db": { "host": "127.0.0.1", "port": 5432, "username": "app", "database": "app" } }
-```
-
-- No secret goes in the file. With no `db.password`, the server reads `PGPASSWORD`, then
-  `~/.pgpass` (mode 0600, made by hand), then falls back to `postgres`. `~/.pgpass` compares the
-  host literally, so `localhost` does not match `127.0.0.1`. The file is narrower than
-  `PGPASSWORD`, which reaches every libpq client.
-- Code actions that run statements stay off until `db.allowStatementExecutionsAgainst` names
-  schemas.
-- ws drops new connections to private ranges ([outbound](security.md#outbound)): a database on
-  the LAN hangs for `db.connTimeoutSecs`, 10 by default. Loopback, Docker and `ikeward0` work.
-- To bump a pin, read the digests with the `gh api` command in `binaries.go` and check a download
-  with `sha256sum`. A bumped postgres-language-server may need its daemon stopped.
 
 ## The npm servers
 
