@@ -164,9 +164,38 @@ func TestAStrokeIsSpeltAsFreshSpellsIt(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		got := spell(chord[0])
+		got := forms(chord[0])[len(forms(chord[0]))-1]
 		if got.Key != c.want.Key || !slices.Equal(got.Modifiers, c.want.Modifiers) {
 			t.Errorf("%s = %+v; want %+v", c.stroke, got, c.want)
+		}
+	}
+}
+
+func TestAShiftedSignTakesTwoForms(t *testing.T) {
+	chord, err := editor.ParseChord("ctrl+shift+/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := forms(chord[0])
+	if len(got) != 2 || got[0].Key != "?" || slices.Contains(got[0].Modifiers, "shift") {
+		t.Errorf("forms = %+v; want the sign with no Shift, then the key with it", got)
+	}
+}
+
+func TestAnArrivalTakesNoBoundKey(t *testing.T) {
+	keymap, err := editor.LoadKeymap()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, scope := range editor.Scopes {
+		for _, b := range keymap[scope] {
+			for _, chord := range b.Keys {
+				for from, to := range arrivals {
+					if chord.String() == to && !slices.Contains(skipped, to) {
+						t.Errorf("%s arrives as %s, which %s binds", from, to, b.Action)
+					}
+				}
+			}
 		}
 	}
 }
