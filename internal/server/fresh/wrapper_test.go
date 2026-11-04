@@ -83,6 +83,18 @@ func TestTheWrapperAsksInTmuxAndResets(t *testing.T) {
 	}
 }
 
+func TestTheWrapperLeavesExtendedKeysAtAlways(t *testing.T) {
+	for _, ext := range []string{"always", "on"} {
+		out, tmux, _ := run(t, setup{env: "TMUX=/tmp/s,1,0", fakeTmux: true, terminal: true, ext: ext})
+		if tmux != "" {
+			t.Errorf("at %s tmux got %q", ext, tmux)
+		}
+		if want := "\033[>4;2meditor " + conf + "a b c\n\033[>4m"; out != want {
+			t.Errorf("at %s out %q, want %q", ext, out, want)
+		}
+	}
+}
+
 func TestTheWrapperPassesThroughOutsideTmux(t *testing.T) {
 	out, tmux, code := run(t, setup{env: "TERM=xterm", fakeTmux: true, terminal: true, ext: "off"})
 	if out != "editor "+conf+"a b c\n" || tmux != "" || code != 7 {
@@ -94,6 +106,15 @@ func TestTheWrapperPassesAPipeThrough(t *testing.T) {
 	out, tmux, code := run(t, setup{env: "TMUX=/tmp/s,1,0", fakeTmux: true, ext: "off"})
 	if out != "editor "+conf+"a b c\n" || tmux != "" || code != 7 {
 		t.Errorf("out %q, tmux %q, exit %d", out, tmux, code)
+	}
+}
+
+func TestTheWrapperPassesNoConfigWhereThereIsNone(t *testing.T) {
+	for _, terminal := range []bool{false, true} {
+		out, _, _ := run(t, setup{env: "TMUX=/tmp/s,1,0", fakeTmux: true, terminal: terminal, noConfig: true, ext: "always"})
+		if strings.Contains(out, "--config") {
+			t.Errorf("terminal %v: out %q", terminal, out)
+		}
 	}
 }
 
