@@ -25,7 +25,7 @@ if [[ ! $key =~ ^[A-Za-z0-9+/]{43}=$ ]] || [ "$key" != "$mac" ]; then
     echo "::error::ws mac apply printed '$key' as the Mac's public key, not '$mac'"
     fail=1
 fi
-give="    ssh ws-ssh \"printf '%s\\n' '$mac' | tee /etc/wireguard/mac.pub >/dev/null\""
+give="    ssh -o HostName=ADDRESS -o Port=PORT ws \"printf '%s\\n' '$mac' | tee /etc/wireguard/mac.pub >/dev/null\""
 grep -qxF "$give" "$RUNNER_TEMP/first.out" ||
     {
         echo "::error::ws mac apply printed no command that gives ws '$mac'"
@@ -51,9 +51,9 @@ if launchctl print "system/$LABEL" >/dev/null 2>&1; then
     echo "::error::ws mac apply loaded the daemon without ws's key"
     fail=1
 fi
-[ "$(ssh -G ws | awk '$1 == "hostname" { print $2 }')" = 127.0.0.1 ] ||
+[ "$(ssh -G ws | awk '$1 == "hostname" { print $2 }')" = 10.99.0.1 ] ||
     {
-        echo "::error::without ws's key, ssh -G ws does not take the LAN's way"
+        echo "::error::without ws's key, ssh -G ws does not give the tunnel's end"
         fail=1
     }
 exit "$fail"

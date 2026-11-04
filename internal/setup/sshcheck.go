@@ -73,19 +73,6 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	return id, nil
 }
 
-// viaTunnel is whether ws goes through the tunnel: where mac.conf has WS_PUBLIC_KEY and launchd has
-// the daemon. A run that stops before the tunnel leaves ssh ws on the ways of ws-ssh.
-func (s SSH) viaTunnel(ctx context.Context) bool {
-	if s.Conf.PublicKey == "" {
-		return false
-	}
-	if s.AssumeTunnel {
-		return true
-	}
-	_, err := s.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel)
-	return err == nil
-}
-
 // cldTabs is whether Ghostty's app is there and the cld in ~/.local/bin has restore tabs, so that
 // ssh never runs a cld that would refuse restore tabs --watch at each connection.
 func (s SSH) cldTabs(ctx context.Context) bool {

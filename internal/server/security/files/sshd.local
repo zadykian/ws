@@ -6,3 +6,6 @@
 [sshd]
 enabled = true
 backend = systemd
+# Each peer of wg0 holds a key that ws lists, so the tunnel's subnet is never banned. ignoreself,
+# fail2ban's default, covers ws's own addresses, loopback included.
+ignoreip = 10.99.0.0/24

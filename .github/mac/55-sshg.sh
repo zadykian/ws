@@ -1,5 +1,5 @@
 #!/bin/bash
-# ssh -G gives ws and ws-ssh their addresses.
+# ssh -G gives ws the tunnel's end, and its user, alias and key.
 
 set -eo pipefail
 
@@ -17,9 +17,5 @@ expect ws port 22
 expect ws user root
 expect ws hostkeyalias ws
 expect ws serveraliveinterval 30
-expect ws-ssh hostname 127.0.0.1
-expect ws-ssh port 22
-expect ws-ssh user root
-expect ws-ssh hostkeyalias ws
-expect ws-ssh identitiesonly yes
+expect ws identitiesonly yes
 exit "$fail"

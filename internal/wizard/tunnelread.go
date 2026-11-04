@@ -35,8 +35,7 @@ func (t *Tunnel) port(ctx context.Context) bool {
 	return err == nil
 }
 
-// via tells whether ssh -G ws gives ws's end of the tunnel, as config.d/ws does once launchd has
-// ws-tunnel.
+// via tells whether ssh -G ws gives ws's end of the tunnel, as config.d/ws does.
 func (t *Tunnel) via(ctx context.Context) bool {
 	out, err := t.M.Run(ctx, "ssh", "-G", "ws")
 	for _, l := range strings.Split(string(out), "\n") {

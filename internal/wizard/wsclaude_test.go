@@ -36,7 +36,7 @@ func TestWsClaudeApply(t *testing.T) {
 	if err := c.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "still has no login") {
 		t.Errorf("Apply where ssh fails = %v", err)
 	}
-	if !strings.Contains(strings.Join(m.Calls, "\n"), `ws-ssh exec bash -lc "claude auth login"`) {
+	if !strings.Contains(strings.Join(m.Calls, "\n"), `ws exec bash -lc "claude auth login"`) {
 		t.Errorf("calls = %q; want the login", m.Calls)
 	}
 }

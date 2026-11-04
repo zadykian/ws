@@ -22,6 +22,8 @@ func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.
 		effecttest.Result{Out: []byte("openssh-server ii\nufw ii\nfail2ban ii\nnftables ii\n")}
 	m.Results["/usr/sbin/sshd -G -f /etc/ssh/sshd_config.d/10-keys-only.conf.ws-check"] = effecttest.Result{}
 	m.Results["rm -f /etc/ssh/sshd_config.d/10-keys-only.conf.ws-check"] = effecttest.Result{}
+	m.Results["/usr/sbin/sshd -G -f /etc/ssh/sshd_config.d/10-tunnel-peers.conf.ws-check"] = effecttest.Result{}
+	m.Results["rm -f /etc/ssh/sshd_config.d/10-tunnel-peers.conf.ws-check"] = effecttest.Result{}
 	// What ufw's own commands leave in its files.
 	m.Files[ufw.UserRules] = []byte("### tuple ### allow tcp 22 0.0.0.0/0 any 0.0.0.0/0 in comment=77733a20535348\n" +
 		"### tuple ### allow tcp 22 ::/0 any ::/0 in comment=77733a20535348\n")
@@ -51,6 +53,10 @@ func TestSSHDKeepsKeysOnlyAndReloads(t *testing.T) {
 	run(t, ss)
 	if got := string(m.Files["/etc/ssh/sshd_config.d/10-keys-only.conf"]); got == "" {
 		t.Error("the drop-in was not written")
+	}
+	peers := string(m.Files["/etc/ssh/sshd_config.d/10-tunnel-peers.conf"])
+	if !strings.Contains(peers, "PerSourcePenaltyExemptList 10.99.0.0/24") {
+		t.Errorf("the tunnel's drop-in = %q, want the exempt list", peers)
 	}
 	if !slices.Contains(u.Calls, "reload ssh.service") {
 		t.Errorf("calls = %q, want a reload of ssh.service", u.Calls)
@@ -85,6 +91,20 @@ func TestSSHDKeepsTheOldFileWhereSSHDRefusesTheNew(t *testing.T) {
 		t.Error("a file that sshd refuses was written")
 	}
 	if _, ok := m.Files["/etc/ssh/sshd_config.d/10-keys-only.conf"]; ok {
+		t.Error("the refused file replaced the target")
+	}
+}
+
+func TestSSHDKeepsTheOldTunnelFileWhereSSHDRefusesTheNew(t *testing.T) {
+	v := values.Default()
+	v.Home = "/root"
+	m, _, ss := fakeSteps(v)
+	m.Results["/usr/sbin/sshd -G -f /etc/ssh/sshd_config.d/10-tunnel-peers.conf.ws-check"] =
+		effecttest.Result{Err: errors.New("bad option")}
+	if _, err := step.Run(t.Context(), ss, &effecttest.Out{}, false); err == nil {
+		t.Error("a file that sshd refuses was written")
+	}
+	if _, ok := m.Files["/etc/ssh/sshd_config.d/10-tunnel-peers.conf"]; ok {
 		t.Error("the refused file replaced the target")
 	}
 }

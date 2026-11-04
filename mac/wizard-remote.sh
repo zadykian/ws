@@ -2,7 +2,7 @@
 # The wizard's remote script on ws, which the Mac's wizard sends to root there over ssh. So it is
 # the Mac's clone's, whatever ws's clone holds, or where ws has none:
 #
-#   ssh ws-ssh sh -s -- OP [ARG...] <mac/wizard-remote.sh
+#   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
 #   is missing. run is the ws version and status of the last full run, and off where host_vars turned the
@@ -279,7 +279,7 @@ journal() {
 }
 
 main() {
-    [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh ws-ssh logs in"
+    [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh logs in to ws"
     case ${1-} in
     status) status ;;
     run) shift && run "$@" ;;

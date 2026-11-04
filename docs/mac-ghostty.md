@@ -73,7 +73,7 @@ The script sets cld up wherever it runs, whatever the terminal. It:
   release, which checks the binary's SHA-256. Each run then has `cld update` replace it where a
   newer release is out, and says so only then. A release before 0.6.0 lacks `cld update`, so
   `install.sh` replaces it. A cld built from a clone is left alone;
-- adds the two lines that start cld's watcher to `Host ws ws-ssh` in `config.d/ws`, where Ghostty's
+- adds the two lines that start cld's watcher to `Host ws` in `config.d/ws`, where Ghostty's
   app is there, once the cld installed has `restore tabs`.
 
 A restore needs Ghostty 1.4 or newer, which cld checks, by Ghostty's AppleScript rather than its
@@ -92,7 +92,7 @@ export PATH="$HOME/.local/bin:$PATH"
 ### The watcher
 
 A watcher keeps the record of Ghostty's windows, tabs and panes that a restore reads, and ends as
-Ghostty quits. ssh starts it, through these lines of `Host ws ws-ssh`, as each connection opens:
+Ghostty quits. ssh starts it, through these lines of `Host ws`, as each connection opens:
 
 ```text
 PermitLocalCommand yes
@@ -106,9 +106,8 @@ turn it off. The watcher starts inside Ghostty's pane, so macOS charges its Appl
 Ghostty, which controls itself with no prompt. A `git push` to ws from a Ghostty pane starts the
 watcher too, or finds it running.
 
-A restore opens an ssh connection for each pane it reopens. Where those logins fail, fail2ban bans
-the tunnel's address, `10.99.0.2`, after 5 of them, as [ssh's hosts](mac.md#sshs-hosts) says.
-`ssh ws` then fails for 10 minutes, while `ssh ws-ssh` comes from another address and serves.
+A restore opens an ssh connection for each pane it reopens. Over the tunnel, failed logins bring
+no ban, as [ssh's hosts](mac.md#sshs-hosts) says.
 
 Two open issues meet this. [#56](https://github.com/zadykian/ws/issues/56) plans `mac/ws-join`,
 which joins a session again after ssh drops: cld counts a pane that runs it as an ssh pane.

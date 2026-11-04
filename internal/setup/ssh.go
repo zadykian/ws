@@ -20,10 +20,7 @@ type SSH struct {
 	M    effect.Machine
 	Out  effect.Out
 	Now  func() time.Time
-	// AssumeTunnel has ws go through the tunnel wherever mac.conf has WS_PUBLIC_KEY, as under --check,
-	// which does not load the daemon.
-	AssumeTunnel bool
-	// Again is the second run of the step, which the tunnel and cld may have changed ssh's file for.
+	// Again is the second run of the step, which cld may have changed ssh's file for.
 	Again bool
 }
 
@@ -35,10 +32,10 @@ func (s SSH) Name() string {
 	return "ssh"
 }
 
-// WaitsOn is the tunnel for the second run.
+// WaitsOn is cld for the second run.
 func (s SSH) WaitsOn() string {
 	if s.Again {
-		return "tunnel"
+		return "cld"
 	}
 	return ""
 }
@@ -54,19 +51,18 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	in := sshcfg.Inputs{
-		User: s.Conf.User, LAN: s.Conf.LAN, LANAddress: s.Conf.LANAddress, Remote: s.Conf.Remote,
-		RemotePort: s.Conf.RemotePort, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
-		IdentityPub: id.Pub, IdentityAgent: id.Agent, ViaTunnel: s.viaTunnel(ctx), CldTabs: s.cldTabs(ctx),
+		User: s.Conf.User, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
+		IdentityPub: id.Pub, IdentityAgent: id.Agent, CldTabs: s.cldTabs(ctx),
 	}
 	text := []byte(sshcfg.Config(in))
 	if err := s.validate(ctx, f, text); err != nil {
 		return step.Plan{}, err
 	}
 	if f.ConfigDirLink != "" && !bytes.Equal(f.Ws.Text, text) {
-		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws, with mac.conf's addresses, goes there",
+		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there",
 			f.ConfigDirLink)
 	}
-	for _, h := range sshcfg.OwnHosts(string(f.UserConfig.Text), "ws", "ws-ssh") {
+	for _, h := range sshcfg.OwnHosts(string(f.UserConfig.Text), "ws") {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}

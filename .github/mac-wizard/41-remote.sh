@@ -35,7 +35,7 @@ error() {
 # remote OP [ARG...]: the remote script's OP on ws, as the wizard runs it. It prints the output, and
 # sets out and status.
 remote() {
-    out=$(ssh -o BatchMode=yes ws-ssh sh -s -- "$@" <"$remote_sh" 2>&1)
+    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- "$@" <"$remote_sh" 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
@@ -108,7 +108,7 @@ remote run --only devtools
     error "a tagged run exited $status"
 rm "$ws/server.status"
 echo 4 >"$ws/server.wait"
-ssh -o BatchMode=yes ws-ssh sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
+ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
 first=$!
 tries=0
 until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
@@ -149,7 +149,7 @@ remote run --diff
 
 # files OP [ARG...]: the files script's OP, as remote runs the remote script's.
 files() {
-    out=$(ssh -o BatchMode=yes ws-ssh sh -s -- "$@" <"${remote_sh%/*}/wizard-remote-files.sh" 2>&1)
+    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- "$@" <"${remote_sh%/*}/wizard-remote-files.sh" 2>&1)
     status=$?
     printf '%s\n' "$out"
 }

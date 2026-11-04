@@ -22,7 +22,7 @@ func TestTunnelApply(t *testing.T) {
 			m.Results[libexec+" mac tunnel status"] = effecttest.Result{Out: []byte(tc.shake)}
 		}
 		m.Results["mkdir -p /h"] = effecttest.Result{}
-		m.Results["ssh "+strings.Join(tun.Host.SSH.argv([]string{"-o", "BatchMode=yes", "ws", "echo", "ok"}), " ")] =
+		m.Results[tunnelCall(tun.Host.SSH, "-o", "BatchMode=yes", "ws", "echo", "ok")] =
 			effecttest.Result{Out: []byte("ok\n")}
 		ran := false
 		tun.Setup = &Setup{Run: func(context.Context, bool) (bool, error) { ran = true; return true, nil }}

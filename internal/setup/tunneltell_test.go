@@ -36,8 +36,8 @@ func TestTunnelFinishPrintsTheKeyWhereMacConfLacksWsKey(t *testing.T) {
 	if err := s.Finish(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"public key is PUB\n", "ssh -t ws-ssh \"printf '%s\\n' 'PUB' | sudo tee /etc/wireguard/mac.pub",
-		"ssh -t ws-ssh sudo ws server apply --only wireguard\n", "Then set WS_PUBLIC_KEY"} {
+	for _, want := range []string{"public key is PUB\n", "ssh -t -o HostName=ADDRESS -o Port=PORT ws \"printf '%s\\n' 'PUB' | sudo tee /etc/wireguard/mac.pub",
+		"ssh -t -o HostName=ADDRESS -o Port=PORT ws sudo ws server apply --only wireguard\n", "Then set WS_PUBLIC_KEY"} {
 		if !strings.Contains(text.String(), want) {
 			t.Errorf("Finish printed %q; want %q in it", text.String(), want)
 		}

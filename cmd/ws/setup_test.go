@@ -82,9 +82,7 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	for _, file := range []string{"new", "whole"} {
-		for _, host := range []string{"ws", "ws-ssh"} {
-			m.Results["ssh -G -F /tmp/x/"+file+" "+host] = effecttest.Result{}
-		}
+		m.Results["ssh -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
 	}
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.machine = m
