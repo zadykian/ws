@@ -1,0 +1,32 @@
+---
+# F12's git keys.
+global:
+  - action: git.commit-editor
+    keys: [ctrl+alt+k]
+    f12: [ChangesView.ToggleCommitUi, CheckinProject, Git.Commit.Stage]
+  - {action: git.branch, keys: [alt+x], f12: [Git.Branches, Git.ShowBranches]}
+  - action: git.branch
+    keys: [ctrl+alt+n]
+    f12: [Git.CreateNewBranch, Git.CreateNewBranch.FromCommit, Git.New.Branch.In.Log]
+  - {action: git.fetch, keys: [alt+z], f12: [Git.Fetch]}
+  - {action: file.reload, keys: [ctrl+alt+y], f12: [Synchronize]}
+  - {action: git.copy-sha, keys: [ctrl+alt+shift+c], f12: [Vcs.CopyRevisionNumberAction]}
+  - {action: git.push, keys: [alt+v], f12: [Vcs.Push]}
+code:
+  - {action: git.next-hunk, keys: [f8], f12: [NextDiff]}
+  - {action: git.previous-hunk, keys: [shift+f8, shift+f7], f12: [PreviousDiff]}
+  - {action: git.restore-hunk, keys: [ctrl+alt+z], f12: [Vcs.RollbackChangedLines]}
+  - {action: git.next-hunk, keys: [ctrl+alt+shift+n], f12: [VcsShowNextChangeMarker]}
+  - {action: git.previous-hunk, keys: [ctrl+alt+shift+p], f12: [VcsShowPrevChangeMarker]}
+git:
+  - action: git.toggle-staged
+    keys: [ctrl+alt+a]
+    f12: [ChangesView.AddUnversioned, Git.Add, Git.Stage.Add, hg4idea.add]
+  - {action: git.tree-view, keys: [ctrl+alt+p], f12: [ChangesView.GroupBy.Directory]}
+  - {action: git.restore-file, keys: [ctrl+alt+z], f12: [ChangesView.Revert, Git.Stage.Revert]}
+  - {action: git.stash, keys: [ctrl+shift+h], f12: [ChangesView.ShelveSilently]}
+  - {action: git.stash-pop, keys: [ctrl+alt+u], f12: [ChangesView.UnshelveSilently]}
+  - {action: git.hide, keys: [f5, alt+5], f12: [ActivateCommitToolWindow]}
+commit:
+  - {action: git.commit, keys: [alt+c], f12: [Git.Commit.And.Push.Executor]}
+  - {action: git.amend, keys: [alt+a], f12: [Vcs.ToggleAmendCommitMode]}
