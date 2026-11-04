@@ -3,10 +3,10 @@
 F12 is the keymap GoLand and Rider use here: `F12.xml`, 736 actions over IntelliJ's default keymap,
 in Visual Studio's style. The `config.toml` that the `helix` role wrote bound the keys of each F12
 action that helix has a command for, in normal and insert mode. These pages list those 109 actions
-by topic, with helix's own key for each, then the 414 that helix has no command for. 107 of the 109
-are bound: Parameter info and Open aren't, and [their tables](helix-keymap/actions.md) say why. The
-other 213 actions of `F12.xml` have no keys: they take the default keymap's keys away. An action
-that `F12.xml` doesn't name keeps the default keymap's keys, which aren't here.
+by topic, with helix's own key for each. 107 of the 109 are bound: Parameter info and Open aren't,
+and [their tables](helix-keymap/actions.md) say why. The 414 actions that helix has no command for
+are not listed. The 213 actions of `F12.xml` with no keys take the default keymap's keys away. An
+action that `F12.xml` doesn't name keeps the default keymap's keys, which aren't here.
 
 The keys are F12's as the IDEs write them: a comma between the keys of a chord, a semicolon
 between an action's keys. F12's Cmd keys are left out, as Cmd never reaches a program in a
@@ -18,8 +18,6 @@ left out too in the tables of actions helix has, as helix has no names for them.
 - [Keys a terminal or tmux may not pass on](helix-keymap/terminals.md).
 - [helix's keys that F12 takes](helix-keymap/taken.md), with helix's other key for each.
 - [The actions helix has](helix-keymap/actions.md), by topic, with helix's own key for each.
-- The actions helix lacks, in the order of their names, upper and lower case alike:
-  [A to J](helix-keymap/lacks-a-j.md) and [L to Z](helix-keymap/lacks-l-z.md).
 
 ## In insert mode
 

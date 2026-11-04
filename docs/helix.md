@@ -16,9 +16,8 @@ role installs them ([The language servers](devtools.md#the-language-servers)), s
 ws wrote a `config.toml` that bound the keys of F12, the keymap GoLand and Rider use here, in
 normal and in insert mode. It no longer does, and the pages below describe those keys.
 [The F12 keymap](helix-keymap.md) and its pages give each F12 action's keys, helix command
-and helix's own key, then the actions helix has no command for. Cmd never reaches a program in a
-terminal, so F12's Ctrl keys stand in for it. On a Mac, left Option sends Alt
-([Ghostty's settings](mac-ghostty.md#ghosttys-settings)).
+and helix's own key. Cmd never reaches a program in a terminal, so F12's Ctrl keys stand in for it.
+On a Mac, left Option sends Alt ([Ghostty's settings](mac-ghostty.md#ghosttys-settings)).
 
 Where F12 takes a key of helix's, helix's other key for it still works. A few have no other key,
 which [helix's keys that F12 takes](helix-keymap/taken.md) lists. Alt+D was helix's only key to
