@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 )
 
 // version is the .deb's, and tag the release that holds it. sums are the SHA-256 of that .deb for
@@ -51,3 +52,21 @@ func architecture(ctx context.Context, m effect.Machine) (string, error) {
 	}
 	return arch, nil
 }
+
+// download makes the part that fetches the release's .deb, checked against its SHA-256 before dpkg
+// reads it, where the version is not installed.
+func download(m effect.Machine) func(context.Context) ([]host.Resource, error) {
+	return func(ctx context.Context) ([]host.Resource, error) {
+		if ok, err := installed(ctx, m); err != nil || ok {
+			return nil, err
+		}
+		arch, err := architecture(ctx, m)
+		if err != nil {
+			return nil, err
+		}
+		return []host.Resource{host.Download{M: m, URL: debURL(arch), Path: debPath(arch), SHA256: sums[arch], Mode: 0o644}}, nil
+	}
+}
+
+// downloadStep names the step that fetches the .deb.
+const downloadStep = "Fresh download"
