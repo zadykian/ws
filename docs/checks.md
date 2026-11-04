@@ -52,7 +52,9 @@ below takes it. A second run and `--check` must print nothing, by sh and dash. T
 `ssh-agent` at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
 `WS_IDENTITY`. While it lists the key, `--check` must print nothing of the Mac key stage. With git's
 name, it must say it would wait for git's key made in Secretive, unless `WS_GIT_SIGNING_KEY` is
-empty. Once the agent lacks it, a run and `--check` must stop there, naming the socket. Last,
+empty. With no `WS_IDENTITY` and `PublicKeys` closed, it must take the agent's key, and say it would
+write ws's copy. Once the agent lacks it, a run and `--check` must stop there, naming the socket.
+Last,
 without the stand-in `gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth
 login`. With a login lacking the scopes, or the signing one alone, it must name `gh auth refresh`.
 `--check` must say each would run.
