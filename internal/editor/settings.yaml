@@ -1,0 +1,4 @@
+---
+# What every editor shares, in no editor's terms. An adapter says where each value goes.
+font: JetBrainsMono Nerd Font Mono
+theme: {mode: dark, dark: JetBrains Dark, light: JetBrains Light}
