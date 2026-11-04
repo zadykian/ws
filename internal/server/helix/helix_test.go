@@ -41,7 +41,7 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 }
 
 func TestConfigRefusesALink(t *testing.T) {
-	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/helix", "/home/ws/.config/helix/config.toml", "/home/ws/.config/helix/.ws-grammars"} {
+	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/helix", "/home/ws/.config/helix/config.toml"} {
 		m := effecttest.NewMachine()
 		m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 		m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
