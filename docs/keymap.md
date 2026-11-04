@@ -2,7 +2,8 @@
 
 F12's keys, in no editor's terms. The data is in [`internal/editor`](../internal/editor/), and each
 editor has an adapter that renders it as that editor's file. Zed's adapter is
-[`internal/editor/zed`](../internal/editor/zed/).
+[`internal/editor/zed`](../internal/editor/zed/) and Fresh's
+[`internal/editor/fresh`](../internal/editor/fresh/).
 
 ## The data
 
@@ -37,7 +38,8 @@ An action is a group, a dot and what it does, as `edit.copy`. A key is bound onc
 
 Each adapter holds a table of its own: a map of each action to a target in that editor, or to a
 reason it has none. An action with neither fails a test, as does a stale row. So no key goes
-missing from an editor unseen. For Zed the table is `internal/editor/zed/actions/`.
+missing from an editor unseen. For Zed the table is `internal/editor/zed/actions/`. Fresh's is
+`internal/editor/fresh/actions/`.
 
 ## Changing a key
 
@@ -45,6 +47,7 @@ missing from an editor unseen. For Zed the table is `internal/editor/zed/actions
 2. Give a new action a target or a reason in each adapter's table.
 3. Change each golden file by hand, in the same commit. For Zed, the file is
    [`keymap.json`](../internal/editor/zed/testdata/keymap.json). `go test` holds the render equal.
+   Fresh has no golden file: its tests hold the rules.
 
 ## Where F12 comes from
 
