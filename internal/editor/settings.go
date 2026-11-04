@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-//go:embed settings.yaml filetypes.yaml
+//go:embed settings.yaml filetypes.yaml servers.yaml
 var dataFiles embed.FS
 
 // Settings are the values that every editor takes.

@@ -18,3 +18,10 @@ func TestTheFileTypesLoad(t *testing.T) {
 		t.Fatalf("%v, %v", types, err)
 	}
 }
+
+func TestTheCatalogueLoads(t *testing.T) {
+	servers, err := LoadServers()
+	if err != nil || len(servers) == 0 {
+		t.Fatalf("%v, %v", servers, err)
+	}
+}
