@@ -163,3 +163,50 @@ func TestReplaceCancelled(t *testing.T) {
 		t.Errorf("replace = %v, file %q, calls %q; want the old file and the copy removed", err, m.Files[file], calls)
 	}
 }
+
+func TestRunReplaces(t *testing.T) {
+	// v0.10.0 is the later by number, and the earlier as text.
+	u, m := newUpdater("v0.9.0", release(t, "v0.10.0", good()), "v0.10.0")
+	r, err := u.Run(t.Context())
+	if err != nil || r.Report() != "Updated ws v0.9.0 to v0.10.0: "+file+"\n" {
+		t.Fatalf("Run = %+v, %v", r, err)
+	}
+	if got := string(m.Files[file]); got != string(newBinary) {
+		t.Errorf("the file holds %q, want the new binary", got)
+	}
+}
+
+func TestRunStays(t *testing.T) {
+	for name, tc := range map[string]struct{ version, latest, report string }{
+		"the latest": {"v1.2.3", "v1.2.3", "ws v1.2.3 is the latest release\n"},
+		"newer":      {"v0.10.0", "v0.9.0", "ws v0.10.0 is newer than the latest release, v0.9.0\n"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			// The release holds no file: a download would fail.
+			u, m := newUpdater(tc.version, release(t, tc.latest, nil), tc.latest)
+			r, err := u.Run(t.Context())
+			if err != nil || r.Report() != tc.report || len(m.Calls) != 0 {
+				t.Errorf("Run = %+v, %v, calls %v; want %q and no call", r, err, m.Calls, tc.report)
+			}
+		})
+	}
+}
+
+func TestRunRefuses(t *testing.T) {
+	for name, version := range map[string]string{
+		"devel":  "devel",
+		"pseudo": "v1.2.4-0.20260101000000-abcdef123456",
+		"dirty":  "v1.2.3+dirty",
+	} {
+		t.Run(name, func(t *testing.T) {
+			u, m := newUpdater(version, "http://127.0.0.1:1", "v9.9.9")
+			if _, err := u.Run(t.Context()); err == nil || !strings.Contains(err.Error(), "not a release") || len(m.Calls) != 0 {
+				t.Errorf("Run = %v, calls %v; want the refusal, and no call", err, m.Calls)
+			}
+		})
+	}
+	u, _ := newUpdater("v1.2.3", "http://example.com", "v9.9.9")
+	if _, err := u.Run(t.Context()); err == nil || !strings.Contains(err.Error(), "WS_RELEASES_URL") {
+		t.Errorf("Run at another address = %v, want the refusal", err)
+	}
+}
