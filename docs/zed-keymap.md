@@ -103,6 +103,20 @@ F12's Ctrl+B is in the editor only, so the terminal gets it.
 - Last edit location stays in the file (zed#19731). Next error can skip gopls's unused-variable
   errors (zed#64790).
 
+## The keys left to Zed
+
+The data holds no row for 37 plain F12 keys, and the keymap binds none. Zed's own defaults do it:
+
+- Zed's editor keys: Backspace, Enter, Esc, Tab, Shift+Tab, the arrows, Home, End and Page Up and
+  Down, each alone and with Shift.
+- Zed's completion and snippet keys: Enter and Tab accept an item, and Ctrl+Up and Ctrl+Down pick
+  one. Tab and Shift+Tab move between a snippet's variables and a call's parameters.
+- Tab accepts Zed's edit prediction.
+- Alt+click adds a cursor, and Shift+Alt+drag selects a column (`multi_cursor_modifier`).
+- Ctrl+D in the Terminal reaches the shell.
+
+Seven of the rows share `tab`, so a neutral action for each would collide.
+
 ## How the mapping was made
 
 Each action got a hand-made decision: status, Zed action, context and note. The inputs were:
