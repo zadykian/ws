@@ -28,6 +28,9 @@ func agentMachine(m *effecttest.Machine, lines ...string) *effecttest.Machine {
 	return m
 }
 
+// copyOf is the path of ws's copy of the line's key.
+func copyOf(line string) string { return sshcfg.Expand(sshcfg.AgentKeys(line)[0].Pub(), agentHome) }
+
 func TestSecretiveKeys(t *testing.T) {
 	ctx := context.Background()
 	m := effecttest.NewMachine()
@@ -47,5 +50,30 @@ func TestSecretiveKeys(t *testing.T) {
 	m.Results[agentList] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
 	if _, socket, err := setup.SecretiveKeys(ctx, m, agentHome); !socket || !errors.Is(err, setup.ErrAgentDown) {
 		t.Errorf("a stale socket: %v, %v", socket, err)
+	}
+}
+
+func TestPlanCopy(t *testing.T) {
+	m := effecttest.NewMachine()
+	pub := copyOf(agentKey)
+	if got := setup.PlanCopy(m, "/h/.ssh/k.pub", agentKey, agentHome); got != nil {
+		t.Errorf("a .pub elsewhere: %v", got)
+	}
+	if got := setup.PlanCopy(m, pub, "", agentHome); got != nil {
+		t.Errorf("no text: %v", got)
+	}
+	got := setup.PlanCopy(m, pub, agentKey, agentHome)
+	if len(got) != 1 || got[0] != (setup.KeyCopy{Path: pub, Text: agentKey}) {
+		t.Fatalf("a missing copy: %v", got)
+	}
+	m.Results["mkdir -p /h/.config/ws/secretive"] = effecttest.Result{}
+	if err := setup.Apply(context.Background(), m, &effecttest.Out{}, got[0]); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files[pub]) != agentKey {
+		t.Errorf("the copy holds %q", m.Files[pub])
+	}
+	if got := setup.PlanCopy(m, pub, agentKey, agentHome); got != nil {
+		t.Errorf("a copy that holds the key: %v", got)
 	}
 }

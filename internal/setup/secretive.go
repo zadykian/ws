@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"path/filepath"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/step"
 )
 
 // ErrAgentDown is why Secretive's keys cannot be listed: its socket stays after Secretive quits, and
@@ -31,4 +33,34 @@ func SecretiveKeys(ctx context.Context, m effect.Machine, home string) ([]sshcfg
 			"mac.conf's WS_IDENTITY", ErrAgentDown, socket)
 	}
 	return sshcfg.AgentKeys(string(out)), true, nil
+}
+
+// KeyCopy writes ws's copy of the .pub of a key of Secretive's.
+type KeyCopy struct{ Path, Text string }
+
+func (c KeyCopy) String() string {
+	return "would write " + c.Path + ", ws's copy of a key of Secretive's"
+}
+
+// PlanCopy returns the change that makes ws's copy at pub hold text. It returns none for a .pub
+// elsewhere, for one with no text from the agent, and for a copy that holds text already.
+func PlanCopy(m effect.Machine, pub, text, home string) []step.Change {
+	if text == "" || !strings.HasPrefix(pub, home+"/"+sshcfg.KeyCopies+"/") {
+		return nil
+	}
+	if old, err := m.ReadFile(pub); err == nil && string(old) == text {
+		return nil
+	}
+	return []step.Change{KeyCopy{pub, text}}
+}
+
+func applyCopy(ctx context.Context, m effect.Machine, out effect.Out, c KeyCopy) error {
+	if _, err := m.Run(ctx, "mkdir", "-p", filepath.Dir(c.Path)); err != nil {
+		return fmt.Errorf("cannot make %s: %w", filepath.Dir(c.Path), err)
+	}
+	if err := m.WriteFile(c.Path, []byte(c.Text), 0o644); err != nil {
+		return fmt.Errorf("cannot write %s: %w", c.Path, err)
+	}
+	out.Say("wrote %s", c.Path)
+	return nil
 }
