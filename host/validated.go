@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/zadykian/ws/step"
 )
 
 // Validated is a File that a command checks before it replaces the old file, so that a daemon
@@ -19,6 +21,9 @@ type checked struct {
 	Change
 	v Validated
 }
+
+// Kind is the wrapped change's: the embedded Change has no Kind to promote.
+func (c checked) Kind() step.ChangeKind { return step.KindOf(c.Change) }
 
 // Apply writes the content beside the target and runs the check on it. Only a good file is then
 // written over the target.

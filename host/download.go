@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Download is a file fetched from a URL. Its SHA-256, in hex, is pinned: the file is renamed into
@@ -30,6 +31,8 @@ type fetch struct{ d Download }
 
 func (c fetch) String() string { return fmt.Sprintf("download %s to %s", c.d.URL, c.d.Path) }
 
+func (fetch) Kind() step.ChangeKind { return step.Write }
+
 func (c fetch) Apply(ctx context.Context) error {
 	return c.d.M.Download(ctx, c.d.URL, c.d.Path, c.d.SHA256, c.d.attrs())
 }
@@ -39,6 +42,8 @@ type setAttrs struct{ d Download }
 func (c setAttrs) String() string {
 	return fmt.Sprintf("set owner %d:%d and mode %o of %s", c.d.UID, c.d.GID, c.d.Mode.Perm(), c.d.Path)
 }
+
+func (setAttrs) Kind() step.ChangeKind { return step.Write }
 
 func (c setAttrs) Apply(context.Context) error {
 	if err := c.d.M.Chown(c.d.Path, c.d.UID, c.d.GID); err != nil {

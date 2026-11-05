@@ -6,6 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Absent is a path that does not exist: a file, a link, or a directory with all it holds. Name only
@@ -18,6 +19,8 @@ type Absent struct {
 type removePath struct{ a Absent }
 
 func (c removePath) String() string { return "remove " + c.a.Path }
+
+func (removePath) Kind() step.ChangeKind { return step.Removal }
 
 func (c removePath) Apply(ctx context.Context) error {
 	_, err := c.a.M.RunRoot(ctx, "rm", "-rf", "--", c.a.Path)

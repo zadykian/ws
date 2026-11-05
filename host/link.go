@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Link is a symbolic link to a target. It has no owner or mode: a link's own are never used.
@@ -19,6 +20,8 @@ type Link struct {
 type setLink struct{ l Link }
 
 func (c setLink) String() string { return fmt.Sprintf("link %s to %s", c.l.Path, c.l.Target) }
+
+func (setLink) Kind() step.ChangeKind { return step.Write }
 
 func (c setLink) Apply(context.Context) error { return c.l.M.Symlink(c.l.Target, c.l.Path) }
 

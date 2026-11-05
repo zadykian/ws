@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // File is a file with its content, mode and owner.
@@ -41,6 +42,8 @@ func (c writeFile) String() string {
 	}
 	return fmt.Sprintf("%s %s\n%s", c.why, c.f.Path, effect.Diff(c.f.Path, c.before, c.f.Content))
 }
+
+func (writeFile) Kind() step.ChangeKind { return step.Write }
 
 func (c writeFile) Apply(context.Context) error {
 	if c.f.edit != nil {
