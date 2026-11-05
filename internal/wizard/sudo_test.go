@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
-const sudoPassword = "a pass'word $x"
+const sudoPassword = "a pass'word $x" //nolint:gosec // a test value, not a credential
 
 // sudoMachine answers sudo's check of a password as sudo-rs does: Results can't, as stdin isn't in
 // their key.
@@ -33,7 +33,6 @@ func sudoLine(s *Sudo, cmd ...string) string {
 // newSudo returns the stage over newHost's machine, where ssh logs in as zadykian, whose sudo needs
 // a password, and answers the hidden questions from the list.
 func newSudo(t *testing.T, hidden ...string) (*Sudo, *effecttest.Machine, *effecttest.Prompt) {
-	t.Helper()
 	h, m := newHost(nil)
 	m.Results[wayCall(h.SSH)] = effecttest.Result{Out: []byte("user zadykian\nhostname 10.1.1.2\nport 22\n" +
 		"userknownhostsfile ~/.ssh/known_hosts\n")}
@@ -123,6 +122,19 @@ func TestSudoWithNoTerminalStops(t *testing.T) {
 	err := s.Apply(context.Background(), p)
 	if err == nil || !strings.Contains(err.Error(), "no terminal") || len(prompt.Asked) != 0 {
 		t.Fatalf("Apply = %v, Asked %q", err, prompt.Asked)
+	}
+}
+
+func TestSudoUnderCheck(t *testing.T) {
+	s, _, _ := newSudo(t, sudoPassword)
+	s.Host.Check = true
+	if p, err := s.Plan(context.Background()); err != nil || len(p.Changes) != 0 || s.way != sudoAsked {
+		t.Errorf("at a terminal: Plan = %v, %v, way %d", p, err, s.way)
+	}
+	s, _, prompt := newSudo(t)
+	s.Host.Check, s.Host.Tty = true, false
+	if p, err := s.Plan(context.Background()); err != nil || len(p.Changes) != 1 || len(prompt.Asked) != 0 {
+		t.Errorf("with no terminal: Plan = %v, %v, Asked %q", p, err, prompt.Asked)
 	}
 }
 
