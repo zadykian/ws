@@ -25,7 +25,7 @@ func (s StateScreen) detailBody(size Size) (string, string) {
 // detailLines draws the selected row for a pane of width, each line wrapped to it, as what a pane
 // cuts is what a diff is read for.
 func (s StateScreen) detailLines(width int) []string {
-	rows := s.rows[s.tab]
+	rows := s.shown(s.tab)
 	if len(rows) == 0 || width <= 0 {
 		return nil
 	}

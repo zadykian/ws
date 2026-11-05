@@ -90,7 +90,7 @@ func (s StateScreen) tabCell(tab int) string {
 // list, so that the list needs no scroll of its own to keep, and a new size can't lose the row.
 func (s StateScreen) listBody(size Size) string {
 	var lines []string
-	rows := s.rows[s.tab]
+	rows := s.shown(s.tab)
 	room := size.Height
 	cursor := s.cursors[s.tab]
 	top := max(min(cursor-room/2, len(rows)-room), 0)

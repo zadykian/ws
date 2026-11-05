@@ -115,7 +115,7 @@ func TestStateScreenTabWalksTheTabsThenTheButtons(t *testing.T) {
 
 // selected returns the name of the row that the screen has selected.
 func selected(s StateScreen) string {
-	return s.rows[s.tab][s.cursors[s.tab]].name
+	return s.shown(s.tab)[s.cursors[s.tab]].name
 }
 
 func TestStateScreenSelectionMovesAndStaysInTheList(t *testing.T) {

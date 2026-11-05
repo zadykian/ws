@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -54,12 +55,16 @@ type StateScreen struct {
 	// failed, and warning the last that a read's steps gave.
 	reading, reported bool
 	problem, warning  string
+	// filter holds the words that a row's name must contain.
+	filter textinput.Model
 }
 
 // NewStateScreen returns the screen, which asks for a report as it starts.
 func NewStateScreen(theme Theme, title string, read, leave tea.Cmd) StateScreen {
 	footer := NewFooter(readButton, Keys.Quit).Enable(readPlace, false)
-	return StateScreen{theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true}
+	return StateScreen{
+		theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true, filter: newFilter(),
+	}
 }
 
 // Init asks for the first report.
@@ -100,13 +105,13 @@ func (s StateScreen) took(msg StateRead) StateScreen {
 	return s.refound(was)
 }
 
-// refound puts each tab's selection back on its row, once a read moved the rows under it. Where the
-// row went, the selection keeps its place.
+// refound puts each tab's selection back on its row, once a read or the filter moved the rows under
+// it. Where the row went, the selection keeps its place.
 func (s StateScreen) refound(was StateScreen) StateScreen {
 	for tab := range s.cursors {
-		rows := s.rows[tab]
+		rows := s.shown(tab)
 		s.cursors[tab] = max(min(was.cursors[tab], len(rows)-1), 0)
-		old := was.rows[tab]
+		old := was.shown(tab)
 		if len(old) == 0 {
 			continue
 		}
@@ -133,7 +138,7 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 	switch {
 	case key.Matches(msg, openKey):
-		s.inDetail = len(s.rows[s.tab]) > 0
+		s.inDetail = len(s.shown(s.tab)) > 0
 		return s, nil
 	case key.Matches(msg, backKey):
 		s.inDetail = false
@@ -182,7 +187,7 @@ func (s StateScreen) moved(msg tea.KeyPressMsg) StateScreen {
 		s.scroll = stepped(msg, s.scroll, size.Height, last)
 		return s
 	}
-	cursor := stepped(msg, s.cursors[s.tab], sizes[listPane].Height, len(s.rows[s.tab])-1)
+	cursor := stepped(msg, s.cursors[s.tab], sizes[listPane].Height, len(s.shown(s.tab))-1)
 	if cursor != s.cursors[s.tab] {
 		s.cursors[s.tab], s.scroll = cursor, 0
 	}
