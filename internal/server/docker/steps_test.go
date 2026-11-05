@@ -22,7 +22,7 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 	m.Files["/proc/cpuinfo"] = []byte("processor\t: 0\nprocessor\t: 1\n")
 	m.Files["/etc/os-release"] = []byte("VERSION_CODENAME=resolute\n")
 	m.Files["/etc/passwd"] = []byte("ws:x:1000:1000::/home/ws:/bin/sh\n")
-	m.Files["/etc/group"] = []byte("docker:x:999:ws\n")
+	m.Files["/etc/group"] = []byte("docker:x:999:\n")
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	var rules string
 	var installed strings.Builder
@@ -83,5 +83,19 @@ func TestStepsApplyOnceAndThenPlanNothing(t *testing.T) {
 		if !strings.Contains(string(m.Files[path]), want) {
 			t.Errorf("%s = %q, want it to hold %q", path, m.Files[path], want)
 		}
+	}
+}
+
+func TestStepsTakeTheUserOutOfTheDockerGroup(t *testing.T) {
+	m, ss := fakeSteps(t, "ws")
+	m.Files["/etc/group"] = []byte("docker:x:999:ws\n")
+	m.Results["gpasswd --delete ws docker"] = effecttest.Result{}
+	// The fake leaves /etc/group as it is, so the run's check after applying still sees the user.
+	_, err := step.Run(t.Context(), ss, &effecttest.Out{}, false)
+	if err == nil || !strings.Contains(err.Error(), "remove ws from the docker group") {
+		t.Errorf("run = %v, want the group's step to plan the removal", err)
+	}
+	if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "gpasswd --delete ws docker") }) {
+		t.Errorf("calls = %q, want gpasswd", m.Calls)
 	}
 }
