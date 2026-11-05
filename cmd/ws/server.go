@@ -94,10 +94,6 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	// ca-certificates serves the steps' downloads over HTTPS.
-	prepare := []step.Step{host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
-		M: p.machine, Out: out, Names: []string{"ca-certificates"},
-	}}}}
 	v, err := values.Load(p.machine, serverVars)
 	if err != nil {
 		return err
@@ -112,13 +108,20 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 		return err
 	}
 	changed, err := apply.Run(c.Context(), apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out,
-		Observer: out, Prepare: prepare}, list)
+		Observer: out, Prepare: prepareSteps(p.machine, out)}, list)
 	term.Flush()
 	if err != nil {
 		return err
 	}
 	out.Say("%s", apply.Summary(changed, opts.Check))
 	return nil
+}
+
+// prepareSteps is what every role needs: ca-certificates serves the steps' downloads over HTTPS.
+func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
+	return []step.Step{host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
+		M: m, Out: out, Names: []string{"ca-certificates"},
+	}}}}
 }
 
 // loadSecrets reads the identity from the unit's credential and decrypts the file, or returns no
