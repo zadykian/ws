@@ -49,10 +49,11 @@ focus with Tab.
 | q | Leave a screen. |
 | Ctrl-C | Stop the run. |
 
-Ctrl-C is a key in raw mode, and the screen turns it into the signal. The first one ends the
-run's context, and the screen stays until the work has ended. The second one closes the screen,
-and ws waits up to 5 seconds for the work's cleanup, such as the wizard's lock. A third one leaves
-at once.
+Ctrl-C is a key in raw mode, and the screen turns it into the signal. On a run that reads
+`Bridge.Stop`, the first one asks ([Stopping a run](#stopping-a-run)). On any other, it ends the
+run's context, and the screen stays until the work has ended. The next one closes the screen, and
+ws waits up to 5 seconds for the work's cleanup, such as the wizard's lock. Another one leaves at
+once.
 
 ## Questions
 
@@ -88,6 +89,20 @@ The other pane is a window on what the run prints, under the current step's name
 - It wraps a long line, unlike the other panes. `\r` keeps the last state of a progress bar, and
   escapes and control characters go.
 - Under `--check`, each step's changes show in it, a file's diff in color.
+
+### Stopping a run
+
+A step cut halfway can leave a machine between two states, so a run stops between its steps. That
+holds for a run whose `step.Options.Stop` is `Bridge.Stop`, with `Config.Halts` set.
+
+1. Ctrl-C, or the stop button, opens a box. Esc goes on, and the run has not paused for it.
+2. Enter stops the run once its current step ends. The steps left end skipped, and the window stays
+   readable, with `Stopping after` in its title.
+3. Ctrl-C from there ends the context, as it does from the box.
+
+A question asks nothing first: its step waits on the answer, so Ctrl-C ends the context. A signal
+asks nothing either, as nobody may be there to answer. A run stopped past its current step ends
+with the status of Ctrl-C, unless that step was the last.
 
 ## Commands
 
