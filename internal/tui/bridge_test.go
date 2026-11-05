@@ -12,7 +12,11 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-var _ effect.Out = (*Bridge)(nil)
+var (
+	_ effect.Prompt = (*Bridge)(nil)
+	_ effect.Hidden = (*Bridge)(nil)
+	_ effect.Out    = (*Bridge)(nil)
+)
 
 // testBridge returns a bridge that keeps what it sends, and prints on w.
 func testBridge(w io.Writer) (*Bridge, *[]tea.Msg) {
@@ -65,5 +69,27 @@ func TestBridgeByHandPrintsAsAPlainRunDoes(t *testing.T) {
 	b.flush()
 	if got.String() != want.String() {
 		t.Errorf("printed %q, want %q", got.String(), want.String())
+	}
+}
+
+func TestBridgeAskSendsTheQuestionAndReturnsTheReply(t *testing.T) {
+	b, _ := testBridge(io.Discard)
+	var asked prompt
+	b.send = func(msg tea.Msg) {
+		asked = msg.(askMsg).prompt
+		asked.reply <- " kept as sent "
+	}
+	got, err := b.Ask(t.Context(), effect.Question{Text: "Host", Default: "ws"})
+	if err != nil || got != " kept as sent " {
+		t.Fatalf("Ask = %q, %v", got, err)
+	}
+	if asked.text != "Host" || asked.fallback != "ws" || asked.hidden {
+		t.Errorf("asked %+v", asked)
+	}
+	if _, err = b.AskHidden(t.Context(), "Password"); err != nil {
+		t.Fatal(err)
+	}
+	if asked.text != "Password" || !asked.hidden || asked.id != 2 {
+		t.Errorf("asked %+v, want the hidden question, as the second", asked)
 	}
 }
