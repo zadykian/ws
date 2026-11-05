@@ -1,0 +1,95 @@
+#!/bin/sh
+# Tests the zed role's terminal script and tmux.conf against the tmux on the PATH. Panes of an
+# outer tmux stand for Zed's terminal tabs, and both servers keep their sockets in a directory of
+# their own. Run it from the repository's root, with the directory that holds the two files:
+#
+#   sh .github/zed-terminal-checks.sh [DIR]    # DIR is internal/server/zed/files by default
+#
+# Each case prints ok or FAIL. Any FAIL makes the exit status 1.
+
+# shellcheck disable=SC2329 # the cases call these functions through until_ok and result
+set -eu
+
+dir=$(cd "${1:-internal/server/zed/files}" && pwd -P)
+work=$(mktemp -d)
+cleanup() {
+    tmux -L outer kill-server 2>/dev/null || true
+    tmux -L zed kill-server 2>/dev/null || true
+    rm -rf "$work"
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
+mkdir "$work/tmux" "$work/proj" "$work/proj/ws" "$work/proj/ws-foo" "$work/other" "$work/other/ws"
+unset TMUX
+export TMUX_TMPDIR="$work/tmux"
+failed=0
+
+# zt runs tmux on the script's socket, and ot on the outer one, whose panes are the tabs.
+zt() { tmux -L zed "$@"; }
+ot() { tmux -L outer "$@"; }
+
+# until_ok runs a command every 0.1 s, for 10 s at most, until it succeeds.
+until_ok() {
+    n=0
+    until "$@"; do
+        n=$((n + 1))
+        [ "$n" -lt 100 ] || return 1
+        sleep 0.1
+    done
+}
+
+# result NAME COMMAND prints ok where the command succeeds, else FAIL.
+result() {
+    name=$1
+    shift
+    if "$@"; then
+        echo "ok   $name"
+    else
+        echo "FAIL $name"
+        failed=1
+    fi
+}
+
+# project_of DIR is the name the script gives DIR's sessions, up to their PID.
+project_of() {
+    printf '%s-%s' "$(basename "$1" | tr -c 'A-Za-z0-9_\n-' _)" \
+        "$(printf %s "$1" | cksum | cut -d ' ' -f 1)"
+}
+
+# detached DIR makes a session of DIR's that no client shows, as a tab that has ended leaves.
+detached() {
+    zt -f "$dir/tmux.conf" new-session -d -s "$(project_of "$1")-$(sh -c 'echo $$')"
+}
+
+# tab NAME DIR [-e NAME=VALUE]... starts the script in DIR as Zed does, in a pane of its own, once go
+# is touched. The -e options are the tab's own environment.
+tab() {
+    name=$1
+    start=$2
+    shift 2
+    ot new-session -d -s "$name" -x 100 -y 30 -c "$start" "$@" \
+        "while [ ! -e '$work/go' ]; do :; done; exec env -u TMUX TERM=xterm-256color '$dir/terminal'"
+}
+go() { touch "$work/go"; }
+
+no_server() { ! zt list-sessions >/dev/null 2>&1; }
+# reset ends both servers and holds the tabs back again.
+reset() {
+    ot kill-server 2>/dev/null || true
+    zt kill-server 2>/dev/null || true
+    rm -f "$work/go"
+    until_ok no_server
+}
+
+clients() { zt list-clients 2>/dev/null | wc -l; }
+have_clients() { [ "$(clients)" -eq "$1" ]; }
+sessions() { zt list-sessions 2>/dev/null | wc -l; }
+# shown N is true where the sessions have N clients in all, and none has two.
+shown() {
+    [ "$(clients)" -eq "$1" ] && ! zt list-sessions -F '#{session_attached}' | grep -qv '^[01]$'
+}
+# named SESSION is true where the session exists.
+named() { zt has-session -t "=$1" 2>/dev/null; }
+pane_pid() { ot list-panes -t "$1" -F '#{pane_pid}'; }
+
+exit "$failed"
