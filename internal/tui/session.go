@@ -43,6 +43,8 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s.field = newField(msg.prompt, s.window)
 		}
 		return s, nil
+	case retractMsg:
+		return s.drop(msg.id), nil
 	case doneMsg:
 		s.done, s.err = true, msg.err
 		return s, tea.Quit

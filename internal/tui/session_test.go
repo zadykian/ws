@@ -106,3 +106,21 @@ func TestSessionKeepsARefusedQuestion(t *testing.T) {
 		t.Errorf("a refused answer left %v, and Cmd %v", s.asked, cmd)
 	}
 }
+
+func TestSessionTakesQuestionsInTurn(t *testing.T) {
+	s, _ := testSession()
+	first, second := prompt{id: 1, text: "First"}, prompt{id: 2, text: "Second"}
+	third := prompt{id: 3, text: "Third"}
+	s, _ = feed(s, askMsg{first}, askMsg{second}, press('a'), askMsg{third}, retractMsg{2})
+	if s.field.prompt.text != "First" || s.field.input.Value() != "a" {
+		t.Errorf("a retraction behind the first changed %q", s.field.prompt.text)
+	}
+	s, _ = feed(s, retractMsg{1})
+	if s.field.prompt.text != "Third" || s.field.input.Value() != "" {
+		t.Errorf("past the retraction: %q with %q", s.field.prompt.text, s.field.input.Value())
+	}
+	s, _ = feed(s, retractMsg{9}, retractMsg{3})
+	if len(s.asked) != 0 {
+		t.Errorf("left %v", s.asked)
+	}
+}
