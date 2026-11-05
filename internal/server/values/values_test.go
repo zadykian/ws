@@ -44,7 +44,8 @@ func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
 
 func TestParseDerivesFromTheUser(t *testing.T) {
 	tests := []struct{ in, home, key string }{
-		{"", "/root", "/root/.ssh/id_ed25519_signing"},
+		{"", "/home/zadykian", "/home/zadykian/.ssh/id_ed25519_signing"},
+		{"ws_user: root\n", "/root", "/root/.ssh/id_ed25519_signing"},
 		{"ws_user: dev\n", "/home/dev", "/home/dev/.ssh/id_ed25519_signing"},
 		{"ws_home: /srv/x\n", "/srv/x", "/srv/x/.ssh/id_ed25519_signing"},
 	}
