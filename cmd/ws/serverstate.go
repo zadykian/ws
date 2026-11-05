@@ -1,13 +1,64 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/step"
 )
+
+// stateDoc is what ws server state --json prints.
+type stateDoc struct {
+	Version string            `json:"version"`
+	Roles   []apply.RoleState `json:"roles"`
+}
+
+// newStateCmd returns ws server state.
+func newStateCmd(p process) *cobra.Command {
+	var opts apply.Options
+	var asJSON bool
+	c := &cobra.Command{
+		Use:   "state",
+		Short: "report what the server holds of what ws manages, and what apply would change",
+		Long: "It reads alone and applies nothing. It needs what --check needs: root, on Ubuntu 26.04. " +
+			"It reports what ws manages and not the rest of the machine: the packages, services and files of the " +
+			"steps, what stands against them, and the changes that apply would make. A step that fails stands " +
+			"in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and " +
+			"says nothing of what they write.\n\n" +
+			"The report is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
+			"each role with its steps, items and changes.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error { return runState(c, p, opts, asJSON) },
+	}
+	f := c.Flags()
+	f.BoolVar(&asJSON, "json", false, "print the report as JSON")
+	f.StringSliceVar(&opts.Only, "only", nil, "report the named roles alone, as a list or by repeating the flag")
+	return c
+}
+
+// runState prints what the roles report.
+func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) error {
+	r, err := prepareServer(c, p, opts)
+	if err != nil {
+		return err
+	}
+	states, err := apply.State(c.Context(), r.cfg, r.list)
+	r.term.Flush()
+	if err != nil {
+		return err
+	}
+	if asJSON {
+		enc := json.NewEncoder(c.OutOrStdout())
+		enc.SetIndent("", "  ")
+		return enc.Encode(stateDoc{Version: p.version, Roles: states})
+	}
+	return writeState(c.OutOrStdout(), states)
+}
 
 // writeState prints the roles' reports as text.
 func writeState(w io.Writer, states []apply.RoleState) error {
