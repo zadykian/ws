@@ -73,3 +73,22 @@ func (d Download) Plan(context.Context) ([]Change, error) {
 	}
 	return nil, nil
 }
+
+// Report compares the file as Plan does, and one that differs stands against ws. Its content is a
+// release's, so no diff shows it.
+func (d Download) Report(context.Context) ([]step.Item, error) {
+	item := step.Item{Kind: step.FileItem, Name: d.Path, Want: attrsText(d.attrs()), Found: missing}
+	body, got, ok, err := readRoot(d.M, d.Path)
+	if !ok {
+		return []step.Item{item}, err
+	}
+	item.Found = attrsText(got)
+	switch {
+	case fmt.Sprintf("%x", sha256.Sum256(body)) != d.SHA256:
+		item.Found += ", other content"
+		item.Conflict = "differs from the download ws pins: a change by hand, or another version of ws"
+	case got != d.attrs():
+		item.Conflict = attrsChanged
+	}
+	return []step.Item{item}, nil
+}

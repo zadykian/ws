@@ -11,6 +11,9 @@ import (
 // missing is the state of what a report looks for and doesn't find.
 const missing = "missing"
 
+// attrsChanged says how a path stands against ws where its content, if it has any, is right.
+const attrsChanged = "its owner or mode changed"
+
 // writtenBy is the line at the top of a file ws writes, after its format's comment mark.
 var writtenBy = []byte("Written by github.com/zadykian/ws")
 

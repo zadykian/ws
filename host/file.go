@@ -100,7 +100,7 @@ func (f File) Report(context.Context) ([]step.Item, error) {
 			item.Diff = effect.Diff(f.Path, before, f.Content)
 		}
 	case got != f.attrs():
-		item.Conflict = "its owner or mode changed"
+		item.Conflict = attrsChanged
 	}
 	return []step.Item{item}, nil
 }
