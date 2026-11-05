@@ -11,15 +11,19 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// UserUnit keeps a unit of the user's own systemd running. effect.Units is the system's bus alone,
-// so this runs systemctl --user, as the user. A unit with no file is left to whatever installs it.
+// UserUnit keeps a unit of the user's own systemd running, and restarts it where any of Watch has a
+// change to make, as Unit does for the system's. effect.Units is the system's bus alone, so this
+// runs systemctl --user, as the user. A unit with no file is left to whatever installs it.
 type UserUnit struct {
-	M    effect.Machine
-	User User
-	UID  int
-	Out  effect.Out
-	Name string
+	M     effect.Machine
+	User  User
+	UID   int
+	Out   effect.Out
+	Name  string
+	Watch []Resource
 }
+
+func (u UserUnit) mark() mark { return mark{u.M, u.User.Name + "-" + u.Name} }
 
 func (u UserUnit) systemctl(ctx context.Context, args ...string) ([]byte, error) {
 	argv := slices.Concat(SessionEnv(u.UID), []string{"systemctl", "--user"}, args)
@@ -43,20 +47,27 @@ func (u UserUnit) active(ctx context.Context) (bool, error) {
 type userCall struct {
 	u    UserUnit
 	verb string
+	// forced marks a restart, which Group.Apply still applies after a failure.
+	forced bool
 }
+
+func (c userCall) Forced() bool { return c.forced }
 
 func (c userCall) String() string { return c.verb + " " + c.u.User.Name + "'s " + c.u.Name }
 
-// Apply reloads the manager first, as the unit's file may be new.
+// Apply reloads the manager first, as a watched file may be one of the unit's.
 func (c userCall) Apply(ctx context.Context) error {
 	if _, err := c.u.systemctl(ctx, "daemon-reload"); err != nil {
 		return err
 	}
-	_, err := c.u.systemctl(ctx, c.verb, c.u.Name)
-	return err
+	if _, err := c.u.systemctl(ctx, c.verb, c.u.Name); err != nil {
+		return err
+	}
+	return c.u.mark().settle(ctx)
 }
 
-// Plan starts the unit where it is down.
+// Plan starts the unit where it is down, which serves any watched change too, and otherwise
+// restarts it for a watched change or a mark that an earlier run left.
 func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
 	if !Booted(u.M) {
 		u.Out.Say("%s's %s: skipped, systemd is not running", u.User.Name, u.Name)
@@ -70,8 +81,27 @@ func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
 		return nil, err
 	}
 	active, err := u.active(ctx)
-	if err != nil || active {
+	if err != nil {
 		return nil, err
 	}
-	return []Change{userCall{u, "start"}}, nil
+	if !active {
+		return []Change{userCall{u: u, verb: "start"}}, nil
+	}
+	k := u.mark()
+	owed, err := k.owed()
+	if err != nil {
+		return nil, err
+	}
+	changed, err := anyChange(ctx, u.Watch)
+	if err != nil {
+		return nil, err
+	}
+	var cs []Change
+	if changed && !owed {
+		cs = append(cs, owe{k})
+	}
+	if changed || owed {
+		cs = append(cs, userCall{u: u, verb: "restart", forced: true})
+	}
+	return cs, nil
 }

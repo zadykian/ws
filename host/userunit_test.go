@@ -4,8 +4,10 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/step"
 )
 
 const (
@@ -68,5 +70,39 @@ func TestUserUnitStartsAnInactiveUnitAndLeavesAnActiveOne(t *testing.T) {
 	userState(m, "active")
 	if got := applyAll(t, u); got != nil {
 		t.Errorf("plan = %q, want none", got)
+	}
+}
+
+func TestUserUnitRestartsAfterAWatchedChange(t *testing.T) {
+	m, u, out := userUnitFixture(true)
+	m.Files["/home/ws/.config/systemd/user/docker.service"] = nil
+	m.Results[userShow[len("root "):]+"restart docker.service"] = effecttest.Result{}
+	userState(m, "active")
+	conf := host.File{M: m, Path: "/home/ws/.config/docker/daemon.json", Content: []byte("x"), Mode: 0o644}
+	u.Watch = []host.Resource{conf}
+	g := host.Group{Title: "A", Parts: []host.Resource{conf, u}}
+	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(m.Calls, userShow+"restart docker.service") {
+		t.Errorf("calls = %q, want a restart", m.Calls)
+	}
+	if _, ok := m.Files["/var/lib/ws/owed/ws-docker.service"]; ok {
+		t.Error("the mark is left after the restart")
+	}
+	if got := applyAll(t, u); got != nil {
+		t.Errorf("plan = %q, want none", got)
+	}
+}
+
+func TestUserUnitRestartsWhereAMarkIsLeft(t *testing.T) {
+	m, u, _ := userUnitFixture(true)
+	m.Files["/home/ws/.config/systemd/user/docker.service"] = nil
+	m.Results[userShow[len("root "):]+"restart docker.service"] = effecttest.Result{}
+	m.Root["/var/lib/ws/owed/ws-docker.service"] = effect.Attrs{}
+	m.Files["/var/lib/ws/owed/ws-docker.service"] = nil
+	userState(m, "active")
+	if got := applyAll(t, u); !slices.Equal(got, []string{"restart ws's docker.service"}) {
+		t.Errorf("plan = %q, want the restart that the mark owes", got)
 	}
 }
