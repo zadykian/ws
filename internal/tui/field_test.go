@@ -153,6 +153,25 @@ func TestFieldScrollsALongAnswerInsideItsBox(t *testing.T) {
 	}
 }
 
+func TestFieldScrollsThroughAShrink(t *testing.T) {
+	small := Size{30, 24}
+	long := typeIn(newField(prompt{text: "Key"}, window), strings.Repeat("a", 50)+"END")
+	if got := long.fit(small).render(testTheme, small); !strings.Contains(got, "END") {
+		t.Errorf("the end of the answer went with the shrink:\n%s", got)
+	}
+	inside, _ := long.update(tea.KeyPressMsg{Code: tea.KeyHome})
+	for range 40 {
+		inside, _ = inside.update(tea.KeyPressMsg{Code: tea.KeyRight})
+	}
+	shrunk := inside.fit(small)
+	if got := lipgloss.Width(shrunk.input.view(testTheme, 28)); got > 28 {
+		t.Errorf("past a shrink the input draws %d columns", got)
+	}
+	if got := shrunk.input.input.Position(); got != 40 {
+		t.Errorf("the shrink moved the cursor to %d", got)
+	}
+}
+
 func TestFieldFitsAnyWindow(t *testing.T) {
 	text := strings.Repeat("a long question ", 20)
 	for w := range 12 {

@@ -88,9 +88,13 @@ func (f FormField) Blur() FormField {
 	return f
 }
 
-// Fit sets the columns of the field, past which it scrolls.
+// Fit sets the columns of the field, past which it scrolls. The input scrolls only as its cursor
+// moves, and from the end alone does it work out a narrower view, so the cursor goes there and back.
 func (f FormField) Fit(width int) FormField {
 	f.input.SetWidth(max(width-lipgloss.Width(f.input.Prompt)-1, 1))
+	at := f.input.Position()
+	f.input.CursorEnd()
+	f.input.SetCursor(at)
 	return f
 }
 
