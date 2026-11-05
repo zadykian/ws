@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"charm.land/bubbles/v2/key"
+	"charm.land/lipgloss/v2"
 )
 
 // twoPanes is a list beside a window of output, which takes the room left twice over.
@@ -110,6 +111,61 @@ func TestPaneRender(t *testing.T) {
 		got := stripped(c.pane.render(NewTheme(noColor("1")), Size{13, 4}))
 		if want := strings.TrimPrefix(c.want, "\n"); got != want {
 			t.Errorf("%s:\n%s\nwant\n%s", c.name, got, want)
+		}
+	}
+}
+
+func TestRenderAt80x24(t *testing.T) {
+	lines := strings.Split(stripped(twoPanes().Render(NewTheme(noColor("1")), 80, 24)), "\n")
+	if want := " ws server apply" + strings.Repeat(" ", 59) + "3/59 "; lines[0] != want {
+		t.Errorf("title %q, want %q", lines[0], want)
+	}
+	if !strings.HasPrefix(lines[1], "┏━ Steps ") || !strings.Contains(lines[1], "╭─ Output ") {
+		t.Errorf("panes not side by side: %q", lines[1])
+	}
+	if got := strings.TrimRight(lines[23], " "); got != "[q] quit" {
+		t.Errorf("last line %q", got)
+	}
+}
+
+func TestRenderStacksInANarrowWindow(t *testing.T) {
+	got := stripped(twoPanes().Render(NewTheme(noColor("1")), 30, 24))
+	first := strings.Index(got, "┏━ Steps ")
+	second := strings.Index(got, "╭─ Output ")
+	if first < 0 || second < first || strings.Count(got[:second], "\n") < 2 {
+		t.Errorf("panes not stacked:\n%s", got)
+	}
+}
+
+func TestRenderDropsTheStatusThatDoesNotFit(t *testing.T) {
+	got := stripped(twoPanes().Render(NewTheme(noColor("1")), 18, 24))
+	if line, _, _ := strings.Cut(got, "\n"); line != " ws server apply  " {
+		t.Errorf("title %q", line)
+	}
+}
+
+// TestRenderFillsAnyWindow keeps a resize from breaking the screen: a window gets its exact height
+// and no line past its width, around each size where the layout changes, and in tiny ones.
+func TestRenderFillsAnyWindow(t *testing.T) {
+	theme := NewTheme(noColor(""))
+	long := strings.Repeat("0123456789 ", 30) + "\n" + strings.Repeat("line\n", 80) + "日本語\ttab"
+	wide := twoPanes()
+	wide.Title = strings.Repeat("title", 30)
+	wide.Panes = append(wide.Panes, Pane{Title: wide.Title, Body: long, Weight: 9})
+	wide.Footer = testFooter().Enable(1, false)
+	widths := []int{1, 2, 3, 4, 5, 6, 8, 12, 23, 24, 47, 48, 71, 72, 73, 80, 81, 200}
+	heights := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 24, 50}
+	for _, layout := range []Layout{twoPanes(), wide, {}, {Panes: []Pane{{Body: long}}}} {
+		for _, width := range widths {
+			for _, height := range heights {
+				got := layout.Render(theme, width, height)
+				if lines := strings.Count(got, "\n") + 1; lines != height {
+					t.Fatalf("%dx%d: %d lines", width, height, lines)
+				}
+				if size := lipgloss.Width(got); size > width {
+					t.Fatalf("%dx%d: %d columns", width, height, size)
+				}
+			}
 		}
 	}
 }

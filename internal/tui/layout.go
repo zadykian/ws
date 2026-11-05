@@ -55,6 +55,46 @@ func (l Layout) PaneSizes(width, height int) []Size {
 	return sizes
 }
 
+// Render fills a window of width and height. What doesn't fit is cut at the edges.
+func (l Layout) Render(theme Theme, width, height int) string {
+	parts := []string{l.renderTitle(theme, width)}
+	if room := l.bodyHeight(width, height); room > 0 {
+		panes := l.renderPanes(theme, width, height)
+		parts = append(parts, lipgloss.PlaceVertical(room, lipgloss.Top, panes))
+	}
+	if footer := l.Footer.render(theme, width); footer != "" {
+		parts = append(parts, footer)
+	}
+	return lipgloss.NewStyle().MaxWidth(width).MaxHeight(height).Render(strings.Join(parts, "\n"))
+}
+
+// renderTitle draws the title's line, with the status at its right where both fit.
+func (l Layout) renderTitle(theme Theme, width int) string {
+	text := " " + l.Title
+	status := l.Status + " "
+	gap := width - lipgloss.Width(text) - lipgloss.Width(status)
+	if l.Status == "" || gap < 1 {
+		status = ""
+		gap = max(width-lipgloss.Width(text), 0)
+	}
+	return theme.TitleBar.MaxWidth(width).Render(text + strings.Repeat(" ", gap) + status)
+}
+
+// renderPanes draws the panes that the window holds, side by side or stacked.
+func (l Layout) renderPanes(theme Theme, width, height int) string {
+	sizes, stacked := l.frames(width, height)
+	boxes := make([]string, 0, len(sizes))
+	for i, size := range sizes {
+		if size != (Size{}) {
+			boxes = append(boxes, l.Panes[i].render(theme, size))
+		}
+	}
+	if stacked {
+		return lipgloss.JoinVertical(lipgloss.Left, boxes...)
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Top, boxes...)
+}
+
 // frames returns each pane's size with its frame, and whether the panes stack.
 func (l Layout) frames(width, height int) ([]Size, bool) {
 	sizes := make([]Size, len(l.Panes))
