@@ -35,7 +35,8 @@ func withSecrets(t *testing.T, status string) (*WsRun, *effecttest.Machine, stri
 }
 
 func sendLine(r *WsRun, path string) string {
-	return "ssh " + strings.Join(r.Host.SSH.argv(context.Background(), []string{"-o", "BatchMode=yes", "ws", "umask 077 && cat >" + path}), " ")
+	return "ssh " + strings.Join(r.Host.SSH.argv(context.Background(),
+		[]string{"-o", "BatchMode=yes", "ws", "sh", "-c", "'umask 077 && cat >" + path + "'"}), " ")
 }
 
 func sum(b string) string {
@@ -65,7 +66,7 @@ func TestWsRunSendsTheFileAndTheIdentityOnStdin(t *testing.T) {
 func TestWsRunSendsAgainForEachRun(t *testing.T) {
 	r, m, _ := withSecrets(t, "run v1.2.3 0 on -\nactive -\noutbound on\n")
 	r.Host.Conf = "/h/cloud.conf"
-	m.Files["/h/cloud.conf"] = []byte("WS_TARGET=cloud\n" + extra["cloud"])
+	m.Files["/h/cloud.conf"] = []byte("WS_TARGET=cloud\nWS_USER=alice\n" + extra["cloud"])
 	m.Results[remoteLine(r.Remote, "outbound")] = effecttest.Result{}
 	p, err := r.Plan(context.Background())
 	if err != nil {

@@ -78,7 +78,7 @@ func (r *WsRun) send(ctx context.Context) error {
 	}
 	r.Host.Out.Say("%s: sending the secrets file and the identity to ws", runStage)
 	for i, in := range [][]byte{data, []byte(key + "\n")} {
-		if _, err := r.Host.SSH.RunInput(ctx, in, "-o", "BatchMode=yes", "ws", "umask 077 && cat >"+paths[i]); err != nil {
+		if err := r.Remote.Put(ctx, paths[i], in); err != nil {
 			r.drop(ctx)
 			return fmt.Errorf("%s: sending %s to ws failed", runStage, [...]string{"the secrets file", "the identity"}[i])
 		}

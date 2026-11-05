@@ -166,6 +166,14 @@ func TestRemoteThroughSudo(t *testing.T) {
 	if !r.Status(context.Background()) {
 		t.Fatal("Status read nothing")
 	}
+	put := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-c", "'umask 077 && cat >/var/lib/ws-wizard/x'")
+	m.Results[put] = effecttest.Result{}
+	if err := r.Put(context.Background(), "/var/lib/ws-wizard/x", []byte("\x00data")); err != nil {
+		t.Fatal(err)
+	}
+	if got := m.Inputs[len(m.Inputs)-1]; got != sudoPassword+"\n\x00data" {
+		t.Errorf("Put's stdin = %q", got)
+	}
 }
 
 func TestRemoteBeforeTheStageReadsNothing(t *testing.T) {

@@ -49,6 +49,17 @@ func (r *Remote) Pass(ctx context.Context, op ...string) error {
 	return r.SSH.PassInput(ctx, in, args...)
 }
 
+// Put writes data to path on ws as root, mode 0600, through its stdin. path holds no blank or quote:
+// the remote script named it.
+func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
+	args, in, err := r.command([]string{"sh", "-c", "'umask 077 && cat >" + path + "'"}, data)
+	if err != nil {
+		return err
+	}
+	_, err = r.SSH.RunInput(ctx, in, args...)
+	return err
+}
+
 // Status reads what the remote script's status prints once, until Do or Pass runs, and reports
 // whether it read any: ssh or the script fails where root does not log in. A line is NAME VALUE.
 func (r *Remote) Status(ctx context.Context) bool {
