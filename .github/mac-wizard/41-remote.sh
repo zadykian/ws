@@ -37,7 +37,7 @@ error() {
 # remote OP [ARG...]: the remote script's OP on ws, as the wizard runs it. It prints the output, and
 # sets out and status.
 remote() {
-    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- "$@" <"$remote_sh" 2>&1)
+    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- "$@" <"$remote_sh" 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
@@ -78,12 +78,12 @@ states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")
 touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-sudo git config -f "$ws/root/root/.gitconfig" --unset user.signingkey
+sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
 states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
     'peer -' 'outbound on'
 rm "$ws/nct6687"
-sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
-    "$ws/root/root/.ssh/id_ed25519_signing.pub"
+sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
+    "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
 
@@ -113,7 +113,7 @@ remote run --only devtools
     error "a tagged run exited $status"
 rm "$ws/server.status"
 echo 4 >"$ws/server.wait"
-ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
+ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
 first=$!
 tries=0
 until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
@@ -154,7 +154,7 @@ remote run --diff
 
 # files OP [ARG...]: the files script's OP, as remote runs the remote script's.
 files() {
-    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- "$@" <"${remote_sh%/*}/wizard-remote-files.sh" 2>&1)
+    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- "$@" <"${remote_sh%/*}/wizard-remote-files.sh" 2>&1)
     status=$?
     printf '%s\n' "$out"
 }

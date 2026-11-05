@@ -19,7 +19,7 @@ done
 # mac.conf's answers: ws by the router's name and port alone, as a Mac away from home has it. ws's
 # key is the file ~/.ssh/id_ed25519, named, as a run with no terminal to ask for another needs it.
 mkdir -p ~/.config/ws
-printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
+printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
     >~/.config/ws/mac.conf
 # PATH as a shell that predates Homebrew has it, without the directories that hold brew, for the
 # cases that give it to the wizard.
@@ -70,13 +70,14 @@ esac
 EOF
 chmod 755 /opt/homebrew/bin/gh
 # ws's stand-in: an sshd of its own at 127.0.0.1:22022, where mac.conf's WS_REMOTE and its port
-# lead, with a host key made here. The cases answer the Host key stage with its fingerprint. Root
-# logs in by root's own authorized_keys, which the cases fill from the stand-in gh's keys, as
-# Ubuntu's installer imports the account's keys for its user and the README's step copies them to
-# root. Each session runs ws.sh. A second host key, ECDSA, as ws has more than one, must stay out
+# lead, with a host key made here. The runner's user logs in by its own authorized_keys, which the
+# cases fill from the stand-in gh's keys, as Ubuntu's installer imports the account's keys for its
+# user. The image's file goes, so that no key is there before a case adds it. Each session runs
+# ws.sh. A second host key, ECDSA, as ws has more than one, must stay out
 # of known_hosts at each login.
 ws=$RUNNER_TEMP/ws
-mkdir -p "$ws"
+mkdir -p "$ws" ~/.ssh
+rm -f ~/.ssh/authorized_keys
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/host_key" </dev/null
 ssh-keygen -q -t ecdsa -N '' -C ws -f "$ws/host_ecdsa" </dev/null
 ssh-keygen -l -f "$ws/host_key.pub" | awk '{ print $2 }' >"$ws/fingerprint"
@@ -152,6 +153,14 @@ sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
 sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
 cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
+# The runner's user has a home on ws of its own, with the same files, as the remote script reads
+# the claude and git config of the user that logs in, and root's serves a cloud VM's login.
+home=$ws/root/home/$(id -un)
+sudo mkdir -p "$home/.local/bin" "$home/.ssh"
+sudo ln -s "$here/ws-standin.sh" "$home/.local/bin/claude"
+sudo cp "$ws/signing.pub" "$home/.ssh/id_ed25519_signing.pub"
+sudo git config -f "$home/.gitconfig" user.signingkey "$home/.ssh/id_ed25519_signing.pub"
+sudo chown -R "$(id -un)" "$home"
 touch "$ws/claude"
 # sudo asks no password until a case removes sudo.open.
 touch "$ws/sudo.open"

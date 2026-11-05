@@ -32,7 +32,7 @@ expect() {
 
 # sessions: no session on ws may have run a login.
 sessions() {
-    ! grep -q '^root: exec bash -lc "claude auth login"$' "$ws/log" ||
+    ! grep -q "^$(id -un): exec bash -lc \"claude auth login\"\$" "$ws/log" ||
         error "a run opened a session on ws for a login"
 }
 

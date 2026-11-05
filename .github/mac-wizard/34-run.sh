@@ -66,7 +66,7 @@ rm "$ws/sb" "$ws/nct6687"
 sudo rm "$stamp"
 # Its unit runs 20 s, as the wizard takes some seconds to reach its stage, more on a slow runner.
 echo 20 >"$ws/server.wait"
-ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
+ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
 first=$!
 tries=0
 until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
@@ -86,8 +86,8 @@ printf '%s\n' "$out" | grep -q "^ws mac wizard: ws's run: would run ws server ap
 
 echo 'ws_user: "other"' | sudo tee "$vars" >/dev/null
 wizard
-started 1 2 && sudo grep -qx 'ws_user: "root"' "$vars" && [ "$status" = 0 ] ||
-    error "a run with another ws_user exited $status, or named no ws_user: root"
+started 1 2 && sudo grep -qx "ws_user: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
+    error "a run with another ws_user exited $status, or named no ws_user: $(id -un)"
 
 WS_CONF=$RUNNER_TEMP/cloud.conf
 export WS_CONF
@@ -96,7 +96,7 @@ out=$("$wsbin" mac wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'after naming security_outbound: false in ' ||
     error "ws mac wizard --check on a cloud VM named no host_vars line before the run: $out"
 echo 20 >"$ws/server.wait"
-ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
+ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run <"$remote_sh" >/dev/null 2>&1 &
 tries=0
 until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
     sleep 1

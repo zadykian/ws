@@ -25,7 +25,8 @@ for args in '' --check; do
 done
 
 conf=$RUNNER_TEMP/tools.conf
-out=$(WS_CONF=$conf WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
+user=$(id -un)
+out=$(WS_CONF=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
     "$wsbin" mac wizard --check 2>&1)
 status=$?
