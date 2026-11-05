@@ -17,6 +17,13 @@ func installFixture(booted bool) (*effecttest.Machine, rootlessInstall, *effectt
 	return m, rootlessInstall{m, host.User{Name: "ws", Home: "/home/ws"}, 1000, out}, out
 }
 
+func TestRootlessInstallSkipsWithoutSystemd(t *testing.T) {
+	_, r, out := installFixture(false)
+	if changes, err := r.Plan(t.Context()); err != nil || changes != nil || len(out.Lines) != 1 {
+		t.Errorf("Plan = %v, %v, said %q; want a skip said once", changes, err, out.Lines)
+	}
+}
+
 func TestRootlessInstallRunsUntilTheUnitAndItsLinkExist(t *testing.T) {
 	m, r, _ := installFixture(true)
 	changes, err := r.Plan(t.Context())

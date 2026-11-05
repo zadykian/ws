@@ -25,6 +25,10 @@ func (r rootlessInstall) String() string { return "install " + r.user.Name + "'s
 // Plan looks at the files alone, so a dry run on a new machine needs no user's systemd. A run cut
 // between the tool's unit and its link runs the tool again, which keeps the unit.
 func (r rootlessInstall) Plan(context.Context) ([]host.Change, error) {
+	if !host.Booted(r.m) {
+		r.out.Say("Docker rootless daemon: skipped, systemd is not running")
+		return nil, nil
+	}
 	units := r.user.Home + "/.config/systemd/user"
 	for _, p := range []string{units + "/docker.service", units + "/default.target.wants/docker.service"} {
 		_, err := r.m.Stat(p)
