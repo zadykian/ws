@@ -17,6 +17,7 @@ import (
 const (
 	packagesStep = "Security packages"
 	keysStep     = "SSH keys"
+	sudoStep     = "sudo"
 	lxdStep      = "lxd"
 	sshdStep     = "sshd"
 	ufwStep      = "ufw"
@@ -38,9 +39,12 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 		// package leaves it. Recommends: apt's default, as the role installed them.
 		host.Group{Title: packagesStep, Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true,
-				Names: []string{"openssh-server", "ufw", "fail2ban", "nftables"}},
+				Names: []string{"openssh-server", "ufw", "fail2ban", "nftables", "sudo"}},
 		}},
 		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, v.Home}}},
+		host.Lazy{Title: sudoStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
+			return sudoParts(m)
+		}},
 	}
 	// Ubuntu's installer puts its user in lxd, whose socket lxd-installer opens to the group: that
 	// group is root, as a container of LXD's can mount the host. lxd-installer outlives its group.

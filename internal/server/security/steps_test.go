@@ -18,10 +18,12 @@ func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.
 	m := effecttest.NewMachine()
 	m.Dirs["/run/systemd/system"] = 0o755
 	m.Files["/root/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n openssh-server ufw fail2ban nftables"] =
-		effecttest.Result{Out: []byte("openssh-server ii\nufw ii\nfail2ban ii\nnftables ii\n")}
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n openssh-server ufw fail2ban nftables sudo"] =
+		effecttest.Result{Out: []byte("openssh-server ii\nufw ii\nfail2ban ii\nnftables ii\nsudo ii\n")}
 	m.Files["/etc/group"] = []byte("lxd:x:110:\n")
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n lxd-installer"] = effecttest.Result{}
+	m.Results["visudo -cf "+noCachePath+".ws-check"] = effecttest.Result{}
+	m.Results["rm -f "+noCachePath+".ws-check"] = effecttest.Result{}
 	m.Results["/usr/sbin/sshd -G -f /etc/ssh/sshd_config.d/10-keys-only.conf.ws-check"] = effecttest.Result{}
 	m.Results["rm -f /etc/ssh/sshd_config.d/10-keys-only.conf.ws-check"] = effecttest.Result{}
 	// What ufw's own commands leave in its files.
@@ -81,6 +83,16 @@ func TestLXDStepSkipsForRoot(t *testing.T) {
 	_, _, ss := fakeSteps(v)
 	if slices.ContainsFunc(ss, func(s step.Step) bool { return s.Name() == lxdStep }) {
 		t.Error("root has the lxd step")
+	}
+}
+
+func TestSudoAsksForThePasswordAtEveryCommand(t *testing.T) {
+	v := values.Default()
+	v.Home = "/root"
+	m, _, ss := fakeSteps(v)
+	run(t, ss)
+	if got := string(m.Files[noCachePath]); !strings.Contains(got, "\nDefaults timestamp_timeout=0\n") {
+		t.Errorf("the drop-in = %q, want timestamp_timeout=0", got)
 	}
 }
 

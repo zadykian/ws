@@ -1,0 +1,5 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# sudo asks for the password at every command. A cached one would let what ws_user runs, such as
+# claude, take root in the minutes after the maintainer's own sudo.
+Defaults timestamp_timeout=0
