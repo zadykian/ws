@@ -69,7 +69,9 @@ server to every YAML file, Ansible's too.
 - The terminal docks right, as the project, git and outline panels dock left. A resize of a terminal
   docked at a side duplicates its lines (zed#65316, open).
 - `terminal.shell` stays unset, as Zed runs it on ws too (zed#65548). `option_as_meta` gives helix's
-  Alt keys in Zed's terminal, at the cost of Option's special characters.
+  Alt keys in Zed's terminal, at the cost of Option's special characters. `detect_venv` is `off`:
+  with it on, a venv in the directory has Zed type its activation line into every new tab, which
+  reaches a reattached tmux session and whatever runs there.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
 - Zed's keymap overlay is [zed-keymap.md](zed-keymap.md), and `docs/zed.md`, its page for the server, says
