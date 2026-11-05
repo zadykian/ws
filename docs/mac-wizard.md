@@ -164,7 +164,9 @@ another `WS_USER`, it tries `sudo -n true`. Where sudo wants a password, the sta
 hidden, once a run, and has sudo check it, with nothing behind it on stdin, up to three times. With
 no terminal, it stops. A user outside sudoers stops it too, with sudo's words. `--check` asks at a
 terminal, as the stages after it read ws through sudo. With no terminal, it says that a run would
-ask, and those stages wait.
+ask, and those stages wait. The password stays in the wizard's memory, and goes as the first line
+of `sudo -k -S -p ''`'s stdin, ahead of the script. `-k` has sudo read it each time. It goes in no
+argument, message or file.
 
 ## ws on ws
 
@@ -183,7 +185,9 @@ way. It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through 
 root's `HOME` and a UTF-8 locale. That ws runs its roles
 ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, and stops
 where the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when
-the Mac sleeps, and the next run of the wizard follows it to its end.
+the Mac sleeps, and the next run of the wizard follows it to its end. Where `WS_USER` isn't the
+server's default, the stage first names it as `ws_user` in `/etc/ws/host_vars.yml` on ws, with the
+files script, so the roles set up that user. Where the file names another, it changes the line.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:

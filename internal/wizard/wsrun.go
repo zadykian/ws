@@ -88,6 +88,8 @@ type runChange struct {
 	outbound bool
 	// cloud is set for a cloud VM, whose run turns the outbound table off.
 	cloud bool
+	// user is the ws_user that host_vars is to name before the run, where it names another.
+	user string
 }
 
 func (c runChange) String() string { return runStage + ": would " + c.text }
@@ -109,9 +111,14 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if data, _ := r.macSecrets(); data != nil {
 		how += ", after sending the secrets file and the identity"
 	}
+	user := ""
+	if !r.named(c) {
+		user = c.User
+		how += ", after naming ws_user: " + user + " in ws's host_vars"
+	}
 	if c.Target == "cloud" {
 		how += ", after naming security_outbound: false in ws's host_vars"
-		if !r.Update && r.idle(ctx) && r.off() {
+		if !r.Update && r.idle(ctx) && r.off() && user == "" {
 			return step.Plan{Changes: []step.Change{runChange{text: "name security_outbound: false in ws's host_vars",
 				outbound: true}}}, nil
 		}
@@ -124,7 +131,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 			how += "; its last full run exited " + last
 		}
 	}
-	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud"}}}, nil
+	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user}}}, nil
 }
 
 // fail says what to do where ws server apply ran no full run to its end. It names no cause, as ssh has

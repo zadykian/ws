@@ -1,6 +1,6 @@
 #!/bin/sh
-# The wizard's files script on ws, which writes what the wizard names there: the cable's port
-# and the tunnel's peer. The Mac's wizard sends it over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, which writes what the wizard names there: the cable's port,
+# ws_user and the tunnel's peer. The Mac's wizard sends it over ssh, as it sends wizard-remote.sh:
 #
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
@@ -10,6 +10,7 @@
 #   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
 #   network_direct_link_interface, the port of the Mac's cable, which the network and wireguard
 #   roles read.
+# - user NAME names NAME in that file as ws_user, for ws server apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
@@ -100,6 +101,15 @@ link() {
     name network_direct_link_interface "$1"
 }
 
+# user NAME names NAME as ws_user, a name as check.User takes it, in the file itself: through a link
+# the rename would leave the link's target as it was.
+user() {
+    printf '%s\n' "$1" | grep -Eqx '[A-Za-z0-9._][A-Za-z0-9._-]{0,31}' ||
+        die "'$1' is not a user's name"
+    [ ! -L "$vars" ] || die "$vars is a link to $(readlink "$vars"): name ws_user in its file by hand"
+    name ws_user "$1"
+}
+
 # peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
 # wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
 # wireguard-tools makes it.
@@ -118,8 +128,9 @@ main() {
     case ${1-} in
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
+    user) user "${2-}" ;;
     peer) peer "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT] |" \
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT] | user NAME |" \
         "peer KEY" ;;
     esac
 }

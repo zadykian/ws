@@ -53,15 +53,15 @@ func TestWsRunPlan(t *testing.T) {
 	}
 }
 
-func TestWsRunSeesWsUser(t *testing.T) {
+func TestWsRunNamesWsUser(t *testing.T) {
 	done := "run v1.2.3 0 on -\nactive -\n"
 	for name, tc := range map[string]struct{ status, server, want string }{
 		"the default":    {done + "user -\n", "alice", ""},
-		"no line":        {done + "user -\n", "zadykian", "run ws server apply on ws"},
+		"no line":        {done + "user -\n", "zadykian", "after naming ws_user: alice in ws's host_vars"},
 		"named":          {done + "user alice\n", "zadykian", ""},
-		"another":        {done + "user other\n", "alice", "run ws server apply on ws"},
+		"another":        {done + "user other\n", "alice", "after naming ws_user: alice in ws's host_vars"},
 		"an older ws":    {"run v1.2.2 0 on -\nactive -\nuser alice\n", "zadykian", "run ws server apply on ws"},
-		"status with no": {done, "zadykian", "run ws server apply on ws"},
+		"status with no": {done, "zadykian", "after naming ws_user: alice"},
 	} {
 		r, _ := newRun("lan", tc.status, false, false)
 		r.Default = tc.server
@@ -73,6 +73,26 @@ func TestWsRunSeesWsUser(t *testing.T) {
 		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
 			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
 		}
+	}
+}
+
+func TestWsRunNamesWsUserBeforeTheRun(t *testing.T) {
+	r, m := newRun("lan", "run v1.2.3 0 on -\nactive -\nuser -\n", false, false)
+	r.Default = "zadykian"
+	p, _ := r.Plan(context.Background())
+	err := r.Apply(context.Background(), p)
+	if err == nil || !strings.Contains(err.Error(), "ws's host_vars lacks ws_user: alice") {
+		t.Fatalf("Apply where the files script fails = %v; want the stop", err)
+	}
+	m.Results[remoteLine(r.Files, "user", "alice")] = effecttest.Result{}
+	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
+	m.Calls = nil
+	if err := r.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	all := strings.Join(m.Calls, "\n")
+	if i := strings.Index(all, "-- user alice"); i < 0 || i > strings.Index(all, "-- run") {
+		t.Errorf("calls = %q; want the name before the run", m.Calls)
 	}
 }
 

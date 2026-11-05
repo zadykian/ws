@@ -21,6 +21,12 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if c.outbound {
 		return r.outbound(ctx)
 	}
+	if c.user != "" {
+		if _, err := r.Files.Do(ctx, "user", c.user); err != nil {
+			return fmt.Errorf("%s: ws's host_vars lacks ws_user: %s: %s; mend that, then run the wizard again",
+				runStage, c.user, stderrOf(err))
+		}
+	}
 	if c.cloud && r.Remote.Get("outbound") != "off" {
 		if err := r.outbound(ctx); err != nil {
 			return err
