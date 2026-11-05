@@ -64,3 +64,18 @@ func (d Dir) Plan(context.Context) ([]Change, error) {
 	}
 	return nil, nil
 }
+
+// Report reads the directory's owner and mode, which stand against ws where Plan would fix them.
+func (d Dir) Report(context.Context) ([]step.Item, error) {
+	attrs := effect.Attrs{UID: d.UID, GID: d.GID, Mode: d.Mode.Perm()}
+	want, conflict := attrsText(attrs), ""
+	got, err := d.M.RootAttrs(d.Path)
+	switch {
+	case d.CreateOnly:
+		want = present
+	case got != attrs:
+		conflict = attrsChanged
+	}
+	item := step.Item{Kind: step.DirItem, Name: d.Path, Want: want, Found: missing}
+	return reportPath(item, attrsText(got), conflict, err)
+}

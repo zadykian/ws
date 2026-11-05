@@ -6,10 +6,14 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
-// missing is the state of what a report looks for and doesn't find.
-const missing = "missing"
+// The states that a report's items share.
+const (
+	missing = "missing"
+	present = "present"
+)
 
 // attrsChanged says how a path stands against ws where its content, if it has any, is right.
 const attrsChanged = "its owner or mode changed"
@@ -32,4 +36,16 @@ func readRoot(m effect.Machine, path string) (body []byte, a effect.Attrs, ok bo
 	}
 	a, err = m.RootAttrs(path)
 	return body, a, err == nil, err
+}
+
+// reportPath returns item, with found and conflict unless err says that the path is missing.
+func reportPath(item step.Item, found, conflict string, err error) ([]step.Item, error) {
+	if errors.Is(err, fs.ErrNotExist) {
+		return []step.Item{item}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	item.Found, item.Conflict = found, conflict
+	return []step.Item{item}, nil
 }
