@@ -68,11 +68,15 @@ func (s StateScreen) header() string {
 	return strings.Join(lines, "\n")
 }
 
-// tabCell draws a tab with its count. What needs a look shows in color, and the count says the same
-// under NO_COLOR. Before the first report a tab has no count to give.
+// tabCell draws a tab with its count, and under a filter what that leaves of it. What needs a look
+// shows in color, and the count says the same under NO_COLOR. Before the first report a tab has no
+// count to give.
 func (s StateScreen) tabCell(tab int) string {
 	text := " " + tabNames[tab] + " "
-	if s.reported {
+	switch {
+	case s.reported && s.filter.Value() != "":
+		text = fmt.Sprintf(" %s %d/%d ", tabNames[tab], len(s.shown(tab)), len(s.rows[tab]))
+	case s.reported:
 		text = fmt.Sprintf(" %s %d ", tabNames[tab], len(s.rows[tab]))
 	}
 	switch {
@@ -90,8 +94,11 @@ func (s StateScreen) tabCell(tab int) string {
 // list, so that the list needs no scroll of its own to keep, and a new size can't lose the row.
 func (s StateScreen) listBody(size Size) string {
 	var lines []string
+	if field := s.filterLine(); field != "" {
+		lines = append(lines, field)
+	}
 	rows := s.shown(s.tab)
-	room := size.Height
+	room := size.Height - len(lines)
 	cursor := s.cursors[s.tab]
 	top := max(min(cursor-room/2, len(rows)-room), 0)
 	for i := top; i < min(top+room, len(rows)); i++ {

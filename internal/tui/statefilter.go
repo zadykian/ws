@@ -61,3 +61,15 @@ func (s StateScreen) cleared() StateScreen {
 	s.filter.Reset()
 	return s.refound(picks)
 }
+
+// filterLine draws the filter: the input while it has the keys, the words once they stand, and
+// nothing without any.
+func (s StateScreen) filterLine() string {
+	switch {
+	case s.editing:
+		return s.filter.View()
+	case s.filter.Value() != "":
+		return s.theme.Muted.Render(filterPrompt + s.filter.Value())
+	}
+	return ""
+}

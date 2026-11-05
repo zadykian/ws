@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"reflect"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -15,6 +16,14 @@ func filtered(t *testing.T, text string) StateScreen {
 		s, _ = feedState(t, s, press(r))
 	}
 	return s
+}
+
+func TestStateFilterNarrowsTheListAsItsWordsGrow(t *testing.T) {
+	s := filtered(t, "POD")
+	if got := names(s.shown(packagesTab)); !reflect.DeepEqual(got, []string{"podman"}) {
+		t.Fatalf("rows %v", got)
+	}
+	wantDrawn(t, s, "/ POD", " Packages 1/2 ", " Services 0/1 ", " Conflicts 1/2 ")
 }
 
 func TestStateFilterTakesEveryKeyItCan(t *testing.T) {
@@ -40,6 +49,25 @@ func TestStateFilterTakesAPasteWhileItHasTheKeys(t *testing.T) {
 	}
 }
 
+func TestStateFilterEnterKeepsTheWordsAndGivesTheKeysBack(t *testing.T) {
+	s, _ := feedState(t, filtered(t, "pod"), enter)
+	if s.editing || s.filter.Value() != "pod" {
+		t.Fatalf("editing %v, the words %q", s.editing, s.filter.Value())
+	}
+	wantDrawn(t, s, "/ pod", " Packages 1/2 ")
+	if _, cmd := feedState(t, s, press('q')); cmd == nil {
+		t.Error("q stays with the filter")
+	}
+}
+
+func TestStateFilterEscDropsTheWords(t *testing.T) {
+	s, _ := feedState(t, filtered(t, "pod"), esc)
+	if s.editing || s.filter.Value() != "" {
+		t.Fatalf("editing %v, the words %q", s.editing, s.filter.Value())
+	}
+	wantDrawn(t, s, " Packages 2 ", "docker-ce")
+}
+
 func TestStateScreenEscLeavesTheDetailThenDropsTheWords(t *testing.T) {
 	s, _ := feedState(t, filtered(t, "pod"), enter, enter, esc)
 	if s.inDetail || s.filter.Value() != "pod" {
@@ -58,6 +86,16 @@ func TestStateFilterKeepsTheSelectedRow(t *testing.T) {
 	s, _ = feedState(t, s, esc)
 	if got := selected(s); got != "podman" {
 		t.Errorf("without it, on %q", got)
+	}
+	s, _ = feedState(t, filtered(t, "pod"), enter, press('r'), StateRead{Sections: testSections()})
+	wantDrawn(t, s, " Packages 1/2 ", "! podman")
+}
+
+func TestStateFilterThatLeavesNothingDrawsAnEmptyList(t *testing.T) {
+	s := filtered(t, "nothing here")
+	wantDrawn(t, s, emptyNote)
+	if got, _ := feedState(t, s, enter, enter); got.inDetail {
+		t.Error("an empty list opens the detail pane")
 	}
 }
 
