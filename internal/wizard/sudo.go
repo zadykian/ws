@@ -13,6 +13,9 @@ import (
 // sudoStage names the stage in its messages.
 const sudoStage = "Sudo"
 
+// sudoTries is how many passwords the stage takes, as sudo's own three.
+const sudoTries = 3
+
 // sudoWay is how a remote script reaches root on ws.
 type sudoWay int
 
@@ -88,15 +91,24 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		return fmt.Errorf("%s: %s's sudo on ws asks for a password, and no terminal is here to ask it: "+
 			"run the wizard at a terminal", sudoStage, user)
 	}
-	password, err := s.P.AskHidden(ctx, user+"'s sudo password on ws")
-	if err != nil {
-		return fmt.Errorf("%s: %w", sudoStage, err)
+	for try := 1; ; try++ {
+		password, err := s.P.AskHidden(ctx, user+"'s sudo password on ws")
+		if err != nil {
+			return fmt.Errorf("%s: %w", sudoStage, err)
+		}
+		_, err = s.Host.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
+			"sudo", "-k", "-S", "-p", "''", "true")
+		if err == nil {
+			s.way, s.password = sudoAsked, password
+			return nil
+		}
+		why := stderrOf(err)
+		if !strings.Contains(why, "Authentication failed") {
+			return fmt.Errorf("%s: sudo on ws stopped: %s", sudoStage, why)
+		}
+		if try == sudoTries {
+			return fmt.Errorf("%s: sudo on ws refused the password %d times", sudoStage, sudoTries)
+		}
+		s.Host.Out.Say("%s: sudo on ws refused the password", sudoStage)
 	}
-	_, err = s.Host.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
-		"sudo", "-k", "-S", "-p", "''", "true")
-	if err != nil {
-		return fmt.Errorf("%s: sudo on ws stopped: %s", sudoStage, stderrOf(err))
-	}
-	s.way, s.password = sudoAsked, password
-	return nil
 }

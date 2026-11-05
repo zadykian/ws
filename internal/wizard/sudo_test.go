@@ -65,8 +65,8 @@ func TestSudoWithNoPasswordAsksNothing(t *testing.T) {
 	}
 }
 
-func TestSudoAsksForThePassword(t *testing.T) {
-	s, m, prompt := newSudo(t, sudoPassword)
+func TestSudoAsksUntilSudoTakesIt(t *testing.T) {
+	s, m, prompt := newSudo(t, "wrong", sudoPassword)
 	p, err := s.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 ||
 		p.Changes[0].String() != "Sudo: would ask for zadykian's sudo password on ws, at the terminal" {
@@ -75,7 +75,7 @@ func TestSudoAsksForThePassword(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	if len(prompt.Asked) != 1 || prompt.Asked[0] != "zadykian's sudo password on ws" {
+	if len(prompt.Asked) != 2 || prompt.Asked[0] != "zadykian's sudo password on ws" {
 		t.Errorf("Asked = %q", prompt.Asked)
 	}
 	if again, err := s.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
@@ -88,14 +88,20 @@ func TestSudoAsksForThePassword(t *testing.T) {
 	if strings.Contains(said, sudoPassword) || strings.Contains(strings.Join(m.Calls, "\n"), sudoPassword) {
 		t.Errorf("the password shows in %q or %q", said, m.Calls)
 	}
+	if !strings.Contains(said, "sudo on ws refused the password") {
+		t.Errorf("said %q", said)
+	}
 }
 
-func TestSudoStopsOnAWrongPassword(t *testing.T) {
-	s, _, _ := newSudo(t, "one")
+func TestSudoStopsAfterThreeWrongPasswords(t *testing.T) {
+	s, _, _ := newSudo(t, "one", "two", "three")
 	p, _ := s.Plan(context.Background())
 	err := s.Apply(context.Background(), p)
-	if err == nil || s.way != sudoUnread || s.password != "" {
-		t.Fatalf("Apply = %v, way %d, password %q: the stage kept a refused password", err, s.way, s.password)
+	if err == nil || !strings.Contains(err.Error(), "refused the password 3 times") {
+		t.Fatalf("Apply = %v", err)
+	}
+	if s.way != sudoUnread || s.password != "" {
+		t.Errorf("way %d, password %q: the stage kept a refused password", s.way, s.password)
 	}
 }
 
