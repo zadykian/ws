@@ -73,3 +73,28 @@ func TestDaemonJSONLeavesOutTheAgeOfZeroDays(t *testing.T) {
 		t.Errorf("policy = %v, want the two limits alone", p)
 	}
 }
+
+func TestRootlessJSONHasTheUsersValuesAndNoSystemOnes(t *testing.T) {
+	d := values.Default().Docker
+	out, err := docker.RootlessJSON(d, docker.Cache{Reserved: "2GB", MaxUsed: "9GB", MinFree: "3GB"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var j map[string]any
+	if err := json.Unmarshal(out, &j); err != nil {
+		t.Fatal(err)
+	}
+	for key, want := range map[string]any{"cgroup-parent": "docker.slice", "ip": "127.0.0.1", "log-driver": "json-file"} {
+		if j[key] != want {
+			t.Errorf("%s = %v, want %v", key, j[key], want)
+		}
+	}
+	if dns := j["dns"].([]any); len(dns) != 1 || dns[0] != "10.0.2.3" {
+		t.Errorf("dns = %v, want slirp4netns's resolver", dns)
+	}
+	for _, key := range []string{"bip", "default-address-pools", "live-restore"} {
+		if _, ok := j[key]; ok {
+			t.Errorf("%s is set; the rootless daemon has no use for it", key)
+		}
+	}
+}

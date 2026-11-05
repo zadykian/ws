@@ -13,6 +13,16 @@ type daemonJSON struct {
 	LogOpts             map[string]string            `json:"log-opts"`
 }
 
+type rootlessJSON struct {
+	Builder            builder                      `json:"builder"`
+	CgroupParent       string                       `json:"cgroup-parent"`
+	DefaultNetworkOpts map[string]map[string]string `json:"default-network-opts"`
+	DNS                []string                     `json:"dns"`
+	IP                 string                       `json:"ip"`
+	LogDriver          string                       `json:"log-driver"`
+	LogOpts            map[string]string            `json:"log-opts"`
+}
+
 type builder struct {
 	GC struct {
 		Enabled bool       `json:"enabled"`
