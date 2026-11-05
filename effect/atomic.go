@@ -11,6 +11,13 @@ import (
 // over path, so that a reader sees the old file or the new one whole. Another owner than ws's own
 // needs root.
 func (m OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
+	if root, rel, err := m.confined(path); err != nil || root != nil {
+		if err != nil {
+			return err
+		}
+		defer func() { _ = root.Close() }()
+		return writeAtomicIn(root, rel, data, a)
+	}
 	f, err := renameio.NewPendingFile(path,
 		renameio.WithTempDir(filepath.Dir(path)), renameio.WithPermissions(a.Mode.Perm()))
 	if err != nil {
