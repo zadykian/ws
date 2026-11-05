@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -12,12 +13,14 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 var (
 	_ effect.Prompt = (*Bridge)(nil)
 	_ effect.Hidden = (*Bridge)(nil)
 	_ effect.Out    = (*Bridge)(nil)
+	_ step.Observer = (*Bridge)(nil)
 )
 
 // testBridge returns a bridge that keeps what it sends, and prints on w.
@@ -122,5 +125,40 @@ func TestBridgeAskEndsWithTheScreen(t *testing.T) {
 	_, err := b.Ask(t.Context(), effect.Question{Text: "Host"})
 	if err == nil || !strings.Contains(err.Error(), `"Host"`) {
 		t.Errorf("Ask: %v, want an error that names the question", err)
+	}
+}
+
+func TestBridgeObservePrintsAsAPlainRun(t *testing.T) {
+	changes := []step.Change{oneChange("a"), oneChange("b")}
+	cases := []struct {
+		name  string
+		event step.Event
+		want  []Line
+	}{
+		{"an apply's plan", step.Event{Kind: step.Planned, Step: "S", Changes: changes}, nil},
+		{"a check's plan", step.Event{Kind: step.Planned, Step: "S", Check: true, Changes: changes},
+			[]Line{{Said, "S: a"}, {Said, "S: b"}}},
+		{"a diff", step.Event{Kind: step.Planned, Parent: "base", Step: "S", Check: true,
+			Changes: []step.Change{oneChange("write f\n--- f\n+++ f\n")}},
+			[]Line{{Diffed, "base: S: write f\n--- f\n+++ f"}}},
+		{"a start", step.Event{Kind: step.Started, Parent: "base", Step: "S", Changes: changes},
+			[]Line{{Said, "base: S: applying 2 change(s)"}}},
+		{"behind a step", step.Event{Kind: step.Skipped, Step: "S", After: "T"}, []Line{{Said, "S: after T"}}},
+		{"past a failure", step.Event{Kind: step.Skipped, Step: "S"}, nil},
+		{"left out", step.Event{Kind: step.Planned, Step: "S", Changes: changes, LeftOut: true}, nil},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			b, sent := testBridge(io.Discard)
+			b.Observe(c.event)
+			var want []tea.Msg
+			for _, l := range c.want {
+				want = append(want, l)
+			}
+			want = append(want, c.event)
+			if !reflect.DeepEqual(*sent, want) {
+				t.Errorf("sent %v, want %v", *sent, want)
+			}
+		})
 	}
 }

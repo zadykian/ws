@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // LineKind says which call of effect.Out made a Line, as a screen draws each apart.
@@ -47,9 +48,9 @@ type (
 	retractMsg struct{ id uint64 }
 )
 
-// Bridge puts effect.Prompt, effect.Hidden and effect.Out behind a screen. A run's goroutine calls
-// it, and each call reaches the model as a message: Ask and AskHidden then wait for the reply, and
-// the others go on. A Line sent past the screen's end is dropped.
+// Bridge puts effect.Prompt, effect.Hidden, effect.Out and step.Observer behind a screen. A run's
+// goroutine calls it, and each call reaches the model as a message: Ask and AskHidden then wait for
+// the reply, and the others go on. A Line sent past the screen's end is dropped.
 type Bridge struct {
 	send func(tea.Msg)
 	// gone closes as the screen ends: no reply comes past it.
@@ -121,6 +122,37 @@ func (b *Bridge) Diff(name string, before, after []byte) {
 	if text := effect.Diff(name, before, after); text != "" {
 		b.send(Line{Diffed, strings.TrimSuffix(text, "\n")})
 	}
+}
+
+// Observe sends a run's event behind what the step's commands printed, with the lines that a plain
+// run prints of it. Their words are made here, on the run's goroutine, as a Change's String can
+// take a diff's time, and Update would hold the screen for it.
+func (b *Bridge) Observe(e step.Event) {
+	name := e.Step
+	if e.Parent != "" {
+		name = e.Parent + ": " + e.Step
+	}
+	switch {
+	case e.Kind == step.Planned && e.Check:
+		for _, c := range e.Changes {
+			b.send(changeLine(name, c))
+		}
+	case e.Kind == step.Started:
+		b.Say("%s: applying %d change(s)", name, len(e.Changes))
+	case e.Kind == step.Skipped && e.After != "":
+		b.Say("%s: after %s", name, e.After)
+	}
+	b.send(e)
+}
+
+// changeLine is a change as --check shows it. One of several lines holds a file's diff under its
+// first line.
+func changeLine(name string, c step.Change) Line {
+	text := name + ": " + strings.TrimSuffix(c.String(), "\n")
+	if strings.Contains(text, "\n") {
+		return Line{Diffed, text}
+	}
+	return Line{Said, text}
 }
 
 // ByHand keeps a line for the end of the run.
