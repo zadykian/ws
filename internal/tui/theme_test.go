@@ -26,6 +26,11 @@ func themeCodes(theme Theme) []string {
 	return codes
 }
 
+// stripped drops the text styles from a drawing, to compare its words.
+func stripped(text string) string {
+	return sgr.ReplaceAllString(text, "")
+}
+
 // noColor is the getenv of an environment with NO_COLOR=value.
 func noColor(value string) func(string) string {
 	return func(string) string { return value }

@@ -2,10 +2,15 @@ package tui
 
 import (
 	"slices"
+	"strings"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
+
+// buttonGap is the columns between two buttons.
+const buttonGap = 2
 
 // Footer is a screen's buttons. A button is a key binding: its help gives the shortcut and the
 // label. A disabled one shows, and takes neither the focus nor its key. Tab walks a ring of the
@@ -66,4 +71,53 @@ func (f Footer) move(step int) Footer {
 			return f
 		}
 	}
+}
+
+// rows breaks the buttons into rows of at most width columns, each a list of their places.
+func (f Footer) rows(width int) [][]int {
+	var rows [][]int
+	used := 0
+	for i, button := range f.buttons {
+		size := lipgloss.Width(buttonText(button))
+		if len(rows) == 0 || used+buttonGap+size > width {
+			rows = append(rows, nil)
+			used = -buttonGap
+		}
+		last := len(rows) - 1
+		rows[last] = append(rows[last], i)
+		used += buttonGap + size
+	}
+	return rows
+}
+
+// render draws the rows of buttons, or nothing where the footer has none.
+func (f Footer) render(theme Theme, width int) string {
+	var lines []string
+	for _, row := range f.rows(width) {
+		cells := make([]string, 0, len(row))
+		for _, place := range row {
+			cells = append(cells, f.renderButton(theme, place))
+		}
+		lines = append(lines, strings.Join(cells, strings.Repeat(" ", buttonGap)))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// renderButton draws one button. Only a button at rest colors its shortcut apart from its label.
+func (f Footer) renderButton(theme Theme, place int) string {
+	button := f.buttons[place]
+	switch {
+	case !button.Enabled():
+		return theme.ButtonOff.Render(buttonText(button))
+	case place == f.Focused():
+		return theme.ButtonFocus.Render(buttonText(button))
+	}
+	help := button.Help()
+	return theme.Shortcut.Render("["+help.Key+"]") + " " + help.Desc
+}
+
+// buttonText is a button's words. The brackets tell the shortcut apart under NO_COLOR.
+func buttonText(button key.Binding) string {
+	help := button.Help()
+	return "[" + help.Key + "] " + help.Desc
 }

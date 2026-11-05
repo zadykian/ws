@@ -79,3 +79,24 @@ func TestFooterEnableMovesTheFocusOffAButtonTurnedOff(t *testing.T) {
 		t.Error("Enable changed the older value's buttons")
 	}
 }
+
+func TestFooterRendersItsShortcutsInRowsThatFit(t *testing.T) {
+	for width, want := range map[int]string{
+		80: "[enter] run  [c] check  [q] quit",
+		22: "[enter] run  [c] check\n[q] quit",
+		10: "[enter] run\n[c] check\n[q] quit",
+	} {
+		if got := stripped(testFooter().render(NewTheme(noColor("1")), width)); got != want {
+			t.Errorf("%d columns: %q, want %q", width, got, want)
+		}
+	}
+}
+
+func TestFooterMarksItsFocusWithoutColor(t *testing.T) {
+	theme := NewTheme(noColor("1"))
+	rest := testFooter().render(theme, 80)
+	focused, _ := testFooter().Update(tab)
+	if focused.render(theme, 80) == rest {
+		t.Error("a focused button reads as any other")
+	}
+}

@@ -10,8 +10,14 @@ import (
 
 // Theme is the look that the screens share, each style named by what it marks. It uses the 16
 // ANSI colors alone: the terminal's palette sets them, so they suit its background, and
-// Terminal.app, which has 256 colors, shows them.
+// Terminal.app, which has 256 colors, shows them. Focus never rests on color, so that it holds
+// under NO_COLOR: a focused button is reversed.
 type Theme struct {
+	// ButtonFocus and ButtonOff are a button in focus and a disabled one. Shortcut is the key of a
+	// button at rest.
+	ButtonFocus lipgloss.Style
+	ButtonOff   lipgloss.Style
+	Shortcut    lipgloss.Style
 	// Muted is text that steps back. It is faint rather than bright black, which some palettes
 	// draw in the background's color.
 	Muted lipgloss.Style
@@ -32,9 +38,12 @@ func NewTheme(getenv func(string) string) Theme {
 		return style.Foreground(ansi)
 	}
 	return Theme{
-		Muted: plain.Faint(true),
-		Good:  paint(plain, lipgloss.Green),
-		Warn:  paint(plain, lipgloss.Yellow),
-		Bad:   paint(plain.Bold(true), lipgloss.Red),
+		ButtonFocus: plain.Bold(true).Reverse(true),
+		ButtonOff:   plain.Faint(true),
+		Shortcut:    paint(plain.Bold(true), lipgloss.Cyan),
+		Muted:       plain.Faint(true),
+		Good:        paint(plain, lipgloss.Green),
+		Warn:        paint(plain, lipgloss.Yellow),
+		Bad:         paint(plain.Bold(true), lipgloss.Red),
 	}
 }
