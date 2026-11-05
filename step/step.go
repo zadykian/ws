@@ -47,14 +47,16 @@ func Run(ctx context.Context, steps []Step, out effect.Out, check bool) (changed
 
 // RunWith plans each step in order. Under check it applies nothing, and skips a step whose awaited
 // step has changes to make. Otherwise it applies each plan, plans again, and fails where the second
-// plan is not empty. It reports whether any step had changes to make.
+// plan is not empty. It stops at the first failure, and the steps past it end Skipped. It reports
+// whether any step had changes to make.
 func RunWith(ctx context.Context, steps []Step, o Options) (changed bool, err error) {
 	pending := map[string]bool{} // the earlier steps, whether each has changes to make
 	for i, s := range steps {
-		e := o.settle(ctx, s, Event{Parent: o.Parent, Step: s.Name(), Index: i, Check: o.Check}, pending)
+		e := o.settle(ctx, s, o.event(i, s), pending)
 		o.observe(e)
 		changed = changed || e.Kind == Skipped || len(e.Changes) != 0
 		if e.Err != nil {
+			o.unreached(steps, i+1)
 			return changed, e.Err
 		}
 	}
@@ -99,6 +101,20 @@ func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string
 	}
 	pending[name] = false
 	return e.as(Done)
+}
+
+// Unreached ends each step as Skipped, for the nested runs that a failed run before them never
+// starts: each step of a run gets its last event, and a screen has no other word of these.
+func Unreached(steps []Step, o Options) { o.unreached(steps, 0) }
+
+func (o Options) unreached(steps []Step, from int) {
+	for i := from; i < len(steps); i++ {
+		o.observe(o.event(i, steps[i]).as(Skipped))
+	}
+}
+
+func (o Options) event(i int, s Step) Event {
+	return Event{Parent: o.Parent, Step: s.Name(), Index: i, Check: o.Check}
 }
 
 func (o Options) observe(e Event) {
