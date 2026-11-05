@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Purged removes packages with their settings, and leaves those that aren't there.
@@ -22,6 +23,8 @@ type purge struct {
 }
 
 func (c purge) String() string { return "purge " + strings.Join(c.names, " ") }
+
+func (purge) Kind() step.ChangeKind { return step.Removal }
 
 func (c purge) Apply(ctx context.Context) error {
 	args := slices.Concat([]string{"DEBIAN_FRONTEND=noninteractive", "apt-get"}, installOptions, []string{"purge", "-y"}, c.names)

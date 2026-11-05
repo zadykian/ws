@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // owedDir holds a mark per unit whose restart or reload a watched change owes. A mark is written
@@ -41,6 +42,8 @@ func (k mark) settle(ctx context.Context) error {
 type owe struct{ k mark }
 
 func (c owe) String() string { return "note the owed restart of " + c.k.name }
+
+func (owe) Kind() step.ChangeKind { return step.Write }
 
 // Early moves the change before the rest of the group's.
 func (owe) Early() bool { return true }

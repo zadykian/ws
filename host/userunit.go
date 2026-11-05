@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // UserUnit keeps a unit of the user's own systemd running, and restarts it where any of Watch has a
@@ -54,6 +55,8 @@ type userCall struct {
 func (c userCall) Forced() bool { return c.forced }
 
 func (c userCall) String() string { return c.verb + " " + c.u.User.Name + "'s " + c.u.Name }
+
+func (userCall) Kind() step.ChangeKind { return step.Restart }
 
 // Apply reloads the manager first, as a watched file may be one of the unit's.
 func (c userCall) Apply(ctx context.Context) error {

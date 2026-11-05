@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // DaemonReload makes systemd read its unit files again where any of the watched resources has a
@@ -18,6 +19,8 @@ type DaemonReload struct {
 type reload struct{ u effect.Units }
 
 func (reload) String() string { return "reload systemd's unit files" }
+
+func (reload) Kind() step.ChangeKind { return step.Restart }
 
 // Forced makes a failed run still reload, as a handler does.
 func (reload) Forced() bool { return true }

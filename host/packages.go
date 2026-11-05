@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // installOptions make apt-get wait for dpkg's lock, and keep the configuration file a machine
@@ -42,6 +43,8 @@ type installChange struct {
 }
 
 func (c installChange) String() string { return "install " + strings.Join(c.missing, " ") }
+
+func (installChange) Kind() step.ChangeKind { return step.Install }
 
 // Plan asks dpkg which of the packages are installed. A name of the form NAME=GLOB, such as
 // nodejs=24.*, is installed only at a version that matches the glob.

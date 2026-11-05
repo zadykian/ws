@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Run is what a Unit wants of a unit's activity.
@@ -50,6 +51,15 @@ type unitCall struct {
 func (c unitCall) Forced() bool { return c.forced }
 
 func (c unitCall) String() string { return c.verb + " " + c.u.Name }
+
+// Kind tells a change to what starts at boot, a link that systemd writes, from a change to what
+// runs.
+func (c unitCall) Kind() step.ChangeKind {
+	if c.verb == "enable" || c.verb == "disable" {
+		return step.Write
+	}
+	return step.Restart
+}
 
 func (c unitCall) Apply(ctx context.Context) error { return c.do(ctx) }
 
