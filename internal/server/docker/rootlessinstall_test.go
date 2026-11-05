@@ -41,16 +41,19 @@ func TestRootlessInstallRunsUntilTheUnitAndItsLinkExist(t *testing.T) {
 	}
 }
 
-func TestRootlessInstallRunsDockersTool(t *testing.T) {
+func TestRootlessInstallReloadsThenRunsDockersTool(t *testing.T) {
 	m, r, _ := installFixture(true)
 	session := "runuser -u ws -- env -C /home/ws HOME=/home/ws env XDG_RUNTIME_DIR=/run/user/1000 " +
 		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus "
+	m.Results[session+"systemctl --user daemon-reload"] = effecttest.Result{}
 	m.Results[session+"dockerd-rootless-setuptool.sh install"] = effecttest.Result{}
 	if err := r.Apply(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	calls := strings.Join(m.Calls, "\n")
-	if !strings.Contains(calls, "dockerd-rootless-setuptool.sh install") || !strings.Contains(calls, "XDG_RUNTIME_DIR=/run/user/1000") {
-		t.Errorf("calls = %q; want the tool, in the user's session", calls)
+	reload := strings.Index(calls, "systemctl --user daemon-reload")
+	tool := strings.Index(calls, "dockerd-rootless-setuptool.sh install")
+	if reload < 0 || tool < reload || !strings.Contains(calls, "XDG_RUNTIME_DIR=/run/user/1000") {
+		t.Errorf("calls = %q; want the reload, then the tool, in the user's session", calls)
 	}
 }

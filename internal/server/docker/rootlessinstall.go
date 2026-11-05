@@ -42,7 +42,12 @@ func (r rootlessInstall) Plan(context.Context) ([]host.Change, error) {
 	return nil, nil
 }
 
-// Apply runs the tool in the user's session.
+// Apply reloads the user's systemd first: one that started before dbus-user-session landed does
+// not know dbus.socket.
 func (r rootlessInstall) Apply(ctx context.Context) error {
-	return r.user.Pass(ctx, r.m, "env", slices.Concat(host.SessionEnv(r.uid), []string{"dockerd-rootless-setuptool.sh", "install"})...)
+	env := host.SessionEnv(r.uid)
+	if err := r.user.Pass(ctx, r.m, "env", slices.Concat(env, []string{"systemctl", "--user", "daemon-reload"})...); err != nil {
+		return err
+	}
+	return r.user.Pass(ctx, r.m, "env", slices.Concat(env, []string{"dockerd-rootless-setuptool.sh", "install"})...)
 }
