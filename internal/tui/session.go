@@ -9,10 +9,15 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// stopNote is the box of a run that is stopping. A run that heeds ctx never shows it for long.
+const stopNote = "The run ends with its current step.\nCtrl-C again leaves it behind."
+
 // Messages of a run.
 type (
 	// signalMsg is a signal that Run caught.
 	signalMsg struct{ signal syscall.Signal }
+	// endedMsg says that the run's ctx ended, whoever ended it.
+	endedMsg struct{}
 	// doneMsg is the end of a run's work.
 	doneMsg struct{ err error }
 )
@@ -31,8 +36,9 @@ type session struct {
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
 	field field
-	// cutBy is set once a signal or Ctrl-C ended ctx.
-	cutBy error
+	// stopping is set once ctx ended, and cutBy once a signal or Ctrl-C ended it.
+	stopping bool
+	cutBy    error
 	// done and err are the end of the work.
 	done bool
 	err  error
@@ -57,6 +63,9 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return s.drop(msg.id), nil
 	case signalMsg:
 		return s.interrupt(msg.signal)
+	case endedMsg:
+		s.stopping = true
+		return s, nil
 	case doneMsg:
 		s.done, s.err = true, msg.err
 		return s, tea.Quit
@@ -123,16 +132,20 @@ func (s session) interrupt(signal syscall.Signal) (tea.Model, tea.Cmd) {
 		return s, tea.Quit
 	}
 	s.cutBy = s.cut(signal)
+	s.stopping = true
 	return s, s.stop
 }
 
-// View draws the screen, and over it the question. It holds to the alternate buffer whatever the
-// screen says, as the end of a run restores the terminal by it.
+// View draws the screen, and over it the question or the note that the run is stopping. It holds to
+// the alternate buffer whatever the screen says, as the end of a run restores the terminal by it.
 func (s session) View() tea.View {
 	view := s.screen.View()
 	view.AltScreen = true
-	if len(s.asked) > 0 {
+	switch {
+	case len(s.asked) > 0:
 		view.Content = over(view.Content, s.field.render(s.theme, s.window), s.window)
+	case s.stopping:
+		view.Content = over(view.Content, box(s.theme, "Stopping", stopNote, s.window), s.window)
 	}
 	return view
 }

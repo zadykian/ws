@@ -160,8 +160,8 @@ func TestSessionStopsOnTheFirstInterruptAndLeavesOnTheNext(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			s, _ := testSession()
 			s, cmd := feed(s, c.msgs...)
-			if cmd == nil || cmd() != (stoppedMsg{}) || !errors.Is(s.cutBy, c.want) {
-				t.Fatalf("after the first: cut by %v", s.cutBy)
+			if cmd == nil || cmd() != (stoppedMsg{}) || !errors.Is(s.cutBy, c.want) || !s.stopping {
+				t.Fatalf("after the first: cut by %v, stopping %v", s.cutBy, s.stopping)
 			}
 			if s, cmd = feed(s, c.again); !quits(cmd) || !errors.Is(s.cutBy, c.want) {
 				t.Errorf("the second left no way out, cut by %v", s.cutBy)
@@ -172,15 +172,21 @@ func TestSessionStopsOnTheFirstInterruptAndLeavesOnTheNext(t *testing.T) {
 
 func TestSessionDrawsOverTheScreen(t *testing.T) {
 	s, _ := testSession()
-	s, _ = feed(s, askMsg{prompt{id: 1, text: "Host"}})
-	view := s.View()
-	for _, want := range []string{"Host", "the screen"} {
-		if !strings.Contains(view.Content, want) || !view.AltScreen {
-			t.Errorf("no %q in:\n%s", want, view.Content)
+	asked, _ := feed(s, askMsg{prompt{id: 1, text: "Host"}})
+	stopping, _ := feed(s, endedMsg{})
+	for _, c := range []struct {
+		s    session
+		want string
+	}{{asked, "Host"}, {stopping, "Ctrl-C again"}} {
+		view := c.s.View()
+		for _, want := range []string{c.want, "the screen"} {
+			if !strings.Contains(view.Content, want) || !view.AltScreen {
+				t.Errorf("no %q in:\n%s", want, view.Content)
+			}
 		}
-	}
-	if h := lipgloss.Height(view.Content); h != window.Height {
-		t.Errorf("drew %d lines over the window's %d", h, window.Height)
+		if h := lipgloss.Height(view.Content); h != window.Height {
+			t.Errorf("drew %d lines over the window's %d", h, window.Height)
+		}
 	}
 }
 
