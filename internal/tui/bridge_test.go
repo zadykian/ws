@@ -2,6 +2,8 @@ package tui
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"io"
 	"slices"
 	"strings"
@@ -91,5 +93,34 @@ func TestBridgeAskSendsTheQuestionAndReturnsTheReply(t *testing.T) {
 	}
 	if asked.text != "Password" || !asked.hidden || asked.id != 2 {
 		t.Errorf("asked %+v, want the hidden question, as the second", asked)
+	}
+}
+
+func TestBridgeAskTakesBackAQuestionWhenItsContextEnds(t *testing.T) {
+	b, _ := testBridge(io.Discard)
+	ctx, cancel := context.WithCancel(t.Context())
+	var sent []tea.Msg
+	b.send = func(msg tea.Msg) {
+		sent = append(sent, msg)
+		cancel()
+	}
+	if _, err := b.Ask(ctx, effect.Question{Text: "Host"}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Ask: %v", err)
+	}
+	if _, err := b.AskHidden(ctx, "Past the end"); !errors.Is(err, context.Canceled) {
+		t.Fatalf("AskHidden: %v", err)
+	}
+	id := sent[0].(askMsg).prompt.id
+	if len(sent) != 2 || sent[1] != (retractMsg{id}) {
+		t.Errorf("sent %v, want the first question and its retraction", sent)
+	}
+}
+
+func TestBridgeAskEndsWithTheScreen(t *testing.T) {
+	b, _ := testBridge(io.Discard)
+	b.send = func(tea.Msg) { close(b.gone) }
+	_, err := b.Ask(t.Context(), effect.Question{Text: "Host"})
+	if err == nil || !strings.Contains(err.Error(), `"Host"`) {
+		t.Errorf("Ask: %v, want an error that names the question", err)
 	}
 }
