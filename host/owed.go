@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io/fs"
 	"path"
+
+	"github.com/zadykian/ws/effect"
 )
 
 // owedDir holds a mark per unit whose restart or reload a watched change owes. A mark is written
@@ -12,34 +14,40 @@ import (
 // failed, leaves it, and the next run plans the restart again though the watched file is right.
 const owedDir = "/var/lib/ws/owed"
 
-func (u Unit) mark() string { return path.Join(owedDir, u.Name) }
+// mark is a unit's file in owedDir.
+type mark struct {
+	m    effect.Machine
+	name string
+}
 
-// owed reports whether an earlier run left the unit's mark.
-func (u Unit) owed() (bool, error) {
-	_, err := u.M.RootAttrs(u.mark())
+func (k mark) path() string { return path.Join(owedDir, k.name) }
+
+// owed reports whether an earlier run left the mark.
+func (k mark) owed() (bool, error) {
+	_, err := k.m.RootAttrs(k.path())
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
 	return err == nil, err
 }
 
-// settle removes the unit's mark.
-func (u Unit) settle(ctx context.Context) error {
-	_, err := u.M.RunRoot(ctx, "rm", "-f", "--", u.mark())
+// settle removes the mark.
+func (k mark) settle(ctx context.Context) error {
+	_, err := k.m.RunRoot(ctx, "rm", "-f", "--", k.path())
 	return err
 }
 
-// owe writes the unit's mark. Group.Plan puts it before the changes that Watch lists.
-type owe struct{ u Unit }
+// owe writes the mark. Group.Plan puts it before the changes that Watch lists.
+type owe struct{ k mark }
 
-func (c owe) String() string { return "note the owed restart of " + c.u.Name }
+func (c owe) String() string { return "note the owed restart of " + c.k.name }
 
 // Early moves the change before the rest of the group's.
 func (owe) Early() bool { return true }
 
 func (c owe) Apply(ctx context.Context) error {
-	if _, err := c.u.M.RunRoot(ctx, "mkdir", "-p", "--", owedDir); err != nil {
+	if _, err := c.k.m.RunRoot(ctx, "mkdir", "-p", "--", owedDir); err != nil {
 		return err
 	}
-	return c.u.M.WriteRootFile(c.u.mark(), nil, 0o600)
+	return c.k.m.WriteRootFile(c.k.path(), nil, 0o600)
 }
