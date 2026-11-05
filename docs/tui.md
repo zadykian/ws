@@ -76,8 +76,15 @@ A screen owns the terminal, so a step's commands stay off it.
   sudo, such as brew's, would ask again without one.
 - `effect.Foreground` runs a command that talks to the maintainer. The screen suspends, and the
   command has the terminal until it ends. In plain mode it does what `Pass` does, but for a signal.
+- `Bridge.Foreground` runs such a command on a machine. The screen releases the terminal first.
+  The command has ws's own standard input and error. The screen draws again after it, even after
+  a failure. A screen that can't leave runs nothing.
+- The wizard's steps hold it as `F` beside `M`. It runs `ssh-keygen` and `ssh-add` for the Mac's
+  key, gh's login, and `claude auth login` over `ssh -t`. With no `F`, a step does `M.Pass`.
 - A run that ends sends such a command SIGTERM, and kills it 2 seconds later. A kill alone would
   leave the terminal raw, or with no echo.
+- A second Ctrl-C waits for such a command's end, and then closes the screen. The program's loop
+  moves the terminal, as a move past the screen's end would leave it raw.
 
 ## sudo
 
