@@ -49,6 +49,21 @@ func (OSMachine) ReadFile(path string) ([]byte, error) {
 
 // WriteFile writes the file, and sets its mode where it already existed.
 func (m OSMachine) WriteFile(path string, data []byte, perm fs.FileMode) error {
+	if root, rel, err := m.confined(path); err != nil || root != nil {
+		if err != nil {
+			return err
+		}
+		defer func() { _ = root.Close() }()
+		f, err := root.OpenFile(rel, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+		if err != nil {
+			return err
+		}
+		_, err = f.Write(data)
+		if err = errors.Join(err, f.Chmod(perm), f.Close()); err != nil {
+			return err
+		}
+		return nil
+	}
 	if err := os.WriteFile(path, data, perm); err != nil {
 		return err
 	}
