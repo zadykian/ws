@@ -64,6 +64,47 @@ func TestReadSkipsAStepWhoseAwaitedStepHasChanges(t *testing.T) {
 	}
 }
 
+func TestReadGoesPastAFailure(t *testing.T) {
+	log := []string{}
+	got, err := step.Read(t.Context(), []step.Step{
+		&fake{name: "a", planErr: errors.New("two routes"), log: &log},
+		&fake{name: "b", waitsOn: "a", log: &log},
+		&fake{name: "c", todo: []step.Change{change("x")}, log: &log},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []step.Report{
+		{Step: "a", Items: []step.Item{{Kind: step.CheckItem, Name: "a", Want: "passes", Found: "fails",
+			Conflict: "a: planning: two routes"}}},
+		{Step: "b", After: "a"},
+		{Step: "c", Changes: []step.Pending{{Kind: step.OtherChange, Text: "x"}}},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("reports = %+v, want %+v", got, want)
+	}
+}
+
+func TestReadShowsOneFailureOfAStep(t *testing.T) {
+	log := []string{}
+	found := []step.Item{{Kind: step.FileItem, Name: "/a"}}
+	both := reporting{&fake{name: "a", planErr: errors.New("plan"), log: &log}, found, errors.New("report")}
+	alone := reporting{&fake{name: "b", log: &log}, nil, errors.New("report")}
+	got, err := step.Read(t.Context(), []step.Step{both, alone})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got[0].Items) != 1 || got[0].Items[0].Conflict != "a: planning: plan" {
+		t.Errorf("items = %+v, want the plan's failure alone", got[0].Items)
+	}
+	if want := []string{"plan a", "plan b", "report b"}; !reflect.DeepEqual(log, want) {
+		t.Errorf("log = %v, want %v: a failed plan keeps its step from being reported", log, want)
+	}
+	if len(got[1].Items) != 1 || got[1].Items[0].Conflict != "report" {
+		t.Errorf("items = %+v, want the report's failure", got[1].Items)
+	}
+}
+
 func TestReadEndsWithItsContext(t *testing.T) {
 	log := []string{}
 	ctx, cancel := context.WithCancel(t.Context())

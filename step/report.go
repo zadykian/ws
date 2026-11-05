@@ -12,6 +12,8 @@ const (
 	FileItem    ItemKind = "file"
 	LinkItem    ItemKind = "link"
 	DirItem     ItemKind = "directory"
+	// CheckItem is what stops a run: Read makes one of a step's failure.
+	CheckItem ItemKind = "check"
 )
 
 // Item is a part of what a step manages, as a report shows it. It holds no secret, as --check
@@ -31,7 +33,7 @@ type Item struct {
 // Reporter is a Step, or a part of one, that says what it manages. A step without one shows its
 // plan alone.
 type Reporter interface {
-	// Report reads alone, as Plan does.
+	// Report reads alone, as Plan does, and follows a Plan that passed: what Plan refuses stays unread.
 	Report(ctx context.Context) ([]Item, error)
 }
 
@@ -51,7 +53,9 @@ type Report struct {
 }
 
 // Read reports on each step in order. It goes as a run under check does, so it reads no step whose
-// awaited step has changes to make. It stops at the first failure, or at the end of ctx.
+// awaited step has changes to make. A failure stops a run, and so stands as a CheckItem here, and
+// Read goes past it: what fails is what a report is for. Only the end of ctx fails Read, which
+// returns the reports it has.
 func Read(ctx context.Context, steps []Step) ([]Report, error) {
 	o := Options{Check: true}
 	pending := map[string]bool{}
@@ -61,28 +65,31 @@ func Read(ctx context.Context, steps []Step) ([]Report, error) {
 			return reports, err
 		}
 		e := o.settle(ctx, s, o.event(i, s), pending)
-		if e.Err != nil {
-			return reports, e.Err
+		if e.Kind == Failed {
+			pending[e.Step] = true // what waits on a failed step can't be read either
 		}
-		r, err := read(ctx, s, e)
-		if err != nil {
-			return reports, err
-		}
-		reports = append(reports, r)
+		reports = append(reports, read(ctx, s, e))
 	}
 	return reports, nil
 }
 
-func read(ctx context.Context, s Step, e Event) (Report, error) {
+// read turns a step's last event into its report, with at most one CheckItem. A failed plan stands
+// alone: it may be a refusal to read, as host.Plain's of a link, so Report must not go past it.
+func read(ctx context.Context, s Step, e Event) Report {
 	r := Report{Step: e.Step, After: e.After}
 	for _, c := range e.Changes {
 		r.Changes = append(r.Changes, Pending{KindOf(c), c.String()})
 	}
-	reporter, ok := s.(Reporter)
-	if !ok || e.Kind == Skipped {
-		return r, nil
+	if e.Kind == Skipped {
+		return r
 	}
-	var err error
-	r.Items, err = reporter.Report(ctx)
-	return r, err
+	failure := e.Err
+	if reporter, ok := s.(Reporter); ok && failure == nil {
+		r.Items, failure = reporter.Report(ctx)
+	}
+	if failure != nil {
+		r.Items = append(r.Items, Item{Kind: CheckItem, Name: e.Step, Want: "passes", Found: "fails",
+			Conflict: failure.Error()})
+	}
+	return r
 }
