@@ -74,6 +74,13 @@ func TestSessionGoesOnPastEsc(t *testing.T) {
 	}
 }
 
+func TestSessionStopButtonGoesOnByTheFocus(t *testing.T) {
+	s, _ := haltingSession()
+	if s, _ = feed(s, stopPressedMsg{}, tab, tab, enter); s.confirming || s.halted {
+		t.Errorf("Enter on the second button: confirming %v, halted %v", s.confirming, s.halted)
+	}
+}
+
 func TestSessionEndsCtxWhereNothingConfirms(t *testing.T) {
 	ask := askMsg{prompt{id: 1, text: "Host"}}
 	cases := []struct {
@@ -94,6 +101,13 @@ func TestSessionEndsCtxWhereNothingConfirms(t *testing.T) {
 				t.Errorf("stopping %v, confirming %v", s.stopping, s.confirming)
 			}
 		})
+	}
+}
+
+func TestSessionWithNoHaltEndsCtxOnTheFirstPress(t *testing.T) {
+	s, _ := testSession()
+	if s, cmd := feed(s, stopPressedMsg{}); !runs(cmd, stoppedMsg{}) || s.confirming {
+		t.Errorf("confirming %v", s.confirming)
 	}
 }
 
@@ -181,5 +195,25 @@ func TestRunEndsWellWhereTheStoppedStepWasTheLast(t *testing.T) {
 	})
 	if err != nil {
 		t.Errorf("Run: %v", err)
+	}
+}
+
+func TestRunScreenStopButtonAsksTheSession(t *testing.T) {
+	r := testRun()
+	for range 4 {
+		r = sent(r, tab)
+	}
+	if _, cmd := r.Update(enter); !runs(cmd, stopPressedMsg{}) {
+		t.Error("the button asked nothing")
+	}
+}
+
+func TestRunScreenShowsAStopInItsWindowsTitle(t *testing.T) {
+	r := sent(testRun(), haltedMsg{}, Line{Piped, "still printing"})
+	got := shown(r)
+	for _, want := range []string{"Stopping after base: Packages", "still printing", "[ctrl+c] stop now"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("frame holds no %q:\n%s", want, got)
+		}
 	}
 }

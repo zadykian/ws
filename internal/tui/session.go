@@ -37,6 +37,8 @@ type (
 	endedMsg struct{}
 	// doneMsg is the end of a run's work.
 	doneMsg struct{ err error }
+	// stopPressedMsg is a screen's stop button, pressed by Enter: the key Ctrl-C reaches no screen.
+	stopPressedMsg struct{}
 	// haltedMsg tells the screen that the run ends with its current step.
 	haltedMsg struct{}
 )
@@ -95,6 +97,8 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case doneMsg:
 		s.done, s.err = true, msg.err
 		return s, tea.Quit
+	case stopPressedMsg:
+		return s.pressed()
 	case tea.KeyPressMsg:
 		if key.Matches(msg, Keys.Interrupt) {
 			return s.pressed()
@@ -154,8 +158,9 @@ func (s session) drop(id uint64) session {
 	return s
 }
 
-// pressed takes Ctrl-C, which raw mode keeps from being a signal. A run that can stop between its
-// steps asks first. Under a question it can't: a step waits on the answer, so that ctx alone ends it.
+// pressed takes Ctrl-C, which raw mode keeps from being a signal, or a screen's stop button. A run
+// that can stop between its steps asks first. Under a question it can't: a step waits on the answer,
+// so that ctx alone ends it.
 func (s session) pressed() (tea.Model, tea.Cmd) {
 	if s.halt == nil || s.confirming || s.halted || s.stopping || len(s.asked) > 0 {
 		return s.interrupt(syscall.SIGINT)

@@ -25,7 +25,11 @@ const (
 	pageUpPlace = iota
 	pageDownPlace
 	bottomPlace
+	stopButtonPlace
 )
+
+// stopNowButton is Ctrl-C's button past a confirmed stop, when the press ends ctx.
+var stopNowButton = key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "stop now"))
 
 // tickMsg is the clock, for the elapsed time. It carries the time, so that Update reads no clock.
 type tickMsg struct{ at time.Time }
@@ -42,6 +46,9 @@ type RunScreen struct {
 	window  Size
 	started time.Time
 	now     time.Time
+	// halted says that the run ends with its current step. It is no box over the window, as a step
+	// can run for long and its output stays worth reading.
+	halted bool
 }
 
 // NewRunScreen returns the screen of a run of groups, which name every step before the run starts.
@@ -51,7 +58,7 @@ func NewRunScreen(title string, theme Theme, groups ...Group) RunScreen {
 		theme:  theme,
 		steps:  newStepList(groups),
 		output: outputPane{theme: theme},
-		footer: NewFooter(Keys.PageUp, Keys.PageDown, Keys.Bottom),
+		footer: NewFooter(Keys.PageUp, Keys.PageDown, Keys.Bottom, Keys.Interrupt),
 	}
 }
 
@@ -73,18 +80,28 @@ func (r RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		r.now = msg.at
 		return r, tea.Tick(time.Second, func(at time.Time) tea.Msg { return tickMsg{at} })
+	case haltedMsg:
+		r.halted = true
+		r.footer = NewFooter(Keys.PageUp, Keys.PageDown, Keys.Bottom, stopNowButton)
+		return r.fitted(), nil
 	case tea.WindowSizeMsg:
 		r.window = Size{msg.Width, msg.Height}
-		r.output = r.output.fit(r.layout().PaneSizes(msg.Width, msg.Height)[1])
+		return r.fitted(), nil
 	case tea.KeyPressMsg:
-		return r.pressed(msg), nil
+		return r.pressed(msg)
 	}
 	return r, nil
 }
 
-// pressed moves the focus or the window. Up, Down and Home are no buttons, as a row of all the keys
-// would take two lines of an 80-column window.
-func (r RunScreen) pressed(msg tea.KeyPressMsg) RunScreen {
+// fitted sizes the output to the window, past a change of the window or of the footer's rows.
+func (r RunScreen) fitted() RunScreen {
+	r.output = r.output.fit(r.layout().PaneSizes(r.window.Width, r.window.Height)[1])
+	return r
+}
+
+// pressed moves the focus or the window, or asks the session to stop. Up, Down and Home are no
+// buttons, as a row of all the keys would take two lines of an 80-column window.
+func (r RunScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	var place int
 	r.footer, place = r.footer.Update(msg)
 	page := max(r.output.size.Height, 1)
@@ -95,6 +112,8 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) RunScreen {
 		r.output = r.output.move(-page)
 	case place == bottomPlace:
 		r.output = r.output.move(-len(r.output.rows))
+	case place == stopButtonPlace:
+		return r, func() tea.Msg { return stopPressedMsg{} }
 	case key.Matches(msg, Keys.Up):
 		r.output = r.output.move(1)
 	case key.Matches(msg, Keys.Down):
@@ -102,7 +121,7 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) RunScreen {
 	case key.Matches(msg, Keys.Top):
 		r.output = r.output.move(len(r.output.rows))
 	}
-	return r
+	return r, nil
 }
 
 // layout is the screen with its panes empty, as what fills them depends on their sizes. The window
@@ -112,6 +131,9 @@ func (r RunScreen) layout() Layout {
 	title := "Output"
 	if at := r.steps.at(); at >= 0 {
 		title = r.steps[at].label()
+		if r.halted {
+			title = "Stopping after " + title
+		}
 	}
 	return Layout{
 		Title:  r.title,
