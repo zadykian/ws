@@ -63,7 +63,7 @@ func (load) String() string { return "load nct6687" }
 func (l load) Apply(ctx context.Context) error {
 	_, err := l.c.m.RunRoot(ctx, "modprobe", "nct6687")
 	if err != nil && strings.Contains(err.Error(), "Key was rejected") {
-		l.c.out.Say("The kernel refused nct6687, as Secure Boot is on and DKMS's key is not enrolled, so the board's own curves drive its fans. docs/fans.md#secure-boot says how to enroll it.")
+		effect.SayLasting(l.c.out, "The kernel refused nct6687, as Secure Boot is on and DKMS's key is not enrolled, so the board's own curves drive its fans. docs/fans.md#secure-boot says how to enroll it.")
 		_, err = l.c.m.RunRoot(ctx, "touch", "--", refusedMark)
 		return err
 	}

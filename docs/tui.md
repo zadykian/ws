@@ -94,6 +94,10 @@ The other pane is a window on what the run prints, under the current step's name
 The window goes with the screen. The last line of `ws server apply`, an error and what stays by hand
 print on the normal screen, and `--plain` keeps every line of a run.
 
+What stays by hand holds the lines that the maintainer acts on past a run: ws's WireGuard key, and
+what a step leaves to do. A step says one through `effect.SayLasting`, which a plain run prints in
+place.
+
 ### Stopping a run
 
 A step cut halfway can leave a machine between two states, so a run stops between its steps. That

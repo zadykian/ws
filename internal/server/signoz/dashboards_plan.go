@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/step"
 )
@@ -70,7 +71,7 @@ func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 		switch {
 		case !got.Data.differs(files[n]):
 		case got.Data.Locked:
-			s.Out.Say("The %s dashboard is locked in SigNoz's UI and differs from dashboards/%s.json: unlock it for a run to replace it.", n, n)
+			effect.SayLasting(s.Out, "The %s dashboard is locked in SigNoz's UI and differs from dashboards/%s.json: unlock it for a run to replace it.", n, n)
 		default:
 			p.Changes = append(p.Changes, replace{c, have[i].ID})
 		}

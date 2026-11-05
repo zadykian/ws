@@ -77,6 +77,20 @@ func TestBridgeByHandPrintsAsAPlainRunDoes(t *testing.T) {
 	}
 }
 
+func TestBridgeSayLastingStaysPastTheScreenOnce(t *testing.T) {
+	var got bytes.Buffer
+	b, sent := testBridge(&got)
+	effect.SayLasting(b, "the key: %s", "k")
+	effect.SayLasting(b, "the key: %s", "k")
+	if len(*sent) != 2 || (*sent)[0] != (Line{Said, "the key: k"}) {
+		t.Fatalf("sent %v, want the line twice", *sent)
+	}
+	b.flush()
+	if want := "\nWhat stays by hand:\n- the key: k\n"; got.String() != want {
+		t.Errorf("printed %q, want %q", got.String(), want)
+	}
+}
+
 func TestBridgeAskSendsTheQuestionAndReturnsTheReply(t *testing.T) {
 	b, _ := testBridge(io.Discard)
 	var asked prompt

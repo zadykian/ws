@@ -70,6 +70,8 @@ type Bridge struct {
 	// suspend and resume take the terminal from the screen and give it back, as Run sets them. Nil
 	// ones leave it where it is.
 	suspend, resume func() error
+	// lasting holds the lines that SayLasting kept for hand.
+	lasting sync.Map
 	// hand keeps what ByHand gets, to print once the terminal is back.
 	lock sync.Mutex
 	hand *effect.Terminal
@@ -127,6 +129,16 @@ func (b *Bridge) Raw(format string, a ...any) {
 // Warn sends a line that starts with "warning: ".
 func (b *Bridge) Warn(format string, a ...any) {
 	b.send(Line{Warned, fmt.Sprintf("warning: "+format, a...)})
+}
+
+// SayLasting sends a line, and keeps it with what stays by hand, once, as a step plans again after it
+// applies. The window goes with the screen, and the maintainer acts on this line past it.
+func (b *Bridge) SayLasting(format string, a ...any) {
+	line := fmt.Sprintf(format, a...)
+	b.send(Line{Said, line})
+	if _, kept := b.lasting.LoadOrStore(line, true); !kept {
+		b.ByHand("%s", line)
+	}
 }
 
 // Diff sends the unified diff of before and after, and nothing where they are equal.

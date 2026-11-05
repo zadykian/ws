@@ -10,6 +10,16 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
+func TestSayLastingIsASayOnAPlainTerminal(t *testing.T) {
+	var out bytes.Buffer
+	term := effect.NewTerminal(strings.NewReader(""), &out)
+	effect.SayLasting(term, "the key: %s", "k")
+	term.Flush()
+	if got, want := out.String(), "the key: k\n"; got != want {
+		t.Errorf("printed %q, want %q", got, want)
+	}
+}
+
 func TestTerminalAsk(t *testing.T) {
 	notEmpty := func(s string) error {
 		if s == "" {

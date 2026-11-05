@@ -57,7 +57,7 @@ func (r ready) Plan(ctx context.Context) ([]host.Change, error) {
 		r.out.Say("The server has no WireGuard key yet: a real run makes it and shows its public key.")
 		return nil, nil
 	}
-	r.out.Say("ws's WireGuard public key, for WS_PUBLIC_KEY in the Mac's mac.conf: %s", public)
+	effect.SayLasting(r.out, "ws's WireGuard public key, for WS_PUBLIC_KEY in the Mac's mac.conf: %s", public)
 	if !host.Booted(r.m) || r.holds(ctx, public) {
 		return nil, nil
 	}
