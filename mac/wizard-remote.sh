@@ -6,7 +6,7 @@
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. run is the ws version and status of the last full run, and off where host_vars turned the
+#   is missing. user is the ws_user that host_vars names. run is the ws version and status of the last full run, and off where host_vars turned the
 #   outbound table off as the run began, else on, and the SHA-256 of its secrets file, or -. ws is the version that ws prints. last is the unit and status of
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
@@ -103,6 +103,8 @@ status() {
     echo "last $(stamp "$state/last")"
     echo "active $(active | first)"
     echo "ws $("$ws" version 2>/dev/null | first)"
+    echo "user $(sed -n "s/^ws_user:[[:space:]]*[\"']\{0,1\}\([^\"' #]*\).*/\1/p" "$vars" \
+        2>/dev/null | tail -n 1 | first)"
     echo "mac.pub $(head -n 1 "$peer" 2>/dev/null | first)"
     echo "wg0 $(wg show wg0 public-key 2>/dev/null | first)"
     echo "signing $(signing_key | first)"

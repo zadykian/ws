@@ -69,7 +69,8 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript, Sudo: sudo}
 	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update,
 		Secrets: p.getenv("HOME") + "/" + secretsFile, User: p.getenv("USER"),
-		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript, Sudo: sudo}, Files: files}
+		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript, Sudo: sudo},
+		Files:  files, Default: values.Default().User}
 	hand.Late(run.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}

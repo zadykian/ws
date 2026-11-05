@@ -144,7 +144,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		in && c.Run.Remote.Status(ctx) && c.Run.Remote.Get("cable") == cf.CablePort) {
 		return step.Plan{}, nil
 	}
-	if c.Host.Check && !none && (!in || !c.Run.runDone(ctx, cf.Target)) {
+	if c.Host.Check && !none && (!in || !c.Run.runDone(ctx, cf)) {
 		c.Out.Say("%s: after %s", cableStage, runStage)
 		return step.Plan{}, nil
 	}

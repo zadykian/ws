@@ -15,10 +15,11 @@ var extra = map[string]string{"cloud": "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT
 // answers status with the text.
 func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\n" + extra[target])
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=alice\n" + extra[target])
 	h := &HostKey{Conf: "/h/mac.conf", Lock: "/l", Check: check, M: m, Out: &effecttest.Out{},
 		SSH: SSH{M: m, Lock: "/l"}}
-	r := &WsRun{Host: h, Version: "v1.2.3", Update: update, Remote: &Remote{SSH: h.SSH, Script: []byte("x")}}
+	r := &WsRun{Host: h, Version: "v1.2.3", Update: update, Default: "alice", Remote: &Remote{SSH: h.SSH, Script: []byte("x")},
+		Files: &Remote{SSH: h.SSH, Script: []byte("y")}}
 	m.Results[remoteLine(r.Remote, "status")] = effecttest.Result{Out: []byte(status)}
 	m.Results[remoteLine(r.Remote, "secrets", "drop")] = effecttest.Result{}
 	return r, m
@@ -41,6 +42,29 @@ func TestWsRunPlan(t *testing.T) {
 		"failed":    {"lan", "run v1.2.3 1 on -\nactive -\n", "its last full run exited 1", false, true},
 	} {
 		r, _ := newRun(tc.target, tc.status, tc.update, tc.check)
+		p, err := r.Plan(context.Background())
+		got := ""
+		if len(p.Changes) > 0 {
+			got = p.Changes[0].String()
+		}
+		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
+			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
+		}
+	}
+}
+
+func TestWsRunSeesWsUser(t *testing.T) {
+	done := "run v1.2.3 0 on -\nactive -\n"
+	for name, tc := range map[string]struct{ status, server, want string }{
+		"the default":    {done + "user -\n", "alice", ""},
+		"no line":        {done + "user -\n", "zadykian", "run ws server apply on ws"},
+		"named":          {done + "user alice\n", "zadykian", ""},
+		"another":        {done + "user other\n", "alice", "run ws server apply on ws"},
+		"an older ws":    {"run v1.2.2 0 on -\nactive -\nuser alice\n", "zadykian", "run ws server apply on ws"},
+		"status with no": {done, "zadykian", "run ws server apply on ws"},
+	} {
+		r, _ := newRun("lan", tc.status, false, false)
+		r.Default = tc.server
 		p, err := r.Plan(context.Background())
 		got := ""
 		if len(p.Changes) > 0 {
