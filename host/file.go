@@ -82,3 +82,17 @@ func (f File) Plan(context.Context) ([]Change, error) {
 	}
 	return nil, nil
 }
+
+// Report compares the file as Plan does.
+func (f File) Report(context.Context) ([]step.Item, error) {
+	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: attrsText(f.attrs()), Found: missing}
+	before, got, ok, err := readRoot(f.M, f.Path)
+	if !ok {
+		return []step.Item{item}, err
+	}
+	item.Found = attrsText(got)
+	if !bytes.Equal(before, f.Content) {
+		item.Found += ", other content"
+	}
+	return []step.Item{item}, nil
+}

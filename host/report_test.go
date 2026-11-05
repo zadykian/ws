@@ -21,6 +21,19 @@ func (r reported) Report(context.Context) ([]step.Item, error) { return r.items,
 
 func item(name string) step.Item { return step.Item{Kind: step.FileItem, Name: name} }
 
+// reportOf returns the one item of a resource's report.
+func reportOf(t *testing.T, r step.Reporter) step.Item {
+	t.Helper()
+	items, err := r.Report(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("items = %+v, want one", items)
+	}
+	return items[0]
+}
+
 func TestGroupJoinsTheReportsOfItsParts(t *testing.T) {
 	g := host.Group{Title: "T", Parts: []host.Resource{
 		reported{items: []step.Item{item("a")}}, part{}, reported{items: []step.Item{item("b")}},
