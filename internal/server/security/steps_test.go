@@ -88,6 +88,20 @@ func TestLXDStepSkipsForRoot(t *testing.T) {
 	}
 }
 
+func TestSSHDClosesRootsLoginWhereWsUserIsAnother(t *testing.T) {
+	for user, want := range map[string]string{"zadykian": "\nPermitRootLogin no\n", "root": "\nPermitRootLogin prohibit-password\n"} {
+		v := values.Default()
+		v.Home = "/root"
+		v.User = user
+		m, _, ss := fakeSteps(v)
+		m.Files["/etc/group"] = []byte("")
+		run(t, ss)
+		if got := string(m.Files["/etc/ssh/sshd_config.d/10-keys-only.conf"]); !strings.Contains(got, want) {
+			t.Errorf("ws_user %s: drop-in = %q, want %q", user, got, want)
+		}
+	}
+}
+
 func TestSudoAsksForThePasswordAtEveryCommand(t *testing.T) {
 	v := values.Default()
 	v.Home = "/root"

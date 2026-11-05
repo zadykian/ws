@@ -56,7 +56,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 	}
 	ss = append(ss,
 		host.Lazy{Title: sshdStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
-			return sshd(m, u, out)
+			return sshd(m, u, out, v.User)
 		}},
 		host.Group{Title: ufwStep, After: packagesStep, Parts: firewall(m, u, out)},
 		host.Lazy{Title: fail2banStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {

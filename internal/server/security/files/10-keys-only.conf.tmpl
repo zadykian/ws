@@ -5,5 +5,10 @@
 # which may allow passwords.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
-# ws runs as root, who logs in by key only.
+{{- if .Root }}
+# ws_user is root, who logs in by key only.
 PermitRootLogin prohibit-password
+{{- else }}
+# ws_user logs in, and takes root by sudo with its password.
+PermitRootLogin no
+{{- end }}
