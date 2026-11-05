@@ -36,6 +36,24 @@ func TestSelect(t *testing.T) {
 	}
 }
 
+func TestCheckSteps(t *testing.T) {
+	list := []roles.Role{role("a", named{name: "x y"})}
+	for _, tc := range []struct {
+		only []string
+		want string
+	}{
+		{[]string{"a"}, ""},
+		{[]string{"a/x y"}, ""},
+		{[]string{"a/z"}, `no step "z" in a; its steps here are ["x y"]`},
+		{[]string{"a/"}, `no step "" in a; its steps here are ["x y"]`},
+	} {
+		err := Config{Options: Options{Only: tc.only}}.CheckSteps(list)
+		if (tc.want == "" && err != nil) || (tc.want != "" && (err == nil || err.Error() != tc.want)) {
+			t.Errorf("only %q: err = %v, want %q", tc.only, err, tc.want)
+		}
+	}
+}
+
 func TestLeftOut(t *testing.T) {
 	var all Options
 	if all.leftOut() != nil {

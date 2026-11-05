@@ -26,6 +26,27 @@ func Select(list []roles.Role, only []string) ([]roles.Role, error) {
 	return slices.DeleteFunc(slices.Clone(list), func(r roles.Role) bool { return !slices.Contains(only, r.Name) }), nil
 }
 
+// CheckSteps refuses a ROLE/STEP of Only that names no step of its role. It comes past Select, as
+// a role's steps follow the machine's values: ikeward has none without a profile.
+func (c Config) CheckSteps(list []roles.Role) error {
+	for _, r := range list {
+		for _, entry := range c.Only {
+			name, ok := strings.CutPrefix(entry, r.Name+"/")
+			if !ok {
+				continue
+			}
+			var names []string
+			for _, s := range c.Steps(r) {
+				names = append(names, s.Name())
+			}
+			if !slices.Contains(names, name) {
+				return fmt.Errorf("no step %q in %s; its steps here are %q", name, r.Name, names)
+			}
+		}
+	}
+	return nil
+}
+
 // leftOut is the filter of a run's roles: a role named by ROLE/STEP alone keeps those steps. With
 // no Only it is nil, as every role runs whole.
 func (o Options) leftOut() func(role, step string) bool {
