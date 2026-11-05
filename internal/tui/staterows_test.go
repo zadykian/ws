@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// testSections is a server's report, with an item of each kind.
+// testSections is a server's report: a role of each kind of item, and a step left unread.
 func testSections() []StateSection {
 	return []StateSection{
 		{Name: "docker", Reports: []step.Report{{
@@ -17,6 +17,7 @@ func testSections() []StateSection {
 				{Kind: step.PackageItem, Name: "podman", Want: "missing", Found: "5.0", Conflict: "held by hand"},
 				{Kind: step.ServiceItem, Name: "docker.service", Want: "running", Found: "dead"},
 			},
+			Changes: []step.Pending{{Kind: step.Restart, Text: "would start docker.service"}},
 		}}},
 		{Name: "shell", Reports: []step.Report{
 			{Step: "Files", Items: []step.Item{
@@ -24,7 +25,8 @@ func testSections() []StateSection {
 				{Kind: step.LinkItem, Name: "/etc/b", Want: "/c", Found: "missing"},
 				{Kind: step.DirItem, Name: "/etc/d", Want: "present", Found: "present"},
 				{Kind: step.CheckItem, Name: "Files", Want: "passes", Found: "fails", Conflict: "no way"},
-			}},
+			}, Changes: []step.Pending{{Kind: step.Write, Text: "would write /etc/a\n--- /etc/a\n+++ /etc/a\n"}}},
+			{Step: "Tools", After: "Files"},
 		}},
 	}
 }
@@ -43,7 +45,7 @@ func TestTabRowsSortsAReportByTab(t *testing.T) {
 		servicesTab:  {"docker.service"},
 		filesTab:     {"/etc/a", "/etc/b", "/etc/d"},
 		conflictsTab: {"podman", "Files"},
-		pendingTab:   {},
+		pendingTab:   {"would start docker.service", "would write /etc/a", "shell/Tools"},
 	}
 	for tab, rows := range tabRows(testSections()) {
 		if got := names(rows); !reflect.DeepEqual(got, want[tab]) {
@@ -58,6 +60,20 @@ func TestTabRowsSayWhatAPartIs(t *testing.T) {
 	podman := tabs[packagesTab][1]
 	if !reflect.DeepEqual(podman.facts, wantFacts) || podman.conflict != "held by hand" {
 		t.Errorf("podman: %+v", podman)
+	}
+	write := tabs[pendingTab][1]
+	if write.diff != "--- /etc/a\n+++ /etc/a\n" || write.facts[0] != (stateFact{"Kind", "write"}) {
+		t.Errorf("a file's change: %+v", write)
+	}
+	if got := tabs[pendingTab][2].facts[0]; got != (stateFact{"Not read", "it waits on Files"}) {
+		t.Errorf("a step left unread: %+v", got)
+	}
+}
+
+func TestTabRowsNameAMacsStepAlone(t *testing.T) {
+	sections := []StateSection{{Reports: []step.Report{{Step: "Tools", After: "Keys"}}}}
+	if got := tabRows(sections)[pendingTab][0].name; got != "Tools" {
+		t.Errorf("name %q", got)
 	}
 }
 

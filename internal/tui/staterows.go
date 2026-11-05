@@ -49,6 +49,7 @@ type stateRow struct {
 
 // tabRows sorts what sections report into the tabs. Each tab keeps the order of a run, so that a
 // role's rows stand together. An item that stands against ws shows under its kind and in Conflicts.
+// A step left unread goes under Pending, as a change before it holds it back.
 func tabRows(sections []StateSection) [tabCount][]stateRow {
 	var tabs [tabCount][]stateRow
 	for _, section := range sections {
@@ -62,6 +63,12 @@ func tabRows(sections []StateSection) [tabCount][]stateRow {
 				if item.Conflict != "" {
 					tabs[conflictsTab] = append(tabs[conflictsTab], row)
 				}
+			}
+			for _, change := range report.Changes {
+				tabs[pendingTab] = append(tabs[pendingTab], pendingRow(name, change))
+			}
+			if report.After != "" {
+				tabs[pendingTab] = append(tabs[pendingTab], unreadRow(name, report.After))
 			}
 		}
 	}
@@ -89,6 +96,19 @@ func itemRow(path string, item step.Item) stateRow {
 		conflict: printable(item.Conflict),
 		diff:     printable(item.Diff),
 	}
+}
+
+// pendingRow takes a change's first line as its name, as the plain report does. What follows it is
+// the file's diff, where the change has one.
+func pendingRow(path string, change step.Pending) stateRow {
+	name, diff, _ := strings.Cut(printable(change.Text), "\n")
+	facts := []stateFact{{"Kind", string(change.Kind)}, {"Step", printable(path)}}
+	return stateRow{name: name, step: path, facts: facts, diff: diff}
+}
+
+func unreadRow(path, after string) stateRow {
+	facts := []stateFact{{"Not read", "it waits on " + printable(after)}}
+	return stateRow{name: firstLine(printable(path)), step: path, facts: facts}
 }
 
 // firstLine returns the text up to its first line's end.
