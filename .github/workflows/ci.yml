@@ -119,6 +119,22 @@ jobs:
               echo '::error::The second run of ws server apply changed something.'
               exit 1
           fi
+      # script gives ws a terminal, so that the run screen draws every role's steps. The screen's
+      # last sequences share the last line, so the words must end it, not fill it.
+      - name: Draw the run screen
+        shell: bash
+        working-directory: /root
+        env:
+          TERM: xterm
+        run: |
+          script -qec 'stty cols 100 rows 30; ws server apply --check' /dev/null \
+              </dev/null >"$RUNNER_TEMP/screen.log"
+          last="$(tail -n 1 "$RUNNER_TEMP/screen.log" | tr -d '\r')"
+          if ! grep -qF $'\e[?1049h' "$RUNNER_TEMP/screen.log" ||
+              [[ "$last" != *'ws server apply: would change: none' ]]; then
+              echo '::error::ws server apply --check drew no screen, or found a change.'
+              exit 1
+          fi
       # The wrapper and tmux.conf that the zed step installed, run against the container's tmux. The
       # test takes about a minute, and catches a tmux release that changes how list-sessions or
       # rename-session behave.
