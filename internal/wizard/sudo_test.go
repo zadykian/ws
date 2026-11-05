@@ -41,7 +41,7 @@ func newSudo(t *testing.T, hidden ...string) (*Sudo, *effecttest.Machine, *effec
 	p := &effecttest.Prompt{T: t, Hidden: hidden}
 	s := &Sudo{Host: h, P: p}
 	m.Results[sudoLine(s, "sudo", "-n", "true")] = effecttest.Result{
-		Err: errors.New("[ssh]: exit status 1: sudo: interactive authentication is required\n")}
+		Err: errors.New("[ssh]: exit status 1: sudo: interactive authentication is required")}
 	m.Results[sudoLine(s, "sudo", "-k", "-S", "-p", "''", "true")] = effecttest.Result{}
 	return s, m, p
 }
@@ -62,6 +62,51 @@ func TestSudoWithNoPasswordAsksNothing(t *testing.T) {
 	p, err := s.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || s.way != sudoOpen {
 		t.Fatalf("Plan = %v, %v, way %d", p, err, s.way)
+	}
+}
+
+func TestSudoAsksForThePassword(t *testing.T) {
+	s, m, prompt := newSudo(t, sudoPassword)
+	p, err := s.Plan(context.Background())
+	if err != nil || len(p.Changes) != 1 ||
+		p.Changes[0].String() != "Sudo: would ask for zadykian's sudo password on ws, at the terminal" {
+		t.Fatalf("Plan = %v, %v", p, err)
+	}
+	if err := s.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if len(prompt.Asked) != 1 || prompt.Asked[0] != "zadykian's sudo password on ws" {
+		t.Errorf("Asked = %q", prompt.Asked)
+	}
+	if again, err := s.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
+		t.Errorf("Plan after Apply = %v, %v", again, err)
+	}
+	if s.way != sudoAsked || s.password != sudoPassword {
+		t.Errorf("way %d, password %q", s.way, s.password)
+	}
+	said := strings.Join(s.Host.Out.(*effecttest.Out).Lines, "\n")
+	if strings.Contains(said, sudoPassword) || strings.Contains(strings.Join(m.Calls, "\n"), sudoPassword) {
+		t.Errorf("the password shows in %q or %q", said, m.Calls)
+	}
+}
+
+func TestSudoStopsOnAWrongPassword(t *testing.T) {
+	s, _, _ := newSudo(t, "one")
+	p, _ := s.Plan(context.Background())
+	err := s.Apply(context.Background(), p)
+	if err == nil || s.way != sudoUnread || s.password != "" {
+		t.Fatalf("Apply = %v, way %d, password %q: the stage kept a refused password", err, s.way, s.password)
+	}
+}
+
+func TestSudoStopsOnAUserOutsideSudoers(t *testing.T) {
+	s, m, _ := newSudo(t, sudoPassword)
+	m.Results[sudoLine(s, "sudo", "-k", "-S", "-p", "''", "true")] = effecttest.Result{
+		Err: errors.New("[ssh]: exit status 1: sudo: I'm sorry zadykian. I'm afraid I can't do that")}
+	p, _ := s.Plan(context.Background())
+	err := s.Apply(context.Background(), p)
+	if err == nil || !strings.Contains(err.Error(), "afraid") || strings.Contains(err.Error(), sudoPassword) {
+		t.Fatalf("Apply = %v", err)
 	}
 }
 

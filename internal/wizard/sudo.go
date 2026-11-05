@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -19,16 +20,19 @@ const (
 	sudoUnread sudoWay = iota // the stage has not read it
 	sudoLogin                 // ssh logs in as root
 	sudoOpen                  // sudo needs no password, as for a cloud image's user
+	sudoAsked                 // sudo takes the password that the stage asked
 )
 
-// Sudo is the stage that finds how the remote scripts reach root on ws: a root login, or a sudo that
-// needs no password.
+// Sudo is the stage that finds how the remote scripts reach root on ws: a root login, a sudo that
+// needs no password, or the password, asked once a run. The password stays in this struct and in
+// ssh's stdin, never in an argument, a message or the environment.
 type Sudo struct {
 	// Host is the Host key stage, whose ssh this one uses. Its Tty and Check are this stage's.
 	Host *HostKey
 	P    effect.Hidden
 
-	way sudoWay
+	way      sudoWay
+	password string
 }
 
 // Name is the stage's name.
@@ -37,7 +41,14 @@ func (*Sudo) Name() string { return sudoStage }
 // WaitsOn is the stage that checks the login, without which sudo answers nothing.
 func (*Sudo) WaitsOn() string { return rootStage }
 
-// Plan reads how a script reaches root.
+// sudoAsk is the change that asks for the password.
+type sudoAsk struct{ user string }
+
+func (a sudoAsk) String() string {
+	return sudoStage + ": would ask for " + a.user + "'s sudo password on ws, at the terminal"
+}
+
+// Plan reads how a script reaches root. A password is Apply's to ask.
 func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 	if s.way != sudoUnread {
 		return step.Plan{}, nil
@@ -58,5 +69,30 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 	case strings.Contains(err.Error(), "exit status 255"):
 		return step.Plan{}, errors.New(sudoStage + ": ssh to ws failed: " + stderrOf(err))
 	}
-	return step.Plan{}, errors.New(sudoStage + ": " + w.User + "'s sudo on ws asks for a password")
+	return step.Plan{Changes: []step.Change{sudoAsk{w.User}}}, nil
+}
+
+// Apply asks for the password.
+func (s *Sudo) Apply(ctx context.Context, p step.Plan) error {
+	c, ok := p.Changes[0].(sudoAsk)
+	if !ok {
+		return fmt.Errorf("%s: unknown change %T", sudoStage, p.Changes[0])
+	}
+	return s.ask(ctx, c.user)
+}
+
+// ask takes the password, and has sudo check it with nothing behind it on stdin. With a script
+// behind a wrong password, sudo would read the script's lines as its next two tries.
+func (s *Sudo) ask(ctx context.Context, user string) error {
+	password, err := s.P.AskHidden(ctx, user+"'s sudo password on ws")
+	if err != nil {
+		return fmt.Errorf("%s: %w", sudoStage, err)
+	}
+	_, err = s.Host.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
+		"sudo", "-k", "-S", "-p", "''", "true")
+	if err != nil {
+		return fmt.Errorf("%s: sudo on ws stopped: %s", sudoStage, stderrOf(err))
+	}
+	s.way, s.password = sudoAsked, password
+	return nil
 }
