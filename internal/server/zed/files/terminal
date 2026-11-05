@@ -1,0 +1,48 @@
+#!/bin/sh
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+#
+# A Zed terminal on ws: a tmux session of this directory's, on tmux's own socket, which outlives
+# Zed's reconnects. It takes a session of this directory's that no tab holds, else a new one.
+command -v tmux >/dev/null 2>&1 || exec "${SHELL:-/bin/bash}" -l
+dir=$(pwd -P)
+# The directory's name, in the characters a session name keeps, then a checksum of the whole path,
+# so that two projects of one name never share sessions. A session is PROJECT-PID, PID being the
+# process of the tab that holds it.
+project=$(basename "$dir" | tr -c 'A-Za-z0-9_\n-' _)-$(printf %s "$dir" | cksum | cut -d ' ' -f 1)
+
+# idle prints the PID in the name of a session of this directory's that no client shows and whose
+# tab has ended. One whose PID lives is a tab that has renamed it and not yet attached.
+idle() {
+    tmux -L zed list-sessions -F '#{session_attached} #{session_name}' 2>/dev/null |
+        awk -v p="$project-" '$1 == 0 && substr($2, 1, length(p)) == p &&
+            substr($2, length(p) + 1) ~ /^[0-9]+$/ { print substr($2, length(p) + 1) }' |
+        while read -r pid; do
+            kill -0 "$pid" 2>/dev/null && continue
+            echo "$pid"
+            break
+        done
+}
+
+# A rename is atomic, so of tabs that start together and see one idle session, one takes it and
+# the others look again. The = makes -t match the name exactly, not as a prefix.
+taken=
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    pid=$(idle)
+    [ -n "$pid" ] || break
+    if tmux -L zed rename-session -t "=$project-$pid" "$project-$$" 2>/dev/null; then
+        taken=yes
+        break
+    fi
+done
+[ -z "$taken" ] || exec tmux -L zed attach-session -t "=$project-$$"
+# The server keeps the environment it started with, and a new session takes no more of a client's
+# than update-environment names. So this tab's environment, which holds the project's terminal.env
+# and direnv's variables, goes to the session as -e options.
+set --
+for name in $(env | sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p'); do
+    case $name in TMUX | TMUX_PANE | SHLVL | PWD | OLDPWD | _) continue ;; esac
+    # The dot keeps a value's own trailing newlines, and ${value%??} drops it and printenv's.
+    value=$(printenv "$name" && echo .) || continue
+    set -- "$@" -e "$name=${value%??}"
+done
+exec tmux -L zed -f "${0%/*}/tmux.conf" new-session "$@" -s "$project-$$"
