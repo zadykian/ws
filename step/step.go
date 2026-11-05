@@ -36,47 +36,55 @@ type Step interface {
 func Run(ctx context.Context, steps []Step, out effect.Out, check bool) (changed bool, err error) {
 	pending := map[string]bool{} // the earlier steps, whether each has changes to make
 	for _, s := range steps {
-		name := s.Name()
-		waitsOn := s.WaitsOn()
-		if waitsOn != "" {
-			if _, ok := pending[waitsOn]; !ok {
-				return changed, fmt.Errorf("%s waits on %q, which is not an earlier step", name, waitsOn)
-			}
-			if check && pending[waitsOn] {
-				out.Say("%s: after %s", name, waitsOn)
-				changed, pending[name] = true, true
-				continue
-			}
-		}
-		p, err := s.Plan(ctx)
+		did, err := settle(ctx, s, out, check, pending)
+		changed = changed || did
 		if err != nil {
-			return changed, fmt.Errorf("%s: planning: %w", name, err)
+			return changed, err
 		}
-		if len(p.Changes) == 0 {
-			pending[name] = false
-			continue
-		}
-		changed = true
-		if check {
-			report(out, name, p)
-			pending[name] = true
-			continue
-		}
-		out.Say("%s: applying %d change(s)", name, len(p.Changes))
-		if err := s.Apply(ctx, p); err != nil {
-			return changed, fmt.Errorf("%s: applying: %w", name, err)
-		}
-		again, err := s.Plan(ctx)
-		if err != nil {
-			return changed, fmt.Errorf("%s: planning again: %w", name, err)
-		}
-		if len(again.Changes) != 0 {
-			return changed, fmt.Errorf("%s: still has %d change(s) after applying, the first: %s",
-				name, len(again.Changes), again.Changes[0])
-		}
-		pending[name] = false
 	}
 	return changed, nil
+}
+
+// settle takes one step as far as the run goes, and reports whether it had changes to make.
+func settle(ctx context.Context, s Step, out effect.Out, check bool, pending map[string]bool) (changed bool, err error) {
+	name := s.Name()
+	waitsOn := s.WaitsOn()
+	if waitsOn != "" {
+		if _, ok := pending[waitsOn]; !ok {
+			return false, fmt.Errorf("%s waits on %q, which is not an earlier step", name, waitsOn)
+		}
+		if check && pending[waitsOn] {
+			out.Say("%s: after %s", name, waitsOn)
+			pending[name] = true
+			return true, nil
+		}
+	}
+	p, err := s.Plan(ctx)
+	if err != nil {
+		return false, fmt.Errorf("%s: planning: %w", name, err)
+	}
+	pending[name] = len(p.Changes) != 0
+	if !pending[name] {
+		return false, nil
+	}
+	if check {
+		report(out, name, p)
+		return true, nil
+	}
+	out.Say("%s: applying %d change(s)", name, len(p.Changes))
+	if err := s.Apply(ctx, p); err != nil {
+		return true, fmt.Errorf("%s: applying: %w", name, err)
+	}
+	again, err := s.Plan(ctx)
+	if err != nil {
+		return true, fmt.Errorf("%s: planning again: %w", name, err)
+	}
+	if len(again.Changes) != 0 {
+		return true, fmt.Errorf("%s: still has %d change(s) after applying, the first: %s",
+			name, len(again.Changes), again.Changes[0])
+	}
+	pending[name] = false
+	return true, nil
 }
 
 func report(out effect.Out, name string, p Plan) {
