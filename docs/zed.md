@@ -73,8 +73,7 @@ drop-in restricts no forwarding, and the outbound table accepts loopback
 ([security](security.md#outbound)). `ws_user` is `zadykian` by default, so Yama's `ptrace_scope` stops an
 attach to a process that is not its child. Launching under `dlv` works.
 
-C# keeps Rider for its gaps: Zed has no C# debugger (csharp#12), no Razor (csharp#41) and no C#
-test runnables. Debug C# or edit Razor in Rider through Gateway ([jetbrains](jetbrains.md)).
+Zed has no C# debugger (csharp#12), no Razor (csharp#41) and no C# test runnables.
 
 There is no msbuild-lsp yet. Its v0.7.0 of 2026-07-24 is the latest release, and fails on SDKs from
 10.0.400 and the 11.0 previews, where MSBuild references `NuGet.Frameworks` itself. The fix

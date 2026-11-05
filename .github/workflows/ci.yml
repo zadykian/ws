@@ -96,12 +96,12 @@ jobs:
         if: matrix.user != 'root'
         run: useradd --create-home --shell /bin/bash "$WS_USER"
       # The values file holds what the job changes of the defaults: the swap file is small, as the
-      # runner's disk has no room for one the size of its RAM, and the JetBrains backends are left
-      # out, as it has none for their 10 GB either. The matrix names the user and the table.
+      # runner's disk has no room for one the size of its RAM. The matrix names the user and the
+      # table.
       - name: Write the values
         run: |
           install -d -m 755 /etc/ws
-          printf '%s\n' --- 'base_swap_size_mb: 64' 'jetbrains_backends: []' \
+          printf '%s\n' --- 'base_swap_size_mb: 64' \
               "ws_user: $WS_USER" "security_outbound: $OUTBOUND" >/etc/ws/host_vars.yml
           chmod 600 /etc/ws/host_vars.yml
       # From root's home, 0700 on any machine, as after sudo -i: a command run as the user must not

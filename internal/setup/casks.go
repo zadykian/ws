@@ -37,8 +37,8 @@ func (b brewCasks) has(name string, dirs ...string) bool {
 }
 
 // cask plans Homebrew's cask where there is none of its files, and says whether they are there,
-// or would be after the plan. Where Homebrew has the cask but its files are gone, it warns instead,
-// as gateway does: brew install would upgrade the cask. Without Homebrew it stops.
+// or would be after the plan. Where Homebrew has the cask but its files are gone, it warns instead:
+// brew install would upgrade the cask. Without Homebrew it stops.
 func (b brewCasks) cask(ctx context.Context, name string, there bool, missing string) ([]step.Change, bool, error) {
 	if there {
 		return nil, true, nil

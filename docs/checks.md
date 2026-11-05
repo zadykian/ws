@@ -17,8 +17,8 @@ last line must be `changed: none`. Then `nft -c`, with the container's NET_ADMIN
 outbound table the run wrote and the users it names, and a find that the user owns its home. Root's
 leg has no table. The run leaves out its own check ([Outbound](security.md#outbound)). Its
 `/etc/ws/host_vars.yml` gives a swap file of 64 MiB, as the runner's disk has no room for one of its
-RAM's size. It names no JetBrains backend, `jetbrains_backends: []`, for the same reason. Its board
-is not MSI's, so `fans` leaves its fans alone. It gives no VPN profile, so `ikeward` does nothing.
+RAM's size. Its board is not MSI's, so `fans` leaves its fans alone. It gives no VPN profile, so
+`ikeward` does nothing.
 
 ## The install script
 
@@ -172,8 +172,8 @@ and ws's back once the foreign one goes.
 
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First, `ws
 mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
-installs no formula or cask. It must note the install of JetBrains Gateway's cask. Stand-ins for
-Gateway's, Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, spare the
+installs no formula or cask. It must note the install of Zed's cask. Stand-ins for
+Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, spare the
 job's runs their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no
 daemon, while `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's, as
 must the key in the command that gives it to ws. With a stand-in's key it must load the daemon,
@@ -206,12 +206,7 @@ agent must stop `ws mac apply`. Where `WS_GIT_SIGNING_KEY` names one of the two,
 the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is missing
 or unreadable, or holds a private key, a certificate or a line that is no key, must stop `ws mac
 apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
-([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). Without the stand-in app, `ws mac
-apply` must install Gateway's cask once, through a stand-in brew that refuses any other call, and
-then print nothing. With an app in `/Applications`, it must install nothing. A failed install, or
-one that leaves no app, must draw a warning, and the run go on to the tunnel. So must a cask that
-Homebrew has without its app, which neither a run nor `--check` may install again
-([mac-gateway-checks.sh](../.github/mac-gateway-checks.sh)). With `WS_GIT_NAME` and `WS_GIT_EMAIL`,
+([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). With `WS_GIT_NAME` and `WS_GIT_EMAIL`,
 it must make git's signing key once, an ed25519 key with no passphrase. It must stop on a
 `WS_GIT_SIGNING_KEY` that is missing or unreadable, or a `.pub` that holds more than a public key.
 So must the default key or its `.pub` alone. git must then sign a commit and verify it. A

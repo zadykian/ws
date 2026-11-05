@@ -1,6 +1,6 @@
 # shellcheck shell=sh
 # The mac job's checks of the key that ws mac apply's config.d/ws gives ws, which
-# mac-setup-checks.sh sources before Gateway's, so that they run with its functions and the job's
+# mac-setup-checks.sh sources before git's, so that they run with its functions and the job's
 # mac.conf. They end with config.d/ws as the job's runs wrote it.
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's

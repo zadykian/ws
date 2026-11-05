@@ -14,7 +14,6 @@ import (
 	"github.com/zadykian/ws/internal/server/fans"
 	"github.com/zadykian/ws/internal/server/helix"
 	"github.com/zadykian/ws/internal/server/ikeward"
-	"github.com/zadykian/ws/internal/server/jetbrains"
 	"github.com/zadykian/ws/internal/server/network"
 	"github.com/zadykian/ws/internal/server/otelcol"
 	"github.com/zadykian/ws/internal/server/security"
@@ -55,7 +54,6 @@ var all = []Role{
 	{Name: "helix", Steps: helix.Steps},
 	// zed is described in `docs/zed.md`.
 	{Name: "zed", Steps: zed.Steps},
-	{Name: "jetbrains", Steps: jetbrains.Steps},
 }
 
 // List returns every role, in the order that they run.

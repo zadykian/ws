@@ -2,7 +2,7 @@
 # Without ws's key, ws mac apply makes the Mac's key and installs no daemon.
 # The key it prints, and the command that makes it ws's peer, must hold the Mac's public key,
 # which the stand-in ws below takes as its peer. Root's daemon runs the copy of ws, so it must be
-# root's alone. Stand-ins for the apps of Gateway,
+# root's alone. Stand-ins for the apps of
 # Ghostty and Zed, their font and cld spare this run and later ones their downloads (mac-standins.sh).
 
 set -eo pipefail

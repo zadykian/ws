@@ -15,8 +15,7 @@ left out too in the tables of actions helix has, as helix has no names for them.
 
 ## The pages
 
-- [Keys a terminal or tmux may not pass on](helix-keymap/terminals.md), and those the JetBrains
-  terminal loses.
+- [Keys a terminal or tmux may not pass on](helix-keymap/terminals.md).
 - [helix's keys that F12 takes](helix-keymap/taken.md), with helix's other key for each.
 - [The actions helix has](helix-keymap/actions.md), by topic, with helix's own key for each.
 - The actions helix lacks, in the order of their names, upper and lower case alike:
