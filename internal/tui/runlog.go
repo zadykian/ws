@@ -1,26 +1,67 @@
 package tui
 
 import (
+	"fmt"
 	"io"
 	"strings"
 	"sync"
+
+	"github.com/zadykian/ws/step"
 )
 
-// record keeps a run's words past the screen: the file that holds all of them. A window and its
-// scrollback go with the alternate screen, and the log is what the maintainer reads after it.
+// tailLines is how many of a failed step's last lines stay for the end of a run.
+const tailLines = 30
+
+// record keeps a run's words past the screen: the file that holds all of them, and the end of the failed step's output. A window and its scrollback go with the
+// alternate screen, and these are what the maintainer reads after it.
 type record struct {
 	lock sync.Mutex
 	// log takes every line of the run, as clean makes it. Nil where there is none.
 	log io.Writer
+	// recent are the last lines since a step last ended: the current step's, its Plan's included.
+	recent []string
+	// failed names the step that failed, and tail holds its recent lines.
+	failed string
+	tail   []string
 }
 
-// note adds msg, as the bridge sends it to the screen. Only lines matter.
+// note adds msg, as the bridge sends it to the screen. Only lines and events matter.
 func (r *record) note(msg any) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	if l, ok := msg.(Line); ok {
-		r.write(cleanLines(l.Text))
+	switch m := msg.(type) {
+	case Line:
+		text := cleanLines(m.Text)
+		r.write(text)
+		r.recent = append(r.recent, strings.Split(text, "\n")...)
+		if len(r.recent) > tailLines {
+			r.recent = r.recent[len(r.recent)-tailLines:]
+		}
+	case step.Event:
+		r.event(m)
 	}
+}
+
+// event logs how a step ended, and keeps a failed step's output. recent clears at a step's last event
+// and not at Started, which a failed Plan and --check never send. A stage fails behind the step that
+// failed in it, whose output is the one to keep.
+func (r *record) event(e step.Event) {
+	name := e.Step
+	if e.Parent != "" {
+		name = e.Parent + ": " + e.Step
+	}
+	switch e.Kind {
+	case step.Planned, step.Started:
+		return
+	case step.Failed:
+		r.write(fmt.Sprintf("%s: failed: %v", name, e.Err))
+		if r.failed == "" {
+			r.failed, r.tail = name, r.recent
+		}
+	case step.Skipped:
+		r.write(name + ": skipped")
+	}
+	r.recent = nil
 }
 
 // write adds a line to the log. A log that fails stops, and the run goes on without it.
@@ -38,6 +79,27 @@ func (r *record) close() {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	r.log = nil
+}
+
+// report prints what a run leaves on the normal screen: the end of a failed step's output, and the log's path where there is something to read in it.
+func (r *record) report(w io.Writer, path string, cut bool) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	var b strings.Builder
+	if r.failed != "" {
+		fmt.Fprintf(&b, "%s failed.", r.failed)
+		if len(r.tail) > 0 {
+			b.WriteString(" The end of its output:")
+		}
+		b.WriteByte('\n')
+		for _, line := range r.tail {
+			b.WriteString("  " + line + "\n")
+		}
+	}
+	if path != "" && (cut || r.failed != "") {
+		fmt.Fprintf(&b, "The whole output is in %s\n", path)
+	}
+	_, _ = io.WriteString(w, b.String())
 }
 
 // cleanLines applies clean to each line of a text, as a diff holds several.

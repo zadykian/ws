@@ -77,7 +77,7 @@ type Bridge struct {
 	// hand keeps what ByHand gets, to print once the terminal is back.
 	lock sync.Mutex
 	hand *effect.Terminal
-	// rec keeps the run for its log.
+	// rec keeps the run for its log and its end.
 	rec record
 }
 

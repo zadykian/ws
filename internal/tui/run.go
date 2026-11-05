@@ -40,8 +40,10 @@ type Config struct {
 	// Halts says that the work reads Bridge.Stop between its steps. Ctrl-C then asks first, and stops
 	// the run past its current step. Without it, the first Ctrl-C ends ctx.
 	Halts bool
-	// Log takes every line of the run. A nil Log keeps none.
-	Log io.Writer
+	// Log takes every line of the run, and LogPath names it for the report past the screen. A nil
+	// Log keeps none.
+	Log     io.Writer
+	LogPath string
 }
 
 // Work is what a run does. It takes b as its effects, and sends the screen its messages by them.
@@ -94,6 +96,7 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	bridge.flush()
 	s, _ := final.(session) // A panic in Update or View leaves no model.
 	s.err = cmp.Or(late, s.err)
+	bridge.rec.report(c.Out, c.LogPath, s.cutBy != nil || !s.done)
 	return ending(s, broke)
 }
 
