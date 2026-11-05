@@ -25,11 +25,14 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 	m.Files["/etc/group"] = []byte("docker:x:999:\n")
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	var rules string
+	v := values.Default()
+	v.User = user
 	var installed strings.Builder
-	for _, n := range []string{"docker-ce", "docker-ce-cli", "containerd.io", "docker-buildx-plugin", "docker-compose-plugin", "iproute2"} {
+	names := packages(v)
+	for _, n := range names {
 		installed.WriteString(n + " ii\n")
 	}
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin iproute2"] =
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n "+strings.Join(names, " ")] =
 		effecttest.Result{Out: []byte(installed.String())}
 	m.Results["ip -j -4 route show table all"] = effecttest.Result{Out: []byte("[]")}
 	m.Results["dockerd --validate --config-file /etc/docker/daemon.json.ws-check"] = effecttest.Result{}
@@ -41,8 +44,6 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 	pin := ascSHA256
 	ascSHA256 = fmt.Sprintf("%x", sha256.Sum256([]byte("key")))
 	t.Cleanup(func() { ascSHA256 = pin })
-	v := values.Default()
-	v.User = user
 	held := func() ([]netip.Prefix, error) { return []netip.Prefix{netip.MustParsePrefix("172.17.0.1/16")}, nil }
 	size := func(string) (uint64, error) { return 100 << 30, nil }
 	return m, steps(v, m, &effecttest.Units{}, &effecttest.Out{}, size, held)
@@ -97,5 +98,17 @@ func TestStepsTakeTheUserOutOfTheDockerGroup(t *testing.T) {
 	}
 	if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "gpasswd --delete ws docker") }) {
 		t.Errorf("calls = %q, want gpasswd", m.Calls)
+	}
+}
+
+func TestPackagesAddTheRootlessDaemonsForAUserAlone(t *testing.T) {
+	v := values.Default()
+	v.User = "ws"
+	if got := packages(v); !slices.Contains(got, "docker-ce-rootless-extras") || !slices.Contains(got, "uidmap") {
+		t.Errorf("packages for a user = %q, want the rootless extras", got)
+	}
+	v.User = "root"
+	if got := packages(v); slices.Contains(got, "uidmap") {
+		t.Errorf("packages for root = %q, want the system daemon's alone", got)
 	}
 }

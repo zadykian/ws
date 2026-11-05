@@ -38,7 +38,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, si
 		host.Lazy{Title: repositoryStep, Parts: repository(m)},
 		// iproute2, from Ubuntu's archive, gives the route check its ip; a container lacks it.
 		host.Group{Title: packagesStep, After: repositoryStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Recommends: true, Names: append(append([]string{}, d.Packages...), "iproute2")},
+			host.Packages{M: m, Out: out, Recommends: true, Names: packages(v)},
 		}},
 		host.Group{Title: routesStep, After: packagesStep, Parts: []host.Resource{routeCheck{m, d}}},
 	}
