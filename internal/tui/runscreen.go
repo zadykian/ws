@@ -6,6 +6,8 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/step"
 )
 
 // RunScreen follows a run: its steps by role with the current one marked, a window on what the run
@@ -36,9 +38,13 @@ func (r RunScreen) Init() tea.Cmd {
 	return nil
 }
 
-// Update takes the window's size.
+// Update takes the run's events and lines, and the window's size.
 func (r RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case step.Event:
+		r.steps = r.steps.take(msg)
+	case Line:
+		r.output = r.output.add(msg)
 	case tea.WindowSizeMsg:
 		r.window = Size{msg.Width, msg.Height}
 		r.output = r.output.fit(r.layout().PaneSizes(msg.Width, msg.Height)[1])
