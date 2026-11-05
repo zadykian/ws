@@ -25,7 +25,7 @@ func TestSigningPlan(t *testing.T) {
 		"no key":  {"signing none\n", "", ""},
 		"listed":  {"signing ssh-ed25519 AAA\n", "ssh-ed25519 AAA\n", ""},
 		"missing": {"signing ssh-ed25519 AAA\nhostname ws1\n", "ssh-ed25519 BBB\n", "--title ws1"},
-		"no ssh":  {"", "", "root does not log in"},
+		"no ssh":  {"", "", "the remote script reads nothing"},
 	} {
 		s, _ := newSigning(tc.status, tc.listed)
 		p, err := s.Plan(context.Background())

@@ -12,7 +12,7 @@ func TestWsClaude(t *testing.T) {
 	for name, tc := range map[string]struct{ status, want string }{
 		"logged in": {"claude ok\n", ""},
 		"no login":  {"claude login\n", "would run claude auth login"},
-		"none":      {"claude none\n", "ws lacks root's claude"},
+		"none":      {"claude none\n", "ws lacks WS_USER's claude"},
 	} {
 		r, _ := newRun("lan", tc.status, false, false)
 		p, err := (&WsClaude{Run: r, Tty: true}).Plan(context.Background())

@@ -36,7 +36,7 @@ the first two of which install what the rest needs:
 9. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
 10. ws's run: `ws server apply` on ws, in a unit of its own, which the wizard follows, below.
 11. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
-12. claude on ws: root's claude there, logged in, below.
+12. claude on ws: `WS_USER`'s claude there, logged in, below.
 13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
@@ -216,21 +216,22 @@ apply.
 
 ## Signing key
 
-The stage is done where root's `~/.gitconfig` on ws names no signing key file, as
+The stage is done where `WS_USER`'s `~/.gitconfig` on ws names no signing key file, as
 `shell_git_signing: false` leaves it ([Signing](shell.md#signing)), or where the Mac's gh lists ws's
-public signing key. ws's `status` prints that key and its hostname. Else it runs `gh ssh-key add
---type signing --title HOSTNAME` on the Mac, from a file in the lock. The Mac's gh login has the
+public signing key. ws's `status` prints that key and its hostname, read as `WS_USER`, who can write
+those files, so that root never reads through them. Else it runs `gh ssh-key add --type signing
+--title HOSTNAME` on the Mac, from a file in the lock. The Mac's gh login has the
 scope, and ws's token has no account permission, so ws adds nothing. `--check` says it would.
 The closing list omits ws's gh login: `ws server apply` logs it in by the secrets file's
 `token.github` ([gh](devtools.md#gh)).
 
 ## claude on ws
 
-The stage is done where root's claude on ws has a login, as `claude auth status` says. Else the
-wizard runs `claude auth login` as root on ws, in an `ssh -t` session, through a login shell, whose
-`PATH` has `~/.local/bin`, where claude is ([claude](claude.md)). Take its steps at the terminal,
-with the address it shows opened in the Mac's browser. With no terminal, the stage stops, naming
-`claude auth login`. Where ws lacks claude, it stops.
+The stage is done where `WS_USER`'s claude on ws has a login, as `claude auth status` says, run as
+that user. Else the wizard runs `claude auth login` as `WS_USER` on ws, in an `ssh -t` session,
+through a login shell, whose `PATH` has `~/.local/bin`, where claude is ([claude](claude.md)). Take
+its steps at the terminal, with the address it shows opened in the Mac's browser. With no terminal,
+the stage stops, naming `claude auth login`. Where ws lacks claude, it stops.
 
 ## The tunnel
 

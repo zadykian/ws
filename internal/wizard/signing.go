@@ -35,11 +35,11 @@ func (c signingAdd) String() string {
 		" for ws's signing key"
 }
 
-// line returns ws's signing key as status prints it, or none where root's git config on ws names
-// no key file. It reads ws only where root logs in there.
+// line returns ws's signing key as status prints it, or none where WS_USER's git config on ws names
+// no key file. It reads ws only where the remote script does.
 func (s *Signing) line(ctx context.Context) (string, error) {
 	if !s.Run.Remote.Status(ctx) {
-		return "", errors.New(signingStage + ": root does not log in to ws, so the key cannot be read")
+		return "", errors.New(signingStage + ": the remote script reads nothing on ws, so the key cannot be read")
 	}
 	line := s.Run.Remote.Get("signing")
 	if line == "" {
@@ -48,7 +48,7 @@ func (s *Signing) line(ctx context.Context) (string, error) {
 	return line, nil
 }
 
-// Plan is empty where root's git config on ws names no key file, or the Mac's gh lists the key among
+// Plan is empty where WS_USER's git config on ws names no key file, or the Mac's gh lists the key among
 // its login's signing keys. gh's errors other than a 404, which shows its login lacks the scope,
 // stop it, as the gh stage mends first.
 func (s *Signing) Plan(ctx context.Context) (step.Plan, error) {

@@ -39,7 +39,7 @@ sessions() {
 sessions
 rm "$ws/claude"
 expect 'claude on ws' 1 'no terminal is there for claude auth login'
-expect 'claude on ws' 0 'would run claude auth login as root on ws' --check
+expect 'claude on ws' 0 'would run claude auth login as WS_USER on ws' --check
 touch "$ws/claude"
 sessions
 out=$("$wsbin" mac wizard </dev/null 2>&1)
