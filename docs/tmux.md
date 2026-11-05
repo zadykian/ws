@@ -7,3 +7,6 @@ Where cld's sessions run the snap's tmux, end them before a real run. cld then f
 removal takes away.
 
 The server options that let helix's keys through tmux are in [helix's keys](helix.md#helixs-keys).
+
+The [zed role](zed.md#terminals-in-tmux) reads a config of its own, with `-f`, on a socket of its
+own, so the role's tmux still has none.
