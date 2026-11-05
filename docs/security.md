@@ -7,7 +7,9 @@ and DNS.
 
 ## SSH and the firewall
 
-ws turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
+ws turns SSH's passwords off: everyone logs in by key. Where `ws_user` is another user, root
+cannot log in at all, and `ws_user` takes root by `sudo` with its password. Where `ws_user` is
+root, a cloud VM's, root logs in by key. ufw then lets in
 SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](wireguard.md)). It lets in DNS lookups
 from Docker's bridges to the host's resolver too ([docker](docker.md)), and nothing else. fail2ban
 bans an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one
@@ -17,6 +19,13 @@ keys imported from the GitHub account during Ubuntu's install; a cloud VM has no
 new one logs in. The steps stop before they turn passwords off if `ws_user` has no key to log in
 with, outside a container. sshd's drop-in lands only after `sshd -G` accepts it, and sshd reloads
 after a change.
+
+Where `ws_user` is another user, the step "sudo" checks, before sshd's, that it may run `sudo`
+and has a password to give. Closing root's login then leaves a way to root. A container skips
+the check. sudo asks for the password at every command (`/etc/sudoers.d/ws-no-cache`,
+`timestamp_timeout=0`). What `ws_user` runs, such as claude, then cannot take root after the
+maintainer's own `sudo`.
+The step "lxd" takes `ws_user` out of the `lxd` group, which is root, and purges `lxd-installer`.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](docker.md)): reach it through an SSH tunnel. A port published on another
