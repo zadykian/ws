@@ -150,6 +150,48 @@ func TestServerGroupsNameEveryStepOfARun(t *testing.T) {
 	}
 }
 
+// A role's steps follow the machine's values, so the check reads those first, and runs no step. A
+// step's name holds a space, and --only keeps it whole.
+func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
+	p, m := serverTerminal()
+	status, _, stderr := runWs(p, "", "server", "apply", "--only", "tmux/no such")
+	want := `ws server apply: no step "no such" in tmux; its steps here are ["Tmux"]` + "\n" +
+		"Run 'ws server apply --help' for usage.\n"
+	if status != 2 || stderr != want {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+	if want := []string{"read /etc/os-release", "read /etc/ws/host_vars.yml"}; !slices.Equal(m.Calls, want) {
+		t.Errorf("calls = %q, want %q", m.Calls, want)
+	}
+}
+
+func TestServerApplyTakesAStepByName(t *testing.T) {
+	p, m := serverTerminal()
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n tmux"] = effecttest.Result{Out: []byte("tmux ii \n")}
+	status, _, stderr := runWs(p, "", "server", "apply", "--plain", "--check", "--only", "tmux/Tmux")
+	if status != 0 || !strings.HasSuffix(stderr, "ws server apply: would change: none\n") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+}
+
+func TestApplyOnScreenChecksTheStepsNamed(t *testing.T) {
+	p, m := serverTerminal()
+	c, drawn := screenCommand(t, "")
+	role := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+		plan := func(context.Context) error { return nil }
+		return []step.Step{stepOf{"one", plan}, stepOf{"two", plan}}
+	}}
+	cfg := apply.Config{Options: apply.Options{Check: true, Only: []string{"a/two"}}, M: m, Out: &effecttest.Out{}}
+	changed, err := applyOnScreen(c, p, cfg, []roles.Role{role})
+	if err != nil || !slices.Equal(changed, []string{"a"}) {
+		t.Fatalf("changed = %q, err = %v", changed, err)
+	}
+	past := drawn.String()[strings.LastIndex(drawn.String(), leaveScreen):]
+	if !strings.Contains(past, "a: two: x") || strings.Contains(past, "a: one: x") {
+		t.Errorf("after the screen: %q, want the change of two alone", past)
+	}
+}
+
 func TestServerApplyDrawsNothingWithPlain(t *testing.T) {
 	p, m := serverTerminal()
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n tmux"] = effecttest.Result{Out: []byte("tmux ii \n")}

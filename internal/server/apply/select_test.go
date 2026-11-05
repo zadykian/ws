@@ -18,6 +18,8 @@ func TestSelect(t *testing.T) {
 		{"all", nil, []string{"a", "b", "c"}},
 		{"in the list's order", []string{"c", "a"}, []string{"a", "c"}},
 		{"one", []string{"b"}, []string{"b"}},
+		{"by a step", []string{"c/x", "a"}, []string{"a", "c"}},
+		{"a step's name holds a slash", []string{"b/x/y"}, []string{"b"}},
 	} {
 		got, err := Select(list, tc.only)
 		if err != nil {
@@ -33,6 +35,9 @@ func TestSelect(t *testing.T) {
 	}
 	if _, err := Select(list, []string{"x"}); err == nil || !strings.Contains(err.Error(), `no role "x"; the roles are a, b, c`) {
 		t.Errorf("unknown role: err = %v", err)
+	}
+	if _, err := Select(list, []string{"x/y"}); err == nil || !strings.Contains(err.Error(), `no role "x"`) {
+		t.Errorf("unknown role of a step: err = %v", err)
 	}
 }
 

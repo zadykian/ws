@@ -70,9 +70,9 @@ func TestRunTakesStepsByName(t *testing.T) {
 			b := role("b", named{todo{done["z"]}, "z"})
 			c := Config{Options: Options{Check: tt.check, Only: tt.only}, M: effecttest.NewMachine(),
 				Out: &effecttest.Out{}, Prepare: []step.Step{named{todo{done["prepare"]}, "prepare"}}}
-			list := []roles.Role{a}
-			if slices.Contains(tt.only, "b") {
-				list = append(list, b)
+			list, err := Select([]roles.Role{a, b}, tt.only)
+			if err != nil {
+				t.Fatal(err)
 			}
 			got, err := Run(context.Background(), c, list)
 			if err != nil || !slices.Equal(got, tt.want) {
@@ -88,6 +88,19 @@ func TestRunTakesStepsByName(t *testing.T) {
 				t.Errorf("applied %q, want %q", applied, tt.applied)
 			}
 		})
+	}
+}
+
+// A role whose named step has nothing to do changed nothing, whatever the steps beside it hold.
+func TestRunNamesNoRoleForStepsLeftOut(t *testing.T) {
+	for _, check := range []bool{false, true} {
+		done, pending := true, false
+		a := role("a", named{todo{&done}, "x"}, named{todo{&pending}, "y"})
+		c := Config{Options: Options{Check: check, Only: []string{"a/x"}}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
+		got, err := Run(context.Background(), c, []roles.Role{a})
+		if err != nil || len(got) != 0 || pending {
+			t.Errorf("check %v: changed = %q, y applied = %v, err = %v", check, got, pending, err)
+		}
 	}
 }
 
