@@ -68,6 +68,7 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	program := tea.NewProgram(model,
 		tea.WithInput(c.In), tea.WithOutput(c.Out), tea.WithoutSignalHandler())
 	bridge.send = program.Send
+	bridge.suspend, bridge.resume = program.ReleaseTerminal, program.RestoreTerminal
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(signals)

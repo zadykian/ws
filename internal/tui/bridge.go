@@ -56,6 +56,9 @@ type Bridge struct {
 	gone chan struct{}
 	// last is the id of the last question.
 	last atomic.Uint64
+	// suspend and resume take the terminal from the screen and give it back, as Run sets them. Nil
+	// ones leave it where it is.
+	suspend, resume func() error
 	// hand keeps what ByHand gets, to print once the terminal is back.
 	lock sync.Mutex
 	hand *effect.Terminal
