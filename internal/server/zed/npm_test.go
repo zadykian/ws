@@ -21,7 +21,7 @@ func npmCommand(user, home string) string {
 		return "env HOME=" + home + " " + npmBin + " ci --prefix " + serversDir(home) +
 			" --ignore-scripts --no-audit --no-fund"
 	default:
-		return "runuser -u " + user + " -- env HOME=" + home + " " + npmBin + " ci --prefix " +
+		return "runuser -u " + user + " -- env -C " + home + " HOME=" + home + " " + npmBin + " ci --prefix " +
 			serversDir(home) + " --ignore-scripts --no-audit --no-fund"
 	}
 }

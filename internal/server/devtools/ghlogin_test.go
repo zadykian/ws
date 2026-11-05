@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	readCall  = "runuser -u ws -- env HOME=/home/ws gh auth token -h github.com"
-	loginCall = "runuser -u ws -- env HOME=/home/ws gh auth login -h github.com -p https --insecure-storage --with-token"
+	readCall  = "runuser -u ws -- env -C /home/ws HOME=/home/ws gh auth token -h github.com"
+	loginCall = "runuser -u ws -- env -C /home/ws HOME=/home/ws gh auth login -h github.com -p https --insecure-storage --with-token"
 )
 
 func ghStep(m *effecttest.Machine, token string) GHLogin {
