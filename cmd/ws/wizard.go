@@ -51,7 +51,7 @@ func wizardRefusal(p process) string {
 }
 
 // wizardStages returns the stages of ws mac wizard, in order.
-func wizardStages(p process, stdout io.Writer, ask effect.Prompt, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
+func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.Hidden, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
 	scratch := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
@@ -73,6 +73,7 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, out effect.Out
 	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(p, stdout, out, later)
 	root := &wizard.RootKey{Host: host, Gh: gh}
+	sudo := &wizard.Sudo{Host: host, P: hidden}
 	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}
 	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: files, Setup: setup, Env: p.lookup,
 		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
@@ -89,6 +90,7 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, out effect.Out
 		setup,
 		host,
 		root,
+		sudo,
 		install,
 		run,
 		&wizard.WsClaude{Run: run, Tty: p.tty},
@@ -128,7 +130,7 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 		hand.Close(ctx, c.OutOrStdout())
 		term.Flush()
 	}
-	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, out, prog, o, hand)
+	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, term, out, prog, o, hand)
 	_, err := wizard.Run(ctx, p.machine, out, stages, o.check, tmp, p.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)
