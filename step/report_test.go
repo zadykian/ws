@@ -9,6 +9,18 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
+// reporting is a fake that says what it manages.
+type reporting struct {
+	*fake
+	items []step.Item
+	err   error
+}
+
+func (r reporting) Report(context.Context) ([]step.Item, error) {
+	*r.log = append(*r.log, "report "+r.name)
+	return r.items, r.err
+}
+
 func TestReadShowsAPlanAloneWithoutAReporter(t *testing.T) {
 	log := []string{}
 	s := &fake{name: "a", todo: []step.Change{removal{"remove /a"}, change("b")}, log: &log}
@@ -23,17 +35,29 @@ func TestReadShowsAPlanAloneWithoutAReporter(t *testing.T) {
 	}
 }
 
+func TestReadTakesTheItemsOfAReporter(t *testing.T) {
+	log := []string{}
+	items := []step.Item{{Kind: step.FileItem, Name: "/a", Want: "present", Found: "missing"}}
+	got, err := step.Read(t.Context(), []step.Step{reporting{&fake{name: "a", log: &log}, items, nil}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []step.Report{{Step: "a", Items: items}}; !reflect.DeepEqual(got, want) {
+		t.Errorf("reports = %+v, want %+v", got, want)
+	}
+}
+
 func TestReadSkipsAStepWhoseAwaitedStepHasChanges(t *testing.T) {
 	log := []string{}
 	got, err := step.Read(t.Context(), []step.Step{
 		&fake{name: "a", todo: []step.Change{change("x")}, log: &log},
-		&fake{name: "b", waitsOn: "a", log: &log},
+		reporting{fake: &fake{name: "b", waitsOn: "a", log: &log}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(log, []string{"plan a"}) {
-		t.Errorf("log = %v, want b not planned", log)
+		t.Errorf("log = %v, want b neither planned nor reported", log)
 	}
 	if got[1].After != "a" {
 		t.Errorf("after = %q, want the awaited step", got[1].After)
