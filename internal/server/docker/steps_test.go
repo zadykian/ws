@@ -25,8 +25,12 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 	m.Files["/etc/group"] = []byte("docker:x:999:\n")
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	var rules string
+	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Files["/etc/subuid"] = []byte("ws:100000:65536\n")
+	m.Files["/etc/subgid"] = []byte("ws:100000:65536\n")
 	v := values.Default()
-	v.User = user
+	v.User, v.Home = user, "/home/"+user
 	var installed strings.Builder
 	names := packages(v)
 	for _, n := range names {
@@ -36,6 +40,7 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 		effecttest.Result{Out: []byte(installed.String())}
 	m.Results["ip -j -4 route show table all"] = effecttest.Result{Out: []byte("[]")}
 	m.Results["dockerd --validate --config-file /etc/docker/daemon.json.ws-check"] = effecttest.Result{}
+	m.Results["dockerd --validate --config-file /home/ws/.config/docker/daemon.json.ws-check"] = effecttest.Result{}
 	for _, b := range []string{"docker0", "br-+"} {
 		rules += "### tuple ### allow any 53 172.17.0.1 any 0.0.0.0/0 in_" + b + " comment=444e532066726f6d20636f6e7461696e657273\n"
 	}
@@ -55,16 +60,17 @@ func TestStepsWaitOnTheirPackagesInOrder(t *testing.T) {
 	for _, s := range ss {
 		names, after = append(names, s.Name()), append(after, s.WaitsOn())
 	}
-	wantNames := []string{repositoryStep, packagesStep, routesStep, membersStep, configStep, bridgeStep}
-	wantAfter := []string{"", repositoryStep, packagesStep, packagesStep, routesStep, configStep}
+	wantNames := []string{repositoryStep, packagesStep, routesStep, membersStep, configStep, bridgeStep, rootlessStep}
+	wantAfter := []string{"", repositoryStep, packagesStep, packagesStep, routesStep, configStep, configStep}
 	if !slices.Equal(names, wantNames) || !slices.Equal(after, wantAfter) {
 		t.Errorf("steps = %q after %q, want %q after %q", names, after, wantNames, wantAfter)
 	}
 	_, ss = fakeSteps(t, "root")
-	if len(ss) != len(wantNames)-1 {
-		t.Errorf("root has %d steps, want %d: root needs no group", len(ss), len(wantNames)-1)
+	if len(ss) != len(wantNames)-2 {
+		t.Errorf("root has %d steps, want %d: root needs no group and no daemon of its own", len(ss), len(wantNames)-2)
 	}
 }
+
 func TestStepsApplyOnceAndThenPlanNothing(t *testing.T) {
 	m, ss := fakeSteps(t, "ws")
 	out := &effecttest.Out{}
@@ -80,6 +86,8 @@ func TestStepsApplyOnceAndThenPlanNothing(t *testing.T) {
 		"/etc/systemd/system/docker.slice":                   "MemoryMax=8000M",
 		"/etc/systemd/system/docker.service.d/override.conf": "docker.slice",
 		"/etc/apt/sources.list.d/docker.sources":             "Suites: resolute",
+		"/home/ws/.config/docker/daemon.json":                `"dns": [` + "\n" + `    "10.0.2.3"`,
+		"/home/ws/.config/systemd/user/docker.slice":         "MemoryMax=8000M",
 	} {
 		if !strings.Contains(string(m.Files[path]), want) {
 			t.Errorf("%s = %q, want it to hold %q", path, m.Files[path], want)
@@ -98,17 +106,5 @@ func TestStepsTakeTheUserOutOfTheDockerGroup(t *testing.T) {
 	}
 	if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "gpasswd --delete ws docker") }) {
 		t.Errorf("calls = %q, want gpasswd", m.Calls)
-	}
-}
-
-func TestPackagesAddTheRootlessDaemonsForAUserAlone(t *testing.T) {
-	v := values.Default()
-	v.User = "ws"
-	if got := packages(v); !slices.Contains(got, "docker-ce-rootless-extras") || !slices.Contains(got, "uidmap") {
-		t.Errorf("packages for a user = %q, want the rootless extras", got)
-	}
-	v.User = "root"
-	if got := packages(v); slices.Contains(got, "uidmap") {
-		t.Errorf("packages for root = %q, want the system daemon's alone", got)
 	}
 }
