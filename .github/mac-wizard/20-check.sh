@@ -2,7 +2,8 @@
 # A fresh --check, with standin.sh's PATH, which lacks brew. The wizard must
 # still find brew, and show the Include for ~/.ssh/config. It must show the Mac's key it would make
 # and add to gh's login, and make none. The Host key stage must wait for ws mac apply, Root's key for it,
-# ws's run for root's key, and the Signing key, claude on ws, the Tunnel and the Cable for ws's run. It must write none of
+# Sudo for Root's key, ws on ws for Sudo, ws's run for ws on ws, and the Signing key, claude on ws, the
+# Tunnel and the Cable for ws's run. It must write none of
 # the paths that mac.yml's --check step lists, keep ~/.ssh/config as it was, and install no formula
 # or cask. It must leave no lock or file of its own in $TMPDIR.
 
@@ -45,8 +46,10 @@ printf '%s\n' "$out" | grep -qx 'ws mac wizard: Host key: after ws mac apply' ||
     error "ws mac wizard --check showed no Host key stage after ws mac apply"
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Root's key: after Host key" ||
     error "ws mac wizard --check showed no Root's key stage after the Host key"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: ws on ws: after Root's key" ||
-    error "ws mac wizard --check showed no ws on ws stage after Root's key"
+printf '%s\n' "$out" | grep -qx "ws mac wizard: Sudo: after Root's key" ||
+    error "ws mac wizard --check showed no Sudo stage after Root's key"
+printf '%s\n' "$out" | grep -qx "ws mac wizard: ws on ws: after Sudo" ||
+    error "ws mac wizard --check showed no ws on ws stage after Sudo"
 printf '%s\n' "$out" | grep -qx "ws mac wizard: ws's run: after ws on ws" ||
     error "ws mac wizard --check showed no ws's run after ws on ws"
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Signing key: after ws's run" ||

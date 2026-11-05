@@ -31,12 +31,14 @@ the first two of which install what the rest needs:
    the warnings of `ws mac apply` and drops the Mac's key that it prints.
 6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
 7. Root's key: root's login to ws by the Mac's key, checked and never added, below.
-8. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
-9. ws's run: `ws server apply` on ws, in a unit of its own, which the wizard follows, below.
-10. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
-11. claude on ws: root's claude there, logged in, below.
-12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-13. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+8. Sudo: how the remote scripts reach root on ws, with sudo's password asked where it needs one,
+   below.
+9. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
+10. ws's run: `ws server apply` on ws, in a unit of its own, which the wizard follows, below.
+11. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
+12. claude on ws: root's claude there, logged in, below.
+13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
+14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
 ## The answers
 
@@ -154,6 +156,15 @@ starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
 
 A run shares one ssh connection for its direct calls, and one for the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.
+
+## Sudo
+
+The stage reads how the remote scripts reach root on ws. A root login needs nothing more. For
+another `WS_USER`, it tries `sudo -n true`. Where sudo wants a password, the stage asks for it,
+hidden, once a run, and has sudo check it, with nothing behind it on stdin, up to three times. With
+no terminal, it stops. A user outside sudoers stops it too, with sudo's words. `--check` asks at a
+terminal, as the stages after it read ws through sudo. With no terminal, it says that a run would
+ask, and those stages wait.
 
 ## ws on ws
 
