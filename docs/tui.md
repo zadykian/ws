@@ -30,7 +30,8 @@ and the frames and the focus stay visible by their shapes.
 
 ## Layout
 
-A screen is a title, panes and a footer of buttons. It resizes with the window.
+A screen is a title, panes and a footer of buttons, and a header may stand above the panes. It
+resizes with the window.
 
 - Each pane gets its least size first, then the rest by weight.
 - A window under 24 columns a pane stacks the panes.
