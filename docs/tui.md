@@ -79,6 +79,26 @@ A screen owns the terminal, so a step's commands stay off it.
 - A run that ends sends such a command SIGTERM, and kills it 2 seconds later. A kill alone would
   leave the terminal raw, or with no echo.
 
+## sudo
+
+sudo asks at `/dev/tty`, under a screen. `Bridge.Machine` gives a run's steps a machine whose sudo
+can't ask, and takes the password in a hidden field:
+
+- Its root commands run by `sudo -n --`, which fails where it would ask.
+- Before each one, `sudo -n -v` looks for a ticket. A valid one asks nothing, and neither does a
+  sudo that wants no password.
+- With none, the field asks for sudo's password on this machine, and `sudo -S -v` checks it, up to
+  three times. Any refusal asks again, as sudo's words differ by version, so a user outside
+  sudoers sees them after the third. ws drops the password once sudo has checked it.
+- A sudo that keeps no ticket, as with `timestamp_timeout=0`, ends the run past a right password,
+  as `sudo -n` can run nothing. The error says to run with `--plain`, where sudo asks each time.
+- A ticker runs `sudo -n -v` each minute while a ticket holds, so that a long step, or a child's
+  own sudo, finds one.
+- A stage that has sudo ask ahead of its lines calls `effect.Validate`. That is `sudo -v` in plain
+  mode, and the same field under a screen.
+
+ws runs as root on the server, with no sudo, so there it asks nothing.
+
 ## The terminal comes back
 
 The terminal is restored after an error, a signal and a panic, a panic in a step's goroutine
