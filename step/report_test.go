@@ -105,6 +105,29 @@ func TestReadShowsOneFailureOfAStep(t *testing.T) {
 	}
 }
 
+// itemized is a change that stands as an item.
+type itemized string
+
+func (i itemized) String() string { return "write " + string(i) }
+func (i itemized) Item() step.Item {
+	return step.Item{Kind: step.FileItem, Name: string(i), Found: "planned"}
+}
+
+func TestReadShowsTheItemsOfChangesNoReportNamed(t *testing.T) {
+	log := []string{}
+	named := step.Item{Kind: step.FileItem, Name: "/a", Found: "reported"}
+	s := reporting{&fake{name: "s", todo: []step.Change{itemized("/a"), itemized("/b"), change("c")}, log: &log},
+		[]step.Item{named}, nil}
+	got, err := step.Read(t.Context(), []step.Step{s})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []step.Item{named, itemized("/b").Item()}
+	if !reflect.DeepEqual(got[0].Items, want) {
+		t.Errorf("items = %+v, want %+v", got[0].Items, want)
+	}
+}
+
 func TestReadEndsWithItsContext(t *testing.T) {
 	log := []string{}
 	ctx, cancel := context.WithCancel(t.Context())

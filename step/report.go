@@ -37,6 +37,12 @@ type Reporter interface {
 	Report(ctx context.Context) ([]Item, error)
 }
 
+// Itemized is a Change that stands as an Item. A role may build a resource as it plans, where no
+// Report reaches it: the change then says what the resource's Report would, and Read shows that.
+type Itemized interface {
+	Item() Item
+}
+
 // Pending is a Change as data: a Change holds what it applies with, and a report crosses a wire.
 type Pending struct {
 	Kind ChangeKind `json:"kind"`
@@ -87,9 +93,25 @@ func read(ctx context.Context, s Step, e Event) Report {
 	if reporter, ok := s.(Reporter); ok && failure == nil {
 		r.Items, failure = reporter.Report(ctx)
 	}
+	r.Items = append(r.Items, unreported(e.Changes, r.Items)...)
 	if failure != nil {
 		r.Items = append(r.Items, Item{Kind: CheckItem, Name: e.Step, Want: "passes", Found: "fails",
 			Conflict: failure.Error()})
 	}
 	return r
+}
+
+// unreported returns the items of the changes whose resource no item names.
+func unreported(changes []Change, items []Item) []Item {
+	named := map[string]bool{}
+	for _, it := range items {
+		named[it.Name] = true
+	}
+	var rest []Item
+	for _, c := range changes {
+		if i, ok := c.(Itemized); ok && !named[i.Item().Name] {
+			rest = append(rest, i.Item())
+		}
+	}
+	return rest
 }
