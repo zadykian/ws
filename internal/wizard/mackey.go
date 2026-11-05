@@ -18,8 +18,10 @@ type MacKey struct {
 	// link that fingerprints a private key.
 	Conf, Home, Lock string
 	// Tty tells whether a terminal is there to ask.
-	Tty   bool
-	M     effect.Machine
+	Tty bool
+	M   effect.Machine
+	// F runs ssh-keygen and ssh-add, which ask a passphrase. Nil means M.Pass.
+	F     effect.Foreground
 	P     effect.Prompt
 	Out   effect.Out
 	Sleep func(time.Duration)

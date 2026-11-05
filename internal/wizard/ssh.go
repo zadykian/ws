@@ -19,6 +19,8 @@ const FirstFile = "first"
 // SSH runs ssh to ws for the stages, with the options every call needs.
 type SSH struct {
 	M effect.Machine
+	// F runs ssh for a session at the terminal. Nil means M.Pass.
+	F effect.Foreground
 	// Lock is the run's lock, where the master connections' sockets live.
 	Lock string
 	// Home is the user's, which a ~/ in known_hosts' path means.
