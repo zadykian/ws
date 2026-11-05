@@ -17,6 +17,7 @@ import (
 const (
 	packagesStep = "Security packages"
 	keysStep     = "SSH keys"
+	lxdStep      = "lxd"
 	sshdStep     = "sshd"
 	ufwStep      = "ufw"
 	fail2banStep = "fail2ban"
@@ -40,6 +41,16 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 				Names: []string{"openssh-server", "ufw", "fail2ban", "nftables"}},
 		}},
 		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, v.Home}}},
+	}
+	// Ubuntu's installer puts its user in lxd, whose socket lxd-installer opens to the group: that
+	// group is root, as a container of LXD's can mount the host. lxd-installer outlives its group.
+	if v.User != "root" {
+		ss = append(ss, host.Group{Title: lxdStep, After: packagesStep, Parts: []host.Resource{
+			host.Left{M: m, User: v.User, Group: "lxd"},
+			host.Purged{M: m, Names: []string{"lxd-installer"}},
+		}})
+	}
+	ss = append(ss,
 		host.Lazy{Title: sshdStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
 			return sshd(m, u, out)
 		}},
@@ -47,7 +58,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 		host.Lazy{Title: fail2banStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
 			return fail2ban(m, u, out)
 		}},
-	}
+	)
 	if !v.Security.Outbound {
 		return append(ss, host.Group{Title: offStep, Parts: outboundOff(m, u, out)})
 	}

@@ -20,6 +20,8 @@ func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.
 	m.Files["/root/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n openssh-server ufw fail2ban nftables"] =
 		effecttest.Result{Out: []byte("openssh-server ii\nufw ii\nfail2ban ii\nnftables ii\n")}
+	m.Files["/etc/group"] = []byte("lxd:x:110:\n")
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n lxd-installer"] = effecttest.Result{}
 	m.Results["/usr/sbin/sshd -G -f /etc/ssh/sshd_config.d/10-keys-only.conf.ws-check"] = effecttest.Result{}
 	m.Results["rm -f /etc/ssh/sshd_config.d/10-keys-only.conf.ws-check"] = effecttest.Result{}
 	// What ufw's own commands leave in its files.
@@ -54,6 +56,31 @@ func TestSSHDKeepsKeysOnlyAndReloads(t *testing.T) {
 	}
 	if !slices.Contains(u.Calls, "reload ssh.service") {
 		t.Errorf("calls = %q, want a reload of ssh.service", u.Calls)
+	}
+}
+
+func TestLXDLeavesWhereWsUserIsAnotherThanRoot(t *testing.T) {
+	v := values.Default()
+	v.Home = "/root"
+	v.User = "zadykian"
+	m, _, ss := fakeSteps(v)
+	m.Files["/etc/group"] = []byte("lxd:x:110:zadykian\n")
+	i := slices.IndexFunc(ss, func(s step.Step) bool { return s.Name() == lxdStep })
+	if i < 0 {
+		t.Fatal("no lxd step")
+	}
+	p, err := ss[i].Plan(t.Context())
+	if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != "remove zadykian from the lxd group" {
+		t.Errorf("plan = %v, %v; want the user out of lxd", p.Changes, err)
+	}
+}
+
+func TestLXDStepSkipsForRoot(t *testing.T) {
+	v := values.Default()
+	v.User = "root"
+	_, _, ss := fakeSteps(v)
+	if slices.ContainsFunc(ss, func(s step.Step) bool { return s.Name() == lxdStep }) {
+		t.Error("root has the lxd step")
 	}
 }
 
