@@ -2,8 +2,24 @@ package tui
 
 import (
 	"reflect"
+	"slices"
 	"testing"
+
+	"charm.land/bubbles/v2/key"
 )
+
+// twoPanes is a list beside a window of output, which takes the room left twice over.
+func twoPanes() Layout {
+	return Layout{
+		Title:  "ws server apply",
+		Status: "3/59",
+		Panes: []Pane{
+			{Title: "Steps", Body: "a\nb"},
+			{Title: "Output", Body: "line", Weight: 2},
+		},
+		Footer: NewFooter(Keys.Quit),
+	}
+}
 
 func TestSpread(t *testing.T) {
 	panes := []Pane{{}, {Weight: 2}}
@@ -20,5 +36,32 @@ func TestSpread(t *testing.T) {
 		if got := spread(panes, c.total, c.least); !reflect.DeepEqual(got, c.want) {
 			t.Errorf("spread(%d, %d) = %v, want %v", c.total, c.least, got, c.want)
 		}
+	}
+}
+
+func TestPaneSizes(t *testing.T) {
+	cases := []struct {
+		name          string
+		width, height int
+		want          []Size
+	}{
+		{"side by side at 80x24", 80, 24, []Size{{32, 20}, {44, 20}}},
+		{"side by side at the narrowest", 48, 24, []Size{{22, 20}, {22, 20}}},
+		{"no pane in a window that holds no frame", 80, 4, []Size{{}, {}}},
+		{"no pane in a window under the two frames", 47, 24, []Size{{}, {}}},
+	}
+	for _, c := range cases {
+		if got := twoPanes().PaneSizes(c.width, c.height); !reflect.DeepEqual(got, c.want) {
+			t.Errorf("%s: %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+func TestPaneSizesGiveTheFootersRowsTheirRoom(t *testing.T) {
+	layout := twoPanes()
+	layout.Footer = NewFooter(slices.Repeat([]key.Binding{Keys.Quit}, 6)...)
+	want := 24 - 1 - 2 - 2
+	if got := layout.PaneSizes(48, 24)[0].Height; got != want {
+		t.Errorf("%d lines in a pane, want %d", got, want)
 	}
 }
