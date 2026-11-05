@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"slices"
+
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -10,14 +12,17 @@ type (
 	doneMsg struct{ err error }
 )
 
-// session is a run's model: its screen, which takes every message that the session doesn't. It
-// leaves when the work ends, so that a run's steps decide the end, and a screen never quits by
-// itself.
+// session is a run's model: its screen, which takes every message that the session doesn't, with
+// the run's questions drawn over it. It leaves when the work ends, so that a run's steps decide the
+// end, and a screen never quits by itself.
 type session struct {
 	screen tea.Model
 	window Size
 	// begin starts the work.
 	begin tea.Cmd
+	// asked is the questions waiting, the first of them on the screen in field.
+	asked []prompt
+	field field
 	// done and err are the end of the work.
 	done bool
 	err  error
@@ -28,18 +33,67 @@ func (s session) Init() tea.Cmd {
 	return tea.Batch(s.screen.Init(), s.begin)
 }
 
-// Update takes what is a run's, and hands the rest to the screen.
+// Update takes what is a run's, and hands the rest to the screen. While a question is up, what the
+// keyboard sends goes to its field alone, so that no screen sees a secret.
 func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case askMsg:
+		s.asked = append(slices.Clip(s.asked), msg.prompt)
+		if len(s.asked) == 1 {
+			s.field = newField(msg.prompt, s.window)
+		}
+		return s, nil
 	case doneMsg:
 		s.done, s.err = true, msg.err
 		return s, tea.Quit
+	case tea.KeyPressMsg:
+		if len(s.asked) > 0 {
+			return s.typed(msg)
+		}
+	case tea.PasteMsg:
+		if len(s.asked) > 0 {
+			return s.typed(msg)
+		}
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
+		s.field = s.field.fit(s.window)
 	}
 	var cmd tea.Cmd
 	s.screen, cmd = s.screen.Update(msg)
 	return s, cmd
+}
+
+// typed hands the field a key or a paste, and acts on the button it pressed.
+func (s session) typed(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var place int
+	s.field, place = s.field.update(msg)
+	if place != answerPlace {
+		return s, nil
+	}
+	var answer string
+	var ok bool
+	if s.field, answer, ok = s.field.answer(); !ok {
+		return s, nil
+	}
+	reply := s.field.prompt.reply
+	return s.drop(s.field.prompt.id), func() tea.Msg {
+		reply <- answer
+		return nil
+	}
+}
+
+// drop takes the question id out of the queue, and the next one up where it was on the screen. The
+// field goes with its question, and what was typed in it.
+func (s session) drop(id uint64) session {
+	first := len(s.asked) > 0 && s.asked[0].id == id
+	s.asked = slices.DeleteFunc(slices.Clone(s.asked), func(p prompt) bool { return p.id == id })
+	switch {
+	case first && len(s.asked) > 0:
+		s.field = newField(s.asked[0], s.window)
+	case first:
+		s.field = field{}
+	}
+	return s
 }
 
 // View draws the screen. It holds to the alternate buffer whatever the screen says, as the end of a

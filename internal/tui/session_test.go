@@ -70,3 +70,39 @@ func TestSessionEndsWithTheWork(t *testing.T) {
 		t.Errorf("done %v, err %v", s.done, s.err)
 	}
 }
+
+func TestSessionKeepsAQuestionsKeysFromTheScreen(t *testing.T) {
+	s, got := testSession()
+	s, _ = feed(s, askMsg{prompt{id: 1, text: "Password", hidden: true}},
+		press('a'), tea.PasteMsg{Content: "b"})
+	if len(*got) != 0 || s.field.secret != "ab" {
+		t.Errorf("the screen got %v, and the field holds %q", *got, s.field.secret)
+	}
+}
+
+func TestSessionAnswersThroughACmd(t *testing.T) {
+	reply := make(chan string, 1)
+	s, got := testSession()
+	s, cmd := feed(s, askMsg{prompt{id: 1, text: "Host", reply: reply}}, press('a'), enter)
+	if len(s.asked) != 0 || cmd == nil {
+		t.Fatalf("an answer left %v, and Cmd %v", s.asked, cmd)
+	}
+	if len(reply) != 0 {
+		t.Error("Update replied by itself")
+	}
+	if msg := cmd(); msg != nil || <-reply != "a" {
+		t.Errorf("the reply's Cmd returned %v", msg)
+	}
+	s, _ = feed(s, press('b'))
+	if len(*got) != 1 {
+		t.Errorf("with no question the screen got %v", *got)
+	}
+}
+
+func TestSessionKeepsARefusedQuestion(t *testing.T) {
+	s, _ := testSession()
+	s, cmd := feed(s, askMsg{prompt{id: 1, text: "Host", valid: refuseEmpty}}, enter)
+	if len(s.asked) != 1 || cmd != nil {
+		t.Errorf("a refused answer left %v, and Cmd %v", s.asked, cmd)
+	}
+}
