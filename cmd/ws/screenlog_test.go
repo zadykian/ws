@@ -37,3 +37,31 @@ func TestOpenLogFallsBackToHomeAndNeedsAnAbsoluteDirectory(t *testing.T) {
 		}
 	}
 }
+
+func TestOpenLogKeepsTheNewest(t *testing.T) {
+	state := t.TempDir()
+	dir := filepath.Join(state, "ws")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now().Add(-time.Hour)
+	for i := range logsKept + 5 {
+		old := filepath.Join(dir, string(rune('a'+i))+".log")
+		if err := os.WriteFile(old, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		at := start.Add(time.Duration(i) * time.Second)
+		if err := os.Chtimes(old, at, at); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f, _ := openLog(withEnv(fakeProcess(), map[string]string{"XDG_STATE_HOME": state}), "ws mac apply", time.Now())
+	_ = f.Close()
+	left, _ := filepath.Glob(filepath.Join(dir, "*.log"))
+	if len(left) != logsKept {
+		t.Errorf("%d logs left, want %d", len(left), logsKept)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "a.log")); err == nil {
+		t.Error("the oldest log stayed")
+	}
+}

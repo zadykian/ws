@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -58,6 +59,9 @@ func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work
 	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, theme, groups...), work)
 }
 
+// logsKept is how many logs stay in the state directory, the newest.
+const logsKept = 20
+
 // openLog creates the log of a run of command, under $XDG_STATE_HOME/ws or ~/.local/state/ws, for
 // the owner alone. A log that can't be made is no reason to stop a run, so it returns nil.
 func openLog(p process, command string, now time.Time) (*os.File, string) {
@@ -74,6 +78,7 @@ func openLog(p process, command string, now time.Time) (*os.File, string) {
 	if os.MkdirAll(dir, 0o700) != nil {
 		return nil, ""
 	}
+	pruneLogs(dir)
 	name := strings.ReplaceAll(command, " ", "-") + "-" + now.UTC().Format("20060102T150405Z") + ".log"
 	path := filepath.Join(dir, name)
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600) //nolint:gosec // under the state directory, named by ws
@@ -81,6 +86,22 @@ func openLog(p process, command string, now time.Time) (*os.File, string) {
 		return nil, ""
 	}
 	return f, path
+}
+
+// pruneLogs removes the oldest logs of dir, so that room is left for one more.
+func pruneLogs(dir string) {
+	logs, _ := filepath.Glob(filepath.Join(dir, "*.log"))
+	age := map[string]time.Time{}
+	for _, l := range logs {
+		if info, err := os.Stat(l); err == nil {
+			age[l] = info.ModTime()
+		}
+	}
+	slices.SortFunc(logs, func(a, b string) int { return age[a].Compare(age[b]) })
+	for len(logs) >= logsKept {
+		_ = os.Remove(logs[0])
+		logs = logs[1:]
+	}
 }
 
 // screenMachine returns m as a run's steps take it under a screen. A fake has no terminal to keep
