@@ -55,6 +55,8 @@ type (
 // the reply, and the others go on. A Line sent past the screen's end is dropped.
 type Bridge struct {
 	send func(tea.Msg)
+	// pipe takes what the machine's commands print.
+	pipe *pipe
 	// gone closes as the screen ends: no reply comes past it.
 	gone chan struct{}
 	// last is the id of the last question.
@@ -70,7 +72,9 @@ type Bridge struct {
 // newBridge returns a bridge that prints what stays by hand on w. Run sets send, as the program's
 // model needs the bridge first.
 func newBridge(w io.Writer) *Bridge {
-	return &Bridge{gone: make(chan struct{}), hand: effect.NewTerminal(strings.NewReader(""), w)}
+	b := &Bridge{gone: make(chan struct{}), hand: effect.NewTerminal(strings.NewReader(""), w)}
+	b.pipe = &pipe{bridge: b}
+	return b
 }
 
 // Ask draws q over the screen and waits for an answer that q.Valid takes, or for ctx's end.
