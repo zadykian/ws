@@ -18,7 +18,11 @@ func (c ufwCall) String() string {
 }
 
 func (c ufwCall) Apply(ctx context.Context) error {
-	args := append([]string{"--force"}, c.rule.command(c.delete)...)
+	args := c.rule.command(c.delete)
+	// A delete alone asks, and ufw's parser refuses --force before a rule to add.
+	if c.delete {
+		args = append([]string{"--force"}, args...)
+	}
 	_, err := c.m.RunRoot(ctx, "ufw", append(args, "comment", c.rule.Comment)...)
 	return err
 }

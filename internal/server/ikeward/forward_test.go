@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	addPeer  = "ufw --force route allow in on wg0 out on ikeward0 from 10.99.0.2 to any comment ikeward"
+	addPeer  = "ufw route allow in on wg0 out on ikeward0 from 10.99.0.2 to any comment ikeward"
 	dropPeer = "ufw --force route delete allow in on wg0 out on ikeward0 from 10.99.0.9 to any comment ikeward"
 	userRule = "### tuple ### route:allow any any 0.0.0.0/0 any 10.99.0.9 in_wg0!out_ikeward0 comment=696b6577617264\n"
 )
