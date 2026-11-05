@@ -1,10 +1,20 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
+	"github.com/zadykian/ws/step"
 )
+
+// fileReport is a report of the file /a, with this diff, and of the file /b.
+func fileReport(diff string) StateRead {
+	items := []step.Item{{Kind: step.FileItem, Name: "/a", Diff: diff}, {Kind: step.FileItem, Name: "/b"}}
+	return StateRead{Sections: []StateSection{{Reports: []step.Report{{Items: items}}}}}
+}
 
 func TestStateScreenDrawsTheSelectedRow(t *testing.T) {
 	s, _ := feedState(t, reportedState(t), down)
@@ -26,5 +36,38 @@ func TestStateScreenDetailTakesTheKeys(t *testing.T) {
 	}
 	if s, _ = feedState(t, newTestState(), sized, StateRead{}, enter); s.inDetail {
 		t.Error("an empty tab opens the detail pane")
+	}
+}
+
+func TestStateScreenColorsADiff(t *testing.T) {
+	s, _ := feedState(t, reportedState(t), tab, tab)
+	got := s.View().Content
+	for _, want := range []string{
+		testTheme.Muted.Render("@@ -1 +1 @@"), testTheme.Good.Render("+new"), testTheme.Bad.Bold(false).Render("-old"),
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in %q", want, got)
+		}
+	}
+}
+
+func TestDiffStyleTakesALaterMarkForAChange(t *testing.T) {
+	cases := map[string]lipgloss.Style{
+		"--- a removed line": testTheme.Bad.Bold(false),
+		"+++ an added line":  testTheme.Good,
+		" a line that stays": lipgloss.NewStyle(),
+	}
+	for line, want := range cases {
+		if got := newTestState().diffStyle(2, line); got.Render("x") != want.Render("x") {
+			t.Errorf("%q has another style", line)
+		}
+	}
+}
+
+func TestStateScreenWrapsADiffLine(t *testing.T) {
+	s, _ := feedState(t, newTestState(), sized, fileReport("+"+strings.Repeat("word ", 40)), tab, tab)
+	lines := s.detailLines(s.layout().PaneSizes(80, 24)[detailPane].Width)
+	if got := strings.Count(strings.Join(lines, " "), "word"); got != 40 {
+		t.Errorf("%d of the 40 words stay", got)
 	}
 }
