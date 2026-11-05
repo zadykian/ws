@@ -141,6 +141,7 @@ done
 : >"$ws/run.log"
 : >"$ws/server.log"
 : >"$ws/install.log"
+: >"$ws/sudo.log"
 sudo mkdir -p "$ws/root/root/.local/bin" "$ws/root/usr/local/bin"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/usr/local/bin/ws"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/root/.local/bin/claude"
