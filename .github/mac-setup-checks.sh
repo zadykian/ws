@@ -4,8 +4,7 @@
 # set up the Mac (.github/workflows/mac.yml). As it runs ws mac apply, sudo included, and edits the
 # job's mac.conf, it stops without the job's TUNNEL, and puts the file back as it exits, on a
 # signal too. Each failure prints an ::error:: line, and any fails the script at its end. Last, it
-# sources the cases of ws's key, Gateway and git: mac-identity-checks.sh, mac-gateway-checks.sh and
-# mac-git-checks.sh.
+# sources the cases of ws's key and git: mac-identity-checks.sh and mac-git-checks.sh.
 
 set -eu
 if [ -z "${TUNNEL-}" ]; then
@@ -188,8 +187,6 @@ stops 'ws mac apply: networksetup -getinfo "ws stand-in no-op" shows Router: 192
 logged
 # shellcheck source=.github/mac-identity-checks.sh
 . .github/mac-identity-checks.sh
-# shellcheck source=.github/mac-gateway-checks.sh
-. .github/mac-gateway-checks.sh
 # shellcheck source=.github/mac-git-checks.sh
 . .github/mac-git-checks.sh
 exit "$fail"

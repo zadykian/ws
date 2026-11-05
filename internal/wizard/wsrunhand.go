@@ -25,10 +25,8 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 		h.Add("ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, as for " +
 			"a cloud VM; remove that line, then run the wizard with --update (docs/security.md, Outbound).")
 	}
-	h.Add("macOS's local network: where it asks whether Ghostty, Gateway or another app may find " +
+	h.Add("macOS's local network: where it asks whether Ghostty, Zed or another app may find " +
 		"devices there, allow it (docs/mac.md, ssh's hosts).")
-	h.Add("Gateway's connection: an SSH connection to ws in JetBrains Gateway, with Parse config " +
-		"file ~/.ssh/config on (docs/mac.md).")
 	first := r.Host.SSH.First()
 	if c.Target != "lan" {
 		away(h, c, first)

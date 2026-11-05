@@ -29,11 +29,6 @@ cmp -s ~/.ssh/config "$RUNNER_TEMP/ssh-config-before" ||
         echo '::error::ws mac apply --check installed a formula or a cask'
         fail=1
     }
-grep -q ': would run brew install --cask jetbrains-gateway$' "$RUNNER_TEMP/check.out" ||
-    {
-        echo "::error::ws mac apply --check showed no brew install of Gateway's cask"
-        fail=1
-    }
 grep -q ': would run brew install --cask zed$' "$RUNNER_TEMP/check.out" ||
     {
         echo "::error::ws mac apply --check showed no brew install of Zed's cask"

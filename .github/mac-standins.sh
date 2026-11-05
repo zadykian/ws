@@ -5,7 +5,7 @@
 #
 #   sh .github/mac-standins.sh
 #
-# - JetBrains Gateway.app, Ghostty.app and Zed.app, empty directories in ~/Applications, and the
+# - Ghostty.app and Zed.app, empty directories in ~/Applications, and the
 #   regular style of their font, an empty file in ~/Library/Fonts, which spare their casks. ws mac
 #   apply writes ws.ghostty, as on a Mac with Ghostty;
 # - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws:
@@ -20,9 +20,7 @@ if [ -e ~/.local/bin/cld ]; then
     exit 1
 fi
 brew list --formula wireguard-tools >/dev/null 2>&1 || brew install wireguard-tools
-mkdir -p ~/Applications/"JetBrains Gateway.app" ~/Applications/Ghostty.app \
-    ~/Applications/Zed.app ~/Library/Fonts \
-    ~/.local/bin
+mkdir -p ~/Applications/Ghostty.app ~/Applications/Zed.app ~/Library/Fonts ~/.local/bin
 : >~/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf
 cat >~/.local/bin/cld <<'EOS'
 #!/bin/sh

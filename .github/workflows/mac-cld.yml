@@ -14,8 +14,7 @@ permissions: {}
 
 jobs:
   # Ghostty, Zed and cld on a Mac, in docs/mac-ghostty.md's order. ws mac apply runs with a
-  # stand-in for ws's key, so that the tunnel's daemon loads and a second run prints nothing, and
-  # one for JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. On
+  # stand-in for ws's key, so that the tunnel's daemon loads and a second run prints nothing. On
   # a runner without Ghostty, Zed, their font or cld, --check must change nothing. Where their
   # casks fail, a run must install cld alone. A run must then install Ghostty, Zed and the font
   # from Homebrew's casks, and Ghostty's settings, which Ghostty must take. ssh's LocalCommand
@@ -75,7 +74,7 @@ jobs:
                   fail=1
               fi
           done
-          mkdir -p ~/.config/ws ~/Applications/"JetBrains Gateway.app"
+          mkdir -p ~/.config/ws
           echo "WS_PUBLIC_KEY=$(openssl rand -base64 32)" >~/.config/ws/mac.conf
           exit "$fail"
       # --check shows the casks' installs, Zed's among them, cld's, the ssh lines that may

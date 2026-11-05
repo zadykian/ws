@@ -2,10 +2,9 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the LAN, or elsewhere through the router's port forwards. `ws mac apply` sets up its
-end of the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), JetBrains Gateway
-([The Mac's tunnel](#the-macs-tunnel)), Zed ([Zed on the Mac](mac-zed.md)) and one host for ssh,
-`ws`. It goes through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac
-connects. The sessions of `ssh ws`, JetBrains Gateway and Zed stay open as the Mac moves between the
+end of the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), Zed ([Zed on the
+Mac](mac-zed.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac
+connects. The sessions of `ssh ws` and Zed stay open as the Mac moves between the
 cable, the LAN and elsewhere, with a pause of a few seconds
 ([Zed](zed.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
@@ -144,7 +143,7 @@ DHCP and DNS still go to the Mac, which serves them.
 
 The first login asks whether to trust ws's host key: compare its fingerprint with the one
 `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on ws's console. On the cable and the LAN,
-macOS asks once whether Ghostty, Gateway, Zed or another app may find devices on the local
+macOS asks once whether Ghostty, Zed or another app may find devices on the local
 network: allow it. Only a direct way needs it. ssh run from Terminal needs no such grant, and
 neither does `ws` through the tunnel. The tunnel's utun is no local network, and macOS lets daemons
 that run as root reach one anyway (Apple's TN3179).
@@ -237,14 +236,7 @@ sudo /usr/local/libexec/ws-tunnel/ws mac tunnel status
 prints the way in use, its endpoint, the latest handshake and the bytes moved.
 `/var/log/ws-tunnel.log` has a line for each switch and failure.
 
-`ws mac apply` installs JetBrains Gateway from Homebrew's cask where `JetBrains Gateway.app` is in
-neither `/Applications` nor `~/Applications`, and runs no `brew upgrade`, as Gateway updates itself.
-A failed install draws a warning, and the next run tries again, with brew's output. Where Homebrew
-has the cask but not the app, the script warns instead, and installs nothing: `brew reinstall --cask
-jetbrains-gateway` puts the app back. By hand, add an SSH connection to `ws` in Gateway, with "Parse
-config file ~/.ssh/config" on. Gateway then reads `~/.ssh/config` through the Mac's `ssh -G`, its
-default. Through it, open Rider or GoLand, on a backend that the `jetbrains` role installed
-([jetbrains](jetbrains.md)). A connection to `ws` outlives a switch. Zed has [its page](mac-zed.md).
+A connection to `ws` outlives a switch. Zed has [its page](mac-zed.md).
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install
