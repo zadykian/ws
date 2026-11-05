@@ -112,8 +112,9 @@ A dry run checks no file it would write. ws runs a file's check, such as `nft -c
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
-checks root's key and installs its own ws on ws and runs `ws server apply`, with the Mac's secrets
-file. Then it adds ws's signing key to GitHub, logs claude in there, and gives `wg0` the Mac's key.
+checks that `WS_USER` logs in and installs its own ws on ws and runs `ws server apply`, with the
+Mac's secrets file. Then it adds ws's signing key to GitHub, logs claude in there, and gives `wg0`
+the Mac's key.
 Without the wizard, `gh auth setup-git`, the claude login and the Mac's key stay manual. ws's gh
 takes a fine-grained personal access token, which `ws server apply` logs gh in with, from the
 secrets file's `token.github` ([gh](docs/devtools.md#gh)). Its permissions are the
