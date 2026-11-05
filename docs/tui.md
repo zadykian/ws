@@ -1,8 +1,8 @@
 # The terminal UI
 
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
-`internal/tui`. No command draws a screen yet: the package holds the parts, and `--plain` is in
-place for the commands that will.
+`internal/tui`. `ws server apply` draws [the run screen](#the-run-screen). The other commands print
+lines for now.
 
 ## Modes
 
@@ -14,7 +14,8 @@ A command draws a screen only where each of these holds:
 
 Anywhere else ws prints lines, as before, byte for byte. That covers CI, a pipe and the unit on
 ws, which reads the last line of a run. The wizard's cases in `.github/mac-wizard` that run under
-`script -q` get a terminal, so each passes `--plain`.
+`script -q` get a terminal, so each passes `--plain`. CI's `playbook` job runs `ws server apply
+--check` under `script` to draw the screen ([The `playbook` job](checks.md#the-playbook-job)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
 The mode is chosen in `cmd/ws/screen.go`.
@@ -89,6 +90,9 @@ The other pane is a window on what the run prints, under the current step's name
 - It wraps a long line, unlike the other panes. `\r` keeps the last state of a progress bar, and
   escapes and control characters go.
 - Under `--check`, each step's changes show in it, a file's diff in color.
+
+The window goes with the screen. The last line of `ws server apply`, an error and what stays by hand
+print on the normal screen, and `--plain` keeps every line of a run.
 
 ### Stopping a run
 
