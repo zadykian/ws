@@ -24,6 +24,9 @@ func pairs(c Conf) []Error {
 		return refuse("WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT")
 	case c.Target == "mac-vm" && c.LAN == "":
 		return refuse("WS_TARGET=mac-vm needs WS_LAN")
+	// Root is the login of a cloud VM alone: a machine of one's own has its user, and logs root out.
+	case c.User == "root" && c.Target != "cloud":
+		return refuse("WS_USER=root needs WS_TARGET=cloud (docs/mac-targets.md)")
 	}
 	if away := foreign(c); len(away) > 0 {
 		return refuse("WS_TARGET=" + c.Target + " has another target's key: " +

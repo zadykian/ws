@@ -114,7 +114,7 @@ it add the Mac's keys, and a login without them is refreshed the same way. The w
 key for ws to the account's ssh keys, titled with the Mac's name. `ws mac apply` then adds git's
 signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the command to run.
 
-Ubuntu's installer imports the account's keys for ws's user. So run the line before Ubuntu's
+Ubuntu's installer imports the account's keys for ws's user, `zadykian`. So run the line before Ubuntu's
 install, as the wizard adds no key to ws afterwards. A run before the install stops at the Host key
 stage, as ws doesn't answer yet. Leave ws's address empty there, and run the wizard again once
 Ubuntu is installed. In the installer, turn OpenSSH on, import the keys from GitHub, and leave
@@ -178,14 +178,15 @@ its `install.sh` runs, then the command again. A ws that is no release stays, wi
 
 ## ws's run
 
-The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a direct
-way. It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
-root's `HOME` and a UTF-8 locale. That ws runs its roles
-([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, and stops
-where the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when
-the Mac sleeps, and the next run of the wizard follows it to its end. Where `WS_USER` isn't the
-server's default, the stage first names it as `ws_user` in `/etc/ws/host_vars.yml` on ws, with the
-files script, so the roles set up that user. Where the file names another, it changes the line.
+The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a
+direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server apply` in a unit of
+its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8 locale. That ws
+runs its roles ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log
+until it ends, and stops where the run fails. A first run takes 20 to 40 minutes. The unit goes on
+where ssh drops, as when the Mac sleeps, and the next run of the wizard follows it to its end. Where
+`WS_USER` isn't the server's default, the stage first names it as `ws_user` in
+`/etc/ws/host_vars.yml` on ws, with the files script, so the roles set up that user. Where the file
+names another, it changes the line.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:

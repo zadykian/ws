@@ -22,7 +22,7 @@ func Parse(text string) (Conf, []Error) {
 // other line, of any other key and of a value of the wrong form. An empty value, KEY= or KEY="", is
 // the key's default, as a missing line is. A later line of a key replaces an earlier one.
 func Lines(text string) (Conf, []Error) {
-	c := Conf{User: "root", Target: "lan"}
+	c := Conf{Target: "lan"}
 	var errs []Error
 	for i, line := range strings.Split(text, "\n") {
 		line = strings.Trim(line, " \t")
@@ -49,7 +49,20 @@ func Lines(text string) (Conf, []Error) {
 			c.defaults()
 		}
 	}
+	// The user's default follows the target, so it waits for the last line, whatever the order.
+	if c.User == "" {
+		c.User = defaultUser(c.Target)
+	}
 	return c, errs
+}
+
+// defaultUser is WS_USER's default: root on a cloud VM, which may have no other user, else the user
+// that ws sets a machine up for.
+func defaultUser(target string) string {
+	if target == "cloud" {
+		return "root"
+	}
+	return "zadykian"
 }
 
 // lookup finds the key named name.
@@ -70,11 +83,8 @@ func unquote(raw string) (string, bool) {
 	return raw, false
 }
 
-// defaults sets the keys with a default other than empty to it.
+// defaults sets the keys with a default other than empty to it, but WS_USER, which Lines sets last.
 func (c *Conf) defaults() {
-	if c.User == "" {
-		c.User = "root"
-	}
 	if c.Target == "" {
 		c.Target = "lan"
 	}
