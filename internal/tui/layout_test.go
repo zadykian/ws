@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -167,5 +168,21 @@ func TestRenderFillsAnyWindow(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestRenderWithNoWindowDrawsNothing(t *testing.T) {
+	if got := twoPanes().Render(NewTheme(noColor("")), 0, 0); got != "" {
+		t.Errorf("render = %q", got)
+	}
+}
+
+func TestViewIsAFullScreenWithNoMouse(t *testing.T) {
+	view := twoPanes().View(NewTheme(noColor("")), 80, 24)
+	if !view.AltScreen {
+		t.Error("the view stays on the normal screen")
+	}
+	if view.MouseMode != tea.MouseModeNone {
+		t.Errorf("mouse mode %v", view.MouseMode)
 	}
 }

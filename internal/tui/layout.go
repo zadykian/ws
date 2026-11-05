@@ -3,6 +3,7 @@ package tui
 import (
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -55,8 +56,21 @@ func (l Layout) PaneSizes(width, height int) []Size {
 	return sizes
 }
 
-// Render fills a window of width and height. What doesn't fit is cut at the edges.
+// View draws the layout as a full screen. The alternate buffer gives the terminal its scrollback
+// back at the end. The mouse stays the terminal's, as its capture would block selecting the lines
+// a screen prints to copy.
+func (l Layout) View(theme Theme, width, height int) tea.View {
+	view := tea.NewView(l.Render(theme, width, height))
+	view.AltScreen = true
+	return view
+}
+
+// Render fills a window of width and height, and draws nothing before the window's size is known.
+// What doesn't fit is cut at the edges.
 func (l Layout) Render(theme Theme, width, height int) string {
+	if width <= 0 || height <= 0 {
+		return ""
+	}
 	parts := []string{l.renderTitle(theme, width)}
 	if room := l.bodyHeight(width, height); room > 0 {
 		panes := l.renderPanes(theme, width, height)
