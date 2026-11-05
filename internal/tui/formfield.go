@@ -55,8 +55,9 @@ type FormField struct {
 	// secret is a password. The input never holds it: its sanitizer makes a space of a tab or a line
 	// end, which a value that shows nothing would carry unseen.
 	secret string
-	// chosen is the place of a choice's option.
+	// chosen is the place of a choice's option, and start the value before any edit.
 	chosen int
+	start  string
 	// problem is why Valid refuses the value, once an edit or a Check found that: an empty field that
 	// nobody touched shows none.
 	problem error
@@ -70,12 +71,20 @@ func NewFormField(spec FieldSpec) FormField {
 		input.SetValue(spec.Value)
 	}
 	chosen := max(slices.Index(spec.Options, cmp.Or(spec.Value, spec.Default)), 0)
-	return FormField{spec: spec, input: input, chosen: chosen}
+	f := FormField{spec: spec, input: input, chosen: chosen}
+	f.start = f.Value()
+	return f
 }
 
 // Focus gives the field the keys.
 func (f FormField) Focus() FormField {
 	_ = f.input.Focus()
+	return f
+}
+
+// Blur takes the keys from the field.
+func (f FormField) Blur() FormField {
+	f.input.Blur()
 	return f
 }
 
@@ -89,6 +98,9 @@ func (f FormField) Fit(width int) FormField {
 // blink, or reads a clipboard that a server lacks, into a message that would reach the screen. A
 // terminal's own paste comes as tea.PasteMsg.
 func (f FormField) Update(msg tea.Msg) FormField {
+	if !f.input.Focused() {
+		return f
+	}
 	before := f.Value()
 	switch f.spec.Kind {
 	case PasswordField:
@@ -154,6 +166,12 @@ func (f FormField) Value() string {
 	return f.spec.Options[f.chosen]
 }
 
+// Edited reports whether the value differs from the one the field started on, so that a form writes
+// what the maintainer changed alone, and a choice's first option never stands in for a file's value.
+func (f FormField) Edited() bool {
+	return f.Value() != f.start
+}
+
 // Check runs Valid on the value, and keeps its refusal for the field to show.
 func (f FormField) Check() (FormField, bool) {
 	f.problem = nil
@@ -163,7 +181,7 @@ func (f FormField) Check() (FormField, bool) {
 	return f, f.problem == nil
 }
 
-// view draws the line that takes the keys. A choice's arrows show the keys it takes. Too narrow for
+// view draws the line that takes the keys. A choice in focus shows its keys as arrows. Too narrow for
 // its options, it shows the chosen one alone. Its brackets mark that one under NO_COLOR.
 func (f FormField) view(theme Theme, width int) string {
 	if f.spec.Kind != ChoiceField {
@@ -179,10 +197,14 @@ func (f FormField) view(theme Theme, width int) string {
 		}
 		cells = append(cells, cell)
 	}
-	if line := "← " + strings.Join(cells, " ") + " →"; lipgloss.Width(line) <= width {
+	before, after := "  ", "  "
+	if f.input.Focused() {
+		before, after = "← ", " →"
+	}
+	if line := before + strings.Join(cells, " ") + after; lipgloss.Width(line) <= width {
 		return line
 	}
-	return "← " + chosen + " →"
+	return before + chosen + after
 }
 
 // label is the field's words, with the default that an empty text gives.

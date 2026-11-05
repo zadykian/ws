@@ -147,3 +147,51 @@ func TestFieldNamesADefaultOnATextAlone(t *testing.T) {
 		t.Errorf("a choice's label: %q", got)
 	}
 }
+
+func TestBlurredFieldTakesNoKey(t *testing.T) {
+	specs := map[string]FieldSpec{
+		"a text":     {},
+		"a password": {Kind: PasswordField},
+		"a choice":   {Kind: ChoiceField, Options: []string{"a", "b"}},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			f := NewFormField(spec).Focus().Blur()
+			want := f.Value()
+			if got := f.Update(press('x')).Update(right).Update(tea.PasteMsg{Content: "y"}).Value(); got != want {
+				t.Errorf("value = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestBlurredFieldShowsNoColorAndNoArrows(t *testing.T) {
+	theme := NewTheme(func(string) string { return "yes" })
+	text := NewFormField(FieldSpec{Value: "held"}).Fit(20)
+	if got := text.view(theme, 20); !strings.Contains(got, "held") || strings.Contains(got, "\x1b[3") {
+		t.Errorf("a text at rest: %q", got)
+	}
+	if got := choice("").Blur().view(theme, 40); strings.ContainsAny(got, "←→") {
+		t.Errorf("a choice at rest: %q", got)
+	}
+}
+
+func TestFieldEditedComparesTheValueWithItsStart(t *testing.T) {
+	text := NewFormField(FieldSpec{Value: "ws"}).Focus()
+	if text.Edited() {
+		t.Error("a text edited before the first key")
+	}
+	if text = text.Update(press('x')); !text.Edited() {
+		t.Error("a typed value counts as no edit")
+	}
+	if text = text.Update(tea.KeyPressMsg{Code: tea.KeyBackspace}); text.Edited() {
+		t.Error("a value back at its start counts as an edit")
+	}
+	unknown := NewFormField(FieldSpec{Kind: ChoiceField, Options: []string{"a", "b"}, Value: "gone"}).Focus()
+	if unknown.Edited() {
+		t.Error("a file's unknown value counts as an edit")
+	}
+	if unknown = unknown.Update(right); !unknown.Edited() {
+		t.Error("a moved choice counts as no edit")
+	}
+}
