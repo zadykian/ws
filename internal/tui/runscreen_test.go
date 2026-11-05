@@ -31,7 +31,7 @@ func testRun() RunScreen {
 
 func TestRunScreenKnowsEveryStepBeforeTheRun(t *testing.T) {
 	got := shown(testRun())
-	for _, want := range []string{"ws server apply", "base", "▸ Packages", "· Locale", "ssh", "· Keys"} {
+	for _, want := range []string{"ws server apply", "0/3", "base", "▸ Packages", "· Locale", "ssh", "· Keys"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("frame holds no %q:\n%s", want, got)
 		}
@@ -43,7 +43,7 @@ func TestRunScreenFollowsTheEvents(t *testing.T) {
 		step.Event{Kind: step.Done, Parent: "base", Step: "Packages"},
 		step.Event{Kind: step.Started, Parent: "base", Step: "Locale", Index: 1})
 	got := shown(r)
-	for _, want := range []string{"✓ Packages", "▸ Locale", "base: Locale"} {
+	for _, want := range []string{"1/3", "✓ Packages", "▸ Locale", "base: Locale"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("frame holds no %q:\n%s", want, got)
 		}
@@ -70,6 +70,33 @@ func TestRunScreenWrapsALongLineToTheWindow(t *testing.T) {
 	r := sent(testRun(), Line{Said, "first " + strings.Repeat("x", 45) + " last"})
 	if got := shown(r); !strings.Contains(got, "last") {
 		t.Errorf("frame cut the line:\n%s", got)
+	}
+}
+
+func TestRunScreenTicksFromItsFirstTick(t *testing.T) {
+	start := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
+	r := sent(testRun(), tickMsg{start}, tickMsg{start.Add(75 * time.Second)})
+	if got := shown(r); !strings.Contains(got, "01:15") {
+		t.Errorf("frame holds no elapsed time:\n%s", got)
+	}
+	if _, cmd := r.Update(tickMsg{start}); cmd == nil {
+		t.Error("a tick asks for no next one")
+	}
+}
+
+func TestRunScreenInitReadsTheClock(t *testing.T) {
+	if _, ok := testRun().Init()().(tickMsg); !ok {
+		t.Error("Init's Cmd gives no tick")
+	}
+}
+
+func TestRunScreenStatusMakesRoomInANarrowWindow(t *testing.T) {
+	r := sent(testRun(), tea.WindowSizeMsg{Width: 30, Height: 24})
+	if got := r.status(); got != "0/3 00:00" {
+		t.Errorf("status = %q, want no bar", got)
+	}
+	if got := shown(r); !strings.Contains(got, "0/3") {
+		t.Errorf("frame holds no count:\n%s", got)
 	}
 }
 
