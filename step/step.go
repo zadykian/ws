@@ -40,6 +40,7 @@ type Options struct {
 	Parent string
 	// LeftOut says which steps the run plans and doesn't apply, by the run's Parent and the step's
 	// name. Nil leaves none out. A step is planned all the same, as later steps read its state.
+	// Check leaves them out too, as it shows what the same run would make.
 	LeftOut func(parent, step string) bool
 	// Stop is read before each step, and an error ends the run there, with the steps left Skipped.
 	// Nil never stops, as a run in lines ends mid-step or not at all.
@@ -53,9 +54,10 @@ func Run(ctx context.Context, steps []Step, out effect.Out, check bool) (changed
 
 // RunWith plans each step in order. Under check it applies nothing, and skips a step whose awaited
 // step has changes to make. A step left out is planned and not applied, and the steps that wait on
-// it, if it has changes, are skipped as under check. Otherwise it applies each plan, plans again, and fails where the second
-// plan is not empty. It stops at the first failure, or where o.Stop says, and the steps past it end
-// Skipped. It reports whether any step had changes to make.
+// it, if it has changes, are skipped as under check. Otherwise it applies each plan, plans again,
+// and fails where the second plan is not empty. It stops at the first failure, or where o.Stop
+// says, and the steps past it end Skipped. It reports whether any step it didn't leave out had
+// changes to make.
 func RunWith(ctx context.Context, steps []Step, o Options) (changed bool, err error) {
 	pending := map[string]bool{} // the earlier steps, whether each has changes to make
 	for i, s := range steps {
@@ -85,6 +87,7 @@ func (o Options) stopped() error {
 // settle takes one step as far as the run goes, and returns its last event for the run to send.
 func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string]bool) Event {
 	name := e.Step
+	e.LeftOut = o.LeftOut != nil && o.LeftOut(o.Parent, name)
 	waitsOn := s.WaitsOn()
 	if waitsOn != "" {
 		if _, ok := pending[waitsOn]; !ok {
@@ -101,7 +104,6 @@ func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string
 		return e.failed(fmt.Errorf("%s: planning: %w", name, err))
 	}
 	e.Changes = p.Changes
-	e.LeftOut = !o.Check && o.LeftOut != nil && o.LeftOut(o.Parent, name)
 	o.observe(e.as(Planned))
 	pending[name] = len(p.Changes) != 0
 	if o.Check || e.LeftOut || !pending[name] {

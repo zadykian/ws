@@ -48,6 +48,7 @@ func TestStateAfter(t *testing.T) {
 		{step.Event{Kind: step.Done, Changes: changes, LeftOut: true}, stepLeftOut},
 		{step.Event{Kind: step.Failed, Err: errors.New("no")}, stepFailed},
 		{step.Event{Kind: step.Skipped, After: "Keys"}, stepSkipped},
+		{step.Event{Kind: step.Skipped, After: "Keys", LeftOut: true}, stepLeftOut},
 	}
 	for _, c := range cases {
 		if got := stateAfter(c.event); got != c.want {

@@ -39,6 +39,7 @@ func (o progOut) Say(format string, a ...any) {
 // applying, which the step's own lines follow: a plan under --check, and what a step is behind.
 func (o progOut) Observe(e step.Event) {
 	switch {
+	case e.LeftOut:
 	case e.Kind == step.Planned && e.Check:
 		for _, c := range e.Changes {
 			o.sayChange(c)

@@ -63,19 +63,39 @@ func TestRunWithLeaveOutPrintsLikeNone(t *testing.T) {
 	}
 }
 
-func TestRunWithCheckLeavesNoneOut(t *testing.T) {
+func TestRunWithCheckLeavesStepsOut(t *testing.T) {
 	var log []string
-	steps := []step.Step{&fake{name: "a", todo: []step.Change{change("x")}, log: &log}}
-	var ev []step.Event
-	o := step.Options{Check: true, LeftOut: func(string, string) bool { return true },
-		Observer: observerFunc(func(e step.Event) { ev = append(ev, e) })}
-	if _, err := step.RunWith(context.Background(), steps, o); err != nil {
-		t.Fatal(err)
+	x := []step.Change{change("x")}
+	steps := []step.Step{
+		&fake{name: "a", todo: x, log: &log},
+		&fake{name: "b", todo: []step.Change{change("y")}, log: &log},
+		&fake{name: "c", waitsOn: "a", todo: x, log: &log},
+		&fake{name: "d", waitsOn: "a", todo: x, log: &log},
 	}
+	var ev []step.Event
+	out := &effecttest.Out{}
+	printer := step.Printer{Out: out}
+	o := step.Options{Check: true, LeftOut: func(_, name string) bool { return name != "b" && name != "c" },
+		Observer: observerFunc(func(e step.Event) { ev = append(ev, e); printer.Observe(e) })}
+	changed, err := step.RunWith(context.Background(), steps, o)
+	if err != nil || !changed {
+		t.Fatalf("changed, err = %v, %v", changed, err)
+	}
+	if want := []string{"plan a", "plan b"}; !slices.Equal(log, want) {
+		t.Errorf("log = %q, want %q", log, want)
+	}
+	if want := []string{"say: b: y", "say: c: after a"}; !slices.Equal(out.Lines, want) {
+		t.Errorf("printed %q, want %q", out.Lines, want)
+	}
+	last := map[string]step.Event{}
 	for _, e := range ev {
-		if e.LeftOut {
-			t.Errorf("event %+v is LeftOut under check", e)
-		}
+		last[e.Step] = e
+	}
+	if e := last["a"]; e.Kind != step.Done || !e.LeftOut || len(e.Changes) != 1 {
+		t.Errorf("a ends %+v, want Done, LeftOut, with its change", e)
+	}
+	if e := last["d"]; e.Kind != step.Skipped || !e.LeftOut {
+		t.Errorf("d ends %+v, want Skipped and LeftOut", e)
 	}
 }
 

@@ -33,8 +33,9 @@ type Event struct {
 	// Changes is the step's plan from Planned on. It stays on Done, which says what the step made,
 	// or would make under Check.
 	Changes []Change
-	// LeftOut is set where Options.LeftOut kept the step from applying: it ends Done with its
-	// Changes unmade. A run under Check sets it on none.
+	// LeftOut is set where Options.LeftOut keeps the step from applying: it ends Done with its
+	// Changes unmade, or Skipped where it waits on a step with changes. No reader of a run's lines
+	// hears of it.
 	LeftOut bool
 	// After names the awaited step that a Skipped step is behind. It is empty where a failure stopped
 	// the run first.
@@ -65,6 +66,7 @@ type Printer struct{ Out effect.Out }
 // Observe prints a plan under check, its size as a step applies it, and what a step is behind.
 func (p Printer) Observe(e Event) {
 	switch {
+	case e.LeftOut:
 	case e.Kind == Planned && e.Check:
 		for _, c := range e.Changes {
 			p.Out.Say("%s: %s", e.Step, c)

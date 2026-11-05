@@ -61,6 +61,8 @@ func TestProgOutObservesAPlanAndWhatAStepIsBehind(t *testing.T) {
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
 	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh"})
 	out.Observe(step.Event{Kind: step.Skipped, Step: "zed"})
+	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan, LeftOut: true})
+	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh", LeftOut: true})
 	want := []string{
 		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws mac apply: would run x",
 		"say: ws mac apply: git: after ssh",

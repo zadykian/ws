@@ -53,6 +53,9 @@ func stateAfter(e step.Event) stepState {
 	case step.Failed:
 		return stepFailed
 	case step.Skipped:
+		if e.LeftOut {
+			return stepLeftOut
+		}
 		return stepSkipped
 	case step.Planned, step.Started:
 	}
