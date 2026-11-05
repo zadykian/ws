@@ -29,6 +29,12 @@ type Line struct {
 	Text string
 }
 
+// prompt is a question on its way to the screen.
+type prompt struct {
+	text   string
+	hidden bool
+}
+
 // Bridge puts effect.Out behind a screen. A run's goroutine calls it, and each call reaches the
 // model as a message. A Line sent past the screen's end is dropped.
 type Bridge struct {
