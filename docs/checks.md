@@ -2,6 +2,8 @@
 
 In a stack, CI runs `playbook`, `mac`, `mac-cld` and `mac-wizard`, its longest jobs, on the top
 pull request alone, as it holds every change below it. `lint`, `install` and `signoz` run on each.
+These four start once a pull request is 2 minutes old, as `stack-top.yml` reads its stack then. A
+stack linked later runs them on each of its pull requests, until the next push.
 The `mac-cld` job's checks are on [their own page](checks-mac-cld.md), and the gates of `make lint`
 on [theirs](gates.md).
 
