@@ -135,6 +135,28 @@ jobs:
               exit 1
           fi
 
+  # The rootless daemon and the firewall around it, which need a booted systemd: a container has
+  # none, so this job runs on the runner itself, and ws sets the runner up as it would a machine.
+  # The stack's top alone, as for playbook.
+  rootless:
+    if: >-
+      (github.event.action != 'opened' || !github.event.pull_request.draft) &&
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build ws
+        run: tools/build linux amd64 "$RUNNER_TEMP/ws"
+      - name: Install ws
+        run: sudo install -m 755 "$RUNNER_TEMP/ws" /usr/local/bin/ws
+      - name: The cases
+        run: sudo bash .github/rootless-checks.sh
+
   # install.sh against releases laid out in a temporary directory and served on loopback, in the
   # order of .github/install-checks.sh: the latest and a named release install, a second run
   # updates, a wrong checksum and a binary of another version are refused, and root installs to
