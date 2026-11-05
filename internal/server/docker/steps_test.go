@@ -27,6 +27,7 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 	var rules string
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Files["/var/lib/systemd/linger/ws"] = nil
 	m.Files["/etc/subuid"] = []byte("ws:100000:65536\n")
 	m.Files["/etc/subgid"] = []byte("ws:100000:65536\n")
 	v := values.Default()
@@ -88,6 +89,7 @@ func TestStepsApplyOnceAndThenPlanNothing(t *testing.T) {
 		"/etc/apt/sources.list.d/docker.sources":             "Suites: resolute",
 		"/home/ws/.config/docker/daemon.json":                `"dns": [` + "\n" + `    "10.0.2.3"`,
 		"/home/ws/.config/systemd/user/docker.slice":         "MemoryMax=8000M",
+		"/etc/systemd/system/user@.service.d/delegate.conf":  "Delegate=cpu io memory pids",
 	} {
 		if !strings.Contains(string(m.Files[path]), want) {
 			t.Errorf("%s = %q, want it to hold %q", path, m.Files[path], want)

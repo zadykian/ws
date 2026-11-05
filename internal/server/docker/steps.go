@@ -54,7 +54,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, si
 		}},
 	)
 	if v.User != "root" {
-		steps = append(steps, rootless(v, m, size))
+		steps = append(steps, rootless(v, m, u, out, size))
 	}
 	return steps
 }
