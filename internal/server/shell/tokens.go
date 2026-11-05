@@ -65,6 +65,9 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 	}
 	for _, c := range t.Creds {
 		file := dir + "/" + credentialFile(c.URL)
+		if err := host.RefuseLinks(t.M, t.A.Home, file); err != nil {
+			return nil, err
+		}
 		username := c.Username
 		if username == "" {
 			username = "token"
