@@ -14,7 +14,8 @@ const (
 	Done
 	// Failed ends a step, and the run with it.
 	Failed
-	// Skipped ends a step that a run didn't plan: one behind an awaited step with changes, or past a failure.
+	// Skipped ends a step that a run didn't plan: one behind an awaited step with changes, one past
+	// a failure, or one left out whose plan failed.
 	Skipped
 )
 
@@ -34,13 +35,14 @@ type Event struct {
 	// or would make under Check.
 	Changes []Change
 	// LeftOut is set where Options.LeftOut keeps the step from applying: it ends Done with its
-	// Changes unmade, or Skipped where it waits on a step with changes. No reader of a run's lines
-	// hears of it.
+	// Changes unmade, or Skipped where it waits on a step with changes or its plan failed. A reader
+	// of a run's lines hears of the failed plan alone.
 	LeftOut bool
 	// After names the awaited step that a Skipped step is behind. It is empty where a failure stopped
 	// the run first.
 	After string
-	// Err is what the run returns, on Failed alone.
+	// Err is what the run returns, on Failed. On Skipped it is why a left-out step's plan failed,
+	// which the run goes past.
 	Err error
 }
 
@@ -63,9 +65,12 @@ type Observer interface {
 // Printer prints a run's events as lines, as Run does on its out.
 type Printer struct{ Out effect.Out }
 
-// Observe prints a plan under check, its size as a step applies it, and what a step is behind.
+// Observe prints a plan under check, its size as a step applies it, what a step is behind, and a
+// left-out step's failed plan.
 func (p Printer) Observe(e Event) {
 	switch {
+	case e.Kind == Skipped && e.Err != nil:
+		p.Out.Warn("left out: %v", e.Err)
 	case e.LeftOut:
 	case e.Kind == Planned && e.Check:
 		for _, c := range e.Changes {

@@ -2,6 +2,7 @@ package step_test
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"testing"
 
@@ -99,6 +100,57 @@ func TestRunWithCheckLeavesStepsOut(t *testing.T) {
 	}
 }
 
+func TestRunWithCountsNoChangeLeftOut(t *testing.T) {
+	x := []step.Change{change("x")}
+	for _, check := range []bool{false, true} {
+		var log []string
+		steps := []step.Step{
+			&fake{name: "a", todo: x, log: &log},
+			&fake{name: "b", waitsOn: "a", todo: x, log: &log},
+			&fake{name: "c", log: &log},
+		}
+		o := step.Options{Check: check, LeftOut: func(_, name string) bool { return name == "a" }}
+		changed, err := step.RunWith(context.Background(), steps, o)
+		if err != nil || changed {
+			t.Errorf("check %v: changed, err = %v, %v, want no change", check, changed, err)
+		}
+	}
+}
+
 type observerFunc func(step.Event)
 
 func (f observerFunc) Observe(e step.Event) { f(e) }
+
+func TestALeftOutPlanThatFailsStopsNoRun(t *testing.T) {
+	var log []string
+	x := []step.Change{change("x")}
+	steps := []step.Step{
+		&fake{name: "broken", planErr: errors.New("no file"), log: &log},
+		&fake{name: "behind", waitsOn: "broken", todo: x, log: &log},
+		&fake{name: "chosen", todo: x, log: &log},
+	}
+	out := &effecttest.Out{}
+	o := step.Options{Observer: step.Printer{Out: out}, LeftOut: func(_, name string) bool { return name == "broken" }}
+	changed, err := step.RunWith(context.Background(), steps, o)
+	if err != nil || !changed {
+		t.Fatalf("changed, err = %v, %v", changed, err)
+	}
+	want := []string{"warn: left out: broken: planning: no file", "say: behind: after broken", "say: chosen: applying 1 change(s)"}
+	if !slices.Equal(out.Lines, want) {
+		t.Errorf("printed %q, want %q", out.Lines, want)
+	}
+}
+
+func TestACutPlanStopsTheRunThoughItsStepIsLeftOut(t *testing.T) {
+	ctx, cut := context.WithCancel(context.Background())
+	cut()
+	var log []string
+	steps := []step.Step{
+		&fake{name: "a", planErr: context.Canceled, log: &log},
+		&fake{name: "b", log: &log},
+	}
+	_, err := step.RunWith(ctx, steps, step.Options{LeftOut: func(string, string) bool { return true }})
+	if !errors.Is(err, context.Canceled) || len(log) != 1 {
+		t.Errorf("err = %v, log = %q", err, log)
+	}
+}

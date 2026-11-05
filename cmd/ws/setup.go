@@ -36,9 +36,12 @@ func (o progOut) Say(format string, a ...any) {
 }
 
 // Observe prints a run's events as the runner's lines once did, but for the line that a step is
-// applying, which the step's own lines follow: a plan under --check, and what a step is behind.
+// applying, which the step's own lines follow: a plan under --check, what a step is behind, and a
+// left-out step's failed plan.
 func (o progOut) Observe(e step.Event) {
 	switch {
+	case e.Kind == step.Skipped && e.Err != nil:
+		o.Warn("left out: %v", e.Err)
 	case e.LeftOut:
 	case e.Kind == step.Planned && e.Check:
 		for _, c := range e.Changes {
