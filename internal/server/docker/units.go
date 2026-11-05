@@ -25,3 +25,11 @@ func Resolved(d values.Docker) ([]byte, error) {
 // limits that systemctl edit writes. dockerd moves into the slice as it restarts, and each running
 // container as it next starts.
 func Override() ([]byte, error) { return files.ReadFile("files/override.conf") }
+
+// RootlessOverride returns the rootless unit's drop-in. It puts the unit in the user's docker.slice
+// and pins the drivers, so that a package installed later changes neither.
+func RootlessOverride() ([]byte, error) { return files.ReadFile("files/rootless.conf") }
+
+// Delegate returns user@.service's drop-in, which gives a user's systemd the io controller. Ubuntu
+// 26.04 delegates cpu, memory and pids by default, and a container's --device-read-bps needs io.
+func Delegate() ([]byte, error) { return files.ReadFile("files/delegate.conf") }
