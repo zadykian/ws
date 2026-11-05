@@ -21,11 +21,28 @@ type OSMachine struct {
 	Owner string
 	// Stderr takes what RunShown, PassInput and Pass pass on. Nil means os.Stderr.
 	Stderr io.Writer
+	// Stdin is what Pass gives a command to read. Nil means os.Stdin, where sudo can ask for a
+	// password. A screen owns the terminal, and sets NoStdin.
+	Stdin io.Reader
 	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
 	// inside for a path under it: a link there that leaves it fails the write. ws_user owns the
 	// ws_home, and can swap a directory in it for a link as root applies, which would hand the
 	// target to ws_user. Empty means no limit.
 	Confine string
+}
+
+// NoStdin is a Stdin that ends at once, as http.NoBody is a body.
+var NoStdin io.Reader = noStdin{}
+
+type noStdin struct{}
+
+func (noStdin) Read([]byte) (int, error) { return 0, io.EOF }
+
+func (m OSMachine) stdin() io.Reader {
+	if m.Stdin == nil {
+		return os.Stdin
+	}
+	return m.Stdin
 }
 
 func (m OSMachine) stderr() io.Writer {
@@ -105,11 +122,11 @@ func (m OSMachine) PassInput(ctx context.Context, stdin []byte, name string, arg
 	return nil
 }
 
-// Pass runs the command with its standard output and error sent to Stderr, and standard input kept,
-// so that sudo can ask for a password.
+// Pass runs the command with its standard output and error sent to Stderr, and Stdin as its
+// standard input.
 func (m OSMachine) Pass(ctx context.Context, root bool, name string, args ...string) error {
 	cmd := m.command(ctx, m.argv(root, name, args))
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, m.stderr(), m.stderr()
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = m.stdin(), m.stderr(), m.stderr()
 	if err := cmd.Run(); err != nil {
 		return commandError(cmd, err)
 	}
