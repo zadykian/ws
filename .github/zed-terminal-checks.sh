@@ -92,4 +92,45 @@ shown() {
 named() { zt has-session -t "=$1" 2>/dev/null; }
 pane_pid() { ot list-panes -t "$1" -F '#{pane_pid}'; }
 
+echo "== T0 tmux.conf loads and its options take effect"
+reset
+zt -f "$dir/tmux.conf" new-session -d -s probe
+got=$(
+    zt show -sv extended-keys
+    zt show -sv extended-keys-format
+    zt show -gv status
+    zt show -gv prefix
+    zt show -gv mouse
+)
+result "extended-keys always, csi-u, status off, prefix None, mouse on" \
+    test "$got" = "$(printf '%s\n' always csi-u off None on)"
+
+echo "== T1 no session: a tab starts one, and exit ends it and the server"
+reset
+tab t1 "$work/proj/ws"
+go
+result "one session, one client" until_ok shown 1
+result "named PROJECT-PID, PID the tab's" named "$(project_of "$work/proj/ws")-$(pane_pid t1)"
+result "tmux.conf was read through the script's own path" test "$(zt show -gv prefix)" = None
+ot send-keys -t t1 exit Enter
+result "the server ends with the session" until_ok no_server
+
+echo "== T2 a detached session of this directory's is taken, and named for the tab"
+reset
+detached "$work/proj/ws"
+tab t1 "$work/proj/ws"
+go
+result "one client" until_ok shown 1
+result "the session is named for the tab's PID" named "$(project_of "$work/proj/ws")-$(pane_pid t1)"
+result "it is the only session" test "$(sessions)" -eq 1
+
+echo "== T3 the prefix trap: neither ws-foo-123 nor a project ws-foo is taken by project ws"
+reset
+zt -f "$dir/tmux.conf" new-session -d -s ws-foo-123
+detached "$work/proj/ws-foo"
+tab t1 "$work/proj/ws"
+go
+result "a new session beside the two" until_ok shown 1
+result "three sessions" test "$(sessions)" -eq 3
+
 exit "$failed"
