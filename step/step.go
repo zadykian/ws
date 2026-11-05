@@ -38,6 +38,9 @@ type Options struct {
 	Check bool
 	// Parent names the role or stage of a nested run. A run of its own leaves it empty.
 	Parent string
+	// LeftOut says which steps the run plans and doesn't apply, by the run's Parent and the step's
+	// name. Nil leaves none out. A step is planned all the same, as later steps read its state.
+	LeftOut func(parent, step string) bool
 }
 
 // Run is RunWith with a Printer on out, for a caller that follows a run by its lines.
@@ -46,7 +49,8 @@ func Run(ctx context.Context, steps []Step, out effect.Out, check bool) (changed
 }
 
 // RunWith plans each step in order. Under check it applies nothing, and skips a step whose awaited
-// step has changes to make. Otherwise it applies each plan, plans again, and fails where the second
+// step has changes to make. A step left out is planned and not applied, and the steps that wait on
+// it, if it has changes, are skipped as under check. Otherwise it applies each plan, plans again, and fails where the second
 // plan is not empty. It stops at the first failure, and the steps past it end Skipped. It reports
 // whether any step had changes to make.
 func RunWith(ctx context.Context, steps []Step, o Options) (changed bool, err error) {
@@ -71,7 +75,7 @@ func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string
 		if _, ok := pending[waitsOn]; !ok {
 			return e.failed(fmt.Errorf("%s waits on %q, which is not an earlier step", name, waitsOn))
 		}
-		if o.Check && pending[waitsOn] {
+		if (o.Check || o.LeftOut != nil) && pending[waitsOn] {
 			pending[name] = true
 			e.After = waitsOn
 			return e.as(Skipped)
@@ -82,9 +86,10 @@ func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string
 		return e.failed(fmt.Errorf("%s: planning: %w", name, err))
 	}
 	e.Changes = p.Changes
+	e.LeftOut = !o.Check && o.LeftOut != nil && o.LeftOut(o.Parent, name)
 	o.observe(e.as(Planned))
 	pending[name] = len(p.Changes) != 0
-	if o.Check || !pending[name] {
+	if o.Check || e.LeftOut || !pending[name] {
 		return e.as(Done)
 	}
 	o.observe(e.as(Started))

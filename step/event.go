@@ -14,7 +14,7 @@ const (
 	Done
 	// Failed ends a step, and the run with it.
 	Failed
-	// Skipped ends a step that a run didn't plan.
+	// Skipped ends a step that a run didn't plan: one behind an awaited step with changes, or past a failure.
 	Skipped
 )
 
@@ -33,6 +33,9 @@ type Event struct {
 	// Changes is the step's plan from Planned on. It stays on Done, which says what the step made,
 	// or would make under Check.
 	Changes []Change
+	// LeftOut is set where Options.LeftOut kept the step from applying: it ends Done with its
+	// Changes unmade. A run under Check sets it on none.
+	LeftOut bool
 	// After names the awaited step that a Skipped step is behind. It is empty where a failure stopped
 	// the run first.
 	After string
