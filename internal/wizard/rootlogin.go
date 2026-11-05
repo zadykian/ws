@@ -43,11 +43,16 @@ func (r *RootKey) login(ctx context.Context, w Way) (ok bool, sshErr string) {
 	if err == nil {
 		return false, ""
 	}
+	return false, stderrOf(err)
+}
+
+// stderrOf returns the stderr that a failed command's error holds, in one line, without its argv.
+func stderrOf(err error) string {
 	var lines []string
 	for _, l := range strings.Split(exitStatus.ReplaceAllString(err.Error(), ""), "\n") {
 		if l = strings.TrimSpace(l); l != "" {
 			lines = append(lines, l)
 		}
 	}
-	return false, strings.Join(lines, "; ")
+	return strings.Join(lines, "; ")
 }
