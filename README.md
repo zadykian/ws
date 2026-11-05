@@ -3,9 +3,8 @@
 Sets up my development server from code. `ws server apply` runs on the machine itself. It sets up
 packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It sets up
 Docker, the shell, tmux, the helix editor and Zed's server. It sets up claude and
-[cld](https://github.com/zadykian/cld), SigNoz with a collector for the machine's telemetry, and the
-backends of Rider and GoLand that JetBrains Gateway connects to. Running it again is safe, and
-`--check` shows how a machine differs from the repository.
+[cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
+Running it again is safe, and `--check` shows how a machine differs from the repository.
 
 Each role has a page of its own. A role is Go steps of ws:
 
@@ -36,7 +35,6 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the npm
   servers, and the open-file limit that it needs. [A project's settings](docs/zed-projects.md) cover
   SQL Server and Ansible.
-- [`jetbrains`](docs/jetbrains.md): the backends of Rider and GoLand that JetBrains Gateway runs.
 
 `mac/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](docs/mac.md).
 
@@ -66,9 +64,6 @@ sudo ws server apply
 ```
 
 It runs the roles in order. Then do what stays by hand, below.
-
-The last role, `jetbrains`, needs about 12 GB free on the home's disk for the backends of Rider
-and GoLand. With less, the run fails at that role: [Disk space](docs/jetbrains.md#disk-space).
 
 ## Running it again
 

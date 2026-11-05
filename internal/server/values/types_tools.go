@@ -26,14 +26,6 @@ type Ikeward struct {
 	ForwardFrom []string `yaml:"ikeward_forward_from"`
 }
 
-// JetBrains is roles/jetbrains' keys.
-type JetBrains struct {
-	// Backends are the product codes of the backends the role installs.
-	Backends []string `yaml:"jetbrains_backends"`
-	// Prune removes the other builds of each product installed.
-	Prune bool `yaml:"jetbrains_prune"`
-}
-
 // Network is roles/network's keys.
 type Network struct {
 	// DirectLinkInterface is the cable's port. Empty, the role sets up no direct link.

@@ -3,9 +3,9 @@
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the LAN, or elsewhere through the router's port forwards. `ws mac apply` sets up its
 end of the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), Zed ([Zed on the
-Mac](mac-zed.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that ends on ws, at `10.99.0.1` whichever way the Mac
-connects. The sessions of `ssh ws` and Zed stay open as the Mac moves between the
-cable, the LAN and elsewhere, with a pause of a few seconds
+Mac](mac-zed.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that ends on ws,
+at `10.99.0.1` whichever way the Mac connects. The sessions of `ssh ws` and Zed stay open as the
+Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
 ([Zed](zed.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.

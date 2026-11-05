@@ -21,11 +21,10 @@ export DOTNET_RUNTIME_ID=linux-{{ .Arch }}
 
 # ble.sh replaces readline: suggestions from history as you type (Right accepts, Alt-f one word),
 # syntax highlighting and a Tab menu fed by bash-completion. It attaches at the first prompt, its
-# default, rather than here: JetBrains' terminal sources this file and only then installs its
-# PROMPT_COMMAND, DEBUG trap and prompt markers, and attaching before that prints "[ble: press RET
-# to continue]" after every command and stops the IDE's command events (ble.sh#709). The default
-# suggestion face has a grey background, a box on dark themes, and the default errexit mark
-# prints "[ble: exit N]" after every failing command.
+# default, rather than here: a terminal that sources this file and only then installs its
+# PROMPT_COMMAND and DEBUG trap would print "[ble: press RET to continue]" after every command
+# (ble.sh#709). The default suggestion face has a grey background, a box on dark themes, and the
+# default errexit mark prints "[ble: exit N]" after every failing command.
 [[ $- == *i* && -f /usr/share/blesh/ble.sh ]] && source -- /usr/share/blesh/ble.sh
 if [[ ${BLE_VERSION-} ]]; then
     ble-face auto_complete=fg=242

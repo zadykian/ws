@@ -30,14 +30,14 @@ func TestParseReadsZedNofile(t *testing.T) {
 }
 
 func TestParseKeepsDefaultsBesideAGivenKey(t *testing.T) {
-	got, err := Parse([]byte("jetbrains_backends: []\nbase_swap_size_mb: 64\nsecurity_outbound: false\n"))
+	got, err := Parse([]byte("base_swap_size_mb: 64\nsecurity_outbound: false\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got.JetBrains.Backends) != 0 || got.Base.SwapSizeMB == nil || *got.Base.SwapSizeMB != 64 || got.Security.Outbound {
-		t.Errorf("given keys not read: %+v %v %v", got.JetBrains, got.Base.SwapSizeMB, got.Security.Outbound)
+	if got.Base.SwapSizeMB == nil || *got.Base.SwapSizeMB != 64 || got.Security.Outbound {
+		t.Errorf("given keys not read: %v %v", got.Base.SwapSizeMB, got.Security.Outbound)
 	}
-	if got.Base.Locale != "en_US.UTF-8" || !got.JetBrains.Prune {
+	if got.Base.Locale != "en_US.UTF-8" {
 		t.Error("a key left out lost its default")
 	}
 }

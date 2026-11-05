@@ -25,7 +25,6 @@ type Values struct {
 	Fans      Fans      `yaml:",inline"`
 	Helix     Helix     `yaml:",inline"`
 	Ikeward   Ikeward   `yaml:",inline"`
-	JetBrains JetBrains `yaml:",inline"`
 	Network   Network   `yaml:",inline"`
 	Security  Security  `yaml:",inline"`
 	Shell     Shell     `yaml:",inline"`

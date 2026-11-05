@@ -17,8 +17,8 @@ last line must be `changed: none`. Then `nft -c`, with the container's NET_ADMIN
 outbound table the run wrote and the users it names, and a find that the user owns its home. Root's
 leg has no table. The run leaves out its own check ([Outbound](security.md#outbound)). Its
 `/etc/ws/host_vars.yml` gives a swap file of 64 MiB, as the runner's disk has no room for one of its
-RAM's size. It names no JetBrains backend, `jetbrains_backends: []`, for the same reason. Its board
-is not MSI's, so `fans` leaves its fans alone. It gives no VPN profile, so `ikeward` does nothing.
+RAM's size. Its board is not MSI's, so `fans` leaves its fans alone. It gives no VPN profile, so
+`ikeward` does nothing.
 
 ## The install script
 

@@ -37,8 +37,7 @@ Settings, under the Mission Control shortcuts, not on that page.
 | Ctrl+Left, Ctrl+Right | move a space (on by default; unchecked) | Word left, right |
 | Ctrl+F3, Ctrl+F4, Ctrl+F5 | focus Dock, window, toolbar | Find word, Close tab, Debug |
 
-The JetBrains client meets them on the Mac too, so the keys may be off already: unknown. They go
-off by hand, in System Settings.
+They go off by hand, in System Settings.
 
 `defaults write com.apple.symbolichotkeys` can do it. The ids are from memory and unchecked:
 
