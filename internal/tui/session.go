@@ -2,13 +2,17 @@ package tui
 
 import (
 	"slices"
+	"syscall"
 
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
 // Messages of a run.
 type (
+	// signalMsg is a signal that Run caught.
+	signalMsg struct{ signal syscall.Signal }
 	// doneMsg is the end of a run's work.
 	doneMsg struct{ err error }
 )
@@ -20,11 +24,15 @@ type session struct {
 	screen tea.Model
 	theme  Theme
 	window Size
-	// begin starts the work.
+	// begin starts the work, and stop ends the run's ctx. cut names a signal's error.
 	begin tea.Cmd
+	stop  tea.Cmd
+	cut   func(syscall.Signal) error
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
 	field field
+	// cutBy is set once a signal or Ctrl-C ended ctx.
+	cutBy error
 	// done and err are the end of the work.
 	done bool
 	err  error
@@ -47,10 +55,15 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return s, nil
 	case retractMsg:
 		return s.drop(msg.id), nil
+	case signalMsg:
+		return s.interrupt(msg.signal)
 	case doneMsg:
 		s.done, s.err = true, msg.err
 		return s, tea.Quit
 	case tea.KeyPressMsg:
+		if key.Matches(msg, Keys.Interrupt) {
+			return s.interrupt(syscall.SIGINT)
+		}
 		if len(s.asked) > 0 {
 			return s.typed(msg)
 		}
@@ -71,19 +84,22 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (s session) typed(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var place int
 	s.field, place = s.field.update(msg)
-	if place != answerPlace {
-		return s, nil
+	switch place {
+	case stopPlace:
+		return s.interrupt(syscall.SIGINT)
+	case answerPlace:
+		var answer string
+		var ok bool
+		if s.field, answer, ok = s.field.answer(); !ok {
+			return s, nil
+		}
+		reply := s.field.prompt.reply
+		return s.drop(s.field.prompt.id), func() tea.Msg {
+			reply <- answer
+			return nil
+		}
 	}
-	var answer string
-	var ok bool
-	if s.field, answer, ok = s.field.answer(); !ok {
-		return s, nil
-	}
-	reply := s.field.prompt.reply
-	return s.drop(s.field.prompt.id), func() tea.Msg {
-		reply <- answer
-		return nil
-	}
+	return s, nil
 }
 
 // drop takes the question id out of the queue, and the next one up where it was on the screen. The
@@ -98,6 +114,16 @@ func (s session) drop(id uint64) session {
 		s.field = field{}
 	}
 	return s
+}
+
+// interrupt takes a signal, or Ctrl-C, which raw mode keeps from being one. The first ends ctx, and
+// the screen stays until the work has seen that. The next leaves, as a step can ignore ctx.
+func (s session) interrupt(signal syscall.Signal) (tea.Model, tea.Cmd) {
+	if s.cutBy != nil {
+		return s, tea.Quit
+	}
+	s.cutBy = s.cut(signal)
+	return s, s.stop
 }
 
 // View draws the screen, and over it the question. It holds to the alternate buffer whatever the

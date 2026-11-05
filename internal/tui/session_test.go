@@ -4,11 +4,24 @@ import (
 	"errors"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
+
+var ctrlC = tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}
+
+// cutError is the error of a test's Cut.
+type cutError struct{ signal syscall.Signal }
+
+func (c cutError) Error() string { return c.signal.String() }
+
+func testCut(s syscall.Signal) error { return cutError{s} }
+
+// stoppedMsg is what a test's stop returns.
+type stoppedMsg struct{}
 
 // recorder is a screen that keeps what it gets.
 type recorder struct{ got *[]tea.Msg }
@@ -24,7 +37,9 @@ func (r recorder) View() tea.View { return tea.NewView("the screen") }
 
 func testSession() (session, *[]tea.Msg) {
 	got := &[]tea.Msg{}
-	return session{screen: recorder{got}, theme: testTheme, window: window}, got
+	stop := func() tea.Msg { return stoppedMsg{} }
+	s := session{screen: recorder{got}, theme: testTheme, window: window, stop: stop, cut: testCut}
+	return s, got
 }
 
 // feed gives s each message, and returns the last Cmd.
@@ -124,6 +139,34 @@ func TestSessionTakesQuestionsInTurn(t *testing.T) {
 	s, _ = feed(s, retractMsg{9}, retractMsg{3})
 	if len(s.asked) != 0 {
 		t.Errorf("left %v", s.asked)
+	}
+}
+
+func TestSessionStopsOnTheFirstInterruptAndLeavesOnTheNext(t *testing.T) {
+	ask := askMsg{prompt{id: 1, text: "Host"}}
+	cases := []struct {
+		name  string
+		msgs  []tea.Msg
+		again tea.Msg
+		want  error
+	}{
+		{"ctrl-c", []tea.Msg{ctrlC}, ctrlC, cutError{syscall.SIGINT}},
+		{"a signal", []tea.Msg{signalMsg{syscall.SIGTERM}}, signalMsg{syscall.SIGHUP},
+			cutError{syscall.SIGTERM}},
+		{"the button", []tea.Msg{ask, tab, tab, enter}, ctrlC,
+			cutError{syscall.SIGINT}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			s, _ := testSession()
+			s, cmd := feed(s, c.msgs...)
+			if cmd == nil || cmd() != (stoppedMsg{}) || !errors.Is(s.cutBy, c.want) {
+				t.Fatalf("after the first: cut by %v", s.cutBy)
+			}
+			if s, cmd = feed(s, c.again); !quits(cmd) || !errors.Is(s.cutBy, c.want) {
+				t.Errorf("the second left no way out, cut by %v", s.cutBy)
+			}
+		})
 	}
 }
 
