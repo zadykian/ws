@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
+
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
@@ -142,4 +146,76 @@ func TestSudoHoldsATicketItFound(t *testing.T) {
 			t.Errorf("%d looks past a lapsed ticket, held = %v", n, s.held.Load())
 		}
 	})
+}
+
+// standInSudo puts on PATH a sudo that takes the password "right", and holds a ticket past it.
+func standInSudo(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	script := `#!/bin/sh
+ticket=` + dir + `/ticket
+case "$1 $2" in
+"-n -v") test -e "$ticket" ;;
+"-n --")
+    test -e "$ticket" || { echo "sudo: a password is required" >&2; exit 1; }
+    shift 2
+    exec "$@"
+    ;;
+"-S -p")
+    read -r line
+    test "$line" = right && : >"$ticket"
+    ;;
+*) exit 2 ;;
+esac
+`
+	if err := os.WriteFile(filepath.Join(dir, "sudo"), []byte(script), 0o700); err != nil { //nolint:gosec // a script
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
+
+func TestBridgeMachineTakesThePasswordOnTheScreen(t *testing.T) {
+	standInSudo(t)
+	answers, asked := []string{"wrong", "right"}, 0
+	b := newBridge(io.Discard)
+	b.send = func(msg tea.Msg) {
+		if a, ok := msg.(askMsg); ok && a.prompt.hidden {
+			a.prompt.reply <- answers[asked]
+			asked++
+		}
+	}
+	m := b.Machine(t.Context(), effect.OSMachine{})
+	for range 2 {
+		if out, err := m.RunRoot(t.Context(), "echo", "as root"); err != nil || string(out) != "as root\n" {
+			t.Fatalf("RunRoot = %q, %v", out, err)
+		}
+	}
+	if err := effect.Validate(t.Context(), m); err != nil || asked != 2 {
+		t.Errorf("Validate: %v, %d questions", err, asked)
+	}
+}
+
+// A WriteRootFile has no context of its own, and a run's end must still end its question.
+func TestBridgeMachineEndsAQuestionWithTheRun(t *testing.T) {
+	standInSudo(t)
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	b := newBridge(io.Discard)
+	b.send = func(msg tea.Msg) {
+		if _, ok := msg.(askMsg); ok {
+			cancel()
+		}
+	}
+	m := b.Machine(ctx, effect.OSMachine{})
+	if err := m.WriteRootFile(filepath.Join(t.TempDir(), "file"), nil, 0o600); !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestBridgeMachineOfRootAsksNothing(t *testing.T) {
+	b, _ := testBridge(io.Discard)
+	m := b.Machine(t.Context(), effect.OSMachine{Sudo: []string{}})
+	if m.Sudo == nil || len(m.Sudo) != 0 || m.Ticket != nil || m.Stdin != effect.NoStdin {
+		t.Errorf("machine = %+v", m)
+	}
 }
