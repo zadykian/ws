@@ -30,6 +30,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 			}
 			dir := v.Home + "/.config/zed"
 			return []host.Resource{
+				host.Plain{M: m, Home: v.Home, Paths: []string{dir + "/settings.json"}},
 				host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
 				host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
 				host.File{M: m, Path: dir + "/settings.json", Content: settings, Mode: 0o644, UID: uid, GID: gid,

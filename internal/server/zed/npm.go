@@ -31,6 +31,9 @@ func serverBin(home, name string) string { return serversDir(home) + "/node_modu
 func serverFiles(m effect.Machine, user host.User, uid, gid int) ([]host.Resource, error) {
 	dir := serversDir(user.Home)
 	parts := []host.Resource{
+		host.Plain{M: m, Home: user.Home, Paths: []string{
+			dir + "/package.json", dir + "/package-lock.json", dir + "/node_modules/.ws-sha256",
+		}},
 		host.Dir{M: m, Path: user.Home + "/.local", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
 		host.Dir{M: m, Path: user.Home + "/.local/lib", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
 		host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},

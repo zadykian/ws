@@ -17,6 +17,9 @@ const (
 // remoteEndpoint reads the remote collector's endpoint from the user's ~/.secrets/env, or ""
 // where the file or the variable is missing. A bad value stops the run.
 func remoteEndpoint(m effect.Machine, home string) (string, error) {
+	if err := host.RefuseLinks(m, home, home+"/.secrets/env"); err != nil {
+		return "", err
+	}
 	env, err := m.ReadFile(home + "/.secrets/env")
 	if errors.Is(err, fs.ErrNotExist) {
 		return "", nil
