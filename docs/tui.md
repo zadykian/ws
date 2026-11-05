@@ -79,7 +79,7 @@ the steps by role, and keeps the current one in sight:
 | `·` | Waiting. |
 | `✓` | Done, with nothing to change. |
 | `●` | Done with changes, or with changes to make under `--check`. |
-| `○` | Left out. |
+| `○` | Left out by `--only ROLE/STEP`: planned, and neither applied nor shown under `--check`. A plan that fails warns, and the run goes on. |
 | `✗` | Failed. |
 | `–` | Skipped. |
 
