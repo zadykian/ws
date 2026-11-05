@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"testing"
@@ -116,6 +118,70 @@ func TestRunEndsCtxOnASignal(t *testing.T) {
 	}
 }
 
+func TestRunTurnsAPanicOfTheWorkIntoAnError(t *testing.T) {
+	var out bytes.Buffer
+	err := Run(t.Context(), noKeys(&out), recorder{&[]tea.Msg{}},
+		func(context.Context, *Bridge) error { panic("a bug") })
+	if !errors.Is(err, errPanic) || !strings.Contains(err.Error(), "a bug") ||
+		!strings.Contains(err.Error(), "run_test.go") {
+		t.Errorf("Run: %v, want the value and the stack", err)
+	}
+	if !strings.Contains(out.String(), leaveBuffer) {
+		t.Errorf("the terminal stayed on the screen: %q", out.String())
+	}
+}
+
+func TestRunReportsAPanicPastItsScreen(t *testing.T) {
+	c := noKeys(io.Discard)
+	c.In = strings.NewReader("\x03\x03")
+	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(_ context.Context, b *Bridge) error {
+		<-b.gone
+		panic("a bug")
+	})
+	if !errors.Is(err, errPanic) {
+		t.Errorf("Run: %v", err)
+	}
+}
+
+// fragile is a screen that panics on a Line.
+type fragile struct{ recorder }
+
+func (f fragile) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if _, ok := msg.(Line); ok {
+		panic("a bug")
+	}
+	return f, nil
+}
+
+// firstWrite is a terminal that says when a frame has reached it.
+type firstWrite struct {
+	bytes.Buffer
+	once  sync.Once
+	drawn chan struct{}
+}
+
+func (f *firstWrite) Write(p []byte) (int, error) {
+	f.once.Do(func() { close(f.drawn) })
+	return f.Buffer.Write(p)
+}
+
+func TestRunRestoresTheTerminalAfterAPanicOfTheScreen(t *testing.T) {
+	out := firstWrite{drawn: make(chan struct{})}
+	err := Run(t.Context(), noKeys(&out), fragile{recorder{&[]tea.Msg{}}},
+		func(ctx context.Context, b *Bridge) error {
+			b.send(tea.WindowSizeMsg{Width: 80, Height: 24})
+			<-out.drawn
+			b.Say("a line")
+			return waitForCtx(ctx, b)
+		})
+	if !errors.Is(err, tea.ErrProgramPanic) {
+		t.Errorf("Run: %v", err)
+	}
+	if !strings.Contains(out.String(), leaveBuffer) {
+		t.Errorf("the terminal stayed on the screen: %q", out.String())
+	}
+}
+
 // quitter is a screen that quits by itself.
 type quitter struct{ recorder }
 
@@ -130,6 +196,7 @@ func TestRunRefusesAScreenThatQuitsByItself(t *testing.T) {
 
 func TestEnding(t *testing.T) {
 	cut, failed := cutError{syscall.SIGINT}, errors.New("a step failed")
+	panicked := fmt.Errorf("%w: a bug", errPanic)
 	cases := []struct {
 		name  string
 		s     session
@@ -140,6 +207,8 @@ func TestEnding(t *testing.T) {
 		{"a failure", session{done: true, err: failed}, nil, failed},
 		{"a failure past a cut", session{done: true, err: failed, cutBy: cut}, nil, cut},
 		{"a success past a cut", session{done: true, cutBy: cut}, nil, nil},
+		{"a panic past a cut", session{done: true, err: panicked, cutBy: cut}, nil, panicked},
+		{"a panic past the screen", session{err: panicked, cutBy: cut}, nil, panicked},
 		{"a work left behind", session{cutBy: cut}, nil, cut},
 		{"a screen that quit", session{}, nil, errLeft},
 		{"a broken screen", session{}, syscall.EIO, syscall.EIO},

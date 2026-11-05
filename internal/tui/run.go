@@ -4,9 +4,11 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -16,8 +18,12 @@ import (
 // unwindBound bounds the wait for a work's cleanup, short as a second Ctrl-C asked to leave.
 const unwindBound = 5 * time.Second
 
-// errLeft is the error of a screen that quit by itself, with the work unfinished.
-var errLeft = errors.New("the screen ended before the run")
+var (
+	// errLeft is the error of a screen that quit by itself, with the work unfinished.
+	errLeft = errors.New("the screen ended before the run")
+	// errPanic marks a panic of the work, which a cut must not hide.
+	errPanic = errors.New("panic")
+)
 
 // Config is what Run takes of the process.
 type Config struct {
@@ -40,7 +46,7 @@ type Work func(ctx context.Context, b *Bridge) error
 // back: after the work, or once Ctrl-C or a signal ended ctx and then came again.
 // A screen that ends first ends ctx, and Run gives the work c.Unwind. It returns the work's error,
 // or Cut's where a cut run failed, for execute to report. What stays by hand prints on the normal
-// screen before Run returns.
+// screen before Run returns. A panic of the work is an error too.
 func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -48,7 +54,7 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	result := make(chan error, 1)
 	begin := tea.Batch(
 		func() tea.Msg {
-			err := work(ctx, bridge)
+			err := guarded(ctx, bridge, work)
 			result <- err
 			return doneMsg{err}
 		},
@@ -104,10 +110,24 @@ func forward(signals <-chan os.Signal, program *tea.Program, gone <-chan struct{
 // failure is the cut's work, and so is a screen that broke as it closed.
 func ending(s session, broke error) error {
 	switch {
+	case errors.Is(s.err, errPanic):
+		return s.err
 	case !s.done:
 		return cmp.Or(s.cutBy, broke, errLeft)
 	case s.err != nil && s.cutBy != nil:
 		return s.cutBy
 	}
 	return s.err
+}
+
+// guarded runs work, and turns its panic into an error, so that the terminal comes back and the
+// stack prints on the normal screen. A panic left alone in this goroutine would leave the terminal
+// raw.
+func guarded(ctx context.Context, bridge *Bridge, work Work) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%w: %v\n%s", errPanic, r, debug.Stack())
+		}
+	}()
+	return work(ctx, bridge)
 }
