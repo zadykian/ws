@@ -26,6 +26,14 @@ func screenWanted(plain, stdinTTY, stderrTTY bool, term string) bool {
 	return !plain && stdinTTY && stderrTTY && term != "" && term != "dumb"
 }
 
+// runTitle is a run screen's title: the command, with --check where it makes no change.
+func runTitle(c *cobra.Command, check bool) string {
+	if check {
+		return c.CommandPath() + " --check"
+	}
+	return c.CommandPath()
+}
+
 // drawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
 // the terminal is back. work reads Bridge.Stop between its steps. A run cut short ends with the
 // status of a signal, for execute to report.

@@ -135,12 +135,8 @@ func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
 // applyOnScreen is apply.Run under the run screen. cfg's steps name the screen's rows, and the run
 // builds them again on the screen's effects. The roles it returns are those of a run that ended.
 func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []roles.Role) ([]string, error) {
-	title := c.CommandPath()
-	if cfg.Check {
-		title += " --check"
-	}
 	var changed []string
-	err := drawRun(c, p, title, serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
+	err := drawRun(c, p, runTitle(c, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
 		run := cfg
 		run.M = screenMachine(ctx, b, cfg.M)
 		run.Out, run.Observer, run.Stop, run.Prepare = b, b, b.Stop(ctx), prepareSteps(run.M, b)

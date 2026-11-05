@@ -140,25 +140,34 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		}
 		return errors.Join(all...)
 	}
+	xdg := p.getenv("XDG_CONFIG_HOME")
+	build := func(m effect.Machine, out effect.Out, text io.Writer) []step.Step {
+		steps := setupSteps(settings, home, xdg, m, out, text, check)
+		switch {
+		case len(args) == 1:
+			return slices.DeleteFunc(steps, func(s step.Step) bool { return s.Name() != args[0] })
+		case check:
+			// Nothing is applied, so a second plan would only repeat the first.
+			return steps
+		}
+		// cld's restore tabs change ssh's file, so ssh runs once more.
+		return slices.Concat(steps, []step.Step{sshStep(settings, home, m, out, true)})
+	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), p.machine, out, c.OutOrStdout(), check)
-	chosen := steps
-	if len(args) == 1 {
-		chosen = slices.DeleteFunc(slices.Clone(steps), func(s step.Step) bool { return s.Name() != args[0] })
-	} else if !check {
-		// cld's restore tabs change ssh's file, so ssh runs once more.
-		// Under --check nothing is applied, so a second plan would only repeat the first.
-		chosen = slices.Concat(steps, []step.Step{sshStep(settings, home, p.machine, out, true)})
-	}
-	ctx := c.Context()
-	_, err = step.RunWith(ctx, chosen, step.Options{Observer: out, Check: check})
-	for _, s := range chosen {
+	err = runSetup(c.Context(), build(p.machine, out, c.OutOrStdout()), step.Options{Observer: out, Check: check})
+	term.Flush()
+	return err
+}
+
+// runSetup runs steps under o, then what each leaves for the end of a run that passed.
+func runSetup(ctx context.Context, steps []step.Step, o step.Options) error {
+	_, err := step.RunWith(ctx, steps, o)
+	for _, s := range steps {
 		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil {
 			err = f.Finish(ctx)
 		}
 	}
-	term.Flush()
 	return unwrapStep(err)
 }
 
