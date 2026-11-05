@@ -138,6 +138,21 @@ func TestRenderStacksInANarrowWindow(t *testing.T) {
 	}
 }
 
+func TestRenderDrawsTheHeaderAboveThePanes(t *testing.T) {
+	layout := twoPanes()
+	layout.Header = "tab one\ntab two"
+	lines := strings.Split(layout.Render(testTheme, 80, 24), "\n")
+	if got := strings.TrimRight(lines[1], " "); len(lines) != 24 || got != "tab one" {
+		t.Fatalf("%d lines, the second %q", len(lines), got)
+	}
+	if !strings.HasPrefix(lines[2], "tab two") || !strings.Contains(lines[3], "Steps") {
+		t.Errorf("lines 3 and 4: %q, %q", lines[2], lines[3])
+	}
+	if got := layout.PaneSizes(80, 24)[0].Height; got != 18 {
+		t.Errorf("a pane holds %d lines, want 18 with the header's two taken", got)
+	}
+}
+
 func TestRenderDropsTheStatusThatDoesNotFit(t *testing.T) {
 	got := stripped(twoPanes().Render(NewTheme(noColor("1")), 18, 24))
 	if line, _, _ := strings.Cut(got, "\n"); line != " ws server apply  " {
