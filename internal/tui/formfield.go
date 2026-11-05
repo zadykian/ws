@@ -154,3 +154,25 @@ func (f FormField) Check() (FormField, bool) {
 	}
 	return f, f.problem == nil
 }
+
+// view draws the line that takes the keys. A choice's arrows show the keys it takes. Too narrow for
+// its options, it shows the chosen one alone. Its brackets mark that one under NO_COLOR.
+func (f FormField) view(theme Theme, width int) string {
+	if f.spec.Kind != ChoiceField {
+		return f.input.View()
+	}
+	cells := make([]string, 0, len(f.spec.Options))
+	chosen := ""
+	for i, option := range f.spec.Options {
+		cell := " " + option + " "
+		if i == f.chosen {
+			chosen = theme.Shortcut.Render("[" + option + "]")
+			cell = chosen
+		}
+		cells = append(cells, cell)
+	}
+	if line := "← " + strings.Join(cells, " ") + " →"; lipgloss.Width(line) <= width {
+		return line
+	}
+	return "← " + chosen + " →"
+}

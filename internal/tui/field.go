@@ -74,7 +74,7 @@ func (f field) render(theme Theme, window Size) string {
 	if f.prompt.fallback != "" {
 		text += " [" + f.prompt.fallback + "]"
 	}
-	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.input.View(), ""}
+	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.view(theme, width-2), ""}
 	if f.input.problem != nil {
 		lines[2] = theme.Bad.Width(width - 2).Render(f.input.problem.Error())
 	}
