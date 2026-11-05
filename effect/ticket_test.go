@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/effect/effecttest"
 )
 
 // rootCalls are the ways through OSMachine that run a command as root.
@@ -62,5 +64,24 @@ func TestOSMachineTicketLeavesTheUsersCommands(t *testing.T) {
 	if err := errors.Join(run, shown, m.Pass(t.Context(), false, "true"),
 		m.PassForeground(t.Context(), false, "true")); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestValidateRunsSudoAtTheTerminal(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["sudo -v"] = effecttest.Result{}
+	if err := effect.Validate(t.Context(), m); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"run sudo -v"}; !slices.Equal(m.Calls, want) {
+		t.Errorf("calls = %q, want %q", m.Calls, want)
+	}
+}
+
+func TestValidateTakesAMachinesTicket(t *testing.T) {
+	refused := errors.New("refused")
+	m := effect.OSMachine{Sudo: []string{"false"}, Ticket: func() error { return refused }}
+	if err := effect.Validate(t.Context(), m); !errors.Is(err, refused) {
+		t.Errorf("err = %v", err)
 	}
 }

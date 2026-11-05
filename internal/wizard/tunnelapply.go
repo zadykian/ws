@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/check"
 	"github.com/zadykian/ws/step"
 )
@@ -19,7 +20,10 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil {
 		return err
 	}
-	if err := t.M.Pass(ctx, false, "sudo", "-v"); err != nil {
+	switch err := effect.Validate(ctx, t.M); {
+	case errors.Is(err, effect.ErrNoTicket):
+		return err
+	case err != nil:
 		return errors.New(tunnelStage + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
 	}
 	out, err := t.M.RunRoot(ctx, libexec, "mac", "tunnel", "key")

@@ -36,6 +36,10 @@ type OSMachine struct {
 	Confine string
 }
 
+// ErrNoTicket ends a Ticket where sudo took the password and kept no ticket, as with
+// timestamp_timeout=0. A sudo that can't ask then refuses each command, and --plain asks for each.
+var ErrNoTicket = errors.New("sudo keeps no ticket here, so a screen can't run root's commands: run with --plain")
+
 // NoStdin is a Stdin that ends at once, as http.NoBody is a body.
 var NoStdin io.Reader = noStdin{}
 

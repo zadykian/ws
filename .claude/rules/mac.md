@@ -26,6 +26,8 @@ module is at the root), each linking its reason
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../effect/effecttest/effecttest.go), never the real ones.
+- A step that wants sudo's password ahead of its lines calls `effect.Validate`, never `sudo -v`
+  by `Pass`, which would ask over a screen ([tui.md](../../docs/tui.md#commands)).
 - No cgo: ws builds with `CGO_ENABLED=0`. The race detector's cgo is the tests' alone
   ([Makefile](../../Makefile)).
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
