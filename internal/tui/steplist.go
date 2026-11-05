@@ -2,6 +2,7 @@ package tui
 
 import (
 	"slices"
+	"strings"
 
 	"charm.land/lipgloss/v2"
 
@@ -93,6 +94,19 @@ func (r stepRow) label() string {
 	return r.parent + ": " + r.name
 }
 
+// render draws the row, indented under a heading.
+func (r stepRow) render(theme Theme, current bool) string {
+	mark, style := r.state.look(theme)
+	if current && r.state == stepOpen {
+		mark, style = "▸", theme.PaneTitle
+	}
+	indent := ""
+	if r.parent != "" {
+		indent = "  "
+	}
+	return indent + style.Render(mark+" "+r.name)
+}
+
 // stepList is a run's steps in the order they run, so that the first one open is the current one.
 type stepList []stepRow
 
@@ -134,4 +148,23 @@ func (l stepList) ended() int {
 		}
 	}
 	return done
+}
+
+// view draws height lines of the list, the steps under their headings. A run has more steps than a
+// window has lines, so the current one stays in sight, a third of the way down.
+func (l stepList) view(theme Theme, height int) string {
+	at := l.at()
+	lines := make([]string, 0, len(l))
+	sight := 0
+	for i, row := range l {
+		if row.parent != "" && (i == 0 || row.parent != l[i-1].parent) {
+			lines = append(lines, theme.PaneTitle.Render(row.parent))
+		}
+		if i == at || at < 0 {
+			sight = len(lines)
+		}
+		lines = append(lines, row.render(theme, i == at))
+	}
+	top := max(min(sight-height/3, len(lines)-height), 0)
+	return strings.Join(lines[top:min(top+height, len(lines))], "\n")
 }

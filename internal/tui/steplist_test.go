@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/step"
@@ -113,5 +114,56 @@ func TestStepListAt(t *testing.T) {
 	list = list.take(step.Event{Kind: step.Done, Parent: "ssh", Step: "Keys"})
 	if list.at() != -1 || list.ended() != 3 {
 		t.Errorf("at = %d, ended = %d, want a run that is over", list.at(), list.ended())
+	}
+}
+
+func TestStepListViewMarksEachStateByItsShape(t *testing.T) {
+	list := newStepList([]Group{{"base", []string{"a", "b", "c", "d", "e", "f", "g"}}})
+	changes := []step.Change{oneChange("x")}
+	events := []step.Event{
+		{Kind: step.Done},
+		{Kind: step.Done, Changes: changes},
+		{Kind: step.Done, Changes: changes, LeftOut: true},
+		{Kind: step.Skipped},
+	}
+	for i, e := range events {
+		e.Parent, e.Index = "base", i
+		list = list.take(e)
+	}
+	want := "base\n  ✓ a\n  ● b\n  ○ c\n  – d\n  ▸ e\n  · f\n  · g"
+	if got := stripped(list.view(testTheme, 20)); got != want {
+		t.Errorf("view =\n%s\nwant\n%s", got, want)
+	}
+}
+
+func TestStepListViewDrawsNoHeadingForAFlatList(t *testing.T) {
+	got := stripped(newStepList([]Group{{"", []string{"Tools", "ssh"}}}).view(testTheme, 20))
+	if want := "▸ Tools\n· ssh"; got != want {
+		t.Errorf("view =\n%s\nwant\n%s", got, want)
+	}
+}
+
+func TestStepListViewKeepsTheCurrentStepInSight(t *testing.T) {
+	names := make([]string, 40)
+	for i := range names {
+		names[i] = "step" + string(rune('A'+i))
+	}
+	list := newStepList([]Group{{"base", names}})
+	for i := range 30 {
+		list = list.take(step.Event{Kind: step.Done, Parent: "base", Index: i})
+	}
+	got := strings.Split(list.view(testTheme, 9), "\n")
+	if len(got) != 9 || !strings.Contains(got[3], "▸") {
+		t.Errorf("view = %q, want 9 lines with the current step on the fourth", got)
+	}
+}
+
+func TestStepListViewEndsOnTheLastStepOfAFinishedRun(t *testing.T) {
+	list := newStepList([]Group{{"", []string{"a", "b", "c", "d"}}})
+	for i := range 4 {
+		list = list.take(step.Event{Kind: step.Done, Index: i})
+	}
+	if got, want := stripped(list.view(testTheme, 2)), "✓ c\n✓ d"; got != want {
+		t.Errorf("view =\n%s\nwant\n%s", got, want)
 	}
 }
