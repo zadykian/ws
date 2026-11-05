@@ -132,5 +132,32 @@ tab t1 "$work/proj/ws"
 go
 result "a new session beside the two" until_ok shown 1
 result "three sessions" test "$(sessions)" -eq 3
+echo "== T4 two directories named ws share nothing"
+reset
+detached "$work/other/ws"
+tab t1 "$work/proj/ws"
+go
+result "a new session beside the other's" until_ok shown 1
+result "two sessions" test "$(sessions)" -eq 2
+
+echo "== T5 a second tab does not take the first's session"
+reset
+tab t1 "$work/proj/ws"
+go
+result "the first tab shows a session" until_ok shown 1
+tab t2 "$work/proj/ws"
+result "two clients, each on a session" until_ok shown 2
+result "two sessions" test "$(sessions)" -eq 2
+
+echo "== T6 a tab closed with its client killed leaves a session that the next tab takes"
+reset
+tab t1 "$work/proj/ws"
+go
+result "the first tab shows a session" until_ok shown 1
+ot kill-session -t t1
+result "the session stays, shown to no one" until_ok shown 0
+tab t2 "$work/proj/ws"
+result "the next tab takes it" until_ok shown 1
+result "it is named for the new tab" named "$(project_of "$work/proj/ws")-$(pane_pid t2)"
 
 exit "$failed"
