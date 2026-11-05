@@ -159,5 +159,71 @@ result "the session stays, shown to no one" until_ok shown 0
 tab t2 "$work/proj/ws"
 result "the next tab takes it" until_ok shown 1
 result "it is named for the new tab" named "$(project_of "$work/proj/ws")-$(pane_pid t2)"
+echo "== T7 tabs that start together each end on a session of their own"
+# together K N: K detached sessions and N tabs started at once end as the larger number of
+# sessions, with N clients and none shown twice, in each of 10 rounds.
+together() {
+    want=$1
+    [ "$2" -le "$1" ] || want=$2
+    bad=0
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        reset
+        i=0
+        while [ "$i" -lt "$1" ]; do
+            detached "$work/proj/ws"
+            i=$((i + 1))
+        done
+        i=0
+        while [ "$i" -lt "$2" ]; do
+            tab "t$i" "$work/proj/ws"
+            i=$((i + 1))
+        done
+        sleep 0.3
+        go
+        until_ok have_clients "$2" || true
+        sleep 0.5
+        { shown "$2" && [ "$(sessions)" -eq "$want" ]; } || bad=$((bad + 1))
+    done
+    test "$bad" -eq 0
+}
+result "1 detached, 2 tabs together" together 1 2
+result "3 detached, 3 tabs together" together 3 3
+result "3 detached, 5 tabs together" together 3 5
+result "0 detached, 3 tabs together" together 0 3
+result "2 detached, 2 tabs together" together 2 2
+result "5 detached, 5 tabs together" together 5 5
+
+echo "== T8 a session whose tab still lives is not taken"
+reset
+zt -f "$dir/tmux.conf" new-session -d -s "$(project_of "$work/proj/ws")-$$"
+tab t1 "$work/proj/ws"
+go
+result "a new session beside it" until_ok shown 1
+result "two sessions" test "$(sessions)" -eq 2
+
+echo "== T9 without tmux on the PATH the script runs a login shell"
+reset
+cat >"$work/shell" <<EOF
+#!/bin/sh
+echo "\$0 \$*" >"$work/shell.out"
+EOF
+chmod +x "$work/shell"
+(cd "$work/proj/ws" && SHELL="$work/shell" PATH="$work/none" /bin/sh "$dir/terminal")
+result "it ran \$SHELL -l" test "$(cat "$work/shell.out")" = "$work/shell -l"
+
+echo "== T10 a new session takes the tab's environment, though the server started with another"
+reset
+tab t1 "$work/proj/ws"
+go
+result "the first tab starts the server" until_ok shown 1
+tab t2 "$work/other/ws" -e ZED_TRIAL_ENV=other -e "ZED_TWO=$(printf 'a\nb')"
+result "the second tab shows a session of its own" until_ok shown 2
+# sees SESSION is true where the shell of the session prints both variables as the tab had them.
+sees() { zt capture-pane -p -t "=$1:" | grep -qx 'env=other two=a+b'; }
+# shellcheck disable=SC2016 # the pane's shell expands the line, not this one
+zt send-keys -t "=$(project_of "$work/other/ws")-$(pane_pid t2):" \
+    'echo "env=${ZED_TRIAL_ENV:-unset} two=$(printf %s "$ZED_TWO" | tr "\n" +)"' Enter
+result "its shell sees a variable and one of two lines" \
+    until_ok sees "$(project_of "$work/other/ws")-$(pane_pid t2)"
 
 exit "$failed"
