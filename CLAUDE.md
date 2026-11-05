@@ -29,7 +29,8 @@ Mac that works on the server. The rest is the docs, the lint gates' tools and CI
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
-- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `install` and `signoz`;
+- `.github/workflows/`: `ci.yml`, with the jobs `lint`, `playbook`, `rootless`, `install` and
+  `signoz`;
   `mac.yml`, with `mac`, whose cases are `.github/mac/NN-*.sh`; `mac-cld.yml`, with `mac-cld`;
   `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
@@ -55,8 +56,9 @@ It installs yamllint into `.cache`, and `tools/run` downloads the rest there.
 
 The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` builds ws and runs `ws server apply`
 twice in an Ubuntu 26.04 container, `signoz` forges SigNoz's compose files again, and `install`
-tries `install.sh`. `mac` sets up a Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's
-wizard on another. `mac-cld` sets up Ghostty and cld on a third
+tries `install.sh`. `rootless` runs the rootless daemon and the firewall on a booted runner
+([The rootless job](docs/checks-rootless.md)). `mac` sets up a Mac on GitHub's macOS runner, and
+`mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up Ghostty and cld on a third
 ([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of `ws server apply` sets up the
 machine that runs it, as below.
 

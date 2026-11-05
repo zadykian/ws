@@ -1,12 +1,12 @@
 # Checks
 
-In a stack, CI runs `playbook`, `mac`, `mac-cld` and `mac-wizard`, its longest jobs, on the top
-pull request alone, as it holds every change below it. `lint`, `install` and `signoz` run on each.
-A stack opens as drafts, as a pull request opens before its link, and only a later event names
-the stack. So these four skip a draft's `opened` run and start on `ready_for_review`, which the
-other three skip.
-The `mac-cld` job's checks are on [their own page](checks-mac-cld.md), and the gates of `make lint`
-on [theirs](gates.md).
+In a stack, CI runs `playbook`, `rootless`, `mac`, `mac-cld` and `mac-wizard`, its longest jobs, on
+the top pull request alone, as it holds every change below it. `lint`, `install` and `signoz` run
+on each. A stack opens as drafts, as a pull request opens before its link, and only a later event
+names the stack. So these five skip a draft's `opened` run and start on `ready_for_review`, which
+the other three skip.
+The checks of `rootless` and `mac-cld` are on their own pages ([rootless](checks-rootless.md),
+[mac-cld](checks-mac-cld.md)), and the gates of `make lint` on [theirs](gates.md).
 
 ## The `playbook` job
 
