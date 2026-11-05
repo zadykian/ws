@@ -84,6 +84,10 @@ func (s *Sudo) Apply(ctx context.Context, p step.Plan) error {
 // ask takes the password, and has sudo check it with nothing behind it on stdin. With a script
 // behind a wrong password, sudo would read the script's lines as its next two tries.
 func (s *Sudo) ask(ctx context.Context, user string) error {
+	if !s.Host.Tty {
+		return fmt.Errorf("%s: %s's sudo on ws asks for a password, and no terminal is here to ask it: "+
+			"run the wizard at a terminal", sudoStage, user)
+	}
 	password, err := s.P.AskHidden(ctx, user+"'s sudo password on ws")
 	if err != nil {
 		return fmt.Errorf("%s: %w", sudoStage, err)

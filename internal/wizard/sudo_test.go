@@ -110,6 +110,16 @@ func TestSudoStopsOnAUserOutsideSudoers(t *testing.T) {
 	}
 }
 
+func TestSudoWithNoTerminalStops(t *testing.T) {
+	s, _, prompt := newSudo(t)
+	s.Host.Tty = false
+	p, _ := s.Plan(context.Background())
+	err := s.Apply(context.Background(), p)
+	if err == nil || !strings.Contains(err.Error(), "no terminal") || len(prompt.Asked) != 0 {
+		t.Fatalf("Apply = %v, Asked %q", err, prompt.Asked)
+	}
+}
+
 func TestSudoStopsWhereSSHFails(t *testing.T) {
 	s, m, prompt := newSudo(t)
 	m.Results[sudoLine(s, "sudo", "-n", "true")] = effecttest.Result{Err: sshFailed("timed out\r\n")}
