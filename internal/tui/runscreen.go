@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
@@ -17,6 +18,13 @@ const (
 	barMost  = 24
 	// statusGaps is the columns around the title and the status's parts.
 	statusGaps = 5
+)
+
+// The places of the run screen's buttons.
+const (
+	pageUpPlace = iota
+	pageDownPlace
+	bottomPlace
 )
 
 // tickMsg is the clock, for the elapsed time. It carries the time, so that Update reads no clock.
@@ -68,8 +76,33 @@ func (r RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		r.window = Size{msg.Width, msg.Height}
 		r.output = r.output.fit(r.layout().PaneSizes(msg.Width, msg.Height)[1])
+	case tea.KeyPressMsg:
+		return r.pressed(msg), nil
 	}
 	return r, nil
+}
+
+// pressed moves the focus or the window. Up, Down and Home are no buttons, as a row of all the keys
+// would take two lines of an 80-column window.
+func (r RunScreen) pressed(msg tea.KeyPressMsg) RunScreen {
+	var place int
+	r.footer, place = r.footer.Update(msg)
+	page := max(r.output.size.Height, 1)
+	switch {
+	case place == pageUpPlace:
+		r.output = r.output.move(page)
+	case place == pageDownPlace:
+		r.output = r.output.move(-page)
+	case place == bottomPlace:
+		r.output = r.output.move(-len(r.output.rows))
+	case key.Matches(msg, Keys.Up):
+		r.output = r.output.move(1)
+	case key.Matches(msg, Keys.Down):
+		r.output = r.output.move(-1)
+	case key.Matches(msg, Keys.Top):
+		r.output = r.output.move(len(r.output.rows))
+	}
+	return r
 }
 
 // layout is the screen with its panes empty, as what fills them depends on their sizes. The window

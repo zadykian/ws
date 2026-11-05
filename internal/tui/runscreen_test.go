@@ -11,6 +11,8 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
+var pgUp = tea.KeyPressMsg{Code: tea.KeyPgUp}
+
 // sent gives r each message.
 func sent(r RunScreen, msgs ...tea.Msg) RunScreen {
 	for _, msg := range msgs {
@@ -70,6 +72,63 @@ func TestRunScreenWrapsALongLineToTheWindow(t *testing.T) {
 	r := sent(testRun(), Line{Said, "first " + strings.Repeat("x", 45) + " last"})
 	if got := shown(r); !strings.Contains(got, "last") {
 		t.Errorf("frame cut the line:\n%s", got)
+	}
+}
+
+func TestRunScreenKeysScrollTheWindow(t *testing.T) {
+	r := testRun()
+	for i := range 100 {
+		r = sent(r, Line{Said, "line" + strings.Repeat("x", i%2) + string(rune('0'+i%10))})
+	}
+	page := r.output.size.Height
+	cases := []struct {
+		name string
+		key  tea.KeyPressMsg
+		want int
+	}{
+		{"up", tea.KeyPressMsg{Code: tea.KeyUp}, 1},
+		{"k", tea.KeyPressMsg{Code: 'k', Text: "k"}, 1},
+		{"page up", pgUp, page},
+		{"ctrl+u", tea.KeyPressMsg{Code: 'u', Mod: tea.ModCtrl}, page},
+		{"home", tea.KeyPressMsg{Code: tea.KeyHome}, 100 - page},
+		{"g", tea.KeyPressMsg{Code: 'g', Text: "g"}, 100 - page},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := sent(r, c.key).output.back; got != c.want {
+				t.Errorf("back = %d, want %d", got, c.want)
+			}
+		})
+	}
+	moved := sent(r, tea.KeyPressMsg{Code: tea.KeyHome})
+	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyDown}).output.back; got != 100-page-1 {
+		t.Errorf("down: back = %d, want %d", got, 100-page-1)
+	}
+	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyPgDown}).output.back; got != 100-2*page {
+		t.Errorf("page down: back = %d, want %d", got, 100-2*page)
+	}
+	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyEnd}).output.back; got != 0 {
+		t.Errorf("end: back = %d, want the window back on the end", got)
+	}
+}
+
+func TestRunScreenButtonsTakeTheFocus(t *testing.T) {
+	r := sent(testRun(), Line{Said, strings.Repeat("line\n", 60)})
+	focused := sent(r, tea.KeyPressMsg{Code: tea.KeyTab})
+	if focused.footer.Focused() != pageUpPlace {
+		t.Fatalf("focus = %d after Tab, want the first button", focused.footer.Focused())
+	}
+	if got := sent(focused, tea.KeyPressMsg{Code: tea.KeyEnter}).output.back; got != r.output.size.Height {
+		t.Errorf("back = %d after Enter on page up, want a page", got)
+	}
+}
+
+func TestRunScreenFooterShowsTheShortcuts(t *testing.T) {
+	got := shown(testRun())
+	for _, want := range []string{"[pgup] page up", "[pgdn] page down", "[end] bottom"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("footer holds no %q:\n%s", want, got)
+		}
 	}
 }
 
