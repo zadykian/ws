@@ -104,3 +104,10 @@ type Machine interface {
 	// returns only where it fails to start the command.
 	Exec(name string, args, env []string) error
 }
+
+// Foreground runs a command that talks to the maintainer. It stands beside Machine, whose fakes in
+// other modules go on compiling: effect is public.
+type Foreground interface {
+	// PassForeground is Pass on the terminal itself. A screen suspends first, and draws again after.
+	PassForeground(ctx context.Context, root bool, name string, args ...string) error
+}

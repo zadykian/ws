@@ -74,6 +74,8 @@ A screen owns the terminal, so a step's commands stay off it.
   `BatchMode` where no prompt is expected.
 - A command keeps ws's controlling terminal. sudo keeps its ticket by terminal, so a child's own
   sudo, such as brew's, would ask again without one.
+- `effect.Foreground` runs a command that talks to the maintainer. The screen suspends, and the
+  command has the terminal until it ends. In plain mode it does what `Pass` does.
 
 ## The terminal comes back
 
