@@ -20,6 +20,8 @@ type (
 	endedMsg struct{}
 	// doneMsg is the end of a run's work.
 	doneMsg struct{ err error }
+	// haltedMsg tells the screen that the run ends with its current step.
+	haltedMsg struct{}
 )
 
 // session is a run's model: its screen, which takes every message that the session doesn't, with
@@ -38,7 +40,10 @@ type session struct {
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
 	field field
-	// stopping is set once ctx ended, and cutBy once a signal or Ctrl-C ended it.
+	// halted is set once the run was told to end past its current step.
+	halted bool
+	// stopping is set once ctx ended. cutBy is set once a signal or Ctrl-C ended ctx, or halted the
+	// run, so that a run stopped short ends with the status of a cut one.
 	stopping bool
 	cutBy    error
 	// done and err are the end of the work.
@@ -73,7 +78,7 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return s, tea.Quit
 	case tea.KeyPressMsg:
 		if key.Matches(msg, Keys.Interrupt) {
-			return s.interrupt(syscall.SIGINT)
+			return s.pressed()
 		}
 		if len(s.asked) > 0 {
 			return s.typed(msg)
@@ -127,10 +132,24 @@ func (s session) drop(id uint64) session {
 	return s
 }
 
-// interrupt takes a signal, or Ctrl-C, which raw mode keeps from being one. The first ends ctx, and
-// the screen stays until the work has seen that. The next leaves, as a step can ignore ctx.
+// pressed takes Ctrl-C, which raw mode keeps from being a signal. A run that can stop between its
+// steps does. Under a question it can't: a step waits on the answer, so that ctx alone ends it. The
+// screen hears of a stop, as the run goes on under it and the maintainer can still read its output.
+func (s session) pressed() (tea.Model, tea.Cmd) {
+	if s.halt == nil || s.halted || s.stopping || len(s.asked) > 0 {
+		return s.interrupt(syscall.SIGINT)
+	}
+	s.halted = true
+	s.cutBy = s.cut(syscall.SIGINT)
+	var cmd tea.Cmd
+	s.screen, cmd = s.screen.Update(haltedMsg{})
+	return s, tea.Batch(s.halt, cmd)
+}
+
+// interrupt takes a signal, which nobody confirms, or a press past the confirmation. The first ends
+// ctx, and the screen stays until the work has seen that. The next leaves, as a step can ignore ctx.
 func (s session) interrupt(signal syscall.Signal) (tea.Model, tea.Cmd) {
-	if s.cutBy != nil {
+	if s.stopping && s.cutBy != nil {
 		return s, tea.Quit
 	}
 	s.cutBy = s.cut(signal)
