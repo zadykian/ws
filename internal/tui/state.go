@@ -10,8 +10,7 @@ type StateRead struct {
 	Err      error
 }
 
-// StateScreen shows what a machine holds of what ws manages: a tab for each kind and the rows of the
-// tab on show. It changes nothing.
+// StateScreen shows what a machine holds of what ws manages, a tab for each kind. It changes nothing.
 type StateScreen struct {
 	theme Theme
 	title string
