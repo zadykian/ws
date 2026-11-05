@@ -88,16 +88,23 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # cases make in a row. The stand-in takes them, where its sshd knows the setting.
 ! sudo /usr/sbin/sshd -G -f "$ws/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
     echo 'PerSourcePenalties no' >>"$ws/sshd_config"
-# ws.sh, ws's shell: it logs each command in log, which root writes, and the connection it came in
-# by in conns, then runs it.
-# Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
-# command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
-# and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
-# here. So it roots a command's path from /root or the wizard's state alone, with its arguments, or
-# after the script of sh -c.
+# ws.sh, ws's shell: it logs each command in log, with the user that runs it, which the runner's
+# sudo makes root, and the connection it came in by in conns, then runs it.
+# Where the login's authorized_keys gives the key a command, as cloud-init's does for root, ws.sh
+# stops as that command does, since sshd's ForceCommand runs in its place. It puts ws's programs
+# first on PATH, and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their
+# own, in root here. So it roots a command's path from /root or the wizard's state alone, with its
+# arguments, or after the script of sh -c.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
-echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
+run=${SSH_ORIGINAL_COMMAND#sudo -n }
+run=${run#sudo -k -S -p \'\' }
+who=$(id -un)
+[ "$run" = "$SSH_ORIGINAL_COMMAND" ] || {
+    who=root
+    echo "$SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/sudo.log"
+}
+echo "$who: $run" >>"$WS_STANDIN/log"
 echo "$SSH_CONNECTION" >>"$WS_STANDIN/conns"
 key=$(awk '$1 == "publickey" { print $3 }' "${SSH_USER_AUTH:-/dev/null}")
 line=$(awk -v key="$key" 'key != "" && index($0, key) { print; exit }' \
@@ -111,7 +118,9 @@ esac
 PATH=$WS_STANDIN/bin:$PATH
 export PATH
 case $SSH_ORIGINAL_COMMAND in
-'sh -s -- '*) sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
+'sh -s -- '* | 'sudo '*'sh -s -- '*)
+    sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND"
+    ;;
 /root/*) exec "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
 /var/lib/ws-wizard/*) exec /bin/sh -c "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
 "sh -c '"*)
@@ -125,7 +134,7 @@ EOF
 chmod 755 "$ws/ws.sh"
 # ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
 mkdir -p "$ws/bin" "$ws/units"
-for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl getent runuser; do
+for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl getent runuser sudo; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
 : >"$ws/run.log"
@@ -144,6 +153,8 @@ sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
 cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
 touch "$ws/claude"
+# sudo asks no password until a case removes sudo.open.
+touch "$ws/sudo.open"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws mac tunnel has a
 # handshake, and lands in tunnel.log. A direct call, which carries AddressFamily=inet, as Login's

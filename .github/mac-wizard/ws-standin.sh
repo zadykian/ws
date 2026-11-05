@@ -4,6 +4,8 @@
 # PATH, claude where the remote script looks for it and ws at /usr/local/bin/ws. Their state is in
 # WS_STANDIN, which ws's sshd sets:
 #
+# - sudo.open is there while sudo asks no password, and sudo.password holds the one that it asks
+#   otherwise; sudo.log holds the command lines that sudo ran for ws.sh;
 # - ws.version is the version that ws prints, and install.log holds a line for each curl, its URL.
 #   curl writes the release's install.sh, which puts its WS_VERSION in ws.version;
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
@@ -54,6 +56,26 @@ direct() {
     grep -qsx 10.77.0.1/30 "$s/addr/$port" || echo 10.77.0.1/30 >>"$s/addr/$port"
 }
 case ${0##*/} in
+sudo)
+    # The forms that the wizard sends. -n takes no password, and -k -S -p '' takes it as the first
+    # line of stdin, a byte at a time, so that the script behind it stays in the pipe. The command
+    # runs as the runner's root, as real sudo does, which sets SUDO_USER.
+    case $1 in
+    -n)
+        shift
+        [ -f "$s/sudo.open" ] || { echo 'sudo: interactive authentication is required' >&2 && exit 1; }
+        ;;
+    -k)
+        [ "$1 $2 $3 $4" = "-k -S -p " ] || exit 2
+        shift 4
+        IFS= read -r password
+        [ "$password" = "$(cat "$s/sudo.password")" ] ||
+            { echo 'sudo: Authentication failed, try again.' >&2 && exit 1; }
+        ;;
+    *) exit 2 ;;
+    esac
+    exec /usr/bin/sudo -n env PATH="$PATH" WS_STANDIN="$s" "$@"
+    ;;
 systemd-run)
     echo "$*" >>"$s/run.log"
     cred=
