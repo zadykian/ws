@@ -52,22 +52,16 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
 account's keys, and leave password login off. Neither the Mac's wizard nor `ws server apply` adds a
 key later. So run the Mac's line above first, which puts the Mac's key on the account ([GitHub and
-Ubuntu's install](docs/mac-wizard.md#github-and-ubuntus-install)). A cloud VM has no installer: it
-gives its default user the provider's keys, which must be the account's. The installer gives the
-keys to its own user, and ws lets root log in by key only. So copy them to root first, as that user:
+Ubuntu's install](docs/mac-wizard.md#github-and-ubuntus-install)). Name the installer's user
+`zadykian`, ws's default user. A cloud VM has no installer: it gives its default user the provider's
+keys, which must be the account's. A VM with root alone logs in as root, where `WS_TARGET=cloud`.
+
+Then, logged in as that user, install ws and apply it through `sudo`. `ws server apply` logs nothing
+in before it: the `devtools` role installs gh, and its login comes by hand ([By hand](#by-hand)).
 
 ```sh
-sudo install -d -m 700 /root/.ssh
-sudo install -m 600 ~/.ssh/authorized_keys /root/.ssh/authorized_keys
-```
-
-Then, as root, after `sudo -i` if you log in as the installer's user, install ws and apply it.
-`ws server apply` logs nothing in before it: the `devtools` role installs gh, and its login comes
-by hand ([By hand](#by-hand)).
-
-```sh
-curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
-ws server apply
+curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sudo sh
+sudo ws server apply
 ```
 
 It runs the roles in order. Then do what stays by hand, below.
@@ -80,8 +74,8 @@ and GoLand. With less, the run fails at that role: [Disk space](docs/jetbrains.m
 Each ws holds the roles of its release, so update ws first, then apply:
 
 ```sh
-ws update
-ws server apply
+sudo ws update
+sudo ws server apply
 ```
 
 A ws before v0.5.1 lacks `ws update`: [Update](docs/releases.md#update).
@@ -100,7 +94,7 @@ ws's last line names the roles that changed, `changed: none` on a second run.
 With `--check`, ws plans its steps and shows what each would change, and nothing changes:
 
 ```sh
-ws server apply --check
+sudo ws server apply --check
 ```
 
 A dry run adds no apt repository. So where a step needs a repository still to come, it says "after"
