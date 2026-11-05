@@ -119,7 +119,7 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	defer stop()
 	term := effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
 	out := progOut{term, prog, map[string]bool{}}
-	obs := step.Printer{Out: out}
+	obs := out
 	if o.update {
 		// Its own run, before the lock: the new ws takes the place of this process, which would leave the lock held.
 		u := &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases, Home: p.getenv("HOME"), Args: p.argv}

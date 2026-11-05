@@ -71,6 +71,6 @@ func runRoute(c *cobra.Command, check bool, build func(effect.Out) step.Step) er
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	defer term.Flush()
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	_, err := step.Run(c.Context(), []step.Step{build(out)}, out, check)
+	_, err := step.RunWith(c.Context(), []step.Step{build(out)}, step.Options{Observer: out, Check: check})
 	return unwrapStep(err)
 }

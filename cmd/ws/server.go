@@ -112,7 +112,7 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 		return err
 	}
 	changed, err := apply.Run(c.Context(), apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out,
-		Observer: step.Printer{Out: out}, Prepare: prepare}, list)
+		Observer: out, Prepare: prepare}, list)
 	term.Flush()
 	if err != nil {
 		return err
