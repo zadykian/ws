@@ -1,10 +1,17 @@
 package host_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/host"
+)
+
+const (
+	userShow = "root runuser -u ws -- env -C /home/ws HOME=/home/ws env XDG_RUNTIME_DIR=/run/user/1000 " +
+		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user "
+	userShowState = "show --property=ActiveState --value docker.service"
 )
 
 func userUnitFixture(booted bool) (*effecttest.Machine, host.UserUnit, *effecttest.Out) {
@@ -12,9 +19,17 @@ func userUnitFixture(booted bool) (*effecttest.Machine, host.UserUnit, *effectte
 	if booted {
 		m.Dirs["/run/systemd/system"] = 0o755
 	}
+	for _, c := range []string{"daemon-reload", "start docker.service"} {
+		m.Results[userShow[len("root "):]+c] = effecttest.Result{}
+	}
 	out := &effecttest.Out{}
 	return m, host.UserUnit{M: m, User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, Out: out,
 		Name: "docker.service"}, out
+}
+
+func userState(m *effecttest.Machine, state string) {
+	m.Dirs["/run/user/1000/systemd/private"] = 0o755
+	m.Results[userShow[len("root "):]+userShowState] = effecttest.Result{Out: []byte(state + "\n")}
 }
 
 func TestUserUnitSkipsWithoutSystemd(t *testing.T) {
@@ -26,6 +41,31 @@ func TestUserUnitSkipsWithoutSystemd(t *testing.T) {
 
 func TestUserUnitWithoutAFileIsLeftAlone(t *testing.T) {
 	_, u, _ := userUnitFixture(true)
+	if got := applyAll(t, u); got != nil {
+		t.Errorf("plan = %q, want none", got)
+	}
+}
+
+func TestUserUnitStartsWhereTheManagerIsDown(t *testing.T) {
+	m, u, _ := userUnitFixture(true)
+	m.Files["/home/ws/.config/systemd/user/docker.service"] = nil
+	if got := applyAll(t, u); !slices.Equal(got, []string{"start ws's docker.service"}) {
+		t.Errorf("plan = %q, want a start", got)
+	}
+}
+
+func TestUserUnitStartsAnInactiveUnitAndLeavesAnActiveOne(t *testing.T) {
+	m, u, _ := userUnitFixture(true)
+	m.Files["/home/ws/.config/systemd/user/docker.service"] = nil
+	userState(m, "inactive")
+	if got := applyAll(t, u); !slices.Equal(got, []string{"start ws's docker.service"}) {
+		t.Fatalf("plan = %q, want a start", got)
+	}
+	if !slices.Contains(m.Calls, "root runuser -u ws -- env -C /home/ws HOME=/home/ws env XDG_RUNTIME_DIR=/run/user/1000 "+
+		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user start docker.service") {
+		t.Errorf("calls = %q, want systemctl --user start", m.Calls)
+	}
+	userState(m, "active")
 	if got := applyAll(t, u); got != nil {
 		t.Errorf("plan = %q, want none", got)
 	}
