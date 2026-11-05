@@ -25,3 +25,14 @@ func Select(list []roles.Role, only []string) ([]roles.Role, error) {
 	}
 	return slices.DeleteFunc(slices.Clone(list), func(r roles.Role) bool { return !slices.Contains(only, r.Name) }), nil
 }
+
+// leftOut is the filter of a run's roles: a role named by ROLE/STEP alone keeps those steps. With
+// no Only it is nil, as every role runs whole.
+func (o Options) leftOut() func(role, step string) bool {
+	if len(o.Only) == 0 {
+		return nil
+	}
+	return func(role, step string) bool {
+		return !slices.Contains(o.Only, role) && !slices.Contains(o.Only, role+"/"+step)
+	}
+}

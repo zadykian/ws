@@ -35,3 +35,25 @@ func TestSelect(t *testing.T) {
 		t.Errorf("unknown role: err = %v", err)
 	}
 }
+
+func TestLeftOut(t *testing.T) {
+	var all Options
+	if all.leftOut() != nil {
+		t.Error("no Only has a filter, want none")
+	}
+	some := Options{Only: []string{"a/x", "a/y", "b", "b/x"}}
+	left := some.leftOut()
+	for _, tc := range []struct {
+		role, step string
+		want       bool
+	}{
+		{"a", "x", false},
+		{"a", "y", false},
+		{"a", "z", true},
+		{"b", "z", false},
+	} {
+		if got := left(tc.role, tc.step); got != tc.want {
+			t.Errorf("%s/%s: left out = %v, want %v", tc.role, tc.step, got, tc.want)
+		}
+	}
+}

@@ -42,6 +42,55 @@ func TestRun(t *testing.T) {
 	}
 }
 
+// named is todo under a name of its own.
+type named struct {
+	todo
+	name string
+}
+
+func (n named) Name() string { return n.name }
+
+func TestRunTakesStepsByName(t *testing.T) {
+	tests := []struct {
+		name    string
+		check   bool
+		only    []string
+		want    []string
+		applied []string
+	}{
+		{"a step of a role", false, []string{"a/x"}, []string{"a"}, []string{"prepare", "x"}},
+		{"a step beside a role", false, []string{"a/x", "b"}, []string{"a", "b"}, []string{"prepare", "x", "z"}},
+		{"a step and its role", false, []string{"a/x", "a"}, []string{"a"}, []string{"prepare", "x", "y"}},
+		{"a check", true, []string{"a/x"}, []string{"a"}, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			done := map[string]*bool{"prepare": new(bool), "x": new(bool), "y": new(bool), "z": new(bool)}
+			a := role("a", named{todo{done["x"]}, "x"}, named{todo{done["y"]}, "y"})
+			b := role("b", named{todo{done["z"]}, "z"})
+			c := Config{Options: Options{Check: tt.check, Only: tt.only}, M: effecttest.NewMachine(),
+				Out: &effecttest.Out{}, Prepare: []step.Step{named{todo{done["prepare"]}, "prepare"}}}
+			list := []roles.Role{a}
+			if slices.Contains(tt.only, "b") {
+				list = append(list, b)
+			}
+			got, err := Run(context.Background(), c, list)
+			if err != nil || !slices.Equal(got, tt.want) {
+				t.Errorf("changed = %q, err = %v, want %q", got, err, tt.want)
+			}
+			var applied []string
+			for _, name := range []string{"prepare", "x", "y", "z"} {
+				if *done[name] {
+					applied = append(applied, name)
+				}
+			}
+			if !slices.Equal(applied, tt.applied) {
+				t.Errorf("applied %q, want %q", applied, tt.applied)
+			}
+		})
+	}
+}
+
 // failing is a step whose plan fails.
 type failing struct{ todo }
 
@@ -57,10 +106,10 @@ func (l *lasts) Observe(e step.Event) {
 	}
 }
 
-// role is a role of the one step s.
-func role(name string, s step.Step) roles.Role {
+// role is a role of the steps list.
+func role(name string, list ...step.Step) roles.Role {
 	return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
-		return []step.Step{s}
+		return list
 	}}
 }
 
