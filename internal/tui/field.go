@@ -111,3 +111,27 @@ func (f field) answer() (field, string, bool) {
 	}
 	return f, answer, true
 }
+
+// render draws the box for a window, cut to its height.
+func (f field) render(theme Theme, window Size) string {
+	width := min(window.Width, boxWidth)
+	text := f.prompt.text
+	if f.prompt.fallback != "" {
+		text += " [" + f.prompt.fallback + "]"
+	}
+	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.View()}
+	if f.problem != "" {
+		lines = append(lines, theme.Bad.Width(width-2).Render(f.problem))
+	}
+	lines = append(lines, "", f.footer.render(theme, width-2))
+	return box(theme, "Question", strings.Join(lines, "\n"), window)
+}
+
+// box draws body in a focused frame that fits it, or nothing where the window holds no frame.
+func box(theme Theme, title, body string, window Size) string {
+	if window.Width < minFrameWidth || window.Height < minPaneHeight {
+		return ""
+	}
+	frame := Size{min(window.Width, boxWidth), min(lipgloss.Height(body)+2, window.Height)}
+	return Pane{Title: title, Body: body, Focused: true}.render(theme, frame)
+}

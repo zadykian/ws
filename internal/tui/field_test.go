@@ -1,12 +1,16 @@
 package tui
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var window = Size{80, 24}
+var testTheme = NewTheme(func(string) string { return "" })
 
 // typeIn gives the field each rune of text as a key.
 func typeIn(f field, text string) field {
@@ -14,6 +18,13 @@ func typeIn(f field, text string) field {
 		f, _ = f.update(press(r))
 	}
 	return f
+}
+
+func refuseEmpty(answer string) error {
+	if answer == "" {
+		return errors.New("an answer is needed")
+	}
+	return nil
 }
 
 func TestFieldAnswerReadsAsThePlainPromptDoes(t *testing.T) {
@@ -54,6 +65,18 @@ func TestFieldErasesAHiddenAnswerAsATerminalDoes(t *testing.T) {
 	}
 }
 
+func TestFieldShowsWhatValidRefusesAndKeepsTheText(t *testing.T) {
+	f := typeIn(newField(prompt{text: "Host", valid: refuseEmpty}, window), " ")
+	f, _, ok := f.answer()
+	if ok || !strings.Contains(f.render(testTheme, window), "an answer is needed") {
+		t.Fatalf("ok = %v, and the box:\n%s", ok, f.render(testTheme, window))
+	}
+	f = typeIn(f, "ws")
+	if _, got, ok := f.answer(); !ok || got != "ws" {
+		t.Errorf("mended answer = %q, %v", got, ok)
+	}
+}
+
 func TestFieldKeys(t *testing.T) {
 	f := newField(prompt{text: "Host"}, window)
 	if _, place := f.update(enter); place != answerPlace {
@@ -71,5 +94,48 @@ func TestFieldKeys(t *testing.T) {
 	f, _ = f.update(tea.PasteMsg{Content: "pasted"})
 	if got := typeIn(f, "!").input.Value(); got != "pasted!" {
 		t.Errorf("Tab back to the input, a paste and a key: %q", got)
+	}
+}
+
+func TestFieldDrawsTheQuestionWithNoColorUnderNoColor(t *testing.T) {
+	theme := NewTheme(func(string) string { return "yes" })
+	f := typeIn(newField(prompt{text: "Host", fallback: "ws"}, window), "abc")
+	shown := f.render(theme, window)
+	for _, want := range []string{"Host [ws]", "> ", "abc", "[enter]", "answer", "[ctrl+c]", "stop"} {
+		if !strings.Contains(shown, want) {
+			t.Errorf("no %q in:\n%s", want, shown)
+		}
+	}
+	if strings.Contains(shown, "\x1b[3") {
+		t.Errorf("a color under NO_COLOR: %q", shown)
+	}
+}
+
+func TestFieldShowsNothingOfAHiddenAnswer(t *testing.T) {
+	empty := newField(prompt{text: "Password", hidden: true}, window)
+	typed := typeIn(empty, "s3cret")
+	if got, want := typed.render(testTheme, window), empty.render(testTheme, window); got != want {
+		t.Errorf("the box changed as a secret was typed:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestFieldScrollsALongAnswerInsideItsBox(t *testing.T) {
+	f := typeIn(newField(prompt{text: "Key"}, Size{20, 10}), strings.Repeat("a", 40)+"end")
+	got := f.render(testTheme, Size{20, 10})
+	if !strings.Contains(got, "end") || lipgloss.Width(got) != 20 {
+		t.Errorf("the end of the answer is off the box:\n%s", got)
+	}
+}
+
+func TestFieldFitsAnyWindow(t *testing.T) {
+	text := strings.Repeat("a long question ", 20)
+	for w := range 12 {
+		for h := range 12 {
+			size := Size{w, h}
+			got := newField(prompt{text: text}, size).render(testTheme, size)
+			if got != "" && (lipgloss.Height(got) > h || w < minFrameWidth) {
+				t.Errorf("%v: drew %d lines:\n%s", size, lipgloss.Height(got), got)
+			}
+		}
 	}
 }
