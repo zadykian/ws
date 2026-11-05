@@ -108,3 +108,21 @@ func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
 	}
 	return cs, nil
 }
+
+// Report reads the unit's state, stopped where the manager is down. Plan says that systemd is not
+// running, so this doesn't.
+func (u UserUnit) Report(ctx context.Context) ([]step.Item, error) {
+	item := step.Item{Kind: step.ServiceItem, Name: u.User.Name + "'s " + u.Name, Want: "running", Found: noSystemd}
+	if !Booted(u.M) {
+		return []step.Item{item}, nil
+	}
+	active, err := u.active(ctx)
+	if err != nil {
+		return nil, err
+	}
+	item.Found = "stopped"
+	if active {
+		item.Found = "running"
+	}
+	return []step.Item{item}, nil
+}
