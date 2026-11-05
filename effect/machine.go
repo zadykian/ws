@@ -25,6 +25,10 @@ type OSMachine struct {
 	// password. A screen owns the terminal, and sets NoStdin. With any Stdin, git and ssh get
 	// offTerminal, as they ask at /dev/tty, past their standard input.
 	Stdin io.Reader
+	// Ticket, where set, runs before each command as root, which runs only where it passes. A screen
+	// sets it beside a Sudo that can't ask, to take sudo's password in a form. It holds a run's
+	// context, as WriteRootFile has none.
+	Ticket func() error
 	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
 	// inside for a path under it: a link there that leaves it fails the write. ws_user owns the
 	// ws_home, and can swap a directory in it for a link as root applies, which would hand the
@@ -58,6 +62,13 @@ func (m OSMachine) sudo() []string {
 		return []string{"sudo", "--"}
 	}
 	return m.Sudo
+}
+
+func (m OSMachine) ticket(root bool) error {
+	if root && m.Ticket != nil {
+		return m.Ticket()
+	}
+	return nil
 }
 
 // ReadFile reads the file.
@@ -102,11 +113,17 @@ func (m OSMachine) RunInput(ctx context.Context, stdin []byte, name string, args
 
 // RunRoot runs the command through sudo.
 func (m OSMachine) RunRoot(ctx context.Context, name string, args ...string) ([]byte, error) {
+	if err := m.ticket(true); err != nil {
+		return nil, err
+	}
 	return output(m.command(ctx, append(append(m.sudo(), name), args...)))
 }
 
 // RunShown runs the command and returns its standard output. Its standard error goes to Stderr.
 func (m OSMachine) RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error) {
+	if err := m.ticket(root); err != nil {
+		return nil, err
+	}
 	cmd := m.command(ctx, m.argv(root, name, args))
 	cmd.Stderr = m.stderr()
 	return output(cmd)
@@ -126,6 +143,9 @@ func (m OSMachine) PassInput(ctx context.Context, stdin []byte, name string, arg
 // Pass runs the command with its standard output and error sent to Stderr, and Stdin as its
 // standard input.
 func (m OSMachine) Pass(ctx context.Context, root bool, name string, args ...string) error {
+	if err := m.ticket(root); err != nil {
+		return err
+	}
 	cmd := m.command(ctx, m.argv(root, name, args))
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = m.stdin(), m.stderr(), m.stderr()
 	if err := cmd.Run(); err != nil {
