@@ -102,6 +102,11 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	if err != nil {
 		return err
 	}
+	// ws_home is known now: the machine's writes under it stay inside it.
+	if m, ok := p.machine.(effect.OSMachine); ok {
+		m.Confine = v.Home
+		p.machine = m
+	}
 	sec, err := loadSecrets(p.machine, opts.Secrets, p.getenv)
 	if err != nil {
 		return err

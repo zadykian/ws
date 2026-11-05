@@ -30,6 +30,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 			}
 			dir := v.Home + "/.config/zed"
 			return []host.Resource{
+				host.Plain{M: m, Home: v.Home, Paths: []string{dir + "/settings.json"}},
 				host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
 				host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
 				host.File{M: m, Path: dir + "/settings.json", Content: settings, Mode: 0o644, UID: uid, GID: gid,
@@ -48,7 +49,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 }
 
 // limitsPath is where the limit for ws_user's logins lives. limits.conf(5) says a `*` line does
-// not apply to root, ws's default ws_user, so the user is named.
+// not apply to root, which a cloud VM may use as ws_user, so the user is named.
 const limitsPath = "/etc/security/limits.d/ws-zed.conf"
 
 // limitsFile raises ws_user's soft open-file limit: sshd's logins start at 1024, past which Zed's

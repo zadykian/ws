@@ -10,7 +10,14 @@ import (
 // WriteAtomic fills a pending file beside path, gives it the owner and mode of a, and renames it
 // over path, so that a reader sees the old file or the new one whole. Another owner than ws's own
 // needs root.
-func (OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
+func (m OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
+	if root, rel, err := m.confined(path); err != nil || root != nil {
+		if err != nil {
+			return err
+		}
+		defer func() { _ = root.Close() }()
+		return writeAtomicIn(root, rel, data, a)
+	}
 	f, err := renameio.NewPendingFile(path,
 		renameio.WithTempDir(filepath.Dir(path)), renameio.WithPermissions(a.Mode.Perm()))
 	if err != nil {
@@ -30,11 +37,37 @@ func (OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
 }
 
 // Chown sets the owner of the file a link points to. It needs root for another owner than ws's.
-func (OSMachine) Chown(path string, uid, gid int) error { return os.Chown(path, uid, gid) }
+func (m OSMachine) Chown(path string, uid, gid int) error {
+	root, rel, err := m.confined(path)
+	if err != nil {
+		return err
+	}
+	if root == nil {
+		return os.Chown(path, uid, gid)
+	}
+	defer func() { _ = root.Close() }()
+	return root.Chown(rel, uid, gid)
+}
 
 // Symlink makes path a link to target, replacing a file or link there through a new link renamed
 // over it.
-func (OSMachine) Symlink(target, path string) error {
+func (m OSMachine) Symlink(target, path string) error {
+	if root, rel, err := m.confined(path); err != nil || root != nil {
+		if err != nil {
+			return err
+		}
+		defer func() { _ = root.Close() }()
+		tmp := filepath.Join(filepath.Dir(rel), "."+filepath.Base(rel)+".ws-new")
+		_ = root.Remove(tmp)
+		if err := root.Symlink(target, tmp); err != nil {
+			return err
+		}
+		if err := root.Rename(tmp, rel); err != nil {
+			_ = root.Remove(tmp)
+			return err
+		}
+		return nil
+	}
 	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
 	_ = os.Remove(tmp)
 	if err := os.Symlink(target, tmp); err != nil {

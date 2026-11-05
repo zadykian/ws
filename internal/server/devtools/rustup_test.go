@@ -14,7 +14,7 @@ func TestRustupInstallsOnce(t *testing.T) {
 		home := "/home/" + user
 		install := "bash -c " + installRustup
 		m.Results["env HOME="+home+" "+install] = effecttest.Result{}
-		m.Results["runuser -u ws -- env HOME="+home+" "+install] = effecttest.Result{}
+		m.Results["runuser -u ws -- env -C "+home+" HOME="+home+" "+install] = effecttest.Result{}
 		r := Rustup{M: m, User: user, Home: home}
 		changes, err := r.Plan(context.Background())
 		if err != nil || len(changes) != 1 {

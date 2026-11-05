@@ -12,7 +12,7 @@ func TestSigningKeyIsMadeOnceAsTheUser(t *testing.T) {
 	m := effecttest.NewMachine()
 	a := account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	const key = "/home/ws/.ssh/id_ed25519_signing"
-	m.Results["runuser -u ws -- env HOME=/home/ws ssh-keygen -q -t ed25519 -N  -f "+key] = effecttest.Result{}
+	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws ssh-keygen -q -t ed25519 -N  -f "+key] = effecttest.Result{}
 	var shown []string
 	for range 2 {
 		for _, r := range signingKey(m, a, key) {

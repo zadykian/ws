@@ -21,6 +21,11 @@ type OSMachine struct {
 	Owner string
 	// Stderr takes what RunShown, PassInput and Pass pass on. Nil means os.Stderr.
 	Stderr io.Writer
+	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
+	// inside for a path under it: a link there that leaves it fails the write. ws_user owns the
+	// ws_home, and can swap a directory in it for a link as root applies, which would hand the
+	// target to ws_user. Empty means no limit.
+	Confine string
 }
 
 func (m OSMachine) stderr() io.Writer {
@@ -43,7 +48,22 @@ func (OSMachine) ReadFile(path string) ([]byte, error) {
 }
 
 // WriteFile writes the file, and sets its mode where it already existed.
-func (OSMachine) WriteFile(path string, data []byte, perm fs.FileMode) error {
+func (m OSMachine) WriteFile(path string, data []byte, perm fs.FileMode) error {
+	if root, rel, err := m.confined(path); err != nil || root != nil {
+		if err != nil {
+			return err
+		}
+		defer func() { _ = root.Close() }()
+		f, err := root.OpenFile(rel, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+		if err != nil {
+			return err
+		}
+		_, err = f.Write(data)
+		if err = errors.Join(err, f.Chmod(perm), f.Close()); err != nil {
+			return err
+		}
+		return nil
+	}
 	if err := os.WriteFile(path, data, perm); err != nil {
 		return err
 	}
@@ -180,6 +200,16 @@ func (OSMachine) ReadDir(path string) ([]string, error) {
 
 // Mkdir makes the directory with exactly perm, whatever the umask.
 func (m OSMachine) Mkdir(path string, perm fs.FileMode) error {
+	if root, rel, err := m.confined(path); err != nil || root != nil {
+		if err != nil {
+			return err
+		}
+		defer func() { _ = root.Close() }()
+		if err := root.Mkdir(rel, perm); err != nil {
+			return err
+		}
+		return m.Chmod(path, perm)
+	}
 	if err := os.Mkdir(path, perm); err != nil {
 		return err
 	}
@@ -187,4 +217,14 @@ func (m OSMachine) Mkdir(path string, perm fs.FileMode) error {
 }
 
 // Chmod sets the mode of the file a link points to.
-func (OSMachine) Chmod(path string, perm fs.FileMode) error { return os.Chmod(path, perm) }
+func (m OSMachine) Chmod(path string, perm fs.FileMode) error {
+	root, rel, err := m.confined(path)
+	if err != nil {
+		return err
+	}
+	if root == nil {
+		return os.Chmod(path, perm)
+	}
+	defer func() { _ = root.Close() }()
+	return root.Chmod(rel, perm)
+}

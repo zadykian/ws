@@ -13,14 +13,15 @@ type User struct {
 }
 
 // argv returns the command that runs name as the user with the user's HOME, and whether it needs
-// root. The caller's HOME would otherwise reach the command, as the user's login does not run.
+// root. The caller's HOME would otherwise reach the command, as the user's login does not run, and
+// env -C starts it in the user's home, as root's directory may be closed to the user.
 // root itself needs no switch of user, and a container has no sudo.
 func (u User) argv(name string, args []string) (cmd string, argv []string, root bool) {
 	env := append([]string{"HOME=" + u.Home, name}, args...)
 	if u.Name == "root" {
 		return "env", env, false
 	}
-	return "runuser", append([]string{"-u", u.Name, "--", "env"}, env...), true
+	return "runuser", append([]string{"-u", u.Name, "--", "env", "-C", u.Home}, env...), true
 }
 
 // Pass runs the command as the user and passes its output to ws's standard error.

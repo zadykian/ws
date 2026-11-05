@@ -20,7 +20,7 @@ only root reads; nothing else needs it. Reach the UI through an SSH tunnel, then
 `http://localhost:3301`:
 
 ```sh
-ssh -N -L 3301:127.0.0.1:3301 root@SERVER
+ssh -N -L 3301:127.0.0.1:3301 WS_USER@SERVER
 ```
 
 A `LocalForward 3301 127.0.0.1:3301` in the client's `~/.ssh/config` does the same.

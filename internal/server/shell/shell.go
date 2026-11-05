@@ -12,11 +12,14 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Steps returns the role's steps in order. Packages come first, as ble.sh and bash-completion
-// serve the files after.
+// Steps returns the role's steps in order. The check for links comes first, so that no write runs
+// beside one. Packages follow, as ble.sh and bash-completion serve the files after.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
+		host.Group{Title: "Shell links", Parts: []host.Resource{
+			host.Plain{M: m, Home: v.Home, Paths: rootPaths(v)},
+		}},
 		host.Group{Title: "Shell packages", Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"bash-completion", "ble.sh"}},
 		}},
@@ -46,3 +49,13 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 }
 
 const keyStep = "Shell signing key"
+
+// rootPaths are the files under the user's home that root reads or writes, which a link there
+// would send elsewhere (docs/security.md#links-under-the-home).
+func rootPaths(v values.Values) []string {
+	return []string{
+		v.Home + "/.bashrc", v.Home + "/.profile", v.Home + "/.gitconfig",
+		v.GitSigningKey, v.GitSigningKey + ".pub", v.Shell.GitAllowedSigners,
+		v.Home + "/.config/git/tokens.gitconfig", v.Home + "/.config/git/tokens", v.Home + "/.secrets/env",
+	}
+}

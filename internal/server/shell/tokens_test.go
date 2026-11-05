@@ -123,3 +123,11 @@ func TestTokensWithAnEmptyTableRemoveWhatTheFileHeld(t *testing.T) {
 		t.Errorf("tokens.gitconfig = %q", cfg)
 	}
 }
+
+func TestTokensRefuseALinkAtATokenFile(t *testing.T) {
+	m, tk := tokenFixture(credential{URL: "https://a.example", Token: "hunter2"})
+	m.Links["/home/ws/.config/git/tokens/a.example"] = "/etc/shadow"
+	if _, err := tk.Plan(context.Background()); err == nil {
+		t.Error("no error for a link at a token file")
+	}
+}

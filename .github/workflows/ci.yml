@@ -50,6 +50,7 @@ jobs:
   # GitHub's stack metadata:
   # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
   playbook:
+    name: playbook (${{ matrix.user }})
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&
       github.event.pull_request.stack.position == github.event.pull_request.stack.size
@@ -57,6 +58,15 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    # The default user with the table, and root as a cloud VM has it, without.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - user: zadykian
+            outbound: true
+          - user: root
+            outbound: false
     # NET_ADMIN lets nft -c, below, check the outbound table in the container's own netns.
     container:
       image: ubuntu:26.04
@@ -64,6 +74,8 @@ jobs:
     env:
       # The home of root, as on a new machine, rather than the /github/home a container job gets.
       HOME: /root
+      WS_USER: ${{ matrix.user }}
+      OUTBOUND: ${{ matrix.outbound }}
     steps:
       # curl fetches the Go that tools/build needs, and ca-certificates serves
       # their HTTPS. There is no git, so the checkout has no .git and the build is devel.
@@ -79,19 +91,28 @@ jobs:
       # CI builds ws from the tree, never from a release.
       - name: Build ws
         run: tools/build linux amd64 /usr/local/bin/ws
+      # The account as Ubuntu's installer leaves it. ws makes no user.
+      - name: Make the user
+        if: matrix.user != 'root'
+        run: useradd --create-home --shell /bin/bash "$WS_USER"
       # The values file holds what the job changes of the defaults: the swap file is small, as the
       # runner's disk has no room for one the size of its RAM, and the JetBrains backends are left
-      # out, as it has none for their 10 GB either.
+      # out, as it has none for their 10 GB either. The matrix names the user and the table.
       - name: Write the values
         run: |
           install -d -m 755 /etc/ws
-          printf '%s\n' --- 'base_swap_size_mb: 64' 'jetbrains_backends: []' >/etc/ws/host_vars.yml
+          printf '%s\n' --- 'base_swap_size_mb: 64' 'jetbrains_backends: []' \
+              "ws_user: $WS_USER" "security_outbound: $OUTBOUND" >/etc/ws/host_vars.yml
           chmod 600 /etc/ws/host_vars.yml
+      # From root's home, 0700 on any machine, as after sudo -i: a command run as the user must not
+      # rest on the directory it starts in.
       - name: Apply
+        working-directory: /root
         run: ws server apply
       # ws's last line names the roles that changed. The second run must name none.
       - name: Apply again, changing nothing
         shell: bash
+        working-directory: /root
         run: |
           ws server apply 2>&1 | tee "$RUNNER_TEMP/again.log"
           if [ "$(tail -n 1 "$RUNNER_TEMP/again.log")" != 'ws server apply: changed: none' ]; then
@@ -101,7 +122,18 @@ jobs:
       # The container has no booted systemd, so the run leaves out its own nft -c. This checks the
       # outbound table it wrote, and the users the table names, which the steps make.
       - name: Check the outbound table
+        if: matrix.outbound
         run: nft -c -f /usr/local/lib/ws/security/outbound.nft
+      - name: Check the home's owner
+        if: matrix.user != 'root'
+        shell: bash
+        run: |
+          strays=$(find "/home/$WS_USER" -xdev -not -user "$WS_USER")
+          if [ -n "$strays" ]; then
+              printf '%s\n' "$strays"
+              echo '::error::ws left files in the home that its user does not own.'
+              exit 1
+          fi
 
   # install.sh against releases laid out in a temporary directory and served on loopback, in the
   # order of .github/install-checks.sh: the latest and a named release install, a second run

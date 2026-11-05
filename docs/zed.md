@@ -70,8 +70,8 @@ tasks for projects and solutions. `.sln` opens as plain text.
 
 For Go, the shim and `dlv` run on ws, and the Mac forwards the debug port over ssh. The sshd
 drop-in restricts no forwarding, and the outbound table accepts loopback
-([security](security.md#outbound)). `ws_user` is root by default, so Yama's `ptrace_scope` does not
-stop an attach.
+([security](security.md#outbound)). `ws_user` is `zadykian` by default, so Yama's `ptrace_scope` stops an
+attach to a process that is not its child. Launching under `dlv` works.
 
 C# keeps Rider for its gaps: Zed has no C# debugger (csharp#12), no Razor (csharp#41) and no C#
 test runnables. Debug C# or edit Razor in Rider through Gateway ([jetbrains](jetbrains.md)).

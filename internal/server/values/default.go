@@ -4,7 +4,7 @@ package values
 // size left empty (see derive and each key).
 func Default() Values {
 	return Values{
-		Shared: Shared{User: "root"},
+		Shared: Shared{User: "zadykian"},
 		Base: Base{
 			Packages: []string{
 				"btop", "bubblewrap", "build-essential", "ca-certificates", "chrony", "curl",

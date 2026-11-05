@@ -12,8 +12,8 @@ import (
 // login; before that, a change starts it. The reload comes in this step, not at the end of the
 // run: if a later step fails, the next run has no change to reload for, and a running sshd would
 // go on taking passwords.
-func sshd(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource, error) {
-	conf, err := files.ReadFile("files/10-keys-only.conf")
+func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]host.Resource, error) {
+	conf, err := host.Render(files, "files/10-keys-only.conf.tmpl", struct{ Root bool }{user == "root"})
 	if err != nil {
 		return nil, err
 	}

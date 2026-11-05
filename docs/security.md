@@ -7,7 +7,9 @@ and DNS.
 
 ## SSH and the firewall
 
-ws turns SSH's passwords off: everyone logs in by key, root included. ufw then lets in
+ws turns SSH's passwords off: everyone logs in by key. Where `ws_user` is another user, root
+cannot log in at all, and `ws_user` takes root by `sudo` with its password. Where `ws_user` is
+root, a cloud VM's, root logs in by key. ufw then lets in
 SSH on port 22 and WireGuard on UDP port 51820 ([wireguard](wireguard.md)). It lets in DNS lookups
 from Docker's bridges to the host's resolver too ([docker](docker.md)), and nothing else. fail2ban
 bans an address for an hour after 5 failed logins in 10 minutes. sshd's own penalties slow one
@@ -15,8 +17,17 @@ that keeps failing. Both hold on every network, with no peer or network exempt. 
 keys imported from the GitHub account during Ubuntu's install; a cloud VM has no installer
 ([A new machine](../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
 new one logs in. The steps stop before they turn passwords off if `ws_user` has no key to log in
-with, outside a container. sshd's drop-in lands only after `sshd -G` accepts it, and sshd reloads
-after a change.
+with, or a file of keys that sshd passes over, outside a container. sshd's drop-in lands only after
+`sshd -G` accepts it, and sshd reloads after a change.
+
+Where `ws_user` is another user, the step "sudo" checks, before sshd's, that it may run `sudo`
+and has a password to give. Closing root's login then leaves a way to root. A container skips
+the check. sudo asks for the password at every command (`/etc/sudoers.d/ws-no-cache`,
+`timestamp_timeout=0`). What `ws_user` runs, such as claude, then cannot take root after the
+maintainer's own `sudo`. That holds where sudo asks. A cloud image's default user has a `NOPASSWD`
+rule, which ws leaves in place, so what that user runs holds root, past the outbound table too. Give
+the user a password and remove the rule by hand.
+The step "lxd" takes `ws_user` out of the `lxd` group, which is root, and purges `lxd-installer`.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
 `127.0.0.1` ([docker](docker.md)): reach it through an SSH tunnel. A port published on another
@@ -94,9 +105,9 @@ The caveats:
 - root gets past the table. Its programs meet the table, but it can stop `security-outbound`,
   delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
   become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
-  and the `docker` group's ([The docker group](docker.md#the-docker-group)). `ws_user` is root by
-  default ([values.go](../internal/server/values/values.go)), and in the `docker` group otherwise. The
-  table binds the other users and the bridged containers.
+  and the `docker` group's ([The docker group](docker.md#the-docker-group)). `ws_user` is `zadykian` by
+  default ([values.go](../internal/server/values/values.go)), and so in the `docker` group, except
+  root. The table binds the other users and the bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the
   packet leaves by the same gateway. A rule on the router drops it for a machine on the LAN
   ([The router](router.md)).
@@ -163,3 +174,14 @@ removal. Off leaves:
 So Docker's containers reach a cloud's metadata service, and the VPC or the LAN, too. Only the
 table's `containers` chain drops what they forward: Docker forwards it ahead of ufw's rules, and
 `WS-MAC` covers `wg0` and the cable alone.
+
+## Links under the home
+
+`ws_user` owns `ws_home`, so a link there could send ws, which runs as root, to any file: its reads,
+`chown`, `chmod` and backups would follow it. ws refuses a link at a file it reads or writes there
+as root. It refuses a link at a directory between the home and that file too, and names the link
+and its target. The `shell`, `helix`, `zed` and `otelcol` roles check, root as `ws_user` included.
+Replace the link with the file itself. The check looks as the step plans. A link made while
+it applies fails at the write: `ws server apply` makes its writes under `ws_home` through an
+`os.Root`, which refuses a link that leaves the home. Its reads, `cat` and `git` stay outside that
+bound.
