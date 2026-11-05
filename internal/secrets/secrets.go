@@ -19,6 +19,9 @@ type Secrets struct {
 	// is then the truth of what it names, and a role removes what it lacks. The file does not hold
 	// it.
 	Whole bool
+	// Unread is true where a command reads the machine and takes no secrets, as ws server state does:
+	// a role then shows what it can, where a run would stop at what the secrets lack.
+	Unread bool
 }
 
 // Tokens are the tokens of the services that ws logs in to.

@@ -61,6 +61,36 @@ func TestTheStepsRefuseAProfileThatTheSecretsLack(t *testing.T) {
 	}
 }
 
+func TestAReadNeedsNoProfileAndStandsNoConflict(t *testing.T) {
+	v := good()
+	v.ForwardFrom = nil
+	m := effecttest.NewMachine()
+	m.Dirs["/run/systemd/system"] = 0o755
+	m.Files[ipForward] = []byte("1\n")
+	m.Files[binary] = []byte("binary")
+	m.Modes[binary] = 0o755
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Results[binary+" status"] = effecttest.Result{}
+	pin := sums["amd64"]
+	sums["amd64"] = fmt.Sprintf("%x", sha256.Sum256([]byte("binary")))
+	t.Cleanup(func() { sums["amd64"] = pin })
+	ss := steps(v, secrets.Secrets{Unread: true}, m, &effecttest.Out{}, 1, time.Millisecond)
+	reports, err := step.Read(t.Context(), ss)
+	if err != nil || len(reports) != len(ss) {
+		t.Fatalf("reports = %+v, %v", reports, err)
+	}
+	for _, r := range reports {
+		for _, item := range r.Items {
+			if item.Conflict != "" {
+				t.Errorf("%s: item = %+v, want no conflict", r.Step, item)
+			}
+		}
+		if r.After != "" {
+			t.Errorf("%s: not read, after %s", r.Step, r.After)
+		}
+	}
+}
+
 func TestStepsApplyOnceAndThenPlanNothing(t *testing.T) {
 	v := good()
 	v.ForwardFrom = nil

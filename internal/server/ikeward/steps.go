@@ -36,12 +36,13 @@ func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out
 		return nil
 	}
 	fetch := download(m)
-	// A profile that the secrets lack fails the run before anything changes, as the values do.
+	// A profile that the secrets lack fails the run before anything changes, as the values do. A
+	// read holds no secrets, so it says nothing of the profile.
 	ready := func() error {
 		if err := check(v); err != nil {
 			return err
 		}
-		if !(profile{files: s.File}).present() {
+		if !s.Unread && !(profile{files: s.File}).present() {
 			return fmt.Errorf("ikeward_profile is %s, and the secrets hold no profile for it", v.Profile)
 		}
 		return nil
