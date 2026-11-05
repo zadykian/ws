@@ -19,14 +19,13 @@ func TestRunLogsEveryLineClean(t *testing.T) {
 	c.Log, c.LogPath = &log, "/state/ws/run.log"
 	err := Run(t.Context(), c, recorder{new([]tea.Msg)}, func(_ context.Context, b *Bridge) error {
 		b.Say("a line")
-		b.Warn("take care")
 		_, _ = b.pipe.Write([]byte("\x1b[31mred\x1b[0m\n"))
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	want := "a line\nwarning: take care\nred\n"
+	want := "a line\nred\n"
 	if log.String() != want {
 		t.Errorf("log %q, want %q", log.String(), want)
 	}
@@ -40,6 +39,28 @@ func TestRunLogsEveryLineClean(t *testing.T) {
 func pastScreen(out string) string {
 	_, past, _ := strings.Cut(out, leaveBuffer)
 	return ansi.Strip(past)
+}
+
+// A step that warns passes, so the line is all that shows what it gave up.
+func TestRunPrintsAWarningPastTheScreen(t *testing.T) {
+	var log, out bytes.Buffer
+	c := noKeys(&out)
+	c.Log, c.LogPath = &log, "/state/ws/run.log"
+	err := Run(t.Context(), c, recorder{new([]tea.Msg)}, func(_ context.Context, b *Bridge) error {
+		b.Warn("take care")
+		b.Warn("take care")
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if want := "warning: take care\n"; log.String() != want {
+		t.Errorf("log %q, want %q", log.String(), want)
+	}
+	want := "warning: take care\nThe whole output is in /state/ws/run.log\n"
+	if got := pastScreen(out.String()); got != want {
+		t.Errorf("past the screen %q, want %q, in %q", got, want, out.String())
+	}
 }
 
 func TestRunReportsAFailedStepsOutputAndTheLog(t *testing.T) {
@@ -99,5 +120,24 @@ func TestRunReportsAPlanFailureFromItsOwnOutput(t *testing.T) {
 				t.Errorf("past the screen %q, want %q, in %q", got, tt.want, out.String())
 			}
 		})
+	}
+}
+
+func TestRunReportsCheckChanges(t *testing.T) {
+	var out bytes.Buffer
+	c := noKeys(&out)
+	c.LogPath = "/state/ws/run.log"
+	err := Run(t.Context(), c, recorder{new([]tea.Msg)}, func(_ context.Context, b *Bridge) error {
+		b.Observe(step.Event{Kind: step.Planned, Check: true, Step: "ssh", Parent: "base",
+			Changes: []step.Change{oneChange("write /etc/motd")}})
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	got := out.String()
+	left := got[strings.LastIndex(got, leaveBuffer):]
+	if !strings.Contains(left, "base: ssh: write /etc/motd\n") || !strings.Contains(left, "/state/ws/run.log") {
+		t.Errorf("past the screen: %q", left)
 	}
 }

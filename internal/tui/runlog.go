@@ -12,12 +12,15 @@ import (
 // tailLines is how many of a failed step's last lines stay for the end of a run.
 const tailLines = 30
 
-// record keeps a run's words past the screen: the file that holds all of them, and the end of the failed step's output. A window and its scrollback go with the
-// alternate screen, and these are what the maintainer reads after it.
+// record keeps a run's words past the screen: the file that holds all of them, the warnings and the
+// changes that --check planned, and the end of the failed step's output. A window and its scrollback
+// go with the alternate screen, and these are what the maintainer reads after it.
 type record struct {
 	lock sync.Mutex
 	// log takes every line of the run, as clean makes it. Nil where there is none.
 	log io.Writer
+	// kept are the warnings and the lines of --check's plan, in the order of the run.
+	kept []Line
 	// recent are the last lines since a step last ended: the current step's, its Plan's included.
 	recent []string
 	// failed names the step that failed, and tail holds its recent lines.
@@ -64,6 +67,13 @@ func (r *record) event(e step.Event) {
 	r.recent = nil
 }
 
+// keep holds a warning or a change line of --check for the end of the run.
+func (r *record) keep(l Line) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	r.kept = append(r.kept, l)
+}
+
 // write adds a line to the log. A log that fails stops, and the run goes on without it.
 func (r *record) write(text string) {
 	if r.log == nil {
@@ -81,11 +91,15 @@ func (r *record) close() {
 	r.log = nil
 }
 
-// report prints what a run leaves on the normal screen: the end of a failed step's output, and the log's path where there is something to read in it.
+// report prints what a run leaves on the normal screen: its warnings, --check's changes, the end of
+// a failed step's output, and the log's path where there is something to read in it.
 func (r *record) report(w io.Writer, path string, cut bool) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	var b strings.Builder
+	for _, l := range r.kept {
+		b.WriteString(cleanLines(l.Text) + "\n")
+	}
 	if r.failed != "" {
 		fmt.Fprintf(&b, "%s failed.", r.failed)
 		if len(r.tail) > 0 {
@@ -96,7 +110,7 @@ func (r *record) report(w io.Writer, path string, cut bool) {
 			b.WriteString("  " + line + "\n")
 		}
 	}
-	if path != "" && (cut || r.failed != "") {
+	if path != "" && (cut || r.failed != "" || len(r.kept) > 0) {
 		fmt.Fprintf(&b, "The whole output is in %s\n", path)
 	}
 	_, _ = io.WriteString(w, b.String())
