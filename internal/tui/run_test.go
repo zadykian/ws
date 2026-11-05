@@ -5,10 +5,13 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -62,11 +65,53 @@ func TestRunLeavesAWorkThatIgnoresCtxOnASecondCtrlC(t *testing.T) {
 	defer close(release)
 	c := noKeys(io.Discard)
 	c.In = strings.NewReader("\x03\x03")
+	c.Unwind = time.Millisecond
 	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(context.Context, *Bridge) error {
 		<-release
 		return nil
 	})
 	if !errors.Is(err, cutError{syscall.SIGINT}) {
+		t.Errorf("Run: %v", err)
+	}
+}
+
+func TestRunWaitsForAWorkPastItsScreen(t *testing.T) {
+	for keys, want := range map[string]error{"\x03\x03": cutError{syscall.SIGINT}, "": syscall.EIO} {
+		in, typing := io.Pipe()
+		c := noKeys(io.Discard)
+		c.In = in
+		var cleaned atomic.Bool
+		err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(ctx context.Context, b *Bridge) error {
+			_, _ = io.WriteString(typing, keys)
+			_ = typing.CloseWithError(syscall.EIO)
+			<-ctx.Done()
+			<-b.gone
+			cleaned.Store(true)
+			return nil
+		})
+		if !errors.Is(err, want) || !cleaned.Load() {
+			t.Errorf("keys %q: Run = %v, past the cleanup: %v", keys, err, cleaned.Load())
+		}
+	}
+}
+
+func TestUnwoundGivesUpOnAFurtherSignal(t *testing.T) {
+	signals := make(chan os.Signal, 1)
+	signals <- syscall.SIGINT
+	if err := unwound(nil, signals, time.Hour); err != nil {
+		t.Errorf("unwound: %v", err)
+	}
+}
+
+func TestRunEndsCtxOnASignal(t *testing.T) {
+	err := Run(t.Context(), noKeys(io.Discard), recorder{&[]tea.Msg{}},
+		func(ctx context.Context, b *Bridge) error {
+			if err := syscall.Kill(syscall.Getpid(), syscall.SIGTERM); err != nil {
+				return err
+			}
+			return waitForCtx(ctx, b)
+		})
+	if !errors.Is(err, cutError{syscall.SIGTERM}) {
 		t.Errorf("Run: %v", err)
 	}
 }
