@@ -97,6 +97,14 @@ func TestSessionKeepsAQuestionsKeysFromTheScreen(t *testing.T) {
 	}
 }
 
+func TestSessionShowsAQuestionInAWindowWithNoRoomForAFrame(t *testing.T) {
+	s, _ := testSession()
+	s, _ = feed(s, tea.WindowSizeMsg{Width: 80, Height: 2}, askMsg{prompt{id: 1, text: "Password", hidden: true}})
+	if got := s.View().Content; !strings.Contains(got, "Password") || !strings.Contains(got, ">") {
+		t.Errorf("no question in:\n%s", got)
+	}
+}
+
 func TestSessionAnswersThroughACmd(t *testing.T) {
 	reply := make(chan string, 1)
 	s, got := testSession()

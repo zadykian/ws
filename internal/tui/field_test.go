@@ -172,14 +172,46 @@ func TestFieldScrollsThroughAShrink(t *testing.T) {
 	}
 }
 
-func TestFieldFitsAnyWindow(t *testing.T) {
+func TestFieldKeepsItsInputInAnyWindow(t *testing.T) {
 	text := strings.Repeat("a long question ", 20)
-	for w := range 12 {
-		for h := range 12 {
+	for w := range 14 {
+		for h := range 14 {
 			size := Size{w, h}
 			got := newField(prompt{text: text}, size).render(testTheme, size)
-			if got != "" && (lipgloss.Height(got) > h || w < minFrameWidth) {
-				t.Errorf("%v: drew %d lines:\n%s", size, lipgloss.Height(got), got)
+			switch {
+			case w == 0 || h == 0:
+				if got != "" {
+					t.Errorf("%v: drew %q", size, got)
+				}
+			case lipgloss.Height(got) > h || lipgloss.Width(got) > w || !strings.Contains(got, ">"):
+				t.Errorf("%v: no input, or past the window:\n%s", size, got)
+			}
+		}
+	}
+}
+
+func TestShortWindowGivesUpTheButtonsThenTheFrame(t *testing.T) {
+	cases := []struct {
+		size    Size
+		want    []string
+		missing []string
+	}{
+		{Size{80, 1}, []string{">"}, []string{"Host", "Question"}},
+		{Size{80, 2}, []string{"Host", ">"}, []string{"Question"}},
+		{Size{80, 3}, []string{"Host", ">"}, []string{"Question", "answer"}},
+		{Size{80, 4}, []string{"Question", "Host", ">"}, []string{"answer"}},
+		{Size{80, 5}, []string{"Question", "Host", ">", "answer"}, nil},
+	}
+	for _, c := range cases {
+		got := newField(prompt{text: "Host"}, c.size).render(testTheme, c.size)
+		for _, want := range c.want {
+			if !strings.Contains(got, want) {
+				t.Errorf("%v: no %q in:\n%s", c.size, want, got)
+			}
+		}
+		for _, missing := range c.missing {
+			if strings.Contains(got, missing) {
+				t.Errorf("%v: %q in:\n%s", c.size, missing, got)
 			}
 		}
 	}

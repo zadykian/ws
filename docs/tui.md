@@ -68,6 +68,9 @@ question in a field, and the step's goroutine waits for the answer. While a fiel
 keys go to it alone. A hidden answer travels on a channel of its own, and enters no log, message
 or error. A step's lines arrive as messages and show in a pane.
 
+A short window gives up the buttons, whose keys still work, then the frame, then the question's
+words. The input stays, down to a window of one line.
+
 ## Fields
 
 A question draws a text field or a password field. No screen draws a choice yet.

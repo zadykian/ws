@@ -14,8 +14,12 @@ const (
 	stopPlace
 )
 
-// boxWidth is the most columns of a box drawn over the screen.
-const boxWidth = 64
+const (
+	// boxWidth is the most columns of a box drawn over the screen.
+	boxWidth = 64
+	// minQuestionHeight is the fewest rows that frame a line of a question over its input.
+	minQuestionHeight = minPaneHeight + 1
+)
 
 // answerButton is the field's first button. Enter presses it from the field too.
 var answerButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "answer"))
@@ -66,15 +70,27 @@ func (f field) answer() (field, string, bool) {
 	return f, f.input.Value(), ok
 }
 
-// render draws the box for a window, cut to its height. A refusal takes the line under the input, so
-// that the box holds still as one comes and goes with each key.
+// render draws the box for a window. The buttons go first in a short window, as their keys work
+// unseen, and then the frame: a run waits on the question, and its keys reach the input, so the input
+// stays. A refusal takes the line under the input, so that the box holds still as one comes and goes.
 func (f field) render(theme Theme, window Size) string {
-	width := min(window.Width, boxWidth) - 2
-	lines := f.input.Lines(theme, width, window.Height)
-	if f.input.problem == nil {
+	if window.Width < 1 {
+		return ""
+	}
+	if window.Width < minFrameWidth || window.Height < minQuestionHeight {
+		lines := f.input.Lines(theme, window.Width, window.Height)
+		return lipgloss.NewStyle().MaxWidth(window.Width).Render(strings.Join(lines, "\n"))
+	}
+	width, room := min(window.Width, boxWidth)-2, window.Height-2
+	lines := f.input.Lines(theme, width, room)
+	footer := f.footer.render(theme, width)
+	spare := room - len(lines) - lipgloss.Height(footer)
+	if spare > 0 && f.input.problem == nil {
 		lines = append(lines, "")
 	}
-	lines = append(lines, f.footer.render(theme, width))
+	if spare >= 0 {
+		lines = append(lines, footer)
+	}
 	return box(theme, "Question", strings.Join(lines, "\n"), window)
 }
 
