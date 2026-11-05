@@ -17,6 +17,8 @@ type WsRun struct {
 	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
 	Host   *HostKey
 	Remote *Remote
+	// Files is the files script, which names the tunnel's peer.
+	Files *Remote
 	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
 	Version string
 	// Secrets is the Mac's secrets file and User the Mac's user, whose Keychain holds its identity. A

@@ -1,6 +1,6 @@
 #!/bin/sh
-# The wizard's files script on ws, for the cable's port. The Mac's wizard sends it to root there
-# over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, which writes what the wizard names there: the cable's port
+# and the tunnel's peer. The Mac's wizard sends it over ssh, as it sends wizard-remote.sh:
 #
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
@@ -10,15 +10,17 @@
 #   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
 #   network_direct_link_interface, the port of the Mac's cable, which the network and wireguard
 #   roles read.
+# - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# Sysfs's network interfaces and the machine's values for ws server apply. CI's stand-in for ws
-# roots each, a line NAME=PATH, in a directory of its own.
+# Sysfs's network interfaces, the machine's values for ws server apply and the Mac's key for wg0.
+# CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
 net=/sys/class/net
 vars=/etc/ws/host_vars.yml
+peer=/etc/wireguard/mac.pub
 
 # say prints a message of the script's on stderr.
 say() {
@@ -98,12 +100,27 @@ link() {
     name network_direct_link_interface "$1"
 }
 
+# peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
+# wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
+# wireguard-tools makes it.
+peer() {
+    printf '%s\n' "$1" | grep -qxE '[A-Za-z0-9+/]{43}=' && [ "${#1}" = 44 ] ||
+        die "'$1' is not a WireGuard public key"
+    [ "$(head -n 1 "$peer" 2>/dev/null)" != "$1" ] || return 0
+    (umask 077 && mkdir -p "${peer%/*}") || die "cannot make ${peer%/*}"
+    printf '%s\n' "$1" >"$peer.new" || die "cannot write $peer.new"
+    mv -f "$peer.new" "$peer" || die "cannot write $peer"
+    say "wrote $peer"
+}
+
 main() {
-    [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh logs in to ws"
+    [ "$(id -u)" = 0 ] || die "it runs as root on ws, through sudo or a root login"
     case ${1-} in
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT]" ;;
+    peer) peer "${2-}" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT] |" \
+        "peer KEY" ;;
     esac
 }
 

@@ -1,6 +1,7 @@
 #!/bin/sh
-# The wizard's remote script on ws, which the Mac's wizard sends to root there over ssh. So it is
-# the Mac's clone's, whatever ws's clone holds, or where ws has none:
+# The wizard's remote script on ws, which the Mac's wizard sends over ssh, to run as root there,
+# through sudo where ssh logs in as another user. So it is the Mac's clone's, whatever ws's clone
+# holds, or where ws has none:
 #
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
@@ -25,7 +26,6 @@
 #   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
 # - outbound names security_outbound: false in ws's host_vars, which keeps the outbound table off
 #   for a cloud VM. It runs before the run, as ws server apply reads its values from that file.
-# - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
@@ -255,19 +255,6 @@ secrets() {
     esac
 }
 
-# peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
-# wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
-# wireguard-tools makes it.
-peer() {
-    printf '%s\n' "$1" | grep -qxE '[A-Za-z0-9+/]{43}=' && [ "${#1}" = 44 ] ||
-        die "'$1' is not a WireGuard public key"
-    [ "$(head -n 1 "$peer" 2>/dev/null)" != "$1" ] || return 0
-    (umask 077 && mkdir -p "${peer%/*}") || die "cannot make ${peer%/*}"
-    printf '%s\n' "$1" >"$peer.new" || die "cannot write $peer.new"
-    mv -f "$peer.new" "$peer" || die "cannot write $peer"
-    say "wrote $peer"
-}
-
 # running succeeds while UNIT is active, or on its way in or out.
 running() {
     systemctl show -p ActiveState --value "$1" | grep -qxE "active|activating|deactivating"
@@ -279,16 +266,15 @@ journal() {
 }
 
 main() {
-    [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh logs in to ws"
+    [ "$(id -u)" = 0 ] || die "it runs as root on ws, through sudo or a root login"
     case ${1-} in
     status) status ;;
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$vars" ;;
     install) install "${2-}" "${3-}" ;;
-    peer) peer "${2-}" ;;
     secrets) secrets "${2-}" "${3-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...] |" \
-        "install TAG URL | outbound | peer KEY | secrets stage|drop" ;;
+        "install TAG URL | outbound | secrets stage|drop" ;;
     esac
 }
 

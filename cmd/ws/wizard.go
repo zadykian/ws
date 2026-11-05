@@ -65,16 +65,16 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
 		SSH: wizard.SSH{M: p.machine, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
+	sudo := &wizard.Sudo{Host: host, P: hidden}
+	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript, Sudo: sudo}
 	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update,
 		Secrets: p.getenv("HOME") + "/" + secretsFile, User: p.getenv("USER"),
-		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
+		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript, Sudo: sudo}, Files: files}
 	hand.Late(run.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(p, stdout, out, later)
 	root := &wizard.RootKey{Host: host, Gh: gh}
-	sudo := &wizard.Sudo{Host: host, P: hidden}
-	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}
 	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: files, Setup: setup, Env: p.lookup,
 		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
