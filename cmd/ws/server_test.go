@@ -10,6 +10,8 @@ import (
 	"filippo.io/age/armor"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/step"
 )
 
 func TestServerRefusal(t *testing.T) {
@@ -123,3 +125,33 @@ func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 }
 
 func noEnv(string) string { return "" }
+
+func TestWriteState(t *testing.T) {
+	states := []apply.RoleState{{Role: "base", Steps: []step.Report{
+		{Step: "Packages", Items: []step.Item{{Kind: step.PackageItem, Name: "git", Want: "installed", Found: "missing"}},
+			Changes: []step.Pending{{Kind: step.Install, Text: "install git"}}},
+		{Step: "Config", Items: []step.Item{{Kind: step.FileItem, Name: "/etc/x", Want: "written", Found: "differs",
+			Conflict: "changed by hand", Diff: "-a\n+b\n"}}, Changes: []step.Pending{{Text: "write /etc/x\n-a\n+b\n"}}},
+		{Step: "Later", After: "Config"},
+	}}}
+	var b bytes.Buffer
+	if err := writeState(&b, states); err != nil {
+		t.Fatal(err)
+	}
+	want := `base
+  Packages
+    package git: found missing, want installed
+    pending: install git
+  Config
+    file /etc/x: found differs, want written
+      conflict: changed by hand
+      -a
+      +b
+    pending: write /etc/x
+  Later
+    not read: after Config
+`
+	if b.String() != want {
+		t.Errorf("got\n%s\nwant\n%s", b.String(), want)
+	}
+}
