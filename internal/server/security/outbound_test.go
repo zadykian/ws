@@ -36,6 +36,22 @@ func TestOutboundWritesTheFillAndTheTableThenLoadsThem(t *testing.T) {
 	}
 }
 
+func TestOutboundOpensDockersBridgesToRootAlone(t *testing.T) {
+	v := values.Default()
+	v.Home = "/root"
+	m, _, ss := fakeSteps(v)
+	run(t, ss)
+	table := string(m.Files[tableFile])
+	for _, want := range []string{"meta skuid 0 oifname \"docker0\" accept", "meta skuid 0 oifname \"br-*\" accept"} {
+		if !strings.Contains(table, want) {
+			t.Errorf("the table lacks %q", want)
+		}
+	}
+	if strings.Contains(table, "{ \"lo\", \"ikeward0\", \"docker0\"") {
+		t.Error("the table opens docker0 to every user")
+	}
+}
+
 func TestOutboundRunsNftCBeforeTheTableIsInPlace(t *testing.T) {
 	v := values.Default()
 	v.Home = "/root"

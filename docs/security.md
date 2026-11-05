@@ -44,7 +44,8 @@ boot, before the network comes up. `ufw status verbose` still shows outgoing tra
 These pass:
 
 - replies, to the Mac or any other host, over the LAN, the cable or `wg0`;
-- what leaves by loopback, `ikeward0`, `docker0` or a `br-` bridge;
+- what leaves by loopback or `ikeward0`, and what root sends to `docker0` or a `br-` bridge. A
+  user reaches a container of the system daemon by a port it publishes, and no other way;
 - DHCP's renewals, releases and declines, and DHCPv6, to any address, by networkd's user,
   `systemd-network`. networkd sends DHCP's discovers and its other requests by AF_PACKET, which
   the table never sees;

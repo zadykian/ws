@@ -29,10 +29,12 @@ table inet ws {
     chain output {
         type filter hook output priority filter; policy accept;
         ct state established,related accept
-        # Loopback, the VPN, and Docker's bridges. ws's own packets to its containers meet this
-        # chain alone; the forward chain sees what the containers send.
-        oifname { "lo", "ikeward0", "docker0" } accept
-        oifname "br-*" accept
+        # Loopback and the VPN. Docker's bridges for root alone: ws's own packets to its containers meet
+        # this chain alone, and a user reaches a container of the system daemon by a port it publishes.
+        # The forward chain sees what the containers send.
+        oifname { "lo", "ikeward0" } accept
+        meta skuid 0 oifname "docker0" accept
+        meta skuid 0 oifname "br-*" accept
         # networkd's DHCP and DHCPv6, by its user, as a raw socket could forge the ports. Its DHCP
         # discovers, and its requests but a renewal, go out by AF_PACKET, which no hook sees.
         meta skuid "systemd-network" udp sport 68 udp dport 67 accept
