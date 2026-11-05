@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -73,6 +74,37 @@ func TestSessionGoesOnPastEsc(t *testing.T) {
 	}
 }
 
+func TestSessionEndsCtxWhereNothingConfirms(t *testing.T) {
+	ask := askMsg{prompt{id: 1, text: "Host"}}
+	cases := []struct {
+		name string
+		msgs []tea.Msg
+	}{
+		{"a second press", []tea.Msg{ctrlC, ctrlC}},
+		{"a signal", []tea.Msg{signalMsg{syscall.SIGINT}}},
+		{"a signal under the box", []tea.Msg{ctrlC, signalMsg{syscall.SIGINT}}},
+		{"a press under a question", []tea.Msg{ask, ctrlC}},
+		{"a press past ctx's end", []tea.Msg{endedMsg{}, ctrlC}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			s, _ := haltingSession()
+			s, cmd := feed(s, c.msgs...)
+			if !runs(cmd, stoppedMsg{}) || !s.stopping || s.confirming {
+				t.Errorf("stopping %v, confirming %v", s.stopping, s.confirming)
+			}
+		})
+	}
+}
+
+func TestSessionGivesAQuestionTheKeysOverTheBox(t *testing.T) {
+	s, _ := haltingSession()
+	s, _ = feed(s, ctrlC, askMsg{prompt{id: 1, text: "Host"}}, press('a'), enter)
+	if s.halted || !s.confirming {
+		t.Errorf("the answer's Enter reached the box: halted %v, confirming %v", s.halted, s.confirming)
+	}
+}
+
 func TestSessionWrapsItsNotesAndKeepsTheWayOut(t *testing.T) {
 	s, _ := testSession()
 	s, _ = feed(s, endedMsg{}, tea.WindowSizeMsg{Width: 24, Height: 8})
@@ -116,5 +148,38 @@ func TestBridgeStop(t *testing.T) {
 	b.halted.Store(true)
 	if err := stop(); !errors.Is(err, errHalted) {
 		t.Errorf("past a stop: %v", err)
+	}
+}
+
+func TestRunStopsPastTheCurrentStepWithCtxAlive(t *testing.T) {
+	c := noKeys(io.Discard)
+	c.In = strings.NewReader("\x03\r")
+	c.Halts = true
+	alive := false
+	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(ctx context.Context, b *Bridge) error {
+		stop := b.Stop(ctx)
+		for stop() == nil {
+			time.Sleep(time.Millisecond)
+		}
+		alive = ctx.Err() == nil
+		return stop()
+	})
+	if !errors.Is(err, cutError{syscall.SIGINT}) || !alive {
+		t.Errorf("Run: %v, ctx alive %v", err, alive)
+	}
+}
+
+func TestRunEndsWellWhereTheStoppedStepWasTheLast(t *testing.T) {
+	c := noKeys(io.Discard)
+	c.In = strings.NewReader("\x03\r")
+	c.Halts = true
+	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(ctx context.Context, b *Bridge) error {
+		for b.Stop(ctx)() == nil {
+			time.Sleep(time.Millisecond)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Run: %v", err)
 	}
 }
