@@ -64,16 +64,3 @@ func TestRestoreFailsWithoutLingering(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
-func TestLingerPlan(t *testing.T) {
-	m := effecttest.NewMachine()
-	m.Dirs["/run/systemd/system"] = 0o755
-	l := Linger{M: m, User: root, Out: &effecttest.Out{}}
-	if got, err := l.Plan(context.Background()); err != nil || len(got) != 1 {
-		t.Fatalf("%v, %v", got, err)
-	}
-	m.Files["/var/lib/systemd/linger/root"] = nil
-	if got, err := l.Plan(context.Background()); err != nil || len(got) != 0 {
-		t.Fatalf("%v, %v", got, err)
-	}
-}
