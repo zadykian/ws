@@ -2,10 +2,11 @@ package tui
 
 const (
 	// minPaneWidth is the columns under which a pane is too narrow to read beside another, frame
-	// included.
+	// included, so that the panes stack.
 	minPaneWidth = 24
-	// minPaneHeight is the lines of the smallest frame that holds a line of text.
+	// minPaneHeight and minFrameWidth are the smallest frame that holds a line of text.
 	minPaneHeight = 3
+	minFrameWidth = 3
 	// titleHeight is the lines of the title.
 	titleHeight = 1
 )
@@ -22,10 +23,13 @@ type Pane struct {
 	Body  string
 	// Weight is the pane's part of the room that the panes' least sizes leave. Zero counts as 1.
 	Weight int
+	// Focused draws the heavier frame, and keeps this pane where the window holds only one.
+	Focused bool
 }
 
 // Layout is a full screen: the title and its status on the first line, the panes side by side,
-// and the footer's buttons on the last lines. A window with no room for the frames shows no pane.
+// and the footer's buttons on the last lines. A narrow window stacks the panes, and one too short
+// for that shows the focused pane alone. A window with no room for a frame shows no pane.
 type Layout struct {
 	Title  string
 	Status string
@@ -36,7 +40,7 @@ type Layout struct {
 // PaneSizes returns the room inside each pane's frame, in a window of width and height, so that a
 // screen can size what it draws in a pane. A pane the window leaves out has the zero Size.
 func (l Layout) PaneSizes(width, height int) []Size {
-	sizes := l.frames(width, height)
+	sizes, _ := l.frames(width, height)
 	for i, size := range sizes {
 		if size != (Size{}) {
 			sizes[i] = Size{size.Width - 2, size.Height - 2}
@@ -45,17 +49,27 @@ func (l Layout) PaneSizes(width, height int) []Size {
 	return sizes
 }
 
-// frames returns each pane's size with its frame.
-func (l Layout) frames(width, height int) []Size {
+// frames returns each pane's size with its frame, and whether the panes stack.
+func (l Layout) frames(width, height int) ([]Size, bool) {
 	sizes := make([]Size, len(l.Panes))
 	room := l.bodyHeight(width, height)
-	if room < minPaneHeight {
-		return sizes
+	if len(l.Panes) == 0 || room < minPaneHeight || width < minFrameWidth {
+		return sizes, true
 	}
-	for i, column := range spread(l.Panes, width, minPaneWidth) {
-		sizes[i] = Size{column, room}
+	if columns := spread(l.Panes, width, minPaneWidth); columns != nil {
+		for i, column := range columns {
+			sizes[i] = Size{column, room}
+		}
+		return sizes, false
 	}
-	return sizes
+	if rows := spread(l.Panes, room, minPaneHeight); rows != nil {
+		for i, row := range rows {
+			sizes[i] = Size{width, row}
+		}
+		return sizes, true
+	}
+	sizes[l.focused()] = Size{width, room}
+	return sizes, true
 }
 
 // bodyHeight is the lines between the title and the footer.
@@ -83,4 +97,14 @@ func spread(panes []Pane, total, least int) []int {
 		given = end
 	}
 	return parts
+}
+
+// focused returns the place of the focused pane, or the first where none has the focus.
+func (l Layout) focused() int {
+	for i, pane := range l.Panes {
+		if pane.Focused {
+			return i
+		}
+	}
+	return 0
 }

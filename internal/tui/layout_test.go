@@ -14,7 +14,7 @@ func twoPanes() Layout {
 		Title:  "ws server apply",
 		Status: "3/59",
 		Panes: []Pane{
-			{Title: "Steps", Body: "a\nb"},
+			{Title: "Steps", Body: "a\nb", Focused: true},
 			{Title: "Output", Body: "line", Weight: 2},
 		},
 		Footer: NewFooter(Keys.Quit),
@@ -47,13 +47,25 @@ func TestPaneSizes(t *testing.T) {
 	}{
 		{"side by side at 80x24", 80, 24, []Size{{32, 20}, {44, 20}}},
 		{"side by side at the narrowest", 48, 24, []Size{{22, 20}, {22, 20}}},
+		{"stacked one column under that", 47, 24, []Size{{45, 6}, {45, 12}}},
+		{"stacked at the shortest", 40, 8, []Size{{38, 1}, {38, 1}}},
+		{"the focused pane alone, too short to stack", 40, 7, []Size{{38, 3}, {}}},
 		{"no pane in a window that holds no frame", 80, 4, []Size{{}, {}}},
-		{"no pane in a window under the two frames", 47, 24, []Size{{}, {}}},
+		{"no pane in a window of no columns", 2, 24, []Size{{}, {}}},
 	}
 	for _, c := range cases {
 		if got := twoPanes().PaneSizes(c.width, c.height); !reflect.DeepEqual(got, c.want) {
 			t.Errorf("%s: %v, want %v", c.name, got, c.want)
 		}
+	}
+}
+
+func TestPaneSizesKeepTheFocusedPaneInAShortWindow(t *testing.T) {
+	layout := twoPanes()
+	layout.Panes[0].Focused, layout.Panes[1].Focused = false, true
+	want := []Size{{}, {38, 3}}
+	if got := layout.PaneSizes(40, 7); !reflect.DeepEqual(got, want) {
+		t.Errorf("sizes %v, want %v", got, want)
 	}
 }
 
