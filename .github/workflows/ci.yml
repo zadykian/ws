@@ -119,6 +119,11 @@ jobs:
               echo '::error::The second run of ws server apply changed something.'
               exit 1
           fi
+      # The wrapper and tmux.conf that the zed step installed, run against the container's tmux. The
+      # test takes about a minute, and catches a tmux release that changes how list-sessions or
+      # rename-session behave.
+      - name: Check the Zed terminal wrapper
+        run: sh .github/zed-terminal-checks.sh /usr/local/lib/ws/zed
       # The container has no booted systemd, so the run leaves out its own nft -c. This checks the
       # outbound table it wrote, and the users the table names, which the steps make.
       - name: Check the outbound table

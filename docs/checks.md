@@ -14,8 +14,9 @@ CI also builds ws from the tree, never from a release, in an Ubuntu 26.04 contai
 that the build is `devel`. It runs `ws server apply` twice from root's home, as `zadykian` and as
 root, a cloud VM's user. The steps that need a booted systemd skip and say so, and the second run's
 last line must be `changed: none`. Then `nft -c`, with the container's NET_ADMIN, checks the
-outbound table the run wrote and the users it names, and a find that the user owns its home. Root's
-leg has no table. The run leaves out its own check ([Outbound](security.md#outbound)). Its
+outbound table the run wrote and the users it names, and a find that the user owns its home. The
+Zed wrapper's [checks](../.github/zed-terminal-checks.sh) run on the files it installed. Root's leg
+has no table. The run leaves out its own check ([Outbound](security.md#outbound)). Its
 `/etc/ws/host_vars.yml` gives a swap file of 64 MiB, as the runner's disk has no room for one of its
 RAM's size. Its board is not MSI's, so `fans` leaves its fans alone. It gives no VPN profile, so
 `ikeward` does nothing.
