@@ -16,12 +16,14 @@ const (
 
 // The places of the state screen's buttons.
 const (
-	readPlace = iota
+	filterPlace = iota
+	readPlace
 	leavePlace
 )
 
 var (
-	readButton = key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "read again"))
+	filterButton = key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter"))
+	readButton   = key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "read again"))
 	// openKey and backKey move between the list and the detail pane, as Tab moves between the tabs.
 	openKey = key.NewBinding(key.WithKeys("enter", "right", "l"))
 	backKey = key.NewBinding(key.WithKeys("esc", "left", "h"))
@@ -55,13 +57,14 @@ type StateScreen struct {
 	// failed, and warning the last that a read's steps gave.
 	reading, reported bool
 	problem, warning  string
-	// filter holds the words that a row's name must contain.
-	filter textinput.Model
+	// filter holds the words that a row's name must contain, and editing gives it the keys.
+	filter  textinput.Model
+	editing bool
 }
 
 // NewStateScreen returns the screen, which asks for a report as it starts.
 func NewStateScreen(theme Theme, title string, read, leave tea.Cmd) StateScreen {
-	footer := NewFooter(readButton, Keys.Quit).Enable(readPlace, false)
+	footer := NewFooter(filterButton, readButton, Keys.Quit).Enable(readPlace, false)
 	return StateScreen{
 		theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true, filter: newFilter(),
 	}
@@ -84,7 +87,14 @@ func (s StateScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Kind == Warned {
 			s.warning = firstLine(printable(msg.Text))
 		}
+	case tea.PasteMsg:
+		if s.editing {
+			return s.edited(msg), nil
+		}
 	case tea.KeyPressMsg:
+		if s.editing {
+			return s.edited(msg), nil
+		}
 		return s.pressed(msg)
 	}
 	return s, nil
@@ -99,23 +109,34 @@ func (s StateScreen) took(msg StateRead) StateScreen {
 		s.problem = firstLine(printable(msg.Err.Error()))
 		return s
 	}
-	was := s
+	picks := s.picks()
 	s.reported = true
 	s.rows = tabRows(msg.Sections)
-	return s.refound(was)
+	return s.refound(picks)
+}
+
+// picks returns the row that each tab has selected, nil where a tab shows none. Whatever moves the
+// rows takes them first: the input rewrites its words in place, so a copy of the screen from before
+// an edit reads the new words, and its cursors don't fit the rows those leave.
+func (s StateScreen) picks() [tabCount]*stateRow {
+	var picks [tabCount]*stateRow
+	for tab, cursor := range s.cursors {
+		if rows := s.shown(tab); len(rows) > 0 {
+			picks[tab] = &rows[cursor]
+		}
+	}
+	return picks
 }
 
 // refound puts each tab's selection back on its row, once a read or the filter moved the rows under
 // it. Where the row went, the selection keeps its place.
-func (s StateScreen) refound(was StateScreen) StateScreen {
-	for tab := range s.cursors {
+func (s StateScreen) refound(picks [tabCount]*stateRow) StateScreen {
+	for tab, picked := range picks {
 		rows := s.shown(tab)
-		s.cursors[tab] = max(min(was.cursors[tab], len(rows)-1), 0)
-		old := was.shown(tab)
-		if len(old) == 0 {
+		s.cursors[tab] = max(min(s.cursors[tab], len(rows)-1), 0)
+		if picked == nil {
 			continue
 		}
-		picked := old[was.cursors[tab]]
 		same := func(row stateRow) bool { return row.step == picked.step && row.name == picked.name }
 		if at := slices.IndexFunc(rows, same); at >= 0 {
 			s.cursors[tab] = at
@@ -140,16 +161,22 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, openKey):
 		s.inDetail = len(s.shown(s.tab)) > 0
 		return s, nil
-	case key.Matches(msg, backKey):
+	case s.inDetail && key.Matches(msg, backKey):
 		s.inDetail = false
 		return s, nil
+	case key.Matches(msg, clearKey):
+		return s.cleared(), nil
 	}
 	return s.moved(msg), nil
 }
 
 // pushed acts on a button.
 func (s StateScreen) pushed(place int) (tea.Model, tea.Cmd) {
-	if place == leavePlace {
+	switch place {
+	case filterPlace:
+		s.editing, s.inDetail = true, false
+		return s, nil
+	case leavePlace:
 		return s, s.leave
 	}
 	s.reading, s.warning = true, ""

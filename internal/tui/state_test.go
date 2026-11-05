@@ -99,13 +99,13 @@ func TestStateScreenOtherKeysAskForNothing(t *testing.T) {
 func TestStateScreenTabWalksTheTabsThenTheButtons(t *testing.T) {
 	type place struct{ tab, button int }
 	s := reportedState(t)
-	for _, want := range []place{{1, -1}, {2, -1}, {3, -1}, {4, -1}, {4, 0}, {4, 1}, {0, -1}} {
+	for _, want := range []place{{1, -1}, {2, -1}, {3, -1}, {4, -1}, {4, 0}, {4, 1}, {4, 2}, {0, -1}} {
 		s, _ = feedState(t, s, tab)
 		if got := (place{s.tab, s.footer.Focused()}); got != want {
 			t.Fatalf("Tab: %+v, want %+v", got, want)
 		}
 	}
-	for _, want := range []place{{0, 1}, {0, 0}, {4, -1}, {3, -1}} {
+	for _, want := range []place{{0, 2}, {0, 1}, {0, 0}, {4, -1}, {3, -1}} {
 		s, _ = feedState(t, s, shiftTab)
 		if got := (place{s.tab, s.footer.Focused()}); got != want {
 			t.Fatalf("Shift-Tab: %+v, want %+v", got, want)
