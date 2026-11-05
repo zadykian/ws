@@ -163,3 +163,12 @@ removal. Off leaves:
 So Docker's containers reach a cloud's metadata service, and the VPC or the LAN, too. Only the
 table's `containers` chain drops what they forward: Docker forwards it ahead of ufw's rules, and
 `WS-MAC` covers `wg0` and the cable alone.
+
+## Links under the home
+
+`ws_user` owns `ws_home`, so a link there could send ws, which runs as root, to any file: its reads,
+`chown`, `chmod` and backups would follow it. ws refuses a link at a file it reads or writes there
+as root. It refuses a link at a directory between the home and that file too, and names the link
+and its target. The `shell`, `helix`, `zed` and `otelcol` roles check, root as `ws_user` included.
+Replace the link with the file itself. The check looks as the step plans, so a link made while
+it applies gets past it.
