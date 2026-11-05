@@ -1,8 +1,8 @@
 # The terminal UI
 
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
-`internal/tui`. `ws server apply` draws [the run screen](#the-run-screen). The other commands print
-lines for now.
+`internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen). The other
+commands print lines for now.
 
 ## Modes
 
@@ -15,7 +15,8 @@ A command draws a screen only where each of these holds:
 Anywhere else ws prints lines, as before, byte for byte. That covers CI, a pipe and the unit on
 ws, which reads the last line of a run. The wizard's cases in `.github/mac-wizard` that run under
 `script -q` get a terminal, so each passes `--plain`. CI's `playbook` job runs `ws server apply
---check` under `script` to draw the screen ([The `playbook` job](checks.md#the-playbook-job)).
+--check` under `script` to draw the screen ([The `playbook` job](checks.md#the-playbook-job)), and
+a case of the `mac` job does so with `ws mac apply --check` ([The Mac](checks.md#the-mac)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
 The mode is chosen in `cmd/ws/screen.go`.
@@ -92,7 +93,8 @@ The other pane is a window on what the run prints, under the current step's name
 - Under `--check`, each step's changes show in it, a file's diff in color.
 
 The window goes with the screen. The last line of `ws server apply`, an error and what stays by hand
-print on the normal screen, and `--plain` keeps every line of a run.
+print on the normal screen, and `--plain` keeps every line of a run. What `ws mac apply` prints on
+stdout, the commands that make the Mac ws's peer, waits for the screen's end.
 
 What stays by hand holds the lines that the maintainer acts on past a run: ws's WireGuard key, and
 what a step leaves to do. A step says one through `effect.SayLasting`, which a plain run prints in
@@ -160,7 +162,8 @@ can't ask, and takes the password in a hidden field:
 - A stage that has sudo ask ahead of its lines calls `effect.Validate`. That is `sudo -v` in plain
   mode, and the same field under a screen.
 
-ws runs as root on the server, with no sudo, so there it asks nothing.
+ws runs as root on the server, with no sudo, so there it asks nothing. `ws mac apply` asks at its
+first root command, so a run that needs none asks nothing.
 
 ## The terminal comes back
 
