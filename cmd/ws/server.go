@@ -80,27 +80,36 @@ func newApplyCmd(p process) *cobra.Command {
 	return c
 }
 
-// runApply sets the server up as opts say.
-func runApply(c *cobra.Command, p process, opts apply.Options) error {
+// serverRun is what a command that reads or sets the server up has made ready.
+type serverRun struct {
+	cfg  apply.Config
+	list []roles.Role
+	term *effect.Terminal
+	out  progOut
+}
+
+// prepareServer checks where the command runs, then loads the values and the secrets that the
+// roles read. The steps of --only follow the values, so they are checked last.
+func prepareServer(c *cobra.Command, p process, opts apply.Options) (serverRun, error) {
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
-		return usageError{errors.New("--only names no role")}
+		return serverRun{}, usageError{errors.New("--only names no role")}
 	}
 	list, err := apply.Select(roles.List(), opts.Only)
 	if err != nil {
-		return usageError{err}
+		return serverRun{}, usageError{err}
 	}
 	text, err := p.machine.ReadFile(osRelease)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return err
+		return serverRun{}, err
 	}
 	if why := serverRefusal(p.euid, text); why != "" {
-		return errors.New(why)
+		return serverRun{}, errors.New(why)
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
 	v, err := values.Load(p.machine, serverVars)
 	if err != nil {
-		return err
+		return serverRun{}, err
 	}
 	// ws_home is known now: the machine's writes under it stay inside it.
 	if m, ok := p.machine.(effect.OSMachine); ok {
@@ -109,30 +118,39 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	}
 	sec, err := loadSecrets(p.machine, opts.Secrets, p.getenv)
 	if err != nil {
-		return err
+		return serverRun{}, err
 	}
 	cfg := apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
 	if err := cfg.CheckSteps(list); err != nil {
-		return usageError{err}
+		return serverRun{}, usageError{err}
+	}
+	return serverRun{cfg: cfg, list: list, term: term, out: out}, nil
+}
+
+// runApply sets the server up as opts say.
+func runApply(c *cobra.Command, p process, opts apply.Options) error {
+	r, err := prepareServer(c, p, opts)
+	if err != nil {
+		return err
 	}
 	if opensList(c, p, c.Flags().Changed("only")) {
-		if cfg, list, err = pickServer(c, p, cfg, list); err != nil || list == nil {
-			term.Flush()
+		if r.cfg, r.list, err = pickServer(c, p, r.cfg, r.list); err != nil || r.list == nil {
+			r.term.Flush()
 			return err
 		}
 	}
 	var changed []string
 	if drawsScreen(c, p) {
-		changed, err = applyOnScreen(c, p, cfg, list)
+		changed, err = applyOnScreen(c, p, r.cfg, r.list)
 	} else {
-		changed, err = apply.Run(c.Context(), cfg, list)
+		changed, err = apply.Run(c.Context(), r.cfg, r.list)
 	}
-	term.Flush()
+	r.term.Flush()
 	if err != nil {
 		return err
 	}
-	out.Say("%s", apply.Summary(changed, cfg.Check))
+	r.out.Say("%s", apply.Summary(changed, r.cfg.Check))
 	return nil
 }
 
