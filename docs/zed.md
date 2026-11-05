@@ -26,7 +26,7 @@ The settings layers, lowest first:
 5. A project's `.zed/settings.json`.
 
 ws's file names the language servers by path. A path makes Zed skip every download and add no
-arguments. It sets `terminal.shell` to `system`, Zed's default. A program set in the Mac's
+arguments. It sets `terminal.shell.program` to ws's terminal wrapper. A program set in the Mac's
 `settings.json` would run on ws too (zed#65548), and fail there if ws lacks it.
 
 ## Zed's downloads, outside the SHA-256 rule

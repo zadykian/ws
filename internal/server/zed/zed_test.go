@@ -209,3 +209,24 @@ func TestTheTerminalStepComesFirstAndMakesItsParents(t *testing.T) {
 		t.Errorf("an empty machine plans %d changes, %v", len(plan.Changes), err)
 	}
 }
+
+func TestSettingsRunTheWrapperAsTheTerminalProgramAfterItsStep(t *testing.T) {
+	got, err := settingsFile(values.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, body, _ := strings.Cut(string(got), "\n")
+	var top struct {
+		Terminal struct{ Shell struct{ Program string } }
+	}
+	if err := json.Unmarshal([]byte(body), &top); err != nil {
+		t.Fatal(err)
+	}
+	if top.Terminal.Shell.Program != terminalPath {
+		t.Errorf("program %q, want %q", top.Terminal.Shell.Program, terminalPath)
+	}
+	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	if steps[1].Name() != "Zed settings" || steps[1].WaitsOn() != steps[0].Name() {
+		t.Errorf("%q waits on %q", steps[1].Name(), steps[1].WaitsOn())
+	}
+}

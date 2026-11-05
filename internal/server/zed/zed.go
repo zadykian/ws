@@ -26,12 +26,15 @@ var terminalFiles embed.FS
 // runs the wrapper by its path. The wrapper finds its config beside itself.
 const terminalDir = "/usr/local/lib/ws/zed"
 
+// terminalPath is the wrapper, which the settings name as the terminal's program.
+const terminalPath = terminalDir + "/terminal"
+
 // Steps returns the role's steps in order.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: "Zed terminal", Parts: terminalParts(m)},
-		user.Owned(m, "Zed settings", "", func(uid, gid int) ([]host.Resource, error) {
+		user.Owned(m, "Zed settings", "Zed terminal", func(uid, gid int) ([]host.Resource, error) {
 			settings, err := settingsFile(v)
 			if err != nil {
 				return nil, err
@@ -76,7 +79,8 @@ func quote(s string) string {
 // settingsFile renders ~/.config/zed/settings.json: the servers by path, as devtools installs
 // them. The server's file wins over the Mac's, which Zed forwards.
 func settingsFile(v values.Values) ([]byte, error) {
-	return host.Render(files, "settings.json.tmpl", struct{ Gopls, Roslyn, Dlv, AnsibleLS, HTMLLS, DockerfileLS string }{
+	return host.Render(files, "settings.json.tmpl", struct{ Terminal, Gopls, Roslyn, Dlv, AnsibleLS, HTMLLS, DockerfileLS string }{
+		Terminal:     quote(terminalPath),
 		Gopls:        quote(devtools.Gopls(v.Home)),
 		Roslyn:       quote(devtools.Roslyn(v.Home)),
 		Dlv:          quote(devtools.Dlv(v.Home)),
@@ -94,7 +98,7 @@ func terminalParts(m effect.Machine) []host.Resource {
 	return []host.Resource{
 		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755, CreateOnly: true},
 		host.Dir{M: m, Path: terminalDir, Mode: 0o755},
-		host.File{M: m, Path: terminalDir + "/terminal", Content: script, Mode: 0o755},
+		host.File{M: m, Path: terminalPath, Content: script, Mode: 0o755},
 		host.File{M: m, Path: terminalDir + "/tmux.conf", Content: conf, Mode: 0o644},
 	}
 }
