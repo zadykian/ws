@@ -62,6 +62,19 @@ keys go to it alone. A hidden answer travels on a channel of its own, and enters
 or error. A paste into a hidden field gives its first line, byte for byte, as the plain prompt
 reads it, and Enter still answers. A step's lines arrive as messages and show in a pane.
 
+## Commands
+
+A screen owns the terminal, so a step's commands stay off it.
+
+- A screen sets `Stdin` of `effect.OSMachine` to `effect.NoStdin`, and a command finds the end of
+  its input at once.
+- git and ssh ask at `/dev/tty`, past their input. With `Stdin` set, git gets
+  `GIT_TERMINAL_PROMPT=0`, and ssh gets `SSH_ASKPASS_REQUIRE=force` with `SSH_ASKPASS=false`. So a
+  clone fails where it would ask, as ssh does of an unknown host, and `--plain` asks. ws's ssh keeps
+  `BatchMode` where no prompt is expected.
+- A command keeps ws's controlling terminal. sudo keeps its ticket by terminal, so a child's own
+  sudo, such as brew's, would ask again without one.
+
 ## The terminal comes back
 
 The terminal is restored after an error, a signal and a panic, a panic in a step's goroutine

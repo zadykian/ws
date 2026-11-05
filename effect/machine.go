@@ -22,7 +22,8 @@ type OSMachine struct {
 	// Stderr takes what RunShown, PassInput and Pass pass on. Nil means os.Stderr.
 	Stderr io.Writer
 	// Stdin is what Pass gives a command to read. Nil means os.Stdin, where sudo can ask for a
-	// password. A screen owns the terminal, and sets NoStdin.
+	// password. A screen owns the terminal, and sets NoStdin. With any Stdin, git and ssh get
+	// offTerminal, as they ask at /dev/tty, past their standard input.
 	Stdin io.Reader
 	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
 	// inside for a path under it: a link there that leaves it fails the write. ws_user owns the
@@ -165,8 +166,17 @@ func (m OSMachine) argv(root bool, name string, args []string) []string {
 	return append([]string{name}, args...)
 }
 
-func (OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
-	return exec.CommandContext(ctx, argv[0], argv[1:]...) //nolint:gosec // the steps name the command
+// offTerminal makes git and ssh fail where they would ask, as a clone's ssh does of an unknown host.
+// An askpass that fails gives ssh an empty answer. A GIT_SSH_COMMAND with BatchMode would do the same,
+// but would replace a core.sshCommand.
+var offTerminal = []string{"GIT_TERMINAL_PROMPT=0", "SSH_ASKPASS=false", "SSH_ASKPASS_REQUIRE=force"}
+
+func (m OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...) //nolint:gosec // the steps name the command
+	if m.Stdin != nil {
+		cmd.Env = withEnv(os.Environ(), offTerminal)
+	}
+	return cmd
 }
 
 func output(cmd *exec.Cmd) ([]byte, error) {

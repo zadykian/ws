@@ -54,3 +54,21 @@ func TestOSMachinePassStdin(t *testing.T) {
 		})
 	}
 }
+
+func TestOSMachineStdinStopsGitAndSSHAsking(t *testing.T) {
+	t.Setenv("GIT_TERMINAL_PROMPT", "1")
+	t.Setenv("SSH_ASKPASS", "own")
+	t.Setenv("SSH_ASKPASS_REQUIRE", "never")
+	const show, want = `echo "$GIT_TERMINAL_PROMPT $SSH_ASKPASS $SSH_ASKPASS_REQUIRE"`, "0 false force\n"
+	if out, err := (effect.OSMachine{}).Run(t.Context(), "sh", "-c", show); err != nil || string(out) != "1 own never\n" {
+		t.Errorf("a plain run gave %q, %v; want ws's own", out, err)
+	}
+	var passed bytes.Buffer
+	m := effect.OSMachine{Stdin: effect.NoStdin, Stderr: &passed}
+	if out, err := m.Run(t.Context(), "sh", "-c", show); err != nil || string(out) != want {
+		t.Errorf("Run gave %q, %v; want %q", out, err, want)
+	}
+	if err := m.Pass(t.Context(), false, "sh", "-c", show); err != nil || passed.String() != want {
+		t.Errorf("Pass gave %q, %v; want %q", passed.String(), err, want)
+	}
+}
