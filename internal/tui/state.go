@@ -47,8 +47,9 @@ type StateScreen struct {
 	rows    [tabCount][]stateRow
 	cursors [tabCount]int
 	tab     int
-	// inDetail gives the keys to the detail pane.
+	// inDetail gives the keys to the detail pane, and scroll is the first of its lines on show.
 	inDetail bool
+	scroll   int
 	// reading holds while a read runs, and reported once one has come. problem is why the last
 	// failed, and warning the last that a read's steps gave.
 	reading, reported bool
@@ -154,7 +155,7 @@ func (s StateScreen) pushed(place int) (tea.Model, tea.Cmd) {
 // turned moves along one ring of the tabs and the buttons, as Tab must both turn the tabs and reach
 // a button. The list takes the keys in a new tab.
 func (s StateScreen) turned(step int) StateScreen {
-	s.inDetail = false
+	s.inDetail, s.scroll = false, 0
 	next := s.tab + step
 	if s.footer.Focused() < 0 && next >= 0 && next < tabCount {
 		s.tab = next
@@ -171,13 +172,20 @@ func (s StateScreen) turned(step int) StateScreen {
 	return s
 }
 
-// moved moves the selection, while the list has the keys.
+// moved moves the selection, or the detail pane's lines where that pane has the keys. A new row
+// shows from its first line.
 func (s StateScreen) moved(msg tea.KeyPressMsg) StateScreen {
+	sizes := s.layout().PaneSizes(s.window.Width, s.window.Height)
 	if s.inDetail {
+		size := sizes[detailPane]
+		last := max(len(s.detailLines(size.Width))-size.Height, 0)
+		s.scroll = stepped(msg, s.scroll, size.Height, last)
 		return s
 	}
-	sizes := s.layout().PaneSizes(s.window.Width, s.window.Height)
-	s.cursors[s.tab] = stepped(msg, s.cursors[s.tab], sizes[listPane].Height, len(s.rows[s.tab])-1)
+	cursor := stepped(msg, s.cursors[s.tab], sizes[listPane].Height, len(s.rows[s.tab])-1)
+	if cursor != s.cursors[s.tab] {
+		s.cursors[s.tab], s.scroll = cursor, 0
+	}
 	return s
 }
 

@@ -19,7 +19,7 @@ func (s StateScreen) View() tea.View {
 	l := s.layout()
 	sizes := l.PaneSizes(s.window.Width, s.window.Height)
 	l.Panes[listPane].Body = s.listBody(sizes[listPane])
-	l.Panes[detailPane].Body = strings.Join(s.detailLines(sizes[detailPane].Width), "\n")
+	l.Panes[detailPane].Title, l.Panes[detailPane].Body = s.detailBody(sizes[detailPane])
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
 

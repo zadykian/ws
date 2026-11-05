@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -61,6 +62,24 @@ func TestDiffStyleTakesALaterMarkForAChange(t *testing.T) {
 		if got := newTestState().diffStyle(2, line); got.Render("x") != want.Render("x") {
 			t.Errorf("%q has another style", line)
 		}
+	}
+}
+
+func TestStateScreenScrollsTheDetail(t *testing.T) {
+	var diff strings.Builder
+	for i := range 60 {
+		fmt.Fprintf(&diff, "+line %d \n", i)
+	}
+	s, _ := feedState(t, newTestState(), sized, fileReport(diff.String()), tab, tab)
+	height := s.layout().PaneSizes(80, 24)[detailPane].Height
+	wantDrawn(t, s, fmt.Sprintf("Detail 1-%d/", height), "+line 0 ")
+	s, _ = feedState(t, s, enter, down)
+	wantDrawn(t, s, fmt.Sprintf("Detail 2-%d/", height+1))
+	s, _ = feedState(t, s, press('G'))
+	wantDrawn(t, s, "+line 59 ")
+	s, _ = feedState(t, s, esc, down, press('k'))
+	if s.scroll != 0 {
+		t.Errorf("a new row shows from line %d", s.scroll)
 	}
 }
 
