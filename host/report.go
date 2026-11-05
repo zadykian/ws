@@ -11,6 +11,9 @@ import (
 // missing is the state of what a report looks for and doesn't find.
 const missing = "missing"
 
+// writtenBy is the line at the top of a file ws writes, after its format's comment mark.
+var writtenBy = []byte("Written by github.com/zadykian/ws")
+
 func attrsText(a effect.Attrs) string {
 	return fmt.Sprintf("owner %d:%d, mode %o", a.UID, a.GID, a.Mode)
 }

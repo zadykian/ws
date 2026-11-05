@@ -14,15 +14,19 @@ import (
 func TestFileReport(t *testing.T) {
 	const header, wanted = "# Written by github.com/zadykian/ws\n", "owner 0:0, mode 644"
 	tests := []struct {
-		name, before string
-		mode         fs.FileMode
-		found        string
-		diff         bool
+		name, before    string
+		mode            fs.FileMode
+		found, conflict string
+		diff            bool
 	}{
 		{name: "missing", found: "missing"},
 		{name: "as wanted", before: header + "new\n", found: wanted},
-		{name: "content", before: header + "old\n", found: wanted + ", other content", diff: true},
-		{name: "mode", before: header + "new\n", mode: 0o600, found: "owner 0:0, mode 600"},
+		{name: "by hand", before: header + "old\n", found: wanted + ", other content", diff: true,
+			conflict: "differs from what ws writes: a change by hand, or another version of ws"},
+		{name: "no line", before: "old\n", found: wanted + ", other content", diff: true,
+			conflict: "holds no Written by line: ws did not write it"},
+		{name: "mode", before: header + "new\n", mode: 0o600, found: "owner 0:0, mode 600",
+			conflict: "its owner or mode changed"},
 	}
 	for _, tt := range tests {
 		m := effecttest.NewMachine()
@@ -37,8 +41,8 @@ func TestFileReport(t *testing.T) {
 		if got.Kind != step.FileItem || got.Name != "/a" || got.Want != wanted {
 			t.Errorf("%s: item = %+v, want the file's wanted state", tt.name, got)
 		}
-		if got.Found != tt.found {
-			t.Errorf("%s: found %q, want %q", tt.name, got.Found, tt.found)
+		if got.Found != tt.found || got.Conflict != tt.conflict {
+			t.Errorf("%s: found %q, conflict %q, want %q, %q", tt.name, got.Found, got.Conflict, tt.found, tt.conflict)
 		}
 		if (got.Diff != "") != tt.diff || tt.diff && !strings.Contains(got.Diff, "+new") {
 			t.Errorf("%s: diff = %q, want one: %v", tt.name, got.Diff, tt.diff)

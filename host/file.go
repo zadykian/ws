@@ -83,8 +83,8 @@ func (f File) Plan(context.Context) ([]Change, error) {
 	return nil, nil
 }
 
-// Report compares the file as Plan does. A secret shows no diff and no sum, as a sum would let a
-// guess be checked.
+// Report compares the file as Plan does. A file that exists and differs stands against ws. A secret
+// shows no diff and no sum, as a sum would let a guess be checked.
 func (f File) Report(context.Context) ([]step.Item, error) {
 	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: attrsText(f.attrs()), Found: missing}
 	before, got, ok, err := readRoot(f.M, f.Path)
@@ -92,11 +92,24 @@ func (f File) Report(context.Context) ([]step.Item, error) {
 		return []step.Item{item}, err
 	}
 	item.Found = attrsText(got)
-	if !bytes.Equal(before, f.Content) {
+	switch {
+	case !bytes.Equal(before, f.Content):
 		item.Found += ", other content"
+		item.Conflict = f.conflict(before)
 		if !f.Secret {
 			item.Diff = effect.Diff(f.Path, before, f.Content)
 		}
+	case got != f.attrs():
+		item.Conflict = "its owner or mode changed"
 	}
 	return []step.Item{item}, nil
+}
+
+// conflict says how the file's content stands against ws. ws keeps no sum of what it wrote, so a
+// change by hand reads the same as a file from another version of ws.
+func (f File) conflict(before []byte) string {
+	if bytes.Contains(f.Content, writtenBy) && !bytes.Contains(before, writtenBy) {
+		return "holds no Written by line: ws did not write it"
+	}
+	return "differs from what ws writes: a change by hand, or another version of ws"
 }
