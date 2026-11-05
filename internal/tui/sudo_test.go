@@ -6,7 +6,10 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
@@ -33,8 +36,8 @@ func TestSudoAsksNothingOfAValidTicket(t *testing.T) {
 	if err := s.ticket(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	if want := []string{"run " + sudoLook}; !slices.Equal(m.Calls, want) {
-		t.Errorf("calls = %q, want %q", m.Calls, want)
+	if want := []string{"run " + sudoLook}; !slices.Equal(m.Calls, want) || !s.held.Load() {
+		t.Errorf("calls = %q, held = %v", m.Calls, s.held.Load())
 	}
 }
 
@@ -49,8 +52,8 @@ func TestSudoChecksThePasswordAnswered(t *testing.T) {
 	if want := []string{" a pass\tword \n"}; !slices.Equal(m.Inputs, want) {
 		t.Errorf("sudo read %q, want %q", m.Inputs, want)
 	}
-	if want := []string{sudoQuestion}; !slices.Equal(p.Asked, want) {
-		t.Errorf("asked = %q, want %q", p.Asked, want)
+	if want := []string{sudoQuestion}; !slices.Equal(p.Asked, want) || !s.held.Load() {
+		t.Errorf("asked = %q, held = %v", p.Asked, s.held.Load())
 	}
 }
 
@@ -59,8 +62,8 @@ func TestSudoEndsWhereARightPasswordLeavesNoTicket(t *testing.T) {
 	m.Results[sudoCheck] = effecttest.Result{}
 	m.Results[sudoKept] = effecttest.Result{Err: errors.New("sudo: a password is required")}
 	s := &sudo{m: m, p: &effecttest.Prompt{T: t, Hidden: []string{"right"}}}
-	if err := s.ticket(t.Context()); !errors.Is(err, effect.ErrNoTicket) {
-		t.Errorf("err = %v", err)
+	if err := s.ticket(t.Context()); !errors.Is(err, effect.ErrNoTicket) || s.held.Load() {
+		t.Errorf("err = %v, held = %v", err, s.held.Load())
 	}
 }
 
@@ -70,8 +73,8 @@ func TestSudoStopsAfterItsTries(t *testing.T) {
 	p := &effecttest.Prompt{T: t, Hidden: []string{"first", "second", "third"}}
 	s := &sudo{m: m, p: p}
 	err := s.ticket(t.Context())
-	if err == nil || !strings.Contains(err.Error(), "Sorry, try again") {
-		t.Fatalf("err = %v", err)
+	if err == nil || !strings.Contains(err.Error(), "Sorry, try again") || s.held.Load() {
+		t.Fatalf("err = %v, held = %v", err, s.held.Load())
 	}
 	for _, secret := range []string{"first", "second", "third"} {
 		if strings.Contains(err.Error(), secret) {
@@ -96,4 +99,47 @@ func TestSudoEndsWithTheQuestion(t *testing.T) {
 	if want := []string{"run " + sudoLook}; !slices.Equal(m.Calls, want) {
 		t.Errorf("calls = %q, want %q", m.Calls, want)
 	}
+}
+
+// lookedMachine counts sudo's looks, which come from hold's goroutine, and refuses them once lapsed.
+type lookedMachine struct {
+	effect.Machine
+	looks  atomic.Int32
+	lapsed atomic.Bool
+}
+
+func (m *lookedMachine) Run(context.Context, string, ...string) ([]byte, error) {
+	m.looks.Add(1)
+	if m.lapsed.Load() {
+		return nil, errors.New("sudo: a password is required")
+	}
+	return nil, nil
+}
+
+func TestSudoHoldsATicketItFound(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := &lookedMachine{}
+		s := &sudo{m: m}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		go s.hold(ctx)
+		looks := func(after time.Duration) int32 {
+			time.Sleep(after)
+			synctest.Wait()
+			return m.looks.Load()
+		}
+		if n := looks(3 * sudoRenewal); n != 0 {
+			t.Errorf("%d looks with no ticket", n)
+		}
+		if err := s.ticket(ctx); err != nil {
+			t.Fatal(err)
+		}
+		if n := looks(2 * sudoRenewal); n != 3 {
+			t.Errorf("%d looks past the ticket and two renewals", n)
+		}
+		m.lapsed.Store(true)
+		if n := looks(3 * sudoRenewal); n != 4 || s.held.Load() {
+			t.Errorf("%d looks past a lapsed ticket, held = %v", n, s.held.Load())
+		}
+	})
 }
