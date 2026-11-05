@@ -122,3 +122,63 @@ func TestSetupStepNamesAreTheArguments(t *testing.T) {
 		t.Errorf("ValidArgs = %q; want %q", c.ValidArgs, want)
 	}
 }
+
+func TestMacStateRefusesRootAndArgs(t *testing.T) {
+	p := fakeProcess()
+	p.euid = 0
+	if status, _, stderr := runWs(p, "", "mac", "state"); status != 1 ||
+		!strings.HasPrefix(stderr, "ws mac state: run it as yourself, not root") {
+		t.Errorf("as root: status = %d, stderr = %q", status, stderr)
+	}
+	for _, args := range [][]string{{"state", "extra"}, {"state", "--check"}} {
+		if status, _, stderr := runWs(fakeProcess(), "", append([]string{"mac"}, args...)...); status != 2 ||
+			!strings.Contains(stderr, "--help' for usage.") {
+			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
+		}
+	}
+	if status, _, stderr := runWs(fakeProcess(), "", "mac", "state"); status != 1 || !strings.Contains(stderr, "is missing") {
+		t.Errorf("no mac.conf: status = %d, stderr = %q", status, stderr)
+	}
+}
+
+func TestMacStateHelp(t *testing.T) {
+	status, stdout, _ := runWs(fakeProcess(), "", "mac", "state", "-h")
+	for _, want := range []string{"--json", "applies nothing"} {
+		if status != 0 || !strings.Contains(stdout, want) {
+			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
+		}
+	}
+}
+
+func TestMacStateWritesReports(t *testing.T) {
+	var b bytes.Buffer
+	reports := []step.Report{
+		{Step: "git", Changes: []step.Pending{{Text: "write ~/.gitconfig\n+a\n"}}},
+		{Step: "zed", After: "git"},
+	}
+	if err := writeMacState(&b, reports); err != nil {
+		t.Fatal(err)
+	}
+	want := "  git\n    pending: write ~/.gitconfig\n  zed\n    not read: after git\n"
+	if b.String() != want {
+		t.Errorf("got %q, want %q", b.String(), want)
+	}
+	b.Reset()
+	if err := writeJSON(&b, macDoc{Version: "v1", Steps: reports[1:]}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(b.String(), `"version": "v1"`) || !strings.Contains(b.String(), `"after": "git"`) {
+		t.Errorf("json = %s", b.String())
+	}
+}
+
+func TestMacStateReadsMacConf(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.machine = m
+	status, stdout, _ := runWs(p, "", "mac", "state", "--json")
+	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) {
+		t.Errorf("status = %d, stdout = %q", status, stdout)
+	}
+}
