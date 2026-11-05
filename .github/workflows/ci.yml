@@ -156,6 +156,12 @@ jobs:
         run: sudo install -m 755 "$RUNNER_TEMP/ws" /usr/local/bin/ws
       - name: The cases
         run: sudo bash .github/rootless-checks.sh
+      # Docker's tool only points to the daemon's log.
+      - name: The daemon's log
+        if: failure()
+        run: |
+          sudo journalctl -n 80 --no-pager _SYSTEMD_USER_UNIT=docker.service
+          sudo dmesg | grep -i apparmor | tail -n 20
 
   # install.sh against releases laid out in a temporary directory and served on loopback, in the
   # order of .github/install-checks.sh: the latest and a named release install, a second run
