@@ -2,7 +2,11 @@ package main
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -39,10 +43,44 @@ func runTitle(c *cobra.Command, check bool) string {
 // status of a signal, for execute to report.
 func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work tui.Work) error {
 	theme := tui.NewTheme(p.getenv)
-	return tui.Run(c.Context(), tui.Config{
-		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: theme, Halts: true,
+	out := c.ErrOrStderr()
+	log, path := openLog(p, c.CommandPath(), time.Now())
+	if log != nil {
+		defer func() { _ = log.Close() }()
+	}
+	cfg := tui.Config{
+		In: c.InOrStdin(), Out: out, Theme: theme, Halts: true, LogPath: path,
 		Cut: func(s syscall.Signal) error { return signalExit{s} },
-	}, tui.NewRunScreen(title, theme, groups...), work)
+	}
+	if log != nil { // A nil *os.File in the interface would not be nil.
+		cfg.Log = log
+	}
+	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, theme, groups...), work)
+}
+
+// openLog creates the log of a run of command, under $XDG_STATE_HOME/ws or ~/.local/state/ws, for
+// the owner alone. A log that can't be made is no reason to stop a run, so it returns nil.
+func openLog(p process, command string, now time.Time) (*os.File, string) {
+	dir := p.getenv("XDG_STATE_HOME")
+	if dir == "" {
+		if home := p.getenv("HOME"); home != "" {
+			dir = filepath.Join(home, ".local", "state")
+		}
+	}
+	if !filepath.IsAbs(dir) {
+		return nil, ""
+	}
+	dir = filepath.Join(dir, "ws")
+	if os.MkdirAll(dir, 0o700) != nil {
+		return nil, ""
+	}
+	name := strings.ReplaceAll(command, " ", "-") + "-" + now.UTC().Format("20060102T150405Z") + ".log"
+	path := filepath.Join(dir, name)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600) //nolint:gosec // under the state directory, named by ws
+	if err != nil {
+		return nil, ""
+	}
+	return f, path
 }
 
 // screenMachine returns m as a run's steps take it under a screen. A fake has no terminal to keep
