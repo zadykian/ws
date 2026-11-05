@@ -63,10 +63,26 @@ link_wait() {
     link
 }
 
+# name KEY VALUE names VALUE in vars as KEY, by a rename that keeps the file's other lines and its
+# mode. A new file is 0600 in a 0755 directory, and starts with ---, as yamllint asks of YAML.
+name() {
+    [ -d "${vars%/*}" ] || { mkdir -p "${vars%/*}" && chmod 755 "${vars%/*}"; }
+    umask 077
+    [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
+    {
+        [ -s "$vars" ] || echo ---
+        cat "$vars" 2>/dev/null | awk -v key="$1:" -v line="$1: \"$2\"" '
+            index($0, key) == 1 { if (!done++) print line; next }
+            { print }
+            END { if (!done) print line }'
+    } >"$vars.new"
+    mv -f "$vars.new" "$vars"
+    say "wrote $vars"
+}
+
 # link [PORT] lists the ports, as the header says, with sysfs's carrier, which a port that is down
 # lacks, and ip's IPv4 addresses. Given PORT, one that it lists, it names it in vars, where that
-# names another, by a rename that keeps the file's other lines and its mode. A new file is 0600 in
-# a 0755 directory, and starts with ---, as yamllint asks of YAML.
+# names another.
 link() {
     if [ -z "${1-}" ]; then
         for port in $(ports); do
@@ -79,18 +95,7 @@ link() {
     ports | grep -qxF -- "$1" || die "'$1' is none of the wired ports that link lists"
     [ "$(sed -n 's/^network_direct_link_interface: *"\{0,1\}\([A-Za-z0-9_.-]*\).*/\1/p' "$vars" \
         2>/dev/null)" != "$1" ] || return 0
-    [ -d "${vars%/*}" ] || { mkdir -p "${vars%/*}" && chmod 755 "${vars%/*}"; }
-    umask 077
-    [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
-    {
-        [ -s "$vars" ] || echo ---
-        cat "$vars" 2>/dev/null | awk -v line="network_direct_link_interface: \"$1\"" '
-            /^network_direct_link_interface:/ { if (!done++) print line; next }
-            { print }
-            END { if (!done) print line }'
-    } >"$vars.new"
-    mv -f "$vars.new" "$vars"
-    say "wrote $vars"
+    name network_direct_link_interface "$1"
 }
 
 main() {
