@@ -22,6 +22,8 @@ func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.
 		effecttest.Result{Out: []byte("openssh-server ii\nufw ii\nfail2ban ii\nnftables ii\nsudo ii\n")}
 	m.Files["/etc/group"] = []byte("lxd:x:110:\n")
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n lxd-installer"] = effecttest.Result{}
+	m.Results["sudo -l -U zadykian"] = effecttest.Result{Out: []byte("User zadykian may run the following commands on h:\n    (ALL : ALL) ALL\n")}
+	m.Results["passwd --status zadykian"] = effecttest.Result{Out: []byte("zadykian P 2026-11-05 0 99999 7 -1\n")}
 	m.Results["visudo -cf "+noCachePath+".ws-check"] = effecttest.Result{}
 	m.Results["rm -f "+noCachePath+".ws-check"] = effecttest.Result{}
 	m.Results["/usr/sbin/sshd -G -f /etc/ssh/sshd_config.d/10-keys-only.conf.ws-check"] = effecttest.Result{}
@@ -93,6 +95,49 @@ func TestSudoAsksForThePasswordAtEveryCommand(t *testing.T) {
 	run(t, ss)
 	if got := string(m.Files[noCachePath]); !strings.Contains(got, "\nDefaults timestamp_timeout=0\n") {
 		t.Errorf("the drop-in = %q, want timestamp_timeout=0", got)
+	}
+}
+
+func sudoRightPlan(t *testing.T, list, status string, container bool) error {
+	v := values.Default()
+	v.Home = "/root"
+	m, _, ss := fakeSteps(v)
+	if container {
+		m.Files["/.dockerenv"] = nil
+	}
+	m.Results["sudo -l -U zadykian"] = effecttest.Result{Out: []byte(list)}
+	m.Results["passwd --status zadykian"] = effecttest.Result{Out: []byte(status)}
+	i := slices.IndexFunc(ss, func(s step.Step) bool { return s.Name() == sudoStep })
+	_, err := ss[i].Plan(t.Context())
+	return err
+}
+
+func TestSudoRightRefusesAUserWithNoRightOrNoPassword(t *testing.T) {
+	const right = "User zadykian may run the following commands on h:\n    (ALL : ALL) ALL\n"
+	for name, c := range map[string]struct{ list, status string }{
+		"no right":    {"User zadykian is not allowed to run sudo on h.\n", "zadykian P x\n"},
+		"no password": {right, "zadykian L x\n"},
+	} {
+		if err := sudoRightPlan(t, c.list, c.status, false); err == nil {
+			t.Errorf("%s: planned, want an error", name)
+		}
+	}
+}
+
+func TestSudoRightAcceptsAPasswordOrNOPASSWDAndSkipsInAContainer(t *testing.T) {
+	const right = "User zadykian may run the following commands on h:\n    (ALL : ALL) ALL\n"
+	const free = "User zadykian may run the following commands on h:\n    (ALL) NOPASSWD: ALL\n"
+	for name, c := range map[string]struct {
+		list, status string
+		container    bool
+	}{
+		"password":  {right, "zadykian P x\n", false},
+		"nopasswd":  {free, "zadykian L x\n", false},
+		"container": {"", "", true},
+	} {
+		if err := sudoRightPlan(t, c.list, c.status, c.container); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
 	}
 }
 

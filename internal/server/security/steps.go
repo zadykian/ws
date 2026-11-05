@@ -43,7 +43,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 		}},
 		host.Group{Title: keysStep, Parts: []host.Resource{keyCheck{m, v.Home}}},
 		host.Lazy{Title: sudoStep, After: packagesStep, Parts: func(context.Context) ([]host.Resource, error) {
-			return sudoParts(m)
+			return sudoParts(m, v.User)
 		}},
 	}
 	// Ubuntu's installer puts its user in lxd, whose socket lxd-installer opens to the group: that
