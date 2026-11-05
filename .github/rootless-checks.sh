@@ -146,3 +146,51 @@ id=$(as docker run -d --rm "$image" sleep 60)
 must "a container runs inside docker.slice" test -d "$cgroup/docker.slice/docker-$id.scope"
 as docker stop -t 0 "$id" >/dev/null
 
+if out=$(as docker run --rm --privileged --net=host -v /:/host "$image" \
+    chroot /host /usr/sbin/nft flush ruleset 2>&1); then
+    fail "a privileged container flushed the ruleset"
+fi
+must "the kernel refuses the flush" grep -q 'Operation not permitted' <<<"$out"
+ruleset=$(nft list chain inet ws output)
+must "inet ws stays" grep -q 'jump private' <<<"$ruleset"
+
+probe='touch /host/etc/ws-probe; touch /host/usr/bin/ws-probe; echo usr=$?
+cat /host/etc/shadow >/dev/null; echo shadow=$?'
+out=$(as docker run --rm -v /:/host "$image" sh -c "$probe" 2>&1)
+echo "$out"
+must "a container can't write /usr" grep -qx 'usr=1' <<<"$out"
+must "a container can't read shadow" grep -qx 'shadow=1' <<<"$out"
+refused "a container wrote the real /etc" test -e /etc/ws-probe
+refused "a container wrote the real /usr" test -e /usr/bin/ws-probe
+
+refused "a bridged container reaches a private address" \
+    as docker run --rm "$image" wget -qO /dev/null --timeout=5 "http://$target/"
+refused "a host-network container reaches a private address" \
+    as docker run --rm --net=host "$image" wget -qO /dev/null --timeout=5 "http://$target/"
+refused "the user reaches a private address" as curl --silent --fail --max-time 5 "http://$target/"
+
+as docker run -d --rm --name ws-web -p 0.0.0.0:8082:80 "$image" sh -c "$web" >/dev/null
+must "a port on 0.0.0.0 answers on the host" up http://127.0.0.1:8082/
+refused "a port on 0.0.0.0 answers past ufw" ip netns exec lab curl --silent --fail --max-time 5 \
+    --output /dev/null http://10.250.0.1:8082/
+ufw --force disable
+must "the same port answers with ufw off" ip netns exec lab curl --silent --fail --max-time 5 \
+    --output /dev/null http://10.250.0.1:8082/
+ufw --force enable
+as docker stop -t 0 ws-web >/dev/null
+
+docker run -d --rm --name ws-probe -p 127.0.0.1:18080:80 "$image" sh -c "$web" >/dev/null
+address=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ws-probe)
+must "root reaches a system container" up "http://$address/"
+refused "the user reaches a system container" as curl --silent --fail --max-time 5 \
+    --output /dev/null "http://$address/"
+must "the user reaches a published port" as curl --silent --fail --max-time 5 \
+    --output /dev/null http://127.0.0.1:18080/
+docker stop -t 0 ws-probe >/dev/null
+
+as ln -s /etc "$home/.secrets"
+if out=$(ws server apply --only shell 2>&1); then
+    fail "ws server apply followed a link at ~/.secrets"
+fi
+must "a link at ~/.secrets is refused" grep -q 'is a link to' <<<"$out"
+as rm "$home/.secrets"
