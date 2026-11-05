@@ -120,7 +120,7 @@ func (c *Cable) lacks() bool {
 // empty or the cable that ws's status names. Without the service, it is empty too where no port that
 // link lists has carrier, as the Mac isn't docked: the stage waits then, and Hand names the dock in
 // the closing list. WS_CABLE_PORT in the environment ends the wait, as for a port that ws keeps
-// down. It reads ws only where root logged in there in this run. Under --check it says that it is
+// down. It reads ws only where the login reached it in this run. Under --check it says that it is
 // after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	cf, err := c.Host.conf()

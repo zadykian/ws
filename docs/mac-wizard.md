@@ -2,11 +2,11 @@
 
 `ws mac wizard` sets up the Mac in stages, around `ws mac apply` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
-then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
-runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on
-ws. Then it exchanges the tunnel's keys. Last, it sets up the cable from the Mac's display to ws. On
-a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs what else it
-needs, as yourself:
+then runs `ws mac apply`. It takes ws's host key and checks that `WS_USER` on ws takes the Mac's
+key. It runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs
+claude in on ws. Then it exchanges the tunnel's keys. Last, it sets up the cable from the Mac's
+display to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard
+installs what else it needs, as yourself:
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
@@ -30,7 +30,7 @@ the first two of which install what the rest needs:
    timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
    the warnings of `ws mac apply` and drops the Mac's key that it prints.
 6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
-7. Login: root's login to ws by the Mac's key, checked and never added, below.
+7. Login: `WS_USER`'s login to ws by the Mac's key, checked and never added, below.
 8. Sudo: how the remote scripts reach root on ws, with sudo's password asked where it needs one,
    below.
 9. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
@@ -140,19 +140,17 @@ answers. A linked `known_hosts` stops the stage, and a run prints the key's line
 
 ## Login
 
-The stage is done where ssh logs in to `ws` at a direct way as root by the Mac's key. The wizard
-adds no key to ws: GitHub's account is the only way to give ws its keys. Where root doesn't take the
-key, the stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's installer imports
-the account's keys for its user, and root takes them as the [README](../README.md#a-new-machine)
-says: copy that user's `authorized_keys` to root. That replaces root's file, so cloud-init's forced
-command goes too. A cloud VM gives its default user the provider's keys instead, which must be the
-account's. Then run the wizard again. `--check` says that a run would stop. Both show any ssh error.
+The stage is done where ssh logs in to `ws` at a direct way as `WS_USER` by the Mac's key. The
+wizard adds no key to ws: GitHub's account is the only way to give ws its keys. Where `WS_USER`
+doesn't take the key, the stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's
+installer imports the account's keys for its user. A cloud VM gives its default user the provider's
+keys instead, which must be the account's. Set `WS_USER` to that user, then run the wizard again.
+`--check` says that a run would stop. Both show any ssh error.
 
-The stage stops too where `WS_USER` isn't root: the README's steps are then by hand. Where ws offers
-another host key than `known_hosts` holds, as once ws is installed again, it stops, naming
-`ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and
-its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line that
-starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
+Where ws offers another host key than `known_hosts` holds, as once ws is installed again, it stops,
+naming `ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets,
+and its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line
+that starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
 
 A run shares one ssh connection for its direct calls, and one for the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.

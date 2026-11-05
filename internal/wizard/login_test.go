@@ -28,7 +28,7 @@ func TestLoginStops(t *testing.T) {
 	}{
 		"refused": {"root", "denied\r\nPermission denied\r\n", "ssh's error: denied; Permission denied"},
 		"changed": {"root", "Host key verification failed.", "offers another host key than known_hosts"},
-		"another": {"ada", "denied", "root on ws doesn't log in by the Mac's key"},
+		"another": {"ada", "denied", "ada on ws doesn't log in by the Mac's key"},
 	} {
 		r, m := newLogin(effecttest.Result{Err: sshFailed(tc.sshErr)})
 		m.Results[wayCall(r.Host.SSH)] = effecttest.Result{Out: []byte("user " + tc.user + "\nhostname 10.1.1.2\nport 22\n" +

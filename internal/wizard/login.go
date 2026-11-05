@@ -11,10 +11,10 @@ import (
 type loginStop struct{}
 
 func (loginStop) String() string {
-	return loginStage + ": would stop, as root on ws refuses the Mac's key"
+	return loginStage + ": would stop, as WS_USER on ws refuses the Mac's key"
 }
 
-// Plan is empty where root logs in. Under --check it shows that a run would stop.
+// Plan is empty where WS_USER logs in. Under --check it shows that a run would stop.
 func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
 	w, err := r.Host.SSH.Way(ctx)
 	if err != nil {
@@ -31,9 +31,9 @@ func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{loginStop{}}}, nil
 }
 
-// Apply stops, naming the Mac's key and what gives root that key without the wizard. Where ws
-// doesn't answer, the Host key stage's question gives its address now, and root may take the key
-// there.
+// Apply stops, naming the Mac's key and the user that holds it without the wizard. Where ws
+// doesn't answer, the Host key stage's question gives its address now, and WS_USER may take the
+// key there.
 func (r *Login) Apply(ctx context.Context, _ step.Plan) error {
 	w, err := r.Host.SSH.Way(ctx)
 	if err != nil {
