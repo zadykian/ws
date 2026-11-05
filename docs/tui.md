@@ -75,7 +75,9 @@ A screen owns the terminal, so a step's commands stay off it.
 - A command keeps ws's controlling terminal. sudo keeps its ticket by terminal, so a child's own
   sudo, such as brew's, would ask again without one.
 - `effect.Foreground` runs a command that talks to the maintainer. The screen suspends, and the
-  command has the terminal until it ends. In plain mode it does what `Pass` does.
+  command has the terminal until it ends. In plain mode it does what `Pass` does, but for a signal.
+- A run that ends sends such a command SIGTERM, and kills it 2 seconds later. A kill alone would
+  leave the terminal raw, or with no echo.
 
 ## The terminal comes back
 
