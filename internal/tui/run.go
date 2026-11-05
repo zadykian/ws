@@ -64,11 +64,14 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	)
 	stop := func() tea.Msg { cancel(); return nil }
 	model := session{screen: screen, theme: c.Theme, begin: begin, stop: stop, cut: c.Cut}
+	terminal := &handover{}
 	// Signals stay ws's: Bubble Tea's handler would end the screen before the work had stopped.
-	program := tea.NewProgram(model,
-		tea.WithInput(c.In), tea.WithOutput(c.Out), tea.WithoutSignalHandler())
+	program := tea.NewProgram(model, tea.WithInput(c.In), tea.WithOutput(c.Out),
+		tea.WithoutSignalHandler(), tea.WithFilter(terminal.filter))
+	terminal.release, terminal.restore = program.ReleaseTerminal, program.RestoreTerminal
 	bridge.send = program.Send
-	bridge.suspend, bridge.resume = program.ReleaseTerminal, program.RestoreTerminal
+	bridge.suspend = func() error { return bridge.pass(true, errGone) }
+	bridge.resume = func() error { return bridge.pass(false, nil) }
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(signals)
