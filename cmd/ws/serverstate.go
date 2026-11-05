@@ -53,11 +53,16 @@ func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) erro
 		return err
 	}
 	if asJSON {
-		enc := json.NewEncoder(c.OutOrStdout())
-		enc.SetIndent("", "  ")
-		return enc.Encode(stateDoc{Version: p.version, Roles: states})
+		return writeJSON(c.OutOrStdout(), stateDoc{Version: p.version, Roles: states})
 	}
 	return writeState(c.OutOrStdout(), states)
+}
+
+// writeJSON prints doc as indented JSON.
+func writeJSON(w io.Writer, doc any) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(doc)
 }
 
 // writeState prints the roles' reports as text.
