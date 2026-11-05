@@ -5,6 +5,7 @@ name: mac
 # the event is the push and stack is null, so that mac runs in the call as it runs on a push.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_call:
@@ -21,7 +22,9 @@ jobs:
   # that makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's
   # playbook job.
   mac:
-    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    if: >-
+      (github.event.action != 'opened' || !github.event.pull_request.draft) &&
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
     timeout-minutes: 20
     permissions:

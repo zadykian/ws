@@ -4,6 +4,7 @@ name: mac-wizard
 # request, whatever its base, and on main each pull request's merge.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -14,7 +15,9 @@ jobs:
   # cases. A new stage adds its cases and stand-ins in .github/mac-wizard, and nothing here.
   # Gated as ci.yml's playbook job.
   mac-wizard:
-    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    if: >-
+      (github.event.action != 'opened' || !github.event.pull_request.draft) &&
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
     timeout-minutes: 25
     permissions:
