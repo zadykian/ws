@@ -2,8 +2,9 @@
 
 The `docker` role installs Docker Engine with its buildx and compose plugins, from Docker's apt
 repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `internal/server/docker`, as
-steps of `ws server apply`: the repository, the packages, the check of the routes, the user's
-group, the configuration and the check of `docker0`. Docker's apt key is pinned by its SHA-256 in
+steps of `ws server apply`. They are the repository, the packages, the check of the routes, the
+user's leaving the `docker` group, the configuration, the check of `docker0` and the user's rootless
+daemon. Docker's apt key is pinned by its SHA-256 in
 `repository.go`: a changed key fails the run. Without systemd booted, as in CI's container, the
 steps that need it skip and say so.
 
@@ -69,8 +70,21 @@ so while the disk has less than 20% free or the cache takes more than 80% of it.
 `docker_build_cache_min_free_space` set other sizes, in the format of `daemon.json`: `50G`, `50GB`
 or `50GiB`, but not `50Gi`. Cache that an image shares frees no space until the image is removed.
 
-## The docker group
+## The rootless daemon
 
-Where `ws_user` isn't root, the role adds it to the `docker` group, so that it runs `docker` without
-sudo. The group amounts to root, as a container can mount any of the host's files. The user has it
-from its next login.
+Where `ws_user` isn't root, it runs its own daemon, and the role takes it out of the `docker` group,
+which amounts to root. The user keeps the group until its session ends. `docker` reaches the daemon
+by the `rootless` context, which Docker's tool makes. The system's daemon stays for root, and for
+SigNoz: `sudo docker ps` lists its containers.
+
+The role installs `docker-ce-rootless-extras`, `uidmap`, `slirp4netns` and `apparmor`, and fails
+where `/etc/subuid` or `/etc/subgid` gives the user fewer than 65536 ids. It enables lingering, so
+that the user's systemd runs without a login, and delegates the `io` controller to it.
+
+The daemon's `daemon.json` is `~/.config/docker/daemon.json`. It has the log and cache values, the
+published address and `cgroup-parent`, so that the containers stay in the user's `docker.slice` with
+the same limits. It has no `bip`, address pools or `live-restore`: its bridges live in rootlesskit's
+namespace, and a restart stops the user's containers. Its `dns` is slirp4netns's 10.0.2.3, whose
+queries reach the host's resolver. slirp4netns runs as the user, so the outbound table drops them
+where `/etc/resolv.conf` names a private resolver in place of systemd-resolved's stub. A container
+asks the resolver of the host by `--dns 127.0.0.53`. A rootless container binds no port below 1024.

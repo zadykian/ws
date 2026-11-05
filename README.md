@@ -25,7 +25,8 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server and rustup.
-- [`docker`](docs/docker.md): Docker Engine, its `daemon.json` and a slice for its containers.
+- [`docker`](docs/docker.md): Docker Engine, its `daemon.json`, a slice for its containers and
+  `ws_user`'s rootless daemon.
 - [`claude`](docs/claude.md): claude, its user settings and telemetry, its sessions after a reboot,
   and plugin marketplaces from a list.
 - [`signoz`](docs/signoz.md): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
