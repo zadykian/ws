@@ -111,7 +111,7 @@ Each action got a hand-made decision: status, Zed action, context and note. The 
 - `F12.xml`, a user keymap in GoLand 2026.2's settings (76,333 bytes, md5
   `b00c6c90bdb6bbf84c3db578d1d93a0a`, identical under Rider 2026.2, with `parent` `$default`);
 - `$default.xml` from `lib/intellij.platform.ide.impl.jar` of the GoLand 2026.2.3 backend;
-- Zed's `assets/keymaps/default-macos.json`, as of Zed v1.26.2.
+- Zed's `assets/keymaps/default-macos.json`, as of Zed v1.27.0.
 
 Nothing here was run on a Mac.
 
