@@ -170,5 +170,7 @@ table's `containers` chain drops what they forward: Docker forwards it ahead of 
 `chown`, `chmod` and backups would follow it. ws refuses a link at a file it reads or writes there
 as root. It refuses a link at a directory between the home and that file too, and names the link
 and its target. The `shell`, `helix`, `zed` and `otelcol` roles check, root as `ws_user` included.
-Replace the link with the file itself. The check looks as the step plans, so a link made while
-it applies gets past it.
+Replace the link with the file itself. The check looks as the step plans. A link made while
+it applies fails at the write: `ws server apply` makes its writes under `ws_home` through an
+`os.Root`, which refuses a link that leaves the home. Its reads, `cat` and `git` stay outside that
+bound.

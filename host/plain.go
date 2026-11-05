@@ -11,8 +11,8 @@ import (
 
 // Plain refuses a link at any of Paths, or at a directory between Home and them. The user owns its
 // home, so a link there would send the root ws runs as, with its reads, chown, chmod and backup, to
-// whatever the link names. It looks as it plans, so a link made while the step applies gets past it
-// (docs/security.md).
+// whatever the link names. It looks as it plans, and names the link. A link made while the step
+// applies is caught by effect.OSMachine's Confine, which fails the write itself (docs/security.md).
 type Plain struct {
 	M     effect.Machine
 	Home  string
