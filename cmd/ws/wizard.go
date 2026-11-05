@@ -62,9 +62,10 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 		later = scratch
 	}
 	lock := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName
-	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, Out: out}
+	talks, _ := p.machine.(effect.Foreground)
+	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, F: talks, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
-		SSH: wizard.SSH{M: p.machine, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
+		SSH: wizard.SSH{M: p.machine, F: talks, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
 	sudo := &wizard.Sudo{Host: host, P: hidden}
 	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript, Sudo: sudo}
 	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update,
@@ -86,7 +87,7 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 			Prog: prog, Tty: p.tty, Check: check, Scratch: scratch, M: p.machine, P: ask, Out: out, Env: p.lookup},
 		&wizard.MacKey{Conf: later, Home: p.getenv("HOME"),
 			Lock: lock, Tty: p.tty,
-			M: p.machine, P: ask, Out: out, Sleep: time.Sleep},
+			M: p.machine, F: talks, P: ask, Out: out, Sleep: time.Sleep},
 		gh,
 		setup,
 		host,
