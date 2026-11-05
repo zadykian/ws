@@ -119,6 +119,15 @@ sudo ws server state --json
 The report is on stdout and ws's own lines on stderr. `--json` prints the version of ws, then
 each role with its steps, items and changes.
 
+`ws mac state` does the same for the Mac, as `ws mac apply --check` reads it: it needs `mac.conf`,
+and not root. The Mac's steps report their changes and no items yet. `--json` prints the version of
+ws, then each step.
+
+```sh
+ws mac state
+ws mac state --json
+```
+
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
