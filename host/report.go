@@ -11,8 +11,9 @@ import (
 
 // The states that a report's items share.
 const (
-	missing = "missing"
-	present = "present"
+	missing   = "missing"
+	present   = "present"
+	noSystemd = "systemd is not running"
 )
 
 // attrsChanged says how a path stands against ws where its content, if it has any, is right.

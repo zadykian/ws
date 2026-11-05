@@ -1,8 +1,10 @@
 package host
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
@@ -20,6 +22,8 @@ const (
 	// timer or a path unit starts.
 	Triggered
 )
+
+var runWords = map[Run]string{Running: "running", Stopped: "stopped", Triggered: "started by its trigger"}
 
 // Unit is a systemd unit that is enabled or not, and running or not. Without systemd booted, as in
 // CI's container, it plans nothing and says so.
@@ -141,6 +145,48 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		call("reset failed state of", u.U.ResetFailed)
 	}
 	return cs, nil
+}
+
+// Report reads the unit's state. Plan says that systemd is not running, so this doesn't.
+func (u Unit) Report(ctx context.Context) ([]step.Item, error) {
+	item := step.Item{Kind: step.ServiceItem, Name: u.Name, Want: u.wanted(), Found: noSystemd}
+	if !Booted(u.M) {
+		return []step.Item{item}, nil
+	}
+	s, err := u.U.State(ctx, u.Name)
+	if err != nil {
+		return nil, fmt.Errorf("unit %s: %w", u.Name, err)
+	}
+	item.Found = unitState(s)
+	return []step.Item{item}, nil
+}
+
+func (u Unit) wanted() string {
+	var want []string
+	if u.Enabled {
+		want = append(want, "enabled")
+	}
+	if u.Disabled {
+		want = append(want, "disabled")
+	}
+	if run, ok := runWords[u.Run]; ok {
+		want = append(want, run)
+	}
+	return cmp.Or(strings.Join(want, ", "), "as it is")
+}
+
+func unitState(s effect.UnitState) string {
+	boot, run := "disabled", "stopped"
+	if s.Enabled {
+		boot = "enabled"
+	}
+	switch {
+	case s.Active:
+		run = "running"
+	case s.Failed:
+		run = "failed"
+	}
+	return boot + ", " + run
 }
 
 // anyChange reports whether any of the resources has a change to make.
