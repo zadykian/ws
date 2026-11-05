@@ -17,6 +17,7 @@ import (
 func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.Step) {
 	m := effecttest.NewMachine()
 	m.Dirs["/run/systemd/system"] = 0o755
+	m.Dirs[v.Home] = 0o700
 	m.Files["/root/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n openssh-server ufw fail2ban nftables sudo"] =
 		effecttest.Result{Out: []byte("openssh-server ii\nufw ii\nfail2ban ii\nnftables ii\nsudo ii\n")}

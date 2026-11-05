@@ -17,8 +17,8 @@ that keeps failing. Both hold on every network, with no peer or network exempt. 
 keys imported from the GitHub account during Ubuntu's install; a cloud VM has no installer
 ([A new machine](../README.md#a-new-machine)). Over SSH, keep the session that ran ws open until a
 new one logs in. The steps stop before they turn passwords off if `ws_user` has no key to log in
-with, outside a container. sshd's drop-in lands only after `sshd -G` accepts it, and sshd reloads
-after a change.
+with, or a file of keys that sshd passes over, outside a container. sshd's drop-in lands only after
+`sshd -G` accepts it, and sshd reloads after a change.
 
 Where `ws_user` is another user, the step "sudo" checks, before sshd's, that it may run `sudo`
 and has a password to give. Closing root's login then leaves a way to root. A container skips

@@ -3,11 +3,13 @@ package security
 import (
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
 func TestKeyCheckRefusesNoKeys(t *testing.T) {
 	m := effecttest.NewMachine()
+	m.Root["/home/ws"] = effect.Attrs{UID: 1000, GID: 1000, Mode: 0o755}
 	k := keyCheck{m, "/home/ws"}
 	if _, err := k.Plan(t.Context()); err == nil {
 		t.Fatal("a missing authorized_keys passed")
@@ -16,9 +18,34 @@ func TestKeyCheckRefusesNoKeys(t *testing.T) {
 	if _, err := k.Plan(t.Context()); err == nil {
 		t.Error("an empty authorized_keys passed")
 	}
-	m.Files["/home/ws/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
-	if _, err := k.Plan(t.Context()); err != nil {
-		t.Errorf("a key was refused: %v", err)
+	m.Files["/home/ws/.ssh/authorized_keys"] = []byte("# none yet\n\n")
+	if _, err := k.Plan(t.Context()); err == nil {
+		t.Error("an authorized_keys of comments passed")
+	}
+}
+
+// sshd takes the user's file, or root's where the user can read it, with no other able to write.
+func TestKeyCheckRefusesAFileSSHDPassesOver(t *testing.T) {
+	const file = "/home/ws/.ssh/authorized_keys"
+	for _, c := range []struct {
+		name string
+		a    effect.Attrs
+		ok   bool
+	}{
+		{"the user's", effect.Attrs{UID: 1000, Mode: 0o600}, true},
+		{"root's, open to read", effect.Attrs{Mode: 0o644}, true},
+		{"root's, as cp leaves it", effect.Attrs{Mode: 0o600}, false},
+		{"another user's", effect.Attrs{UID: 1001, Mode: 0o644}, false},
+		{"open to the group to write", effect.Attrs{UID: 1000, Mode: 0o660}, false},
+	} {
+		m := effecttest.NewMachine()
+		m.Root["/home/ws"] = effect.Attrs{UID: 1000, GID: 1000, Mode: 0o755}
+		m.Root[file] = c.a
+		m.Files[file] = []byte("ssh-ed25519 AAAA me\n")
+		_, err := keyCheck{m, "/home/ws"}.Plan(t.Context())
+		if (err == nil) != c.ok {
+			t.Errorf("%s: %v", c.name, err)
+		}
 	}
 }
 
