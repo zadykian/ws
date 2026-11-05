@@ -1,5 +1,5 @@
 #!/bin/sh
-# The Root's key stage on the Mac that 31-host.sh leaves, where root on the stand-in ws takes the
+# The Login stage on the Mac that 31-host.sh leaves, where root on the stand-in ws takes the
 # Mac's key. With another key alone in root's file, a run must stop, naming the Mac's key, and end
 # with ssh's error, its \r dropped. Once root's line for the Mac's key carries a forced command, as
 # cloud-init writes it, beside the other key, --check must say that a run would stop, and a run
@@ -34,7 +34,7 @@ expect() {
 
 ssh-keygen -q -t ed25519 -N '' -C other -f "$RUNNER_TEMP/other" </dev/null
 other=$(cut -d ' ' -f 1-2 "$RUNNER_TEMP/other.pub")
-stop="ws mac wizard: Root's key: root on ws doesn't log in by the Mac's key, $HOME/.ssh/id_ed25519.pub,"
+stop="ws mac wizard: Login: root on ws doesn't log in by the Mac's key, $HOME/.ssh/id_ed25519.pub,"
 echo "$other other" >"$RUNNER_TEMP/root.keys"
 sudo cp "$RUNNER_TEMP/root.keys" "$keys"
 out=$("$wsbin" mac wizard </dev/null 2>&1)
@@ -42,13 +42,13 @@ status=$?
 expect 1 "$stop" "$keys" "$RUNNER_TEMP/root.keys"
 printf '%s\n' "$out" | grep -F "$stop" |
     grep -q "again\. ssh's error: .*Permission denied (.*)\.\$" ||
-    error "ws mac wizard's stop at Root's key ended in no error of ssh's, or kept its \\r"
+    error "ws mac wizard's stop at Login ended in no error of ssh's, or kept its \\r"
 printf '%s\n' "$other other" "no-port-forwarding,command=\"echo no;exit 142\" $pub mac" \
     >"$RUNNER_TEMP/root.keys"
 sudo cp "$RUNNER_TEMP/root.keys" "$keys"
 out=$("$wsbin" mac wizard --check </dev/null 2>&1)
 status=$?
-expect 0 "ws mac wizard: Root's key: root on ws doesn't log in by the Mac's key; a run would stop" \
+expect 0 "ws mac wizard: Login: root on ws doesn't log in by the Mac's key; a run would stop" \
     "$keys" "$RUNNER_TEMP/root.keys"
 out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
@@ -62,8 +62,8 @@ sudo install -m 600 "$RUNNER_TEMP/gh/keys" "$keys"
 out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q "^ws mac wizard: Root's key: "; then
-    error "ws mac wizard exited $status, or said of Root's key, with the account's keys in root's file"
+if [ "$status" != 0 ] || printf '%s\n' "$out" | grep -q "^ws mac wizard: Login: "; then
+    error "ws mac wizard exited $status, or said of Login, with the account's keys in root's file"
 fi
 sudo cmp -s "$keys" "$RUNNER_TEMP/gh/keys" || error "ws mac wizard changed $keys"
 

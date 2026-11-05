@@ -12,14 +12,14 @@ import (
 const cableLink = "eth0 - -\neth1 1 -\n"
 
 func newCable(t *testing.T, status, link string, env map[string]string) (*Cable, *effecttest.Machine, *effecttest.Prompt) {
-	root, m := newRoot(effecttest.Result{Out: []byte("ok\n")})
+	root, m := newLogin(effecttest.Result{Out: []byte("ok\n")})
 	r := &WsRun{Host: root.Host, Version: "v1.2.3", Default: "root", Remote: &Remote{SSH: root.Host.SSH, Script: []byte("x")}}
 	m.Results[remoteLine(r.Remote, "status")] = effecttest.Result{Out: []byte("run v1.2.3 0 on -\nactive -\n" + status)}
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	files := &Remote{SSH: r.Host.SSH, Script: []byte("f")}
 	m.Results[remoteLine(files, "link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
-	c := &Cable{Host: r.Host, Run: r, Root: root, Files: files, Setup: &Setup{Run: func(context.Context, bool) (bool, error) { return false, nil }},
+	c := &Cable{Host: r.Host, Run: r, Login: root, Files: files, Setup: &Setup{Run: func(context.Context, bool) (bool, error) { return false, nil }},
 		Env: func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: r.Host.Out}
 	return c, m, p
 }

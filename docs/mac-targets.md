@@ -30,7 +30,7 @@ the Mac's display, if any:
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_PORT` sets. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
-  ([Root's key](mac-wizard.md#roots-key)).
+  ([Login](mac-wizard.md#login)).
 - Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the
   provider shows it.
 - ws's run turns the outbound table off, which would drop the metadata service

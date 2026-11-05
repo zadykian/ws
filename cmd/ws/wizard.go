@@ -75,8 +75,8 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(p, stdout, out, later)
-	root := &wizard.RootKey{Host: host, Gh: gh}
-	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: files, Setup: setup, Env: p.lookup,
+	login := &wizard.Login{Host: host, Gh: gh}
+	cable := &wizard.Cable{Host: host, Run: run, Login: login, Files: files, Setup: setup, Env: p.lookup,
 		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
@@ -90,7 +90,7 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 		gh,
 		setup,
 		host,
-		root,
+		login,
 		sudo,
 		install,
 		run,

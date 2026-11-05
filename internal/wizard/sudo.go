@@ -42,7 +42,7 @@ type Sudo struct {
 func (*Sudo) Name() string { return sudoStage }
 
 // WaitsOn is the stage that checks the login, without which sudo answers nothing.
-func (*Sudo) WaitsOn() string { return rootStage }
+func (*Sudo) WaitsOn() string { return loginStage }
 
 // sudoAsk is the change that asks for the password.
 type sudoAsk struct{ user string }

@@ -34,7 +34,7 @@ func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 }
 
 // make makes the ed25519 key, whose passphrase ssh-keygen asks at the terminal. It gives the key to
-// ssh's agent, and the passphrase to the Keychain, so that ssh asks no more. Root's key logs in with
+// ssh's agent, and the passphrase to the Keychain, so that ssh asks no more. Login logs in with
 // BatchMode, where ssh asks for no passphrase, so a passphrase that neither holds fails it. Where
 // ssh-add fails, the stage stops. The next run finds the key there and makes no more, so the stop
 // names the command to run by hand.

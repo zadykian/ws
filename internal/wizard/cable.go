@@ -27,8 +27,8 @@ const cableEnd = "10.77.0.1"
 type Cable struct {
 	Host *HostKey
 	Run  *WsRun
-	// Root is the stage that logs in as root: ws is read only where it did, in this run.
-	Root *RootKey
+	// Login is the stage that logs in to ws: ws is read only where it did, in this run.
+	Login *Login
 	// Files runs the files script's operations as root on ws.
 	Files *Remote
 	// Setup is the ws mac apply stage, which gives the Mac's service its address.
@@ -135,7 +135,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	in := false
 	if err == nil {
-		in, _ = c.Root.login(ctx, w)
+		in, _ = c.Login.login(ctx, w)
 	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")

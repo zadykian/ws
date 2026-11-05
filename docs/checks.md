@@ -75,7 +75,7 @@ the lease.
 
 Root logs in to that `sshd` by root's own `authorized_keys`. The cases fill it from the stand-in
 `gh`'s keys, as Ubuntu's installer and the README's step do for ws. Each session runs `ws.sh`, which
-logs the command. The wizard adds no key, so the first run must stop at the Root's key stage, naming
+logs the command. The wizard adds no key, so the first run must stop at the Login stage, naming
 the Mac's key, and add none. The case then gives root the keys, and the wizard runs again. With
 another key alone in root's file, the stop must show ssh's error. With a forced command on root's
 line for the key, as cloud-init writes it, `--check` must say that a run would stop. A run must

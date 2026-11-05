@@ -30,7 +30,7 @@ the first two of which install what the rest needs:
    timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
    the warnings of `ws mac apply` and drops the Mac's key that it prints.
 6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
-7. Root's key: root's login to ws by the Mac's key, checked and never added, below.
+7. Login: root's login to ws by the Mac's key, checked and never added, below.
 8. Sudo: how the remote scripts reach root on ws, with sudo's password asked where it needs one,
    below.
 9. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
@@ -87,7 +87,7 @@ Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.
 `ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
 `ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
 and asks it once more. With no terminal to ask one, the key gets none. Where `ssh-add` fails, the
-wizard stops, as Root's key logs in with no prompt. Run the command it names, then the wizard again.
+wizard stops, as Login logs in with no prompt. Run the command it names, then the wizard again.
 
 Without `WS_IDENTITY`, and with no key yet, the wizard asks whether Secretive keeps the key, in the
 Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and where
@@ -138,7 +138,7 @@ the stage warns that a new ws faces the internet until its run sets up the `secu
 ([security](security.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
 answers. A linked `known_hosts` stops the stage, and a run prints the key's line for its target.
 
-## Root's key
+## Login
 
 The stage is done where ssh logs in to `ws` at a direct way as root by the Mac's key. The wizard
 adds no key to ws: GitHub's account is the only way to give ws its keys. Where root doesn't take the

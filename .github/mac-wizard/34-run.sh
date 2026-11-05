@@ -1,5 +1,5 @@
 #!/bin/sh
-# ws's run on the Mac that 33-root.sh leaves. The wizard must have run ws server apply twice by now,
+# ws's run on the Mac that 33-login.sh leaves. The wizard must have run ws server apply twice by now,
 # once in 30-run.sh and once as 31-host.sh's cloud VM, and each run of the wizard since must have
 # read ws's status alone. A run must read it once, and once more after a run of ws server apply. Once
 # ws's run stamp is gone, a run whose unit is cut off before its stamp must stop at the stage. The
