@@ -27,7 +27,7 @@ rm "$ws/claude"
 "$wsbin" mac wizard </dev/null >/dev/null 2>&1
 lines=$(wc -l <"$ws/log")
 # script gives the wizard a terminal of its own, which the session of ssh -t takes.
-{ sleep 5; } | script -q /dev/null "$wsbin" mac wizard >"$RUNNER_TEMP/tty" 2>&1
+{ sleep 5; } | script -q /dev/null "$wsbin" --plain mac wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 tail -n "+$((lines + 1))" "$ws/log" | tee "$RUNNER_TEMP/sessions"

@@ -48,7 +48,7 @@ printf '%s\n' "$out" | grep -qF "Sudo: would ask for $(id -un)'s sudo password o
     prompts 2
     printf '%s\n' "$password"
     sleep 5
-} | script -q /dev/null "$wsbin" mac wizard >"$tty" 2>&1
+} | script -q /dev/null "$wsbin" --plain mac wizard >"$tty" 2>&1
 status=$?
 tr -d '\r' <"$tty"
 tr -d '\r' <"$tty" | grep -qF 'Sudo: sudo on ws refused the password' &&

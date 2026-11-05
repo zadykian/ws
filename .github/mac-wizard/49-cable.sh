@@ -196,7 +196,7 @@ mv -f "$cable/bin/ip" "$ws/bin/ip"
     done
     printf '%s\n' 'ws stand-in absent' ''
     sleep 5
-} | script -q /dev/null "$wsbin" mac wizard >"$RUNNER_TEMP/tty" 2>&1
+} | script -q /dev/null "$wsbin" --plain mac wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 grep -qF "(WS_CABLE_SERVICE) [ws stand-in adapter, or none]: " "$RUNNER_TEMP/tty" &&

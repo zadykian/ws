@@ -17,7 +17,7 @@ printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_I
 {
     printf '%s\n' '' 10.77.0.0/30 none none '' '' ''
     sleep 5
-} | script -q /dev/null "$wsbin" mac wizard >"$RUNNER_TEMP/tty" 2>&1
+} | script -q /dev/null "$wsbin" --plain mac wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 if [ "$status" != 0 ]; then

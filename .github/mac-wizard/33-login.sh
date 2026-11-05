@@ -54,7 +54,7 @@ out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 expect 1 "$stop" "$keys" "$RUNNER_TEMP/user.keys"
 # script gives the wizard a terminal of its own, at which the stage asks nothing.
-{ sleep 5; } | script -q /dev/null "$wsbin" mac wizard >"$RUNNER_TEMP/tty" 2>&1
+{ sleep 5; } | script -q /dev/null "$wsbin" --plain mac wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 out=$(tr -d '\r' <"$RUNNER_TEMP/tty")
 expect 1 "$stop" "$keys" "$RUNNER_TEMP/user.keys"
