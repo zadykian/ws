@@ -12,7 +12,8 @@ import (
 // ends: a stage may wait on a download or an answer. pid is the process caffeinate waits on. It
 // reports whether any stage had changes to make, as step.Run does. closing runs after a run that
 // changed something, outside --check, while the lock stands: the stages' files in it are still there.
-func Run(ctx context.Context, m effect.Machine, out effect.Out, stages []step.Step, check bool, tmp string, pid int, closing func(context.Context)) (bool, error) {
+// obs takes the stages' events.
+func Run(ctx context.Context, m effect.Machine, obs step.Observer, stages []step.Step, check bool, tmp string, pid int, closing func(context.Context)) (bool, error) {
 	lock, release, err := Lock(ctx, m, tmp)
 	if err != nil {
 		return false, err
@@ -31,7 +32,7 @@ func Run(ctx context.Context, m effect.Machine, out effect.Out, stages []step.St
 		cancel()
 		<-done
 	}()
-	changed, err := step.Run(ctx, stages, out, check)
+	changed, err := step.RunWith(ctx, stages, step.Options{Observer: obs, Check: check})
 	if err == nil && changed && !check && closing != nil {
 		closing(ctx)
 	}

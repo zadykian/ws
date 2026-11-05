@@ -18,6 +18,9 @@ module is at the root), each linking its reason
 - Each step is isolated behind `step.Step`: it plans and applies one part of the setup, and reads
   no other step's state. A step that needs another done first names it in `Step.WaitsOn`
   ([step.go](../../step/step.go)).
+- A run reports each step to a `step.Observer`, and each step ends with one event of `Done`,
+  `Failed` or `Skipped`. A run inside another passes the observer on, and names its role or stage
+  as `Options.Parent` ([step.go](../../step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values, and it applies them. Tests compare the values.
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
