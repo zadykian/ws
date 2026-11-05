@@ -34,6 +34,9 @@ var (
 // FieldSpec is what a field asks for.
 type FieldSpec struct {
 	Kind FieldKind
+	// Label is a question's words, or a file's key. Help says more, under the value.
+	Label string
+	Help  string
 	// Value is what a text or a choice starts with. A password starts empty, as a form shows no secret.
 	Value string
 	// Default is what an empty text gives, and the option that a choice with no Value starts on.
@@ -180,4 +183,38 @@ func (f FormField) view(theme Theme, width int) string {
 		return line
 	}
 	return "← " + chosen + " →"
+}
+
+// label is the field's words, with the default that an empty text gives.
+func (f FormField) label() string {
+	if f.spec.Kind == TextField && f.spec.Default != "" {
+		return f.spec.Label + " [" + f.spec.Default + "]"
+	}
+	return f.spec.Label
+}
+
+// Lines draws the label, the line that takes the keys, the help and why the value is refused, in at
+// most room lines. The line that takes the keys stays whatever the room, and the refusal goes after
+// the words around it, as it says what to mend.
+func (f FormField) Lines(theme Theme, width, room int) []string {
+	if room < 1 {
+		return nil
+	}
+	room--
+	take := func(style lipgloss.Style, words string) []string {
+		if words == "" {
+			return nil
+		}
+		lines := strings.Split(style.Width(max(width, 1)).Render(words), "\n")
+		lines = lines[:min(room, len(lines))]
+		room -= len(lines)
+		return lines
+	}
+	var why []string
+	if f.problem != nil {
+		why = take(theme.Bad, f.problem.Error())
+	}
+	label := take(lipgloss.NewStyle(), f.label())
+	help := take(theme.Muted, f.spec.Help)
+	return slices.Concat(label, []string{f.view(theme, width)}, help, why)
 }

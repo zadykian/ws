@@ -109,3 +109,41 @@ func TestFieldStartsOnItsValue(t *testing.T) {
 		})
 	}
 }
+
+func TestFieldLinesGiveUpTheirWordsBeforeTheInput(t *testing.T) {
+	refused := func(string) error { return errors.New("refused") }
+	f := NewFormField(FieldSpec{Label: "KEY", Help: "says more", Value: "held", Valid: refused}).Fit(30)
+	f, _ = f.Check()
+	cases := []struct {
+		room int
+		want []string
+	}{
+		{0, nil},
+		{1, []string{"held"}},
+		{2, []string{"held", "refused"}},
+		{3, []string{"KEY", "held", "refused"}},
+		{9, []string{"KEY", "held", "says more", "refused"}},
+	}
+	for _, c := range cases {
+		got := f.Lines(testTheme, 30, c.room)
+		if len(got) != len(c.want) {
+			t.Fatalf("room %d: %d lines: %q", c.room, len(got), got)
+		}
+		for i, want := range c.want {
+			if !strings.Contains(got[i], want) {
+				t.Errorf("room %d, line %d: no %q in %q", c.room, i, want, got[i])
+			}
+		}
+	}
+}
+
+func TestFieldNamesADefaultOnATextAlone(t *testing.T) {
+	text := NewFormField(FieldSpec{Label: "Host", Default: "ws"})
+	if got := text.Lines(testTheme, 30, 3)[0]; !strings.Contains(got, "Host [ws]") {
+		t.Errorf("a text's label: %q", got)
+	}
+	picked := NewFormField(FieldSpec{Kind: ChoiceField, Label: "Target", Options: []string{"a"}, Default: "a"})
+	if got := picked.Lines(testTheme, 30, 3)[0]; strings.Contains(got, "[a]") {
+		t.Errorf("a choice's label: %q", got)
+	}
+}

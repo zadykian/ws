@@ -33,7 +33,7 @@ func newField(p prompt, window Size) field {
 	if p.hidden {
 		kind = PasswordField
 	}
-	input := NewFormField(FieldSpec{Kind: kind, Default: p.fallback, Valid: p.valid}).Focus()
+	input := NewFormField(FieldSpec{Kind: kind, Label: p.text, Default: p.fallback, Valid: p.valid}).Focus()
 	f := field{prompt: p, input: input, footer: NewFooter(answerButton, Keys.Interrupt)}
 	return f.fit(window)
 }
@@ -69,16 +69,12 @@ func (f field) answer() (field, string, bool) {
 // render draws the box for a window, cut to its height. A refusal takes the line under the input, so
 // that the box holds still as one comes and goes with each key.
 func (f field) render(theme Theme, window Size) string {
-	width := min(window.Width, boxWidth)
-	text := f.prompt.text
-	if f.prompt.fallback != "" {
-		text += " [" + f.prompt.fallback + "]"
+	width := min(window.Width, boxWidth) - 2
+	lines := f.input.Lines(theme, width, window.Height)
+	if f.input.problem == nil {
+		lines = append(lines, "")
 	}
-	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.view(theme, width-2), ""}
-	if f.input.problem != nil {
-		lines[2] = theme.Bad.Width(width - 2).Render(f.input.problem.Error())
-	}
-	lines = append(lines, f.footer.render(theme, width-2))
+	lines = append(lines, f.footer.render(theme, width))
 	return box(theme, "Question", strings.Join(lines, "\n"), window)
 }
 
