@@ -15,6 +15,7 @@ type (
 
 var (
 	sized = tea.WindowSizeMsg{Width: 80, Height: 24}
+	down  = press('j')
 )
 
 func newTestState() StateScreen {
@@ -88,7 +89,7 @@ func TestStateScreenReadsOnceAtATime(t *testing.T) {
 }
 
 func TestStateScreenOtherKeysAskForNothing(t *testing.T) {
-	for _, msg := range []tea.Msg{press('j'), enter, esc, tab, shiftTab, press('x'), press('G'), press('h')} {
+	for _, msg := range []tea.Msg{down, enter, esc, tab, shiftTab, press('x'), press('G'), press('h')} {
 		if _, cmd := feedState(t, reportedState(t), msg); cmd != nil {
 			t.Errorf("%v gives a Cmd", msg)
 		}
@@ -109,6 +110,47 @@ func TestStateScreenTabWalksTheTabsThenTheButtons(t *testing.T) {
 		if got := (place{s.tab, s.footer.Focused()}); got != want {
 			t.Fatalf("Shift-Tab: %+v, want %+v", got, want)
 		}
+	}
+}
+
+// selected returns the name of the row that the screen has selected.
+func selected(s StateScreen) string {
+	return s.rows[s.tab][s.cursors[s.tab]].name
+}
+
+func TestStateScreenSelectionMovesAndStaysInTheList(t *testing.T) {
+	cases := []struct {
+		name string
+		keys []tea.Msg
+		want string
+	}{
+		{"Down", []tea.Msg{down}, "/etc/b"},
+		{"past the end", []tea.Msg{down, down, down}, "/etc/d"},
+		{"Up at the top", []tea.Msg{press('k')}, "/etc/a"},
+		{"End", []tea.Msg{press('G')}, "/etc/d"},
+		{"Home", []tea.Msg{press('G'), press('g')}, "/etc/a"},
+		{"a page", []tea.Msg{tea.KeyPressMsg{Code: tea.KeyPgDown}}, "/etc/d"},
+		{"a tab keeps its own", []tea.Msg{down, tab, down, shiftTab}, "/etc/b"},
+	}
+	for _, c := range cases {
+		s, _ := feedState(t, reportedState(t), tab, tab)
+		if s, _ = feedState(t, s, c.keys...); selected(s) != c.want {
+			t.Errorf("%s: on %q, want %q", c.name, selected(s), c.want)
+		}
+	}
+}
+
+func TestStateScreenAReadKeepsTheSelectedRow(t *testing.T) {
+	s, _ := feedState(t, reportedState(t), down)
+	sections := testSections()
+	sections[0].Reports[0].Items = sections[0].Reports[0].Items[1:]
+	s, _ = feedState(t, s, press('r'), StateRead{Sections: sections})
+	if got := selected(s); got != "podman" || s.cursors[packagesTab] != 0 {
+		t.Errorf("on %q, at %d", got, s.cursors[packagesTab])
+	}
+	s, _ = feedState(t, s, press('r'), StateRead{})
+	if s.cursors != ([tabCount]int{}) {
+		t.Errorf("no rows, cursors %v", s.cursors)
 	}
 }
 
