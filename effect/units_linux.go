@@ -62,7 +62,8 @@ func (OSUnits) State(ctx context.Context, name string) (UnitState, error) {
 	return s, nil
 }
 
-// Enable enables the units' files.
+// Enable enables the units' files, and reloads systemd, as systemctl does: D-Bus alone leaves every
+// unit reporting NeedDaemonReload, so a run would plan a reload that it cannot clear.
 func (OSUnits) Enable(ctx context.Context, names ...string) error {
 	for _, n := range names {
 		if err := CheckUnitName("enable", n); err != nil {
@@ -74,11 +75,13 @@ func (OSUnits) Enable(ctx context.Context, names ...string) error {
 		return err
 	}
 	defer c.Close()
-	_, _, err = c.EnableUnitFilesContext(ctx, names, false, false)
-	return err
+	if _, _, err = c.EnableUnitFilesContext(ctx, names, false, false); err != nil {
+		return err
+	}
+	return c.ReloadContext(ctx)
 }
 
-// Disable disables the units' files.
+// Disable disables the units' files, and reloads systemd, as Enable does.
 func (OSUnits) Disable(ctx context.Context, names ...string) error {
 	for _, n := range names {
 		if err := CheckUnitName("disable", n); err != nil {
@@ -90,8 +93,10 @@ func (OSUnits) Disable(ctx context.Context, names ...string) error {
 		return err
 	}
 	defer c.Close()
-	_, err = c.DisableUnitFilesContext(ctx, names, false)
-	return err
+	if _, err = c.DisableUnitFilesContext(ctx, names, false); err != nil {
+		return err
+	}
+	return c.ReloadContext(ctx)
 }
 
 // Start starts the unit, replacing the jobs that conflict, and waits for the job.
