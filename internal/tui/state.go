@@ -1,8 +1,15 @@
 package tui
 
 import (
+	"slices"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+)
+
+// The panes of the state screen.
+const (
+	listPane = iota
 )
 
 // The places of the state screen's buttons.
@@ -19,7 +26,8 @@ type StateRead struct {
 	Err      error
 }
 
-// StateScreen shows what a machine holds of what ws manages, a tab for each kind. It changes nothing.
+// StateScreen shows what a machine holds of what ws manages: a tab for each kind and the rows of the
+// tab on show. It changes nothing.
 type StateScreen struct {
 	theme Theme
 	title string
@@ -28,10 +36,11 @@ type StateScreen struct {
 	read, leave tea.Cmd
 	window      Size
 	footer      Footer
-	// rows is each tab's, and tab the tab on show. It's an array so that a value of the screen shares
-	// none of it with an older one.
-	rows [tabCount][]stateRow
-	tab  int
+	// rows is each tab's, cursors the selected row of each, and tab the tab on show. They are arrays
+	// so that a value of the screen shares none of them with an older one.
+	rows    [tabCount][]stateRow
+	cursors [tabCount]int
+	tab     int
 	// reading holds while a read runs, and reported once one has come. problem is why the last
 	// failed, and warning the last that a read's steps gave.
 	reading, reported bool
@@ -76,12 +85,32 @@ func (s StateScreen) took(msg StateRead) StateScreen {
 		s.problem = firstLine(printable(msg.Err.Error()))
 		return s
 	}
+	was := s
 	s.reported = true
 	s.rows = tabRows(msg.Sections)
+	return s.refound(was)
+}
+
+// refound puts each tab's selection back on its row, once a read moved the rows under it. Where the
+// row went, the selection keeps its place.
+func (s StateScreen) refound(was StateScreen) StateScreen {
+	for tab := range s.cursors {
+		rows := s.rows[tab]
+		s.cursors[tab] = max(min(was.cursors[tab], len(rows)-1), 0)
+		old := was.rows[tab]
+		if len(old) == 0 {
+			continue
+		}
+		picked := old[was.cursors[tab]]
+		same := func(row stateRow) bool { return row.step == picked.step && row.name == picked.name }
+		if at := slices.IndexFunc(rows, same); at >= 0 {
+			s.cursors[tab] = at
+		}
+	}
 	return s
 }
 
-// pressed acts on a key: Tab first, as the footer would take it, then the buttons.
+// pressed acts on a key: Tab first, as the footer would take it, then the buttons, then the list.
 func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, Keys.Next):
@@ -93,7 +122,7 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if s.footer, place = s.footer.Update(msg); place >= 0 {
 		return s.pushed(place)
 	}
-	return s, nil
+	return s.moved(msg), nil
 }
 
 // pushed acts on a button.
@@ -123,4 +152,30 @@ func (s StateScreen) turned(step int) StateScreen {
 		s.tab = tabCount - 1
 	}
 	return s
+}
+
+// moved moves the selection.
+func (s StateScreen) moved(msg tea.KeyPressMsg) StateScreen {
+	sizes := s.layout().PaneSizes(s.window.Width, s.window.Height)
+	s.cursors[s.tab] = stepped(msg, s.cursors[s.tab], sizes[listPane].Height, len(s.rows[s.tab])-1)
+	return s
+}
+
+// stepped returns where a key moves a place in 0 to last, by a page of page lines.
+func stepped(msg tea.KeyPressMsg, at, page, last int) int {
+	switch {
+	case key.Matches(msg, Keys.Up):
+		at--
+	case key.Matches(msg, Keys.Down):
+		at++
+	case key.Matches(msg, Keys.PageUp):
+		at -= page
+	case key.Matches(msg, Keys.PageDown):
+		at += page
+	case key.Matches(msg, Keys.Top):
+		at = 0
+	case key.Matches(msg, Keys.Bottom):
+		at = last
+	}
+	return max(min(at, last), 0)
 }
