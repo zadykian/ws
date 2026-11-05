@@ -90,15 +90,15 @@ sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-
 [ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first on its `PATH`. `status`
 must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key for it and as
 its peer, and ws's signing key or `none`. They are also its hostname, claude's login, Secure Boot
-that refuses the fans' driver, and `host_vars.yml`'s outbound table. A full `run` must run `ws
-server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It must
-print the log, and stamp ws's version, `-` here, 0, `on` and `-`, the secrets file's sum; after its
-`outbound` writes the line, which stops on a link, `off`. A tagged run after it must start its own
-unit and leave that stamp. A run during another's unit must follow it. A full run cut off must
-remove the stamp of the one before, so the next starts a unit again. The files script,
-`mac/wizard-remote-files.sh`: its `link` must list the wired ports, and `link PORT` name one in
-`host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
-`10.77.0.1`. With the Mac's secrets file,
+that refuses the fans' driver, and `host_vars.yml`'s `ws_user` and outbound table. A full `run` must
+run `ws server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale.
+It must print the log, and stamp ws's version, `-` here, 0, `on` and `-`, the secrets file's sum;
+after its `outbound` writes the line, which stops on a link, `off`. A tagged run after it must start
+its own unit and leave that stamp. A run during another's unit must follow it. A full run cut off
+must remove the stamp of the one before, so the next starts a unit again. The files script,
+`mac/wizard-remote-files.sh`: its `link` must list the wired ports, `user NAME` name `ws_user`, and
+`link PORT` name one in `host_vars.yml`, mode 600 in a 755 directory, once, which `status` names
+once the roles give `10.77.0.1`. With the Mac's secrets file,
 in a throwaway keychain, a run must start a unit that loads the identity as a credential and runs
 `--secrets`. It must remove the identity from ws, and stamp the file's SHA-256. A changed file must
 run again, and a removed one run with no secrets

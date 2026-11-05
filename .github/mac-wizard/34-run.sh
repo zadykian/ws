@@ -8,7 +8,8 @@
 # another's unit runs, as one that a dropped ssh left, must follow that unit, and start none. With
 # WS_TARGET=cloud, a run must name security_outbound: false in ws's host_vars first. One that
 # follows a unit that began without the line must then start one of its own. The next run must start
-# none. Without the line, a run must write it alone. --check --update, with no WS_TARGET in the
+# none. Without the line, a run must write it alone. A host_vars with another ws_user must get
+# WS_USER's by a full run, and the line stays for the cases after it. --check --update, with no WS_TARGET in the
 # environment, and --check on a cloud VM must name the run that each would start. Back on the LAN,
 # the closing list of --update must name the table that the line keeps off.
 
@@ -83,6 +84,11 @@ out=$(env -u WS_TARGET "$wsbin" mac wizard --check --update </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q "^ws mac wizard: ws's run: would run ws server apply on ws in a unit of its own, " ||
     error "ws mac wizard --check --update named no run of ws server apply: $out"
 
+echo 'ws_user: "other"' | sudo tee "$vars" >/dev/null
+wizard
+started 1 2 && sudo grep -qx 'ws_user: "root"' "$vars" && [ "$status" = 0 ] ||
+    error "a run with another ws_user exited $status, or named no ws_user: root"
+
 WS_CONF=$RUNNER_TEMP/cloud.conf
 export WS_CONF
 sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
@@ -104,7 +110,7 @@ grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     [ "$status" = 0 ] || error "a cloud VM's run after a unit without the line exited $status"
 wizard
 started 0 1 && [ "$status" = 0 ] || error "the next run with WS_TARGET=cloud exited $status"
-sudo rm "$vars"
+sudo sed -i '' '/^security_outbound:/d' "$vars"
 wizard
 started 0 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
     error "a cloud VM's run without the line exited $status, or ran ws server apply"
@@ -113,5 +119,5 @@ unset WS_CONF
 "$wsbin" mac wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
 grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, " \
     "$RUNNER_TEMP/run.out" || error "ws mac wizard --update on the LAN named no table left off"
-sudo rm -r "${vars%/*}"
+sudo sed -i '' '/^security_outbound:/d' "$vars"
 exit "$fail"
