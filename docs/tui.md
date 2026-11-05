@@ -66,8 +66,18 @@ once.
 A step asks through the same ports as in plain mode, `Prompt` and `Hidden`. The screen shows the
 question in a field, and the step's goroutine waits for the answer. While a field is open, the
 keys go to it alone. A hidden answer travels on a channel of its own, and enters no log, message
-or error. A paste into a hidden field gives its first line, byte for byte, as the plain prompt
-reads it, and Enter still answers. A step's lines arrive as messages and show in a pane.
+or error. A step's lines arrive as messages and show in a pane.
+
+## Fields
+
+A question draws a text field or a password field. No screen draws a choice yet.
+
+- **Text:** takes a line. `Valid` runs on each edit, and its refusal shows under the input until an
+  edit mends it. A paste's line ends become blanks.
+- **Password:** shows nothing of what is typed. A paste gives its first line, byte for byte, as the
+  plain prompt reads it, and Enter still answers.
+- **Choice:** shows its options in a row, and `←` and `→`, `h` and `l`, or Space move round them.
+  A window too narrow for the row shows the chosen option alone.
 
 ## The run screen
 
