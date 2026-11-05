@@ -26,9 +26,9 @@ func TestLoginStops(t *testing.T) {
 	for name, tc := range map[string]struct {
 		user, sshErr, want string
 	}{
-		"refused":  {"root", "denied\r\nPermission denied\r\n", "ssh's error: denied; Permission denied"},
-		"changed":  {"root", "Host key verification failed.", "offers another host key than known_hosts"},
-		"not root": {"ws", "", "ssh logs in to ws as ws, mac.conf's WS_USER"},
+		"refused": {"root", "denied\r\nPermission denied\r\n", "ssh's error: denied; Permission denied"},
+		"changed": {"root", "Host key verification failed.", "offers another host key than known_hosts"},
+		"another": {"ada", "denied", "root on ws doesn't log in by the Mac's key"},
 	} {
 		r, m := newLogin(effecttest.Result{Err: sshFailed(tc.sshErr)})
 		m.Results[wayCall(r.Host.SSH)] = effecttest.Result{Out: []byte("user " + tc.user + "\nhostname 10.1.1.2\nport 22\n" +

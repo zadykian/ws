@@ -3,7 +3,6 @@ package wizard
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/zadykian/ws/step"
 )
@@ -44,10 +43,6 @@ func (r *Login) Apply(ctx context.Context, _ step.Plan) error {
 }
 
 func (r *Login) stop(ctx context.Context, w Way) error {
-	if w.User != "root" {
-		return fmt.Errorf("%s: ssh logs in to ws as %s, mac.conf's WS_USER, and the wizard sets ws up as root alone: "+
-			"take the README's steps by hand", loginStage, w.User)
-	}
 	c, err := r.Host.conf()
 	if err != nil {
 		return err

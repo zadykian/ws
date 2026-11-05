@@ -34,7 +34,7 @@ func TestLoginLogin(t *testing.T) {
 	}{
 		"in":      {effecttest.Result{Out: []byte("ok\n")}, "root", true, ""},
 		"refused": {effecttest.Result{Err: sshFailed("denied\r\n\r\nno sign\r\n")}, "root", false, "denied; no sign"},
-		"user":    {effecttest.Result{Out: []byte("ok\n")}, "ws", false, ""},
+		"user":    {effecttest.Result{Out: []byte("ok\n")}, "ada", true, ""},
 	} {
 		r, _ := newLogin(tc.login)
 		w.User = tc.user
