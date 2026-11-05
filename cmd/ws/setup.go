@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/step"
 )
@@ -69,6 +71,10 @@ func (o progOut) Warn(format string, a ...any) {
 func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, again bool) step.Step {
 	return setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, Again: again}
 }
+
+// setupBuild returns the steps of a run on the effects it is given. text takes what the run prints
+// on stdout.
+type setupBuild func(m effect.Machine, out effect.Out, text io.Writer) []step.Step
 
 // setupSteps returns the steps of ws mac apply, in the order ws mac apply runs them.
 func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out, text io.Writer, check bool) []step.Step {
@@ -141,7 +147,7 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		return errors.Join(all...)
 	}
 	xdg := p.getenv("XDG_CONFIG_HOME")
-	build := func(m effect.Machine, out effect.Out, text io.Writer) []step.Step {
+	var build setupBuild = func(m effect.Machine, out effect.Out, text io.Writer) []step.Step {
 		steps := setupSteps(settings, home, xdg, m, out, text, check)
 		switch {
 		case len(args) == 1:
@@ -153,10 +159,29 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		// cld's restore tabs change ssh's file, so ssh runs once more.
 		return slices.Concat(steps, []step.Step{sshStep(settings, home, m, out, true)})
 	}
+	if drawsScreen(c, p) {
+		return setupOnScreen(c, p, check, build)
+	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
 	err = runSetup(c.Context(), build(p.machine, out, c.OutOrStdout()), step.Options{Observer: out, Check: check})
 	term.Flush()
+	return err
+}
+
+// setupOnScreen is a run of ws mac apply under the run screen. The plain effects name the screen's
+// rows, and the run builds its steps again on the screen's effects. What a run prints on stdout
+// waits for the screen's end, as it would paint over the screen at a terminal.
+func setupOnScreen(c *cobra.Command, p process, check bool, build setupBuild) error {
+	rows := tui.NewGroup("", build(p.machine, nil, io.Discard))
+	var text bytes.Buffer
+	err := drawRun(c, p, runTitle(c, check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
+		steps := build(screenMachine(ctx, b, p.machine), b, &text)
+		return runSetup(ctx, steps, step.Options{Observer: b, Check: check, Stop: b.Stop(ctx)})
+	})
+	if err == nil { // A work left behind may still write to text.
+		_, _ = text.WriteTo(c.OutOrStdout())
+	}
 	return err
 }
 
