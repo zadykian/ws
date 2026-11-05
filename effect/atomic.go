@@ -10,7 +10,7 @@ import (
 // WriteAtomic fills a pending file beside path, gives it the owner and mode of a, and renames it
 // over path, so that a reader sees the old file or the new one whole. Another owner than ws's own
 // needs root.
-func (OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
+func (m OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
 	f, err := renameio.NewPendingFile(path,
 		renameio.WithTempDir(filepath.Dir(path)), renameio.WithPermissions(a.Mode.Perm()))
 	if err != nil {
@@ -34,7 +34,7 @@ func (OSMachine) Chown(path string, uid, gid int) error { return os.Chown(path, 
 
 // Symlink makes path a link to target, replacing a file or link there through a new link renamed
 // over it.
-func (OSMachine) Symlink(target, path string) error {
+func (m OSMachine) Symlink(target, path string) error {
 	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
 	_ = os.Remove(tmp)
 	if err := os.Symlink(target, tmp); err != nil {
