@@ -28,6 +28,17 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Files["/var/lib/systemd/linger/ws"] = nil
+	// The tool's unit and link exist, as the fake runs no tool: rootlessInstall has its own tests.
+	m.Files["/home/ws/.config/systemd/user/docker.service"] = nil
+	m.Files["/home/ws/.config/systemd/user/default.target.wants/docker.service"] = nil
+	m.Dirs["/run/user/1000/systemd/private"] = 0o755
+	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws env XDG_RUNTIME_DIR=/run/user/1000 "+
+		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user show --property=ActiveState --value docker.service"] =
+		effecttest.Result{Out: []byte("active\n")}
+	for _, verb := range []string{"daemon-reload", "restart docker.service"} {
+		m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws env XDG_RUNTIME_DIR=/run/user/1000 "+
+			"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user "+verb] = effecttest.Result{}
+	}
 	m.Files["/etc/subuid"] = []byte("ws:100000:65536\n")
 	m.Files["/etc/subgid"] = []byte("ws:100000:65536\n")
 	v := values.Default()

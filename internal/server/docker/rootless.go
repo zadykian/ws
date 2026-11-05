@@ -11,7 +11,9 @@ import (
 )
 
 // rootless sets up ws_user's own daemon. Root writes the user's files, whose links it refuses, and
-// delegates the io controller to the user's systemd, which lingers.
+// the user runs Docker's tool, which needs the user's systemd up: so lingering comes first, and the
+// files, as the tool starts the daemon at once. In a container the files are written and the rest
+// skips: the job that proves the rest runs on a booted machine.
 func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out, size DiskSize) step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	return user.Owned(m, rootlessStep, configStep, func(uid, gid int) ([]host.Resource, error) {
@@ -66,6 +68,9 @@ func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out,
 			daemon,
 			sliceFile,
 			service,
+			rootlessInstall{m, user, uid, out},
+			host.UserUnit{M: m, User: user, UID: uid, Out: out, Name: "docker.service",
+				Watch: []host.Resource{daemon, sliceFile, service}},
 		}, nil
 	})
 }
