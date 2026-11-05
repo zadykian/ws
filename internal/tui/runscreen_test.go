@@ -1,9 +1,39 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 	"time"
+
+	tea "charm.land/bubbletea/v2"
 )
+
+// sent gives r each message.
+func sent(r RunScreen, msgs ...tea.Msg) RunScreen {
+	for _, msg := range msgs {
+		model, _ := r.Update(msg)
+		r = model.(RunScreen)
+	}
+	return r
+}
+
+// shown is the words of r's frame.
+func shown(r RunScreen) string { return stripped(r.View().Content) }
+
+func testRun() RunScreen {
+	screen := NewRunScreen("ws server apply", testTheme,
+		Group{"base", []string{"Packages", "Locale"}}, Group{"ssh", []string{"Keys"}})
+	return sent(screen, tea.WindowSizeMsg{Width: 80, Height: 24})
+}
+
+func TestRunScreenKnowsEveryStepBeforeTheRun(t *testing.T) {
+	got := shown(testRun())
+	for _, want := range []string{"ws server apply", "base", "▸ Packages", "· Locale", "ssh", "· Keys"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("frame holds no %q:\n%s", want, got)
+		}
+	}
+}
 
 func TestBar(t *testing.T) {
 	cases := []struct {
