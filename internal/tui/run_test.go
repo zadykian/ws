@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -191,6 +193,39 @@ func TestRunRefusesAScreenThatQuitsByItself(t *testing.T) {
 	err := Run(t.Context(), noKeys(io.Discard), quitter{recorder{&[]tea.Msg{}}}, waitForCtx)
 	if !errors.Is(err, errLeft) {
 		t.Errorf("Run: %v", err)
+	}
+}
+
+func TestRunKeepsAHiddenAnswerOffEveryRecord(t *testing.T) {
+	trace := filepath.Join(t.TempDir(), "keys")
+	t.Setenv("TEA_TRACE", trace)
+	keys, typing := io.Pipe()
+	defer func() { _ = typing.Close() }()
+	var out bytes.Buffer
+	c := noKeys(&out)
+	c.In = keys
+	var answer string
+	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(ctx context.Context, b *Bridge) error {
+		send := b.send
+		b.send = func(msg tea.Msg) {
+			send(msg)
+			if _, asked := msg.(askMsg); asked {
+				go func() { _, _ = io.WriteString(typing, "s3cret\r") }()
+			}
+		}
+		b.send(tea.WindowSizeMsg{Width: 80, Height: 24})
+		var err error
+		answer, err = b.AskHidden(ctx, "Password")
+		return err
+	})
+	if err != nil || answer != "s3cret" {
+		t.Fatalf("Run: %v, with the answer %q", err, answer)
+	}
+	if strings.Contains(out.String(), "s3cret") {
+		t.Errorf("the secret reached the terminal: %q", out.String())
+	}
+	if _, err := os.Stat(trace); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("Bubble Tea kept a log of the keys: %v", err)
 	}
 }
 

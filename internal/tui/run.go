@@ -50,6 +50,8 @@ type Work func(ctx context.Context, b *Bridge) error
 func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	// Bubble Tea logs each key read to the file that this names, a hidden field's too.
+	_ = os.Unsetenv("TEA_TRACE")
 	bridge := newBridge(c.Out)
 	result := make(chan error, 1)
 	begin := tea.Batch(
