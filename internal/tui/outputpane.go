@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode"
 
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -21,4 +22,25 @@ func clean(line string) string {
 		}
 		return r
 	}, line)
+}
+
+// style is how l draws. A diff's line goes by its first characters, which show under NO_COLOR too.
+func (l Line) style(theme Theme) lipgloss.Style {
+	switch l.Kind {
+	case Warned:
+		return theme.Warn
+	case Piped:
+		return theme.Muted
+	case Diffed:
+		switch {
+		case strings.HasPrefix(l.Text, "+++"), strings.HasPrefix(l.Text, "---"), strings.HasPrefix(l.Text, "@@"):
+			return theme.Muted
+		case strings.HasPrefix(l.Text, "+"):
+			return theme.Good
+		case strings.HasPrefix(l.Text, "-"):
+			return theme.Bad
+		}
+	case Said, Copied:
+	}
+	return lipgloss.NewStyle()
 }

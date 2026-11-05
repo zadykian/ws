@@ -2,6 +2,8 @@ package tui
 
 import (
 	"testing"
+
+	"charm.land/lipgloss/v2"
 )
 
 func TestClean(t *testing.T) {
@@ -23,5 +25,32 @@ func TestClean(t *testing.T) {
 				t.Errorf("clean(%q) = %q, want %q", c.in, got, c.want)
 			}
 		})
+	}
+}
+
+func TestLineStyleColorsADiff(t *testing.T) {
+	theme := NewTheme(func(string) string { return "" })
+	cases := []struct {
+		text string
+		want lipgloss.Style
+	}{
+		{"+added", theme.Good},
+		{"-removed", theme.Bad},
+		{"@@ -1 +1 @@", theme.Muted},
+		{"--- a", theme.Muted},
+		{"+++ a", theme.Muted},
+		{" context", lipgloss.NewStyle()},
+	}
+	for _, c := range cases {
+		if got := (Line{Diffed, c.text}).style(theme).Render("x"); got != c.want.Render("x") {
+			t.Errorf("%q draws as %q, want %q", c.text, got, c.want.Render("x"))
+		}
+	}
+}
+
+func TestLineStyleLeavesAPlainLineAlone(t *testing.T) {
+	theme := NewTheme(func(string) string { return "" })
+	if got := (Line{Said, "+1 change"}).style(theme).Render("x"); got != "x" {
+		t.Errorf("a said line draws as %q, want no color", got)
 	}
 }

@@ -17,12 +17,14 @@ import (
 // LineKind says which call of effect.Out made a Line, as a screen draws each apart.
 type LineKind int
 
-// The kinds of Line, by the call of effect.Out.
+// The kinds of Line, by where the line came from.
 const (
 	Said LineKind = iota
 	Warned
 	Copied
 	Diffed
+	// Piped is what a step's commands print, which reaches no call of effect.Out.
+	Piped
 )
 
 // Line is a line of a run, sent to the screen. Text is what a plain run prints, less the last
