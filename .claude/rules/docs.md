@@ -20,6 +20,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld, [mac-zed.md](../../docs/mac-zed.md) its Zed, and
   [mac-secrets.md](../../docs/mac-secrets.md) the secrets file.
   [router.md](../../docs/router.md) is the router's steps, taken once by hand.
+- [tui.md](../../docs/tui.md) is the terminal UI: its modes, `--plain`, the layout and the keys.
 - [releases.md](../../docs/releases.md) says how to install and update ws, and how a release is cut.
 - [gates.md](../../docs/gates.md) says what each gate of `make lint` runs.
   [checks.md](../../docs/checks.md) says what CI's other jobs check, and what the hooks of
