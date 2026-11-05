@@ -40,6 +40,16 @@ type Event struct {
 	Err error
 }
 
+func (e Event) as(k Kind) Event {
+	e.Kind = k
+	return e
+}
+
+func (e Event) failed(err error) Event {
+	e.Err = err
+	return e.as(Failed)
+}
+
 // Observer follows a run. It sees each event on the run's goroutine, as it happens, so a step's
 // own lines fall between them. It keeps Changes as they are, as the run shares them.
 type Observer interface {
