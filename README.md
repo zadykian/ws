@@ -103,6 +103,12 @@ and the repository's step, and plans nothing more.
 A dry run checks no file it would write. ws runs a file's check, such as `nft -c`, `sshd -G` or
 `dockerd --validate`, only as it writes the file.
 
+## Events
+
+`sudo ws server apply --json` prints each event of the run as a line of JSON on stdout: `planned`,
+`started`, `done`, `failed` or `skipped`, with the role, the step, its changes and the error. ws's
+own lines stay on stderr, and no screen is drawn.
+
 ## State
 
 `ws server state` reads and applies nothing. It needs what `--check` needs, root on Ubuntu 26.04,
