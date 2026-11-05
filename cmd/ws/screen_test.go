@@ -1,10 +1,28 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
+
+	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/tui"
 )
+
+// screenCommand returns a command that keys type on, and what it draws.
+func screenCommand(t *testing.T, keys string) (*cobra.Command, *bytes.Buffer) {
+	var drawn bytes.Buffer
+	c := &cobra.Command{Use: "apply"}
+	c.SetContext(t.Context())
+	c.SetIn(strings.NewReader(keys))
+	c.SetErr(&drawn)
+	return c, &drawn
+}
 
 func TestScreenWanted(t *testing.T) {
 	for _, tc := range []struct {
@@ -42,5 +60,27 @@ func TestDrawsScreenReadsPlain(t *testing.T) {
 	}
 	if want := []bool{true, false, false}; len(seen) != 3 || seen[0] != want[0] || seen[1] != want[1] || seen[2] != want[2] {
 		t.Errorf("drawsScreen = %v, want %v", seen, want)
+	}
+}
+
+func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
+	var got effect.Machine
+	c, _ := screenCommand(t, "")
+	err := drawRun(c, fakeProcess(), "title", nil, func(ctx context.Context, b *tui.Bridge) error {
+		got = screenMachine(ctx, b, effect.OSMachine{Sudo: []string{}, Confine: "/home/z"})
+		if fake := effecttest.NewMachine(); screenMachine(ctx, b, fake) != effect.Machine(fake) {
+			return errors.New("a fake changed")
+		}
+		return nil
+	})
+	m, ok := got.(effect.OSMachine)
+	if err != nil || !ok {
+		t.Fatalf("machine = %T, err = %v", got, err)
+	}
+	if m.Sudo == nil || len(m.Sudo) != 0 || m.Ticket != nil || m.Confine != "/home/z" {
+		t.Errorf("sudo = %q, a ticket = %v, confine = %q", m.Sudo, m.Ticket != nil, m.Confine)
+	}
+	if m.Stdin != effect.NoStdin || m.Stderr == nil {
+		t.Errorf("stdin = %v, stderr = %v, want a command off the terminal", m.Stdin, m.Stderr)
 	}
 }
