@@ -62,6 +62,33 @@ keys go to it alone. A hidden answer travels on a channel of its own, and enters
 or error. A paste into a hidden field gives its first line, byte for byte, as the plain prompt
 reads it, and Enter still answers. A step's lines arrive as messages and show in a pane.
 
+## The run screen
+
+`RunScreen` follows a run. It takes the run's `Group`s, so it lists every step before the first
+one starts. `Bridge.Observe` is the run's `step.Observer`, and sends it the run's events.
+
+The title's right side holds the steps ended, a bar of them and the elapsed time. One pane lists
+the steps by role, and keeps the current one in sight:
+
+| Mark | Step |
+| --- | --- |
+| `▸` | The current one. |
+| `·` | Waiting. |
+| `✓` | Done, with nothing to change. |
+| `●` | Done with changes, or with changes to make under `--check`. |
+| `○` | Left out. |
+| `✗` | Failed. |
+| `–` | Skipped. |
+
+The other pane is a window on what the run prints, under the current step's name.
+
+- It holds the lines a plain run prints, and what the step's commands print.
+- It follows the end of the output. Up, PgUp and Home move it back, and End brings it to the end.
+- It keeps the last 10,000 lines of a run.
+- It wraps a long line, unlike the other panes. `\r` keeps the last state of a progress bar, and
+  escapes and control characters go.
+- Under `--check`, each step's changes show in it, a file's diff in color.
+
 ## Commands
 
 A screen owns the terminal, so a step's commands stay off it.
