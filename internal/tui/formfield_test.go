@@ -90,3 +90,22 @@ func TestChoiceShowsItsOptionsOrTheChosenOneAlone(t *testing.T) {
 		t.Errorf("narrow: %q", got)
 	}
 }
+
+func TestFieldStartsOnItsValue(t *testing.T) {
+	cases := []struct {
+		name string
+		spec FieldSpec
+		want string
+	}{
+		{"a text", FieldSpec{Value: "ws", Default: "other"}, "ws"},
+		{"a choice", FieldSpec{Kind: ChoiceField, Options: []string{"a", "b"}, Value: "b", Default: "a"}, "b"},
+		{"a password", FieldSpec{Kind: PasswordField, Value: "s3cret"}, ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := NewFormField(c.spec).Value(); got != c.want {
+				t.Errorf("value = %q, want %q", got, c.want)
+			}
+		})
+	}
+}

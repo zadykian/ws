@@ -34,10 +34,12 @@ var (
 // FieldSpec is what a field asks for.
 type FieldSpec struct {
 	Kind FieldKind
-	// Default is what an empty text gives, and the option that a choice starts on.
+	// Value is what a text or a choice starts with. A password starts empty, as a form shows no secret.
+	Value string
+	// Default is what an empty text gives, and the option that a choice with no Value starts on.
 	Default string
-	// Options are a choice's values, in the order they show. A choice starts on its first where
-	// Default names none.
+	// Options are a choice's values, in the order they show. A choice starts on its first where its
+	// Value, or its Default with no Value, names none.
 	Options []string
 	// Valid is pure, as it runs on each edit. A nil Valid takes any value.
 	Valid func(string) error
@@ -61,7 +63,10 @@ type FormField struct {
 func NewFormField(spec FieldSpec) FormField {
 	input := newInput()
 	input.Blur()
-	chosen := max(slices.Index(spec.Options, spec.Default), 0)
+	if spec.Kind == TextField {
+		input.SetValue(spec.Value)
+	}
+	chosen := max(slices.Index(spec.Options, cmp.Or(spec.Value, spec.Default)), 0)
 	return FormField{spec: spec, input: input, chosen: chosen}
 }
 
