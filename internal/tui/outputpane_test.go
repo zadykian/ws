@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"charm.land/lipgloss/v2"
@@ -50,6 +52,54 @@ func TestOutputPaneSplitsAndWrapsALine(t *testing.T) {
 	}
 }
 
+func TestOutputPaneHoldsStillOnceMoved(t *testing.T) {
+	o := testPane(Size{10, 2}, "one", "two", "three", "four").move(1)
+	want := "two\nthree"
+	if got := o.view(); got != want {
+		t.Fatalf("view = %q, want %q", got, want)
+	}
+	if got := o.add(Line{Said, "five"}).view(); got != want {
+		t.Errorf("view past a new line = %q, want %q", got, want)
+	}
+	if got := o.add(Line{Said, "five"}).move(-5).view(); got != "four\nfive" {
+		t.Errorf("view at the end = %q, want the end followed again", got)
+	}
+}
+
+func TestOutputPaneStopsAtTheTop(t *testing.T) {
+	o := testPane(Size{10, 2}, "one", "two", "three").move(100)
+	if got, want := o.view(), "one\ntwo"; got != want {
+		t.Errorf("view = %q, want %q", got, want)
+	}
+}
+
+func TestOutputPaneShorterThanItsWindow(t *testing.T) {
+	o := testPane(Size{10, 5}, "one").move(3)
+	if got := o.view(); got != "one" {
+		t.Errorf("view = %q, want the one line", got)
+	}
+}
+
+func TestOutputPaneFitWrapsAgain(t *testing.T) {
+	o := testPane(Size{20, 3}, "two words").fit(Size{5, 3})
+	if got, want := o.view(), "two\nwords"; got != want {
+		t.Errorf("view = %q, want %q", got, want)
+	}
+}
+
+func TestOutputPaneKeepsTheEndOfALongRun(t *testing.T) {
+	o := testPane(Size{20, 1})
+	for i := range outputCap + outputSlack + 1 {
+		o = o.add(Line{Said, fmt.Sprint("line ", i)})
+	}
+	if len(o.lines) != outputCap || len(o.rows) != outputCap {
+		t.Errorf("lines, rows = %d, %d, want %d", len(o.lines), len(o.rows), outputCap)
+	}
+	if got, want := o.view(), fmt.Sprint("line ", outputCap+outputSlack); got != want {
+		t.Errorf("view = %q, want %q", got, want)
+	}
+}
+
 func TestLineStyleColorsADiff(t *testing.T) {
 	theme := NewTheme(func(string) string { return "" })
 	cases := []struct {
@@ -74,5 +124,15 @@ func TestLineStyleLeavesAPlainLineAlone(t *testing.T) {
 	theme := NewTheme(func(string) string { return "" })
 	if got := (Line{Said, "+1 change"}).style(theme).Render("x"); got != "x" {
 		t.Errorf("a said line draws as %q, want no color", got)
+	}
+}
+
+func TestOutputPaneStylesEachRowAlone(t *testing.T) {
+	theme := NewTheme(func(string) string { return "" })
+	o := outputPane{theme: theme}.fit(Size{5, 3}).add(Line{Warned, "two words"})
+	for _, row := range strings.Split(o.view(), "\n") {
+		if !strings.HasSuffix(row, "m") {
+			t.Errorf("row %q holds no end of its color", row)
+		}
 	}
 }
