@@ -1,12 +1,9 @@
 package tui
 
 import (
-	"cmp"
 	"strings"
-	"unicode/utf8"
 
 	"charm.land/bubbles/v2/key"
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -26,30 +23,30 @@ var answerButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "
 // field is the box that takes the answer to a prompt.
 type field struct {
 	prompt  prompt
-	input   textinput.Model
+	input   FormField
 	footer  Footer
 	problem string
-	// secret is a hidden answer. The input never holds it: its sanitizer makes a space of a tab or
-	// a line end, which an answer that shows nothing would carry unseen.
-	secret string
 }
 
 // newField returns the field of p, which takes the keys at once.
 func newField(p prompt, window Size) field {
-	f := field{prompt: p, input: newInput(), footer: NewFooter(answerButton, Keys.Interrupt)}
+	kind := TextField
+	if p.hidden {
+		kind = PasswordField
+	}
+	input := NewFormField(FieldSpec{Kind: kind, Default: p.fallback}).Focus()
+	f := field{prompt: p, input: input, footer: NewFooter(answerButton, Keys.Interrupt)}
 	return f.fit(window)
 }
 
 // fit sets the columns of the input, past which it scrolls.
 func (f field) fit(window Size) field {
-	f.input.SetWidth(max(min(window.Width, boxWidth)-2-lipgloss.Width(f.input.Prompt)-1, 1))
+	f.input = f.input.Fit(min(window.Width, boxWidth) - 2)
 	return f
 }
 
 // update hands msg to the buttons, then to the input while the input holds the focus. It returns
-// the place of the button that msg pressed, or -1. The input's Cmd goes: it starts a blink, or
-// reads a clipboard that a server lacks, into a message that would reach the screen. A terminal's
-// own paste comes as tea.PasteMsg.
+// the place of the button that msg pressed, or -1.
 func (f field) update(msg tea.Msg) (field, int) {
 	if press, ok := msg.(tea.KeyPressMsg); ok {
 		var place int
@@ -58,43 +55,14 @@ func (f field) update(msg tea.Msg) (field, int) {
 			return f, place
 		}
 	}
-	if f.prompt.hidden {
-		return f.edit(msg), -1
-	}
-	f.input, _ = f.input.Update(msg)
+	f.input = f.input.Update(msg)
 	return f, -1
 }
 
-// edit takes a key or a paste into a hidden answer, as a terminal's line takes them for the plain
-// prompt: Backspace and Ctrl-U erase, and a paste gives its first line. Enter alone answers, as
-// nothing shows what a paste brought.
-func (f field) edit(msg tea.Msg) field {
-	switch msg := msg.(type) {
-	case tea.PasteMsg:
-		line, _, _ := strings.Cut(strings.ReplaceAll(msg.Content, "\r", "\n"), "\n")
-		f.secret += line
-	case tea.KeyPressMsg:
-		switch {
-		case key.Matches(msg, f.input.KeyMap.DeleteBeforeCursor):
-			f.secret = ""
-		case key.Matches(msg, f.input.KeyMap.DeleteCharacterBackward):
-			_, size := utf8.DecodeLastRuneInString(f.secret)
-			f.secret = f.secret[:len(f.secret)-size]
-		default:
-			f.secret += msg.Text
-		}
-	}
-	return f
-}
-
-// answer returns what the field holds, as effect.Terminal reads it: a hidden line as typed, and
-// any other trimmed, an empty one taking the default. Where Valid refuses that, it returns false,
-// and the field shows why and keeps the text.
+// answer returns what the field holds. Where Valid refuses that, it returns false, and the field
+// shows why and keeps the text.
 func (f field) answer() (field, string, bool) {
-	if f.prompt.hidden {
-		return f, f.secret, true
-	}
-	answer := cmp.Or(strings.TrimSpace(f.input.Value()), f.prompt.fallback)
+	answer := f.input.Value()
 	if f.prompt.valid != nil {
 		if err := f.prompt.valid(answer); err != nil {
 			f.problem = err.Error()
@@ -111,7 +79,7 @@ func (f field) render(theme Theme, window Size) string {
 	if f.prompt.fallback != "" {
 		text += " [" + f.prompt.fallback + "]"
 	}
-	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.View()}
+	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.input.View()}
 	if f.problem != "" {
 		lines = append(lines, theme.Bad.Width(width-2).Render(f.problem))
 	}
