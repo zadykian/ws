@@ -1,6 +1,6 @@
 #!/bin/sh
 # The wizard's calls to ws share one connection. A run that finds every stage done, and --check,
-# read ws at Root's key and at ws's run, so each makes two sessions at least. They must all come in
+# read ws at Login and at ws's run, so each makes two sessions at least. They must all come in
 # by one connection of the stand-in's sshd, whose ws.sh logs each session's in conns. Once the run
 # ends, the stand-in must have no connection open, so that no master of ssh lives on, and the lock
 # must be gone with its sockets.

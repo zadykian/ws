@@ -23,8 +23,8 @@ type WsInstall struct {
 // Name is the stage's name.
 func (*WsInstall) Name() string { return installStage }
 
-// WaitsOn is the Root's key stage, which the remote script needs.
-func (*WsInstall) WaitsOn() string { return rootStage }
+// WaitsOn is the Sudo stage, which the remote script needs.
+func (*WsInstall) WaitsOn() string { return sudoStage }
 
 type wsInstall struct{ version string }
 

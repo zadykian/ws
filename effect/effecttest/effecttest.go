@@ -13,7 +13,19 @@ import (
 type Prompt struct {
 	T       testing.TB
 	Answers map[string]string // by the text of the question
+	Hidden  []string          // the answers to AskHidden, in their order
 	Asked   []string
+}
+
+// AskHidden returns the next of Hidden, and fails the test where none is left.
+func (p *Prompt) AskHidden(_ context.Context, text string) (string, error) {
+	p.Asked = append(p.Asked, text)
+	if len(p.Hidden) == 0 {
+		p.T.Fatalf("unexpected hidden question %q", text)
+	}
+	answer := p.Hidden[0]
+	p.Hidden = p.Hidden[1:]
+	return answer, nil
 }
 
 // Ask returns the scripted answer to q.Text, and asks again of nothing: a bad answer fails.

@@ -14,7 +14,7 @@ expect() {
 }
 expect ws hostname 10.99.0.1
 expect ws port 22
-expect ws user root
+expect ws user zadykian
 expect ws hostkeyalias ws
 expect ws serveraliveinterval 30
 expect ws identitiesonly yes

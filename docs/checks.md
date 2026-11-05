@@ -73,36 +73,37 @@ Where `WS_REMOTE` doesn't answer, ws's address must come from `WS_FIRST_ADDRESS`
 list name `WS_PORT` and no lease's address. On a cloud VM, it must name `mac.conf`'s way in place of
 the lease.
 
-Root logs in to that `sshd` by root's own `authorized_keys`. The cases fill it from the stand-in
-`gh`'s keys, as Ubuntu's installer and the README's step do for ws. Each session runs `ws.sh`, which
-logs the command. The wizard adds no key, so the first run must stop at the Root's key stage, naming
-the Mac's key, and add none. The case then gives root the keys, and the wizard runs again. With
-another key alone in root's file, the stop must show ssh's error. With a forced command on root's
-line for the key, as cloud-init writes it, `--check` must say that a run would stop. A run must
-stop, with no terminal and at a terminal of `script`'s, and change nothing. With the keys back in
-root's file, a run must say nothing of the stage. With another host key under `ws`, a run must stop,
-with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s second host key, an
-ECDSA one, nor a `--check` under `StrictHostKeyChecking accept-new` may add a line to `known_hosts`.
-A `LocalCommand` that touches a file must run for a plain ssh to ws, not for the wizard's.
+The runner's user logs in to that `sshd` by its own `authorized_keys`, which `standin.sh` empties
+and the cases fill from the stand-in `gh`'s keys. Each session runs `ws.sh`, which logs the command.
+The wizard adds no key, so the first run must stop at the Login stage, naming the Mac's key, and add
+none. The case then gives the user the keys. With another key alone in the file, the stop must show
+ssh's error. With a forced command on the line for the key, as cloud-init writes it, `--check` must
+say that a run would stop. A run must stop, with no terminal and at a terminal of `script`'s, and
+change nothing. With the keys back, a run must say nothing of the stage. With another host key under
+`ws`, a run must stop, with `StrictHostKeyChecking no` in `~/.ssh/config` too. Neither the `sshd`'s
+second host key, an ECDSA one, nor `--check` under `accept-new` may add a line to `known_hosts`. A
+stand-in `sudo` runs the scripts as root. Where it asks a password, a run with no terminal must stop
+at Sudo. At a terminal, it takes the right one after a wrong one, and neither shows in a log. A
+cloud target with no `WS_USER` logs in as root, with no `sudo`. A `LocalCommand` that touches a file
+must run for a plain ssh to ws, not for the wizard's.
 
-The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, sent as the wizard
-sends it. `ws.sh` roots its paths in a directory of its own, and puts the stand-ins of
-[ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first on its `PATH`. `status`
-must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's key for it and as
-its peer, and ws's signing key or `none`. They are also its hostname, claude's login, Secure Boot
-that refuses the fans' driver, and `host_vars.yml`'s outbound table. A full `run` must run `ws
-server apply` with no arguments in a unit of its own, with root's `HOME` and a UTF-8 locale. It must
-print the log, and stamp ws's version, `-` here, 0, `on` and `-`, the secrets file's sum; after its
-`outbound` writes the line, which stops on a link, `off`. A tagged run after it must start its own
-unit and leave that stamp. A run during another's unit must follow it. A full run cut off must
-remove the stamp of the one before, so the next starts a unit again. The files script,
-`mac/wizard-remote-files.sh`: its `link` must list the wired ports, and `link PORT` name one in
-`host_vars.yml`, mode 600 in a 755 directory, once, which `status` names once the roles give
-`10.77.0.1`. With the Mac's secrets file,
-in a throwaway keychain, a run must start a unit that loads the identity as a credential and runs
-`--secrets`. It must remove the identity from ws, and stamp the file's SHA-256. A changed file must
-run again, and a removed one run with no secrets
-([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
+The wizard's remote script, `mac/wizard-remote.sh`, runs as root on that `sshd`, through `sudo`,
+sent as the wizard sends it. `ws.sh` roots its paths in a directory of its own, and puts the
+stand-ins of [ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first on its
+`PATH`. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the Mac's
+key for it and as its peer, and ws's signing key or `none`. They are also its hostname, claude's
+login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `ws_user` and outbound
+table. A full `run` must run `ws server apply` with no arguments in a unit of its own, with root's
+`HOME` and a UTF-8 locale. It must print the log, and stamp ws's version, `-` here, 0, `on` and `-`,
+the secrets file's sum; after its `outbound` writes the line, which stops on a link, `off`. A tagged
+run after it must start its own unit and leave that stamp. A run during another's unit must follow
+it. A full run cut off must remove the stamp of the one before, so the next starts a unit again. The
+files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports, `user NAME` name
+`ws_user`, and `link PORT` name one in `host_vars.yml`, mode 600 in a 755 directory, once, which
+`status` names once the roles give `10.77.0.1`. With the Mac's secrets file, in a throwaway
+keychain, a run must start a unit that loads the identity as a credential and runs `--secrets`. It
+must remove the identity from ws, and stamp the file's SHA-256. A changed file must run again, and a
+removed one run with no secrets ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9

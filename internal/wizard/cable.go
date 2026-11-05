@@ -27,8 +27,8 @@ const cableEnd = "10.77.0.1"
 type Cable struct {
 	Host *HostKey
 	Run  *WsRun
-	// Root is the stage that logs in as root: ws is read only where it did, in this run.
-	Root *RootKey
+	// Login is the stage that logs in to ws: ws is read only where it did, in this run.
+	Login *Login
 	// Files runs the files script's operations as root on ws.
 	Files *Remote
 	// Setup is the ws mac apply stage, which gives the Mac's service its address.
@@ -120,7 +120,7 @@ func (c *Cable) lacks() bool {
 // empty or the cable that ws's status names. Without the service, it is empty too where no port that
 // link lists has carrier, as the Mac isn't docked: the stage waits then, and Hand names the dock in
 // the closing list. WS_CABLE_PORT in the environment ends the wait, as for a port that ws keeps
-// down. It reads ws only where root logged in there in this run. Under --check it says that it is
+// down. It reads ws only where the login reached it in this run. Under --check it says that it is
 // after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	cf, err := c.Host.conf()
@@ -135,7 +135,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	in := false
 	if err == nil {
-		in, _ = c.Root.login(ctx, w)
+		in, _ = c.Login.login(ctx, w)
 	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")
@@ -144,7 +144,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		in && c.Run.Remote.Status(ctx) && c.Run.Remote.Get("cable") == cf.CablePort) {
 		return step.Plan{}, nil
 	}
-	if c.Host.Check && !none && (!in || !c.Run.runDone(ctx, cf.Target)) {
+	if c.Host.Check && !none && (!in || !c.Run.runDone(ctx, cf)) {
 		c.Out.Say("%s: after %s", cableStage, runStage)
 		return step.Plan{}, nil
 	}

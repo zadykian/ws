@@ -11,26 +11,53 @@ type Remote struct {
 	SSH SSH
 	// Script is wizard-remote.sh, which sh -s reads from standard input.
 	Script []byte
+	// Sudo is how a script reaches root. Nil runs it as the login.
+	Sudo *Sudo
 
 	read   bool
 	status map[string]string
 }
 
-// args returns ssh's arguments for the operation. No argument holds a blank or a quote.
-func (*Remote) args(op []string) []string {
-	return append([]string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--"}, op...)
+// args returns ssh's arguments and stdin for the operation. No argument of op holds a blank or a quote.
+func (r *Remote) args(op []string) ([]string, []byte, error) {
+	return r.command(append([]string{"sh", "-s", "--"}, op...), r.Script)
+}
+
+// command returns ssh's arguments and stdin for cmd as root, with in as its stdin.
+func (r *Remote) command(cmd []string, in []byte) ([]string, []byte, error) {
+	cmd, in, err := r.Sudo.rooted(cmd, in)
+	return append([]string{"-o", "BatchMode=yes", "ws"}, cmd...), in, err
 }
 
 // Do runs the operation, and has the next Status read ws again, as the operation may change it.
 func (r *Remote) Do(ctx context.Context, op ...string) ([]byte, error) {
 	r.read = false
-	return r.SSH.RunInput(ctx, r.Script, r.args(op)...)
+	args, in, err := r.args(op)
+	if err != nil {
+		return nil, err
+	}
+	return r.SSH.RunInput(ctx, in, args...)
 }
 
 // Pass is Do for an operation that goes on, such as run, whose output goes to Stderr as it comes.
 func (r *Remote) Pass(ctx context.Context, op ...string) error {
 	r.read = false
-	return r.SSH.PassInput(ctx, r.Script, r.args(op)...)
+	args, in, err := r.args(op)
+	if err != nil {
+		return err
+	}
+	return r.SSH.PassInput(ctx, in, args...)
+}
+
+// Put writes data to path on ws as root, mode 0600, through its stdin. path holds no blank or quote:
+// the remote script named it.
+func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
+	args, in, err := r.command([]string{"sh", "-c", "'umask 077 && cat >" + path + "'"}, data)
+	if err != nil {
+		return err
+	}
+	_, err = r.SSH.RunInput(ctx, in, args...)
+	return err
 }
 
 // Status reads what the remote script's status prints once, until Do or Pass runs, and reports

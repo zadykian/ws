@@ -3,7 +3,7 @@
 # ws's signing key off the Mac's gh login, --check must say it would run gh ssh-key add --type
 # signing, titled with ws's hostname, and change nothing. A run must add the key to the signing keys
 # alone, and list what stays by hand, which no longer holds ws's gh login. The next run
-# must print nothing. Where root's git config on ws names no signing key, a run must print nothing,
+# must print nothing. Where the login's git config on ws names no signing key, a run must print nothing,
 # with the key off the login.
 
 set -u
@@ -47,9 +47,9 @@ printf '%s\n' "$out" | grep -qxF "ws mac wizard: Signing key: ran $add for ws's 
     error "ws mac wizard exited $status, adding other than the signing key to the signing keys"
 quiet 'after the key was added'
 : >"$state/signing"
-sudo git config -f "$ws/root/root/.gitconfig" --unset user.signingkey
+sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
 quiet 'with no signing key on ws'
-sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
-    "$ws/root/root/.ssh/id_ed25519_signing.pub"
+sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
+    "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
 echo "$key" >"$state/signing"
 exit "$fail"

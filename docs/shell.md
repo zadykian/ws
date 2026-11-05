@@ -78,7 +78,8 @@ The identity stays in the Mac's Keychain, made by `ws mac secrets init`
 ([The identity](mac-secrets.md#the-identity)). `ws server apply` reads it from the systemd
 credential `ws-secrets`, in `$CREDENTIALS_DIRECTORY`, for `--secrets` and `--check` alike. Without
 the credential it fails and names `LoadCredential`. It reads no standard input and no terminal. The
-Mac's wizard starts the run as a unit with `LoadCredential=ws-secrets:PATH`. By hand, on a server:
+Mac's wizard starts the run as a unit with `LoadCredential=ws-secrets:PATH`. By hand, on a server, as
+root, after `sudo -i`:
 
 ```sh
 umask 077 && mkdir -p /run/ws && cat >/run/ws/identity   # the identity on stdin, on a tmpfs

@@ -9,7 +9,7 @@
 # must write the line, and stop at gh's stage, whose login the case takes away. A second run must
 # say nothing of the Mac key stage, and change nothing. Last, a run that makes a file key in
 # $RUNNER_TEMP, where ssh-add can't take it, must stop at the stage, naming the command to run by
-# hand, as Root's key logs in with no prompt, and leave the key it made, before ws mac apply.
+# hand, as Login logs in with no prompt, and leave the key it made, before ws mac apply.
 
 set -u
 
@@ -25,7 +25,7 @@ error() {
     fail=1
 }
 
-printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TARGET=lan WS_LAN= WS_GIT_NAME= \
+printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TARGET=lan WS_LAN= WS_GIT_NAME= \
     WS_TUNNEL_NETWORKS= WS_RESOLVERS= >"$conf"
 cp "$conf" "$RUNNER_TEMP/key.conf.before"
 out=$(WS_CONF=$conf "$wsbin" mac wizard </dev/null 2>&1)

@@ -1,6 +1,6 @@
 #!/bin/sh
-# The wizard's files script on ws, for the cable's port. The Mac's wizard sends it to root there
-# over ssh, as it sends wizard-remote.sh:
+# The wizard's files script on ws, which writes what the wizard names there: the cable's port,
+# ws_user and the tunnel's peer. The Mac's wizard sends it over ssh, as it sends wizard-remote.sh:
 #
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote-files.sh
 #
@@ -10,15 +10,18 @@
 #   or -. link PORT names that port in ws's /etc/ws/host_vars.yml as
 #   network_direct_link_interface, the port of the Mac's cable, which the network and wireguard
 #   roles read.
+# - user NAME names NAME in that file as ws_user, for ws server apply.
+# - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# Sysfs's network interfaces and the machine's values for ws server apply. CI's stand-in for ws
-# roots each, a line NAME=PATH, in a directory of its own.
+# Sysfs's network interfaces, the machine's values for ws server apply and the Mac's key for wg0.
+# CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
 net=/sys/class/net
 vars=/etc/ws/host_vars.yml
+peer=/etc/wireguard/mac.pub
 
 # say prints a message of the script's on stderr.
 say() {
@@ -63,10 +66,26 @@ link_wait() {
     link
 }
 
+# name KEY VALUE names VALUE in vars as KEY, by a rename that keeps the file's other lines and its
+# mode. A new file is 0600 in a 0755 directory, and starts with ---, as yamllint asks of YAML.
+name() {
+    [ -d "${vars%/*}" ] || { mkdir -p "${vars%/*}" && chmod 755 "${vars%/*}"; }
+    umask 077
+    [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
+    {
+        [ -s "$vars" ] || echo ---
+        cat "$vars" 2>/dev/null | awk -v key="$1:" -v line="$1: \"$2\"" '
+            index($0, key) == 1 { if (!done++) print line; next }
+            { print }
+            END { if (!done) print line }'
+    } >"$vars.new"
+    mv -f "$vars.new" "$vars"
+    say "wrote $vars"
+}
+
 # link [PORT] lists the ports, as the header says, with sysfs's carrier, which a port that is down
 # lacks, and ip's IPv4 addresses. Given PORT, one that it lists, it names it in vars, where that
-# names another, by a rename that keeps the file's other lines and its mode. A new file is 0600 in
-# a 0755 directory, and starts with ---, as yamllint asks of YAML.
+# names another.
 link() {
     if [ -z "${1-}" ]; then
         for port in $(ports); do
@@ -79,26 +98,40 @@ link() {
     ports | grep -qxF -- "$1" || die "'$1' is none of the wired ports that link lists"
     [ "$(sed -n 's/^network_direct_link_interface: *"\{0,1\}\([A-Za-z0-9_.-]*\).*/\1/p' "$vars" \
         2>/dev/null)" != "$1" ] || return 0
-    [ -d "${vars%/*}" ] || { mkdir -p "${vars%/*}" && chmod 755 "${vars%/*}"; }
-    umask 077
-    [ ! -f "$vars" ] || cp -p "$vars" "$vars.new"
-    {
-        [ -s "$vars" ] || echo ---
-        cat "$vars" 2>/dev/null | awk -v line="network_direct_link_interface: \"$1\"" '
-            /^network_direct_link_interface:/ { if (!done++) print line; next }
-            { print }
-            END { if (!done) print line }'
-    } >"$vars.new"
-    mv -f "$vars.new" "$vars"
-    say "wrote $vars"
+    name network_direct_link_interface "$1"
+}
+
+# user NAME names NAME as ws_user, a name as check.User takes it, in the file itself: through a link
+# the rename would leave the link's target as it was.
+user() {
+    printf '%s\n' "$1" | grep -Eqx '[A-Za-z0-9._][A-Za-z0-9._-]{0,31}' ||
+        die "'$1' is not a user's name"
+    [ ! -L "$vars" ] || die "$vars is a link to $(readlink "$vars"): name ws_user in its file by hand"
+    name ws_user "$1"
+}
+
+# peer KEY writes KEY, a WireGuard public key, to mac.pub, which wg0's peer mac takes at the
+# wireguard role's next run, where mac.pub holds another. Its directory is root's alone, as
+# wireguard-tools makes it.
+peer() {
+    printf '%s\n' "$1" | grep -qxE '[A-Za-z0-9+/]{43}=' && [ "${#1}" = 44 ] ||
+        die "'$1' is not a WireGuard public key"
+    [ "$(head -n 1 "$peer" 2>/dev/null)" != "$1" ] || return 0
+    (umask 077 && mkdir -p "${peer%/*}") || die "cannot make ${peer%/*}"
+    printf '%s\n' "$1" >"$peer.new" || die "cannot write $peer.new"
+    mv -f "$peer.new" "$peer" || die "cannot write $peer"
+    say "wrote $peer"
 }
 
 main() {
-    [ "$(id -u)" = 0 ] || die "it runs as root on ws, as ssh logs in to ws"
+    [ "$(id -u)" = 0 ] || die "it runs as root on ws, through sudo or a root login"
     case ${1-} in
     wait) link_wait "${2-}" ;;
     link) link "${2-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT]" ;;
+    user) user "${2-}" ;;
+    peer) peer "${2-}" ;;
+    *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT] | user NAME |" \
+        "peer KEY" ;;
     esac
 }
 

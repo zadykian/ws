@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
 
@@ -17,6 +18,10 @@ type WsRun struct {
 	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
 	Host   *HostKey
 	Remote *Remote
+	// Files is the files script, which names ws_user and the tunnel's peer.
+	Files *Remote
+	// Default is the server's default ws_user, what a host_vars with no such line gives.
+	Default string
 	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
 	Version string
 	// Secrets is the Mac's secrets file and User the Mac's user, whose Keychain holds its identity. A
@@ -59,11 +64,21 @@ func (r *WsRun) idle(ctx context.Context) bool {
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
 // that run must have begun with host_vars turning the outbound table off, and ws's host_vars must keep it off. Under
 // --update, only once the stage ran ws server apply in this run.
-func (r *WsRun) runDone(ctx context.Context, target string) bool {
+func (r *WsRun) runDone(ctx context.Context, c conf.Conf) bool {
 	if r.Update && !r.ran {
 		return false
 	}
-	return r.idle(ctx) && (target != "cloud" || (r.off() && r.Remote.Get("outbound") == "off"))
+	return r.idle(ctx) && r.named(c) && (c.Target != "cloud" || (r.off() && r.Remote.Get("outbound") == "off"))
+}
+
+// named tells whether ws's values give ws_user the user that ssh logs in as. It compares with the
+// server's default, so that a default that moves leaves a WS_USER of the old one named in host_vars.
+func (r *WsRun) named(c conf.Conf) bool {
+	user := r.Remote.Get("user")
+	if user == "" || user == "-" {
+		user = r.Default
+	}
+	return user == c.User
 }
 
 // runChange is the change that runs ws server apply, or that names the outbound table's state in host_vars.
@@ -73,6 +88,8 @@ type runChange struct {
 	outbound bool
 	// cloud is set for a cloud VM, whose run turns the outbound table off.
 	cloud bool
+	// user is the ws_user that host_vars is to name before the run, where it names another.
+	user string
 }
 
 func (c runChange) String() string { return runStage + ": would " + c.text }
@@ -87,16 +104,21 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if _, err := r.localSum(); err != nil {
 		return step.Plan{}, err
 	}
-	if r.runDone(ctx, c.Target) {
+	if r.runDone(ctx, c) {
 		return step.Plan{}, nil
 	}
 	how := "run ws server apply on ws in a unit of its own, and follow its log"
 	if data, _ := r.macSecrets(); data != nil {
 		how += ", after sending the secrets file and the identity"
 	}
+	user := ""
+	if !r.named(c) {
+		user = c.User
+		how += ", after naming ws_user: " + user + " in ws's host_vars"
+	}
 	if c.Target == "cloud" {
 		how += ", after naming security_outbound: false in ws's host_vars"
-		if !r.Update && r.idle(ctx) && r.off() {
+		if !r.Update && r.idle(ctx) && r.off() && user == "" {
 			return step.Plan{Changes: []step.Change{runChange{text: "name security_outbound: false in ws's host_vars",
 				outbound: true}}}, nil
 		}
@@ -109,7 +131,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 			how += "; its last full run exited " + last
 		}
 	}
-	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud"}}}, nil
+	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user}}}, nil
 }
 
 // fail says what to do where ws server apply ran no full run to its end. It names no cause, as ssh has

@@ -21,6 +21,13 @@ type Prompt interface {
 	Ask(ctx context.Context, q Question) (string, error)
 }
 
+// Hidden asks for a secret, with no echo. It stands beside Prompt, whose fakes in other modules go on
+// compiling: effect is public.
+type Hidden interface {
+	// AskHidden returns the line as typed, blanks included.
+	AskHidden(ctx context.Context, text string) (string, error)
+}
+
 // Out tells the maintainer what ws does.
 type Out interface {
 	Say(format string, a ...any)

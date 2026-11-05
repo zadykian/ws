@@ -16,7 +16,8 @@
 # status's cable name it. The remote script's outbound must add security_outbound: false there once,
 # which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
 # must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
-# the linked file holds the line. The stand-ins' state goes back.
+# the linked file holds the line. The files script's user must name ws_user there, which status
+# reads, and refuse no user's name and a link. The stand-ins' state goes back.
 
 set -u
 
@@ -24,6 +25,7 @@ remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamps=$ws/root/var/lib/ws-wizard
 peer=$ws/root/etc/wireguard/mac.pub
+vars="$ws/root"/etc/ws/host_vars.yml
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -35,7 +37,7 @@ error() {
 # remote OP [ARG...]: the remote script's OP on ws, as the wizard runs it. It prints the output, and
 # sets out and status.
 remote() {
-    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- "$@" <"$remote_sh" 2>&1)
+    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- "$@" <"$remote_sh" 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
@@ -50,15 +52,18 @@ wsv() {
     cat "$ws/ws.version" 2>/dev/null || echo -
 }
 
-# states WANT...: status must print the stamps, no unit that runs, ws's version, then the lines WANT.
+# states WANT...: status must print the stamps, no unit that runs, ws's version, no ws_user, then the
+# lines WANT.
 states() {
     remote status
-    want=$(printf '%s\n' "run $(stamp run)" "last $(stamp last)" 'active -' "ws $(wsv)" "$@")
+    want=$(printf '%s\n' "run $(stamp run)" "last $(stamp last)" 'active -' "ws $(wsv)" 'user -' "$@")
     [ "$status" = 0 ] && [ "$out" = "$want" ] ||
         error "status exited $status, printing other than '$want'"
 }
 
-# The Tunnel stage's wg0 and mac.pub go aside, for the states, and come back after.
+# The Tunnel stage's wg0 and mac.pub go aside, for the states, and come back after. So does the
+# host_vars that 34-run.sh leaves.
+sudo mv "$vars" "$RUNNER_TEMP/host_vars.yml"
 mv "$ws/wg0" "$RUNNER_TEMP/wg0"
 sudo mv "$peer" "$RUNNER_TEMP/mac.pub"
 key=$(head -c 32 /dev/urandom | base64)
@@ -73,12 +78,12 @@ states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")
 touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
-sudo git config -f "$ws/root/root/.gitconfig" --unset user.signingkey
+sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
 states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
     'peer -' 'outbound on'
 rm "$ws/nct6687"
-sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
-    "$ws/root/root/.ssh/id_ed25519_signing.pub"
+sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
+    "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
 
@@ -108,7 +113,7 @@ remote run --only devtools
     error "a tagged run exited $status"
 rm "$ws/server.status"
 echo 4 >"$ws/server.wait"
-ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
+ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
 first=$!
 tries=0
 until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
@@ -149,15 +154,23 @@ remote run --diff
 
 # files OP [ARG...]: the files script's OP, as remote runs the remote script's.
 files() {
-    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sh -s -- "$@" <"${remote_sh%/*}/wizard-remote-files.sh" 2>&1)
+    out=$(ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- "$@" <"${remote_sh%/*}/wizard-remote-files.sh" 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
 
+files user zadykian
+remote status
+if ! printf '%s\n' "$out" | grep -qx 'user zadykian' || ! sudo grep -qx 'ws_user: "zadykian"' "$vars"; then
+    error "the files script's user named no ws_user, or status read another"
+fi
+files user a,b
+! sudo grep -q 'a,b' "$vars" && [ "$status" = 1 ] || error "its user with no user's name exited $status"
+sudo rm -r "${vars%/*}"
+
 # ws's ports, in a sysfs of the stand-in's, root's: the uplink, a port with carrier, one without and
 # with an address, one that is down, and a wireless one. A member of the bridge br0 has carrier.
 net=$ws/root/sys/class/net
-vars="$ws/root"/etc/ws/host_vars.yml
 for each in enp4s0:1 enp5s0:1 enp6s0:0 enp7s0 wlan0:1 enp8s0:1; do
     sudo mkdir -p "$net/${each%:*}/device"
     echo 1 | sudo tee "$net/${each%:*}/type" >/dev/null
@@ -209,10 +222,15 @@ printf '%s\n' "$out" | grep -qx 'outbound on' || error "status read true after O
 remote outbound
 printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$status" = 1 ] ||
     error "its outbound through a link exited $status"
+files user zadykian
+printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$status" = 1 ] ||
+    error "its user through a link exited $status"
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
 sudo rm -rf "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
 rm -f "$ws/uplink"
+sudo mkdir -m 755 "${vars%/*}"
+sudo mv "$RUNNER_TEMP/host_vars.yml" "$vars"
 exit "$fail"

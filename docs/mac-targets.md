@@ -24,13 +24,15 @@ the Mac's display, if any:
 `WS_TARGET=cloud` is a VM at a provider, reached through the internet alone:
 
 - The wizard asks no LAN.
+- `WS_USER` defaults to `root`, as a VM may have no other user. Set it for an image whose root refuses
+  a login, such as `ubuntu`. The other targets refuse `WS_USER=root`.
 - `WS_REMOTE` is the VM's name or address, and `WS_REMOTE_PORT` its SSH port, `22` by default. The
   target needs both.
 - The VM needs a public IPv4 address, as the tunnel takes IPv4 alone.
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_PORT` sets. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
-  ([Root's key](mac-wizard.md#roots-key)).
+  ([Login](mac-wizard.md#login)).
 - Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the
   provider shows it.
 - ws's run turns the outbound table off, which would drop the metadata service

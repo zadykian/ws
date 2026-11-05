@@ -2,11 +2,11 @@
 
 `ws mac wizard` sets up the Mac in stages, around `ws mac apply` ([The Mac](mac.md)). It asks for
 the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh key for ws and adds it to GitHub,
-then runs `ws mac apply`. It takes ws's host key and checks that root on ws takes the Mac's key. It
-runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs claude in on
-ws. Then it exchanges the tunnel's keys. Last, it sets up the cable from the Mac's display to ws. On
-a new Mac with Apple silicon, one line installs ws's binary, and the wizard installs what else it
-needs, as yourself:
+then runs `ws mac apply`. It takes ws's host key and checks that `WS_USER` on ws takes the Mac's
+key. It runs `ws server apply` there, adds ws's signing key to GitHub by the Mac's gh, and logs
+claude in on ws. Then it exchanges the tunnel's keys. Last, it sets up the cable from the Mac's
+display to ws. On a new Mac with Apple silicon, one line installs ws's binary, and the wizard
+installs what else it needs, as yourself:
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
@@ -30,13 +30,15 @@ the first two of which install what the rest needs:
    timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
    the warnings of `ws mac apply` and drops the Mac's key that it prints.
 6. Host key: ws's host key, matched against ws's console, in `known_hosts` under `ws`, below.
-7. Root's key: root's login to ws by the Mac's key, checked and never added, below.
-8. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
-9. ws's run: `ws server apply` on ws, in a unit of its own, which the wizard follows, below.
-10. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
-11. claude on ws: root's claude there, logged in, below.
-12. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
-13. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
+7. Login: `WS_USER`'s login to ws by the Mac's key, checked and never added, below.
+8. Sudo: how the remote scripts reach root on ws, with sudo's password asked where it needs one,
+   below.
+9. ws on ws: this ws's release, installed on ws by its `install.sh`, below.
+10. ws's run: `ws server apply` on ws, in a unit of its own, which the wizard follows, below.
+11. Signing key: ws's public signing key among the signing keys of the Mac's gh login, below.
+12. claude on ws: `WS_USER`'s claude there, logged in, below.
+13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
+14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
 ## The answers
 
@@ -85,7 +87,7 @@ Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.
 `ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
 `ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
 and asks it once more. With no terminal to ask one, the key gets none. Where `ssh-add` fails, the
-wizard stops, as Root's key logs in with no prompt. Run the command it names, then the wizard again.
+wizard stops, as Login logs in with no prompt. Run the command it names, then the wizard again.
 
 Without `WS_IDENTITY`, and with no key yet, the wizard asks whether Secretive keeps the key, in the
 Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and where
@@ -112,7 +114,7 @@ it add the Mac's keys, and a login without them is refreshed the same way. The w
 key for ws to the account's ssh keys, titled with the Mac's name. `ws mac apply` then adds git's
 signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the command to run.
 
-Ubuntu's installer imports the account's keys for ws's user. So run the line before Ubuntu's
+Ubuntu's installer imports the account's keys for ws's user, `zadykian`. So run the line before Ubuntu's
 install, as the wizard adds no key to ws afterwards. A run before the install stops at the Host key
 stage, as ws doesn't answer yet. Leave ws's address empty there, and run the wizard again once
 Ubuntu is installed. In the installer, turn OpenSSH on, import the keys from GitHub, and leave
@@ -136,24 +138,33 @@ the stage warns that a new ws faces the internet until its run sets up the `secu
 ([security](security.md)). With no terminal, `WS_FIRST_ADDRESS` and `WS_HOST_KEY` give the
 answers. A linked `known_hosts` stops the stage, and a run prints the key's line for its target.
 
-## Root's key
+## Login
 
-The stage is done where ssh logs in to `ws` at a direct way as root by the Mac's key. The wizard
-adds no key to ws: GitHub's account is the only way to give ws its keys. Where root doesn't take the
-key, the stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's installer imports
-the account's keys for its user, and root takes them as the [README](../README.md#a-new-machine)
-says: copy that user's `authorized_keys` to root. That replaces root's file, so cloud-init's forced
-command goes too. A cloud VM gives its default user the provider's keys instead, which must be the
-account's. Then run the wizard again. `--check` says that a run would stop. Both show any ssh error.
+The stage is done where ssh logs in to `ws` at a direct way as `WS_USER` by the Mac's key. The
+wizard adds no key to ws: GitHub's account is the only way to give ws its keys. Where `WS_USER`
+doesn't take the key, the stage stops, at a terminal or not, and names the Mac's `.pub`. Ubuntu's
+installer imports the account's keys for its user. A cloud VM gives its default user the provider's
+keys instead, which must be the account's. Set `WS_USER` to that user, then run the wizard again.
+`--check` says that a run would stop. Both show any ssh error.
 
-The stage stops too where `WS_USER` isn't root: the README's steps are then by hand. Where ws offers
-another host key than `known_hosts` holds, as once ws is installed again, it stops, naming
-`ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets, and
-its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line that
-starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
+Where ws offers another host key than `known_hosts` holds, as once ws is installed again, it stops,
+naming `ssh-keygen -R ws`. It does so whatever `StrictHostKeyChecking` the user's `ssh_config` sets,
+and its logins add nothing to `known_hosts`. They run no `LocalCommand` either, such as the line
+that starts cld's watcher ([The watcher](mac-ghostty.md#the-watcher)).
 
 A run shares one ssh connection for its direct calls, and one for the Tunnel stage, so Secretive's
 key asks Touch ID once a run. Its end closes them, or 30 idle minutes after a `SIGKILL`.
+
+## Sudo
+
+The stage reads how the remote scripts reach root on ws. A root login needs nothing more. For
+another `WS_USER`, it tries `sudo -n true`. Where sudo wants a password, the stage asks for it,
+hidden, once a run, and has sudo check it, with nothing behind it on stdin, up to three times. With
+no terminal, it stops. A user outside sudoers stops it too, with sudo's words. `--check` asks at a
+terminal, as the stages after it read ws through sudo. With no terminal, it says that a run would
+ask, and those stages wait. The password stays in the wizard's memory, and goes as the first line
+of `sudo -k -S -p ''`'s stdin, ahead of the script. `-k` has sudo read it each time. It goes in no
+argument, message or file.
 
 ## ws on ws
 
@@ -167,12 +178,15 @@ its `install.sh` runs, then the command again. A ws that is no release stays, wi
 
 ## ws's run
 
-The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a direct
-way. It runs `ws server apply` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with
-root's `HOME` and a UTF-8 locale. That ws runs its roles
-([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, and stops
-where the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when
-the Mac sleeps, and the next run of the wizard follows it to its end.
+The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a
+direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server apply` in a unit of
+its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8 locale. That ws
+runs its roles ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log
+until it ends, and stops where the run fails. A first run takes 20 to 40 minutes. The unit goes on
+where ssh drops, as when the Mac sleeps, and the next run of the wizard follows it to its end. Where
+`WS_USER` isn't the server's default, the stage first names it as `ws_user` in
+`/etc/ws/host_vars.yml` on ws, with the files script, so the roles set up that user. Where the file
+names another, it changes the line.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:
@@ -203,21 +217,22 @@ apply.
 
 ## Signing key
 
-The stage is done where root's `~/.gitconfig` on ws names no signing key file, as
+The stage is done where `WS_USER`'s `~/.gitconfig` on ws names no signing key file, as
 `shell_git_signing: false` leaves it ([Signing](shell.md#signing)), or where the Mac's gh lists ws's
-public signing key. ws's `status` prints that key and its hostname. Else it runs `gh ssh-key add
---type signing --title HOSTNAME` on the Mac, from a file in the lock. The Mac's gh login has the
+public signing key. ws's `status` prints that key and its hostname, read as `WS_USER`, who can write
+those files, so that root never reads through them. Else it runs `gh ssh-key add --type signing
+--title HOSTNAME` on the Mac, from a file in the lock. The Mac's gh login has the
 scope, and ws's token has no account permission, so ws adds nothing. `--check` says it would.
 The closing list omits ws's gh login: `ws server apply` logs it in by the secrets file's
 `token.github` ([gh](devtools.md#gh)).
 
 ## claude on ws
 
-The stage is done where root's claude on ws has a login, as `claude auth status` says. Else the
-wizard runs `claude auth login` as root on ws, in an `ssh -t` session, through a login shell, whose
-`PATH` has `~/.local/bin`, where claude is ([claude](claude.md)). Take its steps at the terminal,
-with the address it shows opened in the Mac's browser. With no terminal, the stage stops, naming
-`claude auth login`. Where ws lacks claude, it stops.
+The stage is done where `WS_USER`'s claude on ws has a login, as `claude auth status` says, run as
+that user. Else the wizard runs `claude auth login` as `WS_USER` on ws, in an `ssh -t` session,
+through a login shell, whose `PATH` has `~/.local/bin`, where claude is ([claude](claude.md)). Take
+its steps at the terminal, with the address it shows opened in the Mac's browser. With no terminal,
+the stage stops, naming `claude auth login`. Where ws lacks claude, it stops.
 
 ## The tunnel
 

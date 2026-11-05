@@ -51,7 +51,7 @@ func wizardRefusal(p process) string {
 }
 
 // wizardStages returns the stages of ws mac wizard, in order.
-func wizardStages(p process, stdout io.Writer, ask effect.Prompt, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
+func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.Hidden, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
 	scratch := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
@@ -65,16 +65,18 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, out effect.Out
 	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
 		SSH: wizard.SSH{M: p.machine, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
+	sudo := &wizard.Sudo{Host: host, P: hidden}
+	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript, Sudo: sudo}
 	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update,
 		Secrets: p.getenv("HOME") + "/" + secretsFile, User: p.getenv("USER"),
-		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript}}
+		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript, Sudo: sudo},
+		Files:  files, Default: values.Default().User}
 	hand.Late(run.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(p, stdout, out, later)
-	root := &wizard.RootKey{Host: host, Gh: gh}
-	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript}
-	cable := &wizard.Cable{Host: host, Run: run, Root: root, Files: files, Setup: setup, Env: p.lookup,
+	login := &wizard.Login{Host: host, Gh: gh}
+	cable := &wizard.Cable{Host: host, Run: run, Login: login, Files: files, Setup: setup, Env: p.lookup,
 		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
@@ -88,7 +90,8 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, out effect.Out
 		gh,
 		setup,
 		host,
-		root,
+		login,
+		sudo,
 		install,
 		run,
 		&wizard.WsClaude{Run: run, Tty: p.tty},
@@ -128,7 +131,7 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 		hand.Close(ctx, c.OutOrStdout())
 		term.Flush()
 	}
-	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, out, prog, o, hand)
+	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, term, out, prog, o, hand)
 	_, err := wizard.Run(ctx, p.machine, out, stages, o.check, tmp, p.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)

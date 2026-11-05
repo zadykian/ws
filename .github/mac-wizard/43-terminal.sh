@@ -32,7 +32,7 @@ status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 tail -n "+$((lines + 1))" "$ws/log" | tee "$RUNNER_TEMP/sessions"
 [ "$status" = 0 ] || error "ws mac wizard at a terminal exited $status"
-grep -qxF 'root: exec bash -lc "claude auth login"' "$RUNNER_TEMP/sessions" ||
+grep -qxF "$(id -un): exec bash -lc \"claude auth login\"" "$RUNNER_TEMP/sessions" ||
     error "no session on ws ran claude auth login"
 grep -qF 'What stays by hand:' "$RUNNER_TEMP/tty" && [ -f "$ws/claude" ] ||
     error "ws mac wizard left claude logged out on ws, or listed nothing by hand"

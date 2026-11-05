@@ -19,7 +19,7 @@ done
 # mac.conf's answers: ws by the router's name and port alone, as a Mac away from home has it. ws's
 # key is the file ~/.ssh/id_ed25519, named, as a run with no terminal to ask for another needs it.
 mkdir -p ~/.config/ws
-printf '%s\n' WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
+printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
     >~/.config/ws/mac.conf
 # PATH as a shell that predates Homebrew has it, without the directories that hold brew, for the
 # cases that give it to the wizard.
@@ -70,13 +70,14 @@ esac
 EOF
 chmod 755 /opt/homebrew/bin/gh
 # ws's stand-in: an sshd of its own at 127.0.0.1:22022, where mac.conf's WS_REMOTE and its port
-# lead, with a host key made here. The cases answer the Host key stage with its fingerprint. Root
-# logs in by root's own authorized_keys, which the cases fill from the stand-in gh's keys, as
-# Ubuntu's installer imports the account's keys for its user and the README's step copies them to
-# root. Each session runs ws.sh. A second host key, ECDSA, as ws has more than one, must stay out
+# lead, with a host key made here. The runner's user logs in by its own authorized_keys, which the
+# cases fill from the stand-in gh's keys, as Ubuntu's installer imports the account's keys for its
+# user. The image's file goes, so that no key is there before a case adds it. Each session runs
+# ws.sh. A second host key, ECDSA, as ws has more than one, must stay out
 # of known_hosts at each login.
 ws=$RUNNER_TEMP/ws
-mkdir -p "$ws"
+mkdir -p "$ws" ~/.ssh
+rm -f ~/.ssh/authorized_keys
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/host_key" </dev/null
 ssh-keygen -q -t ecdsa -N '' -C ws -f "$ws/host_ecdsa" </dev/null
 ssh-keygen -l -f "$ws/host_key.pub" | awk '{ print $2 }' >"$ws/fingerprint"
@@ -88,16 +89,23 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # cases make in a row. The stand-in takes them, where its sshd knows the setting.
 ! sudo /usr/sbin/sshd -G -f "$ws/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
     echo 'PerSourcePenalties no' >>"$ws/sshd_config"
-# ws.sh, ws's shell: it logs each command in log, which root writes, and the connection it came in
-# by in conns, then runs it.
-# Where root's authorized_keys gives the key a command, as cloud-init's does, ws.sh stops as that
-# command does, since sshd's ForceCommand runs in its place. It puts ws's programs first on PATH,
-# and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their own, in root
-# here. So it roots a command's path from /root or the wizard's state alone, with its arguments, or
-# after the script of sh -c.
+# ws.sh, ws's shell: it logs each command in log, with the user that runs it, which the runner's
+# sudo makes root, and the connection it came in by in conns, then runs it.
+# Where the login's authorized_keys gives the key a command, as cloud-init's does for root, ws.sh
+# stops as that command does, since sshd's ForceCommand runs in its place. It puts ws's programs
+# first on PATH, and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their
+# own, in root here. So it roots a command's path from /root or the wizard's state alone, with its
+# arguments, or after the script of sh -c.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
-echo "$(id -un): $SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/log"
+run=${SSH_ORIGINAL_COMMAND#sudo -n }
+run=${run#sudo -k -S -p \'\' }
+who=$(id -un)
+[ "$run" = "$SSH_ORIGINAL_COMMAND" ] || {
+    who=root
+    echo "$SSH_ORIGINAL_COMMAND" >>"$WS_STANDIN/sudo.log"
+}
+echo "$who: $run" >>"$WS_STANDIN/log"
 echo "$SSH_CONNECTION" >>"$WS_STANDIN/conns"
 key=$(awk '$1 == "publickey" { print $3 }' "${SSH_USER_AUTH:-/dev/null}")
 line=$(awk -v key="$key" 'key != "" && index($0, key) { print; exit }' \
@@ -111,7 +119,9 @@ esac
 PATH=$WS_STANDIN/bin:$PATH
 export PATH
 case $SSH_ORIGINAL_COMMAND in
-'sh -s -- '*) sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND" ;;
+'sh -s -- '* | 'sudo '*'sh -s -- '*)
+    sed "s|^\([a-z]*=\)/|\1$WS_STANDIN/root/|" | /bin/sh -c "$SSH_ORIGINAL_COMMAND"
+    ;;
 /root/*) exec "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
 /var/lib/ws-wizard/*) exec /bin/sh -c "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
 "sh -c '"*)
@@ -125,12 +135,13 @@ EOF
 chmod 755 "$ws/ws.sh"
 # ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
 mkdir -p "$ws/bin" "$ws/units"
-for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl; do
+for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl getent runuser sudo; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
 : >"$ws/run.log"
 : >"$ws/server.log"
 : >"$ws/install.log"
+: >"$ws/sudo.log"
 sudo mkdir -p "$ws/root/root/.local/bin" "$ws/root/usr/local/bin"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/usr/local/bin/ws"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/root/.local/bin/claude"
@@ -143,10 +154,20 @@ sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
 sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
 cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
+# The runner's user has a home on ws of its own, with the same files, as the remote script reads
+# the claude and git config of the user that logs in, and root's serves a cloud VM's login.
+home=$ws/root/home/$(id -un)
+sudo mkdir -p "$home/.local/bin" "$home/.ssh"
+sudo ln -s "$here/ws-standin.sh" "$home/.local/bin/claude"
+sudo cp "$ws/signing.pub" "$home/.ssh/id_ed25519_signing.pub"
+sudo git config -f "$home/.gitconfig" user.signingkey "$home/.ssh/id_ed25519_signing.pub"
+sudo chown -R "$(id -un)" "$home"
 touch "$ws/claude"
+# sudo asks no password until a case removes sudo.open.
+touch "$ws/sudo.open"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
 # stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws mac tunnel has a
-# handshake, and lands in tunnel.log. A direct call, which carries AddressFamily=inet, as Root's key's
+# handshake, and lands in tunnel.log. A direct call, which carries AddressFamily=inet, as Login's
 # login, and any other call is the runner's ssh.
 cat >/opt/homebrew/bin/ssh <<EOF
 #!/bin/sh
