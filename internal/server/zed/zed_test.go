@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"runtime"
 	"strings"
 	"testing"
@@ -175,5 +176,57 @@ func TestTheStepsRefuseALinkAtAFileRootWrites(t *testing.T) {
 		if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err == nil {
 			t.Errorf("a link at %s: no error", link)
 		}
+	}
+}
+
+func TestTheTerminalFilesAreRootsAtTheirModes(t *testing.T) {
+	m := run(t, "ws", "/home/ws")
+	for path, want := range map[string]fs.FileMode{
+		"/usr/local/lib/ws/zed/terminal": 0o755, "/usr/local/lib/ws/zed/tmux.conf": 0o644,
+	} {
+		if len(m.Files[path]) == 0 || m.Owners[path] != [2]int{} {
+			t.Errorf("%s: %d bytes, owner %v", path, len(m.Files[path]), m.Owners[path])
+		}
+		if got, set := m.Modes[path]; want != 0o644 && (!set || got != want) {
+			t.Errorf("%s: mode %v", path, got)
+		}
+	}
+	for _, dir := range []string{"/usr/local/lib/ws", "/usr/local/lib/ws/zed"} {
+		if m.Dirs[dir] != 0o755 || m.Owners[dir] != [2]int{} {
+			t.Errorf("%s: mode %v, owner %v", dir, m.Dirs[dir], m.Owners[dir])
+		}
+	}
+}
+
+func TestTheTerminalStepComesFirstAndMakesItsParents(t *testing.T) {
+	m := effecttest.NewMachine()
+	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, m, &effecttest.Out{})
+	if steps[0].Name() != "Zed terminal" {
+		t.Fatalf("the first step is %q", steps[0].Name())
+	}
+	plan, err := steps[0].Plan(context.Background())
+	if err != nil || len(plan.Changes) != 4 {
+		t.Errorf("an empty machine plans %d changes, %v", len(plan.Changes), err)
+	}
+}
+
+func TestSettingsRunTheWrapperAsTheTerminalProgramAfterItsStep(t *testing.T) {
+	got, err := settingsFile(values.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, body, _ := strings.Cut(string(got), "\n")
+	var top struct {
+		Terminal struct{ Shell struct{ Program string } }
+	}
+	if err := json.Unmarshal([]byte(body), &top); err != nil {
+		t.Fatal(err)
+	}
+	if top.Terminal.Shell.Program != terminalPath {
+		t.Errorf("program %q, want %q", top.Terminal.Shell.Program, terminalPath)
+	}
+	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	if steps[1].Name() != "Zed settings" || steps[1].WaitsOn() != steps[0].Name() {
+		t.Errorf("%q waits on %q", steps[1].Name(), steps[1].WaitsOn())
 	}
 }

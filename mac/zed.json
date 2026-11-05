@@ -5,7 +5,8 @@
   "terminal": {
     "dock": "right",
     "font_family": "JetBrainsMono Nerd Font Mono",
-    "option_as_meta": true
+    "option_as_meta": true,
+    "detect_venv": "off"
   },
   "base_keymap": "Zed",
   "project_panel": { "dock": "left" },

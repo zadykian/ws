@@ -26,7 +26,7 @@ The settings layers, lowest first:
 5. A project's `.zed/settings.json`.
 
 ws's file names the language servers by path. A path makes Zed skip every download and add no
-arguments. It sets `terminal.shell` to `system`, Zed's default. A program set in the Mac's
+arguments. It sets `terminal.shell.program` to ws's terminal wrapper. A program set in the Mac's
 `settings.json` would run on ws too (zed#65548), and fail there if ws lacks it.
 
 ## Zed's downloads, outside the SHA-256 rule
@@ -194,6 +194,23 @@ reconnect proxies never exit (zed#62995). Zed raises the limit in its GUI alone.
   restarts, which closing the project or quitting Zed does.
 - `ssh ws 'ulimit -Sn'` prints `zed_nofile` in a new login.
 
+## Terminals in tmux
+
+Zed's terminals on ws run `/usr/local/lib/ws/zed/terminal`, which opens a tmux session of the
+project's directory on a socket of its own, `tmux -L zed`, so that a reconnect leaves the shell
+running. A new tab takes a session of that directory that no tab holds, else starts one. Closing a
+tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` lists the sessions.
+
+- A new session takes its tab's environment, the project's own included.
+- A tab that takes over a session keeps that session's shell, and so its environment.
+- The scrollback, and any search of it, are tmux's: the wheel enters tmux's copy mode, not Zed's own
+  scrollback.
+- tmux has no prefix, so helix gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
+  has the rest.
+- Without tmux on the `PATH` the tab runs a login shell.
+- A task ignores the wrapper.
+- Keep `terminal.detect_venv` `off`, as [the Mac's settings](mac-zed.md) do.
+
 ## When the connection drops
 
 Zed's heartbeat pings 5 s after the last message from ws, waits 5 s, and gives up after 5 misses:
@@ -204,8 +221,8 @@ Terminal output is no traffic to the heartbeat.
 What survives depends on the kind of reconnect:
 
 - An automatic reconnect gives the old daemon a new proxy. Language servers, buffers and unsaved
-  edits stay, and the tabs resync. Terminals, tasks, debug sessions and agent threads are lost
-  (zed#20589, zed#65338).
+  edits stay, and the tabs resync. Tasks, debug sessions and agent threads are lost, and so are
+  the terminal tabs, but their tmux sessions stay (zed#20589, zed#65338).
 - A manual Reconnect, a quit or an update of Zed starts a new daemon, which kills the old one.
   Unsaved edits stay on the Mac. Tabs are often lost (zed#51697), the project panel collapses
   (zed#56049), and a multi-root project may return with one folder (zed#41708).
@@ -247,6 +264,7 @@ clock.
 | All servers gone after a manual Reconnect (zed#60328) | `workspace: reload`, or close and reopen the project |
 | Tabs lost | Reopen the files |
 | An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
+| New tabs start new sessions while old tmux clients stay attached | `tmux -L zed detach-client -s =NAME`, then a new tab |
 | The Disconnected overlay | Reconnect, at the cost of a new daemon |
 | `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](mac.md#sshs-hosts) |
 

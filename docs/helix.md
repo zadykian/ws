@@ -57,6 +57,8 @@ knows it of iTerm2 already. With `always`, tmux sends those keys as `CSI u` to e
 shell too. tmux's prefix reaches helix pressed twice: Ctrl+B, Toggle line breakpoint, by default,
 and Ctrl+Q, Go to action, in cld's sessions.
 
+The zed role's `tmux.conf` sets the same options, and `hyperlinks` too, for Zed's terminals.
+
 Where an F12 key doesn't arrive, helix's own key does the same.
 [Keys a terminal or tmux may not pass on](helix-keymap/terminals.md) lists those keys, and
 [the actions helix has](helix-keymap/actions.md) gives helix's own key for each.

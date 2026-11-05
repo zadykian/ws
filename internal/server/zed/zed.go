@@ -19,11 +19,22 @@ import (
 //go:embed settings.json.tmpl
 var files embed.FS
 
+//go:embed files/terminal files/tmux.conf
+var terminalFiles embed.FS
+
+// terminalDir is where the terminal wrapper and its tmux.conf live: root's, outside any home, as Zed
+// runs the wrapper by its path. The wrapper finds its config beside itself.
+const terminalDir = "/usr/local/lib/ws/zed"
+
+// terminalPath is the wrapper, which the settings name as the terminal's program.
+const terminalPath = terminalDir + "/terminal"
+
 // Steps returns the role's steps in order.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
-		user.Owned(m, "Zed settings", "", func(uid, gid int) ([]host.Resource, error) {
+		host.Group{Title: "Zed terminal", Parts: terminalParts(m)},
+		user.Owned(m, "Zed settings", "Zed terminal", func(uid, gid int) ([]host.Resource, error) {
 			settings, err := settingsFile(v)
 			if err != nil {
 				return nil, err
@@ -68,7 +79,8 @@ func quote(s string) string {
 // settingsFile renders ~/.config/zed/settings.json: the servers by path, as devtools installs
 // them. The server's file wins over the Mac's, which Zed forwards.
 func settingsFile(v values.Values) ([]byte, error) {
-	return host.Render(files, "settings.json.tmpl", struct{ Gopls, Roslyn, Dlv, AnsibleLS, HTMLLS, DockerfileLS string }{
+	return host.Render(files, "settings.json.tmpl", struct{ Terminal, Gopls, Roslyn, Dlv, AnsibleLS, HTMLLS, DockerfileLS string }{
+		Terminal:     quote(terminalPath),
 		Gopls:        quote(devtools.Gopls(v.Home)),
 		Roslyn:       quote(devtools.Roslyn(v.Home)),
 		Dlv:          quote(devtools.Dlv(v.Home)),
@@ -76,4 +88,17 @@ func settingsFile(v values.Values) ([]byte, error) {
 		HTMLLS:       quote(serverBin(v.Home, "vscode-html-language-server")),
 		DockerfileLS: quote(serverBin(v.Home, "docker-langserver")),
 	})
+}
+
+// terminalParts installs the wrapper at mode 0755 and its tmux.conf at 0644. Both parents are made
+// here: --only zed may run where security has not made /usr/local/lib/ws.
+func terminalParts(m effect.Machine) []host.Resource {
+	script, _ := terminalFiles.ReadFile("files/terminal")
+	conf, _ := terminalFiles.ReadFile("files/tmux.conf")
+	return []host.Resource{
+		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755, CreateOnly: true},
+		host.Dir{M: m, Path: terminalDir, Mode: 0o755},
+		host.File{M: m, Path: terminalPath, Content: script, Mode: 0o755},
+		host.File{M: m, Path: terminalDir + "/tmux.conf", Content: conf, Mode: 0o644},
+	}
 }
