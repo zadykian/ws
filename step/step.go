@@ -30,7 +30,7 @@ type Step interface {
 	Apply(ctx context.Context, p Plan) error
 }
 
-// Options says how a run goes.
+// Options says how RunWith runs.
 type Options struct {
 	// Observer takes the run's events. Nil takes none, and the run prints nothing.
 	Observer Observer
@@ -40,14 +40,15 @@ type Options struct {
 	Parent string
 }
 
-// Run plans each step in order. Under check it prints each plan and applies nothing, and skips a
-// step whose awaited step has changes to make. Otherwise it applies each plan, plans again, and
-// fails where the second plan is not empty. It reports whether any step had changes to make.
+// Run is RunWith with a Printer on out, for a caller that follows a run by its lines.
 func Run(ctx context.Context, steps []Step, out effect.Out, check bool) (changed bool, err error) {
-	return run(ctx, steps, Options{Observer: Printer{Out: out}, Check: check})
+	return RunWith(ctx, steps, Options{Observer: Printer{Out: out}, Check: check})
 }
 
-func run(ctx context.Context, steps []Step, o Options) (changed bool, err error) {
+// RunWith plans each step in order. Under check it applies nothing, and skips a step whose awaited
+// step has changes to make. Otherwise it applies each plan, plans again, and fails where the second
+// plan is not empty. It reports whether any step had changes to make.
+func RunWith(ctx context.Context, steps []Step, o Options) (changed bool, err error) {
 	pending := map[string]bool{} // the earlier steps, whether each has changes to make
 	for i, s := range steps {
 		e := o.settle(ctx, s, Event{Parent: o.Parent, Step: s.Name(), Index: i, Check: o.Check}, pending)
