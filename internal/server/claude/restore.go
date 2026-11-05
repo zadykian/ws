@@ -32,10 +32,9 @@ func (r Restore) cld() string { return r.User.Home + "/.local/bin/cld" }
 // clean environment, not the caller's: /etc/environment, as PAM gives a login, then bash's login
 // files. With the user's bus, systemctl --user finds the user's systemd.
 func (r Restore) loginShell(args ...string) (string, []string) {
-	run := fmt.Sprintf("/run/user/%d", r.UID)
-	argv := []string{"-i", "HOME=" + r.User.Home, "USER=" + r.User.Name, "LOGNAME=" + r.User.Name,
-		"SHELL=/bin/bash", "XDG_RUNTIME_DIR=" + run, "DBUS_SESSION_BUS_ADDRESS=unix:path=" + run + "/bus",
-		"/bin/bash", "-c", `set -a && . /etc/environment && exec /bin/bash -l "$@"`, "bash"}
+	argv := append([]string{"-i", "HOME=" + r.User.Home, "USER=" + r.User.Name, "LOGNAME=" + r.User.Name,
+		"SHELL=/bin/bash"}, host.SessionEnv(r.UID)...)
+	argv = append(argv, "/bin/bash", "-c", `set -a && . /etc/environment && exec /bin/bash -l "$@"`, "bash")
 	return "env", append(argv, args...)
 }
 
