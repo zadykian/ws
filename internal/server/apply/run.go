@@ -27,25 +27,32 @@ type Config struct {
 	Observer step.Observer
 	// Prepare are the steps that come first, whatever roles run: what every role needs.
 	Prepare []step.Step
+	// Stop is the Stop of every step.Options here. Nil never stops.
+	Stop func() error
+}
+
+// Steps returns r's steps as Run runs them, on M and Out. Given --secrets, they take the secrets as
+// the whole truth (secrets.Secrets.Whole).
+func (c Config) Steps(r roles.Role) []step.Step {
+	s := c.Secrets
+	s.Whole = c.Options.Secrets != ""
+	return r.Steps(c.Values, s, c.M, c.Out)
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
-// that would under Check. Given --secrets, the roles take the secrets as the whole truth
-// (secrets.Secrets.Whole).
+// that would under Check.
 func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
-	s := c.Secrets
-	s.Whole = c.Options.Secrets != ""
-	o := step.Options{Observer: c.Observer, Check: c.Check, Parent: Prepare}
+	o := step.Options{Observer: c.Observer, Check: c.Check, Parent: Prepare, Stop: c.Stop}
 	if _, err := step.RunWith(ctx, c.Prepare, o); err != nil {
-		c.unreached(list, s)
+		c.unreached(list)
 		return nil, err
 	}
 	var changed []string
 	for i, r := range list {
 		o.Parent = r.Name
-		did, err := step.RunWith(ctx, r.Steps(c.Values, s, c.M, c.Out), o)
+		did, err := step.RunWith(ctx, c.Steps(r), o)
 		if err != nil {
-			c.unreached(list[i+1:], s)
+			c.unreached(list[i+1:])
 			return changed, fmt.Errorf("%s: %w", r.Name, err)
 		}
 		if did {
@@ -56,10 +63,10 @@ func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
 }
 
 // unreached ends the steps of the roles that a failure stopped short of.
-func (c Config) unreached(list []roles.Role, s secrets.Secrets) {
+func (c Config) unreached(list []roles.Role) {
 	for _, r := range list {
 		o := step.Options{Observer: c.Observer, Check: c.Check, Parent: r.Name}
-		step.Unreached(r.Steps(c.Values, s, c.M, c.Out), o)
+		step.Unreached(c.Steps(r), o)
 	}
 }
 
