@@ -35,6 +35,21 @@ func TestReadShowsAPlanAloneWithoutAReporter(t *testing.T) {
 	}
 }
 
+// titled is a change whose text names nothing, as a bare diff.
+type titled string
+
+func (t titled) String() string { return string(t) }
+func (titled) Title() string    { return "would write /a" }
+
+func TestPendingOfPutsATitleFirst(t *testing.T) {
+	if got, want := step.PendingOf(titled("+a\n")).Text, "would write /a\n+a\n"; got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+	if got := step.PendingOf(change("b")).Text; got != "b" {
+		t.Errorf("text = %q, want the change's own", got)
+	}
+}
+
 func TestReadTakesTheItemsOfAReporter(t *testing.T) {
 	log := []string{}
 	items := []step.Item{{Kind: step.FileItem, Name: "/a", Want: "present", Found: "missing"}}

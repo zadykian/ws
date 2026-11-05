@@ -21,6 +21,12 @@ type Kinded interface {
 	Kind() ChangeKind
 }
 
+// Titled is a Change whose String has no line that names it, as a bare diff has none. It stands
+// beside Change, as Kinded does, and leaves String as --check prints it.
+type Titled interface {
+	Title() string
+}
+
 // KindOf returns the change's kind.
 func KindOf(c Change) ChangeKind {
 	if k, ok := c.(Kinded); ok {

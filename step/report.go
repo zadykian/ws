@@ -49,6 +49,15 @@ type Pending struct {
 	Text string     `json:"text"`
 }
 
+// PendingOf returns the change as data. Its first line says what changes.
+func PendingOf(c Change) Pending {
+	text := c.String()
+	if t, ok := c.(Titled); ok {
+		text = t.Title() + "\n" + text
+	}
+	return Pending{KindOf(c), text}
+}
+
 // Report is what Read finds of one step.
 type Report struct {
 	Step string `json:"step"`
@@ -84,7 +93,7 @@ func Read(ctx context.Context, steps []Step) ([]Report, error) {
 func read(ctx context.Context, s Step, e Event) Report {
 	r := Report{Step: e.Step, After: e.After}
 	for _, c := range e.Changes {
-		r.Changes = append(r.Changes, Pending{KindOf(c), c.String()})
+		r.Changes = append(r.Changes, PendingOf(c))
 	}
 	if e.Kind == Skipped {
 		return r

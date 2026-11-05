@@ -27,6 +27,14 @@ func (w Write) String() string {
 	return effect.DiffAs(from, w.Path, w.Before, w.After)
 }
 
+// Title names the file, which a new file's first line of diff leaves out.
+func (w Write) Title() string {
+	if !w.Exists {
+		return "would create " + w.Path
+	}
+	return "would write " + w.Path
+}
+
 // MakeDir makes the user's directory.
 type MakeDir struct {
 	Path string

@@ -95,8 +95,8 @@ func writeReport(b *strings.Builder, r step.Report) {
 	}
 }
 
-// firstLine returns text up to its first line break: a file's change holds its diff, which the
-// item shows.
+// firstLine returns the line that says what changes. What follows it is a file's diff, which the
+// item and --json show.
 func firstLine(text string) string {
 	line, _, _ := strings.Cut(text, "\n")
 	return line

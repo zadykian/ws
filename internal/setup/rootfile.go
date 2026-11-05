@@ -32,6 +32,9 @@ type RootRemove struct {
 
 func (r RootRemove) String() string { return effect.DiffAs(r.Path, "/dev/null", r.Before, nil) }
 
+// Title names the file, as Write's does.
+func (r RootRemove) Title() string { return "would remove " + r.Path }
+
 // rootFile plans root's file with the bytes and mode: written where missing or different, fixed
 // where only its owner or mode differ. A nil change means it is right.
 func rootFile(m effect.Machine, path string, mode fs.FileMode, want []byte) (step.Change, error) {
