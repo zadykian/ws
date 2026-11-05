@@ -9,8 +9,13 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// stopNote is the box of a run that is stopping. A run that heeds ctx never shows it for long.
-const stopNote = "The run ends with its current step.\nCtrl-C again leaves it behind."
+const (
+	// stopNote is the box of a run that is stopping. A run that heeds ctx never shows it for long. The
+	// way out comes first, as a short window cuts the box from the bottom.
+	stopNote = "Ctrl-C again leaves it behind.\nThe run ends with its current step."
+	// confirmNote asks before a stop, as a press can be a slip and a run can take an hour.
+	confirmNote = "Stop the run once its current step ends? Ctrl-C again stops it now."
+)
 
 // The places of the buttons that confirm a stop.
 const (
@@ -188,18 +193,26 @@ func (s session) interrupt(signal syscall.Signal) (tea.Model, tea.Cmd) {
 	return s, s.stop
 }
 
-// View draws the screen, and over it the question or the note that the run is stopping. It holds to
-// the alternate buffer whatever the screen says, as the end of a run restores the terminal by it.
+// View draws the screen, and over it the question, the box that asks before a stop or the note that
+// the run is stopping. It holds to the alternate buffer whatever the screen says, as the end of a run restores the terminal by it.
 func (s session) View() tea.View {
 	view := s.screen.View()
 	view.AltScreen = true
 	switch {
 	case len(s.asked) > 0:
 		view.Content = over(view.Content, s.field.render(s.theme, s.window), s.window)
+	case s.confirming:
+		body := wrapped(confirmNote, s.window) + "\n" + s.confirm.render(s.theme, min(s.window.Width, boxWidth)-2)
+		view.Content = over(view.Content, box(s.theme, "Stop", body, s.window), s.window)
 	case s.stopping:
-		view.Content = over(view.Content, box(s.theme, "Stopping", stopNote, s.window), s.window)
+		view.Content = over(view.Content, box(s.theme, "Stopping", wrapped(stopNote, s.window), s.window), s.window)
 	}
 	return view
+}
+
+// wrapped fits words to the inside of a box, which would cut them.
+func wrapped(words string, window Size) string {
+	return lipgloss.Wrap(words, max(min(window.Width, boxWidth)-2, 1), "")
 }
 
 // over draws a box in the middle of a window, on what base shows there.

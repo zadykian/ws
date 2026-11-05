@@ -5,10 +5,12 @@ import (
 	"errors"
 	"io"
 	"slices"
+	"strings"
 	"syscall"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var esc = tea.KeyPressMsg{Code: tea.KeyEscape}
@@ -41,6 +43,9 @@ func TestSessionStopsPastTheCurrentStepOnceConfirmed(t *testing.T) {
 	if cmd != nil || !s.confirming || s.cutBy != nil {
 		t.Fatalf("the first press stopped the run: cut by %v", s.cutBy)
 	}
+	if view := stripped(s.View().Content); !strings.Contains(view, "current step") || !strings.Contains(view, "[esc] go on") {
+		t.Errorf("no question in:\n%s", view)
+	}
 	s, cmd = feed(s, enter)
 	if !runs(cmd, haltedRunMsg{}) || !s.halted || s.confirming || s.stopping {
 		t.Fatalf("halted %v, confirming %v, stopping %v", s.halted, s.confirming, s.stopping)
@@ -65,6 +70,34 @@ func TestSessionGoesOnPastEsc(t *testing.T) {
 	}
 	if s, _ = feed(s, ctrlC); !s.confirming {
 		t.Error("a press past a refusal asks no more")
+	}
+}
+
+func TestSessionWrapsItsNotesAndKeepsTheWayOut(t *testing.T) {
+	s, _ := testSession()
+	s, _ = feed(s, endedMsg{}, tea.WindowSizeMsg{Width: 24, Height: 8})
+	got := stripped(s.View().Content)
+	for _, want := range []string{"Ctrl-C again leaves it", "behind.", "current step."} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in:\n%s", want, got)
+		}
+	}
+	s, _ = feed(s, tea.WindowSizeMsg{Width: 80, Height: 3})
+	if view := s.View().Content; !strings.Contains(view, "Ctrl-C again") {
+		t.Errorf("a short window hides the way out:\n%s", view)
+	}
+}
+
+func TestSessionDrawsItsBoxInAnyWindow(t *testing.T) {
+	s, _ := haltingSession()
+	s, _ = feed(s, ctrlC)
+	for w := range 14 {
+		for h := range 10 {
+			s, _ = feed(s, tea.WindowSizeMsg{Width: w, Height: h})
+			if got := lipgloss.Width(s.View().Content); got > max(w, len("the screen")) {
+				t.Errorf("%dx%d: drew %d columns", w, h, got)
+			}
+		}
 	}
 }
 
