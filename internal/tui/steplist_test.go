@@ -22,6 +22,10 @@ type oneChange string
 
 func (c oneChange) String() string { return string(c) }
 
+func testList() stepList {
+	return newStepList([]Group{{"base", []string{"Packages", "Locale"}}, {"ssh", []string{"Keys"}}})
+}
+
 func TestNewGroupNamesTheSteps(t *testing.T) {
 	got := NewGroup("base", []step.Step{namedStep("Packages"), namedStep("Locale")})
 	want := Group{"base", []string{"Packages", "Locale"}}
@@ -48,5 +52,37 @@ func TestStateAfter(t *testing.T) {
 		if got := stateAfter(c.event); got != c.want {
 			t.Errorf("stateAfter(%+v) = %d, want %d", c.event, got, c.want)
 		}
+	}
+}
+
+func TestStepRowLabelNamesItsParent(t *testing.T) {
+	if got := (stepRow{parent: "base", name: "Packages"}).label(); got != "base: Packages" {
+		t.Errorf("label = %q", got)
+	}
+	if got := (stepRow{name: "Packages"}).label(); got != "Packages" {
+		t.Errorf("label = %q", got)
+	}
+}
+
+func TestStepListTellsARepeatedNameByItsPlace(t *testing.T) {
+	list := newStepList([]Group{{"", []string{"ssh", "Tools", "ssh"}}})
+	list = list.take(step.Event{Kind: step.Done, Step: "ssh", Index: 2})
+	if list[0].state != stepOpen || list[2].state != stepSame {
+		t.Errorf("states = %d, %d, want the last ssh alone ended", list[0].state, list[2].state)
+	}
+}
+
+func TestStepListTakeLeavesAnOlderValueAlone(t *testing.T) {
+	old := testList()
+	_ = old.take(step.Event{Kind: step.Done, Parent: "base", Step: "Packages"})
+	if old[0].state != stepOpen {
+		t.Error("take changed the list it was called on")
+	}
+}
+
+func TestStepListIgnoresAStepItDoesNotHold(t *testing.T) {
+	list := testList().take(step.Event{Kind: step.Done, Parent: "other", Step: "Packages"})
+	if list.ended() != 0 {
+		t.Errorf("ended = %d, want 0", list.ended())
 	}
 }
