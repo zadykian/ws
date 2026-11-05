@@ -6,19 +6,22 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 )
 
 // Terminal is a Prompt and an Out over a reader and a writer.
 type Terminal struct {
 	in     *bufio.Reader
+	file   *os.File // in, where it is a file: AskHidden reads the terminal itself
 	w      io.Writer
 	byHand []string
 }
 
 // NewTerminal returns a Terminal that reads answers from in and writes to w.
 func NewTerminal(in io.Reader, w io.Writer) *Terminal {
-	return &Terminal{in: bufio.NewReader(in), w: w}
+	file, _ := in.(*os.File)
+	return &Terminal{in: bufio.NewReader(in), file: file, w: w}
 }
 
 // Ask prints the question with its default, and reads a line. An empty line takes the default.
