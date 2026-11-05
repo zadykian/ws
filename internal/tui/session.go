@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // Messages of a run.
@@ -17,6 +18,7 @@ type (
 // end, and a screen never quits by itself.
 type session struct {
 	screen tea.Model
+	theme  Theme
 	window Size
 	// begin starts the work.
 	begin tea.Cmd
@@ -98,10 +100,24 @@ func (s session) drop(id uint64) session {
 	return s
 }
 
-// View draws the screen. It holds to the alternate buffer whatever the screen says, as the end of a
-// run restores the terminal by it.
+// View draws the screen, and over it the question. It holds to the alternate buffer whatever the
+// screen says, as the end of a run restores the terminal by it.
 func (s session) View() tea.View {
 	view := s.screen.View()
 	view.AltScreen = true
+	if len(s.asked) > 0 {
+		view.Content = over(view.Content, s.field.render(s.theme, s.window), s.window)
+	}
 	return view
+}
+
+// over draws a box in the middle of a window, on what base shows there.
+func over(base, drawn string, window Size) string {
+	if drawn == "" {
+		return base
+	}
+	x := (window.Width - lipgloss.Width(drawn)) / 2
+	y := (window.Height - lipgloss.Height(drawn)) / 2
+	layers := lipgloss.NewCompositor(lipgloss.NewLayer(base), lipgloss.NewLayer(drawn).X(x).Y(y).Z(1))
+	return lipgloss.NewCanvas(window.Width, window.Height).Compose(layers).Render()
 }

@@ -3,9 +3,11 @@ package tui
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // recorder is a screen that keeps what it gets.
@@ -22,7 +24,7 @@ func (r recorder) View() tea.View { return tea.NewView("the screen") }
 
 func testSession() (session, *[]tea.Msg) {
 	got := &[]tea.Msg{}
-	return session{screen: recorder{got}, window: window}, got
+	return session{screen: recorder{got}, theme: testTheme, window: window}, got
 }
 
 // feed gives s each message, and returns the last Cmd.
@@ -122,5 +124,32 @@ func TestSessionTakesQuestionsInTurn(t *testing.T) {
 	s, _ = feed(s, retractMsg{9}, retractMsg{3})
 	if len(s.asked) != 0 {
 		t.Errorf("left %v", s.asked)
+	}
+}
+
+func TestSessionDrawsOverTheScreen(t *testing.T) {
+	s, _ := testSession()
+	s, _ = feed(s, askMsg{prompt{id: 1, text: "Host"}})
+	view := s.View()
+	for _, want := range []string{"Host", "the screen"} {
+		if !strings.Contains(view.Content, want) || !view.AltScreen {
+			t.Errorf("no %q in:\n%s", want, view.Content)
+		}
+	}
+	if h := lipgloss.Height(view.Content); h != window.Height {
+		t.Errorf("drew %d lines over the window's %d", h, window.Height)
+	}
+}
+
+func TestSessionDrawsInAnyWindow(t *testing.T) {
+	s, _ := testSession()
+	s, _ = feed(s, askMsg{prompt{id: 1, text: strings.Repeat("a long question ", 20)}})
+	for w := range 14 {
+		for h := range 10 {
+			s, _ = feed(s, tea.WindowSizeMsg{Width: w, Height: h})
+			if got := lipgloss.Width(s.View().Content); got > max(w, len("the screen")) {
+				t.Errorf("%dx%d: drew %d columns", w, h, got)
+			}
+		}
 	}
 }
