@@ -138,3 +138,23 @@ func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
 		t.Errorf("err = %v, the next role reached = %v", err, reached)
 	}
 }
+
+func TestServerGroupsNameEveryStepOfARun(t *testing.T) {
+	role := roleOf("a", func(effect.Machine, effect.Out) step.Step { return stepOf{name: "one"} })
+	cfg := apply.Config{M: effecttest.NewMachine(), Prepare: []step.Step{stepOf{name: "first"}}}
+	got := serverGroups(cfg, []roles.Role{role})
+	want := []tui.Group{{Name: apply.Prepare, Steps: []string{"first"}}, {Name: "a", Steps: []string{"one"}}}
+	if len(got) != 2 || got[0].Name != want[0].Name || !slices.Equal(got[0].Steps, want[0].Steps) ||
+		got[1].Name != want[1].Name || !slices.Equal(got[1].Steps, want[1].Steps) {
+		t.Errorf("groups = %+v, want %+v", got, want)
+	}
+}
+
+func TestServerApplyDrawsNothingWithPlain(t *testing.T) {
+	p, m := serverTerminal()
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n tmux"] = effecttest.Result{Out: []byte("tmux ii \n")}
+	status, _, stderr := runWs(p, "", "server", "apply", "--plain", "--check", "--only", "tmux")
+	if status != 0 || strings.Contains(stderr, "\x1b") || !strings.HasSuffix(stderr, "ws server apply: would change: none\n") {
+		t.Errorf("status = %d, stderr = %q", status, stderr)
+	}
+}
