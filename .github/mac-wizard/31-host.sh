@@ -113,7 +113,7 @@ if [ "$status" != 0 ] || ! printf '%s\n' "$out" | grep -qF -e "$way (docs/mac-ta
     printf '%s\n' "$out" | grep -q "^- ws's lease: "; then
     error "ws mac wizard on a cloud VM with WS_FIRST_ADDRESS exited $status, or named its lease"
 fi
-sudo rm -r "$RUNNER_TEMP/ws/root"/etc/ws
+sudo sed -i '' '/^security_outbound:/d' "$RUNNER_TEMP/ws/root"/etc/ws/host_vars.yml
 rm "$RUNNER_TEMP/cloud.conf"
 "$wsbin" mac wizard </dev/null || error "ws mac wizard with the Mac's own mac.conf exited $?"
 grep -qx '    HostName 10.99.0.1' ~/.ssh/config.d/ws || error 'ws mac wizard wrote no config.d/ws for the tunnel'
