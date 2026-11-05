@@ -1,8 +1,8 @@
 name: ci
 
 # Every pull request, whatever its base, since pull requests are stacked, each on the one below it.
-# On main, each pull request's merge. release.yml calls it on a tag, where the event is the push
-# and stack is null, so that playbook runs in the call as it runs on a push.
+# On main, each pull request's merge. release.yml calls it on a tag, where the event is the push,
+# so that playbook runs in the call as it runs on a push.
 on:
   pull_request:
   push:
@@ -12,6 +12,10 @@ on:
 permissions: {}
 
 jobs:
+  # Whether playbook runs.
+  stack:
+    uses: ./.github/workflows/stack-top.yml # zizmor: ignore[self-repository] actionlint rejects $/
+
   # make lint, the one gate, with the tools it pins: tools/run's binaries, the Python tools of
   # .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks. Any finding
   # fails it, warnings included.
@@ -39,13 +43,11 @@ jobs:
 
   # ws server apply as on a new machine, but in a container rather than a booted system, so without
   # the steps that need a booted systemd. It runs twice, and the second run must change nothing.
-  # In a stack, it runs on the top pull request alone, which holds every change below it, as do
-  # mac.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these jobs kept its pull
-  # requests waiting for runners past 50 minutes. Outside a stack, and on a push, stack is null,
-  # and null == null holds. GitHub's stack metadata:
-  # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
+  # In a stack, it runs on the top pull request alone, as do mac.yml's, mac-cld.yml's and
+  # mac-wizard.yml's jobs: stack-top.yml says why and how.
   playbook:
-    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    needs: stack
+    if: needs.stack.outputs.top == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

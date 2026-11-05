@@ -35,7 +35,7 @@ jobs:
           }
 
   # The workflows of a pull request, on the tag's commit. Their playbook and mac jobs run, as the
-  # tag's push event has no stack.
+  # tag's push event has no pull request.
   ci:
     needs: check
     uses: ./.github/workflows/ci.yml # zizmor: ignore[self-repository] actionlint rejects $/

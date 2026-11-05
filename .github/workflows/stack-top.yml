@@ -1,0 +1,47 @@
+name: stack-top
+
+# Decides whether a pull request's longest jobs run: on a stack's top pull request alone, which
+# holds every change below it, and outside a stack. Run on each of a stack of 20, they kept its pull
+# requests waiting for runners past 50 minutes. A push and a tag have no pull request, so they run.
+#
+# A stack's pull requests open before gh stack link joins them, so the first run's event has no
+# stack, and no event follows the link: #561's came 71 seconds after it opened. This job waits until
+# a pull request is 2 minutes old, then reads its stack from the API. A later link costs runners
+# alone, as the jobs run. GitHub's stack metadata:
+# https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
+#
+# The read needs no permission, as ws is public, so release.yml's calls grant none.
+on:
+  workflow_call:
+    outputs:
+      top:
+        description: Whether the caller's longest jobs run
+        value: ${{ jobs.top.outputs.top }}
+
+permissions: {}
+
+jobs:
+  top:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      top: ${{ steps.stack.outputs.top }}
+    steps:
+      - id: stack
+        name: The pull request's place in its stack
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENED: ${{ github.event.pull_request.created_at }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          top=true
+          if [ -n "$PR" ]; then
+              left=$(($(date -d "$OPENED" +%s) + 120 - $(date +%s)))
+              if [ "$left" -gt 0 ]; then
+                  sleep "$left"
+              fi
+              top=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" \
+                  --jq '.stack == null or .stack.position == .stack.size')
+          fi
+          echo "top=$top" >>"$GITHUB_OUTPUT"

@@ -12,6 +12,9 @@ on:
 permissions: {}
 
 jobs:
+  stack:
+    uses: ./.github/workflows/stack-top.yml # zizmor: ignore[self-repository] actionlint rejects $/
+
   # Ghostty, Zed and cld on a Mac, in docs/mac-ghostty.md's order. ws mac apply runs with a
   # stand-in for ws's key, so that the tunnel's daemon loads and a second run prints nothing, and
   # one for JetBrains Gateway's app, as in mac.yml, which spares the runs its cask's download. On
@@ -23,7 +26,8 @@ jobs:
   # before a release of cld has it. Under the second, which lacks it, a run drops them. Gated as
   # ci.yml's playbook job.
   mac-cld:
-    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    needs: stack
+    if: needs.stack.outputs.top == 'true'
     runs-on: macos-latest
     timeout-minutes: 20
     permissions:
