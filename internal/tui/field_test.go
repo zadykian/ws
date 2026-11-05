@@ -77,6 +77,30 @@ func TestFieldShowsWhatValidRefusesAndKeepsTheText(t *testing.T) {
 	}
 }
 
+func TestFieldChecksTheValueAsItIsTyped(t *testing.T) {
+	short := func(s string) error {
+		if len(s) < 3 {
+			return errors.New("too short")
+		}
+		return nil
+	}
+	shows := func(f field) bool { return strings.Contains(f.render(testTheme, window), "too short") }
+	f := newField(prompt{text: "Host", valid: short}, window)
+	if shows(f) {
+		t.Error("a refusal showed before the first key")
+	}
+	height := lipgloss.Height(f.render(testTheme, window))
+	if f = typeIn(f, "ab"); !shows(f) {
+		t.Error("no refusal as a short value was typed")
+	}
+	if got := lipgloss.Height(f.render(testTheme, window)); got != height {
+		t.Errorf("the box went from %d lines to %d", height, got)
+	}
+	if f, _ = f.update(tea.PasteMsg{Content: "c"}); shows(f) {
+		t.Error("a paste left the refusal of the value it mended")
+	}
+}
+
 func TestFieldKeys(t *testing.T) {
 	f := newField(prompt{text: "Host"}, window)
 	if _, place := f.update(enter); place != answerPlace {

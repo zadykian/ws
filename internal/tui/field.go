@@ -22,10 +22,9 @@ var answerButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "
 
 // field is the box that takes the answer to a prompt.
 type field struct {
-	prompt  prompt
-	input   FormField
-	footer  Footer
-	problem string
+	prompt prompt
+	input  FormField
+	footer Footer
 }
 
 // newField returns the field of p, which takes the keys at once.
@@ -34,7 +33,7 @@ func newField(p prompt, window Size) field {
 	if p.hidden {
 		kind = PasswordField
 	}
-	input := NewFormField(FieldSpec{Kind: kind, Default: p.fallback}).Focus()
+	input := NewFormField(FieldSpec{Kind: kind, Default: p.fallback, Valid: p.valid}).Focus()
 	f := field{prompt: p, input: input, footer: NewFooter(answerButton, Keys.Interrupt)}
 	return f.fit(window)
 }
@@ -62,28 +61,24 @@ func (f field) update(msg tea.Msg) (field, int) {
 // answer returns what the field holds. Where Valid refuses that, it returns false, and the field
 // shows why and keeps the text.
 func (f field) answer() (field, string, bool) {
-	answer := f.input.Value()
-	if f.prompt.valid != nil {
-		if err := f.prompt.valid(answer); err != nil {
-			f.problem = err.Error()
-			return f, "", false
-		}
-	}
-	return f, answer, true
+	var ok bool
+	f.input, ok = f.input.Check()
+	return f, f.input.Value(), ok
 }
 
-// render draws the box for a window, cut to its height.
+// render draws the box for a window, cut to its height. A refusal takes the line under the input, so
+// that the box holds still as one comes and goes with each key.
 func (f field) render(theme Theme, window Size) string {
 	width := min(window.Width, boxWidth)
 	text := f.prompt.text
 	if f.prompt.fallback != "" {
 		text += " [" + f.prompt.fallback + "]"
 	}
-	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.input.View()}
-	if f.problem != "" {
-		lines = append(lines, theme.Bad.Width(width-2).Render(f.problem))
+	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.input.View(), ""}
+	if f.input.problem != nil {
+		lines[2] = theme.Bad.Width(width - 2).Render(f.input.problem.Error())
 	}
-	lines = append(lines, "", f.footer.render(theme, width-2))
+	lines = append(lines, f.footer.render(theme, width-2))
 	return box(theme, "Question", strings.Join(lines, "\n"), window)
 }
 
