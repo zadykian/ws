@@ -12,6 +12,18 @@ import (
 // stopNote is the box of a run that is stopping. A run that heeds ctx never shows it for long.
 const stopNote = "The run ends with its current step.\nCtrl-C again leaves it behind."
 
+// The places of the buttons that confirm a stop.
+const (
+	haltPlace = iota
+	goOnPlace
+)
+
+// The buttons that confirm a stop.
+var (
+	haltButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "stop"))
+	goOnButton = key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "go on"))
+)
+
 // Messages of a run.
 type (
 	// signalMsg is a signal that Run caught.
@@ -40,8 +52,10 @@ type session struct {
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
 	field field
-	// halted is set once the run was told to end past its current step.
-	halted bool
+	// confirming is set while the box in confirm asks before a stop, and halted once it was confirmed.
+	confirming bool
+	confirm    Footer
+	halted     bool
 	// stopping is set once ctx ended. cutBy is set once a signal or Ctrl-C ended ctx, or halted the
 	// run, so that a run stopped short ends with the status of a cut one.
 	stopping bool
@@ -71,7 +85,7 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case signalMsg:
 		return s.interrupt(msg.signal)
 	case endedMsg:
-		s.stopping = true
+		s.stopping, s.confirming = true, false
 		return s, nil
 	case doneMsg:
 		s.done, s.err = true, msg.err
@@ -82,6 +96,9 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if len(s.asked) > 0 {
 			return s.typed(msg)
+		}
+		if s.confirming {
+			return s.confirmed(msg)
 		}
 	case tea.PasteMsg:
 		if len(s.asked) > 0 {
@@ -133,17 +150,31 @@ func (s session) drop(id uint64) session {
 }
 
 // pressed takes Ctrl-C, which raw mode keeps from being a signal. A run that can stop between its
-// steps does. Under a question it can't: a step waits on the answer, so that ctx alone ends it. The
-// screen hears of a stop, as the run goes on under it and the maintainer can still read its output.
+// steps asks first. Under a question it can't: a step waits on the answer, so that ctx alone ends it.
 func (s session) pressed() (tea.Model, tea.Cmd) {
-	if s.halt == nil || s.halted || s.stopping || len(s.asked) > 0 {
+	if s.halt == nil || s.confirming || s.halted || s.stopping || len(s.asked) > 0 {
 		return s.interrupt(syscall.SIGINT)
 	}
-	s.halted = true
-	s.cutBy = s.cut(syscall.SIGINT)
-	var cmd tea.Cmd
-	s.screen, cmd = s.screen.Update(haltedMsg{})
-	return s, tea.Batch(s.halt, cmd)
+	s.confirming, s.confirm = true, NewFooter(haltButton, goOnButton)
+	return s, nil
+}
+
+// confirmed takes a key under the box that asks before a stop. The screen hears of a stop, as the
+// run goes on under it and the maintainer can still read its output.
+func (s session) confirmed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	var place int
+	s.confirm, place = s.confirm.Update(msg)
+	switch place {
+	case goOnPlace:
+		s.confirming = false
+	case haltPlace:
+		s.confirming, s.halted = false, true
+		s.cutBy = s.cut(syscall.SIGINT)
+		var cmd tea.Cmd
+		s.screen, cmd = s.screen.Update(haltedMsg{})
+		return s, tea.Batch(s.halt, cmd)
+	}
+	return s, nil
 }
 
 // interrupt takes a signal, which nobody confirms, or a press past the confirmation. The first ends
@@ -153,7 +184,7 @@ func (s session) interrupt(signal syscall.Signal) (tea.Model, tea.Cmd) {
 		return s, tea.Quit
 	}
 	s.cutBy = s.cut(signal)
-	s.stopping = true
+	s.stopping, s.confirming = true, false
 	return s, s.stop
 }
 

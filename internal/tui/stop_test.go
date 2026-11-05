@@ -11,6 +11,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+var esc = tea.KeyPressMsg{Code: tea.KeyEscape}
+
 // haltedRunMsg is what a test's halt returns.
 type haltedRunMsg struct{}
 
@@ -33,11 +35,15 @@ func runs(cmd tea.Cmd, want tea.Msg) bool {
 	return msg == want
 }
 
-func TestSessionStopsPastTheCurrentStep(t *testing.T) {
+func TestSessionStopsPastTheCurrentStepOnceConfirmed(t *testing.T) {
 	s, got := haltingSession()
 	s, cmd := feed(s, ctrlC)
-	if !runs(cmd, haltedRunMsg{}) || !s.halted || s.stopping {
-		t.Fatalf("halted %v, stopping %v", s.halted, s.stopping)
+	if cmd != nil || !s.confirming || s.cutBy != nil {
+		t.Fatalf("the first press stopped the run: cut by %v", s.cutBy)
+	}
+	s, cmd = feed(s, enter)
+	if !runs(cmd, haltedRunMsg{}) || !s.halted || s.confirming || s.stopping {
+		t.Fatalf("halted %v, confirming %v, stopping %v", s.halted, s.confirming, s.stopping)
 	}
 	if !errors.Is(s.cutBy, cutError{syscall.SIGINT}) || !slices.Contains(*got, tea.Msg(haltedMsg{})) {
 		t.Errorf("cut by %v, the screen got %v", s.cutBy, *got)
@@ -48,6 +54,17 @@ func TestSessionStopsPastTheCurrentStep(t *testing.T) {
 	}
 	if _, cmd = feed(s, ctrlC); !quits(cmd) {
 		t.Error("the third press left no way out")
+	}
+}
+
+func TestSessionGoesOnPastEsc(t *testing.T) {
+	s, _ := haltingSession()
+	s, cmd := feed(s, ctrlC, esc)
+	if cmd != nil || s.confirming || s.halted || s.cutBy != nil {
+		t.Errorf("confirming %v, halted %v, cut by %v", s.confirming, s.halted, s.cutBy)
+	}
+	if s, _ = feed(s, ctrlC); !s.confirming {
+		t.Error("a press past a refusal asks no more")
 	}
 }
 
