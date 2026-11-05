@@ -14,11 +14,12 @@ const (
 	emptyNote   = "None."
 )
 
-// View draws the tabs and the list.
+// View draws the tabs, the list and the detail pane.
 func (s StateScreen) View() tea.View {
 	l := s.layout()
 	sizes := l.PaneSizes(s.window.Width, s.window.Height)
 	l.Panes[listPane].Body = s.listBody(sizes[listPane])
+	l.Panes[detailPane].Body = strings.Join(s.detailLines(sizes[detailPane].Width), "\n")
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
 
@@ -32,7 +33,10 @@ func (s StateScreen) layout() Layout {
 		Title:  s.title,
 		Status: status,
 		Header: s.header(),
-		Panes:  []Pane{{Title: tabNames[s.tab], Focused: true}},
+		Panes: []Pane{
+			{Title: tabNames[s.tab], Focused: !s.inDetail},
+			{Title: "Detail", Weight: detailWeight, Focused: s.inDetail},
+		},
 		Footer: s.footer,
 	}
 }

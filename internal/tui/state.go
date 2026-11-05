@@ -10,6 +10,7 @@ import (
 // The panes of the state screen.
 const (
 	listPane = iota
+	detailPane
 )
 
 // The places of the state screen's buttons.
@@ -18,7 +19,12 @@ const (
 	leavePlace
 )
 
-var readButton = key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "read again"))
+var (
+	readButton = key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "read again"))
+	// openKey and backKey move between the list and the detail pane, as Tab moves between the tabs.
+	openKey = key.NewBinding(key.WithKeys("enter", "right", "l"))
+	backKey = key.NewBinding(key.WithKeys("esc", "left", "h"))
+)
 
 // StateRead is the end of a read: what the machine reports, or why it can't be read.
 type StateRead struct {
@@ -26,8 +32,8 @@ type StateRead struct {
 	Err      error
 }
 
-// StateScreen shows what a machine holds of what ws manages: a tab for each kind and the rows of the
-// tab on show. It changes nothing.
+// StateScreen shows what a machine holds of what ws manages: a tab for each kind, the rows of the
+// tab on show, and a pane of the selected row's wanted and found state. It changes nothing.
 type StateScreen struct {
 	theme Theme
 	title string
@@ -41,6 +47,8 @@ type StateScreen struct {
 	rows    [tabCount][]stateRow
 	cursors [tabCount]int
 	tab     int
+	// inDetail gives the keys to the detail pane.
+	inDetail bool
 	// reading holds while a read runs, and reported once one has come. problem is why the last
 	// failed, and warning the last that a read's steps gave.
 	reading, reported bool
@@ -110,7 +118,7 @@ func (s StateScreen) refound(was StateScreen) StateScreen {
 	return s
 }
 
-// pressed acts on a key: Tab first, as the footer would take it, then the buttons, then the list.
+// pressed acts on a key: Tab first, as the footer would take it, then the buttons, then the panes.
 func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, Keys.Next):
@@ -121,6 +129,14 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	var place int
 	if s.footer, place = s.footer.Update(msg); place >= 0 {
 		return s.pushed(place)
+	}
+	switch {
+	case key.Matches(msg, openKey):
+		s.inDetail = len(s.rows[s.tab]) > 0
+		return s, nil
+	case key.Matches(msg, backKey):
+		s.inDetail = false
+		return s, nil
 	}
 	return s.moved(msg), nil
 }
@@ -136,8 +152,9 @@ func (s StateScreen) pushed(place int) (tea.Model, tea.Cmd) {
 }
 
 // turned moves along one ring of the tabs and the buttons, as Tab must both turn the tabs and reach
-// a button.
+// a button. The list takes the keys in a new tab.
 func (s StateScreen) turned(step int) StateScreen {
+	s.inDetail = false
 	next := s.tab + step
 	if s.footer.Focused() < 0 && next >= 0 && next < tabCount {
 		s.tab = next
@@ -154,8 +171,11 @@ func (s StateScreen) turned(step int) StateScreen {
 	return s
 }
 
-// moved moves the selection.
+// moved moves the selection, while the list has the keys.
 func (s StateScreen) moved(msg tea.KeyPressMsg) StateScreen {
+	if s.inDetail {
+		return s
+	}
 	sizes := s.layout().PaneSizes(s.window.Width, s.window.Height)
 	s.cursors[s.tab] = stepped(msg, s.cursors[s.tab], sizes[listPane].Height, len(s.rows[s.tab])-1)
 	return s
