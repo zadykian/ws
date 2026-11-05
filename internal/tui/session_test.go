@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -35,6 +36,15 @@ func feed(s session, msgs ...tea.Msg) (session, tea.Cmd) {
 	return s, cmd
 }
 
+// quits says whether cmd ends the program.
+func quits(cmd tea.Cmd) bool {
+	if cmd == nil {
+		return false
+	}
+	_, ok := cmd().(tea.QuitMsg)
+	return ok
+}
+
 func TestSessionHandsTheScreenWhatIsNotARuns(t *testing.T) {
 	s, got := testSession()
 	size := tea.WindowSizeMsg{Width: 100, Height: 30}
@@ -49,5 +59,14 @@ func TestSessionHoldsToTheAlternateBuffer(t *testing.T) {
 	s, _ := testSession()
 	if view := s.View(); !view.AltScreen || view.Content != "the screen" {
 		t.Errorf("view %+v", view)
+	}
+}
+
+func TestSessionEndsWithTheWork(t *testing.T) {
+	failed := errors.New("a step failed")
+	s, _ := testSession()
+	s, cmd := feed(s, doneMsg{failed})
+	if !quits(cmd) || !s.done || !errors.Is(s.err, failed) {
+		t.Errorf("done %v, err %v", s.done, s.err)
 	}
 }
