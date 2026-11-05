@@ -39,6 +39,8 @@ func TestFieldAnswerReadsAsThePlainPromptDoes(t *testing.T) {
 		{"blanks trimmed", prompt{text: "Host"}, "  ws ", "", "ws"},
 		{"the default", prompt{text: "Host", fallback: "ws"}, "  ", "", "ws"},
 		{"a default passed over", prompt{text: "Host", fallback: "ws"}, "mac", "", "mac"},
+		{"a paste's line end", prompt{text: "Key"}, "", "SHA256:x\n", "SHA256:x"},
+		{"a paste's two lines", prompt{text: "Key"}, "", "256 SHA256:x\nroot", "256 SHA256:x root"},
 		{"hidden blanks kept", prompt{text: "Password", hidden: true}, " s3 ", "", " s3 "},
 		{"empty and hidden", prompt{text: "Password", hidden: true}, "", "", ""},
 		{"a hidden paste's line end", prompt{text: "Password", hidden: true}, "s", "3\r\n", "s3"},
