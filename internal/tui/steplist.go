@@ -119,6 +119,12 @@ func (l stepList) take(e step.Event) stepList {
 	return l
 }
 
+// at returns the place of the step that the run stands on, the failed one past a failure, or -1
+// where every step has ended.
+func (l stepList) at() int {
+	return slices.IndexFunc(l, func(r stepRow) bool { return r.state == stepOpen || r.state == stepFailed })
+}
+
 // ended returns how many steps have ended.
 func (l stepList) ended() int {
 	done := 0

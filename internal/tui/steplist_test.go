@@ -86,3 +86,32 @@ func TestStepListIgnoresAStepItDoesNotHold(t *testing.T) {
 		t.Errorf("ended = %d, want 0", list.ended())
 	}
 }
+
+func TestStepListPlannedOpensAnEndedStep(t *testing.T) {
+	list := testList().take(step.Event{Kind: step.Done, Parent: "base", Step: "Packages"})
+	list = list.take(step.Event{Kind: step.Planned, Parent: "base", Step: "Packages"})
+	if list.ended() != 0 || list.at() != 0 {
+		t.Errorf("ended = %d, at = %d, want the step open again", list.ended(), list.at())
+	}
+}
+
+func TestStepListAt(t *testing.T) {
+	list := testList()
+	if list.at() != 0 {
+		t.Errorf("at = %d before any event, want the first step", list.at())
+	}
+	list = list.take(step.Event{Kind: step.Done, Parent: "base", Step: "Packages"})
+	if list.at() != 1 {
+		t.Errorf("at = %d past the first step, want the second", list.at())
+	}
+	failed := list.take(step.Event{Kind: step.Failed, Parent: "base", Step: "Locale", Index: 1})
+	failed = failed.take(step.Event{Kind: step.Skipped, Parent: "ssh", Step: "Keys"})
+	if failed.at() != 1 {
+		t.Errorf("at = %d past a failure, want the failed step", failed.at())
+	}
+	list = list.take(step.Event{Kind: step.Done, Parent: "base", Step: "Locale", Index: 1})
+	list = list.take(step.Event{Kind: step.Done, Parent: "ssh", Step: "Keys"})
+	if list.at() != -1 || list.ended() != 3 {
+		t.Errorf("at = %d, ended = %d, want a run that is over", list.at(), list.ended())
+	}
+}
