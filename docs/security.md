@@ -24,7 +24,9 @@ Where `ws_user` is another user, the step "sudo" checks, before sshd's, that it 
 and has a password to give. Closing root's login then leaves a way to root. A container skips
 the check. sudo asks for the password at every command (`/etc/sudoers.d/ws-no-cache`,
 `timestamp_timeout=0`). What `ws_user` runs, such as claude, then cannot take root after the
-maintainer's own `sudo`.
+maintainer's own `sudo`. That holds where sudo asks. A cloud image's default user has a `NOPASSWD`
+rule, which ws leaves in place, so what that user runs holds root, past the outbound table too. Give
+the user a password and remove the rule by hand.
 The step "lxd" takes `ws_user` out of the `lxd` group, which is root, and purges `lxd-installer`.
 
 Docker's published ports get past ufw, so Docker publishes a port that names no address on
