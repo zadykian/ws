@@ -1,6 +1,7 @@
 package host
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -155,4 +156,23 @@ func (p Packages) wait(d time.Duration) {
 		return
 	}
 	time.Sleep(d)
+}
+
+// Report shows the version of each package. A pin wants its glob.
+func (p Packages) Report(ctx context.Context) ([]step.Item, error) {
+	names := make([]string, len(p.Names))
+	items := make([]step.Item, len(p.Names))
+	for i, spec := range p.Names {
+		name, glob, _ := strings.Cut(spec, "=")
+		names[i] = name
+		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: cmp.Or(glob, "installed")}
+	}
+	states, err := dpkgStates(ctx, p.M, names)
+	if err != nil {
+		return nil, err
+	}
+	for i, name := range names {
+		items[i].Found = states[name].text()
+	}
+	return items, nil
 }
