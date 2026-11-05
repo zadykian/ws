@@ -25,6 +25,9 @@ type checked struct {
 // Kind is the wrapped change's: the embedded Change has no Kind to promote.
 func (c checked) Kind() step.ChangeKind { return step.KindOf(c.Change) }
 
+// Item is the wrapped change's, as File.Plan makes a writeFile alone.
+func (c checked) Item() step.Item { return c.Change.(writeFile).Item() }
+
 // Apply writes the content beside the target and runs the check on it. Only a good file is then
 // written over the target.
 func (c checked) Apply(ctx context.Context) error {

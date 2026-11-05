@@ -34,6 +34,8 @@ type writeFile struct {
 	f      File
 	before []byte
 	why    string
+	// got is the file's owner and mode, nil for a file that is missing.
+	got *effect.Attrs
 }
 
 func (c writeFile) String() string {
@@ -44,6 +46,9 @@ func (c writeFile) String() string {
 }
 
 func (writeFile) Kind() step.ChangeKind { return step.Write }
+
+// Item is what the File's Report would show: a role's wrapper builds its File as it plans.
+func (c writeFile) Item() step.Item { return c.f.item(c.before, c.got) }
 
 func (c writeFile) Apply(context.Context) error {
 	if c.f.edit != nil {
@@ -76,22 +81,31 @@ func (f File) Plan(context.Context) ([]Change, error) {
 	}
 	switch {
 	case !bytes.Equal(before, f.Content):
-		return []Change{writeFile{f, before, "write"}}, nil
+		return []Change{writeFile{f, before, "write", &got}}, nil
 	case got != f.attrs():
-		return []Change{writeFile{f, before, fmt.Sprintf("set owner %d:%d and mode %o of", f.UID, f.GID, f.Mode.Perm())}}, nil
+		return []Change{writeFile{f, before, fmt.Sprintf("set owner %d:%d and mode %o of", f.UID, f.GID, f.Mode.Perm()), &got}}, nil
 	}
 	return nil, nil
 }
 
-// Report compares the file as Plan does. A file that exists and differs stands against ws. A secret
-// shows no diff and no sum, as a sum would let a guess be checked.
+// Report compares the file as Plan does.
 func (f File) Report(context.Context) ([]step.Item, error) {
-	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: attrsText(f.attrs()), Found: missing}
 	before, got, ok, err := readRoot(f.M, f.Path)
 	if !ok {
-		return []step.Item{item}, err
+		return []step.Item{f.item(nil, nil)}, err
 	}
-	item.Found = attrsText(got)
+	return []step.Item{f.item(before, &got)}, nil
+}
+
+// item compares what the file holds with what ws writes, got being nil for a file that is missing.
+// A file that exists and differs stands against ws. A secret shows no diff and no sum, as a sum
+// would let a guess be checked.
+func (f File) item(before []byte, got *effect.Attrs) step.Item {
+	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: attrsText(f.attrs()), Found: missing}
+	if got == nil {
+		return item
+	}
+	item.Found = attrsText(*got)
 	switch {
 	case !bytes.Equal(before, f.Content):
 		item.Found += ", other content"
@@ -99,16 +113,19 @@ func (f File) Report(context.Context) ([]step.Item, error) {
 		if !f.Secret {
 			item.Diff = effect.Diff(f.Path, before, f.Content)
 		}
-	case got != f.attrs():
+	case *got != f.attrs():
 		item.Conflict = attrsChanged
 	}
-	return []step.Item{item}, nil
+	return item
 }
 
 // conflict says how the file's content stands against ws. ws keeps no sum of what it wrote, so a
 // change by hand reads the same as a file from another version of ws.
 func (f File) conflict(before []byte) string {
-	if bytes.Contains(f.Content, writtenBy) && !bytes.Contains(before, writtenBy) {
+	switch {
+	case f.edit != nil:
+		return "a line differs from what ws sets"
+	case bytes.Contains(f.Content, writtenBy) && !bytes.Contains(before, writtenBy):
 		return "holds no Written by line: ws did not write it"
 	}
 	return "differs from what ws writes: a change by hand, or another version of ws"

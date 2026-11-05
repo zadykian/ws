@@ -42,7 +42,8 @@ steps, and each role's page in `docs/` says what it sets up.
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([devtools](../../internal/server/devtools/golang_plan.go)).
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
-  ([report.go](../../step/report.go)).
+  ([report.go](../../step/report.go)). A `File` that a role builds in `Plan` shows by its change
+  alone, so a healthy one has no item.
 - Where a dry run skips a step, a step beside it shows what the run would change, as Go's move into
   `/usr/local/go` does ([claude's marketplaces](../../internal/server/claude/marketplaces.go)).
 - A step that needs a booted machine's systemd checks `host.Booted`: without one, as in CI's
