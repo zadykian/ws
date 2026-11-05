@@ -83,7 +83,8 @@ func (f File) Plan(context.Context) ([]Change, error) {
 	return nil, nil
 }
 
-// Report compares the file as Plan does.
+// Report compares the file as Plan does. A secret shows no diff and no sum, as a sum would let a
+// guess be checked.
 func (f File) Report(context.Context) ([]step.Item, error) {
 	item := step.Item{Kind: step.FileItem, Name: f.Path, Want: attrsText(f.attrs()), Found: missing}
 	before, got, ok, err := readRoot(f.M, f.Path)
@@ -93,6 +94,9 @@ func (f File) Report(context.Context) ([]step.Item, error) {
 	item.Found = attrsText(got)
 	if !bytes.Equal(before, f.Content) {
 		item.Found += ", other content"
+		if !f.Secret {
+			item.Diff = effect.Diff(f.Path, before, f.Content)
+		}
 	}
 	return []step.Item{item}, nil
 }
