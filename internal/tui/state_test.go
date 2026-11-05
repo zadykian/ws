@@ -7,13 +7,18 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// readAsked is the message of a test's read.
-type readAsked struct{}
+// The messages of a test's read and leave.
+type (
+	readAsked struct{}
+	leftAsked struct{}
+)
 
 var sized = tea.WindowSizeMsg{Width: 80, Height: 24}
 
 func newTestState() StateScreen {
-	return NewStateScreen(testTheme, "ws server state", func() tea.Msg { return readAsked{} })
+	read := func() tea.Msg { return readAsked{} }
+	leave := func() tea.Msg { return leftAsked{} }
+	return NewStateScreen(testTheme, "ws server state", read, leave)
 }
 
 // feedState gives s each message, and returns the last Cmd.

@@ -24,6 +24,7 @@ func (s StateScreen) layout() Layout {
 		Status: status,
 		Header: s.header(),
 		Panes:  []Pane{{Title: tabNames[s.tab], Focused: true}},
+		Footer: s.footer,
 	}
 }
 
