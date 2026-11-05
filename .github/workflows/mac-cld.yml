@@ -6,6 +6,7 @@ name: mac-cld
 # does.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -23,7 +24,9 @@ jobs:
   # before a release of cld has it. Under the second, which lacks it, a run drops them. Gated as
   # ci.yml's playbook job.
   mac-cld:
-    if: github.event.pull_request.stack.position == github.event.pull_request.stack.size
+    if: >-
+      (github.event.action != 'opened' || !github.event.pull_request.draft) &&
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size
     runs-on: macos-latest
     timeout-minutes: 20
     permissions:
