@@ -1,6 +1,7 @@
 package host
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -35,4 +36,15 @@ func (l Link) Plan(context.Context) ([]Change, error) {
 		return []Change{setLink{l}}, nil
 	}
 	return nil, nil
+}
+
+// Report reads where the path points. Any other target, or no link, stands against ws.
+func (l Link) Report(context.Context) ([]step.Item, error) {
+	info, err := l.M.Stat(l.Path)
+	conflict := ""
+	if info.Link != l.Target {
+		conflict = "not the link ws makes"
+	}
+	item := step.Item{Kind: step.LinkItem, Name: l.Path, Want: l.Target, Found: missing}
+	return reportPath(item, cmp.Or(info.Link, "not a link"), conflict, err)
 }

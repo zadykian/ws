@@ -38,3 +38,9 @@ func (a Absent) Plan(context.Context) ([]Change, error) {
 	}
 	return []Change{removePath{a}}, nil
 }
+
+// Report says whether the path exists.
+func (a Absent) Report(context.Context) ([]step.Item, error) {
+	_, err := a.M.RootAttrs(a.Path)
+	return reportPath(step.Item{Kind: step.FileItem, Name: a.Path, Want: missing, Found: missing}, present, "", err)
+}

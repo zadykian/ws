@@ -14,6 +14,7 @@ func TestReportsOfPaths(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/f"] = []byte("old\n")
 	m.Dirs["/d"] = 0o700
+	m.Links["/l"] = "/elsewhere"
 	const asRoot = "owner 0:0, mode 644"
 	const changed = "its owner or mode changed"
 	sum := fmt.Sprintf("%x", sha256.Sum256([]byte("old\n")))
@@ -38,6 +39,16 @@ func TestReportsOfPaths(t *testing.T) {
 			step.Item{Kind: step.DirItem, Name: "/d", Want: "owner 0:0, mode 755", Found: "owner 0:0, mode 700", Conflict: changed}},
 		{host.Dir{M: m, Path: "/d", Mode: 0o700},
 			step.Item{Kind: step.DirItem, Name: "/d", Want: "owner 0:0, mode 700", Found: "owner 0:0, mode 700"}},
+		{host.Link{M: m, Path: "/new", Target: "/t"},
+			step.Item{Kind: step.LinkItem, Name: "/new", Want: "/t", Found: "missing"}},
+		{host.Link{M: m, Path: "/l", Target: "/t"},
+			step.Item{Kind: step.LinkItem, Name: "/l", Want: "/t", Found: "/elsewhere", Conflict: "not the link ws makes"}},
+		{host.Link{M: m, Path: "/l", Target: "/elsewhere"},
+			step.Item{Kind: step.LinkItem, Name: "/l", Want: "/elsewhere", Found: "/elsewhere"}},
+		{host.Link{M: m, Path: "/f", Target: "/t"},
+			step.Item{Kind: step.LinkItem, Name: "/f", Want: "/t", Found: "not a link", Conflict: "not the link ws makes"}},
+		{host.Absent{M: m, Path: "/f"}, step.Item{Kind: step.FileItem, Name: "/f", Want: "missing", Found: "present"}},
+		{host.Absent{M: m, Path: "/new"}, step.Item{Kind: step.FileItem, Name: "/new", Want: "missing", Found: "missing"}},
 	}
 	for _, tt := range tests {
 		if got := reportOf(t, tt.r); got != tt.want {
