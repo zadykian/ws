@@ -176,6 +176,20 @@ ip)
     *) exit 2 ;;
     esac
     ;;
+getent)
+    # An account's line: root's home is the stand-in's, as another user's is below its home.
+    case $2 in
+    root) echo "root:x:0:0::$s/root/root:/bin/sh" ;;
+    *) echo "$2:x:501:20::$s/root/home/$2:/bin/sh" ;;
+    esac
+    ;;
+runuser)
+    # runuser -u NAME -- COMMAND, by the runner's sudo, which needs no password.
+    [ "$1" = -u ] && [ "$3" = -- ] || exit 2
+    user=$2
+    shift 3
+    exec /usr/bin/sudo -n -u "$user" env PATH="$PATH" WS_STANDIN="$s" "$@"
+    ;;
 mokutil) if [ -f "$s/sb" ]; then echo 'SecureBoot enabled'; else echo 'SecureBoot disabled'; fi ;;
 modinfo) [ -f "$s/nct6687" ] ;;
 *) exit 2 ;;

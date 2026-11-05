@@ -31,20 +31,23 @@
 
 set -eu
 
-# The wizard's stamps, ws's binary, the machine's values that ws server apply reads, the
-# Mac's key for wg0, root's claude, root's git config, which
-# names ws's signing key, the fans' driver as the kernel loaded it, and the network role's netplan
-# file of the cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of
-# its own.
+# The wizard's stamps, ws's binary, the machine's values that ws server apply reads, the Mac's key
+# for wg0, the fans' driver as the kernel loaded it, and the network role's netplan file of the
+# cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of its own.
 state=/var/lib/ws-wizard
 ws=/usr/local/bin/ws
 vars=/etc/ws/host_vars.yml
 peer=/etc/wireguard/mac.pub
 identity=/run/ws-wizard/identity
-claude=/root/.local/bin/claude
-gitconfig=/root/.gitconfig
 module=/sys/module/nct6687
 netplan=/etc/netplan/60-direct-link.yaml
+
+# The user whom ssh logs in as, whose claude and git config the status reads: sudo's SUDO_USER, or
+# root at a root login. The git config names ws's signing key.
+user=${SUDO_USER:-$(id -un)}
+home=$(getent passwd "$user" | cut -d : -f 6)
+claude=$home/.local/bin/claude
+gitconfig=$home/.gitconfig
 
 # say prints a message of the script's on stderr.
 say() {
@@ -90,11 +93,20 @@ active() {
         'ws-wizard-*' 2>/dev/null | awk '{ sub(/\.service$/, "", $1); print $1; exit }'
 }
 
-# signing_key prints the type and base64 of the public key that root's git config signs with, the
-# .pub that user.signingkey names, or none where that config names no key file.
+# as_login runs a command as that user. The user can write those files, so root never runs them,
+# nor reads through them: that would hand root to any process of the user's.
+as_login() {
+    runuser -u "$user" -- "$@"
+}
+
+# signing_key prints the type and base64 of the public key that the user's git config signs with,
+# the .pub that user.signingkey names, or none where that config names no key file.
 signing_key() {
-    pub=$(git config -f "$gitconfig" user.signingkey) && [ -f "$pub" ] || { echo none && return; }
-    cut -d ' ' -f 1-2 "$pub"
+    if pub=$(as_login git config -f "$gitconfig" user.signingkey) && as_login test -f "$pub"; then
+        as_login cut -d ' ' -f 1-2 "$pub"
+    else
+        echo none
+    fi
 }
 
 # status prints what the wizard reads of ws, as the header says.
@@ -109,9 +121,9 @@ status() {
     echo "wg0 $(wg show wg0 public-key 2>/dev/null | first)"
     echo "signing $(signing_key | first)"
     echo "hostname $(hostname | first)"
-    if [ ! -x "$claude" ]; then
+    if ! as_login test -x "$claude"; then
         echo 'claude none'
-    elif "$claude" auth status >/dev/null 2>&1; then
+    elif as_login "$claude" auth status >/dev/null 2>&1; then
         echo 'claude ok'
     else
         echo 'claude login'

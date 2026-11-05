@@ -125,7 +125,7 @@ EOF
 chmod 755 "$ws/ws.sh"
 # ws's programs that the remote script runs, as stand-ins, in bin and where root's claude is.
 mkdir -p "$ws/bin" "$ws/units"
-for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl; do
+for each in systemd-run systemctl journalctl wg mokutil modinfo ip curl getent runuser; do
     ln -s "$here/ws-standin.sh" "$ws/bin/$each"
 done
 : >"$ws/run.log"
