@@ -2,6 +2,7 @@ package tui
 
 import (
 	"cmp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -20,13 +21,24 @@ const (
 	TextField FieldKind = iota
 	// PasswordField takes a line, and shows nothing of it.
 	PasswordField
+	// ChoiceField takes one of its spec's Options.
+	ChoiceField
+)
+
+// The keys of a choice. Up and Down stay a form's, to move between its fields.
+var (
+	optionBack = key.NewBinding(key.WithKeys("left", "h"))
+	optionNext = key.NewBinding(key.WithKeys("right", "l", "space"))
 )
 
 // FieldSpec is what a field asks for.
 type FieldSpec struct {
 	Kind FieldKind
-	// Default is what an empty text gives.
+	// Default is what an empty text gives, and the option that a choice starts on.
 	Default string
+	// Options are a choice's values, in the order they show. A choice starts on its first where
+	// Default names none.
+	Options []string
 	// Valid is pure, as it runs on each edit. A nil Valid takes any value.
 	Valid func(string) error
 }
@@ -38,6 +50,8 @@ type FormField struct {
 	// secret is a password. The input never holds it: its sanitizer makes a space of a tab or a line
 	// end, which a value that shows nothing would carry unseen.
 	secret string
+	// chosen is the place of a choice's option.
+	chosen int
 	// problem is why Valid refuses the value, once an edit or a Check found that: an empty field that
 	// nobody touched shows none.
 	problem error
@@ -47,7 +61,8 @@ type FormField struct {
 func NewFormField(spec FieldSpec) FormField {
 	input := newInput()
 	input.Blur()
-	return FormField{spec: spec, input: input}
+	chosen := max(slices.Index(spec.Options, spec.Default), 0)
+	return FormField{spec: spec, input: input, chosen: chosen}
 }
 
 // Focus gives the field the keys.
@@ -67,9 +82,12 @@ func (f FormField) Fit(width int) FormField {
 // terminal's own paste comes as tea.PasteMsg.
 func (f FormField) Update(msg tea.Msg) FormField {
 	before := f.Value()
-	if f.spec.Kind == PasswordField {
+	switch f.spec.Kind {
+	case PasswordField:
 		f = f.edit(msg)
-	} else {
+	case ChoiceField:
+		f = f.choose(msg)
+	default:
 		f.input, _ = f.input.Update(msg)
 	}
 	if f.Value() != before {
@@ -100,13 +118,32 @@ func (f FormField) edit(msg tea.Msg) FormField {
 	return f
 }
 
-// Value returns what the field holds, as effect.Terminal reads it: a password as typed, and a text
-// trimmed, an empty one taking the default.
-func (f FormField) Value() string {
-	if f.spec.Kind == PasswordField {
-		return f.secret
+// choose moves a choice along its options, round the ends.
+func (f FormField) choose(msg tea.Msg) FormField {
+	press, ok := msg.(tea.KeyPressMsg)
+	count := len(f.spec.Options)
+	switch {
+	case !ok || count == 0:
+	case key.Matches(press, optionBack):
+		f.chosen = (f.chosen + count - 1) % count
+	case key.Matches(press, optionNext):
+		f.chosen = (f.chosen + 1) % count
 	}
-	return cmp.Or(strings.TrimSpace(f.input.Value()), f.spec.Default)
+	return f
+}
+
+// Value returns what the field holds, as effect.Terminal reads it: a password as typed, a choice's
+// option, and a text trimmed, an empty one taking the default.
+func (f FormField) Value() string {
+	switch {
+	case f.spec.Kind == PasswordField:
+		return f.secret
+	case f.spec.Kind != ChoiceField:
+		return cmp.Or(strings.TrimSpace(f.input.Value()), f.spec.Default)
+	case len(f.spec.Options) == 0:
+		return ""
+	}
+	return f.spec.Options[f.chosen]
 }
 
 // Check runs Valid on the value, and keeps its refusal for the field to show.
