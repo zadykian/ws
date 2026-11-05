@@ -67,6 +67,8 @@ type Bridge struct {
 	last atomic.Uint64
 	// halted is set once a stop is confirmed, for Stop to read on the run's goroutine.
 	halted atomic.Bool
+	// warned holds the warnings sent so far.
+	warned sync.Map
 	// suspend and resume take the terminal from the screen and give it back, as Run sets them. Nil
 	// ones leave it where it is.
 	suspend, resume func() error
@@ -126,9 +128,12 @@ func (b *Bridge) Raw(format string, a ...any) {
 	b.send(Line{Copied, fmt.Sprintf(format, a...)})
 }
 
-// Warn sends a line that starts with "warning: ".
+// Warn sends a line that starts with "warning: ", once, as a step plans again after it applies.
 func (b *Bridge) Warn(format string, a ...any) {
-	b.send(Line{Warned, fmt.Sprintf("warning: "+format, a...)})
+	line := fmt.Sprintf("warning: "+format, a...)
+	if _, sent := b.warned.LoadOrStore(line, true); !sent {
+		b.send(Line{Warned, line})
+	}
 }
 
 // SayLasting sends a line, and keeps it with what stays by hand, once, as a step plans again after it
