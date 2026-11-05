@@ -6,6 +6,14 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+func testPane(size Size, texts ...string) outputPane {
+	o := outputPane{theme: testTheme}.fit(size)
+	for _, text := range texts {
+		o = o.add(Line{Said, text})
+	}
+	return o
+}
+
 func TestClean(t *testing.T) {
 	cases := []struct{ name, in, want string }{
 		{"plain", "a line", "a line"},
@@ -25,6 +33,20 @@ func TestClean(t *testing.T) {
 				t.Errorf("clean(%q) = %q, want %q", c.in, got, c.want)
 			}
 		})
+	}
+}
+
+func TestOutputPaneFollowsTheEnd(t *testing.T) {
+	o := testPane(Size{10, 2}, "one", "two", "three")
+	if got, want := o.view(), "two\nthree"; got != want {
+		t.Errorf("view = %q, want %q", got, want)
+	}
+}
+
+func TestOutputPaneSplitsAndWrapsALine(t *testing.T) {
+	o := testPane(Size{5, 4}, "one\ntwo words")
+	if got, want := o.view(), "one\ntwo\nwords"; got != want {
+		t.Errorf("view = %q, want %q", got, want)
 	}
 }
 
