@@ -53,7 +53,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 	}
 	return append(list, user.Owned(m, "Claude restore", "Claude telemetry", func(uid, _ int) ([]host.Resource, error) {
 		return []host.Resource{
-			Linger{M: m, User: user, Out: out},
+			host.Linger{M: m, User: user, Out: out},
 			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", uid), Run: host.Running},
 			Restore{M: m, User: user, UID: uid, Out: out},
 		}, nil

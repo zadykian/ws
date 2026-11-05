@@ -1,0 +1,6 @@
+---
+# ubuntu-26.04 is GitHub's, and actionlint 1.7.12, the newest, doesn't know it yet. This names the
+# label alone, and every other check holds. It goes once a release lists the label.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04

@@ -18,8 +18,8 @@ func Route(action, in, out, from, comment string) Rule {
 		From: from, Dir: "in", Interface: in + "!out_" + out, Comment: comment}
 }
 
-// command is the ufw command's arguments after --force: route's keyword and delete's verb, where
-// they apply, then the rule in its full form.
+// command is the ufw command's arguments after --force, which a delete alone takes: route's
+// keyword and delete's verb, where they apply, then the rule in its full form.
 func (r Rule) command(del bool) []string {
 	var args []string
 	if strings.HasPrefix(r.Action, "route:") {

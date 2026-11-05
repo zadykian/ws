@@ -64,7 +64,8 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		return nil, fmt.Errorf("unit %s: %w", u.Name, err)
 	}
 	var cs []Change
-	owed, err := u.owed()
+	k := mark{u.M, u.Name}
+	owed, err := k.owed()
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 				return err
 			}
 			if settle {
-				return u.settle(ctx)
+				return k.settle(ctx)
 			}
 			return nil
 		}, forced})
@@ -105,7 +106,7 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 			return nil, err
 		}
 		if changed && !owed {
-			cs = append(cs, owe{u})
+			cs = append(cs, owe{k})
 		}
 		switch {
 		case (changed || owed) && u.Reload:
@@ -119,7 +120,7 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 			return nil, err
 		}
 		if changed && !owed {
-			cs = append(cs, owe{u})
+			cs = append(cs, owe{k})
 		}
 		if changed || owed {
 			call("restart", u.U.Restart)

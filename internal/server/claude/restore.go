@@ -32,10 +32,9 @@ func (r Restore) cld() string { return r.User.Home + "/.local/bin/cld" }
 // clean environment, not the caller's: /etc/environment, as PAM gives a login, then bash's login
 // files. With the user's bus, systemctl --user finds the user's systemd.
 func (r Restore) loginShell(args ...string) (string, []string) {
-	run := fmt.Sprintf("/run/user/%d", r.UID)
-	argv := []string{"-i", "HOME=" + r.User.Home, "USER=" + r.User.Name, "LOGNAME=" + r.User.Name,
-		"SHELL=/bin/bash", "XDG_RUNTIME_DIR=" + run, "DBUS_SESSION_BUS_ADDRESS=unix:path=" + run + "/bus",
-		"/bin/bash", "-c", `set -a && . /etc/environment && exec /bin/bash -l "$@"`, "bash"}
+	argv := append([]string{"-i", "HOME=" + r.User.Home, "USER=" + r.User.Name, "LOGNAME=" + r.User.Name,
+		"SHELL=/bin/bash"}, host.SessionEnv(r.UID)...)
+	argv = append(argv, "/bin/bash", "-c", `set -a && . /etc/environment && exec /bin/bash -l "$@"`, "bash")
 	return "env", append(argv, args...)
 }
 
@@ -121,36 +120,6 @@ func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {
 	_, err = r.M.Stat(r.User.Home + "/.config/systemd/user/default.target.wants/cld-restore.service")
 	if errors.Is(err, fs.ErrNotExist) {
 		return []host.Change{setupRestore{r}}, nil
-	}
-	return nil, err
-}
-
-// Linger enables lingering for the user, which starts the user's systemd at boot. loginctl starts
-// it now too.
-type Linger struct {
-	M    effect.Machine
-	User host.User
-	Out  effect.Out
-}
-
-type enableLinger struct{ l Linger }
-
-func (c enableLinger) String() string { return "enable lingering for " + c.l.User.Name }
-
-func (c enableLinger) Apply(ctx context.Context) error {
-	_, err := c.l.M.RunRoot(ctx, "loginctl", "enable-linger", c.l.User.Name)
-	return err
-}
-
-// Plan looks for the file that loginctl makes.
-func (l Linger) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(l.M) {
-		l.Out.Say("Claude lingering: skipped, systemd is not running")
-		return nil, nil
-	}
-	_, err := l.M.Stat("/var/lib/systemd/linger/" + l.User.Name)
-	if errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{enableLinger{l}}, nil
 	}
 	return nil, err
 }

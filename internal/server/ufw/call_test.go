@@ -11,7 +11,7 @@ func TestCallsRunUfwAsRootWithTheComment(t *testing.T) {
 	r := Rule{Action: "allow", Proto: "any", ToPort: "53", To: "172.17.0.1", FromPort: "any",
 		From: Any, Dir: "in", Interface: "docker0", Comment: "DNS from containers"}
 	m := effecttest.NewMachine()
-	add := "ufw --force allow in on docker0 from any to 172.17.0.1 port 53 comment DNS from containers"
+	add := "ufw allow in on docker0 from any to 172.17.0.1 port 53 comment DNS from containers"
 	del := "ufw --force delete allow in on docker0 from any to 172.17.0.1 port 53 comment DNS from containers"
 	m.Results[add], m.Results[del] = effecttest.Result{}, effecttest.Result{}
 	for _, c := range []ufwCall{{m, false, r}, {m, true, r}} {
