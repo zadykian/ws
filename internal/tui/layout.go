@@ -1,5 +1,11 @@
 package tui
 
+import (
+	"strings"
+
+	"charm.land/lipgloss/v2"
+)
+
 const (
 	// minPaneWidth is the columns under which a pane is too narrow to read beside another, frame
 	// included, so that the panes stack.
@@ -107,4 +113,35 @@ func (l Layout) focused() int {
 		}
 	}
 	return 0
+}
+
+// render draws the pane in a frame of that size, its title in the top edge. A line wider than the
+// frame is cut, as a pane holds its shape: a screen wraps by PaneSizes where it wants that.
+func (p Pane) render(theme Theme, frame Size) string {
+	edge, border := theme.Frame, theme.Border
+	if p.Focused {
+		edge, border = theme.FocusFrame, theme.FocusBorder
+	}
+	title := ""
+	if p.Title != "" {
+		title = theme.PaneTitle.MaxWidth(frame.Width - 3).Render(" " + p.Title + " ")
+	}
+	fill := strings.Repeat(border.Top, max(frame.Width-3-lipgloss.Width(title), 0))
+	lines := []string{
+		edge.Render(border.TopLeft+border.Top) + title + edge.Render(fill+border.TopRight),
+	}
+	inner := Size{frame.Width - 2, frame.Height - 2}
+	clip := lipgloss.NewStyle().MaxWidth(inner.Width).MaxHeight(inner.Height)
+	body := strings.Split(clip.Render(p.Body), "\n")
+	for i := range inner.Height {
+		line := ""
+		if i < len(body) {
+			line = body[i]
+		}
+		pad := strings.Repeat(" ", max(inner.Width-lipgloss.Width(line), 0))
+		lines = append(lines, edge.Render(border.Left)+line+pad+edge.Render(border.Right))
+	}
+	bottom := strings.Repeat(border.Bottom, inner.Width)
+	lines = append(lines, edge.Render(border.BottomLeft+bottom+border.BottomRight))
+	return strings.Join(lines, "\n")
 }

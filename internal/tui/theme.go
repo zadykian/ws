@@ -11,8 +11,17 @@ import (
 // Theme is the look that the screens share, each style named by what it marks. It uses the 16
 // ANSI colors alone: the terminal's palette sets them, so they suit its background, and
 // Terminal.app, which has 256 colors, shows them. Focus never rests on color, so that it holds
-// under NO_COLOR: a focused button is reversed.
+// under NO_COLOR: a focused pane has a heavier frame, and a focused button is reversed.
 type Theme struct {
+	// TitleBar is the screen's first line.
+	TitleBar lipgloss.Style
+	// Frame and FocusFrame draw a pane's edge, along Border and FocusBorder.
+	Frame       lipgloss.Style
+	FocusFrame  lipgloss.Style
+	Border      lipgloss.Border
+	FocusBorder lipgloss.Border
+	// PaneTitle is the name in a pane's top edge.
+	PaneTitle lipgloss.Style
 	// ButtonFocus and ButtonOff are a button in focus and a disabled one. Shortcut is the key of a
 	// button at rest.
 	ButtonFocus lipgloss.Style
@@ -38,6 +47,12 @@ func NewTheme(getenv func(string) string) Theme {
 		return style.Foreground(ansi)
 	}
 	return Theme{
+		TitleBar:    plain.Bold(true).Reverse(true),
+		Frame:       plain.Faint(true),
+		FocusFrame:  paint(plain.Bold(true), lipgloss.Cyan),
+		Border:      lipgloss.RoundedBorder(),
+		FocusBorder: lipgloss.ThickBorder(),
+		PaneTitle:   plain.Bold(true),
 		ButtonFocus: plain.Bold(true).Reverse(true),
 		ButtonOff:   plain.Faint(true),
 		Shortcut:    paint(plain.Bold(true), lipgloss.Cyan),

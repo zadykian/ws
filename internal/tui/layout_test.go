@@ -3,6 +3,7 @@ package tui
 import (
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	"charm.land/bubbles/v2/key"
@@ -75,5 +76,40 @@ func TestPaneSizesGiveTheFootersRowsTheirRoom(t *testing.T) {
 	want := 24 - 1 - 2 - 2
 	if got := layout.PaneSizes(48, 24)[0].Height; got != want {
 		t.Errorf("%d lines in a pane, want %d", got, want)
+	}
+}
+
+func TestPaneRender(t *testing.T) {
+	cases := []struct {
+		name string
+		pane Pane
+		want string
+	}{
+		{"at rest", Pane{Title: "Steps", Body: "a"}, `
+╭─ Steps ───╮
+│a          │
+│           │
+╰───────────╯`},
+		{"in focus", Pane{Title: "Steps", Body: "a", Focused: true}, `
+┏━ Steps ━━━┓
+┃a          ┃
+┃           ┃
+┗━━━━━━━━━━━┛`},
+		{"no title", Pane{Body: "a\nb"}, `
+╭───────────╮
+│a          │
+│b          │
+╰───────────╯`},
+		{"more than it holds", Pane{Title: "A very long title", Body: "0123456789abcdef\nb\nc"}, `
+╭─ A very lo╮
+│0123456789a│
+│b          │
+╰───────────╯`},
+	}
+	for _, c := range cases {
+		got := stripped(c.pane.render(NewTheme(noColor("1")), Size{13, 4}))
+		if want := strings.TrimPrefix(c.want, "\n"); got != want {
+			t.Errorf("%s:\n%s\nwant\n%s", c.name, got, want)
+		}
 	}
 }
