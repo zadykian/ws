@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -13,6 +14,9 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
 )
+
+// errHalted ends a run that a confirmed stop ended between two steps.
+var errHalted = errors.New("stopped after the current step")
 
 // LineKind says which call of effect.Out made a Line, as a screen draws each apart.
 type LineKind int
@@ -61,6 +65,8 @@ type Bridge struct {
 	gone chan struct{}
 	// last is the id of the last question.
 	last atomic.Uint64
+	// halted is set once a stop is confirmed, for Stop to read on the run's goroutine.
+	halted atomic.Bool
 	// suspend and resume take the terminal from the screen and give it back, as Run sets them. Nil
 	// ones leave it where it is.
 	suspend, resume func() error
@@ -160,6 +166,17 @@ func changeLine(name string, c step.Change) Line {
 		return Line{Diffed, text}
 	}
 	return Line{Said, text}
+}
+
+// Stop is a run's step.Options.Stop. It ends the run before its next step, past a confirmed stop or
+// ctx's end, as a step that ignores ctx would let the next one start.
+func (b *Bridge) Stop(ctx context.Context) func() error {
+	return func() error {
+		if b.halted.Load() {
+			return errHalted
+		}
+		return ctx.Err()
+	}
 }
 
 // ByHand keeps a line for the end of the run.

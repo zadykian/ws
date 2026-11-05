@@ -29,9 +29,11 @@ type session struct {
 	screen tea.Model
 	theme  Theme
 	window Size
-	// begin starts the work, and stop ends the run's ctx. cut names a signal's error.
+	// begin starts the work, and stop ends the run's ctx. cut names a signal's error. halt ends the
+	// run past its current step, and nil says that it can't.
 	begin tea.Cmd
 	stop  tea.Cmd
+	halt  tea.Cmd
 	cut   func(syscall.Signal) error
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
