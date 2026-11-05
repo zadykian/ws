@@ -116,3 +116,21 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		s.Host.Out.Say("%s: sudo on ws refused the password", sudoStage)
 	}
 }
+
+// rooted returns the command and stdin that run cmd as root on ws, with in as cmd's stdin. -k drops
+// a cached credential, so that the first line is always sudo's: with one, sudo would pass the line
+// on. A nil Sudo runs cmd as the login, as a Remote's tests do.
+func (s *Sudo) rooted(cmd []string, in []byte) ([]string, []byte, error) {
+	if s == nil {
+		return cmd, in, nil
+	}
+	switch s.way {
+	case sudoLogin:
+		return cmd, in, nil
+	case sudoOpen:
+		return append([]string{"sudo", "-n"}, cmd...), in, nil
+	case sudoAsked:
+		return append([]string{"sudo", "-k", "-S", "-p", "''"}, cmd...), append([]byte(s.password+"\n"), in...), nil
+	}
+	return nil, nil, errors.New(sudoStage + ": the stage has not read how to reach root on ws")
+}

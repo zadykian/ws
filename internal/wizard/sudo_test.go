@@ -53,6 +53,9 @@ func TestSudoRootLoginAsksNothing(t *testing.T) {
 	if err != nil || len(p.Changes) != 0 || s.way != sudoLogin {
 		t.Fatalf("Plan = %v, %v, way %d", p, err, s.way)
 	}
+	if cmd, in, _ := s.rooted([]string{"true"}, []byte("x")); strings.Join(cmd, " ") != "true" || string(in) != "x" {
+		t.Errorf("rooted = %q, %q", cmd, in)
+	}
 }
 
 func TestSudoWithNoPasswordAsksNothing(t *testing.T) {
@@ -61,6 +64,9 @@ func TestSudoWithNoPasswordAsksNothing(t *testing.T) {
 	p, err := s.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || s.way != sudoOpen {
 		t.Fatalf("Plan = %v, %v, way %d", p, err, s.way)
+	}
+	if cmd, in, _ := s.rooted([]string{"true"}, []byte("x")); strings.Join(cmd, " ") != "sudo -n true" || string(in) != "x" {
+		t.Errorf("rooted = %q, %q", cmd, in)
 	}
 }
 
@@ -80,8 +86,9 @@ func TestSudoAsksUntilSudoTakesIt(t *testing.T) {
 	if again, err := s.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
 		t.Errorf("Plan after Apply = %v, %v", again, err)
 	}
-	if s.way != sudoAsked || s.password != sudoPassword {
-		t.Errorf("way %d, password %q", s.way, s.password)
+	cmd, in, err := s.rooted([]string{"sh", "-s", "--", "status"}, []byte("echo\n"))
+	if err != nil || strings.Join(cmd, " ") != "sudo -k -S -p '' sh -s -- status" || string(in) != sudoPassword+"\necho\n" {
+		t.Errorf("rooted = %q, %q, %v", cmd, in, err)
 	}
 	said := strings.Join(s.Host.Out.(*effecttest.Out).Lines, "\n")
 	if strings.Contains(said, sudoPassword) || strings.Contains(strings.Join(m.Calls, "\n"), sudoPassword) {
@@ -99,8 +106,8 @@ func TestSudoStopsAfterThreeWrongPasswords(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "refused the password 3 times") {
 		t.Fatalf("Apply = %v", err)
 	}
-	if s.way != sudoUnread || s.password != "" {
-		t.Errorf("way %d, password %q: the stage kept a refused password", s.way, s.password)
+	if _, _, err := s.rooted([]string{"true"}, nil); err == nil {
+		t.Error("rooted took a refused password")
 	}
 }
 
