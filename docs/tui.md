@@ -148,8 +148,8 @@ sudo asks at `/dev/tty`, under a screen. `Bridge.Machine` gives a run's steps a 
 can't ask, and takes the password in a hidden field:
 
 - Its root commands run by `sudo -n --`, which fails where it would ask.
-- Before each one, `sudo -n -v` looks for a ticket. A valid one asks nothing, and neither does a
-  sudo that wants no password.
+- Before each one, `sudo -n -- true` looks for a ticket. A valid one asks nothing, and neither does
+  a sudo that wants no password. `sudo -n -v` would ask of a NOPASSWD user in a Mac's admin group.
 - With none, the field asks for sudo's password on this machine, and `sudo -S -v` checks it, up to
   three times. Any refusal asks again, as sudo's words differ by version, so a user outside
   sudoers sees them after the third. ws drops the password once sudo has checked it.
