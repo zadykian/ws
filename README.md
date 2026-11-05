@@ -84,8 +84,9 @@ A ws before v0.5.1 lacks `ws update`: [Update](docs/releases.md#update).
 gives the roles their secrets
 ([The secrets file](docs/shell.md#the-secrets-file)).
 The values of a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads
-them. `ws_user: NAME` sets up the user NAME, whose account must exist, instead of root, with
-`ws_home` following it as `/home/NAME`; `ws_home: DIR` sets another home. A cloud VM names
+them. `ws_user: NAME` sets up the user NAME instead of `zadykian`, the default, whose account must
+exist. `ws_user: root` sets up a cloud VM with no other user. `ws_home` follows the user as
+`/home/NAME`; `ws_home: DIR` sets another home. A cloud VM names
 `security_outbound: false` there before its first run ([Outbound](docs/security.md#outbound)).
 ws's last line names the roles that changed, `changed: none` on a second run.
 

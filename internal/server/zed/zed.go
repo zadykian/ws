@@ -49,7 +49,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 }
 
 // limitsPath is where the limit for ws_user's logins lives. limits.conf(5) says a `*` line does
-// not apply to root, ws's default ws_user, so the user is named.
+// not apply to root, which a cloud VM may use as ws_user, so the user is named.
 const limitsPath = "/etc/security/limits.d/ws-zed.conf"
 
 // limitsFile raises ws_user's soft open-file limit: sshd's logins start at 1024, past which Zed's

@@ -94,9 +94,9 @@ The caveats:
 - root gets past the table. Its programs meet the table, but it can stop `security-outbound`,
   delete the table, or send by AF_PACKET, which the table never sees. So can any user who can
   become root: the `sudo` group's members, as the installer's user or a cloud image's `ubuntu`,
-  and the `docker` group's ([The docker group](docker.md#the-docker-group)). `ws_user` is root by
-  default ([values.go](../internal/server/values/values.go)), and in the `docker` group otherwise. The
-  table binds the other users and the bridged containers.
+  and the `docker` group's ([The docker group](docker.md#the-docker-group)). `ws_user` is `zadykian` by
+  default ([values.go](../internal/server/values/values.go)), and so in the `docker` group, except
+  root. The table binds the other users and the bridged containers.
 - The router answers at its public address too, which the table takes for the internet: the
   packet leaves by the same gateway. A rule on the router drops it for a machine on the LAN
   ([The router](router.md)).
