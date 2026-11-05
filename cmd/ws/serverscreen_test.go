@@ -1,10 +1,22 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"slices"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/step"
 )
 
 const (
@@ -46,5 +58,83 @@ func TestServerApplyReportsAFailurePastTheScreen(t *testing.T) {
 	left := strings.LastIndex(drawn, leaveScreen)
 	if status != 1 || left < 0 || !strings.Contains(drawn[left:], "ws server apply: Packages: ") {
 		t.Errorf("status = %d, stderr = %q", status, drawn)
+	}
+}
+
+// change is what a stepOf plans.
+type change string
+
+func (c change) String() string { return string(c) }
+
+// stepOf is a step whose Plan runs plan and finds a change, so that --check names its role.
+type stepOf struct {
+	name string
+	plan func(ctx context.Context) error
+}
+
+func (s stepOf) Name() string    { return s.name }
+func (s stepOf) WaitsOn() string { return "" }
+func (s stepOf) Plan(ctx context.Context) (step.Plan, error) {
+	if err := s.plan(ctx); err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: []step.Change{change("x")}}, nil
+}
+func (stepOf) Apply(context.Context, step.Plan) error { return nil }
+
+// roleOf is a role of one step, which makes takes the run's effects to build.
+func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) roles.Role {
+	return roles.Role{Name: name, Steps: func(_ values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+		return []step.Step{makes(m, out)}
+	}}
+}
+
+func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
+	p, m := serverTerminal()
+	c, drawn := screenCommand(t, "")
+	var made []effect.Out
+	role := roleOf("a", func(_ effect.Machine, out effect.Out) step.Step {
+		made = append(made, out)
+		return stepOf{"one", func(context.Context) error { return nil }}
+	})
+	lines := &effecttest.Out{}
+	cfg := apply.Config{Options: apply.Options{Check: true}, M: m, Out: lines, Observer: step.Printer{Out: lines}}
+	changed, err := applyOnScreen(c, p, cfg, []roles.Role{role})
+	if err != nil || !slices.Equal(changed, []string{"a"}) {
+		t.Fatalf("changed = %q, err = %v", changed, err)
+	}
+	if !strings.Contains(drawn.String(), enterScreen) || !strings.Contains(drawn.String(), leaveScreen) {
+		t.Errorf("no whole screen in %q", drawn.String())
+	}
+	if len(made) != 2 || made[0] != effect.Out(lines) {
+		t.Fatalf("the steps were made on %v, want the plain effects first, for their names", made)
+	}
+	if _, ok := made[1].(*tui.Bridge); !ok {
+		t.Errorf("the run's steps got %T, want the screen's bridge", made[1])
+	}
+	if len(lines.Lines) != 0 {
+		t.Errorf("a run on the screen printed %q", lines.Lines)
+	}
+}
+
+func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
+	p, m := serverTerminal()
+	c, _ := screenCommand(t, "\x03\r")
+	var reached bool
+	waits := roleOf("a", func(_ effect.Machine, out effect.Out) step.Step {
+		return stepOf{"one", func(ctx context.Context) error {
+			stopped := out.(*tui.Bridge).Stop(ctx)
+			for stopped() == nil {
+				time.Sleep(time.Millisecond)
+			}
+			return nil
+		}}
+	})
+	next := roleOf("b", func(effect.Machine, effect.Out) step.Step {
+		return stepOf{"two", func(context.Context) error { reached = true; return nil }}
+	})
+	_, err := applyOnScreen(c, p, apply.Config{M: m, Out: &effecttest.Out{}}, []roles.Role{waits, next})
+	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
+		t.Errorf("err = %v, the next role reached = %v", err, reached)
 	}
 }
