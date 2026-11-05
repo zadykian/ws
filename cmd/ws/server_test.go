@@ -126,6 +126,33 @@ func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 
 func noEnv(string) string { return "" }
 
+func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
+	p := fakeProcess()
+	m := p.machine.(*effecttest.Machine)
+	p.euid = 1000
+	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
+	status, stdout, stderr := runWs(p, "", "server", "state", "--json")
+	if status != 1 || stdout != "" || stderr != "ws server state: run it as root\n" {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+	for _, args := range [][]string{{"state", "extra"}, {"state", "--only", "nothing"}, {"state", "--check"},
+		{"state", "--secrets", "f"}} {
+		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server"}, args...)...)
+		if status != 2 || !strings.Contains(stderr, "--help' for usage.") {
+			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
+		}
+	}
+}
+
+func TestServerStateHelp(t *testing.T) {
+	status, stdout, _ := runWs(fakeProcess(), "", "server", "state", "-h")
+	for _, want := range []string{"--json", "--only", "applies nothing", "no secrets"} {
+		if status != 0 || !strings.Contains(stdout, want) {
+			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
+		}
+	}
+}
+
 func TestWriteState(t *testing.T) {
 	states := []apply.RoleState{{Role: "base", Steps: []step.Report{
 		{Step: "Packages", Items: []step.Item{{Kind: step.PackageItem, Name: "git", Want: "installed", Found: "missing"}},
