@@ -162,3 +162,13 @@ func TestBridgeObservePrintsAsAPlainRun(t *testing.T) {
 		})
 	}
 }
+
+func TestBridgeObserveSendsACommandsOutputFirst(t *testing.T) {
+	b, sent := testBridge(io.Discard)
+	_, _ = b.pipe.Write([]byte("no end"))
+	event := step.Event{Kind: step.Done, Step: "S"}
+	b.Observe(event)
+	if want := []tea.Msg{Line{Piped, "no end"}, event}; !reflect.DeepEqual(*sent, want) {
+		t.Errorf("sent %v, want %v", *sent, want)
+	}
+}

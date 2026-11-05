@@ -134,6 +134,7 @@ func (b *Bridge) Diff(name string, before, after []byte) {
 // run prints of it. Their words are made here, on the run's goroutine, as a Change's String can
 // take a diff's time, and Update would hold the screen for it.
 func (b *Bridge) Observe(e step.Event) {
+	b.pipe.flush()
 	name := e.Step
 	if e.Parent != "" {
 		name = e.Parent + ": " + e.Step

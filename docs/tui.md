@@ -68,10 +68,15 @@ A screen owns the terminal, so a step's commands stay off it.
 
 - A screen sets `Stdin` of `effect.OSMachine` to `effect.NoStdin`, and a command finds the end of
   its input at once.
+- `Bridge.Machine` sets `Stderr` to a pipe that sends what the commands print to the screen, a
+  whole line at a time. What `Pass` prints then reaches the window, and leaves the terminal alone.
 - git and ssh ask at `/dev/tty`, past their input. With `Stdin` set, git gets
   `GIT_TERMINAL_PROMPT=0`, and ssh gets `SSH_ASKPASS_REQUIRE=force` with `SSH_ASKPASS=false`. So a
   clone fails where it would ask, as ssh does of an unknown host, and `--plain` asks. ws's ssh keeps
   `BatchMode` where no prompt is expected.
+- A run that ends sends a step's command SIGTERM, and kills it 3 seconds later. No Ctrl-C reaches
+  it through a raw terminal, and a kill of `runuser` would leave its child. Past those 3 seconds ws
+  no longer waits for what a command left running, under a screen alone.
 - A command keeps ws's controlling terminal. sudo keeps its ticket by terminal, so a child's own
   sudo, such as brew's, would ask again without one.
 - `effect.Foreground` runs a command that talks to the maintainer. The screen suspends, and the

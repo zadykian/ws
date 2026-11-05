@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/effect"
 )
 
 func TestPipeSendsWholeLines(t *testing.T) {
@@ -37,5 +39,13 @@ func TestPipeBoundsALineWithNoEnd(t *testing.T) {
 	}
 	if len(*sent) != 1 || len(b.pipe.rest) != 0 {
 		t.Errorf("sent %d messages, and %d bytes wait", len(*sent), len(b.pipe.rest))
+	}
+}
+
+func TestMachineSendsWhatCommandsPrintToTheScreen(t *testing.T) {
+	b := newBridge(io.Discard)
+	m := b.Machine(t.Context(), effect.OSMachine{Sudo: []string{}})
+	if m.Stderr != b.pipe || m.Stdin != effect.NoStdin {
+		t.Errorf("Stderr %v, Stdin %v", m.Stderr, m.Stdin)
 	}
 }
