@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"slices"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 )
@@ -25,15 +27,34 @@ func (f Footer) Focused() int {
 	return f.focus - 1
 }
 
-// Update moves the focus on Tab and Shift-Tab.
-func (f Footer) Update(msg tea.KeyPressMsg) Footer {
-	switch {
-	case key.Matches(msg, Keys.Next):
+// Enable turns the button at place on or off. Turned off, it hands its focus to the next in the
+// ring. The buttons are copied, as a screen's older value shares them.
+func (f Footer) Enable(place int, on bool) Footer {
+	f.buttons = slices.Clone(f.buttons)
+	f.buttons[place].SetEnabled(on)
+	if !on && place == f.Focused() {
 		return f.move(1)
-	case key.Matches(msg, Keys.Prev):
-		return f.move(-1)
 	}
 	return f
+}
+
+// Update moves the focus on Tab and Shift-Tab. It returns the place of the button that msg
+// pressed, by Enter on the focused one or by its shortcut, or -1.
+func (f Footer) Update(msg tea.KeyPressMsg) (Footer, int) {
+	switch {
+	case key.Matches(msg, Keys.Next):
+		return f.move(1), -1
+	case key.Matches(msg, Keys.Prev):
+		return f.move(-1), -1
+	case f.focus > 0 && key.Matches(msg, Keys.Press):
+		return f, f.Focused()
+	}
+	for i, button := range f.buttons {
+		if key.Matches(msg, button) {
+			return f, i
+		}
+	}
+	return f, -1
 }
 
 // move steps the focus along the ring, past the disabled buttons. The panes' place ends the walk.
