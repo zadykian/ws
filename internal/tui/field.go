@@ -1,6 +1,10 @@
 package tui
 
 import (
+	"cmp"
+	"strings"
+	"unicode/utf8"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
@@ -21,9 +25,13 @@ var answerButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "
 
 // field is the box that takes the answer to a prompt.
 type field struct {
-	prompt prompt
-	input  textinput.Model
-	footer Footer
+	prompt  prompt
+	input   textinput.Model
+	footer  Footer
+	problem string
+	// secret is a hidden answer. The input never holds it: its sanitizer makes a space of a tab or
+	// a line end, which an answer that shows nothing would carry unseen.
+	secret string
 }
 
 // newField returns the field of p, which takes the keys at once. Its cursor stays lit, as a blink
@@ -58,6 +66,48 @@ func (f field) update(msg tea.Msg) (field, int) {
 			return f, place
 		}
 	}
+	if f.prompt.hidden {
+		return f.edit(msg), -1
+	}
 	f.input, _ = f.input.Update(msg)
 	return f, -1
+}
+
+// edit takes a key or a paste into a hidden answer, as a terminal's line takes them for the plain
+// prompt: Backspace and Ctrl-U erase, and a paste gives its first line. Enter alone answers, as
+// nothing shows what a paste brought.
+func (f field) edit(msg tea.Msg) field {
+	switch msg := msg.(type) {
+	case tea.PasteMsg:
+		line, _, _ := strings.Cut(strings.ReplaceAll(msg.Content, "\r", "\n"), "\n")
+		f.secret += line
+	case tea.KeyPressMsg:
+		switch {
+		case key.Matches(msg, f.input.KeyMap.DeleteBeforeCursor):
+			f.secret = ""
+		case key.Matches(msg, f.input.KeyMap.DeleteCharacterBackward):
+			_, size := utf8.DecodeLastRuneInString(f.secret)
+			f.secret = f.secret[:len(f.secret)-size]
+		default:
+			f.secret += msg.Text
+		}
+	}
+	return f
+}
+
+// answer returns what the field holds, as effect.Terminal reads it: a hidden line as typed, and
+// any other trimmed, an empty one taking the default. Where Valid refuses that, it returns false,
+// and the field shows why and keeps the text.
+func (f field) answer() (field, string, bool) {
+	if f.prompt.hidden {
+		return f, f.secret, true
+	}
+	answer := cmp.Or(strings.TrimSpace(f.input.Value()), f.prompt.fallback)
+	if f.prompt.valid != nil {
+		if err := f.prompt.valid(answer); err != nil {
+			f.problem = err.Error()
+			return f, "", false
+		}
+	}
+	return f, answer, true
 }

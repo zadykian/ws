@@ -31,8 +31,10 @@ type Line struct {
 
 // prompt is a question on its way to the screen.
 type prompt struct {
-	text   string
-	hidden bool
+	text     string
+	fallback string
+	hidden   bool
+	valid    func(string) error
 }
 
 // Bridge puts effect.Out behind a screen. A run's goroutine calls it, and each call reaches the
