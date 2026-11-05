@@ -24,7 +24,7 @@ The mode is chosen in `cmd/ws/screen.go`.
 ## Colors
 
 The theme uses the 16 ANSI colors alone, so Terminal.app's 256 colors work. It does not use
-bright black, as some palettes hide it. `NO_COLOR`, set to any true value, turns the colors off,
+bright black, as some palettes hide it. `NO_COLOR`, set to any value but nothing, turns the colors off,
 and the frames and the focus stay visible by their shapes.
 
 ## Layout
@@ -92,13 +92,29 @@ The other pane is a window on what the run prints, under the current step's name
   escapes and control characters go.
 - Under `--check`, each step's changes show in it, a file's diff in color.
 
-The window goes with the screen. The last line of `ws server apply`, an error and what stays by hand
-print on the normal screen, and `--plain` keeps every line of a run. What `ws mac apply` prints on
-stdout, the commands that make the Mac ws's peer, waits for the screen's end.
+The window goes with the screen, and these stay:
+
+- Under `--check`, each step's changes print on the normal screen, a file's diff in full.
+- A warning prints there too, on any run, as the step that gave it passes.
+- A failed step prints the last 30 lines of its output, then the error.
+- The summary of `ws server apply` is the last line. A passing `ws mac apply` prints nothing more.
+- What stays by hand prints after the screen.
+- `--plain` keeps every line of a run. What `ws mac apply` prints on stdout, the commands that make
+  the Mac ws's peer, waits for the screen's end.
 
 What stays by hand holds the lines that the maintainer acts on past a run: ws's WireGuard key, and
 what a step leaves to do. A step says one through `effect.SayLasting`, which a plain run prints in
 place.
+
+### The log
+
+A run keeps its whole output in `$XDG_STATE_HOME/ws/`, or `~/.local/state/ws/`, in a file named for
+the command and the time, as `ws-server-apply-20261105T120000Z.log`. The directory is mode 0700
+and the file 0600. The file holds the lines the window shows, cleaned as the window cleans them,
+and a failed or skipped step's name. A hidden answer never reaches it.
+
+The newest 20 logs stay. A run whose log can't be made goes on without one. The path prints on the
+normal screen after a failure, a stop, a warning or a `--check` with changes.
 
 ### Stopping a run
 
