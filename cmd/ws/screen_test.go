@@ -26,20 +26,21 @@ func screenCommand(t *testing.T, keys string) (*cobra.Command, *bytes.Buffer) {
 
 func TestScreenWanted(t *testing.T) {
 	for _, tc := range []struct {
-		name           string
-		plain, in, err bool
-		term           string
-		want           bool
+		name                 string
+		plain, json, in, err bool
+		term                 string
+		want                 bool
 	}{
-		{"terminal", false, true, true, "xterm-256color", true},
-		{"plain flag", true, true, true, "xterm-256color", false},
-		{"stdin piped", false, false, true, "xterm", false},
-		{"stderr piped", false, true, false, "xterm", false},
-		{"no TERM", false, true, true, "", false},
-		{"dumb TERM", false, true, true, "dumb", false},
+		{"terminal", false, false, true, true, "xterm-256color", true},
+		{"plain flag", true, false, true, true, "xterm-256color", false},
+		{"stdin piped", false, false, false, true, "xterm", false},
+		{"stderr piped", false, false, true, false, "xterm", false},
+		{"no TERM", false, false, true, true, "", false},
+		{"json", false, true, true, true, "xterm", false},
+		{"dumb TERM", false, false, true, true, "dumb", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := screenWanted(tc.plain, tc.in, tc.err, tc.term); got != tc.want {
+			if got := screenWanted(tc.plain, tc.json, tc.in, tc.err, tc.term); got != tc.want {
 				t.Errorf("screenWanted = %v, want %v", got, tc.want)
 			}
 		})
