@@ -3,6 +3,7 @@ package setup
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os/exec"
 
 	"github.com/zadykian/ws/effect"
@@ -14,6 +15,7 @@ const (
 	// file of its regular style.
 	caskFont     = "font-jetbrains-mono-nerd-font"
 	caskFontFile = "JetBrainsMonoNerdFontMono-Regular.ttf"
+	fontGone     = "no " + caskFontFile + " is in ~/Library/Fonts or /Library/Fonts"
 )
 
 // brewCasks plans and installs an app's Homebrew cask and the font's, for the steps that set up an
@@ -56,15 +58,41 @@ func (b brewCasks) cask(ctx context.Context, name string, there bool, missing st
 	if _, err := b.m.Run(ctx, "brew", "list", "--cask", name); err != nil {
 		return []step.Change{Run{Name: "brew", Args: []string{"install", "--cask", name}}}, true, nil
 	}
-	b.out.Warn("Homebrew has the cask %s, but %s: brew reinstall --cask %s puts it back",
-		name, missing, name)
+	b.out.Warn("%s", caskGone(name, missing))
 	return nil, false, nil
+}
+
+func caskGone(name, missing string) string {
+	return fmt.Sprintf("Homebrew has the cask %s, but %s: brew reinstall --cask %s puts it back",
+		name, missing, name)
+}
+
+// item says how the cask stands, as cask reads it. brew is asked of one cask, and only where its
+// files are gone: a report covers what ws manages, never all that Homebrew holds.
+func (b brewCasks) item(ctx context.Context, name string, there bool, missing string) step.Item {
+	item := step.Item{Kind: step.PackageItem, Name: name, Want: stateInstalled, Found: stateInstalled}
+	if there {
+		return item
+	}
+	item.Found = stateMissing
+	if _, err := b.m.Run(ctx, "brew", "list", "--cask", name); err == nil {
+		item.Conflict = caskGone(name, missing)
+	}
+	return item
+}
+
+// report says how an app's cask and the font's stand.
+func (b brewCasks) report(ctx context.Context, name, app, home string) fixed {
+	return fixed{
+		b.item(ctx, name, b.has(app, "/Applications", home+"/Applications"),
+			"no "+app+" is in /Applications or ~/Applications"),
+		b.item(ctx, caskFont, b.has(caskFontFile, home+"/Library/Fonts", "/Library/Fonts"), fontGone),
+	}
 }
 
 // font plans the font's cask where its file is missing.
 func (b brewCasks) font(ctx context.Context, home string) ([]step.Change, error) {
-	c, _, err := b.cask(ctx, caskFont, b.has(caskFontFile, home+"/Library/Fonts", "/Library/Fonts"),
-		"no "+caskFontFile+" is in ~/Library/Fonts or /Library/Fonts")
+	c, _, err := b.cask(ctx, caskFont, b.has(caskFontFile, home+"/Library/Fonts", "/Library/Fonts"), fontGone)
 	return c, err
 }
 
