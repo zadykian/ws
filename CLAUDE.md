@@ -123,8 +123,6 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
   ([The compose files](docs/signoz.md#the-compose-files)).
-- An action of the keymap has a target or a reason in Fresh's table: a test fails otherwise
-  ([The keymap](docs/keymap.md#the-contract)).
 - Secrets are never in this repository ([By hand](README.md#by-hand)).
 - ws is public. No word of the local list, `~/.config/ws/forbidden-words`, goes into it. That
   holds for its files, the names of files and branches, the commit messages, and the text of pull

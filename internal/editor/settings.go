@@ -1,9 +1,15 @@
+// Package editor holds the settings, the file types and the language servers that the editors share.
 package editor
 
 import (
+	"bytes"
 	"embed"
+	"errors"
 	"fmt"
+	"io"
 	"regexp"
+
+	"go.yaml.in/yaml/v3"
 )
 
 //go:embed settings.yaml filetypes.yaml servers.yaml
@@ -60,6 +66,16 @@ func load(name string, out any) error {
 	}
 	if err := decodeStrict(data, out); err != nil {
 		return fmt.Errorf("%s: %w", name, err)
+	}
+	return nil
+}
+
+// decodeStrict fails on a field the type lacks, so that a misspelt one is no silent loss.
+func decodeStrict(data []byte, out any) error {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(out); err != nil && !errors.Is(err, io.EOF) {
+		return err
 	}
 	return nil
 }
