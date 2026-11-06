@@ -56,9 +56,11 @@ func TestPickScreenMovesDuringTheScan(t *testing.T) {
 
 func TestPickScreenFitsAnyWindow(t *testing.T) {
 	for _, size := range []tea.WindowSizeMsg{{Width: 120, Height: 40}, {Width: 40, Height: 12}, {Width: 30, Height: 8}, {Width: 12, Height: 5}} {
-		lines := strings.Split(pickShown(pickSent(testPick(), size)), "\n")
-		if len(lines) > size.Height {
-			t.Errorf("%v: %d lines", size, len(lines))
+		for _, keys := range [][]tea.Msg{nil, {press('/'), press('s')}} {
+			lines := strings.Split(pickShown(pickSent(testPick(), append(keys, size)...)), "\n")
+			if len(lines) > size.Height {
+				t.Errorf("%v: %d lines", size, len(lines))
+			}
 		}
 	}
 }
@@ -140,5 +142,24 @@ func TestPickScreenGivesNoRunWhereItHoldsNone(t *testing.T) {
 	}
 	if _, ok := picked(testPick(), press('q')); !ok {
 		t.Error("q gave no choice during the scan")
+	}
+}
+
+func TestPickScreenFilterTakesTheKeysUntilEnter(t *testing.T) {
+	s := pickSent(testPick(), press('/'), press('k'), press('e'), press('q'), tea.KeyPressMsg{Code: tea.KeyBackspace})
+	if got := pickShown(s); !strings.Contains(got, "/ ke") || !strings.Contains(got, "Keys") || strings.Contains(got, "Packages") {
+		t.Errorf("frame:\n%s", got)
+	}
+	s = pickSent(s, enter, press('j'))
+	if got := s.list.at; s.editing || got != 1 {
+		t.Errorf("editing = %v, at = %d: keys past Enter move the list", s.editing, got)
+	}
+}
+
+func TestPickScreenEscDropsTheFilter(t *testing.T) {
+	for _, keys := range [][]tea.Msg{{press('/'), press('k'), esc}, {press('/'), press('k'), enter, esc}} {
+		if s := pickSent(testPick(), keys...); s.filtering() {
+			t.Errorf("%v: words = %q, editing = %v", keys, s.list.words, s.editing)
+		}
 	}
 }

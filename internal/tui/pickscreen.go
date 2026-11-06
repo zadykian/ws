@@ -16,10 +16,14 @@ const (
 	pickNonePlace
 	pickInvertPlace
 	pickPendingPlace
+	pickFilterPlace
 	pickRunPlace
 	pickCheckPlace
 	pickQuitPlace
 )
+
+// pickClearKey drops the filter's words.
+var pickClearKey = key.NewBinding(key.WithKeys("esc"))
 
 // Choice is what the list leaves to a run. No steps says that nothing runs.
 type Choice struct {
@@ -44,6 +48,8 @@ type pickScreen struct {
 	scanning bool
 	// problem is why the scan stopped short.
 	problem string
+	// editing says that the keys go to the filter's line.
+	editing bool
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
 	picks chan<- Choice
 	// left says that the choice has gone, and the screen waits for the work to end it.
@@ -54,7 +60,7 @@ type pickScreen struct {
 func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Choice) pickScreen {
 	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
 	footer := NewFooter(button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
-		button("p", "pending"), button("enter", "run"), button("c", "check"), Keys.Quit)
+		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), Keys.Quit)
 	s := pickScreen{title: title, theme: theme, list: newPickList(groups), footer: footer, scanning: true, picks: picks}
 	return s.enabled()
 }
@@ -85,7 +91,13 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // pressed turns the boxes that msg's button names, moves the cursor, or gives the choice.
 func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
-	if s.left {
+	switch {
+	case s.left:
+		return s, nil
+	case s.editing:
+		return s.typed(msg), nil
+	case key.Matches(msg, pickClearKey):
+		s.list = s.list.filtered("")
 		return s, nil
 	}
 	var place int
@@ -101,6 +113,8 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		s.list = s.list.chose(func(r pickRow) bool { return !r.on() })
 	case pickPendingPlace:
 		s.list = s.list.chose(pickRow.pending)
+	case pickFilterPlace:
+		s.editing = true
 	case pickRunPlace:
 		return s.leave(Choice{Only: s.list.only()})
 	case pickCheckPlace:
@@ -111,6 +125,23 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		s.list = s.list.moved(msg, max(s.listHeight(), 1))
 	}
 	return s, nil
+}
+
+// typed edits the filter, which narrows the list as it goes. Enter keeps it, and Esc drops it.
+func (s pickScreen) typed(msg tea.KeyPressMsg) pickScreen {
+	words := []rune(s.list.words)
+	switch {
+	case key.Matches(msg, Keys.Press):
+		s.editing = false
+	case key.Matches(msg, pickClearKey):
+		s.editing = false
+		s.list = s.list.filtered("")
+	case msg.Code == tea.KeyBackspace:
+		s.list = s.list.filtered(string(words[:max(len(words)-1, 0)]))
+	case msg.Text != "":
+		s.list = s.list.filtered(s.list.words + msg.Text)
+	}
+	return s
 }
 
 // leave gives c to the work. A session quits with its work alone, and a screen never does.
@@ -156,14 +187,34 @@ func (s pickScreen) layout() Layout {
 	}
 }
 
-// listHeight is the lines of the pane of steps.
+// filtering says that the filter's line shows, over the list.
+func (s pickScreen) filtering() bool {
+	return s.editing || s.list.words != ""
+}
+
+// filterLine draws the filter. The block marks it as the place that takes the keys.
+func (s pickScreen) filterLine() string {
+	if s.editing {
+		return "/ " + s.list.words + s.theme.ButtonFocus.Render(" ")
+	}
+	return s.theme.Muted.Render("/ " + s.list.words)
+}
+
+// listHeight is the lines of the pane of steps that the list has.
 func (s pickScreen) listHeight() int {
-	return s.layout().PaneSizes(s.window.Width, s.window.Height)[0].Height
+	height := s.layout().PaneSizes(s.window.Width, s.window.Height)[0].Height
+	if s.filtering() {
+		height--
+	}
+	return max(height, 0)
 }
 
 // View draws the screen.
 func (s pickScreen) View() tea.View {
 	l := s.layout()
 	l.Panes[0].Body = s.list.view(s.theme, s.listHeight())
+	if s.filtering() {
+		l.Panes[0].Body = s.filterLine() + "\n" + l.Panes[0].Body
+	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
