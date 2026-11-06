@@ -25,8 +25,9 @@ func newMacStateCmd(p process) *cobra.Command {
 		Use:   "state",
 		Short: "report what the Mac's steps would change",
 		Long: "It reads alone and applies nothing, as ws mac apply --check does, and needs what it needs: " +
-			"mac.conf, and not root. The Mac's steps report their changes and no items yet, so a step " +
-			"that fails stands in the report as a check. The exit code stays 0. A report holds no secret.\n\n" +
+			"mac.conf, and not root. The Mac's steps report the packages, services and files ws manages " +
+			"there, and a step that fails stands in the report as a check. The exit code stays 0. " +
+			"A report holds no secret.\n\n" +
 			"At a terminal it draws the state screen on stderr, where sudo's password comes through a question. " +
 			"--plain prints the report as text, and so does a pipe. " +
 			"The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +

@@ -33,6 +33,15 @@ commands ([the secrets](mac-secrets.md) too), darwin alone. `ws version` prints 
 `ws update` replaces it with the latest release
 ([Update](releases.md#update)).
 
+## What the Mac reports
+
+`ws mac state` lists the casks, gh, cld, the cable's service, the tunnel's daemon, and the files and
+directories ws writes. A file that differs from ws's, or holds no `Written by` line, is a conflict.
+So is a cask that Homebrew holds with its files gone, and a cable's service that is disabled, which
+no run turns on. No report reads a private key: `private.key` shows by its owner and mode, a signing
+key by its `.pub`. `~/.ssh/config`, `~/.gitconfig` and Ghostty's config show whether they hold ws's
+line, and none of their text.
+
 ## mac.conf
 
 The repository names no server, so the Mac's values go in `~/.config/ws/mac.conf`, `KEY=value`

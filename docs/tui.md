@@ -183,8 +183,7 @@ waits on as `[#]`, and the pane beside the list says why. The order of roles is 
 ## The state screen
 
 `ws server state` and `ws mac state` draw what a machine holds of what ws manages. The screen reads
-and changes nothing. The Mac's steps report changes and no items yet, so its tabs hold conflicts
-and pending changes alone.
+and changes nothing.
 
 The header holds the tabs, each with its count: Packages, Services, Files, Conflicts and Pending.
 The tabs wrap to a new line in a narrow window. Under a filter a count reads `shown/all`. A check

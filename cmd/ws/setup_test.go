@@ -178,7 +178,8 @@ func TestMacStateReadsMacConf(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.machine = m
 	status, stdout, _ := runWs(p, "", "mac", "state", "--json")
-	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) {
+	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) ||
+		!strings.Contains(stdout, `"kind": "package"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
 }
