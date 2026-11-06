@@ -125,9 +125,20 @@ func TestPickScreenGivesItsChoice(t *testing.T) {
 	}
 }
 
-func TestPickScreenGivesOneChoice(t *testing.T) {
-	s := pickSent(scannedPick(), press('q'))
-	if got, ok := picked(s, enter); ok {
-		t.Errorf("enter gave %+v past q", got)
+// An empty Only means every step, so nothing chosen must never reach a run.
+func TestPickScreenGivesNoRunWhereItHoldsNone(t *testing.T) {
+	for name, s := range map[string]pickScreen{
+		"nothing chosen": pickSent(scannedPick(), press('n')),
+		"the scan":       testPick(),
+		"past q":         pickSent(scannedPick(), press('q')),
+	} {
+		for _, msg := range []tea.Msg{enter, press('c')} {
+			if got, ok := picked(s, msg); ok {
+				t.Errorf("%s: %v gave %+v", name, msg, got)
+			}
+		}
+	}
+	if _, ok := picked(testPick(), press('q')); !ok {
+		t.Error("q gave no choice during the scan")
 	}
 }

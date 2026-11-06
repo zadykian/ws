@@ -122,11 +122,14 @@ func (s pickScreen) leave(c Choice) (pickScreen, tea.Cmd) {
 	}
 }
 
-// enabled returns s with its boxes held while the scan ticks them, as a press would race it.
+// enabled returns s with its boxes held while the scan ticks them, as a press would race it. A run
+// waits for something chosen, as a run with no Only runs every step.
 func (s pickScreen) enabled() pickScreen {
 	for place := pickTogglePlace; place <= pickPendingPlace; place++ {
 		s.footer = s.footer.Enable(place, !s.scanning)
 	}
+	some := !s.scanning && len(s.list.only()) > 0
+	s.footer = s.footer.Enable(pickRunPlace, some).Enable(pickCheckPlace, some)
 	return s
 }
 
