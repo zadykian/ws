@@ -3,19 +3,27 @@
 [The terminal UI](tui.md) holds what every screen shares, such as the modes and the
 fields.
 
-`ws mac configure` edits `mac.conf` on a form, with a field for each key: the key, its value and
-its help. A key shows where the wizard's Answers stage would ask it, by `WS_TARGET`, and an edit
-moves the fields at once, as a `WS_REMOTE` brings its port. A key that the stage never asks, such
-as `WS_USER`, stays the file's. The screen draws or stops: with no terminal, or under `--plain`, it
-refuses, and the file stays open to an editor. A line that `ws mac apply` would refuse stops it
-before the screen, as a form has no field for it. Keys that disagree open, as the form mends them.
+`ws mac configure` edits `mac.conf` on a form, and the secrets on a second, with a field for each
+key: the key, its value and its help. A key shows where the wizard's Answers stage would ask it, by
+`WS_TARGET`, and an edit moves the fields at once, as a `WS_REMOTE` brings its port. A key that the
+stage never asks, such as `WS_USER`, stays the file's. The screen draws or stops: with no terminal,
+or under `--plain`, it refuses, and the file stays open to an editor. A line that `ws mac apply`
+would refuse stops it before the screen, as a form has no field for it. Keys that disagree open, as
+the form mends them.
 
 Tab, Enter and Down go to the next field, Shift-Tab and Up to the one before, and past either end
 to the buttons. A key that needs a value shows the wizard's default in brackets, and a save writes
 it. An optional key's default stays in its help as an offer, and an empty field is an empty value,
 as `none` is. Esc with edits unsaved asks for a second Esc in the title's place, at any width, and
 Ctrl-C drops them with status 130.
-Ctrl-N walks the forms where a screen has several.
+Ctrl-N walks the forms: `mac.conf`, then the secrets.
+
+The secrets form has a field for the tokens and the VPN password, and for each env and git entry
+the file holds. A field shows no value: its help says whether the entry is set, and a new value
+replaces it. A save writes the fields typed in through the secrets writer, which keeps the other
+entries and a git entry's user name ([The secrets](mac-secrets.md)). A field can't clear an entry,
+and the form adds no env or git entry, nor a profile file: `ws mac secrets unset` and `set` do.
+With no Keychain item, every field reads as not set, and a save says to run `ws mac secrets init`.
 
 A save checks the fields that show, and the first it refuses takes the focus. Its changes then go
 in as one, through the wizard's writer, which checks the whole file and leaves a link
