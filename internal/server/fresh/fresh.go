@@ -26,6 +26,11 @@ const wrapperPath = "/usr/local/bin/fresh"
 //go:embed files/fresh
 var wrapper []byte
 
+// themeFile is JetBrains Dark as a Fresh theme. A theme is strict JSON: it takes no header.
+//
+//go:embed files/themes/jetbrains-dark.json
+var themeFile []byte
+
 // Steps returns the role's steps in order. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}

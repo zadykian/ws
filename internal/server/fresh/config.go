@@ -25,6 +25,6 @@ func configFiles(m effect.Machine, v values.Values, uid, gid int) ([]host.Resour
 		host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
 		host.Dir{M: m, Path: themes, Mode: 0o755, UID: uid, GID: gid},
 		host.File{M: m, Path: dir + "/config.json", Content: config, Mode: 0o644, UID: uid, GID: gid, Backup: true},
-		host.File{M: m, Path: theme, Content: editorfresh.Theme, Mode: 0o644, UID: uid, GID: gid, Backup: true},
+		host.File{M: m, Path: theme, Content: themeFile, Mode: 0o644, UID: uid, GID: gid, Backup: true},
 	}, nil
 }

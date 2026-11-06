@@ -2,6 +2,7 @@ package fresh
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -88,5 +89,27 @@ func TestTheActionListNamesThePinnedVersion(t *testing.T) {
 	line, _, _ := strings.Cut(string(data), "\n")
 	if want := "Fresh " + strings.TrimPrefix(tag, "v") + ":"; !strings.Contains(line, want) {
 		t.Errorf("the list's first line %q lacks %q: list the actions of the new version", line, want)
+	}
+}
+
+func TestTheThemeIsStrictJSONUnderItsName(t *testing.T) {
+	var theme map[string]any
+	if err := json.Unmarshal(themeFile, &theme); err != nil {
+		t.Fatal(err)
+	}
+	if theme["name"] != "JetBrains Dark" {
+		t.Fatalf("name %v, want JetBrains Dark", theme["name"])
+	}
+	for section, value := range theme {
+		colours, isMap := value.(map[string]any)
+		if !isMap {
+			continue
+		}
+		for name, colour := range colours {
+			triple, isList := colour.([]any)
+			if !isList || len(triple) != 3 {
+				t.Errorf("%s.%s: %v isn't [r, g, b]", section, name, colour)
+			}
+		}
 	}
 }
