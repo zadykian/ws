@@ -3,6 +3,7 @@ package tui
 import (
 	"maps"
 	"slices"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -20,7 +21,9 @@ type Form struct {
 	// focus is the place in names of the field in focus, and blurred says that a button has the keys.
 	focus   int
 	blurred bool
-	size    Size
+	// top is the place of the first field that draws, and size the room that the fields draw in.
+	top  int
+	size Size
 }
 
 // NewForm returns the form of specs, with the focus on its first field.
@@ -68,7 +71,30 @@ func (f Form) settle(place int) Form {
 	if name := f.name(); name != "" && !f.blurred {
 		f.fields[name] = f.fields[name].Focus()
 	}
+	return f.inSight()
+}
+
+// inSight scrolls no further than the field in focus needs to draw whole.
+func (f Form) inSight() Form {
+	f.top = min(f.top, f.focus)
+	for f.top < f.focus && f.height(f.top, f.focus) > f.size.Height {
+		f.top++
+	}
 	return f
+}
+
+// height is the lines from the field at one place through the field at another.
+func (f Form) height(from, through int) int {
+	lines := -1
+	for _, name := range f.names[from : through+1] {
+		lines += len(f.block(name)) + 1
+	}
+	return lines
+}
+
+// block draws a field.
+func (f Form) block(name string) []string {
+	return f.fields[name].Lines(f.theme, f.size.Width, f.size.Height)
 }
 
 // Blur gives the keys up to a button.
@@ -84,6 +110,28 @@ func (f Form) Enter(last bool) Form {
 		return f.settle(len(f.names) - 1)
 	}
 	return f.settle(0)
+}
+
+// Fit sets the room that the fields draw in.
+func (f Form) Fit(size Size) Form {
+	f.size, f.top = size, 0
+	f.fields = maps.Clone(f.fields)
+	for name, field := range f.fields {
+		f.fields[name] = field.Fit(size.Width)
+	}
+	return f.inSight()
+}
+
+// Render draws the fields from the top one on, with a line between two, as far as the room goes.
+func (f Form) Render() string {
+	var lines []string
+	for _, name := range f.names[f.top:] {
+		if len(lines) > 0 {
+			lines = append(lines, "")
+		}
+		lines = append(lines, f.block(name)...)
+	}
+	return strings.Join(lines[:min(len(lines), f.size.Height)], "\n")
 }
 
 // Move steps the focus along the fields, and reports false past either end, which is a button's.

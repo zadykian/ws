@@ -1,8 +1,10 @@
 package tui
 
 import (
+	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -103,5 +105,42 @@ func TestFormBlurLeavesNoFieldTheKeys(t *testing.T) {
 	}
 	if f = f.Blur().Enter(false); f.name() != "HOST" {
 		t.Errorf("past Enter(false): focus on %q", f.name())
+	}
+}
+
+// longSpecs is more fields than a short window holds.
+func longSpecs(map[string]string) []FieldSpec {
+	specs := make([]FieldSpec, 0, 6)
+	for i := range 6 {
+		specs = append(specs, FieldSpec{Label: fmt.Sprintf("KEY%d", i), Help: "says more"})
+	}
+	return specs
+}
+
+func TestFormScrollsToKeepItsFocusWhole(t *testing.T) {
+	f := NewForm(testTheme, longSpecs).Fit(Size{40, 7})
+	if got := stripped(f.Render()); !strings.Contains(got, "KEY0") || strings.Contains(got, "KEY2") {
+		t.Errorf("first lines:\n%s", got)
+	}
+	for range 5 {
+		f = moved(t, f, 1)
+	}
+	got := stripped(f.Render())
+	if !strings.Contains(got, "KEY5") || !strings.Contains(got, "says more") || strings.Contains(got, "KEY0") {
+		t.Errorf("past the last move:\n%s", got)
+	}
+	f = f.Enter(false)
+	if got := stripped(f.Render()); !strings.Contains(got, "KEY0") {
+		t.Errorf("back on the first field:\n%s", got)
+	}
+}
+
+func TestFormRendersWithinItsRoom(t *testing.T) {
+	f := NewForm(testTheme, longSpecs).Fit(Size{40, 5})
+	if got := strings.Count(f.Render(), "\n") + 1; got != 5 {
+		t.Errorf("%d lines", got)
+	}
+	if empty := NewForm(testTheme, longSpecs); empty.Render() != "" {
+		t.Errorf("no room: %q", empty.Render())
 	}
 }
