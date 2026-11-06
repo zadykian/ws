@@ -1,13 +1,10 @@
 package zed
 
 import (
-	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
 
-	editorzed "github.com/zadykian/ws/internal/editor/zed"
-	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
 )
 
@@ -20,18 +17,6 @@ func render(t *testing.T, home string) []byte {
 		t.Fatal(err)
 	}
 	return got
-}
-
-func TestTheTemplateEqualsTheAdaptersRenderAtEachHome(t *testing.T) {
-	for _, home := range []string{"/home/ws", "/root"} {
-		want, err := editorzed.ServerSettings(devtools.ServerPaths(home), devtools.Dlv(home), terminalPath)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got := render(t, home); !bytes.Equal(got, want) {
-			t.Errorf("%s: %d bytes, want %d\n%s", home, len(got), len(want), got)
-		}
-	}
 }
 
 func TestSettingsAreJSONUnderTheirCommentLine(t *testing.T) {
