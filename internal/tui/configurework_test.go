@@ -9,7 +9,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-var ctrlS = tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl}
+var (
+	ctrlS = tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl}
+	ctrlN = tea.KeyPressMsg{Code: 'n', Mod: tea.ModCtrl}
+)
 
 // recording is a screen whose jobs land in jobs.
 func recording(jobs *[]configureJob, sheets ...Sheet) configureScreen {
@@ -121,5 +124,20 @@ func TestConfigureAsksBeforeItLosesAnEdit(t *testing.T) {
 	fed(s, esc, esc)
 	if len(jobs) != 1 || !jobs[0].leave {
 		t.Errorf("jobs = %+v", jobs)
+	}
+}
+
+func TestConfigureWalksItsSheetsAndKeepsTheirTyping(t *testing.T) {
+	s := testConfigure(wayFile(), Sheet{Name: "other.conf", Fields: longSpecs})
+	if got := stripped(s.View().Content); !strings.Contains(got, "[ctrl+n] next form") {
+		t.Errorf("no button:\n%s", got)
+	}
+	s = fed(s, enter, tea.PasteMsg{Content: "2222"}, ctrlN)
+	if got := stripped(s.View().Content); !strings.Contains(got, "other.conf 1/6") {
+		t.Errorf("no second form:\n%s", got)
+	}
+	s = fed(s, shiftTab, enter)
+	if s.at != 0 || s.form().Edits()["PORT"] != "2222" || s.footer.Focused() >= 0 {
+		t.Errorf("at = %d, Edits = %v, button %d", s.at, s.form().Edits(), s.footer.Focused())
 	}
 }
