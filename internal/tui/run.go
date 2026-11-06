@@ -40,6 +40,10 @@ type Config struct {
 	// Halts says that the work reads Bridge.Stop between its steps. Ctrl-C then asks first, and stops
 	// the run past its current step. Without it, the first Ctrl-C ends ctx.
 	Halts bool
+	// Log takes every line of the run, and LogPath names it for the report past the screen. A nil
+	// Log keeps none.
+	Log     io.Writer
+	LogPath string
 }
 
 // Work is what a run does. It takes b as its effects, and sends the screen its messages by them.
@@ -76,7 +80,8 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	program := tea.NewProgram(model, tea.WithInput(c.In), tea.WithOutput(c.Out),
 		tea.WithoutSignalHandler(), tea.WithFilter(terminal.filter))
 	terminal.release, terminal.restore = program.ReleaseTerminal, program.RestoreTerminal
-	bridge.send = program.Send
+	bridge.rec.log = c.Log
+	bridge.send = func(m tea.Msg) { bridge.rec.note(m); program.Send(m) }
 	bridge.suspend = func() error { return bridge.pass(true, errGone) }
 	bridge.resume = func() error { return bridge.pass(false, nil) }
 	signals := make(chan os.Signal, 1)
@@ -87,9 +92,11 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	close(bridge.gone)
 	cancel()
 	late := unwound(result, signals, cmp.Or(c.Unwind, unwindBound))
+	bridge.rec.close()
 	bridge.flush()
 	s, _ := final.(session) // A panic in Update or View leaves no model.
 	s.err = cmp.Or(late, s.err)
+	bridge.rec.report(c.Out, c.LogPath, s.cutBy != nil || !s.done)
 	return ending(s, broke)
 }
 

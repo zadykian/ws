@@ -179,7 +179,8 @@ Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, s
 job's runs their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no
 daemon, while `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's, as
 must the key in the command that gives it to ws. With a stand-in's key it must load the daemon,
-which must run. Then a second run and `--check` must print nothing, and `ssh -G` must give `ws` the
+which must run. Then a second run and `--check` must print nothing. Under `script`, `--check` must
+draw [the run screen](tui.md#the-run-screen) and leave it. `ssh -G` must give `ws` the
 tunnel's end. The stand-in for ws is a second wireguard-go on the runner, with the printed key as
 its peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws mac tunnel status` must
 show a handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and

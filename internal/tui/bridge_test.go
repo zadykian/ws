@@ -61,6 +61,16 @@ func TestBridgeLinesHoldWhatAPlainRunPrints(t *testing.T) {
 	}
 }
 
+func TestBridgeSendsEachWarningOnce(t *testing.T) {
+	b, sent := testBridge(io.Discard)
+	for _, name := range []string{"a", "a", "b"} {
+		b.Warn("no %s", name)
+	}
+	if want := []tea.Msg{Line{Warned, "warning: no a"}, Line{Warned, "warning: no b"}}; !slices.Equal(*sent, want) {
+		t.Errorf("sent %v, want %v", *sent, want)
+	}
+}
+
 func TestBridgeByHandPrintsAsAPlainRunDoes(t *testing.T) {
 	var got, want bytes.Buffer
 	plain := effect.NewTerminal(strings.NewReader(""), &want)

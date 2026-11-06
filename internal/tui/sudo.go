@@ -31,8 +31,7 @@ type sudo struct {
 // asks nothing. So does each root command past the first, and one past a ticket that has lapsed
 // asks again, as sudo would. The password stays in this frame, and goes once sudo has checked it.
 func (s *sudo) ticket(ctx context.Context) error {
-	if _, err := s.m.Run(ctx, "sudo", "-n", "-v"); err == nil {
-		s.held.Store(true)
+	if s.look(ctx) == nil {
 		return nil
 	}
 	text := sudoQuestion
@@ -44,21 +43,23 @@ func (s *sudo) ticket(ctx context.Context) error {
 		}
 		// Nothing follows the password: sudo would read the next line as its next try.
 		if _, refused = s.m.RunInput(ctx, []byte(password+"\n"), "sudo", "-S", "-p", "", "-v"); refused == nil {
-			return s.kept(ctx)
+			if err := s.look(ctx); err != nil {
+				return fmt.Errorf("%w: %w", effect.ErrNoTicket, err)
+			}
+			return nil
 		}
 		text = sudoRefused + sudoQuestion
 	}
 	return fmt.Errorf("sudo refused the password %d times: %w", sudoTries, refused)
 }
 
-// kept looks for the ticket that a right password leaves, as a root command would: sudo -S -v passes
-// with none, as with timestamp_timeout=0, and each further question would end the same way.
-func (s *sudo) kept(ctx context.Context) error {
-	if _, err := s.m.Run(ctx, "sudo", "-n", "--", "true"); err != nil {
-		return fmt.Errorf("%w: %w", effect.ErrNoTicket, err)
-	}
-	s.held.Store(true)
-	return nil
+// look runs what a root command runs, as -v can differ from it either way. sudo -n -v fails for a
+// NOPASSWD user who is also in a group with a password, such as a Mac's admin. sudo -S -v passes with
+// no ticket left, as with timestamp_timeout=0, where each further question would end the same way.
+func (s *sudo) look(ctx context.Context) error {
+	_, err := s.m.Run(ctx, "sudo", "-n", "--", "true")
+	s.held.Store(err == nil)
+	return err
 }
 
 // hold renews a ticket until ctx ends. A step can outlast one, and a child's own sudo, such as brew's,

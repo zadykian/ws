@@ -21,9 +21,8 @@ import (
 
 // The commands of sudo, as the fake's table names them.
 const (
-	sudoLook  = "sudo -n -v"
+	sudoLook  = "sudo -n -- true"
 	sudoCheck = "sudo -S -p  -v"
-	sudoKept  = "sudo -n -- true"
 )
 
 // noTicket returns a machine whose sudo holds no ticket.
@@ -31,6 +30,14 @@ func noTicket() *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Results[sudoLook] = effecttest.Result{Err: errors.New("sudo: a password is required")}
 	return m
+}
+
+// answeredMachine is a sudo that keeps a ticket once it has taken a password.
+type answeredMachine struct{ *effecttest.Machine }
+
+func (m answeredMachine) RunInput(ctx context.Context, in []byte, name string, args ...string) ([]byte, error) {
+	m.Results[sudoLook] = effecttest.Result{}
+	return m.Machine.RunInput(ctx, in, name, args...)
 }
 
 func TestSudoAsksNothingOfAValidTicket(t *testing.T) {
@@ -47,9 +54,9 @@ func TestSudoAsksNothingOfAValidTicket(t *testing.T) {
 
 func TestSudoChecksThePasswordAnswered(t *testing.T) {
 	m := noTicket()
-	m.Results[sudoCheck], m.Results[sudoKept] = effecttest.Result{}, effecttest.Result{}
+	m.Results[sudoCheck] = effecttest.Result{}
 	p := &effecttest.Prompt{T: t, Hidden: []string{" a pass\tword "}}
-	s := &sudo{m: m, p: p}
+	s := &sudo{m: answeredMachine{m}, p: p}
 	if err := s.ticket(t.Context()); err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +71,6 @@ func TestSudoChecksThePasswordAnswered(t *testing.T) {
 func TestSudoEndsWhereARightPasswordLeavesNoTicket(t *testing.T) {
 	m := noTicket()
 	m.Results[sudoCheck] = effecttest.Result{}
-	m.Results[sudoKept] = effecttest.Result{Err: errors.New("sudo: a password is required")}
 	s := &sudo{m: m, p: &effecttest.Prompt{T: t, Hidden: []string{"right"}}}
 	if err := s.ticket(t.Context()); !errors.Is(err, effect.ErrNoTicket) || s.held.Load() {
 		t.Errorf("err = %v, held = %v", err, s.held.Load())
