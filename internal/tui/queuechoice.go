@@ -62,3 +62,43 @@ func (l pickList) partial() map[string][]string {
 	}
 	return parts
 }
+
+// due says that a run has work in r: the scan found some, or never reached it. What no scan named
+// under a stage that found nothing to do has none.
+func (l pickList) due(r pickRow) bool {
+	switch r.state {
+	case stepSame, stepLeftOut:
+		return false
+	case stepOpen:
+		return !slices.ContainsFunc(l.rows, func(o pickRow) bool { return o.number > 0 && o.state == stepSame && under(o)(r) })
+	}
+	return true
+}
+
+// opened returns the queue as a scan's end leaves it. What is due starts chosen, as the wizard left
+// alone runs each stage it reaches, and a check stops short on a new Mac.
+func (l pickList) opened() pickList {
+	due := l.due
+	l.rows = slices.Clone(l.rows)
+	for i, r := range l.rows {
+		l.rows[i].chosen = due(r)
+	}
+	return l.settled().whole(due)
+}
+
+// whole returns the list with every step on in a stage that want takes and that has none on: ws's
+// run can be due while its roles read clean, and a stage with nothing on wouldn't run.
+func (l pickList) whole(want func(pickRow) bool) pickList {
+	l.rows = slices.Clone(l.rows)
+	for _, r := range l.rows {
+		if on, _ := l.count(under(r)); r.number == 0 || on > 0 || !want(r) {
+			continue
+		}
+		for i := range l.rows {
+			if under(r)(l.rows[i]) {
+				l.rows[i].chosen = true
+			}
+		}
+	}
+	return l.settled()
+}

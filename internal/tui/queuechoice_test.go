@@ -62,3 +62,35 @@ func TestALockedStageHoldsItsBox(t *testing.T) {
 		t.Errorf("rows = %+v", l.rows)
 	}
 }
+
+func TestWhatNoScanReachedStartsChosen(t *testing.T) {
+	l := newQueue(testStages()).take(planned("", "Tools", 0)).opened()
+	if want := slices.Concat(slices.Repeat([]string{"[#]"}, 8), []string{"[x]"}); !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+}
+
+func TestRolesUnreadFollowAStageThatFoundNothing(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base"}}}}
+	if got := newQueue(stages).take(planned("", "Run", 0)).opened().only(); len(got) != 0 {
+		t.Errorf("only = %q", got)
+	}
+}
+
+func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	l := newQueue(stages).take(planned("base", "one", 0)).take(planned("base", "two", 1)).
+		take(planned("", "Run", 0, oneChange("a"))).opened()
+	if want := []string{"[x]", "[x]", "[x]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+}
+
+func TestAStageRunsWhatTheScanFound(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	l := newQueue(stages).take(planned("base", "one", 0, oneChange("a"))).take(planned("base", "two", 1)).
+		take(planned("", "Run", 0)).opened()
+	if want := []string{"[x]", "[x]", "[ ]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+}
