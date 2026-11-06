@@ -14,12 +14,6 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// stateDoc is what ws server state --json prints.
-type stateDoc struct {
-	Version string            `json:"version"`
-	Roles   []apply.RoleState `json:"roles"`
-}
-
 // newStateCmd returns ws server state.
 func newStateCmd(p process) *cobra.Command {
 	var opts apply.Options
@@ -67,7 +61,7 @@ func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) erro
 		return err
 	}
 	if asJSON {
-		return writeJSON(c.OutOrStdout(), stateDoc{Version: p.version, Roles: states})
+		return writeJSON(c.OutOrStdout(), apply.StateDoc{Version: p.version, Roles: states})
 	}
 	return writeState(c.OutOrStdout(), states)
 }

@@ -17,6 +17,13 @@ type RoleState struct {
 	Steps []step.Report `json:"steps"`
 }
 
+// StateDoc is what ws server state --json prints, and what the Mac's wizard reads of it. Version is
+// that of the ws that read the steps.
+type StateDoc struct {
+	Version string      `json:"version"`
+	Roles   []RoleState `json:"roles"`
+}
+
 // State reads what Prepare's steps and then each role's steps report, and applies none. It goes
 // past a step that fails, which stands in its report. Only the end of ctx fails it, and it returns
 // the roles it has read. The roles get no secrets: a step that needs them would write them out to
