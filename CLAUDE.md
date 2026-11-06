@@ -19,7 +19,7 @@ the server. The rest is the docs, the lint gates' tools and CI.
   `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
   steps on them.
 - `internal/editor`: what the editors share, in no editor's terms, with F12's keys by topic in
-  `keymap/`. `internal/editor/zed` holds Zed's action tables.
+  `keymap/`.
   `internal/editor/fresh` is Fresh's, whose `testdata` holds its pinned version's action list.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
@@ -124,7 +124,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
   ([The compose files](docs/signoz.md#the-compose-files)).
-- An action of the keymap has a target or a reason in each adapter: a test fails otherwise
+- An action of the keymap has a target or a reason in Fresh's table: a test fails otherwise
   ([The keymap](docs/keymap.md#the-contract)).
 - Secrets are never in this repository ([By hand](README.md#by-hand)).
 - ws is public. No word of the local list, `~/.config/ws/forbidden-words`, goes into it. That
