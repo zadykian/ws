@@ -135,7 +135,15 @@ with the status of Ctrl-C, unless that step was the last.
 The list shows a run's roles and their steps, each with a box. A scan ticks the steps with changes.
 Past it, `space` turns a box. `a`, `n`, `i` and `p` choose all, none, the inverse and the steps
 with changes, among those a filter shows. `/` filters, and `Esc` drops it. `enter` runs the steps
-chosen, `c` checks them and `q` leaves. No command opens it yet.
+chosen, `c` checks them and `q` leaves.
+
+`ws server apply` and `ws mac apply` open it at a terminal when they get no selection: no `--only`
+on the server, no STEP on the Mac, and no `--check` on either. The scan is a check of every step, run
+beside the list. `enter` then runs the steps chosen on the run screen, and `c` checks them there. A
+list left with `q`, or with nothing chosen, runs nothing and exits 0. A cut that follows a choice
+wins: nothing runs, and the status is that of the cut. The server's choice is the `--only` entries,
+`ROLE` or `ROLE/STEP`. The Mac's is a set of step names. With `--plain` or no terminal the command
+runs at once, as before.
 
 A role's box follows its steps, and `[-]` says that some are on. A chosen step locks the step it
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so
