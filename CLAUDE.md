@@ -147,7 +147,8 @@ skill. Commits are signed, as the ruleset on `main` requires.
 ## Where else to look
 
 - `.claude/rules/`, loaded with the files they cover. [server.md](.claude/rules/server.md) has the
-  roles' invariants and [mac.md](.claude/rules/mac.md) the ws CLI's.
+  roles' invariants, [mac.md](.claude/rules/mac.md) the ws CLI's and
+  [editors.md](.claude/rules/editors.md) what Zed's files and Fresh's share.
   [docs.md](.claude/rules/docs.md) says what each document holds. [writing.md](.claude/rules/writing.md)
   has ws's facts beside the `writing` skill.
 - Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),
