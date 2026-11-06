@@ -45,9 +45,9 @@ missing from an editor unseen. For Zed the table is `internal/editor/zed/actions
 
 1. Change the row in `internal/editor/keymap/`.
 2. Give a new action a target or a reason in each adapter's table.
-3. Change each golden file by hand, in the same commit. For Zed, the file is
-   [`keymap.json`](../internal/editor/zed/testdata/keymap.json). `go test` holds the render equal.
-   Fresh has no golden file: its tests hold the rules.
+3. Change each file by hand, in the same commit. For Zed, the file is
+   [`keymap.json`](../mac/zed/keymap.json). `go test` holds the render equal.
+   Fresh has no such file: its tests hold the rules.
 
 ## Where F12 comes from
 

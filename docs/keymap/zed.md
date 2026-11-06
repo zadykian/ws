@@ -2,7 +2,7 @@
 
 F12's 635 actions carry 817 keystrokes ([where F12 comes from](../keymap.md#where-f12-comes-from)).
 The adapter gives Zed the keys of 271 of them, and the pages below say what becomes of the other
-364. The golden file is [`keymap.json`](../../internal/editor/zed/testdata/keymap.json). The Mac
+364. The file is [`keymap.json`](../../mac/zed/keymap.json). The Mac
 step writes the file to `~/.config/zed/keymap.json` ([The keymap](../mac-zed.md#the-keymap)).
 
 ## The pages
