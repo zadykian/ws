@@ -59,3 +59,11 @@ func TestConfigureCtrlCEndsWithTheCut(t *testing.T) {
 		t.Errorf("Configure: %v", err)
 	}
 }
+
+func TestConfigureEndsWithItsContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if err := Configure(ctx, noKeys(&bytes.Buffer{}), "configure", wayFile()); !errors.Is(err, context.Canceled) {
+		t.Errorf("Configure: %v", err)
+	}
+}
