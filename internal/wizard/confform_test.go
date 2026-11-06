@@ -2,7 +2,9 @@ package wizard
 
 import (
 	"context"
+	"errors"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
@@ -134,5 +136,62 @@ func TestConfFormSave(t *testing.T) {
 		if got := string(m.Files["/h/mac.conf"]); got != tc.want {
 			t.Errorf("%s: mac.conf = %q; want %q", name, got, tc.want)
 		}
+	}
+}
+
+func TestConfFormSaveReturnsWhatTheFileHolds(t *testing.T) {
+	f, _ := formOf(t, "")
+	next, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_REMOTE": "r.example"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fieldOf(t, next.Fields(nil), "WS_REMOTE").Value; got != "r.example" {
+		t.Errorf("value = %q", got)
+	}
+	if got := fieldOf(t, f.Fields(nil), "WS_REMOTE").Value; got != "" {
+		t.Errorf("the form before the save holds %q", got)
+	}
+}
+
+func TestConfFormSaveOfNoChangeWritesNothing(t *testing.T) {
+	f, m := formOf(t, "# mine\nWS_REMOTE=r.example\n")
+	out := &effecttest.Out{}
+	if _, err := f.Save(context.Background(), out, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/mac.conf"]); got != "# mine\nWS_REMOTE=r.example\n" {
+		t.Errorf("mac.conf = %q", got)
+	}
+	if want := []string{"say: /h/mac.conf holds these values already"}; !slices.Equal(out.Lines, want) {
+		t.Errorf("said %q; want %q", out.Lines, want)
+	}
+}
+
+func TestConfFormSaveSaysWhatItEmptied(t *testing.T) {
+	f, _ := formOf(t, "WS_REMOTE=r.example\nWS_REMOTE_PORT=22022\n")
+	out := &effecttest.Out{}
+	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": ""}); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(out.Lines, "say: emptied WS_REMOTE WS_REMOTE_PORT") {
+		t.Errorf("said %q", out.Lines)
+	}
+}
+
+func TestConfFormSaveRefusals(t *testing.T) {
+	signed := "WS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\nWS_GIT_SIGNING_KEY=~/.ssh/k.pub\n"
+	f, m := formOf(t, signed)
+	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_GIT_NAME": ""})
+	if !errors.Is(err, errRefused) || string(m.Files["/h/mac.conf"]) != signed {
+		t.Errorf("a signing key with no name: %v, mac.conf = %q", err, m.Files["/h/mac.conf"])
+	}
+	f, m = formOf(t, "")
+	m.Links["/h/mac.conf"] = "/dotfiles/mac.conf"
+	out := &effecttest.Out{}
+	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, errRefused) {
+		t.Errorf("a link: %v", err)
+	}
+	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "is a link") || !strings.Contains(said, "WS_REMOTE=r.example") {
+		t.Errorf("said %q", said)
 	}
 }
