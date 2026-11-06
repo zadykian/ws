@@ -71,6 +71,21 @@ func (f Form) settle(place int) Form {
 	return f
 }
 
+// Blur gives the keys up to a button.
+func (f Form) Blur() Form {
+	f.blurred = true
+	return f.settle(f.focus)
+}
+
+// Enter takes the keys back from a button, on the last field or the first.
+func (f Form) Enter(last bool) Form {
+	f.blurred = false
+	if last {
+		return f.settle(len(f.names) - 1)
+	}
+	return f.settle(0)
+}
+
 // Move steps the focus along the fields, and reports false past either end, which is a button's.
 func (f Form) Move(step int) (Form, bool) {
 	place := f.focus + step

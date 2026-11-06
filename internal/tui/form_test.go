@@ -92,3 +92,16 @@ func TestFormOlderValueKeepsItsField(t *testing.T) {
 		t.Errorf("Edits = %v", before.Edits())
 	}
 }
+
+func TestFormBlurLeavesNoFieldTheKeys(t *testing.T) {
+	f := typedIn(NewForm(testTheme, waySpecs).Blur(), "x")
+	if len(f.Edits()) != 0 {
+		t.Errorf("Edits = %v", f.Edits())
+	}
+	if f = typedIn(f.Enter(true), "ada"); f.Edits()["USER"] != "ada" {
+		t.Errorf("past Enter(true): Edits = %v", f.Edits())
+	}
+	if f = f.Blur().Enter(false); f.name() != "HOST" {
+		t.Errorf("past Enter(false): focus on %q", f.name())
+	}
+}
