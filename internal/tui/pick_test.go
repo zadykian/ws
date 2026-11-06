@@ -142,3 +142,25 @@ func TestAStepThatComesTwiceIsOneChoice(t *testing.T) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
 }
+
+// threeRoles has changes in the first two.
+func threeRoles() pickList {
+	l := newPickList([]Group{{Name: "a", Steps: []string{"one"}}, {Name: "b", Steps: []string{"two", "three"}}, {Name: "c", Steps: []string{"four"}}})
+	return l.take(planned("a", "one", 0, oneChange("x"))).take(planned("b", "two", 0, oneChange("x")))
+}
+
+func TestARoleIsNamedWhereItsChangesStayBehindAStepOn(t *testing.T) {
+	for _, c := range []struct{ on, want []string }{
+		{[]string{"four"}, []string{"a", "b"}},
+		{[]string{"one"}, nil},
+		{[]string{"one", "three"}, nil},
+	} {
+		if got := choosing(threeRoles(), c.on...).passedOver(); !slices.Equal(got, c.want) {
+			t.Errorf("%q on: passed over = %q, want %q", c.on, got, c.want)
+		}
+	}
+	flat := newPickList([]Group{{Steps: []string{"ssh", "git"}}}).take(planned("", "ssh", 0, oneChange("x")))
+	if got := choosing(flat, "git").passedOver(); len(got) != 0 {
+		t.Errorf("passed over = %q, want none in a flat list", got)
+	}
+}
