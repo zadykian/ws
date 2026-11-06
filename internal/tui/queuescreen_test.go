@@ -41,6 +41,14 @@ func TestANarrowWindowStacksTheLists(t *testing.T) {
 	}
 }
 
+func TestTheFilterShowsOverTheListInFocus(t *testing.T) {
+	s := pickSent(testQueueScreen(), press('/'), press('t'), press('w'), press('o'))
+	got := pickShown(s)
+	if !strings.Contains(got, "/ two") || !strings.Contains(got, "No step matches.") {
+		t.Errorf("frame:\n%s", got)
+	}
+}
+
 func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 	cases := []struct {
 		height, want int
@@ -60,5 +68,47 @@ func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 	}
 	if got := l.reported("Run", nil).panes()[WsSide].Title; got != "ws" {
 		t.Errorf("title = %q", got)
+	}
+}
+
+// chosenBy returns what s gives past msgs, with the choice's channel read.
+func chosenBy(t *testing.T, msgs ...tea.Msg) Choice {
+	picks := make(chan Choice, 1)
+	s := pickSent(newQueueScreen("ws", testTheme, testStages(), picks), tea.WindowSizeMsg{Width: 100, Height: 30})
+	for _, msg := range msgs {
+		model, cmd := s.Update(msg)
+		s = model.(pickScreen)
+		if cmd != nil {
+			cmd()
+			return <-picks
+		}
+	}
+	t.Fatalf("no choice past %v", msgs)
+	return Choice{}
+}
+
+func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
+	s := pickSent(testQueueScreen(), scannedMsg{}, tab)
+	if s.list.side != WsSide || s.footer.Focused() >= 0 {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+	}
+	if s = pickSent(s, tab); s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+	}
+	s = pickSent(s, shiftTab, shiftTab)
+	if s.list.side != MacSide || s.footer.Focused() >= 0 {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+	}
+	if s = pickSent(s, shiftTab); s.footer.Focused() != pickConfigurePlace {
+		t.Errorf("focus %d", s.footer.Focused())
+	}
+	if s = pickSent(s, tab); s.list.side != MacSide || s.footer.Focused() >= 0 {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+	}
+}
+
+func TestConfigureGoesBeforeTheScanEnds(t *testing.T) {
+	if got := chosenBy(t, press('e')); !got.Configure || got.Only != nil {
+		t.Errorf("choice = %+v", got)
 	}
 }

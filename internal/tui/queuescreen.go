@@ -3,6 +3,7 @@ package tui
 import (
 	"slices"
 
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -14,11 +15,34 @@ const (
 	stripMost  = 12
 )
 
+// configureButton leaves the lists for the values' form, which a scan needs no end for.
+var configureButton = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "configure"))
+
 // newQueueScreen returns the two lists of stages, their scan under way.
 func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- Choice) pickScreen {
 	s := newPickScreen(title, theme, nil, picks)
 	s.list, s.queued = newQueue(stages), true
+	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), configureButton)...)
 	return s.enabled()
+}
+
+// tabbed walks the ring of the two lists, then the buttons, as a Tab between the lists would else
+// leave for the buttons.
+func (s pickScreen) tabbed(step int) pickScreen {
+	next := int(s.list.side) + step
+	if s.footer.Focused() < 0 && next >= 0 && next < int(sideCount) {
+		s.list = s.list.facing(Side(next))
+		return s
+	}
+	s.footer = s.footer.move(step)
+	if s.footer.Focused() >= 0 {
+		return s
+	}
+	s.list = s.list.facing(MacSide)
+	if step < 0 {
+		s.list = s.list.facing(WsSide)
+	}
+	return s
 }
 
 // stripSize is the frame of the strip under a queue's lists, and the zero Size where a window has

@@ -20,6 +20,7 @@ const (
 	pickRunPlace
 	pickCheckPlace
 	pickQuitPlace
+	pickConfigurePlace
 )
 
 // pickClearKey drops the filter's words.
@@ -31,6 +32,8 @@ type Choice struct {
 	Only []string
 	// Check plans them and applies nothing.
 	Check bool
+	// Configure leaves a queue for its values' form, whatever else is chosen.
+	Configure bool
 	// Partial gives, by stage of a queue, the steps on where some of the stage's are off, by entry.
 	// A stage it has no key for runs whole.
 	Partial map[string][]string
@@ -104,6 +107,10 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case key.Matches(msg, pickClearKey):
 		s.list = s.list.filtered("")
 		return s, nil
+	case s.queued && key.Matches(msg, Keys.Next):
+		return s.tabbed(1), nil
+	case s.queued && key.Matches(msg, Keys.Prev):
+		return s.tabbed(-1), nil
 	}
 	var place int
 	s.footer, place = s.footer.Update(msg)
@@ -126,6 +133,8 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		return s.leave(Choice{Only: s.list.only(), Check: true})
 	case pickQuitPlace:
 		return s.leave(Choice{})
+	case pickConfigurePlace:
+		return s.leave(Choice{Configure: true})
 	default:
 		s.list = s.list.moved(msg, max(s.listHeight(), 1))
 	}
