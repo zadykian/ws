@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 )
 
@@ -43,5 +45,61 @@ func TestVarsReachLeavesAnotherRunsLock(t *testing.T) {
 	r.close(context.Background())
 	if got := lockCalls(m.Calls, "rm -rf"); got != 0 {
 		t.Errorf("removed another run's lock: %v", m.Calls)
+	}
+}
+
+// farWs is a ws that takes the login as root, and whose files script holds file. Each operation of
+// the script that reaches it goes on ops, past any that a slow test leaves there.
+type farWs struct {
+	*effecttest.Machine
+	file string
+	ops  chan []string
+}
+
+func newFarWs(m *effecttest.Machine, file string) farWs {
+	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\n")
+	return farWs{Machine: m, file: file, ops: make(chan []string, 64)}
+}
+
+func (w farWs) Run(ctx context.Context, name string, args ...string) ([]byte, error) {
+	switch {
+	case name == "ifconfig":
+		return nil, nil
+	case name == "ssh" && slices.Contains(args, "-G"):
+		return []byte("user root\nhostname ws\nport 22\n"), nil
+	}
+	return w.Machine.Run(ctx, name, args...)
+}
+
+func (w farWs) RunInput(ctx context.Context, in []byte, name string, args ...string) ([]byte, error) {
+	at := slices.Index(args, "--")
+	if name != "ssh" || at < 0 {
+		return w.Machine.RunInput(ctx, in, name, args...)
+	}
+	w.ops <- args[at+1:]
+	return []byte(w.file), nil
+}
+
+func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
+	p, m := macTerminal()
+	ws := newFarWs(m, "ws_user: ada\n")
+	p.machine = ws
+	r := &varsReach{p: p}
+	defer r.close(context.Background())
+	sheet, err := r.open(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	specs := sheet.Fields(nil)
+	user := slices.IndexFunc(specs, func(s tui.FieldSpec) bool { return s.Label == "ws_user" })
+	outbound := slices.IndexFunc(specs, func(s tui.FieldSpec) bool { return s.Label == "security_outbound" })
+	if user < 0 || specs[user].Value != "ada" || specs[user].Default != "" {
+		t.Errorf("user at %d of %+v", user, specs)
+	}
+	if outbound < 0 || specs[outbound].Kind != tui.ChoiceField {
+		t.Errorf("outbound at %d of %+v", outbound, specs)
+	}
+	if op := <-ws.ops; !slices.Equal(op, []string{"values"}) {
+		t.Errorf("op = %q", op)
 	}
 }
