@@ -15,6 +15,8 @@ import (
 
 const (
 	zedConfig = "/h/.config/zed/"
+	tunnelKey = "/etc/ws-tunnel/private.key"
+	rootWs    = "/usr/local/libexec/ws-tunnel/ws"
 )
 
 func TestACaskThatHomebrewHoldsStandsAgainstWs(t *testing.T) {
@@ -132,5 +134,50 @@ func TestCableReportsItsAddress(t *testing.T) {
 	s.Conf = conf.Conf{}
 	if got := reportOf(t, s); len(got) != 0 {
 		t.Errorf("items = %v, want none without a service", got)
+	}
+}
+
+func TestTunnelReportsAMacThatIsDone(t *testing.T) {
+	m := daemonMachine()
+	got := reportOf(t, daemonStep(m))
+	for _, name := range []string{
+		"/h/.local/bin/ws", rootWs, "/etc/ws-tunnel", "/etc/ws-tunnel/routes.d", tunnelKey,
+		"/h/.config/ws/tunnel.pub",
+	} {
+		if it, ok := got[name]; !ok || it.Found != it.Want || it.Conflict != "" || it.Diff != "" {
+			t.Errorf("%s = %+v, %v, want it right", name, it, ok)
+		}
+	}
+	if got[tunnelKey].Kind != step.FileItem {
+		t.Errorf("key = %+v", got[tunnelKey])
+	}
+}
+
+func TestTunnelReportNeverReadsTheKey(t *testing.T) {
+	m := daemonMachine()
+	reportOf(t, daemonStep(m))
+	if slices.Contains(m.Calls, "read root "+tunnelKey) || slices.Contains(m.Calls, "read "+tunnelKey) {
+		t.Errorf("calls = %q, which read the private key", m.Calls)
+	}
+	asked := 0
+	for _, c := range m.Calls {
+		if strings.Contains(c, "mac tunnel key") {
+			asked++
+		}
+	}
+	if asked != 1 {
+		t.Errorf("root's ws was asked for the public key %d times, want once, by Plan", asked)
+	}
+}
+
+func TestTunnelReportShowsNoDiffOfAProgram(t *testing.T) {
+	m := daemonMachine()
+	m.Files[rootWs] = []byte("old")
+	m.Files["/h/.local/bin/ws"] = []byte("old")
+	got := reportOf(t, daemonStep(m))
+	for _, name := range []string{rootWs, "/h/.local/bin/ws"} {
+		if it := got[name]; it.Found == it.Want || it.Diff != "" {
+			t.Errorf("%s = %+v, want it to differ, with no diff", name, it)
+		}
 	}
 }

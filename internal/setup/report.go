@@ -92,6 +92,8 @@ type userFile struct {
 	Mode fs.FileMode
 	// Own says whether a run replaces a file that holds these bytes. Nil means that it always does.
 	Own func(have []byte) bool
+	// Binary keeps a program out of the diff.
+	Binary bool
 }
 
 // Report compares the file as a plan does. A file that isn't ws's shows no diff: a run leaves it,
@@ -118,7 +120,9 @@ func (f userFile) Report(context.Context) ([]step.Item, error) {
 		if bytes.Contains(f.Text, writtenBy) && !bytes.Contains(have, writtenBy) {
 			item.Conflict = "holds no Written by line: ws did not write it"
 		}
-		item.Diff = effect.Diff(f.Path, have, f.Text)
+		if !f.Binary {
+			item.Diff = effect.Diff(f.Path, have, f.Text)
+		}
 	}
 	return []step.Item{item}, nil
 }

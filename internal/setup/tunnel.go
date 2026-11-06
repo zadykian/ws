@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
@@ -121,6 +122,37 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		cs = append(cs, d...)
 	}
 	return step.Plan{Changes: cs}, nil
+}
+
+// Report says how ws, root's copy and the key stand. A program shows no diff, and the
+// key shows by its owner and mode alone: no report reads it. tunnel.pub compares with what Plan
+// asked root's ws for, as a second sudo would add nothing.
+func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
+	self, err := t.self()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read ws: %w", err)
+	}
+	key, err := host.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600}.Report(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for i := range key {
+		key[i].Kind = step.FileItem
+	}
+	parts := []step.Reporter{
+		userFile{M: t.M, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
+		host.Dir{M: t.M, Path: "/usr/local", Mode: 0o755},
+		host.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
+		host.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
+		host.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
+		host.Dir{M: t.M, Path: tunnelDir, Mode: 0o700},
+		host.Dir{M: t.M, Path: tunnelDir + "/routes.d", Mode: 0o755},
+		fixed(key),
+	}
+	if t.public != "" {
+		parts = append(parts, userFile{M: t.M, Path: t.pubFile(), Text: []byte(t.public + "\n")})
+	}
+	return gather(ctx, parts...)
 }
 
 func (t *Tunnel) sleep(d time.Duration) {
