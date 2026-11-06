@@ -116,18 +116,6 @@ Zed on macOS, with a US layout:
 - `unbind` works only where the section's context matches, so Zed's Ctrl+R in the Diagnostics
   view still waits.
 
-### The file's sections
-
-In this order:
-
-- The global keys, with no context.
-- Editing, in every editor: `Editor`.
-- Code, in the full editor alone, so that search bars and pickers keep their keys.
-- The signature popup, the project panel, the git panel and the commit message.
-- A stopped debug session, where the step keys leave the Alt keys to type.
-- Esc, which goes back to the editor from a panel. The terminal keeps its own Esc.
-- The terminal, last.
-
 ### Two keys of the file's own
 
 Zed has no default key to restart a language server or to reload Zed. They are the remedies after
@@ -136,14 +124,59 @@ a reconnect (`docs/zed.md`, "When the connection drops"). Both keys are free in 
 - Ctrl+Shift+R is `editor::RestartLanguageServer`, in `Editor && mode == full`.
 - Ctrl+Alt+Shift+Y is `workspace::Reload`, in the global section.
 
-Shift keeps the terminal's rule below, so Ctrl+Alt+Shift+Y reaches Zed from the terminal too.
-
 ### The terminal's rule
 
 In the terminal, a Ctrl or Alt key with a letter or sign, without Shift, reaches the shell
 (zed#26018). The section unbinds 21 global keys, and the chords' first keys go straight
 (zed#28423). F-keys, named keys and digits stay Zed's. Ctrl+C, Ctrl+D and Ctrl+R stay the shell's.
 Ctrl+B is in the editor only, so the terminal gets it.
+
+### Decisions in the file
+
+- **Agent:** F7 and Alt+7 open the agent panel (`agent::ToggleFocus`). Ctrl+/ is the inline
+  assistant (`assistant::InlineAssist`) in the full editor.
+- **Cmd+Y** is the agent's Allow once and Keep, and `git::StageAndNext`.
+- **Edit predictions:** Tab, Alt+Tab and Ctrl+Cmd+Right and Down stay Zed's.
+- The global keys win in the agent panel. So its Ctrl+Home and End and Ctrl+Alt+Up, Down, PgUp and
+  PgDn are the pane, dock and tab keys there.
+- **Keys whose action Zed lacks keep Zed's:** F3 tests, F4 NuGet, F10 build and Alt+Delete safe
+  delete.
+- Ctrl+N in the full editor is New file, so it no longer moves in the completion menu. The arrows
+  do, and pickers keep Ctrl+N and Ctrl+P.
+- **Code actions:** the keys for refactor, change signature, extract method, add methods and
+  generate all open the full menu, as no binding picks a kind (zed#14470).
+
+### The keys left to Zed
+
+The file binds no plain key: the arrows, Enter, Tab, Home, End and Page Up and Down, nor the
+completion and snippet keys. Alt+click adds a cursor, and Shift+Alt+drag selects a column
+(`multi_cursor_modifier`). Ctrl+D in the terminal reaches the shell.
+
+### Keys a Mac keyboard lacks
+
+A Mac keyboard has no Insert, Pause, Break or menu key, so the file leaves out Alt+Insert,
+Shift+Insert, the menu key, Ctrl+Pause and Ctrl+Alt+Break.
+
+F-keys need Fn, or the setting "Use F1, F2 keys as standard function keys" in System
+Settings. The name of that setting is unchecked: it comes from Linux.
+
+### macOS's own shortcuts
+
+Apple lists its shortcuts at <https://support.apple.com/en-us/102650>. Spaces' keys are in System
+Settings, under the Mission Control shortcuts, not on that page.
+
+| Key | macOS | The file's action |
+| --- | --- | --- |
+| Ctrl+Space | previous input source | Completion (Zed's own default too) |
+| Shift+Ctrl+Space | input source, by Zed's comment | Parameter info |
+| Ctrl+Alt+Space | next input source | Type-matching completion |
+| Ctrl+Up, Ctrl+Down | Mission Control, app windows | Scroll line, overloads |
+| Ctrl+Left, Ctrl+Right | move a space (on by default; unchecked) | Word left, right |
+| Ctrl+F3, Ctrl+F4, Ctrl+F5 | focus Dock, window, toolbar | Find word, Close tab, Debug |
+
+They go off by hand, in System Settings.
+
+`defaults write com.apple.symbolichotkeys` can do it, with a re-login. ws does not.
 
 ## Changing the settings
 

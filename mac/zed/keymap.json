@@ -1,7 +1,7 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
 // Zed's keys on the Mac: each key that Zed has an action for,
 // and two keys of its own: Ctrl+Shift+R restarts a language server, Ctrl+Alt+Shift+Y reloads Zed.
-// docs/mac-zed.md says which keys Zed lacks, and why.
+// The block of keys left out, at this file's end, says which keys Zed lacks, and why.
 [
   // The global keys. No context, so each beats Zed's defaults wherever focus is.
   {
