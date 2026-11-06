@@ -14,14 +14,24 @@ func (l pickList) chose(box func(pickRow) bool) pickList {
 	return l.settled()
 }
 
-// toggled returns the list with the box under the cursor turned. A locked step holds, as the step
-// that waits on it would go with it.
+// toggled returns the list with the box under the cursor turned. A role's turns its shown steps on,
+// or off where all are on. A locked step holds, as the step that waits on it would go with it.
 func (l pickList) toggled() pickList {
 	line, ok := l.current()
-	if !ok || line.heading {
+	if !ok {
 		return l
 	}
 	row := l.rows[line.row]
+	if line.heading {
+		off := func(o pickRow) bool { return o.parent == row.parent && l.shows(o) && !o.on() }
+		turned := slices.ContainsFunc(l.rows, off)
+		return l.chose(func(o pickRow) bool {
+			if o.parent == row.parent {
+				return turned
+			}
+			return o.chosen
+		})
+	}
 	if len(row.lockedBy) > 0 {
 		return l
 	}

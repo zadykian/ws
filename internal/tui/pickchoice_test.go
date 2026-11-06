@@ -30,6 +30,26 @@ func TestALockedStepHoldsItsBox(t *testing.T) {
 	}
 }
 
+func TestARolesBoxTurnsItsStepsOnThenOff(t *testing.T) {
+	l := choosing(twoRoles(), "Locale", "Keys")
+	l.at = 0
+	l = l.toggled()
+	if want := []string{"[x]", "[x]", "[x]", "[x]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+	if want := []string{"[ ]", "[ ]", "[ ]", "[x]"}; !slices.Equal(boxes(l.toggled()), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	}
+}
+
+func TestARolesBoxTurnsTheStepsAFilterShows(t *testing.T) {
+	l := twoRoles().filtered("t") // Time alone, of base, and Keys has no t.
+	l.at = 0
+	if want := []string{"[ ]", "[ ]", "[x]", "[ ]"}; !slices.Equal(boxes(l.toggled()), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	}
+}
+
 func TestATurnReachesAStepThatComesTwice(t *testing.T) {
 	l := cursorOn(newPickList([]Group{{Steps: []string{"ssh", "git", "ssh"}}}), "ssh").toggled()
 	if want := []string{"[x]", "[ ]", "[x]"}; !slices.Equal(boxes(l), want) {
