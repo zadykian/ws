@@ -55,3 +55,27 @@ func TestApply(t *testing.T) {
 		t.Errorf("said %q, want %q", out.Lines, want)
 	}
 }
+
+func TestAChangeSaysItsKind(t *testing.T) {
+	tests := []struct {
+		change step.Change
+		want   step.ChangeKind
+	}{
+		{setup.Write{Path: "/f"}, step.Write},
+		{setup.RootWrite{Write: setup.Write{Path: "/e"}}, step.Write},
+		{setup.MakeDir{Path: "/d"}, step.Write},
+		{setup.RootCopy{To: "/e"}, step.Install},
+		{setup.Install{Path: "/b"}, step.Install},
+		{setup.Run{Name: "brew", Args: []string{"install"}}, step.Install},
+		{setup.Run{Name: "open"}, step.OtherChange},
+		{setup.RootRemove{Path: "/e"}, step.Removal},
+		{setup.Launchctl{}, step.Restart},
+		{setup.Remark("a line"), step.OtherChange},
+		{setup.KeyMake{}, step.OtherChange},
+	}
+	for _, tt := range tests {
+		if got := step.KindOf(tt.change); got != tt.want {
+			t.Errorf("%T: kind = %s, want %s", tt.change, got, tt.want)
+		}
+	}
+}
