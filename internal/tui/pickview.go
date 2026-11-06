@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"slices"
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 )
@@ -11,11 +14,19 @@ type pickLine struct {
 	heading bool
 }
 
-// lines returns the steps, each under its role's heading.
+// shows says that the filter keeps r, by its role or its name.
+func (l pickList) shows(r pickRow) bool {
+	return strings.Contains(strings.ToLower(r.entry()), strings.ToLower(l.words))
+}
+
+// lines returns what the filter leaves, each step under its role's heading.
 func (l pickList) lines() []pickLine {
 	var lines []pickLine
 	parent := ""
 	for i, r := range l.rows {
+		if !l.shows(r) {
+			continue
+		}
 		if r.parent != "" && r.parent != parent {
 			lines = append(lines, pickLine{row: i, heading: true})
 		}
@@ -25,13 +36,21 @@ func (l pickList) lines() []pickLine {
 	return lines
 }
 
-// current returns the line under the cursor. A list of no step has none.
+// current returns the line under the cursor. A filter can leave none.
 func (l pickList) current() (pickLine, bool) {
 	lines := l.lines()
 	if l.at >= len(lines) {
 		return pickLine{}, false
 	}
 	return lines[l.at], true
+}
+
+// filtered returns the list under words, the cursor on its line while that shows.
+func (l pickList) filtered(words string) pickList {
+	was, _ := l.current()
+	l.words = words
+	l.at = max(slices.Index(l.lines(), was), 0)
+	return l
 }
 
 // moved returns the list with the cursor where msg sends it, page lines to a page.

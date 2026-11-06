@@ -35,6 +35,34 @@ func TestCurrentIsTheLineUnderTheCursor(t *testing.T) {
 	}
 }
 
+func TestAFilterMatchesARoleOrAStepInAnyCase(t *testing.T) {
+	if got, want := twoRoles().filtered("LOC").lines(), []pickLine{{1, true}, {1, false}}; !slices.Equal(got, want) {
+		t.Errorf("lines = %v, want %v", got, want)
+	}
+	if got, want := twoRoles().filtered("ssh").lines(), []pickLine{{3, true}, {3, false}}; !slices.Equal(got, want) {
+		t.Errorf("lines = %v, want %v", got, want)
+	}
+}
+
+func TestAFilterKeepsTheCursorOnItsLine(t *testing.T) {
+	l := twoRoles()
+	l.at = 3
+	got, ok := l.filtered("t").current()
+	if want := (pickLine{2, false}); !ok || got != want {
+		t.Errorf("current = %v, %v, want %v", got, ok, want)
+	}
+	l = l.filtered("ssh")
+	if l.at != 0 {
+		t.Errorf("at = %d, its line went, so the cursor starts the list", l.at)
+	}
+}
+
+func TestAFilterCanLeaveNoLine(t *testing.T) {
+	if got, ok := twoRoles().filtered("nothing here").current(); ok {
+		t.Errorf("current = %v, want none", got)
+	}
+}
+
 func TestTheCursorStopsAtTheEnds(t *testing.T) {
 	cases := []struct {
 		msg  tea.KeyPressMsg

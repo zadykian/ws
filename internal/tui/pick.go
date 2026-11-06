@@ -62,6 +62,8 @@ type pickList struct {
 	rows []pickRow
 	// heard holds what the scan printed since a step last ended.
 	heard []Line
+	// words is the filter: the list shows the steps whose entry holds them.
+	words string
 	// at is the cursor's place in lines.
 	at int
 }
