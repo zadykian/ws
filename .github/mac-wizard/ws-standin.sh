@@ -13,7 +13,8 @@
 #   each; values.log holds those of ws server values set, a line each, each argument in brackets;
 # - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
 #   ws server apply --secrets found, identity and secrets.age;
-# - server.wait holds the seconds that ws server apply runs, and server.status its status;
+# - server.wait holds the seconds that ws server apply runs, and server.status its status, and that
+#   of ws server state --json, which prints a line with its version, HOME and locale;
 # - with server.cut, ws server apply kills the unit's job, as a stop or a reboot would;
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
 #   in;
@@ -153,6 +154,10 @@ ws)
             printf '[%s]' "$@" >>"$s/values.log"
             echo >>"$s/values.log"
             exit 0
+        fi
+        if [ "$2 ${3-}" = 'state --json' ]; then
+            echo "report of $(cat "$s/ws.version") with $HOME and $LC_ALL"
+            exit "$(cat "$s/server.status" 2>/dev/null || echo 0)"
         fi
         [ "$2" = apply ] || exit 2
         shift 2

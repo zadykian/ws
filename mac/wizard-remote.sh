@@ -14,6 +14,8 @@
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
+# - state prints ws server state --json, which changes nothing, on stdout alone. It has the HOME and
+#   the locale of a run's unit, so that it reads what a run would.
 # - run [ARG...] runs ws server apply ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. A run with no ARG is a full one. Where the identity is
@@ -283,11 +285,12 @@ main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, through sudo or a root login"
     case ${1-} in
     status) status ;;
+    state) HOME=/root LC_ALL=C.UTF-8 "$ws" server state --json ;;
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$vars" ;;
     install) install "${2-}" "${3-}" ;;
     secrets) secrets "${2-}" "${3-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...] |" \
+    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | state | run [ARG...] |" \
         "install TAG URL | outbound | secrets stage|drop" ;;
     esac
 }

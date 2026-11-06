@@ -3,7 +3,8 @@
 # over ssh as the wizard sends it. status must print the stamps and each state of the stand-ins.
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
-# off. A full run must run ws server apply without arguments in a unit of its own, with root's HOME and
+# off. state must print ws's report, with root's HOME and a UTF-8 locale, and exit with ws's status.
+# A full run must run ws server apply without arguments in a unit of its own, with root's HOME and
 # a UTF-8 locale, print its log and exit 0. It must stamp ws's version, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
@@ -87,6 +88,14 @@ sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
     "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
 mv "$RUNNER_TEMP/wg0" "$ws/wg0"
 sudo mv "$RUNNER_TEMP/mac.pub" "$peer"
+
+remote state
+[ "$status" = 0 ] && [ "$out" = "report of $(wsv) with /root and C.UTF-8" ] ||
+    error "state exited $status, printing '$out'"
+echo 3 >"$ws/server.status"
+remote state
+[ "$status" = 3 ] || error "a state that fails exited $status"
+rm "$ws/server.status"
 
 # units prints how many units systemd-run started, and unit the last one's name.
 units() {
