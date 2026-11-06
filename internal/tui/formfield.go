@@ -76,6 +76,21 @@ func NewFormField(spec FieldSpec) FormField {
 	return f
 }
 
+// Respec gives the field what spec asks now, as a value above it changed that, and keeps what was
+// typed. A field nobody edited follows the new default, and a refusal on show is checked again. A
+// choice keeps its options.
+func (f FormField) Respec(spec FieldSpec) FormField {
+	edited := f.Edited()
+	f.spec = spec
+	if !edited {
+		f.start = f.Value()
+	}
+	if f.problem != nil {
+		f, _ = f.Check()
+	}
+	return f
+}
+
 // Focus gives the field the keys.
 func (f FormField) Focus() FormField {
 	_ = f.input.Focus()

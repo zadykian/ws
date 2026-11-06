@@ -195,3 +195,26 @@ func TestFieldEditedComparesTheValueWithItsStart(t *testing.T) {
 		t.Error("a moved choice counts as no edit")
 	}
 }
+
+func TestRespecKeepsWhatWasTypedAndFollowsADefault(t *testing.T) {
+	typed := NewFormField(FieldSpec{Default: "22"}).Focus().Update(tea.PasteMsg{Content: "2222"})
+	if got := typed.Respec(FieldSpec{Default: "22022"}); got.Value() != "2222" || !got.Edited() {
+		t.Errorf("typed: Value = %q, Edited = %v", got.Value(), got.Edited())
+	}
+	left := NewFormField(FieldSpec{Default: "22"}).Respec(FieldSpec{Default: "22022"})
+	if left.Value() != "22022" || left.Edited() {
+		t.Errorf("left alone: Value = %q, Edited = %v", left.Value(), left.Edited())
+	}
+}
+
+func TestRespecChecksARefusalAgain(t *testing.T) {
+	refused := errors.New("outside the LAN")
+	f, ok := NewFormField(FieldSpec{Valid: func(string) error { return refused }}).Check()
+	if ok {
+		t.Fatal("Check took the value")
+	}
+	f = f.Respec(FieldSpec{})
+	if got := strings.Join(f.Lines(testTheme, 40, 5), "\n"); strings.Contains(got, refused.Error()) {
+		t.Errorf("a mended value still shows its refusal:\n%s", got)
+	}
+}
