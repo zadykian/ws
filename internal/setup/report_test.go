@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/sshcfg"
 	"github.com/zadykian/ws/step"
 )
 
@@ -29,7 +30,7 @@ func reportOf(t *testing.T, s step.Step) map[string]step.Item {
 func TestSSHReportsAFreshHome(t *testing.T) {
 	got := reportOf(t, sshStep(sshMachine(), &effecttest.Out{}))
 	for name, want := range map[string]string{
-		"/h/.ssh": "present", "/h/.ssh/config.d": "mode 700",
+		"/h/.ssh": "present", "/h/.ssh/config.d": "mode 700", "/h/.ssh/config.d/ws": "mode 600",
 		"/h/.ssh/config": "holds Include config.d/ws",
 	} {
 		if got[name].Want != want || got[name].Found != "missing" || got[name].Conflict != "" {
@@ -44,6 +45,21 @@ func TestSSHAgainReportsNothing(t *testing.T) {
 	got, err := s.Report(context.Background())
 	if err != nil || len(got) != 0 {
 		t.Errorf("items = %v, %v, want none: the first run reports the same files", got, err)
+	}
+}
+
+func TestSSHReportsAChangeToItsFile(t *testing.T) {
+	const file = "/h/.ssh/config.d/ws"
+	m := sshMachine()
+	m.Dirs["/h/.ssh"], m.Dirs["/h/.ssh/config.d"] = 0o700, 0o755
+	m.Files[file], m.Modes[file] = []byte(sshcfg.Header+"\nHost ws\n"), 0o600
+	got := reportOf(t, sshStep(m, &effecttest.Out{}))
+	if it := got[file]; it.Found != "mode 600, other content" || !strings.Contains(it.Conflict, "by hand") ||
+		!strings.Contains(it.Diff, "+    HostName") {
+		t.Errorf("file = %+v, want a conflict and its diff", it)
+	}
+	if it := got["/h/.ssh/config.d"]; it.Found != "mode 755" || it.Conflict == "" {
+		t.Errorf("directory = %+v, want its mode to stand against ws", it)
 	}
 }
 
