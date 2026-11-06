@@ -1,7 +1,7 @@
 #!/bin/bash
-# ws mac apply writes Zed's global_settings.json, which holds the golden file under ws's header, and
-# settings.json, the seed, where it is missing. The job's ws renders the golden file, so the case
-# checks the render too. A settings.json that is there is left byte for byte.
+# ws mac apply writes Zed's global_settings.json, which is mac/zed's file whole, and
+# settings.json, the seed, where it is missing. A settings.json that is there is left byte for
+# byte.
 
 set -eo pipefail
 
@@ -12,9 +12,9 @@ head -n 1 "$dir/global_settings.json" | grep -qxF '// Written by ws mac apply: i
         echo '::error::global_settings.json has no ws header'
         fail=1
     }
-tail -n +2 "$dir/global_settings.json" | cmp -s - internal/editor/zed/testdata/global_settings.json ||
+cmp -s "$dir/global_settings.json" mac/zed/global_settings.json ||
     {
-        echo '::error::global_settings.json is not the golden file under the header'
+        echo '::error::global_settings.json is not mac/zed/global_settings.json'
         fail=1
     }
 tail -n +2 "$dir/global_settings.json" | jq -e . >/dev/null ||
