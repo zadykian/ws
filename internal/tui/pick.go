@@ -158,12 +158,17 @@ func (l pickList) settled() pickList {
 	return l
 }
 
-// only returns the steps on, as Options.Only names them. A name that comes twice in a run is one
-// choice there, so it comes once here.
+// only returns the steps on, as Options.Only names them: a queue's stages, as they run what's
+// under them. A name that comes twice in a run is one choice there, so it comes once here.
 func (l pickList) only() []string {
+	return l.entries(func(r pickRow) bool { return r.stage == "" })
+}
+
+// entries returns those rows in on, each name once.
+func (l pickList) entries(in func(pickRow) bool) []string {
 	var entries []string
 	for _, r := range l.rows {
-		if r.on() && !slices.Contains(entries, r.entry()) {
+		if in(r) && r.on() && !slices.Contains(entries, r.entry()) {
 			entries = append(entries, r.entry())
 		}
 	}
