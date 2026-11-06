@@ -58,3 +58,50 @@ func TestConfFormShowsTheKeysOfATarget(t *testing.T) {
 		}
 	}
 }
+
+// fieldOf finds the key's field.
+func fieldOf(t *testing.T, fields []Field, key string) Field {
+	t.Helper()
+	at := slices.IndexFunc(fields, func(f Field) bool { return f.Key == key })
+	if at < 0 {
+		t.Fatalf("no field of %s in %v", key, keysOf(fields))
+	}
+	return fields[at]
+}
+
+func TestConfFormEditLeadsTheWalk(t *testing.T) {
+	f, _ := formOf(t, "")
+	fields := f.Fields(map[string]string{"WS_REMOTE": "ws.example", "WS_GIT_NAME": "Me"})
+	if got := fieldOf(t, fields, "WS_REMOTE_PORT").Text; got != "The router's port forwarded to ws's 22 (the wizard offers 22022)" {
+		t.Errorf("port's text = %q", got)
+	}
+	if got := fieldOf(t, fields, "WS_GIT_EMAIL").Default; got != "a@b.dev" {
+		t.Errorf("email's default = %q", got)
+	}
+	if got := fieldOf(t, f.Fields(nil), "WS_TARGET").Options; !slices.Equal(got, targets) {
+		t.Errorf("target's options = %v", got)
+	}
+}
+
+func TestConfFormFieldsLeaveTheFile(t *testing.T) {
+	f, m := formOf(t, "WS_REMOTE=r.example\n")
+	f.Fields(map[string]string{"WS_REMOTE": "other.example"})
+	if got := string(m.Files["/h/mac.conf"]); got != "WS_REMOTE=r.example\n" {
+		t.Errorf("mac.conf = %q", got)
+	}
+}
+
+func TestConfFormValidReadsTheForm(t *testing.T) {
+	f, _ := formOf(t, "WS_TARGET=cloud\nWS_REMOTE=vm.example\nWS_REMOTE_PORT=22\n")
+	remote := fieldOf(t, f.Fields(nil), "WS_REMOTE")
+	if err := remote.Valid(""); err == nil || err.Error() != "WS_TARGET=cloud needs WS_REMOTE and WS_REMOTE_PORT" {
+		t.Errorf("empty name: %v", err)
+	}
+	if err := fieldOf(t, f.Fields(nil), "WS_TUNNEL_NETWORKS").Valid(""); err != nil {
+		t.Errorf("empty networks: %v", err)
+	}
+	address := fieldOf(t, f.Fields(map[string]string{"WS_TARGET": "lan", "WS_LAN": "10.88.0.0/24"}), "WS_LAN_ADDRESS")
+	if err := address.Valid("10.9.0.1"); err == nil {
+		t.Error("an address outside the LAN passes")
+	}
+}
