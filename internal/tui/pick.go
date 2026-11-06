@@ -102,7 +102,8 @@ func (l pickList) take(e step.Event) pickList {
 	}
 	said := l.heard
 	l.heard = nil
-	place := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.parent == e.Parent && r.index == e.Index })
+	l = l.learned(e)
+	place := l.place(e)
 	if place < 0 {
 		return l
 	}
@@ -118,6 +119,11 @@ func (l pickList) take(e step.Event) pickList {
 		row.said = append(row.said, Line{Warned, e.Err.Error()})
 	}
 	return l.settled()
+}
+
+// place returns where the row of e's step stands, or -1.
+func (l pickList) place(e step.Event) int {
+	return slices.IndexFunc(l.rows, func(r pickRow) bool { return r.parent == e.Parent && r.index == e.Index })
 }
 
 // withoutLabel returns lines less the step's name that opens them, as the pane they go to has it in
