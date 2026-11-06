@@ -1,9 +1,8 @@
 # The keymap
 
-F12's keys, in no editor's terms. The data is in [`internal/editor`](../internal/editor/), and each
-editor has an adapter that renders it as that editor's file. Zed's adapter is
-[`internal/editor/zed`](../internal/editor/zed/) and Fresh's
-[`internal/editor/fresh`](../internal/editor/fresh/).
+F12's keys, in no editor's terms. The data is in [`internal/editor`](../internal/editor/), and Fresh's
+adapter, [`internal/editor/fresh`](../internal/editor/fresh/), renders it as Fresh's file. Zed's
+file is [plain](mac-zed.md), and its action tables are in [`internal/editor/zed`](../internal/editor/zed/).
 
 ## The data
 
@@ -36,7 +35,7 @@ An action is a group, a dot and what it does, as `edit.copy`. A key is bound onc
 
 ## The contract
 
-Each adapter holds a table of its own: a map of each action to a target in that editor, or to a
+Each editor holds a table of its own: a map of each action to a target in that editor, or to a
 reason it has none. An action with neither fails a test, as does a stale row. So no key goes
 missing from an editor unseen. For Zed the table is `internal/editor/zed/actions/`. Fresh's is
 `internal/editor/fresh/actions/`.

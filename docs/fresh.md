@@ -2,7 +2,7 @@
 
 The `fresh` role is Go steps in `internal/server/fresh`. It installs the Fresh editor on ws from
 the `.deb` of a pinned release. Fresh runs in a terminal, and its settings come from the neutral
-data in `internal/editor`, which Zed's role also reads.
+data in `internal/editor`.
 
 ## The install
 

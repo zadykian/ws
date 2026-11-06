@@ -98,5 +98,5 @@ The file carries its own header, and the step takes the start of line 1,
 
 ## Changing the settings
 
-Edit the two files in `mac/zed/` by hand. Until the adapter goes, `go test` holds them equal to its
-render.
+Edit the two files in `mac/zed/` by hand. They are plain files, and `mac/zed_test.go` checks that
+each is valid JSON under its comment lines.
