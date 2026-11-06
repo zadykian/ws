@@ -62,16 +62,21 @@ func screenConfig(c *cobra.Command, p process) tui.Config {
 // the terminal is back. work reads Bridge.Stop between its steps. A run cut short ends with the
 // status of a signal, for execute to report.
 func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work tui.Work) error {
-	log, path := openLog(p, c.CommandPath(), time.Now())
-	if log != nil {
-		defer func() { _ = log.Close() }()
-	}
-	cfg := screenConfig(c, p)
-	cfg.Halts, cfg.LogPath = true, path
-	if log != nil { // A nil *os.File in the interface would not be nil.
-		cfg.Log = log
-	}
+	cfg, done := runConfig(c, p, screenConfig(c, p))
+	defer done()
 	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, cfg.Theme, groups...), work)
+}
+
+// runConfig returns cfg as a run draws it: it asks before it stops, and keeps a log, which done
+// closes once the run has ended.
+func runConfig(c *cobra.Command, p process, cfg tui.Config) (tui.Config, func()) {
+	log, path := openLog(p, c.CommandPath(), time.Now())
+	cfg.Halts, cfg.LogPath = true, path
+	if log == nil { // A nil *os.File in the interface would not be nil.
+		return cfg, func() {}
+	}
+	cfg.Log = log
+	return cfg, func() { _ = log.Close() }
 }
 
 // logsKept is how many logs stay in the state directory, the newest.

@@ -33,6 +33,11 @@ func runConfigure(c *cobra.Command, p process) error {
 	if !drawsScreen(c, p) {
 		return errors.New("it needs a terminal and no --plain: anywhere else, edit mac.conf by hand")
 	}
+	return configureOn(c, p, screenConfig(c, p))
+}
+
+// configureOn draws the forms with cfg: the wizard's list opens them with its own.
+func configureOn(c *cobra.Command, p process, cfg tui.Config) error {
 	form := wizard.ConfForm{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
 	form, err := form.Load(effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()))
 	if err != nil {
@@ -45,7 +50,7 @@ func runConfigure(c *cobra.Command, p process) error {
 	}
 	vars := &varsReach{p: p}
 	defer vars.close(c.Context())
-	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), confSheet(form), secretsSheet(store, held), vars.sheet())
+	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), secretsSheet(store, held), vars.sheet())
 }
 
 // confSheet is mac.conf on the Configure screen.
