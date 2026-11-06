@@ -116,6 +116,12 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	if err := cfg.CheckSteps(list); err != nil {
 		return usageError{err}
 	}
+	if opensList(c, p, c.Flags().Changed("only")) {
+		if cfg, list, err = pickServer(c, p, cfg, list); err != nil || list == nil {
+			term.Flush()
+			return err
+		}
+	}
 	var changed []string
 	if drawsScreen(c, p) {
 		changed, err = applyOnScreen(c, p, cfg, list)
@@ -126,7 +132,7 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	if err != nil {
 		return err
 	}
-	out.Say("%s", apply.Summary(changed, opts.Check))
+	out.Say("%s", apply.Summary(changed, cfg.Check))
 	return nil
 }
 
