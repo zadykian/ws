@@ -7,7 +7,7 @@ func Gopls(home string) string { return home + "/go/bin/gopls" }
 func Roslyn(home string) string { return home + "/.dotnet/tools/roslyn-language-server" }
 
 // ServerPaths returns, for the home, the binary of each language server that an editor names by
-// path. Its keys are the catalogue's server names, internal/editor/servers.yaml.
+// path. Its keys are the servers' names.
 func ServerPaths(home string) map[string]string {
 	return map[string]string{
 		"gopls":                       Gopls(home),

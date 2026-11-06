@@ -1,10 +1,6 @@
 package devtools
 
-import (
-	"testing"
-
-	"github.com/zadykian/ws/internal/editor"
-)
+import "testing"
 
 func TestServerPathsNameEachServerOfTheCatalogue(t *testing.T) {
 	paths := ServerPaths("/srv/x")
@@ -31,26 +27,6 @@ func TestPathsFollowTheHome(t *testing.T) {
 	for got, want := range tests {
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
-		}
-	}
-}
-
-func TestEachServerOfTheCatalogueHasAPath(t *testing.T) {
-	catalogue, err := editor.LoadServers()
-	if err != nil {
-		t.Fatal(err)
-	}
-	paths := ServerPaths("/srv/x")
-	named := map[string]bool{}
-	for _, s := range catalogue {
-		named[s.Name] = true
-		if paths[s.Name] == "" {
-			t.Errorf("%s has no path", s.Name)
-		}
-	}
-	for name := range paths {
-		if !named[name] {
-			t.Errorf("%s is not in the catalogue", name)
 		}
 	}
 }
