@@ -131,7 +131,7 @@ func TestEveryLanguageHasAName(t *testing.T) {
 }
 
 func TestEveryTargetIsAnActionOfFresh(t *testing.T) {
-	data, err := os.ReadFile("testdata/actions.txt")
+	data, err := os.ReadFile("../../server/fresh/files/actions.txt")
 	if err != nil {
 		t.Fatal(err)
 	}

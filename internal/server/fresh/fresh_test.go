@@ -81,7 +81,7 @@ func TestConfigNamesTheHomesServers(t *testing.T) {
 }
 
 func TestTheActionListNamesThePinnedVersion(t *testing.T) {
-	data, err := os.ReadFile("../../editor/fresh/testdata/actions.txt")
+	data, err := os.ReadFile("files/actions.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
