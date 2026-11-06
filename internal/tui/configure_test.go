@@ -41,4 +41,34 @@ func TestConfigureTabWalksOneRingOfFieldsAndButtons(t *testing.T) {
 	if s = fed(s, tab, tab); s.footer.Focused() >= 0 || s.form().name() != "HOST" {
 		t.Errorf("past the last button: button %d, field %q", s.footer.Focused(), s.form().name())
 	}
+	if s = fed(s, shiftTab, shiftTab, shiftTab); s.footer.Focused() >= 0 || s.form().name() != "USER" {
+		t.Errorf("back past the buttons: button %d, field %q", s.footer.Focused(), s.form().name())
+	}
+}
+
+func TestConfigureEnterAndTheArrowsStepAlongTheFields(t *testing.T) {
+	s := fed(testConfigure(wayFile()), enter, tea.KeyPressMsg{Code: tea.KeyDown})
+	if s.form().name() != "USER" {
+		t.Errorf("field %q", s.form().name())
+	}
+	if s = fed(s, tea.KeyPressMsg{Code: tea.KeyUp}); s.form().name() != "PORT" {
+		t.Errorf("past Up: field %q", s.form().name())
+	}
+}
+
+func TestConfigureLettersOfAKeyTypeInAField(t *testing.T) {
+	s := fed(testConfigure(wayFile()), enter, press('j'), press('k'), press('q'))
+	if got := s.form().Edits()["PORT"]; got != "jkq" {
+		t.Errorf("PORT = %q", got)
+	}
+}
+
+func TestConfigureAPasteGoesToTheFieldInFocusAlone(t *testing.T) {
+	s := fed(testConfigure(wayFile()), enter, tea.PasteMsg{Content: "2222"})
+	if got := s.form().Edits()["PORT"]; got != "2222" {
+		t.Errorf("PORT = %q", got)
+	}
+	if s = fed(s, enter, enter, tea.PasteMsg{Content: "x"}); s.form().Edits()["USER"] != "" {
+		t.Errorf("a button took the paste: %v", s.form().Edits())
+	}
 }

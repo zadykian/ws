@@ -17,6 +17,9 @@ const (
 var (
 	saveButton  = key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save"))
 	leaveButton = key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "leave"))
+	// fieldUp and fieldDown are the arrows alone, as k and j are letters of a value.
+	fieldUp   = key.NewBinding(key.WithKeys("up"))
+	fieldDown = key.NewBinding(key.WithKeys("down"))
 )
 
 // Sheet is a file that the Configure screen edits.
@@ -52,7 +55,7 @@ func newConfigureScreen(title string, theme Theme, sheets []Sheet) configureScre
 // Init starts nothing, as the screen waits for a key.
 func (s configureScreen) Init() tea.Cmd { return nil }
 
-// Update takes the window's size and the keys.
+// Update takes the window's size, the keys and a paste.
 func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -60,6 +63,10 @@ func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return s.fitted(), nil
 	case tea.KeyPressMsg:
 		return s.pressed(msg)
+	case tea.PasteMsg:
+		if s.footer.Focused() < 0 {
+			return s.with(s.form().Update(msg)), nil
+		}
 	}
 	return s, nil
 }
@@ -87,9 +94,9 @@ func (s configureScreen) fitted() configureScreen {
 // fieldStep is the way that msg moves along a form's fields, or 0.
 func fieldStep(msg tea.KeyPressMsg) int {
 	switch {
-	case key.Matches(msg, Keys.Next):
+	case key.Matches(msg, Keys.Next, Keys.Press, fieldDown):
 		return 1
-	case key.Matches(msg, Keys.Prev):
+	case key.Matches(msg, Keys.Prev, fieldUp):
 		return -1
 	}
 	return 0
