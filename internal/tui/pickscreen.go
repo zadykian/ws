@@ -57,6 +57,8 @@ type pickScreen struct {
 	picks chan<- Choice
 	// left says that the choice has gone, and the screen waits for the work to end it.
 	left bool
+	// queued draws the list as a queue's two sides.
+	queued bool
 }
 
 // newPickScreen returns the screen of groups, its scan under way.
@@ -167,15 +169,15 @@ func (s pickScreen) enabled() pickScreen {
 	return s
 }
 
-// status is the title's right side: how far the scan is, then how much is chosen. Its mark stands
-// for the warning of a role passed over, which a short window has no pane for.
+// status is the title's right side: how far the scan is, then how much is chosen, of a queue's stages
+// alone. Its mark stands for the warning of a role passed over, which a short window has no pane for.
 func (s pickScreen) status() string {
-	on, all := s.list.count(func(pickRow) bool { return true })
+	on, all := s.list.count(func(r pickRow) bool { return r.stage == "" })
 	if s.left {
 		return "leaving"
 	}
 	if s.scanning {
-		_, scanned := s.list.count(func(r pickRow) bool { return r.state != stepOpen })
+		_, scanned := s.list.count(func(r pickRow) bool { return r.stage == "" && r.state != stepOpen })
 		return fmt.Sprintf("scanning %d/%d", scanned, all)
 	}
 	if len(s.list.passedOver()) > 0 {
@@ -187,6 +189,9 @@ func (s pickScreen) status() string {
 // layout is the screen with its panes empty, as what fills them depends on their sizes. The list
 // holds the focus alone, so that a window too short for two panes shows it.
 func (s pickScreen) layout() Layout {
+	if s.queued {
+		return s.queueLayout()
+	}
 	return Layout{
 		Title:  s.title,
 		Status: s.status(),
@@ -210,7 +215,7 @@ func (s pickScreen) filterLine() string {
 
 // listHeight is the lines of the pane of steps that the list has.
 func (s pickScreen) listHeight() int {
-	height := s.layout().PaneSizes(s.window.Width, s.window.Height)[0].Height
+	height := s.layout().PaneSizes(s.window.Width, s.window.Height)[s.list.side].Height
 	if s.filtering() {
 		height--
 	}
@@ -219,6 +224,9 @@ func (s pickScreen) listHeight() int {
 
 // View draws the screen.
 func (s pickScreen) View() tea.View {
+	if s.queued {
+		return s.queueView()
+	}
 	l := s.layout()
 	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1])
 	l.Panes[0].Body = s.list.view(s.theme, s.listHeight())

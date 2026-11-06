@@ -1,6 +1,10 @@
 package tui
 
-import "slices"
+import (
+	"slices"
+
+	tea "charm.land/bubbletea/v2"
+)
 
 const (
 	// stripWindow is the lines under which a window leaves the strip out, for the lists to read.
@@ -9,6 +13,13 @@ const (
 	stripLeast = 5
 	stripMost  = 12
 )
+
+// newQueueScreen returns the two lists of stages, their scan under way.
+func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- Choice) pickScreen {
+	s := newPickScreen(title, theme, nil, picks)
+	s.list, s.queued = newQueue(stages), true
+	return s.enabled()
+}
 
 // stripSize is the frame of the strip under a queue's lists, and the zero Size where a window has
 // no room for one.
@@ -50,4 +61,25 @@ func (l pickList) drawn(layout Layout, theme Theme, window Size) Layout {
 		layout.Panes[side].Body = l.glance(side).view(theme, sizes[side].Height)
 	}
 	return layout
+}
+
+// queueLayout is the screen of a queue, its lists empty as what fills them depends on their sizes.
+func (s pickScreen) queueLayout() Layout {
+	detail := Pane{Title: "Detail", Body: s.detail(inside(stripSize(s.window)))}
+	return Layout{
+		Title:  s.title,
+		Status: s.status(),
+		Panes:  s.list.panes(),
+		Below:  strip(s.theme, detail, s.window),
+		Footer: s.footer,
+	}
+}
+
+// queueView draws the two lists, the filter's line over the one in focus.
+func (s pickScreen) queueView() tea.View {
+	l := s.list.drawn(s.layout(), s.theme, s.window)
+	if s.filtering() {
+		l.Panes[s.list.side].Body = s.filterLine() + "\n" + s.list.view(s.theme, s.listHeight())
+	}
+	return l.View(s.theme, s.window.Width, s.window.Height)
 }
