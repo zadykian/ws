@@ -25,7 +25,7 @@ func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.machine = m
 	var got lastEvents
-	s := wizardSetup(p, io.Discard, &effecttest.Out{}, &got, "/h/mac.conf")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, "/h/mac.conf")
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents

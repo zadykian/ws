@@ -50,8 +50,31 @@ func wizardRefusal(p process) string {
 	return ""
 }
 
+// wizardEffects is what the stages act through: a plain run's terminal, or a screen's Bridge.
+type wizardEffects struct {
+	// p holds the machine that the stages act on.
+	p      process
+	prog   string
+	talks  effect.Foreground
+	ask    effect.Prompt
+	hidden effect.Hidden
+	out    effect.Out
+	// text takes what a run prints on stdout.
+	text io.Writer
+	obs  step.Observer
+	hand *wizard.Hand
+	// sudo is the stage that finds how to reach root on ws. A run takes it from the scan before it, so
+	// that its password is asked once.
+	sudo *wizard.Sudo
+	// events hears ws's run, and only is what it takes where it runs in part. A plain run has neither:
+	// it follows ws's run by its lines.
+	events step.Observer
+	only   []string
+}
+
 // wizardStages returns the stages of ws mac wizard, in order.
-func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.Hidden, out effect.Out, obs step.Observer, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
+func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
+	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
 	scratch := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
@@ -62,20 +85,20 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 		later = scratch
 	}
 	lock := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName
-	talks, _ := p.machine.(effect.Foreground)
-	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, F: talks, Out: out}
+	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, F: e.talks, Out: out}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
-		SSH: wizard.SSH{M: p.machine, F: talks, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
-	sudo := &wizard.Sudo{Host: host, P: hidden}
+		SSH: wizard.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
+	sudo := e.sudo
+	sudo.Host, sudo.P = host, e.hidden
 	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript, Sudo: sudo}
-	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update,
+	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update, Only: e.only,
 		Secrets: p.getenv("HOME") + "/" + secretsFile, User: p.getenv("USER"),
-		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript, Sudo: sudo},
+		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript, Sudo: sudo, Events: e.events},
 		Files:  files, Default: values.Default().User}
 	hand.Late(run.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}
-	setup := wizardSetup(p, stdout, out, obs, later)
+	setup := wizardSetup(e, later)
 	login := &wizard.Login{Host: host, Gh: gh}
 	cable := &wizard.Cable{Host: host, Run: run, Login: login, Files: files, Setup: setup, Env: p.lookup,
 		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
@@ -87,7 +110,7 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 			Prog: prog, Tty: p.tty, Check: check, Scratch: scratch, M: p.machine, P: ask, Out: out, Env: p.lookup},
 		&wizard.MacKey{Conf: later, Home: p.getenv("HOME"),
 			Lock: lock, Tty: p.tty,
-			M: p.machine, F: talks, P: ask, Out: out, Sleep: time.Sleep},
+			M: p.machine, F: e.talks, P: ask, Out: out, Sleep: time.Sleep},
 		gh,
 		setup,
 		host,
@@ -133,7 +156,9 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 		hand.Close(ctx, c.OutOrStdout())
 		term.Flush()
 	}
-	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, term, out, obs, prog, o, hand)
+	talks, _ := p.machine.(effect.Foreground)
+	stages := wizardStages(wizardEffects{p: p, prog: prog, talks: talks, ask: signalPrompt{term}, hidden: term, out: out,
+		text: c.OutOrStdout(), obs: obs, hand: hand, sudo: &wizard.Sudo{}}, o)
 	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: obs, Check: o.check}, stages, tmp, p.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)
