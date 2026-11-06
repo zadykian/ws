@@ -27,6 +27,8 @@ CI's container.
 `files/config.json.tmpl`, which fills in the user's home for the language servers' paths. A
 run replaces a change made to it by hand and keeps the old file beside the new one, as
 [zed](zed.md) does for its settings.
+`gotest` holds the render to checks in `internal/server/fresh`: a config that does not parse makes
+Fresh load its defaults and exit 0.
 
 - Updates, telemetry and the session daemon are off: `check_for_updates`, `self_update` and
   `auto_attach` are false. Fresh reads a missing key as its default, so the render writes each.
