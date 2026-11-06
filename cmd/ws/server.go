@@ -56,7 +56,7 @@ func serverRefusal(euid int, osRelease []byte) string {
 // newServerCmd returns ws server, the server's side of ws. It is built everywhere, so that the
 // tests run anywhere. Only its entry in the groups is built for Linux alone.
 func newServerCmd(p process) *cobra.Command {
-	return group("server", "the server's commands", newApplyCmd(p), newStateCmd(p), newFansCmd(p))
+	return group("server", "the server's commands", newApplyCmd(p), newStateCmd(p), newFansCmd(p), newValuesCmd(p))
 }
 
 // newApplyCmd returns ws server apply.
