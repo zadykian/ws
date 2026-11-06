@@ -10,9 +10,27 @@ import (
 // chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
 func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work) (Choice, error) {
 	picks := make(chan Choice, 1)
+	return pick(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
+}
+
+// PickStages draws a queue's two lists over scan, as Pick draws a list. scan's Bridge.Report fills
+// a stage from what its machine says. A Choice with neither steps nor Configure says that they left.
+func PickStages(ctx context.Context, c Config, title string, stages []Stage, scan Work) (Choice, error) {
+	picks := make(chan Choice, 1)
+	return pick(ctx, c, newQueueScreen(title, c.Theme, stages, picks), picks, scan)
+}
+
+// Report fills a stage of the lists with what its machine says: sections, or problem, why it says
+// nothing. It goes ahead of the scan's end, which chooses by it.
+func (b *Bridge) Report(stage string, sections []StateSection, problem string) {
+	b.send(reportedMsg{stage, sections, problem})
+}
+
+// pick runs a list's screen over scan until picks gives a choice.
+func pick(ctx context.Context, c Config, screen pickScreen, picks <-chan Choice, scan Work) (Choice, error) {
 	var choice Choice
 	c.Halts, c.quiet = false, true
-	err := Run(ctx, c, newPickScreen(title, c.Theme, groups, picks), func(ctx context.Context, b *Bridge) error {
+	err := Run(ctx, c, screen, func(ctx context.Context, b *Bridge) error {
 		var err error
 		choice, err = awaitPick(ctx, b, picks, scan)
 		return err

@@ -1,11 +1,14 @@
 package tui
 
 import (
+	"io"
 	"slices"
 	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/step"
 )
 
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
@@ -128,5 +131,46 @@ func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
 	}
 	if !s.list.rows[2].on() || !s.list.rows[3].on() {
 		t.Errorf("rows = %+v", s.list.rows[2:4])
+	}
+}
+
+func TestAReportFillsWsList(t *testing.T) {
+	sections := []StateSection{{Name: "base", Reports: []step.Report{{Step: "Packages"}}}}
+	got := pickShown(pickSent(testQueueScreen(), reportedMsg{stage: "Run", sections: sections}))
+	if strings.Contains(got, "not scanned") || !strings.Contains(got, "✓ Packages") {
+		t.Errorf("frame:\n%s", got)
+	}
+}
+
+func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
+	got := pickShown(pickSent(testQueueScreen(), reportedMsg{stage: "Run", problem: "ws on ws is another version"}))
+	if !strings.Contains(got, "ws: roles not scanned") || !strings.Contains(got, "Not scanned: ws on ws is another version") {
+		t.Errorf("frame:\n%s", got)
+	}
+}
+
+func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
+	s := pickSent(testQueueScreen(), scannedMsg{})
+	s.list = choosing(s.list, "one")
+	s.list = atRow(s.list, "Setup")
+	if got := pickShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
+		t.Errorf("frame:\n%s", got)
+	}
+}
+
+func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
+	c := noKeys(io.Discard)
+	c.In = strings.NewReader("e")
+	got, err := PickStages(t.Context(), c, "ws", testStages(), waitForCtx)
+	if err != nil || !got.Configure {
+		t.Errorf("PickStages = %+v, %v", got, err)
+	}
+}
+
+func TestABridgeReportReachesTheScreen(t *testing.T) {
+	b, sent := testBridge(io.Discard)
+	b.Report("Run", nil, "refused")
+	if got := (*sent)[0].(reportedMsg); got.stage != "Run" || got.problem != "refused" {
+		t.Errorf("sent %+v", got)
 	}
 }

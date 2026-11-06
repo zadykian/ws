@@ -45,6 +45,13 @@ type Choice struct {
 // scannedMsg ends the scan. problem says why it stopped short, if it did.
 type scannedMsg struct{ problem string }
 
+// reportedMsg says what a stage's machine reports, or why it reports nothing.
+type reportedMsg struct {
+	stage    string
+	sections []StateSection
+	problem  string
+}
+
 // pickScreen is the list that a run is chosen from. A scan fills it behind the screen, and the
 // maintainer can read and move as it goes.
 type pickScreen struct {
@@ -65,6 +72,8 @@ type pickScreen struct {
 	left bool
 	// queued draws the list as a queue's two sides.
 	queued bool
+	// unread is why a machine reported nothing, and its steps stand as the queue named them.
+	unread string
 }
 
 // newPickScreen returns the screen of groups, its scan under way.
@@ -92,6 +101,11 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.scanning, s.problem = false, msg.problem
 		if s.queued {
 			s.list = s.list.opened()
+		}
+	case reportedMsg:
+		s.unread = msg.problem
+		if msg.problem == "" {
+			s.list = s.list.reported(msg.stage, msg.sections)
 		}
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
