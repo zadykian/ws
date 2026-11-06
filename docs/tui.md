@@ -142,8 +142,9 @@ on the server, no STEP on the Mac, and no `--check` on either. The scan is a che
 beside the list. `enter` then runs the steps chosen on the run screen, and `c` checks them there. A
 list left with `q`, or with nothing chosen, runs nothing and exits 0. A cut that follows a choice
 wins: nothing runs, and the status is that of the cut. The server's choice is the `--only` entries,
-`ROLE` or `ROLE/STEP`. The Mac's is a set of step names. With `--plain` or no terminal the command
-runs at once, as before.
+`ROLE` or `ROLE/STEP`. The Mac's is a set of step names. `ssh again` has no row, as a check has no
+second plan: it runs, unless `ssh` is left out with changes. With `--plain` or no terminal the
+command runs at once, as before.
 
 A role's box follows its steps, and `[-]` says that some are on. A chosen step locks the step it
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so

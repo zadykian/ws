@@ -54,7 +54,7 @@ func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
 func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
 	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	c.SetIn(repeating("a\r"))
+	c.SetIn(repeating("n \r"))
 	var checks []bool
 	build := func(check bool) setupBuild {
 		return func(_ effect.Machine, _ effect.Out, _ io.Writer) []step.Step {
@@ -69,8 +69,11 @@ func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
 	if err != nil || !ok || o.Check || o.LeftOut == nil {
 		t.Fatalf("options = %+v, ok = %v, err = %v", o, ok, err)
 	}
-	if o.LeftOut("", "one") || o.LeftOut("", "two") || !o.LeftOut("", "three") {
+	if o.LeftOut("", "one") || !o.LeftOut("", "two") {
 		t.Error("the choice leaves out a step it chose, or keeps one it didn't")
+	}
+	if o.LeftOut("", "ssh again") {
+		t.Error("the choice leaves out a step that no row offers")
 	}
 	if slices.Contains(checks, false) {
 		t.Errorf("the list built steps without a check: %v", checks)

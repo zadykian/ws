@@ -2,6 +2,7 @@ package setup_test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/step"
 )
 
 // sshMachine answers the commands that the ssh step runs, with ssh happy.
@@ -85,5 +87,18 @@ func TestSSHWarnsOfBlocksForWs(t *testing.T) {
 	}
 	if len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "warn: line 2 of ~/.ssh/config, Host ws, sets its own values for ws:") {
 		t.Errorf("said %q, want a warning of line 2", out.Lines)
+	}
+}
+
+func TestSSHAgainAppliesNothingOfAnSSHLeftOut(t *testing.T) {
+	m, out := sshMachine(), &effecttest.Out{}
+	again := sshStep(m, out)
+	again.Again = true
+	left := func(_, name string) bool { return name == "ssh" }
+	if _, err := step.RunWith(t.Context(), []step.Step{sshStep(m, out), again}, step.Options{LeftOut: left}); err != nil {
+		t.Fatal(err)
+	}
+	if i := slices.IndexFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "write /h/.ssh/") }); i >= 0 {
+		t.Errorf("a left-out ssh applied: %s", m.Calls[i])
 	}
 }

@@ -64,6 +64,9 @@ func pickSetup(c *cobra.Command, p process, build func(check bool) setupBuild) (
 	if err != nil || len(choice.Only) == 0 {
 		return step.Options{}, false, err
 	}
-	left := func(_, name string) bool { return !slices.Contains(choice.Only, name) }
+	// ssh again has no row, as a check has no second plan, so it follows ssh by its wait.
+	left := func(_, name string) bool {
+		return slices.Contains(rows.Steps, name) && !slices.Contains(choice.Only, name)
+	}
 	return step.Options{Check: choice.Check, LeftOut: left}, true, nil
 }
