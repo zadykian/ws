@@ -15,7 +15,8 @@ import (
 // mac.conf has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands that make it
 // ws's peer at every run, which the Tunnel stage takes over: the text goes nowhere then. file is the
 // mac.conf to read, which is Answers' would-be file under --check. obs takes the steps' events, which
-// name the stage: each of a stage's runs reports them again, a check before it applies.
+// name the stage: each of a stage's runs reports them again, a check before it applies. It stops and
+// leaves steps out as the run does.
 func wizardSetup(e wizardEffects, file string) *wizard.Setup {
 	p := e.p
 	s := &wizard.Setup{M: p.machine}
@@ -38,13 +39,7 @@ func wizardSetup(e wizardEffects, file string) *wizard.Setup {
 			// cld's restore tabs change ssh's file, so ssh runs once more.
 			steps = slices.Concat(steps, []step.Step{sshStep(c, home, p.machine, e.out, true)})
 		}
-		changed, err := step.RunWith(ctx, steps, step.Options{Observer: e.obs, Check: check, Parent: s.Name()})
-		for _, st := range steps {
-			if f, ok := st.(interface{ Finish(context.Context) error }); ok && err == nil {
-				err = f.Finish(ctx)
-			}
-		}
-		return changed, err
+		return finishSetup(ctx, steps, step.Options{Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: e.left})
 	}
 	return s
 }

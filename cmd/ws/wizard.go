@@ -66,6 +66,10 @@ type wizardEffects struct {
 	// sudo is the stage that finds how to reach root on ws. A run takes it from the scan before it, so
 	// that its password is asked once.
 	sudo *wizard.Sudo
+	// stop and left are the run's Stop and LeftOut, which reach the steps of ws mac apply too. Nil ones
+	// run all.
+	stop func() error
+	left func(parent, name string) bool
 	// events hears ws's run, and only is what it takes where it runs in part. A plain run has neither:
 	// it follows ws's run by its lines.
 	events step.Observer
