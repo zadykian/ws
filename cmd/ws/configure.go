@@ -15,9 +15,10 @@ import (
 func newConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
-		Short: "edit mac.conf and the secrets on forms",
+		Short: "edit mac.conf, the secrets and ws's host_vars on forms",
 		Long: "It shows the keys that ws mac wizard would ask, by WS_TARGET, with what mac.conf holds, and " +
-			"writes them on Ctrl-S. Ctrl-N goes to the secrets, which show as set or not, never their values. It needs a terminal: anywhere else, edit the file by hand.",
+			"writes them on Ctrl-S. Ctrl-N goes to the secrets, which show as set or not, never their values, " +
+			"then to ws's host_vars, read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runConfigure(c, p) },
 	}
@@ -42,26 +43,16 @@ func runConfigure(c *cobra.Command, p process) error {
 	if err != nil {
 		return err
 	}
-	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), confSheet(form), secretsSheet(store, held))
+	vars := &varsReach{p: p}
+	defer vars.close(c.Context())
+	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), confSheet(form), secretsSheet(store, held), vars.sheet())
 }
 
 // confSheet is mac.conf on the Configure screen.
 func confSheet(form wizard.ConfForm) tui.Sheet {
 	return tui.Sheet{
-		Name: "mac.conf",
-		Fields: func(edits map[string]string) []tui.FieldSpec {
-			fields := form.Fields(edits)
-			specs := make([]tui.FieldSpec, 0, len(fields))
-			for _, f := range fields {
-				spec := tui.FieldSpec{Label: f.Key, Help: f.Text, Value: f.Value, Default: f.Default,
-					Options: f.Options, Valid: f.Valid}
-				if f.Options != nil {
-					spec.Kind = tui.ChoiceField
-				}
-				specs = append(specs, spec)
-			}
-			return specs
-		},
+		Name:   "mac.conf",
+		Fields: func(edits map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields(edits)) },
 		Save: func(ctx context.Context, b *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
 			// A copy, as Fields reads form on the screen's goroutine.
 			work := form
@@ -70,4 +61,18 @@ func confSheet(form wizard.ConfForm) tui.Sheet {
 			return confSheet(next), err
 		},
 	}
+}
+
+// fieldSpecs is a form's fields on the screen. A key that takes one of a few is a choice.
+func fieldSpecs(fields []wizard.Field) []tui.FieldSpec {
+	specs := make([]tui.FieldSpec, 0, len(fields))
+	for _, f := range fields {
+		spec := tui.FieldSpec{Label: f.Key, Help: f.Text, Value: f.Value, Default: f.Default,
+			Options: f.Options, Valid: f.Valid}
+		if f.Options != nil {
+			spec.Kind = tui.ChoiceField
+		}
+		specs = append(specs, spec)
+	}
+	return specs
 }

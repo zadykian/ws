@@ -33,6 +33,10 @@ type Sheet struct {
 	Fields func(edits map[string]string) []FieldSpec
 	// Save writes the edits on the work's goroutine, and returns the sheet of what the file then holds.
 	Save func(ctx context.Context, b *Bridge, edits map[string]string) (Sheet, error)
+	// Open reads a file that takes time to reach, on the work's goroutine, once the sheet shows, and
+	// returns the sheet of what it holds, with no Open. Until then Ctrl-S tries it again. Nil means
+	// that Fields is ready, so that a file out of reach leaves the other sheets as they are.
+	Open func(ctx context.Context, b *Bridge) (Sheet, error)
 }
 
 // configureScreen edits its sheets, a form each, with one form on the screen.
@@ -144,7 +148,7 @@ func (s configureScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case place == formLeavePlace:
 		return s.leave(again)
 	case place == nextFormPlace:
-		return s.nextForm().fitted(), nil
+		return s.nextForm().opened()
 	case !onForm && s.footer.Focused() < 0:
 		return s.with(s.form().Enter(key.Matches(msg, Keys.Prev))), nil
 	case onForm:
@@ -183,9 +187,14 @@ func (s configureScreen) layout() Layout {
 // status says what the screen waits for, or counts the edits that a leave would lose.
 func (s configureScreen) status() string {
 	changed := s.unsaved()
+	unread := s.sheets[s.at].Open != nil
 	switch {
+	case s.saving && unread:
+		return "reading"
 	case s.saving:
 		return "saving"
+	case unread:
+		return "not read: ctrl+s tries again"
 	case changed > 0:
 		return fmt.Sprintf("%d unsaved", changed)
 	}
