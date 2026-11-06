@@ -149,11 +149,16 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	out := progOut{term, prog, map[string]bool{}}
 	obs := out
 	if o.update {
-		// Its own run, before the lock: the new ws takes the place of this process, which would leave the lock held.
+		// Its own run, before the lock: the new ws takes the place of this process, which would leave the
+		// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
 		u := &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases, Home: p.getenv("HOME"), Args: p.argv}
 		if _, err := step.RunWith(ctx, []step.Step{u}, step.Options{Observer: obs, Check: o.check}); err != nil {
 			return unwrapStep(err)
 		}
+	}
+	if drawsScreen(c, p) {
+		stop() // The screen takes the signals, and asks before a signal ends a run.
+		return wizardScreen{c, p, o}.draw()
 	}
 	hand := &wizard.Hand{}
 	closing := func(ctx context.Context) {
