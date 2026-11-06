@@ -1,0 +1,32 @@
+---
+# F12's editing keys.
+global:
+  - {action: file.save-all, keys: [ctrl+shift+s, ctrl+cmd+s], f12: [SaveAll]}
+  - {action: file.save, keys: [ctrl+s], f12: [SaveDocument]}
+  - {action: view.ui-font-larger, keys: [ctrl+alt+shift+.], f12: [ZoomInIdeAction]}
+  - {action: view.ui-font-smaller, keys: ['ctrl+alt+shift+,'], f12: [ZoomOutIdeAction]}
+text:
+  - {action: edit.copy, keys: [ctrl+c], f12: [$Copy, Editor Copy]}
+  - {action: edit.cut, keys: [ctrl+x], f12: [$Cut, Editor Cut]}
+  - {action: edit.paste, keys: [ctrl+v], f12: [$Paste, Editor Paste]}
+  - {action: edit.redo, keys: [ctrl+y, ctrl+shift+z], f12: [$Redo, Editor Redo]}
+  - {action: edit.undo, keys: [ctrl+z], f12: [$Undo, Editor Undo]}
+  - {action: edit.comment-block, keys: [ctrl+shift+/], f12: [CommentByBlockComment]}
+  - action: edit.comment-line
+    keys: [ctrl+alt+/, ctrl+k c, ctrl+k ctrl+c, ctrl+k ctrl+/, ctrl+k ctrl+u]
+    f12: [CommentByLineComment]
+  - {action: view.font-smaller, keys: [ctrl+shift+-], f12: [EditorDecreaseFontSize]}
+  - {action: view.font-larger, keys: [ctrl+shift+=], f12: [EditorIncreaseFontSize]}
+  - {action: view.font-reset, keys: [ctrl+shift+\], f12: [EditorResetFontSizeGlobal]}
+  - {action: edit.delete-word-end, keys: [ctrl+delete], f12: [EditorDeleteToWordEnd]}
+  - {action: edit.delete-word-start, keys: [ctrl+backspace], f12: [EditorDeleteToWordStart]}
+  - {action: edit.duplicate, keys: [ctrl+d], f12: [EditorDuplicate]}
+  - {action: edit.join-lines, keys: [ctrl+shift+j], f12: [EditorJoinLines]}
+  - {action: edit.paste, keys: [ctrl+alt+shift+v], f12: [EditorPasteSimple]}
+  - {action: edit.toggle-case, keys: [ctrl+shift+u], f12: [EditorToggleCase]}
+  - {action: edit.move-line-up, keys: [alt+up], f12: [MoveLineUp]}
+  - {action: edit.move-line-down, keys: [alt+down], f12: [MoveLineDown]}
+code:
+  - {action: edit.newline-below, keys: [ctrl+shift+enter], f12: [EditorStartNewLine]}
+  - {action: complete.show, keys: [ctrl+k x, ctrl+k ctrl+x], f12: [InsertLiveTemplate]}
+  - {action: edit.unwrap, keys: [ctrl+shift+delete], f12: [Unwrap]}

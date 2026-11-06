@@ -16,8 +16,3 @@ var TunnelPlist []byte
 //
 //go:embed zed.json
 var Zed []byte
-
-// ZedKeymap is zed-keymap.json, the keymap that ws mac apply writes as Zed's keymap.json.
-//
-//go:embed zed-keymap.json
-var ZedKeymap []byte

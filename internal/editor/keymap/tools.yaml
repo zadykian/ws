@@ -1,0 +1,27 @@
+---
+# F12's keys for panels, and the file tree's own.
+global:
+  - {action: panel.agent, keys: [f7, alt+7], f12: [ActivateAIAssistantToolWindow]}
+  - {action: panel.git, keys: [f5, alt+5], f12: [ActivateCommitToolWindow]}
+  - {action: panel.tree, keys: [f1, alt+1], f12: [ActivateProjectToolWindow]}
+  - {action: panel.terminal, keys: [f2, alt+2], f12: [ActivateTerminalToolWindow]}
+  - {action: git.graph, keys: [f6, alt+6], f12: [ActivateVersionControlToolWindow]}
+  - {action: app.docs, keys: [ctrl+f1], f12: [HelpTopics]}
+code:
+  - {action: code.context-menu, keys: [f13], f12: [ShowPopupMenu]}
+tree:
+  - {action: tree.expand-all, keys: [ctrl+shift+=], f12: [ExpandAll, ExternalSystem.ExpandAll]}
+  - {action: tree.collapse-all, keys: [ctrl+-], f12: [CollapseAll, ExternalSystem.CollapseAll]}
+  - {action: tree.download, keys: [ctrl+shift+d], f12: [DownloadBackendFileToClient]}
+  - {action: tree.new-file, keys: [ctrl+shift+a], f12: [NewElementSamePlace]}
+  - {action: tree.new-file, keys: [ctrl+n], f12: [NewElement]}
+  - {action: tree.hide, keys: [f1, alt+1], f12: [ActivateProjectToolWindow]}
+  - {action: tree.rename, keys: [ctrl+r r], f12: [RenameElement]}
+  - {action: tree.copy, keys: [ctrl+c], f12: [$Copy]}
+  - {action: tree.cut, keys: [ctrl+x], f12: [$Cut]}
+  - {action: tree.paste, keys: [ctrl+v], f12: [$Paste]}
+  - {action: tree.undo, keys: [ctrl+z], f12: [$Undo]}
+  - {action: tree.redo, keys: [ctrl+y], f12: [$Redo]}
+  - {action: tree.search, keys: [ctrl+shift+f], f12: [FindInPath]}
+panel:
+  - {action: panel.to-editor, keys: [escape], f12: [FocusEditor]}

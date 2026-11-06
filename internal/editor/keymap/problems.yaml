@@ -1,0 +1,18 @@
+---
+# F12's keys for problems.
+global:
+  - {action: problem.list, keys: [ctrl+alt+2], f12: [ActivateErrorsInSolutionToolWindow]}
+  - action: problem.list
+    keys: [ctrl+alt+4, ctrl+alt+v]
+    f12: [ActivateInspectionResultsToolWindow]
+  - {action: problem.list-file, keys: [alt+shift+i], f12: [CodeInspection.OnEditor]}
+  - {action: problem.list, keys: [alt+f11], f12: [InspectCode]}
+  - action: problem.list
+    keys: [alt+shift+pagedown, ctrl+shift+f12]
+    f12: [ReSharperGotoNextErrorInSolution]
+  - action: problem.list
+    keys: [alt+shift+f2, alt+shift+pageup]
+    f12: [ReSharperGotoPrevErrorInSolution]
+code:
+  - {action: problem.next, keys: [alt+pagedown], f12: [GotoNextError, SwitcherNextProblemFallback]}
+  - {action: problem.previous, keys: [alt+pageup], f12: [GotoPreviousError]}

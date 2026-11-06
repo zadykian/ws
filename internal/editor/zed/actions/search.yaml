@@ -1,0 +1,23 @@
+---
+# F12's search keys, as Zed's actions.
+# Find: Cmd+F is Zed's already
+search.find: {to: buffer_search::Deploy}
+# FindInPath: Shift+Cmd+F is Zed's already
+search.project: {to: pane::DeploySearch}
+# FindNext approx: Shift+Alt+/ alone: Shift+Ctrl+Down goes to the next highlighted usage
+search.next: {to: search::SelectNextMatch}
+app.command-palette: {to: command_palette::Toggle}
+# SearchEverywhere approx: files alone, as in helix
+file.find: {to: file_finder::Toggle}
+search.symbol: {to: project_symbols::Toggle}
+# OpenFile approx: opens a folder; on a remote project, the server's
+file.open: {to: workspace::Open}
+# Replace: replaces Zed's emacs-style backspace
+search.replace: {to: buffer_search::DeployReplace}
+search.replace-project: {to: pane::DeploySearch, args: '{ "replace_enabled": true }'}
+search.text: {to: text_finder::Toggle}
+# FindPrevWordAtCaret approx
+search.previous-word: {to: editor::FindPreviousMatch}
+# FindWordAtCaret approx: Ctrl+F3: F-keys need Fn or the setting
+search.next-word: {to: editor::FindNextMatch}
+search.outline: {to: outline::Toggle}

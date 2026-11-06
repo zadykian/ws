@@ -1,0 +1,43 @@
+---
+# F12's editing keys, as Zed's actions.
+# SaveAll: Ctrl+Cmd+S replaces Zed's ToggleWorktreeSecurity
+file.save-all: {to: workspace::SaveAll}
+# SaveDocument: Cmd+S is Zed's already
+file.save: {to: workspace::Save}
+view.ui-font-larger: {to: zed::IncreaseUiFontSize}
+view.ui-font-smaller: {to: zed::DecreaseUiFontSize}
+# $Copy: Cmd+C is Zed's already
+edit.copy: {to: editor::Copy}
+# Editor Cut: Cmd+X alone in F12; $Cut's Ctrl+X cuts in the editor too
+edit.cut: {to: editor::Cut}
+# $Paste: Ctrl+V replaces Zed's emacs-style page down
+# EditorPasteSimple approx
+edit.paste: {to: editor::Paste}
+# $Redo: Shift+Cmd+Z is Zed's; Cmd+Y stays Zed's: the agent's Allow once and Keep, and
+# git::StageAndNext
+# Editor Redo: Cmd keys alone in F12; Cmd+Y stays Zed's, as for $Redo
+edit.redo: {to: editor::Redo}
+# $Undo: Cmd+Z is Zed's already
+edit.undo: {to: editor::Undo}
+edit.comment-block: {to: editor::ToggleBlockComments}
+# CommentByLineComment: Ctrl+K, Ctrl+U toggles rather than uncomments
+edit.comment-line: {to: editor::ToggleComments}
+# EditorDecreaseFontSize: mouse wheel left to Zed
+view.font-smaller: {to: zed::DecreaseBufferFontSize}
+view.font-larger: {to: zed::IncreaseBufferFontSize}
+view.font-reset: {to: zed::ResetBufferFontSize}
+edit.delete-word-end: {to: editor::DeleteToNextWordEnd}
+edit.delete-word-start: {to: editor::DeleteToPreviousWordStart}
+# EditorDuplicate: replaces Zed's emacs-style delete
+edit.duplicate: {to: editor::DuplicateSelection}
+edit.join-lines: {to: editor::JoinLines}
+edit.toggle-case: {to: editor::ToggleCase}
+edit.newline-below: {to: editor::NewlineBelow}
+# InsertLiveTemplate approx: Zed offers snippets among completions
+# ClassNameCompletion, SmartTypeCompletion approx: one kind of completion
+# CodeCompletion: Ctrl+Space is Zed's, but macOS's input sources may take it
+complete.show: {to: editor::ShowCompletions}
+# Unwrap: the syntax node around the cursor
+edit.unwrap: {to: editor::UnwrapSyntaxNode}
+edit.move-line-up: {why: "Alt+Up is Zed's on macOS"}
+edit.move-line-down: {why: "Alt+Down is Zed's on macOS"}

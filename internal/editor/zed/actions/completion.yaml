@@ -1,0 +1,9 @@
+---
+# F12's completion keys, as Zed's actions.
+# HippieCompletion approx: words of the buffer; takes Alt+/ from which-key in the editor
+complete.words: {to: editor::ShowWordCompletions}
+# ParameterInfo: replaces Zed's ShowWordCompletions
+complete.signature: {to: editor::ShowSignatureHelp}
+# ParameterInfo.GoToPreviousSignature: Pause's key too, outside the popup
+signature.previous: {to: editor::SignatureHelpPrevious}
+signature.next: {to: editor::SignatureHelpNext}

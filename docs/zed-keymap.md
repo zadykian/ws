@@ -2,7 +2,7 @@
 
 F12 is the keymap GoLand and Rider use here: `F12.xml`, 523 actions with keys, over the 112 of
 IntelliJ's default keymap, `$default.xml`, that F12 leaves alone. That makes 635 actions with
-817 keystrokes. [`mac/zed-keymap.json`](../mac/zed-keymap.json) gives Zed the keys of 271 of them,
+817 keystrokes. The golden file [`keymap.json`](../internal/editor/zed/testdata/keymap.json) gives Zed the keys of 271 of them,
 and the pages below say what becomes of the other 364. The Mac step writes the file to
 `~/.config/zed/keymap.json` ([The keymap](mac-zed.md#the-keymap)).
 
@@ -17,8 +17,7 @@ No gate notices a drift, and no generator is in `tools/`.
 
 - [The Zed keymap on a Mac](zed-keymap/macos.md): the keys a Mac keyboard lacks, the F-keys and
   Fn, and macOS's own shortcuts on F12's keys.
-- [The actions the keymap binds](zed-keymap/actions.md), Editing to Folding, with Zed's keys.
-- [The same, in the IDE](zed-keymap/actions-ide.md), Problems to Terminal.
+- [The actions the keymap binds](../internal/editor/keymap/): the data, by topic, with F12's ids.
 - The actions the keymap lacks, in the order of their names, upper and lower case alike:
   [A to J](zed-keymap/lacks-a-j.md) and [L to Z](zed-keymap/lacks-l-z.md).
 
@@ -103,6 +102,20 @@ F12's Ctrl+B is in the editor only, so the terminal gets it.
   (zed#14470).
 - Last edit location stays in the file (zed#19731). Next error can skip gopls's unused-variable
   errors (zed#64790).
+
+## The keys left to Zed
+
+The data holds no row for 37 plain F12 keys, and the keymap binds none. Zed's own defaults do it:
+
+- Zed's editor keys: Backspace, Enter, Esc, Tab, Shift+Tab, the arrows, Home, End and Page Up and
+  Down, each alone and with Shift.
+- Zed's completion and snippet keys: Enter and Tab accept an item, and Ctrl+Up and Ctrl+Down pick
+  one. Tab and Shift+Tab move between a snippet's variables and a call's parameters.
+- Tab accepts Zed's edit prediction.
+- Alt+click adds a cursor, and Shift+Alt+drag selects a column (`multi_cursor_modifier`).
+- Ctrl+D in the Terminal reaches the shell.
+
+Seven of the rows share `tab`, so a neutral action for each would collide.
 
 ## How the mapping was made
 

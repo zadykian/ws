@@ -79,7 +79,7 @@ server to every YAML file, Ansible's too.
 
 ## The keymap
 
-The step also writes `~/.config/zed/keymap.json`, [`mac/zed-keymap.json`](../mac/zed-keymap.json),
+The step also writes `~/.config/zed/keymap.json`, rendered from [`internal/editor`](../internal/editor/),
 F12's keys for Zed. `base_keymap` stays `Zed`. The file carries its own header, so the step adds
 none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as ws's mark.
 
@@ -93,5 +93,6 @@ none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as 
 
 ## Changing the settings
 
-Edit [`mac/zed.json`](../mac/zed.json) or [`mac/zed-keymap.json`](../mac/zed-keymap.json), build `ws`
-again and run it. `ws` embeds both files.
+Edit [`mac/zed.json`](../mac/zed.json), build `ws` again and run it. `ws` embeds it. For the
+keymap, edit the data or the adapter and the golden file: `go test` holds them equal. `ws` renders
+the keymap.

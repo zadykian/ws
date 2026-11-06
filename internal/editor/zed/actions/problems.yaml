@@ -1,0 +1,8 @@
+---
+# F12's keys for problems, as Zed's actions.
+# ReSharperGotoNextErrorInSolution, ReSharperGotoPrevErrorInSolution approx: opens the project's
+# diagnostics, where F12's Alt+PgDn moves on
+problem.list: {to: diagnostics::Deploy}
+problem.list-file: {to: diagnostics::DeployCurrentFile}
+problem.next: {to: editor::GoToDiagnostic}
+problem.previous: {to: editor::GoToPreviousDiagnostic}

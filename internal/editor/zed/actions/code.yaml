@@ -1,0 +1,14 @@
+---
+# F12's code keys, as Zed's actions.
+view.inlay-hints: {to: editor::ToggleInlayHints}
+# AIAssistant.Editor.AskAiAssistantInEditor: the inline assistant, whose Ctrl+Enter is F12's code
+# actions here
+code.inline-assist: {to: assistant::InlineAssist}
+# ChangeSignature, ExtractMethod, ImplementMethods, IntroduceConstant,
+# Refactorings.QuickListPopupAction approx: the server's code actions, of every kind
+# Generate approx: Alt+Insert: a Mac keyboard has no Insert
+# ShowIntentionActions: Shift+Enter and Ctrl+Enter only in the full editor
+code.actions: {to: editor::ToggleCodeActions}
+code.format: {to: editor::Format}
+# RenameElement: Zed's F2 stays too
+code.rename: {to: editor::Rename}

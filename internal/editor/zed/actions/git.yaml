@@ -1,0 +1,35 @@
+---
+# F12's git keys, as Zed's actions.
+# ChangesView.ToggleCommitUi, CheckinProject, Git.Commit.Stage approx
+git.commit-editor: {to: git::ToggleCommitEditor}
+# Git.CreateNewBranch, Git.CreateNewBranch.FromCommit, Git.New.Branch.In.Log approx: the branch
+# picker creates one
+git.branch: {to: git::Branch}
+git.fetch: {to: git::Fetch}
+# Synchronize approx: the active file
+file.reload: {to: workspace::ReloadActiveItem}
+# Vcs.CopyRevisionNumberAction approx: in the git graph
+git.copy-sha: {to: git_graph::CopyCommitSha}
+git.push: {to: git::Push}
+# NextDiff: replaces Zed's F8, GoToDiagnostic
+git.next-hunk: {to: editor::GoToHunk}
+# PreviousDiff: replaces Zed's Shift+F8
+git.previous-hunk: {to: editor::GoToPreviousHunk}
+# Vcs.RollbackChangedLines: the hunks at the cursor
+git.restore-hunk: {to: git::Restore}
+# ChangesView.AddUnversioned, Git.Add, Git.Stage.Add, hg4idea.add approx: in the git panel
+git.toggle-staged: {to: git::ToggleStaged}
+# ChangesView.GroupBy.Directory approx
+git.tree-view: {to: git_panel::ToggleTreeView}
+# ChangesView.Revert, Git.Stage.Revert approx
+git.restore-file: {to: git::RestoreFile}
+# ChangesView.ShelveSilently approx: a stash, not a shelf; in the git panel, as Shift+Ctrl+H is
+# Replace in path's
+git.stash: {to: git::StashAll}
+# ChangesView.UnshelveSilently approx
+git.stash-pop: {to: git::StashPop}
+git.hide: {to: workspace::CloseActiveDock}
+# Git.Commit.And.Push.Executor approx: commits; push stays separate
+git.commit: {to: git::Commit}
+# Vcs.ToggleAmendCommitMode approx
+git.amend: {to: git::Amend}

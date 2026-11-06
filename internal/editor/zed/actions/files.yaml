@@ -1,0 +1,28 @@
+---
+# F12's keys for files, tabs and splits, as Zed's actions.
+# HideAllWindows: replaces Zed's Shift+Esc, ToggleZoom
+panel.toggle-all: {to: workspace::ToggleAllDocks}
+# SelectIn approx
+tree.reveal: {to: pane::RevealInProjectPanel}
+# NextSplitter: takes Shift+Alt+Right, macOS's select word
+pane.next: {to: workspace::ActivateNextPane}
+# NextTab: takes Alt+Right from Zed's word motion
+tab.next: {to: pane::ActivateNextItem}
+# PreviousTab: takes Alt+Left from Zed's word motion
+tab.previous: {to: pane::ActivatePreviousItem}
+pane.previous: {to: workspace::ActivatePreviousPane}
+# ResizeToolWindowDown, ResizeToolWindowLeft approx: by the dock, whichever its side
+panel.shrink: {to: workspace::DecreaseActiveDockSize}
+# ResizeToolWindowRight, ResizeToolWindowUp approx
+panel.grow: {to: workspace::IncreaseActiveDockSize}
+pane.split-right: {to: pane::SplitRight}
+# ToggleFullScreen: Ctrl+Cmd+F stays Zed's too
+window.full-screen: {to: zed::ToggleFullScreen}
+# CloseActiveTab approx
+panel.hide: {to: workspace::CloseActiveDock}
+# CloseContent: macOS's keyboard navigation may take Ctrl+F4
+tab.close: {to: pane::CloseActiveItem}
+pane.maximize: {to: workspace::ToggleZoom}
+window.next: {to: workspace::ActivateNextWindow}
+window.previous: {to: workspace::ActivatePreviousWindow}
+tab.switch: {why: "Shift+Ctrl+Tab is Zed's"}
