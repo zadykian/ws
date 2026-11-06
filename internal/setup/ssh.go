@@ -74,7 +74,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 
 // Report says how ~/.ssh stands against the plan. The step's second run manages the same files,
 // so it says nothing.
-func (s SSH) Report(context.Context) ([]step.Item, error) {
+func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	if s.Again {
 		return nil, nil
 	}
@@ -89,7 +89,10 @@ func (s SSH) Report(context.Context) ([]step.Item, error) {
 		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
 			"first, win where both set a key", own[0].Line)
 	}
-	return []step.Item{include}, nil
+	return gather(ctx,
+		userPath{M: s.M, Kind: step.DirItem, Path: dir},
+		userPath{M: s.M, Kind: step.DirItem, Path: dir + "/config.d", Mode: sshDirMode},
+		fixed{include})
 }
 
 // Apply applies the changes in order.
