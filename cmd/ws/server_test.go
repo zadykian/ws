@@ -144,6 +144,14 @@ func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 	}
 }
 
+func TestServerStateRefusesAStepItsRoleLacks(t *testing.T) {
+	p, _ := serverTerminal()
+	status, stdout, stderr := runWs(p, "", "server", "state", "--only", "tmux/no such")
+	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in tmux`) {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+}
+
 func TestServerStateHelp(t *testing.T) {
 	status, stdout, _ := runWs(fakeProcess(), "", "server", "state", "-h")
 	for _, want := range []string{"--json", "--only", "applies nothing", "no secrets"} {

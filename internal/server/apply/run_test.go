@@ -234,6 +234,33 @@ func TestStateReadsPrepareAndEachRoleAndAppliesNone(t *testing.T) {
 	}
 }
 
+func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
+	var done bool
+	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+		return []step.Step{named{todo{&done}, "x"}, named{todo{&done}, "y"}}
+	}}
+	for _, tc := range []struct{ only, want []string }{
+		{nil, []string{"x", "y"}},
+		{[]string{"a"}, []string{"x", "y"}},
+		{[]string{"a/y"}, []string{"y"}},
+		{[]string{"a/y", "a"}, []string{"x", "y"}},
+	} {
+		c := Config{Options: Options{Only: tc.only}, M: effecttest.NewMachine(), Out: &effecttest.Out{},
+			Prepare: []step.Step{named{todo{&done}, "prepare"}}}
+		got, err := State(context.Background(), c, []roles.Role{r})
+		if err != nil || len(got) != 2 || len(got[0].Steps) != 1 {
+			t.Fatalf("only %q: got %+v, err = %v", tc.only, got, err)
+		}
+		var steps []string
+		for _, report := range got[1].Steps {
+			steps = append(steps, report.Step)
+		}
+		if !slices.Equal(steps, tc.want) {
+			t.Errorf("only %q: steps = %q, want %q", tc.only, steps, tc.want)
+		}
+	}
+}
+
 func TestStateGivesTheRolesNoSecrets(t *testing.T) {
 	var got secrets.Secrets
 	r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Out) []step.Step {

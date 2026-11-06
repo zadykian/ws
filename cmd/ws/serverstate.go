@@ -37,7 +37,7 @@ func newStateCmd(p process) *cobra.Command {
 	}
 	f := c.Flags()
 	f.BoolVar(&asJSON, "json", false, "print the report as JSON")
-	f.StringSliceVar(&opts.Only, "only", nil, "report the named roles alone, as a list or by repeating the flag")
+	f.StringSliceVar(&opts.Only, "only", nil, "report the named roles and ROLE/STEPs alone, as a list or by repeating the flag")
 	return c
 }
 
