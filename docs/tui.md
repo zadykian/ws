@@ -63,11 +63,27 @@ once.
 
 ## Questions
 
-A step asks through the same ports as in plain mode, `Prompt` and `Hidden`. The screen shows the
-question in a field, and the step's goroutine waits for the answer. While a field is open, the
-keys go to it alone. A hidden answer travels on a channel of its own, and enters no log, message
-or error. A paste into a hidden field gives its first line, byte for byte, as the plain prompt
-reads it, and Enter still answers. A step's lines arrive as messages and show in a pane.
+A step asks through the same ports as in plain mode, `Prompt` and `Hidden`, and `effect.Choosing`
+for a few answers to pick from. The screen shows the question in a field, and the step's goroutine
+waits for the answer. While a field is open, the keys go to it alone. A hidden answer travels on a
+channel of its own, and enters no log, message or error. A step's lines arrive as messages and show
+in a pane.
+
+A short window gives up the buttons, whose keys still work, then the frame, then the question's
+words. The input stays, down to a window of one line.
+
+## Fields
+
+A question draws a text field, a password field or a choice. `effect.Choose` asks a choice of a
+`Prompt`. The bridge draws it as a choice field. Any other `Prompt` gets a line that must name an
+option, with the first, or the default, as its answer when empty.
+
+- **Text:** takes a line. `Valid` runs on each edit, and its refusal shows under the input until an
+  edit mends it. A paste's line ends become blanks.
+- **Password:** shows nothing of what is typed. A paste gives its first line, byte for byte, as the
+  plain prompt reads it, and Enter still answers.
+- **Choice:** shows its options in a row, and `←` and `→`, `h` and `l`, or Space move round them.
+  A window too narrow for the row shows the chosen option alone.
 
 ## The run screen
 

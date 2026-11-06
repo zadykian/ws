@@ -12,7 +12,8 @@ func newInput() textinput.Model {
 	input := textinput.New()
 	styles := input.Styles()
 	styles.Cursor.Color = nil
-	styles.Focused.Prompt = lipgloss.NewStyle()
+	plain := lipgloss.NewStyle()
+	styles.Focused.Prompt, styles.Blurred.Prompt, styles.Blurred.Text = plain, plain, plain
 	input.SetStyles(styles)
 	_ = input.Focus()
 	return input

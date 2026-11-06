@@ -39,6 +39,8 @@ func TestFieldAnswerReadsAsThePlainPromptDoes(t *testing.T) {
 		{"blanks trimmed", prompt{text: "Host"}, "  ws ", "", "ws"},
 		{"the default", prompt{text: "Host", fallback: "ws"}, "  ", "", "ws"},
 		{"a default passed over", prompt{text: "Host", fallback: "ws"}, "mac", "", "mac"},
+		{"a paste's line end", prompt{text: "Key"}, "", "SHA256:x\n", "SHA256:x"},
+		{"a paste's two lines", prompt{text: "Key"}, "", "256 SHA256:x\nroot", "256 SHA256:x root"},
 		{"hidden blanks kept", prompt{text: "Password", hidden: true}, " s3 ", "", " s3 "},
 		{"empty and hidden", prompt{text: "Password", hidden: true}, "", "", ""},
 		{"a hidden paste's line end", prompt{text: "Password", hidden: true}, "s", "3\r\n", "s3"},
@@ -74,6 +76,30 @@ func TestFieldShowsWhatValidRefusesAndKeepsTheText(t *testing.T) {
 	f = typeIn(f, "ws")
 	if _, got, ok := f.answer(); !ok || got != "ws" {
 		t.Errorf("mended answer = %q, %v", got, ok)
+	}
+}
+
+func TestFieldChecksTheValueAsItIsTyped(t *testing.T) {
+	short := func(s string) error {
+		if len(s) < 3 {
+			return errors.New("too short")
+		}
+		return nil
+	}
+	shows := func(f field) bool { return strings.Contains(f.render(testTheme, window), "too short") }
+	f := newField(prompt{text: "Host", valid: short}, window)
+	if shows(f) {
+		t.Error("a refusal showed before the first key")
+	}
+	height := lipgloss.Height(f.render(testTheme, window))
+	if f = typeIn(f, "ab"); !shows(f) {
+		t.Error("no refusal as a short value was typed")
+	}
+	if got := lipgloss.Height(f.render(testTheme, window)); got != height {
+		t.Errorf("the box went from %d lines to %d", height, got)
+	}
+	if f, _ = f.update(tea.PasteMsg{Content: "c"}); shows(f) {
+		t.Error("a paste left the refusal of the value it mended")
 	}
 }
 
@@ -127,14 +153,65 @@ func TestFieldScrollsALongAnswerInsideItsBox(t *testing.T) {
 	}
 }
 
-func TestFieldFitsAnyWindow(t *testing.T) {
+func TestFieldScrollsThroughAShrink(t *testing.T) {
+	small := Size{30, 24}
+	long := typeIn(newField(prompt{text: "Key"}, window), strings.Repeat("a", 50)+"END")
+	if got := long.fit(small).render(testTheme, small); !strings.Contains(got, "END") {
+		t.Errorf("the end of the answer went with the shrink:\n%s", got)
+	}
+	inside, _ := long.update(tea.KeyPressMsg{Code: tea.KeyHome})
+	for range 40 {
+		inside, _ = inside.update(tea.KeyPressMsg{Code: tea.KeyRight})
+	}
+	shrunk := inside.fit(small)
+	if got := lipgloss.Width(shrunk.input.view(testTheme, 28)); got > 28 {
+		t.Errorf("past a shrink the input draws %d columns", got)
+	}
+	if got := shrunk.input.input.Position(); got != 40 {
+		t.Errorf("the shrink moved the cursor to %d", got)
+	}
+}
+
+func TestFieldKeepsItsInputInAnyWindow(t *testing.T) {
 	text := strings.Repeat("a long question ", 20)
-	for w := range 12 {
-		for h := range 12 {
+	for w := range 14 {
+		for h := range 14 {
 			size := Size{w, h}
 			got := newField(prompt{text: text}, size).render(testTheme, size)
-			if got != "" && (lipgloss.Height(got) > h || w < minFrameWidth) {
-				t.Errorf("%v: drew %d lines:\n%s", size, lipgloss.Height(got), got)
+			switch {
+			case w == 0 || h == 0:
+				if got != "" {
+					t.Errorf("%v: drew %q", size, got)
+				}
+			case lipgloss.Height(got) > h || lipgloss.Width(got) > w || !strings.Contains(got, ">"):
+				t.Errorf("%v: no input, or past the window:\n%s", size, got)
+			}
+		}
+	}
+}
+
+func TestShortWindowGivesUpTheButtonsThenTheFrame(t *testing.T) {
+	cases := []struct {
+		size    Size
+		want    []string
+		missing []string
+	}{
+		{Size{80, 1}, []string{">"}, []string{"Host", "Question"}},
+		{Size{80, 2}, []string{"Host", ">"}, []string{"Question"}},
+		{Size{80, 3}, []string{"Host", ">"}, []string{"Question", "answer"}},
+		{Size{80, 4}, []string{"Question", "Host", ">"}, []string{"answer"}},
+		{Size{80, 5}, []string{"Question", "Host", ">", "answer"}, nil},
+	}
+	for _, c := range cases {
+		got := newField(prompt{text: "Host"}, c.size).render(testTheme, c.size)
+		for _, want := range c.want {
+			if !strings.Contains(got, want) {
+				t.Errorf("%v: no %q in:\n%s", c.size, want, got)
+			}
+		}
+		for _, missing := range c.missing {
+			if strings.Contains(got, missing) {
+				t.Errorf("%v: %q in:\n%s", c.size, missing, got)
 			}
 		}
 	}

@@ -92,8 +92,16 @@ func TestSessionKeepsAQuestionsKeysFromTheScreen(t *testing.T) {
 	s, got := testSession()
 	s, _ = feed(s, askMsg{prompt{id: 1, text: "Password", hidden: true}},
 		press('a'), tea.PasteMsg{Content: "b"})
-	if len(*got) != 0 || s.field.secret != "ab" {
-		t.Errorf("the screen got %v, and the field holds %q", *got, s.field.secret)
+	if len(*got) != 0 || s.field.input.secret != "ab" {
+		t.Errorf("the screen got %v, and the field holds %q", *got, s.field.input.secret)
+	}
+}
+
+func TestSessionShowsAQuestionInAWindowWithNoRoomForAFrame(t *testing.T) {
+	s, _ := testSession()
+	s, _ = feed(s, tea.WindowSizeMsg{Width: 80, Height: 2}, askMsg{prompt{id: 1, text: "Password", hidden: true}})
+	if got := s.View().Content; !strings.Contains(got, "Password") || !strings.Contains(got, ">") {
+		t.Errorf("no question in:\n%s", got)
 	}
 }
 
@@ -200,5 +208,31 @@ func TestSessionDrawsInAnyWindow(t *testing.T) {
 				t.Errorf("%dx%d: drew %d columns", w, h, got)
 			}
 		}
+	}
+}
+
+func TestSessionAnswersAChoice(t *testing.T) {
+	reply := make(chan string, 1)
+	s, _ := testSession()
+	right := tea.KeyPressMsg{Code: tea.KeyRight}
+	ask := askMsg{prompt{id: 1, text: "Keep?", options: []string{"yes", "no", "later"}, fallback: "no", reply: reply}}
+	s, cmd := feed(s, ask, right, enter)
+	if len(s.asked) != 0 || cmd == nil {
+		t.Fatalf("an answer left %v, and Cmd %v", s.asked, cmd)
+	}
+	if cmd(); <-reply != "later" {
+		t.Error("the choice did not move from its default to the next option")
+	}
+}
+
+func TestFieldOfAChoiceStartsOnItsDefault(t *testing.T) {
+	size := Size{80, 24}
+	f := newField(prompt{text: "Keep?", options: []string{"yes", "no"}, fallback: "no"}, size)
+	if _, answer, ok := f.answer(); !ok || answer != "no" {
+		t.Errorf("answered %q, %v", answer, ok)
+	}
+	got := f.render(testTheme, size)
+	if !strings.Contains(got, "Keep?") || !strings.Contains(got, "[no]") || !strings.Contains(got, "yes") {
+		t.Errorf("drawn as\n%s", got)
 	}
 }

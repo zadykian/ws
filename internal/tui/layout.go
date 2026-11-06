@@ -187,7 +187,7 @@ func (p Pane) render(theme Theme, frame Size) string {
 		edge, border = theme.FocusFrame, theme.FocusBorder
 	}
 	title := ""
-	if p.Title != "" {
+	if p.Title != "" && frame.Width > 3 {
 		title = theme.PaneTitle.MaxWidth(frame.Width - 3).Render(" " + p.Title + " ")
 	}
 	fill := strings.Repeat(border.Top, max(frame.Width-3-lipgloss.Width(title), 0))

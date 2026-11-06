@@ -1,12 +1,9 @@
 package tui
 
 import (
-	"cmp"
 	"strings"
-	"unicode/utf8"
 
 	"charm.land/bubbles/v2/key"
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -17,39 +14,46 @@ const (
 	stopPlace
 )
 
-// boxWidth is the most columns of a box drawn over the screen.
-const boxWidth = 64
+const (
+	// boxWidth is the most columns of a box drawn over the screen.
+	boxWidth = 64
+	// minQuestionHeight is the fewest rows that frame a line of a question over its input.
+	minQuestionHeight = minPaneHeight + 1
+)
 
 // answerButton is the field's first button. Enter presses it from the field too.
 var answerButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "answer"))
 
 // field is the box that takes the answer to a prompt.
 type field struct {
-	prompt  prompt
-	input   textinput.Model
-	footer  Footer
-	problem string
-	// secret is a hidden answer. The input never holds it: its sanitizer makes a space of a tab or
-	// a line end, which an answer that shows nothing would carry unseen.
-	secret string
+	prompt prompt
+	input  FormField
+	footer Footer
 }
 
 // newField returns the field of p, which takes the keys at once.
 func newField(p prompt, window Size) field {
-	f := field{prompt: p, input: newInput(), footer: NewFooter(answerButton, Keys.Interrupt)}
+	kind := TextField
+	switch {
+	case p.hidden:
+		kind = PasswordField
+	case len(p.options) > 0:
+		kind = ChoiceField
+	}
+	spec := FieldSpec{Kind: kind, Label: p.text, Default: p.fallback, Options: p.options, Valid: p.valid}
+	input := NewFormField(spec).Focus()
+	f := field{prompt: p, input: input, footer: NewFooter(answerButton, Keys.Interrupt)}
 	return f.fit(window)
 }
 
 // fit sets the columns of the input, past which it scrolls.
 func (f field) fit(window Size) field {
-	f.input.SetWidth(max(min(window.Width, boxWidth)-2-lipgloss.Width(f.input.Prompt)-1, 1))
+	f.input = f.input.Fit(min(window.Width, boxWidth) - 2)
 	return f
 }
 
 // update hands msg to the buttons, then to the input while the input holds the focus. It returns
-// the place of the button that msg pressed, or -1. The input's Cmd goes: it starts a blink, or
-// reads a clipboard that a server lacks, into a message that would reach the screen. A terminal's
-// own paste comes as tea.PasteMsg.
+// the place of the button that msg pressed, or -1.
 func (f field) update(msg tea.Msg) (field, int) {
 	if press, ok := msg.(tea.KeyPressMsg); ok {
 		var place int
@@ -58,64 +62,39 @@ func (f field) update(msg tea.Msg) (field, int) {
 			return f, place
 		}
 	}
-	if f.prompt.hidden {
-		return f.edit(msg), -1
-	}
-	f.input, _ = f.input.Update(msg)
+	f.input = f.input.Update(msg)
 	return f, -1
 }
 
-// edit takes a key or a paste into a hidden answer, as a terminal's line takes them for the plain
-// prompt: Backspace and Ctrl-U erase, and a paste gives its first line. Enter alone answers, as
-// nothing shows what a paste brought.
-func (f field) edit(msg tea.Msg) field {
-	switch msg := msg.(type) {
-	case tea.PasteMsg:
-		line, _, _ := strings.Cut(strings.ReplaceAll(msg.Content, "\r", "\n"), "\n")
-		f.secret += line
-	case tea.KeyPressMsg:
-		switch {
-		case key.Matches(msg, f.input.KeyMap.DeleteBeforeCursor):
-			f.secret = ""
-		case key.Matches(msg, f.input.KeyMap.DeleteCharacterBackward):
-			_, size := utf8.DecodeLastRuneInString(f.secret)
-			f.secret = f.secret[:len(f.secret)-size]
-		default:
-			f.secret += msg.Text
-		}
-	}
-	return f
-}
-
-// answer returns what the field holds, as effect.Terminal reads it: a hidden line as typed, and
-// any other trimmed, an empty one taking the default. Where Valid refuses that, it returns false,
-// and the field shows why and keeps the text.
+// answer returns what the field holds. Where Valid refuses that, it returns false, and the field
+// shows why and keeps the text.
 func (f field) answer() (field, string, bool) {
-	if f.prompt.hidden {
-		return f, f.secret, true
-	}
-	answer := cmp.Or(strings.TrimSpace(f.input.Value()), f.prompt.fallback)
-	if f.prompt.valid != nil {
-		if err := f.prompt.valid(answer); err != nil {
-			f.problem = err.Error()
-			return f, "", false
-		}
-	}
-	return f, answer, true
+	var ok bool
+	f.input, ok = f.input.Check()
+	return f, f.input.Value(), ok
 }
 
-// render draws the box for a window, cut to its height.
+// render draws the box for a window. The buttons go first in a short window, as their keys work
+// unseen, and then the frame: a run waits on the question, and its keys reach the input, so the input
+// stays. A refusal takes the line under the input, so that the box holds still as one comes and goes.
 func (f field) render(theme Theme, window Size) string {
-	width := min(window.Width, boxWidth)
-	text := f.prompt.text
-	if f.prompt.fallback != "" {
-		text += " [" + f.prompt.fallback + "]"
+	if window.Width < 1 {
+		return ""
 	}
-	lines := []string{lipgloss.NewStyle().Width(width - 2).Render(text), f.input.View()}
-	if f.problem != "" {
-		lines = append(lines, theme.Bad.Width(width-2).Render(f.problem))
+	if window.Width < minFrameWidth || window.Height < minQuestionHeight {
+		lines := f.input.Lines(theme, window.Width, window.Height)
+		return lipgloss.NewStyle().MaxWidth(window.Width).Render(strings.Join(lines, "\n"))
 	}
-	lines = append(lines, "", f.footer.render(theme, width-2))
+	width, room := min(window.Width, boxWidth)-2, window.Height-2
+	lines := f.input.Lines(theme, width, room)
+	footer := f.footer.render(theme, width)
+	spare := room - len(lines) - lipgloss.Height(footer)
+	if spare > 0 && f.input.problem == nil {
+		lines = append(lines, "")
+	}
+	if spare >= 0 {
+		lines = append(lines, footer)
+	}
 	return box(theme, "Question", strings.Join(lines, "\n"), window)
 }
 
