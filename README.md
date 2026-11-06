@@ -87,7 +87,8 @@ them. `ws_user: NAME` sets up the user NAME instead of `zadykian`, the default, 
 exist. `ws_user: root` sets up a cloud VM with no other user. `ws_home` follows the user as
 `/home/NAME`; `ws_home: DIR` sets another home. A cloud VM names
 `security_outbound: false` there before its first run ([Outbound](docs/security.md#outbound)).
-`ws server values set KEY VALUE` writes one key, and an empty VALUE gives its default back.
+`ws server values set KEY VALUE` writes one key, and an empty VALUE gives its default back. From the
+Mac, `ws mac configure` writes them on a form ([The Configure screen](docs/tui-configure.md)).
 ws's last line names the roles that changed, `changed: none` on a second run.
 
 ## Dry runs
