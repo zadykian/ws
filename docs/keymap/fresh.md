@@ -1,14 +1,14 @@
 # Fresh's F12 keymap
 
-The template `config.json.tmpl` holds `keybinding_maps.f12` in Fresh's `config.json`
+The template `config.json.tmpl` holds `keybinding_maps.ws` in Fresh's `config.json`
 ([the config](../fresh.md#the-config)). F12's keys are described in
-[where F12 comes from](../keymap.md#where-f12-comes-from). The page holds counts, rules and limits. The targets and the reasons are in
-[`actions/`](../../internal/editor/fresh/actions/), the one place for them.
+[where F12 comes from](../keymap.md#where-f12-comes-from). The page holds counts, rules and
+limits. The reasons are `//` comments in the template.
 
 ## The counts
 
 - 186 actions in 14 topics: 104 take a Fresh action, and 82 take a reason that Fresh lacks one.
-- The render has 199 bindings: 198 in the map `f12`, which inherits `default`, and ctrl+h outside it.
+- The render has 199 bindings: 198 in the map `ws`, which inherits `default`, and ctrl+h outside it.
 - They serve 95 distinct actions and 30 chords. By `when`, `normal` has 159, `file_explorer` 13
   and `terminal` 27. By kind, 175 are builtin, 23 plugin and 1 with a char.
 - Of 153 keys tested, 147 land on their action through tmux 3.6a, and 151 directly.
