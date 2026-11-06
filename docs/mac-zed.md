@@ -78,13 +78,13 @@ server to every YAML file, Ansible's too.
   reaches a reattached tmux session and whatever runs there.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- Zed's keymap overlay is [keymap/zed.md](keymap/zed.md), and `docs/zed.md`, its page for the
-  server, says what to do when the connection drops.
+- `docs/zed.md`, Zed's page for the server, says what to do when the connection drops.
 
 ## The keymap
 
 The step also writes `~/.config/zed/keymap.json`, which is
-[`mac/zed/keymap.json`](../mac/zed/keymap.json) whole: F12's keys for Zed. `base_keymap` stays `Zed`.
+[`mac/zed/keymap.json`](../mac/zed/keymap.json) whole. That plain file is the source of the keys,
+and a `//` comment beside a binding gives its reason. `base_keymap` stays `Zed`.
 The file carries its own header, and the step takes the start of line 1,
 `// Written by github.com/zadykian/ws`, as ws's mark.
 
@@ -94,7 +94,56 @@ The file carries its own header, and the step takes the start of line 1,
 - Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
   run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
 
-[keymap/zed.md](keymap/zed.md) says which F12 actions Zed has, and why it lacks the others.
+The block at the file's end lists the keys left out, each with its reason. The rest of this
+section holds what the file's comments do not.
+
+### How the keys translate
+
+Zed on macOS, with a US layout:
+
+- Shift with a sign or digit is written as the shifted character without Shift, such as `alt-{`
+  and `ctrl-?`. macOS reports it so, and `shift-alt-[` never matches. Shift with a letter stays.
+- Zed does not tell numpad keys apart ([zed#11948](https://github.com/zed-industries/zed/issues/11948)).
+- Alt with a letter matches by key, so an unbound Alt key still types its character.
+
+### How Zed picks a binding
+
+- The deeper context wins, then the later binding. User bindings load after Zed's.
+- A binding with no context counts as the deepest, so the file's global section beats every default.
+- A chord whose first key also has a binding waits 1 s, then runs that binding. A chord defined
+  before a binding of its first key is ignored (zed#30211). So the file unbinds Zed's Ctrl+K,
+  Ctrl+M and Ctrl+R.
+- `unbind` works only where the section's context matches, so Zed's Ctrl+R in the Diagnostics
+  view still waits.
+
+### The file's sections
+
+In this order:
+
+- The global keys, with no context.
+- Editing, in every editor: `Editor`.
+- Code, in the full editor alone, so that search bars and pickers keep their keys.
+- The signature popup, the project panel, the git panel and the commit message.
+- A stopped debug session, where the step keys leave the Alt keys to type.
+- Esc, which goes back to the editor from a panel. The terminal keeps its own Esc.
+- The terminal, last.
+
+### Two keys of the file's own
+
+Zed has no default key to restart a language server or to reload Zed. They are the remedies after
+a reconnect (`docs/zed.md`, "When the connection drops"). Both keys are free in Zed's defaults:
+
+- Ctrl+Shift+R is `editor::RestartLanguageServer`, in `Editor && mode == full`.
+- Ctrl+Alt+Shift+Y is `workspace::Reload`, in the global section.
+
+Shift keeps the terminal's rule below, so Ctrl+Alt+Shift+Y reaches Zed from the terminal too.
+
+### The terminal's rule
+
+In the terminal, a Ctrl or Alt key with a letter or sign, without Shift, reaches the shell
+(zed#26018). The section unbinds 21 global keys, and the chords' first keys go straight
+(zed#28423). F-keys, named keys and digits stay Zed's. Ctrl+C, Ctrl+D and Ctrl+R stay the shell's.
+Ctrl+B is in the editor only, so the terminal gets it.
 
 ## Changing the settings
 
