@@ -2,7 +2,7 @@ package devtools
 
 import "testing"
 
-func TestServerPathsNameEachServerOfTheCatalogue(t *testing.T) {
+func TestServerPathsNameEachServer(t *testing.T) {
 	paths := ServerPaths("/srv/x")
 	if len(paths) != 7 {
 		t.Fatalf("%d paths: %v", len(paths), paths)
