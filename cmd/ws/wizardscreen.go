@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -23,8 +24,31 @@ type wizardScreen struct {
 	o wizardOptions
 }
 
-// draw runs the stages on the run screen.
-func (w wizardScreen) draw() error { return w.whole() }
+// draw opens the lists over a scan and runs what they choose, or goes straight to the run under
+// --check, as ws mac apply does. The forms come back to a new scan, of what they wrote.
+func (w wizardScreen) draw() error {
+	if !opensList(w.c, w.p, false) {
+		return w.whole()
+	}
+	for {
+		// A new one reads the forms' answers. The run takes the scan's, which holds what it asked.
+		sudo := &wizard.Sudo{}
+		queue := wizardQueue(w.p, w.plainStages())
+		choice, err := tui.PickStages(w.c.Context(), w.config(), w.c.CommandPath(), queue, w.scan(sudo))
+		switch {
+		case err != nil:
+			return err
+		case choice.Configure:
+			if err := configureOn(w.c, w.p, w.config()); err != nil {
+				return err
+			}
+		case len(choice.Only) == 0:
+			return nil
+		default:
+			return w.chosen(choice, sudo)
+		}
+	}
+}
 
 // config is what the wizard's screens draw with. A signal ends a plain wizard through its context,
 // with status 1, so here too it is an error of the run, not signalExit.
@@ -137,6 +161,26 @@ func (w wizardScreen) running(r wizardRun, draw func(tui.Config, tui.Work) error
 func (w wizardScreen) whole() error {
 	return w.running(wizardRun{o: w.o, sudo: &wizard.Sudo{}}, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewRunScreen(runTitle(w.c, w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
+		return tui.Run(w.c.Context(), cfg, screen, work)
+	})
+}
+
+// runOf is the run of what the lists chose. A stage in part leaves out ws's roles by --only, as they
+// run on ws, and ws mac apply's steps by the run's filter. ws's run whole by a tick goes once more, as
+// under --update: a good last run says nothing of a step that drifted after it.
+func (w wizardScreen) runOf(choice tui.Choice, sudo *wizard.Sudo) wizardRun {
+	o := w.o
+	o.check = choice.Check
+	name := wsRunOf(w.plainStages()).Name()
+	o.update = o.update || slices.Contains(choice.Whole, name)
+	return wizardRun{o: o, sudo: sudo, left: wizardLeft(choice, setupStepNames(w.p)), only: choice.Partial[name]}
+}
+
+// chosen runs what the lists chose, on a run of those stages.
+func (w wizardScreen) chosen(choice tui.Choice, sudo *wizard.Sudo) error {
+	r := w.runOf(choice, sudo)
+	return w.running(r, func(cfg tui.Config, work tui.Work) error {
+		screen := tui.NewQueueRun(runTitle(w.c, r.o.check), cfg.Theme, choice)
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }
