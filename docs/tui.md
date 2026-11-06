@@ -3,8 +3,9 @@
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
 `internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen),
 `ws server state` and `ws mac state` draw [the state screen](#the-state-screen), and
-`ws mac configure` draws [the Configure screen](tui-configure.md). The other commands print
-lines for now.
+`ws mac configure` draws [the Configure screen](tui-configure.md). `ws mac wizard` draws
+[two lists](tui-wizard.md), which lead to the other two. The rest, such as `ws update` and
+`ws version`, print lines.
 
 ## Modes
 
@@ -182,9 +183,8 @@ waits on as `[#]`, and the pane beside the list says why. The order of roles is 
 
 ## The state screen
 
-`ws server state` and `ws mac state` draw what a machine holds of what ws manages. The screen reads
-and changes nothing. The Mac's steps report changes and no items yet, so its tabs hold conflicts
-and pending changes alone.
+`ws server state`, `ws mac state` and [the wizard's `s`](tui-wizard.md#the-state-screen) draw what a
+machine holds of what ws manages. The screen reads and changes nothing.
 
 The header holds the tabs, each with its count: Packages, Services, Files, Conflicts and Pending.
 The tabs wrap to a new line in a narrow window. Under a filter a count reads `shown/all`. A check

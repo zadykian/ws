@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os/exec"
@@ -29,20 +30,56 @@ func (Cable) Name() string { return "cable" }
 // WaitsOn is nothing.
 func (Cable) WaitsOn() string { return "" }
 
+// program finds networksetup. sudo gets its path as the user's PATH finds it, whatever PATH sudo
+// would keep.
+func (c Cable) program() (string, error) {
+	look := c.LookPath
+	if look == nil {
+		look = exec.LookPath
+	}
+	program, err := look("networksetup")
+	if err != nil {
+		return "", fmt.Errorf("cannot find networksetup: put /usr/sbin, where macOS keeps it, on PATH")
+	}
+	return program, nil
+}
+
+// Report says how the service stands, where mac.conf names one. A disabled one is a conflict, as no
+// run turns it on, and it keeps its address.
+func (c Cable) Report(ctx context.Context) ([]step.Item, error) {
+	if c.Conf.CableService == "" {
+		return nil, nil
+	}
+	program, err := c.program()
+	if err != nil {
+		return nil, err
+	}
+	list, err := c.M.RunShown(ctx, false, program, "-listallnetworkservices")
+	if err != nil {
+		return nil, fmt.Errorf("networksetup -listallnetworkservices failed: %w", err)
+	}
+	info, err := c.M.RunShown(ctx, false, program, "-getinfo", c.Conf.CableService)
+	if err != nil {
+		return nil, fmt.Errorf("networksetup -getinfo %q failed: %w", c.Conf.CableService, err)
+	}
+	item := step.Item{Kind: step.ServiceItem, Name: c.Conf.CableService, Want: cableClient + " " + cableMask}
+	item.Found = cmp.Or(cableOther(string(info)), item.Want)
+	if _, disabled := serviceListed(string(list), c.Conf.CableService); disabled {
+		item.Found += ", disabled"
+		item.Conflict = "disabled, so the cable carries nothing: turn it on in System Settings › Network"
+	}
+	return []step.Item{item}, nil
+}
+
 // Plan reads the service with networksetup.
 func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 	service := c.Conf.CableService
 	if service == "" {
 		return step.Plan{}, nil
 	}
-	look := c.LookPath
-	if look == nil {
-		look = exec.LookPath
-	}
-	// sudo gets the program's path as the user's PATH finds it, whatever PATH sudo would keep.
-	program, err := look("networksetup")
+	program, err := c.program()
 	if err != nil {
-		return step.Plan{}, fmt.Errorf("cannot find networksetup: put /usr/sbin, where macOS keeps it, on PATH")
+		return step.Plan{}, err
 	}
 	list, err := c.M.RunShown(ctx, false, program, "-listallnetworkservices")
 	if err != nil {

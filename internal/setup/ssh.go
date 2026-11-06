@@ -3,6 +3,7 @@ package setup
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/zadykian/ws/effect"
@@ -51,11 +52,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	in := sshcfg.Inputs{
-		User: s.Conf.User, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
-		IdentityPub: id.Pub, IdentityAgent: id.Agent, CldTabs: s.cldTabs(ctx),
-	}
-	text := []byte(sshcfg.Config(in))
+	text := s.config(ctx, f, id)
 	if err := s.validate(ctx, f, text); err != nil {
 		return step.Plan{}, err
 	}
@@ -69,6 +66,44 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	copied := PlanCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)
 	return step.Plan{Changes: append(copied, sshChanges(f, text)...)}, nil
+}
+
+// config returns the text of config.d/ws.
+func (s SSH) config(ctx context.Context, f sshFacts, id sshcfg.Identity) []byte {
+	return []byte(sshcfg.Config(sshcfg.Inputs{
+		User: s.Conf.User, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
+		IdentityPub: id.Pub, IdentityAgent: id.Agent, CldTabs: s.cldTabs(ctx),
+	}))
+}
+
+// Report says how ~/.ssh stands against the plan. It picks the key as Plan does, past Plan's
+// warning. The step's second run manages the same files, so it says nothing.
+func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
+	if s.Again {
+		return nil, nil
+	}
+	f, err := s.read()
+	if err != nil {
+		return nil, err
+	}
+	id, err := PickKey(ctx, s.M, s.Conf, s.Home)
+	if err != nil {
+		return nil, err
+	}
+	dir := s.Home + "/.ssh"
+	there := f.UserConfig.Exists
+	include := lineItem(dir+"/config", includeLine, there, there && !f.UserConfigNeedsInclude)
+	if own := sshcfg.OwnHosts(string(f.UserConfig.Text), "ws"); len(own) > 0 {
+		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
+			"first, win where both set a key", own[0].Line)
+	}
+	parts := []step.Reporter{
+		userPath{M: s.M, Kind: step.DirItem, Path: dir},
+		userPath{M: s.M, Kind: step.DirItem, Path: dir + "/config.d", Mode: sshDirMode},
+		userFile{M: s.M, Path: dir + "/config.d/ws", Text: s.config(ctx, f, id), Mode: sshFileMode},
+		fixed{include},
+	}
+	return gather(ctx, append(parts, keyCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)...)...)
 }
 
 // Apply applies the changes in order.

@@ -25,7 +25,7 @@ func TestVarsReachTakesTheLockOnceAndLetsItGo(t *testing.T) {
 	p, m := macTerminal()
 	r := &varsReach{p: p}
 	for range 2 {
-		if _, err := r.reach(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "no direct way") {
+		if _, err := r.reach(context.Background(), nil, nil); err == nil || !strings.Contains(err.Error(), "no direct way") {
 			t.Fatalf("err = %v", err)
 		}
 	}
@@ -42,7 +42,7 @@ func TestVarsReachLeavesAnotherRunsLock(t *testing.T) {
 	p, m := macTerminal()
 	m.Dirs["/tmp/"+wizard.LockName] = 0o700
 	r := &varsReach{p: p}
-	if _, err := r.reach(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "another run holds") {
+	if _, err := r.reach(context.Background(), nil, nil); err == nil || !strings.Contains(err.Error(), "another run holds") {
 		t.Fatalf("err = %v", err)
 	}
 	r.close(context.Background())
@@ -81,6 +81,25 @@ func (w farWs) RunInput(ctx context.Context, in []byte, name string, args ...str
 	}
 	w.ops <- args[at+1:]
 	return []byte(w.file), nil
+}
+
+// A way to root that the scan read holds across a reach, and one it never read is read there.
+func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
+	p, m := macTerminal()
+	p.machine = newFarWs(m, "")
+	sudo := &wizard.Sudo{}
+	r := &varsReach{p: p, sudo: sudo}
+	defer r.close(context.Background())
+	got, err := r.reach(context.Background(), nil, []byte("script"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Sudo != sudo || string(got.Script) != "script" {
+		t.Errorf("remote = %+v", got)
+	}
+	if _, err := got.Do(context.Background(), "status"); err != nil {
+		t.Errorf("the reach left sudo unread: %v", err)
+	}
 }
 
 func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {

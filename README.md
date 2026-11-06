@@ -132,8 +132,8 @@ lines on stderr. `--json` prints the version of ws, then each role with its step
 changes.
 
 `ws mac state` does the same for the Mac, as `ws mac apply --check` reads it: it needs `mac.conf`,
-and not root. On the screen, sudo's password comes through a question. The Mac's steps report
-their changes and no items yet. `--json` prints the version of ws, then each step.
+and not root. On the screen, sudo's password comes through a question. `--json` prints the version
+of ws, then each step ([What the Mac reports](docs/mac.md#what-the-mac-reports)).
 
 ```sh
 ws mac state

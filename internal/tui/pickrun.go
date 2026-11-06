@@ -14,10 +14,23 @@ func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work
 }
 
 // PickStages draws a queue's two lists over scan, as Pick draws a list. scan's Bridge.Report fills
-// a stage from what its machine says. A Choice with neither steps nor Configure says that they left.
+// a stage from what its machine says. A Choice with no steps, Configure or State says that they left.
 func PickStages(ctx context.Context, c Config, title string, stages []Stage, scan Work) (Choice, error) {
 	picks := make(chan Choice, 1)
 	return pick(ctx, c, newQueueScreen(title, c.Theme, stages, picks), picks, scan)
+}
+
+// Reopen draws the lists again as left, a State choice, found them, and returns the next choice. No
+// scan runs, as left came past a scan's end and the state screen changes nothing: what the scan found
+// stands, and so do the boxes, which a scan would choose again.
+func Reopen(ctx context.Context, c Config, left Choice) (Choice, error) {
+	picks := make(chan Choice, 1)
+	screen := left.back
+	screen.picks = picks
+	return pick(ctx, c, screen, picks, func(ctx context.Context, _ *Bridge) error {
+		<-ctx.Done()
+		return nil
+	})
 }
 
 // Report fills a stage of the lists with what its machine says: sections, or problem, why it says

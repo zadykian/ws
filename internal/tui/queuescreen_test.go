@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"io"
 	"slices"
 	"strings"
@@ -103,7 +104,7 @@ func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 	if s.list.side != MacSide || s.footer.Focused() >= 0 {
 		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
 	}
-	if s = pickSent(s, shiftTab); s.footer.Focused() != pickConfigurePlace {
+	if s = pickSent(s, shiftTab); s.footer.Focused() != pickStatePlace {
 		t.Errorf("focus %d", s.footer.Focused())
 	}
 	if s = pickSent(s, tab); s.list.side != MacSide || s.footer.Focused() >= 0 {
@@ -164,6 +165,45 @@ func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
 	got, err := PickStages(t.Context(), c, "ws", testStages(), waitForCtx)
 	if err != nil || !got.Configure {
 		t.Errorf("PickStages = %+v, %v", got, err)
+	}
+}
+
+func TestStateKeyNamesTheListInFocus(t *testing.T) {
+	if got := chosenBy(t, scannedMsg{}, press('s')); !got.State || got.Side != MacSide || len(got.Only) != 0 {
+		t.Errorf("s on the Mac's list = %+v", got)
+	}
+	if got := chosenBy(t, scannedMsg{}, tab, press('s')); !got.State || got.Side != WsSide {
+		t.Errorf("s on ws's list = %+v", got)
+	}
+}
+
+func TestStateKeyWaitsForTheScanAndTheFilter(t *testing.T) {
+	if s := pickSent(testQueueScreen(), press('s')); s.left {
+		t.Error("s left a scan under way")
+	}
+	s := pickSent(testQueueScreen(), scannedMsg{}, press('/'), press('s'))
+	if s.left || s.list.words != "s" {
+		t.Errorf("left %v, words %q", s.left, s.list.words)
+	}
+}
+
+// A list of steps alone has no machine to read, and no such button.
+func TestStateKeyIsAQueuesAlone(t *testing.T) {
+	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), scannedMsg{}, press('s'))
+	if s.left {
+		t.Error("s left a list of steps")
+	}
+}
+
+// What the maintainer chose comes back: a new scan would choose the boxes again.
+func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
+	s := pickSent(testQueueScreen(), scannedMsg{problem: "no network"}, press('n'), press(' '))
+	var out bytes.Buffer
+	c := noKeys(&out)
+	c.In = strings.NewReader("\r")
+	got, err := Reopen(t.Context(), c, Choice{State: true, back: s})
+	if err != nil || !slices.Equal(got.Only, []string{"Tools"}) {
+		t.Errorf("Reopen = %+v, %v", got, err)
 	}
 }
 

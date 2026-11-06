@@ -25,8 +25,9 @@ func newMacStateCmd(p process) *cobra.Command {
 		Use:   "state",
 		Short: "report what the Mac's steps would change",
 		Long: "It reads alone and applies nothing, as ws mac apply --check does, and needs what it needs: " +
-			"mac.conf, and not root. The Mac's steps report their changes and no items yet, so a step " +
-			"that fails stands in the report as a check. The exit code stays 0. A report holds no secret.\n\n" +
+			"mac.conf, and not root. The Mac's steps report the packages, services and files ws manages " +
+			"there, and a step that fails stands in the report as a check. The exit code stays 0. " +
+			"A report holds no secret.\n\n" +
 			"At a terminal it draws the state screen on stderr, where sudo's password comes through a question. " +
 			"--plain prints the report as text, and so does a pipe. " +
 			"The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
@@ -46,13 +47,7 @@ func runMacState(c *cobra.Command, p process, asJSON bool) error {
 		return err
 	}
 	if drawsReport(c, p) {
-		machine := readMachine(p.machine)
-		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-			// The read takes the screen's effects as a run does, as the terminal under it is not theirs.
-			steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), machine(ctx, b), b, io.Discard, true)
-			reports, err := step.Read(ctx, steps)
-			return []tui.StateSection{{Reports: reports}}, err
-		})
+		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), macRead(p))
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
@@ -66,6 +61,22 @@ func runMacState(c *cobra.Command, p process, asJSON bool) error {
 		return writeJSON(c.OutOrStdout(), macDoc{Version: p.version, Steps: reports})
 	}
 	return writeMacState(c.OutOrStdout(), reports)
+}
+
+// macRead is the state screen's read of the Mac. It takes mac.conf itself, as the wizard opens the
+// screen on a Mac that may have none: the header then says so, and the wizard stays.
+func macRead(p process) tui.StateReader {
+	machine := readMachine(p.machine)
+	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
+		home, settings, err := loadMacConf(p)
+		if err != nil {
+			return nil, err
+		}
+		// The read takes the screen's effects as a run does, as the terminal under it is not theirs.
+		steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), machine(ctx, b), b, io.Discard, true)
+		reports, err := step.Read(ctx, steps)
+		return []tui.StateSection{{Reports: reports}}, err
+	}
 }
 
 // writeMacState prints the steps' reports as text.

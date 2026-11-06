@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
@@ -46,6 +47,26 @@ func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	return step.Plan{Changes: append(cs, rs...)}, nil
+}
+
+// Report says how routes.d/mac-conf and the resolvers that mac.conf names stand. A file a run is to
+// remove comes from its change, as mac.conf no longer names it.
+func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
+	if n.Conf.PublicKey == "" {
+		return nil, nil
+	}
+	var parts []step.Reporter
+	if nets := strings.Fields(n.Conf.TunnelNetworks); len(nets) > 0 {
+		parts = append(parts, host.File{M: n.M, Path: tunnelDir + "/routes.d/mac-conf", Content: []byte(routesText(nets)), Mode: 0o644})
+	}
+	list := resolvers(n.Conf.Resolvers)
+	if len(list) > 0 {
+		parts = append(parts, host.Dir{M: n.M, Path: resolverDir, Mode: 0o755})
+	}
+	for _, r := range list {
+		parts = append(parts, host.File{M: n.M, Path: resolverDir + "/" + r.Domain, Content: []byte(resolverText(r.Addresses)), Mode: 0o644})
+	}
+	return gather(ctx, parts...)
 }
 
 func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {

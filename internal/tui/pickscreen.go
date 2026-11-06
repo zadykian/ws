@@ -21,6 +21,7 @@ const (
 	pickCheckPlace
 	pickQuitPlace
 	pickConfigurePlace
+	pickStatePlace
 )
 
 // pickClearKey drops the filter's words.
@@ -40,6 +41,11 @@ type Choice struct {
 	// Whole names the stages of a queue that run every step, one of them by a tick. Such a stage is
 	// to run though its last run passed. One that a lock alone holds whole isn't.
 	Whole []string
+	// State leaves a queue for the state screen of Side's machine, and Reopen comes back to it.
+	State bool
+	Side  Side
+	// back is the screen that State left.
+	back pickScreen
 	// list is the lists as the maintainer left them, for the screen that follows the run.
 	list pickList
 }
@@ -157,6 +163,8 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		return s.leave(Choice{})
 	case pickConfigurePlace:
 		return s.leave(Choice{Configure: true})
+	case pickStatePlace:
+		return s.leave(Choice{State: true, Side: s.list.side, back: s})
 	default:
 		s.list = s.list.moved(msg, max(s.listHeight(), 1))
 	}
@@ -195,13 +203,17 @@ func (s pickScreen) leave(c Choice) (pickScreen, tea.Cmd) {
 }
 
 // enabled returns s with its boxes held while the scan ticks them, as a press would race it. A run
-// waits for something chosen, as a run with no Only runs every step.
+// waits for something chosen, as a run with no Only runs every step. The state screen waits for the
+// scan's end, as both read the same machine.
 func (s pickScreen) enabled() pickScreen {
 	for place := pickTogglePlace; place <= pickPendingPlace; place++ {
 		s.footer = s.footer.Enable(place, !s.scanning)
 	}
 	some := !s.scanning && len(s.list.only()) > 0
 	s.footer = s.footer.Enable(pickRunPlace, some).Enable(pickCheckPlace, some)
+	if s.queued {
+		s.footer = s.footer.Enable(pickStatePlace, !s.scanning)
+	}
 	return s
 }
 

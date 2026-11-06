@@ -11,9 +11,9 @@ The numbers run across both lists, in the order of the run. Stage 3 can stand in
 stages of `Mac`, and the order, the locks and the count hold across the machines. A stage's own
 steps stand under it, indented, with no number.
 
-Tab walks the lists, then the buttons, which add `configure` to the list's, and Shift-Tab walks
-back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act on both lists, and `e` leaves for
-the values' form at any time, a scan under way included. `q` runs nothing.
+Tab walks the lists, then the buttons, which add `configure` and `state` to the list's, and
+Shift-Tab walks back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act on both lists, and
+`e` leaves for the values' form at any time, a scan under way included. `q` runs nothing.
 
 Each stage's box follows its steps, and `[-]` says that some are on. A stage run in part stays
 pending, and the detail says so. A stage that a chosen one waits on is locked as `[#]`, with its
@@ -41,6 +41,21 @@ The scan is `--check`, so it asks what a check asks, over the lists. sudo's pass
 over to the run, and the forms drop it, as they may change the way to ws. The values Answers rehearses
 go nowhere, and the run asks them again: `e` is the way to write them first. ws's prepare steps have
 no row, as they run whatever the roles do and `--only` refuses their name.
+
+## The state screen
+
+`s` opens [the state screen](tui.md#the-state-screen) of the machine of the list in focus. It waits
+for the scan's end, as both read that machine. The screen changes nothing, so `q` comes back to the
+lists as they stood, with no new scan. `e` comes back to a new scan, which chooses the boxes again.
+The run's screen has no `s`, as ssh and the lock are the run's.
+
+The Mac's read is `ws mac state`'s, and ws's is `ws server state`'s, over ssh under the wizard's
+lock. sudo's password carries from the scan. A scan that stopped before it leaves the state screen
+to ask, and the run keeps the answer.
+
+A read that fails shows in the header and ends nothing. A Mac with no `mac.conf` fails so, and so
+does a ws at another version or with none. A first run's address, which the Host key stage asked,
+goes with the scan's lock. ws's read then fails until a run sets the way up.
 
 ## The run
 

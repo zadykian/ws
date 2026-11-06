@@ -25,7 +25,8 @@ type wizardScreen struct {
 }
 
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
-// --check, as ws mac apply does. The forms come back to a new scan, of what they wrote.
+// --check, as ws mac apply does. The forms come back to a new scan, of what they wrote, and the
+// state screen, which writes nothing, to the lists as it found them.
 func (w wizardScreen) draw() error {
 	if !opensList(w.c, w.p, false) {
 		return w.whole()
@@ -35,6 +36,9 @@ func (w wizardScreen) draw() error {
 		sudo := &wizard.Sudo{}
 		queue := wizardQueue(w.p, w.plainStages())
 		choice, err := tui.PickStages(w.c.Context(), w.config(), w.c.CommandPath(), queue, w.scan(sudo))
+		for err == nil && choice.State {
+			choice, err = w.stated(choice, sudo)
+		}
 		switch {
 		case err != nil:
 			return err

@@ -178,7 +178,8 @@ func TestMacStateReadsMacConf(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.machine = m
 	status, stdout, _ := runWs(p, "", "mac", "state", "--json")
-	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) {
+	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) ||
+		!strings.Contains(stdout, `"kind": "package"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
 	}
 }
@@ -194,6 +195,13 @@ func macStateAtTerminal() process {
 	p.machine = m
 	p.tty, p.errTTY, p.outTTY = true, true, true
 	return p
+}
+
+func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
+	_, err := macRead(fakeProcess())(t.Context(), nil)
+	if err == nil || !strings.Contains(err.Error(), "is missing") {
+		t.Errorf("err = %v", err)
+	}
 }
 
 func TestMacStateDrawsTheScreenAtATerminal(t *testing.T) {
