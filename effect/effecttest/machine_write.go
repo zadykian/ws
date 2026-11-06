@@ -55,6 +55,20 @@ func (m *Machine) PassInput(ctx context.Context, stdin []byte, name string, args
 	return err
 }
 
+// PassLines records the command as RunInput does, and offers each line of its result's output to
+// take. A line that take leaves goes in Passed. It returns the error of its result.
+func (m *Machine) PassLines(ctx context.Context, stdin []byte, take func(line string) bool, name string, args ...string) error {
+	out, err := m.RunInput(ctx, stdin, name, args...)
+	for line := range strings.Lines(string(out)) {
+		if line = strings.TrimSuffix(line, "\n"); !take(line) {
+			m.mu.Lock()
+			m.Passed = append(m.Passed, line)
+			m.mu.Unlock()
+		}
+	}
+	return err
+}
+
 // RunRoot records the command as root's and returns its result from the table.
 func (m *Machine) RunRoot(_ context.Context, name string, args ...string) ([]byte, error) {
 	return m.run("root", name, args)
