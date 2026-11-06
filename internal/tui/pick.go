@@ -62,6 +62,8 @@ type pickList struct {
 	rows []pickRow
 	// heard holds what the scan printed since a step last ended.
 	heard []Line
+	// at is the cursor's place in lines.
+	at int
 }
 
 // newPickList returns the list of groups, each step open and left out.
