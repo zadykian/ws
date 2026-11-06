@@ -21,6 +21,30 @@ func TestReplace(t *testing.T) {
 	}
 }
 
+func TestReplaceQuotesABlank(t *testing.T) {
+	if got, want := replace("K=old\n", "K", "a b"), "K=\"a b\"\n"; got != want {
+		t.Errorf("replace = %q; want %q", got, want)
+	}
+}
+
+func TestConfSetAllPassesAPairTogether(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
+	m.Results["mkdir -p /h"] = effecttest.Result{}
+	f := confFile{"/h/mac.conf", "Configure", m, &effecttest.Out{}}
+	if err := f.set(context.Background(), "WS_LAN", "10.88.0.0/24"); err == nil {
+		t.Error("set of half a pair = nil; want a refusal")
+	}
+	pair := []setting{{"WS_LAN", "10.88.0.0/24"}, {"WS_LAN_ADDRESS", "10.88.0.10"}}
+	if err := f.setAll(context.Background(), pair...); err != nil {
+		t.Fatal(err)
+	}
+	want := "WS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n"
+	if got := string(m.Files["/h/mac.conf"]); got != want {
+		t.Errorf("mac.conf = %q; want %q", got, want)
+	}
+}
+
 func TestConfSet(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_PUBLIC_KEY=x\n")

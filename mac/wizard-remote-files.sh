@@ -12,14 +12,18 @@
 #   roles read.
 # - user NAME names NAME in that file as ws_user, for ws server apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
+# - values prints that file, and nothing where there is none. values PAIR... runs ws server values
+#   set on each PAIR, the base64 of KEY=VALUE: ssh joins its arguments for this shell, which would
+#   split a value at a blank, run one with a quote, and lose an empty one.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
 set -eu
 
-# Sysfs's network interfaces, the machine's values for ws server apply and the Mac's key for wg0.
-# CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
+# Sysfs's network interfaces, ws, the machine's values for ws server apply and the Mac's key for
+# wg0. CI's stand-in for ws roots each, a line NAME=PATH, in a directory of its own.
 net=/sys/class/net
+ws=/usr/local/bin/ws
 vars=/etc/ws/host_vars.yml
 peer=/etc/wireguard/mac.pub
 
@@ -123,6 +127,21 @@ peer() {
     say "wrote $peer"
 }
 
+# values [PAIR...] reads vars, or writes each pair, as the header says. A value's checks are ws's.
+values() {
+    if [ $# = 0 ]; then
+        [ ! -e "$vars" ] || cat "$vars" || die "cannot read $vars"
+        return 0
+    fi
+    [ -x "$ws" ] || die "$ws is not there: the wizard installs it"
+    for pair; do
+        case $pair in *[!A-Za-z0-9+/=]*) die "'$pair' is not base64" ;; esac
+        text=$(printf %s "$pair" | base64 -d) || die "'$pair' is not base64"
+        case $text in [a-z]*=*) ;; *) die "'$pair' holds no KEY=VALUE" ;; esac
+        "$ws" server values set -- "${text%%=*}" "${text#*=}" || die "cannot write ${text%%=*}"
+    done
+}
+
 main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, through sudo or a root login"
     case ${1-} in
@@ -130,8 +149,9 @@ main() {
     link) link "${2-}" ;;
     user) user "${2-}" ;;
     peer) peer "${2-}" ;;
+    values) shift && values "$@" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote-files.sh wait PORT | link [PORT] | user NAME |" \
-        "peer KEY" ;;
+        "peer KEY | values [PAIR...]" ;;
     esac
 }
 

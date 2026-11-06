@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"slices"
 	"strings"
 
@@ -9,6 +10,41 @@ import (
 
 // noteRows is the most rows of what a save said that the screen keeps under the form.
 const noteRows = 6
+
+// Configure draws the sheets on c.Out, a form each, until a leave, with title over them. It returns
+// nil past a leave, and Cut's error past Ctrl-C or a signal, which drop what is unsaved. Saves run
+// here, off the screen's goroutine, and what they print stays on the screen.
+func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
+	jobs := make(chan configureJob)
+	done := make(chan struct{})
+	send := func(j configureJob) {
+		select {
+		case jobs <- j:
+		case <-done:
+		}
+	}
+	screen := newConfigureScreen(title, c.Theme, send, sheets)
+	return Run(ctx, c, screen, func(ctx context.Context, b *Bridge) error {
+		defer close(done)
+		return serveJobs(ctx, b, jobs)
+	})
+}
+
+// serveJobs saves until a job leaves or ctx ends. The context's error is the one a cut run ends with.
+func serveJobs(ctx context.Context, b *Bridge, jobs <-chan configureJob) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case job := <-jobs:
+			if job.leave {
+				return nil
+			}
+			sheet, err := job.sheet.Save(ctx, b, job.edits)
+			b.send(savedMsg{job.place, sheet, err})
+		}
+	}
+}
 
 // configureJob is what the screen asks of its work. It travels on a channel and never as a message,
 // as the edits can hold a secret.

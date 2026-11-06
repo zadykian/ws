@@ -17,7 +17,8 @@
 # which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
 # must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
 # the linked file holds the line. The files script's user must name ws_user there, which status
-# reads, and refuse no user's name and a link. The stand-ins' state goes back.
+# reads, and refuse no user's name and a link. Its values must print the file, and values PAIR...
+# run ws server values set on each pair, an empty value too. The stand-ins' state goes back.
 
 set -u
 
@@ -166,7 +167,14 @@ if ! printf '%s\n' "$out" | grep -qx 'user zadykian' || ! sudo grep -qx 'ws_user
 fi
 files user a,b
 ! sudo grep -q 'a,b' "$vars" && [ "$status" = 1 ] || error "its user with no user's name exited $status"
-sudo rm -r "${vars%/*}"
+files values
+[ "$status" = 0 ] && [ "$out" = "$(sudo cat "$vars")" ] || error "its values printed '$out', and exited $status"
+files values "$(printf 'ws_git_signing_key=a b' | base64)" "$(printf 'ws_home=' | base64)"
+[ "$status" = 0 ] && [ "$(sudo cat "$ws/values.log")" = "$(printf '%s\n' \
+    '[--][ws_git_signing_key][a b]' '[--][ws_home][]')" ] || error "its values PAIR... exited $status"
+files values '%%'
+[ "$status" = 1 ] || error "its values with no base64 exited $status"
+sudo rm -r "${vars%/*}" "$ws/values.log"
 
 # ws's ports, in a sysfs of the stand-in's, root's: the uplink, a port with carrier, one without and
 # with an address, one that is down, and a wireless one. A member of the bridge br0 has carrier.

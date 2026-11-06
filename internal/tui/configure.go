@@ -13,11 +13,13 @@ import (
 const (
 	savePlace = iota
 	formLeavePlace
+	nextFormPlace
 )
 
 var (
-	saveButton  = key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save"))
-	leaveButton = key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "leave"))
+	saveButton     = key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save"))
+	leaveButton    = key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "leave"))
+	nextFormButton = key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next form"))
 	// fieldUp and fieldDown are the arrows alone, as k and j are letters of a value.
 	fieldUp   = key.NewBinding(key.WithKeys("up"))
 	fieldDown = key.NewBinding(key.WithKeys("down"))
@@ -52,13 +54,18 @@ type configureScreen struct {
 	leaving bool
 }
 
-// newConfigureScreen returns the screen of sheets, on the first.
+// newConfigureScreen returns the screen of sheets, on the first. A second sheet adds the button that
+// walks them.
 func newConfigureScreen(title string, theme Theme, send func(configureJob), sheets []Sheet) configureScreen {
 	forms := make([]Form, 0, len(sheets))
 	for _, sheet := range sheets {
 		forms = append(forms, NewForm(theme, sheet.Fields))
 	}
-	footer := NewFooter(saveButton, leaveButton)
+	buttons := []key.Binding{saveButton, leaveButton}
+	if len(sheets) > 1 {
+		buttons = append(buttons, nextFormButton)
+	}
+	footer := NewFooter(buttons...)
 	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer, send: send}
 }
 
@@ -136,6 +143,8 @@ func (s configureScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return s.save()
 	case place == formLeavePlace:
 		return s.leave(again)
+	case place == nextFormPlace:
+		return s.nextForm().fitted(), nil
 	case !onForm && s.footer.Focused() < 0:
 		return s.with(s.form().Enter(key.Matches(msg, Keys.Prev))), nil
 	case onForm:
@@ -190,6 +199,14 @@ func (s configureScreen) unsaved() int {
 		changed += form.Changed()
 	}
 	return changed
+}
+
+// nextForm shows the next sheet, with the focus on its first field. Each form keeps its typing, and
+// a save writes the one that shows.
+func (s configureScreen) nextForm() configureScreen {
+	s.at = (s.at + 1) % len(s.sheets)
+	s.footer.focus = 0
+	return s.with(s.form().Enter(false))
 }
 
 // View draws the form that shows.

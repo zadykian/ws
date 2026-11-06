@@ -10,7 +10,7 @@
 #   curl writes the release's install.sh, which puts its WS_VERSION in ws.version;
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
 # - run.log holds systemd-run's arguments, and server.log the arguments of ws server apply, a line
-#   each;
+#   each; values.log holds those of ws server values set, a line each, each argument in brackets;
 # - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
 #   ws server apply --secrets found, identity and secrets.age;
 # - server.wait holds the seconds that ws server apply runs, and server.status its status;
@@ -148,6 +148,12 @@ ws)
     case $1 in
     version) cat "$s/ws.version" 2>/dev/null ;;
     server)
+        if [ "$2 ${3-}" = 'values set' ]; then
+            shift 3
+            printf '[%s]' "$@" >>"$s/values.log"
+            echo >>"$s/values.log"
+            exit 0
+        fi
         [ "$2" = apply ] || exit 2
         shift 2
         echo "$*" >>"$s/server.log"
