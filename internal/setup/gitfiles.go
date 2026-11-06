@@ -35,8 +35,29 @@ func (g *Git) put(file string, text string, mode fs.FileMode) (step.Change, erro
 	return nil, nil //nolint:nilnil // nothing to change
 }
 
-// files plans ~/.config/ws and the files in it: the script for a key of Secretive's, the allowed
-// signers once the key is there, and gitconfig. Under --check, before the key is made, there are no
+// gitFile is a file of ~/.config/ws.
+type gitFile struct {
+	path, text string
+	mode       fs.FileMode
+}
+
+// list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
+// once the key is there, and gitconfig.
+func (g *Git) list(key gitKey, gh string) []gitFile {
+	dir := g.Home + "/.config/ws"
+	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.Pub, Gh: gh, Dir: dir}
+	var list []gitFile
+	if sshcfg.SecretiveKey(key.Pub, g.Home) {
+		in.Program = dir + "/secretive-ssh-keygen"
+		list = append(list, gitFile{in.Program, gitcfg.Wrapper(g.Home + "/" + sshcfg.SecretiveData), 0o755})
+	}
+	if key.Public != "" {
+		list = append(list, gitFile{dir + "/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644})
+	}
+	return append(list, gitFile{dir + "/gitconfig", gitcfg.Config(in), 0o644})
+}
+
+// files plans ~/.config/ws and the files in it. Under --check, before the key is made, there are no
 // allowed signers.
 func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 	dir := g.Home + "/.config/ws"
@@ -53,24 +74,10 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 		}
 	}
 	cs = append(cs, PlanCopy(g.M, key.Pub, key.Text, g.Home)...)
-	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.Pub, Gh: gh, Dir: dir}
-	secretive := g.Home + "/" + sshcfg.SecretiveData
-	type file struct {
-		path, text string
-		mode       fs.FileMode
-	}
-	var list []file
-	if sshcfg.SecretiveKey(key.Pub, g.Home) {
-		in.Program = dir + "/secretive-ssh-keygen"
-		list = append(list, file{in.Program, gitcfg.Wrapper(secretive), 0o755})
-	}
-	if key.Public != "" {
-		list = append(list, file{dir + "/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644})
-	} else {
+	if key.Public == "" {
 		cs = append(cs, Pending("would write "+dir+"/allowed_signers once the key is made"))
 	}
-	list = append(list, file{dir + "/gitconfig", gitcfg.Config(in), 0o644})
-	for _, f := range list {
+	for _, f := range g.list(key, gh) {
 		c, err := g.put(f.path, f.text, f.mode)
 		if err != nil {
 			return nil, err
