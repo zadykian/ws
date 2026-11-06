@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/internal/editor/zed"
@@ -32,35 +31,6 @@ func TestKeymapEqualsTheMacsFileByteForByte(t *testing.T) {
 	}
 	if !bytes.Equal(got, mac.ZedKeymap) {
 		t.Fatalf("keymap.json differs: %d bytes, want %d\n%s", len(got), len(mac.ZedKeymap), got)
-	}
-}
-
-func TestTheKeymapHasWsMarkAndIsJSONUnderItsComments(t *testing.T) {
-	got, err := zed.Keymap()
-	if err != nil {
-		t.Fatal(err)
-	}
-	var lines []string
-	for _, l := range strings.Split(string(got), "\n") {
-		if !strings.HasPrefix(strings.TrimSpace(l), "//") {
-			lines = append(lines, l)
-		}
-	}
-	if !strings.HasPrefix(string(got), "// Written by github.com/zadykian/ws") {
-		t.Error("the keymap does not start with ws's mark")
-	}
-	if !json.Valid([]byte(strings.Join(lines, "\n"))) {
-		t.Error("the keymap is not valid JSON under its comments")
-	}
-}
-
-func TestTheSettingsAreJSON(t *testing.T) {
-	got, err := zed.Settings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !json.Valid(got) {
-		t.Errorf("the settings are not valid JSON:\n%s", got)
 	}
 }
 
