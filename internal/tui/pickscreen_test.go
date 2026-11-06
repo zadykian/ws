@@ -25,7 +25,7 @@ func pickShown(s pickScreen) string { return stripped(s.View().Content) }
 // testPick is a screen at 80 by 24, its scan under way.
 func testPick() pickScreen {
 	groups := []Group{{Name: "base", Steps: []string{"Packages", "Locale"}}, {Name: "ssh", Steps: []string{"Keys"}}}
-	return pickSent(newPickScreen("ws server apply", testTheme, groups), tea.WindowSizeMsg{Width: 80, Height: 24})
+	return pickSent(newPickScreen("ws server apply", testTheme, groups, make(chan Choice, 1)), tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 
 func TestPickScreenShowsEveryStepBeforeTheScan(t *testing.T) {
@@ -93,5 +93,41 @@ func TestPickScreenKeysTurnTheBoxes(t *testing.T) {
 func TestPickScreenHoldsItsBoxesDuringTheScan(t *testing.T) {
 	if got := pickSent(testPick(), press('a')).list.only(); len(got) != 0 {
 		t.Errorf("only = %q, want none", got)
+	}
+}
+
+// picked presses msg on s and returns the choice that it gives, with false where it gives none.
+func picked(s pickScreen, msg tea.Msg) (Choice, bool) {
+	picks := make(chan Choice, 1)
+	s.picks = picks
+	_, leaving := s.Update(msg)
+	if leaving == nil {
+		return Choice{}, false
+	}
+	leaving()
+	return <-picks, true
+}
+
+func TestPickScreenGivesItsChoice(t *testing.T) {
+	cases := []struct {
+		msg  tea.Msg
+		want Choice
+	}{
+		{enter, Choice{Only: []string{"base/Packages", "ssh/Keys"}}},
+		{press('c'), Choice{Only: []string{"base/Packages", "ssh/Keys"}, Check: true}},
+		{press('q'), Choice{}},
+	}
+	for _, c := range cases {
+		got, ok := picked(scannedPick(), c.msg)
+		if !ok || !slices.Equal(got.Only, c.want.Only) || got.Check != c.want.Check {
+			t.Errorf("%v: choice = %+v, %v, want %+v", c.msg, got, ok, c.want)
+		}
+	}
+}
+
+func TestPickScreenGivesOneChoice(t *testing.T) {
+	s := pickSent(scannedPick(), press('q'))
+	if got, ok := picked(s, enter); ok {
+		t.Errorf("enter gave %+v past q", got)
 	}
 }

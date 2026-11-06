@@ -16,7 +16,18 @@ const (
 	pickNonePlace
 	pickInvertPlace
 	pickPendingPlace
+	pickRunPlace
+	pickCheckPlace
+	pickQuitPlace
 )
+
+// Choice is what the list leaves to a run. No steps says that nothing runs.
+type Choice struct {
+	// Only names the steps as Options.Only does.
+	Only []string
+	// Check plans them and applies nothing.
+	Check bool
+}
 
 // scannedMsg ends the scan. problem says why it stopped short, if it did.
 type scannedMsg struct{ problem string }
@@ -33,14 +44,18 @@ type pickScreen struct {
 	scanning bool
 	// problem is why the scan stopped short.
 	problem string
+	// picks takes the choice, and holds one, so that sending it waits for nobody.
+	picks chan<- Choice
+	// left says that the choice has gone, and the screen waits for the work to end it.
+	left bool
 }
 
 // newPickScreen returns the screen of groups, its scan under way.
-func newPickScreen(title string, theme Theme, groups []Group) pickScreen {
+func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Choice) pickScreen {
 	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
 	footer := NewFooter(button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
-		button("p", "pending"))
-	s := pickScreen{title: title, theme: theme, list: newPickList(groups), footer: footer, scanning: true}
+		button("p", "pending"), button("enter", "run"), button("c", "check"), Keys.Quit)
+	s := pickScreen{title: title, theme: theme, list: newPickList(groups), footer: footer, scanning: true, picks: picks}
 	return s.enabled()
 }
 
@@ -61,13 +76,18 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
 	case tea.KeyPressMsg:
-		s = s.pressed(msg)
+		var leaving tea.Cmd
+		s, leaving = s.pressed(msg)
+		return s.enabled(), leaving
 	}
 	return s.enabled(), nil
 }
 
-// pressed turns the boxes that msg's button names, or moves the cursor.
-func (s pickScreen) pressed(msg tea.KeyPressMsg) pickScreen {
+// pressed turns the boxes that msg's button names, moves the cursor, or gives the choice.
+func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
+	if s.left {
+		return s, nil
+	}
 	var place int
 	s.footer, place = s.footer.Update(msg)
 	switch place {
@@ -81,10 +101,25 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) pickScreen {
 		s.list = s.list.chose(func(r pickRow) bool { return !r.on() })
 	case pickPendingPlace:
 		s.list = s.list.chose(pickRow.pending)
+	case pickRunPlace:
+		return s.leave(Choice{Only: s.list.only()})
+	case pickCheckPlace:
+		return s.leave(Choice{Only: s.list.only(), Check: true})
+	case pickQuitPlace:
+		return s.leave(Choice{})
 	default:
 		s.list = s.list.moved(msg, max(s.listHeight(), 1))
 	}
-	return s
+	return s, nil
+}
+
+// leave gives c to the work. A session quits with its work alone, and a screen never does.
+func (s pickScreen) leave(c Choice) (pickScreen, tea.Cmd) {
+	s.left = true
+	return s, func() tea.Msg {
+		s.picks <- c
+		return nil
+	}
 }
 
 // enabled returns s with its boxes held while the scan ticks them, as a press would race it.
@@ -98,6 +133,9 @@ func (s pickScreen) enabled() pickScreen {
 // status is the title's right side: how far the scan is, then how much is chosen.
 func (s pickScreen) status() string {
 	on, all := s.list.count(func(pickRow) bool { return true })
+	if s.left {
+		return "leaving"
+	}
 	if s.scanning {
 		_, scanned := s.list.count(func(r pickRow) bool { return r.state != stepOpen })
 		return fmt.Sprintf("scanning %d/%d", scanned, all)
