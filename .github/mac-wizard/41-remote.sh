@@ -4,8 +4,8 @@
 # First come wg0's key, a Mac's key it lacks, Secure Boot that refuses the fans' driver, and no
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
 # off. state must print ws's report, with root's HOME and a UTF-8 locale, and exit with ws's status.
-# A full run must run ws server apply without arguments in a unit of its own, with root's HOME and
-# a UTF-8 locale, print its log and exit 0. It must stamp ws's version, 0 and on in run, and the unit
+# A full run must run ws server apply with --json alone in a unit of its own, with root's HOME and
+# a UTF-8 locale, print its log, event lines too, and exit 0. It must stamp ws's version, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during another's unit must follow that unit and start none. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
@@ -111,7 +111,7 @@ n=$(units)
 remote run
 full=$(unit)
 printf '%s\n' "$out" | grep -qx 'PLAY RECAP' && [ "$status" = 0 ] &&
-    [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on - / $full 0" ] &&
+    printf '%s\n' "$out" | grep -q '^{"event":"done",' && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on - / $full 0" ] &&
     [ "$(tail -n 1 "$ws/server.log")" = '' ] || error "a full run exited $status"
 tail -n 1 "$ws/run.log" | grep -q -- '--collect .* --setenv=LC_ALL=C.UTF-8 --setenv=HOME=/root ' ||
     error "a full run's unit lacked root's HOME or a UTF-8 locale"

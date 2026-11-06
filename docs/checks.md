@@ -96,18 +96,18 @@ stand-ins of [ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's progr
 key for it and as its peer, and ws's signing key or `none`. They are also its hostname, claude's
 login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `ws_user` and outbound
 table. `state` must print ws's report and exit with its status. Like a full `run`, it has root's
-`HOME` and a UTF-8 locale. A full `run` must run `ws server apply` with no arguments in a unit of
-its own. It must print the log, and stamp ws's version, `-` here, 0, `on` and `-`,
-the secrets file's sum; after its `outbound` writes the line, which stops on a link, `off`. A tagged
-run after it must start its own unit and leave that stamp. A run during another's unit must follow
-it. A full run cut off must remove the stamp of the one before, so the next starts a unit again. The
-files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports, `user NAME` name
-`ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server values set` on each.
-`link PORT` must name one there, mode 600 in a 755 directory, once, which
-`status` names once the roles give `10.77.0.1`. With the Mac's secrets file, in a throwaway
-keychain, a run must start a unit that loads the identity as a credential and runs `--secrets`. It
-must remove the identity from ws, and stamp the file's SHA-256. A changed file must run again, and a
-removed one run with no secrets ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
+`HOME` and a UTF-8 locale. A full `run` must run `ws server apply` with `--json` alone in a unit of
+its own. It must print the log, event lines too. It must stamp ws's version, `-` here, 0, `on` and
+`-`, the secrets file's sum; after its `outbound` writes the line, which stops on a link, `off`. A
+tagged run after it must start its own unit and leave that stamp. A run during another's unit must
+follow it. A full run cut off must remove the stamp of the one before, so the next starts a unit
+again. The files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports, `user
+NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server values set`
+on each. `link PORT` must name one there, mode 600 in a 755 directory, once, which `status` names
+once the roles give `10.77.0.1`. With the Mac's secrets file, in a throwaway keychain, a run must
+start a unit that loads the identity as a credential and runs `--secrets`. It must remove the
+identity from ws, and stamp the file's SHA-256. A changed file must run again, and a removed one run
+with no secrets ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
@@ -117,11 +117,11 @@ on ws, with a full run of its own, a run must install v0.0.0 and run the apply a
 `--update` finds v0.0.0 and stays. A tagged clone built as v0.0.1, the latest, must make
 `--update` leave v0.0.1 as the Mac's `ws version` and as the stand-in ws's (case 59).
 The wizard's stage ws's run must wait for ws on ws under a fresh `--check`. The first run must run
-ws's apply through the remote script, and each run since must read ws's `status` alone, once, and
-again after a run of apply. A run's calls to ws share one connection, which its end closes.
-Without the stamp, a run whose unit is cut off must stop at the stage, and the next must start a
-unit of its own. That run must end with what stays by hand: the fans' driver and the router's
-forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
+ws's apply through the remote script, and print none of its event lines. Each run since must read
+ws's `status` alone, once, and again after a run of apply. A run's calls to ws share one connection,
+which its end closes. Without the stamp, a run whose unit is cut off must stop at the stage, and the
+next must start a unit of its own. That run must end with what stays by hand: the fans' driver and
+the router's forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
 `WS_TARGET=cloud`, a run must turn the outbound table off, and the next none.
 
 `standin.sh` logs ws's claude in, and the Mac's gh lists ws's signing key, so no run may open a

@@ -10,7 +10,7 @@
 # takes no key yet, so that run must stop at Login, and add none to the user's authorized_keys. The
 # case then puts the account's keys there, as Ubuntu's installer imports them for its user, and the
 # wizard runs again. It must run ws server
-# apply once, with no arguments, in a unit with root's HOME, and stamp its status 0. Then the Mac's
+# apply once, with --json alone, in a unit with root's HOME, stamp its status 0, and print no event. Then the Mac's
 # key must go to the stand-in ws's mac.pub, and ws server apply --only wireguard run there. wg0's key
 # must end mac.conf as WS_PUBLIC_KEY, and ws mac apply, run again, load the daemon, which must have a
 # handshake with the stand-in ws. The wizard must log in to ws through the tunnel once. The closing
@@ -70,6 +70,7 @@ if ! printf '\n%s\n' '--only wireguard' | cmp -s - "$RUNNER_TEMP/ws/server.log" 
     ! grep -q ' 0 on -$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
     error "ws mac wizard ran no ws server apply on ws, once, then with --only wireguard, with root's HOME"
 fi
+! grep -q '"event"' "$RUNNER_TEMP/run.err" || error "ws mac wizard printed an event line of the run's log"
 mac=$(sudo sh -c '"$1" pubkey <"$2"' sh /opt/homebrew/bin/wg /etc/ws-tunnel/private.key)
 [ "$(sudo cat "$RUNNER_TEMP/ws/root/etc/wireguard/mac.pub")" = "$mac" ] ||
     error "ws mac wizard gave the stand-in ws no mac.pub of the Mac's key, $mac"
