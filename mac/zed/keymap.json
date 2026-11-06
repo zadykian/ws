@@ -447,4 +447,13 @@
       "alt-2": "workspace::CloseActiveDock"
     }
   }
+  // The keys left out, so that a sync doesn't retry them.
+  // ctrl-shift-tab: Shift+Ctrl+Tab is Zed's
+  // ctrl-d: Ctrl+D reaches the shell
+  // cmd-c: Cmd+C is Zed's; Ctrl+C stays the shell's
+  // alt-up: Alt+Up is Zed's on macOS
+  // alt-down: Alt+Down is Zed's on macOS
+  // ctrl--: Ctrl+- is Zed's in a pane
+  // alt-f12: no popup: Zed's Alt+F12 opens it in a split
+  // delete: Delete is Zed's
 ]
