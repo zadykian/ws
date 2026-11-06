@@ -31,6 +31,12 @@ func drawsScreen(c *cobra.Command, p process) bool {
 	return screenWanted(plain, asJSON, p.tty, p.errTTY, p.getenv("TERM"))
 }
 
+// drawsReport tells whether a command draws the report that it would print on stdout. That takes a
+// terminal there too: a pipe or a file waits for the text, which a screen never prints.
+func drawsReport(c *cobra.Command, p process) bool {
+	return p.outTTY && drawsScreen(c, p)
+}
+
 // screenWanted is the choice itself, on its five inputs.
 func screenWanted(plain, asJSON, stdinTTY, stderrTTY bool, term string) bool {
 	return !plain && !asJSON && stdinTTY && stderrTTY && term != "" && term != "dumb"

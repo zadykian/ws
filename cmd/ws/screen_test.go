@@ -47,6 +47,15 @@ func TestScreenWanted(t *testing.T) {
 	}
 }
 
+func TestDrawsReportNeedsStdoutAtATerminal(t *testing.T) {
+	for _, atTerminal := range []bool{true, false} {
+		p := process{tty: true, errTTY: true, outTTY: atTerminal, getenv: func(string) string { return "xterm" }}
+		if got := drawsReport(&cobra.Command{}, p); got != atTerminal {
+			t.Errorf("stdout at a terminal %v: drawsReport = %v", atTerminal, got)
+		}
+	}
+}
+
 func TestDrawsScreenReadsPlain(t *testing.T) {
 	p := process{tty: true, errTTY: true, getenv: func(string) string { return "xterm" }}
 	var seen []bool
