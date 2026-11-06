@@ -77,6 +77,16 @@ func TestValuesSetTakesAKeyOut(t *testing.T) {
 	}
 }
 
+func TestValuesSetTakesAValueWithADash(t *testing.T) {
+	p, m := valuesProcess("---\n")
+	if status, _, stderr := runWs(p, "", "server", "values", "set", "--", "ws_user", "-x"); status != 0 {
+		t.Fatalf("status = %d: %s", status, stderr)
+	}
+	if got := string(m.Files[serverVars]); got != "---\nws_user: -x\n" {
+		t.Errorf("file = %q", got)
+	}
+}
+
 func TestValuesSetRefuses(t *testing.T) {
 	notRoot, _ := valuesProcess("---\n")
 	notRoot.euid = 501

@@ -101,7 +101,8 @@ the secrets file's sum; after its `outbound` writes the line, which stops on a l
 run after it must start its own unit and leave that stamp. A run during another's unit must follow
 it. A full run cut off must remove the stamp of the one before, so the next starts a unit again. The
 files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports, `user NAME` name
-`ws_user`, and `link PORT` name one in `host_vars.yml`, mode 600 in a 755 directory, once, which
+`ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server values set` on each.
+`link PORT` must name one there, mode 600 in a 755 directory, once, which
 `status` names once the roles give `10.77.0.1`. With the Mac's secrets file, in a throwaway
 keychain, a run must start a unit that loads the identity as a credential and runs `--secrets`. It
 must remove the identity from ws, and stamp the file's SHA-256. A changed file must run again, and a
