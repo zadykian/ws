@@ -40,6 +40,11 @@ type Choice struct {
 	// Whole names the stages of a queue that run every step, one of them by a tick. Such a stage is
 	// to run though its last run passed. One that a lock alone holds whole isn't.
 	Whole []string
+	// State leaves a queue for the state screen of Side's machine, and Reopen comes back to it.
+	State bool
+	Side  Side
+	// back is the screen that State left.
+	back pickScreen
 	// list is the lists as the maintainer left them, for the screen that follows the run.
 	list pickList
 }

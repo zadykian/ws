@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"io"
 	"slices"
 	"strings"
@@ -164,6 +165,18 @@ func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
 	got, err := PickStages(t.Context(), c, "ws", testStages(), waitForCtx)
 	if err != nil || !got.Configure {
 		t.Errorf("PickStages = %+v, %v", got, err)
+	}
+}
+
+// What the maintainer chose comes back: a new scan would choose the boxes again.
+func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
+	s := pickSent(testQueueScreen(), scannedMsg{problem: "no network"}, press('n'), press(' '))
+	var out bytes.Buffer
+	c := noKeys(&out)
+	c.In = strings.NewReader("\r")
+	got, err := Reopen(t.Context(), c, Choice{State: true, back: s})
+	if err != nil || !slices.Equal(got.Only, []string{"Tools"}) {
+		t.Errorf("Reopen = %+v, %v", got, err)
 	}
 }
 
