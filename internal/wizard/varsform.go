@@ -2,9 +2,13 @@ package wizard
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/server/values"
 )
 
@@ -46,4 +50,23 @@ func (f VarsForm) Fields() []Field {
 		fields = append(fields, field)
 	}
 	return fields
+}
+
+// Save writes the edits in one login, each key's check being ws's, and reads the file back. A failed
+// one can leave the first keys written, which a second save writes again as they are. A pair goes as
+// base64, as the files script says. Nothing applies them until the next ws server apply.
+func (f VarsForm) Save(ctx context.Context, out effect.Out, edits map[string]string) (VarsForm, error) {
+	if len(edits) == 0 {
+		out.Say("host_vars holds these values already")
+		return f, nil
+	}
+	op := []string{"values"}
+	for _, key := range slices.Sorted(maps.Keys(edits)) {
+		op = append(op, base64.StdEncoding.EncodeToString([]byte(key+"="+edits[key])))
+	}
+	if _, err := f.Files.Do(ctx, op...); err != nil {
+		return f, errors.New("host_vars on ws: " + stderrOf(err))
+	}
+	out.Say("wrote host_vars: the next ws server apply takes it")
+	return f.Load(ctx)
 }
