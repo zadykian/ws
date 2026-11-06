@@ -54,3 +54,20 @@ func TestSetTwiceChangesNothing(t *testing.T) {
 		t.Errorf("twice = %q, %v, want %q", twice, err, once)
 	}
 }
+
+func TestSetRefuses(t *testing.T) {
+	for _, tc := range []struct {
+		name, data, key, value, want string
+	}{
+		{"an unknown key", "", "no_such_key", "1", "no line holds no_such_key"},
+		{"a table", "", "fans_curves", "1", "no line holds fans_curves"},
+		{"a wrong kind", "", "base_swappiness", "ten", "a whole number"},
+		{"a broken file", "ws_user: [\n", "ws_home", "/h", "yaml"},
+		{"a key of a quoted name", "\"ws_user\": ada\n", "ws_user", "bob", "edit it by hand"},
+		{"a document that ended", "ws_home: /h\n...\n", "ws_user", "bob", "edit it by hand"},
+	} {
+		if _, err := Set([]byte(tc.data), tc.key, tc.value); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: err = %v, want %q", tc.name, err, tc.want)
+		}
+	}
+}
