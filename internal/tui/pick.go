@@ -10,6 +10,12 @@ import (
 // pickRow is a step of the list that a run is chosen from.
 type pickRow struct {
 	stepRow
+	// side is the list of a queue that shows the row.
+	side Side
+	// number is a stage's place in a queue, from 1, and 0 on any other row.
+	number int
+	// stage names the stage of a queue that runs the row.
+	stage string
 	// waitsOn names the step of its group that has to run first.
 	waitsOn string
 	// chosen is the row's own box. It stands under a lock, and counts again once the lock goes.
@@ -66,6 +72,8 @@ type pickList struct {
 	words string
 	// at is the cursor's place in lines.
 	at int
+	// side is the list of a queue that lines shows.
+	side Side
 }
 
 // newPickList returns the list of groups, each step open and left out.
