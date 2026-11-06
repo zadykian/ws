@@ -51,6 +51,51 @@ func (w wizardScreen) effects(ctx context.Context, b *tui.Bridge, text io.Writer
 		hand: &wizard.Hand{}, sudo: sudo, stop: b.Stop(ctx)}
 }
 
+// scan is a check of every stage, beside the lists. ws speaks for its roles once the stage that
+// installs it has read it, as ws's stages behind that need a ws at this version.
+func (w wizardScreen) scan(sudo *wizard.Sudo) tui.Work {
+	check := w.o
+	check.check = true
+	return func(ctx context.Context, b *tui.Bridge) error {
+		e := w.effects(ctx, b, io.Discard, sudo)
+		stages := wizardStages(e, check)
+		run := wsRunOf(stages)
+		watch := afterStage{b, run.WaitsOn(), func() {
+			states, err := run.Remote.State(ctx, w.p.version)
+			reportRoles(run.Name(), states, err, b.Report)
+		}}
+		o := step.Options{Observer: watch, Check: true, Stop: e.stop}
+		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.tmp(), w.p.pid, nil)
+		return unwrapStep(err)
+	}
+}
+
+// afterStage passes a run's events to next, and calls then once the stage named has passed. A step
+// of a stage's own has a parent, and a stage skipped has not read what then needs.
+type afterStage struct {
+	next  step.Observer
+	stage string
+	then  func()
+}
+
+// Observe passes e on, ahead of then, as the lists take the stage's result first.
+func (a afterStage) Observe(e step.Event) {
+	a.next.Observe(e)
+	if e.Parent == "" && e.Step == a.stage && e.Kind == step.Done {
+		a.then()
+	}
+}
+
+// wsRunOf returns the stage of ws's run.
+func wsRunOf(stages []step.Step) *wizard.WsRun {
+	for _, s := range stages {
+		if run, ok := s.(*wizard.WsRun); ok {
+			return run
+		}
+	}
+	panic("the wizard has no stage of ws's run")
+}
+
 // tmp is where the lock of a run goes.
 func (w wizardScreen) tmp() string { return cmp.Or(w.p.getenv("TMPDIR"), "/tmp") }
 
