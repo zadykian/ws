@@ -40,6 +40,8 @@ type Choice struct {
 	// Whole names the stages of a queue that run every step, one of them by a tick. Such a stage is
 	// to run though its last run passed. One that a lock alone holds whole isn't.
 	Whole []string
+	// list is the lists as the maintainer left them, for the screen that follows the run.
+	list pickList
 }
 
 // scannedMsg ends the scan. problem says why it stopped short, if it did.
@@ -180,7 +182,7 @@ func (s pickScreen) typed(msg tea.KeyPressMsg) pickScreen {
 
 // choice is what the list holds, to run or to check.
 func (s pickScreen) choice(check bool) Choice {
-	return Choice{Only: s.list.only(), Check: check, Partial: s.list.partial(), Whole: s.list.ticked()}
+	return Choice{Only: s.list.only(), Check: check, Partial: s.list.partial(), Whole: s.list.ticked(), list: s.list}
 }
 
 // leave gives c to the work. A session quits with its work alone, and a screen never does.
