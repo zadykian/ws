@@ -2,20 +2,17 @@ package zed_test
 
 import (
 	"bytes"
-	"embed"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/zadykian/ws/internal/editor/zed"
 	"github.com/zadykian/ws/mac"
 )
 
-//go:embed testdata/settings.json
-var goldens embed.FS
-
 // golden fails where the render differs. A meant change edits the file by hand, in its commit.
 func golden(t *testing.T, name string, got []byte) {
-	want, err := goldens.ReadFile("testdata/" + name)
+	want, err := os.ReadFile("../../server/zed/files/" + name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +57,7 @@ func TestServerSettingsMatchTheGoldenFileByteForByte(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	golden(t, "settings.json", got)
+	golden(t, "settings.json.tmpl", got)
 	_, body, _ := bytes.Cut(got, []byte("\n"))
 	if !json.Valid(body) {
 		t.Fatalf("not JSON:\n%s", body)
