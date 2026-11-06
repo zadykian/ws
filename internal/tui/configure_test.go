@@ -23,7 +23,7 @@ func fed(s configureScreen, msgs ...tea.Msg) configureScreen {
 }
 
 func testConfigure(sheets ...Sheet) configureScreen {
-	s := newConfigureScreen("ws mac configure", testTheme, sheets)
+	s := newConfigureScreen("ws mac configure", testTheme, func(configureJob) {}, sheets)
 	return fed(s, tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 

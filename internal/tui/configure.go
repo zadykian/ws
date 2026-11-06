@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"slices"
 
@@ -28,6 +29,8 @@ type Sheet struct {
 	Name string
 	// Fields gives the fields that show under the edits so far. It is pure, as it runs on each edit.
 	Fields func(edits map[string]string) []FieldSpec
+	// Save writes the edits on the work's goroutine, and returns the sheet of what the file then holds.
+	Save func(ctx context.Context, b *Bridge, edits map[string]string) (Sheet, error)
 }
 
 // configureScreen edits its sheets, a form each, with one form on the screen.
@@ -40,16 +43,20 @@ type configureScreen struct {
 	at     int
 	footer Footer
 	window Size
+	// send hands the work a job, and saving holds the keys till it ends, as the form would change
+	// under the file that it writes.
+	send   func(configureJob)
+	saving bool
 }
 
 // newConfigureScreen returns the screen of sheets, on the first.
-func newConfigureScreen(title string, theme Theme, sheets []Sheet) configureScreen {
+func newConfigureScreen(title string, theme Theme, send func(configureJob), sheets []Sheet) configureScreen {
 	forms := make([]Form, 0, len(sheets))
 	for _, sheet := range sheets {
 		forms = append(forms, NewForm(theme, sheet.Fields))
 	}
 	footer := NewFooter(saveButton, leaveButton)
-	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer}
+	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer, send: send}
 }
 
 // Init starts nothing, as the screen waits for a key.
@@ -64,7 +71,7 @@ func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		return s.pressed(msg)
 	case tea.PasteMsg:
-		if s.footer.Focused() < 0 {
+		if s.footer.Focused() < 0 && !s.saving {
 			return s.with(s.form().Update(msg)), nil
 		}
 	}
@@ -102,14 +109,21 @@ func fieldStep(msg tea.KeyPressMsg) int {
 	return 0
 }
 
-// pressed moves the focus along the one ring of the fields and the buttons, or hands a field the key.
+// pressed moves the focus along the one ring of the fields and the buttons, presses a button, or
+// hands a field the key. The keys wait for a save.
 func (s configureScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if s.saving {
+		return s, nil
+	}
 	onForm := s.footer.Focused() < 0
 	if step := fieldStep(msg); onForm && step != 0 {
 		return s.stepped(step), nil
 	}
-	s.footer, _ = s.footer.Update(msg)
+	var place int
+	s.footer, place = s.footer.Update(msg)
 	switch {
+	case place == savePlace:
+		return s.save()
 	case !onForm && s.footer.Focused() < 0:
 		return s.with(s.form().Enter(key.Matches(msg, Keys.Prev))), nil
 	case onForm:
