@@ -3,6 +3,9 @@ package wizard
 import (
 	"context"
 	"strings"
+
+	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/step"
 )
 
 // Remote runs the remote script's operations as root on ws, through ssh, which reaches ws at the
@@ -13,6 +16,9 @@ type Remote struct {
 	Script []byte
 	// Sudo is how a script reaches root. Nil runs it as the login.
 	Sudo *Sudo
+	// Events hears a run's events. Nil drops them. It hears them on a goroutine of ssh's, while the
+	// stage waits, and hears them again where a follow replays the log.
+	Events step.Observer
 
 	read   bool
 	status map[string]string
@@ -44,7 +50,7 @@ func (r *Remote) query(ctx context.Context, op ...string) ([]byte, error) {
 	return r.SSH.RunInput(ctx, in, args...)
 }
 
-// Pass is Do for an operation that goes on, such as run, whose output goes to Stderr as it comes.
+// Pass is Do for an operation that goes on, such as install, whose output goes to Stderr as it comes.
 func (r *Remote) Pass(ctx context.Context, op ...string) error {
 	r.read = false
 	args, in, err := r.args(op)
@@ -52,6 +58,26 @@ func (r *Remote) Pass(ctx context.Context, op ...string) error {
 		return err
 	}
 	return r.SSH.PassInput(ctx, in, args...)
+}
+
+// Follow is Pass for the operation run, with ws server apply's args. The events of the run's log go
+// to Events, and its other lines to Stderr.
+func (r *Remote) Follow(ctx context.Context, args ...string) error {
+	r.read = false
+	a, in, err := r.args(append([]string{"run"}, args...))
+	if err != nil {
+		return err
+	}
+	return r.SSH.PassLines(ctx, in, r.event, a...)
+}
+
+// event tells whether a line of a run's log is an event, and hands it on.
+func (r *Remote) event(line string) bool {
+	e, ok := apply.ParseEvent(line)
+	if ok && r.Events != nil {
+		r.Events.Observe(e)
+	}
+	return ok
 }
 
 // Put writes data to path on ws as root, mode 0600, through its stdin. path holds no blank or quote:
@@ -65,7 +91,7 @@ func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
 	return err
 }
 
-// Status reads what the remote script's status prints once, until Do or Pass runs, and reports
+// Status reads what the remote script's status prints once, until Do, Pass or Follow runs, and reports
 // whether it read any: ssh or the script fails where root does not log in. A line is NAME VALUE.
 func (r *Remote) Status(ctx context.Context) bool {
 	if !r.read {

@@ -70,7 +70,7 @@ func (c *Cable) name(ctx context.Context, port string) error {
 	if err := c.Files.Pass(ctx, "link", port); err != nil {
 		return err
 	}
-	return c.Run.Remote.Pass(ctx, "run", "--only", "network,wireguard")
+	return c.Run.Remote.Follow(ctx, "--only", "network,wireguard")
 }
 
 // again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another, as after

@@ -97,7 +97,7 @@ func (r *WsRun) run(ctx context.Context) error {
 	if err := r.send(ctx); err != nil {
 		return err
 	}
-	if err := r.Remote.Pass(ctx, "run"); err != nil {
+	if err := r.Remote.Follow(ctx); err != nil {
 		r.drop(ctx, "identity")
 		return fail()
 	}

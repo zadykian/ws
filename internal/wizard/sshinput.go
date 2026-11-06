@@ -26,6 +26,15 @@ func (s SSH) PassInput(ctx context.Context, stdin []byte, args ...string) error 
 	return s.M.PassInput(ctx, stdin, "ssh", s.argv(ctx, args)...)
 }
 
+// PassLines is PassInput with each line of the output offered to take first. A Machine without
+// effect.Lines passes every line on: a run goes on, and its reader misses the lines.
+func (s SSH) PassLines(ctx context.Context, stdin []byte, take func(line string) bool, args ...string) error {
+	if m, ok := s.M.(effect.Lines); ok {
+		return m.PassLines(ctx, stdin, take, "ssh", s.argv(ctx, args)...)
+	}
+	return s.PassInput(ctx, stdin, args...)
+}
+
 // Pass runs ssh with the arguments, with its output passed to Stderr and standard input kept, for a
 // session at the terminal.
 func (s SSH) Pass(ctx context.Context, args ...string) error {
