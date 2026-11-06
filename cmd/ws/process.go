@@ -27,6 +27,8 @@ type process struct {
 	tty bool
 	// errTTY tells whether stderr is a terminal, where a screen draws.
 	errTTY bool
+	// outTTY tells whether stdout is a terminal, where a report prints.
+	outTTY bool
 	// version is this ws's version, as ws version prints it.
 	version string
 	// argv is ws's arguments, without the program, which ws mac wizard --update runs the new ws with.
@@ -53,6 +55,7 @@ func newProcess() process {
 		pwd:      pwd,
 		tty:      isTerminal(os.Stdin),
 		errTTY:   isTerminal(os.Stderr),
+		outTTY:   isTerminal(os.Stdout),
 		version:  versionOf(info, ok),
 		argv:     os.Args[1:],
 		releases: releasesURL(os.Getenv),

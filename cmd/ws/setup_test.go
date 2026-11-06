@@ -143,7 +143,7 @@ func TestMacStateRefusesRootAndArgs(t *testing.T) {
 
 func TestMacStateHelp(t *testing.T) {
 	status, stdout, _ := runWs(fakeProcess(), "", "mac", "state", "-h")
-	for _, want := range []string{"--json", "applies nothing"} {
+	for _, want := range []string{"--json", "applies nothing", "a question"} {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
 		}
@@ -180,5 +180,43 @@ func TestMacStateReadsMacConf(t *testing.T) {
 	status, stdout, _ := runWs(p, "", "mac", "state", "--json")
 	if status != 0 || !strings.Contains(stdout, `"version": "v1.2.3"`) || !strings.Contains(stdout, `"steps"`) {
 		t.Errorf("status = %d, stdout = %q", status, stdout)
+	}
+}
+
+// altScreen is what a screen writes first: the switch to the alternate screen.
+const altScreen = "\x1b[?1049h"
+
+// macStateAtTerminal returns a process that stands at a terminal, with a Mac that has a mac.conf.
+func macStateAtTerminal() process {
+	m := effecttest.NewMachine()
+	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h", "TERM": "xterm-256color"})
+	p.machine = m
+	p.tty, p.errTTY, p.outTTY = true, true, true
+	return p
+}
+
+func TestMacStateDrawsTheScreenAtATerminal(t *testing.T) {
+	status, stdout, stderr := runWs(macStateAtTerminal(), "q", "mac", "state")
+	if status != 0 || stdout != "" || !strings.Contains(stderr, altScreen) {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+}
+
+func TestMacStatePrintsTextWithPlainOrJSON(t *testing.T) {
+	for _, flag := range []string{"--plain", "--json"} {
+		status, stdout, stderr := runWs(macStateAtTerminal(), "", "mac", "state", flag)
+		if status != 0 || stdout == "" || strings.Contains(stderr, altScreen) {
+			t.Errorf("%s: status = %d, stdout = %q, stderr = %q", flag, status, stdout, stderr)
+		}
+	}
+}
+
+func TestMacStatePrintsTextToAPipeOrAFile(t *testing.T) {
+	p := macStateAtTerminal()
+	p.outTTY = false
+	status, stdout, stderr := runWs(p, "", "mac", "state")
+	if status != 0 || stdout == "" || strings.Contains(stderr, altScreen) {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }

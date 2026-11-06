@@ -47,6 +47,15 @@ func TestScreenWanted(t *testing.T) {
 	}
 }
 
+func TestDrawsReportNeedsStdoutAtATerminal(t *testing.T) {
+	for _, atTerminal := range []bool{true, false} {
+		p := process{tty: true, errTTY: true, outTTY: atTerminal, getenv: func(string) string { return "xterm" }}
+		if got := drawsReport(&cobra.Command{}, p); got != atTerminal {
+			t.Errorf("stdout at a terminal %v: drawsReport = %v", atTerminal, got)
+		}
+	}
+}
+
 func TestDrawsScreenReadsPlain(t *testing.T) {
 	p := process{tty: true, errTTY: true, getenv: func(string) string { return "xterm" }}
 	var seen []bool
@@ -83,5 +92,22 @@ func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
 	}
 	if m.Stdin != effect.NoStdin || m.Stderr == nil {
 		t.Errorf("stdin = %v, stderr = %v, want a command off the terminal", m.Stdin, m.Stderr)
+	}
+}
+
+// The second read passes no bridge, which would fail a second making of the machine.
+func TestReadMachineTakesARunsEffectsOnce(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	machine := readMachine(effect.OSMachine{})
+	for _, b := range []*tui.Bridge{{}, nil} {
+		m, ok := machine(ctx, b).(effect.OSMachine)
+		if !ok || m.Stdin != effect.NoStdin || m.Ticket == nil {
+			t.Errorf("machine = %+v", m)
+		}
+	}
+	fake := effecttest.NewMachine()
+	if got := readMachine(fake)(ctx, nil); got != effect.Machine(fake) {
+		t.Errorf("a fake became %T", got)
 	}
 }

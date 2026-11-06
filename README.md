@@ -122,12 +122,15 @@ sudo ws server state
 sudo ws server state --json
 ```
 
-The report is on stdout and ws's own lines on stderr. `--json` prints the version of ws, then
-each role with its steps, items and changes.
+At a terminal `ws server state` draws the state screen on stderr: the tabs Packages, Services,
+Files, Conflicts and Pending, with `/` to filter, `r` to read again and `q` to quit. `--plain`, a
+pipe, a file on stdout or `--json` skips the screen. Then the report is on stdout and ws's own
+lines on stderr. `--json` prints the version of ws, then each role with its steps, items and
+changes.
 
 `ws mac state` does the same for the Mac, as `ws mac apply --check` reads it: it needs `mac.conf`,
-and not root. The Mac's steps report their changes and no items yet. `--json` prints the version of
-ws, then each step.
+and not root. On the screen, sudo's password comes through a question. The Mac's steps report
+their changes and no items yet. `--json` prints the version of ws, then each step.
 
 ```sh
 ws mac state

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/step"
 )
 
@@ -30,7 +32,8 @@ func newStateCmd(p process) *cobra.Command {
 			"steps, what stands against them, and the changes that apply would make. A step that fails stands " +
 			"in the report as a check, and the exit code stays 0. It takes no secrets, so a report holds none and " +
 			"says nothing of what they write.\n\n" +
-			"The report is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
+			"At a terminal it draws the state screen on stderr, where the tabs, a filter and r to read again are. " +
+			"--plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each role with its steps, items and changes.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runState(c, p, opts, asJSON) },
@@ -47,6 +50,17 @@ func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) erro
 	if err != nil {
 		return err
 	}
+	if drawsReport(c, p) {
+		machine := readMachine(r.cfg.M)
+		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
+			// The read takes the screen's effects as a run does, as the terminal under it is not theirs.
+			cfg := r.cfg
+			cfg.M = machine(ctx, b)
+			cfg.Out, cfg.Prepare = b, prepareSteps(cfg.M, b)
+			states, err := apply.State(ctx, cfg, r.list)
+			return roleSections(states), err
+		})
+	}
 	states, err := apply.State(c.Context(), r.cfg, r.list)
 	r.term.Flush()
 	if err != nil {
@@ -56,6 +70,15 @@ func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) erro
 		return writeJSON(c.OutOrStdout(), stateDoc{Version: p.version, Roles: states})
 	}
 	return writeState(c.OutOrStdout(), states)
+}
+
+// roleSections turns the roles' reports into the state screen's sections.
+func roleSections(states []apply.RoleState) []tui.StateSection {
+	sections := make([]tui.StateSection, len(states))
+	for i, s := range states {
+		sections[i] = tui.StateSection{Name: s.Role, Reports: s.Steps}
+	}
+	return sections
 }
 
 // writeJSON prints doc as indented JSON.

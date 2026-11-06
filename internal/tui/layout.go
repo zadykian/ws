@@ -34,12 +34,15 @@ type Pane struct {
 	Focused bool
 }
 
-// Layout is a full screen: the title and its status on the first line, the panes side by side,
-// and the footer's buttons on the last lines. A narrow window stacks the panes, and one too short
-// for that shows the focused pane alone. A window with no room for a frame shows no pane.
+// Layout is a full screen: the title and its status on the first line, the header, the panes side
+// by side, and the footer's buttons on the last lines. A narrow window stacks the panes, and one too
+// short for that shows the focused pane alone. A window with no room for a frame shows no pane.
 type Layout struct {
 	Title  string
 	Status string
+	// Header is lines across the window, above the panes, such as a screen's tabs. Those it doesn't
+	// have take no room.
+	Header string
 	Panes  []Pane
 	Footer Footer
 }
@@ -72,6 +75,9 @@ func (l Layout) Render(theme Theme, width, height int) string {
 		return ""
 	}
 	parts := []string{l.renderTitle(theme, width)}
+	if l.Header != "" {
+		parts = append(parts, l.Header)
+	}
 	if room := l.bodyHeight(width, height); room > 0 {
 		panes := l.renderPanes(theme, width, height)
 		parts = append(parts, lipgloss.PlaceVertical(room, lipgloss.Top, panes))
@@ -132,9 +138,13 @@ func (l Layout) frames(width, height int) ([]Size, bool) {
 	return sizes, true
 }
 
-// bodyHeight is the lines between the title and the footer.
+// bodyHeight is the lines between the header and the footer.
 func (l Layout) bodyHeight(width, height int) int {
-	return max(height-titleHeight-len(l.Footer.rows(width)), 0)
+	above := titleHeight
+	if l.Header != "" {
+		above += lipgloss.Height(l.Header)
+	}
+	return max(height-above-len(l.Footer.rows(width)), 0)
 }
 
 // spread gives each pane least, and the room left by weight, or nil where total can't hold that.

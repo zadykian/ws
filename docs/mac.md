@@ -24,9 +24,11 @@ ws mac apply
 
 `ws mac wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)).
 `ws mac apply STEP` runs one step, and `--check` shows each change and makes none. At a terminal it
-draws [the run screen](tui.md#the-run-screen), and `--plain` keeps its lines. `ws mac` holds the
-Mac's commands ([the secrets](mac-secrets.md) too), darwin alone. `ws version` prints its version,
-and `ws update` replaces it with the latest release ([Update](releases.md#update)).
+draws [the run screen](tui.md#the-run-screen), past [the list of steps](tui.md#the-list-of-steps)
+where it gets neither, and `--plain` keeps its lines. `ws mac state` reports what a check reads, and
+changes nothing ([State](../README.md#state)). `ws mac` holds the Mac's commands
+([the secrets](mac-secrets.md) too), darwin alone. `ws version` prints its version, and `ws update`
+replaces it with the latest release ([Update](releases.md#update)).
 
 ## mac.conf
 

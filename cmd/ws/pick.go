@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"slices"
-	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -24,12 +23,7 @@ func opensList(c *cobra.Command, p process, selected bool) bool {
 // pickSteps draws the list of groups over scan and returns the choice. A choice that names no step
 // is a maintainer who left.
 func pickSteps(c *cobra.Command, p process, groups []tui.Group, scan tui.Work) (tui.Choice, error) {
-	theme := tui.NewTheme(p.getenv)
-	cfg := tui.Config{
-		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: theme,
-		Cut: func(s syscall.Signal) error { return signalExit{s} },
-	}
-	return tui.Pick(c.Context(), cfg, c.CommandPath(), groups, scan)
+	return tui.Pick(c.Context(), screenConfig(c, p), c.CommandPath(), groups, scan)
 }
 
 // pickServer opens the list of the roles' steps, scanned by a check, and returns cfg and the roles

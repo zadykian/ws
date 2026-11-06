@@ -190,3 +190,25 @@ func TestWriteState(t *testing.T) {
 		t.Errorf("got\n%s\nwant\n%s", b.String(), want)
 	}
 }
+
+func TestRoleSectionsNameTheRoles(t *testing.T) {
+	reports := []step.Report{{Step: "Packages"}}
+	got := roleSections([]apply.RoleState{{Role: "base", Steps: reports}, {Role: "docker"}})
+	if len(got) != 2 || got[0].Name != "base" || len(got[0].Reports) != 1 || got[0].Reports[0].Step != "Packages" ||
+		got[1].Name != "docker" {
+		t.Errorf("sections = %+v", got)
+	}
+}
+
+func TestServerStateDrawsTheScreenAtATerminal(t *testing.T) {
+	p, _ := serverTerminal()
+	p.outTTY = true
+	status, stdout, stderr := runWs(p, "q", "server", "state", "--only", "tmux")
+	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+	status, stdout, stderr = runWs(p, "", "server", "state", "--json", "--only", "tmux")
+	if status != 0 || !strings.Contains(stdout, `"role": "tmux"`) || strings.Contains(stderr, enterScreen) {
+		t.Errorf("--json: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+}

@@ -31,6 +31,12 @@ func drawsScreen(c *cobra.Command, p process) bool {
 	return screenWanted(plain, asJSON, p.tty, p.errTTY, p.getenv("TERM"))
 }
 
+// drawsReport tells whether a command draws the report that it would print on stdout. That takes a
+// terminal there too: a pipe or a file waits for the text, which a screen never prints.
+func drawsReport(c *cobra.Command, p process) bool {
+	return p.outTTY && drawsScreen(c, p)
+}
+
 // screenWanted is the choice itself, on its five inputs.
 func screenWanted(plain, asJSON, stdinTTY, stderrTTY bool, term string) bool {
 	return !plain && !asJSON && stdinTTY && stderrTTY && term != "" && term != "dumb"
@@ -44,24 +50,28 @@ func runTitle(c *cobra.Command, check bool) string {
 	return c.CommandPath()
 }
 
+// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws.
+func screenConfig(c *cobra.Command, p process) tui.Config {
+	return tui.Config{
+		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: tui.NewTheme(p.getenv),
+		Cut: func(s syscall.Signal) error { return signalExit{s} },
+	}
+}
+
 // drawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
 // the terminal is back. work reads Bridge.Stop between its steps. A run cut short ends with the
 // status of a signal, for execute to report.
 func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work tui.Work) error {
-	theme := tui.NewTheme(p.getenv)
-	out := c.ErrOrStderr()
 	log, path := openLog(p, c.CommandPath(), time.Now())
 	if log != nil {
 		defer func() { _ = log.Close() }()
 	}
-	cfg := tui.Config{
-		In: c.InOrStdin(), Out: out, Theme: theme, Halts: true, LogPath: path,
-		Cut: func(s syscall.Signal) error { return signalExit{s} },
-	}
+	cfg := screenConfig(c, p)
+	cfg.Halts, cfg.LogPath = true, path
 	if log != nil { // A nil *os.File in the interface would not be nil.
 		cfg.Log = log
 	}
-	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, theme, groups...), work)
+	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, cfg.Theme, groups...), work)
 }
 
 // logsKept is how many logs stay in the state directory, the newest.
@@ -116,4 +126,17 @@ func screenMachine(ctx context.Context, b *tui.Bridge, m effect.Machine) effect.
 		return b.Machine(ctx, machine)
 	}
 	return m
+}
+
+// readMachine returns what each read of a state screen runs on: m as a run takes it under a screen.
+// The first read makes it, as that takes the screen's Bridge, and the rest share it, as each one made
+// would hold sudo's ticket until the screen ends. The reads run on one goroutine.
+func readMachine(m effect.Machine) func(context.Context, *tui.Bridge) effect.Machine {
+	var screen effect.Machine
+	return func(ctx context.Context, b *tui.Bridge) effect.Machine {
+		if screen == nil {
+			screen = screenMachine(ctx, b, m)
+		}
+		return screen
+	}
 }

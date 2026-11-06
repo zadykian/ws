@@ -1,8 +1,9 @@
 # The terminal UI
 
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
-`internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen). The other
-commands print lines for now.
+`internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen), and
+`ws server state` and `ws mac state` draw [the state screen](#the-state-screen). The other commands
+print lines for now.
 
 ## Modes
 
@@ -10,7 +11,8 @@ A command draws a screen only where each of these holds:
 
 - `--plain` is not given. Every command takes the flag, and `ws --plain mac wizard` is the form.
 - `--json` is not given, where a command takes it.
-- Stdin and stderr are terminals.
+- Stdin and stderr are terminals. So is stdout for `ws server state` and `ws mac state`, as their
+  report prints there.
 - `TERM` is set and is not `dumb`.
 
 Anywhere else ws prints lines, as before, byte for byte. That covers CI, a pipe and the unit on
@@ -30,12 +32,13 @@ and the frames and the focus stay visible by their shapes.
 
 ## Layout
 
-A screen is a title, panes and a footer of buttons. It resizes with the window.
+A screen is a title, panes and a footer of buttons, and a header may stand above the panes. It
+resizes with the window.
 
 - Each pane gets its least size first, then the rest by weight.
 - A window under 24 columns a pane stacks the panes.
 - A window too short to stack shows the focused pane alone.
-- A pane's lines are cut, never wrapped.
+- A pane's lines are cut, but for a run's window and the state screen's detail, which wrap.
 
 ## Keys
 
@@ -89,8 +92,8 @@ The other pane is a window on what the run prints, under the current step's name
 - It holds the lines a plain run prints, and what the step's commands print.
 - It follows the end of the output. Up, PgUp and Home move it back, and End brings it to the end.
 - It keeps the last 10,000 lines of a run.
-- It wraps a long line, unlike the other panes. `\r` keeps the last state of a progress bar, and
-  escapes and control characters go.
+- It wraps a long line. `\r` keeps the last state of a progress bar, and escapes and control
+  characters go.
 - Under `--check`, each step's changes show in it, a file's diff in color.
 
 The window goes with the screen, and these stay:
@@ -151,6 +154,43 @@ A role's box follows its steps, and `[-]` says that some are on. A chosen step l
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so
 `!` in the status warns of changes left out in an earlier role.
 
+## The state screen
+
+`ws server state` and `ws mac state` draw what a machine holds of what ws manages. The screen reads
+and changes nothing. The Mac's steps report changes and no items yet, so its tabs hold conflicts
+and pending changes alone.
+
+The header holds the tabs, each with its count: Packages, Services, Files, Conflicts and Pending.
+The tabs wrap to a new line in a narrow window. Under a filter a count reads `shown/all`. A check
+that failed stands in Conflicts, and a step with an unread report stands in Pending. The list
+shows a row for each item, and the detail pane beside it shows the selected row's wanted and found
+state, and a file's diff in color. The diff's marks say the same under `NO_COLOR`. A long line of
+the detail wraps. A failed read keeps the old rows and shows its first line in the header.
+
+Tab walks the tabs, then the buttons, and wraps to the first tab. The selection stays on its row,
+by step and name, across a read and a filter.
+
+| Key | Meaning |
+| --- | --- |
+| Tab, Shift-Tab | Move to the next or the previous tab, then the buttons. |
+| Up, k, Down, j | Move the selection, or the detail's lines. |
+| PgUp, PgDn, Home, End | Move by a page, or to either end. |
+| Enter, Right, l | Move the keys to the detail pane. |
+| Esc, Left, h | Move them back to the list. |
+| `/` | Filter the rows by name. |
+| `r` | Read the machine again. |
+| q | Leave. |
+
+The filter keeps the rows whose name holds its words, in any case. An open filter takes the keys
+alone. Enter keeps the words and closes it, and Esc drops them. Esc on the list drops a
+filter that stands. The wizard does not open the screen yet.
+
+The q key ends a read that runs, through its context, and Ctrl-C acts as above.
+
+A read takes the machine a run takes ([Commands](#commands)). What its commands print shows nowhere,
+as this screen has no window. sudo's password comes through a question over the screen
+([sudo](#sudo)), and a step that gets no ticket stands in Conflicts with sudo's words.
+
 ## Commands
 
 A screen owns the terminal, so a step's commands stay off it.
@@ -183,8 +223,8 @@ A screen owns the terminal, so a step's commands stay off it.
 
 ## sudo
 
-sudo asks at `/dev/tty`, under a screen. `Bridge.Machine` gives a run's steps a machine whose sudo
-can't ask, and takes the password in a hidden field:
+sudo asks at `/dev/tty`, under a screen. `Bridge.Machine` gives the steps of a run or a read a
+machine whose sudo can't ask, and takes the password in a hidden field:
 
 - Its root commands run by `sudo -n --`, which fails where it would ask.
 - Before each one, `sudo -n -- true` looks for a ticket. A valid one asks nothing, and neither does
@@ -199,8 +239,8 @@ can't ask, and takes the password in a hidden field:
 - A stage that has sudo ask ahead of its lines calls `effect.Validate`. That is `sudo -v` in plain
   mode, and the same field under a screen.
 
-ws runs as root on the server, with no sudo, so there it asks nothing. `ws mac apply` asks at its
-first root command, so a run that needs none asks nothing.
+ws runs as root on the server, with no sudo, so there it asks nothing. `ws mac apply` and
+`ws mac state` ask at their first root command, so one that needs none asks nothing.
 
 ## The terminal comes back
 

@@ -34,17 +34,9 @@ type field struct {
 	secret string
 }
 
-// newField returns the field of p, which takes the keys at once. Its cursor stays lit, as a blink
-// would wake the screen twice a second while a question waits. Bubbles' colors go, as NO_COLOR
-// counts in the Theme alone, and a reversed cursor needs none.
+// newField returns the field of p, which takes the keys at once.
 func newField(p prompt, window Size) field {
-	input := textinput.New()
-	styles := input.Styles()
-	styles.Cursor.Color = nil
-	styles.Focused.Prompt = lipgloss.NewStyle()
-	input.SetStyles(styles)
-	_ = input.Focus()
-	f := field{prompt: p, input: input, footer: NewFooter(answerButton, Keys.Interrupt)}
+	f := field{prompt: p, input: newInput(), footer: NewFooter(answerButton, Keys.Interrupt)}
 	return f.fit(window)
 }
 
