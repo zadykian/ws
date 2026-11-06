@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
 
@@ -96,5 +97,40 @@ func TestGhosttyReportsALinkThatLacksTheLine(t *testing.T) {
 	it := reportOf(t, s)[ghosttyDir+"/config.ghostty"]
 	if it.Found != "lacks it" || !strings.Contains(it.Conflict, "/dots/config") || it.Diff != "" {
 		t.Errorf("config = %+v, want the line lacking, and the link named", it)
+	}
+}
+
+func TestCldReportsItsVersion(t *testing.T) {
+	s, m, _ := cldStep(true)
+	items, err := s.Report(context.Background())
+	if err != nil || items[0].Kind != step.PackageItem || items[0].Found != "installed 0.13.0" {
+		t.Errorf("items = %+v, %v", items, err)
+	}
+	delete(m.Files, cldBin)
+	delete(m.Modes, cldBin)
+	if items, _ = s.Report(context.Background()); items[0].Found != "missing" {
+		t.Errorf("items = %+v, want cld missing", items)
+	}
+}
+
+func TestCableReportsItsAddress(t *testing.T) {
+	const list = "header\nDock\n"
+	m := effecttest.NewMachine()
+	it := reportOf(t, cableStep(m, &effecttest.Out{}, list, cableSet))["Dock"]
+	if it.Kind != step.ServiceItem || it.Found != it.Want {
+		t.Errorf("set = %+v, want its address found", it)
+	}
+	it = reportOf(t, cableStep(m, &effecttest.Out{}, list, "DHCP Configuration\nIP address: 10.0.0.9\n"))["Dock"]
+	if it.Found == it.Want || !strings.Contains(it.Found, "10.0.0.9") {
+		t.Errorf("dhcp = %+v, want the address it has", it)
+	}
+	it = reportOf(t, cableStep(m, &effecttest.Out{}, "header\n*Dock\n", cableSet))["Dock"]
+	if it.Found == it.Want || !strings.Contains(it.Conflict, "disabled") {
+		t.Errorf("disabled = %+v, want a conflict: no run turns it on", it)
+	}
+	s := cableStep(m, &effecttest.Out{}, list, cableSet)
+	s.Conf = conf.Conf{}
+	if got := reportOf(t, s); len(got) != 0 {
+		t.Errorf("items = %v, want none without a service", got)
 	}
 }

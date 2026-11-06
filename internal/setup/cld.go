@@ -110,6 +110,19 @@ func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: cs}, nil
 }
 
+// Report says whether cld is there, with the version it names.
+func (c *Cld) Report(ctx context.Context) ([]step.Item, error) {
+	item := step.Item{Kind: step.PackageItem, Name: "cld", Want: stateInstalled, Found: stateMissing}
+	if c.has() {
+		item.Found = stateInstalled
+		if out, err := c.M.Run(ctx, c.bin(), "--version"); err == nil {
+			v, _ := cldVersion(string(out))
+			item.Found += " " + v
+		}
+	}
+	return []step.Item{item}, nil
+}
+
 // update plans the update of the cld there, and says whether the cld to come may have restore tabs.
 // A release before 0.6.0 lacks cld update, so install.sh replaces it. A cld built from a clone, of
 // no release's version, is left alone, as cld update refuses it. Only a run can ask cld to update,
