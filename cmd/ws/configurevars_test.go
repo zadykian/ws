@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"io"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/tui"
@@ -101,5 +104,59 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	}
 	if op := <-ws.ops; !slices.Equal(op, []string{"values"}) {
 		t.Errorf("op = %q", op)
+	}
+}
+
+func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
+	p, m := macTerminal()
+	ws := newFarWs(m, "ws_user: ada\n")
+	p.machine = ws
+	in, keys := io.Pipe()
+	defer func() { _ = keys.Close() }()
+	ended := make(chan int, 1)
+	go func() {
+		root := newRoot(p, newMacCmd(p), newServerCmd(p))
+		ended <- execute(context.Background(), root, []string{"mac", "configure"}, in, io.Discard, io.Discard)
+	}()
+	press := func(text string) {
+		if _, err := keys.Write([]byte(text)); err != nil {
+			t.Error(err)
+		}
+	}
+	press("\x0e\x0e")
+	select {
+	case op := <-ws.ops:
+		if !slices.Equal(op, []string{"values"}) {
+			t.Fatalf("read = %q", op)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("no read reached ws")
+	}
+	// A read holds the keys, so the edit goes on until one lands past it.
+	var saved []string
+	for saved == nil {
+		select {
+		case op := <-ws.ops:
+			if len(op) > 1 {
+				saved = op
+			}
+		case <-time.After(150 * time.Millisecond):
+			press("x\x13")
+		}
+	}
+	pair, err := base64.StdEncoding.DecodeString(saved[1])
+	if err != nil || !strings.HasPrefix(string(pair), "ws_user=adax") {
+		t.Errorf("saved %q: %v", pair, err)
+	}
+	for {
+		select {
+		case status := <-ended:
+			if got := lockCalls(m.Calls, "rm -rf"); status != 0 || got != 1 {
+				t.Errorf("status = %d, let the lock go %d times", status, got)
+			}
+			return
+		case <-time.After(150 * time.Millisecond):
+			press("\x1b")
+		}
 	}
 }
