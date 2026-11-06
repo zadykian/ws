@@ -6,6 +6,14 @@ import (
 	"testing"
 )
 
+// atRow returns l with the cursor on the row of that name, on its side.
+func atRow(l pickList, name string) pickList {
+	row := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.name == name })
+	l.side = l.rows[row].side
+	l.at = slices.Index(l.lines(), pickLine{row: row})
+	return l
+}
+
 func TestAStageFollowsTheStepsItRuns(t *testing.T) {
 	l := choosing(newQueue(testStages()), "one")
 	if got := drawn(l, MacSide); got[0] != " 1 [#] · Tools" || got[1] != " 2 [-] · Setup" {
@@ -35,5 +43,22 @@ func TestARoleUnreadIsChosenByItsName(t *testing.T) {
 	got := choosing(newQueue(testStages()), "ssh").partial()["Run"]
 	if want := []string{"ssh"}; !slices.Equal(got, want) {
 		t.Errorf("partial = %q, want %q", got, want)
+	}
+}
+
+func TestAStagesBoxTurnsItsSteps(t *testing.T) {
+	l := atRow(newQueue(testStages()), "Setup").toggled()
+	if got := boxes(l)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
+		t.Errorf("boxes = %q", got)
+	}
+	if got := boxes(l.toggled())[1:4]; !slices.Equal(got, []string{"[ ]", "[ ]", "[ ]"}) {
+		t.Errorf("boxes = %q", got)
+	}
+}
+
+func TestALockedStageHoldsItsBox(t *testing.T) {
+	l := atRow(choosing(newQueue(testStages()), "Signing"), "Run").toggled()
+	if !l.rows[5].on() || !l.rows[6].on() {
+		t.Errorf("rows = %+v", l.rows)
 	}
 }

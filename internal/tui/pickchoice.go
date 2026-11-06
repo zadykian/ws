@@ -15,29 +15,36 @@ func (l pickList) chose(box func(pickRow) bool) pickList {
 }
 
 // toggled returns the list with the box under the cursor turned. A role's turns its shown steps on,
-// or off where all are on. A locked step holds, as the step that waits on it would go with it.
+// or off where all are on, and so does a stage's. A locked step holds, as the step that waits on it
+// would go with it.
 func (l pickList) toggled() pickList {
 	line, ok := l.current()
 	if !ok {
 		return l
 	}
 	row := l.rows[line.row]
-	if line.heading {
-		off := func(o pickRow) bool { return o.parent == row.parent && l.shows(o) && !o.on() }
-		turned := slices.ContainsFunc(l.rows, off)
-		return l.chose(func(o pickRow) bool {
-			if o.parent == row.parent {
-				return turned
-			}
-			return o.chosen
-		})
-	}
-	if len(row.lockedBy) > 0 {
+	switch {
+	case line.heading:
+		return l.turned(func(o pickRow) bool { return o.parent == row.parent })
+	case len(row.lockedBy) > 0:
 		return l
+	case l.nests(row):
+		return l.turned(under(row))
 	}
 	return l.chose(func(o pickRow) bool {
 		if o.sameChoice(row) {
 			return !row.chosen
+		}
+		return o.chosen
+	})
+}
+
+// turned returns the list with the shown steps of part on, or off where all are on.
+func (l pickList) turned(part func(pickRow) bool) pickList {
+	on := slices.ContainsFunc(l.rows, func(o pickRow) bool { return part(o) && l.shows(o) && !o.on() })
+	return l.chose(func(o pickRow) bool {
+		if part(o) {
+			return on
 		}
 		return o.chosen
 	})
