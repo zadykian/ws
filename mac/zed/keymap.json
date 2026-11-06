@@ -12,20 +12,29 @@
     },
     "bindings": {
       "ctrl-shift-s": "workspace::SaveAll",
+      // Ctrl+Cmd+S replaces Zed's worktree security toggle
       "ctrl-cmd-s": "workspace::SaveAll",
+      // Cmd+S is Zed's already
       "ctrl-s": "workspace::Save",
       "ctrl-alt->": "zed::IncreaseUiFontSize",
       "ctrl-alt-<": "zed::DecreaseUiFontSize",
+      // Mouse button 5 is Zed's already
       "ctrl-=": "pane::GoForward",
+      // Cmd+F is Zed's already
       "ctrl-f": "buffer_search::Deploy",
+      // Shift+Cmd+F is Zed's already
       "ctrl-shift-f": "pane::DeploySearch",
+      // Shift+Alt+/ alone: Shift+Ctrl+Down goes to the next highlighted usage
       "alt-?": "search::SelectNextMatch",
       "ctrl-q": "command_palette::Toggle",
       "ctrl-shift-t": "file_finder::Toggle",
       "ctrl-alt-shift-t": "project_symbols::Toggle",
+      // Opens a folder; on a remote project, the server's
       "ctrl-o": "workspace::Open",
+      // Replaces Zed's emacs-style backspace
       "ctrl-h": "buffer_search::DeployReplace",
       "ctrl-shift-h": ["pane::DeploySearch", { "replace_enabled": true }],
+      // Files alone
       "ctrl-,": "file_finder::Toggle",
       "ctrl-alt-shift-e": "text_finder::Toggle",
       "ctrl-alt-2": "diagnostics::Deploy",
@@ -33,32 +42,41 @@
       "ctrl-alt-v": "diagnostics::Deploy",
       "alt-shift-i": "diagnostics::DeployCurrentFile",
       "alt-f11": "diagnostics::Deploy",
+      // Opens the project's diagnostics, where Alt+PgDn moves on
       "alt-shift-pagedown": "diagnostics::Deploy",
       "ctrl-shift-f12": "diagnostics::Deploy",
       "alt-shift-f2": "diagnostics::Deploy",
       "alt-shift-pageup": "diagnostics::Deploy",
+      // Replaces Zed's Shift+Esc, which toggles zoom
       "shift-escape": "workspace::ToggleAllDocks",
       "alt-shift-l": "pane::RevealInProjectPanel",
+      // Takes Shift+Alt+Right, macOS's select word
       "ctrl-end": "workspace::ActivateNextPane",
       "alt-shift-right": "workspace::ActivateNextPane",
+      // Takes Alt+Right from Zed's word motion
       "ctrl-alt-pagedown": "pane::ActivateNextItem",
       "alt-right": "pane::ActivateNextItem",
+      // Takes Alt+Left from Zed's word motion
       "ctrl-alt-pageup": "pane::ActivatePreviousItem",
       "alt-left": "pane::ActivatePreviousItem",
       "ctrl-home": "workspace::ActivatePreviousPane",
       "alt-shift-left": "workspace::ActivatePreviousPane",
+      // By the dock, whichever its side
       "ctrl-alt-down": "workspace::DecreaseActiveDockSize",
       "ctrl-alt-left": "workspace::DecreaseActiveDockSize",
       "ctrl-alt-right": "workspace::IncreaseActiveDockSize",
       "ctrl-alt-up": "workspace::IncreaseActiveDockSize",
       "ctrl-alt-shift-r": "pane::SplitRight",
+      // Ctrl+Cmd+F stays Zed's too
       "alt-shift-enter": "zed::ToggleFullScreen",
       "ctrl-shift-f4": "workspace::CloseActiveDock",
+      // macOS's keyboard navigation may take Ctrl+F4
       "ctrl-f4": "pane::CloseActiveItem",
       "ctrl-\"": "workspace::ToggleZoom",
       "ctrl-alt-]": "workspace::ActivateNextWindow",
       "ctrl-alt-[": "workspace::ActivatePreviousWindow",
       "alt-f1": "pane::RevealInProjectPanel",
+      // The agent panel; replaces Zed's F7, which steps over while stopped, as F10 steps over too
       "f7": "agent::ToggleFocus",
       "alt-7": "agent::ToggleFocus",
       "f5": "git_panel::ToggleFocus",
@@ -67,25 +85,35 @@
       "alt-1": "project_panel::ToggleFocus",
       "f2": "terminal_panel::Toggle",
       "alt-2": "terminal_panel::Toggle",
+      // The log: Zed's git graph
       "f6": "git_graph::Open",
       "alt-6": "git_graph::Open",
       "ctrl-f1": "zed::OpenDocs",
       "ctrl-alt-k": "git::ToggleCommitEditor",
       "alt-x": "git::Branch",
+      // The branch picker creates one
       "ctrl-alt-n": "git::Branch",
       "alt-z": "git::Fetch",
+      // The active file
       "ctrl-alt-y": "workspace::ReloadActiveItem",
+      // In the git graph
       "ctrl-alt-shift-c": "git_graph::CopyCommitSha",
       "alt-v": "git::Push",
+      // A task named build, which tasks.json gives
       "ctrl-shift-b": ["task::Spawn", { "task_name": "build" }],
       "alt-shift-f9": "debugger::Start",
+      // The last debug session; Ctrl+F5 is macOS's toolbar key
       "ctrl-f5": "debugger::Rerun",
+      // A task named go generate
       "ctrl-alt-g": ["task::Spawn", { "task_name": "go generate" }],
+      // Shift+Ctrl+P alone: a Mac has no Pause; global, as the editor's Shift+Ctrl+P would win
       "ctrl-shift-p": "debugger::Pause",
       "ctrl-shift-f5": "debugger::Continue",
       "ctrl-shift-f9": "debugger::ClearAllBreakpoints",
+      // The last task
       "shift-f5": "task::Rerun",
       "alt-f5": "debugger::Stop",
+      // The modal, on its Attach tab by hand
       "ctrl-alt-p": "debugger::Start",
       "alt-)": "zed::ResetUiFontSize",
       "ctrl-alt-shift-s": "zed::OpenProjectSettings",
@@ -97,29 +125,40 @@
   {
     "context": "Editor",
     "bindings": {
+      // Cmd+C is Zed's already
       "ctrl-c": "editor::Copy",
+      // Cmd+X is Zed's already; Ctrl+X cuts in the editor too
       "ctrl-x": "editor::Cut",
+      // Ctrl+V replaces Zed's emacs-style page down
       "ctrl-v": "editor::Paste",
+      // Shift+Cmd+Z is Zed's; Cmd+Y stays Zed's: the agent's Allow once and Keep, and the git panel's stage and next
       "ctrl-y": "editor::Redo",
       "ctrl-shift-z": "editor::Redo",
+      // Cmd+Z is Zed's already
       "ctrl-z": "editor::Undo",
       "ctrl-?": "editor::ToggleBlockComments",
+      // Ctrl+K, Ctrl+U toggles rather than uncomments
       "ctrl-alt-/": "editor::ToggleComments",
       "ctrl-k c": "editor::ToggleComments",
       "ctrl-k ctrl-c": "editor::ToggleComments",
       "ctrl-k ctrl-/": "editor::ToggleComments",
       "ctrl-k ctrl-u": "editor::ToggleComments",
+      // Mouse wheel left to Zed
       "ctrl-_": "zed::DecreaseBufferFontSize",
       "ctrl-+": "zed::IncreaseBufferFontSize",
       "ctrl-|": "zed::ResetBufferFontSize",
       "ctrl-delete": "editor::DeleteToNextWordEnd",
       "ctrl-backspace": "editor::DeleteToPreviousWordStart",
+      // Replaces Zed's emacs-style delete
       "ctrl-d": "editor::DuplicateSelection",
       "ctrl-shift-j": "editor::JoinLines",
       "ctrl-alt-shift-v": "editor::Paste",
       "ctrl-shift-u": "editor::ToggleCase",
+      // Ctrl+A replaces Zed's emacs-style line start
       "ctrl-a": "editor::SelectAll",
+      // Replaces Zed's line duplicate up
       "alt-shift-up": "editor::AddSelectionAbove",
+      // Replaces Zed's line duplicate down
       "alt-shift-down": "editor::AddSelectionBelow",
       "alt-+": "editor::SelectLargerSyntaxNode",
       "ctrl-w": "editor::SelectLargerSyntaxNode",
@@ -127,17 +166,25 @@
       "ctrl-shift-w": "editor::SelectSmallerSyntaxNode",
       "alt-:": "editor::SelectAllMatches",
       "alt->": ["editor::SelectNext", { "replace_newest": false }],
+      // Undoes the last selection change
       "alt-<": "editor::UndoSelection",
       "alt-shift-g": "editor::SplitSelectionIntoLines",
+      // Replaces Zed's larger syntax node selection
       "ctrl-shift-right": "editor::SelectToNextWordEnd",
+      // Replaces Zed's smaller syntax node selection
       "ctrl-shift-left": "editor::SelectToPreviousWordStart",
       "ctrl-m c": "editor::ScrollCursorCenter",
       "ctrl-m ctrl-c": "editor::ScrollCursorCenter",
+      // macOS's Spaces take Ctrl+Right by default
       "ctrl-right": "editor::MoveToNextWordEnd",
+      // macOS's Spaces take Ctrl+Left by default
       "ctrl-left": "editor::MoveToPreviousWordStart",
+      // App windows takes Ctrl+Down by default
       "ctrl-down": "editor::LineDown",
+      // Mission Control takes Ctrl+Up by default
       "ctrl-up": "editor::LineUp",
       "ctrl-shift-f3": "editor::FindPreviousMatch",
+      // Ctrl+F3: F-keys need Fn or the setting
       "ctrl-f3": "editor::FindNextMatch",
       "ctrl-i": "editor::ToggleInlayHints"
     }
@@ -147,6 +194,7 @@
     "context": "Editor && mode == full",
     "bindings": {
       "ctrl-shift-enter": "editor::NewlineBelow",
+      // Zed offers snippets among completions
       "ctrl-k x": "editor::ShowCompletions",
       "ctrl-k ctrl-x": "editor::ShowCompletions",
       "ctrl-shift-delete": "editor::UnwrapSyntaxNode",
