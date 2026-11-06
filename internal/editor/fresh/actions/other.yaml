@@ -1,0 +1,9 @@
+---
+# F12's other keys, as Fresh's actions.
+view.ui-font-reset: {why: the terminal sets the font size}
+# near: one editor for every layer
+app.project-settings: {to: open_settings}
+app.settings: {to: open_settings}
+app.reload: {why: no restart action}
+file.new: {to: new}
+code.restart-server: {to: lsp_restart}

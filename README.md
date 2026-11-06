@@ -2,7 +2,7 @@
 
 Sets up my development server from code. `ws server apply` runs on the machine itself. It sets up
 packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It sets up
-Docker, the shell, tmux, the helix editor and Zed's server. It sets up claude and
+Docker, the shell, tmux, the Fresh and helix editors and Zed's server. It sets up claude and
 [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
 
@@ -30,6 +30,7 @@ Each role has a page of its own. A role is Go steps of ws:
   and plugin marketplaces from a list.
 - [`signoz`](docs/signoz.md): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
+- [`fresh`](docs/fresh.md): the Fresh editor, from the .deb of a pinned release.
 - [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and its config for the Go and C#
   servers.
 - [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the
@@ -156,6 +157,8 @@ Workflows read and write; and no account permission. These stay manual:
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
   [The profile](docs/ikeward.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot);
+- Fresh's trust, once per repository: press T, then Enter
+  ([Trust each project](docs/fresh.md#trust-each-project));
 - the local list of words: set the secret `FORBIDDEN_WORDS` on GitHub, and place
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
   ([The hooks](docs/checks.md#the-hooks)).

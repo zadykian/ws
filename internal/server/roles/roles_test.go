@@ -36,3 +36,14 @@ func TestZedRunsAfterHelix(t *testing.T) {
 		t.Errorf("zed is misplaced in %v", names)
 	}
 }
+
+func TestFreshRunsJustBeforeHelix(t *testing.T) {
+	var names []string
+	for _, r := range List() {
+		names = append(names, r.Name)
+	}
+	i := slices.Index(names, "fresh")
+	if i < 1 || names[i-1] != "otelcol" || names[i+1] != "helix" {
+		t.Errorf("fresh is misplaced in %v", names)
+	}
+}

@@ -1,0 +1,7 @@
+---
+# F12's completion keys, as Fresh's actions.
+# near: expands in place, with no list
+complete.words: {to: dabbrev_expand}
+complete.signature: {to: lsp_signature_help}
+signature.previous: {why: no paging of overloads}
+signature.next: {why: no paging of overloads}

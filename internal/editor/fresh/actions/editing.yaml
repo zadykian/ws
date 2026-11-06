@@ -1,0 +1,29 @@
+---
+# F12's editing keys, as Fresh's actions.
+file.save-all: {to: save_all}
+file.save: {to: save}
+view.ui-font-larger: {why: the terminal sets the font size}
+view.ui-font-smaller: {why: the terminal sets the font size}
+edit.copy: {to: copy}
+edit.cut: {to: cut}
+edit.paste: {to: paste}
+edit.redo: {to: redo}
+edit.undo: {to: undo}
+edit.comment-block: {why: no block comment action}
+edit.comment-line: {to: toggle_comment}
+view.font-smaller: {why: the terminal sets the font size}
+view.font-larger: {why: the terminal sets the font size}
+view.font-reset: {why: the terminal sets the font size}
+edit.delete-word-end: {to: delete_word_forward}
+edit.delete-word-start: {to: delete_word_backward}
+# near: duplicates lines, not a selection
+edit.duplicate: {to: duplicate_line}
+edit.join-lines: {why: vi_join lives in vi mode alone}
+# near: flips the character under the cursor, as vim's tilde; the docs' label is wrong
+edit.toggle-case: {to: toggle_case}
+edit.move-line-up: {to: move_line_up}
+edit.move-line-down: {to: move_line_down}
+# near: Emacs's C-o: splits at the cursor and keeps it there
+edit.newline-below: {to: open_line}
+complete.show: {to: lsp_completion}
+edit.unwrap: {why: no syntax-tree selection or motion in Fresh}

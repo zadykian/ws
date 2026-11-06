@@ -1,0 +1,19 @@
+---
+# F12's git keys, as Fresh's actions.
+git.commit-editor: {why: 'no git command in Fresh: the shell does this'}
+git.branch: {why: 'no git command in Fresh: the shell does this'}
+git.fetch: {why: 'no git command in Fresh: the shell does this'}
+file.reload: {to: revert}
+git.copy-sha: {why: no git graph in Fresh}
+git.push: {why: 'no git command in Fresh: the shell does this'}
+git.next-hunk: {to: diff_nav_next}
+git.previous-hunk: {to: diff_nav_prev}
+git.restore-hunk: {why: no action restores a hunk}
+git.toggle-staged: {why: no git panel in Fresh}
+git.tree-view: {why: no git panel in Fresh}
+git.restore-file: {why: no git panel in Fresh}
+git.stash: {why: no git panel in Fresh}
+git.stash-pop: {why: no git panel in Fresh}
+git.hide: {why: no git panel in Fresh}
+git.commit: {why: 'no git command in Fresh: the shell does this'}
+git.amend: {why: 'no git command in Fresh: the shell does this'}
