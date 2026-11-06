@@ -234,8 +234,9 @@ A screen owns the terminal, so a step's commands stay off it.
   command has the terminal until it ends. In plain mode it does what `Pass` does, but for a signal.
 - `Bridge.Foreground` runs such a command on a machine. A root command's ticket comes first, as
   only the screen can ask for it. Then the screen releases the terminal, and the command has ws's
-  own standard input and error. The screen draws again after it, even after a failure. A screen
-  that can't leave runs nothing.
+  own standard input and error. The line a step said last prints above it, once, as the pane is
+  out of sight: `ssh-keygen`'s directions are that line. The screen draws again after it, even
+  after a failure. A screen that can't leave runs nothing.
 - The wizard's steps hold it as `F` beside `M`. It runs `ssh-keygen` and `ssh-add` for the Mac's
   key, gh's login, and `claude auth login` over `ssh -t`. With no `F`, a step does `M.Pass`.
 - A run that ends sends such a command SIGTERM, and kills it 2 seconds later. A kill alone would

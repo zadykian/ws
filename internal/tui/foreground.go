@@ -23,8 +23,9 @@ func (b *Bridge) Foreground(m effect.OSMachine) effect.Foreground {
 	return foreground{b, m}
 }
 
-// PassForeground suspends the screen, runs the command, and resumes the screen. The terminal comes
-// back even after the command failed, and a screen that can't resume ends the run with its error.
+// PassForeground suspends the screen, prints the directions a step gave for the command, runs it,
+// and resumes the screen. The terminal comes back even after the command failed, and a screen that
+// can't resume ends the run with its error.
 // The ticket comes first, once: a question past the suspension would draw where nobody reads it.
 func (f foreground) PassForeground(ctx context.Context, root bool, name string, args ...string) (err error) {
 	m := f.m
@@ -39,6 +40,7 @@ func (f foreground) PassForeground(ctx context.Context, root bool, name string, 
 			return fmt.Errorf("leaving the screen for %s: %w", name, err)
 		}
 	}
+	f.b.directions()
 	defer func() {
 		if f.b.resume == nil {
 			return
