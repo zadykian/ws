@@ -40,7 +40,7 @@ func serveJobs(ctx context.Context, b *Bridge, jobs <-chan configureJob) error {
 			if job.leave {
 				return nil
 			}
-			sheet, err := job.sheet.Save(ctx, b, job.edits)
+			sheet, err := job.run(ctx, b)
 			b.send(savedMsg{job.place, sheet, err})
 		}
 	}
@@ -56,7 +56,15 @@ type configureJob struct {
 	leave bool
 }
 
-// savedMsg is the end of a save. Its sheet reads what the file holds.
+// run reads the sheet where it waits for that, and saves the edits otherwise.
+func (j configureJob) run(ctx context.Context, b *Bridge) (Sheet, error) {
+	if j.sheet.Open != nil {
+		return j.sheet.Open(ctx, b)
+	}
+	return j.sheet.Save(ctx, b, j.edits)
+}
+
+// savedMsg is the end of a read or of a save. Its sheet reads what the file holds.
 type savedMsg struct {
 	place int
 	sheet Sheet
@@ -75,6 +83,9 @@ func (s configureScreen) leave(again bool) (tea.Model, tea.Cmd) {
 // save checks the form, and hands its edits to the work. A refusal takes the focus, for the field to
 // be mended.
 func (s configureScreen) save() (tea.Model, tea.Cmd) {
+	if s.sheets[s.at].Open != nil {
+		return s.opened()
+	}
 	s.notes = nil
 	form, ok := s.form().Check()
 	s = s.with(form)
@@ -87,7 +98,18 @@ func (s configureScreen) save() (tea.Model, tea.Cmd) {
 	return s.fitted(), func() tea.Msg { s.send(job); return nil }
 }
 
-// saved ends a save. A failed one keeps the edits, and shows why.
+// opened hands the work the read of the sheet that shows, where it waits for one. The keys wait for
+// the read as for a save, and a question goes to the session, as in a save.
+func (s configureScreen) opened() (tea.Model, tea.Cmd) {
+	if s.sheets[s.at].Open == nil {
+		return s.fitted(), nil
+	}
+	s.notes, s.saving = nil, true
+	job := configureJob{place: s.at, sheet: s.sheets[s.at]}
+	return s.fitted(), func() tea.Msg { s.send(job); return nil }
+}
+
+// saved ends a read or a save. A failed one keeps the edits, and shows why.
 func (s configureScreen) saved(msg savedMsg) configureScreen {
 	s.saving = false
 	if msg.err != nil {
