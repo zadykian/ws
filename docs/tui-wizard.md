@@ -1,0 +1,41 @@
+# The wizard's lists
+
+[The list of steps](tui.md#the-list-of-steps) holds the keys these lists share. They are code that
+no command opens yet, with tests of their own: `ws mac wizard` prints its lines until it takes them
+up.
+
+The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine
+a stage runs on. A narrow window stacks them, and one too short for that keeps the list in focus.
+The numbers run across both lists, in the order of the run. Stage 3 can stand in `ws` between two
+stages of `Mac`, and the order, the locks and the count hold across the machines. A stage's own
+steps stand under it, indented, with no number.
+
+Tab walks the lists, then the buttons, which add `configure` to the list's, and Shift-Tab walks
+back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act on both lists, and `e` leaves for
+the values' form at any time, a scan under way included. `q` runs nothing.
+
+Each stage's box follows its steps, and `[-]` says that some are on. A stage run in part stays
+pending, and the detail says so. A stage that a chosen one waits on is locked as `[#]`, with its
+steps, as that one needs it whole.
+
+Under the lists, a strip of a third of the window holds the detail, between 5 and 12 lines. A window
+under 14 lines leaves it out.
+
+## The scan
+
+ws's list shows the roles by name until the stage that reaches ws has reported, and its title says
+`ws: roles not scanned`. A check of the Mac can't read ws before ws is there. A report gives each
+role its steps, in place of its name. A report that failed keeps the names, and the detail gives its
+reason. A run then adds the steps as its events name them.
+
+At the scan's end all that the scan found work in starts chosen, as the wizard left alone runs each
+stage it reaches. So does all that it never reached, as a check stops short on a new Mac. A stage
+found clean keeps the rows it never named off. A stage with work and no row on, as ws's run can be,
+turns on whole.
+
+## The run
+
+The run keeps both lists, each with the boxes it left with. A step's mark moves as it runs, and the
+cursor follows it across the lists. The strip holds what the run prints, and a window too short for
+the strip shows the lists alone. The bar and the count are of stages. The keys and the stop are
+[the run screen's](tui.md#the-run-screen).

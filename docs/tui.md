@@ -174,6 +174,8 @@ A role's box follows its steps, and `[-]` says that some are on. A chosen step l
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so
 `!` in the status warns of changes left out in an earlier role.
 
+[The wizard's lists](tui-wizard.md) set two such lists side by side.
+
 ## The state screen
 
 `ws server state` and `ws mac state` draw what a machine holds of what ws manages. The screen reads
