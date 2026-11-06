@@ -8,5 +8,6 @@ import (
 // Linux. Only its entry in the groups is built for darwin alone.
 func newMacCmd(p process) *cobra.Command {
 	return group("mac", "the Mac's commands",
-		newConfCmd(p), newMacApplyCmd(p), newMacStateCmd(p), newWizardCmd(p), newResolverCmd(p), newTunnelCmd(p), newSecretsCmd(p))
+		newConfCmd(p), newConfigureCmd(p), newMacApplyCmd(p), newMacStateCmd(p), newWizardCmd(p), newResolverCmd(p),
+		newTunnelCmd(p), newSecretsCmd(p))
 }
