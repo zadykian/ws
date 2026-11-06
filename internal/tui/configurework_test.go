@@ -96,3 +96,30 @@ func TestConfigureShortWindowKeepsTheInputAndTheNotesEnd(t *testing.T) {
 		}
 	}
 }
+
+func TestConfigureLeavesAtOnceWithNoEdit(t *testing.T) {
+	var jobs []configureJob
+	fed(recording(&jobs, wayFile()), esc)
+	if len(jobs) != 1 || !jobs[0].leave {
+		t.Errorf("jobs = %+v", jobs)
+	}
+}
+
+func TestConfigureAsksBeforeItLosesAnEdit(t *testing.T) {
+	var jobs []configureJob
+	s := fed(recording(&jobs, wayFile()), enter, tea.PasteMsg{Content: "2222"})
+	if got := stripped(s.View().Content); !strings.Contains(got, "1 unsaved") {
+		t.Errorf("no count:\n%s", got)
+	}
+	s = fed(s, tea.WindowSizeMsg{Width: 30, Height: 24}, esc)
+	if got := stripped(s.View().Content); len(jobs) != 0 || !strings.Contains(got, "esc again") {
+		t.Errorf("jobs = %+v, drew:\n%s", jobs, got)
+	}
+	if s = fed(s, press('1')); s.leaving {
+		t.Error("a key kept the question")
+	}
+	fed(s, esc, esc)
+	if len(jobs) != 1 || !jobs[0].leave {
+		t.Errorf("jobs = %+v", jobs)
+	}
+}

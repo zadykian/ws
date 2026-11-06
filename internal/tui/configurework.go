@@ -16,6 +16,8 @@ type configureJob struct {
 	place int
 	sheet Sheet
 	edits map[string]string
+	// leave ends the work in place of a save.
+	leave bool
 }
 
 // savedMsg is the end of a save. Its sheet reads what the file holds.
@@ -23,6 +25,15 @@ type savedMsg struct {
 	place int
 	sheet Sheet
 	err   error
+}
+
+// leave ends the screen, and asks first where it would lose an edit.
+func (s configureScreen) leave(again bool) (tea.Model, tea.Cmd) {
+	if !again && s.unsaved() > 0 {
+		s.leaving = true
+		return s, nil
+	}
+	return s, func() tea.Msg { s.send(configureJob{leave: true}); return nil }
 }
 
 // save checks the form, and hands its edits to the work. A refusal takes the focus, for the field to

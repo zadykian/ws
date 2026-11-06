@@ -48,6 +48,8 @@ type configureScreen struct {
 	notes  []Line
 	send   func(configureJob)
 	saving bool
+	// leaving says that Esc asked to leave with edits unsaved, and the next Esc drops them.
+	leaving bool
 }
 
 // newConfigureScreen returns the screen of sheets, on the first.
@@ -121,6 +123,8 @@ func (s configureScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if s.saving {
 		return s, nil
 	}
+	again := s.leaving
+	s.leaving = false
 	onForm := s.footer.Focused() < 0
 	if step := fieldStep(msg); onForm && step != 0 {
 		return s.stepped(step), nil
@@ -130,6 +134,8 @@ func (s configureScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case place == savePlace:
 		return s.save()
+	case place == formLeavePlace:
+		return s.leave(again)
 	case !onForm && s.footer.Focused() < 0:
 		return s.with(s.form().Enter(key.Matches(msg, Keys.Prev))), nil
 	case onForm:
@@ -151,11 +157,39 @@ func (s configureScreen) stepped(step int) configureScreen {
 // layout is the screen with its pane empty, as what fills it depends on its size.
 func (s configureScreen) layout() Layout {
 	at, of := s.form().Place()
+	title, status := s.title, s.status()
+	if s.leaving {
+		// The question takes the title's place: a status that doesn't fit beside the title goes, and
+		// the next Esc drops the edits.
+		title, status = "esc again leaves without saving", ""
+	}
 	return Layout{
-		Title:  s.title,
+		Title:  title,
+		Status: status,
 		Panes:  []Pane{{Title: fmt.Sprintf("%s %d/%d", s.sheets[s.at].Name, at, of), Focused: s.footer.Focused() < 0}},
 		Footer: s.footer,
 	}
+}
+
+// status says what the screen waits for, or counts the edits that a leave would lose.
+func (s configureScreen) status() string {
+	changed := s.unsaved()
+	switch {
+	case s.saving:
+		return "saving"
+	case changed > 0:
+		return fmt.Sprintf("%d unsaved", changed)
+	}
+	return ""
+}
+
+// unsaved counts the changes on every form.
+func (s configureScreen) unsaved() int {
+	changed := 0
+	for _, form := range s.forms {
+		changed += form.Changed()
+	}
+	return changed
 }
 
 // View draws the form that shows.
