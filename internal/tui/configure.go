@@ -43,8 +43,9 @@ type configureScreen struct {
 	at     int
 	footer Footer
 	window Size
-	// send hands the work a job, and saving holds the keys till it ends, as the form would change
-	// under the file that it writes.
+	// notes is what the last save said. send hands the work a job, and saving holds the keys till it
+	// ends, as the form would change under the file that it writes.
+	notes  []Line
 	send   func(configureJob)
 	saving bool
 }
@@ -62,11 +63,14 @@ func newConfigureScreen(title string, theme Theme, send func(configureJob), shee
 // Init starts nothing, as the screen waits for a key.
 func (s configureScreen) Init() tea.Cmd { return nil }
 
-// Update takes the window's size, the keys and a paste.
+// Update takes the window's size, the keys, a paste, and what a save said.
 func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
+		return s.fitted(), nil
+	case Line:
+		s.notes = slices.Concat(s.notes, []Line{msg})
 		return s.fitted(), nil
 	case tea.KeyPressMsg:
 		return s.pressed(msg)
@@ -88,9 +92,9 @@ func (s configureScreen) with(form Form) configureScreen {
 	return s
 }
 
-// fitted sizes the forms to the pane.
+// fitted sizes the forms to the pane, less what the notes take.
 func (s configureScreen) fitted() configureScreen {
-	size := s.layout().PaneSizes(s.window.Width, s.window.Height)[0]
+	size, _ := s.split(s.layout().PaneSizes(s.window.Width, s.window.Height)[0])
 	s.forms = slices.Clone(s.forms)
 	for place, form := range s.forms {
 		s.forms[place] = form.Fit(size)
@@ -155,6 +159,7 @@ func (s configureScreen) layout() Layout {
 // View draws the form that shows.
 func (s configureScreen) View() tea.View {
 	l := s.layout()
-	l.Panes[0].Body = s.form().Render()
+	_, under := s.split(l.PaneSizes(s.window.Width, s.window.Height)[0])
+	l.Panes[0].Body = s.form().Render() + under
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }

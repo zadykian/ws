@@ -3,6 +3,7 @@ package tui
 import (
 	"errors"
 	"maps"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -40,5 +41,38 @@ func TestConfigureRefusedSaveStaysOnTheField(t *testing.T) {
 	}
 	if s.footer.Focused() >= 0 || s.form().name() != "HOST" {
 		t.Errorf("button %d, field %q", s.footer.Focused(), s.form().name())
+	}
+}
+
+func TestConfigureShowsWhatASaveSaidUntilTheNext(t *testing.T) {
+	s := fed(testConfigure(wayFile()), Line{Said, "wrote way.conf"})
+	if got := stripped(s.View().Content); !strings.Contains(got, "wrote way.conf") {
+		t.Errorf("no note:\n%s", got)
+	}
+	if s = fed(s, ctrlS); len(s.notes) != 0 {
+		t.Errorf("a save kept the last one's notes: %v", s.notes)
+	}
+}
+
+func TestConfigureKeepsTheEndOfWhatASaveSaid(t *testing.T) {
+	s := testConfigure(wayFile())
+	for range noteRows + 2 {
+		s = fed(s, Line{Said, "a line"})
+	}
+	if got := len(s.noteLines(40)); got != noteRows {
+		t.Errorf("%d rows", got)
+	}
+}
+
+func TestConfigureShortWindowKeepsTheInputAndTheNotesEnd(t *testing.T) {
+	refusal := strings.Repeat("no room here ", 30) + "why"
+	for _, height := range []int{5, 6, 8, 9, 11} {
+		s := fed(testConfigure(wayFile()), tea.WindowSizeMsg{Width: 60, Height: height}, enter)
+		s = fed(s, tea.PasteMsg{Content: "2222"}, Line{Warned, refusal})
+		got := stripped(s.View().Content)
+		// A pane of one row holds the input alone. The status still counts the edit.
+		if !strings.Contains(got, "2222") || height > 5 && !strings.Contains(got, "why") {
+			t.Errorf("height %d drew:\n%s", height, got)
+		}
 	}
 }
