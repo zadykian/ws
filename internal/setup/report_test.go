@@ -3,10 +3,12 @@ package setup_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/sshcfg"
 	"github.com/zadykian/ws/step"
 )
@@ -80,5 +82,58 @@ func TestSSHReportsWsCopyOfAKey(t *testing.T) {
 	it := reportOf(t, sshStep(m, &effecttest.Out{}))[copyOf(agentKey)]
 	if it.Kind != step.FileItem || it.Want != "present" || it.Found != "missing" {
 		t.Errorf("copy = %+v, want a file that is missing", it)
+	}
+}
+
+func TestGitWithoutNameReportsNothing(t *testing.T) {
+	_, g := gitReady()
+	g.Conf = conf.Conf{}
+	if got := reportOf(t, g); len(got) != 0 {
+		t.Errorf("items = %v, want none", got)
+	}
+}
+
+func TestGitReportsWhatItManages(t *testing.T) {
+	m, g := gitReady()
+	dir := gitHome + "/.config/ws/"
+	m.Files[dir+"gitconfig"] = []byte("[user]\n    name = other\n")
+	got := reportOf(t, g)
+	if it := got["gh"]; it.Kind != step.PackageItem || it.Found != "installed" {
+		t.Errorf("gh = %+v", it)
+	}
+	if it := got[dir+"allowed_signers"]; it.Want != "mode 644" || it.Found != "missing" {
+		t.Errorf("allowed_signers = %+v", it)
+	}
+	if it := got[dir+"gitconfig"]; !strings.Contains(it.Conflict, "no Written by line") || it.Diff == "" {
+		t.Errorf("gitconfig = %+v, want a file ws did not write, with its diff", it)
+	}
+	if it := got[gitHome+"/.config"]; it.Kind != step.DirItem || it.Found != "present" {
+		t.Errorf("~/.config = %+v", it)
+	}
+	if it := got[gitConfigFile]; it.Want != it.Found || it.Diff != "" {
+		t.Errorf("~/.gitconfig = %+v, want its include held, and no diff", it)
+	}
+	if it := got[gitPub]; it.Kind != step.FileItem || it.Found != "present" {
+		t.Errorf("key = %+v, want its .pub found", it)
+	}
+	if slices.Contains(m.Calls, "read "+strings.TrimSuffix(gitPub, ".pub")) {
+		t.Errorf("calls = %q, which read the private key", m.Calls)
+	}
+}
+
+func TestGitReportShowsAKeyToMakeAndGhToInstall(t *testing.T) {
+	m, g := gitReady()
+	delete(m.Files, gitPub)
+	delete(m.Files, strings.TrimSuffix(gitPub, ".pub"))
+	g.LookPath = func(name string) (string, error) {
+		if name == "gh" {
+			return "", fmt.Errorf("no %s", name)
+		}
+		return "/opt/bin/" + name, nil
+	}
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	got := reportOf(t, g)
+	if got["gh"].Found != "missing" || got[gitPub].Found != "missing" {
+		t.Errorf("gh = %+v, key = %+v, want both missing", got["gh"], got[gitPub])
 	}
 }

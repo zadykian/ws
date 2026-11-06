@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 
@@ -87,4 +88,42 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 		}
 	}
 	return cs, nil
+}
+
+// Report says how gh, the signing key, the files and ~/.gitconfig's include stand. The key shows by
+// its .pub alone, and ~/.gitconfig by the include, as it is the user's file.
+func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
+	if g.Conf.GitName == "" {
+		return nil, nil
+	}
+	in, err := g.include(ctx)
+	if err != nil {
+		return nil, err
+	}
+	key, err := g.key(ctx)
+	if err != nil {
+		return nil, err
+	}
+	gh, install, err := g.gh(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tool := step.Item{Kind: step.PackageItem, Name: "gh", Want: stateInstalled, Found: stateInstalled}
+	if install != nil {
+		tool.Found = stateMissing
+	}
+	parts := []step.Reporter{
+		fixed{tool},
+		userPath{M: g.M, Kind: step.DirItem, Path: g.Home + "/.config"},
+		userPath{M: g.M, Kind: step.DirItem, Path: g.Home + "/.config/ws"},
+	}
+	for _, f := range g.list(key, gh) {
+		parts = append(parts, userFile{M: g.M, Path: f.path, Text: []byte(f.text), Mode: f.mode})
+	}
+	pub := keyCopy(g.M, key.Pub, key.Text, g.Home)
+	if len(pub) == 0 {
+		pub = []step.Reporter{userPath{M: g.M, Kind: step.FileItem, Path: key.Pub}}
+	}
+	parts = append(append(parts, pub...), fixed{lineItem(in.Path, "the include of ~/.config/ws/gitconfig", in.Exists, in.Included)})
+	return gather(ctx, parts...)
 }

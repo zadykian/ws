@@ -13,8 +13,9 @@ import (
 
 // The states that a report's items share.
 const (
-	stateMissing = "missing"
-	statePresent = "present"
+	stateMissing   = "missing"
+	statePresent   = "present"
+	stateInstalled = "installed"
 )
 
 // writtenBy starts the line at the top of a file that ws writes on the Mac, after its format's
