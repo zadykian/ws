@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -89,4 +90,43 @@ func (b binding) spellAll() string {
 		parts = append(parts, spell(p))
 	}
 	return strings.Join(parts, " ")
+}
+
+func TestTheConfigTurnsUpdatesAndSessionsOff(t *testing.T) {
+	loose, _ := load(t)
+	for _, key := range []string{"check_for_updates", "self_update", "auto_attach"} {
+		if got, found := loose[key]; !found || got != false {
+			t.Errorf("%s = %v, found %v; want false", key, got, found)
+		}
+	}
+}
+
+func TestEveryBindingNamesAnActionOfFresh(t *testing.T) {
+	data, err := os.ReadFile("files/actions.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, list, _ := strings.Cut(string(data), "\n")
+	known := strings.Fields(list)
+	if !slices.Contains(known, "noop") {
+		t.Fatal("the list lacks noop")
+	}
+	_, c := load(t)
+	all := slices.Clone(c.Keybindings)
+	for _, m := range c.Maps {
+		all = append(all, m.Bindings...)
+	}
+	for _, b := range all {
+		if !slices.Contains(known, b.Action) {
+			t.Errorf("%s binds %s, which isn't an action of Fresh", b.spellAll(), b.Action)
+		}
+	}
+}
+
+func TestTheActiveMapResolves(t *testing.T) {
+	_, c := load(t)
+	m, found := c.Maps[c.Active]
+	if !found || m.Inherits != "default" || len(m.Bindings) == 0 {
+		t.Fatalf("map %q: %+v", c.Active, m)
+	}
 }
