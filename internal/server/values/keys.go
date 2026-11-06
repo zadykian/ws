@@ -108,3 +108,18 @@ func (k Key) Check(value string) error {
 	}
 	return nil
 }
+
+// Text is the key's value in v as a line gives it, which is empty for an unset pointer.
+func (v Values) Text(k Key) string {
+	field := reflect.ValueOf(v).FieldByIndex(k.place)
+	if field.Kind() == reflect.Pointer {
+		if field.IsNil() {
+			return ""
+		}
+		field = field.Elem()
+	}
+	if k.Kind == List {
+		return strings.Join(field.Interface().([]string), ", ")
+	}
+	return fmt.Sprint(field.Interface())
+}

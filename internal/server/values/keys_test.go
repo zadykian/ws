@@ -63,3 +63,23 @@ func TestCheckRefusesWhatTheKindCantTake(t *testing.T) {
 		}
 	}
 }
+
+func TestTextGivesTheValueAsALine(t *testing.T) {
+	v, err := Parse([]byte("ikeward_domains: [a.example, b.example]\nfans_interval: 1.5\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, want := range map[string]string{
+		"ikeward_domains": "a.example, b.example", "fans_interval": "1.5", "security_outbound": "true",
+		"base_swappiness": "10", "base_swap_size_mb": "", "ws_home": "/home/zadykian", "ikeward_dns": "",
+	} {
+		if got := v.Text(keyOf(t, name)); got != want {
+			t.Errorf("%s = %q, want %q", name, got, want)
+		}
+	}
+	size := 0
+	v.Base.SwapSizeMB = &size
+	if got := v.Text(keyOf(t, "base_swap_size_mb")); got != "0" {
+		t.Errorf("a swap of 0 reads %q", got)
+	}
+}
