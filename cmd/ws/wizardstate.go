@@ -8,6 +8,17 @@ import (
 	"github.com/zadykian/ws/mac"
 )
 
+// state draws the state screen of side's machine. sudo is the scan's, which the run takes after it.
+func (w wizardScreen) state(side tui.Side, sudo *wizard.Sudo) error {
+	ctx, title := w.c.Context(), w.c.CommandPath()
+	if side == tui.MacSide {
+		return tui.RunState(ctx, w.config(), title+": Mac", macRead(w.p))
+	}
+	reach := &varsReach{p: w.p, sudo: sudo}
+	defer reach.close(ctx)
+	return tui.RunState(ctx, w.config(), title+": ws", wsRead(reach, w.p.version))
+}
+
 // wsRead is the state screen's read of ws. The way to ws stays once found, as a new one would hold
 // sudo's ticket until the screen ends. Each read asks ws's status again, as a run may have changed it.
 func wsRead(reach *varsReach, version string) tui.StateReader {

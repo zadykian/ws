@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 )
 
@@ -67,5 +69,39 @@ func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	defer reach.close(context.Background())
 	if _, err := wsRead(reach, p.version)(t.Context(), nil); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)
+	}
+}
+
+// The lock goes with the screen, for the run that may follow.
+func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
+	p, m := macTerminal()
+	ws := newReportingWs(m, p.version)
+	p.machine = ws
+	c, _ := screenCommand(t, "")
+	in, keys := io.Pipe()
+	defer func() { _ = keys.Close() }()
+	c.SetIn(in)
+	go func() {
+		<-ws.ops // The status, then the report.
+		<-ws.ops
+		_, _ = keys.Write([]byte("q"))
+	}()
+	if err := (wizardScreen{c, p, wizardOptions{}}).state(tui.WsSide, &wizard.Sudo{}); err != nil {
+		t.Fatal(err)
+	}
+	if took, gone := lockCalls(m.Calls, "mkdir"), lockCalls(m.Calls, "rm -rf"); took != 1 || gone != 1 {
+		t.Errorf("took the lock %d times, let it go %d times", took, gone)
+	}
+}
+
+// The Mac's read is local, so a run's lock on ws stays out of it.
+func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
+	p, m := macTerminal()
+	c, _ := screenCommand(t, "q")
+	if err := (wizardScreen{c, p, wizardOptions{}}).state(tui.MacSide, &wizard.Sudo{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := lockCalls(m.Calls, "mkdir"); got != 0 {
+		t.Errorf("took the lock %d times", got)
 	}
 }
