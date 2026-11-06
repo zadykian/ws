@@ -39,6 +39,22 @@ func TestALockedStageRunsWhole(t *testing.T) {
 	}
 }
 
+func TestAStageRunsWholeByATickAndNotByALockAlone(t *testing.T) {
+	for _, tc := range []struct {
+		names, want []string
+	}{
+		{[]string{"Signing"}, nil},
+		{[]string{"ssh"}, nil},
+		{[]string{"Signing", "ssh"}, []string{"Run"}},
+		{[]string{"base", "ssh"}, []string{"Run"}},
+		{[]string{"one", "base", "ssh"}, []string{"Setup", "Run"}},
+	} {
+		if got := choosing(newQueue(testStages()), tc.names...).ticked(); !slices.Equal(got, tc.want) {
+			t.Errorf("%q ticks %q, want %q", tc.names, got, tc.want)
+		}
+	}
+}
+
 func TestARoleUnreadIsChosenByItsName(t *testing.T) {
 	got := choosing(newQueue(testStages()), "ssh").partial()["Run"]
 	if want := []string{"ssh"}; !slices.Equal(got, want) {

@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -107,8 +108,25 @@ func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 	}
 }
 
+func TestAScansEndOpensTheQueueChosen(t *testing.T) {
+	got := chosenBy(t, scannedMsg{}, press('c'))
+	if !got.Check || len(got.Only) != 5 || got.Partial != nil {
+		t.Errorf("choice = %+v", got)
+	}
+}
+
 func TestConfigureGoesBeforeTheScanEnds(t *testing.T) {
 	if got := chosenBy(t, press('e')); !got.Configure || got.Only != nil {
 		t.Errorf("choice = %+v", got)
+	}
+}
+
+func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
+	s := pickSent(testQueueScreen(), planned("", "Setup", 1, oneChange("a")), scannedMsg{}, press('n'), press('p'))
+	if got := s.list.only(); !slices.Equal(got, []string{"Tools", "Setup"}) {
+		t.Errorf("only = %q", got)
+	}
+	if !s.list.rows[2].on() || !s.list.rows[3].on() {
+		t.Errorf("rows = %+v", s.list.rows[2:4])
 	}
 }

@@ -63,6 +63,20 @@ func (l pickList) partial() map[string][]string {
 	return parts
 }
 
+// ticked returns the stages that run every step, one of them by a tick. A lock alone asks for the
+// stage's end, which a good last run gives, and a tick for the steps, as one can drift after it.
+func (l pickList) ticked() []string {
+	var names []string
+	for _, r := range l.rows {
+		on, all := l.count(under(r))
+		picked := func(o pickRow) bool { return under(r)(o) && o.chosen }
+		if r.number > 0 && on == all && slices.ContainsFunc(l.rows, picked) {
+			names = append(names, r.name)
+		}
+	}
+	return names
+}
+
 // due says that a run has work in r: the scan found some, or never reached it. What no scan named
 // under a stage that found nothing to do has none.
 func (l pickList) due(r pickRow) bool {

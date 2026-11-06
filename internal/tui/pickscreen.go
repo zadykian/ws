@@ -37,6 +37,9 @@ type Choice struct {
 	// Partial gives, by stage of a queue, the steps on where some of the stage's are off, by entry.
 	// A stage it has no key for runs whole.
 	Partial map[string][]string
+	// Whole names the stages of a queue that run every step, one of them by a tick. Such a stage is
+	// to run though its last run passed. One that a lock alone holds whole isn't.
+	Whole []string
 }
 
 // scannedMsg ends the scan. problem says why it stopped short, if it did.
@@ -87,6 +90,9 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.list = s.list.hear(msg)
 	case scannedMsg:
 		s.scanning, s.problem = false, msg.problem
+		if s.queued {
+			s.list = s.list.opened()
+		}
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
 	case tea.KeyPressMsg:
@@ -124,13 +130,13 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickInvertPlace:
 		s.list = s.list.chose(func(r pickRow) bool { return !r.on() })
 	case pickPendingPlace:
-		s.list = s.list.chose(pickRow.pending)
+		s.list = s.list.chose(pickRow.pending).whole(pickRow.pending)
 	case pickFilterPlace:
 		s.editing = true
 	case pickRunPlace:
-		return s.leave(Choice{Only: s.list.only()})
+		return s.leave(s.choice(false))
 	case pickCheckPlace:
-		return s.leave(Choice{Only: s.list.only(), Check: true})
+		return s.leave(s.choice(true))
 	case pickQuitPlace:
 		return s.leave(Choice{})
 	case pickConfigurePlace:
@@ -156,6 +162,11 @@ func (s pickScreen) typed(msg tea.KeyPressMsg) pickScreen {
 		s.list = s.list.filtered(s.list.words + msg.Text)
 	}
 	return s
+}
+
+// choice is what the list holds, to run or to check.
+func (s pickScreen) choice(check bool) Choice {
+	return Choice{Only: s.list.only(), Check: check, Partial: s.list.partial(), Whole: s.list.ticked()}
 }
 
 // leave gives c to the work. A session quits with its work alone, and a screen never does.
