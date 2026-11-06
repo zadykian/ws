@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -59,5 +60,38 @@ func TestPickScreenFitsAnyWindow(t *testing.T) {
 		if len(lines) > size.Height {
 			t.Errorf("%v: %d lines", size, len(lines))
 		}
+	}
+}
+
+// scannedPick is a screen past its scan, which found changes in Packages and in Keys.
+func scannedPick() pickScreen {
+	return pickSent(testPick(), planned("base", "Packages", 0, oneChange("a")), planned("base", "Locale", 1),
+		planned("ssh", "Keys", 0, oneChange("a")), scannedMsg{})
+}
+
+func TestPickScreenKeysTurnTheBoxes(t *testing.T) {
+	space := tea.KeyPressMsg{Code: tea.KeySpace, Text: " "}
+	cases := []struct {
+		name string
+		keys []tea.Msg
+		want []string
+	}{
+		{"a step", []tea.Msg{press('j'), space}, []string{"ssh/Keys"}},
+		{"a role", []tea.Msg{space}, []string{"base/Packages", "base/Locale", "ssh/Keys"}},
+		{"all", []tea.Msg{press('a')}, []string{"base/Packages", "base/Locale", "ssh/Keys"}},
+		{"none", []tea.Msg{press('n')}, nil},
+		{"invert", []tea.Msg{press('i')}, []string{"base/Locale"}},
+		{"pending", []tea.Msg{press('a'), press('p')}, []string{"base/Packages", "ssh/Keys"}},
+	}
+	for _, c := range cases {
+		if got := pickSent(scannedPick(), c.keys...).list.only(); !slices.Equal(got, c.want) {
+			t.Errorf("%s: only = %q, want %q", c.name, got, c.want)
+		}
+	}
+}
+
+func TestPickScreenHoldsItsBoxesDuringTheScan(t *testing.T) {
+	if got := pickSent(testPick(), press('a')).list.only(); len(got) != 0 {
+		t.Errorf("only = %q, want none", got)
 	}
 }

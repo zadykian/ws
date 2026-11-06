@@ -3,9 +3,19 @@ package tui
 import (
 	"fmt"
 
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/step"
+)
+
+// The places of the list's buttons.
+const (
+	pickTogglePlace = iota
+	pickAllPlace
+	pickNonePlace
+	pickInvertPlace
+	pickPendingPlace
 )
 
 // scannedMsg ends the scan. problem says why it stopped short, if it did.
@@ -27,7 +37,11 @@ type pickScreen struct {
 
 // newPickScreen returns the screen of groups, its scan under way.
 func newPickScreen(title string, theme Theme, groups []Group) pickScreen {
-	return pickScreen{title: title, theme: theme, list: newPickList(groups), scanning: true}
+	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
+	footer := NewFooter(button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
+		button("p", "pending"))
+	s := pickScreen{title: title, theme: theme, list: newPickList(groups), footer: footer, scanning: true}
+	return s.enabled()
 }
 
 // Init starts nothing, as the scan is the work's.
@@ -47,9 +61,38 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
 	case tea.KeyPressMsg:
+		s = s.pressed(msg)
+	}
+	return s.enabled(), nil
+}
+
+// pressed turns the boxes that msg's button names, or moves the cursor.
+func (s pickScreen) pressed(msg tea.KeyPressMsg) pickScreen {
+	var place int
+	s.footer, place = s.footer.Update(msg)
+	switch place {
+	case pickTogglePlace:
+		s.list = s.list.toggled()
+	case pickAllPlace:
+		s.list = s.list.chose(func(pickRow) bool { return true })
+	case pickNonePlace:
+		s.list = s.list.chose(func(pickRow) bool { return false })
+	case pickInvertPlace:
+		s.list = s.list.chose(func(r pickRow) bool { return !r.on() })
+	case pickPendingPlace:
+		s.list = s.list.chose(pickRow.pending)
+	default:
 		s.list = s.list.moved(msg, max(s.listHeight(), 1))
 	}
-	return s, nil
+	return s
+}
+
+// enabled returns s with its boxes held while the scan ticks them, as a press would race it.
+func (s pickScreen) enabled() pickScreen {
+	for place := pickTogglePlace; place <= pickPendingPlace; place++ {
+		s.footer = s.footer.Enable(place, !s.scanning)
+	}
+	return s
 }
 
 // status is the title's right side: how far the scan is, then how much is chosen.
