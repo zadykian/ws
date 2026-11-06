@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -142,5 +143,43 @@ func TestFormRendersWithinItsRoom(t *testing.T) {
 	}
 	if empty := NewForm(testTheme, longSpecs); empty.Render() != "" {
 		t.Errorf("no room: %q", empty.Render())
+	}
+}
+
+func TestFormCheckFocusesTheFirstRefusal(t *testing.T) {
+	refused := errors.New("not this one")
+	specs := func(map[string]string) []FieldSpec {
+		no := func(string) error { return refused }
+		return []FieldSpec{{Label: "A"}, {Label: "B", Valid: no}, {Label: "C", Valid: no}}
+	}
+	f, ok := NewForm(testTheme, specs).Fit(Size{40, 20}).Blur().Check()
+	if ok || f.name() != "B" || f.blurred {
+		t.Errorf("Check = %v, focus on %q, blurred = %v", ok, f.name(), f.blurred)
+	}
+	if got := stripped(f.Render()); strings.Count(got, refused.Error()) != 2 {
+		t.Errorf("each refusal shows:\n%s", got)
+	}
+	if _, ok := NewForm(testTheme, waySpecs).Check(); !ok {
+		t.Error("Check refused a form that takes any value")
+	}
+}
+
+func TestFormRefillStartsOverAndKeepsTheFocus(t *testing.T) {
+	f := typedIn(moved(t, NewForm(testTheme, waySpecs), 1), "2222").Refill(func(map[string]string) []FieldSpec {
+		return []FieldSpec{{Label: "HOST"}, {Label: "PORT", Value: "2222"}}
+	})
+	if f.name() != "PORT" || f.fields["PORT"].Value() != "2222" || len(f.Edits()) != 0 {
+		t.Errorf("focus on %q, Edits = %v", f.name(), f.Edits())
+	}
+}
+
+func TestFormCountsTheChangesThatShow(t *testing.T) {
+	f := typedIn(moved(t, NewForm(testTheme, waySpecs), 1), "2222")
+	if at, of := f.Place(); at != 2 || of != 3 || f.Changed() != 1 {
+		t.Errorf("Place = %d/%d, Changed = %d", at, of, f.Changed())
+	}
+	f = typedIn(moved(t, f, -1).Update(cleared), "none")
+	if f.Changed() != 1 || len(f.Edits()) != 2 {
+		t.Errorf("Changed = %d, Edits = %v", f.Changed(), f.Edits())
 	}
 }

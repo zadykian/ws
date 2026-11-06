@@ -158,6 +158,51 @@ func (f Form) Update(msg tea.Msg) Form {
 	return f
 }
 
+// Check checks the fields that show, and puts the focus on the first that it refuses.
+func (f Form) Check() (Form, bool) {
+	f.fields = maps.Clone(f.fields)
+	refused := -1
+	for place, name := range slices.Backward(f.names) {
+		field, ok := f.fields[name].Check()
+		f.fields[name] = field
+		if !ok {
+			refused = place
+		}
+	}
+	if refused < 0 {
+		return f, true
+	}
+	f.blurred = false
+	return f.settle(refused), false
+}
+
+// Refill starts the form over on specs, as a save leaves the file holding the edits. The focus stays
+// on its field.
+func (f Form) Refill(specs func(edits map[string]string) []FieldSpec) Form {
+	next := NewForm(f.theme, specs).Fit(f.size)
+	next.blurred = f.blurred
+	if place := slices.Index(next.names, f.name()); place >= 0 {
+		return next.settle(place)
+	}
+	return next.settle(f.focus)
+}
+
+// Place says which field has the focus, from 1, and how many show.
+func (f Form) Place() (at, of int) {
+	return f.focus + 1, len(f.names)
+}
+
+// Changed is how many of the fields that show differ from what they started on.
+func (f Form) Changed() int {
+	changed := 0
+	for _, name := range f.names {
+		if f.fields[name].Edited() {
+			changed++
+		}
+	}
+	return changed
+}
+
 // Edits returns the value of each field that differs from what it started on, by label. A field that
 // no longer shows counts, so that specs reads it as it comes back, and a save skips what doesn't show.
 func (f Form) Edits() map[string]string {
