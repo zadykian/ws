@@ -177,12 +177,13 @@ func (s pickScreen) status() string {
 	return fmt.Sprintf("%d of %d chosen", on, all)
 }
 
-// layout is the screen with its panes empty, as what fills them depends on their sizes.
+// layout is the screen with its panes empty, as what fills them depends on their sizes. The list
+// holds the focus alone, so that a window too short for two panes shows it.
 func (s pickScreen) layout() Layout {
 	return Layout{
 		Title:  s.title,
 		Status: s.status(),
-		Panes:  []Pane{{Title: "Steps", Focused: true}},
+		Panes:  []Pane{{Title: "Steps", Focused: true}, {Title: "Detail"}},
 		Footer: s.footer,
 	}
 }
@@ -212,6 +213,7 @@ func (s pickScreen) listHeight() int {
 // View draws the screen.
 func (s pickScreen) View() tea.View {
 	l := s.layout()
+	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1])
 	l.Panes[0].Body = s.list.view(s.theme, s.listHeight())
 	if s.filtering() {
 		l.Panes[0].Body = s.filterLine() + "\n" + l.Panes[0].Body
