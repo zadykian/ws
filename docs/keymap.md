@@ -66,14 +66,13 @@ No gate notices a drift, and no generator is in `tools/`.
 
 GoLand's synced settings also activate a keymap named `F24` on the Mac. `F24.xml` has 642 actions
 and `parent` `Visual Studio 2022`. Its 627 keystrokes are all F12's, and it has the same 34 Cmd
-keystrokes. The maintainer asked for F12, which helix follows, so F12 stays the source. Nothing
+keystrokes. The maintainer asked for F12, so F12 stays the source. Nothing
 reads F24, and "Ctrl stays Ctrl" holds either way.
 
 ## The pages
 
 - [Zed's F12 keymap](keymap/zed.md): the adapter's counts, statuses and decisions.
 - [Fresh's F12 keymap](keymap/fresh.md): the adapter's counts, rules and limits.
-- [The same for helix](helix-keymap.md).
 
 Plain keys, such as the arrows and Enter, and the mouse stay each editor's own. The data has no
 row for them.

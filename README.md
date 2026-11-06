@@ -2,7 +2,7 @@
 
 Sets up my development server from code. `ws server apply` runs on the machine itself. It sets up
 packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It sets up
-Docker, the shell, tmux, the Fresh and helix editors and Zed's server. It sets up claude and
+Docker, the shell, tmux, the Fresh editor and Zed's server. It sets up claude and
 [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
 
@@ -32,8 +32,6 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
 - [`fresh`](docs/fresh.md): the Fresh editor, from the .deb of a pinned release, with F12's keys,
   JetBrains Dark and the language servers.
-- [`helix`](docs/helix.md): the helix editor, with the IDEs' keys and its config for the Go and C#
-  servers.
 - [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](docs/zed-projects.md) cover SQL Server and Ansible.

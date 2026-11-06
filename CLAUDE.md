@@ -3,8 +3,8 @@
 ws sets up the maintainer's development server from code: `ws server apply`, which runs on the
 machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
 links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux, Fresh,
-helix, Docker, claude, SigNoz with its collector, and Zed's server. `mac/` sets up the Mac that
-works on the server. The rest is the docs, the lint gates' tools and CI.
+Docker, claude, SigNoz with its collector, and Zed's server. `mac/` sets up the Mac that works on
+the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
@@ -26,9 +26,8 @@ works on the server. The rest is the docs, the lint gates' tools and CI.
   wizard's scripts for ws in POSIX sh and `ws.ghostty`, Ghostty's settings.
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
   `mac-targets.md`, `mac-ghostty.md`, `mac-zed.md` and `mac-secrets.md`; `router.md` and
-  `checks.md`; `tui.md`, the terminal UI, with `tui-configure.md` and `tui-wizard.md`;
-  `helix-keymap.md`, the index of the keymap's pages in `docs/helix-keymap/`; `keymap.md`, the
-  index of `docs/keymap/`.
+  `checks.md`; `tui.md`, the terminal UI, with `tui-configure.md` and `tui-wizard.md`; `keymap.md`,
+  the index of `docs/keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.

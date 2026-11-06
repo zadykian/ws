@@ -7,7 +7,7 @@ search.project: {to: pane::DeploySearch}
 # FindNext approx: Shift+Alt+/ alone: Shift+Ctrl+Down goes to the next highlighted usage
 search.next: {to: search::SelectNextMatch}
 app.command-palette: {to: command_palette::Toggle}
-# SearchEverywhere approx: files alone, as in helix
+# SearchEverywhere approx: files alone
 file.find: {to: file_finder::Toggle}
 search.symbol: {to: project_symbols::Toggle}
 # OpenFile approx: opens a folder; on a remote project, the server's

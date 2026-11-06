@@ -85,7 +85,7 @@ to J, are in [A to J](zed-lacks-a-j.md). The actions that Zed has are in
 | `RunInspection` | Shift+Ctrl+Alt+I |  | none |  |
 | `RunJsbtTask` | Shift+Ctrl+Alt+F11 |  | n/a | JavaScript |
 | `SafeDelete` | Alt+Delete |  | none | Alt+Delete stays Zed's delete to word end |
-| `SaveAs` | Shift+Ctrl+S | `workspace::SaveAs` | skip | Shift+Ctrl+S is Save all's too; helix gave it to Save all |
+| `SaveAs` | Shift+Ctrl+S | `workspace::SaveAs` | skip | Shift+Ctrl+S is Save all's too; Save all has it |
 | `SchemaCompare.Cancel` | Alt+Pause |  | n/a | database tools |
 | `SchemaCompare.Compare` | Shift+Alt+C |  | n/a | database tools |
 | `SchemaCompare.GenerateDeployScript` | Shift+Alt+G |  | n/a | database tools |

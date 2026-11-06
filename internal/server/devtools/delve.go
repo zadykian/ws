@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// delveTool is Delve at a version, built with a Go version, for helix's debug keys and Zed. The
+// delveTool is Delve at a version, built with a Go version, for Zed's debugger. The
 // versions are the pins, without the v and the go.
 type delveTool struct {
 	M                  effect.Machine

@@ -32,8 +32,6 @@ What each document holds. How to write them is in the `writing` skill and [writi
 - [zed.md](../../docs/zed.md) is the page of the `zed` role: what runs on ws, Zed's downloads, trust
   and the limits. [zed-projects.md](../../docs/zed-projects.md) is a project's `.zed/settings.json`,
   for SQL Server and Ansible.
-- [helix-keymap.md](../../docs/helix-keymap.md) indexes the keymap's pages in
-  `docs/helix-keymap/`.
 - [keymap.md](../../docs/keymap.md) indexes the keymap's pages in `docs/keymap/`.
 - [The dashboards](../../internal/server/signoz/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.

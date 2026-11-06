@@ -23,7 +23,6 @@ type Values struct {
 	Devtools  Devtools  `yaml:",inline"`
 	Docker    Docker    `yaml:",inline"`
 	Fans      Fans      `yaml:",inline"`
-	Helix     Helix     `yaml:",inline"`
 	Ikeward   Ikeward   `yaml:",inline"`
 	Network   Network   `yaml:",inline"`
 	Security  Security  `yaml:",inline"`

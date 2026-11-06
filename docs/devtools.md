@@ -28,15 +28,12 @@ user's home. Once there, rustup updates itself, so ws leaves it alone.
 - gopls, Go's server, comes from `go install` at the version `pins.go` pins, with the Go of this
   role and Go's checksum database. A change of either version builds it again.
 - Delve, Go's debugger, goes in the same way and a change of either version builds it again.
-  helix's debug keys run it for Go ([helix's keys](helix.md#helixs-keys)).
+  Zed's debugger runs it for Go.
 - roslyn-language-server, C#'s server, is the server of VS Code's C# extension. It comes from
   nuget.org with `dotnet tool` at the version `pins.go` pins, and runs on the .NET 10 of this role.
 - They go in `ws_user`'s home: `~/go/bin/gopls`, `~/go/bin/dlv` and
-  `~/.dotnet/tools/roslyn-language-server`. Their paths follow `ws_home`, so the `helix` role
-  finds them with this role not run.
-
-[helix](helix.md) names both servers in its `languages.toml`. `ws server apply --only helix` does
-not install them: pass `--only devtools,helix`.
+  `~/.dotnet/tools/roslyn-language-server`. Their paths follow `ws_home`, so the `zed` and
+  `fresh` roles find them with this role not run.
 
 ## The SQL and Docker servers
 

@@ -46,7 +46,6 @@ func Default() Values {
 			PublishIP: "127.0.0.1", BuildCacheKeepDays: 90,
 		},
 		Fans:     defaultFans(),
-		Helix:    Helix{Grammars: defaultGrammars()},
 		Ikeward:  Ikeward{},
 		Network:  Network{DirectLinkAddress: "10.77.0.1/30"},
 		Security: Security{Outbound: true},
@@ -62,12 +61,5 @@ func Default() Values {
 			Peers: []WireguardPeer{{Name: "mac", Address: "10.99.0.2"}},
 		},
 		Zed: Zed{Nofile: 65536},
-	}
-}
-
-func defaultGrammars() []string {
-	return []string{
-		"go", "gomod", "gotmpl", "gowork", "c-sharp", "xml", "bash", "diff", "json", "markdown",
-		"markdown_inline", "toml", "yaml",
 	}
 }
