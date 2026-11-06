@@ -6,6 +6,7 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -20,6 +21,46 @@ type repeating string
 func (r repeating) Read(b []byte) (int, error) {
 	time.Sleep(5 * time.Millisecond)
 	return copy(b, r), nil
+}
+
+// afterScan is a terminal that holds keys back until the list draws its count in place of the scan's:
+// keys of one read can straddle the scan's end, and those past it then act on a list that missed the
+// first. It reports a size first, as a screen with none draws nothing. A list that never draws the
+// count gets the keys all the same, and the test fails on what they did.
+type afterScan struct {
+	keys  repeating
+	sized sync.Once
+	mu    sync.Mutex
+	drawn bytes.Buffer
+	shown sync.Once
+	ended chan struct{}
+}
+
+func newAfterScan(keys repeating) *afterScan {
+	return &afterScan{keys: keys, ended: make(chan struct{})}
+}
+
+func (s *afterScan) Write(b []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.drawn.Write(b)
+	if bytes.Contains(s.drawn.Bytes(), []byte(" chosen")) {
+		s.shown.Do(func() { close(s.ended) })
+	}
+	return len(b), nil
+}
+
+func (s *afterScan) Read(b []byte) (int, error) {
+	size := 0
+	s.sized.Do(func() { size = copy(b, "\x1b[8;24;80t") })
+	if size > 0 {
+		return size, nil
+	}
+	select {
+	case <-s.ended:
+	case <-time.After(10 * time.Second):
+	}
+	return s.keys.Read(b)
 }
 
 func TestMacApplyOpensTheListAtATerminal(t *testing.T) {
@@ -54,7 +95,9 @@ func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
 func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
 	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	c.SetIn(repeating("n \r"))
+	keys := newAfterScan("n \r")
+	c.SetIn(keys)
+	c.SetErr(keys)
 	var checks []bool
 	build := func(check bool) setupBuild {
 		return func(_ effect.Machine, _ effect.Out, _ io.Writer) []step.Step {
