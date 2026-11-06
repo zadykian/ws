@@ -58,13 +58,28 @@ func (c KeyCopy) String() string {
 // PlanCopy returns the change that makes ws's copy at pub hold text. It returns none for a .pub
 // elsewhere, for one with no text from the agent, and for a copy that holds text already.
 func PlanCopy(m effect.Machine, pub, text, home string) []step.Change {
-	if text == "" || !strings.HasPrefix(pub, home+"/"+sshcfg.KeyCopies+"/") {
+	if !copied(pub, text, home) {
 		return nil
 	}
 	if old, err := m.ReadFile(pub); err == nil && string(old) == text {
 		return nil
 	}
 	return []step.Change{KeyCopy{pub, text}}
+}
+
+// copied says whether ws keeps a copy of the .pub at pub: one in ws's directory of copies, with text
+// from the agent.
+func copied(pub, text, home string) bool {
+	return text != "" && strings.HasPrefix(pub, home+"/"+sshcfg.KeyCopies+"/")
+}
+
+// keyCopy reports ws's copy of a .pub, where it keeps one. A run writes the copy where its text
+// differs, and leaves its mode.
+func keyCopy(m effect.Machine, pub, text, home string) []step.Reporter {
+	if !copied(pub, text, home) {
+		return nil
+	}
+	return []step.Reporter{userFile{M: m, Path: pub, Text: []byte(text)}}
 }
 
 func applyCopy(ctx context.Context, m effect.Machine, out effect.Out, c KeyCopy) error {

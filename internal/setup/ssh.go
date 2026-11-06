@@ -103,7 +103,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 		userFile{M: s.M, Path: dir + "/config.d/ws", Text: s.config(ctx, f, id), Mode: sshFileMode},
 		fixed{include},
 	}
-	return gather(ctx, parts...)
+	return gather(ctx, append(parts, keyCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)...)...)
 }
 
 // Apply applies the changes in order.

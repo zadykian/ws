@@ -74,3 +74,11 @@ func TestSSHReportLeavesTheUsersConfigOut(t *testing.T) {
 		t.Errorf("config = %+v, which shows the user's file", it)
 	}
 }
+
+func TestSSHReportsWsCopyOfAKey(t *testing.T) {
+	m := agentMachine(sshMachine(), agentKey)
+	it := reportOf(t, sshStep(m, &effecttest.Out{}))[copyOf(agentKey)]
+	if it.Kind != step.FileItem || it.Want != "present" || it.Found != "missing" {
+		t.Errorf("copy = %+v, want a file that is missing", it)
+	}
+}
