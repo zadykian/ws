@@ -201,10 +201,13 @@ func (b *Bridge) Observe(e step.Event) {
 	b.send(e)
 }
 
-// changeLine is a change as --check shows it. One of several lines holds a file's diff under its
-// first line.
+// changeLine is a change as --check shows it, under the name of its step, which a wizard's stage
+// writes in the change itself. One of several lines holds a file's diff under its first line.
 func changeLine(name string, c step.Change) Line {
-	text := name + ": " + strings.TrimSuffix(c.String(), "\n")
+	text := strings.TrimSuffix(c.String(), "\n")
+	if !strings.HasPrefix(text, name+": ") {
+		text = name + ": " + text
+	}
 	if strings.Contains(text, "\n") {
 		return Line{Diffed, text}
 	}

@@ -191,6 +191,14 @@ func TestBridgeObservePrintsAsAPlainRun(t *testing.T) {
 	}
 }
 
+func TestChangeLineNamesItsStepOnce(t *testing.T) {
+	for change, want := range map[string]string{"a": "Tools: a", "Tools: a": "Tools: a", "Toolset: a": "Tools: Toolset: a"} {
+		if got := changeLine("Tools", oneChange(change)).Text; got != want {
+			t.Errorf("%q: line = %q, want %q", change, got, want)
+		}
+	}
+}
+
 func TestBridgeObserveSendsACommandsOutputFirst(t *testing.T) {
 	b, sent := testBridge(io.Discard)
 	_, _ = b.pipe.Write([]byte("no end"))
