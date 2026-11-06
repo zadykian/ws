@@ -10,10 +10,13 @@ import (
 	"github.com/zadykian/ws/mac"
 )
 
-// varsReach is the way to ws of the host_vars sheet. It starts with the sheet's first read, so that
-// mac.conf and the secrets draw with ws out of reach.
+// varsReach is the way to ws of the host_vars sheet and of the wizard's state screen. It starts with
+// the first read, so that mac.conf and the secrets draw with ws out of reach.
 type varsReach struct {
 	p process
+	// sudo is the scan's, whose way to root the state screen keeps. It stands unread where the scan
+	// never reached it, and a read then asks. Nil makes a new one for each reach.
+	sudo *wizard.Sudo
 	// mu guards lock and release: the work takes the lock, and the command lets it go, past a work
 	// that the screen's end left behind.
 	mu      sync.Mutex
@@ -33,7 +36,7 @@ func (r *varsReach) sheet() tui.Sheet {
 // open reaches ws and reads the file. The password that sudo asks stays with the form, so that a
 // save asks none.
 func (r *varsReach) open(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
-	files, err := r.reach(ctx, b)
+	files, err := r.reach(ctx, b, mac.RemoteFilesScript)
 	if err != nil {
 		return tui.Sheet{}, err
 	}
@@ -44,9 +47,9 @@ func (r *varsReach) open(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) 
 	return varsSheet(form), nil
 }
 
-// reach finds how the files script reaches root on ws, as the wizard's stages do. The lock keeps a
-// wizard's own writes of the file away, and holds ssh's sockets.
-func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Remote, error) {
+// reach finds how script reaches root on ws, as the wizard's stages do. The lock keeps a wizard's
+// own run away, and holds ssh's sockets.
+func (r *varsReach) reach(ctx context.Context, b *tui.Bridge, script []byte) (*wizard.Remote, error) {
 	lock, err := r.locked(ctx)
 	if err != nil {
 		return nil, err
@@ -54,7 +57,9 @@ func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Remote, e
 	m := screenMachine(ctx, b, r.p.machine)
 	conf := confPath(r.p.getenv, r.p.pwd)
 	ssh := wizard.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Conf: conf}
-	sudo := &wizard.Sudo{Host: &wizard.HostKey{Tty: r.p.tty, SSH: ssh, Out: b}, P: b}
+	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
+	// A kept one holds the effects of a screen that has ended.
+	sudo.Host, sudo.P = &wizard.HostKey{Tty: r.p.tty, SSH: ssh, Out: b}, b
 	plan, err := sudo.Plan(ctx)
 	if err != nil {
 		return nil, err
@@ -64,7 +69,7 @@ func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Remote, e
 			return nil, err
 		}
 	}
-	return &wizard.Remote{SSH: ssh, Script: mac.RemoteFilesScript, Sudo: sudo}, nil
+	return &wizard.Remote{SSH: ssh, Script: script, Sudo: sudo}, nil
 }
 
 // locked takes the wizard's lock, once.
