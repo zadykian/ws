@@ -200,3 +200,23 @@ func TestBridgeObserveSendsACommandsOutputFirst(t *testing.T) {
 		t.Errorf("sent %v, want %v", *sent, want)
 	}
 }
+
+func TestBridgeChooseSendsTheOptions(t *testing.T) {
+	b, _ := testBridge(io.Discard)
+	var asked prompt
+	b.send = func(msg tea.Msg) {
+		asked = msg.(askMsg).prompt
+		asked.reply <- "no"
+	}
+	q := effect.ChoiceQuestion{Text: "Keep the key?", Options: []string{"yes", "no"}, Default: "no"}
+	got, err := effect.Choose(t.Context(), b, q)
+	if err != nil || got != "no" {
+		t.Fatalf("Choose = %q, %v", got, err)
+	}
+	if asked.text != q.Text || asked.fallback != "no" || !slices.Equal(asked.options, q.Options) || asked.hidden {
+		t.Errorf("asked %+v", asked)
+	}
+	if _, err = b.Choose(t.Context(), effect.ChoiceQuestion{Text: "None"}); err == nil {
+		t.Error("a choice with no options was asked")
+	}
+}

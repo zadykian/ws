@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -44,8 +45,10 @@ type prompt struct {
 	text     string
 	fallback string
 	hidden   bool
-	valid    func(string) error
-	reply    chan<- string
+	// options make the question a choice among them, and fallback the one it starts on.
+	options []string
+	valid   func(string) error
+	reply   chan<- string
 }
 
 // Messages of a question. They hold no answer: see Bridge.ask.
@@ -92,6 +95,14 @@ func newBridge(w io.Writer) *Bridge {
 // Ask draws q over the screen and waits for an answer that q.Valid takes, or for ctx's end.
 func (b *Bridge) Ask(ctx context.Context, q effect.Question) (string, error) {
 	return b.ask(ctx, prompt{text: q.Text, fallback: q.Default, valid: q.Valid})
+}
+
+// Choose draws q over the screen as a choice, and waits for the option picked, or for ctx's end.
+func (b *Bridge) Choose(ctx context.Context, q effect.ChoiceQuestion) (string, error) {
+	if len(q.Options) == 0 {
+		return "", fmt.Errorf("choosing %q: no options", q.Text)
+	}
+	return b.ask(ctx, prompt{text: q.Text, fallback: q.Default, options: slices.Clone(q.Options)})
 }
 
 // AskHidden draws text over the screen, in a field that shows nothing of what is typed. It returns

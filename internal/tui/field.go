@@ -34,10 +34,14 @@ type field struct {
 // newField returns the field of p, which takes the keys at once.
 func newField(p prompt, window Size) field {
 	kind := TextField
-	if p.hidden {
+	switch {
+	case p.hidden:
 		kind = PasswordField
+	case len(p.options) > 0:
+		kind = ChoiceField
 	}
-	input := NewFormField(FieldSpec{Kind: kind, Label: p.text, Default: p.fallback, Valid: p.valid}).Focus()
+	spec := FieldSpec{Kind: kind, Label: p.text, Default: p.fallback, Options: p.options, Valid: p.valid}
+	input := NewFormField(spec).Focus()
 	f := field{prompt: p, input: input, footer: NewFooter(answerButton, Keys.Interrupt)}
 	return f.fit(window)
 }

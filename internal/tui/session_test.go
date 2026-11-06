@@ -210,3 +210,29 @@ func TestSessionDrawsInAnyWindow(t *testing.T) {
 		}
 	}
 }
+
+func TestSessionAnswersAChoice(t *testing.T) {
+	reply := make(chan string, 1)
+	s, _ := testSession()
+	right := tea.KeyPressMsg{Code: tea.KeyRight}
+	ask := askMsg{prompt{id: 1, text: "Keep?", options: []string{"yes", "no", "later"}, fallback: "no", reply: reply}}
+	s, cmd := feed(s, ask, right, enter)
+	if len(s.asked) != 0 || cmd == nil {
+		t.Fatalf("an answer left %v, and Cmd %v", s.asked, cmd)
+	}
+	if cmd(); <-reply != "later" {
+		t.Error("the choice did not move from its default to the next option")
+	}
+}
+
+func TestFieldOfAChoiceStartsOnItsDefault(t *testing.T) {
+	size := Size{80, 24}
+	f := newField(prompt{text: "Keep?", options: []string{"yes", "no"}, fallback: "no"}, size)
+	if _, answer, ok := f.answer(); !ok || answer != "no" {
+		t.Errorf("answered %q, %v", answer, ok)
+	}
+	got := f.render(testTheme, size)
+	if !strings.Contains(got, "Keep?") || !strings.Contains(got, "[no]") || !strings.Contains(got, "yes") {
+		t.Errorf("drawn as\n%s", got)
+	}
+}
