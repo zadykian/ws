@@ -201,3 +201,19 @@ func TestViewIsAFullScreenWithNoMouse(t *testing.T) {
 		t.Errorf("mouse mode %v", view.MouseMode)
 	}
 }
+
+func TestWhatStandsBelowThePanesTakesTheirRoom(t *testing.T) {
+	layout := twoPanes()
+	layout.Below = "first\nsecond"
+	layout.Footer = NewFooter(Keys.Quit)
+	if got, want := layout.PaneSizes(80, 24)[0].Height, 24-1-2-1-2; got != want {
+		t.Errorf("%d lines in a pane, want %d", got, want)
+	}
+	lines := strings.Split(stripped(layout.Render(testTheme, 80, 24)), "\n")
+	if got := lines[21]; !strings.HasPrefix(got, "first") {
+		t.Errorf("line 21 = %q in:\n%s", got, strings.Join(lines, "\n"))
+	}
+	if got := lines[23]; !strings.Contains(got, "quit") {
+		t.Errorf("last line = %q", got)
+	}
+}
