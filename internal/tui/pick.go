@@ -2,6 +2,7 @@ package tui
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/step"
 )
@@ -17,6 +18,8 @@ type pickRow struct {
 	lockedBy []string
 	// after names the step whose changes kept the scan from planning this one.
 	after string
+	// said holds what the scan printed of the step.
+	said []Line
 }
 
 // entry names the row as Options.Only does.
@@ -57,6 +60,8 @@ func (r pickRow) box() string {
 // a screen's older value shares them.
 type pickList struct {
 	rows []pickRow
+	// heard holds what the scan printed since a step last ended.
+	heard []Line
 }
 
 // newPickList returns the list of groups, each step open and left out.
@@ -71,11 +76,20 @@ func newPickList(groups []Group) pickList {
 	return l
 }
 
-// take returns the list with how the scan left e's step: chosen where it holds changes.
+// hear keeps a line of the scan for the step that ends next.
+func (l pickList) hear(line Line) pickList {
+	l.heard = append(slices.Clip(l.heard), line)
+	return l
+}
+
+// take returns the list with how the scan left e's step: chosen where it holds changes. Lines of a
+// step outside the list go with it, as the list has no place for them.
 func (l pickList) take(e step.Event) pickList {
 	if e.Kind == step.Planned || e.Kind == step.Started {
 		return l
 	}
+	said := l.heard
+	l.heard = nil
 	place := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.parent == e.Parent && r.index == e.Index })
 	if place < 0 {
 		return l
@@ -84,7 +98,24 @@ func (l pickList) take(e step.Event) pickList {
 	row := &l.rows[place]
 	row.state, row.after = stateAfter(e), e.After
 	row.chosen = row.pending()
+	row.said = nil
+	if e.Kind != step.Skipped {
+		row.said = withoutLabel(said, row.label())
+	}
+	if e.Err != nil {
+		row.said = append(row.said, Line{Warned, e.Err.Error()})
+	}
 	return l.settled()
+}
+
+// withoutLabel returns lines less the step's name that opens them, as the pane they go to has it in
+// its title.
+func withoutLabel(lines []Line, label string) []Line {
+	kept := make([]Line, len(lines))
+	for i, line := range lines {
+		kept[i] = Line{line.Kind, strings.TrimPrefix(line.Text, label+": ")}
+	}
+	return kept
 }
 
 // settled returns the list with its locks worked out again, and a box ticked on every step that

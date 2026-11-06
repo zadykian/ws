@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"slices"
 	"testing"
 
@@ -101,16 +102,35 @@ func TestAScanChoosesTheStepsWithChanges(t *testing.T) {
 
 func TestAStepBehindChangesStartsChosen(t *testing.T) {
 	behind := step.Event{Kind: step.Skipped, Parent: "base", Step: "two", Index: 1, After: "one"}
-	l := chain().take(planned("base", "one", 0, oneChange("a"))).take(behind)
+	l := chain().take(planned("base", "one", 0, oneChange("a"))).hear(Line{Said, "base: two: after one"}).take(behind)
 	if want := []string{"[#]", "[x]", "[ ]", "[ ]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
+	if len(l.rows[1].said) != 0 {
+		t.Errorf("said = %+v, the list words that itself", l.rows[1].said)
+	}
 }
 
-func TestAStepThatFailsStartsLeftOut(t *testing.T) {
-	row := chain().take(step.Event{Kind: step.Failed, Parent: "base", Step: "one"}).rows[0]
-	if row.on() || row.state != stepFailed {
+func TestAStepThatFailsStartsLeftOutWithItsError(t *testing.T) {
+	failed := step.Event{Kind: step.Failed, Parent: "base", Step: "one", Err: errors.New("no disk")}
+	row := chain().take(failed).rows[0]
+	if row.on() || row.state != stepFailed || len(row.said) != 1 || row.said[0] != (Line{Warned, "no disk"}) {
 		t.Errorf("row = %+v", row)
+	}
+}
+
+func TestALineGoesToTheStepThatEndsPastIt(t *testing.T) {
+	l := chain().hear(Line{Diffed, "base: one: writes a\n+b"}).hear(Line{Warned, "warning: old"})
+	got := l.take(step.Event{Kind: step.Planned, Parent: "base", Step: "one"}).take(planned("base", "one", 0)).rows[0].said
+	if want := []Line{{Diffed, "writes a\n+b"}, {Warned, "warning: old"}}; !slices.Equal(got, want) {
+		t.Errorf("said = %+v, want %+v", got, want)
+	}
+}
+
+func TestAStepOutsideTheListTakesItsLinesWithIt(t *testing.T) {
+	l := chain().hear(Line{Said, "prepare: first: writes"}).take(planned("prepare", "first", 0))
+	if got := l.take(planned("base", "one", 0)).rows[0].said; len(got) != 0 {
+		t.Errorf("said = %+v, want none", got)
 	}
 }
 
