@@ -21,11 +21,37 @@ type OSMachine struct {
 	Owner string
 	// Stderr takes what RunShown, PassInput and Pass pass on. Nil means os.Stderr.
 	Stderr io.Writer
+	// Stdin is what Pass gives a command to read. Nil means os.Stdin, where sudo can ask for a
+	// password. A screen owns the terminal, and sets NoStdin. With any Stdin, git and ssh get
+	// offTerminal, as they ask at /dev/tty, past their standard input.
+	Stdin io.Reader
+	// Ticket, where set, runs before each command as root, which runs only where it passes. A screen
+	// sets it beside a Sudo that can't ask, to take sudo's password in a form. It holds a run's
+	// context, as WriteRootFile has none.
+	Ticket func() error
 	// Confine is a directory that Mkdir, Chmod, Chown, Symlink, WriteFile and WriteAtomic stay
 	// inside for a path under it: a link there that leaves it fails the write. ws_user owns the
 	// ws_home, and can swap a directory in it for a link as root applies, which would hand the
 	// target to ws_user. Empty means no limit.
 	Confine string
+}
+
+// ErrNoTicket ends a Ticket where sudo took the password and kept no ticket, as with
+// timestamp_timeout=0. A sudo that can't ask then refuses each command, and --plain asks for each.
+var ErrNoTicket = errors.New("sudo keeps no ticket here, so a screen can't run root's commands: run with --plain")
+
+// NoStdin is a Stdin that ends at once, as http.NoBody is a body.
+var NoStdin io.Reader = noStdin{}
+
+type noStdin struct{}
+
+func (noStdin) Read([]byte) (int, error) { return 0, io.EOF }
+
+func (m OSMachine) stdin() io.Reader {
+	if m.Stdin == nil {
+		return os.Stdin
+	}
+	return m.Stdin
 }
 
 func (m OSMachine) stderr() io.Writer {
@@ -40,6 +66,13 @@ func (m OSMachine) sudo() []string {
 		return []string{"sudo", "--"}
 	}
 	return m.Sudo
+}
+
+func (m OSMachine) ticket(root bool) error {
+	if root && m.Ticket != nil {
+		return m.Ticket()
+	}
+	return nil
 }
 
 // ReadFile reads the file.
@@ -84,11 +117,17 @@ func (m OSMachine) RunInput(ctx context.Context, stdin []byte, name string, args
 
 // RunRoot runs the command through sudo.
 func (m OSMachine) RunRoot(ctx context.Context, name string, args ...string) ([]byte, error) {
+	if err := m.ticket(true); err != nil {
+		return nil, err
+	}
 	return output(m.command(ctx, append(append(m.sudo(), name), args...)))
 }
 
 // RunShown runs the command and returns its standard output. Its standard error goes to Stderr.
 func (m OSMachine) RunShown(ctx context.Context, root bool, name string, args ...string) ([]byte, error) {
+	if err := m.ticket(root); err != nil {
+		return nil, err
+	}
 	cmd := m.command(ctx, m.argv(root, name, args))
 	cmd.Stderr = m.stderr()
 	return output(cmd)
@@ -105,11 +144,14 @@ func (m OSMachine) PassInput(ctx context.Context, stdin []byte, name string, arg
 	return nil
 }
 
-// Pass runs the command with its standard output and error sent to Stderr, and standard input kept,
-// so that sudo can ask for a password.
+// Pass runs the command with its standard output and error sent to Stderr, and Stdin as its
+// standard input.
 func (m OSMachine) Pass(ctx context.Context, root bool, name string, args ...string) error {
+	if err := m.ticket(root); err != nil {
+		return err
+	}
 	cmd := m.command(ctx, m.argv(root, name, args))
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, m.stderr(), m.stderr()
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = m.stdin(), m.stderr(), m.stderr()
 	if err := cmd.Run(); err != nil {
 		return commandError(cmd, err)
 	}
@@ -148,8 +190,17 @@ func (m OSMachine) argv(root bool, name string, args []string) []string {
 	return append([]string{name}, args...)
 }
 
-func (OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
-	return exec.CommandContext(ctx, argv[0], argv[1:]...) //nolint:gosec // the steps name the command
+// offTerminal makes git and ssh fail where they would ask, as a clone's ssh does of an unknown host.
+// An askpass that fails gives ssh an empty answer. A GIT_SSH_COMMAND with BatchMode would do the same,
+// but would replace a core.sshCommand.
+var offTerminal = []string{"GIT_TERMINAL_PROMPT=0", "SSH_ASKPASS=false", "SSH_ASKPASS_REQUIRE=force"}
+
+func (m OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...) //nolint:gosec // the steps name the command
+	if m.Stdin != nil {
+		cmd.Env = withEnv(os.Environ(), offTerminal)
+	}
+	return cmd
 }
 
 func output(cmd *exec.Cmd) ([]byte, error) {

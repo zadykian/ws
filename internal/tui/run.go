@@ -43,7 +43,8 @@ type Config struct {
 type Work func(ctx context.Context, b *Bridge) error
 
 // Run draws screen on c.Out, runs work in a goroutine beside it, and returns once the terminal is
-// back: after the work, or once Ctrl-C or a signal ended ctx and then came again.
+// back: after the work, or once Ctrl-C or a signal ended ctx and then came again, past a command
+// that holds the terminal.
 // A screen that ends first ends ctx, and Run gives the work c.Unwind. It returns the work's error,
 // or Cut's where a cut run failed, for execute to report. What stays by hand prints on the normal
 // screen before Run returns. A panic of the work is an error too.
@@ -64,10 +65,14 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	)
 	stop := func() tea.Msg { cancel(); return nil }
 	model := session{screen: screen, theme: c.Theme, begin: begin, stop: stop, cut: c.Cut}
+	terminal := &handover{}
 	// Signals stay ws's: Bubble Tea's handler would end the screen before the work had stopped.
-	program := tea.NewProgram(model,
-		tea.WithInput(c.In), tea.WithOutput(c.Out), tea.WithoutSignalHandler())
+	program := tea.NewProgram(model, tea.WithInput(c.In), tea.WithOutput(c.Out),
+		tea.WithoutSignalHandler(), tea.WithFilter(terminal.filter))
+	terminal.release, terminal.restore = program.ReleaseTerminal, program.RestoreTerminal
 	bridge.send = program.Send
+	bridge.suspend = func() error { return bridge.pass(true, errGone) }
+	bridge.resume = func() error { return bridge.pass(false, nil) }
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(signals)

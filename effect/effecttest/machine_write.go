@@ -74,6 +74,17 @@ func (m *Machine) Pass(ctx context.Context, root bool, name string, args ...stri
 	return err
 }
 
+// PassForeground records the command as "foreground NAME ARG", or "foreground root NAME ARG", and
+// returns the error of its result.
+func (m *Machine) PassForeground(_ context.Context, root bool, name string, args ...string) error {
+	kind := "foreground"
+	if root {
+		kind += " root"
+	}
+	_, err := m.run(kind, name, args)
+	return err
+}
+
 // Exec records "exec NAME ARGS" and returns nothing, as a command that ended ws would.
 func (m *Machine) Exec(name string, args, env []string) error {
 	m.mu.Lock()

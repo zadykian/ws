@@ -40,10 +40,10 @@ func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 // names the command to run by hand.
 func (k *MacKey) make(ctx context.Context, key string) error {
 	k.Out.Say("%s: making %s: ssh-keygen asks its passphrase twice, then ssh-add once", macKey, key)
-	if err := k.M.Pass(ctx, false, "ssh-keygen", "-q", "-t", "ed25519", "-a", "100", "-f", key); err != nil {
+	if err := talk(ctx, k.F, k.M, "ssh-keygen", "-q", "-t", "ed25519", "-a", "100", "-f", key); err != nil {
 		return fmt.Errorf("%s: ssh-keygen cannot make %s", macKey, key)
 	}
-	if err := k.M.Pass(ctx, false, "ssh-add", "--apple-use-keychain", key); err != nil {
+	if err := talk(ctx, k.F, k.M, "ssh-add", "--apple-use-keychain", key); err != nil {
 		return fmt.Errorf("%s: %s is made, but ssh-add cannot give it to the agent: run ssh-add "+
 			"--apple-use-keychain %s, which asks its passphrase, then run the wizard again", macKey, key, key)
 	}

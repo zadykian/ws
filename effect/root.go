@@ -20,6 +20,9 @@ stat -c '%u:%g %a' "$1" 2>/dev/null || stat -f '%u:%g %Lp' "$1"`
 
 // WriteRootFile writes a new file beside path, through sudo, then renames it over path.
 func (m OSMachine) WriteRootFile(path string, data []byte, perm fs.FileMode) error {
+	if err := m.ticket(true); err != nil {
+		return err
+	}
 	owner := m.Owner
 	if owner == "" {
 		owner = "0:0"

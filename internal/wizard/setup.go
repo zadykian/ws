@@ -49,7 +49,10 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{Changes: []step.Change{todo(setupStage + ": after Homebrew")}}, nil
 	}
 	if !s.sudoed {
-		if err := s.M.Pass(ctx, false, "sudo", "-v"); err != nil {
+		switch err := effect.Validate(ctx, s.M); {
+		case errors.Is(err, effect.ErrNoTicket):
+			return step.Plan{}, err
+		case err != nil:
 			return step.Plan{}, errors.New("sudo -v failed; ws mac apply needs sudo, as an admin of the Mac")
 		}
 		s.sudoed = true

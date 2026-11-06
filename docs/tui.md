@@ -62,6 +62,50 @@ keys go to it alone. A hidden answer travels on a channel of its own, and enters
 or error. A paste into a hidden field gives its first line, byte for byte, as the plain prompt
 reads it, and Enter still answers. A step's lines arrive as messages and show in a pane.
 
+## Commands
+
+A screen owns the terminal, so a step's commands stay off it.
+
+- A screen sets `Stdin` of `effect.OSMachine` to `effect.NoStdin`, and a command finds the end of
+  its input at once.
+- git and ssh ask at `/dev/tty`, past their input. With `Stdin` set, git gets
+  `GIT_TERMINAL_PROMPT=0`, and ssh gets `SSH_ASKPASS_REQUIRE=force` with `SSH_ASKPASS=false`. So a
+  clone fails where it would ask, as ssh does of an unknown host, and `--plain` asks. ws's ssh keeps
+  `BatchMode` where no prompt is expected.
+- A command keeps ws's controlling terminal. sudo keeps its ticket by terminal, so a child's own
+  sudo, such as brew's, would ask again without one.
+- `effect.Foreground` runs a command that talks to the maintainer. The screen suspends, and the
+  command has the terminal until it ends. In plain mode it does what `Pass` does, but for a signal.
+- `Bridge.Foreground` runs such a command on a machine. The screen releases the terminal first.
+  The command has ws's own standard input and error. The screen draws again after it, even after
+  a failure. A screen that can't leave runs nothing.
+- The wizard's steps hold it as `F` beside `M`. It runs `ssh-keygen` and `ssh-add` for the Mac's
+  key, gh's login, and `claude auth login` over `ssh -t`. With no `F`, a step does `M.Pass`.
+- A run that ends sends such a command SIGTERM, and kills it 2 seconds later. A kill alone would
+  leave the terminal raw, or with no echo.
+- A second Ctrl-C waits for such a command's end, and then closes the screen. The program's loop
+  moves the terminal, as a move past the screen's end would leave it raw.
+
+## sudo
+
+sudo asks at `/dev/tty`, under a screen. `Bridge.Machine` gives a run's steps a machine whose sudo
+can't ask, and takes the password in a hidden field:
+
+- Its root commands run by `sudo -n --`, which fails where it would ask.
+- Before each one, `sudo -n -v` looks for a ticket. A valid one asks nothing, and neither does a
+  sudo that wants no password.
+- With none, the field asks for sudo's password on this machine, and `sudo -S -v` checks it, up to
+  three times. Any refusal asks again, as sudo's words differ by version, so a user outside
+  sudoers sees them after the third. ws drops the password once sudo has checked it.
+- A sudo that keeps no ticket, as with `timestamp_timeout=0`, ends the run past a right password,
+  as `sudo -n` can run nothing. The error says to run with `--plain`, where sudo asks each time.
+- A ticker runs `sudo -n -v` each minute while a ticket holds, so that a long step, or a child's
+  own sudo, finds one.
+- A stage that has sudo ask ahead of its lines calls `effect.Validate`. That is `sudo -v` in plain
+  mode, and the same field under a screen.
+
+ws runs as root on the server, with no sudo, so there it asks nothing.
+
 ## The terminal comes back
 
 The terminal is restored after an error, a signal and a panic, a panic in a step's goroutine

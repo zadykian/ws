@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/step"
 )
@@ -42,6 +43,16 @@ func TestSetup(t *testing.T) {
 		if (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
 			t.Errorf("%s: Plan = %q, want %q", name, got, tc.want)
 		}
+	}
+}
+
+func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {
+	m := effect.OSMachine{Ticket: func() error { return effect.ErrNoTicket }}
+	_, planned := (&Setup{M: m, LookPath: func(string) (string, error) { return "", nil }}).Plan(context.Background())
+	tun, _ := newTunnel(keyA, "", false)
+	tun.M = m
+	if err := tun.Apply(context.Background(), step.Plan{}); !errors.Is(err, effect.ErrNoTicket) || !errors.Is(planned, err) {
+		t.Errorf("Apply = %v, Plan = %v", err, planned)
 	}
 }
 

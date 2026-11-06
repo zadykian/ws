@@ -1,6 +1,19 @@
 package wizard
 
-import "context"
+import (
+	"context"
+
+	"github.com/zadykian/ws/effect"
+)
+
+// talk runs a command, never as root, that talks to the maintainer: by f, which gives it the terminal, or by m's
+// Pass where f is nil.
+func talk(ctx context.Context, f effect.Foreground, m effect.Machine, name string, args ...string) error {
+	if f == nil {
+		return m.Pass(ctx, false, name, args...)
+	}
+	return f.PassForeground(ctx, false, name, args...)
+}
 
 // RunInput runs ssh with the arguments and the bytes as standard input, and returns its standard
 // output.
@@ -16,5 +29,5 @@ func (s SSH) PassInput(ctx context.Context, stdin []byte, args ...string) error 
 // Pass runs ssh with the arguments, with its output passed to Stderr and standard input kept, for a
 // session at the terminal.
 func (s SSH) Pass(ctx context.Context, args ...string) error {
-	return s.M.Pass(ctx, false, "ssh", s.argv(ctx, args)...)
+	return talk(ctx, s.F, s.M, "ssh", s.argv(ctx, args)...)
 }

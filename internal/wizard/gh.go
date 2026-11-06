@@ -30,7 +30,9 @@ type Gh struct {
 	// LookPath finds a program on PATH.
 	LookPath func(string) (string, error)
 	M        effect.Machine
-	Out      effect.Out
+	// F runs gh's login, which shows a code and waits. Nil means M.Pass.
+	F   effect.Foreground
+	Out effect.Out
 }
 
 // Name is the stage's name.
