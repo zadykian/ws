@@ -85,3 +85,20 @@ func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
 		t.Errorf("stdin = %v, stderr = %v, want a command off the terminal", m.Stdin, m.Stderr)
 	}
 }
+
+// The second read passes no bridge, which would fail a second making of the machine.
+func TestReadMachineTakesARunsEffectsOnce(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	machine := readMachine(effect.OSMachine{})
+	for _, b := range []*tui.Bridge{{}, nil} {
+		m, ok := machine(ctx, b).(effect.OSMachine)
+		if !ok || m.Stdin != effect.NoStdin || m.Ticket == nil {
+			t.Errorf("machine = %+v", m)
+		}
+	}
+	fake := effecttest.NewMachine()
+	if got := readMachine(fake)(ctx, nil); got != effect.Machine(fake) {
+		t.Errorf("a fake became %T", got)
+	}
+}

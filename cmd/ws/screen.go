@@ -121,3 +121,16 @@ func screenMachine(ctx context.Context, b *tui.Bridge, m effect.Machine) effect.
 	}
 	return m
 }
+
+// readMachine returns what each read of a state screen runs on: m as a run takes it under a screen.
+// The first read makes it, as that takes the screen's Bridge, and the rest share it, as each one made
+// would hold sudo's ticket until the screen ends. The reads run on one goroutine.
+func readMachine(m effect.Machine) func(context.Context, *tui.Bridge) effect.Machine {
+	var screen effect.Machine
+	return func(ctx context.Context, b *tui.Bridge) effect.Machine {
+		if screen == nil {
+			screen = screenMachine(ctx, b, m)
+		}
+		return screen
+	}
+}
