@@ -1,8 +1,0 @@
----
-# F12's terminal keys, as Fresh's actions.
-terminal.paste: {to: terminal_paste}
-terminal.send-key: {why: 'no binding needed: the terminal gets the key'}
-# near: with the terminal in the dock
-terminal.hide: {to: toggle_utility_dock}
-terminal.eof: {why: 'no binding needed: the terminal gets the key'}
-terminal.copy: {why: no Fresh action copies from the terminal by a key of its own}
