@@ -5,8 +5,12 @@ import "slices"
 // pickRow is a step of the list that a run is chosen from.
 type pickRow struct {
 	stepRow
-	// chosen is the row's own box.
+	// waitsOn names the step of its group that has to run first.
+	waitsOn string
+	// chosen is the row's own box. It stands under a lock, and counts again once the lock goes.
 	chosen bool
+	// lockedBy names the steps on that wait on this one: settled works it out.
+	lockedBy []string
 }
 
 // entry names the row as Options.Only does.
@@ -19,12 +23,15 @@ func (r pickRow) entry() string {
 
 // on says that the step runs.
 func (r pickRow) on() bool {
-	return r.chosen
+	return r.chosen || len(r.lockedBy) > 0
 }
 
-// box draws the row's checkbox.
+// box draws the row's checkbox. A locked step takes no key, and its box says so by shape.
 func (r pickRow) box() string {
-	if r.chosen {
+	switch {
+	case len(r.lockedBy) > 0:
+		return "[#]"
+	case r.chosen:
 		return "[x]"
 	}
 	return "[ ]"
@@ -41,7 +48,30 @@ func newPickList(groups []Group) pickList {
 	var l pickList
 	for _, g := range groups {
 		for i, name := range g.Steps {
-			l.rows = append(l.rows, pickRow{stepRow: stepRow{parent: g.Name, index: i, name: name}})
+			row := stepRow{parent: g.Name, index: i, name: name}
+			l.rows = append(l.rows, pickRow{stepRow: row, waitsOn: g.Waits[name]})
+		}
+	}
+	return l
+}
+
+// settled returns the list with its locks worked out again. A step waits on an earlier one alone,
+// so that one walk from the end reaches the whole of a chain.
+func (l pickList) settled() pickList {
+	l.rows = slices.Clone(l.rows)
+	for i := range l.rows {
+		l.rows[i].lockedBy = nil
+	}
+	for i := len(l.rows) - 1; i >= 0; i-- {
+		r := l.rows[i]
+		if r.waitsOn == "" || !r.on() {
+			continue
+		}
+		for j := range l.rows {
+			other := &l.rows[j]
+			if other.parent == r.parent && other.name == r.waitsOn && !slices.Contains(other.lockedBy, r.name) {
+				other.lockedBy = append(other.lockedBy, r.name)
+			}
 		}
 	}
 	return l
