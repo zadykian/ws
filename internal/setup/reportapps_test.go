@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
@@ -199,5 +200,33 @@ func TestTunnelWithoutAPeerReportsNoDaemon(t *testing.T) {
 	}
 	if it := got[tunnelKey]; it.Kind != step.FileItem || it.Found != "missing" {
 		t.Errorf("key = %+v", it)
+	}
+}
+
+func TestNetworksReportNothingWithoutAPeer(t *testing.T) {
+	if got := reportOf(t, networksStep(effecttest.NewMachine(), conf.Conf{})); len(got) != 0 {
+		t.Errorf("items = %v, want none", got)
+	}
+}
+
+func TestNetworksReportsRoutesAndResolvers(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["launchctl print system/"+daemonName] = effecttest.Result{}
+	got := reportOf(t, networksStep(m, conf.Conf{PublicKey: "K", TunnelNetworks: "10.1.0.0/24", Resolvers: "a.test=10.0.0.1"}))
+	for _, name := range []string{"/etc/ws-tunnel/routes.d/mac-conf", "/etc/resolver", "/etc/resolver/a.test"} {
+		if it, ok := got[name]; !ok || it.Found != "missing" {
+			t.Errorf("%s = %+v, %v, want it missing", name, it, ok)
+		}
+	}
+}
+
+func TestNetworksReportsAResolverToRemove(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/etc/resolver/gone.test"] = []byte(resolverHead + "nameserver 10.0.0.1\n")
+	m.Root["/etc/resolver"], m.Dirs["/etc/resolver"] = effect.Attrs{Mode: 0o755}, 0o755
+	m.Root["/etc/resolver/gone.test"] = effect.Attrs{Mode: 0o644}
+	it := reportOf(t, networksStep(m, conf.Conf{PublicKey: "K"}))["/etc/resolver/gone.test"]
+	if it.Kind != step.FileItem || it.Want != "missing" || it.Found != "present" {
+		t.Errorf("resolver = %+v, want it to go", it)
 	}
 }
