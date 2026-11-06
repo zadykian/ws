@@ -2,6 +2,7 @@ package tui
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -83,5 +84,37 @@ func TestTheCursorStopsAtTheEnds(t *testing.T) {
 		if got := l.moved(c.msg, 4).at; got != c.want {
 			t.Errorf("%v from %d = %d, want %d", c.msg, c.from, got, c.want)
 		}
+	}
+}
+
+func TestAViewDrawsARolesBoxBehindItsSteps(t *testing.T) {
+	l := choosing(twoRoles(), "Packages", "Keys").take(planned("base", "Locale", 1))
+	l.rows[1].chosen = false
+	l.at = 1
+	want := strings.Join([]string{
+		"  [-] base",
+		"▸   [x] · Packages",
+		"    [ ] ✓ Locale",
+		"    [ ] · Time",
+		"  [x] ssh",
+		"    [x] · Keys",
+	}, "\n")
+	if got := stripped(l.view(testTheme, 6)); got != want {
+		t.Errorf("view:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestAViewKeepsTheCursorInSight(t *testing.T) {
+	l := newPickList([]Group{{Steps: strings.Fields("a b c d e f g h i j")}})
+	l.at = 7
+	got := strings.Split(stripped(l.view(testTheme, 3)), "\n")
+	if len(got) != 3 || got[1] != "▸ [ ] · h" {
+		t.Errorf("view = %q, want the cursor on the second of 3 lines", got)
+	}
+}
+
+func TestAViewSaysThatAFilterLeftNothing(t *testing.T) {
+	if got := stripped(twoRoles().filtered("nothing here").view(testTheme, 5)); got != "No step matches." {
+		t.Errorf("view = %q", got)
 	}
 }

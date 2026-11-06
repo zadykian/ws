@@ -73,3 +73,56 @@ func (l pickList) moved(msg tea.KeyPressMsg, page int) pickList {
 	l.at = max(min(l.at, last), 0)
 	return l
 }
+
+// groupBox draws a role's box, which follows its steps: "[-]" says that some are on.
+func (l pickList) groupBox(parent string) string {
+	on, all := 0, 0
+	for _, r := range l.rows {
+		if r.parent == parent {
+			all++
+			if r.on() {
+				on++
+			}
+		}
+	}
+	switch on {
+	case 0:
+		return "[ ]"
+	case all:
+		return "[x]"
+	}
+	return "[-]"
+}
+
+// render draws a line. Its box and its mark differ by shape, as NO_COLOR takes the rest.
+func (l pickList) render(theme Theme, line pickLine) string {
+	r := l.rows[line.row]
+	if line.heading {
+		return l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
+	}
+	mark, style := r.state.look(theme)
+	indent := ""
+	if r.parent != "" {
+		indent = "  "
+	}
+	return indent + r.box() + " " + style.Render(mark) + " " + r.name
+}
+
+// view draws height lines of the list. The list runs past a window, so that the cursor stays in
+// sight, a third of the way down.
+func (l pickList) view(theme Theme, height int) string {
+	lines := l.lines()
+	if len(lines) == 0 {
+		return theme.Muted.Render("No step matches.")
+	}
+	top := max(min(l.at-height/3, len(lines)-height), 0)
+	drawn := make([]string, 0, height)
+	for i := top; i < min(top+height, len(lines)); i++ {
+		gutter := "  "
+		if i == l.at {
+			gutter = "▸ "
+		}
+		drawn = append(drawn, gutter+l.render(theme, lines[i]))
+	}
+	return strings.Join(drawn, "\n")
+}
