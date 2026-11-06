@@ -118,7 +118,9 @@ The other pane is a window on what the run prints, under the current step's name
 
 The window goes with the screen, and these stay:
 
-- Under `--check`, each step's changes print on the normal screen, a file's diff in full.
+- Under `--check`, each step's changes print on the normal screen, a file's diff in full. Of a file
+  of the user's, as `~/.gitconfig`, the screen, the log and a report hold ws's lines alone, as the
+  lines beside them may hold a secret. `--plain` prints the whole diff.
 - A warning prints there too, on any run, as the step that gave it passes.
 - A failed step prints the last 30 lines of its output, then the error.
 - The summary of `ws server apply` is the last line. A passing `ws mac apply` prints nothing more.
