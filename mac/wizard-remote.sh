@@ -17,10 +17,11 @@
 # - state prints ws server state --json, which changes nothing, on stdout alone. It has the HOME and
 #   the locale of a run's unit, so that it reads what a run would.
 # - run [ARG...] runs ws server apply --json ARGs in a unit of its own, ws-wizard-STAMP, which goes
-#   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
-#   ends, and exits with the run's status. A run with no ARG is a full one. Where the identity is
-#   there, the unit loads it as the credential ws-secrets, and runs with --secrets. run removes the
-#   identity once systemd-run returns, at once where it follows a unit, and where it ends in error.
+#   on where ssh drops, or follows such a unit that runs already. A unit of other ARGs would leave
+#   these unrun, so run refuses it, unless it is a full one. It prints the unit's log until it ends,
+#   and exits with the run's status. A run with no ARG is a full one. Where the identity is there,
+#   the unit loads it as the credential ws-secrets, and runs with --secrets. run removes the identity
+#   once systemd-run returns, at once where it follows a unit, and where it ends in error.
 # - secrets stage makes the directories of the secrets file and the identity, and prints their paths,
 #   which the wizard sends to. secrets drop removes both, or the identity alone given "identity".
 # - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
@@ -51,12 +52,10 @@ home=$(getent passwd "$user" | cut -d : -f 6)
 claude=$home/.local/bin/claude
 gitconfig=$home/.gitconfig
 
-# say prints a message of the script's on stderr.
 say() {
     printf 'wizard-remote.sh: %s\n' "$*" >&2
 }
 
-# die prints a message of the script's and exits with status 1.
 die() {
     say "$*"
     exit 1
@@ -72,10 +71,9 @@ stamp() {
     awk -v n="${2:-2}" 'NF == n { print; exit }' "$1" 2>/dev/null | first
 }
 
-# cable prints the port that host_vars names as network_direct_link_interface, as
-# link writes it, bare or in either quotes: the last such line. It
-# prints - for none, and where the network role's netplan file lacks the port, as after a roles'
-# run that failed, so that the Cable stage runs them again.
+# cable prints the port that host_vars names as network_direct_link_interface, as link writes it,
+# bare or in either quotes: the last such line. It prints - for none, and where the network role's
+# netplan file lacks it, as after a roles' run that failed, so that the Cable stage runs them again.
 cable() {
     port=$(awk -v q="'" '/^network_direct_link_interface[ \t]*:/ {
         v = $0
@@ -89,7 +87,6 @@ cable() {
     echo "$port"
 }
 
-# active prints the run's unit that is active or activating, where there is one.
 active() {
     systemctl list-units --type=service --state=active,activating --no-legend --plain \
         'ws-wizard-*' 2>/dev/null | awk '{ sub(/\.service$/, "", $1); print $1; exit }'
@@ -206,12 +203,16 @@ run() {
     trap 'exit 1' HUP INT TERM
     unit=$(active)
     if [ -n "$unit" ]; then
+        other=$(cat "$state/args" 2>/dev/null) || other=
+        [ -z "$other" ] || [ "$other" = "$*" ] ||
+            die "$unit runs other steps on ws: journalctl -u $unit shows its log; run the wizard again once it ends"
         rm -f "$identity"
         say "following $unit, which runs on ws already"
     else
         mkdir -p "$state"
         job >"$state/job.new" && mv -f "$state/job.new" "$state/job"
         off >"$state/off.new" && mv -f "$state/off.new" "$state/off"
+        printf '%s\n' "$*" >"$state/args"
         unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
         creds=
         [ ! -f "$identity" ] || creds="-p LoadCredential=ws-secrets:$identity -p Type=exec"
@@ -271,7 +272,6 @@ secrets() {
     esac
 }
 
-# running succeeds while UNIT is active, or on its way in or out.
 running() {
     systemctl show -p ActiveState --value "$1" | grep -qxE "active|activating|deactivating"
 }

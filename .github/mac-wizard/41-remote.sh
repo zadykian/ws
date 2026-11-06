@@ -7,7 +7,8 @@
 # A full run must run ws server apply with --json alone in a unit of its own, with root's HOME and
 # a UTF-8 locale, print its log, event lines too, and exit 0. It must stamp ws's version, 0 and on in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
-# as it was. A run during another's unit must follow that unit and start none. A full run whose unit
+# as it was. A run during a full unit, or one of the same steps, must follow that unit and start
+# none, and one of other steps during a part's unit must refuse it. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
 # unit of its own, as must one after outbound, which stamps off in run, as /etc/ws/host_vars.yml,
 # a file of mode 0600 in a directory of 0755, names security_outbound: false. One with an argument, as
@@ -105,6 +106,18 @@ unit() {
     sed -n 's/.* --unit=\([^ ]*\) .*/\1/p' "$ws/run.log" | tail -n 1
 }
 
+# started ARG... runs the remote script's run with ARGs in the background, until its unit is up.
+started() {
+    ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run "$@" <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
+    first=$!
+    tries=0
+    until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
+        sleep 1
+        tries=$((tries + 1))
+    done
+    n=$(units)
+}
+
 # The stamp's version is the stand-in ws's, which the wizard's install left in ws.version.
 sha=$(wsv)
 n=$(units)
@@ -123,20 +136,24 @@ remote run --only devtools
     error "a tagged run exited $status"
 rm "$ws/server.status"
 echo 4 >"$ws/server.wait"
-ssh -o BatchMode=yes -o HostName=localhost -o Port=22022 ws sudo -n sh -s -- run <"$remote_sh" >"$RUNNER_TEMP/first" 2>&1 &
-first=$!
-tries=0
-until ls "$ws"/units/*.on >/dev/null 2>&1 || [ "$tries" = 20 ]; do
-    sleep 1
-    tries=$((tries + 1))
-done
-n=$(units)
+started
 remote run --only other
 wait "$first"
 first=$?
 printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: following ws-wizard-' &&
     ! grep -q other "$ws/server.log" && [ "$first" = 0 ] && [ "$status" = 0 ] &&
     [ "$(units)" -eq "$n" ] || error "a run during another's unit exited $status, or started one"
+started --only devtools
+remote run --only other
+printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: ws-wizard-[^ ]* runs other steps on ws' &&
+    [ "$status" = 1 ] && ! grep -q other "$ws/server.log" && [ "$(units)" -eq "$n" ] ||
+    error "a run during a part's unit of other steps exited $status, or started one"
+remote run --only devtools
+wait "$first"
+first=$?
+printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: following ws-wizard-' && [ "$first" = 0 ] &&
+    [ "$status" = 0 ] && [ "$(units)" -eq "$n" ] ||
+    error "a run during a part's unit of its steps exited $status, or started one"
 rm "$ws/server.wait" "$RUNNER_TEMP/first"
 touch "$ws/server.cut"
 remote run

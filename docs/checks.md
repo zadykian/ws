@@ -99,15 +99,15 @@ table. `state` must print ws's report and exit with its status. Like a full `run
 `HOME` and a UTF-8 locale. A full `run` must run `ws server apply` with `--json` alone in a unit of
 its own. It must print the log, event lines too. It must stamp ws's version, `-` here, 0, `on` and
 `-`, the secrets file's sum; after its `outbound` writes the line, which stops on a link, `off`. A
-tagged run after it must start its own unit and leave that stamp. A run during another's unit must
-follow it. A full run cut off must remove the stamp of the one before, so the next starts a unit
-again. The files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports, `user
-NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server values set`
-on each. `link PORT` must name one there, mode 600 in a 755 directory, once, which `status` names
-once the roles give `10.77.0.1`. With the Mac's secrets file, in a throwaway keychain, a run must
-start a unit that loads the identity as a credential and runs `--secrets`. It must remove the
-identity from ws, and stamp the file's SHA-256. A changed file must run again, and a removed one run
-with no secrets ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
+tagged run after it must start its own unit and leave that stamp. A run must follow a full unit or
+one of its steps, and refuse another's. A full run cut off must remove the last stamp, so the next
+starts a unit. The files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports,
+`user NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
+values set` on each. `link PORT` must name one there, mode 600 in a 755 directory, once, which
+`status` names once the roles give `10.77.0.1`. With the Mac's secrets file, in a throwaway
+keychain, a run must start a unit that loads the identity as a credential and runs `--secrets`. It
+must remove the identity from ws, and stamp the file's SHA-256. A changed file must run again, and a
+removed one run with no secrets ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9

@@ -192,7 +192,8 @@ unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` an
 That ws runs its roles ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the
 unit's log until it ends, past the [event lines](../README.md#events), and stops where the run
 fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when the Mac sleeps,
-and the next run of the wizard follows it to its end, and replays the log. Where `WS_USER` isn't
+and the next run of the wizard follows it to its end, and replays the log. A unit of part of ws
+stops a run of other steps, which it would leave unrun, until it ends. Where `WS_USER` isn't
 the server's default, the stage first names it as `ws_user` in `/etc/ws/host_vars.yml` on ws, with
 the files script, so the roles set up that user. Where the file names another, it changes the line.
 
