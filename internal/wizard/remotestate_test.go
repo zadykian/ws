@@ -94,3 +94,34 @@ func TestRemoteStateRefusesAnotherWs(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoteStateFails(t *testing.T) {
+	cases := []struct {
+		name   string
+		result effecttest.Result
+	}{
+		{"the op fails", effecttest.Result{Err: errors.New("denied")}},
+		{"cut short", effecttest.Result{Out: []byte(wsReport[:40])}},
+		{"a line beside the report", effecttest.Result{Out: []byte("a line\n" + wsReport)}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r, m := stateRemote("v1", "")
+			m.Results[remoteLine(r, "state")] = c.result
+			if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
+				t.Errorf("got %v, %v; want a failure that is no refusal", got, err)
+			}
+		})
+	}
+}
+
+func TestRemoteStateWithNoStatus(t *testing.T) {
+	r, m := stateRemote("v1", wsReport)
+	m.Results[remoteLine(r, "status")] = effecttest.Result{Err: errors.New("denied")}
+	if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
+		t.Errorf("got %v, %v; want a failure that is no refusal", got, err)
+	}
+	if n := ranOp(m, "state"); n != 0 {
+		t.Errorf("state ran %d times", n)
+	}
+}

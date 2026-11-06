@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"os"
 	"strings"
@@ -153,5 +154,37 @@ func TestWizardStagesNameTheirMachines(t *testing.T) {
 	}
 	if len(stages) != 15 || onWs != 4 {
 		t.Errorf("%d stages, %d on ws; want 15 and 4", len(stages), onWs)
+	}
+}
+
+// wsOverSSH answers the remote script's ops as a ws reached by ssh: state with its report, and any
+// other with its status.
+type wsOverSSH struct {
+	*effecttest.Machine
+	status, report []byte
+}
+
+// RunInput answers by the op, the last of ssh's arguments.
+func (m wsOverSSH) RunInput(_ context.Context, _ []byte, _ string, args ...string) ([]byte, error) {
+	if args[len(args)-1] == "state" {
+		return m.report, nil
+	}
+	return m.status, nil
+}
+
+func TestWizardReadsWhatServerStatePrints(t *testing.T) {
+	p, _ := serverTerminal()
+	status, stdout, _ := runWs(p, "", "server", "state", "--json", "--only", "tmux")
+	if status != 0 {
+		t.Fatalf("status = %d", status)
+	}
+	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
+	r := &wizard.Remote{SSH: wizard.SSH{M: m, Lock: "/t/l"}}
+	roles, err := r.State(context.Background(), p.version)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(roles) != 2 || roles[1].Role != "tmux" || len(roles[1].Steps) == 0 {
+		t.Errorf("roles = %+v", roles)
 	}
 }
