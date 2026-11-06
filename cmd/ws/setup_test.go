@@ -197,6 +197,13 @@ func macStateAtTerminal() process {
 	return p
 }
 
+func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
+	_, err := macRead(fakeProcess())(t.Context(), nil)
+	if err == nil || !strings.Contains(err.Error(), "is missing") {
+		t.Errorf("err = %v", err)
+	}
+}
+
 func TestMacStateDrawsTheScreenAtATerminal(t *testing.T) {
 	status, stdout, stderr := runWs(macStateAtTerminal(), "q", "mac", "state")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, altScreen) {
