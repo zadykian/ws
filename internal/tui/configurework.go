@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"slices"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -17,6 +18,13 @@ type configureJob struct {
 	edits map[string]string
 }
 
+// savedMsg is the end of a save. Its sheet reads what the file holds.
+type savedMsg struct {
+	place int
+	sheet Sheet
+	err   error
+}
+
 // save checks the form, and hands its edits to the work. A refusal takes the focus, for the field to
 // be mended.
 func (s configureScreen) save() (tea.Model, tea.Cmd) {
@@ -30,6 +38,18 @@ func (s configureScreen) save() (tea.Model, tea.Cmd) {
 	s.saving = true
 	job := configureJob{place: s.at, sheet: s.sheets[s.at], edits: form.Edits()}
 	return s.fitted(), func() tea.Msg { s.send(job); return nil }
+}
+
+// saved ends a save. A failed one keeps the edits, and shows why.
+func (s configureScreen) saved(msg savedMsg) configureScreen {
+	s.saving = false
+	if msg.err != nil {
+		s.notes = slices.Concat(s.notes, []Line{{Warned, msg.err.Error()}})
+		return s.fitted()
+	}
+	s.sheets, s.forms = slices.Clone(s.sheets), slices.Clone(s.forms)
+	s.sheets[msg.place], s.forms[msg.place] = msg.sheet, s.forms[msg.place].Refill(msg.sheet.Fields)
+	return s.fitted()
 }
 
 // noteLines draws the end of what the last save said, at width.

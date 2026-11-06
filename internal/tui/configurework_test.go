@@ -44,13 +44,33 @@ func TestConfigureRefusedSaveStaysOnTheField(t *testing.T) {
 	}
 }
 
-func TestConfigureShowsWhatASaveSaidUntilTheNext(t *testing.T) {
-	s := fed(testConfigure(wayFile()), Line{Said, "wrote way.conf"})
+func TestConfigureSavedStartsTheFormOverOnTheFile(t *testing.T) {
+	var jobs []configureJob
+	s := fed(recording(&jobs, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
+	wrote := Sheet{Name: "way.conf", Fields: func(map[string]string) []FieldSpec {
+		return []FieldSpec{{Label: "HOST"}, {Label: "PORT", Value: "2222"}}
+	}}
+	s = fed(s, Line{Said, "wrote way.conf"}, savedMsg{sheet: wrote})
+	if s.saving || len(s.form().Edits()) != 0 || s.form().name() != "PORT" {
+		t.Errorf("saving = %v, Edits = %v, field %q", s.saving, s.form().Edits(), s.form().name())
+	}
 	if got := stripped(s.View().Content); !strings.Contains(got, "wrote way.conf") {
 		t.Errorf("no note:\n%s", got)
 	}
 	if s = fed(s, ctrlS); len(s.notes) != 0 {
 		t.Errorf("a save kept the last one's notes: %v", s.notes)
+	}
+}
+
+func TestConfigureFailedSaveKeepsTheEditsAndSaysWhy(t *testing.T) {
+	var jobs []configureJob
+	s := fed(recording(&jobs, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
+	s = fed(s, savedMsg{err: errors.New("the file is read-only")})
+	if s.saving || s.form().Edits()["PORT"] != "2222" {
+		t.Errorf("saving = %v, Edits = %v", s.saving, s.form().Edits())
+	}
+	if got := stripped(s.View().Content); !strings.Contains(got, "the file is read-only") {
+		t.Errorf("no reason:\n%s", got)
 	}
 }
 

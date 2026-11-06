@@ -63,7 +63,7 @@ func newConfigureScreen(title string, theme Theme, send func(configureJob), shee
 // Init starts nothing, as the screen waits for a key.
 func (s configureScreen) Init() tea.Cmd { return nil }
 
-// Update takes the window's size, the keys, a paste, and what a save said.
+// Update takes the window's size, the keys, a paste, and what a save said and how it ended.
 func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -72,6 +72,8 @@ func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case Line:
 		s.notes = slices.Concat(s.notes, []Line{msg})
 		return s.fitted(), nil
+	case savedMsg:
+		return s.saved(msg), nil
 	case tea.KeyPressMsg:
 		return s.pressed(msg)
 	case tea.PasteMsg:
