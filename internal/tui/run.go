@@ -44,6 +44,8 @@ type Config struct {
 	// Log keeps none.
 	Log     io.Writer
 	LogPath string
+	// quiet leaves nothing past the screen, for a screen that a run follows and says the same again.
+	quiet bool
 }
 
 // Work is what a run does. It takes b as its effects, and sends the screen its messages by them.
@@ -93,9 +95,12 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	cancel()
 	late := unwound(result, signals, cmp.Or(c.Unwind, unwindBound))
 	bridge.rec.close()
-	bridge.flush()
 	s, _ := final.(session) // A panic in Update or View leaves no model.
 	s.err = cmp.Or(late, s.err)
+	if c.quiet { // Nothing ran, so a cut past the work's end is no run stopped at its end.
+		return cmp.Or(ending(s, broke), s.cutBy)
+	}
+	bridge.flush()
 	bridge.rec.report(c.Out, c.LogPath, s.cutBy != nil || !s.done)
 	return ending(s, broke)
 }
