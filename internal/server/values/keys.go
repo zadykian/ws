@@ -1,8 +1,12 @@
 package values
 
 import (
+	"errors"
+	"fmt"
+	"math"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -17,6 +21,11 @@ const (
 	Switch
 	List
 )
+
+// String says what the kind takes, in a form's help and in a refusal.
+func (k Kind) String() string {
+	return [...]string{"text", "a whole number", "a number", "true or false", "a list, split by commas"}[k]
+}
 
 // Key is a key of the file that a line of text holds: a scalar, or a list of strings. A table, such
 // as fans_curves, stays the file's to edit.
@@ -67,4 +76,35 @@ func kindOf(t reflect.Type) (Kind, bool) {
 		return List, t.Elem().Kind() == reflect.String
 	}
 	return 0, false
+}
+
+// Check says why the key can't take value. Each key takes an empty value, which gives its default
+// back. It is pure, as a form runs it on each edit.
+func (k Key) Check(value string) error {
+	if strings.ContainsAny(value, "\r\n") {
+		return errors.New(k.Name + " takes one line")
+	}
+	if value == "" {
+		return nil
+	}
+	var err error
+	switch k.Kind {
+	case Number:
+		_, err = strconv.Atoi(value)
+	case Decimal:
+		var number float64
+		number, err = strconv.ParseFloat(value, 64)
+		if math.IsNaN(number) || math.IsInf(number, 0) {
+			err = strconv.ErrSyntax
+		}
+	case Switch:
+		if value != "true" && value != "false" {
+			err = strconv.ErrSyntax
+		}
+	case Text, List:
+	}
+	if err != nil {
+		return fmt.Errorf("%s takes %s", k.Name, k.Kind)
+	}
+	return nil
 }
