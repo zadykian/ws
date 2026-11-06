@@ -48,7 +48,7 @@ func (r pickRow) pending() bool {
 
 // sameChoice says that o is r to a run, which chooses by name, as a name can come twice in one.
 func (r pickRow) sameChoice(o pickRow) bool {
-	return r.parent == o.parent && r.name == o.name
+	return r.stage == o.stage && r.parent == o.parent && r.name == o.name
 }
 
 // box draws the row's checkbox. A locked step takes no key, and its box says so by shape.

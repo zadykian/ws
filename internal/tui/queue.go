@@ -1,5 +1,10 @@
 package tui
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Side is the list of a queue that shows a stage: the machine the stage acts on.
 type Side int
 
@@ -10,8 +15,14 @@ const (
 	sideCount
 )
 
-// unreadIndex is a role's in place of a step's, as no event of a run names a role.
-const unreadIndex = -1
+const (
+	// unreadIndex is a role's in place of a step's, as no event of a run names a role.
+	unreadIndex = -1
+	// stageColumns is the columns of a stage's number, which a row under the stage stands past.
+	stageColumns = 5
+	// roleColumns is what a role's heading adds to a step of the role.
+	roleColumns = 2
+)
 
 // Stage is a step of a queue: the two lists show one order, as stages wait on each other across the
 // machines and share a connection, so that no two run at once.
@@ -50,4 +61,27 @@ func (s Stage) rows(g Group) []pickRow {
 		rows[i] = pickRow{stepRow: row, side: s.Side, stage: s.Name, waitsOn: g.Waits[name]}
 	}
 	return rows
+}
+
+// indent is what stands ahead of the row's box: a stage's number, or the room of its depth.
+func (r pickRow) indent() string {
+	switch {
+	case r.number > 0:
+		return fmt.Sprintf("%*d ", stageColumns-3, r.number)
+	case r.stage != "" && r.parent != "" && r.parent != r.stage:
+		return strings.Repeat(" ", stageColumns+roleColumns)
+	case r.stage != "":
+		return strings.Repeat(" ", stageColumns)
+	case r.parent != "":
+		return strings.Repeat(" ", roleColumns)
+	}
+	return ""
+}
+
+// headingIndent is what stands ahead of the box of the row's role.
+func (r pickRow) headingIndent() string {
+	if r.stage != "" {
+		return strings.Repeat(" ", stageColumns)
+	}
+	return ""
 }

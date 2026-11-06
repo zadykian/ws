@@ -2,6 +2,7 @@ package tui
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -16,6 +17,16 @@ func testStages() []Stage {
 	}
 }
 
+// drawn is what a side of l shows, a line each, its colors gone.
+func drawn(l pickList, side Side) []string {
+	l.side = side
+	var got []string
+	for _, line := range l.lines() {
+		got = append(got, stripped(l.render(testTheme, line)))
+	}
+	return got
+}
+
 func TestAStageIsNumberedAndItsStepsFollowIt(t *testing.T) {
 	var numbers []int
 	var names []string
@@ -27,5 +38,32 @@ func TestAStageIsNumberedAndItsStepsFollowIt(t *testing.T) {
 	}
 	if want := []string{"Tools", "Setup", "one", "two", "Sudo", "Run", "base", "ssh", "Signing"}; !slices.Equal(names, want) {
 		t.Errorf("names = %q, want %q", names, want)
+	}
+}
+
+func TestAQueueNumbersItsStagesAcrossBothSides(t *testing.T) {
+	l := newQueue(testStages())
+	mac := []string{" 1 [ ] · Tools", " 2 [ ] · Setup", "     [ ] · one", "     [ ] · two", " 5 [ ] · Signing"}
+	if got := drawn(l, MacSide); !slices.Equal(got, mac) {
+		t.Errorf("Mac's list = %q, want %q", got, mac)
+	}
+	ws := []string{" 3 [ ] · Sudo", " 4 [ ] · Run", "     [ ] · base", "     [ ] · ssh"}
+	if got := drawn(l, WsSide); !slices.Equal(got, ws) {
+		t.Errorf("ws's list = %q, want %q", got, ws)
+	}
+}
+
+func TestARoleOfAStageOpensUnderItsHeading(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"Packages"}}}}}
+	got := strings.Join(drawn(newQueue(stages), MacSide), "|")
+	if want := " 1 [ ] · Run|     [ ] base|       [ ] · Packages"; got != want {
+		t.Errorf("list = %q, want %q", got, want)
+	}
+}
+
+func TestAFilterLeavesAStepTheHeadingOfItsStage(t *testing.T) {
+	got := newQueue(testStages()).filtered("two").lines()
+	if want := []pickLine{{3, true}, {3, false}}; !slices.Equal(got, want) {
+		t.Errorf("lines = %v, want %v", got, want)
 	}
 }
