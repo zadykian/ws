@@ -185,3 +185,33 @@ func TestCtrlHBindsOutsideTheMap(t *testing.T) {
 		t.Fatalf("%+v", outside)
 	}
 }
+
+func TestAComposeFileTakesItsLanguageID(t *testing.T) {
+	loose, _ := load(t)
+	langs, _ := loose["languages"].(map[string]any)
+	compose, _ := langs["docker-compose"].(map[string]any)
+	names, _ := compose["filenames"].([]any)
+	for _, file := range []string{"compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml"} {
+		if !slices.Contains(names, any(file)) {
+			t.Errorf("docker-compose lacks the file %s", file)
+		}
+	}
+	servers, _ := loose["lsp"].(map[string]any)
+	for language, list := range servers {
+		for _, entry := range list.([]any) {
+			ids := entry.(map[string]any)["language_id_overrides"]
+			if (ids != nil) != (language == "docker-compose") {
+				t.Errorf("%s: language_id_overrides = %v", language, ids)
+			}
+		}
+	}
+}
+
+// byWhen maps "when strokes" to the action of each binding of the active map.
+func byWhen(c config) map[string]string {
+	out := map[string]string{}
+	for _, b := range c.Maps[c.Active].Bindings {
+		out[b.When+" "+b.spellAll()] = b.Action
+	}
+	return out
+}
