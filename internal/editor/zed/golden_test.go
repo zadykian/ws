@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/internal/editor/zed"
+	"github.com/zadykian/ws/mac"
 )
 
-//go:embed testdata/*.json
+//go:embed testdata/settings.json
 var goldens embed.FS
 
 // golden fails where the render differs. A meant change edits the file by hand, in its commit.
@@ -24,12 +25,14 @@ func golden(t *testing.T, name string, got []byte) {
 	}
 }
 
-func TestKeymapMatchesTheGoldenFileByteForByte(t *testing.T) {
+func TestKeymapEqualsTheMacsFileByteForByte(t *testing.T) {
 	got, err := zed.Keymap()
 	if err != nil {
 		t.Fatal(err)
 	}
-	golden(t, "keymap.json", got)
+	if !bytes.Equal(got, mac.ZedKeymap) {
+		t.Fatalf("keymap.json differs: %d bytes, want %d\n%s", len(got), len(mac.ZedKeymap), got)
+	}
 }
 
 func TestTheKeymapHasWsMarkAndIsJSONUnderItsComments(t *testing.T) {
@@ -61,12 +64,14 @@ func TestTheSettingsAreJSON(t *testing.T) {
 	}
 }
 
-func TestSettingsMatchTheGoldenFileByteForByte(t *testing.T) {
+func TestSettingsEqualTheMacsFileByteForByte(t *testing.T) {
 	got, err := zed.Settings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	golden(t, "global_settings.json", got)
+	if !bytes.Equal(got, mac.ZedSettings) {
+		t.Fatalf("global_settings.json differs: %d bytes, want %d\n%s", len(got), len(mac.ZedSettings), got)
+	}
 }
 
 var paths = map[string]string{

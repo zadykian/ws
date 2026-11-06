@@ -11,3 +11,13 @@ var Ghostty []byte
 //
 //go:embed com.github.zadykian.ws-tunnel.plist
 var TunnelPlist []byte
+
+// ZedSettings is Zed's global_settings.json, which ws mac apply writes whole.
+//
+//go:embed zed/global_settings.json
+var ZedSettings []byte
+
+// ZedKeymap is Zed's keymap.json, which ws mac apply writes whole.
+//
+//go:embed zed/keymap.json
+var ZedKeymap []byte
