@@ -1,5 +1,10 @@
 package tui
 
+import (
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+)
+
 // pickLine is a line of the list: a step, or the heading of the role whose first shown step is row.
 type pickLine struct {
 	row     int
@@ -27,4 +32,25 @@ func (l pickList) current() (pickLine, bool) {
 		return pickLine{}, false
 	}
 	return lines[l.at], true
+}
+
+// moved returns the list with the cursor where msg sends it, page lines to a page.
+func (l pickList) moved(msg tea.KeyPressMsg, page int) pickList {
+	last := len(l.lines()) - 1
+	switch {
+	case key.Matches(msg, Keys.Up):
+		l.at--
+	case key.Matches(msg, Keys.Down):
+		l.at++
+	case key.Matches(msg, Keys.PageUp):
+		l.at -= page
+	case key.Matches(msg, Keys.PageDown):
+		l.at += page
+	case key.Matches(msg, Keys.Top):
+		l.at = 0
+	case key.Matches(msg, Keys.Bottom):
+		l.at = last
+	}
+	l.at = max(min(l.at, last), 0)
+	return l
 }
