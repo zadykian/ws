@@ -8,15 +8,13 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
-	editorzed "github.com/zadykian/ws/internal/editor/zed"
 	"github.com/zadykian/ws/internal/secrets"
-	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
-//go:embed files/terminal files/tmux.conf
-var terminalFiles embed.FS
+//go:embed files/terminal files/tmux.conf files/settings.json.tmpl
+var files embed.FS
 
 // terminalDir is where the terminal wrapper and its tmux.conf live: root's, outside any home, as Zed
 // runs the wrapper by its path. The wrapper finds its config beside itself.
@@ -61,17 +59,17 @@ func limitsFile(v values.Values) []byte {
 		"%s soft nofile %d\n", v.User, v.Zed.Nofile))
 }
 
-// settingsFile renders ~/.config/zed/settings.json from the catalogue of language servers: each by
-// the path devtools installs it at. The server's file wins over the Mac's, which Zed forwards.
+// settingsFile renders ~/.config/zed/settings.json: the paths of the language servers lie under the
+// home, which may be root's on a cloud VM. The server's file wins over the Mac's, which Zed forwards.
 func settingsFile(v values.Values) ([]byte, error) {
-	return editorzed.ServerSettings(devtools.ServerPaths(v.Home), devtools.Dlv(v.Home), terminalPath)
+	return host.Render(files, "files/settings.json.tmpl", struct{ Home string }{v.Home})
 }
 
 // terminalParts installs the wrapper at mode 0755 and its tmux.conf at 0644. Both parents are made
 // here: --only zed may run where security has not made /usr/local/lib/ws.
 func terminalParts(m effect.Machine) []host.Resource {
-	script, _ := terminalFiles.ReadFile("files/terminal")
-	conf, _ := terminalFiles.ReadFile("files/tmux.conf")
+	script, _ := files.ReadFile("files/terminal")
+	conf, _ := files.ReadFile("files/tmux.conf")
 	return []host.Resource{
 		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755, CreateOnly: true},
 		host.Dir{M: m, Path: terminalDir, Mode: 0o755},

@@ -4,22 +4,22 @@
   "node": { "path": "/usr/bin/node", "npm_path": "/usr/bin/npm" },
   "lsp": {
     "gopls": {
-      "binary": { "path": "/home/ws/go/bin/gopls", "arguments": ["-mode=stdio"] }
+      "binary": { "path": "{{.Home}}/go/bin/gopls", "arguments": ["-mode=stdio"] }
     },
     "roslyn": {
-      "binary": { "path": "/home/ws/.dotnet/tools/roslyn-language-server", "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"] }
+      "binary": { "path": "{{.Home}}/.dotnet/tools/roslyn-language-server", "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"] }
     },
     "postgres-language-server": {
       "binary": { "path": "/usr/local/bin/postgres-language-server", "arguments": ["lsp-proxy"] }
     },
     "ansible": {
-      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/ansible-language-server", "arguments": ["--stdio"] }
+      "binary": { "path": "{{.Home}}/.local/lib/language-servers/node_modules/.bin/ansible-language-server", "arguments": ["--stdio"] }
     },
     "vscode-html-language-server": {
-      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/vscode-html-language-server", "arguments": ["--stdio"] }
+      "binary": { "path": "{{.Home}}/.local/lib/language-servers/node_modules/.bin/vscode-html-language-server", "arguments": ["--stdio"] }
     },
     "dockerfile-language-server": {
-      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/docker-langserver", "arguments": ["--stdio"] }
+      "binary": { "path": "{{.Home}}/.local/lib/language-servers/node_modules/.bin/docker-langserver", "arguments": ["--stdio"] }
     },
     "docker-language-server": {
       "binary": { "path": "/usr/local/bin/docker-language-server", "arguments": ["start", "--stdio"] },
@@ -43,5 +43,5 @@
       "docker-compose.*.yml"
     ]
   },
-  "dap": { "Delve": { "binary": "/home/ws/go/bin/dlv" } }
+  "dap": { "Delve": { "binary": "{{.Home}}/go/bin/dlv" } }
 }
