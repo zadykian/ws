@@ -1,7 +1,10 @@
 package wizard
 
 import (
+	"context"
 	"errors"
+	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
@@ -12,6 +15,10 @@ const configureStage = "Configure"
 
 // targets are WS_TARGET's values, in the order that the form offers them.
 var targets = []string{"lan", "cloud", "mac-vm"}
+
+// wayKeys are the keys that an edit can hide. conf refuses one past the edit that hid it, as
+// WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
+var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_EMAIL"}
 
 // Field is a key of mac.conf as the Configure screen shows it.
 type Field struct {
@@ -108,4 +115,49 @@ func (f ConfForm) Fields(edits map[string]string) []Field {
 		fields = append(fields, field)
 	}
 	return fields
+}
+
+// settings lists what a save changes: each key that shows, and an empty value for one that holds a
+// value and no longer has a place. The cable's keys never show, and go with the LAN.
+func (f ConfForm) settings(edits map[string]string) []setting {
+	asked, vals := f.walk(edits)
+	var changes []setting
+	for _, q := range asked {
+		if v := f.wanted(q, edits); v != f.file.Value(q.key) {
+			changes = append(changes, setting{q.key, v})
+		}
+	}
+	gone := wayKeys
+	if vals["WS_TARGET"] != "lan" {
+		gone = slices.Concat(gone, []string{"WS_CABLE_SERVICE", "WS_CABLE_PORT"})
+	}
+	for _, key := range gone {
+		if _, shows := vals[key]; !shows && f.file.Value(key) != "" {
+			changes = append(changes, setting{key, ""})
+		}
+	}
+	return changes
+}
+
+// Save writes the changes to mac.conf as one and returns the form of what it then holds. It says the
+// keys that it emptied, as some of them no longer show.
+func (f ConfForm) Save(ctx context.Context, out effect.Out, edits map[string]string) (ConfForm, error) {
+	changes := f.settings(edits)
+	if len(changes) == 0 {
+		out.Say("%s holds these values already", f.Conf)
+		return f, nil
+	}
+	if err := (confFile{f.Conf, configureStage, f.M, out}).setAll(ctx, changes...); err != nil {
+		return f, err
+	}
+	var emptied []string
+	for _, c := range changes {
+		if c.value == "" {
+			emptied = append(emptied, c.key)
+		}
+	}
+	if len(emptied) > 0 {
+		out.Say("emptied %s", strings.Join(emptied, " "))
+	}
+	return f.Load(out)
 }

@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	"context"
 	"slices"
 	"testing"
 
@@ -103,5 +104,35 @@ func TestConfFormValidReadsTheForm(t *testing.T) {
 	address := fieldOf(t, f.Fields(map[string]string{"WS_TARGET": "lan", "WS_LAN": "10.88.0.0/24"}), "WS_LAN_ADDRESS")
 	if err := address.Valid("10.9.0.1"); err == nil {
 		t.Error("an address outside the LAN passes")
+	}
+}
+
+func TestConfFormSave(t *testing.T) {
+	way := "WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22022\n"
+	for name, tc := range map[string]struct {
+		text  string
+		edits map[string]string
+		want  string
+	}{
+		"a needed default": {"", map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "vm.example"},
+			"WS_TARGET=cloud\nWS_REMOTE=vm.example\nWS_REMOTE_PORT=22\n"},
+		"no optional default": {"", map[string]string{"WS_GIT_NAME": "A B"},
+			"WS_GIT_NAME=\"A B\"\nWS_GIT_EMAIL=a@b.dev\n"},
+		"to a cloud VM": {way + "WS_CABLE_PORT=enp1s0\n", map[string]string{"WS_TARGET": "cloud"},
+			"WS_LAN=\nWS_LAN_ADDRESS=\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22022\nWS_CABLE_PORT=\nWS_TARGET=cloud\n"},
+		"a cleared field": {way, map[string]string{"WS_REMOTE": ""},
+			"WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\nWS_REMOTE_PORT=\n"},
+		"none and quotes": {"WS_TUNNEL_NETWORKS=10.20.0.0/16\n",
+			map[string]string{"WS_TUNNEL_NETWORKS": "none", "WS_GIT_NAME": `"Me"`, "WS_GIT_EMAIL": "me@b.dev"},
+			"WS_TUNNEL_NETWORKS=\nWS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\n"},
+		"a mended pair": {"WS_LAN=10.88.0.0/24\n", nil, "WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n"},
+	} {
+		f, m := formOf(t, tc.text)
+		if _, err := f.Save(context.Background(), &effecttest.Out{}, tc.edits); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+		if got := string(m.Files["/h/mac.conf"]); got != tc.want {
+			t.Errorf("%s: mac.conf = %q; want %q", name, got, tc.want)
+		}
 	}
 }
