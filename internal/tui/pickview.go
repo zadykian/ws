@@ -76,15 +76,7 @@ func (l pickList) moved(msg tea.KeyPressMsg, page int) pickList {
 
 // groupBox draws a role's box, which follows its steps: "[-]" says that some are on.
 func (l pickList) groupBox(parent string) string {
-	on, all := 0, 0
-	for _, r := range l.rows {
-		if r.parent == parent {
-			all++
-			if r.on() {
-				on++
-			}
-		}
-	}
+	on, all := l.count(func(r pickRow) bool { return r.parent == parent })
 	switch on {
 	case 0:
 		return "[ ]"

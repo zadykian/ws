@@ -42,3 +42,16 @@ func (l pickList) toggled() pickList {
 		return o.chosen
 	})
 }
+
+// count returns how many of the steps in are on, and how many steps it takes.
+func (l pickList) count(in func(pickRow) bool) (on, all int) {
+	for _, r := range l.rows {
+		if in(r) {
+			all++
+			if r.on() {
+				on++
+			}
+		}
+	}
+	return on, all
+}

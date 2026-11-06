@@ -70,3 +70,10 @@ func TestABulkChoiceHoldsToWhatAFilterShows(t *testing.T) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
 }
+
+func TestCountTakesTheStepsItIsGiven(t *testing.T) {
+	on, all := choosing(twoRoles(), "Time", "Keys").count(func(r pickRow) bool { return r.parent == "base" })
+	if on != 1 || all != 3 {
+		t.Errorf("count = %d of %d, want 1 of 3", on, all)
+	}
+}
