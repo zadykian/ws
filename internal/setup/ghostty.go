@@ -108,7 +108,7 @@ func (g *Ghostty) files() []step.Change {
 	var old []byte
 	if exists {
 		old, _ = g.M.ReadFile(file)
-		if first, _, _ := strings.Cut(string(old), "\n"); !strings.HasPrefix(first, ghosttyHeader) {
+		if !ghosttyOwn(old) {
 			g.Out.Warn("%s is not ws mac apply's: move it away, as the script writes its own", file)
 			return nil
 		}
@@ -118,11 +118,44 @@ func (g *Ghostty) files() []step.Change {
 		g.Out.Warn("cannot read %s, Ghostty's config, so ws.ghostty stays out", config)
 		return nil
 	}
-	want := append([]byte(ghosttyHeader+": its next run replaces changes made here.\n"), g.Settings...)
-	resolve := g.Real
-	if resolve == nil {
-		resolve = filepath.EvalSymlinks
+	has := ghosttyIncludes(config, string(text), file, g.Home, g.resolve())
+	return g.fileChanges(config, text, file, old, g.want(), has)
+}
+
+// ghosttyOwn says whether ws.ghostty's first line is ws's.
+func ghosttyOwn(have []byte) bool {
+	first, _, _ := strings.Cut(string(have), "\n")
+	return strings.HasPrefix(first, ghosttyHeader)
+}
+
+// want is what ws.ghostty holds.
+func (g *Ghostty) want() []byte {
+	return append([]byte(ghosttyHeader+": its next run replaces changes made here.\n"), g.Settings...)
+}
+
+func (g *Ghostty) resolve() func(string) (string, error) {
+	if g.Real != nil {
+		return g.Real
 	}
-	has := ghosttyIncludes(config, string(text), file, g.Home, resolve)
-	return g.fileChanges(config, text, file, old, want, has)
+	return filepath.EvalSymlinks
+}
+
+// Report says how the casks, ws.ghostty and the line that reads it stand. A config that is a link
+// lacking the line stands against ws: a run only warns of it.
+func (g *Ghostty) Report(ctx context.Context) ([]step.Item, error) {
+	config := g.conf()
+	dir := filepath.Dir(config)
+	file := dir + "/ws.ghostty"
+	text, err := g.M.ReadFile(config)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	line := lineItem(config, ghosttyLine, err == nil, ghosttyIncludes(config, string(text), file, g.Home, g.resolve()))
+	if info, err := g.M.Stat(config); err == nil && info.Link != "" && line.Found != line.Want {
+		line.Conflict = "a link to " + info.Link + ": add the line at the end of that file"
+	}
+	return gather(ctx, g.casks().report(ctx, "ghostty", "Ghostty.app", g.Home),
+		userPath{M: g.M, Kind: step.DirItem, Path: dir},
+		userFile{M: g.M, Path: file, Text: g.want(), Mode: 0o644, Own: ghosttyOwn},
+		fixed{line})
 }

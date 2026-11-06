@@ -62,3 +62,39 @@ func TestZedReportKeepsAForeignFileOut(t *testing.T) {
 		t.Errorf("calls = %q, which read Zed's own file", m.Calls)
 	}
 }
+
+func TestGhosttyReportsAFreshMac(t *testing.T) {
+	got := reportOf(t, ghosttyStep(effecttest.NewMachine(), &effecttest.Out{}))
+	if it := got["ghostty"]; it.Kind != step.PackageItem || it.Found != "installed" {
+		t.Errorf("cask = %+v", it)
+	}
+	if it := got["font-jetbrains-mono-nerd-font"]; it.Found != "installed" {
+		t.Errorf("font = %+v", it)
+	}
+	for _, name := range []string{ghosttyDir, ghosttyDir + "/ws.ghostty", ghosttyDir + "/config.ghostty"} {
+		if it := got[name]; it.Found != "missing" || it.Conflict != "" {
+			t.Errorf("%s = %+v, want it missing", name, it)
+		}
+	}
+}
+
+func TestGhosttyReportsAFileChangedByHand(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := ghosttyStep(m, &effecttest.Out{})
+	m.Files[ghosttyDir+"/ws.ghostty"] = []byte(ghosttyHead + "font-size = 20\n")
+	it := reportOf(t, s)[ghosttyDir+"/ws.ghostty"]
+	if !strings.Contains(it.Conflict, "by hand") || !strings.Contains(it.Diff, "-font-size = 20") {
+		t.Errorf("file = %+v, want a conflict and its diff", it)
+	}
+}
+
+func TestGhosttyReportsALinkThatLacksTheLine(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := ghosttyStep(m, &effecttest.Out{})
+	m.Files[ghosttyDir+"/config.ghostty"] = []byte("theme = mine\n")
+	m.Links[ghosttyDir+"/config.ghostty"] = "/dots/config"
+	it := reportOf(t, s)[ghosttyDir+"/config.ghostty"]
+	if it.Found != "lacks it" || !strings.Contains(it.Conflict, "/dots/config") || it.Diff != "" {
+		t.Errorf("config = %+v, want the line lacking, and the link named", it)
+	}
+}
