@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -113,6 +114,44 @@ func TestWsRunApply(t *testing.T) {
 	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil || !r.ran {
 		t.Errorf("Apply = %v, ran %v; want a run", err, r.ran)
+	}
+}
+
+func TestWsRunTakesItsPart(t *testing.T) {
+	for name, status := range map[string]string{
+		"a clean stage": "run v1.2.3 0 on -\nactive -\n",
+		"a stage due":   "run - -\nactive -\n",
+		"a cloud VM":    "run v1.2.3 0 off -\nactive -\noutbound off\n",
+	} {
+		target := "lan"
+		if name == "a cloud VM" {
+			target = "cloud"
+		}
+		r, m := newRun(target, status, false, false)
+		r.Only = []string{"signoz/signoz up", "fans"}
+		line := remoteLine(r.Remote, "run", "'--only=signoz/signoz up'", "'--only=fans'")
+		m.Results[line] = effecttest.Result{}
+		p, err := r.Plan(context.Background())
+		if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "the steps chosen") {
+			t.Fatalf("%s: Plan = %v, %v; want the part", name, p, err)
+		}
+		if err := r.Apply(context.Background(), p); err != nil {
+			t.Fatalf("%s: Apply = %v", name, err)
+		}
+		if !slices.Contains(m.Calls, "run "+line) {
+			t.Errorf("%s: calls = %q; want %q", name, m.Calls, line)
+		}
+		// The runner's second plan: the part ran, though no stamp says so.
+		if p, err := r.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
+			t.Errorf("%s: Plan after the part = %v, %v; want none", name, p, err)
+		}
+	}
+}
+
+func TestOnlyArgsQuoteForWsShell(t *testing.T) {
+	got := onlyArgs([]string{"a b", "it's"})
+	if want := []string{`'--only=a b'`, `'--only=it'\''s'`}; !slices.Equal(got, want) {
+		t.Errorf("onlyArgs = %q, want %q", got, want)
 	}
 }
 

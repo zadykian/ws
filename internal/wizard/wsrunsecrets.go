@@ -97,9 +97,18 @@ func (r *WsRun) run(ctx context.Context) error {
 	if err := r.send(ctx); err != nil {
 		return err
 	}
-	if err := r.Remote.Follow(ctx); err != nil {
+	if err := r.Remote.Follow(ctx, onlyArgs(r.Only)...); err != nil {
 		r.drop(ctx, "identity")
 		return fail()
 	}
 	return nil
+}
+
+// onlyArgs returns --only for each entry, quoted for ws's shell, as a step's name may hold a blank.
+func onlyArgs(only []string) []string {
+	args := make([]string, len(only))
+	for i, entry := range only {
+		args[i] = "'--only=" + strings.ReplaceAll(entry, "'", `'\''`) + "'"
+	}
+	return args
 }

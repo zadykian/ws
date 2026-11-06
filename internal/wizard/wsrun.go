@@ -29,6 +29,9 @@ type WsRun struct {
 	Secrets, User string
 	// Update has the stage run ws server apply once more, with the ws installed there.
 	Update bool
+	// Only is what a run of part of ws takes, by --only's entries. The remote script stamps a full run
+	// alone, so such a run leaves the stage due as it found it.
+	Only []string
 	// ran is set once the stage ran ws server apply in this run.
 	ran bool
 }
@@ -104,10 +107,13 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if _, err := r.localSum(); err != nil {
 		return step.Plan{}, err
 	}
-	if r.runDone(ctx, c) {
+	if r.partDone(ctx, c) {
 		return step.Plan{}, nil
 	}
 	how := "run ws server apply on ws in a unit of its own, and follow its log"
+	if len(r.Only) > 0 {
+		how = "run ws server apply on ws for the steps chosen, in a unit of its own, and follow its log"
+	}
 	if data, _ := r.macSecrets(); data != nil {
 		how += ", after sending the secrets file and the identity"
 	}
@@ -118,7 +124,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if c.Target == "cloud" {
 		how += ", after naming security_outbound: false in ws's host_vars"
-		if !r.Update && r.idle(ctx) && r.off() && user == "" {
+		if !r.Update && r.idle(ctx) && r.off() && user == "" && len(r.Only) == 0 {
 			return step.Plan{Changes: []step.Change{runChange{text: "name security_outbound: false in ws's host_vars",
 				outbound: true}}}, nil
 		}
@@ -132,6 +138,15 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		}
 	}
 	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user}}}, nil
+}
+
+// partDone is runDone for what this run takes: a part that ran is all it is to do, and a part
+// chosen is to run whatever the last full run left, as a step can drift after it.
+func (r *WsRun) partDone(ctx context.Context, c conf.Conf) bool {
+	if len(r.Only) > 0 {
+		return r.ran
+	}
+	return r.runDone(ctx, c)
 }
 
 // fail says what to do where ws server apply ran no full run to its end. It names no cause, as ssh has

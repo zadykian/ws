@@ -38,7 +38,8 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return err
 	}
 	r.ran = true
-	if !c.cloud {
+	// A part leaves the full run's stamp as it was, which would read as a unit begun too soon.
+	if !c.cloud || len(r.Only) > 0 {
 		return nil
 	}
 	if !r.Remote.Status(ctx) {
