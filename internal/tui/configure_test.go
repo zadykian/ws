@@ -10,13 +10,35 @@ import (
 // wayFile is a file of the form tests' fields.
 func wayFile() Sheet { return Sheet{Name: "way.conf", Fields: waySpecs} }
 
+// fed hands s each message in turn, and runs what comes back, as the screen's Cmds leave by its send.
+func fed(s configureScreen, msgs ...tea.Msg) configureScreen {
+	for _, msg := range msgs {
+		next, cmd := s.Update(msg)
+		s = next.(configureScreen) //nolint:forcetypeassert // Update returns its own type
+		if cmd != nil {
+			cmd()
+		}
+	}
+	return s
+}
+
 func testConfigure(sheets ...Sheet) configureScreen {
-	s, _ := newConfigureScreen("ws mac configure", testTheme, sheets).Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	return s.(configureScreen) //nolint:forcetypeassert // Update returns its own type
+	s := newConfigureScreen("ws mac configure", testTheme, sheets)
+	return fed(s, tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 
 func TestConfigureDrawsAForm(t *testing.T) {
 	if got := stripped(testConfigure(wayFile()).View().Content); !strings.Contains(got, "way.conf 1/3") {
 		t.Errorf("drew:\n%s", got)
+	}
+}
+
+func TestConfigureTabWalksOneRingOfFieldsAndButtons(t *testing.T) {
+	s := fed(testConfigure(wayFile()), tab, tab, tab)
+	if s.footer.Focused() != savePlace || !s.form().blurred {
+		t.Fatalf("past the last field: button %d, blurred = %v", s.footer.Focused(), s.form().blurred)
+	}
+	if s = fed(s, tab, tab); s.footer.Focused() >= 0 || s.form().name() != "HOST" {
+		t.Errorf("past the last button: button %d, field %q", s.footer.Focused(), s.form().name())
 	}
 }
