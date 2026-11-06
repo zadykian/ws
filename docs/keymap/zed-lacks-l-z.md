@@ -3,8 +3,7 @@
 Each row is an F12 action that Zed's keymap binds no key for. The status `none` means
 Zed lacks the action. The status `skip` means Zed has it, but the binding is left out. The
 status `n/a` means a tool Zed lacks, or one it needs not. No action starts with K. The rest, up
-to J, are in [A to J](zed-lacks-a-j.md). The actions that Zed has are in
-[the data](../../internal/editor/keymap/).
+to J, are in [A to J](zed-lacks-a-j.md).
 
 | F12 action | F12's keys | Zed action | Status | Note |
 | --- | --- | --- | --- | --- |

@@ -1,14 +1,7 @@
 # The keymap
 
-F12's keys, in no editor's terms. The data is in [`internal/editor`](../internal/editor/). Fresh's
-file is a [plain template](fresh.md#the-config), and Zed's file is [plain](mac-zed.md). Each holds
-the reason of a key beside it.
-
-## The data
-
-`internal/editor/keymap/TOPIC.yaml` maps a scope to rows. A row has an `action`, its `keys`, and
-the `f12` ids it comes from. A topic holds a scope whole, or the rows of a scope that other topics
-share. The order of the topics is the order of the rows in each scope.
+F12's keys, in no editor's terms. Fresh's file is a [plain template](fresh.md#the-config), and
+Zed's file is [plain](mac-zed.md). Each holds the reason of a key beside it.
 
 A key is the physical key with its modifiers, as `ctrl+shift+/`:
 
@@ -41,10 +34,9 @@ Zed's file is plain too. Tests hold Fresh's template to its rules.
 
 ## Changing a key
 
-1. Change the row in `internal/editor/keymap/`.
-2. Change Fresh's template by hand, in the same commit, with the reason of a key it leaves out:
+1. Change Fresh's template by hand, in the same commit, with the reason of a key it leaves out:
    [`config.json.tmpl`](../internal/server/fresh/files/config.json.tmpl).
-3. Change Zed's file by hand too: [`keymap.json`](../mac/zed/keymap.json).
+2. Change Zed's file by hand too: [`keymap.json`](../mac/zed/keymap.json).
 
 ## Where F12 comes from
 

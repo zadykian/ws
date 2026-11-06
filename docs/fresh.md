@@ -46,9 +46,9 @@ Fresh load its defaults and exit 0.
 path that `devtools.ServerPaths` gives it for the user's home.
 
 - Fresh takes a list of servers for a language, so dockerfile has two.
-- Each entry starts at once (`auto_start`), with the catalogue's arguments and options.
+- Each entry starts at once (`auto_start`), with its arguments and options, set in the template.
 - Fresh has no docker-compose language. ws adds one on the yaml grammar for `compose.yaml`,
-  `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` and the catalogue's globs. The server
+  `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` and the globs of the template. The server
   sees a compose file by Fresh's key, the extension, mapped to `dockercompose`.
 - Ansible has no entry: no pattern tells a playbook from YAML, and `.yml` playbooks stay YAML.
 - Fresh's csharp plugin answers Roslyn's restore request for csharp-ls alone. Roslyn starts and
@@ -72,7 +72,7 @@ it, so ws cannot. A folder with no marker is trusted at once.
    the top level of `plugins/`, leaving out `plugins/examples`.
 3. Write them to `internal/server/fresh/files/actions.txt`, under its first line with the new
    version. `TestTheActionListNamesThePinnedVersion` fails until then, and
-   `TestEveryTargetIsAnActionOfFresh` names any target that is gone.
+   `TestEveryBindingNamesAnActionOfFresh` names any target that is gone.
 4. Leave out `unbind`, a config word, and the plugin commands made at run time: 65 of those in
    0.5.7.
 
