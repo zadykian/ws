@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
@@ -32,5 +33,28 @@ func TestConfFormLoadRefusesABadLine(t *testing.T) {
 	m.Files["/h/mac.conf"] = []byte("no line\n")
 	if _, err := (ConfForm{Conf: "/h/mac.conf", M: m}).Load(&effecttest.Out{}); err == nil {
 		t.Error("Load = nil; want a refusal")
+	}
+}
+
+// keysOf lists the keys that show.
+func keysOf(fields []Field) []string {
+	keys := make([]string, 0, len(fields))
+	for _, f := range fields {
+		keys = append(keys, f.Key)
+	}
+	return keys
+}
+
+func TestConfFormShowsTheKeysOfATarget(t *testing.T) {
+	tail := []string{"WS_GIT_NAME", "WS_TUNNEL_NETWORKS", "WS_RESOLVERS"}
+	for target, want := range map[string][]string{
+		"lan":    slices.Concat([]string{"WS_TARGET", "WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE"}, tail),
+		"cloud":  slices.Concat([]string{"WS_TARGET", "WS_REMOTE", "WS_REMOTE_PORT"}, tail),
+		"mac-vm": slices.Concat([]string{"WS_TARGET", "WS_LAN", "WS_LAN_ADDRESS"}, tail),
+	} {
+		f, _ := formOf(t, "WS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\n")
+		if got := keysOf(f.Fields(map[string]string{"WS_TARGET": target})); !slices.Equal(got, want) {
+			t.Errorf("%s: keys = %v; want %v", target, got, want)
+		}
 	}
 }
