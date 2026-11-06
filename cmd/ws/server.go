@@ -72,8 +72,8 @@ func newApplyCmd(p process) *cobra.Command {
 			"are planned and left out, and a step that waits on one of them with changes is skipped.\n\n" +
 			"The last line names the roles that changed.\n\n" +
 			"--json prints each event of the run as a line of JSON on stdout: planned, started, done, failed " +
-			"or skipped, with the step, its changes and the error. ws's own lines stay on stderr, and no " +
-			"screen is drawn.",
+			"or skipped, with the step, the first line of each change and the error. ws's own lines stay on " +
+			"stderr, and no screen is drawn.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runApply(c, p, opts, asJSON) },
 	}

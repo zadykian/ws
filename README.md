@@ -108,8 +108,9 @@ A dry run checks no file it would write. ws runs a file's check, such as `nft -c
 ## Events
 
 `sudo ws server apply --json` prints each event of the run as a line of JSON on stdout: `planned`,
-`started`, `done`, `failed` or `skipped`, with the role, the step, its changes and the error. ws's
-own lines stay on stderr, and no screen is drawn.
+`started`, `done`, `failed` or `skipped`, with the role, the step, the first line of each change and
+the error. So a line holds no file's text: `ws server state --json` has the diffs. ws's own lines
+stay on stderr, and no screen is drawn.
 
 ## State
 

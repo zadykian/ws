@@ -121,6 +121,14 @@ type Machine interface {
 	Exec(name string, args, env []string) error
 }
 
+// Lines runs a command whose output ws reads as it comes. It stands beside Machine, as Foreground does.
+type Lines interface {
+	// PassLines is PassInput with each line of the output, without its newline, offered to take
+	// first. A line that take takes stays off Stderr. take runs on a goroutine of the command's, a
+	// call at a time, and all of them end before PassLines returns.
+	PassLines(ctx context.Context, stdin []byte, take func(line string) bool, name string, args ...string) error
+}
+
 // Foreground runs a command that talks to the maintainer. It stands beside Machine, whose fakes in
 // other modules go on compiling: effect is public.
 type Foreground interface {

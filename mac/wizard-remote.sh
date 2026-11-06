@@ -14,7 +14,9 @@
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
-# - run [ARG...] runs ws server apply ARGs in a unit of its own, ws-wizard-STAMP, which goes
+# - state prints ws server state --json, which changes nothing, on stdout alone. It has the HOME and
+#   the locale of a run's unit, so that it reads what a run would.
+# - run [ARG...] runs ws server apply --json ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. It prints the unit's log until it
 #   ends, and exits with the run's status. A run with no ARG is a full one. Where the identity is
 #   there, the unit loads it as the credential ws-secrets, and runs with --secrets. run removes the
@@ -142,7 +144,7 @@ status() {
 }
 
 # job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE [ARG...].
-# It runs WS server apply ARGs. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
+# It runs WS server apply --json ARGs, whose event lines reach the wizard through the unit's log. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
 # which has no ARG, writes STATE/run too: the version that WS printed before the run, or - where WS
 # prints none, the status, off where host_vars turned the outbound table off as the run began, else
 # on, and the SHA-256 of the secrets file, or -. It removes it as it starts. A unit with the
@@ -159,7 +161,7 @@ fi
 sh "$state/off" check "$vars" && table=off
 [ "$full" = 0 ] || rm -f "$state/run"
 version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version=-
-"$ws" server apply "$@"
+"$ws" server apply --json "$@"
 status=$?
 if [ "$full" = 1 ]; then
     echo "$version $status $table $sum" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
@@ -283,11 +285,12 @@ main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, through sudo or a root login"
     case ${1-} in
     status) status ;;
+    state) HOME=/root LC_ALL=C.UTF-8 "$ws" server state --json ;;
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$vars" ;;
     install) install "${2-}" "${3-}" ;;
     secrets) secrets "${2-}" "${3-}" ;;
-    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | run [ARG...] |" \
+    *) die "unknown op '${1-}'; usage: wizard-remote.sh status | state | run [ARG...] |" \
         "install TAG URL | outbound | secrets stage|drop" ;;
     esac
 }

@@ -19,18 +19,22 @@ func (l pickList) shows(r pickRow) bool {
 	return strings.Contains(strings.ToLower(r.entry()), strings.ToLower(l.words))
 }
 
-// lines returns what the filter leaves, each step under its role's heading.
+// lines returns what the filter leaves of the side, each step under its role's heading. A stage
+// names the steps under it, so that a group called as its stage takes no heading of its own.
 func (l pickList) lines() []pickLine {
 	var lines []pickLine
 	parent := ""
 	for i, r := range l.rows {
-		if !l.shows(r) {
+		if r.side != l.side || !l.shows(r) {
 			continue
 		}
 		if r.parent != "" && r.parent != parent {
 			lines = append(lines, pickLine{row: i, heading: true})
 		}
 		parent = r.parent
+		if r.number > 0 {
+			parent = r.name
+		}
 		lines = append(lines, pickLine{row: i})
 	}
 	return lines
@@ -90,14 +94,10 @@ func (l pickList) groupBox(parent string) string {
 func (l pickList) render(theme Theme, line pickLine) string {
 	r := l.rows[line.row]
 	if line.heading {
-		return l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
+		return r.headingIndent() + l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
 	}
 	mark, style := r.state.look(theme)
-	indent := ""
-	if r.parent != "" {
-		indent = "  "
-	}
-	return indent + r.box() + " " + style.Render(mark) + " " + r.name
+	return r.indent() + l.box(r) + " " + style.Render(mark) + " " + r.name
 }
 
 // view draws height lines of the list. The list runs past a window, so that the cursor stays in

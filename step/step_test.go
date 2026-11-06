@@ -53,7 +53,7 @@ func TestRun(t *testing.T) {
 		{
 			name: "a plan not empty after apply",
 			steps: func(l *[]string) []step.Step {
-				return []step.Step{&fake{name: "a", todo: []step.Change{change("x")}, sticky: true, log: l}}
+				return []step.Step{&fake{name: "a", todo: []step.Change{change("x\nthe file's diff")}, sticky: true, log: l}}
 			},
 			wantChanged: true,
 			wantErr:     "a: still has 1 change(s) after applying, the first: x",

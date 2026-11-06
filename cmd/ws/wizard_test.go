@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/wizard"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
@@ -132,5 +134,57 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 	_, _, stderr := runWs(p, "", "mac", "wizard", "--check", "--update")
 	if !strings.Contains(stderr, "ws on the Mac: would install ws v1.1.0 on the Mac") || strings.Contains(strings.Join(m.Calls, "\n"), "exec") {
 		t.Errorf("stderr = %q, calls = %v; want the plan and no exec", stderr, m.Calls)
+	}
+}
+
+// TestWizardStagesNameTheirMachines puts the lists of the two machines on firm ground: each stage
+// that the wizard runs names the machine it acts on.
+func TestWizardStagesNameTheirMachines(t *testing.T) {
+	var out strings.Builder
+	stages := wizardStages(fakeProcess(), &out, nil, nil, nil, nil, "ws mac wizard", wizardOptions{}, &wizard.Hand{})
+	onWs := 0
+	for _, s := range stages {
+		m, ok := wizard.MachineOf(s)
+		if !ok {
+			t.Errorf("%s names no machine", s.Name())
+		}
+		if m == wizard.OnWs {
+			onWs++
+		}
+	}
+	if len(stages) != 15 || onWs != 4 {
+		t.Errorf("%d stages, %d on ws; want 15 and 4", len(stages), onWs)
+	}
+}
+
+// wsOverSSH answers the remote script's ops as a ws reached by ssh: state with its report, and any
+// other with its status.
+type wsOverSSH struct {
+	*effecttest.Machine
+	status, report []byte
+}
+
+// RunInput answers by the op, the last of ssh's arguments.
+func (m wsOverSSH) RunInput(_ context.Context, _ []byte, _ string, args ...string) ([]byte, error) {
+	if args[len(args)-1] == "state" {
+		return m.report, nil
+	}
+	return m.status, nil
+}
+
+func TestWizardReadsWhatServerStatePrints(t *testing.T) {
+	p, _ := serverTerminal()
+	status, stdout, _ := runWs(p, "", "server", "state", "--json", "--only", "tmux")
+	if status != 0 {
+		t.Fatalf("status = %d", status)
+	}
+	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
+	r := &wizard.Remote{SSH: wizard.SSH{M: m, Lock: "/t/l"}}
+	roles, err := r.State(context.Background(), p.version)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(roles) != 2 || roles[1].Role != "tmux" || len(roles[1].Steps) == 0 {
+		t.Errorf("roles = %+v", roles)
 	}
 }

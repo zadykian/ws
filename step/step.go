@@ -126,7 +126,7 @@ func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string
 	}
 	if len(again.Changes) != 0 {
 		return e.failed(fmt.Errorf("%s: still has %d change(s) after applying, the first: %s",
-			name, len(again.Changes), again.Changes[0]))
+			name, len(again.Changes), Headline(again.Changes[0])))
 	}
 	pending[name] = false
 	return e.as(Done)

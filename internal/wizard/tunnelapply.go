@@ -40,7 +40,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 		if err := t.Run.Files.Pass(ctx, "peer", mac); err != nil {
 			return err
 		}
-		if err := r.Pass(ctx, "run", "--only", "wireguard"); err != nil {
+		if err := r.Follow(ctx, "--only", "wireguard"); err != nil {
 			return err
 		}
 		if !r.Status(ctx) || r.Get("peer") != "ok" {

@@ -25,6 +25,7 @@ type Machine struct {
 	Pages   map[string][]byte       // the bodies Download serves, by URL
 	Owners  map[string][2]int       // the uid and gid set on files and directories, where not root's
 	Inputs  []string                // the standard input of each RunInput
+	Passed  []string                // the lines that PassLines passed on
 	ExecEnv [][]string              // the env of each Exec
 	Calls   []string                // each call, as "run NAME ARG", "root NAME ARG", "write PATH" ...
 }

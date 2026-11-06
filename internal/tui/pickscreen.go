@@ -31,6 +31,9 @@ type Choice struct {
 	Only []string
 	// Check plans them and applies nothing.
 	Check bool
+	// Partial gives, by stage of a queue, the steps on where some of the stage's are off, by entry.
+	// A stage it has no key for runs whole.
+	Partial map[string][]string
 }
 
 // scannedMsg ends the scan. problem says why it stopped short, if it did.

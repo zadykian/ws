@@ -96,7 +96,7 @@ func (Group) Apply(ctx context.Context, p step.Plan) error {
 			continue
 		}
 		if err := c.(Change).Apply(ctx); err != nil {
-			failed = errors.Join(failed, fmt.Errorf("%s: %w", c, err))
+			failed = errors.Join(failed, fmt.Errorf("%s: %w", step.Headline(c), err))
 		}
 	}
 	return failed

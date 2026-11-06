@@ -40,6 +40,10 @@ the first two of which install what the rest needs:
 13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
+Each stage names the machine it acts on, in `internal/wizard/machine.go`. Sudo, ws on ws, ws's run
+and claude on ws are ws's, and the rest are the Mac's. A stage that changes both is the Mac's where
+its last change lands there, as the Tunnel and the Cable do.
+
 ## The answers
 
 | Question | Kept in | Default | Asked |
@@ -176,17 +180,21 @@ is no release: put a Linux build of the tree at `/usr/local/bin/ws` (`tools/buil
 With `--update`, ws on the Mac comes first, before the lock: where `/latest` names another release,
 its `install.sh` runs, then the command again. A ws that is no release stays, with a warning.
 
+The script's `state` prints `ws server state --json`, with a run's `HOME` and locale. The report
+comes back over ssh, so it reaches no journal. The wizard takes it from a ws of its own version
+alone: another version's names other steps.
+
 ## ws's run
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a
-direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server apply` in a unit of
-its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8 locale. That ws
-runs its roles ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the unit's log
-until it ends, and stops where the run fails. A first run takes 20 to 40 minutes. The unit goes on
-where ssh drops, as when the Mac sleeps, and the next run of the wizard follows it to its end. Where
-`WS_USER` isn't the server's default, the stage first names it as `ws_user` in
-`/etc/ws/host_vars.yml` on ws, with the files script, so the roles set up that user. Where the file
-names another, it changes the line.
+direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server apply --json` in a
+unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8 locale.
+That ws runs its roles ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the
+unit's log until it ends, past the [event lines](../README.md#events), and stops where the run
+fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when the Mac sleeps,
+and the next run of the wizard follows it to its end, and replays the log. Where `WS_USER` isn't
+the server's default, the stage first names it as `ws_user` in `/etc/ws/host_vars.yml` on ws, with
+the files script, so the roles set up that user. Where the file names another, it changes the line.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:
