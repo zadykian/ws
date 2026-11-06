@@ -83,3 +83,32 @@ func TestTextGivesTheValueAsALine(t *testing.T) {
 		t.Errorf("a swap of 0 reads %q", got)
 	}
 }
+
+func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
+	for _, tc := range []struct {
+		key, value, want string
+	}{
+		{"docker_memory_swap_max", "0", "docker_memory_swap_max: \"0\"\n"},
+		{"ws_user", "a #b", "ws_user: 'a #b'\n"},
+		{"ikeward_domains", ",", "ikeward_domains: []\n"},
+		{"ikeward_domains", "a.example , b.example", "ikeward_domains: [a.example, b.example]\n"},
+		{"fans_interval", "1.50", "fans_interval: 1.5\n"},
+		{"security_outbound", "false", "security_outbound: false\n"},
+		{"base_swappiness", "20", "base_swappiness: 20\n"},
+	} {
+		if got, err := keyOf(t, tc.key).line(tc.value); err != nil || got != tc.want {
+			t.Errorf("%s %q = %q, %v, want %q", tc.key, tc.value, got, err, tc.want)
+		}
+	}
+}
+
+func TestLineKeepsALongValueOnOneLine(t *testing.T) {
+	long := strings.Repeat("word ", 60) + "end"
+	line, err := keyOf(t, "ws_git_signing_key").line(long)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, err := Parse([]byte(line)); err != nil || v.GitSigningKey != long {
+		t.Errorf("reads %q, %v", v.GitSigningKey, err)
+	}
+}

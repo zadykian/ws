@@ -1,6 +1,7 @@
 package values
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -8,6 +9,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"go.yaml.in/yaml/v3"
 )
 
 // Kind is what a key's value is.
@@ -122,4 +125,47 @@ func (v Values) Text(k Key) string {
 		return strings.Join(field.Interface().([]string), ", ")
 	}
 	return fmt.Sprint(field.Interface())
+}
+
+// line is the key's line of the file at value. yaml writes it, so that a value that reads as another
+// type is quoted. The roles' shell readers take a value bare or quoted.
+func (k Key) line(value string) (string, error) {
+	var out any = value
+	var err error
+	switch k.Kind {
+	case Text:
+	case Number:
+		out, err = strconv.Atoi(value)
+	case Decimal:
+		out, err = strconv.ParseFloat(value, 64)
+	case Switch:
+		out = value == "true"
+	case List:
+		var node yaml.Node
+		err = node.Encode(items(value))
+		node.Style = yaml.FlowStyle
+		out = &node
+	}
+	if err != nil {
+		return "", err
+	}
+	text, err := yaml.Marshal(map[string]any{k.Name: out})
+	if err != nil {
+		return "", err
+	}
+	if bytes.Count(text, []byte("\n")) != 1 {
+		return "", errors.New(k.Name + " takes one line")
+	}
+	return string(text), nil
+}
+
+// items splits a list by commas, without the blanks around each item.
+func items(value string) []string {
+	list := []string{}
+	for item := range strings.SplitSeq(value, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			list = append(list, item)
+		}
+	}
+	return list
 }
