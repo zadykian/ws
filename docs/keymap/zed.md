@@ -9,8 +9,6 @@ step writes the file to `~/.config/zed/keymap.json` ([The keymap](../mac-zed.md#
 
 - [The Zed keymap on a Mac](zed-macos.md): the keys a Mac keyboard lacks, the F-keys and
   Fn, and macOS's own shortcuts on F12's keys.
-- The actions the keymap lacks, in the order of their names, upper and lower case alike:
-  [A to J](zed-lacks-a-j.md) and [L to Z](zed-lacks-l-z.md).
 
 The statuses are `bind`, the same behaviour, and `approx`, the closest Zed action. Then come `zed`,
 where Zed's own default already does it, and `skip`, where Zed has the action and the binding is
