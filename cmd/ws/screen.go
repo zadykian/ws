@@ -44,24 +44,28 @@ func runTitle(c *cobra.Command, check bool) string {
 	return c.CommandPath()
 }
 
+// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws.
+func screenConfig(c *cobra.Command, p process) tui.Config {
+	return tui.Config{
+		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: tui.NewTheme(p.getenv),
+		Cut: func(s syscall.Signal) error { return signalExit{s} },
+	}
+}
+
 // drawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
 // the terminal is back. work reads Bridge.Stop between its steps. A run cut short ends with the
 // status of a signal, for execute to report.
 func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work tui.Work) error {
-	theme := tui.NewTheme(p.getenv)
-	out := c.ErrOrStderr()
 	log, path := openLog(p, c.CommandPath(), time.Now())
 	if log != nil {
 		defer func() { _ = log.Close() }()
 	}
-	cfg := tui.Config{
-		In: c.InOrStdin(), Out: out, Theme: theme, Halts: true, LogPath: path,
-		Cut: func(s syscall.Signal) error { return signalExit{s} },
-	}
+	cfg := screenConfig(c, p)
+	cfg.Halts, cfg.LogPath = true, path
 	if log != nil { // A nil *os.File in the interface would not be nil.
 		cfg.Log = log
 	}
-	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, theme, groups...), work)
+	return tui.Run(c.Context(), cfg, tui.NewRunScreen(title, cfg.Theme, groups...), work)
 }
 
 // logsKept is how many logs stay in the state directory, the newest.
