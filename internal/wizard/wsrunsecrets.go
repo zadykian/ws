@@ -99,6 +99,10 @@ func (r *WsRun) run(ctx context.Context) error {
 	}
 	if err := r.Remote.Follow(ctx, onlyArgs(r.Only)...); err != nil {
 		r.drop(ctx, "identity")
+		// A screen ends by the cut's own words, which leave the unit unsaid, and a plain run by fail's.
+		if ctx.Err() != nil {
+			r.Host.Out.ByHand("%s: the unit goes on on ws; run the wizard again, which follows it", runStage)
+		}
 		return fail()
 	}
 	return nil

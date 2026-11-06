@@ -148,6 +148,32 @@ func TestWsRunTakesItsPart(t *testing.T) {
 	}
 }
 
+func TestWsRunCutLeavesTheUnitAndSaysSo(t *testing.T) {
+	r, _ := newRun("lan", "run - -\nactive -\n", false, false)
+	out := r.Host.Out.(*effecttest.Out)
+	p, _ := r.Plan(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := r.Apply(ctx, p); err == nil {
+		t.Fatal("Apply took a cut run for a whole one")
+	}
+	if !slices.ContainsFunc(out.Lines, func(l string) bool { return strings.Contains(l, "the unit goes on on ws") }) {
+		t.Errorf("lines = %q; want the unit named", out.Lines)
+	}
+}
+
+func TestWsRunFailureNamesNoUnit(t *testing.T) {
+	r, _ := newRun("lan", "run - -\nactive -\n", false, false)
+	out := r.Host.Out.(*effecttest.Out)
+	p, _ := r.Plan(context.Background())
+	if err := r.Apply(context.Background(), p); err == nil {
+		t.Fatal("Apply succeeded with no result for ssh")
+	}
+	if slices.ContainsFunc(out.Lines, func(l string) bool { return strings.Contains(l, "the unit goes on") }) {
+		t.Errorf("lines = %q; a run that failed by itself has no unit left", out.Lines)
+	}
+}
+
 func TestOnlyArgsQuoteForWsShell(t *testing.T) {
 	got := onlyArgs([]string{"a b", "it's"})
 	if want := []string{`'--only=a b'`, `'--only=it'\''s'`}; !slices.Equal(got, want) {
