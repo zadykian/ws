@@ -151,7 +151,8 @@ for each.
   - ctrl+alt+4 arrives as ctrl+alt+\\, and ctrl+alt+/ as ctrl+alt+shift+-;
   - ctrl+k ctrl+/ arrives as ctrl+k ctrl+shift+-;
   - ctrl+shift+space arrives as ctrl+space, and alt+shift+space as alt+space.
-- ctrl+backspace and ctrl+shift+backspace take no binding. Through tmux both arrive as ctrl+h.
+- ctrl+backspace and ctrl+shift+backspace take no binding. Through tmux both arrive as ctrl+h. With
+  no tmux, Fresh's default for ctrl+backspace deletes a word.
 - ctrl+h is bound outside the map. The default map binds both ctrl+h and ctrl+backspace, and a
   binding in a map warns at each start.
 

@@ -124,6 +124,8 @@ a reconnect (`docs/zed.md`, "When the connection drops"). Both keys are free in 
 - Ctrl+Shift+R is `editor::RestartLanguageServer`, in `Editor && mode == full`.
 - Ctrl+Alt+Shift+Y is `workspace::Reload`, in the global section.
 
+Shift keeps the terminal's rule below, so Ctrl+Alt+Shift+Y reaches Zed from the terminal too.
+
 ### The terminal's rule
 
 In the terminal, a Ctrl or Alt key with a letter or sign, without Shift, reaches the shell
@@ -137,6 +139,8 @@ Ctrl+B is in the editor only, so the terminal gets it.
   assistant (`assistant::InlineAssist`) in the full editor.
 - **Cmd+Y** is the agent's Allow once and Keep, and `git::StageAndNext`.
 - **Edit predictions:** Tab, Alt+Tab and Ctrl+Cmd+Right and Down stay Zed's.
+- Ctrl+Cmd+S is Save all, not the agent's steer of a queued message.
+- F7 replaces Zed's F7, step over while stopped, and F10 steps over too.
 - The global keys win in the agent panel. So its Ctrl+Home and End and Ctrl+Alt+Up, Down, PgUp and
   PgDn are the pane, dock and tab keys there.
 - **Keys whose action Zed lacks keep Zed's:** F3 tests, F4 NuGet, F10 build and Alt+Delete safe
@@ -145,6 +149,8 @@ Ctrl+B is in the editor only, so the terminal gets it.
   do, and pickers keep Ctrl+N and Ctrl+P.
 - **Code actions:** the keys for refactor, change signature, extract method, add methods and
   generate all open the full menu, as no binding picks a kind (zed#14470).
+- Last edit location stays in the file (zed#19731). Next error can skip gopls's unused-variable
+  errors (zed#64790).
 
 ### The keys left to Zed
 
@@ -158,7 +164,8 @@ A Mac keyboard has no Insert, Pause, Break or menu key, so the file leaves out A
 Shift+Insert, the menu key, Ctrl+Pause and Ctrl+Alt+Break.
 
 F-keys need Fn, or the setting "Use F1, F2 keys as standard function keys" in System
-Settings. The name of that setting is unchecked: it comes from Linux.
+Settings. The name of that setting is unchecked: it comes from Linux. `defaults write -g
+com.apple.keyboard.fnState -bool true` should do the same, and is unchecked too.
 
 ### macOS's own shortcuts
 
@@ -176,7 +183,14 @@ Settings, under the Mission Control shortcuts, not on that page.
 
 They go off by hand, in System Settings.
 
-`defaults write com.apple.symbolichotkeys` can do it, with a re-login. ws does not.
+`defaults write com.apple.symbolichotkeys` can do it. The ids are from memory and unchecked:
+
+- 60 and 61 are the input sources.
+- 32 and 33 are Mission Control.
+- 79 and 81 are Spaces.
+- 8, 9 and 10 are the focus keys.
+
+A change needs a re-login, or `activateSettings -u`. That is why ws does not do it.
 
 ## Changing the settings
 
