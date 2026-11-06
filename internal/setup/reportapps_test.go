@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	zedConfig = "/h/.config/zed/"
-	tunnelKey = "/etc/ws-tunnel/private.key"
-	rootWs    = "/usr/local/libexec/ws-tunnel/ws"
+	zedConfig  = "/h/.config/zed/"
+	tunnelKey  = "/etc/ws-tunnel/private.key"
+	rootWs     = "/usr/local/libexec/ws-tunnel/ws"
+	daemonName = "com.github.zadykian.ws-tunnel"
 )
 
 func TestACaskThatHomebrewHoldsStandsAgainstWs(t *testing.T) {
@@ -142,14 +143,15 @@ func TestTunnelReportsAMacThatIsDone(t *testing.T) {
 	got := reportOf(t, daemonStep(m))
 	for _, name := range []string{
 		"/h/.local/bin/ws", rootWs, "/etc/ws-tunnel", "/etc/ws-tunnel/routes.d", tunnelKey,
-		"/h/.config/ws/tunnel.pub",
+		"/h/.config/ws/tunnel.pub", "/etc/ws-tunnel/tunnel.conf", daemonName,
+		"/Library/LaunchDaemons/" + daemonName + ".plist",
 	} {
 		if it, ok := got[name]; !ok || it.Found != it.Want || it.Conflict != "" || it.Diff != "" {
 			t.Errorf("%s = %+v, %v, want it right", name, it, ok)
 		}
 	}
-	if got[tunnelKey].Kind != step.FileItem {
-		t.Errorf("key = %+v", got[tunnelKey])
+	if got[tunnelKey].Kind != step.FileItem || got[daemonName].Kind != step.ServiceItem {
+		t.Errorf("key = %+v, daemon = %+v", got[tunnelKey], got[daemonName])
 	}
 }
 
@@ -179,5 +181,23 @@ func TestTunnelReportShowsNoDiffOfAProgram(t *testing.T) {
 		if it := got[name]; it.Found == it.Want || it.Diff != "" {
 			t.Errorf("%s = %+v, want it to differ, with no diff", name, it)
 		}
+	}
+}
+
+func TestTunnelReportsADaemonLaunchdLacks(t *testing.T) {
+	m := daemonMachine()
+	m.Results["launchctl print system/"+daemonName] = effecttest.Result{Err: errors.New("no")}
+	if it := reportOf(t, daemonStep(m))[daemonName]; it.Found != "not loaded" {
+		t.Errorf("daemon = %+v", it)
+	}
+}
+
+func TestTunnelWithoutAPeerReportsNoDaemon(t *testing.T) {
+	got := reportOf(t, tunnelStep(effecttest.NewMachine()))
+	if _, ok := got[daemonName]; ok {
+		t.Errorf("items = %v, want no daemon before mac.conf names a peer", got)
+	}
+	if it := got[tunnelKey]; it.Kind != step.FileItem || it.Found != "missing" {
+		t.Errorf("key = %+v", it)
 	}
 }

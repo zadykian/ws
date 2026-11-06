@@ -124,7 +124,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: cs}, nil
 }
 
-// Report says how ws, root's copy and the key stand. A program shows no diff, and the
+// Report says how ws, root's copy, the key and the daemon stand. A program shows no diff, and the
 // key shows by its owner and mode alone: no report reads it. tunnel.pub compares with what Plan
 // asked root's ws for, as a second sudo would add nothing.
 func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
@@ -151,6 +151,14 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	if t.public != "" {
 		parts = append(parts, userFile{M: t.M, Path: t.pubFile(), Text: []byte(t.public + "\n")})
+	}
+	if t.Conf.PublicKey != "" {
+		daemon := step.Item{Kind: step.ServiceItem, Name: daemonLabel, Want: "loaded", Found: "not loaded"}
+		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel); err == nil {
+			daemon.Found = daemon.Want
+		}
+		parts = append(parts, host.File{M: t.M, Path: tunnelDir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
+			host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, fixed{daemon})
 	}
 	return gather(ctx, parts...)
 }
