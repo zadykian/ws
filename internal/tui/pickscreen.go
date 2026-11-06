@@ -164,7 +164,8 @@ func (s pickScreen) enabled() pickScreen {
 	return s
 }
 
-// status is the title's right side: how far the scan is, then how much is chosen.
+// status is the title's right side: how far the scan is, then how much is chosen. Its mark stands
+// for the warning of a role passed over, which a short window has no pane for.
 func (s pickScreen) status() string {
 	on, all := s.list.count(func(pickRow) bool { return true })
 	if s.left {
@@ -173,6 +174,9 @@ func (s pickScreen) status() string {
 	if s.scanning {
 		_, scanned := s.list.count(func(r pickRow) bool { return r.state != stepOpen })
 		return fmt.Sprintf("scanning %d/%d", scanned, all)
+	}
+	if len(s.list.passedOver()) > 0 {
+		return fmt.Sprintf("! %d of %d chosen", on, all)
 	}
 	return fmt.Sprintf("%d of %d chosen", on, all)
 }

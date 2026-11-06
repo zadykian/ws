@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/zadykian/ws/step"
 )
 
@@ -46,6 +48,18 @@ func TestDetailWordsEachStateOfTheScan(t *testing.T) {
 	for _, c := range cases {
 		if got := detailOf(cursorOn(chain().take(c.e), "one")); len(got) != 1 || got[0] != c.want {
 			t.Errorf("detail = %q, want %q", got, c.want)
+		}
+	}
+}
+
+func TestDetailWarnsOfARolePassedOverAndOfAStoppedScan(t *testing.T) {
+	l := threeRoles().chose(func(r pickRow) bool { return r.name == "four" })
+	s := testPick()
+	s.list, s.scanning, s.problem = l, false, "no network"
+	got := pickShown(pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 24}))
+	for _, want := range []string{"! 1 of 4 chosen", "The scan stopped: no network", "changes left out in a, b"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in:\n%s", want, got)
 		}
 	}
 }

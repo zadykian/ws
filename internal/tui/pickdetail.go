@@ -15,9 +15,17 @@ func (s pickScreen) detail(size Size) string {
 	return pane.move(len(pane.rows)).view()
 }
 
-// notes is the words of the pane, for the line under the cursor.
+// notes is the words of the pane: what holds for the whole list, then the line under the cursor.
 func (s pickScreen) notes() []Line {
 	var notes []Line
+	if s.problem != "" {
+		notes = append(notes, Line{Warned, "The scan stopped: " + s.problem})
+	}
+	if held := s.list.passedOver(); len(held) > 0 {
+		text := "warning: changes left out in " + strings.Join(held, ", ") +
+			", ahead of a step chosen. It can fail without them."
+		notes = append(notes, Line{Warned, text})
+	}
 	line, ok := s.list.current()
 	if !ok || line.heading {
 		return notes
