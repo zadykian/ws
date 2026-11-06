@@ -1,6 +1,7 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
 {
   "theme": "JetBrains Dark",
+  // A missing key brings back updates, telemetry and a daemon, so each stays, false.
   "check_for_updates": false,
   "self_update": false,
   "auto_attach": false,
@@ -216,6 +217,7 @@
         // with the terminal in the dock
         { "key": "F2", "action": "toggle_utility_dock", "when": "terminal" },
         { "key": "2", "modifiers": ["alt"], "action": "toggle_utility_dock", "when": "terminal" },
+        // Each noop leaves its key to the shell, as the terminal would otherwise take it.
         { "key": "q", "modifiers": ["ctrl"], "action": "noop", "when": "terminal" },
         { "key": ",", "modifiers": ["ctrl"], "action": "noop", "when": "terminal" },
         { "key": "]", "modifiers": ["ctrl", "alt"], "action": "noop", "when": "terminal" },
@@ -243,6 +245,8 @@
       ]
     }
   },
+  // Fresh's default map binds Ctrl+H and Ctrl+Backspace, a pair it compares as each map loads,
+  // so a map's Ctrl+H warns at each start. It doesn't compare these.
   "keybindings": [
     { "key": "h", "modifiers": ["ctrl"], "action": "replace", "when": "normal" }
   ],
