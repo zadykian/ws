@@ -43,6 +43,7 @@ func group(use, short string, cmds ...*cobra.Command) *cobra.Command {
 func newRoot(p process, groups ...*cobra.Command) *cobra.Command {
 	root := group("ws", "set up the server and the Mac that works on it", newVersionCmd(p), newUpdateCmd(p))
 	root.AddCommand(groups...)
+	root.PersistentFlags().Bool(plainFlag, false, "print lines, with no full-screen display")
 	root.SilenceErrors = true
 	root.SilenceUsage = true
 	root.CompletionOptions.DisableDefaultCmd = true

@@ -132,6 +132,8 @@ request breaks the rules of zadykian/toolkit's skills, and the issues workflow w
 from its issue form. The hooks in `.githooks` check each commit before git makes it.
 [Checks](docs/checks.md) and [The gates](docs/gates.md) have the details.
 
+On a terminal, ws draws a full-screen display, and `--plain` keeps its lines: [The terminal UI](docs/tui.md).
+
 ## Pull requests
 
 Pull requests land on `main` by GitHub's merge commits, as the

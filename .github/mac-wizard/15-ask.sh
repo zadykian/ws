@@ -71,7 +71,7 @@ typed() {
     {
         printf '%s\n' "$@"
         sleep 5
-    } | script -q /dev/null "$wsbin" mac wizard --check >"$RUNNER_TEMP/raw" 2>&1
+    } | script -q /dev/null "$wsbin" --plain mac wizard --check >"$RUNNER_TEMP/raw" 2>&1
     status=$?
     tr -d '\r' <"$RUNNER_TEMP/raw" >"$RUNNER_TEMP/tty"
     cat "$RUNNER_TEMP/tty"
