@@ -127,7 +127,7 @@ Rules a change keeps:
 
 ## The keys
 
-[Fresh's F12 keymap](keymap/fresh.md) holds the adapter's counts, rules and limits. What stays
+[Fresh's F12 keymap](keymap/fresh.md) holds the counts, rules and limits. What stays
 unproven until the maintainer's trial on the Mac:
 
 - Real Ghostty, with left Option as Alt: its encoder was modelled on a US layout.

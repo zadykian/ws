@@ -1,9 +1,8 @@
 # Fresh's F12 keymap
 
-The adapter in [`internal/editor/fresh`](../../internal/editor/fresh/) turns the neutral keymap
-into `keybinding_maps.f12` in Fresh's `config.json` ([the config](../fresh.md#the-config)). F12's
-keys are described in [where F12 comes from](../keymap.md#where-f12-comes-from). The page holds
-counts, rules and limits. The targets and the reasons are in
+The template `config.json.tmpl` holds `keybinding_maps.f12` in Fresh's `config.json`
+([the config](../fresh.md#the-config)). F12's keys are described in
+[where F12 comes from](../keymap.md#where-f12-comes-from). The page holds counts, rules and limits. The targets and the reasons are in
 [`actions/`](../../internal/editor/fresh/actions/), the one place for them.
 
 ## The counts

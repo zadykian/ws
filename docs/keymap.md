@@ -1,8 +1,9 @@
 # The keymap
 
 F12's keys, in no editor's terms. The data is in [`internal/editor`](../internal/editor/), and Fresh's
-adapter, [`internal/editor/fresh`](../internal/editor/fresh/), renders it as Fresh's file. Zed's
-file is [plain](mac-zed.md), with the reason of each key beside it.
+table, [`internal/editor/fresh/actions`](../internal/editor/fresh/actions/), holds Fresh's targets
+and reasons. Fresh's file is a plain template, and Zed's file is [plain](mac-zed.md), with the reason of each
+key beside it.
 
 ## The data
 
@@ -69,7 +70,7 @@ reads F24, and "Ctrl stays Ctrl" holds either way.
 ## The pages
 
 - [Zed's F12 keymap](keymap/zed.md): the file's counts, statuses and decisions.
-- [Fresh's F12 keymap](keymap/fresh.md): the adapter's counts, rules and limits.
+- [Fresh's F12 keymap](keymap/fresh.md): the counts, rules and limits.
 
 Plain keys, such as the arrows and Enter, and the mouse stay each editor's own. The data has no
 row for them.
