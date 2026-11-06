@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/step"
 )
 
 // queueRunSent returns q past msgs.
@@ -32,5 +34,54 @@ func TestARunOfAQueueShowsBothListsOverItsOutput(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)
 		}
+	}
+}
+
+func TestARunOfAQueueFollowsItsStages(t *testing.T) {
+	q := queueRunSent(testQueueRun(), step.Event{Kind: step.Done, Step: "Tools"},
+		step.Event{Kind: step.Done, Step: "Setup", Index: 1, LeftOut: true},
+		step.Event{Kind: step.Started, Step: "Sudo", Index: 2})
+	got := queueRunShown(q)
+	for _, want := range []string{"2/5", "✓ Tools", "○ Setup", "▸  3 [ ] · Sudo"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in:\n%s", want, got)
+		}
+	}
+}
+
+func TestTheOutputOfAQueueRunFitsItsStrip(t *testing.T) {
+	q := testQueueRun()
+	if got, want := q.run.output.size, inside(stripSize(Size{100, 30})); got != want {
+		t.Errorf("output %v, want %v", got, want)
+	}
+	if q = queueRunSent(q, haltedMsg{}); q.run.output.size != inside(stripSize(Size{100, 30})) {
+		t.Errorf("past a stop, output %v", q.run.output.size)
+	}
+	if got := queueRunShown(q); !strings.Contains(got, "Stopping after Tools") {
+		t.Errorf("frame:\n%s", got)
+	}
+}
+
+func TestAShortWindowFollowsAQueueRunWithoutItsOutput(t *testing.T) {
+	q := queueRunSent(testQueueRun(), tea.WindowSizeMsg{Width: 100, Height: 12}, Line{Said, "installs the tools"})
+	if got := queueRunShown(q); strings.Contains(got, "installs the tools") || !strings.Contains(got, "Tools") {
+		t.Errorf("frame:\n%s", got)
+	}
+}
+
+func TestThePagesOfAQueueRunMoveItsStrip(t *testing.T) {
+	q := testQueueRun()
+	for range 40 {
+		q = queueRunSent(q, Line{Said, "installs the tools"})
+	}
+	if got, want := queueRunSent(q, pgUp).run.output.back, inside(stripSize(Size{100, 30})).Height; got != want {
+		t.Errorf("back = %d, want %d", got, want)
+	}
+}
+
+func TestTheStopButtonOfAQueueRunGoesToTheSession(t *testing.T) {
+	q := queueRunSent(testQueueRun(), tab, tab, tab, tab)
+	if _, cmd := q.Update(enter); !runs(cmd, stopPressedMsg{}) {
+		t.Error("Enter on the stop button asked for no stop")
 	}
 }
