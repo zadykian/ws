@@ -27,7 +27,7 @@ func shown(r RunScreen) string { return stripped(r.View().Content) }
 
 func testRun() RunScreen {
 	screen := NewRunScreen("ws server apply", testTheme,
-		Group{"base", []string{"Packages", "Locale"}}, Group{"ssh", []string{"Keys"}})
+		Group{Name: "base", Steps: []string{"Packages", "Locale"}}, Group{Name: "ssh", Steps: []string{"Keys"}})
 	return sent(screen, tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 
