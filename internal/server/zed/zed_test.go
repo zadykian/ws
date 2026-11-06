@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -34,21 +35,22 @@ func run(t *testing.T, user, home string) *effecttest.Machine {
 	return m
 }
 
-func TestSettingsAreValidJSONWithTheUsersPaths(t *testing.T) {
-	v := values.Default()
-	v.Home = "/home/ws"
-	got, err := settingsFile(v)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, body, _ := strings.Cut(string(got), "\n")
-	if !json.Valid([]byte(body)) {
-		t.Fatalf("not JSON:\n%s", body)
-	}
-	for _, want := range []string{"/home/ws/go/bin/gopls", "/home/ws/.dotnet/tools/roslyn-language-server",
-		"/home/ws/go/bin/dlv"} {
-		if !strings.Contains(body, `"`+want+`"`) {
-			t.Errorf("settings lack %q", want)
+func TestSettingsNameTheToolPathsUnderTheHome(t *testing.T) {
+	for _, home := range []string{"/root", "/home/ws"} {
+		v := values.Default()
+		v.Home = home
+		got, err := settingsFile(v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, body, _ := strings.Cut(string(got), "\n")
+		if !json.Valid([]byte(body)) {
+			t.Fatalf("not JSON:\n%s", body)
+		}
+		for _, want := range []string{devtools.Gopls(home), devtools.Roslyn(home), devtools.Dlv(home)} {
+			if !strings.Contains(body, `"`+want+`"`) {
+				t.Errorf("%s: settings lack %q", home, want)
+			}
 		}
 	}
 }
