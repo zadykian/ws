@@ -17,3 +17,40 @@ func TestSpanFindsTheLinesOfAKey(t *testing.T) {
 		}
 	}
 }
+
+func TestSetEditsOneLineAndKeepsTheRest(t *testing.T) {
+	const file = "---\n# the machine\nbase_timezone: UTC\n\n# the link\nbase_packages:\n  - git\n  - jq\n\n# the cable\n" +
+		"network_direct_link_interface: enp1\n"
+	for _, tc := range []struct {
+		name, data, key, value, want string
+	}{
+		{"replaces", file, "base_timezone", "Asia/Tbilisi",
+			strings.Replace(file, "UTC", "Asia/Tbilisi", 1)},
+		{"replaces a block list", file, "base_packages", "git, tmux",
+			strings.Replace(file, "base_packages:\n  - git\n  - jq\n", "base_packages: [git, tmux]\n", 1)},
+		{"adds at the end", file, "base_swappiness", "20", file + "base_swappiness: 20\n"},
+		{"takes a line out", file, "base_timezone", "", strings.Replace(file, "base_timezone: UTC\n", "", 1)},
+		{"takes a list out", file, "base_packages", "", strings.Replace(file, "base_packages:\n  - git\n  - jq\n", "", 1)},
+		{"leaves a key that no line holds", file, "base_swappiness", "", file},
+		{"starts an empty file", "", "ws_user", "ada", "---\nws_user: ada\n"},
+		{"ends the last line", "ws_user: ada", "base_swappiness", "20", "ws_user: ada\nbase_swappiness: 20\n"},
+	} {
+		got, err := Set([]byte(tc.data), tc.key, tc.value)
+		if err != nil {
+			t.Errorf("%s: %v", tc.name, err)
+		} else if string(got) != tc.want {
+			t.Errorf("%s:\n got %q\nwant %q", tc.name, got, tc.want)
+		}
+	}
+}
+
+func TestSetTwiceChangesNothing(t *testing.T) {
+	once, err := Set([]byte("---\n"), "ikeward_domains", "a.example,b.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	twice, err := Set(once, "ikeward_domains", "a.example, b.example")
+	if err != nil || string(twice) != string(once) {
+		t.Errorf("twice = %q, %v, want %q", twice, err, once)
+	}
+}
