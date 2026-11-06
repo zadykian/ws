@@ -1,6 +1,10 @@
 package tui
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/zadykian/ws/step"
+)
 
 // pickRow is a step of the list that a run is chosen from.
 type pickRow struct {
@@ -11,6 +15,8 @@ type pickRow struct {
 	chosen bool
 	// lockedBy names the steps on that wait on this one: settled works it out.
 	lockedBy []string
+	// after names the step whose changes kept the scan from planning this one.
+	after string
 }
 
 // entry names the row as Options.Only does.
@@ -24,6 +30,16 @@ func (r pickRow) entry() string {
 // on says that the step runs.
 func (r pickRow) on() bool {
 	return r.chosen || len(r.lockedBy) > 0
+}
+
+// pending says that the step has changes to apply, or waits on a step that has.
+func (r pickRow) pending() bool {
+	return r.state == stepChanged || r.after != ""
+}
+
+// sameChoice says that o is r to a run, which chooses by name, as a name can come twice in one.
+func (r pickRow) sameChoice(o pickRow) bool {
+	return r.parent == o.parent && r.name == o.name
 }
 
 // box draws the row's checkbox. A locked step takes no key, and its box says so by shape.
@@ -55,12 +71,32 @@ func newPickList(groups []Group) pickList {
 	return l
 }
 
-// settled returns the list with its locks worked out again. A step waits on an earlier one alone,
-// so that one walk from the end reaches the whole of a chain.
+// take returns the list with how the scan left e's step: chosen where it holds changes.
+func (l pickList) take(e step.Event) pickList {
+	if e.Kind == step.Planned || e.Kind == step.Started {
+		return l
+	}
+	place := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.parent == e.Parent && r.index == e.Index })
+	if place < 0 {
+		return l
+	}
+	l.rows = slices.Clone(l.rows)
+	row := &l.rows[place]
+	row.state, row.after = stateAfter(e), e.After
+	row.chosen = row.pending()
+	return l.settled()
+}
+
+// settled returns the list with its locks worked out again, and a box ticked on every step that
+// its name runs. A step waits on an earlier one alone, so that one walk from the end reaches the
+// whole of a chain.
 func (l pickList) settled() pickList {
 	l.rows = slices.Clone(l.rows)
-	for i := range l.rows {
+	for i, r := range l.rows {
 		l.rows[i].lockedBy = nil
+		for j := range l.rows {
+			l.rows[j].chosen = l.rows[j].chosen || r.chosen && r.sameChoice(l.rows[j])
+		}
 	}
 	for i := len(l.rows) - 1; i >= 0; i-- {
 		r := l.rows[i]

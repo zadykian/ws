@@ -3,6 +3,8 @@ package tui
 import (
 	"slices"
 	"testing"
+
+	"github.com/zadykian/ws/step"
 )
 
 // chain is a role whose steps wait on each other, beside one that waits on nothing.
@@ -79,5 +81,44 @@ func TestABoxSaysWhetherItsStepIsChosen(t *testing.T) {
 	rows := choosing(chain(), "two").rows
 	if rows[0].box() != "[#]" || rows[1].box() != "[x]" || rows[2].box() != "[ ]" {
 		t.Errorf("boxes = %q, %q, %q", rows[0].box(), rows[1].box(), rows[2].box())
+	}
+}
+
+// planned is how a scan ends a step: with changes, under a change of the step.
+func planned(parent, name string, index int, changes ...step.Change) step.Event {
+	return step.Event{Kind: step.Done, Parent: parent, Step: name, Index: index, Check: true, Changes: changes}
+}
+
+func TestAScanChoosesTheStepsWithChanges(t *testing.T) {
+	l := chain().take(planned("base", "one", 0)).take(planned("base", "alone", 3, oneChange("a")))
+	if want := []string{"[ ]", "[ ]", "[ ]", "[x]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+	if l.rows[0].state != stepSame || l.rows[1].state != stepOpen || l.rows[3].state != stepChanged {
+		t.Errorf("rows = %+v", l.rows)
+	}
+}
+
+func TestAStepBehindChangesStartsChosen(t *testing.T) {
+	behind := step.Event{Kind: step.Skipped, Parent: "base", Step: "two", Index: 1, After: "one"}
+	l := chain().take(planned("base", "one", 0, oneChange("a"))).take(behind)
+	if want := []string{"[#]", "[x]", "[ ]", "[ ]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+}
+
+func TestAStepThatFailsStartsLeftOut(t *testing.T) {
+	row := chain().take(step.Event{Kind: step.Failed, Parent: "base", Step: "one"}).rows[0]
+	if row.on() || row.state != stepFailed {
+		t.Errorf("row = %+v", row)
+	}
+}
+
+// The run chooses by name, so a box left open beside its twin would run all the same.
+func TestAStepThatComesTwiceIsOneChoice(t *testing.T) {
+	l := newPickList([]Group{{Steps: []string{"ssh", "git", "ssh"}}})
+	l = l.take(planned("", "ssh", 0, oneChange("a"))).take(planned("", "git", 1)).take(planned("", "ssh", 2))
+	if want := []string{"[x]", "[ ]", "[x]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
 }
