@@ -24,7 +24,7 @@ func peerKeys(m effect.Machine, out effect.Out, w values.Wireguard) ([]Peer, err
 		path := "/etc/wireguard/" + p.Name + ".pub"
 		text, err := m.ReadRootFile(path)
 		if errors.Is(err, fs.ErrNotExist) {
-			out.Say("wg0 leaves out the peer %s, as %s is missing. Put its public key there, then run ws server apply --only wireguard again.", p.Name, path)
+			effect.SayLasting(out, "wg0 leaves out the peer %s, as %s is missing. Put its public key there, then run ws server apply --only wireguard again.", p.Name, path)
 			continue
 		}
 		if err != nil {

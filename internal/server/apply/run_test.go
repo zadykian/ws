@@ -34,13 +34,8 @@ func (t todo) Apply(context.Context, step.Plan) error { *t.done = true; return n
 func TestRun(t *testing.T) {
 	for _, check := range []bool{false, true} {
 		var a, b bool
-		role := func(name string, done *bool) roles.Role {
-			return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
-				return []step.Step{todo{done}}
-			}}
-		}
 		c := Config{Options: Options{Check: check}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
-		got, err := Run(context.Background(), c, []roles.Role{role("a", &a), role("b", &b)})
+		got, err := Run(context.Background(), c, []roles.Role{role("a", todo{&a}), role("b", todo{&b})})
 		if err != nil || !slices.Equal(got, []string{"a", "b"}) || a == check || b == check {
 			t.Errorf("check %v: changed = %q, a = %v, b = %v, err = %v", check, got, a, b, err)
 		}
@@ -62,12 +57,14 @@ func (l *lasts) Observe(e step.Event) {
 	}
 }
 
+// role is a role of the one step s.
+func role(name string, s step.Step) roles.Role {
+	return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+		return []step.Step{s}
+	}}
+}
+
 func TestRunNamesEachRoleAndEndsThoseAFailureStopsShortOf(t *testing.T) {
-	role := func(name string, s step.Step) roles.Role {
-		return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
-			return []step.Step{s}
-		}}
-	}
 	var done bool
 	ok, bad := todo{&done}, failing{todo{&done}}
 	tests := []struct {
@@ -92,6 +89,25 @@ func TestRunNamesEachRoleAndEndsThoseAFailureStopsShortOf(t *testing.T) {
 				t.Errorf("last events = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRunStopsBetweenTheRolesAndEndsThoseItStopsShortOf(t *testing.T) {
+	stopped := errors.New("stopped")
+	var a, b bool
+	var got lasts
+	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Observer: &got, Stop: func() error {
+		if a {
+			return stopped
+		}
+		return nil
+	}}
+	changed, err := Run(context.Background(), c, []roles.Role{role("a", todo{&a}), role("b", todo{&b}), role("c", todo{&b})})
+	if !errors.Is(err, stopped) || !slices.Equal(changed, []string{"a"}) || b {
+		t.Errorf("changed = %q, err = %v, b = %v", changed, err, b)
+	}
+	if want := (lasts{"a/todo done", "b/todo skipped", "c/todo skipped"}); !slices.Equal(got, want) {
+		t.Errorf("last events = %q, want %q", got, want)
 	}
 }
 

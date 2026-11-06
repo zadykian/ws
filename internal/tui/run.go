@@ -37,6 +37,9 @@ type Config struct {
 	Cut func(syscall.Signal) error
 	// Unwind bounds the wait for a work past the screen's end, and defaults to unwindBound.
 	Unwind time.Duration
+	// Halts says that the work reads Bridge.Stop between its steps. Ctrl-C then asks first, and stops
+	// the run past its current step. Without it, the first Ctrl-C ends ctx.
+	Halts bool
 }
 
 // Work is what a run does. It takes b as its effects, and sends the screen its messages by them.
@@ -65,6 +68,9 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	)
 	stop := func() tea.Msg { cancel(); return nil }
 	model := session{screen: screen, theme: c.Theme, begin: begin, stop: stop, cut: c.Cut}
+	if c.Halts {
+		model.halt = func() tea.Msg { bridge.halted.Store(true); return nil }
+	}
 	terminal := &handover{}
 	// Signals stay ws's: Bubble Tea's handler would end the screen before the work had stopped.
 	program := tea.NewProgram(model, tea.WithInput(c.In), tea.WithOutput(c.Out),

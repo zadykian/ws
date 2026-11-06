@@ -9,8 +9,25 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// stopNote is the box of a run that is stopping. A run that heeds ctx never shows it for long.
-const stopNote = "The run ends with its current step.\nCtrl-C again leaves it behind."
+const (
+	// stopNote is the box of a run that is stopping. A run that heeds ctx never shows it for long. The
+	// way out comes first, as a short window cuts the box from the bottom.
+	stopNote = "Ctrl-C again leaves it behind.\nThe run ends with its current step."
+	// confirmNote asks before a stop, as a press can be a slip and a run can take an hour.
+	confirmNote = "Stop the run once its current step ends? Ctrl-C again stops it now."
+)
+
+// The places of the buttons that confirm a stop.
+const (
+	haltPlace = iota
+	goOnPlace
+)
+
+// The buttons that confirm a stop.
+var (
+	haltButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "stop"))
+	goOnButton = key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "go on"))
+)
 
 // Messages of a run.
 type (
@@ -20,6 +37,10 @@ type (
 	endedMsg struct{}
 	// doneMsg is the end of a run's work.
 	doneMsg struct{ err error }
+	// stopPressedMsg is a screen's stop button, pressed by Enter: the key Ctrl-C reaches no screen.
+	stopPressedMsg struct{}
+	// haltedMsg tells the screen that the run ends with its current step.
+	haltedMsg struct{}
 )
 
 // session is a run's model: its screen, which takes every message that the session doesn't, with
@@ -29,14 +50,21 @@ type session struct {
 	screen tea.Model
 	theme  Theme
 	window Size
-	// begin starts the work, and stop ends the run's ctx. cut names a signal's error.
+	// begin starts the work, and stop ends the run's ctx. cut names a signal's error. halt ends the
+	// run past its current step, and nil says that it can't.
 	begin tea.Cmd
 	stop  tea.Cmd
+	halt  tea.Cmd
 	cut   func(syscall.Signal) error
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
 	field field
-	// stopping is set once ctx ended, and cutBy once a signal or Ctrl-C ended it.
+	// confirming is set while the box in confirm asks before a stop, and halted once it was confirmed.
+	confirming bool
+	confirm    Footer
+	halted     bool
+	// stopping is set once ctx ended. cutBy is set once a signal or Ctrl-C ended ctx, or halted the
+	// run, so that a run stopped short ends with the status of a cut one.
 	stopping bool
 	cutBy    error
 	// done and err are the end of the work.
@@ -64,17 +92,22 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case signalMsg:
 		return s.interrupt(msg.signal)
 	case endedMsg:
-		s.stopping = true
+		s.stopping, s.confirming = true, false
 		return s, nil
 	case doneMsg:
 		s.done, s.err = true, msg.err
 		return s, tea.Quit
+	case stopPressedMsg:
+		return s.pressed()
 	case tea.KeyPressMsg:
 		if key.Matches(msg, Keys.Interrupt) {
-			return s.interrupt(syscall.SIGINT)
+			return s.pressed()
 		}
 		if len(s.asked) > 0 {
 			return s.typed(msg)
+		}
+		if s.confirming {
+			return s.confirmed(msg)
 		}
 	case tea.PasteMsg:
 		if len(s.asked) > 0 {
@@ -125,29 +158,66 @@ func (s session) drop(id uint64) session {
 	return s
 }
 
-// interrupt takes a signal, or Ctrl-C, which raw mode keeps from being one. The first ends ctx, and
-// the screen stays until the work has seen that. The next leaves, as a step can ignore ctx.
+// pressed takes Ctrl-C, which raw mode keeps from being a signal, or a screen's stop button. A run
+// that can stop between its steps asks first. Under a question it can't: a step waits on the answer,
+// so that ctx alone ends it.
+func (s session) pressed() (tea.Model, tea.Cmd) {
+	if s.halt == nil || s.confirming || s.halted || s.stopping || len(s.asked) > 0 {
+		return s.interrupt(syscall.SIGINT)
+	}
+	s.confirming, s.confirm = true, NewFooter(haltButton, goOnButton)
+	return s, nil
+}
+
+// confirmed takes a key under the box that asks before a stop. The screen hears of a stop, as the
+// run goes on under it and the maintainer can still read its output.
+func (s session) confirmed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	var place int
+	s.confirm, place = s.confirm.Update(msg)
+	switch place {
+	case goOnPlace:
+		s.confirming = false
+	case haltPlace:
+		s.confirming, s.halted = false, true
+		s.cutBy = s.cut(syscall.SIGINT)
+		var cmd tea.Cmd
+		s.screen, cmd = s.screen.Update(haltedMsg{})
+		return s, tea.Batch(s.halt, cmd)
+	}
+	return s, nil
+}
+
+// interrupt takes a signal, which nobody confirms, or a press past the confirmation. The first ends
+// ctx, and the screen stays until the work has seen that. The next leaves, as a step can ignore ctx.
 func (s session) interrupt(signal syscall.Signal) (tea.Model, tea.Cmd) {
-	if s.cutBy != nil {
+	if s.stopping && s.cutBy != nil {
 		return s, tea.Quit
 	}
 	s.cutBy = s.cut(signal)
-	s.stopping = true
+	s.stopping, s.confirming = true, false
 	return s, s.stop
 }
 
-// View draws the screen, and over it the question or the note that the run is stopping. It holds to
-// the alternate buffer whatever the screen says, as the end of a run restores the terminal by it.
+// View draws the screen, and over it the question, the box that asks before a stop or the note that
+// the run is stopping. It holds to the alternate buffer whatever the screen says, as the end of a run restores the terminal by it.
 func (s session) View() tea.View {
 	view := s.screen.View()
 	view.AltScreen = true
 	switch {
 	case len(s.asked) > 0:
 		view.Content = over(view.Content, s.field.render(s.theme, s.window), s.window)
+	case s.confirming:
+		body := wrapped(confirmNote, s.window) + "\n" + s.confirm.render(s.theme, min(s.window.Width, boxWidth)-2)
+		view.Content = over(view.Content, box(s.theme, "Stop", body, s.window), s.window)
 	case s.stopping:
-		view.Content = over(view.Content, box(s.theme, "Stopping", stopNote, s.window), s.window)
+		view.Content = over(view.Content, box(s.theme, "Stopping", wrapped(stopNote, s.window), s.window), s.window)
 	}
 	return view
+}
+
+// wrapped fits words to the inside of a box, which would cut them.
+func wrapped(words string, window Size) string {
+	return lipgloss.Wrap(words, max(min(window.Width, boxWidth)-2, 1), "")
 }
 
 // over draws a box in the middle of a window, on what base shows there.

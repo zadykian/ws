@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -16,6 +17,7 @@ import (
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/step"
 )
 
@@ -94,10 +96,6 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	// ca-certificates serves the steps' downloads over HTTPS.
-	prepare := []step.Step{host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
-		M: p.machine, Out: out, Names: []string{"ca-certificates"},
-	}}}}
 	v, err := values.Load(p.machine, serverVars)
 	if err != nil {
 		return err
@@ -111,14 +109,58 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	if err != nil {
 		return err
 	}
-	changed, err := apply.Run(c.Context(), apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out,
-		Observer: out, Prepare: prepare}, list)
+	cfg := apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out, Observer: out,
+		Prepare: prepareSteps(p.machine, out)}
+	var changed []string
+	if drawsScreen(c, p) {
+		changed, err = applyOnScreen(c, p, cfg, list)
+	} else {
+		changed, err = apply.Run(c.Context(), cfg, list)
+	}
 	term.Flush()
 	if err != nil {
 		return err
 	}
 	out.Say("%s", apply.Summary(changed, opts.Check))
 	return nil
+}
+
+// prepareSteps is what every role needs: ca-certificates serves the steps' downloads over HTTPS.
+func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
+	return []step.Step{host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
+		M: m, Out: out, Names: []string{"ca-certificates"},
+	}}}}
+}
+
+// applyOnScreen is apply.Run under the run screen. cfg's steps name the screen's rows, and the run
+// builds them again on the screen's effects. The roles it returns are those of a run that ended.
+func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []roles.Role) ([]string, error) {
+	title := c.CommandPath()
+	if cfg.Check {
+		title += " --check"
+	}
+	var changed []string
+	err := drawRun(c, p, title, serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
+		run := cfg
+		run.M = screenMachine(ctx, b, cfg.M)
+		run.Out, run.Observer, run.Stop, run.Prepare = b, b, b.Stop(ctx), prepareSteps(run.M, b)
+		var err error
+		changed, err = apply.Run(ctx, run, list)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return changed, nil
+}
+
+// serverGroups names the steps of a run, so that its screen lists each one before the first starts.
+func serverGroups(cfg apply.Config, list []roles.Role) []tui.Group {
+	groups := []tui.Group{tui.NewGroup(apply.Prepare, cfg.Prepare)}
+	for _, r := range list {
+		groups = append(groups, tui.NewGroup(r.Name, cfg.Steps(r)))
+	}
+	return groups
 }
 
 // loadSecrets reads the identity from the unit's credential and decrypts the file, or returns no

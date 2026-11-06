@@ -11,7 +11,13 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+	"time"
 )
+
+// screenGrace bounds a command's end past its context under a screen. It stays above the 2 seconds
+// that runuser gives its child, which a kill of runuser would cut short, and under the 5 seconds
+// that a screen gives a run's cleanup.
+const screenGrace = 3 * time.Second
 
 // OSMachine is the Machine of the machine that ws runs on.
 type OSMachine struct {
@@ -23,7 +29,8 @@ type OSMachine struct {
 	Stderr io.Writer
 	// Stdin is what Pass gives a command to read. Nil means os.Stdin, where sudo can ask for a
 	// password. A screen owns the terminal, and sets NoStdin. With any Stdin, git and ssh get
-	// offTerminal, as they ask at /dev/tty, past their standard input.
+	// offTerminal, as they ask at /dev/tty, past their standard input, and a command's context ends
+	// it by SIGTERM before a kill.
 	Stdin io.Reader
 	// Ticket, where set, runs before each command as root, which runs only where it passes. A screen
 	// sets it beside a Sudo that can't ask, to take sudo's password in a form. It holds a run's
@@ -138,10 +145,7 @@ func (m OSMachine) RunShown(ctx context.Context, root bool, name string, args ..
 func (m OSMachine) PassInput(ctx context.Context, stdin []byte, name string, args ...string) error {
 	cmd := m.command(ctx, append([]string{name}, args...))
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = bytes.NewReader(stdin), m.stderr(), m.stderr()
-	if err := cmd.Run(); err != nil {
-		return commandError(cmd, err)
-	}
-	return nil
+	return finished(cmd, cmd.Run())
 }
 
 // Pass runs the command with its standard output and error sent to Stderr, and Stdin as its
@@ -152,10 +156,7 @@ func (m OSMachine) Pass(ctx context.Context, root bool, name string, args ...str
 	}
 	cmd := m.command(ctx, m.argv(root, name, args))
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = m.stdin(), m.stderr(), m.stderr()
-	if err := cmd.Run(); err != nil {
-		return commandError(cmd, err)
-	}
-	return nil
+	return finished(cmd, cmd.Run())
 }
 
 // Exec replaces ws with the command, found on PATH, with ws's environment and env's entries set.
@@ -199,16 +200,26 @@ func (m OSMachine) command(ctx context.Context, argv []string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...) //nolint:gosec // the steps name the command
 	if m.Stdin != nil {
 		cmd.Env = withEnv(os.Environ(), offTerminal)
+		// A raw terminal sends the command's group no Ctrl-C, so ctx's end is all that reaches it. A
+		// kill would end runuser and leave its child, whose hold on a screen's pipe holds up Wait.
+		cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }
+		cmd.WaitDelay = screenGrace
 	}
 	return cmd
 }
 
 func output(cmd *exec.Cmd) ([]byte, error) {
 	out, err := cmd.Output()
-	if err != nil {
-		return out, commandError(cmd, err)
+	return out, finished(cmd, err)
+}
+
+// finished is the error of cmd, past what Run or Output returned. ErrWaitDelay is none: the command
+// passed, and left a process that holds its output, which a plain run's file never waits on.
+func finished(cmd *exec.Cmd, err error) error {
+	if err == nil || errors.Is(err, exec.ErrWaitDelay) {
+		return nil
 	}
-	return out, nil
+	return commandError(cmd, err)
 }
 
 func commandError(cmd *exec.Cmd, err error) error {

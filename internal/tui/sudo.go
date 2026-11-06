@@ -80,11 +80,11 @@ func (s *sudo) hold(ctx context.Context) {
 	}
 }
 
-// Machine returns m as a run's steps use it under a screen: its commands stay off the terminal, and
-// sudo's password comes through a question. Its ticket holds until ctx ends. A machine with its own
-// Sudo, such as root's on ws, has no password to ask for.
+// Machine returns m as a run's steps use it under a screen: its commands stay off the terminal, what
+// they print reaches the screen, and sudo's password comes through a question. Its ticket holds until
+// ctx ends. A machine with its own Sudo, such as root's on ws, has no password to ask for.
 func (b *Bridge) Machine(ctx context.Context, m effect.OSMachine) effect.OSMachine {
-	m.Stdin = effect.NoStdin
+	m.Stdin, m.Stderr = effect.NoStdin, b.pipe
 	if m.Sudo != nil {
 		return m
 	}

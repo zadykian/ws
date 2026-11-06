@@ -1,8 +1,8 @@
 # The terminal UI
 
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
-`internal/tui`. No command draws a screen yet: the package holds the parts, and `--plain` is in
-place for the commands that will.
+`internal/tui`. `ws server apply` draws [the run screen](#the-run-screen). The other commands print
+lines for now.
 
 ## Modes
 
@@ -14,7 +14,8 @@ A command draws a screen only where each of these holds:
 
 Anywhere else ws prints lines, as before, byte for byte. That covers CI, a pipe and the unit on
 ws, which reads the last line of a run. The wizard's cases in `.github/mac-wizard` that run under
-`script -q` get a terminal, so each passes `--plain`.
+`script -q` get a terminal, so each passes `--plain`. CI's `playbook` job runs `ws server apply
+--check` under `script` to draw the screen ([The `playbook` job](checks.md#the-playbook-job)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
 The mode is chosen in `cmd/ws/screen.go`.
@@ -49,10 +50,11 @@ focus with Tab.
 | q | Leave a screen. |
 | Ctrl-C | Stop the run. |
 
-Ctrl-C is a key in raw mode, and the screen turns it into the signal. The first one ends the
-run's context, and the screen stays until the work has ended. The second one closes the screen,
-and ws waits up to 5 seconds for the work's cleanup, such as the wizard's lock. A third one leaves
-at once.
+Ctrl-C is a key in raw mode, and the screen turns it into the signal. On a run that reads
+`Bridge.Stop`, the first one asks ([Stopping a run](#stopping-a-run)). On any other, it ends the
+run's context, and the screen stays until the work has ended. The next one closes the screen, and
+ws waits up to 5 seconds for the work's cleanup, such as the wizard's lock. Another one leaves at
+once.
 
 ## Questions
 
@@ -62,16 +64,69 @@ keys go to it alone. A hidden answer travels on a channel of its own, and enters
 or error. A paste into a hidden field gives its first line, byte for byte, as the plain prompt
 reads it, and Enter still answers. A step's lines arrive as messages and show in a pane.
 
+## The run screen
+
+`RunScreen` follows a run. It takes the run's `Group`s, so it lists every step before the first
+one starts. `Bridge.Observe` is the run's `step.Observer`, and sends it the run's events.
+
+The title's right side holds the steps ended, a bar of them and the elapsed time. One pane lists
+the steps by role, and keeps the current one in sight:
+
+| Mark | Step |
+| --- | --- |
+| `▸` | The current one. |
+| `·` | Waiting. |
+| `✓` | Done, with nothing to change. |
+| `●` | Done with changes, or with changes to make under `--check`. |
+| `○` | Left out. |
+| `✗` | Failed. |
+| `–` | Skipped. |
+
+The other pane is a window on what the run prints, under the current step's name.
+
+- It holds the lines a plain run prints, and what the step's commands print.
+- It follows the end of the output. Up, PgUp and Home move it back, and End brings it to the end.
+- It keeps the last 10,000 lines of a run.
+- It wraps a long line, unlike the other panes. `\r` keeps the last state of a progress bar, and
+  escapes and control characters go.
+- Under `--check`, each step's changes show in it, a file's diff in color.
+
+The window goes with the screen. The last line of `ws server apply`, an error and what stays by hand
+print on the normal screen, and `--plain` keeps every line of a run.
+
+What stays by hand holds the lines that the maintainer acts on past a run: ws's WireGuard key, and
+what a step leaves to do. A step says one through `effect.SayLasting`, which a plain run prints in
+place.
+
+### Stopping a run
+
+A step cut halfway can leave a machine between two states, so a run stops between its steps. That
+holds for a run whose `step.Options.Stop` is `Bridge.Stop`, with `Config.Halts` set.
+
+1. Ctrl-C, or the stop button, opens a box. Esc goes on, and the run has not paused for it.
+2. Enter stops the run once its current step ends. The steps left end skipped, and the window stays
+   readable, with `Stopping after` in its title.
+3. Ctrl-C from there ends the context, as it does from the box.
+
+A question asks nothing first: its step waits on the answer, so Ctrl-C ends the context. A signal
+asks nothing either, as nobody may be there to answer. A run stopped past its current step ends
+with the status of Ctrl-C, unless that step was the last.
+
 ## Commands
 
 A screen owns the terminal, so a step's commands stay off it.
 
 - A screen sets `Stdin` of `effect.OSMachine` to `effect.NoStdin`, and a command finds the end of
   its input at once.
+- `Bridge.Machine` sets `Stderr` to a pipe that sends what the commands print to the screen, a
+  whole line at a time. What `Pass` prints then reaches the window, and leaves the terminal alone.
 - git and ssh ask at `/dev/tty`, past their input. With `Stdin` set, git gets
   `GIT_TERMINAL_PROMPT=0`, and ssh gets `SSH_ASKPASS_REQUIRE=force` with `SSH_ASKPASS=false`. So a
   clone fails where it would ask, as ssh does of an unknown host, and `--plain` asks. ws's ssh keeps
   `BatchMode` where no prompt is expected.
+- A run that ends sends a step's command SIGTERM, and kills it 3 seconds later. No Ctrl-C reaches
+  it through a raw terminal, and a kill of `runuser` would leave its child. Past those 3 seconds ws
+  no longer waits for what a command left running, under a screen alone.
 - A command keeps ws's controlling terminal. sudo keeps its ticket by terminal, so a child's own
   sudo, such as brew's, would ask again without one.
 - `effect.Foreground` runs a command that talks to the maintainer. The screen suspends, and the

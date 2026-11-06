@@ -54,6 +54,22 @@ type Info struct {
 	Link string
 }
 
+// Lasting keeps a line past the screen that draws it. It stands beside Out, whose fakes in other
+// modules go on compiling: effect is public.
+type Lasting interface {
+	SayLasting(format string, a ...any)
+}
+
+// SayLasting says a line that the maintainer acts on past a run, such as a key to copy. An out that
+// doesn't draw a screen loses no line, so it takes a Say, and a plain run's output stays as it was.
+func SayLasting(out Out, format string, a ...any) {
+	if l, ok := out.(Lasting); ok {
+		l.SayLasting(format, a...)
+		return
+	}
+	out.Say(format, a...)
+}
+
 // Machine reads and changes a machine.
 type Machine interface {
 	// Stat returns fs.ErrNotExist where the path is missing, and describes a dangling link.

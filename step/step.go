@@ -41,6 +41,9 @@ type Options struct {
 	// LeftOut says which steps the run plans and doesn't apply, by the run's Parent and the step's
 	// name. Nil leaves none out. A step is planned all the same, as later steps read its state.
 	LeftOut func(parent, step string) bool
+	// Stop is read before each step, and an error ends the run there, with the steps left Skipped.
+	// Nil never stops, as a run in lines ends mid-step or not at all.
+	Stop func() error
 }
 
 // Run is RunWith with a Printer on out, for a caller that follows a run by its lines.
@@ -51,11 +54,15 @@ func Run(ctx context.Context, steps []Step, out effect.Out, check bool) (changed
 // RunWith plans each step in order. Under check it applies nothing, and skips a step whose awaited
 // step has changes to make. A step left out is planned and not applied, and the steps that wait on
 // it, if it has changes, are skipped as under check. Otherwise it applies each plan, plans again, and fails where the second
-// plan is not empty. It stops at the first failure, and the steps past it end Skipped. It reports
-// whether any step had changes to make.
+// plan is not empty. It stops at the first failure, or where o.Stop says, and the steps past it end
+// Skipped. It reports whether any step had changes to make.
 func RunWith(ctx context.Context, steps []Step, o Options) (changed bool, err error) {
 	pending := map[string]bool{} // the earlier steps, whether each has changes to make
 	for i, s := range steps {
+		if err := o.stopped(); err != nil {
+			o.unreached(steps, i)
+			return changed, err
+		}
 		e := o.settle(ctx, s, o.event(i, s), pending)
 		o.observe(e)
 		changed = changed || e.Kind == Skipped || len(e.Changes) != 0
@@ -65,6 +72,14 @@ func RunWith(ctx context.Context, steps []Step, o Options) (changed bool, err er
 		}
 	}
 	return changed, nil
+}
+
+// stopped is why the run goes no further, or nil where it goes on.
+func (o Options) stopped() error {
+	if o.Stop == nil {
+		return nil
+	}
+	return o.Stop()
 }
 
 // settle takes one step as far as the run goes, and returns its last event for the run to send.

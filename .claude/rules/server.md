@@ -27,6 +27,8 @@ steps, and each role's page in `docs/` says what it sets up.
   otherwise be the caller's ([claude's install](../../internal/server/claude/install.go)).
 - Root's reads and writes under `ws_home` go through `host.Plain` or `host.RefuseLinks`, as the user
   owns the home and could link a file elsewhere ([Links under the home](../../docs/security.md#links-under-the-home)).
+- A line the maintainer acts on past a run, such as a key to copy, goes through
+  `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../docs/tui.md#the-run-screen)).
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `internal/server/signoz/casting.yaml`, as its compose files are forged from it.
 - A restart or a reload that a watched change calls for is `host.Forced`. `Group.Apply` runs it

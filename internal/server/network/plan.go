@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 )
 
@@ -20,7 +21,7 @@ func (d direct) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, fmt.Errorf("network_direct_link_interface %q is not an interface's name", d.Interface)
 	}
 	if _, err := d.M.Stat("/sys/class/net/" + d.Interface); errors.Is(err, fs.ErrNotExist) {
-		d.Out.Say("this machine has no interface %s, so the direct link stays as it is; network_direct_link_interface names the port of the Mac's cable, as ip link lists it", d.Interface)
+		effect.SayLasting(d.Out, "this machine has no interface %s, so the direct link stays as it is; network_direct_link_interface names the port of the Mac's cable, as ip link lists it", d.Interface)
 		return nil, nil
 	} else if err != nil {
 		return nil, err
