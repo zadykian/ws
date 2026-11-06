@@ -15,6 +15,8 @@ window-vsync = true
 window-height = 60
 window-width = 200
 window-new-tab-position = end
+# Left Option acts as Alt for F12's Alt keys in helix and Fresh. Right Option keeps composing.
+macos-option-as-alt = left
 # ws mac apply installs the font from Homebrew's cask where it is missing. A later font-family adds a
 # fallback to the config's own, so the empty one clears those first. font-family takes a family, as
 # ghostty +list-fonts heads it: a face, as JetBrainsMono NFM Regular, finds no font.

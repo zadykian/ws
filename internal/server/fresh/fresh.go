@@ -1,8 +1,10 @@
-// Package fresh is the fresh role as Go steps: the editor from its release's .deb, and its config. See
-// docs/fresh.md.
+// Package fresh is the fresh role as Go steps: the editor from its release's .deb, the wrapper that
+// carries its keys through tmux, and its config and theme. See docs/fresh.md.
 package fresh
 
 import (
+	_ "embed"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/secrets"
@@ -10,12 +12,19 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Step names. The install waits on the download.
+// Step names. Those after the download wait on the steps before them.
 const (
 	downloadStep = "Fresh download"
 	installStep  = "Fresh install"
+	wrapperStep  = "Fresh wrapper"
 	configStep   = "Fresh config"
 )
+
+// wrapperPath comes before the .deb's /usr/bin/fresh on every PATH of Ubuntu's, as docs/fresh.md says.
+const wrapperPath = "/usr/local/bin/fresh"
+
+//go:embed files/fresh
+var wrapper []byte
 
 // Steps returns the role's steps in order. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
@@ -23,6 +32,9 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 	return []step.Step{
 		host.Lazy{Title: downloadStep, Parts: download(m)},
 		host.Lazy{Title: installStep, After: downloadStep, Parts: install(m)},
+		host.Group{Title: wrapperStep, After: installStep, Parts: []host.Resource{
+			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
+		}},
 		user.Owned(m, configStep, "", func(uid, gid int) ([]host.Resource, error) {
 			return configFiles(m, v, uid, gid)
 		}),

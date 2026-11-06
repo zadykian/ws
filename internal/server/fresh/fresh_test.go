@@ -43,14 +43,20 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 	if err != nil || changed {
 		t.Errorf("the second run: changed %v, %v", changed, err)
 	}
-	path := "/home/ws/.config/fresh/config.json"
-	if o := m.Owners[path]; o != [2]int{1000, 1000} {
-		t.Errorf("%s owner %v", path, o)
+	for _, path := range []string{
+		"/home/ws/.config/fresh/config.json", "/home/ws/.config/fresh/themes/jetbrains-dark.json",
+	} {
+		if o := m.Owners[path]; o != [2]int{1000, 1000} {
+			t.Errorf("%s owner %v", path, o)
+		}
 	}
 }
 
 func TestConfigRefusesALink(t *testing.T) {
-	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/fresh", "/home/ws/.config/fresh/config.json"} {
+	for _, link := range []string{
+		"/home/ws/.config", "/home/ws/.config/fresh", "/home/ws/.config/fresh/config.json",
+		"/home/ws/.config/fresh/themes", "/home/ws/.config/fresh/themes/jetbrains-dark.json",
+	} {
 		m, v := userMachine()
 		m.Links[link] = "/srv/target"
 		s := stepNamed(t, m, v, configStep)

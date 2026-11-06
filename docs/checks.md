@@ -17,10 +17,10 @@ last line must be `changed: none`. Under `script`, `ws server apply --check` mus
 screen](tui.md#the-run-screen) and end on `would change: none`. Then `nft -c`, with the container's
 NET_ADMIN, checks the outbound table the run wrote and the users it names, and a find that the user
 owns its home. The Zed wrapper's [checks](../.github/zed-terminal-checks.sh) run on the files it
-installed. Root's leg has no table. The run leaves out its own check
-([Outbound](security.md#outbound)). Its `/etc/ws/host_vars.yml` gives a swap file of 64 MiB, as the
-runner's disk has no room for one of its RAM's size. Its board is not MSI's, so `fans` leaves its
-fans alone. It gives no VPN profile, so `ikeward` does nothing.
+installed, and Fresh's on the config it loaded. Root's leg has no table. The run leaves out its own
+check ([Outbound](security.md#outbound)). Its `/etc/ws/host_vars.yml` gives a swap file of 64 MiB,
+as the runner's disk has no room for one of its RAM's size. Its board is not MSI's, so `fans` leaves
+its fans alone. It gives no VPN profile, so `ikeward` does nothing.
 
 ## The install script
 

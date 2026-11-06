@@ -72,6 +72,7 @@ reads F24, and "Ctrl stays Ctrl" holds either way.
 ## The pages
 
 - [Zed's F12 keymap](keymap/zed.md): the adapter's counts, statuses and decisions.
+- [Fresh's F12 keymap](keymap/fresh.md): the adapter's counts, rules and limits.
 - [The same for helix](helix-keymap.md).
 
 Plain keys, such as the arrows and Enter, and the mouse stay each editor's own. The data has no

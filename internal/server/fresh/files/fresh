@@ -1,0 +1,21 @@
+#!/bin/sh
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# Fresh asks only for kitty's keys, which tmux ignores, so Shift+Ctrl keys arrive without Shift.
+# In tmux this raises extended keys from off to on, which stays after Fresh exits, and asks for them
+# in Fresh's pane, which the reset undoes. It loads the user's config alone: a project's own file
+# can name a language server's command, or replace the user's config whole where it fails to parse.
+config="${HOME:-}/.config/fresh/config.json"
+if [ -f "$config" ]; then
+    set -- --config "$config" "$@"
+fi
+if [ -z "${TMUX:-}" ] || [ ! -t 0 ] || [ ! -t 1 ]; then
+    exec /usr/bin/fresh "$@"
+fi
+if [ "$(tmux show -sv extended-keys 2>/dev/null)" = off ]; then
+    tmux set -s extended-keys on 2>/dev/null
+fi
+printf '\033[>4;2m'
+/usr/bin/fresh "$@"
+status=$?
+printf '\033[>4m'
+exit "$status"

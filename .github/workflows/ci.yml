@@ -155,6 +155,15 @@ jobs:
               echo '::error::ws left files in the home that its user does not own.'
               exit 1
           fi
+      # Fresh loads a malformed config with its defaults and exits 0, so this reads what it loaded,
+      # as the user whose config it is.
+      - name: Check the config that Fresh reads
+        shell: bash
+        run: |
+          home=$(getent passwd "$WS_USER" | cut -d: -f6)
+          runuser -u "$WS_USER" -- env -C "$home" HOME="$home" fresh --cmd config show \
+              >"$RUNNER_TEMP/fresh.json"
+          .github/fresh-config-check.sh "$home/.config/fresh/config.json" "$RUNNER_TEMP/fresh.json"
 
   # The rootless daemon and the firewall around it, which need a booted systemd: a container has
   # none, so this job runs on the runner itself, and ws sets the runner up as it would a machine.
