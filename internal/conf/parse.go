@@ -75,6 +75,16 @@ func lookup(name string) (key, bool) {
 	return key{}, false
 }
 
+// Value returns the value of the key named name, as the file gives it or by the key's default,
+// and nothing for a name that mac.conf has no key of.
+func (c Conf) Value(name string) string {
+	k, ok := lookup(name)
+	if !ok {
+		return ""
+	}
+	return *k.field(&c)
+}
+
 // unquote takes off a pair of quotes, " or ', around raw, and says whether there was one.
 func unquote(raw string) (string, bool) {
 	if len(raw) >= 2 && (raw[0] == '"' || raw[0] == '\'') && raw[len(raw)-1] == raw[0] {

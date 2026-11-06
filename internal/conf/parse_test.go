@@ -51,3 +51,15 @@ func TestLines(t *testing.T) {
 		t.Errorf("Parse took a key that goes with another: %v", errs)
 	}
 }
+
+func TestValue(t *testing.T) {
+	c, errs := Lines("WS_GIT_NAME=\"A B\"\n")
+	if len(errs) > 0 {
+		t.Fatal(errs)
+	}
+	for name, want := range map[string]string{"WS_GIT_NAME": "A B", "WS_TARGET": "lan", "WS_LAN": "", "NOT_A_KEY": ""} {
+		if got := c.Value(name); got != want {
+			t.Errorf("Value(%s) = %q; want %q", name, got, want)
+		}
+	}
+}
