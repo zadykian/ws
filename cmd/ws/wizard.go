@@ -134,7 +134,7 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 		term.Flush()
 	}
 	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, term, out, obs, prog, o, hand)
-	_, err := wizard.Run(ctx, p.machine, obs, stages, o.check, tmp, p.pid, closing)
+	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: obs, Check: o.check}, stages, tmp, p.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)
 }
