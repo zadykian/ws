@@ -132,7 +132,7 @@ func withoutLabel(lines []Line, label string) []Line {
 
 // settled returns the list with its locks worked out again, and a box ticked on every step that
 // its name runs. A step waits on an earlier one alone, so that one walk from the end reaches the
-// whole of a chain.
+// whole of a chain. A stage's box follows the steps it runs, and its lock holds them.
 func (l pickList) settled() pickList {
 	l.rows = slices.Clone(l.rows)
 	for i, r := range l.rows {
@@ -141,6 +141,7 @@ func (l pickList) settled() pickList {
 			l.rows[j].chosen = l.rows[j].chosen || r.chosen && r.sameChoice(l.rows[j])
 		}
 	}
+	l.tickStages()
 	for i := len(l.rows) - 1; i >= 0; i-- {
 		r := l.rows[i]
 		if r.waitsOn == "" || !r.on() {
@@ -153,6 +154,7 @@ func (l pickList) settled() pickList {
 			}
 		}
 	}
+	l.holdStages()
 	return l
 }
 

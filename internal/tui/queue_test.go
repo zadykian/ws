@@ -67,3 +67,11 @@ func TestAFilterLeavesAStepTheHeadingOfItsStage(t *testing.T) {
 		t.Errorf("lines = %v, want %v", got, want)
 	}
 }
+
+func TestAWaitOfTheSameNameStaysWithItsStage(t *testing.T) {
+	first := pickRow{stepRow: stepRow{name: "a"}, stage: "one"}
+	second := pickRow{stepRow: stepRow{name: "a"}, stage: "two"}
+	if first.sameChoice(second) {
+		t.Errorf("%+v and %+v are one choice", first, second)
+	}
+}
