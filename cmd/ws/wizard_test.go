@@ -141,7 +141,8 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 // that the wizard runs names the machine it acts on.
 func TestWizardStagesNameTheirMachines(t *testing.T) {
 	var out strings.Builder
-	stages := wizardStages(fakeProcess(), &out, nil, nil, nil, nil, "ws mac wizard", wizardOptions{}, &wizard.Hand{})
+	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws mac wizard", text: &out, hand: &wizard.Hand{},
+		sudo: &wizard.Sudo{}}, wizardOptions{})
 	onWs := 0
 	for _, s := range stages {
 		m, ok := wizard.MachineOf(s)

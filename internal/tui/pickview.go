@@ -111,7 +111,7 @@ func (l pickList) view(theme Theme, height int) string {
 	drawn := make([]string, 0, height)
 	for i := top; i < min(top+height, len(lines)); i++ {
 		gutter := "  "
-		if i == l.at {
+		if i == l.at && !l.blind {
 			gutter = "▸ "
 		}
 		drawn = append(drawn, gutter+l.render(theme, lines[i]))

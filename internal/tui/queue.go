@@ -85,3 +85,19 @@ func (r pickRow) headingIndent() string {
 	}
 	return ""
 }
+
+// facing returns the list turned to side, under the cursor that side had.
+func (l pickList) facing(side Side) pickList {
+	if side != l.side {
+		l.side, l.at, l.other = side, l.other, l.at
+	}
+	l.at = max(min(l.at, len(l.lines())-1), 0)
+	return l
+}
+
+// glance returns the list to draw side by, which shows no cursor out of focus.
+func (l pickList) glance(side Side) pickList {
+	seen := l.facing(side)
+	seen.blind = side != l.side
+	return seen
+}

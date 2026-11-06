@@ -69,6 +69,11 @@ func (r RunScreen) Init() tea.Cmd {
 
 // Update takes the run's events and lines, the clock, the window's size and the keys.
 func (r RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	return r.update(msg)
+}
+
+// update is Update by its own type, for a screen that draws a run its way.
+func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case step.Event:
 		r.steps = r.steps.take(msg)
@@ -101,7 +106,7 @@ func (r RunScreen) fitted() RunScreen {
 
 // pressed moves the focus or the window, or asks the session to stop. Up, Down and Home are no
 // buttons, as a row of all the keys would take two lines of an 80-column window.
-func (r RunScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 	var place int
 	r.footer, place = r.footer.Update(msg)
 	page := max(r.output.size.Height, 1)

@@ -163,16 +163,18 @@ chosen, `c` checks them and `q` leaves.
 
 `ws server apply` and `ws mac apply` open it at a terminal when they get no selection: no `--only`
 on the server, no STEP on the Mac, and no `--check` on either. The scan is a check of every step, run
-beside the list. `enter` then runs the steps chosen on the run screen, and `c` checks them there. A
-list left with `q`, or with nothing chosen, runs nothing and exits 0. A cut that follows a choice
-wins: nothing runs, and the status is that of the cut. The server's choice is the `--only` entries,
-`ROLE` or `ROLE/STEP`. The Mac's is a set of step names. `ssh again` has no row, as a check has no
-second plan: it runs, unless `ssh` is left out with changes. With `--plain`, `--json` or no terminal
-the command runs at once, as before.
+beside the list. `enter` then runs the steps chosen on the run screen, and `c` checks them there.
+Both are off with nothing chosen. A list left with `q` runs nothing and exits 0. A cut that follows
+a choice wins: nothing runs, and the status is that of the cut. The server's choice is the `--only`
+entries, `ROLE` or `ROLE/STEP`. The Mac's is a set of step names. `ssh again` has no row, as a check
+has no second plan: it runs, unless `ssh` is left out with changes. With `--plain` or no terminal
+the command runs at once, as before, and so does the server's with `--json`.
 
 A role's box follows its steps, and `[-]` says that some are on. A chosen step locks the step it
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so
 `!` in the status warns of changes left out in an earlier role.
+
+[The wizard's lists](tui-wizard.md) set two such lists side by side.
 
 ## The state screen
 
@@ -203,7 +205,7 @@ by step and name, across a read and a filter.
 
 The filter keeps the rows whose name holds its words, in any case. An open filter takes the keys
 alone. Enter keeps the words and closes it, and Esc drops them. Esc on the list drops a
-filter that stands. The wizard does not open the screen yet.
+filter that stands.
 
 The q key ends a read that runs, through its context, and Ctrl-C acts as above.
 
@@ -232,8 +234,9 @@ A screen owns the terminal, so a step's commands stay off it.
   command has the terminal until it ends. In plain mode it does what `Pass` does, but for a signal.
 - `Bridge.Foreground` runs such a command on a machine. A root command's ticket comes first, as
   only the screen can ask for it. Then the screen releases the terminal, and the command has ws's
-  own standard input and error. The screen draws again after it, even after a failure. A screen
-  that can't leave runs nothing.
+  own standard input and error. The line a step said last prints above it, once, as the pane is
+  out of sight: `ssh-keygen`'s directions are that line. The screen draws again after it, even
+  after a failure. A screen that can't leave runs nothing.
 - The wizard's steps hold it as `F` beside `M`. It runs `ssh-keygen` and `ssh-add` for the Mac's
   key, gh's login, and `claude auth login` over `ssh -t`. With no `F`, a step does `M.Pass`.
 - A run that ends sends such a command SIGTERM, and kills it 2 seconds later. A kill alone would

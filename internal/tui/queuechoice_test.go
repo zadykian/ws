@@ -39,6 +39,22 @@ func TestALockedStageRunsWhole(t *testing.T) {
 	}
 }
 
+func TestAStageRunsWholeByATickAndNotByALockAlone(t *testing.T) {
+	for _, tc := range []struct {
+		names, want []string
+	}{
+		{[]string{"Signing"}, nil},
+		{[]string{"ssh"}, nil},
+		{[]string{"Signing", "ssh"}, []string{"Run"}},
+		{[]string{"base", "ssh"}, []string{"Run"}},
+		{[]string{"one", "base", "ssh"}, []string{"Setup", "Run"}},
+	} {
+		if got := choosing(newQueue(testStages()), tc.names...).ticked(); !slices.Equal(got, tc.want) {
+			t.Errorf("%q ticks %q, want %q", tc.names, got, tc.want)
+		}
+	}
+}
+
 func TestARoleUnreadIsChosenByItsName(t *testing.T) {
 	got := choosing(newQueue(testStages()), "ssh").partial()["Run"]
 	if want := []string{"ssh"}; !slices.Equal(got, want) {
@@ -60,5 +76,37 @@ func TestALockedStageHoldsItsBox(t *testing.T) {
 	l := atRow(choosing(newQueue(testStages()), "Signing"), "Run").toggled()
 	if !l.rows[5].on() || !l.rows[6].on() {
 		t.Errorf("rows = %+v", l.rows)
+	}
+}
+
+func TestWhatNoScanReachedStartsChosen(t *testing.T) {
+	l := newQueue(testStages()).take(planned("", "Tools", 0)).opened()
+	if want := slices.Concat(slices.Repeat([]string{"[#]"}, 8), []string{"[x]"}); !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+}
+
+func TestRolesUnreadFollowAStageThatFoundNothing(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base"}}}}
+	if got := newQueue(stages).take(planned("", "Run", 0)).opened().only(); len(got) != 0 {
+		t.Errorf("only = %q", got)
+	}
+}
+
+func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	l := newQueue(stages).take(planned("base", "one", 0)).take(planned("base", "two", 1)).
+		take(planned("", "Run", 0, oneChange("a"))).opened()
+	if want := []string{"[x]", "[x]", "[x]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
+	}
+}
+
+func TestAStageRunsWhatTheScanFound(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	l := newQueue(stages).take(planned("base", "one", 0, oneChange("a"))).take(planned("base", "two", 1)).
+		take(planned("", "Run", 0)).opened()
+	if want := []string{"[x]", "[x]", "[ ]"}; !slices.Equal(boxes(l), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
 }

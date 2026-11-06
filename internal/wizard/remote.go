@@ -24,7 +24,8 @@ type Remote struct {
 	status map[string]string
 }
 
-// args returns ssh's arguments and stdin for the operation. No argument of op holds a blank or a quote.
+// args returns ssh's arguments and stdin for the operation. ssh hands ws's shell one line, so an
+// argument of op that holds a blank or a quote comes quoted for it, as onlyArgs does.
 func (r *Remote) args(op []string) ([]string, []byte, error) {
 	return r.command(append([]string{"sh", "-s", "--"}, op...), r.Script)
 }

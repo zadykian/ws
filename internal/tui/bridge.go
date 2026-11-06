@@ -75,6 +75,8 @@ type Bridge struct {
 	// suspend and resume take the terminal from the screen and give it back, as Run sets them. Nil
 	// ones leave it where it is.
 	suspend, resume func() error
+	// said is what a step said last, since it started: a command that talks may need it to read by.
+	said atomic.Pointer[string]
 	// lasting holds the lines that SayLasting kept for hand.
 	lasting sync.Map
 	// hand keeps what ByHand gets, to print once the terminal is back.
@@ -133,7 +135,9 @@ func (b *Bridge) ask(ctx context.Context, p prompt) (string, error) {
 
 // Say sends a line.
 func (b *Bridge) Say(format string, a ...any) {
-	b.send(Line{Said, fmt.Sprintf(format, a...)})
+	text := fmt.Sprintf(format, a...)
+	b.said.Store(&text)
+	b.send(Line{Said, text})
 }
 
 // Raw sends a line to copy.
@@ -189,17 +193,21 @@ func (b *Bridge) Observe(e step.Event) {
 			b.send(l)
 		}
 	case e.Kind == step.Started:
-		b.Say("%s: applying %d change(s)", name, len(e.Changes))
+		b.said.Store(nil)
+		b.send(Line{Said, fmt.Sprintf("%s: applying %d change(s)", name, len(e.Changes))})
 	case e.Kind == step.Skipped && e.After != "":
 		b.Say("%s: after %s", name, e.After)
 	}
 	b.send(e)
 }
 
-// changeLine is a change as --check shows it. One of several lines holds a file's diff under its
-// first line.
+// changeLine is a change as --check shows it, under the name of its step, which a wizard's stage
+// writes in the change itself. One of several lines holds a file's diff under its first line.
 func changeLine(name string, c step.Change) Line {
-	text := name + ": " + strings.TrimSuffix(c.String(), "\n")
+	text := strings.TrimSuffix(c.String(), "\n")
+	if !strings.HasPrefix(text, name+": ") {
+		text = name + ": " + text
+	}
 	if strings.Contains(text, "\n") {
 		return Line{Diffed, text}
 	}
@@ -222,6 +230,16 @@ func (b *Bridge) ByHand(format string, a ...any) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	b.hand.ByHand(format, a...)
+}
+
+// directions prints what a step said last on the terminal that the screen left, once: a command
+// that talks takes over at once, and the pane that shows the line stands behind it.
+func (b *Bridge) directions() {
+	if text := b.said.Swap(nil); text != nil {
+		b.lock.Lock()
+		defer b.lock.Unlock()
+		b.hand.Say("%s", *text)
+	}
 }
 
 // flush prints what ByHand kept. A run left behind may still call ByHand, hence the lock.

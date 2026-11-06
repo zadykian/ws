@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
 )
 
@@ -25,7 +27,7 @@ func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.machine = m
 	var got lastEvents
-	s := wizardSetup(p, io.Discard, &effecttest.Out{}, &got, "/h/mac.conf")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, "/h/mac.conf")
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents
@@ -34,5 +36,49 @@ func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	}
 	if !slices.Equal(got, want) {
 		t.Errorf("steps = %q, want %q", got, want)
+	}
+}
+
+// leftEvents keeps the steps that a run left out, and those that ended unreached.
+type leftEvents struct{ left, skipped []string }
+
+func (l *leftEvents) Observe(e step.Event) {
+	switch {
+	case e.LeftOut && e.Kind >= step.Done:
+		l.left = append(l.left, e.Step)
+	case e.Kind == step.Skipped && e.After == "" && e.Err == nil:
+		l.skipped = append(l.skipped, e.Step)
+	}
+}
+
+func setupOf(t *testing.T, e wizardEffects) *wizard.Setup {
+	t.Helper()
+	m := effecttest.NewMachine()
+	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
+	e.p = withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	e.p.machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
+	return wizardSetup(e, "/h/mac.conf")
+}
+
+func TestWizardSetupLeavesOutWhatTheRunDoes(t *testing.T) {
+	var got leftEvents
+	left := func(parent, name string) bool { return parent == "ws mac apply" && name == "ssh" }
+	s := setupOf(t, wizardEffects{obs: &got, left: left})
+	// The fake machine fails ssh's plan, which a step left out survives.
+	_, _ = s.Run(context.Background(), true)
+	if want := []string{"ssh"}; !slices.Equal(got.left, want) {
+		t.Errorf("left out = %q, want %q", got.left, want)
+	}
+}
+
+func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
+	var got leftEvents
+	stopped := errors.New("stopped")
+	s := setupOf(t, wizardEffects{obs: &got, stop: func() error { return stopped }})
+	if _, err := s.Run(context.Background(), true); !errors.Is(err, stopped) {
+		t.Errorf("err = %v, want the stop", err)
+	}
+	if len(got.skipped) != len(setupStepNames(fakeProcess())) {
+		t.Errorf("unreached = %q; want every step", got.skipped)
 	}
 }

@@ -72,8 +72,11 @@ type pickList struct {
 	words string
 	// at is the cursor's place in lines.
 	at int
-	// side is the list of a queue that lines shows.
-	side Side
+	// side is the list of a queue that lines shows, and other the cursor of the side out of sight.
+	side  Side
+	other int
+	// blind draws no cursor, on the side out of focus.
+	blind bool
 }
 
 // newPickList returns the list of groups, each step open and left out.

@@ -21,6 +21,9 @@ func (s pickScreen) notes() []Line {
 	if s.problem != "" {
 		notes = append(notes, Line{Warned, "The scan stopped: " + s.problem})
 	}
+	if s.unread != "" {
+		notes = append(notes, Line{Warned, "Not scanned: " + s.unread})
+	}
 	if held := s.list.passedOver(); len(held) > 0 {
 		text := "warning: changes left out in " + strings.Join(held, ", ") +
 			", ahead of a step chosen. It can fail without them."
@@ -30,7 +33,11 @@ func (s pickScreen) notes() []Line {
 	if !ok || line.heading {
 		return notes
 	}
-	return append(notes, s.list.rows[line.row].notes()...)
+	row := s.list.rows[line.row]
+	if s.list.partial()[row.name] != nil && row.number > 0 {
+		notes = append(notes, Line{Said, "Runs in part, so it stays pending."})
+	}
+	return append(notes, row.notes()...)
 }
 
 // notes says why the step stands as it does, then what the scan printed of it.
