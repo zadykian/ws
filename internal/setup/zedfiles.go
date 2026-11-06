@@ -38,8 +38,8 @@ func (z *Zed) files() []step.Change {
 		}
 		cs = append(cs, MakeDir{dir, 0o755})
 	}
-	cs = append(cs, z.owned(global, append([]byte(zedHeader+"\n"), z.Settings...), zedHeader, true)...)
-	cs = append(cs, z.owned(dir+"/keymap.json", z.Keymap, zedKeymapMark, false)...)
+	cs = append(cs, z.owned(global, z.global(), zedOwn(zedHeader, true))...)
+	cs = append(cs, z.owned(dir+"/keymap.json", z.Keymap, zedOwn(zedKeymapMark, false))...)
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
 	}
@@ -49,16 +49,27 @@ func (z *Zed) files() []step.Change {
 	return cs
 }
 
-// owned plans a file that ws replaces while its first line is ws's: equal to mark, or starting with
-// it where exact is false. A file with another first line is left, with a warning.
-func (z *Zed) owned(file string, want []byte, mark string, exact bool) []step.Change {
+// global is what global_settings.json holds.
+func (z *Zed) global() []byte { return append([]byte(zedHeader+"\n"), z.Settings...) }
+
+// zedOwn returns the test of a file's first line: equal to mark, or starting with it where exact is
+// false.
+func zedOwn(mark string, exact bool) func([]byte) bool {
+	return func(have []byte) bool {
+		first, _, _ := strings.Cut(string(have), "\n")
+		return first == mark || (!exact && strings.HasPrefix(first, mark))
+	}
+}
+
+// owned plans a file that ws replaces while own passes it. A file with another first line is left,
+// with a warning.
+func (z *Zed) owned(file string, want []byte, own func([]byte) bool) []step.Change {
 	info, err := z.M.Stat(file)
 	if err != nil {
 		return []step.Change{Write{file, nil, want, false, 0o644}}
 	}
 	old, _ := z.M.ReadFile(file)
-	first, _, _ := strings.Cut(string(old), "\n")
-	if first != mark && (exact || !strings.HasPrefix(first, mark)) {
+	if !own(old) {
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's", file)
 		return nil
 	}

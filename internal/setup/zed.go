@@ -55,6 +55,8 @@ func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
 	dir := z.Home + "/.config/zed"
 	return gather(ctx, z.casks().report(ctx, "zed", "Zed.app", z.Home),
 		userPath{M: z.M, Kind: step.DirItem, Path: dir},
+		userFile{M: z.M, Path: dir + "/global_settings.json", Text: z.global(), Mode: 0o644, Own: zedOwn(zedHeader, true)},
+		userFile{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
 		userPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
 
