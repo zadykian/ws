@@ -1,8 +1,9 @@
 # The wizard's lists
 
-[The list of steps](tui.md#the-list-of-steps) holds the keys these lists share. They are code that
-no command opens yet, with tests of their own: `ws mac wizard` prints its lines until it takes them
-up.
+[The list of steps](tui.md#the-list-of-steps) holds the keys these lists share. `ws mac wizard`
+opens them at a terminal, and `--plain` or no terminal keeps its lines. `--check` goes straight to
+its run, on the run screen. `--update` runs ahead of any screen, on lines, as the new ws takes this
+one's place and opens them itself.
 
 The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine
 a stage runs on. A narrow window stacks them, and one too short for that keeps the list in focus.
@@ -16,7 +17,10 @@ the values' form at any time, a scan under way included. `q` runs nothing.
 
 Each stage's box follows its steps, and `[-]` says that some are on. A stage run in part stays
 pending, and the detail says so. A stage that a chosen one waits on is locked as `[#]`, with its
-steps, as that one needs it whole.
+steps, as that one needs it whole. Cable locks ws mac apply too, whose steps it applies itself.
+
+ws's run with every step on and one of them ticked runs once more, whatever its last run left, as a
+step can drift after it. A lock alone leaves a good last run as it stands.
 
 Under the lists, a strip of a third of the window holds the detail, between 5 and 12 lines. A window
 under 14 lines leaves it out.
@@ -33,9 +37,20 @@ stage it reaches. So does all that it never reached, as a check stops short on a
 found clean keeps the rows it never named off. A stage with work and no row on, as ws's run can be,
 turns on whole.
 
+The scan is `--check`, so it asks what a check asks, over the lists. sudo's password on ws carries
+over to the run, and the forms drop it, as they may change the way to ws. The values Answers rehearses
+go nowhere, and the run asks them again: `e` is the way to write them first. ws's prepare steps have
+no row, as they run whatever the roles do and `--only` refuses their name.
+
 ## The run
 
 The run keeps both lists, each with the boxes it left with. A step's mark moves as it runs, and the
 cursor follows it across the lists. The strip holds what the run prints, and a window too short for
 the strip shows the lists alone. The bar and the count are of stages. The keys and the stop are
 [the run screen's](tui.md#the-run-screen).
+
+A stage run in part leaves the rest out as a run does: ws mac apply's steps by the run's filter, and
+ws's roles by `--only` to `ws server apply`. A stop in ws's run ends the Mac's side alone. The unit
+goes on on ws, the run says so, and the next wizard follows it. Where that unit runs part of ws, the
+next wizard's other steps wait for its end. A signal ends with status 1, as in
+[plain mode](tui.md#the-terminal-comes-back).

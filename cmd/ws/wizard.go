@@ -27,7 +27,8 @@ func newWizardCmd(p process) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "wizard",
 		Short: "set the Mac up in stages",
-		Long: "The stages run under a lock, and what stays by hand is listed after a run in which a stage " +
+		Long: "At a terminal the stages open as two lists, by the machine each runs on, and the ones chosen run. " +
+			"The stages run under a lock, and what stays by hand is listed after a run in which a stage " +
 			"acted. Under --check each stage prints what it would do and changes nothing.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runWizard(c, p, o) },

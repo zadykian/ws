@@ -12,12 +12,12 @@ installs what else it needs, as yourself:
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
 ```
 
-Then `~/.local/bin/ws mac wizard` runs the wizard, with `--check` to see what it would do.
-Each stage reads what it sets up, acts where that isn't done, and reads it again. So a run takes up
-where the last one stopped, and in a second no stage acts. `--check` prints what each stage would
-do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`, and keeps the Mac
-from idle sleep. A run in which a stage acted ends with what stays by hand. The stages, in order,
-the first two of which install what the rest needs:
+Then `~/.local/bin/ws mac wizard` opens [the stages' lists](tui-wizard.md), with `--check` to see
+what it would do. Each stage reads what it sets up, acts where that isn't done, and reads it again.
+So a run takes up where the last one stopped, and in a second no stage acts. `--check` prints what
+each stage would do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in `$TMPDIR`,
+and keeps the Mac from idle sleep. A run in which a stage acted ends with what stays by hand. The
+stages, in order, the first two of which install what the rest needs:
 
 1. Tools, then Homebrew: the Command Line Tools, through the dialog that `xcode-select --install`
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
