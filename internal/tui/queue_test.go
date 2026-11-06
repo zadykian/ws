@@ -75,3 +75,21 @@ func TestAWaitOfTheSameNameStaysWithItsStage(t *testing.T) {
 		t.Errorf("%+v and %+v are one choice", first, second)
 	}
 }
+
+func TestEachSideKeepsItsCursor(t *testing.T) {
+	l := newQueue(testStages())
+	l.at = 3
+	l = l.facing(WsSide)
+	if l.at != 0 || l.other != 3 {
+		t.Errorf("at %d, other %d", l.at, l.other)
+	}
+	if l = l.facing(MacSide); l.at != 3 {
+		t.Errorf("at %d", l.at)
+	}
+	if got := l.glance(WsSide).view(testTheme, 9); strings.Contains(got, "▸") {
+		t.Errorf("a cursor out of focus:\n%s", got)
+	}
+	if got := l.glance(MacSide).view(testTheme, 9); !strings.Contains(got, "▸") {
+		t.Errorf("no cursor:\n%s", got)
+	}
+}

@@ -51,3 +51,31 @@ func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 		t.Errorf("said = %+v", got)
 	}
 }
+
+func TestARunMovesTheMarksAndLeavesTheBoxes(t *testing.T) {
+	l := choosing(newQueue(testStages()), "Tools")
+	l = l.follow(step.Event{Kind: step.Started, Step: "Sudo", Index: 2})
+	if l.side != WsSide || l.at != 0 {
+		t.Errorf("side %d, at %d", l.side, l.at)
+	}
+	l = l.follow(step.Event{Kind: step.Done, Step: "Tools", Index: 0, LeftOut: true})
+	if got := drawn(l, MacSide)[0]; got != " 1 [x] ○ Tools" {
+		t.Errorf("row = %q", got)
+	}
+}
+
+func TestARunLearnsTheStepsOfARoleAndOpensOneAgain(t *testing.T) {
+	event := step.Event{Kind: step.Planned, Parent: "ssh", Step: "Keys"}
+	l := newQueue(testStages()).follow(event)
+	if got := drawn(l, WsSide)[3:]; !slices.Equal(got, []string{"     [ ] ssh", "       [ ] · Keys"}) {
+		t.Errorf("list = %q", got)
+	}
+	event.Kind = step.Done
+	if got := l.follow(event).rows[l.place(event)].state; got != stepSame {
+		t.Errorf("state = %d", got)
+	}
+	event.Kind = step.Planned
+	if got := l.follow(event).rows[l.place(event)].state; got != stepOpen {
+		t.Errorf("state = %d", got)
+	}
+}
