@@ -169,7 +169,7 @@ which the case never runs.
 
 ## The Mac
 
-Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed.json` under the
+Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be the golden file under the
 header, and a `settings.json` that is there must stay byte for byte.
 Case 48 checks its `keymap.json`: the golden keymap whole, a foreign file left with one warning,
 and ws's back once the foreign one goes.

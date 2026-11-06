@@ -1,35 +1,29 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
 {
-  "terminal": { "shell": { "program": {{.Terminal}} } },
+  "terminal": { "shell": { "program": "/usr/local/lib/ws/zed/terminal" } },
   "node": { "path": "/usr/bin/node", "npm_path": "/usr/bin/npm" },
   "lsp": {
     "gopls": {
-      "binary": { "path": {{.Gopls}}, "arguments": ["-mode=stdio"] }
+      "binary": { "path": "/home/ws/go/bin/gopls", "arguments": ["-mode=stdio"] }
     },
     "roslyn": {
-      "binary": {
-        "path": {{.Roslyn}},
-        "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"]
-      }
+      "binary": { "path": "/home/ws/.dotnet/tools/roslyn-language-server", "arguments": ["--stdio", "--autoLoadProjects", "--telemetryLevel", "off"] }
     },
     "postgres-language-server": {
       "binary": { "path": "/usr/local/bin/postgres-language-server", "arguments": ["lsp-proxy"] }
     },
     "ansible": {
-      "binary": { "path": {{.AnsibleLS}}, "arguments": ["--stdio"] }
+      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/ansible-language-server", "arguments": ["--stdio"] }
     },
     "vscode-html-language-server": {
-      "binary": { "path": {{.HTMLLS}}, "arguments": ["--stdio"] }
+      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/vscode-html-language-server", "arguments": ["--stdio"] }
     },
     "dockerfile-language-server": {
-      "binary": { "path": {{.DockerfileLS}}, "arguments": ["--stdio"] }
+      "binary": { "path": "/home/ws/.local/lib/language-servers/node_modules/.bin/docker-langserver", "arguments": ["--stdio"] }
     },
     "docker-language-server": {
       "binary": { "path": "/usr/local/bin/docker-language-server", "arguments": ["start", "--stdio"] },
-      "initialization_options": {
-        "telemetry": "off",
-        "dockerfileExperimental": { "removeOverlappingIssues": true }
-      }
+      "initialization_options": {"dockerfileExperimental":{"removeOverlappingIssues":true},"telemetry":"off"}
     }
   },
   "languages": {
@@ -49,5 +43,5 @@
       "docker-compose.*.yml"
     ]
   },
-  "dap": { "Delve": { "binary": {{.Dlv}} } }
+  "dap": { "Delve": { "binary": "/home/ws/go/bin/dlv" } }
 }

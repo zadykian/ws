@@ -34,8 +34,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   for SQL Server and Ansible.
 - [helix-keymap.md](../../docs/helix-keymap.md) indexes the keymap's pages in
   `docs/helix-keymap/`.
-- [zed-keymap.md](../../docs/zed-keymap.md) indexes the pages of Zed's keymap in
-  `docs/zed-keymap/`.
+- [keymap.md](../../docs/keymap.md) indexes the keymap's pages in `docs/keymap/`.
 - [The dashboards](../../internal/server/signoz/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
 - ws is public, and names no server ([mac.conf](../../docs/mac.md#macconf)). So no doc holds a

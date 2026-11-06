@@ -1,0 +1,17 @@
+---
+# The language servers that devtools installs, which each editor names by path. A server's name is
+# the key of devtools' paths. Its languages are those of filetypes.yaml and the editors' own.
+- {server: gopls, languages: [go], args: [-mode=stdio]}
+- server: roslyn-language-server
+  languages: [csharp]
+  args: [--stdio, --autoLoadProjects, --telemetryLevel, 'off']
+- {server: postgres-language-server, languages: [sql], args: [lsp-proxy]}
+- {server: ansible-language-server, languages: [ansible], args: [--stdio]}
+- {server: vscode-html-language-server, languages: [html], args: [--stdio]}
+- {server: dockerfile-language-server, languages: [dockerfile], args: [--stdio]}
+- server: docker-language-server
+  languages: [dockerfile, docker-compose]
+  args: [start, --stdio]
+  init:
+    telemetry: 'off'
+    dockerfileExperimental: {removeOverlappingIssues: true}

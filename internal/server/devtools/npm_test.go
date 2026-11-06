@@ -1,4 +1,4 @@
-package zed
+package devtools
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-const wsDir = "/home/ws/.local/lib/zed-servers"
+const wsDir = "/home/ws/.local/lib/language-servers"
 
 // npmCommand is the command line that the fake machine answers for the user's npm ci.
 func npmCommand(user, home string) string {
@@ -31,7 +31,7 @@ func newInstall(m *effecttest.Machine) npmInstall {
 }
 
 func TestTheDirectoriesPlanInOrderForAHomeWithNoLocal(t *testing.T) {
-	m := run(t, "ws", "/home/ws")
+	m := runServers(t, "ws", "/home/ws")
 	var made []string
 	for _, c := range m.Calls {
 		if p, ok := strings.CutPrefix(c, "mkdir "); ok && strings.Contains(p, "/.local") {
@@ -108,11 +108,11 @@ func TestAFailedNpmCiLeavesNoStamp(t *testing.T) {
 	}
 }
 
-func TestNpmApplyNamesDevtoolsWhereNpmIsMissing(t *testing.T) {
+func TestNpmApplyNamesNodeWhereNpmIsMissing(t *testing.T) {
 	m := effecttest.NewMachine()
 	changes, _ := newInstall(m).Plan(context.Background())
 	err := changes[0].Apply(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "devtools") {
+	if err == nil || !strings.Contains(err.Error(), "Node package") {
 		t.Errorf("err %v", err)
 	}
 }
@@ -152,5 +152,19 @@ func TestTheFormatterLinkPlansBeforeItsTargetExists(t *testing.T) {
 	}
 	if again, err := link.Plan(context.Background()); err != nil || len(again) != 0 {
 		t.Errorf("a dangling link plans %v, %v", again, err)
+	}
+}
+
+func TestTheServerFilesRefuseALink(t *testing.T) {
+	for _, link := range []string{wsDir, wsDir + "/package.json"} {
+		m := effecttest.NewMachine()
+		m.Links[link] = "/srv/target"
+		parts, err := serverFiles(m, host.User{Name: "ws", Home: "/home/ws"}, 1000, 1000)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := parts[0].Plan(context.Background()); err == nil {
+			t.Errorf("a link at %s: no error", link)
+		}
 	}
 }

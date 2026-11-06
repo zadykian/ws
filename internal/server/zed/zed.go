@@ -4,20 +4,16 @@ package zed
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
-	"runtime"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
+	editorzed "github.com/zadykian/ws/internal/editor/zed"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
-
-//go:embed settings.json.tmpl
-var files embed.FS
 
 //go:embed files/terminal files/tmux.conf
 var terminalFiles embed.FS
@@ -51,11 +47,6 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 		host.Group{Title: "Zed open-file limit", Parts: []host.Resource{
 			host.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
 		}},
-		download(m, runtime.GOARCH, "postgres-language-server", pgls, pglsURL),
-		download(m, runtime.GOARCH, "docker-language-server", dockerLS, dockerLSURL),
-		user.Owned(m, "Zed npm servers", "", func(uid, gid int) ([]host.Resource, error) {
-			return serverFiles(m, user, uid, gid)
-		}),
 	}
 }
 
@@ -70,24 +61,10 @@ func limitsFile(v values.Values) []byte {
 		"%s soft nofile %d\n", v.User, v.Zed.Nofile))
 }
 
-// quote returns the string as a JSON string.
-func quote(s string) string {
-	b, _ := json.Marshal(s)
-	return string(b)
-}
-
-// settingsFile renders ~/.config/zed/settings.json: the servers by path, as devtools installs
-// them. The server's file wins over the Mac's, which Zed forwards.
+// settingsFile renders ~/.config/zed/settings.json from the catalogue of language servers: each by
+// the path devtools installs it at. The server's file wins over the Mac's, which Zed forwards.
 func settingsFile(v values.Values) ([]byte, error) {
-	return host.Render(files, "settings.json.tmpl", struct{ Terminal, Gopls, Roslyn, Dlv, AnsibleLS, HTMLLS, DockerfileLS string }{
-		Terminal:     quote(terminalPath),
-		Gopls:        quote(devtools.Gopls(v.Home)),
-		Roslyn:       quote(devtools.Roslyn(v.Home)),
-		Dlv:          quote(devtools.Dlv(v.Home)),
-		AnsibleLS:    quote(serverBin(v.Home, "ansible-language-server")),
-		HTMLLS:       quote(serverBin(v.Home, "vscode-html-language-server")),
-		DockerfileLS: quote(serverBin(v.Home, "docker-langserver")),
-	})
+	return editorzed.ServerSettings(devtools.ServerPaths(v.Home), devtools.Dlv(v.Home), terminalPath)
 }
 
 // terminalParts installs the wrapper at mode 0755 and its tmux.conf at 0644. Both parents are made

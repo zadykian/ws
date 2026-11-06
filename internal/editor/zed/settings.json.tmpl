@@ -1,0 +1,23 @@
+// Written by github.com/zadykian/ws, whose next run replaces any change made here.
+{
+  "terminal": { "shell": { "program": {{.Terminal}} } },
+  "node": { "path": "/usr/bin/node", "npm_path": "/usr/bin/npm" },
+  "lsp": {
+{{- range $i, $s := .Servers}}{{if $i}},{{end}}
+    {{$s.Key}}: {
+      "binary": { "path": {{$s.Path}}, "arguments": {{$s.Args}} }{{if $s.Init}},
+      "initialization_options": {{$s.Init}}{{end}}
+    }
+{{- end}}
+  },
+  "languages": {
+    "HTML": { "formatter": "language_server" },
+    "SQL": {
+      "language_servers": ["postgres-language-server", "..."],
+      "formatter": { "language_server": { "name": "postgres-language-server" } }
+    },
+    "Docker Compose": { "formatter": { "language_server": { "name": "docker-language-server" } } }
+  },
+{{.FileTypes}},
+  "dap": { "Delve": { "binary": {{.Dlv}} } }
+}

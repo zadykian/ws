@@ -10,8 +10,8 @@ Zed applies no project settings until the worktree is trusted
 ## A SQL Server project
 
 Zed's SQL language serves PostgreSQL. A T-SQL project turns its language server off and formats
-with sql-formatter, which the `zed` role links to `/usr/local/bin/sql-formatter`. The settings name
-the bare command, so the file stays the same on every machine.
+with sql-formatter, which the `devtools` role links to `/usr/local/bin/sql-formatter`. The
+settings name the bare command, so the file stays the same on every machine.
 
 ```jsonc
 {
@@ -112,7 +112,7 @@ Check the file:
 - In Zed, `site.yml` and `roles/NAME/tasks/main.yml` say Ansible in the status bar. A workflow
   under `.github/workflows` and `.ansible-lint` say YAML.
 - `dev: open language server logs` lists `ansible`, and `pgrep -af ansible-language-server` on ws
-  shows the binary under `~/.local/lib/zed-servers`.
+  shows the binary under `~/.local/lib/language-servers`.
 
 Limits:
 

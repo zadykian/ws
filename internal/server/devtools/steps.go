@@ -1,6 +1,8 @@
 package devtools
 
 import (
+	"runtime"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/secrets"
@@ -8,13 +10,14 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Steps returns the role's steps: the apt repositories, the packages from them, gh's login, Go and rustup.
+// Steps returns the role's steps: the apt repositories, the packages from them, gh's login, Go,
+// the language servers and rustup.
 // The packages wait on the repositories, so a check run says "after Devtools repositories" where a
 // repository is still to come, as apt may not know the packages then.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	const repositories = "Devtools repositories"
 	user := host.User{Name: v.User, Home: v.Home}
-	return []step.Step{
+	steps := []step.Step{
 		host.Group{Title: repositories, Parts: []host.Resource{Repositories{M: m}}},
 		host.Group{Title: "Devtools packages", After: repositories, Parts: []host.Resource{
 			// Node at its major version, from NodeSource's repository; gh from Ubuntu's archive;
@@ -37,9 +40,22 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 		host.Group{Title: "Devtools roslyn-language-server", After: "Devtools packages", Parts: []host.Resource{
 			roslynTool{M: m, User: user, Path: Roslyn(v.Home)},
 		}},
-		host.Group{Title: "Devtools rustup", Parts: []host.Resource{
-			Rustup{M: m, User: v.User, Home: v.Home},
-		}},
+	}
+	return append(append(steps, serverSteps(m, user)...), host.Group{Title: "Devtools rustup", Parts: []host.Resource{
+		Rustup{M: m, User: v.User, Home: v.Home},
+	}})
+}
+
+// serverSteps returns the steps of the language servers that editors name by path: the downloads of
+// the SQL and Docker servers, and the npm servers, which wait on the Node package. They install
+// apart from Steps so that a test can run them with no stand-ins for Go and the packages.
+func serverSteps(m effect.Machine, user host.User) []step.Step {
+	return []step.Step{
+		download(m, runtime.GOARCH, "postgres-language-server", pgls, pglsURL),
+		download(m, runtime.GOARCH, "docker-language-server", dockerLS, dockerLSURL),
+		user.Owned(m, "Devtools npm servers", "Devtools packages", func(uid, gid int) ([]host.Resource, error) {
+			return serverFiles(m, user, uid, gid)
+		}),
 	}
 }
 

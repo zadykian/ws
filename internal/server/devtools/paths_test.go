@@ -1,6 +1,26 @@
 package devtools
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zadykian/ws/internal/editor"
+)
+
+func TestServerPathsNameEachServerOfTheCatalogue(t *testing.T) {
+	paths := ServerPaths("/srv/x")
+	if len(paths) != 7 {
+		t.Fatalf("%d paths: %v", len(paths), paths)
+	}
+	for name, want := range map[string]string{
+		"gopls":                      "/srv/x/go/bin/gopls",
+		"postgres-language-server":   "/usr/local/bin/postgres-language-server",
+		"dockerfile-language-server": "/srv/x/.local/lib/language-servers/node_modules/.bin/docker-langserver",
+	} {
+		if paths[name] != want {
+			t.Errorf("%s: %q, want %q", name, paths[name], want)
+		}
+	}
+}
 
 func TestPathsFollowTheHome(t *testing.T) {
 	tests := map[string]string{
@@ -11,6 +31,26 @@ func TestPathsFollowTheHome(t *testing.T) {
 	for got, want := range tests {
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
+		}
+	}
+}
+
+func TestEachServerOfTheCatalogueHasAPath(t *testing.T) {
+	catalogue, err := editor.LoadServers()
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := ServerPaths("/srv/x")
+	named := map[string]bool{}
+	for _, s := range catalogue {
+		named[s.Name] = true
+		if paths[s.Name] == "" {
+			t.Errorf("%s has no path", s.Name)
+		}
+	}
+	for name := range paths {
+		if !named[name] {
+			t.Errorf("%s is not in the catalogue", name)
 		}
 	}
 }

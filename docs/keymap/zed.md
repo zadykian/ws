@@ -1,25 +1,17 @@
 # Zed's F12 keymap
 
-F12 is the keymap GoLand and Rider use here: `F12.xml`, 523 actions with keys, over the 112 of
-IntelliJ's default keymap, `$default.xml`, that F12 leaves alone. That makes 635 actions with
-817 keystrokes. The golden file [`keymap.json`](../internal/editor/zed/testdata/keymap.json) gives Zed the keys of 271 of them,
-and the pages below say what becomes of the other 364. The Mac step writes the file to
-`~/.config/zed/keymap.json` ([The keymap](mac-zed.md#the-keymap)).
-
-An action that `F12.xml` names gets exactly F12's keys. One it does not name keeps
-`$default.xml`'s. Ctrl stays Ctrl and Cmd stays Cmd.
-
-The file is a snapshot of F12 as of 2026-10-23. It follows GoLand 2026.2's settings over the
-defaults of build 2026.2.3 (GO-262.10968.67). `F12.xml` stays in GoLand's and Rider's settings.
-No gate notices a drift, and no generator is in `tools/`.
+F12's 635 actions carry 817 keystrokes ([where F12 comes from](../keymap.md#where-f12-comes-from)).
+The adapter gives Zed the keys of 271 of them, and the pages below say what becomes of the other
+364. The golden file is [`keymap.json`](../../internal/editor/zed/testdata/keymap.json). The Mac
+step writes the file to `~/.config/zed/keymap.json` ([The keymap](../mac-zed.md#the-keymap)).
 
 ## The pages
 
-- [The Zed keymap on a Mac](zed-keymap/macos.md): the keys a Mac keyboard lacks, the F-keys and
+- [The Zed keymap on a Mac](zed-macos.md): the keys a Mac keyboard lacks, the F-keys and
   Fn, and macOS's own shortcuts on F12's keys.
-- [The actions the keymap binds](../internal/editor/keymap/): the data, by topic, with F12's ids.
+- [The actions the keymap binds](../../internal/editor/keymap/): the data, by topic, with F12's ids.
 - The actions the keymap lacks, in the order of their names, upper and lower case alike:
-  [A to J](zed-keymap/lacks-a-j.md) and [L to Z](zed-keymap/lacks-l-z.md).
+  [A to J](zed-lacks-a-j.md) and [L to Z](zed-lacks-l-z.md).
 
 The statuses are `bind`, the same behaviour, and `approx`, the closest Zed action. Then come `zed`,
 where Zed's own default already does it, and `skip`, where Zed has the action and the binding is
@@ -38,7 +30,7 @@ Zed on macOS, with a US layout:
   and `ctrl-?`. macOS reports it so, and `shift-alt-[` never matches. Shift with a letter stays.
 - Zed does not tell numpad keys apart ([zed#11948](https://github.com/zed-industries/zed/issues/11948)).
 - A Mac keyboard has no Insert, Pause, Break or menu key, so six F12 keystrokes drop.
-- F-keys need Fn, or a setting of System Settings. [The Mac's page](zed-keymap/macos.md) has both.
+- F-keys need Fn, or a setting of System Settings. [The Mac's page](zed-macos.md) has both.
 - Alt with a letter matches by key, so an unbound Alt key still types its character.
 
 ## How Zed picks a binding
@@ -127,10 +119,3 @@ Each action got a hand-made decision: status, Zed action, context and note. The 
 - Zed's `assets/keymaps/default-macos.json`, as of Zed v1.26.2.
 
 Nothing here was run on a Mac.
-
-## Why F12, not F24
-
-GoLand's synced settings also activate a keymap named `F24` on the Mac. `F24.xml` has 642 actions
-and `parent` `Visual Studio 2022`. Its 627 keystrokes are all F12's, and it has the same 34 Cmd
-keystrokes. The maintainer asked for F12, which helix follows, so F12 stays the source. Nothing
-reads F24, and "Ctrl stays Ctrl" holds either way.

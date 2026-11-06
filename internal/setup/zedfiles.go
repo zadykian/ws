@@ -23,10 +23,14 @@ const (
 )
 
 // files plans Zed's directory and its three files. global_settings.json is the header and
-// mac/zed.json, replaced on each run, and left with a warning where its first line is not ws's.
-// keymap.json is Keymap's render as it is, replaced and left on the same terms with its own
+// Settings's render, replaced on each run, and left with a warning where its first line is not
+// ws's. keymap.json is Keymap's render as it is, replaced and left on the same terms with its own
 // mark. settings.json is written where nothing is there, and never read.
 func (z *Zed) files() ([]step.Change, error) {
+	settings, err := z.global()
+	if err != nil {
+		return nil, err
+	}
 	keymap, err := z.Keymap()
 	if err != nil {
 		return nil, err
@@ -42,7 +46,7 @@ func (z *Zed) files() ([]step.Change, error) {
 		}
 		cs = append(cs, MakeDir{dir, 0o755})
 	}
-	cs = append(cs, z.owned(global, z.global(), zedOwn(zedHeader, true))...)
+	cs = append(cs, z.owned(global, settings, zedOwn(zedHeader, true))...)
 	cs = append(cs, z.owned(dir+"/keymap.json", keymap, zedOwn(zedKeymapMark, false))...)
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
@@ -53,8 +57,14 @@ func (z *Zed) files() ([]step.Change, error) {
 	return cs, nil
 }
 
-// global is what global_settings.json holds.
-func (z *Zed) global() []byte { return append([]byte(zedHeader+"\n"), z.Settings...) }
+// global renders what global_settings.json holds.
+func (z *Zed) global() ([]byte, error) {
+	settings, err := z.Settings()
+	if err != nil {
+		return nil, err
+	}
+	return append([]byte(zedHeader+"\n"), settings...), nil
+}
 
 // zedOwn returns the test of a file's first line: equal to mark, or starting with it where exact is
 // false.

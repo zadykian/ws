@@ -2,6 +2,10 @@
   "theme": { "mode": "dark", "light": "JetBrains Light", "dark": "JetBrains Dark" },
   "ui_font_family": "JetBrainsMono Nerd Font Mono",
   "buffer_font_family": "JetBrainsMono Nerd Font Mono",
+  "wrap_guides": [120],
+  "show_wrap_guides": true,
+  "show_whitespaces": "all",
+  "autosave": { "after_delay": { "milliseconds": 3000 } },
   "terminal": {
     "dock": "right",
     "font_family": "JetBrainsMono Nerd Font Mono",

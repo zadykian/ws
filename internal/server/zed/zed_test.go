@@ -2,11 +2,8 @@ package zed
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
-	"fmt"
 	"io/fs"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -23,29 +20,13 @@ func valuesOf(user, home string) values.Values {
 	return v
 }
 
-// servePins serves a stand-in body at each pinned URL and pins its SHA-256 for the test's length.
-func servePins(t *testing.T, m *effecttest.Machine) {
-	t.Helper()
-	body := []byte("stand-in binary")
-	sum := fmt.Sprintf("%x", sha256.Sum256(body))
-	pgls0, dockerLS0 := pgls, dockerLS
-	t.Cleanup(func() { pgls, dockerLS = pgls0, dockerLS0 })
-	pgls = release{version: pgls0.version, sha256: map[string]string{runtime.GOARCH: sum}}
-	dockerLS = release{version: dockerLS0.version, sha256: map[string]string{runtime.GOARCH: sum}}
-	m.Pages[pglsURL(pgls, runtime.GOARCH)] = body
-	m.Pages[dockerLSURL(dockerLS, runtime.GOARCH)] = body
-}
-
 // run applies the role on a machine with an empty home for the user.
 func run(t *testing.T, user, home string) *effecttest.Machine {
 	t.Helper()
 	m := effecttest.NewMachine()
 	m.Dirs[home] = 0o755
-	servePins(t, m)
 	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
-	m.Files[npmBin] = []byte("stand-in npm")
-	m.Results[npmCommand(user, home)] = effecttest.Result{}
 	steps := Steps(valuesOf(user, home), secrets.Secrets{}, m, &effecttest.Out{})
 	if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
@@ -104,15 +85,6 @@ func TestTheLimitNamesTheUserAndTheValue(t *testing.T) {
 	}
 }
 
-func TestTheServersAreRootsBinariesAtMode0755(t *testing.T) {
-	m := run(t, "ws", "/home/ws")
-	for _, p := range []string{"/usr/local/bin/postgres-language-server", "/usr/local/bin/docker-language-server"} {
-		if string(m.Files[p]) != "stand-in binary" || m.Owners[p] != [2]int{} {
-			t.Errorf("%s: owner %v", p, m.Owners[p])
-		}
-	}
-}
-
 func TestSettingsNameTheSQLAndDockerServersWithNoDuplicateKey(t *testing.T) {
 	got, err := settingsFile(values.Default())
 	if err != nil {
@@ -148,7 +120,7 @@ func TestSettingsNameTheNpmServersForRootAndAnotherUser(t *testing.T) {
 			t.Fatalf("not JSON:\n%s", body)
 		}
 		for _, name := range []string{"ansible-language-server", "vscode-html-language-server", "docker-langserver"} {
-			want := `"` + bin + "/.local/lib/zed-servers/node_modules/.bin/" + name + `"`
+			want := `"` + bin + "/.local/lib/language-servers/node_modules/.bin/" + name + `"`
 			if !strings.Contains(body, want) {
 				t.Errorf("%s: settings lack %s", home, want)
 			}
@@ -164,11 +136,9 @@ func TestSettingsNameTheNpmServersForRootAndAnotherUser(t *testing.T) {
 func TestTheStepsRefuseALinkAtAFileRootWrites(t *testing.T) {
 	for _, link := range []string{
 		"/home/ws/.config/zed", "/home/ws/.config/zed/settings.json",
-		"/home/ws/.local/lib/zed-servers", "/home/ws/.local/lib/zed-servers/package.json",
 	} {
 		m := effecttest.NewMachine()
 		m.Dirs["/home/ws"] = 0o755
-		servePins(t, m)
 		m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 		m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 		m.Links[link] = "/srv/target"

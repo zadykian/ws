@@ -25,7 +25,7 @@ and `zed ssh://ws/PATH` opens a project on ws.
 The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lookup. It makes
 `~/.config` first where missing.
 
-- `global_settings.json` is ws's settings, [`mac/zed.json`](../mac/zed.json), under one header
+- `global_settings.json` is ws's settings, rendered from [`internal/editor`](../internal/editor/), under one header
   line. Each run replaces it, so changes made there are lost. A file whose first line is not the
   header is left, with a warning: move it away, and the next run writes ws's. Zed parses it as it
   parses `settings.json`, so the header comment is valid.
@@ -35,6 +35,10 @@ The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lo
 Zed merges `settings.json` over `global_settings.json`, so a key in `settings.json` wins over ws's.
 This is the reverse of Ghostty's order. A key set only in `global_settings.json` shows Zed's
 default in the Settings Editor.
+
+The file sets a ruler at column 120, shows all whitespace, and saves 3 seconds after an edit, from
+`internal/editor/settings.yaml`. CI parses the file but sees no Zed obey it: check the three once on
+a remote project.
 
 The seed holds one connection, `{ "host": "ws" }`. Zed records an opened project by its index in the
 list of `ssh_connections` in `settings.json`, and arrays replace rather than merge, so the
@@ -74,14 +78,15 @@ server to every YAML file, Ansible's too.
   reaches a reattached tmux session and whatever runs there.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- Zed's keymap overlay is [zed-keymap.md](zed-keymap.md), and `docs/zed.md`, its page for the server, says
-  what to do when the connection drops.
+- Zed's keymap overlay is [keymap/zed.md](keymap/zed.md), and `docs/zed.md`, its page for the
+  server, says what to do when the connection drops.
 
 ## The keymap
 
-The step also writes `~/.config/zed/keymap.json`, rendered from [`internal/editor`](../internal/editor/),
-F12's keys for Zed. `base_keymap` stays `Zed`. The file carries its own header, so the step adds
-none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as ws's mark.
+The step also writes `~/.config/zed/keymap.json`, rendered from
+[`internal/editor`](../internal/editor/), F12's keys for Zed. `base_keymap` stays `Zed`. The file
+carries its own header, so the step adds none, and takes the start of line 1,
+`// Written by github.com/zadykian/ws`, as ws's mark.
 
 - Where the file is missing, or its first line starts with the mark, the step writes it whole.
 - Where the first line does not, the step leaves the file and warns once: move it away, and the
@@ -89,10 +94,8 @@ none, and takes the start of line 1, `// Written by github.com/zadykian/ws`, as 
 - Zed's keymap editor writes this file too (zed#8829). A change made there is replaced at the next
   run while line 1 stands. Delete line 1 to keep the file, and ws leaves it.
 
-[zed-keymap.md](zed-keymap.md) lists every F12 action with its Zed action, or why it has none.
+[keymap/zed.md](keymap/zed.md) says which F12 actions Zed has, and why it lacks the others.
 
 ## Changing the settings
 
-Edit [`mac/zed.json`](../mac/zed.json), build `ws` again and run it. `ws` embeds it. For the
-keymap, edit the data or the adapter and the golden file: `go test` holds them equal. `ws` renders
-the keymap.
+Edit the data or the adapter and the golden files: `go test` holds them equal. `ws` renders both.
