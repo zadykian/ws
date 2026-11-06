@@ -1,6 +1,9 @@
 package step
 
-import "context"
+import (
+	"context"
+	"strings"
+)
 
 // ItemKind says what an Item is. The values are those of --json.
 type ItemKind string
@@ -56,6 +59,13 @@ func PendingOf(c Change) Pending {
 		text = t.Title() + "\n" + text
 	}
 	return Pending{KindOf(c), text}
+}
+
+// Headline is a change's first line, what changes. An error or an event names a change by it: the
+// rest can be a file's diff, with what the file holds now, and a unit's journal keeps ws's errors.
+func Headline(c Change) string {
+	line, _, _ := strings.Cut(PendingOf(c).Text, "\n")
+	return line
 }
 
 // Report is what Read finds of one step.

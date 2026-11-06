@@ -83,7 +83,7 @@ func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 func (Dashboards) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
 		if err := c.(host.Change).Apply(ctx); err != nil {
-			return fmt.Errorf("%s: %w", c, err)
+			return fmt.Errorf("%s: %w", step.Headline(c), err)
 		}
 	}
 	return nil
