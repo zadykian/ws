@@ -21,6 +21,29 @@ type varsReach struct {
 	release func()
 }
 
+// sheet is the host_vars form before its read.
+func (r *varsReach) sheet() tui.Sheet {
+	return tui.Sheet{
+		Name:   "host_vars",
+		Fields: func(map[string]string) []tui.FieldSpec { return nil },
+		Open:   r.open,
+	}
+}
+
+// open reaches ws and reads the file. The password that sudo asks stays with the form, so that a
+// save asks none.
+func (r *varsReach) open(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
+	files, err := r.reach(ctx, b)
+	if err != nil {
+		return tui.Sheet{}, err
+	}
+	form, err := wizard.VarsForm{Files: files}.Load(ctx)
+	if err != nil {
+		return tui.Sheet{}, err
+	}
+	return varsSheet(form), nil
+}
+
 // reach finds how the files script reaches root on ws, as the wizard's stages do. The lock keeps a
 // wizard's own writes of the file away, and holds ssh's sockets.
 func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Remote, error) {
@@ -67,5 +90,17 @@ func (r *varsReach) close(ctx context.Context) {
 	if r.release != nil {
 		wizard.SSH{M: r.p.machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
 		r.release()
+	}
+}
+
+// varsSheet is ws's host_vars on the Configure screen, as form read it.
+func varsSheet(form wizard.VarsForm) tui.Sheet {
+	return tui.Sheet{
+		Name:   "host_vars",
+		Fields: func(map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields()) },
+		Save: func(ctx context.Context, b *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
+			next, err := form.Save(ctx, b, edits)
+			return varsSheet(next), err
+		},
 	}
 }

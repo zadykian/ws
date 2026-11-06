@@ -15,9 +15,10 @@ import (
 func newConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
-		Short: "edit mac.conf and the secrets on forms",
+		Short: "edit mac.conf, the secrets and ws's host_vars on forms",
 		Long: "It shows the keys that ws mac wizard would ask, by WS_TARGET, with what mac.conf holds, and " +
-			"writes them on Ctrl-S. Ctrl-N goes to the secrets, which show as set or not, never their values. It needs a terminal: anywhere else, edit the file by hand.",
+			"writes them on Ctrl-S. Ctrl-N goes to the secrets, which show as set or not, never their values, " +
+			"then to ws's host_vars, read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runConfigure(c, p) },
 	}
@@ -42,7 +43,9 @@ func runConfigure(c *cobra.Command, p process) error {
 	if err != nil {
 		return err
 	}
-	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), confSheet(form), secretsSheet(store, held))
+	vars := &varsReach{p: p}
+	defer vars.close(c.Context())
+	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), confSheet(form), secretsSheet(store, held), vars.sheet())
 }
 
 // confSheet is mac.conf on the Configure screen.
