@@ -150,7 +150,12 @@ func (w wizardScreen) running(r wizardRun, draw func(tui.Config, tui.Work) error
 	cfg, done := runConfig(w.c, w.p, w.config())
 	defer done()
 	var text bytes.Buffer
-	err := draw(cfg, w.work(r, &text))
+	work := w.work(r, &text)
+	err := draw(cfg, func(ctx context.Context, b *tui.Bridge) error {
+		err := work(ctx, b)
+		b.Log(text.String()) // A failed run prints it too.
+		return err
+	})
 	if err == nil { // A work left behind may still write to text.
 		_, _ = text.WriteTo(w.c.OutOrStdout())
 	}

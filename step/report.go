@@ -19,8 +19,7 @@ const (
 	CheckItem ItemKind = "check"
 )
 
-// Item is a part of what a step manages, as a report shows it. It holds no secret, as --check
-// shows none.
+// Item is a part of what a step manages, as a report shows it. It holds no secret.
 type Item struct {
 	Kind ItemKind `json:"kind"`
 	Name string   `json:"name"`
@@ -54,7 +53,7 @@ type Pending struct {
 
 // PendingOf returns the change as data. Its first line says what changes.
 func PendingOf(c Change) Pending {
-	text := c.String()
+	text := ExcerptOf(c)
 	if t, ok := c.(Titled); ok {
 		text = t.Title() + "\n" + text
 	}

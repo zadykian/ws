@@ -2,6 +2,7 @@
 package setup
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -25,6 +26,15 @@ func (w Write) String() string {
 		from = "/dev/null"
 	}
 	return effect.DiffAs(from, w.Path, w.Before, w.After)
+}
+
+// Excerpt is the diff of what ws adds to a file it keeps the text of. Such a file is the user's, and
+// the lines beside ws's may hold a secret. ws replaces its own files whole, and their diff stands.
+func (w Write) Excerpt() string {
+	if len(w.Before) == 0 || !bytes.Contains(w.After, w.Before) {
+		return w.String()
+	}
+	return effect.DiffAs(w.Path, w.Path, nil, bytes.Replace(w.After, w.Before, nil, 1))
 }
 
 // Title names the file, which a new file's first line of diff leaves out.

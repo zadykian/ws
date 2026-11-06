@@ -199,6 +199,19 @@ func TestChangeLineNamesItsStepOnce(t *testing.T) {
 	}
 }
 
+// quoting is a change whose String quotes a file of the user's.
+type quoting struct{}
+
+func (quoting) String() string  { return "+ws\n the user's text\n" }
+func (quoting) Excerpt() string { return "+ws\n" }
+
+// A line reaches the log and the normal screen, so neither gets what the user's file holds.
+func TestChangeLineHoldsAnExcerpt(t *testing.T) {
+	if got := changeLine("Tools", quoting{}).Text; got != "Tools: +ws" {
+		t.Errorf("line = %q, want the excerpt", got)
+	}
+}
+
 func TestBridgeObserveSendsACommandsOutputFirst(t *testing.T) {
 	b, sent := testBridge(io.Discard)
 	_, _ = b.pipe.Write([]byte("no end"))

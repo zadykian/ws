@@ -118,7 +118,9 @@ The other pane is a window on what the run prints, under the current step's name
 
 The window goes with the screen, and these stay:
 
-- Under `--check`, each step's changes print on the normal screen, a file's diff in full.
+- Under `--check`, each step's changes print on the normal screen, a file's diff in full. Of a file
+  of the user's, as `~/.gitconfig`, the screen, the log and a report hold ws's lines alone, as the
+  lines beside them may hold a secret. `--plain` prints the whole diff.
 - A warning prints there too, on any run, as the step that gave it passes.
 - A failed step prints the last 30 lines of its output, then the error.
 - The summary of `ws server apply` is the last line. A passing `ws mac apply` prints nothing more.
@@ -135,7 +137,9 @@ place.
 A run keeps its whole output in `$XDG_STATE_HOME/ws/`, or `~/.local/state/ws/`, in a file named for
 the command and the time, as `ws-server-apply-20261105T120000Z.log`. The directory is mode 0700
 and the file 0600. The file holds the lines the window shows, cleaned as the window cleans them,
-and a failed or skipped step's name. A hidden answer never reaches it.
+and a failed or skipped step's name. It holds too what a plain run prints apart from them: the
+summary, the stdout text of a run, and what stays by hand. A hidden answer never reaches it, and
+neither does a foreground command's own output, which holds the terminal.
 
 The newest 20 logs stay. A run whose log can't be made goes on without one. The path prints on the
 normal screen after a failure, a stop, a warning or a `--check` with changes.
