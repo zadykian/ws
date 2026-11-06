@@ -32,10 +32,11 @@ func (s SSH) Name() string {
 	return "ssh"
 }
 
-// WaitsOn is cld for the second run.
+// WaitsOn is ssh for the second run: where ssh is left out with changes, its plan would hold them
+// too. The run's order puts it past cld.
 func (s SSH) WaitsOn() string {
 	if s.Again {
-		return "cld"
+		return "ssh"
 	}
 	return ""
 }

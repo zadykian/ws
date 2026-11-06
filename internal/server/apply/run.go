@@ -40,13 +40,14 @@ func (c Config) Steps(r roles.Role) []step.Step {
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
-// that would under Check.
+// that would under Check. Only leaves steps out of the roles alone, as Prepare serves every step.
 func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
 	o := step.Options{Observer: c.Observer, Check: c.Check, Parent: Prepare, Stop: c.Stop}
 	if _, err := step.RunWith(ctx, c.Prepare, o); err != nil {
 		c.unreached(list)
 		return nil, err
 	}
+	o.LeftOut = c.leftOut()
 	var changed []string
 	for i, r := range list {
 		o.Parent = r.Name

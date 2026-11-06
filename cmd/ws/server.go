@@ -67,13 +67,15 @@ func newApplyCmd(p process) *cobra.Command {
 		Short: "set the server up, each role as Go steps",
 		Long: "--secrets reads an age-encrypted TOML file with the secrets. The X25519 identity comes from the " +
 			"unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY.\n\n" +
+			"--only names a role, or a step of it as ROLE/STEP, by the name that the run shows. A role's other steps " +
+			"are planned and left out, and a step that waits on one of them with changes is skipped.\n\n" +
 			"The last line names the roles that changed.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runApply(c, p, opts) },
 	}
 	f := c.Flags()
 	f.BoolVar(&opts.Check, "check", false, "plan the steps and apply none")
-	f.StringSliceVar(&opts.Only, "only", nil, "run the named roles alone, as a list or by repeating the flag")
+	f.StringSliceVar(&opts.Only, "only", nil, "run the named roles and ROLE/STEPs alone, as a list or by repeating the flag")
 	f.StringVar(&opts.Secrets, "secrets", "", "read the secrets from the age-encrypted `FILE`")
 	return c
 }
@@ -111,6 +113,15 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	}
 	cfg := apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
+	if err := cfg.CheckSteps(list); err != nil {
+		return usageError{err}
+	}
+	if opensList(c, p, c.Flags().Changed("only")) {
+		if cfg, list, err = pickServer(c, p, cfg, list); err != nil || list == nil {
+			term.Flush()
+			return err
+		}
+	}
 	var changed []string
 	if drawsScreen(c, p) {
 		changed, err = applyOnScreen(c, p, cfg, list)
@@ -121,7 +132,7 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	if err != nil {
 		return err
 	}
-	out.Say("%s", apply.Summary(changed, opts.Check))
+	out.Say("%s", apply.Summary(changed, cfg.Check))
 	return nil
 }
 

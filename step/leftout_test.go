@@ -2,6 +2,7 @@ package step_test
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"testing"
 
@@ -63,18 +64,55 @@ func TestRunWithLeaveOutPrintsLikeNone(t *testing.T) {
 	}
 }
 
-func TestRunWithCheckLeavesNoneOut(t *testing.T) {
+func TestRunWithCheckLeavesStepsOut(t *testing.T) {
 	var log []string
-	steps := []step.Step{&fake{name: "a", todo: []step.Change{change("x")}, log: &log}}
-	var ev []step.Event
-	o := step.Options{Check: true, LeftOut: func(string, string) bool { return true },
-		Observer: observerFunc(func(e step.Event) { ev = append(ev, e) })}
-	if _, err := step.RunWith(context.Background(), steps, o); err != nil {
-		t.Fatal(err)
+	x := []step.Change{change("x")}
+	steps := []step.Step{
+		&fake{name: "a", todo: x, log: &log},
+		&fake{name: "b", todo: []step.Change{change("y")}, log: &log},
+		&fake{name: "c", waitsOn: "a", todo: x, log: &log},
+		&fake{name: "d", waitsOn: "a", todo: x, log: &log},
 	}
+	var ev []step.Event
+	out := &effecttest.Out{}
+	printer := step.Printer{Out: out}
+	o := step.Options{Check: true, LeftOut: func(_, name string) bool { return name != "b" && name != "c" },
+		Observer: observerFunc(func(e step.Event) { ev = append(ev, e); printer.Observe(e) })}
+	changed, err := step.RunWith(context.Background(), steps, o)
+	if err != nil || !changed {
+		t.Fatalf("changed, err = %v, %v", changed, err)
+	}
+	if want := []string{"plan a", "plan b"}; !slices.Equal(log, want) {
+		t.Errorf("log = %q, want %q", log, want)
+	}
+	if want := []string{"say: b: y", "say: c: after a"}; !slices.Equal(out.Lines, want) {
+		t.Errorf("printed %q, want %q", out.Lines, want)
+	}
+	last := map[string]step.Event{}
 	for _, e := range ev {
-		if e.LeftOut {
-			t.Errorf("event %+v is LeftOut under check", e)
+		last[e.Step] = e
+	}
+	if e := last["a"]; e.Kind != step.Done || !e.LeftOut || len(e.Changes) != 1 {
+		t.Errorf("a ends %+v, want Done, LeftOut, with its change", e)
+	}
+	if e := last["d"]; e.Kind != step.Skipped || !e.LeftOut {
+		t.Errorf("d ends %+v, want Skipped and LeftOut", e)
+	}
+}
+
+func TestRunWithCountsNoChangeLeftOut(t *testing.T) {
+	x := []step.Change{change("x")}
+	for _, check := range []bool{false, true} {
+		var log []string
+		steps := []step.Step{
+			&fake{name: "a", todo: x, log: &log},
+			&fake{name: "b", waitsOn: "a", todo: x, log: &log},
+			&fake{name: "c", log: &log},
+		}
+		o := step.Options{Check: check, LeftOut: func(_, name string) bool { return name == "a" }}
+		changed, err := step.RunWith(context.Background(), steps, o)
+		if err != nil || changed {
+			t.Errorf("check %v: changed, err = %v, %v, want no change", check, changed, err)
 		}
 	}
 }
@@ -82,3 +120,37 @@ func TestRunWithCheckLeavesNoneOut(t *testing.T) {
 type observerFunc func(step.Event)
 
 func (f observerFunc) Observe(e step.Event) { f(e) }
+
+func TestALeftOutPlanThatFailsStopsNoRun(t *testing.T) {
+	var log []string
+	x := []step.Change{change("x")}
+	steps := []step.Step{
+		&fake{name: "broken", planErr: errors.New("no file"), log: &log},
+		&fake{name: "behind", waitsOn: "broken", todo: x, log: &log},
+		&fake{name: "chosen", todo: x, log: &log},
+	}
+	out := &effecttest.Out{}
+	o := step.Options{Observer: step.Printer{Out: out}, LeftOut: func(_, name string) bool { return name == "broken" }}
+	changed, err := step.RunWith(context.Background(), steps, o)
+	if err != nil || !changed {
+		t.Fatalf("changed, err = %v, %v", changed, err)
+	}
+	want := []string{"warn: left out: broken: planning: no file", "say: behind: after broken", "say: chosen: applying 1 change(s)"}
+	if !slices.Equal(out.Lines, want) {
+		t.Errorf("printed %q, want %q", out.Lines, want)
+	}
+}
+
+func TestACutPlanStopsTheRunThoughItsStepIsLeftOut(t *testing.T) {
+	ctx, cut := context.WithCancel(context.Background())
+	cut()
+	var log []string
+	steps := []step.Step{
+		&fake{name: "a", planErr: context.Canceled, log: &log},
+		&fake{name: "b", log: &log},
+	}
+	_, err := step.RunWith(ctx, steps, step.Options{LeftOut: func(string, string) bool { return true }})
+	if !errors.Is(err, context.Canceled) || len(log) != 1 {
+		t.Errorf("err = %v, log = %q", err, log)
+	}
+}

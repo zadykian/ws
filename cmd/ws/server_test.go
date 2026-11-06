@@ -35,7 +35,8 @@ func TestServerRefusal(t *testing.T) {
 
 func TestServerApplyRefusesOtherArgs(t *testing.T) {
 	for _, args := range [][]string{
-		{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--only", "base,"}, {"apply", "--only", ""},
+		{"apply", "--tags", "base"}, {"apply", "--only", "nothing"}, {"apply", "--only", "nothing/step"},
+		{"apply", "--only", "base,"}, {"apply", "--only", ""},
 		{"apply", "--only"}, {"apply", "-C"}, {"apply", "extra"}, {"other"},
 	} {
 		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server"}, args...)...)
@@ -61,7 +62,7 @@ func TestServerApplyRefusesNonRoot(t *testing.T) {
 
 func TestServerApplyHelp(t *testing.T) {
 	status, stdout, _ := runWs(fakeProcess(), "", "server", "apply", "-h")
-	for _, want := range []string{"--check", "--only", "--secrets", "ws-secrets"} {
+	for _, want := range []string{"--check", "--only", "ROLE/STEP", "--secrets", "ws-secrets"} {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
 		}

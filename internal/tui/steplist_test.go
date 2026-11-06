@@ -24,14 +24,29 @@ type oneChange string
 func (c oneChange) String() string { return string(c) }
 
 func testList() stepList {
-	return newStepList([]Group{{"base", []string{"Packages", "Locale"}}, {"ssh", []string{"Keys"}}})
+	return newStepList([]Group{{Name: "base", Steps: []string{"Packages", "Locale"}}, {Name: "ssh", Steps: []string{"Keys"}}})
 }
 
 func TestNewGroupNamesTheSteps(t *testing.T) {
 	got := NewGroup("base", []step.Step{namedStep("Packages"), namedStep("Locale")})
-	want := Group{"base", []string{"Packages", "Locale"}}
+	want := Group{Name: "base", Steps: []string{"Packages", "Locale"}, Waits: map[string]string{}}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("NewGroup = %+v, want %+v", got, want)
+	}
+}
+
+// waitingStep is a step that waits on another.
+type waitingStep struct {
+	namedStep
+	awaited string
+}
+
+func (w waitingStep) WaitsOn() string { return w.awaited }
+
+func TestNewGroupNamesWhatAStepWaitsOn(t *testing.T) {
+	got := NewGroup("signoz", []step.Step{namedStep("up"), waitingStep{"ready", "up"}})
+	if want := map[string]string{"ready": "up"}; !reflect.DeepEqual(got.Waits, want) {
+		t.Errorf("Waits = %v, want %v", got.Waits, want)
 	}
 }
 
@@ -48,6 +63,7 @@ func TestStateAfter(t *testing.T) {
 		{step.Event{Kind: step.Done, Changes: changes, LeftOut: true}, stepLeftOut},
 		{step.Event{Kind: step.Failed, Err: errors.New("no")}, stepFailed},
 		{step.Event{Kind: step.Skipped, After: "Keys"}, stepSkipped},
+		{step.Event{Kind: step.Skipped, After: "Keys", LeftOut: true}, stepLeftOut},
 	}
 	for _, c := range cases {
 		if got := stateAfter(c.event); got != c.want {
@@ -66,7 +82,7 @@ func TestStepRowLabelNamesItsParent(t *testing.T) {
 }
 
 func TestStepListTellsARepeatedNameByItsPlace(t *testing.T) {
-	list := newStepList([]Group{{"", []string{"ssh", "Tools", "ssh"}}})
+	list := newStepList([]Group{{Steps: []string{"ssh", "Tools", "ssh"}}})
 	list = list.take(step.Event{Kind: step.Done, Step: "ssh", Index: 2})
 	if list[0].state != stepOpen || list[2].state != stepSame {
 		t.Errorf("states = %d, %d, want the last ssh alone ended", list[0].state, list[2].state)
@@ -118,7 +134,7 @@ func TestStepListAt(t *testing.T) {
 }
 
 func TestStepListViewMarksEachStateByItsShape(t *testing.T) {
-	list := newStepList([]Group{{"base", []string{"a", "b", "c", "d", "e", "f", "g"}}})
+	list := newStepList([]Group{{Name: "base", Steps: []string{"a", "b", "c", "d", "e", "f", "g"}}})
 	changes := []step.Change{oneChange("x")}
 	events := []step.Event{
 		{Kind: step.Done},
@@ -137,7 +153,7 @@ func TestStepListViewMarksEachStateByItsShape(t *testing.T) {
 }
 
 func TestStepListViewDrawsNoHeadingForAFlatList(t *testing.T) {
-	got := stripped(newStepList([]Group{{"", []string{"Tools", "ssh"}}}).view(testTheme, 20))
+	got := stripped(newStepList([]Group{{Steps: []string{"Tools", "ssh"}}}).view(testTheme, 20))
 	if want := "▸ Tools\n· ssh"; got != want {
 		t.Errorf("view =\n%s\nwant\n%s", got, want)
 	}
@@ -148,7 +164,7 @@ func TestStepListViewKeepsTheCurrentStepInSight(t *testing.T) {
 	for i := range names {
 		names[i] = "step" + string(rune('A'+i))
 	}
-	list := newStepList([]Group{{"base", names}})
+	list := newStepList([]Group{{Name: "base", Steps: names}})
 	for i := range 30 {
 		list = list.take(step.Event{Kind: step.Done, Parent: "base", Index: i})
 	}
@@ -159,7 +175,7 @@ func TestStepListViewKeepsTheCurrentStepInSight(t *testing.T) {
 }
 
 func TestStepListViewEndsOnTheLastStepOfAFinishedRun(t *testing.T) {
-	list := newStepList([]Group{{"", []string{"a", "b", "c", "d"}}})
+	list := newStepList([]Group{{Steps: []string{"a", "b", "c", "d"}}})
 	for i := range 4 {
 		list = list.take(step.Event{Kind: step.Done, Index: i})
 	}

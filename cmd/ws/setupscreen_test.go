@@ -66,6 +66,15 @@ type ending struct {
 
 func (e ending) Finish(ctx context.Context) error { return e.finish(ctx) }
 
+func TestRunSetupFinishesNoStepLeftOut(t *testing.T) {
+	finish := func(context.Context) error { return errors.New("a step left out finished") }
+	steps := []step.Step{ending{stepOf{"one", func(context.Context) error { return nil }}, finish}}
+	left := func(_, _ string) bool { return true }
+	if err := runSetup(t.Context(), steps, step.Options{LeftOut: left}); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 	p, _ := macTerminal()
 	p.machine = effect.OSMachine{}
@@ -76,7 +85,7 @@ func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 		machines, outs = append(machines, m), append(outs, out)
 		return []step.Step{stepOf{"one", func(context.Context) error { return nil }}}
 	}
-	if err := setupOnScreen(c, p, true, build); err != nil {
+	if err := setupOnScreen(c, p, build, step.Options{Check: true}); err != nil {
 		t.Fatal(err)
 	}
 	if len(outs) != 2 || outs[0] != nil {
@@ -105,7 +114,7 @@ func TestSetupOnScreenPrintsWhatStaysOnStdoutPastTheScreen(t *testing.T) {
 			return err
 		}}}
 	}
-	if err := setupOnScreen(c, p, true, build); err != nil {
+	if err := setupOnScreen(c, p, build, step.Options{Check: true}); err != nil {
 		t.Fatal(err)
 	}
 	if stdout.String() != "the key\n" || strings.Contains(drawn.String(), "the key") {
@@ -128,7 +137,7 @@ func TestSetupOnScreenStopsPastTheCurrentStep(t *testing.T) {
 			stepOf{"two", func(context.Context) error { reached = true; return nil }},
 		}
 	}
-	err := setupOnScreen(c, p, true, build)
+	err := setupOnScreen(c, p, build, step.Options{Check: true})
 	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached || finished {
 		t.Errorf("err = %v, the next step reached = %v, finished = %v", err, reached, finished)
 	}

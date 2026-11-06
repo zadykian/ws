@@ -14,14 +14,19 @@ type Group struct {
 	// Name is the run's Options.Parent. An empty one draws no heading.
 	Name  string
 	Steps []string
+	// Waits gives the step that a step of Steps waits on, by name, where it has one.
+	Waits map[string]string
 }
 
 // NewGroup names steps as a run of them under parent will, so that a screen knows each one before
 // the run starts.
 func NewGroup(parent string, steps []step.Step) Group {
-	g := Group{Name: parent}
+	g := Group{Name: parent, Waits: map[string]string{}}
 	for _, s := range steps {
 		g.Steps = append(g.Steps, s.Name())
+		if awaited := s.WaitsOn(); awaited != "" {
+			g.Waits[s.Name()] = awaited
+		}
 	}
 	return g
 }
@@ -53,6 +58,9 @@ func stateAfter(e step.Event) stepState {
 	case step.Failed:
 		return stepFailed
 	case step.Skipped:
+		if e.LeftOut {
+			return stepLeftOut
+		}
 		return stepSkipped
 	case step.Planned, step.Started:
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -61,9 +62,12 @@ func TestProgOutObservesAPlanAndWhatAStepIsBehind(t *testing.T) {
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
 	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh"})
 	out.Observe(step.Event{Kind: step.Skipped, Step: "zed"})
+	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan, LeftOut: true})
+	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh", LeftOut: true})
+	out.Observe(step.Event{Kind: step.Skipped, Step: "cld", Err: errors.New("no file"), LeftOut: true})
 	want := []string{
 		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws mac apply: would run x",
-		"say: ws mac apply: git: after ssh",
+		"say: ws mac apply: git: after ssh", "say: ws mac apply: warning: left out: no file",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)

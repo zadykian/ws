@@ -168,6 +168,9 @@ func (b *Bridge) Observe(e step.Event) {
 		name = e.Parent + ": " + e.Step
 	}
 	switch {
+	case e.Kind == step.Skipped && e.Err != nil:
+		b.Warn("left out: %v", e.Err)
+	case e.LeftOut:
 	case e.Kind == step.Planned && e.Check:
 		for _, c := range e.Changes {
 			l := changeLine(name, c)

@@ -170,6 +170,10 @@ func TestBridgeObservePrintsAsAPlainRun(t *testing.T) {
 		{"behind a step", step.Event{Kind: step.Skipped, Step: "S", After: "T"}, []Line{{Said, "S: after T"}}},
 		{"past a failure", step.Event{Kind: step.Skipped, Step: "S"}, nil},
 		{"left out", step.Event{Kind: step.Planned, Step: "S", Changes: changes, LeftOut: true}, nil},
+		{"left out of a check", step.Event{Kind: step.Planned, Step: "S", Check: true, Changes: changes, LeftOut: true}, nil},
+		{"left out behind a step", step.Event{Kind: step.Skipped, Step: "S", After: "T", LeftOut: true}, nil},
+		{"left out with a failed plan", step.Event{Kind: step.Skipped, Step: "S", Err: errors.New("no file"), LeftOut: true},
+			[]Line{{Warned, "warning: left out: no file"}}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
