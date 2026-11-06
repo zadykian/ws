@@ -3,7 +3,7 @@
 package fresh
 
 import (
-	_ "embed"
+	"embed"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -22,6 +22,11 @@ const (
 
 // wrapperPath comes before the .deb's /usr/bin/fresh on every PATH of Ubuntu's, as docs/fresh.md says.
 const wrapperPath = "/usr/local/bin/fresh"
+
+// templates holds config.json.tmpl, which the role fills with the user's home.
+//
+//go:embed files/config.json.tmpl
+var templates embed.FS
 
 //go:embed files/fresh
 var wrapper []byte
