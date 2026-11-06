@@ -3,6 +3,7 @@ package setup
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/zadykian/ws/effect"
@@ -69,6 +70,26 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	copied := PlanCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)
 	return step.Plan{Changes: append(copied, sshChanges(f, text)...)}, nil
+}
+
+// Report says how ~/.ssh stands against the plan. The step's second run manages the same files,
+// so it says nothing.
+func (s SSH) Report(context.Context) ([]step.Item, error) {
+	if s.Again {
+		return nil, nil
+	}
+	f, err := s.read()
+	if err != nil {
+		return nil, err
+	}
+	dir := s.Home + "/.ssh"
+	there := f.UserConfig.Exists
+	include := lineItem(dir+"/config", includeLine, there, there && !f.UserConfigNeedsInclude)
+	if own := sshcfg.OwnHosts(string(f.UserConfig.Text), "ws"); len(own) > 0 {
+		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
+			"first, win where both set a key", own[0].Line)
+	}
+	return []step.Item{include}, nil
 }
 
 // Apply applies the changes in order.
