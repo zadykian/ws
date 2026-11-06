@@ -1,9 +1,9 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
-// F12, the IDEs' keymap, for Zed on the Mac: each F12 key that Zed has an action for,
-// and two keys F12 lacks: Ctrl+Shift+R restarts a language server, Ctrl+Alt+Shift+Y reloads Zed.
-// docs/keymap/zed.md says which F12 actions Zed has, and why it lacks the others.
+// Zed's keys on the Mac: each key that Zed has an action for,
+// and two keys of its own: Ctrl+Shift+R restarts a language server, Ctrl+Alt+Shift+Y reloads Zed.
+// docs/mac-zed.md says which keys Zed lacks, and why.
 [
-  // F12's global keys. No context, so each beats Zed's defaults wherever focus is.
+  // The global keys. No context, so each beats Zed's defaults wherever focus is.
   {
     "unbind": {
       "ctrl-k": "editor::KillRingCut",
@@ -258,7 +258,7 @@
       "ctrl-up": "editor::SignatureHelpPrevious"
     }
   },
-  // The project panel: F12's tree keys, and F1 hides it again.
+  // The project panel: the tree keys, and F1 hides it again.
   {
     "context": "ProjectPanel && not_editing",
     "bindings": {
