@@ -69,7 +69,8 @@ func TestSettingsEqualTheMacsFileByteForByte(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(got, mac.ZedSettings) {
+	header := "// Written by ws mac apply: its next run replaces changes made here.\n"
+	if want := append([]byte(header), got...); !bytes.Equal(want, mac.ZedSettings) {
 		t.Fatalf("global_settings.json differs: %d bytes, want %d\n%s", len(got), len(mac.ZedSettings), got)
 	}
 }
