@@ -151,20 +151,23 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		return errors.Join(all...)
 	}
 	xdg := p.getenv("XDG_CONFIG_HOME")
-	var build setupBuild = func(m effect.Machine, out effect.Out, text io.Writer) []step.Step {
-		steps := setupSteps(settings, home, xdg, m, out, text, check)
-		switch {
-		case len(args) == 1:
-			return slices.DeleteFunc(steps, func(s step.Step) bool { return s.Name() != args[0] })
-		case check:
-			// Nothing is applied, so a second plan would only repeat the first.
-			return steps
+	buildFor := func(check bool) setupBuild {
+		return func(m effect.Machine, out effect.Out, text io.Writer) []step.Step {
+			steps := setupSteps(settings, home, xdg, m, out, text, check)
+			switch {
+			case len(args) == 1:
+				return slices.DeleteFunc(steps, func(s step.Step) bool { return s.Name() != args[0] })
+			case check:
+				// Nothing is applied, so a second plan would only repeat the first.
+				return steps
+			}
+			// cld's restore tabs change ssh's file, so ssh runs once more.
+			return slices.Concat(steps, []step.Step{sshStep(settings, home, m, out, true)})
 		}
-		// cld's restore tabs change ssh's file, so ssh runs once more.
-		return slices.Concat(steps, []step.Step{sshStep(settings, home, m, out, true)})
 	}
+	build := buildFor(check)
 	if drawsScreen(c, p) {
-		return setupOnScreen(c, p, check, build)
+		return setupOnScreen(c, p, build, step.Options{Check: check})
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
@@ -176,12 +179,13 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 // setupOnScreen is a run of ws mac apply under the run screen. The plain effects name the screen's
 // rows, and the run builds its steps again on the screen's effects. What a run prints on stdout
 // waits for the screen's end, as it would paint over the screen at a terminal.
-func setupOnScreen(c *cobra.Command, p process, check bool, build setupBuild) error {
+func setupOnScreen(c *cobra.Command, p process, build setupBuild, o step.Options) error {
 	rows := tui.NewGroup("", build(p.machine, nil, io.Discard))
 	var text bytes.Buffer
-	err := drawRun(c, p, runTitle(c, check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
+	err := drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
 		steps := build(screenMachine(ctx, b, p.machine), b, &text)
-		return runSetup(ctx, steps, step.Options{Observer: b, Check: check, Stop: b.Stop(ctx)})
+		o.Observer, o.Stop = b, b.Stop(ctx)
+		return runSetup(ctx, steps, o)
 	})
 	if err == nil { // A work left behind may still write to text.
 		_, _ = text.WriteTo(c.OutOrStdout())

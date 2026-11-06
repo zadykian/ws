@@ -76,7 +76,7 @@ func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 		machines, outs = append(machines, m), append(outs, out)
 		return []step.Step{stepOf{"one", func(context.Context) error { return nil }}}
 	}
-	if err := setupOnScreen(c, p, true, build); err != nil {
+	if err := setupOnScreen(c, p, build, step.Options{Check: true}); err != nil {
 		t.Fatal(err)
 	}
 	if len(outs) != 2 || outs[0] != nil {
@@ -105,7 +105,7 @@ func TestSetupOnScreenPrintsWhatStaysOnStdoutPastTheScreen(t *testing.T) {
 			return err
 		}}}
 	}
-	if err := setupOnScreen(c, p, true, build); err != nil {
+	if err := setupOnScreen(c, p, build, step.Options{Check: true}); err != nil {
 		t.Fatal(err)
 	}
 	if stdout.String() != "the key\n" || strings.Contains(drawn.String(), "the key") {
@@ -128,7 +128,7 @@ func TestSetupOnScreenStopsPastTheCurrentStep(t *testing.T) {
 			stepOf{"two", func(context.Context) error { reached = true; return nil }},
 		}
 	}
-	err := setupOnScreen(c, p, true, build)
+	err := setupOnScreen(c, p, build, step.Options{Check: true})
 	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached || finished {
 		t.Errorf("err = %v, the next step reached = %v, finished = %v", err, reached, finished)
 	}
