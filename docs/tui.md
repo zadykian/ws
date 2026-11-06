@@ -1,9 +1,10 @@
 # The terminal UI
 
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
-`internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen), and
-`ws server state` and `ws mac state` draw [the state screen](#the-state-screen). The other commands
-print lines for now.
+`internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen),
+`ws server state` and `ws mac state` draw [the state screen](#the-state-screen), and
+`ws mac configure` draws [the Configure screen](tui-configure.md). The other commands print
+lines for now.
 
 ## Modes
 
@@ -53,6 +54,9 @@ focus with Tab.
 | PgUp, Ctrl-U, PgDn, Ctrl-D | Move by a page. |
 | Home, g, End, G | Go to the top or the bottom. |
 | q | Leave a screen. |
+| Ctrl-S | Save the form in sight. |
+| Esc | Leave the Configure screen. |
+| Ctrl-N | Show the next form. |
 | Ctrl-C | Stop the run. |
 
 Ctrl-C is a key in raw mode, and the screen turns it into the signal. On a run that reads

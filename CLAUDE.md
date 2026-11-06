@@ -24,8 +24,9 @@ the server. The rest is the docs, the lint gates' tools and CI.
   settings, and `zed-keymap.json`, its keymap.
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
   `mac-targets.md`, `mac-ghostty.md`, `mac-zed.md` and `mac-secrets.md`; `router.md` and
-  `checks.md`; `tui.md`, the terminal UI; `helix-keymap.md`, the index of the keymap's pages in
-  `docs/helix-keymap/`; `zed-keymap.md`, the same for Zed's, in `docs/zed-keymap/`.
+  `checks.md`; `tui.md`, the terminal UI, with `tui-configure.md`; `helix-keymap.md`, the index of
+  the keymap's pages in `docs/helix-keymap/`; `zed-keymap.md`, the same for Zed's, in
+  `docs/zed-keymap/`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
