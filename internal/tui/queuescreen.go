@@ -18,11 +18,14 @@ const (
 // configureButton leaves the lists for the values' form, which a scan needs no end for.
 var configureButton = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "configure"))
 
+// stateButton leaves the lists for the state screen of the machine of the list in focus.
+var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
+
 // newQueueScreen returns the two lists of stages, their scan under way.
 func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- Choice) pickScreen {
 	s := newPickScreen(title, theme, nil, picks)
 	s.list, s.queued = newQueue(stages), true
-	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), configureButton)...)
+	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), configureButton, stateButton)...)
 	return s.enabled()
 }
 

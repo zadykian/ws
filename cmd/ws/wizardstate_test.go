@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/server/apply"
@@ -103,5 +105,39 @@ func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	}
 	if got := lockCalls(m.Calls, "mkdir"); got != 0 {
 		t.Errorf("took the lock %d times", got)
+	}
+}
+
+// stateTrip is a terminal that presses s on the lists, q on the Mac's state screen, and q on the lists
+// that follow. The keys go by the screen drawn, as a reader of a program that ended takes one.
+type stateTrip struct{ *afterScan }
+
+func (s stateTrip) Read(b []byte) (int, error) {
+	n, err := s.afterScan.Read(b)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	switch {
+	case bytes.Contains(s.drawn.Bytes(), []byte("ws mac wizard: Mac")):
+		return copy(b, "q"), nil
+	case bytes.Count(s.drawn.Bytes(), []byte(enterScreen)) > 1:
+		return copy(b, "\x1b[8;24;80t"), nil // A later screen draws from its size too.
+	}
+	return n, err
+}
+
+// The lists come back from the state screen with no scan of their own.
+func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
+	p, m := macTerminal()
+	p.machine = freed{m}
+	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
+	defer cancel()
+	var out bytes.Buffer
+	keys := stateTrip{newAfterScan("s")}
+	status := execute(ctx, newRoot(p, newMacCmd(p), newServerCmd(p)), []string{"mac", "wizard"}, keys, &out, keys)
+	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 1 {
+		t.Fatalf("status = %d, want a scan alone: calls = %q", status, m.Calls)
+	}
+	if got := bytes.Count(keys.drawn.Bytes(), []byte(enterScreen)); got != 3 {
+		t.Errorf("entered the screen %d times", got)
 	}
 }

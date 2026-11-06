@@ -8,6 +8,14 @@ import (
 	"github.com/zadykian/ws/mac"
 )
 
+// stated draws the state screen that choice names, then the lists as it left them.
+func (w wizardScreen) stated(choice tui.Choice, sudo *wizard.Sudo) (tui.Choice, error) {
+	if err := w.state(choice.Side, sudo); err != nil {
+		return tui.Choice{}, err
+	}
+	return tui.Reopen(w.c.Context(), w.config(), choice)
+}
+
 // state draws the state screen of side's machine. sudo is the scan's, which the run takes after it.
 func (w wizardScreen) state(side tui.Side, sudo *wizard.Sudo) error {
 	ctx, title := w.c.Context(), w.c.CommandPath()
