@@ -27,3 +27,50 @@ func MachineOf(s step.Step) (Machine, bool) {
 	return p.Machine(), true
 }
 
+// Machine is the Mac: the stage installs ws's tool before the others.
+func (*MacUpdate) Machine() Machine { return OnMac }
+
+// Machine is the Mac: the Command Line Tools.
+func (*Tools) Machine() Machine { return OnMac }
+
+// Machine is the Mac: Homebrew.
+func (*Homebrew) Machine() Machine { return OnMac }
+
+// Machine is the Mac: mac.conf.
+func (*Answers) Machine() Machine { return OnMac }
+
+// Machine is the Mac: its ssh key.
+func (*MacKey) Machine() Machine { return OnMac }
+
+// Machine is the Mac: gh's login and the Mac's key among the account's.
+func (*Gh) Machine() Machine { return OnMac }
+
+// Machine is the Mac: ws mac apply.
+func (*Setup) Machine() Machine { return OnMac }
+
+// Machine is the Mac: known_hosts holds ws's host key.
+func (*HostKey) Machine() Machine { return OnMac }
+
+// Machine is the Mac: the stage checks the Mac's login and changes nothing on ws.
+func (*Login) Machine() Machine { return OnMac }
+
+// Machine is ws: how its scripts reach root.
+func (*Sudo) Machine() Machine { return OnWs }
+
+// Machine is ws: this release is installed there.
+func (*WsInstall) Machine() Machine { return OnWs }
+
+// Machine is ws: ws server apply runs there.
+func (*WsRun) Machine() Machine { return OnWs }
+
+// Machine is ws: the claude login of WS_USER.
+func (*WsClaude) Machine() Machine { return OnWs }
+
+// Machine is the Mac: ws's signing key goes to the Mac's gh login.
+func (*Signing) Machine() Machine { return OnMac }
+
+// Machine is the Mac: the stage ends in the Mac's WireGuard configuration and mac.conf.
+func (*Tunnel) Machine() Machine { return OnMac }
+
+// Machine is the Mac: the cable's service, after ws's port in host_vars.yml.
+func (*Cable) Machine() Machine { return OnMac }
