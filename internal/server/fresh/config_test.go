@@ -130,3 +130,58 @@ func TestTheActiveMapResolves(t *testing.T) {
 		t.Fatalf("map %q: %+v", c.Active, m)
 	}
 }
+
+func TestNoKeyFiresTwoActions(t *testing.T) {
+	_, c := load(t)
+	seen := map[string]string{}
+	for _, b := range c.Maps[c.Active].Bindings {
+		mods := slices.Clone(b.Modifiers)
+		slices.Sort(mods)
+		var seq [][]string
+		for _, p := range b.Keys {
+			m := slices.Clone(p.Modifiers)
+			slices.Sort(m)
+			seq = append(seq, append(m, p.Key))
+		}
+		form, err := json.Marshal([]any{b.When, b.Key, mods, seq})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if other, taken := seen[string(form)]; taken {
+			t.Errorf("%s binds both %s and %s", form, other, b.Action)
+		}
+		seen[string(form)] = b.Action
+	}
+}
+
+func TestNoKeyConflictsWithItsTerminalEquivalent(t *testing.T) {
+	_, c := load(t)
+	bound := map[string]string{}
+	for _, b := range c.Maps[c.Active].Bindings {
+		if len(b.Keys) == 0 {
+			bound[b.When+" "+spell(b.press)] = b.Action
+		}
+	}
+	for _, when := range []string{"normal", "file_explorer", "terminal"} {
+		for _, pair := range [][2]string{
+			{"ctrl+/", "ctrl+7"}, {"ctrl+Backspace", "ctrl+h"}, {"ctrl+Space", "ctrl+@"}, {"ctrl+-", "ctrl+_"},
+		} {
+			one, two := bound[when+" "+pair[0]], bound[when+" "+pair[1]]
+			if one != two && one != "" && two != "" {
+				t.Errorf("%s: %s is %s, %s is %s", when, pair[0], one, pair[1], two)
+			}
+		}
+	}
+	if bound["normal ctrl+h"] != "" || bound["normal ctrl+Backspace"] != "" {
+		t.Error("a map's Ctrl+H or Ctrl+Backspace warns at each start, against Fresh's default")
+	}
+}
+
+func TestCtrlHBindsOutsideTheMap(t *testing.T) {
+	_, c := load(t)
+	outside := c.Keybindings
+	if len(outside) != 1 || outside[0].Action != "replace" || outside[0].When != "normal" ||
+		spell(outside[0].press) != "ctrl+h" {
+		t.Fatalf("%+v", outside)
+	}
+}
