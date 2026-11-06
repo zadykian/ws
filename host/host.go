@@ -30,7 +30,8 @@ type Early interface {
 	Early() bool
 }
 
-// Resource is one part of a machine that a step sets up.
+// Resource is one part of a machine that a step sets up. One that says what it manages is a
+// step.Reporter too, and Group joins those.
 type Resource interface {
 	// Plan reads alone, and returns no change once the resource is as wanted.
 	Plan(ctx context.Context) ([]Change, error)
@@ -48,6 +49,24 @@ func (g Group) Name() string { return g.Title }
 
 // WaitsOn returns the earlier step that must be done first.
 func (g Group) WaitsOn() string { return g.After }
+
+// Report joins what the parts say they manage. A part that says nothing shows by its plan alone.
+// A failure keeps what the parts before it said, as a report shows what it can.
+func (g Group) Report(ctx context.Context) ([]step.Item, error) {
+	var items []step.Item
+	for _, part := range g.Parts {
+		r, ok := part.(step.Reporter)
+		if !ok {
+			continue
+		}
+		found, err := r.Report(ctx)
+		items = append(items, found...)
+		if err != nil {
+			return items, err
+		}
+	}
+	return items, nil
+}
 
 // Plan joins the changes of the parts.
 func (g Group) Plan(ctx context.Context) (step.Plan, error) {

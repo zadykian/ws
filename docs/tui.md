@@ -9,6 +9,7 @@ commands print lines for now.
 A command draws a screen only where each of these holds:
 
 - `--plain` is not given. Every command takes the flag, and `ws --plain mac wizard` is the form.
+- `--json` is not given, where a command takes it.
 - Stdin and stderr are terminals.
 - `TERM` is set and is not `dumb`.
 
@@ -143,8 +144,8 @@ beside the list. `enter` then runs the steps chosen on the run screen, and `c` c
 list left with `q`, or with nothing chosen, runs nothing and exits 0. A cut that follows a choice
 wins: nothing runs, and the status is that of the cut. The server's choice is the `--only` entries,
 `ROLE` or `ROLE/STEP`. The Mac's is a set of step names. `ssh again` has no row, as a check has no
-second plan: it runs, unless `ssh` is left out with changes. With `--plain` or no terminal the
-command runs at once, as before.
+second plan: it runs, unless `ssh` is left out with changes. With `--plain`, `--json` or no terminal
+the command runs at once, as before.
 
 A role's box follows its steps, and `[-]` says that some are on. A chosen step locks the step it
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so

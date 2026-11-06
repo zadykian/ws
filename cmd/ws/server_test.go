@@ -10,6 +10,8 @@ import (
 	"filippo.io/age/armor"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/step"
 )
 
 func TestServerRefusal(t *testing.T) {
@@ -123,3 +125,68 @@ func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 }
 
 func noEnv(string) string { return "" }
+
+func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
+	p := fakeProcess()
+	m := p.machine.(*effecttest.Machine)
+	p.euid = 1000
+	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
+	status, stdout, stderr := runWs(p, "", "server", "state", "--json")
+	if status != 1 || stdout != "" || stderr != "ws server state: run it as root\n" {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+	for _, args := range [][]string{{"state", "extra"}, {"state", "--only", "nothing"}, {"state", "--check"},
+		{"state", "--secrets", "f"}} {
+		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server"}, args...)...)
+		if status != 2 || !strings.Contains(stderr, "--help' for usage.") {
+			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
+		}
+	}
+}
+
+func TestServerStateRefusesAStepItsRoleLacks(t *testing.T) {
+	p, _ := serverTerminal()
+	status, stdout, stderr := runWs(p, "", "server", "state", "--only", "tmux/no such")
+	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in tmux`) {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+}
+
+func TestServerStateHelp(t *testing.T) {
+	status, stdout, _ := runWs(fakeProcess(), "", "server", "state", "-h")
+	for _, want := range []string{"--json", "--only", "applies nothing", "no secrets"} {
+		if status != 0 || !strings.Contains(stdout, want) {
+			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
+		}
+	}
+}
+
+func TestWriteState(t *testing.T) {
+	states := []apply.RoleState{{Role: "base", Steps: []step.Report{
+		{Step: "Packages", Items: []step.Item{{Kind: step.PackageItem, Name: "git", Want: "installed", Found: "missing"}},
+			Changes: []step.Pending{{Kind: step.Install, Text: "install git"}}},
+		{Step: "Config", Items: []step.Item{{Kind: step.FileItem, Name: "/etc/x", Want: "written", Found: "differs",
+			Conflict: "changed by hand", Diff: "-a\n+b\n"}}, Changes: []step.Pending{{Text: "write /etc/x\n-a\n+b\n"}}},
+		{Step: "Later", After: "Config"},
+	}}}
+	var b bytes.Buffer
+	if err := writeState(&b, states); err != nil {
+		t.Fatal(err)
+	}
+	want := `base
+  Packages
+    package git: found missing, want installed
+    pending: install git
+  Config
+    file /etc/x: found differs, want written
+      conflict: changed by hand
+      -a
+      +b
+    pending: write /etc/x
+  Later
+    not read: after Config
+`
+	if b.String() != want {
+		t.Errorf("got\n%s\nwant\n%s", b.String(), want)
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Linger enables lingering for the user, which starts the user's systemd at boot. loginctl starts
@@ -19,6 +20,8 @@ type Linger struct {
 type enableLinger struct{ l Linger }
 
 func (c enableLinger) String() string { return "enable lingering for " + c.l.User.Name }
+
+func (enableLinger) Kind() step.ChangeKind { return step.Write }
 
 func (c enableLinger) Apply(ctx context.Context) error {
 	_, err := c.l.M.RunRoot(ctx, "loginctl", "enable-linger", c.l.User.Name)

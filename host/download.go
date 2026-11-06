@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Download is a file fetched from a URL. Its SHA-256, in hex, is pinned: the file is renamed into
@@ -30,6 +31,8 @@ type fetch struct{ d Download }
 
 func (c fetch) String() string { return fmt.Sprintf("download %s to %s", c.d.URL, c.d.Path) }
 
+func (fetch) Kind() step.ChangeKind { return step.Write }
+
 func (c fetch) Apply(ctx context.Context) error {
 	return c.d.M.Download(ctx, c.d.URL, c.d.Path, c.d.SHA256, c.d.attrs())
 }
@@ -39,6 +42,8 @@ type setAttrs struct{ d Download }
 func (c setAttrs) String() string {
 	return fmt.Sprintf("set owner %d:%d and mode %o of %s", c.d.UID, c.d.GID, c.d.Mode.Perm(), c.d.Path)
 }
+
+func (setAttrs) Kind() step.ChangeKind { return step.Write }
 
 func (c setAttrs) Apply(context.Context) error {
 	if err := c.d.M.Chown(c.d.Path, c.d.UID, c.d.GID); err != nil {
@@ -67,4 +72,23 @@ func (d Download) Plan(context.Context) ([]Change, error) {
 		return []Change{setAttrs{d}}, nil
 	}
 	return nil, nil
+}
+
+// Report compares the file as Plan does, and one that differs stands against ws. Its content is a
+// release's, so no diff shows it.
+func (d Download) Report(context.Context) ([]step.Item, error) {
+	item := step.Item{Kind: step.FileItem, Name: d.Path, Want: attrsText(d.attrs()), Found: missing}
+	body, got, ok, err := readRoot(d.M, d.Path)
+	if !ok {
+		return []step.Item{item}, err
+	}
+	item.Found = attrsText(got)
+	switch {
+	case fmt.Sprintf("%x", sha256.Sum256(body)) != d.SHA256:
+		item.Found += ", other content"
+		item.Conflict = "differs from the download ws pins: a change by hand, or another version of ws"
+	case got != d.attrs():
+		item.Conflict = attrsChanged
+	}
+	return []step.Item{item}, nil
 }

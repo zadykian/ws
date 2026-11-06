@@ -56,12 +56,13 @@ func serverRefusal(euid int, osRelease []byte) string {
 // newServerCmd returns ws server, the server's side of ws. It is built everywhere, so that the
 // tests run anywhere. Only its entry in the groups is built for Linux alone.
 func newServerCmd(p process) *cobra.Command {
-	return group("server", "the server's commands", newApplyCmd(p), newFansCmd(p))
+	return group("server", "the server's commands", newApplyCmd(p), newStateCmd(p), newFansCmd(p))
 }
 
 // newApplyCmd returns ws server apply.
 func newApplyCmd(p process) *cobra.Command {
 	var opts apply.Options
+	var asJSON bool
 	c := &cobra.Command{
 		Use:   "apply",
 		Short: "set the server up, each role as Go steps",
@@ -69,38 +70,51 @@ func newApplyCmd(p process) *cobra.Command {
 			"unit's credential ws-secrets (systemd's LoadCredential), in $CREDENTIALS_DIRECTORY.\n\n" +
 			"--only names a role, or a step of it as ROLE/STEP, by the name that the run shows. A role's other steps " +
 			"are planned and left out, and a step that waits on one of them with changes is skipped.\n\n" +
-			"The last line names the roles that changed.",
+			"The last line names the roles that changed.\n\n" +
+			"--json prints each event of the run as a line of JSON on stdout: planned, started, done, failed " +
+			"or skipped, with the step, its changes and the error. ws's own lines stay on stderr, and no " +
+			"screen is drawn.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runApply(c, p, opts) },
+		RunE: func(c *cobra.Command, _ []string) error { return runApply(c, p, opts, asJSON) },
 	}
 	f := c.Flags()
+	f.BoolVar(&asJSON, "json", false, "print each event of the run as a line of JSON on stdout")
 	f.BoolVar(&opts.Check, "check", false, "plan the steps and apply none")
 	f.StringSliceVar(&opts.Only, "only", nil, "run the named roles and ROLE/STEPs alone, as a list or by repeating the flag")
 	f.StringVar(&opts.Secrets, "secrets", "", "read the secrets from the age-encrypted `FILE`")
 	return c
 }
 
-// runApply sets the server up as opts say.
-func runApply(c *cobra.Command, p process, opts apply.Options) error {
+// serverRun is what a command that reads or sets the server up has made ready.
+type serverRun struct {
+	cfg  apply.Config
+	list []roles.Role
+	term *effect.Terminal
+	out  progOut
+}
+
+// prepareServer checks where the command runs, then loads the values and the secrets that the
+// roles read. The steps of --only follow the values, so they are checked last.
+func prepareServer(c *cobra.Command, p process, opts apply.Options) (serverRun, error) {
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
-		return usageError{errors.New("--only names no role")}
+		return serverRun{}, usageError{errors.New("--only names no role")}
 	}
 	list, err := apply.Select(roles.List(), opts.Only)
 	if err != nil {
-		return usageError{err}
+		return serverRun{}, usageError{err}
 	}
 	text, err := p.machine.ReadFile(osRelease)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return err
+		return serverRun{}, err
 	}
 	if why := serverRefusal(p.euid, text); why != "" {
-		return errors.New(why)
+		return serverRun{}, errors.New(why)
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
 	v, err := values.Load(p.machine, serverVars)
 	if err != nil {
-		return err
+		return serverRun{}, err
 	}
 	// ws_home is known now: the machine's writes under it stay inside it.
 	if m, ok := p.machine.(effect.OSMachine); ok {
@@ -109,30 +123,47 @@ func runApply(c *cobra.Command, p process, opts apply.Options) error {
 	}
 	sec, err := loadSecrets(p.machine, opts.Secrets, p.getenv)
 	if err != nil {
-		return err
+		return serverRun{}, err
 	}
 	cfg := apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
 	if err := cfg.CheckSteps(list); err != nil {
-		return usageError{err}
+		return serverRun{}, usageError{err}
 	}
-	if opensList(c, p, c.Flags().Changed("only")) {
-		if cfg, list, err = pickServer(c, p, cfg, list); err != nil || list == nil {
-			term.Flush()
-			return err
-		}
-	}
-	var changed []string
-	if drawsScreen(c, p) {
-		changed, err = applyOnScreen(c, p, cfg, list)
-	} else {
-		changed, err = apply.Run(c.Context(), cfg, list)
-	}
-	term.Flush()
+	return serverRun{cfg: cfg, list: list, term: term, out: out}, nil
+}
+
+// runApply sets the server up as opts say.
+func runApply(c *cobra.Command, p process, opts apply.Options, asJSON bool) error {
+	r, err := prepareServer(c, p, opts)
 	if err != nil {
 		return err
 	}
-	out.Say("%s", apply.Summary(changed, cfg.Check))
+	if opensList(c, p, c.Flags().Changed("only")) {
+		if r.cfg, r.list, err = pickServer(c, p, r.cfg, r.list); err != nil || r.list == nil {
+			r.term.Flush()
+			return err
+		}
+	}
+	var events *jsonEvents
+	if asJSON {
+		events = newJSONEvents(c.OutOrStdout(), r.out)
+		r.cfg.Observer = events
+	}
+	var changed []string
+	if drawsScreen(c, p) {
+		changed, err = applyOnScreen(c, p, r.cfg, r.list)
+	} else {
+		changed, err = apply.Run(c.Context(), r.cfg, r.list)
+	}
+	r.term.Flush()
+	if err != nil {
+		return err
+	}
+	if events != nil && events.err != nil {
+		return events.err
+	}
+	r.out.Say("%s", apply.Summary(changed, r.cfg.Check))
 	return nil
 }
 

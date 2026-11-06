@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // UserUnit keeps a unit of the user's own systemd running, and restarts it where any of Watch has a
@@ -54,6 +55,8 @@ type userCall struct {
 func (c userCall) Forced() bool { return c.forced }
 
 func (c userCall) String() string { return c.verb + " " + c.u.User.Name + "'s " + c.u.Name }
+
+func (userCall) Kind() step.ChangeKind { return step.Restart }
 
 // Apply reloads the manager first, as a watched file may be one of the unit's.
 func (c userCall) Apply(ctx context.Context) error {
@@ -104,4 +107,22 @@ func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
 		cs = append(cs, userCall{u: u, verb: "restart", forced: true})
 	}
 	return cs, nil
+}
+
+// Report reads the unit's state, stopped where the manager is down. Plan says that systemd is not
+// running, so this doesn't.
+func (u UserUnit) Report(ctx context.Context) ([]step.Item, error) {
+	item := step.Item{Kind: step.ServiceItem, Name: u.User.Name + "'s " + u.Name, Want: "running", Found: noSystemd}
+	if !Booted(u.M) {
+		return []step.Item{item}, nil
+	}
+	active, err := u.active(ctx)
+	if err != nil {
+		return nil, err
+	}
+	item.Found = "stopped"
+	if active {
+		item.Found = "running"
+	}
+	return []step.Item{item}, nil
 }

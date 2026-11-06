@@ -203,3 +203,84 @@ func TestSummary(t *testing.T) {
 		}
 	}
 }
+
+// reports is a step that reports one item.
+type reports struct{ todo }
+
+func (reports) Report(context.Context) ([]step.Item, error) {
+	return []step.Item{{Kind: step.PackageItem, Name: "git", Want: "installed", Found: "missing"}}, nil
+}
+
+func TestStateReadsPrepareAndEachRoleAndAppliesNone(t *testing.T) {
+	var a, b bool
+	role := func(name string, s step.Step) roles.Role {
+		return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+			return []step.Step{s}
+		}}
+	}
+	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Prepare: []step.Step{todo{&a}}}
+	got, err := State(context.Background(), c, []roles.Role{role("a", reports{todo{&b}}), role("b", failing{todo{&b}})})
+	if err != nil || len(got) != 3 || a || b {
+		t.Fatalf("got %+v, a = %v, b = %v, err = %v", got, a, b, err)
+	}
+	if got[0].Role != Prepare || got[1].Role != "a" || got[2].Role != "b" {
+		t.Errorf("roles = %+v", got)
+	}
+	if items := got[1].Steps[0].Items; len(items) != 1 || items[0].Name != "git" {
+		t.Errorf("a's items = %+v", items)
+	}
+	if items := got[2].Steps[0].Items; len(items) != 1 || items[0].Kind != step.CheckItem {
+		t.Errorf("b's failure = %+v, want one check item", items)
+	}
+}
+
+func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
+	var done bool
+	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+		return []step.Step{named{todo{&done}, "x"}, named{todo{&done}, "y"}}
+	}}
+	for _, tc := range []struct{ only, want []string }{
+		{nil, []string{"x", "y"}},
+		{[]string{"a"}, []string{"x", "y"}},
+		{[]string{"a/y"}, []string{"y"}},
+		{[]string{"a/y", "a"}, []string{"x", "y"}},
+	} {
+		c := Config{Options: Options{Only: tc.only}, M: effecttest.NewMachine(), Out: &effecttest.Out{},
+			Prepare: []step.Step{named{todo{&done}, "prepare"}}}
+		got, err := State(context.Background(), c, []roles.Role{r})
+		if err != nil || len(got) != 2 || len(got[0].Steps) != 1 {
+			t.Fatalf("only %q: got %+v, err = %v", tc.only, got, err)
+		}
+		var steps []string
+		for _, report := range got[1].Steps {
+			steps = append(steps, report.Step)
+		}
+		if !slices.Equal(steps, tc.want) {
+			t.Errorf("only %q: steps = %q, want %q", tc.only, steps, tc.want)
+		}
+	}
+}
+
+func TestStateGivesTheRolesNoSecrets(t *testing.T) {
+	var got secrets.Secrets
+	r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Out) []step.Step {
+		got = s
+		return nil
+	}}
+	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Secrets: secrets.Secrets{Env: map[string]string{"A": "b"}}}
+	if _, err := State(context.Background(), c, []roles.Role{r}); err != nil || !got.Unread || got.Env != nil {
+		t.Errorf("secrets = %+v, %v, want none, and Unread", got, err)
+	}
+}
+
+func TestStateStopsAtTheEndOfTheContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	var done bool
+	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+		return []step.Step{todo{&done}}
+	}}
+	if _, err := State(ctx, Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}}, []roles.Role{r}); !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want canceled", err)
+	}
+}

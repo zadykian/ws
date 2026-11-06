@@ -2,11 +2,34 @@ package setup_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/step"
 )
+
+func TestAFileChangeNamesItsFileInAReport(t *testing.T) {
+	tests := []struct {
+		change step.Change
+		want   string
+	}{
+		{setup.Write{Path: "/f", After: []byte("a\n")}, "would create /f"},
+		{setup.Write{Path: "/f", Before: []byte("b\n"), After: []byte("a\n"), Exists: true}, "would write /f"},
+		{setup.RootWrite{Write: setup.Write{Path: "/e", After: []byte("a\n")}}, "would create /e"},
+		{setup.RootRemove{Path: "/e", Before: []byte("a\n")}, "would remove /e"},
+	}
+	for _, tt := range tests {
+		got, _, _ := strings.Cut(step.PendingOf(tt.change).Text, "\n")
+		if got != tt.want {
+			t.Errorf("%T: first line = %q, want %q", tt.change, got, tt.want)
+		}
+		if !strings.Contains(step.PendingOf(tt.change).Text, tt.change.String()) {
+			t.Errorf("%T: the report lost the diff", tt.change)
+		}
+	}
+}
 
 func TestApply(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}

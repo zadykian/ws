@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Left takes a user out of a group. A session that is running keeps the group until it ends.
@@ -20,6 +21,8 @@ type leaveGroup struct{ l Left }
 func (c leaveGroup) String() string {
 	return "remove " + c.l.User + " from the " + c.l.Group + " group"
 }
+
+func (leaveGroup) Kind() step.ChangeKind { return step.Removal }
 
 func (c leaveGroup) Apply(ctx context.Context) error {
 	_, err := c.l.M.RunRoot(ctx, "gpasswd", "--delete", c.l.User, c.l.Group)

@@ -106,3 +106,18 @@ func TestUserUnitRestartsWhereAMarkIsLeft(t *testing.T) {
 		t.Errorf("plan = %q, want the restart that the mark owes", got)
 	}
 }
+
+func TestUserUnitReport(t *testing.T) {
+	_, u, _ := userUnitFixture(false)
+	if got := reportOf(t, u); got.Name != "ws's docker.service" || got.Found != "systemd is not running" {
+		t.Errorf("item = %+v, want the user's unit and the state of a machine with no systemd", got)
+	}
+	m, u, _ := userUnitFixture(true)
+	if got := reportOf(t, u); got.Found != "stopped" {
+		t.Errorf("item = %+v, want stopped with the manager down", got)
+	}
+	userState(m, "active")
+	if got := reportOf(t, u); got.Want != "running" || got.Found != "running" {
+		t.Errorf("item = %+v, want it running", got)
+	}
+}

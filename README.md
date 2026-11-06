@@ -103,6 +103,37 @@ and the repository's step, and plans nothing more.
 A dry run checks no file it would write. ws runs a file's check, such as `nft -c`, `sshd -G` or
 `dockerd --validate`, only as it writes the file.
 
+## Events
+
+`sudo ws server apply --json` prints each event of the run as a line of JSON on stdout: `planned`,
+`started`, `done`, `failed` or `skipped`, with the role, the step, its changes and the error. ws's
+own lines stay on stderr, and no screen is drawn.
+
+## State
+
+`ws server state` reads and applies nothing. It needs what `--check` needs, root on Ubuntu 26.04,
+and takes `--only` as `apply` does. It reports what ws manages, not the rest of the machine: each
+step's packages, services and files, what stands against ws, and the changes that `apply` would
+make. A step that fails stands in the report as a check, and the exit code stays 0. It takes no
+secrets, so a report holds none and says nothing of what they write.
+
+```sh
+sudo ws server state
+sudo ws server state --json
+```
+
+The report is on stdout and ws's own lines on stderr. `--json` prints the version of ws, then
+each role with its steps, items and changes.
+
+`ws mac state` does the same for the Mac, as `ws mac apply --check` reads it: it needs `mac.conf`,
+and not root. The Mac's steps report their changes and no items yet. `--json` prints the version of
+ws, then each step.
+
+```sh
+ws mac state
+ws mac state --json
+```
+
 ## By hand
 
 Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)

@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Dir is a directory with its mode and owner. Its parent must exist: list the parents first.
@@ -31,6 +32,8 @@ func (c setDir) String() string {
 	}
 	return fmt.Sprintf("set owner %d:%d and mode %o of %s", c.d.UID, c.d.GID, c.d.Mode.Perm(), c.d.Path)
 }
+
+func (setDir) Kind() step.ChangeKind { return step.Write }
 
 func (c setDir) Apply(context.Context) error {
 	if !c.exists {
@@ -60,4 +63,19 @@ func (d Dir) Plan(context.Context) ([]Change, error) {
 		return []Change{setDir{d, true}}, nil
 	}
 	return nil, nil
+}
+
+// Report reads the directory's owner and mode, which stand against ws where Plan would fix them.
+func (d Dir) Report(context.Context) ([]step.Item, error) {
+	attrs := effect.Attrs{UID: d.UID, GID: d.GID, Mode: d.Mode.Perm()}
+	want, conflict := attrsText(attrs), ""
+	got, err := d.M.RootAttrs(d.Path)
+	switch {
+	case d.CreateOnly:
+		want = present
+	case got != attrs:
+		conflict = attrsChanged
+	}
+	item := step.Item{Kind: step.DirItem, Name: d.Path, Want: want, Found: missing}
+	return reportPath(item, attrsText(got), conflict, err)
 }

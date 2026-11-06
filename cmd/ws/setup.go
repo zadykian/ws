@@ -122,33 +122,43 @@ func setupStepNames(p process) []string {
 	return names
 }
 
-// runMacApply runs the steps that args name, or all of them, from mac.conf. Under check it prints
-// each change and makes none.
-func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
+// loadMacConf refuses root and reads mac.conf: the commands that act on the Mac's own files share it.
+func loadMacConf(p process) (home string, settings conf.Conf, err error) {
 	if p.euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
-		return errors.New("run it as yourself, not root: it asks sudo where it needs root")
+		return "", conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
-	home := p.getenv("HOME")
+	home = p.getenv("HOME")
 	file := p.getenv("WS_CONF")
 	if file == "" {
 		file = filepath.Join(home, confFile)
 	}
 	text, err := p.machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
+		return "", conf.Conf{}, fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
 	}
 	if err != nil {
-		return err
+		return "", conf.Conf{}, err
 	}
-	settings, errs := conf.Parse(string(text))
+	var errs []conf.Error
+	settings, errs = conf.Parse(string(text))
 	if len(errs) > 0 {
 		var all []error
 		for _, e := range errs {
 			all = append(all, errors.New(e.In(file)))
 		}
-		return errors.Join(all...)
+		return "", conf.Conf{}, errors.Join(all...)
+	}
+	return home, settings, nil
+}
+
+// runMacApply runs the steps that args name, or all of them, from mac.conf. Under check it prints
+// each change and makes none.
+func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
+	home, settings, err := loadMacConf(p)
+	if err != nil {
+		return err
 	}
 	xdg := p.getenv("XDG_CONFIG_HOME")
 	buildFor := func(check bool) setupBuild {

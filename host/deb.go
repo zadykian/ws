@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // Deb is a package from a .deb file on disk, such as a download. It installs where the package is
@@ -25,6 +26,8 @@ type installDeb struct {
 }
 
 func (c installDeb) String() string { return "install " + c.name + " from " + c.d.Path }
+
+func (installDeb) Kind() step.ChangeKind { return step.Install }
 
 func (c installDeb) Apply(ctx context.Context) error {
 	args := append([]string{"DEBIAN_FRONTEND=noninteractive", "apt-get"}, installOptions...)

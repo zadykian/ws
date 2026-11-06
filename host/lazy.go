@@ -30,5 +30,14 @@ func (l Lazy) Plan(ctx context.Context) (step.Plan, error) {
 	return Group{Title: l.Title, Parts: parts}.Plan(ctx)
 }
 
+// Report makes the parts and reports them as a Group does.
+func (l Lazy) Report(ctx context.Context) ([]step.Item, error) {
+	parts, err := l.Parts(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return Group{Parts: parts}.Report(ctx)
+}
+
 // Apply applies the plan as a Group does.
 func (l Lazy) Apply(ctx context.Context, p step.Plan) error { return Group{}.Apply(ctx, p) }
