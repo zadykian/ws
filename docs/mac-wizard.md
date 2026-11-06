@@ -180,6 +180,10 @@ is no release: put a Linux build of the tree at `/usr/local/bin/ws` (`tools/buil
 With `--update`, ws on the Mac comes first, before the lock: where `/latest` names another release,
 its `install.sh` runs, then the command again. A ws that is no release stays, with a warning.
 
+The script's `state` prints `ws server state --json`, with a run's `HOME` and locale. The report
+comes back over ssh, so it reaches no journal. The wizard takes it from a ws of its own version
+alone: another version's names other steps.
+
 ## ws's run
 
 The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a

@@ -32,6 +32,11 @@ func (r *Remote) command(cmd []string, in []byte) ([]string, []byte, error) {
 // Do runs the operation, and has the next Status read ws again, as the operation may change it.
 func (r *Remote) Do(ctx context.Context, op ...string) ([]byte, error) {
 	r.read = false
+	return r.query(ctx, op...)
+}
+
+// query runs an operation that changes nothing, so what Status read stands.
+func (r *Remote) query(ctx context.Context, op ...string) ([]byte, error) {
 	args, in, err := r.args(op)
 	if err != nil {
 		return nil, err
