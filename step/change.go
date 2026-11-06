@@ -27,6 +27,21 @@ type Titled interface {
 	Title() string
 }
 
+// Excerpted is a Change whose String quotes a file of the user's, which may hold a secret. --check
+// prints that on the user's own terminal, and a report and a run's log outlast it, so they hold the
+// Excerpt. It stands beside Change, as Titled does, and leaves String as --check prints it.
+type Excerpted interface {
+	Excerpt() string
+}
+
+// ExcerptOf returns the change as a report and a log hold it.
+func ExcerptOf(c Change) string {
+	if e, ok := c.(Excerpted); ok {
+		return e.Excerpt()
+	}
+	return c.String()
+}
+
 // KindOf returns the change's kind.
 func KindOf(c Change) ChangeKind {
 	if k, ok := c.(Kinded); ok {

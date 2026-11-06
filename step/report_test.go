@@ -50,6 +50,20 @@ func TestPendingOfPutsATitleFirst(t *testing.T) {
 	}
 }
 
+// quoting is a change whose String quotes a file of the user's.
+type quoting struct{ titled }
+
+func (quoting) Excerpt() string { return "+ws\n" }
+
+func TestPendingOfHoldsAnExcerpt(t *testing.T) {
+	if got, want := step.PendingOf(quoting{"+ws\n the user's text\n"}).Text, "would write /a\n+ws\n"; got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+	if got, want := step.Headline(quoting{"+ws\n"}), "would write /a"; got != want {
+		t.Errorf("headline = %q, want %q", got, want)
+	}
+}
+
 func TestReadTakesTheItemsOfAReporter(t *testing.T) {
 	log := []string{}
 	items := []step.Item{{Kind: step.FileItem, Name: "/a", Want: "present", Found: "missing"}}

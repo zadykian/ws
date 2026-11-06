@@ -202,9 +202,10 @@ func (b *Bridge) Observe(e step.Event) {
 }
 
 // changeLine is a change as --check shows it, under the name of its step, which a wizard's stage
-// writes in the change itself. One of several lines holds a file's diff under its first line.
+// writes in the change itself. One of several lines holds a file's diff under its first line. A
+// line reaches the log, so it holds the excerpt.
 func changeLine(name string, c step.Change) Line {
-	text := strings.TrimSuffix(c.String(), "\n")
+	text := strings.TrimSuffix(step.ExcerptOf(c), "\n")
 	if !strings.HasPrefix(text, name+": ") {
 		text = name + ": " + text
 	}
