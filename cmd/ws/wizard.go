@@ -51,7 +51,7 @@ func wizardRefusal(p process) string {
 }
 
 // wizardStages returns the stages of ws mac wizard, in order.
-func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.Hidden, out effect.Out, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
+func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.Hidden, out effect.Out, obs step.Observer, prog string, o wizardOptions, hand *wizard.Hand) []step.Step {
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
 	scratch := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
@@ -74,7 +74,7 @@ func wizardStages(p process, stdout io.Writer, ask effect.Prompt, hidden effect.
 	hand.Late(run.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}
-	setup := wizardSetup(p, stdout, out, later)
+	setup := wizardSetup(p, stdout, out, obs, later)
 	login := &wizard.Login{Host: host, Gh: gh}
 	cable := &wizard.Cable{Host: host, Run: run, Login: login, Files: files, Setup: setup, Env: p.lookup,
 		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
@@ -119,10 +119,11 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	defer stop()
 	term := effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
 	out := progOut{term, prog, map[string]bool{}}
+	obs := out
 	if o.update {
-		// Its own step.Run, before the lock: the new ws takes the place of this process, which would leave the lock held.
+		// Its own run, before the lock: the new ws takes the place of this process, which would leave the lock held.
 		u := &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases, Home: p.getenv("HOME"), Args: p.argv}
-		if _, err := step.Run(ctx, []step.Step{u}, out, o.check); err != nil {
+		if _, err := step.RunWith(ctx, []step.Step{u}, step.Options{Observer: obs, Check: o.check}); err != nil {
 			return unwrapStep(err)
 		}
 	}
@@ -131,8 +132,8 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 		hand.Close(ctx, c.OutOrStdout())
 		term.Flush()
 	}
-	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, term, out, prog, o, hand)
-	_, err := wizard.Run(ctx, p.machine, out, stages, o.check, tmp, p.pid, closing)
+	stages := wizardStages(p, c.OutOrStdout(), signalPrompt{term}, term, out, obs, prog, o, hand)
+	_, err := wizard.Run(ctx, p.machine, obs, stages, o.check, tmp, p.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)
 }

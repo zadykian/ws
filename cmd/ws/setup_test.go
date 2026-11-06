@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/step"
 )
 
 func TestSetupCommand(t *testing.T) {
@@ -36,23 +37,42 @@ func TestSetupRefusesRoot(t *testing.T) {
 	}
 }
 
-func TestProgOutPrefixesAndDropsLines(t *testing.T) {
+func TestProgOutPrefixesLines(t *testing.T) {
 	out := progOut{Out: &effecttest.Out{}, prog: "ws mac apply", seen: map[string]bool{}}
-	out.Say("%s: applying %d change(s)", "ssh", 1)
-	out.Say("%s: %s", "cable", "would run x")
 	out.Say("wrote %s", "f")
-	out.Say("%s: %s", "ssh", setup.Write{Path: "/f", After: []byte("a\n")})
-	out.Say("%s: %s", "ssh", setup.Backup{Path: "/f", To: "/f.~"})
+	out.Say("%s: %s", "Answers", "bad")
 	out.Warn("w %d", 1)
 	out.Warn("w %d", 1)
 	want := []string{
-		"say: ws mac apply: would run x", "say: ws mac apply: wrote f",
-		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws mac apply: warning: w 1",
+		"say: ws mac apply: wrote f", "say: ws mac apply: Answers: bad", "say: ws mac apply: warning: w 1",
 	}
 	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)
 	}
 }
+
+func TestProgOutObservesAPlanAndWhatAStepIsBehind(t *testing.T) {
+	out := progOut{Out: &effecttest.Out{}, prog: "ws mac apply", seen: map[string]bool{}}
+	plan := []step.Change{
+		setup.Write{Path: "/f", After: []byte("a\n")}, setup.Backup{Path: "/f", To: "/f.~"}, stringChange("would run x"),
+	}
+	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Changes: plan})
+	out.Observe(step.Event{Kind: step.Started, Step: "ssh", Changes: plan})
+	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
+	out.Observe(step.Event{Kind: step.Skipped, Step: "git", After: "ssh"})
+	out.Observe(step.Event{Kind: step.Skipped, Step: "zed"})
+	want := []string{
+		"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a", "say: ws mac apply: would run x",
+		"say: ws mac apply: git: after ssh",
+	}
+	if got := out.Out.(*effecttest.Out).Lines; !reflect.DeepEqual(got, want) {
+		t.Errorf("lines = %q, want %q", got, want)
+	}
+}
+
+type stringChange string
+
+func (c stringChange) String() string { return string(c) }
 
 func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
 	var names []string

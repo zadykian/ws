@@ -28,22 +28,27 @@ type progOut struct {
 	seen map[string]bool
 }
 
-// Say prints the line after the prefix. It drops the runner's line that a step is applying, which
-// the step's own lines follow, and the step's name that starts a line of --check.
+// Say prints the line after the prefix.
 func (o progOut) Say(format string, a ...any) {
+	o.Out.Say("%s: "+format, append([]any{o.prog}, a...)...)
+}
+
+// Observe prints a run's events as the runner's lines once did, but for the line that a step is
+// applying, which the step's own lines follow: a plan under --check, and what a step is behind.
+func (o progOut) Observe(e step.Event) {
 	switch {
-	case format == "%s: applying %d change(s)":
-		return
-	case format == "%s: %s" && len(a) == 2:
-		o.sayChange(a[1]) //nolint:gosec // len(a) is 2 in this case
-	default:
-		o.Out.Say("%s: "+format, append([]any{o.prog}, a...)...)
+	case e.Kind == step.Planned && e.Check:
+		for _, c := range e.Changes {
+			o.sayChange(c)
+		}
+	case e.Kind == step.Skipped && e.After != "":
+		o.Say("%s: after %s", e.Step, e.After)
 	}
 }
 
 // sayChange prints a change under --check. ws mac apply printed a diff as diff -u does, with no prefix and
 // no blank line after it, and said nothing of the backup of a file.
-func (o progOut) sayChange(c any) {
+func (o progOut) sayChange(c step.Change) {
 	switch c := c.(type) {
 	case setup.Write:
 		o.Out.Say("%s", strings.TrimSuffix(c.String(), "\n"))
@@ -147,7 +152,7 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		chosen = slices.Concat(steps, []step.Step{sshStep(settings, home, p.machine, out, true)})
 	}
 	ctx := c.Context()
-	_, err = step.Run(ctx, chosen, out, check)
+	_, err = step.RunWith(ctx, chosen, step.Options{Observer: out, Check: check})
 	for _, s := range chosen {
 		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil {
 			err = f.Finish(ctx)

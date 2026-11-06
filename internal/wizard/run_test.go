@@ -36,7 +36,7 @@ func (s *stage) Apply(context.Context, step.Plan) error {
 func TestRunHoldsLockAndCaffeinate(t *testing.T) {
 	m := effecttest.NewMachine()
 	var out effecttest.Out
-	changed, err := Run(context.Background(), m, &out, []step.Step{&stage{}}, false, "/tmp", 42, nil)
+	changed, err := Run(context.Background(), m, step.Printer{Out: &out}, []step.Step{&stage{}}, false, "/tmp", 42, nil)
 	if err != nil || !changed {
 		t.Fatalf("Run = %v, %v; want true, nil", changed, err)
 	}
@@ -45,12 +45,15 @@ func TestRunHoldsLockAndCaffeinate(t *testing.T) {
 			t.Errorf("calls %v lack %q", m.Calls, call)
 		}
 	}
+	if want := []string{"say: Stage: applying 1 change(s)"}; !slices.Equal(out.Lines, want) {
+		t.Errorf("lines = %q, want %q", out.Lines, want)
+	}
 }
 
 func TestRunStopsWhereLockIsHeld(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/tmp/ws-wizard.lock"] = 0o700
-	if _, err := Run(context.Background(), m, &effecttest.Out{}, []step.Step{&stage{}}, false, "/tmp", 42, nil); err == nil {
+	if _, err := Run(context.Background(), m, nil, []step.Step{&stage{}}, false, "/tmp", 42, nil); err == nil {
 		t.Fatal("Run succeeded with the lock held")
 	}
 	if slices.Contains(m.Calls, "run caffeinate -i -w 42") || slices.Contains(m.Calls, "run rm -rf /tmp/ws-wizard.lock") {
@@ -65,7 +68,7 @@ func TestRunClosesUnderTheLock(t *testing.T) {
 		_, held = m.Dirs["/tmp/ws-wizard.lock"]
 		closed = true
 	}
-	if _, err := Run(context.Background(), m, &effecttest.Out{}, []step.Step{&stage{}}, false, "/tmp", 42, closing); err != nil {
+	if _, err := Run(context.Background(), m, nil, []step.Step{&stage{}}, false, "/tmp", 42, closing); err != nil {
 		t.Fatal(err)
 	}
 	if !closed || !held {
