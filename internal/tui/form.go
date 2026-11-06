@@ -3,6 +3,8 @@ package tui
 import (
 	"maps"
 	"slices"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 // Form is the fields of a file with one in focus, a value that a screen's Update replaces. Which
@@ -65,6 +67,30 @@ func (f Form) settle(place int) Form {
 	}
 	if name := f.name(); name != "" && !f.blurred {
 		f.fields[name] = f.fields[name].Focus()
+	}
+	return f
+}
+
+// Move steps the focus along the fields, and reports false past either end, which is a button's.
+func (f Form) Move(step int) (Form, bool) {
+	place := f.focus + step
+	if place < 0 || place >= len(f.names) {
+		return f, false
+	}
+	return f.settle(place), true
+}
+
+// Update hands the field in focus a key or a paste, and flows again where its value changed.
+func (f Form) Update(msg tea.Msg) Form {
+	name := f.name()
+	if name == "" {
+		return f
+	}
+	before := f.fields[name]
+	f.fields = maps.Clone(f.fields)
+	f.fields[name] = before.Update(msg)
+	if f.fields[name].Value() != before.Value() {
+		return f.flow()
 	}
 	return f
 }
