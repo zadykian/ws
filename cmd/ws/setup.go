@@ -166,6 +166,13 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		}
 	}
 	build := buildFor(check)
+	if opensList(c, p, len(args) == 1) {
+		chosen, ok, err := pickSetup(c, p, buildFor)
+		if err != nil || !ok {
+			return err
+		}
+		return setupOnScreen(c, p, buildFor(chosen.Check), chosen)
+	}
 	if drawsScreen(c, p) {
 		return setupOnScreen(c, p, build, step.Options{Check: check})
 	}
@@ -194,10 +201,12 @@ func setupOnScreen(c *cobra.Command, p process, build setupBuild, o step.Options
 }
 
 // runSetup runs steps under o, then what each leaves for the end of a run that passed.
+// A step left out leaves nothing, as it applied nothing.
 func runSetup(ctx context.Context, steps []step.Step, o step.Options) error {
 	_, err := step.RunWith(ctx, steps, o)
 	for _, s := range steps {
-		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil {
+		left := o.LeftOut != nil && o.LeftOut(o.Parent, s.Name())
+		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil && !left {
 			err = f.Finish(ctx)
 		}
 	}

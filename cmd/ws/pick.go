@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"io"
+	"slices"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -9,6 +11,7 @@ import (
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
 	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/step"
 )
 
 // opensList says that a run opens the list of steps first: it draws a screen, and neither a
@@ -47,4 +50,20 @@ func pickServer(c *cobra.Command, p process, cfg apply.Config, list []roles.Role
 	cfg.Only, cfg.Check = choice.Only, choice.Check
 	chosen, err := apply.Select(list, cfg.Only)
 	return cfg, chosen, err
+}
+
+// pickSetup opens the list of ws mac apply's steps, scanned by a check. It returns the options that
+// the choice sets, and false where the maintainer left.
+func pickSetup(c *cobra.Command, p process, build func(check bool) setupBuild) (step.Options, bool, error) {
+	scan := func(ctx context.Context, b *tui.Bridge) error {
+		steps := build(true)(screenMachine(ctx, b, p.machine), b, io.Discard)
+		return runSetup(ctx, steps, step.Options{Observer: b, Check: true, Stop: b.Stop(ctx)})
+	}
+	rows := tui.NewGroup("", build(true)(p.machine, nil, io.Discard))
+	choice, err := pickSteps(c, p, []tui.Group{rows}, scan)
+	if err != nil || len(choice.Only) == 0 {
+		return step.Options{}, false, err
+	}
+	left := func(_, name string) bool { return !slices.Contains(choice.Only, name) }
+	return step.Options{Check: choice.Check, LeftOut: left}, true, nil
 }

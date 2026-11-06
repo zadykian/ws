@@ -2,12 +2,16 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/step"
 )
 
 // repeating types keys again and again, so that one lands once the list takes it.
@@ -18,6 +22,24 @@ func (r repeating) Read(b []byte) (int, error) {
 	return copy(b, r), nil
 }
 
+func TestMacApplyOpensTheListAtATerminal(t *testing.T) {
+	p, _ := macTerminal()
+	status, stdout, stderr := runWs(p, "q", "mac", "apply")
+	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
+		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+}
+
+func TestMacApplyGoesStraightToTheRunWithAStepOrCheck(t *testing.T) {
+	for _, args := range [][]string{{"mac", "apply", "ssh"}, {"mac", "apply", "--check"}} {
+		p, m := macTerminal()
+		status, _, stderr := runWs(p, "q", args...)
+		if !slices.Contains(m.Calls, "run mktemp -d") {
+			t.Errorf("%v: status = %d, no run began: calls = %q, stderr = %q", args, status, m.Calls, stderr)
+		}
+	}
+}
+
 func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
 	p, _ := serverTerminal()
 	status, stdout, stderr := runWs(p, "q", "server", "apply")
@@ -26,6 +48,32 @@ func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
 	}
 	if strings.Contains(stderr, "changed:") {
 		t.Errorf("a run began: %q", stderr)
+	}
+}
+
+func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
+	p, _ := macTerminal()
+	c, _ := screenCommand(t, "")
+	c.SetIn(repeating("a\r"))
+	var checks []bool
+	build := func(check bool) setupBuild {
+		return func(_ effect.Machine, _ effect.Out, _ io.Writer) []step.Step {
+			checks = append(checks, check)
+			return []step.Step{
+				stepOf{"one", func(context.Context) error { return nil }},
+				stepOf{"two", func(context.Context) error { return nil }},
+			}
+		}
+	}
+	o, ok, err := pickSetup(c, p, build)
+	if err != nil || !ok || o.Check || o.LeftOut == nil {
+		t.Fatalf("options = %+v, ok = %v, err = %v", o, ok, err)
+	}
+	if o.LeftOut("", "one") || o.LeftOut("", "two") || !o.LeftOut("", "three") {
+		t.Error("the choice leaves out a step it chose, or keeps one it didn't")
+	}
+	if slices.Contains(checks, false) {
+		t.Errorf("the list built steps without a check: %v", checks)
 	}
 }
 

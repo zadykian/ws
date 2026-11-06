@@ -66,6 +66,15 @@ type ending struct {
 
 func (e ending) Finish(ctx context.Context) error { return e.finish(ctx) }
 
+func TestRunSetupFinishesNoStepLeftOut(t *testing.T) {
+	finish := func(context.Context) error { return errors.New("a step left out finished") }
+	steps := []step.Step{ending{stepOf{"one", func(context.Context) error { return nil }}, finish}}
+	left := func(_, _ string) bool { return true }
+	if err := runSetup(t.Context(), steps, step.Options{LeftOut: left}); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 	p, _ := macTerminal()
 	p.machine = effect.OSMachine{}
