@@ -130,6 +130,12 @@ A question asks nothing first: its step waits on the answer, so Ctrl-C ends the 
 asks nothing either, as nobody may be there to answer. A run stopped past its current step ends
 with the status of Ctrl-C, unless that step was the last.
 
+## The list of steps
+
+The list shows a run's roles and their steps, each with a box. A scan ticks the steps with changes.
+Past it, `space` turns a box. `a`, `n`, `i` and `p` choose all, none, the inverse and the steps
+with changes. No command opens it yet.
+
 ## Commands
 
 A screen owns the terminal, so a step's commands stay off it.
