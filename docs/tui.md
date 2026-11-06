@@ -134,7 +134,12 @@ with the status of Ctrl-C, unless that step was the last.
 
 The list shows a run's roles and their steps, each with a box. A scan ticks the steps with changes.
 Past it, `space` turns a box. `a`, `n`, `i` and `p` choose all, none, the inverse and the steps
-with changes. No command opens it yet.
+with changes, among those a filter shows. `/` filters, and `Esc` drops it. `enter` runs the steps
+chosen, `c` checks them and `q` leaves. No command opens it yet.
+
+A role's box follows its steps, and `[-]` says that some are on. A chosen step locks the step it
+waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so
+`!` in the status warns of changes left out in an earlier role.
 
 ## Commands
 
