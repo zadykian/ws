@@ -74,6 +74,17 @@ func (r *record) keep(l Line) {
 	r.kept = append(r.kept, l)
 }
 
+// logText adds text to the log alone, cleaned, and without its last newline. Empty text adds nothing.
+func (r *record) logText(text string) {
+	text = strings.TrimSuffix(text, "\n")
+	if text == "" {
+		return
+	}
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	r.write(cleanLines(text))
+}
+
 // write adds a line to the log. A log that fails stops, and the run goes on without it.
 func (r *record) write(text string) {
 	if r.log == nil {

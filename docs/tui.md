@@ -135,7 +135,9 @@ place.
 A run keeps its whole output in `$XDG_STATE_HOME/ws/`, or `~/.local/state/ws/`, in a file named for
 the command and the time, as `ws-server-apply-20261105T120000Z.log`. The directory is mode 0700
 and the file 0600. The file holds the lines the window shows, cleaned as the window cleans them,
-and a failed or skipped step's name. A hidden answer never reaches it.
+and a failed or skipped step's name. It holds too what a plain run prints apart from them: the
+summary, the stdout text of a run, and what stays by hand. A hidden answer never reaches it, and
+neither does a foreground command's own output, which holds the terminal.
 
 The newest 20 logs stay. A run whose log can't be made goes on without one. The path prints on the
 normal screen after a failure, a stop, a warning or a `--check` with changes.

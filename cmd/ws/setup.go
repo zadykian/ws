@@ -202,7 +202,9 @@ func setupOnScreen(c *cobra.Command, p process, build setupBuild, o step.Options
 	err := drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
 		steps := build(screenMachine(ctx, b, p.machine), b, &text)
 		o.Observer, o.Stop = b, b.Stop(ctx)
-		return runSetup(ctx, steps, o)
+		err := runSetup(ctx, steps, o)
+		b.Log(text.String()) // A failed run prints it too.
+		return err
 	})
 	if err == nil { // A work left behind may still write to text.
 		_, _ = text.WriteTo(c.OutOrStdout())

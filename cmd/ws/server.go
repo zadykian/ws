@@ -184,6 +184,9 @@ func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []roles.R
 		run.Out, run.Observer, run.Stop, run.Prepare = b, b, b.Stop(ctx), prepareSteps(run.M, b)
 		var err error
 		changed, err = apply.Run(ctx, run, list)
+		if err == nil { // A plain run prints the summary after the screen, and the log holds it.
+			b.Log(apply.Summary(changed, cfg.Check))
+		}
 		return err
 	})
 	if err != nil {

@@ -141,3 +141,26 @@ func TestRunReportsCheckChanges(t *testing.T) {
 		t.Errorf("past the screen: %q", left)
 	}
 }
+
+// A plain run prints its stdout text and what stays by hand, so the log holds them. The window
+// shows neither. A line SayLasting keeps by hand is logged once by its Line alone.
+func TestRunLogsWhatAPlainRunPrints(t *testing.T) {
+	var log, out bytes.Buffer
+	c := noKeys(&out)
+	c.Log = &log
+	err := Run(t.Context(), c, recorder{new([]tea.Msg)}, func(_ context.Context, b *Bridge) error {
+		b.ByHand("%s: run it again", "ws")
+		b.SayLasting("%s", "set the key")
+		b.SayLasting("%s", "set the key")
+		b.Log("\x1b[31mpublic key\x1b[0m\nthen\n")
+		b.Log("")
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	want := "ws: run it again\nset the key\nset the key\npublic key\nthen\n"
+	if log.String() != want {
+		t.Errorf("log %q, want %q", log.String(), want)
+	}
+}

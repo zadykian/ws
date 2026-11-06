@@ -162,7 +162,7 @@ func (b *Bridge) SayLasting(format string, a ...any) {
 	line := fmt.Sprintf(format, a...)
 	b.send(Line{Said, line})
 	if _, kept := b.lasting.LoadOrStore(line, true); !kept {
-		b.ByHand("%s", line)
+		b.keepByHand("%s", line)
 	}
 }
 
@@ -225,11 +225,23 @@ func (b *Bridge) Stop(ctx context.Context) func() error {
 	}
 }
 
-// ByHand keeps a line for the end of the run.
+// ByHand keeps a line for the end of the run, and logs it, as a plain run prints it.
 func (b *Bridge) ByHand(format string, a ...any) {
+	b.rec.logText(fmt.Sprintf(format, a...))
+	b.keepByHand(format, a...)
+}
+
+// keepByHand keeps a line for the end of the run, for a line the log holds already.
+func (b *Bridge) keepByHand(format string, a ...any) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	b.hand.ByHand(format, a...)
+}
+
+// Log writes text to the run's log alone, as a plain run would print it on stdout: the window never
+// shows it. A work calls it at its end, for the text that waits for the screen's end.
+func (b *Bridge) Log(text string) {
+	b.rec.logText(text)
 }
 
 // directions prints what a step said last on the terminal that the screen left, once: a command
