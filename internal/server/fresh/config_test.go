@@ -215,3 +215,55 @@ func byWhen(c config) map[string]string {
 	}
 	return out
 }
+
+// A key that terminals rewrite arrives as another key. Each form of it binds what the key binds.
+func TestEachArrivalIsBound(t *testing.T) {
+	_, c := load(t)
+	bound := byWhen(c)
+	for _, a := range []struct {
+		key      string
+		arrivals []string
+	}{
+		{"ctrl+alt+4", []string{"ctrl+alt+\\"}},
+		{"ctrl+alt+/", []string{"ctrl+alt+_", "ctrl+alt+shift+-"}},
+		{"ctrl+k ctrl+/", []string{"ctrl+k ctrl+_", "ctrl+k ctrl+shift+-"}},
+		{"ctrl+shift+Space", []string{"ctrl+Space"}},
+		{"alt+shift+Space", []string{"alt+Space"}},
+	} {
+		found := false
+		for _, when := range []string{"normal", "file_explorer", "terminal"} {
+			action, has := bound[when+" "+a.key]
+			if !has {
+				continue
+			}
+			found = true
+			for _, other := range a.arrivals {
+				if got := bound[when+" "+other]; got != action {
+					t.Errorf("%s: %s is %q, but %s is %q", when, a.key, action, other, got)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("%s binds nothing", a.key)
+		}
+	}
+}
+
+func TestEachShellKeyIsNoopInTheTerminal(t *testing.T) {
+	_, c := load(t)
+	bound := byWhen(c)
+	for _, key := range []string{
+		"ctrl+q", "ctrl+,", "ctrl+alt+]", "ctrl+alt+[", "alt+x", "ctrl+alt+s", "alt+v", "alt+Left",
+		"alt+Right", "alt+e", "alt+f", "alt+g", "alt+h", "alt+s", "alt+w", "alt+r", "alt+j", "alt+/",
+		"alt+[", "alt+]", "alt+`", "ctrl+p", "ctrl+;", "ctrl+'",
+	} {
+		if bound["terminal "+key] != "noop" {
+			t.Errorf("%s is %q in the terminal; want noop", key, bound["terminal "+key])
+		}
+	}
+	for _, way := range []string{"ctrl+Space", "ctrl+]", "F9", "alt+o"} {
+		if bound["terminal "+way] == "noop" {
+			t.Errorf("%s is Fresh's way out of its terminal", way)
+		}
+	}
+}
