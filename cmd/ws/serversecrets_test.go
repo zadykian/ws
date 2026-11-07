@@ -93,3 +93,23 @@ func TestServerSecretsInitRefusesAFileAlone(t *testing.T) {
 		t.Errorf("status %d, stderr %q; want 1, and no identity made", status, errs)
 	}
 }
+
+func TestServerSecretsAsRootAlone(t *testing.T) {
+	m, _ := credFixture()
+	for _, a := range [][]string{{"init"}, {"set", "env", "A"}, {"unset", "env", "A"}, {"keys"}} {
+		status, _, errs := runServerSecrets(m, 1000, "dummy\n", a...)
+		if status != 1 || !strings.Contains(errs, "run it as root") {
+			t.Errorf("%q: status %d, stderr %q; want 1, as root", a, status, errs)
+		}
+	}
+	if len(m.Calls) != 0 {
+		t.Errorf("calls %q, want none", m.Calls)
+	}
+}
+
+func TestServerSecretsWithoutTheCredential(t *testing.T) {
+	status, _, errs := runServerSecrets(effecttest.NewMachine(), 0, "dummy\n", "set", "env", "A")
+	if status != 1 || !strings.Contains(errs, "ws server secrets init") {
+		t.Errorf("status %d, stderr %q; want 1 naming init", status, errs)
+	}
+}
