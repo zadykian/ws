@@ -12,7 +12,6 @@ type Side int
 const (
 	MacSide Side = iota
 	WsSide
-	sideCount
 )
 
 const (
@@ -37,7 +36,8 @@ type Stage struct {
 	Nested []Group
 }
 
-// newQueue returns the list of stages, numbered across both sides in the order they run.
+// newQueue returns the list of stages, numbered across the sides in the order they run, and turned
+// to the first list.
 func newQueue(stages []Stage) pickList {
 	var l pickList
 	for i, s := range stages {
@@ -47,7 +47,7 @@ func newQueue(stages []Stage) pickList {
 			l.rows = append(l.rows, s.rows(g)...)
 		}
 	}
-	return l
+	return l.facing(l.sides()[0])
 }
 
 // rows returns the rows of a group of the stage. A role unread has one, by which ws's run names it.
