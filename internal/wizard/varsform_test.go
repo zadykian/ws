@@ -13,7 +13,7 @@ import (
 // farVars returns the form of a ws whose file is file.
 func farVars(file string) (VarsForm, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	r := &Remote{SSH: SSH{M: m, Lock: "/t/l"}, Script: []byte("echo\n")}
+	r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}, Script: []byte("echo\n")}
 	m.Results[remoteLine(r, "values")] = effecttest.Result{Out: []byte(file)}
 	return VarsForm{Files: r}, m
 }

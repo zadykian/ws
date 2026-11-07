@@ -94,7 +94,7 @@ func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Sudo != sudo || string(got.Script) != "script" {
+	if got.Shell.Sudo != sudo || string(got.Script) != "script" {
 		t.Errorf("remote = %+v", got)
 	}
 	if _, err := got.Do(context.Background(), "status"); err != nil {
