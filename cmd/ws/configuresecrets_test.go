@@ -14,16 +14,20 @@ import (
 	"github.com/zadykian/ws/internal/tui"
 )
 
-// wsSecrets is a ws that takes the login as root, whose ws server secrets runs here on ws, as root.
+// wsSecrets is a ws that takes the login as root, whose ws server secrets runs here on ws, as root,
+// or where ssh fails with err.
 type wsSecrets struct {
 	farWs
-	ws *effecttest.Machine
+	ws  *effecttest.Machine
+	err error
 }
 
 func (w wsSecrets) RunInput(ctx context.Context, in []byte, name string, args ...string) ([]byte, error) {
 	at := slices.Index(args, "/usr/local/bin/ws")
 	if name != "ssh" || at < 0 {
 		return w.farWs.RunInput(ctx, in, name, args...)
+	} else if w.err != nil {
+		return nil, w.err
 	}
 	var far []string
 	for _, a := range args[at+3:] {

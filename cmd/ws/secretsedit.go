@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"filippo.io/age"
@@ -15,11 +14,10 @@ import (
 	"golang.org/x/term"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/keychain"
 	"github.com/zadykian/ws/internal/secrets"
 )
 
-// secretsKey keeps the identity of a secrets file: the Mac's Keychain, or ws's credential.
+// secretsKey keeps the identity of ws's secrets file: its credential.
 type secretsKey interface {
 	Identity(ctx context.Context) (age.Identity, error)
 }
@@ -209,13 +207,6 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 		_, _ = io.WriteString(c.OutOrStdout(), k+"\n")
 	}
 	return nil
-}
-
-// newSecretsStore returns the Mac's store: its file, and its identity in the Keychain.
-func newSecretsStore(p process) secretsStore {
-	path := filepath.Join(p.getenv("HOME"), secretsFile)
-	return secretsStore{m: p.machine, k: keychain.Keychain{M: p.machine, User: p.getenv("USER")}, path: path,
-		write: func(s secrets.Secrets, id age.Identity) error { return secrets.WriteFile(p.machine, path, s, id) }}
 }
 
 // sayOut prints a line on stdout after the command's path.

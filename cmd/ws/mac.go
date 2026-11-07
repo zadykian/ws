@@ -9,5 +9,5 @@ import (
 func newMacCmd(p process) *cobra.Command {
 	return group("mac", "the Mac's commands",
 		newConfCmd(p), newConfigureCmd(p), newMacApplyCmd(p), newMacStateCmd(p), newWizardCmd(p), newResolverCmd(p),
-		newTunnelCmd(p), newSecretsCmd(p))
+		newTunnelCmd(p), newMacSecretsCmd(p))
 }
