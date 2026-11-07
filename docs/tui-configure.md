@@ -44,5 +44,17 @@ field takes the key's line out, which gives its default back. A save runs `ws se
 ws for each key that changed, in one login, so ws's own check refuses a value. A save that failed
 part way wrote the first keys, and a second writes them again as they are.
 
+## On ws
+
+`sudo ws server configure` draws the secrets form and the host_vars form on ws itself, as root.
+It has no `mac.conf` form. Each reads and writes as on the Mac, with no ssh, lock or sudo. The
+secrets form edits ws's file as `ws server secrets` does. The host_vars form runs the same files
+script, here on `sh`'s standard input. The secrets form, now first, reads as the screen opens. With
+no terminal, or under `--plain`, it refuses: `ws server secrets` and `ws server values set` edit the
+same files on lines. `e` and the `configure` button of `ws server wizard`'s list open it, and the
+list comes back to a new scan ([The server's wizard](server-wizard.md)).
+
+## After a save
+
 Only the file changes: the next `ws server apply` takes it. The wizard's next run names `ws_user`
 and, on a cloud VM, `security_outbound` again ([The Mac's wizard](mac-wizard.md)).
