@@ -176,10 +176,10 @@ The stage is done where the remote script's `status` prints this ws's version as
 script's `install TAG URL` runs the `install.sh` of `WS_RELEASES_URL` or
 [GitHub's releases](https://github.com/zadykian/ws/releases), which checks the binary against
 `ws.sha256`. The address starts with `https://`, or `http://127.0.0.1:` in CI. A build of a clone
-is no release: put a Linux build of the tree at `/usr/local/bin/ws` (`tools/build`), then run again.
-With `--update`, ws on the Mac comes first, before the lock: where `/latest` names another release,
-its `install.sh` runs, then the command again. A ws that is no release stays, with a warning.
-
+is no release: put a Linux build of the tree at `/usr/local/bin/ws`, then run again. Where ws holds
+a newer release, as after a `ws update` there, the stage stops and names `--update`. With it, ws on
+the Mac comes first, before the lock: where `/latest` names another release, its `install.sh` runs,
+then the command again. A ws that is no release stays, with a warning.
 The script's `state` prints `ws server state --json`, with a run's `HOME` and locale. The report
 comes back over ssh, so it reaches no journal. The wizard takes it from a ws of its own version
 alone: another version's names other steps.
