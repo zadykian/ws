@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"filippo.io/age"
@@ -10,6 +11,8 @@ import (
 )
 
 const credDecrypt = "systemd-creds decrypt --name=ws-secrets " + secrets.CredstorePath + " -"
+
+const credEncrypt = "systemd-creds encrypt --with-key=host --name=ws-secrets - -" //nolint:gosec // G101: a command line, no credential
 
 // credFixture is ws with its credential, whose identity it returns.
 func credFixture() (*effecttest.Machine, *age.X25519Identity) {
@@ -47,5 +50,46 @@ func TestServerSecretsEdits(t *testing.T) {
 	}
 	if len(m.Inputs) != 0 {
 		t.Error("a command took a value")
+	}
+}
+
+func TestServerSecretsInitMakesBoth(t *testing.T) {
+	m, id := credFixture()
+	delete(m.Files, secrets.CredstorePath)
+	m.Results[credEncrypt] = effecttest.Result{Out: []byte("sealed")}
+	status, out, errs := runServerSecrets(m, 0, "", "init")
+	if status != 0 || len(m.Inputs) != 1 || string(m.Files[secrets.CredstorePath]) != "sealed" {
+		t.Fatalf("status %d, stderr %q; want the credential made", status, errs)
+	}
+	// The fake's credential gives id back, as systemd-creds gives the identity that it took.
+	if _, err := secrets.Load(m, serverSecrets, id); err != nil || m.Modes[serverSecrets] != 0o600 {
+		t.Errorf("Load = %v, mode %o; want an empty file that the identity opens, 600", err, m.Modes[serverSecrets])
+	}
+	if strings.Count(out, ": made ") != 2 || strings.Contains(out+errs, "AGE-SECRET-KEY") {
+		t.Errorf("stdout %q; want two lines of what init made, and no key", out)
+	}
+}
+
+func TestServerSecretsInitKeepsWhatIsThere(t *testing.T) {
+	m, id := credFixture()
+	if status, _, errs := runServerSecrets(m, 0, "", "init"); status != 0 {
+		t.Fatalf("status %d, stderr %q", status, errs)
+	}
+	if _, err := secrets.Load(m, serverSecrets, id); err != nil {
+		t.Errorf("Load = %v; want the file made with the credential's identity", err)
+	}
+	m.Files[serverSecrets] = []byte("kept")
+	status, out, _ := runServerSecrets(m, 0, "", "init")
+	if status != 0 || string(m.Files[serverSecrets]) != "kept" || strings.Count(out, "stays") != 2 || len(m.Inputs) != 0 {
+		t.Errorf("status %d, stdout %q; want both kept", status, out)
+	}
+}
+
+func TestServerSecretsInitRefusesAFileAlone(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[serverSecrets] = []byte("kept")
+	status, _, errs := runServerSecrets(m, 0, "", "init")
+	if status != 1 || !strings.Contains(errs, "remove the file") || len(m.Inputs) != 0 {
+		t.Errorf("status %d, stderr %q; want 1, and no identity made", status, errs)
 	}
 }
