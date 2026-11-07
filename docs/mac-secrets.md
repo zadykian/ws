@@ -1,10 +1,9 @@
-# The Mac's secrets
+# ws's secrets
 
-The secrets of the roles are one file, `~/.config/ws/secrets.age` on the Mac or
-`/etc/ws/secrets.age` on ws ([ws's file](#wss-file)): TOML that age encrypts, in armor. Git never
-holds it. `ws server apply --secrets` decrypts it in its process
-([The secrets file](shell.md#the-secrets-file)). A value is never in an error, a plan or a diff:
-they name kinds, names, keys and paths.
+The secrets of the roles are one file, `/etc/ws/secrets.age` on ws ([ws's file](#wss-file)): TOML
+that age encrypts, in armor. The Mac keeps neither it nor its identity. Git never holds it. `ws
+server apply --secrets` decrypts it in its process ([The secrets file](shell.md#the-secrets-file)).
+A value is never in an error, a plan or a diff: they name kinds, names, keys and paths.
 
 ## From the Mac
 

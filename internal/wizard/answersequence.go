@@ -27,8 +27,8 @@ func (s *sequence) get(q question) (string, error) {
 	return v, err
 }
 
-// run asks the keys in order. git's email is asked only with a name, and needs a value then, and the
-// Keychain item only with another repository. git's identity defaults to ws's own.
+// run asks the keys in order. git's email is asked only with a name, and needs a value then. git's
+// identity defaults to ws's own.
 func (s *sequence) run() error {
 	if err := s.ways(); err != nil {
 		return err
