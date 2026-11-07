@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"io"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
 )
@@ -46,14 +50,45 @@ func TestServerWizardCheckAsksNothing(t *testing.T) {
 	}
 }
 
-// At a terminal the stages run on the run screen, which ends on the normal screen.
-func TestServerWizardAtATerminalDrawsTheRunScreen(t *testing.T) {
-	p, _ := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", false, "claude ok\nsigning none\n")
+// At a terminal the stages open as ws's list alone, and q leaves it with nothing run.
+func TestServerWizardAtATerminalOpensOneList(t *testing.T) {
+	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", false, "claude ok\nsigning none\n")
 	p = withEnv(p, map[string]string{"TERM": "xterm"})
 	p.tty, p.errTTY = true, true
-	status, stdout, stderr := runWs(p, "", "server", "wizard")
+	status, stdout, stderr := runWs(p, "q", "server", "wizard")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status %d, stdout %q, stderr %q", status, stdout, stderr)
+	}
+	if strings.Contains(stderr, "Mac") || strings.Contains(stderr, "configure") || slices.ContainsFunc(m.Calls, ranWs) {
+		t.Errorf("stderr %q, calls %q", stderr, m.Calls)
+	}
+}
+
+// ranWs tells whether a call ran ws's run.
+func ranWs(call string) bool { return strings.HasSuffix(call, "sh -s -- run") }
+
+// screenServer is ws server wizard at a terminal, on a booted machine whose remote script reports a
+// good last run, and the keys that the lists read, past the scan.
+func screenServer(keys io.ReadWriter) (int, *effecttest.Machine) {
+	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+		"run v1.2.3 0 on -\nactive -\nuser ada\noutbound on\nsecrets -\nclaude ok\nsigning none\n")
+	p = withEnv(p, map[string]string{"TERM": "xterm"})
+	p.tty, p.errTTY, p.machine = true, true, freed{m}
+	var out bytes.Buffer
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	return execute(ctx, newRoot(p, newServerCmd(p)), []string{"server", "wizard"}, keys, &out, keys), m
+}
+
+// The stages chosen run on the list's run screen, ws's run left out.
+func TestServerWizardRunsTheStagesChosen(t *testing.T) {
+	keys := newAfterScan("n \r")
+	status, m := screenServer(keys)
+	if status != 0 || bytes.Count(keys.drawn.Bytes(), []byte(enterScreen)) != 2 {
+		t.Fatalf("status %d, want a scan and a run: calls %q", status, m.Calls)
+	}
+	if slices.ContainsFunc(m.Calls, ranWs) {
+		t.Errorf("ws's run ran, left out: calls %q", m.Calls)
 	}
 }
 
