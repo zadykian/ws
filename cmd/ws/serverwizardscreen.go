@@ -23,7 +23,7 @@ func drawServerWizard(c *cobra.Command, p process, check bool, tmp string) error
 	cfg, done := runConfig(c, p, cfg)
 	defer done()
 	var text bytes.Buffer
-	names := tui.NewGroup("", serverWizardStages(p, nil, nil, nil, nil, &wizard.Hand{}, check))
+	names := tui.NewGroup("", serverWizardStages(p, nil, nil, nil, nil, &wizard.Hand{}, serverPick{check: check}))
 	err := tui.Run(c.Context(), cfg, tui.NewRunScreen(runTitle(c, check), cfg.Theme, names),
 		func(ctx context.Context, b *tui.Bridge) error {
 			on := p
@@ -33,7 +33,7 @@ func drawServerWizard(c *cobra.Command, p process, check bool, tmp string) error
 				talks = b.Foreground(m)
 			}
 			hand := &wizard.Hand{}
-			stages := serverWizardStages(on, b, talks, b, b, hand, check)
+			stages := serverWizardStages(on, b, talks, b, b, hand, serverPick{check: check})
 			closing := func(ctx context.Context) { hand.Close(ctx, &text) }
 			o := step.Options{Observer: b, Check: check, Stop: b.Stop(ctx)}
 			_, err := wizard.Run(ctx, on.machine, o, stages, tmp, 0, closing)
