@@ -33,5 +33,10 @@ The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs
 `unset` drops the entry, and a second `init` keeps both files
 ([ws's file](mac-secrets.md#wss-file)).
 
+Last, `ws server wizard`. With no terminal it stops where host_vars lacks a key. Then it runs
+`ws server apply` in a unit, with the credential, and a second run starts no unit. The unit's ws is
+a stand-in that adds `--only shell` to apply, so that a full run, as its stamp has it, fits the job
+([The server's wizard](server-wizard.md)).
+
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.
