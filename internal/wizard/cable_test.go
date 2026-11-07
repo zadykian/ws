@@ -13,7 +13,8 @@ const cableLink = "eth0 - -\neth1 1 -\n"
 
 func newCable(t *testing.T, status, link string, env map[string]string) (*Cable, *effecttest.Machine, *effecttest.Prompt) {
 	root, m := newLogin(effecttest.Result{Out: []byte("ok\n")})
-	r := &WsRun{Host: root.Host, Version: "v1.2.3", Default: "zadykian", Remote: &Remote{Shell: SSHShell{SSH: root.Host.SSH}, Script: []byte("x")}}
+	r := &WsRun{Host: root.Host, Want: root.Host.ReadConf, Check: root.Host.Check, Out: root.Host.Out,
+		Version: "v1.2.3", Default: "zadykian", Remote: &Remote{Shell: SSHShell{SSH: root.Host.SSH}, Script: []byte("x")}}
 	m.Results[remoteLine(r.Remote, "status")] = effecttest.Result{Out: []byte("run v1.2.3 0 on -\nactive -\nsecrets -\n" + status)}
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	files := &Remote{Shell: SSHShell{SSH: r.Host.SSH}, Script: []byte("f")}
