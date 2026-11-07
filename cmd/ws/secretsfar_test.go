@@ -18,15 +18,7 @@ func runFarSecrets(m *effecttest.Machine, err error, stdin string, args ...strin
 	p, mac := macTerminal()
 	mac.Files["/p12"] = []byte{0, 1, 2}
 	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m, err: err}
-	return runMacSecretsOn(p, stdin, args...)
-}
-
-// runMacSecretsOn runs ws mac secrets ARGS, with stdin.
-func runMacSecretsOn(p process, stdin string, args ...string) (int, string, string) {
-	var out, errs bytes.Buffer
-	root := newRoot(p, group("mac", "the Mac's commands", newMacSecretsCmd(p)))
-	status := execute(context.Background(), root, append([]string{"mac", "secrets"}, args...), strings.NewReader(stdin), &out, &errs)
-	return status, out.String(), errs.String()
+	return runWs(p, stdin, append([]string{"mac", "secrets"}, args...)...)
 }
 
 func TestMacSecretsEditWsFile(t *testing.T) {
@@ -61,7 +53,7 @@ func TestMacSecretsSayWhyTheyStop(t *testing.T) {
 // With no way to ws, a command says so before it reads a value, and a value never shows.
 func TestMacSecretsSetAsksNoValueWithWsOutOfReach(t *testing.T) {
 	p, m := macTerminal()
-	if status, _, errs := runMacSecretsOn(p, "dummy-value\n", "set", "env", "A"); status != 1 ||
+	if status, _, errs := runWs(p, "dummy-value\n", "mac", "secrets", "set", "env", "A"); status != 1 ||
 		!strings.Contains(errs, "no direct way") || len(m.Inputs) != 0 {
 		t.Errorf("status %d, stderr %q; want 1 naming the way", status, errs)
 	}
@@ -102,13 +94,13 @@ func TestMacSecretsAskSudoAtTheTerminalPastStdin(t *testing.T) {
 	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
 	tty := &effecttest.Prompt{T: t, Hidden: []string{"pw"}}
 	p.openTTY = func() (effect.Hidden, func(), error) { return tty, func() {}, nil }
-	status, _, errs := runMacSecretsOn(p, "dummy-value\n", "set", "env", "A")
+	status, _, errs := runWs(p, "dummy-value\n", "mac", "secrets", "set", "env", "A")
 	if s, err := secrets.Load(m, serverSecrets, id); status != 0 || err != nil || s.Env["A"] != "dummy-value" {
 		t.Errorf("status %d, stderr %q, secrets %+v, %v; want A set", status, errs, s, err)
 	}
 	p, mac = macTerminal()
 	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
-	if status, _, errs := runMacSecretsOn(p, "dummy-value\n", "set", "env", "A"); status != 1 ||
+	if status, _, errs := runWs(p, "dummy-value\n", "mac", "secrets", "set", "env", "A"); status != 1 ||
 		!strings.Contains(errs, "no terminal") {
 		t.Errorf("status %d, stderr %q; want 1 naming no terminal", status, errs)
 	}

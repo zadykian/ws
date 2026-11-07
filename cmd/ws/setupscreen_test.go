@@ -22,7 +22,6 @@ func macTerminal() (process, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
-	m.Results[kcFind+" -w"] = effecttest.Result{Err: errors.New(kcGone)}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	for _, file := range []string{"new", "whole"} {
 		m.Results["ssh -G -F /tmp/x/"+file+" ws"] = effecttest.Result{}
