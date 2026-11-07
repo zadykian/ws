@@ -68,11 +68,45 @@ func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 	stages := []Stage{{Name: "Run", Side: WsSide, Nested: []Group{{Name: "base"}}}}
 	l := newQueue(stages)
-	if got := l.panes()[WsSide].Title; got != "ws: roles not scanned" {
+	if got := l.panes()[l.pane(WsSide)].Title; got != "ws: roles not scanned" {
 		t.Errorf("title = %q", got)
 	}
-	if got := l.reported("Run", nil).panes()[WsSide].Title; got != "ws" {
+	if got := l.reported("Run", nil).panes()[l.pane(WsSide)].Title; got != "ws" {
 		t.Errorf("title = %q", got)
+	}
+}
+
+// wsStages is a queue of ws server wizard, whose every stage runs on ws.
+func wsStages() []Stage {
+	return []Stage{
+		{Name: "Values", Side: WsSide},
+		{Name: "Run", Side: WsSide, Waits: "Values", Nested: []Group{{Name: "base"}}},
+		{Name: "Signing", Side: WsSide, Waits: "Run"},
+	}
+}
+
+func TestStagesAllOnWsStandInOneList(t *testing.T) {
+	s := newQueueScreen("ws server wizard", testTheme, wsStages(), make(chan Choice, 1))
+	s = pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, press('/'), press('s'))
+	got := pickShown(s)
+	for _, want := range []string{"ws server wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "Mac") || s.list.side != WsSide || len(s.layout().Panes) != 1 {
+		t.Errorf("side %d, frame:\n%s", s.list.side, got)
+	}
+}
+
+func TestTabLeavesOneListForTheButtons(t *testing.T) {
+	s := newQueueScreen("ws server wizard", testTheme, wsStages(), make(chan Choice, 1))
+	s = pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
+	if s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+	}
+	if s = pickSent(s, shiftTab); s.list.side != WsSide || s.footer.Focused() >= 0 {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
 	}
 }
 

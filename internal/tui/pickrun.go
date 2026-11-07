@@ -13,7 +13,7 @@ func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work
 	return pick(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
 }
 
-// PickStages draws a queue's two lists over scan, as Pick draws a list. scan's Bridge.Report fills
+// PickStages draws a queue's lists over scan, as Pick draws a list. scan's Bridge.Report fills
 // a stage from what its machine says. A Choice with no steps, Configure or State says that they left.
 func PickStages(ctx context.Context, c Config, title string, stages []Stage, scan Work) (Choice, error) {
 	picks := make(chan Choice, 1)
