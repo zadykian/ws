@@ -1,10 +1,12 @@
 package wizard
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"strings"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
@@ -14,9 +16,22 @@ const runStage = "ws's run"
 
 // WsRun is the stage of ws's run, ws server apply, in a unit of its own on ws. The remote script
 // starts it and follows it. A run goes on where ssh drops, and the next run of the wizard follows it.
+// The Mac's wizard and ws's both run it, each filling the fields that it reads.
 type WsRun struct {
-	// Host is the Host key stage, whose ssh and mac.conf this one uses. Check is its.
-	Host   *HostKey
+	// Host is the Mac's Host key stage, whose ssh, lock and mac.conf the Mac's later stages and its
+	// closing list reach through this one.
+	Host *HostKey
+	// Want reads the target and the WS_USER that ws's run is to leave: mac.conf's on the Mac, and
+	// host_vars' on ws.
+	Want func() (conf.Conf, error)
+	// Await names the stage that must be done first: by default the one that installs this ws on ws.
+	Await string
+	// Unbooted is set on ws where its systemd isn't booted, as in a container: no unit runs there, so
+	// the stage says so and skips.
+	Unbooted bool
+	// Check is set under --check. Out takes the stage's lines.
+	Check  bool
+	Out    effect.Out
 	Remote *Remote
 	// Files is the files script, which names ws_user and the tunnel's peer.
 	Files *Remote
@@ -36,8 +51,8 @@ type WsRun struct {
 // Name is the stage's name.
 func (*WsRun) Name() string { return runStage }
 
-// WaitsOn is the stage that installs this ws on ws.
-func (*WsRun) WaitsOn() string { return installStage }
+// WaitsOn is Await, or the stage that installs this ws on ws.
+func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
 
 // lastRun returns the status of ws's last full run, as the remote script's status read it, or -.
 func (r *WsRun) lastRun() string {
@@ -96,7 +111,12 @@ func (c runChange) String() string { return runStage + ": would " + c.text }
 // Plan reads ws's last run, and finds whether ws server apply is to run, to be followed, or whether
 // host_vars alone lacks the outbound line. Under --check it says what would happen.
 func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
-	c, err := r.Host.conf()
+	if r.Unbooted {
+		r.Out.Say("%s: ws's systemd isn't booted, as in a container, so no unit runs ws server apply: "+
+			"run sudo ws server apply", runStage)
+		return step.Plan{}, nil
+	}
+	c, err := r.Want()
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -122,7 +142,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 				outbound: true}}}, nil
 		}
 	}
-	if r.Host.Check {
+	if r.Check {
 		unit, last := r.Remote.Get("active"), r.lastRun()
 		if unit != "" && unit != "-" {
 			how = "follow " + unit + ", which runs on ws"

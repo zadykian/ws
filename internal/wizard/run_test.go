@@ -50,6 +50,17 @@ func TestRunHoldsLockAndCaffeinate(t *testing.T) {
 	}
 }
 
+// On ws, with no pid, the run holds its lock and runs no caffeinate.
+func TestRunOnWsKeepsNothingAwake(t *testing.T) {
+	m := effecttest.NewMachine()
+	if _, err := Run(context.Background(), m, step.Options{}, []step.Step{&stage{}}, "/tmp", 0, nil); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"mkdir /tmp/ws-wizard.lock 700", "readdir /tmp/ws-wizard.lock", "run rm -rf /tmp/ws-wizard.lock"}; !slices.Equal(m.Calls, want) {
+		t.Errorf("calls = %q, want %q", m.Calls, want)
+	}
+}
+
 func TestRunStopsWhereLockIsHeld(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/tmp/ws-wizard.lock"] = 0o700

@@ -13,10 +13,11 @@ func TestEveryStageNamesItsMachine(t *testing.T) {
 		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
 		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: OnWs,
 		installStage: OnWs, runStage: OnWs, claudeStage: OnWs, signingStage: OnMac, tunnelStage: OnMac,
-		cableStage: OnMac,
+		cableStage: OnMac, valuesStage: OnWs,
 	}
 	stages := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
-		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &WsRun{}, &WsClaude{}, &Signing{}, &Tunnel{}, &Cable{}}
+		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &WsRun{}, &WsClaude{}, &Signing{}, &Tunnel{}, &Cable{},
+		&WsValues{}}
 	if len(stages) != len(want) {
 		t.Fatalf("%d stages, %d wanted", len(stages), len(want))
 	}
