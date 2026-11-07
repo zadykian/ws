@@ -70,11 +70,19 @@ func newConfigureScreen(title string, theme Theme, send func(configureJob), shee
 		buttons = append(buttons, nextFormButton)
 	}
 	footer := NewFooter(buttons...)
-	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer, send: send}
+	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer, send: send,
+		saving: sheets[0].Open != nil}
 }
 
-// Init starts nothing, as the screen waits for a key.
-func (s configureScreen) Init() tea.Cmd { return nil }
+// Init reads the first sheet where it waits for a read, which no key of its own starts, and the keys
+// wait for it. Otherwise it starts nothing, as the screen waits for a key.
+func (s configureScreen) Init() tea.Cmd {
+	if s.sheets[0].Open == nil {
+		return nil
+	}
+	job := configureJob{sheet: s.sheets[0]}
+	return func() tea.Msg { s.send(job); return nil }
+}
 
 // Update takes the window's size, the keys, a paste, and what a save said and how it ended.
 func (s configureScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

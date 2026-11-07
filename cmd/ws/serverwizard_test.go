@@ -59,7 +59,7 @@ func TestServerWizardAtATerminalOpensOneList(t *testing.T) {
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
-	if strings.Contains(stderr, "Mac") || strings.Contains(stderr, "configure") || slices.ContainsFunc(m.Calls, ranWs) {
+	if strings.Contains(stderr, "Mac") || slices.ContainsFunc(m.Calls, ranWs) {
 		t.Errorf("stderr %q, calls %q", stderr, m.Calls)
 	}
 }
@@ -112,5 +112,39 @@ func TestServerWizardListsTheSigningKeyByHand(t *testing.T) {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status %d, stdout %q lacks %q; stderr %q", status, stdout, want, stderr)
 		}
+	}
+}
+
+// configureTrip presses e on the list, then Ctrl-C on the forms past their read. The forms read
+// their size first, as they draw from it.
+type configureTrip struct {
+	*afterScan
+	sized *bool
+}
+
+func (s configureTrip) Read(b []byte) (int, error) {
+	n, err := s.afterScan.Read(b)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	switch {
+	case bytes.Count(s.drawn.Bytes(), []byte(enterScreen)) < 2:
+		return n, err
+	case !*s.sized:
+		*s.sized = true
+		return copy(b, "\x1b[8;24;80t"), nil
+	case bytes.Contains(s.drawn.Bytes(), []byte("ctrl+s tries again")):
+		return copy(b, "\x03"), nil
+	}
+	return 0, nil
+}
+
+// e opens ws's forms, which read ws's secrets here: with no credential they say so.
+func TestServerWizardConfigureKeyOpensTheForms(t *testing.T) {
+	keys := configureTrip{newAfterScan("e"), new(bool)}
+	status, m := screenServer(keys)
+	drawn := keys.drawn.String()
+	if status != 1 || strings.Count(drawn, enterScreen) != 2 || !strings.Contains(drawn, "no credential") ||
+		slices.ContainsFunc(m.Calls, ranWs) {
+		t.Errorf("status %d, calls %q", status, m.Calls)
 	}
 }

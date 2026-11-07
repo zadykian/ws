@@ -25,23 +25,38 @@ type serverScreen struct {
 }
 
 // draw opens the list of the stages over a scan and runs what it chooses, or goes straight to the
-// run under --check. Every stage runs on ws, so the list is ws's alone. The state screen, which
-// writes nothing, comes back to the list as it found it.
+// run under --check. Every stage runs on ws, so the list is ws's alone. The forms come back to a new
+// scan, of what they wrote, and the state screen, which writes nothing, to the list as it found it.
 func (s serverScreen) draw(check bool) error {
 	if !opensList(s.c, s.p, false) {
 		return s.running(serverPick{check: check}, nil)
 	}
 	ctx, title := s.c.Context(), s.c.CommandPath()
-	queue := wizardQueue(s.p, s.stages(serverPick{}))
-	choice, err := tui.PickStages(ctx, s.config(), title, queue, false, s.scan())
-	for err == nil && choice.State {
-		if err = tui.RunState(ctx, s.config(), title+": ws", s.read()); err == nil {
-			choice, err = tui.Reopen(ctx, s.config(), choice)
+	for {
+		queue := wizardQueue(s.p, s.stages(serverPick{}))
+		choice, err := tui.PickStages(ctx, s.config(), title, queue, true, s.scan())
+		for err == nil && choice.State {
+			if err = tui.RunState(ctx, s.config(), title+": ws", s.read()); err == nil {
+				choice, err = tui.Reopen(ctx, s.config(), choice)
+			}
+		}
+		switch {
+		case err != nil:
+			return err
+		case choice.Configure:
+			if err := serverConfigureOn(s.c, s.p, s.config()); err != nil {
+				return err
+			}
+		case len(choice.Only) == 0:
+			return nil
+		default:
+			return s.chosen(choice)
 		}
 	}
-	if err != nil || len(choice.Only) == 0 {
-		return err
-	}
+}
+
+// chosen runs the stages that choice holds, ws's run in part where the list left some of its roles out.
+func (s serverScreen) chosen(choice tui.Choice) error {
 	name := wsRunOf(s.stages(serverPick{})).Name()
 	r := serverPick{check: choice.Check, update: slices.Contains(choice.Whole, name), only: choice.Partial[name]}
 	return s.running(r, &choice)
