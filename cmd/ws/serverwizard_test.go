@@ -15,7 +15,7 @@ import (
 // After a full run of this ws, from the Mac or from ws, with nothing changed, no apply runs.
 func TestServerWizardAfterARunAppliesNothing(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
-		"run v1.2.3 0 on -\nactive -\nuser ada\noutbound on\nsecrets -\nclaude ok\nsigning none\n")
+		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
 	status, stdout, stderr := runWs(p, "", "server", "wizard", "--plain")
 	if status != 0 || stdout != "" || slices.ContainsFunc(m.Calls, func(c string) bool { return strings.Contains(c, "-- run") }) {
 		t.Errorf("status %d, stdout %q, stderr %q; calls %q", status, stdout, stderr, m.Calls)
@@ -71,7 +71,7 @@ func ranWs(call string) bool { return strings.HasSuffix(call, "sh -s -- run") }
 // good last run, and the keys that the lists read, past the scan.
 func screenServer(keys io.ReadWriter) (int, *effecttest.Machine) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
-		"run v1.2.3 0 on -\nactive -\nuser ada\noutbound on\nsecrets -\nclaude ok\nsigning none\n")
+		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
 	p = withEnv(p, map[string]string{"TERM": "xterm"})
 	p.tty, p.errTTY, p.machine = true, true, freed{m}
 	var out bytes.Buffer
@@ -104,7 +104,7 @@ func TestServerWizardStateKeyReadsWs(t *testing.T) {
 // Where GitHub lacks ws's signing key, the list at the end names it, and each device's key.
 func TestServerWizardListsTheSigningKeyByHand(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
-		"run v1.2.3 0 on -\nactive -\nuser ada\noutbound on\nsecrets -\nclaude ok\nsigning ssh-ed25519 AAA\n")
+		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning ssh-ed25519 AAA\n")
 	m.Results["runuser -l ada -c gh api user --jq .login 2>/dev/null || git config --global github.user"] =
 		effecttest.Result{}
 	status, stdout, stderr := runWs(p, "", "server", "wizard", "--plain")
