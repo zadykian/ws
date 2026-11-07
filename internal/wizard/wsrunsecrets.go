@@ -2,8 +2,6 @@ package wizard
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -12,7 +10,7 @@ import (
 	"github.com/zadykian/ws/internal/keychain"
 )
 
-// noSum is the sum of no secrets file, in the run's stamp and in the stage's own.
+// noSum is the sum of no secrets file, in the run's stamp and in the remote script's status.
 const noSum = "-"
 
 // macSecrets reads the Mac's secrets file, or nil where there is none.
@@ -27,23 +25,12 @@ func (r *WsRun) macSecrets() ([]byte, error) {
 	return data, err
 }
 
-// localSum returns the SHA-256 of the Mac's secrets file, or noSum where there is none. A run is
-// done only where its stamp names the same sum.
-func (r *WsRun) localSum() (string, error) {
-	data, err := r.macSecrets()
-	if err != nil || data == nil {
-		return noSum, err
-	}
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:]), nil
-}
-
-// stampSum returns the sum that ws's last full run names in its stamp.
-func (r *WsRun) stampSum() string {
-	if f := strings.Fields(r.Remote.Get("run")); len(f) > 3 {
-		return f[3]
-	}
-	return ""
+// sameSecrets tells whether ws's last full run read ws's secrets file as it is now: the run's stamp
+// names the sum that the status reads, which is noSum in both where the run had no file to read.
+// So the wizard reads one sum, whichever machine it runs on.
+func (r *WsRun) sameSecrets() bool {
+	f := strings.Fields(r.Remote.Get("run"))
+	return len(f) > 3 && f[3] == r.Remote.Get("secrets")
 }
 
 // send puts the Mac's secrets file and the identity on ws, where the remote script's run hands the

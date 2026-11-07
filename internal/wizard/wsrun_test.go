@@ -13,7 +13,7 @@ import (
 var extra = map[string]string{"cloud": "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n"}
 
 // newRun returns the stage over a Machine whose mac.conf holds the target, and whose remote script
-// answers status with the text.
+// answers status with the text, and with no secrets file on ws where the text, if any, names none.
 func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=alice\n" + extra[target])
@@ -21,6 +21,9 @@ func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Mach
 		SSH: SSH{M: m, Lock: "/l"}}
 	r := &WsRun{Host: h, Version: "v1.2.3", Update: update, Default: "alice", Remote: &Remote{SSH: h.SSH, Script: []byte("x")},
 		Files: &Remote{SSH: h.SSH, Script: []byte("y")}}
+	if status != "" {
+		status += "secrets -\n"
+	}
 	m.Results[remoteLine(r.Remote, "status")] = effecttest.Result{Out: []byte(status)}
 	m.Results[remoteLine(r.Remote, "secrets", "drop")] = effecttest.Result{}
 	return r, m
@@ -49,6 +52,29 @@ func TestWsRunPlan(t *testing.T) {
 			got = p.Changes[0].String()
 		}
 		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
+			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
+		}
+	}
+}
+
+// The run is done where its stamp names the sum of ws's secrets file that the status reads now.
+func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
+	for name, tc := range map[string]struct{ stamp, now, want string }{
+		"same file":    {"aa11", "aa11", ""},
+		"changed file": {"aa11", "bb22", "run ws server apply on ws in a unit of its own, and follow its log, with ws's secrets file"},
+		"a new file":   {"-", "bb22", ", with ws's secrets file"},
+		"file gone":    {"aa11", "-", "and follow its log"},
+		"no file":      {"-", "-", ""},
+		"no line":      {"-", "", "and follow its log"},
+	} {
+		r, _ := newRun("lan", "run v1.2.3 0 on "+tc.stamp+"\nactive -\nsecrets "+tc.now+"\n", false, false)
+		p, err := r.Plan(context.Background())
+		got := ""
+		if len(p.Changes) > 0 {
+			got = p.Changes[0].String()
+		}
+		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) ||
+			(tc.now == "-" || tc.now == "") && strings.Contains(got, "secrets file") {
 			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
 		}
 	}

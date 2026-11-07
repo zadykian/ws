@@ -2,8 +2,6 @@ package wizard
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"slices"
 	"strings"
@@ -39,15 +37,10 @@ func sendLine(r *WsRun, path string) string {
 		[]string{"-o", "BatchMode=yes", "ws", "sh", "-c", "'umask 077 && cat >" + path + "'"}), " ")
 }
 
-func sum(b string) string {
-	h := sha256.Sum256([]byte(b))
-	return hex.EncodeToString(h[:])
-}
-
 func TestWsRunSendsTheFileAndTheIdentityOnStdin(t *testing.T) {
 	r, m, key := withSecrets(t, "run - -\nactive -\n")
 	p, err := r.Plan(context.Background())
-	if err != nil || !strings.Contains(p.Changes[0].String(), "after sending the secrets file and the identity") {
+	if err != nil || len(p.Changes) != 1 {
 		t.Fatalf("Plan = %v, %v", p, err)
 	}
 	if err := r.Apply(context.Background(), p); err != nil {
@@ -96,22 +89,6 @@ func TestWsRunWithoutTheFileDropsWsFile(t *testing.T) {
 	if !slices.Contains(m.Calls, "run "+remoteLine(r.Remote, "secrets", "drop")) ||
 		slices.Contains(m.Calls, "run "+remoteLine(r.Remote, "secrets", "stage")) {
 		t.Errorf("calls = %q; want a drop and no stage", m.Calls)
-	}
-}
-
-func TestWsRunIsDoneAtTheFilesSum(t *testing.T) {
-	r, m, _ := withSecrets(t, "run v1.2.3 0 on "+sum("armored bytes")+"\nactive -\n")
-	if p, err := r.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
-		t.Errorf("same file: %v, %v; want none", p, err)
-	}
-	m.Files[macFile] = []byte("another file")
-	r.Remote.Forget()
-	if p, err := r.Plan(context.Background()); err != nil || len(p.Changes) != 1 {
-		t.Errorf("new file: %v, %v; want a run", p, err)
-	}
-	delete(m.Files, macFile)
-	if p, _ := r.Plan(context.Background()); len(p.Changes) != 1 {
-		t.Error("the file gone, the stamp naming one: want a run")
 	}
 }
 
