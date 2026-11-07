@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/tui"
 )
@@ -74,5 +77,49 @@ func TestHeldSecretsOfNoItem(t *testing.T) {
 	held, err := heldSecrets(context.Background(), newSecretsStore(p))
 	if err != nil || held != nil {
 		t.Errorf("held = %v, %v; want none and no error", held, err)
+	}
+}
+
+// wsSecrets is a ws that takes the login as root, whose ws server secrets runs here on ws, as root.
+type wsSecrets struct {
+	farWs
+	ws *effecttest.Machine
+}
+
+func (w wsSecrets) RunInput(ctx context.Context, in []byte, name string, args ...string) ([]byte, error) {
+	at := slices.Index(args, "/usr/local/bin/ws")
+	if name != "ssh" || at < 0 {
+		return w.farWs.RunInput(ctx, in, name, args...)
+	}
+	var far []string
+	for _, a := range args[at+3:] {
+		far = append(far, strings.Trim(a, "'"))
+	}
+	status, out, errs := runServerSecrets(w.ws, 0, string(in), far...)
+	if status != 0 {
+		return nil, errors.New("[ssh]: exit status 1: \n" + errs)
+	}
+	return []byte(out), nil
+}
+
+// wsSide sets an entry on ws's file, the value on stdin, and lists the entries that keys prints.
+func TestWsSideSetsAndListsOnWs(t *testing.T) {
+	m, id := credFixture()
+	p, mac := macTerminal()
+	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
+	r := &varsReach{p: p}
+	defer r.close(context.Background())
+	ws, err := r.reach(context.Background(), nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	side := wsSide{ws}
+	if err := side.set(context.Background(), "env A", "dummy-value"); err != nil {
+		t.Fatal(err)
+	}
+	held, err := side.keys(context.Background())
+	if s, lerr := secrets.Load(m, serverSecrets, id); err != nil || lerr != nil || s.Env["A"] != "dummy-value" ||
+		!slices.Equal(held, []string{"env A"}) {
+		t.Errorf("keys %q, file %+v, %v %v; want env A set", held, s, err, lerr)
 	}
 }
