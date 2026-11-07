@@ -16,7 +16,7 @@ func serverWizardStages(p process, ask effect.Prompt, out effect.Out, events ste
 	m := p.machine
 	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
-	shell := wizard.LocalShell{M: m}
+	shell := wizard.LocalShell{M: m, User: func() string { c, _ := wsWant(m); return c.User }}
 	run := &wizard.WsRun{Want: func() (conf.Conf, error) { return wsWant(m) }, Await: vals.Name(),
 		Unbooted: !host.Booted(m), Check: check, Out: out, Version: p.version, Default: values.Default().User,
 		Remote: &wizard.Remote{Shell: shell, Script: mac.RemoteScript, Events: events},
