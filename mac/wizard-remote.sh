@@ -45,7 +45,8 @@ module=/sys/module/nct6687
 netplan=/etc/netplan/60-direct-link.yaml
 
 # The user whom ssh logs in as, whose claude and git config the status reads: sudo's SUDO_USER, or
-# root at a root login. The git config names ws's signing key.
+# root at a root login. ws server wizard names WS_USER as SUDO_USER. The git config names ws's
+# signing key.
 user=${SUDO_USER:-$(id -un)}
 home=$(getent passwd "$user" | cut -d : -f 6)
 claude=$home/.local/bin/claude

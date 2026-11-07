@@ -59,3 +59,19 @@ func TestFollowOnWsWithoutLines(t *testing.T) {
 		t.Errorf("calls = %q", m.Calls)
 	}
 }
+
+// WS_USER reaches the script as SUDO_USER, as sudo names the Mac's ssh login; an empty one leaves it.
+func TestLocalShellNamesWsUser(t *testing.T) {
+	m := effecttest.NewMachine()
+	user := "ada"
+	r := &Remote{Shell: LocalShell{M: m, User: func() string { return user }}, Script: []byte("echo\n")}
+	m.Results["env SUDO_USER=ada sh -s -- status"] = effecttest.Result{Out: []byte("claude ok\n")}
+	if !r.Status(context.Background()) || r.Get("claude") != "ok" {
+		t.Errorf("Status read %q; calls %q", r.Get("claude"), m.Calls)
+	}
+	user = ""
+	m.Results["sh -s -- install"] = effecttest.Result{}
+	if err := r.Pass(context.Background(), "install"); err != nil || m.Calls[len(m.Calls)-1] != "run sh -s -- install" {
+		t.Errorf("Pass = %v; calls %q", err, m.Calls)
+	}
+}

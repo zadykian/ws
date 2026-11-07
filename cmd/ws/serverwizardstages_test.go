@@ -8,14 +8,15 @@ import (
 )
 
 // wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,
-// whose remote script reports status.
+// whose remote script reports status as host_vars' ws_user reads it.
 func wizardProcess(vars string, booted bool, status string) (process, *effecttest.Machine) {
 	p, m := valuesProcess(vars)
 	p.goos = "linux"
 	if booted {
 		m.Dirs["/run/systemd/system"] = 0o755
 	}
-	m.Results["sh -s -- status"] = effecttest.Result{Out: []byte(status)}
+	c, _ := wsWant(m)
+	m.Results["env SUDO_USER="+c.User+" sh -s -- status"] = effecttest.Result{Out: []byte(status)}
 	return p, m
 }
 
