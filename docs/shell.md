@@ -74,8 +74,8 @@ removes `~/.secrets/env`, if ws wrote it.
 
 `ws server apply --secrets FILE` takes the secrets of the roles from a TOML file that age encrypts,
 in armor. `ws` decrypts it in its process with an X25519 identity. A run without `--secrets`, as
-CI's, has no secrets. [The Mac's secrets](mac-secrets.md) says the file's tables, its references
-and its values.
+CI's, has no secrets. [ws's secrets](mac-secrets.md) says the file's tables, its references and
+its values.
 
 The identity stays in ws's credential, made by `ws server secrets init`, or by `ws mac secrets
 init` from the Mac ([ws's file](mac-secrets.md#wss-file)). `ws server apply` reads it from
