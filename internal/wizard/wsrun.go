@@ -24,9 +24,6 @@ type WsRun struct {
 	Default string
 	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
 	Version string
-	// Secrets is the Mac's secrets file and User the Mac's user, whose Keychain holds its identity. A
-	// run sends the file and the identity, and the run's stamp names the file's SHA-256.
-	Secrets, User string
 	// Update has the stage run ws server apply once more, with the ws installed there.
 	Update bool
 	// Only is what a run of part of ws takes, by --only's entries. The remote script stamps a full run
