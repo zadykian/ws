@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"path/filepath"
 
@@ -19,7 +18,8 @@ const secretsFile = ".config/ws/secrets.age"
 // the Keychain.
 func newSecretsCmd(p process) *cobra.Command {
 	return group("secrets", "keep the secrets file, with its identity in the Keychain",
-		newSecretsInitCmd(p), newSecretsSetCmd(p), newSecretsUnsetCmd(p), newSecretsKeysCmd(p))
+		append([]*cobra.Command{newSecretsInitCmd(p)},
+			secretsEditCmds(p, func() (secretsStore, error) { return newSecretsStore(p), nil })...)...)
 }
 
 // newSecretsInitCmd returns ws mac secrets init.
@@ -34,33 +34,9 @@ func newSecretsInitCmd(p process) *cobra.Command {
 	}
 }
 
-// newSecretsUnsetCmd returns ws mac secrets unset.
-func newSecretsUnsetCmd(p process) *cobra.Command {
-	return &cobra.Command{
-		Use:   "unset KIND NAME",
-		Short: "drop an entry",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(c *cobra.Command, args []string) error {
-			return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { return s.Unset(args[0], args[1]) })
-		},
-	}
-}
-
-// newSecretsKeysCmd returns ws mac secrets keys.
-func newSecretsKeysCmd(p process) *cobra.Command {
-	return &cobra.Command{
-		Use:   "keys",
-		Short: "print each entry as KIND NAME, never a value",
-		Args:  cobra.NoArgs,
-		RunE:  func(c *cobra.Command, _ []string) error { return secretsKeys(c, newSecretsStore(p)) },
-	}
-}
-
 // secretsInit makes the identity where the Keychain lacks it, and the file where none is.
 func secretsInit(c *cobra.Command, p process) error {
-	say := func(format string, a ...any) {
-		_, _ = fmt.Fprintf(c.OutOrStdout(), "%s: "+format+"\n", append([]any{c.CommandPath()}, a...)...)
-	}
+	say := func(format string, a ...any) { sayOut(c, format, a...) }
 	k := keychain.Keychain{M: p.machine, User: p.getenv("USER")}
 	made, err := k.Init(c.Context())
 	if err != nil {

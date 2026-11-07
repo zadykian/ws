@@ -63,12 +63,7 @@ func runValuesSet(c *cobra.Command, p process, key, value string) error {
 
 // writeVars replaces the file. A first one is root's alone, in a directory that anyone reads.
 func writeVars(m effect.Machine, data []byte) error {
-	dir := path.Dir(serverVars)
-	if _, err := m.Stat(dir); errors.Is(err, fs.ErrNotExist) {
-		if err := m.Mkdir(dir, 0o755); err != nil {
-			return err
-		}
-	} else if err != nil {
+	if err := makeConfigDir(m); err != nil {
 		return err
 	}
 	attrs, err := m.RootAttrs(serverVars)
@@ -79,4 +74,15 @@ func writeVars(m effect.Machine, data []byte) error {
 		return err
 	}
 	return m.WriteAtomic(serverVars, data, attrs)
+}
+
+// makeConfigDir makes /etc/ws where it is missing, a directory that anyone reads: its files are
+// root's alone.
+func makeConfigDir(m effect.Machine) error {
+	dir := path.Dir(serverVars)
+	_, err := m.Stat(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return m.Mkdir(dir, 0o755)
+	}
+	return err
 }
