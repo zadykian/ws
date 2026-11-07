@@ -17,6 +17,8 @@ type WsSigning struct {
 	Run  *WsRun
 	M    effect.Machine
 	Hand *Hand
+	// named is set once this run named the key in what stays by hand, all that the stage can do.
+	named bool
 }
 
 // Name is the stage's name.
@@ -38,7 +40,7 @@ func (c signingByHand) String() string {
 // the signing keys of WS_USER's GitHub login.
 func (s *WsSigning) Plan(ctx context.Context) (step.Plan, error) {
 	line, err := signingLine(ctx, s.Run)
-	if err != nil || line == "none" {
+	if err != nil || line == "none" || s.named {
 		return step.Plan{}, err
 	}
 	want, err := s.Run.Want()
@@ -55,4 +57,17 @@ func (s *WsSigning) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	return step.Plan{Changes: []step.Change{signingByHand{"GitHub lists it for no login of WS_USER's"}}}, nil
+}
+
+// Apply lists the key in what stays by hand, to add on GitHub, as ws holds no token that may.
+func (s *WsSigning) Apply(ctx context.Context, _ step.Plan) error {
+	line, err := signingLine(ctx, s.Run)
+	if err != nil {
+		return err
+	}
+	s.Hand.Add("ws's signing key on GitHub: add it as a signing key at https://github.com/settings/ssh/new, "+
+		"so that GitHub shows ws's commits as verified (docs/server-wizard.md): %s", line)
+	s.Run.Out.Say("%s: GitHub lacks ws's signing key, which the list at the end names", signingStage)
+	s.named = true
+	return nil
 }

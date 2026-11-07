@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/wizard"
 )
 
 // wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,
@@ -20,12 +21,17 @@ func wizardProcess(vars string, booted bool, status string) (process, *effecttes
 	return p, m
 }
 
-// ws's run waits on ws's values, and reads the target and the user that host_vars names.
+// ws's run waits on ws's values, and reads the target and the user that host_vars names. claude and
+// the signing key wait on the run.
 func TestServerWizardStagesReadHostVars(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: false\nws_user: root\n", false, "")
-	stages := serverWizardStages(p, nil, nil, nil, nil, false)
-	if got := []string{stages[0].Name(), stages[1].Name(), stages[1].WaitsOn()}; !slices.Equal(got,
-		[]string{"ws's values", "ws's run", "ws's values"}) {
+	stages := serverWizardStages(p, nil, nil, nil, nil, &wizard.Hand{}, false)
+	var got []string
+	for _, s := range stages {
+		got = append(got, s.Name()+" < "+s.WaitsOn())
+	}
+	if !slices.Equal(got, []string{"ws's values < ", "ws's run < ws's values", "claude on ws < ws's run",
+		"Signing key < ws's run"}) {
 		t.Errorf("stages %q", got)
 	}
 	if c, err := wsWant(m); err != nil || c.Target != "cloud" || c.User != "root" {
