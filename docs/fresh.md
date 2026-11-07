@@ -1,8 +1,7 @@
 # fresh
 
 The `fresh` role is Go steps in `internal/server/fresh`. It installs the Fresh editor on ws from
-the `.deb` of a pinned release. Fresh runs in a terminal, and its settings come from the neutral
-data in `internal/editor`.
+the `.deb` of a pinned release. Fresh runs in a terminal, and its config is a plain template.
 
 ## The install
 
@@ -23,14 +22,19 @@ CI's container.
 
 ## The config
 
-`Fresh config` writes `~/.config/fresh/config.json` for `ws_user`, from `internal/editor/fresh`. A
+`Fresh config` writes `~/.config/fresh/config.json` for `ws_user`, from the template
+`files/config.json.tmpl`, which fills in the user's home for the language servers' paths. A
 run replaces a change made to it by hand and keeps the old file beside the new one, as
 [zed](zed.md) does for its settings.
+`gotest` holds the render to checks in `internal/server/fresh`: a config that does not parse makes
+Fresh load its defaults and exit 0.
 
 - Updates, telemetry and the session daemon are off: `check_for_updates`, `self_update` and
   `auto_attach` are false. Fresh reads a missing key as its default, so the render writes each.
-- The ruler, visible whitespace and auto-save come from `internal/editor/settings.yaml`. Zed's
-  are in `mac/zed/global_settings.json`.
+- The ruler, visible whitespace and auto-save match Zed's `mac/zed/global_settings.json`, and a
+  test holds them equal.
+- A `//` comment in the template gives the reason for a quirk, and a block at its end lists the
+  keys left out. Fresh skips the comments.
 - The file starts with a comment that says ws wrote it. Fresh reads JSONC.
 - `~/.config/fresh` stays the user's, as Fresh writes `tsconfig.json` and `types/` there.
 - The step fails where `~/.config`, the directory or `config.json` is a link. The user owns
@@ -38,7 +42,7 @@ run replaces a change made to it by hand and keeps the old file beside the new o
 
 ## The servers
 
-`lsp` in `config.json` names the language servers of `internal/editor/servers.yaml`, each by the
+`lsp` in `config.json` names the language servers, each by the
 path that `devtools.ServerPaths` gives it for the user's home.
 
 - Fresh takes a list of servers for a language, so dockerfile has two.
@@ -66,7 +70,7 @@ it, so ws cannot. A folder with no marker is trusted at once.
 2. From the tag's source, take every name of `define_action_str_mapping!` in
    `crates/fresh-editor/src/input/keybindings.rs`, and the handler names of `registerCommand` at
    the top level of `plugins/`, leaving out `plugins/examples`.
-3. Write them to `internal/editor/fresh/testdata/actions.txt`, under its first line with the new
+3. Write them to `internal/server/fresh/files/actions.txt`, under its first line with the new
    version. `TestTheActionListNamesThePinnedVersion` fails until then, and
    `TestEveryTargetIsAnActionOfFresh` names any target that is gone.
 4. Leave out `unbind`, a config word, and the plugin commands made at run time: 65 of those in
@@ -77,7 +81,7 @@ A name with no action loads with no error, so the list is the only check of a ta
 ## The theme
 
 `Fresh config` also writes `~/.config/fresh/themes/jetbrains-dark.json`, and `config.json` names it
-by its `name`, `JetBrains Dark`, which comes from `internal/editor/settings.yaml`. The values are
+by its `name`, `JetBrains Dark`, which Zed's `theme.dark` names too. The values are
 Zed's, from `artemevsevev/zed-theme-jetbrains` at `4385ff2c112e693716badf22e8fb348bede26f93`,
 Apache-2.0, by Artem Evsevev. Only the dark theme is used.
 
@@ -124,7 +128,7 @@ Rules a change keeps:
 
 ## The keys
 
-[Fresh's F12 keymap](keymap/fresh.md) holds the adapter's counts, rules and limits. What stays
+[Fresh's keymap](keymap/fresh.md) holds the counts, rules and limits. What stays
 unproven until the maintainer's trial on the Mac:
 
 - Real Ghostty, with left Option as Alt: its encoder was modelled on a US layout.

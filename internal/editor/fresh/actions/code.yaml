@@ -1,7 +1,0 @@
----
-# F12's code keys, as Fresh's actions.
-view.inlay-hints: {to: toggle_inlay_hints}
-code.inline-assist: {why: no assistant in Fresh}
-code.actions: {to: lsp_code_actions}
-code.format: {to: format_buffer}
-code.rename: {to: lsp_rename}

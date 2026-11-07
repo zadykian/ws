@@ -1,8 +1,8 @@
 # The keymap
 
-F12's keys, in no editor's terms. The data is in [`internal/editor`](../internal/editor/), and Fresh's
-adapter, [`internal/editor/fresh`](../internal/editor/fresh/), renders it as Fresh's file. Zed's
-file is [plain](mac-zed.md), with the reason of each key beside it.
+F12's keys, in no editor's terms. The data is in [`internal/editor`](../internal/editor/). Fresh's
+file is a [plain template](fresh.md#the-config), and Zed's file is [plain](mac-zed.md). Each holds
+the reason of a key beside it.
 
 ## The data
 
@@ -35,16 +35,16 @@ An action is a group, a dot and what it does, as `edit.copy`. A key is bound onc
 
 ## The contract
 
-Fresh holds a table: a map of each action to a target in Fresh, or to a reason it has none. An
-action with neither fails a test, as does a stale row. So no key goes missing from Fresh unseen.
-The table is `internal/editor/fresh/actions/`. Zed has no table: its file is plain.
+Neither editor has a table. Fresh's template binds each action it has. A `//` comment gives the
+reason for a quirk, beside its binding, or for a key left out, in the block at the file's end.
+Zed's file is plain too. Tests hold Fresh's template to its rules.
 
 ## Changing a key
 
 1. Change the row in `internal/editor/keymap/`.
-2. Give a new action a target or a reason in Fresh's table.
-3. Change Zed's file by hand, in the same commit:
-   [`keymap.json`](../mac/zed/keymap.json). Fresh has no such file: its tests hold the rules.
+2. Change Fresh's template by hand, in the same commit, with the reason of a key it leaves out:
+   [`config.json.tmpl`](../internal/server/fresh/files/config.json.tmpl).
+3. Change Zed's file by hand too: [`keymap.json`](../mac/zed/keymap.json).
 
 ## Where F12 comes from
 
@@ -69,7 +69,7 @@ reads F24, and "Ctrl stays Ctrl" holds either way.
 ## The pages
 
 - [Zed's F12 keymap](keymap/zed.md): the file's counts, statuses and decisions.
-- [Fresh's F12 keymap](keymap/fresh.md): the adapter's counts, rules and limits.
+- [Fresh's F12 keymap](keymap/fresh.md): the counts, rules and limits.
 
 Plain keys, such as the arrows and Enter, and the mouse stay each editor's own. The data has no
 row for them.
