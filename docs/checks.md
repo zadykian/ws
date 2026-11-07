@@ -107,7 +107,9 @@ values set` on each. `link PORT` must name one there, mode 600 in a 755 director
 `status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a run
 must start a unit that loads the credential and runs `--secrets` on that file, and stamp its
 SHA-256. A second run must start none, a changed file one, and the file without the credential one
-with no secrets, then none ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
+with no secrets, then none. `ws mac secrets` must run its own of `ws server secrets` there, with a
+value on stdin alone, which no argument or log holds
+([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9,
