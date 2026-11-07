@@ -76,13 +76,13 @@ func (r *WsRun) idle(ctx context.Context) bool {
 }
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
-// that run must have begun with host_vars turning the outbound table off, and ws's host_vars must keep it off. Under
-// --update, only once the stage ran ws server apply in this run.
+// that run must have begun with host_vars turning the outbound table off, which host_vars, the same
+// since, still does. Under --update, only once the stage ran ws server apply in this run.
 func (r *WsRun) runDone(ctx context.Context, c conf.Conf) bool {
 	if r.Update && !r.ran {
 		return false
 	}
-	return r.idle(ctx) && r.named(c) && (c.Target != "cloud" || (r.off() && r.Remote.Get("outbound") == "off"))
+	return r.idle(ctx) && r.named(c) && (c.Target != "cloud" || r.off())
 }
 
 // named tells whether ws's values give ws_user the user that ssh logs in as. It compares with the
@@ -95,11 +95,9 @@ func (r *WsRun) named(c conf.Conf) bool {
 	return user == c.User
 }
 
-// runChange is the change that runs ws server apply, or that names the outbound table's state in host_vars.
+// runChange is the change that runs ws server apply.
 type runChange struct {
 	text string
-	// outbound has the stage name the state alone.
-	outbound bool
 	// cloud is set for a cloud VM, whose run turns the outbound table off.
 	cloud bool
 	// user is the ws_user that host_vars is to name before the run, where it names another.
@@ -108,8 +106,8 @@ type runChange struct {
 
 func (c runChange) String() string { return runStage + ": would " + c.text }
 
-// Plan reads ws's last run, and finds whether ws server apply is to run, to be followed, or whether
-// host_vars alone lacks the outbound line. Under --check it says what would happen.
+// Plan reads ws's last run, and finds whether ws server apply is to run or to be followed. Under
+// --check it says what would happen.
 func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.Unbooted {
 		r.Out.Say("%s: ws's systemd isn't booted, as in a container, so no unit runs ws server apply: "+
@@ -137,10 +135,6 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if c.Target == "cloud" {
 		how += ", after naming security_outbound: false in ws's host_vars"
-		if !r.Update && r.idle(ctx) && r.off() && user == "" && len(r.Only) == 0 {
-			return step.Plan{Changes: []step.Change{runChange{text: "name security_outbound: false in ws's host_vars",
-				outbound: true}}}, nil
-		}
 	}
 	if r.Check {
 		unit, last := r.Remote.Get("active"), r.lastRun()
