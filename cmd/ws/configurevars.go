@@ -5,13 +5,14 @@ import (
 	"context"
 	"sync"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/mac"
 )
 
-// varsReach is the way to ws of the host_vars sheet and of the wizard's state screen. It starts with
-// the first read, so that mac.conf and the secrets draw with ws out of reach.
+// varsReach is the way to ws of the host_vars and secrets sheets, of the wizard's state screen and of
+// ws mac secrets. It starts with the first read, so that mac.conf draws with ws out of reach.
 type varsReach struct {
 	p process
 	// sudo is the scan's, whose way to root the state screen keeps. It stands unread where the scan
@@ -47,19 +48,29 @@ func (r *varsReach) open(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) 
 	return varsSheet(form), nil
 }
 
-// reach finds how script reaches root on ws, as the wizard's stages do. The lock keeps a wizard's
-// own run away, and holds ssh's sockets.
+// reach finds how script reaches root on ws, as the wizard's stages do, through the screen.
 func (r *varsReach) reach(ctx context.Context, b *tui.Bridge, script []byte) (*wizard.Remote, error) {
+	return r.reachOn(ctx, screenMachine(ctx, b, r.p.machine), b, script)
+}
+
+// rootTalk asks sudo's password and says what sudo answered: a screen's Bridge, or the terminal.
+type rootTalk interface {
+	effect.Hidden
+	effect.Out
+}
+
+// reachOn is reach on m, which asks through t. The lock keeps a wizard's own run away, and holds
+// ssh's sockets.
+func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk, script []byte) (*wizard.Remote, error) {
 	lock, err := r.locked(ctx)
 	if err != nil {
 		return nil, err
 	}
-	m := screenMachine(ctx, b, r.p.machine)
 	conf := confPath(r.p.getenv, r.p.pwd)
 	ssh := wizard.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Conf: conf}
 	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
-	sudo.Host, sudo.P = &wizard.HostKey{Tty: r.p.tty, SSH: ssh, Out: b}, b
+	sudo.Host, sudo.P = &wizard.HostKey{Tty: r.p.tty, SSH: ssh, Out: t}, t
 	plan, err := sudo.Plan(ctx)
 	if err != nil {
 		return nil, err
