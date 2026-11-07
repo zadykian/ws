@@ -34,4 +34,7 @@ changed, applies nothing. ws's values name its target, which the stage reads in 
 host_vars' `ws_user`, where the Mac's reads those of the user that ssh logs in as.
 
 The Mac's other stages stay the Mac's: the tunnel and the cable. The list at the end names ws's
-fans' driver where Secure Boot refused it.
+fans' driver where Secure Boot refused it, and the router's static lease on the LAN. It names the
+signing key where GitHub lacks it. The wizard adds no device's key to ws, so the list names
+`ssh-import-id gh:LOGIN`, run as `WS_USER`, for each one
+([SSH and the firewall](security.md#ssh-and-the-firewall)).

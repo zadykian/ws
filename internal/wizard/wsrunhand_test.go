@@ -2,6 +2,7 @@ package wizard
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -22,14 +23,27 @@ func TestWsRunHand(t *testing.T) {
 	}
 }
 
-// ws's own list holds ws's lines alone, with nothing of the Mac's.
+// ws's own list holds ws's lines alone, with nothing of the Mac's, and each device's key.
 func TestWsRunWsHand(t *testing.T) {
-	for status, want := range map[string]string{"fans refused\n": "ws's fans' driver", "fans ok\n": ""} {
-		r, _ := newRun("lan", status, false, false)
+	device := "Each device's ssh key on ws"
+	for name, tc := range map[string]struct {
+		target, status string
+		want           []string
+	}{
+		"fans":  {"cloud", "fans refused\n", []string{"ws's fans' driver", device}},
+		"lan":   {"lan", "fans ok\n", []string{"ws's lease, on a machine on the LAN", device}},
+		"cloud": {"cloud", "fans ok\n", []string{device}},
+	} {
+		r, _ := newRun(tc.target, tc.status, false, false)
 		h := &Hand{}
 		r.WsHand(context.Background(), h)
-		if got := strings.Join(h.lines, "\n"); (want == "") != (got == "") || !strings.HasPrefix(got, want) {
-			t.Errorf("%q: WsHand = %q; want %q", status, got, want)
+		var got []string
+		for _, l := range h.lines {
+			head, _, _ := strings.Cut(l, ":")
+			got = append(got, head)
+		}
+		if !slices.Equal(got, tc.want) {
+			t.Errorf("%s: WsHand = %q; want %q", name, h.lines, tc.want)
 		}
 	}
 }
