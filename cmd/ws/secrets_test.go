@@ -18,13 +18,19 @@ const (
 	file   = home + "/.config/ws/secrets.age"
 )
 
+func runMacSecrets(m *effecttest.Machine, args ...string) (int, string, string) {
+	p := withEnv(fakeProcess(), map[string]string{"HOME": home, "USER": "me"})
+	p.machine = m
+	return runWs(p, "", append([]string{"mac", "secrets"}, args...)...)
+}
+
 func TestSecretsInitMakesTheItemAndTheFile(t *testing.T) {
 	id, _ := age.GenerateX25519Identity()
 	m := effecttest.NewMachine()
 	m.Results[kcFind] = effecttest.Result{Err: errors.New(kcGone)}
 	m.Results["security -i"] = effecttest.Result{}
 	m.Results[kcFind+" -w"] = effecttest.Result{Out: []byte(id.String() + "\n")}
-	got, out, errb := runSecrets(m, "", "init")
+	got, out, errb := runMacSecrets(m, "init")
 	if got != 0 {
 		t.Fatalf("status = %d, stderr %q", got, errb)
 	}
@@ -44,7 +50,7 @@ func TestSecretsInitKeepsWhatIsThere(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[kcFind] = effecttest.Result{}
 	m.Files[file] = []byte("kept")
-	got, out, errb := runSecrets(m, "", "init")
+	got, out, errb := runMacSecrets(m, "init")
 	if got != 0 {
 		t.Fatalf("status = %d, stderr %q", got, errb)
 	}
