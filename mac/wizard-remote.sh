@@ -22,8 +22,6 @@
 #   these unrun, so run refuses it, unless it is a full one. It prints the unit's log until it ends,
 #   and exits with the run's status. A run with no ARG is a full one. Where ws's secrets file and
 #   its identity's credential are both there, the unit loads the credential and runs with --secrets.
-# - secrets stage makes the directories of the secrets file and the identity, and prints their paths,
-#   which the wizard sends to. secrets drop removes both, or the identity alone given "identity".
 # - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
 #   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
 #   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
@@ -43,7 +41,6 @@ vars=/etc/ws/host_vars.yml
 secrets=/etc/ws/secrets.age
 credential=/etc/credstore.encrypted/ws-secrets
 peer=/etc/wireguard/mac.pub
-identity=/run/ws-wizard/identity
 module=/sys/module/nct6687
 netplan=/etc/netplan/60-direct-link.yaml
 
@@ -259,19 +256,6 @@ install() {
     WS_VERSION=$1 WS_RELEASES_URL=$2 sh "$state/install.sh"
 }
 
-# secrets OP stages or drops the secrets file and the identity, which lives on a tmpfs. Both are
-# root's alone.
-secrets() {
-    case $1 in
-    stage)
-        (umask 077 && mkdir -p "$state" "${identity%/*}") || die "cannot make the secrets' directories"
-        echo "$state/secrets.age $identity"
-        ;;
-    drop) rm -f "$identity" && { [ "${2-}" = identity ] || rm -f "$state/secrets.age"; } ;;
-    *) die "unknown secrets op '$1'" ;;
-    esac
-}
-
 running() {
     systemctl show -p ActiveState --value "$1" | grep -qxE "active|activating|deactivating"
 }
@@ -289,9 +273,8 @@ main() {
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$vars" ;;
     install) install "${2-}" "${3-}" ;;
-    secrets) secrets "${2-}" "${3-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote.sh status | state | run [ARG...] |" \
-        "install TAG URL | outbound | secrets stage|drop" ;;
+        "install TAG URL | outbound" ;;
     esac
 }
 

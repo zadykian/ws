@@ -25,7 +25,6 @@ func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Mach
 		status += "secrets -\n"
 	}
 	m.Results[remoteLine(r.Remote, "status")] = effecttest.Result{Out: []byte(status)}
-	m.Results[remoteLine(r.Remote, "secrets", "drop")] = effecttest.Result{}
 	return r, m
 }
 
