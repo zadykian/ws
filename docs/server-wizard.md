@@ -20,6 +20,11 @@ with what stays by hand of ws.
 3. claude on ws: `WS_USER`'s claude, logged in, as `claude auth status` says. Else the stage runs
    `runuser -l WS_USER -c 'claude auth login'` at the terminal: open the address it shows in a
    browser. With no terminal, it stops. Where ws lacks claude, it names `sudo ws server apply`.
+4. Signing key: done where `WS_USER`'s git config names no signing key file. Else GitHub must list
+   ws's public signing key for `WS_USER`'s GitHub login: its gh's, else its git config's
+   `github.user`. GitHub's API lists a login's signing keys with no token. ws's gh has no account
+   permission ([By hand](../README.md#by-hand)), so the list at the end names the key, to add on
+   GitHub as a signing key.
 
 ws's run is done where the last full run exited 0, by this ws, with the secrets file unchanged
 since. Both wizards read that one stamp, so a run from either side after the other's, with nothing
@@ -28,6 +33,5 @@ changed, applies nothing. ws's values name its target, which the stage reads in 
 `sudo ws server apply` there. The remote script reads the claude and the signing key of `WS_USER`,
 host_vars' `ws_user`, where the Mac's reads those of the user that ssh logs in as.
 
-The Mac's other stages stay the Mac's: the tunnel, the cable and the signing key
-([By hand](../README.md#by-hand)). The list at the end names ws's fans' driver where Secure Boot
-refused it.
+The Mac's other stages stay the Mac's: the tunnel and the cable. The list at the end names ws's
+fans' driver where Secure Boot refused it.

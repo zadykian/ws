@@ -22,7 +22,7 @@ func newServerWizardCmd(p process) *cobra.Command {
 		Short: "set ws up from its own shell, in stages",
 		Long: "The stages of ws mac wizard that act on ws, run as root on ws: ws's values, which it asks where " +
 			"host_vars lacks them, then ws server apply, in a unit of its own that goes on where the login drops, " +
-			"then claude's login. " +
+			"then claude's login, and ws's signing key on GitHub. " +
 			"Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. " +
 			"Under --check each stage prints what it would do and changes nothing.",
 		Args: cobra.NoArgs,
@@ -49,9 +49,8 @@ func runServerWizard(c *cobra.Command, p process, check bool) error {
 	term := effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
 	talks, _ := p.machine.(effect.Foreground)
-	stages := serverWizardStages(p, signalPrompt{term}, talks, out, nil, check)
 	hand := &wizard.Hand{}
-	hand.Late(wsRunOf(stages).WsHand)
+	stages := serverWizardStages(p, signalPrompt{term}, talks, out, nil, hand, check)
 	closing := func(ctx context.Context) { hand.Close(ctx, c.OutOrStdout()); term.Flush() }
 	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: out, Check: check}, stages, tmp, 0, closing)
 	return unwrapStep(err)
