@@ -42,3 +42,14 @@ func TestServerWizardCheckAsksNothing(t *testing.T) {
 		t.Errorf("status %d, stderr %q, host_vars %q", status, stderr, m.Files[serverVars])
 	}
 }
+
+// At a terminal the stages run on the run screen, which ends on the normal screen.
+func TestServerWizardAtATerminalDrawsTheRunScreen(t *testing.T) {
+	p, _ := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", false, "")
+	p = withEnv(p, map[string]string{"TERM": "xterm"})
+	p.tty, p.errTTY = true, true
+	status, stdout, stderr := runWs(p, "", "server", "wizard")
+	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
+		t.Errorf("status %d, stdout %q, stderr %q", status, stdout, stderr)
+	}
+}
