@@ -36,12 +36,15 @@ func (c signingAdd) String() string {
 }
 
 // line returns ws's signing key as status prints it, or none where WS_USER's git config on ws names
-// no key file. It reads ws only where the remote script does.
-func (s *Signing) line(ctx context.Context) (string, error) {
-	if !s.Run.Remote.Status(ctx) {
+// no key file.
+func (s *Signing) line(ctx context.Context) (string, error) { return signingLine(ctx, s.Run) }
+
+// signingLine is Signing's line, of ws's run r. It reads ws only where the remote script does.
+func signingLine(ctx context.Context, r *WsRun) (string, error) {
+	if !r.Remote.Status(ctx) {
 		return "", errors.New(signingStage + ": the remote script reads nothing on ws, so the key cannot be read")
 	}
-	line := s.Run.Remote.Get("signing")
+	line := r.Remote.Get("signing")
 	if line == "" {
 		return "", errors.New(signingStage + ": ws's status names no signing key")
 	}

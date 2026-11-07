@@ -17,13 +17,24 @@ with what stays by hand of ws.
    sends over ssh, here on `sh`'s standard input. The unit goes on where the login drops, and reads
    [ws's secrets file](mac-secrets.md#wss-file) where its credential stands beside it. A run follows
    the unit that runs, whichever wizard started it.
+3. claude on ws: `WS_USER`'s claude, logged in, as `claude auth status` says. Else the stage runs
+   `runuser -l WS_USER -c 'claude auth login'` at the terminal: open the address it shows in a
+   browser. With no terminal, it stops. Where ws lacks claude, it names `sudo ws server apply`.
+4. Signing key: done where `WS_USER`'s git config names no signing key file. Else GitHub must list
+   ws's public signing key for `WS_USER`'s GitHub login: its gh's, else its git config's
+   `github.user`. GitHub's API lists a login's signing keys with no token. ws's gh has no account
+   permission ([By hand](../README.md#by-hand)), so the list at the end names the key, to add on
+   GitHub as a signing key.
 
 ws's run is done where the last full run exited 0, by this ws, with the secrets file unchanged
 since. Both wizards read that one stamp, so a run from either side after the other's, with nothing
 changed, applies nothing. ws's values name its target, which the stage reads in place of
 `mac.conf`. With no booted systemd, as in a container, the stage says so and skips: run
-`sudo ws server apply` there.
+`sudo ws server apply` there. The remote script reads the claude and the signing key of `WS_USER`,
+host_vars' `ws_user`, where the Mac's reads those of the user that ssh logs in as.
 
-The Mac's other stages stay the Mac's: the tunnel, the cable, claude's login and the signing key
-([By hand](../README.md#by-hand)). The list at the end names ws's fans' driver where Secure Boot
-refused it.
+The Mac's other stages stay the Mac's: the tunnel and the cable. The list at the end names ws's
+fans' driver where Secure Boot refused it, and the router's static lease on the LAN. It names the
+signing key where GitHub lacks it. The wizard adds no device's key to ws, so the list names
+`ssh-import-id gh:LOGIN`, run as `WS_USER`, for each one
+([SSH and the firewall](security.md#ssh-and-the-firewall)).

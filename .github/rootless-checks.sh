@@ -235,6 +235,13 @@ printf '%s\n' '#!/bin/sh' \
     "[ \"\$1 \$2\" != 'server apply' ] || { shift 2; exec $real server apply --only shell \"\$@\"; }" \
     "exec $real \"\$@\"" >/usr/local/bin/ws
 chmod 755 /usr/local/bin/ws
+# The user's claude is a stand-in with a login, as that run installs none.
+# shellcheck disable=SC2016 # the user's sh expands $1, and cat reads the stdin it can't reopen
+runuser -u "$user" -- sh -c 'mkdir -p "$1" && cat >"$1/claude" && chmod 755 "$1/claude"' \
+    sh "$home/.local/bin" <<'EOF'
+#!/bin/sh
+[ "$*" = 'auth status' ]
+EOF
 must "the wizard runs ws server apply in a unit" ws server wizard --plain </dev/null
 out=$(ws server wizard --plain 2>&1 </dev/null)
 refused "a second wizard starts a unit" grep -q ws-wizard- <<<"$out"

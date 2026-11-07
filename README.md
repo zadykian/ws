@@ -155,6 +155,8 @@ account's selected repositories; Metadata and Actions read; Contents, Pull reque
 Workflows read and write; and no account permission. These stay manual:
 
 - other peers' public keys on the server, as in [The tunnel](docs/wireguard.md#the-tunnel);
+- another device's SSH key on the server: `ssh-import-id gh:LOGIN`, run as `ws_user`
+  ([SSH and the firewall](docs/security.md#ssh-and-the-firewall));
 - the VPN's profile, age-encrypted on the server, and the `ikeward` role's variables, as in
   [The profile](docs/ikeward.md#the-profile);
 - with Secure Boot on, DKMS's key, enrolled at the console: [Secure Boot](docs/fans.md#secure-boot);

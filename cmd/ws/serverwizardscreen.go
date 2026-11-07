@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
@@ -22,14 +23,17 @@ func drawServerWizard(c *cobra.Command, p process, check bool, tmp string) error
 	cfg, done := runConfig(c, p, cfg)
 	defer done()
 	var text bytes.Buffer
-	names := tui.NewGroup("", serverWizardStages(p, nil, nil, nil, check))
+	names := tui.NewGroup("", serverWizardStages(p, nil, nil, nil, nil, &wizard.Hand{}, check))
 	err := tui.Run(c.Context(), cfg, tui.NewRunScreen(runTitle(c, check), cfg.Theme, names),
 		func(ctx context.Context, b *tui.Bridge) error {
 			on := p
 			on.machine = screenMachine(ctx, b, p.machine)
-			stages := serverWizardStages(on, b, b, b, check)
+			talks, _ := on.machine.(effect.Foreground)
+			if m, ok := p.machine.(effect.OSMachine); ok {
+				talks = b.Foreground(m)
+			}
 			hand := &wizard.Hand{}
-			hand.Late(wsRunOf(stages).WsHand)
+			stages := serverWizardStages(on, b, talks, b, b, hand, check)
 			closing := func(ctx context.Context) { hand.Close(ctx, &text) }
 			o := step.Options{Observer: b, Check: check, Stop: b.Stop(ctx)}
 			_, err := wizard.Run(ctx, on.machine, o, stages, tmp, 0, closing)
