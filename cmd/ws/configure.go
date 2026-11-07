@@ -50,7 +50,7 @@ func configureOn(c *cobra.Command, p process, cfg tui.Config) error {
 	}
 	vars := &varsReach{p: p}
 	defer vars.close(c.Context())
-	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), secretsSheet(store, held), vars.sheet())
+	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), secretsSheet(storeSide{store}, held), vars.sheet())
 }
 
 // confSheet is mac.conf on the Configure screen.

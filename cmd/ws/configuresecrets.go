@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"slices"
 	"strings"
 
@@ -21,7 +22,7 @@ var secretsLabels = []string{
 // secretsSheet is the secrets file on the Configure screen. held lists its entries as "KIND NAME",
 // never a value: a field says whether its entry is set, and starts empty. A file entry holds bytes,
 // and an env or git entry beyond these needs a name, so ws mac secrets sets those.
-func secretsSheet(store secretsStore, held []string) tui.Sheet {
+func secretsSheet(side secretsSide, held []string) tui.Sheet {
 	return tui.Sheet{
 		Name: "secrets",
 		Fields: func(map[string]string) []tui.FieldSpec {
@@ -41,24 +42,38 @@ func secretsSheet(store secretsStore, held []string) tui.Sheet {
 			}
 			return specs
 		},
+		// Save sets each entry in turn. A failed one leaves those before it set, and the sheet reads
+		// what the file then holds.
 		Save: func(ctx context.Context, _ *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
-			var keys []string
-			err := store.edit(ctx, func(s *secrets.Secrets) error {
-				for _, label := range slices.Sorted(mapKeys(edits)) {
-					if err := setEntry(s, label, edits[label]); err != nil {
-						return err
-					}
+			var err error
+			for _, label := range slices.Sorted(maps.Keys(edits)) {
+				if err = side.set(ctx, label, edits[label]); err != nil {
+					break
 				}
-				keys = s.Keys()
-				return nil
-			})
-			if err != nil {
-				return secretsSheet(store, held), err
 			}
-			return secretsSheet(store, keys), nil
+			keys, kerr := side.keys(ctx)
+			if kerr != nil {
+				keys = held
+			}
+			return secretsSheet(side, keys), errors.Join(err, kerr)
 		},
 	}
 }
+
+// secretsSide is where the secrets sheet reads and sets the file's entries, by label: "KIND NAME".
+type secretsSide interface {
+	keys(ctx context.Context) ([]string, error)
+	set(ctx context.Context, label, value string) error
+}
+
+// storeSide is the Mac's secrets file.
+type storeSide struct{ store secretsStore }
+
+func (s storeSide) set(ctx context.Context, label, value string) error {
+	return s.store.edit(ctx, func(cur *secrets.Secrets) error { return setEntry(cur, label, value) })
+}
+
+func (s storeSide) keys(ctx context.Context) ([]string, error) { return heldSecrets(ctx, s.store) }
 
 // setEntry sets the entry that a label names. A git entry keeps its user name.
 func setEntry(s *secrets.Secrets, label, value string) error {
@@ -70,16 +85,6 @@ func setEntry(s *secrets.Secrets, label, value string) error {
 		return nil
 	}
 	return s.Set(kind, name, value)
-}
-
-func mapKeys(m map[string]string) func(yield func(string) bool) {
-	return func(yield func(string) bool) {
-		for k := range m {
-			if !yield(k) {
-				return
-			}
-		}
-	}
 }
 
 // heldSecrets lists the entries of the secrets file as "KIND NAME". A Keychain without the item, or a

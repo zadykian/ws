@@ -18,7 +18,7 @@ func TestSecretsSheetSaysSetOrNotAndNeverShowsAValue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	specs := secretsSheet(store, held).Fields(nil)
+	specs := secretsSheet(storeSide{store}, held).Fields(nil)
 	want := map[string]string{
 		"token github": "set", "token azure_devops": "not set", "password vpn_p12": "not set", "env A": "set",
 	}
@@ -32,7 +32,7 @@ func TestSecretsSheetSaysSetOrNotAndNeverShowsAValue(t *testing.T) {
 		}
 	}
 	// A save writes the edits and keeps the rest, then the sheet says set.
-	next, err := secretsSheet(store, held).Save(context.Background(), nil, map[string]string{"token azure_devops": "dummy-new"})
+	next, err := secretsSheet(storeSide{store}, held).Save(context.Background(), nil, map[string]string{"token azure_devops": "dummy-new"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func TestSecretsSheetKeepsAGitUserName(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": home, "USER": "me"})
 	p.machine = m
 	store := newSecretsStore(p)
-	if _, err := secretsSheet(store, nil).Save(context.Background(), nil, map[string]string{"git https://h.example": "dummy-2"}); err != nil {
+	if _, err := secretsSheet(storeSide{store}, nil).Save(context.Background(), nil, map[string]string{"git https://h.example": "dummy-2"}); err != nil {
 		t.Fatal(err)
 	}
 	got, err := secrets.LoadRaw(m, file, id)
@@ -63,7 +63,7 @@ func TestSecretsSheetSaveRefusalNamesNoValue(t *testing.T) {
 	m, _ := editFixture(t, "")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": home, "USER": "me"})
 	p.machine = m
-	_, err := secretsSheet(newSecretsStore(p), nil).Save(context.Background(), nil, map[string]string{"token nope": "dummy-secret"})
+	_, err := secretsSheet(storeSide{newSecretsStore(p)}, nil).Save(context.Background(), nil, map[string]string{"token nope": "dummy-secret"})
 	if err == nil || strings.Contains(err.Error(), "dummy-secret") {
 		t.Errorf("err = %v, want a refusal with no value", err)
 	}
