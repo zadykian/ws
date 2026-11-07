@@ -80,8 +80,8 @@ A ws before v0.5.1 lacks `ws update`: [Update](docs/releases.md#update).
 or a step of it by the name a run shows, as in `--only 'docker/Docker group',tmux`. That role's
 other steps are planned and left out. A step that waits on one of them with changes is skipped,
 and says so, and `--check` shows what the same run would change. A left-out step whose plan fails
-warns, and the run goes on. `--secrets FILE` gives the roles their secrets
-([The secrets file](docs/shell.md#the-secrets-file)).
+warns, and the run goes on. `--secrets FILE` gives the roles their secrets, and
+`ws server secrets` edits ws's file ([The secrets file](docs/shell.md#the-secrets-file)).
 The values of a machine go in `/etc/ws/host_vars.yml`, which only root reads, and every run reads
 them. `ws_user: NAME` sets up the user NAME instead of `zadykian`, the default, whose account must
 exist. `ws_user: root` sets up a cloud VM with no other user. `ws_home` follows the user as
