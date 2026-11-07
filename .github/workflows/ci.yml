@@ -119,6 +119,16 @@ jobs:
               echo '::error::The second run of ws server apply changed something.'
               exit 1
           fi
+      # The server's wizard over the values that the job wrote: it asks nothing, and its run skips,
+      # as the container's systemd isn't booted.
+      - name: Check the server's wizard
+        shell: bash
+        run: |
+          ws server wizard --check --plain 2>&1 | tee "$RUNNER_TEMP/wizard.log"
+          if ! grep -qF "isn't booted" "$RUNNER_TEMP/wizard.log"; then
+              echo '::error::ws server wizard --check did not skip its run.'
+              exit 1
+          fi
       # script gives ws a terminal, so that the run screen draws every role's steps. The screen's
       # last sequences share the last line, so the words must end it, not fill it.
       - name: Draw the run screen
