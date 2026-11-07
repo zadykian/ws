@@ -122,3 +122,23 @@ func (s wsSide) keys(ctx context.Context) ([]string, error) {
 	}
 	return strings.FieldsFunc(string(out), func(r rune) bool { return r == '\n' }), nil
 }
+
+// secretsSheet is ws's secrets sheet before its read, which reaches ws as the host_vars sheet does.
+func (r *varsReach) secretsSheet() tui.Sheet {
+	return tui.Sheet{
+		Name:   "secrets",
+		Fields: func(map[string]string) []tui.FieldSpec { return nil },
+		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
+			ws, err := r.reach(ctx, b, nil)
+			if err != nil {
+				return tui.Sheet{}, err
+			}
+			side := wsSide{ws}
+			held, err := side.keys(ctx)
+			if err != nil {
+				return tui.Sheet{}, err
+			}
+			return secretsSheet(side, held), nil
+		},
+	}
+}
