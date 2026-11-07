@@ -9,7 +9,8 @@ import (
 )
 
 // Run runs the stages in order under the run's lock, with the Mac kept from idle sleep until it
-// ends: a stage may wait on a download or an answer. pid is the process caffeinate waits on. It
+// ends: a stage may wait on a download or an answer. pid is the process caffeinate waits on, and 0
+// keeps nothing awake, as on ws, where caffeinate is not macOS's. It
 // reports whether any stage had changes to make, as step.Run does. closing runs after a run that
 // changed something, outside --check, while the lock stands: the stages' files in it are still there.
 // o is the stages' run: who hears it, and where a screen stops it or leaves a stage out.
@@ -26,7 +27,9 @@ func Run(ctx context.Context, m effect.Machine, o step.Options, stages []step.St
 	go func() {
 		defer close(done)
 		// The command ends with the cancel, or with the process it waits on.
-		_, _ = m.Run(awake, "caffeinate", "-i", "-w", strconv.Itoa(pid))
+		if pid != 0 {
+			_, _ = m.Run(awake, "caffeinate", "-i", "-w", strconv.Itoa(pid))
+		}
 	}()
 	defer func() {
 		cancel()
