@@ -22,6 +22,12 @@ stamp=$ws/root/var/lib/ws-wizard/run
 vars="$ws/root"/etc/ws/host_vars.yml
 fail=0
 
+# stamped TABLE: the run's stamp must name a full run that passed, TABLE, and no secrets file, with
+# host_vars' sum or none.
+stamped() {
+    grep -Eq " 0 $1 - (-|[0-9a-f]{64})\$" "$stamp"
+}
+
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
     echo "::error::$*"
@@ -55,7 +61,7 @@ grep -q "^ws mac wizard: ws's run: ws server apply stopped, " "$RUNNER_TEMP/run.
     [ "$status" = 1 ] && [ ! -f "$stamp" ] || error "a run cut off exited $status, or stamped run"
 rm "$ws/server.cut"
 wizard
-grep -q ' 0 on -$' "$stamp" && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
+stamped on && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
 if ! grep -q "^- ws's fans' driver: " "$RUNNER_TEMP/run.out" ||
     ! grep -q "^- The router's forwards to ws, UDP 51820 and TCP 22022, for localhost," \
         "$RUNNER_TEMP/run.out"; then
@@ -77,7 +83,7 @@ done
 kill "$first"
 wizard
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
-    grep -q ' 0 on -$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
+    stamped on && started 0 2 && [ "$status" = 0 ] ||
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/server.wait"
 out=$(env -u WS_TARGET "$wsbin" mac wizard --check --update </dev/null 2>&1)
@@ -106,7 +112,7 @@ wizard
 rm "$ws/server.wait"
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     started 1 3 &&
-    grep -q ' 0 off -$' "$stamp" && sudo grep -qx 'security_outbound: false' "$vars" &&
+    stamped off && sudo grep -qx 'security_outbound: false' "$vars" &&
     [ "$status" = 0 ] || error "a cloud VM's run after a unit without the line exited $status"
 wizard
 started 0 1 && [ "$status" = 0 ] || error "the next run with WS_TARGET=cloud exited $status"

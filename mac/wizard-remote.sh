@@ -7,14 +7,15 @@
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
 #   is missing. user is the ws_user that host_vars names. run is the ws version and status of the last full run, and off where host_vars turned the
-#   outbound table off as the run began, else on, and the SHA-256 of its secrets file, or -. ws is the version that ws prints. last is the unit and status of
+#   outbound table off as the run began, else on, and the SHA-256 of its secrets file and of host_vars, each or -. ws is the version that ws prints. last is the unit and status of
 #   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
-#   secrets is the SHA-256 of ws's secrets file, as a run would stamp it, or -.
+#   secrets is the SHA-256 of ws's secrets file, as a run would stamp it, or -, and vars that of
+#   host_vars.
 # - state prints ws server state --json, which changes nothing, on stdout alone. It has the HOME and
 #   the locale of a run's unit, so that it reads what a run would.
 # - run [ARG...] runs ws server apply --json ARGs in a unit of its own, ws-wizard-STAMP, which goes
@@ -110,7 +111,7 @@ signing_key() {
 
 # status prints what the wizard reads of ws, as the header says.
 status() {
-    echo "run $(stamp "$state/run" 4)"
+    echo "run $(stamp "$state/run" 5)"
     echo "last $(stamp "$state/last")"
     echo "active $(active | first)"
     echo "ws $("$ws" version 2>/dev/null | first)"
@@ -140,22 +141,28 @@ status() {
     echo "outbound $(off | sh -s -- check "$vars" && echo off || echo on)"
     echo "secrets $( ([ -f "$credential" ] && (sha256sum || shasum -a 256) <"$secrets") 2>/dev/null |
         cut -d ' ' -f 1 | first)"
+    echo "vars $( ([ -f "$vars" ] && (sha256sum || shasum -a 256) <"$vars") 2>/dev/null |
+        cut -d ' ' -f 1 | first)"
 }
 
 # job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE SECRETS [ARG...].
 # It runs WS server apply --json ARGs, whose event lines reach the wizard through the unit's log. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
 # which has no ARG, writes STATE/run too: the version that WS printed before the run, or - where WS
 # prints none, the status, off where host_vars turned the outbound table off as the run began, else
-# on, and the SHA-256 of the secrets file, or -. It removes it as it starts. A unit with the
-# identity as its credential adds --secrets and the file.
+# on, the SHA-256 of the secrets file, or -, and that of host_vars as the run began, or -. It
+# removes it as it starts. A unit with the identity as its credential adds --secrets and the file.
 job() {
     cat <<'EOF'
-unit=$1 vars=$2 ws=$3 state=$4 secrets=$5 full=0 table=on sum=-
+unit=$1 vars=$2 ws=$3 state=$4 secrets=$5 full=0 table=on sum=- values=-
 shift 5
 [ $# != 0 ] || full=1
 if [ -n "${CREDENTIALS_DIRECTORY-}" ]; then
     sum=$( (sha256sum || shasum -a 256) <"$secrets" | cut -d ' ' -f 1) && [ -n "$sum" ] || exit 1
     set -- "$@" --secrets "$secrets"
+fi
+if [ -f "$vars" ]; then
+    values=$( (sha256sum 2>/dev/null || shasum -a 256) <"$vars" | cut -d ' ' -f 1) &&
+        [ -n "$values" ] || exit 1
 fi
 sh "$state/off" check "$vars" && table=off
 [ "$full" = 0 ] || rm -f "$state/run"
@@ -163,7 +170,7 @@ version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version
 "$ws" server apply --json "$@"
 status=$?
 if [ "$full" = 1 ]; then
-    echo "$version $status $table $sum" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
+    echo "$version $status $table $sum $values" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
 fi
 echo "$unit $status" >"$state/last.new" && mv -f "$state/last.new" "$state/last"
 exit "$status"

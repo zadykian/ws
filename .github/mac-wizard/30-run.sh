@@ -67,7 +67,7 @@ cat "$RUNNER_TEMP/run.err" "$RUNNER_TEMP/run.out"
 [ "$status" = 0 ] || error "ws mac wizard exited $status, with the account's keys in the user's file"
 if ! printf '\n%s\n' '--only wireguard' | cmp -s - "$RUNNER_TEMP/ws/server.log" ||
     ! grep -q -- '--setenv=HOME=/root ' "$RUNNER_TEMP/ws/run.log" ||
-    ! grep -q ' 0 on -$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
+    ! grep -Eq ' 0 on - (-|[0-9a-f]{64})$' "$RUNNER_TEMP/ws/root/var/lib/ws-wizard/run"; then
     error "ws mac wizard ran no ws server apply on ws, once, then with --only wireguard, with root's HOME"
 fi
 ! grep -q '"event"' "$RUNNER_TEMP/run.err" || error "ws mac wizard printed an event line of the run's log"
