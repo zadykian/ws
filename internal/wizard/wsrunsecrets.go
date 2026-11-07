@@ -28,11 +28,11 @@ func (r *WsRun) run(ctx context.Context) error {
 	return nil
 }
 
-// onlyArgs returns --only for each entry, quoted for ws's shell, as a step's name may hold a blank.
+// onlyArgs returns --only for each entry. A step's name may hold a blank: the Shell keeps it whole.
 func onlyArgs(only []string) []string {
 	args := make([]string, len(only))
 	for i, entry := range only {
-		args[i] = "'--only=" + strings.ReplaceAll(entry, "'", `'\''`) + "'"
+		args[i] = "--only=" + entry
 	}
 	return args
 }

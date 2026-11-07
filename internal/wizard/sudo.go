@@ -130,7 +130,7 @@ func (s *Sudo) rooted(cmd []string, in []byte) ([]string, []byte, error) {
 	case sudoOpen:
 		return append([]string{"sudo", "-n"}, cmd...), in, nil
 	case sudoAsked:
-		return append([]string{"sudo", "-k", "-S", "-p", "''"}, cmd...), append([]byte(s.password+"\n"), in...), nil
+		return append([]string{"sudo", "-k", "-S", "-p", ""}, cmd...), append([]byte(s.password+"\n"), in...), nil
 	}
 	return nil, nil, errors.New(sudoStage + ": the stage has not read how to reach root on ws")
 }
