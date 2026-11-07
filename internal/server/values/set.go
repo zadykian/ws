@@ -42,6 +42,13 @@ func Set(data []byte, name, value string) ([]byte, error) {
 	return checked([]byte(strings.Join(slices.Replace(lines, start, end, line), "")), key, line)
 }
 
+// Named tells whether a line of data holds key name, whatever its value.
+func Named(data []byte, name string) bool {
+	lines := strings.SplitAfter(string(data), "\n")
+	start, _ := span(lines, name)
+	return start < len(lines)
+}
+
 // checked returns data where the file reads and gives key the value of line, which is empty for a
 // key taken out. The line-by-line edit knows no YAML: this catches a file that it misread, such as
 // one whose document ends before the new line.
