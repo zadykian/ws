@@ -27,21 +27,29 @@ func newValuesCmd(p process) *cobra.Command {
 	})
 }
 
-// runValuesSet writes key in the file, by rename and with its owner and mode, as the wizard's own
-// writes do. It writes nothing where the file holds the value already, and a link stays the
-// maintainer's to edit, as a rename would replace it.
+// runValuesSet writes key in the file, by setServerValue.
 func runValuesSet(c *cobra.Command, p process, key, value string) error {
 	if p.euid != 0 {
 		return errors.New("run it as root")
 	}
-	info, err := p.machine.Stat(serverVars)
+	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
+	defer term.Flush()
+	return setServerValue(p.machine, progOut{term, c.CommandPath(), map[string]bool{}}, key, value)
+}
+
+// setServerValue writes key in the file, by rename and with its owner and mode, as the wizard's own
+// writes do, and says so on out. It writes nothing where the file holds the value already, and a
+// link stays the maintainer's to edit, as a rename would replace it. ws server wizard writes its
+// values through it too.
+func setServerValue(m effect.Machine, out effect.Out, key, value string) error {
+	info, err := m.Stat(serverVars)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 	if info.Link != "" {
 		return fmt.Errorf("%s is a link to %s: name %s in its file by hand", serverVars, info.Link, key)
 	}
-	data, err := p.machine.ReadFile(serverVars)
+	data, err := m.ReadFile(serverVars)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
@@ -52,12 +60,10 @@ func runValuesSet(c *cobra.Command, p process, key, value string) error {
 	if bytes.Equal(next, data) {
 		return nil
 	}
-	if err := writeVars(p.machine, next); err != nil {
+	if err := writeVars(m, next); err != nil {
 		return err
 	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	progOut{term, c.CommandPath(), map[string]bool{}}.Say("wrote %s", serverVars)
-	term.Flush()
+	out.Say("wrote %s", serverVars)
 	return nil
 }
 
