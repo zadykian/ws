@@ -1,6 +1,0 @@
----
-# Files that a language's own patterns miss.
-- language: dockerfile
-  globs: [Dockerfile.*, Containerfile.*]
-- language: docker-compose
-  globs: [compose.*.yaml, compose.*.yml, docker-compose.*.yaml, docker-compose.*.yml]

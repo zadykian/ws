@@ -30,7 +30,7 @@ Each role has a page of its own. A role is Go steps of ws:
   and plugin marketplaces from a list.
 - [`signoz`](docs/signoz.md): SigNoz in Docker, which keeps the machine's telemetry for 90 days.
 - [`otelcol`](docs/otelcol.md): the OpenTelemetry Collector on the host, which feeds SigNoz.
-- [`fresh`](docs/fresh.md): the Fresh editor, from the .deb of a pinned release, with F12's keys,
+- [`fresh`](docs/fresh.md): the Fresh editor, from the .deb of a pinned release, with the plain keys,
   JetBrains Dark and the language servers.
 - [`zed`](docs/zed.md): the settings of Zed's server for Go, C#, SQL, Docker, Ansible and HTML, the
   terminals' tmux wrapper, and the open-file limit that it needs.

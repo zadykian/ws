@@ -18,16 +18,13 @@ the server. The rest is the docs, the lint gates' tools and CI.
   is the command and `internal/` its packages. `step`, `effect`, with
   `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
   steps on them.
-- `internal/editor`: what the editors share, in no editor's terms, with F12's keys by topic in
-  `keymap/`. Fresh's file is a plain template in `internal/server/fresh/files`.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
   wizard's scripts for ws in POSIX sh, `ws.ghostty`, Ghostty's settings, and `zed/`, Zed's settings
   and keymap.
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
   `mac-targets.md`, `mac-ghostty.md`, `mac-zed.md` and `mac-secrets.md`; `router.md` and
-  `checks.md`; `tui.md`, the terminal UI, with `tui-configure.md` and `tui-wizard.md`; `keymap.md`,
-  the index of `docs/keymap/`.
+  `checks.md`; `tui.md`, the terminal UI, with `tui-configure.md` and `tui-wizard.md`.
 - `tools/`: the gates' tools. `run` pins the binaries, `files` lists a gate's files and `sizecheck`
   caps them. `build` builds ws for a target.
 - `.githooks/`: the hooks that check each commit for the words of the local list and for secrets.
@@ -123,8 +120,6 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
   ([The compose files](docs/signoz.md#the-compose-files)).
-- An action of the keymap has a target or a reason in Fresh's table: a test fails otherwise
-  ([The keymap](docs/keymap.md#the-contract)).
 - Secrets are never in this repository ([By hand](README.md#by-hand)).
 - ws is public. No word of the local list, `~/.config/ws/forbidden-words`, goes into it. That
   holds for its files, the names of files and branches, the commit messages, and the text of pull
@@ -152,7 +147,8 @@ skill. Commits are signed, as the ruleset on `main` requires.
 ## Where else to look
 
 - `.claude/rules/`, loaded with the files they cover. [server.md](.claude/rules/server.md) has the
-  roles' invariants and [mac.md](.claude/rules/mac.md) the ws CLI's.
+  roles' invariants, [mac.md](.claude/rules/mac.md) the ws CLI's and
+  [editors.md](.claude/rules/editors.md) what Zed's files and Fresh's share.
   [docs.md](.claude/rules/docs.md) says what each document holds. [writing.md](.claude/rules/writing.md)
   has ws's facts beside the `writing` skill.
 - Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),

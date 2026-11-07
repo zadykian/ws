@@ -46,9 +46,9 @@ Fresh load its defaults and exit 0.
 path that `devtools.ServerPaths` gives it for the user's home.
 
 - Fresh takes a list of servers for a language, so dockerfile has two.
-- Each entry starts at once (`auto_start`), with the catalogue's arguments and options.
+- Each entry starts at once (`auto_start`), with its arguments and options, set in the template.
 - Fresh has no docker-compose language. ws adds one on the yaml grammar for `compose.yaml`,
-  `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` and the catalogue's globs. The server
+  `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` and the globs of the template. The server
   sees a compose file by Fresh's key, the extension, mapped to `dockercompose`.
 - Ansible has no entry: no pattern tells a playbook from YAML, and `.yml` playbooks stay YAML.
 - Fresh's csharp plugin answers Roslyn's restore request for csharp-ls alone. Roslyn starts and
@@ -72,7 +72,7 @@ it, so ws cannot. A folder with no marker is trusted at once.
    the top level of `plugins/`, leaving out `plugins/examples`.
 3. Write them to `internal/server/fresh/files/actions.txt`, under its first line with the new
    version. `TestTheActionListNamesThePinnedVersion` fails until then, and
-   `TestEveryTargetIsAnActionOfFresh` names any target that is gone.
+   `TestEveryBindingNamesAnActionOfFresh` names any target that is gone.
 4. Leave out `unbind`, a config word, and the plugin commands made at run time: 65 of those in
    0.5.7.
 
@@ -128,8 +128,76 @@ Rules a change keeps:
 
 ## The keys
 
-[Fresh's keymap](keymap/fresh.md) holds the counts, rules and limits. What stays
-unproven until the maintainer's trial on the Mac:
+The template `config.json.tmpl` is the source of the keys, in the map `ws`, which inherits
+`default` ([the config](#the-config)). A `//` comment gives the reason for a quirk beside its
+binding. The block at the file's end gives the reason for each key left out, such as an action
+that Fresh lacks. Tests hold the template to its rules.
+
+### Contexts
+
+- Global, Text and Code bind in `normal` alone. A global binding loses to the default map's
+  `normal`. Fresh's `normal` passes only its UI actions on to the explorer and the panels
+  ([Other limits](#other-limits)).
+- Tree and Panel bind in `file_explorer`, and Terminal in `terminal`.
+
+### Strokes
+
+A stroke is spelt as Fresh spells it, and a chord that arrives in more than one form gets a binding
+for each.
+
+- A stroke with Shift and a sign gets two forms: tmux sends the sign without Shift, and a direct
+  terminal sends the key with Shift.
+- Terminals rewrite some chords, and a test keeps them apart from the bound keys:
+  - ctrl+alt+4 arrives as ctrl+alt+\\, and ctrl+alt+/ as ctrl+alt+shift+-;
+  - ctrl+k ctrl+/ arrives as ctrl+k ctrl+shift+-;
+  - ctrl+shift+space arrives as ctrl+space, and alt+shift+space as alt+space.
+- ctrl+backspace and ctrl+shift+backspace take no binding. Through tmux both arrive as ctrl+h. With
+  no tmux, Fresh's default for ctrl+backspace deletes a word.
+- ctrl+h is bound outside the map. The default map binds both ctrl+h and ctrl+backspace, and a
+  binding in a map warns at each start.
+
+### The shell keys
+
+24 keys are `noop` in `terminal`, so the shell in Fresh's terminal gets them. A `noop` there
+ends Fresh's lookup, so its default map cannot take the key:
+
+- Nine are free of any other use: ctrl+q, ctrl+comma, ctrl+alt+], ctrl+alt+[, ctrl+alt+s, alt+x,
+  alt+v, alt+left and alt+right.
+- The default map fires 15 more over the shell:
+  - alt+e, alt+f, alt+g, alt+h and alt+s open a menu, and alt+w closes the tab;
+  - ctrl+p, ctrl+; and ctrl+' open Quick Open;
+  - alt+r, alt+j, alt+/, alt+[, alt+] and alt+` do the editor's work.
+- Fresh's own ways out stay: ctrl+space and ctrl+] (`terminal_escape`), F9 (keyboard capture) and
+  alt+o (the dock's focus).
+
+### Keys that fail through tmux
+
+| Key | Action | What happens |
+| --- | --- | --- |
+| ctrl+cmd+s | `file.save-all` | Lands on `open_settings` |
+| ctrl+alt+2 | `problem.list` | Lands on `lsp_completion` |
+| ctrl+backspace | `edit.delete-word-start` | Arrives as ctrl+h, so lands on `replace` |
+| ctrl+shift+backspace | `nav.last-change` | Arrives as ctrl+h, so lands on `replace` |
+| ctrl+f3 | `search.next-word` | Types `13;~5`, as tmux splits it |
+| ctrl+shift+f3 | `search.previous-word` | Types `13;6~`, as tmux splits it |
+
+### Other limits
+
+- Fresh lacks a debugger, a git panel and a task runner. The maintainer accepted it.
+- A key with no Fresh action keeps Fresh's default, such as ctrl+b, `toggle_file_explorer`, and
+  alt+f, `menu_open`, in the editor.
+- Fresh's `normal` passes on only its UI actions: menus, quick open, splits, tabs, the terminal's
+  and the explorer's toggles. With focus in the explorer or a panel, save, save-all, search,
+  replace and revert and the like do nothing. F6 there opens Fresh's remote menu, not the git log.
+- The prefix reaches the editor pressed twice: ctrl+b by default, ctrl+q in cld's sessions. So
+  Fresh's palette on ctrl+q needs it twice in cld's sessions, and ctrl+b is lost in tmux.
+- A folder with a project marker opens Restricted, with every server off
+  ([Trust each project](#trust-each-project)).
+- `.yml` playbooks stay YAML, with no Ansible server.
+
+### Unproven
+
+What stays unproven until the maintainer's trial on the Mac:
 
 - Real Ghostty, with left Option as Alt: its encoder was modelled on a US layout.
 - macOS and the ssh leg between Ghostty and tmux, and tmux 3.7c and Ubuntu's own build, as 3.6a
