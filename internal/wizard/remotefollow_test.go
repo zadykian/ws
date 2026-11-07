@@ -30,7 +30,7 @@ func (h heard) steps() []string {
 }
 
 func newFollow(m effect.Machine) *Remote {
-	return &Remote{SSH: SSH{M: m, Lock: "/t/l"}, Script: []byte("echo\n")}
+	return &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}, Script: []byte("echo\n")}
 }
 
 func TestFollowHandsEventsOnAndPassesTheLog(t *testing.T) {

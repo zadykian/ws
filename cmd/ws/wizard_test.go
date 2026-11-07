@@ -180,7 +180,7 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 		t.Fatalf("status = %d", status)
 	}
 	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
-	r := &wizard.Remote{SSH: wizard.SSH{M: m, Lock: "/t/l"}}
+	r := &wizard.Remote{Shell: wizard.SSHShell{SSH: wizard.SSH{M: m, Lock: "/t/l"}}}
 	roles, err := r.State(context.Background(), p.version)
 	if err != nil {
 		t.Fatal(err)
