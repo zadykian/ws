@@ -23,7 +23,7 @@ func wizardProcess(vars string, booted bool, status string) (process, *effecttes
 // ws's run waits on ws's values, and reads the target and the user that host_vars names.
 func TestServerWizardStagesReadHostVars(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: false\nws_user: root\n", false, "")
-	stages := serverWizardStages(p, nil, nil, nil, false)
+	stages := serverWizardStages(p, nil, nil, nil, nil, false)
 	if got := []string{stages[0].Name(), stages[1].Name(), stages[1].WaitsOn()}; !slices.Equal(got,
 		[]string{"ws's values", "ws's run", "ws's values"}) {
 		t.Errorf("stages %q", got)

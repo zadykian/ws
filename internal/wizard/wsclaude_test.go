@@ -2,9 +2,12 @@ package wizard
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
 
@@ -38,5 +41,20 @@ func TestWsClaudeApply(t *testing.T) {
 	}
 	if !strings.Contains(strings.Join(m.Calls, "\n"), `ws exec bash -lc "claude auth login"`) {
 		t.Errorf("calls = %q; want the login", m.Calls)
+	}
+}
+
+// On ws, the login runs by runuser as host_vars' WS_USER, and a missing claude names ws server apply.
+func TestWsClaudeHere(t *testing.T) {
+	r, m := newRun("lan", "claude none\n", false, false)
+	r.Want = func() (conf.Conf, error) { return conf.Conf{User: "ada"}, nil }
+	c := &WsClaude{Run: r, Tty: true, Here: m}
+	if _, err := c.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "run sudo ws server apply") {
+		t.Errorf("Plan where claude is missing = %v", err)
+	}
+	m.Results["runuser -l ada -c claude auth login"] = effecttest.Result{}
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil ||
+		!slices.Contains(m.Calls, "foreground runuser -l ada -c claude auth login") {
+		t.Errorf("Apply = %v; calls %q", err, m.Calls)
 	}
 }

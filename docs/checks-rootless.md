@@ -35,7 +35,8 @@ The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs
 
 Last, `ws server wizard`. With no terminal it stops where host_vars lacks a key. Then it runs
 `ws server apply` in a unit, with the credential, and a second run starts no unit. The unit's ws is
-a stand-in that adds `--only shell` to apply, so that a full run, as its stamp has it, fits the job
+a stand-in that adds `--only shell` to apply, so that a full run, as its stamp has it, fits the job.
+The user's claude is a stand-in too, with a login
 ([The server's wizard](server-wizard.md)).
 
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label

@@ -11,8 +11,10 @@ import (
 )
 
 // serverWizardStages returns the stages of ws server wizard, in order. They act on ws itself, with
-// the remote script on sh's stdin, as the Mac's wizard sends it over ssh. events hears ws's run.
-func serverWizardStages(p process, ask effect.Prompt, out effect.Out, events step.Observer, check bool) []step.Step {
+// the remote script on sh's stdin, as the Mac's wizard sends it over ssh. events hears ws's run, and
+// talks runs claude's login.
+func serverWizardStages(p process, ask effect.Prompt, talks effect.Foreground, out effect.Out, events step.Observer,
+	check bool) []step.Step {
 	m := p.machine
 	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
@@ -21,7 +23,7 @@ func serverWizardStages(p process, ask effect.Prompt, out effect.Out, events ste
 		Unbooted: !host.Booted(m), Check: check, Out: out, Version: p.version, Default: values.Default().User,
 		Remote: &wizard.Remote{Shell: shell, Script: mac.RemoteScript, Events: events},
 		Files:  &wizard.Remote{Shell: shell, Script: mac.RemoteFilesScript}}
-	return []step.Step{vals, run}
+	return []step.Step{vals, run, &wizard.WsClaude{Run: run, Tty: p.tty, Here: talks}}
 }
 
 // wsWant is what ws's run is to leave, as host_vars names it: a cloud VM where it turns the outbound
