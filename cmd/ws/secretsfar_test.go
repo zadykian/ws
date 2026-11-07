@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
 )
@@ -66,5 +68,48 @@ func TestMacSecretsSetAsksNoValueWithWsOutOfReach(t *testing.T) {
 	status, _, errs := runFarSecrets(effecttest.NewMachine(), nil, "dummy-value\n", "set", "env", "A")
 	if status != 1 || !strings.Contains(errs, "run ws server secrets init") || strings.Contains(errs, "dummy-value") {
 		t.Errorf("status %d, stderr %q; want 1 naming init, and no value", status, errs)
+	}
+}
+
+// sudoWs is a wsSecrets whose login is ada, and whose sudo asks the password pw.
+type sudoWs struct{ wsSecrets }
+
+func (w sudoWs) Run(ctx context.Context, name string, args ...string) ([]byte, error) {
+	if name == "ssh" && slices.Contains(args, "-G") {
+		return []byte("user ada\nhostname ws\nport 22\n"), nil
+	} else if name == "ssh" && slices.Contains(args, "sudo") {
+		return nil, errors.New("[ssh]: exit status 1: \nsudo: a password is required")
+	}
+	return w.wsSecrets.Run(ctx, name, args...)
+}
+
+func (w sudoWs) RunInput(ctx context.Context, in []byte, name string, args ...string) ([]byte, error) {
+	at := slices.Index(args, "-k")
+	if pw, rest, _ := bytes.Cut(in, []byte("\n")); at > 0 && string(pw) == "pw" {
+		if args[at+4] == "true" {
+			return nil, nil
+		}
+		return w.wsSecrets.RunInput(ctx, rest, name, args[at+4:]...)
+	}
+	return nil, errors.New("[ssh]: exit status 1: \nsudo: Authentication failed")
+}
+
+// A value on stdin is read first, and sudo's password then comes from the terminal; with none, the
+// command says why.
+func TestMacSecretsAskSudoAtTheTerminalPastStdin(t *testing.T) {
+	m, id := credFixture()
+	p, mac := macTerminal()
+	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
+	tty := &effecttest.Prompt{T: t, Hidden: []string{"pw"}}
+	p.openTTY = func() (effect.Hidden, func(), error) { return tty, func() {}, nil }
+	status, _, errs := runMacSecretsOn(p, "dummy-value\n", "set", "env", "A")
+	if s, err := secrets.Load(m, serverSecrets, id); status != 0 || err != nil || s.Env["A"] != "dummy-value" {
+		t.Errorf("status %d, stderr %q, secrets %+v, %v; want A set", status, errs, s, err)
+	}
+	p, mac = macTerminal()
+	p.machine, p.tty = sudoWs{wsSecrets{farWs: newFarWs(mac, ""), ws: m}}, false
+	if status, _, errs := runMacSecretsOn(p, "dummy-value\n", "set", "env", "A"); status != 1 ||
+		!strings.Contains(errs, "no terminal") {
+		t.Errorf("status %d, stderr %q; want 1 naming no terminal", status, errs)
 	}
 }
