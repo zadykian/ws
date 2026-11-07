@@ -110,8 +110,8 @@ must remove the identity from ws, and stamp the file's SHA-256. A changed file m
 removed one run with no secrets ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
-`ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9
-on ws, with a full run of its own, a run must install v0.0.0 and run the apply again.
+`ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9,
+a newer release, on ws, a run must stop and name `ws mac wizard --update`, with no install or unit.
 `standin.sh` serves a release v0.0.0, the job's build, as the latest on 127.0.0.1:22080 with
 [serve-releases](../tools/serve-releases/main.go), and the job's `WS_RELEASES_URL` names it. So
 `--update` finds v0.0.0 and stays. A tagged clone built as v0.0.1, the latest, must make

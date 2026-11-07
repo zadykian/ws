@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/check"
 	"github.com/zadykian/ws/step"
+	"golang.org/x/mod/semver"
 )
 
 // installStage names the stage in its messages.
@@ -32,11 +33,17 @@ func (c wsInstall) String() string {
 	return fmt.Sprintf("%s: would install ws %s on ws", installStage, c.version)
 }
 
-// Plan is empty where ws holds this version. It stops where this ws is no release, or URL is no
+// Plan is empty where ws holds this version. It stops where ws holds a newer release than this
+// ws's, so that an update on ws is not undone, where this ws is no release, or where URL is no
 // address to fetch from.
 func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
 	if i.Remote.Status(ctx) && i.Remote.Get("ws") == i.Version {
 		return step.Plan{}, nil
+	}
+	if have := i.Remote.Get("ws"); i.Remote.Status(ctx) && check.Release(i.Version) && check.Release(have) &&
+		semver.Compare(have, i.Version) > 0 {
+		return step.Plan{}, fmt.Errorf("%s: ws holds %s, newer than this ws's %s: run ws mac wizard --update "+
+			"to bring this ws to the newest", installStage, have, i.Version)
 	}
 	if !check.Release(i.Version) {
 		return step.Plan{}, fmt.Errorf("%s: this ws is %s, not a release: put a linux build of the same tree at "+
