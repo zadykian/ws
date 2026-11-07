@@ -2,7 +2,7 @@
 
 The `fresh` role is Go steps in `internal/server/fresh`. It installs the Fresh editor on ws from
 the `.deb` of a pinned release. Fresh runs in a terminal, and its settings come from the neutral
-data in `internal/editor`, which Zed's role also reads.
+data in `internal/editor`.
 
 ## The install
 
@@ -29,8 +29,8 @@ run replaces a change made to it by hand and keeps the old file beside the new o
 
 - Updates, telemetry and the session daemon are off: `check_for_updates`, `self_update` and
   `auto_attach` are false. Fresh reads a missing key as its default, so the render writes each.
-- The ruler, visible whitespace and auto-save come from `internal/editor/settings.yaml`, which
-  Zed reads too.
+- The ruler, visible whitespace and auto-save come from `internal/editor/settings.yaml`. Zed's
+  are in `mac/zed/global_settings.json`.
 - The file starts with a comment that says ws wrote it. Fresh reads JSONC.
 - `~/.config/fresh` stays the user's, as Fresh writes `tsconfig.json` and `types/` there.
 - The step fails where `~/.config`, the directory or `config.json` is a link. The user owns

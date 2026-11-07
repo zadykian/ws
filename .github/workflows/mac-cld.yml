@@ -169,15 +169,14 @@ jobs:
           zed=~/.config/zed
           head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws mac apply' ||
               { echo '::error::global_settings.json has no ws header'; fail=1; }
-          golden=internal/editor/zed/testdata
-          tail -n +2 "$zed/global_settings.json" | cmp -s - "$golden/global_settings.json" ||
-              { echo "::error::global_settings.json is not the golden file"; fail=1; }
+          cmp -s "$zed/global_settings.json" mac/zed/global_settings.json ||
+              { echo '::error::global_settings.json is not mac/zed/global_settings.json'; fail=1; }
           grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$zed/settings.json" ||
               { echo '::error::settings.json has no seed for the host ws'; fail=1; }
           head -n 1 "$zed/keymap.json" | grep -q '^// Written by github.com/zadykian/ws' ||
               { echo '::error::keymap.json has no ws mark'; fail=1; }
-          cmp -s "$zed/keymap.json" "$golden/keymap.json" ||
-              { echo '::error::keymap.json is not the golden file'; fail=1; }
+          cmp -s "$zed/keymap.json" mac/zed/keymap.json ||
+              { echo '::error::keymap.json is not mac/zed/keymap.json'; fail=1; }
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }

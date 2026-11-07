@@ -25,10 +25,10 @@ and `zed ssh://ws/PATH` opens a project on ws.
 The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lookup. It makes
 `~/.config` first where missing.
 
-- `global_settings.json` is ws's settings, rendered from [`internal/editor`](../internal/editor/), under one header
-  line. Each run replaces it, so changes made there are lost. A file whose first line is not the
-  header is left, with a warning: move it away, and the next run writes ws's. Zed parses it as it
-  parses `settings.json`, so the header comment is valid.
+- `global_settings.json` is [the file in `mac/zed/`](../mac/zed/global_settings.json), whole, with
+  the header as its first line. Each run replaces it, so changes made there are lost. A file whose
+  first line is not the header is left, with a warning: move it away, and the next run writes
+  ws's. Zed parses it as it parses `settings.json`, so the header comment is valid.
 - `settings.json` is Zed's own, which its UI writes. The step writes a seed there once, where
   nothing is, and never reads the file after. A file of any content, or a link, counts as there.
 
@@ -37,7 +37,7 @@ This is the reverse of Ghostty's order. A key set only in `global_settings.json`
 default in the Settings Editor.
 
 The file sets a ruler at column 120, shows all whitespace, and saves 3 seconds after an edit, from
-`internal/editor/settings.yaml`. CI parses the file but sees no Zed obey it: check the three once on
+`mac/zed/global_settings.json`. CI parses the file but sees no Zed obey it: check the three once on
 a remote project.
 
 The seed holds one connection, `{ "host": "ws" }`. Zed records an opened project by its index in the
@@ -83,9 +83,9 @@ server to every YAML file, Ansible's too.
 
 ## The keymap
 
-The step also writes `~/.config/zed/keymap.json`, rendered from
-[`internal/editor`](../internal/editor/), F12's keys for Zed. `base_keymap` stays `Zed`. The file
-carries its own header, so the step adds none, and takes the start of line 1,
+The step also writes `~/.config/zed/keymap.json`, which is
+[`mac/zed/keymap.json`](../mac/zed/keymap.json) whole: F12's keys for Zed. `base_keymap` stays `Zed`.
+The file carries its own header, and the step takes the start of line 1,
 `// Written by github.com/zadykian/ws`, as ws's mark.
 
 - Where the file is missing, or its first line starts with the mark, the step writes it whole.
@@ -98,4 +98,5 @@ carries its own header, so the step adds none, and takes the start of line 1,
 
 ## Changing the settings
 
-Edit the data or the adapter and the golden files: `go test` holds them equal. `ws` renders both.
+Edit the two files in `mac/zed/` by hand. They are plain files, and `mac/zed_test.go` checks that
+each is valid JSON under its comment lines.

@@ -169,9 +169,9 @@ which the case never runs.
 
 ## The Mac
 
-Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be the golden file under the
-header, and a `settings.json` that is there must stay byte for byte.
-Case 48 checks its `keymap.json`: the golden keymap whole, a foreign file left with one warning,
+Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed/`'s file whole,
+and a `settings.json` that is there must stay byte for byte.
+Case 48 checks its `keymap.json`: `mac/zed/`'s keymap whole, a foreign file left with one warning,
 and ws's back once the foreign one goes.
 
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First, `ws
