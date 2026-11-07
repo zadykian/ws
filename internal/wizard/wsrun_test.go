@@ -80,6 +80,28 @@ func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
 	}
 }
 
+// The run is done where its stamp names the sum of ws's host_vars that the status reads now, so a
+// change by either wizard, Configure or by hand makes it due.
+func TestWsRunIsDoneAtHostVarsSum(t *testing.T) {
+	for name, tc := range map[string]struct{ stamp, now, want string }{
+		"same file":      {" aa11", "aa11", ""},
+		"changed file":   {" aa11", "bb22", "run ws server apply on ws"},
+		"a new file":     {" -", "bb22", "run ws server apply on ws"},
+		"no file":        {" -", "-", ""},
+		"an older stamp": {"", "-", "run ws server apply on ws"},
+	} {
+		r, _ := newRun("lan", "run v1.2.3 0 on -"+tc.stamp+"\nactive -\nvars "+tc.now+"\n", false, false)
+		p, err := r.Plan(context.Background())
+		got := ""
+		if len(p.Changes) > 0 {
+			got = p.Changes[0].String()
+		}
+		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
+			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
+		}
+	}
+}
+
 func TestWsRunNamesWsUser(t *testing.T) {
 	done := "run v1.2.3 0 on - -\nactive -\n"
 	for name, tc := range map[string]struct{ status, server, want string }{
@@ -207,8 +229,21 @@ func TestOnlyArgsQuoteForWsShell(t *testing.T) {
 	}
 }
 
+// A run whose stamp names host_vars as the status reads it after the run runs once.
+func TestWsRunApplyOnceWhereItsStampNamesHostVars(t *testing.T) {
+	r, m := newRun("lan", "run v1.2.3 0 on - aa11\nactive -\nvars aa11\n", true, false)
+	p, _ := r.Plan(context.Background())
+	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
+	if err := r.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if runs := strings.Count(strings.Join(m.Calls, "\n"), "-- run"); runs != 1 {
+		t.Errorf("calls = %q; want one run", m.Calls)
+	}
+}
+
 func TestWsRunApplyCloudAgain(t *testing.T) {
-	r, m := newRun("cloud", "run v1.2.3 0 on - -\nactive -\noutbound on\n", false, false)
+	r, m := newRun("cloud", "run v1.2.3 0 on - aa11\nactive -\noutbound on\nvars bb22\n", false, false)
 	p, _ := r.Plan(context.Background())
 	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
 	m.Results[remoteLine(r.Remote, "outbound")] = effecttest.Result{}
@@ -222,7 +257,7 @@ func TestWsRunApplyCloudAgain(t *testing.T) {
 		}
 	}
 	if runs != 2 || !strings.Contains(strings.Join(m.Calls, "\n"), "-- outbound") {
-		t.Errorf("calls = %q; want two runs, as the status says on, and outbound", m.Calls)
+		t.Errorf("calls = %q; want two runs, as the stamp names another host_vars, and outbound", m.Calls)
 	}
 }
 
