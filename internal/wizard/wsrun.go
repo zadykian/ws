@@ -69,10 +69,10 @@ func (r *WsRun) off() bool {
 }
 
 // idle tells whether ws's last full run exited 0, made by a ws of this version, with ws's secrets
-// file as it is now, and no run's unit runs there now.
+// file and host_vars as they are now, and no run's unit runs there now.
 func (r *WsRun) idle(ctx context.Context) bool {
 	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
-		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ") && r.sameSecrets()
+		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ") && r.sameSecrets() && r.sameVars()
 }
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,

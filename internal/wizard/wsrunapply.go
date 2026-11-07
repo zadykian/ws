@@ -12,7 +12,7 @@ import (
 // goes on there, with its log on stderr. On a cloud VM, where the outbound table would drop the
 // provider's metadata service, host_vars names security_outbound: false before the run, as ws
 // server apply reads its values from that file. A unit that the run followed may have begun before
-// that line: a run of its own follows then.
+// a change to that file: a run of its own follows then.
 func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	c, ok := p.Changes[0].(runChange)
 	if !ok {
@@ -39,14 +39,14 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	}
 	r.ran = true
 	// A part leaves the full run's stamp as it was, which would read as a unit begun too soon.
-	if !c.cloud || len(r.Only) > 0 {
+	if len(r.Only) > 0 {
 		return nil
 	}
 	if !r.Remote.Status(ctx) {
 		return fail()
 	}
-	if !r.off() {
-		r.Out.Say("%s: the unit it followed began before host_vars named security_outbound: false, "+
+	if !r.sameVars() {
+		r.Out.Say("%s: the unit it followed began before ws's host_vars took its last change, "+
 			"so ws server apply runs again", runStage)
 		if err := r.run(ctx); err != nil {
 			return err
