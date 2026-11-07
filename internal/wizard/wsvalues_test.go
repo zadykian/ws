@@ -65,3 +65,26 @@ func TestWsValuesWithNoTerminalNamesTheCommand(t *testing.T) {
 		t.Errorf("Apply = %v; wrote %q", err, set)
 	}
 }
+
+func TestUserRefusal(t *testing.T) {
+	for _, tc := range []struct {
+		user      string
+		cloud, ok bool
+	}{{"alice", false, true}, {"root", true, true}, {"root", false, false}, {"", true, false}, {"x y", true, false}} {
+		if err := userRefusal(tc.user, tc.cloud); (err == nil) != tc.ok {
+			t.Errorf("userRefusal(%q, %v) = %v", tc.user, tc.cloud, err)
+		}
+	}
+}
+
+// ws_user offers sudo's user, else root on a cloud VM alone.
+func TestWsUserOffered(t *testing.T) {
+	for _, tc := range []struct {
+		user, want string
+		cloud      bool
+	}{{"alice", "alice", false}, {"alice", "alice", true}, {"", "root", true}, {"root", "", false}, {"", "", false}} {
+		if got := (&WsValues{User: tc.user}).offered(tc.cloud); got != tc.want {
+			t.Errorf("offered(%q, %v) = %q, want %q", tc.user, tc.cloud, got, tc.want)
+		}
+	}
+}

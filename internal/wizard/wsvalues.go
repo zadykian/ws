@@ -24,6 +24,8 @@ type WsValues struct {
 	// Vars is host_vars' path. Set writes one key of it, as ws server values set does.
 	Vars string
 	Set  func(key, value string) error
+	// User is the user that ran sudo, which ws_user offers first. Empty at a root login.
+	User string
 	// Tty tells whether a terminal is there to ask.
 	Tty bool
 	M   effect.Machine
