@@ -194,3 +194,32 @@ if out=$(ws server apply --only shell 2>&1); then
 fi
 must "a link at ~/.secrets is refused" grep -q 'is a link to' <<<"$out"
 as rm "$home/.secrets"
+
+# ws's secrets: the identity is a credential that the host's key encrypts, and a unit reads it by
+# LoadCredentialEncrypted, which a container's systemd can't run.
+ws server secrets init
+must "the credential is root's 600, in root's 700" test "$(stat -c '%U %a' \
+    /etc/credstore.encrypted /etc/credstore.encrypted/ws-secrets)" = $'root 700\nroot 600'
+must "the file is root's 600" test "$(stat -c '%U %a' /etc/ws/secrets.age)" = 'root 600'
+value=$(openssl rand -hex 16)
+echo "::add-mask::$value"
+must "set takes a value on stdin" ws server secrets set env WS_CI <<<"$value"
+names=$(ws server secrets keys)
+must "keys names the entry" grep -qx 'env WS_CI' <<<"$names"
+refused "keys prints the value" grep -q "$value" <<<"$names"
+refused "the user runs ws server secrets" as ws server secrets keys
+
+apply=(ws server apply --secrets /etc/ws/secrets.age --check --only shell)
+out=$(systemd-run --quiet --wait --pipe -p LoadCredentialEncrypted=ws-secrets "${apply[@]}" \
+    </dev/null 2>&1) || fail "a unit with the credential can't read the file"
+echo "ok: a unit with the credential reads the file"
+refused "the unit prints the value" grep -q "$value" <<<"$out"
+refused "a unit without the credential reads the file" \
+    systemd-run --quiet --wait --pipe "${apply[@]}" </dev/null
+
+must "unset drops the entry" ws server secrets unset env WS_CI
+refused "keys names the entry after unset" grep -q WS_CI <<<"$(ws server secrets keys)"
+sums=$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)
+ws server secrets init
+must "a second init keeps both" test "$sums" = \
+    "$(sha256sum /etc/ws/secrets.age /etc/credstore.encrypted/ws-secrets)"

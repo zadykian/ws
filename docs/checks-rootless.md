@@ -26,5 +26,12 @@ The firewall must hold under the rootless daemon:
   published on loopback.
 - A link at `~/.secrets` is refused ([Docker](docker.md)).
 
+Then ws's secrets. `ws server secrets init` makes the credential, root's 600 in root's 700, and the
+file, root's 600. `set` takes a value on standard input, and `keys` names it but never prints it.
+The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs
+`ws server apply --secrets --check`, and one without it fails: a container's systemd runs neither.
+`unset` drops the entry, and a second `init` keeps both files
+([ws's file](mac-secrets.md#wss-file)).
+
 The runner has Azure's routes, so only CI proves them. `.github/actionlint.yaml` names the label
 `ubuntu-26.04`, as actionlint 1.7.12 doesn't know it yet. It goes once a release lists the label.
