@@ -99,9 +99,10 @@ key for it and as its peer, and ws's signing key or `none`. They are also its ho
 login, Secure Boot that refuses the fans' driver, and `host_vars.yml`'s `ws_user` and outbound
 table. `state` must print ws's report and exit with its status. Like a full `run`, it has root's
 `HOME` and a UTF-8 locale. A full `run` must run `ws server apply` with `--json` alone in a unit of
-its own. It must print the log, event lines too. It must stamp ws's version, `-` here, 0, `on` and
-`-`, the secrets file's sum; after its `outbound` writes the line, which stops on a link, `off`. A
-tagged run after it must start its own unit and leave that stamp. A run must follow a full unit or
+its own. It must print the log, event lines too. It must stamp ws's version, `-` here, 0, `on`,
+and `-` for the sums of the secrets file and `host_vars.yml`. After its `outbound` writes the line,
+which stops on a link, it stamps `off` and that file's sum. A tagged run after it must start its own
+unit and leave that stamp. A run must follow a full unit or
 one of its steps, and refuse another's. A full run cut off must remove the last stamp, so the next
 starts a unit. The files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports,
 `user NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
