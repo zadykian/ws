@@ -85,16 +85,17 @@ systemd-run)
         --unit=*) unit=${1#--unit=} ;;
         -p)
             shift
-            case $1 in LoadCredential=*) cred=${1#LoadCredential=} ;; esac
+            case $1 in LoadCredentialEncrypted=*) cred=${1#LoadCredentialEncrypted=} ;; esac
             ;;
         esac
         shift
     done
     touch "$s/units/$unit.on"
-    # A credential is copied before systemd-run returns, as Type=exec has it, to a directory of the
-    # unit's, which only the unit's job sees as CREDENTIALS_DIRECTORY.
+    # A credential is copied from the credstore before systemd-run returns, as Type=exec has it, to a
+    # directory of the unit's, which only the unit's job sees as CREDENTIALS_DIRECTORY.
     if [ -n "$cred" ]; then
-        mkdir -p "$s/creds/$unit" && cp "${cred#*:}" "$s/creds/$unit/${cred%%:*}" || exit 1
+        store="$s/root"/etc/credstore.encrypted
+        mkdir -p "$s/creds/$unit" && cp "$store/$cred" "$s/creds/$unit/$cred" || exit 1
         CREDENTIALS_DIRECTORY=$s/creds/$unit
         export CREDENTIALS_DIRECTORY
     fi
