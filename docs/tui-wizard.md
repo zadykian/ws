@@ -4,8 +4,8 @@
 opens them at a terminal, and `--plain` or no terminal keeps its lines. `--check` goes straight to
 its run, on the run screen. `--update` runs ahead of any screen, on lines, as the new ws takes this
 one's place and opens them itself.
-`ws server wizard` opens no lists: its stages run on the run screen
-([The server's wizard](server-wizard.md)).
+`ws server wizard` opens one list, `ws`, where every stage runs, by the same rules
+([The server's wizard](server-wizard.md)). It has no `configure` button, and its `s` reads ws on ws.
 
 The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine
 a stage runs on. A narrow window stacks them, and one too short for that keeps the list in focus.

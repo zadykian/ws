@@ -2,8 +2,10 @@
 
 `sudo ws server wizard` runs the stages of [the Mac's wizard](mac-wizard.md) that act on ws, on ws
 itself, for a login over plain ssh, such as Termius on an iPad. It runs as root alone, and `--check`
-prints what each stage would do and changes nothing. At a terminal the stages run on
-[the run screen](tui.md#the-run-screen), and `--plain` or no terminal keeps the lines. It holds the
+prints what each stage would do and changes nothing. At a terminal it opens
+[the wizard's list](tui-wizard.md), one, `ws`, as every stage runs on ws: `s` opens ws's state, and
+the stages chosen run. `--check` goes straight to the run screen, and `--plain` or no terminal keeps
+the lines. It holds the
 lock `ws-wizard.lock` in `$TMPDIR`, as the Mac's wizard does, and a run in which a stage acted ends
 with what stays by hand of ws.
 
