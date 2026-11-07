@@ -35,7 +35,7 @@ func (w wizardScreen) draw() error {
 		// A new one reads the forms' answers. The run takes the scan's, which holds what it asked.
 		sudo := &wizard.Sudo{}
 		queue := wizardQueue(w.p, w.plainStages())
-		choice, err := tui.PickStages(w.c.Context(), w.config(), w.c.CommandPath(), queue, w.scan(sudo))
+		choice, err := tui.PickStages(w.c.Context(), w.config(), w.c.CommandPath(), queue, true, w.scan(sudo))
 		for err == nil && choice.State {
 			choice, err = w.stated(choice, sudo)
 		}

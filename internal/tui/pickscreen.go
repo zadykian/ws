@@ -20,8 +20,8 @@ const (
 	pickRunPlace
 	pickCheckPlace
 	pickQuitPlace
-	pickConfigurePlace
 	pickStatePlace
+	pickConfigurePlace
 )
 
 // pickClearKey drops the filter's words.

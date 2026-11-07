@@ -21,11 +21,16 @@ var configureButton = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "confi
 // stateButton leaves the lists for the state screen of the machine of the list in focus.
 var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
 
-// newQueueScreen returns the lists of stages, their scan under way.
-func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- Choice) pickScreen {
+// newQueueScreen returns the lists of stages, their scan under way. The configure button comes last,
+// and where forms is unset there is none, as no form opens from that wizard.
+func newQueueScreen(title string, theme Theme, stages []Stage, forms bool, picks chan<- Choice) pickScreen {
 	s := newPickScreen(title, theme, nil, picks)
 	s.list, s.queued = newQueue(stages), true
-	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), configureButton, stateButton)...)
+	buttons := append(slices.Clip(s.footer.buttons), stateButton)
+	if forms {
+		buttons = append(buttons, configureButton)
+	}
+	s.footer = NewFooter(buttons...)
 	return s.enabled()
 }
 
