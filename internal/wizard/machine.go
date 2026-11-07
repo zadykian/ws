@@ -60,6 +60,9 @@ func (*Sudo) Machine() Machine { return OnWs }
 // Machine is ws: this release is installed there.
 func (*WsInstall) Machine() Machine { return OnWs }
 
+// Machine is ws: its host_vars.
+func (*WsValues) Machine() Machine { return OnWs }
+
 // Machine is ws: ws server apply runs there.
 func (*WsRun) Machine() Machine { return OnWs }
 
