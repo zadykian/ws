@@ -56,3 +56,17 @@ func TestServerWizardAtATerminalDrawsTheRunScreen(t *testing.T) {
 		t.Errorf("status %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
 }
+
+// Where GitHub lacks ws's signing key, the list at the end names it, and each device's key.
+func TestServerWizardListsTheSigningKeyByHand(t *testing.T) {
+	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+		"run v1.2.3 0 on -\nactive -\nuser ada\noutbound on\nsecrets -\nclaude ok\nsigning ssh-ed25519 AAA\n")
+	m.Results["runuser -l ada -c gh api user --jq .login 2>/dev/null || git config --global github.user"] =
+		effecttest.Result{}
+	status, stdout, stderr := runWs(p, "", "server", "wizard", "--plain")
+	for _, want := range []string{"What stays by hand", "settings/ssh/new", "ssh-ed25519 AAA", "ws's lease", "ssh-import-id gh:LOGIN"} {
+		if status != 0 || !strings.Contains(stdout, want) {
+			t.Errorf("status %d, stdout %q lacks %q; stderr %q", status, stdout, want, stderr)
+		}
+	}
+}
