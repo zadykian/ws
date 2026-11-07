@@ -18,16 +18,14 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if !ok {
 		return fmt.Errorf("%s: unknown change %T", runStage, p.Changes[0])
 	}
-	if c.outbound {
-		return r.outbound(ctx)
-	}
 	if c.user != "" {
 		if _, err := r.Files.Do(ctx, "user", c.user); err != nil {
 			return fmt.Errorf("%s: ws's host_vars lacks ws_user: %s: %s; mend that, then run the wizard again",
 				runStage, c.user, stderrOf(err))
 		}
 	}
-	if c.cloud && r.Remote.Get("outbound") != "off" {
+	// A part's plan reads no status, where the outbound line shows.
+	if c.cloud && (!r.Remote.Status(ctx) || r.Remote.Get("outbound") != "off") {
 		if err := r.outbound(ctx); err != nil {
 			return err
 		}
