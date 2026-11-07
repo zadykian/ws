@@ -40,11 +40,11 @@ flags set its username and proactive auth. `unset` fails where the entry is miss
 a `KIND NAME` line per entry, sorted, and `git URL` for a server: never a value. `set` without the
 Keychain item fails and names `ws mac secrets init`.
 
-## Sending
+## The run
 
-`ws mac wizard` sends the file and the identity to ws in its run stage, and the run reads the
-identity as a systemd credential ([ws's run](mac-wizard.md#wss-run)). The file's SHA-256 is in the
-run's stamp, so a changed file runs the stage again.
+The run stage of `ws mac wizard` runs `--secrets` on ws's file, and sends nothing from the Mac
+([ws's run](mac-wizard.md#wss-run)). The file's SHA-256 is in the run's stamp, so a changed file
+runs the stage again.
 
 ## ws's file
 
