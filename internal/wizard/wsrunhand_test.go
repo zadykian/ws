@@ -21,3 +21,15 @@ func TestWsRunHand(t *testing.T) {
 		}
 	}
 }
+
+// ws's own list holds ws's lines alone, with nothing of the Mac's.
+func TestWsRunWsHand(t *testing.T) {
+	for status, want := range map[string]string{"fans refused\n": "ws's fans' driver", "fans ok\n": ""} {
+		r, _ := newRun("lan", status, false, false)
+		h := &Hand{}
+		r.WsHand(context.Background(), h)
+		if got := strings.Join(h.lines, "\n"); (want == "") != (got == "") || !strings.HasPrefix(got, want) {
+			t.Errorf("%q: WsHand = %q; want %q", status, got, want)
+		}
+	}
+}
