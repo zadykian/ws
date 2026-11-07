@@ -28,11 +28,13 @@ with what stays by hand of ws.
    permission ([By hand](../README.md#by-hand)), so the list at the end names the key, to add on
    GitHub as a signing key.
 
-ws's run is done where the last full run exited 0, by this ws, with the secrets file unchanged
-since. Both wizards read that one stamp, so a run from either side after the other's, with nothing
-changed, applies nothing. ws's values name its target, which the stage reads in place of
-`mac.conf`. With no booted systemd, as in a container, the stage says so and skips: run
-`sudo ws server apply` there. The remote script reads the claude and the signing key of `WS_USER`,
+ws's run is done where the last full run exited 0, by this ws, with the secrets file and
+`host_vars.yml` unchanged since. Both wizards read that one stamp, so a run from either side after
+the other's, with nothing changed, applies nothing. A change to `host_vars.yml`, by the values
+stage, `ws server values set`, Configure or by hand, makes the next run due. ws's values name its
+target, which the stage reads in place of `mac.conf`. With no booted systemd, as in a container,
+the stage says so and skips: run `sudo ws server apply` there. The remote script reads the claude
+and the signing key of `WS_USER`,
 host_vars' `ws_user`, where the Mac's reads those of the user that ssh logs in as.
 
 The Mac's other stages stay the Mac's: the tunnel and the cable. The list at the end names ws's

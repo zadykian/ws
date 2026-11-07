@@ -5,12 +5,12 @@
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
 # off. state must print ws's report, with root's HOME and a UTF-8 locale, and exit with ws's status.
 # A full run must run ws server apply with --json alone in a unit of its own, with root's HOME and
-# a UTF-8 locale, print its log, event lines too, and exit 0. It must stamp ws's version, 0 and on in run, and the unit
+# a UTF-8 locale, print its log, event lines too, and exit 0. It must stamp ws's version, 0, on and no sums in run, and the unit
 # and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
 # as it was. A run during a full unit, or one of the same steps, must follow that unit and start
 # none, and one of other steps during a part's unit must refuse it. A full run whose unit
 # is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
-# unit of its own, as must one after outbound, which stamps off in run, as /etc/ws/host_vars.yml,
+# unit of its own, as must one after outbound, which stamps off and the file's sum in run, as /etc/ws/host_vars.yml,
 # a file of mode 0600 in a directory of 0755, names security_outbound: false. One with an argument, as
 # --diff, must leave that stamp. The files script's link must list ws's wired ports but the
 # uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
@@ -64,9 +64,10 @@ states() {
         error "status exited $status, printing other than '$want'"
 }
 
-# The Tunnel stage's wg0 and mac.pub go aside, for the states, and come back after. So does the
-# host_vars that 34-run.sh leaves.
+# The Tunnel stage's wg0 and mac.pub go aside, for the states, and come back after. So do the
+# host_vars that 34-run.sh leaves, and the run's stamp, which names its sum.
 sudo mv "$vars" "$RUNNER_TEMP/host_vars.yml"
+sudo cp -p "$stamps/run" "$RUNNER_TEMP/run.stamp"
 mv "$ws/wg0" "$RUNNER_TEMP/wg0"
 sudo mv "$peer" "$RUNNER_TEMP/mac.pub"
 key=$(head -c 32 /dev/urandom | base64)
@@ -77,13 +78,13 @@ echo "$mac" | sudo tee "$peer" >/dev/null
 rm "$ws/claude"
 states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")" \
     "hostname $(hostname)" 'claude login' 'fans refused' 'cable -' 'peer -' \
-    'outbound on' 'secrets -'
+    'outbound on' 'secrets -' 'vars -'
 touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
 sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
 states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
-    'peer -' 'outbound on' 'secrets -'
+    'peer -' 'outbound on' 'secrets -' 'vars -'
 rm "$ws/nct6687"
 sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
     "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"
@@ -124,14 +125,14 @@ n=$(units)
 remote run
 full=$(unit)
 printf '%s\n' "$out" | grep -qx 'PLAY RECAP' && [ "$status" = 0 ] &&
-    printf '%s\n' "$out" | grep -q '^{"event":"done",' && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on - / $full 0" ] &&
+    printf '%s\n' "$out" | grep -q '^{"event":"done",' && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run) / $(stamp last)" = "$sha 0 on - - / $full 0" ] &&
     [ "$(tail -n 1 "$ws/server.log")" = '' ] || error "a full run exited $status"
 tail -n 1 "$ws/run.log" | grep -q -- '--collect .* --setenv=LC_ALL=C.UTF-8 --setenv=HOME=/root ' ||
     error "a full run's unit lacked root's HOME or a UTF-8 locale"
 echo 3 >"$ws/server.status"
 remote run --only devtools
 [ "$status" = 3 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(unit)" != "$full" ] &&
-    [ "$(stamp run) / $(stamp last)" = "$sha 0 on - / $(unit) 3" ] &&
+    [ "$(stamp run) / $(stamp last)" = "$sha 0 on - - / $(unit) 3" ] &&
     [ "$(tail -n 1 "$ws/server.log")" = '--only devtools' ] ||
     error "a tagged run exited $status"
 rm "$ws/server.status"
@@ -162,12 +163,13 @@ printf '%s\n' "$out" | grep -q ' ended before its run wrote its status' && [ "$s
 rm "$ws/server.cut"
 n=$(units)
 remote run
-[ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on -" ] ||
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 1)) ] && [ "$(stamp run)" = "$sha 0 on - -" ] ||
     error "the run after it exited $status, with run '$(stamp run)'"
 sudo rm "$stamps/run"
 remote outbound
 remote run
-[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off -" ] ||
+values=$(sudo shasum -a 256 "$vars" | cut -d ' ' -f 1)
+[ "$status" = 0 ] && [ "$(units)" -eq $((n + 2)) ] && [ "$(stamp run)" = "$sha 0 off - $values" ] ||
     error "a full run after outbound exited $status, with run '$(stamp run)'"
 host_vars="$ws/root"/etc/ws
 sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
@@ -177,7 +179,7 @@ sudo grep -qx 'security_outbound: false' "$host_vars/host_vars.yml" ||
     error "outbound made /etc/ws or its host_vars.yml with another mode"
 sudo rm -r "$host_vars"
 remote run --diff
-[ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off -" ] || error "a run with --diff stamped run"
+[ "$status" = 0 ] && [ "$(stamp run)" = "$sha 0 off - $values" ] || error "a run with --diff stamped run"
 
 # files OP [ARG...]: the files script's OP, as remote runs the remote script's.
 files() {
@@ -267,4 +269,5 @@ sudo rm -rf "$ws/root/sys" "$ws/addr" "${vars%/*}" \
 rm -f "$ws/uplink"
 sudo mkdir -m 755 "${vars%/*}"
 sudo mv "$RUNNER_TEMP/host_vars.yml" "$vars"
+sudo mv "$RUNNER_TEMP/run.stamp" "$stamps/run"
 exit "$fail"

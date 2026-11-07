@@ -1,6 +1,7 @@
 #!/bin/sh
-# ws's run on the Mac that 33-login.sh leaves. The wizard must have run ws server apply twice by now,
-# once in 30-run.sh and once as 31-host.sh's cloud VM, and each run of the wizard since must have
+# ws's run on the Mac that 33-login.sh leaves. The wizard must have run ws server apply three times
+# by now: in 30-run.sh, as 31-host.sh's cloud VM, and after that case took the outbound line out of
+# host_vars, which makes the next run due. Each run of the wizard since must have
 # read ws's status alone. A run must read it once, and once more after a run of ws server apply. Once
 # ws's run stamp is gone, a run whose unit is cut off before its stamp must stop at the stage. The
 # next must start a unit of its own. That one must end with what stays by hand: ws's fans' driver,
@@ -8,10 +9,11 @@
 # another's unit runs, as one that a dropped ssh left, must follow that unit, and start none. With
 # WS_TARGET=cloud, a run must name security_outbound: false in ws's host_vars first. One that
 # follows a unit that began without the line must then start one of its own. The next run must start
-# none. Without the line, a run must write it alone. A host_vars with another ws_user must get
+# none. Without the line, a run must write it, and run ws server apply. A host_vars with another ws_user must get
 # WS_USER's by a full run, and the line stays for the cases after it. --check --update, with no WS_TARGET in the
 # environment, and --check on a cloud VM must name the run that each would start. Back on the LAN,
-# the closing list of --update must name the table that the line keeps off.
+# the closing list of --update must name the table that the line keeps off. Once the line goes by
+# hand, the next run must run ws server apply.
 
 set -u
 
@@ -21,6 +23,12 @@ ws=$RUNNER_TEMP/ws
 stamp=$ws/root/var/lib/ws-wizard/run
 vars="$ws/root"/etc/ws/host_vars.yml
 fail=0
+
+# stamped TABLE: the run's stamp must name a full run that passed, TABLE, and no secrets file, with
+# host_vars' sum or none.
+stamped() {
+    grep -Eq " 0 $1 - (-|[0-9a-f]{64})\$" "$stamp"
+}
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
@@ -46,8 +54,8 @@ started() {
 }
 
 grep -q '^root: sh -s -- status$' "$ws/log" &&
-    [ "$(grep -c '^root: sh -s -- run$' "$ws/log")" = 2 ] ||
-    error "the wizard ran ws server apply other than twice, or read ws's status no time since"
+    [ "$(grep -c '^root: sh -s -- run$' "$ws/log")" = 3 ] ||
+    error "the wizard ran ws server apply other than three times, or read ws's status no time since"
 sudo rm "$stamp"
 touch "$ws/server.cut" "$ws/sb" "$ws/nct6687"
 wizard
@@ -55,7 +63,7 @@ grep -q "^ws mac wizard: ws's run: ws server apply stopped, " "$RUNNER_TEMP/run.
     [ "$status" = 1 ] && [ ! -f "$stamp" ] || error "a run cut off exited $status, or stamped run"
 rm "$ws/server.cut"
 wizard
-grep -q ' 0 on -$' "$stamp" && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
+stamped on && started 1 2 && [ "$status" = 0 ] || error "the next run exited $status"
 if ! grep -q "^- ws's fans' driver: " "$RUNNER_TEMP/run.out" ||
     ! grep -q "^- The router's forwards to ws, UDP 51820 and TCP 22022, for localhost," \
         "$RUNNER_TEMP/run.out"; then
@@ -77,7 +85,7 @@ done
 kill "$first"
 wizard
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
-    grep -q ' 0 on -$' "$stamp" && started 0 2 && [ "$status" = 0 ] ||
+    stamped on && started 0 2 && [ "$status" = 0 ] ||
     error "a run during a dropped ssh's unit exited $status, or started one"
 rm "$ws/server.wait"
 out=$(env -u WS_TARGET "$wsbin" mac wizard --check --update </dev/null 2>&1)
@@ -106,18 +114,20 @@ wizard
 rm "$ws/server.wait"
 grep -q '^wizard-remote\.sh: following ws-wizard-' "$RUNNER_TEMP/run.err" &&
     started 1 3 &&
-    grep -q ' 0 off -$' "$stamp" && sudo grep -qx 'security_outbound: false' "$vars" &&
+    stamped off && sudo grep -qx 'security_outbound: false' "$vars" &&
     [ "$status" = 0 ] || error "a cloud VM's run after a unit without the line exited $status"
 wizard
 started 0 1 && [ "$status" = 0 ] || error "the next run with WS_TARGET=cloud exited $status"
 sudo sed -i '' '/^security_outbound:/d' "$vars"
 wizard
-started 0 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
-    error "a cloud VM's run without the line exited $status, or ran ws server apply"
+started 1 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
+    error "a cloud VM's run without the line exited $status, or ran no ws server apply"
 rm "$WS_CONF"
 unset WS_CONF
 "$wsbin" mac wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
 grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, " \
     "$RUNNER_TEMP/run.out" || error "ws mac wizard --update on the LAN named no table left off"
 sudo sed -i '' '/^security_outbound:/d' "$vars"
+wizard
+started 1 2 && [ "$status" = 0 ] || error "a run after the line went by hand exited $status, or ran no ws server apply"
 exit "$fail"

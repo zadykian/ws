@@ -16,6 +16,14 @@ func (r *WsRun) sameSecrets() bool {
 	return len(f) > 3 && f[3] == r.Remote.Get("secrets")
 }
 
+// sameVars tells whether ws's last full run read ws's host_vars as it is now, by the sum that the
+// stamp names after the secrets file's. So a change to host_vars, by either wizard, Configure or by
+// hand, makes the next run due.
+func (r *WsRun) sameVars() bool {
+	f := strings.Fields(r.Remote.Get("run"))
+	return len(f) > 4 && f[4] == r.Remote.Get("vars")
+}
+
 // run runs ws server apply through the remote script.
 func (r *WsRun) run(ctx context.Context) error {
 	if err := r.Remote.Follow(ctx, onlyArgs(r.Only)...); err != nil {

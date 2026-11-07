@@ -200,11 +200,12 @@ the files script, so the roles set up that user. Where the file names another, i
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:
 ws's version, or `-` where it has none, and the status there. Then `off` where the values turned the
-outbound table off, else `on`, and the SHA-256 of the secrets file it used, or `-`. The stage is
-done where that status is 0, the version is this ws's, the sum is that of ws's file now, and no
-unit runs. So a second run of the wizard runs no apply, one after a run cut short starts again, and
-so does one after the file changed. With `--update`, the stage runs `ws server apply` once more with
-the ws installed there.
+outbound table off, else `on`, and the SHA-256 of the secrets file and of `host_vars.yml`, each or
+`-`. The stage is done where that status is 0, the version is this ws's, both sums are those of the
+files now, and no unit runs. So a second run runs no apply, and one after a run cut short starts
+again, as does one after either file changed: by a wizard, Configure or by hand. A unit that began
+before such a change, which the run followed, has a run of its own follow. With `--update`, the
+stage runs `ws server apply` once more with the ws installed there.
 
 Where ws has its secrets file, `/etc/ws/secrets.age`, and the identity's credential, which
 `ws server secrets init` makes ([ws's file](mac-secrets.md#wss-file)), the unit runs `--secrets` on
@@ -217,9 +218,7 @@ as they find it ([The profile](ikeward.md#the-profile)).
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
 with `WS_TARGET=cloud`, the stage names `security_outbound: false` in ws's `/etc/ws/host_vars.yml`
 before the run, which reads its values there. The stage is done there once a run that began with
-the line passed and `host_vars.yml` has it. After a unit that began without it, which the run
-followed, a run of its own goes. Where the line alone is missing, the stage writes it, and runs no
-apply.
+the line passed, and `host_vars.yml` is as that run read it.
 
 ## Signing key
 
@@ -259,7 +258,8 @@ wizard's files script lists ws's wired ports but the uplink, each with its carri
 addresses. Where none has carrier, as the Mac isn't docked, the stage waits, and the closing list
 says to dock the Mac and run the line again. Docked, the stage asks ws's port of the cable, the one
 with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which both roles
-read, then runs `ws server apply --only network,wireguard` there. Once the port holds
+read, then runs `ws server apply --only network,wireguard` there; the next run of the wizard runs
+the whole, as `host_vars.yml` changed. Once the port holds
 `10.77.0.1`, the stage asks the Mac's service of the cable. The default is the one service with a
 `169.254` address, which an adapter gives itself where no DHCP server answers. The answer goes in
 `mac.conf` as `WS_CABLE_SERVICE`, then `ws mac apply` gives the service `10.77.0.2`
