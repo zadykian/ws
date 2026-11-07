@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/secrets"
 )
 
 // newMacSecretsCmd returns ws mac secrets, which edits ws's secrets file: each command runs its own
@@ -14,7 +16,7 @@ import (
 func newMacSecretsCmd(p process) *cobra.Command {
 	c := group("secrets", "edit ws's secrets file, over ssh", append([]*cobra.Command{{Use: "init",
 		Short: "make ws's age identity and an empty secrets file on ws", Args: cobra.NoArgs}},
-		secretsEditCmds(p, nil)[1:]...)...)
+		secretsEditCmds(p, nil)...)...)
 	forward(c, p)
 	return c
 }
@@ -30,8 +32,10 @@ func forward(c *cobra.Command, p process) {
 	}
 }
 
-// runFar runs ws server secrets on ws with the command's path past ws mac secrets, and its arguments
-// past a --, as a name may start with a dash: unset env A runs ws server secrets unset -- env A.
+// runFar reaches root on ws before it reads a value, so that a value is asked only where it can go.
+// Then it runs ws server secrets with the command's path past ws mac secrets, the flags it was given
+// and its arguments past a --, as a name may start with a dash: set env A runs
+// ws server secrets set env -- A. set file sends the file at PATH, or stdin, and NAME alone.
 func runFar(c *cobra.Command, p process, args []string) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
@@ -43,10 +47,32 @@ func runFar(c *cobra.Command, p process, args []string) error {
 		return err
 	}
 	far := strings.Fields(c.CommandPath())[3:]
+	in, args, err := farInput(c, p, far, args)
+	if err != nil {
+		return err
+	}
+	c.LocalNonPersistentFlags().VisitAll(func(f *pflag.Flag) {
+		if f.Changed {
+			far = append(far, "--"+f.Name+"="+f.Value.String())
+		}
+	})
 	if len(args) > 0 {
 		far = append(append(far, "--"), args...)
 	}
-	out, err := ws.Secrets(c.Context(), nil, far...)
+	out, err := ws.Secrets(c.Context(), in, far...)
 	_, _ = c.OutOrStdout().Write(out)
 	return err
+}
+
+// farInput reads what set sends on ssh's stdin, and returns the arguments that go on to ws.
+func farInput(c *cobra.Command, p process, far, args []string) ([]byte, []string, error) {
+	switch {
+	case far[0] == "set" && far[1] == secrets.KindFile:
+		in, err := readProfile(c, p, args)
+		return in, args[:1], err
+	case far[0] == "set":
+		value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), far[1]+" "+args[0])
+		return []byte(value + "\n"), args, err
+	}
+	return nil, args, nil
 }
