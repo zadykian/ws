@@ -144,7 +144,7 @@ func TestMacHelpAndErrors(t *testing.T) {
 		{"secrets set alone", []string{"mac", "secrets", "set"}, 0, "Available Commands:", ""},
 		{"secrets set no name", []string{"mac", "secrets", "set", "env"}, 2, "", "ws mac secrets set env: accepts 1 arg(s), received 0"},
 		{"secrets set extra", []string{"mac", "secrets", "set", "env", "A", "x"}, 2, "", "ws mac secrets set env: accepts 1 arg(s), received 2"},
-		{"secrets set file no path", []string{"mac", "secrets", "set", "file", "vpn_p12"}, 2, "", "ws mac secrets set file: accepts 2 arg(s), received 1"},
+		{"secrets set file no name", []string{"mac", "secrets", "set", "file"}, 2, "", "ws mac secrets set file: accepts between 1 and 2 arg(s), received 0"},
 		{"secrets set git flag", []string{"mac", "secrets", "set", "git", "https://git.example.com", "--bogus"}, 2, "", "ws mac secrets set git: unknown flag: --bogus"},
 		{"secrets unset one", []string{"mac", "secrets", "unset", "env"}, 2, "", "ws mac secrets unset: accepts 2 arg(s), received 1"},
 		{"secrets keys extra", []string{"mac", "secrets", "keys", "x"}, 2, "", "ws mac secrets keys: unknown command \"x\""},

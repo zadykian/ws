@@ -27,15 +27,17 @@ ws mac secrets set env MY_TOKEN                 # any shell name
 ws mac secrets set password vpn_p12
 ws mac secrets set git https://git.example.com --username bob --proactive-auth
 ws mac secrets set file vpn_p12 vpnclient.p12   # vpn_sswan too: the file whole
+ws mac secrets set file vpn_sswan <ws.sswan     # or the file on standard input
 ws mac secrets unset env MY_TOKEN
 ws mac secrets keys
 ```
 
 A value comes from a prompt with no echo at a terminal, else from standard input, less one
-trailing newline. So `set` never takes a value in an argument. `set file` reads its path whole. A
-git entry takes the token so, and the flags set its username and proactive auth. `unset` fails
-where the entry is missing. `keys` prints a `KIND NAME` line per entry, sorted, and `git URL` for a
-server: never a value. `set` without the Keychain item fails and names `ws mac secrets init`.
+trailing newline. So `set` never takes a value in an argument. `set file` reads its path whole, or
+standard input whole without one, but not a terminal. A git entry takes the token so, and the
+flags set its username and proactive auth. `unset` fails where the entry is missing. `keys` prints
+a `KIND NAME` line per entry, sorted, and `git URL` for a server: never a value. `set` without the
+Keychain item fails and names `ws mac secrets init`.
 
 ## Sending
 

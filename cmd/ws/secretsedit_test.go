@@ -115,6 +115,16 @@ func TestSecretsSetKeysUnset(t *testing.T) {
 	}
 }
 
+func TestSecretsSetFileFromStdin(t *testing.T) {
+	m, id := editFixture(t, "")
+	if status, _, errs := runSecrets(m, "conn ws\n", "set", "file", "vpn_sswan"); status != 0 {
+		t.Fatalf("status %d, stderr %q", status, errs)
+	}
+	if s, err := secrets.Load(m, file, id); err != nil || string(s.File.VPNSswan) != "conn ws\n" {
+		t.Errorf("vpn_sswan = %q, %v; want stdin whole", s.File.VPNSswan, err)
+	}
+}
+
 func TestSecretsSetKeepsReferences(t *testing.T) {
 	m, id := editFixture(t, "[token]\ngithub = \"dummy\"\n[env]\nA = \"${token.github}\"\n")
 	if status, _, errs := runSecrets(m, "dummy\n", "set", "env", "B"); status != 0 {
@@ -151,6 +161,7 @@ func TestSecretsSetRefuses(t *testing.T) {
 		{"unknown token", "dummy\n", []string{"set", "token", "nope"}, "token nope"},
 		{"git URL", "dummy\n", []string{"set", "git", "http://git.example.com"}, "https://"},
 		{"missing file", "", []string{"set", "file", "vpn_p12", "/none"}, "/none"},
+		{"empty stdin", "", []string{"set", "file", "vpn_p12"}, "vpn_p12 on stdin is empty"},
 		{"unset missing", "", []string{"unset", "env", "A"}, "env A is not in the file"},
 	}
 	for _, tt := range tests {
