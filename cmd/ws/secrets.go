@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"path/filepath"
 
@@ -37,9 +36,7 @@ func newSecretsInitCmd(p process) *cobra.Command {
 
 // secretsInit makes the identity where the Keychain lacks it, and the file where none is.
 func secretsInit(c *cobra.Command, p process) error {
-	say := func(format string, a ...any) {
-		_, _ = fmt.Fprintf(c.OutOrStdout(), "%s: "+format+"\n", append([]any{c.CommandPath()}, a...)...)
-	}
+	say := func(format string, a ...any) { sayOut(c, format, a...) }
 	k := keychain.Keychain{M: p.machine, User: p.getenv("USER")}
 	made, err := k.Init(c.Context())
 	if err != nil {

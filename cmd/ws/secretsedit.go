@@ -205,3 +205,8 @@ func newSecretsStore(p process) secretsStore {
 	return secretsStore{m: p.machine, k: keychain.Keychain{M: p.machine, User: p.getenv("USER")}, path: path,
 		write: func(s secrets.Secrets, id age.Identity) error { return secrets.WriteFile(p.machine, path, s, id) }}
 }
+
+// sayOut prints a line on stdout after the command's path.
+func sayOut(c *cobra.Command, format string, a ...any) {
+	_, _ = fmt.Fprintf(c.OutOrStdout(), "%s: "+format+"\n", append([]any{c.CommandPath()}, a...)...)
+}
