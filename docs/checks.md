@@ -104,10 +104,10 @@ one of its steps, and refuse another's. A full run cut off must remove the last 
 starts a unit. The files script, `mac/wizard-remote-files.sh`: its `link` must list the wired ports,
 `user NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
 values set` on each. `link PORT` must name one there, mode 600 in a 755 directory, once, which
-`status` names once the roles give `10.77.0.1`. With the Mac's secrets file, in a throwaway
-keychain, a run must start a unit that loads the identity as a credential and runs `--secrets`. It
-must remove the identity from ws, and stamp the file's SHA-256. A changed file must run again, and a
-removed one run with no secrets ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
+`status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a run
+must start a unit that loads the credential and runs `--secrets` on that file, and stamp its
+SHA-256. A second run must start none, a changed file one, and the file without the credential one
+with no secrets, then none ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9,
