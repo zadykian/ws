@@ -11,13 +11,13 @@ import (
 
 // secretsLine is the ssh command line that runs cmd as root on ws, through sudo's password.
 func secretsLine(r *Remote, cmd string) string {
-	return "ssh " + strings.Join(r.SSH.argv(context.Background(),
+	return "ssh " + strings.Join(r.Shell.SSH.argv(context.Background(),
 		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", wsPath, "server", "secrets"}), " ") + " " + cmd
 }
 
 func TestRemoteSecretsSendsTheValueOnStdin(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := &Remote{SSH: SSH{M: m, Lock: "/t/l"}, Sudo: &Sudo{way: sudoAsked, password: "pw"}}
+	r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}, Sudo: &Sudo{way: sudoAsked, password: "pw"}}}
 	m.Results[secretsLine(r, `'set' 'env' 'A'\''B'`)] = effecttest.Result{Out: []byte("set\n")}
 	out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B")
 	if err != nil || string(out) != "set\n" {
@@ -37,8 +37,8 @@ func TestRemoteSecretsErrors(t *testing.T) {
 		{"[ssh]: exit status 1: \nws server secrets keys: run it as root\n", "ws server secrets keys: run it as root"},
 	} {
 		m := effecttest.NewMachine()
-		r := &Remote{SSH: SSH{M: m, Lock: "/t/l"}}
-		m.Results["ssh "+strings.Join(r.SSH.argv(context.Background(),
+		r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}}
+		m.Results["ssh "+strings.Join(r.Shell.SSH.argv(context.Background(),
 			[]string{"-o", "BatchMode=yes", "ws", wsPath, "server", "secrets", "'keys'"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}
 		if _, err := r.Secrets(context.Background(), nil, "keys"); err == nil || !strings.HasPrefix(err.Error(), tt.want) {
 			t.Errorf("err = %v, want %q", err, tt.want)

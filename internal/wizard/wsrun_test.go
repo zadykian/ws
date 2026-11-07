@@ -19,8 +19,8 @@ func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Mach
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=alice\n" + extra[target])
 	h := &HostKey{Conf: "/h/mac.conf", Lock: "/l", Check: check, M: m, Out: &effecttest.Out{},
 		SSH: SSH{M: m, Lock: "/l"}}
-	r := &WsRun{Host: h, Version: "v1.2.3", Update: update, Default: "alice", Remote: &Remote{SSH: h.SSH, Script: []byte("x")},
-		Files: &Remote{SSH: h.SSH, Script: []byte("y")}}
+	r := &WsRun{Host: h, Version: "v1.2.3", Update: update, Default: "alice", Remote: &Remote{Shell: SSHShell{SSH: h.SSH}, Script: []byte("x")},
+		Files: &Remote{Shell: SSHShell{SSH: h.SSH}, Script: []byte("y")}}
 	if status != "" {
 		status += "secrets -\n"
 	}

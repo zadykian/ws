@@ -80,7 +80,7 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk, s
 			return nil, err
 		}
 	}
-	return &wizard.Remote{SSH: ssh, Script: script, Sudo: sudo}, nil
+	return &wizard.Remote{Shell: wizard.SSHShell{SSH: ssh, Sudo: sudo}, Script: script}, nil
 }
 
 // locked takes the wizard's lock, once.

@@ -12,12 +12,12 @@ import (
 // remoteLine is the ssh command line that Remote runs for the operation.
 func remoteLine(r *Remote, op ...string) string {
 	args, _, _ := r.args(op)
-	return "ssh " + strings.Join(r.SSH.argv(context.Background(), args), " ")
+	return "ssh " + strings.Join(r.Shell.SSH.argv(context.Background(), args), " ")
 }
 
 func TestRemoteStatus(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := &Remote{SSH: SSH{M: m, Lock: "/t/l"}, Script: []byte("echo\n")}
+	r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}, Script: []byte("echo\n")}
 	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: []byte("run abc 0 off\nactive -\nclaude ok\n")}
 	if !r.Status(context.Background()) {
 		t.Fatal("Status read nothing")
@@ -39,7 +39,7 @@ func TestRemoteStatus(t *testing.T) {
 
 func TestRemoteStatusFails(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := &Remote{SSH: SSH{M: m, Lock: "/t/l"}}
+	r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}}
 	m.Results[remoteLine(r, "status")] = effecttest.Result{Err: errors.New("denied")}
 	if r.Status(context.Background()) || r.Get("run") != "" {
 		t.Error("Status read from a failed ssh")

@@ -23,7 +23,7 @@ func (r *Remote) Secrets(ctx context.Context, in []byte, args ...string) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	out, err := r.SSH.RunInput(ctx, stdin, argv...)
+	out, err := r.Shell.SSH.RunInput(ctx, stdin, argv...)
 	switch {
 	case err == nil:
 		return out, nil
