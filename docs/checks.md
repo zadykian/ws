@@ -127,7 +127,8 @@ ws's `status` alone, once, and again after a run of apply. A run's calls to ws s
 which its end closes. Without the stamp, a run whose unit is cut off must stop at the stage, and the
 next must start a unit of its own. That run must end with what stays by hand: the fans' driver and
 the router's forwards. A run while a unit runs, as a dropped ssh's, must follow that unit. With
-`WS_TARGET=cloud`, a run must turn the outbound table off, and the next none.
+`WS_TARGET=cloud`, a run must turn the outbound table off, and the next none. A run after
+`host_vars.yml` changed, as a case or the Cable stage changes it, must run apply.
 
 `standin.sh` logs ws's claude in, and the Mac's gh lists ws's signing key, so no run may open a
 session on ws for a login. A fresh `--check` must show the Signing key and claude on ws after ws's
