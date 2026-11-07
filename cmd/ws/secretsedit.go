@@ -119,20 +119,39 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 	return c
 }
 
-// newSecretsSetFileCmd returns ws mac secrets set file.
+// newSecretsSetFileCmd returns set file.
 func newSecretsSetFileCmd(p process, open openStore) *cobra.Command {
 	return &cobra.Command{
-		Use:   "file NAME PATH",
-		Short: "set a profile file (vpn_p12, vpn_sswan) from the file at PATH",
-		Args:  cobra.ExactArgs(2),
+		Use:   "file NAME [PATH]",
+		Short: "set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin",
+		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(c *cobra.Command, args []string) error {
-			data, err := p.machine.ReadFile(args[1])
+			data, err := readProfile(c, p, args)
 			if err != nil {
 				return err
 			}
 			return editIn(c, open, func(s *secrets.Secrets) error { return s.SetFile(args[0], data) })
 		},
 	}
+}
+
+// readProfile reads the file at args[1], else stdin whole, as bytes: a terminal is refused, as no
+// prompt takes a .p12.
+func readProfile(c *cobra.Command, p process, args []string) ([]byte, error) {
+	if len(args) == 2 {
+		return p.machine.ReadFile(args[1])
+	}
+	if f, ok := c.InOrStdin().(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+		return nil, fmt.Errorf("give the file %s as PATH, or on stdin from a file", args[0])
+	}
+	data, err := io.ReadAll(c.InOrStdin())
+	if err != nil {
+		return nil, fmt.Errorf("read the file %s: %w", args[0], err)
+	}
+	if len(data) == 0 {
+		return nil, fmt.Errorf("the file %s on stdin is empty", args[0])
+	}
+	return data, nil
 }
 
 // readValue reads a secret: at a terminal, a line with no echo, asked on stderr; else all of stdin,
