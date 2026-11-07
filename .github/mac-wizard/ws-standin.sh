@@ -11,6 +11,8 @@
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
 # - run.log holds systemd-run's arguments, and server.log the arguments of ws server apply past its
 #   --json, which it requires, a line each; values.log holds those of ws server values set, a line each, each argument in brackets;
+# - secrets.log holds the arguments of ws server secrets, a line each, secrets.in its last stdin,
+#   and keys what its keys prints;
 # - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
 #   ws server apply --secrets found, identity and secrets.age;
 # - server.wait holds the seconds that ws server apply runs, and server.status its status, and that
@@ -150,6 +152,13 @@ ws)
     case $1 in
     version) cat "$s/ws.version" 2>/dev/null ;;
     server)
+        if [ "$2" = secrets ]; then
+            shift 2
+            echo "$*" >>"$s/secrets.log"
+            cat >"$s/secrets.in"
+            [ "$1" != keys ] || cat "$s/keys"
+            exit
+        fi
         if [ "$2 ${3-}" = 'values set' ]; then
             shift 3
             printf '[%s]' "$@" >>"$s/values.log"
