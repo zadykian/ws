@@ -193,3 +193,14 @@ func TestSecretsLeaveNoPlainFile(t *testing.T) {
 		}
 	}
 }
+
+func TestSecretsSetGitKeepsWhatAFlagLeavesOut(t *testing.T) {
+	m, id := editFixture(t, "[git.\"https://h.example\"]\ntoken = \"old\"\nusername = \"bob\"\nproactive_auth = true\n")
+	if status, _, errs := runSecrets(m, "dummy-2\n", "set", "git", "https://h.example"); status != 0 {
+		t.Fatalf("status %d, stderr %q", status, errs)
+	}
+	s, _ := secrets.Load(m, file, id)
+	if g := s.Git["https://h.example"]; g.Token != "dummy-2" || g.Username != "bob" || !g.ProactiveAuth {
+		t.Errorf("git = %+v, want the new token with bob and proactive_auth", g)
+	}
+}
