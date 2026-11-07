@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"maps"
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/internal/keychain"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
@@ -65,44 +63,6 @@ func secretsSheet(side secretsSide, held []string) tui.Sheet {
 type secretsSide interface {
 	keys(ctx context.Context) ([]string, error)
 	set(ctx context.Context, label, value string) error
-}
-
-// storeSide is the Mac's secrets file.
-type storeSide struct{ store secretsStore }
-
-func (s storeSide) set(ctx context.Context, label, value string) error {
-	return s.store.edit(ctx, func(cur *secrets.Secrets) error { return setEntry(cur, label, value) })
-}
-
-func (s storeSide) keys(ctx context.Context) ([]string, error) { return heldSecrets(ctx, s.store) }
-
-// setEntry sets the entry that a label names. A git entry keeps its user name.
-func setEntry(s *secrets.Secrets, label, value string) error {
-	kind, name, _ := strings.Cut(label, " ")
-	if kind == secrets.KindGit {
-		g := s.Git[name]
-		g.Token = value
-		s.SetGit(name, g)
-		return nil
-	}
-	return s.Set(kind, name, value)
-}
-
-// heldSecrets lists the entries of the secrets file as "KIND NAME". A Keychain without the item, or a
-// missing file, holds none: a save then tells what to run.
-func heldSecrets(ctx context.Context, store secretsStore) ([]string, error) {
-	id, err := store.k.Identity(ctx)
-	if errors.Is(err, keychain.ErrNoItem) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("read the secrets: %w", err)
-	}
-	cur, err := secrets.LoadRaw(store.m, store.path, id)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-	return cur.Keys(), nil
 }
 
 // wsSide is ws's secrets file, which ws server secrets edits on ws over the wizard's ssh, a value on
