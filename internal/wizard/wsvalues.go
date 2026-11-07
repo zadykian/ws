@@ -3,7 +3,9 @@ package wizard
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
+	"strconv"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -57,4 +59,32 @@ func (v *WsValues) Plan(context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	return step.Plan{Changes: []step.Change{valuesAsk{v.Vars, strings.Join(lacks, " and ")}}}, nil
+}
+
+// Apply asks the target, and names it in host_vars. Without a terminal it stops, naming the command
+// that names a key by hand.
+func (v *WsValues) Apply(ctx context.Context, p step.Plan) error {
+	c, ok := p.Changes[0].(valuesAsk)
+	if !ok {
+		return fmt.Errorf("%s: unknown change %T", valuesStage, p.Changes[0])
+	}
+	if key := strings.Fields(c.keys)[0]; !v.Tty {
+		return fmt.Errorf("%s: no terminal to ask %s: name it by sudo ws server values set %s VALUE",
+			valuesStage, key, key)
+	}
+	target, err := effect.Choose(ctx, v.P, effect.ChoiceQuestion{
+		Text:    "ws's target: lan for a machine on the LAN or a VM on the Mac, cloud for a cloud VM",
+		Options: []string{"lan", "cloud"}, Default: "lan"})
+	if err != nil {
+		return err
+	}
+	return v.set(outboundKey, strconv.FormatBool(target != "cloud"))
+}
+
+// set names key in host_vars, with the stage's name before an error.
+func (v *WsValues) set(key, value string) error {
+	if err := v.Set(key, value); err != nil {
+		return fmt.Errorf("%s: %w", valuesStage, err)
+	}
+	return nil
 }
