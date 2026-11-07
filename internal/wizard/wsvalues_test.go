@@ -18,9 +18,10 @@ func newValues(vars string) *WsValues {
 
 func TestWsValuesPlanNamesWhatHostVarsLacks(t *testing.T) {
 	for vars, want := range map[string]string{
-		"ws_user: a\n":              "would ask security_outbound, and name each in /etc/ws/host_vars.yml",
-		"":                          "would ask security_outbound,",
-		"security_outbound: true\n": "",
+		"":                                      "would ask security_outbound and ws_user, and name each in /etc/ws/host_vars.yml",
+		"ws_user: a\n":                          "would ask security_outbound,",
+		"security_outbound: true\n":             "would ask ws_user,",
+		"security_outbound: true\nws_user: a\n": "",
 	} {
 		p, err := newValues(vars).Plan(context.Background())
 		got := ""
@@ -33,12 +34,16 @@ func TestWsValuesPlanNamesWhatHostVarsLacks(t *testing.T) {
 	}
 }
 
-const targetQuestion = "ws's target: lan for a machine on the LAN or a VM on the Mac, cloud for a cloud VM (lan, cloud)"
+const (
+	targetQuestion = "ws's target: lan for a machine on the LAN or a VM on the Mac, cloud for a cloud VM (lan, cloud)"
+	userQuestion   = "ws_user, the user that ws is set up for"
+)
 
 // valuesApply applies the stage's plan over host_vars' text, with a terminal where answers are
 // given, and returns the keys it wrote, as KEY=VALUE.
-func valuesApply(t *testing.T, vars string, answers map[string]string) ([]string, error) {
+func valuesApply(t *testing.T, vars, user string, answers map[string]string) ([]string, error) {
 	v := newValues(vars)
+	v.User = user
 	var set []string
 	v.Tty, v.P = answers != nil, &effecttest.Prompt{T: t, Answers: answers}
 	v.Set = func(key, value string) error { set = append(set, key+"="+value); return nil }
@@ -49,18 +54,27 @@ func valuesApply(t *testing.T, vars string, answers map[string]string) ([]string
 	return set, v.Apply(context.Background(), p)
 }
 
-// The target is written as answered, the default too.
-func TestWsValuesWritesTheTarget(t *testing.T) {
-	for target, want := range map[string]string{"": "security_outbound=true", "cloud": "security_outbound=false"} {
-		set, err := valuesApply(t, "", map[string]string{targetQuestion: target})
-		if err != nil || !slices.Equal(set, []string{want}) {
-			t.Errorf("%q: wrote %q, %v; want %s", target, set, err, want)
+// Each key is written as answered, the defaults too: sudo's user on the LAN, root at a cloud VM's
+// root login, and root where host_vars names the table off already.
+func TestWsValuesWritesEachAnswer(t *testing.T) {
+	for name, tc := range map[string]struct {
+		vars, user, target string
+		want               []string
+	}{
+		"lan":        {"", "alice", "", []string{"security_outbound=true", "ws_user=alice"}},
+		"cloud root": {"", "", "cloud", []string{"security_outbound=false", "ws_user=root"}},
+		"named off":  {"security_outbound: false\n", "root", "", []string{"ws_user=root"}},
+		"user named": {"ws_user: bob\n", "alice", "cloud", []string{"security_outbound=false"}},
+	} {
+		set, err := valuesApply(t, tc.vars, tc.user, map[string]string{targetQuestion: tc.target, userQuestion: ""})
+		if err != nil || !slices.Equal(set, tc.want) {
+			t.Errorf("%s: wrote %q, %v; want %q", name, set, err, tc.want)
 		}
 	}
 }
 
 func TestWsValuesWithNoTerminalNamesTheCommand(t *testing.T) {
-	set, err := valuesApply(t, "", nil)
+	set, err := valuesApply(t, "ws_user: a\n", "", nil)
 	if err == nil || !strings.Contains(err.Error(), "sudo ws server values set security_outbound VALUE") || set != nil {
 		t.Errorf("Apply = %v; wrote %q", err, set)
 	}

@@ -13,9 +13,9 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// valuesStage names the stage in its messages, and outboundKey is the key of host_vars that the
-// target names: a cloud VM turns the outbound table off.
-const valuesStage, outboundKey = "ws's values", "security_outbound"
+// valuesStage names the stage in its messages. outboundKey is the key of host_vars that the target
+// names, as a cloud VM turns the outbound table off, and userKey the user that ws is set up for.
+const valuesStage, outboundKey, userKey = "ws's values", "security_outbound", "ws_user"
 
 // WsValues is the stage of ws's values on ws itself, which ws server wizard runs. It asks each key
 // that host_vars lacks, and names it there even at its default, so that a later run, from ws or the
@@ -52,7 +52,7 @@ func (v *WsValues) Plan(context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	var lacks []string
-	for _, key := range []string{outboundKey} {
+	for _, key := range []string{outboundKey, userKey} {
 		if !values.Named(data, key) {
 			lacks = append(lacks, key)
 		}
@@ -63,8 +63,8 @@ func (v *WsValues) Plan(context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{valuesAsk{v.Vars, strings.Join(lacks, " and ")}}}, nil
 }
 
-// Apply asks the target, and names it in host_vars. Without a terminal it stops, naming the command
-// that names a key by hand.
+// Apply asks each key that host_vars lacks, and names it there as it is answered. Without a terminal
+// it stops, naming the command that names a key by hand.
 func (v *WsValues) Apply(ctx context.Context, p step.Plan) error {
 	c, ok := p.Changes[0].(valuesAsk)
 	if !ok {
@@ -74,13 +74,27 @@ func (v *WsValues) Apply(ctx context.Context, p step.Plan) error {
 		return fmt.Errorf("%s: no terminal to ask %s: name it by sudo ws server values set %s VALUE",
 			valuesStage, key, key)
 	}
+	cloud, err := v.target(ctx, c.keys)
+	if err != nil || !strings.Contains(c.keys, userKey) {
+		return err
+	}
+	return v.askUser(ctx, cloud)
+}
+
+// target tells whether ws is a cloud VM: it asks where keys holds the target, and names the answer
+// in host_vars, else reads the target that host_vars names.
+func (v *WsValues) target(ctx context.Context, keys string) (bool, error) {
+	if !strings.Contains(keys, outboundKey) {
+		vals, err := values.Load(v.M, v.Vars)
+		return !vals.Security.Outbound, err
+	}
 	target, err := effect.Choose(ctx, v.P, effect.ChoiceQuestion{
 		Text:    "ws's target: lan for a machine on the LAN or a VM on the Mac, cloud for a cloud VM",
 		Options: []string{"lan", "cloud"}, Default: "lan"})
 	if err != nil {
-		return err
+		return false, err
 	}
-	return v.set(outboundKey, strconv.FormatBool(target != "cloud"))
+	return target == "cloud", v.set(outboundKey, strconv.FormatBool(target != "cloud"))
 }
 
 // set names key in host_vars, with the stage's name before an error.
