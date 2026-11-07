@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"slices"
 	"syscall"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/effect"
@@ -21,10 +23,21 @@ type serverScreen struct {
 	tmp string
 }
 
-// draw runs ws server wizard's stages on the run screen of their names, as ws mac wizard does under
-// --check.
+// draw opens the list of the stages over a scan and runs what it chooses, or goes straight to the
+// run under --check. Every stage runs on ws, so the list is ws's alone.
 func (s serverScreen) draw(check bool) error {
-	return s.running(serverPick{check: check})
+	if !opensList(s.c, s.p, false) {
+		return s.running(serverPick{check: check}, nil)
+	}
+	ctx, title := s.c.Context(), s.c.CommandPath()
+	queue := wizardQueue(s.p, s.stages(serverPick{}))
+	choice, err := tui.PickStages(ctx, s.config(), title, queue, false, s.scan())
+	if err != nil || len(choice.Only) == 0 {
+		return err
+	}
+	name := wsRunOf(s.stages(serverPick{})).Name()
+	r := serverPick{check: choice.Check, update: slices.Contains(choice.Whole, name), only: choice.Partial[name]}
+	return s.running(r, &choice)
 }
 
 // config is what the screens draw with. A signal ends a plain run through its context, with status
@@ -51,13 +64,33 @@ func (s serverScreen) on(ctx context.Context, b *tui.Bridge) (process, effect.Fo
 	return on, talks
 }
 
-// running runs r on the run screen of the stages' names. What stays by hand prints past the screen,
-// which would paint over it.
-func (s serverScreen) running(r serverPick) error {
+// scan is a check of every stage, beside the list. ws speaks for its roles once its values are
+// read, as the remote script's report takes ws_user from them.
+func (s serverScreen) scan() tui.Work {
+	return func(ctx context.Context, b *tui.Bridge) error {
+		on, talks := s.on(ctx, b)
+		stages := serverWizardStages(on, b, talks, b, nil, &wizard.Hand{}, serverPick{check: true})
+		run := wsRunOf(stages)
+		watch := afterStage{b, run.WaitsOn(), func() {
+			states, err := run.Remote.State(ctx, s.p.version)
+			reportRoles(run.Name(), states, err, b.Report)
+		}}
+		o := step.Options{Observer: watch, Check: true, Stop: b.Stop(ctx)}
+		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, nil)
+		return unwrapStep(err)
+	}
+}
+
+// running runs r on the run screen of the stages' names, or on the list's, which choice holds. What
+// stays by hand prints past the screen, which would paint over it.
+func (s serverScreen) running(r serverPick, choice *tui.Choice) error {
 	cfg, done := runConfig(s.c, s.p, s.config())
 	defer done()
-	screen := tui.NewRunScreen(runTitle(s.c, r.check), cfg.Theme, tui.NewGroup("", s.stages(r)))
+	var screen tea.Model = tui.NewRunScreen(runTitle(s.c, r.check), cfg.Theme, tui.NewGroup("", s.stages(r)))
 	o := step.Options{Check: r.check}
+	if choice != nil {
+		screen, o.LeftOut = tui.NewQueueRun(runTitle(s.c, r.check), cfg.Theme, *choice), wizardLeft(*choice, nil)
+	}
 	var text bytes.Buffer
 	err := tui.Run(s.c.Context(), cfg, screen, func(ctx context.Context, b *tui.Bridge) error {
 		on, talks := s.on(ctx, b)
