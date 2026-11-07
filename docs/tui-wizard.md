@@ -13,7 +13,7 @@ The numbers run across both lists, in the order of the run. Stage 3 can stand in
 stages of `Mac`, and the order, the locks and the count hold across the machines. A stage's own
 steps stand under it, indented, with no number.
 
-Tab walks the lists, then the buttons, which add `configure` and `state` to the list's, and
+Tab walks the lists, then the buttons, which add `state` and `configure` to the list's, and
 Shift-Tab walks back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act on both lists, and
 `e` leaves for the values' form at any time, a scan under way included. `q` runs nothing.
 
