@@ -24,7 +24,7 @@ func newServerWizardCmd(p process) *cobra.Command {
 			"host_vars lacks them, then ws server apply, in a unit of its own that goes on where the login drops, " +
 			"then claude's login, and ws's signing key on GitHub. " +
 			"Either wizard follows the other's unit, and after the other's run, with nothing changed, runs no apply. " +
-			"At a terminal the stages open as ws's list, and the ones chosen run. " +
+			"At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server configure's forms. " +
 			"Under --check each stage prints what it would do and changes nothing.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runServerWizard(c, p, check) },
