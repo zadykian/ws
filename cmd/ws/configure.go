@@ -17,8 +17,8 @@ func newConfigureCmd(p process) *cobra.Command {
 		Use:   "configure",
 		Short: "edit mac.conf, the secrets and ws's host_vars on forms",
 		Long: "It shows the keys that ws mac wizard would ask, by WS_TARGET, with what mac.conf holds, and " +
-			"writes them on Ctrl-S. Ctrl-N goes to the secrets, which show as set or not, never their values, " +
-			"then to ws's host_vars, read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
+			"writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, " +
+			"then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runConfigure(c, p) },
 	}
@@ -43,14 +43,10 @@ func configureOn(c *cobra.Command, p process, cfg tui.Config) error {
 	if err != nil {
 		return err
 	}
-	store := newSecretsStore(p)
-	held, err := heldSecrets(c.Context(), store)
-	if err != nil {
-		return err
-	}
-	vars := &varsReach{p: p}
+	// One way to root serves both of ws's sheets, so that sudo's password is asked once.
+	vars := &varsReach{p: p, sudo: &wizard.Sudo{}}
 	defer vars.close(c.Context())
-	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), secretsSheet(store, held), vars.sheet())
+	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), vars.secretsSheet(), vars.sheet())
 }
 
 // confSheet is mac.conf on the Configure screen.
