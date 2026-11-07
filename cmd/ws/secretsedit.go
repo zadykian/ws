@@ -195,18 +195,42 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 	if err != nil {
 		return err
 	}
-	id, err := s.k.Identity(c.Context())
+	keys, err := s.keys(c.Context())
 	if err != nil {
 		return err
 	}
-	cur, err := secrets.LoadRaw(s.m, s.path, id)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return err
-	}
-	for _, k := range cur.Keys() {
+	for _, k := range keys {
 		_, _ = io.WriteString(c.OutOrStdout(), k+"\n")
 	}
 	return nil
+}
+
+// keys returns each entry as KIND NAME, never a value. A file that is missing holds none.
+func (s secretsStore) keys(ctx context.Context) ([]string, error) {
+	id, err := s.k.Identity(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cur, err := secrets.LoadRaw(s.m, s.path, id)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	return cur.Keys(), nil
+}
+
+// set sets the entry that label names, "KIND NAME", for the secrets sheet. A git entry keeps its
+// other fields, as set git does with no flag.
+func (s secretsStore) set(ctx context.Context, label, value string) error {
+	kind, name, _ := strings.Cut(label, " ")
+	return s.edit(ctx, func(cur *secrets.Secrets) error {
+		if kind == secrets.KindGit {
+			g := cur.Git[name]
+			g.Token = value
+			cur.SetGit(name, g)
+			return nil
+		}
+		return cur.Set(kind, name, value)
+	})
 }
 
 // sayOut prints a line on stdout after the command's path.
