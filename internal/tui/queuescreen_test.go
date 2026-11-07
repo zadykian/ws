@@ -14,7 +14,7 @@ import (
 
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
 func testQueueScreen() pickScreen {
-	s := newQueueScreen("ws mac wizard", testTheme, testStages(), make(chan Choice, 1))
+	s := newQueueScreen("ws mac wizard", testTheme, testStages(), true, make(chan Choice, 1))
 	return pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30})
 }
 
@@ -68,18 +68,55 @@ func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 	stages := []Stage{{Name: "Run", Side: WsSide, Nested: []Group{{Name: "base"}}}}
 	l := newQueue(stages)
-	if got := l.panes()[WsSide].Title; got != "ws: roles not scanned" {
+	if got := l.panes()[l.pane(WsSide)].Title; got != "ws: roles not scanned" {
 		t.Errorf("title = %q", got)
 	}
-	if got := l.reported("Run", nil).panes()[WsSide].Title; got != "ws" {
+	if got := l.reported("Run", nil).panes()[l.pane(WsSide)].Title; got != "ws" {
 		t.Errorf("title = %q", got)
+	}
+}
+
+// wsStages is a queue of ws server wizard, whose every stage runs on ws.
+func wsStages() []Stage {
+	return []Stage{
+		{Name: "Values", Side: WsSide},
+		{Name: "Run", Side: WsSide, Waits: "Values", Nested: []Group{{Name: "base"}}},
+		{Name: "Signing", Side: WsSide, Waits: "Run"},
+	}
+}
+
+func TestStagesAllOnWsStandInOneList(t *testing.T) {
+	s := newQueueScreen("ws server wizard", testTheme, wsStages(), false, make(chan Choice, 1))
+	s = pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, press('/'), press('s'))
+	got := pickShown(s)
+	for _, want := range []string{"ws server wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "Mac") || s.list.side != WsSide || len(s.layout().Panes) != 1 {
+		t.Errorf("side %d, frame:\n%s", s.list.side, got)
+	}
+}
+
+func TestTabLeavesOneListForTheButtons(t *testing.T) {
+	s := newQueueScreen("ws server wizard", testTheme, wsStages(), false, make(chan Choice, 1))
+	s = pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
+	if s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+	}
+	if s = pickSent(s, shiftTab); s.list.side != WsSide || s.footer.Focused() >= 0 {
+		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
+	}
+	if s = pickSent(s, shiftTab); s.footer.Focused() != pickStatePlace || strings.Contains(pickShown(s), "configure") {
+		t.Errorf("focus %d, frame:\n%s", s.footer.Focused(), pickShown(s))
 	}
 }
 
 // chosenBy returns what s gives past msgs, with the choice's channel read.
 func chosenBy(t *testing.T, msgs ...tea.Msg) Choice {
 	picks := make(chan Choice, 1)
-	s := pickSent(newQueueScreen("ws", testTheme, testStages(), picks), tea.WindowSizeMsg{Width: 100, Height: 30})
+	s := pickSent(newQueueScreen("ws", testTheme, testStages(), true, picks), tea.WindowSizeMsg{Width: 100, Height: 30})
 	for _, msg := range msgs {
 		model, cmd := s.Update(msg)
 		s = model.(pickScreen)
@@ -104,7 +141,7 @@ func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 	if s.list.side != MacSide || s.footer.Focused() >= 0 {
 		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
 	}
-	if s = pickSent(s, shiftTab); s.footer.Focused() != pickStatePlace {
+	if s = pickSent(s, shiftTab); s.footer.Focused() != pickConfigurePlace {
 		t.Errorf("focus %d", s.footer.Focused())
 	}
 	if s = pickSent(s, tab); s.list.side != MacSide || s.footer.Focused() >= 0 {
@@ -162,7 +199,7 @@ func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
 func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
 	c := noKeys(io.Discard)
 	c.In = strings.NewReader("e")
-	got, err := PickStages(t.Context(), c, "ws", testStages(), waitForCtx)
+	got, err := PickStages(t.Context(), c, "ws", testStages(), true, waitForCtx)
 	if err != nil || !got.Configure {
 		t.Errorf("PickStages = %+v, %v", got, err)
 	}

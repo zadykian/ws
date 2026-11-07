@@ -4,8 +4,8 @@
 opens them at a terminal, and `--plain` or no terminal keeps its lines. `--check` goes straight to
 its run, on the run screen. `--update` runs ahead of any screen, on lines, as the new ws takes this
 one's place and opens them itself.
-`ws server wizard` opens no lists: its stages run on the run screen
-([The server's wizard](server-wizard.md)).
+`ws server wizard` opens one list, `ws`, where every stage runs, by the same rules
+([The server's wizard](server-wizard.md)). It has no `configure` button, and its `s` reads ws on ws.
 
 The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine
 a stage runs on. A narrow window stacks them, and one too short for that keeps the list in focus.
@@ -13,7 +13,7 @@ The numbers run across both lists, in the order of the run. Stage 3 can stand in
 stages of `Mac`, and the order, the locks and the count hold across the machines. A stage's own
 steps stand under it, indented, with no number.
 
-Tab walks the lists, then the buttons, which add `configure` and `state` to the list's, and
+Tab walks the lists, then the buttons, which add `state` and `configure` to the list's, and
 Shift-Tab walks back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act on both lists, and
 `e` leaves for the values' form at any time, a scan under way included. `q` runs nothing.
 
