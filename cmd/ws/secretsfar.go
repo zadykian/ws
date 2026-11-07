@@ -32,24 +32,44 @@ func forward(c *cobra.Command, p process) {
 	}
 }
 
-// runFar reaches root on ws before it reads a value, so that a value is asked only where it can go.
-// Then it runs ws server secrets with the command's path past ws mac secrets, the flags it was given
+// runFar runs ws server secrets with the command's path past ws mac secrets, the flags it was given
 // and its arguments past a --, as a name may start with a dash: set env A runs
-// ws server secrets set env -- A. set file sends the file at PATH, or stdin, and NAME alone.
+// ws server secrets set env -- A. set file sends the file at PATH, or stdin, and NAME alone. At a
+// terminal, it reaches root on ws before it asks a value, so that a value is asked only where it can
+// go. Else it reads stdin first, and sudo's password, where ws's sudo asks one, comes from /dev/tty.
 func runFar(c *cobra.Command, p process, args []string) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
+	far := strings.Fields(c.CommandPath())[3:]
+	var talk rootTalk = effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
+	var in []byte
+	var err error
+	atTerminal := p.tty
+	if !atTerminal {
+		if in, args, err = farInput(c, p, far, args); err != nil {
+			return err
+		}
+		if p.openTTY != nil {
+			if tty, done, ttyErr := p.openTTY(); ttyErr == nil {
+				defer done()
+				talk, p.tty = struct {
+					effect.Hidden
+					effect.Out
+				}{tty, talk}, true
+			}
+		}
+	}
 	r := &varsReach{p: p}
 	defer r.close(c.Context())
-	ws, err := r.reachOn(c.Context(), p.machine, effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()), nil)
+	ws, err := r.reachOn(c.Context(), p.machine, talk, nil)
 	if err != nil {
 		return err
 	}
-	far := strings.Fields(c.CommandPath())[3:]
-	in, args, err := farInput(c, p, far, args)
-	if err != nil {
-		return err
+	if atTerminal {
+		if in, args, err = farInput(c, p, far, args); err != nil {
+			return err
+		}
 	}
 	c.LocalNonPersistentFlags().VisitAll(func(f *pflag.Flag) {
 		if f.Changed {

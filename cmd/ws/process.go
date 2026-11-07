@@ -25,6 +25,8 @@ type process struct {
 	pwd string
 	// tty tells whether stdin is a terminal, which the questions need.
 	tty bool
+	// openTTY opens the terminal, /dev/tty, to ask a password past a stdin that is not one. Nil has none.
+	openTTY func() (effect.Hidden, func(), error)
 	// errTTY tells whether stderr is a terminal, where a screen draws.
 	errTTY bool
 	// outTTY tells whether stdout is a terminal, where a report prints.
@@ -54,6 +56,7 @@ func newProcess() process {
 		goarch:   runtime.GOARCH,
 		pwd:      pwd,
 		tty:      isTerminal(os.Stdin),
+		openTTY:  openTTY,
 		errTTY:   isTerminal(os.Stderr),
 		outTTY:   isTerminal(os.Stdout),
 		version:  versionOf(info, ok),
@@ -61,4 +64,13 @@ func newProcess() process {
 		releases: releasesURL(os.Getenv),
 		self:     runningFile,
 	}
+}
+
+// openTTY opens /dev/tty, which asks with no echo and prints its question there.
+func openTTY() (effect.Hidden, func(), error) {
+	f, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
+	if err != nil {
+		return nil, nil, err
+	}
+	return effect.NewTerminal(f, f), func() { _ = f.Close() }, nil
 }
