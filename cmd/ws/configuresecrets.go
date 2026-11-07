@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/internal/keychain"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/internal/wizard"
 )
 
 // secretsLabels are the entries that the form always offers, besides those the file holds.
@@ -102,4 +103,22 @@ func heldSecrets(ctx context.Context, store secretsStore) ([]string, error) {
 		return nil, err
 	}
 	return cur.Keys(), nil
+}
+
+// wsSide is ws's secrets file, which ws server secrets edits on ws over the wizard's ssh, a value on
+// ssh's stdin. set git, with no flag, keeps the entry's user name.
+type wsSide struct{ ws *wizard.Remote }
+
+func (s wsSide) set(ctx context.Context, label, value string) error {
+	kind, name, _ := strings.Cut(label, " ")
+	_, err := s.ws.Secrets(ctx, []byte(value+"\n"), "set", kind, "--", name)
+	return err
+}
+
+func (s wsSide) keys(ctx context.Context) ([]string, error) {
+	out, err := s.ws.Secrets(ctx, nil, "keys")
+	if err != nil {
+		return nil, fmt.Errorf("the secrets on ws: %w", err)
+	}
+	return strings.FieldsFunc(string(out), func(r rune) bool { return r == '\n' }), nil
 }
