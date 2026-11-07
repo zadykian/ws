@@ -1,20 +1,18 @@
 #!/bin/bash
-# The secrets, on the Mac that the cases before leave, with a throwaway keychain as the default one.
-# With the Mac's file, a run must start one unit that loads the identity as the credential
-# ws-secrets, with Type=exec, and runs ws server apply --secrets on ws's copy of the file. The
-# stand-in ws must find the Mac's file and the Keychain's identity in it, both modes 600 and the
-# identity on a tmpfs path, which the run removes. The run's stamp must name the file's SHA-256. A
-# second run must start none, a changed file must start one, and a removed one must start one that
-# runs with no --secrets, with ws's copy gone and the stamp naming none. No output may hold a key
-# or a value. The keychain and the file go back.
+# ws's own secrets file and its identity's credential, on the stand-in ws that the cases before
+# leave. With both, a run must start one unit that loads the credential ws-secrets, with Type=exec,
+# and runs ws server apply --secrets on ws's file. The stand-in ws must find the file and the
+# credential in it. The run's stamp must name the file's SHA-256. A second run must start none, a
+# changed file must start one, and the file without the credential one that runs with no --secrets,
+# with the stamp naming none, and then none. No output may hold the file or the credential.
 
 set -u
 
 wsbin=$HOME/.local/bin/ws
-file=$HOME/.config/ws/secrets.age
 ws=$RUNNER_TEMP/ws
+file="$ws/root"/etc/ws/secrets.age
+credential="$ws/root"/etc/credstore.encrypted/ws-secrets
 state=$ws/root/var/lib/ws-wizard
-keychain=$RUNNER_TEMP/wizard-secrets.keychain-db
 value='a stand-in value, for the case'
 fail=0
 
@@ -31,7 +29,7 @@ wizard() {
     out=$("$wsbin" mac wizard </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
-    grep -qF -e "$value" -e AGE-SECRET-KEY <<<"$out" && error "the wizard printed a key or a value"
+    grep -qF "$value" <<<"$out" && error "the wizard printed the file or the credential"
 }
 
 # started N: the run before must have started N units.
@@ -39,57 +37,45 @@ started() {
     [ "$(wc -l <"$ws/run.log")" -eq $((units + $1)) ]
 }
 
-if [ -e "$file" ]; then
-    echo "::error::$file is there before the case"
+# stamped: the run's stamp must name the file's SHA-256.
+stamped() {
+    [ "$(sudo cut -d ' ' -f 4 "$state/run")" = "$(sudo shasum -a 256 "$file" | cut -d ' ' -f 1)" ]
+}
+
+if sudo test -e "$file" || sudo test -e "$credential"; then
+    echo "::error::ws's secrets file or its credential is there before the case"
     exit 1
 fi
-list=$(security list-keychains -d user | tr -d '"')
-default=$(security default-keychain -d user | tr -d '" ')
-security create-keychain -p ws "$keychain"
-security set-keychain-settings "$keychain"
-security unlock-keychain -p ws "$keychain"
-# shellcheck disable=SC2086 # the keychains' paths hold no blank
-security list-keychains -d user -s "$keychain" $list
-security default-keychain -d user -s "$keychain"
-
-"$wsbin" mac secrets init >/dev/null 2>&1 || error "ws mac secrets init failed"
-printf '%s\n' "$value" | "$wsbin" mac secrets set env MY_TOKEN >/dev/null 2>&1 || error "ws mac secrets set failed"
+sudo mkdir -p "${credential%/*}"
+printf 'file: %s\n' "$value" | sudo tee "$file" >/dev/null
+printf 'credential: %s\n' "$value" | sudo tee "$credential" >/dev/null
 sudo rm -rf "$ws/seen" "$ws/creds"
 
 wizard
 last=$(tail -n 1 "$ws/run.log")
-[ "$status" = 0 ] && started 1 && [[ $last == '-p LoadCredential=ws-secrets:'*' -p Type=exec '* ]] ||
-    error "the run with the file exited $status, or started no unit that loads ws-secrets with Type=exec"
-[ "$(tail -n 1 "$ws/server.log")" = "--secrets $state/secrets.age" ] ||
-    error "the unit ran ws server apply other than with --secrets and ws's copy of the file"
-sudo cmp -s "$file" "$ws/seen/secrets.age" || error "the unit saw another file than the Mac's"
-sudo cmp -s "$file" "$state/secrets.age" || error "ws's copy of the file is not the Mac's"
-security find-generic-password -s ws-secrets -w | sudo cmp -s - "$ws/seen/identity" ||
-    error "the credential is not the Keychain's identity"
-[ "$(sudo stat -f %Lp "$state/secrets.age")" = 600 ] || error "ws's copy has a mode other than 600"
-[ "$(sudo stat -f %Lp "$ws/root/run/ws-wizard")" = 700 ] || error "the identity's directory has a mode other than 700"
-sudo test ! -e "$ws/root/run/ws-wizard/identity" || error "the run left the identity on ws"
-[ "$(sudo cut -d ' ' -f 4 "$state/run")" = "$(shasum -a 256 "$file" | cut -d ' ' -f 1)" ] ||
-    error "the run's stamp does not name the file's SHA-256"
+[ "$status" = 0 ] && started 1 && [[ $last == '-p LoadCredentialEncrypted=ws-secrets -p Type=exec '* ]] ||
+    error "the run with the credential exited $status, or started no unit that loads ws-secrets with Type=exec"
+[ "$(tail -n 1 "$ws/server.log")" = "--secrets $file" ] ||
+    error "the unit ran ws server apply other than with --secrets and ws's file"
+sudo cmp -s "$file" "$ws/seen/secrets.age" || error "the unit saw another file than ws's"
+sudo cmp -s "$credential" "$ws/seen/identity" || error "the unit saw another credential than ws's"
+stamped || error "the run's stamp does not name the file's SHA-256"
 
 wizard
 [ "$status" = 0 ] || error "a second run exited $status"
 started 0 || error "a second run started a unit"
 
-printf '%s\n' "$value" | "$wsbin" mac secrets set env OTHER >/dev/null 2>&1 || error "the second set failed"
+echo more | sudo tee -a "$file" >/dev/null
 wizard
-[ "$status" = 0 ] && started 1 && [ "$(sudo cut -d ' ' -f 4 "$state/run")" = "$(shasum -a 256 "$file" | cut -d ' ' -f 1)" ] ||
-    error "a changed file exited $status, or started no unit that stamps its sum"
+started 1 && stamped && [ "$status" = 0 ] || error "a changed file exited $status, or started no unit that stamps its sum"
 
-rm -f "$file"
+sudo rm -f "$credential"
 wizard
 [ "$status" = 0 ] && started 1 && [ "$(tail -n 1 "$ws/server.log")" = '' ] &&
-    sudo test ! -e "$state/secrets.age" && [ "$(sudo cut -d ' ' -f 4 "$state/run")" = - ] ||
-    error "the run without the file exited $status, or ran with --secrets, or left ws's copy or a sum"
+    [ "$(sudo cut -d ' ' -f 4 "$state/run")" = - ] ||
+    error "the file without the credential exited $status, or ran with --secrets, or stamped a sum"
+wizard
+started 0 && [ "$status" = 0 ] || error "a run with nothing changed exited $status, or started a unit"
 
-# shellcheck disable=SC2086 # as above
-security list-keychains -d user -s $list
-security default-keychain -d user -s "$default"
-security delete-keychain "$keychain"
-sudo rm -rf "$ws/seen" "$ws/creds"
+sudo rm -rf "$file" "$ws/seen" "$ws/creds"
 exit "$fail"
