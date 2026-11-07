@@ -1,7 +1,8 @@
 # The Mac's secrets
 
-The secrets of the roles are one file, `~/.config/ws/secrets.age` on the Mac: TOML that age
-encrypts, in armor. Git never holds it. `ws server apply --secrets` decrypts it in its process
+The secrets of the roles are one file, `~/.config/ws/secrets.age` on the Mac or
+`/etc/ws/secrets.age` on ws ([ws's file](#wss-file)): TOML that age encrypts, in armor. Git never
+holds it. `ws server apply --secrets` decrypts it in its process
 ([The secrets file](shell.md#the-secrets-file)). A value is never in an error, a plan or a diff:
 they name kinds, names, keys and paths.
 
@@ -44,6 +45,24 @@ Keychain item fails and names `ws mac secrets init`.
 `ws mac wizard` sends the file and the identity to ws in its run stage, and the run reads the
 identity as a systemd credential ([ws's run](mac-wizard.md#wss-run)). The file's SHA-256 is in the
 run's stamp, so a changed file runs the stage again.
+
+## ws's file
+
+`ws server secrets` keeps the file on ws, root's and mode 600, and runs as root alone. Its `set`,
+`unset` and `keys` are the Mac's. `init` makes the identity in memory and gives it to
+`systemd-creds encrypt --with-key=host` on its standard input. ws writes what that prints as the
+credential `/etc/credstore.encrypted/ws-secrets`, mode 600 in a directory of 700. The host's key
+in `/var/lib/systemd` encrypts it, not the TPM's, which a change of firmware or of Secure Boot can
+lock out. Each command decrypts the identity by `systemd-creds decrypt` into memory. `init` keeps
+a credential and a file that are there. It refuses a file without the credential, which a new
+identity would not open. A unit reads the credential by `LoadCredentialEncrypted=ws-secrets`
+([The secrets file](shell.md#the-secrets-file)).
+
+```sh
+ws server secrets init
+ws server secrets set file vpn_sswan <ws.sswan
+ws server secrets keys
+```
 
 ## The tables
 
