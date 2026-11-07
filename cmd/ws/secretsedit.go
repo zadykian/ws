@@ -111,11 +111,23 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.KindGit+" "+args[0]); err != nil {
 				return err
 			}
-			return editIn(c, open, func(s *secrets.Secrets) error { s.SetGit(args[0], g); return nil })
+			return editIn(c, open, func(s *secrets.Secrets) error {
+				// A flag left out keeps the entry's, so that a form sets a token alone.
+				cur := s.Git[args[0]]
+				if !c.Flags().Changed("username") {
+					g.Username = cur.Username
+				}
+				if !c.Flags().Changed("proactive-auth") {
+					g.ProactiveAuth = cur.ProactiveAuth
+				}
+				s.SetGit(args[0], g)
+				return nil
+			})
 		},
 	}
-	c.Flags().StringVar(&g.Username, "username", "", "the user name that git sends with the token")
-	c.Flags().BoolVar(&g.ProactiveAuth, "proactive-auth", false, "send the token before the server asks for it")
+	c.Flags().StringVar(&g.Username, "username", "", "the user name that git sends with the token, else the entry's")
+	c.Flags().BoolVar(&g.ProactiveAuth, "proactive-auth", false, "send the token before the server asks for it, "+
+		"else as the entry does")
 	return c
 }
 
