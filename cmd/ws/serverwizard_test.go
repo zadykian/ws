@@ -92,6 +92,15 @@ func TestServerWizardRunsTheStagesChosen(t *testing.T) {
 	}
 }
 
+// s opens ws's state, read on ws itself, and the list comes back with no scan.
+func TestServerWizardStateKeyReadsWs(t *testing.T) {
+	keys := stateTrip{newAfterScan("s"), "ws server wizard: ws"}
+	status, m := screenServer(keys)
+	if status != 0 || bytes.Count(keys.drawn.Bytes(), []byte(enterScreen)) != 3 {
+		t.Errorf("status %d, calls %q", status, m.Calls)
+	}
+}
+
 // Where GitHub lacks ws's signing key, the list at the end names it, and each device's key.
 func TestServerWizardListsTheSigningKeyByHand(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
