@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"filippo.io/age"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
@@ -18,11 +19,47 @@ import (
 	"github.com/zadykian/ws/internal/secrets"
 )
 
+// secretsKey keeps the identity of a secrets file: the Mac's Keychain, or ws's credential.
+type secretsKey interface {
+	Identity(ctx context.Context) (age.Identity, error)
+}
+
 // secretsStore is the secrets file and the identity that opens it.
 type secretsStore struct {
 	m    effect.Machine
-	k    keychain.Keychain
+	k    secretsKey
 	path string
+	// write replaces the file with s, sealed to id.
+	write func(s secrets.Secrets, id age.Identity) error
+}
+
+// openStore returns the store that a command edits, or why the command doesn't run.
+type openStore func() (secretsStore, error)
+
+// secretsEditCmds returns set, unset and keys, which edit the store that open returns.
+func secretsEditCmds(p process, open openStore) []*cobra.Command {
+	return []*cobra.Command{newSecretsSetCmd(p, open), {
+		Use:   "unset KIND NAME",
+		Short: "drop an entry",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(c *cobra.Command, args []string) error {
+			return editIn(c, open, func(s *secrets.Secrets) error { return s.Unset(args[0], args[1]) })
+		},
+	}, {
+		Use:   "keys",
+		Short: "print each entry as KIND NAME, never a value",
+		Args:  cobra.NoArgs,
+		RunE:  func(c *cobra.Command, _ []string) error { return secretsKeys(c, open) },
+	}}
+}
+
+// editIn opens the store and edits it with fn.
+func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) error {
+	s, err := open()
+	if err != nil {
+		return err
+	}
+	return s.edit(c.Context(), fn)
 }
 
 // edit reads the file with its references as written, applies fn and writes the file again. A file
@@ -39,12 +76,12 @@ func (s secretsStore) edit(ctx context.Context, fn func(*secrets.Secrets) error)
 	if err := fn(&cur); err != nil {
 		return err
 	}
-	return secrets.WriteFile(s.m, s.path, cur, id)
+	return s.write(cur, id)
 }
 
 // newSecretsSetCmd returns ws mac secrets set, with a command per kind.
-func newSecretsSetCmd(p process) *cobra.Command {
-	cmds := []*cobra.Command{newSecretsSetGitCmd(p), newSecretsSetFileCmd(p)}
+func newSecretsSetCmd(p process, open openStore) *cobra.Command {
+	cmds := []*cobra.Command{newSecretsSetGitCmd(open), newSecretsSetFileCmd(p, open)}
 	for _, kind := range []string{secrets.KindToken, secrets.KindEnv, secrets.KindPassword} {
 		cmds = append(cmds, &cobra.Command{
 			Use:   kind + " NAME",
@@ -55,7 +92,7 @@ func newSecretsSetCmd(p process) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { return s.Set(kind, args[0], value) })
+				return editIn(c, open, func(s *secrets.Secrets) error { return s.Set(kind, args[0], value) })
 			},
 		})
 	}
@@ -63,7 +100,7 @@ func newSecretsSetCmd(p process) *cobra.Command {
 }
 
 // newSecretsSetGitCmd returns ws mac secrets set git.
-func newSecretsSetGitCmd(p process) *cobra.Command {
+func newSecretsSetGitCmd(open openStore) *cobra.Command {
 	var g secrets.Git
 	c := &cobra.Command{
 		Use:   "git URL",
@@ -74,7 +111,7 @@ func newSecretsSetGitCmd(p process) *cobra.Command {
 			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.KindGit+" "+args[0]); err != nil {
 				return err
 			}
-			return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { s.SetGit(args[0], g); return nil })
+			return editIn(c, open, func(s *secrets.Secrets) error { s.SetGit(args[0], g); return nil })
 		},
 	}
 	c.Flags().StringVar(&g.Username, "username", "", "the user name that git sends with the token")
@@ -83,7 +120,7 @@ func newSecretsSetGitCmd(p process) *cobra.Command {
 }
 
 // newSecretsSetFileCmd returns ws mac secrets set file.
-func newSecretsSetFileCmd(p process) *cobra.Command {
+func newSecretsSetFileCmd(p process, open openStore) *cobra.Command {
 	return &cobra.Command{
 		Use:   "file NAME PATH",
 		Short: "set a profile file (vpn_p12, vpn_sswan) from the file at PATH",
@@ -93,7 +130,7 @@ func newSecretsSetFileCmd(p process) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { return s.SetFile(args[0], data) })
+			return editIn(c, open, func(s *secrets.Secrets) error { return s.SetFile(args[0], data) })
 		},
 	}
 }
@@ -124,7 +161,11 @@ func readValue(stdin io.Reader, stderr io.Writer, what string) (string, error) {
 }
 
 // secretsKeys prints each entry as KIND NAME, never a value.
-func secretsKeys(c *cobra.Command, s secretsStore) error {
+func secretsKeys(c *cobra.Command, open openStore) error {
+	s, err := open()
+	if err != nil {
+		return err
+	}
 	id, err := s.k.Identity(c.Context())
 	if err != nil {
 		return err
@@ -139,7 +180,9 @@ func secretsKeys(c *cobra.Command, s secretsStore) error {
 	return nil
 }
 
+// newSecretsStore returns the Mac's store: its file, and its identity in the Keychain.
 func newSecretsStore(p process) secretsStore {
-	return secretsStore{m: p.machine, k: keychain.Keychain{M: p.machine, User: p.getenv("USER")},
-		path: filepath.Join(p.getenv("HOME"), secretsFile)}
+	path := filepath.Join(p.getenv("HOME"), secretsFile)
+	return secretsStore{m: p.machine, k: keychain.Keychain{M: p.machine, User: p.getenv("USER")}, path: path,
+		write: func(s secrets.Secrets, id age.Identity) error { return secrets.WriteFile(p.machine, path, s, id) }}
 }

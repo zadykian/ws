@@ -19,7 +19,8 @@ const secretsFile = ".config/ws/secrets.age"
 // the Keychain.
 func newSecretsCmd(p process) *cobra.Command {
 	return group("secrets", "keep the secrets file, with its identity in the Keychain",
-		newSecretsInitCmd(p), newSecretsSetCmd(p), newSecretsUnsetCmd(p), newSecretsKeysCmd(p))
+		append([]*cobra.Command{newSecretsInitCmd(p)},
+			secretsEditCmds(p, func() (secretsStore, error) { return newSecretsStore(p), nil })...)...)
 }
 
 // newSecretsInitCmd returns ws mac secrets init.
@@ -31,28 +32,6 @@ func newSecretsInitCmd(p process) *cobra.Command {
 			"~/" + secretsFile + ". An item or a file that is there stays.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return secretsInit(c, p) },
-	}
-}
-
-// newSecretsUnsetCmd returns ws mac secrets unset.
-func newSecretsUnsetCmd(p process) *cobra.Command {
-	return &cobra.Command{
-		Use:   "unset KIND NAME",
-		Short: "drop an entry",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(c *cobra.Command, args []string) error {
-			return newSecretsStore(p).edit(c.Context(), func(s *secrets.Secrets) error { return s.Unset(args[0], args[1]) })
-		},
-	}
-}
-
-// newSecretsKeysCmd returns ws mac secrets keys.
-func newSecretsKeysCmd(p process) *cobra.Command {
-	return &cobra.Command{
-		Use:   "keys",
-		Short: "print each entry as KIND NAME, never a value",
-		Args:  cobra.NoArgs,
-		RunE:  func(c *cobra.Command, _ []string) error { return secretsKeys(c, newSecretsStore(p)) },
 	}
 }
 
