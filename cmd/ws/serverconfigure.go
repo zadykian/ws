@@ -2,10 +2,46 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/mac"
 )
+
+// newServerConfigureCmd returns ws server configure.
+func newServerConfigureCmd(p process) *cobra.Command {
+	return &cobra.Command{
+		Use:   "configure",
+		Short: "edit ws's secrets and host_vars on forms, on ws",
+		Long: "The forms of ws mac configure that edit ws, read and written here as root, with no ssh. ws's " +
+			"secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. " +
+			"It needs a terminal: anywhere else, run ws server secrets and ws server values set.",
+		Args: cobra.NoArgs,
+		RunE: func(c *cobra.Command, _ []string) error { return runServerConfigure(c, p) },
+	}
+}
+
+// runServerConfigure draws the forms. A form has no lines to fall back on, so it refuses where no
+// screen draws.
+func runServerConfigure(c *cobra.Command, p process) error {
+	if p.euid != 0 {
+		return errors.New("run it as root, by sudo: ws's secrets and host_vars are root's")
+	}
+	if !drawsScreen(c, p) {
+		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server secrets " +
+			"and ws server values set")
+	}
+	return serverConfigureOn(c, p, screenConfig(c, p))
+}
+
+// serverConfigureOn draws the forms with cfg: ws server wizard's list opens them with its own.
+func serverConfigureOn(c *cobra.Command, p process, cfg tui.Config) error {
+	return tui.Configure(c.Context(), cfg, c.CommandPath(), serverSecretsSheet(p), serverVarsSheet(p))
+}
 
 // serverSecretsSheet is ws's secrets file, edited here as ws server secrets edits it.
 func serverSecretsSheet(p process) tui.Sheet {
@@ -24,6 +60,22 @@ func serverSecretsSheet(p process) tui.Sheet {
 				return tui.Sheet{}, fmt.Errorf("the secrets on ws: %w", err)
 			}
 			return secretsSheet(store, held), nil
+		},
+	}
+}
+
+// serverVarsSheet is host_vars, read and written by the files script as on the Mac, run here as root.
+func serverVarsSheet(p process) tui.Sheet {
+	return tui.Sheet{
+		Name:   "host_vars",
+		Fields: func(map[string]string) []tui.FieldSpec { return nil },
+		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
+			files := &wizard.Remote{Shell: serverShell(screenMachine(ctx, b, p.machine)), Script: mac.RemoteFilesScript}
+			form, err := wizard.VarsForm{Files: files}.Load(ctx)
+			if err != nil {
+				return tui.Sheet{}, err
+			}
+			return varsSheet(form), nil
 		},
 	}
 }

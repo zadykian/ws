@@ -5,8 +5,32 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
 )
+
+func TestServerConfigureRefusals(t *testing.T) {
+	user, _ := wizardProcess("", false, "")
+	user.euid = 1000
+	away, _ := wizardProcess("", false, "")
+	plain, _ := wizardProcess("", false, "")
+	plain = withEnv(plain, map[string]string{"TERM": "xterm"})
+	plain.tty, plain.errTTY = true, true
+	for name, tc := range map[string]struct {
+		p    process
+		args []string
+		want string
+	}{
+		"a user":      {user, []string{"server", "configure"}, "by sudo"},
+		"no terminal": {away, []string{"server", "configure"}, "ws server values set"},
+		"--plain":     {plain, []string{"--plain", "server", "configure"}, "ws server values set"},
+	} {
+		status, stdout, stderr := runWs(tc.p, "", tc.args...)
+		if status != 1 || stdout != "" || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, enterScreen) {
+			t.Errorf("%s: status = %d, stdout = %q, stderr = %q", name, status, stdout, stderr)
+		}
+	}
+}
 
 // The secrets sheet sets an entry of ws's file here and reads it as set, a git entry keeping its user.
 func TestServerSecretsSheetSetsOnWs(t *testing.T) {
@@ -31,5 +55,24 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 	}
 	if got := sheet.Fields(nil)[0]; got.Label != "token github" || !strings.HasPrefix(got.Help, "set") {
 		t.Errorf("after the save: %+v", got)
+	}
+}
+
+// The host_vars sheet reads the file by the files script, run here as root with no ssh.
+func TestServerVarsSheetReadsOnWs(t *testing.T) {
+	p, m := wizardProcess("---\nws_user: ada\n", false, "")
+	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("ws_user: ada\n")}
+	sheet, err := serverVarsSheet(p).Open(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := ""
+	for _, f := range sheet.Fields(nil) {
+		if f.Label == "ws_user" {
+			user = f.Value
+		}
+	}
+	if user != "ada" {
+		t.Errorf("ws_user = %q of %+v", user, sheet.Fields(nil))
 	}
 }
