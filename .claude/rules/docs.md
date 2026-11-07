@@ -19,6 +19,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   git, and [mac-wizard.md](../../docs/mac-wizard.md) its wizard. [mac-targets.md](../../docs/mac-targets.md) is the wizard's targets, and
   [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld, [mac-zed.md](../../docs/mac-zed.md) its Zed, and
   [mac-secrets.md](../../docs/mac-secrets.md) the secrets file.
+  [server-wizard.md](../../docs/server-wizard.md) is `ws server wizard`, the stages run on ws.
   [router.md](../../docs/router.md) is the router's steps, taken once by hand.
 - [tui.md](../../docs/tui.md) is the terminal UI: its modes, `--plain`, the layout and the keys.
   [tui-configure.md](../../docs/tui-configure.md) is its Configure screen, and

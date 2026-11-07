@@ -63,7 +63,9 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 sudo ws server apply
 ```
 
-It runs the roles in order. Then do what stays by hand, below.
+It runs the roles in order. Then do what stays by hand, below. Over plain ssh, `sudo ws server
+wizard` asks ws's values and runs `ws server apply` in a unit, which goes on where the login drops
+([The server's wizard](docs/server-wizard.md)).
 
 ## Running it again
 
