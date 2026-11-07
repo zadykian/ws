@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -87,7 +88,7 @@ func TestSudoAsksUntilSudoTakesIt(t *testing.T) {
 		t.Errorf("Plan after Apply = %v, %v", again, err)
 	}
 	cmd, in, err := s.rooted([]string{"sh", "-s", "--", "status"}, []byte("echo\n"))
-	if err != nil || strings.Join(cmd, " ") != "sudo -k -S -p '' sh -s -- status" || string(in) != sudoPassword+"\necho\n" {
+	if err != nil || !slices.Equal(cmd, []string{"sudo", "-k", "-S", "-p", "", "sh", "-s", "--", "status"}) || string(in) != sudoPassword+"\necho\n" {
 		t.Errorf("rooted = %q, %q, %v", cmd, in, err)
 	}
 	said := strings.Join(s.Host.Out.(*effecttest.Out).Lines, "\n")

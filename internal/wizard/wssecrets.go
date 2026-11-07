@@ -11,19 +11,11 @@ import (
 const wsPath = "/usr/local/bin/ws"
 
 // Secrets runs ws server secrets ARGS on ws as root, with in as its stdin, and returns its stdout. A
-// value goes in in alone: ssh joins args into one line for ws's shell, so each goes quoted, and ps
-// shows the line. A failed ssh says that ws is out of reach; else the error is what ws printed.
+// value goes in in alone: ps shows the arguments. A failed ssh says that ws is out of reach; else the
+// error is what ws printed.
 func (r *Remote) Secrets(ctx context.Context, in []byte, args ...string) ([]byte, error) {
 	r.read = false
-	cmd := []string{wsPath, "server", "secrets"}
-	for _, a := range args {
-		cmd = append(cmd, "'"+strings.ReplaceAll(a, "'", `'\''`)+"'")
-	}
-	argv, stdin, err := r.command(cmd, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := r.Shell.SSH.RunInput(ctx, stdin, argv...)
+	out, err := r.Shell.Run(ctx, in, append([]string{wsPath, "server", "secrets"}, args...)...)
 	switch {
 	case err == nil:
 		return out, nil

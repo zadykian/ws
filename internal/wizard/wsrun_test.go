@@ -154,7 +154,7 @@ func TestWsRunTakesItsPart(t *testing.T) {
 		}
 		r, m := newRun(target, status, false, false)
 		r.Only = []string{"signoz/signoz up", "fans"}
-		line := remoteLine(r.Remote, "run", "'--only=signoz/signoz up'", "'--only=fans'")
+		line := remoteLine(r.Remote, "run", "--only=signoz/signoz up", "--only=fans")
 		m.Results[line] = effecttest.Result{}
 		p, err := r.Plan(context.Background())
 		if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "the steps chosen") {
@@ -201,7 +201,7 @@ func TestWsRunFailureNamesNoUnit(t *testing.T) {
 
 func TestOnlyArgsQuoteForWsShell(t *testing.T) {
 	got := onlyArgs([]string{"a b", "it's"})
-	if want := []string{`'--only=a b'`, `'--only=it'\''s'`}; !slices.Equal(got, want) {
+	if want := []string{"--only=a b", "--only=it's"}; !slices.Equal(got, want) {
 		t.Errorf("onlyArgs = %q, want %q", got, want)
 	}
 }
