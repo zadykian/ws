@@ -41,7 +41,7 @@ func runServerWizard(c *cobra.Command, p process, check bool) error {
 	}
 	tmp := cmp.Or(p.getenv("TMPDIR"), "/tmp")
 	if drawsScreen(c, p) {
-		return drawServerWizard(c, p, check, tmp)
+		return serverScreen{c, p, tmp}.draw(check)
 	}
 	// The run's context ends with a signal, and its lock goes with it.
 	ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
