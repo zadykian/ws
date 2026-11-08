@@ -107,7 +107,9 @@ values set` on each. `link PORT` must name one there, mode 600 in a 755 director
 `status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a run
 must start a unit that loads the credential and runs `--secrets` on that file, and stamp its
 SHA-256. A second run must start none, a changed file one, and the file without the credential one
-with no secrets, then none ([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
+with no secrets, then none. `ws mac secrets` must run its own of `ws server secrets` there, with a
+value on stdin alone, which no argument or log holds
+([61-secrets.sh](../.github/mac-wizard/61-secrets.sh)).
 
 The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets the version of its
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9,
@@ -228,12 +230,6 @@ without the key. It must add the key where the account lacks it, and `--check` n
 the key is made. Where `PATH` has no gh, `ws mac apply` must install Homebrew's once, and only with
 git's keys ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun,
 the job fails, as the daemon's device makes a utun too.
-
-A last case runs `ws mac secrets` on a throwaway keychain that is the default one
-([90-secrets.sh](../.github/mac/90-secrets.sh)). `init` must make the item `ws-secrets` and the
-secrets file, mode 600 in a directory of 700, and print no key. A second `init` must change nothing.
-`set` from standard input and `keys`, which decrypts the file, must list the entries by kind and
-name, with no output or file that holds the value. `unset` must drop one, and fail on a missing one.
 
 ## The rules
 

@@ -23,7 +23,7 @@ ws mac apply
 ```
 
 `ws mac wizard`, in its place, asks first for the values below ([The Mac's wizard](mac-wizard.md)),
-and `ws mac configure` changes them later on a form, with the secrets and ws's host_vars
+and `ws mac configure` changes them later on a form, with ws's secrets and host_vars
 ([The Configure screen](tui-configure.md)). `ws mac apply STEP` runs one step, and
 `--check` shows each change and makes none. At a terminal it draws
 [the run screen](tui.md#the-run-screen), past [the list of steps](tui.md#the-list-of-steps) where

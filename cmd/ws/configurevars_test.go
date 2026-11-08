@@ -142,14 +142,16 @@ func TestMacConfigureSavesHostVarsAndLetsTheLockGo(t *testing.T) {
 			t.Error(err)
 		}
 	}
-	press("\x0e\x0e")
-	select {
-	case op := <-ws.ops:
-		if !slices.Equal(op, []string{"values"}) {
-			t.Fatalf("read = %q", op)
+	// The secrets sheet's read holds the keys, so Ctrl-N goes on until host_vars' read lands.
+	for read := false; !read; {
+		select {
+		case op := <-ws.ops:
+			if read = true; !slices.Equal(op, []string{"values"}) {
+				t.Fatalf("read = %q", op)
+			}
+		case <-time.After(150 * time.Millisecond):
+			press("\x0e")
 		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("no read reached ws")
 	}
 	// A read holds the keys, so the edit goes on until one lands past it.
 	var saved []string

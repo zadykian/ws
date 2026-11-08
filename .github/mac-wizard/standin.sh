@@ -95,7 +95,8 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # stops as that command does, since sshd's ForceCommand runs in its place. It puts ws's programs
 # first on PATH, and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their
 # own, in root here. So it roots a command's path from /root or the wizard's state alone, with its
-# arguments, or after the script of sh -c.
+# arguments, or after the script of sh -c, and ws's binary, which ws mac secrets runs, bare or past
+# sudo's options.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 run=${SSH_ORIGINAL_COMMAND#sudo -n }
@@ -124,6 +125,11 @@ case $SSH_ORIGINAL_COMMAND in
     ;;
 /root/*) exec "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
 /var/lib/ws-wizard/*) exec /bin/sh -c "$WS_STANDIN/root$SSH_ORIGINAL_COMMAND" ;;
+'/usr/local/bin/ws '* | 'sudo '*' /usr/local/bin/ws '*)
+    command=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" | sed -e "s|^/usr/local/bin/ws |$WS_STANDIN/root&|" \
+        -e "s| /usr/local/bin/ws | $WS_STANDIN/root/usr/local/bin/ws |")
+    exec /bin/sh -c "$command"
+    ;;
 "sh -c '"*)
     command=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" |
         sed "s| /root/| $WS_STANDIN/root/root/|; s| /var/lib/ws-wizard/| $WS_STANDIN/root/var/lib/ws-wizard/|")

@@ -4,7 +4,8 @@
 # and runs ws server apply --secrets on ws's file. The stand-in ws must find the file and the
 # credential in it. The run's stamp must name the file's SHA-256. A second run must start none, a
 # changed file must start one, and the file without the credential one that runs with no --secrets,
-# with the stamp naming none, and then none. No output may hold the file or the credential.
+# with the stamp naming none, and then none. No output may hold the file or the credential. ws mac
+# secrets must run ws server secrets on ws, with a value on its stdin alone, and print what it prints.
 
 set -u
 
@@ -77,5 +78,13 @@ wizard
 wizard
 started 0 && [ "$status" = 0 ] || error "a run with nothing changed exited $status, or started a unit"
 
-sudo rm -rf "$file" "$ws/seen" "$ws/creds"
+"$wsbin" mac secrets init && [ "$(tail -n 1 "$ws/secrets.log")" = init ] || error "init ran other than its own on ws"
+out=$(printf '%s\n' "$value" | "$wsbin" mac secrets set env MY_TOKEN 2>&1) || error "set env exited $?"
+[ "$(tail -n 1 "$ws/secrets.log")" = 'set env -- MY_TOKEN' ] && [ "$(cat "$ws/secrets.in")" = "$value" ] ||
+    error "set env ran other than ws server secrets set env -- MY_TOKEN, with the value on stdin"
+echo 'env MY_TOKEN' >"$ws/keys"
+[ "$("$wsbin" mac secrets keys 2>&1)" = 'env MY_TOKEN' ] || error "keys printed other than ws's keys"
+grep -qF "$value" - "$ws/secrets.log" "$ws/log" "$ws/sudo.log" <<<"$out" && error "an argument or a log held the value"
+
+sudo rm -rf "$file" "$ws/seen" "$ws/creds" "$ws/secrets.in" "$ws/keys"
 exit "$fail"

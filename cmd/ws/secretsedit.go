@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"filippo.io/age"
@@ -15,11 +14,10 @@ import (
 	"golang.org/x/term"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/keychain"
 	"github.com/zadykian/ws/internal/secrets"
 )
 
-// secretsKey keeps the identity of a secrets file: the Mac's Keychain, or ws's credential.
+// secretsKey keeps the identity of ws's secrets file: its credential.
 type secretsKey interface {
 	Identity(ctx context.Context) (age.Identity, error)
 }
@@ -111,11 +109,23 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.KindGit+" "+args[0]); err != nil {
 				return err
 			}
-			return editIn(c, open, func(s *secrets.Secrets) error { s.SetGit(args[0], g); return nil })
+			return editIn(c, open, func(s *secrets.Secrets) error {
+				// A flag left out keeps the entry's, so that a form sets a token alone.
+				cur := s.Git[args[0]]
+				if !c.Flags().Changed("username") {
+					g.Username = cur.Username
+				}
+				if !c.Flags().Changed("proactive-auth") {
+					g.ProactiveAuth = cur.ProactiveAuth
+				}
+				s.SetGit(args[0], g)
+				return nil
+			})
 		},
 	}
-	c.Flags().StringVar(&g.Username, "username", "", "the user name that git sends with the token")
-	c.Flags().BoolVar(&g.ProactiveAuth, "proactive-auth", false, "send the token before the server asks for it")
+	c.Flags().StringVar(&g.Username, "username", "", "the user name that git sends with the token, else the entry's")
+	c.Flags().BoolVar(&g.ProactiveAuth, "proactive-auth", false, "send the token before the server asks for it, "+
+		"else as the entry does")
 	return c
 }
 
@@ -197,13 +207,6 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 		_, _ = io.WriteString(c.OutOrStdout(), k+"\n")
 	}
 	return nil
-}
-
-// newSecretsStore returns the Mac's store: its file, and its identity in the Keychain.
-func newSecretsStore(p process) secretsStore {
-	path := filepath.Join(p.getenv("HOME"), secretsFile)
-	return secretsStore{m: p.machine, k: keychain.Keychain{M: p.machine, User: p.getenv("USER")}, path: path,
-		write: func(s secrets.Secrets, id age.Identity) error { return secrets.WriteFile(p.machine, path, s, id) }}
 }
 
 // sayOut prints a line on stdout after the command's path.
