@@ -88,7 +88,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	if err := (wizardScreen{c, p, wizardOptions{}}).state(tui.WsSide, &wizard.Sudo{}); err != nil {
+	if err := (macScreen{c, p, wizardOptions{}}).state(tui.WsSide, &wizard.Sudo{}); err != nil {
 		t.Fatal(err)
 	}
 	if took, gone := lockCalls(m.Calls, "mkdir"), lockCalls(m.Calls, "rm -rf"); took != 1 || gone != 1 {
@@ -100,7 +100,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "q")
-	if err := (wizardScreen{c, p, wizardOptions{}}).state(tui.MacSide, &wizard.Sudo{}); err != nil {
+	if err := (macScreen{c, p, wizardOptions{}}).state(tui.MacSide, &wizard.Sudo{}); err != nil {
 		t.Fatal(err)
 	}
 	if got := lockCalls(m.Calls, "mkdir"); got != 0 {
@@ -110,14 +110,18 @@ func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 
 // stateTrip is a terminal that presses s on the lists, q on the Mac's state screen, and q on the lists
 // that follow. The keys go by the screen drawn, as a reader of a program that ended takes one.
-type stateTrip struct{ *afterScan }
+// stateTrip leaves the state screen titled title with q.
+type stateTrip struct {
+	*afterScan
+	title string
+}
 
 func (s stateTrip) Read(b []byte) (int, error) {
 	n, err := s.afterScan.Read(b)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	switch {
-	case bytes.Contains(s.drawn.Bytes(), []byte("ws mac wizard: Mac")):
+	case bytes.Contains(s.drawn.Bytes(), []byte(s.title)):
 		return copy(b, "q"), nil
 	case bytes.Count(s.drawn.Bytes(), []byte(enterScreen)) > 1:
 		return copy(b, "\x1b[8;24;80t"), nil // A later screen draws from its size too.
@@ -132,7 +136,7 @@ func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
 	defer cancel()
 	var out bytes.Buffer
-	keys := stateTrip{newAfterScan("s")}
+	keys := stateTrip{newAfterScan("s"), "ws mac wizard: Mac"}
 	status := execute(ctx, newRoot(p, newMacCmd(p), newServerCmd(p)), []string{"mac", "wizard"}, keys, &out, keys)
 	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 1 {
 		t.Fatalf("status = %d, want a scan alone: calls = %q", status, m.Calls)

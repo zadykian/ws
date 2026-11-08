@@ -17,8 +17,8 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// wizardScreen is ws mac wizard at a terminal.
-type wizardScreen struct {
+// macScreen is ws mac wizard at a terminal.
+type macScreen struct {
 	c *cobra.Command
 	p process
 	o wizardOptions
@@ -27,7 +27,7 @@ type wizardScreen struct {
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
 // --check, as ws mac apply does. The forms come back to a new scan, of what they wrote, and the
 // state screen, which writes nothing, to the lists as it found them.
-func (w wizardScreen) draw() error {
+func (w macScreen) draw() error {
 	if !opensList(w.c, w.p, false) {
 		return w.whole()
 	}
@@ -35,7 +35,7 @@ func (w wizardScreen) draw() error {
 		// A new one reads the forms' answers. The run takes the scan's, which holds what it asked.
 		sudo := &wizard.Sudo{}
 		queue := wizardQueue(w.p, w.plainStages())
-		choice, err := tui.PickStages(w.c.Context(), w.config(), w.c.CommandPath(), queue, w.scan(sudo))
+		choice, err := tui.PickStages(w.c.Context(), w.config(), w.c.CommandPath(), queue, true, w.scan(sudo))
 		for err == nil && choice.State {
 			choice, err = w.stated(choice, sudo)
 		}
@@ -56,19 +56,19 @@ func (w wizardScreen) draw() error {
 
 // config is what the wizard's screens draw with. A signal ends a plain wizard through its context,
 // with status 1, so here too it is an error of the run, not signalExit.
-func (w wizardScreen) config() tui.Config {
+func (w macScreen) config() tui.Config {
 	cfg := screenConfig(w.c, w.p)
 	cfg.Cut = func(s syscall.Signal) error { return fmt.Errorf("stopped by %v", s) }
 	return cfg
 }
 
 // plainStages returns the stages for their names and machines alone: none of them runs.
-func (w wizardScreen) plainStages() []step.Step {
+func (w macScreen) plainStages() []step.Step {
 	return wizardStages(wizardEffects{p: w.p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, w.o)
 }
 
 // effects returns the stages' effects on b, for a run that prints its stdout on text.
-func (w wizardScreen) effects(ctx context.Context, b *tui.Bridge, text io.Writer, sudo *wizard.Sudo) wizardEffects {
+func (w macScreen) effects(ctx context.Context, b *tui.Bridge, text io.Writer, sudo *wizard.Sudo) wizardEffects {
 	p := w.p
 	p.machine = screenMachine(ctx, b, p.machine)
 	talks, _ := p.machine.(effect.Foreground)
@@ -81,7 +81,7 @@ func (w wizardScreen) effects(ctx context.Context, b *tui.Bridge, text io.Writer
 
 // scan is a check of every stage, beside the lists. ws speaks for its roles once the stage that
 // installs it has read it, as ws's stages behind that need a ws at this version.
-func (w wizardScreen) scan(sudo *wizard.Sudo) tui.Work {
+func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 	check := w.o
 	check.check = true
 	return func(ctx context.Context, b *tui.Bridge) error {
@@ -125,7 +125,7 @@ func wsRunOf(stages []step.Step) *wizard.WsRun {
 }
 
 // tmp is where the lock of a run goes.
-func (w wizardScreen) tmp() string { return cmp.Or(w.p.getenv("TMPDIR"), "/tmp") }
+func (w macScreen) tmp() string { return cmp.Or(w.p.getenv("TMPDIR"), "/tmp") }
 
 // wizardRun is what a run of the stages takes from a screen.
 type wizardRun struct {
@@ -137,7 +137,7 @@ type wizardRun struct {
 }
 
 // work is r beside a screen. What stays by hand goes to the run's stdout, as in a plain run.
-func (w wizardScreen) work(r wizardRun, text io.Writer) tui.Work {
+func (w macScreen) work(r wizardRun, text io.Writer) tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
 		e := w.effects(ctx, b, text, r.sudo)
 		e.left, e.only, e.events = r.left, r.only, b
@@ -150,7 +150,7 @@ func (w wizardScreen) work(r wizardRun, text io.Writer) tui.Work {
 
 // running gives draw a run's config and the work of r, and prints the run's stdout past the screen,
 // which it would paint over.
-func (w wizardScreen) running(r wizardRun, draw func(tui.Config, tui.Work) error) error {
+func (w macScreen) running(r wizardRun, draw func(tui.Config, tui.Work) error) error {
 	cfg, done := runConfig(w.c, w.p, w.config())
 	defer done()
 	var text bytes.Buffer
@@ -167,7 +167,7 @@ func (w wizardScreen) running(r wizardRun, draw func(tui.Config, tui.Work) error
 }
 
 // whole runs every stage, on the run screen of their names.
-func (w wizardScreen) whole() error {
+func (w macScreen) whole() error {
 	return w.running(wizardRun{o: w.o, sudo: &wizard.Sudo{}}, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewRunScreen(runTitle(w.c, w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
 		return tui.Run(w.c.Context(), cfg, screen, work)
@@ -177,7 +177,7 @@ func (w wizardScreen) whole() error {
 // runOf is the run of what the lists chose. A stage in part leaves out ws's roles by --only, as they
 // run on ws, and ws mac apply's steps by the run's filter. ws's run whole by a tick goes once more, as
 // under --update: a good last run says nothing of a step that drifted after it.
-func (w wizardScreen) runOf(choice tui.Choice, sudo *wizard.Sudo) wizardRun {
+func (w macScreen) runOf(choice tui.Choice, sudo *wizard.Sudo) wizardRun {
 	o := w.o
 	o.check = choice.Check
 	name := wsRunOf(w.plainStages()).Name()
@@ -186,7 +186,7 @@ func (w wizardScreen) runOf(choice tui.Choice, sudo *wizard.Sudo) wizardRun {
 }
 
 // chosen runs what the lists chose, on a run of those stages.
-func (w wizardScreen) chosen(choice tui.Choice, sudo *wizard.Sudo) error {
+func (w macScreen) chosen(choice tui.Choice, sudo *wizard.Sudo) error {
 	r := w.runOf(choice, sudo)
 	return w.running(r, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewQueueRun(runTitle(w.c, r.o.check), cfg.Theme, choice)

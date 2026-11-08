@@ -159,7 +159,7 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	}
 	if drawsScreen(c, p) {
 		stop() // The screen takes the signals, and asks before a signal ends a run.
-		return wizardScreen{c, p, o}.draw()
+		return macScreen{c, p, o}.draw()
 	}
 	hand := &wizard.Hand{}
 	closing := func(ctx context.Context) {
