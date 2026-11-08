@@ -8,32 +8,22 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Remote runs the remote script's operations as root on ws, through ssh, which reaches ws at the
-// address that the Host key stage asked, where it asked one.
+// Remote runs the remote script's operations as root on ws, through its Shell.
 type Remote struct {
-	SSH SSH
+	Shell Shell
 	// Script is wizard-remote.sh, which sh -s reads from standard input.
 	Script []byte
-	// Sudo is how a script reaches root. Nil runs it as the login.
-	Sudo *Sudo
-	// Events hears a run's events. Nil drops them. It hears them on a goroutine of ssh's, while the
-	// stage waits, and hears them again where a follow replays the log.
+	// Events hears a run's events. Nil drops them. It hears them on a goroutine of the Shell's, while
+	// the stage waits, and hears them again where a follow replays the log.
 	Events step.Observer
 
 	read   bool
 	status map[string]string
 }
 
-// args returns ssh's arguments and stdin for the operation. ssh hands ws's shell one line, so an
-// argument of op that holds a blank or a quote comes quoted for it, as onlyArgs does.
-func (r *Remote) args(op []string) ([]string, []byte, error) {
-	return r.command(append([]string{"sh", "-s", "--"}, op...), r.Script)
-}
-
-// command returns ssh's arguments and stdin for cmd as root, with in as its stdin.
-func (r *Remote) command(cmd []string, in []byte) ([]string, []byte, error) {
-	cmd, in, err := r.Sudo.rooted(cmd, in)
-	return append([]string{"-o", "BatchMode=yes", "ws"}, cmd...), in, err
+// script returns the command that runs the operation, with the script on its stdin.
+func script(op []string) []string {
+	return append([]string{"sh", "-s", "--"}, op...)
 }
 
 // Do runs the operation, and has the next Status read ws again, as the operation may change it.
@@ -44,32 +34,20 @@ func (r *Remote) Do(ctx context.Context, op ...string) ([]byte, error) {
 
 // query runs an operation that changes nothing, so what Status read stands.
 func (r *Remote) query(ctx context.Context, op ...string) ([]byte, error) {
-	args, in, err := r.args(op)
-	if err != nil {
-		return nil, err
-	}
-	return r.SSH.RunInput(ctx, in, args...)
+	return r.Shell.Run(ctx, r.Script, script(op)...)
 }
 
 // Pass is Do for an operation that goes on, such as install, whose output goes to Stderr as it comes.
 func (r *Remote) Pass(ctx context.Context, op ...string) error {
 	r.read = false
-	args, in, err := r.args(op)
-	if err != nil {
-		return err
-	}
-	return r.SSH.PassInput(ctx, in, args...)
+	return r.Shell.Pass(ctx, r.Script, script(op)...)
 }
 
 // Follow is Pass for the operation run, with ws server apply's args. The events of the run's log go
 // to Events, and its other lines to Stderr.
 func (r *Remote) Follow(ctx context.Context, args ...string) error {
 	r.read = false
-	a, in, err := r.args(append([]string{"run"}, args...))
-	if err != nil {
-		return err
-	}
-	return r.SSH.PassLines(ctx, in, r.event, a...)
+	return r.Shell.Lines(ctx, r.Script, r.event, script(append([]string{"run"}, args...))...)
 }
 
 // event tells whether a line of a run's log is an event, and hands it on.
@@ -81,19 +59,14 @@ func (r *Remote) event(line string) bool {
 	return ok
 }
 
-// Put writes data to path on ws as root, mode 0600, through its stdin. path holds no blank or quote:
-// the remote script named it.
+// Put writes data to path on ws as root, mode 0600. path holds no blank or quote: the remote script
+// named it.
 func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
-	args, in, err := r.command([]string{"sh", "-c", "'umask 077 && cat >" + path + "'"}, data)
-	if err != nil {
-		return err
-	}
-	_, err = r.SSH.RunInput(ctx, in, args...)
-	return err
+	return r.Shell.Put(ctx, path, data)
 }
 
 // Status reads what the remote script's status prints once, until Do, Pass or Follow runs, and reports
-// whether it read any: ssh or the script fails where root does not log in. A line is NAME VALUE.
+// whether it read any: the Shell or the script fails where root is out of reach. A line is NAME VALUE.
 func (r *Remote) Status(ctx context.Context) bool {
 	if !r.read {
 		out, err := r.Do(ctx, "status")

@@ -17,10 +17,7 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 	if err != nil {
 		return
 	}
-	if r.Remote.Get("fans") == "refused" {
-		h.Add("ws's fans' driver: with Secure Boot on, DKMS's key, enrolled at ws's console " +
-			"(docs/fans.md, Secure Boot).")
-	}
+	r.fans(h)
 	if c.Target != "cloud" && r.Remote.Get("outbound") == "off" {
 		h.Add("ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, as for " +
 			"a cloud VM; remove that line, then run the wizard with --update (docs/security.md, Outbound).")
@@ -42,6 +39,21 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 	if c.Remote != "" {
 		h.Add("The router's forwards to ws, UDP %s and TCP %s, for %s, as docs/router.md has them.",
 			cmp.Or(c.Port, "51820"), cmp.Or(c.RemotePort, "22022"), c.Remote)
+	}
+}
+
+// WsHand adds what stays by hand of ws alone, after a run of ws's own wizard. ws's host_vars names
+// its target, so its outbound table follows that, and no mac.conf names another.
+func (r *WsRun) WsHand(ctx context.Context, h *Hand) {
+	r.Remote.Status(ctx)
+	r.fans(h)
+}
+
+// fans adds the fans' driver where Secure Boot refused it, as the remote script's status read.
+func (r *WsRun) fans(h *Hand) {
+	if r.Remote.Get("fans") == "refused" {
+		h.Add("ws's fans' driver: with Secure Boot on, DKMS's key, enrolled at ws's console " +
+			"(docs/fans.md, Secure Boot).")
 	}
 }
 

@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -87,7 +88,7 @@ func TestSudoAsksUntilSudoTakesIt(t *testing.T) {
 		t.Errorf("Plan after Apply = %v, %v", again, err)
 	}
 	cmd, in, err := s.rooted([]string{"sh", "-s", "--", "status"}, []byte("echo\n"))
-	if err != nil || strings.Join(cmd, " ") != "sudo -k -S -p '' sh -s -- status" || string(in) != sudoPassword+"\necho\n" {
+	if err != nil || !slices.Equal(cmd, []string{"sudo", "-k", "-S", "-p", "", "sh", "-s", "--", "status"}) || string(in) != sudoPassword+"\necho\n" {
 		t.Errorf("rooted = %q, %q, %v", cmd, in, err)
 	}
 	said := strings.Join(s.Host.Out.(*effecttest.Out).Lines, "\n")
@@ -157,7 +158,7 @@ func TestSudoStopsWhereSSHFails(t *testing.T) {
 func TestRemoteThroughSudo(t *testing.T) {
 	s, m, _ := newSudo(t)
 	s.way, s.password = sudoAsked, sudoPassword
-	r := &Remote{SSH: s.Host.SSH, Script: []byte("echo\n"), Sudo: s}
+	r := &Remote{Shell: SSHShell{SSH: s.Host.SSH, Sudo: s}, Script: []byte("echo\n")}
 	line := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-s", "--", "status")
 	if remoteLine(r, "status") != line {
 		t.Fatalf("remoteLine = %q", remoteLine(r, "status"))
@@ -178,7 +179,7 @@ func TestRemoteThroughSudo(t *testing.T) {
 
 func TestRemoteBeforeTheStageReadsNothing(t *testing.T) {
 	s, _, _ := newSudo(t)
-	r := &Remote{SSH: s.Host.SSH, Script: []byte("echo\n"), Sudo: s}
+	r := &Remote{Shell: SSHShell{SSH: s.Host.SSH, Sudo: s}, Script: []byte("echo\n")}
 	if r.Status(context.Background()) {
 		t.Error("Status read with the stage unread")
 	}

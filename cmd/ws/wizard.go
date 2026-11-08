@@ -95,9 +95,10 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		SSH: wizard.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
 	sudo := e.sudo
 	sudo.Host, sudo.P = host, e.hidden
-	files := &wizard.Remote{SSH: host.SSH, Script: mac.RemoteFilesScript, Sudo: sudo}
-	run := &wizard.WsRun{Host: host, Version: p.version, Update: o.update, Only: e.only,
-		Remote: &wizard.Remote{SSH: host.SSH, Script: mac.RemoteScript, Sudo: sudo, Events: e.events},
+	shell := wizard.SSHShell{SSH: host.SSH, Sudo: sudo}
+	files := &wizard.Remote{Shell: shell, Script: mac.RemoteFilesScript}
+	run := &wizard.WsRun{Host: host, Want: host.ReadConf, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only,
+		Remote: &wizard.Remote{Shell: shell, Script: mac.RemoteScript, Events: e.events},
 		Files:  files, Default: values.Default().User}
 	hand.Late(run.Hand)
 	hand.Late(gh.Hand)

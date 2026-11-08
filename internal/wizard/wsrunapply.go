@@ -32,7 +32,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 			return err
 		}
 	}
-	r.Host.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
+	r.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
 		"a first run takes 20 to 40 minutes", runStage)
 	if err := r.run(ctx); err != nil {
 		return err
@@ -46,7 +46,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return fail()
 	}
 	if !r.off() {
-		r.Host.Out.Say("%s: the unit it followed began before host_vars named security_outbound: false, "+
+		r.Out.Say("%s: the unit it followed began before host_vars named security_outbound: false, "+
 			"so ws server apply runs again", runStage)
 		if err := r.run(ctx); err != nil {
 			return err

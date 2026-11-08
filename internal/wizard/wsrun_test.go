@@ -19,8 +19,8 @@ func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Mach
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=alice\n" + extra[target])
 	h := &HostKey{Conf: "/h/mac.conf", Lock: "/l", Check: check, M: m, Out: &effecttest.Out{},
 		SSH: SSH{M: m, Lock: "/l"}}
-	r := &WsRun{Host: h, Version: "v1.2.3", Update: update, Default: "alice", Remote: &Remote{SSH: h.SSH, Script: []byte("x")},
-		Files: &Remote{SSH: h.SSH, Script: []byte("y")}}
+	r := &WsRun{Host: h, Want: h.ReadConf, Check: check, Out: h.Out, Version: "v1.2.3", Update: update, Default: "alice", Remote: &Remote{Shell: SSHShell{SSH: h.SSH}, Script: []byte("x")},
+		Files: &Remote{Shell: SSHShell{SSH: h.SSH}, Script: []byte("y")}}
 	if status != "" {
 		status += "secrets -\n"
 	}
@@ -154,7 +154,7 @@ func TestWsRunTakesItsPart(t *testing.T) {
 		}
 		r, m := newRun(target, status, false, false)
 		r.Only = []string{"signoz/signoz up", "fans"}
-		line := remoteLine(r.Remote, "run", "'--only=signoz/signoz up'", "'--only=fans'")
+		line := remoteLine(r.Remote, "run", "--only=signoz/signoz up", "--only=fans")
 		m.Results[line] = effecttest.Result{}
 		p, err := r.Plan(context.Background())
 		if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "the steps chosen") {
@@ -175,7 +175,7 @@ func TestWsRunTakesItsPart(t *testing.T) {
 
 func TestWsRunCutLeavesTheUnitAndSaysSo(t *testing.T) {
 	r, _ := newRun("lan", "run - -\nactive -\n", false, false)
-	out := r.Host.Out.(*effecttest.Out)
+	out := r.Out.(*effecttest.Out)
 	p, _ := r.Plan(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -189,7 +189,7 @@ func TestWsRunCutLeavesTheUnitAndSaysSo(t *testing.T) {
 
 func TestWsRunFailureNamesNoUnit(t *testing.T) {
 	r, _ := newRun("lan", "run - -\nactive -\n", false, false)
-	out := r.Host.Out.(*effecttest.Out)
+	out := r.Out.(*effecttest.Out)
 	p, _ := r.Plan(context.Background())
 	if err := r.Apply(context.Background(), p); err == nil {
 		t.Fatal("Apply succeeded with no result for ssh")
@@ -201,7 +201,7 @@ func TestWsRunFailureNamesNoUnit(t *testing.T) {
 
 func TestOnlyArgsQuoteForWsShell(t *testing.T) {
 	got := onlyArgs([]string{"a b", "it's"})
-	if want := []string{`'--only=a b'`, `'--only=it'\''s'`}; !slices.Equal(got, want) {
+	if want := []string{"--only=a b", "--only=it's"}; !slices.Equal(got, want) {
 		t.Errorf("onlyArgs = %q, want %q", got, want)
 	}
 }
@@ -222,5 +222,18 @@ func TestWsRunApplyCloudAgain(t *testing.T) {
 	}
 	if runs != 2 || !strings.Contains(strings.Join(m.Calls, "\n"), "-- outbound") {
 		t.Errorf("calls = %q; want two runs, as the status says on, and outbound", m.Calls)
+	}
+}
+
+// On ws with no booted systemd, as in a container, the stage reads nothing and skips with a line.
+func TestWsRunSkipsUnbooted(t *testing.T) {
+	r, m := newRun("lan", "", false, true)
+	r.Unbooted, r.Await, m.Calls = true, "ws's values", nil
+	p, err := r.Plan(context.Background())
+	if err != nil || len(p.Changes) != 0 || len(m.Calls) != 0 || r.WaitsOn() != "ws's values" {
+		t.Fatalf("Plan = %v, %v; calls %q; waits on %q", p, err, m.Calls, r.WaitsOn())
+	}
+	if out := r.Out.(*effecttest.Out); len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "isn't booted") {
+		t.Errorf("said %q", out.Lines)
 	}
 }
