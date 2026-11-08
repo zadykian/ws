@@ -14,16 +14,14 @@
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
 #   is off where host_vars, /etc/ws/host_vars.yml, turns the security role's outbound table off, else
 #   on. cable is the port of the Mac's cable that host_vars and the network role's netplan file name.
+#   secrets is the SHA-256 of ws's secrets file, as a run would stamp it, or -.
 # - state prints ws server state --json, which changes nothing, on stdout alone. It has the HOME and
 #   the locale of a run's unit, so that it reads what a run would.
 # - run [ARG...] runs ws server apply --json ARGs in a unit of its own, ws-wizard-STAMP, which goes
 #   on where ssh drops, or follows such a unit that runs already. A unit of other ARGs would leave
 #   these unrun, so run refuses it, unless it is a full one. It prints the unit's log until it ends,
-#   and exits with the run's status. A run with no ARG is a full one. Where the identity is there,
-#   the unit loads it as the credential ws-secrets, and runs with --secrets. run removes the identity
-#   once systemd-run returns, at once where it follows a unit, and where it ends in error.
-# - secrets stage makes the directories of the secrets file and the identity, and prints their paths,
-#   which the wizard sends to. secrets drop removes both, or the identity alone given "identity".
+#   and exits with the run's status. A run with no ARG is a full one. Where ws's secrets file and
+#   its identity's credential are both there, the unit loads the credential and runs with --secrets.
 # - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
 #   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
 #   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
@@ -34,14 +32,15 @@
 
 set -eu
 
-# The wizard's stamps, ws's binary, the machine's values that ws server apply reads, the Mac's key
-# for wg0, the fans' driver as the kernel loaded it, and the network role's netplan file of the
-# cable. Each is a line NAME=PATH, which CI's stand-in for ws roots in a directory of its own.
+# The wizard's stamps, ws's binary, the values and secrets file that ws server apply reads, their
+# identity's credential, the Mac's key for wg0, the fans' driver as loaded, and the cable's netplan
+# file. Each is a line NAME=PATH, which CI's stand-in roots in a directory of its own.
 state=/var/lib/ws-wizard
 ws=/usr/local/bin/ws
 vars=/etc/ws/host_vars.yml
+secrets=/etc/ws/secrets.age
+credential=/etc/credstore.encrypted/ws-secrets
 peer=/etc/wireguard/mac.pub
-identity=/run/ws-wizard/identity
 module=/sys/module/nct6687
 netplan=/etc/netplan/60-direct-link.yaml
 
@@ -138,9 +137,11 @@ status() {
     echo "peer $(wg show wg0 peers 2>/dev/null |
         awk -v mac="$mac" 'mac != "" && $0 == mac { print "ok"; exit }' | first)"
     echo "outbound $(off | sh -s -- check "$vars" && echo off || echo on)"
+    echo "secrets $( ([ -f "$credential" ] && (sha256sum || shasum -a 256) <"$secrets") 2>/dev/null |
+        cut -d ' ' -f 1 | first)"
 }
 
-# job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE [ARG...].
+# job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE SECRETS [ARG...].
 # It runs WS server apply --json ARGs, whose event lines reach the wizard through the unit's log. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
 # which has no ARG, writes STATE/run too: the version that WS printed before the run, or - where WS
 # prints none, the status, off where host_vars turned the outbound table off as the run began, else
@@ -148,12 +149,12 @@ status() {
 # identity as its credential adds --secrets and the file.
 job() {
     cat <<'EOF'
-unit=$1 vars=$2 ws=$3 state=$4 full=0 table=on sum=-
-shift 4
+unit=$1 vars=$2 ws=$3 state=$4 secrets=$5 full=0 table=on sum=-
+shift 5
 [ $# != 0 ] || full=1
 if [ -n "${CREDENTIALS_DIRECTORY-}" ]; then
-    sum=$( (sha256sum || shasum -a 256) <"$state/secrets.age" | cut -d ' ' -f 1) && [ -n "$sum" ] || exit 1
-    set -- "$@" --secrets "$state/secrets.age"
+    sum=$( (sha256sum || shasum -a 256) <"$secrets" | cut -d ' ' -f 1) && [ -n "$sum" ] || exit 1
+    set -- "$@" --secrets "$secrets"
 fi
 sh "$state/off" check "$vars" && table=off
 [ "$full" = 0 ] || rm -f "$state/run"
@@ -199,14 +200,11 @@ EOF
 # run starts a run's unit, or follows the one that runs, as the header says. The unit takes root's
 # HOME, which systemd gives a unit only with a user, and a UTF-8 locale.
 run() {
-    trap 'rm -f "$identity"' EXIT
-    trap 'exit 1' HUP INT TERM
     unit=$(active)
     if [ -n "$unit" ]; then
         other=$(cat "$state/args" 2>/dev/null) || other=
         [ -z "$other" ] || [ "$other" = "$*" ] ||
             die "$unit runs other steps on ws: journalctl -u $unit shows its log; run the wizard again once it ends"
-        rm -f "$identity"
         say "following $unit, which runs on ws already"
     else
         mkdir -p "$state"
@@ -215,13 +213,12 @@ run() {
         printf '%s\n' "$*" >"$state/args"
         unit=ws-wizard-$(date +%Y%m%d%H%M%S)-$$
         creds=
-        [ ! -f "$identity" ] || creds="-p LoadCredential=ws-secrets:$identity -p Type=exec"
+        [ ! -f "$secrets" ] || [ ! -f "$credential" ] || creds="-p LoadCredentialEncrypted=ws-secrets -p Type=exec"
         # shellcheck disable=SC2086 # the words are options, and no path holds a blank
         systemd-run $creds --quiet --unit="$unit" --collect --expand-environment=no \
             --description="ws server apply, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
-            --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$vars" "$ws" "$state" "$@" ||
-            { rm -f "$identity" && die "systemd-run cannot start $unit"; }
-        rm -f "$identity"
+            --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$vars" "$ws" "$state" "$secrets" "$@" ||
+            die "systemd-run cannot start $unit"
         say "started $unit, which goes on where ssh drops: journalctl -u $unit shows its log"
     fi
     follow "$unit"
@@ -259,19 +256,6 @@ install() {
     WS_VERSION=$1 WS_RELEASES_URL=$2 sh "$state/install.sh"
 }
 
-# secrets OP stages or drops the secrets file and the identity, which lives on a tmpfs. Both are
-# root's alone.
-secrets() {
-    case $1 in
-    stage)
-        (umask 077 && mkdir -p "$state" "${identity%/*}") || die "cannot make the secrets' directories"
-        echo "$state/secrets.age $identity"
-        ;;
-    drop) rm -f "$identity" && { [ "${2-}" = identity ] || rm -f "$state/secrets.age"; } ;;
-    *) die "unknown secrets op '$1'" ;;
-    esac
-}
-
 running() {
     systemctl show -p ActiveState --value "$1" | grep -qxE "active|activating|deactivating"
 }
@@ -289,9 +273,8 @@ main() {
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$vars" ;;
     install) install "${2-}" "${3-}" ;;
-    secrets) secrets "${2-}" "${3-}" ;;
     *) die "unknown op '${1-}'; usage: wizard-remote.sh status | state | run [ARG...] |" \
-        "install TAG URL | outbound | secrets stage|drop" ;;
+        "install TAG URL | outbound" ;;
     esac
 }
 

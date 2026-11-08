@@ -77,13 +77,13 @@ echo "$mac" | sudo tee "$peer" >/dev/null
 rm "$ws/claude"
 states "mac.pub $mac" "wg0 $key" "signing $(cut -d ' ' -f 1-2 "$ws/signing.pub")" \
     "hostname $(hostname)" 'claude login' 'fans refused' 'cable -' 'peer -' \
-    'outbound on'
+    'outbound on' 'secrets -'
 touch "$ws/claude"
 rm "$ws/sb" "$ws/wg0"
 sudo rm "$peer"
 sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" --unset user.signingkey
 states 'mac.pub -' 'wg0 -' 'signing none' "hostname $(hostname)" 'claude ok' 'fans ok' 'cable -' \
-    'peer -' 'outbound on'
+    'peer -' 'outbound on' 'secrets -'
 rm "$ws/nct6687"
 sudo git config -f "$ws/root/home/$(id -un)/.gitconfig" user.signingkey \
     "$ws/root/home/$(id -un)/.ssh/id_ed25519_signing.pub"

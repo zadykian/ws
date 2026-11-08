@@ -24,9 +24,6 @@ type WsRun struct {
 	Default string
 	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
 	Version string
-	// Secrets is the Mac's secrets file and User the Mac's user, whose Keychain holds its identity. A
-	// run sends the file and the identity, and the run's stamp names the file's SHA-256.
-	Secrets, User string
 	// Update has the stage run ws server apply once more, with the ws installed there.
 	Update bool
 	// Only is what a run of part of ws takes, by --only's entries. The remote script stamps a full run
@@ -56,12 +53,11 @@ func (r *WsRun) off() bool {
 	return len(f) > 2 && f[2] == "off"
 }
 
-// idle tells whether ws's last full run exited 0, made by a ws of this version, with the Mac's
-// secrets file as it is now, and no run's unit runs there now.
+// idle tells whether ws's last full run exited 0, made by a ws of this version, with ws's secrets
+// file as it is now, and no run's unit runs there now.
 func (r *WsRun) idle(ctx context.Context) bool {
-	sum, err := r.localSum()
-	return err == nil && r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
-		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ") && r.stampSum() == sum
+	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
+		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ") && r.sameSecrets()
 }
 
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
@@ -104,9 +100,6 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	if _, err := r.localSum(); err != nil {
-		return step.Plan{}, err
-	}
 	if r.partDone(ctx, c) {
 		return step.Plan{}, nil
 	}
@@ -114,8 +107,8 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if len(r.Only) > 0 {
 		how = "run ws server apply on ws for the steps chosen, in a unit of its own, and follow its log"
 	}
-	if data, _ := r.macSecrets(); data != nil {
-		how += ", after sending the secrets file and the identity"
+	if s := r.Remote.Get("secrets"); s != "" && s != noSum {
+		how += ", with ws's secrets file"
 	}
 	user := ""
 	if !r.named(c) {
