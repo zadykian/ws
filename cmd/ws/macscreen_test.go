@@ -19,7 +19,7 @@ import (
 func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := wizardScreen{c, p, wizardOptions{}}
+	w := macScreen{c, p, wizardOptions{}}
 	r := wizardRun{o: wizardOptions{check: true}, sudo: &wizard.Sudo{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
@@ -35,7 +35,7 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 func TestWizardConfigEndsACutAsAPlainRunDoes(t *testing.T) {
 	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	err := wizardScreen{c, p, wizardOptions{}}.config().Cut(syscall.SIGINT)
+	err := macScreen{c, p, wizardOptions{}}.config().Cut(syscall.SIGINT)
 	var cut signalExit
 	if err == nil || errors.As(err, &cut) {
 		t.Errorf("err = %v, want one of status 1", err)
@@ -111,7 +111,7 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
-	w := wizardScreen{p: fakeProcess()}
+	w := macScreen{p: fakeProcess()}
 	if !w.runOf(tui.Choice{Whole: []string{"ws's run"}}, nil).o.update {
 		t.Error("a tick in ws's run left the last run to speak")
 	}
@@ -123,7 +123,7 @@ func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := wizardScreen{c, p, wizardOptions{}}
+	w := macScreen{c, p, wizardOptions{}}
 	r := wizardRun{sudo: &wizard.Sudo{}, left: func(string, string) bool { return true }}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
@@ -138,7 +138,7 @@ func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 func TestWizardScanChangesNothing(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := wizardScreen{c, p, wizardOptions{}}
+	w := macScreen{c, p, wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	if err := tui.Run(context.Background(), cfg, screen, w.scan(&wizard.Sudo{})); err != nil {
