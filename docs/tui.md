@@ -3,7 +3,7 @@
 ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip Gloss. Its code is
 `internal/tui`. `ws server apply` and `ws mac apply` draw [the run screen](#the-run-screen),
 `ws server state` and `ws mac state` draw [the state screen](#the-state-screen), and
-`ws mac configure` draws [the Configure screen](tui-configure.md). `ws mac wizard` draws
+`ws mac configure` and `ws server configure` draw [the Configure screen](tui-configure.md). `ws mac wizard` draws
 [two lists](tui-wizard.md), which lead to the other two, and `ws server wizard` one. The rest, such
 as `ws update` and `ws version`, print lines.
 

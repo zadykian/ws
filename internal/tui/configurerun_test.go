@@ -49,6 +49,23 @@ func TestConfigureSavesAndLeaves(t *testing.T) {
 	}
 }
 
+// A first sheet that waits for a read is read as the screen opens, with no key.
+func TestConfigureReadsTheFirstSheetAtOnce(t *testing.T) {
+	read := make(chan struct{})
+	sheet := Sheet{Name: "far", Fields: wayFile().Fields, Open: func(context.Context, *Bridge) (Sheet, error) {
+		close(read)
+		return wayFile(), nil
+	}}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	go func() { _ = Configure(ctx, noKeys(&bytes.Buffer{}), "configure", sheet) }()
+	select {
+	case <-read:
+	case <-time.After(5 * time.Second):
+		t.Error("the first sheet was never read")
+	}
+}
+
 func TestConfigureCtrlCEndsWithTheCut(t *testing.T) {
 	c := noKeys(&bytes.Buffer{})
 	in, keys := io.Pipe()
