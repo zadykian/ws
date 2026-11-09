@@ -25,7 +25,7 @@ func TestRunWritesTheLineThenRemovesIt(t *testing.T) {
 			return io.NopCloser(strings.NewReader("0, 5, 33\n")), nil
 		}
 	}
-	b := &Bar{FS: fstest.MapFS{"proc/meminfo": {Data: []byte("MemTotal: 10 kB\nMemAvailable: 5 kB\n")}}, Interval: time.Millisecond}
+	b := &Bar{FS: fstest.MapFS{"proc/meminfo": {Data: []byte("MemTotal: 10 kB\nMemAvailable: 5 kB\n")}}, Interval: 100 * time.Millisecond}
 	done := make(chan error)
 	go func() { done <- b.Run(ctx, file, command) }()
 	want := "gpu 5% 33C  ram 50%\n"

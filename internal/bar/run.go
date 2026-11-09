@@ -23,13 +23,16 @@ func (b *Bar) Run(ctx context.Context, file string, command Command) error {
 	}
 	ctx, stop := context.WithCancel(ctx)
 	defer stop()
-	go b.gpus.run(ctx, command("nvidia-smi", smiArgs(b.Interval)...), smiRetry)
 	defer func() { _ = os.Remove(file) }() // a line never written leaves nothing to remove
 	tick := time.NewTicker(b.Interval)
 	defer tick.Stop()
-	for {
+	for first := true; ; first = false {
 		if err := writeLine(file, b.Line()); err != nil {
 			return err
+		}
+		if first {
+			// After the first line, so that a file that cannot be written starts no nvidia-smi.
+			go b.gpus.run(ctx, command("nvidia-smi", smiArgs(b.Interval)...), smiRetry)
 		}
 		select {
 		case <-ctx.Done():
