@@ -29,13 +29,13 @@ type Tunnel struct {
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
-	// Setup is the ws mac apply stage, which runs again once WS_PUBLIC_KEY is wg0's.
-	Setup *Setup
-	Hand  *Hand
-	Home  string
-	Sleep func(time.Duration)
-	M     effect.Machine
-	Out   effect.Out
+	// MacApply runs ws mac apply, as the Setup stage's Run does, again once WS_PUBLIC_KEY is wg0's.
+	MacApply func(ctx context.Context, check bool) (bool, error)
+	Hand     *Hand
+	Home     string
+	Sleep    func(time.Duration)
+	M        effect.Machine
+	Out      effect.Out
 	// none is set where the check finds no handshake in this run.
 	none bool
 }

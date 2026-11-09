@@ -105,7 +105,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	setup := wizardSetup(e, later)
 	login := &wizard.Login{Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
 	cable := &wizard.Cable{Ws: ws, Conf: later, Check: check, Version: p.version, Default: run.Default, Update: o.update,
-		Setup: setup, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
+		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
 		&wizard.Tools{M: p.machine, Out: out, Sleep: time.Sleep},
@@ -124,7 +124,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		run,
 		&wizard.WsClaude{Ws: ws, Tty: p.tty},
 		&wizard.Signing{Gh: gh.GhCLI, Ws: ws, Lock: lock, Check: check},
-		&wizard.Tunnel{Ws: ws, Conf: later, Check: check, Setup: setup, Hand: hand, Home: p.getenv("HOME"),
+		&wizard.Tunnel{Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,
 	}

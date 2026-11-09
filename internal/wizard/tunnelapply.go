@@ -59,7 +59,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 			return err
 		}
 	}
-	if _, err := t.Setup.Run(ctx, false); err != nil {
+	if _, err := t.MacApply(ctx, false); err != nil {
 		return err
 	}
 	return t.handshake(ctx, c.Target, c.Port, peered && c.PublicKey == wg0)

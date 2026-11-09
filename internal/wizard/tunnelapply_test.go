@@ -25,7 +25,7 @@ func TestTunnelApply(t *testing.T) {
 		m.Results[tunnelCall(tun.Ws.ssh(), "-o", "BatchMode=yes", "ws", "echo", "ok")] =
 			effecttest.Result{Out: []byte("ok\n")}
 		ran := false
-		tun.Setup = &Setup{Run: func(context.Context, bool) (bool, error) { ran = true; return true, nil }}
+		tun.MacApply = func(context.Context, bool) (bool, error) { ran = true; return true, nil }
 		tun.Hand, tun.Sleep = &Hand{}, func(time.Duration) {}
 		if err := tun.Apply(context.Background(), step.Plan{}); err != nil {
 			t.Fatalf("%s: Apply = %v", name, err)

@@ -37,8 +37,9 @@ type Cable struct {
 	// Version, Default and Update are ws's run's, whose plan the stage waits on under --check.
 	Version, Default string
 	Update           bool
-	// Setup is the ws mac apply stage, which gives the Mac's service its address.
-	Setup *Setup
+	// MacApply runs ws mac apply, as the Setup stage's Run does, which gives the Mac's service its
+	// address.
+	MacApply func(ctx context.Context, check bool) (bool, error)
 	// Env looks up a variable of the environment.
 	Env func(string) (string, bool)
 	P   effect.Prompt

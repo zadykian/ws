@@ -22,8 +22,8 @@ func newCable(t *testing.T, status wsStatus, link string, env map[string]string)
 	m.Results[remoteLine(ws.files, "link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
 	c := &Cable{Ws: ws, Conf: "/h/mac.conf", Version: "v1.2.3", Default: "zadykian",
-		Setup: &Setup{Run: func(context.Context, bool) (bool, error) { return false, nil }},
-		Env:   func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: out}
+		MacApply: func(context.Context, bool) (bool, error) { return false, nil },
+		Env:      func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: out}
 	return c, m, p
 }
 

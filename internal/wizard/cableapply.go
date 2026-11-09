@@ -131,7 +131,7 @@ func (c *Cable) service(ctx context.Context) error {
 	if err := c.write(ctx, value); err != nil || value == "" {
 		return err
 	}
-	if _, err := c.Setup.Run(ctx, false); err != nil {
+	if _, err := c.MacApply(ctx, false); err != nil {
 		return err
 	}
 	if _, err := c.M.Run(ctx, "ping", "-c", "1", "-t", "3", cableEnd); err != nil {

@@ -21,9 +21,9 @@ func wizardQueue(p process, stages []step.Step) []tui.Stage {
 		if m, ok := wizard.MachineOf(s); ok && m == wizard.OnWs {
 			queue[i].Side = tui.WsSide
 		}
-		switch st := s.(type) {
+		switch s.(type) {
 		case *wizard.Cable:
-			queue[i].Waits = st.Setup.Name()
+			queue[i].Waits = (&wizard.Setup{}).Name()
 		case *wizard.Setup:
 			queue[i].Nested = []tui.Group{{Name: s.Name(), Steps: setupStepNames(p)}}
 		case *wizard.WsRun:
