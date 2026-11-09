@@ -112,7 +112,25 @@ A restore opens an ssh connection for each pane it reopens. Where those logins f
 the tunnel's address, `10.99.0.2`, which shuts `ssh ws` out for an hour. [ssh's
 hosts](mac.md#sshs-hosts) says how to lift the ban.
 
-Two open issues meet this. [#56](https://github.com/zadykian/ws/issues/56) plans `mac/ws-join`,
-which joins a session again after ssh drops: cld counts a pane that runs it as an ssh pane.
 [#59](https://github.com/zadykian/ws/issues/59) plans `~/.config/ws/zshrc`, which is where a Mac
 without this ssh config would start the watcher.
+
+## ws-join
+
+A dropped ssh ends with `client_loop: send disconnect: Broken pipe` and leaves the pane at the Mac's
+prompt, while its cld session runs on ws. Keepalives cover a move between networks, not a long
+sleep or a reboot ([Zed](zed.md#when-the-connection-drops)). `ws mac apply` writes
+[`mac/ws-join`](../mac/ws-join) into `~/.local/bin`, beside cld, which joins the session again:
+
+```sh
+ws-join [-H HOST] -n NAME -s SUFFIX
+```
+
+It runs `cld join -n NAME -s SUFFIX` on `ws`, or HOST, through `ssh -t`, and cld counts its pane as
+an ssh pane. Where ssh exits 255, as a drop or a failed connection makes it, it tries again 5 s
+later, with `--existing`. A detach or `/exit` ends it, and a switch to another session isn't
+followed: a try joins NAME. ssh's lines go to a log, which it prints after each try. It stops where
+the log holds `Permission denied` or `Host key verification failed`, so that no try counts toward
+the ban above. To leave a pane that hangs, type `~.` at the start of a line, which ends ssh, then
+Ctrl-C in the 5 s before the next try. NAME and SUFFIX hold letters, digits, `.`, `_` and `-`
+alone, as they pass through two shells on ws.

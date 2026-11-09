@@ -12,8 +12,8 @@ a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on e
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
 
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
-request. It runs as the user, with sudo where it needs root. It sets up Ghostty and cld ([Ghostty
-and cld on the Mac](mac-ghostty.md)), and installs Ghostty, Zed and a font from Homebrew,
+request. It runs as the user, with sudo where it needs root. It sets up Ghostty, cld and `ws-join`
+([Ghostty and cld on the Mac](mac-ghostty.md)), and installs Ghostty, Zed and a font from Homebrew,
 [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on `PATH` by
 hand) from a release ([Releases](releases.md)). `ws` embeds the files it installs, so it needs no
 clone. Then:
