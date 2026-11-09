@@ -16,9 +16,10 @@ const (
 
 // serviceParts returns the parts of ws-fans, which drives the board's fans on the curves of its
 // config, checked by the daemon's own loader. The unit runs a copy of ws, so that an update of ws
-// leaves the running service as it is until the next run. A change to the copy, the config or the
-// unit restarts the service, which hands the fans back as it stops and takes them again from
-// their speeds as it starts, so the three are one step. exe returns the path of the ws that runs.
+// leaves the running service unchanged until the next run. A change to the copy, the config or the
+// unit restarts the service, so the three are one step. The service hands the fans back as it
+// stops, and takes them again from their speeds as it starts. exe returns the path of the ws that
+// runs.
 func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fans, exe func() (string, error)) func(context.Context) ([]host.Resource, error) {
 	return func(context.Context) ([]host.Resource, error) {
 		config, err := Config(f)

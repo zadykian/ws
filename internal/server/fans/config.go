@@ -16,7 +16,7 @@ func pair(p values.FanPair) daemon.Pair {
 }
 
 // Config returns the text of /etc/ws-fans.json for the values. The daemon's own loader checks it
-// before it is written, so that a config the daemon would refuse never replaces a good one.
+// before the role writes it, so that a config the daemon would refuse never replaces a good one.
 func Config(f values.Fans) ([]byte, error) {
 	c := daemon.Config{Interval: f.Interval, Step: pair(f.Step)}
 	for _, s := range f.Sensors {
