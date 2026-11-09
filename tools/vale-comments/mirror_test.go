@@ -2,6 +2,7 @@ package main
 
 import (
 	"maps"
+	"slices"
 	"testing"
 )
 
@@ -15,6 +16,37 @@ func expect(t *testing.T, m *mirror, want map[string]origin) {
 	}
 	if !maps.Equal(got, want) {
 		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestGoMirror(t *testing.T) {
+	src := `// Package p is a test.
+package p
+
+// doc says why.
+//
+//	code stays code
+//
+//go:embed x
+var doc string
+
+var n = 1 //nolint:gosec // the reason stays
+var é = "// not a comment" // trailing
+
+/* a block
+of two lines */
+`
+	m, err := goMirror([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect(t, m, map[string]origin{
+		"Package p is a test.": {1, 4}, "doc says why.": {4, 4}, "\tcode stays code": {6, 3},
+		"the reason stays": {11, 29}, "trailing": {12, 31},
+	})
+	// Two comments are two paragraphs, though on lines next to each other.
+	if i := slices.Index(m.lines, "trailing"); m.lines[i-1] != "" {
+		t.Errorf("the trailing comment joins the line before: %q", m.lines)
 	}
 }
 

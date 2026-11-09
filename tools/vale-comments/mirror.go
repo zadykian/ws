@@ -1,6 +1,8 @@
 package main
 
 import (
+	"go/parser"
+	"go/token"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -40,6 +42,8 @@ func (m *mirror) gap() {
 }
 
 var (
+	// goDirective matches a Go directive's body, such as //nolint's, as go/ast tells one.
+	goDirective = regexp.MustCompile(`^(?:[a-z0-9]+:[a-z0-9]|line |extern |export |\s*\+build)`)
 	// hashDirective matches the body of ShellCheck's, yamllint's and zizmor's directives, and not
 	// a comment's sentence that starts with the linter's name.
 	hashDirective = regexp.MustCompile(`^\s*(?:shellcheck\s+[a-z-]+=|yamllint\s+(?:disable|enable)|zizmor:)`)
@@ -59,6 +63,32 @@ func text(body string, directive *regexp.Regexp, marker string) (string, int, bo
 	}
 	rest := strings.TrimPrefix(body, " ")
 	return rest, skip + len(body) - len(rest), true
+}
+
+// goMirror mirrors a Go file's comments, as go/parser finds them, trailing ones included.
+func goMirror(src []byte) (*mirror, error) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "", src, parser.ParseComments|parser.SkipObjectResolution)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(src), "\n")
+	m := newMirror()
+	for _, group := range f.Comments {
+		m.gap()
+		for _, c := range group.List {
+			p := fset.Position(c.Slash)
+			col := utf8.RuneCountInString(lines[p.Line-1][:p.Column-1]) + 1
+			// The mirror skips a block comment, as ws writes none.
+			body, skip, ok := text(c.Text[2:], goDirective, "//")
+			if strings.HasPrefix(c.Text, "/*") || !ok {
+				m.gap()
+				continue
+			}
+			m.add(body, origin{p.Line, col + 2 + skip})
+		}
+	}
+	return m, nil
 }
 
 // lineMirror mirrors the comments that marker starts, of full lines alone: a line rule cannot tell
