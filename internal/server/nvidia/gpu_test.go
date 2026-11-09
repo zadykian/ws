@@ -1,10 +1,15 @@
 package nvidia
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
 )
+
+// checkLine is the simulated install of every name the role pins.
+var checkLine = "apt-get install -s " + strings.Join(allNames(), " ")
 
 // withDevice returns a machine with one PCI device of the class and the vendor.
 func withDevice(class, vendor string) *effecttest.Machine {
@@ -30,5 +35,27 @@ func TestHasGPU(t *testing.T) {
 		if got, err := hasGPU(tc.m); err != nil || got != tc.want {
 			t.Errorf("%s: hasGPU = %v, %v; want %v", tc.name, got, err, tc.want)
 		}
+	}
+}
+
+func TestGPUChecksTheNamesWithoutOne(t *testing.T) {
+	m, out := withDevice("0x030000", "0x1af4"), &effecttest.Out{}
+	m.Results[checkLine] = effecttest.Result{}
+	if changes, err := (gpu{m, out}).Plan(t.Context()); err != nil || len(changes) != 0 {
+		t.Errorf("Plan = %v, %v; want none", changes, err)
+	}
+	if len(out.Lines) != 1 || !strings.Contains(out.Lines[0], "no NVIDIA GPU") {
+		t.Errorf("says %q", out.Lines)
+	}
+	m.Results[checkLine] = effecttest.Result{Err: errors.New("E: Unable to locate package")}
+	if _, err := (gpu{m, out}).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "Unable to locate") {
+		t.Errorf("Plan with a name gone = %v; want apt's error", err)
+	}
+}
+
+func TestGPUChecksNothingWithOne(t *testing.T) {
+	m := withDevice("0x030000", "0x10de")
+	if changes, err := (gpu{m, &effecttest.Out{}}).Plan(t.Context()); err != nil || len(changes) != 0 {
+		t.Errorf("Plan = %v, %v; want none and no apt-get", changes, err)
 	}
 }
