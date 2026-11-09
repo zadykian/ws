@@ -1,5 +1,21 @@
 #!/bin/sh
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
-# lazygit replaces the script, so that it stays the shell's job, with its own signals and exit
-# status.
-exec /usr/bin/lazygit "$@"
+# lazygit sets no title, so a tab keeps the shell's. This names the repository and its branch in
+# the title, and gets the shell's back from the terminal's stack when lazygit ends.
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    exec /usr/bin/lazygit "$@"
+fi
+# title prints NAME: BRANCH for the repository at $1, and nothing outside one. It drops control
+# characters, as a directory's name can hold an escape.
+title() {
+    top=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || return 0
+    branch=$(git -C "$1" symbolic-ref --short -q HEAD)
+    printf '%s: %s' "${top##*/}" "$branch" | tr -d '\000-\037\177'
+}
+printf '\033[22;2t'
+shown=$(title .)
+[ -z "$shown" ] || printf '\033]2;%s\007' "$shown"
+/usr/bin/lazygit "$@"
+status=$?
+printf '\033[23;2t'
+exit "$status"
