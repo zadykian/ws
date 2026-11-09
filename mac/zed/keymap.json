@@ -1,6 +1,6 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
-// Zed's keys on the Mac: each key that Zed has an action for,
-// and two keys of its own: Ctrl+Shift+R restarts a language server, Ctrl+Alt+Shift+Y reloads Zed.
+// Zed's keys on the Mac: each key that Zed has an action for, and two keys of its own.
+// Ctrl+Shift+R restarts a language server, and Ctrl+Alt+Shift+Y reloads Zed.
 // The block of keys left out, at this file's end, says which keys Zed lacks, and why.
 [
   // The global keys. No context, so each beats Zed's defaults wherever focus is.
@@ -448,12 +448,12 @@
     }
   }
   // The keys left out, so that a sync doesn't retry them.
-  // ctrl-shift-tab: Shift+Ctrl+Tab is Zed's
-  // ctrl-d: Ctrl+D reaches the shell
-  // cmd-c: Cmd+C is Zed's; Ctrl+C stays the shell's
-  // alt-up: Alt+Up is Zed's on macOS
-  // alt-down: Alt+Down is Zed's on macOS
-  // ctrl--: Ctrl+- is Zed's in a pane
-  // alt-f12: no popup: Zed's Alt+F12 opens it in a split
-  // delete: Delete is Zed's
+  // ctrl-shift-tab: Shift+Ctrl+Tab is Zed's.
+  // ctrl-d: Ctrl+D reaches the shell.
+  // cmd-c: Cmd+C is Zed's; Ctrl+C stays the shell's.
+  // alt-up: Alt+Up is Zed's on macOS.
+  // alt-down: Alt+Down is Zed's on macOS.
+  // ctrl--: Ctrl+- is Zed's in a pane.
+  // alt-f12: no popup: Zed's Alt+F12 opens it in a split.
+  // delete: Delete is Zed's.
 ]
