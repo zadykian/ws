@@ -61,7 +61,9 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there",
 			f.ConfigDirLink)
 	}
-	for _, h := range sshcfg.OwnHosts(string(f.UserConfig.Text), "ws") {
+	// The line is counted in the text the run leaves, so that the runner's second Plan names the
+	// same line and the warning shows once.
+	for _, h := range sshcfg.OwnHosts(string(userConfigText(f)), "ws") {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}

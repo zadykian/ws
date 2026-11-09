@@ -59,9 +59,17 @@ func sshChanges(f sshFacts, text []byte) []step.Change {
 	case !f.UserConfig.Exists:
 		cs = append(cs, Write{user, nil, []byte(includeLine + "\n"), false, sshFileMode})
 	case f.UserConfigNeedsInclude:
-		top := append([]byte(includeLine+"\n\n"), f.UserConfig.Text...)
 		cs = append(cs, Backup{user, user + "." + f.Stamp + "~"},
-			Write{user, f.UserConfig.Text, top, true, f.UserConfig.Mode.Perm()})
+			Write{user, f.UserConfig.Text, userConfigText(f), true, f.UserConfig.Mode.Perm()})
 	}
 	return cs
+}
+
+// userConfigText returns the text of ~/.ssh/config that the run leaves: the Include and a blank
+// line above the file's text where it lacks the Include.
+func userConfigText(f sshFacts) []byte {
+	if !f.UserConfig.Exists || !f.UserConfigNeedsInclude {
+		return f.UserConfig.Text
+	}
+	return append([]byte(includeLine+"\n\n"), f.UserConfig.Text...)
 }
