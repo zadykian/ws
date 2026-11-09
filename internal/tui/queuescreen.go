@@ -92,14 +92,14 @@ func (l pickList) pane(side Side) int { return max(slices.Index(l.sides(), side)
 // panes returns the lists' panes, empty. ws's says so while a role stands unread, as a check of the
 // Mac can't reach what ws reports until ws is there.
 func (l pickList) panes() []Pane {
-	ws := Pane{Title: "ws", Focused: l.side == WsSide}
+	ws := Pane{Title: WsSide.String(), Focused: l.side == WsSide}
 	if slices.ContainsFunc(l.rows, func(r pickRow) bool { return r.index == unreadIndex }) {
-		ws.Title = "ws: roles not scanned"
+		ws.Title = WsSide.String() + ": roles not scanned"
 	}
 	if len(l.sides()) == 1 {
 		return []Pane{ws}
 	}
-	return []Pane{{Title: "Mac", Focused: l.side == MacSide}, ws}
+	return []Pane{{Title: MacSide.String(), Focused: l.side == MacSide}, ws}
 }
 
 // drawn returns the layout with the lists in its panes.

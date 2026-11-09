@@ -14,6 +14,14 @@ const (
 	WsSide
 )
 
+// String names the side as its list's pane does.
+func (s Side) String() string {
+	if s == MacSide {
+		return "Mac"
+	}
+	return "ws"
+}
+
 const (
 	// unreadIndex is a role's in place of a step's, as no event of a run names a role.
 	unreadIndex = -1
