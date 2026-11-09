@@ -168,3 +168,16 @@ func TestThePagerIsDeltaFromItsPackage(t *testing.T) {
 		t.Errorf("packages %v", packages.Names)
 	}
 }
+
+// Each edit opens Fresh, which needs lazygit's terminal.
+func TestTheEditorIsFresh(t *testing.T) {
+	keys := leaves(t)
+	for _, key := range []string{"os.edit", "os.editAtLine", "os.editAtLineAndWait", "os.openDirInEditor"} {
+		if v, _ := keys[key].(string); !strings.HasPrefix(v, "fresh ") {
+			t.Errorf("%s is %q", key, v)
+		}
+	}
+	if keys["os.editInTerminal"] != true {
+		t.Error("os.editInTerminal is not true")
+	}
+}

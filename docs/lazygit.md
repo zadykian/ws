@@ -55,6 +55,9 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
   default. So the config empties the prefix and leaves `w` unbound.
 - `overrideGpg` signs a commit in place. Without it, lazygit leaves its screen for each commit,
   amend or rebase, as git signs each one, and ws's key asks for no passphrase.
+- `e` and lazygit's other edits open Fresh, through [its wrapper](fresh.md#the-wrapper), in
+  lazygit's terminal, at the line where lazygit names one. lazygit comes back when Fresh ends, with
+  no Enter to press, unless the command failed.
 - `update.method` is `never`, as apt updates lazygit.
 - No random tip shows in the command log, and no popup at start. So after apt updates lazygit, a
   version's breaking changes are in its release notes alone.

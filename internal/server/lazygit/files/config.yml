@@ -29,6 +29,8 @@ gui:
   showRandomTip: false
 # No intro at the first start, and no note of a version's breaking changes after apt updates it.
 disableStartupPopups: true
+# lazygit comes back from Fresh with no Enter to press. A command that fails still waits for one.
+promptToReturnFromSubprocess: false
 git:
   # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
   # prefix, WIP by default. Empty, it never does.
@@ -47,6 +49,14 @@ keybinding:
   files:
     # w commits with --no-verify too.
     commitChangesWithoutHook: <disabled>
+os:
+  # Fresh, through ws's wrapper, in lazygit's terminal. It takes FILE:LINE, and a directory as the
+  # one it works in.
+  edit: fresh {{filename}}
+  editAtLine: fresh {{filename}}:{{line}}
+  editAtLineAndWait: fresh {{filename}}:{{line}}
+  openDirInEditor: fresh {{dir}}
+  editInTerminal: true
 # apt updates lazygit, so lazygit never looks for a release of its own.
 update:
   method: never
