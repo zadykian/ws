@@ -15,12 +15,12 @@ type Secrets struct {
 	File Files
 	// Password holds the passwords that go with the files.
 	Password Passwords
-	// Whole is true where the run was given a secrets file, as ws server apply sets it: the file
-	// is then the truth of what it names, and a role removes what it lacks. The file does not hold
-	// it.
+	// Whole is true where the run was given a secrets file, as ws server apply sets it. The file is
+	// then the truth of what it names, and a role removes what it lacks. The file does not hold
+	// Whole.
 	Whole bool
-	// Unread is true where a command reads the machine and takes no secrets, as ws server state does:
-	// a role then shows what it can, where a run would stop at what the secrets lack.
+	// Unread is true where a command reads the machine and takes no secrets, as ws server state
+	// does. A role then shows what it can, where a run would stop at what the secrets lack.
 	Unread bool
 }
 
