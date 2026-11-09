@@ -2,8 +2,10 @@ package setup
 
 import (
 	"bytes"
+	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
 )
 
@@ -37,8 +39,8 @@ func (z *Zed) files() []step.Change {
 		}
 		cs = append(cs, MakeDir{dir, 0o755})
 	}
-	cs = append(cs, z.owned(global, z.Settings, zedOwn(zedHeader, true))...)
-	cs = append(cs, z.owned(dir+"/keymap.json", z.Keymap, zedOwn(zedKeymapMark, false))...)
+	cs = append(cs, owned(z.M, z.Out, global, z.Settings, 0o644, zedOwn(zedHeader, true))...)
+	cs = append(cs, owned(z.M, z.Out, dir+"/keymap.json", z.Keymap, 0o644, zedOwn(zedKeymapMark, false))...)
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
 	}
@@ -57,23 +59,23 @@ func zedOwn(mark string, exact bool) func([]byte) bool {
 	}
 }
 
-// owned plans a file that ws replaces while own passes it. A file with another first line is left,
-// with a warning.
-func (z *Zed) owned(file string, want []byte, own func([]byte) bool) []step.Change {
-	info, err := z.M.Stat(file)
+// owned plans a file that ws replaces whole, with mode, while own passes it. A file with another
+// first line is left, with a warning.
+func owned(m effect.Machine, out effect.Out, file string, want []byte, mode fs.FileMode, own func([]byte) bool) []step.Change {
+	info, err := m.Stat(file)
 	if err != nil {
-		return []step.Change{Write{file, nil, want, false, 0o644}}
+		return []step.Change{Write{file, nil, want, false, mode}}
 	}
-	old, _ := z.M.ReadFile(file)
+	old, _ := m.ReadFile(file)
 	if !own(old) {
-		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's", file)
+		out.Warn("%s is not ws's: move it away, and the next run writes ws's", file)
 		return nil
 	}
 	switch {
 	case !bytes.Equal(old, want):
-		return []step.Change{Write{file, old, want, true, 0o644}}
-	case info.Mode.Perm() != 0o644:
-		return []step.Change{SetMode{file, 0o644}}
+		return []step.Change{Write{file, old, want, true, mode}}
+	case info.Mode.Perm() != mode:
+		return []step.Change{SetMode{file, mode}}
 	}
 	return nil
 }
