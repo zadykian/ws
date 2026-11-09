@@ -27,6 +27,7 @@ func sudoRan(t *testing.T, log string) string {
 func TestAnotherOwnersFilesGoThroughSudo(t *testing.T) {
 	m, log := loggedSudo(t)
 	effect.RunAs(t, os.Getuid()+1, false)
+	t.Setenv("HOME", t.TempDir())
 	dir, own := t.TempDir(), effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o640}
 	if err := m.WriteAtomic(dir+"/f", []byte("new"), own); err != nil {
 		t.Fatal(err)
@@ -70,6 +71,33 @@ func TestOwnAndConfinedFilesStayOffSudo(t *testing.T) {
 	if err := m.Mkdir(dir+"/d", 0o750); err != nil {
 		t.Fatal(err)
 	}
+	if err := m.Chmod(dir+"/d", 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if got := sudoRan(t, log); got != "" {
+		t.Errorf("sudo ran %q, want nothing", got)
+	}
+}
+
+func TestHomeAndLinksStayOffSudo(t *testing.T) {
+	m, log := loggedSudo(t)
+	dir, own := t.TempDir(), effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o640}
+	effect.RunAs(t, own.UID+1, false)
+	t.Setenv("HOME", dir)
+	if err := m.WriteAtomic(dir+"/f", []byte("new"), own); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Mkdir(dir+"/d", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(t.TempDir(), "link")
+	if err := os.Symlink(dir+"/f", link); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Chown(link, own.UID, own.GID); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HOME", "")
 	if err := m.Chmod(dir+"/d", 0o700); err != nil {
 		t.Fatal(err)
 	}
