@@ -49,6 +49,8 @@ type RunScreen struct {
 	// halted says that the run ends with its current step. No box covers the window for it, as a
 	// step can run for long and its output stays worth reading.
 	halted bool
+	// pane, where set, sizes the output in a window, for a host that draws the output elsewhere.
+	pane func(window Size) Size
 }
 
 // NewRunScreen returns the screen of a run of groups, which name every step before the run starts.
@@ -98,8 +100,12 @@ func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
 	return r, nil
 }
 
-// fitted sizes the output to the window, past a change of the window or of the footer's rows.
+// fitted sizes the output to its pane, past a change of the window or of the footer's rows.
 func (r RunScreen) fitted() RunScreen {
+	if r.pane != nil {
+		r.output = r.output.fit(r.pane(r.window))
+		return r
+	}
 	r.output = r.output.fit(r.layout().PaneSizes(r.window.Width, r.window.Height)[1])
 	return r
 }

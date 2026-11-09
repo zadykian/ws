@@ -22,7 +22,9 @@ func NewQueueRun(title string, theme Theme, choice Choice) QueueRun {
 			stages.Steps = append(stages.Steps, r.name)
 		}
 	}
-	return QueueRun{NewRunScreen(title, theme, stages), choice.list.filtered("")}
+	run := NewRunScreen(title, theme, stages)
+	run.pane = func(window Size) Size { return inside(stripSize(window)) }
+	return QueueRun{run, choice.list.filtered("")}
 }
 
 // Init starts the clock.
@@ -30,18 +32,14 @@ func (q QueueRun) Init() tea.Cmd {
 	return q.run.Init()
 }
 
-// Update moves the lists by a run's events, and leaves the rest to the run's own screen, which
-// sized the output to a pane this draws no longer.
+// Update moves the lists by a run's events, and leaves the rest to the run's own screen, which fits
+// the output to the strip.
 func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if e, ok := msg.(step.Event); ok {
 		q.list = q.list.follow(e)
 	}
 	var cmd tea.Cmd
 	q.run, cmd = q.run.update(msg)
-	switch msg.(type) {
-	case tea.WindowSizeMsg, haltedMsg:
-		q.run.output = q.run.output.fit(inside(stripSize(q.run.window)))
-	}
 	return q, cmd
 }
 
