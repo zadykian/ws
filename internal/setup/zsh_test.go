@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/setup"
@@ -12,17 +13,21 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
+const zshSource = "source ~/.config/ws/zshrc\n"
+
 func zshStep(m *effecttest.Machine, out *effecttest.Out) *setup.Zsh {
-	return &setup.Zsh{Home: "/h", Hook: mac.Zshrc, M: m, Out: out}
+	return &setup.Zsh{Home: "/h", Hook: mac.Zshrc, M: m, Out: out,
+		Now: func() time.Time { return time.Date(2026, 11, 9, 10, 0, 0, 0, time.UTC) }}
 }
 
 // The second plan finds mac/zshrc's header, so the hook that ws embeds is its own.
-func TestZshMakesTheHookThenNothing(t *testing.T) {
+func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := zshStep(m, &effecttest.Out{})
 	p, err := s.Plan(context.Background())
 	want := []step.Change{setup.MakeDir{Path: "/h/.config", Mode: 0o755}, setup.MakeDir{Path: "/h/.config/ws", Mode: 0o700},
-		setup.Write{Path: "/h/.config/ws/zshrc", After: mac.Zshrc, Mode: 0o644}}
+		setup.Write{Path: "/h/.config/ws/zshrc", After: mac.Zshrc, Mode: 0o644},
+		setup.Write{Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
 	if err != nil || !reflect.DeepEqual(p.Changes, want) {
 		t.Fatalf("Plan = %v, %v; want %v", p.Changes, err, want)
 	}
@@ -38,7 +43,21 @@ func TestZshMakesTheHookThenNothing(t *testing.T) {
 	}
 }
 
-func TestZshLeavesAHookNotItsOwn(t *testing.T) {
+func TestZshAddsTheLineAtTheEndAndKeepsTheOldZshrc(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
+	m.Files["/h/.config/ws/zshrc"] = mac.Zshrc
+	m.Files["/h/.zshrc"] = []byte("export EDITOR=vi")
+	p, err := zshStep(m, &effecttest.Out{}).Plan(context.Background())
+	want := []step.Change{setup.Backup{Path: "/h/.zshrc", To: "/h/.zshrc.20261109100000~"},
+		setup.Write{Path: "/h/.zshrc", Before: []byte("export EDITOR=vi"),
+			After: []byte("export EDITOR=vi\n" + zshSource), Exists: true, Mode: 0o644}}
+	if err != nil || !reflect.DeepEqual(p.Changes, want) {
+		t.Errorf("Plan = %v, %v; want %v", p.Changes, err, want)
+	}
+}
+
+func TestZshLeavesAHookNotItsOwnAndZshrc(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
 	m.Files["/h/.config/ws/zshrc"] = []byte("echo mine\n")
