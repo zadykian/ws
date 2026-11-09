@@ -6,9 +6,9 @@
 #
 # It caps Markdown, YAML, shell scripts, found by extension or shebang, Python, Go and Jinja
 # templates. Data files, such as TOML, JSON, conf files and licenses, are of no kind it caps.
-# Generated and vendored files are exempt, as they are not written here: foundryctl's compose
-# files in internal/server/signoz/deployment/ and its casting.yaml.lock, which yamllint
-# leaves out too, and the Vale styles in .vale/styles/, errata-ai's word lists. Each
+# Generated and vendored files are exempt, as they are not written here. These are foundryctl's
+# compose files in internal/server/signoz/deployment/ and its casting.yaml.lock, which yamllint
+# leaves out too. So are the Vale styles in .vale/styles/, errata-ai's word lists. Each
 # finding goes to stdout as PATH: message, and any fails the check. Run it from the root.
 
 set -eu
