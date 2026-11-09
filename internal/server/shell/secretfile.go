@@ -24,7 +24,7 @@ type secretEnv struct {
 }
 
 // Plan checks the names, and that ws wrote the file there is. A file written by hand is refused
-// rather than replaced: a backup would copy its secrets, and the new file would drop what the
+// rather than replaced. A backup would copy its secrets, and the new file would drop what the
 // secrets file lacks, and so would a removal. A dry run stops there too. The file is read for its
 // first line alone.
 func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {

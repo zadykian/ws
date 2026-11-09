@@ -13,8 +13,8 @@ import (
 )
 
 // Steps returns the role's steps in order. The check for links comes first, so that no write runs
-// beside one, and each step that reads its paths waits on it: a report goes past a step that fails,
-// and would read through the link. Packages follow, as ble.sh and bash-completion serve the files
+// beside one. Each step that reads its paths waits on it: a report goes past a step that fails, and
+// would read through the link. Packages follow, as ble.sh and bash-completion serve the files
 // after.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}

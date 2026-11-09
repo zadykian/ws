@@ -10,7 +10,7 @@ import (
 )
 
 // gitconfig is ~/.gitconfig, which ws replaces whole. A real run keeps the old file beside it, as
-// ~/.gitconfig.*~, and a diff would print a credential that a file set up by hand holds, such as an
+// ~/.gitconfig.*~. A diff would print a credential that a file set up by hand holds, such as an
 // http.extraHeader, so it shows none. The settings of the machine's own go in ~/.config/git/local,
 // which the file includes last.
 type gitconfig struct {
@@ -80,8 +80,8 @@ func (g gitconfig) notes(ctx context.Context, content []byte) error {
 }
 
 // signingNotes names the signing key that the rewrite replaces, which the note on dropped keys
-// misses as the key's name stays, and the signing settings of ~/.config/git/local, which win over
-// the role's.
+// misses as the key's name stays. It also names the signing settings of ~/.config/git/local, which
+// win over the role's.
 func (g gitconfig) signingNotes(ctx context.Context, old []byte) error {
 	list, err := g.M.RunInput(ctx, old, "git", "config", "--file", "-", "--list")
 	if err != nil {

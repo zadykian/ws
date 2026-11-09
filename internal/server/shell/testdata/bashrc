@@ -12,8 +12,8 @@ if [ -f "$HOME/.secrets/env" ]; then
 fi
 
 # Ubuntu's .NET SDK runs as ubuntu.26.04-x64, which NuGet's runtime graph, frozen after .NET 8,
-# lacks: `dotnet tool install` then finds no tool assets and fails with "DotnetToolSettings.xml
-# was not found in the package". The portable ID works. Above the guard too.
+# lacks. `dotnet tool install` then finds no tool assets and fails with "DotnetToolSettings.xml was
+# not found in the package". The portable ID works. Above the guard too.
 export DOTNET_RUNTIME_ID=linux-x64
 
 # If not running interactively, don't do anything
@@ -21,7 +21,7 @@ export DOTNET_RUNTIME_ID=linux-x64
 
 # ble.sh replaces readline: suggestions from history as you type (Right accepts, Alt-f one word),
 # syntax highlighting and a Tab menu fed by bash-completion. It attaches at the first prompt, its
-# default, rather than here: a terminal that sources this file and only then installs its
+# default, rather than here. A terminal that sources this file and only then installs its
 # PROMPT_COMMAND and DEBUG trap would print "[ble: press RET to continue]" after every command
 # (ble.sh#709). The default suggestion face has a grey background, a box on dark themes, and the
 # default errexit mark prints "[ble: exit N]" after every failing command.
@@ -59,9 +59,8 @@ case "$TERM" in
     xterm-color) color_prompt=yes;;
 esac
 
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
+# uncomment for a colored prompt, if the terminal has the capability. Off by default to not distract
+# the user: the focus in a terminal window should be on the output of commands, not on the prompt.
 #force_color_prompt=yes
 
 if [ -n "$force_color_prompt" ]; then

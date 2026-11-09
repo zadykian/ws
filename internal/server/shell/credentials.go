@@ -64,7 +64,7 @@ func keptURLs(keys []string, listed []credential) []string {
 }
 
 // sections returns the helpers of tokens.gitconfig, sorted by URL: the present entries' and the
-// kept ones'. An entry's proactive auth is as the entry says, a kept one's as it was.
+// kept ones'. An entry's proactive auth is as the entry says, a kept one's as before.
 func sections(keys []string, creds []credential) []section {
 	kept := keptURLs(keys, creds)
 	proactive := map[string]bool{}

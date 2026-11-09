@@ -21,7 +21,7 @@ var envName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 // unsafeQuote matches a character that shlex.quote quotes.
 var unsafeQuote = regexp.MustCompile(`[^A-Za-z0-9_@%+=:,./-]`)
 
-// quote returns the string as Python's shlex.quote does: as it is where it holds only safe
+// quote returns the string as Python's shlex.quote does: unchanged where it holds only safe
 // characters, else in single quotes, with each single quote as '"'"'.
 func quote(s string) string {
 	if s == "" {
