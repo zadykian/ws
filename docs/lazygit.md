@@ -56,6 +56,8 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 - `overrideGpg` signs a commit in place. Without it, lazygit leaves its screen for each commit,
   amend or rebase, as git signs each one, and ws's key asks for no passphrase.
 - `update.method` is `never`, as apt updates lazygit.
+- No random tip shows in the command log, and no popup at start. So after apt updates lazygit, a
+  version's breaking changes are in its release notes alone.
 - The step fails where `~/.config`, the directory or `config.yml` is a link. The user owns
   `~/.config`, and a link would send ws's root to whatever it names.
 

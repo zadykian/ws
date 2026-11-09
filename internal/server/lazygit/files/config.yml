@@ -26,6 +26,9 @@ gui:
   nerdFontsVersion: "3"
   # Square corners, as JetBrains draws its panels.
   border: single
+  showRandomTip: false
+# No intro at the first start, and no note of a version's breaking changes after apt updates it.
+disableStartupPopups: true
 git:
   # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
   # prefix, WIP by default. Empty, it never does.
