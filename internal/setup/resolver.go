@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/check"
 	"github.com/zadykian/ws/step"
 )
@@ -34,7 +35,7 @@ func (*Resolver) Name() string { return "resolver" }
 func (*Resolver) WaitsOn() string { return "" }
 
 // Plan plans /etc/resolver/Domain.
-func (r *Resolver) Plan(context.Context) (step.Plan, error) {
+func (r *Resolver) Plan(ctx context.Context) (step.Plan, error) {
 	if !check.Name(r.Domain) {
 		return step.Plan{}, fmt.Errorf("'%s' is not a domain of DNS labels joined by dots", r.Domain)
 	}
@@ -61,24 +62,15 @@ func (r *Resolver) Plan(context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if len(r.Addresses) == 0 {
-		c, err := removeRoot(r.M, file)
-		if c == nil {
-			return step.Plan{}, err
-		}
-		return step.Plan{Changes: []step.Change{c}}, err
+		cs, err := plan(ctx, nil, host.Absent{M: r.M, Path: file})
+		return step.Plan{Changes: cs}, err
 	}
-	dir, err := rootDir(r.M, resolverDir, 0o755)
+	cs, err := plan(ctx, nil, host.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
 	if err != nil {
 		return step.Plan{}, err
 	}
 	want := resolverCmdHeader + "\nnameserver " + strings.Join(r.Addresses, "\nnameserver ") + "\n"
-	c, err := rootFile(r.M, file, 0o644, []byte(want))
-	var cs []step.Change
-	for _, c := range []step.Change{dir, c} {
-		if c != nil {
-			cs = append(cs, c)
-		}
-	}
+	cs, err = plan(ctx, cs, host.File{M: r.M, Path: file, Content: []byte(want), Mode: 0o644})
 	return step.Plan{Changes: cs}, err
 }
 

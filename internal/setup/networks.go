@@ -42,7 +42,7 @@ func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	rs, err := n.resolvers()
+	rs, err := n.resolvers(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -74,14 +74,11 @@ func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
 	return r.changes(ctx)
 }
 
-// remove plans the removal of root's file, if the file is there.
-func (n *Networks) remove(file string) (step.Change, error) { return removeRoot(n.M, file) }
-
-func (n *Networks) resolvers() ([]step.Change, error) {
+func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 	var cs []step.Change
+	var err error
 	named := map[string]bool{}
-	dirPlanned := false
-	for _, r := range resolvers(n.Conf.Resolvers) {
+	for i, r := range resolvers(n.Conf.Resolvers) {
 		file := resolverDir + "/" + r.Domain
 		named[r.Domain] = true
 		if own, err := n.ownsFile(file); err != nil {
@@ -90,24 +87,14 @@ func (n *Networks) resolvers() ([]step.Change, error) {
 			return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
 				"ws mac resolver %s with no address, or move the file away", file, r.Domain)
 		}
-		// The directory is planned once: a second mkdir, with no -p, would fail where the directory
-		// is new.
-		var dir step.Change
-		if !dirPlanned {
-			dirPlanned = true
-			var err error
-			if dir, err = rootDir(n.M, resolverDir, 0o755); err != nil {
+		// The directory is planned once: a second mkdir would fail where the directory is new.
+		if i == 0 {
+			if cs, err = plan(ctx, cs, host.Dir{M: n.M, Path: resolverDir, Mode: 0o755}); err != nil {
 				return nil, err
 			}
 		}
-		file1, err := rootFile(n.M, file, 0o644, []byte(resolverText(r.Addresses)))
-		if err != nil {
+		if cs, err = plan(ctx, cs, host.File{M: n.M, Path: file, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
 			return nil, err
-		}
-		for _, c := range []step.Change{dir, file1} {
-			if c != nil {
-				cs = append(cs, c)
-			}
 		}
 	}
 	names, err := n.M.ReadDir(resolverDir)
@@ -122,12 +109,12 @@ func (n *Networks) resolvers() ([]step.Change, error) {
 		if own, err := n.ownsFile(file); err != nil {
 			return nil, err
 		} else if own {
-			c, err := n.remove(file)
+			gone, err := host.Absent{M: n.M, Path: file}.Plan(ctx)
 			if err != nil {
 				return nil, err
 			}
-			if c != nil {
-				cs = append(cs, c)
+			for _, c := range gone {
+				cs = append(cs, removal{c, file})
 			}
 		}
 	}

@@ -47,3 +47,18 @@ func plan(ctx context.Context, cs []step.Change, r host.Resource) ([]step.Change
 	}
 	return cs, err
 }
+
+// removal is host's removal of a file that no Report names, as mac.conf no longer does. It says
+// what the file's Report would.
+type removal struct {
+	host.Change
+	path string
+}
+
+// Kind is removal.
+func (removal) Kind() step.ChangeKind { return step.Removal }
+
+// Item says that the file is to go.
+func (r removal) Item() step.Item {
+	return step.Item{Kind: step.FileItem, Name: r.path, Want: stateMissing, Found: statePresent}
+}
