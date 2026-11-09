@@ -11,9 +11,9 @@ import (
 	"github.com/zadykian/ws/internal/tunnel"
 )
 
-// FirstFile is the file in the lock that holds the address the Host key stage asked, where ws did
-// not answer at its way. Later stages read it as ssh's HostName, in place of a variable shared
-// with that stage.
+// FirstFile is the file in the lock that holds the address that the Host key or Login stage asked,
+// where ws did not answer at its way. The session's ssh reads it as HostName, and a run's later
+// stages through that session.
 const FirstFile = "first"
 
 // SSH runs ssh to ws for the stages, with the options every call needs.
