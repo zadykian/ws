@@ -29,10 +29,20 @@ EOF
     printf '%s: %s' "${name##*/}" "$branch" | tr -d '\000-\037\177'
 }
 
+# show sets the title to $1. In tmux it sets the pane's, which writes nothing to the terminal that
+# lazygit draws on.
+show() {
+    if [ -n "${TMUX:-}" ]; then
+        tmux select-pane -t "${TMUX_PANE:-}" -T "$1" 2>/dev/null
+    else
+        printf '\033]2;%s\007' "$1"
+    fi
+}
+
 # The terminal keeps the shell's title on its stack, and gets it back once lazygit ends.
 printf '\033[22;2t'
 shown=$(title .)
-[ -z "$shown" ] || printf '\033]2;%s\007' "$shown"
+[ -z "$shown" ] || show "$shown"
 
 # Each second, the watcher reads lazygit's directory, as lazygit moves to the repository it opens,
 # and sets the title where it changed. lazygit takes this process's PID.
@@ -42,7 +52,7 @@ lazygit=$$
         dir=$(readlink "/proc/$lazygit/cwd") || continue
         now=$(title "$dir")
         if [ -n "$now" ] && [ "$now" != "$shown" ]; then
-            printf '\033]2;%s\007' "$now"
+            show "$now"
             shown=$now
         fi
     done

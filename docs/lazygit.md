@@ -21,11 +21,21 @@ the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
   and a detached HEAD its short hash.
 - Each second, the wrapper reads lazygit's directory and its HEAD. So the title follows a checkout,
   and a move to another repository through lazygit's recent repositories.
-- The wrapper writes the title as OSC 2, which Ghostty's tab shows.
+- Outside tmux, it writes the title as OSC 2, which Ghostty's tab shows.
+- In tmux, it sets the pane's title, and no write reaches the terminal that lazygit draws on.
 - The terminal's stack keeps the shell's title, and gets it back within a second of lazygit's end.
   Where a terminal lacks the stack, the shell's next prompt sets its own title in an `xterm`
   terminal, as Ubuntu's `~/.bashrc` does.
 - Where stdin or stdout is not a terminal, the wrapper runs lazygit and sets nothing.
 
-The watcher writes to the terminal while lazygit draws. Where a frame of lazygit's takes more than
-one write, the title may land inside it and leave stray characters until those cells change.
+Where the title shows:
+
+- Ghostty's tab, through `ssh ws` with no tmux on ws.
+- Not past tmux, as Zed's tmux and cld's leave `set-titles` off. A status line that names
+  `#{pane_title}`, as tmux's default does, shows it.
+- Not Zed's terminal tab, which takes no title: Zed shows one in the terminal's breadcrumbs alone,
+  and its tmux passes none on.
+
+Outside tmux, the watcher writes to the terminal while lazygit draws. Where a frame of lazygit's
+takes more than one write, the title may land inside it and leave stray characters until those
+cells change.

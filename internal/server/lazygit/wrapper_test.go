@@ -47,10 +47,10 @@ func repository(t *testing.T, dir string) string {
 
 // wrapped says how run builds the wrapper's surroundings: lazygit is the stub's body, which
 // replaces the wrapper as lazygit does; terminal drops the test for a terminal, as a test's stdin
-// and stdout are pipes.
+// and stdout are pipes; tmux, where set, names the log of a stub for tmux in PATH, and sets TMUX.
 type wrapped struct {
-	dir, lazygit string
-	terminal     bool
+	dir, lazygit, tmux string
+	terminal           bool
 }
 
 // run runs the wrapper in w.dir, with a stub for lazygit that prints its arguments and exits 3,
@@ -68,6 +68,10 @@ func run(t *testing.T, w wrapped) (out string, code int) {
 	// The ceiling keeps git from finding a repository that holds the test's directories.
 	env := []string{"PATH=" + bin + ":/usr/bin:/bin", "HOME=" + bin, "GIT_CONFIG_NOSYSTEM=1",
 		"GIT_CONFIG_GLOBAL=/dev/null", "GIT_CEILING_DIRECTORIES=" + os.TempDir()}
+	if w.tmux != "" {
+		write(filepath.Join(bin, "tmux"), "echo \"$*\" >>"+w.tmux+"\n")
+		env = append(env, "TMUX=/tmp/s,1,0", "TMUX_PANE=%1")
+	}
 	script := strings.ReplaceAll(string(wrapper), "/usr/bin/lazygit", stub)
 	script = strings.ReplaceAll(script, "sleep 1", "sleep 0.1")
 	if w.terminal {
@@ -168,5 +172,23 @@ func TestTheWrapperDropsControlCharacters(t *testing.T) {
 	out, _ := run(t, wrapped{dir: dir, terminal: true})
 	if want := push + osc("w]0;xs: main") + "lazygit a b c\n" + pop; out != want {
 		t.Errorf("out %q, want %q", out, want)
+	}
+}
+
+func TestTheWrapperSetsThePanesTitleInTmux(t *testing.T) {
+	linux(t)
+	dir := repository(t, filepath.Join(t.TempDir(), "ws"))
+	gitIn(t, dir, "branch", "next")
+	log := filepath.Join(t.TempDir(), "tmux")
+	out, _ := run(t, wrapped{dir: dir, terminal: true, tmux: log, lazygit: "git switch -q next\nsleep 0.5"})
+	if out != push+"lazygit a b c\n"+pop {
+		t.Errorf("out %q", out)
+	}
+	logged, err := os.ReadFile(log) //nolint:gosec // the test's own log
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "select-pane -t %1 -T ws: main\nselect-pane -t %1 -T ws: next\n"; string(logged) != want {
+		t.Errorf("tmux got %q, want %q", logged, want)
 	}
 }
