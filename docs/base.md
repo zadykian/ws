@@ -5,7 +5,8 @@ The `base` role sets up the ground every machine stands on. It runs as Go steps 
 
 - the packages every machine gets;
 - the locale `en_US.UTF-8` and the timezone UTC;
-- unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily;
+- unattended-upgrades as Ubuntu ships it, which installs Ubuntu's security updates daily, and gh's
+  releases, which [devtools](devtools.md#gh) allows;
 - a swap file, `/swapfile`, the size of the RAM rounded up to a whole GiB.
 
 Its steps are Packages, Locale, Timezone, Upgrades, Swap and Swappiness, in that order. Each plans

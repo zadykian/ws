@@ -1,6 +1,7 @@
 package devtools
 
 import (
+	_ "embed"
 	"runtime"
 
 	"github.com/zadykian/ws/effect"
@@ -10,6 +11,11 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
+// ghUpgrades lets unattended-upgrades install gh's releases.
+//
+//go:embed 52unattended-upgrades-github-cli
+var ghUpgrades []byte
+
 // Steps returns the role's steps: the apt repositories, the packages from them, gh's login, Go,
 // the language servers and rustup.
 // The packages wait on the repositories, so a check run says "after Devtools repositories" where a
@@ -18,7 +24,10 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 	const repositories = "Devtools repositories"
 	user := host.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
-		host.Group{Title: repositories, Parts: []host.Resource{Repositories{M: m}}},
+		host.Group{Title: repositories, Parts: []host.Resource{
+			Repositories{M: m},
+			host.File{M: m, Path: "/etc/apt/apt.conf.d/52unattended-upgrades-github-cli", Content: ghUpgrades, Mode: 0o644},
+		}},
 		host.Group{Title: "Devtools packages", After: repositories, Parts: []host.Resource{
 			// Node at its major version, from NodeSource's repository; gh from GitHub CLI's;
 			// glow from Charm's; each .NET SDK from Ubuntu's archive or the PPA.

@@ -1,0 +1,5 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# gh follows each release of GitHub CLI's repository, whose one suite is stable.
+Unattended-Upgrade::Origins-Pattern {
+	"origin=gh,codename=stable,site=cli.github.com";
+};

@@ -96,3 +96,12 @@ func TestRepositoriesTable(t *testing.T) {
 		t.Errorf("GitHub CLI's repository is %+v", got)
 	}
 }
+
+func TestGHUpgradesAllowTheRepository(t *testing.T) {
+	gh := repositories("resolute")[3]
+	host := strings.TrimPrefix(strings.TrimSuffix(gh.URIs, "/packages"), "https://")
+	want := `"origin=gh,codename=` + gh.Suites + `,site=` + host + `";`
+	if !strings.Contains(string(ghUpgrades), want) {
+		t.Errorf("52unattended-upgrades-github-cli lacks %s", want)
+	}
+}

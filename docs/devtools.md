@@ -108,7 +108,8 @@ vanish after an edit.
 
 gh comes from GitHub CLI's apt repository, as the gh of Ubuntu's archive is one that GitHub's API
 has left behind. Its key file holds two certificates: one that expired in 2026, and the one that
-signs. The role pins both.
+signs. The role pins both. `/etc/apt/apt.conf.d/52unattended-upgrades-github-cli` allows the
+repository's origin, so unattended-upgrades installs each release of gh within a day.
 
 A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
 ([The secrets file](shell.md#the-secrets-file)). It compares `gh auth token -h github.com` with the
