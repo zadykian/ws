@@ -17,6 +17,8 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](docs/ikeward.md): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
+- [`nvidia`](docs/nvidia.md): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
+  NVIDIA GPU.
 - [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of

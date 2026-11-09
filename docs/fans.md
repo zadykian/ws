@@ -64,8 +64,8 @@ So does every fan when the service stops. As it starts, it takes each fan from t
 
 The RTX 5080's own fans are off the card, which the GPU Fans on the board's System Fan #1 cool. So
 ws-fans sets no fan through NVIDIA's driver: it reads only the GPU's temperature, by `nvidia-smi`,
-which keeps ws free of NVML's library. That needs NVIDIA's driver, which ws doesn't install yet
-(#58). Without it, the GPU Fans and the Exhaust Fans, on the GPU's temperature, keep the board's
+which keeps ws free of NVML's library. That needs NVIDIA's driver, which [nvidia](nvidia.md)
+installs. Without it, the GPU Fans and the Exhaust Fans, on the GPU's temperature, keep the board's
 curves.
 
 ## The defaults
