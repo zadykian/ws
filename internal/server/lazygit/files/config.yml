@@ -1,0 +1,7 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. Settings of
+# your own go in ~/.lazygit.yml, which lazygit loads over this file in each repository under the
+# home.
+---
+# apt updates lazygit, so lazygit never looks for a release of its own.
+update:
+  method: never

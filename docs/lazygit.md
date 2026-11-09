@@ -1,7 +1,7 @@
 # lazygit
 
 The `lazygit` role is Go steps in `internal/server/lazygit`. It installs lazygit from Ubuntu's
-archive, with a wrapper that puts the repository and its branch in the terminal's title.
+archive, a wrapper that puts the repository and its branch in the terminal's title, and a config.
 
 ## The install
 
@@ -39,3 +39,15 @@ Where the title shows:
 Outside tmux, the watcher writes to the terminal while lazygit draws. Where a frame of lazygit's
 takes more than one write, the title may land inside it and leave stray characters until those
 cells change.
+
+## The config
+
+`Lazygit config` writes `~/.config/lazygit/config.yml` for `ws_user`, from `files/config.yml`. A
+run replaces a change made to it by hand, and keeps the old file beside the new one.
+
+- Settings of your own go in `~/.lazygit.yml`. lazygit loads it over the config in each repository
+  under the home, and a repository's `.git/lazygit.yml` after it.
+- lazygit reads no config from a repository's work tree, so a clone cannot name a command for it.
+- `update.method` is `never`, as apt updates lazygit.
+- The step fails where `~/.config`, the directory or `config.yml` is a link. The user owns
+  `~/.config`, and a link would send ws's root to whatever it names.
