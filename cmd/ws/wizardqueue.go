@@ -10,29 +10,32 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// wizardQueue returns the stages as the lists show them, each on its machine. ws mac apply's steps
-// stand under their stage, and ws's roles too, by name, until ws reports their steps. Cable waits on
-// ws mac apply here alone. It applies those steps itself, and a list must hold them on beside it,
-// while a plain run's Cable reads Homebrew as ever.
+// wizardQueue returns the stages as the lists show them, each on its machine, with the stage that
+// picking it locks. ws mac apply's steps stand under their stage, and ws's roles too, by name, until
+// ws reports their steps.
 func wizardQueue(p process, stages []step.Step) []tui.Stage {
 	queue := make([]tui.Stage, len(stages))
 	for i, s := range stages {
-		queue[i] = tui.Stage{Name: s.Name(), Waits: s.WaitsOn()}
+		queue[i] = tui.Stage{Name: s.Name(), Waits: wizard.Locks(s), Nested: nestedRows(p, s.Name())}
 		if m, ok := wizard.MachineOf(s); ok && m == wizard.OnWs {
 			queue[i].Side = tui.WsSide
 		}
-		switch s.(type) {
-		case *wizard.Cable:
-			queue[i].Waits = (&wizard.Setup{}).Name()
-		case *wizard.Setup:
-			queue[i].Nested = []tui.Group{{Name: s.Name(), Steps: setupStepNames(p)}}
-		case *wizard.WsRun:
-			for _, r := range roles.List() {
-				queue[i].Nested = append(queue[i].Nested, tui.Group{Name: r.Name})
-			}
-		}
 	}
 	return queue
+}
+
+// nestedRows returns the groups that the stage named runs, as the lists show them under it.
+func nestedRows(p process, stage string) []tui.Group {
+	var groups []tui.Group
+	switch stage {
+	case (&wizard.Setup{}).Name():
+		groups = []tui.Group{{Name: stage, Steps: setupStepNames(p)}}
+	case (&wizard.WsRun{}).Name():
+		for _, r := range roles.List() {
+			groups = append(groups, tui.Group{Name: r.Name})
+		}
+	}
+	return groups
 }
 
 // wizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
