@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// ghosttyConfigs lists the config files that Ghostty reads under home, in the order the menu's
-// Open Config tries them (src/config/edit.zig, 1.3.1 and main): config.ghostty and config in
+// ghosttyConfigs lists the config files that Ghostty reads under home, in the order the menu's Open
+// Config tries them (src/config/edit.zig, 1.3.1 and main). They are config.ghostty and config in
 // Application Support's com.mitchellh.ghostty, then in ~/.config/ghostty. Ghostty's app, which
 // launchd starts, sees no XDG_CONFIG_HOME of a shell's.
 func ghosttyConfigs(home string) []string {

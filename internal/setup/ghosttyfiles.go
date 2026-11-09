@@ -8,8 +8,9 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// fileChanges returns the changes that put want in ws.ghostty, whose text is old where it exists,
-// and the line that reads it at the end of Ghostty's config, whose text is text, unless has.
+// fileChanges returns the changes that put want in ws.ghostty, whose text is old where it exists.
+// Unless has, they also put the line that reads ws.ghostty at the end of Ghostty's config, whose
+// text is text.
 func (g *Ghostty) fileChanges(config string, text []byte, file string, old, want []byte, has bool) []step.Change {
 	dir := filepath.Dir(file)
 	var cs []step.Change

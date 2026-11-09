@@ -7,9 +7,9 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Zed sets up Zed, the Mac's editor for ws: Zed and the font its settings name, from Homebrew's
-// casks where missing, and ws's settings and keymap in ~/.config/zed. It warns where Zed can't be installed,
-// so that the run goes on to the tunnel. Zed then updates itself.
+// Zed sets up Zed, the Mac's editor for ws. It installs Zed and the font its settings name from
+// Homebrew's casks where missing, and writes ws's settings and keymap in ~/.config/zed. It warns
+// where Zed can't be installed, so that the run goes on to the tunnel. Zed then updates itself.
 type Zed struct {
 	Home string
 	// Settings is global_settings.json whole, its first line zedHeader.

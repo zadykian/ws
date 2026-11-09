@@ -41,7 +41,7 @@ func (r RootRemove) Item() step.Item {
 }
 
 // rootFile plans root's file with the bytes and mode: written where missing or different, fixed
-// where only its owner or mode differ. A nil change means it is right.
+// where only its owner or mode differ. A nil change means the file is right.
 func rootFile(m effect.Machine, path string, mode fs.FileMode, want []byte) (step.Change, error) {
 	a, err := m.RootAttrs(path)
 	if errors.Is(err, fs.ErrNotExist) {

@@ -61,7 +61,7 @@ type SetMode struct {
 
 func (s SetMode) String() string { return fmt.Sprintf("would set %s's mode to %o", s.Path, s.Mode) }
 
-// Backup keeps the file as To.
+// Backup keeps a copy of the file at To.
 type Backup struct{ Path, To string }
 
 func (b Backup) String() string { return fmt.Sprintf("would keep %s as %s", b.Path, b.To) }

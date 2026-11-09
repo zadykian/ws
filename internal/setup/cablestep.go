@@ -12,10 +12,10 @@ import (
 )
 
 // Cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of the
-// cable's address and mask with no router, through sudo, where networksetup -getinfo shows other
-// settings. With no router, the cable takes no default route from the uplink. A service
-// networksetup lacks stops the run, as does one with a router outside the cable's /30, as an
-// uplink has. A disabled one draws a warning. Without WS_CABLE_SERVICE, it leaves the network alone.
+// cable's address and mask with no router. It does so through sudo, where networksetup -getinfo
+// shows other settings. With no router, the cable takes no default route from the uplink. A service
+// networksetup lacks stops the run, as does one with a router outside the cable's /30, as an uplink
+// has. A disabled one draws a warning. Without WS_CABLE_SERVICE, it leaves the network alone.
 type Cable struct {
 	Conf conf.Conf
 	M    effect.Machine
@@ -116,9 +116,9 @@ func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 // Apply runs networksetup -setmanual, then reads the service again. Where it still shows other
-// settings, as a profile that manages it would leave them, the run stops with the remedy: set it by
-// hand in System Settings › Network, as docs/mac.md's The cable says, or empty mac.conf's
-// WS_CABLE_SERVICE.
+// settings, as a profile that manages it would leave them, the run stops with the remedy. That is
+// to set it by hand in System Settings › Network, as docs/mac.md's The cable says, or to empty
+// mac.conf's WS_CABLE_SERVICE.
 func (c Cable) Apply(ctx context.Context, p step.Plan) error {
 	for _, ch := range p.Changes {
 		if err := Apply(ctx, c.M, c.Out, ch); err != nil {

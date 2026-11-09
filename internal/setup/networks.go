@@ -74,7 +74,7 @@ func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
 	return r.changes(ctx)
 }
 
-// remove plans the removal of root's file, if it is there.
+// remove plans the removal of root's file, if the file is there.
 func (n *Networks) remove(file string) (step.Change, error) { return removeRoot(n.M, file) }
 
 func (n *Networks) resolvers() ([]step.Change, error) {
@@ -90,7 +90,8 @@ func (n *Networks) resolvers() ([]step.Change, error) {
 			return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
 				"ws mac resolver %s with no address, or move the file away", file, r.Domain)
 		}
-		// The directory is planned once: a second mkdir, with no -p, would fail where it is new.
+		// The directory is planned once: a second mkdir, with no -p, would fail where the directory
+		// is new.
 		var dir step.Change
 		if !dirPlanned {
 			dirPlanned = true

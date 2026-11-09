@@ -18,11 +18,11 @@ type MakeKey struct{ Path string }
 func (k MakeKey) String() string { return "would make git's signing key, " + k.Path }
 
 // Git sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_KEY, and leaves it
-// alone without them: git's identity and a signing key of the Mac's own, in ~/.config/ws/gitconfig,
-// which ~/.gitconfig includes at its top, as the shell role sets them up on ws. gh, from Homebrew
-// where missing, takes git's pushes to GitHub, and registers the key there. It stops where the key
-// or ~/.gitconfig is not as it can use, before it acts. Without a login for gh, or its
-// write:ssh_signing_key scope, it warns, at each run until one adds the key.
+// alone without them. It writes git's identity and a signing key of the Mac's own to
+// ~/.config/ws/gitconfig, as the shell role sets them up on ws. ~/.gitconfig includes that file at
+// its top. gh, from Homebrew where missing, takes git's pushes to GitHub, and registers the key
+// there. It stops where the key or ~/.gitconfig is not as it can use, before it acts. Without a
+// login for gh, or its write:ssh_signing_key scope, it warns, at each run until one adds the key.
 type Git struct {
 	Conf conf.Conf
 	Home string

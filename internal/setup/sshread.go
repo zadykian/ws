@@ -19,8 +19,8 @@ func (s SSH) stat(p string) (path, effect.Info, error) {
 	return path{Exists: true, Mode: info.Mode}, info, err
 }
 
-// read reads ~/.ssh as it is, and stops at a config.d/ws that is not ws's and at an Include below
-// a setting.
+// read reads ~/.ssh as the directory stands, and stops at a config.d/ws that is not ws's and at an
+// Include below a setting.
 func (s SSH) read() (sshFacts, error) {
 	dir := s.Home + "/.ssh"
 	f := sshFacts{Home: s.Home, Stamp: s.Now().Format("20060102150405")}

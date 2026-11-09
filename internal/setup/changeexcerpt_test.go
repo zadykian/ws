@@ -15,8 +15,8 @@ const usersToken = "FAKETOKEN0123"
 // usersText opens on a secret, as the lines beside ws's at a file's top are what a diff quotes.
 const usersText = "[url \"https://oauth2:" + usersToken + "@example.test/\"]\n    insteadOf = https://example.test/\n"
 
-// Each file of the user's that a plan adds to: a report and a log show ws's line, and leave out the
-// lines beside it that --check's diff shows.
+// Each file of the user's that a plan adds to: a report and a log show ws's line. They leave out
+// the lines beside it that --check's diff shows.
 func TestAReportShowsWsLinesAloneOfAUsersFile(t *testing.T) {
 	gitMachine, _, git := gitWithConfig(usersText, "", "")
 	gitMachine.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] =

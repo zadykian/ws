@@ -12,9 +12,10 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// publicKey asks root's copy of ws for the Mac's public key. It is "" where there is no copy yet,
-// as a check before the first run, or where the key is to be made. It is "" too where the copy, or
-// a directory above it, is to change, as the sh fixed or replaced them before it ran the copy.
+// publicKey asks root's copy of ws for the Mac's public key. It returns "" where there is no copy
+// yet, as a check before the first run, or where the key is to be made. It returns "" too where the
+// copy, or a directory above it, is to change, as the sh fixed or replaced them before it ran the
+// copy.
 func (t *Tunnel) publicKey(ctx context.Context) (string, error) {
 	if t.keyMade || t.untrusted {
 		return "", nil
@@ -66,7 +67,7 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 }
 
 // publish writes tunnel.pub after the changes, where the key or root's copy was missing when the
-// step planned, so that the plan after it is empty.
+// step planned, so that the next plan is empty.
 func (t *Tunnel) publish(ctx context.Context) error {
 	t.keyMade = false
 	t.untrusted = false

@@ -91,7 +91,7 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 }
 
 // Report says how gh, the signing key, the files and ~/.gitconfig's include stand. The key shows by
-// its .pub alone, and ~/.gitconfig by the include, as it is the user's file.
+// its .pub alone, and ~/.gitconfig by the include, as the file is the user's.
 func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if g.Conf.GitName == "" {
 		return nil, nil

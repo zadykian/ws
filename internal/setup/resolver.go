@@ -17,8 +17,8 @@ import (
 const resolverCmdHeader = "# Written by ws mac resolver, which removes this file when given no address."
 
 // Resolver has macOS ask the nameservers Addresses, up to 3, for Domain and the names under it, and
-// the Mac's own for the rest: it writes /etc/resolver/Domain (resolver(5)). With no address, it
-// removes the file, but only one that has the header; it stops rather than replace such a file of
+// the Mac's own for the rest. It writes /etc/resolver/Domain (resolver(5)). With no address, it
+// removes the file, but only one that has the header. It stops rather than replace such a file of
 // another's.
 type Resolver struct {
 	Domain    string

@@ -8,7 +8,7 @@ type Run struct {
 	Name string
 	Args []string
 	// Label is how --check and the run's lines show the command, where it differs from Name and
-	// Args: a program's full path, which sudo needs, is long, and a name with spaces is quoted.
+	// Args. A program's full path, which sudo needs, is long, and a name with spaces is quoted.
 	Label string
 }
 

@@ -27,8 +27,8 @@ type brewCasks struct {
 	failed   map[string]bool // the casks whose install failed, so the plan skips them for the run
 }
 
-// has reports whether the first of the files is there, in /Applications or ~/Applications for the
-// app, where its cask puts it, or in ~/Library/Fonts or /Library/Fonts for the font.
+// has reports whether the first of the files is there. An app's cask puts it in /Applications or
+// ~/Applications, and a font's in ~/Library/Fonts or /Library/Fonts.
 func (b brewCasks) has(name string, dirs ...string) bool {
 	for _, d := range dirs {
 		if _, err := b.m.Stat(d + "/" + name); err == nil {
