@@ -1,28 +1,22 @@
 package wizard
 
-import (
-	"context"
-	"strings"
-)
+import "context"
 
-// noSum is the sum of no secrets file, in the run's stamp and in the remote script's status.
-const noSum = "-"
+// idle tells whether ws's last full run, made by a ws of this version, exited 0. The run must have
+// read ws's secrets file and host_vars as they are now, and no run's unit may run there now.
+func (s wsStatus) idle(version string) bool {
+	return s.Active == "" && s.Run.Exit == "0" && s.Run.Version == version && s.sameSecrets() && s.sameVars()
+}
 
 // sameSecrets tells whether ws's last full run read ws's secrets file as it stands now. The run's
-// stamp names the sum that the status reads, which is noSum in both where the run had no file to
+// stamp names the sum that the status reads, which is empty in both where the run had no file to
 // read. So the wizard reads one sum, whichever machine it runs on.
-func (r *WsRun) sameSecrets() bool {
-	f := strings.Fields(r.Remote.Get("run"))
-	return len(f) > 3 && f[3] == r.Remote.Get("secrets")
-}
+func (s wsStatus) sameSecrets() bool { return s.Run.Exit != "" && s.Run.Secrets == s.Secrets }
 
 // sameVars tells whether ws's last full run read ws's host_vars as it stands now, by the sum that
 // the stamp names after the secrets file's. So a change to host_vars, by either wizard, Configure
 // or by hand, makes the next run due.
-func (r *WsRun) sameVars() bool {
-	f := strings.Fields(r.Remote.Get("run"))
-	return len(f) > 4 && f[4] == r.Remote.Get("vars")
-}
+func (s wsStatus) sameVars() bool { return s.Run.Exit != "" && s.Run.Vars == s.Vars }
 
 // run runs ws server apply through the remote script.
 func (r *WsRun) run(ctx context.Context) error {

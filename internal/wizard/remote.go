@@ -91,6 +91,9 @@ func (r *Remote) status(ctx context.Context) (wsStatus, bool) {
 	return r.last, r.got
 }
 
+// known returns what status last read, with no read of its own: zero before the first.
+func (r *Remote) known() wsStatus { return r.last }
+
 // Status is status, as the stages read it until each reads the fields.
 func (r *Remote) Status(ctx context.Context) bool {
 	r.status(ctx)

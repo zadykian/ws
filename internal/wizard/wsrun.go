@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
@@ -54,27 +53,6 @@ func (*WsRun) Name() string { return runStage }
 // WaitsOn is Await, or the stage that installs this ws on ws.
 func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
 
-// lastRun returns the status of ws's last full run, as the remote script's status read it, or -.
-func (r *WsRun) lastRun() string {
-	if f := strings.Fields(r.Remote.Get("run")); len(f) > 1 {
-		return f[1]
-	}
-	return "-"
-}
-
-// off tells whether ws's last full run began with host_vars turning the outbound table off.
-func (r *WsRun) off() bool {
-	f := strings.Fields(r.Remote.Get("run"))
-	return len(f) > 2 && f[2] == "off"
-}
-
-// idle tells whether ws's last full run, made by a ws of this version, exited 0. The run must have
-// read ws's secrets file and host_vars as they are now, and no run's unit may run there now.
-func (r *WsRun) idle(ctx context.Context) bool {
-	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
-		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ") && r.sameSecrets() && r.sameVars()
-}
-
 // runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
 // that run must have begun with host_vars turning the outbound table off, which host_vars, the same
 // since, still does. Under --update, only once the stage ran ws server apply in this run.
@@ -82,17 +60,14 @@ func (r *WsRun) runDone(ctx context.Context, c conf.Conf) bool {
 	if r.Update && !r.ran {
 		return false
 	}
-	return r.idle(ctx) && r.named(c) && (c.Target != "cloud" || r.off())
+	s, ok := r.Remote.status(ctx)
+	return ok && s.idle(r.Version) && r.named(s, c) && (c.Target != "cloud" || s.Run.Off)
 }
 
 // named tells whether ws's values give ws_user the user that ssh logs in as. It compares with the
 // server's default, so that a default that moves leaves a WS_USER of the old one named in host_vars.
-func (r *WsRun) named(c conf.Conf) bool {
-	user := r.Remote.Get("user")
-	if user == "" || user == "-" {
-		user = r.Default
-	}
-	return user == c.User
+func (r *WsRun) named(s wsStatus, c conf.Conf) bool {
+	return cmp.Or(s.User, r.Default) == c.User
 }
 
 // runChange is the change that runs ws server apply.
@@ -125,11 +100,12 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if len(r.Only) > 0 {
 		how = "run ws server apply on ws for the steps chosen, in a unit of its own, and follow its log"
 	}
-	if s := r.Remote.Get("secrets"); s != "" && s != noSum {
+	s := r.Remote.known()
+	if s.Secrets != "" {
 		how += ", with ws's secrets file"
 	}
 	user := ""
-	if !r.named(c) {
+	if !r.named(s, c) {
 		user = c.User
 		how += ", after naming ws_user: " + user + " in ws's host_vars"
 	}
@@ -137,10 +113,10 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		how += ", after naming security_outbound: false in ws's host_vars"
 	}
 	if r.Check {
-		unit, last := r.Remote.Get("active"), r.lastRun()
-		if unit != "" && unit != "-" {
+		unit, last := s.Active, s.Run.Exit
+		if unit != "" {
 			how = "follow " + unit + ", which runs on ws"
-		} else if last != "-" && last != "0" {
+		} else if last != "" && last != "0" {
 			how += "; its last full run exited " + last
 		}
 	}

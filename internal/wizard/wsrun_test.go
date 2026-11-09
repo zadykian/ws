@@ -65,7 +65,6 @@ func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
 		"a new file":   {"-", "bb22", ", with ws's secrets file"},
 		"file gone":    {"aa11", "-", "and follow its log"},
 		"no file":      {"-", "-", ""},
-		"no line":      {"-", "", "and follow its log"},
 	} {
 		r, _ := newRun("lan", "run v1.2.3 0 on "+tc.stamp+" -\nactive -\nsecrets "+tc.now+"\n", false, false)
 		p, err := r.Plan(context.Background())

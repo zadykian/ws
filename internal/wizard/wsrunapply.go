@@ -25,9 +25,11 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		}
 	}
 	// A part's plan reads no status, where the outbound line shows.
-	if c.cloud && (!r.Remote.Status(ctx) || r.Remote.Get("outbound") != "off") {
-		if err := r.outbound(ctx); err != nil {
-			return err
+	if c.cloud {
+		if s, ok := r.Remote.status(ctx); !ok || !s.OutboundOff {
+			if err := r.outbound(ctx); err != nil {
+				return err
+			}
 		}
 	}
 	r.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
@@ -40,16 +42,15 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if len(r.Only) > 0 {
 		return nil
 	}
-	if !r.Remote.Status(ctx) {
+	if s, ok := r.Remote.status(ctx); !ok {
 		return fail()
-	}
-	if !r.sameVars() {
+	} else if !s.sameVars() {
 		r.Out.Say("%s: the unit it followed began before ws's host_vars took its last change, "+
 			"so ws server apply runs again", runStage)
 		if err := r.run(ctx); err != nil {
 			return err
 		}
-		if !r.Remote.Status(ctx) {
+		if _, ok := r.Remote.status(ctx); !ok {
 			return fail()
 		}
 	}
