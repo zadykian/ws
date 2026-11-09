@@ -19,7 +19,6 @@ func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, 
 // answer, writes an empty WS_CABLE_SERVICE. Where mac.conf has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
-	defer c.Run.Remote.Forget()
 	cf, err := c.Host.conf()
 	if err != nil {
 		return err

@@ -69,7 +69,7 @@ func (c cableChange) String() string { return cableStage + ": would " + string(c
 // read sets the ports to what the files script's op lists on ws. The op is link, or wait PORT,
 // which lists them once PORT holds 10.77.0.1, or after 10 s, in one login.
 func (c *Cable) read(ctx context.Context, op ...string) error {
-	out, err := c.Files.Do(ctx, op...)
+	out, err := c.Files.query(ctx, op...)
 	if err != nil {
 		return fmt.Errorf("%s: link failed on ws: %w", cableStage, err)
 	}

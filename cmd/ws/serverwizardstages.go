@@ -26,12 +26,11 @@ func serverWizardStages(p process, ask effect.Prompt, talks effect.Foreground, o
 	m := p.machine
 	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
-	shell := serverShell(m)
+	remote := &wizard.Remote{Shell: serverShell(m), Script: mac.RemoteScript, Events: events}
 	run := &wizard.WsRun{Want: func() (conf.Conf, error) { return wsWant(m) }, Await: vals.Name(),
 		Unbooted: !host.Booted(m), Check: r.check, Out: out, Version: p.version, Default: values.Default().User,
 		Update: r.update, Only: r.only,
-		Remote: &wizard.Remote{Shell: shell, Script: mac.RemoteScript, Events: events},
-		Files:  &wizard.Remote{Shell: shell, Script: mac.RemoteFilesScript}}
+		Remote: remote, Files: remote.Beside(mac.RemoteFilesScript)}
 	hand.Late(run.WsHand)
 	return []step.Step{vals, run, &wizard.WsClaude{Run: run, Tty: p.tty, Here: talks},
 		&wizard.WsSigning{Run: run, M: m, Hand: hand}}
