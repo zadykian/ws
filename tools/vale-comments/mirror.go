@@ -30,7 +30,16 @@ func newMirror() *mirror {
 	return &mirror{lines: []string{""}, from: []origin{{}}}
 }
 
+// fence matches a line that opens a fenced code block, whose text Vale skips to the fence's end.
+var fence = regexp.MustCompile("^ {0,3}(?:```|~~~)")
+
+// add takes a comment's line. A fence or an HTML tag in it would hide the comments after it from
+// Vale. So the fence's marks and each < become runes that Vale reads as text, one for one.
 func (m *mirror) add(text string, o origin) {
+	if loc := fence.FindStringIndex(text); loc != nil {
+		text = text[:loc[1]-3] + "xxx" + text[loc[1]:]
+	}
+	text = strings.ReplaceAll(text, "<", "‹")
 	m.lines = append(m.lines, text)
 	m.from = append(m.from, o)
 	if strings.TrimSpace(text) != "" {

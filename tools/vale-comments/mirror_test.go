@@ -118,3 +118,14 @@ var é = 1
 		"Validator is no name of this func.":          {14, 4}, "x is a name too.": {17, 4},
 	})
 }
+
+func TestMirrorHidesNothing(t *testing.T) {
+	m := newMirror()
+	m.add("~~~ opens no fence", origin{1, 3})
+	m.add("```go", origin{2, 3})
+	m.add("<!-- vale off --> and <pre>", origin{3, 3})
+	want := []string{"", "xxx opens no fence", "xxxgo", "‹!-- vale off --> and ‹pre>"}
+	if !slices.Equal(m.lines, want) {
+		t.Errorf("got %q, want %q", m.lines, want)
+	}
+}
