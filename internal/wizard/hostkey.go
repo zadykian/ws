@@ -45,14 +45,17 @@ func (c hostAdd) String() string {
 func (h *HostKey) ReadConf() (conf.Conf, error) { return h.conf() }
 
 // conf reads mac.conf.
-func (h *HostKey) conf() (conf.Conf, error) {
-	text, err := h.M.ReadFile(h.Conf)
+func (h *HostKey) conf() (conf.Conf, error) { return macConf(h.M, h.Conf) }
+
+// macConf reads and parses mac.conf at path, and fails on its first error.
+func macConf(m effect.Machine, path string) (conf.Conf, error) {
+	text, err := m.ReadFile(path)
 	if err != nil {
 		return conf.Conf{}, err
 	}
 	c, errs := conf.Parse(string(text))
 	if len(errs) > 0 {
-		return c, errors.New(errs[0].In(h.Conf))
+		return c, errors.New(errs[0].In(path))
 	}
 	return c, nil
 }
