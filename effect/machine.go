@@ -277,16 +277,3 @@ func (m OSMachine) Mkdir(path string, perm fs.FileMode) error {
 	}
 	return m.Chmod(path, perm)
 }
-
-// Chmod sets the mode of the file a link points to.
-func (m OSMachine) Chmod(path string, perm fs.FileMode) error {
-	root, rel, err := m.confined(path)
-	if err != nil {
-		return err
-	}
-	if root == nil {
-		return os.Chmod(path, perm)
-	}
-	defer func() { _ = root.Close() }()
-	return root.Chmod(rel, perm)
-}

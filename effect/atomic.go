@@ -1,6 +1,7 @@
 package effect
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -47,6 +48,19 @@ func (m OSMachine) Chown(path string, uid, gid int) error {
 	}
 	defer func() { _ = root.Close() }()
 	return root.Chown(rel, uid, gid)
+}
+
+// Chmod sets the mode of the file a link points to.
+func (m OSMachine) Chmod(path string, perm fs.FileMode) error {
+	root, rel, err := m.confined(path)
+	if err != nil {
+		return err
+	}
+	if root == nil {
+		return os.Chmod(path, perm)
+	}
+	defer func() { _ = root.Close() }()
+	return root.Chmod(rel, perm)
 }
 
 // Symlink makes path a link to target, replacing a file or link there through a new link renamed

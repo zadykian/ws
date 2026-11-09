@@ -1,11 +1,9 @@
 package effect
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
-	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -20,23 +18,11 @@ stat -c '%u:%g %a' "$1" 2>/dev/null || stat -f '%u:%g %Lp' "$1"`
 
 // WriteRootFile writes a new file beside path, through sudo, then renames it over path.
 func (m OSMachine) WriteRootFile(path string, data []byte, perm fs.FileMode) error {
-	if err := m.ticket(true); err != nil {
-		return err
-	}
 	owner := m.Owner
 	if owner == "" {
 		owner = "0:0"
 	}
-	tmp := filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".ws-new")
-	mode := strconv.FormatUint(uint64(perm.Perm()), 8)
-	cmd := m.command(context.Background(),
-		append(m.sudo(), "sh", "-c", rootWrite, "sh", tmp, owner, mode, path))
-	cmd.Stdin = bytes.NewReader(data)
-	if _, err := cmd.Output(); err != nil {
-		_, _ = m.RunRoot(context.Background(), "rm", "-f", tmp)
-		return commandError(cmd, err)
-	}
-	return nil
+	return m.sudoWrite(path, data, owner, perm)
 }
 
 // ReadRootFile reads the file through sudo's cat.
