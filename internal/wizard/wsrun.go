@@ -37,7 +37,7 @@ type WsRun struct {
 	Files *Remote
 	// Default is the server's default ws_user, what a host_vars with no such line gives.
 	Default string
-	// Version is this ws's version. A full run counts only where it was made by a ws of that version.
+	// Version is this ws's version. A full run counts only where a ws of that version made it.
 	Version string
 	// Update has the stage run ws server apply once more, with the ws installed there.
 	Update bool
@@ -68,8 +68,8 @@ func (r *WsRun) off() bool {
 	return len(f) > 2 && f[2] == "off"
 }
 
-// idle tells whether ws's last full run exited 0, made by a ws of this version, with ws's secrets
-// file and host_vars as they are now, and no run's unit runs there now.
+// idle tells whether ws's last full run, made by a ws of this version, exited 0. The run must have
+// read ws's secrets file and host_vars as they are now, and no run's unit may run there now.
 func (r *WsRun) idle(ctx context.Context) bool {
 	return r.Remote.Status(ctx) && r.Remote.Get("active") == "-" && r.lastRun() == "0" &&
 		strings.HasPrefix(r.Remote.Get("run"), r.Version+" ") && r.sameSecrets() && r.sameVars()
@@ -147,7 +147,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user}}}, nil
 }
 
-// partDone is runDone for what this run takes: a part that ran is all it is to do, and a part
+// partDone is runDone for what this run takes. A part that ran is all there is to do, and a part
 // chosen is to run whatever the last full run left, as a step can drift after it.
 func (r *WsRun) partDone(ctx context.Context, c conf.Conf) bool {
 	if len(r.Only) > 0 {

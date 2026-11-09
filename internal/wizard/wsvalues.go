@@ -18,8 +18,8 @@ import (
 const valuesStage, outboundKey, userKey = "ws's values", "security_outbound", "ws_user"
 
 // WsValues is the stage of ws's values on ws itself, which ws server wizard runs. It asks each key
-// that host_vars lacks, and names it there even at its default, so that a later run, from ws or the
-// Mac, reads the file and asks nothing.
+// that host_vars lacks, and names it there even at its default. So a later run, from ws or the Mac,
+// reads the file and asks nothing.
 type WsValues struct {
 	// Vars is host_vars' path. Set writes one key of it, as ws server values set does.
 	Vars string
@@ -63,8 +63,8 @@ func (v *WsValues) Plan(context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{valuesAsk{v.Vars, strings.Join(lacks, " and ")}}}, nil
 }
 
-// Apply asks each key that host_vars lacks, and names it there as it is answered. Without a terminal
-// it stops, naming the command that names a key by hand.
+// Apply asks each key that host_vars lacks, and names it there once answered. Without a terminal it
+// stops, naming the command that names a key by hand.
 func (v *WsValues) Apply(ctx context.Context, p step.Plan) error {
 	c, ok := p.Changes[0].(valuesAsk)
 	if !ok {

@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
-// scan returns the ed25519 key that ws offers at the way's host and port, within 10 s, over IPv4
-// alone where ssh takes it alone, as "ssh-ed25519 KEY", or an empty string where ws offers none.
+// scan returns the ed25519 key that ws offers at the way's host and port, as "ssh-ed25519 KEY",
+// within 10 s. It goes over IPv4 alone where ssh takes it alone. It returns an empty string where
+// ws offers none.
 func (h *HostKey) scan(ctx context.Context, w Way) string {
 	args := []string{"-T", "10", "-t", "ed25519", "-p", w.Port, w.Host}
 	if w.Inet {

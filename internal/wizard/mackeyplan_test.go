@@ -65,8 +65,8 @@ func TestMacKeyPlanPinsAFileKey(t *testing.T) {
 	}
 }
 
-// macOS 27 denies ws the files of Secretive's container, as #839 of Secretive's says: the stage must
-// take the key from the agent alone, and plan the copy that the stages after it read.
+// macOS 27 denies ws the files of Secretive's container, as #839 of Secretive's says. So the stage
+// must take the key from the agent alone, and plan the copy that the stages after it read.
 func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	k, m, _ := newMacKey(t, "")
 	agent(m, p256)

@@ -38,10 +38,10 @@ func (s SSH) First() string {
 	return strings.TrimSpace(string(b))
 }
 
-// way finds the direct way to ws from mac.conf and the Mac's addresses, with the address that the
-// Host key stage asked in place of the way's host. A failed ifconfig counts as no addresses, as in
-// the daemon. A mac.conf that can't be read or parsed leaves no way. With no way and that address,
-// the port stays ssh's own.
+// way finds the direct way to ws from mac.conf and the Mac's addresses. The address that the Host
+// key stage asked takes the place of the way's host. A failed ifconfig counts as no addresses, as
+// in the daemon. A mac.conf that can't be read or parsed leaves no way. With no way and that
+// address, the port stays ssh's own.
 func (s SSH) way(ctx context.Context) (tunnel.Direct, bool) {
 	var d tunnel.Direct
 	var found bool

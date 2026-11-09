@@ -12,11 +12,12 @@ import (
 // file is mac.conf.
 func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, c.Out} }
 
-// Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the terminal,
-// the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws, and ws server apply --only network,wireguard
-// runs there, as both roles read it: the network role must give it 10.77.0.1. Then
-// service takes the Mac's service. none, as either answer, writes an empty WS_CABLE_SERVICE. Where
-// mac.conf has a service, again takes the stage's steps.
+// Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
+// terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
+// server apply --only network,wireguard runs there, as both roles read it: the network role must
+// give it 10.77.0.1 as ws's end. After that, service takes the Mac's service. none, as either
+// answer, writes an empty WS_CABLE_SERVICE. Where mac.conf has a service, again takes the stage's
+// steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 	defer c.Run.Remote.Forget()
 	cf, err := c.Host.conf()
@@ -73,9 +74,9 @@ func (c *Cable) name(ctx context.Context, port string) error {
 	return c.Run.Remote.Follow(ctx, "--only", "network,wireguard")
 }
 
-// again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another, as after
-// ws's install, a failed roles' run or a change in mac.conf, and runs the roles there, with no
-// question and no dock. It stops on a port that ws lacks.
+// again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another.
+// That holds after ws's install, a failed roles' run or a change in mac.conf. Then it runs the
+// roles there, with no question and no dock. It stops on a port that ws lacks.
 func (c *Cable) again(ctx context.Context, port string) error {
 	if !c.Run.Remote.Status(ctx) {
 		return fmt.Errorf("%s: status failed on ws", cableStage)

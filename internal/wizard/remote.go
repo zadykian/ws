@@ -65,8 +65,9 @@ func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
 	return r.Shell.Put(ctx, path, data)
 }
 
-// Status reads what the remote script's status prints once, until Do, Pass or Follow runs, and reports
-// whether it read any: the Shell or the script fails where root is out of reach. A line is NAME VALUE.
+// Status reads what the remote script's status prints once, until Do, Pass or Follow runs. It
+// reports whether it read any: the Shell or the script fails where root is out of reach. A line is
+// NAME VALUE.
 func (r *Remote) Status(ctx context.Context) bool {
 	if !r.read {
 		out, err := r.Do(ctx, "status")

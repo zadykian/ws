@@ -7,7 +7,7 @@ import (
 )
 
 // listed tells whether the keys of gh's login hold the key, and whether the login needs its scopes
-// refreshed: a 404 from its keys or its signing keys shows it lacks one. gh's other errors stop it.
+// refreshed. A 404 from its keys or its signing keys shows it lacks one. gh's other errors stop it.
 func (g *Gh) listed(ctx context.Context, gh, key string) (listed, refresh bool, err error) {
 	keys, err := g.api(ctx, gh, "user/keys")
 	if err != nil {

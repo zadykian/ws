@@ -49,8 +49,8 @@ func (c tunnelChange) String() string { return tunnelStage + ": would " + string
 
 // Plan is empty where ws's wg0 has the Mac's key as its peer, WS_PUBLIC_KEY is wg0's key, and
 // launchd has ws-tunnel loaded. ws's SSH port must answer through the tunnel too, and ssh ws go
-// through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries, and where
-// the check found no handshake, ws-tunnel has none: a later run checks those two.
+// through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries. Where
+// the check found no handshake, ws-tunnel has none. A later run checks those two.
 func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	c, err := t.Host.conf()
 	if err != nil {

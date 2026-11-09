@@ -9,10 +9,10 @@ import (
 // loginStage names the stage in its messages.
 const loginStage = "Login"
 
-// Login is the stage that checks that WS_USER on ws takes the Mac's key, so that ssh logs in to
-// ws. The wizard adds no key to ws: ws's keys come from the GitHub account at its install, and
-// the gh on the Mac stage has put the Mac's there. So the stage stops where WS_USER refuses the
-// key, and says what to do.
+// Login is the stage that checks that WS_USER on ws takes the Mac's key, so that ssh logs in to ws.
+// The wizard adds no key to ws. ws's keys come from the GitHub account at its install, and the gh
+// on the Mac stage has put the Mac's there. So the stage stops where WS_USER refuses the key, and
+// says what to do.
 type Login struct {
 	// Host is the Host key stage, whose ssh, address and known_hosts this one uses.
 	Host *HostKey

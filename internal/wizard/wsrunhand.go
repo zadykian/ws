@@ -8,9 +8,9 @@ import (
 )
 
 // Hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
-// remote script's status. ws's gh login is a step of ws server apply, by token.github, so it is not here.
-// mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only with a LAN. Off
-// the LAN, away's lines take the router's place.
+// remote script's status. ws's gh login is a step of ws server apply, by token.github, so the list
+// leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only
+// with a LAN. Off the LAN, away's lines take the router's place.
 func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 	r.Remote.Status(ctx)
 	_, c, err := loadConf(confFile{r.Host.Conf, runStage, r.Host.M, r.Host.Out})
@@ -42,10 +42,10 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 	}
 }
 
-// WsHand adds what stays by hand of ws alone, after a run of ws's own wizard: the Mac's list, less
-// the tunnel, the cable and the Mac's own lines. ws's host_vars names its target, so its outbound
-// table follows that, and no mac.conf names another. The wizard adds no device's key to ws, so each
-// goes from GitHub by hand.
+// WsHand adds what stays by hand of ws alone, after a run of ws's own wizard. That is the Mac's
+// list, less the tunnel, the cable and the Mac's own lines. ws's host_vars names its target, so its
+// outbound table follows that, and no mac.conf names another. The wizard adds no device's key to
+// ws, so each goes from GitHub by hand.
 func (r *WsRun) WsHand(ctx context.Context, h *Hand) {
 	r.Remote.Status(ctx)
 	r.fans(h)

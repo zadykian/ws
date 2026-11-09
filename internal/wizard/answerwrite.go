@@ -24,7 +24,7 @@ type confFile struct {
 	out   effect.Out
 }
 
-// read returns the text of mac.conf, empty where it is missing.
+// read returns the text of mac.conf, empty where mac.conf is missing.
 func (f confFile) read() (string, error) {
 	text, err := f.m.ReadFile(f.path)
 	if errors.Is(err, fs.ErrNotExist) {

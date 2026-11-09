@@ -11,7 +11,7 @@ import (
 type setting struct{ key, value string }
 
 // replace returns the text with the first line of key set to value and the later lines of key
-// dropped, or with the line at its end where the text has none.
+// dropped. Where the text has no line of key, it adds the line at its end.
 func replace(text, key, value string) string {
 	var out []string
 	done := false

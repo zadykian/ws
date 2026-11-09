@@ -13,8 +13,8 @@ func (c makeKey) String() string {
 		macKey, c.path, c.path)
 }
 
-// chooseKey is the change that makes ws's key where it has none: in Secretive, or in the file at
-// pub where the answer is no. app tells whether Secretive's app is there.
+// chooseKey is the change that makes ws's key where it has none. The key goes in Secretive, or in
+// the file at pub where the answer is no. app tells whether Secretive's app is there.
 type chooseKey struct {
 	pub string
 	app bool
