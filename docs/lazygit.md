@@ -51,6 +51,8 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 - A commit runs the hooks of `.githooks`, which check the local list's words and secrets. lazygit
   passes `--no-verify` on `w`, and on a summary that starts with `skipHookPrefix`, `WIP` by
   default. So the config empties the prefix and leaves `w` unbound.
+- `overrideGpg` signs a commit in place. Without it, lazygit leaves its screen for each commit,
+  amend or rebase, as git signs each one, and ws's key asks for no passphrase.
 - `update.method` is `never`, as apt updates lazygit.
 - The step fails where `~/.config`, the directory or `config.yml` is a link. The user owns
   `~/.config`, and a link would send ws's root to whatever it names.

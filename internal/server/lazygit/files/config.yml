@@ -9,6 +9,9 @@ git:
   # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
   # prefix, WIP by default. Empty, it never does.
   skipHookPrefix: ""
+  # git signs each commit, as the shell role sets it, and its key asks for no passphrase. So lazygit
+  # signs in place, where it would leave its screen for each commit, amend or rebase.
+  overrideGpg: true
 keybinding:
   files:
     # w commits with --no-verify too.
