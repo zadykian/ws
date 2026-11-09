@@ -23,7 +23,7 @@ func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
 	if ok, _ := r.Ws.login(ctx, w); ok {
 		return step.Plan{}, nil
 	}
-	if r.Host.Check {
+	if r.Check {
 		if err := r.stop(ctx, w); err != nil {
 			return step.Plan{}, err
 		}
@@ -43,16 +43,16 @@ func (r *Login) Apply(ctx context.Context, _ step.Plan) error {
 }
 
 func (r *Login) stop(ctx context.Context, w Way) error {
-	c, err := r.Host.conf()
+	c, err := r.Ws.want()
 	if err != nil {
 		return err
 	}
-	if r.Host.scan(ctx, w) == "" {
-		if r.Host.Check {
-			r.Host.Out.Say("%s: %s; a run would ask its address now", hostStage, r.Host.none(w))
+	if scanKey(ctx, r.Ws.ssh().M, w) == "" {
+		if r.Check {
+			r.Out.Say("%s: %s; a run would ask its address now", hostStage, noAnswer(w))
 			return nil
 		}
-		if w, _, err = r.Host.ask(ctx, c.Target, w); err != nil {
+		if w, _, err = (firstQuestion{r.Ws.ssh(), r.Env, r.Tty, r.P, r.Out}).ask(ctx, c.Target, w); err != nil {
 			return err
 		}
 	}

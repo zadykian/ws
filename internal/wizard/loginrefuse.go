@@ -15,8 +15,8 @@ func (r *Login) refuse(ctx context.Context, w Way, sshErr string) error {
 	if sshErr != "" {
 		sshErr = ". ssh's error: " + sshErr
 	}
-	if r.Host.Check {
-		r.Host.Out.Say("%s: %s on ws doesn't log in by the Mac's key; a run would stop, as the wizard adds no key "+
+	if r.Check {
+		r.Out.Say("%s: %s on ws doesn't log in by the Mac's key; a run would stop, as the wizard adds no key "+
 			"to ws%s", loginStage, w.User, sshErr)
 		return nil
 	}

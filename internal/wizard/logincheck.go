@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	"github.com/zadykian/ws/effect"
 	"regexp"
 	"strings"
 )
@@ -15,11 +16,15 @@ const loginStage = "Login"
 type Login struct {
 	// Ws is the session to ws, whose ssh logs in.
 	Ws *Session
-	// Host is the Host key stage, whose question asks ws's address where ws doesn't answer at its
-	// way.
-	Host *HostKey
 	// Gh names the Mac's key in the stop.
 	Gh GhCLI
+	// Tty tells whether a terminal is there to ask ws's address, where ws doesn't answer at its way.
+	// Check is set under --check, which asks nothing.
+	Tty, Check bool
+	// Env looks up a variable of the environment.
+	Env func(string) (string, bool)
+	P   effect.Prompt
+	Out effect.Out
 }
 
 // Name is the stage's name.

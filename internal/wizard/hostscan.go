@@ -4,17 +4,19 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/zadykian/ws/effect"
 )
 
-// scan returns the ed25519 key that ws offers at the way's host and port, as "ssh-ed25519 KEY",
+// scanKey returns the ed25519 key that ws offers at the way's host and port, as "ssh-ed25519 KEY",
 // within 10 s. It goes over IPv4 alone where ssh takes it alone. It returns an empty string where
 // ws offers none.
-func (h *HostKey) scan(ctx context.Context, w Way) string {
+func scanKey(ctx context.Context, m effect.Machine, w Way) string {
 	args := []string{"-T", "10", "-t", "ed25519", "-p", w.Port, w.Host}
 	if w.Inet {
 		args = append([]string{"-4"}, args...)
 	}
-	out, _ := h.M.Run(ctx, "ssh-keyscan", args...)
+	out, _ := m.Run(ctx, "ssh-keyscan", args...)
 	for _, l := range strings.Split(string(out), "\n") {
 		if f := strings.Fields(l); len(f) >= 3 && f[1] == "ssh-ed25519" {
 			return f[1] + " " + f[2]
