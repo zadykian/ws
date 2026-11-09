@@ -184,15 +184,15 @@ EOF
 }
 
 # off prints the script of host_vars VARS's security_outbound line, which runs as OP VARS. check
-# succeeds where the last such line is false, no or off, in any case, with a comment or not, as YAML
-# reads it. write names security_outbound: false otherwise, by a rename that keeps the file's other
-# lines and mode, and not through a link. It makes the directory 0755 and a new file 0600, as the
-# file may hold secrets.
+# succeeds where the last such line is false, no or off, in any case, as YAML reads it. A comment,
+# blanks or a carriage return may follow. write names security_outbound: false otherwise, by a
+# rename that keeps the file's other lines and mode, and not through a link. It makes the directory
+# 0755 and a new file 0600, as the file may hold secrets.
 off() {
     cat <<'EOF'
 vars=$2
 awk '/^security_outbound:/ { line = $0 } END { print line }' "$vars" 2>/dev/null |
-    grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]+#.*)?' && exit 0
+    grep -Eiqx 'security_outbound:[[:space:]]*(false|no|off)([[:space:]]*|[[:space:]]+#.*)' && exit 0
 [ "$1" = write ] || exit 1
 if [ -L "$vars" ]; then
     echo "wizard-remote.sh: $vars is a link to $(readlink "$vars"): name the line in its file by hand" >&2

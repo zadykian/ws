@@ -218,8 +218,9 @@ as they find it ([The profile](ikeward.md#the-profile)).
 
 On a cloud VM, the outbound table drops the metadata service ([Outbound](security.md#outbound)). So
 with `WS_TARGET=cloud`, the stage names `security_outbound: false` in ws's `/etc/ws/host_vars.yml`
-before the run, which reads its values there. The stage is done there once a run that began with
-the line passed, and `host_vars.yml` is as that run read it.
+before the run, which reads its values there. It reads the line as YAML does, with blanks or a
+carriage return after the value too. The stage is done there once a run that began with the line
+passed, and `host_vars.yml` is as that run read it.
 
 ## Signing key
 
