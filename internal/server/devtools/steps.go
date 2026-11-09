@@ -46,8 +46,8 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 	}})
 }
 
-// serverSteps returns the steps of the language servers that editors name by path: the downloads of
-// the SQL and Docker servers, and the npm servers, which wait on the Node package. They install
+// serverSteps returns the steps of the language servers that editors name by path. They are the
+// downloads of the SQL and Docker servers, and the npm servers, which wait on the Node package. They install
 // apart from Steps so that a test can run them with no stand-ins for Go and the packages.
 func serverSteps(m effect.Machine, user host.User) []step.Step {
 	return []step.Step{

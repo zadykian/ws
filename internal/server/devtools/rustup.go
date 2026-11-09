@@ -9,14 +9,14 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// installRustup is rustup's own installer, which curl pipes into sh. --no-modify-path leaves PATH
+// installRustup is rustup's own installer, which curl pipes into sh. `--no-modify-path` leaves PATH
 // to the shell role's .profile, which sources rustup's env file.
 const installRustup = "set -o pipefail && " +
 	"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | " +
 	"sh -s -- -y --no-modify-path --default-toolchain stable"
 
 // Rustup installs rustup and Rust's stable toolchain for User, in ~/.cargo and ~/.rustup. rustup
-// updates itself and its toolchains, so it is installed only where it is missing.
+// updates itself and its toolchains, so the step installs it only where missing.
 type Rustup struct {
 	M    effect.Machine
 	User string

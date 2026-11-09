@@ -17,8 +17,8 @@ import (
 const dotnetBin = "/usr/bin/dotnet"
 
 // roslynTool is roslyn-language-server at the pinned version, a .NET tool. The tool's store keeps a
-// directory per installed version. They are read there, and not with dotnet tool list: dotnet's
-// first run with each SDK version writes files into the home, an HTTPS development certificate
+// directory per installed version. They are read there, and not with dotnet tool list. The first
+// run of dotnet with each SDK version writes files into the home, an HTTPS development certificate
 // among them, and a plan must change nothing. NuGet names the directories in lower case.
 type roslynTool struct {
 	M    effect.Machine
@@ -49,7 +49,7 @@ func (c installRoslyn) String() string {
 	return fmt.Sprintf("replace roslyn-language-server %s with %s", strings.Join(c.installed, ", "), c.r.version())
 }
 
-// Apply updates the tool, which installs it where it is missing too. --allow-downgrade lets the pin
+// Apply updates the tool, which installs it where missing too. --allow-downgrade lets the pin
 // go back. NuGet asks every feed the user's NuGet config names, and one it can't reach fails the
 // install, so --source asks nuget.org alone.
 func (c installRoslyn) Apply(ctx context.Context) error {

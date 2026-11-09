@@ -21,8 +21,8 @@ const (
 
 // Repositories sets up the apt repositories: it removes the sources they replace and those no
 // longer needed, then writes each needed repository's key and .sources file. Apt refuses two
-// sources of one repository whose keys differ, so the old sources go before the new ones come: a run
-// that stops between the two leaves a repository missing, never defined twice.
+// sources of one repository whose keys differ, so the old sources go before the new ones come. A
+// run that stops between the two leaves a repository missing, never defined twice.
 type Repositories struct {
 	M effect.Machine
 	// repos lists the repositories by the release's codename. Nil means repositories; tests pin

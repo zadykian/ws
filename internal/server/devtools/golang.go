@@ -10,9 +10,9 @@ import (
 )
 
 // Where Go is installed, and where its tarball is downloaded and unpacked before the tree is moved
-// into place, under /usr/local/src: root's, and on disk where /tmp may be in memory. Neither path
-// names the version, so a run removes what any earlier run left; the unpacked tree's does, so a
-// tree cut short for another version never mixes with this one.
+// into place. Both go under /usr/local/src: root's, and on disk where /tmp may be in memory.
+// Neither path names the version, so a run removes what any earlier run left. The unpacked tree's
+// does, so a tree cut short for another version never mixes with this one.
 const (
 	goDir     = "/usr/local/go"
 	goTarball = "/usr/local/src/go-install.tar.gz"

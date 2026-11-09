@@ -10,7 +10,7 @@ import (
 
 // GHLogin logs gh in to github.com by Token, as User. ws has no keyring, so --insecure-storage
 // puts the token in ~/.config/gh/hosts.yml, mode 0600. Without a Token the step plans nothing and
-// leaves gh's login as it is.
+// leaves gh's login unchanged.
 type GHLogin struct {
 	M     effect.Machine
 	User  string
