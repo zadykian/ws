@@ -59,7 +59,7 @@ func holdsKey(keys []byte) bool {
 	return false
 }
 
-// usable fails where sshd would pass the file over, which root's cp leaves behind: sshd reads it as
+// usable fails where sshd would pass the file over, which root's cp leaves behind. sshd reads it as
 // the user, and takes it only from that user or root, with no other able to write it. The home's
 // owner is the user.
 func (k keyCheck) usable(file string) error {

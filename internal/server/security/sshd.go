@@ -5,13 +5,13 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// sshd allows SSH by key only. sshd -G parses the file, as a config of its own, before it is in
-// place: sshd refuses to start with a bad one, and a reboot would then lock SSH out. Unlike
+// sshd allows SSH by key only. sshd -G parses the file, as a config of its own, before the file
+// goes in place. sshd refuses to start with a bad one, and a reboot would then lock SSH out. Unlike
 // sshd -t, it needs no /run/sshd, which exists only once ssh.service has started since boot.
-// ssh.service tests the config again before it reloads. ssh.socket starts sshd at the first
-// login; before that, a change starts it. The reload comes in this step, not at the end of the
-// run: if a later step fails, the next run has no change to reload for, and a running sshd would
-// go on taking passwords.
+// ssh.service tests the config again before it reloads. ssh.socket starts sshd at the first login;
+// before that, a change starts it. The reload comes in this step, not at the end of the run. If a
+// later step fails, the next run has no change to reload for, and a running sshd would go on taking
+// passwords.
 func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]host.Resource, error) {
 	conf, err := host.Render(files, "files/10-keys-only.conf.tmpl", struct{ Root bool }{user == "root"})
 	if err != nil {

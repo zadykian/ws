@@ -12,10 +12,10 @@ const sshComment = "ws: SSH"
 // firewall lets SSH in, then denies incoming connections and allows outgoing ones by default, then
 // enables ufw. ufw needs the kernel's netfilter even to show its state, so each of these needs a
 // booted machine. SSH's rule goes in first, so that no default policy refuses SSH, not even to a
-// run over SSH, whatever state ufw starts in. The outbound table holds what goes out where: ufw
-// can't match resolved's or networkd's uid, or an IPv6 next hop, and Docker forwards its
-// containers' packets ahead of ufw's rules. ufw.service loads the rules at boot; without it, the
-// machine would boot with no firewall.
+// run over SSH, whatever state ufw starts in. The outbound table holds what goes out where. ufw
+// can't match resolved's or networkd's uid, or an IPv6 next hop. Docker forwards its containers'
+// packets ahead of ufw's rules. ufw.service loads the rules at boot; without it, the machine would
+// boot with no firewall.
 func firewall(m effect.Machine, u effect.Units, out effect.Out) []host.Resource {
 	ssh := ufw.Rule{Action: "allow", Proto: "tcp", To: "any", ToPort: "22", From: "any", FromPort: "any", Dir: "in"}
 	return []host.Resource{

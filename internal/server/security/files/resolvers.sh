@@ -3,11 +3,11 @@
 #
 # Fills the outbound table's sets of resolved's DNS servers from the nameserver lines of the
 # resolv.conf that resolved rewrites as they change. Who runs it, and when, is said here alone.
-# security-outbound.service runs it with the table's FILE, which it loads with the sets' elements in
-# one nft transaction, or alone where nft refuses them. A run loads FILE so too, in a network
-# namespace of its own (drift.go). Without FILE, it fills the sets anew in one transaction.
+# security-outbound.service runs it with the table's FILE. The script loads FILE with the sets'
+# elements in one nft transaction, or alone where nft refuses them. A run loads FILE so too, in a
+# network namespace of its own (drift.go). Without FILE, it fills the sets anew in one transaction.
 # security-resolvers.path runs it so on each change of resolv.conf, and security-resolvers.timer a
-# minute after each run: the path unit watches nothing while a fill runs, and a lab lost a change
+# minute after each run. The path unit watches nothing while a fill runs, and a lab lost a change
 # made then. A missing resolv.conf leaves the sets empty. A missing table stays missing, as sets
 # made here would make a table that drops nothing, yet looks loaded.
 
@@ -54,10 +54,10 @@ ipv6() (
     [ "$groups" -ge "$min" ] && [ "$groups" -le "$max" ]
 )
 
-# elements prints the command that adds each server of the resolv.conf on stdin to its set, and,
-# unless quiet, names those it leaves out: no address, or one in 0.0.0.0/8, an IPv6 one of zeros,
-# broadcast or multicast. It skips a bare nameserver line. An IPv4-mapped server's packets are
-# IPv4. A set holds no zone, so fe80::1%2 matches on any link.
+# elements prints the command that adds each server of the resolv.conf on stdin to its set. Unless
+# quiet, it names those it leaves out: no address, or one in 0.0.0.0/8, an IPv6 one of zeros,
+# broadcast or multicast. It skips a bare nameserver line. An IPv4-mapped server's packets are IPv4.
+# A set holds no zone, so fe80::1%2 matches on any link.
 elements() {
     while read -r key addr _; do
         addr=${addr%"$cr"}
