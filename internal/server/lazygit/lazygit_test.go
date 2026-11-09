@@ -3,7 +3,9 @@ package lazygit
 import (
 	"bytes"
 	"context"
+	"regexp"
 	"slices"
+	"strings"
 	"testing"
 
 	"go.yaml.in/yaml/v3"
@@ -113,5 +115,39 @@ func TestTheConfigKeepsTheHooks(t *testing.T) {
 	}
 	if v := keys["keybinding.files.commitChangesWithoutHook"]; v != "<disabled>" {
 		t.Errorf("keybinding.files.commitChangesWithoutHook is %q", v)
+	}
+}
+
+// A colour attribute holds one colour at most, as #rrggbb, beside lazygit's modifiers.
+func TestTheThemeHoldsOneColourAKey(t *testing.T) {
+	hex := regexp.MustCompile(`^#[0-9a-f]{6}$`)
+	modifiers := []string{"bold", "default", "reverse", "underline", "strikethrough"}
+	theme := 0
+	for path, v := range leaves(t) {
+		if !strings.HasPrefix(path, "gui.theme.") {
+			continue
+		}
+		theme++
+		attrs, ok := v.([]any)
+		if !ok {
+			t.Errorf("%s is %T, not a list", path, v)
+			continue
+		}
+		colours := 0
+		for _, a := range attrs {
+			s, _ := a.(string)
+			switch {
+			case hex.MatchString(s):
+				colours++
+			case !slices.Contains(modifiers, s):
+				t.Errorf("%s holds %v", path, a)
+			}
+		}
+		if colours != 1 {
+			t.Errorf("%s holds %d colours", path, colours)
+		}
+	}
+	if theme != 12 {
+		t.Errorf("the theme sets %d keys, want lazygit's 12", theme)
 	}
 }

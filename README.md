@@ -22,8 +22,8 @@ Each role has a page of its own. A role is Go steps of ws:
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
   repositories.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
-- [`lazygit`](docs/lazygit.md): lazygit from Ubuntu's archive, with the repository and its branch
-  in the terminal's title.
+- [`lazygit`](docs/lazygit.md): lazygit from Ubuntu's archive, in JetBrains Dark, with the
+  repository and its branch in the terminal's title.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json`, a slice for its containers and

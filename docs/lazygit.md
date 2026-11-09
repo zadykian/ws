@@ -1,7 +1,8 @@
 # lazygit
 
 The `lazygit` role is Go steps in `internal/server/lazygit`. It installs lazygit from Ubuntu's
-archive, a wrapper that puts the repository and its branch in the terminal's title, and a config.
+archive, a wrapper that puts the repository and its branch in the terminal's title, and a config in
+JetBrains Dark.
 
 ## The install
 
@@ -60,6 +61,18 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 lazygit loads a key it lacks, or a value of another kind, with no error. So
 `TestTheConfigMeetsLazygitsSchema` holds the config to the schema of 0.57.0, which `make gotest`
 downloads ([The gates](gates.md)).
+
+## The theme
+
+The theme is JetBrains Dark, which Zed's `theme.dark` and [Fresh's theme](fresh.md#the-theme)
+name. Each colour is Zed's, from the same commit of `artemevsevev/zed-theme-jetbrains`, and the Zed
+key it comes from is beside it in `config.yml`. A change of theme goes to all three
+([editors](../.claude/rules/editors.md)).
+
+- lazygit's 12 theme keys each take one colour, as `#rrggbb`.
+- No alpha: the search border takes Zed's match colour opaque.
+- The background is the terminal's, as lazygit has no key for it. In Ghostty, that is Starlight's.
+- Diffs, the graph and staged files take the terminal's palette, as git colours them.
 
 ## A new version
 

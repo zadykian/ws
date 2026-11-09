@@ -5,6 +5,23 @@
 # lazygit reads a missing key as its default, and loads a key it lacks with no error. A test of ws's
 # holds this file to the schema of the installed version.
 ---
+gui:
+  # JetBrains Dark, the theme of Zed and Fresh. Each colour is Zed's, from the key named beside
+  # it (docs/lazygit.md#the-theme). The background stays the terminal's, as lazygit has no key
+  # for it.
+  theme:
+    activeBorderColor: ["#467ff2", bold]  # border.focused
+    inactiveBorderColor: ["#393b41"]  # border
+    searchingActiveBorderColor: ["#0dcdfb", bold]  # search.match_background, opaque
+    optionsTextColor: ["#548af7"]  # link_text.hover
+    selectedLineBgColor: ["#214283"]  # the first player's selection, as Fresh's selection_bg
+    inactiveViewSelectedLineBgColor: ["#43454a"]  # element.selected
+    cherryPickedCommitFgColor: ["#1e1f22"]  # editor.background
+    cherryPickedCommitBgColor: ["#47ccbd"]  # terminal.ansi.cyan
+    markedBaseCommitFgColor: ["#1e1f22"]  # editor.background
+    markedBaseCommitBgColor: ["#f2c55c"]  # warning
+    unstagedChangesColor: ["#f27481"]  # terminal.ansi.red
+    defaultFgColor: ["#dfe1e5"]  # text
 git:
   # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
   # prefix, WIP by default. Empty, it never does.
