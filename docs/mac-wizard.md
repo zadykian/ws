@@ -76,9 +76,10 @@ A bad answer at the terminal is asked again, with the form the key takes. From t
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
 the end of `mac.conf`, and keeps its comments and order. It writes the file once `ws mac apply`
 would take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that `ws mac
-apply` would refuse. Where `mac.conf` is a link, it prints the lines to add to the link's file,
-and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cable](#the-cable)).
-The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
+apply` would refuse. Where `mac.conf` is a link and lacks a key, it prints the lines to add to the
+link's file, and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE`
+([The cable](#the-cable)). The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults
+until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff.
 `ws mac apply --check` then reads the file it would write, in the lock, which `WS_CONF` names.

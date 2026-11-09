@@ -34,8 +34,8 @@ func (f confFile) read() (string, error) {
 }
 
 // compose returns mac.conf's text, and its text with the lines appended, whose keys mac.conf lacks,
-// where the whole passes conf's checks. Where mac.conf is a link, as a dotfiles manager makes it, it
-// says the lines and stops. f.stage names the stage in the messages.
+// where the whole passes conf's checks. Where mac.conf is a link, as a dotfiles manager makes it, and
+// there are lines to add, it says them and stops. f.stage names the stage in the messages.
 func (f confFile) compose(lines string) (before, after string, err error) {
 	before, err = f.read()
 	if err != nil {
@@ -52,7 +52,7 @@ func (f confFile) compose(lines string) (before, after string, err error) {
 		}
 		return "", "", errRefused
 	}
-	if info, err := f.m.Stat(f.path); err == nil && info.Link != "" {
+	if info, err := f.m.Stat(f.path); err == nil && info.Link != "" && lines != "" {
 		f.out.Say("%s: %s is a link to %s, which the wizard leaves: add these lines to its file, then run the wizard again",
 			f.stage, f.path, info.Link)
 		f.out.Say("%s", strings.TrimSuffix(lines, "\n"))

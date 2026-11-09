@@ -133,6 +133,23 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	}
 }
 
+func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
+	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_GIT_NAME=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	a, out := newAnswers(t, all)
+	a.Check, a.Scratch = true, "/lock/mac.conf"
+	m := a.M.(*effecttest.Machine)
+	m.Links[confPathForTest], m.Dirs["/h/.config/ws"] = "/dot/mac.conf", 0o755
+	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
+		t.Fatalf("Plan = %v, %v", p, err)
+	}
+	if got := out.Lines; len(got) != 1 || got[0] != "diff: "+confPathForTest+"\n" {
+		t.Errorf("out = %q, want an empty diff of mac.conf alone", got)
+	}
+	if got := string(m.Files["/lock/mac.conf"]); got != all {
+		t.Errorf("scratch = %q", got)
+	}
+}
+
 func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
 	a, _ := newAnswers(t, "")
 	a.Check, a.Scratch = true, "/lock/mac.conf"
