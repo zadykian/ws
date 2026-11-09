@@ -19,10 +19,9 @@ import (
 // networkd under the uplink.
 const keyMode fs.FileMode = 0o640
 
-// key is the server's private key, which the run makes on the machine where it is missing and
-// never shows or diffs. A key put back by hand may lack the owner, group and mode: networkd cannot
-// read a root:root 0600 key as it next creates wg0, and anyone can read one written under umask
-// 022.
+// key is the server's private key, which the run makes on the machine where none exists and never
+// shows or diffs. A key put back by hand may lack the owner, group and mode. networkd cannot read a
+// root:root 0600 key as it next creates wg0, and anyone can read one written under umask 022.
 type key struct {
 	m      effect.Machine
 	random io.Reader
@@ -54,8 +53,8 @@ func (c setKeyMode) Apply(context.Context) error {
 	return c.m.Chmod(keyFile, keyMode)
 }
 
-// Plan plans the key where it is missing, or its owner, group and mode where they differ. A file
-// that holds no private key is an error.
+// Plan plans the key where none exists, or its owner, group and mode where they differ. A file that
+// holds no private key is an error.
 func (k key) Plan(context.Context) ([]host.Change, error) {
 	text, err := k.m.ReadRootFile(keyFile)
 	if errors.Is(err, fs.ErrNotExist) {

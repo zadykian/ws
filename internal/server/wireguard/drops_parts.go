@@ -11,7 +11,7 @@ import (
 // drops are the resources of the script and the unit that keep Docker's containers off the Mac.
 // Through wg0 or the cable they come from the server's address, and the Mac lets them in as the
 // server's. The role runs before docker's, so a first run has the drops in place as Docker first
-// starts; where Docker runs already, the restart puts them in force at once. Docker's daemon.json
+// starts. Where Docker runs already, the restart puts them in force at once. Docker's daemon.json
 // leaves it on its iptables backend, which docker-user.sh needs. WantedBy=docker.service: Docker's
 // start, at boot too, starts the unit first.
 func drops(m effect.Machine, u effect.Units, out effect.Out, v values.Values) func(context.Context) ([]host.Resource, error) {

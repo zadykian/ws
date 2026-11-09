@@ -10,10 +10,10 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// wg0 puts the files in force. networkd creates wg0 where it is missing, and sets up again the
-// links whose files are new or changed, and no other. A peer's change updates wg0 in place, but
-// networkd replaces all its peers at once, which ends the tunnel's sessions: each peer handshakes
-// again as it next sends. Without systemd booted, as in CI's container, it plans nothing.
+// wg0 puts the files in force. networkd creates a missing wg0, and sets up again the links whose
+// files are new or changed, and no other. A peer's change updates wg0 in place, but networkd
+// replaces all its peers at once, which ends the tunnel's sessions: each peer handshakes again as
+// it next sends. Without systemd booted, as in CI's container, it plans nothing.
 //
 // networkd reads the private key as it creates wg0, and again as a reload finds the .netdev
 // changed, but not where the key's file alone changed. So a key other than wg0's takes effect once
@@ -24,8 +24,8 @@ type wg0 struct {
 	watch []host.Resource
 }
 
-// Plan plans the deletion of wg0 where it holds another key than the file's, or the file is to
-// be made, and the reload where a watched resource changes or wg0 is missing, as a key that
+// Plan plans the deletion of wg0 where it holds another key than the file's, or the file is to be
+// made. It plans the reload where a watched resource changes or wg0 is missing, as a key that
 // networkd couldn't read or a deletion by hand leaves it.
 func (w wg0) Plan(ctx context.Context) ([]host.Change, error) {
 	if !host.Booted(w.m) {
@@ -47,8 +47,8 @@ func (w wg0) Plan(ctx context.Context) ([]host.Change, error) {
 	return append(cs, reloadNetworkd{w.m, why}), nil
 }
 
-// why says what makes the reload due, and whether wg0 is to be deleted first. It is empty where
-// nothing does.
+// why says what makes the reload due, and whether wg0 is to be deleted first. It returns an empty
+// string where nothing does.
 func (w wg0) why(ctx context.Context, exists bool) (string, bool, error) {
 	public, hasKey, err := serverPublicKey(w.m)
 	if err != nil {
