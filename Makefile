@@ -69,9 +69,11 @@ yamllint: $(PIP_STAMP)
 sizecheck:
 	tools/sizecheck $(FILES)
 
-# Vale (.vale.ini) on the Markdown files git lists, new ones included.
+# Vale (.vale.ini) on the Markdown files git lists, new ones included. Vale would read any other
+# file whole, so tools/vale-comments mirrors its comments as Markdown for Vale.
 vale:
-	@set -ef; files=$$(tools/files md $(FILES)); [ -z "$$files" ] || tools/run vale $$files
+	@set -ef; files=$$(tools/files md $(FILES)); [ -z "$$files" ] || tools/run vale $$files; \
+		go=$$(tools/run -path go); "$$go" run ./tools/vale-comments $(FILES)
 
 # Links to files and their headings in the Markdown files.
 lychee:
@@ -120,18 +122,20 @@ gotest:
 		LAZYGIT_SCHEMA=$$schema CGO_ENABLED=1 "$$go" test -race -count=1 ./...
 
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
-# file (docs/checks.md). A workflow takes actionlint and zizmor too. A file of no kind passes, as
-# each gate passes over the files not of its kind.
+# file (docs/checks.md). A workflow takes actionlint and zizmor too. Every file takes vale, which
+# reads the comments alone of a file other than Markdown. A file of no kind passes, as each gate
+# passes over the files not of its kind.
 lint-file:
 	@status=0; for file in $(FILES); do \
 		case $$file in \
 		*.md) gates='vale lychee rumdl sizecheck' ;; \
 		.github/workflows/*.yml | .github/workflows/*.yaml) \
-			gates='yamllint actionlint zizmor sizecheck' ;; \
-		*.yml | *.yaml) gates='yamllint sizecheck' ;; \
-		*.go | go.mod | go.sum) gates='gofmt govet golangci-lint govulncheck gotest sizecheck' ;; \
-		*.j2) gates=sizecheck ;; \
-		*) gates='shell sizecheck' ;; \
+			gates='yamllint actionlint zizmor vale sizecheck' ;; \
+		*.yml | *.yaml) gates='yamllint vale sizecheck' ;; \
+		*.go | go.mod | go.sum) \
+			gates='gofmt govet golangci-lint govulncheck gotest vale sizecheck' ;; \
+		*.j2) gates='vale sizecheck' ;; \
+		*) gates='shell vale sizecheck' ;; \
 		esac; \
 		$(MAKE) --no-print-directory $$gates FILES="$$file" || status=1; \
 	done; exit $$status

@@ -1,6 +1,7 @@
 ---
 paths:
   - "**/*.md"
+  - "**/*.go"
   - "**/*.yml"
   - "**/*.yaml"
   - "**/*.sh"
@@ -12,8 +13,9 @@ paths:
 
 ws's facts beside the
 [writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md) skill, which
-holds the policy for comments and docs. They cover the Markdown, and the `#` comments of the
-YAML and the shell scripts.
+holds the policy for comments and docs. They cover the Markdown and every comment: Go's, and
+those of the YAML, the shell scripts, the templates and the configs. `make vale` checks them all
+([The gates](../../docs/gates.md)).
 
 - A step's `Name` says what it does. The comment above it says why, and what a dry run or a
   container does there where that differs.

@@ -284,9 +284,9 @@ Code run two targets of the `Makefile`, as [its docs][lint] say. After each edit
 `make lint-file FILES=PATH` runs the gates of the file's kind on that file alone:
 
 - Markdown: `vale`, `lychee`, `rumdl` and `sizecheck`;
-- YAML: `yamllint` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
-- shell, by extension or shebang: `shell` and `sizecheck`;
-- Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest` and `sizecheck`.
+- YAML: `yamllint`, `vale` and `sizecheck`, and for a workflow `actionlint` and `zizmor`;
+- Go: `gofmt`, `govet`, `golangci-lint`, `govulncheck`, `gotest`, `vale` and `sizecheck`;
+- any other file: `shell` on a script, by extension or shebang, `vale` and `sizecheck`.
 
 As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks scans only the
 branch's own commits, from `origin/main`.
