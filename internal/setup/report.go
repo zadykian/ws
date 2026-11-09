@@ -83,17 +83,22 @@ func (p userPath) Report(context.Context) ([]step.Item, error) {
 	return []step.Item{p.itemOf(path{Exists: true, Mode: info.Mode})}, nil
 }
 
-// userFile is a file of the user's that ws writes, as host.File is one of root's.
+// userFile is a file of the user's that ws writes, as host.File is one of root's. Its plan and its
+// report read it alike, so that a report stands off where a plan changes the file or leaves it.
 type userFile struct {
 	M    effect.Machine
 	Path string
 	Text []byte
+	// Mode is the file's mode. 0 leaves it to the user until a write, which sets 644.
 	Mode fs.FileMode
 	// Own says whether a run replaces a file that holds these bytes. Nil means that it always does.
 	Own func(have []byte) bool
 	// Binary keeps a program out of the diff.
 	Binary bool
 }
+
+// errNotWs is a plan's error for a file that is not ws's: its step warns of it, or stops.
+var errNotWs = errors.New("not ws's")
 
 // read reads the file. ours is false where Own refuses the text, and where Own is set and the
 // path is no file, such as a link to nowhere: a run replaces neither.
@@ -114,6 +119,34 @@ func (f userFile) read() (found path, ours bool, err error) {
 		return found, false, fmt.Errorf("cannot read %s: %w", f.Path, err)
 	}
 	return found, f.Own == nil || f.Own(found.Text), nil
+}
+
+// change returns the change that brings the file, as read in found, to Text and Mode, or none.
+func (f userFile) change(found path) []step.Change {
+	mode := f.Mode
+	if mode == 0 {
+		mode = 0o644
+	}
+	switch {
+	case !found.Exists || !bytes.Equal(found.Text, f.Text):
+		return []step.Change{Write{f.Path, found.Text, f.Text, found.Exists, mode}}
+	case f.Mode != 0 && found.Mode.Perm() != f.Mode:
+		return []step.Change{SetMode{f.Path, f.Mode}}
+	}
+	return nil
+}
+
+// plan returns a write, a fix of the mode, or nothing. It returns errNotWs, and no change, where
+// the file is not ws's.
+func (f userFile) plan() ([]step.Change, error) {
+	found, ours, err := f.read()
+	if err != nil {
+		return nil, err
+	}
+	if !ours {
+		return nil, errNotWs
+	}
+	return f.change(found), nil
 }
 
 // Report compares the file as a plan does. A file that isn't ws's shows no diff: a run leaves it,
