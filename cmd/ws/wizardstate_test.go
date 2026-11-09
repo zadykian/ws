@@ -88,7 +88,10 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	if err := (macScreen{c, p, wizardOptions{}}).state(tui.WsSide, &wizard.Sudo{}); err != nil {
+	read, done := (macScreen{c, p, wizardOptions{}}).read(tui.WsSide, &wizard.Sudo{})
+	err := tui.RunState(c.Context(), screenConfig(c, p), "ws", read)
+	done(c.Context())
+	if err != nil {
 		t.Fatal(err)
 	}
 	if took, gone := lockCalls(m.Calls, "mkdir"), lockCalls(m.Calls, "rm -rf"); took != 1 || gone != 1 {
@@ -100,8 +103,9 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "q")
-	if err := (macScreen{c, p, wizardOptions{}}).state(tui.MacSide, &wizard.Sudo{}); err != nil {
-		t.Fatal(err)
+	read, done := (macScreen{c, p, wizardOptions{}}).read(tui.MacSide, &wizard.Sudo{})
+	if err := tui.RunState(c.Context(), screenConfig(c, p), "Mac", read); err != nil || done != nil {
+		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}
 	if got := lockCalls(m.Calls, "mkdir"); got != 0 {
 		t.Errorf("took the lock %d times", got)

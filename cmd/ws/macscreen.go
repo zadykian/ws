@@ -24,32 +24,24 @@ type macScreen struct {
 }
 
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
-// --check, as ws mac apply does. The forms come back to a new scan, of what they wrote, and the
-// state screen, which writes nothing, to the lists as it found them.
+// --check, as ws mac apply does.
 func (w macScreen) draw() error {
 	if !opensList(w.c, w.p, false) {
 		return w.whole()
 	}
-	for {
-		// A new one reads the forms' answers. The run takes the scan's, which holds what it asked.
-		sudo := &wizard.Sudo{}
-		queue := wizardQueue(w.p, w.plainStages())
-		choice, err := tui.PickStages(w.c.Context(), w.config(), w.c.CommandPath(), queue, true, w.scan(sudo))
-		for err == nil && choice.State {
-			choice, err = w.stated(choice, sudo)
-		}
-		switch {
-		case err != nil:
-			return err
-		case choice.Configure:
-			if err := configureOn(w.c, w.p, w.config()); err != nil {
-				return err
-			}
-		case len(choice.Only) == 0:
-			return nil
-		default:
-			return w.chosen(choice, sudo)
-		}
+	return tui.RunWizard(w.c.Context(), tui.Wizard{Title: w.c.CommandPath(), Config: w.config(), Round: w.round,
+		Forms: macForms(w.c, w.p)})
+}
+
+// round is the works of a scan. A new one reads the forms' answers. The state screen's read of ws and
+// the run take the scan's sudo, which holds what it asked.
+func (w macScreen) round() tui.Round {
+	sudo := &wizard.Sudo{}
+	return tui.Round{
+		Stages: wizardQueue(w.p, w.plainStages()),
+		Scan:   w.scan(sudo),
+		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return w.read(side, sudo) },
+		Run:    func(_ context.Context, choice tui.Choice) error { return w.chosen(choice, sudo) },
 	}
 }
 

@@ -7,23 +7,14 @@ import (
 	"github.com/zadykian/ws/internal/wizard"
 )
 
-// stated draws the state screen that choice names, then the lists as it left them.
-func (w macScreen) stated(choice tui.Choice, sudo *wizard.Sudo) (tui.Choice, error) {
-	if err := w.state(choice.Side, sudo); err != nil {
-		return tui.Choice{}, err
-	}
-	return tui.Reopen(w.c.Context(), w.config(), choice)
-}
-
-// state draws the state screen of side's machine. sudo is the scan's, which the run takes after it.
-func (w macScreen) state(side tui.Side, sudo *wizard.Sudo) error {
-	ctx, title := w.c.Context(), w.c.CommandPath()
+// read is the state screen's read of side's machine, and what ends it. ws's reach takes sudo, the
+// scan's, which the run takes after it, and lets the lock go with the screen.
+func (w macScreen) read(side tui.Side, sudo *wizard.Sudo) (tui.StateReader, func(context.Context)) {
 	if side == tui.MacSide {
-		return tui.RunState(ctx, w.config(), title+": Mac", macRead(w.p))
+		return macRead(w.p), nil
 	}
 	reach := &varsReach{p: w.p, sudo: sudo}
-	defer reach.close(ctx)
-	return tui.RunState(ctx, w.config(), title+": ws", stateRead(reach.reach, w.p.version))
+	return stateRead(reach.reach, w.p.version), reach.close
 }
 
 // stateRead is the state screen's read of ws, by the remote script's report, which open reaches ws

@@ -33,20 +33,27 @@ func runConfigure(c *cobra.Command, p process) error {
 	if !drawsScreen(c, p) {
 		return errors.New("it needs a terminal and no --plain: anywhere else, edit mac.conf by hand")
 	}
-	return configureOn(c, p, screenConfig(c, p))
-}
-
-// configureOn draws the forms with cfg: the wizard's list opens them with its own.
-func configureOn(c *cobra.Command, p process, cfg tui.Config) error {
-	form := wizard.ConfForm{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
-	form, err := form.Load(effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()))
+	sheets, done, err := macForms(c, p)(c.Context())
 	if err != nil {
 		return err
 	}
-	// One way to root serves both of ws's sheets, so that sudo's password is asked once.
-	vars := &varsReach{p: p, sudo: &wizard.Sudo{}}
-	defer vars.close(c.Context())
-	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), vars.secretsSheet(), hostVarsSheet(vars.reach))
+	defer done(c.Context())
+	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), sheets...)
+}
+
+// macForms gives the forms' sheets, for ws mac configure and the wizard's list, and done, which lets
+// go of ws once they have ended.
+func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
+	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
+		form := wizard.ConfForm{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
+		form, err := form.Load(effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()))
+		if err != nil {
+			return nil, nil, err
+		}
+		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
+		vars := &varsReach{p: p, sudo: &wizard.Sudo{}}
+		return []tui.Sheet{confSheet(form), vars.secretsSheet(), hostVarsSheet(vars.reach)}, vars.close, nil
+	}
 }
 
 // confSheet is mac.conf on the Configure screen.
