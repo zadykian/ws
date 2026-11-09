@@ -102,7 +102,7 @@ func (c addMarketplace) String() string {
 // Apply adds the marketplace. --json ends the output with a line of JSON, which names the
 // marketplace as it names itself. claude keeps it all the same, under its own name. It lists the
 // marketplaces after, as claude lists some sources in another form than add took them, such as a
-// relative path made absolute: the next run's check would fail on such a one, so this run fails now.
+// relative path made absolute. The next run's check would fail on such a one, so this run fails now.
 func (c addMarketplace) Apply(ctx context.Context) error {
 	out, err := c.p.cli(ctx, "add", "--json", c.mk.Source)
 	if err != nil {

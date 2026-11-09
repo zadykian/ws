@@ -13,10 +13,10 @@ import (
 )
 
 // Restore has the user's systemd restore cld's sessions as it starts, which brings back the
-// sessions a reboot ended. cld setup restore writes the user unit; the rest is left to Restore and
-// the steps around it: lingering, so that the user's systemd starts at boot rather than at the
-// first login, and a shell where systemctl --user reaches it. A container has no systemd, so
-// Restore plans nothing there.
+// sessions a reboot ended. cld setup restore writes the user unit. The rest is left to Restore and
+// the steps around it. One is lingering, so that the user's systemd starts at boot rather than at
+// the first login. Another is a shell where systemctl --user reaches it. A container has no
+// systemd, so Restore plans nothing there.
 type Restore struct {
 	M    effect.Machine
 	User host.User
@@ -41,8 +41,9 @@ func (r Restore) loginShell(args ...string) (string, []string) {
 // compare prints missing or differs where the unit is not what cld writes, in the lines that come
 // from cld's environment and path, each quoted as cld quotes it. The rest of the unit is cld's own
 // text, which may change with a newer cld: so a unit older than cld differs too, and setupRestore
-// touches it. Its command is restore sessions where the cld installed has it, and plain restore with an
-// older cld, which exits 2 on help restore sessions, as cld 0.13.0 does. $0 is cld.
+// touches it. Its command is restore sessions where the cld installed has it. With an older cld,
+// which exits 2 on help restore sessions as cld 0.13.0 does, the command is plain restore. $0 is
+// cld.
 const compare = `unit=$HOME/.config/systemd/user/cld-restore.service
 quote() {
     local word=${1//\\/\\\\}
@@ -96,7 +97,7 @@ func (s setupRestore) Apply(ctx context.Context) error {
 	return nil
 }
 
-// Plan compares cld-restore.service with what cld writes, and looks for the link that
+// Plan compares cld-restore.service with what cld writes. It also looks for the link that
 // systemctl --user enable makes, as cld enables the unit at every run but reports only whether it
 // wrote its file.
 func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {

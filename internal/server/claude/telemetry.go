@@ -12,8 +12,8 @@ import (
 )
 
 // telemetryRemoved are the env keys that Telemetry removes. A signal's own endpoint or protocol
-// would override the general one, and the temporality key changes how claude sends its counters:
-// the Claude dashboard counts deltas, claude's default, and would show less of cumulative sums
+// would override the general one. The temporality key changes how claude sends its counters. The
+// Claude dashboard counts deltas, claude's default, and would show less of cumulative sums
 // (internal/server/signoz/dashboards/README.md).
 var telemetryRemoved = []string{
 	"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
@@ -60,7 +60,7 @@ func (c writeSettings) String() string {
 	return text
 }
 
-// Apply writes as the user, through a link as into a clone of dotfiles: a link, or a file that the
+// Apply writes as the user, through a link as into a clone of dotfiles. A link, or a file that the
 // user plants, then reaches only what the user could write. A new file gets claude's mode, and an
 // existing one keeps its own.
 func (c writeSettings) Apply(ctx context.Context) error {
