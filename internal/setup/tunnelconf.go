@@ -10,7 +10,7 @@ import (
 // no file the user can write.
 func tunnelConf(c conf.Conf) string {
 	var b strings.Builder
-	b.WriteString("# Written by ws mac apply from ~/.config/ws/mac.conf.\n")
+	b.WriteString("# Written by github.com/zadykian/ws: ws mac apply, from ~/.config/ws/mac.conf.\n")
 	b.WriteString("WS_PUBLIC_KEY=" + c.PublicKey + "\n")
 	if c.LAN != "" {
 		b.WriteString("WS_LAN=" + c.LAN + "\n")

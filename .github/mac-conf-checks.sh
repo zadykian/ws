@@ -92,7 +92,7 @@ printf '%s\n' "$out"
 until_ok 20 routed 203.0.113.1 || error "203.0.113.1 is not routed into the daemon's $utun"
 until_ok 20 shown conf.test 203.0.113.53 || error 'scutil --dns shows no resolver for conf.test'
 case $(head -n 1 "$ws_resolvers/conf.test") in
-"# Written by ws mac apply"*) ;;
+"# Written by github.com/zadykian/ws: ws mac apply"*) ;;
 *) error "$ws_resolvers/conf.test does not start with ws mac apply's header" ;;
 esac
 for args in '' --check; do

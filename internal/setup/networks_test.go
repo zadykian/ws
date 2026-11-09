@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/internal/setup"
 )
 
-const resolverHead = "# Written by ws mac apply from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
+const resolverHead = "# Written by github.com/zadykian/ws: ws mac apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
 
 func networksStep(m *effecttest.Machine, c conf.Conf) *setup.Networks {
 	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
