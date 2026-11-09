@@ -35,7 +35,7 @@ func serverWizardStages(p process, ask effect.Prompt, talks effect.Foreground, o
 		Version: p.version, Default: def, Update: r.update, Only: r.only}
 	hand.Late(ws.Hand)
 	return []step.Step{vals, run, &wizard.WsClaude{Ws: ws, Tty: p.tty},
-		&wizard.WsSigning{Ws: ws, M: m, Out: out, Hand: hand}}
+		&wizard.Signing{Ws: ws, GitHub: &wizard.WsGitHub{M: m, Out: out, Hand: hand}}}
 }
 
 // serverSession is ws's session to itself on m: the scripts run here as root, as the Mac's ssh logs

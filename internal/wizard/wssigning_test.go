@@ -11,11 +11,12 @@ import (
 
 const keysCmd = "curl -fsSL --retry 3 --proto =https https://api.github.com/users/ada-1/ssh_signing_keys?per_page=100"
 
-func newWsSigning(status wsStatus, login, listed string) *WsSigning {
+func newWsSigning(status wsStatus, login, listed string) (*Signing, *WsGitHub) {
 	ws, m := wsSession(status)
 	m.Results[loginCmd] = effecttest.Result{Out: []byte(login)}
 	m.Results[keysCmd] = effecttest.Result{Out: []byte(listed)}
-	return &WsSigning{Ws: ws, M: m, Out: &effecttest.Out{}, Hand: &Hand{}}
+	g := &WsGitHub{M: m, Out: &effecttest.Out{}, Hand: &Hand{}}
+	return &Signing{Ws: ws, GitHub: g}, g
 }
 
 func TestWsSigningPlan(t *testing.T) {
@@ -31,9 +32,9 @@ func TestWsSigningPlan(t *testing.T) {
 		"no list":  {key, "ada-1\n", "<html>", "curl read no list"},
 		"no ssh":   {key, "", "", "the remote script reads nothing"},
 	} {
-		s := newWsSigning(tc.status, tc.login, tc.listed)
+		s, g := newWsSigning(tc.status, tc.login, tc.listed)
 		if name == "no ssh" {
-			delete(s.M.(*effecttest.Machine).Results, wsStatusLine)
+			delete(g.M.(*effecttest.Machine).Results, wsStatusLine)
 		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)
@@ -48,11 +49,11 @@ func TestWsSigningPlan(t *testing.T) {
 
 // The key goes to what stays by hand, to add on GitHub, and the run plans nothing more of it.
 func TestWsSigningApply(t *testing.T) {
-	s := newWsSigning(wsStatus{Signing: "ssh-ed25519 AAA"}, "", "")
+	s, g := newWsSigning(wsStatus{Signing: "ssh-ed25519 AAA"}, "", "")
 	if err := s.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(s.Hand.lines, "\n"); !strings.HasSuffix(got, "(docs/server-wizard.md): ssh-ed25519 AAA") {
+	if got := strings.Join(g.Hand.lines, "\n"); !strings.HasSuffix(got, "(docs/server-wizard.md): ssh-ed25519 AAA") {
 		t.Errorf("hand = %q", got)
 	}
 	if p, err := s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
