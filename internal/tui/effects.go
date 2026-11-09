@@ -2,6 +2,9 @@ package tui
 
 import (
 	"context"
+	"io"
+
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/effect"
 )
@@ -40,4 +43,15 @@ func (b *Bridge) effectsOn(ctx context.Context, m effect.Machine) Effects {
 		talks = b.Foreground(machine)
 	}
 	return Effects{M: m, Talks: talks, Stop: b.Stop(ctx)}
+}
+
+// Offscreen returns a Bridge with no screen, whose works run on m as it stands: what they say goes
+// nowhere, and a question fails. A test runs a work by it.
+func Offscreen(m effect.Machine) *Bridge {
+	b := newBridge(io.Discard)
+	b.send = func(tea.Msg) {}
+	close(b.gone)
+	talks, _ := m.(effect.Foreground)
+	b.effects = Effects{M: m, Talks: talks, Stop: func() error { return nil }}
+	return b
 }

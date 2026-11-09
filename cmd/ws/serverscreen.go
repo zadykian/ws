@@ -35,7 +35,7 @@ func (s serverScreen) draw(check bool) error {
 		queue := wizardQueue(s.p, s.stages(serverPick{}))
 		choice, err := tui.PickStages(ctx, s.config(), title, queue, true, s.scan())
 		for err == nil && choice.State {
-			if err = tui.RunState(ctx, s.config(), title+": ws", stateRead(serverOpen(s.p), s.p.version)); err == nil {
+			if err = tui.RunState(ctx, s.config(), title+": ws", stateRead(serverOpen, s.p.version)); err == nil {
 				choice, err = tui.Reopen(ctx, s.config(), choice)
 			}
 		}
@@ -75,21 +75,17 @@ func (s serverScreen) stages(r serverPick) []step.Step {
 }
 
 // on returns the process and claude's terminal as a run beside the screen takes them.
-func (s serverScreen) on(ctx context.Context, b *tui.Bridge) (process, effect.Foreground) {
-	on := s.p
-	on.machine = screenMachine(ctx, b, s.p.machine)
-	talks, _ := on.machine.(effect.Foreground)
-	if m, ok := s.p.machine.(effect.OSMachine); ok {
-		talks = b.Foreground(m)
-	}
-	return on, talks
+func (s serverScreen) on(b *tui.Bridge) (process, effect.Foreground) {
+	on, e := s.p, b.Effects()
+	on.machine = e.M
+	return on, e.Talks
 }
 
 // scan is a check of every stage, beside the list. ws speaks for its roles once its values are
 // read, as the remote script's report takes ws_user from them.
 func (s serverScreen) scan() tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
-		on, talks := s.on(ctx, b)
+		on, talks := s.on(b)
 		stages := serverWizardStages(on, b, talks, b, nil, &wizard.Hand{}, serverPick{check: true})
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
@@ -114,7 +110,7 @@ func (s serverScreen) running(r serverPick, choice *tui.Choice) error {
 	}
 	var text bytes.Buffer
 	err := tui.Run(s.c.Context(), cfg, screen, func(ctx context.Context, b *tui.Bridge) error {
-		on, talks := s.on(ctx, b)
+		on, talks := s.on(b)
 		hand := &wizard.Hand{}
 		stages := serverWizardStages(on, b, talks, b, b, hand, r)
 		closing := func(ctx context.Context) { hand.Close(ctx, &text) }

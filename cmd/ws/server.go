@@ -175,14 +175,22 @@ func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
 	}}}}
 }
 
+// onScreen is cfg as a work beside a screen takes it: on the screen's effects, with its output and
+// its events on b.
+func onScreen(cfg apply.Config, b *tui.Bridge) apply.Config {
+	e := b.Effects()
+	cfg.M, cfg.Stop = e.M, e.Stop
+	cfg.Out, cfg.Observer, cfg.Prepare = b, b, prepareSteps(e.M, b)
+	return cfg
+}
+
 // applyOnScreen is apply.Run under the run screen. cfg's steps name the screen's rows, and the run
 // builds them again on the screen's effects. The roles it returns are those of a run that ended.
 func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []roles.Role) ([]string, error) {
 	var changed []string
+	p.machine = cfg.M // ws_home confines it.
 	err := drawRun(c, p, runTitle(c, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
-		run := cfg
-		run.M = screenMachine(ctx, b, cfg.M)
-		run.Out, run.Observer, run.Stop, run.Prepare = b, b, b.Stop(ctx), prepareSteps(run.M, b)
+		run := onScreen(cfg, b)
 		var err error
 		changed, err = apply.Run(ctx, run, list)
 		if err == nil { // A plain run prints the summary after the screen, and the log holds it.

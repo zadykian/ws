@@ -47,11 +47,9 @@ func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, ev
 }
 
 // serverOpen is ws's session through a screen, for the host_vars sheet and the state screen, which
-// run no login and print nothing.
-func serverOpen(p process) sessionOpen {
-	return func(ctx context.Context, b *tui.Bridge) (*wizard.Session, error) {
-		return serverSession(screenMachine(ctx, b, p.machine), nil, nil, nil), nil
-	}
+// run no login and print nothing. It runs on the screen's machine.
+func serverOpen(_ context.Context, b *tui.Bridge) (*wizard.Session, error) {
+	return serverSession(b.Effects().M, nil, nil, nil), nil
 }
 
 // wsWant is what ws's run is to leave, as host_vars names it: a cloud VM where it turns the outbound

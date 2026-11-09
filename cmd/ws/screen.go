@@ -50,10 +50,11 @@ func runTitle(c *cobra.Command, check bool) string {
 	return c.CommandPath()
 }
 
-// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws.
+// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws. Its works run
+// on p's machine.
 func screenConfig(c *cobra.Command, p process) tui.Config {
 	return tui.Config{
-		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: tui.NewTheme(p.getenv),
+		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: tui.NewTheme(p.getenv), Machine: p.machine,
 		Cut: func(s syscall.Signal) error { return signalExit{s} },
 	}
 }

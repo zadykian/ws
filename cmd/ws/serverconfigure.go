@@ -38,7 +38,7 @@ func runServerConfigure(c *cobra.Command, p process) error {
 
 // serverConfigureOn draws the forms with cfg: ws server wizard's list opens them with its own.
 func serverConfigureOn(c *cobra.Command, p process, cfg tui.Config) error {
-	return tui.Configure(c.Context(), cfg, c.CommandPath(), serverSecretsSheet(p), hostVarsSheet(serverOpen(p)))
+	return tui.Configure(c.Context(), cfg, c.CommandPath(), serverSecretsSheet(p), hostVarsSheet(serverOpen))
 }
 
 // serverSecretsSheet is ws's secrets file, edited here as ws server secrets edits it.
@@ -48,7 +48,7 @@ func serverSecretsSheet(p process) tui.Sheet {
 		Fields: func(map[string]string) []tui.FieldSpec { return nil },
 		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
 			on := p
-			on.machine = screenMachine(ctx, b, p.machine)
+			on.machine = b.Effects().M
 			store, err := serverSecretsStore(on)
 			if err != nil {
 				return tui.Sheet{}, err

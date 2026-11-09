@@ -47,4 +47,7 @@ func TestEffectsKeepAFake(t *testing.T) {
 	if e := (*Bridge)(nil).Effects(); e.M != nil || e.Stop != nil {
 		t.Errorf("a nil Bridge gave %+v", e)
 	}
+	if e := Offscreen(fake).Effects(); e.M != effect.Machine(fake) || e.Stop() != nil {
+		t.Errorf("Offscreen gave %+v", e)
+	}
 }

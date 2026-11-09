@@ -57,7 +57,7 @@ func confSheet(form wizard.ConfForm) tui.Sheet {
 		Save: func(ctx context.Context, b *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
 			// A copy, as Fields reads form on the screen's goroutine.
 			work := form
-			work.M = screenMachine(ctx, b, form.M)
+			work.M = b.Effects().M
 			next, err := work.Save(ctx, b, edits)
 			return confSheet(next), err
 		},

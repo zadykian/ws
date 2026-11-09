@@ -66,14 +66,13 @@ func runMacState(c *cobra.Command, p process, asJSON bool) error {
 // macRead is the state screen's read of the Mac. It takes mac.conf itself, as the wizard opens the
 // screen on a Mac that may have none: the header then says so, and the wizard stays.
 func macRead(p process) tui.StateReader {
-	machine := readMachine(p.machine)
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 		home, settings, err := loadMacConf(p)
 		if err != nil {
 			return nil, err
 		}
 		// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-		steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), machine(ctx, b), b, io.Discard, true)
+		steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), b.Effects().M, b, io.Discard, true)
 		reports, err := step.Read(ctx, steps)
 		return []tui.StateSection{{Reports: reports}}, err
 	}

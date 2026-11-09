@@ -201,8 +201,9 @@ func setupOnScreen(c *cobra.Command, p process, build setupBuild, o step.Options
 	rows := tui.NewGroup("", build(p.machine, nil, io.Discard))
 	var text bytes.Buffer
 	err := drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
-		steps := build(screenMachine(ctx, b, p.machine), b, &text)
-		o.Observer, o.Stop = b, b.Stop(ctx)
+		e := b.Effects()
+		steps := build(e.M, b, &text)
+		o.Observer, o.Stop = b, e.Stop
 		err := runSetup(ctx, steps, o)
 		b.Log(text.String()) // A failed run prints it too.
 		return err
