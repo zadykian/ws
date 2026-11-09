@@ -62,6 +62,10 @@ os:
   copyToClipboardCmd: >-
     if [ -n "$TMUX" ]; then printf %s {{text}} | tmux load-buffer -w -;
     else printf '\033]52;c;%s\a' "$(printf %s {{text}} | base64 -w0)" >/dev/tty; fi
+  # ws has no browser, so a link that lazygit would open, such as a new pull request's, is copied.
+  openLink: >-
+    if [ -n "$TMUX" ]; then printf %s {{link}} | tmux load-buffer -w -;
+    else printf '\033]52;c;%s\a' "$(printf %s {{link}} | base64 -w0)" >/dev/tty; fi
 # apt updates lazygit, so lazygit never looks for a release of its own.
 update:
   method: never

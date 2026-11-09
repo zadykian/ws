@@ -42,3 +42,11 @@ func TestACopyGoesThroughTmuxInTmux(t *testing.T) {
 		t.Errorf("tmux got %q, want %q", logged, want)
 	}
 }
+
+// A link goes where a copy does.
+func TestALinkIsCopied(t *testing.T) {
+	link := command(t, "os.openLink", "{{link}}", "x")
+	if copied := command(t, "os.copyToClipboardCmd", "{{text}}", "x"); link != copied {
+		t.Errorf("openLink runs %q, a copy %q", link, copied)
+	}
+}

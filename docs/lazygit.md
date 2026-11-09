@@ -61,6 +61,8 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 - A copy goes to the Mac's clipboard by OSC 52, which Ghostty's `clipboard-write` allows. In tmux,
   `tmux load-buffer -w` sends it on, whatever tmux's `set-clipboard`, as tmux drops a pane's OSC 52
   where that is not `on`. Zed's tmux has it on.
+- A link that lazygit would open in a browser, such as a new pull request's, is copied the same
+  way, as ws has no browser. lazygit shows no note of it.
 - `update.method` is `never`, as apt updates lazygit.
 - No random tip shows in the command log, and no popup at start. So after apt updates lazygit, a
   version's breaking changes are in its release notes alone.
