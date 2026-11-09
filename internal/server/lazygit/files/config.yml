@@ -57,6 +57,11 @@ os:
   editAtLineAndWait: fresh {{filename}}:{{line}}
   openDirInEditor: fresh {{dir}}
   editInTerminal: true
+  # A copy goes to the terminal's clipboard by OSC 52, which reaches the Mac's over ssh. tmux drops
+  # a pane's OSC 52 unless set-clipboard is on, so in tmux load-buffer -w sends it on.
+  copyToClipboardCmd: >-
+    if [ -n "$TMUX" ]; then printf %s {{text}} | tmux load-buffer -w -;
+    else printf '\033]52;c;%s\a' "$(printf %s {{text}} | base64 -w0)" >/dev/tty; fi
 # apt updates lazygit, so lazygit never looks for a release of its own.
 update:
   method: never

@@ -58,6 +58,9 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 - `e` and lazygit's other edits open Fresh, through [its wrapper](fresh.md#the-wrapper), in
   lazygit's terminal, at the line where lazygit names one. lazygit comes back when Fresh ends, with
   no Enter to press, unless the command failed.
+- A copy goes to the Mac's clipboard by OSC 52, which Ghostty's `clipboard-write` allows. In tmux,
+  `tmux load-buffer -w` sends it on, whatever tmux's `set-clipboard`, as tmux drops a pane's OSC 52
+  where that is not `on`. Zed's tmux has it on.
 - `update.method` is `never`, as apt updates lazygit.
 - No random tip shows in the command log, and no popup at start. So after apt updates lazygit, a
   version's breaking changes are in its release notes alone.
