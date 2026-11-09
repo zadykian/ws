@@ -101,7 +101,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	parts := []step.Reporter{
 		userPath{M: s.M, Kind: step.DirItem, Path: dir},
 		userPath{M: s.M, Kind: step.DirItem, Path: dir + "/config.d", Mode: sshDirMode},
-		userFile{M: s.M, Path: dir + "/config.d/ws", Text: s.config(ctx, f, id), Mode: sshFileMode},
+		s.wsFile(s.config(ctx, f, id)),
 		fixed{include},
 	}
 	return gather(ctx, append(parts, keyCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)...)...)

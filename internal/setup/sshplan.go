@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"bytes"
 	"io/fs"
 
 	"github.com/zadykian/ws/step"
@@ -54,13 +53,7 @@ func sshChanges(f sshFacts, text []byte) []step.Change {
 	case f.ConfigDir.Mode.Perm() != sshDirMode:
 		cs = append(cs, SetMode{dir + "/config.d", sshDirMode})
 	}
-	ws := dir + "/config.d/ws"
-	switch {
-	case !f.Ws.Exists || !bytes.Equal(f.Ws.Text, text):
-		cs = append(cs, Write{ws, f.Ws.Text, text, f.Ws.Exists, sshFileMode})
-	case f.Ws.Mode.Perm() != sshFileMode:
-		cs = append(cs, SetMode{ws, sshFileMode})
-	}
+	cs = append(cs, userFile{Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.change(f.Ws)...)
 	user := dir + "/config"
 	switch {
 	case !f.UserConfig.Exists:

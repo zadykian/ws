@@ -33,20 +33,12 @@ func (s SSH) read() (sshFacts, error) {
 		return f, err
 	}
 	f.ConfigDirLink = info.Link
-	ws := dir + "/config.d/ws"
-	if f.Ws, _, err = s.stat(ws); err != nil {
+	var ours bool
+	if f.Ws, ours, err = s.wsFile(nil).read(); err != nil {
 		return f, err
 	}
-	if f.Ws.Exists {
-		if f.Ws.Text, err = s.M.ReadFile(ws); err != nil && !f.Ws.Mode.IsRegular() {
-			err = nil // a link to nowhere, or a directory, is not ws's either
-		}
-		if err != nil {
-			return f, err
-		}
-		if !strings.HasPrefix(firstLine(f.Ws.Text), sshcfg.Header) {
-			return f, fmt.Errorf("%s is not ws mac apply's: move it away, as the script writes its own there", ws)
-		}
+	if !ours {
+		return f, fmt.Errorf("%s is not ws mac apply's: move it away, as the script writes its own there", dir+"/config.d/ws")
 	}
 	user := dir + "/config"
 	var link effect.Info
@@ -74,3 +66,11 @@ func firstLine(text []byte) string {
 	line, _, _ := bytes.Cut(text, []byte("\n"))
 	return string(line)
 }
+
+// wsFile is config.d/ws, which holds text.
+func (s SSH) wsFile(text []byte) userFile {
+	return userFile{M: s.M, Path: s.Home + "/.ssh/config.d/ws", Text: text, Mode: sshFileMode, Own: sshOwn}
+}
+
+// sshOwn says whether config.d/ws's first line is ws's.
+func sshOwn(have []byte) bool { return strings.HasPrefix(firstLine(have), sshcfg.Header) }
