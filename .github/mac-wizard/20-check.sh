@@ -2,10 +2,10 @@
 # A fresh --check, with standin.sh's PATH, which lacks brew. The wizard must
 # still find brew, and show the Include for ~/.ssh/config. It must show the Mac's key it would make
 # and add to gh's login, and make none. The Host key stage must wait for ws mac apply, Login for it,
-# Sudo for Login, ws on ws for Sudo, ws's run for ws on ws, and the Signing key, claude on ws, the
-# Tunnel and the Cable for ws's run. It must write none of
-# the paths that mac.yml's --check step lists, keep ~/.ssh/config as it was, and install no formula
-# or cask. It must leave no lock or file of its own in $TMPDIR.
+# Sudo for Login, and ws on ws for Sudo. ws's run must wait for ws on ws, and the Signing key,
+# claude on ws, the Tunnel and the Cable for ws's run. It must write none of the paths that
+# mac.yml's --check step lists, keep ~/.ssh/config unchanged, and install no formula or cask. It
+# must leave no lock or file of its own in $TMPDIR.
 
 set -u
 
@@ -22,7 +22,7 @@ error() {
     fail=1
 }
 
-# config prints ~/.ssh/config, and whether it is there.
+# config prints ~/.ssh/config, and whether it exists.
 config() {
     cat ~/.ssh/config 2>/dev/null
     echo "cat: $?"

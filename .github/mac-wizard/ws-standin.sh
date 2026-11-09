@@ -1,27 +1,28 @@
 #!/bin/sh
 # ws's programs that the wizard's remote script runs, as stand-ins on GitHub's macOS runner, each by
-# the name it is called by. standin.sh links the names in WS_STANDIN/bin, which ws.sh puts first on
-# PATH, claude where the remote script looks for it and ws at /usr/local/bin/ws. Their state is in
-# WS_STANDIN, which ws's sshd sets:
+# the name the script calls it by. standin.sh links the names in WS_STANDIN/bin, which ws.sh puts
+# first on PATH, claude where the remote script looks for it and ws at /usr/local/bin/ws. Their
+# state is in WS_STANDIN, which ws's sshd sets:
 #
 # - sudo.open is there while sudo asks no password, and sudo.password holds the one that it asks
-#   otherwise; sudo.log holds the command lines that sudo ran for ws.sh;
+#   otherwise. sudo.log holds the command lines that sudo ran for ws.sh;
 # - ws.version is the version that ws prints, and install.log holds a line for each curl, its URL.
 #   curl writes the release's install.sh, which puts its WS_VERSION in ws.version;
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
 # - run.log holds systemd-run's arguments, and server.log the arguments of ws server apply past its
-#   --json, which it requires, a line each; values.log holds those of ws server values set, a line each, each argument in brackets;
+#   --json, which it requires, a line each. values.log holds those of ws server values set, a line
+#   each, each argument in brackets;
 # - secrets.log holds the arguments of ws server secrets, a line each, secrets.in its last stdin,
 #   and keys what its keys prints;
 # - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
 #   ws server apply --secrets found, identity and secrets.age;
-# - server.wait holds the seconds that ws server apply runs, and server.status its status, and that
-#   of ws server state --json, which prints a line with its version, HOME and locale;
+# - server.wait holds the seconds that ws server apply runs. server.status holds its status, and
+#   that of ws server state --json, which prints a line with its version, HOME and locale;
 # - with server.cut, ws server apply kills the unit's job, as a stop or a reboot would;
 # - wg0 holds wg0's key, sb turns Secure Boot on, nct6687 builds the fans' driver, and claude logs
 #   in;
 # - ws.key is wg0's key, which ws server apply --only wireguard makes, and utun names wg0, root's;
-# - uplink names the port of the default route, and addr/PORT holds a port's IPv4 addresses, which
+# - uplink names the port of the default route. addr/PORT holds a port's IPv4 addresses, which
 #   ws server apply --only network,wireguard gives the port that host_vars names, with carrier. That
 #   run writes the port in root's netplan file, as the network role does, or removes the file.
 
@@ -29,9 +30,9 @@ set -u
 
 s=$WS_STANDIN
 
-# wg0 sets up ws's wg0 as the wireguard role does: its key, made once, whose public key goes in
-# wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of the runner's, beside the
-# Mac's, on UDP 51820, as mac.yml's stand-in ws. It has no address in the tunnel.
+# wg0 sets up ws's wg0 as the wireguard role does. It sets its key, made once, whose public key
+# goes in wg0, and the Mac's key in mac.pub as its peer. wg0 is a wireguard-go of the runner's,
+# beside the Mac's, on UDP 51820, as mac.yml's stand-in ws. It has no address in the tunnel.
 wg0() {
     bin=/opt/homebrew/bin
     [ -f "$s/ws.key" ] || (umask 077 && "$bin/wg" genkey >"$s/ws.key") || return 1
@@ -60,7 +61,7 @@ direct() {
 }
 case ${0##*/} in
 sudo)
-    # The forms that the wizard sends. -n takes no password, and -k -S -p '' takes it as the first
+    # The forms that the wizard sends. -n takes no password. -k -S -p '' takes it as the first
     # line of stdin, a byte at a time, so that the script behind it stays in the pipe. The command
     # runs as the runner's root, as real sudo does, which sets SUDO_USER.
     case $1 in
@@ -93,8 +94,9 @@ systemd-run)
         shift
     done
     touch "$s/units/$unit.on"
-    # A credential is copied from the credstore before systemd-run returns, as Type=exec has it, to a
-    # directory of the unit's, which only the unit's job sees as CREDENTIALS_DIRECTORY.
+    # A credential is copied from the credstore to a directory of the unit's before systemd-run
+    # returns, as Type=exec has it. Only the unit's job sees that directory, as
+    # CREDENTIALS_DIRECTORY.
     if [ -n "$cred" ]; then
         store="$s/root"/etc/credstore.encrypted
         mkdir -p "$s/creds/$unit" && cp "$store/$cred" "$s/creds/$unit/$cred" || exit 1

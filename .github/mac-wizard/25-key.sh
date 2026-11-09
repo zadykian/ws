@@ -1,15 +1,16 @@
 #!/bin/sh
-# The Mac key stage on a fresh Mac. With a mac.conf of its own that holds every answer but names no
-# key for ws, and no terminal, a run must stop at the stage, naming WS_IDENTITY, before ws mac apply's.
+# The Mac key stage on a fresh Mac. The case has a mac.conf of its own that holds every answer but
+# names no key for ws. With it and no terminal, a run must stop at the stage, naming WS_IDENTITY,
+# before ws mac apply's.
 # --check must say that a run at a terminal would ask whether Secretive keeps the key, and that no
 # makes the file key and names it in WS_IDENTITY. With a stand-in for Secretive's app, it must say
 # that it would open the app. None of these may make a key, change that mac.conf, or leave a lock
-# or file of the wizard's in $TMPDIR. Then, with the file key there and no line for it in a copy of
-# that mac.conf, --check must show the WS_IDENTITY line it would write, and make no change. A run
+# or file of the wizard's in $TMPDIR. Then the file key is there, and a copy of that mac.conf has no
+# line for it. --check must show the WS_IDENTITY line it would write, and make no change. A run
 # must write the line, and stop at gh's stage, whose login the case takes away. A second run must
-# say nothing of the Mac key stage, and change nothing. Last, a run that makes a file key in
-# $RUNNER_TEMP, where ssh-add can't take it, must stop at the stage, naming the command to run by
-# hand, as Login logs in with no prompt, and leave the key it made, before ws mac apply.
+# say nothing of the Mac key stage, and change nothing. Last, a run makes a file key in
+# $RUNNER_TEMP, where ssh-add can't take it. It must stop at the stage, before ws mac apply, naming
+# the command to run by hand, as Login logs in with no prompt. It must leave the key it made.
 
 set -u
 

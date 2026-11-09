@@ -1,7 +1,7 @@
 #!/bin/sh
 # A cloud VM's login is root by default, which the stand-in ws takes by root's own authorized_keys,
 # with the account's keys there. ws mac apply on a cloud target that names no WS_USER must write
-# ssh's User as root, and --check after it must read ws's status as root, with no sudo behind it,
+# ssh's User as root. --check after it must read ws's status as root, with no sudo behind it,
 # and ask for no password. Else Setup is pending, and --check skips the stages that read ws. ws mac
 # apply on mac.conf then gives ssh the runner again, and the key file goes.
 

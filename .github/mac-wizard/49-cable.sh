@@ -8,19 +8,20 @@
 # --check say what it would do, neither writing ws's host_vars. With WS_TARGET=cloud, a run must
 # skip the stage, and its closing list name the provider's firewall, but neither the dock nor the
 # router's forwards. With WS_TARGET=mac-vm, --check must skip it too. With WS_CABLE_PORT, a run
-# must name enp5s0 there, run ws server apply --only network,wireguard, read its late 10.77.0.1 in one
-# login of the files script's wait, and stop at the Mac's service.
+# must name enp5s0 there, and run ws server apply --only network,wireguard. It must read its late
+# 10.77.0.1 in one login of the files script's wait, and stop at the Mac's service.
 #
 # The Mac's services are a stand-in networksetup's, and ping a stand-in's. Typed at a terminal of
-# script's after a bad one, an empty line must take the one service with a 169.254 address. ws mac apply
-# must give it 10.77.0.2, and ping reach 10.77.0.1, once, and mac.conf keep enp5s0 as WS_CABLE_PORT.
-# The next run must print nothing, and read no link. Without host_vars' port and the roles' netplan file,
-# as after ws's install, and undocked, --check must wait on ws's run, and a run name enp5s0
-# there again, run the roles, and leave mac.conf. Without the netplan file alone, as after a roles'
-# run that failed, a run must run them again. With no answer from ping, a run must stop, naming
-# WS_CABLE_SERVICE. WS_CABLE_SERVICE= must write that empty line, which the next run keeps. mac.conf
-# and the stand-ins go back, and after a run of ws server apply, as host_vars lost the port, a run
-# must print nothing. A run after host_vars changed since the last full run runs that first.
+# script's after a bad one, an empty line must take the one service with a 169.254 address. ws mac
+# apply must give it 10.77.0.2, and ping reach 10.77.0.1, once, and mac.conf keep enp5s0 as
+# WS_CABLE_PORT. The next run must print nothing, and read no link. Without host_vars' port and the
+# roles' netplan file, as after ws's install, and undocked, --check must wait on ws's run. A run
+# must name enp5s0 there again, run the roles, and leave mac.conf. Without the netplan file alone,
+# as after a roles' run that failed, a run must run them again. With no answer from ping, a run must
+# stop, naming WS_CABLE_SERVICE. WS_CABLE_SERVICE= must write that empty line, which the next run
+# keeps. mac.conf and the stand-ins go back, and after a run of ws server apply, as host_vars lost
+# the port, a run must print nothing. A run after host_vars changed since the last full run runs
+# that first.
 
 set -u
 
@@ -164,8 +165,8 @@ printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: would ask ws's port of th
 in /etc/ws/host_vars\.yml on ws, and run ws server apply --only network,wireguard there" &&
     unnamed && [ "$status" = 0 ] || error "ws mac wizard --check docked exited $status"
 # ws's ip, the stand-in's, but that the first read of enp5s0's addresses after the roles' run finds
-# none, as networkd gives it 10.77.0.1 a moment after their networkctl reload. The files script's
-# wait must read ip again in the same login, and find the address.
+# none. On ws, networkd likewise gives it 10.77.0.1 a moment after their networkctl reload. The
+# files script's wait must read ip again in the same login, and find the address.
 mkdir "$cable/bin"
 mv "$ws/bin/ip" "$cable/bin/ip"
 cat >"$ws/bin/ip" <<EOF
@@ -187,7 +188,7 @@ WS_CABLE_SERVICE, or set it to nothing for none" && [ "$status" = 1 ] &&
     error "ws mac wizard with WS_CABLE_PORT exited $status, or wrote no host_vars, ran no roles, or" \
         "read link other than once and wait other than once"
 mv -f "$cable/bin/ip" "$ws/bin/ip"
-# On macOS, sudo, which the stages' checks run, takes what the terminal holds, so the lines go in
+# On macOS, sudo, which the stages' checks run, takes what the terminal holds. So the lines go in
 # once the question shows, or after 120 s. script's input ends 5 s after them, once it wrote them.
 # shellcheck disable=SC2094 # the loop reads the question that script writes to tty, by design
 {

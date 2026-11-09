@@ -1,10 +1,10 @@
 #!/bin/sh
-# The stage Signing key, through standin.sh's gh and ws, on the Mac that 41-remote.sh leaves. With
-# ws's signing key off the Mac's gh login, --check must say it would run gh ssh-key add --type
-# signing, titled with ws's hostname, and change nothing. A run must add the key to the signing keys
-# alone, and list what stays by hand, which no longer holds ws's gh login. The next run
-# must print nothing. Where the login's git config on ws names no signing key, a run must print nothing,
-# with the key off the login.
+# The stage Signing key, through standin.sh's gh and ws, on the Mac that 41-remote.sh leaves. First
+# ws's signing key is off the Mac's gh login. --check must then say it would run gh ssh-key add
+# --type signing, titled with ws's hostname, and change nothing. A run must add the key to the
+# signing keys alone, and list what stays by hand, which no longer holds ws's gh login. The next
+# run must print nothing. Where the login's git config on ws names no signing key, a run must print
+# nothing, with the key off the login.
 
 set -u
 

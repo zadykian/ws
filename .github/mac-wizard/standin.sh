@@ -1,6 +1,6 @@
 #!/bin/sh
-# The stand-ins of the wizard's job, made once before checks.sh runs the cases: what a new Mac, its
-# user and ws give the wizard, on GitHub's macOS runner.
+# The stand-ins of the wizard's job, made once before checks.sh runs the cases. They are what a new
+# Mac, its user and ws give the wizard, on GitHub's macOS runner.
 
 set -eu
 
@@ -39,9 +39,9 @@ echo "$path" >"$RUNNER_TEMP/path"
 sh "$(dirname "$0")/../mac-standins.sh"
 # A stand-in gh, logged in to github.com, for the runner's, which has no login. The wizard puts
 # /opt/homebrew/bin first on PATH, so the stand-in replaces the runner's link there. Its state is in
-# $RUNNER_TEMP/gh: login is there while it has one, and noscope where its login lacks the scopes,
-# which gh api answers with a 404. nosign gives that 404 for the signing keys alone. keys holds its
-# login's keys, signing its signing keys, and log its calls.
+# $RUNNER_TEMP/gh. login is there while it has one. noscope is there where its login lacks the
+# scopes, which gh api answers with a 404 status. nosign gives that 404 for the signing keys alone.
+# keys holds its login's keys, signing its signing keys, and log its calls.
 here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$RUNNER_TEMP/gh"
 : >"$RUNNER_TEMP/gh/keys"
@@ -70,8 +70,8 @@ esac
 EOF
 chmod 755 /opt/homebrew/bin/gh
 # ws's stand-in: an sshd of its own at 127.0.0.1:22022, where mac.conf's WS_REMOTE and its port
-# lead, with a host key made here. The runner's user logs in by its own authorized_keys, which the
-# cases fill from the stand-in gh's keys, as Ubuntu's installer imports the account's keys for its
+# lead, with a host key made here. The runner's user logs in by its own authorized_keys. The cases
+# fill it from the stand-in gh's keys, as Ubuntu's installer imports the account's keys for its
 # user. The image's file goes, so that no key is there before a case adds it. Each session runs
 # ws.sh. A second host key, ECDSA, as ws has more than one, must stay out
 # of known_hosts at each login.
@@ -89,14 +89,14 @@ printf '%s\n' 'ListenAddress 127.0.0.1:22022' "HostKey $ws/host_key" "PidFile $w
 # cases make in a row. The stand-in takes them, where its sshd knows the setting.
 ! sudo /usr/sbin/sshd -G -f "$ws/sshd_config" -o PerSourcePenalties=no >/dev/null 2>&1 ||
     echo 'PerSourcePenalties no' >>"$ws/sshd_config"
-# ws.sh, ws's shell: it logs each command in log, with the user that runs it, which the runner's
-# sudo makes root, and the connection it came in by in conns, then runs it.
-# Where the login's authorized_keys gives the key a command, as cloud-init's does for root, ws.sh
+# ws.sh is ws's shell. It logs each command in log, with the user that runs it, which the runner's
+# sudo makes root. It logs the connection it came in by in conns, then runs the command.
+# A login's authorized_keys may give the key a command, as cloud-init's does for root. There ws.sh
 # stops as that command does, since sshd's ForceCommand runs in its place. It puts ws's programs
 # first on PATH, and roots the paths of the wizard's scripts on ws, each a line NAME=PATH of their
 # own, in root here. So it roots a command's path from /root or the wizard's state alone, with its
-# arguments, or after the script of sh -c, and ws's binary, which ws mac secrets runs, bare or past
-# sudo's options.
+# arguments, or after the script of sh -c. It roots ws's binary too, which ws mac secrets runs, bare
+# or past sudo's options.
 cat >"$ws/ws.sh" <<'EOF'
 #!/bin/sh
 run=${SSH_ORIGINAL_COMMAND#sudo -n }
@@ -151,8 +151,8 @@ done
 sudo mkdir -p "$ws/root/root/.local/bin" "$ws/root/usr/local/bin"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/usr/local/bin/ws"
 sudo ln -s "$here/ws-standin.sh" "$ws/root/root/.local/bin/claude"
-# ws's claude, root's, logged in, and ws's signing key, which root's git config names and the
-# stand-in gh lists, as the shell role and the stages leave them. So no run of the wizard opens a
+# ws's claude, root's, logged in, and ws's signing key, as the shell role and the stages leave them.
+# root's git config names that key, and the stand-in gh lists it. So no run of the wizard opens a
 # session on ws for a login.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$ws/signing" </dev/null
 sudo mkdir -p "$ws/root/root/.ssh"
@@ -160,8 +160,8 @@ sudo cp "$ws/signing.pub" "$ws/root/root/.ssh/id_ed25519_signing.pub"
 sudo git config -f "$ws/root/root/.gitconfig" user.signingkey \
     "$ws/root/root/.ssh/id_ed25519_signing.pub"
 cut -d ' ' -f 1-2 "$ws/signing.pub" >"$RUNNER_TEMP/gh/signing"
-# The runner's user has a home on ws of its own, with the same files, as the remote script reads
-# the claude and git config of the user that logs in, and root's serves a cloud VM's login.
+# The runner's user has its own home on ws, with the same files, as the remote script reads the
+# claude and git config of the login's user. root's home serves a cloud VM's login.
 home=$ws/root/home/$(id -un)
 sudo mkdir -p "$home/.local/bin" "$home/.ssh"
 sudo ln -s "$here/ws-standin.sh" "$home/.local/bin/claude"
@@ -172,9 +172,9 @@ touch "$ws/claude"
 # sudo asks no password until a case removes sudo.open.
 touch "$ws/sudo.open"
 # ssh first on the wizard's PATH, as the stand-in ws's wg0 has no address in the tunnel. The Tunnel
-# stage's login to ws through it, ssh ws echo ok, goes to the stand-in's sshd where ws mac tunnel has a
-# handshake, and lands in tunnel.log. A direct call, which carries AddressFamily=inet, as Login's
-# login, and any other call is the runner's ssh.
+# stage logs in to ws through it with ssh ws echo ok, which goes to the stand-in's sshd where ws mac
+# tunnel has a handshake. It lands in tunnel.log. A direct call, which carries AddressFamily=inet,
+# as Login's login, and any other call is the runner's ssh.
 cat >/opt/homebrew/bin/ssh <<EOF
 #!/bin/sh
 case " \$* " in
@@ -203,7 +203,7 @@ chmod 755 /opt/homebrew/bin/nc
 : >"$ws/log"
 : >"$ws/conns"
 sudo /usr/sbin/sshd -f "$ws/sshd_config"
-# The releases of ws, at 127.0.0.1:22080, which WS_RELEASES_URL names job-wide: the job's build is
+# The releases of ws, at 127.0.0.1:22080, which WS_RELEASES_URL names job-wide. The job's build is
 # release v0.0.0, the latest, so that --update finds this ws and stays. A case that adds another
 # release writes the tag to latest. The server goes on after this step.
 releases=$RUNNER_TEMP/releases

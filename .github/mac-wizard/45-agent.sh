@@ -5,9 +5,9 @@
 # nothing of the stage while the agent lists the key. With git's name too, it must say it would wait
 # for git's key made in Secretive, unless mac.conf has an empty WS_GIT_SIGNING_KEY. With no
 # WS_IDENTITY and PublicKeys closed, as macOS 27 denies ws Secretive's files, --check must take the
-# agent's key, and say it would write ws's copy of its .pub. Once the agent lacks ws's key, a run and
-# --check must stop at the stage, naming the socket, before ws mac apply's. None may change that
-# mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
+# agent's key. It must say it would write ws's copy of its .pub. Once the agent lacks ws's key, a
+# run and --check must stop at the stage, naming the socket, before ws mac apply's. None may change
+# that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
 

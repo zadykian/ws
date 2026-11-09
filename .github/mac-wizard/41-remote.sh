@@ -5,22 +5,23 @@
 # login of claude's. Then its login, with no signing key in root's git config, and Secure Boot
 # off. state must print ws's report, with root's HOME and a UTF-8 locale, and exit with ws's status.
 # A full run must run ws server apply with --json alone in a unit of its own, with root's HOME and
-# a UTF-8 locale, print its log, event lines too, and exit 0. It must stamp ws's version, 0, on and no sums in run, and the unit
-# and 0 in last. A tagged run after it must start its own unit, exit with its status, and leave run
-# as it was. A run during a full unit, or one of the same steps, must follow that unit and start
-# none, and one of other steps during a part's unit must refuse it. A full run whose unit
-# is cut off must exit 1 and remove the run stamp that the one before left. The next must start a
-# unit of its own, as must one after outbound, which stamps off and the file's sum in run, as /etc/ws/host_vars.yml,
-# a file of mode 0600 in a directory of 0755, names security_outbound: false. One with an argument, as
-# --diff, must leave that stamp. The files script's link must list ws's wired ports but the
-# uplink and a bridge's member, with their carrier and IPv4 addresses. link PORT must name one in
-# ws's /etc/ws/host_vars.yml once, and ws server apply --only network,wireguard then give it 10.77.0.1, and
-# status's cable name it. The remote script's outbound must add security_outbound: false there once,
-# which status must then read as off. The last line counts, as in YAML: Off with a comment by hand
-# must read as off, and stay, and true after it as on. Through a link, outbound must stop, but where
-# the linked file holds the line. The files script's user must name ws_user there, which status
-# reads, and refuse no user's name and a link. Its values must print the file, and values PAIR...
-# run ws server values set on each pair, an empty value too. The stand-ins' state goes back.
+# a UTF-8 locale. It must print its log, event lines too, and exit 0. It must stamp ws's version,
+# 0, on and no sums in run, and the unit and 0 in last. A tagged run after it must start its own
+# unit, exit with its status, and leave run unchanged. A run during a full unit, or one of the
+# same steps, must follow that unit and start none. One of other steps during a part's unit must
+# refuse it. A full run whose unit is cut off must exit 1 and remove the run stamp that the one
+# before left. The next must start a unit of its own, as must one after outbound. That one stamps
+# off and the file's sum in run, as /etc/ws/host_vars.yml names security_outbound: false. That file
+# has mode 0600, in a directory of 0755. One with an argument, as --diff, must leave that stamp.
+# The files script's link must list ws's wired ports but the uplink and a bridge's member, with
+# their carrier and IPv4 addresses. link PORT must name one in ws's /etc/ws/host_vars.yml once. ws
+# server apply --only network,wireguard must then give it 10.77.0.1, and status's cable name it. The
+# remote script's outbound must add security_outbound: false there once, which status must then read
+# as off. The last line counts, as in YAML: Off with a comment by hand must read as off, and stay,
+# and true after it as on. Through a link, outbound must stop, but where the linked file holds the
+# line. The files script's user must name ws_user there, which status reads, and refuse no user's
+# name and a link. Its values must print the file, and values PAIR... run ws server values set on
+# each pair, an empty value too. The stand-ins' state goes back.
 
 set -u
 
@@ -45,7 +46,7 @@ remote() {
     printf '%s\n' "$out"
 }
 
-# stamp NAME prints the stamp NAME, or - where it is missing.
+# stamp NAME prints the stamp NAME, or - where none exists.
 stamp() {
     cat "$stamps/$1" 2>/dev/null || echo -
 }
@@ -204,8 +205,9 @@ files values '%%'
 [ "$status" = 1 ] || error "its values with no base64 exited $status"
 sudo rm -r "${vars%/*}" "$ws/values.log"
 
-# ws's ports, in a sysfs of the stand-in's, root's: the uplink, a port with carrier, one without and
-# with an address, one that is down, and a wireless one. A member of the bridge br0 has carrier.
+# ws's ports, in a sysfs of the stand-in's, root's. They are the uplink, a port with carrier, one
+# without and with an address, one that is down, and a wireless one. A member of the bridge br0 has
+# carrier.
 net=$ws/root/sys/class/net
 for each in enp4s0:1 enp5s0:1 enp6s0:0 enp7s0 wlan0:1 enp8s0:1; do
     sudo mkdir -p "$net/${each%:*}/device"

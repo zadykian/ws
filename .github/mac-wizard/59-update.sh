@@ -1,8 +1,8 @@
 #!/bin/sh
 # --update on the Mac, on the Mac that the cases before leave, whose ws is the job's build, v0.0.0,
 # the latest release of standin.sh's server. A clone of the tree, tagged v0.0.1 and built, becomes
-# the latest release there. Then ws mac wizard --update must install it as ~/.local/bin/ws, run
-# again as the new ws, which installs v0.0.1 on the stand-in ws, so that ws holds it as well. The
+# the latest release there. Then ws mac wizard --update must install it as ~/.local/bin/ws, and run
+# again as the new ws. That one installs v0.0.1 on the stand-in ws, so that ws holds it as well. The
 # case puts v0.0.0 back, the binary, the stand-in ws's version and the latest release.
 
 set -u
@@ -20,8 +20,8 @@ error() {
 }
 
 # The clone shares the tree's .cache, which holds the pinned Go. The link is excluded, as git's
-# ignore of a directory does not match a link: else the build is +dirty. The clone's tag v0.0.0 goes,
-# for the build to print the tag it is at.
+# ignore of a directory does not match a link: else the build is +dirty. The clone's tag v0.0.0
+# goes, for the build to print the tag it sits at.
 git clone -q ~/repository/ws "$src" || exit 1
 ln -s ~/repository/ws/.cache "$src/.cache"
 echo /.cache >>"$src/.git/info/exclude"
