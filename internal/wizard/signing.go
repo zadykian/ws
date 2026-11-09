@@ -41,10 +41,11 @@ func (s *Signing) line(ctx context.Context) (string, error) { return signingLine
 
 // signingLine is Signing's line, of ws's run r. It reads ws only where the remote script does.
 func signingLine(ctx context.Context, r *WsRun) (string, error) {
-	if !r.Remote.Status(ctx) {
+	s, ok := r.Remote.status(ctx)
+	if !ok {
 		return "", errors.New(signingStage + ": the remote script reads nothing on ws, so the key cannot be read")
 	}
-	line := r.Remote.Get("signing")
+	line := s.Signing
 	if line == "" {
 		return "", errors.New(signingStage + ": ws's status names no signing key")
 	}
@@ -79,7 +80,7 @@ func (s *Signing) Plan(ctx context.Context) (step.Plan, error) {
 			return step.Plan{}, nil
 		}
 	}
-	return step.Plan{Changes: []step.Change{signingAdd{s.Run.Remote.Get("hostname")}}}, nil
+	return step.Plan{Changes: []step.Change{signingAdd{s.Run.Remote.known().Hostname}}}, nil
 }
 
 // Apply adds the key to the Mac's gh login, titled with ws's hostname, from a file in the lock.
@@ -92,7 +93,7 @@ func (s *Signing) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil {
 		return err
 	}
-	title := s.Run.Remote.Get("hostname")
+	title := s.Run.Remote.known().Hostname
 	file := s.Run.Host.Lock + "/signing.pub"
 	if err := s.Gh.M.WriteFile(file, []byte(line+"\n"), 0o600); err != nil {
 		return fmt.Errorf("%s: %w", signingStage, err)

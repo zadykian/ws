@@ -39,10 +39,11 @@ func (claudeLogin) String() string {
 
 // Plan is empty where WS_USER's claude on ws has a login.
 func (c *WsClaude) Plan(ctx context.Context) (step.Plan, error) {
-	if c.Run.Remote.Status(ctx) && c.Run.Remote.Get("claude") == "ok" {
+	s, ok := c.Run.Remote.status(ctx)
+	if ok && s.Claude == "ok" {
 		return step.Plan{}, nil
 	}
-	if c.Run.Remote.Get("claude") == "none" {
+	if s.Claude == "none" {
 		fix := "run the wizard with --update"
 		if c.Here != nil {
 			fix = "run sudo ws server apply"

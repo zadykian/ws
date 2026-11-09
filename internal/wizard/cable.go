@@ -143,7 +143,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")
 	none := svcSet && svc == ""
 	if !c.lacks() && (cf.CableService == "" || cf.CablePort == "" ||
-		in && c.Run.Remote.Status(ctx) && c.Run.Remote.Get("cable") == cf.CablePort) {
+		in && c.holds(ctx, cf.CablePort)) {
 		return step.Plan{}, nil
 	}
 	if c.Host.Check && !none && (!in || !c.Run.runDone(ctx, cf)) {

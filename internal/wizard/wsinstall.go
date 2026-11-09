@@ -37,10 +37,11 @@ func (c wsInstall) String() string {
 // ws's, so that an update on ws is not undone. It stops too where this ws is no release, or where
 // URL is no address to fetch from.
 func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
-	if i.Remote.Status(ctx) && i.Remote.Get("ws") == i.Version {
+	s, ok := i.Remote.status(ctx)
+	if ok && s.Version == i.Version {
 		return step.Plan{}, nil
 	}
-	if have := i.Remote.Get("ws"); i.Remote.Status(ctx) && check.Release(i.Version) && check.Release(have) &&
+	if have := s.Version; ok && check.Release(i.Version) && check.Release(have) &&
 		semver.Compare(have, i.Version) > 0 {
 		return step.Plan{}, fmt.Errorf("%s: ws holds %s, newer than this ws's %s: run ws mac wizard --update "+
 			"to bring this ws to the newest", installStage, have, i.Version)

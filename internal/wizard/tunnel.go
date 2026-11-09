@@ -61,19 +61,19 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		t.Out.Say("%s: after ws mac apply", tunnelStage)
 		return step.Plan{}, nil
 	}
-	if t.Run.Remote.Status(ctx) && c.PublicKey != "" && t.Run.Remote.Get("wg0") == c.PublicKey &&
-		t.Run.Remote.Get("peer") == "ok" && mac != "" && t.Run.Remote.Get("mac.pub") == mac &&
+	s, ok := t.Run.Remote.status(ctx)
+	if ok && c.PublicKey != "" && s.WgKey == c.PublicKey && s.Peered && mac != "" && s.MacKey == mac &&
 		t.loaded(ctx) && (t.Host.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
 		return step.Plan{}, nil
 	}
 	var ch []step.Change
-	if t.Run.Remote.Get("mac.pub") != mac {
+	if s.MacKey != mac {
 		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on ws"))
 	}
-	if t.Run.Remote.Get("mac.pub") != mac || t.Run.Remote.Get("peer") != "ok" {
+	if s.MacKey != mac || !s.Peered {
 		ch = append(ch, tunnelChange("run ws server apply --only wireguard on ws, for wg0's peer"))
 	}
-	switch wg0 := t.Run.Remote.Get("wg0"); {
+	switch wg0 := s.WgKey; {
 	case wg0 == "":
 		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, which that run makes"))
 	case wg0 != c.PublicKey:

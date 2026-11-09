@@ -12,13 +12,13 @@ import (
 // leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only
 // with a LAN. Off the LAN, away's lines take the router's place.
 func (r *WsRun) Hand(ctx context.Context, h *Hand) {
-	r.Remote.Status(ctx)
+	s, _ := r.Remote.status(ctx)
 	_, c, err := loadConf(confFile{r.Host.Conf, runStage, r.Host.M, r.Host.Out})
 	if err != nil {
 		return
 	}
-	r.fans(h)
-	if c.Target != "cloud" && r.Remote.Get("outbound") == "off" {
+	fans(h, s)
+	if c.Target != "cloud" && s.OutboundOff {
 		h.Add("ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, as for " +
 			"a cloud VM; remove that line, then run the wizard with --update (docs/security.md, Outbound).")
 	}
@@ -47,8 +47,8 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 // outbound table follows that, and no mac.conf names another. The wizard adds no device's key to
 // ws, so each goes from GitHub by hand.
 func (r *WsRun) WsHand(ctx context.Context, h *Hand) {
-	r.Remote.Status(ctx)
-	r.fans(h)
+	s, _ := r.Remote.status(ctx)
+	fans(h, s)
 	if c, err := r.Want(); err == nil && c.Target == "lan" {
 		h.Add("ws's lease, on a machine on the LAN: static, as docs/router.md has it.")
 	}
@@ -57,8 +57,8 @@ func (r *WsRun) WsHand(ctx context.Context, h *Hand) {
 }
 
 // fans adds the fans' driver where Secure Boot refused it, as the remote script's status read.
-func (r *WsRun) fans(h *Hand) {
-	if r.Remote.Get("fans") == "refused" {
+func fans(h *Hand, s wsStatus) {
+	if s.FansRefused {
 		h.Add("ws's fans' driver: with Secure Boot on, DKMS's key, enrolled at ws's console " +
 			"(docs/fans.md, Secure Boot).")
 	}
