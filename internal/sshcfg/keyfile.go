@@ -9,8 +9,8 @@ import (
 var base64Key = regexp.MustCompile(`^[A-Za-z0-9+/]+=*$`)
 
 // CheckKeyFile fails where the text of the .pub file holds other than one public key of a type that
-// ws's OpenSSH 10.2 has (ssh -Q key there): a private key or a certificate does, and so does a type
-// as an ML-DSA key of Secretive's.
+// ws's OpenSSH 10.2 has (ssh -Q key there). A private key or a certificate fails, and so does a
+// type as an ML-DSA key of Secretive's.
 func CheckKeyFile(file, text string) error {
 	var keyType string
 	lines := 0
