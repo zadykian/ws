@@ -3,6 +3,7 @@ paths:
   - "mac/zed/**"
   - "internal/server/zed/files/settings.json.tmpl"
   - "internal/server/fresh/files/config.json.tmpl"
+  - "internal/server/lazygit/files/config.yml"
 ---
 
 # editors
@@ -19,6 +20,10 @@ They share:
 - the theme, the ruler and auto-save;
 - the language servers' arguments;
 - the keys.
+
+lazygit's `internal/server/lazygit/files/config.yml` takes the theme's colours too, each beside the
+Zed key it comes from, so a change of theme goes to it as well
+([lazygit](../../docs/lazygit.md#the-theme)).
 
 Fresh spells its keys as follows ([Fresh](../../docs/fresh.md#the-keys)):
 

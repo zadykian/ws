@@ -2,7 +2,10 @@
 # Runs one of the lint tools `make lint` uses, at the version pinned here:
 #
 #   tools/run NAME [ARG...]   runs the tool with the ARGs
-#   tools/run -path NAME      prints the path of the tool's executable
+#   tools/run -path NAME      prints the path of the tool's executable, or of its file
+#
+# lazygit-schema is a file to read, not to run: lazygit's config schema, which gotest hands the
+# lazygit role's test (docs/lazygit.md).
 #
 # Each tool comes from its GitHub release, and Go from go.dev, for Linux or macOS on amd64 or
 # arm64. The first run downloads it into .cache/tools and checks its SHA-256. A bump changes a tool's version and its
@@ -50,10 +53,11 @@ pick() {
 # pin sets version, url, sum and member for the tool $1. member is the executable's path in the
 # archive, or empty where the download is the executable itself. exe is the executable's path in
 # the tool's directory, .cache/tools/NAME-VERSION. tree is true where the tool is the whole
-# archive, as Go's is, and then exe is the path inside it.
+# archive, as Go's is, and then exe is the path inside it. file is true where the tool is a file
+# to read.
 pin() {
     gh=https://github.com
-    exe=$1 tree=false
+    exe=$1 tree=false file=false
     case $1 in
     actionlint)
         version=1.7.12
@@ -100,6 +104,15 @@ pin() {
             b4d8f17068b35ee6060cc2f69a16fb48740d706fbba81661c318649c114a6998 \
             767b899a28285e88ded2823d5dcc4bc5ef681173eb2d80f029a7b17ee4ece3b8 \
             d1e409481a8ca846c4bc97e781eb5cb1bd5c23353a0b3977a1cbda1b1b6447d5
+        ;;
+    lazygit-schema)
+        # The version that Ubuntu's archive holds, as the lazygit role installs it. The schema is
+        # one file for every platform, so it has one sum.
+        version=0.57.0
+        url=https://raw.githubusercontent.com/jesseduffield/lazygit/v$version/schema/config.json
+        member=
+        exe=config.json file=true
+        sum=514b510c7990012502050f71cb0cbf37348f15c36db88c86f46c7a45f755221e
         ;;
     lychee)
         # Linux's build is musl's, which links statically.
@@ -177,7 +190,7 @@ pin() {
             e28d22b087f9ebb8d99da6e740d348c930f559961c7c3f12badda54f882195a2
         ;;
     *)
-        die "no tool $1: actionlint, go, gitleaks, golangci-lint, lychee, rumdl, shellcheck, shfmt, vale or zizmor"
+        die "no tool $1: actionlint, go, gitleaks, golangci-lint, lazygit-schema, lychee, rumdl, shellcheck, shfmt, vale or zizmor"
         ;;
     esac
 }
@@ -215,7 +228,11 @@ fetch() {
         tar -xzf "$tmp/download" -C "$tmp" "$member" || die "$url has no $member"
         mv "$tmp/$member" "$tmp/download"
     fi
-    chmod 755 "$tmp/download"
+    if $file; then
+        chmod 644 "$tmp/download"
+    else
+        chmod 755 "$tmp/download"
+    fi
     mkdir -p "${bin%/*}"
     mv -f "$tmp/download" "$bin"
     rm -rf "$tmp"
@@ -235,7 +252,12 @@ main() {
     pin "$name"
     cache=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)/.cache/tools
     bin=$cache/$name-$version/$exe
-    [ -x "$bin" ] || fetch "$name"
+    if $file; then
+        $path || die "$name is a file to read: tools/run -path $name"
+        [ -f "$bin" ] || fetch "$name"
+    else
+        [ -x "$bin" ] || fetch "$name"
+    fi
     if $path; then
         printf '%s\n' "$bin"
     else

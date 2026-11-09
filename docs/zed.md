@@ -142,6 +142,8 @@ tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` li
   scrollback.
 - tmux has no prefix, so Fresh gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
   has the rest.
+- tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](mac-zed.md).
+  Where none is set, the title is empty, not tmux's default, the host's name.
 - Without tmux on the `PATH` the tab runs a login shell.
 - A task ignores the wrapper.
 - Keep `terminal.detect_venv` `off`, as [the Mac's settings](mac-zed.md) do.

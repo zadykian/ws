@@ -1,0 +1,71 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. Settings of
+# your own go in ~/.lazygit.yml, which lazygit loads over this file in each repository under the
+# home.
+#
+# lazygit reads a missing key as its default, and loads a key it lacks with no error. A test of ws's
+# holds this file to the schema of the installed version.
+---
+gui:
+  # JetBrains Dark, the theme of Zed and Fresh. Each colour is Zed's, from the key named beside
+  # it (docs/lazygit.md#the-theme). The background stays the terminal's, as lazygit has no key
+  # for it.
+  theme:
+    activeBorderColor: ["#467ff2", bold]  # border.focused
+    inactiveBorderColor: ["#393b41"]  # border
+    searchingActiveBorderColor: ["#0dcdfb", bold]  # search.match_background, opaque
+    optionsTextColor: ["#548af7"]  # link_text.hover
+    selectedLineBgColor: ["#214283"]  # the first player's selection, as Fresh's selection_bg
+    inactiveViewSelectedLineBgColor: ["#43454a"]  # element.selected
+    cherryPickedCommitFgColor: ["#1e1f22"]  # editor.background
+    cherryPickedCommitBgColor: ["#47ccbd"]  # terminal.ansi.cyan
+    markedBaseCommitFgColor: ["#1e1f22"]  # editor.background
+    markedBaseCommitBgColor: ["#f2c55c"]  # warning
+    unstagedChangesColor: ["#f27481"]  # terminal.ansi.red
+    defaultFgColor: ["#dfe1e5"]  # text
+  # Icons from Nerd Fonts v3, which JetBrainsMono Nerd Font Mono, Ghostty's and Zed's, carries.
+  nerdFontsVersion: "3"
+  # Square corners, as JetBrains draws its panels.
+  border: single
+  showRandomTip: false
+# No intro at the first start, and no note of a version's breaking changes after apt updates it.
+disableStartupPopups: true
+# lazygit comes back from Fresh with no Enter to press. A command that fails still waits for one.
+promptToReturnFromSubprocess: false
+git:
+  # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
+  # prefix, WIP by default. Empty, it never does.
+  skipHookPrefix: ""
+  # git signs each commit, as the shell role sets it, and its key asks for no passphrase. So lazygit
+  # signs in place, where it would leave its screen for each commit, amend or rebase.
+  overrideGpg: true
+  # delta draws diffs on Zed's colours: plus-style and minus-style on editor.diff_hunk.added and
+  # .deleted's backgrounds, their emph styles on version_control.word_added and .word_deleted.
+  pagers:
+    - pager: >-
+        delta --dark --paging=never
+        --plus-style='syntax #1f2b26' --plus-emph-style='syntax #294436'
+        --minus-style='syntax #2b2322' --minus-emph-style='syntax #45302b'
+keybinding:
+  files:
+    # w commits with --no-verify too.
+    commitChangesWithoutHook: <disabled>
+os:
+  # Fresh, through ws's wrapper, in lazygit's terminal. It takes FILE:LINE, and a directory as the
+  # one it works in.
+  edit: fresh {{filename}}
+  editAtLine: fresh {{filename}}:{{line}}
+  editAtLineAndWait: fresh {{filename}}:{{line}}
+  openDirInEditor: fresh {{dir}}
+  editInTerminal: true
+  # A copy goes to the terminal's clipboard by OSC 52, which reaches the Mac's over ssh. tmux drops
+  # a pane's OSC 52 unless set-clipboard is on, so in tmux load-buffer -w sends it on.
+  copyToClipboardCmd: >-
+    if [ -n "$TMUX" ]; then printf %s {{text}} | tmux load-buffer -w -;
+    else printf '\033]52;c;%s\a' "$(printf %s {{text}} | base64 -w0)" >/dev/tty; fi
+  # ws has no browser, so a link that lazygit would open, such as a new pull request's, is copied.
+  openLink: >-
+    if [ -n "$TMUX" ]; then printf %s {{link}} | tmux load-buffer -w -;
+    else printf '\033]52;c;%s\a' "$(printf %s {{link}} | base64 -w0)" >/dev/tty; fi
+# apt updates lazygit, so lazygit never looks for a release of its own.
+update:
+  method: never

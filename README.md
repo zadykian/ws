@@ -2,7 +2,7 @@
 
 Sets up my development server from code. `ws server apply` runs on the machine itself. It sets up
 packages, SSH by key and a firewall, and a direct link and a WireGuard tunnel to the Mac. It sets up
-Docker, the shell, tmux, the Fresh editor and Zed's server. It sets up claude and
+Docker, the shell, tmux, lazygit, the Fresh editor and Zed's server. It sets up claude and
 [cld](https://github.com/zadykian/cld), and SigNoz with a collector for the machine's telemetry.
 Running it again is safe, and `--check` shows how a machine differs from the repository.
 
@@ -22,6 +22,8 @@ Each role has a page of its own. A role is Go steps of ws:
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
   repositories.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
+- [`lazygit`](docs/lazygit.md): lazygit from Ubuntu's archive, in JetBrains Dark, with the
+  repository and its branch in the terminal's title.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,
   gopls, Delve, roslyn-language-server, the SQL, Docker and npm language servers, and rustup.
 - [`docker`](docs/docker.md): Docker Engine, its `daemon.json`, a slice for its containers and

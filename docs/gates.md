@@ -25,14 +25,16 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   (`.golangci.yml`). A finding is justified with `//nolint:NAME // reason` alone.
   `govulncheck` is the module's `tool` directive, so go.mod pins it. `gotest` runs
   `go test -race -count=1 ./...`, and cgo is on for the race detector alone, as ws builds with
-  `CGO_ENABLED=0`.
+  `CGO_ENABLED=0`. `LAZYGIT_SCHEMA` names lazygit's config schema, for
+  [the lazygit role's test](lazygit.md#the-config).
 
 `tools/sizecheck` leaves out the files nobody writes here. Those are foundryctl's compose files and
 lock, which yamllint leaves out too, and Vale's vendored styles. Data files, such
 as TOML, JSON and conf files, are of no kind it caps. `.editorconfig` sets the files' encoding,
 line ends and indents for editors.
 
-`tools/run` downloads the other tools into `.cache/tools`, each pinned by version and SHA-256.
+`tools/run` downloads the other tools into `.cache/tools`, each pinned by version and SHA-256,
+and lazygit's config schema too, a file to read.
 Go comes from go.dev, with the four sums of its listing, and golangci-lint from its release. The
 Go gates keep GOPATH and the caches in `.cache`, and `GOTOOLCHAIN=local` stops a download of
 another Go.
