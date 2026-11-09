@@ -33,10 +33,10 @@ the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
 Where the title shows:
 
 - Ghostty's tab, through `ssh ws` with no tmux on ws.
-- Not past tmux, as Zed's tmux and cld's leave `set-titles` off. A status line that names
-  `#{pane_title}`, as tmux's default does, shows it.
-- Not Zed's terminal tab, which takes no title: Zed shows one in the terminal's breadcrumbs alone,
-  and its tmux passes none on.
+- Zed's terminal toolbar, as [Zed's tmux](zed.md#terminals-in-tmux) passes it on. Zed's tab takes
+  no title.
+- Not past cld's tmux, which leaves `set-titles` off. A status line that names `#{pane_title}`, as
+  tmux's default does, shows it.
 
 Outside tmux, the watcher writes to the terminal while lazygit draws. Where a frame of lazygit's
 takes more than one write, the title may land inside it and leave stray characters until those

@@ -76,6 +76,8 @@ server to every YAML file, Ansible's too.
   Alt keys in Zed's terminal, at the cost of Option's special characters. `detect_venv` is `off`:
   with it on, a venv in the directory has Zed type its activation line into every new tab, which
   reaches a reattached tmux session and whatever runs there.
+- `terminal.toolbar.breadcrumbs` shows a title that a program in the terminal sets, such as
+  [lazygit's](lazygit.md#the-title), above it. Zed's tab takes none.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
 - `docs/zed.md`, Zed's page for the server, says what to do when the connection drops.
