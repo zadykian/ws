@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// UserRules is the file where ufw keeps the rules it was given.
+// UserRules is the file where ufw keeps the rules given to it.
 const UserRules = "/etc/ufw/user.rules"
 
 // Rules is a host.Resource of the rules a role owns, those with Comment. Those in Want are added
@@ -20,7 +20,7 @@ type Rules struct {
 	Out     effect.Out
 	Comment string
 	Want    []Rule
-	// Owns tells which of the rules with Comment the role owns. Nil means all of them.
+	// Owns tells which of the rules with Comment the role owns. Nil means them all.
 	Owns func(Rule) bool
 	// NeedsSystemd skips the resource where systemd is not running, as in CI's container, where
 	// ufw cannot load its rules.
