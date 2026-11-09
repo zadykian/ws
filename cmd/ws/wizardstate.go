@@ -28,18 +28,19 @@ func (w macScreen) state(side tui.Side, sudo *wizard.Sudo) error {
 }
 
 // wsRead is the state screen's read of ws. The way to ws stays once found, as a new one would hold
-// sudo's ticket until the screen ends. Each read asks ws's status again, as a run may have changed it.
+// sudo's ticket until the screen ends. Each read is a Remote of its own, which asks ws's status
+// again, as a run may have changed it.
 func wsRead(reach *varsReach, version string) tui.StateReader {
-	var ws *wizard.Remote
+	var shell wizard.Shell
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		if ws == nil {
+		if shell == nil {
 			remote, err := reach.reach(ctx, b, mac.RemoteScript)
 			if err != nil {
 				return nil, err
 			}
-			ws = remote
+			shell = remote.Shell
 		}
-		ws.Forget()
+		ws := &wizard.Remote{Shell: shell, Script: mac.RemoteScript}
 		states, err := ws.State(ctx, version)
 		return roleSections(states), err
 	}

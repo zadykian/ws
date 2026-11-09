@@ -104,14 +104,14 @@ func (s serverScreen) scan() tui.Work {
 }
 
 // read is the state screen's read of ws, by the remote script's report, as the Mac's is. Each read
-// asks ws's status again, as a run may have changed it.
+// is a Remote of its own, which asks ws's status again, as a run may have changed it.
 func (s serverScreen) read() tui.StateReader {
-	var ws *wizard.Remote
+	var shell wizard.Shell
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		if ws == nil {
-			ws = &wizard.Remote{Shell: serverShell(screenMachine(ctx, b, s.p.machine)), Script: mac.RemoteScript}
+		if shell == nil {
+			shell = serverShell(screenMachine(ctx, b, s.p.machine))
 		}
-		ws.Forget()
+		ws := &wizard.Remote{Shell: shell, Script: mac.RemoteScript}
 		states, err := ws.State(ctx, s.p.version)
 		return roleSections(states), err
 	}

@@ -64,7 +64,7 @@ func (c *WsClaude) Apply(ctx context.Context, _ step.Plan) error {
 	}
 	c.Run.Host.Out.Say("%s: claude auth login runs as WS_USER on ws: take its steps at this terminal, "+
 		"and open the address it shows in the Mac's browser", claudeStage)
-	c.Run.Remote.Forget()
+	c.Run.Remote.stale()
 	if err := c.Run.Host.SSH.Pass(ctx, "-t", "ws", `exec bash -lc "claude auth login"`); err != nil {
 		return errors.New(claudeStage + ": WS_USER's claude on ws still has no login, as above; run the wizard again")
 	}
@@ -79,7 +79,7 @@ func (c *WsClaude) here(ctx context.Context) error {
 	}
 	c.Run.Out.Say("%s: claude auth login runs as WS_USER: take its steps at this terminal, "+
 		"and open the address it shows in a browser", claudeStage)
-	c.Run.Remote.Forget()
+	c.Run.Remote.stale()
 	if err := c.Here.PassForeground(ctx, false, "runuser", "-l", cmp.Or(want.User, c.Run.Default), "-c",
 		"claude auth login"); err != nil {
 		return errors.New(claudeStage + ": WS_USER's claude still has no login, as above; run the wizard again")

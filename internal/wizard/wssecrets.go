@@ -14,7 +14,7 @@ const wsPath = "/usr/local/bin/ws"
 // value goes in in alone: ps shows the arguments. A failed ssh says that ws is out of reach; else the
 // error is what ws printed.
 func (r *Remote) Secrets(ctx context.Context, in []byte, args ...string) ([]byte, error) {
-	r.Forget()
+	r.stale()
 	out, err := r.Shell.Run(ctx, in, append([]string{wsPath, "server", "secrets"}, args...)...)
 	switch {
 	case err == nil:

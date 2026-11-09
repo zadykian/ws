@@ -50,7 +50,7 @@ func script(op []string) []string {
 
 // Do runs the operation, and has the next status read ws again, as the operation may change it.
 func (r *Remote) Do(ctx context.Context, op ...string) ([]byte, error) {
-	r.Forget()
+	r.stale()
 	return r.query(ctx, op...)
 }
 
@@ -61,14 +61,14 @@ func (r *Remote) query(ctx context.Context, op ...string) ([]byte, error) {
 
 // Pass is Do for an operation that goes on, such as install, whose output goes to Stderr as it comes.
 func (r *Remote) Pass(ctx context.Context, op ...string) error {
-	r.Forget()
+	r.stale()
 	return r.Shell.Pass(ctx, r.Script, script(op)...)
 }
 
 // Follow is Pass for the operation run, with ws server apply's args. The events of the run's log go
 // to Events, and its other lines to Stderr.
 func (r *Remote) Follow(ctx context.Context, args ...string) error {
-	r.Forget()
+	r.stale()
 	return r.Shell.Lines(ctx, r.Script, r.event, script(append([]string{"run"}, args...))...)
 }
 
@@ -104,5 +104,6 @@ func (r *Remote) status(ctx context.Context) (wsStatus, bool) {
 // known returns what status last read, with no read of its own: zero before the first.
 func (r *Remote) known() wsStatus { return r.hold().last }
 
-// Forget has the next status read ws again, as after a session that changed it.
-func (r *Remote) Forget() { r.hold().read = false }
+// stale has the next status read ws again. A change through a Remote that shares the status
+// marks it, and so does claude's login, which runs outside the scripts.
+func (r *Remote) stale() { r.hold().read = false }
