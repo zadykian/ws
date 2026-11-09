@@ -16,8 +16,8 @@ import (
 //go:embed 52unattended-upgrades-github-cli
 var ghUpgrades []byte
 
-// Steps returns the role's steps: the apt repositories, the packages from them, gh's login, Go,
-// the language servers and rustup.
+// Steps returns the role's steps: the apt repositories, the packages from them, gh's telemetry and
+// login, Go, the language servers and rustup.
 // The packages wait on the repositories, so a check run says "after Devtools repositories" where a
 // repository is still to come, as apt may not know the packages then.
 func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
@@ -34,6 +34,10 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 			host.Packages{M: m, Out: out, Recommends: true, Names: packageNames()},
 			// The libraries go in without recommends: the browser needs the libraries alone.
 			host.Packages{M: m, Out: out, Names: v.Devtools.ChromiumLibraries},
+		}},
+		// gh's telemetry goes off before gh's login runs gh again.
+		host.Group{Title: "Devtools gh telemetry", After: "Devtools packages", Parts: []host.Resource{
+			GHTelemetry{M: m, User: user},
 		}},
 		// gh logs in by token.github, after its package.
 		host.Group{Title: "Devtools gh login", After: "Devtools packages", Parts: []host.Resource{

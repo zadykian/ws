@@ -118,6 +118,11 @@ token. Where they differ, it runs `gh auth login -h github.com -p https --insecu
 0600. `--check` says "log gh in by token.github", never which token. gh's refusal fails the run. With
 no `token.github`, or no secrets file, the step leaves gh's login alone.
 
+gh 2.91.0 and later send telemetry unless told not to. A step before the login reads `gh config get
+telemetry` as the user, and runs `gh config set telemetry disabled` where it says otherwise. Both
+run with `GH_TELEMETRY=0`, so that they send none themselves. `--check` says "turn gh's telemetry
+off".
+
 ## The signing key
 
 The role does not register the key that signs the machine's commits ([Signing](shell.md#signing)).
