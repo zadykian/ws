@@ -73,3 +73,18 @@ func (s *Session) Hand(ctx context.Context, h *Hand) {
 	st, _ := s.status(ctx)
 	s.reach.hand(h, st)
 }
+
+// Files returns the files script's Remote, which reads and writes host_vars.
+func (s *Session) Files() *Remote { return s.files }
+
+// Secrets runs ws server secrets on ws, as Remote's Secrets does.
+func (s *Session) Secrets(ctx context.Context, in []byte, args ...string) ([]byte, error) {
+	return s.remote.Secrets(ctx, in, args...)
+}
+
+// Restate is State with ws's status read again, for a screen that reads ws more than once: a run
+// may have changed ws since.
+func (s *Session) Restate(ctx context.Context, version string) ([]apply.RoleState, error) {
+	s.remote.stale()
+	return s.State(ctx, version)
+}

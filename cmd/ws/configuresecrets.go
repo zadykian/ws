@@ -67,7 +67,7 @@ type secretsSide interface {
 
 // wsSide is ws's secrets file, which ws server secrets edits on ws over the wizard's ssh, a value on
 // ssh's stdin. set git, with no flag, keeps the entry's user name.
-type wsSide struct{ ws *wizard.Remote }
+type wsSide struct{ ws *wizard.Session }
 
 func (s wsSide) set(ctx context.Context, label, value string) error {
 	kind, name, _ := strings.Cut(label, " ")
@@ -89,7 +89,7 @@ func (r *varsReach) secretsSheet() tui.Sheet {
 		Name:   "secrets",
 		Fields: func(map[string]string) []tui.FieldSpec { return nil },
 		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
-			ws, err := r.reach(ctx, b, nil)
+			ws, err := r.reach(ctx, b)
 			if err != nil {
 				return tui.Sheet{}, err
 			}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/mac"
 )
 
 // stated draws the state screen that choice names, then the lists as it left them.
@@ -27,21 +26,20 @@ func (w macScreen) state(side tui.Side, sudo *wizard.Sudo) error {
 	return tui.RunState(ctx, w.config(), title+": ws", wsRead(reach, w.p.version))
 }
 
-// wsRead is the state screen's read of ws. The way to ws stays once found, as a new one would hold
-// sudo's ticket until the screen ends. Each read is a Remote of its own, which asks ws's status
-// again, as a run may have changed it.
+// wsRead is the state screen's read of ws. The session stays once found, as a new one would hold
+// sudo's ticket until the screen ends. Each read asks ws's status again, as a run may have changed
+// it.
 func wsRead(reach *varsReach, version string) tui.StateReader {
-	var shell wizard.Shell
+	var ws *wizard.Session
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		if shell == nil {
-			remote, err := reach.reach(ctx, b, mac.RemoteScript)
+		if ws == nil {
+			found, err := reach.reach(ctx, b)
 			if err != nil {
 				return nil, err
 			}
-			shell = remote.Shell
+			ws = found
 		}
-		ws := &wizard.Remote{Shell: shell, Script: mac.RemoteScript}
-		states, err := ws.State(ctx, version)
+		states, err := ws.Restate(ctx, version)
 		return roleSections(states), err
 	}
 }

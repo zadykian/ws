@@ -47,7 +47,7 @@ func TestWsSideSetsAndListsOnWs(t *testing.T) {
 	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	ws, err := r.reach(context.Background(), nil, nil)
+	ws, err := r.reach(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
