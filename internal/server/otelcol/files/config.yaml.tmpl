@@ -1,8 +1,8 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 #
-# It starts from SigNoz's config for a collector on a VM, with every port on loopback, the journal
-# and node_exporter's temperatures added, and the per-process metrics left out. Where ~/.secrets/env
-# sets OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT, claude's metrics go there too.
+# It starts from SigNoz's config for a collector on a VM, with every port on loopback. It adds the
+# journal and node_exporter's temperatures, and leaves the per-process metrics out. Where
+# ~/.secrets/env sets OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT, claude's metrics go there too.
 
 extensions:
   health_check:
@@ -45,8 +45,9 @@ receivers:
             - targets: [127.0.0.1:9100]
 
 processors:
-  # Past 384 MiB (512 less the spike), the collector refuses new data, as when SigNoz is down and
-  # the exporter's queue fills, rather than grow until the kernel kills another process.
+  # Past 384 MiB (512 less the spike), the collector refuses new data rather than grow until the
+  # kernel kills another process. That happens, for one, when SigNoz is down and the exporter's
+  # queue fills.
   memory_limiter:
     check_interval: 1s
     limit_mib: 512

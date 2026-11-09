@@ -12,8 +12,8 @@ var files embed.FS
 
 type templateData struct {
 	Home, Endpoint string
-	// Remote is set where an endpoint is given, and Insecure where it is http, whose gRPC runs
-	// without TLS.
+	// Remote is set where an endpoint is given, and Insecure where the endpoint is http, whose gRPC
+	// runs without TLS.
 	Remote, Insecure bool
 }
 
