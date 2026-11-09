@@ -68,7 +68,7 @@ func (r retrying) Download(ctx context.Context, url, path, sum string, a effect.
 	return err
 }
 
-// download makes the release's binary, where install.sh would put it, without install.sh. Download
+// download makes the release's binary without install.sh, where install.sh would put it. Download
 // checks it against the SHA-256 before it writes the file, and fetches again where the file holds
 // another, a former version's.
 func download(m effect.Machine) func(context.Context) ([]host.Resource, error) {

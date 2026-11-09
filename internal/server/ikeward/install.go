@@ -18,9 +18,9 @@ import (
 const exitChanged = 4
 
 // Install runs ikeward install from the profile of the secrets, where its dry run says it would
-// change anything: install a package, write or remove a file, or take a step. So a new version, a
-// new value or a file of ikeward's edited by hand has it run again, and so has an install cut
-// short, or a unit of ikeward's found stopped. Without systemd booted, or a profile in the secrets,
+// change anything. A change is to install a package, write or remove a file, or take a step. So a
+// new version, a new value or a file of ikeward's edited by hand has it run again. So has an
+// install cut short, or a unit of ikeward's found stopped. Without systemd booted, or a profile in the secrets,
 // it says so and plans nothing.
 type Install struct {
 	M       effect.Machine

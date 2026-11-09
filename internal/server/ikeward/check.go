@@ -11,8 +11,8 @@ import (
 )
 
 // check refuses the values the role cannot use, before anything changes. The profile's path names
-// the files that install writes; ikeward install refuses to run without the resolver and a domain,
-// and its error names its flags, not these keys; ufw prints a rule's address as given, and the
+// the files that install writes. ikeward install refuses to run without the resolver and a domain,
+// and its error names its flags, not these keys. ufw prints a rule's address as given, and the
 // removal of a peer's rule compares the two.
 func check(v values.Ikeward) error {
 	if !path.IsAbs(v.Profile) {

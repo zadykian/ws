@@ -10,7 +10,7 @@ import (
 )
 
 // Later roles may need the VPN, as for a clone from the remote network, so one that is not up
-// within about 2 minutes fails the run: 12 tries, 10 seconds apart.
+// within about 2 minutes fails the run. The wait is 12 tries, 10 seconds apart.
 const (
 	statusTries = 12
 	statusWait  = 10 * time.Second
