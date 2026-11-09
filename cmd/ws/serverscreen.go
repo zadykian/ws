@@ -10,7 +10,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
@@ -24,33 +23,25 @@ type serverScreen struct {
 }
 
 // draw opens the list of the stages over a scan and runs what it chooses, or goes straight to the
-// run under --check. Every stage runs on ws, so the list is ws's alone. The forms come back to a new
-// scan, of what they wrote, and the state screen, which writes nothing, to the list as it found it.
+// run under --check. Every stage runs on ws, so the list is ws's alone.
 func (s serverScreen) draw(check bool) error {
 	if !opensList(s.c, s.p, false) {
 		return s.running(serverPick{check: check}, nil)
 	}
-	ctx, title := s.c.Context(), s.c.CommandPath()
-	for {
-		queue := wizardQueue(s.p, s.stages(serverPick{}))
-		choice, err := tui.PickStages(ctx, s.config(), title, queue, true, s.scan())
-		for err == nil && choice.State {
-			if err = tui.RunState(ctx, s.config(), title+": ws", stateRead(serverOpen, s.p.version)); err == nil {
-				choice, err = tui.Reopen(ctx, s.config(), choice)
-			}
-		}
-		switch {
-		case err != nil:
-			return err
-		case choice.Configure:
-			if err := serverConfigureOn(s.c, s.p, s.config()); err != nil {
-				return err
-			}
-		case len(choice.Only) == 0:
-			return nil
-		default:
-			return s.chosen(choice)
-		}
+	forms := func(context.Context) ([]tui.Sheet, func(context.Context), error) { return serverSheets(s.p), nil, nil }
+	return tui.RunWizard(s.c.Context(), tui.Wizard{Title: s.c.CommandPath(), Config: s.config(), Round: s.round,
+		Forms: forms})
+}
+
+// round is the works of a scan. The state screen reads ws on ws.
+func (s serverScreen) round() tui.Round {
+	return tui.Round{
+		Stages: wizardQueue(s.p, s.stages(serverPick{})),
+		Scan:   s.scan(),
+		Read: func(tui.Side) (tui.StateReader, func(context.Context)) {
+			return stateRead(serverOpen, s.p.version), nil
+		},
+		Run: func(_ context.Context, choice tui.Choice) error { return s.chosen(choice) },
 	}
 }
 
@@ -74,25 +65,25 @@ func (s serverScreen) stages(r serverPick) []step.Step {
 	return serverWizardStages(s.p, nil, nil, nil, nil, &wizard.Hand{}, r)
 }
 
-// on returns the process and claude's terminal as a run beside the screen takes them.
-func (s serverScreen) on(b *tui.Bridge) (process, effect.Foreground) {
+// on returns the process and the screen's effects as a run beside the screen takes them.
+func (s serverScreen) on(b *tui.Bridge) (process, tui.Effects) {
 	on, e := s.p, b.Effects()
 	on.machine = e.M
-	return on, e.Talks
+	return on, e
 }
 
 // scan is a check of every stage, beside the list. ws speaks for its roles once its values are
 // read, as the remote script's report takes ws_user from them.
 func (s serverScreen) scan() tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
-		on, talks := s.on(b)
-		stages := serverWizardStages(on, b, talks, b, nil, &wizard.Hand{}, serverPick{check: true})
+		on, e := s.on(b)
+		stages := serverWizardStages(on, b, e.Talks, b, nil, &wizard.Hand{}, serverPick{check: true})
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
 			states, err := run.Ws.State(ctx, s.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
-		o := step.Options{Observer: watch, Check: true, Stop: b.Stop(ctx)}
+		o := step.Options{Observer: watch, Check: true, Stop: e.Stop}
 		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, nil)
 		return unwrapStep(err)
 	}
@@ -110,11 +101,11 @@ func (s serverScreen) running(r serverPick, choice *tui.Choice) error {
 	}
 	var text bytes.Buffer
 	err := tui.Run(s.c.Context(), cfg, screen, func(ctx context.Context, b *tui.Bridge) error {
-		on, talks := s.on(b)
+		on, e := s.on(b)
 		hand := &wizard.Hand{}
-		stages := serverWizardStages(on, b, talks, b, b, hand, r)
+		stages := serverWizardStages(on, b, e.Talks, b, b, hand, r)
 		closing := func(ctx context.Context) { hand.Close(ctx, &text) }
-		o.Observer, o.Stop = b, b.Stop(ctx)
+		o.Observer, o.Stop = b, e.Stop
 		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, closing)
 		b.Log(text.String()) // A failed run prints it too.
 		return unwrapStep(err)

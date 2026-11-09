@@ -33,12 +33,12 @@ func runServerConfigure(c *cobra.Command, p process) error {
 		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server secrets " +
 			"and ws server values set")
 	}
-	return serverConfigureOn(c, p, screenConfig(c, p))
+	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), serverSheets(p)...)
 }
 
-// serverConfigureOn draws the forms with cfg: ws server wizard's list opens them with its own.
-func serverConfigureOn(c *cobra.Command, p process, cfg tui.Config) error {
-	return tui.Configure(c.Context(), cfg, c.CommandPath(), serverSecretsSheet(p), hostVarsSheet(serverOpen))
+// serverSheets are the forms of ws server configure and of ws server wizard's list.
+func serverSheets(p process) []tui.Sheet {
+	return []tui.Sheet{serverSecretsSheet(p), hostVarsSheet(serverOpen)}
 }
 
 // serverSecretsSheet is ws's secrets file, edited here as ws server secrets edits it.
