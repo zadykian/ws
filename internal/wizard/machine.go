@@ -69,8 +69,8 @@ func (*WsRun) Machine() Machine { return OnWs }
 // Machine is ws: the claude login of WS_USER.
 func (*WsClaude) Machine() Machine { return OnWs }
 
-// Machine is the Mac: ws's signing key goes to the Mac's gh login.
-func (*Signing) Machine() Machine { return OnMac }
+// Machine is its GitHub's: the Mac, whose gh login takes ws's signing key, or ws.
+func (s *Signing) Machine() Machine { return s.GitHub.machine() }
 
 // Machine is the Mac: the stage ends in the Mac's WireGuard configuration and mac.conf.
 func (*Tunnel) Machine() Machine { return OnMac }

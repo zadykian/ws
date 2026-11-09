@@ -17,7 +17,7 @@ func newSigning(status wsStatus, listed string) (*Signing, *effecttest.Machine) 
 	m.Results["/bin/gh ssh-key add /l/signing.pub --type signing --title ws1"] = effecttest.Result{}
 	m.Results["/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"] =
 		effecttest.Result{Out: []byte(listed)}
-	return &Signing{Gh: g, Ws: r.Ws, Lock: "/l"}, m
+	return &Signing{Ws: r.Ws, GitHub: &MacGitHub{Gh: g, Lock: "/l"}}, m
 }
 
 func TestSigningPlan(t *testing.T) {
@@ -62,12 +62,12 @@ func TestSigningApply(t *testing.T) {
 func TestSigningPlanWaitsOnGhUnderCheck(t *testing.T) {
 	s, m := newSigning(wsStatus{Signing: "ssh-ed25519 AAA"}, "")
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{Err: errors.New("logged out")}
-	out := &effecttest.Out{}
-	s.Gh.Out = out
+	out, g := &effecttest.Out{}, s.GitHub.(*MacGitHub)
+	g.Gh.Out = out
 	if _, err := s.Plan(context.Background()); err == nil {
 		t.Fatal("Plan without --check passed a gh with no login")
 	}
-	s.Check = true
+	g.Check = true
 	p, err := s.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "after gh on the Mac") {
 		t.Errorf("Plan = %v, %v; out %q", p, err, out.Lines)
