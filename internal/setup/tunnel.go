@@ -150,7 +150,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, userFile{M: t.M, Path: t.pubFile(), Text: []byte(t.public + "\n")})
+		parts = append(parts, t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		daemon := step.Item{Kind: step.ServiceItem, Name: daemonLabel, Want: "loaded", Found: "not loaded"}

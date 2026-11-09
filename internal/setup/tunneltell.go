@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -53,17 +52,16 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 			return nil, fmt.Errorf("%s is not a directory", d.path)
 		}
 	}
-	want := []byte(public + "\n")
-	have, err := t.M.ReadFile(t.pubFile())
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		return append(cs, Write{Path: t.pubFile(), After: want, Mode: 0o644}), nil
-	case err != nil:
+	pub, err := t.pub().plan()
+	if err != nil {
 		return nil, err
-	case !bytes.Equal(have, want):
-		return append(cs, Write{Path: t.pubFile(), Before: have, After: want, Exists: true, Mode: 0o644}), nil
 	}
-	return cs, nil
+	return append(cs, pub...), nil
+}
+
+// pub is tunnel.pub, which holds the key that tell read. Its mode is the user's.
+func (t *Tunnel) pub() userFile {
+	return userFile{M: t.M, Path: t.pubFile(), Text: []byte(t.public + "\n")}
 }
 
 // publish writes tunnel.pub after the changes, where the key or root's copy was missing when the
