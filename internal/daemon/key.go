@@ -12,9 +12,9 @@ import (
 )
 
 // Key makes the Mac's private key in dir where none is, and returns the public key, in base64. It
-// runs as root, so the private key never leaves root's file: it is written under mode 0600 to a new
-// file and moved over private.key, so that a stop in between leaves no half of a key. A key that
-// is there but not a key fails, and is never replaced.
+// runs as root, so the private key never leaves root's file. The key goes under mode 0600 to a new
+// file, which then moves over private.key: a stop between the two leaves no half of a key. A
+// private.key that holds no key fails, and is never replaced.
 func Key(ctx context.Context, m effect.Machine, random io.Reader, dir string) (string, error) {
 	file := path.Join(dir, "private.key")
 	if _, err := m.ReadFile(file); errors.Is(err, fs.ErrNotExist) {

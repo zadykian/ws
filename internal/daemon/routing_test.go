@@ -28,7 +28,7 @@ func TestAllowLogsAnOutNetworkOnce(t *testing.T) {
 	if !slices.Equal(r.lines(), want) {
 		t.Errorf("log = %q, want %q", r.lines(), want)
 	}
-	// Once the network went back in, it is logged again as it goes out.
+	// Once the network went back in, the log names it again as it goes out.
 	r.keepOut(r.allow(nil))
 	r.allow([]netip.Addr{inLAN})
 	if len(r.lines()) != 2 {

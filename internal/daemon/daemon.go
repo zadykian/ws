@@ -28,8 +28,8 @@ type Daemon struct {
 	Out                 io.Writer // the log
 	Log                 string    // the log's file, which trimLog starts anew past LogLimit; empty for none
 	Now                 func() time.Time
-	// CheckEvery is how often a round looks for the handshake, TickEvery how long a tick comes
-	// after the last tick ended, and ChangeWait how long the loop waits after a network change.
+	// CheckEvery is how often a round looks for the handshake. TickEvery is how long a tick comes
+	// after the last tick ended. ChangeWait is how long the loop waits after a network change.
 	CheckEvery, TickEvery, ChangeWait time.Duration
 	// Events is the channel of the loop. Signals, timers and the watch of network changes send to
 	// it through Send.

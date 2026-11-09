@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/internal/tunnel"
 )
 
-// RunRoutes carries out a plan of routes into the utun tun, and returns the networks it could not
+// RunRoutes carries out a plan of routes into the utun tun. It returns the networks it could not
 // add, in the plan's order, with a log line for each route it could not delete. It deletes first,
 // as an old route may be in the way of a new one.
 func RunRoutes(ctx context.Context, m effect.Machine, plan tunnel.RoutePlan, tun string) (failed []netip.Prefix, logs []string) {
