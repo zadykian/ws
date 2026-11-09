@@ -23,7 +23,8 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
   repositories.
-- [`tmux`](docs/tmux.md): tmux from Ubuntu's archive.
+- [`tmux`](docs/tmux.md): tmux from Ubuntu's archive, and ws-bar, the host's load for tmux's
+  status lines.
 - [`lazygit`](docs/lazygit.md): lazygit from Ubuntu's archive, in JetBrains Dark, with the
   repository and its branch in the terminal's title.
 - [`devtools`](docs/devtools.md): Node, the .NET SDKs, gh, glow, Chromium's libraries, Go,

@@ -13,7 +13,8 @@ that works on the server. The rest is the docs, the lint gates' tools and CI.
   `internal/server/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
   alone, such as the cable's port ([The direct link](docs/network.md#the-direct-link)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
-  `ws server fans`, in `internal/fans`.
+  `ws server fans`, in `internal/fans`, and ws-bar, the tmux role's, is `ws server bar`, in
+  `internal/bar`.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. `cmd/ws`
   is the command and `internal/` its packages. `step`, `effect`, with
   `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
