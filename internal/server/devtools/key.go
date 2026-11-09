@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-	"strings"
 
 	"github.com/zadykian/ws/effect"
 )
@@ -14,7 +13,8 @@ import (
 // the next.
 var keyNoise = regexp.MustCompile(`(?m)^(Comment|Version): .*\n`)
 
-// fetchKey fetches the repository's key and checks that it holds its pinned certificate alone.
+// fetchKey fetches the repository's key and checks that it holds a certificate at least, and
+// pinned ones alone.
 func fetchKey(ctx context.Context, m effect.Machine, repo Repository) ([]byte, error) {
 	body, err := fetch(ctx, m, repo.Key)
 	if err != nil {
@@ -24,9 +24,13 @@ func fetchKey(ctx context.Context, m effect.Machine, repo Repository) ([]byte, e
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", repo.Key, err)
 	}
-	if !slices.Equal(prints, repo.Fingerprints) {
-		return nil, fmt.Errorf("%s served the primary keys %s, not %s alone", repo.Key,
-			strings.Join(prints, ", "), strings.Join(repo.Fingerprints, ", "))
+	if len(prints) == 0 {
+		return nil, fmt.Errorf("%s served no key", repo.Key)
+	}
+	for _, p := range prints {
+		if !slices.Contains(repo.Fingerprints, p) {
+			return nil, fmt.Errorf("%s served the primary key %s, which is not pinned", repo.Key, p)
+		}
 	}
 	return keyNoise.ReplaceAll(body, nil), nil
 }

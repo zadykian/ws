@@ -6,12 +6,14 @@ steps in [internal/server/devtools](../internal/server/devtools): the repositori
 Go, the servers and rustup, in this order.
 
 Node comes from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's
-archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again,
-and a key goes in only where it holds one certificate, whose fingerprint the package pins. A subkey
-added to that certificate passes, and a second certificate fails the run. The package reads the
-key's packets itself, as `gpg` is not on every machine. A packet it cannot parse fails the run,
-and only keys of version 4 and 6 pass. A repository that is no longer needed loses its
-`.sources` file and its key, and so do the sources that the repositories' own instructions add.
+archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again.
+A key goes in only where it holds a certificate at least, and the package pins the fingerprint of
+each. A subkey added to a certificate passes, and so does a key that drops a pinned certificate. A
+certificate the package does not pin fails the run, in the first armored block or in another, as
+apt reads them all. The package reads the key's packets itself, as `gpg` is not on every machine.
+A packet it cannot parse fails the run, and only keys of version 4 and 6 pass. A repository that is
+no longer needed loses its `.sources` file and its key, and so do the sources that the
+repositories' own instructions add.
 
 The packages wait on the repositories: `ws server apply --check` says "after Devtools
 repositories" where a repository is still to come, as apt may not know the packages then. The

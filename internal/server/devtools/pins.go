@@ -29,8 +29,9 @@ var (
 
 // Repository is a third-party apt repository: a deb822 .sources file, with its key in
 // /etc/apt/keyrings. The role removes both files of a repository it no longer needs. A key fetched
-// again must hold the certificates whose primary fingerprints are given here: a renewed key keeps
-// them, another key, in place of one or beside them, does not.
+// again must hold a certificate at least, and each one's primary fingerprint must be pinned here. A
+// renewed key keeps its fingerprint, and a key the vendor drops leaves the rest pinned. Another
+// key, in place of them or beside them, is not pinned.
 type Repository struct {
 	Name, Key, URIs, Suites, Components string
 	// Fingerprints are the primary fingerprints of the certificates the key file may hold.
