@@ -24,9 +24,9 @@ func fetchKey(ctx context.Context, m effect.Machine, repo Repository) ([]byte, e
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", repo.Key, err)
 	}
-	if !slices.Equal(prints, []string{repo.Fingerprint}) {
+	if !slices.Equal(prints, repo.Fingerprints) {
 		return nil, fmt.Errorf("%s served the primary keys %s, not %s alone", repo.Key,
-			strings.Join(prints, ", "), repo.Fingerprint)
+			strings.Join(prints, ", "), strings.Join(repo.Fingerprints, ", "))
 	}
 	return keyNoise.ReplaceAll(body, nil), nil
 }

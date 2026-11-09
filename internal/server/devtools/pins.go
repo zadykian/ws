@@ -29,11 +29,13 @@ var (
 
 // Repository is a third-party apt repository: a deb822 .sources file, with its key in
 // /etc/apt/keyrings. The role removes both files of a repository it no longer needs. A key fetched
-// again must hold one certificate, whose primary fingerprint is given here: a renewed key keeps it,
-// another key, in its place or beside it, does not.
+// again must hold the certificates whose primary fingerprints are given here: a renewed key keeps
+// them, another key, in place of one or beside them, does not.
 type Repository struct {
-	Name, Key, Fingerprint, URIs, Suites, Components string
-	Needed                                           bool
+	Name, Key, URIs, Suites, Components string
+	// Fingerprints are the primary fingerprints of the certificates the key file may hold.
+	Fingerprints []string
+	Needed       bool
 }
 
 // repositories returns the repositories for the Ubuntu release, by its codename.
@@ -46,22 +48,22 @@ func repositories(release string) []Repository {
 		// Ubuntu's archive has an older Node.
 		{
 			Name: "nodesource", Key: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key",
-			Fingerprint: "6F71F525282841EEDAF851B42F59B5F99B1BE0B4",
-			URIs:        "https://deb.nodesource.com/node_" + nodeMajor + ".x", Suites: "nodistro",
+			Fingerprints: []string{"6F71F525282841EEDAF851B42F59B5F99B1BE0B4"},
+			URIs:         "https://deb.nodesource.com/node_" + nodeMajor + ".x", Suites: "nodistro",
 			Components: "main", Needed: true,
 		},
 		// Ubuntu's archive has an older glow.
 		{
 			Name: "charm", Key: "https://repo.charm.sh/apt/gpg.key",
-			Fingerprint: "ED927B38BE981E53CA09153D03BBF595D4DFD35C",
-			URIs:        "https://repo.charm.sh/apt/", Suites: "*", Components: "*", Needed: true,
+			Fingerprints: []string{"ED927B38BE981E53CA09153D03BBF595D4DFD35C"},
+			URIs:         "https://repo.charm.sh/apt/", Suites: "*", Components: "*", Needed: true,
 		},
 		// The PPA's key from Ubuntu's keyserver, by the fingerprint Launchpad gives it.
 		{
-			Name:        "dotnet-backports",
-			Key:         "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x45A3F127159BE9E5017811C62125B164E8E5D3FA",
-			Fingerprint: "45A3F127159BE9E5017811C62125B164E8E5D3FA",
-			URIs:        "https://ppa.launchpadcontent.net/dotnet/backports/ubuntu/", Suites: release,
+			Name:         "dotnet-backports",
+			Key:          "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x45A3F127159BE9E5017811C62125B164E8E5D3FA",
+			Fingerprints: []string{"45A3F127159BE9E5017811C62125B164E8E5D3FA"},
+			URIs:         "https://ppa.launchpadcontent.net/dotnet/backports/ubuntu/", Suites: release,
 			Components: "main", Needed: backports,
 		},
 	}

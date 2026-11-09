@@ -33,7 +33,7 @@ func newFixture(t *testing.T) fixture {
 		m.Results[curl+url] = effecttest.Result{Out: []byte(armoredKey(public(t, e)))}
 		f.keys[name] = upper(e.PrimaryKey.Fingerprint)
 		list = append(list, Repository{
-			Name: name, Key: url, Fingerprint: f.keys[name], URIs: "https://example.org/" + name,
+			Name: name, Key: url, Fingerprints: []string{f.keys[name]}, URIs: "https://example.org/" + name,
 			Suites: "*", Components: "main", Needed: true,
 		})
 	}
@@ -80,8 +80,13 @@ func TestRepositoriesWriteKeysAndSources(t *testing.T) {
 
 func TestRepositoriesTable(t *testing.T) {
 	for _, repo := range repositories("resolute") {
-		if len(repo.Fingerprint) != 40 || repo.Key == "" || repo.URIs == "" {
+		if len(repo.Fingerprints) == 0 || repo.Key == "" || repo.URIs == "" {
 			t.Errorf("%s: %+v", repo.Name, repo)
+		}
+		for _, p := range repo.Fingerprints {
+			if len(p) != 40 {
+				t.Errorf("%s: the fingerprint %q", repo.Name, p)
+			}
 		}
 	}
 	if got := repositories("resolute")[2]; got.Suites != "resolute" || !got.Needed {
