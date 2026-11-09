@@ -1,0 +1,57 @@
+package bar
+
+import (
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+)
+
+// gpuReading is a GPU's use, in percent, and temperature, in °C, at a time.
+type gpuReading struct {
+	use, celsius int
+	at           time.Time
+}
+
+// gpus holds the latest reading of each NVIDIA GPU, which nvidia-smi streams.
+type gpus struct {
+	now      func() time.Time
+	mu       sync.Mutex
+	readings map[string]gpuReading // by the GPU's index
+}
+
+// record keeps a line's reading. A line that holds none, as an error or "[N/A]", is dropped.
+func (g *gpus) record(line string) {
+	fields := strings.Split(line, ",")
+	if len(fields) != 3 {
+		return
+	}
+	use, err := strconv.Atoi(strings.TrimSpace(fields[1]))
+	if err != nil {
+		return
+	}
+	celsius, err := strconv.Atoi(strings.TrimSpace(fields[2]))
+	if err != nil {
+		return
+	}
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.readings == nil {
+		g.readings = map[string]gpuReading{}
+	}
+	g.readings[strings.TrimSpace(fields[0])] = gpuReading{use, celsius, g.now()}
+}
+
+// reading returns the highest use and temperature of the GPUs read within maxAge. A GPU that
+// nvidia-smi stopped reading, or a machine with none, has no reading.
+func (g *gpus) reading(maxAge time.Duration) (use, celsius int, ok bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	for _, r := range g.readings {
+		if g.now().Sub(r.at) > maxAge {
+			continue
+		}
+		use, celsius, ok = max(use, r.use), max(celsius, r.celsius), true
+	}
+	return use, celsius, ok
+}
