@@ -41,7 +41,7 @@ of two lines */
 		t.Fatal(err)
 	}
 	expect(t, m, map[string]origin{
-		"Package p is a test.": {1, 4}, "doc says why.": {4, 4}, "\tcode stays code": {6, 3},
+		"Package p is a test.": {1, 4}, "xxx says why.": {4, 4}, "\tcode stays code": {6, 3},
 		"the reason stays": {11, 29}, "trailing": {12, 31},
 	})
 	// Two comments are two paragraphs, though on lines next to each other.
@@ -85,4 +85,36 @@ func TestUnchecked(t *testing.T) {
 			t.Errorf("%s: got %v, want %v", file, got, want)
 		}
 	}
+}
+
+func TestGoMirrorMasksDocNames(t *testing.T) {
+	src := `package p
+
+// Validate checks it.
+func Validate() {}
+
+// An Allocator splits it.
+//
+// Allocator stays a word past the first line.
+type Allocator struct {
+	// The Allocate field, of Allocator.
+	Allocate int
+}
+
+// Validator is no name of this func.
+func Valid() {}
+
+// é is a name too.
+var é = 1
+`
+	m, err := goMirror([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect(t, m, map[string]origin{
+		"xxxxxxxx checks it.": {3, 4}, "An xxxxxxxxx splits it.": {6, 4},
+		"Allocator stays a word past the first line.": {8, 4},
+		"The xxxxxxxx field, of Allocator.":           {10, 5},
+		"Validator is no name of this func.":          {14, 4}, "x is a name too.": {17, 4},
+	})
 }

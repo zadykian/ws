@@ -1,11 +1,13 @@
 package main
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"path"
 	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -83,10 +85,11 @@ func goMirror(src []byte) (*mirror, error) {
 		return nil, err
 	}
 	lines := strings.Split(string(src), "\n")
+	names := docNames(f)
 	m := newMirror()
 	for _, group := range f.Comments {
 		m.gap()
-		for _, c := range group.List {
+		for i, c := range group.List {
 			p := fset.Position(c.Slash)
 			col := utf8.RuneCountInString(lines[p.Line-1][:p.Column-1]) + 1
 			// The mirror skips a block comment, as ws writes none.
@@ -95,10 +98,64 @@ func goMirror(src []byte) (*mirror, error) {
 				m.gap()
 				continue
 			}
+			if i == 0 {
+				body = masked(body, names[group])
+			}
 			m.add(body, origin{p.Line, col + 2 + skip})
 		}
 	}
 	return m, nil
+}
+
+// docNames maps each doc comment to the names its declaration declares: a func's, a type's, a
+// var's or const's, a field's or a method's.
+func docNames(f *ast.File) map[*ast.CommentGroup][]string {
+	names := map[*ast.CommentGroup][]string{}
+	add := func(doc *ast.CommentGroup, idents ...*ast.Ident) {
+		for _, ident := range idents {
+			if doc != nil && ident != nil {
+				names[doc] = append(names[doc], ident.Name)
+			}
+		}
+	}
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.FuncDecl:
+			add(n.Doc, n.Name)
+		case *ast.GenDecl:
+			for _, spec := range n.Specs {
+				switch spec := spec.(type) {
+				case *ast.TypeSpec:
+					add(n.Doc, spec.Name)
+					add(spec.Doc, spec.Name)
+				case *ast.ValueSpec:
+					add(n.Doc, spec.Names...)
+					add(spec.Doc, spec.Names...)
+				}
+			}
+		case *ast.Field:
+			add(n.Doc, n.Names...)
+		}
+		return true
+	})
+	return names
+}
+
+// masked returns the body with x in place of each rune of a declared name that starts it, after
+// A, An or The where one leads. Vale reads no word there then, as the name is code, and each
+// column keeps its source's.
+func masked(body string, names []string) string {
+	for _, article := range []string{"", "A ", "An ", "The "} {
+		rest, ok := strings.CutPrefix(body, article)
+		for _, name := range names {
+			after, found := strings.CutPrefix(rest, name)
+			next, _ := utf8.DecodeRuneInString(after)
+			if ok && found && next != '_' && !unicode.IsLetter(next) && !unicode.IsDigit(next) {
+				return article + strings.Repeat("x", utf8.RuneCountInString(name)) + after
+			}
+		}
+	}
+	return body
 }
 
 // lineMirror mirrors the comments that marker starts, of full lines alone: a line rule cannot tell
