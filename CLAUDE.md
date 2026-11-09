@@ -153,8 +153,9 @@ skill. Commits are signed, as the ruleset on `main` requires.
   has ws's facts beside the `writing` skill.
 - Plugins of the `zadykian` marketplace, [zadykian/toolkit](https://github.com/zadykian/toolkit),
   which `.claude/settings.json` enables: `flow`, with `/flow:issue`, and `/flow:land`, run by
-  hand only; `docs`, with `/docs:trim`; `lint`, with `/lint:split-file`; and `lean`, with
-  `/lean:cost`, run by hand only. `flow` links and lands a stack with gh's extension,
+  hand only; `docs`, with `/docs:trim`; `lint`, with `/lint:split-file`; `lean`, with
+  `/lean:cost`, run by hand only; and `design`, whose skills sharpen a design before code
+  ([design](https://github.com/zadykian/toolkit/blob/main/docs/design.md)). `flow` links and lands a stack with gh's extension,
   `gh extension install github/gh-stack`. The marketplace's `ref` names the release that the
   workflows' actions pin ([The rules](docs/checks.md#the-rules)).
 - Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits and
