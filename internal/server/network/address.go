@@ -15,7 +15,7 @@ import (
 const longestBroadcastPrefix = 30
 
 // AddressProblems returns why value is not an IPv4 address of a host with its prefix length, as
-// 10.77.0.1/30. The list is empty where it is one. A subnet of more than two addresses keeps its
+// 10.77.0.1/30. The list is empty for such an address. A subnet of more than two addresses keeps its
 // first and its last for itself and its broadcast, so neither is a host's.
 func AddressProblems(value string) []string {
 	address, prefix, found := strings.Cut(value, "/")
