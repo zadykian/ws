@@ -38,8 +38,8 @@ func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)
 	}
 	items, err := s.Report(context.Background())
-	if err != nil || len(items) != 1 || items[0].Conflict != "" {
-		t.Errorf("Report = %+v, %v; want the hook with no conflict", items, err)
+	if err != nil || len(items) != 2 || items[0].Conflict != "" || items[1].Found != items[1].Want {
+		t.Errorf("Report = %+v, %v; want the hook and the line, no conflict", items, err)
 	}
 }
 
@@ -64,5 +64,22 @@ func TestZshLeavesAHookNotItsOwnAndZshrc(t *testing.T) {
 	p, err := zshStep(m, out).Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "is not ws's") {
 		t.Errorf("Plan = %v, %v, out %v; want nothing and a warning", p.Changes, err, out.Lines)
+	}
+}
+
+func TestZshWarnsOfALinkedZshrcThatLacksTheLine(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
+	m.Files["/h/.config/ws/zshrc"] = mac.Zshrc
+	m.Files["/h/.zshrc"] = []byte("export EDITOR=vi\n")
+	m.Links["/h/.zshrc"] = "/dots/zshrc"
+	s := zshStep(m, out)
+	p, err := s.Plan(context.Background())
+	if err != nil || len(p.Changes) != 0 || !strings.Contains(strings.Join(out.Lines, "\n"), "a link to /dots/zshrc") {
+		t.Errorf("Plan = %v, %v, out %v; want nothing and a warning", p.Changes, err, out.Lines)
+	}
+	items, _ := s.Report(context.Background())
+	if len(items) != 2 || !strings.Contains(items[1].Conflict, "a link to /dots/zshrc") {
+		t.Errorf("Report = %+v; want the line's conflict", items)
 	}
 }

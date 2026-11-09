@@ -22,7 +22,7 @@ const (
 // Zsh writes ~/.config/ws/zshrc, a hook that turns off at each prompt the modes that a dropped ssh
 // leaves on (docs/mac-ghostty.md). It adds the line that sources the hook at the end of ~/.zshrc,
 // and keeps the old file as ~/.zshrc.TIME~, as the ssh step keeps ~/.ssh/config. It warns, and leaves
-// ~/.zshrc, where the hook is not ws's.
+// ~/.zshrc, where the hook is not ws's or ~/.zshrc is a link that lacks the line.
 type Zsh struct {
 	Home string
 	// Hook is mac/zshrc, its first line zshHeader.
@@ -94,7 +94,11 @@ func (z *Zsh) line() ([]step.Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot read %s: %w", rc, err)
 	}
-	if zshSources(text) {
+	switch {
+	case zshSources(text):
+		return nil, nil
+	case info.Link != "":
+		z.Out.Warn("%s is a link to %s: add '%s' at the end of that file", rc, info.Link, zshLine)
 		return nil, nil
 	}
 	now := time.Now
@@ -120,7 +124,16 @@ func (z *Zsh) Apply(ctx context.Context, p step.Plan) error {
 	return nil
 }
 
-// Report says how the hook stands.
+// Report says how the hook and the line stand. A ~/.zshrc that is a link lacking the line stands
+// against ws: a run only warns of it.
 func (z *Zsh) Report(ctx context.Context) ([]step.Item, error) {
-	return userFile{M: z.M, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}.Report(ctx)
+	text, err := z.M.ReadFile(z.rc())
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	line := lineItem(z.rc(), zshLine, err == nil, zshSources(text))
+	if info, err := z.M.Stat(z.rc()); err == nil && info.Link != "" && line.Found != line.Want {
+		line.Conflict = "a link to " + info.Link + ": add the line at the end of that file"
+	}
+	return gather(ctx, userFile{M: z.M, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}, fixed{line})
 }
