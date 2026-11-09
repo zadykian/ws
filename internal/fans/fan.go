@@ -17,7 +17,7 @@ const (
 type Fan interface {
 	// Speed returns the speed the fan is set to now.
 	Speed() (float64, error)
-	// Set sets the fan to the speed, unless it is set to it already.
+	// Set sets the fan to the speed, unless the fan runs at it already.
 	Set(percent float64) error
 	// Release hands the fan back to the board's curve.
 	Release() error

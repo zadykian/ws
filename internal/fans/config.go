@@ -1,5 +1,5 @@
-// Package fans is ws-fans, the daemon of ws server fans: it drives the board's fans on the curves
-// of the config in /etc/ws-fans.json, and hands them back to the board's own curves as it stops.
+// Package fans is ws-fans, the daemon of ws server fans. It drives the board's fans on the curves
+// of the config in /etc/ws-fans.json. As it stops, it hands them back to the board's own curves.
 package fans
 
 import (
@@ -29,8 +29,8 @@ type Pair struct {
 }
 
 // SensorConfig reads one temperature, from one source: the hwmon device's channel labelled Label,
-// the NVIDIA GPU of index Nvidia, the average over Seconds of the sensor named Average, or the
-// highest of the sensors named in Max. A sensor names only sensors above it.
+// or the NVIDIA GPU of index Nvidia. The other sources are the average over Seconds of the sensor
+// named Average, and the highest of the sensors named in Max. A sensor names only sensors above it.
 type SensorConfig struct {
 	Name    string   `json:"name"`
 	Hwmon   string   `json:"hwmon,omitempty"`

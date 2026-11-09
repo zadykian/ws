@@ -18,8 +18,8 @@ func (g *GPUs) fail(why string) {
 	g.mu.Unlock()
 }
 
-// Run reads the stream of start until ctx ends, and starts it again, after Retry, where it ends or
-// cannot start: the driver may load after the daemon starts, or come back after an update.
+// Run reads the stream of start until ctx ends. Where the stream ends or cannot start, Run starts
+// it again after Retry: the driver may load after the daemon starts, or come back after an update.
 func (g *GPUs) Run(ctx context.Context, start func(context.Context) (io.ReadCloser, error)) {
 	wait := g.Retry
 	if wait == 0 {

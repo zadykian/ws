@@ -4,8 +4,8 @@ import "time"
 
 // Curve is a graph of speed by temperature, which holds still within its hysteresis. The speed
 // follows the temperature once it has moved the hysteresis away from where the speed last changed,
-// and stayed past it for the response time; up and down each have their own. At or beyond the
-// first or the last point, the speed follows at once.
+// and stayed past it for the response time. Up and down each have their own. At or beyond the first
+// or the last point, the speed follows at once.
 type Curve struct {
 	name   string
 	sensor string
