@@ -164,7 +164,7 @@ func TestRemoteThroughSudo(t *testing.T) {
 		t.Fatalf("remoteLine = %q", remoteLine(r, "status"))
 	}
 	m.Results[line] = effecttest.Result{Out: []byte("active -\n")}
-	if !r.Status(context.Background()) {
+	if _, ok := r.status(context.Background()); !ok {
 		t.Fatal("Status read nothing")
 	}
 	put := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-c", "'umask 077 && cat >/var/lib/ws-wizard/x'")
@@ -180,7 +180,7 @@ func TestRemoteThroughSudo(t *testing.T) {
 func TestRemoteBeforeTheStageReadsNothing(t *testing.T) {
 	s, _, _ := newSudo(t)
 	r := &Remote{Shell: SSHShell{SSH: s.Host.SSH, Sudo: s}, Script: []byte("echo\n")}
-	if r.Status(context.Background()) {
+	if _, ok := r.status(context.Background()); ok {
 		t.Error("Status read with the stage unread")
 	}
 }

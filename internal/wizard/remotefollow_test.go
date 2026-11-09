@@ -83,7 +83,7 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	drop := errors.New("ssh dropped")
 	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: []byte("active -\n")}
 	m.Results[remoteLine(r, "run")] = effecttest.Result{Out: []byte(runLog), Err: drop}
-	r.Status(context.Background())
+	r.status(context.Background())
 	h := &heard{}
 	r.Events = h
 	if err := r.Follow(context.Background()); !errors.Is(err, drop) {
@@ -93,8 +93,8 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 		t.Errorf("heard %d events; want those before the drop", len(*h))
 	}
 	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: []byte("active ws-wizard-1\n")}
-	if r.Status(context.Background()); r.Get("active") != "ws-wizard-1" {
-		t.Errorf("active = %q; want the status read again", r.Get("active"))
+	if s, _ := r.status(context.Background()); s.Active != "ws-wizard-1" {
+		t.Errorf("active = %q; want the status read again", s.Active)
 	}
 }
 

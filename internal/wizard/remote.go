@@ -20,7 +20,6 @@ type Remote struct {
 	// read is set once status read ws, until Do, Pass or Follow runs; got is set where it read any.
 	read, got bool
 	last      wsStatus
-	lines     map[string]string
 }
 
 // script returns the command that runs the operation, with the script on its stdin.
@@ -76,32 +75,12 @@ func (r *Remote) status(ctx context.Context) (wsStatus, bool) {
 		if r.got {
 			r.last = parseStatus(string(out))
 		}
-		r.lines = nil
-		if err == nil {
-			r.lines = map[string]string{}
-			for _, l := range strings.Split(string(out), "\n") {
-				if name, value, ok := strings.Cut(l, " "); ok {
-					if _, dup := r.lines[name]; !dup {
-						r.lines[name] = value
-					}
-				}
-			}
-		}
 	}
 	return r.last, r.got
 }
 
 // known returns what status last read, with no read of its own: zero before the first.
 func (r *Remote) known() wsStatus { return r.last }
-
-// Status is status, as the stages read it until each reads the fields.
-func (r *Remote) Status(ctx context.Context) bool {
-	r.status(ctx)
-	return len(r.lines) > 0
-}
-
-// Get returns the value of NAME in what Status read, or an empty string.
-func (r *Remote) Get(name string) string { return r.lines[name] }
 
 // Forget has the next status read ws again, as after a session that changed it.
 func (r *Remote) Forget() { r.read = false }
