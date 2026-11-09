@@ -32,10 +32,10 @@ func TestTunnelPlansTheCopyAndTheKeyOnAFreshMac(t *testing.T) {
 	got := lines(tunnelChanges(t, tunnelStep(effecttest.NewMachine())))
 	want := lines([]string{
 		"would build ws into /h/.local/bin/ws",
-		"would make /usr/local, root's, with mode 755",
-		"would make /usr/local/libexec, root's, with mode 755",
-		"would make /usr/local/libexec/ws-tunnel, root's, with mode 755",
-		"would copy /h/.local/bin/ws to /usr/local/libexec/ws-tunnel/ws",
+		"create directory /usr/local, owner 0:0, mode 755",
+		"create directory /usr/local/libexec, owner 0:0, mode 755",
+		"create directory /usr/local/libexec/ws-tunnel, owner 0:0, mode 755",
+		"create /usr/local/libexec/ws-tunnel/ws (content not shown)",
 		"create directory /etc/ws-tunnel, owner 0:0, mode 700",
 		"create directory /etc/ws-tunnel/routes.d, owner 0:0, mode 755",
 		"would make the Mac's WireGuard key, /etc/ws-tunnel/private.key",
@@ -78,8 +78,7 @@ func TestTunnelStopsWhereADirectoryAboveTheCopyIsWritable(t *testing.T) {
 func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := tunnelStep(m)
-	for _, line := range []string{"mkdir -p /h/.local/bin", "mv -f /h/.local/bin/ws.new /h/.local/bin/ws",
-		"chown 0:0 /usr/local", "chown 0:0 /usr/local/libexec", "chown 0:0 /usr/local/libexec/ws-tunnel"} {
+	for _, line := range []string{"mkdir -p /h/.local/bin", "mv -f /h/.local/bin/ws.new /h/.local/bin/ws"} {
 		m.Results[line] = effecttest.Result{}
 	}
 	m.Results["/usr/local/libexec/ws-tunnel/ws mac tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
@@ -94,7 +93,7 @@ func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 		t.Errorf("root's copy holds %q", m.Files["/usr/local/libexec/ws-tunnel/ws"])
 	}
 	out := lines(s.Out.(*effecttest.Out).Lines)
-	if !strings.Contains(out, "say: copied /h/.local/bin/ws to /usr/local/libexec/ws-tunnel/ws\n") ||
+	if !strings.Contains(out, "say: create /usr/local/libexec/ws-tunnel/ws (content not shown)\n") ||
 		!strings.Contains(out, "say: made the Mac's WireGuard key, /etc/ws-tunnel/private.key") {
 		t.Errorf("out = %q; want the copy and the key", out)
 	}

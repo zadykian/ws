@@ -100,7 +100,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, fmt.Errorf("cannot read ws: %w", err)
 	}
 	var cs []step.Change
-	copied, err := t.programAndCopy(self)
+	copied, err := t.programAndCopy(ctx, self)
 	if err != nil {
 		return step.Plan{}, err
 	}
