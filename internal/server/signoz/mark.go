@@ -11,8 +11,8 @@ import (
 )
 
 // mark is the file that keeps a recreation of the containers due until an up succeeds: after a
-// failed up, the old containers may still run the old files. It comes before the changes it
-// watches in the group, so that it is set before anything can fail.
+// failed up, the old containers may still run the old files. It comes before the changes it watches
+// in the group, so that the mark is set before anything can fail.
 type mark struct {
 	M     effect.Machine
 	Path  string
@@ -27,7 +27,7 @@ func (c setMark) Apply(context.Context) error { return writeMark(c.M, c.Path) }
 
 func writeMark(m effect.Machine, path string) error { return m.WriteRootFile(path, nil, 0o600) }
 
-// Plan sets the mark where it is not set and a watched resource has a change to make.
+// Plan sets the mark where none is set and a watched resource has a change to make.
 func (k mark) Plan(ctx context.Context) ([]host.Change, error) {
 	if _, err := k.M.RootAttrs(k.Path); err == nil {
 		return nil, nil

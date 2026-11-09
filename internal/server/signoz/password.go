@@ -11,8 +11,8 @@ import (
 )
 
 // Password is the step that writes root.env once, with the password of SigNoz's root user. No one
-// logs in with it. It is generated on the machine and only root reads it. A new password marks the
-// containers for recreation, as they read root.env at start.
+// logs in with it. The step generates it on the machine, and only root reads it. A new password
+// marks the containers for recreation, as they read root.env at start.
 func Password(m effect.Machine, dir string) host.Group {
 	return host.Group{
 		Title: "signoz password", After: "signoz files",
