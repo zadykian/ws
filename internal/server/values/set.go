@@ -7,7 +7,7 @@ import (
 )
 
 // Set returns the file data with key name at value: its line in place, or a new line at the end,
-// and every other line as it was. An empty value takes the key's line out, which gives its default
+// and every other line unchanged. An empty value takes the key's line out, which gives its default
 // back. It refuses a key that a line does not hold, and a result that does not read as value.
 func Set(data []byte, name, value string) ([]byte, error) {
 	keys := Keys()

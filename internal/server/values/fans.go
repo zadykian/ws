@@ -20,7 +20,7 @@ type FanPair struct {
 }
 
 // FanSensor reads a temperature from one source: an hwmon label, an NVIDIA GPU, the average of
-// another sensor over Seconds, or the maximum of others.
+// another sensor over Seconds, or the highest of others.
 type FanSensor struct {
 	Name    string   `yaml:"name,omitempty"`
 	Hwmon   string   `yaml:"hwmon,omitempty"`

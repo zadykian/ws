@@ -14,8 +14,8 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// Values is every key of the file. Each role's keys sit in a struct of its name, inlined, so that
-// a role's steps read v.Role.Key. A key left out of the file keeps the default that Default gives.
+// Values is every key of the file. A key left out of the file keeps the default that Default gives.
+// Each role's keys sit in a struct of its name, inlined, so that a role's steps read v.Role.Key.
 type Values struct {
 	Shared    `yaml:",inline"`
 	Base      Base      `yaml:",inline"`
@@ -38,8 +38,8 @@ type Shared struct {
 	User string `yaml:"ws_user"`
 	// Home is the user's home. Left empty, it follows User: /root for root, else /home/USER.
 	Home string `yaml:"ws_home"`
-	// GitSigningKey is the SSH key that signs git's commits, with its public key beside it as
-	// .pub. Left empty, it is Home/.ssh/id_ed25519_signing.
+	// GitSigningKey is the SSH key that signs git's commits, with its public key beside it as .pub.
+	// Left empty, it defaults to Home/.ssh/id_ed25519_signing.
 	GitSigningKey string `yaml:"ws_git_signing_key"`
 }
 

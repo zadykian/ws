@@ -28,7 +28,7 @@ type Claude struct {
 	Marketplaces []Marketplace `yaml:"claude_marketplaces"`
 }
 
-// Marketplace is a plugin marketplace: the name claude gives it and where it is from.
+// Marketplace is a plugin marketplace: the name claude gives it and where it comes from.
 type Marketplace struct {
 	Name   string `yaml:"name,omitempty"`
 	Source string `yaml:"source,omitempty"`
