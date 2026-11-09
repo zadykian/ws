@@ -49,14 +49,15 @@ func NewEventLine(e step.Event) EventLine {
 }
 
 // firstLine is a change as a line holds it: what changes. The rest of its text is a file's diff, with
-// what the file holds now, and the Mac's wizard runs ws in a unit, whose journal keeps each line past
-// the run and cuts one of more than 48 KiB. ws server state --json has the diffs.
+// what the file holds now. The Mac's wizard runs ws in a unit, whose journal keeps each line past the
+// run and cuts one of more than 48 KiB. ws server state --json has the diffs.
 func firstLine(c step.Change) step.Pending {
 	return step.Pending{Kind: step.KindOf(c), Text: step.Headline(c)}
 }
 
-// ParseEvent reads a line of a run's log, and says whether it is an event. The commands of a run write
-// to that log too, and some write JSON, so it takes a line with EventLine's fields alone, and a kind.
+// ParseEvent reads a line of a run's log, and says whether the line is an event. The commands of a
+// run write to that log too, and some write JSON, so it takes a line with EventLine's fields alone,
+// and a kind.
 func ParseEvent(line string) (step.Event, bool) {
 	var l EventLine
 	dec := json.NewDecoder(strings.NewReader(line))

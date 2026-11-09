@@ -8,8 +8,8 @@ import (
 	"github.com/zadykian/ws/internal/server/roles"
 )
 
-// Select returns the roles that only names, each by ROLE or ROLE/STEP, or all of list where only
-// is empty, in the order of list. Config.CheckSteps checks the steps.
+// Select returns the roles that only names, each by ROLE or ROLE/STEP, or every role of list where
+// only is empty, in the order of list. Config.CheckSteps checks the steps.
 func Select(list []roles.Role, only []string) ([]roles.Role, error) {
 	named := make([]string, len(only))
 	for i, entry := range only {
@@ -50,7 +50,7 @@ func (c Config) CheckSteps(list []roles.Role) error {
 }
 
 // leftOut is the filter of a run's roles: a role named by ROLE/STEP alone keeps those steps. With
-// no Only it is nil, as every role runs whole.
+// no Only it returns nil, as every role runs whole.
 func (o Options) leftOut() func(role, step string) bool {
 	if len(o.Only) == 0 {
 		return nil

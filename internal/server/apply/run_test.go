@@ -18,7 +18,7 @@ type change string
 
 func (c change) String() string { return string(c) }
 
-// todo is a step with one change until it is applied.
+// todo is a step with one change until applied.
 type todo struct{ done *bool }
 
 func (todo) Name() string    { return "todo" }
