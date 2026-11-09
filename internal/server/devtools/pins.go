@@ -67,12 +67,22 @@ func repositories(release string) []Repository {
 			URIs:         "https://ppa.launchpadcontent.net/dotnet/backports/ubuntu/", Suites: release,
 			Components: "main", Needed: backports,
 		},
+		// Ubuntu's archive has a gh that GitHub's API has left behind. The key file holds a
+		// certificate that expired in 2026 beside the one that signs: both are pinned.
+		{
+			Name: "github-cli", Key: "https://cli.github.com/packages/githubcli-archive-keyring.asc",
+			Fingerprints: []string{
+				"2C6106201985B60E6C7AC87323F3D4EA75716059", "7F38BBB59D064DBCB3D84D725612B36462313325",
+			},
+			URIs: "https://cli.github.com/packages", Suites: "stable", Components: "main", Needed: true,
+		},
 	}
 }
 
 // replacedFiles are the same repositories as their own instructions add them: NodeSource's setup
-// script, Charm's README and add-apt-repository. apt refuses two sources of a repository whose keys
-// differ, so the role removes these, keys included.
+// script, Charm's README, add-apt-repository and GitHub CLI's install guide. The guide's key has
+// gone in each of three places. apt refuses two sources of a repository whose keys differ, so the
+// role removes these, keys included.
 func replacedFiles(release string) []string {
 	return []string{
 		"/etc/apt/sources.list.d/nodesource.list",
@@ -80,5 +90,9 @@ func replacedFiles(release string) []string {
 		"/etc/apt/sources.list.d/charm.list",
 		"/etc/apt/keyrings/charm.gpg",
 		"/etc/apt/sources.list.d/dotnet-ubuntu-backports-" + release + ".sources",
+		"/etc/apt/sources.list.d/github-cli.list",
+		"/etc/apt/keyrings/githubcli-archive-keyring.gpg",
+		"/usr/share/keyrings/githubcli-archive-keyring.gpg",
+		"/etc/apt/trusted.gpg.d/githubcli-archive-keyring.gpg",
 	}
 }

@@ -20,7 +20,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 	steps := []step.Step{
 		host.Group{Title: repositories, Parts: []host.Resource{Repositories{M: m}}},
 		host.Group{Title: "Devtools packages", After: repositories, Parts: []host.Resource{
-			// Node at its major version, from NodeSource's repository; gh from Ubuntu's archive;
+			// Node at its major version, from NodeSource's repository; gh from GitHub CLI's;
 			// glow from Charm's; each .NET SDK from Ubuntu's archive or the PPA.
 			host.Packages{M: m, Out: out, Recommends: true, Names: packageNames()},
 			// The libraries go in without recommends: the browser needs the libraries alone.

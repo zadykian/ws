@@ -92,4 +92,7 @@ func TestRepositoriesTable(t *testing.T) {
 	if got := repositories("resolute")[2]; got.Suites != "resolute" || !got.Needed {
 		t.Errorf("the PPA is %+v", got)
 	}
+	if got := repositories("resolute")[3]; got.Name != "github-cli" || len(got.Fingerprints) != 2 || !got.Needed {
+		t.Errorf("GitHub CLI's repository is %+v", got)
+	}
 }
