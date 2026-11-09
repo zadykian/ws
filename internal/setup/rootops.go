@@ -2,26 +2,12 @@ package setup
 
 import (
 	"context"
-	"errors"
-	"io/fs"
 	"time"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/step"
 )
-
-// removeRoot plans the removal of root's file, if the file is there.
-func removeRoot(m effect.Machine, file string) (step.Change, error) {
-	have, err := m.ReadRootFile(file)
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return RootRemove{file, have}, nil
-}
 
 // applyInOrder applies the changes of a plan in order, with launchctl's signal as a change.
 func applyInOrder(ctx context.Context, m effect.Machine, out effect.Out, p step.Plan) error {

@@ -17,8 +17,6 @@ func TestAFileChangeNamesItsFileInAReport(t *testing.T) {
 	}{
 		{setup.Write{Path: "/f", After: []byte("a\n")}, "would create /f"},
 		{setup.Write{Path: "/f", Before: []byte("b\n"), After: []byte("a\n"), Exists: true}, "would write /f"},
-		{setup.RootWrite{Write: setup.Write{Path: "/e", After: []byte("a\n")}}, "would create /e"},
-		{setup.RootRemove{Path: "/e", Before: []byte("a\n")}, "would remove /e"},
 	}
 	for _, tt := range tests {
 		got, _, _ := strings.Cut(step.PendingOf(tt.change).Text, "\n")
@@ -62,13 +60,10 @@ func TestAChangeSaysItsKind(t *testing.T) {
 		want   step.ChangeKind
 	}{
 		{setup.Write{Path: "/f"}, step.Write},
-		{setup.RootWrite{Write: setup.Write{Path: "/e"}}, step.Write},
 		{setup.MakeDir{Path: "/d"}, step.Write},
-		{setup.RootCopy{To: "/e"}, step.Install},
 		{setup.Install{Path: "/b"}, step.Install},
 		{setup.Run{Name: "brew", Args: []string{"install"}}, step.Install},
 		{setup.Run{Name: "open"}, step.OtherChange},
-		{setup.RootRemove{Path: "/e"}, step.Removal},
 		{setup.Launchctl{}, step.Restart},
 		{setup.Remark("a line"), step.OtherChange},
 		{setup.KeyMake{}, step.OtherChange},

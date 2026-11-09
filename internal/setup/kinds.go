@@ -17,23 +17,11 @@ func (SetMode) Kind() step.ChangeKind { return step.Write }
 // Kind is write.
 func (KeyCopy) Kind() step.ChangeKind { return step.Write }
 
-// Kind is write.
-func (RootDir) Kind() step.ChangeKind { return step.Write }
-
-// Kind is write.
-func (RootFix) Kind() step.ChangeKind { return step.Write }
-
-// Kind is install.
-func (RootCopy) Kind() step.ChangeKind { return step.Install }
-
 // Kind is install.
 func (Install) Kind() step.ChangeKind { return step.Install }
 
 func (cldInstall) Kind() step.ChangeKind { return step.Install }
 func (cldUpdate) Kind() step.ChangeKind  { return step.Install }
-
-// Kind is removal.
-func (RootRemove) Kind() step.ChangeKind { return step.Removal }
 
 // Kind is restart.
 func (Launchctl) Kind() step.ChangeKind { return step.Restart }

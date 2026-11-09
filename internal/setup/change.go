@@ -100,7 +100,7 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 		}
 		out.Say("%s", step.Headline(c))
 	default:
-		return applyRootFile(ctx, m, out, c)
+		return fmt.Errorf("unknown change %T", c)
 	}
 	return nil
 }
