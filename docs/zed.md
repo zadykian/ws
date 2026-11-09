@@ -140,10 +140,12 @@ tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` li
 - A tab that takes over a session keeps that session's shell, and so its environment.
 - The scrollback, and any search of it, are tmux's: the wheel enters tmux's copy mode, not Zed's own
   scrollback.
-- tmux has no prefix, so Fresh gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
-  has the rest.
+- tmux has no prefix, so Fresh gets Ctrl+B. `/usr/local/lib/ws/zed/tmux.conf` has the rest.
 - tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](mac-zed.md).
   Where none is set, the title is empty, not tmux's default, the host's name.
+- The status line holds [ws-bar's](tmux.md#ws-bar) line of the host's load, read every 10 s. After
+  5 min with no key and no output in the tab it says `paused` and sends nothing, as below. A key
+  brings it back within 10 s.
 - Without tmux on the `PATH` the tab runs a login shell.
 - A task ignores the wrapper.
 - Keep `terminal.detect_venv` `off`, as [the Mac's settings](mac-zed.md) do.
@@ -183,7 +185,8 @@ What survives depends on the kind of reconnect:
 ws keeps a connection with nothing unacknowledged for 2 h 11 min (`tcp_keepalive_time` 7200 s and
 9 probes 75 s apart). With unacknowledged data it gives up 15.5 to 16.5 min after its first send
 that the Mac never acknowledged. Output in a terminal counts as traffic, such as a tmux status
-clock.
+line that changes. ws-bar's line stops changing after 5 min with no key and no output, so a terminal
+left alone counts as silent from then.
 
 - A sleep of up to 2 h 11 min while ws is silent loses nothing, a terminal with no output included.
 - With traffic, a sleep under 15.5 min usually loses nothing. If proxy traffic armed the heartbeat,
