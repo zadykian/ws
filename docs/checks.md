@@ -46,8 +46,8 @@ A workflow of its own, `mac-wizard.yml`, runs `ws mac wizard` on GitHub's macOS 
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and user would,
 such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`. Then
 `checks.sh` runs the cases beside it in order, stopping at the first failure
-([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and
-a removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
+([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and a
+removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
 where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find brew with its
 directories off `PATH`. As `ws mac apply --check` must, it must change nothing, and leave no lock or
 temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `--check` must
@@ -62,10 +62,9 @@ below takes it. A second run and `--check` must print nothing, by sh and dash. T
 name, it must say it would wait for git's key made in Secretive, unless `WS_GIT_SIGNING_KEY` is
 empty. With no `WS_IDENTITY` and `PublicKeys` closed, it must take the agent's key, and say it would
 write ws's copy. Once the agent lacks it, a run and `--check` must stop there, naming the socket.
-Last,
-without the stand-in `gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth
-login`. With a login lacking the scopes, or the signing one alone, it must name `gh auth refresh`.
-`--check` must say each would run.
+Last, without the stand-in `gh`'s login, a run with no terminal must stop at gh's stage, naming `gh
+auth login`. With a login lacking the scopes, or the signing one alone, it must name `gh auth
+refresh`. `--check` must say each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `ws mac apply`.
@@ -176,9 +175,10 @@ which the case never runs.
 ## The Mac
 
 Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed/`'s file whole,
-and a `settings.json` that is there must stay byte for byte.
-Case 48 checks its `keymap.json`: `mac/zed/`'s keymap whole, a foreign file left with one warning,
-and ws's back once the foreign one goes.
+and a `settings.json` that is there must stay byte for byte. Case 48 checks its `keymap.json`:
+`mac/zed/`'s keymap whole, a foreign file left with one warning, and ws's back once the foreign one
+goes. Case 86 checks [ws-join](mac-ghostty.md#ws-join) under a stand-in `ssh`: a 255 then a 0 must
+make two calls, the second with `--existing`, and a 1, or a refused login, one.
 
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First, `ws
 mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
