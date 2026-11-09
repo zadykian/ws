@@ -137,7 +137,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	in := false
 	if err == nil {
-		in, _ = c.Login.login(ctx, w)
+		in, _ = c.Login.Ws.login(ctx, w)
 	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")

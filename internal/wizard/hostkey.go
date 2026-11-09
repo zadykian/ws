@@ -59,8 +59,11 @@ func macConf(m effect.Machine, path string) (conf.Conf, error) {
 
 // known tells whether known_hosts holds a key under ws. It reads no key of ws's, as ws's sshd counts
 // each connection that doesn't log in against the Mac's address (PerSourcePenalties).
-func (h *HostKey) known(ctx context.Context, file string) bool {
-	_, err := h.M.Run(ctx, "ssh-keygen", "-F", "ws", "-f", file)
+func (h *HostKey) known(ctx context.Context, file string) bool { return hostKnown(ctx, h.M, file) }
+
+// hostKnown is known, on m.
+func hostKnown(ctx context.Context, m effect.Machine, file string) bool {
+	_, err := m.Run(ctx, "ssh-keygen", "-F", "ws", "-f", file)
 	return err == nil
 }
 

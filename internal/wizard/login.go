@@ -16,11 +16,11 @@ func (loginStop) String() string {
 
 // Plan is empty where WS_USER logs in. Under --check it shows that a run would stop.
 func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
-	w, err := r.Host.SSH.Way(ctx)
+	w, err := r.Ws.way(ctx)
 	if err != nil {
 		return step.Plan{}, errors.New(loginStage + ": " + err.Error())
 	}
-	if ok, _ := r.login(ctx, w); ok {
+	if ok, _ := r.Ws.login(ctx, w); ok {
 		return step.Plan{}, nil
 	}
 	if r.Host.Check {
@@ -35,7 +35,7 @@ func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
 // doesn't answer, the Host key stage's question gives its address now, and WS_USER may take the
 // key there.
 func (r *Login) Apply(ctx context.Context, _ step.Plan) error {
-	w, err := r.Host.SSH.Way(ctx)
+	w, err := r.Ws.way(ctx)
 	if err != nil {
 		return errors.New(loginStage + ": " + err.Error())
 	}
@@ -56,7 +56,7 @@ func (r *Login) stop(ctx context.Context, w Way) error {
 			return err
 		}
 	}
-	if ok, sshErr := r.login(ctx, w); !ok {
+	if ok, sshErr := r.Ws.login(ctx, w); !ok {
 		return r.refuse(ctx, w, sshErr)
 	}
 	return nil
