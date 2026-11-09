@@ -16,6 +16,49 @@ fi
 # not found in the package". The portable ID works. Above the guard too.
 export DOTNET_RUNTIME_ID=linux-{{ .Arch }}
 
+# A login with a terminal, outside tmux, runs in a tmux of its own, whose status line holds the
+# host's load (docs/shell.md#the-hosts-load). Its shell, or ssh's command, runs there, and its exit
+# status is the login's. A hangup ends it. LC_WS_BAR=off skips it, and so do a login with no
+# terminal, as Zed's server's, and Zed's terminal, whose own tmux holds the line. Where the command
+# cannot be written, or tmux never starts the pane, the login goes on here. So a full /tmp or a
+# broken tmux never loses the command or shuts ssh out. Above the guard, which ssh's command never
+# passes. WS_BAR_LOGIN marks each process that the tmux starts, so that no shell in it ever
+# starts another, even one that tmux gives no TMUX.
+if [[ -n ${SSH_TTY-} && -z ${TMUX-} && -z ${WS_BAR_LOGIN-} && ${LC_WS_BAR-} != off && -t 0 &&
+    -t 1 && ${BASH_EXECUTION_STRING-} != */usr/local/lib/ws/zed/terminal* ]] &&
+    [[ -r /usr/local/lib/ws/zed/tmux.conf ]] && command -v tmux >/dev/null 2>&1 &&
+    __ws_bar=$(mktemp -d 2>/dev/null); then
+    trap 'rm -rf -- "$__ws_bar"; exit 129' HUP
+    # The pane notes that it started, runs the command or a login shell, and keeps its history and
+    # screen, then its status. Those print here, as tmux's own screen leaves with tmux, and its
+    # [exited] goes to /dev/null. The status is in an empty file's name, which a full /tmp still
+    # takes. The pane outlives a Ctrl-C or Ctrl-\ that ends the command, so that it keeps them. A
+    # session that loses its client, as on a hangup, ends, and its server with it. The server's
+    # socket is in the directory, so that none outlives the login.
+    if [[ -z ${BASH_EXECUTION_STRING-} ]] ||
+        printf %s "$BASH_EXECUTION_STRING" 2>/dev/null >"$__ws_bar/command"; then
+        WS_BAR_LOGIN=1 tmux -S "$__ws_bar/tmux" -f /usr/local/lib/ws/zed/tmux.conf \
+            set-option -g history-limit 10000 \; new-session bash -c 'trap : INT QUIT
+        : >"$1/started" || exit
+        if [[ -f $1/command ]]; then bash -c "$(<"$1/command")"; else "${SHELL:-/bin/bash}" -l; fi
+        s=$?; tmux -S "$1/tmux" capture-pane -epJ -S - -E - >"$1/screen"; : >"$1/status.$s"' \
+            ws-bar "$__ws_bar" \; \
+            set-option destroy-unattached on >/dev/null
+    fi
+    if [[ -e $__ws_bar/started ]]; then
+        __ws_status=("$__ws_bar"/status.*)
+        __ws_status=${__ws_status[0]##*/status.}
+        [[ $__ws_status =~ ^[0-9]+$ ]] || __ws_status=129
+        __ws_screen=$(cat -- "$__ws_bar/screen" 2>/dev/null)
+        [[ -z $__ws_screen ]] || printf '%s\e[m\n' "$__ws_screen"
+        rm -rf -- "$__ws_bar"
+        exit "$__ws_status"
+    fi
+    rm -rf -- "$__ws_bar"
+    trap - HUP
+    unset __ws_bar
+fi
+
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
@@ -89,6 +132,11 @@ xterm*|rxvt*)
 *)
     ;;
 esac
+# In the login's tmux too, so that the Mac's terminal shows it. Zed's tmux leaves the title to a
+# program (docs/zed.md#terminals-in-tmux).
+if [[ -n ${WS_BAR_LOGIN-} && $TERM == tmux* ]]; then
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+fi
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
