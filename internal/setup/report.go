@@ -52,36 +52,35 @@ type userPath struct {
 	Mode fs.FileMode
 }
 
-// item says how the path stands, and whether the path is there.
-func (p userPath) item() (step.Item, bool, error) {
+// itemOf says how the path stands, as read in found.
+func (p userPath) itemOf(found path) step.Item {
 	item := step.Item{Kind: p.Kind, Name: p.Path, Want: statePresent, Found: stateMissing}
 	if p.Mode != 0 {
 		item.Want = modeText(p.Mode)
 	}
-	info, err := p.M.Stat(p.Path)
-	if errors.Is(err, fs.ErrNotExist) {
-		return item, false, nil
-	}
-	if err != nil {
-		return item, false, err
+	if !found.Exists {
+		return item
 	}
 	item.Found = statePresent
 	if p.Mode != 0 {
-		item.Found = modeText(info.Mode)
+		item.Found = modeText(found.Mode)
 	}
 	if item.Found != item.Want {
 		item.Conflict = "its mode changed"
 	}
-	return item, true, nil
+	return item
 }
 
 // Report reads the path.
 func (p userPath) Report(context.Context) ([]step.Item, error) {
-	item, _, err := p.item()
+	info, err := p.M.Stat(p.Path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return []step.Item{p.itemOf(path{})}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	return []step.Item{item}, nil
+	return []step.Item{p.itemOf(path{Exists: true, Mode: info.Mode})}, nil
 }
 
 // userFile is a file of the user's that ws writes, as host.File is one of root's.
@@ -96,32 +95,50 @@ type userFile struct {
 	Binary bool
 }
 
+// read reads the file. ours is false where Own refuses the text, and where Own is set and the
+// path is no file, such as a link to nowhere: a run replaces neither.
+func (f userFile) read() (found path, ours bool, err error) {
+	info, err := f.M.Stat(f.Path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return path{}, true, nil
+	}
+	if err != nil {
+		return path{}, false, err
+	}
+	found = path{Exists: true, Mode: info.Mode}
+	nowhere := info.Link != "" && info.Mode == 0
+	if f.Own != nil && (nowhere || !info.Mode.IsRegular()) {
+		return found, false, nil
+	}
+	if found.Text, err = f.M.ReadFile(f.Path); err != nil {
+		return found, false, fmt.Errorf("cannot read %s: %w", f.Path, err)
+	}
+	return found, f.Own == nil || f.Own(found.Text), nil
+}
+
 // Report compares the file as a plan does. A file that isn't ws's shows no diff: a run leaves it,
 // --check shows none, and it may hold anything.
 func (f userFile) Report(context.Context) ([]step.Item, error) {
-	item, there, err := userPath{f.M, step.FileItem, f.Path, f.Mode}.item()
+	found, ours, err := f.read()
 	if err != nil {
 		return nil, err
 	}
-	if !there {
+	item := userPath{Kind: step.FileItem, Path: f.Path, Mode: f.Mode}.itemOf(found)
+	if !found.Exists {
 		return []step.Item{item}, nil
 	}
-	have, err := f.M.ReadFile(f.Path)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read %s: %w", f.Path, err)
-	}
 	switch {
-	case f.Own != nil && !f.Own(have):
+	case !ours:
 		item.Found += ", not ws's"
 		item.Conflict = "not ws's: move it away, and the next run writes ws's"
-	case !bytes.Equal(have, f.Text):
+	case !bytes.Equal(found.Text, f.Text):
 		item.Found += ", other content"
 		item.Conflict = "differs from what ws writes: a change by hand, or another version of ws"
-		if bytes.Contains(f.Text, writtenBy) && !bytes.Contains(have, writtenBy) {
+		if bytes.Contains(f.Text, writtenBy) && !bytes.Contains(found.Text, writtenBy) {
 			item.Conflict = "holds no Written by line: ws did not write it"
 		}
 		if !f.Binary {
-			item.Diff = effect.Diff(f.Path, have, f.Text)
+			item.Diff = effect.Diff(f.Path, found.Text, f.Text)
 		}
 	}
 	return []step.Item{item}, nil
