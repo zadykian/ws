@@ -13,9 +13,10 @@ import (
 )
 
 // fakeTmux runs new-session's pane on the terminal after its line %s sets TMUX or not, and prints
-// "screen" for capture-pane. Run by sh, it never reads BASH_ENV. It refuses a second session.
+// "screen" for capture-pane, whose errors the pane would erase. Run by sh, it never reads BASH_ENV.
+// It refuses a second session.
 const fakeTmux = `#!/bin/sh
-for a do [ "$a" != capture-pane ] || { echo screen; exit; }; done
+for a do [ "$a" != capture-pane ] || { echo screen 2>/dev/null; exit; }; done
 [ -z "${FAKE_TMUX-}" ] || { echo recursed; exit 99; }; export FAKE_TMUX=1
 while [ $# -gt 0 ] && [ "$1" != new-session ]; do shift; done; shift
 n=0; for a do [ "$a" = ';' ] && break; n=$((n + 1)); done
@@ -95,6 +96,51 @@ func TestBashrcRunsALoginWithATerminalInTmux(t *testing.T) {
 	} {
 		if status, out := login(t, c.fakes, c.tty, c.env, c.pre+command); status != 7 || out != c.want {
 			t.Errorf("%s: status %d, output %q; want 7 and %q", c.name, status, out, c.want)
+		}
+	}
+}
+
+// The login keeps the status of a command that Ctrl-C ends. It keeps it too where /tmp has no room
+// left for a file's data, though the screen is gone then.
+func TestBashrcKeepsTheStatusOfAnInterruptedOrFullLogin(t *testing.T) {
+	if _, err := exec.LookPath("script"); err != nil || runtime.GOOS != "linux" {
+		t.Skip("no script(1) on this machine, or not Linux")
+	}
+	for _, c := range []struct {
+		name, pre, command, want string
+		status                   int
+	}{
+		// Ctrl-C reaches the pane's script and the command, which ends of it.
+		{"Ctrl-C", "", `echo x; kill -INT $PPID $$; exit 7`, "x\nscreen\x1b[m", 130},
+		// No data fits in a file, as on a full tmpfs, and the write fails rather than ending the pane.
+		{"a full /tmp", "trap '' XFSZ; ulimit -f 0", `echo x; exit 7`, "x", 7},
+	} {
+		tmux := map[string]string{"tmux": strings.Replace(fakeTmux, "%s", c.pre, 1)}
+		if status, out := login(t, tmux, true, []string{"SSH_TTY=/dev/pts/9"}, c.command); status != c.status || out != c.want {
+			t.Errorf("%s: status %d, output %q; want %d and %q", c.name, status, out, c.status, c.want)
+		}
+	}
+}
+
+// The prompt sets the title in the ssh login's tmux, for the Mac's terminal, and not in Zed's.
+func TestBashrcSetsTheTitleInTheLoginsTmux(t *testing.T) {
+	rc, err := os.ReadFile("testdata/bashrc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	file := filepath.Join(dir, "bashrc")
+	if err := os.WriteFile(file, []byte(strings.ReplaceAll(string(rc), "/usr/share/", "/nonexistent/")), 0o600); err != nil { //nolint:gosec // the test's own file
+		t.Fatal(err)
+	}
+	for env, want := range map[string]bool{"WS_BAR_LOGIN=1": true, "WS_BAR_LOGIN=": false} {
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		cmd := exec.CommandContext(ctx, "bash", "--rcfile", file, "-i", "-c", `printf %s "$PS1"`) //nolint:gosec // the test's own command
+		cmd.Env = []string{"PATH=/usr/bin:/bin", "HOME=" + dir, "TERM=tmux-256color", env}
+		out, err := cmd.Output()
+		cancel()
+		if got := strings.HasPrefix(string(out), `\[\e]0;`); err != nil || got != want {
+			t.Errorf("%s: PS1 %q, %v; want a title %t", env, out, err, want)
 		}
 	}
 }
