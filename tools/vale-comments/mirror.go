@@ -14,9 +14,10 @@ import (
 type origin struct{ line, col int }
 
 // A mirror is a file's comments as Markdown, a line for each comment line, with its origin. A
-// blank line ends a comment, so that Vale reads two comments as two paragraphs. texts counts the
-// lines that hold text.
+// blank line ends a comment, so that Vale reads two comments as two paragraphs. file is the
+// source's path, and texts counts the lines that hold text.
 type mirror struct {
+	file  string
 	lines []string
 	from  []origin
 	texts int
@@ -40,6 +41,14 @@ func (m *mirror) gap() {
 	if m.lines[len(m.lines)-1] != "" {
 		m.add("", origin{})
 	}
+}
+
+// source maps a line and a rune column of the mirror, each from 1, to those of the source.
+func (m *mirror) source(line, col int) (origin, bool) {
+	if m == nil || line < 1 || line > len(m.from) || m.from[line-1].line == 0 {
+		return origin{}, false
+	}
+	return origin{m.from[line-1].line, m.from[line-1].col + col - 1}, true
 }
 
 var (
