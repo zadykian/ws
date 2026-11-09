@@ -21,3 +21,8 @@ var ZedSettings []byte
 //
 //go:embed zed/keymap.json
 var ZedKeymap []byte
+
+// Join is ws-join, which ws mac apply writes into ~/.local/bin whole.
+//
+//go:embed ws-join
+var Join []byte

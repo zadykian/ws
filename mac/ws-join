@@ -1,0 +1,67 @@
+#!/bin/sh
+# Written by ws mac apply: its next run replaces changes made here.
+#
+# Joins cld's session NAME on ws, or HOST, over ssh, and joins it again where ssh drops:
+#
+#   ws-join [-H HOST] -n NAME -s SUFFIX
+#
+# ssh exits 255 where its connection fails or drops, and nothing else does. On 255 the script
+# tries again 5 s later, with --existing, so that a try finds the session and makes none. Any
+# other status ends it, as a detach or /exit does, and is its own. ssh writes its lines to a log,
+# which the script prints after each try. It stops where the log says that ws refused the login,
+# as each try would count toward the tunnel's ban (docs/mac-ghostty.md).
+
+set -u
+
+usage() {
+    echo 'usage: ws-join [-H HOST] -n NAME -s SUFFIX' >&2
+    exit 2
+}
+
+host=ws
+name=
+suffix=
+while getopts H:n:s: opt; do
+    case $opt in
+    H) host=$OPTARG ;;
+    n) name=$OPTARG ;;
+    s) suffix=$OPTARG ;;
+    *) usage ;;
+    esac
+done
+shift $((OPTIND - 1))
+[ $# = 0 ] || usage
+# A HOST that starts with a dash would be one of ssh's options.
+case $host in
+'' | -*) usage ;;
+esac
+# NAME and SUFFIX pass through two shells on ws, unquoted, so they hold no other character.
+for value in "$name" "$suffix"; do
+    case $value in
+    '' | *[!A-Za-z0-9._-]*) usage ;;
+    esac
+done
+
+log=$(mktemp "${TMPDIR:-/tmp}/ws-join.XXXXXX") || exit 1
+trap 'rm -f "$log"' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+existing=
+while :; do
+    # ssh's -E adds to the log, so each try starts it empty.
+    : >"$log"
+    status=0
+    ssh -t -o ConnectTimeout=10 -E "$log" "$host" \
+        "exec bash -lc 'exec cld join$existing -n $name -s $suffix'" || status=$?
+    cat "$log" >&2
+    [ "$status" = 255 ] || exit "$status"
+    if grep -qe 'Permission denied' -e 'Host key verification failed' "$log"; then
+        echo "ws-join: $host refused the login, so no try follows" >&2
+        exit 255
+    fi
+    existing=' --existing'
+    echo "ws-join: ssh dropped; it joins $name again in 5 s, or Ctrl-C ends it" >&2
+    sleep 5
+done
