@@ -10,6 +10,17 @@ on:
     branches: [main]
   workflow_call:
 
+# A newer push to a pull request cancels its runs still in progress, as their head is gone. A push
+# to main and a release's call each take a group of their own run, so nothing cancels them. The run
+# of ready_for_review skips lint, which the ruleset requires, so it takes a group apart, as it must
+# not cancel the lint of the run before it. The name is written out, as in release.yml's call
+# github.workflow names the caller, for mac.yml's group too.
+concurrency:
+  group: >-
+    ci-${{ github.event.pull_request.number || github.run_id
+    }}-${{ github.event.action == 'ready_for_review' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions: {}
 
 jobs:

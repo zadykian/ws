@@ -10,6 +10,12 @@ on:
     branches: [main]
   workflow_call:
 
+# A newer push to a pull request cancels its runs still in progress, and the name is written out,
+# as in ci.yml. It runs no lint, so one group serves every event, ready_for_review's included.
+concurrency:
+  group: mac-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions: {}
 
 jobs:
