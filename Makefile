@@ -113,9 +113,11 @@ golangci-lint:
 govulncheck:
 	@set -ef; go=$$(tools/run -path go); "$$go" tool govulncheck ./...
 
-# The race detector needs cgo, for the tests alone.
+# The race detector needs cgo, for the tests alone. LAZYGIT_SCHEMA names lazygit's config schema,
+# which the lazygit role's test holds its config to.
 gotest:
-	@set -ef; go=$$(tools/run -path go); CGO_ENABLED=1 "$$go" test -race -count=1 ./...
+	@set -ef; go=$$(tools/run -path go); schema=$$(tools/run -path lazygit-schema); \
+		LAZYGIT_SCHEMA=$$schema CGO_ENABLED=1 "$$go" test -race -count=1 ./...
 
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
 # file (docs/checks.md). A workflow takes actionlint and zizmor too. A file of no kind passes, as
