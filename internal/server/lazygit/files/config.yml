@@ -24,6 +24,8 @@ gui:
     defaultFgColor: ["#dfe1e5"]  # text
   # Icons from Nerd Fonts v3, which JetBrainsMono Nerd Font Mono, Ghostty's and Zed's, carries.
   nerdFontsVersion: "3"
+  # Square corners, as JetBrains draws its panels.
+  border: single
 git:
   # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
   # prefix, WIP by default. Empty, it never does.
