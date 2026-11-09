@@ -12,7 +12,7 @@ import (
 
 const keysCmd = "curl -fsSL --retry 3 --proto =https https://api.github.com/users/ada-1/ssh_signing_keys?per_page=100"
 
-func newWsSigning(status, login, listed string) *WsSigning {
+func newWsSigning(status wsStatus, login, listed string) *WsSigning {
 	r, m := newRun("lan", status, false, false)
 	r.Want = func() (conf.Conf, error) { return conf.Conf{User: "ada"}, nil }
 	m.Results[loginCmd] = effecttest.Result{Out: []byte(login)}
@@ -21,16 +21,22 @@ func newWsSigning(status, login, listed string) *WsSigning {
 }
 
 func TestWsSigningPlan(t *testing.T) {
-	key := "signing ssh-ed25519 AAA\n"
-	for name, tc := range map[string]struct{ status, login, listed, want string }{
-		"no key":   {"signing none\n", "", "", ""},
+	key := wsStatus{Signing: "ssh-ed25519 AAA"}
+	for name, tc := range map[string]struct {
+		status              wsStatus
+		login, listed, want string
+	}{
+		"no key":   {wsStatus{Signing: "none"}, "", "", ""},
 		"listed":   {key, "motd\nada-1\n", `[{"id":1,"key":"ssh-ed25519 AAA"}]`, ""},
 		"missing":  {key, "ada-1\n", `[{"key":"ssh-ed25519 BBB"}]`, "lists it for no login"},
 		"no login": {key, "", "", "names a GitHub login"},
 		"no list":  {key, "ada-1\n", "<html>", "curl read no list"},
-		"no ssh":   {"", "", "", "the remote script reads nothing"},
+		"no ssh":   {key, "", "", "the remote script reads nothing"},
 	} {
 		s := newWsSigning(tc.status, tc.login, tc.listed)
+		if name == "no ssh" {
+			delete(s.M.(*effecttest.Machine).Results, remoteLine(s.Run.Remote, "status"))
+		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)
 		for _, c := range p.Changes {
@@ -44,7 +50,7 @@ func TestWsSigningPlan(t *testing.T) {
 
 // The key goes to what stays by hand, to add on GitHub, and the run plans nothing more of it.
 func TestWsSigningApply(t *testing.T) {
-	s := newWsSigning("signing ssh-ed25519 AAA\n", "", "")
+	s := newWsSigning(wsStatus{Signing: "ssh-ed25519 AAA"}, "", "")
 	if err := s.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}

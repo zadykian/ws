@@ -15,7 +15,7 @@ func TestTunnelApply(t *testing.T) {
 		"handshake": {"latest handshake: 5 s ago\n", ""},
 		"none":      {"", "ws-tunnel had none with ws within 30 s"},
 	} {
-		tun, m := newTunnel(keyA, "wg0 "+keyB+"\npeer ok\nmac.pub "+keyA+"\n", false)
+		tun, m := newTunnel(keyA, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA}, false)
 		m.Results["sudo -v"] = effecttest.Result{}
 		m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 		if tc.shake != "" {
@@ -39,7 +39,7 @@ func TestTunnelApply(t *testing.T) {
 	}
 }
 func TestTunnelApplyStops(t *testing.T) {
-	tun, m := newTunnel(keyA, "peer ok\n", false)
+	tun, m := newTunnel(keyA, wsStatus{Peered: true}, false)
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte("x\n")}
 	if err := tun.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "prints no key") {
@@ -47,7 +47,7 @@ func TestTunnelApplyStops(t *testing.T) {
 	}
 }
 func TestTunnelPlanLoaded(t *testing.T) {
-	tun, m := newTunnel(keyB, "wg0 "+keyB+"\npeer ok\nmac.pub "+keyA+"\n", false)
+	tun, m := newTunnel(keyB, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA}, false)
 	m.Results["launchctl print system/"+label] = effecttest.Result{Err: context.Canceled}
 	if p, _ := tun.Plan(context.Background()); len(p.Changes) == 0 {
 		t.Error("Plan without ws-tunnel in launchd is empty")

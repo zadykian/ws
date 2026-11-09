@@ -8,11 +8,15 @@ import (
 )
 
 func TestWsRunHand(t *testing.T) {
-	for name, tc := range map[string]struct{ target, status, want string }{
-		"lan":   {"lan", "fans refused\n", "ws's fans' driver"},
-		"local": {"lan", "", "macOS's local network"},
-		"cloud": {"cloud", "outbound off\n", "The provider's firewall: UDP 51820"},
-		"off":   {"lan", "outbound off\n", "ws's outbound table"},
+	for name, tc := range map[string]struct {
+		target string
+		status wsStatus
+		want   string
+	}{
+		"lan":   {"lan", wsStatus{FansRefused: true}, "ws's fans' driver"},
+		"local": {"lan", wsStatus{}, "macOS's local network"},
+		"cloud": {"cloud", wsStatus{OutboundOff: true}, "The provider's firewall: UDP 51820"},
+		"off":   {"lan", wsStatus{OutboundOff: true}, "ws's outbound table"},
 	} {
 		r, _ := newRun(tc.target, tc.status, false, false)
 		h := &Hand{}
@@ -27,12 +31,13 @@ func TestWsRunHand(t *testing.T) {
 func TestWsRunWsHand(t *testing.T) {
 	device := "Each device's ssh key on ws"
 	for name, tc := range map[string]struct {
-		target, status string
-		want           []string
+		target string
+		status wsStatus
+		want   []string
 	}{
-		"fans":  {"cloud", "fans refused\n", []string{"ws's fans' driver", device}},
-		"lan":   {"lan", "fans ok\n", []string{"ws's lease, on a machine on the LAN", device}},
-		"cloud": {"cloud", "fans ok\n", []string{device}},
+		"fans":  {"cloud", wsStatus{FansRefused: true}, []string{"ws's fans' driver", device}},
+		"lan":   {"lan", wsStatus{}, []string{"ws's lease, on a machine on the LAN", device}},
+		"cloud": {"cloud", wsStatus{}, []string{device}},
 	} {
 		r, _ := newRun(tc.target, tc.status, false, false)
 		h := &Hand{}

@@ -17,7 +17,7 @@ func TestTunnelShake(t *testing.T) {
 		"stale": {"latest handshake: 181 s ago\n", false},
 		"none":  {"peer: x\n", false},
 	} {
-		tun, m := newTunnel(keyA, "", false)
+		tun, m := newTunnel(keyA, wsStatus{}, false)
 		m.Results[libexec+" mac tunnel status"] = effecttest.Result{Out: []byte(tc.status)}
 		tun.Sleep = func(time.Duration) {}
 		if got := tun.shake(context.Background(), 3); got != tc.want {

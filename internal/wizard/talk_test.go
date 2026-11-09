@@ -51,7 +51,7 @@ func TestMacKeyMakeTakesTheTerminal(t *testing.T) {
 }
 
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
-	r, m := newRun("lan", "claude login\n", false, false)
+	r, m := newRun("lan", wsStatus{Claude: "login"}, false, false)
 	r.Host.SSH.F = m
 	c := &WsClaude{Run: r, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
