@@ -63,7 +63,7 @@ func (w Wizard) loop(ctx context.Context, s screens) error {
 	}
 }
 
-// state draws the state screen of side's machine, and forms the forms of w's values.
+// state draws the state screen of side's machine.
 func (w Wizard) state(ctx context.Context, s screens, r Round, side Side) error {
 	read, done := r.Read(side)
 	if done != nil {
@@ -72,6 +72,7 @@ func (w Wizard) state(ctx context.Context, s screens, r Round, side Side) error 
 	return s.state(ctx, side, read)
 }
 
+// forms draws the forms of w's values.
 func (w Wizard) forms(ctx context.Context, s screens) error {
 	sheets, done, err := w.Forms(ctx)
 	if err != nil {
