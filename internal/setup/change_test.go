@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/step"
 )
@@ -51,6 +52,20 @@ func TestApply(t *testing.T) {
 	want := []string{"say: wrote /d/f", "say: kept the old /a as /a~"}
 	if len(out.Lines) != 2 || out.Lines[0] != want[0] || out.Lines[1] != want[1] {
 		t.Errorf("said %q, want %q", out.Lines, want)
+	}
+}
+
+func TestApplySaysAHostChangeByItsHeadline(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	cs, err := host.File{M: m, Path: "/e/f", Content: []byte("x\n"), Mode: 0o644}.Plan(context.Background())
+	if err != nil || len(cs) != 1 {
+		t.Fatalf("Plan = %v, %v; want one change", cs, err)
+	}
+	if err := setup.Apply(context.Background(), m, out, cs[0]); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files["/e/f"]) != "x\n" || len(out.Lines) != 1 || out.Lines[0] != "say: create /e/f" {
+		t.Errorf("/e/f holds %q, and Apply said %q", m.Files["/e/f"], out.Lines)
 	}
 }
 
