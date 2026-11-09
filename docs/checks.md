@@ -147,9 +147,8 @@ Without `wg0`'s peer alone, a run must run it again. With nothing on UDP 51820, 
 must name the port. Where `sudo -n` fails, a run must print nothing, and without `tunnel.pub`, write
 it first.
 
-With claude logged out, a run at a terminal of `script`'s must run `claude auth login` through
-`bash -lc` in an `ssh -t` session. The stand-in takes a terminal alone, and the next run must print
-nothing.
+With claude logged out, a run at `script`'s terminal must run `claude auth login` through `bash -lc`
+in an `ssh -t` session. The stand-in takes a terminal alone, and the next run must print nothing.
 
 For the Cable stage, ws's ports are a stand-in sysfs. Undocked, a run must print nothing, one that
 acts name the dock, and `WS_CABLE_PORT` end the wait. Docked, one with no terminal must stop, one
@@ -175,16 +174,17 @@ which the case never runs.
 
 ## The Mac
 
-Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed/`'s file whole,
-and a `settings.json` that is there must stay byte for byte.
-Case 48 checks its `keymap.json`: `mac/zed/`'s keymap whole, a foreign file left with one warning,
-and ws's back once the foreign one goes.
+Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be `mac/zed/`'s whole, and a
+`settings.json` there must stay byte for byte. Case 48 checks `keymap.json`: `mac/zed/`'s whole, a
+foreign one left with a warning, and ws's back once it goes. Case 87 checks [the zsh
+hook](mac-ghostty.md#the-zsh-hook): `zsh -i` must reset at each prompt, and the alternate screen
+after a 255 from `ssh`, or from `cld` with `--host`, alone.
 
 CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First, `ws
-mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` and
-installs no formula or cask. It must note the install of Zed's cask. Stand-ins for
-Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, spare the
-job's runs their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no
+mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` or
+`~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins for
+Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, spare the job's runs
+their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no
 daemon, while `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's, as
 must the key in the command that gives it to ws. With a stand-in's key it must load the daemon,
 which must run. Then a second run and `--check` must print nothing. Under `script`, `--check` must

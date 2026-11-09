@@ -21,7 +21,7 @@ that works on the server. The rest is the docs, the lint gates' tools and CI.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
   wizard's scripts for ws in POSIX sh, `ws.ghostty`, Ghostty's settings, and `zed/`, Zed's settings
-  and keymap.
+  and keymap. `zshrc` is the zsh hook that turns off the modes that a drop leaves on.
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,
   `mac-targets.md`, `mac-ghostty.md`, `mac-zed.md` and `mac-secrets.md`; `server-wizard.md`;
   `router.md` and `checks.md`; `tui.md`, the terminal UI, with `tui-configure.md` and `tui-wizard.md`.
