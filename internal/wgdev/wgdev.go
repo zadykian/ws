@@ -78,8 +78,8 @@ func (t *Tunnel) serve() error {
 }
 
 // accept hands each connection to the device. Where the listener fails, as it does when something
-// removes the socket's file, the device closes, as in wireguard-go's own main, so that the daemon
-// sees it exit. A close of the listener by Close ends it quietly.
+// removes the socket's file, the device closes, as in wireguard-go's own main. So the daemon sees
+// it exit. A close of the listener by Close ends it quietly.
 func (t *Tunnel) accept(l net.Listener) {
 	for {
 		c, err := l.Accept()
