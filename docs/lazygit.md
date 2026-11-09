@@ -19,8 +19,13 @@ the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
 
 - The title reads `NAME: BRANCH`, such as `ws: main`. A linked worktree shows its main tree's name,
   and a detached HEAD its short hash.
+- Each second, the wrapper reads lazygit's directory and its HEAD. So the title follows a checkout,
+  and a move to another repository through lazygit's recent repositories.
 - The wrapper writes the title as OSC 2, which Ghostty's tab shows.
-- The terminal's stack keeps the shell's title, and gets it back when lazygit ends. Where a
-  terminal lacks the stack, the shell's next prompt sets its own title in an `xterm` terminal, as
-  Ubuntu's `~/.bashrc` does.
+- The terminal's stack keeps the shell's title, and gets it back within a second of lazygit's end.
+  Where a terminal lacks the stack, the shell's next prompt sets its own title in an `xterm`
+  terminal, as Ubuntu's `~/.bashrc` does.
 - Where stdin or stdout is not a terminal, the wrapper runs lazygit and sets nothing.
+
+The watcher writes to the terminal while lazygit draws. Where a frame of lazygit's takes more than
+one write, the title may land inside it and leave stray characters until those cells change.

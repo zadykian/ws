@@ -1,10 +1,12 @@
 #!/bin/sh
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 # lazygit sets no title, so a tab keeps the shell's. This names the repository and its branch in
-# the title, and gets the shell's back from the terminal's stack when lazygit ends.
+# the title, and follows lazygit to another branch or repository. lazygit replaces the script, so
+# that it stays the shell's job, with its own signals and exit status.
 if [ ! -t 0 ] || [ ! -t 1 ]; then
     exec /usr/bin/lazygit "$@"
 fi
+
 # title prints NAME: BRANCH for the directory $1, or nothing outside a work tree. A linked worktree
 # takes its main tree's name, and a detached HEAD its short hash. Control characters are dropped,
 # as a directory's name may hold an escape.
@@ -26,10 +28,24 @@ EOF
         branch=$(git -C "$1" rev-parse --short HEAD 2>/dev/null)
     printf '%s: %s' "${name##*/}" "$branch" | tr -d '\000-\037\177'
 }
+
+# The terminal keeps the shell's title on its stack, and gets it back once lazygit ends.
 printf '\033[22;2t'
 shown=$(title .)
 [ -z "$shown" ] || printf '\033]2;%s\007' "$shown"
-/usr/bin/lazygit "$@"
-status=$?
-printf '\033[23;2t'
-exit "$status"
+
+# Each second, the watcher reads lazygit's directory, as lazygit moves to the repository it opens,
+# and sets the title where it changed. lazygit takes this process's PID.
+lazygit=$$
+(
+    while sleep 1 && kill -0 "$lazygit" 2>/dev/null; do
+        dir=$(readlink "/proc/$lazygit/cwd") || continue
+        now=$(title "$dir")
+        if [ -n "$now" ] && [ "$now" != "$shown" ]; then
+            printf '\033]2;%s\007' "$now"
+            shown=$now
+        fi
+    done
+    printf '\033[23;2t'
+) &
+exec /usr/bin/lazygit "$@"

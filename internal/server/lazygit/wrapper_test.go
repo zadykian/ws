@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -44,15 +45,16 @@ func repository(t *testing.T, dir string) string {
 	return dir
 }
 
-// wrapped says how run builds the wrapper's surroundings: terminal drops the test for a terminal,
-// as a test's stdin and stdout are pipes.
+// wrapped says how run builds the wrapper's surroundings: lazygit is the stub's body, which
+// replaces the wrapper as lazygit does; terminal drops the test for a terminal, as a test's stdin
+// and stdout are pipes.
 type wrapped struct {
-	dir      string
-	terminal bool
+	dir, lazygit string
+	terminal     bool
 }
 
 // run runs the wrapper in w.dir, with a stub for lazygit that prints its arguments and exits 3,
-// and returns the output and the exit status.
+// and a watcher that looks every 0.1 seconds. It returns the output and the exit status.
 func run(t *testing.T, w wrapped) (out string, code int) {
 	t.Helper()
 	bin := t.TempDir()
@@ -62,11 +64,12 @@ func run(t *testing.T, w wrapped) (out string, code int) {
 		}
 	}
 	stub := filepath.Join(bin, "lazygit")
-	write(stub, "echo \"lazygit $*\"\nexit 3\n")
+	write(stub, w.lazygit+"\necho \"lazygit $*\"\nexit 3\n")
 	// The ceiling keeps git from finding a repository that holds the test's directories.
 	env := []string{"PATH=" + bin + ":/usr/bin:/bin", "HOME=" + bin, "GIT_CONFIG_NOSYSTEM=1",
 		"GIT_CONFIG_GLOBAL=/dev/null", "GIT_CEILING_DIRECTORIES=" + os.TempDir()}
 	script := strings.ReplaceAll(string(wrapper), "/usr/bin/lazygit", stub)
+	script = strings.ReplaceAll(script, "sleep 1", "sleep 0.1")
 	if w.terminal {
 		script = strings.ReplaceAll(script, "[ ! -t 0 ] || [ ! -t 1 ]", "false")
 	}
@@ -74,6 +77,7 @@ func run(t *testing.T, w wrapped) (out string, code int) {
 	write(path, script)
 	cmd := exec.CommandContext(t.Context(), "/bin/sh", path, "a", "b c") //nolint:gosec // the test's own script
 	cmd.Dir, cmd.Env = w.dir, env
+	// The watcher holds the output open until it sees lazygit gone.
 	cmd.WaitDelay = 5 * time.Second
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
@@ -83,6 +87,14 @@ func run(t *testing.T, w wrapped) (out string, code int) {
 		t.Fatalf("run: %v", err)
 	}
 	return stdout.String(), ee.ExitCode()
+}
+
+// linux skips a test of the watcher, which reads lazygit's directory from /proc.
+func linux(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS != "linux" {
+		t.Skip("the watcher reads /proc")
+	}
 }
 
 func TestTheWrapperPassesAPipeThrough(t *testing.T) {
@@ -100,6 +112,27 @@ func TestTheWrapperNamesTheRepositoryAndBranch(t *testing.T) {
 	}
 	if code != 3 {
 		t.Errorf("exit %d, want lazygit's", code)
+	}
+}
+
+func TestTheWrapperFollowsACheckout(t *testing.T) {
+	linux(t)
+	dir := repository(t, filepath.Join(t.TempDir(), "ws"))
+	gitIn(t, dir, "branch", "feat/x")
+	out, _ := run(t, wrapped{dir: dir, terminal: true, lazygit: "git switch -q feat/x\nsleep 0.5"})
+	if want := push + osc("ws: main") + osc("ws: feat/x") + "lazygit a b c\n" + pop; out != want {
+		t.Errorf("out %q, want %q", out, want)
+	}
+}
+
+func TestTheWrapperFollowsAnotherRepository(t *testing.T) {
+	linux(t)
+	root := t.TempDir()
+	dir := repository(t, filepath.Join(root, "ws"))
+	other := repository(t, filepath.Join(root, "cld"))
+	out, _ := run(t, wrapped{dir: dir, terminal: true, lazygit: "cd " + other + "\nsleep 0.5"})
+	if want := push + osc("ws: main") + osc("cld: main") + "lazygit a b c\n" + pop; out != want {
+		t.Errorf("out %q, want %q", out, want)
 	}
 }
 
