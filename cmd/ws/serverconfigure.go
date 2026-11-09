@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/internal/tui"
-	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/mac"
 )
 
 // newServerConfigureCmd returns ws server configure.
@@ -40,7 +38,7 @@ func runServerConfigure(c *cobra.Command, p process) error {
 
 // serverConfigureOn draws the forms with cfg: ws server wizard's list opens them with its own.
 func serverConfigureOn(c *cobra.Command, p process, cfg tui.Config) error {
-	return tui.Configure(c.Context(), cfg, c.CommandPath(), serverSecretsSheet(p), serverVarsSheet(p))
+	return tui.Configure(c.Context(), cfg, c.CommandPath(), serverSecretsSheet(p), hostVarsSheet(serverOpen(p)))
 }
 
 // serverSecretsSheet is ws's secrets file, edited here as ws server secrets edits it.
@@ -60,22 +58,6 @@ func serverSecretsSheet(p process) tui.Sheet {
 				return tui.Sheet{}, fmt.Errorf("the secrets on ws: %w", err)
 			}
 			return secretsSheet(store, held), nil
-		},
-	}
-}
-
-// serverVarsSheet is host_vars, read and written by the files script as on the Mac, run here as root.
-func serverVarsSheet(p process) tui.Sheet {
-	return tui.Sheet{
-		Name:   "host_vars",
-		Fields: func(map[string]string) []tui.FieldSpec { return nil },
-		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
-			files := &wizard.Remote{Shell: serverShell(screenMachine(ctx, b, p.machine)), Script: mac.RemoteFilesScript}
-			form, err := wizard.VarsForm{Files: files}.Load(ctx)
-			if err != nil {
-				return tui.Sheet{}, err
-			}
-			return varsSheet(form), nil
 		},
 	}
 }

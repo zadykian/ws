@@ -46,7 +46,7 @@ func configureOn(c *cobra.Command, p process, cfg tui.Config) error {
 	// One way to root serves both of ws's sheets, so that sudo's password is asked once.
 	vars := &varsReach{p: p, sudo: &wizard.Sudo{}}
 	defer vars.close(c.Context())
-	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), vars.secretsSheet(), vars.sheet())
+	return tui.Configure(c.Context(), cfg, c.CommandPath(), confSheet(form), vars.secretsSheet(), hostVarsSheet(vars.reach))
 }
 
 // confSheet is mac.conf on the Configure screen.

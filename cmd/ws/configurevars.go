@@ -25,27 +25,28 @@ type varsReach struct {
 	release func()
 }
 
-// sheet is the host_vars form before its read.
-func (r *varsReach) sheet() tui.Sheet {
+// sessionOpen finds the session to ws of a sheet or a read, through the screen: the Mac's over ssh,
+// or ws's own.
+type sessionOpen func(ctx context.Context, b *tui.Bridge) (*wizard.Session, error)
+
+// hostVarsSheet is the host_vars form before its read, which open reaches ws for. The password that
+// sudo asks stays with the session, so that a save asks none.
+func hostVarsSheet(open sessionOpen) tui.Sheet {
 	return tui.Sheet{
 		Name:   "host_vars",
 		Fields: func(map[string]string) []tui.FieldSpec { return nil },
-		Open:   r.open,
+		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
+			ws, err := open(ctx, b)
+			if err != nil {
+				return tui.Sheet{}, err
+			}
+			form, err := wizard.VarsForm{Files: ws.Files()}.Load(ctx)
+			if err != nil {
+				return tui.Sheet{}, err
+			}
+			return varsSheet(form), nil
+		},
 	}
-}
-
-// open reaches ws and reads the file. The password that sudo asks stays with the form, so that a
-// save asks none.
-func (r *varsReach) open(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
-	ws, err := r.reach(ctx, b)
-	if err != nil {
-		return tui.Sheet{}, err
-	}
-	form, err := wizard.VarsForm{Files: ws.Files()}.Load(ctx)
-	if err != nil {
-		return tui.Sheet{}, err
-	}
-	return varsSheet(form), nil
 }
 
 // reach finds how the session reaches root on ws, as the wizard's stages do, through the screen.

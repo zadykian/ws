@@ -110,7 +110,7 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	p.machine = ws
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	sheet, err := r.open(context.Background(), nil)
+	sheet, err := hostVarsSheet(r.reach).Open(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}

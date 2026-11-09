@@ -62,7 +62,7 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 func TestServerVarsSheetReadsOnWs(t *testing.T) {
 	p, m := wizardProcess("---\nws_user: ada\n", false, "")
 	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("ws_user: ada\n")}
-	sheet, err := serverVarsSheet(p).Open(context.Background(), nil)
+	sheet, err := hostVarsSheet(serverOpen(p)).Open(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
