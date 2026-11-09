@@ -44,8 +44,8 @@ if [ -f "$list" ]; then
 
     # Each added line goes to added, and its file and line number to the same line of where. A
     # line starting with +++ names the file only in the header, before the first @@. The options
-    # pin the diff's shape against the user's config and .gitattributes: the staged bytes as text,
-    # binary files and those marked -diff included, and never a textconv's rewrite of them.
+    # pin the diff's shape against the user's config and .gitattributes. They take the staged bytes
+    # as text, binary files and those marked -diff included, and never a textconv's rewrite of them.
     git -c core.quotePath=false diff --cached --text --no-textconv --no-color --no-ext-diff \
         --no-prefix -U0 --inter-hunk-context=0 --diff-filter=d >"$tmp/diff"
     awk -v where="$tmp/where" '
@@ -69,8 +69,8 @@ if [ -f "$list" ]; then
         status=1
     fi
 
-    # -z, as git quotes a name holding a tab, a newline, a quote or a backslash even with
-    # core.quotePath=false, and a word after \t would not match as a whole word.
+    # The names go with -z, as git quotes a name holding a tab, a newline, a quote or a backslash
+    # even with core.quotePath=false. A word after \t would not match as a whole word.
     git diff --cached --name-only --diff-filter=d -z >"$tmp/names0"
     tr '\0' '\n' <"$tmp/names0" >"$tmp/names"
     if match "$tmp/words" "$tmp/names" "$tmp/hits"; then

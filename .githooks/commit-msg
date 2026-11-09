@@ -14,10 +14,10 @@ sed -e 'y/_/ /' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e '/^#
     "$list" >"$tmp/words"
 
 # From a message written in the editor, git strips its comments, the lines starting with #, and
-# the diff below the scissors line; those become blank lines here, so that the line numbers stay
+# the diff below the scissors line. Those become blank lines here, so that the line numbers stay
 # the message's. A message given with -m or -F keeps every line: git runs the hooks with
 # GIT_EDITOR=: then (githooks(5)). grep -w counts _ as part of a word, so each _ becomes a space,
-# in the message as in the words. tr and sed read bytes, in the C locale: in a UTF-8 one, macOS's
+# in the message as in the words. tr and sed read bytes, in the C locale. In a UTF-8 one, macOS's
 # tr and sed fail on bytes that are not UTF-8, and GNU sed's .* stops at one.
 if [ "${GIT_EDITOR-}" = : ]; then
     LC_ALL=C tr _ ' ' <"$1" >"$tmp/message"
