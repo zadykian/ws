@@ -51,3 +51,13 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 - `update.method` is `never`, as apt updates lazygit.
 - The step fails where `~/.config`, the directory or `config.yml` is a link. The user owns
   `~/.config`, and a link would send ws's root to whatever it names.
+
+lazygit loads a key it lacks, or a value of another kind, with no error. So
+`TestTheConfigMeetsLazygitsSchema` holds the config to the schema of 0.57.0, which `make gotest`
+downloads ([The gates](gates.md)).
+
+## A new version
+
+1. In `tools/run`, give `lazygit-schema` the new version, and the SHA-256 of the new tag's
+   `schema/config.json`.
+2. `make gotest` names each key or value of the config that the new schema refuses.

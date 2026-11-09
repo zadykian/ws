@@ -1,6 +1,9 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here. Settings of
 # your own go in ~/.lazygit.yml, which lazygit loads over this file in each repository under the
 # home.
+#
+# lazygit reads a missing key as its default, and loads a key it lacks with no error. A test of ws's
+# holds this file to the schema of the installed version.
 ---
 # apt updates lazygit, so lazygit never looks for a release of its own.
 update:
