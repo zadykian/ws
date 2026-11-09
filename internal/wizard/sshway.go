@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io/fs"
 	"strings"
 )
 
@@ -22,7 +24,7 @@ var errNoWay = errors.New("ssh finds no direct way to ws")
 // reaches, and known_hosts. It fails where no way is given, and where ssh -G fails.
 func (s SSH) Way(ctx context.Context) (Way, error) {
 	if _, found := s.way(ctx); !found {
-		return Way{}, errNoWay
+		return Way{}, s.noWay()
 	}
 	out, err := s.M.Run(ctx, "ssh", append([]string{"-G"}, s.argv(ctx, []string{"ws"})...)...)
 	if err != nil {
@@ -43,4 +45,17 @@ func (s SSH) Way(ctx context.Context) (Way, error) {
 		w.KnownHosts = s.Home + "/" + rest
 	}
 	return w, nil
+}
+
+// noWay says why no way leads to ws: a mac.conf that is missing or refused gives none, and it names
+// that rather than ssh.
+func (s SSH) noWay() error {
+	_, err := macConf(s.M, s.Conf)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return fmt.Errorf("ws is out of reach: no mac.conf at %s; the wizard or ws mac configure writes it", s.Conf)
+	case err != nil:
+		return fmt.Errorf("ws is out of reach: mac.conf leaves no way: %w", err)
+	}
+	return errNoWay
 }

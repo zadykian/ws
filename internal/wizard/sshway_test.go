@@ -3,8 +3,10 @@ package wizard
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
@@ -36,5 +38,22 @@ func TestSSHWayNeedsAWayOrFirst(t *testing.T) {
 	m.Results[wayCall(s)] = effecttest.Result{Err: errNoWay}
 	if _, err := s.Way(context.Background()); !errors.Is(err, errNoWay) {
 		t.Errorf("Way where ssh -G fails = %v; want errNoWay", err)
+	}
+}
+
+// A mac.conf that is missing or refused says so, in place of ssh's want of a way.
+func TestSSHWaySaysWhyMacConfLeavesNone(t *testing.T) {
+	m := effecttest.NewMachine()
+	s := SSH{M: m, Lock: "/l", Home: "/h", Conf: "/h/mac.conf"}
+	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "no mac.conf at /h/mac.conf") {
+		t.Errorf("Way with no mac.conf = %v", err)
+	}
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=moon\n")
+	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "/h/mac.conf, line 1") {
+		t.Errorf("Way with a refused mac.conf = %v", err)
+	}
+	m.Root["/h/mac.conf"] = effect.Attrs{}
+	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "permission denied") {
+		t.Errorf("Way with an unreadable mac.conf = %v", err)
 	}
 }
