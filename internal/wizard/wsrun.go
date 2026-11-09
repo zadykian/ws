@@ -46,21 +46,14 @@ func (*WsRun) Name() string { return runStage }
 // WaitsOn is Await, or the stage that installs this ws on ws.
 func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
 
-// runDone succeeds where ws's last full run exited 0 and no run's unit runs there. On a cloud VM,
-// that run must have begun with host_vars turning the outbound table off, which host_vars, the same
-// since, still does. Under --update, only once the stage ran ws server apply in this run.
+// runDone succeeds where ws's last full run left what c wants. Under --update, only once the stage
+// ran ws server apply in this run.
 func (r *WsRun) runDone(ctx context.Context, c conf.Conf) bool {
 	if r.Update && !r.ran {
 		return false
 	}
 	s, ok := r.Ws.status(ctx)
-	return ok && s.idle(r.Version) && r.named(s, c) && (c.Target != "cloud" || s.Run.Off)
-}
-
-// named tells whether ws's values give ws_user the user that ssh logs in as. It compares with the
-// server's default, so that a default that moves leaves a WS_USER of the old one named in host_vars.
-func (r *WsRun) named(s wsStatus, c conf.Conf) bool {
-	return cmp.Or(s.User, r.Default) == c.User
+	return ok && s.done(r.Version, r.Default, c)
 }
 
 // runChange is the change that runs ws server apply.
@@ -98,7 +91,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		how += ", with ws's secrets file"
 	}
 	user := ""
-	if !r.named(s, c) {
+	if !s.named(r.Default, c) {
 		user = c.User
 		how += ", after naming ws_user: " + user + " in ws's host_vars"
 	}

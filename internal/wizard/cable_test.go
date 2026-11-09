@@ -16,13 +16,14 @@ const cableLink = "eth0 - -\neth1 1 -\n"
 func newCable(t *testing.T, status wsStatus, link string, env map[string]string) (*Cable, *effecttest.Machine, *effecttest.Prompt) {
 	root, m := newLogin(effecttest.Result{Out: []byte("ok\n")})
 	status.Run = idleRun.Run
-	ws := macSession(m, root.Host.SSH, root.Host.Out.(*effecttest.Out), status)
-	r := &WsRun{Ws: ws, Check: root.Host.Check, Out: root.Host.Out, Version: "v1.2.3", Default: "zadykian"}
+	out := &effecttest.Out{}
+	ws := macSession(m, root.Ws.ssh(), out, status)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results[remoteLine(ws.files, "link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
-	c := &Cable{Host: root.Host, Run: r, Login: root, Ws: ws, Setup: &Setup{Run: func(context.Context, bool) (bool, error) { return false, nil }},
-		Env: func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: r.Out}
+	c := &Cable{Ws: ws, Conf: "/h/mac.conf", Version: "v1.2.3", Default: "zadykian",
+		Setup: &Setup{Run: func(context.Context, bool) (bool, error) { return false, nil }},
+		Env:   func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: out}
 	return c, m, p
 }
 
@@ -104,7 +105,7 @@ func TestCableHand(t *testing.T) {
 func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
-	c.Host.Check = true
+	c.Check = true
 	delete(m.Results, remoteLine(c.Ws.remote, "status"))
 	p, err := c.Plan(context.Background())
 	out := strings.Join(c.Out.(*effecttest.Out).Lines, "\n")
@@ -116,7 +117,7 @@ func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
-	c.Host.Check = true
+	c.Check = true
 	for k := range m.Results {
 		if strings.HasPrefix(k, "ssh -G") {
 			delete(m.Results, k)

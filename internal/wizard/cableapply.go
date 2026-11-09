@@ -10,7 +10,7 @@ import (
 )
 
 // file is mac.conf.
-func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, c.Out} }
+func (c *Cable) file() confFile { return confFile{c.Conf, cableStage, c.M, c.Out} }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 // terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
@@ -19,7 +19,7 @@ func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, 
 // answer, writes an empty WS_CABLE_SERVICE. Where mac.conf has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
-	cf, err := c.Host.conf()
+	cf, err := c.Ws.want()
 	if err != nil {
 		return err
 	}
