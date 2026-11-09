@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -260,8 +261,12 @@ func (OSMachine) ReadDir(path string) ([]string, error) {
 	return names, nil
 }
 
-// Mkdir makes the directory with exactly perm, whatever the umask.
+// Mkdir makes the directory with exactly perm, whatever the umask, through sudo where ws runs as
+// a user that may not write the parent.
 func (m OSMachine) Mkdir(path string, perm fs.FileMode) error {
+	if m.asRoot(path) && unwritable(filepath.Dir(path)) {
+		return m.sudoMkdir(path, perm)
+	}
 	if root, rel, err := m.confined(path); err != nil || root != nil {
 		if err != nil {
 			return err

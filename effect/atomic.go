@@ -1,17 +1,23 @@
 package effect
 
 import (
+	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/google/renameio/v2"
 )
 
 // WriteAtomic fills a pending file beside path, gives it the owner and mode of a, and renames it
 // over path. So a reader sees the old file or the new one whole. Another owner than ws's own
-// needs root.
+// needs root, which sudo gives where ws runs as a user.
 func (m OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
+	if a.UID >= 0 && m.asRoot(path) && another(path, a.UID) {
+		return m.sudoWrite(path, data, fmt.Sprintf("%d:%d", a.UID, a.GID), a.Mode)
+	}
 	if root, rel, err := m.confined(path); err != nil || root != nil {
 		if err != nil {
 			return err
@@ -37,8 +43,13 @@ func (m OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
 	return f.CloseAtomicallyReplace()
 }
 
-// Chown sets the owner of the file a link points to. It needs root for another owner than ws's.
+// Chown sets the owner of the file a link points to. It needs root for another owner than ws's,
+// which sudo gives where ws runs as a user.
 func (m OSMachine) Chown(path string, uid, gid int) error {
+	if m.asRoot(path) && another(path, uid) {
+		_, err := m.RunRoot(context.Background(), "chown", "--", fmt.Sprintf("%d:%d", uid, gid), path)
+		return err
+	}
 	root, rel, err := m.confined(path)
 	if err != nil {
 		return err
@@ -50,8 +61,13 @@ func (m OSMachine) Chown(path string, uid, gid int) error {
 	return root.Chown(rel, uid, gid)
 }
 
-// Chmod sets the mode of the file a link points to.
+// Chmod sets the mode of the file a link points to, through sudo where ws runs as a user and the
+// file is another's.
 func (m OSMachine) Chmod(path string, perm fs.FileMode) error {
+	if m.asRoot(path) && another(path, -1) {
+		_, err := m.RunRoot(context.Background(), "chmod", "--", strconv.FormatUint(uint64(perm.Perm()), 8), path)
+		return err
+	}
 	root, rel, err := m.confined(path)
 	if err != nil {
 		return err
