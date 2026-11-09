@@ -11,8 +11,7 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// Line is one line of a file that may hold others. The file is made, with the owner and mode, where
-// it is missing.
+// Line is one line of a file that may hold others. A missing file is made with the owner and mode.
 type Line struct {
 	M    effect.Machine
 	Path string

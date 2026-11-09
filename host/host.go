@@ -18,14 +18,14 @@ type Change interface {
 }
 
 // Forced is a Change that Group.Apply still applies after another change failed, as a handler runs
-// after a failed task: a restart that a watched change calls for is not planned again, since the
+// after a failed task. A restart that a watched change calls for is not planned again, since the
 // next run finds the watched file right.
 type Forced interface {
 	Forced() bool
 }
 
-// Early is a Change that Group.Plan puts before the changes of all parts, as the mark of an owed
-// restart must be on disk before the change that owes it.
+// Early is a Change that Group.Plan puts before the changes of all parts. That is for the mark of
+// an owed restart, which must be on disk before the change that owes it.
 type Early interface {
 	Early() bool
 }

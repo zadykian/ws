@@ -11,7 +11,7 @@ import (
 )
 
 // owedDir holds a mark per unit whose restart or reload a watched change owes. A mark is written
-// before the change and removed after the restart, so that a run cut short, or one whose restart
+// before the change and removed after the restart. So a run cut short, or one whose restart
 // failed, leaves it, and the next run plans the restart again though the watched file is right.
 const owedDir = "/var/lib/ws/owed"
 
