@@ -2,7 +2,7 @@
 # lint-tree, and the maintainer before a push. Any finding fails a gate, warnings included; make -k
 # lint runs every gate past a failure.
 # Each gate is a target of its own, and those that check files take FILES, every file of their kind
-# when it is empty: make vale FILES=README.md.
+# when FILES is empty: make vale FILES=README.md.
 FILES =
 # The ref the branch starts from: lint-tree's gitleaks scans the commits after it, up to HEAD.
 BASE = origin/main
@@ -34,7 +34,7 @@ export CGO_ENABLED = 0
 lint: shell yamllint sizecheck vale lychee rumdl actionlint zizmor gitleaks \
 	gofmt govet golangci-lint govulncheck gotest
 
-# Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in, so the install
+# Nothing here runs uv, which writes lint-requirements.txt from lint-requirements.in. So the install
 # stops where the .txt lacks a pin of the .in, rather than keep the old pin unseen. pip takes a file
 # only where the .txt lists its SHA-256. So a file PyPI adds to a release later never runs: pip
 # takes a listed one, or fails where none fits. --only-binary takes wheels alone, so no package's
