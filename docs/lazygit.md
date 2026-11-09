@@ -72,6 +72,8 @@ key it comes from is beside it in `config.yml`. A change of theme goes to all th
 
 - lazygit's 12 theme keys each take one colour, as `#rrggbb`.
 - No alpha: the search border takes Zed's match colour opaque.
+- Icons come from Nerd Fonts v3, which JetBrainsMono Nerd Font Mono carries in Ghostty and Zed.
+  Termius's own fonts carry them too, by its release notes. A font without them shows a box.
 - The background is the terminal's, as lazygit has no key for it. In Ghostty, that is Starlight's.
 - delta draws diffs on the backgrounds of Zed's diff hunks, and words on Zed's word colours. Its
   syntax colours are its default theme's.
