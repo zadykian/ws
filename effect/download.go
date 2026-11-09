@@ -13,7 +13,7 @@ import (
 )
 
 // Download streams the URL through SHA-256 into a pending file, and renames it over path only
-// where the sum, in hex, matches. Otherwise nothing is left and path is as it was.
+// where the sum, in hex, matches. Otherwise nothing is left and path is unchanged.
 func (OSMachine) Download(ctx context.Context, url, path, sum string, a Attrs) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

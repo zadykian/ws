@@ -13,7 +13,7 @@ import (
 // Terminal is a Prompt and an Out over a reader and a writer.
 type Terminal struct {
 	in     *bufio.Reader
-	file   *os.File // in, where it is a file: AskHidden reads the terminal itself
+	file   *os.File // in, where in is a file: AskHidden reads the terminal itself
 	w      io.Writer
 	byHand []string
 }
@@ -59,7 +59,7 @@ func (t *Terminal) Say(format string, a ...any) {
 	_, _ = fmt.Fprintf(t.w, format+"\n", a...)
 }
 
-// Raw prints a line as it is.
+// Raw prints a line unchanged.
 func (t *Terminal) Raw(format string, a ...any) {
 	_, _ = fmt.Fprintf(t.w, format+"\n", a...)
 }

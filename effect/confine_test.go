@@ -9,7 +9,7 @@ import (
 )
 
 // TestConfine swaps a link in at the last component and at a parent, as ws_user could while root
-// applies, and checks that each confined write fails and leaves the file outside as it was.
+// applies. It checks that each confined write fails and leaves the file outside unchanged.
 func TestConfine(t *testing.T) {
 	attrs := effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o600}
 	ops := map[string]func(m effect.OSMachine, p string) error{

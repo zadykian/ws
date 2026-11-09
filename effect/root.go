@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-// rootWrite fills the new file under umask 077, so that it is never readable beyond root before
-// its mode is set, then gives it its owner and mode and renames it over the target.
+// rootWrite fills the new file under umask 077, so that no one but root reads it before its mode
+// is set. Then it gives the file its owner and mode and renames it over the target.
 const rootWrite = `umask 077 && cat >"$1" && chown "$2" "$1" && chmod "$3" "$1" && mv -f "$1" "$4"`
 
 // rootStat prints "uid:gid mode" of a file, or "missing". GNU's stat comes first: BSD's -f prints a file system's data under GNU.

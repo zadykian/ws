@@ -38,7 +38,7 @@ type Units interface {
 var unitTypes = []string{".service", ".socket", ".device", ".mount", ".automount", ".swap", ".target", ".path", ".timer", ".slice", ".scope"}
 
 // CheckUnitName fails where the name has no unit type's suffix. systemd's D-Bus API takes full
-// names: it drops a bare name from a list and refuses to load it, so a call with "docker" reads as
+// names. It drops a bare name from a list and refuses to load it, so a call with "docker" reads as
 // a unit that is not installed. The error names the call.
 func CheckUnitName(call, name string) error {
 	for _, t := range unitTypes {

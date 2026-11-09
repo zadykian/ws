@@ -10,7 +10,7 @@ import (
 // PassLines runs the command as PassInput does, with take before Stderr. Its standard output and
 // error share a pipe, so its lines keep the order they have on Stderr. A process that it leaves
 // behind, as ssh leaves a master, may hold that pipe, which a file passed to a plain Pass never
-// waits on: WaitDelay bounds that, screen or no screen.
+// waits on. WaitDelay bounds that wait, screen or no screen.
 func (m OSMachine) PassLines(ctx context.Context, stdin []byte, take func(line string) bool, name string, args ...string) error {
 	lines := &lineFilter{take: take, out: m.stderr()}
 	cmd := m.command(ctx, append([]string{name}, args...))
