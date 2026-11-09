@@ -10,7 +10,7 @@ type Wizard struct {
 	Config Config
 	// Round gives a round's works. The forms lead to a new one, whose works read what they wrote.
 	Round func() Round
-	// Forms adds the configure button and gives the sheets. done, or nil, ends what they hold.
+	// Forms gives the sheets of the configure button's forms. done, or nil, ends what they hold.
 	Forms func(ctx context.Context) (sheets []Sheet, done func(context.Context), err error)
 }
 
@@ -88,7 +88,7 @@ func (w Wizard) forms(ctx context.Context, s screens) error {
 type terminalScreens struct{ w Wizard }
 
 func (d terminalScreens) pick(ctx context.Context, r Round) (Choice, error) {
-	return PickStages(ctx, d.w.Config, d.w.Title, r.Stages, d.w.Forms != nil, r.Scan)
+	return PickStages(ctx, d.w.Config, d.w.Title, r.Stages, r.Scan)
 }
 func (d terminalScreens) state(ctx context.Context, side Side, read StateReader) error {
 	return RunState(ctx, d.w.Config, d.w.Title+": "+side.String(), read)
