@@ -51,9 +51,9 @@ func TestMacKeyMakeTakesTheTerminal(t *testing.T) {
 }
 
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
-	r, m := newRun("lan", wsStatus{Claude: "login"}, false, false)
-	r.Host.SSH.F = m
-	c := &WsClaude{Run: r, Tty: true}
+	m := effecttest.NewMachine()
+	ws := macSession(m, SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{Claude: "login"})
+	c := &WsClaude{Ws: ws, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
 	got := callsWith(m, `claude auth login`)
 	if len(got) != 1 || !strings.HasPrefix(got[0], "foreground ssh ") {

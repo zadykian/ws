@@ -15,7 +15,7 @@ const installStage = "ws on ws"
 
 // WsInstall is the stage that puts this ws's release on ws, by the remote script's install.
 type WsInstall struct {
-	Remote *Remote
+	Ws *Session
 	// URL is the address of the releases that Version comes from.
 	Version, URL string
 	Out          effect.Out
@@ -37,7 +37,7 @@ func (c wsInstall) String() string {
 // ws's, so that an update on ws is not undone. It stops too where this ws is no release, or where
 // URL is no address to fetch from.
 func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
-	s, ok := i.Remote.status(ctx)
+	s, ok := i.Ws.status(ctx)
 	if ok && s.Version == i.Version {
 		return step.Plan{}, nil
 	}

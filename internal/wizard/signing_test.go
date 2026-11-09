@@ -17,7 +17,7 @@ func newSigning(status wsStatus, listed string) (*Signing, *effecttest.Machine) 
 	m.Results["/bin/gh ssh-key add /l/signing.pub --type signing --title ws1"] = effecttest.Result{}
 	m.Results["/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"] =
 		effecttest.Result{Out: []byte(listed)}
-	return &Signing{Gh: g, Run: r}, m
+	return &Signing{Gh: g, Ws: r.Ws, Lock: "/l"}, m
 }
 
 func TestSigningPlan(t *testing.T) {
@@ -33,7 +33,7 @@ func TestSigningPlan(t *testing.T) {
 	} {
 		s, m := newSigning(tc.status, tc.listed)
 		if name == "no ssh" {
-			delete(m.Results, remoteLine(s.Run.Remote, "status"))
+			delete(m.Results, remoteLine(s.Ws.remote, "status"))
 		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)

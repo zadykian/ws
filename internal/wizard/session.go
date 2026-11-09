@@ -24,6 +24,14 @@ type Reach interface {
 	// want reads the target and WS_USER that ws's run is to leave: mac.conf's on the Mac, and
 	// host_vars' on ws.
 	want() (conf.Conf, error)
+	// user returns WS_USER, whose claude and git config the stages read.
+	user() (string, error)
+	// claude runs claude auth login as WS_USER at the terminal.
+	claude(ctx context.Context) error
+	// rerun says how to run ws server apply again, for a stop that needs it.
+	rerun() string
+	// hand adds what stays by hand of this way's ws, as the status s read it.
+	hand(h *Hand, s wsStatus)
 }
 
 // Scripts are what a Session runs on ws: the remote script and the files script. Events hears a
@@ -48,7 +56,20 @@ func (s *Session) known() wsStatus { return s.remote.known() }
 // want reads what ws's run is to leave.
 func (s *Session) want() (conf.Conf, error) { return s.reach.want() }
 
+// claude runs claude's login as WS_USER. The login changes what the status reads, outside the
+// scripts.
+func (s *Session) claude(ctx context.Context) error {
+	s.remote.stale()
+	return s.reach.claude(ctx)
+}
+
 // State returns the roles of ws's report, as Remote's State does.
 func (s *Session) State(ctx context.Context, version string) ([]apply.RoleState, error) {
 	return s.remote.State(ctx, version)
+}
+
+// Hand adds what stays by hand of ws to the list, from the remote script's status.
+func (s *Session) Hand(ctx context.Context, h *Hand) {
+	st, _ := s.status(ctx)
+	s.reach.hand(h, st)
 }

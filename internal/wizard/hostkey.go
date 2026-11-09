@@ -41,9 +41,6 @@ func (c hostAdd) String() string {
 	return hostStage + ": would add ws's key to " + c.file
 }
 
-// ReadConf reads mac.conf, for the stage of ws's run.
-func (h *HostKey) ReadConf() (conf.Conf, error) { return h.conf() }
-
 // conf reads mac.conf.
 func (h *HostKey) conf() (conf.Conf, error) { return macConf(h.M, h.Conf) }
 

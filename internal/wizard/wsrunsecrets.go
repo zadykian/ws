@@ -20,7 +20,7 @@ func (s wsStatus) sameVars() bool { return s.Run.Exit != "" && s.Run.Vars == s.V
 
 // run runs ws server apply through the remote script.
 func (r *WsRun) run(ctx context.Context) error {
-	if err := r.Remote.Follow(ctx, onlyArgs(r.Only)...); err != nil {
+	if err := r.Ws.remote.Follow(ctx, onlyArgs(r.Only)...); err != nil {
 		// A screen ends by the cut's own words, which leave the unit unsaid, and a plain run by fail's.
 		if ctx.Err() != nil {
 			r.Out.ByHand("%s: the unit goes on on ws; run the wizard again, which follows it", runStage)

@@ -2,18 +2,16 @@ package wizard
 
 import (
 	"cmp"
-	"context"
 
 	"github.com/zadykian/ws/internal/conf"
 )
 
-// Hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
+// hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the
 // remote script's status. ws's gh login is a step of ws server apply, by token.github, so the list
 // leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an address only
 // with a LAN. Off the LAN, away's lines take the router's place.
-func (r *WsRun) Hand(ctx context.Context, h *Hand) {
-	s, _ := r.Remote.status(ctx)
-	_, c, err := loadConf(confFile{r.Host.Conf, runStage, r.Host.M, r.Host.Out})
+func (r MacReach) hand(h *Hand, s wsStatus) {
+	_, c, err := loadConf(confFile{r.SSH.Conf, runStage, r.SSH.M, r.Out})
 	if err != nil {
 		return
 	}
@@ -24,7 +22,7 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 	}
 	h.Add("macOS's local network: where it asks whether Ghostty, Zed or another app may find " +
 		"devices there, allow it (docs/mac.md, ssh's hosts).")
-	first := r.Host.SSH.First()
+	first := r.SSH.First()
 	if c.Target != "lan" {
 		away(h, c, first)
 		return
@@ -42,12 +40,11 @@ func (r *WsRun) Hand(ctx context.Context, h *Hand) {
 	}
 }
 
-// WsHand adds what stays by hand of ws alone, after a run of ws's own wizard. That is the Mac's
+// hand adds what stays by hand of ws alone, after a run of ws's own wizard. That is the Mac's
 // list, less the tunnel, the cable and the Mac's own lines. ws's host_vars names its target, so its
 // outbound table follows that, and no mac.conf names another. The wizard adds no device's key to
 // ws, so each goes from GitHub by hand.
-func (r *WsRun) WsHand(ctx context.Context, h *Hand) {
-	s, _ := r.Remote.status(ctx)
+func (r WsReach) hand(h *Hand, s wsStatus) {
 	fans(h, s)
 	if c, err := r.Want(); err == nil && c.Target == "lan" {
 		h.Add("ws's lease, on a machine on the LAN: static, as docs/router.md has it.")

@@ -32,20 +32,19 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil || !check.Key(mac) {
 		return errors.New(tunnelStage + ": root's ws mac tunnel key prints no key: run ws mac apply, which makes both")
 	}
-	r := t.Run.Remote
-	s, _ := r.status(ctx)
+	s, _ := t.Ws.status(ctx)
 	peered := s.MacKey != mac || !s.Peered
 	if peered {
 		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server apply --only "+
 			"wireguard runs there in a unit of its own, which gives wg0 that peer", tunnelStage)
-		if err := t.Run.Files.Pass(ctx, "peer", mac); err != nil {
+		if err := t.Ws.files.Pass(ctx, "peer", mac); err != nil {
 			return err
 		}
-		if err := r.Follow(ctx, "--only", "wireguard"); err != nil {
+		if err := t.Ws.remote.Follow(ctx, "--only", "wireguard"); err != nil {
 			return err
 		}
 		var ok bool
-		if s, ok = r.status(ctx); !ok || !s.Peered {
+		if s, ok = t.Ws.status(ctx); !ok || !s.Peered {
 			return errors.New(tunnelStage + ": ws's wg0 lacks the Mac's key after ws server apply --only " +
 				"wireguard: mend what it printed, then run the wizard again")
 		}

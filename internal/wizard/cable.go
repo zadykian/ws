@@ -31,8 +31,8 @@ type Cable struct {
 	Run  *WsRun
 	// Login is the stage that logs in to ws: ws is read only where it did, in this run.
 	Login *Login
-	// Files runs the files script's operations as root on ws.
-	Files *Remote
+	// Ws is the session to ws, whose files script lists and names the ports.
+	Ws *Session
 	// Setup is the ws mac apply stage, which gives the Mac's service its address.
 	Setup *Setup
 	// Env looks up a variable of the environment.
@@ -69,7 +69,7 @@ func (c cableChange) String() string { return cableStage + ": would " + string(c
 // read sets the ports to what the files script's op lists on ws. The op is link, or wait PORT,
 // which lists them once PORT holds 10.77.0.1, or after 10 s, in one login.
 func (c *Cable) read(ctx context.Context, op ...string) error {
-	out, err := c.Files.query(ctx, op...)
+	out, err := c.Ws.files.query(ctx, op...)
 	if err != nil {
 		return fmt.Errorf("%s: link failed on ws: %w", cableStage, err)
 	}

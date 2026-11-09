@@ -1,7 +1,6 @@
 package wizard
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -14,8 +13,9 @@ import (
 // login's signing keys with no token, so the stage checks them on ws. ws's gh has no account
 // permission that may add the key, so where GitHub lacks it, the key goes to what stays by hand.
 type WsSigning struct {
-	Run  *WsRun
+	Ws   *Session
 	M    effect.Machine
+	Out  effect.Out
 	Hand *Hand
 	// named is set once this run named the key in what stays by hand, all that the stage can do.
 	named bool
@@ -39,15 +39,15 @@ func (c signingByHand) String() string {
 // Plan is empty where WS_USER's git config on ws names no key file, or GitHub lists the key among
 // the signing keys of WS_USER's GitHub login.
 func (s *WsSigning) Plan(ctx context.Context) (step.Plan, error) {
-	line, err := signingLine(ctx, s.Run)
+	line, err := signingLine(ctx, s.Ws)
 	if err != nil || line == "none" || s.named {
 		return step.Plan{}, err
 	}
-	want, err := s.Run.Want()
+	user, err := s.Ws.reach.user()
 	if err != nil {
 		return step.Plan{}, fmt.Errorf("%s: %w", signingStage, err)
 	}
-	login := githubLoginOf(ctx, s.M, cmp.Or(want.User, s.Run.Default))
+	login := githubLoginOf(ctx, s.M, user)
 	if login == "" {
 		return step.Plan{Changes: []step.Change{signingByHand{
 			"neither WS_USER's gh nor its git config's github.user names a GitHub login"}}}, nil
@@ -61,13 +61,13 @@ func (s *WsSigning) Plan(ctx context.Context) (step.Plan, error) {
 
 // Apply lists the key in what stays by hand, to add on GitHub, as ws holds no token that may.
 func (s *WsSigning) Apply(ctx context.Context, _ step.Plan) error {
-	line, err := signingLine(ctx, s.Run)
+	line, err := signingLine(ctx, s.Ws)
 	if err != nil {
 		return err
 	}
 	s.Hand.Add("ws's signing key on GitHub: add it as a signing key at https://github.com/settings/ssh/new, "+
 		"so that GitHub shows ws's commits as verified (docs/server-wizard.md): %s", line)
-	s.Run.Out.Say("%s: GitHub lacks ws's signing key, which the list at the end names", signingStage)
+	s.Out.Say("%s: GitHub lacks ws's signing key, which the list at the end names", signingStage)
 	s.named = true
 	return nil
 }

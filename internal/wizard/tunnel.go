@@ -25,7 +25,7 @@ const (
 // Without a handshake, the closing list says so, and the run goes on.
 type Tunnel struct {
 	Host *HostKey
-	Run  *WsRun
+	Ws   *Session
 	// Setup is the ws mac apply stage, which runs again once WS_PUBLIC_KEY is wg0's.
 	Setup *Setup
 	Hand  *Hand
@@ -61,7 +61,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		t.Out.Say("%s: after ws mac apply", tunnelStage)
 		return step.Plan{}, nil
 	}
-	s, ok := t.Run.Remote.status(ctx)
+	s, ok := t.Ws.status(ctx)
 	if ok && c.PublicKey != "" && s.WgKey == c.PublicKey && s.Peered && mac != "" && s.MacKey == mac &&
 		t.loaded(ctx) && (t.Host.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
 		return step.Plan{}, nil

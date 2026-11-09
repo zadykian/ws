@@ -21,7 +21,8 @@ func newTunnel(pub string, status wsStatus, check bool) (*Tunnel, *effecttest.Ma
 	m.Results["launchctl print system/"+label] = effecttest.Result{}
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
-	return &Tunnel{Host: r.Host, Run: r, Home: "/h", M: m, Out: r.Host.Out}, m
+	h := &HostKey{Conf: "/h/mac.conf", Lock: "/l", Check: check, M: m, Out: r.Out, SSH: SSH{M: m, Lock: "/l"}}
+	return &Tunnel{Host: h, Ws: r.Ws, Home: "/h", M: m, Out: r.Out}, m
 }
 
 func TestTunnelPlan(t *testing.T) {

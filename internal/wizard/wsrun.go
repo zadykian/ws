@@ -15,25 +15,18 @@ const runStage = "ws's run"
 
 // WsRun is the stage of ws's run, ws server apply, in a unit of its own on ws. The remote script
 // starts it and follows it. A run goes on where ssh drops, and the next run of the wizard follows it.
-// The Mac's wizard and ws's both run it, each filling the fields that it reads.
+// The Mac's wizard and ws's both run it, each on its own session.
 type WsRun struct {
-	// Host is the Mac's Host key stage, whose ssh, lock and mac.conf the Mac's later stages and its
-	// closing list reach through this one.
-	Host *HostKey
-	// Want reads the target and the WS_USER that ws's run is to leave: mac.conf's on the Mac, and
-	// host_vars' on ws.
-	Want func() (conf.Conf, error)
+	// Ws is the session to ws, whose files script names ws_user and the tunnel's peer.
+	Ws *Session
 	// Await names the stage that must be done first: by default the one that installs this ws on ws.
 	Await string
 	// Unbooted is set on ws where its systemd isn't booted, as in a container: no unit runs there, so
 	// the stage says so and skips.
 	Unbooted bool
 	// Check is set under --check. Out takes the stage's lines.
-	Check  bool
-	Out    effect.Out
-	Remote *Remote
-	// Files is the files script, which names ws_user and the tunnel's peer.
-	Files *Remote
+	Check bool
+	Out   effect.Out
 	// Default is the server's default ws_user, what a host_vars with no such line gives.
 	Default string
 	// Version is this ws's version. A full run counts only where a ws of that version made it.
@@ -60,7 +53,7 @@ func (r *WsRun) runDone(ctx context.Context, c conf.Conf) bool {
 	if r.Update && !r.ran {
 		return false
 	}
-	s, ok := r.Remote.status(ctx)
+	s, ok := r.Ws.status(ctx)
 	return ok && s.idle(r.Version) && r.named(s, c) && (c.Target != "cloud" || s.Run.Off)
 }
 
@@ -89,7 +82,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 			"run sudo ws server apply", runStage)
 		return step.Plan{}, nil
 	}
-	c, err := r.Want()
+	c, err := r.Ws.want()
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -100,7 +93,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if len(r.Only) > 0 {
 		how = "run ws server apply on ws for the steps chosen, in a unit of its own, and follow its log"
 	}
-	s := r.Remote.known()
+	s := r.Ws.known()
 	if s.Secrets != "" {
 		how += ", with ws's secrets file"
 	}

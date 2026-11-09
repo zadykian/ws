@@ -14,7 +14,7 @@ func TestWsInstallApply(t *testing.T) {
 	if err := i.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "install.sh failed") {
 		t.Errorf("Apply where ssh has no result = %v; want the stop", err)
 	}
-	m.Results[remoteLine(i.Remote, "install", "v1.2.3", releases)] = effecttest.Result{}
+	m.Results[remoteLine(i.Ws.remote, "install", "v1.2.3", releases)] = effecttest.Result{}
 	if err := i.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Errorf("Apply = %v", err)
 	}

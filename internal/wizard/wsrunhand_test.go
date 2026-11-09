@@ -5,9 +5,11 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/zadykian/ws/internal/conf"
 )
 
-func TestWsRunHand(t *testing.T) {
+func TestMacHand(t *testing.T) {
 	for name, tc := range map[string]struct {
 		target string
 		status wsStatus
@@ -20,7 +22,7 @@ func TestWsRunHand(t *testing.T) {
 	} {
 		r, _ := newRun(tc.target, tc.status, false, false)
 		h := &Hand{}
-		r.Hand(context.Background(), h)
+		r.Ws.Hand(context.Background(), h)
 		if got := strings.Join(h.lines, "\n"); !strings.Contains(got, tc.want) {
 			t.Errorf("%s: Hand = %q; want %q", name, got, tc.want)
 		}
@@ -28,7 +30,7 @@ func TestWsRunHand(t *testing.T) {
 }
 
 // ws's own list holds ws's lines alone, with nothing of the Mac's, and each device's key.
-func TestWsRunWsHand(t *testing.T) {
+func TestWsHand(t *testing.T) {
 	device := "Each device's ssh key on ws"
 	for name, tc := range map[string]struct {
 		target string
@@ -39,16 +41,19 @@ func TestWsRunWsHand(t *testing.T) {
 		"lan":   {"lan", wsStatus{}, []string{"ws's lease, on a machine on the LAN", device}},
 		"cloud": {"cloud", wsStatus{}, []string{device}},
 	} {
-		r, _ := newRun(tc.target, tc.status, false, false)
+		ws, _ := wsSession(tc.status)
+		r := ws.reach.(WsReach)
+		r.Want = func() (conf.Conf, error) { return conf.Conf{Target: tc.target}, nil }
+		ws.reach = r
 		h := &Hand{}
-		r.WsHand(context.Background(), h)
+		ws.Hand(context.Background(), h)
 		var got []string
 		for _, l := range h.lines {
 			head, _, _ := strings.Cut(l, ":")
 			got = append(got, head)
 		}
 		if !slices.Equal(got, tc.want) {
-			t.Errorf("%s: WsHand = %q; want %q", name, h.lines, tc.want)
+			t.Errorf("%s: Hand = %q; want %q", name, h.lines, tc.want)
 		}
 	}
 }

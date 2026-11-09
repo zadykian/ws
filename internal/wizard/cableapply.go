@@ -67,15 +67,15 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 
 // name puts the port in ws's /etc/ws/host_vars.yml and runs the network and wireguard roles there.
 func (c *Cable) name(ctx context.Context, port string) error {
-	if err := c.Files.Pass(ctx, "link", port); err != nil {
+	if err := c.Ws.files.Pass(ctx, "link", port); err != nil {
 		return err
 	}
-	return c.Run.Remote.Follow(ctx, "--only", "network,wireguard")
+	return c.Ws.remote.Follow(ctx, "--only", "network,wireguard")
 }
 
 // holds tells whether ws's status names the port as the cable's.
 func (c *Cable) holds(ctx context.Context, port string) bool {
-	s, ok := c.Run.Remote.status(ctx)
+	s, ok := c.Ws.status(ctx)
 	return ok && s.Cable == port
 }
 
@@ -83,7 +83,7 @@ func (c *Cable) holds(ctx context.Context, port string) bool {
 // That holds after ws's install, a failed roles' run or a change in mac.conf. Then it runs the
 // roles there, with no question and no dock. It stops on a port that ws lacks.
 func (c *Cable) again(ctx context.Context, port string) error {
-	s, ok := c.Run.Remote.status(ctx)
+	s, ok := c.Ws.status(ctx)
 	if !ok {
 		return fmt.Errorf("%s: status failed on ws", cableStage)
 	}

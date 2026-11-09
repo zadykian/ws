@@ -117,26 +117,26 @@ func TestEachRunIsFollowed(t *testing.T) {
 	log := effecttest.Result{Out: []byte(runLog)}
 
 	r, m := newRun("lan", wsStatus{}, false, false)
-	r.Remote.Events = h
-	m.Results[remoteLine(r.Remote, "run")] = log
+	r.Ws.remote.Events = h
+	m.Results[remoteLine(r.Ws.remote, "run")] = log
 	if err := r.run(ctx); err != nil {
 		t.Fatal(err)
 	}
 
 	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
-	c.Run.Remote.Events = h
-	m.Results[remoteLine(c.Files, "link", "eth1")] = effecttest.Result{}
-	m.Results[remoteLine(c.Run.Remote, "run", "--only", "network,wireguard")] = log
+	c.Ws.remote.Events = h
+	m.Results[remoteLine(c.Ws.files, "link", "eth1")] = effecttest.Result{}
+	m.Results[remoteLine(c.Ws.remote, "run", "--only", "network,wireguard")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
 		t.Fatal(err)
 	}
 
 	tun, m := newTunnel(keyA, wsStatus{}, false)
-	tun.Run.Remote.Events = h
+	tun.Ws.remote.Events = h
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
-	m.Results[remoteLine(tun.Run.Files, "peer", keyA)] = effecttest.Result{}
-	m.Results[remoteLine(tun.Run.Remote, "run", "--only", "wireguard")] = log
+	m.Results[remoteLine(tun.Ws.files, "peer", keyA)] = effecttest.Result{}
+	m.Results[remoteLine(tun.Ws.remote, "run", "--only", "wireguard")] = log
 	if err := tun.Apply(ctx, step.Plan{}); err == nil || !strings.Contains(err.Error(), "lacks the Mac's key") {
 		t.Errorf("Apply = %v; want the stop past the run", err)
 	}

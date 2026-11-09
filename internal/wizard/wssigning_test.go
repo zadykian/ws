@@ -6,18 +6,16 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
 
 const keysCmd = "curl -fsSL --retry 3 --proto =https https://api.github.com/users/ada-1/ssh_signing_keys?per_page=100"
 
 func newWsSigning(status wsStatus, login, listed string) *WsSigning {
-	r, m := newRun("lan", status, false, false)
-	r.Want = func() (conf.Conf, error) { return conf.Conf{User: "ada"}, nil }
+	ws, m := wsSession(status)
 	m.Results[loginCmd] = effecttest.Result{Out: []byte(login)}
 	m.Results[keysCmd] = effecttest.Result{Out: []byte(listed)}
-	return &WsSigning{Run: r, M: m, Hand: &Hand{}}
+	return &WsSigning{Ws: ws, M: m, Out: &effecttest.Out{}, Hand: &Hand{}}
 }
 
 func TestWsSigningPlan(t *testing.T) {
@@ -35,7 +33,7 @@ func TestWsSigningPlan(t *testing.T) {
 	} {
 		s := newWsSigning(tc.status, tc.login, tc.listed)
 		if name == "no ssh" {
-			delete(s.M.(*effecttest.Machine).Results, remoteLine(s.Run.Remote, "status"))
+			delete(s.M.(*effecttest.Machine).Results, wsStatusLine)
 		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)

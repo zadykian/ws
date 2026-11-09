@@ -16,8 +16,10 @@ const signingStage = "Signing key"
 // gh holds no token that may add it. It runs after ws's run, which makes the key, and after the gh
 // stage, whose login lists and adds the key.
 type Signing struct {
-	Gh  *Gh
-	Run *WsRun
+	Gh *Gh
+	Ws *Session
+	// Lock is the run's lock, which holds the key's file for gh.
+	Lock string
 	// Check is set under --check, where the gh stage is pending and has not made the login yet.
 	Check bool
 }
@@ -37,11 +39,12 @@ func (c signingAdd) String() string {
 
 // line returns ws's signing key as status prints it, or none where WS_USER's git config on ws names
 // no key file.
-func (s *Signing) line(ctx context.Context) (string, error) { return signingLine(ctx, s.Run) }
+func (s *Signing) line(ctx context.Context) (string, error) { return signingLine(ctx, s.Ws) }
 
-// signingLine is Signing's line, of ws's run r. It reads ws only where the remote script does.
-func signingLine(ctx context.Context, r *WsRun) (string, error) {
-	s, ok := r.Remote.status(ctx)
+// signingLine is Signing's line, as ws's session reads it. It reads ws only where the remote script
+// does.
+func signingLine(ctx context.Context, ws *Session) (string, error) {
+	s, ok := ws.status(ctx)
 	if !ok {
 		return "", errors.New(signingStage + ": the remote script reads nothing on ws, so the key cannot be read")
 	}
@@ -80,7 +83,7 @@ func (s *Signing) Plan(ctx context.Context) (step.Plan, error) {
 			return step.Plan{}, nil
 		}
 	}
-	return step.Plan{Changes: []step.Change{signingAdd{s.Run.Remote.known().Hostname}}}, nil
+	return step.Plan{Changes: []step.Change{signingAdd{s.Ws.known().Hostname}}}, nil
 }
 
 // Apply adds the key to the Mac's gh login, titled with ws's hostname, from a file in the lock.
@@ -93,8 +96,8 @@ func (s *Signing) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil {
 		return err
 	}
-	title := s.Run.Remote.known().Hostname
-	file := s.Run.Host.Lock + "/signing.pub"
+	title := s.Ws.known().Hostname
+	file := s.Lock + "/signing.pub"
 	if err := s.Gh.M.WriteFile(file, []byte(line+"\n"), 0o600); err != nil {
 		return fmt.Errorf("%s: %w", signingStage, err)
 	}

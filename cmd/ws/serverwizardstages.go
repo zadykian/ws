@@ -26,14 +26,14 @@ func serverWizardStages(p process, ask effect.Prompt, talks effect.Foreground, o
 	m := p.machine
 	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
-	remote := &wizard.Remote{Shell: serverShell(m), Script: mac.RemoteScript, Events: events}
-	run := &wizard.WsRun{Want: func() (conf.Conf, error) { return wsWant(m) }, Await: vals.Name(),
-		Unbooted: !host.Booted(m), Check: r.check, Out: out, Version: p.version, Default: values.Default().User,
-		Update: r.update, Only: r.only,
-		Remote: remote, Files: remote.Beside(mac.RemoteFilesScript)}
-	hand.Late(run.WsHand)
-	return []step.Step{vals, run, &wizard.WsClaude{Run: run, Tty: p.tty, Here: talks},
-		&wizard.WsSigning{Run: run, M: m, Hand: hand}}
+	def := values.Default().User
+	ws := wizard.NewSession(wizard.WsReach{M: m, Want: func() (conf.Conf, error) { return wsWant(m) }, Default: def,
+		Here: talks, Out: out}, wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: events})
+	run := &wizard.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !host.Booted(m), Check: r.check, Out: out,
+		Version: p.version, Default: def, Update: r.update, Only: r.only}
+	hand.Late(ws.Hand)
+	return []step.Step{vals, run, &wizard.WsClaude{Ws: ws, Tty: p.tty},
+		&wizard.WsSigning{Ws: ws, M: m, Out: out, Hand: hand}}
 }
 
 // serverShell runs the remote script on ws itself, for host_vars' ws_user, as the Mac's ssh logs in

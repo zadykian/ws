@@ -12,7 +12,7 @@ const releases = "https://example.org/releases"
 
 func newInstall(version, url string, status wsStatus) (*WsInstall, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, false)
-	return &WsInstall{Remote: r.Remote, Version: version, URL: url, Out: &effecttest.Out{}}, m
+	return &WsInstall{Ws: r.Ws, Version: version, URL: url, Out: &effecttest.Out{}}, m
 }
 
 func TestWsInstallPlan(t *testing.T) {
@@ -30,7 +30,7 @@ func TestWsInstallPlan(t *testing.T) {
 	} {
 		i, m := newInstall(tc.version, tc.url, wsStatus{Version: tc.held})
 		if name == "no status" {
-			delete(m.Results, remoteLine(i.Remote, "status"))
+			delete(m.Results, remoteLine(i.Ws.remote, "status"))
 		}
 		p, err := i.Plan(context.Background())
 		got := ""

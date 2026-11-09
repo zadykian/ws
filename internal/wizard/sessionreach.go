@@ -1,6 +1,8 @@
 package wizard
 
 import (
+	"cmp"
+
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
 )
@@ -16,6 +18,13 @@ type MacReach struct {
 func (r MacReach) shell() Shell { return SSHShell{SSH: r.SSH, Sudo: r.Sudo} }
 
 func (r MacReach) want() (conf.Conf, error) { return macConf(r.SSH.M, r.SSH.Conf) }
+
+func (r MacReach) user() (string, error) {
+	c, err := r.want()
+	return c.User, err
+}
+
+func (MacReach) rerun() string { return "run the wizard with --update" }
 
 // WsReach is ws's way to itself, for ws server wizard: the scripts run as the user that runs ws,
 // root there, and host_vars names the target and WS_USER.
@@ -35,3 +44,10 @@ func (r WsReach) shell() Shell {
 }
 
 func (r WsReach) want() (conf.Conf, error) { return r.Want() }
+
+func (r WsReach) user() (string, error) {
+	c, err := r.Want()
+	return cmp.Or(c.User, r.Default), err
+}
+
+func (WsReach) rerun() string { return "run sudo ws server apply" }

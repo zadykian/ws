@@ -94,7 +94,7 @@ func (s serverScreen) scan() tui.Work {
 		stages := serverWizardStages(on, b, talks, b, nil, &wizard.Hand{}, serverPick{check: true})
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
-			states, err := run.Remote.State(ctx, s.p.version)
+			states, err := run.Ws.State(ctx, s.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
 		o := step.Options{Observer: watch, Check: true, Stop: b.Stop(ctx)}
