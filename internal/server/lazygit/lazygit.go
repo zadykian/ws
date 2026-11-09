@@ -33,7 +33,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: packageStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"lazygit"}},
+			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"lazygit", "git-delta"}},
 		}},
 		host.Group{Title: wrapperStep, After: packageStep, Parts: []host.Resource{
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},

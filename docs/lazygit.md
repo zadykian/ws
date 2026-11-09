@@ -7,7 +7,8 @@ JetBrains Dark.
 ## The install
 
 `Lazygit` installs the package `lazygit`, 0.57.0 in the universe of Ubuntu 26.04, as the
-[tmux role](tmux.md) installs tmux. apt checks it, and updates it with the archive.
+[tmux role](tmux.md) installs tmux. apt checks it, and updates it with the archive. It installs
+`git-delta`, delta 0.18.2, from the universe too, for lazygit's diffs.
 
 The role needs no other role and no secret. No step needs a booted systemd, so it runs whole in
 CI's container.
@@ -72,7 +73,9 @@ key it comes from is beside it in `config.yml`. A change of theme goes to all th
 - lazygit's 12 theme keys each take one colour, as `#rrggbb`.
 - No alpha: the search border takes Zed's match colour opaque.
 - The background is the terminal's, as lazygit has no key for it. In Ghostty, that is Starlight's.
-- Diffs, the graph and staged files take the terminal's palette, as git colours them.
+- delta draws diffs on the backgrounds of Zed's diff hunks, and words on Zed's word colours. Its
+  syntax colours are its default theme's.
+- The graph and staged files take the terminal's palette, as git colours them.
 
 ## A new version
 

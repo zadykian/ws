@@ -11,6 +11,7 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
@@ -149,5 +150,21 @@ func TestTheThemeHoldsOneColourAKey(t *testing.T) {
 	}
 	if theme != 12 {
 		t.Errorf("the theme sets %d keys, want lazygit's 12", theme)
+	}
+}
+
+// The pager is delta, which the package git-delta installs beside lazygit.
+func TestThePagerIsDeltaFromItsPackage(t *testing.T) {
+	pagers, _ := leaves(t)["git.pagers"].([]any)
+	if len(pagers) != 1 {
+		t.Fatalf("pagers %v", pagers)
+	}
+	pager, _ := pagers[0].(map[string]any)
+	if cmd, _ := pager["pager"].(string); !strings.HasPrefix(cmd, "delta ") {
+		t.Errorf("pager %q", cmd)
+	}
+	group, _ := steps()[0].(host.Group)
+	if packages, _ := group.Parts[0].(host.Packages); !slices.Contains(packages.Names, "git-delta") {
+		t.Errorf("packages %v", packages.Names)
 	}
 }
