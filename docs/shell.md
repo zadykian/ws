@@ -23,6 +23,38 @@ credential. It names instead the keys a real run would drop, without their value
 be a URL, which names a host. A real run keeps the old file beside the new one, as
 `~/.gitconfig.*~`: its name ends in the run's PID and time.
 
+## The host's load
+
+An ssh login with a terminal, a plain `ssh ws` or `ssh -t ws COMMAND`, runs in a tmux of its own.
+Its status line holds [ws-bar's](tmux.md#ws-bar) line of the host's load. It has the options of
+[Zed's terminals](zed.md#terminals-in-tmux): no prefix, and `paused` after 5 min with no key and no
+output. `~/.bashrc` starts it above its interactive guard, so ssh's command runs there too. The
+login's exit status is the shell's or the command's, which cld and `ws-join` read.
+
+- A hangup ends the session, and its tmux server with it: the socket is in a directory of the
+  login's own, which goes as the login ends.
+- `ssh -o SetEnv=LC_WS_BAR=off ws` skips it, as Ubuntu's sshd accepts `LC_*`.
+- A login with no terminal, such as Zed's server's or scp's, runs as before. So does one inside
+  tmux already, cld's session among them, which nests in it.
+- A Zed terminal runs as before too: its command runs Zed's terminal script, whose own tmux holds
+  the line ([Zed](zed.md#terminals-in-tmux)). A Zed task runs in the login's tmux, as any command.
+- `WS_BAR_LOGIN` marks each process in that tmux, so that no shell there starts another, even
+  where `TMUX` is gone.
+- Where tmux is missing, or never starts the pane, the login goes on outside tmux. A broken tmux or
+  ws never shuts ssh out, which sshd's `ForceCommand` would. So does a command that `/tmp` has no
+  room for: no login loses its command.
+- tmux draws on a screen of its own, which goes with it. As the login ends, its history and screen
+  print again, colors kept, so what `ssh -t ws COMMAND` printed stays on the Mac's terminal. tmux's
+  `[exited]` is dropped. A Ctrl-C that ends the command keeps its output too, and its status, 130.
+- The prompt sets the terminal's title, `user@ws: ~/dir`, as outside tmux, and tmux passes it on to
+  the Mac's terminal. Zed's terminals leave it to a program ([Zed](zed.md#terminals-in-tmux)).
+
+What remains costs a little. The status line takes a row. The Mac's scrollback gets the output
+only as the login ends, and the wheel scrolls tmux's history until then. Past 10,000 lines the
+oldest are lost. A full-screen program's screen is gone at its exit, as without tmux. tmux's
+screen hides the login's message until the end. Where `/tmp` fills during the login, the status
+holds but the output is gone.
+
 ## Signing
 
 `~/.gitconfig` signs each commit with an SSH key of the machine's own: `ws_git_signing_key`

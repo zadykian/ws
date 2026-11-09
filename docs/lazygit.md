@@ -27,12 +27,13 @@ the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
 - In tmux, it sets the pane's title, and no write reaches the terminal that lazygit draws on.
 - The terminal's stack keeps the shell's title, and gets it back within a second of lazygit's end.
   Where a terminal lacks the stack, the shell's next prompt sets its own title in an `xterm`
-  terminal, as Ubuntu's `~/.bashrc` does.
+  terminal, as Ubuntu's `~/.bashrc` does, and in [the ssh login's tmux](shell.md#the-hosts-load).
 - Where stdin or stdout is not a terminal, the wrapper runs lazygit and sets nothing.
 
 Where the title shows:
 
-- Ghostty's tab, through `ssh ws` with no tmux on ws.
+- Ghostty's tab, through `ssh ws`, whose tmux passes it on as Zed's does
+  ([The host's load](shell.md#the-hosts-load)).
 - Zed's terminal toolbar, as [Zed's tmux](zed.md#terminals-in-tmux) passes it on. Zed's tab takes
   no title.
 - Not past cld's tmux, which leaves `set-titles` off. A status line that names `#{pane_title}`, as

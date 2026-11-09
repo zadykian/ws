@@ -22,7 +22,7 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
-  repositories.
+  repositories. Each ssh login with a terminal shows the host's load.
 - [`tmux`](docs/tmux.md): tmux from Ubuntu's archive, and ws-bar, the host's load for tmux's
   status lines.
 - [`lazygit`](docs/lazygit.md): lazygit from Ubuntu's archive, in JetBrains Dark, with the
