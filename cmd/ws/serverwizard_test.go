@@ -92,11 +92,11 @@ func TestServerWizardRunsTheStagesChosen(t *testing.T) {
 	}
 }
 
-// s opens ws's state, read on ws itself, and the list comes back with no scan.
+// s opens ws's state, read on ws itself: the keys leave it by its title. tui's tests follow the
+// loop back to the list.
 func TestServerWizardStateKeyReadsWs(t *testing.T) {
 	keys := stateTrip{newAfterScan("s"), "ws server wizard: ws"}
-	status, m := screenServer(keys)
-	if status != 0 || bytes.Count(keys.drawn.Bytes(), []byte(enterScreen)) != 3 {
+	if status, m := screenServer(keys); status != 0 {
 		t.Errorf("status %d, calls %q", status, m.Calls)
 	}
 }

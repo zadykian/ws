@@ -133,7 +133,7 @@ func (s stateTrip) Read(b []byte) (int, error) {
 	return n, err
 }
 
-// The lists come back from the state screen with no scan of their own.
+// The lists come back from the state screen with no scan of their own: one scan reads the Mac.
 func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	p, m := macTerminal()
 	p.machine = freed{m}
@@ -144,8 +144,5 @@ func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	status := execute(ctx, newRoot(p, newMacCmd(p), newServerCmd(p)), []string{"mac", "wizard"}, keys, &out, keys)
 	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 1 {
 		t.Fatalf("status = %d, want a scan alone: calls = %q", status, m.Calls)
-	}
-	if got := bytes.Count(keys.drawn.Bytes(), []byte(enterScreen)); got != 3 {
-		t.Errorf("entered the screen %d times", got)
 	}
 }
