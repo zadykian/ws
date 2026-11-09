@@ -6,11 +6,11 @@ import (
 	"net/netip"
 )
 
-// shortestPrefix is the shortest prefix of a route that counts: a shorter one is taken for a VPN's
+// shortestPrefix is the shortest prefix of a route that counts. A shorter one is taken for a VPN's
 // catch-all, as 0.0.0.0/1, rather than a network.
 const shortestPrefix = 8
 
-// network returns the network that value names: ip writes a route to one address without its /32,
+// network returns the network that value names. ip writes a route to one address without its /32,
 // and a prefix may carry host bits, as the bridge's 172.17.0.1/16 does.
 func network(value string) (netip.Prefix, error) {
 	if p, err := netip.ParsePrefix(value); err == nil {
@@ -23,10 +23,10 @@ func network(value string) (netip.Prefix, error) {
 	return netip.PrefixFrom(a, a.BitLen()), nil
 }
 
-// Conflicts returns, as text, the routes that Docker's networks would overlap: any route into
-// pool that is not an on-link route of the main table, which Docker avoids, and any route into
-// bridge but docker0's own. Routes of another type than unicast do not count, nor do those shorter
-// than /8, a VPN's 0.0.0.0/1, which cover every address rather than name a network.
+// Conflicts returns, as text, the routes that Docker's networks would overlap. One is any route
+// into pool that is not an on-link route of the main table, which Docker avoids. The other is any
+// route into bridge but docker0's own. Routes of another type than unicast do not count. Nor do
+// those shorter than /8, a VPN's 0.0.0.0/1, which cover every address rather than name a network.
 func Conflicts(routes []Route, pool, bridge string) ([]string, error) {
 	poolNet, err := network(pool)
 	if err != nil {

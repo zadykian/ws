@@ -10,8 +10,8 @@ import (
 )
 
 // keyURL and ascSHA256 are Docker's apt key as its install guide for Ubuntu gives it. The checksum
-// is that of the key with fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, so that a
-// changed key fails the run rather than being trusted unseen.
+// is that of the key with fingerprint `9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88`, so that
+// a changed key fails the run rather than being trusted unseen.
 const (
 	keyPath = "/etc/apt/keyrings/docker.asc"
 	keyURL  = "https://download.docker.com/linux/ubuntu/gpg"

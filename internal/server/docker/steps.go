@@ -1,6 +1,7 @@
-// Package docker is the docker role as Go steps: Docker Engine from Docker's apt repository, its
-// daemon.json, docker.slice, the build cache's collection and the containers' DNS through the
-// host, and for a ws_user other than root a rootless daemon of its own. See docs/docker.md.
+// Package docker is the docker role as Go steps. They set up Docker Engine from Docker's apt
+// repository, its daemon.json, docker.slice, the build cache's collection and the containers' DNS
+// through the host. For a ws_user other than root, they set up a rootless daemon of its own. See
+// docs/docker.md.
 package docker
 
 import (
@@ -25,9 +26,9 @@ const (
 	rootlessStep   = "Docker rootless daemon"
 )
 
-// Steps returns the role's steps in order: the repository, the packages, the check of the routes,
-// the user's leaving the docker group, the configuration, the check of docker0, and the user's
-// rootless daemon. The role takes no secrets.
+// Steps returns the role's steps in order. The repository and the packages come first, then the
+// check of the routes and the user's leaving the docker group. Then come the configuration, the
+// check of docker0, and the user's rootless daemon. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	return steps(v, m, effect.OSUnits{}, out, StatfsSize, BridgeAddrs)
 }

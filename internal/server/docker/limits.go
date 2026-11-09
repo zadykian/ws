@@ -10,8 +10,9 @@ import (
 	"github.com/zadykian/ws/internal/server/values"
 )
 
-// WithLimits fills the limits of docker.slice that the values leave empty: half the RAM and half
-// the CPUs, which leaves the other half to the rest of the machine, the user's sessions among it.
+// WithLimits fills the limits of docker.slice that the values leave empty, with half the RAM and
+// half the CPUs. That leaves the other half to the rest of the machine, the user's sessions among
+// it.
 // It reads the RAM from /proc/meminfo and the CPUs from /proc/cpuinfo.
 func WithLimits(m effect.Machine, d values.Docker) (values.Docker, error) {
 	if d.MemoryMax != "" && d.CPUQuota != "" {

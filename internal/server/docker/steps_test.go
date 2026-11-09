@@ -112,7 +112,7 @@ func TestStepsTakeTheUserOutOfTheDockerGroup(t *testing.T) {
 	m, ss := fakeSteps(t, "ws")
 	m.Files["/etc/group"] = []byte("docker:x:999:ws\n")
 	m.Results["gpasswd --delete ws docker"] = effecttest.Result{}
-	// The fake leaves /etc/group as it is, so the run's check after applying still sees the user.
+	// The fake leaves /etc/group unchanged, so the run's check after applying still sees the user.
 	_, err := step.Run(t.Context(), ss, &effecttest.Out{}, false)
 	if err == nil || !strings.Contains(err.Error(), "remove ws from the docker group") {
 		t.Errorf("run = %v, want the group's step to plan the removal", err)

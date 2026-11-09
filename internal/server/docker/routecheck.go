@@ -10,8 +10,8 @@ import (
 	"github.com/zadykian/ws/internal/server/values"
 )
 
-// routeCheck stops the run, before daemon.json takes the pool, on a route that Docker's networks
-// would overlap: such as one a VPN keeps in a table of its own. The routes are those of the
+// routeCheck stops the run on a route that Docker's networks would overlap, such as one a VPN keeps
+// in a table of its own. It runs before daemon.json takes the pool. The routes are those of the
 // moment, and a VPN that is down has none.
 type routeCheck struct {
 	m effect.Machine
