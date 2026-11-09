@@ -19,7 +19,13 @@ func TestStepsAreTheRole(t *testing.T) {
 	for _, s := range steps() {
 		names = append(names, s.Name())
 	}
-	if want := []string{packageStep}; !slices.Equal(names, want) {
+	if want := []string{packageStep, wrapperStep}; !slices.Equal(names, want) {
 		t.Errorf("steps %v, want %v", names, want)
+	}
+}
+
+func TestTheWrapperWaitsOnThePackage(t *testing.T) {
+	if got := steps()[1].WaitsOn(); got != packageStep {
+		t.Errorf("the wrapper waits on %q", got)
 	}
 }

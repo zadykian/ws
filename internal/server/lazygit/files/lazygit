@@ -1,0 +1,5 @@
+#!/bin/sh
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+# lazygit replaces the script, so that it stays the shell's job, with its own signals and exit
+# status.
+exec /usr/bin/lazygit "$@"
