@@ -1,6 +1,6 @@
 name: release
 
-# A pushed tag vX.Y.Z on a commit of main publishes ws's release: ci.yml and mac.yml run on the tag
+# A pushed tag vX.Y.Z on a commit of main publishes ws's release. ci.yml and mac.yml run on the tag
 # first, then three binaries, ws.sha256 and install.sh are published, all checked for the local
 # list's words. docs/releases.md says how a release is cut.
 on:

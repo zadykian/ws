@@ -1,7 +1,7 @@
 name: mac-wizard
 
-# ws mac wizard on macOS, in a workflow of its own beside mac.yml, on the same events: every pull
-# request, whatever its base, and on main each pull request's merge.
+# ws mac wizard on macOS, in a workflow of its own beside mac.yml, on the same events. They are
+# every pull request, whatever its base, and on main each pull request's merge.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The wizard runs from the clone in ~/repository/ws, where docs/mac.md puts it, so the
+      # The wizard runs from the clone in ~/repository/ws, where docs/mac.md puts it. So the
       # checkout is copied there, as ci.yml's playbook job copies it into root's home.
       - name: Put the checkout at ~/repository/ws
         run: |
