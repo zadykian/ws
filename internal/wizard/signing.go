@@ -16,7 +16,7 @@ const signingStage = "Signing key"
 // gh holds no token that may add it. It runs after ws's run, which makes the key, and after the gh
 // stage, whose login lists and adds the key.
 type Signing struct {
-	Gh *Gh
+	Gh GhCLI
 	Ws *Session
 	// Lock is the run's lock, which holds the key's file for gh.
 	Lock string

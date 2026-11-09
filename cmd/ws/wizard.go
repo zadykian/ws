@@ -90,7 +90,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	if check {
 		later = scratch
 	}
-	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, F: e.talks, Out: out}
+	gh := &wizard.Gh{GhCLI: wizard.GhCLI{Conf: later, Home: p.getenv("HOME"), M: p.machine, Out: out}, Tty: p.tty, F: e.talks}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
 		SSH: wizard.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
 	sudo := e.sudo
@@ -103,7 +103,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(e, later)
-	login := &wizard.Login{Host: host, Gh: gh}
+	login := &wizard.Login{Host: host, Gh: gh.GhCLI}
 	cable := &wizard.Cable{Host: host, Run: run, Login: login, Ws: ws, Setup: setup, Env: p.lookup,
 		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
@@ -123,7 +123,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		install,
 		run,
 		&wizard.WsClaude{Ws: ws, Tty: p.tty},
-		&wizard.Signing{Gh: gh, Ws: ws, Lock: lock, Check: check},
+		&wizard.Signing{Gh: gh.GhCLI, Ws: ws, Lock: lock, Check: check},
 		&wizard.Tunnel{Host: host, Ws: ws, Setup: setup, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,

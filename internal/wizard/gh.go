@@ -23,16 +23,21 @@ const ghScopes = "write:public_key,write:ssh_signing_key"
 // Ubuntu's installer imports for ws's user. setup's git step, which runs after, adds git's signing
 // key with that login.
 type Gh struct {
-	// Conf is mac.conf's path, and Home the user's.
-	Conf, Home string
+	GhCLI
 	// Tty tells whether a terminal is there for gh's device flow.
 	Tty bool
+	// F runs gh's login, which shows a code and waits. Nil means M.Pass.
+	F effect.Foreground
+}
+
+// GhCLI is the Mac's gh, as the stages that read its login and the Mac's key run it.
+type GhCLI struct {
+	// Conf is mac.conf's path, and Home the user's.
+	Conf, Home string
 	// LookPath finds a program on PATH.
 	LookPath func(string) (string, error)
 	M        effect.Machine
-	// F runs gh's login, which shows a code and waits. Nil means M.Pass.
-	F   effect.Foreground
-	Out effect.Out
+	Out      effect.Out
 }
 
 // Name is the stage's name.
@@ -70,7 +75,7 @@ func (c ghLater) String() string {
 }
 
 // ghPath returns the path of gh, and the change that installs it where PATH has none.
-func (g *Gh) ghPath(ctx context.Context) (string, []step.Change, error) {
+func (g GhCLI) ghPath(ctx context.Context) (string, []step.Change, error) {
 	path, install, err := setup.FindGh(ctx, g.M, g.look)
 	if err != nil {
 		return "", nil, fmt.Errorf("%s: %w", ghStage, err)
@@ -81,7 +86,7 @@ func (g *Gh) ghPath(ctx context.Context) (string, []step.Change, error) {
 	return path, nil, nil
 }
 
-func (g *Gh) look(name string) (string, error) {
+func (g GhCLI) look(name string) (string, error) {
 	if g.LookPath != nil {
 		return g.LookPath(name)
 	}

@@ -13,7 +13,7 @@ func TestGhHand(t *testing.T) {
 		m.Results["git config --global --includes --get-all credential.https://github.com.helper"] =
 			effecttest.Result{Out: []byte(cred + "\n")}
 		hand := &Hand{}
-		(&Gh{M: m}).Hand(context.Background(), hand)
+		(&Gh{GhCLI: GhCLI{M: m}}).Hand(context.Background(), hand)
 		if len(hand.lines) != want {
 			t.Errorf("%s: %d lines in the list; want %d", cred, len(hand.lines), want)
 		}

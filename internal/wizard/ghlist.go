@@ -29,7 +29,7 @@ func (g *Gh) listed(ctx context.Context, gh, key string) (listed, refresh bool, 
 }
 
 // api returns the keys that gh's login lists at path, or nil where the login lacks their scope.
-func (g *Gh) api(ctx context.Context, gh, path string) ([]string, error) {
+func (g GhCLI) api(ctx context.Context, gh, path string) ([]string, error) {
 	out, err := g.M.Run(ctx, gh, "api", "--paginate", path, "--jq", ".[].key")
 	if err != nil {
 		if strings.Contains(err.Error(), "HTTP 404") {

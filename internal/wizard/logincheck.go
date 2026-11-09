@@ -17,7 +17,7 @@ type Login struct {
 	// Host is the Host key stage, whose ssh, address and known_hosts this one uses.
 	Host *HostKey
 	// Gh names the Mac's key in the stop.
-	Gh *Gh
+	Gh GhCLI
 }
 
 // Name is the stage's name.

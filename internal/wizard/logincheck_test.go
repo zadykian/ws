@@ -18,7 +18,7 @@ func newLogin(login effecttest.Result) (*Login, *effecttest.Machine) {
 	h, m := newHost(nil)
 	m.Results["ssh-keygen -F ws -f "+hostsOf] = effecttest.Result{}
 	m.Results[loginCall] = login
-	return &Login{Host: h, Gh: &Gh{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}}, m
+	return &Login{Host: h, Gh: GhCLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}}, m
 }
 
 // sshFailed is the error of a failed ssh, whose stderr ends each line with \r\n.

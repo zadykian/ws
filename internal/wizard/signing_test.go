@@ -12,7 +12,7 @@ import (
 
 func newSigning(status wsStatus, listed string) (*Signing, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, false)
-	g := &Gh{M: m, Out: &effecttest.Out{}, LookPath: found}
+	g := GhCLI{M: m, Out: &effecttest.Out{}, LookPath: found}
 	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
 	m.Results["/bin/gh ssh-key add /l/signing.pub --type signing --title ws1"] = effecttest.Result{}
 	m.Results["/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"] =
