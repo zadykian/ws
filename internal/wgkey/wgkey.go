@@ -12,9 +12,9 @@ import (
 
 const size = 32
 
-// Generate makes a private key from random, as wg genkey does: 32 random bytes with the bits
-// cleared and set that Curve25519 needs, so that the key is the same in every program. It returns
-// the key in base64.
+// Generate makes a private key from random, as wg genkey does. It takes 32 random bytes with the
+// bits cleared and set that Curve25519 needs, so that the key is the same in every program. It
+// returns the key in base64.
 func Generate(random io.Reader) (string, error) {
 	var key [size]byte
 	if _, err := io.ReadFull(random, key[:]); err != nil {
