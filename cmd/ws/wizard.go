@@ -124,7 +124,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		run,
 		&wizard.WsClaude{Ws: ws, Tty: p.tty},
 		&wizard.Signing{Gh: gh.GhCLI, Ws: ws, Lock: lock, Check: check},
-		&wizard.Tunnel{Host: host, Ws: ws, Setup: setup, Hand: hand, Home: p.getenv("HOME"),
+		&wizard.Tunnel{Ws: ws, Conf: later, Check: check, Setup: setup, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,
 	}

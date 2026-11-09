@@ -17,7 +17,7 @@ import (
 // root's key rather than tunnel.pub, which the user can write, as the key it sends becomes ws's
 // peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
-	c, err := t.Host.conf()
+	c, err := t.Ws.want()
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 		return errors.New(tunnelStage + ": ws has no wg0 key: mend what it printed, then run the wizard again")
 	}
 	if wg0 != c.PublicKey {
-		file := confFile{t.Host.Conf, tunnelStage, t.M, t.Out}
+		file := confFile{t.Conf, tunnelStage, t.M, t.Out}
 		if err := file.set(ctx, "WS_PUBLIC_KEY", wg0); err != nil {
 			return err
 		}
