@@ -14,6 +14,7 @@ import (
 	"github.com/zadykian/ws/internal/server/fans"
 	"github.com/zadykian/ws/internal/server/fresh"
 	"github.com/zadykian/ws/internal/server/ikeward"
+	"github.com/zadykian/ws/internal/server/lazygit"
 	"github.com/zadykian/ws/internal/server/network"
 	"github.com/zadykian/ws/internal/server/otelcol"
 	"github.com/zadykian/ws/internal/server/security"
@@ -46,6 +47,7 @@ var all = []Role{
 	{Name: "fans", Steps: fans.Steps},
 	{Name: "shell", Steps: shell.Steps},
 	{Name: "tmux", Steps: tmux.Steps},
+	{Name: "lazygit", Steps: lazygit.Steps},
 	{Name: "devtools", Steps: devtools.Steps},
 	{Name: "docker", Steps: docker.Steps},
 	{Name: "claude", Steps: claude.Steps},
