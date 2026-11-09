@@ -64,9 +64,3 @@ func wsWant(m effect.Machine) (conf.Conf, error) {
 	}
 	return conf.Conf{Target: target, User: v.User}, err
 }
-
-// serverShell runs the remote script on ws itself, for host_vars' ws_user, as the Mac's ssh logs in
-// as that user.
-func serverShell(m effect.Machine) wizard.LocalShell {
-	return wizard.LocalShell{M: m, User: func() string { c, _ := wsWant(m); return c.User }}
-}

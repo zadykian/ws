@@ -23,17 +23,17 @@ func (w macScreen) state(side tui.Side, sudo *wizard.Sudo) error {
 	}
 	reach := &varsReach{p: w.p, sudo: sudo}
 	defer reach.close(ctx)
-	return tui.RunState(ctx, w.config(), title+": ws", wsRead(reach, w.p.version))
+	return tui.RunState(ctx, w.config(), title+": ws", stateRead(reach.reach, w.p.version))
 }
 
-// wsRead is the state screen's read of ws. The session stays once found, as a new one would hold
-// sudo's ticket until the screen ends. Each read asks ws's status again, as a run may have changed
-// it.
-func wsRead(reach *varsReach, version string) tui.StateReader {
+// stateRead is the state screen's read of ws, by the remote script's report, which open reaches ws
+// for. The session stays once found, as a new one would hold sudo's ticket until the screen ends.
+// Each read asks ws's status again, as a run may have changed it.
+func stateRead(open sessionOpen, version string) tui.StateReader {
 	var ws *wizard.Session
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 		if ws == nil {
-			found, err := reach.reach(ctx, b)
+			found, err := open(ctx, b)
 			if err != nil {
 				return nil, err
 			}
