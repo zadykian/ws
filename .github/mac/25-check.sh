@@ -1,6 +1,7 @@
 #!/bin/bash
 # --check on a fresh Mac changes nothing.
-# --check must write no file, keep no copy of ~/.ssh/config and install no formula or cask.
+# --check must write no file, keep no copy of ~/.ssh/config or ~/.zshrc and install no formula or
+# cask.
 # The brew installs it would run go to stderr, with ws mac apply's other lines.
 
 set -eo pipefail
@@ -12,8 +13,8 @@ ws mac apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
         exit 1
     }
 fail=0
-for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed /etc/ws-tunnel \
-    /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
+for path in ~/.ssh/config.d ~/.ssh/config.*~ ~/.config/zed ~/.config/ws/zshrc ~/.zshrc.*~ \
+    /etc/ws-tunnel /usr/local/libexec/ws-tunnel "/Library/LaunchDaemons/$LABEL.plist"; do
     if sudo test -e "$path"; then
         echo "::error::ws mac apply --check made $path"
         fail=1
