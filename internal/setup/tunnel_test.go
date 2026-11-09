@@ -36,8 +36,8 @@ func TestTunnelPlansTheCopyAndTheKeyOnAFreshMac(t *testing.T) {
 		"would make /usr/local/libexec, root's, with mode 755",
 		"would make /usr/local/libexec/ws-tunnel, root's, with mode 755",
 		"would copy /h/.local/bin/ws to /usr/local/libexec/ws-tunnel/ws",
-		"would make /etc/ws-tunnel, root's, with mode 700",
-		"would make /etc/ws-tunnel/routes.d, root's, with mode 755",
+		"create directory /etc/ws-tunnel, owner 0:0, mode 700",
+		"create directory /etc/ws-tunnel/routes.d, owner 0:0, mode 755",
 		"would make the Mac's WireGuard key, /etc/ws-tunnel/private.key",
 	})
 	if got != want {
@@ -73,18 +73,16 @@ func TestTunnelStopsWhereADirectoryAboveTheCopyIsWritable(t *testing.T) {
 	}
 }
 
+// TestTunnelApplyInstallsCopiesAndMakesTheKey applies a fresh Mac's plan, then plans again. With the
+// key that root's ws makes, and ws where mv put it, that plan is empty.
 func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := tunnelStep(m)
 	for _, line := range []string{"mkdir -p /h/.local/bin", "mv -f /h/.local/bin/ws.new /h/.local/bin/ws",
-		"/usr/local/libexec/ws-tunnel/ws mac tunnel key"} {
+		"chown 0:0 /usr/local", "chown 0:0 /usr/local/libexec", "chown 0:0 /usr/local/libexec/ws-tunnel"} {
 		m.Results[line] = effecttest.Result{}
 	}
-	for _, dir := range []string{"/usr/local", "/usr/local/libexec", "/usr/local/libexec/ws-tunnel", "/etc/ws-tunnel", "/etc/ws-tunnel/routes.d"} {
-		m.Results["chown 0:0 "+dir] = effecttest.Result{}
-		m.Results["mkdir -m 755 "+dir] = effecttest.Result{}
-		m.Results["mkdir -m 700 "+dir] = effecttest.Result{}
-	}
+	m.Results["/usr/local/libexec/ws-tunnel/ws mac tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
 	p, err := s.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -95,8 +93,14 @@ func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	if string(m.Files["/usr/local/libexec/ws-tunnel/ws"]) != "ws" || m.Modes["/usr/local/libexec/ws-tunnel/ws"] != 0o755 {
 		t.Errorf("root's copy holds %q", m.Files["/usr/local/libexec/ws-tunnel/ws"])
 	}
-	out := s.Out.(*effecttest.Out).Lines
-	if len(out) != 2 || out[1] != "say: made the Mac's WireGuard key, /etc/ws-tunnel/private.key" {
+	out := lines(s.Out.(*effecttest.Out).Lines)
+	if !strings.Contains(out, "say: copied /h/.local/bin/ws to /usr/local/libexec/ws-tunnel/ws\n") ||
+		!strings.Contains(out, "say: made the Mac's WireGuard key, /etc/ws-tunnel/private.key") {
 		t.Errorf("out = %q; want the copy and the key", out)
+	}
+	m.Files["/h/.local/bin/ws"] = []byte("ws")
+	m.Root["/etc/ws-tunnel/private.key"] = effect.Attrs{Mode: 0o600}
+	if got := tunnelChanges(t, tunnelStep(m)); len(got) != 0 {
+		t.Errorf("a second Plan = %q; want none", got)
 	}
 }

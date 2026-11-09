@@ -104,7 +104,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	key, err := t.key()
+	key, err := t.key(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}

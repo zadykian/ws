@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/step"
 )
 
@@ -47,22 +48,17 @@ func launchctlAction(loaded, plist, program, key, conf bool) []Launchctl {
 
 // daemon plans tunnel.conf, the plist and launchd's action, where mac.conf has WS_PUBLIC_KEY.
 func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
-	var cs []step.Change
-	conf, err := rootFile(t.M, tunnelDir+"/tunnel.conf", 0o600, []byte(tunnelConf(t.Conf)))
+	cs, err := plan(ctx, nil, host.File{M: t.M, Path: tunnelDir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600})
 	if err != nil {
 		return nil, err
 	}
-	plist, err := rootFile(t.M, tunnelPlist, 0o644, t.Plist)
-	if err != nil {
+	conf := len(cs)
+	if cs, err = plan(ctx, cs, host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}); err != nil {
 		return nil, err
 	}
-	for _, c := range []step.Change{conf, plist} {
-		if c != nil {
-			cs = append(cs, c)
-		}
-	}
+	plist := len(cs) > conf
 	_, err = t.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel)
-	for _, l := range launchctlAction(err == nil, plist != nil, t.copied, t.keyMade, conf != nil) {
+	for _, l := range launchctlAction(err == nil, plist, t.copied, t.keyMade, conf > 0) {
 		cs = append(cs, l)
 	}
 	return cs, nil
