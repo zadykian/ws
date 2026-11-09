@@ -12,9 +12,9 @@ import (
 // tailLines is how many of a failed step's last lines stay for the end of a run.
 const tailLines = 30
 
-// record keeps a run's words past the screen: the file that holds all of them, the warnings and the
-// changes that --check planned, and the end of the failed step's output. A window and its scrollback
-// go with the alternate screen, and these are what the maintainer reads after it.
+// record keeps a run's words past the screen: the file that holds every word, and the warnings and
+// the changes that --check planned. It also keeps the end of the failed step's output. A window and
+// its scrollback go with the alternate screen, and these are what the maintainer reads after it.
 type record struct {
 	lock sync.Mutex
 	// log takes every line of the run, as clean makes it. Nil where there is none.
@@ -102,8 +102,8 @@ func (r *record) close() {
 	r.log = nil
 }
 
-// report prints what a run leaves on the normal screen: its warnings, --check's changes, the end of
-// a failed step's output, and the log's path where there is something to read in it.
+// report prints what a run leaves on the normal screen. That is its warnings, --check's changes,
+// the end of a failed step's output, and the log's path where there is something to read in it.
 func (r *record) report(w io.Writer, path string, cut bool) {
 	r.lock.Lock()
 	defer r.lock.Unlock()

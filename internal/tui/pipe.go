@@ -8,9 +8,9 @@ import (
 // pipeCap bounds a line that no line end closes, such as a meter of \r alone.
 const pipeCap = 64 << 10
 
-// pipe turns what a step's commands print into lines for the screen, as OSMachine.Stderr. It is a
-// pointer, as os/exec keeps to one goroutine a command only for a Stdout and Stderr that compare
-// equal, and it locks, as a run's commands can overlap.
+// pipe, as OSMachine.Stderr, turns what a step's commands print into lines for the screen. A pipe
+// goes by pointer, as os/exec keeps to one goroutine a command only for a Stdout and Stderr that
+// compare equal. It locks, as a run's commands can overlap.
 type pipe struct {
 	bridge *Bridge
 	lock   sync.Mutex
@@ -19,7 +19,7 @@ type pipe struct {
 }
 
 // Write sends each whole line at once. One message a write keeps a loud command from drawing a
-// frame a line, and rest waits for its end, as a write can stop in a line or in a character.
+// frame a line. rest waits for its end, as a write can stop in a line or in a character.
 func (p *pipe) Write(data []byte) (int, error) {
 	p.lock.Lock()
 	defer p.lock.Unlock()

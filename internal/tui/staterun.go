@@ -14,9 +14,9 @@ var errStateLeft = errors.New("the state screen was left")
 // reach the screen and not the terminal under it.
 type StateReader func(ctx context.Context, b *Bridge) ([]StateSection, error)
 
-// RunState draws the state screen on c.Out until q, and reads the machine in Run's work, so that a
-// read's panic and a signal end as a run's do. A read goes on under the screen, which takes the keys
-// meanwhile, and q ends it through ctx. It returns nil after q, and Cut's error after a cut.
+// RunState draws the state screen on c.Out until q, and reads the machine in Run's work. So a
+// read's panic and a signal end as a run's do. A read goes on under the screen, which takes the
+// keys meanwhile, and q ends it through ctx. It returns nil after q, and Cut's error after a cut.
 func RunState(ctx context.Context, c Config, title string, read StateReader) error {
 	ctx, leave := context.WithCancelCause(ctx)
 	defer leave(nil)

@@ -59,7 +59,8 @@ type session struct {
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
 	field field
-	// confirming is set while the box in confirm asks before a stop, and halted once it was confirmed.
+	// confirming is set while the box in confirm asks before a stop, and halted once the stop is
+	// confirmed.
 	confirming bool
 	confirm    Footer
 	halted     bool
@@ -144,7 +145,7 @@ func (s session) typed(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return s, nil
 }
 
-// drop takes the question id out of the queue, and the next one up where it was on the screen. The
+// drop takes the question id out of the queue, and the next one up where id was on the screen. The
 // field goes with its question, and what was typed in it.
 func (s session) drop(id uint64) session {
 	first := len(s.asked) > 0 && s.asked[0].id == id

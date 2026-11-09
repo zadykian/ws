@@ -23,7 +23,7 @@ const (
 	roleColumns = 2
 )
 
-// Stage is a step of a queue: the two lists show one order, as stages wait on each other across the
+// Stage is a step of a queue. The two lists show one order, as stages wait on each other across the
 // machines and share a connection, so that no two run at once.
 type Stage struct {
 	Name string
@@ -31,7 +31,7 @@ type Stage struct {
 	Waits string
 	Side  Side
 	// Nested is what the stage runs, each group by the Parent of its events. A group with no steps
-	// stands for what no scan has named yet: a role shows by its name, and a group called as its
+	// stands for what no scan has named yet. A role shows by its name, and a group called as its
 	// stage shows nothing until its events do.
 	Nested []Group
 }

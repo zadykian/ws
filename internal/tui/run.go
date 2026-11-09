@@ -52,8 +52,8 @@ type Config struct {
 type Work func(ctx context.Context, b *Bridge) error
 
 // Run draws screen on c.Out, runs work in a goroutine beside it, and returns once the terminal is
-// back: after the work, or once Ctrl-C or a signal ended ctx and then came again, past a command
-// that holds the terminal.
+// back. That is after the work, or once Ctrl-C or a signal ended ctx and then came again, past a
+// command that holds the terminal.
 // A screen that ends first ends ctx, and Run gives the work c.Unwind. It returns the work's error,
 // or Cut's where a cut run failed, for execute to report. What stays by hand prints on the normal
 // screen before Run returns. A panic of the work is an error too.

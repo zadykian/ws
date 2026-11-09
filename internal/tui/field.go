@@ -75,8 +75,9 @@ func (f field) answer() (field, string, bool) {
 }
 
 // render draws the box for a window. The buttons go first in a short window, as their keys work
-// unseen, and then the frame: a run waits on the question, and its keys reach the input, so the input
-// stays. A refusal takes the line under the input, so that the box holds still as one comes and goes.
+// unseen, and then the frame. A run waits on the question, and its keys reach the input, so the
+// input stays. A refusal takes the line under the input, so that the box holds still as one comes
+// and goes.
 func (f field) render(theme Theme, window Size) string {
 	if window.Width < 1 {
 		return ""

@@ -160,7 +160,7 @@ func TestRenderDropsTheStatusThatDoesNotFit(t *testing.T) {
 	}
 }
 
-// TestRenderFillsAnyWindow keeps a resize from breaking the screen: a window gets its exact height
+// TestRenderFillsAnyWindow keeps a resize from breaking the screen. A window gets its exact height
 // and no line past its width, around each size where the layout changes, and in tiny ones.
 func TestRenderFillsAnyWindow(t *testing.T) {
 	theme := NewTheme(noColor(""))

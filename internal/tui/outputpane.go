@@ -17,7 +17,7 @@ const (
 )
 
 // clean leaves what a pane can draw of a line of a run. A step's output and a file's diff hold what
-// a screen must not pass on: a code would move the cursor, and a control character would shift the
+// a screen must not pass on. A code would move the cursor, and a control character would shift the
 // frame. Of a line that \r overwrote, the last state stays, as a terminal would show it.
 func clean(line string) string {
 	line = strings.TrimRight(line, "\r")
@@ -54,8 +54,8 @@ func (l Line) style(theme Theme) lipgloss.Style {
 }
 
 // outputPane is a window on what a run prints. It follows the end until a key moves it, and then
-// holds still as lines arrive. rows are the lines as drawn, wrapped to the pane, as a pane cuts what
-// is wider, and each is styled alone, so that no color crosses a line's end.
+// holds still as lines arrive. rows are the lines as drawn, wrapped to the pane, as a pane cuts
+// what is wider. Each is styled alone, so that no color crosses a line's end.
 type outputPane struct {
 	theme Theme
 	lines []Line

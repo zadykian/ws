@@ -22,8 +22,8 @@ func PickStages(ctx context.Context, c Config, title string, stages []Stage, for
 }
 
 // Reopen draws the lists again as left, a State choice, found them, and returns the next choice. No
-// scan runs, as left came past a scan's end and the state screen changes nothing: what the scan found
-// stands, and so do the boxes, which a scan would choose again.
+// scan runs, as left came past a scan's end and the state screen changes nothing. What the scan
+// found stands, and so do the boxes, which a scan would choose again.
 func Reopen(ctx context.Context, c Config, left Choice) (Choice, error) {
 	picks := make(chan Choice, 1)
 	screen := left.back

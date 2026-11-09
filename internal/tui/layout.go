@@ -34,9 +34,10 @@ type Pane struct {
 	Focused bool
 }
 
-// Layout is a full screen: the title and its status on the first line, the header, the panes side
-// by side, what stands below them, and the footer's buttons on the last lines. A narrow window stacks the panes, and one too
-// short for that shows the focused pane alone. A window with no room for a frame shows no pane.
+// Layout is a full screen. The title and its status take the first line, then come the header and
+// the panes side by side. What stands below them follows, and the footer's buttons take the last
+// lines. A narrow window stacks the panes, and one too short for that shows the focused pane alone.
+// A window with no room for a frame shows no pane.
 type Layout struct {
 	Title  string
 	Status string
