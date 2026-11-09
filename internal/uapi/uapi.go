@@ -1,5 +1,6 @@
 // Package uapi writes and reads wireguard-go's configuration protocol, the text of its IpcSet and
-// IpcGet: key=value lines, with keys in hex. It is pure; the daemon and status carry the text.
+// IpcGet: key=value lines, with keys in hex. The package is pure; the daemon and status carry the
+// text.
 package uapi
 
 import (
