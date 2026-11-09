@@ -11,7 +11,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
-// fingerprints returns the fingerprint of each certificate's primary key in an armored public key,
+// fingerprints returns the fingerprint of each certificate's primary key in an armored key file,
 // in upper-case hex. Each public key packet starts a certificate, and every packet must belong to
 // one. So the list names every key apt would trust from the file, and a subkey belongs to its
 // certificate. It reads packet by packet, so a packet it cannot parse fails the check, where

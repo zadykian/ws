@@ -14,7 +14,7 @@ func TestRepositoriesRefuseAKeyThatIsNotThePinnedOne(t *testing.T) {
 	tests := []struct{ name, body, want string }{
 		{"another key", armoredKey(public(t, a)), notPinned},
 		{"two certificates", armoredKey(append(public(t, a), public(t, b)...)), notPinned},
-		{"no armor", "<html>", "not one armored public key alone"},
+		{"no armor", "<html>", "not armored public key blocks alone"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

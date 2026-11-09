@@ -19,25 +19,49 @@ const (
 
 var (
 	armorHeader = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]*:(?: .*)?$`)
-	// A line of base64, and the checksum's: an = and three octets of base64 (sections 6 and 6.1).
-	armorBase64   = regexp.MustCompile(`^[A-Za-z0-9+/]*={0,2}$`)
+	// A line of base64, which apt skips where it starts with =, and the checksum's: an = and three
+	// octets of base64 (sections 6 and 6.1).
+	armorBase64   = regexp.MustCompile(`^(?:[A-Za-z0-9+/]+={0,2})?$`)
 	armorChecksum = regexp.MustCompile(`^=[A-Za-z0-9+/]{4}$`)
 )
 
 // blanks are what apt strips from each line of a .asc key, C's isspace.
 const blanks = " \t\n\v\f\r"
 
-var errArmor = errors.New("not one armored public key alone")
+var errArmor = errors.New("not armored public key blocks alone")
 
-// dearmor returns the data of armored, which must be one armored public key block alone. apt
-// dearmors a .asc key itself, and reads on into any block that follows. It decodes each line after
-// the headers but those that start with = or -, and skips what is not base64. So each line here
-// must be base64, and the file must hold this block alone.
+// dearmor returns the data of armored, which must hold armored public key blocks alone, blank
+// lines apart at most. apt dearmors a .asc key itself, and reads every block in it. It joins the
+// lines after each block's headers into one run of base64, but those that start with = or -. Then
+// it decodes the run in groups of four, and skips what is not base64. So each line here is base64
+// that starts with no =, and each block decodes on its own, whole groups alone. The runs join as
+// apt's does, and their groups end where the blocks do, so the data is the same as apt's.
 func dearmor(armored string) ([]byte, error) {
 	lines := strings.Split(strings.Trim(armored, blanks), "\n")
 	for i, l := range lines {
 		lines[i] = strings.Trim(l, blanks)
 	}
+	var data []byte
+	for len(lines) > 0 {
+		end := slices.Index(lines, armorEnd)
+		if end < 0 {
+			return nil, errArmor
+		}
+		block, err := dearmorBlock(lines[:end+1])
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, block...)
+		lines = lines[end+1:]
+		for len(lines) > 0 && lines[0] == "" {
+			lines = lines[1:]
+		}
+	}
+	return data, nil
+}
+
+// dearmorBlock returns the data of one block's lines, from its first line to its last.
+func dearmorBlock(lines []string) ([]byte, error) {
 	blank := slices.Index(lines, "")
 	if blank < 0 {
 		blank = len(lines)
@@ -52,8 +76,7 @@ func dearmor(armored string) ([]byte, error) {
 	if len(body) > 0 && armorChecksum.MatchString(body[len(body)-1]) {
 		body = body[:len(body)-1]
 	}
-	if lines[0] != armorBegin || lines[len(lines)-1] != armorEnd ||
-		!all(headers, armorHeader) || !all(body, armorBase64) {
+	if lines[0] != armorBegin || !all(headers, armorHeader) || !all(body, armorBase64) {
 		return nil, errArmor
 	}
 	data, err := base64.StdEncoding.DecodeString(strings.Join(body, ""))
