@@ -1,0 +1,19 @@
+# Written by github.com/zadykian/ws, whose next run replaces any change made here. It writes the
+# host's load to /run/ws-bar/line every 10 s, for tmux's status lines. Its log goes to the journal.
+[Unit]
+Description=The host's load for tmux's status lines
+Documentation=https://github.com/zadykian/ws/blob/main/docs/tmux.md
+
+[Service]
+ExecStart=/usr/local/lib/ws-bar server bar /run/ws-bar/line
+# A user of its own, made as it starts, which reads /proc, hwmon and nvidia-smi alone. The runtime
+# directory goes with the service, the line with it, so that tmux shows no stale load.
+DynamicUser=yes
+RuntimeDirectory=ws-bar
+RuntimeDirectoryMode=0755
+Restart=on-failure
+RestartSec=5
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

@@ -155,7 +155,7 @@ func TestServerGroupsNameEveryStepOfARun(t *testing.T) {
 func TestServerApplyRefusesAStepItsRoleLacks(t *testing.T) {
 	p, m := serverTerminal()
 	status, _, stderr := runWs(p, "", "server", "apply", "--only", "tmux/no such")
-	want := `ws server apply: no step "no such" in tmux; its steps here are ["Tmux"]` + "\n" +
+	want := `ws server apply: no step "no such" in tmux; its steps here are ["Tmux" "Tmux's bar"]` + "\n" +
 		"Run 'ws server apply --help' for usage.\n"
 	if status != 2 || stderr != want {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
