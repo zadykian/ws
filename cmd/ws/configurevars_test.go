@@ -26,7 +26,7 @@ func TestVarsReachTakesTheLockOnceAndLetsItGo(t *testing.T) {
 	p, m := macTerminal()
 	r := &varsReach{p: p}
 	for range 2 {
-		if _, err := r.reach(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "no direct way") {
+		if _, err := r.reach(context.Background(), tui.Offscreen(r.p.machine)); err == nil || !strings.Contains(err.Error(), "no direct way") {
 			t.Fatalf("err = %v", err)
 		}
 	}
@@ -43,7 +43,7 @@ func TestVarsReachLeavesAnotherRunsLock(t *testing.T) {
 	p, m := macTerminal()
 	m.Dirs["/tmp/"+wizard.LockName] = 0o700
 	r := &varsReach{p: p}
-	if _, err := r.reach(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "another run holds") {
+	if _, err := r.reach(context.Background(), tui.Offscreen(r.p.machine)); err == nil || !strings.Contains(err.Error(), "another run holds") {
 		t.Fatalf("err = %v", err)
 	}
 	r.close(context.Background())
@@ -91,7 +91,7 @@ func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 	sudo := &wizard.Sudo{}
 	r := &varsReach{p: p, sudo: sudo}
 	defer r.close(context.Background())
-	got, err := r.reach(context.Background(), nil)
+	got, err := r.reach(context.Background(), tui.Offscreen(r.p.machine))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestVarsSheetOpensWithWhatWsHolds(t *testing.T) {
 	p.machine = ws
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	sheet, err := hostVarsSheet(r.reach).Open(context.Background(), nil)
+	sheet, err := hostVarsSheet(r.reach).Open(context.Background(), tui.Offscreen(r.p.machine))
 	if err != nil {
 		t.Fatal(err)
 	}

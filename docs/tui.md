@@ -251,7 +251,9 @@ A screen owns the terminal, so a step's commands stay off it.
 ## sudo
 
 sudo asks at `/dev/tty`, under a screen. `Bridge.Machine` gives the steps of a run or a read a
-machine whose sudo can't ask, and takes the password in a hidden field:
+machine whose sudo can't ask, and takes the password in a hidden field. `Run` wraps the screen's
+`Config.Machine` once, as each wrapping would hold sudo's ticket until the screen ends. Every work
+takes it from `Bridge.Effects`, with `Bridge.Foreground` and the run's stop:
 
 - Its root commands run by `sudo -n --`, which fails where it would ask.
 - Before each one, `sudo -n -- true` looks for a ticket. A valid one asks nothing, and neither does

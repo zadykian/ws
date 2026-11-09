@@ -47,7 +47,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 	defer reach.close(context.Background())
 	read := stateRead(reach.reach, p.version)
 	for range 2 {
-		sections, err := read(t.Context(), nil)
+		sections, err := read(t.Context(), tui.Offscreen(p.machine))
 		if err != nil || len(sections) != 1 || sections[0].Name != "base" {
 			t.Fatalf("read = %+v, %v", sections, err)
 		}
@@ -69,7 +69,7 @@ func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	p.machine = newReportingWs(m, "v0.0.1")
 	reach := &varsReach{p: p, sudo: &wizard.Sudo{}}
 	defer reach.close(context.Background())
-	if _, err := stateRead(reach.reach, p.version)(t.Context(), nil); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
+	if _, err := stateRead(reach.reach, p.version)(t.Context(), tui.Offscreen(p.machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)
 	}
 }

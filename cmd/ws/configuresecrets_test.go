@@ -47,7 +47,7 @@ func TestWsSideSetsAndListsOnWs(t *testing.T) {
 	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	ws, err := r.reach(context.Background(), nil)
+	ws, err := r.reach(context.Background(), tui.Offscreen(p.machine))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func openSecrets(t *testing.T, toml string) (tui.Sheet, *effecttest.Machine, age
 	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
 	r := &varsReach{p: p}
 	t.Cleanup(func() { r.close(context.Background()) })
-	sheet, err := r.secretsSheet().Open(context.Background(), nil)
+	sheet, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.machine))
 	return sheet, m, id, err
 }
 
@@ -108,7 +108,7 @@ func TestWsSecretsSheetWithoutTheCredential(t *testing.T) {
 	p.machine = wsSecrets{farWs: newFarWs(m, ""), ws: effecttest.NewMachine()}
 	r := &varsReach{p: p}
 	defer r.close(context.Background())
-	if _, err := r.secretsSheet().Open(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "ws server secrets init") {
+	if _, err := r.secretsSheet().Open(context.Background(), tui.Offscreen(r.p.machine)); err == nil || !strings.Contains(err.Error(), "ws server secrets init") {
 		t.Errorf("err = %v, want one naming init", err)
 	}
 }

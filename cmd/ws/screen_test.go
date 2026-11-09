@@ -3,14 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/tui"
 )
 
@@ -76,11 +74,10 @@ func TestDrawsScreenReadsPlain(t *testing.T) {
 func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
 	var got effect.Machine
 	c, _ := screenCommand(t, "")
-	err := drawRun(c, fakeProcess(), "title", nil, func(ctx context.Context, b *tui.Bridge) error {
-		got = screenMachine(ctx, b, effect.OSMachine{Sudo: []string{}, Confine: "/home/z"})
-		if fake := effecttest.NewMachine(); screenMachine(ctx, b, fake) != effect.Machine(fake) {
-			return errors.New("a fake changed")
-		}
+	p := fakeProcess()
+	p.machine = effect.OSMachine{Sudo: []string{}, Confine: "/home/z"}
+	err := drawRun(c, p, "title", nil, func(_ context.Context, b *tui.Bridge) error {
+		got = b.Effects().M
 		return nil
 	})
 	m, ok := got.(effect.OSMachine)
@@ -92,22 +89,5 @@ func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
 	}
 	if m.Stdin != effect.NoStdin || m.Stderr == nil {
 		t.Errorf("stdin = %v, stderr = %v, want a command off the terminal", m.Stdin, m.Stderr)
-	}
-}
-
-// The second read passes no bridge, which would fail a second making of the machine.
-func TestReadMachineTakesARunsEffectsOnce(t *testing.T) {
-	ctx, cancel := context.WithCancel(t.Context())
-	cancel()
-	machine := readMachine(effect.OSMachine{})
-	for _, b := range []*tui.Bridge{{}, nil} {
-		m, ok := machine(ctx, b).(effect.OSMachine)
-		if !ok || m.Stdin != effect.NoStdin || m.Ticket == nil {
-			t.Errorf("machine = %+v", m)
-		}
-	}
-	fake := effecttest.NewMachine()
-	if got := readMachine(fake)(ctx, nil); got != effect.Machine(fake) {
-		t.Errorf("a fake became %T", got)
 	}
 }

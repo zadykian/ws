@@ -51,7 +51,7 @@ func hostVarsSheet(open sessionOpen) tui.Sheet {
 
 // reach finds how the session reaches root on ws, as the wizard's stages do, through the screen.
 func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Session, error) {
-	return r.reachOn(ctx, screenMachine(ctx, b, r.p.machine), b)
+	return r.reachOn(ctx, b.Effects().M, b)
 }
 
 // rootTalk asks sudo's password and says what sudo answered: a screen's Bridge, or the terminal.

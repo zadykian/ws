@@ -11,7 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
@@ -68,15 +67,11 @@ func (w macScreen) plainStages() []step.Step {
 }
 
 // effects returns the stages' effects on b, for a run that prints its stdout on text.
-func (w macScreen) effects(ctx context.Context, b *tui.Bridge, text io.Writer, sudo *wizard.Sudo) wizardEffects {
-	p := w.p
-	p.machine = screenMachine(ctx, b, p.machine)
-	talks, _ := p.machine.(effect.Foreground)
-	if m, ok := p.machine.(effect.OSMachine); ok {
-		talks = b.Foreground(m)
-	}
-	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: talks, ask: b, hidden: b, out: b, text: text, obs: b,
-		hand: &wizard.Hand{}, sudo: sudo, stop: b.Stop(ctx)}
+func (w macScreen) effects(b *tui.Bridge, text io.Writer, sudo *wizard.Sudo) wizardEffects {
+	p, on := w.p, b.Effects()
+	p.machine = on.M
+	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: text, obs: b,
+		hand: &wizard.Hand{}, sudo: sudo, stop: on.Stop}
 }
 
 // scan is a check of every stage, beside the lists. ws speaks for its roles once the stage that
@@ -85,7 +80,7 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 	check := w.o
 	check.check = true
 	return func(ctx context.Context, b *tui.Bridge) error {
-		e := w.effects(ctx, b, io.Discard, sudo)
+		e := w.effects(b, io.Discard, sudo)
 		stages := wizardStages(e, check)
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
@@ -139,7 +134,7 @@ type wizardRun struct {
 // work is r beside a screen. What stays by hand goes to the run's stdout, as in a plain run.
 func (w macScreen) work(r wizardRun, text io.Writer) tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
-		e := w.effects(ctx, b, text, r.sudo)
+		e := w.effects(b, text, r.sudo)
 		e.left, e.only, e.events = r.left, r.only, b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, text) }
 		o := step.Options{Observer: b, Check: r.o.check, Stop: e.stop, LeftOut: r.left}
