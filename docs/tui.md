@@ -164,7 +164,8 @@ with the status of Ctrl-C, unless that step was the last.
 The list shows a run's roles and their steps, each with a box. A scan ticks the steps with changes.
 Past it, `space` turns a box. `a`, `n`, `i` and `p` choose all, none, the inverse and the steps
 with changes, among those a filter shows. `/` filters, and `Esc` drops it. `enter` runs the steps
-chosen, `c` checks them and `q` leaves.
+chosen, `c` checks them and `q` leaves. The filter is the state screen's: it takes the same keys
+and a paste.
 
 `ws server apply` and `ws mac apply` open it at a terminal when they get no selection: no `--only`
 on the server, no STEP on the Mac, and no `--check` on either. The scan is a check of every step, run

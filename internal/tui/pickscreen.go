@@ -24,9 +24,6 @@ const (
 	pickConfigurePlace
 )
 
-// pickClearKey drops the filter's words.
-var pickClearKey = key.NewBinding(key.WithKeys("esc"))
-
 // Choice is what the list leaves to a run. No steps says that nothing runs.
 type Choice struct {
 	// Only names the steps as Options.Only does.
@@ -72,8 +69,8 @@ type pickScreen struct {
 	scanning bool
 	// problem is why the scan stopped short.
 	problem string
-	// editing says that the keys go to the filter's line.
-	editing bool
+	// filter holds the words that list.words follows.
+	filter filter
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
 	picks chan<- Choice
 	// left says that the choice has gone, and the screen waits for the work to end it.
@@ -89,7 +86,8 @@ func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Choic
 	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
 	footer := NewFooter(button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
 		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), Keys.Quit)
-	s := pickScreen{title: title, theme: theme, list: newPickList(groups), footer: footer, scanning: true, picks: picks}
+	s := pickScreen{title: title, theme: theme, list: newPickList(groups), footer: footer, scanning: true, picks: picks,
+		filter: newFilter()}
 	return s.enabled()
 }
 
@@ -117,6 +115,10 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
+	case tea.PasteMsg:
+		if s.filter.editing && !s.left {
+			s = s.typed(msg)
+		}
 	case tea.KeyPressMsg:
 		var leaving tea.Cmd
 		s, leaving = s.pressed(msg)
@@ -130,9 +132,10 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	switch {
 	case s.left:
 		return s, nil
-	case s.editing:
+	case s.filter.editing:
 		return s.typed(msg), nil
-	case key.Matches(msg, pickClearKey):
+	case key.Matches(msg, clearKey):
+		s.filter = s.filter.cleared()
 		s.list = s.list.filtered("")
 		return s, nil
 	case s.queued && key.Matches(msg, Keys.Next):
@@ -154,7 +157,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickPendingPlace:
 		s.list = s.list.chose(pickRow.pending).whole(pickRow.pending)
 	case pickFilterPlace:
-		s.editing = true
+		s.filter = s.filter.opened()
 	case pickRunPlace:
 		return s.leave(s.choice(false))
 	case pickCheckPlace:
@@ -171,19 +174,11 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	return s, nil
 }
 
-// typed edits the filter, which narrows the list as it goes. Enter keeps it, and Esc drops it.
-func (s pickScreen) typed(msg tea.KeyPressMsg) pickScreen {
-	words := []rune(s.list.words)
-	switch {
-	case key.Matches(msg, Keys.Press):
-		s.editing = false
-	case key.Matches(msg, pickClearKey):
-		s.editing = false
-		s.list = s.list.filtered("")
-	case msg.Code == tea.KeyBackspace:
-		s.list = s.list.filtered(string(words[:max(len(words)-1, 0)]))
-	case msg.Text != "":
-		s.list = s.list.filtered(s.list.words + msg.Text)
+// typed gives the filter a key or a paste, and the list narrows as its words change.
+func (s pickScreen) typed(msg tea.Msg) pickScreen {
+	s.filter = s.filter.edited(msg)
+	if words := s.filter.words(); words != s.list.words {
+		s.list = s.list.filtered(words)
 	}
 	return s
 }
@@ -250,15 +245,7 @@ func (s pickScreen) layout() Layout {
 
 // filtering says that the filter's line shows, over the list.
 func (s pickScreen) filtering() bool {
-	return s.editing || s.list.words != ""
-}
-
-// filterLine draws the filter. The block marks it as the place that takes the keys.
-func (s pickScreen) filterLine() string {
-	if s.editing {
-		return "/ " + s.list.words + s.theme.ButtonFocus.Render(" ")
-	}
-	return s.theme.Muted.Render("/ " + s.list.words)
+	return s.filter.shows()
 }
 
 // listHeight is the lines of the pane of steps that the list has.
@@ -279,7 +266,7 @@ func (s pickScreen) View() tea.View {
 	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1])
 	l.Panes[0].Body = s.list.view(s.theme, s.listHeight())
 	if s.filtering() {
-		l.Panes[0].Body = s.filterLine() + "\n" + l.Panes[0].Body
+		l.Panes[0].Body = s.filter.line(s.theme) + "\n" + l.Panes[0].Body
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }

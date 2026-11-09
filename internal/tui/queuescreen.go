@@ -127,7 +127,7 @@ func (s pickScreen) queueLayout() Layout {
 func (s pickScreen) queueView() tea.View {
 	l := s.list.drawn(s.layout(), s.theme, s.window)
 	if s.filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.filterLine() + "\n" + s.list.view(s.theme, s.listHeight())
+		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight())
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
