@@ -7,7 +7,7 @@ import (
 )
 
 // signalPrompt gives up a question when ctx ends. The run catches SIGINT, SIGTERM and SIGHUP into
-// ctx, and a read of the terminal ignores it, so the read goes on in its own goroutine: the process
+// ctx, and a read of the terminal ignores it. So the read goes on in its own goroutine: the process
 // ends with the run, as a trap did in sh, and takes the read with it.
 type signalPrompt struct{ effect.Prompt }
 

@@ -47,7 +47,7 @@ func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) erro
 	if drawsReport(c, p) {
 		machine := readMachine(r.cfg.M)
 		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-			// The read takes the screen's effects as a run does, as the terminal under it is not theirs.
+			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
 			cfg := r.cfg
 			cfg.M = machine(ctx, b)
 			cfg.Out, cfg.Prepare = b, prepareSteps(cfg.M, b)
@@ -117,8 +117,8 @@ func writeReport(b *strings.Builder, r step.Report) {
 	}
 }
 
-// firstLine returns the line that says what changes. What follows it is a file's diff, which the
-// item and --json show.
+// firstLine returns the line that says what changes. The lines after it hold a file's diff, which
+// the item and --json show.
 func firstLine(text string) string {
 	line, _, _ := strings.Cut(text, "\n")
 	return line

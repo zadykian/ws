@@ -36,8 +36,8 @@ func (o progOut) Say(format string, a ...any) {
 }
 
 // Observe prints a run's events as the runner's lines once did, but for the line that a step is
-// applying, which the step's own lines follow: a plan under --check, what a step is behind, and a
-// left-out step's failed plan.
+// applying. The step's own lines follow that line: a plan under --check, what a step is behind,
+// and a left-out step's failed plan.
 func (o progOut) Observe(e step.Event) {
 	switch {
 	case e.Kind == step.Skipped && e.Err != nil:
@@ -76,7 +76,7 @@ func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, again b
 	return setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, Again: again}
 }
 
-// setupBuild returns the steps of a run on the effects it is given. text takes what the run prints
+// setupBuild returns the steps of a run on the effects given to it. text takes what the run prints
 // on stdout.
 type setupBuild func(m effect.Machine, out effect.Out, text io.Writer) []step.Step
 
@@ -153,7 +153,7 @@ func loadMacConf(p process) (home string, settings conf.Conf, err error) {
 	return home, settings, nil
 }
 
-// runMacApply runs the steps that args name, or all of them, from mac.conf. Under check it prints
+// runMacApply runs the steps that args name, or every step, from mac.conf. Under check it prints
 // each change and makes none.
 func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 	home, settings, err := loadMacConf(p)

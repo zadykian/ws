@@ -82,7 +82,7 @@ func writeVars(m effect.Machine, data []byte) error {
 	return m.WriteAtomic(serverVars, data, attrs)
 }
 
-// makeConfigDir makes /etc/ws where it is missing, a directory that anyone reads: its files are
+// makeConfigDir makes a missing /etc/ws, a directory that anyone reads: its files are
 // root's alone.
 func makeConfigDir(m effect.Machine) error {
 	dir := path.Dir(serverVars)

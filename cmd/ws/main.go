@@ -70,8 +70,8 @@ func walk(c *cobra.Command, f func(*cobra.Command)) {
 }
 
 // execute runs root with args and returns the exit status. An error prints on stderr after the
-// path of the command that returned it: a usage error with a line to the command's help, and
-// status 2, any other error with status 1. A signal's exit prints nothing.
+// path of the command that returned it. A usage error adds a line to the command's help and takes
+// status 2, any other error status 1. A signal's exit prints nothing.
 func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root.SetArgs(append([]string{}, args...))
 	root.SetIn(stdin)

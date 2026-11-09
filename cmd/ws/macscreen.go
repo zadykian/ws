@@ -55,7 +55,7 @@ func (w macScreen) draw() error {
 }
 
 // config is what the wizard's screens draw with. A signal ends a plain wizard through its context,
-// with status 1, so here too it is an error of the run, not signalExit.
+// with status 1, so here too a signal is an error of the run, not signalExit.
 func (w macScreen) config() tui.Config {
 	cfg := screenConfig(w.c, w.p)
 	cfg.Cut = func(s syscall.Signal) error { return fmt.Errorf("stopped by %v", s) }

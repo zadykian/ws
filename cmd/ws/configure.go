@@ -25,7 +25,7 @@ func newConfigureCmd(p process) *cobra.Command {
 }
 
 // runConfigure draws the form. A form has no lines to fall back on, so it refuses where no screen
-// draws, and a mac.conf that it can't show stops it on the terminal, before the screen.
+// draws. A mac.conf that it can't show stops it on the terminal, before the screen.
 func runConfigure(c *cobra.Command, p process) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)

@@ -13,10 +13,10 @@ import (
 
 // wizardSetup returns the stage that runs the steps of ws mac apply in the wizard's process. Until
 // mac.conf has WS_PUBLIC_KEY, the Tunnel step prints the Mac's key and the commands that make it
-// ws's peer at every run, which the Tunnel stage takes over: the text goes nowhere then. file is the
-// mac.conf to read, which is Answers' would-be file under --check. obs takes the steps' events, which
-// name the stage: each of a stage's runs reports them again, a check before it applies. It stops and
-// leaves steps out as the run does.
+// ws's peer at every run. The Tunnel stage takes that over, so the text goes nowhere then. file is
+// the mac.conf to read, which is Answers' would-be file under --check. obs takes the steps' events,
+// which name the stage: each of a stage's runs reports them again, a check before it applies. It
+// stops and leaves steps out as the run does.
 func wizardSetup(e wizardEffects, file string) *wizard.Setup {
 	p := e.p
 	s := &wizard.Setup{M: p.machine}

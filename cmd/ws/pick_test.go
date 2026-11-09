@@ -23,8 +23,8 @@ func (r repeating) Read(b []byte) (int, error) {
 	return copy(b, r), nil
 }
 
-// afterScan is a terminal that holds keys back until the list draws its count in place of the scan's:
-// keys of one read can straddle the scan's end, and those past it then act on a list that missed the
+// afterScan is a terminal that holds keys back until the list draws its count in place of the scan's.
+// Keys of one read can straddle the scan's end, and those past it then act on a list that missed the
 // first. It reports a size first, as a screen with none draws nothing. A list that never draws the
 // count gets the keys all the same, and the test fails on what they did.
 type afterScan struct {
