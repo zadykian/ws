@@ -17,7 +17,8 @@ lazygit sets no title of its own, so a tab keeps the shell's, `user@host: dir`, 
 `Lazygit wrapper` writes `/usr/local/bin/lazygit`, mode 0755, from `files/lazygit`. It comes before
 the package's `/usr/bin/lazygit` on every `PATH` of Ubuntu's.
 
-- The title reads `NAME: BRANCH`, such as `ws: main`.
+- The title reads `NAME: BRANCH`, such as `ws: main`. A linked worktree shows its main tree's name,
+  and a detached HEAD its short hash.
 - The wrapper writes the title as OSC 2, which Ghostty's tab shows.
 - The terminal's stack keeps the shell's title, and gets it back when lazygit ends. Where a
   terminal lacks the stack, the shell's next prompt sets its own title in an `xterm` terminal, as

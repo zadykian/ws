@@ -5,12 +5,26 @@
 if [ ! -t 0 ] || [ ! -t 1 ]; then
     exec /usr/bin/lazygit "$@"
 fi
-# title prints NAME: BRANCH for the repository at $1, and nothing outside one. It drops control
-# characters, as a directory's name can hold an escape.
+# title prints NAME: BRANCH for the directory $1, or nothing outside a work tree. A linked worktree
+# takes its main tree's name, and a detached HEAD its short hash. Control characters are dropped,
+# as a directory's name may hold an escape.
 title() {
-    top=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || return 0
-    branch=$(git -C "$1" symbolic-ref --short -q HEAD)
-    printf '%s: %s' "${top##*/}" "$branch" | tr -d '\000-\037\177'
+    top=
+    common=
+    {
+        read -r top
+        read -r common
+    } <<EOF
+$(git -C "$1" rev-parse --path-format=absolute --show-toplevel --git-common-dir 2>/dev/null)
+EOF
+    [ -n "$common" ] || return 0
+    case $common in
+    */.git) name=${common%/.git} ;;
+    *) name=$top ;;
+    esac
+    branch=$(git -C "$1" symbolic-ref --short -q HEAD) ||
+        branch=$(git -C "$1" rev-parse --short HEAD 2>/dev/null)
+    printf '%s: %s' "${name##*/}" "$branch" | tr -d '\000-\037\177'
 }
 printf '\033[22;2t'
 shown=$(title .)

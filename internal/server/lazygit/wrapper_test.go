@@ -103,6 +103,26 @@ func TestTheWrapperNamesTheRepositoryAndBranch(t *testing.T) {
 	}
 }
 
+func TestTheWrapperNamesALinkedWorktreeByItsMainTree(t *testing.T) {
+	root := t.TempDir()
+	dir := repository(t, filepath.Join(root, "ws"))
+	tree := filepath.Join(root, "ws", ".claude", "worktrees", "fix")
+	gitIn(t, dir, "worktree", "add", "-q", "-b", "fix/1", tree)
+	out, _ := run(t, wrapped{dir: tree, terminal: true})
+	if !strings.Contains(out, osc("ws: fix/1")) {
+		t.Errorf("out %q", out)
+	}
+}
+
+func TestTheWrapperNamesADetachedHeadByItsHash(t *testing.T) {
+	dir := repository(t, filepath.Join(t.TempDir(), "ws"))
+	gitIn(t, dir, "switch", "-q", "--detach")
+	out, _ := run(t, wrapped{dir: dir, terminal: true})
+	if want := osc("ws: " + gitIn(t, dir, "rev-parse", "--short", "HEAD")); !strings.Contains(out, want) {
+		t.Errorf("out %q, want %q in it", out, want)
+	}
+}
+
 func TestTheWrapperSetsNoTitleOutsideARepository(t *testing.T) {
 	out, code := run(t, wrapped{dir: t.TempDir(), terminal: true})
 	if out != push+"lazygit a b c\n"+pop || code != 3 {
