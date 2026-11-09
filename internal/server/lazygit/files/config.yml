@@ -5,6 +5,14 @@
 # lazygit reads a missing key as its default, and loads a key it lacks with no error. A test of ws's
 # holds this file to the schema of the installed version.
 ---
+git:
+  # lazygit commits with --no-verify, past the checks of .githooks, where a summary starts with this
+  # prefix, WIP by default. Empty, it never does.
+  skipHookPrefix: ""
+keybinding:
+  files:
+    # w commits with --no-verify too.
+    commitChangesWithoutHook: <disabled>
 # apt updates lazygit, so lazygit never looks for a release of its own.
 update:
   method: never

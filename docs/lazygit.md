@@ -48,6 +48,9 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 - Settings of your own go in `~/.lazygit.yml`. lazygit loads it over the config in each repository
   under the home, and a repository's `.git/lazygit.yml` after it.
 - lazygit reads no config from a repository's work tree, so a clone cannot name a command for it.
+- A commit runs the hooks of `.githooks`, which check the local list's words and secrets. lazygit
+  passes `--no-verify` on `w`, and on a summary that starts with `skipHookPrefix`, `WIP` by
+  default. So the config empties the prefix and leaves `w` unbound.
 - `update.method` is `never`, as apt updates lazygit.
 - The step fails where `~/.config`, the directory or `config.yml` is a link. The user owns
   `~/.config`, and a link would send ws's root to whatever it names.

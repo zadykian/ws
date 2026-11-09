@@ -6,6 +6,8 @@ import (
 	"slices"
 	"testing"
 
+	"go.yaml.in/yaml/v3"
+
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
@@ -78,5 +80,38 @@ func TestConfigRefusesALink(t *testing.T) {
 func TestTheConfigStartsWithItsHeader(t *testing.T) {
 	if !bytes.HasPrefix(config, []byte("# Written by github.com/zadykian/ws,")) {
 		t.Error("config.yml lacks the header")
+	}
+}
+
+// leaves returns the dotted path of each value in the config that is not a map, such as
+// git.skipHookPrefix.
+func leaves(t *testing.T) map[string]any {
+	var doc map[string]any
+	if err := yaml.Unmarshal(config, &doc); err != nil {
+		t.Fatal(err)
+	}
+	found := map[string]any{}
+	var walk func(prefix string, node map[string]any)
+	walk = func(prefix string, node map[string]any) {
+		for k, v := range node {
+			if inner, ok := v.(map[string]any); ok {
+				walk(prefix+k+".", inner)
+				continue
+			}
+			found[prefix+k] = v
+		}
+	}
+	walk("", doc)
+	return found
+}
+
+// A commit in lazygit runs the hooks: an empty prefix skips them on no summary, and w is off.
+func TestTheConfigKeepsTheHooks(t *testing.T) {
+	keys := leaves(t)
+	if v, ok := keys["git.skipHookPrefix"]; !ok || v != "" {
+		t.Errorf("git.skipHookPrefix is %q, want it empty", v)
+	}
+	if v := keys["keybinding.files.commitChangesWithoutHook"]; v != "<disabled>" {
+		t.Errorf("keybinding.files.commitChangesWithoutHook is %q", v)
 	}
 }
