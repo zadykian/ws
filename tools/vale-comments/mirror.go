@@ -3,6 +3,7 @@ package main
 import (
 	"go/parser"
 	"go/token"
+	"path"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -107,4 +108,21 @@ func lineMirror(src []byte, marker string, directive *regexp.Regexp) *mirror {
 		m.add(body, origin{i + 1, indent + len(marker) + skip + 1})
 	}
 	return m
+}
+
+// unchecked matches Markdown, which Vale reads itself, and property lists. It matches a file not
+// written here too: foundryctl's, Vale's styles, the toolkit's, pip-compile's, Go's, npm's, a license.
+var unchecked = regexp.MustCompile(`^(?:\.vale/styles/|internal/server/signoz/(?:deployment/|casting\.yaml\.lock$)|` +
+	`\.github/(?:ISSUE_TEMPLATE/|lint-requirements\.txt$)|go\.sum$)|(?:^|/)(?:LICENSE|package-lock\.json)$|\.(?:md|plist)$`)
+
+// mirrorOf mirrors the file's comments by its kind: Go's, JSONC's and go.mod's, else those of #.
+func mirrorOf(file string, src []byte) (*mirror, error) {
+	base := path.Base(file)
+	switch {
+	case strings.HasSuffix(base, ".go"):
+		return goMirror(src)
+	case strings.HasSuffix(base, ".json"), strings.HasSuffix(base, ".json.tmpl"), base == "go.mod":
+		return lineMirror(src, "//", nil), nil
+	}
+	return lineMirror(src, "#", hashDirective), nil
 }

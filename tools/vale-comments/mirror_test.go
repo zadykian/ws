@@ -65,3 +65,24 @@ echo "# not a comment" # nor this
 		"yamllint finds the files, a sentence.": {7, 3}, "  - a list": {8, 3},
 	})
 }
+
+func TestMirrorOf(t *testing.T) {
+	for file, src := range map[string]string{"a.json": "// a\n# b\n", "c.json.tmpl": " // a\n", "Makefile": "# a\n// b\n"} {
+		if m, err := mirrorOf(file, []byte(src)); err != nil || m.texts != 1 {
+			t.Errorf("%s: got %v, %v, want one comment", file, m, err)
+		}
+	}
+}
+
+func TestUnchecked(t *testing.T) {
+	for file, want := range map[string]bool{
+		"docs/a.md": true, ".vale/styles/a.yml": true, ".github/ISSUE_TEMPLATE/change.yml": true, "go.sum": true,
+		"internal/server/signoz/deployment/a.yaml": true, "internal/server/signoz/casting.yaml.lock": true,
+		"internal/server/signoz/casting.yaml": false, "x/LICENSE": true, "x/package-lock.json": true,
+		"go.mod": false, ".github/lint-requirements.in": false, "a.mdx": false,
+	} {
+		if got := unchecked.MatchString(file); got != want {
+			t.Errorf("%s: got %v, want %v", file, got, want)
+		}
+	}
+}
