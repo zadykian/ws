@@ -39,5 +39,5 @@ type swapSteps struct {
 }
 
 // stale reports whether the swap file is of another size, which makes it again, not resizes it; at
-// size 0 it is removed.
+// size 0 the step removes it.
 func (s swapState) stale() bool { return s.File.Exists && s.File.Size != s.WantMiB*mib }

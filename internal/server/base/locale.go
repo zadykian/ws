@@ -9,9 +9,9 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// localeParts keeps the locale generated and the system's: /etc/locale.gen names it, locale-gen
-// makes it, and /etc/locale.conf, where Ubuntu 26.04 keeps the system's locale, sets LANG to it.
-// /etc/default/locale links to that file.
+// localeParts keeps the locale generated and the system's. /etc/locale.gen names it, and
+// locale-gen makes it. /etc/locale.conf, where Ubuntu 26.04 keeps the system's locale, sets LANG
+// to it. /etc/default/locale links to that file.
 func localeParts(m effect.Machine, name string) []host.Resource {
 	return []host.Resource{
 		generated{M: m, Name: name},

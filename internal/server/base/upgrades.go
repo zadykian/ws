@@ -12,8 +12,8 @@ var autoUpgrades []byte
 
 // upgradesParts turns on unattended upgrades with the settings the package writes when its debconf
 // question is answered yes, Ubuntu's default. The stock 50unattended-upgrades, left unchanged,
-// allows Ubuntu's security updates alone. What ucf does with the file's header at an upgrade is in
-// docs/base.md. Then apt's daily timers and unattended-upgrades' shutdown check are enabled and
+// allows Ubuntu's security updates alone. docs/base.md says what ucf does with the file's header at
+// an upgrade. Then apt's daily timers and unattended-upgrades' shutdown check are enabled and
 // started; a machine without a booted systemd skips them.
 func upgradesParts(m effect.Machine, u effect.Units, out effect.Out) []host.Resource {
 	parts := []host.Resource{host.File{M: m, Path: "/etc/apt/apt.conf.d/20auto-upgrades", Content: autoUpgrades, Mode: 0o644}}

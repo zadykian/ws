@@ -52,9 +52,9 @@ func (s swap) Plan(_ context.Context) ([]host.Change, error) {
 	return cs, nil
 }
 
-// create allocates the file under another name and gives it that of /swapfile once mkswap has made
-// it a swap area, so that a run cut short leaves no file that swapon would refuse. A file that a
-// killed run left goes first.
+// create allocates the file under another name. Once mkswap has made it a swap area, the file
+// takes the name /swapfile, so that a run cut short leaves no file that swapon would refuse. A file
+// that a killed run left goes first.
 func (s swap) create(ctx context.Context, size int64) error {
 	tmp := swapFile + ".new"
 	if err := s.Disk.Remove(tmp); err != nil {
