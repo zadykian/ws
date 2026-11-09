@@ -1,6 +1,7 @@
 #!/bin/bash
-# The playbook job's check of the config Fresh loaded: fresh-config-check.sh CONFIG.JSON SHOW.JSON
-# Fresh reads a malformed file with its defaults and exits 0, so a green run alone proves nothing.
+# The playbook job's check of the config Fresh loaded, run as
+# `fresh-config-check.sh CONFIG.JSON SHOW.JSON`. Fresh reads a malformed file with its defaults and
+# exits 0, so a green run alone proves nothing.
 set -e
 written=$(sed '/^[[:space:]]*\/\//d' "$1" | jq '.keybinding_maps.ws.bindings | length')
 jq -e --argjson written "$written" '

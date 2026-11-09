@@ -8,8 +8,8 @@
 # - Ghostty.app and Zed.app, empty directories in ~/Applications, and the
 #   regular style of their font, an empty file in ~/Library/Fonts, which spare their casks. ws mac
 #   apply writes ws.ghostty, as on a Mac with Ghostty;
-# - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws:
-#   the daemon needs neither, so this is the one download, a small formula, that the jobs make;
+# - wireguard-tools from Homebrew where missing, whose wg and wireguard-go make the stand-in ws.
+#   The daemon needs neither, so this is the one download, a small formula, that the jobs make;
 # - ~/.local/bin/cld, whose version names no release, so that ws mac apply neither installs nor updates
 #   it, as a cld built from a clone. It lacks restore tabs, so ssh's hosts get no LocalCommand.
 

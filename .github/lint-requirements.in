@@ -2,9 +2,9 @@
 # every package it pulls in, with the SHA-256 of each of its files on PyPI, and make installs from
 # it. uv writes it from this file. To change a pin, change it here, then run, with uv:
 #
-#   uv pip compile --universal --python-version 3.12 --generate-hashes \
-#       --custom-compile-command 'uv pip compile, as .github/lint-requirements.in says' \
-#       .github/lint-requirements.in -o .github/lint-requirements.txt
+#     uv pip compile --universal --python-version 3.12 --generate-hashes \
+#         --custom-compile-command 'uv pip compile, as .github/lint-requirements.in says' \
+#         .github/lint-requirements.in -o .github/lint-requirements.txt
 #
 # uv keeps the other pins of lint-requirements.txt where they fit, so that a new release of a
 # package it pulls in changes no finding. --universal resolves for each Python from 3.12, so the

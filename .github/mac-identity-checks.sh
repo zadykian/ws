@@ -1,6 +1,6 @@
 # shellcheck shell=sh
-# The mac job's checks of the key that ws mac apply's config.d/ws gives ws, which
-# mac-setup-checks.sh sources before git's, so that they run with its functions and the job's
+# The mac job's checks of the key that ws mac apply's config.d/ws gives ws.
+# mac-setup-checks.sh sources them before git's, so that they run with its functions and the job's
 # mac.conf. They end with config.d/ws as the job's runs wrote it.
 #
 # shellcheck disable=SC2154 # tmp, conf and the functions are mac-setup-checks.sh's
@@ -130,7 +130,7 @@ fi
 rm "$tmp/p256"
 # Without WS_IDENTITY, ws must take Secretive's agent and its one key, by ws's copy of its .pub.
 # PublicKeys is closed, as macOS 27 denies ws the files of Secretive's container: ws must ask the
-# agent. ws mac apply must warn as it replaces the file key, and write the copy where it is missing,
+# agent. ws mac apply must warn as it replaces the file key, and write the copy where ws lacks it,
 # as a run shows and --check says. A second key must stop ws mac apply, --check too, which must name
 # both.
 chmod 000 "$data/PublicKeys"
@@ -156,7 +156,7 @@ prints ''
 with
 chmod 755 "$data/PublicKeys"
 # As the warning says, the file key's .pub in WS_IDENTITY keeps the file key, though the runner
-# lacks it: config.d/ws must be the job's again (sed -n p changes nothing).
+# lacks it. config.d/ws must be the job's again (sed -n p changes nothing).
 with 'WS_IDENTITY=~/.ssh/id_ed25519.pub'
 changes -n p
 with

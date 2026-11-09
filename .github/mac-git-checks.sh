@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# The mac job's checks of ws mac apply's git step, which mac-setup-checks.sh sources last, so that
+# The mac job's checks of ws mac apply's git step. mac-setup-checks.sh sources them last, so that
 # they run with its functions and the job's mac.conf. The runner must lack the files the step
 # writes, but ~/.gitconfig, which goes aside. As the script exits, on a signal too, the files go,
 # and the runner's ~/.gitconfig comes back.
