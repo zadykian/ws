@@ -4,8 +4,6 @@ import (
 	"crypto/md5" //nolint:gosec // Secretive names a key's .pub by its MD5 fingerprint
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
-	"path"
 	"strings"
 )
 
@@ -15,14 +13,9 @@ type Identity struct {
 	Pub string
 	// Agent is its agent's socket as config.d/ws names it, or empty for a key in a file.
 	Agent string
-	// Check is whether the .pub must exist and hold a key: all but the default file key.
-	Check bool
-	// Text is what the .pub holds, or would hold as ws's copy, where Check is set.
+	// Text is what the .pub holds, or would hold as ws's copy.
 	Text string
 }
-
-// DefaultPub is the file key's .pub, which ssh offers ws unless mac.conf or Secretive says other.
-const DefaultPub = "~/.ssh/id_ed25519.pub"
 
 // SecretiveData is where Secretive keeps its socket and its public keys, under the home. macOS 27
 // denies other apps the files there, with no prompt, but its socket still answers.
@@ -78,46 +71,11 @@ func Expand(path, home string) string {
 	return path
 }
 
-// PickIdentity picks the key from mac.conf's WS_IDENTITY_PUB_KEY and WS_IDENTITY_AGENT, where set. Else,
-// where Secretive's socket is there, it picks the one key of publicKeys, the names of those its
-// agent lists, as ws's copy of its .pub. git's signing key, which signs alone, does not count. Else
-// it picks the file key. A key of Secretive's takes its agent. It fails where Secretive holds
-// several such keys.
-func PickIdentity(identity, agent, signingKey, home string, socket bool, publicKeys []string) (Identity, error) {
-	pub := identity
-	if pub == "" && socket {
-		skip := path.Base(signingKey)
-		var keys []string
-		for _, name := range publicKeys {
-			if name == skip {
-				continue
-			}
-			pub = AgentKey{Name: name}.Pub()
-			keys = append(keys, Expand(pub, home))
-		}
-		if len(keys) > 1 {
-			//nolint:staticcheck // Secretive is a name, and mac-identity-checks.sh expects this text
-			return Identity{}, fmt.Errorf("Secretive's agent holds several keys, %s: name the one for ws in "+
-				"mac.conf's WS_IDENTITY_PUB_KEY", strings.Join(keys, ", "))
-		}
-	}
-	if pub == "" {
-		pub = DefaultPub
-	}
-	if pub+agent == DefaultPub {
-		return Identity{Pub: pub}, nil
-	}
-	if agent == "" && SecretiveKey(Expand(pub, home), home) {
-		agent = "~/" + SecretiveData + "/socket.ssh"
-	}
-	return Identity{Pub: pub, Agent: agent, Check: true}, nil
-}
-
 // NamedIdentity is the key of mac.conf's WS_IDENTITY_PUB_KEY and WS_IDENTITY_AGENT. A key of
 // Secretive's takes its agent where WS_IDENTITY_AGENT names none.
 func NamedIdentity(pub, agent, home string) Identity {
 	if agent == "" && SecretiveKey(Expand(pub, home), home) {
 		agent = "~/" + SecretiveData + "/socket.ssh"
 	}
-	return Identity{Pub: pub, Agent: agent, Check: true}
+	return Identity{Pub: pub, Agent: agent}
 }

@@ -62,7 +62,7 @@ func TestPickKeyTakesTheAgentsKeyWithNoFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := sshcfg.Identity{Pub: pub, Agent: "~/" + sshcfg.SecretiveData + "/socket.ssh", Check: true, Text: agentKey}
+	want := sshcfg.Identity{Pub: pub, Agent: "~/" + sshcfg.SecretiveData + "/socket.ssh", Text: agentKey}
 	if id != want {
 		t.Errorf("PickKey = %+v, want %+v", id, want)
 	}
