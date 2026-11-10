@@ -1,24 +1,21 @@
 #!/bin/sh
 # The Mac key stage on a fresh Mac. The case has a mac.conf of its own that holds every answer but
-# names no key for ws. With it and no terminal, a run must stop at the stage, naming WS_IDENTITY_PUB_KEY,
-# before ws mac apply's.
-# --check must say that a run at a terminal would ask whether Secretive keeps the key, and that no
-# makes the file key and names it in WS_IDENTITY_PUB_KEY. With a stand-in for Secretive's app, it must say
-# that it would open the app. None of these may make a key, change that mac.conf, or leave a lock
-# or file of the wizard's in $TMPDIR. Then the file key is there, and a copy of that mac.conf has no
-# line for it. --check must show the WS_IDENTITY_PUB_KEY line it would write, and make no change. A run
-# must write the line, and stop at gh's stage, whose login the case takes away. A second run must
-# say nothing of the Mac key stage, and change nothing. Last, a run makes a file key in
-# $RUNNER_TEMP, where ssh-add can't take it. It must stop at the stage, before ws mac apply, naming
-# the command to run by hand, as Login logs in with no prompt. It must leave the key it made.
+# names no key for ws. With it and no terminal, a run must stop at the stage, naming
+# WS_IDENTITY_PUB_KEY, before ws mac apply's. A --check must say that a run at a terminal would
+# ask for ws's login key, with a new key the default, as the runner's agent lists none. With a copy
+# that names a missing key, a run must stop at the stage, naming it, as the wizard makes no key in
+# a file. With one that names standin.sh's key, --check must say nothing of the stage. None of these
+# may change that mac.conf, or leave a lock or file of the wizard's in $TMPDIR.
 
 set -u
 
 wsbin=$HOME/.local/bin/ws
 conf=$RUNNER_TEMP/key.conf
+named=$RUNNER_TEMP/named.conf
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
+applied='^ws mac wizard: (ws mac apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)'
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
 error() {
@@ -32,76 +29,32 @@ cp "$conf" "$RUNNER_TEMP/key.conf.before"
 out=$(WS_CONF=$conf "$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -q '^ws mac wizard: Mac key: no terminal .*: set WS_IDENTITY_PUB_KEY=' &&
+none="no terminal to ask for ws's login key, and Secretive's agent lists no P-256 key: "
+printf '%s\n' "$out" | grep -q "^ws mac wizard: Mac key: $none.*WS_IDENTITY_PUB_KEY" &&
     [ "$status" = 1 ] || error "ws mac wizard, with no terminal, exited $status, naming no WS_IDENTITY_PUB_KEY"
-! printf '%s\n' "$out" | grep -qE '^ws mac wizard: (ws mac apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)' || error 'ws mac wizard ran ws mac apply after the Mac key'
+! printf '%s\n' "$out" | grep -qE "$applied" || error 'ws mac wizard ran ws mac apply after the Mac key'
 out=$(WS_CONF=$conf "$wsbin" mac wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -q "^ws mac wizard: Mac key: would ask whether Secretive keeps " &&
-    [ "$status" = 0 ] || error "ws mac wizard --check exited $status, with no question on Secretive"
-printf '%s\n' "$out" | grep -qF ' with ssh-keygen, and names it in WS_IDENTITY_PUB_KEY' ||
-    error "ws mac wizard --check said no WS_IDENTITY_PUB_KEY would name the file key that the answer no makes"
-mkdir -p ~/Applications/Secretive.app
-out=$(WS_CONF=$conf "$wsbin" mac wizard --check </dev/null 2>&1)
+want="ws mac wizard: Mac key: would ask for ws's login key, in Secretive: make a new one (the default)"
+printf '%s\n' "$out" | grep -qxF "$want" && [ "$status" = 0 ] ||
+    error "ws mac wizard --check exited $status, saying no '$want'"
+{ cat "$conf" && echo "WS_IDENTITY_PUB_KEY=$RUNNER_TEMP/none.pub"; } >"$named"
+out=$(WS_CONF=$named "$wsbin" mac wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -q '^ws mac wizard: Mac key: would open Secretive, and wait for ' &&
-    [ "$status" = 0 ] || error "ws mac wizard --check exited $status, with no Secretive's app to open"
-rmdir ~/Applications/Secretive.app
-# A copy of mac.conf, with the file key there, must get its line. The run stops at gh's stage, as
-# the stand-in gh has no login, so that nothing else changes: not the login's keys, nor ssh's files.
-pinned=$RUNNER_TEMP/pin.conf
-line='WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub'
-[ -d ~/.ssh ] || mkdir -m 700 ~/.ssh
-ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/id_ed25519
-cp "$conf" "$pinned"
-out=$(WS_CONF=$pinned "$wsbin" mac wizard --check </dev/null 2>&1)
-status=$?
-printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -qxF "+$line" && [ "$status" = 0 ] ||
-    error "ws mac wizard --check exited $status, showing no $line for the file key"
-cmp -s "$conf" "$pinned" || error "ws mac wizard --check changed $pinned"
-rm "$RUNNER_TEMP/gh/login"
-out=$(WS_CONF=$pinned "$wsbin" mac wizard </dev/null 2>&1)
-status=$?
-printf '%s\n' "$out"
-printf '%s\n' "$out" | grep -q '^ws mac wizard: gh on the Mac: .*no terminal is there for gh auth ' &&
-    [ "$status" = 1 ] || error "ws mac wizard exited $status, not at gh's stage, with the file key"
-{
-    cat "$conf"
-    echo "$line"
-} | cmp -s - "$pinned" || error "ws mac wizard wrote another $pinned than $conf and $line"
-cp "$pinned" "$pinned.after"
-out=$(WS_CONF=$pinned "$wsbin" mac wizard </dev/null 2>&1)
-status=$?
-printf '%s\n' "$out"
-! printf '%s\n' "$out" | grep -q '^ws mac wizard: \(Mac key: \|wrote \)' && [ "$status" = 1 ] ||
-    error "ws mac wizard's second run exited $status, or printed lines of the Mac key stage or a write"
-cmp -s "$pinned" "$pinned.after" || error "ws mac wizard's second run changed $pinned"
-touch "$RUNNER_TEMP/gh/login"
-rm -f ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub "$pinned" "$pinned.after"
-# ssh-add fails where SSH_AUTH_SOCK names no socket. WS_IDENTITY_PUB_KEY names the key, so that no terminal
-# is asked, and keeps it from ~/.ssh.
-made=$RUNNER_TEMP/key-add
-mkdir "$made"
-{
-    cat "$conf"
-    echo "WS_IDENTITY_PUB_KEY=$made/id_ed25519.pub"
-} >"$made/mac.conf"
-out=$(SSH_AUTH_SOCK=$made/none WS_CONF=$made/mac.conf "$wsbin" mac wizard </dev/null 2>&1)
-status=$?
-printf '%s\n' "$out"
-stop="ws mac wizard: Mac key: $made/id_ed25519 is made, but ssh-add cannot give it to the agent: run"
-stop="$stop ssh-add --apple-use-keychain $made/id_ed25519, which asks its passphrase, then run the"
-stop="$stop wizard again"
+stop="ws mac wizard: Mac key: $RUNNER_TEMP/none.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing"
 printf '%s\n' "$out" | grep -qF "$stop" && [ "$status" = 1 ] ||
-    error "ws mac wizard, where ssh-add fails, exited $status, naming no ssh-add to run"
-[ -f "$made/id_ed25519" ] && [ -f "$made/id_ed25519.pub" ] ||
-    error "ws mac wizard, where ssh-add fails, left no key in $made"
-! printf '%s\n' "$out" | grep -qE '^ws mac wizard: (ws mac apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)' || error 'ws mac wizard ran ws mac apply, ssh-add failed'
-rm -rf "$made"
-for left in ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
+    error "ws mac wizard exited $status, naming no missing key"
+! printf '%s\n' "$out" | grep -qE "$applied" || error 'ws mac wizard ran ws mac apply, with no key'
+{ cat "$conf" && echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub'; } >"$named"
+out=$(WS_CONF=$named "$wsbin" mac wizard --check </dev/null 2>&1)
+status=$?
+printf '%s\n' "$out"
+! printf '%s\n' "$out" | grep -q '^ws mac wizard: Mac key: ' && [ "$status" = 0 ] ||
+    error "ws mac wizard --check exited $status, or printed a line of the Mac key stage, with the file key"
+rm -f "$named" "$RUNNER_TEMP/none.pub"
+for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
     [ ! -e "$left" ] || error "ws mac wizard left $left"
 done
 cmp -s "$conf" "$RUNNER_TEMP/key.conf.before" || error "ws mac wizard changed $conf"
