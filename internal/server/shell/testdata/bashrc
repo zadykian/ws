@@ -38,7 +38,7 @@ if [[ -n ${SSH_TTY-} && -z ${TMUX-} && -z ${WS_BAR_LOGIN-} && ${LC_WS_BAR-} != o
     if [[ -z ${BASH_EXECUTION_STRING-} ]] ||
         printf %s "$BASH_EXECUTION_STRING" 2>/dev/null >"$__ws_bar/command"; then
         WS_BAR_LOGIN=1 tmux -S "$__ws_bar/tmux" -f /usr/local/lib/ws/zed/tmux.conf \
-            set-option -g history-limit 10000 \; new-session bash -c 'trap : INT QUIT
+            new-session bash -c 'trap : INT QUIT
         : >"$1/started" || exit
         if [[ -f $1/command ]]; then bash -c "$(<"$1/command")"; else "${SHELL:-/bin/bash}" -l; fi
         s=$?; tmux -S "$1/tmux" capture-pane -epJ -S - -E - >"$1/screen"; : >"$1/status.$s"' \
