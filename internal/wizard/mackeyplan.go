@@ -13,8 +13,6 @@ import (
 
 func (k *MacKey) file() confFile { return confFile{k.Conf, macKey, k.M, k.Out} }
 
-func (k *MacKey) secretive() string { return k.Home + "/" + sshcfg.SecretiveData }
-
 // Plan finds what the key that ssh offers ws lacks: a question where mac.conf names none, or ws's
 // copy of a key of Secretive's. A file key must be there, and an agent's key listed by its agent.
 func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
