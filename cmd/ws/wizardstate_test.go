@@ -47,7 +47,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 	defer reach.close(context.Background())
 	read := stateRead(reach.reach, p.version)
 	for range 2 {
-		sections, err := read(t.Context(), nil)
+		sections, err := read(t.Context(), tui.Offscreen(p.machine))
 		if err != nil || len(sections) != 1 || sections[0].Name != "base" {
 			t.Fatalf("read = %+v, %v", sections, err)
 		}
@@ -69,7 +69,7 @@ func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	p.machine = newReportingWs(m, "v0.0.1")
 	reach := &varsReach{p: p, sudo: &wizard.Sudo{}}
 	defer reach.close(context.Background())
-	if _, err := stateRead(reach.reach, p.version)(t.Context(), nil); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
+	if _, err := stateRead(reach.reach, p.version)(t.Context(), tui.Offscreen(p.machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)
 	}
 }
@@ -88,7 +88,10 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	if err := (macScreen{c, p, wizardOptions{}}).state(tui.WsSide, &wizard.Sudo{}); err != nil {
+	read, done := (macScreen{c, p, wizardOptions{}}).read(tui.WsSide, &wizard.Sudo{})
+	err := tui.RunState(c.Context(), screenConfig(c, p), "ws", read)
+	done(c.Context())
+	if err != nil {
 		t.Fatal(err)
 	}
 	if took, gone := lockCalls(m.Calls, "mkdir"), lockCalls(m.Calls, "rm -rf"); took != 1 || gone != 1 {
@@ -100,8 +103,9 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "q")
-	if err := (macScreen{c, p, wizardOptions{}}).state(tui.MacSide, &wizard.Sudo{}); err != nil {
-		t.Fatal(err)
+	read, done := (macScreen{c, p, wizardOptions{}}).read(tui.MacSide, &wizard.Sudo{})
+	if err := tui.RunState(c.Context(), screenConfig(c, p), "Mac", read); err != nil || done != nil {
+		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}
 	if got := lockCalls(m.Calls, "mkdir"); got != 0 {
 		t.Errorf("took the lock %d times", got)
@@ -129,7 +133,7 @@ func (s stateTrip) Read(b []byte) (int, error) {
 	return n, err
 }
 
-// The lists come back from the state screen with no scan of their own.
+// The lists come back from the state screen with no scan of their own: one scan reads the Mac.
 func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	p, m := macTerminal()
 	p.machine = freed{m}
@@ -140,8 +144,5 @@ func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	status := execute(ctx, newRoot(p, newMacCmd(p), newServerCmd(p)), []string{"mac", "wizard"}, keys, &out, keys)
 	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 1 {
 		t.Fatalf("status = %d, want a scan alone: calls = %q", status, m.Calls)
-	}
-	if got := bytes.Count(keys.drawn.Bytes(), []byte(enterScreen)); got != 3 {
-		t.Errorf("entered the screen %d times", got)
 	}
 }

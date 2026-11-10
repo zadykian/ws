@@ -164,7 +164,8 @@ with the status of Ctrl-C, unless that step was the last.
 The list shows a run's roles and their steps, each with a box. A scan ticks the steps with changes.
 Past it, `space` turns a box. `a`, `n`, `i` and `p` choose all, none, the inverse and the steps
 with changes, among those a filter shows. `/` filters, and `Esc` drops it. `enter` runs the steps
-chosen, `c` checks them and `q` leaves.
+chosen, `c` checks them and `q` leaves. The filter is the state screen's: it takes the same keys
+and a paste.
 
 `ws server apply` and `ws mac apply` open it at a terminal when they get no selection: no `--only`
 on the server, no STEP on the Mac, and no `--check` on either. The scan is a check of every step, run
@@ -251,7 +252,9 @@ A screen owns the terminal, so a step's commands stay off it.
 ## sudo
 
 sudo asks at `/dev/tty`, under a screen. `Bridge.Machine` gives the steps of a run or a read a
-machine whose sudo can't ask, and takes the password in a hidden field:
+machine whose sudo can't ask, and takes the password in a hidden field. `Run` wraps the screen's
+`Config.Machine` once, as each wrapping would hold sudo's ticket until the screen ends. Every work
+takes it from `Bridge.Effects`, with `Bridge.Foreground` and the run's stop:
 
 - Its root commands run by `sudo -n --`, which fails where it would ask.
 - Before each one, `sudo -n -- true` looks for a ticket. A valid one asks nothing, and neither does

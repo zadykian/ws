@@ -21,16 +21,11 @@ var configureButton = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "confi
 // stateButton leaves the lists for the state screen of the machine of the list in focus.
 var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
 
-// newQueueScreen returns the lists of stages, their scan under way. The configure button comes last,
-// and where forms is unset there is none, as no form opens from that wizard.
-func newQueueScreen(title string, theme Theme, stages []Stage, forms bool, picks chan<- Choice) pickScreen {
+// newQueueScreen returns the lists of stages, their scan under way. The configure button comes last.
+func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- Choice) pickScreen {
 	s := newPickScreen(title, theme, nil, picks)
 	s.list, s.queued = newQueue(stages), true
-	buttons := append(slices.Clip(s.footer.buttons), stateButton)
-	if forms {
-		buttons = append(buttons, configureButton)
-	}
-	s.footer = NewFooter(buttons...)
+	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), stateButton, configureButton)...)
 	return s.enabled()
 }
 
@@ -92,14 +87,14 @@ func (l pickList) pane(side Side) int { return max(slices.Index(l.sides(), side)
 // panes returns the lists' panes, empty. ws's says so while a role stands unread, as a check of the
 // Mac can't reach what ws reports until ws is there.
 func (l pickList) panes() []Pane {
-	ws := Pane{Title: "ws", Focused: l.side == WsSide}
+	ws := Pane{Title: WsSide.String(), Focused: l.side == WsSide}
 	if slices.ContainsFunc(l.rows, func(r pickRow) bool { return r.index == unreadIndex }) {
-		ws.Title = "ws: roles not scanned"
+		ws.Title = WsSide.String() + ": roles not scanned"
 	}
 	if len(l.sides()) == 1 {
 		return []Pane{ws}
 	}
-	return []Pane{{Title: "Mac", Focused: l.side == MacSide}, ws}
+	return []Pane{{Title: MacSide.String(), Focused: l.side == MacSide}, ws}
 }
 
 // drawn returns the layout with the lists in its panes.
@@ -127,7 +122,7 @@ func (s pickScreen) queueLayout() Layout {
 func (s pickScreen) queueView() tea.View {
 	l := s.list.drawn(s.layout(), s.theme, s.window)
 	if s.filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.filterLine() + "\n" + s.list.view(s.theme, s.listHeight())
+		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight())
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }

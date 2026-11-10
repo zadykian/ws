@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	"charm.land/bubbles/v2/key"
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -57,9 +56,8 @@ type StateScreen struct {
 	// failed, and warning the last that a read's steps gave.
 	reading, reported bool
 	problem, warning  string
-	// filter holds the words that a row's name must contain, and editing gives it the keys.
-	filter  textinput.Model
-	editing bool
+	// filter holds the words that a row's name must contain.
+	filter filter
 }
 
 // NewStateScreen returns the screen, which asks for a report as it starts.
@@ -88,11 +86,11 @@ func (s StateScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s.warning = firstLine(printable(msg.Text))
 		}
 	case tea.PasteMsg:
-		if s.editing {
+		if s.filter.editing {
 			return s.edited(msg), nil
 		}
 	case tea.KeyPressMsg:
-		if s.editing {
+		if s.filter.editing {
 			return s.edited(msg), nil
 		}
 		return s.pressed(msg)
@@ -174,7 +172,7 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 func (s StateScreen) pushed(place int) (tea.Model, tea.Cmd) {
 	switch place {
 	case filterPlace:
-		s.editing, s.inDetail = true, false
+		s.filter, s.inDetail = s.filter.opened(), false
 		return s, nil
 	case leavePlace:
 		return s, s.leave

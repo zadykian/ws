@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/internal/tui"
 )
 
 func TestServerConfigureRefusals(t *testing.T) {
@@ -43,7 +44,7 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 	if err := store.write(held, id); err != nil {
 		t.Fatal(err)
 	}
-	sheet, err := serverSecretsSheet(p).Open(ctx, nil)
+	sheet, err := serverSecretsSheet(p).Open(ctx, tui.Offscreen(p.machine))
 	if err != nil || !strings.HasPrefix(sheet.Fields(nil)[0].Help, "not set") {
 		t.Fatalf("open: %v, fields %+v", err, sheet.Fields(nil))
 	}
@@ -62,7 +63,7 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 func TestServerVarsSheetReadsOnWs(t *testing.T) {
 	p, m := wizardProcess("---\nws_user: ada\n", false, "")
 	m.Results["env SUDO_USER=ada sh -s -- values"] = effecttest.Result{Out: []byte("ws_user: ada\n")}
-	sheet, err := hostVarsSheet(serverOpen(p)).Open(context.Background(), nil)
+	sheet, err := hostVarsSheet(serverOpen).Open(context.Background(), tui.Offscreen(p.machine))
 	if err != nil {
 		t.Fatal(err)
 	}

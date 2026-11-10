@@ -45,13 +45,10 @@ func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) erro
 		return err
 	}
 	if drawsReport(c, p) {
-		machine := readMachine(r.cfg.M)
+		p.machine = r.cfg.M // ws_home confines it.
 		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-			cfg := r.cfg
-			cfg.M = machine(ctx, b)
-			cfg.Out, cfg.Prepare = b, prepareSteps(cfg.M, b)
-			states, err := apply.State(ctx, cfg, r.list)
+			states, err := apply.State(ctx, onScreen(r.cfg, b), r.list)
 			return roleSections(states), err
 		})
 	}

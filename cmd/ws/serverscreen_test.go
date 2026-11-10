@@ -89,12 +89,15 @@ func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) roles
 	}}
 }
 
+// The run takes cfg's machine, which ws_home confines, not p's.
 func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
 	p, m := serverTerminal()
+	p.machine = effecttest.NewMachine()
 	c, drawn := screenCommand(t, "")
 	var made []effect.Out
-	role := roleOf("a", func(_ effect.Machine, out effect.Out) step.Step {
-		made = append(made, out)
+	var on effect.Machine
+	role := roleOf("a", func(machine effect.Machine, out effect.Out) step.Step {
+		made, on = append(made, out), machine
 		return stepOf{"one", func(context.Context) error { return nil }}
 	})
 	lines := &effecttest.Out{}
@@ -109,8 +112,8 @@ func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
 	if len(made) != 2 || made[0] != effect.Out(lines) {
 		t.Fatalf("the steps were made on %v, want the plain effects first, for their names", made)
 	}
-	if _, ok := made[1].(*tui.Bridge); !ok {
-		t.Errorf("the run's steps got %T, want the screen's bridge", made[1])
+	if _, ok := made[1].(*tui.Bridge); !ok || on != effect.Machine(m) {
+		t.Errorf("the run's steps got %T on %p, want the screen's bridge on cfg's machine", made[1], on)
 	}
 	if len(lines.Lines) != 0 {
 		t.Errorf("a run on the screen printed %q", lines.Lines)

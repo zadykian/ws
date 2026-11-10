@@ -13,6 +13,8 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/effect"
 )
 
 // unwindBound bounds the wait for a work's cleanup, short as a second Ctrl-C asked to leave.
@@ -44,6 +46,8 @@ type Config struct {
 	// Log keeps none.
 	Log     io.Writer
 	LogPath string
+	// Machine is what the screen's works run on, as Bridge.Effects gives it. Nil leaves them none.
+	Machine effect.Machine
 	// quiet leaves nothing past the screen, for a screen that a run follows and says the same again.
 	quiet bool
 }
@@ -63,6 +67,7 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	// Bubble Tea logs each key read to the file that this names, a hidden field's too.
 	_ = os.Unsetenv("TEA_TRACE")
 	bridge := newBridge(c.Out)
+	bridge.effects = bridge.effectsOn(ctx, c.Machine)
 	result := make(chan error, 1)
 	begin := tea.Batch(
 		func() tea.Msg {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"slices"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/tui"
 )
 
@@ -50,10 +48,11 @@ func runTitle(c *cobra.Command, check bool) string {
 	return c.CommandPath()
 }
 
-// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws.
+// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws. Its works run
+// on p's machine.
 func screenConfig(c *cobra.Command, p process) tui.Config {
 	return tui.Config{
-		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: tui.NewTheme(p.getenv),
+		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: tui.NewTheme(p.getenv), Machine: p.machine,
 		Cut: func(s syscall.Signal) error { return signalExit{s} },
 	}
 }
@@ -121,27 +120,5 @@ func pruneLogs(dir string) {
 	for len(logs) >= logsKept {
 		_ = os.Remove(logs[0])
 		logs = logs[1:]
-	}
-}
-
-// screenMachine returns m as a run's steps take it under a screen. A fake has no terminal to keep
-// its commands off.
-func screenMachine(ctx context.Context, b *tui.Bridge, m effect.Machine) effect.Machine {
-	if machine, ok := m.(effect.OSMachine); ok {
-		return b.Machine(ctx, machine)
-	}
-	return m
-}
-
-// readMachine returns what each read of a state screen runs on: m as a run takes it under a screen.
-// The first read makes it, as that takes the screen's Bridge, and the rest share it, as each one made
-// would hold sudo's ticket until the screen ends. The reads run on one goroutine.
-func readMachine(m effect.Machine) func(context.Context, *tui.Bridge) effect.Machine {
-	var screen effect.Machine
-	return func(ctx context.Context, b *tui.Bridge) effect.Machine {
-		if screen == nil {
-			screen = screenMachine(ctx, b, m)
-		}
-		return screen
 	}
 }

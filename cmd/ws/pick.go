@@ -29,11 +29,10 @@ func pickSteps(c *cobra.Command, p process, groups []tui.Group, scan tui.Work) (
 // pickServer opens the list of the roles' steps, scanned by a check, and returns cfg and the roles
 // as the choice sets them. The roles are nil where the maintainer left.
 func pickServer(c *cobra.Command, p process, cfg apply.Config, list []roles.Role) (apply.Config, []roles.Role, error) {
+	p.machine = cfg.M // ws_home confines it.
 	scan := func(ctx context.Context, b *tui.Bridge) error {
-		look := cfg
+		look := onScreen(cfg, b)
 		look.Check, look.Only = true, nil
-		look.M = screenMachine(ctx, b, cfg.M)
-		look.Out, look.Observer, look.Stop, look.Prepare = b, b, b.Stop(ctx), prepareSteps(look.M, b)
 		_, err := apply.Run(ctx, look, list)
 		return err
 	}
@@ -50,8 +49,8 @@ func pickServer(c *cobra.Command, p process, cfg apply.Config, list []roles.Role
 // the choice sets, and false where the maintainer left.
 func pickSetup(c *cobra.Command, p process, build func(check bool) setupBuild) (step.Options, bool, error) {
 	scan := func(ctx context.Context, b *tui.Bridge) error {
-		steps := build(true)(screenMachine(ctx, b, p.machine), b, io.Discard)
-		return runSetup(ctx, steps, step.Options{Observer: b, Check: true, Stop: b.Stop(ctx)})
+		e := b.Effects()
+		return runSetup(ctx, build(true)(e.M, b, io.Discard), step.Options{Observer: b, Check: true, Stop: e.Stop})
 	}
 	rows := tui.NewGroup("", build(true)(p.machine, nil, io.Discard))
 	choice, err := pickSteps(c, p, []tui.Group{rows}, scan)

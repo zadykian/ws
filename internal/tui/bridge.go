@@ -82,6 +82,8 @@ type Bridge struct {
 	// hand keeps what ByHand gets, to print once the terminal is back.
 	lock sync.Mutex
 	hand *effect.Terminal
+	// effects are what Effects gives the screen's works. Run sets them before the work starts.
+	effects Effects
 	// rec keeps the run for its log and its end.
 	rec record
 }
