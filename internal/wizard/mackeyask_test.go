@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/sshcfg"
 )
 
 // The labels of p256 and gitP256, by their comments and fingerprints.
@@ -29,6 +30,24 @@ type chooser struct {
 func (c *chooser) Choose(_ context.Context, q effect.ChoiceQuestion) (string, error) {
 	c.asked = append(c.asked, q)
 	return cmp.Or(c.answer, q.Default), nil
+}
+
+// The login key's answer names Secretive's agent beside the key.
+func TestMacKeyQuestionForLogin(t *testing.T) {
+	k, m, _ := newMacKey(t, "")
+	agent(m, p256, mldsa, gitP256)
+	c := &chooser{answer: gitLabel}
+	k.Tty, k.P = true, c
+	if err := k.ask(context.Background(), loginUse); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{p256Label, gitLabel, newKey}; len(c.asked) != 1 || !slices.Equal(c.asked[0].Options, want) {
+		t.Errorf("asked %+v, want the options %q", c.asked, want)
+	}
+	want := "WS_IDENTITY_PUB_KEY=" + listed(gitP256)[0].Pub() + "\nWS_IDENTITY_AGENT=~/" + sshcfg.SecretiveData + "/socket.ssh\n"
+	if got := string(m.Files[confPathForTest]); got != want {
+		t.Errorf("mac.conf = %q, want %q", got, want)
+	}
 }
 
 func TestMacKeyQuestionString(t *testing.T) {

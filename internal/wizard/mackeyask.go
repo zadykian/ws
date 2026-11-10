@@ -22,8 +22,13 @@ const newKey = "make a new one"
 // Secretive's app.
 type keyUse struct{ name, key, make string }
 
-// gitUse is git's key, at Notify, which signs with no prompt while the Mac is unlocked (#109).
-var gitUse = keyUse{"git's signing key", "WS_GIT_SIGNING_PUB_KEY", "a P-256 key for git's signing, at Notify"}
+var (
+	// loginUse is ws's login key, at Secretive's default protection, which asks for Touch ID at
+	// each login.
+	loginUse = keyUse{"ws's login key", "WS_IDENTITY_PUB_KEY", "a P-256 key for ws's login, at its default protection"}
+	// gitUse is git's key, at Notify, which signs with no prompt while the Mac is unlocked (#109).
+	gitUse = keyUse{"git's signing key", "WS_GIT_SIGNING_PUB_KEY", "a P-256 key for git's signing, at Notify"}
+)
 
 // askKey is the change that asks which of Secretive's keys serves the use, and names it in mac.conf.
 type askKey struct {
@@ -122,11 +127,16 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 		"at a terminal", macKey, use.name, strings.Join(lines, "; "))
 }
 
-// name writes ws's copy of the key's .pub, which ssh and git read, and names the copy in mac.conf.
+// name names the key in mac.conf, once it writes ws's copy of its .pub, which ssh and git read.
+// For ws's login key, it names Secretive's agent too, which holds the private key.
 func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) error {
 	copied := setup.KeyCopy{Path: sshcfg.Expand(key.Pub(), k.Home), Text: key.Line + "\n"}
 	if err := setup.Apply(ctx, k.M, k.Out, copied); err != nil {
 		return err
 	}
-	return refused(k.file().set(ctx, use.key, key.Pub()))
+	settings := []setting{{use.key, key.Pub()}}
+	if use == loginUse {
+		settings = append(settings, setting{"WS_IDENTITY_AGENT", "~/" + sshcfg.SecretiveData + "/socket.ssh"})
+	}
+	return refused(k.file().setAll(ctx, settings...))
 }
