@@ -79,10 +79,7 @@ socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
 with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
 `WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for `WS_GIT_SIGNING_PUB_KEY`.
-Where Secretive's agent lists one key for ws, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` take
-ws's copy of that key's `.pub` and the socket. Several stop the script ([ssh's hosts](#sshs-hosts)).
-With none, or no socket, `WS_IDENTITY_PUB_KEY` takes the file key's `.pub`, `~/.ssh/id_ed25519.pub`,
-and `WS_IDENTITY_AGENT` none, as the others do.
+`WS_IDENTITY_PUB_KEY` has none: the script stops without it ([ssh's hosts](#sshs-hosts)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -107,17 +104,15 @@ first run, whichever network the Mac is on. So `ssh ws` fails until the keys' ex
 key below, and checks ws's host key under the one name `ws` (`HostKeyAlias`). A session ends after
 120 s without word from ws, far longer than a switch of the tunnel takes.
 
-ssh offers ws one key alone (`IdentitiesOnly`). Where Secretive's agent has its socket in
-`~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data`, the key is the one that the agent
-lists, but git's signing key and a certificate ([Secretive's keys](mac-git.md#secretives-keys)). The
-script stops on several, and names them. Without one, or elsewhere, the key is
-`~/.ssh/id_ed25519`, its passphrase kept in the Keychain.
-Where `config.d/ws` gave ws that key, the script warns as Secretive's replaces it. Keep the file key
-with `WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub` for an installed ws, or put Secretive's key on
-GitHub before ws's next install. `WS_IDENTITY_PUB_KEY` names any `.pub`, as one of Secretive's. Its
-agent is the one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there.
-Else ssh reads the file beside the `.pub`. The script stops where that `.pub`, but the file key's,
-is missing or unreadable. It stops too where the `.pub` holds other than one public key's line, as a
+ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
+ws's copy of a key of Secretive's ([Secretive's keys](mac-git.md#secretives-keys)) or a file key.
+The script picks none by itself, not even the agent's sole key, as a key made for another use would
+go to GitHub unasked. Without the key, or with it empty, it stops: run `ws mac wizard`, which asks
+([The wizard](mac-wizard.md#the-macs-key)), or add one of the lines it gives. They name each P-256 key that
+Secretive's agent lists, by its comment and SHA256 fingerprint. The agent is the one whose socket
+`WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh reads the file
+beside the `.pub`, its passphrase kept in the Keychain. The script stops where that `.pub` is
+missing or unreadable. It stops too where the `.pub` holds other than one public key's line, as a
 private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a type that
 ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
 

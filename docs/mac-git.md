@@ -24,8 +24,8 @@ default, so a rebase would ask at each commit. The wizard names ws's copy of its
 Key Path, and the script writes the copy from the agent ([Secretive's keys](#secretives-keys)). git
 then signs through `~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
 so that a terminal, an editor and other apps sign alike. The key never leaves the Secure Enclave,
-and signs only while the Mac is unlocked. ssh then offers ws Secretive's other key, or else the file
-key ([ssh's hosts](mac.md#sshs-hosts)).
+and signs only while the Mac is unlocked. ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone,
+whichever keys Secretive holds ([ssh's hosts](mac.md#sshs-hosts)).
 
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
