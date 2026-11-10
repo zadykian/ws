@@ -40,6 +40,29 @@ func TestPickIdentity(t *testing.T) {
 	}
 }
 
+func TestNamedIdentity(t *testing.T) {
+	data := "~/" + sshcfg.SecretiveData
+	tests := []struct {
+		name, pub, agent string
+		want             sshcfg.Identity
+	}{
+		{"a file key", "~/k.pub", "", sshcfg.Identity{Pub: "~/k.pub"}},
+		{"a file key and its agent", "~/k.pub", "~/a.sock", sshcfg.Identity{Pub: "~/k.pub", Agent: "~/a.sock"}},
+		{"ws's copy", "~/" + sshcfg.KeyCopies + "/b.pub", "",
+			sshcfg.Identity{Pub: "~/" + sshcfg.KeyCopies + "/b.pub", Agent: data + "/socket.ssh"}},
+		{"a .pub in the container", data + "/PublicKeys/b.pub", "",
+			sshcfg.Identity{Pub: data + "/PublicKeys/b.pub", Agent: data + "/socket.ssh"}},
+		{"another agent", data + "/PublicKeys/b.pub", "~/a.sock",
+			sshcfg.Identity{Pub: data + "/PublicKeys/b.pub", Agent: "~/a.sock"}},
+	}
+	for _, tt := range tests {
+		tt.want.Check = true
+		if got := sshcfg.NamedIdentity(tt.pub, tt.agent, home); got != tt.want {
+			t.Errorf("%s: NamedIdentity = %+v; want %+v", tt.name, got, tt.want)
+		}
+	}
+}
+
 // The name is what Secretive gives the key's .pub, as ssh-keygen -E md5 -l prints its fingerprint.
 func TestAgentKeys(t *testing.T) {
 	const key = "ecdsa-sha2-nistp256 AAAA me"

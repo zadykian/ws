@@ -112,3 +112,12 @@ func PickIdentity(identity, agent, signingKey, home string, socket bool, publicK
 	}
 	return Identity{Pub: pub, Agent: agent, Check: true}, nil
 }
+
+// NamedIdentity is the key of mac.conf's WS_IDENTITY_PUB_KEY and WS_IDENTITY_AGENT. A key of
+// Secretive's takes its agent where WS_IDENTITY_AGENT names none.
+func NamedIdentity(pub, agent, home string) Identity {
+	if agent == "" && SecretiveKey(Expand(pub, home), home) {
+		agent = "~/" + SecretiveData + "/socket.ssh"
+	}
+	return Identity{Pub: pub, Agent: agent, Check: true}
+}
