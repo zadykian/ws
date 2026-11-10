@@ -157,8 +157,8 @@ func gitReady() (*effecttest.Machine, *setup.Git) {
 func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 	m, g := gitReady()
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 2 {
-		t.Fatalf("Plan = %v, %v; want two writes", p.Changes, err)
+	if err != nil || len(p.Changes) != 3 {
+		t.Fatalf("Plan = %v, %v; want two writes and the line", p.Changes, err)
 	}
 	if err := g.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
@@ -180,7 +180,7 @@ func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 	m, g := gitReady()
 	delete(m.Dirs, gitHome+"/.config/ws")
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 3 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
+	if err != nil || len(p.Changes) != 4 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
 		t.Fatalf("Plan = %v, %v; want the directory and two writes", p.Changes, err)
 	}
 	m, g = gitReady()
@@ -188,7 +188,7 @@ func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.Modes[gitHome+"/.config/ws/gitconfig"] = 0o600
-	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 1 {
+	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 2 {
 		t.Errorf("Plan with a wrong mode = %v, %v; want one change", p.Changes, err)
 	}
 }
@@ -200,7 +200,7 @@ func TestGitTrustsSecretivesKeyThroughItsScript(t *testing.T) {
 	m.Files[pub] = []byte(gitKey)
 	m.Results["ssh-keygen -l -f "+pub] = effecttest.Result{}
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 3 || !strings.Contains(p.Changes[0].String(), "secretive-ssh-keygen") {
+	if err != nil || len(p.Changes) != 4 || !strings.Contains(p.Changes[0].String(), "secretive-ssh-keygen") {
 		t.Errorf("Plan = %v, %v; want the script, allowed signers and gitconfig", p.Changes, err)
 	}
 }

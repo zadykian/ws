@@ -3,6 +3,7 @@ package setup_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
 	"testing"
@@ -98,5 +99,29 @@ func TestGitGoesOnWhereGhCannotAddTheKey(t *testing.T) {
 	}
 	if n := strings.Count(strings.Join(out.Lines, "\n"), "unverified"); n != 1 {
 		t.Errorf("lines = %q; want one warning", out.Lines)
+	}
+}
+
+func TestGitSaysWhereGhListsTheKey(t *testing.T) {
+	const line = "git's key is among GitHub's signing keys already"
+	_, g := gitReady()
+	p, err := g.Plan(context.Background())
+	if last := p.Changes[len(p.Changes)-1].String(); err != nil || last != line {
+		t.Errorf("Plan = %v, %v; want the line after the writes", p.Changes, err)
+	}
+	if out := g.Out.(*effecttest.Out); len(out.Lines) != 0 {
+		t.Errorf("Plan said %q; want the line with the changes", out.Lines)
+	}
+}
+
+func TestGitSaysNoAlreadyAfterItsAdd(t *testing.T) {
+	m, g := gitReady()
+	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
+	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{setup.Register{
+		Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if p, err := g.Plan(context.Background()); err != nil || strings.Contains(fmt.Sprint(p.Changes), "already") {
+		t.Errorf("Plan after the add = %v, %v; want no line that the key was there already", p.Changes, err)
 	}
 }

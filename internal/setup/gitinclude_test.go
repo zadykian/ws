@@ -29,7 +29,7 @@ func TestGitPutsTheIncludeAtTheTopOfGitconfig(t *testing.T) {
 func TestGitMakesGitconfigWhereMissing(t *testing.T) {
 	_, _, g := gitWithConfig("", "", "")
 	p := mustPlan(t, g)
-	if len(p.Changes) != 3 || !strings.Contains(p.Changes[2].String(), "+    path = ~/.config/ws/gitconfig") {
+	if len(p.Changes) != 4 || !strings.Contains(p.Changes[2].String(), "+    path = ~/.config/ws/gitconfig") {
 		t.Errorf("Plan = %v; want the two files and a new ~/.gitconfig", p.Changes)
 	}
 }

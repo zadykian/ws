@@ -42,7 +42,9 @@ needs the `write:ssh_signing_key` scope. Without a login or the scope, or on ano
 the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
 commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,
 and says what it would add. Before gh is installed, it says what it would add once gh has a login.
-After an add, the script checks that they list the key.
+After an add, the script checks that they list the key. Where they list it already, the script
+says so in a line, and `--check` too. GitHub keeps the signing keys apart from the
+authentication keys, so a key that serves both goes on each.
 
 ## Secretive's keys
 

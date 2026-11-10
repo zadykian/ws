@@ -29,9 +29,12 @@ type Git struct {
 	LookPath func(string) (string, error)
 
 	notes []string        // the warnings of the plan in the making
+	known []string        // the lines for what the plan found there already
 	said  map[string]bool // the warnings said in this run
 	// addErr is why the key's add failed in this run.
 	addErr error
+	// added is whether this run added the key, so that the plan after it says no "already".
+	added bool
 }
 
 // Name is git.
@@ -109,6 +112,9 @@ func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes[n:] {
 		switch c := c.(type) {
 		case Pending:
+			continue
+		case Known:
+			g.tell(string(c))
 			continue
 		case Notice:
 			g.say(string(c))
