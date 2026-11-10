@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/setup"
-	"github.com/zadykian/ws/internal/sshcfg"
 )
 
 // choose makes ws's key where it has none. The key goes in Secretive where its app is there or the
@@ -37,25 +35,4 @@ func (k *MacKey) choose(ctx context.Context, c chooseKey) error {
 		return err
 	}
 	return refused(k.file().add(ctx, line("WS_IDENTITY_PUB_KEY", k.tilde(c.pub))+"\n"))
-}
-
-// git has the user make git's signing key in Secretive's app, beside ws's, at Notify. So git signs
-// with no prompt while the Mac is unlocked (#109). It writes its .pub's path into mac.conf as
-// WS_GIT_SIGNING_PUB_KEY. Where only is set, it does so only for a git that has a name and no line.
-func (k *MacKey) git(ctx context.Context, only bool) error {
-	text, c, err := loadConf(k.file())
-	if err != nil || (only && (c.GitName == "" || hasLine(text, "WS_GIT_SIGNING_PUB_KEY"))) {
-		return err
-	}
-	id, err := setup.PickKey(ctx, k.M, c, k.Home)
-	if err != nil {
-		return err
-	}
-	k.open(ctx)
-	got, err := k.pick(ctx, sshcfg.Expand(id.Pub, k.Home), "a second P-256 key, for git's signing, at Notify",
-		"An empty WS_GIT_SIGNING_PUB_KEY= in mac.conf keeps ws mac apply's file key for git at the next run")
-	if err != nil {
-		return err
-	}
-	return refused(k.file().add(ctx, line("WS_GIT_SIGNING_PUB_KEY", k.tilde(got))+"\n"))
 }
