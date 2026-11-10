@@ -47,28 +47,26 @@ func (k *MacKey) open(ctx context.Context) {
 // default protection, which asks for Touch ID at each use. It writes the key's .pub and the agent
 // into mac.conf, as git's key would stop the default, and the agent must list it.
 func (k *MacKey) secretiveKey(ctx context.Context) error {
-	if !k.app() {
-		if err := k.M.Pass(ctx, false, "brew", "install", "--cask", "secretive"); err != nil {
-			return fmt.Errorf("%s: brew install --cask secretive failed; install Secretive, or answer no for "+
-				"ssh-keygen's key", macKey)
-		}
-	}
-	k.open(ctx)
-	text, c, err := loadConf(k.file())
+	text, _, err := loadConf(k.file())
 	if err != nil {
 		return err
 	}
-	got, err := k.pick(ctx, sshcfg.Expand(c.GitSigningPubKey, k.Home), "a P-256 key for ws's login, at its default protection", "")
+	keys, _, _ := setup.SecretiveKeys(ctx, k.M, k.Home)
+	got, err := k.made(ctx, "a P-256 key for ws's login, at its default protection", keys)
 	if err != nil {
+		return err
+	}
+	if err := setup.Apply(ctx, k.M, k.Out, setup.KeyCopy{Path: sshcfg.Expand(got.Pub(), k.Home), Text: got.Line + "\n"}); err != nil {
 		return err
 	}
 	if !hasLine(text, "WS_IDENTITY_PUB_KEY") {
-		lines := line("WS_IDENTITY_PUB_KEY", k.tilde(got)) + "\n" + line("WS_IDENTITY_AGENT", k.tilde(k.secretive())+"/socket.ssh") + "\n"
+		lines := line("WS_IDENTITY_PUB_KEY", got.Pub()) + "\n" + line("WS_IDENTITY_AGENT", k.tilde(k.secretive())+"/socket.ssh") + "\n"
 		if err := refused(k.file().add(ctx, lines)); err != nil {
 			return err
 		}
 	}
-	if _, c, err = loadConf(k.file()); err != nil {
+	_, c, err := loadConf(k.file())
+	if err != nil {
 		return err
 	}
 	id, err := setup.PickKey(ctx, k.M, c, k.Home)

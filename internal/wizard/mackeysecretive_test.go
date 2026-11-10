@@ -14,13 +14,14 @@ import (
 func TestMacKeySecretiveKey(t *testing.T) {
 	k, m, _ := newMacKey(t, "WS_REMOTE=\n")
 	m.Dirs["/h/Applications/Secretive.app"] = 0o755
-	agent(m, p256)
+	agent(m)
 	m.Results["open -a Secretive"] = effecttest.Result{}
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+	k.Sleep = func(time.Duration) { agent(m, p256) }
 	if err := k.secretiveKey(context.Background()); err != nil {
 		t.Fatalf("secretiveKey = %v", err)
 	}
-	want := "WS_REMOTE=\nWS_IDENTITY_PUB_KEY=" + k.tilde(copyOf(p256)) + "\n" +
+	want := "WS_REMOTE=\nWS_IDENTITY_PUB_KEY=" + listed(p256)[0].Pub() + "\n" +
 		"WS_IDENTITY_AGENT=~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh\n"
 	if got := string(m.Files[confPathForTest]); got != want {
 		t.Errorf("mac.conf = %q, want %q", got, want)
@@ -33,7 +34,8 @@ func TestMacKeySecretiveKey(t *testing.T) {
 func TestMacKeySecretiveKeyStopsWhereItsAgentLacksTheKey(t *testing.T) {
 	k, m, out := newMacKey(t, "WS_IDENTITY_PUB_KEY=~/k.pub\nWS_IDENTITY_AGENT=/s\n")
 	m.Dirs["/h/Applications/Secretive.app"] = 0o755
-	agent(m, p256)
+	agent(m)
+	k.Sleep = func(time.Duration) { agent(m, p256) }
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 	m.Results["open -a Secretive"] = effecttest.Result{}
