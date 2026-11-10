@@ -78,8 +78,9 @@ socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts
 `WS_USER` is the user ssh logs in as: the server's `ws_user`, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
 with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
-`WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for `WS_GIT_SIGNING_PUB_KEY`.
-`WS_IDENTITY_PUB_KEY` has none: the script stops without it ([ssh's hosts](#sshs-hosts)).
+`WS_USER` and 51820 for `WS_PORT`. `WS_IDENTITY_PUB_KEY` has none: the script stops without it
+([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`, which git's name needs
+([git on the Mac](mac-git.md)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each

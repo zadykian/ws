@@ -8,13 +8,11 @@ command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's log
 Homebrew's gh where `PATH` has none. Without the two keys, the script leaves git alone, and emptying
 them leaves the files and the include as they are.
 
-Without `WS_GIT_SIGNING_PUB_KEY`, the key is `~/.ssh/id_ed25519_signing`, which the script makes
-once with no passphrase, as git signs unattended, in a rebase too. Where its `.pub` is there without
-the private key, as an agent's key leaves it, the script stops rather than replace it: name the
-`.pub` in `WS_GIT_SIGNING_PUB_KEY`. A key that `WS_GIT_SIGNING_PUB_KEY` names must be there already,
-as the script makes no other: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one. An empty
-`WS_GIT_SIGNING_PUB_KEY` gives the script's own instead. A `.pub` that the script cannot read, or
-that holds more than a public key's line, as a private key does, stops it too.
+`WS_GIT_SIGNING_PUB_KEY` has no default, and the script makes no key. Where `mac.conf` names none,
+or an empty one, the script stops with the line that would name each P-256 key of Secretive's
+agent. A `.pub` that is missing or that the script cannot read, or that holds more than a public
+key's line, as a private key does, stops it too. A file key with no passphrase signs unattended, in
+a rebase too: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one.
 
 The wizard asks for git's key where `mac.conf` names none ([The Mac's
 key](mac-wizard.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
@@ -43,8 +41,8 @@ wizard does the same for ws ([Signing key](mac-wizard.md#signing-key)). The logi
 needs the `write:ssh_signing_key` scope. Without a login or the scope, or on another error of gh's,
 the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
 commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,
-and says what it would add, also before the key is made. Before gh is installed, it says what it
-would add once gh has a login. After an add, the script checks that they list the key.
+and says what it would add. Before gh is installed, it says what it would add once gh has a login.
+After an add, the script checks that they list the key.
 
 ## Secretive's keys
 

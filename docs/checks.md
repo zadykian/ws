@@ -218,20 +218,20 @@ copy. With more keys in the agent, the stop must give a line for each P-256 key 
 is missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
 `ws mac apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
 ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). With `WS_GIT_NAME` and
-`WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must stop
-on a `WS_GIT_SIGNING_PUB_KEY` that is missing or unreadable, or a `.pub` that holds more than a
-public key. So must the default key or its `.pub` alone. git must then sign a commit and verify it.
-A `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
-lines, and name its own settings. An include below them, or a second one, must stop `ws mac apply`
-before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
-settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket and
-`PublicKeys` closed, `--check` must show the wrapper and write none. A run must write ws's copy of
-the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names. `ws` must keep the file key that
-`mac.conf` names. git's credential command for GitHub must be a stand-in gh's, which
-must add the key to its login once. Logged out, gh must draw a warning at each run. Logged in, `ws
-mac apply` must warn of a 404 or another error of gh's, and of an add that leaves the account
-without the key. It must add the key where the account lacks it, and `--check` name the add before
-the key is made. Where `PATH` has no gh, `ws mac apply` must install Homebrew's once, and only with
+`WS_GIT_EMAIL`, it must stop on an empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
+unreadable, or a `.pub` that holds more than a public key. With a file key there, an ed25519 key
+with no passphrase, git must sign a commit and verify it. A `~/.gitconfig` must get the include of
+`~/.config/ws/gitconfig` at its top, once, keep its own lines, and name its own settings. An include
+below them, or a second one, must stop `ws mac apply` before it writes a file, as must a link that
+lacks the include. One whose file has it must pass. The settings of git's XDG file must be named.
+With a key that an agent holds at Secretive's socket and `PublicKeys` closed, an empty
+`WS_GIT_SIGNING_PUB_KEY` must stop with its line. Named, `--check` must show the wrapper and write
+none. A run must write ws's copy of the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names.
+`ws` must keep the file key that `mac.conf` names. git's credential command for GitHub must be a
+stand-in gh's, which must add the key to its login once. Logged out, gh must draw a warning at each
+run. Logged in, `ws mac apply` must warn of a 404 or another error of gh's, and of an add that
+leaves the account without the key. It must add the key where the account lacks it, and `--check`
+name the add. Where `PATH` has no gh, `ws mac apply` must install Homebrew's once, and only with
 git's keys ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun,
 the job fails, as the daemon's device makes a utun too.
 
