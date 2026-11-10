@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"strings"
 
 	"github.com/zadykian/ws/internal/gitcfg"
 	"github.com/zadykian/ws/internal/sshcfg"
@@ -18,26 +17,18 @@ type gitKey struct {
 	Make              bool
 }
 
-// key finds the signing key, WS_GIT_SIGNING_PUB_KEY with its ~/ the home. Without it, the key is
-// ~/.ssh/id_ed25519_signing, made once, as the shell role does on ws. No other key is made, and no
-// .pub replaced. A key that Secretive's agent lists needs no file, as macOS 27 denies ws Secretive's
+// key finds the signing key, WS_GIT_SIGNING_PUB_KEY with its ~/ the home. It makes none, and stops
+// where mac.conf names none, or an empty one, with the line that would name each P-256 key of
+// Secretive's agent. A key that the agent lists needs no file, as macOS 27 denies ws Secretive's
 // (docs/mac.md): git names ws's copy. Else it stops where the .pub is missing or unreadable, holds
 // more than a public key's line, as a private key does, or ssh-keygen can't read it.
 func (g *Git) key(ctx context.Context) (gitKey, error) {
-	pub := sshcfg.Expand(g.Conf.GitSigningPubKey, g.Home)
 	if g.Conf.GitSigningPubKey == "" {
-		pub = g.Home + "/.ssh/id_ed25519_signing.pub"
-		_, err := g.M.Stat(strings.TrimSuffix(pub, ".pub"))
-		if missing, err := notExist(err); err != nil {
-			return gitKey{}, err
-		} else if missing {
-			if _, err := g.M.Stat(pub); err == nil {
-				return gitKey{}, fmt.Errorf("%s is there without its private key: name it in mac.conf's "+
-					"WS_GIT_SIGNING_PUB_KEY where an agent holds the key, or remove it", pub)
-			}
-			return gitKey{Pub: pub, Make: true}, nil
-		}
+		// An agent that does not answer leaves a stop with no line to add.
+		keys, _, _ := SecretiveKeys(ctx, g.M, g.Home)
+		return gitKey{}, unnamed("WS_GIT_SIGNING_PUB_KEY", "git's signing key", keys)
 	}
+	pub := sshcfg.Expand(g.Conf.GitSigningPubKey, g.Home)
 	if sshcfg.SecretiveKey(pub, g.Home) {
 		// An agent that does not answer leaves the .pub to read, as an older macOS allows.
 		keys, _, _ := SecretiveKeys(ctx, g.M, g.Home)
@@ -49,9 +40,6 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 	if missing, rerr := notExist(err); rerr != nil {
 		return gitKey{}, fmt.Errorf("cannot read %s: make it readable, or name another .pub in "+
 			"mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
-	} else if missing && g.Conf.GitSigningPubKey == "" {
-		return gitKey{}, fmt.Errorf("%s is missing beside its key: ssh-keygen -y -f %s >%s writes it",
-			pub, strings.TrimSuffix(pub, ".pub"), pub)
 	} else if missing {
 		return gitKey{}, fmt.Errorf("%s, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing: make the key first, "+
 			"as docs/mac-git.md says", pub)

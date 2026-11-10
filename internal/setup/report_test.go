@@ -122,11 +122,8 @@ func TestGitReportsWhatItManages(t *testing.T) {
 	}
 }
 
-func TestGitReportShowsAKeyToMakeAndGhToInstall(t *testing.T) {
+func TestGitReportShowsGhToInstall(t *testing.T) {
 	m, g := gitReady()
-	delete(m.Files, gitPub)
-	delete(m.Files, strings.TrimSuffix(gitPub, ".pub"))
-	g.Conf.GitSigningPubKey = ""
 	g.LookPath = func(name string) (string, error) {
 		if name == "gh" {
 			return "", fmt.Errorf("no %s", name)
@@ -135,7 +132,7 @@ func TestGitReportShowsAKeyToMakeAndGhToInstall(t *testing.T) {
 	}
 	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
 	got := reportOf(t, g)
-	if got["gh"].Found != "missing" || got[gitPub].Found != "missing" {
-		t.Errorf("gh = %+v, key = %+v, want both missing", got["gh"], got[gitPub])
+	if got["gh"].Found != "missing" || got[gitPub].Found != "present" {
+		t.Errorf("gh = %+v, key = %+v, want gh missing", got["gh"], got[gitPub])
 	}
 }
