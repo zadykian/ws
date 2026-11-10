@@ -53,7 +53,9 @@ What remains costs a little. The status line takes a row. The Mac's scrollback g
 only as the login ends, and the wheel scrolls tmux's history until then. Past 10,000 lines the
 oldest are lost. A full-screen program's screen is gone at its exit, as without tmux. tmux's
 screen hides the login's message until the end. Where `/tmp` fills during the login, the status
-holds but the output is gone.
+holds but the output is gone. A tmux inside the login's, such as cld's, sends a program's
+passthrough to the login's tmux, which drops it. So claude's notifications there never reach the
+Mac, though its copies to the clipboard do.
 
 ## Signing
 
