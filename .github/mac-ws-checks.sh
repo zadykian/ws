@@ -54,7 +54,7 @@ else
 fi
 ! sudo test -e /etc/ws-tunnel/routes.d/test || error '--check wrote routes.d/test'
 
-# The daemon takes each SIGHUP of ws mac tunnel routes in place: it keeps its pid and logs a reload of
+# The daemon takes each SIGHUP of ws mac tunnel routes in place. It keeps its pid and logs a reload of
 # routes.d. A daemon that died of a SIGHUP, and that launchd started again, would log a start.
 was=$(pid)
 lines=$(sudo awk 'END { print NR }' "$log")

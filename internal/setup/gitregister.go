@@ -53,9 +53,9 @@ func unverified(err error, pub string) string {
 }
 
 // register plans to add the key to the signing keys of gh's login where they lack it, titled with
-// the Mac's name, so that GitHub verifies the commits it signs. Without a login or its
-// write:ssh_signing_key scope, or on another error of gh's, it warns, at each run until one adds the
-// key. Before gh or the key is there, it says what it would add once they are.
+// the Mac's name. That way GitHub verifies the commits the key signs. Without a login or its
+// write:ssh_signing_key scope, or on another error of gh's, it warns, at each run until one adds
+// the key. Before gh or the key is there, it says what it would add once they are.
 func (g *Git) register(ctx context.Context, key gitKey, gh string, installing bool) (*Register, string, error) {
 	title, err := g.M.Run(ctx, "hostname", "-s")
 	if err != nil {

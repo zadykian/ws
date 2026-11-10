@@ -1,6 +1,6 @@
 #!/bin/sh
-# claude's login on the stand-in ws at a terminal, on the Mac that 42-login.sh leaves. With it
-# logged out, a run of the wizard at a terminal of script's must run claude auth login through
+# claude's login on the stand-in ws at a terminal, on the Mac that 42-login.sh leaves. The wizard
+# runs at a terminal of script's, with claude logged out. It must run claude auth login through
 # bash -lc in a session of ssh -t, and list what stays by hand. The stand-in claude takes a
 # terminal. The next run must print nothing.
 
@@ -16,7 +16,7 @@ error() {
     fail=1
 }
 
-# macOS puts /usr/local/bin first on a login shell's PATH, so the stand-in claude goes there for
+# macOS puts /usr/local/bin first on a login shell's PATH. So the stand-in claude goes there for
 # claude's session, as root's ~/.local/bin would on ws.
 if [ -e /usr/local/bin/claude ]; then
     echo '::error::the runner has a claude in /usr/local/bin already'

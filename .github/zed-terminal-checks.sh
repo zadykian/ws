@@ -161,7 +161,7 @@ result "the next tab takes it" until_ok shown 1
 result "it is named for the new tab" named "$(project_of "$work/proj/ws")-$(pane_pid t2)"
 echo "== T7 tabs that start together each end on a session of their own"
 # together K N: K detached sessions and N tabs started at once end as the larger number of
-# sessions, with N clients and none shown twice, in each of 10 rounds.
+# sessions, with N clients and none shown twice. That holds in each of 10 rounds.
 together() {
     want=$1
     [ "$2" -le "$1" ] || want=$2

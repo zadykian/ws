@@ -31,8 +31,9 @@ func (u UserUnit) systemctl(ctx context.Context, args ...string) ([]byte, error)
 	return u.User.Output(ctx, u.M, "env", argv...)
 }
 
-// active asks the user's manager, where it is up, for the unit's state. The group plans before
-// the manager's own start, so a manager that is down is no error. show exits with 0 in any state.
+// active asks the user's manager, where the manager is up, for the unit's state. The group plans
+// before the manager's own start, so a manager that is down is no error. show exits with 0 in any
+// state.
 func (u UserUnit) active(ctx context.Context) (bool, error) {
 	_, err := u.M.Stat(fmt.Sprintf("/run/user/%d/systemd/private", u.UID))
 	if errors.Is(err, fs.ErrNotExist) {
@@ -69,7 +70,7 @@ func (c userCall) Apply(ctx context.Context) error {
 	return c.u.mark().settle(ctx)
 }
 
-// Plan starts the unit where it is down, which serves any watched change too, and otherwise
+// Plan starts a unit that is down, which serves any watched change too, and otherwise
 // restarts it for a watched change or a mark that an earlier run left.
 func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
 	if !Booted(u.M) {

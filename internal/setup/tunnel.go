@@ -25,9 +25,9 @@ const (
 	tunnelDir = "/etc/ws-tunnel"
 )
 
-// Tunnel sets up the tunnel to ws: ws in ~/.local/bin and root's copy of it, the Mac's WireGuard
-// key, and with WS_PUBLIC_KEY, tunnel.conf and the LaunchDaemon that runs `ws mac tunnel run`. Without
-// WS_PUBLIC_KEY, ws's key, it installs no daemon yet.
+// Tunnel sets up the tunnel to ws: ws in ~/.local/bin and root's copy of it, and the Mac's
+// WireGuard key. With WS_PUBLIC_KEY, it also sets up tunnel.conf and the LaunchDaemon that runs `ws
+// mac tunnel run`. Without WS_PUBLIC_KEY, ws's key, it installs no daemon yet.
 type Tunnel struct {
 	Conf conf.Conf
 	Home string

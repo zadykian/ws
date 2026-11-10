@@ -11,11 +11,11 @@ import (
 // cldReleases is the page of cld's releases, whose latest has the install.sh that installs cld.
 const cldReleases = "https://github.com/zadykian/cld/releases"
 
-// Cld sets up cld, for cld restore tabs, which reopens Ghostty's tabs of cld's sessions: it installs
-// cld into ~/.local/bin where missing, and updates it where a newer release is out, wherever it
-// runs. It warns where cld can't be installed or updated, so that the run goes on to the tunnel.
-// Under Check it says that ssh's file may gain the lines that start cld's watcher, as --check
-// can run neither a cld nor a Ghostty that it would install.
+// Cld sets up cld, for cld restore tabs, which reopens Ghostty's tabs of cld's sessions. It
+// installs cld into ~/.local/bin where missing, and updates it where a newer release is out,
+// wherever it runs. It warns where cld can't be installed or updated, so that the run goes on to
+// the tunnel. Under Check it says that ssh's file may gain the lines that start cld's watcher. It
+// can't tell, as --check can run neither a cld nor a Ghostty that it would install.
 type Cld struct {
 	Home  string
 	M     effect.Machine
@@ -75,8 +75,9 @@ func (c *Cld) restoreTabs(ctx context.Context) bool {
 	return err == nil
 }
 
-// gains reports whether config.d/ws would gain the lines that start cld's watcher: Ghostty's app
-// is there or --check would install it, as Homebrew has not the cask, and ssh has no lines yet.
+// gains reports whether config.d/ws would gain the lines that start cld's watcher. They come where
+// ssh has no lines yet, and Ghostty's app is there or --check would install it, as Homebrew has not
+// the cask.
 func (c *Cld) gains(ctx context.Context) bool {
 	there := c.ghosttyApp()
 	if there && c.has() && c.restoreTabs(ctx) {
@@ -89,8 +90,8 @@ func (c *Cld) gains(ctx context.Context) bool {
 	return err != nil
 }
 
-// Plan plans cld's install where it is missing, else its update. Under Check, a cld that is or will
-// be there with restore tabs may bring the lines of ssh's file.
+// Plan plans cld's install where cld is missing, else its update. Under Check, a cld that is or
+// will be there with restore tabs may bring the lines of ssh's file.
 func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 	if c.tried {
 		return step.Plan{}, nil

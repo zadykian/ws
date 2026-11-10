@@ -22,9 +22,9 @@ func Parse(data []byte) (Secrets, error) {
 }
 
 // Decode reads the decrypted file and checks it, leaving each reference as written. It refuses a
-// key that ws does not know, a key twice, a value of the wrong type, an env name that the shell
-// does not take, a git key that is no https:// URL and a file that is no base64. Edit the result
-// and Marshal it; Expand gives the values the roles take.
+// key that ws does not know, a key twice and a value of the wrong type. It also refuses an env name
+// that the shell does not take, a git key that is no https:// URL and a file that is no base64.
+// Edit the result and Marshal it. Expand gives the values the roles take.
 func Decode(data []byte) (Secrets, error) {
 	var d document
 	dec := toml.NewDecoder(bytes.NewReader(data))
@@ -35,8 +35,8 @@ func Decode(data []byte) (Secrets, error) {
 	return fromDocument(d)
 }
 
-// scrub keeps a value out of a decode error, which TOML words with the text it could not read: it
-// gives the line, and the key where the key is unknown, alone.
+// scrub keeps a value out of a decode error, which TOML words with the text it could not read. It
+// gives the line alone, and the key where the key is unknown.
 func scrub(err error) error {
 	var strict *toml.StrictMissingError
 	if errors.As(err, &strict) {

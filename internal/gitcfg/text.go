@@ -21,10 +21,10 @@ type Inputs struct {
 	Program string
 }
 
-// Config returns ~/.config/ws/gitconfig: the identity, and each commit and tag signed with the key, which
-// the allowed signers file trusts for the email, through Program where there is one. Then gh's
-// credential command, as gh auth setup-git writes it, after an empty value that drops any set before
-// it. The name and the paths go in quotes, which mac.conf's values cannot end.
+// Config returns ~/.config/ws/gitconfig: the identity, and each commit and tag signed with the key,
+// through Program where there is one. The allowed signers file trusts the key for the email. Then
+// gh's credential command follows, as gh auth setup-git writes it, after an empty value that drops
+// any set before it. The name and the paths go in quotes, which mac.conf's values cannot end.
 func Config(in Inputs) string {
 	var b strings.Builder
 	b.WriteString(Header + "\n")

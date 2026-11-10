@@ -42,7 +42,7 @@ func TestLocale(t *testing.T) {
 		m.Results["locale -a"] = effecttest.Result{Out: []byte(tt.avail)}
 		m.Results["locale-gen"] = effecttest.Result{}
 		g := host.Group{Title: "Locale", Parts: localeParts(m, "en_US.UTF-8")}
-		// The fake's `locale -a` stays as it was after locale-gen, so a run that generates fails its
+		// The fake's `locale -a` stays unchanged after locale-gen, so a run that generates fails its
 		// check that the second plan is empty.
 		_, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false)
 		if (err != nil) != tt.generates {

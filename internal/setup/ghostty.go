@@ -18,11 +18,11 @@ const (
 	ghosttyLine = "config-file = ?ws.ghostty"
 )
 
-// Ghostty sets up Ghostty, the Mac's terminal: Ghostty and the font its settings name, from
-// Homebrew's casks where missing, and ws.ghostty, those settings, which Ghostty's config reads.
-// It warns where Ghostty can't be installed, or Ghostty's config is not the step's to change, so
-// that the run goes on to the tunnel. It stops where it can't write a file. Ghostty then updates
-// itself, as ws.ghostty says.
+// Ghostty sets up Ghostty, the Mac's terminal. It installs Ghostty and the font its settings name
+// from Homebrew's casks where missing, and writes ws.ghostty, those settings, which Ghostty's
+// config reads. It warns where Ghostty can't be installed, or Ghostty's config is not the step's to
+// change, so that the run goes on to the tunnel. It stops where it can't write a file. Ghostty then
+// updates itself, as ws.ghostty says.
 type Ghostty struct {
 	Home string
 	// Settings is the text of mac/ws.ghostty.

@@ -13,7 +13,7 @@ var netplanDirs = []string{"lib/netplan", "etc/netplan", "run/netplan"}
 
 // checkNetplan has netplan merge its files with the direct link's in a scratch root, and returns
 // what keeps it from setting up the port alone. netplan generate, run in a snap's shell, ignores
-// --root-dir and generates the machine's files over D-Bus, so the step runs configure, which
+// --root-dir and generates the machine's files over D-Bus. So the step runs configure, which
 // writes under the root only. The settings may hold secrets, such as Wi-Fi passwords, so no
 // message quotes what netplan prints, and the root is gone as the check ends.
 func checkNetplan(ctx context.Context, m effect.Machine, file []byte, port Port) ([]string, error) {

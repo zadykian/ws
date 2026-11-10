@@ -10,14 +10,14 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// drift finds the outbound table in force other than its file's. A run cut short before the
-// unit's reload leaves the old table in force, and a table flushed or deleted by hand leaves the
-// unit active. Nothing else would reload the unit, so the plan compares the kernel's table with
-// the file's, loaded in a network namespace of its own as the unit loads it. -s leaves out
-// counters' values, not the counters nor the sets' elements. unshare needs CAP_SYS_ADMIN, which
-// CI's container lacks, so it skips without systemd. A table that fails to load, or no table in
-// force, counts as a difference: the reload shows which. A file or fill not yet written has none
-// to load, and its write is a change of its own.
+// drift finds the outbound table in force other than its file's. A run cut short before the unit's
+// reload leaves the old table in force, and a table flushed or deleted by hand leaves the unit
+// active. Nothing else would reload the unit. So the plan compares the kernel's table with the
+// file's, loaded in a network namespace of its own as the unit loads it. -s leaves out counters'
+// values, not the counters nor the sets' elements. unshare needs CAP_SYS_ADMIN, which CI's
+// container lacks, so it skips without systemd. A table that fails to load, or no table in force,
+// counts as a difference: the reload shows which. A file or fill not yet written has none to load,
+// and its write is a change of its own.
 type drift struct {
 	m   effect.Machine
 	out effect.Out

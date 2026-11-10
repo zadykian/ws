@@ -100,7 +100,7 @@ func (l pickList) opened() pickList {
 	return l.settled().whole(due)
 }
 
-// whole returns the list with every step on in a stage that want takes and that has none on: ws's
+// whole returns the list with every step on in a stage that want takes and that has none on. ws's
 // run can be due while its roles read clean, and a stage with nothing on wouldn't run.
 func (l pickList) whole(want func(pickRow) bool) pickList {
 	l.rows = slices.Clone(l.rows)

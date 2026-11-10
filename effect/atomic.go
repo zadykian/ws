@@ -8,7 +8,7 @@ import (
 )
 
 // WriteAtomic fills a pending file beside path, gives it the owner and mode of a, and renames it
-// over path, so that a reader sees the old file or the new one whole. Another owner than ws's own
+// over path. So a reader sees the old file or the new one whole. Another owner than ws's own
 // needs root.
 func (m OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
 	if root, rel, err := m.confined(path); err != nil || root != nil {

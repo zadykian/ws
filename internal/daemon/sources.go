@@ -11,8 +11,8 @@ import (
 
 // Signals turns the signals of sigs into events until ctx ends: SIGHUP reads the settings again,
 // and SIGTERM and SIGINT stop. launchd starts the daemon with each signal's default action, under
-// which a SIGHUP would end it, so the caller subscribes before the loop runs, and a SIGHUP in
-// between waits in sigs.
+// which a SIGHUP would end it. So the caller subscribes before the loop runs, and a SIGHUP before
+// then waits in sigs.
 func (d *Daemon) Signals(ctx context.Context, sigs <-chan os.Signal) {
 	for {
 		select {
@@ -29,9 +29,9 @@ func (d *Daemon) Signals(ctx context.Context, sigs <-chan os.Signal) {
 	}
 }
 
-// Watch sends Changed for each line that start's reader gives, which is notifyutil's: a line each
-// time configd posts a network change, as when an interface's IPv4 address comes or goes. Where
-// the reader ends, it starts again after wait, until ctx ends.
+// Watch sends Changed for each line that start's reader gives, which is notifyutil's. It gives a
+// line each time configd posts a network change, as when an interface's IPv4 address comes or goes.
+// Where the reader ends, it starts again after wait, until ctx ends.
 func (d *Daemon) Watch(ctx context.Context, wait time.Duration, start func(context.Context) (io.ReadCloser, error)) {
 	for {
 		r, err := start(ctx)

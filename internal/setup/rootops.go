@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// removeRoot plans the removal of root's file, if it is there.
+// removeRoot plans the removal of root's file, if the file is there.
 func removeRoot(m effect.Machine, file string) (step.Change, error) {
 	have, err := m.ReadRootFile(file)
 	if errors.Is(err, fs.ErrNotExist) {

@@ -14,7 +14,7 @@ const maxKeepDays = 99999
 
 // sizeFormat is what dockerd reads with go-units' RAMInBytes: a number, then b, or k, m, g, t or p
 // with b, ib or nothing after it. Each letter takes either case, and 50Gi, with no b after its i,
-// stops dockerd. dockerd --validate skips daemon.json's builder section, so the role checks it.
+// stops dockerd. `dockerd --validate` skips daemon.json's builder section, so the role checks it.
 var sizeFormat = regexp.MustCompile(`^[0-9]+(\.[0-9]+)? ?([kKmMgGtTpP]([iI]?[bB])?|[bB])?$`)
 
 // DefaultCache gives the limits as shares of a disk of size bytes: 10%, 80% and 20% of it, in whole

@@ -13,8 +13,12 @@ check files take `FILES`, as in `make vale FILES=README.md`:
   shell script, found by extension or shebang;
 - `yamllint`: `yamllint --strict`, as `.yamllint` sets it, on the YAML files it finds itself;
 - `sizecheck`: 300 lines a file, for Markdown, YAML, shell and Go;
-- `vale`: Vale's three rules (`.vale.ini`) on the Markdown files: sentences of 30 words or fewer,
-  no wordy phrases and no needless variants;
+- `vale`: Vale's three rules (`.vale.ini`): sentences of 30 words or fewer, no wordy phrases and
+  no needless variants. It checks the Markdown files, and the comments of every other file written
+  here. Vale would read such a file's code too. So `tools/vale-comments` gives Vale the
+  comments alone, mirrored as Markdown, and maps each alert back to its line and column. It skips
+  shebangs and linter directives, though not a directive's reason. Of `#` comments, it reads full
+  lines alone. A doc's leading declared name is code to it;
 - `lychee`: the links to files and their headings in the Markdown files, offline;
 - `rumdl`: rumdl's rules on the Markdown files, with lines of 100 columns but in code blocks and
   tables (`.rumdl.toml`);

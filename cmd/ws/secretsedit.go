@@ -164,8 +164,8 @@ func readProfile(c *cobra.Command, p process, args []string) ([]byte, error) {
 	return data, nil
 }
 
-// readValue reads a secret: at a terminal, a line with no echo, asked on stderr; else all of stdin,
-// less one trailing newline. The error names no value.
+// readValue reads a secret: at a terminal, a line with no echo, asked on stderr; else
+// stdin to its end, less one trailing newline. The error names no value.
 func readValue(stdin io.Reader, stderr io.Writer, what string) (string, error) {
 	var value string
 	if f, ok := stdin.(*os.File); ok && term.IsTerminal(int(f.Fd())) {

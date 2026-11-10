@@ -46,7 +46,7 @@ func (g Go) Plan(ctx context.Context) ([]host.Change, error) {
 }
 
 // install unpacks the tarball elsewhere and moves the tree into place whole, as tar writes VERSION
-// near the start of the tree: an unpack cut short in place would pass for the version at the next
+// near the start of the tree. An unpack cut short in place would pass for the version at the next
 // run.
 type install struct{ g Go }
 

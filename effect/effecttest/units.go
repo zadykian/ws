@@ -69,7 +69,7 @@ func (u *Units) Start(_ context.Context, name string) error {
 	return nil
 }
 
-// Restart runs the unit, whatever it was.
+// Restart runs the unit, whatever its earlier state.
 func (u *Units) Restart(_ context.Context, name string) error {
 	if err := effect.CheckUnitName("restart", name); err != nil {
 		return err

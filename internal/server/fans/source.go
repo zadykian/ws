@@ -15,7 +15,7 @@ const (
 )
 
 // source puts the driver's source in /usr/src for DKMS: GitHub's tarball of the commit, checked
-// against its SHA-256 before it is unpacked. The tarball goes after.
+// against its SHA-256 before the step unpacks it. The tarball goes after.
 type source struct {
 	m effect.Machine
 	// sum is the tarball's SHA-256, in hex.

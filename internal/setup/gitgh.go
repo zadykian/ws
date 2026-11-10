@@ -10,8 +10,8 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// gh returns the path of GitHub's CLI, which git runs in whatever directory it works in, so the path
-// must be absolute, not one that a relative directory of PATH gives. Where PATH has none, it
+// gh returns the path of GitHub's CLI, which git runs in whatever directory it works in. So the
+// path must be absolute, not one that a relative directory of PATH gives. Where PATH has none, it
 // returns the path Homebrew would give it, and the change that installs it.
 func (g *Git) gh(ctx context.Context) (string, *Run, error) {
 	return FindGh(ctx, g.M, g.look)

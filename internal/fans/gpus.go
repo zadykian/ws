@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-// maxAge is how old a GPU's reading may be before it is missing. nvidia-smi prints one a second.
+// maxAge is how old a GPU's reading may be before it counts as missing. nvidia-smi prints one a
+// second.
 const maxAge = 10 * time.Second
 
 // reading is a GPU's temperature at a time.

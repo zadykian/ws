@@ -27,8 +27,8 @@ func (u User) IDs(ctx context.Context, m effect.Machine) (uid, gid int, err erro
 	return ids[0], ids[1], nil
 }
 
-// Owned is a step whose parts are made once the user's uid and gid are found, as they come from
-// the machine and a dry run on a new one must still show them.
+// Owned is a step whose parts are made once the user's uid and gid are found. They come from
+// the machine, and a dry run on a new one must still show them.
 func (u User) Owned(m effect.Machine, title, after string, parts func(uid, gid int) ([]Resource, error)) Lazy {
 	return Lazy{Title: title, After: after, Parts: func(ctx context.Context) ([]Resource, error) {
 		uid, gid, err := u.IDs(ctx, m)

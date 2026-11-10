@@ -25,9 +25,10 @@ func serviceListed(list, service string) (listed, disabled bool) {
 }
 
 // cableOther returns what networksetup -getinfo shows that is not a Manual Configuration of the
-// cable's address and mask with no router, joined by "; ", or nothing where the service is set.
-// No source shows which lines getinfo prints while the display, and so its adapter, is away. So an
-// address, mask or router line it leaves out passes, and a run docked checks the service again.
+// cable's address and mask with no router. It joins them by "; ", and returns nothing where the
+// service is set. No source shows which lines getinfo prints while the display, and so its adapter,
+// is away. So an address, mask or router line it leaves out passes, and a run docked checks the
+// service again.
 func cableOther(info string) string {
 	var method, ips, masks, routers string
 	first := false

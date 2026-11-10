@@ -54,8 +54,8 @@ func valuesApply(t *testing.T, vars, user string, answers map[string]string) ([]
 	return set, v.Apply(context.Background(), p)
 }
 
-// Each key is written as answered, the defaults too: sudo's user on the LAN, root at a cloud VM's
-// root login, and root where host_vars names the table off already.
+// Each key is written as answered, the defaults too. The defaults are sudo's user on the LAN, root
+// at a cloud VM's root login, and root where host_vars names the table off already.
 func TestWsValuesWritesEachAnswer(t *testing.T) {
 	for name, tc := range map[string]struct {
 		vars, user, target string

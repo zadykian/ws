@@ -11,7 +11,7 @@ var (
 // a version with +dirty and devel are builds of no release.
 func Release(s string) bool { return release.MatchString(s) }
 
-// ReleasesURL reports whether s is an address that ws's releases are fetched from: one that starts
-// with https://, or with http://127.0.0.1: as CI's stand-in has, with none of a blank, a quote or
+// ReleasesURL reports whether s is an address that ws's releases are fetched from. It starts with
+// https://, or with http://127.0.0.1: as CI's stand-in has. It holds no blank, no quote and no
 // other character that a shell reads.
 func ReleasesURL(s string) bool { return releasesURL.MatchString(s) }

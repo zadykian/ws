@@ -12,8 +12,8 @@ import (
 	"github.com/zadykian/ws/internal/wgkey"
 )
 
-// Dir is where root keeps the daemon's settings: private.key, the Mac's key; tunnel.conf, which
-// setup copies from mac.conf; and routes.d, whose files hold a network a line.
+// Dir is where root keeps the daemon's settings. They are private.key, the Mac's key; tunnel.conf,
+// which setup copies from mac.conf; and routes.d, whose files hold a network a line.
 const Dir = "/etc/ws-tunnel"
 
 // Settings are tunnel.conf and routes.d as read, with the lines of routes.d left out.
@@ -28,7 +28,7 @@ type Settings struct {
 // file of routes.d that it cannot read is left out.
 func ReadSettings(ctx context.Context, m effect.Machine, dir string) (Settings, error) {
 	files := map[string][]byte{}
-	listed, _ := m.Run(ctx, "ls", "-1", path.Join(dir, "routes.d")) // none where it is missing
+	listed, _ := m.Run(ctx, "ls", "-1", path.Join(dir, "routes.d")) // none without routes.d
 	for _, name := range strings.Fields(string(listed)) {
 		if data, err := m.ReadFile(path.Join(dir, "routes.d", name)); err == nil {
 			files[name] = data

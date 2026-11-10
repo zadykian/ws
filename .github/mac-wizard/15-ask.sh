@@ -32,7 +32,7 @@ kept() {
 }
 
 # quick WHY COMMAND...: COMMAND, the wizard with no terminal, must exit 1 within 60 s, with WHY in
-# what it prints. A watchdog ends it at 60 s, and its own sleep as it is ended.
+# what it prints. A watchdog ends it at 60 s, and ends its own sleep on a TERM.
 quick() {
     why=$1
     shift

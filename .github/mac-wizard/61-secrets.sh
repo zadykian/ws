@@ -2,10 +2,11 @@
 # ws's own secrets file and its identity's credential, on the stand-in ws that the cases before
 # leave. With both, a run must start one unit that loads the credential ws-secrets, with Type=exec,
 # and runs ws server apply --secrets on ws's file. The stand-in ws must find the file and the
-# credential in it. The run's stamp must name the file's SHA-256. A second run must start none, a
-# changed file must start one, and the file without the credential one that runs with no --secrets,
-# with the stamp naming none, and then none. No output may hold the file or the credential. ws mac
-# secrets must run ws server secrets on ws, with a value on its stdin alone, and print what it prints.
+# credential in it. The run's stamp must name the file's SHA-256. A second run must start none, and
+# a changed file must start one. The file without the credential must start one that runs with no
+# --secrets, with the stamp naming none, and then none. No output may hold the file or the
+# credential. ws mac secrets must run ws server secrets on ws, with a value on its stdin alone, and
+# print what it prints.
 
 set -u
 

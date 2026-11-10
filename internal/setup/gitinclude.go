@@ -44,10 +44,10 @@ func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string,
 	return lines, nil
 }
 
-// include reads ~/.gitconfig. It stops where git can't read the file, where the include comes twice
-// or sits below the file's own settings, which it then overrides, and where the file is a link that
-// lacks the include, rather than replace the link with a file. It writes nothing, so that the step
-// stops before it acts, as the ssh step does for ssh's Include.
+// include reads ~/.gitconfig. It stops where git can't read the file, and where the include comes
+// twice or sits below the file's own settings, which it then overrides. It also stops where the
+// file is a link that lacks the include, rather than replace the link with a file. It writes
+// nothing, so that the step stops before it acts, as the ssh step does for ssh's Include.
 func (g *Git) include(ctx context.Context) (gitInclude, error) {
 	file := g.Home + "/.gitconfig"
 	in := gitInclude{Path: file}

@@ -28,8 +28,9 @@ const DefaultPub = "~/.ssh/id_ed25519.pub"
 // denies other apps the files there, with no prompt, but its socket still answers.
 const SecretiveData = "Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data"
 
-// KeyCopies is where ws keeps its copies of the .pub of Secretive's keys, under the home, as
-// ssh and git read a key's .pub, and the agent signs with the key whatever the .pub's path.
+// KeyCopies is where ws keeps its copies of the .pub of Secretive's keys, under the home. They
+// exist as ssh and git read a key's .pub, and the agent signs with the key whatever the .pub's
+// path.
 const KeyCopies = ".config/ws/secretive"
 
 // AgentKey is a key that Secretive's agent lists.
@@ -78,10 +79,10 @@ func Expand(path, home string) string {
 }
 
 // PickIdentity picks the key from mac.conf's WS_IDENTITY and WS_IDENTITY_AGENT, where set. Else,
-// where Secretive's socket is there, it is the one key of publicKeys, the names of those its agent
-// lists, as ws's copy of its .pub. git's signing key, which signs alone, does not count. Else it is
-// the file key. A key of Secretive's takes its agent. It fails where Secretive holds several such
-// keys.
+// where Secretive's socket is there, it picks the one key of publicKeys, the names of those its
+// agent lists, as ws's copy of its .pub. git's signing key, which signs alone, does not count. Else
+// it picks the file key. A key of Secretive's takes its agent. It fails where Secretive holds
+// several such keys.
 func PickIdentity(identity, agent, signingKey, home string, socket bool, publicKeys []string) (Identity, error) {
 	pub := identity
 	if pub == "" && socket {

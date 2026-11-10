@@ -13,11 +13,11 @@ func unitFile(m effect.Machine, name string) (host.File, error) {
 
 // outbound keeps what ws starts to the internet and ikeward0, in a table of ws's own that
 // security-outbound.service loads. The fill, its units and its watchers go in before the table and
-// its unit, so that a run cut short, then a boot, finds the old table, or the new one with what
-// fills its sets. The path unit watches from before the table loads (WantedBy=sysinit.target),
-// and it reads its unit first, as no restart has run yet. nft -c checks the table in the kernel,
-// which a container without NET_ADMIN refuses, so it checks with systemd booted alone; CI's
-// playbook job runs it on the file after the run (docs/checks.md).
+// its unit. So a run cut short, then a boot, finds the old table, or the new one with what fills
+// its sets. The path unit watches from before the table loads (WantedBy=sysinit.target). It reads
+// its unit first, as no restart has run yet. nft -c checks the table in the kernel, which a
+// container without NET_ADMIN refuses. So it checks with systemd booted alone; CI's playbook job
+// runs it on the file after the run (docs/checks.md).
 func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource, error) {
 	script, err := files.ReadFile("files/resolvers.sh")
 	if err != nil {

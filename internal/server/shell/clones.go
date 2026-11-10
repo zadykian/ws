@@ -12,10 +12,10 @@ import (
 	"github.com/zadykian/ws/internal/server/values"
 )
 
-// checkClones refuses a repo with a user name or token in a URL of http:// or https://, which would
-// stay in the clone's config and in the run's output, and a dest with *, ? or [, which the clone's
-// check could take for a pattern. A blank repo or dest counts as missing. The message names no
-// repo.
+// checkClones refuses a repo with a user name or token in a URL of http:// or https://. Such a URL
+// would stay in the clone's config and in the run's output. It also refuses a dest with *, ? or [,
+// which the clone's check could take for a pattern. A blank repo or dest counts as missing. The
+// message names no repo.
 func checkClones(clones []values.GitClone) error {
 	for _, c := range clones {
 		if c.Repo == "" || strings.Contains(c.Repo, "\n") || hasUserInfo(c.Repo) ||
@@ -38,8 +38,8 @@ func hasUserInfo(repo string) bool {
 }
 
 // clones clones each repository whose dest is missing, once: a clone is never pulled or reset, as
-// once made it is the user's. It runs git clone, not a module that asks the server where dest is
-// missing, so that a dry run lists each missing dest offline. It runs as the user, whose
+// once made it belongs to the user. It runs git clone, not a module that asks the server where dest
+// is missing, so that a dry run lists each missing dest offline. It runs as the user, whose
 // ~/.gitconfig gives the tokens, in the user's home.
 type clones struct {
 	M      effect.Machine

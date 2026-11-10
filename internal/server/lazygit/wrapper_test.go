@@ -45,9 +45,10 @@ func repository(t *testing.T, dir string) string {
 	return dir
 }
 
-// wrapped says how run builds the wrapper's surroundings: lazygit is the stub's body, which
-// replaces the wrapper as lazygit does; terminal drops the test for a terminal, as a test's stdin
-// and stdout are pipes; tmux, where set, names the log of a stub for tmux in PATH, and sets TMUX.
+// wrapped says how run builds the wrapper's surroundings. Its lazygit is the stub's body, which
+// replaces the wrapper as lazygit does. Its terminal drops the test for a terminal, as a test's
+// stdin and stdout are pipes. Its tmux, where set, names the log of a stub for tmux in PATH, and
+// sets TMUX.
 type wrapped struct {
 	dir, lazygit, tmux string
 	terminal           bool

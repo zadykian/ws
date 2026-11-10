@@ -13,8 +13,8 @@ import (
 // claudeStage names the stage in its messages.
 const claudeStage = "claude on ws"
 
-// WsClaude is the stage that logs WS_USER's claude in on ws, in a session of ssh -t at the terminal,
-// through a login shell, whose PATH has ~/.local/bin, where claude is.
+// WsClaude is the stage that logs WS_USER's claude in on ws, in a session of ssh -t at the
+// terminal. It goes through a login shell, whose PATH has ~/.local/bin, where claude is.
 type WsClaude struct {
 	// Run is ws's run stage, which installs claude on ws.
 	Run *WsRun

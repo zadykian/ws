@@ -57,13 +57,13 @@ func logOpts(d values.Docker) map[string]string {
 }
 
 // slirpDNS is slirp4netns's own resolver, which answers through the host's. Containers can't use a
-// copy of the host's servers: where these are private, the output table drops what slirp4netns
+// copy of the host's servers. Where these are private, the output table drops what slirp4netns
 // sends them on a container's behalf, while its resolver asks by the host's 127.0.0.53.
 const slirpDNS = "10.0.2.3"
 
 // RootlessJSON returns the rootless daemon's daemon.json. It has no bip or address pools, as its
-// bridges live in rootlesskit's namespace and meet no route of the host's, and no live-restore,
-// which a rootless daemon accepts and does not honour. cgroup-parent keeps the containers inside
+// bridges live in rootlesskit's namespace and meet no route of the host's. Nor has it
+// live-restore, which a rootless daemon accepts and does not honour. cgroup-parent keeps the containers inside
 // docker.slice, as without it they land beside the unit and outside its limits.
 func RootlessJSON(d values.Docker, c Cache) ([]byte, error) {
 	j := rootlessJSON{

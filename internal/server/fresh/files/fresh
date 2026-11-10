@@ -2,7 +2,7 @@
 # Written by github.com/zadykian/ws, whose next run replaces any change made here.
 # Fresh asks only for kitty's keys, which tmux ignores, so Shift+Ctrl keys arrive without Shift.
 # In tmux this raises extended keys from off to on, which stays after Fresh exits, and asks for them
-# in Fresh's pane, which the reset undoes. It loads the user's config alone: a project's own file
+# in Fresh's pane, which the reset undoes. It loads the user's config alone. A project's own file
 # can name a language server's command, or replace the user's config whole where it fails to parse.
 config="${HOME:-}/.config/fresh/config.json"
 if [ -f "$config" ]; then

@@ -1,6 +1,6 @@
-// Package claude is the claude role as Go steps: claude and cld, cld's completion in bash,
-// claude's user settings and telemetry, its plugin marketplaces, and cld's restore at boot. See
-// docs/claude.md.
+// Package claude is the claude role as Go steps. They set up claude and cld, cld's completion in
+// bash, claude's user settings and telemetry, its plugin marketplaces, and cld's restore at boot.
+// See docs/claude.md.
 package claude
 
 import (

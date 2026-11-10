@@ -11,10 +11,10 @@ import (
 // signingStage names the stage in its messages.
 const signingStage = "Signing key"
 
-// Signing is the stage of ws's public signing key, which the remote script's status prints, among
-// the signing keys of the Mac's gh login, so that GitHub shows ws's commits as verified. ws's own
-// gh holds no token that may add it. It runs after ws's run, which makes the key, and after the
-// gh stage, whose login lists and adds the key.
+// Signing is the stage of ws's public signing key among the signing keys of the Mac's gh login, so
+// that GitHub shows ws's commits as verified. The remote script's status prints that key. ws's own
+// gh holds no token that may add it. It runs after ws's run, which makes the key, and after the gh
+// stage, whose login lists and adds the key.
 type Signing struct {
 	Gh  *Gh
 	Run *WsRun

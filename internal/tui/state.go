@@ -35,8 +35,8 @@ type StateRead struct {
 	Err      error
 }
 
-// StateScreen shows what a machine holds of what ws manages: a tab for each kind, the rows of the
-// tab on show, and a pane of the selected row's wanted and found state. It changes nothing.
+// StateScreen shows what a machine holds of what ws manages. It has a tab for each kind, the rows
+// of the tab on show, and a pane of the selected row's wanted and found state. It changes nothing.
 type StateScreen struct {
 	theme Theme
 	title string
@@ -116,8 +116,8 @@ func (s StateScreen) took(msg StateRead) StateScreen {
 }
 
 // picks returns the row that each tab has selected, nil where a tab shows none. Whatever moves the
-// rows takes them first: the input rewrites its words in place, so a copy of the screen from before
-// an edit reads the new words, and its cursors don't fit the rows those leave.
+// rows takes them first. The input rewrites its words in place, so a copy of the screen from before
+// an edit reads the new words. Its cursors don't fit the rows those leave.
 func (s StateScreen) picks() [tabCount]*stateRow {
 	var picks [tabCount]*stateRow
 	for tab, cursor := range s.cursors {

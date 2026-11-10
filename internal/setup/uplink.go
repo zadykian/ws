@@ -9,7 +9,7 @@ import (
 )
 
 // uplinkRouter returns the router that info shows outside the cable's /30, which is an uplink's:
-// the cable, with no DHCP, gives none. It is empty where the router is the cable's or none.
+// the cable, with no DHCP, gives none. It returns empty where the router is the cable's or none.
 func uplinkRouter(info string) string {
 	for _, line := range strings.Split(info, "\n") {
 		router, ok := strings.CutPrefix(strings.TrimRight(line, " \t\r"), "Router: ")

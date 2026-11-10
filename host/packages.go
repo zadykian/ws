@@ -14,7 +14,7 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// installOptions make apt-get wait for dpkg's lock, and keep the configuration file a machine
+// installOptions make apt-get wait for dpkg's lock. They keep the configuration file a machine
 // already has where a package ships one, as Ansible's apt module did: a file ws wrote before the
 // package came stays.
 var installOptions = []string{"-o", "DPkg::Lock::Timeout=600",
@@ -25,7 +25,7 @@ const updateTries = 60
 
 // Packages installs system packages, without recommends. Group it after the keyrings and
 // .sources files that name their repositories. A new machine's apt timers hold apt's locks at
-// first: apt-get update has no option to wait, so it tries again for 10 minutes, and apt-get
+// first. apt-get update has no option to wait, so it tries again for 10 minutes, and apt-get
 // install waits as long for dpkg's.
 type Packages struct {
 	M     effect.Machine

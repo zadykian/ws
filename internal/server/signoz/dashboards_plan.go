@@ -34,7 +34,7 @@ func (c replace) Apply(ctx context.Context) error {
 }
 
 // Plan lists SigNoz's dashboards and compares each of the step's with its file. SigNoz refuses to
-// change a dashboard locked in its UI: the step leaves it as it is and says so, rather than fail
+// change a dashboard locked in its UI: the step leaves it unchanged and says so, rather than fail
 // and stop the roles after this one.
 func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 	files := make(map[string]dashboard, len(s.Names))

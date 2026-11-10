@@ -16,8 +16,8 @@ import (
 //go:embed dashboards
 var dashboardFiles embed.FS
 
-// Dashboards is the step that keeps the dashboards of Names in SigNoz: each is created from
-// dashboards/NAME.json and replaced where it differs from that file, so a change made to it in
+// Dashboards is the step that keeps the dashboards of Names in SigNoz. Each is created from
+// dashboards/NAME.json and replaced where it differs from that file. So a change made to it in
 // SigNoz's UI lasts until the next run. A name taken off the list leaves its dashboard in SigNoz.
 // The API answers only where Docker's daemon runs SigNoz, so without systemd booted the step skips.
 type Dashboards struct {
@@ -57,7 +57,7 @@ func sameJSON(a, b json.RawMessage) bool {
 	return reflect.DeepEqual(x, y)
 }
 
-// load reads and checks the file of a dashboard: it names the dashboard as the list does, as two
+// load reads and checks the file of a dashboard. It names the dashboard as the list does, as two
 // entries that found one dashboard would replace it in turn at every run.
 func load(name string) (dashboard, []byte, error) {
 	data, err := dashboardFiles.ReadFile(path.Join("dashboards", name+".json"))

@@ -1,7 +1,7 @@
 #!/bin/sh
-# The wizard's ssh to ws runs no LocalCommand, on the Mac that 31-host.sh leaves. With a Host * block
-# in ~/.ssh/config that permits one and has it touch a marker, a plain ssh to ws must touch it, and
-# a run of the wizard, whose calls to ws pass PermitLocalCommand=no, must not.
+# The wizard's ssh to ws runs no LocalCommand, on the Mac that 31-host.sh leaves. A Host * block in
+# ~/.ssh/config permits one and has it touch a marker. A plain ssh to ws must then touch it, and a
+# run of the wizard, whose calls to ws pass PermitLocalCommand=no, must not.
 
 set -u
 

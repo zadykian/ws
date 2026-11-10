@@ -1,13 +1,13 @@
 #!/bin/sh
 # The Login stage on the Mac that 31-host.sh leaves, where the runner on the stand-in ws takes the
-# Mac's key. With another key alone in the user's file, a run must stop, naming the Mac's key, and end
-# with ssh's error, its \r dropped. Once the user's line for the Mac's key carries a forced command, as
-# cloud-init writes it, beside the other key, --check must say that a run would stop, and a run
-# must stop, with no terminal and at one of script's. None may change the user's authorized_keys. The
-# wizard adds no key, so the case replaces that file by the stand-in gh's keys, as Ubuntu's installer
-# imports them for its user: a run must then say nothing of the stage, and keep the
-# file. With another host key under ws in known_hosts, a run must stop, naming ssh-keygen -R ws, and
-# change nothing, with StrictHostKeyChecking no in ~/.ssh/config too.
+# Mac's key. With another key alone in the user's file, a run must stop, naming the Mac's key, and
+# end with ssh's error, its \r dropped. Then the user's line for the Mac's key carries a forced
+# command, as cloud-init writes it, beside the other key. --check must say that a run would stop,
+# and a run must stop, with no terminal and at one of script's. None may change the user's
+# authorized_keys. The wizard adds no key, so the case replaces that file by the stand-in gh's
+# keys, as Ubuntu's installer imports them for its user. A run must then say nothing of the stage,
+# and keep the file. With another host key under ws in known_hosts, a run must stop, naming
+# ssh-keygen -R ws, and change nothing, with StrictHostKeyChecking no in ~/.ssh/config too.
 
 set -u
 

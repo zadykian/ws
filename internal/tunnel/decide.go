@@ -8,11 +8,11 @@ import (
 	"time"
 )
 
-// Decide chooses the way to ws at the time now, from the Mac's addresses, the settings, the name
-// as resolved and the peer. Between rounds it keeps the endpoint in use, unless the settings or the
+// Decide chooses the way to ws at the time now, from the Mac's addresses, the settings, the name as
+// resolved and the peer. Between rounds it keeps the endpoint in use, unless the settings or the
 // Mac's addresses changed, no path answered, or ws missed pings. Then a round tries each endpoint
-// in order, waits for a handshake from it within Patience, and moves on where none comes, or where
-// it comes from another endpoint, as one that ws started over another path proves nothing.
+// in order, and waits for a handshake from it within Patience. It moves on where none comes, or
+// where it comes from another endpoint: one that ws started over another path proves nothing.
 func Decide(now time.Time, ifaces []Iface, c Conf, resolved netip.Addr, p Peer) Decision {
 	found, missing := Candidates(ifaces, c, resolved)
 	if len(p.Round) == 0 {

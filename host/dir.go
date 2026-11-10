@@ -17,7 +17,7 @@ type Dir struct {
 	Mode fs.FileMode
 	// UID and GID are the owner, root's by default.
 	UID, GID int
-	// CreateOnly leaves an existing directory as it is, whatever its mode and owner.
+	// CreateOnly leaves an existing directory alone, whatever its mode and owner.
 	CreateOnly bool
 }
 

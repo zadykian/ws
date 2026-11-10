@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-// typedAtRead returns a terminal, and a read that types the next of keys on it, again and again until
-// the terminal closes: `r` finds its button off while a read runs, and goes unheard there.
+// typedAtRead returns a terminal, and a read that types the next of keys on it, again and again
+// until the terminal closes. `r` finds its button off while a read runs, and goes unheard there.
 func typedAtRead(t *testing.T, keys ...string) (Config, StateReader) {
 	in, typing := io.Pipe()
 	t.Cleanup(func() { _ = typing.Close() })

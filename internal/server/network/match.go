@@ -89,7 +89,7 @@ func fits(match map[string]any, port Port) bool {
 	return true
 }
 
-// alone tells whether a match: that fits the port fits no other interface: a permanent MAC
+// alone tells whether a match: that fits the port fits no other interface. A permanent MAC
 // address is one interface's, and so is a name without a glob, as the kernel gives no two
 // interfaces one name. A list of names holds a bracket, so it never counts.
 func alone(match map[string]any) bool {

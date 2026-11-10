@@ -27,7 +27,7 @@ type Theme struct {
 	ButtonFocus lipgloss.Style
 	ButtonOff   lipgloss.Style
 	Shortcut    lipgloss.Style
-	// Muted is text that steps back. It is faint rather than bright black, which some palettes
+	// Muted is text that steps back. It uses faint rather than bright black, which some palettes
 	// draw in the background's color.
 	Muted lipgloss.Style
 	// Good, Warn and Bad mark what went well, what needs a look, and what failed.

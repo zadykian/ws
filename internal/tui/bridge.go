@@ -73,7 +73,7 @@ type Bridge struct {
 	// warned holds the warnings sent so far.
 	warned sync.Map
 	// suspend and resume take the terminal from the screen and give it back, as Run sets them. Nil
-	// ones leave it where it is.
+	// ones leave the terminal where it stands.
 	suspend, resume func() error
 	// said is what a step said last, since it started: a command that talks may need it to read by.
 	said atomic.Pointer[string]
@@ -245,7 +245,7 @@ func (b *Bridge) Log(text string) {
 	b.rec.logText(text)
 }
 
-// directions prints what a step said last on the terminal that the screen left, once: a command
+// directions prints what a step said last on the terminal that the screen left, once. A command
 // that talks takes over at once, and the pane that shows the line stands behind it.
 func (b *Bridge) directions() {
 	if text := b.said.Swap(nil); text != nil {

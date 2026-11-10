@@ -21,9 +21,9 @@ const (
 	keyStep      = "WireGuard key"
 )
 
-// Steps returns the role's steps in order: the check of the settings, the packages, the drops that
-// keep Docker's containers off the Mac, wg0's key and files, and the public key with the wait for
-// wg0. The role takes no secrets.
+// Steps returns the role's steps in order: the check of the settings, the packages, and the drops
+// that keep Docker's containers off the Mac. Then come wg0's key and files, and the public key with
+// the wait for wg0. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
 	return steps(v, m, effect.OSUnits{}, out, rand.Reader, time.Sleep)
 }

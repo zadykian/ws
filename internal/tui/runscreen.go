@@ -46,8 +46,8 @@ type RunScreen struct {
 	window  Size
 	started time.Time
 	now     time.Time
-	// halted says that the run ends with its current step. It is no box over the window, as a step
-	// can run for long and its output stays worth reading.
+	// halted says that the run ends with its current step. No box covers the window for it, as a
+	// step can run for long and its output stays worth reading.
 	halted bool
 }
 

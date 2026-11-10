@@ -13,7 +13,7 @@ import (
 
 // fingerprints returns the fingerprint of each certificate's primary key in an armored public key,
 // in upper-case hex. Each public key packet starts a certificate, and every packet must belong to
-// one, so the list names every key apt would trust from the file, and a subkey belongs to its
+// one. So the list names every key apt would trust from the file, and a subkey belongs to its
 // certificate. It reads packet by packet, so a packet it cannot parse fails the check, where
 // openpgp.ReadKeyRing would skip it. Primary keys of version 4 and 6 pass, no other.
 func fingerprints(armored string) ([]string, error) {

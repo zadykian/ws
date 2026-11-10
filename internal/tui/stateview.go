@@ -91,7 +91,7 @@ func (s StateScreen) tabCell(tab int) string {
 }
 
 // listBody draws the rows that fit a pane of size. The selection stays in the middle of a long
-// list, so that the list needs no scroll of its own to keep, and a new size can't lose the row.
+// list. So the list needs no scroll of its own to keep, and a new size can't lose the row.
 func (s StateScreen) listBody(size Size) string {
 	var lines []string
 	if field := s.filterLine(); field != "" {

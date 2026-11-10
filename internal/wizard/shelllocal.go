@@ -11,8 +11,8 @@ import (
 type LocalShell struct {
 	M effect.Machine
 	// User returns WS_USER, whose claude and git config the remote script reads as SUDO_USER's, as
-	// sudo names the user whom the Mac's ssh logs in as. Nil, or an empty name, leaves SUDO_USER as
-	// it is: the user that ran sudo.
+	// sudo names the user whom the Mac's ssh logs in as. Nil, or an empty name, leaves SUDO_USER
+	// unchanged: the user that ran sudo.
 	User func() string
 }
 

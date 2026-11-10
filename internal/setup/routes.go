@@ -84,8 +84,8 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	return cs, nil
 }
 
-// validate refuses a set that is not of a-z, 0-9 and -, and a network that is not an IPv4 network
-// or that overlaps the tunnel's or the cable's, which 0.0.0.0/0 does too.
+// validate refuses a set that is not of a-z, 0-9 and -. It refuses a network that is not an IPv4
+// network, or that overlaps the tunnel's or the cable's, which 0.0.0.0/0 does too.
 func (r *Routes) validate() error {
 	if r.Set == "" || strings.Trim(r.Set, "abcdefghijklmnopqrstuvwxyz0123456789-") != "" {
 		return fmt.Errorf("'%s' is not a name of a-z, 0-9 and -", r.Set)

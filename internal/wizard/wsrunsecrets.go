@@ -8,17 +8,17 @@ import (
 // noSum is the sum of no secrets file, in the run's stamp and in the remote script's status.
 const noSum = "-"
 
-// sameSecrets tells whether ws's last full run read ws's secrets file as it is now: the run's stamp
-// names the sum that the status reads, which is noSum in both where the run had no file to read.
-// So the wizard reads one sum, whichever machine it runs on.
+// sameSecrets tells whether ws's last full run read ws's secrets file as it stands now. The run's
+// stamp names the sum that the status reads, which is noSum in both where the run had no file to
+// read. So the wizard reads one sum, whichever machine it runs on.
 func (r *WsRun) sameSecrets() bool {
 	f := strings.Fields(r.Remote.Get("run"))
 	return len(f) > 3 && f[3] == r.Remote.Get("secrets")
 }
 
-// sameVars tells whether ws's last full run read ws's host_vars as it is now, by the sum that the
-// stamp names after the secrets file's. So a change to host_vars, by either wizard, Configure or by
-// hand, makes the next run due.
+// sameVars tells whether ws's last full run read ws's host_vars as it stands now, by the sum that
+// the stamp names after the secrets file's. So a change to host_vars, by either wizard, Configure
+// or by hand, makes the next run due.
 func (r *WsRun) sameVars() bool {
 	f := strings.Fields(r.Remote.Get("run"))
 	return len(f) > 4 && f[4] == r.Remote.Get("vars")

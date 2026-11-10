@@ -11,8 +11,9 @@ var (
 	keyBase64 = regexp.MustCompile(`^[A-Za-z0-9+/=]+$`)
 )
 
-// PublicKey returns the type and base64 of the public key that a .pub holds, or empty where the
-// file holds more or less than the line of one key, as a private key does, or a line that is no key.
+// PublicKey returns the type and base64 of the public key that a .pub holds. It returns empty where
+// the file holds more or less than the line of one key, as a private key does, or a line that is no
+// key.
 func PublicKey(pub string) string {
 	var key string
 	lines := 0

@@ -53,7 +53,7 @@ func writeServerSecrets(m effect.Machine, s secrets.Secrets, id age.Identity) er
 	return m.WriteAtomic(serverSecrets, data, effect.Attrs{Mode: 0o600})
 }
 
-// serverSecretsInit makes the credential where it is missing, and the file where none is. A file
+// serverSecretsInit makes a missing credential, and the file where none is. A file
 // without the credential stops it, as a new identity would not open the file.
 func serverSecretsInit(c *cobra.Command, p process) error {
 	store, err := serverSecretsStore(p)

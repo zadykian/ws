@@ -1,6 +1,6 @@
 #!/bin/bash
 # With nothing at WS_LAN_ADDRESS, the remote tier.
-# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as ws mac apply requires, where nothing answers:
+# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as ws mac apply requires, where nothing answers.
 # macOS's lo0 has 127.0.0.1 alone, and a handshake on the LAN tier fails the step. The daemon
 # takes the new tunnel.conf on SIGHUP, in place: it keeps its pid and logs a reload. A daemon
 # that died of the SIGHUP, and that launchd started again, would log a start.

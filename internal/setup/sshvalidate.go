@@ -9,9 +9,9 @@ import (
 )
 
 // validate stops where ssh refuses the new config.d/ws, alone or as ssh will read it after the
-// run: first the new file, then ~/.ssh/config, then the system's file. ~/.ssh/config's Include of
-// config.d/ws is left out, as it would read the file that the run replaces. It writes its files in
-// a directory of its own, and removes it.
+// run. It checks the new file first, then ~/.ssh/config, then the system's file. ~/.ssh/config's
+// Include of config.d/ws is left out, as it would read the file that the run replaces. It writes
+// its files in a directory of its own, and removes it.
 func (s SSH) validate(ctx context.Context, f sshFacts, text []byte) error {
 	out, err := s.M.Run(ctx, "mktemp", "-d")
 	if err != nil {

@@ -2,9 +2,9 @@ package signoz
 
 import "github.com/zadykian/ws/effect"
 
-// Retention is the step that keeps SigNoz's data for Days. SigNoz keeps traces and logs for 15
-// days and metrics for 30, unless told otherwise. A new retention applies only to data that comes
-// in after it, so it is set before the collector sends anything.
+// Retention is the step that keeps SigNoz's data for Days. SigNoz keeps traces and logs for 15 days
+// and metrics for 30, unless told otherwise. A new retention applies only to data that comes in
+// after it, so the step sets it before the collector sends anything.
 type Retention struct {
 	M    effect.Machine
 	Out  effect.Out

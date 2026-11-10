@@ -11,8 +11,8 @@ import (
 const installStep = "Collector install"
 
 // install makes the parts that install the downloaded .deb, then remove it. The package adds the
-// otelcol-contrib user and service, and its postinst enables the service and, on a booted
-// machine, starts it with the package's own config, which listens on every address. The
+// otelcol-contrib user and service. Its postinst enables the service and, on a booted machine,
+// starts it with the package's own config, which listens on every address. The
 // collector stays off until the role's config is in place, also at boot should a later step fail.
 func install(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]host.Resource, error) {
 	return func(ctx context.Context) ([]host.Resource, error) {

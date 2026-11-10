@@ -1,5 +1,5 @@
 #!/bin/sh
-# After the first run, mac.conf goes back as standin.sh wrote it, and the first run's answers are
+# After the first run, mac.conf goes back as standin.sh wrote it. The first run's answers are
 # typed at a terminal of script's, after a bad one. The run must exit 0, write the mac.conf that the
 # environment's answers did, and ask the bad one again.
 

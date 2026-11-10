@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// Prompt answers from a script, and fails the test on a question it was not given.
+// Prompt answers from a script, and fails the test on a question that the script doesn't hold.
 type Prompt struct {
 	T       testing.TB
 	Answers map[string]string // by the text of the question

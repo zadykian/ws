@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// fakeDisk keeps the files it is told of, and records the calls that change the disk.
+// fakeDisk keeps the files a test gives it, and records the calls that change the disk.
 type fakeDisk struct {
 	files map[string]swapFileInfo
 	avail int64

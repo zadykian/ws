@@ -21,8 +21,9 @@ const CredstorePath = "/etc/credstore.encrypted/" + CredentialName
 var ErrNoCredential = errors.New("no credential " + CredstorePath + ": run ws server secrets init")
 
 // Credstore keeps the identity as the credential, which systemd-creds encrypts by the host's key in
-// /var/lib/systemd, not the TPM's: a change of firmware or of Secure Boot can lock the TPM's out. The
-// key reaches systemd-creds on its stdin and leaves it on its stdout, never in an argument.
+// /var/lib/systemd. It does not use the TPM's key: a change of firmware or of Secure Boot can lock
+// the TPM's out. The key reaches systemd-creds on its stdin and leaves it on its stdout, never in
+// an argument.
 type Credstore struct{ M effect.Machine }
 
 // Has reports whether the credential is there. It reads no secret.

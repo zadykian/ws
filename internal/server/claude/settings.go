@@ -11,8 +11,9 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// UserSettings has cld add to claude's user settings what they lack: the permission set, cld's
-// choices of model, theme and the like, and the channel claude notifies on, where one is given.
+// UserSettings has cld add to claude's user settings what they lack. It adds the permission set,
+// cld's choices of model, theme and the like, and the channel claude notifies on, where one is
+// given.
 // cld keeps every value already there, and leaves env, which Telemetry writes, alone.
 type UserSettings struct {
 	M    effect.Machine

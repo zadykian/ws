@@ -9,13 +9,13 @@
 # Without pipefail, a curl that fails pipes nothing into sh, which exits 0 having installed nothing.
 #
 # It downloads the binary for this machine, ws-OS-ARCH, from the latest release, or from the one
-# WS_VERSION names (X.Y.Z, with or without the v), checks it against the release's ws.sha256, runs
-# it as ws version and checks that it prints the release's tag, and only then moves it over
-# ~/.local/bin/ws, or over /usr/local/bin/ws as root. Run again, it updates ws. It finds which
-# release is the latest once, before either download, so that both come from one release. Macs
-# with Apple silicon, and Linux on x86_64 and aarch64, are released for. WS_RELEASES_URL stands in
-# for https://github.com/zadykian/ws/releases, for the tests. It runs in any POSIX sh, and needs
-# curl and sha256sum, or shasum on a Mac.
+# WS_VERSION names (X.Y.Z, with or without the v). It checks the binary against the release's
+# ws.sha256 file, runs it as ws version and checks that it prints the release's tag. Only then does
+# it move the binary over ~/.local/bin/ws, or over /usr/local/bin/ws as root. Run again, it updates
+# ws. It finds which release is the latest once, before either download, so that both come from
+# one release. Macs with Apple silicon, and Linux on x86_64 and aarch64, are released for.
+# WS_RELEASES_URL stands in for https://github.com/zadykian/ws/releases, for the tests. It runs in
+# any POSIX sh, and needs curl and sha256sum, or shasum on a Mac.
 #
 # Everything is in functions that the last line calls, so that a download cut short runs nothing.
 
@@ -56,8 +56,8 @@ is_version() {
     esac
 }
 
-# release sets releases to the address of ws's releases, and tag to the release to install,
-# WS_VERSION's, or none for the latest until latest finds it, and where to name it in messages.
+# release sets releases to the address of ws's releases, and tag to the release to install. That is
+# WS_VERSION's, or none for the latest until latest finds it. where is how messages name it.
 release() {
     releases=${WS_RELEASES_URL:-https://github.com/zadykian/ws/releases}
     version=${WS_VERSION:-}
@@ -79,7 +79,7 @@ fetch() {
     curl -fsS --proto "$proto" --tlsv1.2 "$@"
 }
 
-# latest sets tag, where none is set, to the latest release's: GitHub redirects releases/latest to
+# latest sets tag, where none is set, to the latest release's. GitHub redirects releases/latest to
 # the latest release's page, releases/tag/vX.Y.Z, or to releases where there is none. The tag goes
 # into the downloads' addresses, so anything but vX.Y.Z is refused.
 latest() {
@@ -124,8 +124,8 @@ main() {
 
     latest
     mkdir -p "$dir" || die "cannot create $dir"
-    # The download goes into a directory in the one ws goes to, so that moving it there is a rename
-    # that replaces ws at once, even while ws runs, and so that it runs from where ws will.
+    # The download goes into a directory in the one ws goes to. So moving it there is a rename that
+    # replaces ws at once, even while ws runs, and the download runs from where ws will.
     tmp=
     trap '[ -z "$tmp" ] || rm -rf "$tmp"' EXIT
     trap 'exit 1' HUP INT TERM

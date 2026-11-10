@@ -8,9 +8,9 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Apply runs ws server apply in a unit of its own through the remote script, or follows the run that
-// goes on there, with its log on stderr. On a cloud VM, where the outbound table would drop the
-// provider's metadata service, host_vars names security_outbound: false before the run, as ws
+// Apply runs ws server apply in a unit of its own through the remote script, or follows the run
+// that goes on there, with its log on stderr. On a cloud VM the outbound table would drop the
+// provider's metadata service. So host_vars names security_outbound: false before the run, as ws
 // server apply reads its values from that file. A unit that the run followed may have begun before
 // a change to that file: a run of its own follows then.
 func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
@@ -36,7 +36,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return err
 	}
 	r.ran = true
-	// A part leaves the full run's stamp as it was, which would read as a unit begun too soon.
+	// A part leaves the full run's stamp unchanged, which would read as a unit begun too soon.
 	if len(r.Only) > 0 {
 		return nil
 	}

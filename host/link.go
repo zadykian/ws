@@ -26,7 +26,7 @@ func (setLink) Kind() step.ChangeKind { return step.Write }
 
 func (c setLink) Apply(context.Context) error { return c.l.M.Symlink(c.l.Target, c.l.Path) }
 
-// Plan finds where the path points, if it is a link.
+// Plan finds where the path points, if the path is a link.
 func (l Link) Plan(context.Context) ([]Change, error) {
 	info, err := l.M.Stat(l.Path)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {

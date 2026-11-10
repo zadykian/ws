@@ -13,9 +13,9 @@ const (
 	// zedKeymapMark starts the first line of keymap.json, which carries its own header. It does not
 	// name the command, so the file stays ws's if the command changes.
 	zedKeymapMark = "// Written by github.com/zadykian/ws"
-	// zedSeed is settings.json where it is missing. Zed writes that file from its UI and merges it over
-	// global_settings.json, and the connection to ws can sit in no other file, as an opened project is
-	// recorded by its index in this list.
+	// zedSeed is settings.json where the file is missing. Zed writes that file from its UI and
+	// merges it over global_settings.json. The connection to ws can sit in no other file, as an
+	// opened project is recorded by its index in this list.
 	zedSeed = `// Zed's own settings, which its UI writes. ws wrote this once, where it was missing; ws's
 // settings are in global_settings.json, and a key set here wins over them.
 { "ssh_connections": [{ "host": "ws" }] }

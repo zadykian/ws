@@ -84,7 +84,7 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 		return nil, err
 	}
 	// call plans the verb. A restart or reload, or a start that an owed one makes needless, removes
-	// the mark of the watched change once it is done.
+	// the mark of the watched change after it runs.
 	call := func(verb string, do func(context.Context, string) error) {
 		forced := verb == "restart" || verb == "reload"
 		settle := forced || (verb == "start" && owed)

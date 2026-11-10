@@ -50,7 +50,7 @@ func (OSSysfs) Write(path, value string) error {
 
 // Glob lists the paths that match, sorted.
 func (OSSysfs) Glob(pattern string) []string {
-	paths, _ := filepath.Glob(pattern) // the pattern is ours, so it is well formed
+	paths, _ := filepath.Glob(pattern) // the pattern is ours, so it holds no syntax error
 	sort.Strings(paths)
 	return paths
 }

@@ -34,8 +34,8 @@ func (c wsInstall) String() string {
 }
 
 // Plan is empty where ws holds this version. It stops where ws holds a newer release than this
-// ws's, so that an update on ws is not undone, where this ws is no release, or where URL is no
-// address to fetch from.
+// ws's, so that an update on ws is not undone. It stops too where this ws is no release, or where
+// URL is no address to fetch from.
 func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
 	if i.Remote.Status(ctx) && i.Remote.Get("ws") == i.Version {
 		return step.Plan{}, nil

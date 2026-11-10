@@ -12,6 +12,6 @@ type disk interface {
 	// Restrict makes the file root's, mode 0600.
 	Restrict(path string) error
 	Rename(oldPath, newPath string) error
-	// Remove removes the file, and nothing is wrong where it is missing.
+	// Remove removes the file, and a missing file is no error.
 	Remove(path string) error
 }

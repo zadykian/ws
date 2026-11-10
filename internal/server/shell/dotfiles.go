@@ -37,7 +37,7 @@ func dotfiles(m effect.Machine, a account, goarch string) ([]host.Resource, erro
 	}, nil
 }
 
-// owned makes the step's parts once the account is found, as the user's uid and gid come from the
+// owned makes the step's parts once the account is found. The user's uid and gid come from the
 // machine, and a dry run on a new one must still show them.
 func owned(user host.User, m effect.Machine, title, after string,
 	parts func(a account) ([]host.Resource, error)) host.Lazy {

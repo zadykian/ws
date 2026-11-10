@@ -72,7 +72,7 @@ func macRead(p process) tui.StateReader {
 		if err != nil {
 			return nil, err
 		}
-		// The read takes the screen's effects as a run does, as the terminal under it is not theirs.
+		// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
 		steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), machine(ctx, b), b, io.Discard, true)
 		reports, err := step.Read(ctx, steps)
 		return []tui.StateSection{{Reports: reports}}, err

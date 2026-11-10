@@ -1,6 +1,6 @@
 #!/bin/bash
 # ws mac apply writes Zed's global_settings.json, which is mac/zed's file whole, and
-# settings.json, the seed, where it is missing. A settings.json that is there is left byte for
+# settings.json, the seed, where none exists. A settings.json that is there is left byte for
 # byte.
 
 set -eo pipefail

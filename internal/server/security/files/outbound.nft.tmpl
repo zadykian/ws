@@ -2,18 +2,18 @@
 #
 # What ws and its containers start goes to the internet and ikeward0 alone, but what the network
 # needs, such as DHCP and DNS. A new packet to a private, shared, link-local, multicast or broadcast
-# range drops: these hold the LAN, the cable, wg0, and a VM host's or a cloud's private network,
-# none of them named in a rule. Replies pass, so ws still answers the Mac, over WireGuard too, as
-# the Mac speaks first and keeps the flow alive. So WireGuard has no rule on its UDP port or a
-# mark, either of which would let any user past. Ubuntu's mtr-packet, with CAP_NET_RAW, lets any
+# range drops. These ranges hold the LAN, the cable, wg0, and a VM host's or a cloud's private
+# network, none of them named in a rule. Replies pass, so ws still answers the Mac, over WireGuard
+# too, as the Mac speaks first and keeps the flow alive. So WireGuard has no rule on its UDP port or
+# a mark, either of which would let any user past. Ubuntu's mtr-packet, with CAP_NET_RAW, lets any
 # user send from any port and set any mark, and while wg0 is down anyone may bind its port.
 #
 # security-outbound.service loads this file through {{.Script}}, one transaction that replaces this
-# table and no other: nftables.conf would flush ufw's, Docker's, fail2ban's and ikeward's tables
+# table and no other. nftables.conf would flush ufw's, Docker's, fail2ban's and ikeward's tables
 # too. No rule holds a set of ranges, or of names with *. The kernel fills such a set after its
 # rules take effect, and in a lab, packets to the LAN got past a reload. Each run loads the file in
-# an empty network namespace too (drift.go), so a rule names a link by oifname or iifname, never
-# by the index of oif or iif.
+# an empty network namespace too (drift.go). So a rule names a link by oifname or iifname, never by
+# the index of oif or iif.
 destroy table inet ws
 
 table inet ws {
@@ -29,9 +29,9 @@ table inet ws {
     chain output {
         type filter hook output priority filter; policy accept;
         ct state established,related accept
-        # Loopback and the VPN. Docker's bridges for root alone: ws's own packets to its containers meet
-        # this chain alone, and a user reaches a container of the system daemon by a port it publishes.
-        # The forward chain sees what the containers send.
+        # Loopback and the VPN. Docker's bridges for root alone: ws's own packets to its containers
+        # meet this chain alone. A user reaches a container of the system daemon by a port it
+        # publishes. The forward chain sees what the containers send.
         oifname { "lo", "ikeward0" } accept
         meta skuid 0 oifname "docker0" accept
         meta skuid 0 oifname "br-*" accept

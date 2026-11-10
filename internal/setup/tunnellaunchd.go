@@ -27,9 +27,9 @@ type Launchctl struct {
 func (l Launchctl) String() string { return "would run launchctl " + strings.Join(l.Args, " ") }
 
 // launchctlAction picks launchd's action, a pure function of what differs. It bootstraps where the
-// daemon isn't loaded, boots it out and in where the plist changed, kicks it where a program or the
-// key changed, and sends SIGHUP where tunnel.conf alone changed, which the daemon takes without
-// dropping the session.
+// daemon isn't loaded, and boots it out and in where the plist changed. It kicks it where a program
+// or the key changed. It sends SIGHUP where tunnel.conf alone changed, which the daemon takes
+// without dropping the session.
 func launchctlAction(loaded, plist, program, key, conf bool) []Launchctl {
 	target := "system/" + daemonLabel
 	switch {

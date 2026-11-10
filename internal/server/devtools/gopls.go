@@ -46,7 +46,7 @@ func (c buildGopls) Apply(ctx context.Context) error {
 	return goInstall(ctx, c.g.M, c.g.User, "gopls", c.g.Path, "golang.org/x/tools/gopls@v"+c.g.version())
 }
 
-// Plan reads gopls's version and the Go it was built with. A gopls that is missing fails the
+// Plan reads gopls's version and the Go that built it. A gopls that is missing fails the
 // command, which counts as another version.
 func (g goplsTool) Plan(ctx context.Context) ([]host.Change, error) {
 	out, err := g.User.Output(ctx, g.M, g.Path, "version", "-json")

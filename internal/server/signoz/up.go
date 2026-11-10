@@ -14,8 +14,8 @@ import (
 )
 
 // Up is the step that starts the project's containers. Compose's up runs the one-shot services
-// again, the schema migrator among them, so it runs only while a recreation is due, or while a
-// service that keeps running is down. Without systemd booted there is no Docker daemon to ask,
+// again, the schema migrator among them. So the step runs only while a recreation is due, or while
+// a service that keeps running is down. Without systemd booted there is no Docker daemon to ask,
 // and the step skips.
 type Up struct {
 	M   effect.Machine

@@ -8,9 +8,9 @@ import (
 )
 
 // checkPort reads the port and the default routes, refuses an uplink, and returns the port as
-// netplan's match sees it. ip's default_ipv4 would name the interface of the route to one address,
-// which a VPN's 0.0.0.0/1 and 128.0.0.0/1 take from the uplink, so each table's default routes
-// name the uplink whatever a VPN adds. The file turns DHCP off on the port: on an uplink, that
+// netplan's match sees it. ip's default_ipv4 would name the interface of the route to one address.
+// A VPN's 0.0.0.0/1 and 128.0.0.0/1 take that route from the uplink. So each table's default
+// routes name the uplink, whatever a VPN adds. The file turns DHCP off on the port: on an uplink, that
 // would cut the machine off. A VPN that takes the default route still leaves the uplink its lease.
 func (d direct) checkPort(ctx context.Context) (Port, error) {
 	var routes []Route

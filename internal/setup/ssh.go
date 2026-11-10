@@ -13,8 +13,9 @@ import (
 )
 
 // SSH writes ~/.ssh/config.d/ws and puts its Include first in ~/.ssh/config. It stops where
-// config.d/ws is a file it did not write, where the Include could not go first, where the key that
-// ssh offers ws is wrong, and where ssh refuses the new file, alone or as ssh reads it whole.
+// config.d/ws is a file it did not write, and where the Include could not go first. It also stops
+// where the key that ssh offers ws is wrong, and where ssh refuses the new file, alone or as ssh
+// reads it whole.
 type SSH struct {
 	Conf conf.Conf
 	Home string

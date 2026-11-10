@@ -52,7 +52,7 @@ func (c setAttrs) Apply(context.Context) error {
 	return c.d.M.Chmod(c.d.Path, c.d.Mode)
 }
 
-// Plan hashes the file, and plans a download where it is missing or its sum differs.
+// Plan hashes the file, and plans a download where the file is missing or its sum differs.
 func (d Download) Plan(context.Context) ([]Change, error) {
 	body, err := d.M.ReadRootFile(d.Path)
 	if errors.Is(err, fs.ErrNotExist) {

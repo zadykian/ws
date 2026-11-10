@@ -106,7 +106,7 @@ commit() {
     fi
 }
 
-# field PATH FILE writes the event's string at PATH to FILE, empty where it is null.
+# field PATH FILE writes the event's string at PATH to FILE, empty where null.
 field() {
     jq -r "($1) // \"\"" "$event" >"$2"
 }

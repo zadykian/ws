@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-// tokens is git's tokens for servers besides GitHub, each URL's in a file of its own, which the
+// tokens is git's tokens for servers besides GitHub. Each URL's in a file of its own, which the
 // URL's helper in ~/.config/git/tokens.gitconfig reads (docs/shell.md#git-credentials). So no token
 // goes in a template, or in the diff a dry run shows. Without entries, as in CI, ws leaves the
 // tokens and their helpers alone, so that a run without the secrets file changes nothing. With the
@@ -25,7 +25,7 @@ type tokens struct {
 }
 
 // Plan reads the keys of tokens.gitconfig, as a URL the entries omit keeps its section there, or
-// loses it under Whole, and checks the entries before any token is written.
+// loses it under Whole. It checks the entries before any token is written.
 func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 	if len(t.Creds) == 0 && !t.Whole {
 		return nil, nil

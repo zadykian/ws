@@ -28,9 +28,10 @@ func PlanRoutes(want, routed []netip.Prefix) RoutePlan {
 }
 
 // Applied says what is routed once the adds ran, given those that failed, in the plan's order. A
-// network that another route already takes cannot be routed: it is logged once, and tried again at
-// each plan. unroutable holds the networks logged, and keeps those of out, which AllowedFor left
-// out, so that trials that leave one out and take it back log it once. tun is the utun's name.
+// network that another route already takes cannot be routed. It goes to the log once, and is tried
+// again at each plan. unroutable holds the networks logged, and keeps those of out, which
+// AllowedFor left out, so that trials that leave one out and take it back log it once. tun is the
+// utun's name.
 func (p RoutePlan) Applied(failed, out, unroutable []netip.Prefix, tun string) (routed, unroutableNow []netip.Prefix, logs []string) {
 	for _, n := range out {
 		if slices.Contains(unroutable, n) {

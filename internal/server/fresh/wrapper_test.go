@@ -15,9 +15,9 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// setup says how run builds the wrapper's surroundings: env is the one variable the wrapper sees
-// beside HOME and PATH, terminal drops the wrapper's test for a terminal (a test's stdin and stdout
-// are pipes), fakeTmux puts a tmux stub in PATH, and ext is the extended-keys option it reports.
+// setup says how run builds the wrapper's surroundings. env is the one variable the wrapper sees
+// beside HOME and PATH. terminal drops the wrapper's test for a terminal (a test's stdin and stdout
+// are pipes). fakeTmux puts a tmux stub in PATH, and ext is the extended-keys option it reports.
 // Without noConfig, HOME holds ~/.config/fresh/config.json.
 type setup struct {
 	env                          string

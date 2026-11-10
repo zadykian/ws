@@ -26,8 +26,8 @@ type Answers struct {
 	Prog string
 	// Tty tells whether stdin is a terminal, which the questions need.
 	Tty bool
-	// Check makes Plan rehearse the stage: it asks, shows the diff of mac.conf, and writes what mac.conf
-	// would be to Scratch, the file that the stages after it read.
+	// Check makes Plan rehearse the stage. It asks, shows the diff of mac.conf, and writes what
+	// mac.conf would be to Scratch, the file that the stages after it read.
 	Check   bool
 	Scratch string
 	M       effect.Machine
@@ -129,8 +129,8 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 }
 
 // rehearse does Apply's asking under --check, and shows the diff of mac.conf instead of writing it.
-// The stages after read the file it writes to Scratch, as the old script pointed WS_CONF at a file in the
-// lock, so that they check against the mac.conf that the run would make.
+// The stages after read the file it writes to Scratch, so that they check against the mac.conf that
+// the run would make. The old script did the same: it pointed WS_CONF at a file in the lock.
 func (a *Answers) rehearse(ctx context.Context, text string, c conf.Conf) error {
 	lines, err := a.collect(ctx, text, c)
 	if err != nil {

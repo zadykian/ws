@@ -19,15 +19,14 @@ concurrency:
 permissions: {}
 
 jobs:
-  # The Mac's side on macOS, in docs/mac.md's order: ws mac apply without ws's key makes the Mac's
-  # key and installs no daemon; with a stand-in ws's key it installs the daemon; then a second run
+  # The Mac's side on macOS, in docs/mac.md's order. ws mac apply without ws's key makes the Mac's
+  # key and installs no daemon. With a stand-in ws's key it installs the daemon. Then a second run
   # and --check must print nothing, and --check under script must draw the run screen. ssh -G must
-  # give ws the tunnel's end. A stand-in ws, a second
-  # wireguard-go on the runner with the Mac's key as its peer, answers the tunnel's handshakes on
-  # loopback, as the LAN (127.0.0.0/8) and as WS_REMOTE (localhost), and the daemon's status must
-  # show each in turn. Last, ws mac tunnel routes and ws mac resolver, then mac.conf's. A stand-in
-  # that makes no utun fails the job, as the daemon's device makes one too. Gated as ci.yml's
-  # playbook job.
+  # give ws the tunnel's end. A stand-in ws is a second wireguard-go on the runner, with the Mac's
+  # key as its peer. It answers the tunnel's handshakes on loopback, as the LAN (127.0.0.0/8) and
+  # as WS_REMOTE (localhost). The daemon's status must show each in turn. Last, ws mac tunnel
+  # routes and ws mac resolver, then mac.conf's. A stand-in that makes no utun fails the job, as
+  # the daemon's device makes one too. Gated as ci.yml's playbook job.
   mac:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&

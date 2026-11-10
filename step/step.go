@@ -21,8 +21,8 @@ type Plan struct {
 // Step sets up one part of a machine's setup. A step holds its effects as fields and reads no other step's state.
 type Step interface {
 	Name() string
-	// WaitsOn names an earlier step that must be done first, or is empty. It is known before Plan,
-	// as a plan may fail where that step's changes are still to come.
+	// WaitsOn names an earlier step that must be done first, or is empty. Its name is known before
+	// Plan, as a plan may fail where that step's changes are still to come.
 	WaitsOn() string
 	// Plan reads alone and changes nothing.
 	Plan(ctx context.Context) (Plan, error)
@@ -133,7 +133,7 @@ func (o Options) settle(ctx context.Context, s Step, e Event, pending map[string
 }
 
 // Unreached ends each step as Skipped, for the nested runs that a failed run before them never
-// starts: each step of a run gets its last event, and a screen has no other word of these.
+// starts. Each step of a run gets its last event, and a screen has no other word of these.
 func Unreached(steps []Step, o Options) { o.unreached(steps, 0) }
 
 func (o Options) unreached(steps []Step, from int) {

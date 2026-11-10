@@ -13,7 +13,8 @@ import (
 const hostStage = "Host key"
 
 // HostKey is the stage of ws's host key: the ed25519 key that ws offers, matched against ws's
-// console, in known_hosts under the name ws, which config.d/ws's HostKeyAlias gives each way to ws.
+// console. It goes in known_hosts under the name ws, which config.d/ws's HostKeyAlias gives each
+// way to ws.
 type HostKey struct {
 	// Conf is mac.conf's path, Lock the run's lock, whose host.pub holds the key to fingerprint.
 	Conf, Lock string

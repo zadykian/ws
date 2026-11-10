@@ -15,13 +15,13 @@ import (
 )
 
 // screenGrace bounds a command's end past its context under a screen. It stays above the 2 seconds
-// that runuser gives its child, which a kill of runuser would cut short, and under the 5 seconds
-// that a screen gives a run's cleanup.
+// that runuser gives its child, which a kill of runuser would cut short. It stays under the 5
+// seconds that a screen gives a run's cleanup.
 const screenGrace = 3 * time.Second
 
 // OSMachine is the Machine of the machine that ws runs on.
 type OSMachine struct {
-	// Sudo is the command that runs another as root. Nil means sudo; empty, for root itself, runs it as it is.
+	// Sudo is the command that runs another as root. Nil means sudo; empty, for root itself, runs it bare.
 	Sudo []string
 	// Owner is the uid:gid that root files get. Empty means 0:0; tests set their own.
 	Owner string

@@ -10,11 +10,12 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it: the
+// Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it. The
 // peer op writes the key, then ws server apply --only wireguard runs in a unit of its own. It sets
 // WS_PUBLIC_KEY to wg0's key, where it differs, and runs ws mac apply again. Last, it waits for the
 // handshake and logs in, or, where the run asked ws's address, leaves that to a later run. It takes
-// root's key rather than tunnel.pub, which the user can write, as the key it sends becomes ws's peer.
+// root's key rather than tunnel.pub, which the user can write, as the key it sends becomes ws's
+// peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	c, err := t.Host.conf()
 	if err != nil {

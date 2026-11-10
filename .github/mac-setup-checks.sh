@@ -2,7 +2,7 @@
 # The mac job's checks of ws mac apply's own steps, each run with the job's mac.conf, in a section
 # per key or step. mac-conf-checks.sh runs it last, from the repository's root, once ws mac apply has
 # set up the Mac (.github/workflows/mac.yml). As it runs ws mac apply, sudo included, and edits the
-# job's mac.conf, it stops without the job's TUNNEL, and puts the file back as it exits, on a
+# job's mac.conf, it stops without the job's TUNNEL. It puts the file back as it exits, on a
 # signal too. Each failure prints an ::error:: line, and any fails the script at its end. Last, it
 # sources the cases of ws's key and git: mac-identity-checks.sh and mac-git-checks.sh.
 

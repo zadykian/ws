@@ -13,7 +13,7 @@ import (
 // address. The file is one of the package's conffiles, and apt keeps the one it finds. The package
 // comes without its recommends, which add textfile scripts for collectors it leaves off. A change
 // of the arguments restarts node_exporter here rather than at the collector's step, as a run cut
-// short in between would lose the restart.
+// short between the two would lose the restart.
 func exporter(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]host.Resource, error) {
 	return func(context.Context) ([]host.Resource, error) {
 		args, err := files.ReadFile("files/prometheus-node-exporter")

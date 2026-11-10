@@ -37,8 +37,8 @@ func remoteEndpoint(m effect.Machine, home string) (string, error) {
 // configuration makes the parts that configure the collector and run it: the drop-ins, the
 // endpoint for the service, the config, then the unit. The endpoint file is written before the
 // config and removed after it, so that a run cut short never leaves a config that names a
-// variable the service lacks. The config is checked by the collector before it replaces the
-// running one's, with the remote endpoint a stand-in, as its value is only in the service's
+// variable the service lacks. The collector checks the config before it replaces the running
+// one's. The remote endpoint is a stand-in there, as its value is only in the service's
 // environment. A change of any of them restarts the collector: a new endpoint needs a restart, as
 // the collector's reload rereads its config alone.
 func configuration(m effect.Machine, u effect.Units, out effect.Out, home string) func(context.Context) ([]host.Resource, error) {

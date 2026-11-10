@@ -1,6 +1,6 @@
-// Package otelcol is the otelcol role as Go steps: node_exporter, and the OpenTelemetry Collector
-// with its configuration, which feeds SigNoz and, where ~/.secrets/env names one, a remote
-// collector for claude's metrics. See docs/otelcol.md.
+// Package otelcol is the otelcol role as Go steps. They set up node_exporter, and the
+// OpenTelemetry Collector with its configuration. The collector feeds SigNoz and, where
+// ~/.secrets/env names one, a remote collector for claude's metrics. See docs/otelcol.md.
 package otelcol
 
 import (
@@ -15,8 +15,8 @@ const variable = "OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT"
 
 var assignment = regexp.MustCompile(`^[[:space:]]*(?:export[[:space:]]+)?` + variable + `=(.*)$`)
 
-// Endpoint returns the value of the variable in the text of an env file: from the last line that
-// sets it, as in the shell, with one pair of quotes removed. The file is read, not sourced, so that
+// Endpoint returns the value of the variable in the text of an env file. It takes the last line
+// that sets it, as the shell does, with one pair of quotes removed. The file is read, not sourced, so that
 // nothing in it runs as root. It returns "" where no line sets the variable.
 func Endpoint(env []byte) string {
 	value := ""
@@ -39,14 +39,14 @@ var (
 		`\[[0:]*:ffff:(127\.0\.0\.1|0\.0\.0\.0)\]|([^/]*\.)?localhost\.?):4317$`)
 )
 
-// errEndpoint leaves the value out, as it is a secret.
+// errEndpoint leaves the value out, as the value is a secret.
 var errEndpoint = errors.New("OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT in ~/.secrets/env is neither " +
 	"http://HOST:PORT nor https://HOST:PORT, with PORT from 1 to 65535, or it leads to the " +
 	"collector's own receiver")
 
-// CheckEndpoint refuses a URL that is no http or https URL with a host and a port, or that leads
-// to the collector's own gRPC receiver, which would send claude's metrics back to both pipelines
-// without end. The collector checks the URL only as it starts. The error leaves the value out.
+// CheckEndpoint refuses a URL that is no http or https URL with a host and a port. It also refuses
+// one that leads to the collector's own gRPC receiver, which would send claude's metrics back to
+// both pipelines without end. The collector checks the URL only as it starts. The error leaves the value out.
 func CheckEndpoint(url string) error {
 	m := urlForm.FindStringSubmatch(url)
 	if m == nil {

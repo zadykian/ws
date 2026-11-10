@@ -8,12 +8,12 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Run runs the stages in order under the run's lock, with the Mac kept from idle sleep until it
-// ends: a stage may wait on a download or an answer. pid is the process caffeinate waits on, and 0
-// keeps nothing awake, as on ws, where caffeinate is not macOS's. It
-// reports whether any stage had changes to make, as step.Run does. closing runs after a run that
-// changed something, outside --check, while the lock stands: the stages' files in it are still there.
-// o is the stages' run: who hears it, and where a screen stops it or leaves a stage out.
+// Run runs the stages in order under the run's lock. It keeps the Mac from idle sleep until it
+// ends, as a stage may wait on a download or an answer. pid is the process caffeinate waits on, and
+// 0 keeps nothing awake, as on ws, where caffeinate is not macOS's. It reports whether any stage
+// had changes to make, as step.Run does. closing runs after a run that changed something, outside
+// --check, while the lock stands: the stages' files in it are still there. o is the stages' run:
+// who hears it, and where a screen stops it or leaves a stage out.
 func Run(ctx context.Context, m effect.Machine, o step.Options, stages []step.Step, tmp string, pid int, closing func(context.Context)) (bool, error) {
 	lock, release, err := Lock(ctx, m, tmp)
 	if err != nil {

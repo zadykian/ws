@@ -6,10 +6,10 @@
 #
 #   docker-user.sh INTERFACE...
 #
-# The drops come from docker0 and the br- bridge of each of Docker's networks, for IPv4 and IPv6,
-# in a chain of their own, WS-MAC, that DOCKER-USER jumps to first. Docker's iptables backend runs
-# DOCKER-USER ahead of its own rules, makes the chain only where missing, and never changes what it
-# holds, so the drops last through Docker's restarts.
+# The drops come from docker0 and the br- bridge of each of Docker's networks, for IPv4 and IPv6.
+# They sit in a chain of their own, WS-MAC, that DOCKER-USER jumps to first. Docker's iptables
+# backend runs DOCKER-USER ahead of its own rules and makes the chain only where missing. It never
+# changes what the chain holds, so the drops last through Docker's restarts.
 #
 # Each run fills WS-MAC anew, so that an interface no longer given loses its drops. It does so in
 # one commit of iptables-restore, whose chain line empties WS-MAC under --noflush. Rule by rule, a

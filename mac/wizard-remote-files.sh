@@ -13,7 +13,7 @@
 # - user NAME names NAME in that file as ws_user, for ws server apply.
 # - peer KEY writes KEY, the Mac's WireGuard key, to mac.pub where that holds another.
 # - values prints that file, and nothing where there is none. values PAIR... runs ws server values
-#   set on each PAIR, the base64 of KEY=VALUE: ssh joins its arguments for this shell, which would
+#   set on each PAIR, the base64 of KEY=VALUE. ssh joins its arguments for this shell, which would
 #   split a value at a blank, run one with a quote, and lose an empty one.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
@@ -38,9 +38,9 @@ die() {
     exit 1
 }
 
-# ports prints ws's wired ports: a device's, of ARPHRD_ETHER's type 1 and not wireless, but those
-# that a default route names, in any table, as an uplink's. A bridge's or bond's member, which
-# sysfs's master marks, is left out too, as an uplink may be one. So is a name of other characters
+# ports prints ws's wired ports: a device's, of ARPHRD_ETHER's type 1 and not wireless. A port that
+# a default route names, in any table, as an uplink's is left out. So is a bridge's or bond's
+# member, which sysfs's master marks, as an uplink may be one. So is a name of other characters
 # than letters, digits and ._-, or with a - first, as no argument may hold them.
 ports() {
     uplinks=$({
@@ -57,9 +57,9 @@ ports() {
     done
 }
 
-# link_wait PORT runs link once PORT holds 10.77.0.1, which networkd gives it a moment after the
-# network role's networkctl reload, and later for a port that was down. It reads ip each second, 10
-# s at most, so that the wizard waits in one login, which a key may take a touch for.
+# link_wait PORT runs link once PORT holds 10.77.0.1. The address comes from networkd a moment
+# after the network role's networkctl reload, and later for a port that was down. It reads ip each
+# second, 10 s at most, so that the wizard waits in one login, which a key may take a touch for.
 link_wait() {
     ports | grep -qxF -- "${1-}" || die "'${1-}' is none of the wired ports that link lists"
     n=0
@@ -105,8 +105,8 @@ link() {
     name network_direct_link_interface "$1"
 }
 
-# user NAME names NAME as ws_user, a name as check.User takes it, in the file itself: through a link
-# the rename would leave the link's target as it was.
+# user NAME names NAME as ws_user, a name as check.User takes it, in the file itself. Through a
+# link, the rename would leave the link's target unchanged.
 user() {
     printf '%s\n' "$1" | grep -Eqx '[A-Za-z0-9._][A-Za-z0-9._-]{0,31}' ||
         die "'$1' is not a user's name"

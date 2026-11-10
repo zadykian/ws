@@ -34,8 +34,8 @@ func (v *WsValues) offered(cloud bool) string {
 	return ""
 }
 
-// userRefusal says why ws_user can't be the answer, or nil. Off a cloud VM it is a user with sudo,
-// as the installer leaves one.
+// userRefusal says why ws_user can't be the answer, or nil. Off a cloud VM the answer must be a
+// user with sudo, as the installer leaves one.
 func userRefusal(user string, cloud bool) error {
 	switch {
 	case user == "":

@@ -135,9 +135,9 @@ func (f FormField) Update(msg tea.Msg) FormField {
 	return f
 }
 
-// edit takes a key or a paste into a password, as a terminal's line takes them for the plain prompt:
-// Backspace and Ctrl-U erase, and a paste gives its first line. Enter alone answers, as nothing shows
-// what a paste brought.
+// edit takes a key or a paste into a password, as a terminal's line takes them for the plain
+// prompt. Backspace and Ctrl-U erase, and a paste gives its first line. Enter alone answers, as
+// nothing shows what a paste brought.
 func (f FormField) edit(msg tea.Msg) FormField {
 	switch msg := msg.(type) {
 	case tea.PasteMsg:
@@ -185,8 +185,8 @@ func (f FormField) Value() string {
 	return f.spec.Options[f.chosen]
 }
 
-// Edited reports whether the value differs from the one the field started on, so that a form writes
-// what the maintainer changed alone, and a choice's first option never stands in for a file's value.
+// Edited reports whether the value differs from the one the field started on. So a form writes what
+// the maintainer changed alone, and a choice's first option never stands in for a file's value.
 func (f FormField) Edited() bool {
 	return f.Value() != f.start
 }

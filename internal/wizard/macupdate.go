@@ -19,8 +19,8 @@ const macUpdateStage = "ws on the Mac"
 type MacUpdate struct {
 	M   effect.Machine
 	Out effect.Out
-	// Version is this ws's version, URL the address of the releases, Home the Mac's home and Args
-	// the arguments that the new ws gets, ws's own without the program.
+	// Version is this ws's version, URL the address of the releases, and Home the Mac's home. Args
+	// holds the arguments that the new ws gets, ws's own without the program.
 	Version, URL, Home string
 	Args               []string
 }

@@ -27,7 +27,7 @@ type Field struct {
 	Value, Default string
 	// Options are the values of a key that takes one of a few, and nil for a line.
 	Options []string
-	// Valid says why mac.conf can't take a value. It is pure, as it runs on each edit.
+	// Valid says why mac.conf can't take a value. Valid is pure, as it runs on each edit.
 	Valid func(string) error
 }
 
@@ -84,7 +84,7 @@ func (f ConfForm) wanted(q question, edits map[string]string) string {
 	return q.def
 }
 
-// fieldValue reads what a field holds as the wizard reads an answer, but that an empty field of an
+// fieldValue reads what a field holds as the wizard reads an answer. But an empty field of an
 // optional key is an empty value, which is what the form shows.
 func fieldValue(q question, raw string) string {
 	if raw == "" && q.need == "" {

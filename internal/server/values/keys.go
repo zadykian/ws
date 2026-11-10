@@ -82,7 +82,7 @@ func kindOf(t reflect.Type) (Kind, bool) {
 }
 
 // Check says why the key can't take value. Each key takes an empty value, which gives its default
-// back. It is pure, as a form runs it on each edit.
+// back. Check is pure, as a form runs it on each edit.
 func (k Key) Check(value string) error {
 	if strings.ContainsAny(value, "\r\n") {
 		return errors.New(k.Name + " takes one line")

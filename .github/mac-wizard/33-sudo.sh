@@ -1,7 +1,7 @@
 #!/bin/sh
 # Where sudo on the stand-in ws asks for a password, on the Mac that 33-login.sh leaves. A run with
 # no terminal must stop at Sudo, naming the user, and --check must say that a run would ask. At a
-# terminal of script's, a wrong password must be refused and the right one taken, and the run must
+# terminal of script's, a wrong password must be refused and the right one taken. The run must
 # end well, with sudo's forms that carry a password in the stand-in's log. The password must show in
 # no transcript and no log. sudo asks no password again after it.
 

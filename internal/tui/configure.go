@@ -29,7 +29,8 @@ var (
 type Sheet struct {
 	// Name titles the file's form.
 	Name string
-	// Fields gives the fields that show under the edits so far. It is pure, as it runs on each edit.
+	// Fields gives the fields that show under the edits so far. Fields is pure, as it runs on each
+	// edit.
 	Fields func(edits map[string]string) []FieldSpec
 	// Save writes the edits on the work's goroutine, and returns the sheet of what the file then holds.
 	Save func(ctx context.Context, b *Bridge, edits map[string]string) (Sheet, error)

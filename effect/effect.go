@@ -34,7 +34,7 @@ type Out interface {
 	Warn(format string, a ...any)
 	// Diff shows a unified diff of the lines of before and after.
 	Diff(name string, before, after []byte)
-	// Raw prints a line as it is, with no prefix of the program, such as a line to copy.
+	// Raw prints a line unchanged, with no prefix of the program, such as a line to copy.
 	Raw(format string, a ...any)
 	// ByHand keeps a line, and prints it once the run ends.
 	ByHand(format string, a ...any)
@@ -50,7 +50,7 @@ type Attrs struct {
 type Info struct {
 	// Mode is the mode of the file a link points to, with its type bits.
 	Mode fs.FileMode
-	// Link is where the path points, or empty where it is no link.
+	// Link is where the path points, or empty where the path is no link.
 	Link string
 }
 
@@ -61,7 +61,7 @@ type Lasting interface {
 }
 
 // SayLasting says a line that the maintainer acts on past a run, such as a key to copy. An out that
-// doesn't draw a screen loses no line, so it takes a Say, and a plain run's output stays as it was.
+// doesn't draw a screen loses no line, so it takes a Say, and a plain run's output stays as before.
 func SayLasting(out Out, format string, a ...any) {
 	if l, ok := out.(Lasting); ok {
 		l.SayLasting(format, a...)
@@ -74,7 +74,8 @@ func SayLasting(out Out, format string, a ...any) {
 type Machine interface {
 	// Stat returns fs.ErrNotExist where the path is missing, and describes a dangling link.
 	Stat(path string) (Info, error)
-	// ReadDir returns the names in a directory, sorted, and fs.ErrNotExist where it is missing.
+	// ReadDir returns the names in a directory, sorted, and fs.ErrNotExist where the directory is
+	// missing.
 	ReadDir(path string) ([]string, error)
 	// ReadFile returns fs.ErrNotExist where the file is missing.
 	ReadFile(path string) ([]byte, error)
@@ -82,11 +83,11 @@ type Machine interface {
 	// WriteRootFile replaces a file that root owns, through sudo and a new file renamed over it,
 	// which is never readable beyond perm. It sets the owner to root.
 	WriteRootFile(path string, data []byte, perm fs.FileMode) error
-	// ReadRootFile reads a file that only root may read, and returns fs.ErrNotExist where it is
-	// missing.
+	// ReadRootFile reads a file that only root may read, and returns fs.ErrNotExist where the
+	// file is missing.
 	ReadRootFile(path string) ([]byte, error)
 	// RootAttrs returns the owner and mode of a file, read through sudo, and fs.ErrNotExist where
-	// it is missing.
+	// the file is missing.
 	RootAttrs(path string) (Attrs, error)
 	// WriteAtomic replaces a file through a pending file, so that a reader sees the old file or the
 	// new one whole, and sets the owner and mode of a. Another owner than ws's own needs root.
@@ -113,7 +114,7 @@ type Machine interface {
 	// PassInput is Run with the bytes as standard input, and with standard output and error sent to
 	// Stderr as they come, for a command that goes on for minutes.
 	PassInput(ctx context.Context, stdin []byte, name string, args ...string) error
-	// Pass runs the command, through sudo where root is set, and passes its standard output and
+	// Pass runs the command, through sudo where root is set. It passes its standard output and
 	// error to ws's standard error, as a script's command with its output sent to stderr does.
 	Pass(ctx context.Context, root bool, name string, args ...string) error
 	// Exec replaces ws with the command, whose environment is ws's with env's entries set. It
@@ -125,7 +126,7 @@ type Machine interface {
 type Lines interface {
 	// PassLines is PassInput with each line of the output, without its newline, offered to take
 	// first. A line that take takes stays off Stderr. take runs on a goroutine of the command's, a
-	// call at a time, and all of them end before PassLines returns.
+	// call at a time, and every call ends before PassLines returns.
 	PassLines(ctx context.Context, stdin []byte, take func(line string) bool, name string, args ...string) error
 }
 

@@ -6,9 +6,9 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Lazy is a Group whose parts are made as it plans, from what the machine shows then: a value
-// that an earlier step settles, such as the release a source names or the size of a disk. Its
-// plan and its apply see the same parts, as Plan makes them again each time.
+// Lazy is a Group whose parts are made as it plans, from what the machine shows then. A part can
+// take a value that an earlier step settles, such as the release a source names or the size of a
+// disk. Its plan and its apply see the same parts, as Plan makes them again each time.
 type Lazy struct {
 	Title string
 	After string // an earlier step that must be done first, or empty

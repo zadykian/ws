@@ -23,7 +23,7 @@ type Setup struct {
 	LookPath func(string) (string, error)
 	M        effect.Machine
 	sudoed   bool
-	// applied is set once ws mac apply has run: the runner plans again after Apply, and the plan builds
+	// applied is set once ws mac apply has run: the runner plans again after Apply. The plan builds
 	// ws mac apply's steps afresh, which forget what a step only warned of, as cld's install.
 	applied bool
 }

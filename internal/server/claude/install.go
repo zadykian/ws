@@ -36,7 +36,7 @@ func (c installer) String() string { return "install " + c.name + " from " + c.u
 // Apply fetches the script and runs it, so that a failed fetch is an error, as with pipefail.
 // The installer of claude refuses root where SUDO_USER is set, as under sudo -i, from which the
 // README runs ws server apply; root is meant here. cld's installer would take the caller's
-// CLD_INSTALL_DIR over ~/.local/bin, so it is set. --retry rides out a 5xx.
+// CLD_INSTALL_DIR over ~/.local/bin, so the step sets it. --retry rides out a 5xx.
 func (c installer) Apply(ctx context.Context) error {
 	script, err := c.i.User.Output(ctx, c.i.M, "curl", "-fsSL", "--retry", "3", c.url)
 	if err != nil {

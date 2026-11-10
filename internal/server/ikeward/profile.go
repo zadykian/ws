@@ -27,8 +27,8 @@ func (p profile) present() bool { return len(p.files.VPNP12) > 0 && len(p.files.
 // base is the path of the written files, less the extension.
 func (p profile) base() string { return path.Join(runDir, path.Base(p.name)) }
 
-// with writes the files, with no output of their names or bytes, runs f, and removes them whether f
-// fails or not, even those a run killed before left in the directory.
+// with writes the files, with no output of their names or bytes, and runs f. It removes them
+// whether f fails or not, even those a run killed before left in the directory.
 func (p profile) with(ctx context.Context, f func() error) (err error) {
 	defer func() {
 		_, rmErr := p.m.RunRoot(ctx, "rm", "-rf", "--", runDir)

@@ -185,8 +185,8 @@ func (l pickList) entries(in func(pickRow) bool) []string {
 }
 
 // passedOver returns the roles that hold changes left out ahead of a step on. The order of roles
-// has no model, as no step names a role it needs: a later one may fail without them, or may not,
-// so the list warns and locks nothing.
+// has no model, as no step names a role it needs. A later one may fail without them, or may not, so
+// the list warns and locks nothing.
 func (l pickList) passedOver() []string {
 	var held, named []string
 	for _, r := range l.rows {

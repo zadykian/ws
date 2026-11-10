@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
-// On ws, the script goes on sh's stdin and each word goes as it is, with no ssh and no sudo.
+// On ws, the script goes on sh's stdin and each word goes unchanged, with no ssh and no sudo.
 func TestRemoteOnWsRunsTheScriptLocally(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := &Remote{Shell: LocalShell{M: m}, Script: []byte("echo\n")}

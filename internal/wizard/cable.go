@@ -17,13 +17,15 @@ const cableStage = "Cable"
 // the other end.
 const cableEnd = "10.77.0.1"
 
-// Cable is the stage of the cable from the Mac's display to a port of ws's, outside the router, on a
-// machine on the LAN alone.
+// Cable is the stage of the cable from the Mac's display to a port of ws's, outside the router, on
+// a machine on the LAN alone.
+//
 // Docked, the Mac's cable gives that port carrier, which the files script's link lists among ws's
-// wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose network role gives
-// it 10.77.0.1. Then it names the Mac's service of the cable in mac.conf's WS_CABLE_SERVICE, and
-// ws mac apply gives that 10.77.0.2, and the port in WS_CABLE_PORT, which the stage names on ws again
-// after ws's install. Undocked, the first setup waits, and the closing list says to dock the Mac.
+// wired ports. The stage names the port in /etc/ws/host_vars.yml on ws, whose network role gives it
+// 10.77.0.1 as ws's end. Then it names the Mac's service of the cable in mac.conf's
+// WS_CABLE_SERVICE, and ws mac apply gives that 10.77.0.2 as the Mac's end. It names the port in
+// mac.conf's WS_CABLE_PORT too, which the stage names on ws again after ws's install. Undocked, the
+// first setup waits, and the closing list says to dock the Mac.
 type Cable struct {
 	Host *HostKey
 	Run  *WsRun
@@ -46,8 +48,8 @@ type Cable struct {
 	ports []cablePort
 }
 
-// cablePort is a line of link: a wired port of ws's, its carrier, 1 where a cable plugs in, 0, or -
-// where the port is down, and its IPv4 addresses.
+// cablePort is a line of link: a wired port of ws's, its carrier, and its IPv4 addresses. The
+// carrier is 1 where a cable plugs in, 0, or - where the port is down.
 type cablePort struct{ name, carrier, addrs string }
 
 var cableEndAt = regexp.MustCompile(`(^| )` + regexp.QuoteMeta(cableEnd) + `/`)
@@ -55,17 +57,17 @@ var cableEndAt = regexp.MustCompile(`(^| )` + regexp.QuoteMeta(cableEnd) + `/`)
 // Name is the stage's name.
 func (*Cable) Name() string { return cableStage }
 
-// WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to read.
-// Plan says itself that the stage is after ws's run, which makes /etc/ws/host_vars.yml on ws, where
-// it has no cable to see off the LAN, as wizard-cable.sh's cable_after.
+// WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to
+// read. Plan says itself that the stage is after ws's run, as wizard-cable.sh's cable_after did.
+// That run makes /etc/ws/host_vars.yml on ws, where it has no cable to see off the LAN.
 func (*Cable) WaitsOn() string { return homebrewStage }
 
 type cableChange string
 
 func (c cableChange) String() string { return cableStage + ": would " + string(c) }
 
-// read sets the ports to what the files script's op lists on ws: link, or wait PORT, which lists
-// them once PORT holds 10.77.0.1, or after 10 s, in one login.
+// read sets the ports to what the files script's op lists on ws. The op is link, or wait PORT,
+// which lists them once PORT holds 10.77.0.1, or after 10 s, in one login.
 func (c *Cable) read(ctx context.Context, op ...string) error {
 	out, err := c.Files.Do(ctx, op...)
 	if err != nil {
@@ -116,19 +118,19 @@ func (c *Cable) lacks() bool {
 	return !regexp.MustCompile(`(?m)^[ \t]*WS_CABLE_SERVICE=`).Match(text)
 }
 
-// Plan is empty off the LAN, and where mac.conf's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT is
-// empty or the cable that ws's status names. Without the service, it is empty too where no port that
-// link lists has carrier, as the Mac isn't docked: the stage waits then, and Hand names the dock in
-// the closing list. WS_CABLE_PORT in the environment ends the wait, as for a port that ws keeps
-// down. It reads ws only where the login reached it in this run. Under --check it says that it is
-// after ws's run, where that run has changes to make.
+// Plan is empty off the LAN, and where mac.conf's WS_CABLE_SERVICE is empty, or its WS_CABLE_PORT
+// is empty or the cable that ws's status names. Without the service, Plan is empty too where no
+// port that link lists has carrier, as the Mac isn't docked. The stage waits then, and Hand names
+// the dock in the closing list. WS_CABLE_PORT in the environment ends the wait, as for a port that
+// ws keeps down. It reads ws only where the login reached it in this run. Under --check it says
+// that the stage is after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	cf, err := c.Host.conf()
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
 	}
-	// Under --check, no direct way to ws yet means that ws's run is not done either: in stays false,
-	// and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.
+	// Under --check, no direct way to ws yet means that ws's run is not done either. in stays
+	// false, and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.
 	w, err := c.Host.SSH.Way(ctx)
 	if err != nil && !c.Host.Check {
 		return step.Plan{}, fmt.Errorf("%s: %w", cableStage, err)

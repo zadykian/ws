@@ -137,7 +137,7 @@ jobs:
           done
           sh .github/mac-cld-checks.sh lines no || fail=1
           exit "$fail"
-      # Ghostty's +validate-config reads its config as the app does, ws.ghostty and its theme
+      # Ghostty's `+validate-config` reads its config as the app does, ws.ghostty and its theme
       # included, and names each line it refuses. It leaves the fonts alone, and a font-family that
       # names no font falls back to Ghostty's own JetBrains Mono, which looks the same. So
       # +list-fonts, which looks a family up as the config does, must find ws.ghostty's last one.

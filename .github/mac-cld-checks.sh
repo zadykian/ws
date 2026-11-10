@@ -6,11 +6,11 @@
 #   sh .github/mac-cld-checks.sh watch LOG
 #   sh .github/mac-cld-checks.sh quiet
 #
-# lines: ssh -G gives ws the two lines of ws mac apply ssh, with yes, or neither, with no. watch:
-# ssh -G ws's LocalCommand, run by zsh and by sh as ssh runs it, must start the watcher in a
-# Ghostty pane alone. The job's stub cld writes a line to LOG at each start. Elsewhere, and without
-# cld, the line must start none and exit 0. quiet: ws mac apply, and its --check, must print
-# nothing. Each failure is an ::error::, and the status 1.
+# With lines, ssh -G gives ws the two lines of ws mac apply ssh with yes, and neither with no.
+# With watch, ssh -G ws's LocalCommand, run by zsh and by sh as ssh runs it, must start the watcher
+# in a Ghostty pane alone. The job's stub cld writes a line to LOG at each start. Elsewhere, and
+# without cld, the line must start none and exit 0. With quiet, ws mac apply, and its --check,
+# must print nothing. Each failure is an ::error::, and the status 1.
 
 set -u
 
@@ -47,7 +47,7 @@ lines() {
 }
 
 # try SHELL TERM_PROGRAM COMMAND runs COMMAND as ssh runs a LocalCommand, SHELL -c COMMAND, with
-# TERM_PROGRAM set, or unset where it is empty, and notes a status other than 0.
+# TERM_PROGRAM set, or unset where empty, and notes a status other than 0.
 try() {
     if [ -n "$2" ]; then
         TERM_PROGRAM=$2 "$1" -c "$3"

@@ -24,9 +24,9 @@ concurrency:
 permissions: {}
 
 jobs:
-  # make lint, the one gate, with the tools it pins: tools/run's binaries, the Python tools of
-  # .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks. Any finding
-  # fails it, warnings included.
+  # make lint, the one gate, with the tools it pins. They are tools/run's binaries, and the Python
+  # tools of .github/lint-requirements.txt on the runner's Python, of 3.12 to 3.14 as make asks.
+  # Any finding fails it, warnings included.
   lint:
     if: github.event.action != 'ready_for_review'
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # A pull request's own head, rather than GitHub's test merge of it: its commits land as
+          # A pull request's own head, rather than GitHub's test merge of it. Its commits land as
           # they are, and as the ruleset requires branches up to date, the merge's tree is the
           # head's. The whole history, every branch's included, as gitleaks scans every commit.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -52,11 +52,11 @@ jobs:
 
   # ws server apply as on a new machine, but in a container rather than a booted system, so without
   # the steps that need a booted systemd. It runs twice, and the second run must change nothing.
-  # In a stack, it runs on the top pull request alone, which holds every change below it, as do
+  # In a stack, it runs on the top pull request alone, which holds every change below it. So do
   # mac.yml's, mac-cld.yml's and mac-wizard.yml's jobs. Run on each of a stack of 20, these jobs
   # kept its pull requests waiting for runners past 50 minutes. A stack's pull requests open as
   # drafts, before gh stack link joins them, so a draft's opened event has no stack and these
-  # jobs skip it. No event follows the link: ready_for_review, once it is done, is the first to
+  # jobs skip it. No event follows the link: ready_for_review, once done, is the first to
   # name the stack. Outside a stack, and on a push, stack is null, and null == null holds.
   # GitHub's stack metadata:
   # https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
@@ -106,7 +106,7 @@ jobs:
       - name: Make the user
         if: matrix.user != 'root'
         run: useradd --create-home --shell /bin/bash "$WS_USER"
-      # The values file holds what the job changes of the defaults: the swap file is small, as the
+      # The values file holds what the job changes of the defaults. The swap file is small, as the
       # runner's disk has no room for one the size of its RAM. The matrix names the user and the
       # table.
       - name: Write the values
@@ -177,7 +177,7 @@ jobs:
               exit 1
           fi
       # Fresh loads a malformed config with its defaults and exits 0, so this reads what it loaded,
-      # as the user whose config it is.
+      # as the user who owns the config.
       - name: Check the config that Fresh reads
         shell: bash
         run: |
@@ -186,7 +186,7 @@ jobs:
               >"$RUNNER_TEMP/fresh.json"
           .github/fresh-config-check.sh "$home/.config/fresh/config.json" "$RUNNER_TEMP/fresh.json"
 
-  # The rootless daemon and the firewall around it, which need a booted systemd: a container has
+  # The rootless daemon and the firewall around it, which need a booted systemd. A container has
   # none, so this job runs on the runner itself, and ws sets the runner up as it would a machine.
   # The stack's top alone, as for playbook.
   rootless:
@@ -215,8 +215,8 @@ jobs:
           sudo dmesg | grep -i apparmor | tail -n 20
 
   # install.sh against releases laid out in a temporary directory and served on loopback, in the
-  # order of .github/install-checks.sh: the latest and a named release install, a second run
-  # updates, a wrong checksum and a binary of another version are refused, and root installs to
+  # order of .github/install-checks.sh. The latest and a named release install, and a second run
+  # updates. A wrong checksum and a binary of another version are refused, and root installs to
   # /usr/local/bin. The releases are of the tree, built by tools/build.
   install:
     if: github.event.action != 'ready_for_review'

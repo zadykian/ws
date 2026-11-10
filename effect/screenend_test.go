@@ -13,7 +13,8 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// A pipe of the test's own stands for a screen's: exec copies to it, as to any Stderr that is no file.
+// A pipe of the test's own stands for a screen's: exec copies to it, as it does to any Stderr that
+// is no file.
 func TestPassUnderAScreenEnds(t *testing.T) {
 	tests := []struct {
 		name, script, want string

@@ -1,6 +1,6 @@
-// Package fans is the fans role as Go steps: the NCT6687D's driver, nct6687, which DKMS builds
-// for the board, and ws-fans, the service that runs ws server fans on the curves of
-// /etc/ws-fans.json. See docs/fans.md.
+// Package fans is the fans role as Go steps. They set up the NCT6687D's driver, nct6687, which
+// DKMS builds for the board. They also set up ws-fans, the service that runs ws server fans on the
+// curves of /etc/ws-fans.json. See docs/fans.md.
 package fans
 
 import (

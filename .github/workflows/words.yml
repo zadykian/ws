@@ -3,9 +3,9 @@ name: words
 # The run's title is its number, as a pull request's or an issue's title would show in the list.
 run-name: words ${{ github.event.pull_request.number || github.event.issue.number }}
 
-# Checks a pull request and an issue for the words of the local list, as the hooks check a commit:
-# each commit's added lines, file names and message, the branch's name, and the title and body. The
-# list is the secret FORBIDDEN_WORDS. The log says where a word is and never what, as
+# Checks a pull request and an issue for the words of the local list, as the hooks check a commit.
+# It reads each commit's added lines, file names and message, the branch's name, and the title and
+# body. The list is the secret FORBIDDEN_WORDS. The log says where a word is and never what, as
 # .github/words-check.sh does. No step has the text in its env, which the runner prints.
 #
 # It runs on a pull request from a branch of this repository and on an issue the owner opened. A
@@ -35,7 +35,7 @@ jobs:
       contents: read
     steps:
       # No actions/checkout, which prints each branch's name and the head commit's subject. The
-      # fetch is by SHA, so a base that a restack left on no branch still comes, and it is whole,
+      # fetch is by SHA, so a base that a restack left on no branch still comes. The fetch is whole,
       # as a shallow one would end the range at its boundary and skip commits.
       - name: The code
         run: |

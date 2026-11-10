@@ -39,7 +39,7 @@ type Gh struct {
 func (*Gh) Name() string { return ghStage }
 
 // WaitsOn is Homebrew, which gh comes from. Under --check, where the Mac key is still to be made,
-// Plan says it would add the key once it is made, as wizard-gh.sh did.
+// Plan says it would add the key once made, as wizard-gh.sh did.
 func (*Gh) WaitsOn() string { return homebrewStage }
 
 // ghLogin is the change that has gh log in, or refresh the scopes of its login. Its device flow
@@ -61,8 +61,8 @@ func (c ghAdd) line() string { return "gh ssh-key add " + c.pub + " --title " + 
 
 func (c ghAdd) String() string { return fmt.Sprintf("%s: would run %s", ghStage, c.line()) }
 
-// ghLater is the change that adds the Mac's key once it is made. Where the key is still missing at
-// Apply, it fails with the reason.
+// ghLater is the change that adds the Mac's key once made. Where the key is still missing at Apply,
+// it fails with the reason.
 type ghLater struct{ err error }
 
 func (c ghLater) String() string {

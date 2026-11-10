@@ -4,9 +4,9 @@
 # tools/build gets the Go.
 # The releases are of HEAD, built at tags that a copy of it makes and removes again.
 #
-#   v0.1.0 and v0.2.0  good; v0.2.0 is the latest
-#   v0.3.0             ws.sha256 holds another binary's sum
-#   v0.4.0             a binary that prints v0.1.0, with the sum it should have
+#     v0.1.0 and v0.2.0  good; v0.2.0 is the latest
+#     v0.3.0             ws.sha256 holds another binary's sum
+#     v0.4.0             a binary that prints v0.1.0, with the sum it should have
 #
 # The root case writes /usr/local/bin/ws, so it runs on GitHub's runner alone, with sudo.
 

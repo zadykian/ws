@@ -6,13 +6,13 @@ type Shell struct {
 	GitEmail string `yaml:"shell_git_email"`
 	// GitSigning signs each commit with the signing key.
 	GitSigning bool `yaml:"shell_git_signing"`
-	// GitAllowedSigners is the allowed signers file. Empty, it is under Home.
+	// GitAllowedSigners is the allowed signers file. Empty, it lies under Home.
 	GitAllowedSigners string `yaml:"shell_git_allowed_signers"`
 	// GitClones are the repositories cloned once each.
 	GitClones []GitClone `yaml:"shell_git_clones"`
 }
 
-// GitClone is a repository, without a token, and where it is cloned.
+// GitClone is a repository, without a token, and where ws clones it.
 type GitClone struct {
 	Repo string `yaml:"repo,omitempty"`
 	Dest string `yaml:"dest,omitempty"`

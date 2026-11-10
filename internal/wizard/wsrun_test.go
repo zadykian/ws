@@ -13,8 +13,8 @@ import (
 var extra = map[string]string{"cloud": "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n"}
 
 // newRun returns the stage over a Machine whose mac.conf holds the target, and whose remote script
-// answers status with the text, and with no secrets file or host_vars on ws where the text, if any,
-// names none.
+// answers status with the text. ws has no secrets file or host_vars where the text, if any, names
+// none.
 func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=alice\n" + extra[target])
@@ -80,7 +80,7 @@ func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
 	}
 }
 
-// The run is done where its stamp names the sum of ws's host_vars that the status reads now, so a
+// The run is done where its stamp names the sum of ws's host_vars that the status reads now. So a
 // change by either wizard, Configure or by hand makes it due.
 func TestWsRunIsDoneAtHostVarsSum(t *testing.T) {
 	for name, tc := range map[string]struct{ stamp, now, want string }{

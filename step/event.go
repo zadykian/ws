@@ -34,15 +34,15 @@ type Event struct {
 	// Changes is the step's plan from Planned on. It stays on Done, which says what the step made,
 	// or would make under Check.
 	Changes []Change
-	// LeftOut is set where Options.LeftOut keeps the step from applying: it ends Done with its
+	// LeftOut is set where Options.LeftOut keeps the step from applying. It ends Done with its
 	// Changes unmade, or Skipped where it waits on a step with changes or its plan failed. A reader
 	// of a run's lines hears of the failed plan alone.
 	LeftOut bool
-	// After names the awaited step that a Skipped step is behind. It is empty where a failure stopped
-	// the run first.
+	// After names the awaited step that a Skipped step is behind. After is empty where a failure
+	// stopped the run first.
 	After string
-	// Err is what the run returns, on Failed. On Skipped it is why a left-out step's plan failed,
-	// which the run goes past.
+	// Err is what the run returns, on Failed. On Skipped it holds why a left-out step's plan
+	// failed, which the run goes past.
 	Err error
 }
 

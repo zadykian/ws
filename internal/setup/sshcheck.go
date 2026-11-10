@@ -73,7 +73,7 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	return id, nil
 }
 
-// cldTabs is whether Ghostty's app is there and the cld in ~/.local/bin has restore tabs, so that
+// cldTabs is whether Ghostty's app is there and the cld in ~/.local/bin has restore tabs. With it,
 // ssh never runs a cld that would refuse restore tabs --watch at each connection.
 func (s SSH) cldTabs(ctx context.Context) bool {
 	there := false

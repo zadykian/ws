@@ -12,9 +12,9 @@ import (
 	"github.com/zadykian/ws/internal/sshcfg"
 )
 
-// choose makes ws's key where it has none: in Secretive, where its app is there or the terminal's
-// answer is other than no, else in the file of c.pub, named in mac.conf. With no terminal, it stops,
-// naming the key that answers.
+// choose makes ws's key where it has none. The key goes in Secretive where its app is there or the
+// terminal's answer is other than no. Else it goes in the file of c.pub, named in mac.conf. With no
+// terminal, it stops, naming the key that answers.
 func (k *MacKey) choose(ctx context.Context, c chooseKey) error {
 	if c.app {
 		return k.secretiveKey(ctx) // git's key is a change of the plan then
@@ -42,8 +42,8 @@ func (k *MacKey) choose(ctx context.Context, c chooseKey) error {
 	return refused(k.file().add(ctx, line("WS_IDENTITY", k.tilde(c.pub))+"\n"))
 }
 
-// git has the user make git's signing key in Secretive's app, beside ws's, at Notify, so that git
-// signs with no prompt while the Mac is unlocked (#109). It writes its .pub's path into mac.conf as
+// git has the user make git's signing key in Secretive's app, beside ws's, at Notify. So git signs
+// with no prompt while the Mac is unlocked (#109). It writes its .pub's path into mac.conf as
 // WS_GIT_SIGNING_KEY. Where only is set, it does so only for a git that has a name and no line.
 func (k *MacKey) git(ctx context.Context, only bool) error {
 	text, c, err := loadConf(k.file())

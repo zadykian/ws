@@ -52,7 +52,7 @@ type userPath struct {
 	Mode fs.FileMode
 }
 
-// item says how the path stands, and whether it is there.
+// item says how the path stands, and whether the path is there.
 func (p userPath) item() (step.Item, bool, error) {
 	item := step.Item{Kind: p.Kind, Name: p.Path, Want: statePresent, Found: stateMissing}
 	if p.Mode != 0 {

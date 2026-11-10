@@ -10,8 +10,8 @@ import (
 // fstabLine swaps to the file at boot.
 const fstabLine = "/swapfile none swap sw 0 0"
 
-// swapSetting is the swap file's wanted size in MiB, nil for the RAM's, and the swappiness that the
-// step also checks, so that a wrong value stops the run with the swap as it was.
+// swapSetting is the swap file's wanted size in MiB, nil for the RAM's, and the swappiness. The
+// step checks the swappiness too, so that a wrong value stops the run with the swap unchanged.
 type swapSetting struct {
 	SizeMiB    *int
 	Swappiness int

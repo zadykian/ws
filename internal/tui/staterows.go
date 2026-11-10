@@ -20,8 +20,8 @@ const (
 // tabNames holds each tab's title.
 var tabNames = [tabCount]string{"Packages", "Services", "Files", "Conflicts", "Pending"}
 
-// itemTabs says which tab lists an item of each kind. A check has none: it stands against ws by
-// what it is, so the Conflicts tab lists it.
+// itemTabs says which tab lists an item of each kind. A check has none: as a check, it stands
+// against ws, so the Conflicts tab lists it.
 var itemTabs = map[step.ItemKind]int{
 	step.PackageItem: packagesTab,
 	step.ServiceItem: servicesTab,
@@ -39,7 +39,7 @@ type StateSection struct {
 // stateFact is a line of the detail pane.
 type stateFact struct{ label, text string }
 
-// stateRow is a line of a tab and what the detail pane shows of it, all of it safe to draw.
+// stateRow is a line of a tab and what the detail pane shows of it, every part safe to draw.
 type stateRow struct {
 	name, step string
 	facts      []stateFact
@@ -98,8 +98,8 @@ func itemRow(path string, item step.Item) stateRow {
 	}
 }
 
-// pendingRow takes a change's first line as its name, as the plain report does. What follows it is
-// the file's diff, where the change has one.
+// pendingRow takes a change's first line as its name, as the plain report does. What follows that
+// line is the file's diff, where the change has one.
 func pendingRow(path string, change step.Pending) stateRow {
 	name, diff, _ := strings.Cut(printable(change.Text), "\n")
 	facts := []stateFact{{"Kind", string(change.Kind)}, {"Step", printable(path)}}

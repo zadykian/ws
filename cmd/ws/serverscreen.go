@@ -63,7 +63,7 @@ func (s serverScreen) chosen(choice tui.Choice) error {
 }
 
 // config is what the screens draw with. A signal ends a plain run through its context, with status
-// 1, so here too it is the run's error.
+// 1, so here too a signal is the run's error.
 func (s serverScreen) config() tui.Config {
 	cfg := screenConfig(s.c, s.p)
 	cfg.Cut = func(sig syscall.Signal) error { return fmt.Errorf("stopped by %v", sig) }

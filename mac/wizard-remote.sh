@@ -1,14 +1,16 @@
 #!/bin/sh
 # The wizard's remote script on ws, which the Mac's wizard sends over ssh, to run as root there,
-# through sudo where ssh logs in as another user. So it is the Mac's clone's, whatever ws's clone
-# holds, or where ws has none:
+# through sudo where ssh logs in as another user. So the script is the Mac's clone's, whatever ws's
+# clone holds, or where ws has none:
 #
 #   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
-#   is missing. user is the ws_user that host_vars names. run is the ws version and status of the last full run, and off where host_vars turned the
-#   outbound table off as the run began, else on, and the SHA-256 of its secrets file and of host_vars, each or -. ws is the version that ws prints. last is the unit and status of
-#   the last run. active is the run's unit that runs now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
+#   is missing. user is the ws_user that host_vars names. run is the ws version and status of the
+#   last full run, and off where host_vars turned the outbound table off as the run began, else on.
+#   Then come the SHA-256 of that run's secrets file and of host_vars, each or -. ws is the version
+#   that ws prints. last is the unit and status of the last run. active is the run's unit that runs
+#   now. mac.pub is the Mac's key that wg0's peer takes, and wg0 is wg0's own key.
 #   signing is the type and base64 of ws's public signing key, or none, and hostname is ws's. claude
 #   is ok, none or login. fans is refused where Secure Boot refuses nct6687, the fans' driver, else
 #   ok. peer is ok where wg0 has mac.pub's key as a peer. outbound
@@ -19,13 +21,14 @@
 # - state prints ws server state --json, which changes nothing, on stdout alone. It has the HOME and
 #   the locale of a run's unit, so that it reads what a run would.
 # - run [ARG...] runs ws server apply --json ARGs in a unit of its own, ws-wizard-STAMP, which goes
-#   on where ssh drops, or follows such a unit that runs already. A unit of other ARGs would leave
-#   these unrun, so run refuses it, unless it is a full one. It prints the unit's log until it ends,
-#   and exits with the run's status. A run with no ARG is a full one. Where ws's secrets file and
-#   its identity's credential are both there, the unit loads the credential and runs with --secrets.
-# - install TAG URL installs ws's release TAG from the releases at URL, by that release's install.sh,
-#   which checks the binary against the release's ws.sha256. TAG is vX.Y.Z, and URL starts with
-#   https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
+#   on where ssh drops. Or it follows such a unit that runs already. A unit of other ARGs would
+#   leave these unrun, so run refuses it, unless that unit is a full one. It prints the unit's log
+#   until it ends, and exits with the run's status. A run with no ARG is a full one. Where ws's
+#   secrets file and its identity's credential are both there, the unit loads the credential and
+#   runs with --secrets.
+# - install TAG URL installs ws's release TAG from the releases at URL. It runs that release's
+#   install.sh, which checks the binary against the release's ws.sha256 file. TAG is vX.Y.Z, and
+#   URL starts with https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
 # - outbound names security_outbound: false in ws's host_vars, which keeps the outbound table off
 #   for a cloud VM. It runs before the run, as ws server apply reads its values from that file.
 #
@@ -33,9 +36,10 @@
 
 set -eu
 
-# The wizard's stamps, ws's binary, the values and secrets file that ws server apply reads, their
-# identity's credential, the Mac's key for wg0, the fans' driver as loaded, and the cable's netplan
-# file. Each is a line NAME=PATH, which CI's stand-in roots in a directory of its own.
+# The wizard's stamps, ws's binary, the values and secrets file that ws server apply reads, and
+# their identity's credential. Then the Mac's key for wg0, the fans' driver as loaded, and the
+# cable's netplan file. Each is a line NAME=PATH, which CI's stand-in roots in a directory of its
+# own.
 state=/var/lib/ws-wizard
 ws=/usr/local/bin/ws
 vars=/etc/ws/host_vars.yml
@@ -99,8 +103,8 @@ as_login() {
     runuser -u "$user" -- "$@"
 }
 
-# signing_key prints the type and base64 of the public key that the user's git config signs with,
-# the .pub that user.signingkey names, or none where that config names no key file.
+# signing_key prints the type and base64 of the public key that the user's git config signs with.
+# That is the .pub that user.signingkey names, or none where that config names no key file.
 signing_key() {
     if pub=$(as_login git config -f "$gitconfig" user.signingkey) && as_login test -f "$pub"; then
         as_login cut -d ' ' -f 1-2 "$pub"
@@ -145,12 +149,14 @@ status() {
         cut -d ' ' -f 1 | first)"
 }
 
-# job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE SECRETS [ARG...].
-# It runs WS server apply --json ARGs, whose event lines reach the wizard through the unit's log. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
-# which has no ARG, writes STATE/run too: the version that WS printed before the run, or - where WS
-# prints none, the status, off where host_vars turned the outbound table off as the run began, else
-# on, the SHA-256 of the secrets file, or -, and that of host_vars as the run began, or -. It
-# removes it as it starts. A unit with the identity as its credential adds --secrets and the file.
+# job prints the script of a run's unit, which systemd-run runs with UNIT VARS WS STATE SECRETS
+# [ARG...]. It runs WS server apply --json ARGs, whose event lines reach the wizard through the
+# unit's log. Its last steps write STATE/last as UNIT and the status, each by a rename. A full run,
+# which has no ARG, writes STATE/run too. It holds the version that WS printed before the run, or -
+# where WS prints none, and the status. Then off where host_vars turned the outbound table off as
+# the run began, else on. Last come the SHA-256 of the secrets file, or -, and that of host_vars as
+# the run began, or -. It removes it as it starts. A unit with the identity as its credential adds
+# --secrets and the file.
 job() {
     cat <<'EOF'
 unit=$1 vars=$2 ws=$3 state=$4 secrets=$5 full=0 table=on sum=- values=-

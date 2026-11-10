@@ -3,7 +3,7 @@ package conf
 import "strings"
 
 // Assignments prints the settings as shell assignments, a line a key, each value in single quotes,
-// for a shell to evaluate in place of mac.conf, which it never runs.
+// for a shell to eval in place of mac.conf, which it never runs.
 func (c Conf) Assignments() string {
 	var b strings.Builder
 	for _, k := range keys {
