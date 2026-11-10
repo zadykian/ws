@@ -2,7 +2,9 @@ package wizard
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"path"
 	"strings"
 
@@ -68,6 +70,40 @@ func (k *MacKey) login(c conf.Conf) string {
 		return path.Base(pub)
 	}
 	return ""
+}
+
+// ask lists the agent's keys again, with the login key that an earlier answer may have named. It
+// names the key answered in mac.conf, or with no terminal, it stops and names each key's line.
+func (k *MacKey) ask(ctx context.Context, use keyUse) error {
+	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+	if err != nil {
+		return fmt.Errorf("%s: %w", macKey, err)
+	}
+	if !k.Tty {
+		return noTerminal(use, keys)
+	}
+	_, c, err := loadConf(k.file())
+	if err != nil {
+		return err
+	}
+	login := k.login(c)
+	answer, err := effect.Choose(ctx, k.P, keyQuestion(use, keys, login))
+	if errors.Is(err, io.EOF) {
+		return fmt.Errorf("%s: the terminal ended before the answer", macKey)
+	}
+	if err != nil {
+		return err
+	}
+	for _, key := range keys {
+		if key.P256() && option(key, login) == answer {
+			return k.name(ctx, use, key)
+		}
+	}
+	key, err := k.made(ctx, use.make, keys)
+	if err != nil {
+		return err
+	}
+	return k.name(ctx, use, key)
 }
 
 // noTerminal is the stop where no terminal is there to ask.
