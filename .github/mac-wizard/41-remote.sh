@@ -17,11 +17,12 @@
 # their carrier and IPv4 addresses. link PORT must name one in ws's /etc/ws/host_vars.yml once. ws
 # server apply --only network,wireguard must then give it 10.77.0.1, and status's cable name it. The
 # remote script's outbound must add security_outbound: false there once, which status must then read
-# as off. The last line counts, as in YAML: Off with a comment by hand must read as off, and stay,
-# and true after it as on. Through a link, outbound must stop, but where the linked file holds the
-# line. The files script's user must name ws_user there, which status reads, and refuse no user's
-# name and a link. Its values must print the file, and values PAIR... run ws server values set on
-# each pair, an empty value too. The stand-ins' state goes back.
+# as off. So must it read false with a blank after it, and no with CRLF. The last line counts, as in
+# YAML: Off with a comment by hand must read as off, and stay, and true after it as on. Through a
+# link, outbound must stop, but where the linked file holds the line. The files script's user must
+# name ws_user there, which status reads, and refuse no user's name and a link. Its values must
+# print the file, and values PAIR... run ws server values set on each pair, an empty value too. The
+# stand-ins' state goes back.
 
 set -u
 
@@ -247,6 +248,12 @@ remote outbound
 [ "$status" = 0 ] && [ -z "$out" ] || error "its outbound again exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no outbound off"
+printf '%s\n' --- 'security_outbound: false ' | sudo tee "$vars" >/dev/null
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read false with a blank after as on"
+printf -- '---\r\nsecurity_outbound: no\r\n' | sudo tee "$vars" >/dev/null
+remote status
+printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no with CRLF as on"
 printf '%s\n' --- 'security_outbound: true' 'security_outbound: Off  # by hand' |
     sudo tee "$vars" >/dev/null
 remote outbound
