@@ -67,20 +67,23 @@ jobs:
               fi
           done
       # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed.
+      # ws mac apply needs a login key that mac.conf names: a file key, made here.
       - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty, Zed or cld
         run: |
           fail=0
           for path in /Applications/Ghostty.app ~/Applications/Ghostty.app /Applications/Zed.app \
               ~/Applications/Zed.app ~/.config/zed ~/.local/bin/cld \
               ~/.config/ghostty "$HOME/Library/Application Support/com.mitchellh.ghostty" \
-              ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT"; do
+              ~/Library/Fonts/"$FONT" /Library/Fonts/"$FONT" ~/.ssh/id_ed25519; do
               if [ -e "$path" ]; then
                   echo "::error::the runner has $path already"
                   fail=1
               fi
           done
-          mkdir -p ~/.config/ws
-          echo "WS_PUBLIC_KEY=$(openssl rand -base64 32)" >~/.config/ws/mac.conf
+          mkdir -p ~/.config/ws ~/.ssh
+          ssh-keygen -q -t ed25519 -N '' -C ws -f ~/.ssh/id_ed25519 </dev/null
+          printf '%s\n' "WS_PUBLIC_KEY=$(openssl rand -base64 32)" \
+              'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' >~/.config/ws/mac.conf
           exit "$fail"
       # --check shows the casks' installs, Zed's among them, cld's, the ssh lines that may
       # follow, and both of Ghostty's files, and writes none of them.

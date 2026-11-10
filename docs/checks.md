@@ -183,10 +183,11 @@ CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac]
 mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` or
 `~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins for
 Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, spare the job's runs
-their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no
-daemon, while `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's, as
-must the key in the command that gives it to ws. With a stand-in's key it must load the daemon,
-which must run. Then a second run and `--check` must print nothing. Under `script`, `--check` must
+their downloads. The job's `mac.conf` names a file key, made in case 20, as ws's login key. Without
+ws's WireGuard key, `ws mac apply` must make the Mac's key and load no daemon, while `ssh -G ws`
+gives the tunnel's end. The public key it prints must be the Mac's, as must the key in the command
+that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a second
+run and `--check` must print nothing. Under `script`, `--check` must
 draw [the run screen](tui.md#the-run-screen) and leave it. `ssh -G` must give `ws` the
 tunnel's end. The stand-in for ws is a second wireguard-go on the runner, with the printed key as
 its peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws mac tunnel status` must
@@ -225,8 +226,8 @@ lines, and name its own settings. An include below them, or a second one, must s
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket and
 `PublicKeys` closed, `--check` must show the wrapper and write none. A run must write ws's copy of
-the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names. `ws` must keep the file key, as
-Secretive's one key is git's. git's credential command for GitHub must be a stand-in gh's, which
+the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names. `ws` must keep the file key that
+`mac.conf` names. git's credential command for GitHub must be a stand-in gh's, which
 must add the key to its login once. Logged out, gh must draw a warning at each run. Logged in, `ws
 mac apply` must warn of a 404 or another error of gh's, and of an add that leaves the account
 without the key. It must add the key where the account lacks it, and `--check` name the add before

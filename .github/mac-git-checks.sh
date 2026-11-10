@@ -223,7 +223,7 @@ prints ''
 prints '' --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
-# Secretive's one key is git's, which ssh's key for ws leaves out, so ws keeps the file key. The
+# ws keeps the file key that the job's mac.conf names, though Secretive's one key is there. The
 # agent and Secretive's container then go, so that the cases below give ws no key of theirs.
 [ "$(ssh -G ws | awk '$1 == "identityfile" { print $2 }')" = \~/.ssh/id_ed25519 ] ||
     error "ssh -G ws gives git's signing key, Secretive's one key, as ws's"
