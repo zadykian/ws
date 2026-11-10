@@ -57,6 +57,14 @@ func TestMacKeyPlan(t *testing.T) {
 	}
 }
 
+// A file key that mac.conf names must be there: the stage makes none.
+func TestMacKeyPlanNeedsAFileKey(t *testing.T) {
+	k, _, _ := newMacKey(t, "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n")
+	if got := planned(k); !strings.Contains(got, "/h/.ssh/id_ed25519.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing") {
+		t.Errorf("Plan of a missing key = %q", got)
+	}
+}
+
 func TestMacKeyPlanPinsAFileKey(t *testing.T) {
 	k, m, _ := newMacKey(t, "WS_REMOTE=\n")
 	m.Files["/h/.ssh/id_ed25519"], m.Files["/h/.ssh/id_ed25519.pub"] = []byte("p"), []byte(pubText)

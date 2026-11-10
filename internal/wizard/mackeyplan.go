@@ -34,7 +34,7 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 	// A WS_IDENTITY_PUB_KEY that is no key of Secretive's, with no agent, is a key in a file.
 	if c.IdentityPubKey != "" && c.IdentityAgent == "" {
 		if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); !sshcfg.SecretiveKey(pub, k.Home) {
-			return k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
+			return nil, k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 		}
 	}
 	id, err := setup.PickKey(ctx, k.M, c, k.Home)
@@ -58,7 +58,7 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 		}
 		cs = append(cs, choose)
 	default:
-		if _, err := k.fileKey(ctx, key); err != nil {
+		if err := k.fileKey(ctx, key); err != nil {
 			return nil, err
 		}
 		// A Secretive key made later would take the file key's place.
