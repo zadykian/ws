@@ -52,17 +52,17 @@ where another holds the lock, leaving it. A fresh `--check`, by sh and dash, mus
 directories off `PATH`. As `ws mac apply --check` must, it must change nothing, and leave no lock or
 temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `--check` must
 show it would make. With no terminal and a `mac.conf` that names none, a run must stop at the Mac
-key stage, naming `WS_IDENTITY`, making nothing. A file key there with no line must get one, shown
-by `--check`. A failed `ssh-add` must stop a run, naming it. The first run, with that `PATH` too,
-must make that key with no passphrase, add it to that login, install what `ws mac apply` installs.
-It must drop the Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel stage
-below takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in
+key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing. A file key there with no line must get one,
+shown by `--check`. A failed `ssh-add` must stop a run, naming it. The first run, with that `PATH`
+too, must make that key with no passphrase, add it to that login, install what `ws mac apply`
+installs. It must drop the Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel
+stage below takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in
 `ssh-agent` at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
-`WS_IDENTITY`. While it lists the key, `--check` must print nothing of the Mac key stage. With git's
-name, it must say it would wait for git's key made in Secretive, unless `WS_GIT_SIGNING_KEY` is
-empty. With no `WS_IDENTITY` and `PublicKeys` closed, it must take the agent's key, and say it would
-write ws's copy. Once the agent lacks it, a run and `--check` must stop there, naming the socket.
-Last,
+`WS_IDENTITY_PUB_KEY`. While it lists the key, `--check` must print nothing of the Mac key stage.
+With git's name, it must say it would wait for git's key made in Secretive, unless
+`WS_GIT_SIGNING_PUB_KEY` is empty. With no `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, it must
+take the agent's key, and say it would write ws's copy. Once the agent lacks it, a run and `--check`
+must stop there, naming the socket. Last,
 without the stand-in `gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth
 login`. With a login lacking the scopes, or the signing one alone, it must name `gh auth refresh`.
 `--check` must say each would run.
@@ -208,20 +208,20 @@ networksetup lacks, or one with a router outside the cable's `/30`. It must stop
 `-setmanual` that fails or changes nothing, and name what differs
 ([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). `ssh -G` must give `ws` the file key, by
 the four lines `config.d/ws` had for it before. It must give it the file or the agent that
-`WS_IDENTITY` and `WS_IDENTITY_AGENT` name, with `--check` showing `config.d/ws`'s diff alone. Then
-it must give it an agent at Secretive's socket, which holds a P-256 key, and ws's copy of its
-`.pub`, where those keys are empty. `PublicKeys` is closed then, as macOS 27 denies ws the files of
-Secretive's container. It must warn that this replaces the file key, and write the copy where none
-exists. A `.pub` in `PublicKeys` that `WS_IDENTITY` names must become the copy. A second key in the
-agent must stop `ws mac apply`. Where `WS_GIT_SIGNING_KEY` names one of the two, ws's key must be
-the other. The file key's `.pub` in `WS_IDENTITY` must keep the file key. A `.pub` that is missing
-or unreadable, or holds a private key, a certificate or a line that is no key, must stop `ws mac
-apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
-([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). With `WS_GIT_NAME` and `WS_GIT_EMAIL`,
-it must make git's signing key once, an ed25519 key with no passphrase. It must stop on a
-`WS_GIT_SIGNING_KEY` that is missing or unreadable, or a `.pub` that holds more than a public key.
-So must the default key or its `.pub` alone. git must then sign a commit and verify it. A
-`~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
+`WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` name, with `--check` showing `config.d/ws`'s diff
+alone. Then it must give it an agent at Secretive's socket, which holds a P-256 key, and ws's copy
+of its `.pub`, where those keys are empty. `PublicKeys` is closed then, as macOS 27 denies ws the
+files of Secretive's container. It must warn that this replaces the file key, and write the copy
+where none exists. A `.pub` in `PublicKeys` that `WS_IDENTITY_PUB_KEY` names must become the copy. A
+second key in the agent must stop `ws mac apply`. Where `WS_GIT_SIGNING_PUB_KEY` names one of the
+two, ws's key must be the other. The file key's `.pub` in `WS_IDENTITY_PUB_KEY` must keep the file
+key. A `.pub` that is missing or unreadable, or holds a private key, a certificate or a line that is
+no key, must stop `ws mac apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH
+lacks ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). With `WS_GIT_NAME` and
+`WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must stop
+on a `WS_GIT_SIGNING_PUB_KEY` that is missing or unreadable, or a `.pub` that holds more than a
+public key. So must the default key or its `.pub` alone. git must then sign a commit and verify it.
+A `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
 lines, and name its own settings. An include below them, or a second one, must stop `ws mac apply`
 before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
 settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket and
