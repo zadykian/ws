@@ -17,7 +17,7 @@ import (
 // root's key rather than tunnel.pub, which the user can write, as the key it sends becomes ws's
 // peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
-	c, err := t.Host.conf()
+	c, err := t.Ws.want()
 	if err != nil {
 		return err
 	}
@@ -32,34 +32,34 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil || !check.Key(mac) {
 		return errors.New(tunnelStage + ": root's ws mac tunnel key prints no key: run ws mac apply, which makes both")
 	}
-	r := t.Run.Remote
-	r.Status(ctx)
-	peered := r.Get("mac.pub") != mac || r.Get("peer") != "ok"
+	s, _ := t.Ws.status(ctx)
+	peered := s.MacKey != mac || !s.Peered
 	if peered {
 		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server apply --only "+
 			"wireguard runs there in a unit of its own, which gives wg0 that peer", tunnelStage)
-		if err := t.Run.Files.Pass(ctx, "peer", mac); err != nil {
+		if err := t.Ws.files.Pass(ctx, "peer", mac); err != nil {
 			return err
 		}
-		if err := r.Follow(ctx, "--only", "wireguard"); err != nil {
+		if err := t.Ws.remote.Follow(ctx, "--only", "wireguard"); err != nil {
 			return err
 		}
-		if !r.Status(ctx) || r.Get("peer") != "ok" {
+		var ok bool
+		if s, ok = t.Ws.status(ctx); !ok || !s.Peered {
 			return errors.New(tunnelStage + ": ws's wg0 lacks the Mac's key after ws server apply --only " +
 				"wireguard: mend what it printed, then run the wizard again")
 		}
 	}
-	wg0 := r.Get("wg0")
+	wg0 := s.WgKey
 	if wg0 == "" {
 		return errors.New(tunnelStage + ": ws has no wg0 key: mend what it printed, then run the wizard again")
 	}
 	if wg0 != c.PublicKey {
-		file := confFile{t.Host.Conf, tunnelStage, t.M, t.Out}
+		file := confFile{t.Conf, tunnelStage, t.M, t.Out}
 		if err := file.set(ctx, "WS_PUBLIC_KEY", wg0); err != nil {
 			return err
 		}
 	}
-	if _, err := t.Setup.Run(ctx, false); err != nil {
+	if _, err := t.MacApply(ctx, false); err != nil {
 		return err
 	}
 	return t.handshake(ctx, c.Target, c.Port, peered && c.PublicKey == wg0)

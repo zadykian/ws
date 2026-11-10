@@ -41,26 +41,29 @@ func (c hostAdd) String() string {
 	return hostStage + ": would add ws's key to " + c.file
 }
 
-// ReadConf reads mac.conf, for the stage of ws's run.
-func (h *HostKey) ReadConf() (conf.Conf, error) { return h.conf() }
-
 // conf reads mac.conf.
-func (h *HostKey) conf() (conf.Conf, error) {
-	text, err := h.M.ReadFile(h.Conf)
+func (h *HostKey) conf() (conf.Conf, error) { return macConf(h.M, h.Conf) }
+
+// macConf reads and parses mac.conf at path, and fails on its first error.
+func macConf(m effect.Machine, path string) (conf.Conf, error) {
+	text, err := m.ReadFile(path)
 	if err != nil {
 		return conf.Conf{}, err
 	}
 	c, errs := conf.Parse(string(text))
 	if len(errs) > 0 {
-		return c, errors.New(errs[0].In(h.Conf))
+		return c, errors.New(errs[0].In(path))
 	}
 	return c, nil
 }
 
 // known tells whether known_hosts holds a key under ws. It reads no key of ws's, as ws's sshd counts
 // each connection that doesn't log in against the Mac's address (PerSourcePenalties).
-func (h *HostKey) known(ctx context.Context, file string) bool {
-	_, err := h.M.Run(ctx, "ssh-keygen", "-F", "ws", "-f", file)
+func (h *HostKey) known(ctx context.Context, file string) bool { return hostKnown(ctx, h.M, file) }
+
+// hostKnown is known, on m.
+func hostKnown(ctx context.Context, m effect.Machine, file string) bool {
+	_, err := m.Run(ctx, "ssh-keygen", "-F", "ws", "-f", file)
 	return err == nil
 }
 

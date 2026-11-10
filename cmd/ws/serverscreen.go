@@ -13,7 +13,6 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/step"
 )
 
@@ -36,7 +35,7 @@ func (s serverScreen) draw(check bool) error {
 		queue := wizardQueue(s.p, s.stages(serverPick{}))
 		choice, err := tui.PickStages(ctx, s.config(), title, queue, true, s.scan())
 		for err == nil && choice.State {
-			if err = tui.RunState(ctx, s.config(), title+": ws", s.read()); err == nil {
+			if err = tui.RunState(ctx, s.config(), title+": ws", stateRead(serverOpen(s.p), s.p.version)); err == nil {
 				choice, err = tui.Reopen(ctx, s.config(), choice)
 			}
 		}
@@ -94,26 +93,12 @@ func (s serverScreen) scan() tui.Work {
 		stages := serverWizardStages(on, b, talks, b, nil, &wizard.Hand{}, serverPick{check: true})
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
-			states, err := run.Remote.State(ctx, s.p.version)
+			states, err := run.Ws.State(ctx, s.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
 		o := step.Options{Observer: watch, Check: true, Stop: b.Stop(ctx)}
 		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, nil)
 		return unwrapStep(err)
-	}
-}
-
-// read is the state screen's read of ws, by the remote script's report, as the Mac's is. Each read
-// asks ws's status again, as a run may have changed it.
-func (s serverScreen) read() tui.StateReader {
-	var ws *wizard.Remote
-	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		if ws == nil {
-			ws = &wizard.Remote{Shell: serverShell(screenMachine(ctx, b, s.p.machine)), Script: mac.RemoteScript}
-		}
-		ws.Forget()
-		states, err := ws.State(ctx, s.p.version)
-		return roleSections(states), err
 	}
 }
 

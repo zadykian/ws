@@ -23,7 +23,7 @@ type VarsForm struct {
 
 // Load reads the file. A machine without one reads as the defaults.
 func (f VarsForm) Load(ctx context.Context) (VarsForm, error) {
-	text, err := f.Files.Do(ctx, "values")
+	text, err := f.Files.query(ctx, "values")
 	if err != nil {
 		return f, errors.New("host_vars on ws: " + stderrOf(err))
 	}

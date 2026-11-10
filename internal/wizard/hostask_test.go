@@ -16,7 +16,7 @@ func TestHostKeyAsksFirstAddress(t *testing.T) {
 		"hostname 10.1.1.9\nport 22\nuserknownhostsfile ~/.ssh/known_hosts\n")}
 	delete(m.Files, "/l/"+FirstFile)
 	m.Results["ssh-keyscan -T 10 -t ed25519 -p 22 10.1.1.9"] = effecttest.Result{Out: []byte("x " + hostLine + "\n")}
-	w, line, err := h.ask(context.Background(), "lan", Way{Host: "10.1.1.2", Port: "22"})
+	w, line, err := h.question().ask(context.Background(), "lan", Way{Host: "10.1.1.2", Port: "22"})
 	if err != nil || w.Host != "10.1.1.9" || line != hostLine {
 		t.Fatalf("ask = %+v, %q, %v; want the key at 10.1.1.9", w, line, err)
 	}

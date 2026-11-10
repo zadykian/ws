@@ -12,38 +12,37 @@ import (
 // extra is what mac.conf needs besides its target.
 var extra = map[string]string{"cloud": "WS_REMOTE=ws.example.org\nWS_REMOTE_PORT=22022\n"}
 
+// idleRun is ws's status after a full run of this ws, v1.2.3, that exited 0.
+var idleRun = wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0"}}
+
 // newRun returns the stage over a Machine whose mac.conf holds the target, and whose remote script
-// answers status with the text. ws has no secrets file or host_vars where the text, if any, names
-// none.
-func newRun(target, status string, update, check bool) (*WsRun, *effecttest.Machine) {
+// answers status with the value's text.
+func newRun(target string, status wsStatus, update, check bool) (*WsRun, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=alice\n" + extra[target])
-	h := &HostKey{Conf: "/h/mac.conf", Lock: "/l", Check: check, M: m, Out: &effecttest.Out{},
-		SSH: SSH{M: m, Lock: "/l"}}
-	r := &WsRun{Host: h, Want: h.ReadConf, Check: check, Out: h.Out, Version: "v1.2.3", Update: update, Default: "alice", Remote: &Remote{Shell: SSHShell{SSH: h.SSH}, Script: []byte("x")},
-		Files: &Remote{Shell: SSHShell{SSH: h.SSH}, Script: []byte("y")}}
-	if status != "" {
-		status += "secrets -\nvars -\n"
-	}
-	m.Results[remoteLine(r.Remote, "status")] = effecttest.Result{Out: []byte(status)}
-	return r, m
+	out := &effecttest.Out{}
+	ws := macSession(m, SSH{M: m, Lock: "/l", Conf: "/h/mac.conf"}, out, status)
+	return &WsRun{Ws: ws, Check: check, Out: out, Version: "v1.2.3", Update: update, Default: "alice"}, m
 }
 
 func TestWsRunPlan(t *testing.T) {
+	off := stamp{Version: "v1.2.3", Exit: "0", Off: true}
 	for name, tc := range map[string]struct {
-		target, status, want string
-		update, check        bool
+		target        string
+		status        wsStatus
+		want          string
+		update, check bool
 	}{
-		"done":       {"lan", "run v1.2.3 0 on - -\nactive -\n", "", false, false},
-		"older ws":   {"lan", "run v1.2.2 0 on - -\nactive -\n", "run ws server apply on ws", false, false},
-		"first run":  {"lan", "run - -\nactive -\n", "run ws server apply on ws", false, false},
-		"update":     {"lan", "run v1.2.3 0 on - -\nactive -\n", "run ws server apply on ws", true, false},
-		"cloud done": {"cloud", "run v1.2.3 0 off - -\nactive -\noutbound off\n", "", false, false},
-		"cloud host_vars": {"cloud", "run v1.2.3 0 off - aa11\nactive -\noutbound on\nvars bb22\n",
+		"done":       {"lan", idleRun, "", false, false},
+		"older ws":   {"lan", wsStatus{Run: stamp{Version: "v1.2.2", Exit: "0"}}, "run ws server apply on ws", false, false},
+		"first run":  {"lan", wsStatus{}, "run ws server apply on ws", false, false},
+		"update":     {"lan", idleRun, "run ws server apply on ws", true, false},
+		"cloud done": {"cloud", wsStatus{Run: off, OutboundOff: true}, "", false, false},
+		"cloud host_vars": {"cloud", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Off: true, Vars: "aa11"}, Vars: "bb22"},
 			"after naming security_outbound: false in ws's host_vars", false, false},
-		"cloud run": {"cloud", "run v1.2.3 0 on - -\nactive -\n", "after naming security_outbound: false in ws's host_vars", false, false},
-		"follows":   {"lan", "run - -\nactive ws-wizard-1\n", "follow ws-wizard-1, which runs on ws", false, true},
-		"failed":    {"lan", "run v1.2.3 1 on - -\nactive -\n", "its last full run exited 1", false, true},
+		"cloud run": {"cloud", idleRun, "after naming security_outbound: false in ws's host_vars", false, false},
+		"follows":   {"lan", wsStatus{Active: "ws-wizard-1"}, "follow ws-wizard-1, which runs on ws", false, true},
+		"failed":    {"lan", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "1"}}, "its last full run exited 1", false, true},
 	} {
 		r, _ := newRun(tc.target, tc.status, tc.update, tc.check)
 		p, err := r.Plan(context.Background())
@@ -62,19 +61,18 @@ func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
 	for name, tc := range map[string]struct{ stamp, now, want string }{
 		"same file":    {"aa11", "aa11", ""},
 		"changed file": {"aa11", "bb22", "run ws server apply on ws in a unit of its own, and follow its log, with ws's secrets file"},
-		"a new file":   {"-", "bb22", ", with ws's secrets file"},
-		"file gone":    {"aa11", "-", "and follow its log"},
-		"no file":      {"-", "-", ""},
-		"no line":      {"-", "", "and follow its log"},
+		"a new file":   {"", "bb22", ", with ws's secrets file"},
+		"file gone":    {"aa11", "", "and follow its log"},
+		"no file":      {"", "", ""},
 	} {
-		r, _ := newRun("lan", "run v1.2.3 0 on "+tc.stamp+" -\nactive -\nsecrets "+tc.now+"\n", false, false)
+		r, _ := newRun("lan", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Secrets: tc.stamp}, Secrets: tc.now}, false, false)
 		p, err := r.Plan(context.Background())
 		got := ""
 		if len(p.Changes) > 0 {
 			got = p.Changes[0].String()
 		}
 		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) ||
-			(tc.now == "-" || tc.now == "") && strings.Contains(got, "secrets file") {
+			tc.now == "" && strings.Contains(got, "secrets file") {
 			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
 		}
 	}
@@ -83,14 +81,18 @@ func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
 // The run is done where its stamp names the sum of ws's host_vars that the status reads now. So a
 // change by either wizard, Configure or by hand makes it due.
 func TestWsRunIsDoneAtHostVarsSum(t *testing.T) {
-	for name, tc := range map[string]struct{ stamp, now, want string }{
-		"same file":      {" aa11", "aa11", ""},
-		"changed file":   {" aa11", "bb22", "run ws server apply on ws"},
-		"a new file":     {" -", "bb22", "run ws server apply on ws"},
-		"no file":        {" -", "-", ""},
-		"an older stamp": {"", "-", "run ws server apply on ws"},
+	at := func(vars string) stamp { return stamp{Version: "v1.2.3", Exit: "0", Vars: vars} }
+	for name, tc := range map[string]struct {
+		run       stamp
+		now, want string
+	}{
+		"same file":    {at("aa11"), "aa11", ""},
+		"changed file": {at("aa11"), "bb22", "run ws server apply on ws"},
+		"a new file":   {at(""), "bb22", "run ws server apply on ws"},
+		"no file":      {at(""), "", ""},
+		"no stamp":     {stamp{}, "", "run ws server apply on ws"},
 	} {
-		r, _ := newRun("lan", "run v1.2.3 0 on -"+tc.stamp+"\nactive -\nvars "+tc.now+"\n", false, false)
+		r, _ := newRun("lan", wsStatus{Run: tc.run, Vars: tc.now}, false, false)
 		p, err := r.Plan(context.Background())
 		got := ""
 		if len(p.Changes) > 0 {
@@ -103,16 +105,15 @@ func TestWsRunIsDoneAtHostVarsSum(t *testing.T) {
 }
 
 func TestWsRunNamesWsUser(t *testing.T) {
-	done := "run v1.2.3 0 on - -\nactive -\n"
-	for name, tc := range map[string]struct{ status, server, want string }{
-		"the default":    {done + "user -\n", "alice", ""},
-		"no line":        {done + "user -\n", "zadykian", "after naming ws_user: alice in ws's host_vars"},
-		"named":          {done + "user alice\n", "zadykian", ""},
-		"another":        {done + "user other\n", "alice", "after naming ws_user: alice in ws's host_vars"},
-		"an older ws":    {"run v1.2.2 0 on - -\nactive -\nuser alice\n", "zadykian", "run ws server apply on ws"},
-		"status with no": {done, "zadykian", "after naming ws_user: alice"},
+	for name, tc := range map[string]struct{ user, server, want string }{
+		"the default": {"", "alice", ""},
+		"none named":  {"", "zadykian", "after naming ws_user: alice in ws's host_vars"},
+		"named":       {"alice", "zadykian", ""},
+		"another":     {"other", "alice", "after naming ws_user: alice in ws's host_vars"},
 	} {
-		r, _ := newRun("lan", tc.status, false, false)
+		s := idleRun
+		s.User = tc.user
+		r, _ := newRun("lan", s, false, false)
 		r.Default = tc.server
 		p, err := r.Plan(context.Background())
 		got := ""
@@ -126,15 +127,15 @@ func TestWsRunNamesWsUser(t *testing.T) {
 }
 
 func TestWsRunNamesWsUserBeforeTheRun(t *testing.T) {
-	r, m := newRun("lan", "run v1.2.3 0 on - -\nactive -\nuser -\n", false, false)
+	r, m := newRun("lan", idleRun, false, false)
 	r.Default = "zadykian"
 	p, _ := r.Plan(context.Background())
 	err := r.Apply(context.Background(), p)
 	if err == nil || !strings.Contains(err.Error(), "ws's host_vars lacks ws_user: alice") {
 		t.Fatalf("Apply where the files script fails = %v; want the stop", err)
 	}
-	m.Results[remoteLine(r.Files, "user", "alice")] = effecttest.Result{}
-	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
+	m.Results[remoteLine(r.Ws.files, "user", "alice")] = effecttest.Result{}
+	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
 	m.Calls = nil
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
@@ -146,7 +147,7 @@ func TestWsRunNamesWsUserBeforeTheRun(t *testing.T) {
 }
 
 func TestWsRunUpdateWaitsForTheRun(t *testing.T) {
-	r, _ := newRun("lan", "run v1.2.3 0 on - -\nactive -\n", true, false)
+	r, _ := newRun("lan", idleRun, true, false)
 	r.ran = true
 	if p, err := r.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan after the run = %v, %v; want none", p, err)
@@ -154,22 +155,22 @@ func TestWsRunUpdateWaitsForTheRun(t *testing.T) {
 }
 
 func TestWsRunApply(t *testing.T) {
-	r, m := newRun("lan", "run - -\nactive -\n", false, false)
+	r, m := newRun("lan", wsStatus{}, false, false)
 	p, _ := r.Plan(context.Background())
 	if err := r.Apply(context.Background(), p); err == nil || !strings.Contains(err.Error(), "ws server apply stopped") {
 		t.Errorf("Apply where ssh has no result = %v; want the stop", err)
 	}
-	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
+	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil || !r.ran {
 		t.Errorf("Apply = %v, ran %v; want a run", err, r.ran)
 	}
 }
 
 func TestWsRunTakesItsPart(t *testing.T) {
-	for name, status := range map[string]string{
-		"a clean stage": "run v1.2.3 0 on - -\nactive -\n",
-		"a stage due":   "run - -\nactive -\n",
-		"a cloud VM":    "run v1.2.3 0 off - -\nactive -\noutbound off\n",
+	for name, status := range map[string]wsStatus{
+		"a clean stage": idleRun,
+		"a stage due":   {},
+		"a cloud VM":    {Run: stamp{Version: "v1.2.3", Exit: "0", Off: true}, OutboundOff: true},
 	} {
 		target := "lan"
 		if name == "a cloud VM" {
@@ -177,7 +178,7 @@ func TestWsRunTakesItsPart(t *testing.T) {
 		}
 		r, m := newRun(target, status, false, false)
 		r.Only = []string{"signoz/signoz up", "fans"}
-		line := remoteLine(r.Remote, "run", "--only=signoz/signoz up", "--only=fans")
+		line := remoteLine(r.Ws.remote, "run", "--only=signoz/signoz up", "--only=fans")
 		m.Results[line] = effecttest.Result{}
 		p, err := r.Plan(context.Background())
 		if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "the steps chosen") {
@@ -197,7 +198,7 @@ func TestWsRunTakesItsPart(t *testing.T) {
 }
 
 func TestWsRunCutLeavesTheUnitAndSaysSo(t *testing.T) {
-	r, _ := newRun("lan", "run - -\nactive -\n", false, false)
+	r, _ := newRun("lan", wsStatus{}, false, false)
 	out := r.Out.(*effecttest.Out)
 	p, _ := r.Plan(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
@@ -211,7 +212,7 @@ func TestWsRunCutLeavesTheUnitAndSaysSo(t *testing.T) {
 }
 
 func TestWsRunFailureNamesNoUnit(t *testing.T) {
-	r, _ := newRun("lan", "run - -\nactive -\n", false, false)
+	r, _ := newRun("lan", wsStatus{}, false, false)
 	out := r.Out.(*effecttest.Out)
 	p, _ := r.Plan(context.Background())
 	if err := r.Apply(context.Background(), p); err == nil {
@@ -231,9 +232,9 @@ func TestOnlyArgsQuoteForWsShell(t *testing.T) {
 
 // A run whose stamp names host_vars as the status reads it after the run runs once.
 func TestWsRunApplyOnceWhereItsStampNamesHostVars(t *testing.T) {
-	r, m := newRun("lan", "run v1.2.3 0 on - aa11\nactive -\nvars aa11\n", true, false)
+	r, m := newRun("lan", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Vars: "aa11"}, Vars: "aa11"}, true, false)
 	p, _ := r.Plan(context.Background())
-	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
+	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
@@ -243,10 +244,10 @@ func TestWsRunApplyOnceWhereItsStampNamesHostVars(t *testing.T) {
 }
 
 func TestWsRunApplyCloudAgain(t *testing.T) {
-	r, m := newRun("cloud", "run v1.2.3 0 on - aa11\nactive -\noutbound on\nvars bb22\n", false, false)
+	r, m := newRun("cloud", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Vars: "aa11"}, Vars: "bb22"}, false, false)
 	p, _ := r.Plan(context.Background())
-	m.Results[remoteLine(r.Remote, "run")] = effecttest.Result{}
-	m.Results[remoteLine(r.Remote, "outbound")] = effecttest.Result{}
+	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
+	m.Results[remoteLine(r.Ws.remote, "outbound")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
@@ -263,7 +264,7 @@ func TestWsRunApplyCloudAgain(t *testing.T) {
 
 // On ws with no booted systemd, as in a container, the stage reads nothing and skips with a line.
 func TestWsRunSkipsUnbooted(t *testing.T) {
-	r, m := newRun("lan", "", false, true)
+	r, m := newRun("lan", wsStatus{}, false, true)
 	r.Unbooted, r.Await, m.Calls = true, "ws's values", nil
 	p, err := r.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || len(m.Calls) != 0 || r.WaitsOn() != "ws's values" {

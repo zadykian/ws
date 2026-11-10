@@ -10,7 +10,7 @@ import (
 )
 
 // file is mac.conf.
-func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, c.Out} }
+func (c *Cable) file() confFile { return confFile{c.Conf, cableStage, c.M, c.Out} }
 
 // Apply takes ws's port of the cable, where none holds ws's end, from WS_CABLE_PORT or the
 // terminal, the one with carrier by default. link names it in /etc/ws/host_vars.yml on ws. Then ws
@@ -19,8 +19,7 @@ func (c *Cable) file() confFile { return confFile{c.Host.Conf, cableStage, c.M, 
 // answer, writes an empty WS_CABLE_SERVICE. Where mac.conf has a service, again takes the stage's
 // steps.
 func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
-	defer c.Run.Remote.Forget()
-	cf, err := c.Host.conf()
+	cf, err := c.Ws.want()
 	if err != nil {
 		return err
 	}
@@ -68,17 +67,24 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 
 // name puts the port in ws's /etc/ws/host_vars.yml and runs the network and wireguard roles there.
 func (c *Cable) name(ctx context.Context, port string) error {
-	if err := c.Files.Pass(ctx, "link", port); err != nil {
+	if err := c.Ws.files.Pass(ctx, "link", port); err != nil {
 		return err
 	}
-	return c.Run.Remote.Follow(ctx, "--only", "network,wireguard")
+	return c.Ws.remote.Follow(ctx, "--only", "network,wireguard")
+}
+
+// holds tells whether ws's status names the port as the cable's.
+func (c *Cable) holds(ctx context.Context, port string) bool {
+	s, ok := c.Ws.status(ctx)
+	return ok && s.Cable == port
 }
 
 // again names WS_CABLE_PORT in /etc/ws/host_vars.yml on ws where ws's status names none or another.
 // That holds after ws's install, a failed roles' run or a change in mac.conf. Then it runs the
 // roles there, with no question and no dock. It stops on a port that ws lacks.
 func (c *Cable) again(ctx context.Context, port string) error {
-	if !c.Run.Remote.Status(ctx) {
+	s, ok := c.Ws.status(ctx)
+	if !ok {
 		return fmt.Errorf("%s: status failed on ws", cableStage)
 	}
 	if err := c.read(ctx, "link"); err != nil {
@@ -88,7 +94,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 		return fmt.Errorf("%s: WS_CABLE_PORT=%s names none of ws's wired ports, %s: set it to one", cableStage,
 			port, strings.Join(c.names(), ", "))
 	}
-	if c.Run.Remote.Get("cable") == port {
+	if s.Cable == port {
 		return nil
 	}
 	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws again, and ws server apply --only network,wireguard "+
@@ -125,7 +131,7 @@ func (c *Cable) service(ctx context.Context) error {
 	if err := c.write(ctx, value); err != nil || value == "" {
 		return err
 	}
-	if _, err := c.Setup.Run(ctx, false); err != nil {
+	if _, err := c.MacApply(ctx, false); err != nil {
 		return err
 	}
 	if _, err := c.M.Run(ctx, "ping", "-c", "1", "-t", "3", cableEnd); err != nil {

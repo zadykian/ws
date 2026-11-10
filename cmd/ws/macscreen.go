@@ -89,7 +89,7 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 		stages := wizardStages(e, check)
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
-			states, err := run.Remote.State(ctx, w.p.version)
+			states, err := run.Ws.State(ctx, w.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
 		o := step.Options{Observer: watch, Check: true, Stop: e.stop}

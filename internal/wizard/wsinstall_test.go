@@ -10,25 +10,28 @@ import (
 
 const releases = "https://example.org/releases"
 
-func newInstall(version, url, status string) (*WsInstall, *effecttest.Machine) {
+func newInstall(version, url string, status wsStatus) (*WsInstall, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, false)
-	return &WsInstall{Remote: r.Remote, Version: version, URL: url, Out: &effecttest.Out{}}, m
+	return &WsInstall{Ws: r.Ws, Version: version, URL: url, Out: &effecttest.Out{}}, m
 }
 
 func TestWsInstallPlan(t *testing.T) {
-	for name, tc := range map[string]struct{ version, url, status, want, err string }{
-		"done":          {"v1.2.3", releases, "ws v1.2.3\n", "", ""},
-		"older":         {"v1.2.3", releases, "ws v1.2.2\n", "would install ws v1.2.3 on ws", ""},
-		"newer":         {"v1.2.3", releases, "ws v1.3.0\n", "", "ws mac wizard --update"},
-		"newer 10":      {"v1.2.3", releases, "ws v1.10.0\n", "", "ws mac wizard --update"},
-		"a build on ws": {"v1.2.3", releases, "ws v1.2.4-0.2026-abc+dirty\n", "would install ws v1.2.3 on ws", ""},
-		"none":          {"v1.2.3", releases, "ws -\n", "would install ws v1.2.3 on ws", ""},
-		"no status":     {"v1.2.3", releases, "", "would install ws v1.2.3 on ws", ""},
-		"a build":       {"v1.2.4-0.20261030-abc+dirty", releases, "ws v1.2.3\n", "", "not a release"},
-		"devel":         {"devel", releases, "ws -\n", "", "not a release"},
-		"an address":    {"v1.2.3", "http://example.org", "ws -\n", "", "must start with https://"},
+	for name, tc := range map[string]struct{ version, url, held, want, err string }{
+		"done":          {"v1.2.3", releases, "v1.2.3", "", ""},
+		"older":         {"v1.2.3", releases, "v1.2.2", "would install ws v1.2.3 on ws", ""},
+		"newer":         {"v1.2.3", releases, "v1.3.0", "", "ws mac wizard --update"},
+		"newer 10":      {"v1.2.3", releases, "v1.10.0", "", "ws mac wizard --update"},
+		"a build on ws": {"v1.2.3", releases, "v1.2.4-0.2026-abc+dirty", "would install ws v1.2.3 on ws", ""},
+		"none":          {"v1.2.3", releases, "", "would install ws v1.2.3 on ws", ""},
+		"no status":     {"v1.2.3", releases, "v1.2.3", "would install ws v1.2.3 on ws", ""},
+		"a build":       {"v1.2.4-0.20261030-abc+dirty", releases, "v1.2.3", "", "not a release"},
+		"devel":         {"devel", releases, "", "", "not a release"},
+		"an address":    {"v1.2.3", "http://example.org", "", "", "must start with https://"},
 	} {
-		i, _ := newInstall(tc.version, tc.url, tc.status)
+		i, m := newInstall(tc.version, tc.url, wsStatus{Version: tc.held})
+		if name == "no status" {
+			delete(m.Results, remoteLine(i.Ws.remote, "status"))
+		}
 		p, err := i.Plan(context.Background())
 		got := ""
 		if len(p.Changes) > 0 {

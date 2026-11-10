@@ -24,15 +24,18 @@ const (
 // again, which loads ws-tunnel. Last, ws-tunnel must show a handshake, and ssh ws log in through it.
 // Without a handshake, the closing list says so, and the run goes on.
 type Tunnel struct {
-	Host *HostKey
-	Run  *WsRun
-	// Setup is the ws mac apply stage, which runs again once WS_PUBLIC_KEY is wg0's.
-	Setup *Setup
-	Hand  *Hand
-	Home  string
-	Sleep func(time.Duration)
-	M     effect.Machine
-	Out   effect.Out
+	// Ws is the session to ws, whose files script names the Mac's key as wg0's peer.
+	Ws *Session
+	// Conf is mac.conf's path. Check is set under --check.
+	Conf  string
+	Check bool
+	// MacApply runs ws mac apply, as the Setup stage's Run does, again once WS_PUBLIC_KEY is wg0's.
+	MacApply func(ctx context.Context, check bool) (bool, error)
+	Hand     *Hand
+	Home     string
+	Sleep    func(time.Duration)
+	M        effect.Machine
+	Out      effect.Out
 	// none is set where the check finds no handshake in this run.
 	none bool
 }
@@ -52,34 +55,34 @@ func (c tunnelChange) String() string { return tunnelStage + ": would " + string
 // through it. Where the run asked ws's address, ws isn't at the ways that ws-tunnel tries. Where
 // the check found no handshake, ws-tunnel has none. A later run checks those two.
 func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
-	c, err := t.Host.conf()
+	c, err := t.Ws.want()
 	if err != nil {
 		return step.Plan{}, err
 	}
 	mac := t.pub()
-	if mac == "" && t.Host.Check {
+	if mac == "" && t.Check {
 		t.Out.Say("%s: after ws mac apply", tunnelStage)
 		return step.Plan{}, nil
 	}
-	if t.Run.Remote.Status(ctx) && c.PublicKey != "" && t.Run.Remote.Get("wg0") == c.PublicKey &&
-		t.Run.Remote.Get("peer") == "ok" && mac != "" && t.Run.Remote.Get("mac.pub") == mac &&
-		t.loaded(ctx) && (t.Host.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
+	s, ok := t.Ws.status(ctx)
+	if ok && c.PublicKey != "" && s.WgKey == c.PublicKey && s.Peered && mac != "" && s.MacKey == mac &&
+		t.loaded(ctx) && (t.Ws.first() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
 		return step.Plan{}, nil
 	}
 	var ch []step.Change
-	if t.Run.Remote.Get("mac.pub") != mac {
+	if s.MacKey != mac {
 		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on ws"))
 	}
-	if t.Run.Remote.Get("mac.pub") != mac || t.Run.Remote.Get("peer") != "ok" {
+	if s.MacKey != mac || !s.Peered {
 		ch = append(ch, tunnelChange("run ws server apply --only wireguard on ws, for wg0's peer"))
 	}
-	switch wg0 := t.Run.Remote.Get("wg0"); {
+	switch wg0 := s.WgKey; {
 	case wg0 == "":
 		ch = append(ch, tunnelChange("set WS_PUBLIC_KEY in mac.conf to wg0's key, which that run makes"))
 	case wg0 != c.PublicKey:
-		if t.Host.Check {
+		if t.Check {
 			// Under --check mac.conf is the scratch file, as for the stages before.
-			if err := (confFile{t.Host.Conf, tunnelStage, t.M, t.Out}).show("WS_PUBLIC_KEY", wg0); err != nil {
+			if err := (confFile{t.Conf, tunnelStage, t.M, t.Out}).show("WS_PUBLIC_KEY", wg0); err != nil {
 				return step.Plan{}, err
 			}
 		}

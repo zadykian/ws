@@ -19,15 +19,17 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return fmt.Errorf("%s: unknown change %T", runStage, p.Changes[0])
 	}
 	if c.user != "" {
-		if _, err := r.Files.Do(ctx, "user", c.user); err != nil {
+		if _, err := r.Ws.files.Do(ctx, "user", c.user); err != nil {
 			return fmt.Errorf("%s: ws's host_vars lacks ws_user: %s: %s; mend that, then run the wizard again",
 				runStage, c.user, stderrOf(err))
 		}
 	}
 	// A part's plan reads no status, where the outbound line shows.
-	if c.cloud && (!r.Remote.Status(ctx) || r.Remote.Get("outbound") != "off") {
-		if err := r.outbound(ctx); err != nil {
-			return err
+	if c.cloud {
+		if s, ok := r.Ws.status(ctx); !ok || !s.OutboundOff {
+			if err := r.outbound(ctx); err != nil {
+				return err
+			}
 		}
 	}
 	r.Out.Say("%s: ws server apply runs on ws in a unit of its own, which goes on where ssh drops; "+
@@ -40,16 +42,15 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if len(r.Only) > 0 {
 		return nil
 	}
-	if !r.Remote.Status(ctx) {
+	if s, ok := r.Ws.status(ctx); !ok {
 		return fail()
-	}
-	if !r.sameVars() {
+	} else if !s.sameVars() {
 		r.Out.Say("%s: the unit it followed began before ws's host_vars took its last change, "+
 			"so ws server apply runs again", runStage)
 		if err := r.run(ctx); err != nil {
 			return err
 		}
-		if !r.Remote.Status(ctx) {
+		if _, ok := r.Ws.status(ctx); !ok {
 			return fail()
 		}
 	}
@@ -59,7 +60,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 // outbound names security_outbound: false in ws's host_vars by the remote script's outbound op, and
 // stops with its error where that fails.
 func (r *WsRun) outbound(ctx context.Context) error {
-	if _, err := r.Remote.Do(ctx, "outbound"); err != nil {
+	if _, err := r.Ws.remote.Do(ctx, "outbound"); err != nil {
 		lines := strings.Split(strings.TrimSpace(err.Error()), "\n")
 		return fmt.Errorf("%s: ws's host_vars lacks security_outbound: false: %s; mend that, or run the "+
 			"wizard with --update, which runs ws server apply again", runStage, lines[len(lines)-1])

@@ -8,7 +8,7 @@ import (
 func TestHostKeyScan(t *testing.T) {
 	h, m := newHost(nil)
 	w := Way{Host: "10.1.1.2", Port: "22"}
-	if got := h.scan(context.Background(), w); got != hostLine {
+	if got := scanKey(context.Background(), h.M, w); got != hostLine {
 		t.Errorf("scan = %q; want %q", got, hostLine)
 	}
 	if got, err := h.fingerprint(context.Background(), hostLine); err != nil || got != hostFP {

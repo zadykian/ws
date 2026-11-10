@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,14 +15,15 @@ import (
 var ErrOtherWs = errors.New("ws's report refused")
 
 // State returns the roles of what ws server state --json reports on ws, from a ws of this version
-// alone. It runs no state op where Status names another, and the report's own version decides after
-// that. The op changes nothing, so what Status read stands.
+// alone. It runs no state op where the status names another, and the report's own version decides after
+// that. The op changes nothing, so what the status read stands.
 func (r *Remote) State(ctx context.Context, version string) ([]apply.RoleState, error) {
-	if !r.Status(ctx) {
+	s, ok := r.status(ctx)
+	if !ok {
 		return nil, errors.New("ws's report: ws's status read nothing")
 	}
-	if held := r.Get("ws"); held != version {
-		return nil, otherWs(held, version)
+	if s.Version != version {
+		return nil, otherWs(cmp.Or(s.Version, "-"), version)
 	}
 	out, err := r.query(ctx, "state")
 	if err != nil {

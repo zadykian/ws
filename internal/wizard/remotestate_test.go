@@ -28,7 +28,7 @@ const wsReport = `{
 func stateRemote(held, report string) (*Remote, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}, Script: []byte("echo\n")}
-	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: []byte("ws " + held + "\n")}
+	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: wsStatus{Version: held}.text()}
 	m.Results[remoteLine(r, "state")] = effecttest.Result{Out: []byte(report)}
 	return r, m
 }

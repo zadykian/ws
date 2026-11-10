@@ -27,13 +27,13 @@ func (h *HostKey) add(ctx context.Context) error {
 	if err != nil {
 		return noWay(c)
 	}
-	line := h.scan(ctx, way)
+	line := scanKey(ctx, h.M, way)
 	if line == "" {
 		if h.Check {
-			h.Out.Say("%s: %s; a run would ask its address now", hostStage, h.none(way))
+			h.Out.Say("%s: %s; a run would ask its address now", hostStage, noAnswer(way))
 			return nil
 		}
-		if way, line, err = h.ask(ctx, c.Target, way); err != nil {
+		if way, line, err = h.question().ask(ctx, c.Target, way); err != nil {
 			return err
 		}
 	}

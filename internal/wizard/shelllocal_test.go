@@ -13,9 +13,9 @@ import (
 func TestRemoteOnWsRunsTheScriptLocally(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := &Remote{Shell: LocalShell{M: m}, Script: []byte("echo\n")}
-	m.Results["sh -s -- status"] = effecttest.Result{Out: []byte("run abc 0 -\n")}
-	if !r.Status(context.Background()) || r.Get("run") != "abc 0 -" {
-		t.Fatalf("Status read %q; calls %q", r.Get("run"), m.Calls)
+	m.Results["sh -s -- status"] = effecttest.Result{Out: []byte("ws abc\n")}
+	if s, ok := r.status(context.Background()); !ok || s.Version != "abc" {
+		t.Fatalf("status read %q; calls %q", s.Version, m.Calls)
 	}
 	m.Results[wsPath+" server secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
 	if out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B"); err != nil || string(out) != "set\n" {
@@ -66,8 +66,8 @@ func TestLocalShellNamesWsUser(t *testing.T) {
 	user := "ada"
 	r := &Remote{Shell: LocalShell{M: m, User: func() string { return user }}, Script: []byte("echo\n")}
 	m.Results["env SUDO_USER=ada sh -s -- status"] = effecttest.Result{Out: []byte("claude ok\n")}
-	if !r.Status(context.Background()) || r.Get("claude") != "ok" {
-		t.Errorf("Status read %q; calls %q", r.Get("claude"), m.Calls)
+	if s, ok := r.status(context.Background()); !ok || s.Claude != "ok" {
+		t.Errorf("status read %q; calls %q", s.Claude, m.Calls)
 	}
 	user = ""
 	m.Results["sh -s -- install"] = effecttest.Result{}

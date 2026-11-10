@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
 
@@ -27,14 +28,18 @@ const cableEnd = "10.77.0.1"
 // mac.conf's WS_CABLE_PORT too, which the stage names on ws again after ws's install. Undocked, the
 // first setup waits, and the closing list says to dock the Mac.
 type Cable struct {
-	Host *HostKey
-	Run  *WsRun
-	// Login is the stage that logs in to ws: ws is read only where it did, in this run.
-	Login *Login
-	// Files runs the files script's operations as root on ws.
-	Files *Remote
-	// Setup is the ws mac apply stage, which gives the Mac's service its address.
-	Setup *Setup
+	// Ws is the session to ws, whose files script lists and names the ports. ws is read only where
+	// its ssh logs in, in this run.
+	Ws *Session
+	// Conf is mac.conf's path. Check is set under --check.
+	Conf  string
+	Check bool
+	// Version, Default and Update are ws's run's, whose plan the stage waits on under --check.
+	Version, Default string
+	Update           bool
+	// MacApply runs ws mac apply, as the Setup stage's Run does, which gives the Mac's service its
+	// address.
+	MacApply func(ctx context.Context, check bool) (bool, error)
 	// Env looks up a variable of the environment.
 	Env func(string) (string, bool)
 	P   effect.Prompt
@@ -69,7 +74,7 @@ func (c cableChange) String() string { return cableStage + ": would " + string(c
 // read sets the ports to what the files script's op lists on ws. The op is link, or wait PORT,
 // which lists them once PORT holds 10.77.0.1, or after 10 s, in one login.
 func (c *Cable) read(ctx context.Context, op ...string) error {
-	out, err := c.Files.Do(ctx, op...)
+	out, err := c.Ws.files.query(ctx, op...)
 	if err != nil {
 		return fmt.Errorf("%s: link failed on ws: %w", cableStage, err)
 	}
@@ -114,7 +119,7 @@ func (c *Cable) end() string {
 
 // lacks tells whether mac.conf has no line of WS_CABLE_SERVICE yet.
 func (c *Cable) lacks() bool {
-	text, _ := c.M.ReadFile(c.Host.Conf)
+	text, _ := c.M.ReadFile(c.Conf)
 	return !regexp.MustCompile(`(?m)^[ \t]*WS_CABLE_SERVICE=`).Match(text)
 }
 
@@ -125,28 +130,28 @@ func (c *Cable) lacks() bool {
 // ws keeps down. It reads ws only where the login reached it in this run. Under --check it says
 // that the stage is after ws's run, where that run has changes to make.
 func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
-	cf, err := c.Host.conf()
+	cf, err := c.Ws.want()
 	if err != nil || cf.Target != "lan" {
 		return step.Plan{}, err
 	}
 	// Under --check, no direct way to ws yet means that ws's run is not done either. in stays
 	// false, and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.
-	w, err := c.Host.SSH.Way(ctx)
-	if err != nil && !c.Host.Check {
+	w, err := c.Ws.way(ctx)
+	if err != nil && !c.Check {
 		return step.Plan{}, fmt.Errorf("%s: %w", cableStage, err)
 	}
 	in := false
 	if err == nil {
-		in, _ = c.Login.login(ctx, w)
+		in, _ = c.Ws.login(ctx, w)
 	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")
 	none := svcSet && svc == ""
 	if !c.lacks() && (cf.CableService == "" || cf.CablePort == "" ||
-		in && c.Run.Remote.Status(ctx) && c.Run.Remote.Get("cable") == cf.CablePort) {
+		in && c.holds(ctx, cf.CablePort)) {
 		return step.Plan{}, nil
 	}
-	if c.Host.Check && !none && (!in || !c.Run.runDone(ctx, cf)) {
+	if c.Check && !none && (!in || !c.runDone(ctx, cf)) {
 		c.Out.Say("%s: after %s", cableStage, runStage)
 		return step.Plan{}, nil
 	}
@@ -160,7 +165,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	if !in {
 		return c.change("ask for the cable's port and service")
 	}
-	if portSet && !c.Host.Check {
+	if portSet && !c.Check {
 		// Apply reads the ports once, and names the port that the environment gives.
 		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
 			"ws server apply --only network,wireguard there")
@@ -177,6 +182,12 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
 		"ws mac apply, which gives it 10.77.0.2, and ping " + cableEnd)
+}
+
+// runDone tells whether ws's run has nothing to do, as its own plan would find.
+func (c *Cable) runDone(ctx context.Context, cf conf.Conf) bool {
+	s, ok := c.Ws.status(ctx)
+	return !c.Update && ok && s.done(c.Version, c.Default, cf)
 }
 
 func (*Cable) change(text string) (step.Plan, error) {

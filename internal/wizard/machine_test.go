@@ -16,7 +16,7 @@ func TestEveryStageNamesItsMachine(t *testing.T) {
 		cableStage: OnMac, valuesStage: OnWs,
 	}
 	stages := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
-		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &WsRun{}, &WsClaude{}, &Signing{}, &Tunnel{}, &Cable{},
+		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &WsRun{}, &WsClaude{}, &Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},
 		&WsValues{}}
 	if len(stages) != len(want) {
 		t.Fatalf("%d stages, %d wanted", len(stages), len(want))

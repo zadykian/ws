@@ -30,9 +30,12 @@ const (
 // needs no password, or the password, asked once a run. The password stays in this struct and in
 // ssh's stdin, never in an argument, a message or the environment.
 type Sudo struct {
-	// Host is the Host key stage, whose ssh this one uses. Its Tty and Check are this stage's.
-	Host *HostKey
-	P    effect.Hidden
+	// Ws is the session to ws, whose ssh this stage uses.
+	Ws *Session
+	// Tty tells whether a terminal is there to ask. Check is set under --check.
+	Tty, Check bool
+	P          effect.Hidden
+	Out        effect.Out
 
 	way      sudoWay
 	password string
@@ -58,7 +61,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 	if s.way != sudoUnread {
 		return step.Plan{}, nil
 	}
-	w, err := s.Host.SSH.Way(ctx)
+	w, err := s.Ws.way(ctx)
 	if err != nil {
 		return step.Plan{}, errors.New(sudoStage + ": " + err.Error())
 	}
@@ -66,14 +69,14 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 		s.way = sudoLogin
 		return step.Plan{}, nil
 	}
-	_, err = s.Host.SSH.Run(ctx, "-o", "BatchMode=yes", "ws", "sudo", "-n", "true")
+	_, err = s.Ws.ssh().Run(ctx, "-o", "BatchMode=yes", "ws", "sudo", "-n", "true")
 	switch {
 	case err == nil:
 		s.way = sudoOpen
 		return step.Plan{}, nil
 	case strings.Contains(err.Error(), "exit status 255"):
 		return step.Plan{}, errors.New(sudoStage + ": ssh to ws failed: " + stderrOf(err))
-	case s.Host.Check && s.Host.Tty:
+	case s.Check && s.Tty:
 		return step.Plan{}, s.ask(ctx, w.User)
 	}
 	return step.Plan{Changes: []step.Change{sudoAsk{w.User}}}, nil
@@ -91,7 +94,7 @@ func (s *Sudo) Apply(ctx context.Context, p step.Plan) error {
 // ask takes the password, and has sudo check it with nothing behind it on stdin. With a script
 // behind a wrong password, sudo would read the script's lines as its next two tries.
 func (s *Sudo) ask(ctx context.Context, user string) error {
-	if !s.Host.Tty {
+	if !s.Tty {
 		return fmt.Errorf("%s: %s's sudo on ws asks for a password, and no terminal is here to ask it: "+
 			"run the wizard at a terminal", sudoStage, user)
 	}
@@ -100,7 +103,7 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", sudoStage, err)
 		}
-		_, err = s.Host.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
+		_, err = s.Ws.ssh().RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
 			"sudo", "-k", "-S", "-p", "''", "true")
 		if err == nil {
 			s.way, s.password = sudoAsked, password
@@ -113,7 +116,7 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		if try == sudoTries {
 			return fmt.Errorf("%s: sudo on ws refused the password %d times", sudoStage, sudoTries)
 		}
-		s.Host.Out.Say("%s: sudo on ws refused the password", sudoStage)
+		s.Out.Say("%s: sudo on ws refused the password", sudoStage)
 	}
 }
 

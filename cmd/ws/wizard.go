@@ -82,31 +82,30 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
-	scratch := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName + "/mac.conf"
+	lock := wizard.LockPath(cmp.Or(p.getenv("TMPDIR"), "/tmp"))
+	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
 	later := conf
 	if check {
 		later = scratch
 	}
-	lock := strings.TrimRight(cmp.Or(p.getenv("TMPDIR"), "/tmp"), "/") + "/" + wizard.LockName
-	gh := &wizard.Gh{Conf: later, Home: p.getenv("HOME"), Tty: p.tty, M: p.machine, F: e.talks, Out: out}
+	gh := &wizard.Gh{GhCLI: wizard.GhCLI{Conf: later, Home: p.getenv("HOME"), M: p.machine, Out: out}, Tty: p.tty, F: e.talks}
 	host := &wizard.HostKey{Conf: later, Lock: lock, Tty: p.tty, Check: check, Env: p.lookup,
 		SSH: wizard.SSH{M: p.machine, F: e.talks, Lock: lock, Home: p.getenv("HOME"), Conf: later}, M: p.machine, P: ask, Out: out}
 	sudo := e.sudo
-	sudo.Host, sudo.P = host, e.hidden
-	shell := wizard.SSHShell{SSH: host.SSH, Sudo: sudo}
-	files := &wizard.Remote{Shell: shell, Script: mac.RemoteFilesScript}
-	run := &wizard.WsRun{Host: host, Want: host.ReadConf, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only,
-		Remote: &wizard.Remote{Shell: shell, Script: mac.RemoteScript, Events: e.events},
-		Files:  files, Default: values.Default().User}
-	hand.Late(run.Hand)
+	ws := wizard.NewSession(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Out: out},
+		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: e.events})
+	sudo.Ws, sudo.Tty, sudo.Check, sudo.P, sudo.Out = ws, p.tty, check, e.hidden, out
+	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only,
+		Default: values.Default().User}
+	hand.Late(ws.Hand)
 	hand.Late(gh.Hand)
-	install := &wizard.WsInstall{Remote: run.Remote, Version: p.version, URL: p.releases, Out: out}
+	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(e, later)
-	login := &wizard.Login{Host: host, Gh: gh}
-	cable := &wizard.Cable{Host: host, Run: run, Login: login, Files: files, Setup: setup, Env: p.lookup,
-		P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
+	login := &wizard.Login{Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
+	cable := &wizard.Cable{Ws: ws, Conf: later, Check: check, Version: p.version, Default: run.Default, Update: o.update,
+		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
 		&wizard.Tools{M: p.machine, Out: out, Sleep: time.Sleep},
@@ -123,9 +122,9 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		sudo,
 		install,
 		run,
-		&wizard.WsClaude{Run: run, Tty: p.tty},
-		&wizard.Signing{Gh: gh, Run: run, Check: check},
-		&wizard.Tunnel{Host: host, Run: run, Setup: setup, Hand: hand, Home: p.getenv("HOME"),
+		&wizard.WsClaude{Ws: ws, Tty: p.tty},
+		&wizard.Signing{Ws: ws, GitHub: &wizard.MacGitHub{Gh: gh.GhCLI, Lock: lock, Check: check}},
+		&wizard.Tunnel{Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,
 	}

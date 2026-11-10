@@ -14,26 +14,28 @@ const (
 )
 
 // newTunnel returns the stage over a Mac whose mac.conf holds WS_PUBLIC_KEY pub, with ws's status.
-func newTunnel(pub, status string, check bool) (*Tunnel, *effecttest.Machine) {
+func newTunnel(pub string, status wsStatus, check bool) (*Tunnel, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, check)
 	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte("WS_PUBLIC_KEY="+pub+"\n")...)
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte(keyA + "\n")
 	m.Results["launchctl print system/"+label] = effecttest.Result{}
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
-	return &Tunnel{Host: r.Host, Run: r, Home: "/h", M: m, Out: r.Host.Out}, m
+	return &Tunnel{Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Home: "/h", M: m, Out: r.Out}, m
 }
 
 func TestTunnelPlan(t *testing.T) {
-	for name, tc := range map[string]struct{ pub, status, want string }{
-		"done": {keyB, "wg0 " + keyB + "\npeer ok\nmac.pub " + keyA + "\n", ""},
-		"peer": {keyB, "wg0 " + keyB + "\npeer none\nmac.pub " + keyA + "\n",
-			"run ws server apply --only wireguard"},
-		"other key": {keyB, "wg0 " + keyB + "\npeer ok\nmac.pub " + keyB + "\n",
-			"write the Mac's key, " + keyA},
-		"new wg0": {keyA, "wg0 " + keyB + "\npeer ok\nmac.pub " + keyA + "\n",
+	for name, tc := range map[string]struct {
+		pub    string
+		status wsStatus
+		want   string
+	}{
+		"done":      {keyB, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA}, ""},
+		"peer":      {keyB, wsStatus{WgKey: keyB, MacKey: keyA}, "run ws server apply --only wireguard"},
+		"other key": {keyB, wsStatus{WgKey: keyB, Peered: true, MacKey: keyB}, "write the Mac's key, " + keyA},
+		"new wg0": {keyA, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA},
 			"set WS_PUBLIC_KEY in mac.conf to wg0's key, " + keyB},
-		"no wg0": {"", "peer none\n", "to wg0's key, which that run makes"},
+		"no wg0": {"", wsStatus{}, "to wg0's key, which that run makes"},
 	} {
 		tun, _ := newTunnel(tc.pub, tc.status, false)
 		p, err := tun.Plan(context.Background())
@@ -49,7 +51,7 @@ func TestTunnelPlan(t *testing.T) {
 }
 
 func TestTunnelPlanWaits(t *testing.T) {
-	tun, m := newTunnel(keyB, "peer ok\n", true)
+	tun, m := newTunnel(keyB, wsStatus{Peered: true}, true)
 	delete(m.Files, "/h/.config/ws/tunnel.pub")
 	p, err := tun.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || !strings.Contains(tun.Out.(*effecttest.Out).Lines[0], "after ws mac apply") {
@@ -59,7 +61,7 @@ func TestTunnelPlanWaits(t *testing.T) {
 
 func TestTunnelPlanShowsConfsDiffUnderCheck(t *testing.T) {
 	for _, check := range []bool{true, false} {
-		tun, m := newTunnel(keyA, "wg0 "+keyB+"\npeer ok\nmac.pub "+keyA+"\n", check)
+		tun, m := newTunnel(keyA, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA}, check)
 		if _, err := tun.Plan(context.Background()); err != nil {
 			t.Fatal(err)
 		}

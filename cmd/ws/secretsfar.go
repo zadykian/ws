@@ -62,7 +62,7 @@ func runFar(c *cobra.Command, p process, args []string) error {
 	}
 	r := &varsReach{p: p}
 	defer r.close(c.Context())
-	ws, err := r.reachOn(c.Context(), p.machine, talk, nil)
+	ws, err := r.reachOn(c.Context(), p.machine, talk)
 	if err != nil {
 		return err
 	}

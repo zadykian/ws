@@ -17,8 +17,30 @@ type Remote struct {
 	// the stage waits, and hears them again where a follow replays the log.
 	Events step.Observer
 
-	read   bool
-	status map[string]string
+	// held is what status read, which the Remotes that Beside returns share.
+	held *heldStatus
+}
+
+// heldStatus is what status read of ws. read is set until a change through a Remote that shares
+// it, and got where status read any.
+type heldStatus struct {
+	read, got bool
+	last      wsStatus
+}
+
+// hold returns what r's status holds, made on the first call.
+func (r *Remote) hold() *heldStatus {
+	if r.held == nil {
+		r.held = &heldStatus{}
+	}
+	return r.held
+}
+
+// Beside returns a Remote of the script over r's Shell, such as the files script's. A Do, Pass,
+// Follow or Secrets through either leaves the status stale for both, as the files script changes
+// what the status reads.
+func (r *Remote) Beside(script []byte) *Remote {
+	return &Remote{Shell: r.Shell, Script: script, held: r.hold()}
 }
 
 // script returns the command that runs the operation, with the script on its stdin.
@@ -26,27 +48,27 @@ func script(op []string) []string {
 	return append([]string{"sh", "-s", "--"}, op...)
 }
 
-// Do runs the operation, and has the next Status read ws again, as the operation may change it.
+// Do runs the operation, and has the next status read ws again, as the operation may change it.
 func (r *Remote) Do(ctx context.Context, op ...string) ([]byte, error) {
-	r.read = false
+	r.stale()
 	return r.query(ctx, op...)
 }
 
-// query runs an operation that changes nothing, so what Status read stands.
+// query runs an operation that changes nothing, so what status read stands.
 func (r *Remote) query(ctx context.Context, op ...string) ([]byte, error) {
 	return r.Shell.Run(ctx, r.Script, script(op)...)
 }
 
 // Pass is Do for an operation that goes on, such as install, whose output goes to Stderr as it comes.
 func (r *Remote) Pass(ctx context.Context, op ...string) error {
-	r.read = false
+	r.stale()
 	return r.Shell.Pass(ctx, r.Script, script(op)...)
 }
 
 // Follow is Pass for the operation run, with ws server apply's args. The events of the run's log go
 // to Events, and its other lines to Stderr.
 func (r *Remote) Follow(ctx context.Context, args ...string) error {
-	r.read = false
+	r.stale()
 	return r.Shell.Lines(ctx, r.Script, r.event, script(append([]string{"run"}, args...))...)
 }
 
@@ -65,29 +87,23 @@ func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
 	return r.Shell.Put(ctx, path, data)
 }
 
-// Status reads what the remote script's status prints once, until Do, Pass or Follow runs. It
-// reports whether it read any: the Shell or the script fails where root is out of reach. A line is
-// NAME VALUE.
-func (r *Remote) Status(ctx context.Context) bool {
-	if !r.read {
-		out, err := r.Do(ctx, "status")
-		r.read, r.status = true, nil
-		if err == nil {
-			r.status = map[string]string{}
-			for _, l := range strings.Split(string(out), "\n") {
-				if name, value, ok := strings.Cut(l, " "); ok {
-					if _, dup := r.status[name]; !dup {
-						r.status[name] = value
-					}
-				}
-			}
+// status reads what the remote script's status prints once, until Do, Pass or Follow runs. It
+// reports whether it read any: the Shell or the script fails where root is out of reach.
+func (r *Remote) status(ctx context.Context) (wsStatus, bool) {
+	h := r.hold()
+	if !h.read {
+		out, err := r.query(ctx, "status")
+		h.read, h.got, h.last = true, err == nil && strings.TrimSpace(string(out)) != "", wsStatus{}
+		if h.got {
+			h.last = parseStatus(string(out))
 		}
 	}
-	return len(r.status) > 0
+	return h.last, h.got
 }
 
-// Get returns the value of NAME in what Status read, or an empty string.
-func (r *Remote) Get(name string) string { return r.status[name] }
+// known returns what status last read, with no read of its own: zero before the first.
+func (r *Remote) known() wsStatus { return r.hold().last }
 
-// Forget has the next Status read ws again, as after a session that changed it.
-func (r *Remote) Forget() { r.read = false }
+// stale has the next status read ws again. A change through a Remote that shares the status
+// marks it, and so does claude's login, which runs outside the scripts.
+func (r *Remote) stale() { r.hold().read = false }

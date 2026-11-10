@@ -18,7 +18,7 @@ func (e noKey) Unwrap() error { return e.err }
 
 // key returns the .pub of the Mac's key for ws, as setup.PickKey finds it from mac.conf, and its
 // type and base64.
-func (g *Gh) key(ctx context.Context) (pub, key string, err error) {
+func (g GhCLI) key(ctx context.Context) (pub, key string, err error) {
 	_, c, err := loadConf(confFile{g.Conf, ghStage, g.M, g.Out})
 	if err != nil {
 		return "", "", err

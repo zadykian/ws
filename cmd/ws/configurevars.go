@@ -25,32 +25,33 @@ type varsReach struct {
 	release func()
 }
 
-// sheet is the host_vars form before its read.
-func (r *varsReach) sheet() tui.Sheet {
+// sessionOpen finds the session to ws of a sheet or a read, through the screen: the Mac's over ssh,
+// or ws's own.
+type sessionOpen func(ctx context.Context, b *tui.Bridge) (*wizard.Session, error)
+
+// hostVarsSheet is the host_vars form before its read, which open reaches ws for. The password that
+// sudo asks stays with the session, so that a save asks none.
+func hostVarsSheet(open sessionOpen) tui.Sheet {
 	return tui.Sheet{
 		Name:   "host_vars",
 		Fields: func(map[string]string) []tui.FieldSpec { return nil },
-		Open:   r.open,
+		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
+			ws, err := open(ctx, b)
+			if err != nil {
+				return tui.Sheet{}, err
+			}
+			form, err := wizard.VarsForm{Files: ws.Files()}.Load(ctx)
+			if err != nil {
+				return tui.Sheet{}, err
+			}
+			return varsSheet(form), nil
+		},
 	}
 }
 
-// open reaches ws and reads the file. The password that sudo asks stays with the form, so that a
-// save asks none.
-func (r *varsReach) open(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
-	files, err := r.reach(ctx, b, mac.RemoteFilesScript)
-	if err != nil {
-		return tui.Sheet{}, err
-	}
-	form, err := wizard.VarsForm{Files: files}.Load(ctx)
-	if err != nil {
-		return tui.Sheet{}, err
-	}
-	return varsSheet(form), nil
-}
-
-// reach finds how script reaches root on ws, as the wizard's stages do, through the screen.
-func (r *varsReach) reach(ctx context.Context, b *tui.Bridge, script []byte) (*wizard.Remote, error) {
-	return r.reachOn(ctx, screenMachine(ctx, b, r.p.machine), b, script)
+// reach finds how the session reaches root on ws, as the wizard's stages do, through the screen.
+func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Session, error) {
+	return r.reachOn(ctx, screenMachine(ctx, b, r.p.machine), b)
 }
 
 // rootTalk asks sudo's password and says what sudo answered: a screen's Bridge, or the terminal.
@@ -61,7 +62,7 @@ type rootTalk interface {
 
 // reachOn is reach on m, which asks through t. The lock keeps a wizard's own run away, and holds
 // ssh's sockets.
-func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk, script []byte) (*wizard.Remote, error) {
+func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (*wizard.Session, error) {
 	lock, err := r.locked(ctx)
 	if err != nil {
 		return nil, err
@@ -70,7 +71,9 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk, s
 	ssh := wizard.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Conf: conf}
 	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
-	sudo.Host, sudo.P = &wizard.HostKey{Tty: r.p.tty, SSH: ssh, Out: t}, t
+	ws := wizard.NewSession(wizard.MacReach{SSH: ssh, Sudo: sudo, Out: t},
+		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript})
+	sudo.Ws, sudo.Tty, sudo.P, sudo.Out = ws, r.p.tty, t, t
 	plan, err := sudo.Plan(ctx)
 	if err != nil {
 		return nil, err
@@ -80,7 +83,7 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk, s
 			return nil, err
 		}
 	}
-	return &wizard.Remote{Shell: wizard.SSHShell{SSH: ssh, Sudo: sudo}, Script: script}, nil
+	return ws, nil
 }
 
 // locked takes the wizard's lock, once.

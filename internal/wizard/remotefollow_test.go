@@ -81,9 +81,9 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := newFollow(m)
 	drop := errors.New("ssh dropped")
-	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: []byte("active -\n")}
+	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: wsStatus{}.text()}
 	m.Results[remoteLine(r, "run")] = effecttest.Result{Out: []byte(runLog), Err: drop}
-	r.Status(context.Background())
+	r.status(context.Background())
 	h := &heard{}
 	r.Events = h
 	if err := r.Follow(context.Background()); !errors.Is(err, drop) {
@@ -92,9 +92,9 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	if len(*h) != 1 {
 		t.Errorf("heard %d events; want those before the drop", len(*h))
 	}
-	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: []byte("active ws-wizard-1\n")}
-	if r.Status(context.Background()); r.Get("active") != "ws-wizard-1" {
-		t.Errorf("active = %q; want the status read again", r.Get("active"))
+	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: wsStatus{Active: "ws-wizard-1"}.text()}
+	if s, _ := r.status(context.Background()); s.Active != "ws-wizard-1" {
+		t.Errorf("active = %q; want the status read again", s.Active)
 	}
 }
 
@@ -116,27 +116,27 @@ func TestEachRunIsFollowed(t *testing.T) {
 	ctx, h := context.Background(), &heard{}
 	log := effecttest.Result{Out: []byte(runLog)}
 
-	r, m := newRun("lan", "run - -\nactive -\n", false, false)
-	r.Remote.Events = h
-	m.Results[remoteLine(r.Remote, "run")] = log
+	r, m := newRun("lan", wsStatus{}, false, false)
+	r.Ws.remote.Events = h
+	m.Results[remoteLine(r.Ws.remote, "run")] = log
 	if err := r.run(ctx); err != nil {
 		t.Fatal(err)
 	}
 
-	c, m, _ := newCable(t, "", cableLink, nil)
-	c.Run.Remote.Events = h
-	m.Results[remoteLine(c.Files, "link", "eth1")] = effecttest.Result{}
-	m.Results[remoteLine(c.Run.Remote, "run", "--only", "network,wireguard")] = log
+	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
+	c.Ws.remote.Events = h
+	m.Results[remoteLine(c.Ws.files, "link", "eth1")] = effecttest.Result{}
+	m.Results[remoteLine(c.Ws.remote, "run", "--only", "network,wireguard")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
 		t.Fatal(err)
 	}
 
-	tun, m := newTunnel(keyA, "peer none\n", false)
-	tun.Run.Remote.Events = h
+	tun, m := newTunnel(keyA, wsStatus{}, false)
+	tun.Ws.remote.Events = h
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
-	m.Results[remoteLine(tun.Run.Files, "peer", keyA)] = effecttest.Result{}
-	m.Results[remoteLine(tun.Run.Remote, "run", "--only", "wireguard")] = log
+	m.Results[remoteLine(tun.Ws.files, "peer", keyA)] = effecttest.Result{}
+	m.Results[remoteLine(tun.Ws.remote, "run", "--only", "wireguard")] = log
 	if err := tun.Apply(ctx, step.Plan{}); err == nil || !strings.Contains(err.Error(), "lacks the Mac's key") {
 		t.Errorf("Apply = %v; want the stop past the run", err)
 	}

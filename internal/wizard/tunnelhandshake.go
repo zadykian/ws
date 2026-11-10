@@ -15,7 +15,7 @@ import (
 // the tunnel to the closing list, and the run goes on, as the later stages reach ws by a direct
 // way, outside the tunnel.
 func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) error {
-	if first := t.Host.SSH.First(); first != "" {
+	if first := t.Ws.first(); first != "" {
 		once := "mac.conf's way leads to ws"
 		if target == "lan" {
 			once = "ws's lease is static"
@@ -46,7 +46,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 		return errors.New(tunnelStage + ": ssh -G ws gives another host than " + wsEnd + ", ws's end of the " +
 			"tunnel, which ws mac apply's config.d/ws names")
 	}
-	out, err := t.Host.SSH.Tunnel(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
+	out, err := t.Ws.ssh().Tunnel(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
 	if err != nil || strings.TrimSpace(string(out)) != "ok" {
 		last := ""
 		if err != nil {
