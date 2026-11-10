@@ -87,12 +87,13 @@ fi
 # With WS_GIT_NAME, WS_GIT_EMAIL and a file key with no passphrase as WS_GIT_SIGNING_PUB_KEY,
 # --check must show the files' diffs and the add to gh's login, and write none. A run must write
 # the files. It must add the key to gh's login, titled with the Mac's name, and say so. Its
-# credential command for GitHub must be gh's, and a second run and --check print nothing.
+# credential command for GitHub must be gh's, and a second run and --check say the key is listed.
 ssh-keygen -q -t ed25519 -N '' -C ws -f "$key"
 signing=WS_GIT_SIGNING_PUB_KEY=$key.pub
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
 title=$(hostname -s)
 add="gh ssh-key add $key.pub --type signing --title $title"
+listed="ws mac apply: git's key is among GitHub's signing keys already"
 setup --check || error "ws mac apply --check failed: $out"
 case $out in
 *"$nl+++ $files/gitconfig$nl"*"${nl}ws mac apply: would run $add") ;;
@@ -103,8 +104,8 @@ for each in "$files/gitconfig" "$files/allowed_signers" ~/.gitconfig; do
 done
 prints "ws mac apply: wrote $files/allowed_signers${nl}ws mac apply: wrote $files/gitconfig${nl}\
 ws mac apply: wrote $HOME/.gitconfig${nl}ws mac apply: ran $add"
-prints ''
-prints '' --check
+prints "$listed"
+prints "$listed" --check
 for host in github.com gist.github.com; do
     [ "$(git config --global --includes --get-all "credential.https://$host.helper")" = \
         "$nl!$tmp/bin/gh auth git-credential" ] ||
@@ -130,10 +131,10 @@ cmp -s ~/.gitconfig "$tmp/own" && [ "$(echo ~/.gitconfig.*~)" = "$HOME/.gitconfi
 setup || error "ws mac apply failed: $out"
 case $out in
 "ws mac apply: kept the old $HOME/.gitconfig as $HOME/.gitconfig."*"~${nl}ws mac apply: wrote $HOME/\
-.gitconfig$nl$own_warning") ;;
+.gitconfig$nl$listed$nl$own_warning") ;;
 *) error "ws mac apply printed '$out' for a ~/.gitconfig of its own" ;;
 esac
-prints ''
+prints "$listed"
 [ "$(git config --file ~/.gitconfig --get-all include.path)" = \~/.config/ws/gitconfig ] ||
     error "ws mac apply left ~/.gitconfig with includes other than one of ~/.config/ws/gitconfig"
 tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "ws mac apply lost ~/.gitconfig's own lines"
@@ -143,7 +144,7 @@ tail -n +4 ~/.gitconfig | cmp -s - ~/.gitconfig.*~ || error "ws mac apply lost ~
 # stop before the step acts: with another name, the step would write gitconfig. The link must stay
 # one, and once its file has the include at its top, ws mac apply must take it.
 printf '[include]\n\tpath = .config/ws/gitconfig\n' >~/.gitconfig
-prints ''
+prints "$listed"
 with 'WS_GIT_NAME="ws stand-in #2"' WS_GIT_EMAIL=ws@example.com "$signing"
 printf '[user]\n\tname = someone\n[include]\n\tpath = ~/.config/ws/gitconfig\n' >~/.gitconfig
 stops "ws mac apply: $HOME/.gitconfig includes ~/.config/ws/gitconfig below its own settings"
@@ -156,15 +157,16 @@ ln -s "$tmp/linked" ~/.gitconfig
 stops "ws mac apply: $HOME/.gitconfig is a link to $tmp/linked: put"
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
 printf '[include]\n\tpath = ~/.config/ws/gitconfig\n[user]\n\tname = someone\n' >"$tmp/linked"
-prints ''
+prints "$listed"
 [ -L ~/.gitconfig ] || error "ws mac apply replaced the link ~/.gitconfig"
 rm ~/.gitconfig
 # git reads its XDG file before ~/.gitconfig, so ws's settings win over that file's: ws mac apply must
 # name those of identity and signing as it makes ~/.gitconfig.
 mkdir -p "$tmp/xdg/git"
 printf '[user]\n\temail = someone@example.com\n' >"$tmp/xdg/git/config"
-prints "ws mac apply: wrote $HOME/.gitconfig${nl}ws mac apply: warning: $tmp/xdg/git/config's settings of\
- user.email come before the include in ~/.gitconfig, so ~/.config/ws/gitconfig's win over them"
+prints "ws mac apply: wrote $HOME/.gitconfig$nl$listed${nl}ws mac apply: warning: $tmp/xdg/git/config's\
+ settings of user.email come before the include in ~/.gitconfig, so ~/.config/ws/gitconfig's win\
+ over them"
 rm "$tmp/xdg/git/config" ~/.gitconfig
 # An empty WS_GIT_SIGNING_PUB_KEY must stop ws mac apply, with no line to add while Secretive's
 # agent is not there. So must a key that is missing, and a .pub that holds more than a public key's
@@ -211,8 +213,8 @@ prints "ws mac apply: wrote $copy${nl}ws mac apply: wrote $files/secretive-ssh-k
 ws mac apply: wrote $files/allowed_signers${nl}ws mac apply: wrote $files/gitconfig${nl}\
 ws mac apply: wrote $HOME/.gitconfig${nl}ws mac apply: ran gh ssh-key add $copy --type signing\
  --title $title"
-prints ''
-prints '' --check
+prints "$listed"
+prints "$listed" --check
 # In a subshell, as macOS's sh keeps a variable set for a function's call after it.
 (SSH_AUTH_SOCK=$tmp/none && export SSH_AUTH_SOCK && signed && exit "$fail") || fail=1
 # ws keeps the file key that the job's mac.conf names, though Secretive's one key is there. The
@@ -227,7 +229,7 @@ chmod -R u+rwx "$secretive" && rm -rf "$secretive" "$files/secretive"
 # With gh's login, a 404, the answer to a login without the scope of signing keys, must draw a
 # warning that names the scope. Another error must draw its last line, its final period dropped, as
 # must an add that leaves the account without the key. Then, where the account lacks the key,
-# --check must show the add, a run must add it, and a second run and --check print nothing.
+# --check must show the add, a run must add it, and a second run and --check say GitHub lists it.
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com "$signing"
 rm "$tmp/login"
 warning=$(warned "$key.pub")
@@ -249,8 +251,8 @@ prints "ws mac apply: warning: gh failed: gh api user/ssh_signing_keys lacks the
 rm "$tmp/lost"
 prints "ws mac apply: would run $add" --check
 prints "ws mac apply: ran $add"
-prints ''
-prints '' --check
+prints "$listed"
+prints "$listed" --check
 [ "$(grep '^ssh-key add ' "$tmp/gh.log" | tail -n 1)" = "${add#gh }" ] &&
     [ "$(cat "$tmp/keys")" = "$(awk '{ print $1, $2 }' "$key.pub")" ] ||
     error "the stand-in logged another add, or holds other keys, than $key.pub's"
