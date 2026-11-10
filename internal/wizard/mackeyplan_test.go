@@ -51,6 +51,10 @@ func TestMacKeyPlan(t *testing.T) {
 	if got := planned(k); !strings.Contains(got, "would ask whether Secretive keeps the Mac's key") {
 		t.Errorf("no key: Plan = %q", got)
 	}
+	k, _, _ = newMacKey(t, gitConf)
+	if got := planned(k); !strings.Contains(got, "keeps the Mac's key") || !strings.Contains(got, "for git's signing key") {
+		t.Errorf("no key and git's name: Plan = %q, want both questions", got)
+	}
 }
 
 func TestMacKeyPlanPinsAFileKey(t *testing.T) {
@@ -87,12 +91,15 @@ func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	}
 }
 
-func TestMacKeyPlanWaitsForGitsKey(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\n")
+// git's question marks ws's login key, which mac.conf names. An empty WS_GIT_SIGNING_PUB_KEY names none.
+func TestMacKeyPlanAsksForGitsKey(t *testing.T) {
+	k, m, _ := newMacKey(t, gitConf+"WS_GIT_SIGNING_PUB_KEY=\nWS_IDENTITY_PUB_KEY="+listed(p256)[0].Pub()+"\n")
 	agent(m, p256)
 	m.Files[copyOf(p256)] = []byte(p256)
-	if got := planned(k); !strings.Contains(got, "wait for git's signing key made there") {
-		t.Errorf("Plan = %q", got)
+	want := "[Mac key: would ask for git's signing key, in Secretive: " + p256Label + ", ws's login key; " +
+		"make a new one (the default)] <nil>"
+	if got := planned(k); got != want {
+		t.Errorf("Plan = %q, want %q", got, want)
 	}
 }
 

@@ -59,8 +59,8 @@ installs. It must drop the Mac's key that it prints, and leave no tunnel step by
 stage below takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in
 `ssh-agent` at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
 `WS_IDENTITY_PUB_KEY`. While it lists the key, `--check` must print nothing of the Mac key stage.
-With git's name, it must say it would wait for git's key made in Secretive, unless
-`WS_GIT_SIGNING_PUB_KEY` is empty. With no `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, it must
+With git's name, it must ask for git's key, marking that key as ws's, an empty one too, and a run
+must stop, naming its line. With no `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, it must
 take the agent's key, and say it would write ws's copy. Once the agent lacks it, a run and `--check`
 must stop there, naming the socket. Last,
 without the stand-in `gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth

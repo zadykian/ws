@@ -23,8 +23,8 @@ func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 			err = setup.Apply(ctx, k.M, k.Out, c)
 		case chooseKey:
 			err = k.choose(ctx, c)
-		case gitKey:
-			err = k.git(ctx, false)
+		case askKey:
+			err = k.ask(ctx, c.use)
 		}
 		if err != nil {
 			return err

@@ -17,7 +17,7 @@ import (
 // terminal, it stops, naming the key that answers.
 func (k *MacKey) choose(ctx context.Context, c chooseKey) error {
 	if c.app {
-		return k.secretiveKey(ctx) // git's key is a change of the plan then
+		return k.secretiveKey(ctx)
 	}
 	if !k.Tty {
 		return fmt.Errorf("%s: no terminal to ask whether Secretive keeps the Mac's key: set "+
@@ -31,10 +31,7 @@ func (k *MacKey) choose(ctx context.Context, c chooseKey) error {
 		return err
 	}
 	if !strings.HasPrefix(strings.ToLower(answer), "n") {
-		if err := k.secretiveKey(ctx); err != nil {
-			return err
-		}
-		return k.git(ctx, true)
+		return k.secretiveKey(ctx)
 	}
 	if err := k.make(ctx, strings.TrimSuffix(c.pub, ".pub")); err != nil {
 		return err

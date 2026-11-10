@@ -27,10 +27,3 @@ func (c chooseKey) String() string {
 	return fmt.Sprintf("%s: would ask whether Secretive keeps the Mac's key: yes installs its cask, no makes %s with "+
 		"ssh-keygen, and names it in WS_IDENTITY_PUB_KEY", macKey, strings.TrimSuffix(c.pub, ".pub"))
 }
-
-// gitKey is the change that has the user make git's signing key in Secretive.
-type gitKey struct{}
-
-func (gitKey) String() string {
-	return macKey + ": would open Secretive, and wait for git's signing key made there"
-}

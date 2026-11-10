@@ -23,7 +23,11 @@ func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	cs, err := k.changes(ctx, text, c)
-	return step.Plan{Changes: cs}, err
+	if err != nil {
+		return step.Plan{}, err
+	}
+	git, err := k.gitQuestion(ctx, c)
+	return step.Plan{Changes: append(cs, git...)}, err
 }
 
 func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.Change, error) {
@@ -52,7 +56,7 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 		if !choose.app {
 			return []step.Change{choose}, nil
 		}
-		cs, agent = append(cs, choose), k.secretive()+"/socket.ssh"
+		cs = append(cs, choose)
 	default:
 		if _, err := k.fileKey(ctx, key); err != nil {
 			return nil, err
@@ -67,10 +71,17 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 				Exists: text != "", Mode: 0o644}}, nil
 		}
 	}
-	// git, which has a name, needs a key of its own beside ws's in Secretive, unless mac.conf has a
-	// line for WS_GIT_SIGNING_PUB_KEY. An empty one keeps ws mac apply's key.
-	if agent == k.secretive()+"/socket.ssh" && c.GitName != "" && !hasLine(text, "WS_GIT_SIGNING_PUB_KEY") {
-		cs = append(cs, gitKey{})
-	}
 	return cs, nil
+}
+
+// gitQuestion asks for git's key after ws's key's changes, whichever, where git has a name, no key.
+func (k *MacKey) gitQuestion(ctx context.Context, c conf.Conf) ([]step.Change, error) {
+	if c.GitName == "" || c.GitSigningPubKey != "" {
+		return nil, nil
+	}
+	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", macKey, err)
+	}
+	return []step.Change{askKey{gitUse, keyQuestion(gitUse, keys, k.login(c))}}, nil
 }

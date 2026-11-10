@@ -2,8 +2,9 @@
 # The Mac key stage with a key of an agent's, on the Mac that 40-again.sh leaves. The stand-in for
 # Secretive's agent is an ssh-agent at its socket that holds a P-256 key, whose .pub is in
 # PublicKeys. With a mac.conf of its own that names that .pub in WS_IDENTITY_PUB_KEY, --check must print
-# nothing of the stage while the agent lists the key. With git's name too, it must say it would wait
-# for git's key made in Secretive, unless mac.conf has an empty WS_GIT_SIGNING_PUB_KEY. With no
+# nothing of the stage while the agent lists the key. With git's name too, it must say it would ask
+# for git's key, offering that key as ws's login key, an empty WS_GIT_SIGNING_PUB_KEY too. With no
+# terminal, a run must stop there, naming that key's line for git. With no
 # WS_IDENTITY_PUB_KEY and PublicKeys closed, as macOS 27 denies ws Secretive's files, --check must take the
 # agent's key. It must say it would write ws's copy of its .pub. Once the agent lacks ws's key, a
 # run and --check must stop at the stage, naming the socket, before ws mac apply's. None may change
@@ -14,7 +15,6 @@ set -u
 wsbin=$HOME/.local/bin/ws
 container=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 data=$container/Data
-pub=$data/PublicKeys/0123456789abcdef0123456789abcdef.pub
 conf=$RUNNER_TEMP/agent.conf
 fail=0
 
@@ -47,6 +47,11 @@ mkdir -p "$data/PublicKeys"
 ssh-keygen -q -t ecdsa -b 256 -N '' -C ws -f "$RUNNER_TEMP/agent" </dev/null
 agent=$(ssh-agent -a "$data/socket.ssh" | sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p')
 SSH_AUTH_SOCK=$data/socket.ssh ssh-add -q "$RUNNER_TEMP/agent"
+# Secretive names a key's .pub by its MD5 fingerprint, and ws's copy takes that name.
+name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
+    sed -e 's/^[0-9]* MD5://' -e 's/ .*//' -e 's/://g' -e 's/$/.pub/')
+copy=$HOME/.config/ws/secretive/$name
+pub=$data/PublicKeys/$name
 cp "$RUNNER_TEMP/agent.pub" "$pub"
 { cat ~/.config/ws/mac.conf && echo "WS_IDENTITY_PUB_KEY=~/${pub#"$HOME"/}"; } >"$conf"
 cp "$conf" "$RUNNER_TEMP/agent.conf.before"
@@ -55,17 +60,21 @@ files >"$RUNNER_TEMP/agent.files"
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] || error "ws mac wizard --check exited $status, with '$mac'"
 printf '%s\n' 'WS_GIT_NAME="Jane Doe"' WS_GIT_EMAIL=jane@example.com >>"$conf"
-keys --check
-want="ws mac wizard: Mac key: would open Secretive, and wait for git's signing key made there"
-[ "$status" = 0 ] && [ "$mac" = "$want" ] ||
-    error "ws mac wizard --check with git's name exited $status, with '$mac', not '$want'"
-echo WS_GIT_SIGNING_PUB_KEY= >>"$conf"
-keys --check
-[ "$status" = 0 ] && [ -z "$mac" ] ||
-    error "ws mac wizard --check with an empty WS_GIT_SIGNING_PUB_KEY exited $status, with '$mac'"
-name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
-    sed -e 's/^[0-9]* MD5://' -e 's/ .*//' -e 's/://g' -e 's/$/.pub/')
-copy=$HOME/.config/ws/secretive/$name
+label="ws ($(ssh-keygen -l -f "$RUNNER_TEMP/agent.pub" | cut -d ' ' -f 2))"
+want="ws mac wizard: Mac key: would ask for git's signing key, in Secretive: $label, ws's login key;"
+want="$want make a new one (the default)"
+for empty in '' WS_GIT_SIGNING_PUB_KEY=; do
+    [ -z "$empty" ] || echo "$empty" >>"$conf"
+    keys --check
+    [ "$status" = 0 ] && [ "$mac" = "$want" ] ||
+        error "ws mac wizard --check with git's name${empty:+ and $empty} exited $status, with '$mac', not '$want'"
+done
+keys
+stop="ws mac wizard: Mac key: no terminal to ask for git's signing key: add one of these lines to mac.conf,"
+stop="$stop WS_GIT_SIGNING_PUB_KEY=~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+[ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
+    error "ws mac wizard with no terminal exited $status, naming no line for git's key"
+rm -f "$copy"
 grep -v '^WS_IDENTITY_PUB_KEY' ~/.config/ws/mac.conf >"$conf"
 chmod 000 "$data/PublicKeys"
 keys --check
