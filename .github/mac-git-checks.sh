@@ -171,19 +171,19 @@ printf '[user]\n\temail = someone@example.com\n' >"$tmp/xdg/git/config"
 prints "ws mac apply: wrote $HOME/.gitconfig${nl}ws mac apply: warning: $tmp/xdg/git/config's settings of\
  user.email come before the include in ~/.gitconfig, so ~/.config/ws/gitconfig's win over them"
 rm "$tmp/xdg/git/config" ~/.gitconfig
-# A WS_GIT_SIGNING_KEY that is missing must stop ws mac apply, as must a .pub that holds more than a
+# A WS_GIT_SIGNING_PUB_KEY that is missing must stop ws mac apply, as must a .pub that holds more than a
 # public key's line, as a private key does. So must the default key's .pub alone, which a new key
 # would replace, and its private key alone.
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com 'WS_GIT_SIGNING_KEY=~/.ssh/ws.pub'
-stops "ws mac apply: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_KEY, is missing"
+with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com 'WS_GIT_SIGNING_PUB_KEY=~/.ssh/ws.pub'
+stops "ws mac apply: $HOME/.ssh/ws.pub, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing"
 cp "$key" "$tmp/mixed.pub"
-with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_KEY=$tmp/mixed.pub"
+with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com "WS_GIT_SIGNING_PUB_KEY=$tmp/mixed.pub"
 stops "ws mac apply: $tmp/mixed.pub holds no public key alone"
 # So must one it cannot read, where the user cannot, as on the runner: root reads it.
 cp "$key.pub" "$tmp/unread-git.pub" && chmod 000 "$tmp/unread-git.pub"
 if ! cat "$tmp/unread-git.pub" >/dev/null 2>&1; then
     with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com \
-        "WS_GIT_SIGNING_KEY=$tmp/unread-git.pub"
+        "WS_GIT_SIGNING_PUB_KEY=$tmp/unread-git.pub"
     stops "ws mac apply: cannot read $tmp/unread-git.pub"
 fi
 with 'WS_GIT_NAME="ws stand-in"' WS_GIT_EMAIL=ws@example.com
@@ -207,7 +207,7 @@ if [ -z "$agent" ] || ! SSH_AUTH_SOCK=$secretive/Data/socket.ssh ssh-add -q "$tm
 fi
 rm "$tmp/p256"
 with 'WS_GIT_NAME="ws stand-in #1"' WS_GIT_EMAIL=ws@example.com \
-    "WS_GIT_SIGNING_KEY=~/${copy#"$HOME/"}"
+    "WS_GIT_SIGNING_PUB_KEY=~/${copy#"$HOME/"}"
 setup --check || error "ws mac apply --check failed: $out"
 case $out in
 *"+++ $files/secretive-ssh-keygen$nl"*"$nl+    program = \"$files/secretive-ssh-keygen\""*) ;;

@@ -131,7 +131,7 @@ typed 'seven empty lines' '' '' '' '' '' '' ''
 conf=$RUNNER_TEMP/target.conf
 WS_CONF=$conf
 export WS_CONF
-echo 'WS_IDENTITY=~/.ssh/id_ed25519.pub' >"$conf"
+echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' >"$conf"
 cp "$conf" "$RUNNER_TEMP/mac.conf"
 quick 'ws mac wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
     env WS_TARGET=cloud "$wsbin" mac wizard --check
