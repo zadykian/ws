@@ -16,7 +16,7 @@ import (
 
 const (
 	gitHome = "/Users/me"
-	gitPub  = gitHome + "/.ssh/id_ed25519_signing.pub"
+	gitPub  = gitHome + "/.ssh/git.pub"
 	gitKey  = "ssh-ed25519 AAAAC3Nz me@mac\n"
 	gitList = "/opt/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"
 )
@@ -34,13 +34,12 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *setup.Gi
 	}
 }
 
-// prereqs returns the changes that make the key or install gh, which the files wait on.
+// prereqs returns the changes that install gh, which the files wait on.
 func prereqs(p step.Plan) []step.Change {
 	var cs []step.Change
 	for _, c := range p.Changes {
-		switch c.(type) {
-		case setup.MakeKey, setup.Run:
-			cs = append(cs, c)
+		if run, ok := c.(setup.Run); ok {
+			cs = append(cs, run)
 		}
 	}
 	return cs
@@ -72,7 +71,7 @@ func TestGitPlansGh(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
-		m.Files[gitPub], m.Files[gitHome+"/.ssh/id_ed25519_signing"] = []byte(gitKey), []byte("private")
+		m.Files[gitPub] = []byte(gitKey)
 		p, err := gitStep(m, tc.look).Plan(context.Background())
 		if (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
@@ -132,15 +131,6 @@ func TestGitChecksAKeyNamedInMacConf(t *testing.T) {
 	}
 }
 
-func TestGitApplyMakesTheKey(t *testing.T) {
-	m, _ := gitReady() // the key that ssh-keygen makes is there when Apply plans again
-	m.Results["ssh-keygen -q -t ed25519 -N  -f /k"] = effecttest.Result{}
-	err := gitStep(m, nil).Apply(context.Background(), step.Plan{Changes: []step.Change{setup.MakeKey{Path: "/k"}}})
-	if err != nil || m.Calls[0] != "run ssh-keygen -q -t ed25519 -N  -f /k" {
-		t.Errorf("Apply = %v, calls %q; want ssh-keygen first", err, m.Calls)
-	}
-}
-
 const (
 	includeText   = "[include]\n    path = ~/.config/ws/gitconfig\n"
 	gitConfigFile = gitHome + "/.gitconfig"
@@ -158,7 +148,7 @@ func gitConfig(m *effecttest.Machine, text, paths, names string) {
 // gitReady is a Mac with the key and gh there.
 func gitReady() (*effecttest.Machine, *setup.Git) {
 	m := effecttest.NewMachine()
-	m.Files[gitPub], m.Files[gitHome+"/.ssh/id_ed25519_signing"] = []byte(gitKey), []byte("private")
+	m.Files[gitPub] = []byte(gitKey)
 	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
 	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
 	return m, gitStep(m, nil)

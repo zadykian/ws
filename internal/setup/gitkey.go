@@ -10,12 +10,9 @@ import (
 	"github.com/zadykian/ws/internal/sshcfg"
 )
 
-// gitKey is the signing key: its .pub, and the key's type and base64, which are empty before the
-// key is made. Text is what ws's copy of its .pub holds, for a key that Secretive's agent lists.
-type gitKey struct {
-	Pub, Public, Text string
-	Make              bool
-}
+// gitKey is the signing key: its .pub, and the key's type and base64. Text is what ws's copy of
+// its .pub holds, for a key that Secretive's agent lists.
+type gitKey struct{ Pub, Public, Text string }
 
 // key finds the signing key, WS_GIT_SIGNING_PUB_KEY with its ~/ the home. It makes none, and stops
 // where mac.conf names none, or an empty one, with the line that would name each P-256 key of
