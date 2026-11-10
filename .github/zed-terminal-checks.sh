@@ -102,9 +102,12 @@ got=$(
     zt show -gv status-interval
     zt show -gv prefix
     zt show -gv mouse
+    zt show -gv allow-passthrough
+    zt show -sv focus-events
 )
-result "extended-keys always, csi-u, status on every 10 s, prefix None, mouse on" \
-    test "$got" = "$(printf '%s\n' always csi-u on 10 None on)"
+result "extended-keys always, csi-u, status on every 10 s, prefix None, mouse on, passthrough on, \
+focus-events on" \
+    test "$got" = "$(printf '%s\n' always csi-u on 10 None on on on)"
 
 echo "== T1 no session: a tab starts one, and exit ends it and the server"
 reset

@@ -141,6 +141,7 @@ tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` li
 - The scrollback, and any search of it, are tmux's: the wheel enters tmux's copy mode, not Zed's own
   scrollback.
 - tmux has no prefix, so Fresh gets Ctrl+B. `/usr/local/lib/ws/zed/tmux.conf` has the rest.
+- tmux lets a program's passthrough reach the terminal, as claude's notifications need.
 - tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](mac-zed.md).
   Where none is set, the title is empty, not tmux's default, the host's name.
 - The status line holds [ws-bar's](tmux.md#ws-bar) line of the host's load, read every 10 s. After
