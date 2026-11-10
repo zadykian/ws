@@ -16,15 +16,16 @@ as the script makes no other: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes
 `WS_GIT_SIGNING_PUB_KEY` gives the script's own instead. A `.pub` that the script cannot read, or
 that holds more than a public key's line, as a private key does, stops it too.
 
-Where Secretive holds the Mac's ssh key, give git a key of its own in Secretive's app, at Notify.
-The login key asks for Touch ID at each use by default, so a rebase would ask at each commit. Name
-ws's copy of its `.pub`, `~/.config/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is
-that of Secretive's Public Key Path, and the script writes the copy from the agent
-([Secretive's keys](#secretives-keys)). git then signs through
-`~/.config/ws/secretive-ssh-keygen`, which gives
-`ssh-keygen` Secretive's agent, so that a terminal, an editor and other apps sign alike. The
-key never leaves the Secure Enclave, and signs only while the Mac is unlocked. ssh then offers ws
-Secretive's other key, or else the file key ([ssh's hosts](mac.md#sshs-hosts)).
+The wizard asks for git's key where `mac.conf` names none ([The Mac's
+key](mac-wizard.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
+prompt while the Mac is unlocked. The login key may sign too, but asks for Touch ID at each use by
+default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
+`~/.config/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
+Key Path, and the script writes the copy from the agent ([Secretive's keys](#secretives-keys)). git
+then signs through `~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
+so that a terminal, an editor and other apps sign alike. The key never leaves the Secure Enclave,
+and signs only while the Mac is unlocked. ssh then offers ws Secretive's other key, or else the file
+key ([ssh's hosts](mac.md#sshs-hosts)).
 
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
