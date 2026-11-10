@@ -28,6 +28,9 @@ type Gh struct {
 	Tty bool
 	// F runs gh's login, which shows a code and waits. Nil means M.Pass.
 	F effect.Foreground
+
+	// added is whether this run added the key, so that the plan after it says no "already".
+	added bool
 }
 
 // GhCLI is the Mac's gh, as the stages that read its login and the Mac's key run it.

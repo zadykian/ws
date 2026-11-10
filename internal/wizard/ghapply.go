@@ -67,6 +67,7 @@ func (g *Gh) add(ctx context.Context, c ghAdd) error {
 	if _, err := g.M.Run(ctx, path, "ssh-key", "add", c.pub, "--title", c.title); err != nil {
 		return fmt.Errorf("%s: %s failed", ghStage, c.line())
 	}
+	g.added = true
 	g.Out.Say("%s: ran %s", ghStage, c.line())
 	return nil
 }

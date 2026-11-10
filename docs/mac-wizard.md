@@ -25,7 +25,7 @@ stages, in order, the first two of which install what the rest needs:
    installer`. On a new Mac, `--check` stops there.
 2. Answers: the values `mac.conf` lacks, below.
 3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
-4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
+4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, said if there.
 5. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
    timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
    the warnings of `ws mac apply` and drops the Mac's key that it prints.
