@@ -35,7 +35,7 @@ func planned(k *MacKey) string {
 }
 
 func TestMacKeyPlan(t *testing.T) {
-	const conf = "WS_IDENTITY=~/k.pub\nWS_IDENTITY_AGENT=/s\n"
+	const conf = "WS_IDENTITY_PUB_KEY=~/k.pub\nWS_IDENTITY_AGENT=/s\n"
 	k, m, _ := newMacKey(t, conf)
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
@@ -60,7 +60,7 @@ func TestMacKeyPlanPinsAFileKey(t *testing.T) {
 	m.Results["rm -f "+lockDir+"/key"] = effecttest.Result{}
 	m.Results["ssh-keygen -l -f "+lockDir+"/key"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
-	if got := planned(k); !strings.Contains(got, "\n+WS_IDENTITY=~/.ssh/id_ed25519.pub\n") {
+	if got := planned(k); !strings.Contains(got, "\n+WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n") {
 		t.Errorf("Plan = %q, want the line for the file key", got)
 	}
 }

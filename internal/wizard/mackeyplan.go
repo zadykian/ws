@@ -16,7 +16,7 @@ func (k *MacKey) file() confFile { return confFile{k.Conf, macKey, k.M, k.Out} }
 func (k *MacKey) secretive() string { return k.Home + "/" + sshcfg.SecretiveData }
 
 // Plan finds what the key that ssh offers ws lacks. A file key, or a key where mac.conf has no line
-// for WS_IDENTITY, is checked here; a Secretive key's agent must list it.
+// for WS_IDENTITY_PUB_KEY, is checked here; a Secretive key's agent must list it.
 func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
 	text, c, err := loadConf(k.file())
 	if err != nil {
@@ -27,9 +27,9 @@ func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
 }
 
 func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.Change, error) {
-	// A WS_IDENTITY that is no key of Secretive's, with no agent, is a key in a file.
-	if c.Identity != "" && c.IdentityAgent == "" {
-		if pub := sshcfg.Expand(c.Identity, k.Home); !sshcfg.SecretiveKey(pub, k.Home) {
+	// A WS_IDENTITY_PUB_KEY that is no key of Secretive's, with no agent, is a key in a file.
+	if c.IdentityPubKey != "" && c.IdentityAgent == "" {
+		if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); !sshcfg.SecretiveKey(pub, k.Home) {
 			return k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 		}
 	}
@@ -58,18 +58,18 @@ func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.
 			return nil, err
 		}
 		// A Secretive key made later would take the file key's place.
-		if !hasLine(text, "WS_IDENTITY") {
+		if !hasLine(text, "WS_IDENTITY_PUB_KEY") {
 			after := text
 			if after != "" && !strings.HasSuffix(after, "\n") {
 				after += "\n"
 			}
-			return []step.Change{setup.Write{Path: k.Conf, Before: []byte(text), After: []byte(after + line("WS_IDENTITY", id.Pub) + "\n"),
+			return []step.Change{setup.Write{Path: k.Conf, Before: []byte(text), After: []byte(after + line("WS_IDENTITY_PUB_KEY", id.Pub) + "\n"),
 				Exists: text != "", Mode: 0o644}}, nil
 		}
 	}
 	// git, which has a name, needs a key of its own beside ws's in Secretive, unless mac.conf has a
-	// line for WS_GIT_SIGNING_KEY. An empty one keeps ws mac apply's key.
-	if agent == k.secretive()+"/socket.ssh" && c.GitName != "" && !hasLine(text, "WS_GIT_SIGNING_KEY") {
+	// line for WS_GIT_SIGNING_PUB_KEY. An empty one keeps ws mac apply's key.
+	if agent == k.secretive()+"/socket.ssh" && c.GitName != "" && !hasLine(text, "WS_GIT_SIGNING_PUB_KEY") {
 		cs = append(cs, gitKey{})
 	}
 	return cs, nil

@@ -30,7 +30,7 @@ func SecretiveKeys(ctx context.Context, m effect.Machine, home string) ([]sshcfg
 	// ssh-add exits 1 and says so on its standard output for an agent with no keys.
 	if err != nil && !strings.Contains(string(out), "The agent has no identities") {
 		return nil, true, fmt.Errorf("%w at %s: open Secretive, then run this again, or name another key in "+
-			"mac.conf's WS_IDENTITY", ErrAgentDown, socket)
+			"mac.conf's WS_IDENTITY_PUB_KEY", ErrAgentDown, socket)
 	}
 	return sshcfg.AgentKeys(string(out)), true, nil
 }

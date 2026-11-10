@@ -123,8 +123,8 @@ func TestGitPlansTheSigningKey(t *testing.T) {
 func TestGitChecksAKeyNamedInMacConf(t *testing.T) {
 	m := effecttest.NewMachine()
 	g := gitStep(m, nil)
-	g.Conf.GitSigningKey = "~/k.pub"
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_KEY, is missing") {
+	g.Conf.GitSigningPubKey = "~/k.pub"
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_PUB_KEY, is missing") {
 		t.Errorf("a missing .pub: err = %v", err)
 	}
 	m.Files[gitHome+"/k.pub"] = []byte(gitKey)
@@ -212,7 +212,7 @@ func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 func TestGitTrustsSecretivesKeyThroughItsScript(t *testing.T) {
 	m, g := gitReady()
 	pub := gitHome + "/" + sshcfg.SecretiveData + "/PublicKeys/a.pub"
-	g.Conf.GitSigningKey = pub
+	g.Conf.GitSigningPubKey = pub
 	m.Files[pub] = []byte(gitKey)
 	m.Results["ssh-keygen -l -f "+pub] = effecttest.Result{}
 	p, err := g.Plan(context.Background())

@@ -12,7 +12,7 @@ import (
 
 func newGh(look func(string) (string, error)) (*Gh, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files[confPathForTest] = []byte("WS_IDENTITY=~/k.pub\n")
+	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=~/k.pub\n")
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 	m.Results["hostname -s"] = effecttest.Result{Out: []byte("mac\n")}

@@ -10,9 +10,9 @@ import (
 const macKey = "Mac key"
 
 // MacKey is the stage that makes the key that ssh offers ws, as setup.PickKey finds it from
-// mac.conf. Without WS_IDENTITY, the key is Secretive's, in the Mac's Secure Enclave, unless the
+// mac.conf. Without WS_IDENTITY_PUB_KEY, the key is Secretive's, in the Mac's Secure Enclave, unless the
 // answer at the terminal is no: then ssh-keygen makes ~/.ssh/id_ed25519. It writes the key into
-// mac.conf as WS_IDENTITY, so that a Secretive key made later does not take the file key's place.
+// mac.conf as WS_IDENTITY_PUB_KEY, so that a Secretive key made later does not take the file key's place.
 type MacKey struct {
 	// Conf is mac.conf's path, Home the user's, and Lock the run's lock, whose directory holds the
 	// link that fingerprints a private key.

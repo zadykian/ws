@@ -21,8 +21,8 @@ func (k *MacKey) other(ctx context.Context, skip string) (sshcfg.AgentKey, error
 			continue
 		}
 		if got.Name != "" {
-			return got, fmt.Errorf("%s: Secretive holds several keys, %s and %s: name ws's in mac.conf's WS_IDENTITY, "+
-				"and git's in WS_GIT_SIGNING_KEY", macKey, sshcfg.Expand(got.Pub(), k.Home), sshcfg.Expand(key.Pub(), k.Home))
+			return got, fmt.Errorf("%s: Secretive holds several keys, %s and %s: name ws's in mac.conf's WS_IDENTITY_PUB_KEY, "+
+				"and git's in WS_GIT_SIGNING_PUB_KEY", macKey, sshcfg.Expand(got.Pub(), k.Home), sshcfg.Expand(key.Pub(), k.Home))
 		}
 		got = key
 	}

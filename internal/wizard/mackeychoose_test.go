@@ -26,13 +26,13 @@ func TestMacKeyChooseNo(t *testing.T) {
 	if err := k.choose(context.Background(), chooseKey{pub: "/h/.ssh/id_ed25519.pub"}); err != nil {
 		t.Fatalf("choose = %v", err)
 	}
-	if got := string(m.Files[confPathForTest]); got != "WS_REMOTE=\nWS_IDENTITY=~/.ssh/id_ed25519.pub\n" {
+	if got := string(m.Files[confPathForTest]); got != "WS_REMOTE=\nWS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n" {
 		t.Errorf("mac.conf = %q", got)
 	}
 }
 
 func TestMacKeyGit(t *testing.T) {
-	k, m, out := newMacKey(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\nWS_IDENTITY=~/k.pub\nWS_IDENTITY_AGENT=/s\n")
+	k, m, out := newMacKey(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\nWS_IDENTITY_PUB_KEY=~/k.pub\nWS_IDENTITY_AGENT=/s\n")
 	agent(m, p256)
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
@@ -41,7 +41,7 @@ func TestMacKeyGit(t *testing.T) {
 	if err := k.git(context.Background(), true); err != nil {
 		t.Fatalf("git = %v, saying %q", err, out.Lines)
 	}
-	if got := string(m.Files[confPathForTest]); !strings.HasSuffix(got, "\nWS_GIT_SIGNING_KEY="+k.tilde(copyOf(p256))+"\n") {
+	if got := string(m.Files[confPathForTest]); !strings.HasSuffix(got, "\nWS_GIT_SIGNING_PUB_KEY="+k.tilde(copyOf(p256))+"\n") {
 		t.Errorf("mac.conf = %q", got)
 	}
 	if string(m.Files[copyOf(p256)]) != p256 {

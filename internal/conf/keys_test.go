@@ -38,8 +38,8 @@ func TestKeys(t *testing.T) {
 		{"WS_CABLE_PORT", "-enp5s0", false},
 		{"WS_GIT_EMAIL", "ws@example.com", true},
 		{"WS_GIT_EMAIL", "ws", false},
-		{"WS_GIT_SIGNING_KEY", "~/.ssh/ws.pub", true},
-		{"WS_IDENTITY", "~/.ssh/ws", false},
+		{"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/ws.pub", true},
+		{"WS_IDENTITY_PUB_KEY", "~/.ssh/ws", false},
 	}
 	for _, tt := range tests {
 		if got := find(t, tt.key).ok(tt.value, false); got != tt.want {

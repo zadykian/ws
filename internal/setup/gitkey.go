@@ -18,14 +18,14 @@ type gitKey struct {
 	Make              bool
 }
 
-// key finds the signing key, WS_GIT_SIGNING_KEY with its ~/ the home. Without it, the key is
+// key finds the signing key, WS_GIT_SIGNING_PUB_KEY with its ~/ the home. Without it, the key is
 // ~/.ssh/id_ed25519_signing, made once, as the shell role does on ws. No other key is made, and no
 // .pub replaced. A key that Secretive's agent lists needs no file, as macOS 27 denies ws Secretive's
 // (docs/mac.md): git names ws's copy. Else it stops where the .pub is missing or unreadable, holds
 // more than a public key's line, as a private key does, or ssh-keygen can't read it.
 func (g *Git) key(ctx context.Context) (gitKey, error) {
-	pub := sshcfg.Expand(g.Conf.GitSigningKey, g.Home)
-	if g.Conf.GitSigningKey == "" {
+	pub := sshcfg.Expand(g.Conf.GitSigningPubKey, g.Home)
+	if g.Conf.GitSigningPubKey == "" {
 		pub = g.Home + "/.ssh/id_ed25519_signing.pub"
 		_, err := g.M.Stat(strings.TrimSuffix(pub, ".pub"))
 		if missing, err := notExist(err); err != nil {
@@ -33,7 +33,7 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 		} else if missing {
 			if _, err := g.M.Stat(pub); err == nil {
 				return gitKey{}, fmt.Errorf("%s is there without its private key: name it in mac.conf's "+
-					"WS_GIT_SIGNING_KEY where an agent holds the key, or remove it", pub)
+					"WS_GIT_SIGNING_PUB_KEY where an agent holds the key, or remove it", pub)
 			}
 			return gitKey{Pub: pub, Make: true}, nil
 		}
@@ -48,12 +48,12 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 	text, err := g.M.ReadFile(pub)
 	if missing, rerr := notExist(err); rerr != nil {
 		return gitKey{}, fmt.Errorf("cannot read %s: make it readable, or name another .pub in "+
-			"mac.conf's WS_GIT_SIGNING_KEY", pub)
-	} else if missing && g.Conf.GitSigningKey == "" {
+			"mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
+	} else if missing && g.Conf.GitSigningPubKey == "" {
 		return gitKey{}, fmt.Errorf("%s is missing beside its key: ssh-keygen -y -f %s >%s writes it",
 			pub, strings.TrimSuffix(pub, ".pub"), pub)
 	} else if missing {
-		return gitKey{}, fmt.Errorf("%s, mac.conf's WS_GIT_SIGNING_KEY, is missing: make the key first, "+
+		return gitKey{}, fmt.Errorf("%s, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing: make the key first, "+
 			"as docs/mac-git.md says", pub)
 	}
 	public := gitcfg.PublicKey(string(text))

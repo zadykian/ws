@@ -34,12 +34,12 @@ func (k *MacKey) secretiveKey(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	got, err := k.pick(ctx, sshcfg.Expand(c.GitSigningKey, k.Home), "a P-256 key for ws's login, at its default protection", "")
+	got, err := k.pick(ctx, sshcfg.Expand(c.GitSigningPubKey, k.Home), "a P-256 key for ws's login, at its default protection", "")
 	if err != nil {
 		return err
 	}
-	if !hasLine(text, "WS_IDENTITY") {
-		lines := line("WS_IDENTITY", k.tilde(got)) + "\n" + line("WS_IDENTITY_AGENT", k.tilde(k.secretive())+"/socket.ssh") + "\n"
+	if !hasLine(text, "WS_IDENTITY_PUB_KEY") {
+		lines := line("WS_IDENTITY_PUB_KEY", k.tilde(got)) + "\n" + line("WS_IDENTITY_AGENT", k.tilde(k.secretive())+"/socket.ssh") + "\n"
 		if err := refused(k.file().add(ctx, lines)); err != nil {
 			return err
 		}

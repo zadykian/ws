@@ -26,7 +26,7 @@ func TestMacKeyApplyPins(t *testing.T) {
 	k, m, _ := newMacKey(t, "WS_REMOTE=\n")
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
 	w := setup.Write{Path: confPathForTest, Before: []byte("WS_REMOTE=\n"),
-		After: []byte("WS_REMOTE=\nWS_IDENTITY=~/.ssh/id_ed25519.pub\n"), Exists: true}
+		After: []byte("WS_REMOTE=\nWS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n"), Exists: true}
 	if err := k.Apply(context.Background(), step.Plan{Changes: []step.Change{w}}); err != nil {
 		t.Fatalf("Apply = %v", err)
 	}
