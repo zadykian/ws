@@ -24,7 +24,7 @@ stages, in order, the first two of which install what the rest needs:
    `internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
 2. Answers: the values `mac.conf` lacks, below.
-3. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
+3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
 4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
 5. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
    timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
@@ -87,26 +87,22 @@ Under `--check`, the wizard asks too, and shows the lines it would add as a diff
 ## The Mac's key
 
 ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY_PUB_KEY` names
-([mac.conf](mac.md#macconf)). Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key
-nor its `.pub` is there, `ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
-`ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
-and asks it once more. With no terminal to ask one, the key gets none. Where `ssh-add` fails, the
-wizard stops, as Login logs in with no prompt. Run the command it names, then the wizard again.
+([mac.conf](mac.md#macconf)). Where that is a file, as `~/.ssh/id_ed25519.pub`, the key and its
+`.pub` must be there, as the wizard makes no key in a file. Where one is missing, it stops, naming
+the line to drop for the wizard to ask.
 
-Without `WS_IDENTITY_PUB_KEY`, and with no key yet, the wizard asks whether Secretive keeps the key,
-in the Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and
-where its app is there already, the wizard asks nothing. It opens the app, and waits up to 15
-minutes for a P-256 key made there, at its default protection, which asks for Touch ID at each
-login. Where git has a name, and `mac.conf` an empty `WS_GIT_SIGNING_PUB_KEY` or none, the wizard
-asks for git's key. It offers each P-256 key of Secretive's agent, by comment and SHA256
-fingerprint, the login key marked, and a new one, the default ([git](mac-git.md)). It takes each key
-from the agent, and writes a copy of its `.pub` ([Secretive's keys](mac-git.md#secretives-keys)).
-The copies and the agent go in `mac.conf`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and
-`WS_GIT_SIGNING_PUB_KEY`. With no terminal, the wizard stops at git's question, naming the line of
-each such key. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above. Where `mac.conf` has no
-`WS_IDENTITY_PUB_KEY` line, the wizard writes `WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub` for a file
-key, made now or found there. A Secretive key made later then does not take its place. With no
-terminal to ask, the wizard stops, unless `WS_IDENTITY_PUB_KEY` names a file.
+Where `mac.conf` names none, or an empty one, the wizard asks for ws's login key. It offers each
+P-256 key of Secretive's agent, by comment and SHA256 fingerprint, and a new one. The new one is the
+default, so that a keypress never takes a key made for another use. Where git has a name, and
+`mac.conf` an empty `WS_GIT_SIGNING_PUB_KEY` or none, it asks for git's key too, the login key
+marked ([git](mac-git.md)). One key may serve both. For a new key, the wizard installs Secretive's
+cask where its app is missing, and opens the app. It waits up to 15 minutes for a P-256 key made
+there, in the Mac's Secure Enclave, which it never leaves. Where the agent wasn't there to ask, a
+key it lists once it starts stops the wizard, as no answer named it. ws's key takes Secretive's
+default protection, which asks for Touch ID at each login. The wizard takes each key from the agent,
+and writes a copy of its `.pub` ([Secretive's keys](mac-git.md#secretives-keys)). The copies and the
+agent go in `mac.conf`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY`.
+With no terminal, the wizard stops at the first question, naming the line of each such key.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`

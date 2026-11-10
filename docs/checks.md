@@ -46,26 +46,25 @@ A workflow of its own, `mac-wizard.yml`, runs `ws mac wizard` on GitHub's macOS 
 of the checkout at `~/repository/ws`. `standin.sh` gives the wizard what a new Mac and user would,
 such as `mac.conf`'s answers, dash, and a logged-in `gh`, first on the wizard's `PATH`. Then
 `checks.sh` runs the cases beside it in order, stopping at the first failure
-([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and
-a removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
+([checks.sh](../.github/mac-wizard/checks.sh)). The wizard must refuse an unknown flag, root and a
+removed `WS_HOOK` line, as an unknown key, and a removed op of the files script. A run must stop
 where another holds the lock, leaving it. A fresh `--check`, by sh and dash, must find brew with its
 directories off `PATH`. As `ws mac apply --check` must, it must change nothing, and leave no lock or
-temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `--check` must
-show it would make. With no terminal and a `mac.conf` that names none, a run must stop at the Mac
-key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing. A file key there with no line must get one,
-shown by `--check`. A failed `ssh-add` must stop a run, naming it. The first run, with that `PATH`
-too, must make that key with no passphrase, add it to that login, install what `ws mac apply`
-installs. It must drop the Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel
-stage below takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in
-`ssh-agent` at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
+temporary file. The job's `mac.conf` names `~/.ssh/id_ed25519` as ws's key, which `standin.sh`
+makes, as the wizard makes none in a file. With no terminal and a `mac.conf` that names none, a run
+must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing, and `--check` must
+show the question, a new key the default. A named key that is missing must stop a run. The first
+run, with that `PATH` too, must add that key to that login, install what `ws mac apply` installs. It
+must drop the Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel stage below
+takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in `ssh-agent`
+at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
 `WS_IDENTITY_PUB_KEY`. While it lists the key, `--check` must print nothing of the Mac key stage.
 With git's name, it must ask for git's key, marking that key as ws's, an empty one too, and a run
-must stop, naming its line. With no `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, it must
-take the agent's key, and say it would write ws's copy. Once the agent lacks it, a run and `--check`
-must stop there, naming the socket. Last,
-without the stand-in `gh`'s login, a run with no terminal must stop at gh's stage, naming `gh auth
-login`. With a login lacking the scopes, or the signing one alone, it must name `gh auth refresh`.
-`--check` must say each would run.
+must stop, naming its line. With no `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, `--check` must
+offer the agent's key for ws's login, and a run must stop, naming its line. Once the agent lacks it,
+a run and `--check` must stop there, naming the socket. Last, without the stand-in `gh`'s login, a
+run with no terminal must stop at gh's stage, naming `gh auth login`. With a login lacking the
+scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
 leads, with its own host key. A fresh `--check` must show the Host key stage after `ws mac apply`.
