@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -61,4 +62,40 @@ func (k *MacKey) pick(ctx context.Context, skip, what, extra string) (string, er
 	}
 	pub := sshcfg.Expand(got.Pub(), k.Home)
 	return pub, setup.Apply(ctx, k.M, k.Out, setup.KeyCopy{Path: pub, Text: got.Line + "\n"})
+}
+
+// fresh returns the first key that Secretive's agent lists and before lacks, or none. An agent that
+// does not answer lists none, as while Secretive starts.
+func (k *MacKey) fresh(ctx context.Context, before []sshcfg.AgentKey) sshcfg.AgentKey {
+	keys, _, _ := setup.SecretiveKeys(ctx, k.M, k.Home)
+	for _, key := range keys {
+		if !slices.ContainsFunc(before, func(b sshcfg.AgentKey) bool { return b.Name == key.Name }) {
+			return key
+		}
+	}
+	return sshcfg.AgentKey{}
+}
+
+// wait says to make what in Secretive's app, and waits up to 15 minutes for a key that the agent
+// lists besides those of before. It fails on a key other than P-256, as an ML-DSA one, which ws's
+// OpenSSH lacks.
+func (k *MacKey) wait(ctx context.Context, before []sshcfg.AgentKey, what string) (sshcfg.AgentKey, error) {
+	k.Out.Say("%s: in Secretive, make %s; the wizard waits up to 15 minutes for it", macKey, what)
+	got := k.fresh(ctx, before)
+	for left := 450; got.Name == ""; got = k.fresh(ctx, before) {
+		// A signal ends the wait at once, as a trap did in sh.
+		if err := ctx.Err(); err != nil {
+			return got, err
+		}
+		if left--; left < 0 {
+			return got, fmt.Errorf("%s: Secretive made no key in 15 minutes: make %s, then run the wizard again",
+				macKey, what)
+		}
+		k.Sleep(2 * time.Second)
+	}
+	if !got.P256() {
+		return got, fmt.Errorf("%s: %s is not the P-256 key asked for: remove it in Secretive, make %s, then run the "+
+			"wizard again", macKey, got.Label(), what)
+	}
+	return got, nil
 }
