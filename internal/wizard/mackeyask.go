@@ -67,3 +67,19 @@ func (k *MacKey) login(c conf.Conf) string {
 	}
 	return ""
 }
+
+// noTerminal is the stop where no terminal is there to ask.
+func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
+	var lines []string
+	for _, key := range keys {
+		if key.P256() {
+			lines = append(lines, line(use.key, key.Pub())+" for "+key.Label())
+		}
+	}
+	if len(lines) == 0 {
+		return fmt.Errorf("%s: no terminal to ask for %s, and Secretive's agent lists no P-256 key: run the wizard "+
+			"at a terminal to make one, or name a key's .pub in mac.conf's %s", macKey, use.name, use.key)
+	}
+	return fmt.Errorf("%s: no terminal to ask for %s: add one of these lines to mac.conf, %s; or run the wizard "+
+		"at a terminal", macKey, use.name, strings.Join(lines, "; "))
+}
