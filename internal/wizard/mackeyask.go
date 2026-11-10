@@ -1,12 +1,14 @@
 package wizard
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/sshcfg"
 )
 
@@ -82,4 +84,13 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 	}
 	return fmt.Errorf("%s: no terminal to ask for %s: add one of these lines to mac.conf, %s; or run the wizard "+
 		"at a terminal", macKey, use.name, strings.Join(lines, "; "))
+}
+
+// name writes ws's copy of the key's .pub, which ssh and git read, and names the copy in mac.conf.
+func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) error {
+	copied := setup.KeyCopy{Path: sshcfg.Expand(key.Pub(), k.Home), Text: key.Line + "\n"}
+	if err := setup.Apply(ctx, k.M, k.Out, copied); err != nil {
+		return err
+	}
+	return refused(k.file().set(ctx, use.key, key.Pub()))
 }

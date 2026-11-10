@@ -23,7 +23,7 @@ const (
 func agent(m *effecttest.Machine, lines ...string) {
 	m.Files[socket], m.Modes[socket] = nil, fs.ModeSocket
 	m.Results[listKeys] = effecttest.Result{Out: []byte(strings.Join(lines, ""))}
-	m.Results[makeDir] = effecttest.Result{}
+	m.Results[makeDir], m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}, effecttest.Result{}
 }
 
 // copyOf is the path of ws's copy of the line's key.

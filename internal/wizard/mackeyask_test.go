@@ -1,6 +1,7 @@
 package wizard
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -9,6 +10,7 @@ import (
 const (
 	p256Label = "me (SHA256:cJ6AyISHokEeHuTfufIqhhSS0gxHZRUMDHlKvXD4FHw)"
 	gitLabel  = "me (SHA256:CcCKY/wrEaUM+I629sBixyeWSgyCiAj+RsdArzoziXo)"
+	gitConf   = "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\n"
 )
 
 func TestMacKeyQuestionString(t *testing.T) {
@@ -28,5 +30,20 @@ func TestMacKeyQuestionWithNoTerminal(t *testing.T) {
 	}
 	if err := noTerminal(gitUse, listed(mldsa)); err == nil || !strings.Contains(err.Error(), "lists no P-256 key") {
 		t.Errorf("noTerminal of no P-256 key = %v", err)
+	}
+}
+
+// name writes ws's copy of the key's .pub, and its line in place of an empty one.
+func TestMacKeyName(t *testing.T) {
+	k, m, _ := newMacKey(t, gitConf+"WS_GIT_SIGNING_PUB_KEY=\n")
+	agent(m, gitP256)
+	if err := k.name(context.Background(), gitUse, listed(gitP256)[0]); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files[confPathForTest]); got != gitConf+"WS_GIT_SIGNING_PUB_KEY="+listed(gitP256)[0].Pub()+"\n" {
+		t.Errorf("mac.conf = %q", got)
+	}
+	if string(m.Files[copyOf(gitP256)]) != gitP256 {
+		t.Errorf("the copy holds %q", m.Files[copyOf(gitP256)])
 	}
 }
