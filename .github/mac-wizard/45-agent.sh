@@ -4,10 +4,10 @@
 # PublicKeys. With a mac.conf of its own that names that .pub in WS_IDENTITY_PUB_KEY, --check must print
 # nothing of the stage while the agent lists the key. With git's name too, it must say it would ask
 # for git's key, offering that key as ws's login key, an empty WS_GIT_SIGNING_PUB_KEY too. With no
-# terminal, a run must stop there, naming that key's line for git. With no
-# WS_IDENTITY_PUB_KEY and PublicKeys closed, as macOS 27 denies ws Secretive's files, --check must take the
-# agent's key. It must say it would write ws's copy of its .pub. Once the agent lacks ws's key, a
-# run and --check must stop at the stage, naming the socket, before ws mac apply's. None may change
+# terminal, a run must stop there, naming that key's line for git. With no WS_IDENTITY_PUB_KEY and
+# PublicKeys closed, as macOS 27 denies ws Secretive's files, --check must offer the agent's key for
+# ws's login. A run with no terminal must name its line. Once the agent lacks ws's key, a run and
+# --check must stop at the stage, naming the socket, before ws mac apply's. None may change
 # that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
@@ -78,10 +78,16 @@ rm -f "$copy"
 grep -v '^WS_IDENTITY_PUB_KEY' ~/.config/ws/mac.conf >"$conf"
 chmod 000 "$data/PublicKeys"
 keys --check
+want="ws mac wizard: Mac key: would ask for ws's login key, in Secretive: $label; make a new one (the default)"
+[ "$status" = 0 ] && [ "$mac" = "$want" ] ||
+    error "ws mac wizard --check with no WS_IDENTITY_PUB_KEY exited $status, with '$mac', not '$want'"
+keys
+stop="ws mac wizard: Mac key: no terminal to ask for ws's login key: add one of these lines to mac.conf,"
+stop="$stop WS_IDENTITY_PUB_KEY=~/.config/ws/secretive/$name for $label; or run the wizard at a terminal"
+[ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
+    error "ws mac wizard with no terminal exited $status, naming no line for ws's key"
 chmod 755 "$data/PublicKeys"
-want="ws mac wizard: would write $copy, ws's copy of a key of Secretive's"
-printf '%s\n' "$out" | grep -qxF "$want" || error "ws mac wizard --check said no '$want'"
-[ ! -e "$copy" ] || error "ws mac wizard --check wrote $copy"
+[ ! -e "$copy" ] || error "ws mac wizard wrote $copy, with no key named"
 cp "$RUNNER_TEMP/agent.conf.before" "$conf"
 SSH_AUTH_SOCK=$data/socket.ssh ssh-add -D 2>/dev/null
 want="ws mac wizard: Mac key: the agent at $data/socket.ssh lists no key of $pub: open Secretive,"
