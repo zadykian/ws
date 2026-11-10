@@ -65,15 +65,16 @@ func TestMacKeyPlanNeedsAFileKey(t *testing.T) {
 	}
 }
 
-func TestMacKeyPlanPinsAFileKey(t *testing.T) {
+// mac.conf gets no line for a file key that the stage finds where ssh looks by default.
+func TestMacKeyPlanWritesNoLineForAFileKey(t *testing.T) {
 	k, m, _ := newMacKey(t, "WS_REMOTE=\n")
 	m.Files["/h/.ssh/id_ed25519"], m.Files["/h/.ssh/id_ed25519.pub"] = []byte("p"), []byte(pubText)
 	m.Results["ln -sf /h/.ssh/id_ed25519 "+lockDir+"/key"] = effecttest.Result{}
 	m.Results["rm -f "+lockDir+"/key"] = effecttest.Result{}
 	m.Results["ssh-keygen -l -f "+lockDir+"/key"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
-	if got := planned(k); !strings.Contains(got, "\n+WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n") {
-		t.Errorf("Plan = %q, want the line for the file key", got)
+	if got := planned(k); got != "[] <nil>" {
+		t.Errorf("Plan = %q, want no change", got)
 	}
 }
 
