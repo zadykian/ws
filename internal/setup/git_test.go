@@ -30,7 +30,7 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *setup.Gi
 		look = func(name string) (string, error) { return "/opt/bin/" + name, nil }
 	}
 	return &setup.Git{
-		Conf: conf.Conf{GitName: "A B", GitEmail: "a@b.c"},
+		Conf: conf.Conf{GitName: "A B", GitEmail: "a@b.c", GitSigningPubKey: gitPub},
 		Home: gitHome, M: m, Out: &effecttest.Out{}, LookPath: look,
 	}
 }
@@ -111,7 +111,9 @@ func TestGitPlansTheSigningKey(t *testing.T) {
 		for f, text := range tc.files {
 			m.Files[f] = []byte(text)
 		}
-		p, err := gitStep(m, nil).Plan(context.Background())
+		g := gitStep(m, nil)
+		g.Conf.GitSigningPubKey = ""
+		p, err := g.Plan(context.Background())
 		if (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
 		} else if got := fmt.Sprint(prereqs(p)); (tc.want == "") != (len(prereqs(p)) == 0) || (tc.want != "" && got != "["+tc.want+"]") {
@@ -225,7 +227,9 @@ func TestGitWaitsForTheKeyBeforeAllowedSigners(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
 	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
-	p, err := gitStep(m, nil).Plan(context.Background())
+	g := gitStep(m, nil)
+	g.Conf.GitSigningPubKey = ""
+	p, err := g.Plan(context.Background())
 	if err != nil || len(p.Changes) != 4 || !strings.HasSuffix(p.Changes[1].String(), "allowed_signers once the key is made") {
 		t.Errorf("Plan = %v, %v; want the key, two waits and gitconfig", p.Changes, err)
 	}

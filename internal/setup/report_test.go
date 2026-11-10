@@ -126,6 +126,7 @@ func TestGitReportShowsAKeyToMakeAndGhToInstall(t *testing.T) {
 	m, g := gitReady()
 	delete(m.Files, gitPub)
 	delete(m.Files, strings.TrimSuffix(gitPub, ".pub"))
+	g.Conf.GitSigningPubKey = ""
 	g.LookPath = func(name string) (string, error) {
 		if name == "gh" {
 			return "", fmt.Errorf("no %s", name)
