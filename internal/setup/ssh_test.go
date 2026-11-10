@@ -14,9 +14,12 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// sshMachine answers the commands that the ssh step runs, with ssh happy.
+// sshMachine answers the commands that the ssh step runs, with ssh happy, and has the file key that
+// sshStep's mac.conf names.
 func sshMachine() *effecttest.Machine {
 	m := effecttest.NewMachine()
+	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA me\n")
+	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	for _, file := range []string{"new", "whole"} {
@@ -27,7 +30,7 @@ func sshMachine() *effecttest.Machine {
 
 func sshStep(m *effecttest.Machine, out *effecttest.Out) setup.SSH {
 	return setup.SSH{
-		Conf: conf.Conf{User: "me"}, Home: "/h", M: m, Out: out,
+		Conf: conf.Conf{User: "me", IdentityPubKey: "~/.ssh/id_ed25519.pub"}, Home: "/h", M: m, Out: out,
 		Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
 	}
 }

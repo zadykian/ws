@@ -78,8 +78,9 @@ func TestSSHReportLeavesTheUsersConfigOut(t *testing.T) {
 }
 
 func TestSSHReportsWsCopyOfAKey(t *testing.T) {
-	m := agentMachine(sshMachine(), agentKey)
-	it := reportOf(t, sshStep(m, &effecttest.Out{}))[copyOf(agentKey)]
+	s := sshStep(agentMachine(sshMachine(), agentKey), &effecttest.Out{})
+	s.Conf.IdentityPubKey = sshcfg.AgentKeys(agentKey)[0].Pub()
+	it := reportOf(t, s)[copyOf(agentKey)]
 	if it.Kind != step.FileItem || it.Want != "present" || it.Found != "missing" {
 		t.Errorf("copy = %+v, want a file that is missing", it)
 	}

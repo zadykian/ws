@@ -156,6 +156,7 @@ func TestSSHWritesTheCopyItNames(t *testing.T) {
 	m, out := agentMachine(sshMachine(), agentKey), &effecttest.Out{}
 	m.Results["mkdir -p /h/.config/ws/secretive"] = effecttest.Result{}
 	s := sshStep(m, out)
+	s.Conf.IdentityPubKey = sshcfg.AgentKeys(agentKey)[0].Pub()
 	p, err := s.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)

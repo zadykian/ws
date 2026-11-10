@@ -16,11 +16,18 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
+// keyed gives the Mac a mac.conf that names the file key it has for ws's login, as ssh's step needs.
+func keyed(m *effecttest.Machine) {
+	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\nWS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n")
+	m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA ada\n")
+	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{}
+}
+
 // macTerminal returns a process with a terminal, as the Mac's user, with a mac.conf and what ssh's
 // step looks at.
 func macTerminal() (process, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	keyed(m)
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	for _, file := range []string{"new", "whole"} {
