@@ -100,11 +100,11 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, fmt.Errorf("cannot read ws: %w", err)
 	}
 	var cs []step.Change
-	copied, err := t.programAndCopy(self)
+	copied, err := t.programAndCopy(ctx, self)
 	if err != nil {
 		return step.Plan{}, err
 	}
-	key, err := t.key()
+	key, err := t.key(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -150,7 +150,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, userFile{M: t.M, Path: t.pubFile(), Text: []byte(t.public + "\n")})
+		parts = append(parts, t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		daemon := step.Item{Kind: step.ServiceItem, Name: daemonLabel, Want: "loaded", Found: "not loaded"}

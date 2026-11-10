@@ -48,3 +48,18 @@ func TestMachinePassLines(t *testing.T) {
 		t.Errorf("Calls = %q, Inputs = %q", m.Calls, m.Inputs)
 	}
 }
+
+func TestMachineRootMkdirRecordsTheDirectory(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs["/etc/old"] = 0o700
+	for _, args := range [][]string{{"-m", "750", "/etc/new"}, {"-p", "--", "/var/x", "/etc/old"}} {
+		if _, err := m.RunRoot(context.Background(), "mkdir", args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for path, want := range map[string]effect.Attrs{"/etc/new": {Mode: 0o750}, "/var/x": {Mode: 0o755}, "/etc/old": {Mode: 0o700}} {
+		if got, err := m.RootAttrs(path); err != nil || got != want {
+			t.Errorf("RootAttrs(%s) = %+v, %v; want %+v", path, got, err, want)
+		}
+	}
+}

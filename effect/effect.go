@@ -90,18 +90,22 @@ type Machine interface {
 	// the file is missing.
 	RootAttrs(path string) (Attrs, error)
 	// WriteAtomic replaces a file through a pending file, so that a reader sees the old file or the
-	// new one whole, and sets the owner and mode of a. Another owner than ws's own needs root.
+	// new one whole, and sets the owner and mode of a. Another owner than ws's own needs root:
+	// where ws runs as a user, sudo gives it outside the home and Confine, never through a link.
 	WriteAtomic(path string, data []byte, a Attrs) error
 	// Download fetches the URL into path through a pending file, which replaces path only where the
 	// SHA-256 of the body, in hex, is sum. It sets the owner and mode of a.
 	Download(ctx context.Context, url, path, sum string, a Attrs) error
-	// Chown sets the owner of the file a link points to.
+	// Chown sets the owner of the file a link points to, through sudo as WriteAtomic's, where the
+	// file or the owner is another's.
 	Chown(path string, uid, gid int) error
 	// Symlink makes path a link to target, and replaces a file or link there.
 	Symlink(target, path string) error
-	// Mkdir makes the directory with exactly perm, whatever the umask.
+	// Mkdir makes the directory with exactly perm, whatever the umask, through sudo as
+	// WriteAtomic's, where ws may not write the parent.
 	Mkdir(path string, perm fs.FileMode) error
-	// Chmod sets the mode of the file a link points to.
+	// Chmod sets the mode of the file a link points to, through sudo as WriteAtomic's, where the
+	// file is another's.
 	Chmod(path string, perm fs.FileMode) error
 	Run(ctx context.Context, name string, args ...string) ([]byte, error)
 	// RunRoot runs the command through sudo.

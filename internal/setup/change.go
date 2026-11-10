@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/step"
 )
 
@@ -93,8 +94,13 @@ func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change)
 		if err := m.Pass(ctx, c.Root, c.Name, c.Args...); err != nil {
 			return fmt.Errorf("%s failed: %w", c.line(), err)
 		}
+	case host.Change:
+		if err := c.Apply(ctx); err != nil {
+			return fmt.Errorf("cannot %s: %w", step.Headline(c), err)
+		}
+		out.Say("%s", step.Headline(c))
 	default:
-		return applyRootFile(ctx, m, out, c)
+		return fmt.Errorf("unknown change %T", c)
 	}
 	return nil
 }

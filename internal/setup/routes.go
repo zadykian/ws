@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/check"
 	"github.com/zadykian/ws/internal/tunnel"
 	"github.com/zadykian/ws/step"
@@ -49,7 +50,8 @@ func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
 	return applyInOrder(ctx, r.M, r.Out, p)
 }
 
-// changes plans routes.d/Set and the signal that has a loaded daemon read it.
+// changes plans routes.d/Set, and the signal that has a loaded daemon read it. A change of the
+// file's owner or mode alone sends the signal too.
 func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	networks := r.Networks
 	file := tunnelDir + "/routes.d/" + r.Set
@@ -64,19 +66,13 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	var c step.Change
-	var err error
+	var res host.Resource = host.Absent{M: r.M, Path: file}
 	if len(networks) > 0 {
-		c, err = rootFile(r.M, file, 0o644, []byte(routesText(networks)))
-	} else {
-		c, err = removeRoot(r.M, file)
+		res = host.File{M: r.M, Path: file, Content: []byte(routesText(networks)), Mode: 0o644}
 	}
-	if err != nil || c == nil {
-		return nil, err
-	}
-	cs := []step.Change{c}
-	if _, ok := c.(RootFix); ok || r.Check {
-		return cs, nil
+	cs, err := plan(ctx, nil, res)
+	if err != nil || len(cs) == 0 || r.Check {
+		return cs, err
 	}
 	if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+daemonLabel); err == nil {
 		cs = append(cs, Launchctl{Args: []string{"kill", "SIGHUP", "system/" + daemonLabel}, Routes: true})

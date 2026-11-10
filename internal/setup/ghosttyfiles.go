@@ -1,22 +1,23 @@
 package setup
 
 import (
-	"bytes"
 	"io/fs"
 	"path/filepath"
 
 	"github.com/zadykian/ws/step"
 )
 
-// fileChanges returns the changes that put want in ws.ghostty, whose text is old where it exists.
-// Unless has, they also put the line that reads ws.ghostty at the end of Ghostty's config, whose
-// text is text.
-func (g *Ghostty) fileChanges(config string, text []byte, file string, old, want []byte, has bool) []step.Change {
+// fileChanges returns the changes that make the directory of ws.ghostty, file, where missing, then
+// ws, the changes to that file. Unless has, they also put the line that reads ws.ghostty at the end
+// of Ghostty's config, whose text is text.
+func (g *Ghostty) fileChanges(config string, text []byte, file string, ws []step.Change, has bool) []step.Change {
 	dir := filepath.Dir(file)
 	var cs []step.Change
 	dirInfo, dirErr := g.M.Stat(dir)
-	fileInfo, fileErr := g.M.Stat(file)
-	differs := fileErr != nil || !bytes.Equal(old, want)
+	differs := false
+	if len(ws) > 0 {
+		_, differs = ws[0].(Write)
+	}
 	// A linked directory, as GNU stow's folding makes, gets the warning that ssh gives for
 	// ~/.ssh/config.d.
 	if dirErr == nil && dirInfo.Link != "" && (!has || differs) {
@@ -25,12 +26,7 @@ func (g *Ghostty) fileChanges(config string, text []byte, file string, old, want
 	if dirErr != nil {
 		cs = append(cs, MakeDir{dir, 0o755})
 	}
-	switch {
-	case differs:
-		cs = append(cs, Write{file, old, want, fileErr == nil, 0o644})
-	case fileInfo.Mode.Perm() != 0o644:
-		cs = append(cs, SetMode{file, 0o644})
-	}
+	cs = append(cs, ws...)
 	if has {
 		return cs
 	}

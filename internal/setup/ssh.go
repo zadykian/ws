@@ -61,7 +61,9 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there",
 			f.ConfigDirLink)
 	}
-	for _, h := range sshcfg.OwnHosts(string(f.UserConfig.Text), "ws") {
+	// The line is counted in the text the run leaves, so that the runner's second Plan names the
+	// same line and the warning shows once.
+	for _, h := range sshcfg.OwnHosts(string(userConfigText(f)), "ws") {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}
@@ -101,7 +103,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	parts := []step.Reporter{
 		userPath{M: s.M, Kind: step.DirItem, Path: dir},
 		userPath{M: s.M, Kind: step.DirItem, Path: dir + "/config.d", Mode: sshDirMode},
-		userFile{M: s.M, Path: dir + "/config.d/ws", Text: s.config(ctx, f, id), Mode: sshFileMode},
+		s.wsFile(s.config(ctx, f, id)),
 		fixed{include},
 	}
 	return gather(ctx, append(parts, keyCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)...)...)

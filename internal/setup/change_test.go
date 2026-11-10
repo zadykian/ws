@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/step"
 )
@@ -17,8 +18,6 @@ func TestAFileChangeNamesItsFileInAReport(t *testing.T) {
 	}{
 		{setup.Write{Path: "/f", After: []byte("a\n")}, "would create /f"},
 		{setup.Write{Path: "/f", Before: []byte("b\n"), After: []byte("a\n"), Exists: true}, "would write /f"},
-		{setup.RootWrite{Write: setup.Write{Path: "/e", After: []byte("a\n")}}, "would create /e"},
-		{setup.RootRemove{Path: "/e", Before: []byte("a\n")}, "would remove /e"},
 	}
 	for _, tt := range tests {
 		got, _, _ := strings.Cut(step.PendingOf(tt.change).Text, "\n")
@@ -56,19 +55,30 @@ func TestApply(t *testing.T) {
 	}
 }
 
+func TestApplySaysAHostChangeByItsHeadline(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	cs, err := host.File{M: m, Path: "/e/f", Content: []byte("x\n"), Mode: 0o644}.Plan(context.Background())
+	if err != nil || len(cs) != 1 {
+		t.Fatalf("Plan = %v, %v; want one change", cs, err)
+	}
+	if err := setup.Apply(context.Background(), m, out, cs[0]); err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Files["/e/f"]) != "x\n" || len(out.Lines) != 1 || out.Lines[0] != "say: create /e/f" {
+		t.Errorf("/e/f holds %q, and Apply said %q", m.Files["/e/f"], out.Lines)
+	}
+}
+
 func TestAChangeSaysItsKind(t *testing.T) {
 	tests := []struct {
 		change step.Change
 		want   step.ChangeKind
 	}{
 		{setup.Write{Path: "/f"}, step.Write},
-		{setup.RootWrite{Write: setup.Write{Path: "/e"}}, step.Write},
 		{setup.MakeDir{Path: "/d"}, step.Write},
-		{setup.RootCopy{To: "/e"}, step.Install},
 		{setup.Install{Path: "/b"}, step.Install},
 		{setup.Run{Name: "brew", Args: []string{"install"}}, step.Install},
 		{setup.Run{Name: "open"}, step.OtherChange},
-		{setup.RootRemove{Path: "/e"}, step.Removal},
 		{setup.Launchctl{}, step.Restart},
 		{setup.Remark("a line"), step.OtherChange},
 		{setup.KeyMake{}, step.OtherChange},

@@ -59,7 +59,11 @@ func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: append(append(app, font...), g.files()...)}, nil
+	files, err := g.files()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: append(append(app, font...), files...)}, nil
 }
 
 // Apply installs the casks. A failed install is a warning, and the next run tries again; where
@@ -98,28 +102,30 @@ func (g *Ghostty) conf() string {
 // that reads it at the end of that config, once. Ghostty reads a config-file after the file that
 // names it (Config.zig's config-file), so ws.ghostty's settings win over the config's own. It
 // warns, and leaves the config unchanged, where ws.ghostty is not its own, the config can't be
-// read, or the config is a link that lacks the line.
-func (g *Ghostty) files() []step.Change {
+// read, or the config is a link that lacks the line. It stops where ws.ghostty can't be read.
+func (g *Ghostty) files() ([]step.Change, error) {
 	config := g.conf()
-	dir := filepath.Dir(config)
-	file := dir + "/ws.ghostty"
-	_, err := g.M.Stat(file)
-	exists := err == nil
-	var old []byte
-	if exists {
-		old, _ = g.M.ReadFile(file)
-		if !ghosttyOwn(old) {
-			g.Out.Warn("%s is not ws mac apply's: move it away, as the script writes its own", file)
-			return nil
-		}
+	file := g.file(config)
+	ws, err := file.plan()
+	switch {
+	case errors.Is(err, errNotWs):
+		g.Out.Warn("%s is not ws mac apply's: move it away, as the script writes its own", file.Path)
+		return nil, nil
+	case err != nil:
+		return nil, err
 	}
 	text, err := g.M.ReadFile(config)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		g.Out.Warn("cannot read %s, Ghostty's config, so ws.ghostty stays out", config)
-		return nil
+		return nil, nil
 	}
-	has := ghosttyIncludes(config, string(text), file, g.Home, g.resolve())
-	return g.fileChanges(config, text, file, old, g.want(), has)
+	has := ghosttyIncludes(config, string(text), file.Path, g.Home, g.resolve())
+	return g.fileChanges(config, text, file.Path, ws, has), nil
+}
+
+// file is ws.ghostty, beside Ghostty's config.
+func (g *Ghostty) file(config string) userFile {
+	return userFile{M: g.M, Path: filepath.Dir(config) + "/ws.ghostty", Text: g.want(), Mode: 0o644, Own: ghosttyOwn}
 }
 
 // ghosttyOwn says whether ws.ghostty's first line is ws's.
@@ -144,18 +150,16 @@ func (g *Ghostty) resolve() func(string) (string, error) {
 // lacking the line stands against ws: a run only warns of it.
 func (g *Ghostty) Report(ctx context.Context) ([]step.Item, error) {
 	config := g.conf()
-	dir := filepath.Dir(config)
-	file := dir + "/ws.ghostty"
+	file := g.file(config)
 	text, err := g.M.ReadFile(config)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-	line := lineItem(config, ghosttyLine, err == nil, ghosttyIncludes(config, string(text), file, g.Home, g.resolve()))
+	line := lineItem(config, ghosttyLine, err == nil, ghosttyIncludes(config, string(text), file.Path, g.Home, g.resolve()))
 	if info, err := g.M.Stat(config); err == nil && info.Link != "" && line.Found != line.Want {
 		line.Conflict = "a link to " + info.Link + ": add the line at the end of that file"
 	}
 	return gather(ctx, g.casks().report(ctx, "ghostty", "Ghostty.app", g.Home),
-		userPath{M: g.M, Kind: step.DirItem, Path: dir},
-		userFile{M: g.M, Path: file, Text: g.want(), Mode: 0o644, Own: ghosttyOwn},
+		userPath{M: g.M, Kind: step.DirItem, Path: filepath.Dir(config)}, file,
 		fixed{line})
 }

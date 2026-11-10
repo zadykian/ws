@@ -1,10 +1,8 @@
 package setup
 
 import (
-	"bytes"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
 )
 
@@ -26,10 +24,9 @@ const (
 // files plans Zed's directory and its three files. global_settings.json is Settings, replaced on
 // each run, and left with a warning where its first line is not ws's. keymap.json is Keymap,
 // replaced and left on the same terms with its own mark. settings.json is written where nothing is there, and never read.
-func (z *Zed) files() []step.Change {
+func (z *Zed) files() ([]step.Change, error) {
 	conf := z.Home + "/.config"
 	dir := conf + "/zed"
-	global := dir + "/global_settings.json"
 	var cs []step.Change
 	dirInfo, dirErr := z.M.Stat(dir)
 	if dirErr != nil {
@@ -38,15 +35,29 @@ func (z *Zed) files() []step.Change {
 		}
 		cs = append(cs, MakeDir{dir, 0o755})
 	}
-	cs = append(cs, owned(z.M, z.Out, global, z.Settings, zedOwn(zedHeader, true))...)
-	cs = append(cs, owned(z.M, z.Out, dir+"/keymap.json", z.Keymap, zedOwn(zedKeymapMark, false))...)
+	for _, f := range z.whole() {
+		planned, err := owned(z.Out, f)
+		if err != nil {
+			return nil, err
+		}
+		cs = append(cs, planned...)
+	}
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
 	}
 	if dirErr == nil && dirInfo.Link != "" && len(cs) > 0 {
 		z.Out.Warn("%s is a link to %s: Zed's files go there", dir, dirInfo.Link)
 	}
-	return cs
+	return cs, nil
+}
+
+// whole returns global_settings.json and keymap.json, the files that ws replaces whole.
+func (z *Zed) whole() []userFile {
+	dir := z.Home + "/.config/zed"
+	return []userFile{
+		{M: z.M, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
+		{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
+	}
 }
 
 // zedOwn returns the test of a file's first line: equal to mark, or starting with it where exact is
@@ -56,25 +67,4 @@ func zedOwn(mark string, exact bool) func([]byte) bool {
 		first, _, _ := strings.Cut(string(have), "\n")
 		return first == mark || (!exact && strings.HasPrefix(first, mark))
 	}
-}
-
-// owned plans a file that ws replaces whole, at mode 644, while own passes it. A file with another
-// first line is left, with a warning.
-func owned(m effect.Machine, out effect.Out, file string, want []byte, own func([]byte) bool) []step.Change {
-	info, err := m.Stat(file)
-	if err != nil {
-		return []step.Change{Write{file, nil, want, false, 0o644}}
-	}
-	old, _ := m.ReadFile(file)
-	if !own(old) {
-		out.Warn("%s is not ws's: move it away, and the next run writes ws's", file)
-		return nil
-	}
-	switch {
-	case !bytes.Equal(old, want):
-		return []step.Change{Write{file, old, want, true, 0o644}}
-	case info.Mode.Perm() != 0o644:
-		return []step.Change{SetMode{file, 0o644}}
-	}
-	return nil
 }

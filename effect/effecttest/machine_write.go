@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -122,12 +123,33 @@ func (m *Machine) run(kind, name string, args []string) ([]byte, error) {
 		return nil, nil
 	}
 	if !ok && kind == "root" && name == "mkdir" {
+		m.mkdirs(args)
 		return nil, nil
 	}
 	if !ok {
 		return nil, fmt.Errorf("effecttest: no result for %q", line)
 	}
 	return r.Out, r.Err
+}
+
+// mkdirs records the directories of root's mkdir, with the mode of its -m, or 0755, where they are
+// missing. It leaves out the parents that -p makes.
+func (m *Machine) mkdirs(args []string) {
+	mode := fs.FileMode(0o755)
+	for i := 0; i < len(args); i++ {
+		switch a := args[i]; {
+		case a == "-m" && i+1 < len(args):
+			if n, err := strconv.ParseUint(args[i+1], 8, 32); err == nil {
+				mode = fs.FileMode(n)
+			}
+			i++
+		case strings.HasPrefix(a, "-"):
+		default:
+			if _, ok := m.Dirs[a]; !ok {
+				m.Dirs[a] = mode
+			}
+		}
+	}
 }
 
 // Stat describes a directory, a link or a file of the maps. A file's mode is 0644 unless Modes has it.

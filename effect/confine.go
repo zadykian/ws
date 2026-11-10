@@ -8,15 +8,21 @@ import (
 // confined opens Confine as a root when path lies under it, and gives path inside it. A nil root
 // means path is outside, or nothing is confined. The caller closes the root.
 func (m OSMachine) confined(path string) (*os.Root, string, error) {
-	if m.Confine == "" {
-		return nil, "", nil
-	}
-	rel, err := filepath.Rel(m.Confine, path)
-	if err != nil || !filepath.IsLocal(rel) {
+	rel, in := m.inside(path)
+	if !in {
 		return nil, "", nil
 	}
 	root, err := os.OpenRoot(m.Confine)
 	return root, rel, err
+}
+
+// inside gives path inside Confine, and whether it lies there.
+func (m OSMachine) inside(path string) (string, bool) {
+	if m.Confine == "" {
+		return "", false
+	}
+	rel, err := filepath.Rel(m.Confine, path)
+	return rel, err == nil && filepath.IsLocal(rel)
 }
 
 // writeAtomicIn is WriteAtomic inside root: a pending file beside rel, with the owner and mode of

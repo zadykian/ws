@@ -23,6 +23,9 @@ module is at the root), each linking its reason
   as `Options.Parent` ([step.go](../../step/step.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values, and it applies them. Tests compare the values.
+- A whole file that ws writes in the user's home is a `userFile`, whose plan and report read it
+  alike. Its step chooses to warn or to stop at a file that is not ws's
+  ([report.go](../../internal/setup/report.go)).
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../effect/effecttest/effecttest.go), never the real ones.

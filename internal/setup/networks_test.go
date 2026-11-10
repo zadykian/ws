@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/internal/setup"
 )
 
-const resolverHead = "# Written by ws mac apply from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
+const resolverHead = "# Written by github.com/zadykian/ws: ws mac apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"
 
 func networksStep(m *effecttest.Machine, c conf.Conf) *setup.Networks {
 	m.Root["/etc/ws-tunnel/routes.d"] = effect.Attrs{Mode: 0o755}
@@ -43,7 +43,7 @@ func TestNetworksWritesRoutesAndResolversAndSignalsTheDaemon(t *testing.T) {
 	got := networksPlan(t, s)
 	if len(got) != 4 || !strings.Contains(got[0], "+10.1.0.0/24") ||
 		got[1] != "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel" ||
-		got[2] != "would make /etc/resolver, root's, with mode 755" || !strings.Contains(got[3], "+nameserver 10.0.0.1") {
+		got[2] != "create directory /etc/resolver, owner 0:0, mode 755" || !strings.Contains(got[3], "+nameserver 10.0.0.1") {
 		t.Errorf("Plan = %q", got)
 	}
 }
@@ -110,7 +110,7 @@ func TestNetworksMakesResolverDirOnceForSeveralDomains(t *testing.T) {
 	got := networksPlan(t, networksStep(effecttest.NewMachine(), conf.Conf{PublicKey: "K", Resolvers: "a.test=10.0.0.1 b.test=10.0.0.2"}))
 	n := 0
 	for _, c := range got {
-		if strings.HasPrefix(c, "would make /etc/resolver,") {
+		if strings.HasPrefix(c, "create directory /etc/resolver,") {
 			n++
 		}
 	}

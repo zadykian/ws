@@ -2,7 +2,6 @@ package setup
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 
 	"github.com/zadykian/ws/internal/gitcfg"
@@ -15,47 +14,23 @@ type Pending string
 
 func (p Pending) String() string { return string(p) }
 
-// put returns the change that makes the user's file hold text, with mode, or nil.
-func (g *Git) put(file string, text string, mode fs.FileMode) (step.Change, error) {
-	info, err := g.M.Stat(file)
-	if missing, err := notExist(err); err != nil {
-		return nil, err
-	} else if missing {
-		return Write{file, nil, []byte(text), false, mode}, nil
-	}
-	old, err := g.M.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read %s: %w", file, err)
-	}
-	switch {
-	case string(old) != text:
-		return Write{file, old, []byte(text), true, mode}, nil
-	case info.Mode.Perm() != mode:
-		return SetMode{file, mode}, nil
-	}
-	return nil, nil //nolint:nilnil // nothing to change
-}
-
-// gitFile is a file of ~/.config/ws.
-type gitFile struct {
-	path, text string
-	mode       fs.FileMode
-}
-
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
 // once the key is there, and gitconfig.
-func (g *Git) list(key gitKey, gh string) []gitFile {
+func (g *Git) list(key gitKey, gh string) []userFile {
 	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.Pub, Gh: gh, Dir: dir}
-	var list []gitFile
+	file := func(path, text string, mode fs.FileMode) userFile {
+		return userFile{M: g.M, Path: path, Text: []byte(text), Mode: mode}
+	}
+	var list []userFile
 	if sshcfg.SecretiveKey(key.Pub, g.Home) {
 		in.Program = dir + "/secretive-ssh-keygen"
-		list = append(list, gitFile{in.Program, gitcfg.Wrapper(g.Home + "/" + sshcfg.SecretiveData), 0o755})
+		list = append(list, file(in.Program, gitcfg.Wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
 	if key.Public != "" {
-		list = append(list, gitFile{dir + "/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644})
+		list = append(list, file(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644))
 	}
-	return append(list, gitFile{dir + "/gitconfig", gitcfg.Config(in), 0o644})
+	return append(list, file(dir+"/gitconfig", gitcfg.Config(in), 0o644))
 }
 
 // files plans ~/.config/ws and the files in it. Under --check, before the key is made, there are no
@@ -79,13 +54,11 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 		cs = append(cs, Pending("would write "+dir+"/allowed_signers once the key is made"))
 	}
 	for _, f := range g.list(key, gh) {
-		c, err := g.put(f.path, f.text, f.mode)
+		planned, err := f.plan()
 		if err != nil {
 			return nil, err
 		}
-		if c != nil {
-			cs = append(cs, c)
-		}
+		cs = append(cs, planned...)
 	}
 	return cs, nil
 }
@@ -118,7 +91,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 		userPath{M: g.M, Kind: step.DirItem, Path: g.Home + "/.config/ws"},
 	}
 	for _, f := range g.list(key, gh) {
-		parts = append(parts, userFile{M: g.M, Path: f.path, Text: []byte(f.text), Mode: f.mode})
+		parts = append(parts, f)
 	}
 	pub := keyCopy(g.M, key.Pub, key.Text, g.Home)
 	if len(pub) == 0 {

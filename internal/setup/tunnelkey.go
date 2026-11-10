@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/step"
 )
 
@@ -19,32 +20,24 @@ func (KeyMake) String() string { return "would make the Mac's WireGuard key, " +
 
 // key plans /etc/ws-tunnel, routes.d and the Mac's key: made where missing, and its owner and mode
 // set where they differ. It sets keyMade.
-func (t *Tunnel) key() ([]step.Change, error) {
+func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
 	var cs []step.Change
-	for _, d := range []struct {
-		path string
-		mode fs.FileMode
-	}{{tunnelDir, 0o700}, {tunnelDir + "/routes.d", 0o755}} {
-		c, err := rootDir(t.M, d.path, d.mode)
-		if err != nil {
+	var err error
+	for _, d := range []host.Dir{{M: t.M, Path: tunnelDir, Mode: 0o700}, {M: t.M, Path: tunnelDir + "/routes.d", Mode: 0o755}} {
+		if cs, err = plan(ctx, cs, d); err != nil {
 			return nil, err
 		}
-		if c != nil {
-			cs = append(cs, c)
-		}
 	}
-	t.keyMade = false
-	a, err := t.M.RootAttrs(tunnelKeyFile)
+	_, err = t.M.RootAttrs(tunnelKeyFile)
+	t.keyMade = errors.Is(err, fs.ErrNotExist)
 	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		t.keyMade = true
+	case t.keyMade:
 		return append(cs, KeyMake{}), nil
 	case err != nil:
 		return nil, err
-	case a.UID != 0 || a.GID != 0 || a.Mode.Perm() != 0o600:
-		cs = append(cs, RootFix{tunnelKeyFile, 0o600, attrsText(a)})
 	}
-	return cs, nil
+	// A Dir sets a file's owner and mode as a directory's, and never makes it here, as it exists.
+	return plan(ctx, cs, host.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600})
 }
 
 func (t *Tunnel) makeKey(ctx context.Context) error {

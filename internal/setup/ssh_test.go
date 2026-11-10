@@ -2,6 +2,7 @@ package setup_test
 
 import (
 	"context"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -87,6 +88,26 @@ func TestSSHWarnsOfBlocksForWs(t *testing.T) {
 	}
 	if len(out.Lines) != 1 || !strings.HasPrefix(out.Lines[0], "warn: line 2 of ~/.ssh/config, Host ws, sets its own values for ws:") {
 		t.Errorf("said %q, want a warning of line 2", out.Lines)
+	}
+}
+
+func TestSSHWarnsOfABlockAtTheLineTheRunLeaves(t *testing.T) {
+	m, out := sshMachine(), &effecttest.Out{}
+	m.Files["/h/.ssh/config"] = []byte("Host ws\n  User x\n")
+	m.Results["cp -p /h/.ssh/config /h/.ssh/config.20260102030405~"] = effecttest.Result{}
+	if _, err := step.RunWith(t.Context(), []step.Step{sshStep(m, out)}, step.Options{}); err != nil {
+		t.Fatal(err)
+	}
+	// The runner plans twice; Out's callers drop a text they have shown.
+	warned := map[string]bool{}
+	for _, l := range out.Lines {
+		if strings.HasPrefix(l, "warn: ") {
+			warned[l] = true
+		}
+	}
+	want := "warn: line 3 of ~/.ssh/config, Host ws, sets its own values for ws:"
+	if len(warned) != 1 || !strings.HasPrefix(slices.Collect(maps.Keys(warned))[0], want) {
+		t.Errorf("warned %q, want one warning of line 3", slices.Collect(maps.Keys(warned)))
 	}
 }
 

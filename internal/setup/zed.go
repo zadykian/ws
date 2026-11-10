@@ -46,17 +46,20 @@ func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: append(append(app, font...), z.files()...)}, nil
+	files, err := z.files()
+	if err != nil {
+		return step.Plan{}, err
+	}
+	return step.Plan{Changes: append(append(app, font...), files...)}, nil
 }
 
 // Report says how the casks and the files stand. settings.json is Zed's own, which ws writes once
 // and never reads, so a report only finds it.
 func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
 	dir := z.Home + "/.config/zed"
+	files := z.whole()
 	return gather(ctx, z.casks().report(ctx, "zed", "Zed.app", z.Home),
-		userPath{M: z.M, Kind: step.DirItem, Path: dir},
-		userFile{M: z.M, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
-		userFile{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
+		userPath{M: z.M, Kind: step.DirItem, Path: dir}, files[0], files[1],
 		userPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
 

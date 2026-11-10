@@ -1,10 +1,12 @@
 package setup
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 
+	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/step"
 )
 
@@ -12,20 +14,18 @@ import (
 // be root's and writable by root alone, as one that another user could write would let that user
 // replace the copy. /usr/local and /usr/local/libexec are made where missing. A rebuilt ws reaches
 // the copy at the next run.
-func (t *Tunnel) programAndCopy(self []byte) ([]step.Change, error) {
+func (t *Tunnel) programAndCopy(ctx context.Context, self []byte) ([]step.Change, error) {
 	var cs []step.Change
-	add := func(c step.Change, err error) error {
-		if err == nil && c != nil {
-			cs = append(cs, c)
-		}
-		return err
-	}
-	if err := add(t.program(self)); err != nil {
+	program, err := t.program(self)
+	if err != nil {
 		return nil, err
+	}
+	if program != nil {
+		cs = append(cs, program)
 	}
 	own := len(cs)
 	for _, dir := range []string{"/usr/local", "/usr/local/libexec"} {
-		if err := add(rootDir(t.M, dir, 0o755)); err != nil {
+		if cs, err = plan(ctx, cs, host.Dir{M: t.M, Path: dir, Mode: 0o755}); err != nil {
 			return nil, err
 		}
 	}
@@ -38,21 +38,17 @@ func (t *Tunnel) programAndCopy(self []byte) ([]step.Change, error) {
 			return nil, err
 		}
 		if a.UID != 0 || a.Mode.Perm()&0o022 != 0 {
-			return nil, fmt.Errorf("%s, above root's copy, is not root's alone: owner, group and mode %s", dir, attrsText(a))
+			return nil, fmt.Errorf("%s, above root's copy, is not root's alone: owner, group and mode %d:%d %o",
+				dir, a.UID, a.GID, a.Mode.Perm())
 		}
 	}
-	if err := add(rootDir(t.M, tunnelLibexec, 0o755)); err != nil {
+	if cs, err = plan(ctx, cs, host.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755}); err != nil {
 		return nil, err
 	}
-	copied, err := rootFile(t.M, tunnelLibexec+"/ws", 0o755, self)
-	if err != nil {
-		return nil, err
-	}
-	if w, ok := copied.(RootWrite); ok {
-		copied = RootCopy{From: t.Home + "/.local/bin/ws", To: w.Path, Data: self, Mode: 0o755}
-	}
-	t.copied = copied != nil
-	err = add(copied, nil)
+	before := len(cs)
+	// Secret: no diff shows a program.
+	cs, err = plan(ctx, cs, host.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true})
+	t.copied = len(cs) > before
 	// Until Apply has made those changes, root's copy is not one to run as root.
 	t.untrusted = len(cs) > own
 	return cs, err
