@@ -71,11 +71,15 @@ func (z *Zsh) Plan(context.Context) (step.Plan, error) {
 			cs = append(cs, MakeDir{d.path, d.mode})
 		}
 	}
-	if old, err := z.M.ReadFile(z.hook()); err == nil && !zshOwn(old) {
+	hook, err := z.hookFile().plan()
+	switch {
+	case errors.Is(err, errNotWs):
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's and sources it", z.hook())
 		return step.Plan{Changes: cs}, nil
+	case err != nil:
+		return step.Plan{}, err
 	}
-	cs = append(cs, owned(z.M, z.Out, z.hook(), z.Hook, zshOwn)...)
+	cs = append(cs, hook...)
 	line, err := z.line()
 	return step.Plan{Changes: append(cs, line...)}, err
 }
@@ -135,5 +139,10 @@ func (z *Zsh) Report(ctx context.Context) ([]step.Item, error) {
 	if info, err := z.M.Stat(z.rc()); err == nil && info.Link != "" && line.Found != line.Want {
 		line.Conflict = "a link to " + info.Link + ": add the line at the end of that file"
 	}
-	return gather(ctx, userFile{M: z.M, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}, fixed{line})
+	return gather(ctx, z.hookFile(), fixed{line})
+}
+
+// hookFile is the hook, mode 644.
+func (z *Zsh) hookFile() userFile {
+	return userFile{M: z.M, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}
 }

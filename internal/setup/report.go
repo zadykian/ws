@@ -177,6 +177,16 @@ func (f userFile) Report(context.Context) ([]step.Item, error) {
 	return []step.Item{item}, nil
 }
 
+// owned plans f, and leaves a file that is not ws's, with a warning.
+func owned(out effect.Out, f userFile) ([]step.Change, error) {
+	cs, err := f.plan()
+	if errors.Is(err, errNotWs) {
+		out.Warn("%s is not ws's: move it away, and the next run writes ws's", f.Path)
+		return nil, nil
+	}
+	return cs, err
+}
+
 // lineItem is a line that ws keeps in a file of the user's. The rest of the file stays out of the
 // report, as it may hold anything.
 func lineItem(path, line string, exists, holds bool) step.Item {
