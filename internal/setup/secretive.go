@@ -48,6 +48,24 @@ func held(keys []sshcfg.AgentKey, pub, home string) (sshcfg.AgentKey, bool) {
 	return sshcfg.AgentKey{}, false
 }
 
+// unnamed is the stop where mac.conf names no key for the use. It gives the line that would name
+// each P-256 key of keys, the agent's, by its comment and fingerprint. ws's OpenSSH reads no other
+// key of Secretive's.
+func unnamed(name, use string, keys []sshcfg.AgentKey) error {
+	var lines []string
+	for _, k := range keys {
+		if k.P256() {
+			lines = append(lines, name+"="+k.Pub()+" for "+k.Label())
+		}
+	}
+	if len(lines) == 0 {
+		return fmt.Errorf("mac.conf names no %s, %s: run ws mac wizard to pick or make one in Secretive, or "+
+			"name a key's .pub there", name, use)
+	}
+	return fmt.Errorf("mac.conf names no %s, %s: run ws mac wizard, or add one of these lines to mac.conf, %s",
+		name, use, strings.Join(lines, "; "))
+}
+
 // KeyCopy writes ws's copy of the .pub of a key of Secretive's.
 type KeyCopy struct{ Path, Text string }
 

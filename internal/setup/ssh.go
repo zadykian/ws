@@ -49,7 +49,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	id, err := s.identity(ctx, f)
+	id, err := PickKey(ctx, s.M, s.Conf, s.Home)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -79,8 +79,8 @@ func (s SSH) config(ctx context.Context, f sshFacts, id sshcfg.Identity) []byte 
 	}))
 }
 
-// Report says how ~/.ssh stands against the plan. It picks the key as Plan does, past Plan's
-// warning. The step's second run manages the same files, so it says nothing.
+// Report says how ~/.ssh stands against the plan, with the key that Plan takes. The step's second
+// run manages the same files, so it says nothing.
 func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	if s.Again {
 		return nil, nil

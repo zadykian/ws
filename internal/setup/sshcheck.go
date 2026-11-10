@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"strings"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
@@ -15,37 +14,16 @@ import (
 // daemonLabel is the LaunchDaemon of the tunnel.
 const daemonLabel = "com.github.zadykian.ws-tunnel"
 
-// identity picks the key that ssh offers ws and checks its .pub. It warns where Secretive's key
-// takes the place of the file key that the old config.d/ws gave ws.
-func (s SSH) identity(ctx context.Context, f sshFacts) (sshcfg.Identity, error) {
-	id, err := PickKey(ctx, s.M, s.Conf, s.Home)
-	if err != nil || !id.Check {
-		return id, err
-	}
-	if s.Conf.IdentityPubKey == "" && strings.Contains(string(f.Ws.Text), "\n    IdentityFile ~/.ssh/id_ed25519\n") {
-		s.Out.Warn("Secretive's key replaces ~/.ssh/id_ed25519 as ws's: keep the file key with "+
-			"WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the key of %s on GitHub "+
-			"before ws's next install", id.Pub)
-	}
-	return id, nil
-}
-
-// PickKey picks the key that ssh offers ws from mac.conf and the keys of Secretive's agent, and
-// checks its .pub where mac.conf or Secretive names one. A key that the agent lists needs no file:
-// it comes as ws's copy, with the copy's text, which a later step writes.
+// PickKey takes the key that mac.conf names for ws's login, and checks its .pub. A key that
+// Secretive's agent lists needs no file: it comes as ws's copy, with the copy's text, which a later
+// step writes. Without a key named, it stops and names a line for each of the agent's keys.
 func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (sshcfg.Identity, error) {
-	keys, socket, err := SecretiveKeys(ctx, m, home)
-	if err != nil && c.IdentityPubKey == "" {
-		return sshcfg.Identity{}, err
+	// An agent that does not answer leaves a named .pub to read, and a stop with no line to add.
+	keys, _, _ := SecretiveKeys(ctx, m, home)
+	if c.IdentityPubKey == "" {
+		return sshcfg.Identity{}, unnamed("WS_IDENTITY_PUB_KEY", "ws's login key", keys)
 	}
-	names := make([]string, 0, len(keys))
-	for _, k := range keys {
-		names = append(names, k.Name)
-	}
-	id, err := sshcfg.PickIdentity(c.IdentityPubKey, c.IdentityAgent, c.GitSigningPubKey, home, socket, names)
-	if err != nil || !id.Check {
-		return id, err
-	}
+	id := sshcfg.NamedIdentity(c.IdentityPubKey, c.IdentityAgent, home)
 	file := sshcfg.Expand(id.Pub, home)
 	if k, ok := held(keys, file, home); ok {
 		id.Pub, id.Text = k.Pub(), k.Line+"\n"
