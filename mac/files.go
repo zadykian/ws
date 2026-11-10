@@ -21,3 +21,8 @@ var ZedSettings []byte
 //
 //go:embed zed/keymap.json
 var ZedKeymap []byte
+
+// Zshrc is ~/.config/ws/zshrc, which ws mac apply writes whole, and which ~/.zshrc sources.
+//
+//go:embed zshrc
+var Zshrc []byte

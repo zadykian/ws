@@ -112,7 +112,17 @@ A restore opens an ssh connection for each pane it reopens. Where those logins f
 the tunnel's address, `10.99.0.2`, which shuts `ssh ws` out for an hour. [ssh's
 hosts](mac.md#sshs-hosts) says how to lift the ban.
 
-Two open issues meet this. [#56](https://github.com/zadykian/ws/issues/56) plans `mac/ws-join`,
-which joins a session again after ssh drops: cld counts a pane that runs it as an ssh pane.
-[#59](https://github.com/zadykian/ws/issues/59) plans `~/.config/ws/zshrc`, which is where a Mac
-without this ssh config would start the watcher.
+## The zsh hook
+
+A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions turned on, as their
+resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
+keys arrive as escape codes. `ws mac apply` writes [`mac/zshrc`](../mac/zshrc) as
+`~/.config/ws/zshrc`, and adds `source ~/.config/ws/zshrc` at the end of `~/.zshrc`. It keeps the
+old file as `~/.zshrc.TIME~`, and warns where `~/.zshrc` is a link that lacks the line.
+
+Before each prompt, the hook turns off the reports of the mouse, focus and the colour scheme, and
+modifyOtherKeys. It resets kitty's keyboard flags, the cursor keys, the keypad, and the cursor's
+style and visibility. It leaves the alternate screen only after `ssh`, or `cld` with `--host`,
+which becomes ssh, exits 255, as a drop makes it. ESC 7 comes just before that reset, which then
+leaves the main screen's cursor in place. The rest goes before the reset too, as kitty's flags are
+each screen's own. Without the hook, Ghostty's menu item Reset Terminal turns the modes off.
