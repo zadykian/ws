@@ -17,6 +17,8 @@ Each role has a page of its own. A role is Go steps of ws:
 - [`wireguard`](docs/wireguard.md): `wg0`, the server's end of a WireGuard tunnel for the Mac.
 - [`ikeward`](docs/ikeward.md): ikeward's IKEv2 VPN, where a profile is given, and the WireGuard
   peers' way into it.
+- [`nvidia`](docs/nvidia.md): NVIDIA's headless driver from Ubuntu's archive, on a machine with an
+  NVIDIA GPU.
 - [`fans`](docs/fans.md): fan curves for the board's headers, and the driver that sets them.
 - [`shell`](docs/shell.md): `~/.bashrc`, `~/.profile`, `~/.gitconfig`, `~/.secrets/env` from the
   secrets file, a key that signs commits, git's tokens for servers besides GitHub, and clones of
@@ -151,7 +153,7 @@ Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/
 checks that `WS_USER` logs in and installs its own ws on ws and runs `ws server apply`, with the
 secrets file on ws. Then it adds ws's signing key to GitHub, logs claude in there, and gives `wg0`
 the Mac's key.
-Without the wizard, `gh auth setup-git`, the claude login and the Mac's key stay manual. ws's gh
+Without the wizard, the claude login and the Mac's key stay manual. ws's gh
 takes a fine-grained personal access token, which `ws server apply` logs gh in with, from the
 secrets file's `token.github` ([gh](docs/devtools.md#gh)). Its permissions are the
 account's selected repositories; Metadata and Actions read; Contents, Pull requests, Issues and

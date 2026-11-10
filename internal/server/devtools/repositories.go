@@ -31,8 +31,8 @@ type Repositories struct {
 }
 
 // Plan fetches each key again at every run, so that a renewed key replaces the old one: Charm's
-// expires in 2027. A key goes in only where it holds one certificate, the one its repository pins:
-// apt trusts every certificate in its file. A vendor's server can fail for a moment, so curl tries
+// expires in 2027. A key goes in only where its repository pins each certificate in it: apt trusts
+// every certificate in its file. A vendor's server can fail for a moment, so curl tries
 // again.
 func (r Repositories) Plan(ctx context.Context) ([]host.Change, error) {
 	release, err := r.release()

@@ -9,11 +9,14 @@ func TestRepositoriesRemoveWhatTheyReplaceFirst(t *testing.T) {
 	f := newFixture(t)
 	f.m.Files["/etc/apt/sources.list.d/nodesource.list"] = []byte("deb x")
 	f.m.Files["/etc/apt/sources.list.d/dotnet-ubuntu-backports-resolute.sources"] = []byte("x")
+	f.m.Files["/etc/apt/sources.list.d/github-cli.list"] = []byte("deb x")
+	f.m.Files["/etc/apt/trusted.gpg.d/githubcli-archive-keyring.gpg"] = []byte("k")
 	changes, err := f.plan(t)
-	if err != nil || len(changes) != 6 {
+	if err != nil || len(changes) != 8 {
 		t.Fatalf("got %d changes, %v", len(changes), err)
 	}
-	for i, want := range []string{"nodesource.list", "dotnet-ubuntu-backports-resolute.sources"} {
+	for i, want := range []string{"nodesource.list", "dotnet-ubuntu-backports-resolute.sources",
+		"github-cli.list", "trusted.gpg.d/githubcli-archive-keyring.gpg"} {
 		if !strings.HasPrefix(changes[i].String(), "remove ") || !strings.HasSuffix(changes[i].String(), want) {
 			t.Errorf("change %d is %q, want a removal of %s", i, changes[i], want)
 		}

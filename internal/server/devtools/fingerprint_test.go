@@ -82,6 +82,10 @@ func TestFingerprintsOfSeveralCertificates(t *testing.T) {
 	if err != nil || !slices.Equal(got, want) {
 		t.Errorf("got %v, %v; want %v", got, err, want)
 	}
+	got, err = fingerprints(armored(public(t, a)) + armored(public(t, b)))
+	if err != nil || !slices.Equal(got, want) {
+		t.Errorf("two blocks: got %v, %v; want %v", got, err, want)
+	}
 }
 
 func TestFingerprintsRefuse(t *testing.T) {
@@ -113,7 +117,6 @@ func TestFingerprintsRefuse(t *testing.T) {
 		{"an unknown tag", armored(pub, []byte{0xFE, 0})},
 		{"a key of version 3 after a good one", armored(pub, v3)},
 		{"no armor", string(pub)},
-		{"a second block", armored(pub) + armored(pub)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

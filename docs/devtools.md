@@ -5,13 +5,15 @@ Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup.
 steps in [internal/server/devtools](../internal/server/devtools): the repositories, the packages,
 Go, the servers and rustup, in this order.
 
-Node comes from NodeSource's apt repository, glow from Charm's, and each .NET SDK from Ubuntu's
-archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run fetches their keys again,
-and a key goes in only where it holds one certificate, whose fingerprint the package pins. A subkey
-added to that certificate passes, and a second certificate fails the run. The package reads the
-key's packets itself, as `gpg` is not on every machine. A packet it cannot parse fails the run,
-and only keys of version 4 and 6 pass. A repository that is no longer needed loses its
-`.sources` file and its key, and so do the sources that the repositories' own instructions add.
+Node comes from NodeSource's apt repository, glow from Charm's and gh from GitHub CLI's. Each .NET
+SDK comes from Ubuntu's archive or, for those it lacks, Launchpad's dotnet/backports PPA. Each run
+fetches their keys again. A key goes in only where it holds a certificate at least, and the package
+pins the fingerprint of each. A subkey added to a certificate passes, and so does a key that drops a
+pinned certificate. A certificate the package does not pin fails the run, in the first armored block
+or in another, as apt reads them all. The package reads the key's packets itself, as `gpg` is not on
+every machine. A packet it cannot parse fails the run, and only keys of version 4 and 6 pass. A
+repository that is no longer needed loses its `.sources` file and its key, and so do the sources
+that the repositories' own instructions add.
 
 The packages wait on the repositories: `ws server apply --check` says "after Devtools
 repositories" where a repository is still to come, as apt may not know the packages then. The
@@ -104,12 +106,22 @@ vanish after an edit.
 
 ## gh
 
+gh comes from GitHub CLI's apt repository, as the gh of Ubuntu's archive is one that GitHub's API
+has left behind. Its key file holds two certificates: one that expired in 2026, and the one that
+signs. The role pins both. `/etc/apt/apt.conf.d/52unattended-upgrades-github-cli` allows the
+repository's origin, so unattended-upgrades installs each release of gh within a day.
+
 A step after the packages logs gh in to github.com as the user, by `token.github` in the secrets file
 ([The secrets file](shell.md#the-secrets-file)). It compares `gh auth token -h github.com` with the
 token. Where they differ, it runs `gh auth login -h github.com -p https --insecure-storage
 --with-token`, the token on stdin. ws has no keyring, so gh writes `~/.config/gh/hosts.yml`, mode
 0600. `--check` says "log gh in by token.github", never which token. gh's refusal fails the run. With
 no `token.github`, or no secrets file, the step leaves gh's login alone.
+
+gh 2.91.0 and later send telemetry unless told not to. A step before the login reads `gh config get
+telemetry` as the user, and runs `gh config set telemetry disabled` where it says otherwise. Both
+run with `GH_TELEMETRY=0`, so that they send none themselves. `--check` says "turn gh's telemetry
+off".
 
 ## The signing key
 

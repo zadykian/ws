@@ -29,11 +29,14 @@ var (
 
 // Repository is a third-party apt repository: a deb822 .sources file, with its key in
 // /etc/apt/keyrings. The role removes both files of a repository it no longer needs. A key fetched
-// again must hold one certificate, whose primary fingerprint is given here: a renewed key keeps it,
-// another key, in its place or beside it, does not.
+// again must hold a certificate at least, and each one's primary fingerprint must be pinned here. A
+// renewed key keeps its fingerprint, and a key the vendor drops leaves the rest pinned. Another
+// key, in place of them or beside them, is not pinned.
 type Repository struct {
-	Name, Key, Fingerprint, URIs, Suites, Components string
-	Needed                                           bool
+	Name, Key, URIs, Suites, Components string
+	// Fingerprints are the primary fingerprints of the certificates the key file may hold.
+	Fingerprints []string
+	Needed       bool
 }
 
 // repositories returns the repositories for the Ubuntu release, by its codename.
@@ -46,30 +49,40 @@ func repositories(release string) []Repository {
 		// Ubuntu's archive has an older Node.
 		{
 			Name: "nodesource", Key: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key",
-			Fingerprint: "6F71F525282841EEDAF851B42F59B5F99B1BE0B4",
-			URIs:        "https://deb.nodesource.com/node_" + nodeMajor + ".x", Suites: "nodistro",
+			Fingerprints: []string{"6F71F525282841EEDAF851B42F59B5F99B1BE0B4"},
+			URIs:         "https://deb.nodesource.com/node_" + nodeMajor + ".x", Suites: "nodistro",
 			Components: "main", Needed: true,
 		},
 		// Ubuntu's archive has an older glow.
 		{
 			Name: "charm", Key: "https://repo.charm.sh/apt/gpg.key",
-			Fingerprint: "ED927B38BE981E53CA09153D03BBF595D4DFD35C",
-			URIs:        "https://repo.charm.sh/apt/", Suites: "*", Components: "*", Needed: true,
+			Fingerprints: []string{"ED927B38BE981E53CA09153D03BBF595D4DFD35C"},
+			URIs:         "https://repo.charm.sh/apt/", Suites: "*", Components: "*", Needed: true,
 		},
 		// The PPA's key from Ubuntu's keyserver, by the fingerprint Launchpad gives it.
 		{
-			Name:        "dotnet-backports",
-			Key:         "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x45A3F127159BE9E5017811C62125B164E8E5D3FA",
-			Fingerprint: "45A3F127159BE9E5017811C62125B164E8E5D3FA",
-			URIs:        "https://ppa.launchpadcontent.net/dotnet/backports/ubuntu/", Suites: release,
+			Name:         "dotnet-backports",
+			Key:          "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x45A3F127159BE9E5017811C62125B164E8E5D3FA",
+			Fingerprints: []string{"45A3F127159BE9E5017811C62125B164E8E5D3FA"},
+			URIs:         "https://ppa.launchpadcontent.net/dotnet/backports/ubuntu/", Suites: release,
 			Components: "main", Needed: backports,
+		},
+		// Ubuntu's archive has a gh that GitHub's API has left behind. The key file holds a
+		// certificate that expired in 2026 beside the one that signs: both are pinned.
+		{
+			Name: "github-cli", Key: "https://cli.github.com/packages/githubcli-archive-keyring.asc",
+			Fingerprints: []string{
+				"2C6106201985B60E6C7AC87323F3D4EA75716059", "7F38BBB59D064DBCB3D84D725612B36462313325",
+			},
+			URIs: "https://cli.github.com/packages", Suites: "stable", Components: "main", Needed: true,
 		},
 	}
 }
 
 // replacedFiles are the same repositories as their own instructions add them: NodeSource's setup
-// script, Charm's README and add-apt-repository. apt refuses two sources of a repository whose keys
-// differ, so the role removes these, keys included.
+// script, Charm's README, add-apt-repository and GitHub CLI's install guide. The guide's key has
+// gone in each of three places. apt refuses two sources of a repository whose keys differ, so the
+// role removes these, keys included.
 func replacedFiles(release string) []string {
 	return []string{
 		"/etc/apt/sources.list.d/nodesource.list",
@@ -77,5 +90,9 @@ func replacedFiles(release string) []string {
 		"/etc/apt/sources.list.d/charm.list",
 		"/etc/apt/keyrings/charm.gpg",
 		"/etc/apt/sources.list.d/dotnet-ubuntu-backports-" + release + ".sources",
+		"/etc/apt/sources.list.d/github-cli.list",
+		"/etc/apt/keyrings/githubcli-archive-keyring.gpg",
+		"/usr/share/keyrings/githubcli-archive-keyring.gpg",
+		"/etc/apt/trusted.gpg.d/githubcli-archive-keyring.gpg",
 	}
 }

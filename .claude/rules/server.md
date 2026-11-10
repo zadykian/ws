@@ -62,7 +62,8 @@ steps, and each role's page in `docs/` says what it sets up.
 
 - A download is checked against its SHA-256 before it writes `dest`, and downloaded again
   where `dest` holds another ([the Go download](../../host/download.go)).
-- An apt repository's key goes in only with the primary fingerprint its entry pins
+- An apt repository's key goes in only where its entry pins the primary fingerprint of each
+  certificate in it, and it holds one at least
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
   checksum its code pins, so that a changed key fails the run
   ([docker's repository](../../internal/server/docker/repository.go)).
