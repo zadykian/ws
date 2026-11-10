@@ -56,14 +56,14 @@ must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing, an
 show the question, a new key the default. A named key that is missing must stop a run. The first
 run, with that `PATH` too, must add that key to that login, install what `ws mac apply` installs. It
 must drop the Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel stage below
-takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in `ssh-agent`
-at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
-`WS_IDENTITY_PUB_KEY`. While it lists the key, `--check` must print nothing of the Mac key stage.
-With git's name, it must ask for git's key, marking that key as ws's, an empty one too, and a run
-must stop, naming its line. With no `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, `--check` must
-offer the agent's key for ws's login, and a run must stop, naming its line. Once the agent lacks it,
-a run and `--check` must stop there, naming the socket. Last, without the stand-in `gh`'s login, a
-run with no terminal must stop at gh's stage, naming `gh auth login`. With a login lacking the
+takes it. A second run and `--check` must print nothing, by sh and dash: here and below, nothing but
+gh's line that GitHub lists the key. Then a stand-in `ssh-agent` at Secretive's socket holds a P-256
+key, which a `mac.conf` of its own names as ws's. While it lists the key, `--check` must print
+nothing of the Mac key stage. With git's name, it must ask for git's key, marking that key as ws's,
+an empty one too, and a run must stop, naming its line. With no `WS_IDENTITY_PUB_KEY` and
+`PublicKeys` closed, `--check` must offer the agent's key for ws's login, and a run stop, naming its
+line. Once the agent lacks it, both must stop there, naming the socket. Last, without `gh`'s login,
+a run with no terminal must stop at gh's stage, naming `gh auth login`. With a login lacking the
 scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
@@ -164,7 +164,7 @@ it would add to `mac.conf`, and the first run must add them at its end. Typed at
 lines the defaults, for each target. After the first run, they must write the same `mac.conf`.
 
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
-second run and `--check` print nothing at all. Where `WS_CONF` names no file, `--check` must show
+second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show
 the lines it would write there, from the answers in the environment, and write none. The
 case that reads [`homebrew.go`](../internal/wizard/homebrew.go)'s pins must download Homebrew's
 `.pkg` and match its SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows

@@ -6,6 +6,9 @@
 
 set -u
 
+# The one line of the gh stage that a run says where the account holds the Mac's key.
+known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+
 wsbin=$HOME/.local/bin/ws
 path=$(cat "$RUNNER_TEMP/path")
 fail=0
@@ -21,7 +24,7 @@ for args in '' --check; do
     status=$?
     printf '%s\n' "$out"
     [ "$status" = 0 ] || error "ws mac wizard${args:+ $args} exited $status"
-    [ -z "$out" ] || error "ws mac wizard${args:+ $args} printed what it should not"
+    [ -z "${out#"$known"}" ] || error "ws mac wizard${args:+ $args} printed what it should not"
 done
 
 conf=$RUNNER_TEMP/tools.conf
