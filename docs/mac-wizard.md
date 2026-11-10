@@ -102,7 +102,8 @@ key it lists once it starts stops the wizard, as no answer named it. ws's key ta
 default protection, which asks for Touch ID at each login. The wizard takes each key from the agent,
 and writes a copy of its `.pub` ([Secretive's keys](mac-git.md#secretives-keys)). The copies and the
 agent go in `mac.conf`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY`.
-With no terminal, the wizard stops at the first question, naming the line of each such key.
+With no terminal, the wizard stops at the first question, naming the line of each such key. Under
+`--check`, the ws mac apply stage waits on the answer, as `ws mac apply` stops without the key.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`

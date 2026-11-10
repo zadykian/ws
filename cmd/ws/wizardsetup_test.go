@@ -60,6 +60,16 @@ func setupOf(t *testing.T, e wizardEffects) *wizard.Setup {
 	return wizardSetup(e, "/h/mac.conf")
 }
 
+func TestWizardSetupWaitsOnTheMacKeyStage(t *testing.T) {
+	// setupOf's mac.conf names no key for ws, which the Mac key stage would ask for.
+	s := setupOf(t, wizardEffects{})
+	s.LookPath = func(string) (string, error) { return "/brew", nil }
+	p, err := s.Plan(context.Background())
+	if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != "ws mac apply: after Mac key" {
+		t.Errorf("Plan = %v, %v; want the wait on the Mac key stage", p, err)
+	}
+}
+
 func TestWizardSetupLeavesOutWhatTheRunDoes(t *testing.T) {
 	var got leftEvents
 	left := func(parent, name string) bool { return parent == "ws mac apply" && name == "ssh" }
