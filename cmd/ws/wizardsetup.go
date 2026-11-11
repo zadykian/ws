@@ -19,7 +19,7 @@ import (
 // stops and leaves steps out as the run does.
 func wizardSetup(e wizardEffects, file string) *wizard.Setup {
 	p := e.p
-	s := &wizard.Setup{M: p.machine}
+	s := &wizard.Setup{Conf: file, M: p.machine}
 	s.Run = func(ctx context.Context, check bool) (bool, error) {
 		text, err := p.machine.ReadFile(file)
 		if err != nil {

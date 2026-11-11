@@ -9,13 +9,13 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Pending is a change that waits on another, such as the key: the line says on what.
+// Pending is a change that waits on another, such as gh's install: the line says on what.
 type Pending string
 
 func (p Pending) String() string { return string(p) }
 
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
-// once the key is there, and gitconfig.
+// and gitconfig.
 func (g *Git) list(key gitKey, gh string) []userFile {
 	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.Pub, Gh: gh, Dir: dir}
@@ -27,14 +27,11 @@ func (g *Git) list(key gitKey, gh string) []userFile {
 		in.Program = dir + "/secretive-ssh-keygen"
 		list = append(list, file(in.Program, gitcfg.Wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
-	if key.Public != "" {
-		list = append(list, file(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644))
-	}
+	list = append(list, file(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644))
 	return append(list, file(dir+"/gitconfig", gitcfg.Config(in), 0o644))
 }
 
-// files plans ~/.config/ws and the files in it. Under --check, before the key is made, there are no
-// allowed signers.
+// files plans ~/.config/ws and the files in it.
 func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 	dir := g.Home + "/.config/ws"
 	var cs []step.Change
@@ -50,9 +47,6 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 		}
 	}
 	cs = append(cs, PlanCopy(g.M, key.Pub, key.Text, g.Home)...)
-	if key.Public == "" {
-		cs = append(cs, Pending("would write "+dir+"/allowed_signers once the key is made"))
-	}
 	for _, f := range g.list(key, gh) {
 		planned, err := f.plan()
 		if err != nil {

@@ -56,14 +56,14 @@ must stop at the Mac key stage, naming `WS_IDENTITY_PUB_KEY`, making nothing, an
 show the question, a new key the default. A named key that is missing must stop a run. The first
 run, with that `PATH` too, must add that key to that login, install what `ws mac apply` installs. It
 must drop the Mac's key that it prints, and leave no tunnel step by hand, as the Tunnel stage below
-takes it. A second run and `--check` must print nothing, by sh and dash. Then a stand-in `ssh-agent`
-at Secretive's socket holds a P-256 key, whose `.pub` a `mac.conf` of its own names in
-`WS_IDENTITY_PUB_KEY`. While it lists the key, `--check` must print nothing of the Mac key stage.
-With git's name, it must ask for git's key, marking that key as ws's, an empty one too, and a run
-must stop, naming its line. With no `WS_IDENTITY_PUB_KEY` and `PublicKeys` closed, `--check` must
-offer the agent's key for ws's login, and a run must stop, naming its line. Once the agent lacks it,
-a run and `--check` must stop there, naming the socket. Last, without the stand-in `gh`'s login, a
-run with no terminal must stop at gh's stage, naming `gh auth login`. With a login lacking the
+takes it. A second run and `--check` must print nothing, by sh and dash: here and below, nothing but
+gh's line that GitHub lists the key. Then a stand-in `ssh-agent` at Secretive's socket holds a P-256
+key, which a `mac.conf` of its own names as ws's. While it lists the key, `--check` must print
+nothing of the Mac key stage. With git's name, it must ask for git's key, marking that key as ws's,
+an empty one too, and a run must stop, naming its line. With no `WS_IDENTITY_PUB_KEY` and
+`PublicKeys` closed, `--check` must offer the agent's key for ws's login, and a run stop, naming its
+line. Once the agent lacks it, both must stop there, naming the socket. Last, without `gh`'s login,
+a run with no terminal must stop at gh's stage, naming `gh auth login`. With a login lacking the
 scopes, or the signing one alone, it must name `gh auth refresh`. `--check` must say each would run.
 
 `standin.sh` starts an `sshd` of its own as ws, at `127.0.0.1:22022`, where the job's `mac.conf`
@@ -164,7 +164,7 @@ it would add to `mac.conf`, and the first run must add them at its end. Typed at
 lines the defaults, for each target. After the first run, they must write the same `mac.conf`.
 
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
-second run and `--check` print nothing at all. Where `WS_CONF` names no file, `--check` must show
+second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show
 the lines it would write there, from the answers in the environment, and write none. The
 case that reads [`homebrew.go`](../internal/wizard/homebrew.go)'s pins must download Homebrew's
 `.pkg` and match its SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows
@@ -183,10 +183,11 @@ CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac]
 mac apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config` or
 `~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins for
 Ghostty's and Zed's apps, the font and cld, which `ws mac apply` leaves alone, spare the job's runs
-their downloads. Without ws's key, `ws mac apply` must make the Mac's key and load no
-daemon, while `ssh -G ws` gives the tunnel's end. The public key it prints must be the Mac's, as
-must the key in the command that gives it to ws. With a stand-in's key it must load the daemon,
-which must run. Then a second run and `--check` must print nothing. Under `script`, `--check` must
+their downloads. The job's `mac.conf` names a file key, made in case 20, as ws's login key. Without
+ws's WireGuard key, `ws mac apply` must make the Mac's key and load no daemon, while `ssh -G ws`
+gives the tunnel's end. The public key it prints must be the Mac's, as must the key in the command
+that gives it to ws. With a stand-in's key it must load the daemon, which must run. Then a second
+run and `--check` must print nothing. Under `script`, `--check` must
 draw [the run screen](tui.md#the-run-screen) and leave it. `ssh -G` must give `ws` the
 tunnel's end. The stand-in for ws is a second wireguard-go on the runner, with the printed key as
 its peer. It answers on loopback both as the LAN and as `WS_REMOTE`, and `ws mac tunnel status` must
@@ -205,32 +206,32 @@ empty, `ws mac apply` must print nothing. Set, it must run one `networksetup -se
 stand-in's, through sudo, and then none. It must warn of a disabled service. It must stop on one
 networksetup lacks, or one with a router outside the cable's `/30`. It must stop too on a
 `-setmanual` that fails or changes nothing, and name what differs
-([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). `ssh -G` must give `ws` the file key, by
-the four lines `config.d/ws` had for it before. It must give it the file or the agent that
+([mac-setup-checks.sh](../.github/mac-setup-checks.sh)). `ssh -G` must give `ws` the file key that
+the job's `mac.conf` names, by its four lines. It must give it the file or the agent that
 `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` name, with `--check` showing `config.d/ws`'s diff
-alone. Then it must give it an agent at Secretive's socket, which holds a P-256 key, and ws's copy
-of its `.pub`, where those keys are empty. `PublicKeys` is closed then, as macOS 27 denies ws the
-files of Secretive's container. It must warn that this replaces the file key, and write the copy
-where none exists. A `.pub` in `PublicKeys` that `WS_IDENTITY_PUB_KEY` names must become the copy. A
-second key in the agent must stop `ws mac apply`. Where `WS_GIT_SIGNING_PUB_KEY` names one of the
-two, ws's key must be the other. The file key's `.pub` in `WS_IDENTITY_PUB_KEY` must keep the file
-key. A `.pub` that is missing or unreadable, or holds a private key, a certificate or a line that is
-no key, must stop `ws mac apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH
-lacks ([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). With `WS_GIT_NAME` and
-`WS_GIT_EMAIL`, it must make git's signing key once, an ed25519 key with no passphrase. It must stop
-on a `WS_GIT_SIGNING_PUB_KEY` that is missing or unreadable, or a `.pub` that holds more than a
-public key. So must the default key or its `.pub` alone. git must then sign a commit and verify it.
-A `~/.gitconfig` must get the include of `~/.config/ws/gitconfig` at its top, once, keep its own
-lines, and name its own settings. An include below them, or a second one, must stop `ws mac apply`
-before it writes a file, as must a link that lacks the include. One whose file has it must pass. The
-settings of git's XDG file must be named. With a key that an agent holds at Secretive's socket and
-`PublicKeys` closed, `--check` must show the wrapper and write none. A run must write ws's copy of
-the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names. `ws` must keep the file key, as
-Secretive's one key is git's. git's credential command for GitHub must be a stand-in gh's, which
-must add the key to its login once. Logged out, gh must draw a warning at each run. Logged in, `ws
-mac apply` must warn of a 404 or another error of gh's, and of an add that leaves the account
-without the key. It must add the key where the account lacks it, and `--check` name the add before
-the key is made. Where `PATH` has no gh, `ws mac apply` must install Homebrew's once, and only with
+alone. An empty `WS_IDENTITY_PUB_KEY` must stop `ws mac apply`, though an agent at Secretive's
+socket holds a P-256 key. The stop must give the line that names the key, by ws's copy of its
+`.pub`, with its comment and fingerprint. `PublicKeys` is closed, as macOS 27 denies ws the files of
+Secretive's container. With that line, `ssh -G` must give `ws` the agent and the copy, which a run
+writes where none exists. A `.pub` in `PublicKeys` that `WS_IDENTITY_PUB_KEY` names must become the
+copy. With more keys in the agent, the stop must give a line for each P-256 key alone. A `.pub` that
+is missing or unreadable, or holds a private key, a certificate or a line that is no key, must stop
+`ws mac apply` too. So must a key that ssh-keygen cannot read or ws's OpenSSH lacks
+([mac-identity-checks.sh](../.github/mac-identity-checks.sh)). With `WS_GIT_NAME` and
+`WS_GIT_EMAIL`, it must stop on an empty `WS_GIT_SIGNING_PUB_KEY`, or one that is missing or
+unreadable, or a `.pub` that holds more than a public key. With a file key there, an ed25519 key
+with no passphrase, git must sign a commit and verify it. A `~/.gitconfig` must get the include of
+`~/.config/ws/gitconfig` at its top, once, keep its own lines, and name its own settings. An include
+below them, or a second one, must stop `ws mac apply` before it writes a file, as must a link that
+lacks the include. One whose file has it must pass. The settings of git's XDG file must be named.
+With a key that an agent holds at Secretive's socket and `PublicKeys` closed, an empty
+`WS_GIT_SIGNING_PUB_KEY` must stop with its line. Named, `--check` must show the wrapper and write
+none. A run must write ws's copy of the key's `.pub`, and git sign whatever `SSH_AUTH_SOCK` names.
+`ws` must keep the file key that `mac.conf` names. git's credential command for GitHub must be a
+stand-in gh's, which must add the key to its login once. Logged out, gh must draw a warning at each
+run. Logged in, `ws mac apply` must warn of a 404 or another error of gh's, and of an add that
+leaves the account without the key. It must add the key where the account lacks it, and `--check`
+name the add. Where `PATH` has no gh, `ws mac apply` must install Homebrew's once, and only with
 git's keys ([mac-git-checks.sh](../.github/mac-git-checks.sh)). Where wireguard-go makes no utun,
 the job fails, as the daemon's device makes a utun too.
 

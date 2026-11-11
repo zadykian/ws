@@ -102,7 +102,7 @@ func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 
 func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
+	keyed(m)
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	for _, file := range []string{"new", "whole"} {

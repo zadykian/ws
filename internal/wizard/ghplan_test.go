@@ -57,6 +57,21 @@ func TestGhPlan(t *testing.T) {
 	}
 }
 
+func TestGhPlanSaysWhereListed(t *testing.T) {
+	g, m := newGh(found)
+	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
+	listed := effecttest.Result{Out: []byte(strings.Join(strings.Fields(pubText)[:2], " ") + "\n")}
+	m.Results["/bin/gh api --paginate user/keys --jq .[].key"] = listed
+	m.Results["/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"] = listed
+	if _, err := g.Plan(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	want := "say: " + ghStage + ": the Mac's key is among GitHub's authentication keys already"
+	if got := g.Out.(*effecttest.Out).Lines; len(got) != 1 || got[0] != want {
+		t.Errorf("lines = %q, want %q", got, want)
+	}
+}
+
 func TestGhPlanInstall(t *testing.T) {
 	g, m := newGh(func(n string) (string, error) {
 		if n == "brew" {
@@ -106,8 +121,8 @@ func TestGhPlanMissingKey(t *testing.T) {
 // The GitHub stage adds ws's copy of the agent's key, which the Mac key stage wrote.
 func TestGhKeyOfTheAgent(t *testing.T) {
 	g, m := newGh(found)
-	m.Files[confPathForTest] = nil
 	agent(m, p256)
+	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=" + copyOf(p256) + "\n")
 	pub, key, err := g.key(context.Background())
 	if err != nil || pub != copyOf(p256) || key != strings.TrimSuffix(strings.TrimSuffix(p256, "\n"), " me") {
 		t.Errorf("key = %q, %q, %v", pub, key, err)

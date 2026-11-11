@@ -13,6 +13,9 @@
 
 set -u
 
+# The one line of the gh stage that a run says where the account holds the Mac's key.
+known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+
 wsbin=$HOME/.local/bin/ws
 conf=$HOME/.config/ws/mac.conf
 ws=$RUNNER_TEMP/ws
@@ -90,7 +93,7 @@ standin_set listen-port 51820
 wizard
 [ "$status" = 0 ] || error "a run once UDP 51820 answers again exited $status"
 wizard
-[ "$status" = 0 ] && [ -z "$out" ] ||
+[ "$status" = 0 ] && [ -z "${out#"$known"}" ] ||
     error "the last run exited $status, or printed what it should not"
 
 pub=$HOME/.config/ws/tunnel.pub

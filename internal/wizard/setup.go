@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
 
@@ -19,6 +20,8 @@ type Setup struct {
 	// Run plans the steps of ws mac apply, or applies them where check is not set, and reports whether
 	// any had changes to make.
 	Run func(ctx context.Context, check bool) (bool, error)
+	// Conf is the mac.conf that Run reads.
+	Conf string
 	// LookPath finds a program on PATH. Nil means exec.LookPath.
 	LookPath func(string) (string, error)
 	M        effect.Machine
@@ -36,7 +39,7 @@ func (*Setup) Name() string { return setupStage }
 func (*Setup) WaitsOn() string { return homebrewStage }
 
 // Plan runs ws mac apply's plan, which prints each change it finds. Where PATH has no brew, ws mac apply
-// would stop, so the plan waits on Homebrew.
+// would stop, so the plan waits on Homebrew. It waits on the Mac key stage too, for a key to name.
 func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 	if s.applied {
 		return step.Plan{}, nil
@@ -47,6 +50,9 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if _, err := look("brew"); err != nil {
 		return step.Plan{Changes: []step.Change{todo(setupStage + ": after Homebrew")}}, nil
+	}
+	if s.unnamed() {
+		return step.Plan{Changes: []step.Change{todo(setupStage + ": after " + macKey)}}, nil
 	}
 	if !s.sudoed {
 		switch err := effect.Validate(ctx, s.M); {
@@ -62,6 +68,18 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	return step.Plan{Changes: []step.Change{todo(setupStage + ": would apply the steps above")}}, nil
+}
+
+// unnamed reports whether mac.conf lacks a key that the Mac key stage asks for. Under --check that
+// stage writes no line, and ws mac apply would stop for the key, or plan without the one that a run
+// names. A file that cannot be read is Run's to report.
+func (s *Setup) unnamed() bool {
+	text, err := s.M.ReadFile(s.Conf)
+	if err != nil {
+		return false
+	}
+	c, errs := conf.Lines(string(text))
+	return len(errs) == 0 && asked(c)
 }
 
 // Apply runs ws mac apply. Where it stops, it has said why. Where it finishes, the stage is done, as a

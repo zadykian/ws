@@ -26,6 +26,9 @@
 
 set -u
 
+# The one line of the gh stage that a run says where the account holds the Mac's key.
+known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+
 remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamps=$ws/root/var/lib/ws-wizard
@@ -230,7 +233,7 @@ printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' | sudo cmp -s - "$va
     [ "$status" = 0 ] && [ "$out" = "wizard-remote-files.sh: wrote $vars" ] ||
     error "its link enp5s0 exited $status"
 files link enp5s0
-[ "$status" = 0 ] && [ -z "$out" ] || error "its link enp5s0 again exited $status"
+[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "its link enp5s0 again exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'cable -' || error "status named a cable before the roles' run"
 remote run --only network,wireguard
@@ -245,7 +248,7 @@ printf '%s\n' --- 'network_direct_link_interface: "enp5s0"' 'security_outbound: 
     sudo cmp -s - "$vars" && [ "$status" = 0 ] && [ "$out" = "wizard-remote.sh: wrote $vars" ] ||
     error "the remote script's outbound exited $status"
 remote outbound
-[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound again exited $status"
+[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "its outbound again exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no outbound off"
 printf '%s\n' --- 'security_outbound: false ' | sudo tee "$vars" >/dev/null
@@ -257,7 +260,7 @@ printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read no with CRL
 printf '%s\n' --- 'security_outbound: true' 'security_outbound: Off  # by hand' |
     sudo tee "$vars" >/dev/null
 remote outbound
-[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound with Off by hand exited $status"
+[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "its outbound with Off by hand exited $status"
 remote status
 printf '%s\n' "$out" | grep -qx 'outbound off' || error "status read Off by hand as on"
 echo 'security_outbound: true' | sudo tee -a "$vars" >/dev/null
@@ -272,7 +275,7 @@ printf '%s\n' "$out" | grep -qF "$vars is a link to host_vars.yml.real" && [ "$s
     error "its user through a link exited $status"
 echo 'security_outbound: false' | sudo tee -a "$vars.real" >/dev/null
 remote outbound
-[ "$status" = 0 ] && [ -z "$out" ] || error "its outbound through a link to the line exited $status"
+[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "its outbound through a link to the line exited $status"
 sudo rm -rf "$ws/root/sys" "$ws/addr" "${vars%/*}" \
     "$ws/root/etc/netplan"
 rm -f "$ws/uplink"

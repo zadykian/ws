@@ -25,7 +25,7 @@ stages, in order, the first two of which install what the rest needs:
    installer`. On a new Mac, `--check` stops there.
 2. Answers: the values `mac.conf` lacks, below.
 3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
-4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
+4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, said if there.
 5. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
    timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
    the warnings of `ws mac apply` and drops the Mac's key that it prints.
@@ -102,7 +102,8 @@ key it lists once it starts stops the wizard, as no answer named it. ws's key ta
 default protection, which asks for Touch ID at each login. The wizard takes each key from the agent,
 and writes a copy of its `.pub` ([Secretive's keys](mac-git.md#secretives-keys)). The copies and the
 agent go in `mac.conf`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY`.
-With no terminal, the wizard stops at the first question, naming the line of each such key.
+With no terminal, the wizard stops at the first question, naming the line of each such key. Under
+`--check`, the ws mac apply stage waits on the answer, as `ws mac apply` stops without the key.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`

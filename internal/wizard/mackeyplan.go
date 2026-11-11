@@ -60,9 +60,15 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 	return setup.PlanCopy(k.M, pub, id.Text, k.Home), nil
 }
 
+// asked reports whether the stage asks for a key. It asks for ws's where mac.conf names none. It
+// asks for git's where git has a name and mac.conf no key for it. An empty value names none.
+func asked(c conf.Conf) bool { return c.IdentityPubKey == "" || gitAsked(c) }
+
+func gitAsked(c conf.Conf) bool { return c.GitName != "" && c.GitSigningPubKey == "" }
+
 // gitQuestion asks for git's key after ws's key's changes, whichever, where git has a name, no key.
 func (k *MacKey) gitQuestion(ctx context.Context, c conf.Conf) ([]step.Change, error) {
-	if c.GitName == "" || c.GitSigningPubKey != "" {
+	if !gitAsked(c) {
 		return nil, nil
 	}
 	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)

@@ -2,20 +2,13 @@ package setup
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
-
-// MakeKey makes git's signing key, with no passphrase, so that git signs unattended, in a rebase too.
-type MakeKey struct{ Path string }
-
-func (k MakeKey) String() string { return "would make git's signing key, " + k.Path }
 
 // Git sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_PUB_KEY, and leaves it
 // alone without them. It writes git's identity and a signing key of the Mac's own to
@@ -36,9 +29,12 @@ type Git struct {
 	LookPath func(string) (string, error)
 
 	notes []string        // the warnings of the plan in the making
+	known []string        // the lines for what the plan found there already
 	said  map[string]bool // the warnings said in this run
 	// addErr is why the key's add failed in this run.
 	addErr error
+	// added is whether this run added the key, so that the plan after it says no "already".
+	added bool
 }
 
 // Name is git.
@@ -54,7 +50,7 @@ func (g *Git) look(name string) (string, error) {
 	return exec.LookPath(name)
 }
 
-// Plan reads the signing key and gh, and plans to make the key and install gh.
+// Plan reads the signing key and gh, and plans to install gh.
 func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if g.Conf.GitName == "" {
 		return step.Plan{}, nil
@@ -73,9 +69,6 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	var cs []step.Change
-	if key.Make {
-		cs = append(cs, MakeKey{strings.TrimSuffix(key.Pub, ".pub")})
-	}
 	if install != nil {
 		cs = append(cs, *install)
 	}
@@ -96,25 +89,18 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: g.withNotes(cs)}, nil
 }
 
-// Apply makes the key and installs gh first, plans again with them there, then applies the rest.
+// Apply installs gh first, plans again with it there, then applies the rest.
 func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	n := 0
 	for ; n < len(p.Changes); n++ {
-		switch c := p.Changes[n].(type) {
-		case MakeKey:
-			if _, err := g.M.Run(ctx, "ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", c.Path); err != nil {
-				return fmt.Errorf("ssh-keygen cannot make %s: %w", c.Path, err)
-			}
-			g.Out.Say("made git's signing key, %s", c.Path)
-			continue
-		case Run:
-			g.Out.Say("installing gh")
-			if err := Apply(ctx, g.M, g.Out, c); err != nil {
-				return err
-			}
-			continue
+		c, ok := p.Changes[n].(Run)
+		if !ok {
+			break
 		}
-		break
+		g.Out.Say("installing gh")
+		if err := Apply(ctx, g.M, g.Out, c); err != nil {
+			return err
+		}
 	}
 	if n > 0 {
 		var err error
@@ -126,6 +112,9 @@ func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes[n:] {
 		switch c := c.(type) {
 		case Pending:
+			continue
+		case Known:
+			g.tell(string(c))
 			continue
 		case Notice:
 			g.say(string(c))

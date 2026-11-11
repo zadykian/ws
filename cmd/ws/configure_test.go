@@ -22,6 +22,7 @@ func TestMacConfigureAtATerminalDrawsAForm(t *testing.T) {
 
 func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 	p, m := macTerminal()
+	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
 	in, keys := io.Pipe()
 	defer func() { _ = keys.Close() }()

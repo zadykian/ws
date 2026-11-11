@@ -44,5 +44,10 @@ func (g *Gh) Plan(ctx context.Context) (step.Plan, error) {
 	case !listed:
 		return step.Plan{Changes: []step.Change{add}}, nil
 	}
+	// The key is there, so the stage has nothing to do: say why, so that a key picked among
+	// Secretive's is known to be on GitHub already. Where this run added it, its add said so.
+	if !g.added {
+		g.Out.Say("%s: the Mac's key is among GitHub's authentication keys already", ghStage)
+	}
 	return step.Plan{}, nil
 }

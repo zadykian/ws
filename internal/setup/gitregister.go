@@ -55,7 +55,7 @@ func unverified(err error, pub string) string {
 // register plans to add the key to the signing keys of gh's login where they lack it, titled with
 // the Mac's name. That way GitHub verifies the commits the key signs. Without a login or its
 // write:ssh_signing_key scope, or on another error of gh's, it warns, at each run until one adds
-// the key. Before gh or the key is there, it says what it would add once they are.
+// the key. Before gh is installed, it says what it would add with gh there.
 func (g *Git) register(ctx context.Context, key gitKey, gh string, installing bool) (*Register, string, error) {
 	title, err := g.M.Run(ctx, "hostname", "-s")
 	if err != nil {
@@ -70,8 +70,9 @@ func (g *Git) register(ctx context.Context, key gitKey, gh string, installing bo
 	case err != nil:
 		g.note("%s", unverified(err, key.Pub))
 	case listed:
-	case key.Public == "":
-		return nil, "would run " + r.command() + " once the key is made", nil
+		if !g.added {
+			g.know("git's key is among GitHub's signing keys already")
+		}
 	case g.addErr != nil:
 		// The add failed in this run: planning it again would end the step in an error, where the
 		// warning is all that a later run can change.
@@ -98,5 +99,6 @@ func (g *Git) add(ctx context.Context, r Register) {
 		g.say(unverified(err, r.Pub))
 		return
 	}
+	g.added = true
 	g.Out.Say("ran %s", r.command())
 }

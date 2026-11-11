@@ -57,12 +57,12 @@ func TestSecretiveKeys(t *testing.T) {
 // macOS 27 denies ws every file in Secretive's container: PickKey must never need one.
 func TestPickKeyTakesTheAgentsKeyWithNoFile(t *testing.T) {
 	m := agentMachine(effecttest.NewMachine(), agentKey)
-	id, err := setup.PickKey(context.Background(), m, conf.Conf{}, agentHome)
+	pub := sshcfg.AgentKeys(agentKey)[0].Pub()
+	id, err := setup.PickKey(context.Background(), m, conf.Conf{IdentityPubKey: pub}, agentHome)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := sshcfg.Identity{Pub: sshcfg.AgentKeys(agentKey)[0].Pub(), Agent: "~/" + sshcfg.SecretiveData + "/socket.ssh",
-		Check: true, Text: agentKey}
+	want := sshcfg.Identity{Pub: pub, Agent: "~/" + sshcfg.SecretiveData + "/socket.ssh", Text: agentKey}
 	if id != want {
 		t.Errorf("PickKey = %+v, want %+v", id, want)
 	}
@@ -73,15 +73,25 @@ func TestPickKeyTakesTheAgentsKeyWithNoFile(t *testing.T) {
 	}
 }
 
-func TestPickKeyLeavesOutGitsKey(t *testing.T) {
-	m := agentMachine(effecttest.NewMachine(), agentKey, agentGit)
-	id, err := setup.PickKey(context.Background(), m, conf.Conf{GitSigningPubKey: copyOf(agentGit)}, agentHome)
-	if err != nil || id.Text != agentKey {
-		t.Errorf("PickKey = %+v, %v; want ws's key", id, err)
+// ws mac apply takes no key that mac.conf leaves out, not even the agent's one. It names the line
+// for each P-256 key, with its comment and fingerprint, and none for an ML-DSA key.
+func TestPickKeyStopsWithoutANamedKey(t *testing.T) {
+	const mldsa = "ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws\n"
+	m := agentMachine(effecttest.NewMachine(), agentKey, mldsa, agentGit)
+	_, err := setup.PickKey(context.Background(), m, conf.Conf{GitSigningPubKey: copyOf(agentGit)}, agentHome)
+	var lines []string
+	for _, line := range []string{agentKey, agentGit} {
+		k := sshcfg.AgentKeys(line)[0]
+		lines = append(lines, "WS_IDENTITY_PUB_KEY="+k.Pub()+" for "+k.Label())
 	}
-	if _, err := setup.PickKey(context.Background(), m, conf.Conf{}, agentHome); err == nil ||
-		!strings.Contains(err.Error(), "several keys") {
-		t.Errorf("two keys and no git's: err = %v", err)
+	want := "mac.conf names no WS_IDENTITY_PUB_KEY, ws's login key: run ws mac wizard, or add one of these lines " +
+		"to mac.conf, " + strings.Join(lines, "; ")
+	if err == nil || err.Error() != want {
+		t.Errorf("PickKey = %v; want %q", err, want)
+	}
+	if _, err := setup.PickKey(context.Background(), effecttest.NewMachine(), conf.Conf{}, agentHome); err == nil ||
+		!strings.Contains(err.Error(), "run ws mac wizard to pick or make one in Secretive") {
+		t.Errorf("no agent: err = %v", err)
 	}
 }
 
@@ -108,7 +118,8 @@ func TestPickKeyWithoutAnAgent(t *testing.T) {
 	ctx := context.Background()
 	m := agentMachine(effecttest.NewMachine())
 	m.Results[agentList] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
-	if _, err := setup.PickKey(ctx, m, conf.Conf{}, agentHome); !errors.Is(err, setup.ErrAgentDown) {
+	if _, err := setup.PickKey(ctx, m, conf.Conf{}, agentHome); err == nil ||
+		!strings.Contains(err.Error(), "mac.conf names no WS_IDENTITY_PUB_KEY") {
 		t.Errorf("no WS_IDENTITY_PUB_KEY: err = %v", err)
 	}
 	// ws's copy serves while Secretive is closed.
@@ -156,6 +167,7 @@ func TestSSHWritesTheCopyItNames(t *testing.T) {
 	m, out := agentMachine(sshMachine(), agentKey), &effecttest.Out{}
 	m.Results["mkdir -p /h/.config/ws/secretive"] = effecttest.Result{}
 	s := sshStep(m, out)
+	s.Conf.IdentityPubKey = sshcfg.AgentKeys(agentKey)[0].Pub()
 	p, err := s.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)

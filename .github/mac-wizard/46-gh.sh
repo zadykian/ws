@@ -7,6 +7,8 @@
 
 set -u
 
+known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+
 wsbin=$HOME/.local/bin/ws
 state=$RUNNER_TEMP/gh
 flow='-h github.com -s write:public_key,write:ssh_signing_key'
@@ -47,5 +49,5 @@ expect 0 "would run gh auth refresh $flow" --check
 rm "$state/nosign" "$RUNNER_TEMP/gh.keys"
 out=$("$wsbin" mac wizard </dev/null 2>&1)
 status=$?
-[ "$status" = 0 ] && [ -z "$out" ] || error "ws mac wizard with the login back exited $status: '$out'"
+[ "$status" = 0 ] && [ "$out" = "$known" ] || error "ws mac wizard with the login back exited $status: '$out'"
 exit "$fail"

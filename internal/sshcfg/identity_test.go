@@ -1,7 +1,6 @@
 package sshcfg_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/internal/sshcfg"
@@ -9,34 +8,25 @@ import (
 
 const home = "/Users/me"
 
-func TestPickIdentity(t *testing.T) {
+func TestNamedIdentity(t *testing.T) {
 	data := "~/" + sshcfg.SecretiveData
 	tests := []struct {
-		name, identity, agent string
-		socket                bool
-		keys                  []string
-		want                  sshcfg.Identity
+		name, pub, agent string
+		want             sshcfg.Identity
 	}{
-		{"the file key", "", "", false, nil, sshcfg.Identity{Pub: sshcfg.DefaultPub}},
-		{"no socket, so the file key", "", "", false, []string{"a.pub"}, sshcfg.Identity{Pub: sshcfg.DefaultPub}},
-		{"mac.conf's key", "~/k.pub", "", true, []string{"a.pub"}, sshcfg.Identity{Pub: "~/k.pub", Check: true}},
-		{"Secretive's one key", "", "", true, []string{"a.pub", "sign.pub"},
-			sshcfg.Identity{Pub: "~/" + sshcfg.KeyCopies + "/a.pub", Agent: data + "/socket.ssh", Check: true}},
-		{"a copy of mac.conf's", "~/" + sshcfg.KeyCopies + "/b.pub", "", true, nil,
-			sshcfg.Identity{Pub: "~/" + sshcfg.KeyCopies + "/b.pub", Agent: data + "/socket.ssh", Check: true}},
-		{"a .pub in the container", data + "/PublicKeys/b.pub", "", true, nil,
-			sshcfg.Identity{Pub: data + "/PublicKeys/b.pub", Agent: data + "/socket.ssh", Check: true}},
+		{"a file key", "~/k.pub", "", sshcfg.Identity{Pub: "~/k.pub"}},
+		{"a file key and its agent", "~/k.pub", "~/a.sock", sshcfg.Identity{Pub: "~/k.pub", Agent: "~/a.sock"}},
+		{"ws's copy", "~/" + sshcfg.KeyCopies + "/b.pub", "",
+			sshcfg.Identity{Pub: "~/" + sshcfg.KeyCopies + "/b.pub", Agent: data + "/socket.ssh"}},
+		{"a .pub in the container", data + "/PublicKeys/b.pub", "",
+			sshcfg.Identity{Pub: data + "/PublicKeys/b.pub", Agent: data + "/socket.ssh"}},
+		{"another agent", data + "/PublicKeys/b.pub", "~/a.sock",
+			sshcfg.Identity{Pub: data + "/PublicKeys/b.pub", Agent: "~/a.sock"}},
 	}
 	for _, tt := range tests {
-		got, err := sshcfg.PickIdentity(tt.identity, tt.agent, "~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/sign.pub",
-			home, tt.socket, tt.keys)
-		if err != nil || got != tt.want {
-			t.Errorf("%s: PickIdentity = %+v, %v; want %+v", tt.name, got, err, tt.want)
+		if got := sshcfg.NamedIdentity(tt.pub, tt.agent, home); got != tt.want {
+			t.Errorf("%s: NamedIdentity = %+v; want %+v", tt.name, got, tt.want)
 		}
-	}
-	_, err := sshcfg.PickIdentity("", "", "", home, true, []string{"a.pub", "b.pub"})
-	if err == nil || !strings.Contains(err.Error(), "several keys") {
-		t.Errorf("two keys: err = %v", err)
 	}
 }
 

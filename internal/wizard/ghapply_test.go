@@ -48,3 +48,27 @@ func errText(err error) string {
 	}
 	return err.Error()
 }
+
+// The plan after the add finds the key listed: the run that added it says so once, by the add.
+func TestGhSaysNoAlreadyAfterItsAdd(t *testing.T) {
+	g, m := newGh(found)
+	m.Results["/bin/gh auth status -h github.com"] = effecttest.Result{}
+	for _, path := range []string{"user/keys", "user/ssh_signing_keys"} {
+		m.Results["/bin/gh api --paginate "+path+" --jq .[].key"] = effecttest.Result{Out: []byte("ssh-rsa BBBB\n")}
+	}
+	m.Results["/bin/gh ssh-key add /h/k.pub --title mac"] = effecttest.Result{}
+	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{ghAdd{"/h/k.pub", "mac"}}}); err != nil {
+		t.Fatal(err)
+	}
+	listed := effecttest.Result{Out: []byte(strings.Join(strings.Fields(pubText)[:2], " ") + "\n")}
+	for _, path := range []string{"user/keys", "user/ssh_signing_keys"} {
+		m.Results["/bin/gh api --paginate "+path+" --jq .[].key"] = listed
+	}
+	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
+		t.Fatalf("Plan after the add = %v, %v; want nothing", p.Changes, err)
+	}
+	want := "say: " + ghStage + ": ran gh ssh-key add /h/k.pub --title mac"
+	if got := g.Out.(*effecttest.Out).Lines; len(got) != 1 || got[0] != want {
+		t.Errorf("lines = %q, want %q alone", got, want)
+	}
+}

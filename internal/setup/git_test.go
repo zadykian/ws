@@ -3,7 +3,6 @@ package setup_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -17,7 +16,7 @@ import (
 
 const (
 	gitHome = "/Users/me"
-	gitPub  = gitHome + "/.ssh/id_ed25519_signing.pub"
+	gitPub  = gitHome + "/.ssh/git.pub"
 	gitKey  = "ssh-ed25519 AAAAC3Nz me@mac\n"
 	gitList = "/opt/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"
 )
@@ -30,18 +29,17 @@ func gitStep(m *effecttest.Machine, look func(string) (string, error)) *setup.Gi
 		look = func(name string) (string, error) { return "/opt/bin/" + name, nil }
 	}
 	return &setup.Git{
-		Conf: conf.Conf{GitName: "A B", GitEmail: "a@b.c"},
+		Conf: conf.Conf{GitName: "A B", GitEmail: "a@b.c", GitSigningPubKey: gitPub},
 		Home: gitHome, M: m, Out: &effecttest.Out{}, LookPath: look,
 	}
 }
 
-// prereqs returns the changes that make the key or install gh, which the files wait on.
+// prereqs returns the changes that install gh, which the files wait on.
 func prereqs(p step.Plan) []step.Change {
 	var cs []step.Change
 	for _, c := range p.Changes {
-		switch c.(type) {
-		case setup.MakeKey, setup.Run:
-			cs = append(cs, c)
+		if run, ok := c.(setup.Run); ok {
+			cs = append(cs, run)
 		}
 	}
 	return cs
@@ -73,7 +71,7 @@ func TestGitPlansGh(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
-		m.Files[gitPub], m.Files[gitHome+"/.ssh/id_ed25519_signing"] = []byte(gitKey), []byte("private")
+		m.Files[gitPub] = []byte(gitKey)
 		p, err := gitStep(m, tc.look).Plan(context.Background())
 		if (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
@@ -93,30 +91,20 @@ func TestGitApplyInstallsGh(t *testing.T) {
 	}
 }
 
-func TestGitPlansTheSigningKey(t *testing.T) {
-	both := map[string]string{gitPub: gitKey, gitHome + "/.ssh/id_ed25519_signing": "private"}
-	for name, tc := range map[string]struct {
-		files map[string]string
-		want  string
-		err   string
-	}{
-		"there":     {both, "", ""},
-		"missing":   {nil, "would make git's signing key, " + gitHome + "/.ssh/id_ed25519_signing", ""},
-		"pub alone": {map[string]string{gitPub: gitKey}, "", "without its private key"},
-		"two keys": {map[string]string{gitPub: gitKey + gitKey, gitHome + "/.ssh/id_ed25519_signing": "k"}, "",
-			"holds no public key alone"},
-		"no pub": {map[string]string{gitHome + "/.ssh/id_ed25519_signing": "k"}, "", "is missing beside its key"},
-	} {
-		m := effecttest.NewMachine()
-		for f, text := range tc.files {
-			m.Files[f] = []byte(text)
-		}
-		p, err := gitStep(m, nil).Plan(context.Background())
-		if (err == nil) != (tc.err == "") || (err != nil && !strings.Contains(err.Error(), tc.err)) {
-			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
-		} else if got := fmt.Sprint(prereqs(p)); (tc.want == "") != (len(prereqs(p)) == 0) || (tc.want != "" && got != "["+tc.want+"]") {
-			t.Errorf("%s: changes = %v, want %q", name, p.Changes, tc.want)
-		}
+// ws mac apply makes no key for git, nor takes the agent's sole key: it names that key's line.
+func TestGitStopsWithoutANamedKey(t *testing.T) {
+	g := gitStep(effecttest.NewMachine(), nil)
+	g.Conf.GitSigningPubKey = ""
+	if _, err := g.Plan(context.Background()); err == nil ||
+		!strings.Contains(err.Error(), "mac.conf names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws mac wizard") {
+		t.Errorf("no agent: err = %v", err)
+	}
+	g.M, g.Home = agentMachine(effecttest.NewMachine(), agentGit), agentHome
+	k := sshcfg.AgentKeys(agentGit)[0]
+	want := "mac.conf names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws mac wizard, or add one of these " +
+		"lines to mac.conf, WS_GIT_SIGNING_PUB_KEY=" + k.Pub() + " for " + k.Label()
+	if _, err := g.Plan(context.Background()); err == nil || err.Error() != want {
+		t.Errorf("Plan = %v; want %q", err, want)
 	}
 }
 
@@ -132,18 +120,14 @@ func TestGitChecksAKeyNamedInMacConf(t *testing.T) {
 	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "ssh-keygen cannot read") {
 		t.Errorf("a key ssh-keygen rejects: err = %v", err)
 	}
+	m.Files[gitHome+"/k.pub"] = []byte(gitKey + gitKey)
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "holds no public key alone") {
+		t.Errorf("two keys: err = %v", err)
+	}
+	m.Files[gitHome+"/k.pub"] = []byte(gitKey)
 	m.Results["ssh-keygen -l -f "+gitHome+"/k.pub"] = effecttest.Result{}
 	if p, err := g.Plan(context.Background()); err != nil || len(prereqs(p)) != 0 {
 		t.Errorf("a good key: Plan = %v, %v", p.Changes, err)
-	}
-}
-
-func TestGitApplyMakesTheKey(t *testing.T) {
-	m, _ := gitReady() // the key that ssh-keygen makes is there when Apply plans again
-	m.Results["ssh-keygen -q -t ed25519 -N  -f /k"] = effecttest.Result{}
-	err := gitStep(m, nil).Apply(context.Background(), step.Plan{Changes: []step.Change{setup.MakeKey{Path: "/k"}}})
-	if err != nil || m.Calls[0] != "run ssh-keygen -q -t ed25519 -N  -f /k" {
-		t.Errorf("Apply = %v, calls %q; want ssh-keygen first", err, m.Calls)
 	}
 }
 
@@ -164,7 +148,7 @@ func gitConfig(m *effecttest.Machine, text, paths, names string) {
 // gitReady is a Mac with the key and gh there.
 func gitReady() (*effecttest.Machine, *setup.Git) {
 	m := effecttest.NewMachine()
-	m.Files[gitPub], m.Files[gitHome+"/.ssh/id_ed25519_signing"] = []byte(gitKey), []byte("private")
+	m.Files[gitPub] = []byte(gitKey)
 	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
 	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
 	return m, gitStep(m, nil)
@@ -173,8 +157,8 @@ func gitReady() (*effecttest.Machine, *setup.Git) {
 func TestGitWritesAllowedSignersAndGitconfig(t *testing.T) {
 	m, g := gitReady()
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 2 {
-		t.Fatalf("Plan = %v, %v; want two writes", p.Changes, err)
+	if err != nil || len(p.Changes) != 3 {
+		t.Fatalf("Plan = %v, %v; want two writes and the line", p.Changes, err)
 	}
 	if err := g.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
@@ -196,7 +180,7 @@ func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 	m, g := gitReady()
 	delete(m.Dirs, gitHome+"/.config/ws")
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 3 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
+	if err != nil || len(p.Changes) != 4 || p.Changes[0].String() != "would make "+gitHome+"/.config/ws, mode 700" {
 		t.Fatalf("Plan = %v, %v; want the directory and two writes", p.Changes, err)
 	}
 	m, g = gitReady()
@@ -204,7 +188,7 @@ func TestGitFixesAModeAndMakesDirectories(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.Modes[gitHome+"/.config/ws/gitconfig"] = 0o600
-	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 1 {
+	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 2 {
 		t.Errorf("Plan with a wrong mode = %v, %v; want one change", p.Changes, err)
 	}
 }
@@ -216,18 +200,8 @@ func TestGitTrustsSecretivesKeyThroughItsScript(t *testing.T) {
 	m.Files[pub] = []byte(gitKey)
 	m.Results["ssh-keygen -l -f "+pub] = effecttest.Result{}
 	p, err := g.Plan(context.Background())
-	if err != nil || len(p.Changes) != 3 || !strings.Contains(p.Changes[0].String(), "secretive-ssh-keygen") {
+	if err != nil || len(p.Changes) != 4 || !strings.Contains(p.Changes[0].String(), "secretive-ssh-keygen") {
 		t.Errorf("Plan = %v, %v; want the script, allowed signers and gitconfig", p.Changes, err)
-	}
-}
-
-func TestGitWaitsForTheKeyBeforeAllowedSigners(t *testing.T) {
-	m := effecttest.NewMachine()
-	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
-	gitConfig(m, includeText, gitHome+"/.config/ws/gitconfig\n", "include.path\n")
-	p, err := gitStep(m, nil).Plan(context.Background())
-	if err != nil || len(p.Changes) != 4 || !strings.HasSuffix(p.Changes[1].String(), "allowed_signers once the key is made") {
-		t.Errorf("Plan = %v, %v; want the key, two waits and gitconfig", p.Changes, err)
 	}
 }
 
