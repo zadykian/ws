@@ -14,7 +14,7 @@ func TestMacKeyFileKey(t *testing.T) {
 		fp    string // the .pub's fingerprint, where the key's is aa
 		want  string
 	}{
-		"neither":  {nil, "", "would make /h/k"},
+		"neither":  {nil, "", "/h/k.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing"},
 		"both":     {map[string]string{"/h/k": "p", "/h/k.pub": pubText}, "aa", ""},
 		"orphan":   {map[string]string{"/h/k.pub": pubText}, "", "is there without its private key"},
 		"mismatch": {map[string]string{"/h/k": "p", "/h/k.pub": pubText}, "bb", "is not /h/k's public key"},
@@ -27,13 +27,9 @@ func TestMacKeyFileKey(t *testing.T) {
 		m.Results["rm -f "+lockDir+"/key"] = effecttest.Result{}
 		m.Results["ssh-keygen -l -f "+lockDir+"/key"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 		m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:" + tc.fp + " me\n")}
-		cs, err := k.fileKey(context.Background(), "/h/k")
 		got := ""
-		if err != nil {
+		if err := k.fileKey(context.Background(), "/h/k"); err != nil {
 			got = err.Error()
-		}
-		for _, c := range cs {
-			got += c.String()
 		}
 		if !strings.Contains(got, tc.want) || (tc.want == "" && got != "") {
 			t.Errorf("%s: fileKey = %q, want %q", name, got, tc.want)

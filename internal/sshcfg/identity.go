@@ -78,7 +78,7 @@ func Expand(path, home string) string {
 	return path
 }
 
-// PickIdentity picks the key from mac.conf's WS_IDENTITY and WS_IDENTITY_AGENT, where set. Else,
+// PickIdentity picks the key from mac.conf's WS_IDENTITY_PUB_KEY and WS_IDENTITY_AGENT, where set. Else,
 // where Secretive's socket is there, it picks the one key of publicKeys, the names of those its
 // agent lists, as ws's copy of its .pub. git's signing key, which signs alone, does not count. Else
 // it picks the file key. A key of Secretive's takes its agent. It fails where Secretive holds
@@ -98,7 +98,7 @@ func PickIdentity(identity, agent, signingKey, home string, socket bool, publicK
 		if len(keys) > 1 {
 			//nolint:staticcheck // Secretive is a name, and mac-identity-checks.sh expects this text
 			return Identity{}, fmt.Errorf("Secretive's agent holds several keys, %s: name the one for ws in "+
-				"mac.conf's WS_IDENTITY", strings.Join(keys, ", "))
+				"mac.conf's WS_IDENTITY_PUB_KEY", strings.Join(keys, ", "))
 		}
 	}
 	if pub == "" {

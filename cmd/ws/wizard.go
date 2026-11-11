@@ -114,7 +114,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 			Prog: prog, Tty: p.tty, Check: check, Scratch: scratch, M: p.machine, P: ask, Out: out, Env: p.lookup},
 		&wizard.MacKey{Conf: later, Home: p.getenv("HOME"),
 			Lock: lock, Tty: p.tty,
-			M: p.machine, F: e.talks, P: ask, Out: out, Sleep: time.Sleep},
+			M: p.machine, P: ask, Out: out, Sleep: time.Sleep},
 		gh,
 		setup,
 		host,

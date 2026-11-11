@@ -35,10 +35,10 @@ func pairs(c Conf) []Error {
 	switch {
 	case (c.GitName == "") != (c.GitEmail == ""):
 		return refuse("WS_GIT_NAME and WS_GIT_EMAIL go together")
-	case c.GitSigningKey != "" && c.GitName == "":
-		return refuse("WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL")
-	case c.IdentityAgent != "" && c.Identity == "":
-		return refuse("WS_IDENTITY_AGENT needs WS_IDENTITY")
+	case c.GitSigningPubKey != "" && c.GitName == "":
+		return refuse("WS_GIT_SIGNING_PUB_KEY needs WS_GIT_NAME and WS_GIT_EMAIL")
+	case c.IdentityAgent != "" && c.IdentityPubKey == "":
+		return refuse("WS_IDENTITY_AGENT needs WS_IDENTITY_PUB_KEY")
 	}
 	return nil
 }

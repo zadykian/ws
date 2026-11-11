@@ -2,29 +2,30 @@
 
 With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `ws mac apply` sets up git on the Mac ([The
 Mac](mac.md)), as the `shell` role does on ws ([Signing](shell.md#signing)). It writes
-`~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_KEY`, which
+`~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_PUB_KEY`, which
 `~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
 Homebrew's gh where `PATH` has none. Without the two keys, the script leaves git alone, and emptying
 them leaves the files and the include as they are.
 
-Without `WS_GIT_SIGNING_KEY`, the key is `~/.ssh/id_ed25519_signing`, which the script makes once
-with no passphrase, as git signs unattended, in a rebase too. Where its `.pub` is there without the
-private key, as an agent's key leaves it, the script stops rather than replace it: name the `.pub`
-in `WS_GIT_SIGNING_KEY`. A key that `WS_GIT_SIGNING_KEY` names must be there already, as the script
-makes no other: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one. An empty
-`WS_GIT_SIGNING_KEY` gives the script's own instead. A `.pub` that the script cannot read, or that
-holds more than a public key's line, as a private key does, stops it too.
+Without `WS_GIT_SIGNING_PUB_KEY`, the key is `~/.ssh/id_ed25519_signing`, which the script makes
+once with no passphrase, as git signs unattended, in a rebase too. Where its `.pub` is there without
+the private key, as an agent's key leaves it, the script stops rather than replace it: name the
+`.pub` in `WS_GIT_SIGNING_PUB_KEY`. A key that `WS_GIT_SIGNING_PUB_KEY` names must be there already,
+as the script makes no other: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one. An empty
+`WS_GIT_SIGNING_PUB_KEY` gives the script's own instead. A `.pub` that the script cannot read, or
+that holds more than a public key's line, as a private key does, stops it too.
 
-Where Secretive holds the Mac's ssh key, give git a key of its own in Secretive's app, at Notify.
-The login key asks for Touch ID at each use by default, so a rebase would ask at each commit. Name
-ws's copy of its `.pub`, `~/.config/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_KEY`. `NAME` is that
-of Secretive's Public Key Path, and the script writes the copy from the agent
-([Secretive's keys](#secretives-keys)). git then signs through
-`~/.config/ws/secretive-ssh-keygen`, which gives
-`ssh-keygen` Secretive's agent, so that a terminal, an editor and other apps sign alike. The
-key never leaves the Secure Enclave, and signs only while the Mac is unlocked. ssh then offers ws
-Secretive's other key, or else the file key ([ssh's hosts](mac.md#sshs-hosts)).
+The wizard asks for git's key where `mac.conf` names none ([The Mac's
+key](mac-wizard.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
+prompt while the Mac is unlocked. The login key may sign too, but asks for Touch ID at each use by
+default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
+`~/.config/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
+Key Path, and the script writes the copy from the agent ([Secretive's keys](#secretives-keys)). git
+then signs through `~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
+so that a terminal, an editor and other apps sign alike. The key never leaves the Secure Enclave,
+and signs only while the Mac is unlocked. ssh then offers ws Secretive's other key, or else the file
+key ([ssh's hosts](mac.md#sshs-hosts)).
 
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
@@ -55,4 +56,4 @@ it. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `mac.
 that copy where the agent lists the key.
 
 The socket stays after Secretive quits, and nothing answers there. The script then stops, and says
-to open Secretive, unless `WS_IDENTITY` names a key.
+to open Secretive, unless `WS_IDENTITY_PUB_KEY` names a key.

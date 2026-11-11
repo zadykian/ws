@@ -33,23 +33,6 @@ func TestGhLoginTakesTheTerminal(t *testing.T) {
 	}
 }
 
-func TestMacKeyMakeTakesTheTerminal(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_REMOTE=\n")
-	k.F = m
-	m.Results["ssh-keygen -q -t ed25519 -a 100 -f /k"] = effecttest.Result{}
-	m.Results["ssh-add --apple-use-keychain /k"] = effecttest.Result{}
-	if err := k.make(context.Background(), "/k"); err != nil {
-		t.Fatal(err)
-	}
-	want := []string{"foreground ssh-keygen -q -t ed25519 -a 100 -f /k", "foreground ssh-add --apple-use-keychain /k"}
-	if got := callsWith(m, "foreground"); !slices.Equal(got, want) {
-		t.Errorf("foreground calls = %q, want %q", got, want)
-	}
-	if got := callsWith(m, "pass"); len(got) != 0 {
-		t.Errorf("a passphrase's command ran by Pass: %q", got)
-	}
-}
-
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 	m := effecttest.NewMachine()
 	ws := macSession(m, SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{Claude: "login"})

@@ -24,7 +24,7 @@ stages, in order, the first two of which install what the rest needs:
    `internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
 2. Answers: the values `mac.conf` lacks, below.
-3. Mac key: the ssh key that the Mac offers ws, made where missing, in Secretive by default, below.
+3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
 4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, below.
 5. ws mac apply: `ws mac apply`, after sudo's password, asked at each run, `--check` too, unless its
    timestamp is fresh. With no terminal, the stage stops, unless sudo needs no password. It shows
@@ -59,12 +59,11 @@ its last change lands there, as the Tunnel and the Cable do.
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
 
 Each answer goes in `mac.conf`, under the key that [mac.conf](mac.md#macconf) explains, but the
-first. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs
-`WS_REMOTE` and `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the
-questions on the LAN, and [The wizard's targets](mac-targets.md) the others, with the keys that each
-refuses. The defaults are
-[The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's answer comes
-from the first of these that has one:
+first. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs `WS_REMOTE` and
+`WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the questions on the
+LAN, and [The wizard's targets](mac-targets.md) the others, with the keys that each refuses. The
+defaults are [The router](router.md)'s LAN, lease and forward, and ws's own git identity. A key's
+answer comes from the first of these that has one:
 
 - `mac.conf`'s line for the key, even an empty one, so the wizard never asks it again;
 - the environment, under the key's name, as `WS_LAN=10.88.0.0/24`, or `WS_LAN=` for no value;
@@ -75,9 +74,9 @@ from the first of these that has one:
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
 the end of `mac.conf`, and keeps its comments and order. It writes the file once `ws mac apply`
-would take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that `ws mac
-apply` would refuse. Where `mac.conf` is a link and lacks a key, it prints the lines to add to the
-link's file, and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE`
+would take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line that `ws
+mac apply` would refuse. Where `mac.conf` is a link and lacks a key, it prints the lines to add to
+the link's file, and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE`
 ([The cable](#the-cable)). The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults
 until set by hand.
 
@@ -87,25 +86,23 @@ Under `--check`, the wizard asks too, and shows the lines it would add as a diff
 
 ## The Mac's key
 
-ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY` names ([mac.conf](mac.md#macconf)).
-Where that is a file, as `~/.ssh/id_ed25519.pub`, and neither the key nor its `.pub` is there,
-`ssh-keygen -t ed25519 -a 100` makes it, and asks its passphrase twice.
-`ssh-add --apple-use-keychain` then gives the key to the agent and the passphrase to the Keychain,
-and asks it once more. With no terminal to ask one, the key gets none. Where `ssh-add` fails, the
-wizard stops, as Login logs in with no prompt. Run the command it names, then the wizard again.
+ssh offers ws the key whose `.pub` `mac.conf`'s `WS_IDENTITY_PUB_KEY` names
+([mac.conf](mac.md#macconf)). Where that is a file, as `~/.ssh/id_ed25519.pub`, the key and its
+`.pub` must be there, as the wizard makes no key in a file. Where one is missing, it stops, naming
+the line to drop for the wizard to ask.
 
-Without `WS_IDENTITY`, and with no key yet, the wizard asks whether Secretive keeps the key, in the
-Mac's Secure Enclave, which it never leaves. Yes, the default, installs Secretive's cask, and where
-its app is there already, the wizard asks nothing. It opens the app, and waits up to 15 minutes for
-a P-256 key made there, at its default protection, which asks for Touch ID at each login. Where git
-has a name, a second key follows, for git's signing, at Notify, which signs with no prompt while
-the Mac is unlocked ([git](mac-git.md)). The wizard takes each from the agent, and writes a copy of
-its `.pub` ([Secretive's keys](mac-git.md#secretives-keys)). The copies and the agent go in `mac.conf`, as
-`WS_IDENTITY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_KEY`. An empty `WS_GIT_SIGNING_KEY`
-keeps `ws mac apply`'s file key for git. No makes `~/.ssh/id_ed25519` with `ssh-keygen`, as above.
-Where `mac.conf` has no `WS_IDENTITY` line, the wizard writes `WS_IDENTITY=~/.ssh/id_ed25519.pub`
-for a file key, made now or found there. A Secretive key made later then does not take its place.
-With no terminal to ask, the wizard stops, unless `WS_IDENTITY` names a file.
+Where `mac.conf` names none, or an empty one, the wizard asks for ws's login key. It offers each
+P-256 key of Secretive's agent, by comment and SHA256 fingerprint, and a new one. The new one is the
+default, so that a keypress never takes a key made for another use. Where git has a name, and
+`mac.conf` an empty `WS_GIT_SIGNING_PUB_KEY` or none, it asks for git's key too, the login key
+marked ([git](mac-git.md)). One key may serve both. For a new key, the wizard installs Secretive's
+cask where its app is missing, and opens the app. It waits up to 15 minutes for a P-256 key made
+there, in the Mac's Secure Enclave, which it never leaves. Where the agent wasn't there to ask, a
+key it lists once it starts stops the wizard, as no answer named it. ws's key takes Secretive's
+default protection, which asks for Touch ID at each login. The wizard takes each key from the agent,
+and writes a copy of its `.pub` ([Secretive's keys](mac-git.md#secretives-keys)). The copies and the
+agent go in `mac.conf`, as `WS_IDENTITY_PUB_KEY`, `WS_IDENTITY_AGENT` and `WS_GIT_SIGNING_PUB_KEY`.
+With no terminal, the wizard stops at the first question, naming the line of each such key.
 
 The stage stops where the `.pub` is there without its key, the key without its `.pub`, or the two
 differ, and says how to mend each. A key that an agent holds, at the socket of `WS_IDENTITY_AGENT`
@@ -119,21 +116,21 @@ it add the Mac's keys, and a login without them is refreshed the same way. The w
 key for ws to the account's ssh keys, titled with the Mac's name. `ws mac apply` then adds git's
 signing key ([git](mac-git.md)). With no terminal, the stage stops, naming the command to run.
 
-Ubuntu's installer imports the account's keys for ws's user, `zadykian`. So run the line before Ubuntu's
-install, as the wizard adds no key to ws afterwards. A run before the install stops at the Host key
-stage, as ws doesn't answer yet. Leave ws's address empty there, and run the wizard again once
-Ubuntu is installed. In the installer, turn OpenSSH on, import the keys from GitHub, and leave
+Ubuntu's installer imports the account's keys for ws's user, `zadykian`. So run the line before
+Ubuntu's install, as the wizard adds no key to ws afterwards. A run before the install stops at the
+Host key stage, as ws doesn't answer yet. Leave ws's address empty there, and run the wizard again
+once Ubuntu is installed. In the installer, turn OpenSSH on, import the keys from GitHub, and leave
 password login off.
 
 ## ws's host key
 
 The stage reads ws's ed25519 key with `ssh-keyscan`, at the host and port that `ssh -G` gives
-for a direct way to `ws` ([ssh's hosts](mac.md#sshs-hosts)). Where no way matches, it stops, naming [The router](router.md),
-or off the LAN what the target needs, as a VM on the Mac started. A new ws has a lease from the
-router's pool, not its static address. So where ws gives no key within 10 s, the stage asks ws's
-address now, as the router's leases show it. Off the LAN, [The wizard's targets](mac-targets.md)
-says where it shows. ssh takes that address for the rest of the run, and `mac.conf` keeps nothing of
-it. An empty answer stops the run, as before Ubuntu's install.
+for a direct way to `ws` ([ssh's hosts](mac.md#sshs-hosts)). Where no way matches, it stops, naming
+[The router](router.md), or off the LAN what the target needs, as a VM on the Mac started. A new ws
+has a lease from the router's pool, not its static address. So where ws gives no key within 10 s,
+the stage asks ws's address now, as the router's leases show it. Off the LAN, [The wizard's
+targets](mac-targets.md) says where it shows. ssh takes that address for the rest of the run, and
+`mac.conf` keeps nothing of it. An empty answer stops the run, as before Ubuntu's install.
 
 The stage shows the key's fingerprint. At ws's console, `ssh-keygen -lf
 /etc/ssh/ssh_host_ed25519_key.pub` prints ws's own: answer `yes` where they match, or paste what it

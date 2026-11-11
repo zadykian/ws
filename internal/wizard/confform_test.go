@@ -179,7 +179,7 @@ func TestConfFormSaveSaysWhatItEmptied(t *testing.T) {
 }
 
 func TestConfFormSaveRefusals(t *testing.T) {
-	signed := "WS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\nWS_GIT_SIGNING_KEY=~/.ssh/k.pub\n"
+	signed := "WS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\nWS_GIT_SIGNING_PUB_KEY=~/.ssh/k.pub\n"
 	f, m := formOf(t, signed)
 	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_GIT_NAME": ""})
 	if !errors.Is(err, errRefused) || string(m.Files["/h/mac.conf"]) != signed {

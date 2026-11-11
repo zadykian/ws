@@ -1,9 +1,9 @@
 #!/bin/sh
 # The first run, with standin.sh's PATH, which lacks brew. The wizard must still find brew,
 # so that ws mac apply copies ws for root, makes the Mac's key, and writes ssh's files.
-# Without WS_PUBLIC_KEY, ws mac apply prints the Mac's key, which the wizard drops. It must make
-# the ssh key that mac.conf names, ~/.ssh/id_ed25519, beside its .pub, with no passphrase, as no
-# terminal asked one. It must add the .pub to the stand-in gh's login, titled with the Mac's name.
+# Without WS_PUBLIC_KEY, ws mac apply prints the Mac's key, which the wizard drops. The stand-in
+# made the ssh key that mac.conf names, ~/.ssh/id_ed25519. The wizard must add its .pub to the
+# stand-in gh's login, titled with the Mac's name.
 # It must add the environment's answers at the end of mac.conf, and leave no lock or file of its
 # own in $TMPDIR. It must warn that ws, reached through WS_REMOTE, faces the internet, and add ws's
 # host key to known_hosts under ws, as WS_HOST_KEY gives its fingerprint. The runner on the stand-in ws
@@ -43,9 +43,6 @@ fi
 for each in /usr/local/libexec/ws-tunnel/ws /etc/ws-tunnel/private.key ~/.ssh/config.d/ws; do
     sudo test -f "$each" || error "ws mac wizard made no $each"
 done
-[ "$(ssh-keygen -y -P '' -f ~/.ssh/id_ed25519 | cut -d ' ' -f 1-2)" = \
-    "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" ] ||
-    error 'ws mac wizard made no ~/.ssh/id_ed25519 with no passphrase, beside its .pub'
 added="ssh-key add $HOME/.ssh/id_ed25519.pub --title $(hostname -s)"
 if ! grep -qxF "$added" "$RUNNER_TEMP/gh/log" ||
     ! grep -qxF "$(cut -d ' ' -f 1-2 ~/.ssh/id_ed25519.pub)" "$RUNNER_TEMP/gh/keys"; then
@@ -80,7 +77,7 @@ sudo /usr/local/libexec/ws-tunnel/ws mac tunnel status | grep -q '^latest handsh
     [ "$(cat "$RUNNER_TEMP/ws/tunnel.log" 2>/dev/null | wc -l)" -eq 1 ] ||
     error "ws mac wizard had no handshake, or logged in to ws through the tunnel other than once"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "ws mac wizard printed ws mac apply's key"
-printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY=~/.ssh/id_ed25519.pub' \
+printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
     WS_TARGET=lan WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
     "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" |
     cmp -s - ~/.config/ws/mac.conf ||

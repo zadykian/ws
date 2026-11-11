@@ -22,9 +22,9 @@ func (s SSH) identity(ctx context.Context, f sshFacts) (sshcfg.Identity, error) 
 	if err != nil || !id.Check {
 		return id, err
 	}
-	if s.Conf.Identity == "" && strings.Contains(string(f.Ws.Text), "\n    IdentityFile ~/.ssh/id_ed25519\n") {
+	if s.Conf.IdentityPubKey == "" && strings.Contains(string(f.Ws.Text), "\n    IdentityFile ~/.ssh/id_ed25519\n") {
 		s.Out.Warn("Secretive's key replaces ~/.ssh/id_ed25519 as ws's: keep the file key with "+
-			"WS_IDENTITY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the key of %s on GitHub "+
+			"WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub in mac.conf for an installed ws, or put the key of %s on GitHub "+
 			"before ws's next install", id.Pub)
 	}
 	return id, nil
@@ -35,14 +35,14 @@ func (s SSH) identity(ctx context.Context, f sshFacts) (sshcfg.Identity, error) 
 // it comes as ws's copy, with the copy's text, which a later step writes.
 func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (sshcfg.Identity, error) {
 	keys, socket, err := SecretiveKeys(ctx, m, home)
-	if err != nil && c.Identity == "" {
+	if err != nil && c.IdentityPubKey == "" {
 		return sshcfg.Identity{}, err
 	}
 	names := make([]string, 0, len(keys))
 	for _, k := range keys {
 		names = append(names, k.Name)
 	}
-	id, err := sshcfg.PickIdentity(c.Identity, c.IdentityAgent, c.GitSigningKey, home, socket, names)
+	id, err := sshcfg.PickIdentity(c.IdentityPubKey, c.IdentityAgent, c.GitSigningPubKey, home, socket, names)
 	if err != nil || !id.Check {
 		return id, err
 	}
@@ -53,21 +53,21 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	}
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return id, fmt.Errorf("%s, mac.conf's WS_IDENTITY, is missing: make the key first", file)
+		return id, fmt.Errorf("%s, mac.conf's WS_IDENTITY_PUB_KEY, is missing: make the key first", file)
 	}
 	if errors.Is(err, fs.ErrPermission) && sshcfg.SecretiveKey(file, home) {
 		return id, fmt.Errorf("cannot read %s, and Secretive's agent lists no key of it: open Secretive, "+
-			"or name another in mac.conf's WS_IDENTITY", file)
+			"or name another in mac.conf's WS_IDENTITY_PUB_KEY", file)
 	}
 	if err != nil {
-		return id, fmt.Errorf("cannot read %s: make it readable, or name another in mac.conf's WS_IDENTITY", file)
+		return id, fmt.Errorf("cannot read %s: make it readable, or name another in mac.conf's WS_IDENTITY_PUB_KEY", file)
 	}
 	if err := sshcfg.CheckKeyFile(file, string(text)); err != nil {
 		return id, err
 	}
 	if _, err := m.Run(ctx, "ssh-keygen", "-l", "-f", file); err != nil {
 		return id, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
-			"mac.conf's WS_IDENTITY", file)
+			"mac.conf's WS_IDENTITY_PUB_KEY", file)
 	}
 	id.Text = string(text)
 	return id, nil

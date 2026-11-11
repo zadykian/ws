@@ -26,8 +26,8 @@ func TestPairs(t *testing.T) {
 		{"root on a cloud VM", "WS_USER=root\nWS_TARGET=cloud\nWS_REMOTE=a.b\nWS_REMOTE_PORT=22", ""},
 		{"ubuntu on a cloud VM", "WS_USER=ubuntu\nWS_TARGET=cloud\nWS_REMOTE=a.b\nWS_REMOTE_PORT=22", ""},
 		{"name alone", "WS_GIT_NAME=Ada", "WS_GIT_NAME and WS_GIT_EMAIL go together"},
-		{"signing alone", "WS_GIT_SIGNING_KEY=~/k.pub", "WS_GIT_SIGNING_KEY needs WS_GIT_NAME and WS_GIT_EMAIL"},
-		{"agent alone", "WS_IDENTITY_AGENT=~/a.sock", "WS_IDENTITY_AGENT needs WS_IDENTITY"},
+		{"signing alone", "WS_GIT_SIGNING_PUB_KEY=~/k.pub", "WS_GIT_SIGNING_PUB_KEY needs WS_GIT_NAME and WS_GIT_EMAIL"},
+		{"agent alone", "WS_IDENTITY_AGENT=~/a.sock", "WS_IDENTITY_AGENT needs WS_IDENTITY_PUB_KEY"},
 	}
 	for _, tt := range tests {
 		_, errs := Parse(tt.text + "\n")

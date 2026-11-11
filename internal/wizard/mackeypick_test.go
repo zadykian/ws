@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/sshcfg"
 )
 
 const (
@@ -17,7 +18,10 @@ const (
 	reason  = "a P-256 key for ws"
 )
 
-func TestMacKeyPickWaits(t *testing.T) {
+// listed is what the agent lists as the lines.
+func listed(lines ...string) []sshcfg.AgentKey { return sshcfg.AgentKeys(strings.Join(lines, "")) }
+
+func TestMacKeyWaits(t *testing.T) {
 	k, m, out := newMacKey(t, "")
 	agent(m, gitP256)
 	naps := 0
@@ -26,27 +30,24 @@ func TestMacKeyPickWaits(t *testing.T) {
 			agent(m, gitP256, p256)
 		}
 	}
-	got, err := k.pick(context.Background(), copyOf(gitP256), reason, "")
-	if err != nil || got != copyOf(p256) || naps != 3 || len(out.Lines) != 2 {
-		t.Errorf("pick = %q, %v after %d naps, saying %q", got, err, naps, out.Lines)
-	}
-	if string(m.Files[got]) != p256 {
-		t.Errorf("the copy holds %q", m.Files[got])
+	got, err := k.wait(context.Background(), listed(gitP256), reason)
+	if err != nil || got.Line != strings.TrimSuffix(p256, "\n") || naps != 3 || len(out.Lines) != 1 {
+		t.Errorf("wait = %q, %v after %d naps, saying %q", got.Line, err, naps, out.Lines)
 	}
 }
 
 // The socket stays after Secretive quits: the wizard opens it, and its agent starts during the wait.
-func TestMacKeyPickWaitsForAnAgentThatStarts(t *testing.T) {
+func TestMacKeyWaitsForAnAgentThatStarts(t *testing.T) {
 	k, m, _ := newMacKey(t, "")
 	agent(m)
 	m.Results[listKeys] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
 	k.Sleep = func(time.Duration) { agent(m, p256) }
-	if got, err := k.pick(context.Background(), "", reason, ""); err != nil || got != copyOf(p256) {
-		t.Errorf("pick = %q, %v", got, err)
+	if got, err := k.wait(context.Background(), nil, reason); err != nil || got.Pub() != listed(p256)[0].Pub() {
+		t.Errorf("wait = %q, %v", got.Line, err)
 	}
 }
 
-func TestMacKeyPickStopsWithTheContext(t *testing.T) {
+func TestMacKeyWaitStopsWithTheContext(t *testing.T) {
 	k, m, _ := newMacKey(t, "")
 	agent(m)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -56,19 +57,16 @@ func TestMacKeyPickStopsWithTheContext(t *testing.T) {
 			cancel()
 		}
 	}
-	if _, err := k.pick(ctx, "", reason, ""); !errors.Is(err, context.Canceled) || naps != 2 {
-		t.Errorf("pick after a signal = %v after %d naps", err, naps)
+	if _, err := k.wait(ctx, nil, reason); !errors.Is(err, context.Canceled) || naps != 2 {
+		t.Errorf("wait after a signal = %v after %d naps", err, naps)
 	}
 }
 
-func TestMacKeyPickRefuses(t *testing.T) {
+func TestMacKeyWaitRefusesAnotherType(t *testing.T) {
 	k, m, _ := newMacKey(t, "")
-	agent(m, mldsa)
-	if _, err := k.pick(context.Background(), "", reason, ""); err == nil || !strings.Contains(err.Error(), "is not the P-256 key") {
-		t.Errorf("pick of an ML-DSA key = %v", err)
-	}
-	agent(m, mldsa, p256)
-	if _, err := k.pick(context.Background(), "", reason, ""); err == nil || !strings.Contains(err.Error(), "holds several keys") {
-		t.Errorf("pick of two keys = %v", err)
+	agent(m, p256, mldsa)
+	if _, err := k.wait(context.Background(), listed(p256), reason); err == nil ||
+		!strings.Contains(err.Error(), "is not the P-256 key") {
+		t.Errorf("wait for an ML-DSA key = %v", err)
 	}
 }

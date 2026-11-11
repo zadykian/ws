@@ -70,19 +70,19 @@ side is in [The router](router.md). `WS_PUBLIC_KEY` goes in last, once ws has th
 order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
 display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
 [The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
-git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_KEY` is the
+git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_PUB_KEY` is the
 `.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
-`WS_IDENTITY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the socket of its
-agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
+`WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
+socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
 
 `WS_USER` is the user ssh logs in as: the server's `ws_user`, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
 with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
-`WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for `WS_GIT_SIGNING_KEY`. Where
-Secretive's agent lists one key for ws, `WS_IDENTITY` and `WS_IDENTITY_AGENT` take ws's copy of that
-key's `.pub` and the socket. Several stop the script ([ssh's hosts](#sshs-hosts)). With none, or no
-socket, `WS_IDENTITY` takes the file key's `.pub`, `~/.ssh/id_ed25519.pub`, and `WS_IDENTITY_AGENT`
-none, as the others do.
+`WS_USER`, 51820 for `WS_PORT` and `~/.ssh/id_ed25519_signing.pub` for `WS_GIT_SIGNING_PUB_KEY`.
+Where Secretive's agent lists one key for ws, `WS_IDENTITY_PUB_KEY` and `WS_IDENTITY_AGENT` take
+ws's copy of that key's `.pub` and the socket. Several stop the script ([ssh's hosts](#sshs-hosts)).
+With none, or no socket, `WS_IDENTITY_PUB_KEY` takes the file key's `.pub`, `~/.ssh/id_ed25519.pub`,
+and `WS_IDENTITY_AGENT` none, as the others do.
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -113,13 +113,13 @@ lists, but git's signing key and a certificate ([Secretive's keys](mac-git.md#se
 script stops on several, and names them. Without one, or elsewhere, the key is
 `~/.ssh/id_ed25519`, its passphrase kept in the Keychain.
 Where `config.d/ws` gave ws that key, the script warns as Secretive's replaces it. Keep the file key
-with `WS_IDENTITY=~/.ssh/id_ed25519.pub` for an installed ws, or put Secretive's key on GitHub
-before ws's next install. `WS_IDENTITY` names any `.pub`, as one of Secretive's. Its agent is the
-one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh
-reads the file beside the `.pub`. The script stops where that `.pub`, but the file key's, is missing
-or unreadable. It stops too where the `.pub` holds other than one public key's line, as a private
-key or a certificate does. So does a key that ssh-keygen cannot read, or one of a type that ws's
-OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
+with `WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub` for an installed ws, or put Secretive's key on
+GitHub before ws's next install. `WS_IDENTITY_PUB_KEY` names any `.pub`, as one of Secretive's. Its
+agent is the one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there.
+Else ssh reads the file beside the `.pub`. The script stops where that `.pub`, but the file key's,
+is missing or unreadable. It stops too where the `.pub` holds other than one public key's line, as a
+private key or a certificate does. So does a key that ssh-keygen cannot read, or one of a type that
+ws's OpenSSH lacks, as Secretive's ML-DSA keys on macOS 26.
 
 The script puts `Include config.d/ws` first in `~/.ssh/config`, as ssh keeps the first value it
 reads for each key. So neither the file's own settings nor the other files of `config.d` override
@@ -203,8 +203,8 @@ prints its public key with the two commands that make the Mac ws's peer, over a 
 `ssh ws` needs this done first. ADDRESS and PORT are that way:
 
 ```sh
-ssh -o HostName=ADDRESS -o Port=PORT ws "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub >/dev/null"
-ssh -o HostName=ADDRESS -o Port=PORT ws ws server apply --only wireguard
+ssh -o HostName=ADDRESS -o Port=PORT ws "printf '%s\n' 'MAC_PUBLIC_KEY' | tee /etc/wireguard/mac.pub
+>/dev/null" ssh -o HostName=ADDRESS -o Port=PORT ws ws server apply --only wireguard
 ```
 
 For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the password.

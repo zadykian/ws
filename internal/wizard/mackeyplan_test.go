@@ -23,7 +23,7 @@ const (
 func agent(m *effecttest.Machine, lines ...string) {
 	m.Files[socket], m.Modes[socket] = nil, fs.ModeSocket
 	m.Results[listKeys] = effecttest.Result{Out: []byte(strings.Join(lines, ""))}
-	m.Results[makeDir] = effecttest.Result{}
+	m.Results[makeDir], m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}, effecttest.Result{}
 }
 
 // copyOf is the path of ws's copy of the line's key.
@@ -35,7 +35,7 @@ func planned(k *MacKey) string {
 }
 
 func TestMacKeyPlan(t *testing.T) {
-	const conf = "WS_IDENTITY=~/k.pub\nWS_IDENTITY_AGENT=/s\n"
+	const conf = "WS_IDENTITY_PUB_KEY=~/k.pub\nWS_IDENTITY_AGENT=/s\n"
 	k, m, _ := newMacKey(t, conf)
 	m.Files["/h/k.pub"] = []byte(pubText)
 	m.Results["ssh-keygen -l -f /h/k.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
@@ -48,28 +48,41 @@ func TestMacKeyPlan(t *testing.T) {
 		t.Errorf("a key the agent lacks: Plan = %q", got)
 	}
 	k, _, _ = newMacKey(t, "")
-	if got := planned(k); !strings.Contains(got, "would ask whether Secretive keeps the Mac's key") {
+	if got := planned(k); got != "[Mac key: would ask for ws's login key, in Secretive: make a new one (the default)] <nil>" {
 		t.Errorf("no key: Plan = %q", got)
+	}
+	k, _, _ = newMacKey(t, gitConf)
+	if got := planned(k); !strings.Contains(got, "for ws's login key") || !strings.Contains(got, "for git's signing key") {
+		t.Errorf("no key and git's name: Plan = %q, want both questions", got)
 	}
 }
 
-func TestMacKeyPlanPinsAFileKey(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_REMOTE=\n")
+// A file key that mac.conf names must be there: the stage makes none.
+func TestMacKeyPlanNeedsAFileKey(t *testing.T) {
+	k, m, _ := newMacKey(t, "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n")
+	if got := planned(k); !strings.Contains(got, "/h/.ssh/id_ed25519.pub, named in mac.conf's WS_IDENTITY_PUB_KEY, is missing") {
+		t.Errorf("Plan of a missing key = %q", got)
+	}
 	m.Files["/h/.ssh/id_ed25519"], m.Files["/h/.ssh/id_ed25519.pub"] = []byte("p"), []byte(pubText)
 	m.Results["ln -sf /h/.ssh/id_ed25519 "+lockDir+"/key"] = effecttest.Result{}
 	m.Results["rm -f "+lockDir+"/key"] = effecttest.Result{}
 	m.Results["ssh-keygen -l -f "+lockDir+"/key"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
 	m.Results["ssh-keygen -l -f /h/.ssh/id_ed25519.pub"] = effecttest.Result{Out: []byte("256 SHA256:aa me\n")}
-	if got := planned(k); !strings.Contains(got, "\n+WS_IDENTITY=~/.ssh/id_ed25519.pub\n") {
-		t.Errorf("Plan = %q, want the line for the file key", got)
+	if got := planned(k); got != "[] <nil>" {
+		t.Errorf("Plan of the key there = %q", got)
 	}
 }
 
 // macOS 27 denies ws the files of Secretive's container, as #839 of Secretive's says. So the stage
-// must take the key from the agent alone, and plan the copy that the stages after it read.
+// must offer the agent's keys alone, and plan the copy of the one named that the stages after it
+// read.
 func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	k, m, _ := newMacKey(t, "")
 	agent(m, p256)
+	if got := planned(k); !strings.Contains(got, ": "+p256Label+"; make a new one (the default)]") {
+		t.Errorf("Plan = %q, want the agent's key offered", got)
+	}
+	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=" + listed(p256)[0].Pub() + "\n")
 	p, err := k.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 || p.Changes[0] != (setup.KeyCopy{Path: copyOf(p256), Text: p256}) {
 		t.Fatalf("Plan = %v, %v; want the copy alone", p.Changes, err)
@@ -87,12 +100,19 @@ func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	}
 }
 
-func TestMacKeyPlanWaitsForGitsKey(t *testing.T) {
-	k, m, _ := newMacKey(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\n")
+// git's question marks ws's login key, which mac.conf names. An empty WS_GIT_SIGNING_PUB_KEY names none.
+func TestMacKeyPlanAsksForGitsKey(t *testing.T) {
+	k, m, _ := newMacKey(t, gitConf+"WS_GIT_SIGNING_PUB_KEY=\n")
 	agent(m, p256)
+	if got := planned(k); strings.Count(got, "would ask for") != 2 {
+		t.Errorf("Plan with neither key = %q, want both questions", got)
+	}
+	m.Files[confPathForTest] = []byte(gitConf + "WS_IDENTITY_PUB_KEY=" + listed(p256)[0].Pub() + "\n")
 	m.Files[copyOf(p256)] = []byte(p256)
-	if got := planned(k); !strings.Contains(got, "wait for git's signing key made there") {
-		t.Errorf("Plan = %q", got)
+	want := "[Mac key: would ask for git's signing key, in Secretive: " + p256Label + ", ws's login key; " +
+		"make a new one (the default)] <nil>"
+	if got := planned(k); got != want {
+		t.Errorf("Plan = %q, want %q", got, want)
 	}
 }
 

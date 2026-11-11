@@ -13,64 +13,61 @@ import (
 
 func (k *MacKey) file() confFile { return confFile{k.Conf, macKey, k.M, k.Out} }
 
-func (k *MacKey) secretive() string { return k.Home + "/" + sshcfg.SecretiveData }
-
-// Plan finds what the key that ssh offers ws lacks. A file key, or a key where mac.conf has no line
-// for WS_IDENTITY, is checked here; a Secretive key's agent must list it.
+// Plan finds what the key that ssh offers ws lacks: a question where mac.conf names none, or ws's
+// copy of a key of Secretive's. A file key must be there, and an agent's key listed by its agent.
 func (k *MacKey) Plan(ctx context.Context) (step.Plan, error) {
-	text, c, err := loadConf(k.file())
+	_, c, err := loadConf(k.file())
 	if err != nil {
 		return step.Plan{}, err
 	}
-	cs, err := k.changes(ctx, text, c)
-	return step.Plan{Changes: cs}, err
+	cs, err := k.changes(ctx, c)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	git, err := k.gitQuestion(ctx, c)
+	return step.Plan{Changes: append(cs, git...)}, err
 }
 
-func (k *MacKey) changes(ctx context.Context, text string, c conf.Conf) ([]step.Change, error) {
-	// A WS_IDENTITY that is no key of Secretive's, with no agent, is a key in a file.
-	if c.Identity != "" && c.IdentityAgent == "" {
-		if pub := sshcfg.Expand(c.Identity, k.Home); !sshcfg.SecretiveKey(pub, k.Home) {
-			return k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
-		}
+// changes checks ws's key where mac.conf names it, and asks for one where it names none, an empty
+// value included.
+func (k *MacKey) changes(ctx context.Context, c conf.Conf) ([]step.Change, error) {
+	if c.IdentityPubKey != "" {
+		return k.named(ctx, c)
+	}
+	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", macKey, err)
+	}
+	return []step.Change{askKey{loginUse, keyQuestion(loginUse, keys, k.login(c))}}, nil
+}
+
+// named checks the key that mac.conf names for ws. ws's copy of a key of Secretive's comes from
+// the agent, which must list the key.
+func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) {
+	if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); c.IdentityAgent == "" && !sshcfg.SecretiveKey(pub, k.Home) {
+		return nil, k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 	}
 	id, err := setup.PickKey(ctx, k.M, c, k.Home)
 	if err != nil {
 		return nil, err
 	}
 	pub, agent := sshcfg.Expand(id.Pub, k.Home), sshcfg.Expand(id.Agent, k.Home)
-	var cs []step.Change
-	switch key := strings.TrimSuffix(pub, ".pub"); {
-	case agent != "":
-		if !k.listed(ctx, id.Text, agent) {
-			return nil, fmt.Errorf("%s: the agent at %s lists no key of %s: open Secretive, where it is that agent, "+
-				"or start the agent, then run the wizard again", macKey, agent, pub)
-		}
-		// The stages after this one offer the key, and ssh reads its .pub for that.
-		cs = append(cs, setup.PlanCopy(k.M, pub, id.Text, k.Home)...)
-	case !k.exists(key) && !k.exists(pub):
-		choose := chooseKey{pub: pub, app: k.app()}
-		if !choose.app {
-			return []step.Change{choose}, nil
-		}
-		cs, agent = append(cs, choose), k.secretive()+"/socket.ssh"
-	default:
-		if _, err := k.fileKey(ctx, key); err != nil {
-			return nil, err
-		}
-		// A Secretive key made later would take the file key's place.
-		if !hasLine(text, "WS_IDENTITY") {
-			after := text
-			if after != "" && !strings.HasSuffix(after, "\n") {
-				after += "\n"
-			}
-			return []step.Change{setup.Write{Path: k.Conf, Before: []byte(text), After: []byte(after + line("WS_IDENTITY", id.Pub) + "\n"),
-				Exists: text != "", Mode: 0o644}}, nil
-		}
+	if !k.listed(ctx, id.Text, agent) {
+		return nil, fmt.Errorf("%s: the agent at %s lists no key of %s: open Secretive, where it is that agent, "+
+			"or start the agent, then run the wizard again", macKey, agent, pub)
 	}
-	// git, which has a name, needs a key of its own beside ws's in Secretive, unless mac.conf has a
-	// line for WS_GIT_SIGNING_KEY. An empty one keeps ws mac apply's key.
-	if agent == k.secretive()+"/socket.ssh" && c.GitName != "" && !hasLine(text, "WS_GIT_SIGNING_KEY") {
-		cs = append(cs, gitKey{})
+	// The stages after this one offer the key, and ssh reads its .pub for that.
+	return setup.PlanCopy(k.M, pub, id.Text, k.Home), nil
+}
+
+// gitQuestion asks for git's key after ws's key's changes, whichever, where git has a name, no key.
+func (k *MacKey) gitQuestion(ctx context.Context, c conf.Conf) ([]step.Change, error) {
+	if c.GitName == "" || c.GitSigningPubKey != "" {
+		return nil, nil
 	}
-	return cs, nil
+	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", macKey, err)
+	}
+	return []step.Change{askKey{gitUse, keyQuestion(gitUse, keys, k.login(c))}}, nil
 }

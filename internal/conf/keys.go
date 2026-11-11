@@ -10,7 +10,7 @@ import (
 type Conf struct {
 	User, Target, PublicKey, LAN, LANAddress, Remote, RemotePort, Port string
 	TunnelNetworks, Resolvers, CableService, CablePort                 string
-	GitName, GitEmail, GitSigningKey, Identity, IdentityAgent          string
+	GitName, GitEmail, GitSigningPubKey, IdentityPubKey, IdentityAgent string
 }
 
 // key is one of mac.conf's keys: where its value goes, its check, and the form its message names.
@@ -71,8 +71,8 @@ var keys = []key{
 	{"WS_GIT_EMAIL", func(c *Conf) *string { return &c.GitEmail }, plain(check.GitEmail),
 		"an email address, as ws@example.com: letters, digits and ._%+- before the @, and " +
 			"a host name after it"},
-	{"WS_GIT_SIGNING_KEY", func(c *Conf) *string { return &c.GitSigningKey }, plain(check.KeyFile), keyFile},
-	{"WS_IDENTITY", func(c *Conf) *string { return &c.Identity }, plain(check.KeyFile), keyFile},
+	{"WS_GIT_SIGNING_PUB_KEY", func(c *Conf) *string { return &c.GitSigningPubKey }, plain(check.KeyFile), keyFile},
+	{"WS_IDENTITY_PUB_KEY", func(c *Conf) *string { return &c.IdentityPubKey }, plain(check.KeyFile), keyFile},
 	{"WS_IDENTITY_AGENT", func(c *Conf) *string { return &c.IdentityAgent }, check.Socket,
 		"an agent's socket: a path from / or ~/, of letters, digits, blanks and ._/@+-, " +
 			"in quotes where it holds a blank"},

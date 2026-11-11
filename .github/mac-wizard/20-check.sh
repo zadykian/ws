@@ -1,7 +1,7 @@
 #!/bin/sh
 # A fresh --check, with standin.sh's PATH, which lacks brew. The wizard must
-# still find brew, and show the Include for ~/.ssh/config. It must show the Mac's key it would make
-# and add to gh's login, and make none. The Host key stage must wait for ws mac apply, Login for it,
+# still find brew, and show the Include for ~/.ssh/config. It must show the Mac's key it would add
+# to gh's login. The Host key stage must wait for ws mac apply, Login for it,
 # Sudo for Login, and ws on ws for Sudo. ws's run must wait for ws on ws, and the Signing key,
 # claude on ws, the Tunnel and the Cable for ws's run. It must write none of the paths that
 # mac.yml's --check step lists, keep ~/.ssh/config unchanged, and install no formula or cask. It
@@ -38,8 +38,6 @@ printf '%s\n' "$out"
 ! printf '%s\n' "$out" | grep -q ': after Homebrew$' || error "ws mac wizard --check found no brew"
 printf '%s\n' "$out" | grep -qx '+Include config.d/ws' ||
     error "ws mac wizard --check showed no Include for ~/.ssh/config"
-printf '%s\n' "$out" | grep -q "^ws mac wizard: Mac key: would make $HOME/\.ssh/id_ed25519 " ||
-    error "ws mac wizard --check showed no key it would make"
 printf '%s\n' "$out" | grep -q '^ws mac wizard: gh on the Mac: would run gh ssh-key add ' ||
     error "ws mac wizard --check showed no key it would add to gh's login"
 printf '%s\n' "$out" | grep -qx 'ws mac wizard: Host key: after ws mac apply' ||
@@ -61,7 +59,7 @@ printf '%s\n' "$out" | grep -qx "ws mac wizard: Tunnel: after ws's run" ||
 printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: after ws's run" ||
     error "ws mac wizard --check showed no Cable stage after ws's run"
 for made in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel /usr/local/libexec/ws-tunnel \
-    ~/.ssh/id_ed25519 /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist; do
+    /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist; do
     ! sudo test -e "$made" || error "ws mac wizard --check made $made"
 done
 config | cmp -s - "$RUNNER_TEMP/config" ||
