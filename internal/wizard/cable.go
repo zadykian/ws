@@ -34,9 +34,8 @@ type Cable struct {
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
-	// Version, Default and Update are ws's run's, whose plan the stage waits on under --check.
-	Version, Default string
-	Update           bool
+	// RunDone is ws's run's verdict, which the stage waits on under --check.
+	RunDone func(ctx context.Context, c conf.Conf) bool
 	// MacApply runs ws mac apply, as the Setup stage's Run does, which gives the Mac's service its
 	// address.
 	MacApply func(ctx context.Context, check bool) (bool, error)
@@ -151,7 +150,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		in && c.holds(ctx, cf.CablePort)) {
 		return step.Plan{}, nil
 	}
-	if c.Check && !none && (!in || !c.runDone(ctx, cf)) {
+	if c.Check && !none && (!in || !c.RunDone(ctx, cf)) {
 		c.Out.Say("%s: after %s", cableStage, runStage)
 		return step.Plan{}, nil
 	}
@@ -182,12 +181,6 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
 		"ws mac apply, which gives it 10.77.0.2, and ping " + cableEnd)
-}
-
-// runDone tells whether ws's run has nothing to do, as its own plan would find.
-func (c *Cable) runDone(ctx context.Context, cf conf.Conf) bool {
-	s, ok := c.Ws.status(ctx)
-	return !c.Update && ok && s.done(c.Version, c.Default, cf)
 }
 
 func (*Cable) change(text string) (step.Plan, error) {

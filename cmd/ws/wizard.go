@@ -104,7 +104,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(e, later)
 	login := &wizard.Login{Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
-	cable := &wizard.Cable{Ws: ws, Conf: later, Check: check, Version: p.version, Default: run.Default, Update: o.update,
+	cable := &wizard.Cable{Ws: ws, Conf: later, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
