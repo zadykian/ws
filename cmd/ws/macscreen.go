@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -79,7 +78,7 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 		}}
 		o := b.Options(step.Options{Check: true})
 		o.Observer = watch
-		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.tmp(), w.p.pid, nil)
+		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.p.pid, nil)
 		return unwrapStep(err)
 	}
 }
@@ -110,9 +109,6 @@ func wsRunOf(stages []step.Step) *wizard.WsRun {
 	panic("the wizard has no stage of ws's run")
 }
 
-// tmp is where the lock of a run goes.
-func (w macScreen) tmp() string { return cmp.Or(w.p.getenv("TMPDIR"), "/tmp") }
-
 // wizardRun is what a run of the stages takes from a screen.
 type wizardRun struct {
 	o    wizardOptions
@@ -129,7 +125,7 @@ func (w macScreen) work(r wizardRun) tui.Work {
 		e.left, e.only, e.events = r.left, r.only, b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
 		o := b.Options(step.Options{Check: r.o.check, LeftOut: r.left})
-		_, err := wizard.Run(ctx, e.p.machine, o, wizardStages(e, r.o), w.tmp(), w.p.pid, closing)
+		_, err := wizard.Run(ctx, e.p.machine, o, wizardStages(e, r.o), w.p.lockDir(), w.p.pid, closing)
 		return unwrapStep(err)
 	}
 }

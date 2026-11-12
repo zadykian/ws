@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -65,6 +66,9 @@ func newProcess() process {
 		self:     runningFile,
 	}
 }
+
+// lockDir is the directory that the wizards' lock goes in: TMPDIR, or /tmp where TMPDIR is empty.
+func (p process) lockDir() string { return cmp.Or(p.getenv("TMPDIR"), "/tmp") }
 
 // openTTY opens /dev/tty, which asks with no echo and prints its question there.
 func openTTY() (effect.Hidden, func(), error) {

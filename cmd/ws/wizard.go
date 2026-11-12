@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"io"
@@ -82,7 +81,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
-	lock := wizard.LockPath(cmp.Or(p.getenv("TMPDIR"), "/tmp"))
+	lock := wizard.LockPath(p.lockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
@@ -140,7 +139,6 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	_ = p.setenv("PATH", "/opt/homebrew/bin:"+p.getenv("PATH"))
 	_ = p.setenv("WS_CONF", confPath(p.getenv, p.pwd))
 	prog := c.CommandPath()
-	tmp := cmp.Or(p.getenv("TMPDIR"), "/tmp")
 	// The run's context ends with a signal, and its lock goes with it.
 	ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -167,7 +165,7 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	talks, _ := p.machine.(effect.Foreground)
 	stages := wizardStages(wizardEffects{p: p, prog: prog, talks: talks, ask: signalPrompt{term}, hidden: term, out: out,
 		text: c.OutOrStdout(), obs: obs, hand: hand, sudo: &wizard.Sudo{}}, o)
-	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: obs, Check: o.check}, stages, tmp, p.pid, closing)
+	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: obs, Check: o.check}, stages, p.lockDir(), p.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return unwrapStep(err)
 }

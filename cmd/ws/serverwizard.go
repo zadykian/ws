@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"os/signal"
@@ -40,9 +39,8 @@ func runServerWizard(c *cobra.Command, p process, check bool) error {
 	if p.euid != 0 {
 		return errors.New("run it as root, by sudo: ws's values and its run are root's")
 	}
-	tmp := cmp.Or(p.getenv("TMPDIR"), "/tmp")
 	if drawsScreen(c, p) {
-		return serverScreen{c, p, tmp}.draw(check)
+		return serverScreen{c, p}.draw(check)
 	}
 	// The run's context ends with a signal, and its lock goes with it.
 	ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
@@ -53,6 +51,6 @@ func runServerWizard(c *cobra.Command, p process, check bool) error {
 	hand := &wizard.Hand{}
 	stages := serverWizardStages(p, signalPrompt{term}, talks, out, nil, hand, serverPick{check: check})
 	closing := func(ctx context.Context) { hand.Close(ctx, c.OutOrStdout()); term.Flush() }
-	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: out, Check: check}, stages, tmp, 0, closing)
+	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: out, Check: check}, stages, p.lockDir(), 0, closing)
 	return unwrapStep(err)
 }

@@ -14,11 +14,10 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// serverScreen is ws server wizard at a terminal. tmp is where the lock of a run goes.
+// serverScreen is ws server wizard at a terminal.
 type serverScreen struct {
-	c   *cobra.Command
-	p   process
-	tmp string
+	c *cobra.Command
+	p process
 }
 
 // draw opens the list of the stages over a scan and runs what it chooses, or goes straight to the
@@ -84,7 +83,7 @@ func (s serverScreen) scan() tui.Work {
 		}}
 		o := b.Options(step.Options{Check: true})
 		o.Observer = watch
-		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, nil)
+		_, err := wizard.Run(ctx, on.machine, o, stages, s.p.lockDir(), 0, nil)
 		return unwrapStep(err)
 	}
 }
@@ -105,7 +104,7 @@ func (s serverScreen) running(r serverPick, choice *tui.QueueChoice) error {
 		stages := serverWizardStages(on, b, e.Talks, b, b, hand, r)
 		closing := func(ctx context.Context) { hand.Close(ctx, e.Text) }
 		o = b.Options(o)
-		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, closing)
+		_, err := wizard.Run(ctx, on.machine, o, stages, s.p.lockDir(), 0, closing)
 		return unwrapStep(err)
 	})
 }
