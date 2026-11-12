@@ -39,9 +39,10 @@ under its header, to `ws.ghostty`. That file goes beside the config file that Gh
 `config.ghostty` or `config` in `~/Library/Application Support/com.mitchellh.ghostty`, then in
 `~/.config/ghostty`. That is the first that holds anything, else the first that exists. Where none
 exists, the script makes the first. It adds `config-file = ?ws.ghostty` at the end of that file,
-once. Ghostty reads an included file after the file that names it, so each setting of `ws.ghostty`
-wins over the config's own. A later `font-family` adds a fallback rather than replace the list, so
-`ws.ghostty` empties it first. Change the settings in `mac/ws.ghostty`, build `ws` again and run it.
+once, and keeps the old file as `PATH.TIME~`. Ghostty reads an included file after the file that
+names it, so each setting of `ws.ghostty` wins over the config's own. A later `font-family` adds a
+fallback rather than replace the list, so `ws.ghostty` empties it first. Change the settings in
+`mac/ws.ghostty`, build `ws` again and run it.
 
 The script replaces `ws.ghostty` at each run. It warns and changes neither file where `ws.ghostty`
 is one it did not write, or where it can't read the config. Where the config is a link, as a
