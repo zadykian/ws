@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
 	"slices"
 	"strings"
 	"syscall"
@@ -119,11 +120,15 @@ func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
 
 func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
 	p, m := serverTerminal()
-	c, _ := screenCommand(t, "\x03\r")
+	c, _ := screenCommand(t, "")
+	keys, press := io.Pipe()
+	t.Cleanup(func() { _ = press.Close() })
+	c.SetIn(keys)
 	var reached bool
 	waits := roleOf("a", func(_ effect.Machine, out effect.Out) step.Step {
-		return stepOf{"one", func(ctx context.Context) error {
-			stopped := out.(*tui.Bridge).Stop(ctx)
+		return stepOf{"one", func(context.Context) error {
+			stopped := out.(*tui.Bridge).Options(step.Options{}).Stop
+			_, _ = io.WriteString(press, "\x03\r")
 			for stopped() == nil {
 				time.Sleep(time.Millisecond)
 			}

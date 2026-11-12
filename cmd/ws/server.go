@@ -178,9 +178,9 @@ func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
 // onScreen is cfg as a work beside a screen takes it: on the screen's effects, with its output and
 // its events on b.
 func onScreen(cfg apply.Config, b *tui.Bridge) apply.Config {
-	e := b.Effects()
-	cfg.M, cfg.Stop = e.M, e.Stop
-	cfg.Out, cfg.Observer, cfg.Prepare = b, b, prepareSteps(e.M, b)
+	e, o := b.Effects(), b.Options(step.Options{})
+	cfg.M, cfg.Observer, cfg.Stop = e.M, o.Observer, o.Stop
+	cfg.Out, cfg.Prepare = b, prepareSteps(e.M, b)
 	return cfg
 }
 

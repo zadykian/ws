@@ -48,17 +48,17 @@ func runTitle(c *cobra.Command, check bool) string {
 	return c.CommandPath()
 }
 
-// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws. Its works run
-// on p's machine.
+// screenConfig is what a screen draws with: ws's lines go to stderr, where it draws, and a run's
+// stdout waits for the screen's end. Its works run on p's machine.
 func screenConfig(c *cobra.Command, p process) tui.Config {
 	return tui.Config{
-		In: c.InOrStdin(), Out: c.ErrOrStderr(), Theme: tui.NewTheme(p.getenv), Machine: p.machine,
-		Cut: func(s syscall.Signal) error { return signalExit{s} },
+		In: c.InOrStdin(), Out: c.ErrOrStderr(), Text: c.OutOrStdout(), Theme: tui.NewTheme(p.getenv),
+		Machine: p.machine, Cut: func(s syscall.Signal) error { return signalExit{s} },
 	}
 }
 
 // drawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
-// the terminal is back. work reads Bridge.Stop between its steps. A run cut short ends with the
+// the terminal is back. work gives its steps Bridge.Options. A run cut short ends with the
 // status of a signal, for execute to report.
 func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work tui.Work) error {
 	cfg, done := runConfig(c, p, screenConfig(c, p))
@@ -70,7 +70,7 @@ func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work
 // closes once the run has ended.
 func runConfig(c *cobra.Command, p process, cfg tui.Config) (tui.Config, func()) {
 	log, path := openLog(p, c.CommandPath(), time.Now())
-	cfg.Halts, cfg.LogPath = true, path
+	cfg.LogPath = path
 	if log == nil { // A nil *os.File in the interface would not be nil.
 		return cfg, func() {}
 	}

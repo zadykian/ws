@@ -60,8 +60,8 @@ focus with Tab.
 | Ctrl-N | Show the next form. |
 | Ctrl-C | Stop the run. |
 
-Ctrl-C is a key in raw mode, and the screen turns it into the signal. On a run that reads
-`Bridge.Stop`, the first one asks ([Stopping a run](#stopping-a-run)). On any other, it ends the
+Ctrl-C is a key in raw mode, and the screen turns it into the signal. On a run whose work took
+`Bridge.Options`, the first one asks ([Stopping a run](#stopping-a-run)). On any other, it ends the
 run's context, and the screen stays until the work has ended. The next one closes the screen, and
 ws waits up to 5 seconds for the work's cleanup, such as the wizard's lock. Another one leaves at
 once.
@@ -127,7 +127,7 @@ The window goes with the screen, and these stay:
 - The summary of `ws server apply` is the last line. A passing `ws mac apply` prints nothing more.
 - What stays by hand prints after the screen.
 - `--plain` keeps every line of a run. What `ws mac apply` prints on stdout, the commands that make
-  the Mac ws's peer, waits for the screen's end.
+  the Mac ws's peer, waits for the screen's end, and prints after a run that passed.
 
 What stays by hand holds the lines that the maintainer acts on past a run: ws's WireGuard key, and
 what a step leaves to do. A step says one through `effect.SayLasting`, which a plain run prints in
@@ -148,7 +148,7 @@ normal screen after a failure, a stop, a warning or a `--check` with changes.
 ### Stopping a run
 
 A step cut halfway can leave a machine between two states, so a run stops between its steps. That
-holds for a run whose `step.Options.Stop` is `Bridge.Stop`, with `Config.Halts` set.
+holds for a run whose steps took their options from `Bridge.Options`.
 
 1. Ctrl-C, or the stop button, opens a box. Esc goes on, and the run has not paused for it.
 2. Enter stops the run once its current step ends. The steps left end skipped, and the window stays

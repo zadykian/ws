@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"cmp"
 	"context"
 	"fmt"
-	"io"
 	"slices"
 	"syscall"
 
@@ -58,12 +56,12 @@ func (w macScreen) plainStages() []step.Step {
 	return wizardStages(wizardEffects{p: w.p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, w.o)
 }
 
-// effects returns the stages' effects on b, for a run that prints its stdout on text.
-func (w macScreen) effects(b *tui.Bridge, text io.Writer, sudo *wizard.Sudo) wizardEffects {
+// effects returns the stages' effects on b, whose stdout waits for the screen's end.
+func (w macScreen) effects(b *tui.Bridge, sudo *wizard.Sudo) wizardEffects {
 	p, on := w.p, b.Effects()
 	p.machine = on.M
-	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: text, obs: b,
-		hand: &wizard.Hand{}, sudo: sudo, stop: on.Stop}
+	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: on.Text, obs: b,
+		hand: &wizard.Hand{}, sudo: sudo, stop: b.Options(step.Options{}).Stop}
 }
 
 // scan is a check of every stage, beside the lists. ws speaks for its roles once the stage that
@@ -72,14 +70,15 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 	check := w.o
 	check.check = true
 	return func(ctx context.Context, b *tui.Bridge) error {
-		e := w.effects(b, io.Discard, sudo)
+		e := w.effects(b, sudo)
 		stages := wizardStages(e, check)
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
 			states, err := run.Ws.State(ctx, w.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
-		o := step.Options{Observer: watch, Check: true, Stop: e.stop}
+		o := b.Options(step.Options{Check: true})
+		o.Observer = watch
 		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.tmp(), w.p.pid, nil)
 		return unwrapStep(err)
 	}
@@ -124,33 +123,23 @@ type wizardRun struct {
 }
 
 // work is r beside a screen. What stays by hand goes to the run's stdout, as in a plain run.
-func (w macScreen) work(r wizardRun, text io.Writer) tui.Work {
+func (w macScreen) work(r wizardRun) tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
-		e := w.effects(b, text, r.sudo)
+		e := w.effects(b, r.sudo)
 		e.left, e.only, e.events = r.left, r.only, b
-		closing := func(ctx context.Context) { e.hand.Close(ctx, text) }
-		o := step.Options{Observer: b, Check: r.o.check, Stop: e.stop, LeftOut: r.left}
+		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
+		o := b.Options(step.Options{Check: r.o.check, LeftOut: r.left})
 		_, err := wizard.Run(ctx, e.p.machine, o, wizardStages(e, r.o), w.tmp(), w.p.pid, closing)
 		return unwrapStep(err)
 	}
 }
 
-// running gives draw a run's config and the work of r, and prints the run's stdout past the screen,
+// running gives draw a run's config and the work of r. The run's stdout prints past the screen,
 // which it would paint over.
 func (w macScreen) running(r wizardRun, draw func(tui.Config, tui.Work) error) error {
 	cfg, done := runConfig(w.c, w.p, w.config())
 	defer done()
-	var text bytes.Buffer
-	work := w.work(r, &text)
-	err := draw(cfg, func(ctx context.Context, b *tui.Bridge) error {
-		err := work(ctx, b)
-		b.Log(text.String()) // A failed run prints it too.
-		return err
-	})
-	if err == nil { // A work left behind may still write to text.
-		_, _ = text.WriteTo(w.c.OutOrStdout())
-	}
-	return err
+	return draw(cfg, w.work(r))
 }
 
 // whole runs every stage, on the run screen of their names.

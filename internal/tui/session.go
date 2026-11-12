@@ -2,6 +2,7 @@ package tui
 
 import (
 	"slices"
+	"sync/atomic"
 	"syscall"
 
 	"charm.land/bubbles/v2/key"
@@ -55,7 +56,10 @@ type session struct {
 	begin tea.Cmd
 	stop  tea.Cmd
 	halt  tea.Cmd
-	cut   func(syscall.Signal) error
+	// took is set once the work took Bridge.Options: only then does it read the stop between its
+	// steps, and Ctrl-C ask first. Nil reads as unset.
+	took *atomic.Bool
+	cut  func(syscall.Signal) error
 	// asked is the questions waiting, the first of them on the screen in field.
 	asked []prompt
 	field field
@@ -160,10 +164,10 @@ func (s session) drop(id uint64) session {
 }
 
 // pressed takes Ctrl-C, which raw mode keeps from being a signal, or a screen's stop button. A run
-// that can stop between its steps asks first. Under a question it can't: a step waits on the answer,
+// whose work took Bridge.Options asks first. Under a question it can't: a step waits on the answer,
 // so that ctx alone ends it.
 func (s session) pressed() (tea.Model, tea.Cmd) {
-	if s.halt == nil || s.confirming || s.halted || s.stopping || len(s.asked) > 0 {
+	if s.halt == nil || s.took == nil || !s.took.Load() || s.confirming || s.halted || s.stopping || len(s.asked) > 0 {
 		return s.interrupt(syscall.SIGINT)
 	}
 	s.confirming, s.confirm = true, NewFooter(haltButton, goOnButton)

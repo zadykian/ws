@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"slices"
@@ -83,7 +82,8 @@ func (s serverScreen) scan() tui.Work {
 			states, err := run.Ws.State(ctx, s.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
-		o := step.Options{Observer: watch, Check: true, Stop: e.Stop}
+		o := b.Options(step.Options{Check: true})
+		o.Observer = watch
 		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, nil)
 		return unwrapStep(err)
 	}
@@ -99,19 +99,13 @@ func (s serverScreen) running(r serverPick, choice *tui.Choice) error {
 	if choice != nil {
 		screen, o.LeftOut = tui.NewQueueRun(runTitle(s.c, r.check), cfg.Theme, *choice), wizardLeft(*choice, nil)
 	}
-	var text bytes.Buffer
-	err := tui.Run(s.c.Context(), cfg, screen, func(ctx context.Context, b *tui.Bridge) error {
+	return tui.Run(s.c.Context(), cfg, screen, func(ctx context.Context, b *tui.Bridge) error {
 		on, e := s.on(b)
 		hand := &wizard.Hand{}
 		stages := serverWizardStages(on, b, e.Talks, b, b, hand, r)
-		closing := func(ctx context.Context) { hand.Close(ctx, &text) }
-		o.Observer, o.Stop = b, e.Stop
+		closing := func(ctx context.Context) { hand.Close(ctx, e.Text) }
+		o = b.Options(o)
 		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, closing)
-		b.Log(text.String()) // A failed run prints it too.
 		return unwrapStep(err)
 	})
-	if err == nil { // A work left behind may still write to text.
-		_, _ = text.WriteTo(s.c.OutOrStdout())
-	}
-	return err
 }

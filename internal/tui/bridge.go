@@ -68,7 +68,7 @@ type Bridge struct {
 	gone chan struct{}
 	// last is the id of the last question.
 	last atomic.Uint64
-	// halted is set once a stop is confirmed, for Stop to read on the run's goroutine.
+	// halted is set once a stop is confirmed, for stop to read on the run's goroutine.
 	halted atomic.Bool
 	// warned holds the warnings sent so far.
 	warned sync.Map
@@ -82,6 +82,12 @@ type Bridge struct {
 	// hand keeps what ByHand gets, to print once the terminal is back.
 	lock sync.Mutex
 	hand *effect.Terminal
+	// stops is the run's stop, which Options hands to its steps. Run sets it before the work starts.
+	stops func() error
+	// took is set once a work took Options: the first Ctrl-C then asks before it stops the run.
+	took atomic.Bool
+	// text holds what the work wrote to Effects.Text.
+	text *runText
 	// effects are what Effects gives the screen's works. Run sets them before the work starts.
 	effects Effects
 	// rec keeps the run for its log and its end.
@@ -217,15 +223,27 @@ func changeLine(name string, c step.Change) Line {
 	return Line{Said, text}
 }
 
-// Stop is a run's step.Options.Stop. It ends the run before its next step, past a confirmed stop or
+// stop is a run's step.Options.Stop, which Options hands out. It ends the run before its next step, past a confirmed stop or
 // ctx's end, as a step that ignores ctx would let the next one start.
-func (b *Bridge) Stop(ctx context.Context) func() error {
+func (b *Bridge) stop(ctx context.Context) func() error {
 	return func() error {
 		if b.halted.Load() {
 			return errHalted
 		}
 		return ctx.Err()
 	}
+}
+
+// Options returns o with the screen's observer and stop, which a work gives its steps. A caller that
+// wraps the observer sets it after. The first call marks the run as one whose Ctrl-C asks first, as
+// its steps read the stop between them.
+func (b *Bridge) Options(o step.Options) step.Options {
+	if b == nil {
+		return o
+	}
+	b.took.Store(true)
+	o.Observer, o.Stop = b, b.stops
+	return o
 }
 
 // ByHand keeps a line for the end of the run, and logs it, as a plain run prints it.

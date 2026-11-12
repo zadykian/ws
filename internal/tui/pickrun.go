@@ -42,7 +42,7 @@ func (b *Bridge) Report(stage string, sections []StateSection, problem string) {
 // pick runs a list's screen over scan until picks gives a choice.
 func pick(ctx context.Context, c Config, screen pickScreen, picks <-chan Choice, scan Work) (Choice, error) {
 	var choice Choice
-	c.Halts, c.quiet = false, true
+	c.quiet = true
 	err := Run(ctx, c, screen, func(ctx context.Context, b *Bridge) error {
 		var err error
 		choice, err = awaitPick(ctx, b, picks, scan)
