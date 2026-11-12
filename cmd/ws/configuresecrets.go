@@ -47,11 +47,11 @@ func secretsSheet(side secretsSide, held []string) tui.Sheet {
 		Save: func(ctx context.Context, _ *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
 			var err error
 			for _, label := range slices.Sorted(maps.Keys(edits)) {
-				if err = side.set(ctx, label, edits[label]); err != nil {
+				if err = side.Set(ctx, label, edits[label]); err != nil {
 					break
 				}
 			}
-			keys, kerr := side.keys(ctx)
+			keys, kerr := side.Keys(ctx)
 			if kerr != nil {
 				keys = held
 			}
@@ -62,15 +62,15 @@ func secretsSheet(side secretsSide, held []string) tui.Sheet {
 
 // secretsSide is where the secrets sheet reads and sets the file's entries, by label: "KIND NAME".
 type secretsSide interface {
-	keys(ctx context.Context) ([]string, error)
-	set(ctx context.Context, label, value string) error
+	Keys(ctx context.Context) ([]string, error)
+	Set(ctx context.Context, label, value string) error
 }
 
 // wsSide is ws's secrets file, which ws server secrets edits on ws over the wizard's ssh, a value on
 // ssh's stdin. set git, with no flag, keeps the entry's user name.
 type wsSide struct{ ws *wizard.Session }
 
-func (s wsSide) set(ctx context.Context, label, value string) error {
+func (s wsSide) Set(ctx context.Context, label, value string) error {
 	kind, name, err := secrets.CutLabel(label)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (s wsSide) set(ctx context.Context, label, value string) error {
 	return err
 }
 
-func (s wsSide) keys(ctx context.Context) ([]string, error) {
+func (s wsSide) Keys(ctx context.Context) ([]string, error) {
 	out, err := s.ws.Secrets(ctx, nil, "keys")
 	if err != nil {
 		return nil, fmt.Errorf("the secrets on ws: %w", err)
@@ -98,7 +98,7 @@ func (r *varsReach) secretsSheet() tui.Sheet {
 				return tui.Sheet{}, err
 			}
 			side := wsSide{ws}
-			held, err := side.keys(ctx)
+			held, err := side.Keys(ctx)
 			if err != nil {
 				return tui.Sheet{}, err
 			}

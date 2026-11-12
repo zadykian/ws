@@ -53,7 +53,7 @@ func serverSecretsSheet(p process) tui.Sheet {
 			if err != nil {
 				return tui.Sheet{}, err
 			}
-			held, err := store.keys(ctx)
+			held, err := store.Keys(ctx)
 			if err != nil {
 				return tui.Sheet{}, fmt.Errorf("the secrets on ws: %w", err)
 			}

@@ -52,10 +52,10 @@ func TestWsSideSetsAndListsOnWs(t *testing.T) {
 		t.Fatal(err)
 	}
 	side := wsSide{ws}
-	if err := side.set(context.Background(), "env A", "dummy-value"); err != nil {
+	if err := side.Set(context.Background(), "env A", "dummy-value"); err != nil {
 		t.Fatal(err)
 	}
-	held, err := side.keys(context.Background())
+	held, err := side.Keys(context.Background())
 	if s, lerr := secrets.Load(m, secrets.FilePath, id); err != nil || lerr != nil || s.Env["A"] != "dummy-value" ||
 		!slices.Equal(held, []string{"env A"}) {
 		t.Errorf("keys %q, file %+v, %v %v; want env A set", held, s, err, lerr)

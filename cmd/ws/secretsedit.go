@@ -198,7 +198,7 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 	if err != nil {
 		return err
 	}
-	keys, err := s.keys(c.Context())
+	keys, err := s.Keys(c.Context())
 	if err != nil {
 		return err
 	}
@@ -208,8 +208,8 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 	return nil
 }
 
-// keys returns each entry as KIND NAME, never a value. A file that is missing holds none.
-func (s secretsStore) keys(ctx context.Context) ([]string, error) {
+// Keys returns each entry as KIND NAME, never a value. A file that is missing holds none.
+func (s secretsStore) Keys(ctx context.Context) ([]string, error) {
 	id, err := s.k.Identity(ctx)
 	if err != nil {
 		return nil, err
@@ -221,9 +221,9 @@ func (s secretsStore) keys(ctx context.Context) ([]string, error) {
 	return cur.Keys(), nil
 }
 
-// set sets the entry that label names, "KIND NAME", for the secrets sheet. A git entry keeps its
+// Set sets the entry that label names, "KIND NAME", for the secrets sheet. A git entry keeps its
 // other fields, as set git does with no flag.
-func (s secretsStore) set(ctx context.Context, label, value string) error {
+func (s secretsStore) Set(ctx context.Context, label, value string) error {
 	kind, name, err := secrets.CutLabel(label)
 	if err != nil {
 		return err
