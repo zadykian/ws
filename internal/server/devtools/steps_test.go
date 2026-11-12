@@ -45,10 +45,9 @@ func TestPackagesPlanChromiumLibrariesWithoutRecommends(t *testing.T) {
 	v := values.Default()
 	v.Devtools.ChromiumLibraries = []string{"libnss3"}
 	m := effecttest.NewMachine()
-	m.Results["dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n nodejs"] = effecttest.Result{Out: []byte("24.1.0 ii\n")}
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n gh glow dotnet-sdk-8.0 dotnet-sdk-10.0"] =
-		effecttest.Result{Out: []byte("gh ii\nglow ii\ndotnet-sdk-8.0 ii\ndotnet-sdk-10.0 ii\n")}
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n libnss3"] = effecttest.Result{Out: []byte("")}
+	m.Packages = effecttest.Packages{"nodejs": {Version: "24.1.0", Status: "ii"}, "gh": {Version: "2", Status: "ii"},
+		"glow": {Version: "2", Status: "ii"}, "dotnet-sdk-8.0": {Version: "8.0", Status: "ii"},
+		"dotnet-sdk-10.0": {Version: "10.0", Status: "ii"}}
 	plan, err := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})[1].Plan(context.Background())
 	if err != nil || len(plan.Changes) != 1 || plan.Changes[0].String() != "install libnss3" {
 		t.Errorf("got %v, %v", plan.Changes, err)

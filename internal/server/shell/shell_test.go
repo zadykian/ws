@@ -39,7 +39,7 @@ func TestALinkKeepsAReportFromThePathsBehindIt(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n bash-completion ble.sh"] = effecttest.Result{}
+	m.Packages = effecttest.Packages{}
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Links["/home/ws/.bashrc"] = "/etc/shadow"
 	m.Files["/home/ws/.bashrc"] = []byte("root:$6$hash:19000\n")
@@ -68,7 +68,7 @@ func TestALinkAtAFileStopsItsStepAlone(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n bash-completion ble.sh"] = effecttest.Result{}
+	m.Packages = effecttest.Packages{}
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Links["/home/ws/.bashrc"] = "/srv/target"
 	var failed []string

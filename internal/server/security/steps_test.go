@@ -19,10 +19,9 @@ func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.
 	m.Dirs["/run/systemd/system"] = 0o755
 	m.Dirs[v.Home] = 0o700
 	m.Files["/root/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n openssh-server ufw fail2ban nftables sudo"] =
-		effecttest.Result{Out: []byte("openssh-server ii\nufw ii\nfail2ban ii\nnftables ii\nsudo ii\n")}
+	m.Packages = effecttest.Packages{"openssh-server": {Version: "1", Status: "ii"}, "ufw": {Version: "1", Status: "ii"},
+		"fail2ban": {Version: "1", Status: "ii"}, "nftables": {Version: "1", Status: "ii"}, "sudo": {Version: "1", Status: "ii"}}
 	m.Files["/etc/group"] = []byte("lxd:x:110:\n")
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n lxd-installer"] = effecttest.Result{}
 	m.Results["sudo -l -U zadykian"] = effecttest.Result{Out: []byte("User zadykian may run the following commands on h:\n    (ALL : ALL) ALL\n")}
 	m.Results["passwd --status zadykian"] = effecttest.Result{Out: []byte("zadykian P 2026-11-05 0 99999 7 -1\n")}
 	m.Results["visudo -cf "+noCachePath+".ws-check"] = effecttest.Result{}

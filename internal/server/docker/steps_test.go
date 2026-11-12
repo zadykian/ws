@@ -43,13 +43,10 @@ func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {
 	m.Files["/etc/subgid"] = []byte("ws:100000:65536\n")
 	v := values.Default()
 	v.User, v.Home = user, "/home/"+user
-	var installed strings.Builder
-	names := packages(v)
-	for _, n := range names {
-		installed.WriteString(n + " ii\n")
+	m.Packages = effecttest.Packages{}
+	for _, n := range packages(v) {
+		m.Packages[n] = effecttest.Package{Version: "1", Status: "ii"}
 	}
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n "+strings.Join(names, " ")] =
-		effecttest.Result{Out: []byte(installed.String())}
 	m.Results["ip -j -4 route show table all"] = effecttest.Result{Out: []byte("[]")}
 	m.Results["dockerd --validate --config-file /etc/docker/daemon.json.ws-check"] = effecttest.Result{}
 	m.Results["dockerd --validate --config-file /home/ws/.config/docker/daemon.json.ws-check"] = effecttest.Result{}

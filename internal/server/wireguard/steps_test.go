@@ -26,8 +26,8 @@ func fakeSteps() (*effecttest.Machine, []step.Step) {
 	m.Files["/etc/wireguard/mac.pub"] = []byte(peerKey + "\n")
 	m.Files[ufwRules] = []byte("### tuple ### allow udp 51820 0.0.0.0/0 any 0.0.0.0/0 in comment=" +
 		hex.EncodeToString([]byte("WireGuard")) + "\n")
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n wireguard-tools systemd iptables"] =
-		effecttest.Result{Out: []byte("wireguard-tools ii\nsystemd ii\niptables ii\n")}
+	m.Packages = effecttest.Packages{"wireguard-tools": {Version: "1", Status: "ii"}, "systemd": {Version: "259", Status: "ii"},
+		"iptables": {Version: "1.8", Status: "ii"}}
 	m.Results["networkctl reload"] = effecttest.Result{}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"systemd-networkd.service": {Active: true}}}
 	v := values.Default()

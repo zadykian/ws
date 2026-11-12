@@ -54,7 +54,7 @@ func TestStepsPlanNothingOnAnotherBoard(t *testing.T) {
 
 func TestPackagesNameTheRunningKernelsHeaders(t *testing.T) {
 	m := onTheBoard()
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n dkms linux-headers-generic linux-headers-"+kernel] = effecttest.Result{}
+	m.Packages = effecttest.Packages{}
 	p, err := steps(values.Default().Fans, m, &effecttest.Units{}, &effecttest.Out{}, exeAt)[1].Plan(t.Context())
 	if err != nil || len(p.Changes) == 0 || !strings.Contains(p.Changes[0].String(), "linux-headers-"+kernel) {
 		t.Errorf("Plan = %v, %v; want an install naming the kernel's headers", p, err)
