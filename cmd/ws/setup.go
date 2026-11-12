@@ -164,16 +164,19 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		_, err := macOf(p, settings, m, out, text).Run(ctx, setup.Options{Options: o, Only: only})
 		return unwrapStep(err)
 	}
-	build := buildFor(check)
+	rowsOf := func(check bool) tui.Group {
+		o := setup.Options{Options: step.Options{Check: check}, Only: only}
+		return tui.NewGroup("", macOf(p, settings, nil, nil, nil).Rows(o))
+	}
 	if opensList(c, p, len(args) == 1) {
 		chosen, ok, err := pickSetup(c, p, buildFor)
 		if err != nil || !ok {
 			return err
 		}
-		return setupOnScreen(c, p, buildFor(chosen.Check), chosen)
+		return setupOnScreen(c, p, rowsOf(chosen.Check), run, chosen)
 	}
 	if drawsScreen(c, p) {
-		return setupOnScreen(c, p, build, step.Options{Check: check})
+		return setupOnScreen(c, p, rowsOf(check), run, step.Options{Check: check})
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
@@ -182,14 +185,13 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 	return err
 }
 
-// setupOnScreen is a run of ws mac apply under the run screen. The plain effects name the screen's
-// rows, and the run builds its steps again on the screen's effects. What a run prints on stdout
-// waits for the screen's end, as it would paint over the screen at a terminal.
-func setupOnScreen(c *cobra.Command, p process, build setupBuild, o step.Options) error {
-	rows := tui.NewGroup("", build(p.machine, nil, io.Discard))
+// setupOnScreen is a run of ws mac apply under the run screen. The rows name the screen's steps,
+// and the run acts on the screen's effects. What a run prints on stdout waits for the screen's end,
+// as it would paint over the screen at a terminal.
+func setupOnScreen(c *cobra.Command, p process, rows tui.Group, run setupRun, o step.Options) error {
 	return drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
 		e := b.Effects()
-		return runSetup(ctx, build(e.M, b, e.Text), b.Options(o))
+		return run(ctx, e.M, b, e.Text, b.Options(o))
 	})
 }
 
