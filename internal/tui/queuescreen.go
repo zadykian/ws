@@ -22,7 +22,7 @@ var configureButton = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "confi
 var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
 
 // newQueueScreen returns the lists of stages, their scan under way. The configure button comes last.
-func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- Choice) pickScreen {
+func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- QueueChoice) pickScreen {
 	s := newPickScreen(title, theme, nil, picks)
 	s.list, s.queued = newQueue(stages), true
 	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), stateButton, configureButton)...)

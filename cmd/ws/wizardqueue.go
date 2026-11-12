@@ -42,7 +42,7 @@ func nestedRows(stage string) []tui.Group {
 // wizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
 // its steps, and a step of ws mac apply off in a stage it runs in part. ws mac apply's run asks it
 // of the steps with a row alone.
-func wizardLeft(choice tui.Choice) func(parent, name string) bool {
+func wizardLeft(choice tui.QueueChoice) func(parent, name string) bool {
 	return func(parent, name string) bool {
 		if parent == "" {
 			return !slices.Contains(choice.Only, name)

@@ -113,10 +113,10 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 	w := macScreen{p: fakeProcess()}
-	if !w.runOf(tui.Choice{Whole: []string{"ws's run"}}, nil).o.update {
+	if !w.runOf(tui.QueueChoice{Whole: []string{"ws's run"}}, nil).o.update {
 		t.Error("a tick in ws's run left the last run to speak")
 	}
-	if w.runOf(tui.Choice{Whole: []string{"ws mac apply"}}, nil).o.update {
+	if w.runOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}, nil).o.update {
 		t.Error("another stage's tick ran ws again")
 	}
 }

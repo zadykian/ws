@@ -14,7 +14,7 @@ import (
 
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
 func testQueueScreen() pickScreen {
-	s := newQueueScreen("ws mac wizard", testTheme, testStages(), make(chan Choice, 1))
+	s := newQueueScreen("ws mac wizard", testTheme, testStages(), make(chan QueueChoice, 1))
 	return pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30})
 }
 
@@ -86,7 +86,7 @@ func wsStages() []Stage {
 }
 
 func TestStagesAllOnWsStandInOneList(t *testing.T) {
-	s := newQueueScreen("ws server wizard", testTheme, wsStages(), make(chan Choice, 1))
+	s := newQueueScreen("ws server wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, press('/'), press('s'))
 	got := pickShown(s)
 	for _, want := range []string{"ws server wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
@@ -100,7 +100,7 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 }
 
 func TestTabLeavesOneListForTheButtons(t *testing.T) {
-	s := newQueueScreen("ws server wizard", testTheme, wsStages(), make(chan Choice, 1))
+	s := newQueueScreen("ws server wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
 	if s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
 		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())
@@ -114,8 +114,8 @@ func TestTabLeavesOneListForTheButtons(t *testing.T) {
 }
 
 // chosenBy returns what s gives past msgs, with the choice's channel read.
-func chosenBy(t *testing.T, msgs ...tea.Msg) Choice {
-	picks := make(chan Choice, 1)
+func chosenBy(t *testing.T, msgs ...tea.Msg) QueueChoice {
+	picks := make(chan QueueChoice, 1)
 	s := pickSent(newQueueScreen("ws", testTheme, testStages(), picks), tea.WindowSizeMsg{Width: 100, Height: 30})
 	for _, msg := range msgs {
 		model, cmd := s.Update(msg)
@@ -126,7 +126,7 @@ func chosenBy(t *testing.T, msgs ...tea.Msg) Choice {
 		}
 	}
 	t.Fatalf("no choice past %v", msgs)
-	return Choice{}
+	return QueueChoice{}
 }
 
 func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
@@ -151,13 +151,13 @@ func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 
 func TestAScansEndOpensTheQueueChosen(t *testing.T) {
 	got := chosenBy(t, scannedMsg{}, press('c'))
-	if !got.Check || len(got.Only) != 5 || got.Partial != nil {
+	if got.Next != NextCheck || len(got.Only) != 5 || got.Partial != nil {
 		t.Errorf("choice = %+v", got)
 	}
 }
 
 func TestConfigureGoesBeforeTheScanEnds(t *testing.T) {
-	if got := chosenBy(t, press('e')); !got.Configure || got.Only != nil {
+	if got := chosenBy(t, press('e')); got.Next != NextConfigure || got.Only != nil {
 		t.Errorf("choice = %+v", got)
 	}
 }
@@ -200,16 +200,16 @@ func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
 	c := noKeys(io.Discard)
 	c.In = strings.NewReader("e")
 	got, err := PickStages(t.Context(), c, "ws", testStages(), waitForCtx)
-	if err != nil || !got.Configure {
+	if err != nil || got.Next != NextConfigure {
 		t.Errorf("PickStages = %+v, %v", got, err)
 	}
 }
 
 func TestStateKeyNamesTheListInFocus(t *testing.T) {
-	if got := chosenBy(t, scannedMsg{}, press('s')); !got.State || got.Side != MacSide || len(got.Only) != 0 {
+	if got := chosenBy(t, scannedMsg{}, press('s')); got.Next != NextState || got.Side != MacSide || len(got.Only) != 0 {
 		t.Errorf("s on the Mac's list = %+v", got)
 	}
-	if got := chosenBy(t, scannedMsg{}, tab, press('s')); !got.State || got.Side != WsSide {
+	if got := chosenBy(t, scannedMsg{}, tab, press('s')); got.Next != NextState || got.Side != WsSide {
 		t.Errorf("s on ws's list = %+v", got)
 	}
 }
@@ -226,7 +226,7 @@ func TestStateKeyWaitsForTheScanAndTheFilter(t *testing.T) {
 
 // A list of steps alone has no machine to read, and no such button.
 func TestStateKeyIsAQueuesAlone(t *testing.T) {
-	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), scannedMsg{}, press('s'))
+	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan QueueChoice, 1)), scannedMsg{}, press('s'))
 	if s.left {
 		t.Error("s left a list of steps")
 	}
@@ -238,7 +238,7 @@ func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
 	var out bytes.Buffer
 	c := noKeys(&out)
 	c.In = strings.NewReader("\r")
-	got, err := Reopen(t.Context(), c, Choice{State: true, back: s})
+	got, err := Reopen(t.Context(), c, QueueChoice{Next: NextState, left: s})
 	if err != nil || !slices.Equal(got.Only, []string{"Tools"}) {
 		t.Errorf("Reopen = %+v, %v", got, err)
 	}

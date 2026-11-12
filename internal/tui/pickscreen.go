@@ -72,7 +72,7 @@ type pickScreen struct {
 	// filter holds the words that list.words follows.
 	filter filter
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
-	picks chan<- Choice
+	picks chan<- QueueChoice
 	// left says that the choice has gone, and the screen waits for the work to end it.
 	left bool
 	// queued draws the list as a queue's two sides.
@@ -82,7 +82,7 @@ type pickScreen struct {
 }
 
 // newPickScreen returns the screen of groups, its scan under way.
-func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Choice) pickScreen {
+func newPickScreen(title string, theme Theme, groups []Group, picks chan<- QueueChoice) pickScreen {
 	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
 	footer := NewFooter(button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
 		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), Keys.Quit)
@@ -159,15 +159,15 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickFilterPlace:
 		s.filter = s.filter.opened()
 	case pickRunPlace:
-		return s.leave(s.choice(false))
+		return s.leave(s.queueChoice(NextRun))
 	case pickCheckPlace:
-		return s.leave(s.choice(true))
+		return s.leave(s.queueChoice(NextCheck))
 	case pickQuitPlace:
-		return s.leave(Choice{})
+		return s.leave(s.queueChoice(NextLeave))
 	case pickConfigurePlace:
-		return s.leave(Choice{Configure: true})
+		return s.leave(s.queueChoice(NextConfigure))
 	case pickStatePlace:
-		return s.leave(Choice{State: true, Side: s.list.side, back: s})
+		return s.leave(s.queueChoice(NextState))
 	default:
 		s.list = s.list.moved(msg, max(s.listHeight(), 1))
 	}
@@ -183,13 +183,8 @@ func (s pickScreen) typed(msg tea.Msg) pickScreen {
 	return s
 }
 
-// choice is what the list holds, to run or to check.
-func (s pickScreen) choice(check bool) Choice {
-	return Choice{Only: s.list.only(), Check: check, Partial: s.list.partial(), Whole: s.list.ticked(), list: s.list}
-}
-
 // leave gives c to the work. A session quits with its work alone, and a screen never does.
-func (s pickScreen) leave(c Choice) (pickScreen, tea.Cmd) {
+func (s pickScreen) leave(c QueueChoice) (pickScreen, tea.Cmd) {
 	s.left = true
 	return s, func() tea.Msg {
 		s.picks <- c

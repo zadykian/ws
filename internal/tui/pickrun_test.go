@@ -15,11 +15,11 @@ import (
 
 func TestTheListHearsWhyAScanStopped(t *testing.T) {
 	b, sent := testBridge(io.Discard)
-	picks := make(chan Choice, 1)
+	picks := make(chan QueueChoice, 1)
 	send := b.send
-	b.send = func(msg tea.Msg) { send(msg); picks <- Choice{Check: true} }
+	b.send = func(msg tea.Msg) { send(msg); picks <- QueueChoice{Next: NextCheck} }
 	got, err := awaitPick(t.Context(), b, picks, func(context.Context, *Bridge) error { return errors.New("no network") })
-	if err != nil || !got.Check {
+	if err != nil || got.Next != NextCheck {
 		t.Errorf("awaitPick = %v, %v", got, err)
 	}
 	if !slices.Equal(*sent, []tea.Msg{scannedMsg{"no network"}}) {
@@ -29,8 +29,8 @@ func TestTheListHearsWhyAScanStopped(t *testing.T) {
 
 func TestAChoiceEndsTheScanFirst(t *testing.T) {
 	b, _ := testBridge(io.Discard)
-	picks := make(chan Choice, 1)
-	picks <- Choice{Only: []string{"Keys"}}
+	picks := make(chan QueueChoice, 1)
+	picks <- QueueChoice{Only: []string{"Keys"}}
 	ended := false
 	got, err := awaitPick(t.Context(), b, picks, func(ctx context.Context, b *Bridge) error {
 		defer func() { ended = true }()
@@ -43,8 +43,8 @@ func TestAChoiceEndsTheScanFirst(t *testing.T) {
 
 func TestAPanicOfTheScanOutlivesTheWait(t *testing.T) {
 	b, _ := testBridge(io.Discard)
-	picks := make(chan Choice, 1)
-	picks <- Choice{}
+	picks := make(chan QueueChoice, 1)
+	picks <- QueueChoice{}
 	_, err := awaitPick(t.Context(), b, picks, func(ctx context.Context, _ *Bridge) error {
 		<-ctx.Done()
 		panic("the scan broke")

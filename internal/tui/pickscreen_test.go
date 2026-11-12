@@ -25,7 +25,7 @@ func pickShown(s pickScreen) string { return stripped(s.View().Content) }
 // testPick is a screen at 80 by 24, its scan under way.
 func testPick() pickScreen {
 	groups := []Group{{Name: "base", Steps: []string{"Packages", "Locale"}}, {Name: "ssh", Steps: []string{"Keys"}}}
-	return pickSent(newPickScreen("ws server apply", testTheme, groups, make(chan Choice, 1)), tea.WindowSizeMsg{Width: 80, Height: 24})
+	return pickSent(newPickScreen("ws server apply", testTheme, groups, make(chan QueueChoice, 1)), tea.WindowSizeMsg{Width: 80, Height: 24})
 }
 
 func TestPickScreenShowsEveryStepBeforeTheScan(t *testing.T) {
@@ -99,12 +99,12 @@ func TestPickScreenHoldsItsBoxesDuringTheScan(t *testing.T) {
 }
 
 // picked presses msg on s and returns the choice that it gives, with false where it gives none.
-func picked(s pickScreen, msg tea.Msg) (Choice, bool) {
-	picks := make(chan Choice, 1)
+func picked(s pickScreen, msg tea.Msg) (QueueChoice, bool) {
+	picks := make(chan QueueChoice, 1)
 	s.picks = picks
 	_, leaving := s.Update(msg)
 	if leaving == nil {
-		return Choice{}, false
+		return QueueChoice{}, false
 	}
 	leaving()
 	return <-picks, true
@@ -113,15 +113,15 @@ func picked(s pickScreen, msg tea.Msg) (Choice, bool) {
 func TestPickScreenGivesItsChoice(t *testing.T) {
 	cases := []struct {
 		msg  tea.Msg
-		want Choice
+		want QueueChoice
 	}{
-		{enter, Choice{Only: []string{"base/Packages", "ssh/Keys"}}},
-		{press('c'), Choice{Only: []string{"base/Packages", "ssh/Keys"}, Check: true}},
-		{press('q'), Choice{}},
+		{enter, QueueChoice{Next: NextRun, Only: []string{"base/Packages", "ssh/Keys"}}},
+		{press('c'), QueueChoice{Next: NextCheck, Only: []string{"base/Packages", "ssh/Keys"}}},
+		{press('q'), QueueChoice{}},
 	}
 	for _, c := range cases {
 		got, ok := picked(scannedPick(), c.msg)
-		if !ok || !slices.Equal(got.Only, c.want.Only) || got.Check != c.want.Check {
+		if !ok || !slices.Equal(got.Only, c.want.Only) || got.Next != c.want.Next {
 			t.Errorf("%v: choice = %+v, %v, want %+v", c.msg, got, ok, c.want)
 		}
 	}

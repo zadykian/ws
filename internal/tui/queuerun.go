@@ -15,16 +15,16 @@ type QueueRun struct {
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
-func NewQueueRun(title string, theme Theme, choice Choice) QueueRun {
+func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
 	var stages Group
-	for _, r := range choice.list.rows {
+	for _, r := range choice.left.list.rows {
 		if r.number > 0 {
 			stages.Steps = append(stages.Steps, r.name)
 		}
 	}
 	run := NewRunScreen(title, theme, stages)
 	run.pane = func(window Size) Size { return inside(stripSize(window)) }
-	return QueueRun{run, choice.list.filtered("")}
+	return QueueRun{run, choice.left.list.filtered("")}
 }
 
 // Init starts the clock.
