@@ -42,7 +42,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 		host.Group{Title: "Devtools gh login", After: "Devtools packages", Parts: []host.Resource{
 			GHLogin{M: m, User: v.User, Home: v.Home, Token: s.Token.GitHub},
 		}},
-		host.Group{Title: "Devtools Go", Parts: []host.Resource{goTree(m, GoVersion)}},
+		host.Group{Title: "Devtools Go", Parts: []host.Resource{goTree(m)}},
 		host.Group{Title: "Devtools gopls", After: "Devtools Go", Parts: []host.Resource{
 			goplsTool{M: m, User: user, Path: Gopls(v.Home)},
 		}},
