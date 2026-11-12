@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 func TestRunWithStopEndsTheRunBetweenSteps(t *testing.T) {

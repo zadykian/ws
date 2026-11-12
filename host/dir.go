@@ -7,7 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Dir is a directory with its mode and owner. Its parent must exist: list the parents first.

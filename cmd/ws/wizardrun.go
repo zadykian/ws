@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/step"
 )
 
 // wizardRun is a wizard's run at a terminal, over its side: the Mac's or ws's.

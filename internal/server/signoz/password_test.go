@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/step"
 )
 
 func TestPasswordIsGeneratedOnceAndMarksAnUp(t *testing.T) {

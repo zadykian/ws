@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // errLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a

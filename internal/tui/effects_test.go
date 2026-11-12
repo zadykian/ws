@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // effectsOf returns what Bridge.Effects gives a work under a screen of m.

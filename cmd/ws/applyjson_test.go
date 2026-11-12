@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 type textChange string

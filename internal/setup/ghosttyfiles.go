@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // configLines is the line that reads ws.ghostty, at the end of Ghostty's config.

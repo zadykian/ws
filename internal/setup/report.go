@@ -8,7 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // The states that a report's items share.

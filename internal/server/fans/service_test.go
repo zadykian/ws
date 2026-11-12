@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/step"
 )
 
 // applyService plans and applies the service step, and returns what its plan held.

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/step"
 )
 
 // Git sets git up from mac.conf's WS_GIT_NAME, WS_GIT_EMAIL and WS_GIT_SIGNING_PUB_KEY, and leaves it

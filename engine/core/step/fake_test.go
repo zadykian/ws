@@ -3,7 +3,7 @@ package step_test
 import (
 	"context"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 type change string

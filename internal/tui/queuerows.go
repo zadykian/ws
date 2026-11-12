@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/zadykian/ws/step"
+import "github.com/zadykian/ws/engine/core/step"
 
 // reportedRow is the step of a group, as a report says it stands. What the step would change and
 // what stops it are the words of its row, as a report has no output to keep.

@@ -1,6 +1,6 @@
 package wizard
 
-import "github.com/zadykian/ws/step"
+import "github.com/zadykian/ws/engine/core/step"
 
 // locking is a stage that, picked in the wizard's lists, locks another stage than the one it waits
 // on in its run.

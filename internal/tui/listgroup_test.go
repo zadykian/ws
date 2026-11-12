@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 func formed() pickList {

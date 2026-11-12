@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // DaemonReload makes systemd read its unit files again where any of the watched resources has a

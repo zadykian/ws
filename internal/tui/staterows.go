@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // The tabs of the state screen, in their order.

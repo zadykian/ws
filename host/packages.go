@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // installOptions make apt-get wait for dpkg's lock. They keep the configuration file a machine

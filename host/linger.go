@@ -6,7 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Linger enables lingering for the user, which starts the user's systemd at boot. loginctl starts

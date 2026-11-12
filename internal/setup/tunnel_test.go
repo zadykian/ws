@@ -7,8 +7,8 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/setup"
-	"github.com/zadykian/ws/step"
 )
 
 func tunnelStep(m *effecttest.Machine) *setup.Tunnel {

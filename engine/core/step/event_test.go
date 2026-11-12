@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // journal keeps each event as a line: kind, parent/step#index, the size of the plan, and the rest.

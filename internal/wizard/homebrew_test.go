@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 func TestPkgSigner(t *testing.T) {

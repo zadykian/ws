@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/check"
-	"github.com/zadykian/ws/step"
 )
 
 // Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it. The

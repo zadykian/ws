@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/mac"
-	"github.com/zadykian/ws/step"
 )
 
 // wizardOptions is what a run of a wizard's stages takes beside its effects: the flags, and what the

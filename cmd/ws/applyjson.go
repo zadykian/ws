@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/apply"
-	"github.com/zadykian/ws/step"
 )
 
 // jsonEvents prints each event of a run as a line of JSON, and passes it on to next, which keeps

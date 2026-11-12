@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/step"
 )
 
 func TestStepsStopOnTheSettings(t *testing.T) {

@@ -3,7 +3,7 @@ package tui
 import (
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 func TestAReportSaysHowItsStepStands(t *testing.T) {

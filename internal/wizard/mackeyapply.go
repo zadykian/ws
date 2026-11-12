@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/setup"
-	"github.com/zadykian/ws/step"
 )
 
 // Apply makes what the plan lists, in order. A change but a question is PlanCopy's: a directory

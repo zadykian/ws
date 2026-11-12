@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // tailLines is how many of a failed step's last lines stay for the end of a run.

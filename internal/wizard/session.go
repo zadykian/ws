@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/server/apply"
-	"github.com/zadykian/ws/step"
 )
 
 // Session is the one way to ws of a wizard's run: the Mac's over ssh, or ws's own on the machine

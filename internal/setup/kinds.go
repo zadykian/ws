@@ -1,6 +1,6 @@
 package setup
 
-import "github.com/zadykian/ws/step"
+import "github.com/zadykian/ws/engine/core/step"
 
 // The rest of the changes stay other: each is a line for a person, a key made, or a file kept
 // beside a write.

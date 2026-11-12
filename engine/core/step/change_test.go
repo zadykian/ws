@@ -3,7 +3,7 @@ package step_test
 import (
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 type removal struct{ change }

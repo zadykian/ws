@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/step"
 )
 
 // Plan reads the retention of traces, metrics and logs, once the schema migrator is done. Without

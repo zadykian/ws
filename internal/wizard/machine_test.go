@@ -3,7 +3,7 @@ package wizard
 import (
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // TestEveryStageNamesItsMachine fails where a stage is added with no machine, as a screen could not

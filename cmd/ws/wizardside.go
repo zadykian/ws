@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/step"
 )
 
 // wizardSide is what differs between the wizards: their stages, the process that caffeinate waits

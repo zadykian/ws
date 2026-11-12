@@ -8,7 +8,7 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // publicKey asks root's copy of ws for the Mac's public key. It returns "" where there is no copy

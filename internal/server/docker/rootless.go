@@ -5,9 +5,9 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/step"
 )
 
 // rootless sets up ws_user's own daemon. Root writes the user's files, whose links it refuses. The

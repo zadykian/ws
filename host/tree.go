@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // treeMarker is the file in a tree that holds the URL the tree came from, and so its probe. A

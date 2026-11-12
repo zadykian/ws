@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // signozAPI serves the retention of traces and metrics from a fakeTTL, and of logs from days.

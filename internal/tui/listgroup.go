@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // groupForm is how a list shows a group of its steps.

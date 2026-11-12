@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/check"
 	"github.com/zadykian/ws/internal/tunnel"
-	"github.com/zadykian/ws/step"
 )
 
 const routesAbsent = "once routes.d is made"

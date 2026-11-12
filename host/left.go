@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Left takes a user out of a group. A session that is running keeps the group until it ends.

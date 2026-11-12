@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Apply applies the changes of the plan in order, so that root's copy of ws is there when the key

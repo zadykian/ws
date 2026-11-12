@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/step"
 )
 
 // valuesStage names the stage in its messages. outboundKey is the key of host_vars that the target

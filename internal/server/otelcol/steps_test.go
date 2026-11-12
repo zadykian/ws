@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/step"
 )
 
 const validate = "env OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://remote.invalid:4317 /usr/bin/otelcol-contrib validate --config=/etc/otelcol-contrib/config.yaml.ws-check"

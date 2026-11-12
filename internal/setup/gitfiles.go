@@ -4,9 +4,9 @@ import (
 	"context"
 	"io/fs"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/gitcfg"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/step"
 )
 
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers

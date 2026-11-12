@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // namedStep is a step that a test lists and never runs.

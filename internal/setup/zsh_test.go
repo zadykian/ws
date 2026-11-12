@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/mac"
-	"github.com/zadykian/ws/step"
 )
 
 const zshSource = "source ~/.config/ws/zshrc\n"

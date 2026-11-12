@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/step"
 )
 
 // Up is the step that starts the project's containers. Compose's up runs the one-shot services

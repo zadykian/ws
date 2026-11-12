@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // UserUnit keeps a unit of the user's own systemd running, and restarts it where any of Watch has a

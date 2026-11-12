@@ -6,7 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Absent is a path that does not exist: a file, a link, or a directory with all it holds. Name only

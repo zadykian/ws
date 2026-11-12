@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/step"
 )
 
 const supported = "# comment\nC.UTF-8 UTF-8\nde_DE@euro ISO-8859-15\nen_US.UTF-8 UTF-8\n"

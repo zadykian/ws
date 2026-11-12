@@ -8,7 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Link is a symbolic link to a target. It has no owner or mode: a link's own are never used.

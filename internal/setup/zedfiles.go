@@ -3,7 +3,7 @@ package setup
 import (
 	"strings"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 const (

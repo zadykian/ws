@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // owedDir holds a mark per unit whose restart or reload a watched change owes. A mark is written

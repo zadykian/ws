@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // queueBoxes draws each row's box in order, the stages' own among them, as the eye reads a queue.

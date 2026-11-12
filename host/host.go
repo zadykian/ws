@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Change is a step.Change that applies itself.

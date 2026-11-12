@@ -7,8 +7,8 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/step"
 )
 
 // localSession returns ws's own session over m, whose runs' events go to events.

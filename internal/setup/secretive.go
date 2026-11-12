@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/step"
 )
 
 // ErrAgentDown is why Secretive's keys cannot be listed: its socket stays after Secretive quits, and

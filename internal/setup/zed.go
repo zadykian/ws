@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Zed sets up Zed, the Mac's editor for ws. It installs Zed and the font its settings name from

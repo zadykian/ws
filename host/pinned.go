@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // CacheDir is where the pinned file of a package waits for its install.

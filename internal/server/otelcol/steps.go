@@ -2,10 +2,10 @@ package otelcol
 
 import (
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/step"
 )
 
 // Step names. Those after the install wait on the steps before them.

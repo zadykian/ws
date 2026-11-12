@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/setup"
-	"github.com/zadykian/ws/step"
 )
 
 const gitAdd = "gh ssh-key add " + gitPub + " --type signing --title mac"

@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/tui"
-	"github.com/zadykian/ws/step"
 )
 
 // newStateCmd returns ws server state.

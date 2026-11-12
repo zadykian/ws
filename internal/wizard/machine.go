@@ -1,6 +1,6 @@
 package wizard
 
-import "github.com/zadykian/ws/step"
+import "github.com/zadykian/ws/engine/core/step"
 
 // Machine is the machine that a stage acts on. The wizard's order crosses the two, so a screen
 // that shows a list for each reads it from the stage.

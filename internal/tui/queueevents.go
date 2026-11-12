@@ -3,7 +3,7 @@ package tui
 import (
 	"slices"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // hear keeps a line of the scan for the step that ends next.

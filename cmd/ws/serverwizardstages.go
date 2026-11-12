@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/mac"
-	"github.com/zadykian/ws/step"
 )
 
 // serverWizardStages returns the stages of ws server wizard, in order. They act on ws itself, with

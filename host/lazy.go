@@ -3,7 +3,7 @@ package host
 import (
 	"context"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // Lazy is a Group whose parts are made as it plans, from what the machine shows then. A part can

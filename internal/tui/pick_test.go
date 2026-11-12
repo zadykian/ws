@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // chain is a role whose steps wait on each other, beside one that waits on nothing.

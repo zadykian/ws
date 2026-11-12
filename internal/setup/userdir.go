@@ -7,7 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // errNotDir is a plan's error for a path that holds no directory: a step stops there, and its

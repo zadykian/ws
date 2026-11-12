@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // eventNames is the name of each kind of event in --json's lines.

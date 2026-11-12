@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 var sshInclude = Write{"/h/.ssh/config", nil, []byte("Include config.d/ws\n"), false, 0o600}

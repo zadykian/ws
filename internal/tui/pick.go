@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 // pickRow is a step of the list that a run is chosen from.

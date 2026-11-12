@@ -7,10 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
 	"github.com/zadykian/ws/internal/tui"
-	"github.com/zadykian/ws/step"
 )
 
 // opensList says that a run opens the list of steps first: it draws a screen, and neither a

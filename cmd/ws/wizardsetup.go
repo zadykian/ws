@@ -5,10 +5,10 @@ import (
 	"errors"
 	"io"
 
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/step"
 )
 
 // wizardSetup returns the stage that runs the steps of ws mac apply in the wizard's process. Until

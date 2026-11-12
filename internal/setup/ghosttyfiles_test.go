@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/step"
+	"github.com/zadykian/ws/engine/core/step"
 )
 
 func fileChanges(t *testing.T, m *effecttest.Machine, holds bool) []step.Change {

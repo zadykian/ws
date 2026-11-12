@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/step"
 )
 
 const (

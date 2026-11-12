@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/step"
 )
 
 // valuesOf returns the defaults for the user and the home.
