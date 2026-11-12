@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"path"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
 )
+
+// CacheDir is where the pinned file of a package waits for its install.
+const CacheDir = "/var/cache/ws"
 
 // PinnedFile is a file of a release, root's at Path. The role pins its Version and the SHA-256 of
 // each architecture's file. The machine's architecture, as dpkg names it, picks the URL and the
@@ -55,4 +59,15 @@ func (p PinnedFile) Report(ctx context.Context) ([]step.Item, error) {
 		return nil, err
 	}
 	return d.Report(ctx)
+}
+
+// cached is download for a package's source: its file waits in CacheDir, named by its URL.
+func (p PinnedFile) cached(ctx context.Context) (Download, error) {
+	p.Path = CacheDir
+	d, err := p.download(ctx)
+	if err != nil {
+		return Download{}, err
+	}
+	d.Path, d.Mode = path.Join(CacheDir, path.Base(d.URL)), 0o644
+	return d, nil
 }
