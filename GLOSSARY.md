@@ -59,3 +59,19 @@ _Avoid_: command, request
 The wizard's one way to ws: from the Mac over ssh, root by sudo, or ws's own on the machine. A
 stage asks it each operation. It holds what ws's status read until an operation changes ws.
 _Avoid_: remote, connection
+
+**User's directory**:
+A directory below the Mac's home that a step writes under, such as `~/.ssh`. A run makes it where
+missing, and stops where the path is no directory. It leaves the mode of one that exists, but for
+ws's directory and ssh's `config.d`.
+_Avoid_: folder
+
+**User's file**:
+A whole file below the Mac's home that ws writes as the user, not root, such as
+`~/.config/ws/gitconfig`. A plan and a report read it alike. On the server, root writes a home file.
+_Avoid_: dotfile
+
+**ws's directory**:
+`~/.config/ws` on the Mac, mode 700, which holds `mac.conf` and the files that git, zsh and the
+tunnel read. A run sets that mode where it differs.
+_Avoid_: config directory
