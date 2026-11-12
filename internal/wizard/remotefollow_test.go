@@ -119,14 +119,14 @@ func TestEachRunIsFollowed(t *testing.T) {
 	log := effecttest.Result{Out: []byte(runLog)}
 
 	r, m := newRun("lan", wsStatus{}, false, false)
-	r.Ws.remote.Events = h
+	r.Ws.events = h
 	m.Results[opLine("run")] = log
 	if err := r.run(ctx); err != nil {
 		t.Fatal(err)
 	}
 
 	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
-	c.Ws.remote.Events = h
+	c.Ws.events = h
 	m.Results[opLine("link", "eth1")] = effecttest.Result{}
 	m.Results[opLine("run", "--only", "network,wireguard")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
@@ -134,7 +134,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	}
 
 	tun, m := newTunnel(keyA, wsStatus{}, false)
-	tun.Ws.remote.Events = h
+	tun.Ws.events = h
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
 	m.Results[opLine("peer", keyA)] = effecttest.Result{}

@@ -63,11 +63,13 @@ func TestEachOperationsStaleRule(t *testing.T) {
 		"install":   {func(s *Session) error { return s.install(ctx, "v1", "url") }, true},
 		"run":       {func(s *Session) error { return s.run(ctx, nil) }, true},
 		"outbound":  {func(s *Session) error { return s.outbound(ctx) }, true},
+		"values":    {func(s *Session) error { _, err := s.values(ctx); return err }, false},
+		"setValues": {func(s *Session) error { return s.setValues(ctx, []string{"a=b"}) }, true},
 	} {
 		m := effecttest.NewMachine()
 		s := macSession(m, SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{})
 		for _, line := range []string{"link", "link eth1", "wait eth1", "user ada", "peer key", "install v1 url",
-			"run", "run --only network,wireguard", "run --only wireguard", "outbound"} {
+			"run", "run --only network,wireguard", "run --only wireguard", "outbound", "values", "values YT1i"} {
 			m.Results["op "+line] = effecttest.Result{}
 		}
 		s.status(ctx)

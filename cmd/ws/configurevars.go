@@ -40,7 +40,7 @@ func hostVarsSheet(open sessionOpen) tui.Sheet {
 			if err != nil {
 				return tui.Sheet{}, err
 			}
-			form, err := wizard.VarsForm{Files: ws.Files()}.Load(ctx)
+			form, err := wizard.VarsForm{Ws: ws}.Load(ctx)
 			if err != nil {
 				return tui.Sheet{}, err
 			}

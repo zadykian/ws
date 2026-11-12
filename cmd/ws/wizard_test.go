@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/mac"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
@@ -180,8 +181,9 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 		t.Fatalf("status = %d", status)
 	}
 	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
-	r := &wizard.Remote{Shell: wizard.SSHShell{SSH: wizard.SSH{M: m, Lock: "/t/l"}}}
-	roles, err := r.State(context.Background(), p.version)
+	ws := wizard.NewSession(wizard.MacReach{SSH: wizard.SSH{M: m, Lock: "/t/l"}},
+		wizard.Scripts{Remote: mac.RemoteScript})
+	roles, err := ws.State(context.Background(), p.version)
 	if err != nil {
 		t.Fatal(err)
 	}

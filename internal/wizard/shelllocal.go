@@ -47,8 +47,3 @@ func (l LocalShell) Lines(ctx context.Context, in []byte, take func(line string)
 	}
 	return l.Pass(ctx, in, cmd...)
 }
-
-// Put writes data to path, mode 0600.
-func (l LocalShell) Put(_ context.Context, path string, data []byte) error {
-	return l.M.WriteFile(path, data, 0o600)
-}

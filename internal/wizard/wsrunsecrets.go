@@ -9,15 +9,15 @@ import (
 
 // done tells whether ws's last full run, by this version, exited 0 and no run's unit runs there. On
 // a cloud VM, that run must have begun with host_vars turning the outbound table off, which
-// host_vars, the same since, still does. def is the server's default ws_user.
-func (s wsStatus) done(version, def string, c conf.Conf) bool {
-	return s.idle(version) && s.named(def, c) && (c.Target != "cloud" || s.Run.Off)
+// host_vars, the same since, still does.
+func (s wsStatus) done(version string, c conf.Conf) bool {
+	return s.idle(version) && s.named(c) && (c.Target != "cloud" || s.Run.Off)
 }
 
 // named tells whether ws's values give ws_user the user that ssh logs in as. It compares with the
-// server's default, def, so that a default that moves leaves a WS_USER of the old one named in
+// server's default, so that a default that moves leaves a WS_USER of the old one named in
 // host_vars.
-func (s wsStatus) named(def string, c conf.Conf) bool { return cmp.Or(s.User, def) == c.User }
+func (s wsStatus) named(c conf.Conf) bool { return cmp.Or(s.User, defaultUser()) == c.User }
 
 // idle tells whether ws's last full run, made by a ws of this version, exited 0. The run must have
 // read ws's secrets file and host_vars as they are now, and no run's unit may run there now.

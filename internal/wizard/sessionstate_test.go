@@ -23,11 +23,11 @@ const wsReport = `{
 }
 `
 
-// stateRemote returns a Remote on a machine whose status names held as ws's version, and whose state
-// op prints report.
-func stateRemote(held, report string) (*Remote, *effecttest.Machine) {
+// stateSession returns a session on a machine whose status names held as ws's version, and whose
+// state op prints report.
+func stateSession(held, report string) (*Session, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: fakeWs{m}, Script: []byte("echo\n")}
+	r := NewSession(fakeReach{Reach: MacReach{}, M: m}, Scripts{Remote: []byte("echo\n")})
 	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{Version: held}.text()}
 	m.Results[opLine("state")] = effecttest.Result{Out: []byte(report)}
 	return r, m
@@ -44,8 +44,8 @@ func ranOp(m *effecttest.Machine, op string) int {
 	return n
 }
 
-func TestRemoteStateReturnsTheRoles(t *testing.T) {
-	r, _ := stateRemote("v1", wsReport)
+func TestSessionStateReturnsTheRoles(t *testing.T) {
+	r, _ := stateSession("v1", wsReport)
 	got, err := r.State(context.Background(), "v1")
 	if err != nil {
 		t.Fatal(err)
@@ -60,8 +60,8 @@ func TestRemoteStateReturnsTheRoles(t *testing.T) {
 	}
 }
 
-func TestRemoteStateLeavesWhatStatusRead(t *testing.T) {
-	r, m := stateRemote("v1", wsReport)
+func TestSessionStateLeavesWhatStatusRead(t *testing.T) {
+	r, m := stateSession("v1", wsReport)
 	for range 2 {
 		if _, err := r.State(context.Background(), "v1"); err != nil {
 			t.Fatal(err)
@@ -72,7 +72,7 @@ func TestRemoteStateLeavesWhatStatusRead(t *testing.T) {
 	}
 }
 
-func TestRemoteStateRefusesAnotherWs(t *testing.T) {
+func TestSessionStateRefusesAnotherWs(t *testing.T) {
 	cases := []struct {
 		name, held, report string
 		state              int
@@ -84,7 +84,7 @@ func TestRemoteStateRefusesAnotherWs(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			r, m := stateRemote(c.held, c.report)
+			r, m := stateSession(c.held, c.report)
 			if got, err := r.State(context.Background(), "v1"); !errors.Is(err, ErrOtherWs) || got != nil {
 				t.Errorf("got %v, %v; want ErrOtherWs", got, err)
 			}
@@ -95,7 +95,7 @@ func TestRemoteStateRefusesAnotherWs(t *testing.T) {
 	}
 }
 
-func TestRemoteStateFails(t *testing.T) {
+func TestSessionStateFails(t *testing.T) {
 	cases := []struct {
 		name   string
 		result effecttest.Result
@@ -106,7 +106,7 @@ func TestRemoteStateFails(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			r, m := stateRemote("v1", "")
+			r, m := stateSession("v1", "")
 			m.Results[opLine("state")] = c.result
 			if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
 				t.Errorf("got %v, %v; want a failure that is no refusal", got, err)
@@ -115,8 +115,8 @@ func TestRemoteStateFails(t *testing.T) {
 	}
 }
 
-func TestRemoteStateWithNoStatus(t *testing.T) {
-	r, m := stateRemote("v1", wsReport)
+func TestSessionStateWithNoStatus(t *testing.T) {
+	r, m := stateSession("v1", wsReport)
 	m.Results[opLine("status")] = effecttest.Result{Err: errors.New("denied")}
 	if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
 		t.Errorf("got %v, %v; want a failure that is no refusal", got, err)

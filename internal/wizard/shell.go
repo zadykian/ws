@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Shell runs a command as root on ws, with in as its standard input, for a Remote: SSHShell from
+// Shell runs a command as root on ws, with in as its standard input, for a Session: SSHShell from
 // the Mac, or LocalShell on ws itself. A command's words reach it as they are.
 type Shell interface {
 	// Run returns the command's standard output.
@@ -14,15 +14,13 @@ type Shell interface {
 	Pass(ctx context.Context, in []byte, cmd ...string) error
 	// Lines is Pass with each line of the output offered to take first.
 	Lines(ctx context.Context, in []byte, take func(line string) bool, cmd ...string) error
-	// Put writes data to path as root, mode 0600.
-	Put(ctx context.Context, path string, data []byte) error
 }
 
 // SSHShell runs a command on ws over ssh, which reaches ws at the address that the Host key stage
 // asked, where it asked one, and reaches root by Sudo.
 type SSHShell struct {
 	SSH SSH
-	// Sudo is how a command reaches root. Nil runs it as the login, as a Remote's tests do.
+	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
 	Sudo *Sudo
 }
 
@@ -62,12 +60,6 @@ func (s SSHShell) Lines(ctx context.Context, in []byte, take func(line string) b
 		return err
 	}
 	return s.SSH.PassLines(ctx, in, take, args...)
-}
-
-// Put writes data to path through cat's stdin. path holds no quote: the remote script named it.
-func (s SSHShell) Put(ctx context.Context, path string, data []byte) error {
-	_, err := s.Run(ctx, data, "sh", "-c", "umask 077 && cat >"+path)
-	return err
 }
 
 // shellWord returns word as sh reads it back: bare where it holds only letters, digits and

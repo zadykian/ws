@@ -29,10 +29,9 @@ func serverWizardStages(p process, ask effect.Prompt, talks effect.Foreground, o
 	m := p.machine
 	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
-	def := values.Default().User
 	ws := serverSession(m, talks, out, events)
 	run := &wizard.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !host.Booted(m), Check: r.check, Out: out,
-		Version: p.version, Default: def, Update: r.update, Only: r.only}
+		Version: p.version, Update: r.update, Only: r.only}
 	hand.Late(ws.Hand)
 	return []step.Step{vals, run, &wizard.WsClaude{Ws: ws, Tty: p.tty},
 		&wizard.Signing{Ws: ws, GitHub: &wizard.WsGitHub{M: m, Out: out, Hand: hand}}}
@@ -42,7 +41,7 @@ func serverWizardStages(p process, ask effect.Prompt, talks effect.Foreground, o
 // in as host_vars' ws_user. talks runs claude's login, and events hears ws's run.
 func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, events step.Observer) *wizard.Session {
 	want := func() (conf.Conf, error) { return wsWant(m) }
-	return wizard.NewSession(wizard.WsReach{M: m, Want: want, Default: values.Default().User, Here: talks, Out: out},
+	return wizard.NewSession(wizard.WsReach{M: m, Want: want, Here: talks, Out: out},
 		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: events})
 }
 

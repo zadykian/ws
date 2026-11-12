@@ -10,7 +10,7 @@ import (
 // MacReach is the Mac's way to ws: ssh at the direct way that mac.conf gives, root by Sudo.
 type MacReach struct {
 	SSH SSH
-	// Sudo is how a command reaches root. Nil runs it as the login, as a Remote's tests do.
+	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
 	Sudo *Sudo
 	Out  effect.Out
 }
@@ -32,8 +32,6 @@ type WsReach struct {
 	M effect.Machine
 	// Want reads host_vars' target and ws_user.
 	Want func() (conf.Conf, error)
-	// Default is the server's default ws_user, what a host_vars with no such line gives.
-	Default string
 	// Here runs claude's login at the terminal.
 	Here effect.Foreground
 	Out  effect.Out
@@ -47,7 +45,7 @@ func (r WsReach) want() (conf.Conf, error) { return r.Want() }
 
 func (r WsReach) user() (string, error) {
 	c, err := r.Want()
-	return cmp.Or(c.User, r.Default), err
+	return cmp.Or(c.User, defaultUser()), err
 }
 
 func (WsReach) rerun() string { return "run sudo ws server apply" }

@@ -155,28 +155,23 @@ func TestSudoStopsWhereSSHFails(t *testing.T) {
 	}
 }
 
-func TestRemoteThroughSudo(t *testing.T) {
+func TestSessionThroughSudo(t *testing.T) {
 	s, m, _ := newSudo(t)
 	s.way, s.password = sudoAsked, sudoPassword
-	r := &Remote{Shell: SSHShell{SSH: s.SSH, Sudo: s}, Script: []byte("echo\n")}
+	r := secretsSession(SSHShell{SSH: s.SSH, Sudo: s})
 	line := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-s", "--", "status")
 	m.Results[line] = effecttest.Result{Out: []byte("active -\n")}
 	if _, ok := r.status(context.Background()); !ok {
 		t.Fatal("Status read nothing")
 	}
-	put := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-c", "'umask 077 && cat >/var/lib/ws-wizard/x'")
-	m.Results[put] = effecttest.Result{}
-	if err := r.Put(context.Background(), "/var/lib/ws-wizard/x", []byte("\x00data")); err != nil {
-		t.Fatal(err)
-	}
-	if got := m.Inputs[len(m.Inputs)-1]; got != sudoPassword+"\n\x00data" {
-		t.Errorf("Put's stdin = %q", got)
+	if got := m.Inputs[len(m.Inputs)-1]; got != sudoPassword+"\necho\n" {
+		t.Errorf("stdin = %q, want the password, then the script", got)
 	}
 }
 
-func TestRemoteBeforeTheStageReadsNothing(t *testing.T) {
+func TestSessionBeforeTheStageReadsNothing(t *testing.T) {
 	s, _, _ := newSudo(t)
-	r := &Remote{Shell: SSHShell{SSH: s.SSH, Sudo: s}, Script: []byte("echo\n")}
+	r := secretsSession(SSHShell{SSH: s.SSH, Sudo: s})
 	if _, ok := r.status(context.Background()); ok {
 		t.Error("Status read with the stage unread")
 	}

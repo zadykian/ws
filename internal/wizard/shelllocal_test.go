@@ -18,25 +18,19 @@ func localSession(m effect.Machine, events step.Observer) *Session {
 }
 
 // On ws, the script goes on sh's stdin and each word goes unchanged, with no ssh and no sudo.
-func TestRemoteOnWsRunsTheScriptLocally(t *testing.T) {
+func TestSessionOnWsRunsTheScriptLocally(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: LocalShell{M: m}, Script: []byte("echo\n")}
+	r := localSession(m, nil)
 	m.Results["sh -s -- status"] = effecttest.Result{Out: []byte("ws abc\n")}
 	if s, ok := r.status(context.Background()); !ok || s.Version != "abc" {
 		t.Fatalf("status read %q; calls %q", s.Version, m.Calls)
 	}
 	m.Results[wsPath+" server secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
-	if out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B"); err != nil || string(out) != "set\n" {
+	if out, err := localSession(m, nil).Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B"); err != nil || string(out) != "set\n" {
 		t.Fatalf("Secrets = %q, %v", out, err)
 	}
 	if want := []string{"echo\n", "dummy-value\n"}; !slices.Equal(m.Inputs, want) {
 		t.Errorf("stdin = %q, want %q", m.Inputs, want)
-	}
-	if err := r.Put(context.Background(), "/var/lib/ws-wizard/x", []byte("data")); err != nil {
-		t.Fatal(err)
-	}
-	if string(m.Files["/var/lib/ws-wizard/x"]) != "data" || m.Modes["/var/lib/ws-wizard/x"] != 0o600 {
-		t.Errorf("Put wrote %q, mode %v", m.Files["/var/lib/ws-wizard/x"], m.Modes["/var/lib/ws-wizard/x"])
 	}
 }
 
@@ -74,14 +68,14 @@ func TestFollowOnWsWithoutLines(t *testing.T) {
 func TestLocalShellNamesWsUser(t *testing.T) {
 	m := effecttest.NewMachine()
 	user := "ada"
-	r := &Remote{Shell: LocalShell{M: m, User: func() string { return user }}, Script: []byte("echo\n")}
+	r := NewSession(WsReach{M: m, Want: func() (conf.Conf, error) { return conf.Conf{User: user}, nil }}, Scripts{Remote: []byte("echo\n")})
 	m.Results["env SUDO_USER=ada sh -s -- status"] = effecttest.Result{Out: []byte("claude ok\n")}
 	if s, ok := r.status(context.Background()); !ok || s.Claude != "ok" {
 		t.Errorf("status read %q; calls %q", s.Claude, m.Calls)
 	}
 	user = ""
-	m.Results["sh -s -- install"] = effecttest.Result{}
-	if err := r.Shell.Pass(context.Background(), r.Script, script([]string{"install"})...); err != nil || m.Calls[len(m.Calls)-1] != "run sh -s -- install" {
+	m.Results["sh -s -- install v1 url"] = effecttest.Result{}
+	if err := r.install(context.Background(), "v1", "url"); err != nil || m.Calls[len(m.Calls)-1] != "run sh -s -- install v1 url" {
 		t.Errorf("Pass = %v; calls %q", err, m.Calls)
 	}
 }

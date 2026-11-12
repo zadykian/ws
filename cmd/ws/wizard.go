@@ -97,8 +97,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	ws := wizard.NewSession(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Out: out},
 		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = host.SSH, p.tty, check, e.hidden, out
-	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only,
-		Default: values.Default().User}
+	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only}
 	hand.Late(ws.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
