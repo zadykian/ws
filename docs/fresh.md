@@ -5,13 +5,14 @@ the `.deb` of a pinned release. Fresh runs in a terminal, and its config is a pl
 
 ## The install
 
-- `Fresh download` fetches `fresh-editor_VERSION_ARCH.deb` from the project's GitHub release into
-  `/var/cache/ws/`. It checks the file against the SHA-256 in `download.go` before dpkg reads it.
-- `Fresh install` runs dpkg on the file, then removes the file.
-- Where `dpkg-query` lists the pinned version as installed, the download plans nothing and the
-  install only removes a leftover file. A second run changes nothing.
-- The pin holds the version, the tag and one sum for amd64 and one for arm64. Any other
-  architecture fails the step.
+- `Fresh install` plans from the pin in `download.go`: a version and, for amd64 and arm64, a
+  SHA-256. Where `dpkg-query` lists another version, it fetches `fresh-editor_VERSION_ARCH.deb`
+  from the project's GitHub release into `/var/cache/ws/` and checks the file against the SHA-256.
+  Before dpkg reads it, it checks the file's own name and version against the pin. It removes the
+  file once the package installs. A dry run on a new machine shows the install.
+- Where `dpkg-query` lists the pinned version as installed, the step only removes a leftover file.
+  A second run changes nothing.
+- Any other architecture fails the step.
 
 The release's `.deb` needs `libc6` 2.30 and `libgcc-s1` 4.2 alone. So it installs on a physical
 machine on the LAN, on a cloud VM and on a VM on the Mac. The testing `.deb` lacks the grammars
