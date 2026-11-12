@@ -20,7 +20,7 @@ func newCable(t *testing.T, status wsStatus, link string, env map[string]string)
 	out := &effecttest.Out{}
 	ws := macSession(m, root.SSH, out, status)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	m.Results[remoteLine(ws.files, "link")] = effecttest.Result{Out: []byte(link)}
+	m.Results[opLine("link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
 	c := &Cable{Ws: ws, SSH: root.SSH, Conf: "/h/mac.conf",
 		RunDone:  func(context.Context, conf.Conf) bool { return true },
@@ -58,9 +58,9 @@ func TestCablePlan(t *testing.T) {
 
 func TestCableApplyAsksPortAndService(t *testing.T) {
 	c, m, p := newCable(t, wsStatus{}, cableLink, nil)
-	m.Results[remoteLine(c.Ws.files, "link", "eth1")] = effecttest.Result{}
-	m.Results[remoteLine(c.Ws.remote, "run", "--only", "network,wireguard")] = effecttest.Result{}
-	m.Results[remoteLine(c.Ws.files, "wait", "eth1")] = effecttest.Result{Out: []byte("eth1 1 10.77.0.1/24\n")}
+	m.Results[opLine("link", "eth1")] = effecttest.Result{}
+	m.Results[opLine("run", "--only", "network,wireguard")] = effecttest.Result{}
+	m.Results[opLine("wait", "eth1")] = effecttest.Result{Out: []byte("eth1 1 10.77.0.1/24\n")}
 	m.Results["networksetup -listallnetworkservices"] = effecttest.Result{Out: []byte("An asterisk (*) denotes that a network service is disabled.\nWi-Fi\nUSB LAN\n")}
 	m.Results["networksetup -getinfo Wi-Fi"] = effecttest.Result{Out: []byte("IP address: 10.0.0.2\n")}
 	m.Results["networksetup -getinfo USB LAN"] = effecttest.Result{Out: []byte("IP address: 169.254.3.4\n")}

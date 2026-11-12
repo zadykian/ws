@@ -29,15 +29,15 @@ func (h heard) steps() []string {
 	return names
 }
 
-func newFollow(m effect.Machine) *Remote {
-	return &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}, Script: []byte("echo\n")}
+func newFollow(m *effecttest.Machine) *Remote {
+	return &Remote{Shell: fakeWs{m}, Script: []byte("echo\n")}
 }
 
 func TestFollowHandsEventsOnAndPassesTheLog(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := newFollow(m)
 	r.Events = &heard{}
-	m.Results[remoteLine(r, "run", "--only", "wireguard")] = effecttest.Result{Out: []byte(runLog)}
+	m.Results[opLine("run", "--only", "wireguard")] = effecttest.Result{Out: []byte(runLog)}
 	if err := r.Follow(context.Background(), "--only", "wireguard"); err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestFollowHearsAReplayAgain(t *testing.T) {
 	r := newFollow(m)
 	h := &heard{}
 	r.Events = h
-	m.Results[remoteLine(r, "run")] = effecttest.Result{Out: []byte(runLog)}
+	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog)}
 	for range 2 {
 		if err := r.Follow(context.Background()); err != nil {
 			t.Fatal(err)
@@ -68,7 +68,7 @@ func TestFollowHearsAReplayAgain(t *testing.T) {
 func TestFollowDropsEventsThatNoOneHears(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := newFollow(m)
-	m.Results[remoteLine(r, "run")] = effecttest.Result{Out: []byte(runLog)}
+	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog)}
 	if err := r.Follow(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -81,8 +81,8 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := newFollow(m)
 	drop := errors.New("ssh dropped")
-	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: wsStatus{}.text()}
-	m.Results[remoteLine(r, "run")] = effecttest.Result{Out: []byte(runLog), Err: drop}
+	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{}.text()}
+	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog), Err: drop}
 	r.status(context.Background())
 	h := &heard{}
 	r.Events = h
@@ -92,7 +92,7 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	if len(*h) != 1 {
 		t.Errorf("heard %d events; want those before the drop", len(*h))
 	}
-	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: wsStatus{Active: "ws-wizard-1"}.text()}
+	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{Active: "ws-wizard-1"}.text()}
 	if s, _ := r.status(context.Background()); s.Active != "ws-wizard-1" {
 		t.Errorf("active = %q; want the status read again", s.Active)
 	}
@@ -100,7 +100,7 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 
 func TestFollowRunsOnAMachineWithoutLines(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := newFollow(struct{ effect.Machine }{m})
+	r := &Remote{Shell: SSHShell{SSH: SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}}, Script: []byte("echo\n")}
 	m.Results[remoteLine(r, "run")] = effecttest.Result{}
 	if err := r.Follow(context.Background()); err != nil {
 		t.Fatal(err)
@@ -118,15 +118,15 @@ func TestEachRunIsFollowed(t *testing.T) {
 
 	r, m := newRun("lan", wsStatus{}, false, false)
 	r.Ws.remote.Events = h
-	m.Results[remoteLine(r.Ws.remote, "run")] = log
+	m.Results[opLine("run")] = log
 	if err := r.run(ctx); err != nil {
 		t.Fatal(err)
 	}
 
 	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
 	c.Ws.remote.Events = h
-	m.Results[remoteLine(c.Ws.files, "link", "eth1")] = effecttest.Result{}
-	m.Results[remoteLine(c.Ws.remote, "run", "--only", "network,wireguard")] = log
+	m.Results[opLine("link", "eth1")] = effecttest.Result{}
+	m.Results[opLine("run", "--only", "network,wireguard")] = log
 	if err := c.name(ctx, "eth1"); err != nil {
 		t.Fatal(err)
 	}
@@ -135,8 +135,8 @@ func TestEachRunIsFollowed(t *testing.T) {
 	tun.Ws.remote.Events = h
 	m.Results["sudo -v"] = effecttest.Result{}
 	m.Results[libexec+" mac tunnel key"] = effecttest.Result{Out: []byte(keyA + "\n")}
-	m.Results[remoteLine(tun.Ws.files, "peer", keyA)] = effecttest.Result{}
-	m.Results[remoteLine(tun.Ws.remote, "run", "--only", "wireguard")] = log
+	m.Results[opLine("peer", keyA)] = effecttest.Result{}
+	m.Results[opLine("run", "--only", "wireguard")] = log
 	if err := tun.Apply(ctx, step.Plan{}); err == nil || !strings.Contains(err.Error(), "lacks the Mac's key") {
 		t.Errorf("Apply = %v; want the stop past the run", err)
 	}
