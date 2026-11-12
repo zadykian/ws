@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 func TestSelect(t *testing.T) {

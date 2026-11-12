@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 // Select returns the roles that only names, each by ROLE or ROLE/STEP, or every role of list where

@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
