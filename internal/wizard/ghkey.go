@@ -2,7 +2,6 @@ package wizard
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/zadykian/ws/internal/setup"
@@ -26,11 +25,7 @@ func (g GhCLI) key(ctx context.Context) (pub, key string, err error) {
 	if err != nil {
 		return "", "", noKey{err}
 	}
-	pub = k.File
-	if f := strings.Fields(k.Text); len(f) >= 2 {
-		return pub, f[0] + " " + f[1], nil
-	}
-	return "", "", noKey{fmt.Errorf("%s: cannot read the Mac's key for ws from %s", ghStage, pub)}
+	return k.File, k.Key.String(), nil
 }
 
 func (g *Gh) hostname(ctx context.Context) string {
