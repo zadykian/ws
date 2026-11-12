@@ -25,8 +25,9 @@ steps, and each role's page in `docs/` says what it sets up.
 - The roles set the machine up for `ws_user`, `zadykian` by default, in `ws_home`. A step run as
   `ws_user` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
   otherwise be the caller's ([claude's install](../../internal/server/claude/install.go)).
-- Root's reads and writes under `ws_home` go through `host.Plain` or `host.RefuseLinks`, as the user
-  owns the home and could link a file elsewhere ([Links under the home](../../docs/security.md#links-under-the-home)).
+- Root's reads and writes under `ws_home` go through `host.Plain` or `host.RefuseLinks`. The other
+  way is that the step acts as `ws_user`, as claude's does. The user owns the home and could link a
+  file elsewhere ([Links under the home](../../docs/security.md#links-under-the-home)).
 - A line the maintainer acts on past a run, such as a key to copy, goes through
   `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../docs/tui.md#the-run-screen)).
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
