@@ -116,10 +116,7 @@ func keyCopy(m effect.Machine, pub, text, home string) []step.Reporter {
 	return []step.Reporter{userFile{M: m, Path: pub, Text: []byte(text)}}
 }
 
-func applyCopy(ctx context.Context, m effect.Machine, out effect.Out, c KeyCopy) error {
-	if _, err := m.Run(ctx, "mkdir", "-p", filepath.Dir(c.Path)); err != nil {
-		return fmt.Errorf("cannot make %s: %w", filepath.Dir(c.Path), err)
-	}
+func applyCopy(m effect.Machine, out effect.Out, c KeyCopy) error {
 	if err := m.WriteFile(c.Path, []byte(c.Text), 0o644); err != nil {
 		return fmt.Errorf("cannot write %s: %w", c.Path, err)
 	}

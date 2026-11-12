@@ -127,12 +127,18 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 		"at a terminal", macKey, use.name, strings.Join(lines, "; "))
 }
 
-// name names the key in mac.conf, once it writes ws's copy of its .pub, which ssh and git read.
+// name names the key in mac.conf, once it plans and writes ws's copy of its .pub, with the
+// directories of the copies, which ssh and git read.
 // For ws's login key, it names Secretive's agent too, which holds the private key.
 func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) error {
-	copied := setup.KeyCopy{Path: sshcfg.Expand(key.Pub(), k.Home), Text: key.Line + "\n"}
-	if err := setup.Apply(ctx, k.M, k.Out, copied); err != nil {
+	copied, err := setup.PlanCopy(k.M, sshcfg.Expand(key.Pub(), k.Home), key.Line+"\n", k.Home)
+	if err != nil {
 		return err
+	}
+	for _, c := range copied {
+		if err := setup.Apply(ctx, k.M, k.Out, c); err != nil {
+			return err
+		}
 	}
 	settings := []setting{{use.key, key.Pub()}}
 	if use == loginUse {
