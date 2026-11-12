@@ -27,7 +27,7 @@ func (e ending) finish(ctx context.Context) error       { return e.done(ctx) }
 
 func TestRunFinishesNoStepLeftOut(t *testing.T) {
 	finish := func(context.Context) error { return errors.New("a step left out finished") }
-	steps := []step.Step{ending{name: "one", done: finish}}
+	steps := []step.Step{ending{name: "git", done: finish}}
 	left := func(_, _ string) bool { return true }
 	if _, err := run(t.Context(), steps, step.Options{LeftOut: left}); err != nil {
 		t.Error(err)
@@ -107,3 +107,53 @@ func TestMacRowsOfACheckHoldNoSSHAgain(t *testing.T) {
 		t.Errorf("an apply's rows = %q; want %q", got, want)
 	}
 }
+
+// pending is a step with one change to make, which a second plan finds made.
+type pending struct {
+	name, waits string
+	made        bool
+}
+
+func (p *pending) Name() string    { return p.name }
+func (p *pending) WaitsOn() string { return p.waits }
+func (p *pending) Plan(context.Context) (step.Plan, error) {
+	if p.made {
+		return step.Plan{}, nil
+	}
+	return step.Plan{Changes: []step.Change{change("x")}}, nil
+}
+func (p *pending) Apply(context.Context, step.Plan) error { p.made = true; return nil }
+
+type change string
+
+func (c change) String() string { return string(c) }
+
+func TestRunAsksLeftOutOnlyOfAStepWithARow(t *testing.T) {
+	keepSSH := func(_, name string) bool { return name != "ssh" }
+	ssh, again := &pending{name: "ssh"}, &pending{name: "ssh again", waits: "ssh"}
+	if _, err := run(t.Context(), []step.Step{ssh, again}, step.Options{LeftOut: keepSSH}); err != nil {
+		t.Fatal(err)
+	}
+	if !ssh.made || !again.made {
+		t.Errorf("ssh made = %v, ssh again made = %v; want both, as the choice keeps ssh", ssh.made, again.made)
+	}
+	var got []step.Event
+	obs := observed(func(e step.Event) { got = append(got, e) })
+	ssh, again = &pending{name: "ssh"}, &pending{name: "ssh again", waits: "ssh"}
+	left := func(_, _ string) bool { return true }
+	if _, err := run(t.Context(), []step.Step{ssh, again}, step.Options{LeftOut: left, Observer: obs}); err != nil {
+		t.Fatal(err)
+	}
+	if again.made || ssh.made {
+		t.Error("a step ran where the choice left ssh out")
+	}
+	last := got[len(got)-1]
+	if last.Step != "ssh again" || last.Kind != step.Skipped || last.After != "ssh" {
+		t.Errorf("last event = %+v; want ssh again skipped behind ssh", last)
+	}
+}
+
+// observed is an observer made of a function.
+type observed func(step.Event)
+
+func (f observed) Observe(e step.Event) { f(e) }

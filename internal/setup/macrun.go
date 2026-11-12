@@ -51,8 +51,14 @@ func (m Mac) ssh(again bool) step.Step {
 type finisher interface{ finish(context.Context) error }
 
 // run runs steps under o, then what each leaves for the end of a run that passed. A step left out
-// leaves nothing, as it applied nothing. It reports what step.RunWith does.
+// leaves nothing, as it applied nothing. o.LeftOut is asked of the steps with a row alone: ssh
+// again has none, as a check has no second plan, so it follows ssh by its wait. It reports what
+// step.RunWith does.
 func run(ctx context.Context, steps []step.Step, o step.Options) (bool, error) {
+	if left := o.LeftOut; left != nil {
+		rows := Names()
+		o.LeftOut = func(parent, name string) bool { return slices.Contains(rows, name) && left(parent, name) }
+	}
 	changed, err := step.RunWith(ctx, steps, o)
 	for _, s := range steps {
 		left := o.LeftOut != nil && o.LeftOut(o.Parent, s.Name())
