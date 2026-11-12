@@ -72,3 +72,52 @@ func (d userDir) Report(context.Context) ([]step.Item, error) {
 	}
 	return []step.Item{p.itemOf(found)}, nil
 }
+
+// userDirs is directories in the order that a run makes them, parents first.
+type userDirs []userDir
+
+// dirLink is a directory that is a link: where a step writes under it, it warns once.
+type dirLink struct{ Path, To string }
+
+// warn says that the step writes under the link, where it plans writes.
+func (l dirLink) warn(out effect.Out, writes int) {
+	if l.Path != "" && writes > 0 {
+		out.Warn("%s is a link to %s: ws's files go there", l.Path, l.To)
+	}
+}
+
+// plan returns the changes that make the directories, and the last of them that is a link. It stops
+// at a path that is no directory, and at any error other than a missing path.
+func (ds userDirs) plan() ([]step.Change, dirLink, error) {
+	var cs []step.Change
+	var link dirLink
+	for _, d := range ds {
+		found, info, err := d.read()
+		if err != nil {
+			return nil, dirLink{}, err
+		}
+		if info.Link != "" {
+			link = dirLink{d.Path, info.Link}
+		}
+		cs = append(cs, d.change(found)...)
+	}
+	return cs, link, nil
+}
+
+// Report joins the directories' items.
+func (ds userDirs) Report(ctx context.Context) ([]step.Item, error) {
+	parts := make([]step.Reporter, len(ds))
+	for i, d := range ds {
+		parts[i] = d
+	}
+	return gather(ctx, parts...)
+}
+
+// wsDirs is ~/.config and ws's directory in it, which git, zsh and the tunnel write under. A run
+// sets the mode of ws's directory, which holds mac.conf.
+func wsDirs(m effect.Machine, home string) userDirs {
+	return userDirs{
+		{M: m, Path: home + "/.config", Mode: 0o755},
+		{M: m, Path: home + "/.config/ws", Mode: 0o700, Fix: true},
+	}
+}
