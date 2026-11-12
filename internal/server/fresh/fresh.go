@@ -41,7 +41,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Lazy{Title: downloadStep, Parts: download(m)},
-		host.Lazy{Title: installStep, After: downloadStep, Parts: install(m)},
+		host.Group{Title: installStep, After: downloadStep, Parts: []host.Resource{pinned(m)}},
 		host.Group{Title: wrapperStep, After: installStep, Parts: []host.Resource{
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},

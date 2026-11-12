@@ -6,7 +6,7 @@ the `.deb` of a pinned release. Fresh runs in a terminal, and its config is a pl
 ## The install
 
 - `Fresh download` fetches `fresh-editor_VERSION_ARCH.deb` from the project's GitHub release into
-  `/var/cache/`. It checks the file against the SHA-256 in `download.go` before dpkg reads it.
+  `/var/cache/ws/`. It checks the file against the SHA-256 in `download.go` before dpkg reads it.
 - `Fresh install` runs dpkg on the file, then removes the file.
 - Where `dpkg-query` lists the pinned version as installed, the download plans nothing and the
   install only removes a leftover file. A second run changes nothing.
