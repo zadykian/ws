@@ -71,6 +71,12 @@ A whole file below the Mac's home that ws writes as the user, not root, such as
 `~/.config/ws/gitconfig`. A plan and a report read it alike. On the server, root writes a home file.
 _Avoid_: dotfile
 
+**User's lines**:
+ws's lines in a user's file that holds other text too, such as `Include config.d/ws` at the top of
+`~/.ssh/config`. A run adds them once, at the top or the end, and keeps the old file as
+`PATH.TIME~`. At a link that lacks them, or lines out of place, the step warns or stops.
+_Avoid_: include line
+
 **ws's directory**:
 `~/.config/ws` on the Mac, mode 700, which holds `mac.conf` and the files that git, zsh and the
 tunnel read. A run sets that mode where it differs.

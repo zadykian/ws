@@ -65,10 +65,6 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if g.Conf.GitName == "" {
 		return nil, nil
 	}
-	in, err := g.include(ctx)
-	if err != nil {
-		return nil, err
-	}
 	key, err := ReadKey(ctx, g.M, g.Conf, g.Home, SigningKey)
 	if err != nil {
 		return nil, err
@@ -89,6 +85,5 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if len(pub) == 0 {
 		pub = []step.Reporter{userPath{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}
-	parts = append(append(parts, pub...), fixed{lineItem(in.Path, "the include of ~/.config/ws/gitconfig", in.Exists, in.Included)})
-	return gather(ctx, parts...)
+	return gather(ctx, append(append(parts, pub...), g.gitconfigLines())...)
 }

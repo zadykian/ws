@@ -3,9 +3,9 @@ package setup
 import (
 	"context"
 	"errors"
-	"io/fs"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
@@ -31,6 +31,8 @@ type Ghostty struct {
 	Out      effect.Out
 	// LookPath finds a program on the user's PATH. Nil means exec.LookPath.
 	LookPath func(string) (string, error)
+	// Now stamps the copy of Ghostty's config. Nil means time.Now.
+	Now func() time.Time
 	// Real resolves the links of a directory. Nil means filepath.EvalSymlinks.
 	Real   func(string) (string, error)
 	failed map[string]bool // the casks whose install failed, so the plan skips them for the run
@@ -59,7 +61,7 @@ func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	files, err := g.files()
+	files, err := g.files(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -99,11 +101,11 @@ func (g *Ghostty) conf() string {
 }
 
 // files plans ws.ghostty beside Ghostty's config, mac/ws.ghostty under the header, and the line
-// that reads it at the end of that config, once. Ghostty reads a config-file after the file that
-// names it (Config.zig's config-file), so ws.ghostty's settings win over the config's own. It
-// warns, and leaves the config unchanged, where ws.ghostty is not its own, the config can't be
+// that reads it at the end of that config, once. The old config stays as PATH.TIME~. Ghostty reads
+// a config-file after the file that names it (Config.zig's config-file), so ws.ghostty's settings
+// win over the config's own. It warns, and leaves the config unchanged, where ws.ghostty is not its own, the config can't be
 // read, or the config is a link that lacks the line. It stops where ws.ghostty can't be read.
-func (g *Ghostty) files() ([]step.Change, error) {
+func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	config := g.conf()
 	file := g.file(config)
 	ws, err := file.plan()
@@ -114,17 +116,21 @@ func (g *Ghostty) files() ([]step.Change, error) {
 	case err != nil:
 		return nil, err
 	}
-	text, err := g.M.ReadFile(config)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+	lines := g.configLines(config, file.Path)
+	found, link, holds, err := lines.read(ctx)
+	if err != nil {
 		g.Out.Warn("cannot read %s, Ghostty's config, so ws.ghostty stays out", config)
 		return nil, nil
 	}
-	dirs, link, err := g.dirs(config).plan()
+	changes, stop := lines.changes(found, link, holds, nil)
+	if !errors.Is(stop, errLinked) {
+		stop = nil
+	}
+	dirs, dl, err := g.dirs(config).plan()
 	if err != nil {
 		return nil, err
 	}
-	has := ghosttyIncludes(config, string(text), file.Path, g.Home, g.resolve())
-	return g.fileChanges(config, text, ws, dirs, link, has), nil
+	return g.fileChanges(ws, dirs, dl, holds, changes, stop), nil
 }
 
 // dirs is the directory of Ghostty's config alone. Its parent is ~/Library/Application Support on
@@ -161,15 +167,6 @@ func (g *Ghostty) resolve() func(string) (string, error) {
 func (g *Ghostty) Report(ctx context.Context) ([]step.Item, error) {
 	config := g.conf()
 	file := g.file(config)
-	text, err := g.M.ReadFile(config)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-	line := lineItem(config, ghosttyLine, err == nil, ghosttyIncludes(config, string(text), file.Path, g.Home, g.resolve()))
-	if info, err := g.M.Stat(config); err == nil && info.Link != "" && line.Found != line.Want {
-		line.Conflict = "a link to " + info.Link + ": add the line at the end of that file"
-	}
 	return gather(ctx, g.casks().report(ctx, "ghostty", "Ghostty.app", g.Home),
-		g.dirs(config), file,
-		fixed{line})
+		g.dirs(config), file, g.configLines(config, file.Path))
 }

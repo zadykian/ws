@@ -56,7 +56,8 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	g.notes = nil
-	in, err := g.include(ctx)
+	found, link, holds, err := g.gitconfigLines().read(ctx)
+	lines, err := g.gitconfigLines().changes(found, link, holds, err)
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -76,7 +77,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	cs = append(append(cs, files...), g.includeChanges(ctx, in)...)
+	cs = append(append(cs, files...), g.includeChanges(ctx, found, lines)...)
 	reg, waits, err := g.register(ctx, key, gh, install != nil)
 	if err != nil {
 		return step.Plan{}, err

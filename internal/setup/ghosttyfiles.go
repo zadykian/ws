@@ -1,15 +1,26 @@
 package setup
 
 import (
-	"io/fs"
+	"context"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
 )
 
+// configLines is the line that reads ws.ghostty, at the end of Ghostty's config.
+func (g *Ghostty) configLines(config, ws string) userLines {
+	return userLines{
+		M: g.M, Path: config, Lines: ghosttyLine + "\n", Shown: ghosttyLine, Mode: 0o644, Now: g.Now,
+		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
+			return ghosttyIncludes(config, string(text), ws, g.Home, g.resolve()), nil
+		},
+	}
+}
+
 // fileChanges returns the changes to ws.ghostty, ws, after dirs, the changes to its directory,
-// whose link warns once. Unless has, they also put the line that reads ws.ghostty at the end of
-// Ghostty's config, whose text is text.
-func (g *Ghostty) fileChanges(config string, text []byte, ws, dirs []step.Change, link dirLink, has bool) []step.Change {
+// whose link warns once, and then lines, the changes to Ghostty's config. A stop of the config's,
+// such as a link that lacks the line, warns, and the config stays unchanged.
+func (g *Ghostty) fileChanges(ws, dirs []step.Change, link dirLink, holds bool, lines []step.Change, stop error) []step.Change {
 	cs := dirs
 	differs := false
 	if len(ws) > 0 {
@@ -17,26 +28,11 @@ func (g *Ghostty) fileChanges(config string, text []byte, ws, dirs []step.Change
 	}
 	// A linked directory, as GNU stow's folding makes, gets the warning that ssh gives for
 	// ~/.ssh/config.d.
-	if !has || differs {
+	if !holds || differs {
 		link.warn(g.Out, 1, "ws.ghostty and the line that reads it go there")
 	}
-	cs = append(cs, ws...)
-	if has {
-		return cs
+	if stop != nil {
+		g.Out.Warn("%s", stop)
 	}
-	info, err := g.M.Stat(config)
-	if err == nil && info.Link != "" {
-		g.Out.Warn("%s is a link to %s: add '%s' at the end of that file", config, info.Link, ghosttyLine)
-		return cs
-	}
-	mode := fs.FileMode(0o644)
-	if err == nil {
-		mode = info.Mode.Perm()
-	}
-	after := append([]byte(nil), text...)
-	if len(after) > 0 && after[len(after)-1] != '\n' {
-		after = append(after, '\n')
-	}
-	after = append(after, ghosttyLine+"\n"...)
-	return append(cs, Write{config, text, after, err == nil, mode})
+	return append(append(cs, ws...), lines...)
 }

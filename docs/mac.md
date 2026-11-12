@@ -125,11 +125,12 @@ ws's. Where the line is missing, the script adds it at the top and keeps the old
 counts by `~/.ssh/` or the home's full path, in quotes, or as the first of several paths.
 
 Where `~/.ssh/config` is a link, as a dotfiles manager makes it, the script reads the file it points
-to. It stops where the line is missing there, rather than replace the link with a file. Where
-`~/.ssh/config.d` is a link, the script warns as it writes `config.d/ws` there. It stops where
-`config.d/ws` is a file it did not write, rather than replace it. It warns of a `Host` or `Match` of
-`~/.ssh/config`'s own for `ws`, whose settings come after those of `config.d/ws`. Remove an older
-`Host ws` there, whose `IdentityFile` would add a key to ws's.
+to. It stops where the line is missing there, rather than replace the link with a file, and the
+report shows the file as a conflict. Where `~/.ssh/config.d` is a link, the script warns as it
+writes `config.d/ws` there. It stops where `config.d/ws` is a file it did not write, rather than
+replace it. It warns of a `Host` or `Match` of `~/.ssh/config`'s own for `ws`, whose settings come
+after those of `config.d/ws`. Remove an older `Host ws` there, whose `IdentityFile` would add a key
+to ws's.
 
 ssh keeps the first `IgnoreUnknown` it reads too. `config.d/ws` needs one for the file key's
 `UseKeychain`, which only Apple's ssh knows, and keeps it with an agent's key. So it carries the

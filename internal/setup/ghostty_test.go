@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/setup"
@@ -23,6 +24,7 @@ func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *setup.Ghostty {
 		Home: "/h", Settings: []byte("font-size = 13\n"), M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 		Real:     func(p string) (string, error) { return p, nil },
+		Now:      func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
 	}
 }
 
@@ -92,6 +94,7 @@ func TestGhosttyKeepsTheConfigsTextAndMode(t *testing.T) {
 	s := ghosttyStep(m, &effecttest.Out{})
 	m.Files["/h/.config/ghostty/config"] = []byte("theme = x")
 	m.Modes["/h/.config/ghostty/config"] = 0o600
+	m.Results["cp -p /h/.config/ghostty/config /h/.config/ghostty/config.20260102030405~"] = effecttest.Result{}
 	p, _ := s.Plan(context.Background())
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)

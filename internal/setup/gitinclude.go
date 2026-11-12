@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os/exec"
 	"strings"
-	"time"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/gitcfg"
 	"github.com/zadykian/ws/step"
 )
@@ -16,17 +15,6 @@ import (
 // includeText is what goes at the top of ~/.gitconfig, so that the file's own settings come after
 // the include and win.
 const includeText = "[include]\n    path = ~/.config/ws/gitconfig\n"
-
-// gitInclude is what the step read of ~/.gitconfig.
-type gitInclude struct {
-	Path     string
-	Exists   bool
-	Mode     fs.FileMode
-	Text     []byte
-	Included bool
-	// Own lists the file's settings of identity and signing.
-	Own string
-}
 
 // lines runs git config on the file and returns the lines it prints. A status of 1 is no value.
 func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string, error) {
@@ -44,68 +32,52 @@ func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string,
 	return lines, nil
 }
 
-// include reads ~/.gitconfig. It stops where git can't read the file, and where the include comes
-// twice or sits below the file's own settings, which it then overrides. It also stops where the
-// file is a link that lacks the include, rather than replace the link with a file. It writes
-// nothing, so that the step stops before it acts, as the ssh step does for ssh's Include.
-func (g *Git) include(ctx context.Context) (gitInclude, error) {
-	file := g.Home + "/.gitconfig"
-	in := gitInclude{Path: file}
-	info, err := g.M.Stat(file)
-	if missing, err := notExist(err); err != nil || missing {
-		return in, err
+// gitconfigLines is the include at the top of ~/.gitconfig. Its place is wrong where it comes twice
+// or sits below the file's own settings, which it then overrides. git config reads the file, so the
+// step stops before it acts, as the ssh step does for ssh's Include.
+func (g *Git) gitconfigLines() userLines {
+	return userLines{
+		M: g.M, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
+		Shown: "[include] path = ~/.config/ws/gitconfig",
+		Name:  "the include of ~/.config/ws/gitconfig",
+		Has:   g.included,
 	}
-	in.Exists, in.Mode = true, info.Mode.Perm()
+}
+
+// included says whether the file includes ~/.config/ws/gitconfig, as git reads it.
+func (g *Git) included(ctx context.Context, _ effect.Machine, file string, _ []byte) (bool, error) {
 	paths, err := g.lines(ctx, file, "--type", "path", "--get-all", "include.path")
 	if err != nil {
-		return in, err
+		return false, err
 	}
 	names, err := g.lines(ctx, file, "--name-only", "--list")
 	if err != nil {
-		return in, err
+		return false, err
 	}
 	first := ""
 	if len(names) > 0 {
 		first = names[0]
 	}
-	in.Own = gitcfg.Own(names)
-	if in.Included, err = gitcfg.Included(paths, first, g.Home+"/.config/ws"); err != nil {
-		return in, fmt.Errorf("%s %w", file, err)
+	holds, err := gitcfg.Included(paths, first, g.Home+"/.config/ws")
+	if err != nil {
+		return false, misplaced("%s %v", file, err)
 	}
-	if !in.Included && info.Link != "" {
-		return in, fmt.Errorf("%s is a link to %s: put '[include] path = ~/.config/ws/gitconfig' at the "+
-			"top of that file", file, info.Link)
-	}
-	if in.Text, err = g.M.ReadFile(file); err != nil {
-		return in, fmt.Errorf("cannot read %s: %w", file, err)
-	}
-	return in, nil
+	return holds, nil
 }
 
-// includeChanges puts an include of ~/.config/ws/gitconfig at the top of ~/.gitconfig where there is
-// none. It makes the file where missing, and keeps the old one as ~/.gitconfig.TIME~, as the ssh step
-// keeps ~/.ssh/config. It warns of the settings of identity and signing in the file itself, which
-// win, and in git's XDG file, which lose.
-func (g *Git) includeChanges(ctx context.Context, in gitInclude) []step.Change {
-	if in.Included {
+// includeChanges adds the notes to lines, the changes to ~/.gitconfig, where there are any. It warns
+// of the settings of identity and signing in the file itself, which win, and in git's XDG file,
+// which lose.
+func (g *Git) includeChanges(ctx context.Context, found path, lines []step.Change) []step.Change {
+	if len(lines) == 0 {
 		return nil
 	}
-	now := time.Now
-	if g.Now != nil {
-		now = g.Now
-	}
-	mode := fs.FileMode(0o644)
-	var cs []step.Change
-	text := includeText
-	if in.Exists {
-		mode = in.Mode
-		cs = append(cs, Backup{in.Path, in.Path + "." + now().Format("20060102150405") + "~"})
-		text += "\n" + string(in.Text)
-	}
-	cs = append(cs, Write{in.Path, in.Text, []byte(text), in.Exists, mode})
-	if in.Own != "" {
-		g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
-			in.Path, in.Own)
+	if file := g.Home + "/.gitconfig"; found.Exists {
+		names, _ := g.lines(ctx, file, "--name-only", "--list")
+		if own := gitcfg.Own(names); own != "" {
+			g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
+				file, own)
+		}
 	}
 	xdg := g.XDG
 	if xdg == "" {
@@ -118,13 +90,5 @@ func (g *Git) includeChanges(ctx context.Context, in gitInclude) []step.Change {
 				"~/.config/ws/gitconfig's win over them", xdg, own)
 		}
 	}
-	return cs
-}
-
-// notExist reports whether err says a path is missing, and passes on any other error.
-func notExist(err error) (bool, error) {
-	if errors.Is(err, fs.ErrNotExist) {
-		return true, nil
-	}
-	return false, err
+	return lines
 }

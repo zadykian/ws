@@ -77,6 +77,16 @@ func TestSSHReportLeavesTheUsersConfigOut(t *testing.T) {
 	}
 }
 
+func TestSSHReportShowsAnIncludeBelowASettingAsOutOfPlace(t *testing.T) {
+	m := sshMachine()
+	m.Files["/h/.ssh/config"] = []byte("Host a\n    User x\nInclude config.d/ws\n")
+	items, err := sshStep(m, &effecttest.Out{}).Report(context.Background())
+	i := slices.IndexFunc(items, func(it step.Item) bool { return it.Name == "/h/.ssh/config" })
+	if err != nil || i < 0 || items[i].Found != "out of place" || !strings.Contains(items[i].Conflict, "below other settings") {
+		t.Errorf("Report = %+v, %v; want the Include out of place", items, err)
+	}
+}
+
 func TestSSHReportsWsCopyOfAKey(t *testing.T) {
 	s := sshStep(agentMachine(sshMachine(), agentKey), &effecttest.Out{})
 	s.Conf.IdentityPubKey = sshcfg.AgentKeys(agentKey)[0].Pub()
@@ -119,6 +129,19 @@ func TestGitReportsWhatItManages(t *testing.T) {
 	}
 	if slices.Contains(m.Calls, "read "+strings.TrimSuffix(gitPub, ".pub")) {
 		t.Errorf("calls = %q, which read the private key", m.Calls)
+	}
+}
+
+func TestGitReportShowsAnIncludeWhereThePlanStops(t *testing.T) {
+	m, g := gitReady()
+	gitConfig(m, "x", "", "user.name\n")
+	m.Links[gitConfigFile] = "/dotfiles/gitconfig"
+	m.Files["/dotfiles/gitconfig"] = []byte("x")
+	items, err := g.Report(context.Background())
+	if err != nil || !slices.ContainsFunc(items, func(it step.Item) bool {
+		return it.Name == gitConfigFile && strings.Contains(it.Conflict, "a link to /dotfiles/gitconfig")
+	}) {
+		t.Errorf("Report = %+v, %v; want ~/.gitconfig as a link in conflict", items, err)
 	}
 }
 
