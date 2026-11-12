@@ -66,3 +66,18 @@ func TestLinksStepRefusesALinkAtAFileRootWrites(t *testing.T) {
 		}
 	}
 }
+
+// gitconfig reads ~/.config/git/local as root, so a link at it or above it stops the links step.
+func TestLinksStepRefusesALinkWhereGitConfigReadsLocal(t *testing.T) {
+	v := values.Default()
+	v.User, v.Home = "ws", "/home/ws"
+	v.GitSigningKey = "/home/ws/.ssh/id_signing"
+	for _, link := range []string{"/home/ws/.config/git/local", "/home/ws/.config", "/home/ws/.config/git"} {
+		m := effecttest.NewMachine()
+		m.Links[link] = "/srv/target"
+		first := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})[0]
+		if _, err := step.Run(context.Background(), []step.Step{first}, &effecttest.Out{}, false); err == nil {
+			t.Errorf("a link at %s: no error", link)
+		}
+	}
+}

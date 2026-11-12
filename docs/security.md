@@ -182,9 +182,11 @@ table's `containers` chain drops what they forward: Docker forwards it ahead of 
 `ws_user` owns `ws_home`, so a link there could send ws, which runs as root, to any file: its reads,
 `chown`, `chmod` and backups would follow it. ws refuses a link at a file it reads or writes there
 as root. It refuses a link at a directory between the home and that file too, and names the link
-and its target. The `shell`, `devtools`, `fresh`, `zed` and `otelcol` roles check, root as
-`ws_user` included. `ws server state` goes past a step that fails, so it reports no step that a
-refusal covers. Replace the link with the file itself. The check looks as the step plans. A link
+and its target. The `shell`, `devtools`, `fresh`, `zed`, `otelcol`, `lazygit`, `docker` and
+`security` roles check, root as `ws_user` included. The `claude` role acts as `ws_user` for its
+reads and writes there, so a link reaches only what the user could reach: `settings.json` may link
+into a clone of dotfiles. `ws server state` goes past a step that fails, so it reports no step
+that a refusal covers. Replace the link with the file itself. The check looks as the step plans. A link
 made while it applies fails at the write: `ws server apply` makes its writes under `ws_home`
 through an `os.Root`, which refuses a link that leaves the home. Its reads, `cat` and `git` stay
 outside that bound.

@@ -23,9 +23,7 @@ func TestCompletionPlan(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files["/root/.local/bin/cld"] = nil
 		m.Results["env HOME=/root /root/.local/bin/cld completion bash"] = effecttest.Result{Out: []byte("complete -F _cld cld\n")}
-		if c.have != nil {
-			m.Files[completionFile] = c.have
-		}
+		serveRead(m, root, completionFile, c.have)
 		got, err := Completion{M: m, User: root}.Plan(context.Background())
 		if err != nil || len(got) != c.want {
 			t.Errorf("%s: %v, %v", c.name, got, err)
@@ -44,6 +42,7 @@ func TestCompletionRunsCldSetup(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/root/.local/bin/cld"] = nil
 	m.Results["env HOME=/root /root/.local/bin/cld completion bash"] = effecttest.Result{Out: []byte("script\n")}
+	serveRead(m, root, completionFile, nil)
 	m.Results["env HOME=/root /root/.local/bin/cld setup completion bash"] = effecttest.Result{}
 	got, err := Completion{M: m, User: root}.Plan(context.Background())
 	if err != nil || len(got) != 1 {
