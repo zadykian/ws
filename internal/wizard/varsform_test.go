@@ -13,8 +13,8 @@ import (
 // farVars returns the form of a ws whose file is file.
 func farVars(file string) (VarsForm, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}, Script: []byte("echo\n")}
-	m.Results[remoteLine(r, "values")] = effecttest.Result{Out: []byte(file)}
+	r := &Remote{Shell: fakeWs{m}, Script: []byte("echo\n")}
+	m.Results[opLine("values")] = effecttest.Result{Out: []byte(file)}
 	return VarsForm{Files: r}, m
 }
 
@@ -52,7 +52,7 @@ func TestVarsFormLoadSaysWhyItFails(t *testing.T) {
 	if _, err := far.Load(context.Background()); err == nil || !strings.Contains(err.Error(), "no_such_key") {
 		t.Errorf("a bad file: err = %v", err)
 	}
-	m.Results[remoteLine(far.Files, "values")] = effecttest.Result{Err: errors.New("ssh: no route\nexit status 255")}
+	m.Results[opLine("values")] = effecttest.Result{Err: errors.New("ssh: no route\nexit status 255")}
 	if _, err := far.Load(context.Background()); err == nil || !strings.Contains(err.Error(), "ssh: no route") {
 		t.Errorf("no ws: err = %v", err)
 	}
@@ -66,8 +66,8 @@ func TestVarsFormSavesTheEditsInOneLogin(t *testing.T) {
 	}
 	// ws_user=a b, and base_timezone= in front of it, as the keys go in order.
 	op := []string{"values", "YmFzZV90aW1lem9uZT0=", "d3NfdXNlcj1hIGI="}
-	m.Results[remoteLine(far.Files, op...)] = effecttest.Result{}
-	m.Results[remoteLine(far.Files, "values")] = effecttest.Result{Out: []byte("---\nws_user: a b\n")}
+	m.Results[opLine(op...)] = effecttest.Result{}
+	m.Results[opLine("values")] = effecttest.Result{Out: []byte("---\nws_user: a b\n")}
 	out := &effecttest.Out{}
 	f, err = f.Save(context.Background(), out, map[string]string{"ws_user": "a b", "base_timezone": ""})
 	if err != nil {
@@ -93,7 +93,7 @@ func TestVarsFormSaveWithNoEditsReachesNoWs(t *testing.T) {
 func TestVarsFormSaveSaysWhatWsRefused(t *testing.T) {
 	far, m := farVars("---\n")
 	op := []string{"values", "YmFzZV9zd2FwcGluZXNzPXRlbg=="}
-	m.Results[remoteLine(far.Files, op...)] = effecttest.Result{Err: errors.New("a whole number\nexit status 1")}
+	m.Results[opLine(op...)] = effecttest.Result{Err: errors.New("a whole number\nexit status 1")}
 	_, err := far.Save(context.Background(), &effecttest.Out{}, map[string]string{"base_swappiness": "ten"})
 	if err == nil || !strings.Contains(err.Error(), "a whole number") {
 		t.Errorf("err = %v", err)

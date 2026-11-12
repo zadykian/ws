@@ -34,7 +34,7 @@ func TestWsSigningPlan(t *testing.T) {
 	} {
 		s, g := newWsSigning(tc.status, tc.login, tc.listed)
 		if name == "no ssh" {
-			delete(g.M.(*effecttest.Machine).Results, wsStatusLine)
+			delete(g.M.(*effecttest.Machine).Results, opLine("status"))
 		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)

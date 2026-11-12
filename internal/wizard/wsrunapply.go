@@ -19,7 +19,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 		return fmt.Errorf("%s: unknown change %T", runStage, p.Changes[0])
 	}
 	if c.user != "" {
-		if _, err := r.Ws.files.Do(ctx, "user", c.user); err != nil {
+		if err := r.Ws.nameUser(ctx, c.user); err != nil {
 			return fmt.Errorf("%s: ws's host_vars lacks ws_user: %s: %s; mend that, then run the wizard again",
 				runStage, c.user, stderrOf(err))
 		}
@@ -60,7 +60,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 // outbound names security_outbound: false in ws's host_vars by the remote script's outbound op, and
 // stops with its error where that fails.
 func (r *WsRun) outbound(ctx context.Context) error {
-	if _, err := r.Ws.remote.Do(ctx, "outbound"); err != nil {
+	if err := r.Ws.outbound(ctx); err != nil {
 		lines := strings.Split(strings.TrimSpace(err.Error()), "\n")
 		return fmt.Errorf("%s: ws's host_vars lacks security_outbound: false: %s; mend that, or run the "+
 			"wizard with --update, which runs ws server apply again", runStage, lines[len(lines)-1])

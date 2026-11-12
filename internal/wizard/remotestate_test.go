@@ -27,9 +27,9 @@ const wsReport = `{
 // op prints report.
 func stateRemote(held, report string) (*Remote, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}, Script: []byte("echo\n")}
-	m.Results[remoteLine(r, "status")] = effecttest.Result{Out: wsStatus{Version: held}.text()}
-	m.Results[remoteLine(r, "state")] = effecttest.Result{Out: []byte(report)}
+	r := &Remote{Shell: fakeWs{m}, Script: []byte("echo\n")}
+	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{Version: held}.text()}
+	m.Results[opLine("state")] = effecttest.Result{Out: []byte(report)}
 	return r, m
 }
 
@@ -37,7 +37,7 @@ func stateRemote(held, report string) (*Remote, *effecttest.Machine) {
 func ranOp(m *effecttest.Machine, op string) int {
 	n := 0
 	for _, c := range m.Calls {
-		if strings.HasSuffix(c, "-- "+op) {
+		if strings.HasSuffix(c, "op "+op) {
 			n++
 		}
 	}
@@ -107,7 +107,7 @@ func TestRemoteStateFails(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			r, m := stateRemote("v1", "")
-			m.Results[remoteLine(r, "state")] = c.result
+			m.Results[opLine("state")] = c.result
 			if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
 				t.Errorf("got %v, %v; want a failure that is no refusal", got, err)
 			}
@@ -117,7 +117,7 @@ func TestRemoteStateFails(t *testing.T) {
 
 func TestRemoteStateWithNoStatus(t *testing.T) {
 	r, m := stateRemote("v1", wsReport)
-	m.Results[remoteLine(r, "status")] = effecttest.Result{Err: errors.New("denied")}
+	m.Results[opLine("status")] = effecttest.Result{Err: errors.New("denied")}
 	if got, err := r.State(context.Background(), "v1"); err == nil || errors.Is(err, ErrOtherWs) || got != nil {
 		t.Errorf("got %v, %v; want a failure that is no refusal", got, err)
 	}

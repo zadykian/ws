@@ -134,14 +134,14 @@ func TestWsRunNamesWsUserBeforeTheRun(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "ws's host_vars lacks ws_user: alice") {
 		t.Fatalf("Apply where the files script fails = %v; want the stop", err)
 	}
-	m.Results[remoteLine(r.Ws.files, "user", "alice")] = effecttest.Result{}
-	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
+	m.Results[opLine("user", "alice")] = effecttest.Result{}
+	m.Results[opLine("run")] = effecttest.Result{}
 	m.Calls = nil
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	all := strings.Join(m.Calls, "\n")
-	if i := strings.Index(all, "-- user alice"); i < 0 || i > strings.Index(all, "-- run") {
+	if i := strings.Index(all, "op user alice"); i < 0 || i > strings.Index(all, "op run") {
 		t.Errorf("calls = %q; want the name before the run", m.Calls)
 	}
 }
@@ -160,7 +160,7 @@ func TestWsRunApply(t *testing.T) {
 	if err := r.Apply(context.Background(), p); err == nil || !strings.Contains(err.Error(), "ws server apply stopped") {
 		t.Errorf("Apply where ssh has no result = %v; want the stop", err)
 	}
-	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
+	m.Results[opLine("run")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil || !r.ran {
 		t.Errorf("Apply = %v, ran %v; want a run", err, r.ran)
 	}
@@ -178,7 +178,7 @@ func TestWsRunTakesItsPart(t *testing.T) {
 		}
 		r, m := newRun(target, status, false, false)
 		r.Only = []string{"signoz/signoz up", "fans"}
-		line := remoteLine(r.Ws.remote, "run", "--only=signoz/signoz up", "--only=fans")
+		line := opLine("run", "--only=signoz/signoz up", "--only=fans")
 		m.Results[line] = effecttest.Result{}
 		p, err := r.Plan(context.Background())
 		if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), "the steps chosen") {
@@ -234,11 +234,11 @@ func TestOnlyArgsQuoteForWsShell(t *testing.T) {
 func TestWsRunApplyOnceWhereItsStampNamesHostVars(t *testing.T) {
 	r, m := newRun("lan", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Vars: "aa11"}, Vars: "aa11"}, true, false)
 	p, _ := r.Plan(context.Background())
-	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
+	m.Results[opLine("run")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	if runs := strings.Count(strings.Join(m.Calls, "\n"), "-- run"); runs != 1 {
+	if runs := strings.Count(strings.Join(m.Calls, "\n"), "op run"); runs != 1 {
 		t.Errorf("calls = %q; want one run", m.Calls)
 	}
 }
@@ -246,18 +246,18 @@ func TestWsRunApplyOnceWhereItsStampNamesHostVars(t *testing.T) {
 func TestWsRunApplyCloudAgain(t *testing.T) {
 	r, m := newRun("cloud", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Vars: "aa11"}, Vars: "bb22"}, false, false)
 	p, _ := r.Plan(context.Background())
-	m.Results[remoteLine(r.Ws.remote, "run")] = effecttest.Result{}
-	m.Results[remoteLine(r.Ws.remote, "outbound")] = effecttest.Result{}
+	m.Results[opLine("run")] = effecttest.Result{}
+	m.Results[opLine("outbound")] = effecttest.Result{}
 	if err := r.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	runs := 0
 	for _, c := range m.Calls {
-		if strings.HasSuffix(c, "-- run") {
+		if strings.HasSuffix(c, "op run") {
 			runs++
 		}
 	}
-	if runs != 2 || !strings.Contains(strings.Join(m.Calls, "\n"), "-- outbound") {
+	if runs != 2 || !strings.Contains(strings.Join(m.Calls, "\n"), "op outbound") {
 		t.Errorf("calls = %q; want two runs, as the stamp names another host_vars, and outbound", m.Calls)
 	}
 }

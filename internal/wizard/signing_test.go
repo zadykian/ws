@@ -33,7 +33,7 @@ func TestSigningPlan(t *testing.T) {
 	} {
 		s, m := newSigning(tc.status, tc.listed)
 		if name == "no ssh" {
-			delete(m.Results, remoteLine(s.Ws.remote, "status"))
+			delete(m.Results, opLine("status"))
 		}
 		p, err := s.Plan(context.Background())
 		got := errText(err)

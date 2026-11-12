@@ -42,9 +42,11 @@ func TestWsHand(t *testing.T) {
 		"cloud": {"cloud", wsStatus{}, []string{device}},
 	} {
 		ws, _ := wsSession(tc.status)
-		r := ws.reach.(WsReach)
+		far := ws.reach.(fakeReach)
+		r := far.Reach.(WsReach)
 		r.Want = func() (conf.Conf, error) { return conf.Conf{Target: tc.target}, nil }
-		ws.reach = r
+		far.Reach = r
+		ws.reach = far
 		h := &Hand{}
 		ws.Hand(context.Background(), h)
 		var got []string

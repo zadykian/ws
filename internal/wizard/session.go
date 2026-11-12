@@ -56,6 +56,12 @@ func (s *Session) known() wsStatus { return s.remote.known() }
 // want reads what ws's run is to leave.
 func (s *Session) want() (conf.Conf, error) { return s.reach.want() }
 
+// rerun says how to run ws server apply again, for a stop that needs it.
+func (s *Session) rerun() string { return s.reach.rerun() }
+
+// user returns WS_USER, whose claude and git config the stages read.
+func (s *Session) user() (string, error) { return s.reach.user() }
+
 // claude runs claude's login as WS_USER. The login changes what the status reads, outside the
 // scripts.
 func (s *Session) claude(ctx context.Context) error {

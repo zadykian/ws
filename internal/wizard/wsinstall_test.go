@@ -30,7 +30,7 @@ func TestWsInstallPlan(t *testing.T) {
 	} {
 		i, m := newInstall(tc.version, tc.url, wsStatus{Version: tc.held})
 		if name == "no status" {
-			delete(m.Results, remoteLine(i.Ws.remote, "status"))
+			delete(m.Results, opLine("status"))
 		}
 		p, err := i.Plan(context.Background())
 		got := ""
