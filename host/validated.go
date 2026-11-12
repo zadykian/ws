@@ -33,6 +33,9 @@ func (c checked) Item() step.Item { return c.Change.(writeFile).Item() }
 func (c checked) Apply(ctx context.Context) error {
 	f := c.v.File
 	pending := f.Path + ".ws-check"
+	if err := f.guard(); err != nil {
+		return err
+	}
 	if err := makeParents(f.M, f.home, f.Path, f.UID, f.GID); err != nil {
 		return err
 	}

@@ -37,7 +37,11 @@ func (c setDir) String() string {
 
 func (setDir) Kind() step.ChangeKind { return step.Write }
 
+// Apply looks for a link on the way again, as writeFile's does.
 func (c setDir) Apply(context.Context) error {
+	if err := c.d.guard(); err != nil {
+		return err
+	}
 	if err := makeParents(c.d.M, c.d.home, c.d.Path, c.d.UID, c.d.GID); err != nil {
 		return err
 	}

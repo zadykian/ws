@@ -52,7 +52,12 @@ func (writeFile) Kind() step.ChangeKind { return step.Write }
 // Item is what the File's Report would show: a role's wrapper builds its File as it plans.
 func (c writeFile) Item() step.Item { return c.f.item(c.before, c.got) }
 
+// Apply looks for a link on the way again, as the user may make one after Plan. A backup or an edit
+// reads as root, outside the bound that the writes keep.
 func (c writeFile) Apply(context.Context) error {
+	if err := c.f.guard(); err != nil {
+		return err
+	}
 	if err := makeParents(c.f.M, c.f.home, c.f.Path, c.f.UID, c.f.GID); err != nil {
 		return err
 	}
