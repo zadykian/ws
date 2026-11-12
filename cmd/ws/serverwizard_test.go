@@ -151,3 +151,18 @@ func TestServerWizardConfigureKeyOpensTheForms(t *testing.T) {
 		t.Errorf("status %d, calls %q", status, m.Calls)
 	}
 }
+
+// Under --check at a terminal the run goes straight to its screen, with no list and no caffeinate.
+func TestServerWizardCheckAtATerminalGoesStraightToTheRun(t *testing.T) {
+	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
+	p = withEnv(p, map[string]string{"TERM": "xterm"})
+	p.tty, p.errTTY = true, true
+	_, stdout, stderr := runWs(p, "", "server", "wizard", "--check")
+	if stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
+		t.Errorf("stdout = %q, stderr = %q", stdout, stderr)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
+		t.Errorf("caffeinate ran on ws: calls %q", m.Calls)
+	}
+}
