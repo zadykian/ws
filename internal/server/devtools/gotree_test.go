@@ -10,6 +10,8 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
+const goFile = "go1.27.3.linux-amd64.tar.gz"
+
 func goTreeMachine(listed string) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	sum := fmt.Sprintf("%x", sha256.Sum256([]byte("a tarball")))
