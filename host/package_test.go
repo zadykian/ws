@@ -35,7 +35,8 @@ func packageFixture(row effecttest.Package) (*effecttest.Machine, host.Package) 
 }
 
 func TestPackageInstallsFromItsPinWhereTheStateDiffers(t *testing.T) {
-	for _, row := range []effecttest.Package{{}, {Version: "1.1", Status: "ii"}, {Version: "1.3", Status: "ii"}, {Version: "1.2", Status: "rc"}} {
+	for _, row := range []effecttest.Package{{}, {Version: "1.1", Status: "ii"}, {Version: "1.3", Status: "ii"}, {Version: "1.2", Status: "rc"},
+		{Version: "1.2", Status: "hi"}} {
 		m, p := packageFixture(row)
 		changes, err := p.Plan(t.Context())
 		if err != nil || len(changes) != 3 || changes[2].String() != "install a 1.2" {

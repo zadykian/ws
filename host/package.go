@@ -72,7 +72,7 @@ func (p Package) Plan(ctx context.Context) ([]Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	if have := states[p.Name]; have.state == 'i' && have.version == p.Source.Version {
+	if have := states[p.Name]; have.installed() && have.version == p.Source.Version {
 		return Absent{M: p.M, Path: file.Path}.Plan(ctx)
 	}
 	var changes []Change

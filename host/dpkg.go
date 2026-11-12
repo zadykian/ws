@@ -9,11 +9,10 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// dpkgState is what dpkg-query says of a package. Its state is the status's second letter: n for
-// nothing on the machine, c for settings alone. A package dpkg doesn't know has the zero state.
+// dpkgState is what dpkg-query says of a package: its version and its status, such as ii, rc or
+// iU, whole. A package dpkg doesn't know has the zero state.
 type dpkgState struct {
-	version string
-	state   byte
+	version, status string
 }
 
 // dpkgStates asks dpkg for the packages of names and no others, as a report covers what ws manages.
@@ -28,21 +27,37 @@ func dpkgStates(ctx context.Context, m effect.Machine, names []string) (map[stri
 	states := map[string]dpkgState{}
 	for line := range strings.Lines(string(out)) {
 		// A line of two fields has no version: dpkg knows of a package it never installed.
-		if f := strings.Fields(line); len(f) == 3 && len(f[2]) >= 2 {
-			states[f[0]] = dpkgState{f[1], f[2][1]}
+		f := strings.Fields(line)
+		if len(f) != 3 {
+			continue
+		}
+		// A package listed for two architectures keeps its installed line.
+		if have, ok := states[f[0]]; !ok || !have.installed() {
+			states[f[0]] = dpkgState{f[1], f[2]}
 		}
 	}
 	return states, nil
 }
 
-func (s dpkgState) installed() bool { return s.state != 0 && s.state != 'n' && s.state != 'c' }
+// installed is true for ii alone: plans and reports count a package in any other state, such as
+// iU or hi, as not installed.
+func (s dpkgState) installed() bool { return s.status == "ii" }
+
+// settingsLeft is true for a package that was removed and kept its settings.
+func (s dpkgState) settingsLeft() bool { return len(s.status) >= 2 && s.status[1] == 'c' }
+
+// present is true for a package with anything of it on the machine: the status's second letter
+// is n for nothing.
+func (s dpkgState) present() bool { return len(s.status) >= 2 && s.status[1] != 'n' }
 
 func (s dpkgState) text() string {
 	switch {
 	case s.installed():
 		return s.version
-	case s.state == 'c':
+	case s.settingsLeft():
 		return "settings left"
+	case !s.present():
+		return missing
 	}
-	return missing
+	return s.version + " (" + s.status + ")"
 }
