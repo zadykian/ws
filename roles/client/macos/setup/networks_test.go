@@ -8,7 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 const resolverHead = "# Written by github.com/zadykian/ws: ws mac apply, from WS_RESOLVERS in ~/.config/ws/mac.conf.\n"

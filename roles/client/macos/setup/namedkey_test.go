@@ -8,8 +8,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 // keyUses are the two uses, each with the variable, the words and the page that its stops name.

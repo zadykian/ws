@@ -10,7 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 

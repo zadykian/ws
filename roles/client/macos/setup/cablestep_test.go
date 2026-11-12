@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 const cableSet = "Manual Configuration\nIP address: 10.77.0.2\nSubnet mask: 255.255.255.252\nRouter: (null)\n"

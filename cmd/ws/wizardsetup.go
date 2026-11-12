@@ -7,8 +7,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 // wizardSetup returns the stage that runs the steps of ws mac apply in the wizard's process. Until

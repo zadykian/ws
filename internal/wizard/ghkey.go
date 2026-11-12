@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 // noKey is the failure to read the Mac's key: its .pub is not there yet, or cannot be read.

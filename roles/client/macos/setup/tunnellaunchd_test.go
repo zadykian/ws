@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 const doneConf = "# Written by github.com/zadykian/ws: ws mac apply, from ~/.config/ws/mac.conf.\nWS_PUBLIC_KEY=K\nWS_PORT=51820\n"

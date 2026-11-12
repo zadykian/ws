@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 // Apply makes what the plan lists, in order.

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 const zedKeymap = "// Written by github.com/zadykian/ws, whose next run replaces any change.\n[]\n"
