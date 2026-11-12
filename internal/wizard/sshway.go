@@ -20,6 +20,23 @@ type Way struct {
 // address.
 var errNoWay = errors.New("ssh finds no direct way to ws")
 
+// login tells whether ssh logs in to ws at w as WS_USER by the Mac's key, and runs a command. It
+// connects only where known_hosts holds a key under ws. ssh's error comes back in one line, as ssh
+// ends each line with \r\n and an agent's refusal to sign comes before its last line.
+func (s SSH) login(ctx context.Context, w Way) (ok bool, sshErr string) {
+	if !hostKnown(ctx, s.M, w.KnownHosts) {
+		return false, ""
+	}
+	out, err := s.Run(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
+	if err == nil && strings.TrimSpace(string(out)) == "ok" {
+		return true, ""
+	}
+	if err == nil {
+		return false, ""
+	}
+	return false, stderrOf(err)
+}
+
 // Way reads ssh's settings for ws at its direct way, as argv gives it: the host and port that ssh
 // reaches, and known_hosts. It fails where no way is given, and where ssh -G fails.
 func (s SSH) Way(ctx context.Context) (Way, error) {

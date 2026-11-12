@@ -11,7 +11,7 @@ import (
 
 func TestLoginPlan(t *testing.T) {
 	r, m := newLogin(effecttest.Result{Out: []byte("ok\n")})
-	m.Results[wayCall(r.Ws.ssh())] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
+	m.Results[wayCall(r.SSH)] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
 		"userknownhostsfile ~/.ssh/known_hosts\n")}
 	if p, err := r.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan where root logs in = %v, %v; want none", p, err)
@@ -31,7 +31,7 @@ func TestLoginStops(t *testing.T) {
 		"another": {"ada", "denied", "ada on ws doesn't log in by the Mac's key"},
 	} {
 		r, m := newLogin(effecttest.Result{Err: sshFailed(tc.sshErr)})
-		m.Results[wayCall(r.Ws.ssh())] = effecttest.Result{Out: []byte("user " + tc.user + "\nhostname 10.1.1.2\nport 22\n" +
+		m.Results[wayCall(r.SSH)] = effecttest.Result{Out: []byte("user " + tc.user + "\nhostname 10.1.1.2\nport 22\n" +
 			"userknownhostsfile ~/.ssh/known_hosts\n")}
 		m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], "WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub\n"...)
 		m.Files["/h/.ssh/id_ed25519.pub"] = []byte("ssh-ed25519 AAAA mac\n")
