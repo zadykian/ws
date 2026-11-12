@@ -1,7 +1,7 @@
 # ws
 
 ws sets up one development server from code, for one user, `ws_user`, and the Mac that works
-on it. These are the words its code and its docs use for the server's side.
+on it. These are the words its code and its docs use, for the server's side and for the Mac's.
 
 ## Language
 
@@ -40,3 +40,16 @@ _Avoid_: download, release asset, artifact
 `/etc/ws/secrets.age` on ws, root's and 600: TOML that age encrypts to the identity's credential,
 a table per kind. `secrets.Store` alone reads and writes it.
 _Avoid_: vault
+
+## The Mac's side
+
+**Operation**:
+One job that the wizard asks of ws, a method of the session. It sends an op of the remote or the
+files script, or two in turn, as naming the cable's port and then running its roles. Its row in
+the session's table says whether it changes ws, so that the next status reads ws again.
+_Avoid_: command, request
+
+**Session**:
+The wizard's one way to ws: from the Mac over ssh, root by sudo, or ws's own on the machine. A
+stage asks it each operation. It holds what ws's status read until an operation changes ws.
+_Avoid_: remote, connection
