@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
-	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/step"
 )
@@ -77,17 +76,6 @@ func TestProgOutObservesAPlanAndWhatAStepIsBehind(t *testing.T) {
 type stringChange string
 
 func (c stringChange) String() string { return string(c) }
-
-func TestSetupStepsComeInSetupShsOrder(t *testing.T) {
-	var names []string
-	for _, s := range setupSteps(conf.Conf{}, "/h", "", effecttest.NewMachine(), &effecttest.Out{}, &bytes.Buffer{}, false) {
-		names = append(names, s.Name())
-	}
-	want := []string{"ssh", "cable", "git", "ghostty", "zed", "cld", "zsh", "tunnel", "networks"}
-	if !reflect.DeepEqual(names, want) {
-		t.Errorf("steps = %q; want %q", names, want)
-	}
-}
 
 func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 	m := effecttest.NewMachine()

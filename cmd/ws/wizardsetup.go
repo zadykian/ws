@@ -33,11 +33,10 @@ func wizardSetup(e wizardEffects, file string) *wizard.Setup {
 		if c.PublicKey != "" {
 			w = e.text
 		}
-		home := p.getenv("HOME")
-		steps := setupSteps(c, home, p.getenv("XDG_CONFIG_HOME"), p.machine, e.out, w, check)
+		steps := macOf(p, c, p.machine, e.out, w).Steps(check)
 		if !check {
 			// cld's restore tabs change ssh's file, so ssh runs once more.
-			steps = slices.Concat(steps, []step.Step{sshStep(c, home, p.machine, e.out, true)})
+			steps = slices.Concat(steps, []step.Step{sshStep(c, p.getenv("HOME"), p.machine, e.out, true)})
 		}
 		return finishSetup(ctx, steps, step.Options{Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: e.left})
 	}

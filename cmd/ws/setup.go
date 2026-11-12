@@ -17,7 +17,6 @@ import (
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/tui"
-	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/step"
 )
 
@@ -79,20 +78,10 @@ func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, again b
 // on stdout.
 type setupBuild func(m effect.Machine, out effect.Out, text io.Writer) []step.Step
 
-// setupSteps returns the steps of ws mac apply, in the order ws mac apply runs them.
-func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out, text io.Writer, check bool) []step.Step {
-	return []step.Step{
-		sshStep(c, home, m, out, false),
-		setup.Cable{Conf: c, M: m, Out: out},
-		&setup.Git{Conf: c, Home: home, XDG: xdg, M: m, Out: out},
-		&setup.Ghostty{Home: home, Settings: mac.Ghostty, M: m, Out: out},
-		&setup.Zed{Home: home, Settings: mac.ZedSettings, Keymap: mac.ZedKeymap, M: m, Out: out},
-		&setup.Cld{Home: home, M: m, Out: out, Check: check},
-		&setup.Zsh{Home: home, Hook: mac.Zshrc, M: m, Out: out, Now: time.Now},
-		&setup.Tunnel{Conf: c, Home: home, Plist: mac.TunnelPlist, M: m, Out: out, Text: text,
-			Check: check},
-		&setup.Networks{Conf: c, M: m, Out: out, Check: check},
-	}
+// macOf returns the Mac's steps over the process's environment and the effects given to it.
+// No other function builds a Mac. text takes what a run prints on stdout.
+func macOf(p process, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) setup.Mac {
+	return setup.Mac{Conf: c, Home: p.getenv("HOME"), XDG: p.getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
 }
 
 // newMacApplyCmd returns ws mac apply.
@@ -114,23 +103,22 @@ func newMacApplyCmd(p process) *cobra.Command {
 }
 
 // loadMacConf refuses root and reads mac.conf: the commands that act on the Mac's own files share it.
-func loadMacConf(p process) (home string, settings conf.Conf, err error) {
+func loadMacConf(p process) (settings conf.Conf, err error) {
 	if p.euid == 0 {
 		// As root, with HOME kept, it would leave root's files in the user's ~/.ssh, and run the
 		// user's ~/.local/bin/cld.
-		return "", conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
+		return conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
-	home = p.getenv("HOME")
 	file := p.getenv("WS_CONF")
 	if file == "" {
-		file = filepath.Join(home, confFile)
+		file = filepath.Join(p.getenv("HOME"), confFile)
 	}
 	text, err := p.machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return "", conf.Conf{}, fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
+		return conf.Conf{}, fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
 	}
 	if err != nil {
-		return "", conf.Conf{}, err
+		return conf.Conf{}, err
 	}
 	var errs []conf.Error
 	settings, errs = conf.Parse(string(text))
@@ -139,22 +127,21 @@ func loadMacConf(p process) (home string, settings conf.Conf, err error) {
 		for _, e := range errs {
 			all = append(all, errors.New(e.In(file)))
 		}
-		return "", conf.Conf{}, errors.Join(all...)
+		return conf.Conf{}, errors.Join(all...)
 	}
-	return home, settings, nil
+	return settings, nil
 }
 
 // runMacApply runs the steps that args name, or every step, from mac.conf. Under check it prints
 // each change and makes none.
 func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
-	home, settings, err := loadMacConf(p)
+	settings, err := loadMacConf(p)
 	if err != nil {
 		return err
 	}
-	xdg := p.getenv("XDG_CONFIG_HOME")
 	buildFor := func(check bool) setupBuild {
 		return func(m effect.Machine, out effect.Out, text io.Writer) []step.Step {
-			steps := setupSteps(settings, home, xdg, m, out, text, check)
+			steps := macOf(p, settings, m, out, text).Steps(check)
 			switch {
 			case len(args) == 1:
 				return slices.DeleteFunc(steps, func(s step.Step) bool { return s.Name() != args[0] })
@@ -163,7 +150,7 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 				return steps
 			}
 			// cld's restore tabs change ssh's file, so ssh runs once more.
-			return slices.Concat(steps, []step.Step{sshStep(settings, home, m, out, true)})
+			return slices.Concat(steps, []step.Step{sshStep(settings, p.getenv("HOME"), m, out, true)})
 		}
 	}
 	build := buildFor(check)
