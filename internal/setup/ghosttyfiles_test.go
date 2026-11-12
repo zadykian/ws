@@ -2,7 +2,6 @@ package setup
 
 import (
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
@@ -16,13 +15,13 @@ func fileChanges(t *testing.T, m *effecttest.Machine, out *effecttest.Out, text 
 	if err != nil {
 		t.Fatal(err)
 	}
-	return g.fileChanges(dir+"/config", []byte(text), dir+"/ws.ghostty", ws, has)
+	return g.fileChanges(dir+"/config", []byte(text), ws, nil, dirLink{}, has)
 }
 
-func TestGhosttyFileChangesMakeTheDirectoryAndBothFiles(t *testing.T) {
+func TestGhosttyFileChangesWriteBothFiles(t *testing.T) {
 	cs := fileChanges(t, effecttest.NewMachine(), &effecttest.Out{}, "", false)
-	if len(cs) != 3 || !strings.HasPrefix(cs[0].String(), "would make /h/.config/ghostty") {
-		t.Errorf("changes = %v; want a directory and two files", cs)
+	if _, ok := cs[0].(Write); len(cs) != 2 || !ok {
+		t.Errorf("changes = %v; want two files", cs)
 	}
 }
 

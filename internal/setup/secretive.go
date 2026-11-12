@@ -74,12 +74,27 @@ func (c KeyCopy) String() string {
 	return "would write " + c.Path + ", ws's copy of a key of Secretive's"
 }
 
-// PlanCopy returns the change that makes ws's copy at pub hold text. It returns none for a .pub
-// elsewhere, for one with no text from the agent, and for a copy that holds text already.
-func PlanCopy(m effect.Machine, pub, text, home string) []step.Change {
+// PlanCopy returns the changes that make ws's copy at pub hold text: the directories of the copies,
+// ~/.config/ws and ~/.config with them, where missing, then the copy. It returns none for a .pub
+// elsewhere and for one with no text from the agent, and no copy where it holds text already.
+func PlanCopy(m effect.Machine, pub, text, home string) ([]step.Change, error) {
 	if !copied(pub, text, home) {
-		return nil
+		return nil, nil
 	}
+	cs, _, err := copyDirs(m, home).plan()
+	if err != nil {
+		return nil, err
+	}
+	return append(cs, copyChange(m, pub, text)...), nil
+}
+
+// copyDirs is ws's directory with the directory of ws's copies in it.
+func copyDirs(m effect.Machine, home string) userDirs {
+	return append(wsDirs(m, home), userDir{M: m, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
+}
+
+// copyChange returns the write of ws's copy at pub, or none where it holds text already.
+func copyChange(m effect.Machine, pub, text string) []step.Change {
 	if old, err := m.ReadFile(pub); err == nil && string(old) == text {
 		return nil
 	}
@@ -101,10 +116,7 @@ func keyCopy(m effect.Machine, pub, text, home string) []step.Reporter {
 	return []step.Reporter{userFile{M: m, Path: pub, Text: []byte(text)}}
 }
 
-func applyCopy(ctx context.Context, m effect.Machine, out effect.Out, c KeyCopy) error {
-	if _, err := m.Run(ctx, "mkdir", "-p", filepath.Dir(c.Path)); err != nil {
-		return fmt.Errorf("cannot make %s: %w", filepath.Dir(c.Path), err)
-	}
+func applyCopy(m effect.Machine, out effect.Out, c KeyCopy) error {
 	if err := m.WriteFile(c.Path, []byte(c.Text), 0o644); err != nil {
 		return fmt.Errorf("cannot write %s: %w", c.Path, err)
 	}

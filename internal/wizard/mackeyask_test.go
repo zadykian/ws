@@ -117,3 +117,17 @@ func TestMacKeyName(t *testing.T) {
 		t.Errorf("the copy holds %q", m.Files[copyOf(gitP256)])
 	}
 }
+
+// name makes the copies' directory before it writes the copy, as the plan of the copy says.
+func TestMacKeyNameMakesTheCopiesDirectoryFirst(t *testing.T) {
+	k, m, _ := newMacKey(t, gitConf+"WS_GIT_SIGNING_PUB_KEY=\n")
+	agent(m, gitP256)
+	delete(m.Dirs, "/h/"+sshcfg.KeyCopies)
+	if err := k.name(context.Background(), gitUse, listed(gitP256)[0]); err != nil {
+		t.Fatal(err)
+	}
+	made, wrote := slices.Index(m.Calls, "mkdir /h/"+sshcfg.KeyCopies+" 755"), slices.Index(m.Calls, "write "+copyOf(gitP256)+" 644")
+	if made < 0 || wrote < made {
+		t.Errorf("mkdir at %d, the copy at %d, in %q", made, wrote, m.Calls)
+	}
+}

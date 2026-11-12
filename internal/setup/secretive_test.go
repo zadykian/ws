@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/step"
 )
 
 const (
@@ -76,25 +77,27 @@ func TestReadKeyTakesTheAgentsKeyWithNoFile(t *testing.T) {
 func TestPlanCopy(t *testing.T) {
 	m := effecttest.NewMachine()
 	pub := copyOf(agentKey)
-	if got := setup.PlanCopy(m, "/h/.ssh/k.pub", agentKey, agentHome); got != nil {
-		t.Errorf("a .pub elsewhere: %v", got)
+	for name, args := range map[string][2]string{"a .pub elsewhere": {"/h/.ssh/k.pub", agentKey}, "no text": {pub, ""}} {
+		if got, err := setup.PlanCopy(m, args[0], args[1], agentHome); got != nil || err != nil {
+			t.Errorf("%s: %v, %v", name, got, err)
+		}
 	}
-	if got := setup.PlanCopy(m, pub, "", agentHome); got != nil {
-		t.Errorf("no text: %v", got)
+	got, err := setup.PlanCopy(m, pub, agentKey, agentHome)
+	if err != nil || len(got) != 4 || got[2] != (setup.MakeDir{Path: "/h/" + sshcfg.KeyCopies, Mode: 0o755}) ||
+		got[3] != (setup.KeyCopy{Path: pub, Text: agentKey}) {
+		t.Fatalf("a missing copy: %v, %v; want the directories, then the copy", got, err)
 	}
-	got := setup.PlanCopy(m, pub, agentKey, agentHome)
-	if len(got) != 1 || got[0] != (setup.KeyCopy{Path: pub, Text: agentKey}) {
-		t.Fatalf("a missing copy: %v", got)
-	}
-	m.Results["mkdir -p /h/.config/ws/secretive"] = effecttest.Result{}
-	if err := setup.Apply(context.Background(), m, &effecttest.Out{}, got[0]); err != nil {
-		t.Fatal(err)
+	m.Results["mkdir -p /h/"+sshcfg.KeyCopies] = effecttest.Result{}
+	for _, c := range got {
+		if err := setup.Apply(context.Background(), m, &effecttest.Out{}, c); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if string(m.Files[pub]) != agentKey {
 		t.Errorf("the copy holds %q", m.Files[pub])
 	}
-	if got := setup.PlanCopy(m, pub, agentKey, agentHome); got != nil {
-		t.Errorf("a copy that holds the key: %v", got)
+	if got, err := setup.PlanCopy(m, pub, agentKey, agentHome); got != nil || err != nil {
+		t.Errorf("a copy that holds the key: %v, %v", got, err)
 	}
 }
 
@@ -146,5 +149,17 @@ func TestGitSignsWithTheCopyOfTheAgentsKey(t *testing.T) {
 	}
 	if !copied || !config {
 		t.Errorf("Plan = %v; want ws's copy, named as git's key", p.Changes)
+	}
+}
+
+func TestSSHReportsTheDirectoryOfTheCopyItNames(t *testing.T) {
+	m := agentMachine(sshMachine(), agentKey)
+	s := sshStep(m, &effecttest.Out{})
+	s.Conf.IdentityPubKey = sshcfg.AgentKeys(agentKey)[0].Pub()
+	got := reportOf(t, s)
+	for _, name := range []string{"/h/.config", "/h/.config/ws", "/h/" + sshcfg.KeyCopies} {
+		if it := got[name]; it.Kind != step.DirItem || it.Found != "missing" {
+			t.Errorf("%s = %+v, want a directory, missing", name, it)
+		}
 	}
 }

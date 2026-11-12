@@ -3,6 +3,7 @@ package setup
 import (
 	"io/fs"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
 )
 
@@ -24,17 +25,16 @@ type path struct {
 
 // sshFacts is what the ssh step read of the Mac.
 type sshFacts struct {
-	Home       string
-	Dir        path // ~/.ssh
-	ConfigDir  path // ~/.ssh/config.d
+	Home string
+	// Dirs plans ~/.ssh and ~/.ssh/config.d, and DirLink is the last of them that is a link.
+	Dirs       []step.Change
+	DirLink    dirLink
 	Ws         path // ~/.ssh/config.d/ws
 	UserConfig path // ~/.ssh/config, whose text is the file a link points to
 	// UserConfigNeedsInclude is whether it lacks the Include.
 	UserConfigNeedsInclude bool
 	// IncludeLine is the line of its Include of config.d/ws, or 0.
 	IncludeLine int
-	// ConfigDirLink is where ~/.ssh/config.d points, or empty.
-	ConfigDirLink string
 	// Stamp is the time suffix of the copy of the old ~/.ssh/config.
 	Stamp string
 }
@@ -42,17 +42,8 @@ type sshFacts struct {
 // sshChanges returns the changes that bring ~/.ssh to the new text of config.d/ws and to an
 // Include of it first in ~/.ssh/config.
 func sshChanges(f sshFacts, text []byte) []step.Change {
-	var cs []step.Change
+	cs := append([]step.Change(nil), f.Dirs...)
 	dir := f.Home + "/.ssh"
-	if !f.Dir.Exists {
-		cs = append(cs, MakeDir{dir, sshDirMode})
-	}
-	switch {
-	case !f.ConfigDir.Exists:
-		cs = append(cs, MakeDir{dir + "/config.d", sshDirMode})
-	case f.ConfigDir.Mode.Perm() != sshDirMode:
-		cs = append(cs, SetMode{dir + "/config.d", sshDirMode})
-	}
 	cs = append(cs, userFile{Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.change(f.Ws)...)
 	user := dir + "/config"
 	switch {
@@ -72,4 +63,12 @@ func userConfigText(f sshFacts) []byte {
 		return f.UserConfig.Text
 	}
 	return append([]byte(includeLine+"\n\n"), f.UserConfig.Text...)
+}
+
+// sshDirs is ~/.ssh and its config.d. A run sets the mode of config.d, which holds the hosts.
+func sshDirs(m effect.Machine, home string) userDirs {
+	return userDirs{
+		{M: m, Path: home + "/.ssh", Mode: sshDirMode},
+		{M: m, Path: home + "/.ssh/config.d", Mode: sshDirMode, Fix: true},
+	}
 }

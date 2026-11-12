@@ -59,7 +59,7 @@ func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
 	dir := z.Home + "/.config/zed"
 	files := z.whole()
 	return gather(ctx, z.casks().report(ctx, "zed", "Zed.app", z.Home),
-		userPath{M: z.M, Kind: step.DirItem, Path: dir}, files[0], files[1],
+		z.dirs(), files[0], files[1],
 		userPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
 

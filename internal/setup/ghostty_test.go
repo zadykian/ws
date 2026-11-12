@@ -127,3 +127,12 @@ func TestGhosttyWarnsOfALinkedConfig(t *testing.T) {
 		t.Errorf("config %q, out %v", m.Files[ghosttyDir+"/config.ghostty"], out.Lines)
 	}
 }
+
+func TestGhosttyStopsWhereItsDirectoryIsAFile(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[ghosttyDir] = []byte("x")
+	if _, err := ghosttyStep(m, &effecttest.Out{}).Plan(context.Background()); err == nil ||
+		!strings.Contains(err.Error(), "is not a directory") {
+		t.Errorf("Plan's error = %v, want that the directory is no directory", err)
+	}
+}

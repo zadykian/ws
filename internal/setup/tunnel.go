@@ -80,8 +80,17 @@ type Install struct {
 
 func (i Install) String() string { return "would build ws into " + i.Path }
 
-// program plans ~/.local/bin/ws, which the copy for root comes from.
-func (t *Tunnel) program(self []byte) (step.Change, error) {
+// localBin is ~/.local/bin, which holds ws's program. A run makes it where missing, and leaves its mode.
+func localBin(m effect.Machine, home string) userDirs {
+	return userDirs{
+		{M: m, Path: home + "/.local", Mode: 0o755},
+		{M: m, Path: home + "/.local/bin", Mode: 0o755},
+	}
+}
+
+// program plans ~/.local/bin/ws, which the copy for root comes from, and its directories where
+// missing.
+func (t *Tunnel) program(self []byte) ([]step.Change, error) {
 	path := t.Home + "/.local/bin/ws"
 	have, err := t.M.ReadFile(path)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -90,7 +99,11 @@ func (t *Tunnel) program(self []byte) (step.Change, error) {
 	if err == nil && bytes.Equal(have, self) {
 		return nil, nil
 	}
-	return Install{path, self}, nil
+	cs, _, err := localBin(t.M, t.Home).plan()
+	if err != nil {
+		return nil, err
+	}
+	return append(cs, Install{path, self}), nil
 }
 
 // Plan plans ws, root's copy and the Mac's key.
@@ -140,6 +153,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		key[i].Kind = step.FileItem
 	}
 	parts := []step.Reporter{
+		localBin(t.M, t.Home),
 		userFile{M: t.M, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
 		host.Dir{M: t.M, Path: "/usr/local", Mode: 0o755},
 		host.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
@@ -150,7 +164,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, t.pub())
+		parts = append(parts, wsDirs(t.M, t.Home), t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		daemon := step.Item{Kind: step.ServiceItem, Name: daemonLabel, Want: "loaded", Found: "not loaded"}

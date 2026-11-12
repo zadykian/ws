@@ -230,3 +230,12 @@ func TestNetworksReportsAResolverToRemove(t *testing.T) {
 		t.Errorf("resolver = %+v, want it to go", it)
 	}
 }
+
+func TestZedReportShowsTheDirectoryItsPlanMakes(t *testing.T) {
+	got := reportOf(t, zedStep(effecttest.NewMachine(), &effecttest.Out{}))
+	for _, name := range []string{"/h/.config", "/h/.config/zed"} {
+		if it := got[name]; it.Kind != step.DirItem || it.Found != "missing" || it.Conflict != "" {
+			t.Errorf("%s = %+v, want a directory, missing", name, it)
+		}
+	}
+}

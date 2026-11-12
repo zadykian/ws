@@ -73,7 +73,8 @@ display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's po
 git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_PUB_KEY` is the
 `.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
 `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
-socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts).
+socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts). A run makes
+`~/.config/ws` at mode 700, and sets that mode where it differs.
 
 `WS_USER` is the user ssh logs in as: the server's `ws_user`, `zadykian` by default, or `root` for a
 `WS_TARGET` of `cloud`, which may have no other user. The other targets refuse `WS_USER=root`. A key
@@ -211,7 +212,7 @@ stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#
 
 The daemon, `ws mac tunnel run`, runs as root from launchd, from boot and before any login, through
 `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws mac apply` copies
-`ws` from `~/.local/bin` to `/usr/local/libexec/ws-tunnel/ws` as
+`ws` from `~/.local/bin`, which a run makes first if missing, to `/usr/local/libexec/ws-tunnel/ws` as
 root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
 runs as the user become root. The daemon holds WireGuard's device in its own process, so it
 needs no `wg` or `wireguard-go`. `ws mac apply` restarts it where a rebuilt `ws` changed the copy.

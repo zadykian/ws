@@ -59,29 +59,26 @@ func zshSources(text []byte) bool {
 	return false
 }
 
-// Plan plans ~/.config and ~/.config/ws where missing, as the git step makes them, then the hook
-// and the line.
+// Plan plans ~/.config and ~/.config/ws, as the git step does, then the hook and the line.
 func (z *Zsh) Plan(context.Context) (step.Plan, error) {
-	var cs []step.Change
-	for _, d := range []struct {
-		path string
-		mode fs.FileMode
-	}{{z.Home + "/.config", 0o755}, {z.Home + "/.config/ws", 0o700}} {
-		if _, err := z.M.Stat(d.path); err != nil {
-			cs = append(cs, MakeDir{d.path, d.mode})
-		}
+	cs, link, err := wsDirs(z.M, z.Home).plan()
+	if err != nil {
+		return step.Plan{}, err
 	}
 	hook, err := z.hookFile().plan()
 	switch {
 	case errors.Is(err, errNotWs):
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's and sources it", z.hook())
+		link.warn(z.Out, len(cs), "ws's files go there")
 		return step.Plan{Changes: cs}, nil
 	case err != nil:
 		return step.Plan{}, err
 	}
 	cs = append(cs, hook...)
 	line, err := z.line()
-	return step.Plan{Changes: append(cs, line...)}, err
+	cs = append(cs, line...)
+	link.warn(z.Out, len(cs), "ws's files go there")
+	return step.Plan{Changes: cs}, err
 }
 
 // line plans zshLine at the end of ~/.zshrc, which it makes where missing.
@@ -139,7 +136,7 @@ func (z *Zsh) Report(ctx context.Context) ([]step.Item, error) {
 	if info, err := z.M.Stat(z.rc()); err == nil && info.Link != "" && line.Found != line.Want {
 		line.Conflict = "a link to " + info.Link + ": add the line at the end of that file"
 	}
-	return gather(ctx, z.hookFile(), fixed{line})
+	return gather(ctx, wsDirs(z.M, z.Home), z.hookFile(), fixed{line})
 }
 
 // hookFile is the hook, mode 644.

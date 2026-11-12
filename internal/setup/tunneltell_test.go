@@ -64,3 +64,19 @@ func TestTunnelDoesNotRunRootsCopyWhereItOrItsDirectoryIsToChange(t *testing.T) 
 		}
 	}
 }
+
+func TestTunnelReportsWsDirectoryOnceItHoldsTheKey(t *testing.T) {
+	m := daemonMachine()
+	s := daemonStep(m)
+	tunnelChanges(t, s)
+	items, err := s.Report(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, it := range items {
+		if it.Name == "/h/.config/ws" && it.Want == "mode 700" {
+			return
+		}
+	}
+	t.Errorf("Report = %+v, want /h/.config/ws at mode 700", items)
+}

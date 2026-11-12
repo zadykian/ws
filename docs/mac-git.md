@@ -55,7 +55,8 @@ macOS 27 denies other apps the files of Secretive's container, with no prompt
 ([Secretive's issue](https://github.com/maxgoedjen/secretive/issues/839)). Its socket still answers,
 so the script and the wizard ask the agent, with `ssh-add -L`. ssh and git need a key's `.pub` to
 pick it from the agent, so they keep a copy in `~/.config/ws/secretive`, under Secretive's name for
-it. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `mac.conf` names becomes
+it. A run makes that directory, with `~/.config` and `~/.config/ws`, and the plan and the report
+show them. No app then needs Full Disk Access. A `.pub` in `Data/PublicKeys` that `mac.conf` names becomes
 that copy where the agent lists the key.
 
 The socket stays after Secretive quits, and nothing answers there. The script then stops, and says

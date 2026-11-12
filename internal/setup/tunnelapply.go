@@ -2,9 +2,7 @@ package setup
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/fs"
 
 	"github.com/zadykian/ws/step"
 )
@@ -32,12 +30,6 @@ func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 }
 
 func (t *Tunnel) install(ctx context.Context, i Install) error {
-	dir := i.Path[:len(i.Path)-len("/ws")]
-	if _, err := t.M.Stat(dir); errors.Is(err, fs.ErrNotExist) {
-		if _, err := t.M.Run(ctx, "mkdir", "-p", dir); err != nil {
-			return fmt.Errorf("cannot make %s: %w", dir, err)
-		}
-	}
 	if err := t.M.WriteFile(i.Path+".new", i.Data, 0o755); err != nil {
 		return fmt.Errorf("cannot install %s: %w", i.Path, err)
 	}
