@@ -56,7 +56,7 @@ func TestWsSideSetsAndListsOnWs(t *testing.T) {
 		t.Fatal(err)
 	}
 	held, err := side.keys(context.Background())
-	if s, lerr := secrets.Load(m, serverSecrets, id); err != nil || lerr != nil || s.Env["A"] != "dummy-value" ||
+	if s, lerr := secrets.Load(m, secrets.FilePath, id); err != nil || lerr != nil || s.Env["A"] != "dummy-value" ||
 		!slices.Equal(held, []string{"env A"}) {
 		t.Errorf("keys %q, file %+v, %v %v; want env A set", held, s, err, lerr)
 	}
@@ -69,7 +69,7 @@ func openSecrets(t *testing.T, toml string) (tui.Sheet, *effecttest.Machine, age
 	if err != nil {
 		t.Fatal(err)
 	}
-	m.Files[serverSecrets] = armored
+	m.Files[secrets.FilePath] = armored
 	p, mac := macTerminal()
 	p.machine = wsSecrets{farWs: newFarWs(mac, ""), ws: m}
 	r := &varsReach{p: p}
@@ -89,7 +89,7 @@ func TestWsSecretsSheetSavesOnWs(t *testing.T) {
 	}
 	next, err := sheet.Save(context.Background(), nil, map[string]string{"token azure_devops": "dummy-new",
 		"git https://h.example": "dummy-2"})
-	got, lerr := secrets.LoadRaw(m, serverSecrets, id)
+	got, lerr := secrets.LoadRaw(m, secrets.FilePath, id)
 	if g := got.Git["https://h.example"]; err != nil || lerr != nil || got.Token.AzureDevOps != "dummy-new" ||
 		got.Token.GitHub != "dummy" || g.Token != "dummy-2" || g.Username != "ada" {
 		t.Errorf("file = %+v, %v %v; want the new tokens, and the rest kept", got, err, lerr)

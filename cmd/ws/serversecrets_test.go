@@ -36,13 +36,13 @@ func TestServerSecretsEdits(t *testing.T) {
 			t.Fatalf("%q: status %d, stderr %q", a, status, errs)
 		}
 	}
-	s, err := secrets.Load(m, serverSecrets, id)
+	s, err := secrets.Load(m, secrets.FilePath, id)
 	if err != nil || s.Env["A"] != "dummy-value" || len(s.Env) != 1 || string(s.File.VPNSswan) != "dummy-value\n" {
 		t.Errorf("secrets = %+v, %v; want env A and the file", s, err)
 	}
-	if m.Modes[serverSecrets] != 0o600 || m.Owners[serverSecrets] != [2]int{} || m.Dirs["/etc/ws"] != 0o755 {
-		t.Errorf("file %o, owner %v, directory %o; want root's 600 in 755", m.Modes[serverSecrets],
-			m.Owners[serverSecrets], m.Dirs["/etc/ws"])
+	if m.Modes[secrets.FilePath] != 0o600 || m.Owners[secrets.FilePath] != [2]int{} || m.Dirs["/etc/ws"] != 0o755 {
+		t.Errorf("file %o, owner %v, directory %o; want root's 600 in 755", m.Modes[secrets.FilePath],
+			m.Owners[secrets.FilePath], m.Dirs["/etc/ws"])
 	}
 	status, out, _ := runServerSecrets(m, 0, "", "keys")
 	if status != 0 || out != "env A\nfile vpn_sswan\n" {
@@ -62,8 +62,8 @@ func TestServerSecretsInitMakesBoth(t *testing.T) {
 		t.Fatalf("status %d, stderr %q; want the credential made", status, errs)
 	}
 	// The fake's credential gives id back, as systemd-creds gives the identity that it took.
-	if _, err := secrets.Load(m, serverSecrets, id); err != nil || m.Modes[serverSecrets] != 0o600 {
-		t.Errorf("Load = %v, mode %o; want an empty file that the identity opens, 600", err, m.Modes[serverSecrets])
+	if _, err := secrets.Load(m, secrets.FilePath, id); err != nil || m.Modes[secrets.FilePath] != 0o600 {
+		t.Errorf("Load = %v, mode %o; want an empty file that the identity opens, 600", err, m.Modes[secrets.FilePath])
 	}
 	if strings.Count(out, ": made ") != 2 || strings.Contains(out+errs, "AGE-SECRET-KEY") {
 		t.Errorf("stdout %q; want two lines of what init made, and no key", out)
@@ -75,19 +75,19 @@ func TestServerSecretsInitKeepsWhatIsThere(t *testing.T) {
 	if status, _, errs := runServerSecrets(m, 0, "", "init"); status != 0 {
 		t.Fatalf("status %d, stderr %q", status, errs)
 	}
-	if _, err := secrets.Load(m, serverSecrets, id); err != nil {
+	if _, err := secrets.Load(m, secrets.FilePath, id); err != nil {
 		t.Errorf("Load = %v; want the file made with the credential's identity", err)
 	}
-	m.Files[serverSecrets] = []byte("kept")
+	m.Files[secrets.FilePath] = []byte("kept")
 	status, out, _ := runServerSecrets(m, 0, "", "init")
-	if status != 0 || string(m.Files[serverSecrets]) != "kept" || strings.Count(out, "stays") != 2 || len(m.Inputs) != 0 {
+	if status != 0 || string(m.Files[secrets.FilePath]) != "kept" || strings.Count(out, "stays") != 2 || len(m.Inputs) != 0 {
 		t.Errorf("status %d, stdout %q; want both kept", status, out)
 	}
 }
 
 func TestServerSecretsInitRefusesAFileAlone(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files[serverSecrets] = []byte("kept")
+	m.Files[secrets.FilePath] = []byte("kept")
 	status, _, errs := runServerSecrets(m, 0, "", "init")
 	if status != 1 || !strings.Contains(errs, "remove the file") || len(m.Inputs) != 0 {
 		t.Errorf("status %d, stderr %q; want 1, and no identity made", status, errs)

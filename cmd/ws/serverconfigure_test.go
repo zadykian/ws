@@ -49,7 +49,7 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 		t.Fatalf("open: %v, fields %+v", err, sheet.Fields(nil))
 	}
 	sheet, err = sheet.Save(ctx, nil, map[string]string{"token github": "dummy-value", "git https://git.example": "dummy-token"})
-	s, lerr := secrets.Load(m, serverSecrets, id)
+	s, lerr := secrets.Load(m, secrets.FilePath, id)
 	if err != nil || lerr != nil || s.Token.GitHub != "dummy-value" || s.Git["https://git.example"] !=
 		(secrets.Git{Username: "ada", Token: "dummy-token"}) {
 		t.Fatalf("save: %v, %v, %+v", err, lerr, s)

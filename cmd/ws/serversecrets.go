@@ -12,9 +12,6 @@ import (
 	"github.com/zadykian/ws/internal/secrets"
 )
 
-//nolint:gosec // G101: the path of the encrypted file, no credential
-const serverSecrets = "/etc/ws/secrets.age"
-
 // newServerSecretsCmd returns ws server secrets, which keeps ws's secrets file, with its identity as
 // a systemd credential. Its set, unset and keys are ws mac secrets'.
 func newServerSecretsCmd(p process) *cobra.Command {
@@ -25,7 +22,7 @@ func newServerSecretsCmd(p process) *cobra.Command {
 			Short: "make ws's age identity and an empty secrets file",
 			Long: "It makes ws's age identity in memory, which systemd-creds encrypts by the host's key as the " +
 				"credential " + secrets.CredstorePath + ", for a unit's LoadCredentialEncrypted=" +
-				secrets.CredentialName + ". It makes an empty " + serverSecrets + ", root's and 600. A credential " +
+				secrets.CredentialName + ". It makes an empty " + secrets.FilePath + ", root's and 600. A credential " +
 				"or a file that is there stays.",
 			Args: cobra.NoArgs,
 			RunE: func(c *cobra.Command, _ []string) error { return serverSecretsInit(c, p) },
@@ -37,7 +34,7 @@ func serverSecretsStore(p process) (secretsStore, error) {
 	if p.euid != 0 {
 		return secretsStore{}, errors.New("run it as root")
 	}
-	return secretsStore{m: p.machine, k: secrets.Credstore{M: p.machine}, path: serverSecrets,
+	return secretsStore{m: p.machine, k: secrets.Credstore{M: p.machine}, path: secrets.FilePath,
 		write: func(s secrets.Secrets, id age.Identity) error { return writeServerSecrets(p.machine, s, id) }}, nil
 }
 
@@ -50,7 +47,7 @@ func writeServerSecrets(m effect.Machine, s secrets.Secrets, id age.Identity) er
 	if err := makeConfigDir(m); err != nil {
 		return err
 	}
-	return m.WriteAtomic(serverSecrets, data, effect.Attrs{Mode: 0o600})
+	return m.WriteAtomic(secrets.FilePath, data, effect.Attrs{Mode: 0o600})
 }
 
 // serverSecretsInit makes a missing credential, and the file where none is. A file
@@ -65,7 +62,7 @@ func serverSecretsInit(c *cobra.Command, p process) error {
 	if err != nil {
 		return err
 	}
-	_, err = p.machine.Stat(serverSecrets)
+	_, err = p.machine.Stat(secrets.FilePath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
@@ -75,7 +72,7 @@ func serverSecretsInit(c *cobra.Command, p process) error {
 		sayOut(c, "the credential %s is there, and stays", secrets.CredstorePath)
 	case file:
 		return fmt.Errorf("%s is there without the credential %s, and a new identity would not open it: "+
-			"remove the file, then run init again", serverSecrets, secrets.CredstorePath)
+			"remove the file, then run init again", secrets.FilePath, secrets.CredstorePath)
 	default:
 		if _, err := cred.Make(c.Context()); err != nil {
 			return err
@@ -83,13 +80,13 @@ func serverSecretsInit(c *cobra.Command, p process) error {
 		sayOut(c, "made the identity, the credential %s", secrets.CredstorePath)
 	}
 	if file {
-		sayOut(c, "%s is there, and stays", serverSecrets)
+		sayOut(c, "%s is there, and stays", secrets.FilePath)
 		return nil
 	}
 	// An empty edit reads the identity back from the credential, which proves that it opens.
 	if err := store.edit(c.Context(), func(*secrets.Secrets) error { return nil }); err != nil {
 		return err
 	}
-	sayOut(c, "made %s", serverSecrets)
+	sayOut(c, "made %s", secrets.FilePath)
 	return nil
 }
