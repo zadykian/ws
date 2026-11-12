@@ -24,7 +24,8 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	var text bytes.Buffer
-	if err := tui.Run(context.Background(), cfg, screen, w.work(r, &text)); err != nil {
+	cfg.Text = &text
+	if err := tui.Run(context.Background(), cfg, screen, w.work(r)); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
@@ -126,8 +127,9 @@ func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 	w := macScreen{c, p, wizardOptions{}}
 	r := wizardRun{sudo: &wizard.Sudo{}, left: func(string, string) bool { return true }}
 	cfg := w.config()
+	cfg.Text = io.Discard
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
-	if err := tui.Run(context.Background(), cfg, screen, w.work(r, io.Discard)); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.work(r)); err != nil {
 		t.Fatal(err)
 	}
 	if slices.Contains(m.Calls, "run xcode-select --install") {
