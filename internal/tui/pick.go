@@ -99,7 +99,6 @@ func (l pickList) take(e step.Event) pickList {
 	}
 	said := l.heard
 	l.heard = nil
-	l = l.learned(e)
 	place := l.place(e)
 	if place < 0 {
 		return l
