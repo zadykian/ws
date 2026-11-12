@@ -37,12 +37,16 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 		}
 	}
 	text, err := g.M.ReadFile(pub)
-	if missing, rerr := notExist(err); rerr != nil {
-		return gitKey{}, fmt.Errorf("cannot read %s: make it readable, or name another .pub in "+
-			"mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
-	} else if missing {
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
 		return gitKey{}, fmt.Errorf("%s, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing: make the key first, "+
 			"as docs/mac-git.md says", pub)
+	case errors.Is(err, fs.ErrPermission) && sshcfg.SecretiveKey(pub, g.Home):
+		return gitKey{}, fmt.Errorf("cannot read %s, and Secretive's agent lists no key of it: open Secretive, "+
+			"or name another in mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
+	case err != nil:
+		return gitKey{}, fmt.Errorf("cannot read %s: make it readable, or name another in "+
+			"mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
 	}
 	if err := sshcfg.CheckKeyFile(pub, "WS_GIT_SIGNING_PUB_KEY", string(text)); err != nil {
 		return gitKey{}, err
@@ -52,8 +56,8 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 		return gitKey{}, fmt.Errorf("%s holds no public key alone, as ssh-keygen -y prints one", pub)
 	}
 	if _, err := g.M.Run(ctx, "ssh-keygen", "-l", "-f", pub); err != nil {
-		return gitKey{}, fmt.Errorf("ssh-keygen cannot read %s: git signs with a key the Mac's ssh-keygen "+
-			"knows, as ed25519 or Secretive's P-256", pub)
+		return gitKey{}, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
+			"mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
 	}
 	return gitKey{Pub: pub, Public: public}, nil
 }

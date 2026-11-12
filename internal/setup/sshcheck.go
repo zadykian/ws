@@ -31,7 +31,8 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	}
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return id, fmt.Errorf("%s, mac.conf's WS_IDENTITY_PUB_KEY, is missing: make the key first", file)
+		return id, fmt.Errorf("%s, mac.conf's WS_IDENTITY_PUB_KEY, is missing: make the key first, "+
+			"as docs/mac.md says", file)
 	}
 	if errors.Is(err, fs.ErrPermission) && sshcfg.SecretiveKey(file, home) {
 		return id, fmt.Errorf("cannot read %s, and Secretive's agent lists no key of it: open Secretive, "+

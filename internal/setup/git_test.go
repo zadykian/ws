@@ -251,6 +251,17 @@ func TestGitStopsAtALinkAndAtGitConfigFailing(t *testing.T) {
 	}
 }
 
+func TestGitSaysToOpenSecretiveForADeniedPub(t *testing.T) {
+	m := agentMachine(effecttest.NewMachine())
+	g := gitStep(m, nil)
+	in := agentData + "/PublicKeys/a.pub"
+	m.Root[in] = m.Root[agentSock]
+	g.Home, g.Conf.GitSigningPubKey = agentHome, in
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "open Secretive") {
+		t.Errorf("err = %v, want the word to open Secretive", err)
+	}
+}
+
 func TestGitRefusesAnAgentKeyOfATypeWsLacks(t *testing.T) {
 	const line = "ssh-mldsa-65 AAAA me\n"
 	m := agentMachine(effecttest.NewMachine(), line)
