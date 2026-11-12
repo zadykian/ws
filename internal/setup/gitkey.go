@@ -58,11 +58,3 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 	}
 	return gitKey{Pub: pub, Public: key.String()}, nil
 }
-
-// notExist reports whether err says a path is missing, and passes on any other error.
-func notExist(err error) (bool, error) {
-	if errors.Is(err, fs.ErrNotExist) {
-		return true, nil
-	}
-	return false, err
-}

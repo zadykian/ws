@@ -120,3 +120,11 @@ func (g *Git) includeChanges(ctx context.Context, in gitInclude) []step.Change {
 	}
 	return cs
 }
+
+// notExist reports whether err says a path is missing, and passes on any other error.
+func notExist(err error) (bool, error) {
+	if errors.Is(err, fs.ErrNotExist) {
+		return true, nil
+	}
+	return false, err
+}
