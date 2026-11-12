@@ -43,6 +43,9 @@ type Config struct {
 	// Log keeps none.
 	Log     io.Writer
 	LogPath string
+	// Text is where a run's stdout goes past the screen, once a run that passed has ended. Nil drops
+	// it. A run logs it either way.
+	Text io.Writer
 	// Machine is what the screen's works run on, as Bridge.Effects gives it. Nil leaves them none.
 	Machine effect.Machine
 	// quiet leaves nothing past the screen, for a screen that a run follows and says the same again.
@@ -65,12 +68,14 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	// Bubble Tea logs each key read to the file that this names, a hidden field's too.
 	_ = os.Unsetenv("TEA_TRACE")
 	bridge := newBridge(c.Out)
+	bridge.text = &runText{}
 	bridge.effects = bridge.effectsOn(ctx, c.Machine)
 	bridge.stops = bridge.stop(ctx)
 	result := make(chan error, 1)
 	begin := tea.Batch(
 		func() tea.Msg {
 			err := guarded(ctx, bridge, work)
+			bridge.Log(bridge.text.String()) // A failed run prints it too.
 			result <- err
 			return doneMsg{err}
 		},
@@ -106,7 +111,11 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	}
 	bridge.flush()
 	bridge.rec.report(c.Out, c.LogPath, s.cutBy != nil || !s.done)
-	return ending(s, broke)
+	err := ending(s, broke)
+	if err == nil { // A work left behind may still write to the text.
+		bridge.text.writeTo(c.Text)
+	}
+	return err
 }
 
 // unwound waits for a work that ctx has ended, and returns its error. The work's defers hold a

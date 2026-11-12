@@ -86,6 +86,8 @@ type Bridge struct {
 	stops func() error
 	// took is set once a work took Options: the first Ctrl-C then asks before it stops the run.
 	took atomic.Bool
+	// text holds what the work wrote to Effects.Text.
+	text *runText
 	// effects are what Effects gives the screen's works. Run sets them before the work starts.
 	effects Effects
 	// rec keeps the run for its log and its end.
