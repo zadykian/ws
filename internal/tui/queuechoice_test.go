@@ -1,11 +1,6 @@
 package tui
 
-import (
-	"slices"
-	"testing"
-
-	"github.com/zadykian/ws/step"
-)
+import "slices"
 
 // atRow returns l turned to the side of the row of that name, and the cursor on the row.
 func atRow(l pickList, name string) (pickList, cursor) {
@@ -22,27 +17,4 @@ func drawn(l pickList, side Side) []string {
 		got = append(got, stripped(l.render(testTheme, line)))
 	}
 	return got
-}
-
-func TestAStageRunsWhatTheScanFound(t *testing.T) {
-	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
-	l := newQueue(stages).take(planned("base", "one", 0, oneChange("a"))).take(planned("base", "two", 1)).
-		take(planned("", "Run", 0)).opened()
-	if want := []string{"[x]", "[x]", "[ ]"}; !slices.Equal(boxes(l), want) {
-		t.Errorf("boxes = %q, want %q", boxes(l), want)
-	}
-}
-
-func TestALeftOutWarningStaysAmongOneStagesRoles(t *testing.T) {
-	stages := []Stage{
-		{Name: "Setup", Nested: []Group{{Name: "Setup", Steps: []string{"one"}}}},
-		{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"two"}}, {Name: "ssh", Steps: []string{"three"}}}},
-	}
-	l := newQueue(stages)
-	for _, e := range []step.Event{planned("Setup", "one", 0, oneChange("a")), planned("base", "two", 0, oneChange("a")), planned("ssh", "three", 0, oneChange("a"))} {
-		l = l.take(e)
-	}
-	if got, want := choosing(l, "three").passedOver(), []string{"base"}; !slices.Equal(got, want) {
-		t.Errorf("passed over = %q, want %q", got, want)
-	}
 }

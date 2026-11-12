@@ -169,3 +169,9 @@ func (q queue) whole(want func(queueStage) bool) queue {
 	}
 	return q.settled()
 }
+
+// passedOver returns the roles of stage i that hold changes left out ahead of a step on. A stage
+// runs apart from the next, so a role is passed over within its stage alone.
+func (q queue) passedOver(i int) []string {
+	return q.stages[i].list.passedOver()
+}
