@@ -15,6 +15,16 @@ func atRow(l pickList, name string) (pickList, cursor) {
 	return l, cursor(slices.Index(l.lines(), pickLine{row: row}))
 }
 
+// drawn is what a side of l shows, a line each, its colors gone.
+func drawn(l pickList, side Side) []string {
+	l.side = side
+	var got []string
+	for _, line := range l.lines() {
+		got = append(got, stripped(l.render(testTheme, line)))
+	}
+	return got
+}
+
 func TestAStageFollowsTheStepsItRuns(t *testing.T) {
 	l := choosing(newQueue(testStages()), "one")
 	if got := drawn(l, MacSide); got[0] != " 1 [#] · Tools" || got[1] != " 2 [-] · Setup" {

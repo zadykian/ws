@@ -164,3 +164,11 @@ func TestARoleIsNamedWhereItsChangesStayBehindAStepOn(t *testing.T) {
 		t.Errorf("passed over = %q, want none in a flat list", got)
 	}
 }
+
+func TestAWaitOfTheSameNameStaysWithItsStage(t *testing.T) {
+	first := pickRow{stepRow: stepRow{name: "a"}, stage: "one"}
+	second := pickRow{stepRow: stepRow{name: "a"}, stage: "two"}
+	if first.sameChoice(second) {
+		t.Errorf("%+v and %+v are one choice", first, second)
+	}
+}
