@@ -10,12 +10,6 @@ import (
 // pickRow is a step of the list that a run is chosen from.
 type pickRow struct {
 	stepRow
-	// side is the list of a queue that shows the row.
-	side Side
-	// number is a stage's place in a queue, from 1, and 0 on any other row.
-	number int
-	// stage names the stage of a queue that runs the row.
-	stage string
 	// form is how the row's group shows: groupHeaded by the zero value.
 	form groupForm
 	// waitsOn names the step of its group that has to run first.
@@ -50,7 +44,7 @@ func (r pickRow) pending() bool {
 
 // sameChoice says that o is r to a run, which chooses by name, as a name can come twice in one.
 func (r pickRow) sameChoice(o pickRow) bool {
-	return r.stage == o.stage && r.parent == o.parent && r.name == o.name
+	return r.parent == o.parent && r.name == o.name
 }
 
 // box draws the row's checkbox. A locked step takes no key, and its box says so by shape.
@@ -72,8 +66,6 @@ type pickList struct {
 	heard []Line
 	// words is the filter: the list shows the steps whose entry holds them.
 	words string
-	// side is the list of a queue that lines shows.
-	side Side
 }
 
 // newPickList returns the list of groups, each step open and left out, each under its heading.

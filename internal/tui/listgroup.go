@@ -2,6 +2,7 @@ package tui
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/step"
 )
@@ -41,8 +42,8 @@ func newFormedList(groups []listGroup) pickList {
 
 // indented is the room of a heading above the row.
 func (r pickRow) indented() string {
-	if r.form == groupHeaded {
-		return r.indent()
+	if r.form == groupHeaded && r.parent != "" {
+		return strings.Repeat(" ", roleColumns)
 	}
 	return ""
 }

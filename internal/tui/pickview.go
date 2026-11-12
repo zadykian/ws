@@ -24,16 +24,13 @@ func (l pickList) lines() []pickLine {
 	var lines []pickLine
 	parent := ""
 	for i, r := range l.rows {
-		if r.side != l.side || !l.shows(r) {
+		if !l.shows(r) {
 			continue
 		}
 		if r.parent != "" && r.parent != parent && (r.form != groupBare || !l.named(r.parent)) {
 			lines = append(lines, pickLine{row: i, heading: true})
 		}
 		parent = r.parent
-		if r.number > 0 {
-			parent = r.name
-		}
 		lines = append(lines, pickLine{row: i})
 	}
 	return lines
@@ -77,16 +74,16 @@ func (l pickList) groupBox(parent string) string {
 func (l pickList) render(theme Theme, line pickLine) string {
 	r := l.rows[line.row]
 	if line.heading {
-		return r.headingIndent() + l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
+		return l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
 	}
 	mark, style := r.state.look(theme)
 	return r.indented() + r.box() + " " + style.Render(mark) + " " + r.name
 }
 
-// view draws height lines of the list, the cursor's gutter where shown.
-func (l pickList) view(theme Theme, height int, at cursor, shown bool) string {
+// view draws height lines of the list, the cursor's gutter always.
+func (l pickList) view(theme Theme, height int, at cursor) string {
 	lines := l.lines()
-	return windowed(theme, height, at, shown, len(lines), func(i int) string { return l.render(theme, lines[i]) })
+	return windowed(theme, height, at, true, len(lines), func(i int) string { return l.render(theme, lines[i]) })
 }
 
 // windowed draws height of count lines, each by draw, the cursor's gutter where shown. The lines run

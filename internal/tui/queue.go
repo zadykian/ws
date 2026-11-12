@@ -1,10 +1,5 @@
 package tui
 
-import (
-	"fmt"
-	"strings"
-)
-
 // Side is the list of a queue that shows a stage: the machine the stage acts on.
 type Side int
 
@@ -42,27 +37,4 @@ type Stage struct {
 	// stands for what no scan has named yet. A role shows by its name, and a group called as its
 	// stage shows nothing until its events do.
 	Nested []Group
-}
-
-// indent is what stands ahead of the row's box: a stage's number, or the room of its depth.
-func (r pickRow) indent() string {
-	switch {
-	case r.number > 0:
-		return fmt.Sprintf("%*d ", stageColumns-3, r.number)
-	case r.stage != "" && r.parent != "" && r.parent != r.stage:
-		return strings.Repeat(" ", stageColumns+roleColumns)
-	case r.stage != "":
-		return strings.Repeat(" ", stageColumns)
-	case r.parent != "":
-		return strings.Repeat(" ", roleColumns)
-	}
-	return ""
-}
-
-// headingIndent is what stands ahead of the box of the row's role.
-func (r pickRow) headingIndent() string {
-	if r.stage != "" {
-		return strings.Repeat(" ", stageColumns)
-	}
-	return ""
 }

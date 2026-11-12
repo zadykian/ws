@@ -237,7 +237,7 @@ func (s pickScreen) listHeight() int {
 func (s pickScreen) View() tea.View {
 	l := s.layout()
 	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1], s.notes())
-	l.Panes[0].Body = s.list.view(s.theme, s.listHeight(), s.at, true)
+	l.Panes[0].Body = s.list.view(s.theme, s.listHeight(), s.at)
 	if s.filtering() {
 		l.Panes[0].Body = s.filter.line(s.theme) + "\n" + l.Panes[0].Body
 	}
