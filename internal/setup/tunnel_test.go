@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/step"
 )
 
 func tunnelStep(m *effecttest.Machine) *setup.Tunnel {
@@ -31,6 +32,8 @@ func tunnelChanges(t *testing.T, s *setup.Tunnel) []string {
 func TestTunnelPlansTheCopyAndTheKeyOnAFreshMac(t *testing.T) {
 	got := lines(tunnelChanges(t, tunnelStep(effecttest.NewMachine())))
 	want := lines([]string{
+		"would make /h/.local, mode 755",
+		"would make /h/.local/bin, mode 755",
 		"would build ws into /h/.local/bin/ws",
 		"create directory /usr/local, owner 0:0, mode 755",
 		"create directory /usr/local/libexec, owner 0:0, mode 755",
@@ -78,7 +81,7 @@ func TestTunnelStopsWhereADirectoryAboveTheCopyIsWritable(t *testing.T) {
 func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := tunnelStep(m)
-	for _, line := range []string{"mkdir -p /h/.local/bin", "mv -f /h/.local/bin/ws.new /h/.local/bin/ws"} {
+	for _, line := range []string{"mv -f /h/.local/bin/ws.new /h/.local/bin/ws"} {
 		m.Results[line] = effecttest.Result{}
 	}
 	m.Results["/usr/local/libexec/ws-tunnel/ws mac tunnel key"] = effecttest.Result{Out: []byte("PUB\n")}
@@ -101,5 +104,14 @@ func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 	m.Root["/etc/ws-tunnel/private.key"] = effect.Attrs{Mode: 0o600}
 	if got := tunnelChanges(t, tunnelStep(m)); len(got) != 0 {
 		t.Errorf("a second Plan = %q; want none", got)
+	}
+}
+
+func TestTunnelReportsThePlannedDirectoriesOfItsProgram(t *testing.T) {
+	got := reportOf(t, tunnelStep(effecttest.NewMachine()))
+	for _, name := range []string{"/h/.local", "/h/.local/bin"} {
+		if it := got[name]; it.Kind != step.DirItem || it.Found != "missing" {
+			t.Errorf("%s = %+v, want a directory, missing", name, it)
+		}
 	}
 }

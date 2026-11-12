@@ -15,13 +15,9 @@ import (
 // replace the copy. /usr/local and /usr/local/libexec are made where missing. A rebuilt ws reaches
 // the copy at the next run.
 func (t *Tunnel) programAndCopy(ctx context.Context, self []byte) ([]step.Change, error) {
-	var cs []step.Change
-	program, err := t.program(self)
+	cs, err := t.program(self)
 	if err != nil {
 		return nil, err
-	}
-	if program != nil {
-		cs = append(cs, program)
 	}
 	own := len(cs)
 	for _, dir := range []string{"/usr/local", "/usr/local/libexec"} {
