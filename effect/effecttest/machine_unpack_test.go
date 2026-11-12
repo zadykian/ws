@@ -6,6 +6,7 @@ import (
 	"context"
 	"io/fs"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
@@ -61,5 +62,30 @@ func TestMachineUnpackRecordsTheTree(t *testing.T) {
 	}
 	if want := []string{"unpack /c/go.tgz /usr/local/go"}; !slices.Equal(m.Calls, want) {
 		t.Errorf("Calls = %q, want %q", m.Calls, want)
+	}
+}
+func TestMachineUnpackRefuses(t *testing.T) {
+	tests := []struct {
+		name string
+		data []byte
+		want string
+	}{
+		{"a name that goes up", tarball(t, member{name: "a/../../x", typ: tar.TypeReg, body: "x"}), "leaves the directory"},
+		{"a missing archive", nil, "file does not exist"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := effecttest.NewMachine()
+			if tt.data != nil {
+				m.Files["/c/a.tgz"] = tt.data
+			}
+			err := m.Unpack(context.Background(), "/c/a.tgz", "/d", 1)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("got %v, want an error with %q", err, tt.want)
+			}
+			if len(m.Files) > 1 || len(m.Links) != 0 {
+				t.Errorf("a refused archive left %v and %v", m.Files, m.Links)
+			}
+		})
 	}
 }
