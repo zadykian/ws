@@ -7,9 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
-	"slices"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -69,14 +67,6 @@ func (o progOut) Warn(format string, a ...any) {
 		o.Out.Say("%s: warning: %s", o.prog, line)
 	}
 }
-
-func sshStep(c conf.Conf, home string, m effect.Machine, out effect.Out, again bool) step.Step {
-	return setup.SSH{Conf: c, Home: home, M: m, Out: out, Now: time.Now, Again: again}
-}
-
-// setupBuild returns the steps of a run on the effects given to it. text takes what the run prints
-// on stdout.
-type setupBuild func(m effect.Machine, out effect.Out, text io.Writer) []step.Step
 
 // macOf returns the Mac's steps over the process's environment and the effects given to it.
 // No other function builds a Mac. text takes what a run prints on stdout.
@@ -142,20 +132,6 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 	if err != nil {
 		return err
 	}
-	buildFor := func(check bool) setupBuild {
-		return func(m effect.Machine, out effect.Out, text io.Writer) []step.Step {
-			steps := macOf(p, settings, m, out, text).Steps(check)
-			switch {
-			case len(args) == 1:
-				return slices.DeleteFunc(steps, func(s step.Step) bool { return s.Name() != args[0] })
-			case check:
-				// Nothing is applied, so a second plan would only repeat the first.
-				return steps
-			}
-			// cld's restore tabs change ssh's file, so ssh runs once more.
-			return slices.Concat(steps, []step.Step{sshStep(settings, p.getenv("HOME"), m, out, true)})
-		}
-	}
 	var only string
 	if len(args) == 1 {
 		only = args[0]
@@ -169,7 +145,7 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 		return tui.NewGroup("", macOf(p, settings, nil, nil, nil).Rows(o))
 	}
 	if opensList(c, p, len(args) == 1) {
-		chosen, ok, err := pickSetup(c, p, buildFor)
+		chosen, ok, err := pickSetup(c, p, rowsOf(true), run)
 		if err != nil || !ok {
 			return err
 		}
@@ -193,25 +169,6 @@ func setupOnScreen(c *cobra.Command, p process, rows tui.Group, run setupRun, o 
 		e := b.Effects()
 		return run(ctx, e.M, b, e.Text, b.Options(o))
 	})
-}
-
-// runSetup is finishSetup for the command, which names itself in its errors.
-func runSetup(ctx context.Context, steps []step.Step, o step.Options) error {
-	_, err := finishSetup(ctx, steps, o)
-	return unwrapStep(err)
-}
-
-// finishSetup runs steps under o, then what each leaves for the end of a run that passed. A step
-// left out leaves nothing, as it applied nothing. It reports what step.RunWith does.
-func finishSetup(ctx context.Context, steps []step.Step, o step.Options) (bool, error) {
-	changed, err := step.RunWith(ctx, steps, o)
-	for _, s := range steps {
-		left := o.LeftOut != nil && o.LeftOut(o.Parent, s.Name())
-		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil && !left {
-			err = f.Finish(ctx)
-		}
-	}
-	return changed, err
 }
 
 // unwrapStep returns the error of a step, without the step and stage that the runner names before
