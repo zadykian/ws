@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/step"
 )
 
 // effectsOf returns what Bridge.Effects gives a work under a screen of m.
@@ -49,5 +50,24 @@ func TestEffectsKeepAFake(t *testing.T) {
 	}
 	if e := Offscreen(fake).Effects(); e.M != effect.Machine(fake) || e.Stop() != nil {
 		t.Errorf("Offscreen gave %+v", e)
+	}
+}
+
+// A work gives its steps the screen's observer and stop by Options, and a nil Bridge's options
+// stand as they were.
+func TestOptionsGiveTheBridgeAndItsStop(t *testing.T) {
+	b := Offscreen(effecttest.NewMachine())
+	o := b.Options(step.Options{Check: true, Parent: "p"})
+	if o.Observer != step.Observer(b) || !o.Check || o.Parent != "p" {
+		t.Errorf("options = %+v", o)
+	}
+	if o.Stop == nil || o.Stop() != nil {
+		t.Error("Stop is nil or fails, want one that returns nil")
+	}
+	if !b.took.Load() {
+		t.Error("Options left the run as one that took none")
+	}
+	if got := (*Bridge)(nil).Options(step.Options{Check: true}); got.Observer != nil || !got.Check {
+		t.Errorf("a nil Bridge gave %+v", got)
 	}
 }

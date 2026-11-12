@@ -82,6 +82,10 @@ type Bridge struct {
 	// hand keeps what ByHand gets, to print once the terminal is back.
 	lock sync.Mutex
 	hand *effect.Terminal
+	// stops is the run's stop, which Options hands to its steps. Run sets it before the work starts.
+	stops func() error
+	// took is set once a work took Options: the first Ctrl-C then asks before it stops the run.
+	took atomic.Bool
 	// effects are what Effects gives the screen's works. Run sets them before the work starts.
 	effects Effects
 	// rec keeps the run for its log and its end.
@@ -226,6 +230,18 @@ func (b *Bridge) Stop(ctx context.Context) func() error {
 		}
 		return ctx.Err()
 	}
+}
+
+// Options returns o with the screen's observer and stop, which a work gives its steps. A caller that
+// wraps the observer sets it after. The first call marks the run as one whose Ctrl-C asks first, as
+// its steps read the stop between them.
+func (b *Bridge) Options(o step.Options) step.Options {
+	if b == nil {
+		return o
+	}
+	b.took.Store(true)
+	o.Observer, o.Stop = b, b.stops
+	return o
 }
 
 // ByHand keeps a line for the end of the run, and logs it, as a plain run prints it.

@@ -52,6 +52,7 @@ func Offscreen(m effect.Machine) *Bridge {
 	b.send = func(tea.Msg) {}
 	close(b.gone)
 	talks, _ := m.(effect.Foreground)
-	b.effects = Effects{M: m, Talks: talks, Stop: func() error { return nil }}
+	b.stops = func() error { return nil }
+	b.effects = Effects{M: m, Talks: talks, Stop: b.stops}
 	return b
 }
