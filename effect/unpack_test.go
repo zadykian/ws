@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 )
 
 func tarGz(t *testing.T, names ...string) string {
@@ -48,6 +49,16 @@ func TestOSMachineUnpackStripsAndMakesTheDirectory(t *testing.T) {
 	}
 	if fi, err := os.Stat(dir); err != nil || fi.Mode().Perm() != 0o755 {
 		t.Errorf("dir is %v, %v", fi, err)
+	}
+}
+
+func TestUnpackFileThroughTheMachine(t *testing.T) {
+	file := tarGz(t, "top/f")
+	if err := host.UnpackFile(file, filepath.Join(t.TempDir(), "d"), 1); err != nil {
+		t.Error(err)
+	}
+	if err := host.UnpackFile(file+"-none", t.TempDir(), 1); err == nil {
+		t.Error("a missing archive unpacked")
 	}
 }
 

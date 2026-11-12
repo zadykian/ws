@@ -1,9 +1,11 @@
 package host
 
 import (
+	"context"
 	"io"
 	"os"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/archive"
 )
 
@@ -15,18 +17,5 @@ func Unpack(r io.Reader, root *os.Root, strip int) error {
 
 // UnpackFile makes dir with mode 0755, and unpacks the archive file in it as Unpack does.
 func UnpackFile(file, dir string, strip int) error {
-	f, err := os.Open(file) //nolint:gosec // the step names the archive
-	if err != nil {
-		return err
-	}
-	defer func() { _ = f.Close() }()                // read only
-	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // a tree for all users to read
-		return err
-	}
-	root, err := os.OpenRoot(dir)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = root.Close() }() // the tree is written through Unpack, which reports its errors
-	return Unpack(f, root, strip)
+	return effect.OSMachine{}.Unpack(context.Background(), file, dir, strip)
 }
