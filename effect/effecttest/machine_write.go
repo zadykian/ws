@@ -275,7 +275,7 @@ func (m *Machine) Download(_ context.Context, url, path, sum string, a effect.At
 		return fmt.Errorf("download %s: 404 Not Found", url)
 	}
 	if got := fmt.Sprintf("%x", sha256.Sum256(body)); got != sum {
-		return fmt.Errorf("download %s: SHA-256 is %s, want %s", url, got, sum)
+		return fmt.Errorf("download %s: %w is %s, want %s", url, effect.ErrSHA256, got, sum)
 	}
 	return m.WriteAtomic(path, body, a)
 }
