@@ -2,7 +2,6 @@ package sshcfg
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -61,20 +60,4 @@ func ParsePub(text string) (PublicKey, error) {
 		return PublicKey{}, TypeError{typ}
 	}
 	return PublicKey{}, ErrNotAKey
-}
-
-// CheckKeyFile fails where the text of the .pub file holds other than one public key of a type that
-// ws's OpenSSH 10.2 has. Its stops name the variable of mac.conf that names the file.
-func CheckKeyFile(file, name, text string) error {
-	_, err := ParsePub(text)
-	var typ TypeError
-	switch {
-	case errors.Is(err, ErrCertificate):
-		return fmt.Errorf("%s %w: name its key's own .pub in mac.conf's %s", file, err, name)
-	case errors.As(err, &typ):
-		return fmt.Errorf("%s %w: name the .pub of a P-256 or ed25519 key in mac.conf's %s", file, err, name)
-	case err != nil:
-		return fmt.Errorf("%s %w", file, err)
-	}
-	return nil
 }

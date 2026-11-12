@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/zadykian/ws/internal/gitcfg"
 	"github.com/zadykian/ws/internal/sshcfg"
 )
 
@@ -30,10 +29,11 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 		// An agent that does not answer leaves the .pub to read, as an older macOS allows.
 		keys, _, _ := SecretiveKeys(ctx, g.M, g.Home)
 		if k, ok := held(keys, pub, g.Home); ok {
-			if err := sshcfg.CheckKeyFile(pub, "WS_GIT_SIGNING_PUB_KEY", k.Line); err != nil {
-				return gitKey{}, err
+			key, err := sshcfg.ParsePub(k.Line)
+			if err != nil {
+				return gitKey{}, refused(pub, "WS_GIT_SIGNING_PUB_KEY", err)
 			}
-			return gitKey{Pub: sshcfg.Expand(k.Pub(), g.Home), Public: gitcfg.PublicKey(k.Line), Text: k.Line + "\n"}, nil
+			return gitKey{Pub: sshcfg.Expand(k.Pub(), g.Home), Public: key.String(), Text: k.Line + "\n"}, nil
 		}
 	}
 	text, err := g.M.ReadFile(pub)
@@ -48,18 +48,15 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 		return gitKey{}, fmt.Errorf("cannot read %s: make it readable, or name another in "+
 			"mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
 	}
-	if err := sshcfg.CheckKeyFile(pub, "WS_GIT_SIGNING_PUB_KEY", string(text)); err != nil {
-		return gitKey{}, err
-	}
-	public := gitcfg.PublicKey(string(text))
-	if public == "" {
-		return gitKey{}, fmt.Errorf("%s holds no public key alone, as ssh-keygen -y prints one", pub)
+	key, err := sshcfg.ParsePub(string(text))
+	if err != nil {
+		return gitKey{}, refused(pub, "WS_GIT_SIGNING_PUB_KEY", err)
 	}
 	if _, err := g.M.Run(ctx, "ssh-keygen", "-l", "-f", pub); err != nil {
 		return gitKey{}, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
 			"mac.conf's WS_GIT_SIGNING_PUB_KEY", pub)
 	}
-	return gitKey{Pub: pub, Public: public}, nil
+	return gitKey{Pub: pub, Public: key.String()}, nil
 }
 
 // notExist reports whether err says a path is missing, and passes on any other error.
