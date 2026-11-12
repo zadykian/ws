@@ -103,3 +103,61 @@ func TestHomeFilePlansAsTheAccount(t *testing.T) {
 		t.Errorf("a file owned by root: Plan = %v", got)
 	}
 }
+
+func TestHomeFileMakesItsParentsAsTheAccount(t *testing.T) {
+	m := effecttest.NewMachine()
+	f := account.File(m, ".config/x/f", []byte("a"), 0o600)
+	changes, err := f.Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("Plan = %v, %v", changes, err)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	for _, dir := range []string{"/home/ws/.config", "/home/ws/.config/x"} {
+		if m.Dirs[dir] != 0o755 || m.Owners[dir] != [2]int{1000, 1001} {
+			t.Errorf("%s: mode %o, owner %v", dir, m.Dirs[dir], m.Owners[dir])
+		}
+	}
+	if m.Owners[f.Path] != [2]int{1000, 1001} {
+		t.Errorf("file owner %v", m.Owners[f.Path])
+	}
+	var calls []string
+	for _, c := range m.Calls {
+		if strings.HasPrefix(c, "mkdir") {
+			calls = append(calls, c)
+		}
+	}
+	if want := "mkdir /home/ws/.config 755,mkdir /home/ws/.config/x 755"; strings.Join(calls, ",") != want {
+		t.Errorf("mkdir calls %q, want %q", calls, want)
+	}
+	if again, err := f.Plan(t.Context()); err != nil || again != nil {
+		t.Errorf("second Plan = %v, %v", again, err)
+	}
+}
+
+func TestHomeFileLeavesAnExistingParentAlone(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs["/home/ws/.config"] = 0o700
+	f := account.File(m, ".config/f", []byte("a"), 0o644)
+	changes, _ := f.Plan(t.Context())
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if m.Dirs["/home/ws/.config"] != 0o700 {
+		t.Errorf("an existing parent is now %o", m.Dirs["/home/ws/.config"])
+	}
+}
+
+func TestHomeFileOfRootChownsToRoot(t *testing.T) {
+	m := effecttest.NewMachine()
+	root := host.Account{User: host.User{Name: "root", Home: "/root"}}
+	f := root.File(m, ".config/f", []byte("a"), 0o644)
+	changes, _ := f.Plan(t.Context())
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if m.Owners["/root/.config"] != [2]int{0, 0} || m.Owners["/root/.config/f"] != [2]int{0, 0} {
+		t.Errorf("owners %v", m.Owners)
+	}
+}

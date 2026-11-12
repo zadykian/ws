@@ -1,6 +1,7 @@
 package host
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -28,6 +29,25 @@ func (a Account) File(m effect.Machine, rel string, content []byte, mode fs.File
 		M: m, Path: a.Home + "/" + rel, Content: content, Mode: mode,
 		UID: a.UID, GID: a.GID, home: a.Home,
 	}
+}
+
+// makeParents makes each directory between home and target that is missing, top first, as the
+// owner's at 0755, and leaves one that exists as it is. Without a home it does nothing.
+func makeParents(m effect.Machine, home, target string, uid, gid int) error {
+	if home == "" {
+		return nil
+	}
+	dirs := chain(home, target)
+	for _, at := range dirs[:len(dirs)-1] {
+		_, err := m.Stat(at)
+		if errors.Is(err, fs.ErrNotExist) {
+			err = errors.Join(m.Mkdir(at, 0o755), m.Chown(at, uid, gid), m.Chmod(at, 0o755))
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // guardHome fails unless target lies strictly below home by a local path, and fails on the first

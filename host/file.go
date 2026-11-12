@@ -53,6 +53,9 @@ func (writeFile) Kind() step.ChangeKind { return step.Write }
 func (c writeFile) Item() step.Item { return c.f.item(c.before, c.got) }
 
 func (c writeFile) Apply(context.Context) error {
+	if err := makeParents(c.f.M, c.f.home, c.f.Path, c.f.UID, c.f.GID); err != nil {
+		return err
+	}
 	if c.f.edit != nil {
 		before, err := c.f.M.ReadRootFile(c.f.Path)
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
