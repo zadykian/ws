@@ -18,7 +18,15 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-type wizardOptions struct{ check, update bool }
+// wizardOptions is what a run of a wizard's stages takes beside its effects: the flags, and what the
+// lists chose. Nil left and only run every stage whole.
+type wizardOptions struct {
+	check, update bool
+	// only is ws's roles where the lists chose ws's run in part, as --only's entries.
+	only []string
+	// left is the run's LeftOut, which reaches the steps of ws mac apply too.
+	left func(parent, name string) bool
+}
 
 // newWizardCmd returns ws mac wizard.
 func newWizardCmd(p process) *cobra.Command {
@@ -66,14 +74,10 @@ type wizardEffects struct {
 	// sudo is the stage that finds how to reach root on ws. A run takes it from the scan before it, so
 	// that its password is asked once.
 	sudo *wizard.Sudo
-	// stop and left are the run's Stop and LeftOut, which reach the steps of ws mac apply too. Nil ones
-	// run all.
+	// stop is the run's Stop, which reaches the steps of ws mac apply too. Nil runs all.
 	stop func() error
-	left func(parent, name string) bool
-	// events hears ws's run, and only is what it takes where it runs in part. A plain run has neither:
-	// it follows ws's run by its lines.
+	// events hears ws's run. A plain run has none: it follows ws's run by its lines.
 	events step.Observer
-	only   []string
 }
 
 // wizardStages returns the stages of ws mac wizard, in order.
@@ -96,11 +100,11 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	ws := wizard.NewSession(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Out: out},
 		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = host.SSH, p.tty, check, e.hidden, out
-	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only}
+	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
-	setup := wizardSetup(e, later)
+	setup := wizardSetup(e, o.left, later)
 	login := &wizard.Login{SSH: host.SSH, Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
 	cable := &wizard.Cable{Ws: ws, SSH: host.SSH, Conf: later, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}

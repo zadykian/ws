@@ -109,59 +109,52 @@ func wsRunOf(stages []step.Step) *wizard.WsRun {
 	panic("the wizard has no stage of ws's run")
 }
 
-// wizardRun is what a run of the stages takes from a screen.
-type wizardRun struct {
-	o    wizardOptions
-	sudo *wizard.Sudo
-	// left and only are a choice's. Nil ones run every stage whole.
-	left func(parent, name string) bool
-	only []string
-}
-
-// work is r beside a screen. What stays by hand goes to the run's stdout, as in a plain run.
-func (w macScreen) work(r wizardRun) tui.Work {
+// work is a run of the stages by o beside a screen. What stays by hand goes to the run's stdout, as in
+// a plain run.
+func (w macScreen) work(o wizardOptions, sudo *wizard.Sudo) tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
-		e := w.effects(b, r.sudo)
-		e.left, e.only, e.events = r.left, r.only, b
+		e := w.effects(b, sudo)
+		e.events = b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
-		o := b.Options(step.Options{Check: r.o.check, LeftOut: r.left})
-		_, err := wizard.Run(ctx, e.p.machine, o, wizardStages(e, r.o), w.p.lockDir(), w.p.pid, closing)
+		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
+		_, err := wizard.Run(ctx, e.p.machine, so, wizardStages(e, o), w.p.lockDir(), w.p.pid, closing)
 		return unwrapStep(err)
 	}
 }
 
-// running gives draw a run's config and the work of r. The run's stdout prints past the screen,
+// running gives draw a run's config and the work of o. The run's stdout prints past the screen,
 // which it would paint over.
-func (w macScreen) running(r wizardRun, draw func(tui.Config, tui.Work) error) error {
+func (w macScreen) running(o wizardOptions, sudo *wizard.Sudo, draw func(tui.Config, tui.Work) error) error {
 	cfg, done := runConfig(w.c, w.p, w.config())
 	defer done()
-	return draw(cfg, w.work(r))
+	return draw(cfg, w.work(o, sudo))
 }
 
 // whole runs every stage, on the run screen of their names.
 func (w macScreen) whole() error {
-	return w.running(wizardRun{o: w.o, sudo: &wizard.Sudo{}}, func(cfg tui.Config, work tui.Work) error {
+	return w.running(w.o, &wizard.Sudo{}, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewRunScreen(runTitle(w.c, w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }
 
-// runOf is the run of what the lists chose. A stage in part leaves out ws's roles by --only, as they
-// run on ws, and ws mac apply's steps by the run's filter. ws's run whole by a tick goes once more, as
-// under --update: a good last run says nothing of a step that drifted after it.
-func (w macScreen) runOf(choice tui.QueueChoice, sudo *wizard.Sudo) wizardRun {
+// optionsOf is the options of a run of what the lists chose. A stage in part leaves out ws's roles by
+// --only, as they run on ws, and ws mac apply's steps by the run's filter. ws's run whole by a tick goes
+// once more, as under --update: a good last run says nothing of a step that drifted after it.
+func (w macScreen) optionsOf(choice tui.QueueChoice) wizardOptions {
 	o := w.o
 	o.check = choice.Next == tui.NextCheck
 	name := wsRunOf(w.plainStages()).Name()
 	o.update = o.update || slices.Contains(choice.Whole, name)
-	return wizardRun{o: o, sudo: sudo, left: wizardLeft(choice), only: choice.Partial[name]}
+	o.left, o.only = wizardLeft(choice), choice.Partial[name]
+	return o
 }
 
 // chosen runs what the lists chose, on a run of those stages.
 func (w macScreen) chosen(choice tui.QueueChoice, sudo *wizard.Sudo) error {
-	r := w.runOf(choice, sudo)
-	return w.running(r, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewQueueRun(runTitle(w.c, r.o.check), cfg.Theme, choice)
+	o := w.optionsOf(choice)
+	return w.running(o, sudo, func(cfg tui.Config, work tui.Work) error {
+		screen := tui.NewQueueRun(runTitle(w.c, o.check), cfg.Theme, choice)
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }

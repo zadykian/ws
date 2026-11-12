@@ -20,12 +20,11 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
 	w := macScreen{c, p, wizardOptions{}}
-	r := wizardRun{o: wizardOptions{check: true}, sudo: &wizard.Sudo{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	var text bytes.Buffer
 	cfg.Text = &text
-	if err := tui.Run(context.Background(), cfg, screen, w.work(r)); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.work(wizardOptions{check: true}, &wizard.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
@@ -113,10 +112,10 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 	w := macScreen{p: fakeProcess()}
-	if !w.runOf(tui.QueueChoice{Whole: []string{"ws's run"}}, nil).o.update {
+	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}).update {
 		t.Error("a tick in ws's run left the last run to speak")
 	}
-	if w.runOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}, nil).o.update {
+	if w.optionsOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}).update {
 		t.Error("another stage's tick ran ws again")
 	}
 }
@@ -125,11 +124,11 @@ func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
 	w := macScreen{c, p, wizardOptions{}}
-	r := wizardRun{sudo: &wizard.Sudo{}, left: func(string, string) bool { return true }}
+	o := wizardOptions{left: func(string, string) bool { return true }}
 	cfg := w.config()
 	cfg.Text = io.Discard
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
-	if err := tui.Run(context.Background(), cfg, screen, w.work(r)); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.work(o, &wizard.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
 	if slices.Contains(m.Calls, "run xcode-select --install") {
