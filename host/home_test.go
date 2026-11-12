@@ -161,3 +161,28 @@ func TestHomeFileOfRootChownsToRoot(t *testing.T) {
 		t.Errorf("owners %v", m.Owners)
 	}
 }
+
+func TestValidatedHomeFileMakesItsParentsBeforeTheCheck(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["check /home/ws/.config/f.ws-check"] = effecttest.Result{}
+	v := host.Validated{
+		File:  account.File(m, ".config/f", []byte("a"), 0o644),
+		Check: func(p string) (string, []string) { return "check", []string{p} },
+	}
+	changes, _ := v.Plan(t.Context())
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	var made, wrote int
+	for i, c := range m.Calls {
+		if c == "mkdir /home/ws/.config 755" {
+			made = i
+		}
+		if strings.Contains(c, ".ws-check") && wrote == 0 {
+			wrote = i
+		}
+	}
+	if made == 0 || wrote == 0 || made > wrote {
+		t.Errorf("the parent at %d, the check file at %d: %v", made, wrote, m.Calls)
+	}
+}
