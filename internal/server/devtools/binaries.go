@@ -48,27 +48,27 @@ var dockerLS = release{
 }
 
 // pglsURL is r's asset for goarch. The asset spells the architectures x86_64 and aarch64.
-func pglsURL(r release, goarch string) string {
+func pglsURL(version, goarch string) string {
 	target := map[string]string{"amd64": "x86_64", "arm64": "aarch64"}[goarch]
 	return "https://github.com/supabase-community/postgres-language-server/releases/download/" +
-		r.version + "/postgres-language-server_" + target + "-unknown-linux-gnu"
+		version + "/postgres-language-server_" + target + "-unknown-linux-gnu"
 }
 
 // dockerLSURL is r's asset for goarch, under the tag "v" and the version.
-func dockerLSURL(r release, goarch string) string {
-	return "https://github.com/docker/docker-language-server/releases/download/v" + r.version +
-		"/docker-language-server-linux-" + goarch + "-v" + r.version
+func dockerLSURL(version, goarch string) string {
+	return "https://github.com/docker/docker-language-server/releases/download/v" + version +
+		"/docker-language-server-linux-" + goarch + "-v" + version
 }
 
 // download is the step that puts r's binary at /usr/local/bin/name, root's and mode 0755 so any
 // ws_user can run it. A goarch with no pin fails the step's Plan, before any URL exists.
-func download(m effect.Machine, goarch, name string, r release, url func(release, string) string) host.Lazy {
+func download(m effect.Machine, goarch, name string, r release, url func(version, arch string) string) host.Lazy {
 	return host.Lazy{Title: "Devtools " + name, Parts: func(context.Context) ([]host.Resource, error) {
 		sum, err := r.digest(goarch)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
-		return []host.Resource{host.Download{M: m, URL: url(r, goarch), Path: "/usr/local/bin/" + name,
+		return []host.Resource{host.Download{M: m, URL: url(r.version, goarch), Path: "/usr/local/bin/" + name,
 			SHA256: sum, Mode: 0o755}}, nil
 	}}
 }

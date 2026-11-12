@@ -16,10 +16,10 @@ func TestTheURLsNameEachServersAssetPerArchitecture(t *testing.T) {
 	const pg = "https://github.com/supabase-community/postgres-language-server/releases/download/0.28.2/"
 	const dk = "https://github.com/docker/docker-language-server/releases/download/v0.20.1/"
 	for got, want := range map[string]string{
-		pglsURL(pgls, "amd64"):         pg + "postgres-language-server_x86_64-unknown-linux-gnu",
-		pglsURL(pgls, "arm64"):         pg + "postgres-language-server_aarch64-unknown-linux-gnu",
-		dockerLSURL(dockerLS, "amd64"): dk + "docker-language-server-linux-amd64-v0.20.1",
-		dockerLSURL(dockerLS, "arm64"): dk + "docker-language-server-linux-arm64-v0.20.1",
+		pglsURL(pgls.version, "amd64"):         pg + "postgres-language-server_x86_64-unknown-linux-gnu",
+		pglsURL(pgls.version, "arm64"):         pg + "postgres-language-server_aarch64-unknown-linux-gnu",
+		dockerLSURL(dockerLS.version, "amd64"): dk + "docker-language-server-linux-amd64-v0.20.1",
+		dockerLSURL(dockerLS.version, "arm64"): dk + "docker-language-server-linux-arm64-v0.20.1",
 	} {
 		if got != want {
 			t.Errorf("url %s, want %s", got, want)
@@ -46,7 +46,7 @@ func TestADigestFailsForAnArchitectureWithNoPin(t *testing.T) {
 }
 
 // downloadOf returns the one Download that the step for the server plans on goarch.
-func downloadOf(t *testing.T, goarch, name string, r release, url func(release, string) string) host.Download {
+func downloadOf(t *testing.T, goarch, name string, r release, url func(version, arch string) string) host.Download {
 	t.Helper()
 	parts, err := download(effecttest.NewMachine(), goarch, name, r, url).Parts(t.Context())
 	if err != nil || len(parts) != 1 {
@@ -59,11 +59,11 @@ func TestEachServerIsRootsBinaryAtMode0755WithItsPin(t *testing.T) {
 	for _, arch := range []string{"amd64", "arm64"} {
 		pg := downloadOf(t, arch, "postgres-language-server", pgls, pglsURL)
 		dk := downloadOf(t, arch, "docker-language-server", dockerLS, dockerLSURL)
-		if pg.URL != pglsURL(pgls, arch) || pg.SHA256 != pgls.sha256[arch] ||
+		if pg.URL != pglsURL(pgls.version, arch) || pg.SHA256 != pgls.sha256[arch] ||
 			pg.Path != "/usr/local/bin/postgres-language-server" {
 			t.Errorf("%s: %+v", arch, pg)
 		}
-		if dk.URL != dockerLSURL(dockerLS, arch) || dk.SHA256 != dockerLS.sha256[arch] ||
+		if dk.URL != dockerLSURL(dockerLS.version, arch) || dk.SHA256 != dockerLS.sha256[arch] ||
 			dk.Path != "/usr/local/bin/docker-language-server" {
 			t.Errorf("%s: %+v", arch, dk)
 		}
@@ -90,8 +90,8 @@ func servePins(t *testing.T, m *effecttest.Machine) {
 	t.Cleanup(func() { pgls, dockerLS = pgls0, dockerLS0 })
 	pgls = release{version: pgls0.version, sha256: map[string]string{runtime.GOARCH: sum}}
 	dockerLS = release{version: dockerLS0.version, sha256: map[string]string{runtime.GOARCH: sum}}
-	m.Pages[pglsURL(pgls, runtime.GOARCH)] = body
-	m.Pages[dockerLSURL(dockerLS, runtime.GOARCH)] = body
+	m.Pages[pglsURL(pgls.version, runtime.GOARCH)] = body
+	m.Pages[dockerLSURL(dockerLS.version, runtime.GOARCH)] = body
 }
 
 // withPackages returns serverSteps after an empty step of the name that the npm servers wait on.
