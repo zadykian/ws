@@ -6,17 +6,6 @@ import (
 	"testing"
 )
 
-// testStages is a queue across both sides: a stage of steps, a stage of roles no scan has read.
-func testStages() []Stage {
-	return []Stage{
-		{Name: "Tools"},
-		{Name: "Setup", Waits: "Tools", Nested: []Group{{Name: "Setup", Steps: []string{"one", "two"}}}},
-		{Name: "Sudo", Side: WsSide, Waits: "Setup"},
-		{Name: "Run", Side: WsSide, Waits: "Sudo", Nested: []Group{{Name: "base"}, {Name: "ssh"}}},
-		{Name: "Signing", Waits: "Run"},
-	}
-}
-
 // drawn is what a side of l shows, a line each, its colors gone.
 func drawn(l pickList, side Side) []string {
 	l.side = side
