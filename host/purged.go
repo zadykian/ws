@@ -32,7 +32,7 @@ func (c purge) Apply(ctx context.Context) error {
 // Plan reads dpkg once and purges each package with anything of it on the machine. One that left
 // its settings alone still takes a purge. With no names, it plans nothing.
 func (p Purged) Plan(ctx context.Context) ([]Change, error) {
-	states, err := dpkgStates(ctx, p.M, p.Names...)
+	states, err := PackageStates(ctx, p.M, p.Names...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +51,14 @@ func (p Purged) Plan(ctx context.Context) ([]Change, error) {
 // Report shows each package as dpkg knows it. One that is installed stands against ws, as a run
 // purges it.
 func (p Purged) Report(ctx context.Context) ([]step.Item, error) {
-	states, err := dpkgStates(ctx, p.M, p.Names...)
+	states, err := PackageStates(ctx, p.M, p.Names...)
 	if err != nil {
 		return nil, err
 	}
 	items := make([]step.Item, len(p.Names))
 	for i, name := range p.Names {
 		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: missing, Found: states[name].text()}
-		if states[name].installed() {
+		if states[name].Installed() {
 			items[i].Conflict = "installed, and ws purges it"
 		}
 	}

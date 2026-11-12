@@ -68,11 +68,11 @@ func (p Package) Plan(ctx context.Context) ([]Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("package %s: %w", p.Name, err)
 	}
-	states, err := dpkgStates(ctx, p.M, p.Name)
+	states, err := PackageStates(ctx, p.M, p.Name)
 	if err != nil {
 		return nil, err
 	}
-	if have := states[p.Name]; have.installed() && have.version == p.Source.Version {
+	if have := states[p.Name]; have.Installed() && have.Version == p.Source.Version {
 		return Absent{M: p.M, Path: file.Path}.Plan(ctx)
 	}
 	var changes []Change

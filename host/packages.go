@@ -59,19 +59,19 @@ func (p Packages) Plan(ctx context.Context) ([]Change, error) {
 			patterns = append(patterns, n)
 		}
 	}
-	states, err := dpkgStates(ctx, p.M, patterns...)
+	states, err := PackageStates(ctx, p.M, patterns...)
 	if err != nil {
 		return nil, err
 	}
 	var missing []string
 	for _, n := range plain {
-		if !states[n].installed() {
+		if !states[n].Installed() {
 			missing = append(missing, n)
 		}
 	}
 	for _, spec := range pinned {
 		name, glob, _ := strings.Cut(spec, "=")
-		if have := states[name]; !have.installed() || !globMatch(glob, have.version) {
+		if have := states[name]; !have.Installed() || !globMatch(glob, have.Version) {
 			missing = append(missing, spec)
 		}
 	}
@@ -126,7 +126,7 @@ func (p Packages) Report(ctx context.Context) ([]step.Item, error) {
 		names[i] = name
 		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: cmp.Or(glob, "installed")}
 	}
-	states, err := dpkgStates(ctx, p.M, names...)
+	states, err := PackageStates(ctx, p.M, names...)
 	if err != nil {
 		return nil, err
 	}

@@ -58,3 +58,22 @@ func TestPackagesReportNoNamesRunsNoDpkg(t *testing.T) {
 		t.Errorf("items = %+v, %v, calls %q, want none and no call", got, err, m.Calls)
 	}
 }
+
+func TestPackageStatesReadsPatternsInOneRunAndNoneRunsNothing(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Packages = effecttest.Packages{"linux-image-generic": {Version: "6.8", Status: "ii"},
+		"linux-image-generic-hwe-24.04": {Version: "6.11", Status: "rc"}}
+	got, err := host.PackageStates(t.Context(), m, "linux-image-generic*", "absent")
+	want := map[string]host.PackageState{"linux-image-generic": {Version: "6.8", Status: "ii"},
+		"linux-image-generic-hwe-24.04": {Version: "6.11", Status: "rc"}}
+	if err != nil || !reflect.DeepEqual(got, want) || len(m.Calls) != 1 {
+		t.Errorf("states = %+v, %v, calls %q, want %+v from one run", got, err, m.Calls, want)
+	}
+	if !got["linux-image-generic"].Installed() || got["linux-image-generic-hwe-24.04"].Installed() {
+		t.Errorf("states = %+v, want ii alone installed", got)
+	}
+	m.Calls = nil
+	if got, err := host.PackageStates(t.Context(), m); err != nil || len(got) != 0 || len(m.Calls) != 0 {
+		t.Errorf("no pattern: states = %+v, %v, calls %q, want none", got, err, m.Calls)
+	}
+}

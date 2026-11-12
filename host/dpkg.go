@@ -9,19 +9,19 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// dpkgState is what dpkg-query says of a package: its version and its status, such as ii, rc or
+// PackageState is what dpkg-query says of a package: its version and its status, such as ii, rc or
 // iU, whole. A package dpkg doesn't know has the zero state.
-type dpkgState struct {
-	version, status string
+type PackageState struct {
+	Version, Status string
 }
 
 // dpkgFormat is the one format of dpkg-query that ws reads.
 const dpkgFormat = "${Package} ${Version} ${db:Status-Abbrev}\n"
 
-// dpkgStates asks dpkg for the packages of patterns, names or globs, and no others, as a report
+// PackageStates asks dpkg for the packages of patterns, names or globs, and no others, as a report
 // covers what ws manages. No pattern runs nothing: dpkg-query lists every package for none.
-func dpkgStates(ctx context.Context, m effect.Machine, patterns ...string) (map[string]dpkgState, error) {
-	states := map[string]dpkgState{}
+func PackageStates(ctx context.Context, m effect.Machine, patterns ...string) (map[string]PackageState, error) {
+	states := map[string]PackageState{}
 	if len(patterns) == 0 {
 		return states, nil
 	}
@@ -38,37 +38,37 @@ func dpkgStates(ctx context.Context, m effect.Machine, patterns ...string) (map[
 			continue
 		}
 		// A line of two fields has no version: dpkg knows of a package it never installed.
-		state := dpkgState{status: f[len(f)-1]}
+		state := PackageState{Status: f[len(f)-1]}
 		if len(f) == 3 {
-			state.version = f[1]
+			state.Version = f[1]
 		}
 		// A package listed for two architectures keeps its installed line.
-		if have, ok := states[f[0]]; !ok || !have.installed() {
+		if have, ok := states[f[0]]; !ok || !have.Installed() {
 			states[f[0]] = state
 		}
 	}
 	return states, nil
 }
 
-// installed is true for ii alone: plans and reports count a package in any other state, such as
+// Installed is true for ii alone: plans and reports count a package in any other state, such as
 // iU or hi, as not installed.
-func (s dpkgState) installed() bool { return s.status == "ii" }
+func (s PackageState) Installed() bool { return s.Status == "ii" }
 
 // settingsLeft is true for a package that was removed and kept its settings.
-func (s dpkgState) settingsLeft() bool { return len(s.status) >= 2 && s.status[1] == 'c' }
+func (s PackageState) settingsLeft() bool { return len(s.Status) >= 2 && s.Status[1] == 'c' }
 
 // present is true for a package with anything of it on the machine: the status's second letter
 // is n for nothing.
-func (s dpkgState) present() bool { return len(s.status) >= 2 && s.status[1] != 'n' }
+func (s PackageState) present() bool { return len(s.Status) >= 2 && s.Status[1] != 'n' }
 
-func (s dpkgState) text() string {
+func (s PackageState) text() string {
 	switch {
-	case s.installed():
-		return s.version
+	case s.Installed():
+		return s.Version
 	case s.settingsLeft():
 		return "settings left"
 	case !s.present():
 		return missing
 	}
-	return s.version + " (" + s.status + ")"
+	return s.Version + " (" + s.Status + ")"
 }
