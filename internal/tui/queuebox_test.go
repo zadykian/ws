@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"maps"
 	"slices"
 	"testing"
 )
@@ -43,5 +44,43 @@ func TestAStepsBoxTurnsAloneAndALockedOneHolds(t *testing.T) {
 	}
 	if got := q.toggled(MacSide, 0); !slices.Equal(queueBoxes(got), queueBoxes(q)) {
 		t.Errorf("a locked stage turned: %q", queueBoxes(got))
+	}
+}
+
+// queueChoosing returns q with the rows of those names chosen, and no other.
+func queueChoosing(q queue, names ...string) queue {
+	q.stages = slices.Clone(q.stages)
+	for i, s := range q.stages {
+		q.stages[i].row.chosen = slices.Contains(names, s.row.name)
+		q.stages[i].list.rows = slices.Clone(s.list.rows)
+		for j, r := range s.list.rows {
+			q.stages[i].list.rows[j].chosen = slices.Contains(names, r.name)
+		}
+	}
+	return q.settled()
+}
+
+func TestAStageFollowsTheStepsItRuns(t *testing.T) {
+	q := queueChoosing(queueOf(testStages()), "one")
+	if got := drawnQueue(q, MacSide); got[0] != " 1 [#] · Tools" || got[1] != " 2 [-] · Setup" {
+		t.Errorf("list = %q", got)
+	}
+	if got, want := q.only(), []string{"Tools", "Setup"}; !slices.Equal(got, want) {
+		t.Errorf("only = %q, want %q", got, want)
+	}
+	parts := map[string][]string{"Setup": {"Setup/one"}}
+	if !maps.EqualFunc(q.partial(), parts, slices.Equal) {
+		t.Errorf("partial = %q", q.partial())
+	}
+}
+
+func TestALockedStageRunsWhole(t *testing.T) {
+	q := queueChoosing(queueOf(testStages()), "Signing")
+	want := []string{"[#]", "[#]", "[#]", "[#]", "[#]", "[#]", "[#]", "[#]", "[x]"}
+	if !slices.Equal(queueBoxes(q), want) {
+		t.Errorf("boxes = %q, want %q", queueBoxes(q), want)
+	}
+	if len(q.partial()) != 0 {
+		t.Errorf("partial = %q", q.partial())
 	}
 }

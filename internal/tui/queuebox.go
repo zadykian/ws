@@ -74,3 +74,28 @@ func (q queue) toggled(side Side, at cursor) queue {
 	}
 	return q.settled()
 }
+
+// only returns the stages on, as Options.Only names them: a stage runs what is under it.
+func (q queue) only() []string {
+	var names []string
+	for _, s := range q.stages {
+		if s.row.on() {
+			names = append(names, s.row.name)
+		}
+	}
+	return names
+}
+
+// partial returns what each stage that runs in part runs, by Options.Only's names.
+func (q queue) partial() map[string][]string {
+	var parts map[string][]string
+	for _, s := range q.stages {
+		if on, _, all := s.list.tally(); on > 0 && on < all {
+			if parts == nil {
+				parts = map[string][]string{}
+			}
+			parts[s.row.name] = s.list.entries(func(pickRow) bool { return true })
+		}
+	}
+	return parts
+}
