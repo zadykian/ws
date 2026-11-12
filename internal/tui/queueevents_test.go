@@ -23,3 +23,28 @@ func TestAStageTakesTheWordsTheScanSaidBeforeItsStepEnded(t *testing.T) {
 		t.Errorf("said = %+v, heard = %+v", said, q.heard)
 	}
 }
+
+func TestAnEventNamesAStepNoScanHad(t *testing.T) {
+	q := queueOf(testStages()).take(planned("", "Run", 3)).take(planned("base", "Packages", 0, oneChange("a")))
+	q = q.take(planned("base", "Locale", 1))
+	got := drawnQueue(q, WsSide)
+	want := []string{" 3 [ ] · Sudo", " 4 [ ] ✓ Run", "     [-] base", "       [x] ● Packages", "       [ ] ✓ Locale",
+		"     [ ] · ssh"}
+	if !slices.Equal(got, want) {
+		t.Errorf("list = %q, want %q", got, want)
+	}
+}
+
+func TestAnEventOfAStageNamedAsItsGroupJoinsItsSteps(t *testing.T) {
+	q := queueOf(testStages()).take(planned("Setup", "three", 2))
+	if got := drawnQueue(q, MacSide)[4]; got != "     [ ] ✓ three" {
+		t.Errorf("row = %q", got)
+	}
+}
+
+func TestAnEventOfAStageWithNoGroupOfItsNameJoinsItsList(t *testing.T) {
+	q := queueOf(testStages()).take(planned("Run", "Sudo again", 2))
+	if got := drawnQueue(q, WsSide)[2]; got != "     [ ] ✓ Sudo again" {
+		t.Errorf("row = %q", got)
+	}
+}
