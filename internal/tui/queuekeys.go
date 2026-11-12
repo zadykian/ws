@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -77,6 +78,54 @@ func (s queueScreen) View() tea.View {
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
 
+// pressed turns the boxes that msg's button names, moves the cursor, walks the lists, or gives the
+// choice.
+func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
+	switch {
+	case s.left:
+		return s, nil
+	case s.held():
+		return s.typed(msg), nil
+	case key.Matches(msg, clearKey):
+		s.filter = s.filter.cleared()
+		s.list = s.list.filtered("")
+		return s, nil
+	case key.Matches(msg, Keys.Next):
+		return s.tabbed(1), nil
+	case key.Matches(msg, Keys.Prev):
+		return s.tabbed(-1), nil
+	}
+	var place int
+	s.footer, place = s.footer.Update(msg)
+	switch place {
+	case pickTogglePlace:
+		s.list = s.list.toggled()
+	case pickAllPlace:
+		s.list = s.list.chose(func(pickRow) bool { return true })
+	case pickNonePlace:
+		s.list = s.list.chose(func(pickRow) bool { return false })
+	case pickInvertPlace:
+		s.list = s.list.chose(func(r pickRow) bool { return !r.on() })
+	case pickPendingPlace:
+		s.list = s.list.chose(pickRow.pending).whole(pickRow.pending)
+	case pickFilterPlace:
+		s.filter = s.filter.opened()
+	case pickRunPlace:
+		return s.leave(s.queueChoice(NextRun))
+	case pickCheckPlace:
+		return s.leave(s.queueChoice(NextCheck))
+	case pickQuitPlace:
+		return s.leave(s.queueChoice(NextLeave))
+	case queueConfigurePlace:
+		return s.leave(s.queueChoice(NextConfigure))
+	case queueStatePlace:
+		return s.leave(s.queueChoice(NextState))
+	default:
+		s.list = s.list.moved(msg, max(s.listHeight(), 1))
+	}
+	return s, nil
+}
+
 // typed gives the filter a key or a paste, and the list narrows as its words change.
 func (s queueScreen) typed(msg tea.Msg) queueScreen {
 	var words string
@@ -103,4 +152,24 @@ func (s queueScreen) leave(c QueueChoice) (queueScreen, tea.Cmd) {
 		s.picks <- c
 		return nil
 	}
+}
+
+// tabbed walks the ring of the lists, then the buttons, as a Tab between the lists would else leave
+// for the buttons.
+func (s queueScreen) tabbed(step int) queueScreen {
+	sides := s.list.sides()
+	next := s.list.pane(s.list.side) + step
+	if s.footer.Focused() < 0 && next >= 0 && next < len(sides) {
+		s.list = s.list.facing(sides[next])
+		return s
+	}
+	s.footer = s.footer.move(step)
+	if s.footer.Focused() >= 0 {
+		return s
+	}
+	s.list = s.list.facing(sides[0])
+	if step < 0 {
+		s.list = s.list.facing(sides[len(sides)-1])
+	}
+	return s
 }
