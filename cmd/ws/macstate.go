@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/engine/tui"
 )
 
 // macDoc is what ws mac state --json prints.

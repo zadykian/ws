@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/mac"
 )

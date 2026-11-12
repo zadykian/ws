@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/secrets"
-	"github.com/zadykian/ws/internal/tui"
 )
 
 func TestServerConfigureRefusals(t *testing.T) {

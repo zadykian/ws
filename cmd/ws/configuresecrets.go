@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/secrets"
-	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 )
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/engine/tui"
 )
 
 // plainFlag names the persistent flag that keeps a command to lines.

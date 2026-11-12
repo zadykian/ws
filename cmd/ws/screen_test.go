@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/engine/tui"
 )
 
 // screenCommand returns a command that keys type on, and what it draws.

@@ -10,8 +10,8 @@ import (
 	"filippo.io/age"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/secrets"
-	"github.com/zadykian/ws/internal/tui"
 )
 
 // wsSecrets is a ws that takes the login as root, whose ws server secrets runs here on ws, as root,

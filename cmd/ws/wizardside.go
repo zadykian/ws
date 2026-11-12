@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 )
 

@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/tui"
+	"github.com/zadykian/ws/engine/tui"
 )
 
 // keyed gives the Mac a mac.conf that names the file key it has for ws's login, as ssh's step needs.

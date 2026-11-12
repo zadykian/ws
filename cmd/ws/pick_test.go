@@ -13,8 +13,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/server/values"
-	"github.com/zadykian/ws/internal/tui"
 )
 
 // repeating types keys again and again, so that one lands once the list takes it.
