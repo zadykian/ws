@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // configureStage names the Configure screen in what a save says.

@@ -7,9 +7,9 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 

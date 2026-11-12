@@ -4,7 +4,7 @@ import (
 	"cmp"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // MacReach is the Mac's way to ws: ssh at the direct way that mac.conf gives, root by Sudo.

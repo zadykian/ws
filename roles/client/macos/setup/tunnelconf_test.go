@@ -3,7 +3,7 @@ package setup
 import (
 	"testing"
 
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 func TestTunnelConf(t *testing.T) {

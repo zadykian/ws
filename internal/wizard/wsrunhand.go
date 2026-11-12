@@ -3,7 +3,7 @@ package wizard
 import (
 	"cmp"
 
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // hand adds what stays by hand of ws, the router and the Mac to the list. ws's part comes from the

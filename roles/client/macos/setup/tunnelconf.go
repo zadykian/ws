@@ -3,7 +3,7 @@ package setup
 import (
 	"strings"
 
-	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // tunnelConf is tunnel.conf, the values the daemon takes from mac.conf, so that a root daemon reads
