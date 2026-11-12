@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // loggedSudo is a sudo that runs its command bare, and keeps a line of each in the log it returns.

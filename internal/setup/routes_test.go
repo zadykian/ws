@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/setup"
 )
 

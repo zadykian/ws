@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 var _ effect.Foreground = effect.OSMachine{}

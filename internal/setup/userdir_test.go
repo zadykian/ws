@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // TestUserDirPlanAgreesWithReport finds that a report stands off where a plan changes the

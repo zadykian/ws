@@ -5,7 +5,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/host"
 	"github.com/zadykian/ws/internal/server/ufw"
 	"github.com/zadykian/ws/internal/server/values"

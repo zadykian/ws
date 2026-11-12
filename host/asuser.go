@@ -3,7 +3,7 @@ package host
 import (
 	"context"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // User is a user of the machine and the home that commands run as it get.

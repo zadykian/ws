@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const lsLine = "docker container ls --all --filter name=^signoz-telemetrystore-migrator$ --format {{.Status}}"

@@ -3,7 +3,7 @@ package docker
 import (
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 func TestSubIDsNeedARangeInBothFiles(t *testing.T) {

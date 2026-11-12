@@ -10,7 +10,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // CredstorePath is the identity's credential on ws, where a unit's LoadCredentialEncrypted=ws-secrets

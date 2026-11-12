@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // typed puts a file that holds text in place of os.Stdin, as a test's own is empty.

@@ -1,6 +1,6 @@
 package step
 
-import "github.com/zadykian/ws/effect"
+import "github.com/zadykian/ws/engine/core/effect"
 
 // Kind says what an Event reports of a step.
 type Kind int

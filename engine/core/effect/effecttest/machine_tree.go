@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // tree handles two commands that the table holds no result for, and reports whether it did. Root's

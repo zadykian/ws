@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // fakeDashboards is SigNoz's v2 dashboards API: one list, a read by ID, a create and a replace.

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const sourceURL = "https://github.com/Fred78290/nct6687d/archive/" + nct6687Commit + ".tar.gz"

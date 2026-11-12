@@ -10,8 +10,8 @@ import (
 	"filippo.io/age/armor"
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/apply"
 )

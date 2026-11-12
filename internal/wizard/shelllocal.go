@@ -3,7 +3,7 @@ package wizard
 import (
 	"context"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // LocalShell runs a command on ws itself, as the user that runs ws, root for ws server wizard. Its

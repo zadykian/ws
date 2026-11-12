@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // migrator is the schema migrator's container, a one-shot service that each up of compose runs.

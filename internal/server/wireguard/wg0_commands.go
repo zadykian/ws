@@ -3,7 +3,7 @@ package wireguard
 import (
 	"context"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 type deleteLink struct{ m effect.Machine }

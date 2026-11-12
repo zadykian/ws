@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // scanKey returns the ed25519 key that ws offers at the way's host and port, as "ssh-ed25519 KEY",

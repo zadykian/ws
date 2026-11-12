@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // fetch reads a URL. A vendor's server can fail for a moment, so curl tries again, five times at

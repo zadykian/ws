@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // updateProcess returns a process of ws v1.0.0 in /h/.local/bin, with v1.1.0 the latest release.

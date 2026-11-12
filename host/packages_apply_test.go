@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 func TestPackagesApply(t *testing.T) {

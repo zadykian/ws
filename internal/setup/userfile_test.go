@@ -7,8 +7,8 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // TestUserFilePlanAgreesWithReport finds that a report stands off where a plan changes the file or

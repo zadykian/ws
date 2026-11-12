@@ -3,7 +3,7 @@ package ikeward
 import (
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/host"
 )
 

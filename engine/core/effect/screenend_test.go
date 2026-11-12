@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // A pipe of the test's own stands for a screen's: exec copies to it, as it does to any Stderr that

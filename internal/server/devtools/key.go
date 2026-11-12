@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // keyNoise are the armor's Comment and Version lines, which the keyserver swaps from one fetch to

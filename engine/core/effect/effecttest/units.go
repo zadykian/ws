@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // Units keeps the state of units and changes it as systemd does. An unknown unit is inactive. A

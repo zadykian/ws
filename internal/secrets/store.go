@@ -9,7 +9,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // Store is ws's secrets file and the identity's credential that opens it. A missing file holds no

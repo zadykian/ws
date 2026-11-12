@@ -8,7 +8,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const credDecrypt = "systemd-creds decrypt --name=ws-secrets " + CredstorePath + " -"

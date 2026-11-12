@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 func TestPackagesPlanPinnedVersion(t *testing.T) {

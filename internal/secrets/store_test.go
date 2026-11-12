@@ -8,7 +8,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // storeFixture is a machine with the credential, and the file where toml is not empty, sealed to

@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // groups returns the command groups that exist on this system: ws server, on Linux. It runs as

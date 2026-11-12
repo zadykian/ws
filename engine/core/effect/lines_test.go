@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // passLines runs the script under sh, takes the lines that start with "event ", and returns those it

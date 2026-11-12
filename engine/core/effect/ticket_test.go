@@ -9,8 +9,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // rootCalls are the ways through OSMachine that run a command as root.

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // After a full run of this ws, from the Mac or from ws, with nothing changed, no apply runs.

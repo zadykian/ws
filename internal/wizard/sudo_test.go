@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const sudoPassword = "a pass'word $x" //nolint:gosec // a test value, not a credential

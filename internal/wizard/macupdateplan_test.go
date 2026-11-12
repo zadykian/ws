@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const latestCmd = "run curl -fsS -o /dev/null -w %{redirect_url} http://127.0.0.1:22080/latest"

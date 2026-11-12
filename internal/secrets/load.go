@@ -5,7 +5,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // Load reads and decrypts the secrets file. An error names the file, never a value.

@@ -7,7 +7,7 @@ import (
 	"path"
 	"reflect"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // dashboardFiles holds the dashboards as SigNoz returns them, without the ID, owner and times it

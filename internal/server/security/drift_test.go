@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 const unshare = "unshare --net sh -c \"$1\" \"$2\" && nft -s list table inet ws sh " + scriptFile + " " + tableFile

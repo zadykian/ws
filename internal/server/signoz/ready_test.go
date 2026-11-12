@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 // readyFixture is a booted machine and a SigNoz that answers 503 for the first fails requests.

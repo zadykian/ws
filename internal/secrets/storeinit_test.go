@@ -7,7 +7,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 func TestStoreInitMakesBoth(t *testing.T) {

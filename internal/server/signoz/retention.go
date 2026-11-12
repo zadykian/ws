@@ -1,6 +1,6 @@
 package signoz
 
-import "github.com/zadykian/ws/effect"
+import "github.com/zadykian/ws/engine/core/effect"
 
 // Retention is the step that keeps SigNoz's data for Days. SigNoz keeps traces and logs for 15 days
 // and metrics for 30, unless told otherwise. A new retention applies only to data that comes in

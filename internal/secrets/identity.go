@@ -7,7 +7,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // CredentialName is the name of the identity's systemd credential: the unit loads it by

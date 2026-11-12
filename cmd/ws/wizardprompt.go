@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // signalPrompt gives up a question when ctx ends. The run catches SIGINT, SIGTERM and SIGHUP into

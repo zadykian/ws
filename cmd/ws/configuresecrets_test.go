@@ -9,7 +9,7 @@ import (
 
 	"filippo.io/age"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/tui"
 )

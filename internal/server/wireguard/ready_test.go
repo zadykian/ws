@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
 )
 
 func newReady(m *effecttest.Machine, out *effecttest.Out, slept *int) ready {

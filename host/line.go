@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // Line is one line of a file that may hold others. A missing file is made with the owner and mode.
