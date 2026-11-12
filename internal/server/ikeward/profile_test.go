@@ -2,6 +2,7 @@ package ikeward
 
 import (
 	"errors"
+	"io/fs"
 	"slices"
 	"testing"
 
@@ -16,8 +17,10 @@ func newProfile(m *effecttest.Machine) profile {
 func TestWithWritesTheFilesUnderTheirNamesAndRemovesThem(t *testing.T) {
 	m := effecttest.NewMachine()
 	var seen string
+	var mode fs.FileMode
 	err := newProfile(m).with(t.Context(), func() error {
 		seen = string(m.Files[runDir+"/vpnclient.p12"]) + string(m.Files[runDir+"/vpnclient.sswan"])
+		mode = m.Dirs[runDir]
 		return nil
 	})
 	if err != nil || seen != "p12sswan" {
@@ -26,8 +29,11 @@ func TestWithWritesTheFilesUnderTheirNamesAndRemovesThem(t *testing.T) {
 	if !slices.Contains(m.Calls, "root rm -rf -- "+runDir) {
 		t.Errorf("calls = %q, lack the removal", m.Calls)
 	}
-	if m.Dirs[runDir] != 0o700 {
-		t.Errorf("mode of %s = %o, want 700", runDir, m.Dirs[runDir])
+	if mode != 0o700 {
+		t.Errorf("mode of %s = %o, want 700", runDir, mode)
+	}
+	if _, left := m.Dirs[runDir]; left {
+		t.Errorf("%s was left", runDir)
 	}
 }
 
