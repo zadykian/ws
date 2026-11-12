@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/wgkey"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 func newKey(m *effecttest.Machine) key {

@@ -10,7 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/internal/wgkey"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 // keyMode is the key's mode: networkd reads it as the user systemd-network, so the file is

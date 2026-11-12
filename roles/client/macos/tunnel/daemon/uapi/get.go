@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zadykian/ws/internal/wgkey"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 // Info is what the device reports of the peer.

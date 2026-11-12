@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/wgkey"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 const stateText = "tier=cable\nendpoint=10.77.0.1:51820\ninterface=utun4\nsince=1793448000\n" +

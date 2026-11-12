@@ -8,7 +8,7 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/zadykian/ws/internal/wgkey"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 // SetPrivateKey is the text that gives the device its private key, in base64.

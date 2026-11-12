@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/wgkey"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 // Key makes the Mac's private key in dir where none is, and returns the public key, in base64. It

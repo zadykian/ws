@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/wgkey"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
 // Dir is where root keeps the daemon's settings. They are private.key, the Mac's key; tunnel.conf,
