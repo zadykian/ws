@@ -47,8 +47,8 @@ func TestCheckNetplan(t *testing.T) {
 			t.Errorf("copied a directory the machine lacks: %s", call)
 		}
 	}
-	if got := string(m.Files[scratch+netplanPath]); got != "file" {
-		t.Errorf("the scratch file = %q", got)
+	if _, left := m.Files[scratch+netplanPath]; left {
+		t.Error("the scratch file was left")
 	}
 }
 

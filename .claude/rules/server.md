@@ -41,7 +41,7 @@ steps, and each role's page in `docs/` says what it sets up.
   ([The `playbook` job](../../docs/checks.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
-  ([devtools](../../internal/server/devtools/golang_plan.go)).
+  ([devtools](../../internal/server/devtools/golang.go)).
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
@@ -68,6 +68,8 @@ steps, and each role's page in `docs/` says what it sets up.
 - A package plans from its pin, a name and a version, and fetches its file only where that version
   is not installed. Before dpkg, it checks the file's own name and version against the pin
   ([package.go](../../host/package.go)).
+- A tree is unpacked beside its target and moved in whole, and its marker is its probe
+  ([tree.go](../../host/tree.go)).
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each
   certificate in it, and it holds one at least
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
