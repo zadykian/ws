@@ -47,10 +47,6 @@ func (f fakeWs) Lines(ctx context.Context, in []byte, take func(line string) boo
 	return f.M.PassLines(ctx, in, take, name, args...)
 }
 
-func (f fakeWs) Put(_ context.Context, path string, data []byte) error {
-	return f.M.WriteRootFile(path, data, 0o600)
-}
-
 // fakeReach is a Reach whose shell is fakeWs on M.
 type fakeReach struct {
 	Reach
@@ -76,7 +72,7 @@ func TestFakeWsKeysAScriptByItsOp(t *testing.T) {
 	}
 }
 
-func TestFakeWsPassesAndPuts(t *testing.T) {
+func TestFakeWsPasses(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[opLine("install", "v1")] = effecttest.Result{Err: errors.New("denied")}
 	m.Results[opLine("run")] = effecttest.Result{Out: []byte("event\nother\n")}
@@ -90,12 +86,6 @@ func TestFakeWsPassesAndPuts(t *testing.T) {
 	}
 	if want := []string{"other"}; !slices.Equal(m.Passed, want) {
 		t.Errorf("passed = %q; want %q", m.Passed, want)
-	}
-	if err := f.Put(ctx, "/etc/ws/k", []byte("k")); err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := m.Root["/etc/ws/k"]; !ok || string(m.Files["/etc/ws/k"]) != "k" {
-		t.Errorf("Put left root=%v file=%q", m.Root, m.Files["/etc/ws/k"])
 	}
 }
 

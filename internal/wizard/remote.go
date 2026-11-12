@@ -68,12 +68,6 @@ func (r *Remote) event(line string) bool {
 	return ok
 }
 
-// Put writes data to path on ws as root, mode 0600. path holds no blank or quote: the remote script
-// named it.
-func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
-	return r.Shell.Put(ctx, path, data)
-}
-
 // status reads what the remote script's status prints once, until a Do or an operation of the
 // Session runs. It reports whether it read any: the Shell or the script fails where root is out of
 // reach.

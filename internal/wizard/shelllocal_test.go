@@ -32,12 +32,6 @@ func TestRemoteOnWsRunsTheScriptLocally(t *testing.T) {
 	if want := []string{"echo\n", "dummy-value\n"}; !slices.Equal(m.Inputs, want) {
 		t.Errorf("stdin = %q, want %q", m.Inputs, want)
 	}
-	if err := r.Put(context.Background(), "/var/lib/ws-wizard/x", []byte("data")); err != nil {
-		t.Fatal(err)
-	}
-	if string(m.Files["/var/lib/ws-wizard/x"]) != "data" || m.Modes["/var/lib/ws-wizard/x"] != 0o600 {
-		t.Errorf("Put wrote %q, mode %v", m.Files["/var/lib/ws-wizard/x"], m.Modes["/var/lib/ws-wizard/x"])
-	}
 }
 
 func TestFollowOnWsHandsEventsOn(t *testing.T) {
