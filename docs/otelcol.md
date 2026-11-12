@@ -2,7 +2,7 @@
 
 The `otelcol` role runs the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) on
 the host. Its code is Go, in `internal/server/otelcol`, as steps of `ws server apply`:
-node_exporter, the `.deb`'s download and install, the configuration, and the check that the
+node_exporter, the `.deb`'s install, the configuration, and the check that the
 collector answers. It takes OTLP on loopback, and reads the journal, the host's metrics and its
 temperatures from node_exporter. It sends it all to SigNoz, and claude's metrics to another
 collector where one is set.
@@ -10,8 +10,10 @@ collector where one is set.
 ## The collector
 
 The OpenTelemetry Collector runs on the host as the service `otelcol-contrib`, from the `.deb` of
-its release, which `download.go` pins by version and, for each architecture, SHA-256. The file is
-checked before dpkg reads it, waits in `/var/cache/ws/`, and is removed after. Its config,
+its release, which `download.go` pins by version and, for each architecture, SHA-256. One step,
+`Collector install`, fetches the file into `/var/cache/ws/` where dpkg lists another version, and
+checks it against the SHA-256, and checks its name and version against the pin before dpkg reads
+it. The step removes the file after. A dry run on a new machine shows the install. Its config,
 `internal/server/otelcol/files/config.yaml.tmpl`, starts from SigNoz's for a collector on a VM. It:
 
 - takes OTLP on `127.0.0.1:4317` (gRPC) and `127.0.0.1:4318` (HTTP), and answers its health check

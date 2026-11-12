@@ -9,23 +9,16 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// installStep is the name of the step that installs the .deb.
+// installStep is the name of the step that fetches and installs the .deb. The package adds the
+// otelcol-contrib user and service. Its postinst enables the service and, on a booted machine,
+// starts it with the package's own config, which listens on every address. The collector stays off
+// until the role's config is in place, also at boot should a later step fail.
 const installStep = "Collector install"
 
 // pinned is the collector's .deb as a package, which plans from the pin and removes the file once
 // it installs.
 func pinned(m effect.Machine) host.Package {
 	return host.Package{M: m, Name: "otelcol-contrib", Source: host.PinnedFile{M: m, Version: version, URL: debURL, SHA256: sums}}
-}
-
-// install makes the part that installs the .deb, and stops the collector where it installs. The
-// package adds the otelcol-contrib user and service. Its postinst enables the service and, on a
-// booted machine, starts it with the package's own config, which listens on every address. The
-// collector stays off until the role's config is in place, also at boot should a later step fail.
-func install(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]host.Resource, error) {
-	return func(context.Context) ([]host.Resource, error) {
-		return []host.Resource{stopped{pinned(m), m, u, out}}, nil
-	}
 }
 
 // stopped plans the package, and the stop of the collector that it started and enabled where the
