@@ -11,8 +11,8 @@ collector where one is set.
 
 The OpenTelemetry Collector runs on the host as the service `otelcol-contrib`, from the `.deb` of
 its release, which `download.go` pins by version and, for each architecture, SHA-256. One step,
-`Collector install`, fetches the file into `/var/cache/ws/` where dpkg lists another version, and
-checks it against the SHA-256, and checks its name and version against the pin before dpkg reads
+`Collector install`, fetches the file into `/var/cache/ws/` where dpkg lists another version. It
+checks the file against the SHA-256, then its name and version against the pin, before dpkg reads
 it. The step removes the file after. A dry run on a new machine shows the install. Its config,
 `internal/server/otelcol/files/config.yaml.tmpl`, starts from SigNoz's for a collector on a VM. It:
 
