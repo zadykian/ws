@@ -115,3 +115,27 @@ func (s *Session) namePeer(ctx context.Context, key string) error {
 	_, err := s.do(ctx, opNamePeer, []string{key}, []string{"--only", "wireguard"})
 	return err
 }
+
+// nameUser names ws_user in ws's host_vars.
+func (s *Session) nameUser(ctx context.Context, user string) error {
+	_, err := s.do(ctx, opNameUser, []string{user})
+	return err
+}
+
+// install runs install.sh of the version, from url, on ws.
+func (s *Session) install(ctx context.Context, version, url string) error {
+	_, err := s.do(ctx, opInstall, []string{version, url})
+	return err
+}
+
+// run runs ws server apply with args.
+func (s *Session) run(ctx context.Context, args []string) error {
+	_, err := s.do(ctx, opRun, args)
+	return err
+}
+
+// outbound names security_outbound: false in ws's host_vars.
+func (s *Session) outbound(ctx context.Context) error {
+	_, err := s.do(ctx, opOutbound)
+	return err
+}
