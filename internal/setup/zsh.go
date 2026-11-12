@@ -69,7 +69,7 @@ func (z *Zsh) Plan(context.Context) (step.Plan, error) {
 	switch {
 	case errors.Is(err, errNotWs):
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's and sources it", z.hook())
-		link.warn(z.Out, len(cs))
+		link.warn(z.Out, len(cs), "ws's files go there")
 		return step.Plan{Changes: cs}, nil
 	case err != nil:
 		return step.Plan{}, err
@@ -77,7 +77,7 @@ func (z *Zsh) Plan(context.Context) (step.Plan, error) {
 	cs = append(cs, hook...)
 	line, err := z.line()
 	cs = append(cs, line...)
-	link.warn(z.Out, len(cs))
+	link.warn(z.Out, len(cs), "ws's files go there")
 	return step.Plan{Changes: cs}, err
 }
 

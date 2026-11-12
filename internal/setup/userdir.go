@@ -79,10 +79,10 @@ type userDirs []userDir
 // dirLink is a directory that is a link: where a step writes under it, it warns once.
 type dirLink struct{ Path, To string }
 
-// warn says that the step writes under the link, where it plans writes.
-func (l dirLink) warn(out effect.Out, writes int) {
+// warn says that the step writes under the link, where it plans writes. goes names what lands there.
+func (l dirLink) warn(out effect.Out, writes int, goes string) {
 	if l.Path != "" && writes > 0 {
-		out.Warn("%s is a link to %s: ws's files go there", l.Path, l.To)
+		out.Warn("%s is a link to %s: %s", l.Path, l.To, goes)
 	}
 }
 

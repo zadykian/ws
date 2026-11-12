@@ -48,7 +48,7 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	cs = append(cs, pub...)
-	link.warn(t.Out, len(cs))
+	link.warn(t.Out, len(cs), "ws's files go there")
 	return cs, nil
 }
 

@@ -45,7 +45,7 @@ func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
 		}
 		cs = append(cs, planned...)
 	}
-	link.warn(g.Out, len(cs))
+	link.warn(g.Out, len(cs), "ws's files go there")
 	return cs, nil
 }
 
