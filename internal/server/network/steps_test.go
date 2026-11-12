@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
@@ -38,7 +39,7 @@ func newRig(iface, address string) rig {
 	v := values.Default()
 	v.Network.DirectLinkInterface, v.Network.DirectLinkAddress = iface, address
 	out := &effecttest.Out{}
-	return rig{m, u, out, steps(v, m, u, out)}
+	return rig{m, u, out, Steps(v, secrets.Secrets{}, m, u, out)}
 }
 
 func (r rig) run(t *testing.T, check bool) (bool, error) {
