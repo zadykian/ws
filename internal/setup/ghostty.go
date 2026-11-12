@@ -119,8 +119,18 @@ func (g *Ghostty) files() ([]step.Change, error) {
 		g.Out.Warn("cannot read %s, Ghostty's config, so ws.ghostty stays out", config)
 		return nil, nil
 	}
+	dirs, link, err := g.dirs(config).plan()
+	if err != nil {
+		return nil, err
+	}
 	has := ghosttyIncludes(config, string(text), file.Path, g.Home, g.resolve())
-	return g.fileChanges(config, text, file.Path, ws, has), nil
+	return g.fileChanges(config, text, ws, dirs, link, has), nil
+}
+
+// dirs is the directory of Ghostty's config alone. Its parent is ~/Library/Application Support on
+// any Mac, so a run plans no more.
+func (g *Ghostty) dirs(config string) userDirs {
+	return userDirs{{M: g.M, Path: filepath.Dir(config), Mode: 0o755}}
 }
 
 // file is ws.ghostty, beside Ghostty's config.
@@ -160,6 +170,6 @@ func (g *Ghostty) Report(ctx context.Context) ([]step.Item, error) {
 		line.Conflict = "a link to " + info.Link + ": add the line at the end of that file"
 	}
 	return gather(ctx, g.casks().report(ctx, "ghostty", "Ghostty.app", g.Home),
-		userPath{M: g.M, Kind: step.DirItem, Path: filepath.Dir(config)}, file,
+		g.dirs(config), file,
 		fixed{line})
 }
