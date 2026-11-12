@@ -42,24 +42,60 @@ type reportedMsg struct {
 	problem  string
 }
 
-// pickScreen is the list that a run is chosen from. A scan fills it behind the screen, and the
-// maintainer can read and move as it goes.
-type pickScreen struct {
+// listScreen is what both screens of lists share: the frame, the scan's end, the filter's typing
+// and the leave.
+type listScreen struct {
 	title  string
 	theme  Theme
-	list   pickList
-	footer Footer
 	window Size
 	// scanning says that events of the scan are still on their way.
 	scanning bool
 	// problem is why the scan stopped short.
 	problem string
-	// filter holds the words that list.words follows.
+	// filter holds the words that the list follows.
 	filter filter
-	// picks takes the choice, and holds one, so that sending it waits for nobody.
-	picks chan<- QueueChoice
 	// left says that the choice has gone, and the screen waits for the work to end it.
 	left bool
+}
+
+// scanned ends the scan, and keeps why it stopped short, if it did.
+func (s listScreen) scanned(msg scannedMsg) listScreen {
+	s.scanning, s.problem = false, msg.problem
+	return s
+}
+
+// typed gives the filter a key or a paste, and returns its words and whether they differ from was.
+func (s listScreen) typed(msg tea.Msg, was string) (listScreen, string, bool) {
+	s.filter = s.filter.edited(msg)
+	words := s.filter.words()
+	return s, words, words != was
+}
+
+// held says that no button takes a key: the screen is leaving, or the filter takes it.
+func (s listScreen) held() bool { return s.left || s.filter.editing }
+
+// status is the title's right side: the scan's progress, then what is chosen. Its mark stands for
+// the warning of a role passed over, which a short window has no pane for.
+func (s listScreen) status(on, scanned, all int, warned bool) string {
+	switch {
+	case s.left:
+		return "leaving"
+	case s.scanning:
+		return fmt.Sprintf("scanning %d/%d", scanned, all)
+	case warned:
+		return fmt.Sprintf("! %d of %d chosen", on, all)
+	}
+	return fmt.Sprintf("%d of %d chosen", on, all)
+}
+
+// pickScreen is the list that a run is chosen from. A scan fills it behind the screen, and the
+// maintainer can read and move as it goes.
+type pickScreen struct {
+	listScreen
+	list   pickList
+	footer Footer
+	// picks takes the choice, and holds one, so that sending it waits for nobody.
+	picks chan<- QueueChoice
 	// queued draws the list as a queue's two sides.
 	queued bool
 	// unread is why a machine reported nothing, and its steps stand as the queue named them.
@@ -71,8 +107,8 @@ func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Queue
 	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
 	footer := NewFooter(button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
 		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), Keys.Quit)
-	s := pickScreen{title: title, theme: theme, list: newPickList(groups), footer: footer, scanning: true, picks: picks,
-		filter: newFilter()}
+	s := pickScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: newFilter()},
+		list: newPickList(groups), footer: footer, picks: picks}
 	return s.enabled()
 }
 
@@ -89,7 +125,7 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case Line:
 		s.list = s.list.hear(msg)
 	case scannedMsg:
-		s.scanning, s.problem = false, msg.problem
+		s.listScreen = s.scanned(msg)
 		if s.queued {
 			s.list = s.list.opened()
 		}
@@ -117,7 +153,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	switch {
 	case s.left:
 		return s, nil
-	case s.filter.editing:
+	case s.held():
 		return s.typed(msg), nil
 	case key.Matches(msg, clearKey):
 		s.filter = s.filter.cleared()
@@ -161,8 +197,9 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 
 // typed gives the filter a key or a paste, and the list narrows as its words change.
 func (s pickScreen) typed(msg tea.Msg) pickScreen {
-	s.filter = s.filter.edited(msg)
-	if words := s.filter.words(); words != s.list.words {
+	var words string
+	var changed bool
+	if s.listScreen, words, changed = s.listScreen.typed(msg, s.list.words); changed {
 		s.list = s.list.filtered(words)
 	}
 	return s
@@ -192,21 +229,11 @@ func (s pickScreen) enabled() pickScreen {
 	return s
 }
 
-// status is the title's right side: how far the scan is, then how much is chosen, of a queue's stages
-// alone. Its mark stands for the warning of a role passed over, which a short window has no pane for.
-func (s pickScreen) status() string {
+// statusLine is the title's right side, of the steps alone, a queue's stages leaving out.
+func (s pickScreen) statusLine() string {
 	on, all := s.list.count(func(r pickRow) bool { return r.stage == "" })
-	if s.left {
-		return "leaving"
-	}
-	if s.scanning {
-		_, scanned := s.list.count(func(r pickRow) bool { return r.stage == "" && r.state != stepOpen })
-		return fmt.Sprintf("scanning %d/%d", scanned, all)
-	}
-	if len(s.list.passedOver()) > 0 {
-		return fmt.Sprintf("! %d of %d chosen", on, all)
-	}
-	return fmt.Sprintf("%d of %d chosen", on, all)
+	_, scanned := s.list.count(func(r pickRow) bool { return r.stage == "" && r.state != stepOpen })
+	return s.status(on, scanned, all, len(s.list.passedOver()) > 0)
 }
 
 // layout is the screen with its panes empty, as what fills them depends on their sizes. The list
@@ -217,7 +244,7 @@ func (s pickScreen) layout() Layout {
 	}
 	return Layout{
 		Title:  s.title,
-		Status: s.status(),
+		Status: s.statusLine(),
 		Panes:  []Pane{{Title: "Steps", Focused: true}, {Title: "Detail"}},
 		Footer: s.footer,
 	}
@@ -243,7 +270,7 @@ func (s pickScreen) View() tea.View {
 		return s.queueView()
 	}
 	l := s.layout()
-	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1])
+	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1], s.notes())
 	l.Panes[0].Body = s.list.view(s.theme, s.listHeight())
 	if s.filtering() {
 		l.Panes[0].Body = s.filter.line(s.theme) + "\n" + l.Panes[0].Body

@@ -2,11 +2,11 @@ package tui
 
 import "strings"
 
-// detail draws what the pane says, from its top, in size. PgUp and PgDn move the list, so that
-// what runs past the pane stays for `c`, which prints a step's changes whole.
-func (s pickScreen) detail(size Size) string {
+// detail draws notes, from the pane's top, in size. PgUp and PgDn move the list, so that what runs
+// past the pane stays for `c`, which prints a step's changes whole.
+func (s listScreen) detail(size Size, notes []Line) string {
 	pane := outputPane{theme: s.theme, size: size}
-	for _, line := range s.notes() {
+	for _, line := range notes {
 		if len(pane.rows) >= size.Height {
 			break
 		}

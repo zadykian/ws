@@ -108,10 +108,10 @@ func (l pickList) drawn(layout Layout, theme Theme, window Size) Layout {
 
 // queueLayout is the screen of a queue, its lists empty as what fills them depends on their sizes.
 func (s pickScreen) queueLayout() Layout {
-	detail := Pane{Title: "Detail", Body: s.detail(inside(stripSize(s.window)))}
+	detail := Pane{Title: "Detail", Body: s.detail(inside(stripSize(s.window)), s.notes())}
 	return Layout{
 		Title:  s.title,
-		Status: s.status(),
+		Status: s.statusLine(),
 		Panes:  s.list.panes(),
 		Below:  strip(s.theme, detail, s.window),
 		Footer: s.footer,
