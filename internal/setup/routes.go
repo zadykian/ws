@@ -60,7 +60,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 		case len(networks) == 0:
 			return nil, nil
 		case r.Check && !r.Alone:
-			return []step.Change{Pending("would put " + strings.Join(networks, " ") + " in " + file + " " + routesAbsent)}, nil
+			return []step.Change{Remark("would put " + strings.Join(networks, " ") + " in " + file + " " + routesAbsent)}, nil
 		}
 		return nil, fmt.Errorf("%s/routes.d is missing: run ws mac apply first", tunnelDir)
 	} else if err != nil {

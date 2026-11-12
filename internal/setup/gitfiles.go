@@ -9,11 +9,6 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Pending is a change that waits on another, such as gh's install: the line says on what.
-type Pending string
-
-func (p Pending) String() string { return string(p) }
-
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
 // and gitconfig.
 func (g *Git) list(key NamedKey, gh string) []userFile {
