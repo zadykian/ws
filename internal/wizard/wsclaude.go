@@ -40,7 +40,7 @@ func (c *WsClaude) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if s.Claude == "none" {
 		return step.Plan{}, errors.New(claudeStage + ": ws lacks WS_USER's claude, which its run installs: " +
-			c.Ws.reach.rerun())
+			c.Ws.rerun())
 	}
 	return step.Plan{Changes: []step.Change{claudeLogin{}}}, nil
 }

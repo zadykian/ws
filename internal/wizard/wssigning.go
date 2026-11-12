@@ -33,7 +33,7 @@ func (s *WsGitHub) lacks(ctx context.Context, ws *Session, line string) (step.Ch
 	if s.named {
 		return nil, nil
 	}
-	user, err := ws.reach.user()
+	user, err := ws.user()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", signingStage, err)
 	}
