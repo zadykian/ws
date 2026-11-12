@@ -1,40 +1,9 @@
 package gitcfg
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 )
-
-var (
-	keyType   = regexp.MustCompile(`^(ssh-|ecdsa-sha2-|sk-).`)
-	keyBase64 = regexp.MustCompile(`^[A-Za-z0-9+/=]+$`)
-)
-
-// PublicKey returns the type and base64 of the public key that a .pub holds. It returns empty where
-// the file holds more or less than the line of one key, as a private key does, or a line that is no
-// key.
-func PublicKey(pub string) string {
-	var key string
-	lines := 0
-	for _, line := range strings.Split(pub, "\n") {
-		fields := strings.Fields(line)
-		if len(fields) == 0 {
-			continue
-		}
-		lines++
-		if len(fields) > 1 {
-			key = fields[0] + " " + fields[1]
-		} else {
-			key = fields[0] + " "
-		}
-	}
-	typ, data, _ := strings.Cut(key, " ")
-	if lines != 1 || !keyType.MatchString(typ) || !keyBase64.MatchString(data) {
-		return ""
-	}
-	return key
-}
 
 // Why says why gh cannot register the key, from gh's exit status and its errors, in the devtools
 // role's words. A 404 answers a login without the scope, and gh's last line of error loses its

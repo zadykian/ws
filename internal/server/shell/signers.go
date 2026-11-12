@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
-	"github.com/zadykian/ws/internal/gitcfg"
+	"github.com/zadykian/ws/internal/sshcfg"
 )
 
 // signersHeader is the first line of the allowed signers file.
@@ -34,11 +34,11 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	key := gitcfg.PublicKey(string(pub))
-	if key == "" {
-		return nil, fmt.Errorf("%s.pub holds no key of one line", s.Key)
+	key, err := sshcfg.ParsePub(string(pub))
+	if err != nil {
+		return nil, fmt.Errorf("%s.pub %w", s.Key, err)
 	}
-	f := s.A.File(s.M, below(s.A, s.Path), []byte(signersHeader+s.Email+" "+key+"\n"), 0o644)
+	f := s.A.File(s.M, below(s.A, s.Path), []byte(signersHeader+s.Email+" "+key.String()+"\n"), 0o644)
 	f.Backup = true
 	return f.Plan(ctx)
 }

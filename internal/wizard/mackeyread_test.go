@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/sshcfg"
 )
 
 const (
@@ -24,11 +25,12 @@ func newMacKey(t *testing.T, conf string) (*MacKey, *effecttest.Machine, *effect
 func TestMacKeyListed(t *testing.T) {
 	k, m, out := newMacKey(t, "")
 	m.Results["env SSH_AUTH_SOCK=/s ssh-add -L"] = effecttest.Result{Out: []byte("ssh-rsa BBBB x\nssh-ed25519 AAAAC3 other\n")}
-	if !k.listed(context.Background(), pubText, "/s") || k.listed(context.Background(), "", "/s") {
-		t.Error("listed did not find the key of the .pub, or found one in no text")
+	key := sshcfg.PublicKey{Type: "ssh-ed25519", Base64: "AAAAC3"}
+	if !k.listed(context.Background(), key, "/s") || k.listed(context.Background(), sshcfg.PublicKey{}, "/s") {
+		t.Error("listed did not find the key, or found the zero key")
 	}
 	m.Results["env SSH_AUTH_SOCK=/s ssh-add -L"] = effecttest.Result{Out: []byte("ssh-rsa BBBB x\n")}
-	if k.listed(context.Background(), pubText, "/s") {
+	if k.listed(context.Background(), key, "/s") {
 		t.Error("listed found a key the agent lacks")
 	}
 	if len(out.Lines) != 0 {

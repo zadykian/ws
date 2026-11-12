@@ -10,8 +10,11 @@ them leaves the files and the include as they are.
 
 `WS_GIT_SIGNING_PUB_KEY` has no default, and the script makes no key. Where `mac.conf` names none,
 or an empty one, the script stops with the line that would name each P-256 key of Secretive's
-agent. A `.pub` that is missing or that the script cannot read, or that holds more than a public
-key's line, as a private key does, stops it too. A file key with no passphrase signs unattended, in
+agent. A `.pub` that is missing or that the script cannot read stops it too, as does one that holds
+more than a public key's line, as a private key does. So does a certificate, or a key of a type that
+ws's OpenSSH lacks: git takes the seven that ssh takes, as GitHub takes no other signing key. A
+`.pub` of Secretive's that the script cannot read, where its agent lists no key of it, stops it with
+the word to open Secretive. A file key with no passphrase signs unattended, in
 a rebase too: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one.
 
 The wizard asks for git's key where `mac.conf` names none ([The Mac's

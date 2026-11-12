@@ -60,7 +60,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	key, err := g.key(ctx)
+	key, err := ReadKey(ctx, g.M, g.Conf, g.Home, SigningKey)
 	if err != nil {
 		return step.Plan{}, err
 	}

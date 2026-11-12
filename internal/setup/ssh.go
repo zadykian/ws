@@ -49,11 +49,11 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	id, err := PickKey(ctx, s.M, s.Conf, s.Home)
+	key, err := ReadKey(ctx, s.M, s.Conf, s.Home, LoginKey)
 	if err != nil {
 		return step.Plan{}, err
 	}
-	text := s.config(ctx, f, id)
+	text := s.config(ctx, f, key)
 	if err := s.validate(ctx, f, text); err != nil {
 		return step.Plan{}, err
 	}
@@ -67,15 +67,15 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}
-	copied := PlanCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)
+	copied := PlanCopy(s.M, key.File, key.Text, s.Home)
 	return step.Plan{Changes: append(copied, sshChanges(f, text)...)}, nil
 }
 
 // config returns the text of config.d/ws.
-func (s SSH) config(ctx context.Context, f sshFacts, id sshcfg.Identity) []byte {
+func (s SSH) config(ctx context.Context, f sshFacts, key NamedKey) []byte {
 	return []byte(sshcfg.Config(sshcfg.Inputs{
 		User: s.Conf.User, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
-		IdentityPub: id.Pub, IdentityAgent: id.Agent, CldTabs: s.cldTabs(ctx),
+		IdentityPub: key.Pub, IdentityAgent: key.Agent, CldTabs: s.cldTabs(ctx),
 	}))
 }
 
@@ -89,7 +89,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	id, err := PickKey(ctx, s.M, s.Conf, s.Home)
+	key, err := ReadKey(ctx, s.M, s.Conf, s.Home, LoginKey)
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +103,10 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	parts := []step.Reporter{
 		userPath{M: s.M, Kind: step.DirItem, Path: dir},
 		userPath{M: s.M, Kind: step.DirItem, Path: dir + "/config.d", Mode: sshDirMode},
-		s.wsFile(s.config(ctx, f, id)),
+		s.wsFile(s.config(ctx, f, key)),
 		fixed{include},
 	}
-	return gather(ctx, append(parts, keyCopy(s.M, sshcfg.Expand(id.Pub, s.Home), id.Text, s.Home)...)...)
+	return gather(ctx, append(parts, keyCopy(s.M, key.File, key.Text, s.Home)...)...)
 }
 
 // Apply applies the changes in order.

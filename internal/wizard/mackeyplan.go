@@ -47,17 +47,17 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 	if pub := sshcfg.Expand(c.IdentityPubKey, k.Home); c.IdentityAgent == "" && !sshcfg.SecretiveKey(pub, k.Home) {
 		return nil, k.fileKey(ctx, strings.TrimSuffix(pub, ".pub"))
 	}
-	id, err := setup.PickKey(ctx, k.M, c, k.Home)
+	key, err := setup.ReadKey(ctx, k.M, c, k.Home, setup.LoginKey)
 	if err != nil {
 		return nil, err
 	}
-	pub, agent := sshcfg.Expand(id.Pub, k.Home), sshcfg.Expand(id.Agent, k.Home)
-	if !k.listed(ctx, id.Text, agent) {
+	pub, agent := key.File, sshcfg.Expand(key.Agent, k.Home)
+	if !k.listed(ctx, key.Key, agent) {
 		return nil, fmt.Errorf("%s: the agent at %s lists no key of %s: open Secretive, where it is that agent, "+
 			"or start the agent, then run the wizard again", macKey, agent, pub)
 	}
 	// The stages after this one offer the key, and ssh reads its .pub for that.
-	return setup.PlanCopy(k.M, pub, id.Text, k.Home), nil
+	return setup.PlanCopy(k.M, pub, key.Text, k.Home), nil
 }
 
 // asked reports whether the stage asks for a key. It asks for ws's where mac.conf names none. It
