@@ -1,11 +1,48 @@
 package secrets
 
 import (
+	"context"
+	"errors"
 	"strings"
 	"testing"
 
 	"filippo.io/age"
+
+	"github.com/zadykian/ws/effect/effecttest"
 )
+
+// storeFixture is a machine with the credential, and the file where toml is not empty, sealed to
+// the identity that it returns.
+func storeFixture(t *testing.T, toml string) (*effecttest.Machine, age.Identity) {
+	id, _ := age.GenerateX25519Identity()
+	m := effecttest.NewMachine()
+	m.Files[CredstorePath] = []byte("sealed")
+	m.Results[credDecrypt] = effecttest.Result{Out: []byte(id.String() + "\n")}
+	if toml != "" {
+		m.Files[FilePath] = encrypt(t, toml, id.Recipient())
+	}
+	return m, id
+}
+
+func TestStoreEditKeepsReferences(t *testing.T) {
+	m, id := storeFixture(t, "[token]\ngithub = \"dummy\"\n[env]\nA = \"${token.github}\"\n")
+	err := Store{M: m}.Edit(context.Background(), func(s *Secrets) error { return s.Set(KindEnv, "B", "dummy-b") })
+	if err != nil {
+		t.Fatal(err)
+	}
+	plain, _ := Decrypt(m.Files[FilePath], id)
+	got, err := Decode(plain)
+	if err != nil || got.Env["A"] != "${token.github}" || got.Env["B"] != "dummy-b" {
+		t.Errorf("Decode = %+v, %v; want A with its reference and B", got, err)
+	}
+}
+
+func TestStoreEditWithoutTheCredential(t *testing.T) {
+	err := Store{M: effecttest.NewMachine()}.Edit(context.Background(), func(*Secrets) error { return nil })
+	if !errors.Is(err, ErrNoCredential) {
+		t.Errorf("err = %v, want ErrNoCredential", err)
+	}
+}
 
 func TestSealRoundTrips(t *testing.T) {
 	id, _ := age.GenerateX25519Identity()

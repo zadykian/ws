@@ -17,6 +17,9 @@ import (
 // finds it.
 const CredstorePath = "/etc/credstore.encrypted/" + CredentialName
 
+// FilePath is ws's secrets file on ws.
+const FilePath = "/etc/ws/secrets.age"
+
 // ErrNoCredential is the error where ws lacks the credential.
 var ErrNoCredential = errors.New("no credential " + CredstorePath + ": run ws server secrets init")
 
