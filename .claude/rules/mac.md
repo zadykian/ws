@@ -1,6 +1,7 @@
 ---
 paths:
   - "cmd/**"
+  - "main.go"
   - "internal/**"
   - "engine/**"
   - "roles/**"
@@ -8,8 +9,8 @@ paths:
 
 # mac
 
-The rules a change to the ws CLI keeps, in `cmd/`, `internal/`, `engine/` and `roles/` (its
-module is at the root), each linking its reason
+The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `internal/`, `engine/` and `roles/`
+(its module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too.
 
@@ -42,5 +43,5 @@ module is at the root), each linking its reason
   `execute` runs the root, names the command in each error, and returns 2 for a usage error. A
   group of commands exists on the systems where it runs. `newMacCmd` is built everywhere and tested
   on Linux, and `groups` lists it in a `//go:build darwin` file
-  ([groups_darwin.go](../../cmd/ws/groups_darwin.go)). Commands take what they need from the
+  ([groups_darwin.go](../../cmd/groups_darwin.go)). Commands take what they need from the
   process through `process`, which tests build from fakes.

@@ -14,10 +14,10 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   alone, such as the cable's port ([The direct link](docs/network.md#the-direct-link)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server fans`, in `roles/server/ubuntu/fans/daemon`.
-- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. `cmd/ws`
-  is the command and `internal/` its packages. `engine/core` holds `step`, `effect`, with
-  `effect/effecttest`, and `host`, the resources the steps share, which are public: another module
-  builds steps on them.
+- `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root.
+  `main.go` runs `cmd`, the command, and `internal/` holds its packages. `engine/core` holds `step`,
+  `effect`, with `effect/effecttest`, and `host`, the resources the steps share, which are public:
+  another module builds steps on them.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).

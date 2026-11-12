@@ -24,7 +24,7 @@ ws, which reads the last line of a run. The wizard's cases in `.github/mac-wizar
 a case of the `mac` job does so with `ws mac apply --check` ([The Mac](checks.md#the-mac)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
-The mode is chosen in `cmd/ws/screen.go`.
+The mode is chosen in `cmd/screen.go`.
 
 ## Colors
 
