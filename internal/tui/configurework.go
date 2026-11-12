@@ -15,45 +15,25 @@ const noteRows = 6
 // nil past a leave, and Cut's error past Ctrl-C or a signal, which drop what is unsaved. Saves run
 // here, off the screen's goroutine, and what they print stays on the screen.
 func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
-	jobs := make(chan configureJob)
-	done := make(chan struct{})
+	ctx, end := context.WithCancelCause(ctx)
+	defer end(nil)
+	a := newAsks(end)
 	send := func(j configureJob) {
-		select {
-		case jobs <- j:
-		case <-done:
-		}
+		a.ask(func(ctx context.Context, b *Bridge) tea.Msg {
+			sheet, err := j.run(ctx, b)
+			return savedMsg{j.place, sheet, err}
+		})
 	}
-	screen := newConfigureScreen(title, c.Theme, send, sheets)
-	return Run(ctx, c, screen, func(ctx context.Context, b *Bridge) error {
-		defer close(done)
-		return serveJobs(ctx, b, jobs)
-	})
+	screen := newConfigureScreen(title, c.Theme, send, a.leave, sheets)
+	return Run(ctx, c, screen, a.serve)
 }
 
-// serveJobs saves until a job leaves or ctx ends. The context's error is the one a cut run ends with.
-func serveJobs(ctx context.Context, b *Bridge, jobs <-chan configureJob) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case job := <-jobs:
-			if job.leave {
-				return nil
-			}
-			sheet, err := job.run(ctx, b)
-			b.send(savedMsg{job.place, sheet, err})
-		}
-	}
-}
-
-// configureJob is what the screen asks of its work. It travels on a channel and never as a message,
-// as the edits can hold a secret.
+// configureJob is what the screen asks of its work. It travels inside an ask's closure and never as a
+// message, as the edits can hold a secret.
 type configureJob struct {
 	place int
 	sheet Sheet
 	edits map[string]string
-	// leave ends the work in place of a save.
-	leave bool
 }
 
 // run reads the sheet where it waits for that, and saves the edits otherwise.
@@ -77,7 +57,7 @@ func (s configureScreen) leave(again bool) (tea.Model, tea.Cmd) {
 		s.leaving = true
 		return s, nil
 	}
-	return s, func() tea.Msg { s.send(configureJob{leave: true}); return nil }
+	return s, s.end
 }
 
 // save checks the form, and hands its edits to the work. A refusal takes the focus, for the field to

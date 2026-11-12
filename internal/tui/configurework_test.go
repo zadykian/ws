@@ -15,15 +15,16 @@ var (
 )
 
 // recording is a screen whose jobs land in jobs.
-func recording(jobs *[]configureJob, sheets ...Sheet) configureScreen {
+func recording(jobs *[]configureJob, ends *int, sheets ...Sheet) configureScreen {
 	s := testConfigure(sheets...)
 	s.send = func(j configureJob) { *jobs = append(*jobs, j) }
+	s.end = func() tea.Msg { *ends++; return nil }
 	return s
 }
 
 func TestConfigureSaveHandsTheWorkTheEdits(t *testing.T) {
 	var jobs []configureJob
-	s := fed(recording(&jobs, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
+	s := fed(recording(&jobs, nil, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
 	if len(jobs) != 1 || !maps.Equal(jobs[0].edits, map[string]string{"PORT": "2222"}) {
 		t.Fatalf("jobs = %+v", jobs)
 	}
@@ -38,7 +39,7 @@ func TestConfigureRefusedSaveStaysOnTheField(t *testing.T) {
 		return []FieldSpec{{Label: "A"}, {Label: "HOST", Valid: func(string) error { return refused }}}
 	}}
 	var jobs []configureJob
-	s := fed(recording(&jobs, sheet), tab, tab, ctrlS)
+	s := fed(recording(&jobs, nil, sheet), tab, tab, ctrlS)
 	if len(jobs) != 0 || s.saving {
 		t.Errorf("jobs = %+v, saving = %v", jobs, s.saving)
 	}
@@ -49,7 +50,7 @@ func TestConfigureRefusedSaveStaysOnTheField(t *testing.T) {
 
 func TestConfigureSavedStartsTheFormOverOnTheFile(t *testing.T) {
 	var jobs []configureJob
-	s := fed(recording(&jobs, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
+	s := fed(recording(&jobs, nil, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
 	wrote := Sheet{Name: "way.conf", Fields: func(map[string]string) []FieldSpec {
 		return []FieldSpec{{Label: "HOST"}, {Label: "PORT", Value: "2222"}}
 	}}
@@ -67,7 +68,7 @@ func TestConfigureSavedStartsTheFormOverOnTheFile(t *testing.T) {
 
 func TestConfigureFailedSaveKeepsTheEditsAndSaysWhy(t *testing.T) {
 	var jobs []configureJob
-	s := fed(recording(&jobs, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
+	s := fed(recording(&jobs, nil, wayFile()), enter, tea.PasteMsg{Content: "2222"}, ctrlS)
 	s = fed(s, savedMsg{err: errors.New("the file is read-only")})
 	if s.saving || s.form().Edits()["PORT"] != "2222" {
 		t.Errorf("saving = %v, Edits = %v", s.saving, s.form().Edits())
@@ -102,15 +103,17 @@ func TestConfigureShortWindowKeepsTheInputAndTheNotesEnd(t *testing.T) {
 
 func TestConfigureLeavesAtOnceWithNoEdit(t *testing.T) {
 	var jobs []configureJob
-	fed(recording(&jobs, wayFile()), esc)
-	if len(jobs) != 1 || !jobs[0].leave {
-		t.Errorf("jobs = %+v", jobs)
+	var ends int
+	fed(recording(&jobs, &ends, wayFile()), esc)
+	if len(jobs) != 0 || ends != 1 {
+		t.Errorf("jobs = %+v, ends = %d", jobs, ends)
 	}
 }
 
 func TestConfigureAsksBeforeItLosesAnEdit(t *testing.T) {
 	var jobs []configureJob
-	s := fed(recording(&jobs, wayFile()), enter, tea.PasteMsg{Content: "2222"})
+	var ends int
+	s := fed(recording(&jobs, &ends, wayFile()), enter, tea.PasteMsg{Content: "2222"})
 	if got := stripped(s.View().Content); !strings.Contains(got, "1 unsaved") {
 		t.Errorf("no count:\n%s", got)
 	}
@@ -122,8 +125,8 @@ func TestConfigureAsksBeforeItLosesAnEdit(t *testing.T) {
 		t.Error("a key kept the question")
 	}
 	fed(s, esc, esc)
-	if len(jobs) != 1 || !jobs[0].leave {
-		t.Errorf("jobs = %+v", jobs)
+	if len(jobs) != 0 || ends != 1 {
+		t.Errorf("jobs = %+v, ends = %d", jobs, ends)
 	}
 }
 

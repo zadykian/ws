@@ -24,7 +24,7 @@ func unread(reads *int, err error) Sheet {
 func TestConfigureReadsASheetOnceItShows(t *testing.T) {
 	var jobs []configureJob
 	reads := 0
-	s := fed(recording(&jobs, wayFile(), unread(&reads, nil)))
+	s := fed(recording(&jobs, nil, wayFile(), unread(&reads, nil)))
 	if len(jobs) != 0 {
 		t.Fatalf("a read before the sheet showed: %+v", jobs)
 	}
@@ -52,7 +52,7 @@ func TestConfigureFailedReadShowsWhyAndTriesAgain(t *testing.T) {
 	var jobs []configureJob
 	reads := 0
 	far := unread(&reads, errors.New("ws is out of reach"))
-	s := fed(recording(&jobs, wayFile(), far), ctrlN)
+	s := fed(recording(&jobs, nil, wayFile(), far), ctrlN)
 	_, err := jobs[0].run(context.Background(), nil)
 	s = fed(s, savedMsg{place: 1, err: err})
 	if got := stripped(s.View().Content); !strings.Contains(got, "ws is out of reach") {
@@ -75,7 +75,7 @@ func TestConfigureAsksBeforeALossOnAnUnreadSheet(t *testing.T) {
 	var jobs []configureJob
 	reads := 0
 	far := unread(&reads, errors.New("ws is out of reach"))
-	s := fed(recording(&jobs, wayFile(), far), tea.PasteMsg{Content: "x"}, ctrlN)
+	s := fed(recording(&jobs, nil, wayFile(), far), tea.PasteMsg{Content: "x"}, ctrlN)
 	s = fed(s, savedMsg{place: 1, err: errors.New("ws is out of reach")}, esc)
 	if got := stripped(s.View().Content); len(jobs) != 1 || !strings.Contains(got, "esc again") {
 		t.Errorf("jobs = %+v, drew:\n%s", jobs, got)
