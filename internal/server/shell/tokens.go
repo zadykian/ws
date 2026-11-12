@@ -29,9 +29,9 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 	if len(t.Creds) == 0 && !t.Whole {
 		return nil, nil
 	}
-	config := t.A.Home + "/.config/git/tokens.gitconfig"
+	config := ".config/git/tokens.gitconfig"
 	var keys []string
-	old, err := t.M.ReadRootFile(config)
+	old, err := t.A.ReadHome(t.M, config)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}

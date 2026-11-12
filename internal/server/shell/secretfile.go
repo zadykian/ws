@@ -35,7 +35,7 @@ func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	path := s.A.Home + "/.secrets/env"
-	old, err := s.M.ReadRootFile(path)
+	old, err := s.A.ReadHome(s.M, ".secrets/env")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}

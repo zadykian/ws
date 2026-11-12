@@ -24,8 +24,6 @@ type gitconfig struct {
 	Signers string
 }
 
-func (g gitconfig) path() string { return g.A.Home + "/.gitconfig" }
-
 func (g gitconfig) content() ([]byte, error) {
 	return host.Render(files, "files/gitconfig.tmpl", struct {
 		Name, Email, Key, Signers string
@@ -49,7 +47,7 @@ func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
 }
 
 func (g gitconfig) notes(ctx context.Context, content []byte) error {
-	old, err := g.M.ReadRootFile(g.path())
+	old, err := g.A.ReadHome(g.M, ".gitconfig")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
 	}
@@ -86,7 +84,7 @@ func (g gitconfig) signingNotes(ctx context.Context, old []byte) error {
 	if key, ok := signingKeyOf(lines(list), g.A.Home); ok && key != g.Key+".pub" {
 		g.Out.Warn("writing ~/.gitconfig replaces its signing key, %s, with %s.pub. To sign with the old key, set user.signingkey in ~/.config/git/local first.", key, g.Key)
 	}
-	local, err := g.M.ReadRootFile(g.A.Home + "/.config/git/local")
+	local, err := g.A.ReadHome(g.M, ".config/git/local")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
 	}

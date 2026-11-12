@@ -27,7 +27,7 @@ type signers struct {
 // Plan reads the public key. A dry run makes no key, so where there is none yet it plans nothing,
 // and the key's creation shows the change.
 func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
-	pub, err := s.M.ReadRootFile(s.Key + ".pub")
+	pub, err := s.A.ReadHome(s.M, below(s.A, s.Key)+".pub")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	}
