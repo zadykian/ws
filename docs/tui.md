@@ -127,7 +127,7 @@ The window goes with the screen, and these stay:
 - The summary of `ws server apply` is the last line. A passing `ws mac apply` prints nothing more.
 - What stays by hand prints after the screen.
 - `--plain` keeps every line of a run. What `ws mac apply` prints on stdout, the commands that make
-  the Mac ws's peer, waits for the screen's end.
+  the Mac ws's peer, waits for the screen's end, and prints after a run that passed.
 
 What stays by hand holds the lines that the maintainer acts on past a run: ws's WireGuard key, and
 what a step leaves to do. A step says one through `effect.SayLasting`, which a plain run prints in

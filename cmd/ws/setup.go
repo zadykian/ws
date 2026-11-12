@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -199,17 +198,10 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 // waits for the screen's end, as it would paint over the screen at a terminal.
 func setupOnScreen(c *cobra.Command, p process, build setupBuild, o step.Options) error {
 	rows := tui.NewGroup("", build(p.machine, nil, io.Discard))
-	var text bytes.Buffer
-	err := drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
-		steps := build(b.Effects().M, b, &text)
-		err := runSetup(ctx, steps, b.Options(o))
-		b.Log(text.String()) // A failed run prints it too.
-		return err
+	return drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
+		e := b.Effects()
+		return runSetup(ctx, build(e.M, b, e.Text), b.Options(o))
 	})
-	if err == nil { // A work left behind may still write to text.
-		_, _ = text.WriteTo(c.OutOrStdout())
-	}
-	return err
 }
 
 // runSetup is finishSetup for the command, which names itself in its errors.
