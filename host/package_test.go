@@ -18,12 +18,14 @@ const (
 
 const pkgDeb = "dpkg-deb -f " + pkgFile + " Package Version"
 
-const pkgQ = "dpkg-query -W -f ${Package} ${Version} ${db:Status-Abbrev}\n a"
-
-func packageFixture(dpkg string) (*effecttest.Machine, host.Package) {
+// packageFixture is a machine where dpkg lists "a" as the row says, or knows no "a" for a zero row.
+func packageFixture(row effecttest.Package) (*effecttest.Machine, host.Package) {
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
-	m.Results[pkgQ] = effecttest.Result{Out: []byte(dpkg)}
+	m.Packages = effecttest.Packages{}
+	if row.Status != "" {
+		m.Packages["a"] = row
+	}
 	m.Results[pkgDeb] = effecttest.Result{Out: []byte("Package: a\nVersion: 1.2\n")}
 	m.Results[pkgApt] = effecttest.Result{}
 	m.Pages["https://x/1.2/a_amd64.deb"] = []byte("deb")
@@ -33,20 +35,20 @@ func packageFixture(dpkg string) (*effecttest.Machine, host.Package) {
 }
 
 func TestPackageInstallsFromItsPinWhereTheStateDiffers(t *testing.T) {
-	for _, dpkg := range []string{"", "a 1.1 ii\n", "a 1.3 ii\n", "a 1.2 rc\n"} {
-		m, p := packageFixture(dpkg)
+	for _, row := range []effecttest.Package{{}, {Version: "1.1", Status: "ii"}, {Version: "1.3", Status: "ii"}, {Version: "1.2", Status: "rc"}} {
+		m, p := packageFixture(row)
 		changes, err := p.Plan(t.Context())
 		if err != nil || len(changes) != 3 || changes[2].String() != "install a 1.2" {
-			t.Errorf("dpkg %q: plan = %v, %v, want a directory, a fetch and the install", dpkg, changes, err)
+			t.Errorf("row %+v: plan = %v, %v, want a directory, a fetch and the install", row, changes, err)
 		}
 		if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "download ") }) {
-			t.Errorf("dpkg %q: a dry run fetched: %q", dpkg, m.Calls)
+			t.Errorf("row %+v: a dry run fetched: %q", row, m.Calls)
 		}
 	}
 }
 
 func TestPackagePlansNothingWhereThePinIsInstalled(t *testing.T) {
-	m, p := packageFixture("a 1.2 ii\n")
+	m, p := packageFixture(effecttest.Package{Version: "1.2", Status: "ii"})
 	if got := applyAll(t, p); got != nil {
 		t.Errorf("plan = %q, want none", got)
 	}
@@ -56,7 +58,7 @@ func TestPackagePlansNothingWhereThePinIsInstalled(t *testing.T) {
 }
 
 func TestPackageRemovesAStrayCacheFile(t *testing.T) {
-	m, p := packageFixture("a 1.2 ii\n")
+	m, p := packageFixture(effecttest.Package{Version: "1.2", Status: "ii"})
 	m.Files[pkgFile] = []byte("deb")
 	if got := applyAll(t, p); len(got) != 1 || got[0] != "remove "+pkgFile {
 		t.Errorf("plan = %q, want the file's removal", got)
@@ -64,14 +66,14 @@ func TestPackageRemovesAStrayCacheFile(t *testing.T) {
 }
 
 func TestPackageAppliesAndThenPlansNothing(t *testing.T) {
-	m, p := packageFixture("")
+	m, p := packageFixture(effecttest.Package{})
 	if got := applyAll(t, p); len(got) != 3 {
 		t.Fatalf("first plan = %q, want three changes", got)
 	}
 	if _, ok := m.Files[pkgFile]; ok {
 		t.Error("the cache file stayed after the install")
 	}
-	m.Results[pkgQ] = effecttest.Result{Out: []byte("a 1.2 ii\n")}
+	m.Packages["a"] = effecttest.Package{Version: "1.2", Status: "ii"}
 	if got := applyAll(t, p); got != nil {
 		t.Errorf("second plan = %q, want none", got)
 	}
@@ -79,7 +81,7 @@ func TestPackageAppliesAndThenPlansNothing(t *testing.T) {
 
 func TestPackageRefusesAFileOfAnotherNameOrVersion(t *testing.T) {
 	for _, field := range []string{"Package: b\nVersion: 1.2\n", "Package: a\nVersion: 1.3\n"} {
-		m, p := packageFixture("")
+		m, p := packageFixture(effecttest.Package{})
 		m.Results[pkgDeb] = effecttest.Result{Out: []byte(field)}
 		changes, err := p.Plan(t.Context())
 		if err != nil {

@@ -29,10 +29,7 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 	m.Files["/old"] = []byte("old\n")
 	m.Files["/home/ann/.config/systemd/user/a.service"] = []byte("[Unit]\n")
 	m.Files["/etc/group"] = []byte("docker:x:9:ann\n")
-	query := "dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n "
-	m.Results[query+"git"] = effecttest.Result{Out: []byte("git ii\n")}
-	m.Results[query+"curl"] = effecttest.Result{Out: []byte("curl un\n")}
-	m.Results["dpkg-query -W -f ${Package} ${Version} ${db:Status-Abbrev}\n a"] = effecttest.Result{Out: []byte("a 0 ii\n")}
+	m.Packages = effecttest.Packages{"git": {Version: "1", Status: "ii"}, "curl": {Status: "un"}, "a": {Version: "0", Status: "ii"}}
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"on.service": {Active: true}}}
 	out := &effecttest.Out{}

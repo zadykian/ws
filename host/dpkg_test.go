@@ -1,7 +1,6 @@
 package host_test
 
 import (
-	"os/exec"
 	"reflect"
 	"testing"
 
@@ -11,12 +10,10 @@ import (
 )
 
 func TestPackageReports(t *testing.T) {
-	const query = "dpkg-query -W -f ${Package} ${Version} ${db:Status-Abbrev}\n "
 	m := effecttest.NewMachine()
-	// dpkg-query prints what it knows, and exits with 1 for the name it doesn't.
-	known := effecttest.Result{Out: []byte("git 1:2.4 ii\nnode 24.1 ii\nold 1 rc\nnever  un\n"),
-		Err: exec.Command("sh", "-c", "exit 1").Run()}
-	m.Results[query+"git node old never gone"], m.Results[query+"git old gone"] = known, known
+	// The table prints what it knows, and ends with exit 1 for the name it doesn't, as dpkg-query does.
+	m.Packages = effecttest.Packages{"git": {Version: "1:2.4", Status: "ii"}, "node": {Version: "24.1", Status: "ii"},
+		"old": {Version: "1", Status: "rc"}, "never": {Status: "un"}}
 	item := func(name, want, found, conflict string) step.Item {
 		return step.Item{Kind: step.PackageItem, Name: name, Want: want, Found: found, Conflict: conflict}
 	}

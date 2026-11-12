@@ -3,30 +3,32 @@ package host
 import (
 	"context"
 	"errors"
-	"os/exec"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
 func TestPackagesPlanPinnedVersion(t *testing.T) {
-	exit1 := exec.Command("sh", "-c", "exit 1").Run()
 	tests := []struct {
 		name string
-		res  effecttest.Result
+		pkgs effecttest.Packages
+		err  error
 		want string
 		fail bool
 	}{
-		{"the version matches", effecttest.Result{Out: []byte("24.1.0-1nodesource1 ii\n")}, "", false},
-		{"another major version", effecttest.Result{Out: []byte("22.9.0-1nodesource1 ii\n")},
+		{"the version matches", effecttest.Packages{"nodejs": {Version: "24.1.0-1nodesource1", Status: "ii"}}, nil, "", false},
+		{"another major version", effecttest.Packages{"nodejs": {Version: "22.9.0-1nodesource1", Status: "ii"}}, nil,
 			"install nodejs=24.*", false},
-		{"removed with config left", effecttest.Result{Out: []byte("24.1.0 rc\n")}, "install nodejs=24.*", false},
-		{"unknown", effecttest.Result{Err: exit1}, "install nodejs=24.*", false},
-		{"no command", effecttest.Result{Err: errors.New("not found")}, "", true},
+		{"removed with config left", effecttest.Packages{"nodejs": {Version: "24.1.0", Status: "rc"}}, nil, "install nodejs=24.*", false},
+		{"unknown", effecttest.Packages{}, nil, "install nodejs=24.*", false},
+		{"no command", nil, errors.New("not found"), "", true},
 	}
 	for _, tt := range tests {
 		m := effecttest.NewMachine()
-		m.Results["dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n nodejs"] = tt.res
+		m.Packages = tt.pkgs
+		if tt.err != nil {
+			m.Results["dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n nodejs"] = effecttest.Result{Err: tt.err}
+		}
 		pl, err := Packages{M: m, Names: []string{"nodejs=24.*"}}.Plan(context.Background())
 		got := ""
 		if len(pl) > 0 {
