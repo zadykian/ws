@@ -40,10 +40,9 @@ func nestedRows(stage string) []tui.Group {
 }
 
 // wizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
-// its steps, and a step of ws mac apply off in a stage it runs in part. setup names the steps with
-// a row. ssh again has none, as a check has no second plan, so it follows ssh by its wait, as in
-// ws mac apply's own list.
-func wizardLeft(choice tui.Choice, setup []string) func(parent, name string) bool {
+// its steps, and a step of ws mac apply off in a stage it runs in part. ws mac apply's run asks it
+// of the steps with a row alone.
+func wizardLeft(choice tui.Choice) func(parent, name string) bool {
 	return func(parent, name string) bool {
 		if parent == "" {
 			return !slices.Contains(choice.Only, name)
@@ -52,7 +51,7 @@ func wizardLeft(choice tui.Choice, setup []string) func(parent, name string) boo
 		if !part {
 			return !slices.Contains(choice.Only, parent)
 		}
-		return slices.Contains(setup, name) && !slices.Contains(on, parent+"/"+name)
+		return !slices.Contains(on, parent+"/"+name)
 	}
 }
 

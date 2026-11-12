@@ -62,7 +62,7 @@ func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
 func TestWizardLeftFollowsTheChoice(t *testing.T) {
 	const setup = "ws mac apply"
 	choice := tui.Choice{Only: []string{setup, "Tools"}, Partial: map[string][]string{setup: {setup + "/ssh", setup + "/zed"}}}
-	left := wizardLeft(choice, []string{"ssh", "zed", "git"})
+	left := wizardLeft(choice)
 	for _, tc := range []struct {
 		parent, name string
 		want         bool
@@ -72,16 +72,15 @@ func TestWizardLeftFollowsTheChoice(t *testing.T) {
 		{"", setup, false},
 		{setup, "ssh", false},
 		{setup, "git", true},
-		{setup, "ssh again", false},
 	} {
 		if got := left(tc.parent, tc.name); got != tc.want {
 			t.Errorf("left(%q, %q) = %v, want %v", tc.parent, tc.name, got, tc.want)
 		}
 	}
-	if whole := wizardLeft(tui.Choice{Only: []string{setup}}, []string{"git"}); whole(setup, "git") {
+	if whole := wizardLeft(tui.Choice{Only: []string{setup}}); whole(setup, "git") {
 		t.Error("a stage run whole left a step out")
 	}
-	if off := wizardLeft(tui.Choice{Only: []string{"Tools"}}, []string{"git"}); !off(setup, "git") || !off(setup, "ssh again") {
+	if off := wizardLeft(tui.Choice{Only: []string{"Tools"}}); !off(setup, "git") {
 		t.Error("a stage wholly off ran a step")
 	}
 }

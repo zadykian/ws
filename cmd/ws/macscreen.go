@@ -9,7 +9,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
@@ -159,7 +158,7 @@ func (w macScreen) runOf(choice tui.Choice, sudo *wizard.Sudo) wizardRun {
 	o.check = choice.Check
 	name := wsRunOf(w.plainStages()).Name()
 	o.update = o.update || slices.Contains(choice.Whole, name)
-	return wizardRun{o: o, sudo: sudo, left: wizardLeft(choice, setup.Names()), only: choice.Partial[name]}
+	return wizardRun{o: o, sudo: sudo, left: wizardLeft(choice), only: choice.Partial[name]}
 }
 
 // chosen runs what the lists chose, on a run of those stages.

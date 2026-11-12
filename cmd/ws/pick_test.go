@@ -117,9 +117,6 @@ func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
 	if o.LeftOut("", "one") || !o.LeftOut("", "two") {
 		t.Error("the choice leaves out a step it chose, or keeps one it didn't")
 	}
-	if o.LeftOut("", "ssh again") {
-		t.Error("the choice leaves out a step that no row offers")
-	}
 	if len(checks) == 0 || slices.Contains(checks, false) {
 		t.Errorf("the list scanned with checks %v, want a check each time", checks)
 	}
