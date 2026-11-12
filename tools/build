@@ -28,7 +28,7 @@ main() {
     mkdir -p "$(dirname "$file")"
     GOOS=$goos GOARCH=$goarch GOPATH=$root/.cache/go GOMODCACHE=$root/.cache/go/pkg/mod \
         GOCACHE=$root/.cache/go-build GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=0 \
-        "$go" build -trimpath -o "$file.new" ./cmd || die "cannot build ws"
+        "$go" build -trimpath -o "$file.new" . || die "cannot build ws"
     mv -f "$file.new" "$file"
 }
 

@@ -1,5 +1,5 @@
-// Command ws sets up the Mac that works on the server.
-package main
+// Package cmd holds ws's commands, which main.go runs by Execute.
+package cmd
 
 import (
 	"context"
@@ -97,7 +97,8 @@ func execute(ctx context.Context, root *cobra.Command, args []string, stdin io.R
 	return 1
 }
 
-func main() {
+// Execute runs ws on the process's arguments and terminals, and returns its exit status.
+func Execute() int {
 	p := newProcess()
-	os.Exit(execute(context.Background(), newRoot(p, groups(p)...), os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+	return execute(context.Background(), newRoot(p, groups(p)...), os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
 }

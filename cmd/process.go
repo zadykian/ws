@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"cmp"
@@ -9,8 +9,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// process is what the commands take from the process they run in. main builds it from os, and the
-// tests build it from fakes. The streams and the context come from cobra.
+// process is what the commands take from the process they run in. Execute builds it from os, and
+// the tests build it from fakes. The streams and the context come from cobra.
 type process struct {
 	machine effect.Machine
 	getenv  func(string) string

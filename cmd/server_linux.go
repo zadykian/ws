@@ -1,6 +1,6 @@
 //go:build linux
 
-package main
+package cmd
 
 import (
 	"github.com/spf13/cobra"
