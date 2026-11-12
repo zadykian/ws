@@ -10,8 +10,8 @@ them by hand. A machine's own settings go in files they read where they exist:
 - `~/.bash_aliases`, which `~/.bashrc` sources too;
 - `~/.config/git/local`, which `~/.gitconfig` includes last, so that its settings win.
 
-A link at a file the role writes as root fails the run before a step changes anything. So does a
-link at a directory between the home and that file ([Links under the home](security.md#links-under-the-home)).
+A link at a file the role writes as root fails the step of that file alone. So does a link at a
+directory between the home and that file ([Links under the home](security.md#links-under-the-home)).
 
 An installer that appends to `~/.bashrc` or `~/.profile`, a line that adds its directory to
 `PATH`, say, loses that line on the next run: move it to `~/.bash_aliases`.
@@ -26,9 +26,9 @@ be a URL, which names a host. A real run keeps the old file beside the new one, 
 ## Signing
 
 `~/.gitconfig` signs each commit with an SSH key of the machine's own: `ws_git_signing_key`
-in the values file, `~/.ssh/id_ed25519_signing` by default. The role makes it once, an ed25519
-key with no passphrase, as tools and claude commit unattended. The key only signs. The role does not
-register it with GitHub: [The signing key](devtools.md#the-signing-key).
+in the values file, `~/.ssh/id_ed25519_signing` by default. The key lies below `ws_home`, or the
+run fails. The role makes it once, an ed25519 key with no passphrase, as tools and claude commit
+unattended. The key only signs. The role does not register it with GitHub: [The signing key](devtools.md#the-signing-key).
 
 To revoke the key, delete it in the account's settings on GitHub, then delete
 `~/.ssh/id_ed25519_signing` and its `.pub`. The next run makes a new key. The Mac's wizard
@@ -36,9 +36,10 @@ registers it, at its Signing key stage, or add the `.pub` by hand. A key deleted
 comes back the same way.
 
 `git verify-commit` trusts the key for `shell_git_email` through `shell_git_allowed_signers`,
-`~/.config/git/allowed_signers` by default. Each run replaces a change made to it, and keeps the
-old file beside it, as `allowed_signers.*~`. So `git verify-commit` fails here on a commit another
-key signed, an older machine's say, though GitHub verifies it by the account's keys.
+`~/.config/git/allowed_signers` by default, also below `ws_home`. Each run replaces a change made
+to it, and keeps the old file beside it, as `allowed_signers.*~`. So `git verify-commit` fails here
+on a commit another key signed, an older machine's say, though GitHub verifies it by the account's
+keys.
 
 A run replaces the signing key a `~/.gitconfig` set up by hand names, and says so: to keep that key,
 set it in `~/.config/git/local` first. A signing setting there, such as `user.signingkey` or

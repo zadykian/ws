@@ -55,6 +55,22 @@ func TestSetTwiceChangesNothing(t *testing.T) {
 	}
 }
 
+// The new line holds no home of its own: the file's home judges its path.
+func TestSetTakesAKeyBelowTheFilesHome(t *testing.T) {
+	for _, tc := range [][3]string{
+		{"ws_user: root\n", "ws_git_signing_key", "/root/.ssh/k"},
+		{"ws_home: /srv/x\n", "shell_git_allowed_signers", "/srv/x/signers"},
+	} {
+		if _, err := Set([]byte(tc[0]), tc[1], tc[2]); err != nil {
+			t.Errorf("%s at %s in %q: %v", tc[1], tc[2], tc[0], err)
+		}
+	}
+	if _, err := Set([]byte("ws_user: root\n"), "ws_git_signing_key", "/home/zadykian/k"); err == nil ||
+		!strings.Contains(err.Error(), "is outside ws_home /root") {
+		t.Errorf("a key outside the file's home: %v", err)
+	}
+}
+
 func TestSetRefuses(t *testing.T) {
 	for _, tc := range []struct {
 		name, data, key, value, want string

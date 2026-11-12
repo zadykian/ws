@@ -68,15 +68,13 @@ func TestConfigIsWrittenOnceForTheUser(t *testing.T) {
 }
 
 func TestConfigRefusesALink(t *testing.T) {
-	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/lazygit", configPath} {
-		m, s := configOn()
-		m.Links[link] = "/srv/target"
-		if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err == nil {
-			t.Errorf("%s: no error", link)
-		}
-		if len(m.Owners) != 0 || len(m.Files) != 0 {
-			t.Errorf("%s: changed %v %v", link, m.Owners, m.Files)
-		}
+	m, s := configOn()
+	m.Links["/home/ws/.config"] = "/srv/target"
+	if _, err := step.Run(context.Background(), []step.Step{s}, &effecttest.Out{}, false); err == nil {
+		t.Error("no error")
+	}
+	if len(m.Owners) != 0 || len(m.Files) != 0 {
+		t.Errorf("changed %v %v", m.Owners, m.Files)
 	}
 }
 

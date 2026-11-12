@@ -41,30 +41,22 @@ func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out,
 		if err != nil {
 			return nil, err
 		}
-		conf, units := v.Home+"/.config/docker", v.Home+"/.config/systemd/user"
-		dropIn := units + "/docker.service.d"
 		daemon := host.Validated{
-			File: host.File{M: m, Path: conf + "/daemon.json", Content: daemonJSON, Mode: 0o644, UID: a.UID, GID: a.GID},
+			File: a.File(m, ".config/docker/daemon.json", daemonJSON, 0o644),
 			Check: func(path string) (string, []string) {
 				return "dockerd", []string{"--validate", "--config-file", path}
 			},
 		}
-		sliceFile := host.File{M: m, Path: units + "/docker.slice", Content: slice, Mode: 0o644, UID: a.UID, GID: a.GID}
-		service := host.File{M: m, Path: dropIn + "/ws.conf", Content: override, Mode: 0o644, UID: a.UID, GID: a.GID}
+		sliceFile := a.File(m, ".config/systemd/user/docker.slice", slice, 0o644)
+		service := a.File(m, ".config/systemd/user/docker.service.d/ws.conf", override, 0o644)
 		delegation := host.File{M: m, Path: delegatePath, Content: delegate, Mode: 0o644}
 		return []host.Resource{
-			host.Plain{M: m, Home: v.Home, Paths: []string{daemon.Path, sliceFile.Path, service.Path}},
 			subIDs{m, v.User},
 			host.Dir{M: m, Path: path.Dir(delegatePath), Mode: 0o755},
 			delegation,
 			host.DaemonReload{M: m, U: u, Watch: []host.Resource{delegation}},
 			host.Linger{M: m, User: user, Out: out},
 			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: host.Running},
-			host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
-			host.Dir{M: m, Path: conf, Mode: 0o755, UID: a.UID, GID: a.GID},
-			host.Dir{M: m, Path: v.Home + "/.config/systemd", Mode: 0o755, UID: a.UID, GID: a.GID},
-			host.Dir{M: m, Path: units, Mode: 0o755, UID: a.UID, GID: a.GID},
-			host.Dir{M: m, Path: dropIn, Mode: 0o755, UID: a.UID, GID: a.GID},
 			daemon,
 			sliceFile,
 			service,

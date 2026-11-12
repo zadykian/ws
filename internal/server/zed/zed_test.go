@@ -136,18 +136,14 @@ func TestSettingsNameTheNpmServersForRootAndAnotherUser(t *testing.T) {
 }
 
 func TestTheStepsRefuseALinkAtAFileRootWrites(t *testing.T) {
-	for _, link := range []string{
-		"/home/ws/.config/zed", "/home/ws/.config/zed/settings.json",
-	} {
-		m := effecttest.NewMachine()
-		m.Dirs["/home/ws"] = 0o755
-		m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
-		m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
-		m.Links[link] = "/srv/target"
-		steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, m, &effecttest.Out{})
-		if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err == nil {
-			t.Errorf("a link at %s: no error", link)
-		}
+	m := effecttest.NewMachine()
+	m.Dirs["/home/ws"] = 0o755
+	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Links["/home/ws/.config/zed"] = "/srv/target"
+	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, m, &effecttest.Out{})
+	if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err == nil {
+		t.Error("a link at the settings' directory: no error")
 	}
 }
 

@@ -62,9 +62,9 @@ func (c writeSettings) String() string {
 
 // Apply writes as the user, through a link as into a clone of dotfiles. A link, or a file that the
 // user plants, then reaches only what the user could write. A new file gets claude's mode, and an
-// existing one keeps its own.
+// existing one keeps its own. A missing ~/.claude is made at 0755, the user's.
 func (c writeSettings) Apply(ctx context.Context) error {
-	return c.t.User.PassInput(ctx, c.t.M, c.data, "sh", "-c", `umask 022 && cat >"$1"`, "sh", c.t.path())
+	return c.t.User.PassInput(ctx, c.t.M, c.data, "sh", "-c", `umask 022 && mkdir -p "${1%/*}" && cat >"$1"`, "sh", c.t.path())
 }
 
 // Plan edits the settings in memory, and plans a write where env differs.

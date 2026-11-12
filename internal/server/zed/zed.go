@@ -33,14 +33,9 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 			if err != nil {
 				return nil, err
 			}
-			dir := v.Home + "/.config/zed"
-			return []host.Resource{
-				host.Plain{M: m, Home: v.Home, Paths: []string{dir + "/settings.json"}},
-				host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
-				host.Dir{M: m, Path: dir, Mode: 0o755, UID: a.UID, GID: a.GID},
-				host.File{M: m, Path: dir + "/settings.json", Content: settings, Mode: 0o644, UID: a.UID, GID: a.GID,
-					Backup: true},
-			}, nil
+			f := a.File(m, ".config/zed/settings.json", settings, 0o644)
+			f.Backup = true
+			return []host.Resource{f}, nil
 		}),
 		host.Group{Title: "Zed open-file limit", Parts: []host.Resource{
 			host.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},

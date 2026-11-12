@@ -31,8 +31,8 @@ func TestAllowedSignersTrustTheKeyOnce(t *testing.T) {
 		}
 		return shown
 	}
-	if got := run(); len(got) != 1 || !strings.HasPrefix(got[0], "create directory /home/ws/.config/git") {
-		t.Errorf("without the key: %q, want the directory alone", got)
+	if got := run(); got != nil {
+		t.Errorf("without the key: %q, want nothing", got)
 	}
 	m.Files[key+".pub"] = []byte("ssh-ed25519 AAAA comment\n")
 	if got := run(); len(got) != 1 || !strings.Contains(got[0], "me@x.dev ssh-ed25519 AAAA\n") {

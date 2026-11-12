@@ -39,19 +39,15 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out)
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},
 		user.WithAccount(m, configStep, "", func(a host.Account) ([]host.Resource, error) {
-			return configFiles(m, v, a.UID, a.GID), nil
+			return configFiles(m, a), nil
 		}),
 	}
 }
 
 // configFiles returns ~/.config/lazygit/config.yml, which ws replaces whole, keeping the old file
-// beside it. The directory stays the user's.
-func configFiles(m effect.Machine, v values.Values, uid, gid int) []host.Resource {
-	dir := v.Home + "/.config/lazygit"
-	return []host.Resource{
-		host.Plain{M: m, Home: v.Home, Paths: []string{dir + "/config.yml"}},
-		host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
-		host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
-		host.File{M: m, Path: dir + "/config.yml", Content: config, Mode: 0o644, UID: uid, GID: gid, Backup: true},
-	}
+// beside it. The directories on the way stay the user's.
+func configFiles(m effect.Machine, a host.Account) []host.Resource {
+	f := a.File(m, ".config/lazygit/config.yml", config, 0o644)
+	f.Backup = true
+	return []host.Resource{f}
 }

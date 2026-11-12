@@ -35,7 +35,7 @@ func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	path := s.A.Home + "/.secrets/env"
-	old, err := s.M.ReadRootFile(path)
+	old, err := s.A.ReadHome(s.M, ".secrets/env")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
@@ -43,10 +43,9 @@ func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, fmt.Errorf("%s lacks the line '%s' at its top, so it was written by hand: move its values into the secrets file's [env] table, remove the file, then run ws again", path, envMark)
 	}
 	if len(s.Env) == 0 {
-		return planAll(ctx, host.Absent{M: s.M, Path: path})
+		return planAll(ctx, s.A.Absent(s.M, ".secrets/env"))
 	}
-	return planAll(ctx,
-		host.Dir{M: s.M, Path: s.A.Home + "/.secrets", Mode: 0o700, UID: s.A.UID, GID: s.A.GID},
-		host.File{M: s.M, Path: path, Content: renderEnv(s.Env), Mode: 0o600, UID: s.A.UID, GID: s.A.GID, Secret: true},
-	)
+	f := s.A.File(s.M, ".secrets/env", renderEnv(s.Env), 0o600)
+	f.Secret = true
+	return planAll(ctx, s.A.Dir(s.M, ".secrets", 0o700), f)
 }

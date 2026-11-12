@@ -28,7 +28,7 @@ func inContainer(m effect.Machine) bool {
 // installer's user, not root's.
 type keyCheck struct {
 	m    effect.Machine
-	home string
+	user host.User
 }
 
 // Plan fails where authorized_keys, or a directory above it, is a link: the user owns the home and
@@ -38,11 +38,8 @@ func (k keyCheck) Plan(context.Context) ([]host.Change, error) {
 	if inContainer(k.m) {
 		return nil, nil
 	}
-	file := path.Join(k.home, ".ssh/authorized_keys")
-	if err := host.RefuseLinks(k.m, k.home, file); err != nil {
-		return nil, err
-	}
-	keys, err := k.m.ReadRootFile(file)
+	file := path.Join(k.user.Home, ".ssh/authorized_keys")
+	keys, err := k.user.ReadHome(k.m, ".ssh/authorized_keys")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
@@ -67,7 +64,7 @@ func holdsKey(keys []byte) bool {
 // the user, and takes it only from that user or root, with no other able to write it. The home's
 // owner is the user.
 func (k keyCheck) usable(file string) error {
-	home, err := k.m.RootAttrs(k.home)
+	home, err := k.m.RootAttrs(k.user.Home)
 	if err != nil {
 		return err
 	}
@@ -80,5 +77,5 @@ func (k keyCheck) usable(file string) error {
 		return nil
 	}
 	return fmt.Errorf("sshd would pass over %s, owner %d, mode %o, so SSH by key only would let "+
-		"no one in: give it to %s's owner, with mode 600", file, got.UID, got.Mode, k.home)
+		"no one in: give it to %s's owner, with mode 600", file, got.UID, got.Mode, k.user.Home)
 }

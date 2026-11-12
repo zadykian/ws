@@ -98,7 +98,7 @@ func Read(ctx context.Context, steps []Step) ([]Report, error) {
 }
 
 // read turns a step's last event into its report, with at most one CheckItem. A failed plan stands
-// alone: it may be a refusal to read, as host.Plain's of a link, so Report must not go past it.
+// alone: it may be a refusal to read, as the home guard's of a link, so Report must not go past it.
 func read(ctx context.Context, s Step, e Event) Report {
 	r := Report{Step: e.Step, After: e.After}
 	for _, c := range e.Changes {

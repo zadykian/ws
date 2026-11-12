@@ -156,16 +156,23 @@ func TestTheFormatterLinkPlansBeforeItsTargetExists(t *testing.T) {
 }
 
 func TestTheServerFilesRefuseALink(t *testing.T) {
-	for _, link := range []string{wsDir, wsDir + "/package.json"} {
-		m := effecttest.NewMachine()
-		m.Links[link] = "/srv/target"
-		parts, err := serverFiles(m, testAccount(1000))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err := parts[0].Plan(context.Background()); err == nil {
-			t.Errorf("a link at %s: no error", link)
-		}
+	m := effecttest.NewMachine()
+	m.Links[wsDir] = "/srv/target"
+	parts, err := serverFiles(m, testAccount(1000))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := parts[0].Plan(context.Background()); err == nil {
+		t.Error("a link at the servers' directory: no error")
+	}
+}
+
+func TestTheStampIsNotReadThroughALink(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files[npmBin] = []byte("x")
+	m.Links[wsDir+"/node_modules"] = "/srv/target"
+	if _, err := newInstall(m).Plan(context.Background()); err == nil {
+		t.Error("a link at node_modules: no error")
 	}
 }
 

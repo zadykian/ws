@@ -31,7 +31,7 @@ func dotfiles(m effect.Machine, a host.Account, goarch string) ([]host.Resource,
 		return nil, err
 	}
 	return []host.Resource{
-		host.File{M: m, Path: a.Home + "/.bashrc", Content: rc, Mode: 0o644, UID: a.UID, GID: a.GID},
-		host.File{M: m, Path: a.Home + "/.profile", Content: profile, Mode: 0o644, UID: a.UID, GID: a.GID},
+		a.File(m, ".bashrc", rc, 0o644),
+		a.File(m, ".profile", profile, 0o644),
 	}, nil
 }

@@ -121,3 +121,12 @@ func TestStepsTakeTheUserOutOfTheDockerGroup(t *testing.T) {
 		t.Errorf("calls = %q, want gpasswd", m.Calls)
 	}
 }
+
+func TestTheRootlessFilesRefuseALink(t *testing.T) {
+	m, ss := fakeSteps(t, "ws")
+	m.Links["/home/ws/.config/systemd"] = "/srv/target"
+	_, err := step.Run(t.Context(), ss, &effecttest.Out{}, false)
+	if err == nil || !strings.Contains(err.Error(), "is a link to /srv/target") {
+		t.Errorf("a link at the user's systemd directory: %v", err)
+	}
+}

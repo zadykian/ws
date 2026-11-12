@@ -35,3 +35,23 @@ func TestSigningKeyIsMadeOnceAsTheUser(t *testing.T) {
 		t.Errorf("shown %q, directory mode %o; want the directory and the key once", shown, m.Dirs["/home/ws/.ssh"])
 	}
 }
+
+// A key in the home itself needs no directory: a Dir at the home would be no path below it.
+func TestSigningKeyInTheHomePlansNoDirectory(t *testing.T) {
+	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	rs := signingKey(effecttest.NewMachine(), a, "/home/ws/id_ed25519_signing")
+	if _, ok := rs[0].(keygen); len(rs) != 1 || !ok {
+		t.Errorf("resources %v; want the key alone", rs)
+	}
+}
+
+func TestBelowCleansThePathAndTheHome(t *testing.T) {
+	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws/"}}
+	for p, want := range map[string]string{
+		"/home/ws": "", "/home/ws//.ssh/k": ".ssh/k", "/home/ws/a/../b": "b", "/etc/k": "/etc/k",
+	} {
+		if got := below(a, p); got != want {
+			t.Errorf("below(%q) = %q, want %q", p, got, want)
+		}
+	}
+}

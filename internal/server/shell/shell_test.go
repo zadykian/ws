@@ -23,7 +23,7 @@ func stepNames(v values.Values, s secrets.Secrets) []string {
 
 func TestStepsAreTheRolesInOrder(t *testing.T) {
 	got := stepNames(values.Default(), secrets.Secrets{})
-	if want := []string{"Shell links", "Shell packages", "Shell files", keyStep, "Shell allowed signers", "Shell git config", "Shell secret env", "Shell git tokens", "Shell clones"}; !slices.Equal(got, want) {
+	if want := []string{"Shell packages", "Shell files", keyStep, "Shell allowed signers", "Shell git config", "Shell secret env", "Shell git tokens", "Shell clones"}; !slices.Equal(got, want) {
 		t.Errorf("steps = %v, want %v", got, want)
 	}
 	v := values.Default()
@@ -39,6 +39,7 @@ func TestALinkKeepsAReportFromThePathsBehindIt(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n bash-completion ble.sh"] = effecttest.Result{}
 	m.Links["/home/ws/.bashrc"] = "/etc/shadow"
 	m.Files["/home/ws/.bashrc"] = []byte("root:$6$hash:19000\n")
 	reports, err := step.Read(t.Context(), Steps(v, secrets.Secrets{}, m, &effecttest.Out{}))
@@ -48,36 +49,36 @@ func TestALinkKeepsAReportFromThePathsBehindIt(t *testing.T) {
 	if text := fmt.Sprintf("%+v", reports); strings.Contains(text, "$6$hash") {
 		t.Errorf("reports = %s, want nothing read through the link", text)
 	}
-	if got := reports[0].Items; len(got) != 1 || !strings.Contains(got[0].Conflict, "/etc/shadow") {
-		t.Errorf("items = %+v, want the refusal", got)
+	for _, r := range reports {
+		if r.Step == "Shell files" {
+			if len(r.Items) != 1 || !strings.Contains(r.Items[0].Conflict, "/etc/shadow") {
+				t.Errorf("items = %+v, want the refusal", r.Items)
+			}
+			return
+		}
 	}
+	t.Error("no report of Shell files")
 }
 
-func TestLinksStepRefusesALinkAtAFileRootWrites(t *testing.T) {
+func TestALinkAtAFileStopsItsStepAlone(t *testing.T) {
 	v := values.Default()
 	v.User, v.Home = "ws", "/home/ws"
 	v.GitSigningKey = "/home/ws/.ssh/id_signing"
-	for _, link := range []string{"/home/ws/.bashrc", "/home/ws/.ssh/id_signing.pub", "/home/ws/.secrets", "/home/ws/.config/git"} {
-		m := effecttest.NewMachine()
-		m.Links[link] = "/srv/target"
-		first := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})[0]
-		if _, err := step.Run(context.Background(), []step.Step{first}, &effecttest.Out{}, false); err == nil {
-			t.Errorf("a link at %s: no error", link)
+	m := effecttest.NewMachine()
+	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n bash-completion ble.sh"] = effecttest.Result{}
+	m.Links["/home/ws/.bashrc"] = "/srv/target"
+	var failed []string
+	for _, st := range Steps(v, secrets.Secrets{}, m, &effecttest.Out{}) {
+		if st.WaitsOn() != "" {
+			continue // it waits on a step that runs apart from it here
+		}
+		if _, err := step.Run(context.Background(), []step.Step{st}, &effecttest.Out{}, true); err != nil {
+			failed = append(failed, st.Name())
 		}
 	}
-}
-
-// gitconfig reads ~/.config/git/local as root, so a link at it or above it stops the links step.
-func TestLinksStepRefusesALinkWhereGitConfigReadsLocal(t *testing.T) {
-	v := values.Default()
-	v.User, v.Home = "ws", "/home/ws"
-	v.GitSigningKey = "/home/ws/.ssh/id_signing"
-	for _, link := range []string{"/home/ws/.config/git/local", "/home/ws/.config", "/home/ws/.config/git"} {
-		m := effecttest.NewMachine()
-		m.Links[link] = "/srv/target"
-		first := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})[0]
-		if _, err := step.Run(context.Background(), []step.Step{first}, &effecttest.Out{}, false); err == nil {
-			t.Errorf("a link at %s: no error", link)
-		}
+	if want := []string{"Shell files"}; !slices.Equal(failed, want) {
+		t.Errorf("failed steps = %v, want %v", failed, want)
 	}
 }

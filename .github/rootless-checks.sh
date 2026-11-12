@@ -188,12 +188,16 @@ must "the user reaches a published port" as curl --silent --fail --max-time 5 \
     --output /dev/null http://127.0.0.1:18080/
 docker stop -t 0 ws-probe >/dev/null
 
-as ln -s /etc "$home/.secrets"
-if out=$(ws server apply --only shell 2>&1); then
-    fail "ws server apply followed a link at ~/.secrets"
+# The shell role's files refuse a link each. A dry run is enough, as the refusal is in the plan, and
+# it installs none of the role's packages. useradd made ~/.bashrc, from /etc/skel.
+as mv "$home/.bashrc" "$home/.bashrc.orig"
+as ln -s /etc/hostname "$home/.bashrc"
+if out=$(ws server apply --check --only shell 2>&1); then
+    fail "ws server apply planned through a link at ~/.bashrc"
 fi
-must "a link at ~/.secrets is refused" grep -q 'is a link to' <<<"$out"
-as rm "$home/.secrets"
+must "a link at ~/.bashrc is refused" grep -q 'is a link to /etc/hostname' <<<"$out"
+as rm "$home/.bashrc"
+as mv "$home/.bashrc.orig" "$home/.bashrc"
 
 # ws's secrets: the identity is a credential that the host's key encrypts, and a unit reads it by
 # LoadCredentialEncrypted, which a container's systemd can't run.
