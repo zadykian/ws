@@ -17,17 +17,20 @@ import (
 // finds it.
 const CredstorePath = "/etc/credstore.encrypted/" + CredentialName
 
+// FilePath is ws's secrets file on ws.
+const FilePath = "/etc/ws/secrets.age"
+
 // ErrNoCredential is the error where ws lacks the credential.
 var ErrNoCredential = errors.New("no credential " + CredstorePath + ": run ws server secrets init")
 
-// Credstore keeps the identity as the credential, which systemd-creds encrypts by the host's key in
+// credstore keeps the identity as the credential, which systemd-creds encrypts by the host's key in
 // /var/lib/systemd. It does not use the TPM's key: a change of firmware or of Secure Boot can lock
 // the TPM's out. The key reaches systemd-creds on its stdin and leaves it on its stdout, never in
 // an argument.
-type Credstore struct{ M effect.Machine }
+type credstore struct{ M effect.Machine }
 
 // Has reports whether the credential is there. It reads no secret.
-func (c Credstore) Has() (bool, error) {
+func (c credstore) Has() (bool, error) {
 	_, err := c.M.Stat(CredstorePath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
@@ -36,7 +39,7 @@ func (c Credstore) Has() (bool, error) {
 }
 
 // Identity decrypts the identity from the credential. The error names no key.
-func (c Credstore) Identity(ctx context.Context) (age.Identity, error) {
+func (c credstore) Identity(ctx context.Context) (age.Identity, error) {
 	if has, err := c.Has(); err != nil || !has {
 		return nil, errors.Join(err, ErrNoCredential)
 	}
@@ -49,7 +52,7 @@ func (c Credstore) Identity(ctx context.Context) (age.Identity, error) {
 
 // Make makes an identity in memory and writes it as the credential, mode 600 in a directory of 700,
 // replacing one that is there. ws writes the encrypted bytes itself, as it writes its other files.
-func (c Credstore) Make(ctx context.Context) (*age.X25519Identity, error) {
+func (c credstore) Make(ctx context.Context) (*age.X25519Identity, error) {
 	id, err := age.GenerateX25519Identity()
 	if err != nil {
 		return nil, fmt.Errorf("make the age identity: %w", err)

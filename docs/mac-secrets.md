@@ -35,8 +35,9 @@ A value comes from a prompt with no echo at a terminal, else from standard input
 newline. So `set` never takes a value in an argument. `set file` reads its path whole, or standard
 input whole without one, but not a terminal. A git entry takes the token so, and the flags set its
 username and proactive auth: one left out keeps the entry's. `unset` fails where the entry is
-missing. `keys` prints a `KIND NAME` line per entry, sorted, and `git URL` for a server: never a
-value. `set` without ws's credential fails and names `ws server secrets init`.
+missing. A name that ws does not know fails, and the error lists the kind's names. `keys` prints a
+`KIND NAME` line per entry, sorted, and `git URL` for a server: never a value. `set` without ws's
+credential fails and names `ws server secrets init`.
 
 ## The run
 

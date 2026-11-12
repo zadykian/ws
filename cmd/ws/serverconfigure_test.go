@@ -39,17 +39,17 @@ func TestServerSecretsSheetSetsOnWs(t *testing.T) {
 	m, id := credFixture()
 	p := fakeProcess()
 	p.machine, p.euid = m, 0
-	store, _ := serverSecretsStore(p)
-	held := secrets.Secrets{Git: map[string]secrets.Git{"https://git.example": {Username: "ada"}}}
-	if err := store.write(held, id); err != nil {
+	armored, err := secrets.Encrypt([]byte("[git.\"https://git.example\"]\nusername = \"ada\"\n"), id.Recipient())
+	if err != nil {
 		t.Fatal(err)
 	}
+	m.Files[secrets.FilePath] = armored
 	sheet, err := serverSecretsSheet(p).Open(ctx, tui.Offscreen(p.machine))
 	if err != nil || !strings.HasPrefix(sheet.Fields(nil)[0].Help, "not set") {
 		t.Fatalf("open: %v, fields %+v", err, sheet.Fields(nil))
 	}
 	sheet, err = sheet.Save(ctx, nil, map[string]string{"token github": "dummy-value", "git https://git.example": "dummy-token"})
-	s, lerr := secrets.Load(m, serverSecrets, id)
+	s, lerr := secrets.Load(m, secrets.FilePath, id)
 	if err != nil || lerr != nil || s.Token.GitHub != "dummy-value" || s.Git["https://git.example"] !=
 		(secrets.Git{Username: "ada", Token: "dummy-token"}) {
 		t.Fatalf("save: %v, %v, %+v", err, lerr, s)

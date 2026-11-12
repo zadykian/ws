@@ -1,5 +1,5 @@
 // Package secrets holds the values that the roles take from ws's secrets file: age-encrypted TOML,
-// a table per kind, decrypted in ws's process. The Mac's commands and ws server apply share this
+// a table per kind, decrypted in ws's process. ws server secrets and ws server apply share this
 // format. Nothing here prints a value: an error names a kind, a name, a key or a line.
 package secrets
 

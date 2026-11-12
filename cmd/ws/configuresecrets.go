@@ -15,7 +15,8 @@ import (
 
 // secretsLabels are the entries that the form always offers, besides those the file holds.
 var secretsLabels = []string{
-	secrets.KindToken + " github", secrets.KindToken + " azure_devops", secrets.KindPassword + " vpn_p12",
+	secrets.Label(secrets.KindToken, "github"), secrets.Label(secrets.KindToken, "azure_devops"),
+	secrets.Label(secrets.KindPassword, "vpn_p12"),
 }
 
 // secretsSheet is the secrets file on the Configure screen. held lists its entries as "KIND NAME",
@@ -27,7 +28,7 @@ func secretsSheet(side secretsSide, held []string) tui.Sheet {
 		Fields: func(map[string]string) []tui.FieldSpec {
 			labels := slices.Clone(secretsLabels)
 			for _, k := range held {
-				if kind, _, _ := strings.Cut(k, " "); kind == secrets.KindEnv || kind == secrets.KindGit {
+				if kind, _, err := secrets.CutLabel(k); err == nil && (kind == secrets.KindEnv || kind == secrets.KindGit) {
 					labels = append(labels, k)
 				}
 			}
@@ -46,11 +47,11 @@ func secretsSheet(side secretsSide, held []string) tui.Sheet {
 		Save: func(ctx context.Context, _ *tui.Bridge, edits map[string]string) (tui.Sheet, error) {
 			var err error
 			for _, label := range slices.Sorted(maps.Keys(edits)) {
-				if err = side.set(ctx, label, edits[label]); err != nil {
+				if err = side.Set(ctx, label, edits[label]); err != nil {
 					break
 				}
 			}
-			keys, kerr := side.keys(ctx)
+			keys, kerr := side.Keys(ctx)
 			if kerr != nil {
 				keys = held
 			}
@@ -61,21 +62,24 @@ func secretsSheet(side secretsSide, held []string) tui.Sheet {
 
 // secretsSide is where the secrets sheet reads and sets the file's entries, by label: "KIND NAME".
 type secretsSide interface {
-	keys(ctx context.Context) ([]string, error)
-	set(ctx context.Context, label, value string) error
+	Keys(ctx context.Context) ([]string, error)
+	Set(ctx context.Context, label, value string) error
 }
 
 // wsSide is ws's secrets file, which ws server secrets edits on ws over the wizard's ssh, a value on
 // ssh's stdin. set git, with no flag, keeps the entry's user name.
 type wsSide struct{ ws *wizard.Session }
 
-func (s wsSide) set(ctx context.Context, label, value string) error {
-	kind, name, _ := strings.Cut(label, " ")
-	_, err := s.ws.Secrets(ctx, []byte(value+"\n"), "set", kind, "--", name)
+func (s wsSide) Set(ctx context.Context, label, value string) error {
+	kind, name, err := secrets.CutLabel(label)
+	if err != nil {
+		return err
+	}
+	_, err = s.ws.Secrets(ctx, []byte(value+"\n"), "set", kind, "--", name)
 	return err
 }
 
-func (s wsSide) keys(ctx context.Context) ([]string, error) {
+func (s wsSide) Keys(ctx context.Context) ([]string, error) {
 	out, err := s.ws.Secrets(ctx, nil, "keys")
 	if err != nil {
 		return nil, fmt.Errorf("the secrets on ws: %w", err)
@@ -94,7 +98,7 @@ func (r *varsReach) secretsSheet() tui.Sheet {
 				return tui.Sheet{}, err
 			}
 			side := wsSide{ws}
-			held, err := side.keys(ctx)
+			held, err := side.Keys(ctx)
 			if err != nil {
 				return tui.Sheet{}, err
 			}

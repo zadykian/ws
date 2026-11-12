@@ -29,7 +29,7 @@ func TestMacSecretsEditWsFile(t *testing.T) {
 			t.Fatalf("%q: status %d, stderr %q", a, status, errs)
 		}
 	}
-	s, err := secrets.Load(m, serverSecrets, id)
+	s, err := secrets.Load(m, secrets.FilePath, id)
 	if g := s.Git["https://h.example"]; err != nil || s.Env["A"] != "dummy-value" || len(s.Env) != 1 ||
 		g.Token != "dummy-value" || g.Username != "bob" || len(s.File.VPNP12) != 3 {
 		t.Errorf("secrets = %+v, %v; want what was set", s, err)
@@ -95,7 +95,7 @@ func TestMacSecretsAskSudoAtTheTerminalPastStdin(t *testing.T) {
 	tty := &effecttest.Prompt{T: t, Hidden: []string{"pw"}}
 	p.openTTY = func() (effect.Hidden, func(), error) { return tty, func() {}, nil }
 	status, _, errs := runWs(p, "dummy-value\n", "mac", "secrets", "set", "env", "A")
-	if s, err := secrets.Load(m, serverSecrets, id); status != 0 || err != nil || s.Env["A"] != "dummy-value" {
+	if s, err := secrets.Load(m, secrets.FilePath, id); status != 0 || err != nil || s.Env["A"] != "dummy-value" {
 		t.Errorf("status %d, stderr %q, secrets %+v, %v; want A set", status, errs, s, err)
 	}
 	p, mac = macTerminal()

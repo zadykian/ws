@@ -45,14 +45,40 @@ func TestEditErrorsNameNoValue(t *testing.T) {
 		want string
 	}{
 		{"unknown kind", s.Set("nope", "x", "dummy"), "no kind of entry"},
-		{"unknown token", s.Set(KindToken, "x", "dummy"), "token x"},
-		{"git by Set", s.Set(KindGit, "x", "dummy"), "git x"},
-		{"unknown file", s.SetFile("x", []byte("dummy")), "file x"},
+		{"unknown token", s.Set(KindToken, "x", "dummy"), "github or azure_devops"},
+		{"unknown password", s.Set(KindPassword, "x", "dummy"), "want vpn_p12"},
+		{"unknown file", s.SetFile("x", []byte("dummy")), "vpn_p12 or vpn_sswan"},
 		{"unset missing", s.Unset(KindEnv, "MY_TOKEN"), "env MY_TOKEN is not in the file"},
 	}
 	for _, tt := range tests {
 		if tt.err == nil || !strings.Contains(tt.err.Error(), tt.want) || strings.Contains(tt.err.Error(), "dummy") {
 			t.Errorf("%s: err = %v, want %q and no value", tt.name, tt.err, tt.want)
 		}
+	}
+}
+
+func TestLabelCutsBack(t *testing.T) {
+	label := Label(KindGit, "https://h.example")
+	kind, name, err := CutLabel(label)
+	if err != nil || kind != KindGit || name != "https://h.example" {
+		t.Errorf("CutLabel(%q) = %q, %q, %v; want git and the URL", label, kind, name, err)
+	}
+}
+
+func TestCutLabelRefusesNoSpace(t *testing.T) {
+	if _, _, err := CutLabel("github"); err == nil || !strings.Contains(err.Error(), "want KIND NAME") {
+		t.Errorf("err = %v, want a refusal that wants KIND NAME", err)
+	}
+}
+
+func TestSetGitKeepsTheRest(t *testing.T) {
+	var s Secrets
+	url := "https://git.example.com"
+	s.SetGit(url, Git{Username: "bob", Token: "dummy"})
+	if err := s.Set(KindGit, url, "dummy-2"); err != nil {
+		t.Fatal(err)
+	}
+	if g := s.Git[url]; g.Token != "dummy-2" || g.Username != "bob" {
+		t.Errorf("Git = %+v, want the new token and the user name kept", g)
 	}
 }

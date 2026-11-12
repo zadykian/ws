@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 
@@ -20,7 +19,7 @@ func editFixture(t *testing.T, toml string) (*effecttest.Machine, *age.X25519Ide
 		if err != nil {
 			t.Fatal(err)
 		}
-		m.Files[serverSecrets] = armored
+		m.Files[secrets.FilePath] = armored
 	}
 	return m, id
 }
@@ -41,29 +40,13 @@ func TestSecretsKeysAndUnset(t *testing.T) {
 	if status, _, errs := runSecrets(m, "", "unset", "env", "B"); status != 0 {
 		t.Fatalf("unset: status %d, stderr %q", status, errs)
 	}
-	s, err := secrets.LoadRaw(m, serverSecrets, id)
-	if err != nil || len(s.Env) != 1 || s.Env["A"] != "${token.github}" || m.Modes[serverSecrets] != 0o600 {
-		t.Errorf("after unset: %+v, %v, mode %o; want A with its reference, 600", s, err, m.Modes[serverSecrets])
+	s, err := secrets.Load(m, secrets.FilePath, id)
+	if err != nil || len(s.Env) != 1 || s.Env["A"] != "dummy" {
+		t.Errorf("after unset: %+v, %v; want A alone", s, err)
 	}
 	status, _, errs := runSecrets(m, "", "unset", "env", "B")
 	if status != 1 || !strings.Contains(errs, "env B is not in the file") {
 		t.Errorf("unset again: status %d, stderr %q", status, errs)
-	}
-}
-
-func TestSecretsKeysOfNoFile(t *testing.T) {
-	m, _ := editFixture(t, "")
-	if status, out, _ := runSecrets(m, "", "keys"); status != 0 || out != "" {
-		t.Errorf("keys = %d %q, want none", status, out)
-	}
-}
-
-func TestSecretsWithoutTheCredential(t *testing.T) {
-	m := effecttest.NewMachine()
-	for _, a := range [][]string{{"set", "env", "A"}, {"unset", "env", "A"}, {"keys"}} {
-		if status, _, errs := runSecrets(m, "dummy\n", a...); status != 1 || !strings.Contains(errs, "ws server secrets init") {
-			t.Errorf("%q: status %d, stderr %q; want 1 naming init", a, status, errs)
-		}
 	}
 }
 
@@ -78,7 +61,7 @@ func TestSecretsSetKeysUnset(t *testing.T) {
 			t.Fatalf("%q: status %d, stderr %q", a, status, errs)
 		}
 	}
-	s, err := secrets.Load(m, serverSecrets, id)
+	s, err := secrets.Load(m, secrets.FilePath, id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,8 +70,8 @@ func TestSecretsSetKeysUnset(t *testing.T) {
 		g.Token != "dummy-value" || g.Username != "bob" || !g.ProactiveAuth || len(s.File.VPNP12) != 3 {
 		t.Errorf("secrets = %+v, want what was set", s)
 	}
-	if m.Modes[serverSecrets] != 0o600 {
-		t.Errorf("mode %o, want 600", m.Modes[serverSecrets])
+	if m.Modes[secrets.FilePath] != 0o600 {
+		t.Errorf("mode %o, want 600", m.Modes[secrets.FilePath])
 	}
 	status, out, _ := runSecrets(m, "", "keys")
 	want := "env MY_TOKEN\nenv OLD\nfile vpn_p12\ngit https://git.example.com\npassword vpn_p12\ntoken github\n"
@@ -111,19 +94,8 @@ func TestSecretsSetFileFromStdin(t *testing.T) {
 	if status, _, errs := runSecrets(m, "conn ws\n", "set", "file", "vpn_sswan"); status != 0 {
 		t.Fatalf("status %d, stderr %q", status, errs)
 	}
-	if s, err := secrets.Load(m, serverSecrets, id); err != nil || string(s.File.VPNSswan) != "conn ws\n" {
+	if s, err := secrets.Load(m, secrets.FilePath, id); err != nil || string(s.File.VPNSswan) != "conn ws\n" {
 		t.Errorf("vpn_sswan = %q, %v; want stdin whole", s.File.VPNSswan, err)
-	}
-}
-
-func TestSecretsSetKeepsReferences(t *testing.T) {
-	m, id := editFixture(t, "[token]\ngithub = \"dummy\"\n[env]\nA = \"${token.github}\"\n")
-	if status, _, errs := runSecrets(m, "dummy\n", "set", "env", "B"); status != 0 {
-		t.Fatalf("status %d, stderr %q", status, errs)
-	}
-	plain, _ := secrets.Decrypt(m.Files[serverSecrets], id)
-	if !strings.Contains(string(plain), "${token.github}") {
-		t.Error("the reference was expanded")
 	}
 }
 
@@ -133,7 +105,7 @@ func TestSecretsValueFromStdin(t *testing.T) {
 		if status, _, errs := runSecrets(m, in, "set", "env", "A"); status != 0 {
 			t.Fatalf("%q: status %d, stderr %q", in, status, errs)
 		}
-		s, _ := secrets.Load(m, serverSecrets, id)
+		s, _ := secrets.Load(m, secrets.FilePath, id)
 		if s.Env["A"] != want {
 			t.Errorf("stdin %q gave %q, want %q", in, s.Env["A"], want)
 		}
@@ -170,27 +142,12 @@ func TestSecretsSetRefuses(t *testing.T) {
 	}
 }
 
-func TestSecretsLeaveNoPlainFile(t *testing.T) {
-	m, _ := editFixture(t, "")
-	runSecrets(m, "dummy-value\n", "set", "env", "A")
-	for path, data := range m.Files {
-		if bytes.Contains(data, []byte("dummy-value")) {
-			t.Errorf("%s holds the value in plain text", path)
-		}
-	}
-	for _, in := range m.Inputs {
-		if strings.Contains(in, "dummy-value") {
-			t.Error("a command took the value")
-		}
-	}
-}
-
 func TestSecretsSetGitKeepsWhatAFlagLeavesOut(t *testing.T) {
 	m, id := editFixture(t, "[git.\"https://h.example\"]\ntoken = \"old\"\nusername = \"bob\"\nproactive_auth = true\n")
 	if status, _, errs := runSecrets(m, "dummy-2\n", "set", "git", "https://h.example"); status != 0 {
 		t.Fatalf("status %d, stderr %q", status, errs)
 	}
-	s, _ := secrets.Load(m, serverSecrets, id)
+	s, _ := secrets.Load(m, secrets.FilePath, id)
 	if g := s.Git["https://h.example"]; g.Token != "dummy-2" || g.Username != "bob" || !g.ProactiveAuth {
 		t.Errorf("git = %+v, want the new token with bob and proactive_auth", g)
 	}

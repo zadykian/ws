@@ -18,14 +18,14 @@ func TestCredstoreReadsTheIdentity(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files[CredstorePath] = []byte("sealed")
 	m.Results[credDecrypt] = effecttest.Result{Out: []byte(id.String() + "\n")}
-	got, err := Credstore{M: m}.Identity(context.Background())
+	got, err := credstore{M: m}.Identity(context.Background())
 	if err != nil || got.(*age.X25519Identity).String() != id.String() {
 		t.Errorf("Identity = %v; want the credential's identity", err)
 	}
 }
 
 func TestCredstoreWithoutTheCredential(t *testing.T) {
-	_, err := Credstore{M: effecttest.NewMachine()}.Identity(context.Background())
+	_, err := credstore{M: effecttest.NewMachine()}.Identity(context.Background())
 	if !errors.Is(err, ErrNoCredential) || !strings.Contains(err.Error(), "ws server secrets init") {
 		t.Errorf("err = %v, want ErrNoCredential naming init", err)
 	}
@@ -35,7 +35,7 @@ func TestCredstoreErrorShowsNoKey(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files[CredstorePath] = []byte("sealed")
 	m.Results[credDecrypt] = effecttest.Result{Out: []byte("AGE-SECRET-KEY-nope\n")}
-	if _, err := (Credstore{M: m}).Identity(context.Background()); err == nil || strings.Contains(err.Error(), "SECRET-KEY") {
+	if _, err := (credstore{M: m}).Identity(context.Background()); err == nil || strings.Contains(err.Error(), "SECRET-KEY") {
 		t.Errorf("Identity: err = %v, want one with no key", err)
 	}
 }
@@ -45,7 +45,7 @@ const credEncrypt = "systemd-creds encrypt --with-key=host --name=ws-secrets - -
 func TestCredstoreMakesTheIdentity(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[credEncrypt] = effecttest.Result{Out: []byte("sealed")}
-	id, err := Credstore{M: m}.Make(context.Background())
+	id, err := credstore{M: m}.Make(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestCredstoreFailedMakeKeepsTheCredential(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results[credEncrypt] = effecttest.Result{Err: errors.New("exit status 1")}
 	m.Files[CredstorePath] = []byte("sealed")
-	if _, err := (Credstore{M: m}).Make(context.Background()); err == nil || string(m.Files[CredstorePath]) != "sealed" {
+	if _, err := (credstore{M: m}).Make(context.Background()); err == nil || string(m.Files[CredstorePath]) != "sealed" {
 		t.Errorf("Make = %v; want an error, and the credential kept", err)
 	}
 	if err := scrubKey(errors.New("echoed KEY"), "KEY"); err.Error() != "echoed [key]" {

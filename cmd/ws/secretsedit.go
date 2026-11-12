@@ -1,38 +1,19 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"strings"
 
-	"filippo.io/age"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/secrets"
 )
 
-// secretsKey keeps the identity of ws's secrets file: its credential.
-type secretsKey interface {
-	Identity(ctx context.Context) (age.Identity, error)
-}
-
-// secretsStore is the secrets file and the identity that opens it.
-type secretsStore struct {
-	m    effect.Machine
-	k    secretsKey
-	path string
-	// write replaces the file with s, sealed to id.
-	write func(s secrets.Secrets, id age.Identity) error
-}
-
 // openStore returns the store that a command edits, or why the command doesn't run.
-type openStore func() (secretsStore, error)
+type openStore func() (secrets.Store, error)
 
 // secretsEditCmds returns set, unset and keys, which edit the store that open returns.
 func secretsEditCmds(p process, open openStore) []*cobra.Command {
@@ -57,27 +38,10 @@ func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) e
 	if err != nil {
 		return err
 	}
-	return s.edit(c.Context(), fn)
+	return s.Edit(c.Context(), fn)
 }
 
-// edit reads the file with its references as written, applies fn and writes the file again. A file
-// that is missing is an empty one.
-func (s secretsStore) edit(ctx context.Context, fn func(*secrets.Secrets) error) error {
-	id, err := s.k.Identity(ctx)
-	if err != nil {
-		return err
-	}
-	cur, err := secrets.LoadRaw(s.m, s.path, id)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return err
-	}
-	if err := fn(&cur); err != nil {
-		return err
-	}
-	return s.write(cur, id)
-}
-
-// newSecretsSetCmd returns ws mac secrets set, with a command per kind.
+// newSecretsSetCmd returns set, of ws server secrets and ws mac secrets, with a command per kind.
 func newSecretsSetCmd(p process, open openStore) *cobra.Command {
 	cmds := []*cobra.Command{newSecretsSetGitCmd(open), newSecretsSetFileCmd(p, open)}
 	for _, kind := range []string{secrets.KindToken, secrets.KindEnv, secrets.KindPassword} {
@@ -86,7 +50,7 @@ func newSecretsSetCmd(p process, open openStore) *cobra.Command {
 			Short: "set the " + kind + " NAME, from a prompt with no echo or from stdin",
 			Args:  cobra.ExactArgs(1),
 			RunE: func(c *cobra.Command, args []string) error {
-				value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), kind+" "+args[0])
+				value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(kind, args[0]))
 				if err != nil {
 					return err
 				}
@@ -97,7 +61,7 @@ func newSecretsSetCmd(p process, open openStore) *cobra.Command {
 	return group("set", "set an entry, whose value never goes in an argument", cmds...)
 }
 
-// newSecretsSetGitCmd returns ws mac secrets set git.
+// newSecretsSetGitCmd returns set git.
 func newSecretsSetGitCmd(open openStore) *cobra.Command {
 	var g secrets.Git
 	c := &cobra.Command{
@@ -106,19 +70,22 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			var err error
-			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.KindGit+" "+args[0]); err != nil {
+			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(secrets.KindGit, args[0])); err != nil {
 				return err
 			}
 			return editIn(c, open, func(s *secrets.Secrets) error {
 				// A flag left out keeps the entry's, so that a form sets a token alone.
+				if err := s.Set(secrets.KindGit, args[0], g.Token); err != nil {
+					return err
+				}
 				cur := s.Git[args[0]]
-				if !c.Flags().Changed("username") {
-					g.Username = cur.Username
+				if c.Flags().Changed("username") {
+					cur.Username = g.Username
 				}
-				if !c.Flags().Changed("proactive-auth") {
-					g.ProactiveAuth = cur.ProactiveAuth
+				if c.Flags().Changed("proactive-auth") {
+					cur.ProactiveAuth = g.ProactiveAuth
 				}
-				s.SetGit(args[0], g)
+				s.SetGit(args[0], cur)
 				return nil
 			})
 		},
@@ -195,7 +162,7 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 	if err != nil {
 		return err
 	}
-	keys, err := s.keys(c.Context())
+	keys, err := s.Keys(c.Context())
 	if err != nil {
 		return err
 	}
@@ -203,34 +170,6 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 		_, _ = io.WriteString(c.OutOrStdout(), k+"\n")
 	}
 	return nil
-}
-
-// keys returns each entry as KIND NAME, never a value. A file that is missing holds none.
-func (s secretsStore) keys(ctx context.Context) ([]string, error) {
-	id, err := s.k.Identity(ctx)
-	if err != nil {
-		return nil, err
-	}
-	cur, err := secrets.LoadRaw(s.m, s.path, id)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-	return cur.Keys(), nil
-}
-
-// set sets the entry that label names, "KIND NAME", for the secrets sheet. A git entry keeps its
-// other fields, as set git does with no flag.
-func (s secretsStore) set(ctx context.Context, label, value string) error {
-	kind, name, _ := strings.Cut(label, " ")
-	return s.edit(ctx, func(cur *secrets.Secrets) error {
-		if kind == secrets.KindGit {
-			g := cur.Git[name]
-			g.Token = value
-			cur.SetGit(name, g)
-			return nil
-		}
-		return cur.Set(kind, name, value)
-	})
 }
 
 // sayOut prints a line on stdout after the command's path.
