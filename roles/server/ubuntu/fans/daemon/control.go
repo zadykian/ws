@@ -1,4 +1,4 @@
-package fans
+package daemon
 
 // control is a fan on a curve or at a fixed speed, which moves Step % a tick at most.
 type control struct {

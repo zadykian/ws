@@ -1,4 +1,4 @@
-package fans
+package daemon
 
 import (
 	"fmt"
