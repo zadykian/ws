@@ -10,8 +10,8 @@ them by hand. A machine's own settings go in files they read where they exist:
 - `~/.bash_aliases`, which `~/.bashrc` sources too;
 - `~/.config/git/local`, which `~/.gitconfig` includes last, so that its settings win.
 
-A link at a file the role writes as root fails the run before a step changes anything. So does a
-link at a directory between the home and that file ([Links under the home](security.md#links-under-the-home)).
+A link at a file the role writes as root fails the step of that file alone. So does a link at a
+directory between the home and that file ([Links under the home](security.md#links-under-the-home)).
 
 An installer that appends to `~/.bashrc` or `~/.profile`, a line that adds its directory to
 `PATH`, say, loses that line on the next run: move it to `~/.bash_aliases`.

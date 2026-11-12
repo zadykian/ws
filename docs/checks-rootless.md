@@ -24,7 +24,7 @@ The firewall must hold under the rootless daemon:
   is off.
 - Root reaches a system container's address and the user doesn't, though the user reaches a port
   published on loopback.
-- A link at `~/.secrets` is refused ([Docker](docker.md)).
+- A link at `~/.bashrc` is refused ([Shell](shell.md)).
 
 Then ws's secrets. `ws server secrets init` makes the credential, root's 600 in root's 700, and the
 file, root's 600. `set` takes a value on standard input, and `keys` names it but never prints it.
