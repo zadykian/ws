@@ -1,4 +1,4 @@
-package host_test
+package archive_test
 
 import (
 	"archive/tar"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/internal/archive"
 )
 
 type entry struct {
@@ -18,7 +18,7 @@ type entry struct {
 	mode             int64
 }
 
-func archive(t *testing.T, zipped bool, entries ...entry) []byte {
+func tarball(t *testing.T, zipped bool, entries ...entry) []byte {
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 	for _, e := range entries {
@@ -49,7 +49,7 @@ func archive(t *testing.T, zipped bool, entries ...entry) []byte {
 	return out.Bytes()
 }
 
-func unpack(t *testing.T, data []byte, strip int) (string, error) {
+func extractTo(t *testing.T, data []byte, strip int) (string, error) {
 	dir := filepath.Join(t.TempDir(), "tree")
 	if err := os.Mkdir(dir, 0o750); err != nil {
 		t.Fatal(err)
@@ -59,12 +59,12 @@ func unpack(t *testing.T, data []byte, strip int) (string, error) {
 		t.Fatal(err)
 	}
 	defer func() { _ = root.Close() }() // the test reads through paths
-	return dir, host.Unpack(bytes.NewReader(data), root, strip)
+	return dir, archive.Extract(bytes.NewReader(data), root, strip)
 }
 
-func TestUnpackStripsTheTopDirectory(t *testing.T) {
+func TestExtractStripsTheTopDirectory(t *testing.T) {
 	for _, zipped := range []bool{true, false} {
-		data := archive(t, zipped,
+		data := tarball(t, zipped,
 			entry{name: "go/", typ: tar.TypeDir, mode: 0o755},
 			entry{name: "go/VERSION", body: "go1.27.3\n", mode: 0o644},
 			entry{name: "go/bin/", typ: tar.TypeDir, mode: 0o755},
@@ -72,7 +72,7 @@ func TestUnpackStripsTheTopDirectory(t *testing.T) {
 			entry{name: "go/bin/gofmt", typ: tar.TypeSymlink, link: "go"},
 			entry{name: "go/bin/again", typ: tar.TypeLink, link: "go/bin/go"},
 		)
-		dir, err := unpack(t, data, 1)
+		dir, err := extractTo(t, data, 1)
 		if err != nil {
 			t.Fatalf("zipped %v: %v", zipped, err)
 		}
@@ -95,8 +95,8 @@ func TestUnpackStripsTheTopDirectory(t *testing.T) {
 	}
 }
 
-func TestUnpackKeepsTheNamesWithNoStrip(t *testing.T) {
-	dir, err := unpack(t, archive(t, true, entry{name: "a/b", body: "x", mode: 0o600}), 0)
+func TestExtractKeepsTheNamesWithNoStrip(t *testing.T) {
+	dir, err := extractTo(t, tarball(t, true, entry{name: "a/b", body: "x", mode: 0o600}), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestUnpackKeepsTheNamesWithNoStrip(t *testing.T) {
 	}
 }
 
-func TestUnpackRefuses(t *testing.T) {
+func TestExtractRefuses(t *testing.T) {
 	tests := []struct {
 		name    string
 		entries []entry
@@ -126,7 +126,7 @@ func TestUnpackRefuses(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dir, err := unpack(t, archive(t, true, tt.entries...), 1)
+			dir, err := extractTo(t, tarball(t, true, tt.entries...), 1)
 			if err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Fatalf("got %v, want an error with %q", err, tt.want)
 			}
@@ -137,30 +137,12 @@ func TestUnpackRefuses(t *testing.T) {
 	}
 }
 
-func TestUnpackFailsOnACutArchive(t *testing.T) {
-	data := archive(t, true, entry{name: "a/b", body: strings.Repeat("x", 5000)})
-	if _, err := unpack(t, data[:len(data)/2], 1); err == nil {
+func TestExtractFailsOnACutArchive(t *testing.T) {
+	data := tarball(t, true, entry{name: "a/b", body: strings.Repeat("x", 5000)})
+	if _, err := extractTo(t, data[:len(data)/2], 1); err == nil {
 		t.Error("a cut archive unpacked")
 	}
-	if _, err := unpack(t, []byte("not a tarball at all, 512 bytes needed"), 1); err == nil {
+	if _, err := extractTo(t, []byte("not a tarball at all, 512 bytes needed"), 1); err == nil {
 		t.Error("garbage unpacked")
-	}
-}
-
-func TestUnpackFile(t *testing.T) {
-	file := filepath.Join(t.TempDir(), "a.tar.gz")
-	data := archive(t, true, entry{name: "top/f", body: "y", mode: 0o644})
-	if err := os.WriteFile(file, data, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	dir := filepath.Join(t.TempDir(), "new", "tree")
-	if err := host.UnpackFile(file, dir, 1); err != nil {
-		t.Fatal(err)
-	}
-	if b, err := os.ReadFile(filepath.Join(dir, "f")); err != nil || string(b) != "y" { //nolint:gosec // a path in the test's own temp tree
-		t.Errorf("f is %q, %v", b, err)
-	}
-	if err := host.UnpackFile(filepath.Join(dir, "missing"), dir, 1); err == nil {
-		t.Error("a missing archive unpacked")
 	}
 }
