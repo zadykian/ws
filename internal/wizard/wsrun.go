@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
@@ -27,8 +28,6 @@ type WsRun struct {
 	// Check is set under --check. Out takes the stage's lines.
 	Check bool
 	Out   effect.Out
-	// Default is the server's default ws_user, what a host_vars with no such line gives.
-	Default string
 	// Version is this ws's version. A full run counts only where a ws of that version made it.
 	Version string
 	// Update has the stage run ws server apply once more, with the ws installed there.
@@ -53,8 +52,11 @@ func (r *WsRun) RunDone(ctx context.Context, c conf.Conf) bool {
 		return false
 	}
 	s, ok := r.Ws.status(ctx)
-	return ok && s.done(r.Version, r.Default, c)
+	return ok && s.done(r.Version, c)
 }
+
+// defaultUser is the server's default ws_user, what a host_vars with no such line gives.
+func defaultUser() string { return values.Default().User }
 
 // runChange is the change that runs ws server apply.
 type runChange struct {
@@ -91,7 +93,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		how += ", with ws's secrets file"
 	}
 	user := ""
-	if !s.named(r.Default, c) {
+	if !s.named(c) {
 		user = c.User
 		how += ", after naming ws_user: " + user + " in ws's host_vars"
 	}

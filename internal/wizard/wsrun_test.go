@@ -19,10 +19,10 @@ var idleRun = wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0"}}
 // answers status with the value's text.
 func newRun(target string, status wsStatus, update, check bool) (*WsRun, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=alice\n" + extra[target])
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=" + target + "\nWS_USER=" + defaultUser() + "\n" + extra[target])
 	out := &effecttest.Out{}
 	ws := macSession(m, SSH{M: m, Lock: "/l", Conf: "/h/mac.conf"}, out, status)
-	return &WsRun{Ws: ws, Check: check, Out: out, Version: "v1.2.3", Update: update, Default: "alice"}, m
+	return &WsRun{Ws: ws, Check: check, Out: out, Version: "v1.2.3", Update: update}, m
 }
 
 func TestWsRunPlan(t *testing.T) {
@@ -104,31 +104,36 @@ func TestWsRunIsDoneAtHostVarsSum(t *testing.T) {
 	}
 }
 
+// asks sets the user that mac.conf wants ws's run to leave.
+func asks(m *effecttest.Machine, user string) {
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=" + user + "\n")
+}
+
 func TestWsRunNamesWsUser(t *testing.T) {
-	for name, tc := range map[string]struct{ user, server, want string }{
-		"the default": {"", "alice", ""},
-		"none named":  {"", "zadykian", "after naming ws_user: alice in ws's host_vars"},
-		"named":       {"alice", "zadykian", ""},
+	for name, tc := range map[string]struct{ named, want, plan string }{
+		"the default": {"", defaultUser(), ""},
+		"none named":  {"", "alice", "after naming ws_user: alice in ws's host_vars"},
+		"named":       {"alice", "alice", ""},
 		"another":     {"other", "alice", "after naming ws_user: alice in ws's host_vars"},
 	} {
 		s := idleRun
-		s.User = tc.user
-		r, _ := newRun("lan", s, false, false)
-		r.Default = tc.server
+		s.User = tc.named
+		r, m := newRun("lan", s, false, false)
+		asks(m, tc.want)
 		p, err := r.Plan(context.Background())
 		got := ""
 		if len(p.Changes) > 0 {
 			got = p.Changes[0].String()
 		}
-		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
-			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
+		if err != nil || (tc.plan == "") != (got == "") || !strings.Contains(got, tc.plan) {
+			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.plan)
 		}
 	}
 }
 
 func TestWsRunNamesWsUserBeforeTheRun(t *testing.T) {
 	r, m := newRun("lan", idleRun, false, false)
-	r.Default = "zadykian"
+	asks(m, "alice")
 	p, _ := r.Plan(context.Background())
 	err := r.Apply(context.Background(), p)
 	if err == nil || !strings.Contains(err.Error(), "ws's host_vars lacks ws_user: alice") {

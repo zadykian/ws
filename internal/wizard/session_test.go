@@ -19,7 +19,7 @@ func macSession(m *effecttest.Machine, ssh SSH, out *effecttest.Out, status wsSt
 func wsSession(status wsStatus) (*Session, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	want := func() (conf.Conf, error) { return conf.Conf{Target: "lan", User: "ada"}, nil }
-	reach := WsReach{M: m, Want: want, Default: "alice", Here: m, Out: &effecttest.Out{}}
+	reach := WsReach{M: m, Want: want, Here: m, Out: &effecttest.Out{}}
 	ws := NewSession(fakeReach{Reach: reach, M: m}, Scripts{Remote: []byte("x"), Files: []byte("y")})
 	m.Results[opLine("status")] = effecttest.Result{Out: status.text()}
 	return ws, m
