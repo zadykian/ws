@@ -7,20 +7,18 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
-const versionQuery = "dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n " + smiPackage
-
 func TestRebootSaysWhileTheLoadedDriverDiffers(t *testing.T) {
 	for _, tc := range []struct {
-		name, dpkg, loaded, want string
+		name, version, status, loaded, want string
 	}{
-		{"none loaded", "595.91.07-0ubuntu0.26.04.2 ii \n", "", "driver none, and 595.91.07 is installed"},
-		{"an older one", "595.91.07-0ubuntu0.26.04.2 ii \n", "595.58.03\n", "driver 595.58.03, and 595.91.07"},
-		{"the installed one", "595.91.07-0ubuntu1 ii \n", "595.91.07\n", ""},
-		{"not installed", "595.91.07-0ubuntu1 rc \n", "", ""},
+		{"none loaded", "595.91.07-0ubuntu0.26.04.2", "ii", "", "driver none, and 595.91.07 is installed"},
+		{"an older one", "595.91.07-0ubuntu0.26.04.2", "ii", "595.58.03\n", "driver 595.58.03, and 595.91.07"},
+		{"the installed one", "595.91.07-0ubuntu1", "ii", "595.91.07\n", ""},
+		{"not installed", "595.91.07-0ubuntu1", "rc", "", ""},
 	} {
 		m, out := effecttest.NewMachine(), &effecttest.Out{}
 		m.Dirs["/run/systemd/system"] = 0o755
-		m.Results[versionQuery] = effecttest.Result{Out: []byte(tc.dpkg)}
+		m.Packages = effecttest.Packages{smiPackage: {Version: tc.version, Status: tc.status}}
 		if tc.loaded != "" {
 			m.Files[loadedVersion] = []byte(tc.loaded)
 		}

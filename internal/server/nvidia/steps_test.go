@@ -27,11 +27,11 @@ func TestStepsPlanNothingWithoutTheGPU(t *testing.T) {
 
 func TestPackagesInstallTheFlavorsModules(t *testing.T) {
 	m := withDevice("0x030000", "0x10de")
-	m.Results[flavorQuery] = effecttest.Result{Out: []byte("linux-image-generic 7.0.0-42.42 ii \n")}
+	m.Packages = effecttest.Packages{
+		"linux-image-generic":     {Version: "7.0.0-42.42", Status: "ii"},
+		modulesPrefix + "generic": {Version: "7.0.0-14.14", Status: "ii"},
+	}
 	want := append(slices.Clone(driverPackages), modulesPrefix+"generic=7.0.0-42.42")
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n "+strings.Join(driverPackages, " ")] = effecttest.Result{}
-	m.Results["dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n "+modulesPrefix+"generic"] = effecttest.Result{
-		Out: []byte("7.0.0-14.14 ii \n")}
 	p, err := Steps(values.Default(), secrets.Secrets{}, m, &effecttest.Out{})[1].Plan(t.Context())
 	if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != "install "+strings.Join(want, " ") {
 		t.Errorf("Plan = %v, %v; want an install of %q", p, err, want)

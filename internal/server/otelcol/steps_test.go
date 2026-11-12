@@ -15,9 +15,9 @@ import (
 const validate = "env OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://remote.invalid:4317 /usr/bin/otelcol-contrib validate --config=/etc/otelcol-contrib/config.yaml.ws-check"
 
 func fakeSteps(t *testing.T, env string) (*effecttest.Machine, []step.Step) {
-	m := machine(version + " ii\n")
+	m := machine(effecttest.Package{Version: version, Status: "ii"})
 	m.Dirs["/run/systemd/system"] = 0o755
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n prometheus-node-exporter"] = effecttest.Result{Out: []byte("prometheus-node-exporter ii\n")}
+	m.Packages["prometheus-node-exporter"] = effecttest.Package{Version: "1", Status: "ii"}
 	m.Results[validate] = effecttest.Result{}
 	if env != "" {
 		m.Files["/home/ws/.secrets/env"] = []byte(env)

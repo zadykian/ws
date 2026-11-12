@@ -3,9 +3,7 @@ package host
 import (
 	"cmp"
 	"context"
-	"errors"
 	"fmt"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -47,85 +45,46 @@ func (c installChange) String() string { return "install " + strings.Join(c.miss
 
 func (installChange) Kind() step.ChangeKind { return step.Install }
 
-// Plan asks dpkg which of the packages are installed. A name of the form NAME=GLOB, such as
-// nodejs=24.*, is installed only at a version that matches the glob.
+// Plan asks dpkg, in one run, which of the packages are installed. A name of the form NAME=GLOB,
+// such as nodejs=24.*, is installed only at a version that matches the glob. The change lists
+// the plain names first, then the pins.
 func (p Packages) Plan(ctx context.Context) ([]Change, error) {
-	var plain, pinned []string
+	var plain, pinned, patterns []string
 	for _, n := range p.Names {
-		if strings.Contains(n, "=") {
+		if name, _, ok := strings.Cut(n, "="); ok {
 			pinned = append(pinned, n)
+			patterns = append(patterns, name)
 		} else {
 			plain = append(plain, n)
+			patterns = append(patterns, n)
 		}
 	}
-	missing, err := p.missingPlain(ctx, plain)
+	states, err := PackageStates(ctx, p.M, patterns...)
 	if err != nil {
 		return nil, err
 	}
-	wrong, err := p.missingPinned(ctx, pinned)
-	if err != nil {
-		return nil, err
+	var missing []string
+	for _, n := range plain {
+		if !states[n].Installed() {
+			missing = append(missing, n)
+		}
 	}
-	missing = append(missing, wrong...)
+	for _, spec := range pinned {
+		name, glob, _ := strings.Cut(spec, "=")
+		if have := states[name]; !have.Installed() || !globMatch(glob, have.Version) {
+			missing = append(missing, spec)
+		}
+	}
 	if len(missing) == 0 {
 		return nil, nil
 	}
 	return []Change{installChange{p, missing}}, nil
 }
 
-func (p Packages) missingPlain(ctx context.Context, names []string) ([]string, error) {
-	if len(names) == 0 {
-		return nil, nil
-	}
-	args := append([]string{"-W", "-f", "${Package} ${db:Status-Abbrev}\n"}, names...)
-	out, err := p.M.Run(ctx, "dpkg-query", args...)
-	// dpkg-query exits with 1 for a package it does not know, and prints the others.
-	var ee *exec.ExitError
-	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
-		return nil, err
-	}
-	return missingPackages(string(out), names), nil
-}
-
-// missingPinned returns those of the NAME=GLOB specs whose package is not installed at a version
-// that the glob matches.
-func (p Packages) missingPinned(ctx context.Context, specs []string) ([]string, error) {
-	var missing []string
-	for _, spec := range specs {
-		name, glob, _ := strings.Cut(spec, "=")
-		out, err := p.M.Run(ctx, "dpkg-query", "-W", "-f", "${Version} ${db:Status-Abbrev}\n", name)
-		var ee *exec.ExitError
-		if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
-			return nil, err
-		}
-		if f := strings.Fields(string(out)); len(f) != 2 || f[1] != "ii" || !globMatch(glob, f[0]) {
-			missing = append(missing, spec)
-		}
-	}
-	return missing, nil
-}
-
 // globMatch reports whether version matches the glob, whose * stands for any run of characters.
 func globMatch(glob, version string) bool {
 	ok, err := path.Match(glob, version)
 	return err == nil && ok
-}
-
-// missingPackages returns those of want that dpkg-query's output does not list as installed, "ii".
-func missingPackages(out string, want []string) []string {
-	installed := map[string]bool{}
-	for _, line := range strings.Split(out, "\n") {
-		if f := strings.Fields(line); len(f) == 2 && f[1] == "ii" {
-			installed[f[0]] = true
-		}
-	}
-	var missing []string
-	for _, w := range want {
-		if !installed[w] {
-			missing = append(missing, w)
-		}
-	}
-	return missing
 }
 
 // Apply updates apt's lists, then installs the missing packages.
@@ -167,7 +126,7 @@ func (p Packages) Report(ctx context.Context) ([]step.Item, error) {
 		names[i] = name
 		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: cmp.Or(glob, "installed")}
 	}
-	states, err := dpkgStates(ctx, p.M, names)
+	states, err := PackageStates(ctx, p.M, names...)
 	if err != nil {
 		return nil, err
 	}

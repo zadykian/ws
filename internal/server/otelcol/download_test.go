@@ -1,18 +1,18 @@
 package otelcol
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
-const packageQuery = "dpkg-query -W -f ${Package} ${Version} ${db:Status-Abbrev}\n otelcol-contrib"
-
-func machine(have string) *effecttest.Machine {
+func machine(have effecttest.Package) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
-	m.Results[packageQuery] = effecttest.Result{Out: []byte(strings.TrimSpace("otelcol-contrib "+have) + "\n")}
+	m.Packages = effecttest.Packages{}
+	if have.Status != "" {
+		m.Packages["otelcol-contrib"] = have
+	}
 	return m
 }
 

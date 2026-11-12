@@ -115,6 +115,9 @@ func (m *Machine) run(kind, name string, args []string) ([]byte, error) {
 	line := strings.Join(append([]string{name}, args...), " ")
 	m.Calls = append(m.Calls, kind+" "+line)
 	r, ok := m.Results[line]
+	if !ok {
+		r, ok = m.dpkgQuery(name, args)
+	}
 	if !ok && kind == "root" && m.tree(name, args) {
 		return nil, nil
 	}

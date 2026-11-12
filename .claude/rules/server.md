@@ -42,6 +42,11 @@ steps, and each role's page in `docs/` says what it sets up.
 - A dry run, `--check`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([devtools](../../internal/server/devtools/golang.go)).
+- A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
+  in Results, so host's read can change under it
+  ([machine_dpkg.go](../../effect/effecttest/machine_dpkg.go)).
+- A package is installed where dpkg lists it `ii`, in plans and reports alike, and a step reads dpkg
+  in one run ([dpkg.go](../../host/dpkg.go)). A role reads dpkg through `host.PackageStates`.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.

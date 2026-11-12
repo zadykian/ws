@@ -2,8 +2,6 @@ package host
 
 import (
 	"context"
-	"errors"
-	"os/exec"
 	"slices"
 	"strings"
 
@@ -31,19 +29,17 @@ func (c purge) Apply(ctx context.Context) error {
 	return c.m.Pass(ctx, false, "env", args...)
 }
 
-// Plan reads dpkg's status. Its second letter is n for a package with nothing on the machine, and
-// c, for one that left its settings, still takes a purge.
+// Plan reads dpkg once and purges each package with anything of it on the machine. One that left
+// its settings alone still takes a purge. With no names, it plans nothing.
 func (p Purged) Plan(ctx context.Context) ([]Change, error) {
-	out, err := p.M.Run(ctx, "dpkg-query", append([]string{"-W", "-f", "${Package} ${db:Status-Abbrev}\n"}, p.Names...)...)
-	// dpkg-query exits with 1 for a package it does not know, and prints the others.
-	var ee *exec.ExitError
-	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
+	states, err := PackageStates(ctx, p.M, p.Names...)
+	if err != nil {
 		return nil, err
 	}
 	var present []string
-	for line := range strings.Lines(string(out)) {
-		if f := strings.Fields(line); len(f) == 2 && len(f[1]) >= 2 && f[1][1] != 'n' {
-			present = append(present, f[0])
+	for _, n := range p.Names {
+		if states[n].present() {
+			present = append(present, n)
 		}
 	}
 	if len(present) == 0 {
@@ -55,14 +51,14 @@ func (p Purged) Plan(ctx context.Context) ([]Change, error) {
 // Report shows each package as dpkg knows it. One that is installed stands against ws, as a run
 // purges it.
 func (p Purged) Report(ctx context.Context) ([]step.Item, error) {
-	states, err := dpkgStates(ctx, p.M, p.Names)
+	states, err := PackageStates(ctx, p.M, p.Names...)
 	if err != nil {
 		return nil, err
 	}
 	items := make([]step.Item, len(p.Names))
 	for i, name := range p.Names {
 		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: missing, Found: states[name].text()}
-		if states[name].installed() {
+		if states[name].Installed() {
 			items[i].Conflict = "installed, and ws purges it"
 		}
 	}
