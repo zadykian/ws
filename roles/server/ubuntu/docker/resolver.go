@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"github.com/zadykian/ws/internal/server/ufw"
+	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
