@@ -74,17 +74,17 @@ func (p Packages) Plan(ctx context.Context) ([]Change, error) {
 }
 
 func (p Packages) missingPlain(ctx context.Context, names []string) ([]string, error) {
-	if len(names) == 0 {
-		return nil, nil
-	}
-	args := append([]string{"-W", "-f", "${Package} ${db:Status-Abbrev}\n"}, names...)
-	out, err := p.M.Run(ctx, "dpkg-query", args...)
-	// dpkg-query exits with 1 for a package it does not know, and prints the others.
-	var ee *exec.ExitError
-	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
+	states, err := dpkgStates(ctx, p.M, names...)
+	if err != nil {
 		return nil, err
 	}
-	return missingPackages(string(out), names), nil
+	var missing []string
+	for _, n := range names {
+		if !states[n].installed() {
+			missing = append(missing, n)
+		}
+	}
+	return missing, nil
 }
 
 // missingPinned returns those of the NAME=GLOB specs whose package is not installed at a version
@@ -109,23 +109,6 @@ func (p Packages) missingPinned(ctx context.Context, specs []string) ([]string, 
 func globMatch(glob, version string) bool {
 	ok, err := path.Match(glob, version)
 	return err == nil && ok
-}
-
-// missingPackages returns those of want that dpkg-query's output does not list as installed, "ii".
-func missingPackages(out string, want []string) []string {
-	installed := map[string]bool{}
-	for _, line := range strings.Split(out, "\n") {
-		if f := strings.Fields(line); len(f) == 2 && f[1] == "ii" {
-			installed[f[0]] = true
-		}
-	}
-	var missing []string
-	for _, w := range want {
-		if !installed[w] {
-			missing = append(missing, w)
-		}
-	}
-	return missing
 }
 
 // Apply updates apt's lists, then installs the missing packages.
