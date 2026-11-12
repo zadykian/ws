@@ -86,10 +86,10 @@ func TestEachSideKeepsItsCursor(t *testing.T) {
 	if l = l.facing(MacSide); l.at != 3 {
 		t.Errorf("at %d", l.at)
 	}
-	if got := l.glance(WsSide).view(testTheme, 9); strings.Contains(got, "▸") {
-		t.Errorf("a cursor out of focus:\n%s", got)
+	if seen := l.glance(WsSide); strings.Contains(seen.view(testTheme, 9, seen.at, !seen.blind), "▸") {
+		t.Error("a cursor out of focus")
 	}
-	if got := l.glance(MacSide).view(testTheme, 9); !strings.Contains(got, "▸") {
-		t.Errorf("no cursor:\n%s", got)
+	if seen := l.glance(MacSide); !strings.Contains(seen.view(testTheme, 9, seen.at, !seen.blind), "▸") {
+		t.Error("no cursor")
 	}
 }

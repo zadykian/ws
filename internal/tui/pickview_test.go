@@ -46,12 +46,12 @@ func TestAFilterMatchesARoleOrAStepInAnyCase(t *testing.T) {
 func TestAFilterKeepsTheCursorOnItsLine(t *testing.T) {
 	l := twoRoles()
 	l.at = 3
-	l = l.filtered("t")
+	l, l.at = l.narrowed(l.at, "t")
 	got, ok := l.current(l.at)
 	if want := (pickLine{2, false}); !ok || got != want {
 		t.Errorf("current = %v, %v, want %v", got, ok, want)
 	}
-	l = l.filtered("ssh")
+	l, l.at = l.narrowed(l.at, "ssh")
 	if l.at != 0 {
 		t.Errorf("at = %d, its line went, so the cursor starts the list", l.at)
 	}
@@ -75,7 +75,7 @@ func TestAViewDrawsARolesBoxBehindItsSteps(t *testing.T) {
 		"  [x] ssh",
 		"    [x] · Keys",
 	}, "\n")
-	if got := stripped(l.view(testTheme, 6)); got != want {
+	if got := stripped(l.view(testTheme, 6, l.at, true)); got != want {
 		t.Errorf("view:\n%s\nwant:\n%s", got, want)
 	}
 }
@@ -83,14 +83,14 @@ func TestAViewDrawsARolesBoxBehindItsSteps(t *testing.T) {
 func TestAViewKeepsTheCursorInSight(t *testing.T) {
 	l := newPickList([]Group{{Steps: strings.Fields("a b c d e f g h i j")}})
 	l.at = 7
-	got := strings.Split(stripped(l.view(testTheme, 3)), "\n")
+	got := strings.Split(stripped(l.view(testTheme, 3, l.at, true)), "\n")
 	if len(got) != 3 || got[1] != "▸ [ ] · h" {
 		t.Errorf("view = %q, want the cursor on the second of 3 lines", got)
 	}
 }
 
 func TestAViewSaysThatAFilterLeftNothing(t *testing.T) {
-	if got := stripped(twoRoles().filtered("nothing here").view(testTheme, 5)); got != "No step matches." {
+	if got := stripped(twoRoles().filtered("nothing here").view(testTheme, 5, 0, true)); got != "No step matches." {
 		t.Errorf("view = %q", got)
 	}
 }

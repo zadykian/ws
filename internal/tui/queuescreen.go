@@ -72,7 +72,8 @@ func (l pickList) panes() []Pane {
 func (l pickList) drawn(layout Layout, theme Theme, window Size) Layout {
 	sizes := layout.PaneSizes(window.Width, window.Height)
 	for i, side := range l.sides() {
-		layout.Panes[i].Body = l.glance(side).view(theme, sizes[i].Height)
+		seen := l.glance(side)
+		layout.Panes[i].Body = seen.view(theme, sizes[i].Height, seen.at, !seen.blind)
 	}
 	return layout
 }

@@ -144,7 +144,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		return s.typed(msg), nil
 	case key.Matches(msg, clearKey):
 		s.filter = s.filter.cleared()
-		s.list = s.list.filtered("")
+		s.list, s.list.at = s.list.narrowed(s.list.at, "")
 		return s, nil
 	}
 	var place int
@@ -179,7 +179,7 @@ func (s pickScreen) typed(msg tea.Msg) pickScreen {
 	var words string
 	var changed bool
 	if s.listScreen, words, changed = s.listScreen.typed(msg, s.list.words); changed {
-		s.list = s.list.filtered(words)
+		s.list, s.list.at = s.list.narrowed(s.list.at, words)
 	}
 	return s
 }
@@ -235,7 +235,7 @@ func (s pickScreen) listHeight() int {
 func (s pickScreen) View() tea.View {
 	l := s.layout()
 	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1], s.notes())
-	l.Panes[0].Body = s.list.view(s.theme, s.listHeight())
+	l.Panes[0].Body = s.list.view(s.theme, s.listHeight(), s.list.at, true)
 	if s.filtering() {
 		l.Panes[0].Body = s.filter.line(s.theme) + "\n" + l.Panes[0].Body
 	}

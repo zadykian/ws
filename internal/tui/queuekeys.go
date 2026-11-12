@@ -90,7 +90,7 @@ func (s queueScreen) listHeight() int {
 func (s queueScreen) View() tea.View {
 	l := s.list.drawn(s.layout(), s.theme, s.window)
 	if s.filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight())
+		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight(), s.list.at, true)
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
@@ -134,7 +134,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 		return s.typed(msg), nil
 	case key.Matches(msg, clearKey):
 		s.filter = s.filter.cleared()
-		s.list = s.list.filtered("")
+		s.list, s.list.at = s.list.narrowed(s.list.at, "")
 		return s, nil
 	case key.Matches(msg, Keys.Next):
 		return s.tabbed(1), nil
@@ -177,7 +177,7 @@ func (s queueScreen) typed(msg tea.Msg) queueScreen {
 	var words string
 	var changed bool
 	if s.listScreen, words, changed = s.listScreen.typed(msg, s.list.words); changed {
-		s.list = s.list.filtered(words)
+		s.list, s.list.at = s.list.narrowed(s.list.at, words)
 	}
 	return s
 }

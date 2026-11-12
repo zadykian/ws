@@ -1,9 +1,6 @@
 package tui
 
-import (
-	"slices"
-	"strings"
-)
+import "strings"
 
 // pickLine is a line of the list: a step, or the heading of the role whose first shown step is row.
 type pickLine struct {
@@ -46,12 +43,17 @@ func (l pickList) current(at cursor) (pickLine, bool) {
 	return lines[at], true
 }
 
-// filtered returns the list under words, the cursor on its line while that shows.
+// filtered returns the list under words.
 func (l pickList) filtered(words string) pickList {
-	was, _ := l.current(l.at)
 	l.words = words
-	l.at = cursor(max(slices.Index(l.lines(), was), 0))
 	return l
+}
+
+// narrowed returns the list under words, and the cursor on its line while that shows.
+func (l pickList) narrowed(at cursor, words string) (pickList, cursor) {
+	was := l.lines()
+	l = l.filtered(words)
+	return l, kept(at, was, l.lines())
 }
 
 // groupBox draws a role's box, which follows its steps: "[-]" says that some are on.
@@ -76,18 +78,18 @@ func (l pickList) render(theme Theme, line pickLine) string {
 	return r.indent() + l.box(r) + " " + style.Render(mark) + " " + r.name
 }
 
-// view draws height lines of the list. The list runs past a window, so that the cursor stays in
-// sight, a third of the way down.
-func (l pickList) view(theme Theme, height int) string {
+// view draws height lines of the list, the cursor's gutter where shown. The list runs past a window,
+// so that the cursor stays in sight.
+func (l pickList) view(theme Theme, height int, at cursor, shown bool) string {
 	lines := l.lines()
 	if len(lines) == 0 {
 		return theme.Muted.Render("No step matches.")
 	}
-	top := l.at.top(height, len(lines))
+	top := at.top(height, len(lines))
 	drawn := make([]string, 0, height)
 	for i := top; i < min(top+height, len(lines)); i++ {
 		gutter := "  "
-		if i == int(l.at) && !l.blind {
+		if shown && i == int(at) {
 			gutter = "▸ "
 		}
 		drawn = append(drawn, gutter+l.render(theme, lines[i]))
