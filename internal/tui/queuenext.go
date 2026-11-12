@@ -32,12 +32,3 @@ type QueueChoice struct {
 	// left is the screen as the maintainer left it, for Reopen and NewQueueRun.
 	left queueScreen
 }
-
-// queueChoice is what the screen holds, to leave for next.
-func (s pickScreen) queueChoice(next Next) QueueChoice {
-	c := QueueChoice{Next: next, Side: s.list.side}
-	if next == NextRun || next == NextCheck {
-		c.Only, c.Partial, c.Whole = s.list.only(), s.list.partial(), s.list.ticked()
-	}
-	return c
-}

@@ -11,9 +11,8 @@ import (
 // Pick draws the list of groups over scan, a run with --check, and returns what the maintainer
 // chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
 func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work) (Choice, error) {
-	picks := make(chan QueueChoice, 1)
-	got, err := pick(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
-	return Choice{Only: got.Only, Check: got.Next == NextCheck}, err
+	picks := make(chan Choice, 1)
+	return pick(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
 }
 
 // PickStages draws a queue's lists over scan, as Pick draws a list. scan's Bridge.Report fills

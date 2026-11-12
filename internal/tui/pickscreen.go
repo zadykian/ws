@@ -20,8 +20,6 @@ const (
 	pickRunPlace
 	pickCheckPlace
 	pickQuitPlace
-	pickStatePlace
-	pickConfigurePlace
 )
 
 // Choice is what a flat list leaves to a run. No steps says that nothing runs.
@@ -98,7 +96,7 @@ type pickScreen struct {
 	list   pickList
 	footer Footer
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
-	picks chan<- QueueChoice
+	picks chan<- Choice
 	// queued draws the list as a queue's two sides.
 	queued bool
 	// unread is why a machine reported nothing, and its steps stand as the queue named them.
@@ -113,7 +111,7 @@ func listButtons() []key.Binding {
 }
 
 // newPickScreen returns the screen of groups, its scan under way.
-func newPickScreen(title string, theme Theme, groups []Group, picks chan<- QueueChoice) pickScreen {
+func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Choice) pickScreen {
 	footer := NewFooter(listButtons()...)
 	s := pickScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: newFilter()},
 		list: newPickList(groups), footer: footer, picks: picks}
@@ -188,15 +186,11 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickFilterPlace:
 		s.filter = s.filter.opened()
 	case pickRunPlace:
-		return s.leave(s.queueChoice(NextRun))
+		return s.leave(Choice{Only: s.list.only()})
 	case pickCheckPlace:
-		return s.leave(s.queueChoice(NextCheck))
+		return s.leave(Choice{Only: s.list.only(), Check: true})
 	case pickQuitPlace:
-		return s.leave(s.queueChoice(NextLeave))
-	case pickConfigurePlace:
-		return s.leave(s.queueChoice(NextConfigure))
-	case pickStatePlace:
-		return s.leave(s.queueChoice(NextState))
+		return s.leave(Choice{})
 	default:
 		s.list = s.list.moved(msg, max(s.listHeight(), 1))
 	}
@@ -214,7 +208,7 @@ func (s pickScreen) typed(msg tea.Msg) pickScreen {
 }
 
 // leave gives c to the work. A session quits with its work alone, and a screen never does.
-func (s pickScreen) leave(c QueueChoice) (pickScreen, tea.Cmd) {
+func (s pickScreen) leave(c Choice) (pickScreen, tea.Cmd) {
 	s.left = true
 	return s, func() tea.Msg {
 		s.picks <- c
@@ -231,9 +225,6 @@ func (s pickScreen) enabled() pickScreen {
 	}
 	some := !s.scanning && len(s.list.only()) > 0
 	s.footer = s.footer.Enable(pickRunPlace, some).Enable(pickCheckPlace, some)
-	if s.queued {
-		s.footer = s.footer.Enable(pickStatePlace, !s.scanning)
-	}
 	return s
 }
 

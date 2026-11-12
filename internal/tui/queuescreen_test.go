@@ -226,7 +226,7 @@ func TestStateKeyWaitsForTheScanAndTheFilter(t *testing.T) {
 
 // A list of steps alone has no machine to read, and no such button.
 func TestStateKeyIsAQueuesAlone(t *testing.T) {
-	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan QueueChoice, 1)), scannedMsg{}, press('s'))
+	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), scannedMsg{}, press('s'))
 	if s.left {
 		t.Error("s left a list of steps")
 	}
