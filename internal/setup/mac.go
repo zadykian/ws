@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"context"
 	"io"
 	"time"
 
@@ -47,4 +48,10 @@ func Names() []string {
 		names = append(names, s.Name())
 	}
 	return names
+}
+
+// State reads the steps' reports under a check: it applies nothing and prints nothing on stdout.
+func (m Mac) State(ctx context.Context) ([]step.Report, error) {
+	m.Text = io.Discard
+	return step.Read(ctx, m.Steps(true))
 }
