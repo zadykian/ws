@@ -86,7 +86,9 @@ func (s listScreen) filtering() bool { return s.filter.shows() }
 // maintainer can read and move as it goes.
 type pickScreen struct {
 	listScreen
-	list   pickList
+	list pickList
+	// at is the cursor on the list.
+	at     cursor
 	footer Footer
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
 	picks chan<- Choice
@@ -144,14 +146,14 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		return s.typed(msg), nil
 	case key.Matches(msg, clearKey):
 		s.filter = s.filter.cleared()
-		s.list, s.list.at = s.list.narrowed(s.list.at, "")
+		s.list, s.at = s.list.narrowed(s.at, "")
 		return s, nil
 	}
 	var place int
 	s.footer, place = s.footer.Update(msg)
 	switch place {
 	case pickTogglePlace:
-		s.list = s.list.toggled(s.list.at)
+		s.list = s.list.toggled(s.at)
 	case pickAllPlace:
 		s.list = s.list.chose(func(pickRow) bool { return true })
 	case pickNonePlace:
@@ -169,7 +171,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickQuitPlace:
 		return s.leave(Choice{})
 	default:
-		s.list.at = s.list.at.moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
+		s.at = s.at.moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
 	}
 	return s, nil
 }
@@ -179,7 +181,7 @@ func (s pickScreen) typed(msg tea.Msg) pickScreen {
 	var words string
 	var changed bool
 	if s.listScreen, words, changed = s.listScreen.typed(msg, s.list.words); changed {
-		s.list, s.list.at = s.list.narrowed(s.list.at, words)
+		s.list, s.at = s.list.narrowed(s.at, words)
 	}
 	return s
 }
@@ -235,7 +237,7 @@ func (s pickScreen) listHeight() int {
 func (s pickScreen) View() tea.View {
 	l := s.layout()
 	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1], s.notes())
-	l.Panes[0].Body = s.list.view(s.theme, s.listHeight(), s.list.at, true)
+	l.Panes[0].Body = s.list.view(s.theme, s.listHeight(), s.at, true)
 	if s.filtering() {
 		l.Panes[0].Body = s.filter.line(s.theme) + "\n" + l.Panes[0].Body
 	}

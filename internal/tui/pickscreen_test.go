@@ -49,7 +49,7 @@ func TestPickScreenFollowsTheScan(t *testing.T) {
 }
 
 func TestPickScreenMovesDuringTheScan(t *testing.T) {
-	if got := pickSent(testPick(), press('j'), press('j')).list.at; got != 2 {
+	if got := pickSent(testPick(), press('j'), press('j')).at; got != 2 {
 		t.Errorf("at = %d, want 2", got)
 	}
 }
@@ -151,7 +151,7 @@ func TestPickScreenFilterTakesTheKeysUntilEnter(t *testing.T) {
 		t.Errorf("frame:\n%s", got)
 	}
 	s = pickSent(s, enter, press('j'))
-	if got := s.list.at; s.filter.editing || got != 1 {
+	if got := s.at; s.filter.editing || got != 1 {
 		t.Errorf("editing = %v, at = %d: keys past Enter move the list", s.filter.editing, got)
 	}
 }

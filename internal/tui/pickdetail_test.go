@@ -13,7 +13,7 @@ import (
 // detailOf is the words of the pane for the line that l's cursor stands on.
 func detailOf(l pickList) []string {
 	var got []string
-	for _, line := range (pickScreen{list: l}).notes() {
+	for _, line := range (pickScreen{list: l, at: l.at}).notes() {
 		got = append(got, line.Text)
 	}
 	return got
