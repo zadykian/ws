@@ -42,7 +42,7 @@ func newMacStateCmd(p process) *cobra.Command {
 // runMacState prints what the steps of ws mac apply report. The ssh step that runs again is left
 // out: under a read it would repeat the first.
 func runMacState(c *cobra.Command, p process, asJSON bool) error {
-	home, settings, err := loadMacConf(p)
+	settings, err := loadMacConf(p)
 	if err != nil {
 		return err
 	}
@@ -51,8 +51,7 @@ func runMacState(c *cobra.Command, p process, asJSON bool) error {
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), p.machine, out, io.Discard, true)
-	reports, err := step.Read(c.Context(), steps)
+	reports, err := macOf(p, settings, p.machine, out, nil).State(c.Context())
 	term.Flush()
 	if err != nil {
 		return err
@@ -67,13 +66,12 @@ func runMacState(c *cobra.Command, p process, asJSON bool) error {
 // screen on a Mac that may have none: the header then says so, and the wizard stays.
 func macRead(p process) tui.StateReader {
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		home, settings, err := loadMacConf(p)
+		settings, err := loadMacConf(p)
 		if err != nil {
 			return nil, err
 		}
 		// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-		steps := setupSteps(settings, home, p.getenv("XDG_CONFIG_HOME"), b.Effects().M, b, io.Discard, true)
-		reports, err := step.Read(ctx, steps)
+		reports, err := macOf(p, settings, b.Effects().M, b, nil).State(ctx)
 		return []tui.StateSection{{Reports: reports}}, err
 	}
 }

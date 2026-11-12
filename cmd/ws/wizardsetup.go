@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"io"
-	"slices"
 
 	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
 )
@@ -33,13 +33,9 @@ func wizardSetup(e wizardEffects, file string) *wizard.Setup {
 		if c.PublicKey != "" {
 			w = e.text
 		}
-		home := p.getenv("HOME")
-		steps := setupSteps(c, home, p.getenv("XDG_CONFIG_HOME"), p.machine, e.out, w, check)
-		if !check {
-			// cld's restore tabs change ssh's file, so ssh runs once more.
-			steps = slices.Concat(steps, []step.Step{sshStep(c, home, p.machine, e.out, true)})
-		}
-		return finishSetup(ctx, steps, step.Options{Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: e.left})
+		return macOf(p, c, p.machine, e.out, w).Run(ctx, setup.Options{Options: step.Options{
+			Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: e.left,
+		}})
 	}
 	return s
 }

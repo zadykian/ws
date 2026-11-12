@@ -65,45 +65,28 @@ func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 	}
 }
 
-// ending is a stepOf with what a run leaves for its end.
-type ending struct {
-	stepOf
-	finish func(context.Context) error
-}
-
-func (e ending) Finish(ctx context.Context) error { return e.finish(ctx) }
-
-func TestRunSetupFinishesNoStepLeftOut(t *testing.T) {
-	finish := func(context.Context) error { return errors.New("a step left out finished") }
-	steps := []step.Step{ending{stepOf{"one", func(context.Context) error { return nil }}, finish}}
-	left := func(_, _ string) bool { return true }
-	if err := runSetup(t.Context(), steps, step.Options{LeftOut: left}); err != nil {
-		t.Error(err)
-	}
-}
-
 func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 	p, _ := macTerminal()
 	p.machine = effect.OSMachine{}
 	c, _ := screenCommand(t, "")
 	var machines []effect.Machine
 	var outs []effect.Out
-	build := func(m effect.Machine, out effect.Out, _ io.Writer) []step.Step {
+	run := func(_ context.Context, m effect.Machine, out effect.Out, _ io.Writer, _ step.Options) error {
 		machines, outs = append(machines, m), append(outs, out)
-		return []step.Step{stepOf{"one", func(context.Context) error { return nil }}}
+		return nil
 	}
-	if err := setupOnScreen(c, p, build, step.Options{Check: true}); err != nil {
+	if err := setupOnScreen(c, p, tui.NewGroup("", nil), run, step.Options{Check: true}); err != nil {
 		t.Fatal(err)
 	}
-	if len(outs) != 2 || outs[0] != nil {
-		t.Fatalf("the steps were made on %v, want no effects first, for their names", outs)
+	if len(outs) != 1 {
+		t.Fatalf("the run was made %d times, want once", len(outs))
 	}
-	if _, ok := outs[1].(*tui.Bridge); !ok {
-		t.Errorf("the run's steps got %T, want the screen's bridge", outs[1])
+	if _, ok := outs[0].(*tui.Bridge); !ok {
+		t.Errorf("the run's steps got %T, want the screen's bridge", outs[0])
 	}
-	m, ok := machines[1].(effect.OSMachine)
+	m, ok := machines[0].(effect.OSMachine)
 	if !ok || m.Ticket == nil || m.Stdin != effect.NoStdin || m.Stderr == nil {
-		t.Errorf("the run's machine is %+v, want one that keeps its commands off the terminal", machines[1])
+		t.Errorf("the run's machine is %+v, want one that keeps its commands off the terminal", machines[0])
 	}
 }
 
@@ -112,16 +95,14 @@ func TestSetupOnScreenPrintsWhatStaysOnStdoutPastTheScreen(t *testing.T) {
 	c, drawn := screenCommand(t, "")
 	var stdout bytes.Buffer
 	c.SetOut(&stdout)
-	build := func(_ effect.Machine, _ effect.Out, text io.Writer) []step.Step {
-		return []step.Step{ending{stepOf{"one", func(context.Context) error { return nil }}, func(context.Context) error {
-			_, err := io.WriteString(text, "the key\n")
-			if stdout.Len() != 0 {
-				t.Error("the text reached stdout under the screen")
-			}
-			return err
-		}}}
+	run := func(_ context.Context, _ effect.Machine, _ effect.Out, text io.Writer, _ step.Options) error {
+		_, err := io.WriteString(text, "the key\n")
+		if stdout.Len() != 0 {
+			t.Error("the text reached stdout under the screen")
+		}
+		return err
 	}
-	if err := setupOnScreen(c, p, build, step.Options{Check: true}); err != nil {
+	if err := setupOnScreen(c, p, tui.NewGroup("", nil), run, step.Options{Check: true}); err != nil {
 		t.Fatal(err)
 	}
 	if stdout.String() != "the key\n" || strings.Contains(drawn.String(), "the key") {
@@ -135,22 +116,23 @@ func TestSetupOnScreenStopsPastTheCurrentStep(t *testing.T) {
 	keys, press := io.Pipe()
 	t.Cleanup(func() { _ = press.Close() })
 	c.SetIn(keys)
-	var reached, finished bool
-	build := func(_ effect.Machine, out effect.Out, _ io.Writer) []step.Step {
-		return []step.Step{
-			ending{stepOf{"one", func(context.Context) error {
-				stopped := out.(*tui.Bridge).Options(step.Options{}).Stop
+	var reached bool
+	run := func(ctx context.Context, _ effect.Machine, _ effect.Out, _ io.Writer, o step.Options) error {
+		steps := []step.Step{
+			stepOf{"one", func(context.Context) error {
 				_, _ = io.WriteString(press, "\x03\r")
-				for stopped() == nil {
+				for o.Stop() == nil {
 					time.Sleep(time.Millisecond)
 				}
 				return nil
-			}}, func(context.Context) error { finished = true; return nil }},
+			}},
 			stepOf{"two", func(context.Context) error { reached = true; return nil }},
 		}
+		_, err := step.RunWith(ctx, steps, o)
+		return err
 	}
-	err := setupOnScreen(c, p, build, step.Options{Check: true})
-	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached || finished {
-		t.Errorf("err = %v, the next step reached = %v, finished = %v", err, reached, finished)
+	err := setupOnScreen(c, p, tui.NewGroup("", nil), run, step.Options{Check: true})
+	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
+		t.Errorf("err = %v, the next step reached = %v", err, reached)
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/step"
 )
 
@@ -100,27 +101,24 @@ func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
 	c.SetIn(keys)
 	c.SetErr(keys)
 	var checks []bool
-	build := func(check bool) setupBuild {
-		return func(_ effect.Machine, _ effect.Out, _ io.Writer) []step.Step {
-			checks = append(checks, check)
-			return []step.Step{
-				stepOf{"one", func(context.Context) error { return nil }},
-				stepOf{"two", func(context.Context) error { return nil }},
-			}
-		}
+	steps := []step.Step{
+		stepOf{"one", func(context.Context) error { return nil }},
+		stepOf{"two", func(context.Context) error { return nil }},
 	}
-	o, ok, err := pickSetup(c, p, build)
+	run := func(ctx context.Context, _ effect.Machine, _ effect.Out, _ io.Writer, o step.Options) error {
+		checks = append(checks, o.Check)
+		_, err := step.RunWith(ctx, steps, o)
+		return err
+	}
+	o, ok, err := pickSetup(c, p, tui.NewGroup("", steps), run)
 	if err != nil || !ok || o.Check || o.LeftOut == nil {
 		t.Fatalf("options = %+v, ok = %v, err = %v", o, ok, err)
 	}
 	if o.LeftOut("", "one") || !o.LeftOut("", "two") {
 		t.Error("the choice leaves out a step it chose, or keeps one it didn't")
 	}
-	if o.LeftOut("", "ssh again") {
-		t.Error("the choice leaves out a step that no row offers")
-	}
-	if slices.Contains(checks, false) {
-		t.Errorf("the list built steps without a check: %v", checks)
+	if len(checks) == 0 || slices.Contains(checks, false) {
+		t.Errorf("the list scanned with checks %v, want a check each time", checks)
 	}
 }
 

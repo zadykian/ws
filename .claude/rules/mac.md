@@ -21,6 +21,8 @@ module is at the root), each linking its reason
 - A run reports each step to a `step.Observer`, and each step ends with one event of `Done`,
   `Failed` or `Skipped`. A run inside another passes the observer on, and names its role or stage
   as `Options.Parent` ([step.go](../../step/step.go)).
+- The Mac's steps are `setup.Mac`'s: a caller runs, reads or names them through it, and builds none
+  itself ([mac.go](../../internal/setup/mac.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values, and it applies them. Tests compare the values.
 - A whole file that ws writes in the user's home is a `userFile`, and a directory it writes under

@@ -35,7 +35,7 @@ func (s serverScreen) draw(check bool) error {
 // round is the works of a scan. The state screen reads ws on ws.
 func (s serverScreen) round() tui.Round {
 	return tui.Round{
-		Stages: wizardQueue(s.p, s.stages(serverPick{})),
+		Stages: wizardQueue(s.stages(serverPick{})),
 		Scan:   s.scan(),
 		Read: func(tui.Side) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, s.p.version), nil
@@ -97,7 +97,7 @@ func (s serverScreen) running(r serverPick, choice *tui.Choice) error {
 	var screen tea.Model = tui.NewRunScreen(runTitle(s.c, r.check), cfg.Theme, tui.NewGroup("", s.stages(r)))
 	o := step.Options{Check: r.check}
 	if choice != nil {
-		screen, o.LeftOut = tui.NewQueueRun(runTitle(s.c, r.check), cfg.Theme, *choice), wizardLeft(*choice, nil)
+		screen, o.LeftOut = tui.NewQueueRun(runTitle(s.c, r.check), cfg.Theme, *choice), wizardLeft(*choice)
 	}
 	return tui.Run(s.c.Context(), cfg, screen, func(ctx context.Context, b *tui.Bridge) error {
 		on, e := s.on(b)

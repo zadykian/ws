@@ -36,7 +36,7 @@ func (w macScreen) draw() error {
 func (w macScreen) round() tui.Round {
 	sudo := &wizard.Sudo{}
 	return tui.Round{
-		Stages: wizardQueue(w.p, w.plainStages()),
+		Stages: wizardQueue(w.plainStages()),
 		Scan:   w.scan(sudo),
 		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return w.read(side, sudo) },
 		Run:    func(_ context.Context, choice tui.Choice) error { return w.chosen(choice, sudo) },
@@ -158,7 +158,7 @@ func (w macScreen) runOf(choice tui.Choice, sudo *wizard.Sudo) wizardRun {
 	o.check = choice.Check
 	name := wsRunOf(w.plainStages()).Name()
 	o.update = o.update || slices.Contains(choice.Whole, name)
-	return wizardRun{o: o, sudo: sudo, left: wizardLeft(choice, setupStepNames(w.p)), only: choice.Partial[name]}
+	return wizardRun{o: o, sudo: sudo, left: wizardLeft(choice), only: choice.Partial[name]}
 }
 
 // chosen runs what the lists chose, on a run of those stages.

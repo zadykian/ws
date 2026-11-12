@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
@@ -13,10 +14,10 @@ import (
 // wizardQueue returns the stages as the lists show them, each on its machine, with the stage that
 // picking it locks. ws mac apply's steps stand under their stage, and ws's roles too, by name, until
 // ws reports their steps.
-func wizardQueue(p process, stages []step.Step) []tui.Stage {
+func wizardQueue(stages []step.Step) []tui.Stage {
 	queue := make([]tui.Stage, len(stages))
 	for i, s := range stages {
-		queue[i] = tui.Stage{Name: s.Name(), Waits: wizard.Locks(s), Nested: nestedRows(p, s.Name())}
+		queue[i] = tui.Stage{Name: s.Name(), Waits: wizard.Locks(s), Nested: nestedRows(s.Name())}
 		if m, ok := wizard.MachineOf(s); ok && m == wizard.OnWs {
 			queue[i].Side = tui.WsSide
 		}
@@ -25,11 +26,11 @@ func wizardQueue(p process, stages []step.Step) []tui.Stage {
 }
 
 // nestedRows returns the groups that the stage named runs, as the lists show them under it.
-func nestedRows(p process, stage string) []tui.Group {
+func nestedRows(stage string) []tui.Group {
 	var groups []tui.Group
 	switch stage {
 	case (&wizard.Setup{}).Name():
-		groups = []tui.Group{{Name: stage, Steps: setupStepNames(p)}}
+		groups = []tui.Group{{Name: stage, Steps: setup.Names()}}
 	case (&wizard.WsRun{}).Name():
 		for _, r := range roles.List() {
 			groups = append(groups, tui.Group{Name: r.Name})
@@ -39,10 +40,9 @@ func nestedRows(p process, stage string) []tui.Group {
 }
 
 // wizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
-// its steps, and a step of ws mac apply off in a stage it runs in part. setup names the steps with
-// a row. ssh again has none, as a check has no second plan, so it follows ssh by its wait, as in
-// ws mac apply's own list.
-func wizardLeft(choice tui.Choice, setup []string) func(parent, name string) bool {
+// its steps, and a step of ws mac apply off in a stage it runs in part. ws mac apply's run asks it
+// of the steps with a row alone.
+func wizardLeft(choice tui.Choice) func(parent, name string) bool {
 	return func(parent, name string) bool {
 		if parent == "" {
 			return !slices.Contains(choice.Only, name)
@@ -51,7 +51,7 @@ func wizardLeft(choice tui.Choice, setup []string) func(parent, name string) boo
 		if !part {
 			return !slices.Contains(choice.Only, parent)
 		}
-		return slices.Contains(setup, name) && !slices.Contains(on, parent+"/"+name)
+		return !slices.Contains(on, parent+"/"+name)
 	}
 }
 
