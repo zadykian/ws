@@ -89,7 +89,7 @@ func TestWsSecretsSheetSavesOnWs(t *testing.T) {
 	}
 	next, err := sheet.Save(context.Background(), nil, map[string]string{"token azure_devops": "dummy-new",
 		"git https://h.example": "dummy-2"})
-	got, lerr := secrets.LoadRaw(m, secrets.FilePath, id)
+	got, lerr := secrets.Load(m, secrets.FilePath, id)
 	if g := got.Git["https://h.example"]; err != nil || lerr != nil || got.Token.AzureDevOps != "dummy-new" ||
 		got.Token.GitHub != "dummy" || g.Token != "dummy-2" || g.Username != "ada" {
 		t.Errorf("file = %+v, %v %v; want the new tokens, and the rest kept", got, err, lerr)

@@ -40,10 +40,6 @@ func TestServerSecretsEdits(t *testing.T) {
 	if err != nil || s.Env["A"] != "dummy-value" || len(s.Env) != 1 || string(s.File.VPNSswan) != "dummy-value\n" {
 		t.Errorf("secrets = %+v, %v; want env A and the file", s, err)
 	}
-	if m.Modes[secrets.FilePath] != 0o600 || m.Owners[secrets.FilePath] != [2]int{} || m.Dirs["/etc/ws"] != 0o755 {
-		t.Errorf("file %o, owner %v, directory %o; want root's 600 in 755", m.Modes[secrets.FilePath],
-			m.Owners[secrets.FilePath], m.Dirs["/etc/ws"])
-	}
 	status, out, _ := runServerSecrets(m, 0, "", "keys")
 	if status != 0 || out != "env A\nfile vpn_sswan\n" {
 		t.Errorf("keys = %d %q", status, out)

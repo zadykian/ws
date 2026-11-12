@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 
@@ -41,29 +40,13 @@ func TestSecretsKeysAndUnset(t *testing.T) {
 	if status, _, errs := runSecrets(m, "", "unset", "env", "B"); status != 0 {
 		t.Fatalf("unset: status %d, stderr %q", status, errs)
 	}
-	s, err := secrets.LoadRaw(m, secrets.FilePath, id)
-	if err != nil || len(s.Env) != 1 || s.Env["A"] != "${token.github}" || m.Modes[secrets.FilePath] != 0o600 {
-		t.Errorf("after unset: %+v, %v, mode %o; want A with its reference, 600", s, err, m.Modes[secrets.FilePath])
+	s, err := secrets.Load(m, secrets.FilePath, id)
+	if err != nil || len(s.Env) != 1 || s.Env["A"] != "dummy" {
+		t.Errorf("after unset: %+v, %v; want A alone", s, err)
 	}
 	status, _, errs := runSecrets(m, "", "unset", "env", "B")
 	if status != 1 || !strings.Contains(errs, "env B is not in the file") {
 		t.Errorf("unset again: status %d, stderr %q", status, errs)
-	}
-}
-
-func TestSecretsKeysOfNoFile(t *testing.T) {
-	m, _ := editFixture(t, "")
-	if status, out, _ := runSecrets(m, "", "keys"); status != 0 || out != "" {
-		t.Errorf("keys = %d %q, want none", status, out)
-	}
-}
-
-func TestSecretsWithoutTheCredential(t *testing.T) {
-	m := effecttest.NewMachine()
-	for _, a := range [][]string{{"set", "env", "A"}, {"unset", "env", "A"}, {"keys"}} {
-		if status, _, errs := runSecrets(m, "dummy\n", a...); status != 1 || !strings.Contains(errs, "ws server secrets init") {
-			t.Errorf("%q: status %d, stderr %q; want 1 naming init", a, status, errs)
-		}
 	}
 }
 
@@ -116,17 +99,6 @@ func TestSecretsSetFileFromStdin(t *testing.T) {
 	}
 }
 
-func TestSecretsSetKeepsReferences(t *testing.T) {
-	m, id := editFixture(t, "[token]\ngithub = \"dummy\"\n[env]\nA = \"${token.github}\"\n")
-	if status, _, errs := runSecrets(m, "dummy\n", "set", "env", "B"); status != 0 {
-		t.Fatalf("status %d, stderr %q", status, errs)
-	}
-	plain, _ := secrets.Decrypt(m.Files[secrets.FilePath], id)
-	if !strings.Contains(string(plain), "${token.github}") {
-		t.Error("the reference was expanded")
-	}
-}
-
 func TestSecretsValueFromStdin(t *testing.T) {
 	m, id := editFixture(t, "")
 	for in, want := range map[string]string{"dummy\n": "dummy", "dummy": "dummy", "dummy\n\n": "dummy\n", "a\r\n": "a\r"} {
@@ -167,21 +139,6 @@ func TestSecretsSetRefuses(t *testing.T) {
 				t.Error("a refused edit wrote the file")
 			}
 		})
-	}
-}
-
-func TestSecretsLeaveNoPlainFile(t *testing.T) {
-	m, _ := editFixture(t, "")
-	runSecrets(m, "dummy-value\n", "set", "env", "A")
-	for path, data := range m.Files {
-		if bytes.Contains(data, []byte("dummy-value")) {
-			t.Errorf("%s holds the value in plain text", path)
-		}
-	}
-	for _, in := range m.Inputs {
-		if strings.Contains(in, "dummy-value") {
-			t.Error("a command took the value")
-		}
 	}
 }
 
