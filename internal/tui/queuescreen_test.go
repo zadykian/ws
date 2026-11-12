@@ -12,6 +12,13 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
+// atRow returns l turned to the side of the row of that name, and the cursor on the row.
+func atRow(l pickList, name string) (pickList, cursor) {
+	row := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.name == name })
+	l.side = l.rows[row].side
+	return l, cursor(slices.Index(l.lines(), pickLine{row: row}))
+}
+
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
 func testQueueScreen() queueScreen {
 	s := openQueue("ws mac wizard", testTheme, testStages(), make(chan QueueChoice, 1))
