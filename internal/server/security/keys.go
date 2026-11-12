@@ -31,13 +31,17 @@ type keyCheck struct {
 	home string
 }
 
-// Plan fails where authorized_keys is missing, holds no key, or is a file sshd won't use, outside a
-// container.
+// Plan fails where authorized_keys, or a directory above it, is a link: the user owns the home and
+// root reads the file. It also fails where the file is missing, holds no key, or is one sshd won't
+// use, outside a container.
 func (k keyCheck) Plan(context.Context) ([]host.Change, error) {
 	if inContainer(k.m) {
 		return nil, nil
 	}
 	file := path.Join(k.home, ".ssh/authorized_keys")
+	if err := host.RefuseLinks(k.m, k.home, file); err != nil {
+		return nil, err
+	}
 	keys, err := k.m.ReadRootFile(file)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err

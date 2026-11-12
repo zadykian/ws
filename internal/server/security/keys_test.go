@@ -1,6 +1,7 @@
 package security
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/effect"
@@ -54,5 +55,18 @@ func TestKeyCheckPassesInAContainer(t *testing.T) {
 	m.Files["/.dockerenv"] = nil
 	if _, err := (keyCheck{m, "/home/ws"}).Plan(t.Context()); err != nil {
 		t.Errorf("a container was refused: %v", err)
+	}
+}
+
+// The user owns the home, so a link at authorized_keys or above it would send root's read elsewhere.
+func TestKeyCheckRefusesALink(t *testing.T) {
+	for _, link := range []string{"/home/ws/.ssh/authorized_keys", "/home/ws/.ssh"} {
+		m := effecttest.NewMachine()
+		m.Files["/home/ws/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
+		m.Root["/home/ws/.ssh/authorized_keys"] = effect.Attrs{UID: 1000, Mode: 0o600}
+		m.Links[link] = "/srv/target"
+		if _, err := (keyCheck{m, "/home/ws"}).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "link") {
+			t.Errorf("a link at %s: %v", link, err)
+		}
 	}
 }
