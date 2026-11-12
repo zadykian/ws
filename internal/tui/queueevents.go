@@ -44,14 +44,13 @@ func (q queue) take(e step.Event) queue {
 	s := &q.stages[i]
 	if e.Parent == "" {
 		s.row = s.row.took(e, said)
-		return q
+		return q.settled()
 	}
 	s.list = s.list.joined(e)
 	s.list.rows = slices.Clone(s.list.rows)
 	place := s.list.place(e)
 	s.list.rows[place] = s.list.rows[place].took(e, said)
-	s.list = s.list.settled()
-	return q
+	return q.settled()
 }
 
 // reported returns the queue with stage's list made of sections as they say, in place of the rows it
@@ -75,8 +74,7 @@ func (q queue) reported(stage string, sections []StateSection) queue {
 	}
 	q.stages = slices.Clone(q.stages)
 	q.stages[i].list.rows = rows
-	q.stages[i].list = q.stages[i].list.settled()
-	return q
+	return q.settled()
 }
 
 // follow returns the queue with how a run left e's step, the side that shows it, and the line for

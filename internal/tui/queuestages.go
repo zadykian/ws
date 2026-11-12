@@ -73,7 +73,7 @@ func (q queue) render(theme Theme, l queueLine) string {
 		return strings.Repeat(" ", stageColumns) + s.list.render(theme, l.line)
 	}
 	mark, style := s.row.state.look(theme)
-	return fmt.Sprintf("%*d ", stageColumns-3, l.stage+1) + s.row.box() + " " + style.Render(mark) + " " + s.row.name
+	return fmt.Sprintf("%*d ", stageColumns-3, l.stage+1) + q.box(l.stage) + " " + style.Render(mark) + " " + s.row.name
 }
 
 // filtered returns the queue under words.

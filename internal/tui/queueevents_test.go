@@ -30,7 +30,7 @@ func TestAnEventNamesAStepNoScanHad(t *testing.T) {
 	q := queueOf(testStages()).take(planned("", "Run", 3)).take(planned("base", "Packages", 0, oneChange("a")))
 	q = q.take(planned("base", "Locale", 1))
 	got := drawnQueue(q, WsSide)
-	want := []string{" 3 [ ] · Sudo", " 4 [ ] ✓ Run", "     [-] base", "       [x] ● Packages", "       [ ] ✓ Locale",
+	want := []string{" 3 [#] · Sudo", " 4 [-] ✓ Run", "     [-] base", "       [x] ● Packages", "       [ ] ✓ Locale",
 		"     [ ] · ssh"}
 	if !slices.Equal(got, want) {
 		t.Errorf("list = %q, want %q", got, want)
@@ -59,7 +59,7 @@ func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 		{Step: "Fans", Items: []step.Item{{Kind: step.CheckItem, Conflict: "no sensor"}}},
 	}}}
 	q := queueOf(testStages()).reported("Run", sections)
-	want := []string{" 3 [ ] · Sudo", " 4 [ ] · Run", "     [-] base", "       [ ] ✓ Packages", "       [x] ● Locale",
+	want := []string{" 3 [#] · Sudo", " 4 [-] · Run", "     [-] base", "       [ ] ✓ Packages", "       [x] ● Locale",
 		"       [x] – Time", "       [ ] ✗ Fans"}
 	if got := drawnQueue(q, WsSide); !slices.Equal(got, want) {
 		t.Errorf("list = %q, want %q", got, want)
