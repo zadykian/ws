@@ -43,6 +43,12 @@ _Avoid_: vault
 
 ## The Mac's side
 
+**Named key**:
+The key whose `.pub` `mac.conf` names for a use: ws's login, by `WS_IDENTITY_PUB_KEY`, or git's
+signing, by `WS_GIT_SIGNING_PUB_KEY`. Either ws's copy of a key of Secretive's agent, or a file
+key.
+_Avoid_: picked key, git key
+
 **Operation**:
 One job that the wizard asks of ws, a method of the session. It sends an op of the remote or the
 files script, or two in turn, as naming the cable's port and then running its roles. Its row in
