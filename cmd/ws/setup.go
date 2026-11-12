@@ -132,6 +132,9 @@ func loadMacConf(p process) (settings conf.Conf, err error) {
 	return settings, nil
 }
 
+// setupRun runs ws mac apply's steps on the effects given to it. It names no step in its errors.
+type setupRun func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error
+
 // runMacApply runs the steps that args name, or every step, from mac.conf. Under check it prints
 // each change and makes none.
 func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
@@ -153,6 +156,14 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 			return slices.Concat(steps, []step.Step{sshStep(settings, p.getenv("HOME"), m, out, true)})
 		}
 	}
+	var only string
+	if len(args) == 1 {
+		only = args[0]
+	}
+	var run setupRun = func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error {
+		_, err := macOf(p, settings, m, out, text).Run(ctx, setup.Options{Options: o, Only: only})
+		return unwrapStep(err)
+	}
 	build := buildFor(check)
 	if opensList(c, p, len(args) == 1) {
 		chosen, ok, err := pickSetup(c, p, buildFor)
@@ -166,7 +177,7 @@ func runMacApply(c *cobra.Command, p process, args []string, check bool) error {
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	err = runSetup(c.Context(), build(p.machine, out, c.OutOrStdout()), step.Options{Observer: out, Check: check})
+	err = run(c.Context(), p.machine, out, c.OutOrStdout(), step.Options{Observer: out, Check: check})
 	term.Flush()
 	return err
 }
