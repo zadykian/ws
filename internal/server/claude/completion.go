@@ -37,7 +37,7 @@ func (c Completion) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cld completion bash: %w", err)
 	}
-	have, err := c.M.ReadRootFile(c.User.Home + "/.local/share/bash-completion/completions/cld")
+	have, err := readAsUser(ctx, c.M, c.User, c.User.Home+"/.local/share/bash-completion/completions/cld")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}

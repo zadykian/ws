@@ -68,8 +68,8 @@ func (c writeSettings) Apply(ctx context.Context) error {
 }
 
 // Plan edits the settings in memory, and plans a write where env differs.
-func (t Telemetry) Plan(context.Context) ([]host.Change, error) {
-	data, err := t.M.ReadFile(t.path())
+func (t Telemetry) Plan(ctx context.Context) ([]host.Change, error) {
+	data, err := readAsUser(ctx, t.M, t.User, t.path())
 	created := errors.Is(err, fs.ErrNotExist)
 	if err != nil && !created {
 		return nil, err
