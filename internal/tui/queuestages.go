@@ -20,6 +20,8 @@ type queue struct {
 	heard []Line
 	// words is the filter the lists show under.
 	words string
+	// side is the list in focus.
+	side Side
 }
 
 // queueOf returns the queue of stages. A group named as its stage has no heading, and one with no
@@ -40,6 +42,7 @@ func queueOf(stages []Stage) queue {
 		row := pickRow{stepRow: stepRow{index: i, name: s.Name}, waitsOn: s.Waits}
 		q.stages = append(q.stages, queueStage{row: row, side: s.Side, list: newFormedList(groups)})
 	}
+	q.side = q.sides()[0]
 	return q
 }
 
