@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // choose reads the Mac and the peer, asks tunnel.Decide what to do next and does it. A round tries

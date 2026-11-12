@@ -3,7 +3,7 @@ package daemon
 import (
 	"context"
 
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // tick checks that ws answers and looks at the choice again. Decide runs the paths anew where the

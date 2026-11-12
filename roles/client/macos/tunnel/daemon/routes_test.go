@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 func TestRunRoutes(t *testing.T) {

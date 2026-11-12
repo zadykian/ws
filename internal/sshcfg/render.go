@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // Header starts config.d/ws's first line, by which a run knows a file for its own.

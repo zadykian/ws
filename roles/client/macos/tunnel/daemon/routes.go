@@ -6,7 +6,7 @@ import (
 	"net/netip"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // RunRoutes carries out a plan of routes into the utun tun. It returns the networks it could not

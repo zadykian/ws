@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 const routesAbsent = "once routes.d is made"

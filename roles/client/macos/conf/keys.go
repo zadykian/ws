@@ -2,7 +2,7 @@ package conf
 
 import (
 	"github.com/zadykian/ws/engine/core/check"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // Conf is mac.conf's settings, each key's value as the file gives it, with the default of a key

@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"slices"
 
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // allow sorts routes.d by the endpoints hosts, and logs a network once as it goes out. told holds
@@ -34,7 +34,7 @@ func (d *Daemon) keepOut(a tunnel.Allowed) {
 // holds. A network it cannot route, as one another route already takes, is logged once and tried
 // again each time.
 func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
-	plan := tunnel.PlanRoutes(a.Want, d.routed)
+	plan := tunnel.Routes(a.Want, d.routed)
 	failed, logs := RunRoutes(ctx, d.M, plan, d.Tun)
 	var applied []string
 	d.routed, d.unroutable, applied = plan.Applied(failed, a.Out, d.unroutable, d.Tun)

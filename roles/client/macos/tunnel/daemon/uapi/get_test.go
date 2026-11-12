@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 var other = "public_key=" + "00" + keyHex + "\nendpoint=198.51.100.1:1\nrx_bytes=1\n"

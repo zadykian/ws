@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // Device is the wireguard-go device, as the daemon sees it: its UAPI.

@@ -1,4 +1,4 @@
-package tunnel
+package plan
 
 import (
 	"fmt"
@@ -11,8 +11,8 @@ type RoutePlan struct {
 	Want, Delete, Add []netip.Prefix
 }
 
-// PlanRoutes compares the networks wanted with the routes in place. It runs no route.
-func PlanRoutes(want, routed []netip.Prefix) RoutePlan {
+// Routes compares the networks wanted with the routes in place. It runs no route.
+func Routes(want, routed []netip.Prefix) RoutePlan {
 	p := RoutePlan{Want: want}
 	for _, n := range routed {
 		if !slices.Contains(want, n) {

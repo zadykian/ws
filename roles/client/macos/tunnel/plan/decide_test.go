@@ -1,4 +1,4 @@
-package tunnel
+package plan
 
 import (
 	"net/netip"

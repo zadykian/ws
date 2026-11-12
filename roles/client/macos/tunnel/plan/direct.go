@@ -1,4 +1,4 @@
-package tunnel
+package plan
 
 // Direct is a way to ws outside the tunnel.
 type Direct struct{ Host, Port string }

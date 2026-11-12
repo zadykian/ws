@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 func TestReloadChangesTheRoutesInPlace(t *testing.T) {

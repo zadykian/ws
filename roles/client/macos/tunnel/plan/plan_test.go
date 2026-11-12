@@ -1,11 +1,11 @@
-package tunnel
+package plan
 
 import (
 	"reflect"
 	"testing"
 )
 
-func TestPlanRoutes(t *testing.T) {
+func TestRoutes(t *testing.T) {
 	tests := []struct {
 		name         string
 		want, routed []string
@@ -18,7 +18,7 @@ func TestPlanRoutes(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := PlanRoutes(nets(tc.want...), nets(tc.routed...))
+			got := Routes(nets(tc.want...), nets(tc.routed...))
 			if !reflect.DeepEqual(got.Delete, nets(tc.delete...)) || !reflect.DeepEqual(got.Add, nets(tc.add...)) {
 				t.Errorf("delete %v, add %v; want %v, %v", got.Delete, got.Add, tc.delete, tc.add)
 			}
@@ -27,7 +27,7 @@ func TestPlanRoutes(t *testing.T) {
 }
 
 func TestApplied(t *testing.T) {
-	plan := PlanRoutes(nets("10.1.0.0/16", "10.2.0.0/16", "10.3.0.0/16"), nets("10.1.0.0/16"))
+	plan := Routes(nets("10.1.0.0/16", "10.2.0.0/16", "10.3.0.0/16"), nets("10.1.0.0/16"))
 	tests := []struct {
 		name                    string
 		failed, out, unroutable []string
@@ -53,7 +53,7 @@ func TestApplied(t *testing.T) {
 }
 
 func TestAppliedLog(t *testing.T) {
-	plan := PlanRoutes(nets("10.2.0.0/16"), nil)
+	plan := Routes(nets("10.2.0.0/16"), nil)
 	_, _, logs := plan.Applied(nets("10.2.0.0/16"), nil, nil, "utun4")
 	want := []string{"cannot route 10.2.0.0/16 into utun4, as another route to it may be in the way"}
 	if !reflect.DeepEqual(logs, want) {

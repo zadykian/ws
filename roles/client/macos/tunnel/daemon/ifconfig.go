@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // up matches the UP flag in the line of ifconfig that starts an interface.
