@@ -44,34 +44,6 @@ type Stage struct {
 	Nested []Group
 }
 
-// newQueue returns the list of stages, numbered across the sides in the order they run, and turned
-// to the first list.
-func newQueue(stages []Stage) pickList {
-	var l pickList
-	for i, s := range stages {
-		row := stepRow{index: i, name: s.Name}
-		l.rows = append(l.rows, pickRow{stepRow: row, side: s.Side, number: i + 1, waitsOn: s.Waits})
-		for _, g := range s.Nested {
-			l.rows = append(l.rows, s.rows(g)...)
-		}
-	}
-	l.side = l.sides()[0]
-	return l
-}
-
-// rows returns the rows of a group of the stage. A role unread has one, by which ws's run names it.
-func (s Stage) rows(g Group) []pickRow {
-	if len(g.Steps) == 0 && g.Name != s.Name {
-		return []pickRow{{stepRow: stepRow{index: unreadIndex, name: g.Name}, side: s.Side, stage: s.Name}}
-	}
-	rows := make([]pickRow, len(g.Steps))
-	for i, name := range g.Steps {
-		row := stepRow{parent: g.Name, index: i, name: name}
-		rows[i] = pickRow{stepRow: row, side: s.Side, stage: s.Name, waitsOn: g.Waits[name]}
-	}
-	return rows
-}
-
 // indent is what stands ahead of the row's box: a stage's number, or the room of its depth.
 func (r pickRow) indent() string {
 	switch {
