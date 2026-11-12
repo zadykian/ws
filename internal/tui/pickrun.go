@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"context"
 	"errors"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 // Pick draws the list of groups over scan, a run with --check, and returns what the maintainer
@@ -40,9 +42,9 @@ func (b *Bridge) Report(stage string, sections []StateSection, problem string) {
 	b.send(reportedMsg{stage, sections, problem})
 }
 
-// pick runs a list's screen over scan until picks gives a choice.
-func pick(ctx context.Context, c Config, screen pickScreen, picks <-chan QueueChoice, scan Work) (QueueChoice, error) {
-	var choice QueueChoice
+// pick runs a list's screen over scan until picks gives a choice, of whatever type the screen leaves.
+func pick[C any](ctx context.Context, c Config, screen tea.Model, picks <-chan C, scan Work) (C, error) {
+	var choice C
 	c.quiet = true
 	err := Run(ctx, c, screen, func(ctx context.Context, b *Bridge) error {
 		var err error
@@ -50,7 +52,8 @@ func pick(ctx context.Context, c Config, screen pickScreen, picks <-chan QueueCh
 		return err
 	})
 	if err != nil {
-		return QueueChoice{}, err // A work left behind may still write choice.
+		var none C
+		return none, err // A work left behind may still write choice.
 	}
 	return choice, nil
 }
@@ -58,7 +61,8 @@ func pick(ctx context.Context, c Config, screen pickScreen, picks <-chan QueueCh
 // awaitPick runs scan beside the list and returns what the list gives. A choice ends a scan still
 // going and waits for it, as a run beside it would contend for the same machine. A scan that fails
 // leaves the list open, with what remains of it to choose from. Only a panic ends the wait.
-func awaitPick(ctx context.Context, b *Bridge, picks <-chan QueueChoice, scan Work) (QueueChoice, error) {
+func awaitPick[C any](ctx context.Context, b *Bridge, picks <-chan C, scan Work) (C, error) {
+	var none C
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	done := make(chan error, 1)
@@ -71,7 +75,7 @@ func awaitPick(ctx context.Context, b *Bridge, picks <-chan QueueChoice, scan Wo
 		select {
 		case err := <-waiting:
 			if errors.Is(err, errPanic) {
-				return QueueChoice{}, err
+				return none, err
 			}
 			waiting = nil
 			msg := scannedMsg{}
@@ -83,7 +87,7 @@ func awaitPick(ctx context.Context, b *Bridge, picks <-chan QueueChoice, scan Wo
 			cancel()
 			return choice, panicOf(<-done)
 		case <-ctx.Done():
-			return QueueChoice{}, cmp.Or(panicOf(<-done), ctx.Err())
+			return none, cmp.Or(panicOf(<-done), ctx.Err())
 		}
 	}
 }
