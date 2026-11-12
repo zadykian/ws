@@ -13,9 +13,9 @@ import (
 // farVars returns the form of a ws whose file is file.
 func farVars(file string) (VarsForm, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: fakeWs{m}, Script: []byte("echo\n")}
+	ws := NewSession(fakeReach{Reach: MacReach{}, M: m}, Scripts{Remote: []byte("x"), Files: []byte("y")})
 	m.Results[opLine("values")] = effecttest.Result{Out: []byte(file)}
-	return VarsForm{Files: r}, m
+	return VarsForm{Ws: ws}, m
 }
 
 // varsField returns the field of that key.

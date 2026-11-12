@@ -12,7 +12,6 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/mac"
 )
 
 // lockCalls counts the calls of the wizard's lock that hold what.
@@ -87,7 +86,8 @@ func (w farWs) RunInput(ctx context.Context, in []byte, name string, args ...str
 // A way to root that the scan read holds across a reach, and one it never read is read there.
 func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 	p, m := macTerminal()
-	p.machine = newFarWs(m, "")
+	ws := newFarWs(m, "")
+	p.machine = ws
 	sudo := &wizard.Sudo{}
 	r := &varsReach{p: p, sudo: sudo}
 	defer r.close(context.Background())
@@ -95,12 +95,16 @@ func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	files := got.Files()
-	if files.Shell.(wizard.SSHShell).Sudo != sudo || string(files.Script) != string(mac.RemoteFilesScript) {
-		t.Errorf("files = %+v", files)
-	}
-	if _, err := files.Do(context.Background(), "status"); err != nil {
+	if _, err := (wizard.VarsForm{Ws: got}).Load(context.Background()); err != nil {
 		t.Errorf("the reach left sudo unread: %v", err)
+	}
+	if op := <-ws.ops; !slices.Equal(op, []string{"values"}) {
+		t.Errorf("ws got %q, want the files script's values", op)
+	}
+	for _, call := range m.Calls {
+		if strings.Contains(call, " sudo ") {
+			t.Errorf("a login of root went through sudo: %s", call)
+		}
 	}
 }
 

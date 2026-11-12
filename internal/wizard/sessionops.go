@@ -1,6 +1,9 @@
 package wizard
 
-import "context"
+import (
+	"context"
+	"encoding/base64"
+)
 
 // operation is one job that a stage asks of ws through the session.
 type operation string
@@ -137,5 +140,19 @@ func (s *Session) run(ctx context.Context, args []string) error {
 // outbound names security_outbound: false in ws's host_vars.
 func (s *Session) outbound(ctx context.Context) error {
 	_, err := s.do(ctx, opOutbound)
+	return err
+}
+
+// values reads ws's host_vars, as the files script prints it: empty where the file is missing.
+func (s *Session) values(ctx context.Context) ([]byte, error) { return s.do(ctx, opValues) }
+
+// setValues writes each KEY=VALUE pair of pairs into ws's host_vars in one login. A pair goes as
+// base64, as the files script says.
+func (s *Session) setValues(ctx context.Context, pairs []string) error {
+	enc := make([]string, len(pairs))
+	for i, p := range pairs {
+		enc[i] = base64.StdEncoding.EncodeToString([]byte(p))
+	}
+	_, err := s.do(ctx, opSetValues, enc)
 	return err
 }
