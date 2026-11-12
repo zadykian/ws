@@ -28,15 +28,15 @@ func serverBin(home, name string) string { return serversDir(home) + "/node_modu
 // sql-formatter's link.
 // ~/.local and ~/.local/lib are made only where missing, as root's would break the user's own
 // tools, such as claude and pip --user.
-func serverFiles(m effect.Machine, user host.User, uid, gid int) ([]host.Resource, error) {
-	dir := serversDir(user.Home)
+func serverFiles(m effect.Machine, a host.Account) ([]host.Resource, error) {
+	dir := serversDir(a.Home)
 	parts := []host.Resource{
-		host.Plain{M: m, Home: user.Home, Paths: []string{
+		host.Plain{M: m, Home: a.Home, Paths: []string{
 			dir + "/package.json", dir + "/package-lock.json", dir + "/node_modules/.ws-sha256",
 		}},
-		host.Dir{M: m, Path: user.Home + "/.local", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
-		host.Dir{M: m, Path: user.Home + "/.local/lib", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
-		host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
+		host.Dir{M: m, Path: a.Home + "/.local", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
+		host.Dir{M: m, Path: a.Home + "/.local/lib", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
+		host.Dir{M: m, Path: dir, Mode: 0o755, UID: a.UID, GID: a.GID},
 	}
 	sum := sha256.New()
 	for _, name := range []string{"package.json", "package-lock.json"} {
@@ -46,37 +46,36 @@ func serverFiles(m effect.Machine, user host.User, uid, gid int) ([]host.Resourc
 		}
 		sum.Write(content)
 		parts = append(parts, host.File{M: m, Path: dir + "/" + name, Content: content, Mode: 0o644,
-			UID: uid, GID: gid})
+			UID: a.UID, GID: a.GID})
 	}
-	return append(parts, npmInstall{M: m, User: user, UID: uid, GID: gid, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
-		host.Link{M: m, Path: formatterLink, Target: serverBin(user.Home, "sql-formatter")}), nil
+	return append(parts, npmInstall{M: m, Account: a, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
+		host.Link{M: m, Path: formatterLink, Target: serverBin(a.Home, "sql-formatter")}), nil
 }
 
 // npmInstall runs npm ci. Plan cannot see the files written earlier in the step, so a stamp of
 // their digest in node_modules, which npm ci removes, tells it the install is current.
 type npmInstall struct {
-	M        effect.Machine
-	User     host.User
-	UID, GID int
-	Digest   string
+	M       effect.Machine
+	Account host.Account
+	Digest  string
 }
 
-func (n npmInstall) stamp() string { return serversDir(n.User.Home) + "/node_modules/.ws-sha256" }
+func (n npmInstall) stamp() string { return serversDir(n.Account.Home) + "/node_modules/.ws-sha256" }
 
 type runNpm struct{ n npmInstall }
 
-func (c runNpm) String() string { return "npm ci --ignore-scripts in " + serversDir(c.n.User.Home) }
+func (c runNpm) String() string { return "npm ci --ignore-scripts in " + serversDir(c.n.Account.Home) }
 
 func (c runNpm) Apply(ctx context.Context) error {
 	n := c.n
 	if _, err := n.M.Stat(npmBin); err != nil {
 		return fmt.Errorf("the servers install with npm, from the Node package: %w", err)
 	}
-	if err := n.User.Pass(ctx, n.M, npmBin, "ci", "--prefix", serversDir(n.User.Home), "--ignore-scripts",
+	if err := n.Account.Pass(ctx, n.M, npmBin, "ci", "--prefix", serversDir(n.Account.Home), "--ignore-scripts",
 		"--no-audit", "--no-fund"); err != nil {
 		return err
 	}
-	return n.M.WriteAtomic(n.stamp(), []byte(n.Digest+"\n"), effect.Attrs{UID: n.UID, GID: n.GID, Mode: 0o644})
+	return n.M.WriteAtomic(n.stamp(), []byte(n.Digest+"\n"), effect.Attrs{UID: n.Account.UID, GID: n.Account.GID, Mode: 0o644})
 }
 
 // Plan finds a change where npm is missing or the stamp is missing or another digest.
