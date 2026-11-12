@@ -38,6 +38,12 @@ func (a Account) Dir(m effect.Machine, rel string, mode fs.FileMode) Dir {
 	return Dir{M: m, Path: a.Home + "/" + rel, Mode: mode, UID: a.UID, GID: a.GID, home: a.Home}
 }
 
+// Absent is a path at rel below the account's home that does not exist. It refuses a link on the
+// way as File does, as it plans, reports and applies.
+func (a Account) Absent(m effect.Machine, rel string) Absent {
+	return Absent{M: m, Path: a.Home + "/" + rel, home: a.Home}
+}
+
 // makeParents makes each directory between home and target that is missing, top first, as the
 // owner's at 0755, and leaves an existing one alone. Without a home it does nothing.
 func makeParents(m effect.Machine, home, target string, uid, gid int) error {
