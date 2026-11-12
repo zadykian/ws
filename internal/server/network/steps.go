@@ -9,8 +9,8 @@ import (
 )
 
 // Steps returns the role's one step: the direct link to the Mac. The role takes no secrets.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
-	return steps(v, m, effect.OSUnits{}, out)
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
+	return steps(v, m, u, out)
 }
 
 // steps is Steps with the units given, for a test to fake.

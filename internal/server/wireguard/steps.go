@@ -24,12 +24,11 @@ const (
 // Steps returns the role's steps in order: the check of the settings, the packages, and the drops
 // that keep Docker's containers off the Mac. Then come wg0's key and files, and the public key with
 // the wait for wg0. The role takes no secrets.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
-	return steps(v, m, effect.OSUnits{}, out, rand.Reader, time.Sleep)
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
+	return steps(v, m, u, out, rand.Reader, time.Sleep)
 }
 
-// steps is Steps with the units, the source of random bytes and the pause given, for a test to
-// fake.
+// steps is Steps with the source of random bytes and the pause given, for a test to fake.
 func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, random io.Reader,
 	sleep func(time.Duration)) []step.Step {
 	return []step.Step{

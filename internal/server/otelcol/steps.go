@@ -18,11 +18,11 @@ const (
 // Steps returns the role's steps in order: node_exporter, the .deb's install, the
 // collector's configuration and units, and the check of its answer. node_exporter comes first, so
 // that the collector's first scrape finds it. The role takes no secrets.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
-	return steps(v, m, effect.OSUnits{}, out, healthURL)
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
+	return steps(v, m, u, out, healthURL)
 }
 
-// steps is Steps with the units and the health URL given, for a test to fake.
+// steps is Steps with the health URL given, for a test to fake.
 func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, health string) []step.Step {
 	return []step.Step{
 		host.Lazy{Title: exporterStep, Parts: exporter(m, u, out)},
