@@ -3,7 +3,7 @@ package docker_test
 import (
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/docker"
+	"github.com/zadykian/ws/roles/server/ubuntu/docker"
 )
 
 func TestDefaultCacheIsASharePlusOneGiB(t *testing.T) {

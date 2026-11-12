@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/internal/server/devtools"
 	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 )
 
 // The two editors take the same choices in their own files. These tests read both files as they

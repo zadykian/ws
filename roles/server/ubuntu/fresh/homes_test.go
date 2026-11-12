@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/devtools"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 )
 
 // The servers sit under the user's home, which is /home/ws only in the tests: a literal home in

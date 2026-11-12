@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/otelcol"
+	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 )
 
 func TestEndpointReadsTheLastSettingWithoutSourcingTheFile(t *testing.T) {

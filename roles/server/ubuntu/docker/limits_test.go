@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/server/docker"
+	"github.com/zadykian/ws/roles/server/ubuntu/docker"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/docker"
+	"github.com/zadykian/ws/roles/server/ubuntu/docker"
 )
 
 const (

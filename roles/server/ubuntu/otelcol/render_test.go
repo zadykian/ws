@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/otelcol"
+	"github.com/zadykian/ws/roles/server/ubuntu/otelcol"
 	"go.yaml.in/yaml/v3"
 )
 
