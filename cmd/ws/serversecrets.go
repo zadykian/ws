@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"io/fs"
 
-	"filippo.io/age"
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/secrets"
 )
 
 // newServerSecretsCmd returns ws server secrets, which keeps ws's secrets file, with its identity as
 // a systemd credential. Its set, unset and keys are ws mac secrets'.
 func newServerSecretsCmd(p process) *cobra.Command {
-	open := func() (secretsStore, error) { return serverSecretsStore(p) }
+	open := func() (secrets.Store, error) { return serverSecretsStore(p) }
 	return group("secrets", "keep ws's secrets file, with its identity as a systemd credential",
 		append([]*cobra.Command{{
 			Use:   "init",
@@ -30,24 +28,11 @@ func newServerSecretsCmd(p process) *cobra.Command {
 }
 
 // serverSecretsStore returns ws's store, to root alone: the file and the host's key are root's.
-func serverSecretsStore(p process) (secretsStore, error) {
+func serverSecretsStore(p process) (secrets.Store, error) {
 	if p.euid != 0 {
-		return secretsStore{}, errors.New("run it as root")
+		return secrets.Store{}, errors.New("run it as root")
 	}
-	return secretsStore{m: p.machine, k: secrets.Credstore{M: p.machine}, path: secrets.FilePath,
-		write: func(s secrets.Secrets, id age.Identity) error { return writeServerSecrets(p.machine, s, id) }}, nil
-}
-
-// writeServerSecrets replaces ws's file, root's and 600, beside the values.
-func writeServerSecrets(m effect.Machine, s secrets.Secrets, id age.Identity) error {
-	data, err := secrets.Seal(s, id)
-	if err != nil {
-		return err
-	}
-	if err := makeConfigDir(m); err != nil {
-		return err
-	}
-	return m.WriteAtomic(secrets.FilePath, data, effect.Attrs{Mode: 0o600})
+	return secrets.Store{M: p.machine}, nil
 }
 
 // serverSecretsInit makes a missing credential, and the file where none is. A file
@@ -84,7 +69,7 @@ func serverSecretsInit(c *cobra.Command, p process) error {
 		return nil
 	}
 	// An empty edit reads the identity back from the credential, which proves that it opens.
-	if err := store.edit(c.Context(), func(*secrets.Secrets) error { return nil }); err != nil {
+	if err := store.Edit(c.Context(), func(*secrets.Secrets) error { return nil }); err != nil {
 		return err
 	}
 	sayOut(c, "made %s", secrets.FilePath)

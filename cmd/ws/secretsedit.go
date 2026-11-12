@@ -1,38 +1,19 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"strings"
 
-	"filippo.io/age"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/secrets"
 )
 
-// secretsKey keeps the identity of ws's secrets file: its credential.
-type secretsKey interface {
-	Identity(ctx context.Context) (age.Identity, error)
-}
-
-// secretsStore is the secrets file and the identity that opens it.
-type secretsStore struct {
-	m    effect.Machine
-	k    secretsKey
-	path string
-	// write replaces the file with s, sealed to id.
-	write func(s secrets.Secrets, id age.Identity) error
-}
-
 // openStore returns the store that a command edits, or why the command doesn't run.
-type openStore func() (secretsStore, error)
+type openStore func() (secrets.Store, error)
 
 // secretsEditCmds returns set, unset and keys, which edit the store that open returns.
 func secretsEditCmds(p process, open openStore) []*cobra.Command {
@@ -57,24 +38,7 @@ func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) e
 	if err != nil {
 		return err
 	}
-	return s.edit(c.Context(), fn)
-}
-
-// edit reads the file with its references as written, applies fn and writes the file again. A file
-// that is missing is an empty one.
-func (s secretsStore) edit(ctx context.Context, fn func(*secrets.Secrets) error) error {
-	id, err := s.k.Identity(ctx)
-	if err != nil {
-		return err
-	}
-	cur, err := secrets.LoadRaw(s.m, s.path, id)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return err
-	}
-	if err := fn(&cur); err != nil {
-		return err
-	}
-	return s.write(cur, id)
+	return s.Edit(c.Context(), fn)
 }
 
 // newSecretsSetCmd returns ws mac secrets set, with a command per kind.
@@ -206,31 +170,6 @@ func secretsKeys(c *cobra.Command, open openStore) error {
 		_, _ = io.WriteString(c.OutOrStdout(), k+"\n")
 	}
 	return nil
-}
-
-// Keys returns each entry as KIND NAME, never a value. A file that is missing holds none.
-func (s secretsStore) Keys(ctx context.Context) ([]string, error) {
-	id, err := s.k.Identity(ctx)
-	if err != nil {
-		return nil, err
-	}
-	cur, err := secrets.LoadRaw(s.m, s.path, id)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-	return cur.Keys(), nil
-}
-
-// Set sets the entry that label names, "KIND NAME", for the secrets sheet. A git entry keeps its
-// other fields, as set git does with no flag.
-func (s secretsStore) Set(ctx context.Context, label, value string) error {
-	kind, name, err := secrets.CutLabel(label)
-	if err != nil {
-		return err
-	}
-	return s.edit(ctx, func(cur *secrets.Secrets) error {
-		return cur.Set(kind, name, value)
-	})
 }
 
 // sayOut prints a line on stdout after the command's path.
