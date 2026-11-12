@@ -46,9 +46,9 @@ func (*WsRun) Name() string { return runStage }
 // WaitsOn is Await, or the stage that installs this ws on ws.
 func (r *WsRun) WaitsOn() string { return cmp.Or(r.Await, installStage) }
 
-// runDone succeeds where ws's last full run left what c wants. Under --update, only once the stage
+// RunDone succeeds where ws's last full run left what c wants. Under --update, only once the stage
 // ran ws server apply in this run.
-func (r *WsRun) runDone(ctx context.Context, c conf.Conf) bool {
+func (r *WsRun) RunDone(ctx context.Context, c conf.Conf) bool {
 	if r.Update && !r.ran {
 		return false
 	}
@@ -109,13 +109,13 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user}}}, nil
 }
 
-// partDone is runDone for what this run takes. A part that ran is all there is to do, and a part
+// partDone is RunDone for what this run takes. A part that ran is all there is to do, and a part
 // chosen is to run whatever the last full run left, as a step can drift after it.
 func (r *WsRun) partDone(ctx context.Context, c conf.Conf) bool {
 	if len(r.Only) > 0 {
 		return r.ran
 	}
-	return r.runDone(ctx, c)
+	return r.RunDone(ctx, c)
 }
 
 // fail says what to do where ws server apply ran no full run to its end. It names no cause, as ssh has

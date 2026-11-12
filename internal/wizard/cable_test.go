@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/step"
 )
 
@@ -21,7 +22,8 @@ func newCable(t *testing.T, status wsStatus, link string, env map[string]string)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results[remoteLine(ws.files, "link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
-	c := &Cable{Ws: ws, Conf: "/h/mac.conf", Version: "v1.2.3", Default: "zadykian",
+	c := &Cable{Ws: ws, Conf: "/h/mac.conf",
+		RunDone:  func(context.Context, conf.Conf) bool { return true },
 		MacApply: func(context.Context, bool) (bool, error) { return false, nil },
 		Env:      func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: out}
 	return c, m, p
@@ -106,7 +108,7 @@ func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	c.Check = true
-	delete(m.Results, remoteLine(c.Ws.remote, "status"))
+	c.RunDone = func(context.Context, conf.Conf) bool { return false }
 	p, err := c.Plan(context.Background())
 	out := strings.Join(c.Out.(*effecttest.Out).Lines, "\n")
 	if err != nil || len(p.Changes) != 0 || out != "say: Cable: after ws's run" {
