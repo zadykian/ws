@@ -160,9 +160,6 @@ func TestRemoteThroughSudo(t *testing.T) {
 	s.way, s.password = sudoAsked, sudoPassword
 	r := &Remote{Shell: SSHShell{SSH: s.SSH, Sudo: s}, Script: []byte("echo\n")}
 	line := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-s", "--", "status")
-	if remoteLine(r, "status") != line {
-		t.Fatalf("remoteLine = %q", remoteLine(r, "status"))
-	}
 	m.Results[line] = effecttest.Result{Out: []byte("active -\n")}
 	if _, ok := r.status(context.Background()); !ok {
 		t.Fatal("Status read nothing")

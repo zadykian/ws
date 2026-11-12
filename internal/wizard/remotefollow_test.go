@@ -100,8 +100,10 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 
 func TestFollowRunsOnAMachineWithoutLines(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: SSHShell{SSH: SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}}, Script: []byte("echo\n")}
-	m.Results[remoteLine(r, "run")] = effecttest.Result{}
+	ssh := SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}
+	r := &Remote{Shell: SSHShell{SSH: ssh}, Script: []byte("echo\n")}
+	args := []string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run"}
+	m.Results["ssh "+strings.Join(ssh.argv(context.Background(), args), " ")] = effecttest.Result{}
 	if err := r.Follow(context.Background()); err != nil {
 		t.Fatal(err)
 	}

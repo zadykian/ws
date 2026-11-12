@@ -9,13 +9,6 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
-// remoteLine is the ssh command line that Remote runs for the operation.
-func remoteLine(r *Remote, op ...string) string {
-	s := r.Shell.(SSHShell)
-	args, _, _ := s.args(script(op), nil)
-	return "ssh " + strings.Join(s.SSH.argv(context.Background(), args), " ")
-}
-
 func TestRemoteStatus(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := &Remote{Shell: fakeWs{m}, Script: []byte("echo\n")}

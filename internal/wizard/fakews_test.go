@@ -98,3 +98,15 @@ func TestFakeWsPassesAndPuts(t *testing.T) {
 		t.Errorf("Put left root=%v file=%q", m.Root, m.Files["/etc/ws/k"])
 	}
 }
+
+func TestFakeWsKeepsAWordWhole(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results[opLine("run", "--only", "network")] = effecttest.Result{Out: []byte("two")}
+	m.Results[opLine("run", "--only network")] = effecttest.Result{Out: []byte("one")}
+	var f Shell = fakeWs{M: m}
+	for want, op := range map[string][]string{"two": {"run", "--only", "network"}, "one": {"run", "--only network"}} {
+		if out, err := f.Run(context.Background(), nil, script(op)...); err != nil || string(out) != want {
+			t.Errorf("Run of %q = %q, %v; want %q", op, out, err, want)
+		}
+	}
+}
