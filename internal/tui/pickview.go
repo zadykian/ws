@@ -80,7 +80,7 @@ func (l pickList) render(theme Theme, line pickLine) string {
 		return r.headingIndent() + l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
 	}
 	mark, style := r.state.look(theme)
-	return r.indented() + l.box(r) + " " + style.Render(mark) + " " + r.name
+	return r.indented() + r.box() + " " + style.Render(mark) + " " + r.name
 }
 
 // view draws height lines of the list, the cursor's gutter where shown.
