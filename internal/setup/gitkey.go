@@ -30,6 +30,9 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 		// An agent that does not answer leaves the .pub to read, as an older macOS allows.
 		keys, _, _ := SecretiveKeys(ctx, g.M, g.Home)
 		if k, ok := held(keys, pub, g.Home); ok {
+			if err := sshcfg.CheckKeyFile(pub, "WS_GIT_SIGNING_PUB_KEY", k.Line); err != nil {
+				return gitKey{}, err
+			}
 			return gitKey{Pub: sshcfg.Expand(k.Pub(), g.Home), Public: gitcfg.PublicKey(k.Line), Text: k.Line + "\n"}, nil
 		}
 	}
@@ -40,6 +43,9 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 	} else if missing {
 		return gitKey{}, fmt.Errorf("%s, mac.conf's WS_GIT_SIGNING_PUB_KEY, is missing: make the key first, "+
 			"as docs/mac-git.md says", pub)
+	}
+	if err := sshcfg.CheckKeyFile(pub, "WS_GIT_SIGNING_PUB_KEY", string(text)); err != nil {
+		return gitKey{}, err
 	}
 	public := gitcfg.PublicKey(string(text))
 	if public == "" {

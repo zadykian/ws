@@ -124,6 +124,12 @@ func TestGitChecksAKeyNamedInMacConf(t *testing.T) {
 	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "holds no public key alone") {
 		t.Errorf("two keys: err = %v", err)
 	}
+	for _, text := range []string{"ssh-ed25519-cert-v01@openssh.com AAAA\n", "ssh-mldsa-65 AAAA\n"} {
+		m.Files[gitHome+"/k.pub"] = []byte(text)
+		if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_PUB_KEY") {
+			t.Errorf("%q: err = %v, want a stop that names the variable", text, err)
+		}
+	}
 	m.Files[gitHome+"/k.pub"] = []byte(gitKey)
 	m.Results["ssh-keygen -l -f "+gitHome+"/k.pub"] = effecttest.Result{}
 	if p, err := g.Plan(context.Background()); err != nil || len(prereqs(p)) != 0 {
@@ -242,5 +248,15 @@ func TestGitStopsAtALinkAndAtGitConfigFailing(t *testing.T) {
 	m.Results["git config --file "+gitConfigFile+" --name-only --list"] = effecttest.Result{Err: errors.New("bad")}
 	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "git config cannot read") {
 		t.Errorf("git config failing: err = %v", err)
+	}
+}
+
+func TestGitRefusesAnAgentKeyOfATypeWsLacks(t *testing.T) {
+	const line = "ssh-mldsa-65 AAAA me\n"
+	m := agentMachine(effecttest.NewMachine(), line)
+	g := gitStep(m, nil)
+	g.Home, g.Conf.GitSigningPubKey = agentHome, copyOf(line)
+	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "which ws's OpenSSH lacks") {
+		t.Errorf("err = %v, want a type that ws's OpenSSH lacks", err)
 	}
 }
