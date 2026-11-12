@@ -1,6 +1,7 @@
 package sshcfg
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -8,37 +9,72 @@ import (
 
 var base64Key = regexp.MustCompile(`^[A-Za-z0-9+/]+=*$`)
 
-// CheckKeyFile fails where the text of the .pub file holds other than one public key of a type that
-// ws's OpenSSH 10.2 has (ssh -Q key there). A private key or a certificate fails, and so does a
-// type as an ML-DSA key of Secretive's. Its stops name the variable of mac.conf that names the file.
-func CheckKeyFile(file, name, text string) error {
-	var keyType string
+// keyTypes are the types of ws's OpenSSH 10.2 (ssh -Q key there).
+var keyTypes = map[string]bool{
+	"ssh-ed25519": true, "ssh-rsa": true, "sk-ssh-ed25519@openssh.com": true,
+	"sk-ecdsa-sha2-nistp256@openssh.com": true,
+	"ecdsa-sha2-nistp256":                true, "ecdsa-sha2-nistp384": true, "ecdsa-sha2-nistp521": true,
+}
+
+// PublicKey is the type and base64 of the one key that a .pub holds.
+type PublicKey struct{ Type, Base64 string }
+
+// String is the key as allowed_signers and GitHub take it: the type, a space and the base64.
+func (k PublicKey) String() string { return k.Type + " " + k.Base64 }
+
+// ErrCertificate and ErrNotAKey end a sentence that names the file. They are why ParsePub refuses a
+// text.
+var (
+	ErrCertificate = errors.New("is a certificate")
+	ErrNotAKey     = errors.New("holds no public key alone, as ssh-keygen -y prints one")
+)
+
+// TypeError is a key of a type that ws's OpenSSH lacks, as an ML-DSA key of Secretive's. Its name
+// starts with ssh-, ecdsa-sha2- or sk-.
+type TypeError struct{ Type string }
+
+func (e TypeError) Error() string {
+	return "holds a key of type " + e.Type + ", which ws's OpenSSH lacks"
+}
+
+// ParsePub returns the key of a .pub's text: one line that is not blank, of one of the seven types
+// of ws's OpenSSH, with a base64 data. A private key, a text of two keys, a certificate or a type
+// that ws lacks fails, with ErrNotAKey, ErrCertificate or a TypeError.
+func ParsePub(text string) (PublicKey, error) {
+	var fields []string
 	lines := 0
 	for _, line := range strings.Split(text, "\n") {
-		fields := strings.Fields(line)
-		if len(fields) == 0 {
-			continue
-		}
-		lines++
-		keyType = ""
-		if len(fields) > 1 && base64Key.MatchString(fields[1]) {
-			keyType = fields[0]
+		if f := strings.Fields(line); len(f) > 0 {
+			fields = f
+			lines++
 		}
 	}
-	if lines != 1 {
-		keyType = ""
+	if lines != 1 || len(fields) < 2 || !base64Key.MatchString(fields[1]) {
+		return PublicKey{}, ErrNotAKey
 	}
+	switch typ := fields[0]; {
+	case keyTypes[typ]:
+		return PublicKey{typ, fields[1]}, nil
+	case strings.HasSuffix(typ, "-cert-v01@openssh.com"):
+		return PublicKey{}, ErrCertificate
+	case strings.HasPrefix(typ, "ssh-") || strings.HasPrefix(typ, "ecdsa-sha2-") || strings.HasPrefix(typ, "sk-"):
+		return PublicKey{}, TypeError{typ}
+	}
+	return PublicKey{}, ErrNotAKey
+}
+
+// CheckKeyFile fails where the text of the .pub file holds other than one public key of a type that
+// ws's OpenSSH 10.2 has. Its stops name the variable of mac.conf that names the file.
+func CheckKeyFile(file, name, text string) error {
+	_, err := ParsePub(text)
+	var typ TypeError
 	switch {
-	case keyType == "ssh-ed25519", keyType == "ssh-rsa", keyType == "sk-ssh-ed25519@openssh.com",
-		keyType == "sk-ecdsa-sha2-nistp256@openssh.com",
-		keyType == "ecdsa-sha2-nistp256", keyType == "ecdsa-sha2-nistp384", keyType == "ecdsa-sha2-nistp521":
-		return nil
-	case strings.HasSuffix(keyType, "-cert-v01@openssh.com"):
-		return fmt.Errorf("%s is a certificate: name its key's own .pub in mac.conf's %s", file, name)
-	case strings.HasPrefix(keyType, "ssh-") || strings.HasPrefix(keyType, "ecdsa-sha2-") ||
-		strings.HasPrefix(keyType, "sk-"):
-		return fmt.Errorf("%s holds a key of type %s, which ws's OpenSSH lacks: name the .pub of "+
-			"a P-256 or ed25519 key in mac.conf's %s", file, keyType, name)
+	case errors.Is(err, ErrCertificate):
+		return fmt.Errorf("%s %w: name its key's own .pub in mac.conf's %s", file, err, name)
+	case errors.As(err, &typ):
+		return fmt.Errorf("%s %w: name the .pub of a P-256 or ed25519 key in mac.conf's %s", file, err, name)
+	case err != nil:
+		return fmt.Errorf("%s %w", file, err)
 	}
-	return fmt.Errorf("%s holds no public key alone, as ssh-keygen -y prints one", file)
+	return nil
 }

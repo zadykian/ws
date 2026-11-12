@@ -1,4 +1,5 @@
-// Package sshcfg holds the text of ~/.ssh/config.d/ws and the reading of ssh_config files, all pure.
+// Package sshcfg holds the text of ~/.ssh/config.d/ws, the reading of ssh_config files and of a
+// .pub's line, all pure.
 package sshcfg
 
 import (
