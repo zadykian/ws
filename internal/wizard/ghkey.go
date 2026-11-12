@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/internal/setup"
-	"github.com/zadykian/ws/internal/sshcfg"
 )
 
 // noKey is the failure to read the Mac's key: its .pub is not there yet, or cannot be read.
@@ -16,19 +15,19 @@ func (e noKey) Error() string { return e.err.Error() }
 
 func (e noKey) Unwrap() error { return e.err }
 
-// key returns the .pub of the Mac's key for ws, as setup.PickKey finds it from mac.conf, and its
+// key returns the .pub of the Mac's key for ws, as setup.ReadKey finds it from mac.conf, and its
 // type and base64.
 func (g GhCLI) key(ctx context.Context) (pub, key string, err error) {
 	_, c, err := loadConf(confFile{g.Conf, ghStage, g.M, g.Out})
 	if err != nil {
 		return "", "", err
 	}
-	id, err := setup.PickKey(ctx, g.M, c, g.Home)
+	k, err := setup.ReadKey(ctx, g.M, c, g.Home, setup.LoginKey)
 	if err != nil {
 		return "", "", noKey{err}
 	}
-	pub = sshcfg.Expand(id.Pub, g.Home)
-	if f := strings.Fields(id.Text); len(f) >= 2 {
+	pub = k.File
+	if f := strings.Fields(k.Text); len(f) >= 2 {
 		return pub, f[0] + " " + f[1], nil
 	}
 	return "", "", noKey{fmt.Errorf("%s: cannot read the Mac's key for ws from %s", ghStage, pub)}
