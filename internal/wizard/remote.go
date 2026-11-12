@@ -36,9 +36,9 @@ func (r *Remote) hold() *heldStatus {
 	return r.held
 }
 
-// Beside returns a Remote of the script over r's Shell, such as the files script's. A Do, Pass,
-// Follow or Secrets through either leaves the status stale for both, as the files script changes
-// what the status reads.
+// Beside returns a Remote of the script over r's Shell, such as the files script's. A Do or
+// Secrets through either, or an operation of the Session, leaves the status stale for both, as the
+// files script changes what the status reads.
 func (r *Remote) Beside(script []byte) *Remote {
 	return &Remote{Shell: r.Shell, Script: script, held: r.hold()}
 }
@@ -59,19 +59,6 @@ func (r *Remote) query(ctx context.Context, op ...string) ([]byte, error) {
 	return r.Shell.Run(ctx, r.Script, script(op)...)
 }
 
-// Pass is Do for an operation that goes on, such as install, whose output goes to Stderr as it comes.
-func (r *Remote) Pass(ctx context.Context, op ...string) error {
-	r.stale()
-	return r.Shell.Pass(ctx, r.Script, script(op)...)
-}
-
-// Follow is Pass for the operation run, with ws server apply's args. The events of the run's log go
-// to Events, and its other lines to Stderr.
-func (r *Remote) Follow(ctx context.Context, args ...string) error {
-	r.stale()
-	return r.Shell.Lines(ctx, r.Script, r.event, script(append([]string{"run"}, args...))...)
-}
-
 // event tells whether a line of a run's log is an event, and hands it on.
 func (r *Remote) event(line string) bool {
 	e, ok := apply.ParseEvent(line)
@@ -87,8 +74,9 @@ func (r *Remote) Put(ctx context.Context, path string, data []byte) error {
 	return r.Shell.Put(ctx, path, data)
 }
 
-// status reads what the remote script's status prints once, until Do, Pass or Follow runs. It
-// reports whether it read any: the Shell or the script fails where root is out of reach.
+// status reads what the remote script's status prints once, until a Do or an operation of the
+// Session runs. It reports whether it read any: the Shell or the script fails where root is out of
+// reach.
 func (r *Remote) status(ctx context.Context) (wsStatus, bool) {
 	h := r.hold()
 	if !h.read {

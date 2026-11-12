@@ -7,7 +7,15 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/conf"
+	"github.com/zadykian/ws/step"
 )
+
+// localSession returns ws's own session over m, whose runs' events go to events.
+func localSession(m effect.Machine, events step.Observer) *Session {
+	want := func() (conf.Conf, error) { return conf.Conf{}, nil }
+	return NewSession(WsReach{M: m, Want: want}, Scripts{Remote: []byte("echo\n"), Events: events})
+}
 
 // On ws, the script goes on sh's stdin and each word goes unchanged, with no ssh and no sudo.
 func TestRemoteOnWsRunsTheScriptLocally(t *testing.T) {
@@ -34,12 +42,13 @@ func TestRemoteOnWsRunsTheScriptLocally(t *testing.T) {
 
 func TestFollowOnWsHandsEventsOn(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: LocalShell{M: m}, Script: []byte("echo\n"), Events: &heard{}}
+	h := &heard{}
+	r := localSession(m, h)
 	m.Results["sh -s -- run --only=signoz/signoz up"] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.Follow(context.Background(), onlyArgs([]string{"signoz/signoz up"})...); err != nil {
+	if err := r.run(context.Background(), onlyArgs([]string{"signoz/signoz up"})); err != nil {
 		t.Fatal(err)
 	}
-	if got := r.Events.(*heard).steps(); !slices.Equal(got, []string{"ssh/keys"}) {
+	if got := h.steps(); !slices.Equal(got, []string{"ssh/keys"}) {
 		t.Errorf("events = %q", got)
 	}
 	if want := []string{"ssh: changed", "last line"}; !slices.Equal(m.Passed, want) {
@@ -50,10 +59,11 @@ func TestFollowOnWsHandsEventsOn(t *testing.T) {
 // A Machine without effect.Lines still runs the run, its lines all passed on.
 func TestFollowOnWsWithoutLines(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := &Remote{Shell: LocalShell{M: struct{ effect.Machine }{m}}, Script: []byte("echo\n"), Events: &heard{}}
+	h := &heard{}
+	r := localSession(struct{ effect.Machine }{m}, h)
 	m.Results["sh -s -- run"] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.Follow(context.Background()); err != nil || len(*r.Events.(*heard)) != 0 {
-		t.Errorf("Follow = %v, events %v", err, r.Events)
+	if err := r.run(context.Background(), nil); err != nil || len(*h) != 0 {
+		t.Errorf("run = %v, events %v", err, *h)
 	}
 	if !slices.Equal(m.Calls, []string{"run sh -s -- run"}) {
 		t.Errorf("calls = %q", m.Calls)
@@ -71,7 +81,7 @@ func TestLocalShellNamesWsUser(t *testing.T) {
 	}
 	user = ""
 	m.Results["sh -s -- install"] = effecttest.Result{}
-	if err := r.Pass(context.Background(), "install"); err != nil || m.Calls[len(m.Calls)-1] != "run sh -s -- install" {
+	if err := r.Shell.Pass(context.Background(), r.Script, script([]string{"install"})...); err != nil || m.Calls[len(m.Calls)-1] != "run sh -s -- install" {
 		t.Errorf("Pass = %v; calls %q", err, m.Calls)
 	}
 }

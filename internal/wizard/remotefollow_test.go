@@ -29,19 +29,21 @@ func (h heard) steps() []string {
 	return names
 }
 
-func newFollow(m *effecttest.Machine) *Remote {
-	return &Remote{Shell: fakeWs{m}, Script: []byte("echo\n")}
+// newFollow returns a session over ws's fake, whose runs' events go to events.
+func newFollow(m *effecttest.Machine, events step.Observer) *Session {
+	reach := fakeReach{Reach: MacReach{SSH: SSH{M: m, Lock: "/t/l"}}, M: m}
+	return NewSession(reach, Scripts{Remote: []byte("echo\n"), Files: []byte("true\n"), Events: events})
 }
 
 func TestFollowHandsEventsOnAndPassesTheLog(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := newFollow(m)
-	r.Events = &heard{}
+	h := &heard{}
+	r := newFollow(m, h)
 	m.Results[opLine("run", "--only", "wireguard")] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.Follow(context.Background(), "--only", "wireguard"); err != nil {
+	if err := r.run(context.Background(), []string{"--only", "wireguard"}); err != nil {
 		t.Fatal(err)
 	}
-	if got := r.Events.(*heard).steps(); !slices.Equal(got, []string{"ssh/keys"}) {
+	if got := h.steps(); !slices.Equal(got, []string{"ssh/keys"}) {
 		t.Errorf("events = %q; want the line's one", got)
 	}
 	if want := []string{"ssh: changed", "last line"}; !slices.Equal(m.Passed, want) {
@@ -51,12 +53,11 @@ func TestFollowHandsEventsOnAndPassesTheLog(t *testing.T) {
 
 func TestFollowHearsAReplayAgain(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := newFollow(m)
 	h := &heard{}
-	r.Events = h
+	r := newFollow(m, h)
 	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog)}
 	for range 2 {
-		if err := r.Follow(context.Background()); err != nil {
+		if err := r.run(context.Background(), nil); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -67,9 +68,9 @@ func TestFollowHearsAReplayAgain(t *testing.T) {
 
 func TestFollowDropsEventsThatNoOneHears(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := newFollow(m)
+	r := newFollow(m, nil)
 	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.Follow(context.Background()); err != nil {
+	if err := r.run(context.Background(), nil); err != nil {
 		t.Fatal(err)
 	}
 	if slices.ContainsFunc(m.Passed, func(l string) bool { return strings.Contains(l, "event") }) {
@@ -79,14 +80,13 @@ func TestFollowDropsEventsThatNoOneHears(t *testing.T) {
 
 func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 	m := effecttest.NewMachine()
-	r := newFollow(m)
+	h := &heard{}
+	r := newFollow(m, h)
 	drop := errors.New("ssh dropped")
 	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{}.text()}
 	m.Results[opLine("run")] = effecttest.Result{Out: []byte(runLog), Err: drop}
 	r.status(context.Background())
-	h := &heard{}
-	r.Events = h
-	if err := r.Follow(context.Background()); !errors.Is(err, drop) {
+	if err := r.run(context.Background(), nil); !errors.Is(err, drop) {
 		t.Fatalf("Follow = %v, want ssh's error", err)
 	}
 	if len(*h) != 1 {
@@ -101,10 +101,10 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 func TestFollowRunsOnAMachineWithoutLines(t *testing.T) {
 	m := effecttest.NewMachine()
 	ssh := SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}
-	r := &Remote{Shell: SSHShell{SSH: ssh}, Script: []byte("echo\n")}
+	r := NewSession(MacReach{SSH: ssh}, Scripts{Remote: []byte("echo\n")})
 	args := []string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run"}
 	m.Results["ssh "+strings.Join(ssh.argv(context.Background(), args), " ")] = effecttest.Result{}
-	if err := r.Follow(context.Background()); err != nil {
+	if err := r.run(context.Background(), nil); err != nil {
 		t.Fatal(err)
 	}
 	if got := m.Calls[len(m.Calls)-1]; !strings.HasSuffix(got, "-- run") {
