@@ -62,5 +62,6 @@ func rootPaths(v values.Values) []string {
 		v.Home + "/.bashrc", v.Home + "/.profile", v.Home + "/.gitconfig",
 		v.GitSigningKey, v.GitSigningKey + ".pub", v.Shell.GitAllowedSigners,
 		v.Home + "/.config/git/tokens.gitconfig", v.Home + "/.config/git/tokens", v.Home + "/.secrets/env",
+		v.Home + "/.config/git/local",
 	}
 }
