@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	"charm.land/bubbles/v2/key"
-	tea "charm.land/bubbletea/v2"
 )
 
 const (
@@ -20,34 +19,6 @@ var configureButton = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "confi
 
 // stateButton leaves the lists for the state screen of the machine of the list in focus.
 var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
-
-// newQueueScreen returns the lists of stages, their scan under way. The configure button comes last.
-func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- Choice) pickScreen {
-	s := newPickScreen(title, theme, nil, picks)
-	s.list, s.queued = newQueue(stages), true
-	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), stateButton, configureButton)...)
-	return s.enabled()
-}
-
-// tabbed walks the ring of the lists, then the buttons, as a Tab between the lists would else leave
-// for the buttons.
-func (s pickScreen) tabbed(step int) pickScreen {
-	sides := s.list.sides()
-	next := s.list.pane(s.list.side) + step
-	if s.footer.Focused() < 0 && next >= 0 && next < len(sides) {
-		s.list = s.list.facing(sides[next])
-		return s
-	}
-	s.footer = s.footer.move(step)
-	if s.footer.Focused() >= 0 {
-		return s
-	}
-	s.list = s.list.facing(sides[0])
-	if step < 0 {
-		s.list = s.list.facing(sides[len(sides)-1])
-	}
-	return s
-}
 
 // stripSize is the frame of the strip under a queue's lists, and the zero Size where a window has
 // no room for one.
@@ -104,25 +75,4 @@ func (l pickList) drawn(layout Layout, theme Theme, window Size) Layout {
 		layout.Panes[i].Body = l.glance(side).view(theme, sizes[i].Height)
 	}
 	return layout
-}
-
-// queueLayout is the screen of a queue, its lists empty as what fills them depends on their sizes.
-func (s pickScreen) queueLayout() Layout {
-	detail := Pane{Title: "Detail", Body: s.detail(inside(stripSize(s.window)))}
-	return Layout{
-		Title:  s.title,
-		Status: s.status(),
-		Panes:  s.list.panes(),
-		Below:  strip(s.theme, detail, s.window),
-		Footer: s.footer,
-	}
-}
-
-// queueView draws the lists, the filter's line over the one in focus.
-func (s pickScreen) queueView() tea.View {
-	l := s.list.drawn(s.layout(), s.theme, s.window)
-	if s.filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight())
-	}
-	return l.View(s.theme, s.window.Width, s.window.Height)
 }

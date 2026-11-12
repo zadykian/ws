@@ -21,7 +21,7 @@ type Round struct {
 	// Read gives the state screen's read of side's machine. done, or nil, ends what the read holds.
 	Read func(side Side) (read StateReader, done func(context.Context))
 	// Run runs what the lists chose, on a screen of its own.
-	Run func(ctx context.Context, choice Choice) error
+	Run func(ctx context.Context, choice QueueChoice) error
 }
 
 // RunWizard draws w's screens until a leave or a run, and returns the run's error or a screen's.
@@ -31,9 +31,9 @@ func RunWizard(ctx context.Context, w Wizard) error {
 
 // screens are what the loop draws. A test of the loop fakes them.
 type screens interface {
-	pick(ctx context.Context, r Round) (Choice, error)
+	pick(ctx context.Context, r Round) (QueueChoice, error)
 	state(ctx context.Context, side Side, read StateReader) error
-	reopen(ctx context.Context, left Choice) (Choice, error)
+	reopen(ctx context.Context, left QueueChoice) (QueueChoice, error)
 	configure(ctx context.Context, sheets []Sheet) error
 }
 
@@ -43,7 +43,7 @@ func (w Wizard) loop(ctx context.Context, s screens) error {
 	for {
 		r := w.Round()
 		choice, err := s.pick(ctx, r)
-		for err == nil && choice.State {
+		for err == nil && choice.Next == NextState {
 			if err = w.state(ctx, s, r, choice.Side); err == nil {
 				choice, err = s.reopen(ctx, choice)
 			}
@@ -51,7 +51,7 @@ func (w Wizard) loop(ctx context.Context, s screens) error {
 		switch {
 		case err != nil:
 			return err
-		case choice.Configure:
+		case choice.Next == NextConfigure:
 			if err := w.forms(ctx, s); err != nil {
 				return err
 			}
@@ -87,13 +87,13 @@ func (w Wizard) forms(ctx context.Context, s screens) error {
 // terminalScreens is the loop's screens on the terminal.
 type terminalScreens struct{ w Wizard }
 
-func (d terminalScreens) pick(ctx context.Context, r Round) (Choice, error) {
+func (d terminalScreens) pick(ctx context.Context, r Round) (QueueChoice, error) {
 	return PickStages(ctx, d.w.Config, d.w.Title, r.Stages, r.Scan)
 }
 func (d terminalScreens) state(ctx context.Context, side Side, read StateReader) error {
 	return RunState(ctx, d.w.Config, d.w.Title+": "+side.String(), read)
 }
-func (d terminalScreens) reopen(ctx context.Context, left Choice) (Choice, error) {
+func (d terminalScreens) reopen(ctx context.Context, left QueueChoice) (QueueChoice, error) {
 	return Reopen(ctx, d.w.Config, left)
 }
 func (d terminalScreens) configure(ctx context.Context, sheets []Sheet) error {

@@ -39,7 +39,7 @@ func (w macScreen) round() tui.Round {
 		Stages: wizardQueue(w.plainStages()),
 		Scan:   w.scan(sudo),
 		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return w.read(side, sudo) },
-		Run:    func(_ context.Context, choice tui.Choice) error { return w.chosen(choice, sudo) },
+		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, sudo) },
 	}
 }
 
@@ -153,16 +153,16 @@ func (w macScreen) whole() error {
 // runOf is the run of what the lists chose. A stage in part leaves out ws's roles by --only, as they
 // run on ws, and ws mac apply's steps by the run's filter. ws's run whole by a tick goes once more, as
 // under --update: a good last run says nothing of a step that drifted after it.
-func (w macScreen) runOf(choice tui.Choice, sudo *wizard.Sudo) wizardRun {
+func (w macScreen) runOf(choice tui.QueueChoice, sudo *wizard.Sudo) wizardRun {
 	o := w.o
-	o.check = choice.Check
+	o.check = choice.Next == tui.NextCheck
 	name := wsRunOf(w.plainStages()).Name()
 	o.update = o.update || slices.Contains(choice.Whole, name)
 	return wizardRun{o: o, sudo: sudo, left: wizardLeft(choice), only: choice.Partial[name]}
 }
 
 // chosen runs what the lists chose, on a run of those stages.
-func (w macScreen) chosen(choice tui.Choice, sudo *wizard.Sudo) error {
+func (w macScreen) chosen(choice tui.QueueChoice, sudo *wizard.Sudo) error {
 	r := w.runOf(choice, sudo)
 	return w.running(r, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewQueueRun(runTitle(w.c, r.o.check), cfg.Theme, choice)

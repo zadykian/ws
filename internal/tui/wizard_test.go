@@ -10,21 +10,23 @@ import (
 
 // fakeScreens gives the loop the choices in turn, and keeps what it drew.
 type fakeScreens struct {
-	choices []Choice
+	choices []QueueChoice
 	drew    []string
 }
 
-func (f *fakeScreens) next(name string) (Choice, error) {
+func (f *fakeScreens) next(name string) (QueueChoice, error) {
 	f.drew = append(f.drew, name)
 	if len(f.choices) == 0 {
-		return Choice{}, errors.New("no choice left")
+		return QueueChoice{}, errors.New("no choice left")
 	}
 	defer func() { f.choices = f.choices[1:] }()
 	return f.choices[0], nil
 }
 
-func (f *fakeScreens) pick(context.Context, Round) (Choice, error)    { return f.next("lists") }
-func (f *fakeScreens) reopen(context.Context, Choice) (Choice, error) { return f.next("lists again") }
+func (f *fakeScreens) pick(context.Context, Round) (QueueChoice, error) { return f.next("lists") }
+func (f *fakeScreens) reopen(context.Context, QueueChoice) (QueueChoice, error) {
+	return f.next("lists again")
+}
 func (f *fakeScreens) state(_ context.Context, side Side, _ StateReader) error {
 	f.drew = append(f.drew, "state of "+side.String())
 	return nil
@@ -38,7 +40,7 @@ func (f *fakeScreens) configure(_ context.Context, sheets []Sheet) error {
 // fakeWizard counts its rounds and keeps what its works were given.
 type fakeWizard struct {
 	rounds, reads, done int
-	ran                 []Choice
+	ran                 []QueueChoice
 }
 
 func (f *fakeWizard) wizard() Wizard {
@@ -48,7 +50,7 @@ func (f *fakeWizard) wizard() Wizard {
 			f.rounds++
 			return Round{
 				Read: func(Side) (StateReader, func(context.Context)) { f.reads++; return nil, end },
-				Run:  func(_ context.Context, c Choice) error { f.ran = append(f.ran, c); return nil },
+				Run:  func(_ context.Context, c QueueChoice) error { f.ran = append(f.ran, c); return nil },
 			}
 		},
 		Forms: func(context.Context) ([]Sheet, func(context.Context), error) { return []Sheet{{}, {}}, end, nil },
@@ -57,8 +59,8 @@ func (f *fakeWizard) wizard() Wizard {
 
 // The state screen comes back to the lists with no scan, and the run takes what they chose then.
 func TestWizardStateComesBackWithNoScan(t *testing.T) {
-	run := Choice{Only: []string{"Run"}}
-	s := &fakeScreens{choices: []Choice{{State: true, Side: WsSide}, {State: true}, run}}
+	run := QueueChoice{Next: NextRun, Only: []string{"Run"}}
+	s := &fakeScreens{choices: []QueueChoice{{Next: NextState, Side: WsSide}, {Next: NextState}, run}}
 	f := &fakeWizard{}
 	if err := f.wizard().loop(t.Context(), s); err != nil {
 		t.Fatal(err)
@@ -74,7 +76,7 @@ func TestWizardStateComesBackWithNoScan(t *testing.T) {
 
 // The forms lead to a new round, and a leave of its lists runs nothing.
 func TestWizardFormsLeadToANewScan(t *testing.T) {
-	s := &fakeScreens{choices: []Choice{{Configure: true, Only: []string{"Run"}}, {}}}
+	s := &fakeScreens{choices: []QueueChoice{{Next: NextConfigure, Only: []string{"Run"}}, {}}}
 	f := &fakeWizard{}
 	if err := f.wizard().loop(t.Context(), s); err != nil {
 		t.Fatal(err)
@@ -93,7 +95,7 @@ func TestWizardEndsOnAnError(t *testing.T) {
 	}
 	w := f.wizard()
 	w.Forms = func(context.Context) ([]Sheet, func(context.Context), error) { return nil, nil, errors.New("no conf") }
-	s := &fakeScreens{choices: []Choice{{Configure: true}}}
+	s := &fakeScreens{choices: []QueueChoice{{Next: NextConfigure}}}
 	if err := w.loop(t.Context(), s); err == nil || !slices.Equal(s.drew, []string{"lists"}) {
 		t.Errorf("err = %v, drew %q", err, s.drew)
 	}

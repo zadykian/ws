@@ -40,14 +40,14 @@ func (s serverScreen) round() tui.Round {
 		Read: func(tui.Side) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, s.p.version), nil
 		},
-		Run: func(_ context.Context, choice tui.Choice) error { return s.chosen(choice) },
+		Run: func(_ context.Context, choice tui.QueueChoice) error { return s.chosen(choice) },
 	}
 }
 
 // chosen runs the stages that choice holds, ws's run in part where the list left some of its roles out.
-func (s serverScreen) chosen(choice tui.Choice) error {
+func (s serverScreen) chosen(choice tui.QueueChoice) error {
 	name := wsRunOf(s.stages(serverPick{})).Name()
-	r := serverPick{check: choice.Check, update: slices.Contains(choice.Whole, name), only: choice.Partial[name]}
+	r := serverPick{check: choice.Next == tui.NextCheck, update: slices.Contains(choice.Whole, name), only: choice.Partial[name]}
 	return s.running(r, &choice)
 }
 
@@ -91,7 +91,7 @@ func (s serverScreen) scan() tui.Work {
 
 // running runs r on the run screen of the stages' names, or on the list's, which choice holds. What
 // stays by hand prints past the screen, which would paint over it.
-func (s serverScreen) running(r serverPick, choice *tui.Choice) error {
+func (s serverScreen) running(r serverPick, choice *tui.QueueChoice) error {
 	cfg, done := runConfig(s.c, s.p, s.config())
 	defer done()
 	var screen tea.Model = tui.NewRunScreen(runTitle(s.c, r.check), cfg.Theme, tui.NewGroup("", s.stages(r)))
