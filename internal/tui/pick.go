@@ -105,17 +105,23 @@ func (l pickList) take(e step.Event) pickList {
 		return l
 	}
 	l.rows = slices.Clone(l.rows)
-	row := &l.rows[place]
-	row.state, row.after = stateAfter(e), e.After
-	row.chosen = row.pending()
-	row.said = nil
+	l.rows[place] = l.rows[place].took(e, said)
+	return l.settled()
+}
+
+// took returns the row as e leaves its step: chosen where it holds changes. said is what the scan
+// printed since a step last ended.
+func (r pickRow) took(e step.Event, said []Line) pickRow {
+	r.state, r.after = stateAfter(e), e.After
+	r.chosen = r.pending()
+	r.said = nil
 	if e.Kind != step.Skipped {
-		row.said = withoutLabel(said, row.label())
+		r.said = withoutLabel(said, r.label())
 	}
 	if e.Err != nil {
-		row.said = append(row.said, Line{Warned, e.Err.Error()})
+		r.said = append(r.said, Line{Warned, e.Err.Error()})
 	}
-	return l.settled()
+	return r
 }
 
 // place returns where the row of e's step stands, or -1.

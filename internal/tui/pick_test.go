@@ -172,3 +172,16 @@ func TestAWaitOfTheSameNameStaysWithItsStage(t *testing.T) {
 		t.Errorf("%+v and %+v are one choice", first, second)
 	}
 }
+
+func TestARowTakesWhatTheScanSaidOfItsStep(t *testing.T) {
+	row := pickRow{stepRow: stepRow{name: "one"}}
+	said := []Line{{Said, "one: sets it"}}
+	got := row.took(planned("", "one", 0, oneChange("a")), said)
+	if !got.chosen || got.state != stepChanged || len(got.said) != 1 || got.said[0].Text != "sets it" {
+		t.Errorf("row = %+v", got)
+	}
+	failed := row.took(step.Event{Kind: step.Failed, Err: errors.New("no")}, said)
+	if failed.chosen || failed.said[len(failed.said)-1].Kind != Warned {
+		t.Errorf("row = %+v", failed)
+	}
+}
