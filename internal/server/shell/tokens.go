@@ -55,11 +55,10 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	const rel = ".config/git/tokens"
-	dir := t.A.Home + "/" + rel
 	rs := []host.Resource{t.A.Dir(t.M, rel, 0o700)}
 	if t.Whole {
 		for _, u := range dropped {
-			rs = append(rs, host.Absent{M: t.M, Path: dir + "/" + credentialFile(u)})
+			rs = append(rs, t.A.Absent(t.M, rel+"/"+credentialFile(u)))
 		}
 	}
 	for _, c := range t.Creds {

@@ -43,7 +43,7 @@ func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, fmt.Errorf("%s lacks the line '%s' at its top, so it was written by hand: move its values into the secrets file's [env] table, remove the file, then run ws again", path, envMark)
 	}
 	if len(s.Env) == 0 {
-		return planAll(ctx, host.Absent{M: s.M, Path: path})
+		return planAll(ctx, s.A.Absent(s.M, ".secrets/env"))
 	}
 	f := s.A.File(s.M, ".secrets/env", renderEnv(s.Env), 0o600)
 	f.Secret = true
