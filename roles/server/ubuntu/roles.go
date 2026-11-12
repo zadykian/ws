@@ -1,6 +1,6 @@
-// Package roles lists the server's roles in the order that they run. A role is the Go steps that
+// Package ubuntu lists the server's roles in the order that they run. A role is the Go steps that
 // its package's Steps returns.
-package roles
+package ubuntu
 
 import (
 	"slices"
