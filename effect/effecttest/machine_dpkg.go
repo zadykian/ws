@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"os/exec"
+	"path"
 	"slices"
 	"strings"
 	"sync"
@@ -21,27 +22,40 @@ var exitOne = sync.OnceValue(func() error {
 	return exec.Command("sh", "-c", "exit 1").Run()
 })
 
-// dpkgQuery answers "dpkg-query -W -f FORMAT NAME..." from the table, and reports whether it did.
-// Where a name is unknown it prints the rest and ends with exit 1, as dpkg-query does. The caller
-// holds the lock.
+var knownFields = strings.NewReplacer("${Package}", "", "${Version}", "", "${db:Status-Abbrev}", "")
+
+// dpkgQuery answers "dpkg-query -W -f FORMAT PATTERN..." from the table, and reports whether it
+// did. A pattern is a name or a glob. Each package that one matches prints once, in name order.
+// Where a pattern matches none, the rest still prints and the error is exit 1, as dpkg-query
+// does. A field of the format other than host's three fails the command. The caller holds the
+// lock.
 func (m *Machine) dpkgQuery(name string, args []string) (Result, bool) {
 	if name != "dpkg-query" || m.Packages == nil || len(args) < 4 || args[0] != "-W" || args[1] != "-f" {
 		return Result{}, false
 	}
+	if rest := knownFields.Replace(args[2]); strings.Contains(rest, "${") {
+		return Result{Err: fmt.Errorf("effecttest: dpkg-query field in %q", args[2])}, true
+	}
 	var out strings.Builder
 	var err error
-	for _, n := range slices.Sorted(maps.Keys(m.Packages)) {
-		if !slices.Contains(args[3:], n) {
+	names := slices.Sorted(maps.Keys(m.Packages))
+	for _, pattern := range args[3:] {
+		if !slices.ContainsFunc(names, func(n string) bool { return matches(pattern, n) }) {
+			err = exitOne()
+		}
+	}
+	for _, n := range names {
+		if !slices.ContainsFunc(args[3:], func(pattern string) bool { return matches(pattern, n) }) {
 			continue
 		}
 		p := m.Packages[n]
 		out.WriteString(strings.NewReplacer("${Package}", n, "${Version}", p.Version,
 			"${db:Status-Abbrev}", fmt.Sprintf("%-3s", p.Status)).Replace(args[2]))
 	}
-	for _, n := range args[3:] {
-		if _, ok := m.Packages[n]; !ok {
-			err = exitOne()
-		}
-	}
 	return Result{Out: []byte(out.String()), Err: err}, true
+}
+
+func matches(pattern, name string) bool {
+	ok, _ := path.Match(pattern, name)
+	return ok
 }
