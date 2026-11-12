@@ -126,7 +126,9 @@ stay on stderr, and no screen is drawn.
 and takes `--only` as `apply` does. It reports what ws manages, not the rest of the machine: each
 step's packages, services and files, what stands against ws, and the changes that `apply` would
 make. A step that fails stands in the report as a check, and the exit code stays 0. It takes no
-secrets, so a report holds none and says nothing of what they write.
+secrets, so a report holds none and says nothing of what they write. A package in a state other
+than installed shows its version and dpkg's letters, such as `1.2 (iU)`, and one removed with its
+settings shows `settings left`.
 
 ```sh
 sudo ws server state
