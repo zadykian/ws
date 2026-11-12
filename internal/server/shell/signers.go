@@ -58,14 +58,12 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 	if key == "" {
 		return nil, fmt.Errorf("%s.pub holds no key of one line", s.Key)
 	}
-	return host.File{
-		M: s.M, Path: s.Path, Content: []byte(signersHeader + s.Email + " " + key + "\n"),
-		Mode: 0o644, UID: s.A.UID, GID: s.A.GID, Backup: true,
-	}.Plan(ctx)
+	f := s.A.File(s.M, below(s.A, s.Path), []byte(signersHeader+s.Email+" "+key+"\n"), 0o644)
+	f.Backup = true
+	return f.Plan(ctx)
 }
 
-// allowedSigners returns the directory of the allowed signers file and the file.
+// allowedSigners returns the allowed signers file, whose directories the file makes.
 func allowedSigners(m effect.Machine, a host.Account, key, file, email string) []host.Resource {
-	dir := treeTo(m, a, path.Dir(file), 0o755, false)
-	return append(dir, signers{M: m, A: a, Key: key, Path: file, Email: email})
+	return []host.Resource{signers{M: m, A: a, Key: key, Path: file, Email: email}}
 }
