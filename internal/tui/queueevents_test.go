@@ -80,3 +80,39 @@ func TestAReportKeepsTheWordsOfTheFilter(t *testing.T) {
 		t.Errorf("list = %q, want %q", got, want)
 	}
 }
+
+func TestARunMovesTheMarksAndLeavesTheBoxes(t *testing.T) {
+	q := queueOf(testStages()).take(planned("", "Tools", 0, oneChange("a")))
+	q, side, line := q.follow(step.Event{Kind: step.Started, Step: "Sudo", Index: 2})
+	if side != WsSide || line != 0 {
+		t.Errorf("side %d, line %d", side, line)
+	}
+	q, _, line = q.follow(step.Event{Kind: step.Done, Step: "Tools", Index: 0, LeftOut: true})
+	if line >= 0 {
+		t.Errorf("line %d: a step done takes no cursor", line)
+	}
+	if got := drawnQueue(q, MacSide)[0]; got != " 1 [x] ○ Tools" {
+		t.Errorf("row = %q", got)
+	}
+}
+
+func TestARunLearnsTheStepsOfARoleAndOpensOneAgain(t *testing.T) {
+	event := step.Event{Kind: step.Planned, Parent: "ssh", Step: "Keys"}
+	q, side, line := queueOf(testStages()).follow(event)
+	if got := drawnQueue(q, WsSide)[3:]; !slices.Equal(got, []string{"     [ ] ssh", "       [ ] · Keys"}) {
+		t.Errorf("list = %q", got)
+	}
+	if side != WsSide || line != 4 {
+		t.Errorf("side %d, line %d: the cursor is on the step", side, line)
+	}
+	event.Kind = step.Done
+	q, _, _ = q.follow(event)
+	if got := drawnQueue(q, WsSide)[4]; got != "       [ ] ✓ Keys" {
+		t.Errorf("row = %q", got)
+	}
+	event.Kind = step.Planned
+	q, _, _ = q.follow(event)
+	if got := drawnQueue(q, WsSide)[4]; got != "       [ ] · Keys" {
+		t.Errorf("row = %q", got)
+	}
+}

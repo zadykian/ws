@@ -78,3 +78,29 @@ func (q queue) reported(stage string, sections []StateSection) queue {
 	q.stages[i].list = q.stages[i].list.settled()
 	return q
 }
+
+// follow returns the queue with how a run left e's step, the side that shows it, and the line for
+// the cursor. A step that starts takes it, so that its list shows it, and no other event does: -1,
+// and a side that means nothing. The boxes stand, as a run takes no choice.
+func (q queue) follow(e step.Event) (queue, Side, int) {
+	i := q.stageOf(e)
+	if i < 0 {
+		return q, MacSide, -1
+	}
+	q.stages = slices.Clone(q.stages)
+	s := &q.stages[i]
+	at := queueLine{stage: i, head: true}
+	if e.Parent == "" {
+		s.row.state, s.row.after = stateAfter(e), e.After
+	} else {
+		s.list = s.list.joined(e)
+		s.list.rows = slices.Clone(s.list.rows)
+		place := s.list.place(e)
+		s.list.rows[place].state, s.list.rows[place].after = stateAfter(e), e.After
+		at = queueLine{stage: i, line: pickLine{row: place}}
+	}
+	if e.Kind != step.Planned && e.Kind != step.Started {
+		return q, s.side, -1
+	}
+	return q, s.side, max(slices.Index(q.lines(s.side), at), 0)
+}
