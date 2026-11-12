@@ -12,7 +12,7 @@ func TestTelemetryPlan(t *testing.T) {
 	m := effecttest.NewMachine()
 	tel := Telemetry{M: m, User: root, Env: map[string]string{"A": "1"}}
 	serveRead(m, root, tel.path(), nil)
-	m.Results[`env HOME=/root sh -c umask 022 && cat >"$1" sh `+tel.path()] = effecttest.Result{}
+	m.Results[`env HOME=/root sh -c umask 022 && mkdir -p "${1%/*}" && cat >"$1" sh `+tel.path()] = effecttest.Result{}
 	changes, err := tel.Plan(context.Background())
 	if err != nil || len(changes) != 1 || !strings.Contains(changes[0].String(), "create") {
 		t.Fatalf("new file: %v %v", changes, err)
