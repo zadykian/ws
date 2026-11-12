@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	daemon "github.com/zadykian/ws/internal/fans"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 func TestConfigOfTheDefaultsPassesTheDaemonsLoader(t *testing.T) {

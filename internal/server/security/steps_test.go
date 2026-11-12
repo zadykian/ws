@@ -10,8 +10,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/ufw"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // fakeSteps is a booted machine with the packages in and a key for the user.

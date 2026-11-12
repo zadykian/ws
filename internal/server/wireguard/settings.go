@@ -9,7 +9,7 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // The Mac's daemon, in internal/tunnel, fixes the tunnel's ends, the server and the address. It

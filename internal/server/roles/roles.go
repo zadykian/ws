@@ -22,10 +22,10 @@ import (
 	"github.com/zadykian/ws/internal/server/shell"
 	"github.com/zadykian/ws/internal/server/signoz"
 	"github.com/zadykian/ws/internal/server/tmux"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/internal/server/wireguard"
 	"github.com/zadykian/ws/internal/server/zed"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // Role is one role of the server.

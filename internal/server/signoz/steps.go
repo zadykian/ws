@@ -3,8 +3,8 @@ package signoz
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // Steps returns the role's steps, in the order they run. SigNoz keeps its data for the values'

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/internal/server/docker"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 func TestUnitFilesCarryTheValues(t *testing.T) {

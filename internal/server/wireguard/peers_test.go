@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 const keyA = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="

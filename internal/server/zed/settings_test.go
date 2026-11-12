@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // render returns the settings file for the home.

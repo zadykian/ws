@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 const ipRoutes = "ip -j -4 route show table all"

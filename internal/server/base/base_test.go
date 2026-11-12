@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 func TestStepsAreTheRolesInOrder(t *testing.T) {

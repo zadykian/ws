@@ -10,8 +10,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // Step names. Those after the packages wait on them: a check run says "after Docker packages" for

@@ -2,7 +2,7 @@ package docker
 
 import (
 	"github.com/zadykian/ws/internal/server/ufw"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // resolverComment marks the ufw rules that let Docker's networks reach the resolver.

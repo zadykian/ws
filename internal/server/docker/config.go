@@ -6,7 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/internal/server/ufw"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // cacheLimits fills the build cache's limits that the values leave empty, from the size of the

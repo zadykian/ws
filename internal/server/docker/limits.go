@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // WithLimits fills the limits of docker.slice that the values leave empty, with half the RAM and

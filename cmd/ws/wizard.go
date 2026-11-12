@@ -10,9 +10,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // wizardOptions is what a run of a wizard's stages takes beside its effects: the flags, and what the

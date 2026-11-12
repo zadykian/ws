@@ -3,7 +3,7 @@ package fresh
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // configFiles returns ~/.config/fresh with config.json and the theme, which ws replaces whole. The

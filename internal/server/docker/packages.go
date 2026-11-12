@@ -1,6 +1,6 @@
 package docker
 
-import "github.com/zadykian/ws/internal/server/values"
+import "github.com/zadykian/ws/roles/server/ubuntu/values"
 
 // rootlessPackages are what ws_user's daemon needs beyond the system's. apparmor is named for its
 // rootlesskit profile, which Ubuntu's kernel asks for before it grants an unprivileged user

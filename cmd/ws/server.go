@@ -17,8 +17,8 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 const (

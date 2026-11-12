@@ -7,7 +7,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // check refuses the values the role cannot use, before anything changes. The profile's path names

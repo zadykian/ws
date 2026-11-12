@@ -8,9 +8,9 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/conf"
-	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // serverWizardStages returns the stages of ws server wizard, in order. They act on ws itself, with

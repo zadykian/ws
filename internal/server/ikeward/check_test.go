@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 func good() values.Ikeward {

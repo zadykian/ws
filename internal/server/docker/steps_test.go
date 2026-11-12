@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/internal/server/ufw"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 func fakeSteps(t *testing.T, user string) (*effecttest.Machine, []step.Step) {

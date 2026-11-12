@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // publicKey is a WireGuard public key as wg pubkey prints it: 44 characters of base64.

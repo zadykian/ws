@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 const validate = "env OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://remote.invalid:4317 /usr/bin/otelcol-contrib validate --config=/etc/otelcol-contrib/config.yaml.ws-check"
