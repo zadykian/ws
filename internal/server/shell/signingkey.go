@@ -14,7 +14,7 @@ import (
 // commit unattended, and the key only signs. docs/shell.md says how to revoke it, under Signing.
 // ssh-keygen refuses a path whose directory is missing, as a container's ~/.ssh may be, so the
 // directory comes first. The key is made as the user, who then owns it.
-func signingKey(m effect.Machine, a account, key string) []host.Resource {
+func signingKey(m effect.Machine, a host.Account, key string) []host.Resource {
 	return []host.Resource{
 		host.Dir{M: m, Path: path.Dir(key), Mode: 0o700, UID: a.UID, GID: a.GID},
 		keygen{M: m, User: a.User, Path: key},

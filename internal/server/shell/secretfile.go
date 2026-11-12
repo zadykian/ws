@@ -17,7 +17,7 @@ import (
 // wrote.
 type secretEnv struct {
 	M   effect.Machine
-	A   account
+	A   host.Account
 	Env map[string]string
 	// Whole is the secrets file's say that [env] is all: with none, the file goes.
 	Whole bool

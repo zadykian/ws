@@ -43,7 +43,7 @@ func hasUserInfo(repo string) bool {
 // ~/.gitconfig gives the tokens, in the user's home.
 type clones struct {
 	M      effect.Machine
-	A      account
+	A      host.Account
 	Clones []values.GitClone
 }
 

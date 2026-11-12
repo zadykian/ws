@@ -10,7 +10,7 @@ import (
 
 func TestSigningKeyIsMadeOnceAsTheUser(t *testing.T) {
 	m := effecttest.NewMachine()
-	a := account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	const key = "/home/ws/.ssh/id_ed25519_signing"
 	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws ssh-keygen -q -t ed25519 -N  -f "+key] = effecttest.Result{}
 	var shown []string

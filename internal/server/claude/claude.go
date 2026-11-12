@@ -37,11 +37,11 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 		host.Group{Title: "Claude user settings", After: updateStep, Parts: []host.Resource{
 			UserSettings{M: m, User: user, Permissions: v.Claude.Permissions, Notifications: v.Claude.Notifications},
 		}},
-		user.Owned(m, "Claude telemetry", updateStep, func(uid, gid int) ([]host.Resource, error) {
+		user.WithAccount(m, "Claude telemetry", updateStep, func(a host.Account) ([]host.Resource, error) {
 			return []host.Resource{
 				// claude's installer makes it, but a dry run on a new machine runs no installer. It
 				// holds claude's credentials, so an existing one keeps its mode.
-				host.Dir{M: m, Path: user.Home + "/.claude", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
+				host.Dir{M: m, Path: user.Home + "/.claude", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
 				Telemetry{M: m, User: user, Env: v.Claude.TelemetryEnv},
 			}, nil
 		}),
@@ -51,11 +51,11 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 			Marketplaces{M: m, User: user, List: v.Claude.Marketplaces},
 		}})
 	}
-	return append(list, user.Owned(m, "Claude restore", "Claude telemetry", func(uid, _ int) ([]host.Resource, error) {
+	return append(list, user.WithAccount(m, "Claude restore", "Claude telemetry", func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{
 			host.Linger{M: m, User: user, Out: out},
-			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", uid), Run: host.Running},
-			Restore{M: m, User: user, UID: uid, Out: out},
+			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: host.Running},
+			Restore{M: m, Account: a, Out: out},
 		}, nil
 	}))
 }

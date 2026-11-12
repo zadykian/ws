@@ -14,7 +14,7 @@ func installFixture(booted bool) (*effecttest.Machine, rootlessInstall, *effectt
 		m.Dirs["/run/systemd/system"] = 0o755
 	}
 	out := &effecttest.Out{}
-	return m, rootlessInstall{m, host.User{Name: "ws", Home: "/home/ws"}, 1000, out}, out
+	return m, rootlessInstall{m, host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, out}, out
 }
 
 func TestRootlessInstallSkipsWithoutSystemd(t *testing.T) {

@@ -25,27 +25,27 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 		host.Group{Title: "Shell packages", Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"bash-completion", "ble.sh"}},
 		}},
-		owned(user, m, "Shell files", linksStep, func(a account) ([]host.Resource, error) {
+		user.WithAccount(m, "Shell files", linksStep, func(a host.Account) ([]host.Resource, error) {
 			return dotfiles(m, a, runtime.GOARCH)
 		}),
 	}
 	if v.Shell.GitSigning {
-		steps = append(steps, owned(user, m, keyStep, linksStep, func(a account) ([]host.Resource, error) {
+		steps = append(steps, user.WithAccount(m, keyStep, linksStep, func(a host.Account) ([]host.Resource, error) {
 			return signingKey(m, a, v.GitSigningKey), nil
-		}), owned(user, m, "Shell allowed signers", keyStep, func(a account) ([]host.Resource, error) {
+		}), user.WithAccount(m, "Shell allowed signers", keyStep, func(a host.Account) ([]host.Resource, error) {
 			return allowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners, v.Shell.GitEmail), nil
 		}))
 	}
-	return append(steps, owned(user, m, "Shell git config", linksStep, func(a account) ([]host.Resource, error) {
+	return append(steps, user.WithAccount(m, "Shell git config", linksStep, func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{gitconfig{
 			M: m, Out: out, A: a, Name: v.Shell.GitName, Email: v.Shell.GitEmail, Signing: v.Shell.GitSigning,
 			Key: v.GitSigningKey, Signers: v.Shell.GitAllowedSigners,
 		}}, nil
-	}), owned(user, m, "Shell secret env", linksStep, func(a account) ([]host.Resource, error) {
+	}), user.WithAccount(m, "Shell secret env", linksStep, func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{secretEnv{M: m, A: a, Env: s.Env, Whole: s.Whole}}, nil
-	}), owned(user, m, "Shell git tokens", linksStep, func(a account) ([]host.Resource, error) {
+	}), user.WithAccount(m, "Shell git tokens", linksStep, func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{tokens{M: m, A: a, Creds: credentials(s.Git), Whole: s.Whole}}, nil
-	}), owned(user, m, "Shell clones", "", func(a account) ([]host.Resource, error) {
+	}), user.WithAccount(m, "Shell clones", "", func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{clones{M: m, A: a, Clones: v.Shell.GitClones}}, nil
 	}))
 }

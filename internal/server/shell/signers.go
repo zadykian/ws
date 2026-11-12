@@ -19,7 +19,7 @@ const signersHeader = "# Written by github.com/zadykian/ws, whose next run repla
 // treeTo returns the directories from below home down to dir, in order. Each is made with mode;
 // the ones above dir are left as they are where they exist, as the file module leaves them, and dir
 // too where keep is set. A dir outside home is alone, and its parent must exist.
-func treeTo(m effect.Machine, a account, dir string, mode fs.FileMode, keep bool) []host.Resource {
+func treeTo(m effect.Machine, a host.Account, dir string, mode fs.FileMode, keep bool) []host.Resource {
 	var chain []string
 	for d := dir; strings.HasPrefix(d, a.Home+"/"); d = path.Dir(d) {
 		chain = append([]string{d}, chain...)
@@ -38,7 +38,7 @@ func treeTo(m effect.Machine, a account, dir string, mode fs.FileMode, keep bool
 // beside it, as ~/.gitconfig is.
 type signers struct {
 	M     effect.Machine
-	A     account
+	A     host.Account
 	Key   string
 	Path  string
 	Email string
@@ -65,7 +65,7 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 }
 
 // allowedSigners returns the directory of the allowed signers file and the file.
-func allowedSigners(m effect.Machine, a account, key, file, email string) []host.Resource {
+func allowedSigners(m effect.Machine, a host.Account, key, file, email string) []host.Resource {
 	dir := treeTo(m, a, path.Dir(file), 0o755, false)
 	return append(dir, signers{M: m, A: a, Key: key, Path: file, Email: email})
 }

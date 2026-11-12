@@ -45,8 +45,8 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 		host.Group{Title: wrapperStep, After: installStep, Parts: []host.Resource{
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},
-		user.Owned(m, configStep, "", func(uid, gid int) ([]host.Resource, error) {
-			return configFiles(m, v, uid, gid)
+		user.WithAccount(m, configStep, "", func(a host.Account) ([]host.Resource, error) {
+			return configFiles(m, v, a.UID, a.GID)
 		}),
 	}
 }

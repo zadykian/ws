@@ -11,7 +11,7 @@ import (
 
 func envFixture(env map[string]string) (*effecttest.Machine, secretEnv) {
 	m := effecttest.NewMachine()
-	a := account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	return m, secretEnv{M: m, A: a, Env: env}
 }
 

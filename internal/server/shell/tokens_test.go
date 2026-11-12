@@ -14,7 +14,7 @@ func tokenFixture(creds ...credential) (*effecttest.Machine, tokens) {
 	m.Results["git config --file /home/ws/.config/git/tokens.gitconfig.ws-check --name-only --list"] = effecttest.Result{}
 	m.Results["git config --file - --name-only --list"] = effecttest.Result{
 		Out: []byte("credential.https://kept.example.helper\n")}
-	a := account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	return m, tokens{M: m, A: a, Creds: creds}
 }
 

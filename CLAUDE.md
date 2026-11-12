@@ -18,6 +18,7 @@ that works on the server. The rest is the docs, the lint gates' tools and CI.
   is the command and `internal/` its packages. `step`, `effect`, with
   `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
   steps on them.
+- `GLOSSARY.md`: the words of the server's side, such as the account and the home file.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
 - `mac/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
   wizard's scripts for ws in POSIX sh, `ws.ghostty`, Ghostty's settings, and `zed/`, Zed's settings

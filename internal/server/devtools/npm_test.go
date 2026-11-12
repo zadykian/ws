@@ -27,7 +27,7 @@ func npmCommand(user, home string) string {
 }
 
 func newInstall(m *effecttest.Machine) npmInstall {
-	return npmInstall{M: m, User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000, Digest: "abc"}
+	return npmInstall{M: m, Account: testAccount(1000), Digest: "abc"}
 }
 
 func TestTheDirectoriesPlanInOrderForAHomeWithNoLocal(t *testing.T) {
@@ -119,7 +119,7 @@ func TestNpmApplyNamesNodeWhereNpmIsMissing(t *testing.T) {
 
 func TestTheStampIsTheDigestOfBothFiles(t *testing.T) {
 	m := effecttest.NewMachine()
-	parts, err := serverFiles(m, host.User{Name: "ws", Home: "/home/ws"}, 1, 1)
+	parts, err := serverFiles(m, testAccount(1))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +135,7 @@ func TestTheStampIsTheDigestOfBothFiles(t *testing.T) {
 
 func TestTheFormatterLinkPlansBeforeItsTargetExists(t *testing.T) {
 	m := effecttest.NewMachine()
-	parts, err := serverFiles(m, host.User{Name: "ws", Home: "/home/ws"}, 1000, 1000)
+	parts, err := serverFiles(m, testAccount(1000))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +159,7 @@ func TestTheServerFilesRefuseALink(t *testing.T) {
 	for _, link := range []string{wsDir, wsDir + "/package.json"} {
 		m := effecttest.NewMachine()
 		m.Links[link] = "/srv/target"
-		parts, err := serverFiles(m, host.User{Name: "ws", Home: "/home/ws"}, 1000, 1000)
+		parts, err := serverFiles(m, testAccount(1000))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -167,4 +167,8 @@ func TestTheServerFilesRefuseALink(t *testing.T) {
 			t.Errorf("a link at %s: no error", link)
 		}
 	}
+}
+
+func testAccount(id int) host.Account {
+	return host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: id, GID: id}
 }

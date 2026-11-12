@@ -16,7 +16,7 @@ import (
 type gitconfig struct {
 	M       effect.Machine
 	Out     effect.Out
-	A       account
+	A       host.Account
 	Name    string
 	Email   string
 	Signing bool
