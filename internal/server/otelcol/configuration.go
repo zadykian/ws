@@ -16,11 +16,8 @@ const (
 
 // remoteEndpoint reads the remote collector's endpoint from the user's ~/.secrets/env, or ""
 // where the file or the variable is missing. A bad value stops the run.
-func remoteEndpoint(m effect.Machine, home string) (string, error) {
-	if err := host.RefuseLinks(m, home, home+"/.secrets/env"); err != nil {
-		return "", err
-	}
-	env, err := m.ReadFile(home + "/.secrets/env")
+func remoteEndpoint(m effect.Machine, user host.User) (string, error) {
+	env, err := user.ReadHome(m, ".secrets/env")
 	if errors.Is(err, fs.ErrNotExist) {
 		return "", nil
 	}
@@ -41,9 +38,9 @@ func remoteEndpoint(m effect.Machine, home string) (string, error) {
 // one's. The remote endpoint is a stand-in there, as its value is only in the service's
 // environment. A change of any of them restarts the collector: a new endpoint needs a restart, as
 // the collector's reload rereads its config alone.
-func configuration(m effect.Machine, u effect.Units, out effect.Out, home string) func(context.Context) ([]host.Resource, error) {
+func configuration(m effect.Machine, u effect.Units, out effect.Out, user host.User) func(context.Context) ([]host.Resource, error) {
 	return func(context.Context) ([]host.Resource, error) {
-		endpoint, err := remoteEndpoint(m, home)
+		endpoint, err := remoteEndpoint(m, user)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +68,7 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, home string
 		watch := []host.Resource{journalFile, claudeFile, config}
 		parts := []host.Resource{host.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
 		if endpoint != "" {
-			env, err := Env(home, endpoint)
+			env, err := Env(user.Home, endpoint)
 			if err != nil {
 				return nil, err
 			}
