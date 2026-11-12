@@ -30,8 +30,8 @@ const (
 // needs no password, or the password, asked once a run. The password stays in this struct and in
 // ssh's stdin, never in an argument, a message or the environment.
 type Sudo struct {
-	// Ws is the session to ws, whose ssh this stage uses.
-	Ws *Session
+	// SSH is the Mac's ssh to ws.
+	SSH SSH
 	// Tty tells whether a terminal is there to ask. Check is set under --check.
 	Tty, Check bool
 	P          effect.Hidden
@@ -61,7 +61,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 	if s.way != sudoUnread {
 		return step.Plan{}, nil
 	}
-	w, err := s.Ws.way(ctx)
+	w, err := s.SSH.Way(ctx)
 	if err != nil {
 		return step.Plan{}, errors.New(sudoStage + ": " + err.Error())
 	}
@@ -69,7 +69,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 		s.way = sudoLogin
 		return step.Plan{}, nil
 	}
-	_, err = s.Ws.ssh().Run(ctx, "-o", "BatchMode=yes", "ws", "sudo", "-n", "true")
+	_, err = s.SSH.Run(ctx, "-o", "BatchMode=yes", "ws", "sudo", "-n", "true")
 	switch {
 	case err == nil:
 		s.way = sudoOpen
@@ -103,7 +103,7 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", sudoStage, err)
 		}
-		_, err = s.Ws.ssh().RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
+		_, err = s.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
 			"sudo", "-k", "-S", "-p", "''", "true")
 		if err == nil {
 			s.way, s.password = sudoAsked, password

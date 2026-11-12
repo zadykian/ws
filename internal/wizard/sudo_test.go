@@ -28,7 +28,7 @@ func (m sudoMachine) RunInput(ctx context.Context, stdin []byte, name string, ar
 
 // sudoLine is the ssh command line that runs cmd on ws.
 func sudoLine(s *Sudo, cmd ...string) string {
-	return "ssh " + strings.Join(s.Ws.ssh().argv(context.Background(), append([]string{"-o", "BatchMode=yes", "ws"}, cmd...)), " ")
+	return "ssh " + strings.Join(s.SSH.argv(context.Background(), append([]string{"-o", "BatchMode=yes", "ws"}, cmd...)), " ")
 }
 
 // newSudo returns the stage over newHost's machine, where ssh logs in as zadykian, whose sudo needs
@@ -39,8 +39,7 @@ func newSudo(t *testing.T, hidden ...string) (*Sudo, *effecttest.Machine, *effec
 		"userknownhostsfile ~/.ssh/known_hosts\n")}
 	h.SSH.M = sudoMachine{m}
 	p := &effecttest.Prompt{T: t, Hidden: hidden}
-	ws := NewSession(MacReach{SSH: h.SSH}, Scripts{})
-	s := &Sudo{Ws: ws, Tty: h.Tty, P: p, Out: h.Out}
+	s := &Sudo{SSH: h.SSH, Tty: h.Tty, P: p, Out: h.Out}
 	m.Results[sudoLine(s, "sudo", "-n", "true")] = effecttest.Result{
 		Err: errors.New("[ssh]: exit status 1: sudo: interactive authentication is required")}
 	m.Results[sudoLine(s, "sudo", "-k", "-S", "-p", "''", "true")] = effecttest.Result{}
@@ -49,7 +48,7 @@ func newSudo(t *testing.T, hidden ...string) (*Sudo, *effecttest.Machine, *effec
 
 func TestSudoRootLoginAsksNothing(t *testing.T) {
 	s, m, _ := newSudo(t)
-	m.Results[wayCall(s.Ws.ssh())] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
+	m.Results[wayCall(s.SSH)] = effecttest.Result{Out: []byte("user root\nhostname 10.1.1.2\nport 22\n" +
 		"userknownhostsfile ~/.ssh/known_hosts\n")}
 	p, err := s.Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || s.way != sudoLogin {
@@ -159,7 +158,7 @@ func TestSudoStopsWhereSSHFails(t *testing.T) {
 func TestRemoteThroughSudo(t *testing.T) {
 	s, m, _ := newSudo(t)
 	s.way, s.password = sudoAsked, sudoPassword
-	r := &Remote{Shell: SSHShell{SSH: s.Ws.ssh(), Sudo: s}, Script: []byte("echo\n")}
+	r := &Remote{Shell: SSHShell{SSH: s.SSH, Sudo: s}, Script: []byte("echo\n")}
 	line := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-s", "--", "status")
 	if remoteLine(r, "status") != line {
 		t.Fatalf("remoteLine = %q", remoteLine(r, "status"))
@@ -180,7 +179,7 @@ func TestRemoteThroughSudo(t *testing.T) {
 
 func TestRemoteBeforeTheStageReadsNothing(t *testing.T) {
 	s, _, _ := newSudo(t)
-	r := &Remote{Shell: SSHShell{SSH: s.Ws.ssh(), Sudo: s}, Script: []byte("echo\n")}
+	r := &Remote{Shell: SSHShell{SSH: s.SSH, Sudo: s}, Script: []byte("echo\n")}
 	if _, ok := r.status(context.Background()); ok {
 		t.Error("Status read with the stage unread")
 	}
