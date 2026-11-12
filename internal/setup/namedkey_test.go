@@ -91,3 +91,42 @@ func fileText(text string) func(m *effecttest.Machine) string {
 		return filePub
 	}
 }
+
+func TestReadKeyReads(t *testing.T) {
+	line := sshcfg.AgentKeys(agentKey)[0]
+	for _, tc := range []struct {
+		name            string
+		set             func(m *effecttest.Machine) string
+		pub, file, text string
+		askedAgent      bool
+	}{
+		{"a file key", fileText(fileKey), filePub, fileLine, fileKey, false},
+		{"a .pub in the container, held", func(m *effecttest.Machine) string {
+			agentMachine(m, agentKey)
+			return "~/" + sshcfg.SecretiveData + "/PublicKeys/" + line.Name
+		}, line.Pub(), copyOf(agentKey), agentKey, true},
+		{"the copy before it exists", func(m *effecttest.Machine) string {
+			agentMachine(m, agentKey, agentGit)
+			return sshcfg.AgentKeys(agentGit)[0].Pub()
+		}, sshcfg.AgentKeys(agentGit)[0].Pub(), copyOf(agentGit), agentGit, true},
+		{"the agent down, the copy there", func(m *effecttest.Machine) string {
+			agentMachine(m)
+			m.Results[agentList] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
+			m.Files[copyOf(agentKey)] = []byte(agentKey)
+			m.Results["ssh-keygen -l -f "+copyOf(agentKey)] = effecttest.Result{}
+			return line.Pub()
+		}, line.Pub(), copyOf(agentKey), agentKey, true},
+	} {
+		for _, u := range keyUses {
+			m := effecttest.NewMachine()
+			pub := tc.set(m)
+			k, err := setup.ReadKey(context.Background(), m, u.conf(pub), agentHome, u.use)
+			if err != nil || k.Pub != tc.pub || k.File != tc.file || k.Text != tc.text || k.Key.Base64 == "" {
+				t.Errorf("%s, %s: ReadKey = %+v, %v; want %s, %s, text %q", tc.name, u.name, k, err, tc.pub, tc.file, tc.text)
+			}
+			if asked := strings.Contains(strings.Join(m.Calls, "\n"), "ssh-add"); asked != tc.askedAgent {
+				t.Errorf("%s, %s: asked the agent = %v; want %v", tc.name, u.name, asked, tc.askedAgent)
+			}
+		}
+	}
+}
