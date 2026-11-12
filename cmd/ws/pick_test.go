@@ -12,6 +12,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
 )
 
@@ -125,7 +126,10 @@ func TestPickSetupReturnsTheStepsChosen(t *testing.T) {
 
 func TestServerApplyChecksFromTheListAndSaysSo(t *testing.T) {
 	p, m := serverTerminal()
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n tmux"] = effecttest.Result{Out: []byte("tmux ii \n")}
+	// The list scans every role, and base would install what the table leaves out.
+	for _, name := range values.Default().Base.Packages {
+		m.Packages[name] = effecttest.Package{Version: "1", Status: "ii"}
+	}
 	var errs bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
 	// A scan holds c back, so each turn ends by emptying the filter that the next one types.

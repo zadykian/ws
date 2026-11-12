@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/step"
 )
 
@@ -72,8 +71,7 @@ func TestServerApplyJSONRefusesNonRootOnStdoutAlone(t *testing.T) {
 
 // A terminal changes nothing for --json: the events reach stdout, and no screen takes them.
 func TestServerApplyJSONDrawsNoScreenAtATerminal(t *testing.T) {
-	p, m := serverTerminal()
-	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n tmux"] = effecttest.Result{Out: []byte("tmux ii \n")}
+	p, _ := serverTerminal()
 	status, stdout, stderr := runWs(p, "", "server", "apply", "--json", "--check", "--only", "tmux")
 	if status != 0 || !strings.Contains(stdout, `"event":"done","parent":"tmux"`) || strings.Contains(stderr, enterScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
@@ -83,7 +81,7 @@ func TestServerApplyJSONDrawsNoScreenAtATerminal(t *testing.T) {
 // With no selection the list would open here. The run ends in Prepare, so that no role runs.
 func TestServerApplyJSONOpensNoListAtATerminal(t *testing.T) {
 	p, m := serverTerminal()
-	m.Results[dpkgCheck] = effecttest.Result{Err: errors.New("no dpkg")}
+	m.Packages = nil
 	status, stdout, stderr := runWs(p, "q", "server", "apply", "--json")
 	if status != 1 || !strings.Contains(stdout, `"event":"failed"`) || strings.Contains(stderr, enterScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
