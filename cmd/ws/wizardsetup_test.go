@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
 )
@@ -31,7 +32,7 @@ func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents
-	for _, name := range setupStepNames(p) {
+	for _, name := range setup.Names() {
 		want = append(want, s.Name()+"/"+name)
 	}
 	if !slices.Equal(got, want) {
@@ -88,7 +89,7 @@ func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 	if _, err := s.Run(context.Background(), true); !errors.Is(err, stopped) {
 		t.Errorf("err = %v, want the stop", err)
 	}
-	if len(got.skipped) != len(setupStepNames(fakeProcess())) {
+	if len(got.skipped) != len(setup.Names()) {
 		t.Errorf("unreached = %q; want every step", got.skipped)
 	}
 }

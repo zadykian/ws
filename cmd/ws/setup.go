@@ -98,7 +98,7 @@ func setupSteps(c conf.Conf, home, xdg string, m effect.Machine, out effect.Out,
 // newMacApplyCmd returns ws mac apply.
 func newMacApplyCmd(p process) *cobra.Command {
 	var check bool
-	names := setupStepNames(p)
+	names := setup.Names()
 	c := &cobra.Command{
 		Use:   "apply [STEP]",
 		Short: "set the Mac up from mac.conf",
@@ -111,15 +111,6 @@ func newMacApplyCmd(p process) *cobra.Command {
 	}
 	c.Flags().BoolVar(&check, "check", false, "print each change and make none")
 	return c
-}
-
-// setupStepNames returns the names of the steps of ws mac apply, in order.
-func setupStepNames(p process) []string {
-	var names []string
-	for _, s := range setupSteps(conf.Conf{}, "", "", p.machine, nil, io.Discard, false) {
-		names = append(names, s.Name())
-	}
-	return names
 }
 
 // loadMacConf refuses root and reads mac.conf: the commands that act on the Mac's own files share it.

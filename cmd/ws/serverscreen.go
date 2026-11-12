@@ -35,7 +35,7 @@ func (s serverScreen) draw(check bool) error {
 // round is the works of a scan. The state screen reads ws on ws.
 func (s serverScreen) round() tui.Round {
 	return tui.Round{
-		Stages: wizardQueue(s.p, s.stages(serverPick{})),
+		Stages: wizardQueue(s.stages(serverPick{})),
 		Scan:   s.scan(),
 		Read: func(tui.Side) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, s.p.version), nil

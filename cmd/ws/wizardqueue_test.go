@@ -7,13 +7,14 @@ import (
 
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/internal/setup"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
 )
 
 func queueOf(p process) []tui.Stage {
-	return wizardQueue(p, wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, wizardOptions{}))
+	return wizardQueue(wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, wizardOptions{}))
 }
 
 func stageOf(t *testing.T, queue []tui.Stage, name string) tui.Stage {
@@ -47,11 +48,10 @@ func TestWizardQueueHoldsWsMacApplyBesideCable(t *testing.T) {
 }
 
 func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
-	p := fakeProcess()
-	queue := queueOf(p)
-	setup := stageOf(t, queue, "ws mac apply").Nested
-	if len(setup) != 1 || setup[0].Name != "ws mac apply" || !slices.Equal(setup[0].Steps, setupStepNames(p)) {
-		t.Errorf("ws mac apply holds %+v, want its steps by its name", setup)
+	queue := queueOf(fakeProcess())
+	nested := stageOf(t, queue, "ws mac apply").Nested
+	if len(nested) != 1 || nested[0].Name != "ws mac apply" || !slices.Equal(nested[0].Steps, setup.Names()) {
+		t.Errorf("ws mac apply holds %+v, want its steps by its name", nested)
 	}
 	run := stageOf(t, queue, "ws's run").Nested
 	if len(run) != len(roles.List()) || run[0].Name != roles.List()[0].Name || len(run[0].Steps) != 0 {
