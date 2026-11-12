@@ -12,8 +12,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // reportingWs is a far ws whose script gives its status and its report, at version.

@@ -10,8 +10,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // fullDisk is a write that fails.

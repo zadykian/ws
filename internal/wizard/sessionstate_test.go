@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // wsReport is a report of ws v1, as ws server state --json prints it.

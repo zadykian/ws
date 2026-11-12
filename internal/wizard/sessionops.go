@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/zadykian/ws/internal/server/apply"
+	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // operation is one job that a stage asks of ws through the session.
