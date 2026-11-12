@@ -70,6 +70,7 @@ func TestExtractStripsTheTopDirectory(t *testing.T) {
 			entry{name: "go/bin/", typ: tar.TypeDir, mode: 0o755},
 			entry{name: "go/bin/go", body: "#!", mode: 0o755},
 			entry{name: "go/bin/gofmt", typ: tar.TypeSymlink, link: "go"},
+			entry{name: "go/bin/version", typ: tar.TypeSymlink, link: "../VERSION"},
 			entry{name: "go/bin/again", typ: tar.TypeLink, link: "go/bin/go"},
 		)
 		dir, err := extractTo(t, data, 1)
@@ -116,11 +117,20 @@ func TestExtractRefuses(t *testing.T) {
 		{"a name through a link out", []entry{
 			{name: "a/l", typ: tar.TypeSymlink, link: "/tmp"},
 			{name: "a/l/x", body: "x"},
-		}, ""},
+		}, "leaves the directory"},
 		{"a link out of the tree", []entry{
 			{name: "a/l", typ: tar.TypeSymlink, link: "../.."},
 			{name: "a/l/x", body: "x"},
-		}, ""},
+		}, "leaves the directory"},
+		{"a link up from its own directory", []entry{{name: "a/b/l", typ: tar.TypeSymlink, link: "../../x"}}, "leaves"},
+		{"a link under a link", []entry{
+			{name: "a/d", typ: tar.TypeSymlink, link: "."},
+			{name: "a/d/l", typ: tar.TypeSymlink, link: "../x"},
+		}, "under a link"},
+		{"a hard link to a link", []entry{
+			{name: "a/b/l", typ: tar.TypeSymlink, link: "../f"},
+			{name: "a/h", typ: tar.TypeLink, link: "a/b/l"},
+		}, "leaves"},
 		{"a hard link to a name that goes up", []entry{{name: "a/h", typ: tar.TypeLink, link: "../x"}}, "leaves"},
 		{"a device", []entry{{name: "a/d", typ: tar.TypeChar}}, "type"},
 	}

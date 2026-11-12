@@ -71,6 +71,7 @@ func TestMachineUnpackRefuses(t *testing.T) {
 		want string
 	}{
 		{"a name that goes up", tarball(t, member{name: "a/../../x", typ: tar.TypeReg, body: "x"}), "leaves the directory"},
+		{"a link out of the tree", tarball(t, member{name: "a/l", typ: tar.TypeSymlink, link: "/etc"}), "leaves the directory"},
 		{"a missing archive", nil, "file does not exist"},
 	}
 	for _, tt := range tests {

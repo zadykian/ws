@@ -98,8 +98,8 @@ type Machine interface {
 	// SHA-256 of the body, in hex, is sum. It sets the owner and mode of a.
 	Download(ctx context.Context, url, path, sum string, a Attrs) error
 	// Unpack makes dir at 0755 where missing, and unpacks the gzip tar archive into it, less the
-	// first strip components of each name. It refuses an entry that leaves dir, and writes as
-	// ws's own user: the server is root.
+	// first strip components of each name. It refuses an entry or a link that leaves dir, and
+	// writes as ws's own user: the server is root.
 	Unpack(ctx context.Context, archive, dir string, strip int) error
 	// Chown sets the owner of the file a link points to, through sudo as WriteAtomic's, where the
 	// file or the owner is another's.

@@ -20,9 +20,9 @@ var gzipMagic = []byte{0x1f, 0x8b}
 
 // Extract extracts a tar archive, gzip-compressed or plain, into root. It drops the first strip
 // components of each name, such as the one directory that a release tarball holds, and skips an
-// entry that has no more. It writes through root alone, so no entry leaves it, whatever its name
-// or the links it made before. It handles directories, files, symlinks and hard links, and fails on
-// any other entry.
+// entry that has no more. It writes through root alone, so no entry leaves it, and refuses a link
+// that leads out of it. It handles directories, files, symlinks and hard links, and fails on any
+// other entry.
 func Extract(r io.Reader, root *os.Root, strip int) error {
 	br := bufio.NewReader(r)
 	if head, err := br.Peek(len(gzipMagic)); err == nil && string(head) == string(gzipMagic) {
@@ -96,14 +96,44 @@ func extract(r io.Reader, hdr *tar.Header, root *os.Root, strip int) error {
 		}
 		return root.Chmod(name, perm)
 	case tar.TypeSymlink:
+		if err := inside(root, name, hdr.Linkname); err != nil {
+			return err
+		}
 		return root.Symlink(hdr.Linkname, name)
 	case tar.TypeLink:
 		target, ok, err := stripped(hdr.Linkname, strip)
 		if err != nil || !ok {
 			return errors.Join(err, errors.New("a hard link to a name outside the tree"))
 		}
+		// A hard link to a link is a link at name, so its target is read from name's directory.
+		if to, err := root.Readlink(target); err == nil {
+			if err := inside(root, name, to); err != nil {
+				return err
+			}
+		}
 		return root.Link(target, name)
 	default:
 		return fmt.Errorf("an entry of type %q", hdr.Typeflag)
 	}
+}
+
+// inside fails where a link at name to target leads out of root. It reads the target from the
+// link's own directory, as os.Root makes any link and refuses only a write through one that leads
+// out. It refuses a link under another link too, whose directory is then elsewhere than its name
+// says.
+func inside(root *os.Root, name, target string) error {
+	dir := path.Dir(name)
+	if to := path.Join(dir, target); path.IsAbs(target) || to == ".." || strings.HasPrefix(to, "../") {
+		return errors.New("a link that leaves the directory")
+	}
+	for ; dir != "."; dir = path.Dir(dir) {
+		info, err := root.Lstat(dir)
+		if err != nil {
+			return err
+		}
+		if info.Mode()&fs.ModeSymlink != 0 {
+			return errors.New("a link under a link")
+		}
+	}
+	return nil
 }

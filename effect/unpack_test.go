@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -70,5 +71,29 @@ func TestOSMachineUnpackRefusesAnEntryThatLeavesTheDirectory(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(base, "x")); err == nil {
 		t.Error("a file was written beside the directory")
+	}
+}
+
+func TestOSMachineUnpackRefusesALinkThatLeavesTheDirectory(t *testing.T) {
+	for _, target := range []string{"/etc", "../x"} {
+		var buf bytes.Buffer
+		zw := gzip.NewWriter(&buf)
+		tw := tar.NewWriter(zw)
+		if err := tw.WriteHeader(&tar.Header{Name: "top/l", Typeflag: tar.TypeSymlink, Linkname: target}); err != nil {
+			t.Fatal(err)
+		}
+		if err := errors.Join(tw.Close(), zw.Close()); err != nil {
+			t.Fatal(err)
+		}
+		file, dir := filepath.Join(t.TempDir(), "a.tar.gz"), filepath.Join(t.TempDir(), "d")
+		if err := os.WriteFile(file, buf.Bytes(), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := (effect.OSMachine{}).Unpack(context.Background(), file, dir, 1); err == nil {
+			t.Errorf("a link to %s unpacked", target)
+		}
+		if _, err := os.Lstat(filepath.Join(dir, "l")); err == nil {
+			t.Errorf("a link to %s was made", target)
+		}
 	}
 }

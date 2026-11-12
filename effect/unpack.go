@@ -9,7 +9,7 @@ import (
 )
 
 // Unpack makes dir with mode 0755 where missing, and extracts the archive file into it through an
-// os.Root, so that no entry leaves dir.
+// os.Root, so that no entry or link leaves dir.
 func (OSMachine) Unpack(ctx context.Context, file, dir string, strip int) error {
 	if err := ctx.Err(); err != nil {
 		return err
