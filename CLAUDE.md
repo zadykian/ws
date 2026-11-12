@@ -15,9 +15,9 @@ that works on the server. The rest is the docs, the lint gates' tools and CI.
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
   `ws server fans`, in `internal/fans`.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. `cmd/ws`
-  is the command and `internal/` its packages. `step`, `effect`, with
-  `effect/effecttest`, and `host`, the resources the steps share, are public: another module builds
-  steps on them.
+  is the command and `internal/` its packages. `engine/core` holds `step`, `effect`, with
+  `effect/effecttest`, and `host`, the resources the steps share, which are public: another module
+  builds steps on them.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
@@ -107,7 +107,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([download.go](internal/server/fresh/download.go)), and so are foundryctl
   ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](install.sh),
-  [update.go](internal/update/update.go)), and so are yamllint
+  [update.go](engine/core/update/update.go)), and so are yamllint
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
   ([homebrew.go](internal/wizard/homebrew.go)). Go is checked against the
   SHA-256 its publisher lists ([devtools](docs/devtools.md)). The postgres-language-server and

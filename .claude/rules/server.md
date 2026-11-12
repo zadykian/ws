@@ -1,7 +1,7 @@
 ---
 paths:
   - "internal/server/**"
-  - "host/**"
+  - "engine/core/host/**"
 ---
 
 # server
@@ -46,11 +46,11 @@ steps, and each role's page in `docs/` says what it sets up.
   ([devtools](../../internal/server/devtools/golang.go)).
 - A role's test states dpkg's database by effecttest's package table, never by a `dpkg-query` line
   in Results, so host's read can change under it
-  ([machine_dpkg.go](../../effect/effecttest/machine_dpkg.go)).
+  ([machine_dpkg.go](../../engine/core/effect/effecttest/machine_dpkg.go)).
 - A package is installed where dpkg lists it `ii`, in plans and reports alike, and a step reads dpkg
-  in one run ([dpkg.go](../../host/dpkg.go)). A role reads dpkg through `host.PackageStates`.
+  in one run ([dpkg.go](../../engine/core/host/dpkg.go)). A role reads dpkg through `host.PackageStates`.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
-  ([report.go](../../step/report.go)). A `File` that a role builds in `Plan` shows by its change
+  ([report.go](../../engine/core/step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
 - Where a dry run skips a step, a step beside it shows what the run would change, as Go's move into
   `/usr/local/go` does ([claude's marketplaces](../../internal/server/claude/marketplaces.go)).
@@ -69,14 +69,14 @@ steps, and each role's page in `docs/` says what it sets up.
 ## Downloads and keys
 
 - A download is checked against its SHA-256 before it writes `dest`, and downloaded again
-  where `dest` holds another ([the Go download](../../host/download.go)).
+  where `dest` holds another ([the Go download](../../engine/core/host/download.go)).
 - A fetch tries five times, ten seconds apart, and stops at once on a wrong SHA-256, which
-  `effect.ErrSHA256` names ([the fetch](../../host/download.go)).
+  `effect.ErrSHA256` names ([the fetch](../../engine/core/host/download.go)).
 - A package plans from its pin, a name and a version, and fetches its file only where that version
   is not installed. Before dpkg, it checks the file's own name and version against the pin
-  ([package.go](../../host/package.go)).
+  ([package.go](../../engine/core/host/package.go)).
 - A tree is unpacked beside its target and moved in whole, and its marker is its probe
-  ([tree.go](../../host/tree.go)).
+  ([tree.go](../../engine/core/host/tree.go)).
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each
   certificate in it, and it holds one at least
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
