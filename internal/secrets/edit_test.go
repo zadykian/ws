@@ -57,3 +57,17 @@ func TestEditErrorsNameNoValue(t *testing.T) {
 		}
 	}
 }
+
+func TestLabelCutsBack(t *testing.T) {
+	label := Label(KindGit, "https://h.example")
+	kind, name, err := CutLabel(label)
+	if err != nil || kind != KindGit || name != "https://h.example" {
+		t.Errorf("CutLabel(%q) = %q, %q, %v; want git and the URL", label, kind, name, err)
+	}
+}
+
+func TestCutLabelRefusesNoSpace(t *testing.T) {
+	if _, _, err := CutLabel("github"); err == nil || !strings.Contains(err.Error(), "want KIND NAME") {
+		t.Errorf("err = %v, want a refusal that wants KIND NAME", err)
+	}
+}

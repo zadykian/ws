@@ -15,7 +15,8 @@ import (
 
 // secretsLabels are the entries that the form always offers, besides those the file holds.
 var secretsLabels = []string{
-	secrets.KindToken + " github", secrets.KindToken + " azure_devops", secrets.KindPassword + " vpn_p12",
+	secrets.Label(secrets.KindToken, "github"), secrets.Label(secrets.KindToken, "azure_devops"),
+	secrets.Label(secrets.KindPassword, "vpn_p12"),
 }
 
 // secretsSheet is the secrets file on the Configure screen. held lists its entries as "KIND NAME",
@@ -27,7 +28,7 @@ func secretsSheet(side secretsSide, held []string) tui.Sheet {
 		Fields: func(map[string]string) []tui.FieldSpec {
 			labels := slices.Clone(secretsLabels)
 			for _, k := range held {
-				if kind, _, _ := strings.Cut(k, " "); kind == secrets.KindEnv || kind == secrets.KindGit {
+				if kind, _, err := secrets.CutLabel(k); err == nil && (kind == secrets.KindEnv || kind == secrets.KindGit) {
 					labels = append(labels, k)
 				}
 			}
@@ -70,8 +71,11 @@ type secretsSide interface {
 type wsSide struct{ ws *wizard.Session }
 
 func (s wsSide) set(ctx context.Context, label, value string) error {
-	kind, name, _ := strings.Cut(label, " ")
-	_, err := s.ws.Secrets(ctx, []byte(value+"\n"), "set", kind, "--", name)
+	kind, name, err := secrets.CutLabel(label)
+	if err != nil {
+		return err
+	}
+	_, err = s.ws.Secrets(ctx, []byte(value+"\n"), "set", kind, "--", name)
 	return err
 }
 

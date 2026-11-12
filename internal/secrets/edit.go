@@ -60,7 +60,7 @@ func (s *Secrets) SetFile(name string, data []byte) error {
 
 // Unset drops the entry, and fails where the file lacks it.
 func (s *Secrets) Unset(kind, name string) error {
-	if !slices.Contains(s.Keys(), kind+" "+name) {
+	if !slices.Contains(s.Keys(), Label(kind, name)) {
 		return fmt.Errorf("%s %s is not in the file", kind, name)
 	}
 	switch kind {
@@ -76,12 +76,24 @@ func (s *Secrets) Unset(kind, name string) error {
 	return nil
 }
 
+// Label is an entry's label, "KIND NAME", as Keys lists it.
+func Label(kind, name string) string { return kind + " " + name }
+
+// CutLabel splits a label at its first space, so that a git URL or any name keeps the rest.
+func CutLabel(label string) (kind, name string, err error) {
+	kind, name, ok := strings.Cut(label, " ")
+	if !ok {
+		return "", "", fmt.Errorf("%q names no entry: want KIND NAME", label)
+	}
+	return kind, name, nil
+}
+
 // Keys lists the entries as "KIND NAME", sorted, and never a value.
 func (s Secrets) Keys() []string {
 	var keys []string
 	add := func(kind, name string, held bool) {
 		if held {
-			keys = append(keys, kind+" "+name)
+			keys = append(keys, Label(kind, name))
 		}
 	}
 	add(KindToken, "github", s.Token.GitHub != "")

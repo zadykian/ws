@@ -86,7 +86,7 @@ func newSecretsSetCmd(p process, open openStore) *cobra.Command {
 			Short: "set the " + kind + " NAME, from a prompt with no echo or from stdin",
 			Args:  cobra.ExactArgs(1),
 			RunE: func(c *cobra.Command, args []string) error {
-				value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), kind+" "+args[0])
+				value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(kind, args[0]))
 				if err != nil {
 					return err
 				}
@@ -106,7 +106,7 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			var err error
-			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.KindGit+" "+args[0]); err != nil {
+			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(secrets.KindGit, args[0])); err != nil {
 				return err
 			}
 			return editIn(c, open, func(s *secrets.Secrets) error {
@@ -221,7 +221,10 @@ func (s secretsStore) keys(ctx context.Context) ([]string, error) {
 // set sets the entry that label names, "KIND NAME", for the secrets sheet. A git entry keeps its
 // other fields, as set git does with no flag.
 func (s secretsStore) set(ctx context.Context, label, value string) error {
-	kind, name, _ := strings.Cut(label, " ")
+	kind, name, err := secrets.CutLabel(label)
+	if err != nil {
+		return err
+	}
 	return s.edit(ctx, func(cur *secrets.Secrets) error {
 		if kind == secrets.KindGit {
 			g := cur.Git[name]
