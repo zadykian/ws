@@ -231,7 +231,8 @@ func commandError(cmd *exec.Cmd, err error) error {
 	return fmt.Errorf("%v: %w", cmd.Args, err)
 }
 
-// Stat describes the path. A link that points nowhere has a Link and no Mode.
+// Stat describes the path. A link whose target it cannot stat has a Link and no Mode, whatever the
+// error. A guard that looks for links must see one that points into a directory it cannot search.
 func (OSMachine) Stat(path string) (Info, error) {
 	var info Info
 	if l, err := os.Readlink(path); err == nil {
@@ -239,7 +240,7 @@ func (OSMachine) Stat(path string) (Info, error) {
 	}
 	fi, err := os.Stat(path)
 	if err != nil {
-		if info.Link != "" && errors.Is(err, fs.ErrNotExist) {
+		if info.Link != "" {
 			return info, nil
 		}
 		return Info{}, err

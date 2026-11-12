@@ -72,6 +72,25 @@ func TestOSMachineStat(t *testing.T) {
 	}
 }
 
+// A link whose target fails to stat for another reason than a missing file, ENOTDIR or ELOOP here,
+// keeps its Link. Tests run as root, so EACCES cannot be staged.
+func TestOSMachineStatKeepsALinkItCannotFollow(t *testing.T) {
+	m := effect.OSMachine{}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "file"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for name, target := range map[string]string{"notdir": "file/x", "loop": "loop"} {
+		if err := os.Symlink(target, filepath.Join(dir, name)); err != nil {
+			t.Fatal(err)
+		}
+		info, err := m.Stat(filepath.Join(dir, name))
+		if err != nil || info.Link != target || info.Mode != 0 {
+			t.Errorf("Stat(%s) = %+v, %v; want its link and no mode", name, info, err)
+		}
+	}
+}
+
 func TestOSMachineReadDir(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "b"), nil, 0o600); err != nil {

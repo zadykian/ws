@@ -72,7 +72,8 @@ func SayLasting(out Out, format string, a ...any) {
 
 // Machine reads and changes a machine.
 type Machine interface {
-	// Stat returns fs.ErrNotExist where the path is missing, and describes a dangling link.
+	// Stat returns fs.ErrNotExist where the path is missing, and describes any link, one whose
+	// target it cannot stat with no Mode.
 	Stat(path string) (Info, error)
 	// ReadDir returns the names in a directory, sorted, and fs.ErrNotExist where the directory is
 	// missing.
