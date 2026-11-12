@@ -24,8 +24,16 @@ func TestPurgedRemovesWhatIsThereAndWhatLeftItsSettings(t *testing.T) {
 
 func TestPurgedLeavesAPackageThatIsNotThere(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Packages = effecttest.Packages{"snapd": {Status: "n"}}
+	m.Packages = effecttest.Packages{"snapd": {Status: "un"}}
 	if got := applyAll(t, host.Purged{M: m, Names: []string{"lxd-installer", "snapd"}}); got != nil {
 		t.Errorf("plan = %q, want none", got)
+	}
+}
+
+func TestPurgedWithNoNamesPlansNothingAndRunsNothing(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Packages = effecttest.Packages{"snapd": {Version: "2", Status: "ii"}}
+	if got := applyAll(t, host.Purged{M: m}); got != nil || len(m.Calls) != 0 {
+		t.Errorf("plan = %q, calls %q, want none", got, m.Calls)
 	}
 }
