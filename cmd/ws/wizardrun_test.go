@@ -19,7 +19,7 @@ import (
 func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := macScreen{c, p, macSide(c, p), wizardOptions{}}
+	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	var text bytes.Buffer
@@ -35,7 +35,7 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 func TestWizardConfigEndsACutAsAPlainRunDoes(t *testing.T) {
 	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	err := macScreen{c, p, macSide(c, p), wizardOptions{}}.config().Cut(syscall.SIGINT)
+	err := wizardRun{c, p, macSide(c, p), wizardOptions{}}.config().Cut(syscall.SIGINT)
 	var cut signalExit
 	if err == nil || errors.As(err, &cut) {
 		t.Errorf("err = %v, want one of status 1", err)
@@ -117,7 +117,7 @@ func TestWsRunOfFindsNoneWhereNoneIs(t *testing.T) {
 
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
-	w := macScreen{p: fakeProcess(), side: macSide(nil, fakeProcess())}
+	w := wizardRun{p: fakeProcess(), side: macSide(nil, fakeProcess())}
 	run := wsRunOf(w.plainStages()).Name()
 	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}, run).update {
 		t.Error("a tick in ws's run left the last run to speak")
@@ -130,7 +130,7 @@ func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := macScreen{c, p, macSide(c, p), wizardOptions{}}
+	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	o := wizardOptions{left: func(string, string) bool { return true }}
 	cfg := w.config()
 	cfg.Text = io.Discard
@@ -146,7 +146,7 @@ func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 func TestWizardScanChangesNothing(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := macScreen{c, p, macSide(c, p), wizardOptions{}}
+	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	if err := tui.Run(context.Background(), cfg, screen, w.scan(&wizard.Sudo{})); err != nil {
