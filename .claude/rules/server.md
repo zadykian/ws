@@ -66,7 +66,8 @@ steps, and each role's page in `docs/` says what it sets up.
 - A fetch tries five times, ten seconds apart, and stops at once on a wrong SHA-256, which
   `effect.ErrSHA256` names ([the fetch](../../host/download.go)).
 - A package plans from its pin, a name and a version, and fetches its file only where that version
-  is not installed ([package.go](../../host/package.go)).
+  is not installed. Before dpkg, it checks the file's own name and version against the pin
+  ([package.go](../../host/package.go)).
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each
   certificate in it, and it holds one at least
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
