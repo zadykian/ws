@@ -45,9 +45,9 @@ func TestLoadRawKeepsReferences(t *testing.T) {
 	}
 	m := effecttest.NewMachine()
 	m.Files["/f"] = armored
-	raw, err := LoadRaw(m, "/f", id)
+	raw, err := loadRaw(m, "/f", id)
 	if err != nil || raw.Env["MY_TOKEN"] != "${token.github}" {
-		t.Errorf("LoadRaw env = %q, %v; want the reference", raw.Env["MY_TOKEN"], err)
+		t.Errorf("loadRaw env = %q, %v; want the reference", raw.Env["MY_TOKEN"], err)
 	}
 	full, err := Load(m, "/f", id)
 	if err != nil || full.Env["MY_TOKEN"] != "dummy" {

@@ -49,11 +49,11 @@ func (s Store) Set(ctx context.Context, label, value string) error {
 
 // read returns the file's entries as written, with the identity that opens it.
 func (s Store) read(ctx context.Context) (Secrets, age.Identity, error) {
-	id, err := Credstore(s).Identity(ctx)
+	id, err := credstore(s).Identity(ctx)
 	if err != nil {
 		return Secrets{}, nil, err
 	}
-	cur, err := LoadRaw(s.M, FilePath, id)
+	cur, err := loadRaw(s.M, FilePath, id)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return Secrets{}, nil, err
 	}
@@ -62,7 +62,7 @@ func (s Store) read(ctx context.Context) (Secrets, age.Identity, error) {
 
 // write replaces the file with cur, sealed to id.
 func (s Store) write(cur Secrets, id age.Identity) error {
-	data, err := Seal(cur, id)
+	data, err := seal(cur, id)
 	if err != nil {
 		return err
 	}
@@ -77,9 +77,9 @@ func (s Store) write(cur Secrets, id age.Identity) error {
 	return s.M.WriteAtomic(FilePath, data, effect.Attrs{Mode: 0o600})
 }
 
-// Seal marshals s, checks that Parse takes the result (Decode, then Expand), and encrypts it to the
+// seal marshals s, checks that Parse takes the result (Decode, then Expand), and encrypts it to the
 // identity's recipient, in armor. An error names no value.
-func Seal(s Secrets, id age.Identity) ([]byte, error) {
+func seal(s Secrets, id age.Identity) ([]byte, error) {
 	x, ok := id.(*age.X25519Identity)
 	if !ok {
 		return nil, errors.New("the identity is no X25519 identity")

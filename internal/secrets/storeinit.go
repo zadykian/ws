@@ -13,7 +13,7 @@ type Found struct{ Credential, File bool }
 // Init makes a missing credential, and the file where none is. A file without the
 // credential stops it and makes nothing, as a new identity would not open the file.
 func (s Store) Init(ctx context.Context) (Found, error) {
-	cred := Credstore(s)
+	cred := credstore(s)
 	has, err := cred.Has()
 	if err != nil {
 		return Found{}, err

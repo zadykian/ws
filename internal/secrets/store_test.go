@@ -64,7 +64,7 @@ func TestSealRoundTrips(t *testing.T) {
 	id, _ := age.GenerateX25519Identity()
 	//nolint:gosec // G101: made-up values, for a round trip
 	in := Secrets{Env: map[string]string{"MY_TOKEN": "${token.github}"}, Token: Tokens{GitHub: "dummy"}}
-	armored, err := Seal(in, id)
+	armored, err := seal(in, id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestSealRoundTrips(t *testing.T) {
 
 func TestSealRefusesWhatDecodeRefuses(t *testing.T) {
 	id, _ := age.GenerateX25519Identity()
-	_, err := Seal(Secrets{Env: map[string]string{"A-B": "dummy"}}, id)
+	_, err := seal(Secrets{Env: map[string]string{"A-B": "dummy"}}, id)
 	if err == nil || strings.Contains(err.Error(), "dummy") {
 		t.Errorf("err = %v, want a refusal with no value", err)
 	}
@@ -94,7 +94,7 @@ func TestSealRefusesWhatExpandRefuses(t *testing.T) {
 		"absent":  "${env.MISSING}",
 		"loop":    "${env.A}",
 	} {
-		_, err := Seal(Secrets{Env: map[string]string{"A": env}}, id)
+		_, err := seal(Secrets{Env: map[string]string{"A": env}}, id)
 		if err == nil || strings.Contains(err.Error(), "wordpart") || strings.Contains(err.Error(), "MISSING") {
 			t.Errorf("%s: err = %v, want a refusal that quotes no part of the value", name, err)
 		}

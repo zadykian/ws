@@ -13,8 +13,8 @@ func Load(m effect.Machine, path string, id age.Identity) (Secrets, error) {
 	return load(m, path, id, Parse)
 }
 
-// LoadRaw is Load with the references left as written, for an edit that writes the file again.
-func LoadRaw(m effect.Machine, path string, id age.Identity) (Secrets, error) {
+// loadRaw is Load with the references left as written, for an edit that writes the file again.
+func loadRaw(m effect.Machine, path string, id age.Identity) (Secrets, error) {
 	return load(m, path, id, Decode)
 }
 
