@@ -64,7 +64,7 @@
   "plansDirectory": ".claude/plans",
   "extraKnownMarketplaces": {
     "zadykian": {
-      "source": { "source": "github", "repo": "zadykian/toolkit", "ref": "v7.0.1" },
+      "source": { "source": "github", "repo": "zadykian/toolkit", "ref": "v7.1.0" },
       "autoUpdate": true
     }
   },
