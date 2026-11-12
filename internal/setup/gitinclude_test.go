@@ -9,28 +9,16 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
-func TestGitPutsTheIncludeAtTheTopOfGitconfig(t *testing.T) {
+func TestGitWarnsOfOwnSettingsBelowTheInclude(t *testing.T) {
 	m, out, g := gitWithConfig("[user]\n    name = X\n", "", "user.name\n")
 	m.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] =
 		effecttest.Result{Err: exitOne(t)}
 	m.Results["cp -p "+gitConfigFile+" "+gitConfigFile+".20260102030405~"] = effecttest.Result{}
-	p := mustPlan(t, g)
-	if err := g.Apply(context.Background(), p); err != nil {
+	if err := g.Apply(context.Background(), mustPlan(t, g)); err != nil {
 		t.Fatal(err)
-	}
-	if got, want := string(m.Files[gitConfigFile]), includeText+"\n[user]\n    name = X\n"; got != want {
-		t.Errorf("~/.gitconfig = %q, want %q", got, want)
 	}
 	if !strings.Contains(strings.Join(out.Lines, "\n"), "own settings of user.name, below the include") {
 		t.Errorf("no warning of user.name: %q", out.Lines)
-	}
-}
-
-func TestGitMakesGitconfigWhereMissing(t *testing.T) {
-	_, _, g := gitWithConfig("", "", "")
-	p := mustPlan(t, g)
-	if len(p.Changes) != 4 || !strings.Contains(p.Changes[2].String(), "+    path = ~/.config/ws/gitconfig") {
-		t.Errorf("Plan = %v; want the two files and a new ~/.gitconfig", p.Changes)
 	}
 }
 

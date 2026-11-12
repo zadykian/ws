@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/gitcfg"
@@ -116,30 +115,19 @@ func (g *Git) include(ctx context.Context) (gitInclude, error) {
 	return in, nil
 }
 
-// includeChanges puts an include of ~/.config/ws/gitconfig at the top of ~/.gitconfig where there is
-// none. It makes the file where missing, and keeps the old one as ~/.gitconfig.TIME~, as the ssh step
-// keeps ~/.ssh/config. It warns of the settings of identity and signing in the file itself, which
-// win, and in git's XDG file, which lose.
-func (g *Git) includeChanges(ctx context.Context, in gitInclude) []step.Change {
-	if in.Included {
+// includeChanges adds the notes to lines, the changes to ~/.gitconfig, where there are any. It warns
+// of the settings of identity and signing in the file itself, which win, and in git's XDG file,
+// which lose.
+func (g *Git) includeChanges(ctx context.Context, found path, lines []step.Change) []step.Change {
+	if len(lines) == 0 {
 		return nil
 	}
-	now := time.Now
-	if g.Now != nil {
-		now = g.Now
-	}
-	mode := fs.FileMode(0o644)
-	var cs []step.Change
-	text := includeText
-	if in.Exists {
-		mode = in.Mode
-		cs = append(cs, Backup{in.Path, in.Path + "." + now().Format("20060102150405") + "~"})
-		text += "\n" + string(in.Text)
-	}
-	cs = append(cs, Write{in.Path, in.Text, []byte(text), in.Exists, mode})
-	if in.Own != "" {
-		g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
-			in.Path, in.Own)
+	if file := g.Home + "/.gitconfig"; found.Exists {
+		names, _ := g.lines(ctx, file, "--name-only", "--list")
+		if own := gitcfg.Own(names); own != "" {
+			g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
+				file, own)
+		}
 	}
 	xdg := g.XDG
 	if xdg == "" {
@@ -152,7 +140,7 @@ func (g *Git) includeChanges(ctx context.Context, in gitInclude) []step.Change {
 				"~/.config/ws/gitconfig's win over them", xdg, own)
 		}
 	}
-	return cs
+	return lines
 }
 
 // notExist reports whether err says a path is missing, and passes on any other error.
