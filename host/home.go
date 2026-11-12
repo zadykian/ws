@@ -10,10 +10,10 @@ import (
 	"github.com/zadykian/ws/effect"
 )
 
-// ReadHome reads the file at rel below the user's home, as root. The user owns the home, so a link
-// at the file or at a directory on the way would send root's read to whatever it names: ReadHome
-// refuses one, and a rel that is not local, before any call to the machine. A file that is missing
-// gives fs.ErrNotExist.
+// ReadHome reads the file at rel below the user's home, as root. The user owns the home, and a link
+// there would send root's read to whatever it names. So ReadHome refuses a link at the file or on
+// the way, and a rel that is not local, before any call to the machine. A missing file gives
+// fs.ErrNotExist.
 func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
 	at := u.Home + "/" + rel
 	if err := guardHome(m, u.Home, at); err != nil {
@@ -31,8 +31,15 @@ func (a Account) File(m effect.Machine, rel string, content []byte, mode fs.File
 	}
 }
 
+// Dir is a directory at rel below the account's home, whose mode matters: the three at 0700. It
+// refuses a link on the way as File does, makes its missing parents at 0755, and sets its own mode
+// and owner where they differ.
+func (a Account) Dir(m effect.Machine, rel string, mode fs.FileMode) Dir {
+	return Dir{M: m, Path: a.Home + "/" + rel, Mode: mode, UID: a.UID, GID: a.GID, home: a.Home}
+}
+
 // makeParents makes each directory between home and target that is missing, top first, as the
-// owner's at 0755, and leaves one that exists as it is. Without a home it does nothing.
+// owner's at 0755, and leaves an existing one alone. Without a home it does nothing.
 func makeParents(m effect.Machine, home, target string, uid, gid int) error {
 	if home == "" {
 		return nil

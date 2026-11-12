@@ -19,6 +19,8 @@ type Dir struct {
 	UID, GID int
 	// CreateOnly leaves an existing directory alone, whatever its mode and owner.
 	CreateOnly bool
+	// home, set by Account.Dir alone, is the home that the path lies below.
+	home string
 }
 
 type setDir struct {
@@ -36,6 +38,9 @@ func (c setDir) String() string {
 func (setDir) Kind() step.ChangeKind { return step.Write }
 
 func (c setDir) Apply(context.Context) error {
+	if err := makeParents(c.d.M, c.d.home, c.d.Path, c.d.UID, c.d.GID); err != nil {
+		return err
+	}
 	if !c.exists {
 		if err := c.d.M.Mkdir(c.d.Path, c.d.Mode); err != nil {
 			return err
@@ -47,8 +52,19 @@ func (c setDir) Apply(context.Context) error {
 	return c.d.M.Chmod(c.d.Path, c.d.Mode)
 }
 
+// guard refuses a link on the way to a home directory. Another Dir is not checked.
+func (d Dir) guard() error {
+	if d.home == "" {
+		return nil
+	}
+	return guardHome(d.M, d.home, d.Path)
+}
+
 // Plan reads the directory's owner and mode.
 func (d Dir) Plan(context.Context) ([]Change, error) {
+	if err := d.guard(); err != nil {
+		return nil, err
+	}
 	got, err := d.M.RootAttrs(d.Path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return []Change{setDir{d: d}}, nil
@@ -67,6 +83,9 @@ func (d Dir) Plan(context.Context) ([]Change, error) {
 
 // Report reads the directory's owner and mode, which stand against ws where Plan would fix them.
 func (d Dir) Report(context.Context) ([]step.Item, error) {
+	if err := d.guard(); err != nil {
+		return nil, err
+	}
 	attrs := effect.Attrs{UID: d.UID, GID: d.GID, Mode: d.Mode.Perm()}
 	want, conflict := attrsText(attrs), ""
 	got, err := d.M.RootAttrs(d.Path)

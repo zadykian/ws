@@ -186,3 +186,48 @@ func TestValidatedHomeFileMakesItsParentsBeforeTheCheck(t *testing.T) {
 		t.Errorf("the parent at %d, the check file at %d: %v", made, wrote, m.Calls)
 	}
 }
+
+func TestHomeDirRefusesALink(t *testing.T) {
+	for _, link := range []string{"/home/ws/.local", "/home/ws/.local/share"} {
+		m := effecttest.NewMachine()
+		m.Links[link] = "/srv/target"
+		d := account.Dir(m, ".local/share", 0o700)
+		if _, err := d.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
+			t.Errorf("link at %s: Plan = %v", link, err)
+		}
+		if _, err := d.Report(t.Context()); err == nil {
+			t.Errorf("link at %s: Report found no error", link)
+		}
+	}
+}
+
+func TestHomeDirMakesItsParentsAndSetsItsMode(t *testing.T) {
+	m := effecttest.NewMachine()
+	d := account.Dir(m, ".local/share", 0o700)
+	changes, err := d.Plan(t.Context())
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("Plan = %v, %v", changes, err)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if m.Dirs["/home/ws/.local"] != 0o755 || m.Dirs[d.Path] != 0o700 || m.Owners[d.Path] != [2]int{1000, 1001} {
+		t.Errorf("dirs %v, owners %v", m.Dirs, m.Owners)
+	}
+	if again, err := d.Plan(t.Context()); err != nil || again != nil {
+		t.Errorf("second Plan = %v, %v", again, err)
+	}
+}
+
+func TestHomeDirFixesAWrongModeAndOwner(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Dirs["/home/ws/.ssh"] = 0o755
+	d := account.Dir(m, ".ssh", 0o700)
+	changes, _ := d.Plan(t.Context())
+	if len(changes) != 1 || !strings.Contains(changes[0].String(), "set owner 1000:1001 and mode 700") {
+		t.Fatalf("Plan = %v", changes)
+	}
+	if err := changes[0].Apply(t.Context()); err != nil || m.Dirs["/home/ws/.ssh"] != 0o700 {
+		t.Errorf("Apply = %v, mode %o", err, m.Dirs["/home/ws/.ssh"])
+	}
+}
