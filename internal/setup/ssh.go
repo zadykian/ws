@@ -57,9 +57,8 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	if err := s.validate(ctx, f, text); err != nil {
 		return step.Plan{}, err
 	}
-	if f.ConfigDirLink != "" && !bytes.Equal(f.Ws.Text, text) {
-		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there",
-			f.ConfigDirLink)
+	if f.DirLink.Path == s.Home+"/.ssh/config.d" && !bytes.Equal(f.Ws.Text, text) {
+		s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there", f.DirLink.To)
 	}
 	// The line is counted in the text the run leaves, so that the runner's second Plan names the
 	// same line and the warning shows once.
@@ -101,8 +100,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 			"first, win where both set a key", own[0].Line)
 	}
 	parts := []step.Reporter{
-		userPath{M: s.M, Kind: step.DirItem, Path: dir},
-		userPath{M: s.M, Kind: step.DirItem, Path: dir + "/config.d", Mode: sshDirMode},
+		sshDirs(s.M, s.Home),
 		s.wsFile(s.config(ctx, f, key)),
 		fixed{include},
 	}

@@ -126,3 +126,12 @@ func TestSSHAgainAppliesNothingOfAnSSHLeftOut(t *testing.T) {
 		t.Errorf("a left-out ssh applied: %s", m.Calls[i])
 	}
 }
+
+func TestSSHStopsWhereItsDirectoryIsAFile(t *testing.T) {
+	m := sshMachine()
+	m.Files["/h/.ssh"] = []byte("x")
+	if _, err := sshStep(m, &effecttest.Out{}).Plan(context.Background()); err == nil ||
+		!strings.Contains(err.Error(), "/h/.ssh is not a directory") {
+		t.Errorf("Plan's error = %v, want that /h/.ssh is no directory", err)
+	}
+}

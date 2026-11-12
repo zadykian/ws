@@ -25,14 +25,9 @@ func (s SSH) read() (sshFacts, error) {
 	dir := s.Home + "/.ssh"
 	f := sshFacts{Home: s.Home, Stamp: s.Now().Format("20060102150405")}
 	var err error
-	if f.Dir, _, err = s.stat(dir); err != nil {
+	if f.Dirs, f.DirLink, err = sshDirs(s.M, s.Home).plan(); err != nil {
 		return f, err
 	}
-	var info effect.Info
-	if f.ConfigDir, info, err = s.stat(dir + "/config.d"); err != nil {
-		return f, err
-	}
-	f.ConfigDirLink = info.Link
 	var ours bool
 	if f.Ws, ours, err = s.wsFile(nil).read(); err != nil {
 		return f, err
