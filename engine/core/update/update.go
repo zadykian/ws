@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/mod/semver"
 
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/check"
 )
 
 // Result is what an update did: ws went From its release To the latest one, replacing File. Where

@@ -7,10 +7,10 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/check"
 	"github.com/zadykian/ws/internal/tunnel"
 )
 

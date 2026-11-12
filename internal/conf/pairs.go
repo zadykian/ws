@@ -4,7 +4,7 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
 )
 
 // pairs checks the keys that go together, as Parse read them, and returns the first refusal. Each

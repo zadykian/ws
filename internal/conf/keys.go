@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/internal/tunnel"
 )
 

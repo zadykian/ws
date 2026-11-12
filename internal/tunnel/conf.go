@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
 )
 
 // The tunnel's two ends and its subnet, and the cable's subnet and ws's end of it.

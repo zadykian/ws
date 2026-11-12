@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
 )
 
 // transport is Go's default, which takes a proxy from the environment, but gives up on a server

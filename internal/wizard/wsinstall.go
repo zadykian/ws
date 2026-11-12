@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/check"
 	"golang.org/x/mod/semver"
 )
 

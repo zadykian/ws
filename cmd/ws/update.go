@@ -12,7 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/internal/update"
+	"github.com/zadykian/ws/engine/core/update"
 )
 
 // runningFile returns the file this ws runs from, the file a symbolic link leads to.

@@ -4,7 +4,7 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/internal/tunnel"
 )
 

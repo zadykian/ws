@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
 )
 
 // pubFile is the Mac's public key, which ws mac apply writes from root's key at each run. It needs no

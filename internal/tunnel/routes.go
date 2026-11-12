@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/internal/check"
+	"github.com/zadykian/ws/engine/core/check"
 )
 
 // ParseRoutes reads the files of routes.d, a map of file name to contents, into the networks to
