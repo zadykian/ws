@@ -143,7 +143,7 @@ func TestZedWarnsOfAFileNotItsOwn(t *testing.T) {
 func TestZedWarnsOfALinkedDirectoryWhereAWriteIsPlanned(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	s := zedStep(m, out)
-	m.Dirs["/h/.config/zed"] = 0o755
+	m.Dirs["/dots/zed"] = 0o755
 	m.Links["/h/.config/zed"] = "/dots/zed"
 	if _, err := s.Plan(context.Background()); err != nil || len(out.Lines) != 1 ||
 		!strings.Contains(out.Lines[0], "is a link to /dots/zed: Zed's files go there") {

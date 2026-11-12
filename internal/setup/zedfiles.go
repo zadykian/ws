@@ -25,15 +25,10 @@ const (
 // each run, and left with a warning where its first line is not ws's. keymap.json is Keymap,
 // replaced and left on the same terms with its own mark. settings.json is written where nothing is there, and never read.
 func (z *Zed) files() ([]step.Change, error) {
-	conf := z.Home + "/.config"
-	dir := conf + "/zed"
-	var cs []step.Change
-	dirInfo, dirErr := z.M.Stat(dir)
-	if dirErr != nil {
-		if _, err := z.M.Stat(conf); err != nil {
-			cs = append(cs, MakeDir{conf, 0o755})
-		}
-		cs = append(cs, MakeDir{dir, 0o755})
+	dir := z.Home + "/.config/zed"
+	cs, link, err := z.dirs().plan()
+	if err != nil {
+		return nil, err
 	}
 	for _, f := range z.whole() {
 		planned, err := owned(z.Out, f)
@@ -45,10 +40,13 @@ func (z *Zed) files() ([]step.Change, error) {
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, Write{dir + "/settings.json", nil, []byte(zedSeed), false, 0o644})
 	}
-	if dirErr == nil && dirInfo.Link != "" && len(cs) > 0 {
-		z.Out.Warn("%s is a link to %s: Zed's files go there", dir, dirInfo.Link)
-	}
+	link.warn(z.Out, len(cs), "Zed's files go there")
 	return cs, nil
+}
+
+// dirs returns ~/.config and Zed's directory in it.
+func (z *Zed) dirs() userDirs {
+	return userDirs{{M: z.M, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Path: z.Home + "/.config/zed", Mode: 0o755}}
 }
 
 // whole returns global_settings.json and keymap.json, the files that ws replaces whole.
