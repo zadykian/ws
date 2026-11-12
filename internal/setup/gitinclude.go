@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/gitcfg"
 	"github.com/zadykian/ws/step"
 )
@@ -42,6 +43,39 @@ func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string,
 		}
 	}
 	return lines, nil
+}
+
+// gitconfigLines is the include at the top of ~/.gitconfig. Its place is wrong where it comes twice
+// or sits below the file's own settings, which it then overrides. git config reads the file, so the
+// step stops before it acts, as the ssh step does for ssh's Include.
+func (g *Git) gitconfigLines() userLines {
+	return userLines{
+		M: g.M, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
+		Shown: "[include] path = ~/.config/ws/gitconfig",
+		Name:  "the include of ~/.config/ws/gitconfig",
+		Has:   g.included,
+	}
+}
+
+// included says whether the file includes ~/.config/ws/gitconfig, as git reads it.
+func (g *Git) included(ctx context.Context, _ effect.Machine, file string, _ []byte) (bool, error) {
+	paths, err := g.lines(ctx, file, "--type", "path", "--get-all", "include.path")
+	if err != nil {
+		return false, err
+	}
+	names, err := g.lines(ctx, file, "--name-only", "--list")
+	if err != nil {
+		return false, err
+	}
+	first := ""
+	if len(names) > 0 {
+		first = names[0]
+	}
+	holds, err := gitcfg.Included(paths, first, g.Home+"/.config/ws")
+	if err != nil {
+		return false, misplaced("%s %v", file, err)
+	}
+	return holds, nil
 }
 
 // include reads ~/.gitconfig. It stops where git can't read the file, and where the include comes
