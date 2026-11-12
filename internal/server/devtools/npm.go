@@ -14,7 +14,10 @@ import (
 const npmBin = "/usr/bin/npm"
 
 // serversDir is where the npm servers install. The steps and the settings both name it.
-func serversDir(home string) string { return home + "/.local/lib/language-servers" }
+func serversDir(home string) string { return home + "/" + serversRel }
+
+// serversRel is serversDir below the home.
+const serversRel = ".local/lib/language-servers"
 
 // formatterLink puts sql-formatter on every PATH, root's, so a project's settings name the bare
 // command. The target exists only after npm ci: Link compares the link alone, so a --check before
@@ -24,29 +27,19 @@ const formatterLink = "/usr/local/bin/sql-formatter"
 // serverBin is a bin of the npm servers.
 func serverBin(home, name string) string { return serversDir(home) + "/node_modules/.bin/" + name }
 
-// serverFiles returns the directories and the two files of the lock, the install they feed and
-// sql-formatter's link.
-// ~/.local and ~/.local/lib are made only where missing, as root's would break the user's own
-// tools, such as claude and pip --user.
+// serverFiles returns the two files of the lock, the install they feed and sql-formatter's link.
+// Their directories are made as the user's, so root's would not break the user's own tools, such as
+// claude and pip --user.
 func serverFiles(m effect.Machine, a host.Account) ([]host.Resource, error) {
-	dir := serversDir(a.Home)
-	parts := []host.Resource{
-		host.Plain{M: m, Home: a.Home, Paths: []string{
-			dir + "/package.json", dir + "/package-lock.json", dir + "/node_modules/.ws-sha256",
-		}},
-		host.Dir{M: m, Path: a.Home + "/.local", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
-		host.Dir{M: m, Path: a.Home + "/.local/lib", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
-		host.Dir{M: m, Path: dir, Mode: 0o755, UID: a.UID, GID: a.GID},
-	}
 	sum := sha256.New()
+	var parts []host.Resource
 	for _, name := range []string{"package.json", "package-lock.json"} {
 		content, err := serversLock.ReadFile("servers/" + name)
 		if err != nil {
 			return nil, err
 		}
 		sum.Write(content)
-		parts = append(parts, host.File{M: m, Path: dir + "/" + name, Content: content, Mode: 0o644,
-			UID: a.UID, GID: a.GID})
+		parts = append(parts, a.File(m, serversRel+"/"+name, content, 0o644))
 	}
 	return append(parts, npmInstall{M: m, Account: a, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
 		host.Link{M: m, Path: formatterLink, Target: serverBin(a.Home, "sql-formatter")}), nil
@@ -60,7 +53,10 @@ type npmInstall struct {
 	Digest  string
 }
 
-func (n npmInstall) stamp() string { return serversDir(n.Account.Home) + "/node_modules/.ws-sha256" }
+// stampRel is the stamp below the home, which npm ci removes with node_modules.
+const stampRel = serversRel + "/node_modules/.ws-sha256"
+
+func (n npmInstall) stamp() string { return n.Account.Home + "/" + stampRel }
 
 type runNpm struct{ n npmInstall }
 
@@ -85,7 +81,7 @@ func (n npmInstall) Plan(context.Context) ([]host.Change, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	got, err := n.M.ReadFile(n.stamp())
+	got, err := n.Account.ReadHome(n.M, stampRel)
 	if errors.Is(err, fs.ErrNotExist) || (err == nil && string(got) != n.Digest+"\n") {
 		return []host.Change{runNpm{n}}, nil
 	}
