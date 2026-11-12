@@ -28,7 +28,7 @@ func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.machine = m
 	var got lastEvents
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, "/h/mac.conf")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/mac.conf")
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents
@@ -52,18 +52,18 @@ func (l *leftEvents) Observe(e step.Event) {
 	}
 }
 
-func setupOf(t *testing.T, e wizardEffects) *wizard.Setup {
+func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool) *wizard.Setup {
 	t.Helper()
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
 	e.p = withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	e.p.machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
-	return wizardSetup(e, "/h/mac.conf")
+	return wizardSetup(e, left, "/h/mac.conf")
 }
 
 func TestWizardSetupWaitsOnTheMacKeyStage(t *testing.T) {
 	// setupOf's mac.conf names no key for ws, which the Mac key stage would ask for.
-	s := setupOf(t, wizardEffects{})
+	s := setupOf(t, wizardEffects{}, nil)
 	s.LookPath = func(string) (string, error) { return "/brew", nil }
 	p, err := s.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 || p.Changes[0].String() != "ws mac apply: after Mac key" {
@@ -74,7 +74,7 @@ func TestWizardSetupWaitsOnTheMacKeyStage(t *testing.T) {
 func TestWizardSetupLeavesOutWhatTheRunDoes(t *testing.T) {
 	var got leftEvents
 	left := func(parent, name string) bool { return parent == "ws mac apply" && name == "ssh" }
-	s := setupOf(t, wizardEffects{obs: &got, left: left})
+	s := setupOf(t, wizardEffects{obs: &got}, left)
 	// The fake machine fails ssh's plan, which a step left out survives.
 	_, _ = s.Run(context.Background(), true)
 	if want := []string{"ssh"}; !slices.Equal(got.left, want) {
@@ -85,7 +85,7 @@ func TestWizardSetupLeavesOutWhatTheRunDoes(t *testing.T) {
 func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 	var got leftEvents
 	stopped := errors.New("stopped")
-	s := setupOf(t, wizardEffects{obs: &got, stop: func() error { return stopped }})
+	s := setupOf(t, wizardEffects{obs: &got, stop: func() error { return stopped }}, nil)
 	if _, err := s.Run(context.Background(), true); !errors.Is(err, stopped) {
 		t.Errorf("err = %v, want the stop", err)
 	}

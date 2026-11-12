@@ -34,6 +34,9 @@ func TestServerWizardAsksTheValuesAndSkipsUnbooted(t *testing.T) {
 	if got := string(m.Files[serverVars]); got != "---\nsecurity_outbound: false\nws_user: root\n" {
 		t.Errorf("host_vars = %q", got)
 	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
+		t.Errorf("caffeinate ran on ws: calls %q", m.Calls)
+	}
 }
 
 // Under --check the values are named, not asked, and ws's run waits on them. A user is refused.
@@ -89,6 +92,9 @@ func TestServerWizardRunsTheStagesChosen(t *testing.T) {
 	}
 	if slices.ContainsFunc(m.Calls, ranWs) {
 		t.Errorf("ws's run ran, left out: calls %q", m.Calls)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
+		t.Errorf("caffeinate ran on ws: calls %q", m.Calls)
 	}
 }
 
@@ -146,5 +152,20 @@ func TestServerWizardConfigureKeyOpensTheForms(t *testing.T) {
 	if status != 1 || strings.Count(drawn, enterScreen) != 2 || !strings.Contains(drawn, "no credential") ||
 		slices.ContainsFunc(m.Calls, ranWs) {
 		t.Errorf("status %d, calls %q", status, m.Calls)
+	}
+}
+
+// Under --check at a terminal the run goes straight to its screen, with no list and no caffeinate.
+func TestServerWizardCheckAtATerminalGoesStraightToTheRun(t *testing.T) {
+	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
+		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")
+	p = withEnv(p, map[string]string{"TERM": "xterm"})
+	p.tty, p.errTTY = true, true
+	_, stdout, stderr := runWs(p, "", "server", "wizard", "--check")
+	if stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
+		t.Errorf("stdout = %q, stderr = %q", stdout, stderr)
+	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
+		t.Errorf("caffeinate ran on ws: calls %q", m.Calls)
 	}
 }

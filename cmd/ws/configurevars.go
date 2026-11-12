@@ -93,7 +93,7 @@ func (r *varsReach) locked(ctx context.Context) (string, error) {
 	if r.release != nil {
 		return r.lock, nil
 	}
-	lock, release, err := wizard.Lock(ctx, r.p.machine, cmp.Or(r.p.getenv("TMPDIR"), "/tmp"))
+	lock, release, err := wizard.Lock(ctx, r.p.machine, r.p.lockDir())
 	if err != nil {
 		return "", err
 	}

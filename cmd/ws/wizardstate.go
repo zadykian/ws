@@ -7,14 +7,14 @@ import (
 	"github.com/zadykian/ws/internal/wizard"
 )
 
-// read is the state screen's read of side's machine, and what ends it. ws's reach takes sudo, the
+// macState is the state screen's read of side's machine, and what ends it. ws's reach takes sudo, the
 // scan's, which the run takes after it, and lets the lock go with the screen.
-func (w macScreen) read(side tui.Side, sudo *wizard.Sudo) (tui.StateReader, func(context.Context)) {
+func macState(p process, side tui.Side, sudo *wizard.Sudo) (tui.StateReader, func(context.Context)) {
 	if side == tui.MacSide {
-		return macRead(w.p), nil
+		return macRead(p), nil
 	}
-	reach := &varsReach{p: w.p, sudo: sudo}
-	return stateRead(reach.reach, w.p.version), reach.close
+	reach := &varsReach{p: p, sudo: sudo}
+	return stateRead(reach.reach, p.version), reach.close
 }
 
 // stateRead is the state screen's read of ws, by the remote script's report, which open reaches ws

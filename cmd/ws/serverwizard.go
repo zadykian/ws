@@ -1,22 +1,14 @@
 package main
 
 import (
-	"cmp"
-	"context"
 	"errors"
-	"os/signal"
-	"syscall"
 
 	"github.com/spf13/cobra"
-
-	"github.com/zadykian/ws/effect"
-	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/step"
 )
 
 // newServerWizardCmd returns ws server wizard.
 func newServerWizardCmd(p process) *cobra.Command {
-	var check bool
+	var o wizardOptions
 	c := &cobra.Command{
 		Use:   "wizard",
 		Short: "set ws up from its own shell, in stages",
@@ -27,32 +19,18 @@ func newServerWizardCmd(p process) *cobra.Command {
 			"At a terminal the stages open as ws's list, and the ones chosen run: e opens ws server configure's forms. " +
 			"Under --check each stage prints what it would do and changes nothing.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runServerWizard(c, p, check) },
+		RunE: func(c *cobra.Command, _ []string) error { return runServerWizard(c, p, o) },
 	}
-	c.Flags().BoolVar(&check, "check", false, "print what each stage would do and change nothing")
+	c.Flags().BoolVar(&o.check, "check", false, "print what each stage would do and change nothing")
 	return c
 }
 
 // runServerWizard runs ws server wizard's stages under a lock, and what stays by hand of ws after a
 // run in which a stage acted. It runs as root, as the remote script does: sudo asks its password
 // before ws starts.
-func runServerWizard(c *cobra.Command, p process, check bool) error {
+func runServerWizard(c *cobra.Command, p process, o wizardOptions) error {
 	if p.euid != 0 {
 		return errors.New("run it as root, by sudo: ws's values and its run are root's")
 	}
-	tmp := cmp.Or(p.getenv("TMPDIR"), "/tmp")
-	if drawsScreen(c, p) {
-		return serverScreen{c, p, tmp}.draw(check)
-	}
-	// The run's context ends with a signal, and its lock goes with it.
-	ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-	term := effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
-	out := progOut{term, c.CommandPath(), map[string]bool{}}
-	talks, _ := p.machine.(effect.Foreground)
-	hand := &wizard.Hand{}
-	stages := serverWizardStages(p, signalPrompt{term}, talks, out, nil, hand, serverPick{check: check})
-	closing := func(ctx context.Context) { hand.Close(ctx, c.OutOrStdout()); term.Flush() }
-	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: out, Check: check}, stages, tmp, 0, closing)
-	return unwrapStep(err)
+	return wizardRun{c, p, serverSide(p), o}.start()
 }

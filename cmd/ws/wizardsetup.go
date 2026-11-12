@@ -16,8 +16,8 @@ import (
 // ws's peer at every run. The Tunnel stage takes that over, so the text goes nowhere then. file is
 // the mac.conf to read, which is Answers' would-be file under --check. obs takes the steps' events,
 // which name the stage: each of a stage's runs reports them again, a check before it applies. It
-// stops and leaves steps out as the run does.
-func wizardSetup(e wizardEffects, file string) *wizard.Setup {
+// stops as the run does, and leaves out the steps that left names.
+func wizardSetup(e wizardEffects, left func(parent, name string) bool, file string) *wizard.Setup {
 	p := e.p
 	s := &wizard.Setup{Conf: file, M: p.machine}
 	s.Run = func(ctx context.Context, check bool) (bool, error) {
@@ -34,7 +34,7 @@ func wizardSetup(e wizardEffects, file string) *wizard.Setup {
 			w = e.text
 		}
 		return macOf(p, c, p.machine, e.out, w).Run(ctx, setup.Options{Options: step.Options{
-			Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: e.left,
+			Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: left,
 		}})
 	}
 	return s

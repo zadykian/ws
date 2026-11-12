@@ -19,13 +19,12 @@ import (
 func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := macScreen{c, p, wizardOptions{}}
-	r := wizardRun{o: wizardOptions{check: true}, sudo: &wizard.Sudo{}}
+	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	var text bytes.Buffer
 	cfg.Text = &text
-	if err := tui.Run(context.Background(), cfg, screen, w.work(r)); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.work(wizardOptions{check: true}, &wizard.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
@@ -33,10 +32,31 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	}
 }
 
+// testSide is a side of stages that need no machine: no caffeinate, no forms and no state read.
+func testSide(stages ...step.Step) wizardSide {
+	return wizardSide{stages: func(wizardEffects, wizardOptions) []step.Step { return stages }}
+}
+
+// tickStep is a stage that plans a change and records that it applied.
+type tickStep struct {
+	name    string
+	applied *bool
+}
+
+func (s tickStep) Name() string    { return s.name }
+func (s tickStep) WaitsOn() string { return "" }
+func (s tickStep) Plan(context.Context) (step.Plan, error) {
+	return step.Plan{Changes: []step.Change{change("x")}}, nil
+}
+func (s tickStep) Apply(context.Context, step.Plan) error {
+	*s.applied = true
+	return nil
+}
+
 func TestWizardConfigEndsACutAsAPlainRunDoes(t *testing.T) {
 	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	err := macScreen{c, p, wizardOptions{}}.config().Cut(syscall.SIGINT)
+	err := wizardRun{c, p, testSide(), wizardOptions{}}.config().Cut(syscall.SIGINT)
 	var cut signalExit
 	if err == nil || errors.As(err, &cut) {
 		t.Errorf("err = %v, want one of status 1", err)
@@ -110,37 +130,61 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 	}
 }
 
+func TestWsRunOfFindsNoneWhereNoneIs(t *testing.T) {
+	if run := wsRunOf([]step.Step{stepOf{name: "one"}}); run != nil {
+		t.Errorf("wsRunOf = %v, want nil", run)
+	}
+}
+
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
-	w := macScreen{p: fakeProcess()}
-	if !w.runOf(tui.QueueChoice{Whole: []string{"ws's run"}}, nil).o.update {
+	w := wizardRun{p: fakeProcess(), side: testSide(&wizard.WsRun{}, tickStep{name: "one"})}
+	run := wsRunOf(w.plainStages()).Name()
+	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}, run).update {
 		t.Error("a tick in ws's run left the last run to speak")
 	}
-	if w.runOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}, nil).o.update {
+	if w.optionsOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}, run).update {
 		t.Error("another stage's tick ran ws again")
 	}
 }
 
 func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
-	p, m := macTerminal()
+	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := macScreen{c, p, wizardOptions{}}
-	r := wizardRun{sudo: &wizard.Sudo{}, left: func(string, string) bool { return true }}
+	var applied bool
+	w := wizardRun{c, p, testSide(tickStep{name: "one", applied: &applied}), wizardOptions{}}
+	o := wizardOptions{left: func(string, string) bool { return true }}
 	cfg := w.config()
 	cfg.Text = io.Discard
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
-	if err := tui.Run(context.Background(), cfg, screen, w.work(r)); err != nil {
+	if err := tui.Run(context.Background(), cfg, screen, w.work(o, &wizard.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
-	if slices.Contains(m.Calls, "run xcode-select --install") {
-		t.Errorf("a stage left out applied: calls = %q", m.Calls)
+	if applied {
+		t.Error("a stage left out applied")
+	}
+}
+
+func TestWizardScanOfASideWithNoRunReportsNoRoles(t *testing.T) {
+	p, _ := macTerminal()
+	c, _ := screenCommand(t, "")
+	var applied bool
+	w := wizardRun{c, p, testSide(tickStep{name: "one", applied: &applied}), wizardOptions{}}
+	cfg := w.config()
+	cfg.Text = io.Discard
+	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
+	if err := tui.Run(context.Background(), cfg, screen, w.scan(&wizard.Sudo{})); err != nil {
+		t.Fatal(err)
+	}
+	if applied {
+		t.Error("a scan applied a stage")
 	}
 }
 
 func TestWizardScanChangesNothing(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := macScreen{c, p, wizardOptions{}}
+	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	if err := tui.Run(context.Background(), cfg, screen, w.scan(&wizard.Sudo{})); err != nil {

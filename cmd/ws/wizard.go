@@ -1,13 +1,9 @@
 package main
 
 import (
-	"cmp"
-	"context"
 	"errors"
 	"io"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -19,7 +15,15 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-type wizardOptions struct{ check, update bool }
+// wizardOptions is what a run of a wizard's stages takes beside its effects: the flags, and what the
+// lists chose. Nil left and only run every stage whole.
+type wizardOptions struct {
+	check, update bool
+	// only is ws's roles where the lists chose ws's run in part, as --only's entries.
+	only []string
+	// left is the run's LeftOut, which reaches the steps of ws mac apply too.
+	left func(parent, name string) bool
+}
 
 // newWizardCmd returns ws mac wizard.
 func newWizardCmd(p process) *cobra.Command {
@@ -67,14 +71,10 @@ type wizardEffects struct {
 	// sudo is the stage that finds how to reach root on ws. A run takes it from the scan before it, so
 	// that its password is asked once.
 	sudo *wizard.Sudo
-	// stop and left are the run's Stop and LeftOut, which reach the steps of ws mac apply too. Nil ones
-	// run all.
+	// stop is the run's Stop, which reaches the steps of ws mac apply too. Nil runs all.
 	stop func() error
-	left func(parent, name string) bool
-	// events hears ws's run, and only is what it takes where it runs in part. A plain run has neither:
-	// it follows ws's run by its lines.
+	// events hears ws's run. A plain run has none: it follows ws's run by its lines.
 	events step.Observer
-	only   []string
 }
 
 // wizardStages returns the stages of ws mac wizard, in order.
@@ -82,7 +82,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
 	conf := confPath(p.getenv, p.pwd)
-	lock := wizard.LockPath(cmp.Or(p.getenv("TMPDIR"), "/tmp"))
+	lock := wizard.LockPath(p.lockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
@@ -97,11 +97,11 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	ws := wizard.NewSession(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Out: out},
 		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = host.SSH, p.tty, check, e.hidden, out
-	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only}
+	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
-	setup := wizardSetup(e, later)
+	setup := wizardSetup(e, o.left, later)
 	login := &wizard.Login{SSH: host.SSH, Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
 	cable := &wizard.Cable{Ws: ws, SSH: host.SSH, Conf: later, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
@@ -139,37 +139,16 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	// is set for the scripts that stages run.
 	_ = p.setenv("PATH", "/opt/homebrew/bin:"+p.getenv("PATH"))
 	_ = p.setenv("WS_CONF", confPath(p.getenv, p.pwd))
-	prog := c.CommandPath()
-	tmp := cmp.Or(p.getenv("TMPDIR"), "/tmp")
-	// The run's context ends with a signal, and its lock goes with it.
-	ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-	term := effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
-	out := progOut{term, prog, map[string]bool{}}
-	obs := out
+	var before []func(effect.Out) step.Step
 	if o.update {
 		// Its own run, before the lock: the new ws takes the place of this process, which would leave the
 		// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
-		u := &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases, Home: p.getenv("HOME"), Args: p.argv}
-		if _, err := step.RunWith(ctx, []step.Step{u}, step.Options{Observer: obs, Check: o.check}); err != nil {
-			return unwrapStep(err)
-		}
+		before = append(before, func(out effect.Out) step.Step {
+			return &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases,
+				Home: p.getenv("HOME"), Args: p.argv}
+		})
 	}
-	if drawsScreen(c, p) {
-		stop() // The screen takes the signals, and asks before a signal ends a run.
-		return macScreen{c, p, o}.draw()
-	}
-	hand := &wizard.Hand{}
-	closing := func(ctx context.Context) {
-		hand.Close(ctx, c.OutOrStdout())
-		term.Flush()
-	}
-	talks, _ := p.machine.(effect.Foreground)
-	stages := wizardStages(wizardEffects{p: p, prog: prog, talks: talks, ask: signalPrompt{term}, hidden: term, out: out,
-		text: c.OutOrStdout(), obs: obs, hand: hand, sudo: &wizard.Sudo{}}, o)
-	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: obs, Check: o.check}, stages, tmp, p.pid, closing)
-	// The runner names the stage before the stage's own message.
-	return unwrapStep(err)
+	return wizardRun{c, p, macSide(c, p), o}.start(before...)
 }
 
 // shellDefaults is the shell role's git identity as lines of key: value, which ws mac wizard
