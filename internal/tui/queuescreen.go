@@ -21,14 +21,6 @@ var configureButton = key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "confi
 // stateButton leaves the lists for the state screen of the machine of the list in focus.
 var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
 
-// newQueueScreen returns the lists of stages, their scan under way. The configure button comes last.
-func newQueueScreen(title string, theme Theme, stages []Stage, picks chan<- QueueChoice) pickScreen {
-	s := newPickScreen(title, theme, nil, picks)
-	s.list, s.queued = newQueue(stages), true
-	s.footer = NewFooter(append(slices.Clip(s.footer.buttons), stateButton, configureButton)...)
-	return s.enabled()
-}
-
 // tabbed walks the ring of the lists, then the buttons, as a Tab between the lists would else leave
 // for the buttons.
 func (s pickScreen) tabbed(step int) pickScreen {

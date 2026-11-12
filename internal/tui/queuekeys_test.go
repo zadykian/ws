@@ -50,6 +50,9 @@ func TestTheQueueScreenLeavesForTheStateOfTheListInFocus(t *testing.T) {
 	}
 }
 
+// queueShown is the words of s's frame.
+func queueShown(s queueScreen) string { return stripped(s.View().Content) }
+
 // queueSent returns s past msgs.
 func queueSent(s queueScreen, msgs ...tea.Msg) queueScreen {
 	for _, msg := range msgs {

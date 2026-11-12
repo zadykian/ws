@@ -20,7 +20,7 @@ func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work
 // a stage from what its machine says. A QueueChoice that runs nothing, or goes to the form or the state screen, says it by its Next.
 func PickStages(ctx context.Context, c Config, title string, stages []Stage, scan Work) (QueueChoice, error) {
 	picks := make(chan QueueChoice, 1)
-	return pick(ctx, c, newQueueScreen(title, c.Theme, stages, picks), picks, scan)
+	return pick(ctx, c, openQueue(title, c.Theme, stages, picks), picks, scan)
 }
 
 // Reopen draws the lists again as left, a NextState choice, found them, and returns the next choice. No

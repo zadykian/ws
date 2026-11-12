@@ -177,7 +177,7 @@ func (s queueScreen) typed(msg tea.Msg) queueScreen {
 
 // queueChoice is what the lists hold, to leave for next.
 func (s queueScreen) queueChoice(next Next) QueueChoice {
-	c := QueueChoice{Next: next, Side: s.list.side}
+	c := QueueChoice{Next: next, Side: s.list.side, left: s}
 	if next == NextRun || next == NextCheck {
 		c.Only, c.Partial, c.Whole = s.list.only(), s.list.partial(), s.list.ticked()
 	}
