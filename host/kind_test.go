@@ -57,7 +57,7 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 			[]step.ChangeKind{step.Write, step.Restart}},
 		{"restart", host.Unit{M: m, U: u, Out: out, Name: "on.service", Run: host.Running, Watch: watch},
 			[]step.ChangeKind{step.Write, step.Restart}},
-		{"user unit", host.UserUnit{M: m, User: ann, UID: 1000, Out: out, Name: "a.service"},
+		{"user unit", host.UserUnit{M: m, Account: host.Account{User: ann, UID: 1000}, Out: out, Name: "a.service"},
 			[]step.ChangeKind{step.Restart}},
 		{"linger", host.Linger{M: m, User: ann, Out: out}, []step.ChangeKind{step.Write}},
 		{"deb", host.Deb{M: m, Path: "/a.deb"}, []step.ChangeKind{step.Install}},

@@ -25,7 +25,7 @@ func userUnitFixture(booted bool) (*effecttest.Machine, host.UserUnit, *effectte
 		m.Results[userShow[len("root "):]+c] = effecttest.Result{}
 	}
 	out := &effecttest.Out{}
-	return m, host.UserUnit{M: m, User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, Out: out,
+	return m, host.UserUnit{M: m, Account: host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, Out: out,
 		Name: "docker.service"}, out
 }
 
