@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/step"
 )
 
 // errLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a
@@ -94,4 +96,54 @@ func (l userLines) after(found path, holds bool) []byte {
 		text = append(text, '\n')
 	}
 	return append(text, l.Lines...)
+}
+
+// changes plans what read found, or stops at its error, at a link that lacks the lines.
+func (l userLines) changes(found path, link string, holds bool, err error) ([]step.Change, error) {
+	switch {
+	case err != nil:
+		return nil, err
+	case holds:
+		return nil, nil
+	case !found.Exists:
+		return []step.Change{Write{l.Path, nil, l.after(found, false), false, l.Mode}}, nil
+	case link != "":
+		return nil, linesError{errLinked, fmt.Sprintf("%s is a link to %s: %s", l.Path, link, l.remedy())}
+	}
+	return []step.Change{keep(l.Path, l.Now), Write{l.Path, found.Text, l.after(found, false), true, found.Mode.Perm()}}, nil
+}
+
+// plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
+func (l userLines) plan(ctx context.Context) ([]step.Change, error) {
+	found, link, holds, err := l.read(ctx)
+	return l.changes(found, link, holds, err)
+}
+
+// item says how the file stands against what read found. A conflict is where the plan stops.
+func (l userLines) item(found path, link string, holds bool, err error) (step.Item, error) {
+	item := lineItem(l.Path, cmp.Or(l.Name, l.Shown), found.Exists, holds)
+	switch {
+	case errors.Is(err, errMisplaced):
+		item.Found, item.Conflict = "out of place", err.Error()
+	case err != nil:
+		return item, err
+	case link != "" && !holds:
+		item.Conflict = "a link to " + link + ": " + l.remedy()
+	}
+	return item, nil
+}
+
+// Report reads the file as a plan does.
+func (l userLines) Report(ctx context.Context) ([]step.Item, error) {
+	found, link, holds, err := l.read(ctx)
+	item, err := l.item(found, link, holds, err)
+	return []step.Item{item}, err
+}
+
+// keep copies the old file to PATH.TIME~. This is the one stamp of the copies.
+func keep(file string, now func() time.Time) Backup {
+	if now == nil {
+		now = time.Now
+	}
+	return Backup{file, file + "." + now().Format("20060102150405") + "~"}
 }
