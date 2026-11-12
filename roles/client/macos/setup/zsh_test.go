@@ -20,7 +20,7 @@ func zshStep(m *effecttest.Machine, out *effecttest.Out) *setup.Zsh {
 		Now: func() time.Time { return time.Date(2026, 11, 9, 10, 0, 0, 0, time.UTC) }}
 }
 
-// The second plan finds mac/zshrc's header, so the hook that ws embeds is its own.
+// The second plan finds roles/client/macos/mac/zshrc's header, so the hook that ws embeds is its own.
 func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := zshStep(m, &effecttest.Out{})

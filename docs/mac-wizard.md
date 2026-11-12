@@ -185,16 +185,16 @@ alone: another version's names other steps.
 
 ## ws's run
 
-The stage sends `mac/wizard-remote.sh`, the wizard's remote script, to root on ws over ssh at a
-direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server apply --json` in a
-unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a UTF-8 locale.
-That ws runs its roles ([The `playbook` job](checks.md#the-playbook-job)). The wizard prints the
-unit's log until it ends, past the [event lines](../README.md#events), and stops where the run
-fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when the Mac sleeps,
-and the next run of the wizard follows it to its end, and replays the log. A unit of part of ws
-stops a run of other steps, which it would leave unrun, until it ends. Where `WS_USER` isn't
-the server's default, the stage first names it as `ws_user` in `/etc/ws/host_vars.yml` on ws, with
-the files script, so the roles set up that user. Where the file names another, it changes the line.
+The stage sends `roles/client/macos/mac/wizard-remote.sh`, the wizard's remote script, to root on ws
+over ssh at a direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server apply
+--json` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's `HOME` and a
+UTF-8 locale. That ws runs its roles ([The `playbook` job](checks.md#the-playbook-job)). The wizard
+prints the unit's log until it ends, past the [event lines](../README.md#events), and stops where
+the run fails. A first run takes 20 to 40 minutes. The unit goes on where ssh drops, as when the Mac
+sleeps, and the next run of the wizard follows it to its end, and replays the log. A unit of part of
+ws stops a run of other steps, which it would leave unrun, until it ends. Where `WS_USER` isn't the
+server's default, the stage first names it as `ws_user` in `/etc/ws/host_vars.yml` on ws, with the
+files script, so the roles set up that user. Where the file names another, it changes the line.
 
 Each run writes its unit and status in `/var/lib/ws-wizard/last` on ws. A full run, as the stage's,
 with no argument, removes `/var/lib/ws-wizard/run` as it starts. As it ends, it writes these words:

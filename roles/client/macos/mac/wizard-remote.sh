@@ -3,7 +3,7 @@
 # through sudo where ssh logs in as another user. So the script is the Mac's clone's, whatever ws's
 # clone holds, or where ws has none:
 #
-#   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <mac/wizard-remote.sh
+#   ssh -o HostName=ADDRESS -o Port=PORT ws sh -s -- OP [ARG...] <roles/client/macos/mac/wizard-remote.sh
 #
 # - status prints what the wizard reads of ws, a line each, as NAME VALUE, with - for a value that
 #   is missing. user is the ws_user that host_vars names. run is the ws version and status of the

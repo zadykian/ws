@@ -25,7 +25,7 @@ const (
 // updates itself, as ws.ghostty says.
 type Ghostty struct {
 	Home string
-	// Settings is the text of mac/ws.ghostty.
+	// Settings is the text of roles/client/macos/mac/ws.ghostty.
 	Settings []byte
 	M        effect.Machine
 	Out      effect.Out
@@ -100,7 +100,7 @@ func (g *Ghostty) conf() string {
 	return found
 }
 
-// files plans ws.ghostty beside Ghostty's config, mac/ws.ghostty under the header, and the line
+// files plans ws.ghostty beside Ghostty's config, roles/client/macos/mac/ws.ghostty under the header, and the line
 // that reads it at the end of that config, once. The old config stays as PATH.TIME~. Ghostty reads
 // a config-file after the file that names it (Config.zig's config-file), so ws.ghostty's settings
 // win over the config's own. It warns, and leaves the config unchanged, where ws.ghostty is not its own, the config can't be

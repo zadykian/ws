@@ -31,7 +31,7 @@ const (
 type Tunnel struct {
 	Conf conf.Conf
 	Home string
-	// Plist is the text of mac/com.github.zadykian.ws-tunnel.plist.
+	// Plist is the text of roles/client/macos/mac/com.github.zadykian.ws-tunnel.plist.
 	Plist []byte
 	// Self returns the bytes of this ws, which a build from the clone made. Nil means the
 	// executable's file.

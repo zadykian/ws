@@ -32,8 +32,8 @@ Fresh load its defaults and exit 0.
 
 - Updates, telemetry and the session daemon are off: `check_for_updates`, `self_update` and
   `auto_attach` are false. Fresh reads a missing key as its default, so the render writes each.
-- The ruler, visible whitespace and auto-save match Zed's `mac/zed/global_settings.json`, and a
-  test holds them equal.
+- The ruler, visible whitespace and auto-save match Zed's
+  `roles/client/macos/mac/zed/global_settings.json`, and a test holds them equal.
 - A `//` comment in the template gives the reason for a quirk, and a block at its end lists the
   keys left out. Fresh skips the comments.
 - The file starts with a comment that says ws wrote it. Fresh reads JSONC.

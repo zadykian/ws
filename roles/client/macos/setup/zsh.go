@@ -23,7 +23,7 @@ const (
 // ~/.zshrc, where the hook is not ws's or ~/.zshrc is a link that lacks the line.
 type Zsh struct {
 	Home string
-	// Hook is mac/zshrc, its first line zshHeader.
+	// Hook is roles/client/macos/mac/zshrc, its first line zshHeader.
 	Hook []byte
 	M    effect.Machine
 	Out  effect.Out

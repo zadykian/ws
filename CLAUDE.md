@@ -3,8 +3,8 @@
 ws sets up the maintainer's development server from code: `ws server apply`, which runs on the
 machine itself, each role as Go steps. Its roles set up packages, SSH by key and a firewall, the
 links to the Mac, an IKEv2 VPN where a profile is given, and the fans. Then the shell, tmux,
-lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `mac/` sets up the Mac
-that works on the server. The rest is the docs, the lint gates' tools and CI.
+lazygit, Fresh, Docker, claude, SigNoz with its collector, and Zed's server. `roles/client/macos/`
+sets up the Mac that works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
@@ -21,7 +21,7 @@ that works on the server. The rest is the docs, the lint gates' tools and CI.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
-- `mac/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
+- `roles/client/macos/`: the Mac's side, the files that the ws CLI embeds ([The Mac](docs/mac.md)). These are the
   wizard's scripts for ws in POSIX sh, `ws.ghostty`, Ghostty's settings, and `zed/`, Zed's settings
   and keymap. `zshrc` is the zsh hook that turns off the modes that a drop leaves on.
 - `docs/`: a page per role; `releases.md`; `mac.md`, with `mac-git.md`, `mac-wizard.md`,

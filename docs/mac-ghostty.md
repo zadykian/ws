@@ -34,7 +34,7 @@ Regular`, finds no font, and Ghostty falls back to its own JetBrains Mono, which
 
 ## Ghostty's settings
 
-The settings are in [`mac/ws.ghostty`](../mac/ws.ghostty), which `ws` embeds and the script writes,
+The settings are in [`roles/client/macos/mac/ws.ghostty`](../roles/client/macos/mac/ws.ghostty), which `ws` embeds and the script writes,
 under its header, to `ws.ghostty`. That file goes beside the config file that Ghostty's menu opens:
 `config.ghostty` or `config` in `~/Library/Application Support/com.mitchellh.ghostty`, then in
 `~/.config/ghostty`. That is the first that holds anything, else the first that exists. Where none
@@ -42,7 +42,7 @@ exists, the script makes the first. It adds `config-file = ?ws.ghostty` at the e
 once, and keeps the old file as `PATH.TIME~`. Ghostty reads an included file after the file that
 names it, so each setting of `ws.ghostty` wins over the config's own. A later `font-family` adds a
 fallback rather than replace the list, so `ws.ghostty` empties it first. Change the settings in
-`mac/ws.ghostty`, build `ws` again and run it.
+`roles/client/macos/mac/ws.ghostty`, build `ws` again and run it.
 
 The script replaces `ws.ghostty` at each run. It warns and changes neither file where `ws.ghostty`
 is one it did not write, or where it can't read the config. Where the config is a link, as a
@@ -117,7 +117,7 @@ hosts](mac.md#sshs-hosts) says how to lift the ban.
 
 A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions turned on, as their
 resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
-keys arrive as escape codes. `ws mac apply` writes [`mac/zshrc`](../mac/zshrc) as
+keys arrive as escape codes. `ws mac apply` writes [`roles/client/macos/mac/zshrc`](../roles/client/macos/mac/zshrc) as
 `~/.config/ws/zshrc`, and adds `source ~/.config/ws/zshrc` at the end of `~/.zshrc`. It keeps the
 old file as `~/.zshrc.TIME~`, and warns where `~/.zshrc` is a link that lacks the line.
 

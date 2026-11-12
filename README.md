@@ -40,7 +40,7 @@ Each role has a page of its own. A role is Go steps of ws:
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](docs/zed-projects.md) cover SQL Server and Ansible.
 
-`mac/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](docs/mac.md).
+`roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](docs/mac.md).
 
 On a new Mac with Apple silicon, one line installs ws's binary. Then `ws mac wizard` installs
 Apple's Command Line Tools and Homebrew, and sets up the rest ([The Mac's wizard](docs/mac-wizard.md)):

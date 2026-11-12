@@ -25,7 +25,7 @@ and `zed ssh://ws/PATH` opens a project on ws.
 The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lookup. It makes
 `~/.config` first where missing.
 
-- `global_settings.json` is [the file in `mac/zed/`](../mac/zed/global_settings.json), whole, with
+- `global_settings.json` is [the file in `roles/client/macos/mac/zed/`](../roles/client/macos/mac/zed/global_settings.json), whole, with
   the header as its first line. Each run replaces it, so changes made there are lost. A file whose
   first line is not the header is left, with a warning: move it away, and the next run writes
   ws's. Zed parses it as it parses `settings.json`, so the header comment is valid.
@@ -37,8 +37,8 @@ This is the reverse of Ghostty's order. A key set only in `global_settings.json`
 default in the Settings Editor.
 
 The file sets a ruler at column 120, shows all whitespace, and saves 3 seconds after an edit, from
-`mac/zed/global_settings.json`. CI parses the file but sees no Zed obey it: check the three once on
-a remote project.
+`roles/client/macos/mac/zed/global_settings.json`. CI parses the file but sees no Zed obey it: check
+the three once on a remote project.
 
 The seed holds one connection, `{ "host": "ws" }`. Zed records an opened project by its index in the
 list of `ssh_connections` in `settings.json`, and arrays replace rather than merge, so the
@@ -85,7 +85,7 @@ server to every YAML file, Ansible's too.
 ## The keymap
 
 The step also writes `~/.config/zed/keymap.json`, which is
-[`mac/zed/keymap.json`](../mac/zed/keymap.json) whole. That plain file is the source of the keys,
+[`roles/client/macos/mac/zed/keymap.json`](../roles/client/macos/mac/zed/keymap.json) whole. That plain file is the source of the keys,
 and a `//` comment beside a binding gives its reason. `base_keymap` stays `Zed`.
 The file carries its own header, and the step takes the start of line 1,
 `// Written by github.com/zadykian/ws`, as ws's mark.
@@ -196,5 +196,5 @@ A change needs a re-login, or `activateSettings -u`. That is why ws does not do 
 
 ## Changing the settings
 
-Edit the two files in `mac/zed/` by hand. They are plain files, and `mac/zed_test.go` checks that
-each is valid JSON under its comment lines.
+Edit the two files in `roles/client/macos/mac/zed/` by hand. They are plain files, and
+`roles/client/macos/mac/zed_test.go` checks that each is valid JSON under its comment lines.
