@@ -114,3 +114,26 @@ func TestAQueueCountsItsStagesOnAndReached(t *testing.T) {
 		t.Errorf("count = %d, %d, %d", on, scanned, all)
 	}
 }
+
+func TestWhatNoScanReachedStartsChosen(t *testing.T) {
+	q := queueOf(testStages()).take(planned("", "Tools", 0)).opened()
+	if want := slices.Concat(slices.Repeat([]string{"[#]"}, 8), []string{"[x]"}); !slices.Equal(queueBoxes(q), want) {
+		t.Errorf("boxes = %q, want %q", queueBoxes(q), want)
+	}
+}
+
+func TestRolesUnreadFollowAStageThatFoundNothing(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base"}}}}
+	if got := queueOf(stages).take(planned("", "Run", 0)).opened().only(); len(got) != 0 {
+		t.Errorf("only = %q", got)
+	}
+}
+
+func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	q := queueOf(stages).take(planned("base", "one", 0)).take(planned("base", "two", 1)).
+		take(planned("", "Run", 0, oneChange("a"))).opened()
+	if want := []string{"[x]", "[x]", "[x]"}; !slices.Equal(queueBoxes(q), want) {
+		t.Errorf("boxes = %q, want %q", queueBoxes(q), want)
+	}
+}

@@ -126,3 +126,46 @@ func (q queue) count() (on, scanned, all int) {
 	}
 	return on, scanned, all
 }
+
+// due says that a run has work in the stage: the scan found some, or never reached it.
+func due(s queueStage) bool {
+	return dueAt(s.row.state, false)
+}
+
+// dueAt says that a step in state has work. What no scan named under a stage that found nothing to
+// do has none, and clean says that the stage found nothing.
+func dueAt(state stepState, clean bool) bool {
+	switch state {
+	case stepSame, stepLeftOut:
+		return false
+	case stepOpen:
+		return !clean
+	}
+	return true
+}
+
+// opened returns the queue as a scan's end leaves it. What is due starts chosen, as the wizard left
+// alone runs each stage it reaches, and a check stops short on a new Mac.
+func (q queue) opened() queue {
+	q.stages = slices.Clone(q.stages)
+	for i, s := range q.stages {
+		q.stages[i].row.chosen = due(s)
+		q.stages[i].list.rows = slices.Clone(s.list.rows)
+		for j, r := range s.list.rows {
+			q.stages[i].list.rows[j].chosen = dueAt(r.state, s.row.state == stepSame)
+		}
+	}
+	return q.settled().whole(due)
+}
+
+// whole returns the queue with every step on in a stage that want takes and that has none on. ws's
+// run can be due while its roles read clean, and a stage with nothing on wouldn't run.
+func (q queue) whole(want func(queueStage) bool) queue {
+	q.stages = slices.Clone(q.stages)
+	for i, s := range q.stages {
+		if on, _, _ := s.list.tally(); on == 0 && want(s) {
+			q.stages[i].list = s.list.boxed(true)
+		}
+	}
+	return q.settled()
+}
