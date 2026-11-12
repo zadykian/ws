@@ -11,8 +11,8 @@ import (
 	"github.com/zadykian/ws/internal/sshcfg"
 )
 
-// read reads ~/.ssh as the directory stands, and stops at a config.d/ws that is not ws's and at an
-// Include below a setting.
+// read reads ~/.ssh as the directory stands, and stops at a config.d/ws that is not ws's. Its Stop is
+// where ~/.ssh/config can't take the Include.
 func (s SSH) read(ctx context.Context) (sshFacts, error) {
 	dir := s.Home + "/.ssh"
 	f := sshFacts{Home: s.Home}
