@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/internal/tunnel"
-	"github.com/zadykian/ws/internal/uapi"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 )
 
 // reload reads tunnel.conf and routes.d again, on SIGHUP. A new key or path has the paths tried

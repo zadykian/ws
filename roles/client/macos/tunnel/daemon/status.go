@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/internal/tunnel"
-	"github.com/zadykian/ws/internal/uapi"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 )
 
 // LogFile is launchd's log of the daemon, which status names where the daemon is not running.

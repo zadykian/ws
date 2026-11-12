@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/internal/tunnel"
-	"github.com/zadykian/ws/internal/uapi"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 )
 
 // keepalive is the peer's persistent keepalive, in seconds.
