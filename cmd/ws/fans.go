@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/internal/fans"
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon"
 )
 
 // fansConfig is the config of ws server fans, which the fans role writes.

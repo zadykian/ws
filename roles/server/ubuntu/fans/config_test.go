@@ -3,7 +3,7 @@ package fans
 import (
 	"testing"
 
-	daemon "github.com/zadykian/ws/internal/fans"
+	daemon "github.com/zadykian/ws/roles/server/ubuntu/fans/daemon"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
