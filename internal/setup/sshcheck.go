@@ -21,14 +21,14 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	// An agent that does not answer leaves a named .pub to read, and a stop with no line to add.
 	keys, _, _ := SecretiveKeys(ctx, m, home)
 	if c.IdentityPubKey == "" {
-		return sshcfg.Identity{}, unnamed("WS_IDENTITY_PUB_KEY", "ws's login key", keys)
+		return sshcfg.Identity{}, unnamed(LoginKey, keys)
 	}
 	id := sshcfg.NamedIdentity(c.IdentityPubKey, c.IdentityAgent, home)
 	file := sshcfg.Expand(id.Pub, home)
 	if k, ok := held(keys, file, home); ok {
 		id.Pub, id.Text = k.Pub(), k.Line+"\n"
 		_, err := sshcfg.ParsePub(k.Line)
-		return id, refused(sshcfg.Expand(id.Pub, home), "WS_IDENTITY_PUB_KEY", err)
+		return id, LoginKey.refused(sshcfg.Expand(id.Pub, home), err)
 	}
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -43,7 +43,7 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 		return id, fmt.Errorf("cannot read %s: make it readable, or name another in mac.conf's WS_IDENTITY_PUB_KEY", file)
 	}
 	if _, err := sshcfg.ParsePub(string(text)); err != nil {
-		return id, refused(file, "WS_IDENTITY_PUB_KEY", err)
+		return id, LoginKey.refused(file, err)
 	}
 	if _, err := m.Run(ctx, "ssh-keygen", "-l", "-f", file); err != nil {
 		return id, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+
@@ -51,21 +51,6 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	}
 	id.Text = string(text)
 	return id, nil
-}
-
-// refused is the stop where the .pub of file is no key that ws takes, err being why. The remedy
-// names the variable of mac.conf that names the file. A nil err passes.
-func refused(file, name string, err error) error {
-	var typ sshcfg.TypeError
-	switch {
-	case err == nil:
-		return nil
-	case errors.Is(err, sshcfg.ErrCertificate):
-		return fmt.Errorf("%s %w: name its key's own .pub in mac.conf's %s", file, err, name)
-	case errors.As(err, &typ):
-		return fmt.Errorf("%s %w: name the .pub of a P-256 or ed25519 key in mac.conf's %s", file, err, name)
-	}
-	return fmt.Errorf("%s %w", file, err)
 }
 
 // cldTabs is whether Ghostty's app is there and the cld in ~/.local/bin has restore tabs. With it,

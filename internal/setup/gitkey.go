@@ -22,7 +22,7 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 	if g.Conf.GitSigningPubKey == "" {
 		// An agent that does not answer leaves a stop with no line to add.
 		keys, _, _ := SecretiveKeys(ctx, g.M, g.Home)
-		return gitKey{}, unnamed("WS_GIT_SIGNING_PUB_KEY", "git's signing key", keys)
+		return gitKey{}, unnamed(SigningKey, keys)
 	}
 	pub := sshcfg.Expand(g.Conf.GitSigningPubKey, g.Home)
 	if sshcfg.SecretiveKey(pub, g.Home) {
@@ -31,7 +31,7 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 		if k, ok := held(keys, pub, g.Home); ok {
 			key, err := sshcfg.ParsePub(k.Line)
 			if err != nil {
-				return gitKey{}, refused(pub, "WS_GIT_SIGNING_PUB_KEY", err)
+				return gitKey{}, SigningKey.refused(pub, err)
 			}
 			return gitKey{Pub: sshcfg.Expand(k.Pub(), g.Home), Public: key.String(), Text: k.Line + "\n"}, nil
 		}
@@ -50,7 +50,7 @@ func (g *Git) key(ctx context.Context) (gitKey, error) {
 	}
 	key, err := sshcfg.ParsePub(string(text))
 	if err != nil {
-		return gitKey{}, refused(pub, "WS_GIT_SIGNING_PUB_KEY", err)
+		return gitKey{}, SigningKey.refused(pub, err)
 	}
 	if _, err := g.M.Run(ctx, "ssh-keygen", "-l", "-f", pub); err != nil {
 		return gitKey{}, fmt.Errorf("ssh-keygen cannot read %s: name the .pub of a P-256 or ed25519 key in "+

@@ -51,7 +51,8 @@ func held(keys []sshcfg.AgentKey, pub, home string) (sshcfg.AgentKey, bool) {
 // unnamed is the stop where mac.conf names no key for the use. It gives the line that would name
 // each P-256 key of keys, the agent's, by its comment and fingerprint. ws's OpenSSH reads no other
 // key of Secretive's.
-func unnamed(name, use string, keys []sshcfg.AgentKey) error {
+func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
+	name, use := keyUses[u].name, keyUses[u].words
 	var lines []string
 	for _, k := range keys {
 		if k.P256() {
