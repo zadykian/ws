@@ -55,7 +55,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []
 		return []host.Resource{
 			host.Linger{M: m, User: user, Out: out},
 			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: host.Running},
-			Restore{M: m, User: user, UID: a.UID, Out: out},
+			Restore{M: m, Account: a, Out: out},
 		}, nil
 	}))
 }

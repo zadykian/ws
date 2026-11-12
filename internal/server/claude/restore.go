@@ -18,13 +18,12 @@ import (
 // the first login. Another is a shell where systemctl --user reaches it. A container has no
 // systemd, so Restore plans nothing there.
 type Restore struct {
-	M    effect.Machine
-	User host.User
-	UID  int
-	Out  effect.Out
+	M       effect.Machine
+	Account host.Account
+	Out     effect.Out
 }
 
-func (r Restore) cld() string { return r.User.Home + "/.local/bin/cld" }
+func (r Restore) cld() string { return r.Account.Home + "/.local/bin/cld" }
 
 // loginShell returns the command line of a login shell of the user's, which runs the arguments
 // after it. The unit keeps the PATH cld setup restore runs with, where cld restore sessions finds
@@ -32,8 +31,8 @@ func (r Restore) cld() string { return r.User.Home + "/.local/bin/cld" }
 // clean environment, not the caller's: /etc/environment, as PAM gives a login, then bash's login
 // files. With the user's bus, systemctl --user finds the user's systemd.
 func (r Restore) loginShell(args ...string) (string, []string) {
-	argv := append([]string{"-i", "HOME=" + r.User.Home, "USER=" + r.User.Name, "LOGNAME=" + r.User.Name,
-		"SHELL=/bin/bash"}, host.SessionEnv(r.UID)...)
+	argv := append([]string{"-i", "HOME=" + r.Account.Home, "USER=" + r.Account.Name, "LOGNAME=" + r.Account.Name,
+		"SHELL=/bin/bash"}, host.SessionEnv(r.Account.UID)...)
 	argv = append(argv, "/bin/bash", "-c", `set -a && . /etc/environment && exec /bin/bash -l "$@"`, "bash")
 	return "env", append(argv, args...)
 }
@@ -87,7 +86,7 @@ func (setupRestore) String() string { return "have the user's systemd restore cl
 // and only says so, so it fails unless cld says lingering is on.
 func (s setupRestore) Apply(ctx context.Context) error {
 	name, args := s.r.loginShell("-c", setup, s.r.cld())
-	out, err := s.r.User.Output(ctx, s.r.M, name, args...)
+	out, err := s.r.Account.Output(ctx, s.r.M, name, args...)
 	if err != nil {
 		return err
 	}
@@ -111,14 +110,14 @@ func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	name, args := r.loginShell("-c", compare, r.cld())
-	out, err := r.User.Output(ctx, r.M, name, args...)
+	out, err := r.Account.Output(ctx, r.M, name, args...)
 	if err != nil {
 		return nil, err
 	}
 	if stale.Match(out) {
 		return []host.Change{setupRestore{r}}, nil
 	}
-	_, err = r.M.Stat(r.User.Home + "/.config/systemd/user/default.target.wants/cld-restore.service")
+	_, err = r.M.Stat(r.Account.Home + "/.config/systemd/user/default.target.wants/cld-restore.service")
 	if errors.Is(err, fs.ErrNotExist) {
 		return []host.Change{setupRestore{r}}, nil
 	}
