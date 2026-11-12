@@ -32,8 +32,8 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 	query := "dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n "
 	m.Results[query+"git"] = effecttest.Result{Out: []byte("git ii\n")}
 	m.Results[query+"curl"] = effecttest.Result{Out: []byte("curl un\n")}
-	m.Results["dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n a"] = effecttest.Result{Out: []byte("0 ii\n")}
-	m.Results["dpkg-deb -f /a.deb Package Version"] = effecttest.Result{Out: []byte("Package: a\nVersion: 1\n")}
+	m.Results["dpkg-query -W -f ${Package} ${Version} ${db:Status-Abbrev}\n a"] = effecttest.Result{Out: []byte("a 0 ii\n")}
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	u := &effecttest.Units{States: map[string]effect.UnitState{"on.service": {Active: true}}}
 	out := &effecttest.Out{}
 	ann := host.User{Name: "ann", Home: "/home/ann"}
@@ -60,7 +60,9 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 		{"user unit", host.UserUnit{M: m, Account: host.Account{User: ann, UID: 1000}, Out: out, Name: "a.service"},
 			[]step.ChangeKind{step.Restart}},
 		{"linger", host.Linger{M: m, User: ann, Out: out}, []step.ChangeKind{step.Write}},
-		{"deb", host.Deb{M: m, Path: "/a.deb"}, []step.ChangeKind{step.Install}},
+		{"package", host.Package{M: m, Name: "a", Source: host.PinnedFile{M: m, Version: "1", SHA256: map[string]string{"amd64": "s"},
+			URL: func(version, arch string) string { return "https://x/a_" + version + arch + ".deb" }}},
+			[]step.ChangeKind{step.Write, step.Write, step.Install}},
 	}
 	for _, tt := range tests {
 		if got := kinds(t, tt.r); !slices.Equal(got, tt.want) {

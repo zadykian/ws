@@ -3,6 +3,7 @@ package effect_test
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -27,8 +28,8 @@ func TestDownloadRenamesOnAMatchAlone(t *testing.T) {
 	a := effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o644}
 	m := effect.OSMachine{}
 	ctx := context.Background()
-	if err := m.Download(ctx, srv.URL+"/f", path, strings.Repeat("0", 64), a); err == nil || !strings.Contains(err.Error(), "SHA-256") {
-		t.Errorf("a wrong sum: err = %v, want a SHA-256 error", err)
+	if err := m.Download(ctx, srv.URL+"/f", path, strings.Repeat("0", 64), a); !errors.Is(err, effect.ErrSHA256) || !strings.Contains(err.Error(), "SHA-256 is ") {
+		t.Errorf("a wrong sum: err = %v, want an ErrSHA256 error", err)
 	}
 	if _, err := os.Stat(path); err == nil {
 		t.Error("a wrong sum left the file")

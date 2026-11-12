@@ -27,9 +27,9 @@ func TestDotfilesAreTheRolesFiles(t *testing.T) {
 }
 
 func TestDotnetArch(t *testing.T) {
-	for goarch, want := range map[string]string{"arm64": "arm64", "amd64": "x64", "riscv64": "x64"} {
-		if got := dotnetArch(goarch); got != want {
-			t.Errorf("%s: %s, want %s", goarch, got, want)
+	for arch, want := range map[string]string{"arm64": "arm64", "amd64": "x64", "riscv64": "x64"} {
+		if got := dotnetArch(arch); got != want {
+			t.Errorf("%s: %s, want %s", arch, got, want)
 		}
 	}
 }

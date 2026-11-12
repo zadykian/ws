@@ -35,7 +35,7 @@ func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out
 	if v.Profile == "" {
 		return nil
 	}
-	fetch := download(m)
+	file := binaryFile(m)
 	// A profile that the secrets lack fails the run before anything changes, as the values do. A
 	// read holds no secrets, so it says nothing of the profile.
 	ready := func() error {
@@ -48,11 +48,11 @@ func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out
 		return nil
 	}
 	return []step.Step{
-		host.Lazy{Title: downloadStep, Parts: func(ctx context.Context) ([]host.Resource, error) {
+		host.Lazy{Title: downloadStep, Parts: func(context.Context) ([]host.Resource, error) {
 			if err := ready(); err != nil {
 				return nil, err
 			}
-			return fetch(ctx)
+			return []host.Resource{file}, nil
 		}},
 		// The forwarding needs not the binary, so a check shows its plan while the download is due.
 		host.Lazy{Title: forwardStep, Parts: func(context.Context) ([]host.Resource, error) {

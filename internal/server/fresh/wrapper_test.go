@@ -127,7 +127,7 @@ func TestTheWrapperRunsWithNoTmuxBinary(t *testing.T) {
 func TestTheWrapperIsWrittenForEveryUser(t *testing.T) {
 	m, v := userMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
-	m.Results[query] = effecttest.Result{Out: []byte(version + " ii\n")}
+	m.Results[packageQuery] = effecttest.Result{Out: []byte("fresh-editor " + version + " ii\n")}
 	out := &effecttest.Out{}
 	if _, err := step.Run(context.Background(), Steps(v, secrets.Secrets{}, m, out), out, false); err != nil {
 		t.Fatal(err)

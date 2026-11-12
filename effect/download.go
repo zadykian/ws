@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,10 @@ import (
 
 	"github.com/google/renameio/v2"
 )
+
+// ErrSHA256 is what a body of a wrong SHA-256 wraps, so that a caller can tell it from a failed
+// fetch and not retry it.
+var ErrSHA256 = errors.New("SHA-256")
 
 // Download streams the URL through SHA-256 into a pending file, and renames it over path only
 // where the sum, in hex, matches. Otherwise nothing is left and path is unchanged.
@@ -38,7 +43,7 @@ func (OSMachine) Download(ctx context.Context, url, path, sum string, a Attrs) e
 		return fmt.Errorf("download %s: %w", url, err)
 	}
 	if got := hex.EncodeToString(h.Sum(nil)); got != sum {
-		return fmt.Errorf("download %s: SHA-256 is %s, want %s", url, got, sum)
+		return fmt.Errorf("download %s: %w is %s, want %s", url, ErrSHA256, got, sum)
 	}
 	if err := f.Chmod(a.Mode.Perm()); err != nil {
 		return err

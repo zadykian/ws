@@ -12,12 +12,11 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Step names. Those after the download wait on the steps before them.
+// Step names. Those after the install wait on the steps before them.
 const (
-	downloadStep = "Fresh download"
-	installStep  = "Fresh install"
-	wrapperStep  = "Fresh wrapper"
-	configStep   = "Fresh config"
+	installStep = "Fresh install"
+	wrapperStep = "Fresh wrapper"
+	configStep  = "Fresh config"
 )
 
 // wrapperPath comes before the .deb's /usr/bin/fresh on every PATH of Ubuntu's, as docs/fresh.md says.
@@ -40,8 +39,7 @@ var themeFile []byte
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
-		host.Lazy{Title: downloadStep, Parts: download(m)},
-		host.Lazy{Title: installStep, After: downloadStep, Parts: install(m)},
+		host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}},
 		host.Group{Title: wrapperStep, After: installStep, Parts: []host.Resource{
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},

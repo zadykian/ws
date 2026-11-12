@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"time"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/step"
@@ -33,8 +34,35 @@ func (c fetch) String() string { return fmt.Sprintf("download %s to %s", c.d.URL
 
 func (fetch) Kind() step.ChangeKind { return step.Write }
 
+// downloadTries and retryWait are the fetch's: five tries, ten seconds apart, as a server can fail
+// for a moment. A test shortens the wait.
+const downloadTries = 5
+
+var retryWait = 10 * time.Second
+
+// Apply fetches the file again after a failure, except a wrong SHA-256, which a new try won't
+// mend. The error is the last try's, with the earlier ones' kept.
 func (c fetch) Apply(ctx context.Context) error {
-	return c.d.M.Download(ctx, c.d.URL, c.d.Path, c.d.SHA256, c.d.attrs())
+	var errs []error
+	for try := 1; try <= downloadTries; try++ {
+		err := c.d.M.Download(ctx, c.d.URL, c.d.Path, c.d.SHA256, c.d.attrs())
+		if err == nil {
+			return nil
+		}
+		if errors.Is(err, effect.ErrSHA256) {
+			return err
+		}
+		errs = append(errs, err)
+		if try == downloadTries {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return errors.Join(append(errs, ctx.Err())...)
+		case <-time.After(retryWait):
+		}
+	}
+	return errors.Join(errs...)
 }
 
 type setAttrs struct{ d Download }
