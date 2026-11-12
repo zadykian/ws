@@ -45,7 +45,10 @@ func (s SSH) WaitsOn() string {
 
 // Plan reads ~/.ssh and the Mac, and checks the new file with ssh.
 func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
-	f, err := s.read()
+	f, err := s.read(ctx)
+	if err == nil {
+		err = f.Stop
+	}
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -62,7 +65,7 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	// The line is counted in the text the run leaves, so that the runner's second Plan names the
 	// same line and the warning shows once.
-	for _, h := range sshcfg.OwnHosts(string(userConfigText(f)), "ws") {
+	for _, h := range sshcfg.OwnHosts(string(s.configLines().after(f.UserConfig, f.IncludeLine > 0)), "ws") {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}
@@ -87,7 +90,7 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	if s.Again {
 		return nil, nil
 	}
-	f, err := s.read()
+	f, err := s.read(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +98,8 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	dir := s.Home + "/.ssh"
-	there := f.UserConfig.Exists
-	include := lineItem(dir+"/config", includeLine, there, there && !f.UserConfigNeedsInclude)
-	if own := sshcfg.OwnHosts(string(f.UserConfig.Text), "ws"); len(own) > 0 {
+	include := f.Include
+	if own := sshcfg.OwnHosts(string(f.UserConfig.Text), "ws"); len(own) > 0 && include.Conflict == "" {
 		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
 			"first, win where both set a key", own[0].Line)
 	}

@@ -31,12 +31,12 @@ type sshFacts struct {
 	DirLink    dirLink
 	Ws         path // ~/.ssh/config.d/ws
 	UserConfig path // ~/.ssh/config, whose text is the file a link points to
-	// UserConfigNeedsInclude is whether it lacks the Include.
-	UserConfigNeedsInclude bool
 	// IncludeLine is the line of its Include of config.d/ws, or 0.
 	IncludeLine int
-	// Stamp is the time suffix of the copy of the old ~/.ssh/config.
-	Stamp string
+	// Config plans ~/.ssh/config, or Stop says why a run can't. Include is how it stands.
+	Config  []step.Change
+	Stop    error
+	Include step.Item
 }
 
 // sshChanges returns the changes that bring ~/.ssh to the new text of config.d/ws and to an
@@ -45,24 +45,7 @@ func sshChanges(f sshFacts, text []byte) []step.Change {
 	cs := append([]step.Change(nil), f.Dirs...)
 	dir := f.Home + "/.ssh"
 	cs = append(cs, userFile{Path: dir + "/config.d/ws", Text: text, Mode: sshFileMode}.change(f.Ws)...)
-	user := dir + "/config"
-	switch {
-	case !f.UserConfig.Exists:
-		cs = append(cs, Write{user, nil, []byte(includeLine + "\n"), false, sshFileMode})
-	case f.UserConfigNeedsInclude:
-		cs = append(cs, Backup{user, user + "." + f.Stamp + "~"},
-			Write{user, f.UserConfig.Text, userConfigText(f), true, f.UserConfig.Mode.Perm()})
-	}
-	return cs
-}
-
-// userConfigText returns the text of ~/.ssh/config that the run leaves: the Include and a blank
-// line above the file's text where it lacks the Include.
-func userConfigText(f sshFacts) []byte {
-	if !f.UserConfig.Exists || !f.UserConfigNeedsInclude {
-		return f.UserConfig.Text
-	}
-	return append([]byte(includeLine+"\n\n"), f.UserConfig.Text...)
+	return append(cs, f.Config...)
 }
 
 // sshDirs is ~/.ssh and its config.d. A run sets the mode of config.d, which holds the hosts.
