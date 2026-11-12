@@ -3,6 +3,7 @@ package setup
 import (
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/step"
@@ -37,5 +38,16 @@ func TestGhosttyFileChangesSetTheModeOfAFileThatMatches(t *testing.T) {
 	cs := fileChanges(t, m, true)
 	if len(cs) != 1 || !slices.ContainsFunc(cs, func(c step.Change) bool { _, ok := c.(SetMode); return ok }) {
 		t.Errorf("changes = %v; want the mode alone", cs)
+	}
+}
+
+func TestGhosttyKeepsTheOldConfigAsTheTimeStamped(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/.config/ghostty/config"] = []byte("theme = x\n")
+	g := &Ghostty{M: m, Home: "/h", Now: func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) }}
+	cs, err := g.configLines("/h/.config/ghostty/config", "/h/.config/ghostty/ws.ghostty").plan(t.Context())
+	want := Backup{"/h/.config/ghostty/config", "/h/.config/ghostty/config.20260102030405~"}
+	if err != nil || len(cs) != 2 || cs[0] != step.Change(want) {
+		t.Errorf("changes = %v, %v; want %v first", cs, err, want)
 	}
 }
