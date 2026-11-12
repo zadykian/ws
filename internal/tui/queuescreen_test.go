@@ -12,13 +12,6 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// atRow returns l turned to the side of the row of that name, and the cursor on the row.
-func atRow(l pickList, name string) (pickList, cursor) {
-	row := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.name == name })
-	l.side = l.rows[row].side
-	return l, cursor(slices.Index(l.lines(), pickLine{row: row}))
-}
-
 // testQueueScreen is the two lists at 100 by 30, their scan under way.
 func testQueueScreen() queueScreen {
 	s := openQueue("ws mac wizard", testTheme, testStages(), make(chan QueueChoice, 1))
@@ -174,8 +167,8 @@ func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
 	if got := s.list.only(); !slices.Equal(got, []string{"Tools", "Setup"}) {
 		t.Errorf("only = %q", got)
 	}
-	if !s.list.rows[2].on() || !s.list.rows[3].on() {
-		t.Errorf("rows = %+v", s.list.rows[2:4])
+	if !s.list.stages[0].row.on() || !s.list.stages[1].row.on() {
+		t.Errorf("stages = %+v", s.list.stages[:2])
 	}
 }
 
@@ -196,10 +189,7 @@ func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
 
 func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{})
-	s.list = choosing(s.list, "one")
-	var at cursor
-	s.list, at = atRow(s.list, "Setup")
-	s.at[s.list.side] = at
+	s.list, s.at[MacSide] = queueChoosing(s.list, "one"), 1
 	if got := queueShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
 		t.Errorf("frame:\n%s", got)
 	}

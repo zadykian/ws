@@ -11,17 +11,15 @@ import (
 // names them by their places in the queue, and Bridge.Observe sends this what it sends a RunScreen.
 type QueueRun struct {
 	run  RunScreen
-	list pickList
+	list queue
 	at   [2]cursor
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
 func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
 	var stages Group
-	for _, r := range choice.left.list.rows {
-		if r.number > 0 {
-			stages.Steps = append(stages.Steps, r.name)
-		}
+	for _, s := range choice.left.list.stages {
+		stages.Steps = append(stages.Steps, s.row.name)
 	}
 	run := NewRunScreen(title, theme, stages)
 	run.pane = func(window Size) Size { return inside(stripSize(window)) }
@@ -37,9 +35,10 @@ func (q QueueRun) Init() tea.Cmd {
 // the output to the strip.
 func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if e, ok := msg.(step.Event); ok {
+		var side Side
 		var line int
-		if q.list, line = q.list.follow(e); line >= 0 {
-			q.at[q.list.side] = cursor(line)
+		if q.list, side, line = q.list.follow(e); line >= 0 {
+			q.list.side, q.at[side] = side, cursor(line)
 		}
 	}
 	var cmd tea.Cmd
