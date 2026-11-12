@@ -56,13 +56,13 @@ func repository(m effect.Machine) func(context.Context) ([]host.Resource, error)
 		if err != nil {
 			return nil, err
 		}
-		arch, err := m.Run(ctx, "dpkg", "--print-architecture")
+		arch, err := host.Architecture(ctx, m)
 		if err != nil {
-			return nil, fmt.Errorf("reading dpkg's architecture: %w", err)
+			return nil, err
 		}
 		return []host.Resource{
 			host.Download{M: m, URL: keyURL, Path: keyPath, SHA256: ascSHA256, Mode: 0o644},
-			host.File{M: m, Path: sourcesPath, Content: Sources(rel, strings.TrimSpace(string(arch))), Mode: 0o644},
+			host.File{M: m, Path: sourcesPath, Content: Sources(rel, arch), Mode: 0o644},
 		}, nil
 	}
 }
