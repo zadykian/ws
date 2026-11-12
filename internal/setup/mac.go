@@ -24,9 +24,9 @@ type Mac struct {
 	Text io.Writer
 }
 
-// Steps returns the steps in the order ws mac apply runs them. Under check, the steps that plan
+// steps returns the steps in the order ws mac apply runs them. Under check, the steps that plan
 // again after they apply plan once.
-func (m Mac) Steps(check bool) []step.Step {
+func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		m.ssh(false),
 		Cable{Conf: m.Conf, M: m.M, Out: m.Out},
@@ -44,7 +44,7 @@ func (m Mac) Steps(check bool) []step.Step {
 // Names returns the names of the steps, in order: the rows of a list.
 func Names() []string {
 	var names []string
-	for _, s := range (Mac{Text: io.Discard}).Steps(false) {
+	for _, s := range (Mac{Text: io.Discard}).steps(false) {
 		names = append(names, s.Name())
 	}
 	return names
@@ -53,5 +53,5 @@ func Names() []string {
 // State reads the steps' reports under a check: it applies nothing and prints nothing on stdout.
 func (m Mac) State(ctx context.Context) ([]step.Report, error) {
 	m.Text = io.Discard
-	return step.Read(ctx, m.Steps(true))
+	return step.Read(ctx, m.steps(true))
 }

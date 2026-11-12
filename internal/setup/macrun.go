@@ -16,7 +16,7 @@ type Options struct {
 	Only string
 }
 
-// Run runs the steps that o names, or all of them. A run that applies and names no step ends with
+// Run runs the steps that o names, or every step. A run that applies and names no step ends with
 // ssh again, as cld's restore tabs may have changed ssh's file. Then each step of a run that passed
 // finishes, but one left out. It reports what step.RunWith does.
 func (m Mac) Run(ctx context.Context, o Options) (bool, error) {
@@ -31,7 +31,7 @@ func (m Mac) Rows(o Options) []step.Step {
 
 // ofRun returns the steps of the run that o makes.
 func (m Mac) ofRun(o Options) []step.Step {
-	steps := m.Steps(o.Check)
+	steps := m.steps(o.Check)
 	switch {
 	case o.Only != "":
 		return slices.DeleteFunc(steps, func(s step.Step) bool { return s.Name() != o.Only })
@@ -47,14 +47,17 @@ func (m Mac) ssh(again bool) step.Step {
 	return SSH{Conf: m.Conf, Home: m.Home, M: m.M, Out: m.Out, Now: time.Now, Again: again}
 }
 
+// finisher is a step that leaves something for the end of a run that passed.
+type finisher interface{ finish(context.Context) error }
+
 // run runs steps under o, then what each leaves for the end of a run that passed. A step left out
 // leaves nothing, as it applied nothing. It reports what step.RunWith does.
 func run(ctx context.Context, steps []step.Step, o step.Options) (bool, error) {
 	changed, err := step.RunWith(ctx, steps, o)
 	for _, s := range steps {
 		left := o.LeftOut != nil && o.LeftOut(o.Parent, s.Name())
-		if f, ok := s.(interface{ Finish(context.Context) error }); ok && err == nil && !left {
-			err = f.Finish(ctx)
+		if f, ok := s.(finisher); ok && err == nil && !left {
+			err = f.finish(ctx)
 		}
 	}
 	return changed, err

@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/conf"
 	"github.com/zadykian/ws/internal/setup"
+	"github.com/zadykian/ws/step"
 )
 
 func TestNamesComeInSetupShsOrder(t *testing.T) {
@@ -17,17 +18,17 @@ func TestNamesComeInSetupShsOrder(t *testing.T) {
 		t.Errorf("Names = %q; want %q", got, want)
 	}
 	var got []string
-	for _, s := range (setup.Mac{Conf: conf.Conf{}, Home: "/h"}).Steps(false) {
+	for _, s := range (setup.Mac{Conf: conf.Conf{}, Home: "/h"}).Rows(setup.Options{Options: step.Options{Check: true}}) {
 		got = append(got, s.Name())
 	}
 	if !slices.Equal(got, want) {
-		t.Errorf("Steps = %q; want %q", got, want)
+		t.Errorf("Rows = %q; want %q", got, want)
 	}
 }
 
 func TestMacStepsTakeTheCheck(t *testing.T) {
 	for _, check := range []bool{false, true} {
-		for _, s := range (setup.Mac{}).Steps(check) {
+		for _, s := range (setup.Mac{}).Rows(setup.Options{Options: step.Options{Check: check}}) {
 			var got bool
 			switch s := s.(type) {
 			case *setup.Cld:
