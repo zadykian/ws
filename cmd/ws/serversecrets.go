@@ -9,7 +9,7 @@ import (
 )
 
 // newServerSecretsCmd returns ws server secrets, which keeps ws's secrets file, with its identity as
-// a systemd credential. Its set, unset and keys are ws mac secrets'.
+// a systemd credential. ws mac secrets runs its commands here, over ssh.
 func newServerSecretsCmd(p process) *cobra.Command {
 	open := func() (secrets.Store, error) { return serverSecretsStore(p) }
 	return group("secrets", "keep ws's secrets file, with its identity as a systemd credential",

@@ -41,7 +41,7 @@ func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) e
 	return s.Edit(c.Context(), fn)
 }
 
-// newSecretsSetCmd returns ws mac secrets set, with a command per kind.
+// newSecretsSetCmd returns set, of ws server secrets and ws mac secrets, with a command per kind.
 func newSecretsSetCmd(p process, open openStore) *cobra.Command {
 	cmds := []*cobra.Command{newSecretsSetGitCmd(open), newSecretsSetFileCmd(p, open)}
 	for _, kind := range []string{secrets.KindToken, secrets.KindEnv, secrets.KindPassword} {
@@ -61,7 +61,7 @@ func newSecretsSetCmd(p process, open openStore) *cobra.Command {
 	return group("set", "set an entry, whose value never goes in an argument", cmds...)
 }
 
-// newSecretsSetGitCmd returns ws mac secrets set git.
+// newSecretsSetGitCmd returns set git.
 func newSecretsSetGitCmd(open openStore) *cobra.Command {
 	var g secrets.Git
 	c := &cobra.Command{
