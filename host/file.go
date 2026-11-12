@@ -26,6 +26,8 @@ type File struct {
 	// edit, where set, makes the content from the file as Apply finds it, so that two resources
 	// of one file, planned together, keep each other's edit.
 	edit func(before []byte) []byte
+	// home, set by Account.File alone, is the home that the path lies below.
+	home string
 }
 
 func (f File) attrs() effect.Attrs { return effect.Attrs{UID: f.UID, GID: f.GID, Mode: f.Mode.Perm()} }
@@ -66,8 +68,19 @@ func (c writeFile) Apply(context.Context) error {
 	return c.f.M.WriteAtomic(c.f.Path, c.f.Content, c.f.attrs())
 }
 
+// guard refuses a link on the way to a home file. Another File is not checked.
+func (f File) guard() error {
+	if f.home == "" {
+		return nil
+	}
+	return guardHome(f.M, f.home, f.Path)
+}
+
 // Plan reads the file and its attributes as root.
 func (f File) Plan(context.Context) ([]Change, error) {
+	if err := f.guard(); err != nil {
+		return nil, err
+	}
 	before, err := f.M.ReadRootFile(f.Path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return []Change{writeFile{f: f, why: "create"}}, nil
@@ -90,6 +103,9 @@ func (f File) Plan(context.Context) ([]Change, error) {
 
 // Report compares the file as Plan does.
 func (f File) Report(context.Context) ([]step.Item, error) {
+	if err := f.guard(); err != nil {
+		return nil, err
+	}
 	before, got, ok, err := readRoot(f.M, f.Path)
 	if !ok {
 		return []step.Item{f.item(nil, nil)}, err

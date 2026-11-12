@@ -2,6 +2,7 @@ package host
 
 import (
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -18,6 +19,15 @@ func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
 		return nil, err
 	}
 	return m.ReadRootFile(at)
+}
+
+// File is a file at rel below the account's home, owned by the account. Plan and Report refuse a
+// link on the way, as ReadHome does, and a rel that is not local. The caller sets Backup or Secret.
+func (a Account) File(m effect.Machine, rel string, content []byte, mode fs.FileMode) File {
+	return File{
+		M: m, Path: a.Home + "/" + rel, Content: content, Mode: mode,
+		UID: a.UID, GID: a.GID, home: a.Home,
+	}
 }
 
 // guardHome fails unless target lies strictly below home by a local path, and fails on the first

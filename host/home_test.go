@@ -59,3 +59,47 @@ func TestReadHomeRefusesAPathThatIsNotLocalBeforeAnyCall(t *testing.T) {
 		}
 	}
 }
+
+var account = host.Account{User: ws, UID: 1000, GID: 1001}
+
+func TestHomeFileRefusesALinkAsItPlansAndReports(t *testing.T) {
+	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/x", "/home/ws/.config/x/f"} {
+		m := effecttest.NewMachine()
+		m.Links[link] = "/srv/target"
+		f := account.File(m, ".config/x/f", []byte("a"), 0o644)
+		if _, err := f.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), link+" is a link to") {
+			t.Errorf("link at %s: Plan = %v", link, err)
+		}
+		if _, err := f.Report(t.Context()); err == nil {
+			t.Errorf("link at %s: Report found no error", link)
+		}
+	}
+}
+
+func TestHomeFileRefusesARelThatIsNotLocal(t *testing.T) {
+	for _, rel := range []string{"../x", "/etc/x", ""} {
+		f := account.File(effecttest.NewMachine(), rel, nil, 0o644)
+		if _, err := f.Plan(t.Context()); err == nil {
+			t.Errorf("rel %q: Plan found no error", rel)
+		}
+	}
+}
+
+func TestHomeFilePlansAsTheAccount(t *testing.T) {
+	m := effecttest.NewMachine()
+	f := account.File(m, ".config/x/f", []byte("a"), 0o644)
+	got, err := f.Plan(t.Context())
+	if err != nil || len(got) != 1 || !strings.HasPrefix(got[0].String(), "create /home/ws/.config/x/f") {
+		t.Fatalf("Plan = %v, %v", got, err)
+	}
+	m.Files[f.Path] = []byte("a")
+	m.Modes[f.Path] = 0o644
+	m.Owners[f.Path] = [2]int{1000, 1001}
+	if got, err := f.Plan(t.Context()); err != nil || got != nil {
+		t.Errorf("second Plan = %v, %v; want none", got, err)
+	}
+	m.Owners[f.Path] = [2]int{0, 0}
+	if got, _ := f.Plan(t.Context()); len(got) != 1 || !strings.Contains(got[0].String(), "set owner 1000:1001") {
+		t.Errorf("a file owned by root: Plan = %v", got)
+	}
+}
