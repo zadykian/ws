@@ -1,5 +1,10 @@
 package tui
 
+import (
+	"fmt"
+	"strings"
+)
+
 // queueStage is a stage of a queue: its own row, the side that shows it, and a list of what it runs.
 type queueStage struct {
 	row  pickRow
@@ -31,4 +36,39 @@ func queueOf(stages []Stage) queue {
 		q.stages = append(q.stages, queueStage{row: row, side: s.Side, list: newFormedList(groups)})
 	}
 	return q
+}
+
+// queueLine is a line of a queue: a stage's own, or one of its list's.
+type queueLine struct {
+	stage int
+	head  bool
+	line  pickLine
+}
+
+// lines returns what the filter leaves of the side. A stage whose name the words miss loses its own
+// line, and keeps the steps they match.
+func (q queue) lines(side Side) []queueLine {
+	var lines []queueLine
+	for i, s := range q.stages {
+		if s.side != side {
+			continue
+		}
+		if s.list.named(s.row.name) {
+			lines = append(lines, queueLine{stage: i, head: true})
+		}
+		for _, line := range s.list.lines() {
+			lines = append(lines, queueLine{stage: i, line: line})
+		}
+	}
+	return lines
+}
+
+// render draws a line: a stage by its number, and its steps past the room of that number.
+func (q queue) render(theme Theme, l queueLine) string {
+	s := q.stages[l.stage]
+	if !l.head {
+		return strings.Repeat(" ", stageColumns) + s.list.render(theme, l.line)
+	}
+	mark, style := s.row.state.look(theme)
+	return fmt.Sprintf("%*d ", stageColumns-3, l.stage+1) + s.row.box() + " " + style.Render(mark) + " " + s.row.name
 }

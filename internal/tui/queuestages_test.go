@@ -53,3 +53,32 @@ func TestARoleOfAStageThatNoScanReadIsOneRow(t *testing.T) {
 		t.Errorf("rows = %+v", rows)
 	}
 }
+
+// drawnQueue is what a side of q shows, a line each, its colors gone.
+func drawnQueue(q queue, side Side) []string {
+	var got []string
+	for _, line := range q.lines(side) {
+		got = append(got, stripped(q.render(testTheme, line)))
+	}
+	return got
+}
+
+func TestAQueueNumbersItsStagesAcrossBothSides(t *testing.T) {
+	q := queueOf(testStages())
+	mac := []string{" 1 [ ] · Tools", " 2 [ ] · Setup", "     [ ] · one", "     [ ] · two", " 5 [ ] · Signing"}
+	if got := drawnQueue(q, MacSide); !slices.Equal(got, mac) {
+		t.Errorf("Mac's list = %q, want %q", got, mac)
+	}
+	ws := []string{" 3 [ ] · Sudo", " 4 [ ] · Run", "     [ ] · base", "     [ ] · ssh"}
+	if got := drawnQueue(q, WsSide); !slices.Equal(got, ws) {
+		t.Errorf("ws's list = %q, want %q", got, ws)
+	}
+}
+
+func TestARoleOfAStageOpensUnderItsHeading(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"Packages"}}}}}
+	got := strings.Join(drawnQueue(queueOf(stages), MacSide), "|")
+	if want := " 1 [ ] · Run|     [ ] base|       [ ] · Packages"; got != want {
+		t.Errorf("list = %q, want %q", got, want)
+	}
+}
