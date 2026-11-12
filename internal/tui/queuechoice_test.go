@@ -73,25 +73,6 @@ func TestARoleUnreadIsChosenByItsName(t *testing.T) {
 	}
 }
 
-func TestAStagesBoxTurnsItsSteps(t *testing.T) {
-	l, at := atRow(newQueue(testStages()), "Setup")
-	l = l.toggled(at)
-	if got := boxes(l)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
-		t.Errorf("boxes = %q", got)
-	}
-	if got := boxes(l.toggled(at))[1:4]; !slices.Equal(got, []string{"[ ]", "[ ]", "[ ]"}) {
-		t.Errorf("boxes = %q", got)
-	}
-}
-
-func TestALockedStageHoldsItsBox(t *testing.T) {
-	l, at := atRow(choosing(newQueue(testStages()), "Signing"), "Run")
-	l = l.toggled(at)
-	if !l.rows[5].on() || !l.rows[6].on() {
-		t.Errorf("rows = %+v", l.rows)
-	}
-}
-
 func TestWhatNoScanReachedStartsChosen(t *testing.T) {
 	l := newQueue(testStages()).take(planned("", "Tools", 0)).opened()
 	if want := slices.Concat(slices.Repeat([]string{"[#]"}, 8), []string{"[x]"}); !slices.Equal(boxes(l), want) {

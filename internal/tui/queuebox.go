@@ -43,3 +43,34 @@ func (q queue) box(i int) string {
 	}
 	return s.row.box()
 }
+
+// toggled returns the queue with the box under the cursor of the side turned. A stage's turns its
+// shown steps on, or off where all are on, and so does a role's. A locked stage or step holds, as the
+// stage that waits on it would go with it.
+func (q queue) toggled(side Side, at cursor) queue {
+	lines := q.lines(side)
+	if int(at) >= len(lines) {
+		return q
+	}
+	line := lines[at]
+	q.stages = slices.Clone(q.stages)
+	s := &q.stages[line.stage]
+	switch {
+	case line.line.heading:
+		parent := s.list.rows[line.line.row].parent
+		s.list = s.list.turned(func(o pickRow) bool { return o.parent == parent })
+	case line.head && len(s.row.lockedBy) > 0:
+		return q
+	case line.head && len(s.list.rows) > 0:
+		s.list = s.list.turned(func(pickRow) bool { return true })
+	case line.head:
+		s.row.chosen = !s.row.chosen
+	default:
+		row := s.list.rows[line.line.row]
+		if len(row.lockedBy) > 0 {
+			return q
+		}
+		s.list = s.list.chose(func(o pickRow) bool { return o.sameChoice(row) != o.chosen })
+	}
+	return q.settled()
+}
