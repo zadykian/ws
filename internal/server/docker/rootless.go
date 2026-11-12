@@ -68,7 +68,7 @@ func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out,
 			daemon,
 			sliceFile,
 			service,
-			rootlessInstall{m, user, a.UID, out},
+			rootlessInstall{m, a, out},
 			host.UserUnit{M: m, Account: a, Out: out, Name: "docker.service",
 				Watch: []host.Resource{daemon, sliceFile, service}},
 		}, nil
