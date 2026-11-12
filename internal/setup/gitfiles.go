@@ -31,13 +31,23 @@ func (g *Git) list(key NamedKey, gh string) []userFile {
 	return append(list, file(dir+"/gitconfig", gitcfg.Config(in), 0o644))
 }
 
+// dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
+func (g *Git) dirs(pub, text string) userDirs {
+	if copied(pub, text, g.Home) {
+		return copyDirs(g.M, g.Home)
+	}
+	return wsDirs(g.M, g.Home)
+}
+
 // files plans ~/.config/ws and the files in it.
 func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
-	cs, link, err := wsDirs(g.M, g.Home).plan()
+	cs, link, err := g.dirs(key.File, key.Text).plan()
 	if err != nil {
 		return nil, err
 	}
-	cs = append(cs, PlanCopy(g.M, key.File, key.Text, g.Home)...)
+	if copied(key.File, key.Text, g.Home) {
+		cs = append(cs, copyChange(g.M, key.File, key.Text)...)
+	}
 	for _, f := range g.list(key, gh) {
 		planned, err := f.plan()
 		if err != nil {
@@ -71,7 +81,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if install != nil {
 		tool.Found = stateMissing
 	}
-	parts := []step.Reporter{fixed{tool}, wsDirs(g.M, g.Home)}
+	parts := []step.Reporter{fixed{tool}, g.dirs(key.File, key.Text)}
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}

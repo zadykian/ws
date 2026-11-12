@@ -9,15 +9,16 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// Apply makes what the plan lists, in order.
+// Apply makes what the plan lists, in order. A change but a question is PlanCopy's: a directory
+// of the copies, its mode, or the copy.
 func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
 		var err error
 		switch c := c.(type) {
-		case setup.KeyCopy:
-			err = setup.Apply(ctx, k.M, k.Out, c)
 		case askKey:
 			err = k.ask(ctx, c.use)
+		default:
+			err = setup.Apply(ctx, k.M, k.Out, c)
 		}
 		if err != nil {
 			return err

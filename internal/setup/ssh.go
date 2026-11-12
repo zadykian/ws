@@ -66,7 +66,10 @@ func (s SSH) Plan(ctx context.Context) (step.Plan, error) {
 		s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
 			"read first, win where both set a key", h.Line, h.Text, h.Names)
 	}
-	copied := PlanCopy(s.M, key.File, key.Text, s.Home)
+	copied, err := PlanCopy(s.M, key.File, key.Text, s.Home)
+	if err != nil {
+		return step.Plan{}, err
+	}
 	return step.Plan{Changes: append(copied, sshChanges(f, text)...)}, nil
 }
 
@@ -103,6 +106,9 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 		sshDirs(s.M, s.Home),
 		s.wsFile(s.config(ctx, f, key)),
 		fixed{include},
+	}
+	if copied(key.File, key.Text, s.Home) {
+		parts = append(parts, copyDirs(s.M, s.Home))
 	}
 	return gather(ctx, append(parts, keyCopy(s.M, key.File, key.Text, s.Home)...)...)
 }
