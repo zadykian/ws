@@ -122,6 +122,19 @@ func TestGitReportsWhatItManages(t *testing.T) {
 	}
 }
 
+func TestGitReportShowsAnIncludeWhereThePlanStops(t *testing.T) {
+	m, g := gitReady()
+	gitConfig(m, "x", "", "user.name\n")
+	m.Links[gitConfigFile] = "/dotfiles/gitconfig"
+	m.Files["/dotfiles/gitconfig"] = []byte("x")
+	items, err := g.Report(context.Background())
+	if err != nil || !slices.ContainsFunc(items, func(it step.Item) bool {
+		return it.Name == gitConfigFile && strings.Contains(it.Conflict, "a link to /dotfiles/gitconfig")
+	}) {
+		t.Errorf("Report = %+v, %v; want ~/.gitconfig as a link in conflict", items, err)
+	}
+}
+
 func TestGitReportShowsGhToInstall(t *testing.T) {
 	m, g := gitReady()
 	g.LookPath = func(name string) (string, error) {
