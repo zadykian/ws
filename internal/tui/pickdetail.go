@@ -36,7 +36,7 @@ func (s listScreen) warnings(unread string, held []string) []Line {
 // notes is the words of the pane: what holds for the whole list, then the line under the cursor.
 func (s pickScreen) notes() []Line {
 	notes := s.warnings("", s.list.passedOver())
-	line, ok := s.list.current()
+	line, ok := s.list.current(s.at)
 	if !ok || line.heading {
 		return notes
 	}

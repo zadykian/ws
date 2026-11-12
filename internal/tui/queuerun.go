@@ -11,20 +11,19 @@ import (
 // names them by their places in the queue, and Bridge.Observe sends this what it sends a RunScreen.
 type QueueRun struct {
 	run  RunScreen
-	list pickList
+	list queue
+	at   [2]cursor
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
 func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
 	var stages Group
-	for _, r := range choice.left.list.rows {
-		if r.number > 0 {
-			stages.Steps = append(stages.Steps, r.name)
-		}
+	for _, s := range choice.left.list.stages {
+		stages.Steps = append(stages.Steps, s.row.name)
 	}
 	run := NewRunScreen(title, theme, stages)
 	run.pane = func(window Size) Size { return inside(stripSize(window)) }
-	return QueueRun{run, choice.left.list.filtered("")}
+	return QueueRun{run, choice.left.list.filtered(""), choice.left.at}
 }
 
 // Init starts the clock.
@@ -36,7 +35,11 @@ func (q QueueRun) Init() tea.Cmd {
 // the output to the strip.
 func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if e, ok := msg.(step.Event); ok {
-		q.list = q.list.follow(e)
+		var side Side
+		var line int
+		if q.list, side, line = q.list.follow(e); line >= 0 {
+			q.list.side, q.at[side] = side, cursor(line)
+		}
 	}
 	var cmd tea.Cmd
 	q.run, cmd = q.run.update(msg)
@@ -53,6 +56,6 @@ func (q QueueRun) layout() Layout {
 
 // View draws the screen.
 func (q QueueRun) View() tea.View {
-	l := q.list.drawn(q.layout(), q.run.theme, q.run.window)
+	l := q.list.drawn(q.layout(), q.run.theme, q.run.window, q.at)
 	return l.View(q.run.theme, q.run.window.Width, q.run.window.Height)
 }

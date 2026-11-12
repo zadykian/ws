@@ -23,7 +23,7 @@ func queueRunShown(q QueueRun) string { return stripped(q.View().Content) }
 
 // testQueueRun follows a queue at 100 by 30, Tools alone on.
 func testQueueRun() QueueRun {
-	list := choosing(newQueue(testStages()), "Tools")
+	list := queueChoosing(queueOf(testStages()), "Tools")
 	q := NewQueueRun("ws mac wizard", testTheme, QueueChoice{left: queueScreen{list: list.filtered("Tools")}})
 	return queueRunSent(q, tea.WindowSizeMsg{Width: 100, Height: 30})
 }

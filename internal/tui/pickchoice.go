@@ -17,8 +17,8 @@ func (l pickList) chose(box func(pickRow) bool) pickList {
 // toggled returns the list with the box under the cursor turned. A role's turns its shown steps on,
 // or off where all are on, and so does a stage's. A locked step holds, as the step that waits on it
 // would go with it.
-func (l pickList) toggled() pickList {
-	line, ok := l.current()
+func (l pickList) toggled(at cursor) pickList {
+	line, ok := l.current(at)
 	if !ok {
 		return l
 	}
@@ -28,8 +28,6 @@ func (l pickList) toggled() pickList {
 		return l.turned(func(o pickRow) bool { return o.parent == row.parent })
 	case len(row.lockedBy) > 0:
 		return l
-	case l.nests(row):
-		return l.turned(under(row))
 	}
 	return l.chose(func(o pickRow) bool {
 		if o.sameChoice(row) {
@@ -63,9 +61,9 @@ func (l pickList) count(in func(pickRow) bool) (on, all int) {
 	return on, all
 }
 
-// tally counts the steps on, the steps the scan has reached and the steps, a queue's stages leaving out.
+// tally counts the steps on, the steps the scan has reached and the steps.
 func (l pickList) tally() (on, scanned, all int) {
-	on, all = l.count(func(r pickRow) bool { return r.stage == "" })
-	_, scanned = l.count(func(r pickRow) bool { return r.stage == "" && r.state != stepOpen })
+	on, all = l.count(func(pickRow) bool { return true })
+	_, scanned = l.count(func(r pickRow) bool { return r.state != stepOpen })
 	return on, scanned, all
 }

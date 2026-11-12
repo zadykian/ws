@@ -67,7 +67,7 @@ func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 
 func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 	stages := []Stage{{Name: "Run", Side: WsSide, Nested: []Group{{Name: "base"}}}}
-	l := newQueue(stages)
+	l := queueOf(stages)
 	if got := l.panes()[l.pane(WsSide)].Title; got != "ws: roles not scanned" {
 		t.Errorf("title = %q", got)
 	}
@@ -167,8 +167,8 @@ func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
 	if got := s.list.only(); !slices.Equal(got, []string{"Tools", "Setup"}) {
 		t.Errorf("only = %q", got)
 	}
-	if !s.list.rows[2].on() || !s.list.rows[3].on() {
-		t.Errorf("rows = %+v", s.list.rows[2:4])
+	if !s.list.stages[0].row.on() || !s.list.stages[1].row.on() {
+		t.Errorf("stages = %+v", s.list.stages[:2])
 	}
 }
 
@@ -189,8 +189,7 @@ func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
 
 func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{})
-	s.list = choosing(s.list, "one")
-	s.list = atRow(s.list, "Setup")
+	s.list, s.at[MacSide] = queueChoosing(s.list, "one"), 1
 	if got := queueShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
 		t.Errorf("frame:\n%s", got)
 	}
@@ -249,5 +248,18 @@ func TestABridgeReportReachesTheScreen(t *testing.T) {
 	b.Report("Run", nil, "refused")
 	if got := (*sent)[0].(reportedMsg); got.stage != "Run" || got.problem != "refused" {
 		t.Errorf("sent %+v", got)
+	}
+}
+
+func TestEachSideKeepsItsCursor(t *testing.T) {
+	s := queueSent(testQueueScreen(), scannedMsg{}, press('j'), press('j'), press('j'), tab)
+	if s.list.side != WsSide || s.at[MacSide] != 3 || s.at[WsSide] != 0 {
+		t.Errorf("side %d, cursors %v", s.list.side, s.at)
+	}
+	if got := strings.Count(queueShown(s), "▸"); got != 1 {
+		t.Errorf("%d cursors drawn, want the focused list's alone", got)
+	}
+	if s = queueSent(s, shiftTab); s.list.side != MacSide || s.at[MacSide] != 3 {
+		t.Errorf("side %d, cursors %v", s.list.side, s.at)
 	}
 }

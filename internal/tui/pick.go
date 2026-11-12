@@ -10,12 +10,8 @@ import (
 // pickRow is a step of the list that a run is chosen from.
 type pickRow struct {
 	stepRow
-	// side is the list of a queue that shows the row.
-	side Side
-	// number is a stage's place in a queue, from 1, and 0 on any other row.
-	number int
-	// stage names the stage of a queue that runs the row.
-	stage string
+	// form is how the row's group shows: groupHeaded by the zero value.
+	form groupForm
 	// waitsOn names the step of its group that has to run first.
 	waitsOn string
 	// chosen is the row's own box. It stands under a lock, and counts again once the lock goes.
@@ -48,7 +44,7 @@ func (r pickRow) pending() bool {
 
 // sameChoice says that o is r to a run, which chooses by name, as a name can come twice in one.
 func (r pickRow) sameChoice(o pickRow) bool {
-	return r.stage == o.stage && r.parent == o.parent && r.name == o.name
+	return r.parent == o.parent && r.name == o.name
 }
 
 // box draws the row's checkbox. A locked step takes no key, and its box says so by shape.
@@ -70,25 +66,15 @@ type pickList struct {
 	heard []Line
 	// words is the filter: the list shows the steps whose entry holds them.
 	words string
-	// at is the cursor's place in lines.
-	at int
-	// side is the list of a queue that lines shows, and other the cursor of the side out of sight.
-	side  Side
-	other int
-	// blind draws no cursor, on the side out of focus.
-	blind bool
 }
 
-// newPickList returns the list of groups, each step open and left out.
+// newPickList returns the list of groups, each step open and left out, each under its heading.
 func newPickList(groups []Group) pickList {
-	var l pickList
-	for _, g := range groups {
-		for i, name := range g.Steps {
-			row := stepRow{parent: g.Name, index: i, name: name}
-			l.rows = append(l.rows, pickRow{stepRow: row, waitsOn: g.Waits[name]})
-		}
+	formed := make([]listGroup, len(groups))
+	for i, g := range groups {
+		formed[i] = listGroup{Group: g}
 	}
-	return l
+	return newFormedList(formed)
 }
 
 // hear keeps a line of the scan for the step that ends next.
@@ -105,23 +91,28 @@ func (l pickList) take(e step.Event) pickList {
 	}
 	said := l.heard
 	l.heard = nil
-	l = l.learned(e)
 	place := l.place(e)
 	if place < 0 {
 		return l
 	}
 	l.rows = slices.Clone(l.rows)
-	row := &l.rows[place]
-	row.state, row.after = stateAfter(e), e.After
-	row.chosen = row.pending()
-	row.said = nil
+	l.rows[place] = l.rows[place].took(e, said)
+	return l.settled()
+}
+
+// took returns the row as e leaves its step: chosen where it holds changes. said is what the scan
+// printed since a step last ended.
+func (r pickRow) took(e step.Event, said []Line) pickRow {
+	r.state, r.after = stateAfter(e), e.After
+	r.chosen = r.pending()
+	r.said = nil
 	if e.Kind != step.Skipped {
-		row.said = withoutLabel(said, row.label())
+		r.said = withoutLabel(said, r.label())
 	}
 	if e.Err != nil {
-		row.said = append(row.said, Line{Warned, e.Err.Error()})
+		r.said = append(r.said, Line{Warned, e.Err.Error()})
 	}
-	return l.settled()
+	return r
 }
 
 // place returns where the row of e's step stands, or -1.
@@ -141,7 +132,7 @@ func withoutLabel(lines []Line, label string) []Line {
 
 // settled returns the list with its locks worked out again, and a box ticked on every step that
 // its name runs. A step waits on an earlier one alone, so that one walk from the end reaches the
-// whole of a chain. A stage's box follows the steps it runs, and its lock holds them.
+// whole of a chain.
 func (l pickList) settled() pickList {
 	l.rows = slices.Clone(l.rows)
 	for i, r := range l.rows {
@@ -150,7 +141,6 @@ func (l pickList) settled() pickList {
 			l.rows[j].chosen = l.rows[j].chosen || r.chosen && r.sameChoice(l.rows[j])
 		}
 	}
-	l.tickStages()
 	for i := len(l.rows) - 1; i >= 0; i-- {
 		r := l.rows[i]
 		if r.waitsOn == "" || !r.on() {
@@ -163,14 +153,13 @@ func (l pickList) settled() pickList {
 			}
 		}
 	}
-	l.holdStages()
 	return l
 }
 
-// only returns the steps on, as Options.Only names them: a queue's stages, as they run what's
-// under them. A name that comes twice in a run is one choice there, so it comes once here.
+// only returns the steps on, as Options.Only names them. A name that comes twice in a run is one
+// choice there, so it comes once here.
 func (l pickList) only() []string {
-	return l.entries(func(r pickRow) bool { return r.stage == "" })
+	return l.entries(func(pickRow) bool { return true })
 }
 
 // entries returns those rows in on, each name once.
@@ -186,14 +175,10 @@ func (l pickList) entries(in func(pickRow) bool) []string {
 
 // passedOver returns the roles that hold changes left out ahead of a step on. The order of roles
 // has no model, as no step names a role it needs. A later one may fail without them, or may not, so
-// the list warns and locks nothing. A stage of a queue runs apart from the next, so a role is
-// passed over within its stage alone.
+// the list warns and locks nothing.
 func (l pickList) passedOver() []string {
 	var held, named []string
 	for _, r := range l.rows {
-		if r.number > 0 {
-			held = nil
-		}
 		if r.parent != "" && r.pending() && !r.on() && !slices.Contains(held, r.parent) {
 			held = append(held, r.parent)
 		}

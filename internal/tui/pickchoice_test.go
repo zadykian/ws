@@ -5,58 +5,57 @@ import (
 	"testing"
 )
 
-// cursorOn returns l with the cursor on the step of that name.
-func cursorOn(l pickList, name string) pickList {
-	l.at = slices.IndexFunc(l.lines(), func(line pickLine) bool {
+// cursorOn returns the cursor on the step of that name.
+func cursorOn(l pickList, name string) cursor {
+	return cursor(slices.IndexFunc(l.lines(), func(line pickLine) bool {
 		return !line.heading && l.rows[line.row].name == name
-	})
-	return l
+	}))
 }
 
 func TestATurnTicksAndClearsTheStepUnderTheCursor(t *testing.T) {
-	l := cursorOn(twoRoles(), "Locale").toggled()
+	l := twoRoles()
+	at := cursorOn(l, "Locale")
+	l = l.toggled(at)
 	if want := []string{"[ ]", "[x]", "[ ]", "[ ]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
-	if got := l.toggled().only(); len(got) != 0 {
+	if got := l.toggled(at).only(); len(got) != 0 {
 		t.Errorf("only = %q, want none", got)
 	}
 }
 
 func TestALockedStepHoldsItsBox(t *testing.T) {
-	l := cursorOn(choosing(chain(), "two"), "one")
-	if got := l.toggled().only(); !slices.Equal(got, l.only()) {
+	l := choosing(chain(), "two")
+	at := cursorOn(l, "one")
+	if got := l.toggled(at).only(); !slices.Equal(got, l.only()) {
 		t.Errorf("only = %q, want %q", got, l.only())
 	}
 }
 
 func TestARolesBoxTurnsItsStepsOnThenOff(t *testing.T) {
-	l := choosing(twoRoles(), "Locale", "Keys")
-	l.at = 0
-	l = l.toggled()
+	l := choosing(twoRoles(), "Locale", "Keys").toggled(0)
 	if want := []string{"[x]", "[x]", "[x]", "[x]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
-	if want := []string{"[ ]", "[ ]", "[ ]", "[x]"}; !slices.Equal(boxes(l.toggled()), want) {
-		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	if want := []string{"[ ]", "[ ]", "[ ]", "[x]"}; !slices.Equal(boxes(l.toggled(0)), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggled(0)), want)
 	}
 }
 
 func TestARolesBoxTurnsTheStepsAFilterShows(t *testing.T) {
 	l := twoRoles().filtered("t") // Time alone, of base, and Keys has no t.
-	l.at = 0
-	if want := []string{"[ ]", "[ ]", "[x]", "[ ]"}; !slices.Equal(boxes(l.toggled()), want) {
-		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	if want := []string{"[ ]", "[ ]", "[x]", "[ ]"}; !slices.Equal(boxes(l.toggled(0)), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggled(0)), want)
 	}
 }
 
 func TestATurnReachesAStepThatComesTwice(t *testing.T) {
-	l := cursorOn(newPickList([]Group{{Steps: []string{"ssh", "git", "ssh"}}}), "ssh").toggled()
+	l := newPickList([]Group{{Steps: []string{"ssh", "git", "ssh"}}}).toggled(0)
 	if want := []string{"[x]", "[ ]", "[x]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
-	if want := []string{"[ ]", "[ ]", "[ ]"}; !slices.Equal(boxes(l.toggled()), want) {
-		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	if want := []string{"[ ]", "[ ]", "[ ]"}; !slices.Equal(boxes(l.toggled(0)), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggled(0)), want)
 	}
 }
 

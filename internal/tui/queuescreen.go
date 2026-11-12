@@ -43,36 +43,41 @@ func inside(frame Size) Size {
 	return Size{max(frame.Width-2, 0), max(frame.Height-2, 0)}
 }
 
-// sides returns the sides that have a list: ws's alone where no stage runs on the Mac, as in ws
-// server wizard, else both.
-func (l pickList) sides() []Side {
-	if slices.ContainsFunc(l.rows, func(r pickRow) bool { return r.side == MacSide }) {
+// sides returns the sides that have a stage: ws's alone where none runs on the Mac, as in ws server
+// wizard, else both.
+func (q queue) sides() []Side {
+	if slices.ContainsFunc(q.stages, func(s queueStage) bool { return s.side == MacSide }) {
 		return []Side{MacSide, WsSide}
 	}
 	return []Side{WsSide}
 }
 
 // pane is the place of side's list among the panes.
-func (l pickList) pane(side Side) int { return max(slices.Index(l.sides(), side), 0) }
+func (q queue) pane(side Side) int { return max(slices.Index(q.sides(), side), 0) }
 
 // panes returns the lists' panes, empty. ws's says so while a role stands unread, as a check of the
 // Mac can't reach what ws reports until ws is there.
-func (l pickList) panes() []Pane {
-	ws := Pane{Title: WsSide.String(), Focused: l.side == WsSide}
-	if slices.ContainsFunc(l.rows, func(r pickRow) bool { return r.index == unreadIndex }) {
+func (q queue) panes() []Pane {
+	ws := Pane{Title: WsSide.String(), Focused: q.side == WsSide}
+	unread := func(s queueStage) bool {
+		return slices.ContainsFunc(s.list.rows, func(r pickRow) bool { return r.index == unreadIndex })
+	}
+	if slices.ContainsFunc(q.stages, unread) {
 		ws.Title = WsSide.String() + ": roles not scanned"
 	}
-	if len(l.sides()) == 1 {
+	if len(q.sides()) == 1 {
 		return []Pane{ws}
 	}
-	return []Pane{{Title: MacSide.String(), Focused: l.side == MacSide}, ws}
+	return []Pane{{Title: MacSide.String(), Focused: q.side == MacSide}, ws}
 }
 
-// drawn returns the layout with the lists in its panes.
-func (l pickList) drawn(layout Layout, theme Theme, window Size) Layout {
+// drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
+// none.
+func (q queue) drawn(layout Layout, theme Theme, window Size, at [2]cursor) Layout {
 	sizes := layout.PaneSizes(window.Width, window.Height)
-	for i, side := range l.sides() {
-		layout.Panes[i].Body = l.glance(side).view(theme, sizes[i].Height)
+	for i, side := range q.sides() {
+		there := at[side].within(len(q.lines(side)))
+		layout.Panes[i].Body = q.view(theme, side, sizes[i].Height, there, side == q.side)
 	}
 	return layout
 }

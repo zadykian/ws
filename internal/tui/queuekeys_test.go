@@ -11,7 +11,7 @@ import (
 func queueFrame() queueScreen {
 	return queueScreen{
 		listScreen: listScreen{title: "ws mac wizard", theme: testTheme, window: Size{100, 30}, scanning: true},
-		list:       newQueue(testStages()),
+		list:       queueOf(testStages()),
 		footer:     NewFooter(append(listButtons(), stateButton, configureButton)...),
 		picks:      make(chan QueueChoice, 1),
 	}
