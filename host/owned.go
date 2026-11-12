@@ -2,29 +2,14 @@ package host
 
 import (
 	"context"
-	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/zadykian/ws/effect"
 )
 
 // IDs finds the user's uid and primary gid. root's are 0 without a question.
 func (u User) IDs(ctx context.Context, m effect.Machine) (uid, gid int, err error) {
-	if u.Name == "root" {
-		return 0, 0, nil
-	}
-	ids := [2]int{}
-	for i, flag := range []string{"-u", "-g"} {
-		out, err := m.Run(ctx, "id", flag, u.Name)
-		if err != nil {
-			return 0, 0, fmt.Errorf("find user %s: %w", u.Name, err)
-		}
-		if ids[i], err = strconv.Atoi(strings.TrimSpace(string(out))); err != nil {
-			return 0, 0, fmt.Errorf("id %s %s: %w", flag, u.Name, err)
-		}
-	}
-	return ids[0], ids[1], nil
+	a, err := u.Lookup(ctx, m)
+	return a.UID, a.GID, err
 }
 
 // Owned is a step whose parts are made once the user's uid and gid are found. They come from
