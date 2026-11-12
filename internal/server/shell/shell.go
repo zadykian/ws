@@ -3,7 +3,7 @@
 package shell
 
 import (
-	"runtime"
+	"context"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -20,9 +20,15 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 		host.Group{Title: "Shell packages", Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"bash-completion", "ble.sh"}},
 		}},
-		user.WithAccount(m, "Shell files", "", func(a host.Account) ([]host.Resource, error) {
-			return dotfiles(m, a, runtime.GOARCH)
-		}),
+		host.Lazy{Title: "Shell files", Parts: func(ctx context.Context) ([]host.Resource, error) {
+			arch, err := host.Architecture(ctx, m)
+			if err != nil {
+				return nil, err
+			}
+			return user.WithAccount(m, "Shell files", "", func(a host.Account) ([]host.Resource, error) {
+				return dotfiles(m, a, arch)
+			}).Parts(ctx)
+		}},
 	}
 	if v.Shell.GitSigning {
 		steps = append(steps, user.WithAccount(m, keyStep, "", func(a host.Account) ([]host.Resource, error) {

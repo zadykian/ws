@@ -40,6 +40,7 @@ func TestALinkKeepsAReportFromThePathsBehindIt(t *testing.T) {
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n bash-completion ble.sh"] = effecttest.Result{}
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Links["/home/ws/.bashrc"] = "/etc/shadow"
 	m.Files["/home/ws/.bashrc"] = []byte("root:$6$hash:19000\n")
 	reports, err := step.Read(t.Context(), Steps(v, secrets.Secrets{}, m, &effecttest.Out{}))
@@ -68,6 +69,7 @@ func TestALinkAtAFileStopsItsStepAlone(t *testing.T) {
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["dpkg-query -W -f ${Package} ${db:Status-Abbrev}\n bash-completion ble.sh"] = effecttest.Result{}
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Links["/home/ws/.bashrc"] = "/srv/target"
 	var failed []string
 	for _, st := range Steps(v, secrets.Secrets{}, m, &effecttest.Out{}) {
@@ -80,5 +82,21 @@ func TestALinkAtAFileStopsItsStepAlone(t *testing.T) {
 	}
 	if want := []string{"Shell files"}; !slices.Equal(failed, want) {
 		t.Errorf("failed steps = %v, want %v", failed, want)
+	}
+}
+
+func TestShellFilesTakeDpkgsArchitecture(t *testing.T) {
+	v := values.Default()
+	v.User, v.Home = "ws", "/home/ws"
+	m := effecttest.NewMachine()
+	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("arm64\n")}
+	steps := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})
+	if _, err := step.Run(t.Context(), []step.Step{steps[1]}, &effecttest.Out{}, false); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/home/ws/.bashrc"]); !strings.Contains(got, "DOTNET_RUNTIME_ID=linux-arm64") {
+		t.Errorf(".bashrc = %q, want the arm64 runtime ID", got)
 	}
 }
