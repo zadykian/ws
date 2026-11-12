@@ -3,6 +3,8 @@ package tui
 import (
 	"strings"
 	"testing"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 // queueFrame is the queue's screen at 100 by 30, its scan under way, with no footer.
@@ -45,5 +47,25 @@ func TestTheQueueScreenLeavesForTheStateOfTheListInFocus(t *testing.T) {
 	leaving()
 	if got := <-picks; got.Next != NextState || got.Side != WsSide || !s.left {
 		t.Errorf("choice = %+v, left %v", got, s.left)
+	}
+}
+
+// queueSent returns s past msgs.
+func queueSent(s queueScreen, msgs ...tea.Msg) queueScreen {
+	for _, msg := range msgs {
+		model, _ := s.Update(msg)
+		s = model.(queueScreen)
+	}
+	return s
+}
+
+func TestTheQueueScreenHoldsItsBoxesUntilTheScanEnds(t *testing.T) {
+	s := openQueue("ws", testTheme, testStages(), make(chan QueueChoice, 1))
+	if s = queueSent(s, press('a')); len(s.list.only()) != 0 {
+		t.Errorf("only = %q during the scan", s.list.only())
+	}
+	s = queueSent(s, scannedMsg{}, press('a'))
+	if s.scanning || len(s.list.only()) != 5 {
+		t.Errorf("scanning %v, only = %q", s.scanning, s.list.only())
 	}
 }

@@ -3,6 +3,8 @@ package tui
 import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/step"
 )
 
 // The places of the queue's buttons that the flat list lacks, after the places that both share.
@@ -21,6 +23,14 @@ type queueScreen struct {
 	unread string
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
 	picks chan<- QueueChoice
+}
+
+// openQueue returns the lists of stages, their scan under way. The configure button comes last.
+func openQueue(title string, theme Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
+	buttons := append(listButtons(), stateButton, configureButton)
+	s := queueScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: newFilter()},
+		list: newQueue(stages), footer: NewFooter(buttons...), picks: picks}
+	return s.enabled()
 }
 
 // Init starts nothing, as the scan is the work's.
@@ -76,6 +86,35 @@ func (s queueScreen) View() tea.View {
 		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight())
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
+}
+
+// Update takes the scan's events and lines, the window's size and the keys.
+func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case step.Event:
+		s.list = s.list.take(msg)
+	case Line:
+		s.list = s.list.hear(msg)
+	case scannedMsg:
+		s.listScreen = s.scanned(msg)
+		s.list = s.list.opened()
+	case reportedMsg:
+		s.unread = msg.problem
+		if msg.problem == "" {
+			s.list = s.list.reported(msg.stage, msg.sections)
+		}
+	case tea.WindowSizeMsg:
+		s.window = Size{msg.Width, msg.Height}
+	case tea.PasteMsg:
+		if s.filter.editing && !s.left {
+			s = s.typed(msg)
+		}
+	case tea.KeyPressMsg:
+		var leaving tea.Cmd
+		s, leaving = s.pressed(msg)
+		return s.enabled(), leaving
+	}
+	return s.enabled(), nil
 }
 
 // pressed turns the boxes that msg's button names, moves the cursor, walks the lists, or gives the
@@ -152,6 +191,19 @@ func (s queueScreen) leave(c QueueChoice) (queueScreen, tea.Cmd) {
 		s.picks <- c
 		return nil
 	}
+}
+
+// enabled returns s with its boxes held while the scan ticks them, as a press would race it. A run
+// waits for something chosen, as a run with no Only runs every step. The state screen waits for the
+// scan's end, as both read the same machine.
+func (s queueScreen) enabled() queueScreen {
+	for place := pickTogglePlace; place <= pickPendingPlace; place++ {
+		s.footer = s.footer.Enable(place, !s.scanning)
+	}
+	some := !s.scanning && len(s.list.only()) > 0
+	s.footer = s.footer.Enable(pickRunPlace, some).Enable(pickCheckPlace, some)
+	s.footer = s.footer.Enable(queueStatePlace, !s.scanning)
+	return s
 }
 
 // tabbed walks the ring of the lists, then the buttons, as a Tab between the lists would else leave
