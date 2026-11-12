@@ -66,8 +66,8 @@ func serverSteps(m effect.Machine, user host.User) []step.Step {
 	return []step.Step{
 		download(m, runtime.GOARCH, "postgres-language-server", pgls, pglsURL),
 		download(m, runtime.GOARCH, "docker-language-server", dockerLS, dockerLSURL),
-		user.Owned(m, "Devtools npm servers", "Devtools packages", func(uid, gid int) ([]host.Resource, error) {
-			return serverFiles(m, user, uid, gid)
+		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a host.Account) ([]host.Resource, error) {
+			return serverFiles(m, user, a.UID, a.GID)
 		}),
 	}
 }

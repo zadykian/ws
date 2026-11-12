@@ -28,7 +28,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: "Zed terminal", Parts: terminalParts(m)},
-		user.Owned(m, "Zed settings", "Zed terminal", func(uid, gid int) ([]host.Resource, error) {
+		user.WithAccount(m, "Zed settings", "Zed terminal", func(a host.Account) ([]host.Resource, error) {
 			settings, err := settingsFile(v)
 			if err != nil {
 				return nil, err
@@ -36,9 +36,9 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 			dir := v.Home + "/.config/zed"
 			return []host.Resource{
 				host.Plain{M: m, Home: v.Home, Paths: []string{dir + "/settings.json"}},
-				host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
-				host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
-				host.File{M: m, Path: dir + "/settings.json", Content: settings, Mode: 0o644, UID: uid, GID: gid,
+				host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
+				host.Dir{M: m, Path: dir, Mode: 0o755, UID: a.UID, GID: a.GID},
+				host.File{M: m, Path: dir + "/settings.json", Content: settings, Mode: 0o644, UID: a.UID, GID: a.GID,
 					Backup: true},
 			}, nil
 		}),

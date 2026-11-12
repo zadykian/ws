@@ -16,7 +16,7 @@ import (
 // skips: the job that proves the rest runs on a booted machine.
 func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out, size DiskSize) step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
-	return user.Owned(m, rootlessStep, configStep, func(uid, gid int) ([]host.Resource, error) {
+	return user.WithAccount(m, rootlessStep, configStep, func(a host.Account) ([]host.Resource, error) {
 		d, err := WithLimits(m, v.Docker)
 		if err != nil {
 			return nil, err
@@ -44,13 +44,13 @@ func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out,
 		conf, units := v.Home+"/.config/docker", v.Home+"/.config/systemd/user"
 		dropIn := units + "/docker.service.d"
 		daemon := host.Validated{
-			File: host.File{M: m, Path: conf + "/daemon.json", Content: daemonJSON, Mode: 0o644, UID: uid, GID: gid},
+			File: host.File{M: m, Path: conf + "/daemon.json", Content: daemonJSON, Mode: 0o644, UID: a.UID, GID: a.GID},
 			Check: func(path string) (string, []string) {
 				return "dockerd", []string{"--validate", "--config-file", path}
 			},
 		}
-		sliceFile := host.File{M: m, Path: units + "/docker.slice", Content: slice, Mode: 0o644, UID: uid, GID: gid}
-		service := host.File{M: m, Path: dropIn + "/ws.conf", Content: override, Mode: 0o644, UID: uid, GID: gid}
+		sliceFile := host.File{M: m, Path: units + "/docker.slice", Content: slice, Mode: 0o644, UID: a.UID, GID: a.GID}
+		service := host.File{M: m, Path: dropIn + "/ws.conf", Content: override, Mode: 0o644, UID: a.UID, GID: a.GID}
 		delegation := host.File{M: m, Path: delegatePath, Content: delegate, Mode: 0o644}
 		return []host.Resource{
 			host.Plain{M: m, Home: v.Home, Paths: []string{daemon.Path, sliceFile.Path, service.Path}},
@@ -59,17 +59,17 @@ func rootless(v values.Values, m effect.Machine, u effect.Units, out effect.Out,
 			delegation,
 			host.DaemonReload{M: m, U: u, Watch: []host.Resource{delegation}},
 			host.Linger{M: m, User: user, Out: out},
-			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", uid), Run: host.Running},
-			host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
-			host.Dir{M: m, Path: conf, Mode: 0o755, UID: uid, GID: gid},
-			host.Dir{M: m, Path: v.Home + "/.config/systemd", Mode: 0o755, UID: uid, GID: gid},
-			host.Dir{M: m, Path: units, Mode: 0o755, UID: uid, GID: gid},
-			host.Dir{M: m, Path: dropIn, Mode: 0o755, UID: uid, GID: gid},
+			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: host.Running},
+			host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: a.UID, GID: a.GID, CreateOnly: true},
+			host.Dir{M: m, Path: conf, Mode: 0o755, UID: a.UID, GID: a.GID},
+			host.Dir{M: m, Path: v.Home + "/.config/systemd", Mode: 0o755, UID: a.UID, GID: a.GID},
+			host.Dir{M: m, Path: units, Mode: 0o755, UID: a.UID, GID: a.GID},
+			host.Dir{M: m, Path: dropIn, Mode: 0o755, UID: a.UID, GID: a.GID},
 			daemon,
 			sliceFile,
 			service,
-			rootlessInstall{m, user, uid, out},
-			host.UserUnit{M: m, User: user, UID: uid, Out: out, Name: "docker.service",
+			rootlessInstall{m, user, a.UID, out},
+			host.UserUnit{M: m, User: user, UID: a.UID, Out: out, Name: "docker.service",
 				Watch: []host.Resource{daemon, sliceFile, service}},
 		}, nil
 	})
