@@ -65,17 +65,17 @@ func TestARoleUnreadIsChosenByItsName(t *testing.T) {
 }
 
 func TestAStagesBoxTurnsItsSteps(t *testing.T) {
-	l := atRow(newQueue(testStages()), "Setup").toggled()
+	l := atRow(newQueue(testStages()), "Setup").toggle()
 	if got := boxes(l)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
 		t.Errorf("boxes = %q", got)
 	}
-	if got := boxes(l.toggled())[1:4]; !slices.Equal(got, []string{"[ ]", "[ ]", "[ ]"}) {
+	if got := boxes(l.toggle())[1:4]; !slices.Equal(got, []string{"[ ]", "[ ]", "[ ]"}) {
 		t.Errorf("boxes = %q", got)
 	}
 }
 
 func TestALockedStageHoldsItsBox(t *testing.T) {
-	l := atRow(choosing(newQueue(testStages()), "Signing"), "Run").toggled()
+	l := atRow(choosing(newQueue(testStages()), "Signing"), "Run").toggle()
 	if !l.rows[5].on() || !l.rows[6].on() {
 		t.Errorf("rows = %+v", l.rows)
 	}

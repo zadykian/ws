@@ -14,18 +14,18 @@ func cursorOn(l pickList, name string) pickList {
 }
 
 func TestATurnTicksAndClearsTheStepUnderTheCursor(t *testing.T) {
-	l := cursorOn(twoRoles(), "Locale").toggled()
+	l := cursorOn(twoRoles(), "Locale").toggle()
 	if want := []string{"[ ]", "[x]", "[ ]", "[ ]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
-	if got := l.toggled().only(); len(got) != 0 {
+	if got := l.toggle().only(); len(got) != 0 {
 		t.Errorf("only = %q, want none", got)
 	}
 }
 
 func TestALockedStepHoldsItsBox(t *testing.T) {
 	l := cursorOn(choosing(chain(), "two"), "one")
-	if got := l.toggled().only(); !slices.Equal(got, l.only()) {
+	if got := l.toggle().only(); !slices.Equal(got, l.only()) {
 		t.Errorf("only = %q, want %q", got, l.only())
 	}
 }
@@ -33,30 +33,30 @@ func TestALockedStepHoldsItsBox(t *testing.T) {
 func TestARolesBoxTurnsItsStepsOnThenOff(t *testing.T) {
 	l := choosing(twoRoles(), "Locale", "Keys")
 	l.at = 0
-	l = l.toggled()
+	l = l.toggle()
 	if want := []string{"[x]", "[x]", "[x]", "[x]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
-	if want := []string{"[ ]", "[ ]", "[ ]", "[x]"}; !slices.Equal(boxes(l.toggled()), want) {
-		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	if want := []string{"[ ]", "[ ]", "[ ]", "[x]"}; !slices.Equal(boxes(l.toggle()), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggle()), want)
 	}
 }
 
 func TestARolesBoxTurnsTheStepsAFilterShows(t *testing.T) {
 	l := twoRoles().filtered("t") // Time alone, of base, and Keys has no t.
 	l.at = 0
-	if want := []string{"[ ]", "[ ]", "[x]", "[ ]"}; !slices.Equal(boxes(l.toggled()), want) {
-		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	if want := []string{"[ ]", "[ ]", "[x]", "[ ]"}; !slices.Equal(boxes(l.toggle()), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggle()), want)
 	}
 }
 
 func TestATurnReachesAStepThatComesTwice(t *testing.T) {
-	l := cursorOn(newPickList([]Group{{Steps: []string{"ssh", "git", "ssh"}}}), "ssh").toggled()
+	l := cursorOn(newPickList([]Group{{Steps: []string{"ssh", "git", "ssh"}}}), "ssh").toggle()
 	if want := []string{"[x]", "[ ]", "[x]"}; !slices.Equal(boxes(l), want) {
 		t.Errorf("boxes = %q, want %q", boxes(l), want)
 	}
-	if want := []string{"[ ]", "[ ]", "[ ]"}; !slices.Equal(boxes(l.toggled()), want) {
-		t.Errorf("boxes = %q, want %q", boxes(l.toggled()), want)
+	if want := []string{"[ ]", "[ ]", "[ ]"}; !slices.Equal(boxes(l.toggle()), want) {
+		t.Errorf("boxes = %q, want %q", boxes(l.toggle()), want)
 	}
 }
 
@@ -77,3 +77,6 @@ func TestCountTakesTheStepsItIsGiven(t *testing.T) {
 		t.Errorf("count = %d of %d, want 1 of 3", on, all)
 	}
 }
+
+// toggle turns the box under the cursor the list holds.
+func (l pickList) toggle() pickList { return l.toggled(l.at) }

@@ -29,7 +29,7 @@ func TestAFlatListHasNoHeading(t *testing.T) {
 func TestCurrentIsTheLineUnderTheCursor(t *testing.T) {
 	l := twoRoles()
 	l.at = 4
-	if got, ok := l.current(); !ok || got != (pickLine{3, true}) {
+	if got, ok := l.current(l.at); !ok || got != (pickLine{3, true}) {
 		t.Errorf("current = %v, %v", got, ok)
 	}
 }
@@ -46,7 +46,8 @@ func TestAFilterMatchesARoleOrAStepInAnyCase(t *testing.T) {
 func TestAFilterKeepsTheCursorOnItsLine(t *testing.T) {
 	l := twoRoles()
 	l.at = 3
-	got, ok := l.filtered("t").current()
+	l = l.filtered("t")
+	got, ok := l.current(l.at)
 	if want := (pickLine{2, false}); !ok || got != want {
 		t.Errorf("current = %v, %v, want %v", got, ok, want)
 	}
@@ -57,7 +58,7 @@ func TestAFilterKeepsTheCursorOnItsLine(t *testing.T) {
 }
 
 func TestAFilterCanLeaveNoLine(t *testing.T) {
-	if got, ok := twoRoles().filtered("nothing here").current(); ok {
+	if got, ok := twoRoles().filtered("nothing here").current(0); ok {
 		t.Errorf("current = %v, want none", got)
 	}
 }

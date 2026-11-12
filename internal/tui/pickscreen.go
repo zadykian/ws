@@ -151,7 +151,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	s.footer, place = s.footer.Update(msg)
 	switch place {
 	case pickTogglePlace:
-		s.list = s.list.toggled()
+		s.list = s.list.toggled(s.list.at)
 	case pickAllPlace:
 		s.list = s.list.chose(func(pickRow) bool { return true })
 	case pickNonePlace:

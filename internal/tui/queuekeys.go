@@ -54,7 +54,7 @@ func (s queueScreen) statusLine() string {
 // notes is the words of the strip: what holds for the whole queue, then the line under the cursor.
 func (s queueScreen) notes() []Line {
 	notes := s.warnings(s.unread, s.list.passedOver())
-	line, ok := s.list.current()
+	line, ok := s.list.current(s.list.at)
 	if !ok || line.heading {
 		return notes
 	}
@@ -145,7 +145,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	s.footer, place = s.footer.Update(msg)
 	switch place {
 	case pickTogglePlace:
-		s.list = s.list.toggled()
+		s.list = s.list.toggled(s.list.at)
 	case pickAllPlace:
 		s.list = s.list.chose(func(pickRow) bool { return true })
 	case pickNonePlace:

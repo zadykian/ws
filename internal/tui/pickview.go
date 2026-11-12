@@ -38,17 +38,17 @@ func (l pickList) lines() []pickLine {
 }
 
 // current returns the line under the cursor. A filter can leave none.
-func (l pickList) current() (pickLine, bool) {
+func (l pickList) current(at cursor) (pickLine, bool) {
 	lines := l.lines()
-	if int(l.at) >= len(lines) {
+	if int(at) >= len(lines) {
 		return pickLine{}, false
 	}
-	return lines[l.at], true
+	return lines[at], true
 }
 
 // filtered returns the list under words, the cursor on its line while that shows.
 func (l pickList) filtered(words string) pickList {
-	was, _ := l.current()
+	was, _ := l.current(l.at)
 	l.words = words
 	l.at = cursor(max(slices.Index(l.lines(), was), 0))
 	return l
