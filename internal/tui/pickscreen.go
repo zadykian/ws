@@ -105,11 +105,16 @@ type pickScreen struct {
 	unread string
 }
 
+// listButtons are the buttons of both screens of lists, in the order of their places.
+func listButtons() []key.Binding {
+	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
+	return []key.Binding{button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
+		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), Keys.Quit}
+}
+
 // newPickScreen returns the screen of groups, its scan under way.
 func newPickScreen(title string, theme Theme, groups []Group, picks chan<- QueueChoice) pickScreen {
-	button := func(k, label string) key.Binding { return key.NewBinding(key.WithKeys(k), key.WithHelp(k, label)) }
-	footer := NewFooter(button("space", "toggle"), button("a", "all"), button("n", "none"), button("i", "invert"),
-		button("p", "pending"), button("/", "filter"), button("enter", "run"), button("c", "check"), Keys.Quit)
+	footer := NewFooter(listButtons()...)
 	s := pickScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: newFilter()},
 		list: newPickList(groups), footer: footer, picks: picks}
 	return s.enabled()

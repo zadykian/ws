@@ -10,6 +10,8 @@ func queueFrame() queueScreen {
 	return queueScreen{
 		listScreen: listScreen{title: "ws mac wizard", theme: testTheme, window: Size{100, 30}, scanning: true},
 		list:       newQueue(testStages()),
+		footer:     NewFooter(append(listButtons(), stateButton, configureButton)...),
+		picks:      make(chan QueueChoice, 1),
 	}
 }
 
@@ -20,5 +22,16 @@ func TestTheQueueScreenDrawsItsListsOverTheDetail(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)
 		}
+	}
+}
+
+func TestTheQueueScreenGivesItsChoiceAndWaitsForTheWorkToEnd(t *testing.T) {
+	picks := make(chan QueueChoice, 1)
+	s := queueFrame()
+	s.picks = picks
+	s, leaving := s.leave(s.queueChoice(NextCheck))
+	leaving()
+	if got := <-picks; got.Next != NextCheck || !s.left {
+		t.Errorf("choice = %+v, left %v", got, s.left)
 	}
 }
