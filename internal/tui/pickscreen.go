@@ -88,6 +88,9 @@ func (s listScreen) status(on, scanned, all int, warned bool) string {
 	return fmt.Sprintf("%d of %d chosen", on, all)
 }
 
+// filtering says that the filter's line shows, over the list.
+func (s listScreen) filtering() bool { return s.filter.shows() }
+
 // pickScreen is the list that a run is chosen from. A scan fills it behind the screen, and the
 // maintainer can read and move as it goes.
 type pickScreen struct {
@@ -231,8 +234,7 @@ func (s pickScreen) enabled() pickScreen {
 
 // statusLine is the title's right side, of the steps alone, a queue's stages leaving out.
 func (s pickScreen) statusLine() string {
-	on, all := s.list.count(func(r pickRow) bool { return r.stage == "" })
-	_, scanned := s.list.count(func(r pickRow) bool { return r.stage == "" && r.state != stepOpen })
+	on, scanned, all := s.list.tally()
 	return s.status(on, scanned, all, len(s.list.passedOver()) > 0)
 }
 
@@ -248,11 +250,6 @@ func (s pickScreen) layout() Layout {
 		Panes:  []Pane{{Title: "Steps", Focused: true}, {Title: "Detail"}},
 		Footer: s.footer,
 	}
-}
-
-// filtering says that the filter's line shows, over the list.
-func (s pickScreen) filtering() bool {
-	return s.filter.shows()
 }
 
 // listHeight is the lines of the pane of steps that the list has.

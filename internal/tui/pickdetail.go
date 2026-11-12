@@ -15,20 +15,27 @@ func (s listScreen) detail(size Size, notes []Line) string {
 	return pane.move(len(pane.rows)).view()
 }
 
-// notes is the words of the pane: what holds for the whole list, then the line under the cursor.
-func (s pickScreen) notes() []Line {
+// warnings says why the scan stopped short, why a machine reported nothing, and which roles hold
+// changes left out.
+func (s listScreen) warnings(unread string, held []string) []Line {
 	var notes []Line
 	if s.problem != "" {
 		notes = append(notes, Line{Warned, "The scan stopped: " + s.problem})
 	}
-	if s.unread != "" {
-		notes = append(notes, Line{Warned, "Not scanned: " + s.unread})
+	if unread != "" {
+		notes = append(notes, Line{Warned, "Not scanned: " + unread})
 	}
-	if held := s.list.passedOver(); len(held) > 0 {
+	if len(held) > 0 {
 		text := "warning: changes left out in " + strings.Join(held, ", ") +
 			", ahead of a step chosen. It can fail without them."
 		notes = append(notes, Line{Warned, text})
 	}
+	return notes
+}
+
+// notes is the words of the pane: what holds for the whole list, then the line under the cursor.
+func (s pickScreen) notes() []Line {
+	notes := s.warnings(s.unread, s.list.passedOver())
 	line, ok := s.list.current()
 	if !ok || line.heading {
 		return notes

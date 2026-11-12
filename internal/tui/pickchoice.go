@@ -62,3 +62,10 @@ func (l pickList) count(in func(pickRow) bool) (on, all int) {
 	}
 	return on, all
 }
+
+// tally counts the steps on, the steps the scan has reached and the steps, a queue's stages leaving out.
+func (l pickList) tally() (on, scanned, all int) {
+	on, all = l.count(func(r pickRow) bool { return r.stage == "" })
+	_, scanned = l.count(func(r pickRow) bool { return r.stage == "" && r.state != stepOpen })
+	return on, scanned, all
+}
