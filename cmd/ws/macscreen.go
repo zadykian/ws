@@ -42,7 +42,7 @@ func (w macScreen) round() tui.Round {
 	return tui.Round{
 		Stages: wizardQueue(stages),
 		Scan:   w.scan(sudo),
-		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return w.read(side, sudo) },
+		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return macState(w.p, side, sudo) },
 		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, run, sudo) },
 	}
 }
