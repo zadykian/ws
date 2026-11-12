@@ -8,12 +8,11 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// atRow returns l with the cursor on the row of that name, on its side.
-func atRow(l pickList, name string) pickList {
+// atRow returns l turned to the side of the row of that name, and the cursor on the row.
+func atRow(l pickList, name string) (pickList, cursor) {
 	row := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.name == name })
 	l.side = l.rows[row].side
-	l.at = cursor(slices.Index(l.lines(), pickLine{row: row}))
-	return l
+	return l, cursor(slices.Index(l.lines(), pickLine{row: row}))
 }
 
 func TestAStageFollowsTheStepsItRuns(t *testing.T) {
@@ -65,17 +64,19 @@ func TestARoleUnreadIsChosenByItsName(t *testing.T) {
 }
 
 func TestAStagesBoxTurnsItsSteps(t *testing.T) {
-	l := atRow(newQueue(testStages()), "Setup").toggle()
+	l, at := atRow(newQueue(testStages()), "Setup")
+	l = l.toggled(at)
 	if got := boxes(l)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
 		t.Errorf("boxes = %q", got)
 	}
-	if got := boxes(l.toggle())[1:4]; !slices.Equal(got, []string{"[ ]", "[ ]", "[ ]"}) {
+	if got := boxes(l.toggled(at))[1:4]; !slices.Equal(got, []string{"[ ]", "[ ]", "[ ]"}) {
 		t.Errorf("boxes = %q", got)
 	}
 }
 
 func TestALockedStageHoldsItsBox(t *testing.T) {
-	l := atRow(choosing(newQueue(testStages()), "Signing"), "Run").toggle()
+	l, at := atRow(choosing(newQueue(testStages()), "Signing"), "Run")
+	l = l.toggled(at)
 	if !l.rows[5].on() || !l.rows[6].on() {
 		t.Errorf("rows = %+v", l.rows)
 	}

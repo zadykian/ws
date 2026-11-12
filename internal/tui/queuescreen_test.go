@@ -190,7 +190,9 @@ func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
 func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{})
 	s.list = choosing(s.list, "one")
-	s.list = atRow(s.list, "Setup")
+	var at cursor
+	s.list, at = atRow(s.list, "Setup")
+	s.at[s.list.side] = at
 	if got := queueShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
 		t.Errorf("frame:\n%s", got)
 	}
@@ -249,5 +251,18 @@ func TestABridgeReportReachesTheScreen(t *testing.T) {
 	b.Report("Run", nil, "refused")
 	if got := (*sent)[0].(reportedMsg); got.stage != "Run" || got.problem != "refused" {
 		t.Errorf("sent %+v", got)
+	}
+}
+
+func TestEachSideKeepsItsCursor(t *testing.T) {
+	s := queueSent(testQueueScreen(), scannedMsg{}, press('j'), press('j'), press('j'), tab)
+	if s.list.side != WsSide || s.at[MacSide] != 3 || s.at[WsSide] != 0 {
+		t.Errorf("side %d, cursors %v", s.list.side, s.at)
+	}
+	if got := strings.Count(queueShown(s), "▸"); got != 1 {
+		t.Errorf("%d cursors drawn, want the focused list's alone", got)
+	}
+	if s = queueSent(s, shiftTab); s.list.side != MacSide || s.at[MacSide] != 3 {
+		t.Errorf("side %d, cursors %v", s.list.side, s.at)
 	}
 }

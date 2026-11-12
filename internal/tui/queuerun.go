@@ -25,8 +25,7 @@ func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
 	}
 	run := NewRunScreen(title, theme, stages)
 	run.pane = func(window Size) Size { return inside(stripSize(window)) }
-	list := choice.left.list
-	return QueueRun{run, list.filtered(""), list.cursors()}
+	return QueueRun{run, choice.left.list.filtered(""), choice.left.at}
 }
 
 // Init starts the clock.

@@ -24,7 +24,9 @@ type reportedMsg struct {
 // them behind the screen, and the maintainer can read and move as it goes.
 type queueScreen struct {
 	listScreen
-	list   pickList
+	list pickList
+	// at is the cursor on each side's list, by Side.
+	at     [2]cursor
 	footer Footer
 	// unread is why a machine reported nothing, and its steps stand as the queue named them.
 	unread string
@@ -54,7 +56,7 @@ func (s queueScreen) statusLine() string {
 // notes is the words of the strip: what holds for the whole queue, then the line under the cursor.
 func (s queueScreen) notes() []Line {
 	notes := s.warnings(s.unread, s.list.passedOver())
-	line, ok := s.list.current(s.list.at)
+	line, ok := s.list.current(s.at[s.list.side])
 	if !ok || line.heading {
 		return notes
 	}
@@ -88,9 +90,9 @@ func (s queueScreen) listHeight() int {
 
 // View draws the lists, the filter's line over the one in focus.
 func (s queueScreen) View() tea.View {
-	l := s.list.drawn(s.layout(), s.theme, s.window, s.list.cursors())
+	l := s.list.drawn(s.layout(), s.theme, s.window, s.at)
 	if s.filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight(), s.list.at, true)
+		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight(), s.at[s.list.side], true)
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
@@ -134,7 +136,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 		return s.typed(msg), nil
 	case key.Matches(msg, clearKey):
 		s.filter = s.filter.cleared()
-		s.list, s.list.at = s.list.narrowed(s.list.at, "")
+		s.list, s.at[s.list.side] = s.list.narrowed(s.at[s.list.side], "")
 		return s, nil
 	case key.Matches(msg, Keys.Next):
 		return s.tabbed(1), nil
@@ -145,7 +147,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	s.footer, place = s.footer.Update(msg)
 	switch place {
 	case pickTogglePlace:
-		s.list = s.list.toggled(s.list.at)
+		s.list = s.list.toggled(s.at[s.list.side])
 	case pickAllPlace:
 		s.list = s.list.chose(func(pickRow) bool { return true })
 	case pickNonePlace:
@@ -167,7 +169,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	case queueStatePlace:
 		return s.leave(s.queueChoice(NextState))
 	default:
-		s.list.at = s.list.at.moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
+		s.at[s.list.side] = s.at[s.list.side].moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
 	}
 	return s, nil
 }
@@ -177,7 +179,7 @@ func (s queueScreen) typed(msg tea.Msg) queueScreen {
 	var words string
 	var changed bool
 	if s.listScreen, words, changed = s.listScreen.typed(msg, s.list.words); changed {
-		s.list, s.list.at = s.list.narrowed(s.list.at, words)
+		s.list, s.at[s.list.side] = s.list.narrowed(s.at[s.list.side], words)
 	}
 	return s
 }
@@ -219,16 +221,23 @@ func (s queueScreen) tabbed(step int) queueScreen {
 	sides := s.list.sides()
 	next := s.list.pane(s.list.side) + step
 	if s.footer.Focused() < 0 && next >= 0 && next < len(sides) {
-		s.list = s.list.facing(sides[next])
+		s = s.faced(sides[next])
 		return s
 	}
 	s.footer = s.footer.move(step)
 	if s.footer.Focused() >= 0 {
 		return s
 	}
-	s.list = s.list.facing(sides[0])
+	s = s.faced(sides[0])
 	if step < 0 {
-		s.list = s.list.facing(sides[len(sides)-1])
+		s = s.faced(sides[len(sides)-1])
 	}
+	return s
+}
+
+// faced returns s turned to side, whose cursor a filter can have left past its list.
+func (s queueScreen) faced(side Side) queueScreen {
+	s.list.side = side
+	s.at[side] = s.at[side].within(len(s.list.lines()))
 	return s
 }
