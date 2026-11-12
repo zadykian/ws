@@ -44,11 +44,6 @@ type cldUpdate struct{}
 
 func (cldUpdate) String() string { return "would run cld update" }
 
-// Remark is a line that --check prints in the form of a change, which a run does not apply.
-type Remark string
-
-func (r Remark) String() string { return string(r) }
-
 func (c *Cld) bin() string { return c.Home + "/.local/bin/cld" }
 
 // has reports whether cld in ~/.local/bin is executable.

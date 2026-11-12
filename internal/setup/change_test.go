@@ -38,6 +38,7 @@ func TestApply(t *testing.T) {
 		setup.Write{Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
 		setup.SetMode{Path: "/d/f", Mode: 0o644},
 		setup.Backup{Path: "/a", To: "/a~"},
+		setup.Remark("a line"),
 	} {
 		if err := setup.Apply(context.Background(), m, out, c); err != nil {
 			t.Fatalf("Apply(%v): %v", c, err)
