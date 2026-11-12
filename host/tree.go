@@ -42,6 +42,9 @@ func (installTree) Kind() step.ChangeKind { return step.Install }
 
 func (c installTree) Apply(ctx context.Context) error {
 	staging := c.t.staging()
+	if _, err := c.t.M.RunRoot(ctx, "rm", "-rf", "--", staging); err != nil {
+		return err
+	}
 	if err := c.t.M.Unpack(ctx, c.file, staging, c.t.Strip); err != nil {
 		return fmt.Errorf("tree %s: %w", c.t.Path, err)
 	}
@@ -58,8 +61,24 @@ func (c installTree) Apply(ctx context.Context) error {
 	return nil
 }
 
-// Plan plans nothing where the marker holds the pinned URL. Otherwise it plans the directory, the
-// fetch of the archive and the install. It asks the source for its sum only for the fetch.
+// cleaned plans the removal of what a run cut short left beside a current tree: its archive, and
+// its staging directory. The archive's name needs the URL alone, so the source is not asked for a
+// sum.
+func (t Tree) cleaned(ctx context.Context, url string) ([]Change, error) {
+	var changes []Change
+	for _, p := range []string{path.Join(CacheDir, path.Base(url)), t.staging()} {
+		more, err := Absent{M: t.M, Path: p}.Plan(ctx)
+		if err != nil {
+			return nil, err
+		}
+		changes = append(changes, more...)
+	}
+	return changes, nil
+}
+
+// Plan plans the removal of leftovers where the marker holds the pinned URL. Otherwise it plans the
+// directory, the fetch of the archive and the install. It asks the source for its sum only for the
+// fetch.
 func (t Tree) Plan(ctx context.Context) ([]Change, error) {
 	url, _, err := t.Source.resolve(ctx)
 	if err != nil {
@@ -70,7 +89,7 @@ func (t Tree) Plan(ctx context.Context) ([]Change, error) {
 		return nil, err
 	}
 	if err == nil && string(marker) == url+"\n" {
-		return nil, nil
+		return t.cleaned(ctx, url)
 	}
 	file, err := t.Source.cached(ctx)
 	if err != nil {

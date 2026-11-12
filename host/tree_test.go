@@ -90,3 +90,39 @@ func TestTreeWithTheMarkerAsksNothing(t *testing.T) {
 		t.Errorf("calls = %q, want no fetch", m.Calls)
 	}
 }
+
+func TestTreeWithAStaleMarkerInstallsAgain(t *testing.T) {
+	m, tree := treeFixture(t)
+	m.Files[treeDir+"/.ws-source"] = []byte("https://x/1.1/t-amd64.tar\n")
+	if got := applyAll(t, tree); len(got) != 3 || !strings.HasPrefix(got[2], "install ") {
+		t.Errorf("plan = %q, want the install", got)
+	}
+	if string(m.Files[treeDir+"/.ws-source"]) != treeURL+"\n" {
+		t.Error("the marker is stale")
+	}
+}
+
+func TestTreeRemovesWhatACutRunLeft(t *testing.T) {
+	m, tree := treeFixture(t)
+	m.Files[treeDir+"/.ws-source"] = []byte(treeURL + "\n")
+	m.Files[treeFile] = []byte("part")
+	m.Dirs["/opt/.t.staging"] = 0o755
+	m.Files["/opt/.t.staging/f"] = []byte("x")
+	want := []string{"remove " + treeFile, "remove /opt/.t.staging"}
+	if got := applyAll(t, tree); !slices.Equal(got, want) {
+		t.Errorf("plan = %q, want %q", got, want)
+	}
+	if got := applyAll(t, tree); got != nil {
+		t.Errorf("second plan = %q, want none", got)
+	}
+}
+
+func TestTreeUnpacksAfreshOverAStagingAFailedRunLeft(t *testing.T) {
+	m, tree := treeFixture(t)
+	m.Dirs["/opt/.t.staging"] = 0o755
+	m.Files["/opt/.t.staging/stray"] = []byte("x")
+	applyAll(t, tree)
+	if _, ok := m.Files[treeDir+"/stray"]; ok {
+		t.Error("the stray file of the old staging reached the tree")
+	}
+}
