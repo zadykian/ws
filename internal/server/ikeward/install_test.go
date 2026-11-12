@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 const installArgs = binary + " install --p12 " + runDir + "/vpnclient.p12 --sswan " + runDir +

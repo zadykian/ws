@@ -9,8 +9,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 //go:embed files/terminal files/tmux.conf files/settings.json.tmpl

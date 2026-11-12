@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // secretsLabels are the entries that the form always offers, besides those the file holds.

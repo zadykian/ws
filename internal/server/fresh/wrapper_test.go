@@ -12,7 +12,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // setup says how run builds the wrapper's surroundings. env is the one variable the wrapper sees

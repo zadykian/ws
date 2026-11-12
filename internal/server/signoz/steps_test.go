@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 func TestEachStepWaitsOnTheOneBeforeItBarDashboards(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 func newProfile(m *effecttest.Machine) profile {

@@ -7,7 +7,7 @@ import (
 	"filippo.io/age"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 const credDecrypt = "systemd-creds decrypt --name=ws-secrets " + secrets.CredstorePath + " -"

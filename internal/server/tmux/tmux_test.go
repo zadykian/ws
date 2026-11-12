@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/values"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 const list = "Name  Version  Rev  Tracking  Publisher  Notes\ntmux  3.5a  1  latest/stable  x  classic\n"

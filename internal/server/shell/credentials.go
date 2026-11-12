@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // credential is one server's token, from the [git] table of the secrets file.

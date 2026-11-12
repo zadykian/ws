@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // newMacSecretsCmd returns ws mac secrets, which edits ws's secrets file. Each command runs its own

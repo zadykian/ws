@@ -6,8 +6,8 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/roles"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // RoleState is what a role's steps report, as ws server state prints it. Prepare's steps stand
