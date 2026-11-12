@@ -3,6 +3,7 @@ package secrets
 import (
 	"fmt"
 	"slices"
+	"strings"
 )
 
 // The kinds of an entry, as ws mac secrets names them.
@@ -98,10 +99,21 @@ func (s Secrets) Keys() []string {
 	return keys
 }
 
+// entryNames lists the names of the kinds that take a fixed few. An env variable and a git
+// server take any name.
+var entryNames = map[string][]string{
+	KindToken:    {"github", "azure_devops"},
+	KindPassword: {"vpn_p12"},
+	KindFile:     {"vpn_p12", "vpn_sswan"},
+}
+
 func unknown(kind, name string) error {
+	if names, ok := entryNames[kind]; ok {
+		return fmt.Errorf("%s %s: ws has no such entry: want %s", kind, name, strings.Join(names, " or "))
+	}
 	switch kind {
-	case KindToken, KindEnv, KindGit, KindFile, KindPassword:
-		return fmt.Errorf("%s %s: ws has no such entry; see ws mac secrets for the names", kind, name)
+	case KindEnv, KindGit:
+		return fmt.Errorf("%s %s: ws has no such entry", kind, name)
 	}
 	return fmt.Errorf("%s is no kind of entry: want token, env, git, file or password", kind)
 }

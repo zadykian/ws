@@ -45,9 +45,10 @@ func TestEditErrorsNameNoValue(t *testing.T) {
 		want string
 	}{
 		{"unknown kind", s.Set("nope", "x", "dummy"), "no kind of entry"},
-		{"unknown token", s.Set(KindToken, "x", "dummy"), "token x"},
+		{"unknown token", s.Set(KindToken, "x", "dummy"), "github or azure_devops"},
+		{"unknown password", s.Set(KindPassword, "x", "dummy"), "want vpn_p12"},
 		{"git by Set", s.Set(KindGit, "x", "dummy"), "git x"},
-		{"unknown file", s.SetFile("x", []byte("dummy")), "file x"},
+		{"unknown file", s.SetFile("x", []byte("dummy")), "vpn_p12 or vpn_sswan"},
 		{"unset missing", s.Unset(KindEnv, "MY_TOKEN"), "env MY_TOKEN is not in the file"},
 	}
 	for _, tt := range tests {
