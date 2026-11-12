@@ -85,7 +85,7 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if reg != nil {
 		cs = append(cs, *reg)
 	} else if waits != "" {
-		cs = append(cs, Pending(waits))
+		cs = append(cs, Remark(waits))
 	}
 	return step.Plan{Changes: g.withNotes(cs)}, nil
 }
@@ -112,8 +112,6 @@ func (g *Git) Apply(ctx context.Context, p step.Plan) error {
 	}
 	for _, c := range p.Changes[n:] {
 		switch c := c.(type) {
-		case Pending:
-			continue
 		case Known:
 			g.tell(string(c))
 			continue

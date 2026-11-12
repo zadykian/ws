@@ -67,9 +67,16 @@ type Backup struct{ Path, To string }
 
 func (b Backup) String() string { return fmt.Sprintf("would keep %s as %s", b.Path, b.To) }
 
+// Remark is a line that --check prints in the form of a change, which a run does not apply.
+type Remark string
+
+func (r Remark) String() string { return string(r) }
+
 // Apply applies one change of the user's files, and says what it did.
 func Apply(ctx context.Context, m effect.Machine, out effect.Out, c step.Change) error {
 	switch c := c.(type) {
+	case Remark:
+		return nil
 	case Write:
 		if err := m.WriteFile(c.Path, c.After, c.Mode); err != nil {
 			return fmt.Errorf("cannot write %s: %w", c.Path, err)
