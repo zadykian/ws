@@ -6,7 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // Install installs claude and cld where they are missing. claude updates itself in the background,

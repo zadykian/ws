@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // dotnetBin is the .NET SDK's command, from devtools' packages.

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // keyURL and ascSHA256 are Docker's apt key as its install guide for Ubuntu gives it. The checksum

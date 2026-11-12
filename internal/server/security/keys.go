@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // inContainer reports whether the machine is a container, which has no SSH to lose: Docker, Podman

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // bridgeCheck stops the run where docker0 lacks the address the values give. docker0 takes a moved

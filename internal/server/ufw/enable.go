@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // Enable turns ufw on, as `ufw enable` does, where ConfFile does not say ENABLED=yes or ufw status

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // serveRead fakes the command that readAsUser runs for the user's file. A nil body is no file.

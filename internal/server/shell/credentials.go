@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/internal/secrets"
 )
 

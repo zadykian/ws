@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // Files is the step that copies the forged compose files into the project's directory. Compose

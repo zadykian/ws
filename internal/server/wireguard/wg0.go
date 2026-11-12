@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // wg0 puts the files in force. networkd creates a missing wg0, and sets up again the links whose

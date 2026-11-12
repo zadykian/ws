@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // unitDirs are where a link can enable a unit: /etc for the units, /run for those enabled with

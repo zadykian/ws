@@ -6,7 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // installRustup is rustup's own installer, which curl pipes into sh. `--no-modify-path` leaves PATH

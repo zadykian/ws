@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // planAll joins the changes of resources, in order.

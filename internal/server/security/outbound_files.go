@@ -1,6 +1,6 @@
 package security
 
-import "github.com/zadykian/ws/host"
+import "github.com/zadykian/ws/engine/core/host"
 
 // Where the outbound table and its fill live, in a directory of ws's files alone.
 const (

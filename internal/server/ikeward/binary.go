@@ -2,7 +2,7 @@ package ikeward
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // version is ikeward's, from its release's binary. sums are the SHA-256 of that binary for each

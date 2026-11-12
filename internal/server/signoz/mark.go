@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // mark is the file that keeps a recreation of the containers due until an up succeeds: after a

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // Plan checks the address, the port and netplan's files, then plans the file, and the reload that

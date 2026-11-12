@@ -2,7 +2,7 @@ package security
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // fail2ban bans addresses that fail to log in over SSH, starts now and at boot, and reloads

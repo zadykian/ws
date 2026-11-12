@@ -2,7 +2,7 @@ package base
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // swappinessParts sets the kernel's swappiness at boot and in force. The value is set whatever the

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // exporter makes the parts that set up node_exporter, which gives the temperatures and fans that

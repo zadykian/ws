@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // telemetryRemoved are the env keys that Telemetry removes. A signal's own endpoint or protocol

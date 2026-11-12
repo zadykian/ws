@@ -8,7 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // secretEnv is ~/.secrets/env, for ~/.bashrc and the otelcol role, from the secrets file's

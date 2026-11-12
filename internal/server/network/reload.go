@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // reloaded plans the resource, and the two commands that put a change in force. They run on a

@@ -8,8 +8,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/host"
 )
 
 // Write puts After in the user's file with Mode. Before is what the file holds, if it exists.

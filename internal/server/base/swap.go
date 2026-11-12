@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // fstabLine swaps to the file at boot.

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // A malformed config makes Fresh load its defaults and exit 0, so these tests are its only check.

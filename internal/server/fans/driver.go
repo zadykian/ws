@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // dkmsBinary is where the dkms package puts the command.

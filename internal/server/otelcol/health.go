@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // healthURL is the collector's health_check extension.

@@ -2,7 +2,7 @@ package devtools
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // A release pins one server's version and the SHA-256 of its binary for each architecture, as

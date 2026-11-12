@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // rootlessInstall runs Docker's tool as the user, which makes and starts the unit, enables it, and

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // goplsTool is gopls at the pinned version, built with devtools' Go. gopls type-checks with the Go it

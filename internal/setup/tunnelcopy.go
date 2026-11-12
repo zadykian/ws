@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/host"
 )
 
 // programAndCopy plans ~/.local/bin/ws and root's copy of it. Every directory above the copy must

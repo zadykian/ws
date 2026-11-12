@@ -3,7 +3,7 @@ package wireguard
 import (
 	"strings"
 
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // DropsService returns wireguard-docker-user.service, which runs the script before Docker starts

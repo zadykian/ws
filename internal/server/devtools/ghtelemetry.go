@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // GHTelemetry turns gh's telemetry off for User, as gh 2.91.0 and later send it unless told not to.

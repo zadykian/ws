@@ -2,7 +2,7 @@ package security
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // unitFile makes the file of a unit that the fill or the table needs.

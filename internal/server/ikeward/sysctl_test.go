@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 const sysctlNowCall = "/usr/lib/systemd/systemd-sysctl --strict --prefix=net.ipv4.ip_forward"

@@ -5,7 +5,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // readScript prints y and the file, or n where none exists. The mark tells a missing file from an

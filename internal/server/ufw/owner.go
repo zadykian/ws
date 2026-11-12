@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // UserRules is the file where ufw keeps the rules given to it.

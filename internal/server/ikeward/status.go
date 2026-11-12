@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // Later roles may need the VPN, as for a clone from the remote network, so one that is not up

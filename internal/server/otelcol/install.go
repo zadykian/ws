@@ -5,8 +5,8 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/host"
 )
 
 // installStep is the name of the step that fetches and installs the .deb. The package adds the

@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // signingKey makes the SSH key that signs commits, once, with no passphrase: tools and claude

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/host"
 )
 
 // tunnelKeyFile is the Mac's WireGuard key, in a file only root reads.

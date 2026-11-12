@@ -5,7 +5,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // goDir is where Go is installed. Its tree is staged beside it, so that a run cut short never

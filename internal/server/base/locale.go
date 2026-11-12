@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // localeParts keeps the locale generated and the system's. /etc/locale.gen names it, and

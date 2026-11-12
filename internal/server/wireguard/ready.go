@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // ready shows the server's public key, which the Mac's end of the tunnel needs, and checks that

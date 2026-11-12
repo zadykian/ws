@@ -2,7 +2,7 @@ package security
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // sshd allows SSH by key only. sshd -G parses the file, as a config of its own, before the file

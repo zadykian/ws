@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 func tarGz(t *testing.T, names ...string) string {

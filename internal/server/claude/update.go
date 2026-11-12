@@ -12,7 +12,7 @@ import (
 	"golang.org/x/mod/semver"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // releaseVersion is a version of a release, which cld update takes. A build from source, cld dev,

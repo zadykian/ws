@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // Password is the step that writes root.env once, with the password of SigNoz's root user. No one
