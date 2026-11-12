@@ -30,11 +30,6 @@ const (
 // sshd, ufw, fail2ban, and the outbound table, or its removal where the value is off. The role
 // takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
-	return steps(v, m, u, out)
-}
-
-// steps is Steps with the units given, for a test to fake.
-func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
 	ss := []step.Step{
 		// nftables brings nft, which loads the outbound table. Its own service stays off, as the
 		// package leaves it. Recommends: apt's default, as the role installed them.
