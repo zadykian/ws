@@ -4,6 +4,8 @@ import (
 	"maps"
 	"slices"
 	"testing"
+
+	"github.com/zadykian/ws/step"
 )
 
 // queueBoxes draws each row's box in order, the stages' own among them, as the eye reads a queue.
@@ -149,5 +151,27 @@ func TestALeftOutWarningStaysAmongOneStagesRoles(t *testing.T) {
 	q = q.take(planned("ssh", "three", 0, oneChange("a")))
 	if got, want := queueChoosing(q, "three").passedOver(1), []string{"base"}; !slices.Equal(got, want) {
 		t.Errorf("passed over = %q, want %q", got, want)
+	}
+}
+
+func TestABulkChoiceLeavesWhatTheFilterHides(t *testing.T) {
+	q, _ := queueOf(testStages()).narrowed(MacSide, 0, "two")
+	q = q.chose(func(pickRow) bool { return true })
+	if want := []string{"[#]", "[x]", "[ ]", "[x]"}; !slices.Equal(queueBoxes(q)[:4], want) {
+		t.Errorf("boxes = %q, want %q", queueBoxes(q)[:4], want)
+	}
+}
+
+func TestAQueuePassesOverTheRolesOfEachStage(t *testing.T) {
+	stages := []Stage{
+		{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one"}}, {Name: "ssh", Steps: []string{"two"}}}},
+		{Name: "Sudo", Side: WsSide, Nested: []Group{{Name: "net", Steps: []string{"three"}}, {Name: "dns", Steps: []string{"four"}}}},
+	}
+	q := queueOf(stages)
+	for _, e := range []step.Event{planned("base", "one", 0, oneChange("a")), planned("net", "three", 0, oneChange("a"))} {
+		q = q.take(e)
+	}
+	if got, want := queueChoosing(q, "two", "four").passed(), []string{"base", "net"}; !slices.Equal(got, want) {
+		t.Errorf("passed = %q, want %q", got, want)
 	}
 }

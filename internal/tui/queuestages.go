@@ -18,6 +18,8 @@ type queue struct {
 	stages []queueStage
 	// heard holds what the scan printed since a step last ended.
 	heard []Line
+	// words is the filter the lists show under.
+	words string
 }
 
 // queueOf returns the queue of stages. A group named as its stage has no heading, and one with no
@@ -78,11 +80,19 @@ func (q queue) render(theme Theme, l queueLine) string {
 
 // filtered returns the queue under words.
 func (q queue) filtered(words string) queue {
+	q.words = words
 	q.stages = slices.Clone(q.stages)
 	for i := range q.stages {
 		q.stages[i].list = q.stages[i].list.filtered(words)
 	}
 	return q
+}
+
+// narrowed returns the queue under words, and the cursor on its line of the side while that shows.
+func (q queue) narrowed(side Side, at cursor, words string) (queue, cursor) {
+	was := q.lines(side)
+	q = q.filtered(words)
+	return q, kept(at, was, q.lines(side))
 }
 
 // view draws height lines of the side, the cursor's gutter where shown.

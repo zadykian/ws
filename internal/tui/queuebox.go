@@ -165,3 +165,29 @@ func (q queue) whole(want func(queueStage) bool) queue {
 func (q queue) passedOver(i int) []string {
 	return q.stages[i].list.passedOver()
 }
+
+// passed returns the roles with changes left out ahead of a step on, within their stages.
+func (q queue) passed() []string {
+	var roles []string
+	for i := range q.stages {
+		for _, role := range q.passedOver(i) {
+			if !slices.Contains(roles, role) {
+				roles = append(roles, role)
+			}
+		}
+	}
+	return roles
+}
+
+// chose returns the queue with the box of each shown row set by box, the stages' own among them. What
+// a filter hides keeps its box.
+func (q queue) chose(box func(pickRow) bool) queue {
+	q.stages = slices.Clone(q.stages)
+	for i, s := range q.stages {
+		if s.list.named(s.row.name) {
+			q.stages[i].row.chosen = box(s.row)
+		}
+		q.stages[i].list = s.list.chose(box)
+	}
+	return q.settled()
+}

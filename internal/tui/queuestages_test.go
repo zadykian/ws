@@ -96,3 +96,13 @@ func TestAQueueViewDrawsTheWindowUnderTheCursor(t *testing.T) {
 		t.Errorf("view = %q, want %q", got, want)
 	}
 }
+
+func TestNarrowingKeepsTheCursorOnItsLine(t *testing.T) {
+	q, at := queueOf(testStages()).narrowed(MacSide, 3, "two")
+	if q.words != "two" || at != 1 {
+		t.Errorf("words %q, cursor %d", q.words, at)
+	}
+	if _, at = q.narrowed(MacSide, at, ""); at != 3 {
+		t.Errorf("cursor = %d, want 3", at)
+	}
+}
