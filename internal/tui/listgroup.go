@@ -1,5 +1,11 @@
 package tui
 
+import (
+	"slices"
+
+	"github.com/zadykian/ws/step"
+)
+
 // groupForm is how a list shows a group of its steps.
 type groupForm int
 
@@ -39,4 +45,33 @@ func (r pickRow) indented() string {
 		return r.indent()
 	}
 	return ""
+}
+
+// holds says that the list has the group named parent, by its steps or by its unread row.
+func (l pickList) holds(parent string) bool {
+	return slices.ContainsFunc(l.rows, func(r pickRow) bool {
+		return parent != "" && r.parent == parent || r.form == groupUnread && r.name == parent
+	})
+}
+
+// joined returns the list with a row for e's step, where a run has it and no scan named it. A new
+// Mac has no mac.conf to name a stage's steps by, and no role of ws has steps before ws is there.
+// The step goes after its group's last, in place of the group's unread row. A group the list lacks
+// is the stage's own, which has no heading and comes first.
+func (l pickList) joined(e step.Event) pickList {
+	if e.Parent == "" || l.place(e) >= 0 {
+		return l
+	}
+	row := pickRow{stepRow: stepRow{parent: e.Parent, index: e.Index, name: e.Step}, form: groupBare}
+	at, replaced := 0, 0
+	for i, r := range l.rows {
+		switch {
+		case r.parent == e.Parent:
+			row.form, at = r.form, i+1
+		case r.form == groupUnread && r.name == e.Parent:
+			row.form, at, replaced = groupHeaded, i, 1
+		}
+	}
+	l.rows = slices.Replace(slices.Clone(l.rows), at, at+replaced, row)
+	return l
 }
