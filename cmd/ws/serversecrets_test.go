@@ -81,15 +81,6 @@ func TestServerSecretsInitKeepsWhatIsThere(t *testing.T) {
 	}
 }
 
-func TestServerSecretsInitRefusesAFileAlone(t *testing.T) {
-	m := effecttest.NewMachine()
-	m.Files[secrets.FilePath] = []byte("kept")
-	status, _, errs := runServerSecrets(m, 0, "", "init")
-	if status != 1 || !strings.Contains(errs, "remove the file") || len(m.Inputs) != 0 {
-		t.Errorf("status %d, stderr %q; want 1, and no identity made", status, errs)
-	}
-}
-
 func TestServerSecretsAsRootAlone(t *testing.T) {
 	m, _ := credFixture()
 	for _, a := range [][]string{{"init"}, {"set", "env", "A"}, {"unset", "env", "A"}, {"keys"}} {

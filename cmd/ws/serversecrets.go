@@ -2,8 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"io/fs"
 
 	"github.com/spf13/cobra"
 
@@ -35,43 +33,25 @@ func serverSecretsStore(p process) (secrets.Store, error) {
 	return secrets.Store{M: p.machine}, nil
 }
 
-// serverSecretsInit makes a missing credential, and the file where none is. A file
-// without the credential stops it, as a new identity would not open the file.
+// serverSecretsInit makes a missing credential, and the file where none is, and says which it made.
 func serverSecretsInit(c *cobra.Command, p process) error {
 	store, err := serverSecretsStore(p)
 	if err != nil {
 		return err
 	}
-	cred := secrets.Credstore{M: p.machine}
-	has, err := cred.Has()
+	found, err := store.Init(c.Context())
 	if err != nil {
 		return err
 	}
-	_, err = p.machine.Stat(secrets.FilePath)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return err
-	}
-	file := err == nil
-	switch {
-	case has:
+	if found.Credential {
 		sayOut(c, "the credential %s is there, and stays", secrets.CredstorePath)
-	case file:
-		return fmt.Errorf("%s is there without the credential %s, and a new identity would not open it: "+
-			"remove the file, then run init again", secrets.FilePath, secrets.CredstorePath)
-	default:
-		if _, err := cred.Make(c.Context()); err != nil {
-			return err
-		}
+	} else {
 		sayOut(c, "made the identity, the credential %s", secrets.CredstorePath)
 	}
-	if file {
+	if found.File {
 		sayOut(c, "%s is there, and stays", secrets.FilePath)
-		return nil
+	} else {
+		sayOut(c, "made %s", secrets.FilePath)
 	}
-	// An empty edit reads the identity back from the credential, which proves that it opens.
-	if err := store.Edit(c.Context(), func(*secrets.Secrets) error { return nil }); err != nil {
-		return err
-	}
-	sayOut(c, "made %s", secrets.FilePath)
 	return nil
 }
