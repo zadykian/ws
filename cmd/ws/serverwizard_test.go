@@ -34,6 +34,9 @@ func TestServerWizardAsksTheValuesAndSkipsUnbooted(t *testing.T) {
 	if got := string(m.Files[serverVars]); got != "---\nsecurity_outbound: false\nws_user: root\n" {
 		t.Errorf("host_vars = %q", got)
 	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
+		t.Errorf("caffeinate ran on ws: calls %q", m.Calls)
+	}
 }
 
 // Under --check the values are named, not asked, and ws's run waits on them. A user is refused.
