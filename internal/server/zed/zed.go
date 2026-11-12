@@ -24,7 +24,7 @@ const terminalDir = "/usr/local/lib/ws/zed"
 const terminalPath = terminalDir + "/terminal"
 
 // Steps returns the role's steps in order.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: "Zed terminal", Parts: terminalParts(m)},

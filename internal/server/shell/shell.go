@@ -14,7 +14,7 @@ import (
 
 // Steps returns the role's steps in order. Packages come first, as ble.sh and bash-completion serve
 // the files after. Each file refuses a link on its own path, so that a link stops its step alone.
-func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{
 		host.Group{Title: "Shell packages", Parts: []host.Resource{

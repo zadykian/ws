@@ -11,7 +11,7 @@ import (
 
 func TestStepsAreTheRolesInOrder(t *testing.T) {
 	var names []string
-	for _, s := range Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{}) {
+	for _, s := range Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{}) {
 		names = append(names, s.Name())
 	}
 	want := []string{"Packages", "Locale", "Timezone", "Upgrades", "Swap", "Swappiness"}

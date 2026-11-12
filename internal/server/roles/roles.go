@@ -34,8 +34,8 @@ type Role struct {
 	Name string
 	// Steps returns the role's steps, in the order they run. A role's package gives it as
 	// `Steps: name.Steps`, with Steps declared as
-	// func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step.
-	Steps func(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step
+	// func Steps(v values.Values, s secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step.
+	Steps func(v values.Values, s secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step
 }
 
 // all is every role, in the order that they run.

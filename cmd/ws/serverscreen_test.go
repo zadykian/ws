@@ -81,7 +81,7 @@ func (stepOf) Apply(context.Context, step.Plan) error { return nil }
 
 // roleOf is a role of one step, which makes takes the run's effects to build.
 func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) roles.Role {
-	return roles.Role{Name: name, Steps: func(_ values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+	return roles.Role{Name: name, Steps: func(_ values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 		return []step.Step{makes(m, out)}
 	}}
 }
@@ -176,7 +176,7 @@ func TestServerApplyTakesAStepByName(t *testing.T) {
 func TestApplyOnScreenChecksTheStepsNamed(t *testing.T) {
 	p, m := serverTerminal()
 	c, drawn := screenCommand(t, "")
-	role := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+	role := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
 		plan := func(context.Context) error { return nil }
 		return []step.Step{stepOf{"one", plan}, stepOf{"two", plan}}
 	}}

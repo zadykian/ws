@@ -15,7 +15,7 @@ import (
 
 // stepNamed returns the role's step of that name.
 func stepNamed(t *testing.T, m *effecttest.Machine, v values.Values, name string) step.Step {
-	for _, s := range Steps(v, secrets.Secrets{}, m, &effecttest.Out{}) {
+	for _, s := range Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{}) {
 		if s.Name() == name {
 			return s
 		}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
+	"github.com/zadykian/ws/internal/secrets"
 	"github.com/zadykian/ws/internal/server/ufw"
 	"github.com/zadykian/ws/internal/server/values"
 	"github.com/zadykian/ws/step"
@@ -40,7 +41,7 @@ func fakeSteps(v values.Values) (*effecttest.Machine, *effecttest.Units, []step.
 	m.Results["rm -f "+tableFile+".ws-check"] = effecttest.Result{}
 	u := &effecttest.Units{}
 	u.States = map[string]effect.UnitState{"ufw.service": {Enabled: true}, "fail2ban.service": {Enabled: true, Active: true}}
-	return m, u, steps(v, m, u, &effecttest.Out{})
+	return m, u, Steps(v, secrets.Secrets{}, m, u, &effecttest.Out{})
 }
 
 func run(t *testing.T, ss []step.Step) {

@@ -28,7 +28,7 @@ func run(t *testing.T, user, home string) *effecttest.Machine {
 	m.Dirs[home] = 0o755
 	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
-	steps := Steps(valuesOf(user, home), secrets.Secrets{}, m, &effecttest.Out{})
+	steps := Steps(valuesOf(user, home), secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})
 	if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestSettingsAreOwnedByTheUserOnAnEmptyHome(t *testing.T) {
 
 func TestASecondRunChangesNothing(t *testing.T) {
 	m := run(t, "root", "/root")
-	steps := Steps(valuesOf("root", "/root"), secrets.Secrets{}, m, &effecttest.Out{})
+	steps := Steps(valuesOf("root", "/root"), secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})
 	changed, err := step.Run(context.Background(), steps, &effecttest.Out{}, true)
 	if err != nil || changed {
 		t.Errorf("second run: %v, %v", changed, err)
@@ -141,7 +141,7 @@ func TestTheStepsRefuseALinkAtAFileRootWrites(t *testing.T) {
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Links["/home/ws/.config/zed"] = "/srv/target"
-	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, m, &effecttest.Out{})
+	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})
 	if _, err := step.Run(context.Background(), steps, &effecttest.Out{}, false); err == nil {
 		t.Error("a link at the settings' directory: no error")
 	}
@@ -168,7 +168,7 @@ func TestTheTerminalFilesAreRootsAtTheirModes(t *testing.T) {
 
 func TestTheTerminalStepComesFirstAndMakesItsParents(t *testing.T) {
 	m := effecttest.NewMachine()
-	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, m, &effecttest.Out{})
+	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})
 	if steps[0].Name() != "Zed terminal" {
 		t.Fatalf("the first step is %q", steps[0].Name())
 	}
@@ -193,7 +193,7 @@ func TestSettingsRunTheWrapperAsTheTerminalProgramAfterItsStep(t *testing.T) {
 	if top.Terminal.Shell.Program != terminalPath {
 		t.Errorf("program %q, want %q", top.Terminal.Shell.Program, terminalPath)
 	}
-	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	steps := Steps(valuesOf("ws", "/home/ws"), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{})
 	if steps[1].Name() != "Zed settings" || steps[1].WaitsOn() != steps[0].Name() {
 		t.Errorf("%q waits on %q", steps[1].Name(), steps[1].WaitsOn())
 	}

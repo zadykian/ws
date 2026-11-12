@@ -10,7 +10,7 @@ import (
 )
 
 func TestEachStepWaitsOnTheOneBeforeItBarDashboards(t *testing.T) {
-	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{})
 	var names []string
 	for i, s := range steps {
 		before := ""

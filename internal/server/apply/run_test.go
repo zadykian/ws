@@ -121,7 +121,7 @@ func (l *lasts) Observe(e step.Event) {
 
 // role is a role of the steps list.
 func role(name string, list ...step.Step) roles.Role {
-	return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+	return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
 		return list
 	}}
 }
@@ -176,7 +176,7 @@ func TestRunStopsBetweenTheRolesAndEndsThoseItStopsShortOf(t *testing.T) {
 func TestRunMakesTheSecretsTheWholeTruthWhenGivenAFile(t *testing.T) {
 	for _, file := range []string{"", "/s.age"} {
 		var whole bool
-		r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Out) []step.Step {
+		r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
 			whole = s.Whole
 			return nil
 		}}
@@ -214,7 +214,7 @@ func (reports) Report(context.Context) ([]step.Item, error) {
 func TestStateReadsPrepareAndEachRoleAndAppliesNone(t *testing.T) {
 	var a, b bool
 	role := func(name string, s step.Step) roles.Role {
-		return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+		return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
 			return []step.Step{s}
 		}}
 	}
@@ -236,7 +236,7 @@ func TestStateReadsPrepareAndEachRoleAndAppliesNone(t *testing.T) {
 
 func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
 	var done bool
-	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
 		return []step.Step{named{todo{&done}, "x"}, named{todo{&done}, "y"}}
 	}}
 	for _, tc := range []struct{ only, want []string }{
@@ -263,7 +263,7 @@ func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
 
 func TestStateGivesTheRolesNoSecrets(t *testing.T) {
 	var got secrets.Secrets
-	r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Out) []step.Step {
+	r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
 		got = s
 		return nil
 	}}
@@ -277,7 +277,7 @@ func TestStateStopsAtTheEndOfTheContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	var done bool
-	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Out) []step.Step {
+	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
 		return []step.Step{todo{&done}}
 	}}
 	if _, err := State(ctx, Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}}, []roles.Role{r}); !errors.Is(err, context.Canceled) {

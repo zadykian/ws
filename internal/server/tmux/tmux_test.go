@@ -54,7 +54,7 @@ func TestSnapSkipsWithoutSystemdOrSnapd(t *testing.T) {
 }
 
 func TestStepsAreTheRole(t *testing.T) {
-	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{})
 	if len(steps) != 1 || steps[0].Name() != "Tmux" {
 		t.Errorf("got %d steps, want Tmux alone", len(steps))
 	}

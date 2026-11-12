@@ -126,7 +126,7 @@ func prepareServer(c *cobra.Command, p process, opts apply.Options) (serverRun, 
 	if err != nil {
 		return serverRun{}, err
 	}
-	cfg := apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, Out: out, Observer: out,
+	cfg := apply.Config{Options: opts, Values: v, Secrets: sec, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
 	if err := cfg.CheckSteps(list); err != nil {
 		return serverRun{}, usageError{err}

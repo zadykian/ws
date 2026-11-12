@@ -31,11 +31,11 @@ const (
 // Steps returns the role's steps in order: the check of the board, the driver's packages and
 // source, and the rest as they come. The role takes no secrets. On a machine with another board
 // the steps after the first plan nothing.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
-	return steps(v.Fans, m, effect.OSUnits{}, out, running)
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
+	return steps(v.Fans, m, u, out, running)
 }
 
-// steps is Steps with the fans' values, the units and the path of ws given, for a test to fake.
+// steps is Steps with the fans' values and the path of ws given, for a test to fake.
 func steps(f values.Fans, m effect.Machine, u effect.Units, out effect.Out, exe func() (string, error)) []step.Step {
 	vendor := f.BoardVendor
 	return []step.Step{

@@ -18,7 +18,7 @@ import (
 )
 
 func steps() []step.Step {
-	return Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	return Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{})
 }
 
 func TestStepsAreTheRole(t *testing.T) {
@@ -47,7 +47,7 @@ func configOn() (*effecttest.Machine, step.Step) {
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 	v := values.Default()
 	v.User, v.Home = "ws", "/home/ws"
-	return m, Steps(v, secrets.Secrets{}, m, &effecttest.Out{})[2]
+	return m, Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})[2]
 }
 
 func TestConfigIsWrittenOnceForTheUser(t *testing.T) {

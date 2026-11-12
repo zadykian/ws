@@ -8,7 +8,9 @@ import (
 
 	"filippo.io/age"
 	"filippo.io/age/armor"
+	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/internal/server/apply"
 	"github.com/zadykian/ws/step"
@@ -210,5 +212,18 @@ func TestServerStateDrawsTheScreenAtATerminal(t *testing.T) {
 	status, stdout, stderr = runWs(p, "", "server", "state", "--json", "--only", "tmux")
 	if status != 0 || !strings.Contains(stdout, `"role": "tmux"`) || strings.Contains(stderr, enterScreen) {
 		t.Errorf("--json: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
+	}
+}
+
+func TestPrepareServerGivesTheRolesTheMachinesUnits(t *testing.T) {
+	p, _ := serverTerminal()
+	c := &cobra.Command{Use: "apply"}
+	c.SetContext(t.Context())
+	r, err := prepareServer(c, p, apply.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := r.cfg.U.(effect.OSUnits); !ok {
+		t.Errorf("units = %T, want effect.OSUnits", r.cfg.U)
 	}
 }
