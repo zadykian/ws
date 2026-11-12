@@ -74,12 +74,20 @@ func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 
 func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 	stages := []Stage{{Name: "Run", Side: WsSide, Nested: []Group{{Name: "base"}}}}
-	l := newQueue(stages)
-	if got := l.panes()[l.pane(WsSide)].Title; got != "ws: roles not scanned" {
+	q := queueOf(stages)
+	if got := q.panes(WsSide)[q.pane(WsSide)].Title; got != "ws: roles not scanned" {
 		t.Errorf("title = %q", got)
 	}
-	if got := l.reported("Run", nil).panes()[l.pane(WsSide)].Title; got != "ws" {
+	if got := q.reported("Run", nil).panes(WsSide)[q.pane(WsSide)].Title; got != "ws" {
 		t.Errorf("title = %q", got)
+	}
+}
+
+func TestOnlyTheSideInFocusShowsItsCursor(t *testing.T) {
+	q := queueOf(testStages())
+	l := q.drawn(Layout{Panes: q.panes(WsSide)}, testTheme, Size{100, 30}, WsSide, [2]cursor{})
+	if strings.Contains(l.Panes[0].Body, "▸") || !strings.Contains(l.Panes[1].Body, "▸") {
+		t.Errorf("panes:\n%s\n%s", l.Panes[0].Body, l.Panes[1].Body)
 	}
 }
 

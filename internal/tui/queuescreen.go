@@ -80,3 +80,42 @@ func (l pickList) drawn(layout Layout, theme Theme, window Size, at [2]cursor) L
 	}
 	return layout
 }
+
+// sides returns the sides that have a stage: ws's alone where none runs on the Mac, as in ws server
+// wizard, else both.
+func (q queue) sides() []Side {
+	if slices.ContainsFunc(q.stages, func(s queueStage) bool { return s.side == MacSide }) {
+		return []Side{MacSide, WsSide}
+	}
+	return []Side{WsSide}
+}
+
+// pane is the place of side's list among the panes.
+func (q queue) pane(side Side) int { return max(slices.Index(q.sides(), side), 0) }
+
+// panes returns the lists' panes, empty, the one of the side in focus focused. ws's says so while a
+// role stands unread, as a check of the Mac can't reach what ws reports until ws is there.
+func (q queue) panes(focus Side) []Pane {
+	ws := Pane{Title: WsSide.String(), Focused: focus == WsSide}
+	unread := func(s queueStage) bool {
+		return slices.ContainsFunc(s.list.rows, func(r pickRow) bool { return r.index == unreadIndex })
+	}
+	if slices.ContainsFunc(q.stages, unread) {
+		ws.Title = WsSide.String() + ": roles not scanned"
+	}
+	if len(q.sides()) == 1 {
+		return []Pane{ws}
+	}
+	return []Pane{{Title: MacSide.String(), Focused: focus == MacSide}, ws}
+}
+
+// drawn returns the layout with the sides' lines in its panes, a cursor a side. The side out of
+// focus shows none.
+func (q queue) drawn(layout Layout, theme Theme, window Size, focus Side, at [2]cursor) Layout {
+	sizes := layout.PaneSizes(window.Width, window.Height)
+	for i, side := range q.sides() {
+		there := at[side].within(len(q.lines(side)))
+		layout.Panes[i].Body = q.view(theme, side, sizes[i].Height, there, side == focus)
+	}
+	return layout
+}
