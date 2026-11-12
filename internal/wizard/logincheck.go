@@ -14,8 +14,9 @@ const loginStage = "Login"
 // on the Mac stage has put the Mac's there. So the stage stops where WS_USER refuses the key, and
 // says what to do.
 type Login struct {
-	// Ws is the session to ws, whose ssh logs in.
-	Ws *Session
+	// SSH is the Mac's ssh to ws. Ws is the session to ws, whose status the stage reads.
+	SSH SSH
+	Ws  *Session
 	// Gh names the Mac's key in the stop.
 	Gh GhCLI
 	// Tty tells whether a terminal is there to ask ws's address, where ws doesn't answer at its way.

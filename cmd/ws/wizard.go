@@ -96,15 +96,15 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	sudo := e.sudo
 	ws := wizard.NewSession(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Out: out},
 		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript, Events: e.events})
-	sudo.Ws, sudo.Tty, sudo.Check, sudo.P, sudo.Out = ws, p.tty, check, e.hidden, out
+	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = host.SSH, p.tty, check, e.hidden, out
 	run := &wizard.WsRun{Ws: ws, Check: check, Out: out, Version: p.version, Update: o.update, Only: e.only,
 		Default: values.Default().User}
 	hand.Late(ws.Hand)
 	hand.Late(gh.Hand)
 	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
 	setup := wizardSetup(e, later)
-	login := &wizard.Login{Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
-	cable := &wizard.Cable{Ws: ws, Conf: later, Check: check, RunDone: run.RunDone,
+	login := &wizard.Login{SSH: host.SSH, Ws: ws, Gh: gh.GhCLI, Tty: p.tty, Check: check, Env: p.lookup, P: ask, Out: out}
+	cable := &wizard.Cable{Ws: ws, SSH: host.SSH, Conf: later, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
@@ -124,7 +124,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		run,
 		&wizard.WsClaude{Ws: ws, Tty: p.tty},
 		&wizard.Signing{Ws: ws, GitHub: &wizard.MacGitHub{Gh: gh.GhCLI, Lock: lock, Check: check}},
-		&wizard.Tunnel{Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
+		&wizard.Tunnel{SSH: host.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.getenv("HOME"),
 			Sleep: time.Sleep, M: p.machine, Out: out},
 		cable,
 	}

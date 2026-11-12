@@ -16,11 +16,11 @@ func (loginStop) String() string {
 
 // Plan is empty where WS_USER logs in. Under --check it shows that a run would stop.
 func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
-	w, err := r.Ws.way(ctx)
+	w, err := r.SSH.Way(ctx)
 	if err != nil {
 		return step.Plan{}, errors.New(loginStage + ": " + err.Error())
 	}
-	if ok, _ := r.Ws.login(ctx, w); ok {
+	if ok, _ := r.SSH.login(ctx, w); ok {
 		return step.Plan{}, nil
 	}
 	if r.Check {
@@ -35,7 +35,7 @@ func (r *Login) Plan(ctx context.Context) (step.Plan, error) {
 // doesn't answer, the Host key stage's question gives its address now, and WS_USER may take the
 // key there.
 func (r *Login) Apply(ctx context.Context, _ step.Plan) error {
-	w, err := r.Ws.way(ctx)
+	w, err := r.SSH.Way(ctx)
 	if err != nil {
 		return errors.New(loginStage + ": " + err.Error())
 	}
@@ -47,16 +47,16 @@ func (r *Login) stop(ctx context.Context, w Way) error {
 	if err != nil {
 		return err
 	}
-	if scanKey(ctx, r.Ws.ssh().M, w) == "" {
+	if scanKey(ctx, r.SSH.M, w) == "" {
 		if r.Check {
 			r.Out.Say("%s: %s; a run would ask its address now", hostStage, noAnswer(w))
 			return nil
 		}
-		if w, _, err = (firstQuestion{r.Ws.ssh(), r.Env, r.Tty, r.P, r.Out}).ask(ctx, c.Target, w); err != nil {
+		if w, _, err = (firstQuestion{r.SSH, r.Env, r.Tty, r.P, r.Out}).ask(ctx, c.Target, w); err != nil {
 			return err
 		}
 	}
-	if ok, sshErr := r.Ws.login(ctx, w); !ok {
+	if ok, sshErr := r.SSH.login(ctx, w); !ok {
 		return r.refuse(ctx, w, sshErr)
 	}
 	return nil

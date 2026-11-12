@@ -19,7 +19,7 @@ func newLogin(login effecttest.Result) (*Login, *effecttest.Machine) {
 	m.Results["ssh-keygen -F ws -f "+hostsOf] = effecttest.Result{}
 	m.Results[loginCall] = login
 	ws := macSession(m, h.SSH, h.Out.(*effecttest.Out), wsStatus{})
-	return &Login{Ws: ws, Gh: GhCLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
+	return &Login{SSH: h.SSH, Ws: ws, Gh: GhCLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
 }
 
 // sshFailed is the error of a failed ssh, whose stderr ends each line with \r\n.
@@ -39,7 +39,7 @@ func TestLoginLogin(t *testing.T) {
 	} {
 		r, _ := newLogin(tc.login)
 		w.User = tc.user
-		if ok, msg := r.Ws.login(context.Background(), w); ok != tc.ok || msg != tc.err {
+		if ok, msg := r.SSH.login(context.Background(), w); ok != tc.ok || msg != tc.err {
 			t.Errorf("%s: login = %v, %q; want %v, %q", name, ok, msg, tc.ok, tc.err)
 		}
 	}

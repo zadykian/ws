@@ -73,7 +73,7 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 	// A kept one holds the effects of a screen that has ended.
 	ws := wizard.NewSession(wizard.MacReach{SSH: ssh, Sudo: sudo, Out: t},
 		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript})
-	sudo.Ws, sudo.Tty, sudo.P, sudo.Out = ws, r.p.tty, t, t
+	sudo.SSH, sudo.Tty, sudo.P, sudo.Out = ssh, r.p.tty, t, t
 	plan, err := sudo.Plan(ctx)
 	if err != nil {
 		return nil, err

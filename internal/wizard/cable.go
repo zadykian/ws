@@ -31,6 +31,8 @@ type Cable struct {
 	// Ws is the session to ws, whose files script lists and names the ports. ws is read only where
 	// its ssh logs in, in this run.
 	Ws *Session
+	// SSH is the Mac's ssh to ws.
+	SSH SSH
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
@@ -135,13 +137,13 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	// Under --check, no direct way to ws yet means that ws's run is not done either. in stays
 	// false, and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.
-	w, err := c.Ws.way(ctx)
+	w, err := c.SSH.Way(ctx)
 	if err != nil && !c.Check {
 		return step.Plan{}, fmt.Errorf("%s: %w", cableStage, err)
 	}
 	in := false
 	if err == nil {
-		in, _ = c.Ws.login(ctx, w)
+		in, _ = c.SSH.login(ctx, w)
 	}
 	_, portSet := c.Env("WS_CABLE_PORT")
 	svc, svcSet := c.Env("WS_CABLE_SERVICE")

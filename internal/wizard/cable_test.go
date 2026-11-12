@@ -18,11 +18,11 @@ func newCable(t *testing.T, status wsStatus, link string, env map[string]string)
 	root, m := newLogin(effecttest.Result{Out: []byte("ok\n")})
 	status.Run = idleRun.Run
 	out := &effecttest.Out{}
-	ws := macSession(m, root.Ws.ssh(), out, status)
+	ws := macSession(m, root.SSH, out, status)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
 	m.Results[remoteLine(ws.files, "link")] = effecttest.Result{Out: []byte(link)}
 	p := &effecttest.Prompt{T: t, Answers: map[string]string{}}
-	c := &Cable{Ws: ws, Conf: "/h/mac.conf",
+	c := &Cable{Ws: ws, SSH: root.SSH, Conf: "/h/mac.conf",
 		RunDone:  func(context.Context, conf.Conf) bool { return true },
 		MacApply: func(context.Context, bool) (bool, error) { return false, nil },
 		Env:      func(k string) (string, bool) { v, ok := env[k]; return v, ok }, P: p, Tty: true, M: m, Out: out}
