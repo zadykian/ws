@@ -3,23 +3,13 @@ package wizard
 import (
 	"context"
 	"strings"
+
+	"github.com/zadykian/ws/internal/sshcfg"
 )
 
-// firstFields returns the first two fields of the first line of text that holds any: a public key's
-// type and its base64.
-func firstFields(text string) string {
-	for _, l := range strings.Split(text, "\n") {
-		if f := strings.Fields(l); len(f) >= 2 {
-			return f[0] + " " + f[1]
-		}
-	}
-	return ""
-}
-
-// listed reports whether the agent at the socket lists the key that the text of its .pub holds.
-func (k *MacKey) listed(ctx context.Context, text, socket string) bool {
-	want := firstFields(text)
-	if want == "" {
+// listed reports whether the agent at the socket lists the key. The zero key is listed by none.
+func (k *MacKey) listed(ctx context.Context, key sshcfg.PublicKey, socket string) bool {
+	if key == (sshcfg.PublicKey{}) {
 		return false
 	}
 	out, err := k.M.Run(ctx, "env", "SSH_AUTH_SOCK="+socket, "ssh-add", "-L")
@@ -27,7 +17,7 @@ func (k *MacKey) listed(ctx context.Context, text, socket string) bool {
 		return false
 	}
 	for _, l := range strings.Split(string(out), "\n") {
-		if f := strings.Fields(l); len(f) >= 2 && f[0]+" "+f[1] == want {
+		if got, err := sshcfg.ParsePub(l); err == nil && got == key {
 			return true
 		}
 	}

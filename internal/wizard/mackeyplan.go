@@ -52,7 +52,7 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 		return nil, err
 	}
 	pub, agent := key.File, sshcfg.Expand(key.Agent, k.Home)
-	if !k.listed(ctx, key.Text, agent) {
+	if !k.listed(ctx, key.Key, agent) {
 		return nil, fmt.Errorf("%s: the agent at %s lists no key of %s: open Secretive, where it is that agent, "+
 			"or start the agent, then run the wizard again", macKey, agent, pub)
 	}
