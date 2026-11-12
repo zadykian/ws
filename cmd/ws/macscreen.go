@@ -34,11 +34,16 @@ func (w macScreen) draw() error {
 // the run take the scan's sudo, which holds what it asked.
 func (w macScreen) round() tui.Round {
 	sudo := &wizard.Sudo{}
+	stages := w.plainStages()
+	var run string // ws's run, found once a round; a side with none has no name to choose
+	if r := wsRunOf(stages); r != nil {
+		run = r.Name()
+	}
 	return tui.Round{
-		Stages: wizardQueue(w.plainStages()),
+		Stages: wizardQueue(stages),
 		Scan:   w.scan(sudo),
 		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return w.read(side, sudo) },
-		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, sudo) },
+		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, run, sudo) },
 	}
 }
 
@@ -71,13 +76,13 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
 		e := w.effects(b, sudo)
 		stages := wizardStages(e, check)
-		run := wsRunOf(stages)
-		watch := afterStage{b, run.WaitsOn(), func() {
-			states, err := run.Ws.State(ctx, w.p.version)
-			reportRoles(run.Name(), states, err, b.Report)
-		}}
 		o := b.Options(step.Options{Check: true})
-		o.Observer = watch
+		if run := wsRunOf(stages); run != nil {
+			o.Observer = afterStage{b, run.WaitsOn(), func() {
+				states, err := run.Ws.State(ctx, w.p.version)
+				reportRoles(run.Name(), states, err, b.Report)
+			}}
+		}
 		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.p.pid, nil)
 		return unwrapStep(err)
 	}
@@ -99,14 +104,14 @@ func (a afterStage) Observe(e step.Event) {
 	}
 }
 
-// wsRunOf returns the stage of ws's run.
+// wsRunOf returns the stage of ws's run, or nil where the stages hold none.
 func wsRunOf(stages []step.Step) *wizard.WsRun {
 	for _, s := range stages {
 		if run, ok := s.(*wizard.WsRun); ok {
 			return run
 		}
 	}
-	panic("the wizard has no stage of ws's run")
+	return nil
 }
 
 // work is a run of the stages by o beside a screen. What stays by hand goes to the run's stdout, as in
@@ -138,21 +143,20 @@ func (w macScreen) whole() error {
 	})
 }
 
-// optionsOf is the options of a run of what the lists chose. A stage in part leaves out ws's roles by
+// optionsOf is the options of a run of what the lists chose, run being ws's run's name. A stage in part leaves out ws's roles by
 // --only, as they run on ws, and ws mac apply's steps by the run's filter. ws's run whole by a tick goes
 // once more, as under --update: a good last run says nothing of a step that drifted after it.
-func (w macScreen) optionsOf(choice tui.QueueChoice) wizardOptions {
+func (w macScreen) optionsOf(choice tui.QueueChoice, run string) wizardOptions {
 	o := w.o
 	o.check = choice.Next == tui.NextCheck
-	name := wsRunOf(w.plainStages()).Name()
-	o.update = o.update || slices.Contains(choice.Whole, name)
-	o.left, o.only = wizardLeft(choice), choice.Partial[name]
+	o.update = o.update || slices.Contains(choice.Whole, run)
+	o.left, o.only = wizardLeft(choice), choice.Partial[run]
 	return o
 }
 
 // chosen runs what the lists chose, on a run of those stages.
-func (w macScreen) chosen(choice tui.QueueChoice, sudo *wizard.Sudo) error {
-	o := w.optionsOf(choice)
+func (w macScreen) chosen(choice tui.QueueChoice, run string, sudo *wizard.Sudo) error {
+	o := w.optionsOf(choice, run)
 	return w.running(o, sudo, func(cfg tui.Config, work tui.Work) error {
 		screen := tui.NewQueueRun(runTitle(w.c, o.check), cfg.Theme, choice)
 		return tui.Run(w.c.Context(), cfg, screen, work)

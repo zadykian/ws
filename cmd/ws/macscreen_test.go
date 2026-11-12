@@ -109,13 +109,20 @@ func TestWizardRunsTheStagesChosenAlone(t *testing.T) {
 	}
 }
 
+func TestWsRunOfFindsNoneWhereNoneIs(t *testing.T) {
+	if run := wsRunOf([]step.Step{stepOf{name: "one"}}); run != nil {
+		t.Errorf("wsRunOf = %v, want nil", run)
+	}
+}
+
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 	w := macScreen{p: fakeProcess()}
-	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}).update {
+	run := wsRunOf(w.plainStages()).Name()
+	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}, run).update {
 		t.Error("a tick in ws's run left the last run to speak")
 	}
-	if w.optionsOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}).update {
+	if w.optionsOf(tui.QueueChoice{Whole: []string{"ws mac apply"}}, run).update {
 		t.Error("another stage's tick ran ws again")
 	}
 }
