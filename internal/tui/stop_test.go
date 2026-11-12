@@ -6,12 +6,15 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/zadykian/ws/step"
 )
 
 var esc = tea.KeyPressMsg{Code: tea.KeyEscape}
@@ -23,6 +26,8 @@ type haltedRunMsg struct{}
 func haltingSession() (session, *[]tea.Msg) {
 	s, got := testSession()
 	s.halt = func() tea.Msg { return haltedRunMsg{} }
+	s.took = new(atomic.Bool)
+	s.took.Store(true)
 	return s, got
 }
 
@@ -165,13 +170,22 @@ func TestBridgeStop(t *testing.T) {
 	}
 }
 
-func TestRunStopsPastTheCurrentStepWithCtxAlive(t *testing.T) {
+// keysAfterOptions returns a Config whose keys come once the work holds its options: a reader
+// that is ready at once races the work's start. The pipe closes with the test.
+func keysAfterOptions(t *testing.T) (Config, func()) {
+	r, w := io.Pipe()
+	t.Cleanup(func() { _ = w.Close() })
 	c := noKeys(io.Discard)
-	c.In = strings.NewReader("\x03\r")
-	c.Halts = true
+	c.In = r
+	return c, func() { _, _ = io.WriteString(w, "\x03\r") }
+}
+
+func TestRunStopsPastTheCurrentStepWithCtxAlive(t *testing.T) {
+	c, press := keysAfterOptions(t)
 	alive := false
 	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(ctx context.Context, b *Bridge) error {
-		stop := b.Stop(ctx)
+		stop := b.Options(step.Options{}).Stop
+		press()
 		for stop() == nil {
 			time.Sleep(time.Millisecond)
 		}
@@ -184,16 +198,26 @@ func TestRunStopsPastTheCurrentStepWithCtxAlive(t *testing.T) {
 }
 
 func TestRunEndsWellWhereTheStoppedStepWasTheLast(t *testing.T) {
-	c := noKeys(io.Discard)
-	c.In = strings.NewReader("\x03\r")
-	c.Halts = true
-	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(ctx context.Context, b *Bridge) error {
-		for b.Stop(ctx)() == nil {
+	c, press := keysAfterOptions(t)
+	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(_ context.Context, b *Bridge) error {
+		stop := b.Options(step.Options{}).Stop
+		press()
+		for stop() == nil {
 			time.Sleep(time.Millisecond)
 		}
 		return nil
 	})
 	if err != nil {
+		t.Errorf("Run: %v", err)
+	}
+}
+
+// Before a work took Bridge.Options it reads no stop, so Ctrl-C ends ctx at once.
+func TestCtrlCEndsTheRunBeforeTheWorkTookTheOptions(t *testing.T) {
+	c := noKeys(io.Discard)
+	c.In = strings.NewReader("\x03")
+	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, waitForCtx)
+	if !errors.Is(err, cutError{syscall.SIGINT}) {
 		t.Errorf("Run: %v", err)
 	}
 }

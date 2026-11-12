@@ -131,12 +131,17 @@ func TestSetupOnScreenPrintsWhatStaysOnStdoutPastTheScreen(t *testing.T) {
 
 func TestSetupOnScreenStopsPastTheCurrentStep(t *testing.T) {
 	p, _ := macTerminal()
-	c, _ := screenCommand(t, "\x03\r")
+	c, _ := screenCommand(t, "")
+	keys, press := io.Pipe()
+	t.Cleanup(func() { _ = press.Close() })
+	c.SetIn(keys)
 	var reached, finished bool
 	build := func(_ effect.Machine, out effect.Out, _ io.Writer) []step.Step {
 		return []step.Step{
-			ending{stepOf{"one", func(ctx context.Context) error {
-				for stopped := out.(*tui.Bridge).Stop(ctx); stopped() == nil; {
+			ending{stepOf{"one", func(context.Context) error {
+				stopped := out.(*tui.Bridge).Options(step.Options{}).Stop
+				_, _ = io.WriteString(press, "\x03\r")
+				for stopped() == nil {
 					time.Sleep(time.Millisecond)
 				}
 				return nil

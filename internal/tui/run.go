@@ -39,9 +39,6 @@ type Config struct {
 	Cut func(syscall.Signal) error
 	// Unwind bounds the wait for a work past the screen's end, and defaults to unwindBound.
 	Unwind time.Duration
-	// Halts says that the work reads Bridge.Stop between its steps. Ctrl-C then asks first, and stops
-	// the run past its current step. Without it, the first Ctrl-C ends ctx.
-	Halts bool
 	// Log takes every line of the run, and LogPath names it for the report past the screen. A nil
 	// Log keeps none.
 	Log     io.Writer
@@ -49,6 +46,7 @@ type Config struct {
 	// Machine is what the screen's works run on, as Bridge.Effects gives it. Nil leaves them none.
 	Machine effect.Machine
 	// quiet leaves nothing past the screen, for a screen that a run follows and says the same again.
+	// It keeps Ctrl-C from asking too, as that screen's scan stops with ctx.
 	quiet bool
 }
 
@@ -79,8 +77,8 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 		func() tea.Msg { <-ctx.Done(); return endedMsg{} },
 	)
 	stop := func() tea.Msg { cancel(); return nil }
-	model := session{screen: screen, theme: c.Theme, begin: begin, stop: stop, cut: c.Cut}
-	if c.Halts {
+	model := session{screen: screen, theme: c.Theme, begin: begin, stop: stop, cut: c.Cut, took: &bridge.took}
+	if !c.quiet {
 		model.halt = func() tea.Msg { bridge.halted.Store(true); return nil }
 	}
 	terminal := &handover{}

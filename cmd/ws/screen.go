@@ -58,7 +58,7 @@ func screenConfig(c *cobra.Command, p process) tui.Config {
 }
 
 // drawRun runs work beside a run screen of groups, on stderr, where the lines go, and returns once
-// the terminal is back. work reads Bridge.Stop between its steps. A run cut short ends with the
+// the terminal is back. work gives its steps Bridge.Options. A run cut short ends with the
 // status of a signal, for execute to report.
 func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work tui.Work) error {
 	cfg, done := runConfig(c, p, screenConfig(c, p))
@@ -70,7 +70,7 @@ func drawRun(c *cobra.Command, p process, title string, groups []tui.Group, work
 // closes once the run has ended.
 func runConfig(c *cobra.Command, p process, cfg tui.Config) (tui.Config, func()) {
 	log, path := openLog(p, c.CommandPath(), time.Now())
-	cfg.Halts, cfg.LogPath = true, path
+	cfg.LogPath = path
 	if log == nil { // A nil *os.File in the interface would not be nil.
 		return cfg, func() {}
 	}
