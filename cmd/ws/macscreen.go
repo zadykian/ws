@@ -63,7 +63,7 @@ func (w macScreen) effects(b *tui.Bridge, text io.Writer, sudo *wizard.Sudo) wiz
 	p, on := w.p, b.Effects()
 	p.machine = on.M
 	return wizardEffects{p: p, prog: w.c.CommandPath(), talks: on.Talks, ask: b, hidden: b, out: b, text: text, obs: b,
-		hand: &wizard.Hand{}, sudo: sudo, stop: on.Stop}
+		hand: &wizard.Hand{}, sudo: sudo, stop: b.Options(step.Options{}).Stop}
 }
 
 // scan is a check of every stage, beside the lists. ws speaks for its roles once the stage that
@@ -79,7 +79,8 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 			states, err := run.Ws.State(ctx, w.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
-		o := step.Options{Observer: watch, Check: true, Stop: e.stop}
+		o := b.Options(step.Options{Check: true})
+		o.Observer = watch
 		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.tmp(), w.p.pid, nil)
 		return unwrapStep(err)
 	}
@@ -129,7 +130,7 @@ func (w macScreen) work(r wizardRun, text io.Writer) tui.Work {
 		e := w.effects(b, text, r.sudo)
 		e.left, e.only, e.events = r.left, r.only, b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, text) }
-		o := step.Options{Observer: b, Check: r.o.check, Stop: e.stop, LeftOut: r.left}
+		o := b.Options(step.Options{Check: r.o.check, LeftOut: r.left})
 		_, err := wizard.Run(ctx, e.p.machine, o, wizardStages(e, r.o), w.tmp(), w.p.pid, closing)
 		return unwrapStep(err)
 	}

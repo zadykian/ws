@@ -83,7 +83,8 @@ func (s serverScreen) scan() tui.Work {
 			states, err := run.Ws.State(ctx, s.p.version)
 			reportRoles(run.Name(), states, err, b.Report)
 		}}
-		o := step.Options{Observer: watch, Check: true, Stop: e.Stop}
+		o := b.Options(step.Options{Check: true})
+		o.Observer = watch
 		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, nil)
 		return unwrapStep(err)
 	}
@@ -105,7 +106,7 @@ func (s serverScreen) running(r serverPick, choice *tui.Choice) error {
 		hand := &wizard.Hand{}
 		stages := serverWizardStages(on, b, e.Talks, b, b, hand, r)
 		closing := func(ctx context.Context) { hand.Close(ctx, &text) }
-		o.Observer, o.Stop = b, e.Stop
+		o = b.Options(o)
 		_, err := wizard.Run(ctx, on.machine, o, stages, s.tmp, 0, closing)
 		b.Log(text.String()) // A failed run prints it too.
 		return unwrapStep(err)
