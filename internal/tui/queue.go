@@ -55,7 +55,8 @@ func newQueue(stages []Stage) pickList {
 			l.rows = append(l.rows, s.rows(g)...)
 		}
 	}
-	return l.facing(l.sides()[0])
+	l.side = l.sides()[0]
+	return l
 }
 
 // rows returns the rows of a group of the stage. A role unread has one, by which ws's run names it.
@@ -92,20 +93,4 @@ func (r pickRow) headingIndent() string {
 		return strings.Repeat(" ", stageColumns)
 	}
 	return ""
-}
-
-// facing returns the list turned to side, under the cursor that side had.
-func (l pickList) facing(side Side) pickList {
-	if side != l.side {
-		l.side, l.at, l.other = side, l.other, l.at
-	}
-	l.at = l.at.within(len(l.lines()))
-	return l
-}
-
-// glance returns the list to draw side by, which shows no cursor out of focus.
-func (l pickList) glance(side Side) pickList {
-	seen := l.facing(side)
-	seen.blind = side != l.side
-	return seen
 }

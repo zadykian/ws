@@ -70,13 +70,8 @@ type pickList struct {
 	heard []Line
 	// words is the filter: the list shows the steps whose entry holds them.
 	words string
-	// at is the cursor's place in lines.
-	at cursor
-	// side is the list of a queue that lines shows, and other the cursor of the side out of sight.
-	side  Side
-	other cursor
-	// blind draws no cursor, on the side out of focus.
-	blind bool
+	// side is the list of a queue that lines shows.
+	side Side
 }
 
 // newPickList returns the list of groups, each step open and left out.
