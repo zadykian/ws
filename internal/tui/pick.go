@@ -16,6 +16,8 @@ type pickRow struct {
 	number int
 	// stage names the stage of a queue that runs the row.
 	stage string
+	// form is how the row's group shows: groupHeaded by the zero value.
+	form groupForm
 	// waitsOn names the step of its group that has to run first.
 	waitsOn string
 	// chosen is the row's own box. It stands under a lock, and counts again once the lock goes.
@@ -74,16 +76,13 @@ type pickList struct {
 	side Side
 }
 
-// newPickList returns the list of groups, each step open and left out.
+// newPickList returns the list of groups, each step open and left out, each under its heading.
 func newPickList(groups []Group) pickList {
-	var l pickList
-	for _, g := range groups {
-		for i, name := range g.Steps {
-			row := stepRow{parent: g.Name, index: i, name: name}
-			l.rows = append(l.rows, pickRow{stepRow: row, waitsOn: g.Waits[name]})
-		}
+	formed := make([]listGroup, len(groups))
+	for i, g := range groups {
+		formed[i] = listGroup{Group: g}
 	}
-	return l
+	return newFormedList(formed)
 }
 
 // hear keeps a line of the scan for the step that ends next.

@@ -13,6 +13,11 @@ func (l pickList) shows(r pickRow) bool {
 	return strings.Contains(strings.ToLower(r.entry()), strings.ToLower(l.words))
 }
 
+// named says that the filter's words are in name: a bare group's steps stand under it without a heading.
+func (l pickList) named(name string) bool {
+	return strings.Contains(strings.ToLower(name), strings.ToLower(l.words))
+}
+
 // lines returns what the filter leaves of the side, each step under its role's heading. A stage
 // names the steps under it, so that a group called as its stage takes no heading of its own.
 func (l pickList) lines() []pickLine {
@@ -22,7 +27,7 @@ func (l pickList) lines() []pickLine {
 		if r.side != l.side || !l.shows(r) {
 			continue
 		}
-		if r.parent != "" && r.parent != parent {
+		if r.parent != "" && r.parent != parent && (r.form != groupBare || !l.named(r.parent)) {
 			lines = append(lines, pickLine{row: i, heading: true})
 		}
 		parent = r.parent
@@ -75,7 +80,7 @@ func (l pickList) render(theme Theme, line pickLine) string {
 		return r.headingIndent() + l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
 	}
 	mark, style := r.state.look(theme)
-	return r.indent() + l.box(r) + " " + style.Render(mark) + " " + r.name
+	return r.indented() + l.box(r) + " " + style.Render(mark) + " " + r.name
 }
 
 // view draws height lines of the list, the cursor's gutter where shown. The list runs past a window,
