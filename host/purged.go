@@ -55,7 +55,7 @@ func (p Purged) Plan(ctx context.Context) ([]Change, error) {
 // Report shows each package as dpkg knows it. One that is installed stands against ws, as a run
 // purges it.
 func (p Purged) Report(ctx context.Context) ([]step.Item, error) {
-	states, err := dpkgStates(ctx, p.M, p.Names)
+	states, err := dpkgStates(ctx, p.M, p.Names...)
 	if err != nil {
 		return nil, err
 	}

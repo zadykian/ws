@@ -68,7 +68,7 @@ func (p Package) Plan(ctx context.Context) ([]Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("package %s: %w", p.Name, err)
 	}
-	states, err := dpkgStates(ctx, p.M, []string{p.Name})
+	states, err := dpkgStates(ctx, p.M, p.Name)
 	if err != nil {
 		return nil, err
 	}

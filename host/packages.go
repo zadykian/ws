@@ -167,7 +167,7 @@ func (p Packages) Report(ctx context.Context) ([]step.Item, error) {
 		names[i] = name
 		items[i] = step.Item{Kind: step.PackageItem, Name: name, Want: cmp.Or(glob, "installed")}
 	}
-	states, err := dpkgStates(ctx, p.M, names)
+	states, err := dpkgStates(ctx, p.M, names...)
 	if err != nil {
 		return nil, err
 	}

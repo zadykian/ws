@@ -50,3 +50,11 @@ func TestPackageReportsKeepTheInstalledLineOfTwoArchitectures(t *testing.T) {
 		}
 	}
 }
+
+func TestPackagesReportNoNamesRunsNoDpkg(t *testing.T) {
+	m := effecttest.NewMachine()
+	got, err := host.Packages{M: m}.Report(t.Context())
+	if err != nil || len(got) != 0 || len(m.Calls) != 0 {
+		t.Errorf("items = %+v, %v, calls %q, want none and no call", got, err, m.Calls)
+	}
+}
