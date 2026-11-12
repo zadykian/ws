@@ -140,7 +140,7 @@ func withoutLabel(lines []Line, label string) []Line {
 
 // settled returns the list with its locks worked out again, and a box ticked on every step that
 // its name runs. A step waits on an earlier one alone, so that one walk from the end reaches the
-// whole of a chain. A stage's box follows the steps it runs, and its lock holds them.
+// whole of a chain.
 func (l pickList) settled() pickList {
 	l.rows = slices.Clone(l.rows)
 	for i, r := range l.rows {
@@ -149,7 +149,6 @@ func (l pickList) settled() pickList {
 			l.rows[j].chosen = l.rows[j].chosen || r.chosen && r.sameChoice(l.rows[j])
 		}
 	}
-	l.tickStages()
 	for i := len(l.rows) - 1; i >= 0; i-- {
 		r := l.rows[i]
 		if r.waitsOn == "" || !r.on() {
@@ -162,14 +161,13 @@ func (l pickList) settled() pickList {
 			}
 		}
 	}
-	l.holdStages()
 	return l
 }
 
-// only returns the steps on, as Options.Only names them: a queue's stages, as they run what's
-// under them. A name that comes twice in a run is one choice there, so it comes once here.
+// only returns the steps on, as Options.Only names them. A name that comes twice in a run is one
+// choice there, so it comes once here.
 func (l pickList) only() []string {
-	return l.entries(func(r pickRow) bool { return r.stage == "" })
+	return l.entries(func(pickRow) bool { return true })
 }
 
 // entries returns those rows in on, each name once.
@@ -185,14 +183,10 @@ func (l pickList) entries(in func(pickRow) bool) []string {
 
 // passedOver returns the roles that hold changes left out ahead of a step on. The order of roles
 // has no model, as no step names a role it needs. A later one may fail without them, or may not, so
-// the list warns and locks nothing. A stage of a queue runs apart from the next, so a role is
-// passed over within its stage alone.
+// the list warns and locks nothing.
 func (l pickList) passedOver() []string {
 	var held, named []string
 	for _, r := range l.rows {
-		if r.number > 0 {
-			held = nil
-		}
 		if r.parent != "" && r.pending() && !r.on() && !slices.Contains(held, r.parent) {
 			held = append(held, r.parent)
 		}

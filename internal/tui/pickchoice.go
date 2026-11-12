@@ -28,8 +28,6 @@ func (l pickList) toggled(at cursor) pickList {
 		return l.turned(func(o pickRow) bool { return o.parent == row.parent })
 	case len(row.lockedBy) > 0:
 		return l
-	case l.nests(row):
-		return l.turned(under(row))
 	}
 	return l.chose(func(o pickRow) bool {
 		if o.sameChoice(row) {
@@ -63,9 +61,9 @@ func (l pickList) count(in func(pickRow) bool) (on, all int) {
 	return on, all
 }
 
-// tally counts the steps on, the steps the scan has reached and the steps, a queue's stages leaving out.
+// tally counts the steps on, the steps the scan has reached and the steps.
 func (l pickList) tally() (on, scanned, all int) {
-	on, all = l.count(func(r pickRow) bool { return r.stage == "" })
-	_, scanned = l.count(func(r pickRow) bool { return r.stage == "" && r.state != stepOpen })
+	on, all = l.count(func(pickRow) bool { return true })
+	_, scanned = l.count(func(r pickRow) bool { return r.state != stepOpen })
 	return on, scanned, all
 }

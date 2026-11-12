@@ -161,7 +161,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickInvertPlace:
 		s.list = s.list.chose(func(r pickRow) bool { return !r.on() })
 	case pickPendingPlace:
-		s.list = s.list.chose(pickRow.pending).whole(pickRow.pending)
+		s.list = s.list.chose(pickRow.pending)
 	case pickFilterPlace:
 		s.filter = s.filter.opened()
 	case pickRunPlace:
