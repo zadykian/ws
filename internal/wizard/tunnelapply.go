@@ -37,10 +37,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	if peered {
 		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server apply --only "+
 			"wireguard runs there in a unit of its own, which gives wg0 that peer", tunnelStage)
-		if err := t.Ws.files.Pass(ctx, "peer", mac); err != nil {
-			return err
-		}
-		if err := t.Ws.remote.Follow(ctx, "--only", "wireguard"); err != nil {
+		if err := t.Ws.namePeer(ctx, mac); err != nil {
 			return err
 		}
 		var ok bool

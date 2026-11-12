@@ -95,3 +95,23 @@ func (s *Session) do(ctx context.Context, o operation, args ...[]string) ([]byte
 	}
 	return out, nil
 }
+
+// ports lists ws's wired ports.
+func (s *Session) ports(ctx context.Context) ([]byte, error) { return s.do(ctx, opPorts) }
+
+// waitPorts lists the ports once port holds 10.77.0.1, or after 10 s, in one login.
+func (s *Session) waitPorts(ctx context.Context, port string) ([]byte, error) {
+	return s.do(ctx, opWait, []string{port})
+}
+
+// nameCable names the port in ws's host_vars and runs the network and wireguard roles there.
+func (s *Session) nameCable(ctx context.Context, port string) error {
+	_, err := s.do(ctx, opNameCable, []string{port}, []string{"--only", "network,wireguard"})
+	return err
+}
+
+// namePeer puts the Mac's key in ws's wg0 peer file and runs the wireguard role there.
+func (s *Session) namePeer(ctx context.Context, key string) error {
+	_, err := s.do(ctx, opNamePeer, []string{key}, []string{"--only", "wireguard"})
+	return err
+}

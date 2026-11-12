@@ -29,7 +29,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 	if v, set := c.Env("WS_CABLE_SERVICE"); set && v == "" {
 		return c.write(ctx, "")
 	}
-	if err := c.read(ctx, "link"); err != nil {
+	if err := c.read(ctx, ""); err != nil {
 		return err
 	}
 	if c.end() == "" {
@@ -54,7 +54,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 		if err := c.name(ctx, port); err != nil {
 			return err
 		}
-		if err := c.read(ctx, "wait", port); err != nil {
+		if err := c.read(ctx, port); err != nil {
 			return err
 		}
 		if c.end() != port {
@@ -67,10 +67,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 
 // name puts the port in ws's /etc/ws/host_vars.yml and runs the network and wireguard roles there.
 func (c *Cable) name(ctx context.Context, port string) error {
-	if err := c.Ws.files.Pass(ctx, "link", port); err != nil {
-		return err
-	}
-	return c.Ws.remote.Follow(ctx, "--only", "network,wireguard")
+	return c.Ws.nameCable(ctx, port)
 }
 
 // holds tells whether ws's status names the port as the cable's.
@@ -87,7 +84,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 	if !ok {
 		return fmt.Errorf("%s: status failed on ws", cableStage)
 	}
-	if err := c.read(ctx, "link"); err != nil {
+	if err := c.read(ctx, ""); err != nil {
 		return err
 	}
 	if !slices.Contains(c.names(), port) {

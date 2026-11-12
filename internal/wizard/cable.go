@@ -72,10 +72,16 @@ type cableChange string
 
 func (c cableChange) String() string { return cableStage + ": would " + string(c) }
 
-// read sets the ports to what the files script's op lists on ws. The op is link, or wait PORT,
-// which lists them once PORT holds 10.77.0.1, or after 10 s, in one login.
-func (c *Cable) read(ctx context.Context, op ...string) error {
-	out, err := c.Ws.files.query(ctx, op...)
+// read sets the ports to what ws lists. It lists them once port holds 10.77.0.1, or after 10 s, in
+// one login, where port is set.
+func (c *Cable) read(ctx context.Context, port string) error {
+	var out []byte
+	var err error
+	if port == "" {
+		out, err = c.Ws.ports(ctx)
+	} else {
+		out, err = c.Ws.waitPorts(ctx, port)
+	}
 	if err != nil {
 		return fmt.Errorf("%s: link failed on ws: %w", cableStage, err)
 	}
@@ -171,7 +177,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
 			"ws server apply --only network,wireguard there")
 	}
-	if err := c.read(ctx, "link"); err != nil {
+	if err := c.read(ctx, ""); err != nil {
 		return step.Plan{}, err
 	}
 	if !portSet && len(c.up()) == 0 {
