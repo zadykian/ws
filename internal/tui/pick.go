@@ -186,10 +186,14 @@ func (l pickList) entries(in func(pickRow) bool) []string {
 
 // passedOver returns the roles that hold changes left out ahead of a step on. The order of roles
 // has no model, as no step names a role it needs. A later one may fail without them, or may not, so
-// the list warns and locks nothing.
+// the list warns and locks nothing. A stage of a queue runs apart from the next, so a role is
+// passed over within its stage alone.
 func (l pickList) passedOver() []string {
 	var held, named []string
 	for _, r := range l.rows {
+		if r.number > 0 {
+			held = nil
+		}
 		if r.parent != "" && r.pending() && !r.on() && !slices.Contains(held, r.parent) {
 			held = append(held, r.parent)
 		}
