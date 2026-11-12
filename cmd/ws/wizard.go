@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"io"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -142,36 +139,16 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	// is set for the scripts that stages run.
 	_ = p.setenv("PATH", "/opt/homebrew/bin:"+p.getenv("PATH"))
 	_ = p.setenv("WS_CONF", confPath(p.getenv, p.pwd))
-	prog := c.CommandPath()
-	// The run's context ends with a signal, and its lock goes with it.
-	ctx, stop := signal.NotifyContext(c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-	term := effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr())
-	out := progOut{term, prog, map[string]bool{}}
-	obs := out
+	var before []func(effect.Out) step.Step
 	if o.update {
 		// Its own run, before the lock: the new ws takes the place of this process, which would leave the
 		// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
-		u := &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases, Home: p.getenv("HOME"), Args: p.argv}
-		if _, err := step.RunWith(ctx, []step.Step{u}, step.Options{Observer: obs, Check: o.check}); err != nil {
-			return unwrapStep(err)
-		}
+		before = append(before, func(out effect.Out) step.Step {
+			return &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases,
+				Home: p.getenv("HOME"), Args: p.argv}
+		})
 	}
-	if drawsScreen(c, p) {
-		stop() // The screen takes the signals, and asks before a signal ends a run.
-		return wizardRun{c, p, macSide(c, p), o}.draw()
-	}
-	hand := &wizard.Hand{}
-	closing := func(ctx context.Context) {
-		hand.Close(ctx, c.OutOrStdout())
-		term.Flush()
-	}
-	talks, _ := p.machine.(effect.Foreground)
-	stages := wizardStages(wizardEffects{p: p, prog: prog, talks: talks, ask: signalPrompt{term}, hidden: term, out: out,
-		text: c.OutOrStdout(), obs: obs, hand: hand, sudo: &wizard.Sudo{}}, o)
-	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: obs, Check: o.check}, stages, p.lockDir(), p.pid, closing)
-	// The runner names the stage before the stage's own message.
-	return unwrapStep(err)
+	return wizardRun{c, p, macSide(c, p), o}.start(before...)
 }
 
 // shellDefaults is the shell role's git identity as lines of key: value, which ws mac wizard

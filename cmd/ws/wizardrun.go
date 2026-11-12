@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"os/signal"
 	"slices"
 	"syscall"
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/internal/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/step"
@@ -19,6 +21,47 @@ type wizardRun struct {
 	p    process
 	side wizardSide
 	o    wizardOptions
+}
+
+// start runs the wizard on lines, or on its lists at a terminal. The steps that before build run
+// first, on lines, with the run's signals and terminal. A step that replaces ws, such as the update,
+// must run before the lock, and before the screen leaves the terminal raw.
+func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
+	// The run's context ends with a signal, and its lock goes with it.
+	ctx, stop := signal.NotifyContext(w.c.Context(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	term := effect.NewTerminal(w.c.InOrStdin(), w.c.ErrOrStderr())
+	out := progOut{term, w.c.CommandPath(), map[string]bool{}}
+	if len(before) > 0 {
+		steps := make([]step.Step, len(before))
+		for i, build := range before {
+			steps[i] = build(out)
+		}
+		if _, err := step.RunWith(ctx, steps, step.Options{Observer: out, Check: w.o.check}); err != nil {
+			return unwrapStep(err)
+		}
+	}
+	if drawsScreen(w.c, w.p) {
+		stop() // The screen takes the signals, and asks before a signal ends a run.
+		return w.draw()
+	}
+	return w.lines(ctx, term, out)
+}
+
+// lines is the plain run: the stages under the lock, then what stays by hand.
+func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut) error {
+	hand := &wizard.Hand{}
+	closing := func(ctx context.Context) {
+		hand.Close(ctx, w.c.OutOrStdout())
+		term.Flush()
+	}
+	talks, _ := w.p.machine.(effect.Foreground)
+	stages := w.side.stages(wizardEffects{p: w.p, prog: w.c.CommandPath(), talks: talks, ask: signalPrompt{term},
+		hidden: term, out: out, text: w.c.OutOrStdout(), obs: out, hand: hand, sudo: &wizard.Sudo{}}, w.o)
+	_, err := wizard.Run(ctx, w.p.machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.lockDir(),
+		w.side.pid, closing)
+	// The runner names the stage before the stage's own message.
+	return unwrapStep(err)
 }
 
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
