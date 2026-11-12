@@ -41,7 +41,7 @@ steps, and each role's page in `docs/` says what it sets up.
   ([The `playbook` job](../../docs/checks.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
-  ([devtools](../../internal/server/devtools/golang_plan.go)).
+  ([devtools](../../internal/server/devtools/golang.go)).
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
