@@ -83,3 +83,12 @@ func TestZshWarnsOfALinkedZshrcThatLacksTheLine(t *testing.T) {
 		t.Errorf("Report = %+v; want the line's conflict", items)
 	}
 }
+
+func TestZshStopsAtAConfigThatIsNoDirectory(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Files["/h/.config"] = []byte("x")
+	if _, err := zshStep(m, &effecttest.Out{}).Plan(context.Background()); err == nil ||
+		!strings.Contains(err.Error(), "/h/.config is not a directory") {
+		t.Errorf("Plan's error = %v, want that /h/.config is no directory", err)
+	}
+}
