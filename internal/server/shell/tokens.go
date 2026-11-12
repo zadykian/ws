@@ -18,7 +18,7 @@ import (
 // without, it keeps both.
 type tokens struct {
 	M     effect.Machine
-	A     account
+	A     host.Account
 	Creds []credential
 	// Whole removes the tokens and helpers of the URLs that Creds omit.
 	Whole bool

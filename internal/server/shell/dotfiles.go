@@ -21,7 +21,7 @@ func dotnetArch(goarch string) string {
 // dotfiles returns ~/.bashrc and ~/.profile, which ws replaces whole: settings of the user's own
 // go in ~/.bash_aliases, which ~/.bashrc sources. goarch is the machine's architecture: ws is built
 // for the machine it runs on.
-func dotfiles(m effect.Machine, a account, goarch string) ([]host.Resource, error) {
+func dotfiles(m effect.Machine, a host.Account, goarch string) ([]host.Resource, error) {
 	rc, err := host.Render(files, "files/bashrc.tmpl", struct{ Arch string }{dotnetArch(goarch)})
 	if err != nil {
 		return nil, err
