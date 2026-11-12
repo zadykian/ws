@@ -29,7 +29,7 @@ set -u
 # The one line of the gh stage that a run says where the account holds the Mac's key.
 known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
-remote_sh=$HOME/repository/ws/mac/wizard-remote.sh
+remote_sh=$HOME/repository/ws/roles/client/macos/mac/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamps=$ws/root/var/lib/ws-wizard
 peer=$ws/root/etc/wireguard/mac.pub

@@ -43,5 +43,5 @@ refused 'line 1: unknown key WS_HOOK' \
     env WS_CONF="$RUNNER_TEMP/refuse.conf" "$wsbin" mac wizard --check
 rm "$RUNNER_TEMP/refuse.conf"
 refused "unknown op 'stage'" \
-    sudo sh "$HOME/repository/ws/mac/wizard-remote-files.sh" stage
+    sudo sh "$HOME/repository/ws/roles/client/macos/mac/wizard-remote-files.sh" stage
 exit "$fail"
