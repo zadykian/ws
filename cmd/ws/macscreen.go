@@ -15,9 +15,10 @@ import (
 
 // macScreen is ws mac wizard at a terminal.
 type macScreen struct {
-	c *cobra.Command
-	p process
-	o wizardOptions
+	c    *cobra.Command
+	p    process
+	side wizardSide
+	o    wizardOptions
 }
 
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
@@ -27,7 +28,7 @@ func (w macScreen) draw() error {
 		return w.whole()
 	}
 	return tui.RunWizard(w.c.Context(), tui.Wizard{Title: w.c.CommandPath(), Config: w.config(), Round: w.round,
-		Forms: macForms(w.c, w.p)})
+		Forms: w.side.forms})
 }
 
 // round is the works of a scan. A new one reads the forms' answers. The state screen's read of ws and
@@ -42,7 +43,7 @@ func (w macScreen) round() tui.Round {
 	return tui.Round{
 		Stages: wizardQueue(stages),
 		Scan:   w.scan(sudo),
-		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return macState(w.p, side, sudo) },
+		Read:   func(side tui.Side) (tui.StateReader, func(context.Context)) { return w.side.read(side, sudo) },
 		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, run, sudo) },
 	}
 }
@@ -57,7 +58,7 @@ func (w macScreen) config() tui.Config {
 
 // plainStages returns the stages for their names and machines alone: none of them runs.
 func (w macScreen) plainStages() []step.Step {
-	return wizardStages(wizardEffects{p: w.p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, w.o)
+	return w.side.stages(wizardEffects{p: w.p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, w.o)
 }
 
 // effects returns the stages' effects on b, whose stdout waits for the screen's end.
@@ -75,7 +76,7 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 	check.check = true
 	return func(ctx context.Context, b *tui.Bridge) error {
 		e := w.effects(b, sudo)
-		stages := wizardStages(e, check)
+		stages := w.side.stages(e, check)
 		o := b.Options(step.Options{Check: true})
 		if run := wsRunOf(stages); run != nil {
 			o.Observer = afterStage{b, run.WaitsOn(), func() {
@@ -83,7 +84,7 @@ func (w macScreen) scan(sudo *wizard.Sudo) tui.Work {
 				reportRoles(run.Name(), states, err, b.Report)
 			}}
 		}
-		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.p.pid, nil)
+		_, err := wizard.Run(ctx, e.p.machine, o, stages, w.p.lockDir(), w.side.pid, nil)
 		return unwrapStep(err)
 	}
 }
@@ -122,7 +123,7 @@ func (w macScreen) work(o wizardOptions, sudo *wizard.Sudo) tui.Work {
 		e.events = b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
 		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
-		_, err := wizard.Run(ctx, e.p.machine, so, wizardStages(e, o), w.p.lockDir(), w.p.pid, closing)
+		_, err := wizard.Run(ctx, e.p.machine, so, w.side.stages(e, o), w.p.lockDir(), w.side.pid, closing)
 		return unwrapStep(err)
 	}
 }
