@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"path"
-	"strings"
 
 	"github.com/zadykian/ws/effect"
 )
@@ -42,19 +40,4 @@ func RefuseLinks(m effect.Machine, home string, paths ...string) error {
 		}
 	}
 	return nil
-}
-
-// chain returns each directory below home on the way to target, then target.
-func chain(home, target string) []string {
-	rel, ok := strings.CutPrefix(target, home+"/")
-	if !ok {
-		return []string{target}
-	}
-	var list []string
-	at := home
-	for part := range strings.SplitSeq(rel, "/") {
-		at = path.Join(at, part)
-		list = append(list, at)
-	}
-	return list
 }

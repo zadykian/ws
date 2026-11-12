@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -70,5 +71,29 @@ func guardHome(m effect.Machine, home, target string) error {
 	if !ok || !filepath.IsLocal(rel) {
 		return fmt.Errorf("%s is not a path below the home %s", target, home)
 	}
-	return RefuseLinks(m, home, target)
+	for _, at := range chain(home, target) {
+		info, err := m.Stat(at)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("look for a link at %s: %w", at, err)
+		}
+		if info.Link != "" {
+			return fmt.Errorf("%s is a link to %s: replace it with the file itself", at, info.Link)
+		}
+	}
+	return nil
+}
+
+// chain returns each directory below home on the way to target, then target.
+func chain(home, target string) []string {
+	rel, ok := strings.CutPrefix(target, home+"/")
+	if !ok {
+		return []string{target}
+	}
+	var list []string
+	at := home
+	for part := range strings.SplitSeq(rel, "/") {
+		at = path.Join(at, part)
+		list = append(list, at)
+	}
+	return list
 }
