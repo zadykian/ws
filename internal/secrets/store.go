@@ -29,6 +29,24 @@ func (s Store) Edit(ctx context.Context, fn func(*Secrets) error) error {
 	return s.write(cur, id)
 }
 
+// Keys returns the file's labels, "KIND NAME", sorted and never a value.
+func (s Store) Keys(ctx context.Context) ([]string, error) {
+	cur, _, err := s.read(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return cur.Keys(), nil
+}
+
+// Set sets the entry that label names, "KIND NAME". A git entry keeps its other fields.
+func (s Store) Set(ctx context.Context, label, value string) error {
+	kind, name, err := CutLabel(label)
+	if err != nil {
+		return err
+	}
+	return s.Edit(ctx, func(cur *Secrets) error { return cur.Set(kind, name, value) })
+}
+
 // read returns the file's entries as written, with the identity that opens it.
 func (s Store) read(ctx context.Context) (Secrets, age.Identity, error) {
 	id, err := Credstore(s).Identity(ctx)
