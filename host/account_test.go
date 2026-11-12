@@ -24,3 +24,19 @@ func TestLookupFindsTheAccount(t *testing.T) {
 		t.Error("an unknown user is found")
 	}
 }
+
+func TestWithAccountMakesItsPartsFromTheAccount(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
+	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1001\n")}
+	s := host.User{Name: "ws", Home: "/home/ws"}.WithAccount(m, "Files", "", func(a host.Account) ([]host.Resource, error) {
+		return []host.Resource{host.Dir{M: m, Path: a.Home + "/d", Mode: 0o755, UID: a.UID, GID: a.GID}}, nil
+	})
+	p, err := s.Plan(context.Background())
+	if err != nil || len(p.Changes) != 1 {
+		t.Fatalf("plan %v, %v", p, err)
+	}
+	if got, want := p.Changes[0].String(), "create directory /home/ws/d, owner 1000:1001, mode 755"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}

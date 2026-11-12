@@ -34,3 +34,15 @@ func (u User) Lookup(ctx context.Context, m effect.Machine) (Account, error) {
 	a.UID, a.GID = ids[0], ids[1]
 	return a, nil
 }
+
+// WithAccount is a step whose parts are made from the account as the step plans. It comes from
+// the machine, and a dry run on a new one must still show them.
+func (u User) WithAccount(m effect.Machine, title, after string, parts func(a Account) ([]Resource, error)) Lazy {
+	return Lazy{Title: title, After: after, Parts: func(ctx context.Context) ([]Resource, error) {
+		a, err := u.Lookup(ctx, m)
+		if err != nil {
+			return nil, err
+		}
+		return parts(a)
+	}}
+}
