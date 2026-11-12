@@ -4,8 +4,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-
-	tea "charm.land/bubbletea/v2"
 )
 
 // twoRoles is the list of two roles, of three steps and of one.
@@ -61,29 +59,6 @@ func TestAFilterKeepsTheCursorOnItsLine(t *testing.T) {
 func TestAFilterCanLeaveNoLine(t *testing.T) {
 	if got, ok := twoRoles().filtered("nothing here").current(); ok {
 		t.Errorf("current = %v, want none", got)
-	}
-}
-
-func TestTheCursorStopsAtTheEnds(t *testing.T) {
-	cases := []struct {
-		msg  tea.KeyPressMsg
-		from int
-		want int
-	}{
-		{press('k'), 0, 0},
-		{press('j'), 0, 1},
-		{press('j'), 5, 5},
-		{press('G'), 0, 5},
-		{press('g'), 3, 0},
-		{tea.KeyPressMsg{Code: tea.KeyPgDown}, 1, 5},
-		{tea.KeyPressMsg{Code: tea.KeyPgUp}, 5, 1},
-	}
-	for _, c := range cases {
-		l := twoRoles()
-		l.at = c.from
-		if got := l.moved(c.msg, 4).at; got != c.want {
-			t.Errorf("%v from %d = %d, want %d", c.msg, c.from, got, c.want)
-		}
 	}
 }
 

@@ -99,7 +99,7 @@ func (l pickList) facing(side Side) pickList {
 	if side != l.side {
 		l.side, l.at, l.other = side, l.other, l.at
 	}
-	l.at = max(min(l.at, len(l.lines())-1), 0)
+	l.at = l.at.within(len(l.lines()))
 	return l
 }
 

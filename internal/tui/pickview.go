@@ -3,9 +3,6 @@ package tui
 import (
 	"slices"
 	"strings"
-
-	"charm.land/bubbles/v2/key"
-	tea "charm.land/bubbletea/v2"
 )
 
 // pickLine is a line of the list: a step, or the heading of the role whose first shown step is row.
@@ -43,7 +40,7 @@ func (l pickList) lines() []pickLine {
 // current returns the line under the cursor. A filter can leave none.
 func (l pickList) current() (pickLine, bool) {
 	lines := l.lines()
-	if l.at >= len(lines) {
+	if int(l.at) >= len(lines) {
 		return pickLine{}, false
 	}
 	return lines[l.at], true
@@ -53,28 +50,7 @@ func (l pickList) current() (pickLine, bool) {
 func (l pickList) filtered(words string) pickList {
 	was, _ := l.current()
 	l.words = words
-	l.at = max(slices.Index(l.lines(), was), 0)
-	return l
-}
-
-// moved returns the list with the cursor where msg sends it, page lines to a page.
-func (l pickList) moved(msg tea.KeyPressMsg, page int) pickList {
-	last := len(l.lines()) - 1
-	switch {
-	case key.Matches(msg, Keys.Up):
-		l.at--
-	case key.Matches(msg, Keys.Down):
-		l.at++
-	case key.Matches(msg, Keys.PageUp):
-		l.at -= page
-	case key.Matches(msg, Keys.PageDown):
-		l.at += page
-	case key.Matches(msg, Keys.Top):
-		l.at = 0
-	case key.Matches(msg, Keys.Bottom):
-		l.at = last
-	}
-	l.at = max(min(l.at, last), 0)
+	l.at = cursor(max(slices.Index(l.lines(), was), 0))
 	return l
 }
 
@@ -107,11 +83,11 @@ func (l pickList) view(theme Theme, height int) string {
 	if len(lines) == 0 {
 		return theme.Muted.Render("No step matches.")
 	}
-	top := max(min(l.at-height/3, len(lines)-height), 0)
+	top := l.at.top(height, len(lines))
 	drawn := make([]string, 0, height)
 	for i := top; i < min(top+height, len(lines)); i++ {
 		gutter := "  "
-		if i == l.at && !l.blind {
+		if i == int(l.at) && !l.blind {
 			gutter = "▸ "
 		}
 		drawn = append(drawn, gutter+l.render(theme, lines[i]))

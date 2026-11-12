@@ -169,7 +169,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickQuitPlace:
 		return s.leave(Choice{})
 	default:
-		s.list = s.list.moved(msg, max(s.listHeight(), 1))
+		s.list.at = s.list.at.moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
 	}
 	return s, nil
 }

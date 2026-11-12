@@ -167,7 +167,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	case queueStatePlace:
 		return s.leave(s.queueChoice(NextState))
 	default:
-		s.list = s.list.moved(msg, max(s.listHeight(), 1))
+		s.list.at = s.list.at.moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
 	}
 	return s, nil
 }

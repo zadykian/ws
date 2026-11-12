@@ -86,7 +86,7 @@ func (l pickList) follow(e step.Event) pickList {
 	l.rows[place].state, l.rows[place].after = stateAfter(e), e.After
 	if e.Kind == step.Planned || e.Kind == step.Started {
 		l = l.facing(l.rows[place].side)
-		l.at = max(slices.Index(l.lines(), pickLine{row: place}), 0)
+		l.at = cursor(max(slices.Index(l.lines(), pickLine{row: place}), 0))
 	}
 	return l
 }

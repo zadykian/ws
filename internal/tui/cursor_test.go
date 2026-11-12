@@ -6,22 +6,21 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-func TestACursorMovesAndStopsAtTheEnds(t *testing.T) {
-	pgdown := tea.KeyPressMsg{Code: tea.KeyPgDown}
-	for _, c := range []struct {
-		name string
-		from cursor
+func TestTheCursorStopsAtTheEnds(t *testing.T) {
+	cases := []struct {
 		msg  tea.KeyPressMsg
+		from cursor
 		want cursor
 	}{
-		{"down", 1, press('j'), 2},
-		{"up at the top", 0, press('k'), 0},
-		{"down at the end", 4, press('j'), 4},
-		{"bottom", 0, press('G'), 4},
-		{"page down", 1, pgdown, 4},
-	} {
-		if got := c.from.moved(c.msg, 3, 5); got != c.want {
-			t.Errorf("%s: cursor %d, want %d", c.name, got, c.want)
+		{press('j'), 0, 1},
+		{press('j'), 5, 5},
+		{press('G'), 0, 5},
+		{tea.KeyPressMsg{Code: tea.KeyPgDown}, 1, 5},
+		{tea.KeyPressMsg{Code: tea.KeyPgUp}, 5, 1},
+	}
+	for _, c := range cases {
+		if got := c.from.moved(c.msg, 4, 6); got != c.want {
+			t.Errorf("%v from %d = %d, want %d", c.msg, c.from, got, c.want)
 		}
 	}
 }

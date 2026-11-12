@@ -7,9 +7,9 @@ import (
 
 // cursorOn returns l with the cursor on the step of that name.
 func cursorOn(l pickList, name string) pickList {
-	l.at = slices.IndexFunc(l.lines(), func(line pickLine) bool {
+	l.at = cursor(slices.IndexFunc(l.lines(), func(line pickLine) bool {
 		return !line.heading && l.rows[line.row].name == name
-	})
+	}))
 	return l
 }
 

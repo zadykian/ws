@@ -12,7 +12,7 @@ import (
 func atRow(l pickList, name string) pickList {
 	row := slices.IndexFunc(l.rows, func(r pickRow) bool { return r.name == name })
 	l.side = l.rows[row].side
-	l.at = slices.Index(l.lines(), pickLine{row: row})
+	l.at = cursor(slices.Index(l.lines(), pickLine{row: row}))
 	return l
 }
 
