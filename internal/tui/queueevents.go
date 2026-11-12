@@ -53,3 +53,28 @@ func (q queue) take(e step.Event) queue {
 	s.list = s.list.settled()
 	return q
 }
+
+// reported returns the queue with stage's list made of sections as they say, in place of the rows it
+// had. The filter's words stay.
+func (q queue) reported(stage string, sections []StateSection) queue {
+	i := slices.IndexFunc(q.stages, func(s queueStage) bool { return s.row.name == stage })
+	if i < 0 {
+		return q
+	}
+	var rows []pickRow
+	for _, section := range sections {
+		form := groupHeaded
+		if section.Name == stage {
+			form = groupBare
+		}
+		for j, report := range section.Reports {
+			row := reportedRow(section.Name, j, report)
+			row.form = form
+			rows = append(rows, row)
+		}
+	}
+	q.stages = slices.Clone(q.stages)
+	q.stages[i].list.rows = rows
+	q.stages[i].list = q.stages[i].list.settled()
+	return q
+}

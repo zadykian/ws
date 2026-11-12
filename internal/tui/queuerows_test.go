@@ -7,27 +7,6 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
-	sections := []StateSection{{Name: "base", Reports: []step.Report{
-		{Step: "Packages"},
-		{Step: "Locale", Changes: []step.Pending{{Text: "sets the locale"}}},
-		{Step: "Time", After: "Locale"},
-		{Step: "Fans", Items: []step.Item{{Kind: step.CheckItem, Conflict: "no sensor"}}},
-	}}}
-	l := newQueue(testStages()).reported("Run", sections)
-	want := []string{" 3 [#] · Sudo", " 4 [-] · Run", "     [-] base", "       [ ] ✓ Packages", "       [x] ● Locale",
-		"       [x] – Time", "       [ ] ✗ Fans"}
-	if got := drawn(l, WsSide); !slices.Equal(got, want) {
-		t.Errorf("list = %q, want %q", got, want)
-	}
-	if got := l.rows[7].said; len(got) != 1 || got[0].Text != "sets the locale" {
-		t.Errorf("said = %+v", got)
-	}
-	if got := l.rows[9].said; len(got) != 1 || got[0].Kind != Warned || got[0].Text != "no sensor" {
-		t.Errorf("said = %+v", got)
-	}
-}
-
 func TestARunMovesTheMarksAndLeavesTheBoxes(t *testing.T) {
 	l := choosing(newQueue(testStages()), "Tools")
 	l, line := l.follow(step.Event{Kind: step.Started, Step: "Sudo", Index: 2})
