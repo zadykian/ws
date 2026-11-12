@@ -33,18 +33,9 @@ func (g *Git) list(key NamedKey, gh string) []userFile {
 
 // files plans ~/.config/ws and the files in it.
 func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
-	dir := g.Home + "/.config/ws"
-	var cs []step.Change
-	for _, d := range []struct {
-		path string
-		mode fs.FileMode
-	}{{g.Home + "/.config", 0o755}, {dir, 0o700}} {
-		if _, err := g.M.Stat(d.path); err != nil {
-			if missing, err := notExist(err); err != nil || !missing {
-				return nil, err
-			}
-			cs = append(cs, MakeDir{d.path, d.mode})
-		}
+	cs, link, err := wsDirs(g.M, g.Home).plan()
+	if err != nil {
+		return nil, err
 	}
 	cs = append(cs, PlanCopy(g.M, key.File, key.Text, g.Home)...)
 	for _, f := range g.list(key, gh) {
@@ -54,6 +45,7 @@ func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
 		}
 		cs = append(cs, planned...)
 	}
+	link.warn(g.Out, len(cs))
 	return cs, nil
 }
 
@@ -79,11 +71,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if install != nil {
 		tool.Found = stateMissing
 	}
-	parts := []step.Reporter{
-		fixed{tool},
-		userPath{M: g.M, Kind: step.DirItem, Path: g.Home + "/.config"},
-		userPath{M: g.M, Kind: step.DirItem, Path: g.Home + "/.config/ws"},
-	}
+	parts := []step.Reporter{fixed{tool}, wsDirs(g.M, g.Home)}
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}

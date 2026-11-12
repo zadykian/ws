@@ -225,3 +225,19 @@ func TestGitRefusesAnAgentKeyOfATypeWsLacks(t *testing.T) {
 		t.Errorf("err = %v, want a type that ws's OpenSSH lacks", err)
 	}
 }
+
+func TestGitSetsTheModeOfWsDirectoryAndWarnsOfALinkedOne(t *testing.T) {
+	m, g := gitReady()
+	m.Dirs[gitHome+"/.config/ws"] = 0o755
+	p, err := g.Plan(context.Background())
+	if err != nil || len(p.Changes) != 4 || p.Changes[0] != (setup.SetMode{Path: gitHome + "/.config/ws", Mode: 0o700}) {
+		t.Fatalf("Plan = %v, %v; want the mode and two writes", p.Changes, err)
+	}
+	m, g = gitReady()
+	out := g.Out.(*effecttest.Out)
+	m.Dirs["/dots"], m.Links[gitHome+"/.config"] = 0o755, "/dots"
+	if _, err := g.Plan(context.Background()); err != nil || !strings.Contains(strings.Join(out.Lines, "\n"),
+		gitHome+"/.config is a link to /dots: ws's files go there") {
+		t.Errorf("Plan = %v, out %v; want the warning", err, out.Lines)
+	}
+}
