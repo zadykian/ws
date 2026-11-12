@@ -12,6 +12,7 @@ import (
 type QueueRun struct {
 	run  RunScreen
 	list pickList
+	at   [2]cursor
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
@@ -24,7 +25,8 @@ func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
 	}
 	run := NewRunScreen(title, theme, stages)
 	run.pane = func(window Size) Size { return inside(stripSize(window)) }
-	return QueueRun{run, choice.left.list.filtered("")}
+	list := choice.left.list
+	return QueueRun{run, list.filtered(""), list.cursors()}
 }
 
 // Init starts the clock.
@@ -36,7 +38,10 @@ func (q QueueRun) Init() tea.Cmd {
 // the output to the strip.
 func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if e, ok := msg.(step.Event); ok {
-		q.list = q.list.follow(e)
+		var line int
+		if q.list, line = q.list.follow(e); line >= 0 {
+			q.at[q.list.side] = cursor(line)
+		}
 	}
 	var cmd tea.Cmd
 	q.run, cmd = q.run.update(msg)
@@ -53,6 +58,6 @@ func (q QueueRun) layout() Layout {
 
 // View draws the screen.
 func (q QueueRun) View() tea.View {
-	l := q.list.drawn(q.layout(), q.run.theme, q.run.window)
+	l := q.list.drawn(q.layout(), q.run.theme, q.run.window, q.at)
 	return l.View(q.run.theme, q.run.window.Width, q.run.window.Height)
 }

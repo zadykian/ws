@@ -88,7 +88,7 @@ func (s queueScreen) listHeight() int {
 
 // View draws the lists, the filter's line over the one in focus.
 func (s queueScreen) View() tea.View {
-	l := s.list.drawn(s.layout(), s.theme, s.window)
+	l := s.list.drawn(s.layout(), s.theme, s.window, s.list.cursors())
 	if s.filtering() {
 		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.listHeight(), s.list.at, true)
 	}

@@ -68,12 +68,22 @@ func (l pickList) panes() []Pane {
 	return []Pane{{Title: MacSide.String(), Focused: l.side == MacSide}, ws}
 }
 
-// drawn returns the layout with the lists in its panes.
-func (l pickList) drawn(layout Layout, theme Theme, window Size) Layout {
+// cursors returns the cursor on each side's list, by Side.
+func (l pickList) cursors() [2]cursor {
+	var at [2]cursor
+	at[l.side], at[1-l.side] = l.at, l.other
+	return at
+}
+
+// drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
+// none.
+func (l pickList) drawn(layout Layout, theme Theme, window Size, at [2]cursor) Layout {
 	sizes := layout.PaneSizes(window.Width, window.Height)
 	for i, side := range l.sides() {
-		seen := l.glance(side)
-		layout.Panes[i].Body = seen.view(theme, sizes[i].Height, seen.at, !seen.blind)
+		seen := l
+		seen.side = side
+		there := at[side].within(len(seen.lines()))
+		layout.Panes[i].Body = seen.view(theme, sizes[i].Height, there, side == l.side)
 	}
 	return layout
 }

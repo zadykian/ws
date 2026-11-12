@@ -74,19 +74,20 @@ func (r pickRow) reportRow(parent string, index int, report step.Report) pickRow
 	return picked
 }
 
-// follow returns the list with how a run left e's step. A step that starts takes the cursor, so that
-// its list shows it. The boxes stand, as a run takes no choice.
-func (l pickList) follow(e step.Event) pickList {
+// follow returns the list with how a run left e's step, and the line for the cursor. A step that
+// starts takes it, so that its list shows it, and no other event does: -1. The boxes stand, as a run
+// takes no choice.
+func (l pickList) follow(e step.Event) (pickList, int) {
 	l = l.learned(e)
 	place := l.place(e)
 	if place < 0 {
-		return l
+		return l, -1
 	}
 	l.rows = slices.Clone(l.rows)
 	l.rows[place].state, l.rows[place].after = stateAfter(e), e.After
 	if e.Kind == step.Planned || e.Kind == step.Started {
-		l = l.facing(l.rows[place].side)
-		l.at = cursor(max(slices.Index(l.lines(), pickLine{row: place}), 0))
+		l.side = l.rows[place].side
+		return l, max(slices.Index(l.lines(), pickLine{row: place}), 0)
 	}
-	return l
+	return l, -1
 }
