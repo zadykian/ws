@@ -13,3 +13,9 @@ _Avoid_: owner, ids
 A file below the account's home that ws reads or writes as root, by a path under the home. The
 account owns it, and no link lies on the way to it.
 _Avoid_: user file, plain file
+
+**Pinned file**:
+A file of a release that ws fetches at the version a role pins, for the machine's architecture as
+dpkg names it. ws checks it against a SHA-256 that the role pins or the step finds as it plans. A
+binary is the pinned file at its destination; a package and a tree take one as their source.
+_Avoid_: download, release asset, artifact
