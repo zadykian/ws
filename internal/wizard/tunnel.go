@@ -26,6 +26,8 @@ const (
 type Tunnel struct {
 	// Ws is the session to ws, whose files script names the Mac's key as wg0's peer.
 	Ws *Session
+	// SSH is the Mac's ssh to ws.
+	SSH SSH
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
@@ -66,7 +68,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	s, ok := t.Ws.status(ctx)
 	if ok && c.PublicKey != "" && s.WgKey == c.PublicKey && s.Peered && mac != "" && s.MacKey == mac &&
-		t.loaded(ctx) && (t.Ws.first() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
+		t.loaded(ctx) && (t.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
 		return step.Plan{}, nil
 	}
 	var ch []step.Change
