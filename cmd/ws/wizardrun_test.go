@@ -32,10 +32,31 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	}
 }
 
+// testSide is a side of stages that need no machine: no caffeinate, no forms and no state read.
+func testSide(stages ...step.Step) wizardSide {
+	return wizardSide{stages: func(wizardEffects, wizardOptions) []step.Step { return stages }}
+}
+
+// tickStep is a stage that plans a change and records that it applied.
+type tickStep struct {
+	name    string
+	applied *bool
+}
+
+func (s tickStep) Name() string    { return s.name }
+func (s tickStep) WaitsOn() string { return "" }
+func (s tickStep) Plan(context.Context) (step.Plan, error) {
+	return step.Plan{Changes: []step.Change{change("x")}}, nil
+}
+func (s tickStep) Apply(context.Context, step.Plan) error {
+	*s.applied = true
+	return nil
+}
+
 func TestWizardConfigEndsACutAsAPlainRunDoes(t *testing.T) {
 	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	err := wizardRun{c, p, macSide(c, p), wizardOptions{}}.config().Cut(syscall.SIGINT)
+	err := wizardRun{c, p, testSide(), wizardOptions{}}.config().Cut(syscall.SIGINT)
 	var cut signalExit
 	if err == nil || errors.As(err, &cut) {
 		t.Errorf("err = %v, want one of status 1", err)
@@ -117,7 +138,7 @@ func TestWsRunOfFindsNoneWhereNoneIs(t *testing.T) {
 
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
-	w := wizardRun{p: fakeProcess(), side: macSide(nil, fakeProcess())}
+	w := wizardRun{p: fakeProcess(), side: testSide(&wizard.WsRun{}, tickStep{name: "one"})}
 	run := wsRunOf(w.plainStages()).Name()
 	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}, run).update {
 		t.Error("a tick in ws's run left the last run to speak")
@@ -128,9 +149,10 @@ func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 }
 
 func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
-	p, m := macTerminal()
+	p, _ := macTerminal()
 	c, _ := screenCommand(t, "")
-	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
+	var applied bool
+	w := wizardRun{c, p, testSide(tickStep{name: "one", applied: &applied}), wizardOptions{}}
 	o := wizardOptions{left: func(string, string) bool { return true }}
 	cfg := w.config()
 	cfg.Text = io.Discard
@@ -138,8 +160,24 @@ func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 	if err := tui.Run(context.Background(), cfg, screen, w.work(o, &wizard.Sudo{})); err != nil {
 		t.Fatal(err)
 	}
-	if slices.Contains(m.Calls, "run xcode-select --install") {
-		t.Errorf("a stage left out applied: calls = %q", m.Calls)
+	if applied {
+		t.Error("a stage left out applied")
+	}
+}
+
+func TestWizardScanOfASideWithNoRunReportsNoRoles(t *testing.T) {
+	p, _ := macTerminal()
+	c, _ := screenCommand(t, "")
+	var applied bool
+	w := wizardRun{c, p, testSide(tickStep{name: "one", applied: &applied}), wizardOptions{}}
+	cfg := w.config()
+	cfg.Text = io.Discard
+	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
+	if err := tui.Run(context.Background(), cfg, screen, w.scan(&wizard.Sudo{})); err != nil {
+		t.Fatal(err)
+	}
+	if applied {
+		t.Error("a scan applied a stage")
 	}
 }
 
