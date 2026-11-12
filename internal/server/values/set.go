@@ -57,7 +57,7 @@ func checked(data []byte, key Key, line string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("the file reads no more with %s changed: edit it by hand: %w", key.Name, err)
 	}
-	want, err := Parse([]byte(line))
+	want, err := decode([]byte(line))
 	if err != nil {
 		return nil, err
 	}

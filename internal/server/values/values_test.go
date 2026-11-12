@@ -60,6 +60,35 @@ func TestParseDerivesFromTheUser(t *testing.T) {
 	}
 }
 
+func TestParseKeepsAKeyBelowTheHome(t *testing.T) {
+	for _, in := range []string{
+		"ws_user: root\nws_git_signing_key: /root/k\n",
+		"ws_home: /srv/x\nshell_git_allowed_signers: /srv/x/a/../b/signers\n",
+	} {
+		if _, err := Parse([]byte(in)); err != nil {
+			t.Errorf("Parse(%q): %v", in, err)
+		}
+	}
+}
+
+func TestParseRefusesAKeyOutsideTheHome(t *testing.T) {
+	tests := map[string]string{
+		"outside":          "ws_git_signing_key: /etc/key\n",
+		"dot dot":          "ws_git_signing_key: /home/zadykian/../root/key\n",
+		"the home":         "ws_git_signing_key: /home/zadykian\n",
+		"a sibling":        "shell_git_allowed_signers: /home/zadykian2/signers\n",
+		"relative":         "shell_git_allowed_signers: signers\n",
+		"outside, root":    "ws_user: root\nws_git_signing_key: /tmp/key\n",
+		"outside, ws_home": "ws_home: /srv/x\nws_git_signing_key: /home/zadykian/key\n",
+	}
+	for name, in := range tests {
+		_, err := Parse([]byte(in))
+		if err == nil || !strings.Contains(err.Error(), "is outside ws_home") {
+			t.Errorf("%s: Parse(%q) = %v", name, in, err)
+		}
+	}
+}
+
 func TestParseRefuses(t *testing.T) {
 	tests := map[string]string{
 		"unknown key":   "nonsense: 1\n",

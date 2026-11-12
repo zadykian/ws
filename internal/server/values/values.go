@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path"
+	"strings"
 
 	"go.yaml.in/yaml/v3"
 
@@ -43,9 +45,22 @@ type Shared struct {
 	GitSigningKey string `yaml:"ws_git_signing_key"`
 }
 
-// Parse returns the values that data gives over Default. It refuses a key that no role knows, and
-// a key twice. Empty data gives Default.
+// Parse returns the values that data gives over Default. It refuses a key that no role knows, a key
+// twice, and a path that underHome refuses. Empty data gives Default.
 func Parse(data []byte) (Values, error) {
+	v, err := decode(data)
+	if err != nil {
+		return Values{}, err
+	}
+	if err := v.underHome(); err != nil {
+		return Values{}, err
+	}
+	return v, nil
+}
+
+// decode is Parse without underHome, for a part of a file, whose path lies under a home that only
+// the whole file gives.
+func decode(data []byte) (Values, error) {
 	v := Default()
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.KnownFields(true)
@@ -83,4 +98,20 @@ func (v *Values) derive() {
 	if v.Shell.GitAllowedSigners == "" {
 		v.Shell.GitAllowedSigners = v.Home + "/.config/git/allowed_signers"
 	}
+}
+
+// underHome refuses a signing key or an allowed signers file that is not below ws_home. A role
+// reaches such a file through the account, by a path under the home, so that it can refuse a link
+// there (docs/security.md).
+func (v *Values) underHome() error {
+	home := path.Clean(v.Home)
+	for _, k := range []struct{ key, val string }{
+		{"ws_git_signing_key", v.GitSigningKey},
+		{"shell_git_allowed_signers", v.Shell.GitAllowedSigners},
+	} {
+		if !strings.HasPrefix(path.Clean(k.val), strings.TrimSuffix(home, "/")+"/") {
+			return fmt.Errorf("%s: %s is outside ws_home %s", k.key, k.val, v.Home)
+		}
+	}
+	return nil
 }

@@ -103,7 +103,7 @@ func TestLineQuotesWhatReadsAsAnotherType(t *testing.T) {
 }
 
 func TestLineKeepsALongValueOnOneLine(t *testing.T) {
-	long := strings.Repeat("word ", 60) + "end"
+	long := "/home/zadykian/" + strings.Repeat("word ", 60) + "end"
 	line, err := keyOf(t, "ws_git_signing_key").line(long)
 	if err != nil {
 		t.Fatal(err)
