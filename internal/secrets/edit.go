@@ -15,9 +15,10 @@ const (
 	KindPassword = "password"
 )
 
-// Set puts value under the kind and the name: a token, an env variable or a password. A git
-// entry and a file have their own forms, SetGit and SetFile. The error names the kind and the
-// name, never the value; Decode checks the name of an env variable when the file is written.
+// Set puts value under the kind and the name: a token, an env variable or a password. A git entry
+// takes value as its token and keeps the rest; a file has its own form, SetFile. The error names
+// the kind and the name, never the value; Decode checks the name of an env variable when the file
+// is written.
 func (s *Secrets) Set(kind, name, value string) error {
 	switch {
 	case kind == KindToken && name == "github":
@@ -26,6 +27,10 @@ func (s *Secrets) Set(kind, name, value string) error {
 		s.Token.AzureDevOps = value
 	case kind == KindPassword && name == "vpn_p12":
 		s.Password.VPNP12 = value
+	case kind == KindGit:
+		g := s.Git[name]
+		g.Token = value
+		s.SetGit(name, g)
 	case kind == KindEnv:
 		if s.Env == nil {
 			s.Env = map[string]string{}

@@ -111,14 +111,17 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 			}
 			return editIn(c, open, func(s *secrets.Secrets) error {
 				// A flag left out keeps the entry's, so that a form sets a token alone.
+				if err := s.Set(secrets.KindGit, args[0], g.Token); err != nil {
+					return err
+				}
 				cur := s.Git[args[0]]
-				if !c.Flags().Changed("username") {
-					g.Username = cur.Username
+				if c.Flags().Changed("username") {
+					cur.Username = g.Username
 				}
-				if !c.Flags().Changed("proactive-auth") {
-					g.ProactiveAuth = cur.ProactiveAuth
+				if c.Flags().Changed("proactive-auth") {
+					cur.ProactiveAuth = g.ProactiveAuth
 				}
-				s.SetGit(args[0], g)
+				s.SetGit(args[0], cur)
 				return nil
 			})
 		},
@@ -226,12 +229,6 @@ func (s secretsStore) set(ctx context.Context, label, value string) error {
 		return err
 	}
 	return s.edit(ctx, func(cur *secrets.Secrets) error {
-		if kind == secrets.KindGit {
-			g := cur.Git[name]
-			g.Token = value
-			cur.SetGit(name, g)
-			return nil
-		}
 		return cur.Set(kind, name, value)
 	})
 }

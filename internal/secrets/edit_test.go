@@ -47,7 +47,6 @@ func TestEditErrorsNameNoValue(t *testing.T) {
 		{"unknown kind", s.Set("nope", "x", "dummy"), "no kind of entry"},
 		{"unknown token", s.Set(KindToken, "x", "dummy"), "github or azure_devops"},
 		{"unknown password", s.Set(KindPassword, "x", "dummy"), "want vpn_p12"},
-		{"git by Set", s.Set(KindGit, "x", "dummy"), "git x"},
 		{"unknown file", s.SetFile("x", []byte("dummy")), "vpn_p12 or vpn_sswan"},
 		{"unset missing", s.Unset(KindEnv, "MY_TOKEN"), "env MY_TOKEN is not in the file"},
 	}
@@ -69,5 +68,17 @@ func TestLabelCutsBack(t *testing.T) {
 func TestCutLabelRefusesNoSpace(t *testing.T) {
 	if _, _, err := CutLabel("github"); err == nil || !strings.Contains(err.Error(), "want KIND NAME") {
 		t.Errorf("err = %v, want a refusal that wants KIND NAME", err)
+	}
+}
+
+func TestSetGitKeepsTheRest(t *testing.T) {
+	var s Secrets
+	url := "https://git.example.com"
+	s.SetGit(url, Git{Username: "bob", Token: "dummy"})
+	if err := s.Set(KindGit, url, "dummy-2"); err != nil {
+		t.Fatal(err)
+	}
+	if g := s.Git[url]; g.Token != "dummy-2" || g.Username != "bob" {
+		t.Errorf("Git = %+v, want the new token and the user name kept", g)
 	}
 }
