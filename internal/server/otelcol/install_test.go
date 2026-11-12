@@ -17,7 +17,7 @@ func installGroup(m *effecttest.Machine, u effect.Units, out effect.Out) host.Gr
 }
 
 func TestInstallRemovesAStrayDeb(t *testing.T) {
-	m := machine(version + " ii\n")
+	m := machine(effecttest.Package{Version: version, Status: "ii"})
 	m.Files[path.Join(host.CacheDir, debName("amd64"))] = []byte("deb")
 	p, err := installGroup(m, &effecttest.Units{}, &effecttest.Out{}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 1 || !strings.HasPrefix(p.Changes[0].String(), "remove ") {
@@ -26,7 +26,7 @@ func TestInstallRemovesAStrayDeb(t *testing.T) {
 }
 
 func TestOtherVersionDownloadsChecksInstallsAndRemoves(t *testing.T) {
-	m := machine("0.100.0 ii\n")
+	m := machine(effecttest.Package{Version: "0.100.0", Status: "ii"})
 	m.Pages[debURL(version, "amd64")] = []byte("deb")
 	old := sums["amd64"]
 	sums["amd64"] = fmt.Sprintf("%x", sha256.Sum256([]byte("deb")))
@@ -36,7 +36,7 @@ func TestOtherVersionDownloadsChecksInstallsAndRemoves(t *testing.T) {
 		"-o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install -y --allow-downgrades "+path.Join(host.CacheDir, debName("amd64"))] = effecttest.Result{}
 	m.Dirs["/run/systemd/system"] = 0o755
 	u := &effecttest.Units{}
-	// The fake keeps no dpkg database, so the install is planned and applied once, not re-planned.
+	// The table keeps its rows through apt-get, so the install is planned and applied once, not re-planned.
 	in := installGroup(m, u, &effecttest.Out{})
 	p, err := in.Plan(t.Context())
 	if err != nil {
@@ -54,7 +54,7 @@ func TestOtherVersionDownloadsChecksInstallsAndRemoves(t *testing.T) {
 }
 
 func TestInstallPlansFromThePinOnANewMachine(t *testing.T) {
-	m := machine("")
+	m := machine(effecttest.Package{})
 	m.Dirs["/run/systemd/system"] = 0o755
 	p, err := installGroup(m, &effecttest.Units{}, &effecttest.Out{}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 4 || p.Changes[2].String() != "install otelcol-contrib "+version {

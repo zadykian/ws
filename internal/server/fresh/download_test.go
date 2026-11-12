@@ -9,12 +9,13 @@ import (
 	"github.com/zadykian/ws/host"
 )
 
-const packageQuery = "dpkg-query -W -f ${Package} ${Version} ${db:Status-Abbrev}\n fresh-editor"
-
-func machine(arch, have string) *effecttest.Machine {
+func machine(arch string, have effecttest.Package) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte(arch + "\n")}
-	m.Results[packageQuery] = effecttest.Result{Out: []byte(strings.TrimSpace("fresh-editor "+have) + "\n")}
+	m.Packages = effecttest.Packages{}
+	if have.Status != "" {
+		m.Packages["fresh-editor"] = have
+	}
 	return m
 }
 
@@ -26,7 +27,7 @@ func TestTheURLIsTheReleasesDeb(t *testing.T) {
 }
 
 func TestInstallPlansFromThePinOnANewMachine(t *testing.T) {
-	m := machine("amd64", "")
+	m := machine("amd64", effecttest.Package{})
 	p, err := (host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 3 || p.Changes[2].String() != "install fresh-editor "+version {
 		t.Errorf("plan = %v, %v; want the directory, the fetch and the install", p.Changes, err)
@@ -34,7 +35,7 @@ func TestInstallPlansFromThePinOnANewMachine(t *testing.T) {
 }
 
 func TestInstallOnlyClearsTheDebWhereTheVersionIsInstalled(t *testing.T) {
-	m := machine("amd64", version+" ii\n")
+	m := machine("amd64", effecttest.Package{Version: version, Status: "ii"})
 	m.Files[path.Join(host.CacheDir, debName("amd64"))] = []byte("deb")
 	p, err := (host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 1 || strings.Contains(p.Changes[0].String(), "install") {
@@ -43,7 +44,7 @@ func TestInstallOnlyClearsTheDebWhereTheVersionIsInstalled(t *testing.T) {
 }
 
 func TestInstallFailsOnAnArchitectureWithNoSum(t *testing.T) {
-	m := machine("riscv64", "")
+	m := machine("riscv64", effecttest.Package{})
 	if _, err := (host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}}).Plan(t.Context()); err == nil {
 		t.Error("no error")
 	}
