@@ -1,0 +1,31 @@
+package host
+
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/zadykian/ws/effect"
+)
+
+// ReadHome reads the file at rel below the user's home, as root. The user owns the home, so a link
+// at the file or at a directory on the way would send root's read to whatever it names: ReadHome
+// refuses one, and a rel that is not local, before any call to the machine. A file that is missing
+// gives fs.ErrNotExist.
+func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
+	at := u.Home + "/" + rel
+	if err := guardHome(m, u.Home, at); err != nil {
+		return nil, err
+	}
+	return m.ReadRootFile(at)
+}
+
+// guardHome fails unless target lies strictly below home by a local path, and fails on the first
+// link at target or at a directory between home and it.
+func guardHome(m effect.Machine, home, target string) error {
+	rel, ok := strings.CutPrefix(target, home+"/")
+	if !ok || !filepath.IsLocal(rel) {
+		return fmt.Errorf("%s is not a path below the home %s", target, home)
+	}
+	return RefuseLinks(m, home, target)
+}
