@@ -53,7 +53,7 @@ func steps(f values.Fans, m effect.Machine, u effect.Units, out effect.Out, exe 
 				return nil, err
 			}
 			return []host.Resource{
-				source{m: m, sum: nct6687SHA256},
+				sourceTree(m),
 				host.File{M: m, Path: sourceDir + "/dkms.conf", Content: conf, Mode: 0o644},
 			}, nil
 		})},

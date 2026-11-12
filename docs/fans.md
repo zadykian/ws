@@ -12,8 +12,10 @@ chip but sets none of its fans on MSI's boards. So the role builds `nct6687`, fr
 [Fred78290/nct6687d](https://github.com/Fred78290/nct6687d), with DKMS. That repository tags no
 releases: `internal/server/fans/pins.go` pins a commit, and the SHA-256 of GitHub's tarball of it.
 
-The role downloads the tarball against that SHA-256, unpacks it into `/usr/src/nct6687d-COMMIT`,
-with the commit's first 12 characters as DKMS's version, and builds it for the running kernel.
+The role downloads the tarball against that SHA-256 and unpacks it beside
+`/usr/src/nct6687d-COMMIT`. It moves the tree in whole, so that a run cut short leaves no half
+tree. The tree's `.ws-source` file holds the tarball's URL. DKMS's version is the commit's first 12
+characters, and the role builds it for the running kernel.
 DKMS builds it again for each new kernel, from the headers `linux-headers-generic` installs beside
 it. A new pin removes the old version from DKMS, and its source. `dkms status` says which versions
 DKMS holds. `/etc/modprobe.d/ws-fans.conf` keeps `nct6683` off the chip, and `/etc/modules-
