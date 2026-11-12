@@ -52,8 +52,10 @@ type configureScreen struct {
 	window Size
 	// notes is what the last save said. send hands the work a job, and saving holds the keys till it
 	// ends, as the form would change under the file that it writes.
-	notes  []Line
-	send   func(configureJob)
+	notes []Line
+	send  func(configureJob)
+	// end is the Cmd that ends the work, for a leave.
+	end    tea.Cmd
 	saving bool
 	// leaving says that Esc asked to leave with edits unsaved, and the next Esc drops them.
 	leaving bool
@@ -61,7 +63,7 @@ type configureScreen struct {
 
 // newConfigureScreen returns the screen of sheets, on the first. A second sheet adds the button that
 // walks them.
-func newConfigureScreen(title string, theme Theme, send func(configureJob), sheets []Sheet) configureScreen {
+func newConfigureScreen(title string, theme Theme, send func(configureJob), end tea.Cmd, sheets []Sheet) configureScreen {
 	forms := make([]Form, 0, len(sheets))
 	for _, sheet := range sheets {
 		forms = append(forms, NewForm(theme, sheet.Fields))
@@ -71,7 +73,7 @@ func newConfigureScreen(title string, theme Theme, send func(configureJob), shee
 		buttons = append(buttons, nextFormButton)
 	}
 	footer := NewFooter(buttons...)
-	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer, send: send,
+	return configureScreen{title: title, theme: theme, sheets: sheets, forms: forms, footer: footer, send: send, end: end,
 		saving: sheets[0].Open != nil}
 }
 
