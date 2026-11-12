@@ -10,7 +10,7 @@ import (
 
 // Package is a .deb package that the role pins, a name and a version, with the file of that
 // version as Source. It fetches and installs the file where dpkg has another version, so that a
-// newer file upgrades and an older one downgrades.
+// newer file upgrades and an older one downgrades. The install removes the file.
 type Package struct {
 	M      effect.Machine
 	Name   string
@@ -28,10 +28,15 @@ func (installPackage) Kind() step.ChangeKind { return step.Install }
 
 func (c installPackage) Apply(ctx context.Context) error {
 	args := append([]string{"DEBIAN_FRONTEND=noninteractive", "apt-get"}, installOptions...)
-	return c.p.M.Pass(ctx, false, "env", append(args, "install", "-y", "--allow-downgrades", c.path)...)
+	if err := c.p.M.Pass(ctx, false, "env", append(args, "install", "-y", "--allow-downgrades", c.path)...); err != nil {
+		return err
+	}
+	_, err := c.p.M.RunRoot(ctx, "rm", "-f", "--", c.path)
+	return err
 }
 
-// Plan plans the directory, the fetch and the install where the pinned version is not installed.
+// Plan plans the directory, the fetch and the install where the pinned version is not installed,
+// and the removal of the file where it is, as a cut run leaves it.
 func (p Package) Plan(ctx context.Context) ([]Change, error) {
 	file, err := p.Source.cached(ctx)
 	if err != nil {
@@ -42,7 +47,7 @@ func (p Package) Plan(ctx context.Context) ([]Change, error) {
 		return nil, err
 	}
 	if have := states[p.Name]; have.state == 'i' && have.version == p.Source.Version {
-		return nil, nil
+		return Absent{M: p.M, Path: file.Path}.Plan(ctx)
 	}
 	var changes []Change
 	for _, r := range []Resource{Dir{M: p.M, Path: CacheDir, Mode: 0o755}, file} {
