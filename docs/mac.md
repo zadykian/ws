@@ -212,7 +212,7 @@ stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#
 
 The daemon, `ws mac tunnel run`, runs as root from launchd, from boot and before any login, through
 `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws mac apply` copies
-`ws` from `~/.local/bin` to `/usr/local/libexec/ws-tunnel/ws` as
+`ws` from `~/.local/bin`, which a run makes first if missing, to `/usr/local/libexec/ws-tunnel/ws` as
 root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
 runs as the user become root. The daemon holds WireGuard's device in its own process, so it
 needs no `wg` or `wireguard-go`. `ws mac apply` restarts it where a rebuilt `ws` changed the copy.
