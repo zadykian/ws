@@ -2,7 +2,6 @@ package devtools
 
 import (
 	_ "embed"
-	"runtime"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -64,8 +63,8 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out)
 // apart from Steps so that a test can run them with no stand-ins for Go and the packages.
 func serverSteps(m effect.Machine, user host.User) []step.Step {
 	return []step.Step{
-		download(m, runtime.GOARCH, "postgres-language-server", pgls, pglsURL),
-		download(m, runtime.GOARCH, "docker-language-server", dockerLS, dockerLSURL),
+		download(m, "postgres-language-server", pgls, pglsURL),
+		download(m, "docker-language-server", dockerLS, dockerLSURL),
 		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a host.Account) ([]host.Resource, error) {
 			return serverFiles(m, a)
 		}),

@@ -41,8 +41,9 @@ user's home. Once there, rustup updates itself, so ws leaves it alone.
 
 postgres-language-server and docker-language-server are release binaries, each pinned in
 `internal/server/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
-role downloads the one for the machine to `/usr/local/bin`, owned by root with mode 0755, so any
-`ws_user` can run it. A machine of another architecture fails the step. The settings name both by
+role downloads the one for the machine, by the architecture that dpkg names, to `/usr/local/bin`,
+owned by root with mode 0755, so any `ws_user` can run it. A failed download is tried five times,
+ten seconds apart. A machine of another architecture fails the step. The settings name both by
 path, so Zed downloads neither. Fresh names them too.
 `ws server apply --only zed` does not install them: pass `--only devtools,zed`, or `devtools,fresh`.
 

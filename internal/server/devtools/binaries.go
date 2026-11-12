@@ -1,14 +1,13 @@
 package devtools
 
 import (
-	"context"
 	"fmt"
-
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 )
 
-// A release pins one server's version and the SHA-256 of its binary for each GOARCH.
+// A release pins one server's version and the SHA-256 of its binary for each architecture, as
+// dpkg names it.
 type release struct {
 	version string
 	sha256  map[string]string
@@ -47,28 +46,23 @@ var dockerLS = release{
 	},
 }
 
-// pglsURL is r's asset for goarch. The asset spells the architectures x86_64 and aarch64.
-func pglsURL(version, goarch string) string {
-	target := map[string]string{"amd64": "x86_64", "arm64": "aarch64"}[goarch]
+// pglsURL is the asset of the version for the architecture. The asset spells the architectures
+// x86_64 and aarch64.
+func pglsURL(version, arch string) string {
+	target := map[string]string{"amd64": "x86_64", "arm64": "aarch64"}[arch]
 	return "https://github.com/supabase-community/postgres-language-server/releases/download/" +
 		version + "/postgres-language-server_" + target + "-unknown-linux-gnu"
 }
 
-// dockerLSURL is r's asset for goarch, under the tag "v" and the version.
-func dockerLSURL(version, goarch string) string {
+// dockerLSURL is the asset of the version for the architecture, under the tag "v" and the version.
+func dockerLSURL(version, arch string) string {
 	return "https://github.com/docker/docker-language-server/releases/download/v" + version +
-		"/docker-language-server-linux-" + goarch + "-v" + version
+		"/docker-language-server-linux-" + arch + "-v" + version
 }
 
 // download is the step that puts r's binary at /usr/local/bin/name, root's and mode 0755 so any
-// ws_user can run it. A goarch with no pin fails the step's Plan, before any URL exists.
-func download(m effect.Machine, goarch, name string, r release, url func(version, arch string) string) host.Lazy {
-	return host.Lazy{Title: "Devtools " + name, Parts: func(context.Context) ([]host.Resource, error) {
-		sum, err := r.digest(goarch)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", name, err)
-		}
-		return []host.Resource{host.Download{M: m, URL: url(r.version, goarch), Path: "/usr/local/bin/" + name,
-			SHA256: sum, Mode: 0o755}}, nil
-	}}
+// ws_user can run it. An architecture with no pin fails the step's Plan, before any URL exists.
+func download(m effect.Machine, name string, r release, url func(version, arch string) string) host.Group {
+	return host.Group{Title: "Devtools " + name, Parts: []host.Resource{host.PinnedFile{M: m,
+		Version: r.version, URL: url, SHA256: r.sha256, Path: "/usr/local/bin/" + name, Mode: 0o755}}}
 }
