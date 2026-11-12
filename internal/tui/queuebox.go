@@ -3,8 +3,7 @@ package tui
 import "slices"
 
 // settled returns the queue with its boxes and locks worked out again. A stage with steps of its own
-// is on where one is. A stage waits on an earlier one alone, so that one walk from the end reaches
-// the whole of a chain, and a locked stage holds its steps.
+// is on where one is, a locked stage holds its steps, and one walk from the end reaches a whole chain.
 func (q queue) settled() queue {
 	q.stages = slices.Clone(q.stages)
 	for i := range q.stages {
@@ -44,9 +43,8 @@ func (q queue) box(i int) string {
 	return s.row.box()
 }
 
-// toggled returns the queue with the box under the cursor of the side turned. A stage's turns its
-// shown steps on, or off where all are on, and so does a role's. A locked stage or step holds, as the
-// stage that waits on it would go with it.
+// toggled returns the queue with the box under the cursor of the side turned. A stage's or a role's
+// turns its shown steps on, or off where all are on. A locked stage or step holds.
 func (q queue) toggled(side Side, at cursor) queue {
 	lines := q.lines(side)
 	if int(at) >= len(lines) {
@@ -100,8 +98,7 @@ func (q queue) partial() map[string][]string {
 	return parts
 }
 
-// ticked returns the stages that run every step, one of them by a tick. A lock alone asks for the
-// stage's end, which a good last run gives, and a tick for the steps, as one can drift after it.
+// ticked returns the stages that run every step by a tick: a lock alone leaves the steps to the last run.
 func (q queue) ticked() []string {
 	var names []string
 	for _, s := range q.stages {
@@ -127,13 +124,7 @@ func (q queue) count() (on, scanned, all int) {
 	return on, scanned, all
 }
 
-// due says that a run has work in the stage: the scan found some, or never reached it.
-func due(s queueStage) bool {
-	return dueAt(s.row.state, false)
-}
-
-// dueAt says that a step in state has work. What no scan named under a stage that found nothing to
-// do has none, and clean says that the stage found nothing.
+// dueAt says that a step in state has work. In a clean stage, a step no scan named has none.
 func dueAt(state stepState, clean bool) bool {
 	switch state {
 	case stepSame, stepLeftOut:
@@ -147,6 +138,7 @@ func dueAt(state stepState, clean bool) bool {
 // opened returns the queue as a scan's end leaves it. What is due starts chosen, as the wizard left
 // alone runs each stage it reaches, and a check stops short on a new Mac.
 func (q queue) opened() queue {
+	due := func(s queueStage) bool { return dueAt(s.row.state, false) }
 	q.stages = slices.Clone(q.stages)
 	for i, s := range q.stages {
 		q.stages[i].row.chosen = due(s)
@@ -158,8 +150,7 @@ func (q queue) opened() queue {
 	return q.settled().whole(due)
 }
 
-// whole returns the queue with every step on in a stage that want takes and that has none on. ws's
-// run can be due while its roles read clean, and a stage with nothing on wouldn't run.
+// whole turns every step on in a stage that want takes and has none on: ws's run can be due, its roles clean.
 func (q queue) whole(want func(queueStage) bool) queue {
 	q.stages = slices.Clone(q.stages)
 	for i, s := range q.stages {
@@ -170,8 +161,7 @@ func (q queue) whole(want func(queueStage) bool) queue {
 	return q.settled()
 }
 
-// passedOver returns the roles of stage i that hold changes left out ahead of a step on. A stage
-// runs apart from the next, so a role is passed over within its stage alone.
+// passedOver returns the roles of stage i with changes left out ahead of a step on, within its stage.
 func (q queue) passedOver(i int) []string {
 	return q.stages[i].list.passedOver()
 }

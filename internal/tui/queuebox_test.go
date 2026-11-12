@@ -18,17 +18,9 @@ func queueBoxes(q queue) []string {
 	return drawn
 }
 
-// atStage returns the side and the cursor on the line of the stage called name.
-func atStage(q queue, name string) (Side, cursor) {
-	i := slices.IndexFunc(q.stages, func(s queueStage) bool { return s.row.name == name })
-	side := q.stages[i].side
-	return side, cursor(slices.Index(q.lines(side), queueLine{stage: i, head: true}))
-}
-
 func TestAStagesBoxTurnsItsSteps(t *testing.T) {
-	q := queueOf(testStages())
-	side, at := atStage(q, "Setup")
-	q = q.toggled(side, at)
+	side, at := MacSide, cursor(1)
+	q := queueOf(testStages()).toggled(side, at)
 	if got := queueBoxes(q)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
 		t.Errorf("boxes = %q", got)
 	}
@@ -44,6 +36,9 @@ func TestAStepsBoxTurnsAloneAndALockedOneHolds(t *testing.T) {
 	}
 	if got := q.toggled(MacSide, 0); !slices.Equal(queueBoxes(got), queueBoxes(q)) {
 		t.Errorf("a locked stage turned: %q", queueBoxes(got))
+	}
+	if got := queueBoxes(queueOf(testStages()).toggled(WsSide, 0))[:5]; !slices.Equal(got, []string{"[#]", "[#]", "[#]", "[#]", "[x]"}) {
+		t.Errorf("a stage of the ws side left its lock: %q", got)
 	}
 }
 
@@ -77,11 +72,8 @@ func TestAStageFollowsTheStepsItRuns(t *testing.T) {
 func TestALockedStageRunsWhole(t *testing.T) {
 	q := queueChoosing(queueOf(testStages()), "Signing")
 	want := []string{"[#]", "[#]", "[#]", "[#]", "[#]", "[#]", "[#]", "[#]", "[x]"}
-	if !slices.Equal(queueBoxes(q), want) {
-		t.Errorf("boxes = %q, want %q", queueBoxes(q), want)
-	}
-	if len(q.partial()) != 0 {
-		t.Errorf("partial = %q", q.partial())
+	if !slices.Equal(queueBoxes(q), want) || len(q.partial()) != 0 {
+		t.Errorf("boxes = %q, partial = %q, want %q", queueBoxes(q), q.partial(), want)
 	}
 }
 
@@ -135,5 +127,27 @@ func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
 		take(planned("", "Run", 0, oneChange("a"))).opened()
 	if want := []string{"[x]", "[x]", "[x]"}; !slices.Equal(queueBoxes(q), want) {
 		t.Errorf("boxes = %q, want %q", queueBoxes(q), want)
+	}
+}
+
+func TestAStageRunsWhatTheScanFound(t *testing.T) {
+	stages := []Stage{{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	q := queueOf(stages).take(planned("base", "one", 0, oneChange("a"))).take(planned("base", "two", 1)).
+		take(planned("", "Run", 0)).opened()
+	if want := []string{"[x]", "[x]", "[ ]"}; !slices.Equal(queueBoxes(q), want) {
+		t.Errorf("boxes = %q, want %q", queueBoxes(q), want)
+	}
+}
+
+func TestALeftOutWarningStaysAmongOneStagesRoles(t *testing.T) {
+	stages := []Stage{
+		{Name: "Setup", Nested: []Group{{Name: "Setup", Steps: []string{"one"}}}},
+		{Name: "Run", Nested: []Group{{Name: "base", Steps: []string{"two"}}, {Name: "ssh", Steps: []string{"three"}}}},
+	}
+	q := queueOf(stages)
+	q = q.take(planned("Setup", "one", 0, oneChange("a"))).take(planned("base", "two", 0, oneChange("a")))
+	q = q.take(planned("ssh", "three", 0, oneChange("a")))
+	if got, want := queueChoosing(q, "three").passedOver(1), []string{"base"}; !slices.Equal(got, want) {
+		t.Errorf("passed over = %q, want %q", got, want)
 	}
 }
