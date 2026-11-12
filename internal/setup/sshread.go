@@ -2,6 +2,7 @@ package setup
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -55,6 +56,25 @@ func (s SSH) read() (sshFacts, error) {
 		f.UserConfigNeedsInclude, f.IncludeLine = place == sshcfg.Missing, line
 	}
 	return f, nil
+}
+
+// configLines is the Include of config.d/ws at the top of ~/.ssh/config. An Include below a setting
+// is out of place: ssh would take that setting first.
+func (s SSH) configLines() userLines {
+	return userLines{
+		M: s.M, Path: s.Home + "/.ssh/config", Lines: includeLine + "\n", Shown: includeLine, Top: true,
+		Mode: sshFileMode, Now: s.Now, Has: s.included,
+	}
+}
+
+// included says whether the text of ~/.ssh/config has the Include of config.d/ws first.
+func (s SSH) included(_ context.Context, _ effect.Machine, file string, text []byte) (bool, error) {
+	place, line := sshcfg.IncludeAt(string(text), "config.d/ws", s.Home)
+	if place == sshcfg.Below {
+		return false, misplaced("line %d of %s is the Include of config.d/ws, below other settings, which ssh "+
+			"would take first: move it to the top", line, file)
+	}
+	return place == sshcfg.First, nil
 }
 
 func firstLine(text []byte) string {
