@@ -43,13 +43,9 @@ func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
 	if err := g.notes(ctx, content); err != nil {
 		return nil, err
 	}
-	return host.Validated{
-		File: host.File{
-			M: g.M, Path: g.path(), Content: content, Mode: 0o600, UID: g.A.UID, GID: g.A.GID,
-			Secret: true, Backup: true,
-		},
-		Check: configCheck,
-	}.Plan(ctx)
+	f := g.A.File(g.M, ".gitconfig", content, 0o600)
+	f.Secret, f.Backup = true, true
+	return host.Validated{File: f, Check: configCheck}.Plan(ctx)
 }
 
 func (g gitconfig) notes(ctx context.Context, content []byte) error {
