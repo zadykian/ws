@@ -16,6 +16,8 @@ type queueStage struct {
 // queue is the stages in the order they run, each with a list of its own.
 type queue struct {
 	stages []queueStage
+	// heard holds what the scan printed since a step last ended.
+	heard []Line
 }
 
 // queueOf returns the queue of stages. A group named as its stage has no heading, and one with no

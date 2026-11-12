@@ -1,0 +1,55 @@
+package tui
+
+import (
+	"slices"
+
+	"github.com/zadykian/ws/step"
+)
+
+// hear keeps a line of the scan for the step that ends next.
+func (q queue) hear(line Line) queue {
+	q.heard = append(slices.Clip(q.heard), line)
+	return q
+}
+
+// stageOf returns the stage that e's step belongs to, or -1. A stage's own step names its place, and
+// any other step the group that a stage's list holds. A group named as its stage may have no step
+// yet. The events of the Prepare step belong to no stage.
+func (q queue) stageOf(e step.Event) int {
+	if e.Parent == "" {
+		if e.Index < 0 || e.Index >= len(q.stages) {
+			return -1
+		}
+		return e.Index
+	}
+	if i := slices.IndexFunc(q.stages, func(s queueStage) bool { return s.list.holds(e.Parent) }); i >= 0 {
+		return i
+	}
+	return slices.IndexFunc(q.stages, func(s queueStage) bool { return s.row.name == e.Parent })
+}
+
+// take returns the queue with how the scan left e's step: chosen where it holds changes. Lines of a
+// step outside every stage go with it, as the queue has no place for them.
+func (q queue) take(e step.Event) queue {
+	if e.Kind == step.Planned || e.Kind == step.Started {
+		return q
+	}
+	said := q.heard
+	q.heard = nil
+	i := q.stageOf(e)
+	if i < 0 {
+		return q
+	}
+	q.stages = slices.Clone(q.stages)
+	s := &q.stages[i]
+	if e.Parent == "" {
+		s.row = s.row.took(e, said)
+		return q
+	}
+	s.list = s.list.joined(e)
+	s.list.rows = slices.Clone(s.list.rows)
+	place := s.list.place(e)
+	s.list.rows[place] = s.list.rows[place].took(e, said)
+	s.list = s.list.settled()
+	return q
+}

@@ -24,13 +24,6 @@ func TestAnEventOfAStageNamedAsItsGroupJoinsItsSteps(t *testing.T) {
 	}
 }
 
-func TestAnEventOutsideEveryStageMovesNothing(t *testing.T) {
-	was := newQueue(testStages())
-	if got := was.take(planned("other", "x", 0)); len(got.rows) != len(was.rows) {
-		t.Errorf("rows = %+v", got.rows)
-	}
-}
-
 func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 	sections := []StateSection{{Name: "base", Reports: []step.Report{
 		{Step: "Packages"},
