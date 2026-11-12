@@ -1,7 +1,9 @@
 package host_test
 
 import (
+	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -65,5 +67,38 @@ func TestPinnedFileReportsAFileOfOtherContent(t *testing.T) {
 	items, err := pinned(m, map[string]string{"amd64": sumOf("amd")}).Report(t.Context())
 	if err != nil || len(items) != 1 || items[0].Conflict == "" {
 		t.Errorf("Report = %v, %v; want one conflict", items, err)
+	}
+}
+
+func TestPinnedFileAsksLookupForTheSumWhereNoneIsPinned(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	m.Pages["https://x/1.2/x-amd64"] = []byte("amd")
+	var asked []string
+	p := pinned(m, nil)
+	p.Lookup = func(_ context.Context, url string) (string, error) {
+		asked = append(asked, url)
+		return sumOf("amd"), nil
+	}
+	if got := applyAll(t, p); len(got) != 1 || !strings.Contains(got[0], "x-amd64") {
+		t.Errorf("plan = %q, want the amd64 download", got)
+	}
+	if len(asked) == 0 || asked[0] != "https://x/1.2/x-amd64" {
+		t.Errorf("Lookup asked for %q", asked)
+	}
+	p.SHA256 = map[string]string{"amd64": sumOf("amd")}
+	asked = nil
+	if _, err := p.Plan(t.Context()); err != nil || len(asked) != 0 {
+		t.Errorf("with a pin: err %v, Lookup asked for %q", err, asked)
+	}
+}
+
+func TestPinnedFileFailsWhereLookupFails(t *testing.T) {
+	m := effecttest.NewMachine()
+	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
+	p := pinned(m, nil)
+	p.Lookup = func(context.Context, string) (string, error) { return "", errors.New("no list") }
+	if _, err := p.Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "no list") {
+		t.Errorf("Plan err = %v, want Lookup's", err)
 	}
 }
