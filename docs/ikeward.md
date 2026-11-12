@@ -45,9 +45,10 @@ the `.p12`.
 ## A run
 
 - `internal/server/ikeward/binary.go` pins ikeward's version, and the SHA-256 of its binary for each
-  architecture, as the release's `ikeward.sha256` gives it. The run downloads the binary into
-  `/usr/local/sbin/ikeward`, where ikeward's `install.sh` would put it, checked against the pin. A
-  new pin replaces it.
+  architecture, as the release's `ikeward.sha256` gives it. The run downloads the binary for the
+  architecture that dpkg names into `/usr/local/sbin/ikeward`, where ikeward's `install.sh` would
+  put it, checked against the pin. A failed download is tried five times, ten seconds apart. A new
+  pin replaces it.
 - It writes the two files, which the secrets file gives, under their names, into
   `/run/ikeward-profile`, which only root may enter. It removes them once `install` has run, whether
   a step failed or not. Where `ikeward_profile` is set and the secrets hold no profile, the run
