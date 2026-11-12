@@ -26,7 +26,7 @@ func TestRemoteOnWsRunsTheScriptLocally(t *testing.T) {
 		t.Fatalf("status read %q; calls %q", s.Version, m.Calls)
 	}
 	m.Results[wsPath+" server secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
-	if out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B"); err != nil || string(out) != "set\n" {
+	if out, err := localSession(m, nil).Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B"); err != nil || string(out) != "set\n" {
 		t.Fatalf("Secrets = %q, %v", out, err)
 	}
 	if want := []string{"echo\n", "dummy-value\n"}; !slices.Equal(m.Inputs, want) {
