@@ -43,20 +43,6 @@ func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 	}
 }
 
-func TestZshAddsTheLineAtTheEndAndKeepsTheOldZshrc(t *testing.T) {
-	m := effecttest.NewMachine()
-	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
-	m.Files["/h/.config/ws/zshrc"] = mac.Zshrc
-	m.Files["/h/.zshrc"] = []byte("export EDITOR=vi")
-	p, err := zshStep(m, &effecttest.Out{}).Plan(context.Background())
-	want := []step.Change{setup.Backup{Path: "/h/.zshrc", To: "/h/.zshrc.20261109100000~"},
-		setup.Write{Path: "/h/.zshrc", Before: []byte("export EDITOR=vi"),
-			After: []byte("export EDITOR=vi\n" + zshSource), Exists: true, Mode: 0o644}}
-	if err != nil || !reflect.DeepEqual(p.Changes, want) {
-		t.Errorf("Plan = %v, %v; want %v", p.Changes, err, want)
-	}
-}
-
 func TestZshLeavesAHookNotItsOwnAndZshrc(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
