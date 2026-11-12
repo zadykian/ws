@@ -75,3 +75,22 @@ func (l pickList) joined(e step.Event) pickList {
 	l.rows = slices.Replace(slices.Clone(l.rows), at, at+replaced, row)
 	return l
 }
+
+// held returns the list with every row locked by those steps that wait on its stage. The stage runs
+// whole then, as a partial run would leave it pending, and the stage that waits on it would only skip.
+func (l pickList) held(by []string) pickList {
+	l.rows = slices.Clone(l.rows)
+	for i := range l.rows {
+		l.rows[i].lockedBy = by
+	}
+	return l
+}
+
+// boxed returns the list with the box of every row set, the filter's words aside.
+func (l pickList) boxed(on bool) pickList {
+	l.rows = slices.Clone(l.rows)
+	for i := range l.rows {
+		l.rows[i].chosen = on
+	}
+	return l
+}
