@@ -28,6 +28,9 @@ type Machine struct {
 	Passed  []string                // the lines that PassLines passed on
 	ExecEnv [][]string              // the env of each Exec
 	Calls   []string                // each call, as "run NAME ARG", "root NAME ARG", "write PATH" ...
+
+	// Packages is dpkg's database. A non-nil table answers dpkg-query once Results holds no line.
+	Packages Packages
 }
 
 // NewMachine returns an empty Machine.
