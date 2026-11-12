@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Shell runs a command as root on ws, with in as its standard input, for a Remote: SSHShell from
+// Shell runs a command as root on ws, with in as its standard input, for a Session: SSHShell from
 // the Mac, or LocalShell on ws itself. A command's words reach it as they are.
 type Shell interface {
 	// Run returns the command's standard output.
@@ -20,7 +20,7 @@ type Shell interface {
 // asked, where it asked one, and reaches root by Sudo.
 type SSHShell struct {
 	SSH SSH
-	// Sudo is how a command reaches root. Nil runs it as the login, as a Remote's tests do.
+	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
 	Sudo *Sudo
 }
 

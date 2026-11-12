@@ -17,15 +17,15 @@ var ErrOtherWs = errors.New("ws's report refused")
 // State returns the roles of what ws server state --json reports on ws, from a ws of this version
 // alone. It runs no state op where the status names another, and the report's own version decides after
 // that. The op changes nothing, so what the status read stands.
-func (r *Remote) State(ctx context.Context, version string) ([]apply.RoleState, error) {
-	s, ok := r.status(ctx)
+func (s *Session) State(ctx context.Context, version string) ([]apply.RoleState, error) {
+	st, ok := s.status(ctx)
 	if !ok {
 		return nil, errors.New("ws's report: ws's status read nothing")
 	}
-	if s.Version != version {
-		return nil, otherWs(cmp.Or(s.Version, "-"), version)
+	if st.Version != version {
+		return nil, otherWs(cmp.Or(st.Version, "-"), version)
 	}
-	out, err := r.query(ctx, "state")
+	out, err := s.do(ctx, opState)
 	if err != nil {
 		return nil, fmt.Errorf("ws's report: %w", err)
 	}

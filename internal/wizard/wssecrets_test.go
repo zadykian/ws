@@ -25,7 +25,7 @@ func (r shellReach) shell() Shell { return r.sh }
 
 // secretsSession returns a session that reaches ws through sh.
 func secretsSession(sh Shell) *Session {
-	return NewSession(shellReach{sh: sh}, Scripts{})
+	return NewSession(shellReach{sh: sh}, Scripts{Remote: []byte("echo\n")})
 }
 
 func TestSessionSecretsSendsTheValueOnStdin(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 // MacReach is the Mac's way to ws: ssh at the direct way that mac.conf gives, root by Sudo.
 type MacReach struct {
 	SSH SSH
-	// Sudo is how a command reaches root. Nil runs it as the login, as a Remote's tests do.
+	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
 	Sudo *Sudo
 	Out  effect.Out
 }

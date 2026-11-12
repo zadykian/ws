@@ -155,10 +155,10 @@ func TestSudoStopsWhereSSHFails(t *testing.T) {
 	}
 }
 
-func TestRemoteThroughSudo(t *testing.T) {
+func TestSessionThroughSudo(t *testing.T) {
 	s, m, _ := newSudo(t)
 	s.way, s.password = sudoAsked, sudoPassword
-	r := &Remote{Shell: SSHShell{SSH: s.SSH, Sudo: s}, Script: []byte("echo\n")}
+	r := secretsSession(SSHShell{SSH: s.SSH, Sudo: s})
 	line := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-s", "--", "status")
 	m.Results[line] = effecttest.Result{Out: []byte("active -\n")}
 	if _, ok := r.status(context.Background()); !ok {
@@ -169,9 +169,9 @@ func TestRemoteThroughSudo(t *testing.T) {
 	}
 }
 
-func TestRemoteBeforeTheStageReadsNothing(t *testing.T) {
+func TestSessionBeforeTheStageReadsNothing(t *testing.T) {
 	s, _, _ := newSudo(t)
-	r := &Remote{Shell: SSHShell{SSH: s.SSH, Sudo: s}, Script: []byte("echo\n")}
+	r := secretsSession(SSHShell{SSH: s.SSH, Sudo: s})
 	if _, ok := r.status(context.Background()); ok {
 		t.Error("Status read with the stage unread")
 	}

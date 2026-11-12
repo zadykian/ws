@@ -3,6 +3,8 @@ package wizard
 import (
 	"context"
 	"encoding/base64"
+
+	"github.com/zadykian/ws/internal/server/apply"
 )
 
 // operation is one job that a stage asks of ws through the session.
@@ -65,19 +67,33 @@ var opRules = map[operation]opRule{
 	opSetValues: {changes: true, sends: []sent{{files: true, word: "values"}}},
 }
 
+// script returns the command that runs the op, with the script on its stdin.
+func script(op []string) []string {
+	return append([]string{"sh", "-s", "--"}, op...)
+}
+
+// event tells whether a line of a run's log is an event, and hands it on.
+func (s *Session) event(line string) bool {
+	e, ok := apply.ParseEvent(line)
+	if ok && s.events != nil {
+		s.events.Observe(e)
+	}
+	return ok
+}
+
 // do runs the operation: the ops of its row in turn, the args[i] after the word of the i-th, and
 // stops at the first error. It marks the status stale before the first op where the row changes
 // ws. It returns the output of the last op that reads.
 func (s *Session) do(ctx context.Context, o operation, args ...[]string) ([]byte, error) {
 	rule := opRules[o]
 	if rule.changes {
-		s.remote.stale()
+		s.stale()
 	}
 	var out []byte
 	for i, snd := range rule.sends {
-		r := s.remote
+		body := s.remote
 		if snd.files {
-			r = s.files
+			body = s.files
 		}
 		cmd := []string{snd.word}
 		if i < len(args) {
@@ -86,11 +102,11 @@ func (s *Session) do(ctx context.Context, o operation, args ...[]string) ([]byte
 		var err error
 		switch snd.out {
 		case outRead:
-			out, err = r.Shell.Run(ctx, r.Script, script(cmd)...)
+			out, err = s.shell.Run(ctx, body, script(cmd)...)
 		case outPass:
-			err = r.Shell.Pass(ctx, r.Script, script(cmd)...)
+			err = s.shell.Pass(ctx, body, script(cmd)...)
 		case outFollow:
-			err = r.Shell.Lines(ctx, r.Script, r.event, script(cmd)...)
+			err = s.shell.Lines(ctx, body, s.event, script(cmd)...)
 		}
 		if err != nil {
 			return out, err

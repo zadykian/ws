@@ -122,7 +122,7 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 
 // rooted returns the command and stdin that run cmd as root on ws, with in as cmd's stdin. -k drops
 // a cached credential, so that the first line is always sudo's: with one, sudo would pass the line
-// on. A nil Sudo runs cmd as the login, as a Remote's tests do.
+// on. A nil Sudo runs cmd as the login, as the tests do.
 func (s *Sudo) rooted(cmd []string, in []byte) ([]string, []byte, error) {
 	if s == nil {
 		return cmd, in, nil
