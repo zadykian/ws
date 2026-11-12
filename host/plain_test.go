@@ -2,11 +2,37 @@ package host_test
 
 import (
 	"context"
+	"errors"
+	"io/fs"
+	"strings"
 	"testing"
 
+	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/effect/effecttest"
 	"github.com/zadykian/ws/host"
 )
+
+// statFails is the fake machine, whose Stat fails at one path as a directory that ws cannot search
+// would.
+type statFails struct {
+	*effecttest.Machine
+	at string
+}
+
+func (m statFails) Stat(p string) (effect.Info, error) {
+	if p == m.at {
+		return effect.Info{}, &fs.PathError{Op: "stat", Path: p, Err: fs.ErrPermission}
+	}
+	return m.Machine.Stat(p)
+}
+
+func TestRefuseLinksFailsWhereItCannotLook(t *testing.T) {
+	m := statFails{effecttest.NewMachine(), "/home/ws/.config"}
+	err := host.RefuseLinks(m, "/home/ws", "/home/ws/.config/x/f")
+	if !errors.Is(err, fs.ErrPermission) || !strings.Contains(err.Error(), "at /home/ws/.config:") {
+		t.Errorf("RefuseLinks = %v; want Stat's error, naming the path", err)
+	}
+}
 
 func TestPlainRefusesALinkOnTheWay(t *testing.T) {
 	for _, link := range []string{"/home/ws/.config", "/home/ws/.config/x", "/home/ws/.config/x/f"} {

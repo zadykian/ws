@@ -2,7 +2,9 @@ package host
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"path"
 	"strings"
 
@@ -25,11 +27,16 @@ func (p Plain) Plan(context.Context) ([]Change, error) {
 }
 
 // RefuseLinks fails on the first link at any of paths, or at a directory between home and them,
-// for a step that learns its paths as it plans. A path outside home is checked alone.
+// for a step that learns its paths as it plans. A path outside home is checked alone. It fails
+// where Stat fails but for a missing path, as a link may lie there unseen.
 func RefuseLinks(m effect.Machine, home string, paths ...string) error {
 	for _, target := range paths {
 		for _, at := range chain(home, target) {
-			if info, _ := m.Stat(at); info.Link != "" {
+			info, err := m.Stat(at)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("look for a link at %s: %w", at, err)
+			}
+			if info.Link != "" {
 				return fmt.Errorf("%s is a link to %s: replace it with the file itself", at, info.Link)
 			}
 		}
