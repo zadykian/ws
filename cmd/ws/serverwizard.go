@@ -49,7 +49,8 @@ func runServerWizard(c *cobra.Command, p process, check bool) error {
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
 	talks, _ := p.machine.(effect.Foreground)
 	hand := &wizard.Hand{}
-	stages := serverWizardStages(p, signalPrompt{term}, talks, out, nil, hand, serverPick{check: check})
+	stages := serverWizardStages(wizardEffects{p: p, ask: signalPrompt{term}, talks: talks, out: out, hand: hand},
+		wizardOptions{check: check})
 	closing := func(ctx context.Context) { hand.Close(ctx, c.OutOrStdout()); term.Flush() }
 	_, err := wizard.Run(ctx, p.machine, step.Options{Observer: out, Check: check}, stages, p.lockDir(), 0, closing)
 	return unwrapStep(err)

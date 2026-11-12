@@ -25,7 +25,7 @@ func wizardProcess(vars string, booted bool, status string) (process, *effecttes
 // the signing key wait on the run.
 func TestServerWizardStagesReadHostVars(t *testing.T) {
 	p, m := wizardProcess("---\nsecurity_outbound: false\nws_user: root\n", false, "")
-	stages := serverWizardStages(p, nil, nil, nil, nil, &wizard.Hand{}, serverPick{})
+	stages := serverWizardStages(wizardEffects{p: p, hand: &wizard.Hand{}}, wizardOptions{})
 	var got []string
 	for _, s := range stages {
 		got = append(got, s.Name()+" < "+s.WaitsOn())

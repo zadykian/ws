@@ -24,7 +24,7 @@ type serverScreen struct {
 // run under --check. Every stage runs on ws, so the list is ws's alone.
 func (s serverScreen) draw(check bool) error {
 	if !opensList(s.c, s.p, false) {
-		return s.running(serverPick{check: check}, nil)
+		return s.running(wizardOptions{check: check}, nil)
 	}
 	forms := func(context.Context) ([]tui.Sheet, func(context.Context), error) { return serverSheets(s.p), nil, nil }
 	return tui.RunWizard(s.c.Context(), tui.Wizard{Title: s.c.CommandPath(), Config: s.config(), Round: s.round,
@@ -34,7 +34,7 @@ func (s serverScreen) draw(check bool) error {
 // round is the works of a scan. The state screen reads ws on ws.
 func (s serverScreen) round() tui.Round {
 	return tui.Round{
-		Stages: wizardQueue(s.stages(serverPick{})),
+		Stages: wizardQueue(s.stages(wizardOptions{})),
 		Scan:   s.scan(),
 		Read: func(tui.Side) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, s.p.version), nil
@@ -45,9 +45,10 @@ func (s serverScreen) round() tui.Round {
 
 // chosen runs the stages that choice holds, ws's run in part where the list left some of its roles out.
 func (s serverScreen) chosen(choice tui.QueueChoice) error {
-	name := wsRunOf(s.stages(serverPick{})).Name()
-	r := serverPick{check: choice.Next == tui.NextCheck, update: slices.Contains(choice.Whole, name), only: choice.Partial[name]}
-	return s.running(r, &choice)
+	name := wsRunOf(s.stages(wizardOptions{})).Name()
+	o := wizardOptions{check: choice.Next == tui.NextCheck, update: slices.Contains(choice.Whole, name),
+		only: choice.Partial[name], left: wizardLeft(choice)}
+	return s.running(o, &choice)
 }
 
 // config is what the screens draw with. A signal ends a plain run through its context, with status
@@ -59,8 +60,8 @@ func (s serverScreen) config() tui.Config {
 }
 
 // stages returns the stages for their names and machines alone: none of them runs.
-func (s serverScreen) stages(r serverPick) []step.Step {
-	return serverWizardStages(s.p, nil, nil, nil, nil, &wizard.Hand{}, r)
+func (s serverScreen) stages(o wizardOptions) []step.Step {
+	return serverWizardStages(wizardEffects{p: s.p, hand: &wizard.Hand{}}, o)
 }
 
 // on returns the process and the screen's effects as a run beside the screen takes them.
@@ -75,7 +76,8 @@ func (s serverScreen) on(b *tui.Bridge) (process, tui.Effects) {
 func (s serverScreen) scan() tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
 		on, e := s.on(b)
-		stages := serverWizardStages(on, b, e.Talks, b, nil, &wizard.Hand{}, serverPick{check: true})
+		stages := serverWizardStages(wizardEffects{p: on, ask: b, talks: e.Talks, out: b, hand: &wizard.Hand{}},
+			wizardOptions{check: true})
 		run := wsRunOf(stages)
 		watch := afterStage{b, run.WaitsOn(), func() {
 			states, err := run.Ws.State(ctx, s.p.version)
@@ -88,23 +90,22 @@ func (s serverScreen) scan() tui.Work {
 	}
 }
 
-// running runs r on the run screen of the stages' names, or on the list's, which choice holds. What
+// running runs o on the run screen of the stages' names, or on the list's, which choice holds. What
 // stays by hand prints past the screen, which would paint over it.
-func (s serverScreen) running(r serverPick, choice *tui.QueueChoice) error {
+func (s serverScreen) running(o wizardOptions, choice *tui.QueueChoice) error {
 	cfg, done := runConfig(s.c, s.p, s.config())
 	defer done()
-	var screen tea.Model = tui.NewRunScreen(runTitle(s.c, r.check), cfg.Theme, tui.NewGroup("", s.stages(r)))
-	o := step.Options{Check: r.check}
+	var screen tea.Model = tui.NewRunScreen(runTitle(s.c, o.check), cfg.Theme, tui.NewGroup("", s.stages(o)))
 	if choice != nil {
-		screen, o.LeftOut = tui.NewQueueRun(runTitle(s.c, r.check), cfg.Theme, *choice), wizardLeft(*choice)
+		screen = tui.NewQueueRun(runTitle(s.c, o.check), cfg.Theme, *choice)
 	}
 	return tui.Run(s.c.Context(), cfg, screen, func(ctx context.Context, b *tui.Bridge) error {
 		on, e := s.on(b)
 		hand := &wizard.Hand{}
-		stages := serverWizardStages(on, b, e.Talks, b, b, hand, r)
+		stages := serverWizardStages(wizardEffects{p: on, ask: b, talks: e.Talks, out: b, events: b, hand: hand}, o)
 		closing := func(ctx context.Context) { hand.Close(ctx, e.Text) }
-		o = b.Options(o)
-		_, err := wizard.Run(ctx, on.machine, o, stages, s.p.lockDir(), 0, closing)
+		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
+		_, err := wizard.Run(ctx, on.machine, so, stages, s.p.lockDir(), 0, closing)
 		return unwrapStep(err)
 	})
 }

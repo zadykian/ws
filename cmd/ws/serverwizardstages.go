@@ -13,25 +13,18 @@ import (
 	"github.com/zadykian/ws/step"
 )
 
-// serverPick is what a run of ws server wizard's stages takes beside its effects. A list that chose
-// ws's run in part gives only, its roles by --only's entries, and one that ticked it whole update,
-// as on the Mac.
-type serverPick struct {
-	check, update bool
-	only          []string
-}
-
 // serverWizardStages returns the stages of ws server wizard, in order. They act on ws itself, with
-// the remote script on sh's stdin, as the Mac's wizard sends it over ssh. events hears ws's run,
-// talks runs claude's login, and hand takes what stays by hand.
-func serverWizardStages(p process, ask effect.Prompt, talks effect.Foreground, out effect.Out, events step.Observer,
-	hand *wizard.Hand, r serverPick) []step.Step {
+// the remote script on sh's stdin, as the Mac's wizard sends it over ssh. e.events hears ws's run, e.talks
+// runs claude's login, and e.hand takes what stays by hand. A list that chose ws's run in part gives
+// o.only, and one that ticked it whole o.update, as on the Mac.
+func serverWizardStages(e wizardEffects, o wizardOptions) []step.Step {
+	p, out, hand := e.p, e.out, e.hand
 	m := p.machine
-	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: ask,
+	vals := &wizard.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: e.ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
-	ws := serverSession(m, talks, out, events)
-	run := &wizard.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !host.Booted(m), Check: r.check, Out: out,
-		Version: p.version, Update: r.update, Only: r.only}
+	ws := serverSession(m, e.talks, out, e.events)
+	run := &wizard.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !host.Booted(m), Check: o.check, Out: out,
+		Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
 	return []step.Step{vals, run, &wizard.WsClaude{Ws: ws, Tty: p.tty},
 		&wizard.Signing{Ws: ws, GitHub: &wizard.WsGitHub{M: m, Out: out, Hand: hand}}}
