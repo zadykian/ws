@@ -31,17 +31,10 @@ func TestEachPinHoldsAHexDigestForBothArchitectures(t *testing.T) {
 	hex := regexp.MustCompile(`^[0-9a-f]{64}$`)
 	for name, r := range map[string]release{"pgls": pgls, "dockerLS": dockerLS} {
 		for _, arch := range []string{"amd64", "arm64"} {
-			sum, err := r.digest(arch)
-			if err != nil || !hex.MatchString(sum) {
-				t.Errorf("%s %s: %q, %v", name, arch, sum, err)
+			if sum := r.sha256[arch]; !hex.MatchString(sum) {
+				t.Errorf("%s %s: %q", name, arch, sum)
 			}
 		}
-	}
-}
-
-func TestADigestFailsForAnArchitectureWithNoPin(t *testing.T) {
-	if _, err := pgls.digest("riscv64"); err == nil {
-		t.Error("no error for riscv64")
 	}
 }
 
@@ -60,6 +53,18 @@ func TestEachServerIsRootsBinaryAtMode0755WithItsPin(t *testing.T) {
 		if p.Version != r.version || p.Path != "/usr/local/bin/"+name || p.Mode != 0o755 ||
 			!maps.Equal(p.SHA256, r.sha256) {
 			t.Errorf("%s: %+v", name, p)
+		}
+	}
+}
+
+func TestEachServerPlansTheDownloadOfDpkgsArchitecture(t *testing.T) {
+	for _, arch := range []string{"amd64", "arm64"} {
+		m := effecttest.NewMachine()
+		m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte(arch + "\n")}
+		changes, err := download(m, "docker-language-server", dockerLS, dockerLSURL).Parts[0].Plan(t.Context())
+		want := "download " + dockerLSURL(dockerLS.version, arch) + " to /usr/local/bin/docker-language-server"
+		if err != nil || len(changes) != 1 || changes[0].String() != want {
+			t.Errorf("%s: plan = %v, %v; want %q", arch, changes, err, want)
 		}
 	}
 }

@@ -1,7 +1,6 @@
 package devtools
 
 import (
-	"fmt"
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
 )
@@ -11,16 +10,6 @@ import (
 type release struct {
 	version string
 	sha256  map[string]string
-}
-
-// digest is r's SHA-256 for goarch. A GOARCH with no entry is an error, so Steps asks for the
-// digest before it builds a URL.
-func (r release) digest(goarch string) (string, error) {
-	sum, ok := r.sha256[goarch]
-	if !ok {
-		return "", fmt.Errorf("no pin for GOARCH %q", goarch)
-	}
-	return sum, nil
 }
 
 // pgls is postgres-language-server, SQL's language server, from its release's binary.
