@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -29,8 +30,8 @@ const releases = "https://github.com/open-telemetry/opentelemetry-collector-rele
 func debName(arch string) string {
 	return fmt.Sprintf("otelcol-contrib_%s_linux_%s.deb", version, arch)
 }
-func debURL(arch string) string  { return releases + "/download/v" + version + "/" + debName(arch) }
-func debPath(arch string) string { return "/var/cache/" + debName(arch) }
+func debURL(_, arch string) string { return releases + "/download/v" + version + "/" + debName(arch) }
+func debPath(arch string) string   { return path.Join(host.CacheDir, debName(arch)) }
 
 // installed reports whether the pinned version is installed.
 func installed(ctx context.Context, m effect.Machine) (bool, error) {
@@ -66,6 +67,6 @@ func download(m effect.Machine) func(context.Context) ([]host.Resource, error) {
 		if err != nil {
 			return nil, err
 		}
-		return []host.Resource{host.Download{M: m, URL: debURL(arch), Path: debPath(arch), SHA256: sums[arch], Mode: 0o644}}, nil
+		return []host.Resource{host.Dir{M: m, Path: host.CacheDir, Mode: 0o755}, host.Download{M: m, URL: debURL(version, arch), Path: debPath(arch), SHA256: sums[arch], Mode: 0o644}}, nil
 	}
 }

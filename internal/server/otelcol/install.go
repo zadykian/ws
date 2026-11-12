@@ -10,25 +10,23 @@ import (
 // installStep is the name of the step that installs the .deb.
 const installStep = "Collector install"
 
-// install makes the parts that install the downloaded .deb, then remove it. The package adds the
-// otelcol-contrib user and service. Its postinst enables the service and, on a booted machine,
-// starts it with the package's own config, which listens on every address. The
+// pinned is the collector's .deb as a package, which plans from the pin and removes the file once
+// it installs.
+func pinned(m effect.Machine) host.Package {
+	return host.Package{M: m, Name: "otelcol-contrib", Source: host.PinnedFile{M: m, Version: version, URL: debURL, SHA256: sums}}
+}
+
+// install makes the part that installs the .deb, and the stop of the collector where it installs.
+// The package adds the otelcol-contrib user and service. Its postinst enables the service and, on
+// a booted machine, starts it with the package's own config, which listens on every address. The
 // collector stays off until the role's config is in place, also at boot should a later step fail.
 func install(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]host.Resource, error) {
 	return func(ctx context.Context) ([]host.Resource, error) {
-		arch, err := architecture(ctx, m)
-		if err != nil {
-			return nil, err
-		}
-		path := debPath(arch)
 		ok, err := installed(ctx, m)
-		if err != nil {
-			return nil, err
+		if err != nil || ok {
+			return []host.Resource{pinned(m)}, err
 		}
-		if ok {
-			return []host.Resource{host.Absent{M: m, Path: path}}, nil
-		}
-		return []host.Resource{host.Deb{M: m, Path: path}, stopped{m, u, out}, host.Absent{M: m, Path: path}}, nil
+		return []host.Resource{pinned(m), stopped{m, u, out}}, nil
 	}
 }
 

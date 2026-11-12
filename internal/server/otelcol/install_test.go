@@ -22,7 +22,7 @@ func TestInstallRemovesAStrayDeb(t *testing.T) {
 
 func TestOtherVersionDownloadsChecksInstallsAndRemoves(t *testing.T) {
 	m := machine("0.100.0 ii\n")
-	m.Pages[debURL("amd64")] = []byte("deb")
+	m.Pages[debURL(version, "amd64")] = []byte("deb")
 	old := sums["amd64"]
 	sums["amd64"] = fmt.Sprintf("%x", sha256.Sum256([]byte("deb")))
 	t.Cleanup(func() { sums["amd64"] = old })
@@ -49,5 +49,14 @@ func TestOtherVersionDownloadsChecksInstallsAndRemoves(t *testing.T) {
 	}
 	if got := strings.Join(u.Calls, ","); got != "stop otelcol-contrib.service,disable otelcol-contrib.service" {
 		t.Errorf("unit calls = %q, want a stop and a disable", got)
+	}
+}
+
+func TestInstallPlansFromThePinOnANewMachine(t *testing.T) {
+	m := machine("")
+	m.Dirs["/run/systemd/system"] = 0o755
+	p, err := host.Lazy{Title: installStep, Parts: install(m, &effecttest.Units{}, &effecttest.Out{})}.Plan(t.Context())
+	if err != nil || len(p.Changes) != 4 || p.Changes[2].String() != "install otelcol-contrib "+version {
+		t.Errorf("plan = %v, %v; want the directory, the fetch, the install and the stop", p.Changes, err)
 	}
 }

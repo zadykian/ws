@@ -10,10 +10,13 @@ import (
 
 const query = "dpkg-query -W -f ${Version} ${db:Status-Abbrev}\n otelcol-contrib"
 
+const packageQuery = "dpkg-query -W -f ${Package} ${Version} ${db:Status-Abbrev}\n otelcol-contrib"
+
 func machine(have string) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Results[query] = effecttest.Result{Out: []byte(have)}
+	m.Results[packageQuery] = effecttest.Result{Out: []byte(strings.TrimSpace("otelcol-contrib "+have) + "\n")}
 	return m
 }
 
@@ -27,7 +30,7 @@ func TestDownloadPlansNothingWhereTheVersionIsInstalled(t *testing.T) {
 func TestDownloadFetchesWhereAnotherVersionIsInstalled(t *testing.T) {
 	lazy := host.Lazy{Title: downloadStep, Parts: download(machine("0.100.0 ii\n"))}
 	p, err := lazy.Plan(t.Context())
-	if err != nil || len(p.Changes) != 1 || !strings.Contains(p.Changes[0].String(), debURL("amd64")) {
+	if err != nil || len(p.Changes) != 2 || !strings.Contains(p.Changes[1].String(), debURL(version, "amd64")) {
 		t.Errorf("plan = %v, %v; want the release's .deb", p.Changes, err)
 	}
 }
