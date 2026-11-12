@@ -56,19 +56,19 @@ func unverified(err error, pub string) string {
 // the Mac's name. That way GitHub verifies the commits the key signs. Without a login or its
 // write:ssh_signing_key scope, or on another error of gh's, it warns, at each run until one adds
 // the key. Before gh is installed, it says what it would add with gh there.
-func (g *Git) register(ctx context.Context, key gitKey, gh string, installing bool) (*Register, string, error) {
+func (g *Git) register(ctx context.Context, key NamedKey, gh string, installing bool) (*Register, string, error) {
 	title, err := g.M.Run(ctx, "hostname", "-s")
 	if err != nil {
 		return nil, "", fmt.Errorf("hostname failed: %w", err)
 	}
-	r := Register{gh, key.Pub, key.Public, strings.TrimSpace(string(title))}
+	r := Register{gh, key.File, key.Key.String(), strings.TrimSpace(string(title))}
 	if installing {
 		return nil, "would run " + r.command() + " once gh is installed, where it has a login that lacks the key", nil
 	}
-	listed, err := g.listed(ctx, gh, key.Public)
+	listed, err := g.listed(ctx, gh, key.Key.String())
 	switch {
 	case err != nil:
-		g.note("%s", unverified(err, key.Pub))
+		g.note("%s", unverified(err, key.File))
 	case listed:
 		if !g.added {
 			g.know("git's key is among GitHub's signing keys already")
@@ -76,7 +76,7 @@ func (g *Git) register(ctx context.Context, key gitKey, gh string, installing bo
 	case g.addErr != nil:
 		// The add failed in this run: planning it again would end the step in an error, where the
 		// warning is all that a later run can change.
-		g.note("%s", unverified(g.addErr, key.Pub))
+		g.note("%s", unverified(g.addErr, key.File))
 	default:
 		return &r, "", nil
 	}

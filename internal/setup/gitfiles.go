@@ -16,23 +16,23 @@ func (p Pending) String() string { return string(p) }
 
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
 // and gitconfig.
-func (g *Git) list(key gitKey, gh string) []userFile {
+func (g *Git) list(key NamedKey, gh string) []userFile {
 	dir := g.Home + "/.config/ws"
-	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.Pub, Gh: gh, Dir: dir}
+	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.File, Gh: gh, Dir: dir}
 	file := func(path, text string, mode fs.FileMode) userFile {
 		return userFile{M: g.M, Path: path, Text: []byte(text), Mode: mode}
 	}
 	var list []userFile
-	if sshcfg.SecretiveKey(key.Pub, g.Home) {
+	if sshcfg.SecretiveKey(key.File, g.Home) {
 		in.Program = dir + "/secretive-ssh-keygen"
 		list = append(list, file(in.Program, gitcfg.Wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
-	list = append(list, file(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Public), 0o644))
+	list = append(list, file(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Key.String()), 0o644))
 	return append(list, file(dir+"/gitconfig", gitcfg.Config(in), 0o644))
 }
 
 // files plans ~/.config/ws and the files in it.
-func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
+func (g *Git) files(key NamedKey, gh string) ([]step.Change, error) {
 	dir := g.Home + "/.config/ws"
 	var cs []step.Change
 	for _, d := range []struct {
@@ -46,7 +46,7 @@ func (g *Git) files(key gitKey, gh string) ([]step.Change, error) {
 			cs = append(cs, MakeDir{d.path, d.mode})
 		}
 	}
-	cs = append(cs, PlanCopy(g.M, key.Pub, key.Text, g.Home)...)
+	cs = append(cs, PlanCopy(g.M, key.File, key.Text, g.Home)...)
 	for _, f := range g.list(key, gh) {
 		planned, err := f.plan()
 		if err != nil {
@@ -67,7 +67,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := g.key(ctx)
+	key, err := ReadKey(ctx, g.M, g.Conf, g.Home, SigningKey)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +87,9 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}
-	pub := keyCopy(g.M, key.Pub, key.Text, g.Home)
+	pub := keyCopy(g.M, key.File, key.Text, g.Home)
 	if len(pub) == 0 {
-		pub = []step.Reporter{userPath{M: g.M, Kind: step.FileItem, Path: key.Pub}}
+		pub = []step.Reporter{userPath{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}
 	parts = append(append(parts, pub...), fixed{lineItem(in.Path, "the include of ~/.config/ws/gitconfig", in.Exists, in.Included)})
 	return gather(ctx, parts...)
