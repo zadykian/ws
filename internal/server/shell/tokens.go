@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io/fs"
-	"path"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -55,31 +54,24 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	dir := t.A.Home + "/.config/git/tokens"
-	rs := treeTo(t.M, t.A, path.Dir(config), 0o755, true)
-	rs = append(rs, host.Dir{M: t.M, Path: dir, Mode: 0o700, UID: t.A.UID, GID: t.A.GID})
+	const rel = ".config/git/tokens"
+	dir := t.A.Home + "/" + rel
+	rs := []host.Resource{t.A.Dir(t.M, rel, 0o700)}
 	if t.Whole {
 		for _, u := range dropped {
 			rs = append(rs, host.Absent{M: t.M, Path: dir + "/" + credentialFile(u)})
 		}
 	}
 	for _, c := range t.Creds {
-		file := dir + "/" + credentialFile(c.URL)
-		if err := host.RefuseLinks(t.M, t.A.Home, file); err != nil {
-			return nil, err
-		}
 		username := c.Username
 		if username == "" {
 			username = "token"
 		}
-		rs = append(rs, host.File{
-			M: t.M, Path: file, Content: []byte("username=" + username + "\npassword=" + c.Token + "\n"),
-			Mode: 0o600, UID: t.A.UID, GID: t.A.GID, Secret: true,
-		})
+		f := t.A.File(t.M, rel+"/"+credentialFile(c.URL),
+			[]byte("username="+username+"\npassword="+c.Token+"\n"), 0o600)
+		f.Secret = true
+		rs = append(rs, f)
 	}
-	rs = append(rs, host.Validated{
-		File:  host.File{M: t.M, Path: config, Content: content, Mode: 0o600, UID: t.A.UID, GID: t.A.GID},
-		Check: configCheck,
-	})
+	rs = append(rs, host.Validated{File: t.A.File(t.M, ".config/git/tokens.gitconfig", content, 0o600), Check: configCheck})
 	return planAll(ctx, rs...)
 }

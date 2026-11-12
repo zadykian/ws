@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"path"
-	"strings"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
@@ -15,24 +13,6 @@ import (
 
 // signersHeader is the first line of the allowed signers file.
 const signersHeader = "# Written by github.com/zadykian/ws, whose next run replaces any change made here.\n"
-
-// treeTo returns the directories from below home down to dir, in order. Each is made with mode;
-// the ones above dir are left as they are where they exist, as the file module leaves them, and dir
-// too where keep is set. A dir outside home is alone, and its parent must exist.
-func treeTo(m effect.Machine, a host.Account, dir string, mode fs.FileMode, keep bool) []host.Resource {
-	var chain []string
-	for d := dir; strings.HasPrefix(d, a.Home+"/"); d = path.Dir(d) {
-		chain = append([]string{d}, chain...)
-	}
-	if len(chain) == 0 {
-		chain = []string{dir}
-	}
-	var dirs []host.Resource
-	for _, d := range chain {
-		dirs = append(dirs, host.Dir{M: m, Path: d, Mode: mode, UID: a.UID, GID: a.GID, CreateOnly: keep || d != dir})
-	}
-	return dirs
-}
 
 // signers trusts the signing key for the email in git verify-commit. A file set up by hand is kept
 // beside it, as ~/.gitconfig is.
