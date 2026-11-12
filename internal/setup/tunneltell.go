@@ -39,24 +39,17 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	t.public = public
-	var cs []step.Change
-	for _, d := range []struct {
-		path string
-		mode fs.FileMode
-	}{{t.Home + "/.config", 0o755}, {t.Home + "/.config/ws", 0o700}} {
-		if info, err := t.M.Stat(d.path); errors.Is(err, fs.ErrNotExist) {
-			cs = append(cs, MakeDir{d.path, d.mode})
-		} else if err != nil {
-			return nil, err
-		} else if !info.Mode.IsDir() {
-			return nil, fmt.Errorf("%s is not a directory", d.path)
-		}
+	cs, link, err := wsDirs(t.M, t.Home).plan()
+	if err != nil {
+		return nil, err
 	}
 	pub, err := t.pub().plan()
 	if err != nil {
 		return nil, err
 	}
-	return append(cs, pub...), nil
+	cs = append(cs, pub...)
+	link.warn(t.Out, len(cs))
+	return cs, nil
 }
 
 // pub is tunnel.pub, which holds the key that tell read. Its mode is the user's.

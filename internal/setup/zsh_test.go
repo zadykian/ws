@@ -38,8 +38,8 @@ func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)
 	}
 	items, err := s.Report(context.Background())
-	if err != nil || len(items) != 2 || items[0].Conflict != "" || items[1].Found != items[1].Want {
-		t.Errorf("Report = %+v, %v; want the hook and the line, no conflict", items, err)
+	if err != nil || len(items) != 4 || items[2].Conflict != "" || items[3].Found != items[3].Want {
+		t.Errorf("Report = %+v, %v; want the directories, the hook and the line, no conflict", items, err)
 	}
 }
 
@@ -79,7 +79,7 @@ func TestZshWarnsOfALinkedZshrcThatLacksTheLine(t *testing.T) {
 		t.Errorf("Plan = %v, %v, out %v; want nothing and a warning", p.Changes, err, out.Lines)
 	}
 	items, _ := s.Report(context.Background())
-	if len(items) != 2 || !strings.Contains(items[1].Conflict, "a link to /dots/zshrc") {
+	if len(items) != 4 || !strings.Contains(items[3].Conflict, "a link to /dots/zshrc") {
 		t.Errorf("Report = %+v; want the line's conflict", items)
 	}
 }
