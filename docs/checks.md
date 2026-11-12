@@ -38,7 +38,7 @@ that they install, update and refuse what they should
 ## SigNoz's compose files
 
 CI forges SigNoz's compose files again from their casting, with foundryctl pinned by its checksum,
-and fails where they differ from the repository's, in `internal/server/signoz`.
+and fails where they differ from the repository's, in `roles/server/ubuntu/signoz`.
 
 ## The Mac's wizard
 

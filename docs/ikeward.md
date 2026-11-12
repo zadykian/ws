@@ -3,7 +3,7 @@
 The `ikeward` role keeps the server on an IKEv2 VPN with
 [ikeward](https://github.com/zadykian/ikeward), from a client profile that hwdsl2's `ikev2setup.sh`
 makes. It lets the WireGuard peers it names reach the VPN through the server too. Its steps are Go
-code in `internal/server/ikeward`. Without a profile, it does nothing, as in CI's container. Unless
+code in `roles/server/ubuntu/ikeward`. Without a profile, it does nothing, as in CI's container. Unless
 `security_outbound` is false, the `security` role keeps what the server and its containers start off
 the LAN, but what the network needs, such as DHCP and DNS. It leaves `ikeward0` open to them ([Outbound](security.md#outbound)).
 
@@ -44,11 +44,11 @@ the `.p12`.
 
 ## A run
 
-- `internal/server/ikeward/binary.go` pins ikeward's version, and the SHA-256 of its binary for each
-  architecture, as the release's `ikeward.sha256` gives it. The run downloads the binary for the
-  architecture that dpkg names into `/usr/local/sbin/ikeward`, where ikeward's `install.sh` would
-  put it, checked against the pin. A failed download is tried five times, ten seconds apart. A new
-  pin replaces it.
+- `roles/server/ubuntu/ikeward/binary.go` pins ikeward's version, and the SHA-256 of its binary for
+  each architecture, as the release's `ikeward.sha256` gives it. The run downloads the binary for
+  the architecture that dpkg names into `/usr/local/sbin/ikeward`, where ikeward's `install.sh`
+  would put it, checked against the pin. A failed download is tried five times, ten seconds apart. A
+  new pin replaces it.
 - It writes the two files, which the secrets file gives, under their names, into
   `/run/ikeward-profile`, which only root may enter. It removes them once `install` has run, whether
   a step failed or not. Where `ikeward_profile` is set and the secrets hold no profile, the run

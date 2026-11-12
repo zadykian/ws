@@ -2,7 +2,7 @@
 
 The `devtools` role installs Node, the .NET SDKs, gh, glow, the libraries headless Chromium needs,
 Go, gopls, Delve, roslyn-language-server, the SQL and Docker servers and rustup. It runs as Go
-steps in [internal/server/devtools](../internal/server/devtools): the repositories, the packages,
+steps in [roles/server/ubuntu/devtools](../roles/server/ubuntu/devtools): the repositories, the packages,
 Go, the servers and rustup, in this order.
 
 Node comes from NodeSource's apt repository, glow from Charm's and gh from GitHub CLI's. Each .NET
@@ -22,7 +22,7 @@ libraries for Chromium go in without recommends.
 Go goes in `/usr/local/go` from go.dev's tarball, checked against the SHA-256 go.dev lists for it.
 ws unpacks the tarball beside the target and moves the tree into place whole. The tree's
 `.ws-source` file holds the tarball's URL and is its probe. A run cut short never passes for the
-version, and a current Go makes no fetch. A new `GoVersion` in `internal/server/devtools/pins.go`
+version, and a current Go makes no fetch. A new `GoVersion` in `roles/server/ubuntu/devtools/pins.go`
 replaces the Go there, and the Go that builds gopls. rustup installs Rust's stable toolchain in the
 user's home. Once there, rustup updates itself, so ws leaves it alone.
 
@@ -41,7 +41,7 @@ user's home. Once there, rustup updates itself, so ws leaves it alone.
 ## The SQL and Docker servers
 
 postgres-language-server and docker-language-server are release binaries, each pinned in
-`internal/server/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
+`roles/server/ubuntu/devtools/binaries.go` by version and by SHA-256 for `amd64` and `arm64`. The
 role downloads the one for the machine, by the architecture that dpkg names, to `/usr/local/bin`,
 owned by root with mode 0755, so any `ws_user` can run it. A failed download is tried five times,
 ten seconds apart. A machine of another architecture fails the step. The settings name both by
@@ -77,7 +77,7 @@ A project's `postgres-language-server.jsonc` holds `db` fields, never a `connect
 ## The npm servers
 
 The role installs four packages into `~/.local/lib/language-servers`, owned by `ws_user`, from the
-`package.json` and `package-lock.json` in `internal/server/devtools/servers`:
+`package.json` and `package-lock.json` in `roles/server/ubuntu/devtools/servers`:
 
 - `@ansible/ansible-language-server`, for Ansible.
 - `@zed-industries/vscode-langservers-extracted`, whose HTML server Zed installs by default.
@@ -97,7 +97,7 @@ server, so Zed installs no Prettier.
 To bump a package:
 
 1. Edit its version in `package.json`.
-2. In `internal/server/devtools/servers`, run `npm install --package-lock-only --ignore-scripts
+2. In `roles/server/ubuntu/devtools/servers`, run `npm install --package-lock-only --ignore-scripts
    --no-audit --no-fund`.
 3. Commit both files, after checking each `integrity` against
    `npm view PACKAGE@VERSION dist.integrity`.

@@ -1,7 +1,7 @@
 # docker
 
 The `docker` role installs Docker Engine with its buildx and compose plugins, from Docker's apt
-repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `internal/server/docker`, as
+repository, and writes `/etc/docker/daemon.json`. Its code is Go, in `roles/server/ubuntu/docker`, as
 steps of `ws server apply`. They are the repository, the packages, the check of the routes, the
 user's leaving the `docker` group, the configuration, the check of `docker0` and the user's rootless
 daemon. Docker's apt key is pinned by its SHA-256 in

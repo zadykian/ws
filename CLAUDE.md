@@ -8,12 +8,12 @@ that works on the server. The rest is the docs, the lint gates' tools and CI.
 
 ## Layout
 
-- `internal/server/NAME`: a role per directory, as Go steps, with its page, `docs/NAME.md`, and a
-  line in the README. `internal/server/roles` lists the roles in the order they run, and
-  `internal/server/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
+- `roles/server/ubuntu/NAME`: a role per directory, as Go steps, with its page, `docs/NAME.md`,
+  and a line in the README. `roles/server/ubuntu` lists the roles in the order they run, and
+  `roles/server/ubuntu/values` types the machine's values: `/etc/ws/host_vars.yml`, on the machine
   alone, such as the cable's port ([The direct link](docs/network.md#the-direct-link)). Each role
   holds its pins, and embeds its templates and files. ws-fans, the fans' service, is
-  `ws server fans`, in `internal/fans`.
+  `ws server fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root. `cmd/ws`
   is the command and `internal/` its packages. `engine/core` holds `step`, `effect`, with
   `effect/effecttest`, and `host`, the resources the steps share, which are public: another module
@@ -101,10 +101,10 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
   ([Cutting a release](docs/releases.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
-  binary ([binary.go](internal/server/ikeward/binary.go)), otelcol's `.deb`
-  ([download.go](internal/server/otelcol/download.go)) and Docker's apt key
-  ([repository.go](internal/server/docker/repository.go)). So is Fresh's `.deb`
-  ([download.go](internal/server/fresh/download.go)), and so are foundryctl
+  binary ([binary.go](roles/server/ubuntu/ikeward/binary.go)), otelcol's `.deb`
+  ([download.go](roles/server/ubuntu/otelcol/download.go)) and Docker's apt key
+  ([repository.go](roles/server/ubuntu/docker/repository.go)). So is Fresh's `.deb`
+  ([download.go](roles/server/ubuntu/fresh/download.go)), and so are foundryctl
   ([ci.yml](.github/workflows/ci.yml)) and the gates' tools ([tools/run](tools/run)). So is ws's
   binary, against its release's `ws.sha256` ([install.sh](install.sh),
   [update.go](engine/core/update/update.go)), and so are yamllint
@@ -112,13 +112,13 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   ([homebrew.go](internal/wizard/homebrew.go)). Go is checked against the
   SHA-256 its publisher lists ([devtools](docs/devtools.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
-  ([binaries.go](internal/server/devtools/binaries.go)). gopls and Delve are built through Go's
+  ([binaries.go](roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's
   checksum database. roslyn-language-server is pinned by version alone
-  ([pins.go](internal/server/devtools/pins.go)). The npm servers are checked against the sha512
+  ([pins.go](roles/server/ubuntu/devtools/pins.go)). The npm servers are checked against the sha512
   `integrity` of their lockfile ([devtools](docs/devtools.md#the-npm-servers)). Zed's other
   downloads on ws are outside the rule
   ([zed](docs/zed.md#zeds-downloads-outside-the-sha-256-rule)).
-- foundryctl forges SigNoz's compose files, `internal/server/signoz/deployment/` and
+- foundryctl forges SigNoz's compose files, `roles/server/ubuntu/signoz/deployment/` and
   `casting.yaml.lock`, from `casting.yaml`. Change the casting and forge again, never the files by
   hand: CI's `signoz` job fails where they differ
   ([The compose files](docs/signoz.md#the-compose-files)).

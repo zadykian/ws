@@ -1,6 +1,6 @@
 # lazygit
 
-The `lazygit` role is Go steps in `internal/server/lazygit`. It installs lazygit from Ubuntu's
+The `lazygit` role is Go steps in `roles/server/ubuntu/lazygit`. It installs lazygit from Ubuntu's
 archive, a wrapper that puts the repository and its branch in the terminal's title, and a config in
 JetBrains Dark.
 

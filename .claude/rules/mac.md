@@ -4,11 +4,12 @@ paths:
   - "cmd/**"
   - "internal/**"
   - "engine/**"
+  - "roles/**"
 ---
 
 # mac
 
-The rules a change to the ws CLI keeps, in `cmd/`, `internal/` and `engine/` (its
+The rules a change to the ws CLI keeps, in `cmd/`, `internal/`, `engine/` and `roles/` (its
 module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
 [CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too.

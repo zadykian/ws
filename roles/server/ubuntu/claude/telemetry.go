@@ -14,7 +14,7 @@ import (
 // telemetryRemoved are the env keys that Telemetry removes. A signal's own endpoint or protocol
 // would override the general one. The temporality key changes how claude sends its counters. The
 // Claude dashboard counts deltas, claude's default, and would show less of cumulative sums
-// (internal/server/signoz/dashboards/README.md).
+// (roles/server/ubuntu/signoz/dashboards/README.md).
 var telemetryRemoved = []string{
 	"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
 	"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL",

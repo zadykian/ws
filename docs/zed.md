@@ -1,7 +1,7 @@
 # zed
 
-The `zed` role is Go steps in `internal/server/zed`. Zed itself runs on the Mac, which opens ws over
-ssh. The role writes the settings that Zed's server on ws reads, and raises the open-file limit
+The `zed` role is Go steps in `roles/server/ubuntu/zed`. Zed itself runs on the Mac, which opens ws
+over ssh. The role writes the settings that Zed's server on ws reads, and raises the open-file limit
 that the server needs. The Mac's side is `docs/mac-zed.md`.
 
 `~/.config/zed/settings.json` is owned by `ws_user`. A run replaces a change made to it by hand
@@ -26,7 +26,7 @@ The settings layers, lowest first:
 5. A project's `.zed/settings.json`.
 
 ws's file names the language servers by path. Its source is the template
-`internal/server/zed/files/settings.json.tmpl`, where `{{.Home}}` is the user's home.
+`roles/server/ubuntu/zed/files/settings.json.tmpl`, where `{{.Home}}` is the user's home.
 A path makes Zed skip every download and add no arguments. The file sets `terminal.shell.program`
 to ws's terminal wrapper. A program set in the Mac's
 `settings.json` would run on ws too (zed#65548), and fail there if ws lacks it.

@@ -5,7 +5,7 @@ The `wireguard` role sets up `wg0`, the server's end of a WireGuard tunnel for t
 each peer's public key is read from `/etc/wireguard`. It keeps Docker's containers from reaching
 the Mac through the tunnel or the cable.
 
-Its code is Go, in `internal/server/wireguard`, as steps of `ws server apply`. They check the
+Its code is Go, in `roles/server/ubuntu/wireguard`, as steps of `ws server apply`. They check the
 settings, install `wireguard-tools`, `systemd` and `iptables`, and put in the drops that keep the
 containers off the Mac. Then they make the tunnel: the key, wg0's files, the firewall and the
 reload of networkd. The last step shows the public key and waits for `wg0`. Without systemd booted,
