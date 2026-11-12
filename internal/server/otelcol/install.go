@@ -2,9 +2,11 @@ package otelcol
 
 import (
 	"context"
+	"slices"
 
 	"github.com/zadykian/ws/effect"
 	"github.com/zadykian/ws/host"
+	"github.com/zadykian/ws/step"
 )
 
 // installStep is the name of the step that installs the .deb.
@@ -16,23 +18,20 @@ func pinned(m effect.Machine) host.Package {
 	return host.Package{M: m, Name: "otelcol-contrib", Source: host.PinnedFile{M: m, Version: version, URL: debURL, SHA256: sums}}
 }
 
-// install makes the part that installs the .deb, and the stop of the collector where it installs.
-// The package adds the otelcol-contrib user and service. Its postinst enables the service and, on
-// a booted machine, starts it with the package's own config, which listens on every address. The
+// install makes the part that installs the .deb, and stops the collector where it installs. The
+// package adds the otelcol-contrib user and service. Its postinst enables the service and, on a
+// booted machine, starts it with the package's own config, which listens on every address. The
 // collector stays off until the role's config is in place, also at boot should a later step fail.
 func install(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]host.Resource, error) {
-	return func(ctx context.Context) ([]host.Resource, error) {
-		ok, err := installed(ctx, m)
-		if err != nil || ok {
-			return []host.Resource{pinned(m)}, err
-		}
-		return []host.Resource{pinned(m), stopped{m, u, out}}, nil
+	return func(context.Context) ([]host.Resource, error) {
+		return []host.Resource{stopped{pinned(m), m, u, out}}, nil
 	}
 }
 
-// stopped stops the collector that the package started and disables it. Without systemd booted it says so
-// and plans nothing.
+// stopped plans the package, and the stop of the collector that it started and enabled where the
+// package installs. Without systemd booted it says so and plans no stop.
 type stopped struct {
+	pkg host.Package
 	m   effect.Machine
 	u   effect.Units
 	out effect.Out
@@ -49,10 +48,14 @@ func (c stop) Apply(ctx context.Context) error {
 	return c.u.Disable(ctx, "otelcol-contrib.service")
 }
 
-func (s stopped) Plan(context.Context) ([]host.Change, error) {
+func (s stopped) Plan(ctx context.Context) ([]host.Change, error) {
+	changes, err := s.pkg.Plan(ctx)
+	if err != nil || !slices.ContainsFunc(changes, func(c host.Change) bool { return step.KindOf(c) == step.Install }) {
+		return changes, err
+	}
 	if !host.Booted(s.m) {
 		s.out.Say("collector stop: skipped, systemd is not running")
-		return nil, nil
+		return changes, nil
 	}
-	return []host.Change{stop{s.u}}, nil
+	return append(changes, stop{s.u}), nil
 }
