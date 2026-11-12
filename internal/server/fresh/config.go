@@ -7,22 +7,15 @@ import (
 )
 
 // configFiles returns ~/.config/fresh with config.json and the theme, which ws replaces whole. The
-// directory stays the user's, as Fresh writes its own files there. The old file stays beside the new
-// one as a backup: Fresh's scan of themes/ takes only .json, so a backup isn't a theme.
-func configFiles(m effect.Machine, v values.Values, uid, gid int) ([]host.Resource, error) {
+// directories stay the user's, as Fresh writes its own files there. The old file stays beside the
+// new one as a backup: Fresh's scan of themes/ takes only .json, so a backup isn't a theme.
+func configFiles(m effect.Machine, v values.Values, a host.Account) ([]host.Resource, error) {
 	config, err := host.Render(templates, "files/config.json.tmpl", struct{ Home string }{v.Home})
 	if err != nil {
 		return nil, err
 	}
-	dir := v.Home + "/.config/fresh"
-	themes := dir + "/themes"
-	theme := themes + "/jetbrains-dark.json"
-	return []host.Resource{
-		host.Plain{M: m, Home: v.Home, Paths: []string{dir + "/config.json", theme}},
-		host.Dir{M: m, Path: v.Home + "/.config", Mode: 0o755, UID: uid, GID: gid, CreateOnly: true},
-		host.Dir{M: m, Path: dir, Mode: 0o755, UID: uid, GID: gid},
-		host.Dir{M: m, Path: themes, Mode: 0o755, UID: uid, GID: gid},
-		host.File{M: m, Path: dir + "/config.json", Content: config, Mode: 0o644, UID: uid, GID: gid, Backup: true},
-		host.File{M: m, Path: theme, Content: themeFile, Mode: 0o644, UID: uid, GID: gid, Backup: true},
-	}, nil
+	settings := a.File(m, ".config/fresh/config.json", config, 0o644)
+	theme := a.File(m, ".config/fresh/themes/jetbrains-dark.json", themeFile, 0o644)
+	settings.Backup, theme.Backup = true, true
+	return []host.Resource{settings, theme}, nil
 }

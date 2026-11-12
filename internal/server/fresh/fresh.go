@@ -46,7 +46,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) [
 			host.File{M: m, Path: wrapperPath, Content: wrapper, Mode: 0o755},
 		}},
 		user.WithAccount(m, configStep, "", func(a host.Account) ([]host.Resource, error) {
-			return configFiles(m, v, a.UID, a.GID)
+			return configFiles(m, v, a)
 		}),
 	}
 }
