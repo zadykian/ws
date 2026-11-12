@@ -11,8 +11,8 @@ import (
 
 	"golang.zx2c4.com/wireguard/tun/tuntest"
 
-	"github.com/zadykian/ws/internal/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // The keys are 32 equal bytes in base64.

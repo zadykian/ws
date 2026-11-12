@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zadykian/ws/internal/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // Run sets up the utun, then keeps the tunnel up until Stop, or until ctx ends. It logs why it

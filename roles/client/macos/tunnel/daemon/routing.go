@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"slices"
 
-	"github.com/zadykian/ws/internal/tunnel"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // allow sorts routes.d by the endpoints hosts, and logs a network once as it goes out. told holds

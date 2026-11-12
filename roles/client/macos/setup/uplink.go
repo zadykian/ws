@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
-	"github.com/zadykian/ws/internal/tunnel"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // uplinkRouter returns the router that info shows outside the cable's /30, which is an uplink's:

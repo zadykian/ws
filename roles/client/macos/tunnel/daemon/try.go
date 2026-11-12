@@ -5,8 +5,8 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/zadykian/ws/internal/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // keepalive is the peer's persistent keepalive, in seconds.

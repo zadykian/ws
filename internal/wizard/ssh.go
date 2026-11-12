@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // FirstFile is the file in the lock that holds the address that the Host key or Login stage asked,
