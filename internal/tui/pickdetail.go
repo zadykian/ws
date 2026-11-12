@@ -35,15 +35,12 @@ func (s listScreen) warnings(unread string, held []string) []Line {
 
 // notes is the words of the pane: what holds for the whole list, then the line under the cursor.
 func (s pickScreen) notes() []Line {
-	notes := s.warnings(s.unread, s.list.passedOver())
+	notes := s.warnings("", s.list.passedOver())
 	line, ok := s.list.current()
 	if !ok || line.heading {
 		return notes
 	}
 	row := s.list.rows[line.row]
-	if s.list.partial()[row.name] != nil && row.number > 0 {
-		notes = append(notes, Line{Said, "Runs in part, so it stays pending."})
-	}
 	return append(notes, row.notes()...)
 }
 

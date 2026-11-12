@@ -13,6 +13,13 @@ const (
 	queueConfigurePlace
 )
 
+// reportedMsg says what a stage's machine reports, or why it reports nothing.
+type reportedMsg struct {
+	stage    string
+	sections []StateSection
+	problem  string
+}
+
 // queueScreen is the queue's lists, the stages' two sides, over the strip of the detail. A scan fills
 // them behind the screen, and the maintainer can read and move as it goes.
 type queueScreen struct {

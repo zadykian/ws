@@ -33,13 +33,6 @@ type Choice struct {
 // scannedMsg ends the scan. problem says why it stopped short, if it did.
 type scannedMsg struct{ problem string }
 
-// reportedMsg says what a stage's machine reports, or why it reports nothing.
-type reportedMsg struct {
-	stage    string
-	sections []StateSection
-	problem  string
-}
-
 // listScreen is what both screens of lists share: the frame, the scan's end, the filter's typing
 // and the leave.
 type listScreen struct {
@@ -97,10 +90,6 @@ type pickScreen struct {
 	footer Footer
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
 	picks chan<- Choice
-	// queued draws the list as a queue's two sides.
-	queued bool
-	// unread is why a machine reported nothing, and its steps stand as the queue named them.
-	unread string
 }
 
 // listButtons are the buttons of both screens of lists, in the order of their places.
@@ -132,14 +121,6 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.list = s.list.hear(msg)
 	case scannedMsg:
 		s.listScreen = s.scanned(msg)
-		if s.queued {
-			s.list = s.list.opened()
-		}
-	case reportedMsg:
-		s.unread = msg.problem
-		if msg.problem == "" {
-			s.list = s.list.reported(msg.stage, msg.sections)
-		}
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
 	case tea.PasteMsg:
@@ -165,10 +146,6 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		s.filter = s.filter.cleared()
 		s.list = s.list.filtered("")
 		return s, nil
-	case s.queued && key.Matches(msg, Keys.Next):
-		return s.tabbed(1), nil
-	case s.queued && key.Matches(msg, Keys.Prev):
-		return s.tabbed(-1), nil
 	}
 	var place int
 	s.footer, place = s.footer.Update(msg)
@@ -237,9 +214,6 @@ func (s pickScreen) statusLine() string {
 // layout is the screen with its panes empty, as what fills them depends on their sizes. The list
 // holds the focus alone, so that a window too short for two panes shows it.
 func (s pickScreen) layout() Layout {
-	if s.queued {
-		return s.queueLayout()
-	}
 	return Layout{
 		Title:  s.title,
 		Status: s.statusLine(),
@@ -259,9 +233,6 @@ func (s pickScreen) listHeight() int {
 
 // View draws the screen.
 func (s pickScreen) View() tea.View {
-	if s.queued {
-		return s.queueView()
-	}
 	l := s.layout()
 	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1], s.notes())
 	l.Panes[0].Body = s.list.view(s.theme, s.listHeight())
