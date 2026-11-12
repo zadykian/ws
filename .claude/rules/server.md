@@ -46,7 +46,7 @@ steps, and each role's page in `docs/` says what it sets up.
   in Results, so host's read can change under it
   ([machine_dpkg.go](../../effect/effecttest/machine_dpkg.go)).
 - A package is installed where dpkg lists it `ii`, in plans and reports alike, and a step reads dpkg
-  in one run ([dpkg.go](../../host/dpkg.go)).
+  in one run ([dpkg.go](../../host/dpkg.go)). A role reads dpkg through `host.PackageStates`.
 - A report reads as Plan does and holds no secret: a `Secret` file shows no diff and no sum
   ([report.go](../../step/report.go)). A `File` that a role builds in `Plan` shows by its change
   alone, so a healthy one has no item.
