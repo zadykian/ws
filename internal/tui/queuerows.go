@@ -40,7 +40,9 @@ func (l pickList) reported(stage string, sections []StateSection) pickList {
 	rows := slices.Clone(l.rows[:head+1])
 	for _, section := range sections {
 		for i, report := range section.Reports {
-			rows = append(rows, l.rows[head].reportRow(section.Name, i, report))
+			row := reportedRow(section.Name, i, report)
+			row.side, row.stage = l.rows[head].side, stage
+			rows = append(rows, row)
 		}
 	}
 	for _, r := range l.rows[head+1:] {
@@ -52,11 +54,11 @@ func (l pickList) reported(stage string, sections []StateSection) pickList {
 	return l.settled()
 }
 
-// reportRow is a step of the stage r, as a report says it stands. What the step would change and
+// reportedRow is the step of a group, as a report says it stands. What the step would change and
 // what stops it are the words of its row, as a report has no output to keep.
-func (r pickRow) reportRow(parent string, index int, report step.Report) pickRow {
+func reportedRow(parent string, index int, report step.Report) pickRow {
 	row := stepRow{parent: parent, index: index, name: report.Step, state: stepSame}
-	picked := pickRow{stepRow: row, side: r.side, stage: r.name, after: report.After}
+	picked := pickRow{stepRow: row, after: report.After}
 	for _, change := range report.Changes {
 		picked.state = stepChanged
 		picked.said = append(picked.said, Line{Said, change.Text})
