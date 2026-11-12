@@ -20,7 +20,7 @@ const (
 
 // Steps returns the role's steps in order. Each of cld's steps comes after the install, as cld is
 // not there to ask until a run has installed it.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return steps(v, m, effect.OSUnits{}, out)
 }
 

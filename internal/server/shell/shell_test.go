@@ -15,7 +15,7 @@ import (
 
 func stepNames(v values.Values, s secrets.Secrets) []string {
 	var names []string
-	for _, st := range Steps(v, s, effecttest.NewMachine(), &effecttest.Out{}) {
+	for _, st := range Steps(v, s, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{}) {
 		names = append(names, st.Name())
 	}
 	return names
@@ -43,7 +43,7 @@ func TestALinkKeepsAReportFromThePathsBehindIt(t *testing.T) {
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Links["/home/ws/.bashrc"] = "/etc/shadow"
 	m.Files["/home/ws/.bashrc"] = []byte("root:$6$hash:19000\n")
-	reports, err := step.Read(t.Context(), Steps(v, secrets.Secrets{}, m, &effecttest.Out{}))
+	reports, err := step.Read(t.Context(), Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestALinkAtAFileStopsItsStepAlone(t *testing.T) {
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Links["/home/ws/.bashrc"] = "/srv/target"
 	var failed []string
-	for _, st := range Steps(v, secrets.Secrets{}, m, &effecttest.Out{}) {
+	for _, st := range Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{}) {
 		if st.WaitsOn() != "" {
 			continue // it waits on a step that runs apart from it here
 		}
@@ -92,7 +92,7 @@ func TestShellFilesTakeDpkgsArchitecture(t *testing.T) {
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("arm64\n")}
-	steps := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})
+	steps := Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})
 	if _, err := step.Run(t.Context(), []step.Step{steps[1]}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)
 	}

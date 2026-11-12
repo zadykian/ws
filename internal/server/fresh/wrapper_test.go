@@ -129,7 +129,7 @@ func TestTheWrapperIsWrittenForEveryUser(t *testing.T) {
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Packages = effecttest.Packages{"fresh-editor": {Version: version, Status: "ii"}}
 	out := &effecttest.Out{}
-	if _, err := step.Run(context.Background(), Steps(v, secrets.Secrets{}, m, out), out, false); err != nil {
+	if _, err := step.Run(context.Background(), Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, out), out, false); err != nil {
 		t.Fatal(err)
 	}
 	if got := m.Files[wrapperPath]; !bytes.Equal(got, wrapper) {

@@ -22,7 +22,9 @@ type Config struct {
 	// Secrets are the decrypted secrets, for the roles that read them.
 	Secrets secrets.Secrets
 	M       effect.Machine
-	Out     effect.Out
+	// U are the units every role of the run gets; prepareServer sets it once.
+	U   effect.Units
+	Out effect.Out
 	// Observer takes the events of every step, which name their role.
 	Observer step.Observer
 	// Prepare are the steps that come first, whatever roles run: what every role needs.
@@ -36,7 +38,7 @@ type Config struct {
 func (c Config) Steps(r roles.Role) []step.Step {
 	s := c.Secrets
 	s.Whole = c.Options.Secrets != ""
-	return r.Steps(c.Values, s, c.M, c.Out)
+	return r.Steps(c.Values, s, c.M, c.U, c.Out)
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or

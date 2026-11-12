@@ -12,7 +12,7 @@ import (
 )
 
 func TestStepsOrderAndWaits(t *testing.T) {
-	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{})
 	var names, waits []string
 	for _, s := range steps {
 		names, waits = append(names, s.Name()), append(waits, s.WaitsOn())
@@ -26,7 +26,7 @@ func TestStepsOrderAndWaits(t *testing.T) {
 }
 
 func TestEachStepWaitsOnAnEarlierOne(t *testing.T) {
-	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Out{})
+	steps := Steps(values.Default(), secrets.Secrets{}, effecttest.NewMachine(), &effecttest.Units{}, &effecttest.Out{})
 	for i, s := range steps {
 		if w := s.WaitsOn(); w != "" && !slices.ContainsFunc(steps[:i], func(e step.Step) bool { return e.Name() == w }) {
 			t.Errorf("%q waits on %q, which is not an earlier step", s.Name(), w)
@@ -48,7 +48,7 @@ func TestPackagesPlanChromiumLibrariesWithoutRecommends(t *testing.T) {
 	m.Packages = effecttest.Packages{"nodejs": {Version: "24.1.0", Status: "ii"}, "gh": {Version: "2", Status: "ii"},
 		"glow": {Version: "2", Status: "ii"}, "dotnet-sdk-8.0": {Version: "8.0", Status: "ii"},
 		"dotnet-sdk-10.0": {Version: "10.0", Status: "ii"}}
-	plan, err := Steps(v, secrets.Secrets{}, m, &effecttest.Out{})[1].Plan(context.Background())
+	plan, err := Steps(v, secrets.Secrets{}, m, &effecttest.Units{}, &effecttest.Out{})[1].Plan(context.Background())
 	if err != nil || len(plan.Changes) != 1 || plan.Changes[0].String() != "install libnss3" {
 		t.Errorf("got %v, %v", plan.Changes, err)
 	}

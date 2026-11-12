@@ -15,7 +15,7 @@ import (
 // the snap's tmux, end them before a real run. cld then finds /usr/bin/tmux first on the PATH, and
 // their key bindings call /snap/bin/tmux, which the removal takes away. The role takes no values
 // and no secrets.
-func Steps(_ values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(_ values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return []step.Step{
 		host.Group{Title: "Tmux", Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: []string{"tmux"}},

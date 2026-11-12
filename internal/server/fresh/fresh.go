@@ -36,7 +36,7 @@ var wrapper []byte
 var themeFile []byte
 
 // Steps returns the role's steps in order. The role takes no secrets.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}},

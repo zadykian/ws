@@ -29,7 +29,7 @@ const (
 // Steps returns the role's steps in order. The repository and the packages come first, then the
 // check of the routes and the user's leaving the docker group. Then come the configuration, the
 // check of docker0, and the user's rootless daemon. The role takes no secrets.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return steps(v, m, effect.OSUnits{}, out, StatfsSize, BridgeAddrs)
 }
 

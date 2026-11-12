@@ -25,7 +25,7 @@ const (
 // loses its way in even while the VPN is down. Then come the install from the profile of the
 // secrets, and the wait for the VPN. Without ikeward_profile it returns none, as in CI's
 // container: the VPN, the file and ufw's rules stay unchanged.
-func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return steps(v.Ikeward, s, m, out, statusTries, statusWait)
 }
 

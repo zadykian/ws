@@ -31,7 +31,7 @@ const (
 // Steps returns the role's steps in order: the check of the board, the driver's packages and
 // source, and the rest as they come. The role takes no secrets. On a machine with another board
 // the steps after the first plan nothing.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return steps(v.Fans, m, effect.OSUnits{}, out, running)
 }
 

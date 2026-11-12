@@ -29,7 +29,7 @@ var wrapper []byte
 var config []byte
 
 // Steps returns the role's steps in order. The role takes no secrets.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	user := host.User{Name: v.User, Home: v.Home}
 	return []step.Step{
 		host.Group{Title: packageStep, Parts: []host.Resource{

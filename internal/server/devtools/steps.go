@@ -19,7 +19,7 @@ var ghUpgrades []byte
 // login, Go, the language servers and rustup.
 // The packages wait on the repositories, so a check run says "after Devtools repositories" where a
 // repository is still to come, as apt may not know the packages then.
-func Steps(v values.Values, s secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	const repositories = "Devtools repositories"
 	user := host.User{Name: v.User, Home: v.Home}
 	steps := []step.Step{

@@ -18,7 +18,7 @@ const (
 // Steps returns the role's steps in order: node_exporter, the .deb's install, the
 // collector's configuration and units, and the check of its answer. node_exporter comes first, so
 // that the collector's first scrape finds it. The role takes no secrets.
-func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, out effect.Out) []step.Step {
+func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return steps(v, m, effect.OSUnits{}, out, healthURL)
 }
 
