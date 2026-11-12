@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/gitcfg"
+	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 )
 
 func TestConfigSignsWithTheKey(t *testing.T) {

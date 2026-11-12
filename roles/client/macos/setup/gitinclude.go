@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/gitcfg"
+	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 )
 
 // includeText is what goes at the top of ~/.gitconfig, so that the file's own settings come after

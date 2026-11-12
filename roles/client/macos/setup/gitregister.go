@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/zadykian/ws/internal/gitcfg"
+	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 )
 
 // Register adds the key to the signing keys of gh's login.

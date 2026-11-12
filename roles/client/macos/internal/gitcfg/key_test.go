@@ -3,7 +3,7 @@ package gitcfg_test
 import (
 	"testing"
 
-	"github.com/zadykian/ws/internal/gitcfg"
+	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 )
 
 func TestWhyNamesWhatGhLacks(t *testing.T) {
