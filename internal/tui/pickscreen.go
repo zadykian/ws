@@ -226,7 +226,7 @@ func (s pickScreen) layout() Layout {
 
 // listHeight is the lines of the pane of steps that the list has.
 func (s pickScreen) listHeight() int {
-	height := s.layout().PaneSizes(s.window.Width, s.window.Height)[s.list.pane(s.list.side)].Height
+	height := s.layout().PaneSizes(s.window.Width, s.window.Height)[0].Height
 	if s.filtering() {
 		height--
 	}

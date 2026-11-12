@@ -43,44 +43,6 @@ func inside(frame Size) Size {
 	return Size{max(frame.Width-2, 0), max(frame.Height-2, 0)}
 }
 
-// sides returns the sides that have a list: ws's alone where no stage runs on the Mac, as in ws
-// server wizard, else both.
-func (l pickList) sides() []Side {
-	if slices.ContainsFunc(l.rows, func(r pickRow) bool { return r.side == MacSide }) {
-		return []Side{MacSide, WsSide}
-	}
-	return []Side{WsSide}
-}
-
-// pane is the place of side's list among the panes.
-func (l pickList) pane(side Side) int { return max(slices.Index(l.sides(), side), 0) }
-
-// panes returns the lists' panes, empty. ws's says so while a role stands unread, as a check of the
-// Mac can't reach what ws reports until ws is there.
-func (l pickList) panes() []Pane {
-	ws := Pane{Title: WsSide.String(), Focused: l.side == WsSide}
-	if slices.ContainsFunc(l.rows, func(r pickRow) bool { return r.index == unreadIndex }) {
-		ws.Title = WsSide.String() + ": roles not scanned"
-	}
-	if len(l.sides()) == 1 {
-		return []Pane{ws}
-	}
-	return []Pane{{Title: MacSide.String(), Focused: l.side == MacSide}, ws}
-}
-
-// drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
-// none.
-func (l pickList) drawn(layout Layout, theme Theme, window Size, at [2]cursor) Layout {
-	sizes := layout.PaneSizes(window.Width, window.Height)
-	for i, side := range l.sides() {
-		seen := l
-		seen.side = side
-		there := at[side].within(len(seen.lines()))
-		layout.Panes[i].Body = seen.view(theme, sizes[i].Height, there, side == l.side)
-	}
-	return layout
-}
-
 // sides returns the sides that have a stage: ws's alone where none runs on the Mac, as in ws server
 // wizard, else both.
 func (q queue) sides() []Side {
