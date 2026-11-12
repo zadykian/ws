@@ -22,7 +22,7 @@ steps, and each role's page in `docs/` says what it sets up.
   in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
   and no error or output shows a value. Steps take it as their second argument
   ([secrets.go](../../internal/secrets/secrets.go), [ws's secrets](../../docs/mac-secrets.md)).
-- `secrets.Store` alone reads and writes ws's secrets file; cmd/ws keeps
+- `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd/ws keeps
   the commands and the root check ([store.go](../../internal/secrets/store.go)).
 - The roles set the machine up for `ws_user`, `zadykian` by default, in `ws_home`. A step run as
   `ws_user` sets `HOME` and starts in it: root needs no sudo, a container has none, and `HOME` would
