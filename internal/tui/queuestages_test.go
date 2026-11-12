@@ -82,3 +82,17 @@ func TestARoleOfAStageOpensUnderItsHeading(t *testing.T) {
 		t.Errorf("list = %q, want %q", got, want)
 	}
 }
+
+func TestAFilterLeavesAStepTheHeadingOfItsStage(t *testing.T) {
+	got := drawnQueue(queueOf(testStages()).filtered("two"), MacSide)
+	if want := []string{"     [ ] Setup", "     [ ] · two"}; !slices.Equal(got, want) {
+		t.Errorf("lines = %q, want %q", got, want)
+	}
+}
+
+func TestAQueueViewDrawsTheWindowUnderTheCursor(t *testing.T) {
+	got := stripped(queueOf(testStages()).view(testTheme, MacSide, 2, 2, true))
+	if want := "▸      [ ] · one\n       [ ] · two"; got != want {
+		t.Errorf("view = %q, want %q", got, want)
+	}
+}

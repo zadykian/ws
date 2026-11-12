@@ -83,21 +83,26 @@ func (l pickList) render(theme Theme, line pickLine) string {
 	return r.indented() + l.box(r) + " " + style.Render(mark) + " " + r.name
 }
 
-// view draws height lines of the list, the cursor's gutter where shown. The list runs past a window,
-// so that the cursor stays in sight.
+// view draws height lines of the list, the cursor's gutter where shown.
 func (l pickList) view(theme Theme, height int, at cursor, shown bool) string {
 	lines := l.lines()
-	if len(lines) == 0 {
+	return windowed(theme, height, at, shown, len(lines), func(i int) string { return l.render(theme, lines[i]) })
+}
+
+// windowed draws height of count lines, each by draw, the cursor's gutter where shown. The lines run
+// past a window, so that the cursor stays in sight.
+func windowed(theme Theme, height int, at cursor, shown bool, count int, draw func(int) string) string {
+	if count == 0 {
 		return theme.Muted.Render("No step matches.")
 	}
-	top := at.top(height, len(lines))
+	top := at.top(height, count)
 	drawn := make([]string, 0, height)
-	for i := top; i < min(top+height, len(lines)); i++ {
+	for i := top; i < min(top+height, count); i++ {
 		gutter := "  "
 		if shown && i == int(at) {
 			gutter = "▸ "
 		}
-		drawn = append(drawn, gutter+l.render(theme, lines[i]))
+		drawn = append(drawn, gutter+draw(i))
 	}
 	return strings.Join(drawn, "\n")
 }

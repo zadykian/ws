@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -71,4 +72,19 @@ func (q queue) render(theme Theme, l queueLine) string {
 	}
 	mark, style := s.row.state.look(theme)
 	return fmt.Sprintf("%*d ", stageColumns-3, l.stage+1) + s.row.box() + " " + style.Render(mark) + " " + s.row.name
+}
+
+// filtered returns the queue under words.
+func (q queue) filtered(words string) queue {
+	q.stages = slices.Clone(q.stages)
+	for i := range q.stages {
+		q.stages[i].list = q.stages[i].list.filtered(words)
+	}
+	return q
+}
+
+// view draws height lines of the side, the cursor's gutter where shown.
+func (q queue) view(theme Theme, side Side, height int, at cursor, shown bool) string {
+	lines := q.lines(side)
+	return windowed(theme, height, at, shown, len(lines), func(i int) string { return q.render(theme, lines[i]) })
 }
