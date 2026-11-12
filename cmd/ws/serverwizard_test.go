@@ -90,6 +90,9 @@ func TestServerWizardRunsTheStagesChosen(t *testing.T) {
 	if slices.ContainsFunc(m.Calls, ranWs) {
 		t.Errorf("ws's run ran, left out: calls %q", m.Calls)
 	}
+	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "run caffeinate") }) {
+		t.Errorf("caffeinate ran on ws: calls %q", m.Calls)
+	}
 }
 
 // s opens ws's state, read on ws itself: the keys leave it by its title. tui's tests follow the

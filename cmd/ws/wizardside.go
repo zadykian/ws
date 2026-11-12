@@ -31,3 +31,17 @@ func macSide(c *cobra.Command, p process) wizardSide {
 		},
 	}
 }
+
+// serverSide is ws server wizard's side. Every stage runs on ws, with no caffeinate, and the forms are
+// ws's values alone.
+func serverSide(p process) wizardSide {
+	return wizardSide{
+		stages: serverWizardStages,
+		forms: func(context.Context) ([]tui.Sheet, func(context.Context), error) {
+			return serverSheets(p), nil, nil
+		},
+		read: func(tui.Side, *wizard.Sudo) (tui.StateReader, func(context.Context)) {
+			return stateRead(serverOpen, p.version), nil
+		},
+	}
+}
