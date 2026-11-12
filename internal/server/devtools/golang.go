@@ -1,12 +1,15 @@
 package devtools
 
 import (
+	"context"
 	"errors"
 	"io/fs"
+	"path"
 	"runtime"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
+	"github.com/zadykian/ws/host"
 )
 
 // Where Go is installed, and where its tarball is downloaded and unpacked before the tree is moved
@@ -56,4 +59,23 @@ func (g Go) installed() (string, error) {
 	}
 	first, _, _ := strings.Cut(string(data), "\n")
 	return first, nil
+}
+
+// goTree is Go's tarball of the version, from go.dev, unpacked in /usr/local/go. dpkg's name of the
+// architecture is Go's. go.dev's list gives the SHA-256, so a plan that finds the tree current
+// fetches nothing.
+func goTree(m effect.Machine, version string) host.Tree {
+	return host.Tree{M: m, Path: goDir, Strip: 1, Source: host.PinnedFile{
+		M: m, Version: version,
+		URL: func(version, arch string) string {
+			return "https://go.dev/dl/go" + version + ".linux-" + arch + ".tar.gz"
+		},
+		Lookup: func(ctx context.Context, url string) (string, error) {
+			list, err := fetch(ctx, m, goReleases)
+			if err != nil {
+				return "", err
+			}
+			return goSum(list, path.Base(url))
+		},
+	}}
 }
