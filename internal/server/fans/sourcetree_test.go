@@ -7,6 +7,8 @@ import (
 	"github.com/zadykian/ws/effect/effecttest"
 )
 
+const sourceURL = "https://github.com/Fred78290/nct6687d/archive/" + nct6687Commit + ".tar.gz"
+
 func TestSourceTreeFetchesTheCommitsTarballAndStripsItsTopDirectory(t *testing.T) {
 	m := effecttest.NewMachine()
 	tree := sourceTree(m)
