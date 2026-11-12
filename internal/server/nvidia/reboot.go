@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"io/fs"
-	"os/exec"
 	"strings"
 
 	"github.com/zadykian/ws/effect"
@@ -45,15 +44,10 @@ func (r reboot) Plan(ctx context.Context) ([]host.Change, error) {
 // installedVersion returns the upstream version of nvidia-smi's package, as the driver's module
 // gives it, or "" where the package is not installed, as in a dry run.
 func installedVersion(ctx context.Context, m effect.Machine) (string, error) {
-	out, err := m.Run(ctx, "dpkg-query", "-W", "-f", "${Version} ${db:Status-Abbrev}\n", smiPackage)
-	var ee *exec.ExitError
-	if err != nil && (!errors.As(err, &ee) || ee.ExitCode() != 1) {
+	states, err := host.PackageStates(ctx, m, smiPackage)
+	if err != nil || !states[smiPackage].Installed() {
 		return "", err
 	}
-	f := strings.Fields(string(out))
-	if len(f) != 2 || f[1] != "ii" {
-		return "", nil
-	}
-	upstream, _, _ := strings.Cut(f[0], "-")
+	upstream, _, _ := strings.Cut(states[smiPackage].Version, "-")
 	return upstream, nil
 }
