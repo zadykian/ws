@@ -28,7 +28,7 @@ type Mac struct {
 // again after they apply plan once.
 func (m Mac) Steps(check bool) []step.Step {
 	return []step.Step{
-		SSH{Conf: m.Conf, Home: m.Home, M: m.M, Out: m.Out, Now: time.Now},
+		m.ssh(false),
 		Cable{Conf: m.Conf, M: m.M, Out: m.Out},
 		&Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
 		&Ghostty{Home: m.Home, Settings: mac.Ghostty, M: m.M, Out: m.Out},
