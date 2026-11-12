@@ -68,7 +68,7 @@ type Bridge struct {
 	gone chan struct{}
 	// last is the id of the last question.
 	last atomic.Uint64
-	// halted is set once a stop is confirmed, for Stop to read on the run's goroutine.
+	// halted is set once a stop is confirmed, for stop to read on the run's goroutine.
 	halted atomic.Bool
 	// warned holds the warnings sent so far.
 	warned sync.Map
@@ -221,9 +221,9 @@ func changeLine(name string, c step.Change) Line {
 	return Line{Said, text}
 }
 
-// Stop is a run's step.Options.Stop. It ends the run before its next step, past a confirmed stop or
+// stop is a run's step.Options.Stop, which Options hands out. It ends the run before its next step, past a confirmed stop or
 // ctx's end, as a step that ignores ctx would let the next one start.
-func (b *Bridge) Stop(ctx context.Context) func() error {
+func (b *Bridge) stop(ctx context.Context) func() error {
 	return func() error {
 		if b.halted.Load() {
 			return errHalted

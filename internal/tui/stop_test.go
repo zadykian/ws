@@ -156,7 +156,7 @@ func TestBridgeStop(t *testing.T) {
 	b := newBridge(io.Discard)
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
-	stop := b.Stop(ctx)
+	stop := b.stop(ctx)
 	if err := stop(); err != nil {
 		t.Errorf("before a stop: %v", err)
 	}

@@ -17,8 +17,6 @@ type Effects struct {
 	// Talks runs a command that talks to the maintainer: behind the screen's suspension on M, or a
 	// fake's own. A fake with none leaves it nil.
 	Talks effect.Foreground
-	// Stop is the run's step.Options.Stop.
-	Stop func() error
 }
 
 // Effects returns the screen's effects, which Run made of Config.Machine as the screen began. A
@@ -42,7 +40,7 @@ func (b *Bridge) effectsOn(ctx context.Context, m effect.Machine) Effects {
 	if machine, ok := m.(effect.OSMachine); ok {
 		talks = b.Foreground(machine)
 	}
-	return Effects{M: m, Talks: talks, Stop: b.Stop(ctx)}
+	return Effects{M: m, Talks: talks}
 }
 
 // Offscreen returns a Bridge with no screen, whose works run on m as it stands: what they say goes
@@ -53,6 +51,6 @@ func Offscreen(m effect.Machine) *Bridge {
 	close(b.gone)
 	talks, _ := m.(effect.Foreground)
 	b.stops = func() error { return nil }
-	b.effects = Effects{M: m, Talks: talks, Stop: b.stops}
+	b.effects = Effects{M: m, Talks: talks}
 	return b
 }

@@ -66,7 +66,7 @@ func Run(ctx context.Context, c Config, screen tea.Model, work Work) error {
 	_ = os.Unsetenv("TEA_TRACE")
 	bridge := newBridge(c.Out)
 	bridge.effects = bridge.effectsOn(ctx, c.Machine)
-	bridge.stops = bridge.Stop(ctx)
+	bridge.stops = bridge.stop(ctx)
 	result := make(chan error, 1)
 	begin := tea.Batch(
 		func() tea.Msg {

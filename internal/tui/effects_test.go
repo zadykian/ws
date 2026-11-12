@@ -45,10 +45,10 @@ func TestEffectsKeepAFake(t *testing.T) {
 	if _, ok := effect.Machine(fake).(effect.Foreground); ok != (e.Talks != nil) {
 		t.Errorf("talks = %#v", e.Talks)
 	}
-	if e := (*Bridge)(nil).Effects(); e.M != nil || e.Stop != nil {
+	if e := (*Bridge)(nil).Effects(); e.M != nil || e.Talks != nil {
 		t.Errorf("a nil Bridge gave %+v", e)
 	}
-	if e := Offscreen(fake).Effects(); e.M != effect.Machine(fake) || e.Stop() != nil {
+	if e := Offscreen(fake).Effects(); e.M != effect.Machine(fake) {
 		t.Errorf("Offscreen gave %+v", e)
 	}
 }
