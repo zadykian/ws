@@ -63,6 +63,8 @@ steps, and each role's page in `docs/` says what it sets up.
 
 - A download is checked against its SHA-256 before it writes `dest`, and downloaded again
   where `dest` holds another ([the Go download](../../host/download.go)).
+- A fetch tries five times, ten seconds apart, and stops at once on a wrong SHA-256, which
+  `effect.ErrSHA256` names ([the fetch](../../host/download.go)).
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each
   certificate in it, and it holds one at least
   ([devtools' pins](../../internal/server/devtools/pins.go)). Docker's key goes in only with the
