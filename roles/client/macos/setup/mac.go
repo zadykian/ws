@@ -7,8 +7,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/mac"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 // Mac is what the Mac's steps read and act through. It holds the order of ws mac apply's steps, so

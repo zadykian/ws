@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and

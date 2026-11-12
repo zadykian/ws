@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 // caseWords returns the words of the case table in the script's main.

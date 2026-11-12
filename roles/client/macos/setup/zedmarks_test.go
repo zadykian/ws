@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 func TestTheMacsZedFilesCarryTheMarksOfOwnership(t *testing.T) {

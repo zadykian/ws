@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/client/macos/mac"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 )
 

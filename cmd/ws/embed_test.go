@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 func TestEmbeddedFilesAreNotEmpty(t *testing.T) {

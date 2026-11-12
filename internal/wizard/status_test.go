@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/mac"
+	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 func TestParseStatus(t *testing.T) {
