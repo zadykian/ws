@@ -77,6 +77,16 @@ func TestSSHReportLeavesTheUsersConfigOut(t *testing.T) {
 	}
 }
 
+func TestSSHReportShowsAnIncludeBelowASettingAsOutOfPlace(t *testing.T) {
+	m := sshMachine()
+	m.Files["/h/.ssh/config"] = []byte("Host a\n    User x\nInclude config.d/ws\n")
+	items, err := sshStep(m, &effecttest.Out{}).Report(context.Background())
+	i := slices.IndexFunc(items, func(it step.Item) bool { return it.Name == "/h/.ssh/config" })
+	if err != nil || i < 0 || items[i].Found != "out of place" || !strings.Contains(items[i].Conflict, "below other settings") {
+		t.Errorf("Report = %+v, %v; want the Include out of place", items, err)
+	}
+}
+
 func TestSSHReportsWsCopyOfAKey(t *testing.T) {
 	s := sshStep(agentMachine(sshMachine(), agentKey), &effecttest.Out{})
 	s.Conf.IdentityPubKey = sshcfg.AgentKeys(agentKey)[0].Pub()
