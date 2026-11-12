@@ -14,9 +14,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/daemon"
 	"github.com/zadykian/ws/internal/uapi"
 	"github.com/zadykian/ws/internal/wgdev"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
 )
 
 // errNotRoot is the refusal of the commands that read root's files.
