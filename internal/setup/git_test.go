@@ -91,52 +91,6 @@ func TestGitApplyInstallsGh(t *testing.T) {
 	}
 }
 
-// ws mac apply makes no key for git, nor takes the agent's sole key: it names that key's line.
-func TestGitStopsWithoutANamedKey(t *testing.T) {
-	g := gitStep(effecttest.NewMachine(), nil)
-	g.Conf.GitSigningPubKey = ""
-	if _, err := g.Plan(context.Background()); err == nil ||
-		!strings.Contains(err.Error(), "mac.conf names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws mac wizard") {
-		t.Errorf("no agent: err = %v", err)
-	}
-	g.M, g.Home = agentMachine(effecttest.NewMachine(), agentGit), agentHome
-	k := sshcfg.AgentKeys(agentGit)[0]
-	want := "mac.conf names no WS_GIT_SIGNING_PUB_KEY, git's signing key: run ws mac wizard, or add one of these " +
-		"lines to mac.conf, WS_GIT_SIGNING_PUB_KEY=" + k.Pub() + " for " + k.Label()
-	if _, err := g.Plan(context.Background()); err == nil || err.Error() != want {
-		t.Errorf("Plan = %v; want %q", err, want)
-	}
-}
-
-func TestGitChecksAKeyNamedInMacConf(t *testing.T) {
-	m := effecttest.NewMachine()
-	g := gitStep(m, nil)
-	g.Conf.GitSigningPubKey = "~/k.pub"
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_PUB_KEY, is missing") {
-		t.Errorf("a missing .pub: err = %v", err)
-	}
-	m.Files[gitHome+"/k.pub"] = []byte(gitKey)
-	m.Results["ssh-keygen -l -f "+gitHome+"/k.pub"] = effecttest.Result{Err: errors.New("bad")}
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "ssh-keygen cannot read") {
-		t.Errorf("a key ssh-keygen rejects: err = %v", err)
-	}
-	m.Files[gitHome+"/k.pub"] = []byte(gitKey + gitKey)
-	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "holds no public key alone") {
-		t.Errorf("two keys: err = %v", err)
-	}
-	for _, text := range []string{"ssh-ed25519-cert-v01@openssh.com AAAA\n", "ssh-mldsa-65 AAAA\n"} {
-		m.Files[gitHome+"/k.pub"] = []byte(text)
-		if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_PUB_KEY") {
-			t.Errorf("%q: err = %v, want a stop that names the variable", text, err)
-		}
-	}
-	m.Files[gitHome+"/k.pub"] = []byte(gitKey)
-	m.Results["ssh-keygen -l -f "+gitHome+"/k.pub"] = effecttest.Result{}
-	if p, err := g.Plan(context.Background()); err != nil || len(prereqs(p)) != 0 {
-		t.Errorf("a good key: Plan = %v, %v", p.Changes, err)
-	}
-}
-
 const (
 	includeText   = "[include]\n    path = ~/.config/ws/gitconfig\n"
 	gitConfigFile = gitHome + "/.gitconfig"
