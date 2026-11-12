@@ -8,7 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/zadykian/ws/internal/archive"
+	"github.com/zadykian/ws/engine/core/internal/archive"
 )
 
 // Unpack extracts the archive in Files into a temporary directory, as the real machine's does, and

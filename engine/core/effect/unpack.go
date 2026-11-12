@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/zadykian/ws/internal/archive"
+	"github.com/zadykian/ws/engine/core/internal/archive"
 )
 
 // Unpack makes dir with mode 0755 where missing, and extracts the archive file into it through an

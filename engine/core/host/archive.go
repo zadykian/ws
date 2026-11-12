@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/archive"
+	"github.com/zadykian/ws/engine/core/internal/archive"
 )
 
 // Unpack extracts a tar archive, gzip-compressed or plain, into root, less the first strip

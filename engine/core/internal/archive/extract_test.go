@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/internal/archive"
+	"github.com/zadykian/ws/engine/core/internal/archive"
 )
 
 type entry struct {
