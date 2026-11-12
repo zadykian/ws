@@ -99,3 +99,30 @@ func (q queue) partial() map[string][]string {
 	}
 	return parts
 }
+
+// ticked returns the stages that run every step, one of them by a tick. A lock alone asks for the
+// stage's end, which a good last run gives, and a tick for the steps, as one can drift after it.
+func (q queue) ticked() []string {
+	var names []string
+	for _, s := range q.stages {
+		on, _, all := s.list.tally()
+		if on == all && slices.ContainsFunc(s.list.rows, func(r pickRow) bool { return r.chosen }) {
+			names = append(names, s.row.name)
+		}
+	}
+	return names
+}
+
+// count returns how many stages are on, how many the scan has reached, and how many there are.
+func (q queue) count() (on, scanned, all int) {
+	for _, s := range q.stages {
+		all++
+		if s.row.on() {
+			on++
+		}
+		if s.row.state != stepOpen {
+			scanned++
+		}
+	}
+	return on, scanned, all
+}

@@ -84,3 +84,33 @@ func TestALockedStageRunsWhole(t *testing.T) {
 		t.Errorf("partial = %q", q.partial())
 	}
 }
+
+func TestAStageRunsWholeByATickAndNotByALockAlone(t *testing.T) {
+	for _, tc := range []struct {
+		names, want []string
+	}{
+		{[]string{"Signing"}, nil},
+		{[]string{"ssh"}, nil},
+		{[]string{"Signing", "ssh"}, []string{"Run"}},
+		{[]string{"base", "ssh"}, []string{"Run"}},
+		{[]string{"one", "base", "ssh"}, []string{"Setup", "Run"}},
+	} {
+		if got := queueChoosing(queueOf(testStages()), tc.names...).ticked(); !slices.Equal(got, tc.want) {
+			t.Errorf("%q ticks %q, want %q", tc.names, got, tc.want)
+		}
+	}
+}
+
+func TestARoleUnreadIsChosenByItsName(t *testing.T) {
+	got := queueChoosing(queueOf(testStages()), "ssh").partial()["Run"]
+	if want := []string{"ssh"}; !slices.Equal(got, want) {
+		t.Errorf("partial = %q, want %q", got, want)
+	}
+}
+
+func TestAQueueCountsItsStagesOnAndReached(t *testing.T) {
+	q := queueChoosing(queueOf(testStages()), "Signing").take(planned("", "Tools", 0))
+	if on, scanned, all := q.count(); on != 5 || scanned != 1 || all != 5 {
+		t.Errorf("count = %d, %d, %d", on, scanned, all)
+	}
+}
