@@ -10,8 +10,8 @@ var base64Key = regexp.MustCompile(`^[A-Za-z0-9+/]+=*$`)
 
 // CheckKeyFile fails where the text of the .pub file holds other than one public key of a type that
 // ws's OpenSSH 10.2 has (ssh -Q key there). A private key or a certificate fails, and so does a
-// type as an ML-DSA key of Secretive's.
-func CheckKeyFile(file, text string) error {
+// type as an ML-DSA key of Secretive's. Its stops name the variable of mac.conf that names the file.
+func CheckKeyFile(file, name, text string) error {
 	var keyType string
 	lines := 0
 	for _, line := range strings.Split(text, "\n") {
@@ -34,11 +34,11 @@ func CheckKeyFile(file, text string) error {
 		keyType == "ecdsa-sha2-nistp256", keyType == "ecdsa-sha2-nistp384", keyType == "ecdsa-sha2-nistp521":
 		return nil
 	case strings.HasSuffix(keyType, "-cert-v01@openssh.com"):
-		return fmt.Errorf("%s is a certificate: name its key's own .pub in mac.conf's WS_IDENTITY_PUB_KEY", file)
+		return fmt.Errorf("%s is a certificate: name its key's own .pub in mac.conf's %s", file, name)
 	case strings.HasPrefix(keyType, "ssh-") || strings.HasPrefix(keyType, "ecdsa-sha2-") ||
 		strings.HasPrefix(keyType, "sk-"):
 		return fmt.Errorf("%s holds a key of type %s, which ws's OpenSSH lacks: name the .pub of "+
-			"a P-256 or ed25519 key in mac.conf's WS_IDENTITY_PUB_KEY", file, keyType)
+			"a P-256 or ed25519 key in mac.conf's %s", file, keyType, name)
 	}
 	return fmt.Errorf("%s holds no public key alone, as ssh-keygen -y prints one", file)
 }

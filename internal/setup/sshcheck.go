@@ -27,7 +27,7 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	file := sshcfg.Expand(id.Pub, home)
 	if k, ok := held(keys, file, home); ok {
 		id.Pub, id.Text = k.Pub(), k.Line+"\n"
-		return id, sshcfg.CheckKeyFile(sshcfg.Expand(id.Pub, home), k.Line)
+		return id, sshcfg.CheckKeyFile(sshcfg.Expand(id.Pub, home), "WS_IDENTITY_PUB_KEY", k.Line)
 	}
 	text, err := m.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -40,7 +40,7 @@ func PickKey(ctx context.Context, m effect.Machine, c conf.Conf, home string) (s
 	if err != nil {
 		return id, fmt.Errorf("cannot read %s: make it readable, or name another in mac.conf's WS_IDENTITY_PUB_KEY", file)
 	}
-	if err := sshcfg.CheckKeyFile(file, string(text)); err != nil {
+	if err := sshcfg.CheckKeyFile(file, "WS_IDENTITY_PUB_KEY", string(text)); err != nil {
 		return id, err
 	}
 	if _, err := m.Run(ctx, "ssh-keygen", "-l", "-f", file); err != nil {
