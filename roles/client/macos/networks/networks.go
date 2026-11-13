@@ -18,14 +18,15 @@ import (
 
 const resolverDir = "/etc/resolver"
 
-// Networks has the daemon route WS_TUNNEL_NETWORKS, from routes.d/mac-conf, and macOS ask the
-// nameservers of WS_RESOLVERS for their domains. A domain whose file lacks ws's header stops the
-// run, as does a file that another script wrote. A resolver with the header goes once
-// WS_RESOLVERS no longer names its domain.
+// Networks has the daemon of Server route WS_TUNNEL_NETWORKS, from its routes.d/mac-conf, and
+// macOS ask the nameservers of WS_RESOLVERS for their domains. A domain whose file lacks ws's
+// header stops the run, as does a file that another script wrote. A resolver with the header goes
+// once WS_RESOLVERS no longer names its domain.
 type Networks struct {
-	Conf conf.Conf
-	M    effect.Machine
-	Out  effect.Out
+	Server string
+	Conf   conf.Conf
+	M      effect.Machine
+	Out    effect.Out
 	// Check is set under --check, which signals no daemon.
 	Check bool
 }
@@ -36,7 +37,8 @@ func (*Networks) Name() string { return "networks" }
 // WaitsOn is nothing: a check before the tunnel step has run says what would go in routes.d.
 func (*Networks) WaitsOn() string { return "" }
 
-// Plan plans, once mac.conf has WS_PUBLIC_KEY and the daemon is to run, routes.d/mac-conf, the signal that has the daemon read it, and /etc/resolver.
+// Plan plans, once mac.conf has WS_PUBLIC_KEY and the daemon is to run, routes.d/mac-conf, the
+// signal that has the daemon read it, and /etc/resolver.
 func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
 	if n.Conf.PublicKey == "" {
 		return step.Plan{}, nil
@@ -52,7 +54,7 @@ func (n *Networks) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: append(cs, rs...)}, nil
 }
 
-// Report says how routes.d/mac-conf and the resolvers that mac.conf names stand. A file a run is to
+// Report says how routes.d/mac-conf and the resolvers that the server's file names stand. A file a run is to
 // remove comes from its change, as mac.conf no longer names it.
 func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 	if n.Conf.PublicKey == "" {
@@ -60,7 +62,7 @@ func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	var parts []step.Reporter
 	if nets := strings.Fields(n.Conf.TunnelNetworks); len(nets) > 0 {
-		parts = append(parts, file.File{M: n.M, Path: launchd.Dir + "/routes.d/mac-conf", Content: []byte(routesText(nets)), Mode: 0o644})
+		parts = append(parts, file.File{M: n.M, Path: launchd.For(n.Server).Routes + "/mac-conf", Content: []byte(routesText(nets)), Mode: 0o644})
 	}
 	list := resolvers(n.Conf.Resolvers)
 	if len(list) > 0 {
@@ -73,7 +75,7 @@ func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 }
 
 func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
-	r := Routes{Set: "mac-conf", Networks: strings.Fields(n.Conf.TunnelNetworks), M: n.M, Out: n.Out, Check: n.Check}
+	r := Routes{Server: n.Server, Set: "mac-conf", Networks: strings.Fields(n.Conf.TunnelNetworks), M: n.M, Out: n.Out, Check: n.Check}
 	return r.changes(ctx)
 }
 
