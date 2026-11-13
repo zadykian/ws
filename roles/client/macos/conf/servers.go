@@ -65,3 +65,42 @@ func Servers(m effect.Machine, mac string) ([]string, error) {
 	}
 	return names, nil
 }
+
+// Pick returns the name of the server to act on: the one that flag names, or the only one where flag
+// is empty. It refuses a flag of a bad form or with no file, and no flag where there are none or
+// several.
+func Pick(m effect.Machine, mac, flag string) (string, error) {
+	dir := serversDir(mac)
+	if flag != "" && !IsName(flag) {
+		return "", fmt.Errorf("--server %s is not a server's name: %s", flag, NameForm)
+	}
+	names, err := Servers(m, mac)
+	if err != nil {
+		return "", err
+	}
+	switch {
+	case flag != "":
+		for _, n := range names {
+			if n == flag {
+				return flag, nil
+			}
+		}
+		return "", fmt.Errorf("no server named %s in %s, which holds %s", flag, dir, List(names))
+	case len(names) == 0:
+		return "", fmt.Errorf("no server in %s: ws client macos wizard adds one (roles/client/macos/README.md)", dir)
+	case len(names) > 1:
+		return "", fmt.Errorf("several servers in %s, %s: name one by --server", dir, List(names))
+	}
+	return names[0], nil
+}
+
+// List joins names as prose: ws, box and ws, box, lab and ws. No name gives none.
+func List(names []string) string {
+	switch len(names) {
+	case 0:
+		return "none"
+	case 1:
+		return names[0]
+	}
+	return strings.Join(names[:len(names)-1], ", ") + " and " + names[len(names)-1]
+}
