@@ -9,16 +9,16 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 )
 
-func TestRereadSignalsEachLoadedDaemon(t *testing.T) {
+func TestRereadSignalsEachLoadedDaemonButTheOnesSkipped(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/Library/LaunchDaemons"] = 0o755
-	for _, n := range []string{"ws", "lab", "off"} {
+	for _, n := range []string{"ws", "lab", "off", "old"} {
 		m.Files["/Library/LaunchDaemons/"+launchd.For(n).Label+".plist"] = []byte("x")
 	}
-	for _, n := range []string{"ws", "lab"} {
+	for _, n := range []string{"ws", "lab", "old"} {
 		m.Results["launchctl print system/"+launchd.For(n).Label] = effecttest.Result{}
 	}
-	cs, err := launchd.Reread(context.Background(), m, nil)
+	cs, err := launchd.Reread(context.Background(), m, nil, "old")
 	if err != nil {
 		t.Fatal(err)
 	}

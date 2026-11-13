@@ -27,7 +27,8 @@ func (t *Tunnel) gone(ctx context.Context) ([]string, error) {
 }
 
 // prune plans, for each server that is gone, a bootout where launchd has its daemon loaded, then
-// the removal of its plist, directory, state file and log.
+// the removal of its plist, directory, state file and log. The daemons left read again after, to
+// route what the gone server held.
 func (t *Tunnel) prune(ctx context.Context, gone []string) ([]step.Change, error) {
 	var cs []step.Change
 	for _, name := range gone {
@@ -43,5 +44,9 @@ func (t *Tunnel) prune(ctx context.Context, gone []string) ([]step.Change, error
 			}
 		}
 	}
-	return cs, nil
+	if len(gone) == 0 {
+		return cs, nil
+	}
+	reread, err := launchd.Reread(ctx, t.M, t.Out, gone...)
+	return append(cs, reread...), err
 }
