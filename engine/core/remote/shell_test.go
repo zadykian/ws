@@ -28,7 +28,7 @@ func TestShellWord(t *testing.T) {
 // ssh hands ws's shell one line, which reads back the words that the Shell was given.
 func TestSSHShellQuotesForWsShell(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}
+	s := SSHShell{SSH: SSH{Host: "ws", M: m, Lock: "/t/l"}}
 	line := "ssh " + strings.Join(s.SSH.Argv(context.Background(),
 		[]string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run", "'--only=signoz/signoz up'"}), " ")
 	m.Results[line] = effecttest.Result{Out: []byte("ok\n")}

@@ -35,7 +35,7 @@ func (h heard) steps() []string {
 
 // newFollow returns a session over ws's fake, whose runs' events go to events.
 func newFollow(m *effecttest.Machine, events step.Observer) *session.Session {
-	reach := sessiontest.Reach{Reach: host.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}}, M: m}
+	reach := sessiontest.Reach{Reach: host.MacReach{SSH: remote.SSH{Host: "ws", M: m, Lock: "/t/l"}}, M: m}
 	return session.New(reach, session.Scripts{Remote: []byte("echo\n"), Files: []byte("true\n"), Events: events})
 }
 
@@ -104,7 +104,7 @@ func TestFollowReadsStatusAgainAfterAFailure(t *testing.T) {
 
 func TestFollowRunsOnAMachineWithoutLines(t *testing.T) {
 	m := effecttest.NewMachine()
-	ssh := remote.SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}
+	ssh := remote.SSH{Host: "ws", M: struct{ effect.Machine }{m}, Lock: "/t/l"}
 	r := session.New(host.MacReach{SSH: ssh}, session.Scripts{Remote: []byte("echo\n")})
 	args := []string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run"}
 	m.Results["ssh "+strings.Join(ssh.Argv(context.Background(), args), " ")] = effecttest.Result{}
@@ -123,7 +123,7 @@ func TestEachRunIsFollowed(t *testing.T) {
 	log := effecttest.Result{Out: []byte(runLog)}
 
 	r, m := newRun("lan", idleRun, true, false)
-	r.Ws = macSession(m, remote.SSH{M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, r.Out.(*effecttest.Out), idleRun, h)
+	r.Ws = macSession(m, remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, r.Out.(*effecttest.Out), idleRun, h)
 	m.Results[sessiontest.Op("run")] = log
 	plan, err := r.Plan(ctx)
 	if err != nil {

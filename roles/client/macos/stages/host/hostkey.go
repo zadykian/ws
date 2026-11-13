@@ -53,7 +53,7 @@ func (h *Key) conf() (conf.Conf, error) { return conf.Read(h.M, h.Conf) }
 // known tells whether known_hosts holds a key under ws. It reads no key of ws's, as ws's sshd counts
 // each connection that doesn't log in against the Mac's address (PerSourcePenalties).
 func (h *Key) known(ctx context.Context, file string) bool {
-	return remote.KnownHost(ctx, h.M, file)
+	return remote.KnownHost(ctx, h.M, file, h.SSH.Host)
 }
 
 // noWay is the stop where no way leads to ws, naming what ws's target needs.

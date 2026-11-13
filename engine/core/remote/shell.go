@@ -39,7 +39,7 @@ func (s SSHShell) args(cmd []string, in []byte) ([]string, []byte, error) {
 	if s.Root != nil {
 		cmd, in, err = s.Root.Rooted(cmd, in)
 	}
-	args := []string{"-o", "BatchMode=yes", "ws"}
+	args := []string{"-o", "BatchMode=yes", s.SSH.Host}
 	for _, word := range cmd {
 		args = append(args, Quote(word))
 	}
