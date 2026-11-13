@@ -1,4 +1,4 @@
-package devtools
+package npm
 
 import (
 	"context"
@@ -95,7 +95,7 @@ func TestNpmApplyNamesNodeWhereNpmIsMissing(t *testing.T) {
 
 func TestTheStampIsTheDigestOfBothFiles(t *testing.T) {
 	m := effecttest.NewMachine()
-	parts, err := serverFiles(m, testAccount(1))
+	parts, err := Files(m, testAccount(1))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestTheStampIsTheDigestOfBothFiles(t *testing.T) {
 
 func TestTheFormatterLinkPlansBeforeItsTargetExists(t *testing.T) {
 	m := effecttest.NewMachine()
-	parts, err := serverFiles(m, testAccount(1000))
+	parts, err := Files(m, testAccount(1000))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func TestTheFormatterLinkPlansBeforeItsTargetExists(t *testing.T) {
 func TestTheServerFilesRefuseALink(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Links[wsDir] = "/srv/target"
-	parts, err := serverFiles(m, testAccount(1000))
+	parts, err := Files(m, testAccount(1000))
 	if err != nil {
 		t.Fatal(err)
 	}

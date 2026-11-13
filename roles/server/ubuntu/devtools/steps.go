@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/aptrepo"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/golang"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/npm"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -68,7 +69,7 @@ func serverSteps(m effect.Machine, user host.User) []step.Step {
 		download(m, "postgres-language-server", pgls, pglsURL),
 		download(m, "docker-language-server", dockerLS, dockerLSURL),
 		user.WithAccount(m, "Devtools npm servers", "Devtools packages", func(a host.Account) ([]host.Resource, error) {
-			return serverFiles(m, a)
+			return npm.Files(m, a)
 		}),
 	}
 }

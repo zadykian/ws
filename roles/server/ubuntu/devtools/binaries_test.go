@@ -97,7 +97,7 @@ func runServers(t *testing.T, user, home string) *effecttest.Machine {
 	servePins(t, m)
 	m.Results["id -u "+user] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g "+user] = effecttest.Result{Out: []byte("1000\n")}
-	m.Files[npmBin] = []byte("stand-in npm")
+	m.Files["/usr/bin/npm"] = []byte("stand-in npm")
 	m.Results[npmCI(user, home)] = effecttest.Result{}
 	steps := withPackages(m, user, home)
 	if _, err := step.Run(t.Context(), steps, &effecttest.Out{}, false); err != nil {

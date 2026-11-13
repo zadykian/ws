@@ -1,4 +1,5 @@
-package devtools
+// Package npm installs the language servers that npm serves, from a lock that pins each one.
+package npm
 
 import (
 	"context"
@@ -24,13 +25,13 @@ const serversRel = ".local/lib/language-servers"
 // the first install plans it.
 const formatterLink = "/usr/local/bin/sql-formatter"
 
-// serverBin is a bin of the npm servers.
-func serverBin(home, name string) string { return serversDir(home) + "/node_modules/.bin/" + name }
+// Bin is a bin of the npm servers.
+func Bin(home, name string) string { return serversDir(home) + "/node_modules/.bin/" + name }
 
-// serverFiles returns the two files of the lock, the install they feed and sql-formatter's link.
+// Files returns the two files of the lock, the install they feed and sql-formatter's link.
 // Their directories are made as the user's, so root's would not break the user's own tools, such as
 // claude and pip --user.
-func serverFiles(m effect.Machine, a host.Account) ([]host.Resource, error) {
+func Files(m effect.Machine, a host.Account) ([]host.Resource, error) {
 	sum := sha256.New()
 	var parts []host.Resource
 	for _, name := range []string{"package.json", "package-lock.json"} {
@@ -42,7 +43,7 @@ func serverFiles(m effect.Machine, a host.Account) ([]host.Resource, error) {
 		parts = append(parts, a.File(m, serversRel+"/"+name, content, 0o644))
 	}
 	return append(parts, npmInstall{M: m, Account: a, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
-		host.Link{M: m, Path: formatterLink, Target: serverBin(a.Home, "sql-formatter")}), nil
+		host.Link{M: m, Path: formatterLink, Target: Bin(a.Home, "sql-formatter")}), nil
 }
 
 // npmInstall runs npm ci. Plan cannot see the files written earlier in the step, so a stamp of

@@ -1,4 +1,4 @@
-package devtools
+package npm
 
 import "embed"
 
