@@ -3,7 +3,6 @@ package wizard
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -55,29 +54,4 @@ func (c *WsClaude) Apply(ctx context.Context, _ step.Plan) error {
 			"claude auth login: run it on ws, then the wizard again")
 	}
 	return c.Ws.claude(ctx)
-}
-
-// claude runs the login in a session of ssh -t, through a login shell, whose PATH has ~/.local/bin,
-// where claude is.
-func (r MacReach) claude(ctx context.Context) error {
-	r.Out.Say("%s: claude auth login runs as WS_USER on ws: take its steps at this terminal, "+
-		"and open the address it shows in the Mac's browser", claudeStage)
-	if err := r.SSH.Pass(ctx, "-t", "ws", `exec bash -lc "claude auth login"`); err != nil {
-		return errors.New(claudeStage + ": WS_USER's claude on ws still has no login, as above; run the wizard again")
-	}
-	return nil
-}
-
-// claude runs the login as WS_USER: runuser gives WS_USER's login shell in place of ssh's.
-func (r WsReach) claude(ctx context.Context) error {
-	user, err := r.user()
-	if err != nil {
-		return fmt.Errorf("%s: %w", claudeStage, err)
-	}
-	r.Out.Say("%s: claude auth login runs as WS_USER: take its steps at this terminal, "+
-		"and open the address it shows in a browser", claudeStage)
-	if err := r.Here.PassForeground(ctx, false, "runuser", "-l", user, "-c", "claude auth login"); err != nil {
-		return errors.New(claudeStage + ": WS_USER's claude still has no login, as above; run the wizard again")
-	}
-	return nil
 }
