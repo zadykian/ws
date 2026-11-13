@@ -103,7 +103,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.Update, Only: o.Only}
 	hand.Late(ws.Hand)
 	hand.Late(ghStage.Hand)
-	setup := wizardSetup(e, o.Left, later, laterServer)
+	setup := wizardSetup(e, o.Left, later, conf.FirstServer)
 	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.TTY, Check: check, Env: p.Lookup, P: ask, Out: out}
 	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: laterServer, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.Lookup, P: ask, Prog: prog, Tty: p.TTY, M: p.Machine, Out: out}

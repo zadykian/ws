@@ -23,8 +23,10 @@ import (
 // Mac is what the Mac's steps read and act through. It holds the order of ws client macos apply's
 // steps, so that no caller builds them itself.
 type Mac struct {
-	Conf conf.Conf
-	Home string
+	// Server is the name of the server that the steps act for.
+	Server string
+	Conf   conf.Conf
+	Home   string
 	// XDG is XDG_CONFIG_HOME, which may be empty.
 	XDG string
 	M   effect.Machine
