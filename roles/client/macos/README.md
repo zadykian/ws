@@ -220,6 +220,10 @@ apply` keeps the public key in `~/.config/ws/tunnel.pub`, which the wizard reads
 `tunnel.conf` from the server's file, so the daemon reads no file the user can write. In System
 Settings › General › Login Items & Extensions, its "Allow in the Background" must stay on.
 
+A server with no directory beside `mac.conf` has its daemon removed at the next `apply`: booted out
+where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing goes unless
+`mac.conf`'s servers list the one that `apply` runs for.
+
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`, at
 slot 0. `WS_SLOT` N gives `10.99.N.2` and `10.99.N.1`, and a moved slot restarts the daemon. So a
 run of the `wireguard` role stops where its variables give either end another address ([The tunnel](../../server/ubuntu/wireguard/README.md#the-tunnel)).
