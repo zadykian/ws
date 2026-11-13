@@ -27,8 +27,8 @@ func (f *fakeScreens) pick(context.Context, Round) (QueueChoice, error) { return
 func (f *fakeScreens) reopen(context.Context, QueueChoice) (QueueChoice, error) {
 	return f.next("lists again")
 }
-func (f *fakeScreens) state(_ context.Context, side Side, _ StateReader) error {
-	f.drew = append(f.drew, "state of "+side.String())
+func (f *fakeScreens) state(_ context.Context, side string, _ StateReader) error {
+	f.drew = append(f.drew, "state of "+side)
 	return nil
 }
 
@@ -49,7 +49,7 @@ func (f *fakeWizard) wizard() Wizard {
 		Round: func() Round {
 			f.rounds++
 			return Round{
-				Read: func(Side) (StateReader, func(context.Context)) { f.reads++; return nil, end },
+				Read: func(string) (StateReader, func(context.Context)) { f.reads++; return nil, end },
 				Run:  func(_ context.Context, c QueueChoice) error { f.ran = append(f.ran, c); return nil },
 			}
 		},
@@ -60,7 +60,7 @@ func (f *fakeWizard) wizard() Wizard {
 // The state screen comes back to the lists with no scan, and the run takes what they chose then.
 func TestWizardStateComesBackWithNoScan(t *testing.T) {
 	run := QueueChoice{Next: NextRun, Only: []string{"Run"}}
-	s := &fakeScreens{choices: []QueueChoice{{Next: NextState, Side: WsSide}, {Next: NextState}, run}}
+	s := &fakeScreens{choices: []QueueChoice{{Next: NextState, Side: "ws"}, {Next: NextState, Side: "Mac"}, run}}
 	f := &fakeWizard{}
 	if err := f.wizard().loop(t.Context(), s); err != nil {
 		t.Fatal(err)

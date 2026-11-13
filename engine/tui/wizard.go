@@ -19,7 +19,7 @@ type Round struct {
 	Stages []Stage
 	Scan   Work
 	// Read gives the state screen's read of side's machine. done, or nil, ends what the read holds.
-	Read func(side Side) (read StateReader, done func(context.Context))
+	Read func(side string) (read StateReader, done func(context.Context))
 	// Run runs what the lists chose, on a screen of its own.
 	Run func(ctx context.Context, choice QueueChoice) error
 }
@@ -32,7 +32,7 @@ func RunWizard(ctx context.Context, w Wizard) error {
 // screens are what the loop draws. A test of the loop fakes them.
 type screens interface {
 	pick(ctx context.Context, r Round) (QueueChoice, error)
-	state(ctx context.Context, side Side, read StateReader) error
+	state(ctx context.Context, side string, read StateReader) error
 	reopen(ctx context.Context, left QueueChoice) (QueueChoice, error)
 	configure(ctx context.Context, sheets []Sheet) error
 }
@@ -64,7 +64,7 @@ func (w Wizard) loop(ctx context.Context, s screens) error {
 }
 
 // state draws the state screen of side's machine.
-func (w Wizard) state(ctx context.Context, s screens, r Round, side Side) error {
+func (w Wizard) state(ctx context.Context, s screens, r Round, side string) error {
 	read, done := r.Read(side)
 	if done != nil {
 		defer done(ctx)
@@ -90,8 +90,8 @@ type terminalScreens struct{ w Wizard }
 func (d terminalScreens) pick(ctx context.Context, r Round) (QueueChoice, error) {
 	return PickStages(ctx, d.w.Config, d.w.Title, r.Stages, r.Scan)
 }
-func (d terminalScreens) state(ctx context.Context, side Side, read StateReader) error {
-	return RunState(ctx, d.w.Config, d.w.Title+": "+side.String(), read)
+func (d terminalScreens) state(ctx context.Context, side string, read StateReader) error {
+	return RunState(ctx, d.w.Config, d.w.Title+": "+side, read)
 }
 func (d terminalScreens) reopen(ctx context.Context, left QueueChoice) (QueueChoice, error) {
 	return Reopen(ctx, d.w.Config, left)
