@@ -228,5 +228,7 @@ func loadSecrets(m effect.Machine, path string, getenv func(string) string) (sec
 	if err != nil {
 		return secrets.Secrets{}, err
 	}
-	return secrets.Load(m, path, id)
+	s, err := secrets.Load(m, path, id)
+	s.Whole = err == nil
+	return s, err
 }

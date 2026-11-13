@@ -33,12 +33,9 @@ type Config struct {
 	Stop func() error
 }
 
-// Steps returns r's steps as Run runs them, on M and Out. Given --secrets, they take the secrets as
-// the whole truth (secrets.Secrets.Whole).
+// Steps returns r's steps as Run runs them, on M and Out.
 func (c Config) Steps(r roles.Role) []step.Step {
-	s := c.Secrets
-	s.Whole = c.Options.Secrets != ""
-	return r.Steps(c.Values, s, c.M, c.U, c.Out)
+	return r.Steps(c.Values, c.Secrets, c.M, c.U, c.Out)
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or

@@ -91,10 +91,10 @@ func TestLoadSecrets(t *testing.T) {
 	}
 	m.Files["/creds/ws-secrets"] = []byte("# created: now\n" + id.String() + "\n")
 	s, err := loadSecrets(m, "/s.age", env)
-	if err != nil || s.Env["A"] != "hunter2" {
+	if err != nil || s.Env["A"] != "hunter2" || !s.Whole {
 		t.Errorf("got %+v, %v", s, err)
 	}
-	if s, err = loadSecrets(m, "", noEnv); err != nil || s.Env != nil {
+	if s, err = loadSecrets(m, "", noEnv); err != nil || s.Env != nil || s.Whole {
 		t.Errorf("no file: %+v, %v", s, err)
 	}
 	other, _ := age.GenerateX25519Identity()
