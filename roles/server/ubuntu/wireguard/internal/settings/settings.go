@@ -7,17 +7,16 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/zadykian/ws/roles/internal/slot"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// The Mac's daemon takes the tunnel's ends, the server and the address, from the slot, in
-// roles/internal/slot: slot 0's are these. It also fixes the peer's name, as the mac.pub that
-// `ws client macos apply` has the user write on the server.
+// The Mac's scripts fix wg0 at a slot's .1 and the Mac at its .2 (roles/internal/slot). They fix
+// the peer's name too, as the mac.pub that `ws client macos apply` has the user write on the
+// server.
 const (
-	macPeer   = "mac"
-	macServer = "10.99.0.1/24"
-	macClient = "10.99.0.2"
-	maxPort   = 65535
+	macPeer = "mac"
+	maxPort = 65535
 	// longestBroadcastPrefix is the longest prefix of a subnet of more than two addresses, which
 	// keeps its first and its last for itself and its broadcast. A /31 has neither (RFC 3021), nor
 	// has a /32, a single address.
@@ -36,7 +35,7 @@ func Validate(w values.Wireguard) error {
 	}
 	server, err := netip.ParsePrefix(w.Address)
 	if err != nil || !server.Addr().Is4() {
-		problems = append(problems, fmt.Sprintf("wireguard_address is %s, not an IPv4 address with its prefix length, as %s.", w.Address, macServer))
+		problems = append(problems, fmt.Sprintf("wireguard_address is %s, not an IPv4 address with its prefix length, as %s.", w.Address, slot.Slot(0).Wg0()))
 		return errors.New(strings.Join(problems, " "))
 	}
 	subnet := server.Masked()
