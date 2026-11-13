@@ -207,18 +207,18 @@ With ws's key as `WS_PUBLIC_KEY`, `ws client macos apply` again installs the tun
 Mac or a rebuilt server changes one file on each side, and nothing in the repository. The wizard's
 Tunnel stage takes these steps, which stay the way by hand ([The tunnel](stages/README.md#the-tunnel)).
 
-The daemon, `ws client macos tunnel run`, runs as root from launchd, from boot and before any login,
-through `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws client macos apply` copies
-`ws` from `~/.local/bin`, which a run makes first if missing, to `/usr/local/libexec/ws-tunnel/ws`
-as root's. The user owns `~/.local/bin`, so a root daemon that ran that file would let anything that
-runs as the user become root. The daemon holds WireGuard's device in its own process, so it needs no
-`wg` or `wireguard-go`. `ws client macos apply` restarts it where a rebuilt `ws` changed the copy.
+A daemon per server, `ws client macos tunnel run --server NAME`, runs as root from launchd, from
+boot and before any login, by `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.NAME.plist`. `ws
+client macos apply` copies `ws` from `~/.local/bin`, which a run makes if missing, to
+`/usr/local/libexec/ws-tunnel/ws` as root's. The user owns `~/.local/bin`, so a root daemon that ran
+that file would let anything that runs as the user become root. The daemon holds WireGuard's device
+itself, so it needs no `wg` or `wireguard-go`. `apply` restarts it where the copy changed.
 
-The daemon's settings are in `/etc/ws-tunnel`, which only root reads. They are the Mac's key, which
-`ws client macos tunnel key` makes once, `tunnel.conf` and `routes.d`, below. `ws client macos
+The settings are in `/etc/ws-tunnel`, which only root reads. It holds the Mac's key, which `ws
+client macos tunnel key` makes once, `routes.d`, below, and `NAME/tunnel.conf`. `ws client macos
 apply` keeps the public key in `~/.config/ws/tunnel.pub`, which the wizard reads, and copies
-`tunnel.conf` from `mac.conf`, so the daemon reads no file the user can write. In System Settings ›
-General › Login Items & Extensions, its "Allow in the Background" must stay on.
+`tunnel.conf` from the server's file, so the daemon reads no file the user can write. In System
+Settings › General › Login Items & Extensions, its "Allow in the Background" must stay on.
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`, at
 slot 0. `WS_SLOT` N gives `10.99.N.2` and `10.99.N.1`, and a moved slot restarts the daemon. So a
@@ -242,11 +242,11 @@ to 5 s a way. A way that comes back while the Mac's addresses stay as they were 
 next change or failure.
 
 ```sh
-sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status
+sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status [--server NAME]
 ```
 
-prints the way in use, its endpoint, the latest handshake and the bytes moved.
-`/var/log/ws-tunnel.log` has a line for each switch and failure.
+prints the way in use, its endpoint, the latest handshake and the bytes moved, of the one daemon
+installed. `/var/log/ws-tunnel.NAME.log` has a line for each switch and failure.
 
 A connection to `ws` outlives a switch. Zed has [its page](zed/README.md).
 
