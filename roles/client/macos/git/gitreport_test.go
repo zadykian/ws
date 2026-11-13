@@ -84,3 +84,12 @@ func TestGitReportShowsWsLinesAloneOfAUsersFile(t *testing.T) {
 		effecttest.Result{Err: mactest.ExitOne(t)}
 	mactest.CheckUsersFile(t, g, "+[include]")
 }
+
+func TestGitReportWarnsNothing(t *testing.T) {
+	m, out, g := gitWithConfig("[user]\n    name = X\n", "", "user.name\n")
+	m.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] =
+		effecttest.Result{Err: mactest.ExitOne(t)}
+	if _, err := g.Step().Report(context.Background()); err != nil || len(out.Lines) != 0 {
+		t.Errorf("Report = %v, lines %q; want no warning", err, out.Lines)
+	}
+}
