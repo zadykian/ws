@@ -41,9 +41,11 @@ with() {
     } | conf_write "$conf"
 }
 
-# setup [ARG] runs ws client macos apply, and sets out to what it printed.
+# setup [ARG] runs ws client macos apply, on the step that only names where it does, and sets out to
+# what it printed.
+only=
 setup() {
-    out=$(ws client macos apply "$@" 2>&1)
+    out=$(ws client macos apply ${only:+--only "$only"} "$@" 2>&1)
 }
 
 # prints TEXT [ARG] runs ws client macos apply, which must print TEXT alone.
@@ -67,7 +69,9 @@ stops() {
 }
 
 # The cable's service. Empty, it must leave the network alone, and ws client macos apply print
-# nothing.
+# nothing. They run the cable step alone. A service adds WS_CABLE=yes to tunnel.conf. A full apply
+# would write that file, and print it.
+only=cable
 with 'WS_CABLE_SERVICE='
 prints ''
 prints '' --check
@@ -194,6 +198,7 @@ printf '%s\n' 'DHCP Configuration' 'IP address: 192.0.2.10' 'Router: 192.0.2.1' 
     >"$tmp/info-ws_stand_in_no_op"
 stops 'ws client macos apply: networksetup -getinfo "ws stand-in no-op" shows Router: 192.0.2.1, so the'
 logged
+only=
 # shellcheck source=.github/mac-identity-checks.sh
 . .github/mac-identity-checks.sh
 # shellcheck source=.github/mac-git-checks.sh
