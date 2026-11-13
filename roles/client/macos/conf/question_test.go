@@ -7,7 +7,8 @@ func TestQuestionPrompt(t *testing.T) {
 		q    Question
 		want string
 	}{
-		{Question{"WS_TARGET", "The machine", "lan", "needs"}, "The machine (WS_TARGET) [lan]"},
+		{Question{"WS_TARGET", "The machine", "lan", "needs"}, "The machine: lan, cloud or mac-vm (WS_TARGET) [lan]"},
+		{Question{"WS_USER", "The user", "ada", "needs"}, "The user (WS_USER) [ada]"},
 		{Question{"WS_LAN", "ws's home LAN", "10.88.0.0/24", ""}, "ws's home LAN (WS_LAN) [10.88.0.0/24, or none]"},
 		{Question{"WS_RESOLVERS", "Another", "", ""}, "Another (WS_RESOLVERS) [none]"},
 		{Question{"WS_REMOTE", "The VM", "", "needs"}, "The VM (WS_REMOTE)"},

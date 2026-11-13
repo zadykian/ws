@@ -59,7 +59,7 @@ func (s *Sequence) Run() error {
 // (roles/server/ubuntu/network/router.md). A cloud VM's name and port, and each address where
 // asked, need a value.
 func (s *Sequence) ways() error {
-	target, err := s.get(Question{"WS_TARGET", "The machine ws runs on: lan, cloud or mac-vm", "lan",
+	target, err := s.get(Question{"WS_TARGET", "The machine ws runs on", "lan",
 		"WS_TARGET needs lan, cloud or mac-vm"})
 	if err != nil {
 		return err
