@@ -36,7 +36,7 @@ func TestCablePlans(t *testing.T) {
 		"disabled": {"header\n*Dock\n", cableSet, "", 0},
 	} {
 		m, out := effecttest.NewMachine(), &effecttest.Out{}
-		p, err := cableStep(m, out, tc.list, tc.info).Plan(context.Background())
+		p, err := cableStep(m, out, tc.list, tc.info).Step().Plan(context.Background())
 		if tc.err != "" && (err == nil || !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
 		}
@@ -48,7 +48,7 @@ func TestCablePlans(t *testing.T) {
 
 func TestCableWithoutServiceLeavesTheNetworkAlone(t *testing.T) {
 	m := effecttest.NewMachine()
-	p, err := cable.Cable{M: m, Out: &effecttest.Out{}}.Plan(context.Background())
+	p, err := cable.Cable{M: m, Out: &effecttest.Out{}}.Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || len(m.Calls) != 0 {
 		t.Errorf("Plan = %v, %v, calls %v; want none", p.Changes, err, m.Calls)
 	}
@@ -56,7 +56,7 @@ func TestCableWithoutServiceLeavesTheNetworkAlone(t *testing.T) {
 
 func TestCableAppliesSetmanualThroughSudo(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
-	s := cableStep(m, out, "h\nDock\n", "DHCP Configuration\n")
+	s := cableStep(m, out, "h\nDock\n", "DHCP Configuration\n").Step()
 	p, _ := s.Plan(context.Background())
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{}
 	m.Results["/usr/sbin/networksetup -getinfo Dock"] = effecttest.Result{Out: []byte(cableSet)}
@@ -78,7 +78,7 @@ func TestCableAppliesSetmanualThroughSudo(t *testing.T) {
 
 func TestCableApplyNamesTheRemedyWhereSetmanualDoesNotTake(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := cableStep(m, &effecttest.Out{}, "h\nDock\n", "DHCP Configuration\n")
+	s := cableStep(m, &effecttest.Out{}, "h\nDock\n", "DHCP Configuration\n").Step()
 	p, _ := s.Plan(context.Background())
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{}
 	err := s.Apply(context.Background(), p)

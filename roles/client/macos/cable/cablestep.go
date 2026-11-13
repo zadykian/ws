@@ -25,12 +25,6 @@ type Cable struct {
 	LookPath func(string) (string, error)
 }
 
-// Name is cable.
-func (Cable) Name() string { return "cable" }
-
-// WaitsOn is nothing.
-func (Cable) WaitsOn() string { return "" }
-
 // program finds networksetup. sudo gets its path as the user's PATH finds it, whatever PATH sudo
 // would keep.
 func (c Cable) program() (string, error) {
@@ -45,9 +39,9 @@ func (c Cable) program() (string, error) {
 	return program, nil
 }
 
-// Report says how the service stands, where mac.conf names one. A disabled one is a conflict, as no
+// report says how the service stands, where mac.conf names one. A disabled one is a conflict, as no
 // run turns it on, and it keeps its address.
-func (c Cable) Report(ctx context.Context) ([]step.Item, error) {
+func (c Cable) report(ctx context.Context) ([]step.Item, error) {
 	if c.Conf.CableService == "" {
 		return nil, nil
 	}
@@ -72,8 +66,8 @@ func (c Cable) Report(ctx context.Context) ([]step.Item, error) {
 	return []step.Item{item}, nil
 }
 
-// Plan reads the service with networksetup.
-func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
+// plan reads the service with networksetup.
+func (c Cable) plan(ctx context.Context) (step.Plan, error) {
 	service := c.Conf.CableService
 	if service == "" {
 		return step.Plan{}, nil
@@ -113,6 +107,3 @@ func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 		Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
 	}}}}, nil
 }
-
-// Apply applies the change, which runs networksetup -setmanual and checks the service.
-func (c Cable) Apply(ctx context.Context, p step.Plan) error { return resource.Group{}.Apply(ctx, p) }
