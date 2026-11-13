@@ -19,26 +19,6 @@ import (
 // errHalted ends a run that a confirmed stop ended between two steps.
 var errHalted = errors.New("stopped after the current step")
 
-// LineKind says which call of effect.Out made a Line, as a screen draws each apart.
-type LineKind int
-
-// The kinds of Line, by where the line came from.
-const (
-	Said LineKind = iota
-	Warned
-	Copied
-	Diffed
-	// Piped is what a step's commands print, which reaches no call of effect.Out.
-	Piped
-)
-
-// Line is a line of a run, sent to the screen. Text is what a plain run prints, less the last
-// newline, so that a warning reads as one under NO_COLOR and a log can hold the same words.
-type Line struct {
-	Kind LineKind
-	Text string
-}
-
 // prompt is a question on its way to the screen.
 type prompt struct {
 	id       uint64

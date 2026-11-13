@@ -8,6 +8,26 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+// LineKind says which call of effect.Out made a Line, as a screen draws each apart.
+type LineKind int
+
+// The kinds of Line, by where the line came from.
+const (
+	Said LineKind = iota
+	Warned
+	Copied
+	Diffed
+	// Piped is what a step's commands print, which reaches no call of effect.Out.
+	Piped
+)
+
+// Line is a line of a run, sent to the screen. Text is what a plain run prints, less the last
+// newline, so that a warning reads as one under NO_COLOR and a log can hold the same words.
+type Line struct {
+	Kind LineKind
+	Text string
+}
+
 const (
 	// outputCap is the lines that a pane keeps, as a first run prints more than memory should hold.
 	outputCap = 10_000

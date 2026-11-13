@@ -14,12 +14,8 @@ const (
 	stopPlace
 )
 
-const (
-	// boxWidth is the most columns of a box drawn over the screen.
-	boxWidth = 64
-	// minQuestionHeight is the fewest rows that frame a line of a question over its input.
-	minQuestionHeight = minPaneHeight + 1
-)
+// minQuestionHeight is the fewest rows that frame a line of a question over its input.
+const minQuestionHeight = minPaneHeight + 1
 
 // answerButton is the field's first button. Enter presses it from the field too.
 var answerButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "answer"))
@@ -97,13 +93,4 @@ func (f field) render(theme Theme, window Size) string {
 		lines = append(lines, footer)
 	}
 	return box(theme, "Question", strings.Join(lines, "\n"), window)
-}
-
-// box draws body in a focused frame that fits it, or nothing where the window holds no frame.
-func box(theme Theme, title, body string, window Size) string {
-	if window.Width < minFrameWidth || window.Height < minPaneHeight {
-		return ""
-	}
-	frame := Size{min(window.Width, boxWidth), min(lipgloss.Height(body)+2, window.Height)}
-	return Pane{Title: title, Body: body, Focused: true}.render(theme, frame)
 }
