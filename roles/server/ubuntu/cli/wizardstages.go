@@ -1,0 +1,57 @@
+package cli
+
+import (
+	"context"
+	"github.com/zadykian/ws/engine"
+	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/stages"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
+)
+
+// serverWizardStages returns the stages of ws server ubuntu wizard, in order. They act on ws
+// itself, with the remote script on sh's stdin, as the Mac's wizard sends it over ssh. e.Events
+// hears ws's run, e.Talks runs claude's login, and e.Hand takes what stays by hand. A list that
+// chose ws's run in part gives o.Only, and one that ticked it whole o.Update, as on the Mac.
+func serverWizardStages(p enginecli.Env, e engine.WizardEffects, o engine.WizardOptions) []step.Step {
+	out, hand := e.Out, e.Hand
+	p.Machine = e.Machine
+	m := p.Machine
+	vals := &stages.WsValues{Vars: serverVars, User: p.Getenv("SUDO_USER"), Tty: p.TTY, M: m, P: e.Ask,
+		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
+	ws := serverSession(m, e.Talks, out, e.Events)
+	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !systemd.Booted(m), Check: o.Check, Out: out,
+		Version: p.Version, Update: o.Update, Only: o.Only}
+	hand.Late(ws.Hand)
+	return []step.Step{vals, run, &stages.WsClaude{Ws: ws, Tty: p.TTY},
+		&stages.Signing{Ws: ws, GitHub: &stages.WsGitHub{M: m, Out: out, Hand: hand}}}
+}
+
+// serverSession is ws's session to itself on m: the scripts run here as root, as the Mac's ssh logs
+// in as host_vars' ws_user. talks runs claude's login, and events hears ws's run.
+func serverSession(m effect.Machine, talks effect.Foreground, out effect.Out, events step.Observer) *session.Session {
+	want := func() (session.Want, error) { return wsWant(m) }
+	return session.New(session.WsReach{M: m, Read: want, Here: talks, Out: out},
+		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: events})
+}
+
+// serverOpen is ws's session through a screen, for the host_vars sheet and the state screen, which
+// run no login and print nothing. It runs on the screen's machine.
+func serverOpen(_ context.Context, b *tui.Bridge) (*session.Session, error) {
+	return serverSession(b.Effects().M, nil, nil, nil), nil
+}
+
+// wsWant is what ws's run is to leave, as host_vars names it: a cloud VM where it turns the outbound
+// table off, and its ws_user.
+func wsWant(m effect.Machine) (session.Want, error) {
+	v, err := values.Load(m, serverVars)
+	target := "lan"
+	if !v.Security.Outbound {
+		target = "cloud"
+	}
+	return session.Want{Target: target, User: v.User}, err
+}

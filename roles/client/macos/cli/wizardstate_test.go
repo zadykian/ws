@@ -1,0 +1,151 @@
+package cli
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io"
+	"slices"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/zadykian/ws/engine"
+	enginecli "github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/role"
+	"github.com/zadykian/ws/engine/tui"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
+)
+
+// reportingWs is a far ws whose script gives its status and its report, at version.
+type reportingWs struct {
+	farWs
+	version string
+}
+
+func newReportingWs(m *effecttest.Machine, version string) reportingWs {
+	return reportingWs{newFarWs(m, ""), version}
+}
+
+func (w reportingWs) RunInput(ctx context.Context, in []byte, name string, args ...string) ([]byte, error) {
+	out, err := w.farWs.RunInput(ctx, in, name, args...)
+	switch {
+	case err != nil:
+		return nil, err
+	case slices.Contains(args, "status"):
+		return []byte("ws " + w.version + "\n"), nil
+	case slices.Contains(args, "state"):
+		return json.Marshal(role.StateDoc{Version: w.version, Roles: []role.RoleState{{Role: "base"}}})
+	}
+	return out, nil
+}
+
+func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
+	p, m := macTerminal()
+	ws := newReportingWs(m, p.Version)
+	p.Machine = ws
+	reach := &varsReach{p: p, sudo: &host.Sudo{}}
+	defer reach.close(context.Background())
+	read := ubuntucli.StateRead(reach.reach, p.Version)
+	for range 2 {
+		sections, err := read(t.Context(), tui.Offscreen(p.Machine))
+		if err != nil || len(sections) != 1 || sections[0].Name != "base" {
+			t.Fatalf("read = %+v, %v", sections, err)
+		}
+	}
+	var ops []string
+	for range 4 {
+		ops = append(ops, strings.Join(<-ws.ops, " "))
+	}
+	if want := "status"; ops[0] != want || ops[2] != want {
+		t.Errorf("ops = %q", ops)
+	}
+	if got := lockCalls(m.Calls, "mkdir"); got != 1 {
+		t.Errorf("took the lock %d times", got)
+	}
+}
+
+func TestWsReadRefusesAnotherVersion(t *testing.T) {
+	p, m := macTerminal()
+	p.Machine = newReportingWs(m, "v0.0.1")
+	reach := &varsReach{p: p, sudo: &host.Sudo{}}
+	defer reach.close(context.Background())
+	if _, err := ubuntucli.StateRead(reach.reach, p.Version)(t.Context(), tui.Offscreen(p.Machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
+		t.Errorf("err = %v", err)
+	}
+}
+
+// The lock goes with the screen, for the run that may follow.
+func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
+	p, m := macTerminal()
+	ws := newReportingWs(m, p.Version)
+	p.Machine = ws
+	c := screenCommand(t, "")
+	in, keys := io.Pipe()
+	defer func() { _ = keys.Close() }()
+	c.SetIn(in)
+	go func() {
+		<-ws.ops // The status, then the report.
+		<-ws.ops
+		_, _ = keys.Write([]byte("q"))
+	}()
+	read, done := macState(p, "ws", &host.Sudo{})
+	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), "ws", read)
+	done(c.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if took, gone := lockCalls(m.Calls, "mkdir"), lockCalls(m.Calls, "rm -rf"); took != 1 || gone != 1 {
+		t.Errorf("took the lock %d times, let it go %d times", took, gone)
+	}
+}
+
+// The Mac's read is local, so a run's lock on ws stays out of it.
+func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
+	p, m := macTerminal()
+	c := screenCommand(t, "q")
+	read, done := macState(p, "Mac", &host.Sudo{})
+	if err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), "Mac", read); err != nil || done != nil {
+		t.Fatalf("err = %v, done = %v", err, done != nil)
+	}
+	if got := lockCalls(m.Calls, "mkdir"); got != 0 {
+		t.Errorf("took the lock %d times", got)
+	}
+}
+
+// stateTrip is a terminal that presses s on the lists, q on the Mac's state screen, and q on the lists
+// that follow. The keys go by the screen drawn, as a reader of a program that ended takes one.
+// stateTrip leaves the state screen titled title with q.
+type stateTrip struct {
+	*afterScan
+	title string
+}
+
+func (s stateTrip) Read(b []byte) (int, error) {
+	n, err := s.afterScan.Read(b)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	switch {
+	case bytes.Contains(s.drawn.Bytes(), []byte(s.title)):
+		return copy(b, "q"), nil
+	case bytes.Count(s.drawn.Bytes(), []byte(enterScreen)) > 1:
+		return copy(b, "\x1b[8;24;80t"), nil // A later screen draws from its size too.
+	}
+	return n, err
+}
+
+// The lists come back from the state screen with no scan of their own: one scan reads the Mac.
+func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
+	p, m := macTerminal()
+	p.Machine = freed{m}
+	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
+	defer cancel()
+	var out bytes.Buffer
+	keys := stateTrip{newAfterScan("s"), "ws client macos wizard: Mac"}
+	status := enginecli.Execute(ctx, enginecli.Root(p, clientGroup(p), serverGroup(p)), []string{"client", "macos", "wizard"}, keys, &out, keys)
+	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 1 {
+		t.Fatalf("status = %d, want a scan alone: calls = %q", status, m.Calls)
+	}
+}
