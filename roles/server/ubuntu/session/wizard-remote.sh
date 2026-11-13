@@ -19,13 +19,11 @@
 #   secrets is the SHA-256 of ws's secrets file, as a run would stamp it, or -, and vars that of
 #   host_vars.
 # - state prints ws server ubuntu state --json, which changes nothing, on stdout alone. It has the
-# HOME and
-#   the locale of a run's unit, so that it reads what a run would.
+#   HOME and the locale of a run's unit, so that it reads what a run would.
 # - run [ARG...] runs ws server ubuntu apply --json ARGs in a unit of its own, ws-wizard-STAMP,
-# which goes
-#   on where ssh drops. Or it follows such a unit that runs already. A unit of other ARGs would
-#   leave these unrun, so run refuses it, unless that unit is a full one. It prints the unit's log
-#   until it ends, and exits with the run's status. A run with no ARG is a full one. Where ws's
+#   which goes on where ssh drops. Or it follows such a unit that runs already. A unit of other ARGs
+#   would leave these unrun, so run refuses it, unless that unit is a full one. It prints the unit's
+#   log until it ends, and exits with the run's status. A run with no ARG is a full one. Where ws's
 #   secrets file and its identity's credential are both there, the unit loads the credential and
 #   runs with --secrets.
 # - install TAG URL installs ws's release TAG from the releases at URL. It runs that release's
@@ -33,7 +31,7 @@
 #   URL starts with https://, or with http://127.0.0.1: for CI's stand-in, as the wizard checks them.
 # - outbound names security_outbound: false in ws's host_vars, which keeps the outbound table off
 #   for a cloud VM. It runs before the run, as ws server ubuntu apply reads its values from that
-# file.
+#   file.
 #
 # Everything is in functions that the last line calls, so that a script cut short runs nothing.
 
