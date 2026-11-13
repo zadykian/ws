@@ -72,11 +72,6 @@ func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 		return nil, err
 	}
 	text := s.config(ctx, f, key, hosts)
-	include := f.Include
-	if own := sshcfg.OwnHosts(string(f.UserConfig.Text), "ws"); len(own) > 0 && include.Conflict == "" {
-		include.Conflict = fmt.Sprintf("line %d sets its own values for ws: those in config.d/ws, read "+
-			"first, win where both set a key", own[0].Line)
-	}
 	var copies reports
 	if keys.Copied(key.File, key.Text, s.Home) {
 		copies = append(copies, keys.CopyDirs(s.M, s.Out, s.Home))
@@ -88,7 +83,7 @@ func (s SSH) parts(ctx context.Context) ([]resource.Resource, error) {
 		resource.Planned{Changes: copied, Err: err},
 		resource.Planned{Changes: f.Dirs, Seen: sshDirs(s.M, s.Out, s.Home)},
 		resource.Planned{Changes: s.wsFile(text).Change(f.Ws), Seen: s.wsFile(text)},
-		resource.Planned{Changes: f.Config, Seen: file.Fixed{include}},
+		resource.Planned{Changes: f.Config, Seen: file.Fixed{f.Include}},
 		resource.Planned{Seen: copies},
 	}, nil
 }
@@ -99,23 +94,33 @@ type reports []step.Reporter
 // Report gathers the items of the files.
 func (r reports) Report(ctx context.Context) ([]step.Item, error) { return file.Gather(ctx, r...) }
 
-// refusal stops where ssh can't take the files, and warns of what the run leaves to the user.
+// names is the name of each host.
+func names(hosts []sshcfg.Host) []string {
+	out := make([]string, len(hosts))
+	for i, h := range hosts {
+		out[i] = h.Name
+	}
+	return out
+}
+
+// refusal stops where ssh can't take the files, or where the user's own Host names a server, and
+// warns of what else the run leaves to the user.
 func (s SSH) refusal(f sshFacts, hosts []sshcfg.Host, text []byte) refusal {
 	return func(ctx context.Context) error {
 		if f.Stop != nil {
 			return f.Stop
+		}
+		// The line is counted in the text the run leaves, so that each Plan names the same line.
+		own := sshcfg.OwnHosts(string(s.configLines().After(f.UserConfig, f.IncludeLine > 0)), names(hosts)...)
+		if len(own) > 0 {
+			return fmt.Errorf("line %d of ~/.ssh/config, %s, sets its own values for %s: remove it, as "+
+				"config.d/ws holds each server's host", own[0].Line, own[0].Text, own[0].Names)
 		}
 		if err := s.validate(ctx, f, hosts, text); err != nil {
 			return err
 		}
 		if f.DirLink.Path == s.Home+"/.ssh/config.d" && !bytes.Equal(f.Ws.Text, text) {
 			s.Out.Warn("~/.ssh/config.d is a link to %s: config.d/ws goes there", f.DirLink.To)
-		}
-		// The line is counted in the text the run leaves, so that the runner's second Plan names the
-		// same line and the warning shows once.
-		for _, h := range sshcfg.OwnHosts(string(s.configLines().After(f.UserConfig, f.IncludeLine > 0)), "ws") {
-			s.Out.Warn("line %d of ~/.ssh/config, %s, sets its own values for %s: those in config.d/ws, "+
-				"read first, win where both set a key", h.Line, h.Text, h.Names)
 		}
 		return nil
 	}
