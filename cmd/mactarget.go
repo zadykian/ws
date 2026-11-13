@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
@@ -16,7 +18,7 @@ import (
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
 // read when the command runs.
 func macTarget(p cli.Env, only *[]string) engine.Target {
-	return engine.Target{Change: macChange, Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
+	return engine.Target{Change: macChange, State: macReport(p), Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
 		if c.Selected && len(*only) == 0 {
 			return engine.Run{}, engine.UsageError{Err: errors.New("--only names no step")}
 		}
@@ -44,4 +46,27 @@ func macTarget(p cli.Env, only *[]string) engine.Target {
 		}
 		return run, nil
 	}}
+}
+
+// macReport readies what ws client macos state reports. The ssh step that runs again is left out:
+// under a read it would repeat the first.
+func macReport(p cli.Env) func(context.Context, engine.Call) (engine.Report, error) {
+	return func(context.Context, engine.Call) (engine.Report, error) {
+		settings, err := loadMacConf(p)
+		if err != nil {
+			return engine.Report{}, err
+		}
+		return engine.Report{Read: macRead(p), Print: func(ctx context.Context, c engine.Call) error {
+			term := effect.NewTerminal(strings.NewReader(""), c.Err)
+			reports, err := macOf(p, settings, p.Machine, linesOf(term, c.Path), nil).State(ctx)
+			term.Flush()
+			if err != nil {
+				return err
+			}
+			if c.JSON {
+				return engine.WriteJSON(c.Out, macDoc{Version: p.Version, Steps: reports})
+			}
+			return writeMacState(c.Out, reports)
+		}}, nil
+	}
 }

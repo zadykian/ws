@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 )
@@ -22,7 +21,6 @@ type macDoc struct {
 
 // newMacStateCmd returns ws client macos state.
 func newMacStateCmd(p cli.Env) *cobra.Command {
-	var asJSON bool
 	c := &cobra.Command{
 		Use:   "state",
 		Short: "report what the Mac's steps would change",
@@ -35,33 +33,10 @@ func newMacStateCmd(p cli.Env) *cobra.Command {
 			"The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each step with its items and changes.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runMacState(c, p, asJSON) },
+		RunE: cli.State(macTarget(p, new([]string)), p),
 	}
-	c.Flags().BoolVar(&asJSON, "json", false, "print the report as JSON")
+	c.Flags().Bool("json", false, "print the report as JSON")
 	return c
-}
-
-// runMacState prints what the steps of ws client macos apply report. The ssh step that runs again
-// is left out: under a read it would repeat the first.
-func runMacState(c *cobra.Command, p cli.Env, asJSON bool) error {
-	settings, err := loadMacConf(p)
-	if err != nil {
-		return err
-	}
-	if engine.DrawsReport(cli.CallOf(c, p)) {
-		return tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), macRead(p))
-	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := linesOf(term, c.CommandPath())
-	reports, err := macOf(p, settings, p.Machine, out, nil).State(c.Context())
-	term.Flush()
-	if err != nil {
-		return err
-	}
-	if asJSON {
-		return engine.WriteJSON(c.OutOrStdout(), macDoc{Version: p.Version, Steps: reports})
-	}
-	return writeMacState(c.OutOrStdout(), reports)
 }
 
 // macRead is the state screen's read of the Mac. It takes mac.conf itself, as the wizard opens the
