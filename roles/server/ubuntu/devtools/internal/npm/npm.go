@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 const npmBin = "/usr/bin/npm"
@@ -44,7 +45,7 @@ func Files(m effect.Machine, a account.Account) ([]host.Resource, error) {
 		parts = append(parts, a.File(m, serversRel+"/"+name, content, 0o644))
 	}
 	return append(parts, npmInstall{M: m, Account: a, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
-		host.Link{M: m, Path: formatterLink, Target: Bin(a.Home, "sql-formatter")}), nil
+		file.Link{M: m, Path: formatterLink, Target: Bin(a.Home, "sql-formatter")}), nil
 }
 
 // npmInstall runs npm ci. Plan cannot see the files written earlier in the step, so a stamp of

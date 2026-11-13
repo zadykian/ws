@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 // keyURL and ascSHA256 are Docker's apt key as its install guide for Ubuntu gives it. The checksum
@@ -63,7 +64,7 @@ func repository(m effect.Machine) func(context.Context) ([]host.Resource, error)
 		}
 		return []host.Resource{
 			fetch.Download{M: m, URL: keyURL, Path: keyPath, SHA256: ascSHA256, Mode: 0o644},
-			host.File{M: m, Path: sourcesPath, Content: Sources(rel, arch), Mode: 0o644},
+			file.File{M: m, Path: sourcesPath, Content: Sources(rel, arch), Mode: 0o644},
 		}, nil
 	}
 }

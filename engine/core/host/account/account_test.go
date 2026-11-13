@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 func TestLookupFindsTheAccount(t *testing.T) {
@@ -31,7 +32,7 @@ func TestWithAccountMakesItsPartsFromTheAccount(t *testing.T) {
 	m.Results["id -u ws"] = effecttest.Result{Out: []byte("1000\n")}
 	m.Results["id -g ws"] = effecttest.Result{Out: []byte("1001\n")}
 	s := account.User{Name: "ws", Home: "/home/ws"}.WithAccount(m, "Files", "", func(a account.Account) ([]host.Resource, error) {
-		return []host.Resource{host.Dir{M: m, Path: a.Home + "/d", Mode: 0o755, UID: a.UID, GID: a.GID}}, nil
+		return []host.Resource{file.Dir{M: m, Path: a.Home + "/d", Mode: 0o755, UID: a.UID, GID: a.GID}}, nil
 	})
 	p, err := s.Plan(context.Background())
 	if err != nil || len(p.Changes) != 1 {

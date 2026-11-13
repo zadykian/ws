@@ -1,4 +1,4 @@
-package host
+package file
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 )
 
 // Line is one line of a file that may hold others. A missing file is made with the owner and mode.
@@ -28,7 +29,7 @@ type Line struct {
 }
 
 // Plan edits the file's lines and plans the file as File does.
-func (l Line) Plan(ctx context.Context) ([]Change, error) {
+func (l Line) Plan(ctx context.Context) ([]host.Change, error) {
 	re, err := regexp.Compile(l.Match)
 	if err != nil {
 		return nil, err

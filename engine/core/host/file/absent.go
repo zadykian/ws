@@ -1,4 +1,4 @@
-package host
+package file
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -44,7 +45,7 @@ func (a Absent) guard() error {
 }
 
 // Plan plans the removal of a path that exists.
-func (a Absent) Plan(context.Context) ([]Change, error) {
+func (a Absent) Plan(context.Context) ([]host.Change, error) {
 	if err := a.guard(); err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (a Absent) Plan(context.Context) ([]Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []Change{removePath{a}}, nil
+	return []host.Change{removePath{a}}, nil
 }
 
 // Report says whether the path exists.

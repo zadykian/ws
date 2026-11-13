@@ -1,4 +1,4 @@
-package host
+package file
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -66,13 +67,13 @@ func (d Dir) guard() error {
 }
 
 // Plan reads the directory's owner and mode.
-func (d Dir) Plan(context.Context) ([]Change, error) {
+func (d Dir) Plan(context.Context) ([]host.Change, error) {
 	if err := d.guard(); err != nil {
 		return nil, err
 	}
 	got, err := d.M.RootAttrs(d.Path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return []Change{setDir{d: d}}, nil
+		return []host.Change{setDir{d: d}}, nil
 	}
 	if err != nil {
 		return nil, err
@@ -81,7 +82,7 @@ func (d Dir) Plan(context.Context) ([]Change, error) {
 		return nil, nil
 	}
 	if got.UID != d.UID || got.GID != d.GID || got.Mode != d.Mode.Perm() {
-		return []Change{setDir{d, true}}, nil
+		return []host.Change{setDir{d, true}}, nil
 	}
 	return nil, nil
 }

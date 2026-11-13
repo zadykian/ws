@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
@@ -73,6 +74,6 @@ func (t Tokens) Plan(ctx context.Context) ([]host.Change, error) {
 		f.Secret = true
 		rs = append(rs, f)
 	}
-	rs = append(rs, host.Validated{File: t.A.File(t.M, ".config/git/tokens.gitconfig", content, 0o600), Check: configCheck})
+	rs = append(rs, file.Validated{File: t.A.File(t.M, ".config/git/tokens.gitconfig", content, 0o600), Check: configCheck})
 	return plan.All(ctx, rs...)
 }

@@ -8,8 +8,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 var ws = account.User{Name: "ws", Home: "/home/ws"}
@@ -181,7 +181,7 @@ func TestHomeFileOfRootChownsToRoot(t *testing.T) {
 func TestValidatedHomeFileMakesItsParentsBeforeTheCheck(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["check /home/ws/.config/f.ws-check"] = effecttest.Result{}
-	v := host.Validated{
+	v := file.Validated{
 		File:  owner.File(m, ".config/f", []byte("a"), 0o644),
 		Check: func(p string) (string, []string) { return "check", []string{p} },
 	}

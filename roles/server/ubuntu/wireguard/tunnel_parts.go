@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -52,8 +53,8 @@ func tunnel(m effect.Machine, u effect.Units, out effect.Out, random io.Reader, 
 			return nil, err
 		}
 		k := key{m: m, random: random, gid: gid}
-		netdevRes := host.File{M: m, Path: netdevFile, Content: netdev, Mode: 0o640, GID: gid}
-		networkRes := host.File{M: m, Path: networkFile, Content: network, Mode: 0o644}
+		netdevRes := file.File{M: m, Path: netdevFile, Content: netdev, Mode: 0o640, GID: gid}
+		networkRes := file.File{M: m, Path: networkFile, Content: network, Mode: 0o644}
 		return []host.Resource{
 			networkdCheck{m, u}, k, netdevRes, networkRes, firewall(m, out, v.Wireguard.Port),
 			wg0{m: m, watch: []host.Resource{k, netdevRes, networkRes}},

@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -49,7 +50,7 @@ func (c sysctlNow) Plan(context.Context) ([]host.Change, error) {
 // where none is wanted.
 func sysctl(m effect.Machine, want bool) []host.Resource {
 	if !want {
-		return []host.Resource{host.Absent{M: m, Path: sysctlPath}}
+		return []host.Resource{file.Absent{M: m, Path: sysctlPath}}
 	}
-	return []host.Resource{host.File{M: m, Path: sysctlPath, Content: sysctlFile, Mode: 0o644}, sysctlNow{m}}
+	return []host.Resource{file.File{M: m, Path: sysctlPath, Content: sysctlFile, Mode: 0o644}, sysctlNow{m}}
 }

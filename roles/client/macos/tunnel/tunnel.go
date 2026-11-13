@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
@@ -148,7 +148,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot read ws: %w", err)
 	}
-	key, err := host.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600}.Report(ctx)
+	key, err := file.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600}.Report(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -158,12 +158,12 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	parts := []step.Reporter{
 		localBin(t.M, t.Home),
 		userfile.File{M: t.M, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
-		host.Dir{M: t.M, Path: "/usr/local", Mode: 0o755},
-		host.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
-		host.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
-		host.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
-		host.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700},
-		host.Dir{M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755},
+		file.Dir{M: t.M, Path: "/usr/local", Mode: 0o755},
+		file.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
+		file.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
+		file.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
+		file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700},
+		file.Dir{M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755},
 		userfile.Fixed(key),
 	}
 	if t.public != "" {
@@ -174,8 +174,8 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+launchd.Label); err == nil {
 			daemon.Found = daemon.Want
 		}
-		parts = append(parts, host.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
-			host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, userfile.Fixed{daemon})
+		parts = append(parts, file.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
+			file.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, userfile.Fixed{daemon})
 	}
 	return userfile.Gather(ctx, parts...)
 }

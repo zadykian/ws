@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 func TestDotfilesAreTheRolesFiles(t *testing.T) {
@@ -21,7 +21,7 @@ func TestDotfilesAreTheRolesFiles(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if f := got[i].(host.File); !bytes.Equal(f.Content, want) {
+		if f := got[i].(file.File); !bytes.Equal(f.Content, want) {
 			t.Errorf("%s differs from the role's rendering", name)
 		}
 	}

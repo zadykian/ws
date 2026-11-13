@@ -1,4 +1,4 @@
-package host_test
+package file_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -37,8 +38,8 @@ func TestFileReport(t *testing.T) {
 		if tt.mode != 0 {
 			m.Modes["/a"] = tt.mode
 		}
-		f := host.File{M: m, Path: "/a", Content: []byte(header + "new\n"), Mode: 0o644}
-		got := reportOf(t, host.Validated{File: f})
+		f := file.File{M: m, Path: "/a", Content: []byte(header + "new\n"), Mode: 0o644}
+		got := reportOf(t, file.Validated{File: f})
 		if got.Kind != step.FileItem || got.Name != "/a" || got.Want != wanted {
 			t.Errorf("%s: item = %+v, want the file's wanted state", tt.name, got)
 		}
@@ -54,7 +55,7 @@ func TestFileReport(t *testing.T) {
 func TestFileReportKeepsASecretOut(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/key"] = []byte("old-value\n")
-	f := host.File{M: m, Path: "/key", Content: []byte("new-value\n"), Mode: 0o644, Secret: true}
+	f := file.File{M: m, Path: "/key", Content: []byte("new-value\n"), Mode: 0o644, Secret: true}
 	got := fmt.Sprintf("%+v", reportOf(t, f))
 	if strings.Contains(got, "value") {
 		t.Errorf("item = %s, want neither value", got)
@@ -70,7 +71,7 @@ func TestAResourceBuiltInPlanStandsAsAnItem(t *testing.T) {
 	const written = "differs from what ws writes: a change by hand, or another version of ws"
 	m := effecttest.NewMachine()
 	m.Files["/a"] = []byte("old\n")
-	f := host.File{M: m, Path: "/a", Content: []byte("new\n"), Mode: 0o644}
+	f := file.File{M: m, Path: "/a", Content: []byte("new\n"), Mode: 0o644}
 	secret := f
 	secret.Secret = true
 	mode := f
@@ -82,9 +83,9 @@ func TestAResourceBuiltInPlanStandsAsAnItem(t *testing.T) {
 		diff     bool
 	}{
 		{"file", f, written, true},
-		{"checked", host.Validated{File: f}, written, true},
+		{"checked", file.Validated{File: f}, written, true},
 		{"secret", secret, written, false},
-		{"line", host.Line{M: m, Path: "/a", Text: "new", Mode: 0o644}, "a line differs from what ws sets", true},
+		{"line", file.Line{M: m, Path: "/a", Text: "new", Mode: 0o644}, "a line differs from what ws sets", true},
 		{"mode", mode, "its owner or mode changed", false},
 	}
 	for _, tt := range tests {
@@ -100,7 +101,7 @@ func TestAResourceBuiltInPlanStandsAsAnItem(t *testing.T) {
 }
 
 func TestAMissingFileBuiltInPlanStandsAgainstNothing(t *testing.T) {
-	f := host.File{M: effecttest.NewMachine(), Path: "/a", Content: []byte("new\n"), Mode: 0o644}
+	f := file.File{M: effecttest.NewMachine(), Path: "/a", Content: []byte("new\n"), Mode: 0o644}
 	got, err := step.Read(t.Context(), []step.Step{host.Group{Title: "T", Parts: []host.Resource{built{f}}}})
 	if err != nil || len(got[0].Items) != 1 || got[0].Items[0].Found != "missing" || got[0].Items[0].Conflict != "" {
 		t.Errorf("reports = %+v, %v", got, err)
@@ -110,7 +111,7 @@ func TestAMissingFileBuiltInPlanStandsAgainstNothing(t *testing.T) {
 func TestAFileInAGroupStandsOnce(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/a"] = []byte("old\n")
-	f := host.File{M: m, Path: "/a", Content: []byte("new\n"), Mode: 0o644}
+	f := file.File{M: m, Path: "/a", Content: []byte("new\n"), Mode: 0o644}
 	got, err := step.Read(t.Context(), []step.Step{host.Group{Title: "T", Parts: []host.Resource{f}}})
 	if err != nil || len(got[0].Items) != 1 {
 		t.Errorf("reports = %+v, %v", got, err)

@@ -1,16 +1,16 @@
-package host_test
+package file_test
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 func TestDir(t *testing.T) {
 	m := effecttest.NewMachine()
-	d := host.Dir{M: m, Path: "/srv/d", Mode: 0o750, UID: 1000, GID: 1000}
+	d := file.Dir{M: m, Path: "/srv/d", Mode: 0o750, UID: 1000, GID: 1000}
 	if got := applyAll(t, d); len(got) != 1 || !strings.HasPrefix(got[0], "create directory /srv/d") {
 		t.Errorf("first plan = %q, want a create", got)
 	}
@@ -28,7 +28,7 @@ func TestDir(t *testing.T) {
 
 func TestDirCreateOnlyLeavesAnExistingOne(t *testing.T) {
 	m := effecttest.NewMachine()
-	d := host.Dir{M: m, Path: "/srv/d", Mode: 0o755, CreateOnly: true}
+	d := file.Dir{M: m, Path: "/srv/d", Mode: 0o755, CreateOnly: true}
 	if got := applyAll(t, d); len(got) != 1 {
 		t.Errorf("first plan = %q, want a create", got)
 	}

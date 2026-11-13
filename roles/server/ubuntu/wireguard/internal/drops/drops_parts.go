@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -29,11 +30,11 @@ func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable strin
 	if err != nil {
 		return nil, err
 	}
-	scriptFile := host.File{M: m, Path: dropsScript, Content: script, Mode: 0o755}
-	serviceFile := host.File{M: m, Path: dropsUnit, Content: service, Mode: 0o644}
+	scriptFile := file.File{M: m, Path: dropsScript, Content: script, Mode: 0o755}
+	serviceFile := file.File{M: m, Path: dropsUnit, Content: service, Mode: 0o644}
 	return []host.Resource{
-		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755},
-		host.Dir{M: m, Path: dropsDir, Mode: 0o755},
+		file.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755},
+		file.Dir{M: m, Path: dropsDir, Mode: 0o755},
 		scriptFile, serviceFile,
 		systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{serviceFile}},
 		systemd.Unit{M: m, U: u, Out: out, Name: "wireguard-docker-user.service", Enabled: true, Run: systemd.Running,

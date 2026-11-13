@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -55,7 +56,7 @@ func steps(f values.Fans, m effect.Machine, u effect.Units, out effect.Out, exe 
 			}
 			return []host.Resource{
 				sourceTree(m),
-				host.File{M: m, Path: sourceDir + "/dkms.conf", Content: conf, Mode: 0o644},
+				file.File{M: m, Path: sourceDir + "/dkms.conf", Content: conf, Mode: 0o644},
 			}, nil
 		})},
 		host.Lazy{Title: driverStep, After: sourceStep, Parts: gated(m, vendor, func(context.Context) ([]host.Resource, error) {
@@ -80,9 +81,9 @@ func moduleParts(m effect.Machine, out effect.Out) ([]host.Resource, error) {
 		return nil, err
 	}
 	return []host.Resource{
-		host.File{M: m, Path: "/etc/modprobe.d/ws-fans.conf", Content: blacklist, Mode: 0o644},
-		host.Dir{M: m, Path: "/etc/modules-load.d", Mode: 0o755},
-		host.File{M: m, Path: "/etc/modules-load.d/ws-fans.conf", Content: load, Mode: 0o644},
+		file.File{M: m, Path: "/etc/modprobe.d/ws-fans.conf", Content: blacklist, Mode: 0o644},
+		file.Dir{M: m, Path: "/etc/modules-load.d", Mode: 0o755},
+		file.File{M: m, Path: "/etc/modules-load.d/ws-fans.conf", Content: load, Mode: 0o644},
 		modules{m, out},
 	}, nil
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
@@ -25,7 +25,7 @@ func (KeyMake) String() string { return "would make the Mac's WireGuard key, " +
 func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
 	var cs []step.Change
 	var err error
-	for _, d := range []host.Dir{{M: t.M, Path: launchd.Dir, Mode: 0o700}, {M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755}} {
+	for _, d := range []file.Dir{{M: t.M, Path: launchd.Dir, Mode: 0o700}, {M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755}} {
 		if cs, err = change.Plan(ctx, cs, d); err != nil {
 			return nil, err
 		}
@@ -39,7 +39,7 @@ func (t *Tunnel) key(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	// A Dir sets a file's owner and mode as a directory's, and never makes it here, as it exists.
-	return change.Plan(ctx, cs, host.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600})
+	return change.Plan(ctx, cs, file.Dir{M: t.M, Path: tunnelKeyFile, Mode: 0o600})
 }
 
 func (t *Tunnel) makeKey(ctx context.Context) error {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 // Password is the step that writes root.env once, with the password of SigNoz's root user. No one
@@ -53,5 +54,5 @@ func (p password) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	return host.File{M: p.M, Path: p.path(), Content: have, Mode: 0o600, Secret: true}.Plan(ctx)
+	return file.File{M: p.M, Path: p.path(), Content: have, Mode: 0o600, Secret: true}.Plan(ctx)
 }

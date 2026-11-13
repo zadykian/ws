@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 //go:embed files/99-swappiness.conf.tmpl
@@ -27,5 +28,5 @@ func (f sysctlFile) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	return host.File{M: f.M, Path: "/etc/sysctl.d/99-swappiness.conf", Content: content, Mode: 0o644}.Plan(ctx)
+	return file.File{M: f.M, Path: "/etc/sysctl.d/99-swappiness.conf", Content: content, Mode: 0o644}.Plan(ctx)
 }

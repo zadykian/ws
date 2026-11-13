@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -80,7 +81,7 @@ func TestUserUnitRestartsAfterAWatchedChange(t *testing.T) {
 	m.Files["/home/ws/.config/systemd/user/docker.service"] = nil
 	m.Results[userShow[len("root "):]+"restart docker.service"] = effecttest.Result{}
 	userState(m, "active")
-	conf := host.File{M: m, Path: "/home/ws/.config/docker/daemon.json", Content: []byte("x"), Mode: 0o644}
+	conf := file.File{M: m, Path: "/home/ws/.config/docker/daemon.json", Content: []byte("x"), Mode: 0o644}
 	u.Watch = []host.Resource{conf}
 	g := host.Group{Title: "A", Parts: []host.Resource{conf, u}}
 	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {

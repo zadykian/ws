@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 // localeParts keeps the locale generated and the system's. /etc/locale.gen names it, and
@@ -15,7 +16,7 @@ import (
 func localeParts(m effect.Machine, name string) []host.Resource {
 	return []host.Resource{
 		generated{M: m, Name: name},
-		host.Line{M: m, Path: "/etc/locale.conf", Text: "LANG=" + name, Match: "^LANG=", Mode: 0o644},
+		file.Line{M: m, Path: "/etc/locale.conf", Text: "LANG=" + name, Match: "^LANG=", Mode: 0o644},
 	}
 }
 
@@ -53,7 +54,7 @@ func (g generated) Plan(ctx context.Context) ([]host.Change, error) {
 	if listed(string(have), g.Name) {
 		return nil, nil
 	}
-	cs, err := host.Line{M: g.M, Path: "/etc/locale.gen", Text: line, Match: `^#?\s*` + regexp.QuoteMeta(g.Name) + `\s`, Mode: 0o644}.Plan(ctx)
+	cs, err := file.Line{M: g.M, Path: "/etc/locale.gen", Text: line, Match: `^#?\s*` + regexp.QuoteMeta(g.Name) + `\s`, Mode: 0o644}.Plan(ctx)
 	if err != nil {
 		return nil, err
 	}

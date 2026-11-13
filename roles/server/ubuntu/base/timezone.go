@@ -10,6 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 // timezoneParts links /etc/localtime to the zone, without timedatectl, which needs a running
@@ -38,7 +39,7 @@ func (z zoneLink) Plan(ctx context.Context) ([]host.Change, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	return host.Link{M: z.M, Path: "/etc/localtime", Target: target}.Plan(ctx)
+	return file.Link{M: z.M, Path: "/etc/localtime", Target: target}.Plan(ctx)
 }
 
 // legacyZone is /etc/timezone. tzdata no longer uses it, but a machine installed with it may keep
@@ -55,5 +56,5 @@ func (z legacyZone) Plan(ctx context.Context) ([]host.Change, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	return host.File{M: z.M, Path: "/etc/timezone", Content: []byte(z.Zone + "\n"), Mode: 0o644}.Plan(ctx)
+	return file.File{M: z.M, Path: "/etc/timezone", Content: []byte(z.Zone + "\n"), Mode: 0o644}.Plan(ctx)
 }

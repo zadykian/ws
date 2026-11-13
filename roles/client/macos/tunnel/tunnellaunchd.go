@@ -3,7 +3,7 @@ package tunnel
 import (
 	"context"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
@@ -33,12 +33,12 @@ func launchctlAction(loaded, plist, program, key, conf bool) []launchd.Launchctl
 
 // daemon plans tunnel.conf, the plist and launchd's action, where mac.conf has WS_PUBLIC_KEY.
 func (t *Tunnel) daemon(ctx context.Context) ([]step.Change, error) {
-	cs, err := change.Plan(ctx, nil, host.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600})
+	cs, err := change.Plan(ctx, nil, file.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600})
 	if err != nil {
 		return nil, err
 	}
 	conf := len(cs)
-	if cs, err = change.Plan(ctx, cs, host.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}); err != nil {
+	if cs, err = change.Plan(ctx, cs, file.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}); err != nil {
 		return nil, err
 	}
 	plist := len(cs) > conf

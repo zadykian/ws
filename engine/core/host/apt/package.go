@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -75,10 +76,10 @@ func (p Package) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	if have := states[p.Name]; have.Installed() && have.Version == p.Source.Version {
-		return host.Absent{M: p.M, Path: archive.Path}.Plan(ctx)
+		return file.Absent{M: p.M, Path: archive.Path}.Plan(ctx)
 	}
 	var changes []host.Change
-	for _, r := range []host.Resource{host.Dir{M: p.M, Path: fetch.CacheDir, Mode: 0o755}, archive} {
+	for _, r := range []host.Resource{file.Dir{M: p.M, Path: fetch.CacheDir, Mode: 0o755}, archive} {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err

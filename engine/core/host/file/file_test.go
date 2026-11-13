@@ -1,4 +1,4 @@
-package host_test
+package file_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 func applyAll(t *testing.T, r host.Resource) []string {
@@ -26,7 +27,7 @@ func applyAll(t *testing.T, r host.Resource) []string {
 
 func TestFile(t *testing.T) {
 	m := effecttest.NewMachine()
-	f := host.File{M: m, Path: "/srv/a", Content: []byte("new\n"), Mode: 0o600, UID: 5, GID: 6}
+	f := file.File{M: m, Path: "/srv/a", Content: []byte("new\n"), Mode: 0o600, UID: 5, GID: 6}
 	if got := applyAll(t, f); len(got) != 1 || !strings.HasPrefix(got[0], "create /srv/a") {
 		t.Errorf("first plan = %q, want a create", got)
 	}
@@ -49,7 +50,7 @@ func TestFile(t *testing.T) {
 func TestFileSecretShowsNoDiff(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/k"] = []byte("old-secret")
-	f := host.File{M: m, Path: "/k", Content: []byte("new-secret"), Mode: 0o600, Secret: true}
+	f := file.File{M: m, Path: "/k", Content: []byte("new-secret"), Mode: 0o600, Secret: true}
 	got := applyAll(t, f)
 	if len(got) != 1 || strings.Contains(got[0], "secret") || !strings.Contains(got[0], "content not shown") {
 		t.Errorf("plan = %q, want no content", got)
@@ -57,11 +58,11 @@ func TestFileSecretShowsNoDiff(t *testing.T) {
 }
 
 func TestFileBackupKeepsTheOldFileOnce(t *testing.T) {
-	defer host.FixBackupName("1")()
+	defer file.FixBackupName("1")()
 	m := effecttest.NewMachine()
 	m.Files["/srv/a"] = []byte("old\n")
 	m.Modes["/srv/a"], m.Owners["/srv/a"] = 0o640, [2]int{5, 6}
-	f := host.File{M: m, Path: "/srv/a", Content: []byte("new\n"), Mode: 0o600, UID: 5, GID: 6, Backup: true}
+	f := file.File{M: m, Path: "/srv/a", Content: []byte("new\n"), Mode: 0o600, UID: 5, GID: 6, Backup: true}
 	applyAll(t, f)
 	if got := string(m.Files["/srv/a.1~"]); got != "old\n" {
 		t.Errorf("backup = %q, want the old content", got)

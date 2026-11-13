@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -58,27 +59,27 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, user accoun
 		if err != nil {
 			return nil, err
 		}
-		journalFile := host.File{M: m, Path: dropIns + "/journal.conf", Content: journal, Mode: 0o644}
-		claudeFile := host.File{M: m, Path: dropIns + "/claude.conf", Content: claude, Mode: 0o644}
-		config := host.Validated{
-			File: host.File{M: m, Path: configDir + "/config.yaml", Content: cfg, Mode: 0o644},
+		journalFile := file.File{M: m, Path: dropIns + "/journal.conf", Content: journal, Mode: 0o644}
+		claudeFile := file.File{M: m, Path: dropIns + "/claude.conf", Content: claude, Mode: 0o644}
+		config := file.Validated{
+			File: file.File{M: m, Path: configDir + "/config.yaml", Content: cfg, Mode: 0o644},
 			Check: func(path string) (string, []string) {
 				return "env", []string{"OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://remote.invalid:4317",
 					"/usr/bin/otelcol-contrib", "validate", "--config=" + path}
 			},
 		}
 		watch := []host.Resource{journalFile, claudeFile, config}
-		parts := []host.Resource{host.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
+		parts := []host.Resource{file.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
 		if endpoint != "" {
 			env, err := Env(user.Home, endpoint)
 			if err != nil {
 				return nil, err
 			}
-			envFile := host.File{M: m, Path: configDir + "/claude.env", Content: env, Mode: 0o600, Secret: true}
+			envFile := file.File{M: m, Path: configDir + "/claude.env", Content: env, Mode: 0o600, Secret: true}
 			parts = append(parts, envFile, config)
 			watch = append(watch, envFile)
 		} else {
-			gone := host.Absent{M: m, Path: configDir + "/claude.env"}
+			gone := file.Absent{M: m, Path: configDir + "/claude.env"}
 			parts = append(parts, config, gone)
 			watch = append(watch, gone)
 		}

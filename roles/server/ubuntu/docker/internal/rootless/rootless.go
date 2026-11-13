@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -24,7 +25,7 @@ func Resources(m effect.Machine, u effect.Units, out effect.Out, a account.Accou
 	if err != nil {
 		return nil, err
 	}
-	daemon := host.Validated{
+	daemon := file.Validated{
 		File: a.File(m, ".config/docker/daemon.json", daemonJSON, 0o644),
 		Check: func(path string) (string, []string) {
 			return "dockerd", []string{"--validate", "--config-file", path}
@@ -32,10 +33,10 @@ func Resources(m effect.Machine, u effect.Units, out effect.Out, a account.Accou
 	}
 	sliceFile := a.File(m, ".config/systemd/user/docker.slice", slice, 0o644)
 	service := a.File(m, ".config/systemd/user/docker.service.d/ws.conf", override, 0o644)
-	delegation := host.File{M: m, Path: delegatePath, Content: delegate, Mode: 0o644}
+	delegation := file.File{M: m, Path: delegatePath, Content: delegate, Mode: 0o644}
 	return []host.Resource{
 		subIDs{m, a.Name},
-		host.Dir{M: m, Path: path.Dir(delegatePath), Mode: 0o755},
+		file.Dir{M: m, Path: path.Dir(delegatePath), Mode: 0o755},
 		delegation,
 		systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{delegation}},
 		systemd.Linger{M: m, User: a.User, Out: out},

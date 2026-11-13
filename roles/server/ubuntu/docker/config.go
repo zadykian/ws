@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/bridge"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -64,22 +65,22 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, d values.Do
 		if err != nil {
 			return nil, err
 		}
-		daemon := host.Validated{
-			File: host.File{M: m, Path: "/etc/docker/daemon.json", Content: daemonJSON, Mode: 0o644},
+		daemon := file.Validated{
+			File: file.File{M: m, Path: "/etc/docker/daemon.json", Content: daemonJSON, Mode: 0o644},
 			Check: func(path string) (string, []string) {
 				return "dockerd", []string{"--validate", "--config-file", path}
 			},
 		}
-		resolvedFile := host.File{M: m, Path: "/etc/systemd/resolved.conf.d/docker.conf", Content: resolved, Mode: 0o644}
-		sliceFile := host.File{M: m, Path: "/etc/systemd/system/docker.slice", Content: slice, Mode: 0o644}
-		overrideFile := host.File{M: m, Path: "/etc/systemd/system/docker.service.d/override.conf", Content: override, Mode: 0o644}
+		resolvedFile := file.File{M: m, Path: "/etc/systemd/resolved.conf.d/docker.conf", Content: resolved, Mode: 0o644}
+		sliceFile := file.File{M: m, Path: "/etc/systemd/system/docker.slice", Content: slice, Mode: 0o644}
+		overrideFile := file.File{M: m, Path: "/etc/systemd/system/docker.service.d/override.conf", Content: override, Mode: 0o644}
 		return []host.Resource{
 			daemon,
-			host.Dir{M: m, Path: "/etc/systemd/resolved.conf.d", Mode: 0o755},
+			file.Dir{M: m, Path: "/etc/systemd/resolved.conf.d", Mode: 0o755},
 			resolvedFile,
 			systemd.Unit{M: m, U: u, Out: out, Name: "systemd-resolved.service", Run: systemd.Running, Watch: []host.Resource{resolvedFile}},
 			bridge.Resolver(m, out, d),
-			host.Dir{M: m, Path: "/etc/systemd/system/docker.service.d", Mode: 0o755},
+			file.Dir{M: m, Path: "/etc/systemd/system/docker.service.d", Mode: 0o755},
 			sliceFile,
 			overrideFile,
 			systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{sliceFile, overrideFile}},

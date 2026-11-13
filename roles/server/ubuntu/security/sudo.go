@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 const noCachePath = "/etc/sudoers.d/ws-no-cache"
@@ -20,8 +21,8 @@ func sudoParts(m effect.Machine, user string) ([]host.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	dropIn := host.Validated{
-		File: host.File{M: m, Path: noCachePath, Content: conf, Mode: 0o440},
+	dropIn := file.Validated{
+		File: file.File{M: m, Path: noCachePath, Content: conf, Mode: 0o440},
 		Check: func(path string) (string, []string) {
 			return "visudo", []string{"-cf", path}
 		},

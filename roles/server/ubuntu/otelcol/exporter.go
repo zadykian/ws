@@ -6,6 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -22,7 +23,7 @@ func exporter(m effect.Machine, u effect.Units, out effect.Out) func(context.Con
 		if err != nil {
 			return nil, err
 		}
-		defaults := host.File{M: m, Path: "/etc/default/prometheus-node-exporter", Content: args, Mode: 0o644}
+		defaults := file.File{M: m, Path: "/etc/default/prometheus-node-exporter", Content: args, Mode: 0o644}
 		return []host.Resource{
 			defaults,
 			apt.Packages{M: m, Out: out, Names: []string{"prometheus-node-exporter"}},

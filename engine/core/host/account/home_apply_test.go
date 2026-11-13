@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 // planThenLink plans each part on a home with no link, then puts a link at ~/.config, as the user may
@@ -33,7 +34,7 @@ func TestHomePartsRefuseALinkMadeAfterPlan(t *testing.T) {
 	changes, planned := planThenLink(t, m,
 		owner.File(m, ".config/f", []byte("a"), 0o644),
 		edit,
-		host.Validated{
+		file.Validated{
 			File:  owner.File(m, ".config/v", []byte("a"), 0o644),
 			Check: func(p string) (string, []string) { return "check", []string{p} },
 		},

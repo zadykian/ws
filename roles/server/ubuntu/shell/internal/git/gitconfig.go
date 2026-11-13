@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 // gitFiles are the templates of ~/.gitconfig and of the tokens' include.
@@ -52,7 +53,7 @@ func (g Config) Plan(ctx context.Context) ([]host.Change, error) {
 	}
 	f := g.A.File(g.M, ".gitconfig", content, 0o600)
 	f.Secret, f.Backup = true, true
-	return host.Validated{File: f, Check: configCheck}.Plan(ctx)
+	return file.Validated{File: f, Check: configCheck}.Plan(ctx)
 }
 
 func (g Config) notes(ctx context.Context, content []byte) error {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -37,10 +38,10 @@ func swapParts(m effect.Machine, out effect.Out, d disk, want Setting) []host.Re
 	none := want.SizeMiB != nil && *want.SizeMiB == 0
 	return []host.Resource{
 		s,
-		host.Line{M: m, Path: "/etc/fstab", Text: fstabLine, Match: `^/swapfile\s`, Absent: none, Mode: 0o644},
+		file.Line{M: m, Path: "/etc/fstab", Text: fstabLine, Match: `^/swapfile\s`, Absent: none, Mode: 0o644},
 		on,
-		host.Line{M: m, Path: "/etc/fstab", Text: installerImg + " none swap sw 0 0", Match: `^/swap\.img\s`, Absent: true},
-		host.Absent{M: m, Path: installerImg},
+		file.Line{M: m, Path: "/etc/fstab", Text: installerImg + " none swap sw 0 0", Match: `^/swap\.img\s`, Absent: true},
+		file.Absent{M: m, Path: installerImg},
 	}
 }
 

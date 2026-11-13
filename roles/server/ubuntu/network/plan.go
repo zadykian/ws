@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
 )
@@ -17,7 +18,7 @@ import (
 // a change to it calls for.
 func (d direct) Plan(ctx context.Context) ([]host.Change, error) {
 	if d.Interface == "" {
-		return d.reloaded(ctx, host.Absent{M: d.M, Path: netplan.Path})
+		return d.reloaded(ctx, file.Absent{M: d.M, Path: netplan.Path})
 	}
 	if strings.ContainsAny(d.Interface, "/ \t\n") {
 		return nil, fmt.Errorf("network_direct_link_interface %q is not an interface's name", d.Interface)
@@ -53,5 +54,5 @@ func (d direct) Plan(ctx context.Context) ([]host.Change, error) {
 			return nil, errors.New("systemd-networkd is not running, so nothing would set up the direct link: ws expects netplan to render with networkd, as on Ubuntu Server, not with NetworkManager, as on Ubuntu Desktop")
 		}
 	}
-	return d.reloaded(ctx, host.File{M: d.M, Path: netplan.Path, Content: rendered, Mode: 0o600})
+	return d.reloaded(ctx, file.File{M: d.M, Path: netplan.Path, Content: rendered, Mode: 0o600})
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -14,7 +15,7 @@ func TestLazyMakesItsPartsAtEachPlan(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	content := "one"
 	lazy := host.Lazy{Title: "L", Parts: func(context.Context) ([]host.Resource, error) {
-		return []host.Resource{host.File{M: m, Path: "/srv/a", Content: []byte(content), Mode: 0o644}}, nil
+		return []host.Resource{file.File{M: m, Path: "/srv/a", Content: []byte(content), Mode: 0o644}}, nil
 	}}
 	if changed, err := step.Run(t.Context(), []step.Step{lazy}, out, false); err != nil || !changed {
 		t.Fatalf("Run = %v, %v; want the file written", changed, err)

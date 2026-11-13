@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
@@ -61,14 +61,14 @@ func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	var parts []step.Reporter
 	if nets := strings.Fields(n.Conf.TunnelNetworks); len(nets) > 0 {
-		parts = append(parts, host.File{M: n.M, Path: launchd.Dir + "/routes.d/mac-conf", Content: []byte(routesText(nets)), Mode: 0o644})
+		parts = append(parts, file.File{M: n.M, Path: launchd.Dir + "/routes.d/mac-conf", Content: []byte(routesText(nets)), Mode: 0o644})
 	}
 	list := resolvers(n.Conf.Resolvers)
 	if len(list) > 0 {
-		parts = append(parts, host.Dir{M: n.M, Path: resolverDir, Mode: 0o755})
+		parts = append(parts, file.Dir{M: n.M, Path: resolverDir, Mode: 0o755})
 	}
 	for _, r := range list {
-		parts = append(parts, host.File{M: n.M, Path: resolverDir + "/" + r.Domain, Content: []byte(resolverText(r.Addresses)), Mode: 0o644})
+		parts = append(parts, file.File{M: n.M, Path: resolverDir + "/" + r.Domain, Content: []byte(resolverText(r.Addresses)), Mode: 0o644})
 	}
 	return userfile.Gather(ctx, parts...)
 }
@@ -93,11 +93,11 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		}
 		// The directory is planned once: a second mkdir would fail where the directory is new.
 		if i == 0 {
-			if cs, err = change.Plan(ctx, cs, host.Dir{M: n.M, Path: resolverDir, Mode: 0o755}); err != nil {
+			if cs, err = change.Plan(ctx, cs, file.Dir{M: n.M, Path: resolverDir, Mode: 0o755}); err != nil {
 				return nil, err
 			}
 		}
-		if cs, err = change.Plan(ctx, cs, host.File{M: n.M, Path: resolverFile, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
+		if cs, err = change.Plan(ctx, cs, file.File{M: n.M, Path: resolverFile, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
 			return nil, err
 		}
 	}
@@ -113,7 +113,7 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		if own, err := n.ownsFile(resolverFile); err != nil {
 			return nil, err
 		} else if own {
-			gone, err := host.Absent{M: n.M, Path: resolverFile}.Plan(ctx)
+			gone, err := file.Absent{M: n.M, Path: resolverFile}.Plan(ctx)
 			if err != nil {
 				return nil, err
 			}

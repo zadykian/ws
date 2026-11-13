@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/apt"
 	"github.com/zadykian/ws/engine/core/host/fetch"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -38,18 +39,18 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 	u := &effecttest.Units{States: map[string]effect.UnitState{"on.service": {Active: true}}}
 	out := &effecttest.Out{}
 	ann := account.User{Name: "ann", Home: "/home/ann"}
-	watch := []host.Resource{host.Absent{M: m, Path: "/old"}}
+	watch := []host.Resource{file.Absent{M: m, Path: "/old"}}
 	tests := []struct {
 		name string
 		r    host.Resource
 		want []step.ChangeKind
 	}{
-		{"file", host.File{M: m, Path: "/new", Mode: 0o644}, []step.ChangeKind{step.Write}},
-		{"validated", host.Validated{File: host.File{M: m, Path: "/new", Mode: 0o644}}, []step.ChangeKind{step.Write}},
-		{"dir", host.Dir{M: m, Path: "/d", Mode: 0o755}, []step.ChangeKind{step.Write}},
-		{"link", host.Link{M: m, Path: "/l", Target: "/t"}, []step.ChangeKind{step.Write}},
+		{"file", file.File{M: m, Path: "/new", Mode: 0o644}, []step.ChangeKind{step.Write}},
+		{"validated", file.Validated{File: file.File{M: m, Path: "/new", Mode: 0o644}}, []step.ChangeKind{step.Write}},
+		{"dir", file.Dir{M: m, Path: "/d", Mode: 0o755}, []step.ChangeKind{step.Write}},
+		{"link", file.Link{M: m, Path: "/l", Target: "/t"}, []step.ChangeKind{step.Write}},
 		{"download", fetch.Download{M: m, Path: "/new", SHA256: "0"}, []step.ChangeKind{step.Write}},
-		{"absent", host.Absent{M: m, Path: "/old"}, []step.ChangeKind{step.Removal}},
+		{"absent", file.Absent{M: m, Path: "/old"}, []step.ChangeKind{step.Removal}},
 		{"left", host.Left{M: m, User: "ann", Group: "docker"}, []step.ChangeKind{step.Removal}},
 		{"packages", apt.Packages{M: m, Names: []string{"curl"}}, []step.ChangeKind{step.Install}},
 		{"purged", apt.Purged{M: m, Names: []string{"git"}}, []step.ChangeKind{step.Removal}},

@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -39,7 +40,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 			return []host.Resource{f}, nil
 		}),
 		host.Group{Title: "Zed open-file limit", Parts: []host.Resource{
-			host.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
+			file.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
 		}},
 	}
 }
@@ -67,9 +68,9 @@ func terminalParts(m effect.Machine) []host.Resource {
 	script, _ := files.ReadFile("files/terminal")
 	conf, _ := files.ReadFile("files/tmux.conf")
 	return []host.Resource{
-		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755, CreateOnly: true},
-		host.Dir{M: m, Path: terminalDir, Mode: 0o755},
-		host.File{M: m, Path: terminalPath, Content: script, Mode: 0o755},
-		host.File{M: m, Path: terminalDir + "/tmux.conf", Content: conf, Mode: 0o644},
+		file.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755, CreateOnly: true},
+		file.Dir{M: m, Path: terminalDir, Mode: 0o755},
+		file.File{M: m, Path: terminalPath, Content: script, Mode: 0o755},
+		file.File{M: m, Path: terminalDir + "/tmux.conf", Content: conf, Mode: 0o644},
 	}
 }

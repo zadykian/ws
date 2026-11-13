@@ -1,4 +1,6 @@
-package host
+// Package file puts files, directories, links and lines on the machine, and removes paths, each
+// as a resource that plans its changes and reports its state.
+package file
 
 import (
 	"bytes"
@@ -8,6 +10,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -86,13 +89,13 @@ func (f File) guard() error {
 }
 
 // Plan reads the file and its attributes as root.
-func (f File) Plan(context.Context) ([]Change, error) {
+func (f File) Plan(context.Context) ([]host.Change, error) {
 	if err := f.guard(); err != nil {
 		return nil, err
 	}
 	before, err := f.M.ReadRootFile(f.Path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return []Change{writeFile{f: f, why: "create"}}, nil
+		return []host.Change{writeFile{f: f, why: "create"}}, nil
 	}
 	if err != nil {
 		return nil, err
@@ -103,9 +106,9 @@ func (f File) Plan(context.Context) ([]Change, error) {
 	}
 	switch {
 	case !bytes.Equal(before, f.Content):
-		return []Change{writeFile{f, before, "write", &got}}, nil
+		return []host.Change{writeFile{f, before, "write", &got}}, nil
 	case got != f.attrs():
-		return []Change{writeFile{f, before, fmt.Sprintf("set owner %d:%d and mode %o of", f.UID, f.GID, f.Mode.Perm()), &got}}, nil
+		return []host.Change{writeFile{f, before, fmt.Sprintf("set owner %d:%d and mode %o of", f.UID, f.GID, f.Mode.Perm()), &got}}, nil
 	}
 	return nil, nil
 }

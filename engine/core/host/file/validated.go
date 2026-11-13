@@ -1,10 +1,11 @@
-package host
+package file
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -19,7 +20,7 @@ type Validated struct {
 }
 
 type checked struct {
-	Change
+	host.Change
 	v Validated
 }
 
@@ -55,7 +56,7 @@ func (c checked) Apply(ctx context.Context) error {
 }
 
 // Plan plans the file's changes, each checked before it applies.
-func (v Validated) Plan(ctx context.Context) ([]Change, error) {
+func (v Validated) Plan(ctx context.Context) ([]host.Change, error) {
 	changes, err := v.File.Plan(ctx)
 	for i, c := range changes {
 		changes[i] = checked{c, v}

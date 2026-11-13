@@ -1,4 +1,4 @@
-package host_test
+package file_test
 
 import (
 	"errors"
@@ -6,11 +6,12 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
-func validatedFile(m *effecttest.Machine) host.Validated {
-	return host.Validated{
-		File: host.File{M: m, Path: "/srv/d.json", Content: []byte("new"), Mode: 0o644},
+func validatedFile(m *effecttest.Machine) file.Validated {
+	return file.Validated{
+		File: file.File{M: m, Path: "/srv/d.json", Content: []byte("new"), Mode: 0o644},
 		Check: func(path string) (string, []string) {
 			return "check", []string{"--file", path}
 		},

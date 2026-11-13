@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -68,7 +69,7 @@ func (c installTree) Apply(ctx context.Context) error {
 func (t Tree) cleaned(ctx context.Context, url string) ([]host.Change, error) {
 	var changes []host.Change
 	for _, p := range []string{path.Join(CacheDir, path.Base(url)), t.staging()} {
-		more, err := host.Absent{M: t.M, Path: p}.Plan(ctx)
+		more, err := file.Absent{M: t.M, Path: p}.Plan(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +98,7 @@ func (t Tree) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
 	}
 	var changes []host.Change
-	for _, r := range []host.Resource{host.Dir{M: t.M, Path: CacheDir, Mode: 0o755}, archive} {
+	for _, r := range []host.Resource{file.Dir{M: t.M, Path: CacheDir, Mode: 0o755}, archive} {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err

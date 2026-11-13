@@ -1,7 +1,7 @@
 package account
 
 import (
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -22,8 +22,8 @@ func (u User) ReadHome(m effect.Machine, rel string) ([]byte, error) {
 
 // File is a file at rel below the account's home, owned by the account. Plan and Report refuse a
 // link on the way, as ReadHome does, and a rel that is not local. The caller sets Backup or Secret.
-func (a Account) File(m effect.Machine, rel string, content []byte, mode fs.FileMode) host.File {
-	return host.File{
+func (a Account) File(m effect.Machine, rel string, content []byte, mode fs.FileMode) file.File {
+	return file.File{
 		M: m, Path: a.Home + "/" + rel, Content: content, Mode: mode,
 		UID: a.UID, GID: a.GID, Home: a.Home,
 	}
@@ -32,12 +32,12 @@ func (a Account) File(m effect.Machine, rel string, content []byte, mode fs.File
 // Dir is a directory at rel below the account's home, whose mode matters: the three at 0700. It
 // refuses a link on the way as File does, makes its missing parents at 0755, and sets its own mode
 // and owner where they differ.
-func (a Account) Dir(m effect.Machine, rel string, mode fs.FileMode) host.Dir {
-	return host.Dir{M: m, Path: a.Home + "/" + rel, Mode: mode, UID: a.UID, GID: a.GID, Home: a.Home}
+func (a Account) Dir(m effect.Machine, rel string, mode fs.FileMode) file.Dir {
+	return file.Dir{M: m, Path: a.Home + "/" + rel, Mode: mode, UID: a.UID, GID: a.GID, Home: a.Home}
 }
 
 // Absent is a path at rel below the account's home that does not exist. It refuses a link on the
 // way as File does, as it plans, reports and applies.
-func (a Account) Absent(m effect.Machine, rel string) host.Absent {
-	return host.Absent{M: m, Path: a.Home + "/" + rel, Home: a.Home}
+func (a Account) Absent(m effect.Machine, rel string) file.Absent {
+	return file.Absent{M: m, Path: a.Home + "/" + rel, Home: a.Home}
 }

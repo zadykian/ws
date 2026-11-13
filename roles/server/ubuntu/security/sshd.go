@@ -3,6 +3,7 @@ package security
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -18,8 +19,8 @@ func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]host
 	if err != nil {
 		return nil, err
 	}
-	dropIn := host.Validated{
-		File: host.File{M: m, Path: "/etc/ssh/sshd_config.d/10-keys-only.conf", Content: conf, Mode: 0o644},
+	dropIn := file.Validated{
+		File: file.File{M: m, Path: "/etc/ssh/sshd_config.d/10-keys-only.conf", Content: conf, Mode: 0o644},
 		Check: func(path string) (string, []string) {
 			return "/usr/sbin/sshd", []string{"-G", "-f", path}
 		},

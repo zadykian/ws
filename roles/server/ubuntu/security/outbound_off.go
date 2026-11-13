@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
@@ -35,9 +36,9 @@ func outboundOff(m effect.Machine, u effect.Units, out effect.Out) []host.Resour
 	}
 	gone := []host.Resource{links{m}}
 	for _, n := range outboundUnits {
-		gone = append(gone, host.Absent{M: m, Path: "/etc/systemd/system/" + n})
+		gone = append(gone, file.Absent{M: m, Path: "/etc/systemd/system/" + n})
 	}
-	gone = append(gone, host.Absent{M: m, Path: tableDir}, host.Absent{M: m, Path: fillRecord})
+	gone = append(gone, file.Absent{M: m, Path: tableDir}, file.Absent{M: m, Path: fillRecord})
 	return append(append(rs, gone...), systemd.DaemonReload{M: m, U: u, Watch: gone}, table{m, out})
 }
 

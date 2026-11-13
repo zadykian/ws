@@ -1,4 +1,4 @@
-package host
+package file
 
 import (
 	"cmp"
@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -28,13 +29,13 @@ func (setLink) Kind() step.ChangeKind { return step.Write }
 func (c setLink) Apply(context.Context) error { return c.l.M.Symlink(c.l.Target, c.l.Path) }
 
 // Plan finds where the path points, if the path is a link.
-func (l Link) Plan(context.Context) ([]Change, error) {
+func (l Link) Plan(context.Context) ([]host.Change, error) {
 	info, err := l.M.Stat(l.Path)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 	if err != nil || info.Link != l.Target {
-		return []Change{setLink{l}}, nil
+		return []host.Change{setLink{l}}, nil
 	}
 	return nil, nil
 }

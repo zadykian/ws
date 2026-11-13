@@ -1,10 +1,11 @@
-package host_test
+package file_test
 
 import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -20,7 +21,7 @@ func TestLine(t *testing.T) {
 		if tt.before != "" {
 			m.Files["/f"] = []byte(tt.before)
 		}
-		l := host.Line{M: m, Path: "/f", Text: "PermitRootLogin no", Match: tt.match, Mode: 0o644}
+		l := file.Line{M: m, Path: "/f", Text: "PermitRootLogin no", Match: tt.match, Mode: 0o644}
 		applyAll(t, l)
 		if got := string(m.Files["/f"]); got != tt.want {
 			t.Errorf("%s: file = %q, want %q", tt.name, got, tt.want)
@@ -34,8 +35,8 @@ func TestLine(t *testing.T) {
 func TestTwoLinesOfOneFileKeepEachOther(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/f"] = []byte("a\n")
-	one := host.Line{M: m, Path: "/f", Text: "one", Mode: 0o644}
-	two := host.Line{M: m, Path: "/f", Text: "two", Mode: 0o644}
+	one := file.Line{M: m, Path: "/f", Text: "one", Mode: 0o644}
+	two := file.Line{M: m, Path: "/f", Text: "two", Mode: 0o644}
 	g := host.Group{Title: "F", Parts: []host.Resource{one, two}}
 	if _, err := step.Run(t.Context(), []step.Step{g}, &effecttest.Out{}, false); err != nil {
 		t.Fatal(err)

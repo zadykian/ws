@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 )
 
 // Files is the step that copies the forged compose files into the project's directory. Compose
@@ -15,7 +16,7 @@ import (
 // whose settings changed, but not one whose bind-mounted file did, so a change of the files
 // marks all containers for recreation.
 func Files(m effect.Machine, dir string) host.Group {
-	g := host.Group{Title: "signoz files", Parts: []host.Resource{host.Dir{M: m, Path: dir, Mode: 0o755}}}
+	g := host.Group{Title: "signoz files", Parts: []host.Resource{file.Dir{M: m, Path: dir, Mode: 0o755}}}
 	var copies []host.Resource
 	err := fs.WalkDir(deployment, "deployment", func(p string, d fs.DirEntry, err error) error {
 		if err != nil || p == "deployment" {
@@ -23,11 +24,11 @@ func Files(m effect.Machine, dir string) host.Group {
 		}
 		to := path.Join(dir, p[len("deployment/"):])
 		if d.IsDir() {
-			copies = append(copies, host.Dir{M: m, Path: to, Mode: 0o755})
+			copies = append(copies, file.Dir{M: m, Path: to, Mode: 0o755})
 			return nil
 		}
 		content, err := deployment.ReadFile(p)
-		copies = append(copies, host.File{M: m, Path: to, Content: content, Mode: 0o644})
+		copies = append(copies, file.File{M: m, Path: to, Content: content, Mode: 0o644})
 		return err
 	})
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/file"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -43,7 +44,7 @@ func TestUnitSkipsWithoutSystemd(t *testing.T) {
 func TestUnitRestartsAfterAWatchedChange(t *testing.T) {
 	m, u, out := unitFixture(true)
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
-	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
 	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running, Watch: []host.Resource{conf}}
 	g := host.Group{Title: "A", Parts: []host.Resource{conf, unit}}
 	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
@@ -68,7 +69,7 @@ func TestUnitResetsAFailureThenStarts(t *testing.T) {
 
 func TestDaemonReloadFollowsAUnitFile(t *testing.T) {
 	m, u, out := unitFixture(true)
-	unitFile := host.File{M: m, Path: "/srv/systemd/system/a.service", Content: []byte("[Unit]\n"), Mode: 0o644}
+	unitFile := file.File{M: m, Path: "/srv/systemd/system/a.service", Content: []byte("[Unit]\n"), Mode: 0o644}
 	g := host.Group{Title: "A", Parts: []host.Resource{unitFile, systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{unitFile}}}}
 	for range 2 {
 		if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err != nil {
@@ -95,7 +96,7 @@ func TestUnitReloadsWhereAFileWasWrittenAfterACutShortRun(t *testing.T) {
 func TestUnitRestartIsForced(t *testing.T) {
 	m, u, out := unitFixture(true)
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
-	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
 	cs, err := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Running, Watch: []host.Resource{conf}}.Plan(t.Context())
 	f, ok := cs[len(cs)-1].(host.Forced)
 	if err != nil || len(cs) != 2 || !ok || !f.Forced() {
@@ -106,7 +107,7 @@ func TestUnitRestartIsForced(t *testing.T) {
 func TestUnitReloadsAfterAWatchedChange(t *testing.T) {
 	m, u, out := unitFixture(true)
 	u.States = map[string]effect.UnitState{"a.service": {Enabled: true, Active: true}}
-	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
 	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running, Reload: true,
 		Watch: []host.Resource{conf}}
 	g := host.Group{Title: "A", Parts: []host.Resource{conf, unit}}
@@ -133,7 +134,7 @@ func TestUnitDisables(t *testing.T) {
 func TestUnitRestartSurvivesACutShortRun(t *testing.T) {
 	m, u, out := unitFixture(true)
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
-	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
 	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Running, Watch: []host.Resource{conf}}
 	g := host.Group{Title: "A", Parts: []host.Resource{conf, unit}}
 	p, err := g.Plan(t.Context())
@@ -157,7 +158,7 @@ func TestUnitRestartSurvivesACutShortRun(t *testing.T) {
 func TestUnitFailedRestartStaysOwed(t *testing.T) {
 	m, u, out := unitFixture(true)
 	u.States = map[string]effect.UnitState{"a.service": {Active: true}}
-	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
 	unit := systemd.Unit{M: m, U: failingRestart{u}, Out: out, Name: "a.service", Run: systemd.Running, Watch: []host.Resource{conf}}
 	g := host.Group{Title: "A", Parts: []host.Resource{conf, unit}}
 	if _, err := step.Run(t.Context(), []step.Step{g}, out, false); err == nil {
@@ -174,7 +175,7 @@ func (failingRestart) Restart(context.Context, string) error { return errors.New
 
 func TestUnitTriggeredRestartsOnAWatchedChangeAlone(t *testing.T) {
 	m, u, out := unitFixture(true)
-	conf := host.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
+	conf := file.File{M: m, Path: "/srv/a.conf", Content: []byte("x"), Mode: 0o644}
 	unit := systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Run: systemd.Triggered}
 	if got := applyAll(t, unit); got != nil {
 		t.Fatalf("plan = %q, want none: nothing is watched", got)
