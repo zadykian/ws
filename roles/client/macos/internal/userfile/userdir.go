@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // errNotDir is a plan's error for a path that holds no directory: a step stops there, and its
@@ -47,9 +47,9 @@ func (d Dir) read() (found Found, info effect.Info, err error) {
 func (d Dir) change(found Found) []step.Change {
 	switch {
 	case !found.Exists:
-		return []step.Change{change.MakeDir{Path: d.Path, Mode: d.Mode}}
+		return []step.Change{file.UserMkdir{Path: d.Path, Mode: d.Mode}}
 	case d.Fix && found.Mode.Perm() != d.Mode:
-		return []step.Change{change.SetMode{Path: d.Path, Mode: d.Mode}}
+		return []step.Change{file.UserChmod{Path: d.Path, Mode: d.Mode}}
 	}
 	return nil
 }

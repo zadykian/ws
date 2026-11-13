@@ -3,6 +3,7 @@ package keys_test
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"strings"
 	"testing"
 
@@ -64,7 +65,7 @@ func TestPlanCopy(t *testing.T) {
 		}
 	}
 	got, err := keys.PlanCopy(m, pub, mactest.AgentKey, mactest.AgentHome)
-	if err != nil || len(got) != 4 || got[2] != (change.MakeDir{Path: "/h/" + sshcfg.KeyCopies, Mode: 0o755}) ||
+	if err != nil || len(got) != 4 || got[2] != (file.UserMkdir{Path: "/h/" + sshcfg.KeyCopies, Mode: 0o755}) ||
 		got[3] != (change.KeyCopy{Path: pub, Text: mactest.AgentKey}) {
 		t.Fatalf("a missing copy: %v, %v; want the directories, then the copy", got, err)
 	}

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"testing"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 func linesIn(m *effecttest.Machine, top bool) Lines {
@@ -83,7 +83,7 @@ func TestUserLinesPutTheLinesAtTheTopOrTheEnd(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files["/h/f"], m.Modes["/h/f"] = []byte(c.have), 0o640
 		cs, err := linesIn(m, c.top).Plan(context.Background())
-		w, ok := cs[len(cs)-1].(change.Write)
+		w, ok := cs[len(cs)-1].(file.UserWrite)
 		if err != nil || !ok || string(w.After) != c.want || w.Mode != 0o640 {
 			t.Errorf("top %v on %q: %v, %v; want %q", c.top, c.have, cs, err, c.want)
 		}
@@ -94,7 +94,7 @@ func TestUserLinesKeepTheOldFile(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/f"] = []byte("a\n")
 	cs, err := linesIn(m, true).Plan(context.Background())
-	want := change.Backup{Path: "/h/f", To: "/h/f.20260102030405~"}
+	want := file.UserBackup{Path: "/h/f", To: "/h/f.20260102030405~"}
 	if err != nil || len(cs) != 2 || cs[0] != step.Change(want) {
 		t.Errorf("changes = %v, %v; want %v first", cs, err, want)
 	}

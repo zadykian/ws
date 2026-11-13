@@ -2,6 +2,7 @@ package zsh_test
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"reflect"
 	"strings"
 	"testing"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
 
@@ -25,9 +25,9 @@ func TestZshMakesTheHookAndZshrcThenNothing(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := zshStep(m, &effecttest.Out{})
 	p, err := s.Plan(context.Background())
-	want := []step.Change{change.MakeDir{Path: "/h/.config", Mode: 0o755}, change.MakeDir{Path: "/h/.config/ws", Mode: 0o700},
-		change.Write{Path: "/h/.config/ws/zshrc", After: zsh.Hook, Mode: 0o644},
-		change.Write{Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
+	want := []step.Change{file.UserMkdir{Path: "/h/.config", Mode: 0o755}, file.UserMkdir{Path: "/h/.config/ws", Mode: 0o700},
+		file.UserWrite{Path: "/h/.config/ws/zshrc", After: zsh.Hook, Mode: 0o644},
+		file.UserWrite{Path: "/h/.zshrc", After: []byte(zshSource), Mode: 0o644}}
 	if err != nil || !reflect.DeepEqual(p.Changes, want) {
 		t.Fatalf("Plan = %v, %v; want %v", p.Changes, err, want)
 	}

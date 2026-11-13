@@ -13,19 +13,19 @@ import (
 	"github.com/zadykian/ws/engine"
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // macChange says the Mac's changes under --check. ws client macos apply printed a diff as diff -u
 // does, with no prefix and no blank line after it, and said nothing of the backup of a file.
 func macChange(c step.Change) (string, bool) {
 	switch c := c.(type) {
-	case change.Write:
+	case file.UserWrite:
 		return strings.TrimSuffix(c.String(), "\n"), true
-	case change.Backup:
+	case file.UserBackup:
 		return "", true
 	}
 	return "", false

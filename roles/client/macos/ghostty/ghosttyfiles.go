@@ -2,10 +2,10 @@ package ghostty
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/resource/file"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
@@ -26,7 +26,7 @@ func (g *Ghostty) fileChanges(ws, dirs []step.Change, link userfile.DirLink, hol
 	cs := dirs
 	differs := false
 	if len(ws) > 0 {
-		_, differs = ws[0].(change.Write)
+		_, differs = ws[0].(file.UserWrite)
 	}
 	// A linked directory, as GNU stow's folding makes, gets the warning that ssh gives for
 	// ~/.ssh/config.d.

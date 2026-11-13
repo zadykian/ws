@@ -4,20 +4,20 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"io/fs"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // TestUserFilePlanAgreesWithReport finds that a report stands off where a plan changes the file or
 // refuses it, has a conflict where that file is there, and fails where the plan fails.
 func TestUserFilePlanAgreesWithReport(t *testing.T) {
-	const file = "/h/f"
+	const target = "/h/f"
 	put := func(text string, mode fs.FileMode) func(*effecttest.Machine) {
-		return func(m *effecttest.Machine) { m.Files[file], m.Modes[file] = []byte(text), mode }
+		return func(m *effecttest.Machine) { m.Files[target], m.Modes[target] = []byte(text), mode }
 	}
 	for _, c := range []struct {
 		setUp func(*effecttest.Machine)
@@ -31,13 +31,13 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 		{put("# ws\n", 0o640), 0, "a mode left to the user", "nothing"},
 		{put("# ws\nmore\n", 0o600), 0o600, "other content", "write"},
 		{put("mine\n", 0o600), 0o600, "another's", "not ws's"},
-		{func(m *effecttest.Machine) { m.Links[file] = "/nowhere" }, 0o600, "a link to nowhere", "not ws's"},
-		{func(m *effecttest.Machine) { m.Dirs[file] = 0o755 }, 0o600, "a directory", "not ws's"},
-		{func(m *effecttest.Machine) { put("# ws\n", 0o600)(m); m.Root[file] = effect.Attrs{} }, 0o600, "unreadable", "fails"},
+		{func(m *effecttest.Machine) { m.Links[target] = "/nowhere" }, 0o600, "a link to nowhere", "not ws's"},
+		{func(m *effecttest.Machine) { m.Dirs[target] = 0o755 }, 0o600, "a directory", "not ws's"},
+		{func(m *effecttest.Machine) { put("# ws\n", 0o600)(m); m.Root[target] = effect.Attrs{} }, 0o600, "unreadable", "fails"},
 	} {
 		m := effecttest.NewMachine()
 		c.setUp(m)
-		f := File{M: m, Path: file, Text: []byte("# ws\n"), Mode: c.mode,
+		f := File{M: m, Path: target, Text: []byte("# ws\n"), Mode: c.mode,
 			Own: func(have []byte) bool { return bytes.HasPrefix(have, []byte("# ws")) }}
 		cs, planErr := f.Plan()
 		items, reportErr := f.Report(context.Background())
@@ -47,7 +47,7 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 			got = "not ws's"
 		case planErr != nil:
 			got = "fails"
-		case len(cs) == 1 && cs[0] == change.SetMode{Path: file, Mode: c.mode}:
+		case len(cs) == 1 && cs[0] == file.UserChmod{Path: target, Mode: c.mode}:
 			got = "mode"
 		case len(cs) == 1:
 			got = "write"

@@ -3,10 +3,10 @@ package userfile
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // TestUserDirPlanAgreesWithReport finds that a report stands off where a plan changes the
@@ -32,7 +32,7 @@ func TestUserDirPlanAgreesWithReport(t *testing.T) {
 		items, reportErr := d.Report(context.Background())
 		got := "nothing"
 		switch {
-		case len(cs) == 1 && cs[0] == change.SetMode{Path: dir, Mode: 0o700}:
+		case len(cs) == 1 && cs[0] == file.UserChmod{Path: dir, Mode: 0o700}:
 			got = "mode"
 		case len(cs) == 1:
 			got = "make"

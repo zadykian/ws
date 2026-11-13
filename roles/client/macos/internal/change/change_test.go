@@ -2,7 +2,6 @@ package change_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -11,33 +10,14 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
-func TestAFileChangeNamesItsFileInAReport(t *testing.T) {
-	tests := []struct {
-		change step.Change
-		want   string
-	}{
-		{change.Write{Path: "/f", After: []byte("a\n")}, "would create /f"},
-		{change.Write{Path: "/f", Before: []byte("b\n"), After: []byte("a\n"), Exists: true}, "would write /f"},
-	}
-	for _, tt := range tests {
-		got, _, _ := strings.Cut(step.PendingOf(tt.change).Text, "\n")
-		if got != tt.want {
-			t.Errorf("%T: first line = %q, want %q", tt.change, got, tt.want)
-		}
-		if !strings.Contains(step.PendingOf(tt.change).Text, tt.change.String()) {
-			t.Errorf("%T: the report lost the diff", tt.change)
-		}
-	}
-}
-
 func TestApply(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Results["cp -p /a /a~"] = effecttest.Result{}
 	for _, c := range []interface{ String() string }{
-		change.MakeDir{Path: "/d", Mode: 0o700},
-		change.Write{Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
-		change.SetMode{Path: "/d/f", Mode: 0o644},
-		change.Backup{Path: "/a", To: "/a~"},
+		file.UserMkdir{Path: "/d", Mode: 0o700},
+		file.UserWrite{Path: "/d/f", After: []byte("x\n"), Mode: 0o600},
+		file.UserChmod{Path: "/d/f", Mode: 0o644},
+		file.UserBackup{Path: "/a", To: "/a~"},
 		change.Remark("a line"),
 	} {
 		if err := change.Apply(context.Background(), m, out, c); err != nil {
@@ -75,8 +55,6 @@ func TestAChangeSaysItsKind(t *testing.T) {
 		change step.Change
 		want   step.ChangeKind
 	}{
-		{change.Write{Path: "/f"}, step.Write},
-		{change.MakeDir{Path: "/d"}, step.Write},
 		{change.Run{Name: "brew", Args: []string{"install"}}, step.Install},
 		{change.Run{Name: "open"}, step.OtherChange},
 		{change.Remark("a line"), step.OtherChange},
