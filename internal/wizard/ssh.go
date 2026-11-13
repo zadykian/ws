@@ -2,13 +2,9 @@ package wizard
 
 import (
 	"context"
-	"net/netip"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
-	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
 // FirstFile is the file in the lock that holds the address that the Host key or Login stage asked,
@@ -39,33 +35,14 @@ func (s SSH) First() string {
 }
 
 // way finds the direct way to ws from mac.conf and the Mac's addresses. The address that the Host
-// key stage asked takes the place of the way's host. A failed ifconfig counts as no addresses, as
-// in the daemon. A mac.conf that can't be read or parsed leaves no way. With no way and that
-// address, the port stays ssh's own.
-func (s SSH) way(ctx context.Context) (tunnel.Direct, bool) {
-	var d tunnel.Direct
-	var found bool
-	if text, err := s.M.ReadFile(s.Conf); err == nil {
-		if c, errs := conf.Parse(string(text)); len(errs) == 0 {
-			out, err := s.M.Run(ctx, "ifconfig")
-			if err != nil {
-				out = nil
-			}
-			d, found = tunnel.DirectWay(daemon.ParseIfconfig(string(out), ""), tunnelConf(c), c.RemotePort)
-		}
-	}
+// key stage asked takes the place of the way's host. With no way and that address, the port stays
+// ssh's own.
+func (s SSH) way(ctx context.Context) (host, port string, found bool) {
+	host, port, found = MacWays{M: s.M, Conf: s.Conf}.Direct(ctx)
 	if first := s.First(); first != "" {
-		d.Host, found = first, true
+		host, found = first, true
 	}
-	return d, found
-}
-
-// tunnelConf takes the keys of mac.conf that a direct way reads. conf checked them already.
-func tunnelConf(c conf.Conf) tunnel.Conf {
-	t := tunnel.Conf{Remote: c.Remote}
-	t.LAN, _ = netip.ParsePrefix(c.LAN)
-	t.LANServer, _ = netip.ParseAddr(c.LANAddress)
-	return t
+	return host, port, found
 }
 
 // room tells whether the lock's path leaves room for a socket's. A master binds its socket at the
@@ -102,16 +79,16 @@ func (s SSH) shared(socket string) []string {
 //   - The socket is direct, so that a call never rides the tunnel's master. The address that the
 //     Host key stage asked adds .1, so that a master made before it never carries a call to it.
 func (s SSH) argv(ctx context.Context, args []string) []string {
-	d, found := s.way(ctx)
+	host, port, found := s.way(ctx)
 	socket := "direct"
 	if s.First() != "" {
 		socket += ".1"
 	}
 	a := s.shared(socket)
 	if found {
-		a = append(a, "-o", "HostName="+d.Host)
-		if d.Port != "" {
-			a = append(a, "-o", "Port="+d.Port)
+		a = append(a, "-o", "HostName="+host)
+		if port != "" {
+			a = append(a, "-o", "Port="+port)
 		}
 	}
 	return append(append(a, "-o", "AddressFamily=inet"), args...)

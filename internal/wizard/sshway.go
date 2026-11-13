@@ -48,7 +48,7 @@ func KnownHost(ctx context.Context, m effect.Machine, file string) bool {
 // Way reads ssh's settings for ws at its direct way, as argv gives it: the host and port that ssh
 // reaches, and known_hosts. It fails where no way is given, and where ssh -G fails.
 func (s SSH) Way(ctx context.Context) (Way, error) {
-	if _, found := s.way(ctx); !found {
+	if _, _, found := s.way(ctx); !found {
 		return Way{}, s.noWay()
 	}
 	out, err := s.M.Run(ctx, "ssh", append([]string{"-G"}, s.argv(ctx, []string{"ws"})...)...)
