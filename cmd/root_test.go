@@ -17,14 +17,13 @@ func fakeProcess() cli.Env { return clitest.Env() }
 // withEnv returns p with the environment env, for Getenv, Lookup and Setenv.
 func withEnv(p cli.Env, env map[string]string) cli.Env { return clitest.WithEnv(p, env) }
 
-// screenCommand returns a command that keys type on, and what it draws.
-func screenCommand(t *testing.T, keys string) (*cobra.Command, *bytes.Buffer) {
-	var drawn bytes.Buffer
+// screenCommand returns a command that keys type on.
+func screenCommand(t *testing.T, keys string) *cobra.Command {
 	c := &cobra.Command{Use: "apply"}
 	c.SetContext(t.Context())
 	c.SetIn(strings.NewReader(keys))
-	c.SetErr(&drawn)
-	return c, &drawn
+	c.SetErr(&bytes.Buffer{})
+	return c
 }
 
 // runWs runs args on the root of both groups, with stdin, and returns the status, stdout and stderr.

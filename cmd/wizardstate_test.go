@@ -81,7 +81,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 	p, m := macTerminal()
 	ws := newReportingWs(m, p.Version)
 	p.Machine = ws
-	c, _ := screenCommand(t, "")
+	c := screenCommand(t, "")
 	in, keys := io.Pipe()
 	defer func() { _ = keys.Close() }()
 	c.SetIn(in)
@@ -104,7 +104,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 // The Mac's read is local, so a run's lock on ws stays out of it.
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
-	c, _ := screenCommand(t, "q")
+	c := screenCommand(t, "q")
 	read, done := macState(p, "Mac", &host.Sudo{})
 	if err := tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), "Mac", read); err != nil || done != nil {
 		t.Fatalf("err = %v, done = %v", err, done != nil)

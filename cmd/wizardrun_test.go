@@ -21,7 +21,7 @@ import (
 
 func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	p, m := macTerminal()
-	c, _ := screenCommand(t, "")
+	c := screenCommand(t, "")
 	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
@@ -58,7 +58,7 @@ func (s tickStep) Apply(context.Context, step.Plan) error {
 
 func TestWizardConfigEndsACutAsAPlainRunDoes(t *testing.T) {
 	p, _ := macTerminal()
-	c, _ := screenCommand(t, "")
+	c := screenCommand(t, "")
 	err := wizardRun{c, p, testSide(), wizardOptions{}}.config().Cut(syscall.SIGINT)
 	var cut engine.SignalExit
 	if err == nil || errors.As(err, &cut) {
@@ -153,7 +153,7 @@ func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
 
 func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 	p, _ := macTerminal()
-	c, _ := screenCommand(t, "")
+	c := screenCommand(t, "")
 	var applied bool
 	w := wizardRun{c, p, testSide(tickStep{name: "one", applied: &applied}), wizardOptions{}}
 	o := wizardOptions{left: func(string, string) bool { return true }}
@@ -170,7 +170,7 @@ func TestWizardWorkLeavesOutWhatTheChoiceDoes(t *testing.T) {
 
 func TestWizardScanOfASideWithNoRunReportsNoRoles(t *testing.T) {
 	p, _ := macTerminal()
-	c, _ := screenCommand(t, "")
+	c := screenCommand(t, "")
 	var applied bool
 	w := wizardRun{c, p, testSide(tickStep{name: "one", applied: &applied}), wizardOptions{}}
 	cfg := w.config()
@@ -186,7 +186,7 @@ func TestWizardScanOfASideWithNoRunReportsNoRoles(t *testing.T) {
 
 func TestWizardScanChangesNothing(t *testing.T) {
 	p, m := macTerminal()
-	c, _ := screenCommand(t, "")
+	c := screenCommand(t, "")
 	w := wizardRun{c, p, macSide(c, p), wizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
