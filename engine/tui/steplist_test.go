@@ -18,11 +18,6 @@ func (n namedStep) WaitsOn() string                         { return "" }
 func (n namedStep) Plan(context.Context) (step.Plan, error) { return step.Plan{}, nil }
 func (n namedStep) Apply(context.Context, step.Plan) error  { return nil }
 
-// oneChange is a plan's change, for the tests that read how many there are.
-type oneChange string
-
-func (c oneChange) String() string { return string(c) }
-
 func testList() stepList {
 	return newStepList([]Group{{Name: "base", Steps: []string{"Packages", "Locale"}}, {Name: "ssh", Steps: []string{"Keys"}}})
 }

@@ -9,12 +9,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-var (
-	left  = tea.KeyPressMsg{Code: tea.KeyLeft}
-	right = tea.KeyPressMsg{Code: tea.KeyRight}
-	space = tea.KeyPressMsg{Code: tea.KeySpace, Text: " "}
-)
-
 func choice(fallback string) FormField {
 	spec := FieldSpec{Kind: ChoiceField, Options: []string{"lan", "cloud", "mac-vm"}, Default: fallback}
 	return NewFormField(spec).Focus()

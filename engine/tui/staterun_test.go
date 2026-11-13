@@ -56,7 +56,7 @@ func TestRunStateEndsARunningReadAtQ(t *testing.T) {
 
 func TestRunStateGivesTheCutsError(t *testing.T) {
 	c, read := typedAtRead(t, "\x03")
-	if err := RunState(t.Context(), c, "ws", read); !errors.Is(err, cutError{syscall.SIGINT}) {
+	if err := RunState(t.Context(), c, "ws", read); !errors.Is(err, testCut(syscall.SIGINT)) {
 		t.Errorf("RunState: %v", err)
 	}
 }

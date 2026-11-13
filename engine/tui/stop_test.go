@@ -17,8 +17,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-var esc = tea.KeyPressMsg{Code: tea.KeyEscape}
-
 // haltedRunMsg is what a test's halt returns.
 type haltedRunMsg struct{}
 
@@ -56,7 +54,7 @@ func TestSessionStopsPastTheCurrentStepOnceConfirmed(t *testing.T) {
 	if !runs(cmd, haltedRunMsg{}) || !s.halted || s.confirming || s.stopping {
 		t.Fatalf("halted %v, confirming %v, stopping %v", s.halted, s.confirming, s.stopping)
 	}
-	if !errors.Is(s.cutBy, cutError{syscall.SIGINT}) || !slices.Contains(*got, tea.Msg(haltedMsg{})) {
+	if !errors.Is(s.cutBy, testCut(syscall.SIGINT)) || !slices.Contains(*got, tea.Msg(haltedMsg{})) {
 		t.Errorf("cut by %v, the screen got %v", s.cutBy, *got)
 	}
 	s, cmd = feed(s, ctrlC)
@@ -192,7 +190,7 @@ func TestRunStopsPastTheCurrentStepWithCtxAlive(t *testing.T) {
 		alive = ctx.Err() == nil
 		return stop()
 	})
-	if !errors.Is(err, cutError{syscall.SIGINT}) || !alive {
+	if !errors.Is(err, testCut(syscall.SIGINT)) || !alive {
 		t.Errorf("Run: %v, ctx alive %v", err, alive)
 	}
 }
@@ -217,7 +215,7 @@ func TestCtrlCEndsTheRunBeforeTheWorkTookTheOptions(t *testing.T) {
 	c := noKeys(io.Discard)
 	c.In = strings.NewReader("\x03")
 	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, waitForCtx)
-	if !errors.Is(err, cutError{syscall.SIGINT}) {
+	if !errors.Is(err, testCut(syscall.SIGINT)) {
 		t.Errorf("Run: %v", err)
 	}
 }

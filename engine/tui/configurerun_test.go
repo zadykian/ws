@@ -72,7 +72,7 @@ func TestConfigureCtrlCEndsWithTheCut(t *testing.T) {
 	defer func() { _ = keys.Close() }()
 	c.In = in
 	go func() { _, _ = keys.Write([]byte("\x03")) }()
-	if err := Configure(t.Context(), c, "configure", wayFile()); !errors.Is(err, cutError{syscall.SIGINT}) {
+	if err := Configure(t.Context(), c, "configure", wayFile()); !errors.Is(err, testCut(syscall.SIGINT)) {
 		t.Errorf("Configure: %v", err)
 	}
 }

@@ -11,15 +11,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-var ctrlC = tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}
-
-// cutError is the error of a test's Cut.
-type cutError struct{ signal syscall.Signal }
-
-func (c cutError) Error() string { return c.signal.String() }
-
-func testCut(s syscall.Signal) error { return cutError{s} }
-
 // stoppedMsg is what a test's stop returns.
 type stoppedMsg struct{}
 
@@ -158,11 +149,11 @@ func TestSessionStopsOnTheFirstInterruptAndLeavesOnTheNext(t *testing.T) {
 		again tea.Msg
 		want  error
 	}{
-		{"ctrl-c", []tea.Msg{ctrlC}, ctrlC, cutError{syscall.SIGINT}},
+		{"ctrl-c", []tea.Msg{ctrlC}, ctrlC, testCut(syscall.SIGINT)},
 		{"a signal", []tea.Msg{signalMsg{syscall.SIGTERM}}, signalMsg{syscall.SIGHUP},
-			cutError{syscall.SIGTERM}},
+			testCut(syscall.SIGTERM)},
 		{"the button", []tea.Msg{ask, tab, tab, enter}, ctrlC,
-			cutError{syscall.SIGINT}},
+			testCut(syscall.SIGINT)},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

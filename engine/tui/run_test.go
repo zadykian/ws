@@ -20,9 +20,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// leaveBuffer is what puts a terminal back on its normal screen.
-const leaveBuffer = "\x1b[?1049l"
-
 // noKeys is a terminal that nobody types on.
 func noKeys(out io.Writer) Config {
 	return Config{In: strings.NewReader(""), Out: out, Theme: testTheme, Cut: testCut}
@@ -59,7 +56,7 @@ func TestRunEndsCtxOnCtrlC(t *testing.T) {
 	c := noKeys(io.Discard)
 	c.In = strings.NewReader("\x03")
 	err := Run(t.Context(), c, recorder{&[]tea.Msg{}}, waitForCtx)
-	if !errors.Is(err, cutError{syscall.SIGINT}) {
+	if !errors.Is(err, testCut(syscall.SIGINT)) {
 		t.Errorf("Run: %v", err)
 	}
 }
@@ -74,13 +71,13 @@ func TestRunLeavesAWorkThatIgnoresCtxOnASecondCtrlC(t *testing.T) {
 		<-release
 		return nil
 	})
-	if !errors.Is(err, cutError{syscall.SIGINT}) {
+	if !errors.Is(err, testCut(syscall.SIGINT)) {
 		t.Errorf("Run: %v", err)
 	}
 }
 
 func TestRunWaitsForAWorkPastItsScreen(t *testing.T) {
-	for keys, want := range map[string]error{"\x03\x03": cutError{syscall.SIGINT}, "": syscall.EIO} {
+	for keys, want := range map[string]error{"\x03\x03": testCut(syscall.SIGINT), "": syscall.EIO} {
 		in, typing := io.Pipe()
 		c := noKeys(io.Discard)
 		c.In = in
@@ -115,7 +112,7 @@ func TestRunEndsCtxOnASignal(t *testing.T) {
 			}
 			return waitForCtx(ctx, b)
 		})
-	if !errors.Is(err, cutError{syscall.SIGTERM}) {
+	if !errors.Is(err, testCut(syscall.SIGTERM)) {
 		t.Errorf("Run: %v", err)
 	}
 }
@@ -230,7 +227,7 @@ func TestRunKeepsAHiddenAnswerOffEveryRecord(t *testing.T) {
 }
 
 func TestEnding(t *testing.T) {
-	cut, failed := cutError{syscall.SIGINT}, errors.New("a step failed")
+	cut, failed := testCut(syscall.SIGINT), errors.New("a step failed")
 	panicked := fmt.Errorf("%w: a bug", errPanic)
 	cases := []struct {
 		name  string

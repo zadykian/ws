@@ -13,10 +13,7 @@ type (
 	leftAsked struct{}
 )
 
-var (
-	sized = tea.WindowSizeMsg{Width: 80, Height: 24}
-	down  = press('j')
-)
+var sized = tea.WindowSizeMsg{Width: 80, Height: 24}
 
 func newTestState() StateScreen {
 	read := func() tea.Msg { return readAsked{} }

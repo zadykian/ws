@@ -7,12 +7,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-var (
-	tab      = tea.KeyPressMsg{Code: tea.KeyTab}
-	shiftTab = tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}
-	enter    = tea.KeyPressMsg{Code: tea.KeyEnter}
-)
-
 // testFooter holds the buttons run, on Enter, check and quit, at places 0, 1 and 2.
 func testFooter() Footer {
 	return NewFooter(

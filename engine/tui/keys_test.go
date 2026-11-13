@@ -7,11 +7,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// press is the message of a key with no modifier, by its code.
-func press(code rune) tea.KeyPressMsg {
-	return tea.KeyPressMsg{Code: code, Text: string(code)}
-}
-
 func TestKeysMatchWhatTheTerminalSends(t *testing.T) {
 	cases := []struct {
 		name    string

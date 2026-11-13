@@ -85,11 +85,6 @@ func TestABoxSaysWhetherItsStepIsChosen(t *testing.T) {
 	}
 }
 
-// planned is how a scan ends a step: with changes, under a change of the step.
-func planned(parent, name string, index int, changes ...step.Change) step.Event {
-	return step.Event{Kind: step.Done, Parent: parent, Step: name, Index: index, Check: true, Changes: changes}
-}
-
 func TestAScanChoosesTheStepsWithChanges(t *testing.T) {
 	l := chain().take(planned("base", "one", 0)).take(planned("base", "alone", 3, oneChange("a")))
 	if want := []string{"[ ]", "[ ]", "[ ]", "[x]"}; !slices.Equal(boxes(l), want) {

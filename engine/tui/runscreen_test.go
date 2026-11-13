@@ -11,8 +11,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-var pgUp = tea.KeyPressMsg{Code: tea.KeyPgUp}
-
 // sent gives r each message.
 func sent(r RunScreen, msgs ...tea.Msg) RunScreen {
 	for _, msg := range msgs {

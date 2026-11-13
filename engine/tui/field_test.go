@@ -9,9 +9,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-var window = Size{80, 24}
-var testTheme = NewTheme(func(string) string { return "" })
-
 // typeIn gives the field each rune of text as a key.
 func typeIn(f field, text string) field {
 	for _, r := range text {

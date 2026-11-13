@@ -76,7 +76,7 @@ func TestRunEndsOnTheNormalScreenPastACommand(t *testing.T) {
 		time.Sleep(100 * time.Millisecond) // A screen that came back past its end would draw by now.
 		return err
 	})
-	if !errors.Is(err, cutError{syscall.SIGTERM}) {
+	if !errors.Is(err, testCut(syscall.SIGTERM)) {
 		t.Errorf("Run: %v", err)
 	}
 	endsOnTheNormalScreen(t, out.String())
