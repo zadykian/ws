@@ -6,6 +6,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/devtools/internal/golang"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -42,12 +43,12 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 		host.Group{Title: "Devtools gh login", After: "Devtools packages", Parts: []host.Resource{
 			GHLogin{M: m, User: v.User, Home: v.Home, Token: s.Token.GitHub},
 		}},
-		host.Group{Title: "Devtools Go", Parts: []host.Resource{goTree(m, GoVersion)}},
+		host.Group{Title: "Devtools Go", Parts: []host.Resource{golang.Tree(m, GoVersion)}},
 		host.Group{Title: "Devtools gopls", After: "Devtools Go", Parts: []host.Resource{
-			goplsTool{M: m, User: user, Path: Gopls(v.Home), Version: goplsVersion, GoVersion: GoVersion},
+			golang.Gopls{M: m, User: user, Path: Gopls(v.Home), Version: goplsVersion, GoVersion: GoVersion},
 		}},
 		host.Group{Title: "Devtools Delve", After: "Devtools Go", Parts: []host.Resource{
-			delveTool{M: m, User: user, Path: Dlv(v.Home), Version: dlvVersion, GoVersion: GoVersion},
+			golang.Delve{M: m, User: user, Path: Dlv(v.Home), Version: dlvVersion, GoVersion: GoVersion},
 		}},
 		host.Group{Title: "Devtools roslyn-language-server", After: "Devtools packages", Parts: []host.Resource{
 			roslynTool{M: m, User: user, Path: Roslyn(v.Home)},

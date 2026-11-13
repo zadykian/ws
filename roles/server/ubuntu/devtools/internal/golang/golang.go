@@ -1,4 +1,5 @@
-package devtools
+// Package golang installs Go, and gopls and Delve built with it.
+package golang
 
 import (
 	"context"
@@ -13,10 +14,10 @@ import (
 // leaves a half tree there.
 const goDir = "/usr/local/go"
 
-// goTree is Go's tarball of the version, from go.dev, unpacked in /usr/local/go. dpkg's name of the
+// Tree is Go's tarball of the version, from go.dev, unpacked in /usr/local/go. dpkg's name of the
 // architecture is Go's. go.dev's list gives the SHA-256, so a plan that finds the tree current
 // fetches nothing.
-func goTree(m effect.Machine, version string) host.Tree {
+func Tree(m effect.Machine, version string) host.Tree {
 	return host.Tree{M: m, Path: goDir, Strip: 1, Source: host.PinnedFile{
 		M: m, Version: version,
 		URL: func(version, arch string) string {

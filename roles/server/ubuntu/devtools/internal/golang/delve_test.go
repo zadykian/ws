@@ -1,4 +1,4 @@
-package devtools
+package golang
 
 import (
 	"context"
@@ -11,8 +11,11 @@ import (
 
 const delveRead = goBin + " version -m /root/go/bin/dlv"
 
-func newDelve(m *effecttest.Machine) delveTool {
-	return delveTool{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/dlv",
+// dlvVersion is the Delve that the role pins.
+const dlvVersion = "1.27.2"
+
+func newDelve(m *effecttest.Machine) Delve {
+	return Delve{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/dlv",
 		Version: dlvVersion, GoVersion: "1.27.3"}
 }
 

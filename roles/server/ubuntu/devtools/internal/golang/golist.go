@@ -1,4 +1,4 @@
-package devtools
+package golang
 
 import (
 	"encoding/json"

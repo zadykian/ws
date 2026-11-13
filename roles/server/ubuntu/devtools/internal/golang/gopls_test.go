@@ -1,4 +1,4 @@
-package devtools
+package golang
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 
 const goplsRead = "env HOME=/root /root/go/bin/gopls version -json"
 
-func newGopls(m *effecttest.Machine) goplsTool {
-	return goplsTool{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/gopls",
+func newGopls(m *effecttest.Machine) Gopls {
+	return Gopls{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/gopls",
 		Version: "0.23.0", GoVersion: "1.27.3"}
 }
 

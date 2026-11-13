@@ -1,4 +1,4 @@
-package devtools
+package golang
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-// goplsTool is gopls at the pinned version, built with devtools' Go. gopls type-checks with the Go it
+// Gopls is gopls at the pinned version, built with devtools' Go. gopls type-checks with the Go it
 // was built with, so a new Go needs a new gopls too.
-type goplsTool struct {
+type Gopls struct {
 	M    effect.Machine
 	User host.User
 	// Path is where go install puts gopls, and where languages.toml names it.
@@ -20,7 +20,7 @@ type goplsTool struct {
 	Version, GoVersion string
 }
 
-type buildGopls struct{ g goplsTool }
+type buildGopls struct{ g Gopls }
 
 func (c buildGopls) String() string {
 	return fmt.Sprintf("build gopls v%s with Go %s at %s", c.g.Version, c.g.GoVersion, c.g.Path)
@@ -33,7 +33,7 @@ func (c buildGopls) Apply(ctx context.Context) error {
 
 // Plan reads gopls's version and the Go that built it. A gopls that is missing fails the
 // command, which counts as another version.
-func (g goplsTool) Plan(ctx context.Context) ([]host.Change, error) {
+func (g Gopls) Plan(ctx context.Context) ([]host.Change, error) {
 	out, err := g.User.Output(ctx, g.M, g.Path, "version", "-json")
 	if err == nil {
 		var got struct{ Version, GoVersion string }
