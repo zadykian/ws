@@ -49,6 +49,16 @@ func TestMacChangeSaysADiffBareAndNoBackup(t *testing.T) {
 	}
 }
 
+func TestMacChangeSaysAnEmptyDiffAsOneEmptyLine(t *testing.T) {
+	out := &effecttest.Out{}
+	o := linesOf(out, "ws client macos apply")
+	plan := []step.Change{file.UserWrite{Path: "/f", Before: []byte("a\n"), After: []byte("a\n"), Exists: true}}
+	o.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
+	if want := []string{"say: "}; !reflect.DeepEqual(out.Lines, want) {
+		t.Errorf("lines = %q, want %q", out.Lines, want)
+	}
+}
+
 func TestSetupWithNoStepRunsThemAll(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/.config/ws/mac.conf"] = []byte("WS_USER=ada\n")

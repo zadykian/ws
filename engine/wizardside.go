@@ -57,7 +57,7 @@ type WsRun struct {
 type Side struct {
 	Stages func(e WizardEffects, o WizardOptions) []step.Step
 	// Change says a change under --check in this side's way, as Lines.Change does.
-	Change func(step.Change) (string, bool)
+	Change func(step.Change) ([]string, bool)
 	// Pid is the process that caffeinate waits on. 0 on ws, which has no caffeinate.
 	Pid int
 	// Local is the machine of a stage that names none.
