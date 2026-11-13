@@ -212,7 +212,7 @@ boot and before any login, by `/Library/LaunchDaemons/com.github.zadykian.ws-tun
 client macos apply` copies `ws` from `~/.local/bin`, which a run makes if missing, to
 `/usr/local/libexec/ws-tunnel/ws` as root's. The user owns `~/.local/bin`, so a root daemon that ran
 that file would let anything that runs as the user become root. The daemon holds WireGuard's device
-itself, so it needs no `wg` or `wireguard-go`. `apply` restarts it where the copy changed.
+itself, so it needs no `wg` or `wireguard-go`. `apply` restarts each where the copy changed.
 
 The settings are in `/etc/ws-tunnel`, which only root reads. It holds the Mac's key, which `ws
 client macos tunnel key` makes once, `routes.d`, below, and `NAME/tunnel.conf`. `ws client macos
