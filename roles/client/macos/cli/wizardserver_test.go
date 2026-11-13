@@ -16,7 +16,7 @@ func TestWizardServerNamesTheServerToSetUp(t *testing.T) {
 		want string
 		err  string
 	}{
-		{nil, "", "ws", ""},
+		{nil, "", "", ""},
 		{nil, "lab", "lab", ""},
 		{[]string{"box"}, "", "box", ""},
 		{[]string{"box"}, "box", "box", ""},
