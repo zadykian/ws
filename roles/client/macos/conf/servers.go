@@ -1,5 +1,16 @@
 package conf
 
+import (
+	"errors"
+	"fmt"
+	"io/fs"
+	"path"
+	"strings"
+	"syscall"
+
+	"github.com/zadykian/ws/engine/core/effect"
+)
+
 // NameForm says what a server's name looks like, in the words of each refusal of a bad one.
 const NameForm = "a lower-case letter, then up to 11 lower-case letters, digits and -"
 
@@ -17,4 +28,40 @@ func IsName(s string) bool {
 		}
 	}
 	return true
+}
+
+// serversDir returns the directory of the servers beside mac.conf at mac.
+func serversDir(mac string) string {
+	return path.Join(path.Dir(mac), "servers")
+}
+
+// Servers returns the names of the servers beside mac.conf at mac: the directories of servers/ that
+// hold a server.conf, in order. A directory with a file and a bad name is refused.
+func Servers(m effect.Machine, mac string) ([]string, error) {
+	dir := serversDir(mac)
+	entries, err := m.ReadDir(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, e := range entries {
+		if strings.HasPrefix(e, ".") {
+			continue
+		}
+		_, err := m.Stat(ServerPath(mac, e))
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, syscall.ENOTDIR) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		if !IsName(e) {
+			return nil, fmt.Errorf("%s/%s is not a server's name: %s: rename it", dir, e, NameForm)
+		}
+		names = append(names, e)
+	}
+	return names, nil
 }
