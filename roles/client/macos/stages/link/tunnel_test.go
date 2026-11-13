@@ -20,15 +20,18 @@ const (
 	keyB = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
 )
 
+// daemonLabel is the launchd label of ws's daemon.
+const daemonLabel = "com.github.zadykian.ws-tunnel.ws"
+
 // newTunnel returns the stage over a Mac whose mac.conf holds WS_PUBLIC_KEY pub, with ws's status.
 func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, check)
 	m.Files["/h/mac.conf"] = append(m.Files["/h/mac.conf"], []byte("WS_PUBLIC_KEY="+pub+"\n")...)
 	m.Files["/h/.config/ws/tunnel.pub"] = []byte(keyA + "\n")
-	m.Results["launchctl print system/"+label] = effecttest.Result{}
+	m.Results["launchctl print system/"+daemonLabel] = effecttest.Result{}
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
-	return &Tunnel{SSH: remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Home: "/h", M: m, Out: r.Out}, m
+	return &Tunnel{SSH: remote.SSH{Host: "ws", M: m, Lock: "/l", Ways: host.MacWays{M: m, Conf: "/h/mac.conf"}}, Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Server: "ws", Home: "/h", M: m, Out: r.Out}, m
 }
 
 func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {

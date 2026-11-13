@@ -50,7 +50,7 @@ func TestTunnelApplyStops(t *testing.T) {
 }
 func TestTunnelPlanLoaded(t *testing.T) {
 	tun, m := newTunnel(keyB, session.Status{WgKey: keyB, Peered: true, MacKey: keyA}, false)
-	m.Results["launchctl print system/"+label] = effecttest.Result{Err: context.Canceled}
+	m.Results["launchctl print system/"+daemonLabel] = effecttest.Result{Err: context.Canceled}
 	if p, _ := tun.Plan(context.Background()); len(p.Changes) == 0 {
 		t.Error("Plan without ws-tunnel in launchd is empty")
 	}
