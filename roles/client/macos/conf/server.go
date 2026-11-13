@@ -26,9 +26,14 @@ func Load(m effect.Machine, mac, server string) (Conf, error) {
 	if err := errors.Join(macErr, serverErr); err != nil {
 		return Conf{}, err
 	}
-	c.GitName, c.GitEmail, c.GitSigningPubKey = macConf.GitName, macConf.GitEmail, macConf.GitSigningPubKey
-	c.IdentityPubKey, c.IdentityAgent = macConf.IdentityPubKey, macConf.IdentityAgent
-	return c, nil
+	return join(macConf, c), nil
+}
+
+// join returns the keys of a server's file with the Mac's keys from mac.conf.
+func join(mac, server Conf) Conf {
+	server.GitName, server.GitEmail, server.GitSigningPubKey = mac.GitName, mac.GitEmail, mac.GitSigningPubKey
+	server.IdentityPubKey, server.IdentityAgent = mac.IdentityPubKey, mac.IdentityAgent
+	return server
 }
 
 // load reads the file at file as its scope says.
