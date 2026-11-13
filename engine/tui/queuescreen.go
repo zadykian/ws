@@ -73,7 +73,7 @@ func (q queue) panes() []Pane {
 
 // drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
 // none.
-func (q queue) drawn(layout Layout, theme Theme, window Size, at [2]cursor) Layout {
+func (q queue) drawn(layout Layout, theme Theme, window Size, at map[Side]cursor) Layout {
 	sizes := layout.PaneSizes(window.Width, window.Height)
 	for i, side := range q.sides() {
 		there := at[side].within(len(q.lines(side)))

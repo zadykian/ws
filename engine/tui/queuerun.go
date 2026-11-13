@@ -12,7 +12,7 @@ import (
 type QueueRun struct {
 	run  RunScreen
 	list queue
-	at   [2]cursor
+	at   map[Side]cursor
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
@@ -38,7 +38,7 @@ func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var side Side
 		var line int
 		if q.list, side, line = q.list.follow(e); line >= 0 {
-			q.list.side, q.at[side] = side, cursor(line)
+			q.list.side, q.at = side, withCursor(q.at, side, cursor(line))
 		}
 	}
 	var cmd tea.Cmd

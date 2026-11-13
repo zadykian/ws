@@ -189,7 +189,7 @@ func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
 
 func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{})
-	s.list, s.at[MacSide] = queueChoosing(s.list, "one"), 1
+	s.list, s.at = queueChoosing(s.list, "one"), withCursor(s.at, MacSide, 1)
 	if got := queueShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
 		t.Errorf("frame:\n%s", got)
 	}
@@ -261,5 +261,13 @@ func TestEachSideKeepsItsCursor(t *testing.T) {
 	}
 	if s = queueSent(s, shiftTab); s.list.side != MacSide || s.at[MacSide] != 3 {
 		t.Errorf("side %d, cursors %v", s.list.side, s.at)
+	}
+}
+
+func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
+	was := queueSent(testQueueScreen(), scannedMsg{}, press('j'))
+	moved := queueSent(was, press('j'), tab)
+	if was.at[MacSide] != 1 || was.at[WsSide] != 0 || moved.at[MacSide] != 2 {
+		t.Errorf("cursors %v before, %v after", was.at, moved.at)
 	}
 }
