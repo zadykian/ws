@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,10 +11,6 @@ import (
 
 	"github.com/google/renameio/v2"
 )
-
-// ErrSHA256 is what a body of a wrong SHA-256 wraps, so that a caller can tell it from a failed
-// fetch and not retry it.
-var ErrSHA256 = errors.New("SHA-256")
 
 // Download streams the URL through SHA-256 into a pending file, and renames it over path only
 // where the sum, in hex, matches. Otherwise nothing is left and path is unchanged.
