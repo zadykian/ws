@@ -13,6 +13,14 @@ func find(t *testing.T, name string) key {
 	return key{}
 }
 
+func TestTunnelSlot(t *testing.T) {
+	for slot, want := range map[string]string{"": "10.99.0.1", "0": "10.99.0.1", "1": "10.99.1.1", "15": "10.99.15.1"} {
+		if got := (Conf{Slot: slot}).TunnelSlot().Server().String(); got != want {
+			t.Errorf("slot %q: server %s, want %s", slot, got, want)
+		}
+	}
+}
+
 func TestKeys(t *testing.T) {
 	tests := []struct {
 		key, value string
