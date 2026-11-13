@@ -3,16 +3,12 @@ package cmd
 import (
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/wizard"
-	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
-	"github.com/zadykian/ws/roles/client/macos/stages/tools"
-	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 // wizardQueue returns the stages as the lists show them, each on its machine, with the stage that
@@ -27,20 +23,6 @@ func wizardQueue(stages []step.Step) []tui.Stage {
 		}
 	}
 	return queue
-}
-
-// nestedRows returns the groups that the stage named runs, as the lists show them under it.
-func nestedRows(stage string) []tui.Group {
-	var groups []tui.Group
-	switch stage {
-	case (&tools.Setup{}).Name():
-		groups = []tui.Group{{Name: stage, Steps: macos.Names()}}
-	case (&stages.WsRun{}).Name():
-		for _, name := range ubuntu.Names() {
-			groups = append(groups, tui.Group{Name: name})
-		}
-	}
-	return groups
 }
 
 // wizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
