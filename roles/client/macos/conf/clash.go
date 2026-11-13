@@ -6,13 +6,18 @@ import (
 	"strings"
 )
 
-// clashes returns a refusal for each network of c that overlaps one of another server's, and each
-// WS_RESOLVERS domain that another names. Both servers refuse until one changes, so no order of servers decides which does.
+// clashes returns a refusal for each network of c that overlaps one of another server's, each
+// WS_RESOLVERS domain that another names, and a cable that another names too. Both servers refuse
+// until one changes, so no order of servers decides which does.
 func clashes(c Conf, others []Sibling) []Error {
 	var errs []Error
 	for _, o := range others {
 		errs = append(errs, networkClashes(c, o)...)
 		errs = append(errs, domainClashes(c, o)...)
+		if c.CableService != "" && o.Conf.CableService != "" {
+			errs = append(errs, Error{Msg: fmt.Sprintf(
+				"WS_CABLE_SERVICE names a cable, as server %s's does: the cable reaches one server", o.Name)})
+		}
 	}
 	return errs
 }
