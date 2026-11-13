@@ -16,6 +16,12 @@ type Conf struct {
 	GitName, GitEmail, GitSigningPubKey, IdentityPubKey, IdentityAgent       string
 }
 
+// TunnelSlot gives the slot that c.Slot names. Load has checked it, and an empty one is slot 0.
+func (c Conf) TunnelSlot() slot.Slot {
+	s, _ := slot.Parse(c.Slot)
+	return s
+}
+
 // key is one of mac.conf's keys: where its value goes, its check, and the form its message names.
 // A check gets whether the value was in quotes.
 type key struct {
