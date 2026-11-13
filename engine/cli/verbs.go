@@ -12,3 +12,10 @@ func Apply(t engine.Target, e Env) func(*cobra.Command, []string) error {
 		return engine.Apply(c.Context(), CallOf(c, e), t)
 	}
 }
+
+// State returns the RunE of a side's state command: it reports the Target in the process e.
+func State(t engine.Target, e Env) func(*cobra.Command, []string) error {
+	return func(c *cobra.Command, _ []string) error {
+		return engine.State(c.Context(), CallOf(c, e), t)
+	}
+}
