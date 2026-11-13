@@ -1,4 +1,4 @@
-package shell
+package secretenv
 
 import (
 	"bytes"
@@ -12,11 +12,11 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
-// secretEnv is ~/.secrets/env, for ~/.bashrc and the otelcol role, from the secrets file's
+// Env is ~/.secrets/env, for ~/.bashrc and the otelcol role, from the secrets file's
 // [env] table. Without a secrets file, as in CI, ws leaves ~/.secrets alone, even a file it wrote,
 // so that a run without it changes nothing. With one and an empty [env], ws removes the file it
 // wrote.
-type secretEnv struct {
+type Env struct {
 	M   effect.Machine
 	A   host.Account
 	Env map[string]string
@@ -28,7 +28,7 @@ type secretEnv struct {
 // rather than replaced. A backup would copy its secrets, and the new file would drop what the
 // secrets file lacks, and so would a removal. A dry run stops there too. The file is read for its
 // first line alone.
-func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {
+func (s Env) Plan(ctx context.Context) ([]host.Change, error) {
 	if len(s.Env) == 0 && !s.Whole {
 		return nil, nil
 	}

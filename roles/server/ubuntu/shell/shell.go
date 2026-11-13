@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/git"
+	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/secretenv"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -44,7 +45,7 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 			Key: v.GitSigningKey, Signers: v.Shell.GitAllowedSigners,
 		}}, nil
 	}), user.WithAccount(m, "Shell secret env", "", func(a host.Account) ([]host.Resource, error) {
-		return []host.Resource{secretEnv{M: m, A: a, Env: s.Env, Whole: s.Whole}}, nil
+		return []host.Resource{secretenv.Env{M: m, A: a, Env: s.Env, Whole: s.Whole}}, nil
 	}), user.WithAccount(m, "Shell git tokens", "", func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{git.Tokens{M: m, A: a, Creds: git.Credentials(s.Git), Whole: s.Whole}}, nil
 	}), user.WithAccount(m, "Shell clones", "", func(a host.Account) ([]host.Resource, error) {

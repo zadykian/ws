@@ -1,4 +1,6 @@
-package shell
+// Package secretenv writes ~/.secrets/env, which ~/.bashrc and the otelcol role read, from the
+// secrets file's [env] table.
+package secretenv
 
 import (
 	"fmt"

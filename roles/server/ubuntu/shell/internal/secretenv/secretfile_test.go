@@ -1,4 +1,4 @@
-package shell
+package secretenv
 
 import (
 	"context"
@@ -9,10 +9,10 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-func envFixture(env map[string]string) (*effecttest.Machine, secretEnv) {
+func envFixture(env map[string]string) (*effecttest.Machine, Env) {
 	m := effecttest.NewMachine()
 	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	return m, secretEnv{M: m, A: a, Env: env}
+	return m, Env{M: m, A: a, Env: env}
 }
 
 func TestSecretEnvIsWrittenOnceAndNeverShown(t *testing.T) {
