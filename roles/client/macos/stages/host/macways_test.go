@@ -15,7 +15,7 @@ func TestMacWaysFromAddresses(t *testing.T) {
 	for name, tc := range map[string]struct{ conf, ifconfig, want string }{
 		"lan": {lan, "en0: flags=8863<UP> mtu 1500\n\tinet 192.168.1.20 netmask 0xffffff00\n",
 			"-o HostName=192.168.1.5 -o Port=22 "},
-		"cable": {lan, "en5: flags=8863<UP> mtu 1500\n\tinet 10.77.0.2 netmask 0xfffffffc\n",
+		"cable": {lan + "WS_CABLE_SERVICE=USB\n", "en5: flags=8863<UP> mtu 1500\n\tinet 10.77.0.2 netmask 0xfffffffc\n",
 			"-o HostName=10.77.0.1 -o Port=22 "},
 		"remote": {wayConf, "", "-o HostName=ws.example.org -o Port=22022 "},
 		"remote over a lan out of reach": {lan + wayConf, "en0: flags=8863<UP> mtu 1500\n\tinet 172.16.0.2 netmask 0xffff0000\n",

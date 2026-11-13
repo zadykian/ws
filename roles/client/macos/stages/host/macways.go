@@ -41,7 +41,7 @@ func (w MacWays) Direct(ctx context.Context) (host, port string, ok bool) {
 
 // tunnelConf takes the keys of mac.conf that a direct way reads. conf checked them already.
 func tunnelConf(c conf.Conf) tunnel.Conf {
-	t := tunnel.Conf{Remote: c.Remote}
+	t := tunnel.Conf{Remote: c.Remote, Cable: c.CableService != ""}
 	t.LAN, _ = netip.ParsePrefix(c.LAN)
 	t.LANServer, _ = netip.ParseAddr(c.LANAddress)
 	return t

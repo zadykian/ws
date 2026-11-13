@@ -16,7 +16,7 @@ const (
 	// ifaces has an address on the cable's subnet and one on the LAN.
 	ifaces = "en5: flags=8863<UP,BROADCAST,RUNNING> mtu 1500\n\tinet 10.77.0.2 netmask 0xfffffffc\n" +
 		"en0: flags=8863<UP,BROADCAST,RUNNING> mtu 1500\n\tinet 192.168.1.20 netmask 0xffffff00\n"
-	confAll = "WS_LAN=192.168.1.0/24\nWS_LAN_ADDRESS=192.168.1.7\nWS_REMOTE=ws.example.org\n"
+	confAll = "WS_CABLE=yes\nWS_LAN=192.168.1.0/24\nWS_LAN_ADDRESS=192.168.1.7\nWS_REMOTE=ws.example.org\n"
 )
 
 // peerText is what the device reports of the peer, with a handshake at the time at.

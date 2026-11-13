@@ -27,12 +27,12 @@ type Candidate struct {
 	Host netip.Addr
 }
 
-// Candidates lists the endpoints to try, in order. The cable comes first, where the Mac has an
-// address in its subnet. The LAN is next, where it has one in WS_LAN; then WS_REMOTE, as resolved.
+// Candidates lists the endpoints to try, in order. The cable comes first, where the server
+// names it and the Mac has an address in its subnet. The LAN is next, where it has one in WS_LAN; then WS_REMOTE, as resolved.
 // resolved is invalid where the name has no IPv4 address, and then why says so. The caller resolves
 // the name anew before each choice, as an address may change.
 func Candidates(ifaces []Iface, c Conf, resolved netip.Addr) (found []Candidate, why []string) {
-	if within(ifaces, CableNet) {
+	if c.Cable && within(ifaces, CableNet) {
 		found = append(found, Candidate{TierCable, CableServer})
 	}
 	if c.LAN.IsValid() && c.LANServer.IsValid() && within(ifaces, c.LAN) {
