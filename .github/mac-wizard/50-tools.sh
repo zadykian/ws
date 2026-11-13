@@ -38,6 +38,6 @@ status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
     error "ws client macos wizard --check exited $status, with no line the wizard would write to $conf"
-[ ! -e "$conf" ] || error "ws client macos wizard --check wrote $conf"
+[ ! -e "$conf" ] && [ ! -e "$(conf_server_file "$conf")" ] || error "ws client macos wizard --check wrote $conf or the server's file"
 rm -rf "${conf%/*}"
 exit "$fail"

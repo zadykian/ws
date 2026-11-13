@@ -1,11 +1,37 @@
 # shellcheck shell=sh
 # The cases of the mac, mac-wizard and mac-cld jobs write and read a conf, the file that WS_CONF
 # names, through these functions. They source this file and never run it. A conf's layout lives
-# here alone.
+# here alone: mac.conf holds the Mac's five keys, and servers/ws/server.conf, beside it, every
+# other key. roles/client/macos/conf/scope.go lists the five keys too.
 
-# conf_write CONF puts the KEY=value lines of stdin in CONF, in place of what it held. It reads all
-# of stdin first, so that conf_print CONF | ... | conf_write CONF is safe, and it writes in place,
-# so that CONF keeps its inode and its mode.
+# conf_server_file CONF prints the path of the server's file that goes with CONF.
+conf_server_file() {
+    echo "${1%/*}/servers/ws/server.conf"
+}
+
+# conf_split SCOPE prints the lines of stdin that go in the file of SCOPE, mac or server. A line
+# with no key stays with mac.conf.
+conf_split() {
+    awk -v scope="$1" '
+        BEGIN {
+            n = split("WS_GIT_NAME WS_GIT_EMAIL WS_GIT_SIGNING_PUB_KEY WS_IDENTITY_PUB_KEY WS_IDENTITY_AGENT", keys, " ")
+            for (i = 1; i <= n; i++) mac[keys[i]] = 1
+        }
+        {
+            key = $0
+            server = 0
+            if (key ~ /^[A-Za-z_][A-Za-z0-9_]*=/) {
+                sub(/=.*/, "", key)
+                server = !(key in mac)
+            }
+            if (server == (scope == "server")) print
+        }'
+}
+
+# conf_write CONF puts each KEY=value line of stdin in the file of its key, CONF or the server's
+# file, in place of what they held. The server's file goes, with its directory, where it gets no
+# line. It reads stdin first, so that conf_print CONF | ... | conf_write CONF is safe. It writes in
+# place, so that CONF keeps its inode and its mode.
 conf_write() {
     mkdir -p "${1%/*}"
     conf_lines=$(
@@ -13,12 +39,27 @@ conf_write() {
         echo .
     )
     conf_lines=${conf_lines%.}
-    printf '%s' "$conf_lines" >"$1"
+    printf '%s' "$conf_lines" | conf_split mac >"$1"
+    conf_part=$(
+        printf '%s' "$conf_lines" | conf_split server
+        echo .
+    )
+    conf_part=${conf_part%.}
+    conf_dest=$(conf_server_file "$1")
+    if [ -n "$conf_part" ]; then
+        mkdir -p "${conf_dest%/*}"
+        printf '%s' "$conf_part" >"$conf_dest"
+    else
+        rm -rf "${conf_dest%/*}"
+        rmdir "${conf_dest%/*/*}" 2>/dev/null || true
+    fi
 }
 
-# conf_print CONF prints the lines of CONF.
+# conf_print CONF prints the lines of CONF, then those of the server's file where there is one.
 conf_print() {
     cat "$1"
+    conf_part=$(conf_server_file "$1")
+    [ ! -f "$conf_part" ] || cat "$conf_part"
 }
 
 # conf_set CONF LINE... handles each LINE in turn. A KEY=value LINE takes the place of KEY's first
