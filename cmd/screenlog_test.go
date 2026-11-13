@@ -11,12 +11,12 @@ import (
 func TestOpenLogIsPrivateUnderTheStateDirectory(t *testing.T) {
 	state := t.TempDir()
 	p := withEnv(fakeProcess(), map[string]string{"XDG_STATE_HOME": state})
-	f, path := openLog(p, "ws server apply", time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC))
+	f, path := openLog(p, "ws server ubuntu apply", time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC))
 	if f == nil {
 		t.Fatal("no log")
 	}
 	defer func() { _ = f.Close() }()
-	if want := filepath.Join(state, "ws", "ws-server-apply-20261105T120000Z.log"); path != want {
+	if want := filepath.Join(state, "ws", "ws-server-ubuntu-apply-20261105T120000Z.log"); path != want {
 		t.Errorf("path %q, want %q", path, want)
 	}
 	if info, err := os.Stat(path); err != nil || info.Mode().Perm() != 0o600 {

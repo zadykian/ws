@@ -17,7 +17,7 @@ func newServerConfigureCmd(p process) *cobra.Command {
 		Short: "edit ws's secrets and host_vars on forms, on ws",
 		Long: "The forms of ws mac configure that edit ws, read and written here as root, with no ssh. ws's " +
 			"secrets show as set or not, never their values. Ctrl-N goes to host_vars. Ctrl-S writes a form. " +
-			"It needs a terminal: anywhere else, run ws server secrets and ws server values set.",
+			"It needs a terminal: anywhere else, run ws server ubuntu secrets and ws server ubuntu values set.",
 		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error { return runServerConfigure(c, p) },
 	}
@@ -30,8 +30,8 @@ func runServerConfigure(c *cobra.Command, p process) error {
 		return errors.New("run it as root, by sudo: ws's secrets and host_vars are root's")
 	}
 	if !drawsScreen(c, p) {
-		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server secrets " +
-			"and ws server values set")
+		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server ubuntu secrets " +
+			"and ws server ubuntu values set")
 	}
 	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), serverSheets(p)...)
 }

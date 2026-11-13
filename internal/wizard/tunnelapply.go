@@ -35,14 +35,14 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	s, _ := t.Ws.status(ctx)
 	peered := s.MacKey != mac || !s.Peered
 	if peered {
-		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server apply --only "+
+		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server ubuntu apply --only "+
 			"wireguard runs there in a unit of its own, which gives wg0 that peer", tunnelStage)
 		if err := t.Ws.namePeer(ctx, mac); err != nil {
 			return err
 		}
 		var ok bool
 		if s, ok = t.Ws.status(ctx); !ok || !s.Peered {
-			return errors.New(tunnelStage + ": ws's wg0 lacks the Mac's key after ws server apply --only " +
+			return errors.New(tunnelStage + ": ws's wg0 lacks the Mac's key after ws server ubuntu apply --only " +
 				"wireguard: mend what it printed, then run the wizard again")
 		}
 	}

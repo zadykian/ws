@@ -85,7 +85,7 @@ func TestMacApplyGoesStraightToTheRunWithAStepOrCheck(t *testing.T) {
 
 func TestServerApplyOpensTheListAndLeavesWithQ(t *testing.T) {
 	p, _ := serverTerminal()
-	status, stdout, stderr := runWs(p, "q", "server", "apply")
+	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "apply")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Fatalf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
@@ -131,8 +131,8 @@ func TestServerApplyChecksFromTheListAndSaysSo(t *testing.T) {
 	var errs bytes.Buffer
 	root := newRoot(p, newMacCmd(p), newServerCmd(p))
 	// A scan holds c back, so each turn ends by emptying the filter that the next one types.
-	status := execute(t.Context(), root, []string{"server", "apply"}, repeating("/tmux\rac/\x7f\x7f\x7f\x7f\r"), io.Discard, &errs)
-	if want := "ws server apply: would change: none\n"; status != 0 || !strings.HasSuffix(errs.String(), want) {
+	status := execute(t.Context(), root, []string{"server", "ubuntu", "apply"}, repeating("/tmux\rac/\x7f\x7f\x7f\x7f\r"), io.Discard, &errs)
+	if want := "ws server ubuntu apply: would change: none\n"; status != 0 || !strings.HasSuffix(errs.String(), want) {
 		t.Errorf("status = %d, stderr ends %q, want %q", status, errs.String()[max(0, errs.Len()-300):], want)
 	}
 }

@@ -173,7 +173,7 @@ fi
 sh "$state/off" check "$vars" && table=off
 [ "$full" = 0 ] || rm -f "$state/run"
 version=$("$ws" version 2>/dev/null | head -n 1) && [ -n "$version" ] || version=-
-"$ws" server apply --json "$@"
+"$ws" server ubuntu apply --json "$@"
 status=$?
 if [ "$full" = 1 ]; then
     echo "$version $status $table $sum $values" >"$state/run.new" && mv -f "$state/run.new" "$state/run"
@@ -230,7 +230,7 @@ run() {
         [ ! -f "$secrets" ] || [ ! -f "$credential" ] || creds="-p LoadCredentialEncrypted=ws-secrets -p Type=exec"
         # shellcheck disable=SC2086 # the words are options, and no path holds a blank
         systemd-run $creds --quiet --unit="$unit" --collect --expand-environment=no \
-            --description="ws server apply, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
+            --description="ws server ubuntu apply, for the Mac's wizard" --setenv=LC_ALL=C.UTF-8 \
             --setenv=HOME=/root /bin/sh "$state/job" "$unit" "$vars" "$ws" "$state" "$secrets" "$@" ||
             die "systemd-run cannot start $unit"
         say "started $unit, which goes on where ssh drops: journalctl -u $unit shows its log"
@@ -283,7 +283,7 @@ main() {
     [ "$(id -u)" = 0 ] || die "it runs as root on ws, through sudo or a root login"
     case ${1-} in
     status) status ;;
-    state) HOME=/root LC_ALL=C.UTF-8 "$ws" server state --json ;;
+    state) HOME=/root LC_ALL=C.UTF-8 "$ws" server ubuntu state --json ;;
     run) shift && run "$@" ;;
     outbound) off | sh -s -- write "$vars" ;;
     install) install "${2-}" "${3-}" ;;

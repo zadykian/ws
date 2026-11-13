@@ -76,7 +76,7 @@ func TestVarsFormSavesTheEditsInOneLogin(t *testing.T) {
 	if got := varsField(t, f, "ws_user").Value; got != "a b" {
 		t.Errorf("reads ws_user as %q", got)
 	}
-	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "next ws server apply") {
+	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "next ws server ubuntu apply") {
 		t.Errorf("said %q", said)
 	}
 }

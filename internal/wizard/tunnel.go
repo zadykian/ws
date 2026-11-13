@@ -76,7 +76,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		ch = append(ch, tunnelChange("write the Mac's key, "+mac+", to /etc/wireguard/mac.pub on ws"))
 	}
 	if s.MacKey != mac || !s.Peered {
-		ch = append(ch, tunnelChange("run ws server apply --only wireguard on ws, for wg0's peer"))
+		ch = append(ch, tunnelChange("run ws server ubuntu apply --only wireguard on ws, for wg0's peer"))
 	}
 	switch wg0 := s.WgKey; {
 	case wg0 == "":

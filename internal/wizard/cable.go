@@ -164,7 +164,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if !c.lacks() {
 		return c.change("name " + cf.CablePort + " in /etc/ws/host_vars.yml on ws again, and run " +
-			"ws server apply --only network,wireguard there")
+			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if none {
 		return c.change("write an empty WS_CABLE_SERVICE in mac.conf, for no cable")
@@ -175,7 +175,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	if portSet && !c.Check {
 		// Apply reads the ports once, and names the port that the environment gives.
 		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
-			"ws server apply --only network,wireguard there")
+			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if err := c.read(ctx, ""); err != nil {
 		return step.Plan{}, err
@@ -185,7 +185,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	if c.end() == "" {
 		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
-			"ws server apply --only network,wireguard there")
+			"ws server ubuntu apply --only network,wireguard there")
 	}
 	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
 		"ws mac apply, which gives it 10.77.0.2, and ping " + cableEnd)

@@ -43,7 +43,7 @@ func TestServerApplyRefusesOtherArgs(t *testing.T) {
 		{"apply", "--only", "base,"}, {"apply", "--only", ""},
 		{"apply", "--only"}, {"apply", "-C"}, {"apply", "extra"}, {"other"},
 	} {
-		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server"}, args...)...)
+		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server", "ubuntu"}, args...)...)
 		if status != 2 || !strings.Contains(stderr, "--help' for usage.") {
 			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
 		}
@@ -55,8 +55,8 @@ func TestServerApplyRefusesNonRoot(t *testing.T) {
 	m := p.machine.(*effecttest.Machine)
 	p.euid = 1000
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	status, _, stderr := runWs(p, "", "server", "apply")
-	if status != 1 || stderr != "ws server apply: run it as root\n" {
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "apply")
+	if status != 1 || stderr != "ws server ubuntu apply: run it as root\n" {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 	if slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "exec ") }) {
@@ -65,7 +65,7 @@ func TestServerApplyRefusesNonRoot(t *testing.T) {
 }
 
 func TestServerApplyHelp(t *testing.T) {
-	status, stdout, _ := runWs(fakeProcess(), "", "server", "apply", "-h")
+	status, stdout, _ := runWs(fakeProcess(), "", "server", "ubuntu", "apply", "-h")
 	for _, want := range []string{"--check", "--only", "ROLE/STEP", "--secrets", "ws-secrets"} {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
@@ -114,14 +114,14 @@ func TestLoadSecrets(t *testing.T) {
 func TestServerFansRefusesAConfigThatFailsItsCheck(t *testing.T) {
 	p := fakeProcess()
 	p.machine.(*effecttest.Machine).Files["/ws-fans.json"] = []byte(`{"interval": 0}`)
-	status, _, stderr := runWs(p, "", "server", "fans", "/ws-fans.json")
-	if status != 1 || !strings.HasPrefix(stderr, "ws server fans: /ws-fans.json: ") || !strings.Contains(stderr, "interval") {
+	status, _, stderr := runWs(p, "", "server", "ubuntu", "fans", "/ws-fans.json")
+	if status != 1 || !strings.HasPrefix(stderr, "ws server ubuntu fans: /ws-fans.json: ") || !strings.Contains(stderr, "interval") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
-	if status, _, _ = runWs(p, "", "server", "fans", "a", "b"); status != 2 {
+	if status, _, _ = runWs(p, "", "server", "ubuntu", "fans", "a", "b"); status != 2 {
 		t.Errorf("two configs: status = %d, want 2", status)
 	}
-	if status, _, stderr = runWs(p, "", "server", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws-fans.json") {
+	if status, _, stderr = runWs(p, "", "server", "ubuntu", "fans"); status != 1 || !strings.Contains(stderr, "/etc/ws-fans.json") {
 		t.Errorf("no config: status = %d, stderr = %q", status, stderr)
 	}
 }
@@ -133,13 +133,13 @@ func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 	m := p.machine.(*effecttest.Machine)
 	p.euid = 1000
 	m.Files["/etc/os-release"] = []byte("ID=ubuntu\nVERSION_ID=\"26.04\"\n")
-	status, stdout, stderr := runWs(p, "", "server", "state", "--json")
-	if status != 1 || stdout != "" || stderr != "ws server state: run it as root\n" {
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--json")
+	if status != 1 || stdout != "" || stderr != "ws server ubuntu state: run it as root\n" {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 	for _, args := range [][]string{{"state", "extra"}, {"state", "--only", "nothing"}, {"state", "--check"},
 		{"state", "--secrets", "f"}} {
-		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server"}, args...)...)
+		status, _, stderr := runWs(fakeProcess(), "", append([]string{"server", "ubuntu"}, args...)...)
 		if status != 2 || !strings.Contains(stderr, "--help' for usage.") {
 			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
 		}
@@ -148,14 +148,14 @@ func TestServerStateRefusesNonRootAndOtherArgs(t *testing.T) {
 
 func TestServerStateRefusesAStepItsRoleLacks(t *testing.T) {
 	p, _ := serverTerminal()
-	status, stdout, stderr := runWs(p, "", "server", "state", "--only", "tmux/no such")
+	status, stdout, stderr := runWs(p, "", "server", "ubuntu", "state", "--only", "tmux/no such")
 	if status != 2 || stdout != "" || !strings.Contains(stderr, `no step "no such" in tmux`) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
 }
 
 func TestServerStateHelp(t *testing.T) {
-	status, stdout, _ := runWs(fakeProcess(), "", "server", "state", "-h")
+	status, stdout, _ := runWs(fakeProcess(), "", "server", "ubuntu", "state", "-h")
 	for _, want := range []string{"--json", "--only", "applies nothing", "no secrets"} {
 		if status != 0 || !strings.Contains(stdout, want) {
 			t.Errorf("status = %d, help = %q, want it to hold %q", status, stdout, want)
@@ -205,11 +205,11 @@ func TestRoleSectionsNameTheRoles(t *testing.T) {
 func TestServerStateDrawsTheScreenAtATerminal(t *testing.T) {
 	p, _ := serverTerminal()
 	p.outTTY = true
-	status, stdout, stderr := runWs(p, "q", "server", "state", "--only", "tmux")
+	status, stdout, stderr := runWs(p, "q", "server", "ubuntu", "state", "--only", "tmux")
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) {
 		t.Errorf("status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}
-	status, stdout, stderr = runWs(p, "", "server", "state", "--json", "--only", "tmux")
+	status, stdout, stderr = runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "tmux")
 	if status != 0 || !strings.Contains(stdout, `"role": "tmux"`) || strings.Contains(stderr, enterScreen) {
 		t.Errorf("--json: status = %d, stdout = %q, stderr = %q", status, stdout, stderr)
 	}

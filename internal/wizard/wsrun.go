@@ -73,8 +73,8 @@ func (c runChange) String() string { return runStage + ": would " + c.text }
 // --check it says what would happen.
 func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.Unbooted {
-		r.Out.Say("%s: ws's systemd isn't booted, as in a container, so no unit runs ws server apply: "+
-			"run sudo ws server apply", runStage)
+		r.Out.Say("%s: ws's systemd isn't booted, as in a container, so no unit runs ws server ubuntu apply: "+
+			"run sudo ws server ubuntu apply", runStage)
 		return step.Plan{}, nil
 	}
 	c, err := r.Ws.want()
@@ -84,9 +84,9 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.partDone(ctx, c) {
 		return step.Plan{}, nil
 	}
-	how := "run ws server apply on ws in a unit of its own, and follow its log"
+	how := "run ws server ubuntu apply on ws in a unit of its own, and follow its log"
 	if len(r.Only) > 0 {
-		how = "run ws server apply on ws for the steps chosen, in a unit of its own, and follow its log"
+		how = "run ws server ubuntu apply on ws for the steps chosen, in a unit of its own, and follow its log"
 	}
 	s := r.Ws.known()
 	if s.Secrets != "" {
@@ -123,6 +123,6 @@ func (r *WsRun) partDone(ctx context.Context, c conf.Conf) bool {
 // fail says what to do where ws server apply ran no full run to its end. It names no cause, as ssh has
 // printed it, or ws has.
 func fail() error {
-	return errors.New(runStage + ": ws server apply stopped, as above, or ssh dropped while " +
+	return errors.New(runStage + ": ws server ubuntu apply stopped, as above, or ssh dropped while " +
 		"it goes on; mend what it printed, then run the wizard again, which follows a run that goes on")
 }

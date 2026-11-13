@@ -21,7 +21,7 @@ func newValuesCmd(p process) *cobra.Command {
 		Short: "write one key of " + serverVars,
 		Long: "An empty VALUE takes the key's line out, which gives its default back. A list's VALUE is split by " +
 			"commas. A table, such as fans_curves, stays the file's to edit by hand.\n\n" +
-			"The next ws server apply takes the key.",
+			"The next ws server ubuntu apply takes the key.",
 		Args: cobra.ExactArgs(2),
 		RunE: func(c *cobra.Command, args []string) error { return runValuesSet(c, p, args[0], args[1]) },
 	})

@@ -48,4 +48,4 @@ func (r WsReach) user() (string, error) {
 	return cmp.Or(c.User, defaultUser()), err
 }
 
-func (WsReach) rerun() string { return "run sudo ws server apply" }
+func (WsReach) rerun() string { return "run sudo ws server ubuntu apply" }

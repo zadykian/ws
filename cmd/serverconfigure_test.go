@@ -22,9 +22,9 @@ func TestServerConfigureRefusals(t *testing.T) {
 		args []string
 		want string
 	}{
-		"a user":      {user, []string{"server", "configure"}, "by sudo"},
-		"no terminal": {away, []string{"server", "configure"}, "ws server values set"},
-		"--plain":     {plain, []string{"--plain", "server", "configure"}, "ws server values set"},
+		"a user":      {user, []string{"server", "ubuntu", "configure"}, "by sudo"},
+		"no terminal": {away, []string{"server", "ubuntu", "configure"}, "ws server ubuntu values set"},
+		"--plain":     {plain, []string{"--plain", "server", "ubuntu", "configure"}, "ws server ubuntu values set"},
 	} {
 		status, stdout, stderr := runWs(tc.p, "", tc.args...)
 		if status != 1 || stdout != "" || !strings.Contains(stderr, tc.want) || strings.Contains(stderr, enterScreen) {

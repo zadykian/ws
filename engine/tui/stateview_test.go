@@ -29,7 +29,7 @@ func wantDrawn(t *testing.T, s StateScreen, words ...string) {
 func TestStateScreenDrawsTheTabs(t *testing.T) {
 	s, _ := feedState(t, newTestState(), sized)
 	wantDrawn(t, s, " Packages  ", "reading")
-	wantDrawn(t, reportedState(t), " Packages 2 ", " Services 1 ", " Files 3 ", " Conflicts 2 ", "ws server state")
+	wantDrawn(t, reportedState(t), " Packages 2 ", " Services 1 ", " Files 3 ", " Conflicts 2 ", "ws server ubuntu state")
 	s, _ = feedState(t, reportedState(t), tea.WindowSizeMsg{Width: 30, Height: 24})
 	wantDrawn(t, s, " Packages 2 ", " Services 1 ", " Files 3 ", " Conflicts 2 ")
 }

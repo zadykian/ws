@@ -138,7 +138,7 @@ values() {
         case $pair in *[!A-Za-z0-9+/=]*) die "'$pair' is not base64" ;; esac
         text=$(printf %s "$pair" | base64 -d) || die "'$pair' is not base64"
         case $text in [a-z]*=*) ;; *) die "'$pair' holds no KEY=VALUE" ;; esac
-        "$ws" server values set -- "${text%%=*}" "${text#*=}" || die "cannot write ${text%%=*}"
+        "$ws" server ubuntu values set -- "${text%%=*}" "${text#*=}" || die "cannot write ${text%%=*}"
     done
 }
 

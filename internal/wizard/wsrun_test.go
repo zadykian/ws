@@ -34,9 +34,9 @@ func TestWsRunPlan(t *testing.T) {
 		update, check bool
 	}{
 		"done":       {"lan", idleRun, "", false, false},
-		"older ws":   {"lan", wsStatus{Run: stamp{Version: "v1.2.2", Exit: "0"}}, "run ws server apply on ws", false, false},
-		"first run":  {"lan", wsStatus{}, "run ws server apply on ws", false, false},
-		"update":     {"lan", idleRun, "run ws server apply on ws", true, false},
+		"older ws":   {"lan", wsStatus{Run: stamp{Version: "v1.2.2", Exit: "0"}}, "run ws server ubuntu apply on ws", false, false},
+		"first run":  {"lan", wsStatus{}, "run ws server ubuntu apply on ws", false, false},
+		"update":     {"lan", idleRun, "run ws server ubuntu apply on ws", true, false},
 		"cloud done": {"cloud", wsStatus{Run: off, OutboundOff: true}, "", false, false},
 		"cloud host_vars": {"cloud", wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Off: true, Vars: "aa11"}, Vars: "bb22"},
 			"after naming security_outbound: false in ws's host_vars", false, false},
@@ -60,7 +60,7 @@ func TestWsRunPlan(t *testing.T) {
 func TestWsRunIsDoneAtWsFilesSum(t *testing.T) {
 	for name, tc := range map[string]struct{ stamp, now, want string }{
 		"same file":    {"aa11", "aa11", ""},
-		"changed file": {"aa11", "bb22", "run ws server apply on ws in a unit of its own, and follow its log, with ws's secrets file"},
+		"changed file": {"aa11", "bb22", "run ws server ubuntu apply on ws in a unit of its own, and follow its log, with ws's secrets file"},
 		"a new file":   {"", "bb22", ", with ws's secrets file"},
 		"file gone":    {"aa11", "", "and follow its log"},
 		"no file":      {"", "", ""},
@@ -87,10 +87,10 @@ func TestWsRunIsDoneAtHostVarsSum(t *testing.T) {
 		now, want string
 	}{
 		"same file":    {at("aa11"), "aa11", ""},
-		"changed file": {at("aa11"), "bb22", "run ws server apply on ws"},
-		"a new file":   {at(""), "bb22", "run ws server apply on ws"},
+		"changed file": {at("aa11"), "bb22", "run ws server ubuntu apply on ws"},
+		"a new file":   {at(""), "bb22", "run ws server ubuntu apply on ws"},
 		"no file":      {at(""), "", ""},
-		"no stamp":     {stamp{}, "", "run ws server apply on ws"},
+		"no stamp":     {stamp{}, "", "run ws server ubuntu apply on ws"},
 	} {
 		r, _ := newRun("lan", wsStatus{Run: tc.run, Vars: tc.now}, false, false)
 		p, err := r.Plan(context.Background())
@@ -162,7 +162,7 @@ func TestWsRunUpdateWaitsForTheRun(t *testing.T) {
 func TestWsRunApply(t *testing.T) {
 	r, m := newRun("lan", wsStatus{}, false, false)
 	p, _ := r.Plan(context.Background())
-	if err := r.Apply(context.Background(), p); err == nil || !strings.Contains(err.Error(), "ws server apply stopped") {
+	if err := r.Apply(context.Background(), p); err == nil || !strings.Contains(err.Error(), "ws server ubuntu apply stopped") {
 		t.Errorf("Apply where ssh has no result = %v; want the stop", err)
 	}
 	m.Results[opLine("run")] = effecttest.Result{}

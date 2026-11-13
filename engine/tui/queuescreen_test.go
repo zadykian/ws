@@ -86,10 +86,10 @@ func wsStages() []Stage {
 }
 
 func TestStagesAllOnWsStandInOneList(t *testing.T) {
-	s := openQueue("ws server wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, press('/'), press('s'))
 	got := queueShown(s)
-	for _, want := range []string{"ws server wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
+	for _, want := range []string{"ws server ubuntu wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("no %q in:\n%s", want, got)
 		}
@@ -100,7 +100,7 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 }
 
 func TestTabLeavesOneListForTheButtons(t *testing.T) {
-	s := openQueue("ws server wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
+	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
 	if s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
 		t.Errorf("side %d, focus %d", s.list.side, s.footer.Focused())

@@ -71,7 +71,7 @@ func (v *WsValues) Apply(ctx context.Context, p step.Plan) error {
 		return fmt.Errorf("%s: unknown change %T", valuesStage, p.Changes[0])
 	}
 	if key := strings.Fields(c.keys)[0]; !v.Tty {
-		return fmt.Errorf("%s: no terminal to ask %s: name it by sudo ws server values set %s VALUE",
+		return fmt.Errorf("%s: no terminal to ask %s: name it by sudo ws server ubuntu values set %s VALUE",
 			valuesStage, key, key)
 	}
 	cloud, err := v.target(ctx, c.keys)

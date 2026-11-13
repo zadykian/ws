@@ -31,7 +31,7 @@ func TestTunnelPlan(t *testing.T) {
 		want   string
 	}{
 		"done":      {keyB, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA}, ""},
-		"peer":      {keyB, wsStatus{WgKey: keyB, MacKey: keyA}, "run ws server apply --only wireguard"},
+		"peer":      {keyB, wsStatus{WgKey: keyB, MacKey: keyA}, "run ws server ubuntu apply --only wireguard"},
 		"other key": {keyB, wsStatus{WgKey: keyB, Peered: true, MacKey: keyB}, "write the Mac's key, " + keyA},
 		"new wg0": {keyA, wsStatus{WgKey: keyB, Peered: true, MacKey: keyA},
 			"set WS_PUBLIC_KEY in mac.conf to wg0's key, " + keyB},

@@ -12,7 +12,7 @@ import (
 // secretsLine is the ssh command line that runs cmd as root on ws, through sudo's password.
 func secretsLine(sh SSHShell, cmd string) string {
 	return "ssh " + strings.Join(sh.SSH.argv(context.Background(),
-		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", wsPath, "server", "secrets"}), " ") + " " + cmd
+		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", wsPath, "server", "ubuntu", "secrets"}), " ") + " " + cmd
 }
 
 // shellReach is a Reach whose shell is sh.
@@ -48,13 +48,13 @@ func TestSessionSecretsSendsTheValueOnStdin(t *testing.T) {
 func TestSessionSecretsErrors(t *testing.T) {
 	for _, tt := range []struct{ err, want string }{
 		{"[ssh]: exit status 255: \nssh: connect to host ws: No route to host\n", "ws is out of reach: ssh to ws failed: ssh: connect"},
-		{"[ssh]: exit status 1: \nws server secrets keys: run it as root\n", "ws server secrets keys: run it as root"},
+		{"[ssh]: exit status 1: \nws server ubuntu secrets keys: run it as root\n", "ws server ubuntu secrets keys: run it as root"},
 	} {
 		m := effecttest.NewMachine()
 		sh := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}
 		r := secretsSession(sh)
 		m.Results["ssh "+strings.Join(sh.SSH.argv(context.Background(),
-			[]string{"-o", "BatchMode=yes", "ws", wsPath, "server", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}
+			[]string{"-o", "BatchMode=yes", "ws", wsPath, "server", "ubuntu", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}
 		if _, err := r.Secrets(context.Background(), nil, "keys"); err == nil || !strings.HasPrefix(err.Error(), tt.want) {
 			t.Errorf("err = %v, want %q", err, tt.want)
 		}
@@ -67,7 +67,7 @@ func TestSessionSecretsLeavesTheStatusStale(t *testing.T) {
 	m := effecttest.NewMachine()
 	ws := NewSession(fakeReach{Reach: MacReach{}, M: m}, Scripts{Remote: []byte("x")})
 	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{}.text()}
-	m.Results[wsPath+" server secrets keys"] = effecttest.Result{}
+	m.Results[wsPath+" server ubuntu secrets keys"] = effecttest.Result{}
 	ws.status(ctx)
 	if _, err := ws.Secrets(ctx, nil, "keys"); err != nil {
 		t.Fatal(err)

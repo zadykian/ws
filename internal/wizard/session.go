@@ -110,7 +110,7 @@ func (s *Session) Hand(ctx context.Context, h *Hand) {
 // ssh says that ws is out of reach; else the error is what ws printed.
 func (s *Session) Secrets(ctx context.Context, in []byte, args ...string) ([]byte, error) {
 	s.stale()
-	out, err := s.shell.Run(ctx, in, append([]string{wsPath, "server", "secrets"}, args...)...)
+	out, err := s.shell.Run(ctx, in, append([]string{wsPath, "server", "ubuntu", "secrets"}, args...)...)
 	switch {
 	case err == nil:
 		return out, nil

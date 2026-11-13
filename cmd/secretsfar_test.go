@@ -42,7 +42,7 @@ func TestMacSecretsEditWsFile(t *testing.T) {
 
 func TestMacSecretsSayWhyTheyStop(t *testing.T) {
 	ssh := errors.New("[ssh]: exit status 255: \nssh: connect to host ws: No route to host")
-	for err, want := range map[error]string{ssh: "ws is out of reach", nil: "run ws server secrets init"} {
+	for err, want := range map[error]string{ssh: "ws is out of reach", nil: "run ws server ubuntu secrets init"} {
 		status, _, errs := runFarSecrets(effecttest.NewMachine(), err, "", "unset", "env", "A")
 		if status != 1 || !strings.Contains(errs, want) {
 			t.Errorf("status %d, stderr %q; want 1 naming %q", status, errs, want)
@@ -58,7 +58,7 @@ func TestMacSecretsSetAsksNoValueWithWsOutOfReach(t *testing.T) {
 		t.Errorf("status %d, stderr %q; want 1 naming the way", status, errs)
 	}
 	status, _, errs := runFarSecrets(effecttest.NewMachine(), nil, "dummy-value\n", "set", "env", "A")
-	if status != 1 || !strings.Contains(errs, "run ws server secrets init") || strings.Contains(errs, "dummy-value") {
+	if status != 1 || !strings.Contains(errs, "run ws server ubuntu secrets init") || strings.Contains(errs, "dummy-value") {
 		t.Errorf("status %d, stderr %q; want 1 naming init, and no value", status, errs)
 	}
 }

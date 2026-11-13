@@ -49,7 +49,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 		if port == "" {
 			return c.write(ctx, "")
 		}
-		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws, and ws server apply --only network,wireguard "+
+		c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws, and ws server ubuntu apply --only network,wireguard "+
 			"runs there in a unit of its own", cableStage, port)
 		if err := c.name(ctx, port); err != nil {
 			return err
@@ -58,7 +58,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 			return err
 		}
 		if c.end() != port {
-			return fmt.Errorf("%s: ws's %s lacks %s after ws server apply --only network,wireguard: plug the "+
+			return fmt.Errorf("%s: ws's %s lacks %s after ws server ubuntu apply --only network,wireguard: plug the "+
 				"Mac's cable into it, or mend what that printed, then run the wizard again", cableStage, port, cableEnd)
 		}
 	}
@@ -94,7 +94,7 @@ func (c *Cable) again(ctx context.Context, port string) error {
 	if s.Cable == port {
 		return nil
 	}
-	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws again, and ws server apply --only network,wireguard "+
+	c.Out.Say("%s: %s goes in /etc/ws/host_vars.yml on ws again, and ws server ubuntu apply --only network,wireguard "+
 		"runs there in a unit of its own", cableStage, port)
 	return c.name(ctx, port)
 }

@@ -176,7 +176,7 @@ func (m wsOverSSH) RunInput(_ context.Context, _ []byte, _ string, args ...strin
 
 func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 	p, _ := serverTerminal()
-	status, stdout, _ := runWs(p, "", "server", "state", "--json", "--only", "tmux")
+	status, stdout, _ := runWs(p, "", "server", "ubuntu", "state", "--json", "--only", "tmux")
 	if status != 0 {
 		t.Fatalf("status = %d", status)
 	}

@@ -53,11 +53,16 @@ func serverRefusal(euid int, osRelease []byte) string {
 	return ""
 }
 
-// newServerCmd returns ws server, the server's side of ws. It builds everywhere, so that the
-// tests run anywhere. Only its entry in the groups is built for Linux alone.
+// newServerCmd returns ws server, the group of the server's systems. It builds everywhere, so that
+// the tests run anywhere. Only its entry in the groups is built for Linux alone.
 func newServerCmd(p process) *cobra.Command {
-	return group("server", "the server's commands", newApplyCmd(p), newStateCmd(p), newFansCmd(p), newValuesCmd(p),
-		newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
+	return group("server", "the server's systems", newUbuntuCmd(p))
+}
+
+// newUbuntuCmd returns ws server ubuntu, the commands that set up an Ubuntu server.
+func newUbuntuCmd(p process) *cobra.Command {
+	return group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
+		newValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
 }
 
 // newApplyCmd returns ws server apply.
