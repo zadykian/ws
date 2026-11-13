@@ -22,6 +22,8 @@ func TestParseConf(t *testing.T) {
 			LANServer: netip.MustParseAddr("192.168.1.10"), Remote: "ws.example.com", Port: 51000,
 		}, ""},
 		{"a slot", "WS_PUBLIC_KEY=" + key + "\nWS_SLOT=15\n", Conf{Key: key, Port: 51820, Slot: 15}, ""},
+		{"the cable", "WS_PUBLIC_KEY=" + key + "\nWS_CABLE=yes\n", Conf{Key: key, Port: 51820, Cable: true}, ""},
+		{"bad cable", "WS_CABLE=no\n", Conf{}, "tunnel.conf: cannot take 'WS_CABLE=no'"},
 		{"comments, blanks and spaces", "# a\n\n \t WS_PORT=80 \t\nWS_PUBLIC_KEY=" + key + "\n",
 			Conf{Key: key, Port: 80}, ""},
 		{"a later line wins", "WS_PORT=80\nWS_PORT=81\nWS_PUBLIC_KEY=" + key, Conf{Key: key, Port: 81}, ""},
