@@ -1,6 +1,7 @@
 package slot_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/zadykian/ws/roles/internal/slot"
@@ -54,5 +55,29 @@ func TestParse(t *testing.T) {
 		if _, ok := slot.Parse(text); ok {
 			t.Errorf("Parse(%q) was taken", text)
 		}
+	}
+}
+
+func TestWg0(t *testing.T) {
+	for s, want := range map[slot.Slot]string{0: "10.99.0.1/24", 1: "10.99.1.1/24", 15: "10.99.15.1/24"} {
+		if got := s.Wg0().String(); got != want {
+			t.Errorf("Slot(%d).Wg0() = %s, want %s", s, got, want)
+		}
+	}
+}
+
+func TestFind(t *testing.T) {
+	for text, want := range map[string]slot.Slot{"10.99.0.1": 0, "10.99.1.1": 1, "10.99.15.1": 15} {
+		if got, ok := slot.Find(netip.MustParseAddr(text)); !ok || got != want {
+			t.Errorf("Find(%s) = %d, %t", text, got, ok)
+		}
+	}
+	for _, text := range []string{"10.99.0.2", "10.99.16.1", "10.98.0.1", "::1"} {
+		if _, ok := slot.Find(netip.MustParseAddr(text)); ok {
+			t.Errorf("Find(%s) was taken", text)
+		}
+	}
+	if _, ok := slot.Find(netip.Addr{}); ok {
+		t.Error("Find took the zero Addr")
 	}
 }

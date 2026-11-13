@@ -41,3 +41,18 @@ func (s Slot) Server() netip.Addr {
 func (s Slot) Mac() netip.Addr {
 	return s.Server().Next()
 }
+
+// Wg0 is wg0's address on the server, with its subnet's length: 10.99.N.1/24.
+func (s Slot) Wg0() netip.Prefix {
+	return netip.PrefixFrom(s.Server(), s.Net().Bits())
+}
+
+// Find gives the slot whose server end is a, as wg0's address names it.
+func Find(a netip.Addr) (Slot, bool) {
+	for s := Slot(0); s <= Last; s++ {
+		if s.Server() == a {
+			return s, true
+		}
+	}
+	return 0, false
+}

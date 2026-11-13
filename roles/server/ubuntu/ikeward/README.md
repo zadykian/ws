@@ -19,7 +19,7 @@ ikeward_profile: /root/vpn/vpnclient    # vpnclient.p12 and vpnclient.sswan
 ikeward_dns: 10.20.0.53                 # the remote network's resolver
 ikeward_domains: [example.internal]     # the domains whose names go to it alone
 ikeward_floors: [10.20.0.0/16]          # the ranges kept off the uplink from boot on
-ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac
+ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN: the Mac, at .2 of its slot
 ```
 
 Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
