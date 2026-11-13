@@ -9,7 +9,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
@@ -28,7 +27,7 @@ func pickSteps(c *cobra.Command, p process, groups []tui.Group, scan tui.Work) (
 
 // pickServer opens the list of the roles' steps, scanned by a check, and returns cfg and the roles
 // as the choice sets them. The roles are nil where the maintainer left.
-func pickServer(c *cobra.Command, p process, cfg apply.Config, list []roles.Role) (apply.Config, []roles.Role, error) {
+func pickServer(c *cobra.Command, p process, cfg apply.Config, list []apply.Role) (apply.Config, []apply.Role, error) {
 	p.machine = cfg.M // ws_home confines it.
 	scan := func(ctx context.Context, b *tui.Bridge) error {
 		look := onScreen(cfg, b)

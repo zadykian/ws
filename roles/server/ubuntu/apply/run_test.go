@@ -9,9 +9,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 type change string
@@ -35,7 +32,7 @@ func TestRun(t *testing.T) {
 	for _, check := range []bool{false, true} {
 		var a, b bool
 		c := Config{Options: Options{Check: check}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
-		got, err := Run(context.Background(), c, []roles.Role{role("a", todo{&a}), role("b", todo{&b})})
+		got, err := Run(context.Background(), c, []Role{role("a", todo{&a}), role("b", todo{&b})})
 		if err != nil || !slices.Equal(got, []string{"a", "b"}) || a == check || b == check {
 			t.Errorf("check %v: changed = %q, a = %v, b = %v, err = %v", check, got, a, b, err)
 		}
@@ -70,7 +67,7 @@ func TestRunTakesStepsByName(t *testing.T) {
 			b := role("b", named{todo{done["z"]}, "z"})
 			c := Config{Options: Options{Check: tt.check, Only: tt.only}, M: effecttest.NewMachine(),
 				Out: &effecttest.Out{}, Prepare: []step.Step{named{todo{done["prepare"]}, "prepare"}}}
-			list, err := Select([]roles.Role{a, b}, tt.only)
+			list, err := Select([]Role{a, b}, tt.only)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -97,7 +94,7 @@ func TestRunNamesNoRoleForStepsLeftOut(t *testing.T) {
 		done, pending := true, false
 		a := role("a", named{todo{&done}, "x"}, named{todo{&pending}, "y"})
 		c := Config{Options: Options{Check: check, Only: []string{"a/x"}}, M: effecttest.NewMachine(), Out: &effecttest.Out{}}
-		got, err := Run(context.Background(), c, []roles.Role{a})
+		got, err := Run(context.Background(), c, []Role{a})
 		if err != nil || len(got) != 0 || pending {
 			t.Errorf("check %v: changed = %q, y applied = %v, err = %v", check, got, pending, err)
 		}
@@ -120,8 +117,8 @@ func (l *lasts) Observe(e step.Event) {
 }
 
 // role is a role of the steps list.
-func role(name string, list ...step.Step) roles.Role {
-	return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
+func role(name string, list ...step.Step) Role {
+	return Role{Name: name, Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
 		return list
 	}}
 }
@@ -132,12 +129,12 @@ func TestRunNamesEachRoleAndEndsThoseAFailureStopsShortOf(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare step.Step
-		list    []roles.Role
+		list    []Role
 		want    lasts
 	}{
-		{"a role fails", ok, []roles.Role{role("a", bad), role("b", ok)},
+		{"a role fails", ok, []Role{role("a", bad), role("b", ok)},
 			lasts{"prepare/todo done", "a/todo failed", "b/todo skipped"}},
-		{"prepare fails", bad, []roles.Role{role("a", ok)}, lasts{"prepare/todo failed", "a/todo skipped"}},
+		{"prepare fails", bad, []Role{role("a", ok)}, lasts{"prepare/todo failed", "a/todo skipped"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -164,7 +161,7 @@ func TestRunStopsBetweenTheRolesAndEndsThoseItStopsShortOf(t *testing.T) {
 		}
 		return nil
 	}}
-	changed, err := Run(context.Background(), c, []roles.Role{role("a", todo{&a}), role("b", todo{&b}), role("c", todo{&b})})
+	changed, err := Run(context.Background(), c, []Role{role("a", todo{&a}), role("b", todo{&b}), role("c", todo{&b})})
 	if !errors.Is(err, stopped) || !slices.Equal(changed, []string{"a"}) || b {
 		t.Errorf("changed = %q, err = %v, b = %v", changed, err, b)
 	}
@@ -199,13 +196,13 @@ func (reports) Report(context.Context) ([]step.Item, error) {
 
 func TestStateReadsPrepareAndEachRoleAndAppliesNone(t *testing.T) {
 	var a, b bool
-	role := func(name string, s step.Step) roles.Role {
-		return roles.Role{Name: name, Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
+	role := func(name string, s step.Step) Role {
+		return Role{Name: name, Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
 			return []step.Step{s}
 		}}
 	}
 	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Prepare: []step.Step{todo{&a}}}
-	got, err := State(context.Background(), c, []roles.Role{role("a", reports{todo{&b}}), role("b", failing{todo{&b}})})
+	got, err := State(context.Background(), c, []Role{role("a", reports{todo{&b}}), role("b", failing{todo{&b}})})
 	if err != nil || len(got) != 3 || a || b {
 		t.Fatalf("got %+v, a = %v, b = %v, err = %v", got, a, b, err)
 	}
@@ -222,7 +219,7 @@ func TestStateReadsPrepareAndEachRoleAndAppliesNone(t *testing.T) {
 
 func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
 	var done bool
-	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
+	r := Role{Name: "a", Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
 		return []step.Step{named{todo{&done}, "x"}, named{todo{&done}, "y"}}
 	}}
 	for _, tc := range []struct{ only, want []string }{
@@ -233,7 +230,7 @@ func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
 	} {
 		c := Config{Options: Options{Only: tc.only}, M: effecttest.NewMachine(), Out: &effecttest.Out{},
 			Prepare: []step.Step{named{todo{&done}, "prepare"}}}
-		got, err := State(context.Background(), c, []roles.Role{r})
+		got, err := State(context.Background(), c, []Role{r})
 		if err != nil || len(got) != 2 || len(got[0].Steps) != 1 {
 			t.Fatalf("only %q: got %+v, err = %v", tc.only, got, err)
 		}
@@ -247,26 +244,14 @@ func TestStateKeepsTheStepsThatOnlyNames(t *testing.T) {
 	}
 }
 
-func TestStateHandsTheRolesTheConfigsSecrets(t *testing.T) {
-	var got secrets.Secrets
-	r := roles.Role{Name: "a", Steps: func(_ values.Values, s secrets.Secrets, _ effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
-		got = s
-		return nil
-	}}
-	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Secrets: secrets.Secrets{Unread: true, Env: map[string]string{"A": "b"}}}
-	if _, err := State(context.Background(), c, []roles.Role{r}); err != nil || !got.Unread || got.Env["A"] != "b" {
-		t.Errorf("secrets = %+v, %v, want the config's", got, err)
-	}
-}
-
 func TestStateStopsAtTheEndOfTheContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	var done bool
-	r := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
+	r := Role{Name: "a", Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
 		return []step.Step{todo{&done}}
 	}}
-	if _, err := State(ctx, Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}}, []roles.Role{r}); !errors.Is(err, context.Canceled) {
+	if _, err := State(ctx, Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}}, []Role{r}); !errors.Is(err, context.Canceled) {
 		t.Errorf("err = %v, want canceled", err)
 	}
 }

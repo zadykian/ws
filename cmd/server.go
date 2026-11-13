@@ -15,7 +15,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
+	"github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -100,10 +100,11 @@ func newApplyCmd(p process) *cobra.Command {
 
 // serverRun is what a command that reads or sets the server up has made ready.
 type serverRun struct {
-	cfg  apply.Config
-	list []roles.Role
-	term *effect.Terminal
-	out  progOut
+	cfg    apply.Config
+	list   []apply.Role
+	values values.Values
+	term   *effect.Terminal
+	out    progOut
 }
 
 // prepareServer checks where the command runs, then loads the values and the secrets that the
@@ -112,7 +113,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
 		return serverRun{}, usageError{errors.New("--only names no role")}
 	}
-	list, err := apply.Select(roles.List(), opts.Only)
+	_, err := apply.Select(serverRoles(ubuntu.List(), values.Values{}, secrets.Secrets{}), opts.Only)
 	if err != nil {
 		return serverRun{}, usageError{err}
 	}
@@ -138,12 +139,21 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 	if err != nil {
 		return serverRun{}, err
 	}
-	cfg := apply.Config{Options: opts.Options, Values: v, Secrets: sec, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
+	cfg := apply.Config{Options: opts.Options, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
-	if err := cfg.CheckSteps(list); err != nil {
+	r := serverRun{cfg: cfg, values: v, term: term, out: out}
+	if r.list, err = r.roles(sec); err != nil {
 		return serverRun{}, usageError{err}
 	}
-	return serverRun{cfg: cfg, list: list, term: term, out: out}, nil
+	if err := cfg.CheckSteps(r.list); err != nil {
+		return serverRun{}, usageError{err}
+	}
+	return r, nil
+}
+
+// roles returns the roles that --only names, closed over r's values and the secrets s.
+func (r serverRun) roles(s secrets.Secrets) ([]apply.Role, error) {
+	return apply.Select(serverRoles(ubuntu.List(), r.values, s), r.cfg.Only)
 }
 
 // runApply sets the server up as opts say.
@@ -198,7 +208,7 @@ func onScreen(cfg apply.Config, b *tui.Bridge) apply.Config {
 
 // applyOnScreen is apply.Run under the run screen. cfg's steps name the screen's rows, and the run
 // builds them again on the screen's effects. The roles it returns are those of a run that ended.
-func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []roles.Role) ([]string, error) {
+func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []apply.Role) ([]string, error) {
 	var changed []string
 	p.machine = cfg.M // ws_home confines it.
 	err := drawRun(c, p, runTitle(c, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
@@ -217,7 +227,7 @@ func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []roles.R
 }
 
 // serverGroups names the steps of a run, so that its screen lists each one before the first starts.
-func serverGroups(cfg apply.Config, list []roles.Role) []tui.Group {
+func serverGroups(cfg apply.Config, list []apply.Role) []tui.Group {
 	groups := []tui.Group{tui.NewGroup(apply.Prepare, cfg.Prepare)}
 	for _, r := range list {
 		groups = append(groups, tui.NewGroup(r.Name, cfg.Steps(r)))

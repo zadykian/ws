@@ -47,16 +47,19 @@ func runState(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 	}
 	// State reads the machine and takes no secrets. A step that needs them would write them out to
 	// plan, as ikeward's install does, and a report has no use for them.
-	r.cfg.Secrets = secrets.Secrets{Unread: true}
+	list, err := r.roles(secrets.Secrets{Unread: true})
+	if err != nil {
+		return usageError{err}
+	}
 	if drawsReport(c, p) {
 		p.machine = r.cfg.M // ws_home confines it.
 		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-			states, err := apply.State(ctx, onScreen(r.cfg, b), r.list)
+			states, err := apply.State(ctx, onScreen(r.cfg, b), list)
 			return roleSections(states), err
 		})
 	}
-	states, err := apply.State(c.Context(), r.cfg, r.list)
+	states, err := apply.State(c.Context(), r.cfg, list)
 	r.term.Flush()
 	if err != nil {
 		return err

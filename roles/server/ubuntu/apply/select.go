@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 // Select returns the roles that only names, each by ROLE or ROLE/STEP, or every role of list where
 // only is empty, in the order of list. Config.CheckSteps checks the steps.
-func Select(list []roles.Role, only []string) ([]roles.Role, error) {
+func Select(list []Role, only []string) ([]Role, error) {
 	named := make([]string, len(only))
 	for i, entry := range only {
 		named[i], _, _ = strings.Cut(entry, "/")
-		if !slices.ContainsFunc(list, func(r roles.Role) bool { return r.Name == named[i] }) {
+		if !slices.ContainsFunc(list, func(r Role) bool { return r.Name == named[i] }) {
 			names := make([]string, len(list))
 			for i, r := range list {
 				names[i] = r.Name
@@ -25,12 +23,12 @@ func Select(list []roles.Role, only []string) ([]roles.Role, error) {
 	if len(only) == 0 {
 		return list, nil
 	}
-	return slices.DeleteFunc(slices.Clone(list), func(r roles.Role) bool { return !slices.Contains(named, r.Name) }), nil
+	return slices.DeleteFunc(slices.Clone(list), func(r Role) bool { return !slices.Contains(named, r.Name) }), nil
 }
 
 // CheckSteps refuses a ROLE/STEP of Only that names no step of its role. It comes past Select, as
 // a role's steps follow the machine's values: ikeward has none without a profile.
-func (c Config) CheckSteps(list []roles.Role) error {
+func (c Config) CheckSteps(list []Role) error {
 	for _, r := range list {
 		for _, entry := range c.Only {
 			name, ok := strings.CutPrefix(entry, r.Name+"/")

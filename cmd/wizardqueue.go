@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/setup"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
+	"github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
@@ -32,7 +32,7 @@ func nestedRows(stage string) []tui.Group {
 	case (&wizard.Setup{}).Name():
 		groups = []tui.Group{{Name: stage, Steps: setup.Names()}}
 	case (&wizard.WsRun{}).Name():
-		for _, r := range roles.List() {
+		for _, r := range ubuntu.List() {
 			groups = append(groups, tui.Group{Name: r.Name})
 		}
 	}

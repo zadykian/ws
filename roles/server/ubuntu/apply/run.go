@@ -7,9 +7,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // Prepare is the parent of Config.Prepare's steps in a run's events, as a role is of its own.
@@ -18,10 +15,7 @@ const Prepare = "prepare"
 // Config is what Run needs.
 type Config struct {
 	Options
-	Values values.Values
-	// Secrets are the decrypted secrets, for the roles that read them.
-	Secrets secrets.Secrets
-	M       effect.Machine
+	M effect.Machine
 	// U are the units every role of the run gets; prepareServer sets it once.
 	U   effect.Units
 	Out effect.Out
@@ -34,13 +28,13 @@ type Config struct {
 }
 
 // Steps returns r's steps as Run runs them, on M and Out.
-func (c Config) Steps(r roles.Role) []step.Step {
-	return r.Steps(c.Values, c.Secrets, c.M, c.U, c.Out)
+func (c Config) Steps(r Role) []step.Step {
+	return r.Steps(c.M, c.U, c.Out)
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
 // that would under Check. Only leaves steps out of the roles alone, as Prepare serves every step.
-func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
+func Run(ctx context.Context, c Config, list []Role) ([]string, error) {
 	o := step.Options{Observer: c.Observer, Check: c.Check, Parent: Prepare, Stop: c.Stop}
 	if _, err := step.RunWith(ctx, c.Prepare, o); err != nil {
 		c.unreached(list)
@@ -63,7 +57,7 @@ func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
 }
 
 // unreached ends the steps of the roles that a failure stopped short of.
-func (c Config) unreached(list []roles.Role) {
+func (c Config) unreached(list []Role) {
 	for _, r := range list {
 		o := step.Options{Observer: c.Observer, Check: c.Check, Parent: r.Name}
 		step.Unreached(c.Steps(r), o)

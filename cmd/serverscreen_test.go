@@ -14,10 +14,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 const (
@@ -81,8 +78,8 @@ func (s stepOf) Plan(ctx context.Context) (step.Plan, error) {
 func (stepOf) Apply(context.Context, step.Plan) error { return nil }
 
 // roleOf is a role of one step, which makes takes the run's effects to build.
-func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) roles.Role {
-	return roles.Role{Name: name, Steps: func(_ values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
+func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) apply.Role {
+	return apply.Role{Name: name, Steps: func(m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 		return []step.Step{makes(m, out)}
 	}}
 }
@@ -100,7 +97,7 @@ func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
 	})
 	lines := &effecttest.Out{}
 	cfg := apply.Config{Options: apply.Options{Check: true}, M: m, Out: lines, Observer: step.Printer{Out: lines}}
-	changed, err := applyOnScreen(c, p, cfg, []roles.Role{role})
+	changed, err := applyOnScreen(c, p, cfg, []apply.Role{role})
 	if err != nil || !slices.Equal(changed, []string{"a"}) {
 		t.Fatalf("changed = %q, err = %v", changed, err)
 	}
@@ -138,7 +135,7 @@ func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
 	next := roleOf("b", func(effect.Machine, effect.Out) step.Step {
 		return stepOf{"two", func(context.Context) error { reached = true; return nil }}
 	})
-	_, err := applyOnScreen(c, p, apply.Config{M: m, Out: &effecttest.Out{}}, []roles.Role{waits, next})
+	_, err := applyOnScreen(c, p, apply.Config{M: m, Out: &effecttest.Out{}}, []apply.Role{waits, next})
 	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
 		t.Errorf("err = %v, the next role reached = %v", err, reached)
 	}
@@ -147,7 +144,7 @@ func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
 func TestServerGroupsNameEveryStepOfARun(t *testing.T) {
 	role := roleOf("a", func(effect.Machine, effect.Out) step.Step { return stepOf{name: "one"} })
 	cfg := apply.Config{M: effecttest.NewMachine(), Prepare: []step.Step{stepOf{name: "first"}}}
-	got := serverGroups(cfg, []roles.Role{role})
+	got := serverGroups(cfg, []apply.Role{role})
 	want := []tui.Group{{Name: apply.Prepare, Steps: []string{"first"}}, {Name: "a", Steps: []string{"one"}}}
 	if len(got) != 2 || got[0].Name != want[0].Name || !slices.Equal(got[0].Steps, want[0].Steps) ||
 		got[1].Name != want[1].Name || !slices.Equal(got[1].Steps, want[1].Steps) {
@@ -181,12 +178,12 @@ func TestServerApplyTakesAStepByName(t *testing.T) {
 func TestApplyOnScreenChecksTheStepsNamed(t *testing.T) {
 	p, m := serverTerminal()
 	c, drawn := screenCommand(t, "")
-	role := roles.Role{Name: "a", Steps: func(values.Values, secrets.Secrets, effect.Machine, effect.Units, effect.Out) []step.Step {
+	role := apply.Role{Name: "a", Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
 		plan := func(context.Context) error { return nil }
 		return []step.Step{stepOf{"one", plan}, stepOf{"two", plan}}
 	}}
 	cfg := apply.Config{Options: apply.Options{Check: true, Only: []string{"a/two"}}, M: m, Out: &effecttest.Out{}}
-	changed, err := applyOnScreen(c, p, cfg, []roles.Role{role})
+	changed, err := applyOnScreen(c, p, cfg, []apply.Role{role})
 	if err != nil || !slices.Equal(changed, []string{"a"}) {
 		t.Fatalf("changed = %q, err = %v", changed, err)
 	}

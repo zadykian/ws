@@ -4,12 +4,10 @@ import (
 	"slices"
 	"strings"
 	"testing"
-
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 func TestSelect(t *testing.T) {
-	list := []roles.Role{{Name: "a"}, {Name: "b"}, {Name: "c"}}
+	list := []Role{{Name: "a"}, {Name: "b"}, {Name: "c"}}
 	for _, tc := range []struct {
 		name string
 		only []string
@@ -42,7 +40,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestCheckSteps(t *testing.T) {
-	list := []roles.Role{role("a", named{name: "x y"})}
+	list := []Role{role("a", named{name: "x y"})}
 	for _, tc := range []struct {
 		only []string
 		want string
