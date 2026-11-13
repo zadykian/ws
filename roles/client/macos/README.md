@@ -15,7 +15,7 @@ The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` check
 request. It runs as the user, with sudo where it needs root. It sets up Ghostty, cld and a zsh
 hook ([Ghostty and cld on the Mac](ghostty/README.md)). It installs Ghostty, Zed and a font from
 Homebrew, [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on
-`PATH` by hand) from a release ([Releases](../../../docs/releases.md)). `ws` embeds the files it installs, so it
+`PATH` by hand) from a release ([Releases](../../../engine/core/update/README.md)). `ws` embeds the files it installs, so it
 needs no clone. Then:
 
 ```sh
@@ -24,14 +24,15 @@ ws client macos apply
 
 `ws client macos wizard`, in its place, asks first for the values below ([The Mac's
 wizard](stages/README.md)), and `ws client macos configure` changes them later on a form, with ws's
-secrets and host_vars ([The Configure screen](../../../docs/tui-configure.md)). `ws client macos
+secrets and host_vars ([The Configure screen](../../../engine/tui/internal/configure/README.md)). `ws client macos
 apply --only STEP` runs one step, and `--check` shows each change and makes none. At a terminal it
-draws [the run screen](../../../docs/tui.md#the-run-screen), past [the list of
-steps](../../../docs/tui.md#the-list-of-steps) where it gets neither, and `--plain` keeps its lines.
+draws [the run screen](../../../engine/tui/README.md#the-run-screen), past [the list of
+steps](../../../engine/tui/README.md#the-list-of-steps) where it gets neither, and `--plain` keeps
+its lines.
 `ws client macos state` reports what a check reads, and changes nothing
 ([State](../../../README.md#state)). `ws client macos` holds the Mac's commands ([the
 secrets](../../server/ubuntu/secrets/README.md) too), darwin alone. `ws version` prints its version,
-and `ws update` replaces it with the latest release ([Update](../../../docs/releases.md#update)).
+and `ws update` replaces it with the latest release ([Update](../../../engine/core/update/README.md#update)).
 
 ## What the Mac reports
 

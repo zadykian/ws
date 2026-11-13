@@ -150,7 +150,7 @@ its sets in one transaction, with no gap. So it does where systemd failed to loa
 table's, or hasn't read it since it changed. That covers a run cut short before the reload, and a
 table or set flushed or deleted by hand. In a container, where systemd is not running, the run writes
 the files, but skips the check, the comparison, the units and ufw. CI checks the file after its runs
-([The `playbook` job](../../../../docs/checks.md#the-playbook-job)).
+([The `playbook` job](../../../../.github/workflows/README.md#the-playbook-job)).
 
 `security_outbound`, true by default, turns the table on. A cloud VM wants it false: the table
 drops the cloud's metadata service at `169.254.169.254`, which cloud-init, the guest agent and

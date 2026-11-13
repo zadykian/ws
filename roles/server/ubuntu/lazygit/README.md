@@ -71,7 +71,7 @@ run replaces a change made to it by hand, and keeps the old file beside the new 
 
 lazygit loads a key it lacks, or a value of another kind, with no error. So
 `TestTheConfigMeetsLazygitsSchema` holds the config to the schema of 0.57.0, which `make gotest`
-downloads ([The gates](../../../../docs/gates.md)).
+downloads ([The gates](../../../../tools/README.md)).
 
 ## The theme
 

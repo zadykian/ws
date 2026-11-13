@@ -83,7 +83,7 @@ sudo ws update
 sudo ws server ubuntu apply
 ```
 
-A ws before v0.5.1 lacks `ws update`: [Update](docs/releases.md#update).
+A ws before v0.5.1 lacks `ws update`: [Update](engine/core/update/README.md#update).
 
 `ws server ubuntu apply --only NAME,...` runs the roles named, in the order they run in. A name is a
 role, or a step of it by the name a run shows, as in `--only 'docker/Docker group',tmux`. That
@@ -99,8 +99,8 @@ run fails. A cloud VM names `security_outbound: false` there before its first ru
 ([Outbound](roles/server/ubuntu/security/README.md#outbound)). `ws server ubuntu values set KEY VALUE` writes one key, and
 an empty VALUE gives its default back. On ws, `sudo ws server ubuntu configure` writes them on a
 form, and so does `ws client macos configure` from the Mac ([The Configure
-screen](docs/tui-configure.md)). ws's last line names the roles that changed, `changed: none` on a
-second run.
+screen](engine/tui/internal/configure)). ws's last line names the roles that changed,
+`changed: none` on a second run.
 
 ## Dry runs
 
@@ -174,7 +174,7 @@ and write; and no account permission. These stay manual:
   ([Trust each project](roles/server/ubuntu/fresh/README.md#trust-each-project));
 - the local list of words: set the secret `FORBIDDEN_WORDS` on GitHub, and place
   `~/.config/ws/forbidden-words`, mode 600, on each machine that commits
-  ([The hooks](docs/checks.md#the-hooks)).
+  ([The hooks](.github/workflows/README.md#the-hooks)).
 
 The router takes a few steps once, by hand: [The router](roles/server/ubuntu/network/router.md).
 
@@ -183,12 +183,12 @@ The router takes a few steps once, by hand: [The router](roles/server/ubuntu/net
 CI runs `make lint`, which lints the code, the docs and the workflows, and scans the commits for
 secrets. It runs `ws server ubuntu apply` twice in a container, tries `install.sh`, forges SigNoz's
 compose files again, and sets up a Mac on GitHub's macOS runner. A pushed tag `vX.Y.Z` publishes the
-release that `install.sh` installs: [Releases](docs/releases.md). The rules workflow warns where a
+release that `install.sh` installs: [Releases](engine/core/update). The rules workflow warns where a
 pull request breaks the rules of zadykian/toolkit's skills, and the issues workflow where an issue
 strays from its issue form. The hooks in `.githooks` check each commit before git makes it.
-[Checks](docs/checks.md) and [The gates](docs/gates.md) have the details.
+[Checks](.github/workflows) and [The gates](tools) have the details.
 
-On a terminal, ws draws a full-screen display, and `--plain` keeps its lines: [The terminal UI](docs/tui.md).
+On a terminal, ws draws a full-screen display, and `--plain` keeps its lines: [The terminal UI](engine/tui).
 
 ## Pull requests
 

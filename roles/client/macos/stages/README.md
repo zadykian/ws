@@ -12,7 +12,7 @@ line installs ws's binary, and the wizard installs what else it needs, as yourse
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
 ```
 
-Then `~/.local/bin/ws client macos wizard` opens [the stages' lists](../../../../docs/tui-wizard.md), with `--check`
+Then `~/.local/bin/ws client macos wizard` opens [the stages' lists](../../../../engine/tui/internal/queue/README.md), with `--check`
 to see what it would do. Each stage reads what it sets up, acts where that isn't done, and reads it
 again. So a run takes up where the last one stopped, and in a second no stage acts. `--check` prints
 what each stage would do, and changes nothing. The wizard holds a lock, `ws-wizard.lock` in
@@ -190,8 +190,8 @@ The stage sends `roles/server/ubuntu/session/wizard-remote.sh`, the wizard's rem
 on ws over ssh at a direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server
 ubuntu apply --json` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's
 `HOME` and a UTF-8 locale. That ws runs its roles ([The `playbook`
-job](../../../../docs/checks.md#the-playbook-job)). The wizard prints the unit's log until it ends,
-past the [event lines](../../../../README.md#events), and stops where the run fails. A first run
+job](../../../../.github/workflows/README.md#the-playbook-job)). The wizard prints the unit's log
+until it ends, past the [event lines](../../../../README.md#events), and stops where the run fails. A first run
 takes 20 to 40 minutes. The unit goes on where ssh drops, as when the Mac sleeps, and the next run
 of the wizard follows it to its end, and replays the log. A unit of part of ws stops a run of other
 steps, which it would leave unrun, until it ends. Where `WS_USER` isn't the server's default, the

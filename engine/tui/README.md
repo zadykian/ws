@@ -4,7 +4,7 @@ ws draws a full-screen display on a terminal, with Bubble Tea, Bubbles and Lip G
 `engine/tui`. `ws server ubuntu apply` and `ws client macos apply` draw [the run
 screen](#the-run-screen), `ws server ubuntu state` and `ws client macos state` draw [the state
 screen](#the-state-screen), and `ws client macos configure` and `ws server ubuntu configure` draw
-[the Configure screen](tui-configure.md). `ws client macos wizard` draws [two lists](tui-wizard.md),
+[the Configure screen](internal/configure/README.md). `ws client macos wizard` draws [two lists](internal/queue/README.md),
 which lead to the other two, and `ws server ubuntu wizard` one. The rest, such as `ws update` and
 `ws version`, print lines.
 
@@ -22,9 +22,9 @@ A command draws a screen only where each of these holds:
 Anywhere else ws prints lines, as before, byte for byte. That covers CI, a pipe and the unit on ws,
 which reads the last line of a run. The wizard's cases in `.github/mac-wizard` that run under
 `script -q` get a terminal, so each passes `--plain`. CI's `playbook` job runs `ws server ubuntu
-apply --check` under `script` to draw the screen ([The `playbook` job](checks.md#the-playbook-job)),
+apply --check` under `script` to draw the screen ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)),
 and a case of the `mac` job does so with `ws client macos apply --check` ([The
-Mac](checks.md#the-mac)).
+Mac](../../.github/workflows/README.md#the-mac)).
 
 The screen draws on stderr, where ws's lines go. Stdout and the exit codes stay what they were.
 The mode is chosen in `engine/screen.go`.
@@ -184,13 +184,13 @@ A role's box follows its steps, and `[-]` says that some are on. A chosen step l
 waits on as `[#]`, and the pane beside the list says why. The order of roles is not modeled, so
 `!` in the status warns of changes left out in an earlier role.
 
-[The wizard's lists](tui-wizard.md) set two such lists side by side.
+[The wizard's lists](internal/queue/README.md) set two such lists side by side.
 
 ## The state screen
 
 `ws server ubuntu state`, `ws client macos state` and [the wizard's
-`s`](tui-wizard.md#the-state-screen) draw what a machine holds of what ws manages. The screen reads
-and changes nothing.
+`s`](internal/queue/README.md#the-state-screen) draw what a machine holds of what ws manages. The
+screen reads and changes nothing.
 
 The header holds the tabs, each with its count: Packages, Services, Files, Conflicts and Pending.
 The tabs wrap to a new line in a narrow window. Under a filter a count reads `shown/all`. A check

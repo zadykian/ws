@@ -3,9 +3,9 @@
 `sudo ws server ubuntu wizard` runs the stages of [the Mac's wizard](../../../client/macos/stages/README.md)
 that act on ws, on ws itself, for a login over plain ssh, such as Termius on an iPad. It runs as
 root alone, and `--check` prints what each stage would do and changes nothing. At a terminal it
-opens [the wizard's list](../../../../docs/tui-wizard.md), one, `ws`, as every stage runs on ws. `s`
+opens [the wizard's list](../../../../engine/tui/internal/queue/README.md), one, `ws`, as every stage runs on ws. `s`
 opens ws's state, `e` the forms of `sudo ws server ubuntu configure` ([The Configure
-screen](../../../../docs/tui-configure.md#on-ws)), and the stages
+screen](../../../../engine/tui/internal/configure/README.md#on-ws)), and the stages
 chosen run. `--check` goes straight to the run screen, and `--plain` or no terminal keeps the lines.
 It holds the lock `ws-wizard.lock` in `$TMPDIR`, as the Mac's wizard does, and a run in which a
 stage acted ends with what stays by hand of ws.

@@ -31,7 +31,7 @@ steps, and each role's page in `docs/` says what it sets up.
   `Account.Absent`, `User.ReadHome`), or the step acts as `ws_user`, as claude's does. The user owns
   the home and could link a file elsewhere ([Links under the home](../../roles/server/ubuntu/security/README.md#links-under-the-home)).
 - A line the maintainer acts on past a run, such as a key to copy, goes through
-  `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../docs/tui.md#the-run-screen)).
+  `effect.SayLasting`, as a screen's window goes with it ([The run screen](../../engine/tui/README.md#the-run-screen)).
 - A version is pinned in the package of the role that installs it. SigNoz's images are pinned in
   `roles/server/ubuntu/signoz/casting.yaml`, as its compose files are forged from it.
 - A restart or a reload that a watched change calls for is `resource.Forced`. `Group.Apply` runs it
@@ -40,7 +40,7 @@ steps, and each role's page in `docs/` says what it sets up.
 ## Runs
 
 - A second run plans nothing, which CI's `playbook` job checks
-  ([The `playbook` job](../../docs/checks.md#the-playbook-job)). A step that only reads plans no change.
+  ([The `playbook` job](../../.github/workflows/README.md#the-playbook-job)). A step that only reads plans no change.
 - A dry run, `--check`, applies nothing and shows how the machine differs
   ([Dry runs](../../README.md#dry-runs)). A step reads in its Plan, a GET included
   ([devtools](../../roles/server/ubuntu/devtools/internal/golang/golang.go)).

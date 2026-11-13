@@ -1,6 +1,6 @@
 # The Configure screen
 
-[The terminal UI](tui.md) holds what every screen shares, such as the modes and the
+[The terminal UI](../../README.md) holds what every screen shares, such as the modes and the
 fields.
 
 `ws client macos configure` edits `mac.conf` on a form, ws's secrets file on a second, and ws's
@@ -21,14 +21,14 @@ Ctrl-N walks the forms: `mac.conf`, the secrets, then host_vars.
 The secrets form has a field for the tokens and the VPN password, and for each env and git entry the
 file holds. A field shows no value: its help says whether the entry is set, and a new value replaces
 it. A save runs `ws server ubuntu secrets set` on ws for each field typed in, the value on ssh's
-stdin, which keeps the other entries and a git entry's user name ([The secrets](../roles/server/ubuntu/secrets/README.md)). A
+stdin, which keeps the other entries and a git entry's user name ([The secrets](../../../../roles/server/ubuntu/secrets/README.md)). A
 save that failed part way set the first fields. A field can't clear an entry, and the form adds no
 env or git entry, nor a profile file: `ws client macos secrets unset` and `set` do. With no
 credential on ws, the read fails and says to run `ws server ubuntu secrets init`.
 
 A save checks the fields that show, and the first it refuses takes the focus. Its changes then go
 in as one, through the wizard's writer, which checks the whole file and leaves a link
-([The Mac's wizard](../roles/client/macos/stages/README.md)). A key that the edits left with no place goes empty, the cable's
+([The Mac's wizard](../../../../roles/client/macos/stages/README.md)). A key that the edits left with no place goes empty, the cable's
 with a `WS_TARGET` other than `lan`, as conf would refuse it. The wizard asks no key with a line
 again, even an empty one. Under the form, the screen shows the keys a save emptied, or why it
 failed, which keeps the edits. A short window keeps the field's input and the end of those words.
@@ -53,9 +53,9 @@ files script, here on `sh`'s standard input. The secrets form, now first, reads 
 With no terminal, or under `--plain`, it refuses: `ws server ubuntu secrets` and `ws server ubuntu
 values set` edit the same files on lines. `e` and the `configure` button of `ws server ubuntu
 wizard`'s list open it, and the list comes back to a new scan ([The server's
-wizard](../roles/server/ubuntu/stages/README.md)).
+wizard](../../../../roles/server/ubuntu/stages/README.md)).
 
 ## After a save
 
 Only the file changes: the next `ws server ubuntu apply` takes it. The wizard's next run names
-`ws_user` and, on a cloud VM, `security_outbound` again ([The Mac's wizard](../roles/client/macos/stages/README.md)).
+`ws_user` and, on a cloud VM, `security_outbound` again ([The Mac's wizard](../../../../roles/client/macos/stages/README.md)).

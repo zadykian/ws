@@ -24,15 +24,15 @@ What each document holds. How to write them is in the `writing` skill and [writi
   [mac-zed.md](../../roles/client/macos/zed/README.md) its Zed, and [mac-secrets.md](../../roles/server/ubuntu/secrets/README.md) the
   secrets file. [server-wizard.md](../../roles/server/ubuntu/stages/README.md) is `ws server ubuntu wizard`, the
   stages run on ws. [router.md](../../roles/server/ubuntu/network/router.md) is the router's steps, taken once by hand.
-- [tui.md](../../docs/tui.md) is the terminal UI: its modes, `--plain`, the layout and the keys.
-  [tui-configure.md](../../docs/tui-configure.md) is its Configure screen, and
-  [tui-wizard.md](../../docs/tui-wizard.md) the wizard's two lists.
-- [releases.md](../../docs/releases.md) says how to install and update ws, and how a release is cut.
-- [gates.md](../../docs/gates.md) says what each gate of `make lint` runs.
-  [checks.md](../../docs/checks.md) says what CI's other jobs check, and what the hooks of
+- [tui.md](../../engine/tui/README.md) is the terminal UI: its modes, `--plain`, the layout and the keys.
+  [tui-configure.md](../../engine/tui/internal/configure/README.md) is its Configure screen, and
+  [tui-wizard.md](../../engine/tui/internal/queue/README.md) the wizard's two lists.
+- [releases.md](../../engine/core/update/README.md) says how to install and update ws, and how a release is cut.
+- [gates.md](../../tools/README.md) says what each gate of `make lint` runs.
+  [checks.md](../../.github/workflows/README.md) says what CI's other jobs check, and what the hooks of
   `.githooks` and Claude's hooks do.
-  [checks-mac-cld.md](../../docs/checks-mac-cld.md) says what the job `mac-cld` checks.
-  [checks-rootless.md](../../docs/checks-rootless.md) says what `rootless` checks.
+  [checks-mac-cld.md](../../.github/workflows/mac-cld.md) says what the job `mac-cld` checks.
+  [checks-rootless.md](../../.github/workflows/rootless.md) says what `rootless` checks.
 - [zed.md](../../roles/server/ubuntu/zed/README.md) is the page of the `zed` role: what runs on ws, Zed's downloads, trust
   and the limits. [zed-projects.md](../../roles/server/ubuntu/zed/projects.md) is a project's `.zed/settings.json`,
   for SQL Server and Ansible.

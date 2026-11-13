@@ -20,7 +20,7 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   the steps share, which are public: another module builds steps on them.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
-- `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
+- `install.sh`: installs ws's binary from a release ([Releases](engine/core/update/README.md)).
 - `roles/client/macos/`: the Mac's side, the files that the ws CLI embeds ([The Mac](roles/client/macos/README.md)). These are
   `ws.ghostty`, Ghostty's settings, and `zed/`, Zed's settings
   and keymap. `zshrc` is the zsh hook that turns off the modes that a drop leaves on.
@@ -36,10 +36,10 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `mac-wizard.yml`, with `mac-wizard`, whose cases are `.github/mac-wizard/NN-*.sh`; `rules.yml`,
   the checks of zadykian/toolkit on a pull request; and `issues.yml`, its check of an issue. The
   toolkit's checks warn alone. `words.yml`, with `words`, checks a pull request and an issue for the
-  list's words ([The `words` job](docs/checks.md#the-words-job)).
+  list's words ([The `words` job](.github/workflows/README.md#the-words-job)).
   `release.yml`, on a tag `v*`, has `check`, `ci`, `mac`, `build` and `publish`.
 - `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/`: the toolkit's templates, which
-  its `tools/pin` writes, never edited here ([The rules](docs/checks.md#the-rules)).
+  its `tools/pin` writes, never edited here ([The rules](.github/workflows/README.md#the-rules)).
 
 ## Commands
 
@@ -52,15 +52,15 @@ make gotest                       # the Go gates run at the root, the module; so
 
 The gates are `shell`, `yamllint`, `sizecheck`, `vale`, `lychee`, `rumdl`, `actionlint`, `zizmor`,
 `gitleaks`, `gofmt`, `govet`, `golangci-lint`, `govulncheck` and `gotest`
-([The gates](docs/gates.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
+([The gates](tools/README.md)). `make lint` needs Python 3.12 to 3.14, on Linux or on macOS on arm64.
 It installs yamllint into `.cache`, and `tools/run` downloads the rest there.
 
-The tests are CI's jobs ([Checks](docs/checks.md)). `playbook` builds ws and runs `ws server ubuntu
+The tests are CI's jobs ([Checks](.github/workflows/README.md)). `playbook` builds ws and runs `ws server ubuntu
 apply` twice in an Ubuntu 26.04 container and checks the config that Fresh reads, `signoz` forges
 SigNoz's compose files again, and `install` tries `install.sh`. `rootless` runs the rootless daemon
-and the firewall on a booted runner ([The rootless job](docs/checks-rootless.md)). `mac` sets up a
+and the firewall on a booted runner ([The rootless job](.github/workflows/rootless.md)). `mac` sets up a
 Mac on GitHub's macOS runner, and `mac-wizard` runs the Mac's wizard on another. `mac-cld` sets up
-Ghostty and cld on a third ([Ghostty and cld on the Mac](docs/checks-mac-cld.md)). A run of `ws
+Ghostty and cld on a third ([Ghostty and cld on the Mac](.github/workflows/mac-cld.md)). A run of `ws
 server ubuntu apply` sets up the machine that runs it, as below.
 
 The hooks check a commit for the local list's words. This checks any other text, such as a pull
@@ -75,7 +75,7 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 
 - Pull requests are stacked, each on the one below it. CI runs `lint` and `signoz` on each,
   whatever its base, and `playbook`, `mac`, `mac-cld` and `mac-wizard` on the stack's top one alone
-  ([Checks](docs/checks.md#checks)).
+  ([Checks](.github/workflows/README.md#checks)).
 - They land on `main` by GitHub's merge commits, as
   [`/flow:land`](https://github.com/zadykian/toolkit/blob/main/skills/land/SKILL.md) does. A pull
   request's signed commits land as they are, under a merge commit that GitHub signs.
@@ -91,14 +91,14 @@ LC_ALL=C tr _ ' ' <FILE | grep -ciwF -f <(sed -e 'y/_/ /' -e 's/^[[:space:]]*//'
 Each rule links where the repository gives its reason: a doc, a comment or a CI job.
 
 - `ws server ubuntu apply` sets up the machine that runs it. CI's `playbook` job runs it in a
-  container ([The `playbook` job](docs/checks.md#the-playbook-job)).
+  container ([The `playbook` job](.github/workflows/README.md#the-playbook-job)).
 - A second run changes nothing: CI's `playbook` job runs it twice and fails where the second run
   reports a change ([ci.yml](.github/workflows/ci.yml)).
 - A step that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
-  CI's container ([The `playbook` job](docs/checks.md#the-playbook-job)).
+  CI's container ([The `playbook` job](.github/workflows/README.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one
-  ([Cutting a release](docs/releases.md#cutting-a-release)).
+  ([Cutting a release](engine/core/update/README.md#cutting-a-release)).
 - A pinned download is checked against its SHA-256 before use: ikeward's
   binary ([binary.go](roles/server/ubuntu/ikeward/binary.go)), otelcol's `.deb`
   ([download.go](roles/server/ubuntu/otelcol/download.go)) and Docker's apt key
@@ -127,9 +127,9 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   requests and issues. The hooks in `.githooks` refuse a commit that holds one. They name an added
   line by its file and number, never its text, but print a file name that holds one whole. Never
   print the list or a word of it, and never pass `--no-verify`
-  ([The hooks](docs/checks.md#the-hooks)).
+  ([The hooks](.github/workflows/README.md#the-hooks)).
 - `make lint` fails on any finding, warnings included, in any line of any file
-  ([The gates](docs/gates.md); #47).
+  ([The gates](tools/README.md); #47).
 - Fix a finding, or justify it in place with its linter's own mechanism and a reason:
   `//nolint:NAME // reason`, `# yamllint disable-line rule:NAME` or
   `# shellcheck disable=SCNNNN`, each with the reason beside it. Never lower a severity, add an
@@ -162,10 +162,10 @@ skill. Commits are signed, as the ruleset on `main` requires.
   `/lean:cost`, run by hand only; and `design`, whose skills sharpen a design before code
   ([design](https://github.com/zadykian/toolkit/blob/main/docs/design.md)). `flow` links and lands a stack with gh's extension,
   `gh extension install github/gh-stack`. The marketplace's `ref` names the release that the
-  workflows' actions pin ([The rules](docs/checks.md#the-rules)).
+  workflows' actions pin ([The rules](.github/workflows/README.md#the-rules)).
 - Hooks: the lint plugin's, which run `make lint-file` on each file Claude edits and
   `make lint-tree` as a turn ends, on a tree the maintainer vouches for. The gate code includes
   what [.claude/lint-gates](.claude/lint-gates) lists
-  ([Claude's hooks](docs/checks.md#claudes-hooks)). The
+  ([Claude's hooks](.github/workflows/README.md#claudes-hooks)). The
   [lean plugin's](https://github.com/zadykian/toolkit/blob/main/docs/lean.md) deny a workflow
   agent with no tier, and a foreground poll that no timeout bounds.

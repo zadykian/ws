@@ -1,7 +1,7 @@
 # The gates
 
 `make lint` is the one gate: CI's lint job runs it, the lint plugin through `make lint-tree` as
-Claude ends its turn, and the maintainer before a push ([Claude's hooks](checks.md#claudes-hooks)).
+Claude ends its turn, and the maintainer before a push ([Claude's hooks](../.github/workflows/README.md#claudes-hooks)).
 Any finding fails it, warnings included. A finding is fixed, or justified in place with its linter's
 own inline mechanism and a reason. A Vale alert is always fixed, by a rewrite of the sentence, as
 [the writing skill][writing] allows no exception to its rules. No gate lowers a severity or keeps a

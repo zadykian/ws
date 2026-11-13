@@ -45,14 +45,14 @@ It takes `WS_RELEASES_URL` as the table above says. To pick a release, run `inst
 `WS_VERSION`. A ws before v0.5.1 lacks the command, so `install.sh` updates it once.
 
 `ws client macos wizard --update` stays apart: it runs `install.sh`, then the wizard with the new ws
-([The Mac's wizard](../roles/client/macos/stages/README.md)).
+([The Mac's wizard](../../../roles/client/macos/stages/README.md)).
 
 ## The install job
 
-CI's `install` job runs [install-checks.sh](../.github/install-checks.sh) on each pull request. It
+CI's `install` job runs [install-checks.sh](../../../.github/install-checks.sh) on each pull request. It
 builds ws for Linux on amd64 at tags it makes and removes again, so that `ws version` prints them. It
 lays four releases out in a temporary directory, and serves them on loopback with
-[serve-releases](../tools/serve-releases/main.go), which answers `/latest` with GitHub's redirect.
+[serve-releases](../../../tools/serve-releases/main.go), which answers `/latest` with GitHub's redirect.
 The cases:
 
 - a named release installs, and a second run, for the latest, updates it;
@@ -76,11 +76,11 @@ git tag -s v0.2.0 && git push origin v0.2.0
 Nothing else is by hand. `release.yml` runs on the tag, in these jobs:
 
 1. `check`: the tag is `vX.Y.Z`, and `origin/main` holds its commit.
-1. `ci` and `mac`: [ci.yml](../.github/workflows/ci.yml) and
-   [mac.yml](../.github/workflows/mac.yml), called on the tag. Their `playbook` and `mac` jobs run,
+1. `ci` and `mac`: [ci.yml](../../../.github/workflows/ci.yml) and
+   [mac.yml](../../../.github/workflows/mac.yml), called on the tag. Their `playbook` and `mac` jobs run,
    as on a push to `main`.
 1. `build`: `ws-darwin-arm64`, `ws-linux-amd64` and `ws-linux-arm64` with the Go that
-   [tools/run](../tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
+   [tools/run](../../../tools/run) pins, without cgo, with `-trimpath` and Go's stamp of the tag, and
    `ws.sha256`. The job fails unless `ws version` of the amd64 binary prints the tag.
 1. `publish`: GitHub's generated notes, then a check of the notes, the binaries, `ws.sha256` and
    `install.sh` for the local list's words (CLAUDE.md), from the secret `FORBIDDEN_WORDS`. It fails

@@ -1,10 +1,10 @@
 # The wizard's lists
 
-[The list of steps](tui.md#the-list-of-steps) holds the keys these lists share. `ws client macos wizard`
+[The list of steps](../../README.md#the-list-of-steps) holds the keys these lists share. `ws client macos wizard`
 opens them at a terminal, and `--plain` or no terminal keeps its lines. `--check` goes straight to
 its run, on the run screen. `--update` runs ahead of any screen, on lines, as the new ws takes this
 one's place and opens them itself. `ws server ubuntu wizard` opens one list, `ws`, where every stage
-runs, by the same rules ([The server's wizard](../roles/server/ubuntu/stages/README.md)). Its `configure` button opens `ws
+runs, by the same rules ([The server's wizard](../../../../roles/server/ubuntu/stages/README.md)). Its `configure` button opens `ws
 server ubuntu configure`'s forms, and its `s` reads ws on ws.
 
 The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine
@@ -47,7 +47,7 @@ no row, as they run whatever the roles do and `--only` refuses their name.
 
 ## The state screen
 
-`s` opens [the state screen](tui.md#the-state-screen) of the machine of the list in focus. It waits
+`s` opens [the state screen](../../README.md#the-state-screen) of the machine of the list in focus. It waits
 for the scan's end, as both read that machine. The screen changes nothing, so `q` comes back to the
 lists as they stood, with no new scan. `e` comes back to a new scan, which chooses the boxes again.
 The run's screen has no `s`, as ssh and the lock are the run's.
@@ -65,10 +65,10 @@ goes with the scan's lock. ws's read then fails until a run sets the way up.
 The run keeps both lists, each with the boxes it left with. A step's mark moves as it runs, and the
 cursor follows it across the lists. The strip holds what the run prints, and a window too short for
 the strip shows the lists alone. The bar and the count are of stages. The keys and the stop are
-[the run screen's](tui.md#the-run-screen).
+[the run screen's](../../README.md#the-run-screen).
 
 A stage run in part leaves the rest out as a run does: ws client macos apply's steps by the run's
 filter, and ws's roles by `--only` to `ws server ubuntu apply`. A stop in ws's run ends the Mac's
 side alone. The unit goes on on ws, the run says so, and the next wizard follows it. Where that unit
 runs part of ws, the next wizard's other steps wait for its end. A signal ends with status 1, as in
-[plain mode](tui.md#the-terminal-comes-back).
+[plain mode](../../README.md#the-terminal-comes-back).

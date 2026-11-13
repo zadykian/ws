@@ -13,7 +13,7 @@ wizard's ssh and its way to root ([ws's file](#wss-file)). So `ws client macos s
 the identity on ws. A value goes on ssh's standard input, never in an argument. Where ws's sudo asks
 a password, a command that reads its value from standard input asks it at the terminal, `/dev/tty`,
 and fails, saying why, with none. With ws out of reach, a command says so and fails. The Configure
-screen sets the secrets the same way ([The Configure screen](../../../../docs/tui-configure.md)).
+screen sets the secrets the same way ([The Configure screen](../../../../engine/tui/internal/configure/README.md)).
 
 ## Editing
 
