@@ -177,15 +177,6 @@ func TestNoKeyConflictsWithItsTerminalEquivalent(t *testing.T) {
 	}
 }
 
-func TestCtrlHBindsOutsideTheMap(t *testing.T) {
-	_, c := load(t)
-	outside := c.Keybindings
-	if len(outside) != 1 || outside[0].Action != "replace" || outside[0].When != "normal" ||
-		spell(outside[0].press) != "ctrl+h" {
-		t.Fatalf("%+v", outside)
-	}
-}
-
 func TestAComposeFileTakesItsLanguageID(t *testing.T) {
 	loose, _ := load(t)
 	langs, _ := loose["languages"].(map[string]any)
@@ -224,10 +215,6 @@ func TestEachArrivalIsBound(t *testing.T) {
 		key      string
 		arrivals []string
 	}{
-		{"ctrl+alt+4", []string{"ctrl+alt+\\"}},
-		{"ctrl+alt+/", []string{"ctrl+alt+_", "ctrl+alt+shift+-"}},
-		{"ctrl+k ctrl+/", []string{"ctrl+k ctrl+_", "ctrl+k ctrl+shift+-"}},
-		{"ctrl+shift+Space", []string{"ctrl+Space"}},
 		{"alt+shift+Space", []string{"alt+Space"}},
 	} {
 		found := false
@@ -253,9 +240,9 @@ func TestEachShellKeyIsNoopInTheTerminal(t *testing.T) {
 	_, c := load(t)
 	bound := byWhen(c)
 	for _, key := range []string{
-		"ctrl+q", "ctrl+,", "ctrl+alt+]", "ctrl+alt+[", "alt+x", "ctrl+alt+s", "alt+v", "alt+Left",
-		"alt+Right", "alt+e", "alt+f", "alt+g", "alt+h", "alt+s", "alt+w", "alt+r", "alt+j", "alt+/",
-		"alt+[", "alt+]", "alt+`", "ctrl+p", "ctrl+;", "ctrl+'",
+		"ctrl+q", "alt+x", "alt+v", "alt+Left", "alt+Right", "alt+e", "alt+f", "alt+g", "alt+h",
+		"alt+s", "alt+w", "alt+r", "alt+j", "alt+/", "alt+[", "alt+]", "alt+`", "ctrl+p", "ctrl+;",
+		"ctrl+'",
 	} {
 		if bound["terminal "+key] != "noop" {
 			t.Errorf("%s is %q in the terminal; want noop", key, bound["terminal "+key])
