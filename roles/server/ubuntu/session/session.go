@@ -9,6 +9,7 @@ import (
 	"errors"
 	"github.com/zadykian/ws/engine/core/remote"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"net/netip"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/role"
@@ -43,8 +44,8 @@ type heldStatus struct {
 type Reach interface {
 	// Shell runs a command as root on ws.
 	Shell() remote.Shell
-	// Want reads the target and WS_USER that ws's run is to leave: server.conf's on the Mac, and
-	// host_vars' on ws.
+	// Want reads the target, WS_USER, WS_SLOT and WS_PORT that ws's run is to leave: server.conf's
+	// on the Mac, and host_vars' on ws.
 	Want() (Want, error)
 	// User returns WS_USER, whose claude and git config the stages read.
 	User() (string, error)
@@ -56,9 +57,16 @@ type Reach interface {
 	Hand(h *guided.Hand, s Status)
 }
 
-// Want is what ws's run is to leave: the target, lan or cloud, and WS_USER. The server reads no
-// other key of server.conf.
-type Want struct{ Target, User string }
+// Want is what ws's run is to leave: the target, lan or cloud, WS_USER, and wg0's address and port.
+// The server reads no other key of server.conf. ws's own wizard reads no conf and leaves Address
+// and Port zero, so its run writes no tunnel pair.
+type Want struct {
+	Target, User string
+	// Address is wg0's address at the server's slot (WS_SLOT), and Port is WS_PORT as the conf
+	// holds it, empty where it names none.
+	Address netip.Prefix
+	Port    string
+}
 
 // Scripts are what a Session runs on ws: the remote script and the files script. Events hears a
 // run's events.

@@ -70,7 +70,7 @@ named in a rule. By the kind of machine ws runs on, they hold:
   table, and passes;
 - on a VM on the Mac, the Mac's network for its VMs: the Mac is the gateway and the DHCP server,
   and NATs what ws sends on;
-- on each, `wg0`, `10.99.0.0/24`.
+- on each, `wg0`, `10.99.N.0/24`, a slot's.
 
 So, but for DHCP and resolved's lookups, the server opens no connection to the Mac or another host
 of these, nor to a gateway at a private address. From the server, a UDP send there fails at once
