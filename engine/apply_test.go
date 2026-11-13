@@ -121,3 +121,17 @@ func TestApplyStopsPastTheCurrentStep(t *testing.T) {
 		t.Errorf("err = %v", err)
 	}
 }
+
+func TestApplyOpensNoListWithCheck(t *testing.T) {
+	c, _, _ := applyCall(strings.NewReader("q"))
+	c.TTY, c.ErrTTY = true, true
+	c.Check = true
+	var checks []bool
+	err := Apply(t.Context(), c, targetOf(func(_ context.Context, _ Effects, o step.Options) (string, error) {
+		checks = append(checks, o.Check)
+		return "", nil
+	}))
+	if err != nil || len(checks) != 1 || !checks[0] {
+		t.Errorf("err = %v, runs with check = %v, want one", err, checks)
+	}
+}

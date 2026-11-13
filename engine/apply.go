@@ -9,8 +9,9 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 )
 
-// Apply runs a Target's apply. It draws the run's screen, or says lines where no screen is wanted,
-// and --json prints its events on stdout.
+// Apply runs a Target's apply. At a terminal, with no step named and no --check, a list of the
+// steps opens first, scanned by a check. The run then draws its screen, or says lines where no
+// screen is wanted, and --json prints its events on stdout.
 func Apply(ctx context.Context, c Call, t Target) error {
 	run, err := t.Prepare(ctx, c)
 	if err != nil {
@@ -20,6 +21,13 @@ func Apply(ctx context.Context, c Call, t Target) error {
 	term := effect.NewTerminal(strings.NewReader(""), c.Err)
 	lines := Lines{Out: term, Prog: c.Path, Seen: map[string]bool{}, Change: t.Change}
 	o := step.Options{Check: c.Check}
+	if DrawsScreen(c) && !c.Selected && !c.Check {
+		var ok bool
+		if run, o, ok, err = pick(ctx, c, run); err != nil || !ok {
+			term.Flush()
+			return err
+		}
+	}
 	var events *JSONEvents
 	var line string
 	if DrawsScreen(c) {

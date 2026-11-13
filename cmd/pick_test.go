@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -135,5 +136,48 @@ func TestServerApplyChecksFromTheListAndSaysSo(t *testing.T) {
 	status := cli.Execute(t.Context(), root, []string{"server", "ubuntu", "apply"}, repeating("/tmux\rac/\x7f\x7f\x7f\x7f\r"), io.Discard, &errs)
 	if want := "ws server ubuntu apply: would change: none\n"; status != 0 || !strings.HasSuffix(errs.String(), want) {
 		t.Errorf("status = %d, stderr ends %q, want %q", status, errs.String()[max(0, errs.Len()-300):], want)
+	}
+}
+
+func TestApplyRunsTheStepsChosenFromTheList(t *testing.T) {
+	keys := newAfterScan("n \r")
+	steps := []step.Step{
+		stepOf{"one", func(context.Context) error { return nil }},
+		stepOf{"two", func(context.Context) error { return nil }},
+	}
+	var seen []step.Options
+	var run engine.Run
+	run = engine.Run{
+		M:      effecttest.NewMachine(),
+		Groups: func(bool) []tui.Group { return []tui.Group{tui.NewGroup("", steps)} },
+		Do: func(ctx context.Context, _ engine.Effects, o step.Options) (string, error) {
+			seen = append(seen, o)
+			if !o.Check { // The steps' plans never settle, so only a check can run them.
+				return "", nil
+			}
+			_, err := step.RunWith(ctx, steps, o)
+			return "", err
+		},
+		Choose: func(choice tui.Choice) (engine.Run, step.Options, error) {
+			left := func(_, name string) bool { return !slices.Contains(choice.Only, name) }
+			return run, step.Options{Check: choice.Check, LeftOut: left}, nil
+		},
+	}
+	call := engine.Call{
+		Path: "ws x apply", In: keys, Out: io.Discard, Err: keys, Machine: run.M,
+		Getenv: func(k string) string { return map[string]string{"TERM": "xterm"}[k] }, TTY: true, ErrTTY: true,
+	}
+	err := engine.Apply(t.Context(), call, engine.Target{Prepare: func(context.Context, engine.Call) (engine.Run, error) { return run, nil }})
+	if err != nil || len(seen) < 2 {
+		t.Fatalf("err = %v, runs = %d", err, len(seen))
+	}
+	o := seen[len(seen)-1]
+	if o.Check || o.LeftOut == nil || o.LeftOut("", "one") || !o.LeftOut("", "two") {
+		t.Errorf("the run's options %+v leave out a step it chose, or keep one it didn't", o)
+	}
+	for _, o := range seen[:len(seen)-1] {
+		if !o.Check {
+			t.Error("the list scanned without a check")
+		}
 	}
 }
