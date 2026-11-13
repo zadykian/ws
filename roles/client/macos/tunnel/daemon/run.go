@@ -37,7 +37,9 @@ func (d *Daemon) Run(ctx context.Context) error {
 			case Settled:
 				d.settleChange(ctx)
 			case Reload:
-				d.reload(ctx)
+				if d.reload(ctx) {
+					return nil
+				}
 			case Stop:
 				return nil
 			case Exited:
