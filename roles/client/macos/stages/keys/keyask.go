@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
@@ -137,10 +138,8 @@ func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) erro
 	if err != nil {
 		return err
 	}
-	for _, c := range copied {
-		if err := change.Apply(ctx, k.M, k.Out, c); err != nil {
-			return err
-		}
+	if err := (resource.Group{}).Apply(ctx, step.Plan{Changes: copied}); err != nil {
+		return err
 	}
 	settings := []conf.Setting{{Key: use.key, Value: key.Pub()}}
 	if use == loginUse {
