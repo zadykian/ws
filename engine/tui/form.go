@@ -20,7 +20,7 @@ type Form struct {
 	fields map[string]FormField
 	// focus is the place in names of the field in focus, and blurred says that a button has the keys.
 	focus   int
-	blurred bool
+	Blurred bool
 	// top is the place of the first field that draws, and size the room that the fields draw in.
 	top  int
 	size Size
@@ -31,8 +31,8 @@ func NewForm(theme Theme, specs func(edits map[string]string) []FieldSpec) Form 
 	return Form{theme: theme, specs: specs, fields: map[string]FormField{}}.flow()
 }
 
-// name is the label of the field in focus, or nothing in a form with none.
-func (f Form) name() string {
+// Name is the label of the field in focus, or nothing in a form with none.
+func (f Form) Name() string {
 	if len(f.names) == 0 {
 		return ""
 	}
@@ -41,7 +41,7 @@ func (f Form) name() string {
 
 // flow asks which fields show under the edits, and keeps the focus on its field.
 func (f Form) flow() Form {
-	current := f.name()
+	current := f.Name()
 	specs := f.specs(f.Edits())
 	f.fields = maps.Clone(f.fields)
 	f.names = make([]string, 0, len(specs))
@@ -68,7 +68,7 @@ func (f Form) settle(place int) Form {
 	for name, field := range f.fields {
 		f.fields[name] = field.Blur()
 	}
-	if name := f.name(); name != "" && !f.blurred {
+	if name := f.Name(); name != "" && !f.Blurred {
 		f.fields[name] = f.fields[name].Focus()
 	}
 	return f.inSight()
@@ -99,13 +99,13 @@ func (f Form) block(name string) []string {
 
 // Blur gives the keys up to a button.
 func (f Form) Blur() Form {
-	f.blurred = true
+	f.Blurred = true
 	return f.settle(f.focus)
 }
 
 // Enter takes the keys back from a button, on the last field or the first.
 func (f Form) Enter(last bool) Form {
-	f.blurred = false
+	f.Blurred = false
 	if last {
 		return f.settle(len(f.names) - 1)
 	}
@@ -145,7 +145,7 @@ func (f Form) Move(step int) (Form, bool) {
 
 // Update hands the field in focus a key or a paste, and flows again where its value changed.
 func (f Form) Update(msg tea.Msg) Form {
-	name := f.name()
+	name := f.Name()
 	if name == "" {
 		return f
 	}
@@ -172,7 +172,7 @@ func (f Form) Check() (Form, bool) {
 	if refused < 0 {
 		return f, true
 	}
-	f.blurred = false
+	f.Blurred = false
 	return f.settle(refused), false
 }
 
@@ -180,8 +180,8 @@ func (f Form) Check() (Form, bool) {
 // on its field.
 func (f Form) Refill(specs func(edits map[string]string) []FieldSpec) Form {
 	next := NewForm(f.theme, specs).Fit(f.size)
-	next.blurred = f.blurred
-	if place := slices.Index(next.names, f.name()); place >= 0 {
+	next.Blurred = f.Blurred
+	if place := slices.Index(next.names, f.Name()); place >= 0 {
 		return next.settle(place)
 	}
 	return next.settle(f.focus)

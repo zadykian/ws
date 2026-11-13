@@ -29,7 +29,7 @@ type queueScreen struct {
 	list queue
 	// at is the cursor on each side's list, by side. Never written in place: the screens are values,
 	// and Reopen reuses a left one, so withCursor copies it.
-	at     map[string]cursor
+	at     map[string]Cursor
 	footer Footer
 	// unread is why a machine reported nothing, and its steps stand as the queue named them.
 	unread string
@@ -40,7 +40,7 @@ type queueScreen struct {
 // openQueue returns the lists of stages, their scan under way. The configure button comes last.
 func openQueue(title string, theme Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
 	buttons := append(listButtons(), stateButton, configureButton)
-	s := queueScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: newFilter()},
+	s := queueScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: NewFilter()},
 		list: queueOf(stages), footer: NewFooter(buttons...), picks: picks}
 	return s.enabled()
 }
@@ -100,7 +100,7 @@ func (s queueScreen) listHeight() int {
 func (s queueScreen) View() tea.View {
 	l := s.list.drawn(s.layout(), s.theme, s.window, s.at)
 	if s.filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.filter.line(s.theme) + "\n" + s.list.view(s.theme, s.list.side, s.listHeight(), s.at[s.list.side], true)
+		l.Panes[s.list.pane(s.list.side)].Body = s.filter.Line(s.theme) + "\n" + s.list.view(s.theme, s.list.side, s.listHeight(), s.at[s.list.side], true)
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }
@@ -123,7 +123,7 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
 	case tea.PasteMsg:
-		if s.filter.editing && !s.left {
+		if s.filter.Editing && !s.left {
 			s = s.typed(msg)
 		}
 	case tea.KeyPressMsg:
@@ -142,8 +142,8 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 		return s, nil
 	case s.held():
 		return s.typed(msg), nil
-	case key.Matches(msg, clearKey):
-		s.filter = s.filter.cleared()
+	case key.Matches(msg, ClearKey):
+		s.filter = s.filter.Cleared()
 		s = s.narrowed("")
 		return s, nil
 	case key.Matches(msg, Keys.Next):
@@ -165,7 +165,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	case pickPendingPlace:
 		s.list = s.list.chose(pickRow.pending).whole(func(o queueStage) bool { return o.row.pending() })
 	case pickFilterPlace:
-		s.filter = s.filter.opened()
+		s.filter = s.filter.Opened()
 	case pickRunPlace:
 		return s.leave(s.queueChoice(NextRun))
 	case pickCheckPlace:
@@ -177,7 +177,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	case queueStatePlace:
 		return s.leave(s.queueChoice(NextState))
 	default:
-		s.at = withCursor(s.at, s.list.side, s.at[s.list.side].moved(msg, max(s.listHeight(), 1), len(s.list.lines(s.list.side))))
+		s.at = withCursor(s.at, s.list.side, s.at[s.list.side].Moved(msg, max(s.listHeight(), 1), len(s.list.lines(s.list.side))))
 	}
 	return s, nil
 }
@@ -194,17 +194,17 @@ func (s queueScreen) typed(msg tea.Msg) queueScreen {
 
 // narrowed returns s with its lists under words, and the cursor of the side in focus kept.
 func (s queueScreen) narrowed(words string) queueScreen {
-	var c cursor
+	var c Cursor
 	s.list, c = s.list.narrowed(s.list.side, s.at[s.list.side], words)
 	s.at = withCursor(s.at, s.list.side, c)
 	return s
 }
 
 // withCursor returns at with side's cursor set, on a copy.
-func withCursor(at map[string]cursor, side string, c cursor) map[string]cursor {
+func withCursor(at map[string]Cursor, side string, c Cursor) map[string]Cursor {
 	next := maps.Clone(at)
 	if next == nil {
-		next = map[string]cursor{}
+		next = map[string]Cursor{}
 	}
 	next[side] = c
 	return next
@@ -250,7 +250,7 @@ func (s queueScreen) tabbed(step int) queueScreen {
 		s = s.faced(sides[next])
 		return s
 	}
-	s.footer = s.footer.move(step)
+	s.footer = s.footer.Move(step)
 	if s.footer.Focused() >= 0 {
 		return s
 	}
@@ -264,6 +264,6 @@ func (s queueScreen) tabbed(step int) queueScreen {
 // faced returns s turned to side, whose cursor a filter can have left past its list.
 func (s queueScreen) faced(side string) queueScreen {
 	s.list.side = side
-	s.at = withCursor(s.at, side, s.at[side].within(len(s.list.lines(side))))
+	s.at = withCursor(s.at, side, s.at[side].Within(len(s.list.lines(side))))
 	return s
 }

@@ -35,24 +35,24 @@ func TestConfigureDrawsAForm(t *testing.T) {
 
 func TestConfigureTabWalksOneRingOfFieldsAndButtons(t *testing.T) {
 	s := fed(testConfigure(wayFile()), tab, tab, tab)
-	if s.footer.Focused() != savePlace || !s.form().blurred {
-		t.Fatalf("past the last field: button %d, blurred = %v", s.footer.Focused(), s.form().blurred)
+	if s.footer.Focused() != savePlace || !s.form().Blurred {
+		t.Fatalf("past the last field: button %d, blurred = %v", s.footer.Focused(), s.form().Blurred)
 	}
-	if s = fed(s, tab, tab); s.footer.Focused() >= 0 || s.form().name() != "HOST" {
-		t.Errorf("past the last button: button %d, field %q", s.footer.Focused(), s.form().name())
+	if s = fed(s, tab, tab); s.footer.Focused() >= 0 || s.form().Name() != "HOST" {
+		t.Errorf("past the last button: button %d, field %q", s.footer.Focused(), s.form().Name())
 	}
-	if s = fed(s, shiftTab, shiftTab, shiftTab); s.footer.Focused() >= 0 || s.form().name() != "USER" {
-		t.Errorf("back past the buttons: button %d, field %q", s.footer.Focused(), s.form().name())
+	if s = fed(s, shiftTab, shiftTab, shiftTab); s.footer.Focused() >= 0 || s.form().Name() != "USER" {
+		t.Errorf("back past the buttons: button %d, field %q", s.footer.Focused(), s.form().Name())
 	}
 }
 
 func TestConfigureEnterAndTheArrowsStepAlongTheFields(t *testing.T) {
 	s := fed(testConfigure(wayFile()), enter, tea.KeyPressMsg{Code: tea.KeyDown})
-	if s.form().name() != "USER" {
-		t.Errorf("field %q", s.form().name())
+	if s.form().Name() != "USER" {
+		t.Errorf("field %q", s.form().Name())
 	}
-	if s = fed(s, tea.KeyPressMsg{Code: tea.KeyUp}); s.form().name() != "PORT" {
-		t.Errorf("past Up: field %q", s.form().name())
+	if s = fed(s, tea.KeyPressMsg{Code: tea.KeyUp}); s.form().Name() != "PORT" {
+		t.Errorf("past Up: field %q", s.form().Name())
 	}
 }
 

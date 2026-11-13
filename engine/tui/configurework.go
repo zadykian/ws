@@ -70,7 +70,7 @@ func (s configureScreen) save() (tea.Model, tea.Cmd) {
 	form, ok := s.form().Check()
 	s = s.with(form)
 	if !ok {
-		s.footer.focus = 0
+		s.footer.Focus = 0
 		return s.fitted(), nil
 	}
 	s.saving = true

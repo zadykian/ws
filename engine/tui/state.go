@@ -57,14 +57,14 @@ type StateScreen struct {
 	reading, reported bool
 	problem, warning  string
 	// filter holds the words that a row's name must contain.
-	filter filter
+	filter Filter
 }
 
 // NewStateScreen returns the screen, which asks for a report as it starts.
 func NewStateScreen(theme Theme, title string, read, leave tea.Cmd) StateScreen {
 	footer := NewFooter(filterButton, readButton, Keys.Quit).Enable(readPlace, false)
 	return StateScreen{
-		theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true, filter: newFilter(),
+		theme: theme, title: title, read: read, leave: leave, footer: footer, reading: true, filter: NewFilter(),
 	}
 }
 
@@ -86,11 +86,11 @@ func (s StateScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s.warning = firstLine(printable(msg.Text))
 		}
 	case tea.PasteMsg:
-		if s.filter.editing {
+		if s.filter.Editing {
 			return s.edited(msg), nil
 		}
 	case tea.KeyPressMsg:
-		if s.filter.editing {
+		if s.filter.Editing {
 			return s.edited(msg), nil
 		}
 		return s.pressed(msg)
@@ -162,7 +162,7 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case s.inDetail && key.Matches(msg, backKey):
 		s.inDetail = false
 		return s, nil
-	case key.Matches(msg, clearKey):
+	case key.Matches(msg, ClearKey):
 		return s.cleared(), nil
 	}
 	return s.moved(msg), nil
@@ -172,7 +172,7 @@ func (s StateScreen) pressed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 func (s StateScreen) pushed(place int) (tea.Model, tea.Cmd) {
 	switch place {
 	case filterPlace:
-		s.filter, s.inDetail = s.filter.opened(), false
+		s.filter, s.inDetail = s.filter.Opened(), false
 		return s, nil
 	case leavePlace:
 		return s, s.leave
@@ -191,7 +191,7 @@ func (s StateScreen) turned(step int) StateScreen {
 		s.tab = next
 		return s
 	}
-	s.footer = s.footer.move(step)
+	s.footer = s.footer.Move(step)
 	if s.footer.Focused() >= 0 {
 		return s
 	}

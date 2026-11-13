@@ -212,17 +212,17 @@ func (s session) View() tea.View {
 	case len(s.asked) > 0:
 		view.Content = over(view.Content, s.field.render(s.theme, s.window), s.window)
 	case s.confirming:
-		body := wrapped(confirmNote, s.window) + "\n" + s.confirm.render(s.theme, min(s.window.Width, boxWidth)-2)
-		view.Content = over(view.Content, box(s.theme, "Stop", body, s.window), s.window)
+		body := wrapped(confirmNote, s.window) + "\n" + s.confirm.Render(s.theme, min(s.window.Width, BoxWidth)-2)
+		view.Content = over(view.Content, Box(s.theme, "Stop", body, s.window), s.window)
 	case s.stopping:
-		view.Content = over(view.Content, box(s.theme, "Stopping", wrapped(stopNote, s.window), s.window), s.window)
+		view.Content = over(view.Content, Box(s.theme, "Stopping", wrapped(stopNote, s.window), s.window), s.window)
 	}
 	return view
 }
 
 // wrapped fits words to the inside of a box, which would cut them.
 func wrapped(words string, window Size) string {
-	return lipgloss.Wrap(words, max(min(window.Width, boxWidth)-2, 1), "")
+	return lipgloss.Wrap(words, max(min(window.Width, BoxWidth)-2, 1), "")
 }
 
 // over draws a box in the middle of a window, on what base shows there.

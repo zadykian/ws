@@ -9,70 +9,71 @@ import (
 // filterPrompt starts the filter's line, with the key that opens it.
 const filterPrompt = "/ "
 
-// clearKey drops the filter.
-var clearKey = key.NewBinding(key.WithKeys("esc"))
+// ClearKey drops the filter.
+var ClearKey = key.NewBinding(key.WithKeys("esc"))
 
-// filter is the line of words that narrows a list. textinput holds the words, so that its editing
+// Filter is the line of words that narrows a list. textinput holds the words, so that its editing
 // keys and a paste work on the lists and the state screen alike.
-type filter struct {
+type Filter struct {
 	input textinput.Model
-	// editing says that the keys go to the line.
-	editing bool
+	// Editing says that the keys go to the line.
+	Editing bool
 }
 
-func newFilter() filter {
+// NewFilter is a line of no words, not yet taking keys.
+func NewFilter() Filter {
 	input := newInput()
 	input.Prompt = filterPrompt
-	return filter{input: input}
+	return Filter{input: input}
 }
 
-// words returns what the line holds.
-func (f filter) words() string {
+// Words returns what the line holds.
+func (f Filter) Words() string {
 	return f.input.Value()
 }
 
-// shows says that the line takes a place over the list: while it has the keys, or its words stand.
-func (f filter) shows() bool {
-	return f.editing || f.words() != ""
+// Shows says that the line takes a place over the list: while it has the keys, or its words stand.
+func (f Filter) Shows() bool {
+	return f.Editing || f.Words() != ""
 }
 
-// opened gives the line the keys.
-func (f filter) opened() filter {
-	f.editing = true
+// Opened gives the line the keys.
+func (f Filter) Opened() Filter {
+	f.Editing = true
 	return f
 }
 
-// cleared drops the words.
-func (f filter) cleared() filter {
+// Cleared drops the words.
+func (f Filter) Cleared() Filter {
 	f.input.Reset()
 	return f
 }
 
-// edited gives the line a key or a paste. Enter keeps the words and Esc drops them, and each gives
+// Edited gives the line a key or a paste. Enter keeps the words and Esc drops them, and each gives
 // the keys back. The input's Cmd goes, as a field's does.
-func (f filter) edited(msg tea.Msg) filter {
+func (f Filter) Edited(msg tea.Msg) Filter {
 	if press, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(press, Keys.Press):
-			f.editing = false
+			f.Editing = false
 			return f
-		case key.Matches(press, clearKey):
-			f.editing = false
-			return f.cleared()
+		case key.Matches(press, ClearKey):
+			f.Editing = false
+			return f.Cleared()
 		}
 	}
 	f.input, _ = f.input.Update(msg)
 	return f
 }
 
-// line draws the filter: the input while it has the keys, the words once they stand, and nothing
+// Line draws the filter: the input while it has the keys, the words once they stand, and nothing
 // without any.
-func (f filter) line(theme Theme) string {
+func (f Filter) Line(theme Theme) string {
 	switch {
-	case f.editing:
+	case f.Editing:
 		return f.input.View()
-	case f.words() != "":
-		return theme.Muted.Render(filterPrompt + f.words())
+	case f.Words() != "":
+		return theme.Muted.Render(filterPrompt + f.Words())
 	}
 	return ""
 }

@@ -5,14 +5,14 @@ import "strings"
 // detail draws notes, from the pane's top, in size. PgUp and PgDn move the list, so that what runs
 // past the pane stays for `c`, which prints a step's changes whole.
 func (s listScreen) detail(size Size, notes []Line) string {
-	pane := outputPane{theme: s.theme, size: size}
+	pane := OutputPane{Theme: s.theme, Size: size}
 	for _, line := range notes {
-		if len(pane.rows) >= size.Height {
+		if len(pane.Rows) >= size.Height {
 			break
 		}
-		pane = pane.add(line)
+		pane = pane.Add(line)
 	}
-	return pane.move(len(pane.rows)).view()
+	return pane.Move(len(pane.Rows)).View()
 }
 
 // warnings says why the scan stopped short, why a machine reported nothing, and which roles hold

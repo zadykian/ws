@@ -12,7 +12,7 @@ import (
 type QueueRun struct {
 	run  RunScreen
 	list queue
-	at   map[string]cursor
+	at   map[string]Cursor
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
@@ -38,7 +38,7 @@ func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var side string
 		var line int
 		if q.list, side, line = q.list.follow(e); line >= 0 {
-			q.list.side, q.at = side, withCursor(q.at, side, cursor(line))
+			q.list.side, q.at = side, withCursor(q.at, side, Cursor(line))
 		}
 	}
 	var cmd tea.Cmd
@@ -49,7 +49,7 @@ func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // layout is the run's screen with the lists in place of its panes, and its output in the strip.
 func (q QueueRun) layout() Layout {
 	l := q.run.layout()
-	output := Pane{Title: l.Panes[1].Title, Body: q.run.output.view(), Focused: true}
+	output := Pane{Title: l.Panes[1].Title, Body: q.run.output.View(), Focused: true}
 	l.Panes, l.Below = q.list.panes(), strip(q.run.theme, output, q.run.window)
 	return l
 }

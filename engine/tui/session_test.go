@@ -83,8 +83,8 @@ func TestSessionKeepsAQuestionsKeysFromTheScreen(t *testing.T) {
 	s, got := testSession()
 	s, _ = feed(s, askMsg{prompt{id: 1, text: "Password", hidden: true}},
 		press('a'), tea.PasteMsg{Content: "b"})
-	if len(*got) != 0 || s.field.input.secret != "ab" {
-		t.Errorf("the screen got %v, and the field holds %q", *got, s.field.input.secret)
+	if len(*got) != 0 || s.field.input.Secret != "ab" {
+		t.Errorf("the screen got %v, and the field holds %q", *got, s.field.input.Secret)
 	}
 }
 

@@ -109,7 +109,7 @@ func TestPaneRender(t *testing.T) {
 ╰───────────╯`},
 	}
 	for _, c := range cases {
-		got := stripped(c.pane.render(NewTheme(noColor("1")), Size{13, 4}))
+		got := stripped(c.pane.Render(NewTheme(noColor("1")), Size{13, 4}))
 		if want := strings.TrimPrefix(c.want, "\n"); got != want {
 			t.Errorf("%s:\n%s\nwant\n%s", c.name, got, want)
 		}

@@ -44,7 +44,7 @@ type listScreen struct {
 	// problem is why the scan stopped short.
 	problem string
 	// filter holds the words that the list follows.
-	filter filter
+	filter Filter
 	// left says that the choice has gone, and the screen waits for the work to end it.
 	left bool
 }
@@ -57,13 +57,13 @@ func (s listScreen) scanned(msg scannedMsg) listScreen {
 
 // typed gives the filter a key or a paste, and returns its words and whether they differ from was.
 func (s listScreen) typed(msg tea.Msg, was string) (listScreen, string, bool) {
-	s.filter = s.filter.edited(msg)
-	words := s.filter.words()
+	s.filter = s.filter.Edited(msg)
+	words := s.filter.Words()
 	return s, words, words != was
 }
 
 // held says that no button takes a key: the screen is leaving, or the filter takes it.
-func (s listScreen) held() bool { return s.left || s.filter.editing }
+func (s listScreen) held() bool { return s.left || s.filter.Editing }
 
 // status is the title's right side: the scan's progress, then what is chosen. Its mark stands for
 // the warning of a role passed over, which a short window has no pane for.
@@ -80,7 +80,7 @@ func (s listScreen) status(on, scanned, all int, warned bool) string {
 }
 
 // filtering says that the filter's line shows, over the list.
-func (s listScreen) filtering() bool { return s.filter.shows() }
+func (s listScreen) filtering() bool { return s.filter.Shows() }
 
 // pickScreen is the list that a run is chosen from. A scan fills it behind the screen, and the
 // maintainer can read and move as it goes.
@@ -88,7 +88,7 @@ type pickScreen struct {
 	listScreen
 	list pickList
 	// at is the cursor on the list.
-	at     cursor
+	at     Cursor
 	footer Footer
 	// picks takes the choice, and holds one, so that sending it waits for nobody.
 	picks chan<- Choice
@@ -104,7 +104,7 @@ func listButtons() []key.Binding {
 // newPickScreen returns the screen of groups, its scan under way.
 func newPickScreen(title string, theme Theme, groups []Group, picks chan<- Choice) pickScreen {
 	footer := NewFooter(listButtons()...)
-	s := pickScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: newFilter()},
+	s := pickScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: NewFilter()},
 		list: newPickList(groups), footer: footer, picks: picks}
 	return s.enabled()
 }
@@ -126,7 +126,7 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		s.window = Size{msg.Width, msg.Height}
 	case tea.PasteMsg:
-		if s.filter.editing && !s.left {
+		if s.filter.Editing && !s.left {
 			s = s.typed(msg)
 		}
 	case tea.KeyPressMsg:
@@ -144,8 +144,8 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 		return s, nil
 	case s.held():
 		return s.typed(msg), nil
-	case key.Matches(msg, clearKey):
-		s.filter = s.filter.cleared()
+	case key.Matches(msg, ClearKey):
+		s.filter = s.filter.Cleared()
 		s.list, s.at = s.list.narrowed(s.at, "")
 		return s, nil
 	}
@@ -163,7 +163,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickPendingPlace:
 		s.list = s.list.chose(pickRow.pending)
 	case pickFilterPlace:
-		s.filter = s.filter.opened()
+		s.filter = s.filter.Opened()
 	case pickRunPlace:
 		return s.leave(Choice{Only: s.list.only()})
 	case pickCheckPlace:
@@ -171,7 +171,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 	case pickQuitPlace:
 		return s.leave(Choice{})
 	default:
-		s.at = s.at.moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
+		s.at = s.at.Moved(msg, max(s.listHeight(), 1), len(s.list.lines()))
 	}
 	return s, nil
 }
@@ -239,7 +239,7 @@ func (s pickScreen) View() tea.View {
 	l.Panes[1].Body = s.detail(l.PaneSizes(s.window.Width, s.window.Height)[1], s.notes())
 	l.Panes[0].Body = s.list.view(s.theme, s.listHeight(), s.at)
 	if s.filtering() {
-		l.Panes[0].Body = s.filter.line(s.theme) + "\n" + l.Panes[0].Body
+		l.Panes[0].Body = s.filter.Line(s.theme) + "\n" + l.Panes[0].Body
 	}
 	return l.View(s.theme, s.window.Width, s.window.Height)
 }

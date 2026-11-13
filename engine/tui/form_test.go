@@ -25,15 +25,15 @@ func TestNewFormShowsItsFieldsWithTheFocusOnTheFirst(t *testing.T) {
 	if want := []string{"HOST", "PORT", "USER"}; !slices.Equal(f.names, want) {
 		t.Errorf("names = %v, want %v", f.names, want)
 	}
-	if f.name() != "HOST" || len(f.Edits()) != 0 {
-		t.Errorf("focus on %q, Edits = %v", f.name(), f.Edits())
+	if f.Name() != "HOST" || len(f.Edits()) != 0 {
+		t.Errorf("focus on %q, Edits = %v", f.Name(), f.Edits())
 	}
 }
 
 func TestFormWithNoFieldHasNoFocus(t *testing.T) {
 	f := NewForm(testTheme, func(map[string]string) []FieldSpec { return nil })
-	if f.name() != "" {
-		t.Errorf("focus on %q", f.name())
+	if f.Name() != "" {
+		t.Errorf("focus on %q", f.Name())
 	}
 }
 
@@ -46,7 +46,7 @@ func moved(t *testing.T, f Form, step int) Form {
 	t.Helper()
 	f, ok := f.Move(step)
 	if !ok {
-		t.Fatalf("no field %d from %q", step, f.name())
+		t.Fatalf("no field %d from %q", step, f.Name())
 	}
 	return f
 }
@@ -64,8 +64,8 @@ func TestFormMoveStopsAtEitherEnd(t *testing.T) {
 		t.Error("the focus moved above the first field")
 	}
 	f = moved(t, moved(t, f, 1), 1)
-	if _, ok := f.Move(1); ok || f.name() != "USER" {
-		t.Errorf("Move = %v, focus on %q", ok, f.name())
+	if _, ok := f.Move(1); ok || f.Name() != "USER" {
+		t.Errorf("Move = %v, focus on %q", ok, f.Name())
 	}
 }
 
@@ -83,8 +83,8 @@ func TestFormHidesAFieldAndBringsItBackWithItsTyping(t *testing.T) {
 
 func TestFormKeepsTheFocusOnItsFieldAcrossAFlow(t *testing.T) {
 	f := typedIn(NewForm(testTheme, waySpecs).Update(cleared), "none")
-	if f.name() != "HOST" {
-		t.Errorf("focus on %q", f.name())
+	if f.Name() != "HOST" {
+		t.Errorf("focus on %q", f.Name())
 	}
 }
 
@@ -104,8 +104,8 @@ func TestFormBlurLeavesNoFieldTheKeys(t *testing.T) {
 	if f = typedIn(f.Enter(true), "ada"); f.Edits()["USER"] != "ada" {
 		t.Errorf("past Enter(true): Edits = %v", f.Edits())
 	}
-	if f = f.Blur().Enter(false); f.name() != "HOST" {
-		t.Errorf("past Enter(false): focus on %q", f.name())
+	if f = f.Blur().Enter(false); f.Name() != "HOST" {
+		t.Errorf("past Enter(false): focus on %q", f.Name())
 	}
 }
 
@@ -153,8 +153,8 @@ func TestFormCheckFocusesTheFirstRefusal(t *testing.T) {
 		return []FieldSpec{{Label: "A"}, {Label: "B", Valid: no}, {Label: "C", Valid: no}}
 	}
 	f, ok := NewForm(testTheme, specs).Fit(Size{40, 20}).Blur().Check()
-	if ok || f.name() != "B" || f.blurred {
-		t.Errorf("Check = %v, focus on %q, blurred = %v", ok, f.name(), f.blurred)
+	if ok || f.Name() != "B" || f.Blurred {
+		t.Errorf("Check = %v, focus on %q, blurred = %v", ok, f.Name(), f.Blurred)
 	}
 	if got := stripped(f.Render()); strings.Count(got, refused.Error()) != 2 {
 		t.Errorf("each refusal shows:\n%s", got)
@@ -168,8 +168,8 @@ func TestFormRefillStartsOverAndKeepsTheFocus(t *testing.T) {
 	f := typedIn(moved(t, NewForm(testTheme, waySpecs), 1), "2222").Refill(func(map[string]string) []FieldSpec {
 		return []FieldSpec{{Label: "HOST"}, {Label: "PORT", Value: "2222"}}
 	})
-	if f.name() != "PORT" || f.fields["PORT"].Value() != "2222" || len(f.Edits()) != 0 {
-		t.Errorf("focus on %q, Edits = %v", f.name(), f.Edits())
+	if f.Name() != "PORT" || f.fields["PORT"].Value() != "2222" || len(f.Edits()) != 0 {
+		t.Errorf("focus on %q, Edits = %v", f.Name(), f.Edits())
 	}
 }
 

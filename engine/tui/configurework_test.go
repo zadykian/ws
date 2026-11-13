@@ -43,8 +43,8 @@ func TestConfigureRefusedSaveStaysOnTheField(t *testing.T) {
 	if len(jobs) != 0 || s.saving {
 		t.Errorf("jobs = %+v, saving = %v", jobs, s.saving)
 	}
-	if s.footer.Focused() >= 0 || s.form().name() != "HOST" {
-		t.Errorf("button %d, field %q", s.footer.Focused(), s.form().name())
+	if s.footer.Focused() >= 0 || s.form().Name() != "HOST" {
+		t.Errorf("button %d, field %q", s.footer.Focused(), s.form().Name())
 	}
 }
 
@@ -55,8 +55,8 @@ func TestConfigureSavedStartsTheFormOverOnTheFile(t *testing.T) {
 		return []FieldSpec{{Label: "HOST"}, {Label: "PORT", Value: "2222"}}
 	}}
 	s = fed(s, Line{Said, "wrote way.conf"}, savedMsg{sheet: wrote})
-	if s.saving || len(s.form().Edits()) != 0 || s.form().name() != "PORT" {
-		t.Errorf("saving = %v, Edits = %v, field %q", s.saving, s.form().Edits(), s.form().name())
+	if s.saving || len(s.form().Edits()) != 0 || s.form().Name() != "PORT" {
+		t.Errorf("saving = %v, Edits = %v, field %q", s.saving, s.form().Edits(), s.form().Name())
 	}
 	if got := stripped(s.View().Content); !strings.Contains(got, "wrote way.conf") {
 		t.Errorf("no note:\n%s", got)

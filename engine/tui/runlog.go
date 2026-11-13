@@ -131,7 +131,7 @@ func (r *record) report(w io.Writer, path string, cut bool) {
 func cleanLines(text string) string {
 	lines := strings.Split(text, "\n")
 	for i, l := range lines {
-		lines[i] = clean(l)
+		lines[i] = Clean(l)
 	}
 	return strings.Join(lines, "\n")
 }

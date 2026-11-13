@@ -78,7 +78,7 @@ func TestRunScreenKeysScrollTheWindow(t *testing.T) {
 	for i := range 100 {
 		r = sent(r, Line{Said, "line" + strings.Repeat("x", i%2) + string(rune('0'+i%10))})
 	}
-	page := r.output.size.Height
+	page := r.output.Size.Height
 	cases := []struct {
 		name string
 		key  tea.KeyPressMsg
@@ -93,19 +93,19 @@ func TestRunScreenKeysScrollTheWindow(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := sent(r, c.key).output.back; got != c.want {
+			if got := sent(r, c.key).output.Back; got != c.want {
 				t.Errorf("back = %d, want %d", got, c.want)
 			}
 		})
 	}
 	moved := sent(r, tea.KeyPressMsg{Code: tea.KeyHome})
-	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyDown}).output.back; got != 100-page-1 {
+	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyDown}).output.Back; got != 100-page-1 {
 		t.Errorf("down: back = %d, want %d", got, 100-page-1)
 	}
-	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyPgDown}).output.back; got != 100-2*page {
+	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyPgDown}).output.Back; got != 100-2*page {
 		t.Errorf("page down: back = %d, want %d", got, 100-2*page)
 	}
-	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyEnd}).output.back; got != 0 {
+	if got := sent(moved, tea.KeyPressMsg{Code: tea.KeyEnd}).output.Back; got != 0 {
 		t.Errorf("end: back = %d, want the window back on the end", got)
 	}
 }
@@ -116,7 +116,7 @@ func TestRunScreenButtonsTakeTheFocus(t *testing.T) {
 	if focused.footer.Focused() != pageUpPlace {
 		t.Fatalf("focus = %d after Tab, want the first button", focused.footer.Focused())
 	}
-	if got := sent(focused, tea.KeyPressMsg{Code: tea.KeyEnter}).output.back; got != r.output.size.Height {
+	if got := sent(focused, tea.KeyPressMsg{Code: tea.KeyEnter}).output.Back; got != r.output.Size.Height {
 		t.Errorf("back = %d after Enter on page up, want a page", got)
 	}
 }

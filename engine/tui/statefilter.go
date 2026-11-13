@@ -9,7 +9,7 @@ import (
 // shown returns the rows of tab that the filter leaves. A row is its name to the filter, so that a
 // word finds what the list shows.
 func (s StateScreen) shown(tab int) []stateRow {
-	words := strings.ToLower(s.filter.words())
+	words := strings.ToLower(s.filter.Words())
 	if words == "" {
 		return s.rows[tab]
 	}
@@ -25,7 +25,7 @@ func (s StateScreen) shown(tab int) []stateRow {
 // edited gives the filter a key or a paste, and the list follows each one.
 func (s StateScreen) edited(msg tea.Msg) StateScreen {
 	picks := s.picks()
-	s.filter = s.filter.edited(msg)
+	s.filter = s.filter.Edited(msg)
 	s.scroll = 0
 	return s.refound(picks)
 }
@@ -33,6 +33,6 @@ func (s StateScreen) edited(msg tea.Msg) StateScreen {
 // cleared drops the filter's words.
 func (s StateScreen) cleared() StateScreen {
 	picks := s.picks()
-	s.filter = s.filter.cleared()
+	s.filter = s.filter.Cleared()
 	return s.refound(picks)
 }

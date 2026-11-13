@@ -161,10 +161,10 @@ func TestFieldScrollsThroughAShrink(t *testing.T) {
 		inside, _ = inside.update(tea.KeyPressMsg{Code: tea.KeyRight})
 	}
 	shrunk := inside.fit(small)
-	if got := lipgloss.Width(shrunk.input.view(testTheme, 28)); got > 28 {
+	if got := lipgloss.Width(shrunk.input.View(testTheme, 28)); got > 28 {
 		t.Errorf("past a shrink the input draws %d columns", got)
 	}
-	if got := shrunk.input.input.Position(); got != 40 {
+	if got := shrunk.input.Input.Position(); got != 40 {
 		t.Errorf("the shrink moved the cursor to %d", got)
 	}
 }

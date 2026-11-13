@@ -15,7 +15,7 @@ const (
 )
 
 // minQuestionHeight is the fewest rows that frame a line of a question over its input.
-const minQuestionHeight = minPaneHeight + 1
+const minQuestionHeight = MinPaneHeight + 1
 
 // answerButton is the field's first button. Enter presses it from the field too.
 var answerButton = key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "answer"))
@@ -44,7 +44,7 @@ func newField(p prompt, window Size) field {
 
 // fit sets the columns of the input, past which it scrolls.
 func (f field) fit(window Size) field {
-	f.input = f.input.Fit(min(window.Width, boxWidth) - 2)
+	f.input = f.input.Fit(min(window.Width, BoxWidth) - 2)
 	return f
 }
 
@@ -78,19 +78,19 @@ func (f field) render(theme Theme, window Size) string {
 	if window.Width < 1 {
 		return ""
 	}
-	if window.Width < minFrameWidth || window.Height < minQuestionHeight {
+	if window.Width < MinFrameWidth || window.Height < minQuestionHeight {
 		lines := f.input.Lines(theme, window.Width, window.Height)
 		return lipgloss.NewStyle().MaxWidth(window.Width).Render(strings.Join(lines, "\n"))
 	}
-	width, room := min(window.Width, boxWidth)-2, window.Height-2
+	width, room := min(window.Width, BoxWidth)-2, window.Height-2
 	lines := f.input.Lines(theme, width, room)
-	footer := f.footer.render(theme, width)
+	footer := f.footer.Render(theme, width)
 	spare := room - len(lines) - lipgloss.Height(footer)
-	if spare > 0 && f.input.problem == nil {
+	if spare > 0 && f.input.Problem == nil {
 		lines = append(lines, "")
 	}
 	if spare >= 0 {
 		lines = append(lines, footer)
 	}
-	return box(theme, "Question", strings.Join(lines, "\n"), window)
+	return Box(theme, "Question", strings.Join(lines, "\n"), window)
 }

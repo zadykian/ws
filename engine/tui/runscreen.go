@@ -41,7 +41,7 @@ type RunScreen struct {
 	title   string
 	theme   Theme
 	steps   stepList
-	output  outputPane
+	output  OutputPane
 	footer  Footer
 	window  Size
 	started time.Time
@@ -59,7 +59,7 @@ func NewRunScreen(title string, theme Theme, groups ...Group) RunScreen {
 		title:  title,
 		theme:  theme,
 		steps:  newStepList(groups),
-		output: outputPane{theme: theme},
+		output: OutputPane{Theme: theme},
 		footer: NewFooter(Keys.PageUp, Keys.PageDown, Keys.Bottom, Keys.Interrupt),
 	}
 }
@@ -80,7 +80,7 @@ func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
 	case step.Event:
 		r.steps = r.steps.take(msg)
 	case Line:
-		r.output = r.output.add(msg)
+		r.output = r.output.Add(msg)
 	case tickMsg:
 		if r.started.IsZero() {
 			r.started = msg.at
@@ -103,10 +103,10 @@ func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
 // fitted sizes the output to its pane, past a change of the window or of the footer's rows.
 func (r RunScreen) fitted() RunScreen {
 	if r.pane != nil {
-		r.output = r.output.fit(r.pane(r.window))
+		r.output = r.output.Fit(r.pane(r.window))
 		return r
 	}
-	r.output = r.output.fit(r.layout().PaneSizes(r.window.Width, r.window.Height)[1])
+	r.output = r.output.Fit(r.layout().PaneSizes(r.window.Width, r.window.Height)[1])
 	return r
 }
 
@@ -115,22 +115,22 @@ func (r RunScreen) fitted() RunScreen {
 func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 	var place int
 	r.footer, place = r.footer.Update(msg)
-	page := max(r.output.size.Height, 1)
+	page := max(r.output.Size.Height, 1)
 	switch {
 	case place == pageUpPlace:
-		r.output = r.output.move(page)
+		r.output = r.output.Move(page)
 	case place == pageDownPlace:
-		r.output = r.output.move(-page)
+		r.output = r.output.Move(-page)
 	case place == bottomPlace:
-		r.output = r.output.move(-len(r.output.rows))
+		r.output = r.output.Move(-len(r.output.Rows))
 	case place == stopButtonPlace:
 		return r, func() tea.Msg { return stopPressedMsg{} }
 	case key.Matches(msg, Keys.Up):
-		r.output = r.output.move(1)
+		r.output = r.output.Move(1)
 	case key.Matches(msg, Keys.Down):
-		r.output = r.output.move(-1)
+		r.output = r.output.Move(-1)
 	case key.Matches(msg, Keys.Top):
-		r.output = r.output.move(len(r.output.rows))
+		r.output = r.output.Move(len(r.output.Rows))
 	}
 	return r, nil
 }
@@ -159,7 +159,7 @@ func (r RunScreen) View() tea.View {
 	l := r.layout()
 	sizes := l.PaneSizes(r.window.Width, r.window.Height)
 	l.Panes[0].Body = r.steps.view(r.theme, sizes[0].Height)
-	l.Panes[1].Body = r.output.view()
+	l.Panes[1].Body = r.output.View()
 	return l.View(r.theme, r.window.Width, r.window.Height)
 }
 

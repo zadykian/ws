@@ -23,7 +23,7 @@ var stateButton = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "state"))
 // stripSize is the frame of the strip under a queue's lists, and the zero Size where a window has
 // no room for one.
 func stripSize(window Size) Size {
-	if window.Height < stripWindow || window.Width < minFrameWidth {
+	if window.Height < stripWindow || window.Width < MinFrameWidth {
 		return Size{}
 	}
 	return Size{window.Width, min(max(window.Height/3, stripLeast), stripMost)}
@@ -35,7 +35,7 @@ func strip(theme Theme, pane Pane, window Size) string {
 	if size == (Size{}) {
 		return ""
 	}
-	return pane.render(theme, size)
+	return pane.Render(theme, size)
 }
 
 // inside is the room within a frame of that size.
@@ -76,10 +76,10 @@ func (q queue) panes() []Pane {
 
 // drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
 // none.
-func (q queue) drawn(layout Layout, theme Theme, window Size, at map[string]cursor) Layout {
+func (q queue) drawn(layout Layout, theme Theme, window Size, at map[string]Cursor) Layout {
 	sizes := layout.PaneSizes(window.Width, window.Height)
 	for i, side := range q.sides() {
-		there := at[side].within(len(q.lines(side)))
+		there := at[side].Within(len(q.lines(side)))
 		layout.Panes[i].Body = q.view(theme, side, sizes[i].Height, there, side == q.side)
 	}
 	return layout

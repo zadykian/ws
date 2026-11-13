@@ -80,7 +80,7 @@ func TestFooterRendersItsShortcutsInRowsThatFit(t *testing.T) {
 		22: "[enter] run  [c] check\n[q] quit",
 		10: "[enter] run\n[c] check\n[q] quit",
 	} {
-		if got := stripped(testFooter().render(NewTheme(noColor("1")), width)); got != want {
+		if got := stripped(testFooter().Render(NewTheme(noColor("1")), width)); got != want {
 			t.Errorf("%d columns: %q, want %q", width, got, want)
 		}
 	}
@@ -88,9 +88,9 @@ func TestFooterRendersItsShortcutsInRowsThatFit(t *testing.T) {
 
 func TestFooterMarksItsFocusWithoutColor(t *testing.T) {
 	theme := NewTheme(noColor("1"))
-	rest := testFooter().render(theme, 80)
+	rest := testFooter().Render(theme, 80)
 	focused, _ := testFooter().Update(tab)
-	if focused.render(theme, 80) == rest {
+	if focused.Render(theme, 80) == rest {
 		t.Error("a focused button reads as any other")
 	}
 }

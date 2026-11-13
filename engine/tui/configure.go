@@ -174,7 +174,7 @@ func (s configureScreen) stepped(step int) configureScreen {
 	if moved {
 		return s.with(form)
 	}
-	s.footer = s.footer.move(step)
+	s.footer = s.footer.Move(step)
 	return s.with(form.Blur())
 }
 
@@ -225,7 +225,7 @@ func (s configureScreen) unsaved() int {
 // a save writes the one that shows.
 func (s configureScreen) nextForm() configureScreen {
 	s.at = (s.at + 1) % len(s.sheets)
-	s.footer.focus = 0
+	s.footer.Focus = 0
 	return s.with(s.form().Enter(false))
 }
 

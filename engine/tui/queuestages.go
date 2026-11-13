@@ -94,14 +94,14 @@ func (q queue) filtered(words string) queue {
 }
 
 // narrowed returns the queue under words, and the cursor on its line of the side while that shows.
-func (q queue) narrowed(side string, at cursor, words string) (queue, cursor) {
+func (q queue) narrowed(side string, at Cursor, words string) (queue, Cursor) {
 	was := q.lines(side)
 	q = q.filtered(words)
-	return q, kept(at, was, q.lines(side))
+	return q, Kept(at, was, q.lines(side))
 }
 
 // view draws height lines of the side, the cursor's gutter where shown.
-func (q queue) view(theme Theme, side string, height int, at cursor, shown bool) string {
+func (q queue) view(theme Theme, side string, height int, at Cursor, shown bool) string {
 	lines := q.lines(side)
 	return windowed(theme, height, at, shown, len(lines), func(i int) string { return q.render(theme, lines[i]) })
 }

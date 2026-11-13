@@ -151,15 +151,15 @@ func TestPickScreenFilterTakesTheKeysUntilEnter(t *testing.T) {
 		t.Errorf("frame:\n%s", got)
 	}
 	s = pickSent(s, enter, press('j'))
-	if got := s.at; s.filter.editing || got != 1 {
-		t.Errorf("editing = %v, at = %d: keys past Enter move the list", s.filter.editing, got)
+	if got := s.at; s.filter.Editing || got != 1 {
+		t.Errorf("editing = %v, at = %d: keys past Enter move the list", s.filter.Editing, got)
 	}
 }
 
 func TestPickScreenEscDropsTheFilter(t *testing.T) {
 	for _, keys := range [][]tea.Msg{{press('/'), press('k'), esc}, {press('/'), press('k'), enter, esc}} {
 		if s := pickSent(testPick(), keys...); s.filtering() {
-			t.Errorf("%v: words = %q, editing = %v", keys, s.list.words, s.filter.editing)
+			t.Errorf("%v: words = %q, editing = %v", keys, s.list.words, s.filter.Editing)
 		}
 	}
 }

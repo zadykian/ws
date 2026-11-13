@@ -11,9 +11,10 @@ const (
 	// minPaneWidth is the columns under which a pane is too narrow to read beside another, frame
 	// included, so that the panes stack.
 	minPaneWidth = 24
-	// minPaneHeight and minFrameWidth are the smallest frame that holds a line of text.
-	minPaneHeight = 3
-	minFrameWidth = 3
+	// MinPaneHeight and MinFrameWidth are the smallest frame that holds a line of text.
+	MinPaneHeight = 3
+	// MinFrameWidth is the columns of the smallest frame.
+	MinFrameWidth = 3
 	// titleHeight is the lines of the title.
 	titleHeight = 1
 )
@@ -89,7 +90,7 @@ func (l Layout) Render(theme Theme, width, height int) string {
 	if l.Below != "" {
 		parts = append(parts, l.Below)
 	}
-	if footer := l.Footer.render(theme, width); footer != "" {
+	if footer := l.Footer.Render(theme, width); footer != "" {
 		parts = append(parts, footer)
 	}
 	return lipgloss.NewStyle().MaxWidth(width).MaxHeight(height).Render(strings.Join(parts, "\n"))
@@ -113,7 +114,7 @@ func (l Layout) renderPanes(theme Theme, width, height int) string {
 	boxes := make([]string, 0, len(sizes))
 	for i, size := range sizes {
 		if size != (Size{}) {
-			boxes = append(boxes, l.Panes[i].render(theme, size))
+			boxes = append(boxes, l.Panes[i].Render(theme, size))
 		}
 	}
 	if stacked {
@@ -126,7 +127,7 @@ func (l Layout) renderPanes(theme Theme, width, height int) string {
 func (l Layout) frames(width, height int) ([]Size, bool) {
 	sizes := make([]Size, len(l.Panes))
 	room := l.bodyHeight(width, height)
-	if len(l.Panes) == 0 || room < minPaneHeight || width < minFrameWidth {
+	if len(l.Panes) == 0 || room < MinPaneHeight || width < MinFrameWidth {
 		return sizes, true
 	}
 	if columns := spread(l.Panes, width, minPaneWidth); columns != nil {
@@ -135,7 +136,7 @@ func (l Layout) frames(width, height int) ([]Size, bool) {
 		}
 		return sizes, false
 	}
-	if rows := spread(l.Panes, room, minPaneHeight); rows != nil {
+	if rows := spread(l.Panes, room, MinPaneHeight); rows != nil {
 		for i, row := range rows {
 			sizes[i] = Size{width, row}
 		}
@@ -189,9 +190,9 @@ func (l Layout) focused() int {
 	return 0
 }
 
-// render draws the pane in a frame of that size, its title in the top edge. A line wider than the
+// Render draws the pane in a frame of that size, its title in the top edge. A line wider than the
 // frame is cut, as a pane holds its shape: a screen wraps by PaneSizes where it wants that.
-func (p Pane) render(theme Theme, frame Size) string {
+func (p Pane) Render(theme Theme, frame Size) string {
 	edge, border := theme.Frame, theme.Border
 	if p.Focused {
 		edge, border = theme.FocusFrame, theme.FocusBorder

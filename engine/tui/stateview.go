@@ -51,11 +51,11 @@ func (s StateScreen) header() string {
 		switch {
 		case line == "":
 			line = cell
-		case lipgloss.Width(line)+buttonGap+lipgloss.Width(cell) > s.window.Width:
+		case lipgloss.Width(line)+ButtonGap+lipgloss.Width(cell) > s.window.Width:
 			lines = append(lines, line)
 			line = cell
 		default:
-			line += strings.Repeat(" ", buttonGap) + cell
+			line += strings.Repeat(" ", ButtonGap) + cell
 		}
 	}
 	lines = append(lines, line)
@@ -74,7 +74,7 @@ func (s StateScreen) header() string {
 func (s StateScreen) tabCell(tab int) string {
 	text := " " + tabNames[tab] + " "
 	switch {
-	case s.reported && s.filter.words() != "":
+	case s.reported && s.filter.Words() != "":
 		text = fmt.Sprintf(" %s %d/%d ", tabNames[tab], len(s.shown(tab)), len(s.rows[tab]))
 	case s.reported:
 		text = fmt.Sprintf(" %s %d ", tabNames[tab], len(s.rows[tab]))
@@ -94,7 +94,7 @@ func (s StateScreen) tabCell(tab int) string {
 // list. So the list needs no scroll of its own to keep, and a new size can't lose the row.
 func (s StateScreen) listBody(size Size) string {
 	var lines []string
-	if field := s.filter.line(s.theme); field != "" {
+	if field := s.filter.Line(s.theme); field != "" {
 		lines = append(lines, field)
 	}
 	rows := s.shown(s.tab)

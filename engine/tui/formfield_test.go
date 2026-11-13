@@ -56,11 +56,11 @@ func TestChoiceChecksTheOptionItMovesTo(t *testing.T) {
 		return nil
 	}}
 	f := NewFormField(spec).Focus()
-	if f = f.Update(right); f.problem == nil {
+	if f = f.Update(right); f.Problem == nil {
 		t.Error("the refused option shows no problem")
 	}
-	if f = f.Update(right); f.problem != nil {
-		t.Errorf("past the refused option: %v", f.problem)
+	if f = f.Update(right); f.Problem != nil {
+		t.Errorf("past the refused option: %v", f.Problem)
 	}
 }
 
@@ -69,17 +69,17 @@ func TestChoiceWithNoOptionsHoldsNothing(t *testing.T) {
 	if got := f.Value(); got != "" {
 		t.Errorf("value = %q", got)
 	}
-	if got := f.view(testTheme, 20); strings.Contains(got, "[") {
+	if got := f.View(testTheme, 20); strings.Contains(got, "[") {
 		t.Errorf("drew an option: %q", got)
 	}
 }
 
 func TestChoiceShowsItsOptionsOrTheChosenOneAlone(t *testing.T) {
 	f := choice("cloud")
-	if got := f.view(testTheme, 40); !strings.Contains(got, "[cloud]") || !strings.Contains(got, "mac-vm") {
+	if got := f.View(testTheme, 40); !strings.Contains(got, "[cloud]") || !strings.Contains(got, "mac-vm") {
 		t.Errorf("wide: %q", got)
 	}
-	got := f.view(testTheme, 12)
+	got := f.View(testTheme, 12)
 	if !strings.Contains(got, "[cloud]") || strings.Contains(got, "lan") || lipgloss.Width(got) > 12 {
 		t.Errorf("narrow: %q", got)
 	}
@@ -162,10 +162,10 @@ func TestBlurredFieldTakesNoKey(t *testing.T) {
 func TestBlurredFieldShowsNoColorAndNoArrows(t *testing.T) {
 	theme := NewTheme(func(string) string { return "yes" })
 	text := NewFormField(FieldSpec{Value: "held"}).Fit(20)
-	if got := text.view(theme, 20); !strings.Contains(got, "held") || strings.Contains(got, "\x1b[3") {
+	if got := text.View(theme, 20); !strings.Contains(got, "held") || strings.Contains(got, "\x1b[3") {
 		t.Errorf("a text at rest: %q", got)
 	}
-	if got := choice("").Blur().view(theme, 40); strings.ContainsAny(got, "←→") {
+	if got := choice("").Blur().View(theme, 40); strings.ContainsAny(got, "←→") {
 		t.Errorf("a choice at rest: %q", got)
 	}
 }

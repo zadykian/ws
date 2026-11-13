@@ -37,8 +37,8 @@ func TestConfigureReadsASheetOnceItShows(t *testing.T) {
 		t.Fatalf("read: %v, %d reads", err, reads)
 	}
 	s = fed(s, savedMsg{jobs[0].place, sheet, nil})
-	if s.saving || s.status() != "" || s.form().name() != "HOST" {
-		t.Errorf("saving = %v, status %q, field %q", s.saving, s.status(), s.form().name())
+	if s.saving || s.status() != "" || s.form().Name() != "HOST" {
+		t.Errorf("saving = %v, status %q, field %q", s.saving, s.status(), s.form().Name())
 	}
 	if got := stripped(s.View().Content); !strings.Contains(got, "way.conf 1/3") {
 		t.Errorf("drew:\n%s", got)

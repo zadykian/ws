@@ -21,7 +21,7 @@ func queueBoxes(q queue) []string {
 }
 
 func TestAStagesBoxTurnsItsSteps(t *testing.T) {
-	side, at := "Mac", cursor(1)
+	side, at := "Mac", Cursor(1)
 	q := queueOf(testStages()).toggled(side, at)
 	if got := queueBoxes(q)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
 		t.Errorf("boxes = %q", got)

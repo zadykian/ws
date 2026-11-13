@@ -51,16 +51,16 @@ type FieldSpec struct {
 // FormField is a field of a form: a value that Update replaces, as a screen's model is.
 type FormField struct {
 	spec  FieldSpec
-	input textinput.Model
-	// secret is a password. The input never holds it: its sanitizer makes a space of a tab or a line
+	Input textinput.Model
+	// Secret is a password. The input never holds it: its sanitizer makes a space of a tab or a line
 	// end, which a value that shows nothing would carry unseen.
-	secret string
+	Secret string
 	// chosen is the place of a choice's option, and start the value before any edit.
 	chosen int
 	start  string
-	// problem is why Valid refuses the value, once an edit or a Check found that: an empty field that
+	// Problem is why Valid refuses the value, once an edit or a Check found that: an empty field that
 	// nobody touched shows none.
-	problem error
+	Problem error
 }
 
 // NewFormField returns the field of spec, which takes no key before Focus.
@@ -71,7 +71,7 @@ func NewFormField(spec FieldSpec) FormField {
 		input.SetValue(spec.Value)
 	}
 	chosen := max(slices.Index(spec.Options, cmp.Or(spec.Value, spec.Default)), 0)
-	f := FormField{spec: spec, input: input, chosen: chosen}
+	f := FormField{spec: spec, Input: input, chosen: chosen}
 	f.start = f.Value()
 	return f
 }
@@ -85,7 +85,7 @@ func (f FormField) Respec(spec FieldSpec) FormField {
 	if !edited {
 		f.start = f.Value()
 	}
-	if f.problem != nil {
+	if f.Problem != nil {
 		f, _ = f.Check()
 	}
 	return f
@@ -93,23 +93,23 @@ func (f FormField) Respec(spec FieldSpec) FormField {
 
 // Focus gives the field the keys.
 func (f FormField) Focus() FormField {
-	_ = f.input.Focus()
+	_ = f.Input.Focus()
 	return f
 }
 
 // Blur takes the keys from the field.
 func (f FormField) Blur() FormField {
-	f.input.Blur()
+	f.Input.Blur()
 	return f
 }
 
 // Fit sets the columns of the field, past which it scrolls. The input scrolls only as its cursor
 // moves, and from the end alone does it work out a narrower view, so the cursor goes there and back.
 func (f FormField) Fit(width int) FormField {
-	f.input.SetWidth(max(width-lipgloss.Width(f.input.Prompt)-1, 1))
-	at := f.input.Position()
-	f.input.CursorEnd()
-	f.input.SetCursor(at)
+	f.Input.SetWidth(max(width-lipgloss.Width(f.Input.Prompt)-1, 1))
+	at := f.Input.Position()
+	f.Input.CursorEnd()
+	f.Input.SetCursor(at)
 	return f
 }
 
@@ -117,7 +117,7 @@ func (f FormField) Fit(width int) FormField {
 // blink, or reads a clipboard that a server lacks, into a message that would reach the screen. A
 // terminal's own paste comes as tea.PasteMsg.
 func (f FormField) Update(msg tea.Msg) FormField {
-	if !f.input.Focused() {
+	if !f.Input.Focused() {
 		return f
 	}
 	before := f.Value()
@@ -127,7 +127,7 @@ func (f FormField) Update(msg tea.Msg) FormField {
 	case ChoiceField:
 		f = f.choose(msg)
 	default:
-		f.input, _ = f.input.Update(msg)
+		f.Input, _ = f.Input.Update(msg)
 	}
 	if f.Value() != before {
 		f, _ = f.Check()
@@ -142,16 +142,16 @@ func (f FormField) edit(msg tea.Msg) FormField {
 	switch msg := msg.(type) {
 	case tea.PasteMsg:
 		line, _, _ := strings.Cut(strings.ReplaceAll(msg.Content, "\r", "\n"), "\n")
-		f.secret += line
+		f.Secret += line
 	case tea.KeyPressMsg:
 		switch {
-		case key.Matches(msg, f.input.KeyMap.DeleteBeforeCursor):
-			f.secret = ""
-		case key.Matches(msg, f.input.KeyMap.DeleteCharacterBackward):
-			_, size := utf8.DecodeLastRuneInString(f.secret)
-			f.secret = f.secret[:len(f.secret)-size]
+		case key.Matches(msg, f.Input.KeyMap.DeleteBeforeCursor):
+			f.Secret = ""
+		case key.Matches(msg, f.Input.KeyMap.DeleteCharacterBackward):
+			_, size := utf8.DecodeLastRuneInString(f.Secret)
+			f.Secret = f.Secret[:len(f.Secret)-size]
 		default:
-			f.secret += msg.Text
+			f.Secret += msg.Text
 		}
 	}
 	return f
@@ -176,9 +176,9 @@ func (f FormField) choose(msg tea.Msg) FormField {
 func (f FormField) Value() string {
 	switch {
 	case f.spec.Kind == PasswordField:
-		return f.secret
+		return f.Secret
 	case f.spec.Kind != ChoiceField:
-		return cmp.Or(strings.TrimSpace(f.input.Value()), f.spec.Default)
+		return cmp.Or(strings.TrimSpace(f.Input.Value()), f.spec.Default)
 	case len(f.spec.Options) == 0:
 		return ""
 	}
@@ -193,18 +193,18 @@ func (f FormField) Edited() bool {
 
 // Check runs Valid on the value, and keeps its refusal for the field to show.
 func (f FormField) Check() (FormField, bool) {
-	f.problem = nil
+	f.Problem = nil
 	if f.spec.Valid != nil {
-		f.problem = f.spec.Valid(f.Value())
+		f.Problem = f.spec.Valid(f.Value())
 	}
-	return f, f.problem == nil
+	return f, f.Problem == nil
 }
 
-// view draws the line that takes the keys. A choice in focus shows its keys as arrows. Too narrow for
+// View draws the line that takes the keys. A choice in focus shows its keys as arrows. Too narrow for
 // its options, it shows the chosen one alone. Its brackets mark that one under NO_COLOR.
-func (f FormField) view(theme Theme, width int) string {
+func (f FormField) View(theme Theme, width int) string {
 	if f.spec.Kind != ChoiceField {
-		return f.input.View()
+		return f.Input.View()
 	}
 	cells := make([]string, 0, len(f.spec.Options))
 	chosen := ""
@@ -217,7 +217,7 @@ func (f FormField) view(theme Theme, width int) string {
 		cells = append(cells, cell)
 	}
 	before, after := "  ", "  "
-	if f.input.Focused() {
+	if f.Input.Focused() {
 		before, after = "← ", " →"
 	}
 	if line := before + strings.Join(cells, " ") + after; lipgloss.Width(line) <= width {
@@ -252,10 +252,10 @@ func (f FormField) Lines(theme Theme, width, room int) []string {
 		return lines
 	}
 	var why []string
-	if f.problem != nil {
-		why = take(theme.Bad, f.problem.Error())
+	if f.Problem != nil {
+		why = take(theme.Bad, f.Problem.Error())
 	}
 	label := take(lipgloss.NewStyle(), f.label())
 	help := take(theme.Muted, f.spec.Help)
-	return slices.Concat(label, []string{f.view(theme, width)}, help, why)
+	return slices.Concat(label, []string{f.View(theme, width)}, help, why)
 }
