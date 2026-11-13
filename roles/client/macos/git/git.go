@@ -1,4 +1,5 @@
-package setup
+// Package git sets up git's identity and signing key in ~/.config/ws/gitconfig, and gh.
+package git
 
 import (
 	"context"

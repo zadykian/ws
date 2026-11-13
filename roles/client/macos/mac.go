@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/client/macos/mac"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 )
@@ -33,7 +34,7 @@ func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		m.ssh(false),
 		setup.Cable{Conf: m.Conf, M: m.M, Out: m.Out},
-		&setup.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
+		&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
 		&setup.Ghostty{Home: m.Home, Settings: mac.Ghostty, M: m.M, Out: m.Out},
 		&setup.Zed{Home: m.Home, Settings: mac.ZedSettings, Keymap: mac.ZedKeymap, M: m.M, Out: m.Out},
 		&setup.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},

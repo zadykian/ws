@@ -1,4 +1,4 @@
-package setup_test
+package git_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/git"
 )
 
 const gitAdd = "gh ssh-key add " + gitPub + " --type signing --title mac"
@@ -80,7 +80,7 @@ func TestGitChecksThatGhListsTheKeyItAdded(t *testing.T) {
 	out := g.Out.(*effecttest.Out)
 	m.Results[gitList] = effecttest.Result{}
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
-	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{setup.Register{
+	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
 		Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestGitSaysWhereGhListsTheKey(t *testing.T) {
 func TestGitSaysNoAlreadyAfterItsAdd(t *testing.T) {
 	m, g := gitReady()
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
-	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{setup.Register{
+	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
 		Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
 		t.Fatal(err)
 	}

@@ -1,4 +1,4 @@
-package setup_test
+package git_test
 
 import (
 	"context"

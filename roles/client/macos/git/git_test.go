@@ -1,4 +1,4 @@
-package setup_test
+package git_test
 
 import (
 	"context"
@@ -10,9 +10,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
-	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -23,14 +23,14 @@ const (
 	gitList = "/opt/bin/gh api --paginate user/ssh_signing_keys --jq .[].key"
 )
 
-func gitStep(m *effecttest.Machine, look func(string) (string, error)) *setup.Git {
+func gitStep(m *effecttest.Machine, look func(string) (string, error)) *git.Git {
 	m.Results["ssh-keygen -l -f "+gitPub] = effecttest.Result{}
 	m.Results["hostname -s"] = effecttest.Result{Out: []byte("mac\n")}
 	m.Results[gitList] = effecttest.Result{Out: []byte("ssh-ed25519 AAAAC3Nz\n")}
 	if look == nil {
 		look = func(name string) (string, error) { return "/opt/bin/" + name, nil }
 	}
-	return &setup.Git{
+	return &git.Git{
 		Conf: conf.Conf{GitName: "A B", GitEmail: "a@b.c", GitSigningPubKey: gitPub},
 		Home: gitHome, M: m, Out: &effecttest.Out{}, LookPath: look,
 	}
@@ -48,7 +48,7 @@ func prereqs(p step.Plan) []step.Change {
 }
 
 func TestGitWithoutNameLeavesGitAlone(t *testing.T) {
-	p, err := (&setup.Git{M: effecttest.NewMachine(), Out: &effecttest.Out{}}).Plan(context.Background())
+	p, err := (&git.Git{M: effecttest.NewMachine(), Out: &effecttest.Out{}}).Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan = %v, %v; want nothing", p.Changes, err)
 	}
@@ -108,7 +108,7 @@ func gitConfig(m *effecttest.Machine, text, paths, names string) {
 }
 
 // gitReady is a Mac with the key and gh there.
-func gitReady() (*effecttest.Machine, *setup.Git) {
+func gitReady() (*effecttest.Machine, *git.Git) {
 	m := effecttest.NewMachine()
 	m.Files[gitPub] = []byte(gitKey)
 	m.Dirs[gitHome+"/.config"], m.Dirs[gitHome+"/.config/ws"] = 0o755, 0o700
@@ -167,7 +167,7 @@ func TestGitTrustsSecretivesKeyThroughItsScript(t *testing.T) {
 	}
 }
 
-func mustPlan(t *testing.T, g *setup.Git) step.Plan {
+func mustPlan(t *testing.T, g *git.Git) step.Plan {
 	p, err := g.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -175,7 +175,7 @@ func mustPlan(t *testing.T, g *setup.Git) step.Plan {
 	return p
 }
 
-func gitWithConfig(text, paths, names string) (*effecttest.Machine, *effecttest.Out, *setup.Git) {
+func gitWithConfig(text, paths, names string) (*effecttest.Machine, *effecttest.Out, *git.Git) {
 	m, g := gitReady()
 	delete(m.Files, gitConfigFile)
 	if text != "" {
