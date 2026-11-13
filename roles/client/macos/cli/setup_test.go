@@ -10,7 +10,7 @@ import (
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 func TestSetupCommand(t *testing.T) {
@@ -41,7 +41,7 @@ func TestSetupRefusesRoot(t *testing.T) {
 func TestMacChangeSaysADiffBareAndNoBackup(t *testing.T) {
 	out := &effecttest.Out{}
 	o := linesOf(out, "ws client macos apply")
-	plan := []step.Change{macos.Write{Path: "/f", After: []byte("a\n")}, macos.Backup{Path: "/f", To: "/f.~"}}
+	plan := []step.Change{change.Write{Path: "/f", After: []byte("a\n")}, change.Backup{Path: "/f", To: "/f.~"}}
 	o.Observe(step.Event{Kind: step.Planned, Step: "ssh", Check: true, Changes: plan})
 	want := []string{"say: --- /dev/null\n+++ /f\n@@ -0,0 +1 @@\n+a"}
 	if !reflect.DeepEqual(out.Lines, want) {

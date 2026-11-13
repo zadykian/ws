@@ -54,10 +54,10 @@ func serverTerminal() (enginecli.Env, *effecttest.Machine) {
 	return p, m
 }
 
-// change is what a stepOf plans.
-type change string
+// planned is what a stepOf plans.
+type planned string
 
-func (c change) String() string { return string(c) }
+func (c planned) String() string { return string(c) }
 
 // stepOf is a step whose Plan runs plan and finds a change, so that --check names its role.
 type stepOf struct {
@@ -71,6 +71,6 @@ func (s stepOf) Plan(ctx context.Context) (step.Plan, error) {
 	if err := s.plan(ctx); err != nil {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: []step.Change{change("x")}}, nil
+	return step.Plan{Changes: []step.Change{planned("x")}}, nil
 }
 func (stepOf) Apply(context.Context, step.Plan) error { return nil }
