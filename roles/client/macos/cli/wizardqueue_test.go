@@ -10,7 +10,9 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 )
 
@@ -33,18 +35,18 @@ func TestWizardQueueSetsEachStageOnItsMachine(t *testing.T) {
 	for _, s := range queue {
 		on[s.Side]++
 	}
-	if on["Mac"] != 11 || on["ws"] != 4 {
+	if on[string(stage.Mac)] != 11 || on[string(session.Ws)] != 4 {
 		t.Errorf("sides = %v, want 11 on the Mac and 4 on ws", on)
 	}
-	if run := stageOf(t, queue, "ws's run"); run.Side != "ws" || run.Waits == "" {
+	if run := stageOf(t, queue, "ws's run"); run.Side != string(session.Ws) || run.Waits == "" {
 		t.Errorf("ws's run = %+v, want it on ws, behind the install", run)
 	}
 }
 
 // The Mac's pane stands left of ws's as the stages first name them, so the first stage is the Mac's.
 func TestWizardQueueNamesTheMacFirst(t *testing.T) {
-	if queue := queueOf(fakeProcess()); queue[0].Side != "Mac" {
-		t.Errorf("the first stage is on %q, want Mac", queue[0].Side)
+	if queue := queueOf(fakeProcess()); queue[0].Side != string(stage.Mac) {
+		t.Errorf("the first stage is on %q, want %q", queue[0].Side, stage.Mac)
 	}
 }
 

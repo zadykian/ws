@@ -11,6 +11,7 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
 
 // After a full run of this ws, from the Mac or from ws, with nothing changed, no apply runs.
@@ -63,7 +64,7 @@ func TestServerWizardAtATerminalOpensOneList(t *testing.T) {
 	if status != 0 || stdout != "" || !strings.Contains(stderr, enterScreen) || !strings.Contains(stderr, leaveScreen) {
 		t.Errorf("status %d, stdout %q, stderr %q", status, stdout, stderr)
 	}
-	if strings.Contains(stderr, "Mac") || slices.ContainsFunc(m.Calls, ranWs) {
+	if strings.Contains(stderr, string(localSide)) || slices.ContainsFunc(m.Calls, ranWs) {
 		t.Errorf("stderr %q, calls %q", stderr, m.Calls)
 	}
 }
@@ -102,7 +103,7 @@ func TestServerWizardRunsTheStagesChosen(t *testing.T) {
 // s opens ws's state, read on ws itself: the keys leave it by its title. tui's tests follow the
 // loop back to the list.
 func TestServerWizardStateKeyReadsWs(t *testing.T) {
-	keys := stateTrip{newAfterScan("s"), "ws server ubuntu wizard: ws"}
+	keys := stateTrip{newAfterScan("s"), "ws server ubuntu wizard: " + string(session.Ws)}
 	if status, m := screenServer(keys); status != 0 {
 		t.Errorf("status %d, calls %q", status, m.Calls)
 	}

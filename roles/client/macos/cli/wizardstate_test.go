@@ -16,7 +16,9 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 )
 
 // reportingWs is a far ws whose script gives its status and its report, at version.
@@ -91,8 +93,8 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	read, done := macState(p, "ws", &host.Sudo{})
-	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), "ws", read)
+	read, done := macState(p, string(session.Ws), &host.Sudo{})
+	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(session.Ws), read)
 	done(c.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -106,8 +108,8 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c := screenCommand(t, "q")
-	read, done := macState(p, "Mac", &host.Sudo{})
-	if err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), "Mac", read); err != nil || done != nil {
+	read, done := macState(p, string(stage.Mac), &host.Sudo{})
+	if err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(stage.Mac), read); err != nil || done != nil {
 		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}
 	if got := lockCalls(m.Calls, "mkdir"); got != 0 {
@@ -143,7 +145,7 @@ func TestWizardStateKeyComesBackToTheListsWithNoScan(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
 	defer cancel()
 	var out bytes.Buffer
-	keys := stateTrip{newAfterScan("s"), "ws client macos wizard: Mac"}
+	keys := stateTrip{newAfterScan("s"), "ws client macos wizard: " + string(stage.Mac)}
 	status := enginecli.Execute(ctx, enginecli.Root(p, clientGroup(p), serverGroup(p)), []string{"client", "macos", "wizard"}, keys, &out, keys)
 	if status != 0 || strings.Count(strings.Join(m.Calls, "\n"), "run caffeinate") != 1 {
 		t.Fatalf("status = %d, want a scan alone: calls = %q", status, m.Calls)
