@@ -15,8 +15,9 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Ws is the side of ws, in the wizard's locks and its list of what stays by hand.
-const Ws guided.Side = "ws"
+// Ws is the side of ws, and the title of its list, in the wizard's locks and its list of what stays
+// by hand.
+const Ws guided.Side = "Server (Ubuntu)"
 
 // Session is the one way to ws of a wizard's run: the Mac's over ssh, or ws's own on the machine
 // itself. It runs the remote script and the files script, which share ws's status. The stages take

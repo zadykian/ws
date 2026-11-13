@@ -45,8 +45,7 @@ func (c *Cable) Apply(ctx context.Context, _ step.Plan) error {
 				out = append(out, p.name)
 			}
 		}
-		port, err := c.ask(ctx, "WS_CABLE_PORT", "ws's port of the cable, of "+strings.Join(out, ", "),
-			one(c.up()), c.names())
+		port, err := c.ask(ctx, "WS_CABLE_PORT", "ws's port of the cable", one(c.up()), c.names(), out)
 		if err != nil {
 			return err
 		}
@@ -124,8 +123,7 @@ func (c *Cable) service(ctx context.Context) error {
 			linked = append(linked, s)
 		}
 	}
-	value, err := c.ask(ctx, "WS_CABLE_SERVICE", "The Mac's service of the cable, of "+strings.Join(list, ", "),
-		one(linked), list)
+	value, err := c.ask(ctx, "WS_CABLE_SERVICE", "The Mac's service of the cable", one(linked), list, list)
 	if err != nil {
 		return err
 	}

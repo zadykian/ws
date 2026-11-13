@@ -45,20 +45,30 @@ func (a *asker) ask(ctx context.Context, q conf.Question) (string, error) {
 			a.out.Say("%s: values for %s; an empty line takes the one in brackets, and none leaves it empty", stage.Answers, a.conf)
 			a.told = true
 		}
-		raw, err := a.p.Ask(ctx, effect.Question{Text: q.Prompt(), Valid: func(raw string) error {
-			if why := q.Refusal(q.Reply(raw), a.lan()); why != "" {
-				return fmt.Errorf("%s: %s: %s", a.prog, stage.Answers, why)
-			}
-			return nil
-		}})
+		var err error
+		value, err = a.reply(ctx, q)
 		if errors.Is(err, io.EOF) {
 			return "", fmt.Errorf("%s: the terminal ended before %s's answer: set %s", stage.Answers, q.Key, q.Key)
 		}
 		if err != nil {
 			return "", err
 		}
-		value = q.Reply(raw)
 	}
 	a.lines += conf.Line(q.Key, value) + "\n"
 	return value, nil
+}
+
+// reply asks the maintainer for q's value. A screen draws a key that takes one of a few as a choice
+// among them, and a line takes any other, as the plain prompt does every key.
+func (a *asker) reply(ctx context.Context, q conf.Question) (string, error) {
+	if c, ok := a.p.(effect.Choosing); ok && q.Options() != nil {
+		return c.Choose(ctx, effect.ChoiceQuestion{Text: q.Text + " (" + q.Key + ")", Options: q.Options(), Default: q.Def})
+	}
+	raw, err := a.p.Ask(ctx, effect.Question{Text: q.Prompt(), Valid: func(raw string) error {
+		if why := q.Refusal(q.Reply(raw), a.lan()); why != "" {
+			return fmt.Errorf("%s: %s: %s", a.prog, stage.Answers, why)
+		}
+		return nil
+	}})
+	return q.Reply(raw), err
 }

@@ -13,9 +13,6 @@ import (
 // configureStage names the Configure screen in what a save says.
 const configureStage = "Configure"
 
-// targets are WS_TARGET's values, in the order that the form offers them.
-var targets = []string{"lan", "cloud", "mac-vm"}
-
 // wayKeys are the keys that an edit can hide. conf refuses one past the edit that hid it, as
 // WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
 var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_EMAIL"}
@@ -94,8 +91,8 @@ func (f Form) Fields(edits map[string]string) []form.Field {
 			return nil
 		}}
 		switch {
-		case q.Key == "WS_TARGET":
-			field.Options = targets
+		case q.Options() != nil:
+			field.Options = q.Options()
 		case q.Need != "":
 			field.Default = q.Def
 		case q.Def != "":

@@ -3,15 +3,15 @@
 [The list of steps](../../README.md#the-list-of-steps) holds the keys these lists share. `ws client macos wizard`
 opens them at a terminal, and `--plain` or no terminal keeps its lines. `--check` goes straight to
 its run, on the run screen. `--update` runs ahead of any screen, on lines, as the new ws takes this
-one's place and opens them itself. `ws server ubuntu wizard` opens one list, `ws`, where every stage
-runs, by the same rules ([The server's wizard](../../../../roles/server/ubuntu/stages/README.md)). Its `configure` button opens `ws
+one's place and opens them itself. `ws server ubuntu wizard` opens one list, `Server (Ubuntu)`,
+where every stage runs, by the same rules ([The server's wizard](../../../../roles/server/ubuntu/stages/README.md)). Its `configure` button opens `ws
 server ubuntu configure`'s forms, and its `s` reads ws on ws.
 
-The wizard's stages are one queue, shown as two lists side by side: `Mac` and `ws`, by the machine
-a stage runs on. A narrow window stacks them, and one too short for that keeps the list in focus.
-The numbers run across both lists, in the order of the run. Stage 3 can stand in `ws` between two
-stages of `Mac`, and the order, the locks and the count hold across the machines. A stage's own
-steps stand under it, indented, with no number.
+The wizard's stages are one queue, shown as two lists side by side: `Client (macOS)` and `Server
+(Ubuntu)`, by the machine a stage runs on. A narrow window stacks them, and one too short for that
+keeps the list in focus. The numbers run across both lists, in the order of the run. Stage 3 can
+stand in `Server (Ubuntu)` between two stages of `Client (macOS)`, and the order, the locks and the
+count hold across the machines. A stage's own steps stand under it, indented, with no number.
 
 Tab walks the lists, then the buttons, which add `state` and `configure` to the list's, and
 Shift-Tab walks back. Each list keeps its cursor. `a`, `n`, `i`, `p` and `/` act on both lists, and
@@ -31,9 +31,9 @@ under 14 lines leaves it out.
 ## The scan
 
 ws's list shows the roles by name until the stage that reaches ws has reported, and its title says
-`ws: roles not scanned`. A check of the Mac can't read ws before ws is there. A report gives each
-role its steps, in place of its name. A report that failed keeps the names, and the detail gives its
-reason. A run then adds the steps as its events name them.
+`Server (Ubuntu): roles not scanned`. A check of the Mac can't read ws before ws is there. A report
+gives each role its steps, in place of its name. A report that failed keeps the names, and the
+detail gives its reason. A run then adds the steps as its events name them.
 
 At the scan's end all that the scan found work in starts chosen, as the wizard left alone runs each
 stage it reaches. So does all that it never reached, as a check stops short on a new Mac. A stage

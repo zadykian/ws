@@ -15,7 +15,7 @@ import (
 
 // localSide names the machine of a stage that names none. The lists draw ws's stages under the
 // Mac's name, as the Mac's wizard does.
-const localSide wizard.Side = "Mac"
+const localSide wizard.Side = "Client (macOS)"
 
 // wizardSide is ws server ubuntu wizard's side. Every stage runs on ws, with no caffeinate.
 func wizardSide(p enginecli.Env) engine.Side {
