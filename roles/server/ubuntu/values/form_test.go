@@ -1,10 +1,11 @@
-package wizard
+package values_test
 
 import (
 	"context"
 	"errors"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"slices"
 	"strings"
 	"testing"
@@ -14,15 +15,15 @@ import (
 )
 
 // farVars returns the form of a ws whose file is file.
-func farVars(file string) (VarsForm, *effecttest.Machine) {
+func farVars(file string) (values.Form, *effecttest.Machine) {
 	m := effecttest.NewMachine()
-	ws := session.New(sessiontest.Reach{Reach: MacReach{}, M: m}, session.Scripts{Remote: []byte("x"), Files: []byte("y")})
+	ws := session.New(sessiontest.Reach{M: m}, session.Scripts{Remote: []byte("x"), Files: []byte("y")})
 	m.Results[sessiontest.Op("values")] = effecttest.Result{Out: []byte(file)}
-	return VarsForm{Ws: ws}, m
+	return values.Form{Ws: ws}, m
 }
 
 // varsField returns the field of that key.
-func varsField(t *testing.T, f VarsForm, key string) form.Field {
+func varsField(t *testing.T, f values.Form, key string) form.Field {
 	fields := f.Fields()
 	at := slices.IndexFunc(fields, func(field form.Field) bool { return field.Key == key })
 	if at < 0 {

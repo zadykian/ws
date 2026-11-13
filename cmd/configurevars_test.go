@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	guided "github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"io"
 	"slices"
 	"strings"
@@ -96,7 +97,7 @@ func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := (wizard.VarsForm{Ws: got}).Load(context.Background()); err != nil {
+	if _, err := (values.Form{Ws: got}).Load(context.Background()); err != nil {
 		t.Errorf("the reach left sudo unread: %v", err)
 	}
 	if op := <-ws.ops; !slices.Equal(op, []string{"values"}) {

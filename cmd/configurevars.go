@@ -5,6 +5,7 @@ import (
 	"context"
 	guided "github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"sync"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -43,7 +44,7 @@ func hostVarsSheet(open sessionOpen) tui.Sheet {
 			if err != nil {
 				return tui.Sheet{}, err
 			}
-			form, err := wizard.VarsForm{Ws: ws}.Load(ctx)
+			form, err := values.Form{Ws: ws}.Load(ctx)
 			if err != nil {
 				return tui.Sheet{}, err
 			}
@@ -116,7 +117,7 @@ func (r *varsReach) close(ctx context.Context) {
 }
 
 // varsSheet is ws's host_vars on the Configure screen, as form read it.
-func varsSheet(form wizard.VarsForm) tui.Sheet {
+func varsSheet(form values.Form) tui.Sheet {
 	return tui.Sheet{
 		Name:   "host_vars",
 		Fields: func(map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields()) },
