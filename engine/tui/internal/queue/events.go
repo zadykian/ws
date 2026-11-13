@@ -1,10 +1,11 @@
-package tui
+package queue
 
 import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -57,7 +58,7 @@ func (q queue) take(e step.Event) queue {
 
 // reported returns the queue with stage's list made of sections as they say, in place of the rows it
 // had. The filter's words stay.
-func (q queue) reported(stage string, sections []StateSection) queue {
+func (q queue) reported(stage string, sections []run.StateSection) queue {
 	i := slices.IndexFunc(q.stages, func(s queueStage) bool { return s.row.Name == stage })
 	if i < 0 {
 		return q

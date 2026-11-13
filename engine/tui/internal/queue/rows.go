@@ -1,4 +1,4 @@
-package tui
+package queue
 
 import (
 	"github.com/zadykian/ws/engine/core/step"

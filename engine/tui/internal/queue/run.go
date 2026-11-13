@@ -1,18 +1,19 @@
-package tui
+package queue
 
 import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
 // QueueRun follows a run of a queue on the lists that chose it, over what the run prints. The
 // run's bar and clock count stages, and each step's mark moves in its list. A run of the stages
-// names them by their places in the queue, and Bridge.Observe sends this what it sends a RunScreen.
+// names them by their places in the queue, and Bridge.Observe sends this what it sends a run.Screen.
 type QueueRun struct {
-	run  RunScreen
+	run  run.Screen
 	list queue
 	at   map[string]widget.Cursor
 }
@@ -23,7 +24,7 @@ func NewQueueRun(title string, theme widget.Theme, choice QueueChoice) QueueRun 
 	for _, s := range choice.left.list.stages {
 		stages.Steps = append(stages.Steps, s.row.Name)
 	}
-	run := NewRunScreen(title, theme, stages).OutputIn(func(window widget.Size) widget.Size {
+	run := run.NewRunScreen(title, theme, stages).OutputIn(func(window widget.Size) widget.Size {
 		return inside(stripSize(window))
 	})
 	return QueueRun{run, choice.left.list.filtered(""), choice.left.at}

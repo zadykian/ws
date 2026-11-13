@@ -1,4 +1,4 @@
-package tui
+package queue
 
 import (
 	"context"
@@ -41,7 +41,7 @@ type QueueChoice struct {
 
 // PickStages draws a queue's lists over scan, as Pick draws a list. scan's Bridge.Report fills
 // a stage from what its machine says. A QueueChoice that runs nothing, or goes to the form or the state screen, says it by its Next.
-func PickStages(ctx context.Context, c Config, title string, stages []Stage, scan Work) (QueueChoice, error) {
+func PickStages(ctx context.Context, c run.Config, title string, stages []Stage, scan run.Work) (QueueChoice, error) {
 	picks := make(chan QueueChoice, 1)
 	return run.Await(ctx, c, openQueue(title, c.Theme, stages, picks), picks, scan)
 }
@@ -49,11 +49,11 @@ func PickStages(ctx context.Context, c Config, title string, stages []Stage, sca
 // Reopen draws the lists again as left, a NextState choice, found them, and returns the next choice. No
 // scan runs, as left came past a scan's end and the state screen changes nothing. What the scan
 // found stands, and so do the boxes, which a scan would choose again.
-func Reopen(ctx context.Context, c Config, left QueueChoice) (QueueChoice, error) {
+func Reopen(ctx context.Context, c run.Config, left QueueChoice) (QueueChoice, error) {
 	picks := make(chan QueueChoice, 1)
 	screen := left.left
 	screen.picks = picks
-	return run.Await(ctx, c, screen, picks, func(ctx context.Context, _ *Bridge) error {
+	return run.Await(ctx, c, screen, picks, func(ctx context.Context, _ *run.Bridge) error {
 		<-ctx.Done()
 		return nil
 	})

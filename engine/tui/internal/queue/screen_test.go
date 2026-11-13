@@ -1,4 +1,4 @@
-package tui
+package queue
 
 import (
 	"bytes"
@@ -176,7 +176,7 @@ func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
 }
 
 func TestAReportFillsWsList(t *testing.T) {
-	sections := []StateSection{{Name: "base", Reports: []step.Report{{Step: "Packages"}}}}
+	sections := []run.StateSection{{Name: "base", Reports: []step.Report{{Step: "Packages"}}}}
 	got := queueShown(queueSent(testQueueScreen(), run.ReportedMsg{Stage: "Run", Sections: sections}))
 	if strings.Contains(got, "not scanned") || !strings.Contains(got, "✓ Packages") {
 		t.Errorf("frame:\n%s", got)

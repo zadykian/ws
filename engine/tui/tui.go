@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/tui/internal/configure"
 	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/pick"
+	"github.com/zadykian/ws/engine/tui/internal/queue"
 	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
@@ -86,4 +87,43 @@ type Choice = pick.Choice
 // chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
 func Pick(ctx context.Context, c Config, title string, groups []Group, scan Work) (Choice, error) {
 	return pick.Pick(ctx, c, title, groups, scan)
+}
+
+// Stage is a step of a queue. The lists show one order, as stages wait on each other across the
+// machines and share a connection, so that no two run at once.
+type Stage = queue.Stage
+
+// QueueChoice is what the queue's screen leaves to the wizard's loop.
+type QueueChoice = queue.QueueChoice
+
+// Next is what the queue's screen was left for.
+type Next = queue.Next
+
+// The ways to leave the queue's screen.
+const (
+	NextLeave     = queue.NextLeave
+	NextRun       = queue.NextRun
+	NextCheck     = queue.NextCheck
+	NextConfigure = queue.NextConfigure
+	NextState     = queue.NextState
+)
+
+// QueueRun follows a run of a queue on the lists that chose it, over what the run prints.
+type QueueRun = queue.QueueRun
+
+// NewQueueRun returns the screen of a run of choice's stages.
+func NewQueueRun(title string, theme Theme, choice QueueChoice) QueueRun {
+	return queue.NewQueueRun(title, theme, choice)
+}
+
+// PickStages draws a queue's lists over scan, as Pick draws a list. A QueueChoice that runs nothing,
+// or goes to the form or the state screen, says it by its Next.
+func PickStages(ctx context.Context, c Config, title string, stages []Stage, scan Work) (QueueChoice, error) {
+	return queue.PickStages(ctx, c, title, stages, scan)
+}
+
+// Reopen draws the lists again as left, a NextState choice, found them, and returns the next choice.
+// No scan runs.
+func Reopen(ctx context.Context, c Config, left QueueChoice) (QueueChoice, error) {
+	return queue.Reopen(ctx, c, left)
 }

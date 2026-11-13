@@ -1,4 +1,5 @@
-package tui
+// Package queue draws the lists of a queue of stages over one scan, and follows the run of what they chose.
+package queue
 
 import (
 	"github.com/zadykian/ws/engine/tui/internal/list"

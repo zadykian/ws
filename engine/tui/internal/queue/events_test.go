@@ -1,10 +1,11 @@
-package tui
+package queue
 
 import (
 	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -53,7 +54,7 @@ func TestAnEventOfAStageWithNoGroupOfItsNameJoinsItsList(t *testing.T) {
 }
 
 func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
-	sections := []StateSection{{Name: "base", Reports: []step.Report{
+	sections := []run.StateSection{{Name: "base", Reports: []step.Report{
 		{Step: "Packages"},
 		{Step: "Locale", Changes: []step.Pending{{Text: "sets the locale"}}},
 		{Step: "Time", After: "Locale"},
@@ -75,7 +76,7 @@ func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 }
 
 func TestAReportKeepsTheWordsOfTheFilter(t *testing.T) {
-	sections := []StateSection{{Name: "Run", Reports: []step.Report{{Step: "Packages"}, {Step: "Locale"}}}}
+	sections := []run.StateSection{{Name: "Run", Reports: []step.Report{{Step: "Packages"}, {Step: "Locale"}}}}
 	q := queueOf(testStages()).filtered("loc").reported("Run", sections)
 	if got, want := drawnQueue(q, "ws"), []string{"     [ ] Run", "     [ ] ✓ Locale"}; !slices.Equal(got, want) {
 		t.Errorf("list = %q, want %q", got, want)
