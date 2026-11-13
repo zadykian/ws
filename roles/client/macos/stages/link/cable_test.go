@@ -61,8 +61,9 @@ func TestCablePlan(t *testing.T) {
 	}
 }
 
-func TestCableApplyAsksPortAndService(t *testing.T) {
-	c, m, p := newCable(t, session.Status{}, cableLink, nil)
+// linked gives m what a run that names eth1 for the cable reads: the port, then the Mac's services,
+// of which USB LAN has a 169.254 address.
+func linked(m *effecttest.Machine) {
 	m.Results[sessiontest.Op("link", "eth1")] = effecttest.Result{}
 	m.Results[sessiontest.Op("run", "--only", "network,wireguard")] = effecttest.Result{}
 	m.Results[sessiontest.Op("wait", "eth1")] = effecttest.Result{Out: []byte("eth1 1 10.77.0.1/24\n")}
@@ -70,6 +71,11 @@ func TestCableApplyAsksPortAndService(t *testing.T) {
 	m.Results["networksetup -getinfo Wi-Fi"] = effecttest.Result{Out: []byte("IP address: 10.0.0.2\n")}
 	m.Results["networksetup -getinfo USB LAN"] = effecttest.Result{Out: []byte("IP address: 169.254.3.4\n")}
 	m.Results["ping -c 1 -t 3 10.77.0.1"] = effecttest.Result{}
+}
+
+func TestCableApplyAsksPortAndService(t *testing.T) {
+	c, m, p := newCable(t, session.Status{}, cableLink, nil)
+	linked(m)
 	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "eth1"
 	p.Answers["The Mac's service of the cable, of Wi-Fi, USB LAN (WS_CABLE_SERVICE) [USB LAN, or none]"] = "USB LAN"
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
