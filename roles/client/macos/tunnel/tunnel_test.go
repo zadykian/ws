@@ -1,4 +1,4 @@
-package setup_test
+package tunnel_test
 
 import (
 	"context"
@@ -9,16 +9,16 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
 )
 
-func tunnelStep(m *effecttest.Machine) *setup.Tunnel {
-	return &setup.Tunnel{Home: "/h", M: m, Out: &effecttest.Out{}, Self: func() ([]byte, error) { return []byte("ws"), nil }}
+func tunnelStep(m *effecttest.Machine) *tunnel.Tunnel {
+	return &tunnel.Tunnel{Home: "/h", M: m, Out: &effecttest.Out{}, Self: func() ([]byte, error) { return []byte("ws"), nil }}
 }
 
 func lines(p []string) string { return strings.Join(p, "\n") }
 
-func tunnelChanges(t *testing.T, s *setup.Tunnel) []string {
+func tunnelChanges(t *testing.T, s *tunnel.Tunnel) []string {
 	p, err := s.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)

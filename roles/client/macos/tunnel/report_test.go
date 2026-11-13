@@ -1,4 +1,4 @@
-package setup_test
+package tunnel_test
 
 import (
 	"errors"

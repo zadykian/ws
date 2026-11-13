@@ -13,6 +13,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/cld"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
 )
 
 func TestNamesComeInSetupShsOrder(t *testing.T) {
@@ -50,7 +51,7 @@ func TestMacStepsTakeTheCheck(t *testing.T) {
 			switch s := s.(type) {
 			case *cld.Cld:
 				got = s.Check
-			case *setup.Tunnel:
+			case *tunnel.Tunnel:
 				got = s.Check
 			case *setup.Networks:
 				got = s.Check

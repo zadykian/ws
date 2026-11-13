@@ -1,5 +1,5 @@
-// Package setup holds the steps of ws client macos apply, each setting up one part of the Mac.
-package setup
+// Package tunnel sets up the Mac's tunnel to ws: its program, key, config and LaunchDaemon.
+package tunnel
 
 import (
 	"bytes"

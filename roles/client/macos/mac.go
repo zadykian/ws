@@ -14,8 +14,8 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/ghostty"
 	"github.com/zadykian/ws/roles/client/macos/git"
-	"github.com/zadykian/ws/roles/client/macos/mac"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
 	"github.com/zadykian/ws/roles/client/macos/zed"
 	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
@@ -44,7 +44,7 @@ func (m Mac) steps(check bool) []step.Step {
 		&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, M: m.M, Out: m.Out},
 		&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},
 		&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now},
-		&setup.Tunnel{Conf: m.Conf, Home: m.Home, Plist: mac.TunnelPlist, M: m.M, Out: m.Out, Text: m.Text,
+		&tunnel.Tunnel{Conf: m.Conf, Home: m.Home, Plist: tunnel.Plist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},
 		&setup.Networks{Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
 	}

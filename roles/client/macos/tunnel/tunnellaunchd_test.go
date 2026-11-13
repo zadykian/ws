@@ -1,4 +1,4 @@
-package setup_test
+package tunnel_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/tunnel"
 )
 
 const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/mac.conf.\nWS_PUBLIC_KEY=K\nWS_PORT=51820\n"
@@ -37,7 +37,7 @@ func daemonMachine() *effecttest.Machine {
 	return m
 }
 
-func daemonStep(m *effecttest.Machine) *setup.Tunnel {
+func daemonStep(m *effecttest.Machine) *tunnel.Tunnel {
 	s := tunnelStep(m)
 	s.Conf = conf.Conf{PublicKey: "K"}
 	s.Plist = []byte("plist")
