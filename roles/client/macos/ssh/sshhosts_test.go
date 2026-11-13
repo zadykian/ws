@@ -54,3 +54,15 @@ func TestSSHStopsWhereAnotherServersFileFails(t *testing.T) {
 		t.Errorf("Plan err = %v, want a refusal that names server lab", err)
 	}
 }
+
+func TestSSHStopsWhereSSHReadsAServerAtAnotherAddress(t *testing.T) {
+	m := sshMachine()
+	withLab(m, "WS_TARGET=cloud\nWS_REMOTE=r.example\nWS_REMOTE_PORT=22\nWS_USER=root\nWS_SLOT=1\n")
+	m.Results["ssh -G -F /tmp/x/whole lab"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.7.1\n")}
+	c := sshConf(m, &effecttest.Out{})
+	c.MacConf = macConf
+	_, err := c.Step().Plan(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "ssh reads lab as hostname 10.99.7.1") {
+		t.Errorf("Plan err = %v, want a refusal of lab's address", err)
+	}
+}
