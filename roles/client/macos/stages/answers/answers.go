@@ -29,6 +29,9 @@ type Answers struct {
 	Defaults []byte
 	// Prog prefixes the messages of a refused answer.
 	Prog string
+	// Slot is the server's slot, which heads the lines that a server's file lacking WS_SLOT gets.
+	// Empty adds none.
+	Slot string
 	// Tty tells whether stdin is a terminal, which the questions need.
 	Tty bool
 	// Check makes Plan rehearse the stage. It asks, shows the diff of each file, and writes what
@@ -123,12 +126,17 @@ func (a *Answers) collect(ctx context.Context, text map[conf.Scope]string, c con
 }
 
 // compose splits the lines by the file of their keys, and returns each file with its lines added,
-// mac.conf first. A file refused with its lines is said, and stops the stage.
-func (a *Answers) compose(lines string) ([]part, error) {
+// mac.conf first. A server's file that lacks WS_SLOT and gets lines gets the slot first. A file
+// refused with its lines is said, and stops the stage.
+func (a *Answers) compose(text map[conf.Scope]string, lines string) ([]part, error) {
 	var parts []part
 	for _, p := range []part{{file: a.file(conf.MacFile), scratch: a.Scratch}, {file: a.file(conf.ServerFile), scratch: a.ServerScratch}} {
 		var err error
-		p.before, p.after, err = p.file.Compose(p.file.Scope.Keep(lines))
+		kept := p.file.Scope.Keep(lines)
+		if p.file.Scope == conf.ServerFile && kept != "" && a.Slot != "" && !conf.HasLine(text[conf.ServerFile], "WS_SLOT") {
+			kept = "WS_SLOT=" + a.Slot + "\n" + kept
+		}
+		p.before, p.after, err = p.file.Compose(kept)
 		if errors.Is(err, conf.ErrRefused) {
 			return nil, a.refusal(p.file.Path, lines)
 		}
@@ -160,7 +168,7 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil {
 		return err
 	}
-	parts, err := a.compose(lines)
+	parts, err := a.compose(text, lines)
 	if err != nil {
 		return err
 	}
@@ -180,7 +188,7 @@ func (a *Answers) rehearse(ctx context.Context, text map[conf.Scope]string, c co
 	if err != nil {
 		return err
 	}
-	parts, err := a.compose(lines)
+	parts, err := a.compose(text, lines)
 	if err != nil {
 		return err
 	}

@@ -23,7 +23,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
    `roles/client/macos/stages/tools/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
-2. Answers: the values the two files lack, below.
+2. Answers: the server's name, asked first where none is set up, then the values the files lack.
 3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
 4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, said if there.
 5. ws client macos apply: `ws client macos apply`, after sudo's password, asked at each run,
@@ -74,12 +74,12 @@ answer comes from the first of these that has one:
 
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
-the end of each file, and keeps their comments and order. It writes `mac.conf`, then the server's
-file, once `ws client macos apply` would take both. It stops before it asks on a file it can't read,
-or on a line that `ws client macos apply` would refuse. Where a file is a link and lacks a key, it
-prints the lines to add to the link's file, and stops. The Cable stage asks `WS_CABLE_PORT` and
-`WS_CABLE_SERVICE` ([The cable](#the-cable)). The other keys, such as `WS_USER` and `WS_PORT`, keep
-their defaults until set by hand.
+the end of each file, keeps their comments and order, and adds `WS_SLOT=0` to a server's file that
+lacks it. It writes `mac.conf`, then the server's file, once `ws client macos apply` would take
+both. It stops before it asks on a file it can't read, or on a line that `ws client macos apply`
+would refuse. Where a file is a link and lacks a key, it prints the lines to add to the link's file,
+and stops. The Cable stage asks `WS_CABLE_PORT` and `WS_CABLE_SERVICE` ([The cable](#the-cable)).
+The other keys, such as `WS_USER` and `WS_PORT`, keep their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `ws client macos
 apply --check` then reads the files it would write, in the lock, which `WS_CONF` names. `WS_CONF`
@@ -246,7 +246,7 @@ the stage stops, naming `claude auth login`. Where ws lacks claude, it stops.
 The stage writes the Mac's WireGuard key to `wg0`'s `mac.pub` on ws, where that holds another, and
 `ws server ubuntu apply --only wireguard` gives `wg0` that peer. That run goes again where `wg0`
 lacks the peer, as after one that failed. Both go over a direct way, outside the tunnel, whose
-sessions the change ends ([The tunnel](../../../server/ubuntu/wireguard/README.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `mac.conf`
+sessions the change ends ([The tunnel](../../../server/ubuntu/wireguard/README.md#the-tunnel)). Then `WS_PUBLIC_KEY` in `server.conf`
 takes `wg0`'s key, in place of its line, and `ws client macos apply` runs again, which loads
 ws-tunnel ([The Mac's tunnel](../README.md#the-macs-tunnel)): allow it in the Background. Then a handshake
 must come within 30 s, and `ssh ws` log in once. Where none came, or the run asked ws's address, the
@@ -265,12 +265,12 @@ both roles read, then runs `ws server ubuntu apply --only network,wireguard` the
 the wizard runs the whole, as `host_vars.yml` changed. Once the port holds `10.77.0.1`, the stage
 asks the Mac's service of the cable. A screen asks it and the port as a choice. The default is the
 one service with a `169.254` address, which an adapter gives itself where no DHCP server answers.
-The answer goes in `mac.conf` as `WS_CABLE_SERVICE`, then `ws client macos apply` gives the service
+The answer goes in `server.conf` as `WS_CABLE_SERVICE`, then `ws client macos apply` gives the service
 `10.77.0.2` ([The cable](../README.md#the-cable)), and `ping 10.77.0.1` must get an answer.
 
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
 where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
-`WS_CABLE_SERVICE` give the answers. `mac.conf` keeps the port as `WS_CABLE_PORT`, to change there.
+`WS_CABLE_SERVICE` give the answers. `server.conf` keeps the port as `WS_CABLE_PORT`, to change there.
 Where `host_vars.yml` lacks it, as after ws's install, the stage names it there and runs the roles,
 undocked too, but stops on a port ws lacks. `--check` asks nothing, and says what it would do.
 
@@ -286,12 +286,12 @@ After a run in which a stage acted, the wizard lists each of these that applies:
   console ([Secure Boot](../../../server/ubuntu/fans/README.md#secure-boot)).
 - What [The Mac](../README.md) leaves by hand: macOS's grant of the local network to an app.
 - ws's lease, made static, where the Host key stage asked ws's address, and the router's forwards
-  where `mac.conf` has `WS_REMOTE` ([The router](../../../server/ubuntu/network/router.md)). Off the LAN, `mac.conf`'s way to ws
+  where `server.conf` has `WS_REMOTE` ([The router](../../../server/ubuntu/network/router.md)). Off the LAN, `server.conf`'s way to ws
   instead, and a cloud VM's firewall for the tunnel ([The wizard's targets](../conf/README.md)).
 - ws's outbound table, which `security_outbound: false` in ws's `host_vars.yml` keeps off, where
   `WS_TARGET` isn't `cloud`, as after a move from a cloud VM: that line removed, then `--update`.
 - The tunnel's handshake, where the run asked ws's address or none came. A static lease, or off the
-  LAN `mac.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.
+  LAN `server.conf`'s way leading to ws, UDP let through to ws, or ws-tunnel allowed in the Background.
   Then the wizard again, which checks it.
 - `gh auth setup-git`, where git's config names no credential command of gh's for github.com, as `ws
   client macos apply`'s does with git's name ([git](../git/README.md)). Through it, pushes from the Mac's

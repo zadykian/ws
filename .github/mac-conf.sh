@@ -4,9 +4,13 @@
 # here alone: mac.conf holds the Mac's five keys, and servers/ws/server.conf, beside it, every
 # other key. roles/client/macos/conf/scope.go lists the five keys too.
 
+# conf_server names the server whose file goes with a conf. A case sets it to another name, and
+# sets it back, where it works on a second server.
+conf_server=ws
+
 # conf_server_file CONF prints the path of the server's file that goes with CONF.
 conf_server_file() {
-    echo "${1%/*}/servers/ws/server.conf"
+    echo "${1%/*}/servers/$conf_server/server.conf"
 }
 
 # conf_split SCOPE prints the lines of stdin that go in the file of SCOPE, mac or server. A line
@@ -30,7 +34,8 @@ conf_split() {
 
 # conf_write CONF puts each KEY=value line of stdin in the file of its key, CONF or the server's
 # file, in place of what they held. The server's file goes, with its directory, where it gets no
-# line. It reads stdin first, so that conf_print CONF | ... | conf_write CONF is safe. It writes in
+# line. A server's file that it makes and that holds no WS_SLOT gets WS_SLOT=0 first, as the wizard
+# gives it. It reads stdin first, so that conf_print CONF | ... | conf_write CONF is safe. It writes in
 # place, so that CONF keeps its inode and its mode.
 conf_write() {
     mkdir -p "${1%/*}"
@@ -48,6 +53,8 @@ conf_write() {
     conf_dest=$(conf_server_file "$1")
     if [ -n "$conf_part" ]; then
         mkdir -p "${conf_dest%/*}"
+        printf '%s' "$conf_part" | grep -q '^WS_SLOT=' || conf_part="WS_SLOT=0
+$conf_part"
         printf '%s' "$conf_part" >"$conf_dest"
     else
         rm -rf "${conf_dest%/*}"
