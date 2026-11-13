@@ -103,7 +103,7 @@ func TestFollowRunsOnAMachineWithoutLines(t *testing.T) {
 	ssh := SSH{M: struct{ effect.Machine }{m}, Lock: "/t/l"}
 	r := NewSession(MacReach{SSH: ssh}, Scripts{Remote: []byte("echo\n")})
 	args := []string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run"}
-	m.Results["ssh "+strings.Join(ssh.argv(context.Background(), args), " ")] = effecttest.Result{}
+	m.Results["ssh "+strings.Join(ssh.Argv(context.Background(), args), " ")] = effecttest.Result{}
 	if err := r.run(context.Background(), nil); err != nil {
 		t.Fatal(err)
 	}

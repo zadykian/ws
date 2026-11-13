@@ -29,7 +29,7 @@ func TestShellWord(t *testing.T) {
 func TestSSHShellQuotesForWsShell(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}
-	line := "ssh " + strings.Join(s.SSH.argv(context.Background(),
+	line := "ssh " + strings.Join(s.SSH.Argv(context.Background(),
 		[]string{"-o", "BatchMode=yes", "ws", "sh", "-s", "--", "run", "'--only=signoz/signoz up'"}), " ")
 	m.Results[line] = effecttest.Result{Out: []byte("ok\n")}
 	out, err := s.Run(context.Background(), []byte("script"), "sh", "-s", "--", "run", "--only=signoz/signoz up")

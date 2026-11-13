@@ -11,7 +11,7 @@ import (
 
 // secretsLine is the ssh command line that runs cmd as root on ws, through sudo's password.
 func secretsLine(sh SSHShell, cmd string) string {
-	return "ssh " + strings.Join(sh.SSH.argv(context.Background(),
+	return "ssh " + strings.Join(sh.SSH.Argv(context.Background(),
 		[]string{"-o", "BatchMode=yes", "ws", "sudo", "-k", "-S", "-p", "''", wsPath, "server", "ubuntu", "secrets"}), " ") + " " + cmd
 }
 
@@ -53,7 +53,7 @@ func TestSessionSecretsErrors(t *testing.T) {
 		m := effecttest.NewMachine()
 		sh := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}}
 		r := secretsSession(sh)
-		m.Results["ssh "+strings.Join(sh.SSH.argv(context.Background(),
+		m.Results["ssh "+strings.Join(sh.SSH.Argv(context.Background(),
 			[]string{"-o", "BatchMode=yes", "ws", wsPath, "server", "ubuntu", "secrets", "keys"}), " ")] = effecttest.Result{Err: errors.New(tt.err)}
 		if _, err := r.Secrets(context.Background(), nil, "keys"); err == nil || !strings.HasPrefix(err.Error(), tt.want) {
 			t.Errorf("err = %v, want %q", err, tt.want)

@@ -73,7 +73,7 @@ func (f fixedWays) Missing() error { return f.missing }
 func TestSSHWayFromWays(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := SSH{M: m, Lock: "/l", Ways: fixedWays{host: "10.0.0.9", port: "22022"}}
-	got := strings.Join(s.argv(context.Background(), []string{"ws"}), " ")
+	got := strings.Join(s.Argv(context.Background(), []string{"ws"}), " ")
 	if !strings.Contains(got, "-o HostName=10.0.0.9 -o Port=22022") {
 		t.Errorf("argv = %q, want the way's host and port", got)
 	}

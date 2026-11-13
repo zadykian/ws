@@ -28,7 +28,7 @@ func (m sudoMachine) RunInput(ctx context.Context, stdin []byte, name string, ar
 
 // sudoLine is the ssh command line that runs cmd on ws.
 func sudoLine(s *Sudo, cmd ...string) string {
-	return "ssh " + strings.Join(s.SSH.argv(context.Background(), append([]string{"-o", "BatchMode=yes", "ws"}, cmd...)), " ")
+	return "ssh " + strings.Join(s.SSH.Argv(context.Background(), append([]string{"-o", "BatchMode=yes", "ws"}, cmd...)), " ")
 }
 
 // newSudo returns the stage over newHost's machine, where ssh logs in as zadykian, whose sudo needs

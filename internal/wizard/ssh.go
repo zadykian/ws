@@ -63,7 +63,7 @@ func (s SSH) room() bool {
 	return !strings.ContainsAny(s.Lock, "%$") && len(s.Lock) <= 77
 }
 
-// shared returns the options that every call needs, with the master's socket in the lock. ssh stops
+// Shared returns the options that every call needs, with the master's socket in the lock. ssh stops
 // where known_hosts lacks ws's key, or holds another, and adds nothing there. The first call opens
 // a master connection for the calls after it, so a key that asks Touch ID at each login, as
 // Secretive's does, asks once a run.
@@ -71,7 +71,7 @@ func (s SSH) room() bool {
 //     here. BatchMode stays with the calls, as only a login reads it.
 //   - A master lives 30 minutes past its last call, which outlasts a Homebrew install between two.
 //   - It runs no LocalCommand, as config.d/ws's that starts cld's watcher in a Ghostty pane.
-func (s SSH) shared(socket string) []string {
+func (s SSH) Shared(socket string) []string {
 	var a []string
 	if s.room() {
 		a = append(a, "-o", "ControlMaster=auto", "-o", "ControlPath="+s.Lock+"/"+socket,
@@ -81,19 +81,19 @@ func (s SSH) shared(socket string) []string {
 		"-o", "CheckHostIP=no", "-o", "ServerAliveInterval=15", "-o", "PermitLocalCommand=no")
 }
 
-// argv returns ssh's arguments for a direct call, whose host in args is ws.
+// Argv returns ssh's arguments for a direct call, whose host in args is ws.
 //   - The way's host and port go before args as options, over config.d/ws's, which leads through the
 //     tunnel. The address that the Host key stage asked replaces the way's host.
 //   - AddressFamily=inet goes on every call: the ways are IPv4 by conf and WS_REMOTE takes IPv4 alone.
 //   - The socket is direct, so that a call never rides the tunnel's master. The address that the
 //     Host key stage asked adds .1, so that a master made before it never carries a call to it.
-func (s SSH) argv(ctx context.Context, args []string) []string {
+func (s SSH) Argv(ctx context.Context, args []string) []string {
 	host, port, found := s.way(ctx)
 	socket := "direct"
 	if s.First() != "" {
 		socket += ".1"
 	}
-	a := s.shared(socket)
+	a := s.Shared(socket)
 	if found {
 		a = append(a, "-o", "HostName="+host)
 		if port != "" {
@@ -105,11 +105,11 @@ func (s SSH) argv(ctx context.Context, args []string) []string {
 
 // Run runs ssh with the arguments, and returns its standard output.
 func (s SSH) Run(ctx context.Context, args ...string) ([]byte, error) {
-	return s.M.Run(ctx, "ssh", s.argv(ctx, args)...)
+	return s.M.Run(ctx, "ssh", s.Argv(ctx, args)...)
 }
 
 // Tunnel runs ssh through the tunnel, as config.d/ws leads, on a master of its own in the lock and
 // with none of the way's options.
 func (s SSH) Tunnel(ctx context.Context, args ...string) ([]byte, error) {
-	return s.M.Run(ctx, "ssh", append(s.shared("%n"), args...)...)
+	return s.M.Run(ctx, "ssh", append(s.Shared("%n"), args...)...)
 }

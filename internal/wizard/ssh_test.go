@@ -30,7 +30,7 @@ func TestSSHArgv(t *testing.T) {
 		if tc.first != "" {
 			m.Files[tc.lock+"/"+FirstFile] = []byte(tc.first + "\n")
 		}
-		got := strings.Join(SSH{M: m, Lock: tc.lock, Ways: MacWays{M: m, Conf: "/c"}}.argv(context.Background(), []string{"ws"}), " ")
+		got := strings.Join(SSH{M: m, Lock: tc.lock, Ways: MacWays{M: m, Conf: "/c"}}.Argv(context.Background(), []string{"ws"}), " ")
 		if got != tc.want {
 			t.Errorf("%s: argv = %q; want %q", name, got, tc.want)
 		}
@@ -59,12 +59,12 @@ func TestSSHTunnelTakesNoWayOptions(t *testing.T) {
 
 // wayCall is the ssh -G call that Way makes.
 func wayCall(s SSH) string {
-	return "ssh " + strings.Join(append([]string{"-G"}, s.argv(context.Background(), []string{"ws"})...), " ")
+	return "ssh " + strings.Join(append([]string{"-G"}, s.Argv(context.Background(), []string{"ws"})...), " ")
 }
 
 // tunnelCall is the call that Tunnel makes.
 func tunnelCall(s SSH, args ...string) string {
-	return "ssh " + strings.Join(append(s.shared("%n"), args...), " ")
+	return "ssh " + strings.Join(append(s.Shared("%n"), args...), " ")
 }
 
 func TestSSHWayFromAddresses(t *testing.T) {
@@ -80,7 +80,7 @@ func TestSSHWayFromAddresses(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
 		m.Results["ifconfig"] = effecttest.Result{Out: []byte(tc.ifconfig)}
-		got := strings.Join(SSH{M: m, Lock: "/t/l", Ways: MacWays{M: m, Conf: "/c"}}.argv(context.Background(), []string{"ws"}), " ")
+		got := strings.Join(SSH{M: m, Lock: "/t/l", Ways: MacWays{M: m, Conf: "/c"}}.Argv(context.Background(), []string{"ws"}), " ")
 		if !strings.Contains(got, tc.want) {
 			t.Errorf("%s: argv = %q; want %q in it", name, got, tc.want)
 		}
