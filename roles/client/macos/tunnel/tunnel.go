@@ -150,6 +150,11 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		}
 		cs = append(cs, d...)
 	}
+	others, err := t.restartOthers(ctx)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	cs = append(cs, others...)
 	return step.Plan{Changes: cs}, nil
 }
 
