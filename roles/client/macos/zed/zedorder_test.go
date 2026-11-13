@@ -72,7 +72,7 @@ func TestZedReportsInOrder(t *testing.T) {
 	}
 }
 
-// The step is the app's cask, the font's, then the files, which the app's install holds back.
+// The step has three parts: the app's cask, the font's, then the files. The waits are tested apart.
 func TestZedPartsAreTheAppTheFontAndTheFiles(t *testing.T) {
 	m, out := freshZed()
 	parts, err := zedStep(m, out).Parts(context.Background())
