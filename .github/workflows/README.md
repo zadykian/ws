@@ -191,11 +191,11 @@ draw [the run screen](../../engine/tui/README.md#the-run-screen) and leave it. `
 The stand-in for ws is a second wireguard-go on the runner, with the printed key as its peer. It
 answers on loopback both as the LAN and as `WS_REMOTE`, and `ws client macos tunnel status` must
 show a handshake on each in turn. The daemon must take the SIGHUPs for a new `tunnel.conf` and
-`routes.d` in place, with the same pid. Then a network that `ws client macos tunnel routes` adds
-must be routed into the daemon's utun, and a domain `ws client macos resolver` adds must show in
-`scutil --dns`. `ws client macos tunnel loaded`, `ws client macos tunnel routes` and `ws client
-macos resolver` must do the same, with `--check` showing the diff and writing nothing
-([mac-ws-checks.sh](../mac-ws-checks.sh)). Next, `mac.conf`'s `WS_TUNNEL_NETWORKS` and
+its `routes.d` in place, with the same pid. Then a network that `ws client macos tunnel routes
+--server ws` adds must be routed into the daemon's utun, and a domain `ws client macos resolver`
+adds must show in `scutil --dns`. `ws client macos tunnel loaded`, `ws client macos tunnel routes`
+and `ws client macos resolver` must do the same, with `--check` showing the diff and writing
+nothing ([mac-ws-checks.sh](../mac-ws-checks.sh)). Next, the server's `WS_TUNNEL_NETWORKS` and
 `WS_RESOLVERS` must give a route and a resolver, each shown by `--check` first. A second run and
 `--check` must print nothing, and a fourth nameserver must be refused. Emptied or removed, the keys
 must take both back, and spare a script's own. Last, `ws client macos apply` must read an empty
