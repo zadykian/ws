@@ -81,15 +81,16 @@ sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split
 domain comes once and in lower case, with up to 3 addresses split by commas. Once launchd has the
 tunnel's daemon, `ws client macos apply` hands both to the code of `ws client macos tunnel routes`
 and `ws client macos resolver`, whose caveats hold ([their
-section](#routes-and-resolvers-of-another-repository)). The networks go in
-`/etc/ws-tunnel/routes.d/mac-conf`, a name no other script may take. Each resolver starts with ws's
-`Written by` line, which names `ws client macos apply`, so a domain whose file is another script's,
-or written by hand, stops the run. To move a domain from such a script, have it remove its file
-first, with `ws client macos resolver DOMAIN` and no address. A key emptied or removed takes back
-what earlier runs wrote, and only that. `--check` shows each change: a diff, a removal, or a line
-where `routes.d` is missing. Root's files go through sudo, by the code that writes `ws server ubuntu
-apply`'s. Sudo never changes a file in the home, nor one a link names. A file there that the user
-may not change stops the run: sudo would leave root's files where the user's go.
+section](#routes-and-resolvers-of-another-repository)). The networks go in the server's
+`/etc/ws-tunnel/NAME/routes.d/server-conf`, a name no other script may take. Each resolver starts
+with ws's `Written by` line, which names `ws client macos apply`, so a domain whose file is another
+script's, or written by hand, stops the run. To move a domain from such a script, have it remove
+its file first, with `ws client macos resolver DOMAIN` and no address. A key emptied or removed
+takes back what earlier runs wrote, and only that. `--check` shows each change: a diff, a removal,
+or a line where the server's `routes.d` is missing. Root's files go through sudo, by the code that
+writes `ws server ubuntu apply`'s. Sudo never changes a file in the home, nor one a link names. A
+file there that the user may not change stops the run: sudo would leave root's files where the
+user's go.
 
 ## ssh's hosts
 
@@ -215,10 +216,11 @@ that file would let anything that runs as the user become root. The daemon holds
 itself, so it needs no `wg` or `wireguard-go`. `apply` restarts each where the copy changed.
 
 The settings are in `/etc/ws-tunnel`, which only root reads. It holds the Mac's key, which `ws
-client macos tunnel key` makes once, `routes.d`, below, and `NAME/tunnel.conf`. `ws client macos
-apply` keeps the public key in `~/.config/ws/tunnel.pub`, which the wizard reads, and copies
-`tunnel.conf` from the server's file, so the daemon reads no file the user can write. In System
-Settings › General › Login Items & Extensions, its "Allow in the Background" must stay on.
+client macos tunnel key` makes once, and a directory `NAME` per server, with its `tunnel.conf`
+and its `routes.d`, below. `ws client macos apply` keeps the public key in `~/.config/ws/tunnel.pub`,
+which the wizard reads, and copies `tunnel.conf` from the server's file, so the daemon reads no
+file the user can write. In System Settings › General › Login Items & Extensions, its "Allow in the
+Background" must stay on.
 
 A server with no directory beside `mac.conf` has its daemon removed at the next `apply`: booted out
 where loaded, then its plist, `/etc/ws-tunnel/NAME`, state file and log. Nothing goes unless
@@ -276,17 +278,17 @@ A private repository's own script for the Mac can send more networks through the
 domain's names to nameservers behind it. It calls `ws`, which changes only what you give it.
 `--check` makes each print its diffs and change nothing:
 
-- `ws client macos tunnel routes [--check] NAME CIDR...`, which writes the IPv4 networks to
-  `/etc/ws-tunnel/routes.d/NAME` and has the daemon read them again. The daemon adds them to the
-  peer's AllowedIPs and routes them into its utun, without closing a connection. It leaves out for
-  the time being one that holds the endpoint in use, or one that holds a way's endpoint while none
-  answers. `NAME` is of `a-z`, `0-9` and `-`, `mac-conf` aside. A network that overlaps the
-  tunnels' `10.99.0.0/20` or the cable's `10.77.0.0/30`, as `0.0.0.0/0` does, is refused. As in
-  `ws client macos tunnel routes example 198.51.100.0/24`. - `ws client macos resolver [--check]
-  DOMAIN ADDRESS...`, which writes `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS
-  asks them for the domain's names (resolver(5)), and takes the file at once. - `ws client macos
-  tunnel loaded`, which says whether the daemon is loaded, so that the script can stop with "run ws
-  client macos apply first".
+- `ws client macos tunnel routes [--check] --server SERVER NAME CIDR...`, which writes the IPv4
+  networks to `/etc/ws-tunnel/SERVER/routes.d/NAME` and has the daemons read them again. SERVER's
+  daemon adds them to the peer's AllowedIPs and routes them into its utun, without closing a
+  connection. It leaves out for the time being one that holds the endpoint in use, or one that
+  holds a way's endpoint while none answers. `NAME` is of `a-z`, `0-9` and `-`, `server-conf`
+  aside. A network that overlaps the tunnels' `10.99.0.0/20` or the cable's `10.77.0.0/30`, as
+  `0.0.0.0/0` does, is refused. As in `ws client macos tunnel routes --server ws example
+  198.51.100.0/24`. - `ws client macos resolver [--check] DOMAIN ADDRESS...`, which writes
+  `/etc/resolver/DOMAIN`, with up to 3 nameservers, so that macOS asks them for the domain's names
+  (resolver(5)), and takes the file at once. - `ws client macos tunnel loaded`, which says whether
+  the daemon is loaded, so that the script can stop with "run ws client macos apply first".
 
 With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
 The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
