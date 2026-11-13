@@ -1,8 +1,8 @@
-package signoz
+// Package retention keeps how long SigNoz holds its traces, metrics and logs.
+package retention
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
 

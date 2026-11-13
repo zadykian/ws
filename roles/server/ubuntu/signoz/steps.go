@@ -6,6 +6,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/dashboards"
+	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/retention"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -20,7 +21,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units,
 		Password(m, s.Dir),
 		Up{M: m, Out: out, Dir: s.Dir},
 		Ready{M: m, Out: out, API: client},
-		Retention{M: m, Out: out, API: client, Days: s.RetentionDays},
+		retention.Retention{M: m, Out: out, API: client, Days: s.RetentionDays},
 		dashboards.Dashboards{M: m, Out: out, API: client, Names: s.Dashboards},
 	}
 }

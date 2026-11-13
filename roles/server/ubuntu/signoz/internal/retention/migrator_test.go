@@ -1,4 +1,4 @@
-package signoz
+package retention
 
 import (
 	"context"
