@@ -19,8 +19,9 @@ They share:
 
 - the theme, the ruler and auto-save;
 - the language servers' arguments;
-- the Alt and F keys. The Cmd and Ctrl keys are each editor's own: Zed's stay its macOS
-  defaults, and Fresh's its defaults, but for four guards in its terminal.
+- the Alt and F keys. The Cmd and Ctrl keys are each editor's own. Zed's stay its macOS
+  defaults, but for Cmd+T, its new terminal. Fresh's stay its defaults, but for four guards in its
+  terminal. No Cmd key reaches Fresh, so it has no Cmd+T.
 
 lazygit's `roles/server/ubuntu/lazygit/files/config.yml` takes the theme's colours too, each beside
 the Zed key it comes from, so a change of theme goes to it as well
