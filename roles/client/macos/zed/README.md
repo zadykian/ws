@@ -7,7 +7,7 @@ changes and makes none.
 ## The install
 
 The step installs Zed from Homebrew's cask `zed` where `Zed.app` is in neither `/Applications` nor
-`~/Applications`. It installs the font that the settings name, as [Ghostty's step](mac-ghostty.md)
+`~/Applications`. It installs the font that the settings name, as [Ghostty's step](../ghostty/README.md)
 does, from the cask `font-jetbrains-mono-nerd-font`.
 
 - A failed install draws a warning, and the next run tries again, with brew's output. The step
@@ -26,7 +26,7 @@ and `zed ssh://ws/PATH` opens a project on ws.
 The step writes both files in `~/.config/zed`, a path that macOS gives no XDG lookup. It makes
 `~/.config` first where missing.
 
-- `global_settings.json` is [the file in `roles/client/macos/zed/files/`](../roles/client/macos/zed/files/global_settings.json), whole, with
+- `global_settings.json` is [the file in `roles/client/macos/zed/files/`](files/global_settings.json), whole, with
   the header as its first line. Each run replaces it, so changes made there are lost. A file whose
   first line is not the header is left, with a warning: move it away, and the next run writes
   ws's. Zed parses it as it parses `settings.json`, so the header comment is valid.
@@ -69,7 +69,7 @@ server to every YAML file, Ansible's too.
 
 ## Other facts
 
-- `ws` through the tunnel needs no Local Network grant. Only a direct way does ([The Mac](mac.md)),
+- `ws` through the tunnel needs no Local Network grant. Only a direct way does ([The Mac](../README.md)),
   so the seed names `ws` alone.
 - The terminal docks right, as the project, git and outline panels dock left. A resize of a terminal
   docked at a side duplicates its lines (zed#65316, open).
@@ -78,16 +78,16 @@ server to every YAML file, Ansible's too.
   with it on, a venv in the directory has Zed type its activation line into every new tab, which
   reaches a reattached tmux session and whatever runs there.
 - `terminal.toolbar.breadcrumbs` shows a title that a program in the terminal sets, such as
-  [lazygit's](../roles/server/ubuntu/lazygit/README.md#the-title), above it. Zed's tab takes none.
+  [lazygit's](../../../server/ubuntu/lazygit/README.md#the-title), above it. Zed's tab takes none.
 - `terminal.line_height` is Zed's default. Nerd glyphs may look misaligned all the same (zed#4746,
   open), and no setting helps.
-- [Zed's page for the server](../roles/server/ubuntu/zed/README.md#when-the-connection-drops) says what to do when the
+- [Zed's page for the server](../../../server/ubuntu/zed/README.md#when-the-connection-drops) says what to do when the
   connection drops.
 
 ## The keymap
 
 The step also writes `~/.config/zed/keymap.json`, which is
-[`roles/client/macos/zed/files/keymap.json`](../roles/client/macos/zed/files/keymap.json) whole. That plain file is the source of the keys,
+[`roles/client/macos/zed/files/keymap.json`](files/keymap.json) whole. That plain file is the source of the keys,
 and a `//` comment beside a binding gives its reason. `base_keymap` stays `Zed`.
 The file carries its own header, and the step takes the start of line 1,
 `// Written by github.com/zadykian/ws`, as ws's mark.
@@ -123,7 +123,7 @@ Zed on macOS, with a US layout:
 ### Two keys of the file's own
 
 Zed has no default key to restart a language server or to reload Zed. They are the remedies after
-a reconnect ([When the connection drops](../roles/server/ubuntu/zed/README.md#when-the-connection-drops)). Both keys are free
+a reconnect ([When the connection drops](../../../server/ubuntu/zed/README.md#when-the-connection-drops)). Both keys are free
 in Zed's defaults:
 
 - Ctrl+Shift+R is `editor::RestartLanguageServer`, in `Editor && mode == full`.

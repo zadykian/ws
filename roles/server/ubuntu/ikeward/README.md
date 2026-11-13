@@ -23,8 +23,8 @@ ikeward_forward_from: [10.99.0.2]       # the WireGuard peers that reach the VPN
 ```
 
 Put the two files in [the secrets file](../shell/README.md#the-secrets-file), whole. Add the `.p12`'s
-password, left out where it has none ([ws's secrets](../../../../docs/mac-secrets.md#editing)). Run the wizard,
-which runs `--secrets` ([The run](../../../../docs/mac-secrets.md#the-run)). Then remove the plain files, which hold
+password, left out where it has none ([ws's secrets](../secrets/README.md#editing)). Run the wizard,
+which runs `--secrets` ([The run](../secrets/README.md#the-run)). Then remove the plain files, which hold
 the client's key:
 
 ```sh
@@ -90,8 +90,8 @@ ufw's default rules forward pings from any interface. So with forwarding on, any
 the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
 says. The Mac sends the VPN's networks and domains into the tunnel with `WS_TUNNEL_NETWORKS` and
-`WS_RESOLVERS` in [mac.conf](../../../../docs/mac.md#macconf), or with a private repository's script
-([Routes and resolvers of another repository](../../../../docs/mac.md#routes-and-resolvers-of-another-repository)).
+`WS_RESOLVERS` in [mac.conf](../../../client/macos/README.md#macconf), or with a private repository's script
+([Routes and resolvers of another repository](../../../client/macos/README.md#routes-and-resolvers-of-another-repository)).
 
 ## Dry runs
 

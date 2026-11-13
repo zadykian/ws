@@ -1,13 +1,13 @@
 # The wizard's targets
 
 The Mac's wizard sets up ws on one of three machines, which `mac.conf`'s `WS_TARGET` names ([The
-answers](mac-wizard.md#the-answers)). Each target sets the questions of ws's ways and their
+answers](../stages/README.md#the-answers)). Each target sets the questions of ws's ways and their
 defaults, and what a few stages do. `ws server ubuntu apply` is the same on each, but for the
 outbound table on a cloud VM.
 
 ## A machine on the LAN
 
-`WS_TARGET=lan`, the default, is a machine at home, behind [The router](../roles/server/ubuntu/network/router.md), with a cable to
+`WS_TARGET=lan`, the default, is a machine at home, behind [The router](../../../server/ubuntu/network/router.md), with a cable to
 the Mac's display, if any:
 
 - `WS_LAN` is the home LAN, `10.88.0.0/24` by default, and `WS_LAN_ADDRESS` ws's static lease
@@ -16,7 +16,7 @@ the Mac's display, if any:
   ws's 22, `22022` by default.
 - Where ws doesn't answer at its way, the Host key stage asks its address as the router's leases
   show it.
-- The Cable stage sets up the cable ([The cable](mac-wizard.md#the-cable)).
+- The Cable stage sets up the cable ([The cable](../stages/README.md#the-cable)).
 - The closing list names ws's lease and the router's forwards.
 
 ## A cloud VM
@@ -32,11 +32,11 @@ the Mac's display, if any:
 - The provider's firewall must let in TCP `WS_REMOTE_PORT`, and UDP 51820, the tunnel's, or the port
   that `WS_PORT` sets. The closing list says so.
 - The VM's default user takes the provider's keys, which must be the GitHub account's
-  ([Login](mac-wizard.md#login)).
+  ([Login](../stages/README.md#login)).
 - Where ws doesn't answer at its way, the Host key stage asks the VM's public address, as the
   provider shows it.
 - ws's run turns the outbound table off, which would drop the metadata service
-  ([ws's run](mac-wizard.md#wss-run)).
+  ([ws's run](../stages/README.md#wss-run)).
 - The wizard skips the Cable stage.
 
 ## A VM on the Mac
@@ -50,10 +50,10 @@ the Mac's display, if any:
   Keep it stable, by a static address in the VM or a reservation in its app's DHCP: else ssh goes
   to another host once the lease moves.
 - ssh reaches the VM there while the Mac has an address on that network, as while a VM runs
-  ([ssh's hosts](mac.md#sshs-hosts)). Else the Host key stage stops, and says to start the VM.
+  ([ssh's hosts](../README.md#sshs-hosts)). Else the Host key stage stops, and says to start the VM.
 - The wizard asks no `WS_REMOTE`, as only the Mac reaches the VM.
 - The outbound table stays on: ws's DHCP and DNS go to the Mac, which the table lets through
-  ([Outbound](../roles/server/ubuntu/security/README.md#outbound)).
+  ([Outbound](../../../server/ubuntu/security/README.md#outbound)).
 - The wizard skips the Cable stage.
 
 ## A move to another target

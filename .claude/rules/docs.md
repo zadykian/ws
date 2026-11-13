@@ -17,11 +17,11 @@ What each document holds. How to write them is in the `writing` skill and [writi
   mean by each.
 - `docs/NAME.md` is the page of the role NAME: what it sets up and the values that change it.
   It gives the role's caveats too, such as what a run replaces or what a dry run shows.
-- [mac.md](../../docs/mac.md) is the Mac's side, `roles/client/macos/` and the ws CLI.
-  [mac-git.md](../../docs/mac-git.md) is its git, and [mac-wizard.md](../../docs/mac-wizard.md) its
-  wizard. [mac-targets.md](../../docs/mac-targets.md) is the wizard's targets, and
-  [mac-ghostty.md](../../docs/mac-ghostty.md) its Ghostty and cld,
-  [mac-zed.md](../../docs/mac-zed.md) its Zed, and [mac-secrets.md](../../docs/mac-secrets.md) the
+- [mac.md](../../roles/client/macos/README.md) is the Mac's side, `roles/client/macos/` and the ws CLI.
+  [mac-git.md](../../roles/client/macos/git/README.md) is its git, and [mac-wizard.md](../../roles/client/macos/stages/README.md) its
+  wizard. [mac-targets.md](../../roles/client/macos/conf/README.md) is the wizard's targets, and
+  [mac-ghostty.md](../../roles/client/macos/ghostty/README.md) its Ghostty and cld,
+  [mac-zed.md](../../roles/client/macos/zed/README.md) its Zed, and [mac-secrets.md](../../roles/server/ubuntu/secrets/README.md) the
   secrets file. [server-wizard.md](../../roles/server/ubuntu/stages/README.md) is `ws server ubuntu wizard`, the
   stages run on ws. [router.md](../../roles/server/ubuntu/network/router.md) is the router's steps, taken once by hand.
 - [tui.md](../../docs/tui.md) is the terminal UI: its modes, `--plain`, the layout and the keys.
@@ -38,7 +38,7 @@ What each document holds. How to write them is in the `writing` skill and [writi
   for SQL Server and Ansible.
 - [The dashboards](../../roles/server/ubuntu/signoz/internal/dashboards/dashboards/README.md) says what each dashboard reads,
   and how to refresh them from SigNoz.
-- ws is public, and names no server ([mac.conf](../../docs/mac.md#macconf)). So no doc holds a
+- ws is public, and names no server ([mac.conf](../../roles/client/macos/README.md#macconf)). So no doc holds a
   server's address, a secret or a word of the local list (CLAUDE.md).
 - A change goes together across the role, its comments, its page, its line in the README, and
   `docs/checks.md` where CI changes.

@@ -7,7 +7,7 @@ the Mac, `10.77.0.1/30` on the port `network_direct_link_interface` names, from 
 
 The Mac can plug into the server with a cable of its own, from its dock's 2.5GbE port to a port of
 the server's, outside the router. Name the server's port in `/etc/ws/host_vars.yml` on the
-server, as `ip link` names it, or let the Mac's wizard do it ([The cable](../../../../docs/mac-wizard.md#the-cable)):
+server, as `ip link` names it, or let the Mac's wizard do it ([The cable](../../../client/macos/stages/README.md#the-cable)):
 
 ```yaml
 ---
@@ -21,7 +21,7 @@ The step then writes `/etc/netplan/60-direct-link.yaml`, which gives that interf
 (`network_direct_link_address`), and no DHCP, gateway or DNS. netplan merges the file with the other
 files' entries of the port's name, as the installer's: its settings win, and its address joins
 theirs. Boot doesn't wait for the link, which is up only while the Mac is docked. The Mac takes
-`10.77.0.2/30`, with no router, from `ws client macos apply` ([The cable](../../../../docs/mac.md#the-cable)). ufw
+`10.77.0.2/30`, with no router, from `ws client macos apply` ([The cable](../../../client/macos/README.md#the-cable)). ufw
 lets in SSH over the cable, as over any interface. Unless `security_outbound` is false, the
 `security` role's table drops what the server and its containers start over the cable, whatever the
 port ([Outbound](../security/README.md#outbound)). The `wireguard` role's drops keep the containers off it by

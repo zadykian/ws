@@ -163,7 +163,7 @@ security_outbound: false
 ```
 
 The Mac's wizard writes the line before the run where `mac.conf` has `WS_TARGET=cloud`
-([ws's run](../../../../docs/mac-wizard.md#wss-run)). A run with `security_outbound` false stops the table's units
+([ws's run](../../../client/macos/stages/README.md#wss-run)). A run with `security_outbound` false stops the table's units
 by D-Bus, and resets one that failed, even where its file is gone. It then removes the units, their
 links, `/usr/local/lib/ws/security` and the table, even one loaded by hand. `--check` shows each
 removal. Off leaves:

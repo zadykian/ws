@@ -3,7 +3,7 @@
 The secrets of the roles are one file, `/etc/ws/secrets.age` on ws ([ws's file](#wss-file)): TOML
 that age encrypts, in armor. The Mac keeps neither it nor its identity. Git never holds it. `ws
 server ubuntu apply --secrets` decrypts it in its process ([The secrets
-file](../roles/server/ubuntu/shell/README.md#the-secrets-file)). A value is never in an error, a
+file](../shell/README.md#the-secrets-file)). A value is never in an error, a
 plan or a diff: they name kinds, names, keys and paths.
 
 ## From the Mac
@@ -13,7 +13,7 @@ wizard's ssh and its way to root ([ws's file](#wss-file)). So `ws client macos s
 the identity on ws. A value goes on ssh's standard input, never in an argument. Where ws's sudo asks
 a password, a command that reads its value from standard input asks it at the terminal, `/dev/tty`,
 and fails, saying why, with none. With ws out of reach, a command says so and fails. The Configure
-screen sets the secrets the same way ([The Configure screen](tui-configure.md)).
+screen sets the secrets the same way ([The Configure screen](../../../../docs/tui-configure.md)).
 
 ## Editing
 
@@ -43,7 +43,7 @@ credential fails and names `ws server ubuntu secrets init`.
 ## The run
 
 The run stage of `ws client macos wizard` runs `--secrets` on ws's file, and sends nothing from the
-Mac ([ws's run](mac-wizard.md#wss-run)). The file's SHA-256 is in the run's stamp, so a changed file
+Mac ([ws's run](../../../client/macos/stages/README.md#wss-run)). The file's SHA-256 is in the run's stamp, so a changed file
 runs the stage again.
 
 ## ws's file
@@ -56,7 +56,7 @@ credential `/etc/credstore.encrypted/ws-secrets`, mode 600 in a directory of 700
 out. Each command decrypts the identity by `systemd-creds decrypt` into memory. `init` keeps a
 credential and a file that are there. It refuses a file without the credential, which a new identity
 would not open. A unit reads the credential by `LoadCredentialEncrypted=ws-secrets` ([The secrets
-file](../roles/server/ubuntu/shell/README.md#the-secrets-file)).
+file](../shell/README.md#the-secrets-file)).
 
 ```sh
 ws server ubuntu secrets init
@@ -90,9 +90,9 @@ vpn_p12 = "PASSWORD"                # left out where the .p12 has none
 ```
 
 - `[token]` names `github` and `azure_devops`, the tokens ws knows.
-- `[env]` is the content of `~/.secrets/env` ([Secrets](../roles/server/ubuntu/shell/README.md#secrets)).
-- `[git."URL"]` is a server's token in git's store ([Git credentials](../roles/server/ubuntu/shell/README.md#git-credentials)).
-- `[file]` and `[password]` are the ikeward profile's ([The profile](../roles/server/ubuntu/ikeward/README.md#the-profile)). A
+- `[env]` is the content of `~/.secrets/env` ([Secrets](../shell/README.md#secrets)).
+- `[git."URL"]` is a server's token in git's store ([Git credentials](../shell/README.md#git-credentials)).
+- `[file]` and `[password]` are the ikeward profile's ([The profile](../ikeward/README.md#the-profile)). A
   TOML string can't hold the `.p12`'s bytes, so a file is base64. ws decodes it once parsed.
 
 ## References

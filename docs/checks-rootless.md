@@ -31,7 +31,7 @@ and the file, root's 600. `set` takes a value on standard input, and `keys` name
 prints it. The user can't run them. A unit with `LoadCredentialEncrypted=ws-secrets` runs `ws server
 ubuntu apply --secrets --check`, and one without it fails: a container's systemd runs neither.
 `unset` drops the entry, and a second `init` keeps both files ([ws's
-file](mac-secrets.md#wss-file)).
+file](../roles/server/ubuntu/secrets/README.md#wss-file)).
 
 Last, `ws server ubuntu wizard`. With no terminal it stops where host_vars lacks a key. Then it runs
 `ws server ubuntu apply` in a unit, with the credential, and a second run starts no unit. One after

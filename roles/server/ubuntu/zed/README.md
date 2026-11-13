@@ -2,7 +2,7 @@
 
 The `zed` role is Go steps in `roles/server/ubuntu/zed`. Zed itself runs on the Mac, which opens ws
 over ssh. The role writes the settings that Zed's server on ws reads, and raises the open-file limit
-that the server needs. The Mac's side is [Zed on the Mac](../../../../docs/mac-zed.md).
+that the server needs. The Mac's side is [Zed on the Mac](../../../client/macos/zed/README.md).
 
 `~/.config/zed/settings.json` is owned by `ws_user`. A run replaces a change made to it by hand
 and keeps the old file beside the new one. The key
@@ -142,11 +142,11 @@ tab leaves its session for the next tab, and `exit` ends it. `tmux -L zed ls` li
   scrollback.
 - tmux has no prefix, so Fresh gets Ctrl+B, and no status line. `/usr/local/lib/ws/zed/tmux.conf`
   has the rest.
-- tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](../../../../docs/mac-zed.md).
+- tmux passes on a title that a program sets, for the toolbar of [the Mac's settings](../../../client/macos/zed/README.md).
   Where none is set, the title is empty, not tmux's default, the host's name.
 - Without tmux on the `PATH` the tab runs a login shell.
 - A task ignores the wrapper.
-- Keep `terminal.detect_venv` `off`, as [the Mac's settings](../../../../docs/mac-zed.md) do.
+- Keep `terminal.detect_venv` `off`, as [the Mac's settings](../../../client/macos/zed/README.md) do.
 
 ## When the connection drops
 
@@ -203,7 +203,7 @@ clock.
 | An agent's read or grep never ends (zed#65338) | Stop the turn and send it again |
 | New tabs start new sessions while old tmux clients stay attached | `tmux -L zed detach-client -s =NAME`, then a new tab |
 | The Disconnected overlay | Reconnect, at the cost of a new daemon |
-| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../../docs/mac.md#sshs-hosts) |
+| `ssh ws` fails at once for an hour | fail2ban banned the tunnel address: [lift the ban](../../../client/macos/README.md#sshs-hosts) |
 
 Neither command has a default key. Release builds register `remote_debug::SimulateDisconnect`,
 `SimulateTimeout` and `SimulateTimeoutExhausted` in a remote project's workspace. They reproduce

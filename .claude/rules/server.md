@@ -21,7 +21,7 @@ steps, and each role's page in `docs/` says what it sets up.
 - The secrets are one struct, `secrets.Secrets`, beside the values. ws decrypts it from age's armor
   in its process, as TOML with a table per kind. Unknown keys are refused, references expanded,
   and no error or output shows a value. Steps take it as their second argument
-  ([secrets.go](../../roles/server/ubuntu/secrets/secrets.go), [ws's secrets](../../docs/mac-secrets.md)).
+  ([secrets.go](../../roles/server/ubuntu/secrets/secrets.go), [ws's secrets](../../roles/server/ubuntu/secrets/README.md)).
 - `secrets.Store` alone reads and writes ws's secrets file and makes its credential; cmd keeps
   the commands and the root check ([store.go](../../roles/server/ubuntu/secrets/store.go)).
 - The roles set the machine up for `ws_user`, `zadykian` by default, in `ws_home`. A step run as

@@ -1,7 +1,7 @@
 # git on the Mac
 
 With `WS_GIT_NAME` and `WS_GIT_EMAIL` in `mac.conf`, `ws client macos apply` sets up git on the Mac
-([The Mac](mac.md)), as the `shell` role does on ws ([Signing](../roles/server/ubuntu/shell/README.md#signing)). It writes
+([The Mac](../README.md)), as the `shell` role does on ws ([Signing](../../../server/ubuntu/shell/README.md#signing)). It writes
 `~/.config/ws/gitconfig`: the author, and each commit signed with `WS_GIT_SIGNING_PUB_KEY`, which
 `~/.config/ws/allowed_signers` trusts for the email in `git verify-commit`. It names gh's credential
 command too, as `gh auth setup-git` does, so that pushes to GitHub take gh's login, and installs
@@ -18,7 +18,7 @@ the word to open Secretive. A file key with no passphrase signs unattended, in
 a rebase too: `ssh-keygen -t ed25519 -N '' -f ~/.ssh/NAME` makes one.
 
 The wizard asks for git's key where `mac.conf` names none ([The Mac's
-key](mac-wizard.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
+key](../stages/README.md#the-macs-key)). A new one, made in Secretive's app at Notify, signs with no
 prompt while the Mac is unlocked. The login key may sign too, but asks for Touch ID at each use by
 default, so a rebase would ask at each commit. The wizard names ws's copy of its `.pub`,
 `~/.config/ws/secretive/NAME.pub`, in `WS_GIT_SIGNING_PUB_KEY`. `NAME` is that of Secretive's Public
@@ -26,7 +26,7 @@ Key Path, and the script writes the copy from the agent ([Secretive's keys](#sec
 then signs through `~/.config/ws/secretive-ssh-keygen`, which gives `ssh-keygen` Secretive's agent,
 so that a terminal, an editor and other apps sign alike. The key never leaves the Secure Enclave,
 and signs only while the Mac is unlocked. ssh offers ws the key of `WS_IDENTITY_PUB_KEY` alone,
-whichever keys Secretive holds ([ssh's hosts](mac.md#sshs-hosts)).
+whichever keys Secretive holds ([ssh's hosts](../README.md#sshs-hosts)).
 
 `~/.gitconfig` includes `~/.config/ws/gitconfig` at its top, so that its own settings win where both
 set one. Where the include is missing, the script adds it at the top, or makes the file, and keeps
@@ -41,7 +41,7 @@ there. The script names those of identity and signing as it adds the include.
 
 GitHub verifies a commit by the signing keys of its author's account. Where those of gh's login lack
 the key, the script adds it with `gh ssh-key add --type signing`, titled with the Mac's name. The
-wizard does the same for ws ([Signing key](mac-wizard.md#signing-key)). The login
+wizard does the same for ws ([Signing key](../stages/README.md#signing-key)). The login
 needs the `write:ssh_signing_key` scope. Without a login or the scope, or on another error of gh's,
 the script says so at each run, and goes on. Until a run adds the key, GitHub shows the Mac's
 commits as unverified, and the ruleset on `main` refuses them. `--check` reads the account's keys,

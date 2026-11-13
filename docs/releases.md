@@ -45,7 +45,7 @@ It takes `WS_RELEASES_URL` as the table above says. To pick a release, run `inst
 `WS_VERSION`. A ws before v0.5.1 lacks the command, so `install.sh` updates it once.
 
 `ws client macos wizard --update` stays apart: it runs `install.sh`, then the wizard with the new ws
-([The Mac's wizard](mac-wizard.md)).
+([The Mac's wizard](../roles/client/macos/stages/README.md)).
 
 ## The install job
 

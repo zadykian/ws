@@ -2,20 +2,20 @@
 
 The Mac reaches the server, ws, over the cable from the 2.5GbE port of the display it docks at. It
 reaches it over the LAN, or elsewhere through the router's port forwards. `ws client macos apply`
-sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](mac-git.md)), Zed
-([Zed on the Mac](mac-zed.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that
+sets up its end of the cable ([The cable](#the-cable)), git ([git on the Mac](git/README.md)), Zed
+([Zed on the Mac](zed/README.md)) and one host for ssh, `ws`. It goes through a WireGuard tunnel that
 ends on ws, at `10.99.0.1` whichever way the Mac connects. The sessions of `ssh ws` and Zed stay
 open as the Mac moves between the cable, the LAN and elsewhere, with a pause of a few seconds
-([Zed](../roles/server/ubuntu/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
+([Zed](../../server/ubuntu/zed/README.md#when-the-connection-drops)). What it gives up: `ssh ws` fails where UDP is blocked and
 while the tunnel is down, and bulk copies run at wireguard-go's speed. To reach ws by hand, give ssh
 a direct way: `ssh -o HostName=ADDRESS -o Port=PORT ws`, as ufw lets SSH in on every interface.
 `WS_REMOTE_PORT` and the router's forward stay for that and for setup.
 
 The Mac's side is Go: one binary, `ws`, of isolated steps, which `go test` checks on each pull
 request. It runs as the user, with sudo where it needs root. It sets up Ghostty, cld and a zsh
-hook ([Ghostty and cld on the Mac](mac-ghostty.md)). It installs Ghostty, Zed and a font from
+hook ([Ghostty and cld on the Mac](ghostty/README.md)). It installs Ghostty, Zed and a font from
 Homebrew, [installed](https://brew.sh) first. `install.sh` puts `ws` in `~/.local/bin` (put it on
-`PATH` by hand) from a release ([Releases](releases.md)). `ws` embeds the files it installs, so it
+`PATH` by hand) from a release ([Releases](../../../docs/releases.md)). `ws` embeds the files it installs, so it
 needs no clone. Then:
 
 ```sh
@@ -23,14 +23,15 @@ ws client macos apply
 ```
 
 `ws client macos wizard`, in its place, asks first for the values below ([The Mac's
-wizard](mac-wizard.md)), and `ws client macos configure` changes them later on a form, with ws's
-secrets and host_vars ([The Configure screen](tui-configure.md)). `ws client macos apply --only
-STEP` runs one step, and `--check` shows each change and makes none. At a terminal it draws [the run
-screen](tui.md#the-run-screen), past [the list of steps](tui.md#the-list-of-steps) where it gets
-neither, and `--plain` keeps its lines. `ws client macos state` reports what a check reads, and
-changes nothing ([State](../README.md#state)). `ws client macos` holds the Mac's commands ([the
-secrets](mac-secrets.md) too), darwin alone. `ws version` prints its version, and `ws update`
-replaces it with the latest release ([Update](releases.md#update)).
+wizard](stages/README.md)), and `ws client macos configure` changes them later on a form, with ws's
+secrets and host_vars ([The Configure screen](../../../docs/tui-configure.md)). `ws client macos
+apply --only STEP` runs one step, and `--check` shows each change and makes none. At a terminal it
+draws [the run screen](../../../docs/tui.md#the-run-screen), past [the list of
+steps](../../../docs/tui.md#the-list-of-steps) where it gets neither, and `--plain` keeps its lines.
+`ws client macos state` reports what a check reads, and changes nothing
+([State](../../../README.md#state)). `ws client macos` holds the Mac's commands ([the
+secrets](../../server/ubuntu/secrets/README.md) too), darwin alone. `ws version` prints its version,
+and `ws update` replaces it with the latest release ([Update](../../../docs/releases.md#update)).
 
 ## What the Mac reports
 
@@ -65,12 +66,12 @@ address inside it, the router's static lease for it. The script stops on one out
 LAN's network or broadcast address. `WS_REMOTE` is the router's name on the internet, and
 `WS_REMOTE_PORT` the port it forwards to ws's 22. The tunnel takes UDP 51820 every way, which the
 router forwards too; `WS_PORT` sets another. A way without its values is left out. The router's
-side is in [The router](../roles/server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
+side is in [The router](../../server/ubuntu/network/router.md). `WS_PUBLIC_KEY` goes in last, once ws has the Mac's key, in the
 order of [The Mac's tunnel](#the-macs-tunnel). `WS_CABLE_SERVICE` names the network service of the
 display's adapter, in quotes where it holds a blank, and `WS_CABLE_PORT` ws's port of the cable:
 [The cable](#the-cable). `WS_GIT_NAME` and `WS_GIT_EMAIL`, which go together, are the author of
 git's commits on the Mac, the name in quotes where it holds a blank. `WS_GIT_SIGNING_PUB_KEY` is the
-`.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](mac-git.md).
+`.pub` of the key that signs them, by its path from `/` or `~/`: [git on the Mac](git/README.md).
 `WS_IDENTITY_PUB_KEY` is the `.pub` of the key that ssh offers ws, and `WS_IDENTITY_AGENT` the
 socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts). A run makes
 `~/.config/ws` at mode 700, and sets that mode where it differs.
@@ -80,7 +81,7 @@ socket of its agent, in quotes where it holds a blank: [ssh's hosts](#sshs-hosts
 with an empty value, as `WS_REMOTE=`, takes its default, as a missing line does: that user for
 `WS_USER` and 51820 for `WS_PORT`. `WS_IDENTITY_PUB_KEY` has none: the script stops without it
 ([ssh's hosts](#sshs-hosts)). Nor has `WS_GIT_SIGNING_PUB_KEY`, which git's name needs
-([git on the Mac](mac-git.md)).
+([git on the Mac](git/README.md)).
 
 `WS_TUNNEL_NETWORKS` sends more IPv4 networks through the tunnel, split by blanks. `WS_RESOLVERS`
 sends a domain's names to nameservers behind it, in `DOMAIN=ADDRESS` pairs split by blanks. Each
@@ -106,10 +107,10 @@ key below, and checks ws's host key under the one name `ws` (`HostKeyAlias`). A 
 120 s without word from ws, far longer than a switch of the tunnel takes.
 
 ssh offers ws one key alone (`IdentitiesOnly`): the one whose `.pub` `WS_IDENTITY_PUB_KEY` names, as
-ws's copy of a key of Secretive's ([Secretive's keys](mac-git.md#secretives-keys)) or a file key.
+ws's copy of a key of Secretive's ([Secretive's keys](git/README.md#secretives-keys)) or a file key.
 The script picks none by itself, not even the agent's sole key, as a key made for another use would
 go to GitHub unasked. Without the key, or with it empty, it stops: run `ws client macos wizard`,
-which asks ([The wizard](mac-wizard.md#the-macs-key)), or add one of the lines it gives. They name
+which asks ([The wizard](stages/README.md#the-macs-key)), or add one of the lines it gives. They name
 each P-256 key that Secretive's agent lists, by its comment and SHA256 fingerprint. The agent is the
 one whose socket `WS_IDENTITY_AGENT` names, else Secretive's where the `.pub` is there. Else ssh
 reads the file beside the `.pub`, its passphrase kept in the Keychain. The script stops where that
@@ -152,7 +153,7 @@ hour. `ssh -o HostName=ADDRESS -o Port=PORT ws` comes from another address, and 
 `fail2ban-client set sshd unbanip 10.99.0.2` lifts the ban.
 
 Unless `security_outbound` is false, ws opens no connection to the Mac over the cable, the LAN or
-the tunnel ([The firewall](../roles/server/ubuntu/wireguard/README.md#the-firewall), [Outbound](../roles/server/ubuntu/security/README.md#outbound)). That
+the tunnel ([The firewall](../../server/ubuntu/wireguard/README.md#the-firewall), [Outbound](../../server/ubuntu/security/README.md#outbound)). That
 holds for its bridged containers and its users, but those who can become root. On a VM on the Mac,
 DHCP and DNS still go to the Mac, which serves them.
 
@@ -180,7 +181,7 @@ still shows other settings after `-setmanual`, the script names them and stops. 
 by hand. In System Settings › Network, pick it › Details › TCP/IP, and Configure IPv4 Manually: the
 IP address `10.77.0.2`, the subnet mask `255.255.255.252`, no router. Or empty the key.
 
-Set the key once ws's end is up ([network](../roles/server/ubuntu/network/README.md)). Then, docked, check once that the uplink
+Set the key once ws's end is up ([network](../../server/ubuntu/network/README.md)). Then, docked, check once that the uplink
 keeps the default route:
 
 ```sh
@@ -208,7 +209,7 @@ For a `WS_USER` other than root, both go through `sudo` and `ssh -t`, for the pa
 
 With ws's key as `WS_PUBLIC_KEY`, `ws client macos apply` again installs the tunnel's daemon. A new
 Mac or a rebuilt server changes one file on each side, and nothing in the repository. The wizard's
-Tunnel stage takes these steps, which stay the way by hand ([The tunnel](mac-wizard.md#the-tunnel)).
+Tunnel stage takes these steps, which stay the way by hand ([The tunnel](stages/README.md#the-tunnel)).
 
 The daemon, `ws client macos tunnel run`, runs as root from launchd, from boot and before any login,
 through `/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist`. `ws client macos apply` copies
@@ -225,7 +226,7 @@ General › Login Items & Extensions, its "Allow in the Background" must stay on
 
 The tunnel's end on the Mac is `10.99.0.2`, on a utun of wireguard-go's, and ws's is `10.99.0.1`.
 The daemon fixes both, and `mac.conf` sets neither. So a run of the `wireguard` role stops where its
-variables give either end another address ([The tunnel](../roles/server/ubuntu/wireguard/README.md#the-tunnel)). The daemon
+variables give either end another address ([The tunnel](../../server/ubuntu/wireguard/README.md#the-tunnel)). The daemon
 points the Mac's end at the first of these that answers, each on UDP 51820:
 
 - the cable, `10.77.0.1`, where one of the Mac's addresses lies in `10.77.0.0/30`;
@@ -251,7 +252,7 @@ sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status
 prints the way in use, its endpoint, the latest handshake and the bytes moved.
 `/var/log/ws-tunnel.log` has a line for each switch and failure.
 
-A connection to `ws` outlives a switch. Zed has [its page](mac-zed.md).
+A connection to `ws` outlives a switch. Zed has [its page](zed/README.md).
 
 The tunnel's end on the Mac runs in userspace, and wireguard-go on macOS moves one packet a read and
 a write. So the tunnel may fall short of the cable's 2.5 Gbit/s. To measure it, on ws, install
@@ -290,7 +291,7 @@ domain's names to nameservers behind it. It calls `ws`, which changes only what 
 With no network or address, each removes its file, `ws client macos resolver` only a file it wrote.
 The files outlive the daemon. While the daemon is stopped, the routes go with its utun, and the
 domain's lookups go out by the Mac's own network and fail. ufw on ws forwards from the tunnel only
-ping, and what the `ikeward` role lets through to its VPN ([Forwarding](../roles/server/ubuntu/ikeward/README.md#forwarding)). Any
+ping, and what the `ikeward` role lets through to its VPN ([Forwarding](../../server/ubuntu/ikeward/README.md#forwarding)). Any
 other network behind ws needs its side set up on ws too. A network the Mac is on, inside one sent
 into the tunnel, keeps its part off the tunnel: macOS routes the narrower network to the Mac's own
 interface.

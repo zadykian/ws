@@ -40,11 +40,11 @@ Each role has a page of its own. A role is Go steps of ws:
   terminals' tmux wrapper, and the open-file limit that it needs.
   [A project's settings](roles/server/ubuntu/zed/projects.md) cover SQL Server and Ansible.
 
-`roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](docs/mac.md).
+`roles/client/macos/` sets up the Mac that works on the server, and Ghostty and Zed on it: [The Mac](roles/client/macos).
 
 On a new Mac with Apple silicon, one line installs ws's binary. Then `ws client macos wizard`
 installs Apple's Command Line Tools and Homebrew, and sets up the rest ([The Mac's
-wizard](docs/mac-wizard.md)):
+wizard](roles/client/macos/stages)):
 
 ```sh
 curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | sh
@@ -56,7 +56,7 @@ curl -fsSL https://github.com/zadykian/ws/releases/latest/download/install.sh | 
 Install Ubuntu Server 26.04 by hand from its installer. In it, turn OpenSSH on, import the GitHub
 account's keys, and leave password login off. Neither the Mac's wizard nor `ws server ubuntu apply`
 adds a key later. So run the Mac's line above first, which puts the Mac's key on the account
-([GitHub and Ubuntu's install](docs/mac-wizard.md#github-and-ubuntus-install)). Name the installer's
+([GitHub and Ubuntu's install](roles/client/macos/stages/README.md#github-and-ubuntus-install)). Name the installer's
 user `zadykian`, ws's default user. A cloud VM has no installer: it gives its default user the
 provider's keys, which must be the account's. A VM with root alone logs in as root, where
 `WS_TARGET=cloud`.
@@ -146,7 +146,7 @@ and changes.
 
 `ws client macos state` does the same for the Mac, as `ws client macos apply --check` reads it: it
 needs `mac.conf`, and not root. On the screen, sudo's password comes through a question. `--json`
-prints the version of ws, then each step ([What the Mac reports](docs/mac.md#what-the-mac-reports)).
+prints the version of ws, then each step ([What the Mac reports](roles/client/macos/README.md#what-the-mac-reports)).
 
 ```sh
 ws client macos state
@@ -155,7 +155,7 @@ ws client macos state --json
 
 ## By hand
 
-Secrets are never in this repository. On a new machine, [The Mac's wizard](docs/mac-wizard.md)
+Secrets are never in this repository. On a new machine, [The Mac's wizard](roles/client/macos/stages)
 checks that `WS_USER` logs in and installs its own ws on ws and runs `ws server ubuntu apply`, with
 the secrets file on ws. Then it adds ws's signing key to GitHub, logs claude in there, and gives
 `wg0` the Mac's key. Without the wizard, the claude login and the Mac's key stay manual. ws's gh

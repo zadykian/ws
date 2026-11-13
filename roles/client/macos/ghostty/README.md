@@ -1,6 +1,6 @@
 # Ghostty and cld on the Mac
 
-Before the tunnel ([The Mac](mac.md)), `ws client macos apply` sets up Ghostty, the Mac's terminal:
+Before the tunnel ([The Mac](../README.md)), `ws client macos apply` sets up Ghostty, the Mac's terminal:
 Ghostty and the font its settings name, from Homebrew's casks, and the settings, `ws.ghostty`. Then
 it sets up [cld](https://github.com/zadykian/cld) wherever it runs, for `cld restore tabs`. After
 Ghostty quits or a window closes, a restore joins each pane's cld session again, and reopens what
@@ -23,7 +23,7 @@ Ghostty then updates itself, as `ws.ghostty` says: it downloads each stable rele
 install it. The script runs no `brew upgrade`. brew skips a cask that updates itself, and the
 cask's uninstall quits Ghostty, which may be the terminal the script runs in.
 
-The step installs the font that `ws.ghostty` names, and [Zed](mac-zed.md) too, JetBrainsMono Nerd
+The step installs the font that `ws.ghostty` names, and [Zed](../zed/README.md) too, JetBrainsMono Nerd
 Font Mono, from the cask `font-jetbrains-mono-nerd-font`. It does so where
 `JetBrainsMonoNerdFontMono-Regular.ttf` is in neither `~/Library/Fonts`, where the cask puts it,
 nor `/Library/Fonts`, and warns as for the app where Homebrew has the cask without the file.
@@ -34,7 +34,7 @@ Regular`, finds no font, and Ghostty falls back to its own JetBrains Mono, which
 ## Ghostty's settings
 
 The settings are in
-[`roles/client/macos/ghostty/files/ws.ghostty`](../roles/client/macos/ghostty/files/ws.ghostty),
+[`roles/client/macos/ghostty/files/ws.ghostty`](files/ws.ghostty),
 which `ws` embeds and the script writes, under its header, to `ws.ghostty`. That file goes beside
 the config file that Ghostty's menu opens: `config.ghostty` or `config` in `~/Library/Application
 Support/com.mitchellh.ghostty`, then in `~/.config/ghostty`. That is the first that holds anything,
@@ -112,14 +112,14 @@ watcher too, or finds it running.
 
 A restore opens an ssh connection for each pane it reopens. Where those logins fail, fail2ban bans
 the tunnel's address, `10.99.0.2`, which shuts `ssh ws` out for an hour. [ssh's
-hosts](mac.md#sshs-hosts) says how to lift the ban.
+hosts](../README.md#sshs-hosts) says how to lift the ban.
 
 ## The zsh hook
 
 A dropped ssh leaves Ghostty in the modes that Fresh, tmux and cld's sessions turned on, as their
 resets never reach the Mac. Each mouse move then types `^[[<35;42;17M` at the prompt, and some Ctrl
 keys arrive as escape codes. `ws client macos apply` writes
-[`roles/client/macos/zsh/files/zshrc`](../roles/client/macos/zsh/files/zshrc) as `~/.config/ws/zshrc`, and adds
+[`roles/client/macos/zsh/files/zshrc`](../zsh/files/zshrc) as `~/.config/ws/zshrc`, and adds
 `source ~/.config/ws/zshrc` at the end of `~/.zshrc`. It keeps the old file as `~/.zshrc.TIME~`, and
 warns where `~/.zshrc` is a link that lacks the line.
 

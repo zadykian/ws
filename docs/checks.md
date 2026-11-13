@@ -172,13 +172,13 @@ cut short must fail the sum. A run checks it before the install, which the case 
 
 ## The Mac
 
-Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be
+Case 47 checks [Zed's files](../roles/client/macos/zed/README.md): `global_settings.json` must be
 `roles/client/macos/zed/files/`'s whole, and a `settings.json` there must stay byte for byte. Case 48
 checks `keymap.json`: `roles/client/macos/zed/files/`'s whole, a foreign one left with a warning, and
-ws's back once it goes. Case 87 checks [the zsh hook](mac-ghostty.md#the-zsh-hook): `zsh -i` must
+ws's back once it goes. Case 87 checks [the zsh hook](../roles/client/macos/ghostty/README.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 
-CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](mac.md). First, `ws
+CI also sets up a Mac, by [its cases](../.github/mac), in the order of [The Mac](../roles/client/macos/README.md). First, `ws
 client macos apply --check` must change nothing: it writes no file, keeps no copy of `~/.ssh/config`
 or `~/.zshrc`, and installs no formula or cask. It must note the install of Zed's cask. Stand-ins
 for Ghostty's and Zed's apps, the font and cld, which `ws client macos apply` leaves alone, spare

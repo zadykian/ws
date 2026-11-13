@@ -41,7 +41,7 @@ ws server ubuntu apply --only wireguard
 ```
 
 The Mac's scripts fix the peer's name, `mac`, and the tunnel's addresses: `10.99.0.1` for the
-server and `10.99.0.2` for the Mac ([The Mac's tunnel](../../../../docs/mac.md#the-macs-tunnel)). So where
+server and `10.99.0.2` for the Mac ([The Mac's tunnel](../../../client/macos/README.md#the-macs-tunnel)). So where
 `wireguard_peers` holds `mac`, the run stops unless `wireguard_address` is `10.99.0.1/24` and
 `mac`'s address `10.99.0.2`.
 
