@@ -11,11 +11,13 @@
 # that mac.conf, nor the Mac's own or ssh's files. The stand-in goes after.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
 container=$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent
 data=$container/Data
-conf=$RUNNER_TEMP/agent.conf
+conf=$RUNNER_TEMP/confs/agent/mac.conf
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.
@@ -35,7 +37,8 @@ keys() {
 
 # files prints the Mac's own mac.conf and ssh's files.
 files() {
-    cat ~/.config/ws/mac.conf ~/.ssh/config ~/.ssh/config.d/ws ~/.ssh/id_ed25519.pub
+    conf_print ~/.config/ws/mac.conf
+    cat ~/.ssh/config ~/.ssh/config.d/ws ~/.ssh/id_ed25519.pub
 }
 
 if [ -e "$container" ]; then
@@ -53,18 +56,18 @@ name=$(ssh-keygen -E md5 -l -f "$RUNNER_TEMP/agent.pub" |
 copy=$HOME/.config/ws/secretive/$name
 pub=$data/PublicKeys/$name
 cp "$RUNNER_TEMP/agent.pub" "$pub"
-{ cat ~/.config/ws/mac.conf && echo "WS_IDENTITY_PUB_KEY=~/${pub#"$HOME"/}"; } >"$conf"
-cp "$conf" "$RUNNER_TEMP/agent.conf.before"
+{ conf_print ~/.config/ws/mac.conf && echo "WS_IDENTITY_PUB_KEY=~/${pub#"$HOME"/}"; } | conf_write "$conf"
+conf_print "$conf" >"$RUNNER_TEMP/agent.conf.before"
 files >"$RUNNER_TEMP/agent.files"
 
 keys --check
 [ "$status" = 0 ] && [ -z "$mac" ] || error "ws client macos wizard --check exited $status, with '$mac'"
-printf '%s\n' 'WS_GIT_NAME="Jane Doe"' WS_GIT_EMAIL=jane@example.com >>"$conf"
+conf_set "$conf" 'WS_GIT_NAME="Jane Doe"' WS_GIT_EMAIL=jane@example.com
 label="ws ($(ssh-keygen -l -f "$RUNNER_TEMP/agent.pub" | cut -d ' ' -f 2))"
 want="ws client macos wizard: Mac key: would ask for git's signing key, in Secretive: $label, ws's login key;"
 want="$want make a new one (the default)"
 for empty in '' WS_GIT_SIGNING_PUB_KEY=; do
-    [ -z "$empty" ] || echo "$empty" >>"$conf"
+    [ -z "$empty" ] || conf_set "$conf" "$empty"
     keys --check
     [ "$status" = 0 ] && [ "$mac" = "$want" ] ||
         error "ws client macos wizard --check with git's name${empty:+ and $empty} exited $status, with '$mac', not '$want'"
@@ -75,7 +78,7 @@ stop="$stop WS_GIT_SIGNING_PUB_KEY=~/.config/ws/secretive/$name for $label; or r
 [ "$status" = 1 ] && [ "$(printf '%s\n' "$out" | grep -cxF "$stop")" = 1 ] ||
     error "ws client macos wizard with no terminal exited $status, naming no line for git's key"
 rm -f "$copy"
-grep -v '^WS_IDENTITY_PUB_KEY' ~/.config/ws/mac.conf >"$conf"
+conf_print ~/.config/ws/mac.conf | grep -v '^WS_IDENTITY_PUB_KEY' | conf_write "$conf"
 chmod 000 "$data/PublicKeys"
 keys --check
 want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretive: $label; make a new one (the default)"
@@ -88,7 +91,7 @@ stop="$stop WS_IDENTITY_PUB_KEY=~/.config/ws/secretive/$name for $label; or run 
     error "ws client macos wizard with no terminal exited $status, naming no line for ws's key"
 chmod 755 "$data/PublicKeys"
 [ ! -e "$copy" ] || error "ws client macos wizard wrote $copy, with no key named"
-cp "$RUNNER_TEMP/agent.conf.before" "$conf"
+conf_write "$conf" <"$RUNNER_TEMP/agent.conf.before"
 SSH_AUTH_SOCK=$data/socket.ssh ssh-add -D 2>/dev/null
 want="ws client macos wizard: Mac key: the agent at $data/socket.ssh lists no key of $pub: open Secretive,"
 want="$want where it is that agent, or start the agent, then run the wizard again"
@@ -98,6 +101,6 @@ for args in '' --check; do
         error "ws client macos wizard${args:+ $args} exited $status, with '$mac', not '$want'"
     ! printf '%s\n' "$out" | grep -qE '^ws client macos wizard: (ws client macos apply: would apply|wrote [^ ]*/\.ssh/config\.d/ws|ran launchctl |made the Mac.s WireGuard key)' || error "ws client macos wizard${args:+ $args} ran ws client macos apply"
 done
-cmp -s "$conf" "$RUNNER_TEMP/agent.conf.before" || error "ws client macos wizard changed $conf"
+conf_print "$conf" | cmp -s - "$RUNNER_TEMP/agent.conf.before" || error "ws client macos wizard changed $conf"
 files | cmp -s - "$RUNNER_TEMP/agent.files" || error "ws client macos wizard changed the Mac's own files"
 exit "$fail"
