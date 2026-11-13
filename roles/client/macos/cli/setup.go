@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -69,10 +68,7 @@ func loadMacConf(p enginecli.Env) (settings conf.Conf, err error) {
 		// user's ~/.local/bin/cld.
 		return conf.Conf{}, errors.New("run it as yourself, not root: it asks sudo where it needs root")
 	}
-	file := p.Getenv("WS_CONF")
-	if file == "" {
-		file = filepath.Join(p.Getenv("HOME"), confFile)
-	}
+	file := conf.Path(p.Getenv, p.Pwd)
 	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
 		return conf.Conf{}, fmt.Errorf("%s is missing: roles/client/macos/README.md says what goes in it", file)

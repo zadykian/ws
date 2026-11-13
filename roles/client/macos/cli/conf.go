@@ -5,29 +5,12 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
-
-const confFile = ".config/ws/mac.conf"
-
-// confPath returns mac.conf's path from WS_CONF, a path from / as ws client macos apply gets it,
-// else from the home.
-func confPath(getenv func(string) string, pwd string) string {
-	switch file := getenv("WS_CONF"); {
-	case file == "":
-		return getenv("HOME") + "/" + confFile
-	case strings.HasPrefix(file, "/"):
-		return file
-	default:
-		return pwd + "/" + file
-	}
-}
 
 // newConfCmd returns ws client macos conf.
 func newConfCmd(p enginecli.Env) *cobra.Command {
@@ -50,12 +33,9 @@ func runConf(c *cobra.Command, p enginecli.Env, args []string, lines bool) error
 	if lines {
 		parse = conf.Lines
 	}
-	file := p.Getenv("WS_CONF")
+	file := conf.Path(p.Getenv, p.Pwd)
 	if len(args) == 1 {
 		file = args[0]
-	}
-	if file == "" {
-		file = filepath.Join(p.Getenv("HOME"), confFile)
 	}
 	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
@@ -81,12 +82,12 @@ type wizardEffects struct {
 func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.Check
-	conf := confPath(p.Getenv, p.Pwd)
+	macConf := conf.Path(p.Getenv, p.Pwd)
 	lock := wizard.LockPath(p.LockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
-	later := conf
+	later := macConf
 	if check {
 		later = scratch
 	}
@@ -110,7 +111,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	return []step.Step{
 		&tools.Tools{M: p.Machine, Out: out, Sleep: time.Sleep},
 		&tools.Homebrew{Lock: lock, M: p.Machine, Out: out},
-		&answers.Answers{Conf: conf, Defaults: shellDefaults(),
+		&answers.Answers{Conf: macConf, Defaults: shellDefaults(),
 			Prog: prog, Tty: p.TTY, Check: check, Scratch: scratch, M: p.Machine, P: ask, Out: out, Env: p.Lookup},
 		&keys.MacKey{Conf: later, Home: p.Getenv("HOME"),
 			Lock: lock, Tty: p.TTY,
@@ -139,7 +140,7 @@ func runWizard(c *cobra.Command, p enginecli.Env, o engine.WizardOptions) error 
 	// Homebrew's bin comes first in PATH, as a shell started before its install lacks it, and WS_CONF
 	// is set for the scripts that stages run.
 	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
-	_ = p.Setenv("WS_CONF", confPath(p.Getenv, p.Pwd))
+	_ = p.Setenv("WS_CONF", conf.Path(p.Getenv, p.Pwd))
 	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), macTarget(p, new([]string)), o)
 }
 
