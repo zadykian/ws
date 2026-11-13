@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/form"
@@ -33,7 +34,7 @@ func runConfigure(c *cobra.Command, p cli.Env) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
-	if !drawsScreen(c, p) {
+	if !engine.DrawsScreen(cli.CallOf(c, p)) {
 		return errors.New("it needs a terminal and no --plain: anywhere else, edit mac.conf by hand")
 	}
 	sheets, done, err := macForms(c, p)(c.Context())
@@ -41,7 +42,7 @@ func runConfigure(c *cobra.Command, p cli.Env) error {
 		return err
 	}
 	defer done(c.Context())
-	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), sheets...)
+	return tui.Configure(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), sheets...)
 }
 
 // macForms gives the forms' sheets, for ws client macos configure and the wizard's list, and done,

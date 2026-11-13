@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/role"
@@ -90,7 +91,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		_, _ = keys.Write([]byte("q"))
 	}()
 	read, done := macState(p, "ws", &host.Sudo{})
-	err := tui.RunState(c.Context(), screenConfig(c, p), "ws", read)
+	err := tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), "ws", read)
 	done(c.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -105,7 +106,7 @@ func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "q")
 	read, done := macState(p, "Mac", &host.Sudo{})
-	if err := tui.RunState(c.Context(), screenConfig(c, p), "Mac", read); err != nil || done != nil {
+	if err := tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), "Mac", read); err != nil || done != nil {
 		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}
 	if got := lockCalls(m.Calls, "mkdir"); got != 0 {

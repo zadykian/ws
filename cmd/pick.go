@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
@@ -17,13 +18,13 @@ import (
 // selection nor --check is given. Either of those goes straight to the run.
 func opensList(c *cobra.Command, p cli.Env, selected bool) bool {
 	check, _ := c.Flags().GetBool("check")
-	return drawsScreen(c, p) && !selected && !check
+	return engine.DrawsScreen(cli.CallOf(c, p)) && !selected && !check
 }
 
 // pickSteps draws the list of groups over scan and returns the choice. A choice that names no step
 // is a maintainer who left.
 func pickSteps(c *cobra.Command, p cli.Env, groups []tui.Group, scan tui.Work) (tui.Choice, error) {
-	return tui.Pick(c.Context(), screenConfig(c, p), c.CommandPath(), groups, scan)
+	return tui.Pick(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), groups, scan)
 }
 
 // pickServer opens the list of the roles' steps, scanned by a check, and returns cfg and the roles

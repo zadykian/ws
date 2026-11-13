@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/tui"
 )
@@ -30,11 +31,11 @@ func runServerConfigure(c *cobra.Command, p cli.Env) error {
 	if p.Euid != 0 {
 		return errors.New("run it as root, by sudo: ws's secrets and host_vars are root's")
 	}
-	if !drawsScreen(c, p) {
+	if !engine.DrawsScreen(cli.CallOf(c, p)) {
 		return errors.New("it needs a terminal and no --plain: anywhere else, run ws server ubuntu secrets " +
 			"and ws server ubuntu values set")
 	}
-	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), serverSheets(p)...)
+	return tui.Configure(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), serverSheets(p)...)
 }
 
 // serverSheets are the forms of ws server ubuntu configure and of ws server ubuntu wizard's list.

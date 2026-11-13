@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
@@ -15,6 +16,16 @@ func fakeProcess() cli.Env { return clitest.Env() }
 
 // withEnv returns p with the environment env, for Getenv, Lookup and Setenv.
 func withEnv(p cli.Env, env map[string]string) cli.Env { return clitest.WithEnv(p, env) }
+
+// screenCommand returns a command that keys type on, and what it draws.
+func screenCommand(t *testing.T, keys string) (*cobra.Command, *bytes.Buffer) {
+	var drawn bytes.Buffer
+	c := &cobra.Command{Use: "apply"}
+	c.SetContext(t.Context())
+	c.SetIn(strings.NewReader(keys))
+	c.SetErr(&drawn)
+	return c, &drawn
+}
 
 // runWs runs args on the root of both groups, with stdin, and returns the status, stdout and stderr.
 func runWs(p cli.Env, stdin string, args ...string) (status int, stdout, stderr string) {

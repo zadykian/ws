@@ -53,9 +53,9 @@ func runState(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error
 	if err != nil {
 		return engine.UsageError{Err: err}
 	}
-	if drawsReport(c, p) {
+	if engine.DrawsReport(cli.CallOf(c, p)) {
 		p.Machine = r.cfg.M // ws_home confines it.
-		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
+		return tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
 			states, err := role.State(ctx, onScreen(r.cfg, b), list)
 			return roleSections(states), err

@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -44,7 +45,7 @@ func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
 			return unwrapStep(err)
 		}
 	}
-	if drawsScreen(w.c, w.p) {
+	if engine.DrawsScreen(cli.CallOf(w.c, w.p)) {
 		stop() // The screen takes the signals, and asks before a signal ends a run.
 		return w.draw()
 	}
@@ -97,7 +98,7 @@ func (w wizardRun) round() tui.Round {
 // config is what the wizard's screens draw with. A signal ends a plain wizard through its context,
 // with status 1, so here too a signal is an error of the run, not engine.SignalExit.
 func (w wizardRun) config() tui.Config {
-	cfg := screenConfig(w.c, w.p)
+	cfg := engine.ScreenConfig(cli.CallOf(w.c, w.p))
 	cfg.Cut = func(s syscall.Signal) error { return fmt.Errorf("stopped by %v", s) }
 	return cfg
 }
@@ -177,7 +178,7 @@ func (w wizardRun) work(o wizardOptions, sudo *host.Sudo) tui.Work {
 // running gives draw a run's config and the work of o. The run's stdout prints past the screen,
 // which it would paint over.
 func (w wizardRun) running(o wizardOptions, sudo *host.Sudo, draw func(tui.Config, tui.Work) error) error {
-	cfg, done := runConfig(w.c, w.p, w.config())
+	cfg, done := engine.RunConfig(cli.CallOf(w.c, w.p), w.config())
 	defer done()
 	return draw(cfg, w.work(o, sudo))
 }
@@ -185,7 +186,7 @@ func (w wizardRun) running(o wizardOptions, sudo *host.Sudo, draw func(tui.Confi
 // whole runs every stage, on the run screen of their names.
 func (w wizardRun) whole() error {
 	return w.running(w.o, &host.Sudo{}, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewRunScreen(runTitle(w.c, w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
+		screen := tui.NewRunScreen(engine.RunTitle(cli.CallOf(w.c, w.p), w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }
@@ -206,7 +207,7 @@ func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) wizardOptions {
 func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo *host.Sudo) error {
 	o := w.optionsOf(choice, run)
 	return w.running(o, sudo, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewQueueRun(runTitle(w.c, o.check), cfg.Theme, choice)
+		screen := tui.NewQueueRun(engine.RunTitle(cli.CallOf(w.c, w.p), o.check), cfg.Theme, choice)
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }

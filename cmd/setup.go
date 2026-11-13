@@ -162,7 +162,7 @@ func runMacApply(c *cobra.Command, p cli.Env, only []string, check bool) error {
 		}
 		return setupOnScreen(c, p, rowsOf(chosen.Check), run, chosen)
 	}
-	if drawsScreen(c, p) {
+	if engine.DrawsScreen(cli.CallOf(c, p)) {
 		return setupOnScreen(c, p, rowsOf(check), run, step.Options{Check: check})
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
@@ -176,7 +176,8 @@ func runMacApply(c *cobra.Command, p cli.Env, only []string, check bool) error {
 // steps, and the run acts on the screen's effects. What a run prints on stdout waits for the
 // screen's end, as it would paint over the screen at a terminal.
 func setupOnScreen(c *cobra.Command, p cli.Env, rows tui.Group, run setupRun, o step.Options) error {
-	return drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
+	call := cli.CallOf(c, p)
+	return engine.DrawRun(c.Context(), call, engine.RunTitle(call, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
 		e := b.Effects()
 		return run(ctx, e.M, b, e.Text, b.Options(o))
 	})

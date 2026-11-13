@@ -179,7 +179,7 @@ func runApply(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error
 		r.cfg.Observer = events
 	}
 	var changed []string
-	if drawsScreen(c, p) {
+	if engine.DrawsScreen(cli.CallOf(c, p)) {
 		changed, err = applyOnScreen(c, p, r.cfg, r.list)
 	} else {
 		changed, err = role.Run(c.Context(), r.cfg, r.list)
@@ -216,7 +216,8 @@ func onScreen(cfg role.Config, b *tui.Bridge) role.Config {
 func applyOnScreen(c *cobra.Command, p cli.Env, cfg role.Config, list []role.Role) ([]string, error) {
 	var changed []string
 	p.Machine = cfg.M // ws_home confines it.
-	err := drawRun(c, p, runTitle(c, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
+	call := cli.CallOf(c, p)
+	err := engine.DrawRun(c.Context(), call, engine.RunTitle(call, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
 		run := onScreen(cfg, b)
 		var err error
 		changed, err = role.Run(ctx, run, list)

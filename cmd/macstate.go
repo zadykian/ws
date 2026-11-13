@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -47,8 +48,8 @@ func runMacState(c *cobra.Command, p cli.Env, asJSON bool) error {
 	if err != nil {
 		return err
 	}
-	if drawsReport(c, p) {
-		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), macRead(p))
+	if engine.DrawsReport(cli.CallOf(c, p)) {
+		return tui.RunState(c.Context(), engine.ScreenConfig(cli.CallOf(c, p)), c.CommandPath(), macRead(p))
 	}
 	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
 	out := progOut{term, c.CommandPath(), map[string]bool{}}
