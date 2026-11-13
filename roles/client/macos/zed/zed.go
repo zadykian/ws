@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 )
@@ -70,8 +71,8 @@ func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
 		file.UserPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
 
-// Apply installs the casks. A failed install is a warning, and the next run tries again; where
-// the app's fails, the files wait for it.
+// Apply applies the plan as a group does. A failed cask install is a warning, and the next run
+// tries again; where the app's fails, the files wait for it.
 func (z *Zed) Apply(ctx context.Context, p step.Plan) error {
-	return z.casks().Install(ctx, p, "zed")
+	return resource.Group{}.Apply(ctx, p)
 }

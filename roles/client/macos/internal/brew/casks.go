@@ -1,4 +1,4 @@
-// Package brew plans and installs the Homebrew casks of an app and its font, for the roles that
+// Package brew plans the Homebrew casks of an app and its font, for the roles that
 // set up an app.
 package brew
 
@@ -10,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 const (
@@ -22,7 +21,7 @@ const (
 	FontGone = "no " + FontFile + " is in ~/Library/Fonts or /Library/Fonts"
 )
 
-// Casks plans and installs an app's Homebrew cask and the font's, for the steps that set up an
+// Casks plans an app's Homebrew cask and the font's, for the steps that set up an
 // app. A step builds it per call from its own fields, and the Failed map is shared with the step.
 type Casks struct {
 	M        effect.Machine
@@ -116,22 +115,4 @@ func (b Casks) FontResource(home string) Cask {
 func (b Casks) Font(ctx context.Context, home string) ([]step.Change, error) {
 	changes, err := b.FontResource(home).Plan(ctx)
 	return asSteps(changes), err
-}
-
-// Install applies a plan's changes. A failed cask install is a warning, and the next run tries
-// again; where the app's fails, the other changes wait for it.
-func (b Casks) Install(ctx context.Context, p step.Plan, app string) error {
-	for _, c := range p.Changes {
-		if i, ok := c.(Install); ok {
-			_ = i.Apply(ctx)
-			continue
-		}
-		if b.Failed[app] {
-			continue
-		}
-		if err := change.Apply(ctx, b.M, b.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
 }
