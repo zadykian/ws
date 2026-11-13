@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
 
@@ -54,5 +55,37 @@ func TestZshWarnsInOrderUnderALinkedConfig(t *testing.T) {
 			t.Errorf("%s: Plan = %d changes, %v, said %q; want %d, fails %v, %q",
 				c.name, len(p.Changes), err, out.Lines, c.changes, c.fails, c.warns)
 		}
+	}
+}
+
+// The warnings come from the last part alone: the parts before it plan the changes and say nothing.
+func TestZshWarnsFromItsLastPartAlone(t *testing.T) {
+	m, out := linkedConfig()
+	m.Files["/h/.config/ws/zshrc"] = []byte("echo mine\n")
+	parts, err := zshStep(m, out).Parts(context.Background())
+	if err != nil || len(parts) != 4 {
+		t.Fatalf("Parts = %d, %v; want 4", len(parts), err)
+	}
+	if len(out.Lines) != 0 {
+		t.Fatalf("Parts said %q; want nothing", out.Lines)
+	}
+	if _, err := (resource.Group{Parts: parts[:3]}).Plan(context.Background()); err != nil || len(out.Lines) != 0 {
+		t.Fatalf("the first three parts: %v, said %q; want no warning", err, out.Lines)
+	}
+	if _, err := parts[3].Plan(context.Background()); err != nil || len(out.Lines) != 2 {
+		t.Errorf("the last part: %v, said %q; want the two warnings", err, out.Lines)
+	}
+}
+
+// A plan says each warning once, and a report after it, as --check and status run it, says none.
+func TestZshWarningsDoNotDoubleUnderCheckOrShowInStatus(t *testing.T) {
+	m, out := linkedConfig()
+	m.Files["/h/.config/ws/zshrc"] = []byte("echo mine\n")
+	s := zshStep(m, out)
+	if _, err := s.Plan(context.Background()); err != nil || len(out.Lines) != 2 {
+		t.Fatalf("Plan = %v, said %q; want the two warnings", err, out.Lines)
+	}
+	if _, err := s.Report(context.Background()); err != nil || len(out.Lines) != 2 {
+		t.Errorf("Report = %v, said %q; want no more", err, out.Lines)
 	}
 }
