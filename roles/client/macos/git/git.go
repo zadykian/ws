@@ -4,6 +4,7 @@ package git
 import (
 	"context"
 	"os/exec"
+	"slices"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -74,6 +75,7 @@ func (g *Git) plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	cs = append(append(cs, files...), g.includeChanges(ctx, found, lines)...)
+	before := slices.Clone(g.notes)
 	reg, waits, err := g.register(ctx, key, gh, install != nil)
 	if err != nil {
 		return step.Plan{}, err
@@ -81,7 +83,7 @@ func (g *Git) plan(ctx context.Context) (step.Plan, error) {
 	if reg != nil {
 		cs = append(cs, *reg)
 	} else if waits != "" {
-		cs = append(cs, waiting{g, key, gh, waits})
+		cs = append(cs, waiting{g, key, gh, waits, before})
 	}
 	return step.Plan{Changes: g.withNotes(cs)}, nil
 }

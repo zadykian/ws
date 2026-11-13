@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/git"
+	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 )
 
 const gitAdd = "gh ssh-key add " + gitPub + " --type signing --title mac"
@@ -148,5 +149,29 @@ func TestGitSaysNoAlreadyAfterItsAdd(t *testing.T) {
 	}
 	if p, err := g.Step().Plan(context.Background()); err != nil || strings.Contains(fmt.Sprint(p.Changes), "already") {
 		t.Errorf("Plan after the add = %v, %v; want no line that the key was there already", p.Changes, err)
+	}
+}
+
+func TestGitWarnsOfTheIncludeBeforeTheRegistrationAfterGhIsInstalled(t *testing.T) {
+	m, out, g := gitWithConfig("[user]\n    name = X\n", "", "user.name\n")
+	g.LookPath = func(n string) (string, error) {
+		if n == "gh" {
+			return "", errors.New("none")
+		}
+		return "/opt/bin/" + n, nil
+	}
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	m.Results["brew install gh"] = effecttest.Result{}
+	m.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] = effecttest.Result{Err: mactest.ExitOne(t)}
+	m.Results["cp -p "+gitConfigFile+" "+gitConfigFile+".20260102030405~"] = effecttest.Result{}
+	m.Results[gitList] = effecttest.Result{Err: errors.New("boom")}
+	if err := g.Step().Apply(context.Background(), mustPlan(t, g)); err != nil {
+		t.Fatal(err)
+	}
+	at := func(text string) int {
+		return slices.IndexFunc(out.Lines, func(l string) bool { return strings.Contains(l, text) })
+	}
+	if inc, reg := at("below the include"), at("unverified"); inc < 0 || reg < 0 || inc > reg {
+		t.Errorf("lines = %q; want the include's warning before the registration's", out.Lines)
 	}
 }
