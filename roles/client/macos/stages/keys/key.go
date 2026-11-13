@@ -1,4 +1,6 @@
-package wizard
+// Package keys is the wizard stage that picks the Mac key that ws takes, and puts its public half
+// in place.
+package keys
 
 import (
 	guided "github.com/zadykian/ws/engine/core/wizard"

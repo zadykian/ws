@@ -1,4 +1,4 @@
-package wizard
+package keys
 
 import (
 	"context"

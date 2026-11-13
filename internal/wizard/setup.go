@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/stages/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -84,7 +85,7 @@ func (s *Setup) unnamed() bool {
 		return false
 	}
 	c, errs := conf.Lines(string(text))
-	return len(errs) == 0 && asked(c)
+	return len(errs) == 0 && keys.Asked(c)
 }
 
 // Apply runs ws client macos apply. Where it stops, it has said why. Where it finishes, the stage
