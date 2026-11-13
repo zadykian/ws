@@ -62,3 +62,39 @@ func TestServersRefusesABadNameThatHoldsAServerFile(t *testing.T) {
 		t.Errorf("Servers = %v, %v; a bad name with no server.conf is not a server", got, err)
 	}
 }
+func TestPickTakesTheOneServerOrTheNamedOne(t *testing.T) {
+	for _, tc := range []struct {
+		names []string
+		flag  string
+		want  string
+	}{
+		{[]string{"box"}, "", "box"},
+		{[]string{"box"}, "box", "box"},
+		{[]string{"box", "ws"}, "ws", "ws"},
+	} {
+		got, err := Pick(machineWith(tc.names...), macPath, tc.flag)
+		if err != nil || got != tc.want {
+			t.Errorf("Pick(%v, %q) = %q, %v; want %q", tc.names, tc.flag, got, err, tc.want)
+		}
+	}
+}
+
+func TestPickRefuses(t *testing.T) {
+	for _, tc := range []struct {
+		names []string
+		flag  string
+		want  string
+	}{
+		{nil, "Lab", "--server Lab is not a server's name: " + NameForm},
+		{[]string{"box", "ws"}, "lab", "no server named lab in " + serversDirPath + ", which holds box and ws"},
+		{nil, "lab", "no server named lab in " + serversDirPath + ", which holds none"},
+		{nil, "", "no server in " + serversDirPath + ": ws client macos wizard adds one (roles/client/macos/README.md)"},
+		{[]string{"box", "lab", "ws"}, "", "several servers in " + serversDirPath + ", box, lab and ws: name one by --server"},
+		{[]string{"box", "ws"}, "", "several servers in " + serversDirPath + ", box and ws: name one by --server"},
+	} {
+		_, err := Pick(machineWith(tc.names...), macPath, tc.flag)
+		if err == nil || err.Error() != tc.want {
+			t.Errorf("Pick(%v, %q) error = %v, want %q", tc.names, tc.flag, err, tc.want)
+		}
+	}
+}
