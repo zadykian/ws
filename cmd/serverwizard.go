@@ -35,5 +35,5 @@ func runServerWizard(c *cobra.Command, p cli.Env, o engine.WizardOptions) error 
 	if p.Euid != 0 {
 		return errors.New("run it as root, by sudo: ws's values and its run are root's")
 	}
-	return wizardRun{c, p, serverTarget(p, new(applyOptions)), o}.start()
+	return engine.Wizard(c.Context(), cli.CallOf(c, p), serverTarget(p, new(applyOptions)), o)
 }

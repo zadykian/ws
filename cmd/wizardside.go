@@ -23,7 +23,7 @@ func macSide(p cli.Env) engine.Side {
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return wizardStages(effectsOf(p, e), o)
 		},
-		Pid: p.Pid, Local: stage.Mac, NewSudo: func() any { return &host.Sudo{} }, Nested: nestedRows, WsRun: wsRunSide(p),
+		Pid: p.Pid, Change: macChange, Local: stage.Mac, NewSudo: func() any { return &host.Sudo{} }, Nested: nestedRows, WsRun: wsRunSide(p),
 		Read: func(side string, sudo any) (tui.StateReader, func(context.Context)) {
 			return macState(p, side, sudo.(*host.Sudo))
 		},
@@ -47,7 +47,7 @@ func serverSide(p cli.Env) engine.Side {
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return serverWizardStages(effectsOf(p, e), o)
 		},
-		Local: stage.Mac, Nested: nestedRows, WsRun: wsRunSide(p),
+		Local: stage.Mac, Change: macChange, Nested: nestedRows, WsRun: wsRunSide(p),
 		Read: func(string, any) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, p.Version), nil
 		},
@@ -87,4 +87,14 @@ func nestedRows(stage string) []tui.Group {
 		}
 	}
 	return groups
+}
+
+// wsRunOf returns the stage of ws's run, or nil where the list holds none.
+func wsRunOf(list []step.Step) *stages.WsRun {
+	for _, s := range list {
+		if run, ok := s.(*stages.WsRun); ok {
+			return run
+		}
+	}
+	return nil
 }
