@@ -17,9 +17,10 @@ func newConfCmd(p enginecli.Env) *cobra.Command {
 	var lines bool
 	c := &cobra.Command{
 		Use:   "conf [FILE]",
-		Short: "print mac.conf's checked settings as shell assignments",
-		Long: "It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and prints the checked settings as " +
-			"shell assignments, or the errors of a file it refuses.",
+		Short: "print the checked settings of mac.conf and a server's file as shell assignments",
+		Long: "It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, " +
+			"servers/ws/server.conf beside it, and prints the checked settings as shell assignments, " +
+			"or the errors of a file it refuses.",
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error { return runConf(c, p, args, lines) },
 	}
@@ -29,13 +30,17 @@ func newConfCmd(p enginecli.Env) *cobra.Command {
 
 // runConf prints the settings of FILE, or of the file that the environment names.
 func runConf(c *cobra.Command, p enginecli.Env, args []string, lines bool) error {
-	parse := conf.Parse
-	if lines {
-		parse = conf.Lines
-	}
 	file := conf.Path(p.Getenv, p.Pwd)
 	if len(args) == 1 {
 		file = args[0]
+	}
+	if !lines {
+		settings, err := conf.Load(p.Machine, file, conf.ServerPath(file, conf.FirstServer))
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(c.OutOrStdout(), settings.Assignments())
+		return err
 	}
 	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -44,7 +49,7 @@ func runConf(c *cobra.Command, p enginecli.Env, args []string, lines bool) error
 	if err != nil {
 		return err
 	}
-	settings, errs := parse(string(text))
+	settings, errs := conf.Lines(string(text))
 	if len(errs) > 0 {
 		var all []error
 		for _, e := range errs {
