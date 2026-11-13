@@ -103,6 +103,6 @@ would lead to the old machine still. From the LAN to a cloud VM, the router's `W
 the cloud VM's run would turn that machine's outbound table off. `ws client macos apply` refuses a
 key of another target's ways: `WS_LAN` on a cloud VM, `WS_REMOTE` on a VM on the Mac, and
 `WS_CABLE_SERVICE` or `WS_CABLE_PORT` off the LAN. Then run the wizard, which asks the new target's
-ways. A new machine offers another host key, so run `ssh-keygen -R ws` first. From a cloud VM,
-remove `security_outbound: false` from ws's `host_vars.yml` too, as the closing list says, then run
-the wizard with `--update`.
+ways. A new machine offers another host key, so run `ssh-keygen -R NAME` first, NAME the server's
+name. From a cloud VM, remove `security_outbound: false` from ws's `host_vars.yml` too, as the
+closing list says, then run the wizard with `--update`.
