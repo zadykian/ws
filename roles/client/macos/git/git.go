@@ -10,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 )
 
@@ -89,29 +88,12 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 	if reg != nil {
 		cs = append(cs, *reg)
 	} else if waits != "" {
-		cs = append(cs, change.Remark(waits))
+		cs = append(cs, waiting{g, key, gh, waits})
 	}
 	return step.Plan{Changes: g.withNotes(cs)}, nil
 }
 
-// Apply installs gh first, plans again with it there, then applies the rest as a group does.
+// Apply applies the plan as a group does. The registration waits for gh's install by itself.
 func (g *Git) Apply(ctx context.Context, p step.Plan) error {
-	n := 0
-	for n < len(p.Changes) {
-		if _, ok := p.Changes[n].(ghInstall); !ok {
-			break
-		}
-		n++
-	}
-	if n > 0 {
-		if err := (resource.Group{}).Apply(ctx, step.Plan{Changes: p.Changes[:n]}); err != nil {
-			return err
-		}
-		var err error
-		if p, err = g.Plan(ctx); err != nil {
-			return err
-		}
-		n = 0
-	}
-	return resource.Group{}.Apply(ctx, step.Plan{Changes: p.Changes[n:]})
+	return resource.Group{}.Apply(ctx, p)
 }

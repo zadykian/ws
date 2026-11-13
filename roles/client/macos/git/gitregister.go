@@ -30,6 +30,31 @@ func (r Register) Apply(ctx context.Context) error {
 	return nil
 }
 
+// waiting is the registration that waits for gh's install. It says what it would run, and once gh
+// is there it plans the registration again and makes it, with the lines that follow.
+type waiting struct {
+	Git  *Git
+	Key  keys.NamedKey
+	Gh   string
+	Text string
+}
+
+func (w waiting) String() string { return w.Text }
+
+// Apply plans the registration with gh installed, adds the key where the plan does, and says the
+// lines that the plan keeps.
+func (w waiting) Apply(ctx context.Context) error {
+	reg, _, err := w.Git.register(ctx, w.Key, w.Gh, false)
+	if err != nil {
+		return err
+	}
+	if reg != nil {
+		w.Git.add(ctx, *reg)
+	}
+	w.Git.withNotes(nil)
+	return nil
+}
+
 // ghFailure splits the error of a gh command into its exit status and its errors.
 func ghFailure(err error) (int, string) {
 	var ee *exec.ExitError

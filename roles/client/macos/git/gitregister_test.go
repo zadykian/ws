@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 	"testing"
 
@@ -45,6 +46,30 @@ func TestGitWaitsForGhBeforeAddingTheKey(t *testing.T) {
 	last := p.Changes[len(p.Changes)-1].String()
 	if err != nil || !strings.HasSuffix(last, gitAdd+" once gh is installed, where it has a login that lacks the key") {
 		t.Errorf("Plan = %v, %v; want the wait on gh last", p.Changes, err)
+	}
+}
+
+func TestGitAppliesTheWaitingAddAfterGhIsInstalled(t *testing.T) {
+	m, g := gitReady()
+	g.LookPath = func(n string) (string, error) {
+		if n == "gh" {
+			return "", errors.New("none")
+		}
+		return "/opt/bin/" + n, nil
+	}
+	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
+	m.Results["brew install gh"] = effecttest.Result{}
+	m.Results[gitList] = effecttest.Result{}
+	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
+	p, err := g.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := g.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(m.Calls, "run /opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac") {
+		t.Errorf("calls %q; want the add after the install", m.Calls)
 	}
 }
 
