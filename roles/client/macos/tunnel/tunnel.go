@@ -31,7 +31,9 @@ type Tunnel struct {
 	Conf conf.Conf
 	// Server is the name of the server whose daemon this is.
 	Server string
-	Home   string
+	// MacConf is mac.conf's path, beside which the servers' directories are.
+	MacConf string
+	Home    string
 	// Plist is the text of roles/client/macos/tunnel/files/ws-tunnel.plist: a template, with @NAME@
 	// the server's name.
 	Plist []byte
@@ -150,11 +152,19 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		}
 		cs = append(cs, d...)
 	}
-	others, err := t.restartOthers(ctx)
+	gone, err := t.gone(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
-	cs = append(cs, others...)
+	others, err := t.restartOthers(ctx, gone)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	pruned, err := t.prune(ctx, gone)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	cs = append(append(cs, others...), pruned...)
 	return step.Plan{Changes: cs}, nil
 }
 

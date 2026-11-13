@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"context"
+	"slices"
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
@@ -9,8 +10,9 @@ import (
 
 // restartOthers plans a kickstart of each other server's loaded daemon where root's copy of ws is
 // to change. Every daemon runs that one copy, and a running program keeps the old one. The own
-// daemon restarts in daemon(), which needs WS_PUBLIC_KEY. These do not.
-func (t *Tunnel) restartOthers(ctx context.Context) ([]step.Change, error) {
+// daemon restarts in daemon(), which needs WS_PUBLIC_KEY. These do not. A server that is gone has
+// its daemon pruned instead.
+func (t *Tunnel) restartOthers(ctx context.Context, gone []string) ([]step.Change, error) {
 	if !t.copied {
 		return nil, nil
 	}
@@ -21,7 +23,7 @@ func (t *Tunnel) restartOthers(ctx context.Context) ([]step.Change, error) {
 	var cs []step.Change
 	for _, name := range names {
 		d := launchd.For(name)
-		if name == t.Server {
+		if name == t.Server || slices.Contains(gone, name) {
 			continue
 		}
 		if _, err := t.M.Run(ctx, "launchctl", "print", "system/"+d.Label); err != nil {
