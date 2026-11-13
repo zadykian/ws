@@ -43,7 +43,7 @@ Usage:
 
 Available Commands:
   apply       set the Mac up from mac.conf
-  conf        print mac.conf's checked settings as shell assignments
+  conf        print the checked settings of mac.conf and a server's file as shell assignments
   configure   edit mac.conf, the secrets and ws's host_vars on forms
   resolver    send DOMAIN's names to the nameservers, or drop it
   secrets     edit ws's secrets file, over ssh
@@ -72,7 +72,7 @@ Flags:
 Global Flags:
       --plain   print lines, with no full-screen display
 == ws client macos conf
-It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and prints the checked settings as shell assignments, or the errors of a file it refuses.
+It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/ws/server.conf beside it, and prints the checked settings as shell assignments, or the errors of a file it refuses.
 
 Usage:
   ws client macos conf [FILE] [flags]
