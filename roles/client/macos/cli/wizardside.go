@@ -47,8 +47,8 @@ func macSide(p enginecli.Env, server *string) engine.Side {
 	}
 }
 
-// wizardServer returns the server that the wizard sets up: the one that flag names, or the only one,
-// or none where there is none and no flag, which the wizard asks for. It refuses a second server.
+// wizardServer returns the server that the wizard sets up: the one that flag names, or the only one.
+// With none and no flag it returns "", and the wizard asks the name. It refuses a second server.
 func wizardServer(p enginecli.Env, flag string) (string, error) {
 	mac := conf.Path(p.Getenv, p.Pwd)
 	name, err := conf.Pick(p.Machine, mac, flag)
