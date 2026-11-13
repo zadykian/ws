@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -107,12 +108,12 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	parts := []step.Reporter{
 		sshDirs(s.M, s.Home),
 		s.wsFile(s.config(ctx, f, key)),
-		Fixed{include},
+		userfile.Fixed{include},
 	}
 	if copied(key.File, key.Text, s.Home) {
 		parts = append(parts, copyDirs(s.M, s.Home))
 	}
-	return Gather(ctx, append(parts, keyCopy(s.M, key.File, key.Text, s.Home)...)...)
+	return userfile.Gather(ctx, append(parts, keyCopy(s.M, key.File, key.Text, s.Home)...)...)
 }
 
 // Apply applies the changes in order.

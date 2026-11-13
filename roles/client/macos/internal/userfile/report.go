@@ -1,4 +1,6 @@
-package setup
+// Package userfile plans and reports what ws writes in the user's home. That is a whole file, a
+// directory, or ws's lines in a file that holds other text.
+package userfile
 
 import (
 	"bytes"

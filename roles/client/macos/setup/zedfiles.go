@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 const (
@@ -32,7 +33,7 @@ func (z *Zed) files() ([]step.Change, error) {
 		return nil, err
 	}
 	for _, f := range z.whole() {
-		planned, err := Owned(z.Out, f)
+		planned, err := userfile.Owned(z.Out, f)
 		if err != nil {
 			return nil, err
 		}
@@ -41,19 +42,19 @@ func (z *Zed) files() ([]step.Change, error) {
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, change.Write{Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
 	}
-	link.warn(z.Out, len(cs), "Zed's files go there")
+	link.Warn(z.Out, len(cs), "Zed's files go there")
 	return cs, nil
 }
 
 // dirs returns ~/.config and Zed's directory in it.
-func (z *Zed) dirs() Dirs {
-	return Dirs{{M: z.M, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Path: z.Home + "/.config/zed", Mode: 0o755}}
+func (z *Zed) dirs() userfile.Dirs {
+	return userfile.Dirs{{M: z.M, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Path: z.Home + "/.config/zed", Mode: 0o755}}
 }
 
 // whole returns global_settings.json and keymap.json, the files that ws replaces whole.
-func (z *Zed) whole() []File {
+func (z *Zed) whole() []userfile.File {
 	dir := z.Home + "/.config/zed"
-	return []File{
+	return []userfile.File{
 		{M: z.M, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
 		{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
 	}

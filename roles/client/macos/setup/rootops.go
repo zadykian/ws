@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // applyInOrder applies the changes of a plan in order, with launchctl's signal as a change.
@@ -38,5 +39,5 @@ func (removal) Kind() step.ChangeKind { return step.Removal }
 
 // Item says that the file is to go.
 func (r removal) Item() step.Item {
-	return step.Item{Kind: step.FileItem, Name: r.path, Want: StateMissing, Found: StatePresent}
+	return step.Item{Kind: step.FileItem, Name: r.path, Want: userfile.StateMissing, Found: userfile.StatePresent}
 }

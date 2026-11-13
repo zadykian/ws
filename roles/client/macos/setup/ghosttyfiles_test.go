@@ -8,12 +8,13 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 func fileChanges(t *testing.T, m *effecttest.Machine, holds bool) []step.Change {
 	g := &Ghostty{M: m, Out: &effecttest.Out{}}
 	dir := "/h/.config/ghostty"
-	ws, err := File{M: m, Path: dir + "/ws.ghostty", Text: []byte("new\n"), Mode: 0o644}.Plan()
+	ws, err := userfile.File{M: m, Path: dir + "/ws.ghostty", Text: []byte("new\n"), Mode: 0o644}.Plan()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +22,7 @@ func fileChanges(t *testing.T, m *effecttest.Machine, holds bool) []step.Change 
 	if !holds {
 		lines = []step.Change{change.Write{Path: dir + "/config"}}
 	}
-	return g.fileChanges(ws, nil, DirLink{}, holds, lines, nil)
+	return g.fileChanges(ws, nil, userfile.DirLink{}, holds, lines, nil)
 }
 
 func TestGhosttyFileChangesWriteBothFiles(t *testing.T) {

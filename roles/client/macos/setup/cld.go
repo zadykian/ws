@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // cldReleases is the page of cld's releases, whose latest has the install.sh that installs cld.
@@ -112,9 +113,9 @@ func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 
 // Report says whether cld is there, with the version it names.
 func (c *Cld) Report(ctx context.Context) ([]step.Item, error) {
-	item := step.Item{Kind: step.PackageItem, Name: "cld", Want: StateInstalled, Found: StateMissing}
+	item := step.Item{Kind: step.PackageItem, Name: "cld", Want: userfile.StateInstalled, Found: userfile.StateMissing}
 	if c.has() {
-		item.Found = StateInstalled
+		item.Found = userfile.StateInstalled
 		if out, err := c.M.Run(ctx, c.bin(), "--version"); err == nil {
 			v, _ := cldVersion(string(out))
 			item.Found += " " + v

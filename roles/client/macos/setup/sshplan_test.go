@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 var sshInclude = change.Write{Path: "/h/.ssh/config", Before: nil, After: []byte("Include config.d/ws\n"), Exists: false, Mode: 0o600}
@@ -29,7 +30,7 @@ func TestSSHChangesPutTheDirectoriesFirst(t *testing.T) {
 
 func TestSSHChangesOfModesAndInclude(t *testing.T) {
 	f := sshFacts{
-		Home: "/h", Ws: Found{Exists: true, Mode: 0o644, Text: []byte("new\n")}, Config: []step.Change{sshInclude},
+		Home: "/h", Ws: userfile.Found{Exists: true, Mode: 0o644, Text: []byte("new\n")}, Config: []step.Change{sshInclude},
 	}
 	got := sshChanges(f, []byte("new\n"))
 	want := []step.Change{

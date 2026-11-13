@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -29,7 +30,7 @@ func (s SSH) read(ctx context.Context) (sshFacts, error) {
 	}
 	lines := s.configLines()
 	found, link, holds, err := lines.Read(ctx)
-	if err != nil && !errors.Is(err, ErrMisplaced) {
+	if err != nil && !errors.Is(err, userfile.ErrMisplaced) {
 		return f, err
 	}
 	f.UserConfig = found
@@ -43,8 +44,8 @@ func (s SSH) read(ctx context.Context) (sshFacts, error) {
 
 // configLines is the Include of config.d/ws at the top of ~/.ssh/config. An Include below a setting
 // is out of place: ssh would take that setting first.
-func (s SSH) configLines() Lines {
-	return Lines{
+func (s SSH) configLines() userfile.Lines {
+	return userfile.Lines{
 		M: s.M, Path: s.Home + "/.ssh/config", Lines: includeLine + "\n", Shown: includeLine, Top: true,
 		Mode: sshFileMode, Now: s.Now, Has: s.included,
 	}
@@ -54,7 +55,7 @@ func (s SSH) configLines() Lines {
 func (s SSH) included(_ context.Context, _ effect.Machine, file string, text []byte) (bool, error) {
 	place, line := sshcfg.IncludeAt(string(text), "config.d/ws", s.Home)
 	if place == sshcfg.Below {
-		return false, Misplaced("line %d of %s is the Include of config.d/ws, below other settings, which ssh "+
+		return false, userfile.Misplaced("line %d of %s is the Include of config.d/ws, below other settings, which ssh "+
 			"would take first: move it to the top", line, file)
 	}
 	return place == sshcfg.First, nil
@@ -66,8 +67,8 @@ func firstLine(text []byte) string {
 }
 
 // wsFile is config.d/ws, which holds text.
-func (s SSH) wsFile(text []byte) File {
-	return File{M: s.M, Path: s.Home + "/.ssh/config.d/ws", Text: text, Mode: sshFileMode, Own: sshOwn}
+func (s SSH) wsFile(text []byte) userfile.File {
+	return userfile.File{M: s.M, Path: s.Home + "/.ssh/config.d/ws", Text: text, Mode: sshFileMode, Own: sshOwn}
 }
 
 // sshOwn says whether config.d/ws's first line is ws's.

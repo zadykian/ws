@@ -1,4 +1,4 @@
-package setup
+package userfile
 
 import (
 	"context"
@@ -80,8 +80,8 @@ type Dirs []Dir
 // DirLink is a directory that is a link: where a step writes under it, it warns once.
 type DirLink struct{ Path, To string }
 
-// warn says that the step writes under the link, where it plans writes. goes names what lands there.
-func (l DirLink) warn(out effect.Out, writes int, goes string) {
+// Warn says that the step writes under the link, where it plans writes. goes names what lands there.
+func (l DirLink) Warn(out effect.Out, writes int, goes string) {
 	if l.Path != "" && writes > 0 {
 		out.Warn("%s is a link to %s: %s", l.Path, l.To, goes)
 	}
