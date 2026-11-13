@@ -12,14 +12,15 @@ Zed and Fresh each have a plain file for their settings and keys: `roles/client/
 `roles/server/ubuntu/zed/files/settings.json.tmpl` for Zed, and
 `roles/server/ubuntu/fresh/files/config.json.tmpl` for Fresh. No code renders them.
 
-A change to a shared value or a key goes to both files. Where one file keeps a key out, its block
-of keys left out, at the file's end, records why.
+A change to a shared value or an Alt or F key goes to both files. Where one file keeps a key out,
+its block of keys left out, at the file's end, records why.
 
 They share:
 
 - the theme, the ruler and auto-save;
 - the language servers' arguments;
-- the keys.
+- the Alt and F keys. The Cmd and Ctrl keys are each editor's own: Zed's stay its macOS
+  defaults.
 
 lazygit's `roles/server/ubuntu/lazygit/files/config.yml` takes the theme's colours too, each beside
 the Zed key it comes from, so a change of theme goes to it as well
