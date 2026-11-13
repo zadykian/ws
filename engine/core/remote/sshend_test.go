@@ -15,9 +15,17 @@ func TestSSHEnd(t *testing.T) {
 	m.Files["/t/l/direct"] = nil
 	m.Modes["/t/l/direct"] = fs.ModeSocket | 0o600
 	m.Files["/t/l/root.err"] = nil
-	m.Results["ssh -F /dev/null -O exit -o ControlPath=/t/l/direct ws"] = effecttest.Result{}
+	m.Files["/t/l/lab"] = nil
+	m.Modes["/t/l/lab"] = fs.ModeSocket | 0o600
+	m.Results["ssh -F /dev/null -O exit -o ControlPath=/t/l/direct direct"] = effecttest.Result{}
+	m.Results["ssh -F /dev/null -O exit -o ControlPath=/t/l/lab lab"] = effecttest.Result{}
 	SSH{Host: "ws", M: m, Lock: "/t/l"}.End(context.Background())
-	if got := strings.Join(m.Calls, "\n"); strings.Count(got, "run ssh") != 1 {
-		t.Errorf("End calls %q; want one ssh -O exit", got)
+	if got := strings.Join(m.Calls, "\n"); strings.Count(got, "run ssh") != 2 {
+		t.Errorf("End calls %q; want an ssh -O exit for each socket", got)
+	}
+	for _, sock := range []string{"direct direct", "lab lab"} {
+		if got := strings.Join(m.Calls, "\n"); !strings.Contains(got, "/t/l/"+sock) {
+			t.Errorf("End calls %q; want %q", got, sock)
+		}
 	}
 }
