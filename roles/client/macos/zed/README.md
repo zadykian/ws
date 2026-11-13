@@ -41,12 +41,13 @@ The file sets a ruler at column 120, shows all whitespace, and saves 3 seconds a
 `roles/client/macos/zed/files/global_settings.json`. CI parses the file but sees no Zed obey it: check
 the three once on a remote project.
 
-The seed holds one connection, `{ "host": "ws" }`. Zed records an opened project by its index in the
-list of `ssh_connections` in `settings.json`, and arrays replace rather than merge, so the
-connection can sit in no other file. Zed's reader of `~/.ssh/config` has no `Include`, so it
-does not list `ws`, which lives in `~/.ssh/config.d/ws`. Zed connects with the system `ssh`, so
-`host: "ws"` resolves through that file, with its user, key and keepalive. Nothing else is set
-there: no `username`, `port` or `args`.
+The seed holds a connection for each server known at its write, in name order, as `{ "host": "ws" }`.
+Zed records an opened project by its index in the list of `ssh_connections` in `settings.json`, and
+arrays replace rather than merge, so the connections can sit in no other file. Zed's reader of
+`~/.ssh/config` has no `Include`, so it does not list `ws`, which lives in `~/.ssh/config.d/ws`. Zed
+connects with the system `ssh`, so `host: "ws"` resolves through that file, with its user, key and
+keepalive. Nothing else is set there: no `username`, `port` or `args`. A server added later is
+not added to a `settings.json` that exists.
 
 A linked `~/.config/zed`, as GNU stow's folding makes, draws a warning where the step plans a write:
 Zed's files go through the link.
