@@ -2,6 +2,7 @@ package stages
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"net/netip"
 	"slices"
@@ -113,5 +114,51 @@ func TestWsRunStopsWhereHostVarsCannotBeRead(t *testing.T) {
 	m.Results[sessiontest.Op("values")] = effecttest.Result{Err: errors.New("ssh: no route")}
 	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "host_vars on ws") {
 		t.Errorf("Plan where the read fails = %v; want the stop", err)
+	}
+}
+
+// pairsOp is the op that writes the pairs, each sent as base64, as the files script reads it.
+func pairsOp(pairs ...string) string {
+	words := []string{"values"}
+	for _, p := range pairs {
+		words = append(words, base64.StdEncoding.EncodeToString([]byte(p)))
+	}
+	return sessiontest.Op(words...)
+}
+
+func TestWsRunWritesTheTunnelBeforeTheUser(t *testing.T) {
+	r, m := tunnelRun("10.99.1.1/24", "51821", "---\n")
+	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\nWS_USER=alice\n")
+	p, err := r.Plan(context.Background())
+	if err != nil || len(p.Changes) != 1 {
+		t.Fatalf("Plan = %v, %v; want one change", p.Changes, err)
+	}
+	pairs := pairsOp("wireguard_address=10.99.1.1/24", "wireguard_port=51821")
+	m.Results[pairs] = effecttest.Result{}
+	m.Results[sessiontest.Op("user", "alice")] = effecttest.Result{}
+	m.Results[sessiontest.Op("run")] = effecttest.Result{}
+	if err := r.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	at := func(op string) int { return slices.Index(m.Calls, "run "+op) }
+	write, user, run := at(pairs), at("op user alice"), at("op run")
+	if write < 0 || write > user || user > run {
+		t.Errorf("calls = %q; want the pairs, the user, then the run", m.Calls)
+	}
+}
+
+func TestWsRunStopsWhereTheTunnelCannotBeWritten(t *testing.T) {
+	r, m := tunnelRun("10.99.1.1/24", "", "---\n")
+	p, err := r.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Results[pairsOp("wireguard_address=10.99.1.1/24")] = effecttest.Result{Err: errors.New("denied")}
+	err = r.Apply(context.Background(), p)
+	if err == nil || !strings.Contains(err.Error(), "cannot write wireguard_address: 10.99.1.1/24 into ws's host_vars") {
+		t.Errorf("Apply where the write fails = %v; want the stop", err)
+	}
+	if slices.Contains(m.Calls, "run op run") {
+		t.Errorf("calls = %q; want no run", m.Calls)
 	}
 }
