@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/base"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude"
@@ -62,3 +63,27 @@ var all = []Role{
 
 // List returns every role, in the order that they run.
 func List() []Role { return slices.Clone(all) }
+
+// Roles returns every role, in the order that they run, closed over the machine's values v and
+// secrets s, as the runner holds neither. Each call makes a new slice.
+func Roles(v values.Values, s secrets.Secrets) []role.Role { return closeOver(all, v, s) }
+
+// closeOver is the seam that Roles gives the list: it closes each of list over v and s.
+func closeOver(list []Role, v values.Values, s secrets.Secrets) []role.Role {
+	out := make([]role.Role, len(list))
+	for i, r := range list {
+		out[i] = role.Role{Name: r.Name, Steps: func(m effect.Machine, u effect.Units, o effect.Out) []step.Step {
+			return r.Steps(v, s, m, u, o)
+		}}
+	}
+	return out
+}
+
+// Names returns the names of the roles, in the order that they run, where no values are at hand.
+func Names() []string {
+	names := make([]string, len(all))
+	for i, r := range all {
+		names[i] = r.Name
+	}
+	return names
+}
