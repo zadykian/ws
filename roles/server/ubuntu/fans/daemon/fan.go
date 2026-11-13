@@ -3,6 +3,8 @@ package daemon
 import (
 	"math"
 	"strconv"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 const (
@@ -48,7 +50,7 @@ func (f *HwmonFan) Speed() (float64, error) {
 	}
 	value, err := strconv.Atoi(text)
 	if err != nil {
-		return 0, missing("%s holds %q, not a number", path, text)
+		return 0, missing.Errorf("%s holds %q, not a number", path, text)
 	}
 	return float64(value) * percentFull / pwmFull, nil
 }

@@ -3,6 +3,8 @@ package daemon
 import (
 	"testing"
 	"time"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 func celsius(v float64) *float64 { return &v }
@@ -16,7 +18,7 @@ func TestMaxIsTheHighestAndMissingWithAnyMissing(t *testing.T) {
 	if got, err := r(map[string]*float64{"a": celsius(-5), "b": celsius(-9)}, now); err != nil || got != -5 {
 		t.Errorf("max of negatives = %v, %v; want -5", got, err)
 	}
-	if _, err := r(map[string]*float64{"a": celsius(40), "b": nil}, now); !IsMissing(err) {
+	if _, err := r(map[string]*float64{"a": celsius(40), "b": nil}, now); !missing.Is(err) {
 		t.Errorf("max with b missing = %v, want a missing error", err)
 	}
 }
@@ -36,7 +38,7 @@ func TestAverageIsTheMeanOverItsSeconds(t *testing.T) {
 		{30 * time.Second, nil, 0, true},
 	} {
 		got, err := r(map[string]*float64{"a": c.in}, start.Add(c.after))
-		if c.gone != IsMissing(err) || (!c.gone && (err != nil || got != c.want)) {
+		if c.gone != missing.Is(err) || (!c.gone && (err != nil || got != c.want)) {
 			t.Errorf("at +%v: %v, %v; want %v, missing %v", c.after, got, err, c.want, c.gone)
 		}
 	}
@@ -48,7 +50,7 @@ func (g gpuFake) Temperature(i int) (float64, error) {
 	if v, ok := g[i]; ok {
 		return v, nil
 	}
-	return 0, missing("no GPU %d", i)
+	return 0, missing.Errorf("no GPU %d", i)
 }
 
 func TestNvidiaSensorReadsTheGPU(t *testing.T) {

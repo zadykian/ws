@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 func TestGPUsTemperatureIsTheLatestReading(t *testing.T) {
@@ -16,19 +18,19 @@ func TestGPUsTemperatureIsTheLatestReading(t *testing.T) {
 		t.Errorf("Temperature(0) = %v, %v; want 47", got, err)
 	}
 	now = now.Add(maxAge + time.Second)
-	if _, err := g.Temperature(1); !IsMissing(err) {
+	if _, err := g.Temperature(1); !missing.Is(err) {
 		t.Errorf("Temperature(1) after %v = %v, want a missing error", maxAge, err)
 	}
 }
 
 func TestGPUsTemperatureIsMissingWithoutAReadingOrWithABadLine(t *testing.T) {
 	g := &GPUs{}
-	if _, err := g.Temperature(0); !IsMissing(err) {
+	if _, err := g.Temperature(0); !missing.Is(err) {
 		t.Errorf("Temperature before a reading = %v, want a missing error", err)
 	}
 	for _, line := range []string{"45", "x, 45", "0, hot"} {
 		g.record(line)
-		if _, err := g.Temperature(0); !IsMissing(err) || !strings.Contains(err.Error(), line) {
+		if _, err := g.Temperature(0); !missing.Is(err) || !strings.Contains(err.Error(), line) {
 			t.Errorf("Temperature after %q = %v, want a missing error that names it", line, err)
 		}
 	}

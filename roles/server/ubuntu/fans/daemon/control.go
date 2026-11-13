@@ -1,5 +1,9 @@
 package daemon
 
+import (
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
+)
+
 // control is a fan on a curve or at a fixed speed, which moves Step % a tick at most.
 type control struct {
 	name    string
@@ -20,7 +24,7 @@ func (c *control) tick() (problem string, err error) {
 	case c.curve != nil:
 		t, ok := c.curve.Speed()
 		if !ok {
-			return c.giveBack(missing("curve %s has no temperature", c.curve.name))
+			return c.giveBack(missing.Errorf("curve %s has no temperature", c.curve.name))
 		}
 		target = t
 	default:
@@ -45,7 +49,7 @@ func (c *control) tick() (problem string, err error) {
 // giveBack hands the fan back and returns err's text, where err is a missing error. Any other
 // error is returned.
 func (c *control) giveBack(err error) (string, error) {
-	if !IsMissing(err) {
+	if !missing.Is(err) {
 		return "", err
 	}
 	if rerr := c.release(); rerr != nil {
@@ -61,7 +65,7 @@ func (c *control) release() error {
 		return nil
 	}
 	c.held = false
-	if err := c.fan.Release(); err != nil && !IsMissing(err) {
+	if err := c.fan.Release(); err != nil && !missing.Is(err) {
 		return err
 	}
 	return nil

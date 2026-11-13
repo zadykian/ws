@@ -3,6 +3,8 @@ package daemon
 import (
 	"sync"
 	"time"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 // maxAge is how old a GPU's reading may be before it counts as missing. nvidia-smi prints one a
@@ -58,9 +60,9 @@ func (g *GPUs) Temperature(gpu int) (float64, error) {
 	r, ok := g.temps[gpu]
 	switch {
 	case g.problem != "":
-		return 0, missing("no NVML: %s", g.problem)
+		return 0, missing.Errorf("no NVML: %s", g.problem)
 	case !ok || g.now().Sub(r.at) > maxAge:
-		return 0, missing("no reading of GPU %d in %v", gpu, maxAge)
+		return 0, missing.Errorf("no reading of GPU %d in %v", gpu, maxAge)
 	}
 	return r.celsius, nil
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 // Daemon drives the fans of a config on the curves, a tick at a time.
@@ -85,7 +87,7 @@ func (d *Daemon) Tick() error {
 		case err == nil:
 			values[name] = &t
 			d.report(name, "")
-		case IsMissing(err):
+		case missing.Is(err):
 			values[name] = nil
 			d.report(name, err.Error())
 		default:

@@ -3,6 +3,8 @@ package daemon
 import (
 	"os"
 	"testing"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 // coretemp makes the CPU's hwmon device in a directory, and returns the directory.
@@ -31,7 +33,7 @@ func TestTemperatureIsMissingWhereTheDeviceOrLabelIs(t *testing.T) {
 	h := Hwmon{OSSysfs{}, coretemp(t)}
 	for _, tc := range [][2]string{{"k10temp", "Tctl"}, {"coretemp", "Core 0"}} {
 		_, err := h.Temperature(tc[0], tc[1])
-		if !IsMissing(err) {
+		if !missing.Is(err) {
 			t.Errorf("Temperature(%s) = %v, want a missing error", tc, err)
 		}
 	}

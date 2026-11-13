@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/zadykian/ws/roles/server/ubuntu/fans/daemon/internal/missing"
 )
 
 // Sysfs is the files of /sys.
@@ -19,7 +21,7 @@ type Sysfs interface {
 	Glob(pattern string) []string
 }
 
-// OSSysfs is the machine's /sys. A file that fails is a MissingError: files come and go.
+// OSSysfs is the machine's /sys. A file that fails is a missing error: files come and go.
 type OSSysfs struct{}
 
 // reason returns why a file operation failed, as the system words it.
@@ -35,7 +37,7 @@ func reason(err error) string {
 func (OSSysfs) Read(path string) (string, error) {
 	b, err := os.ReadFile(path) //nolint:gosec // a sysfs path that Hwmon built
 	if err != nil {
-		return "", missing("cannot read %s: %s", path, reason(err))
+		return "", missing.Errorf("cannot read %s: %s", path, reason(err))
 	}
 	return strings.TrimSpace(string(b)), nil
 }
@@ -43,7 +45,7 @@ func (OSSysfs) Read(path string) (string, error) {
 // Write writes the value to the file.
 func (OSSysfs) Write(path, value string) error {
 	if err := os.WriteFile(path, []byte(value+"\n"), 0o644); err != nil { //nolint:gosec // an existing sysfs file
-		return missing("cannot write %s to %s: %s", value, path, reason(err))
+		return missing.Errorf("cannot write %s to %s: %s", value, path, reason(err))
 	}
 	return nil
 }
