@@ -24,7 +24,7 @@ func TestMacWaysFromAddresses(t *testing.T) {
 		m := effecttest.NewMachine()
 		m.Files["/c"] = []byte("WS_TARGET=lan\n" + tc.conf)
 		m.Results["ifconfig"] = effecttest.Result{Out: []byte(tc.ifconfig)}
-		got := strings.Join(remote.SSH{M: m, Lock: "/t/l", Ways: MacWays{M: m, Conf: "/c"}}.Argv(context.Background(), []string{"ws"}), " ")
+		got := strings.Join(remote.SSH{Host: "ws", M: m, Lock: "/t/l", Ways: MacWays{M: m, Conf: "/c"}}.Argv(context.Background(), []string{"ws"}), " ")
 		if !strings.Contains(got, tc.want) {
 			t.Errorf("%s: argv = %q; want %q in it", name, got, tc.want)
 		}
@@ -34,7 +34,7 @@ func TestMacWaysFromAddresses(t *testing.T) {
 // A mac.conf that is missing or refused says so, in place of ssh's want of a way.
 func TestMacWaysSayWhyMacConfLeavesNone(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := remote.SSH{M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}
+	s := remote.SSH{Host: "ws", M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}
 	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "no server.conf at /h/mac.conf") {
 		t.Errorf("Way with no mac.conf = %v", err)
 	}
