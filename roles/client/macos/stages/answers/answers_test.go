@@ -10,35 +10,45 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
-const confPathForTest = "/h/.config/ws/mac.conf"
+const (
+	confPathForTest   = "/h/.config/ws/mac.conf"
+	serverPathForTest = "/h/.config/ws/servers/ws/server.conf"
+)
 
-func newAnswers(t *testing.T, text string) (*Answers, *effecttest.Out) {
+// newAnswers returns the stage over a Mac whose mac.conf holds mac, and a server's file holds
+// server; a text left empty is a file that is missing.
+func newAnswers(t *testing.T, mac, server string) (*Answers, *effecttest.Out) {
 	m := effecttest.NewMachine()
-	if text != "" {
-		m.Files[confPathForTest] = []byte(text)
+	if mac != "" {
+		m.Files[confPathForTest] = []byte(mac)
+	}
+	if server != "" {
+		m.Files[serverPathForTest] = []byte(server)
 	}
 	out := &effecttest.Out{}
-	return &Answers{Conf: confPathForTest, Defaults: []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n"), Prog: "ws client macos wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
+	return &Answers{Conf: confPathForTest, Server: serverPathForTest, Defaults: []byte("shell_git_name: ada\nshell_git_email: ada@example.com\n"), Prog: "ws client macos wizard", Tty: true, M: m, P: &effecttest.Prompt{T: t}, Out: out,
 		Env: func(string) (string, bool) { return "", false }}, out
 }
 
 func TestAnswersLoadRefusesABadLine(t *testing.T) {
-	a, out := newAnswers(t, "WS_TARGET=moon\n")
-	if _, _, err := a.load(); err == nil || !strings.Contains(err.Error(), "cannot read /h/.config/ws/mac.conf") ||
+	a, out := newAnswers(t, "", "WS_TARGET=moon\n")
+	if _, _, err := a.load(); err == nil || !strings.Contains(err.Error(), "cannot read "+serverPathForTest) ||
 		len(out.Lines) != 1 {
 		t.Errorf("Plan = %v, out %v", err, out.Lines)
 	}
 }
 
 func TestAnswersPlan(t *testing.T) {
-	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_GIT_NAME=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	for name, tc := range map[string]struct{ text, want string }{
-		"no file":  {"", "would ask for the values that /h/.config/ws/mac.conf lacks, from WS_TARGET on"},
-		"a gap":    {strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
-		"complete": {all, ""},
-		"refused":  {all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws client macos apply would refuse"},
+	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	const mac = "WS_GIT_NAME=\nWS_GIT_EMAIL=\n"
+	for name, tc := range map[string]struct{ mac, server, want string }{
+		"no file":   {"", "", "would ask for the values that " + serverPathForTest + " lacks, from WS_TARGET on"},
+		"a gap":     {mac, strings.Replace(all, "WS_REMOTE=\n", "", 1), "from WS_REMOTE on"},
+		"the Mac's": {"", all, "would ask for the values that " + confPathForTest + " lacks, from WS_GIT_NAME on"},
+		"complete":  {mac, all, ""},
+		"refused":   {mac, all + "WS_TARGET=cloud\nWS_REMOTE_PORT=22\n", "ws client macos apply would refuse " + serverPathForTest},
 	} {
-		a, _ := newAnswers(t, tc.text)
+		a, _ := newAnswers(t, tc.mac, tc.server)
 		p, err := a.Plan(context.Background())
 		got := ""
 		if len(p.Changes) > 0 {
@@ -59,7 +69,7 @@ func (homebrewDone) Plan(context.Context) (step.Plan, error) { return step.Plan{
 func (homebrewDone) Apply(context.Context, step.Plan) error  { return nil }
 
 func TestAnswersAskAndWrite(t *testing.T) {
-	a, out := newAnswers(t, "# mine\nWS_USER=ada")
+	a, out := newAnswers(t, "# mine", "WS_USER=ada")
 	a.P.(*effecttest.Prompt).Answers = map[string]string{
 		"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                          "",
 		"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                          "",
@@ -72,41 +82,48 @@ func TestAnswersAskAndWrite(t *testing.T) {
 	}
 	m := a.M.(*effecttest.Machine)
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+	m.Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
 	changed, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false)
 	if err != nil || !changed {
 		t.Fatalf("Run = %v, %v", changed, err)
 	}
-	want := "# mine\nWS_USER=ada\nWS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\n" +
-		"WS_GIT_NAME=ada\nWS_GIT_EMAIL=ada@example.com\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	if got := string(m.Files[confPathForTest]); got != want {
+	const server = "WS_USER=ada\nWS_TARGET=lan\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.10\nWS_REMOTE=\n" +
+		"WS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	if got := string(m.Files[serverPathForTest]); got != server {
+		t.Errorf("server file = %q, want %q", got, server)
+	}
+	if got, want := string(m.Files[confPathForTest]), "# mine\nWS_GIT_NAME=ada\nWS_GIT_EMAIL=ada@example.com\n"; got != want {
 		t.Errorf("mac.conf = %q, want %q", got, want)
 	}
 }
 
 func TestAnswersFromEnvironment(t *testing.T) {
-	a, out := newAnswers(t, "")
+	a, out := newAnswers(t, "", "")
 	a.Env = func(k string) (string, bool) {
 		return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
 	}
 	a.P.(*effecttest.Prompt).Answers = map[string]string{"The VM's SSH port (WS_REMOTE_PORT) [22]": "", "git's name on the Mac (WS_GIT_NAME) [ada, or none]": "none",
 		"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]": "", "Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": ""}
 	a.M.(*effecttest.Machine).Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+	a.M.(*effecttest.Machine).Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
 	if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false); err != nil {
 		t.Fatalf("Run = %v", err)
 	}
-	if got := string(a.M.(*effecttest.Machine).Files[confPathForTest]); !strings.HasPrefix(got, "WS_TARGET=cloud\nWS_REMOTE=r.example\n") {
-		t.Errorf("mac.conf = %q", got)
+	if got := string(a.M.(*effecttest.Machine).Files[serverPathForTest]); !strings.HasPrefix(got, "WS_TARGET=cloud\nWS_REMOTE=r.example\n") {
+		t.Errorf("server file = %q", got)
 	}
 }
 
 func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
-	a, out := newAnswers(t, "")
-	a.Check, a.Scratch = true, "/lock/mac.conf"
+	a, out := newAnswers(t, "", "")
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	a.Env = func(k string) (string, bool) {
 		return map[string]string{"WS_TARGET": "cloud", "WS_REMOTE": "r.example"}[k], k == "WS_TARGET" || k == "WS_REMOTE"
 	}
 	m := a.M.(*effecttest.Machine)
-	m.Files[confPathForTest] = []byte("WS_USER=ada\n")
+	m.Files[serverPathForTest] = []byte("WS_USER=ada\n")
+	m.Results["mkdir -p /lock"] = effecttest.Result{}
+	m.Results["mkdir -p /lock/servers/ws"] = effecttest.Result{}
 	a.P.(*effecttest.Prompt).Answers = map[string]string{
 		"The VM's SSH port (WS_REMOTE_PORT) [22]":                                                 "",
 		"git's name on the Mac (WS_GIT_NAME) [ada, or none]":                                      "none",
@@ -116,36 +133,41 @@ func TestAnswersCheckWritesTheScratchFile(t *testing.T) {
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan = %v, %v", p, err)
 	}
-	if got := string(m.Files["/lock/mac.conf"]); !strings.HasPrefix(got, "WS_USER=ada\nWS_TARGET=cloud\n") {
-		t.Errorf("scratch = %q", got)
+	if got := string(m.Files["/lock/servers/ws/server.conf"]); !strings.HasPrefix(got, "WS_USER=ada\nWS_TARGET=cloud\n") {
+		t.Errorf("server scratch = %q", got)
 	}
-	if got := string(m.Files[confPathForTest]); got != "WS_USER=ada\n" {
-		t.Errorf("mac.conf changed to %q", got)
+	if got := string(m.Files["/lock/mac.conf"]); got != "WS_GIT_NAME=\n" {
+		t.Errorf("mac scratch = %q, want the answer for git's name alone", got)
 	}
-	if len(out.Lines) == 0 || !strings.HasPrefix(out.Lines[len(out.Lines)-1], "diff: "+confPathForTest) {
-		t.Errorf("out = %q, want the diff of mac.conf last", out.Lines)
+	if got := string(m.Files[serverPathForTest]); got != "WS_USER=ada\n" {
+		t.Errorf("server file changed to %q", got)
+	}
+	if len(out.Lines) == 0 || !strings.HasPrefix(out.Lines[len(out.Lines)-1], "diff: "+serverPathForTest) {
+		t.Errorf("out = %q, want the diff of the server's file last", out.Lines)
 	}
 }
 
 func TestAnswersCheckPassesALinkThatLacksNoKey(t *testing.T) {
-	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_GIT_NAME=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
-	a, out := newAnswers(t, all)
-	a.Check, a.Scratch = true, "/lock/mac.conf"
+	const all = "WS_TARGET=lan\nWS_LAN=\nWS_REMOTE=\nWS_TUNNEL_NETWORKS=\nWS_RESOLVERS=\n"
+	a, out := newAnswers(t, "WS_GIT_NAME=\nWS_GIT_EMAIL=\n", all)
+	a.Check, a.Scratch, a.ServerScratch = true, "/lock/mac.conf", "/lock/servers/ws/server.conf"
 	m := a.M.(*effecttest.Machine)
-	m.Links[confPathForTest], m.Dirs["/h/.config/ws"] = "/dot/mac.conf", 0o755
+	m.Links[serverPathForTest], m.Dirs["/h/.config/ws"], m.Dirs["/h/.config/ws/servers/ws"] = "/dot/server.conf", 0o755, 0o755
+	m.Results["mkdir -p /lock"] = effecttest.Result{}
+	m.Results["mkdir -p /lock/servers/ws"] = effecttest.Result{}
 	if p, err := a.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan = %v, %v", p, err)
 	}
-	if got := out.Lines; len(got) != 1 || got[0] != "diff: "+confPathForTest+"\n" {
-		t.Errorf("out = %q, want an empty diff of mac.conf alone", got)
+	if got := out.Lines; len(got) != 2 || got[0] != "diff: "+confPathForTest+"\n" || got[1] != "diff: "+serverPathForTest+"\n" {
+		t.Errorf("out = %q, want an empty diff of each file", got)
 	}
-	if got := string(m.Files["/lock/mac.conf"]); got != all {
+	if got := string(m.Files["/lock/servers/ws/server.conf"]); got != all {
 		t.Errorf("scratch = %q", got)
 	}
 }
 
 func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
-	a, _ := newAnswers(t, "")
+	a, _ := newAnswers(t, "", "")
 	a.Check, a.Scratch = true, "/lock/mac.conf"
 	a.Env = func(k string) (string, bool) { return "home", k == "WS_TARGET" }
 	if _, err := a.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "WS_TARGET comes from the environment") {
