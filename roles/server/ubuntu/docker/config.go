@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/bridge"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -76,13 +77,13 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, d values.Do
 			daemon,
 			host.Dir{M: m, Path: "/etc/systemd/resolved.conf.d", Mode: 0o755},
 			resolvedFile,
-			host.Unit{M: m, U: u, Out: out, Name: "systemd-resolved.service", Run: host.Running, Watch: []host.Resource{resolvedFile}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "systemd-resolved.service", Run: systemd.Running, Watch: []host.Resource{resolvedFile}},
 			bridge.Resolver(m, out, d),
 			host.Dir{M: m, Path: "/etc/systemd/system/docker.service.d", Mode: 0o755},
 			sliceFile,
 			overrideFile,
-			host.DaemonReload{M: m, U: u, Watch: []host.Resource{sliceFile, overrideFile}},
-			host.Unit{M: m, U: u, Out: out, Name: "docker.service", Enabled: true, Run: host.Running, Watch: []host.Resource{daemon, overrideFile}},
+			systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{sliceFile, overrideFile}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "docker.service", Enabled: true, Run: systemd.Running, Watch: []host.Resource{daemon, overrideFile}},
 		}, nil
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 const (
@@ -81,8 +82,8 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, user host.U
 			watch = append(watch, gone)
 		}
 		parts = append(parts,
-			host.DaemonReload{M: m, U: u, Watch: []host.Resource{journalFile, claudeFile}},
-			host.Unit{M: m, U: u, Out: out, Name: "otelcol-contrib.service", Enabled: true, Run: host.Running, Watch: watch},
+			systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{journalFile, claudeFile}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "otelcol-contrib.service", Enabled: true, Run: systemd.Running, Watch: watch},
 		)
 		return parts, nil
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // loadedVersion is the version of the driver that the kernel runs.
@@ -22,7 +23,7 @@ type reboot struct {
 }
 
 func (r reboot) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(r.m) {
+	if !systemd.Booted(r.m) {
 		r.out.Say("nvidia's driver: skipped, systemd is not running")
 		return nil, nil
 	}

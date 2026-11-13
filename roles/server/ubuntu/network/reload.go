@@ -5,13 +5,14 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // reloaded plans the resource, and the two commands that put a change in force. They run on a
 // booted machine only, and still run after a failed change, as the handlers did.
 func (d direct) reloaded(ctx context.Context, r host.Resource) ([]host.Change, error) {
 	changes, err := r.Plan(ctx)
-	if err != nil || len(changes) == 0 || !host.Booted(d.M) {
+	if err != nil || len(changes) == 0 || !systemd.Booted(d.M) {
 		return changes, err
 	}
 	return append(changes, command{m: d.M, why: "write networkd's files from netplan's", name: "netplan", args: []string{"generate"}},

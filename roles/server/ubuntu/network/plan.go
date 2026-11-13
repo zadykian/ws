@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/network/internal/netplan"
 )
 
@@ -45,7 +46,7 @@ func (d direct) Plan(ctx context.Context) ([]host.Change, error) {
 	if len(problems) > 0 {
 		return nil, errors.New(strings.Join(problems, " "))
 	}
-	if host.Booted(d.M) {
+	if systemd.Booted(d.M) {
 		if state, err := d.U.State(ctx, "systemd-networkd.service"); err != nil {
 			return nil, err
 		} else if !state.Active {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // ready shows the server's public key, which the Mac's end of the tunnel needs, and checks that
@@ -58,7 +59,7 @@ func (r ready) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, nil
 	}
 	effect.SayLasting(r.out, "ws's WireGuard public key, for WS_PUBLIC_KEY in the Mac's mac.conf: %s", public)
-	if !host.Booted(r.m) || r.holds(ctx, public) {
+	if !systemd.Booted(r.m) || r.holds(ctx, public) {
 		return nil, nil
 	}
 	return []host.Change{waitForKey{r, public}}, nil

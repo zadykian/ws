@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // exporter makes the parts that set up node_exporter, which gives the temperatures and fans that
@@ -24,7 +25,7 @@ func exporter(m effect.Machine, u effect.Units, out effect.Out) func(context.Con
 		return []host.Resource{
 			file,
 			host.Packages{M: m, Out: out, Names: []string{"prometheus-node-exporter"}},
-			host.Unit{M: m, U: u, Out: out, Name: "prometheus-node-exporter.service", Enabled: true, Run: host.Running, Watch: []host.Resource{file}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "prometheus-node-exporter.service", Enabled: true, Run: systemd.Running, Watch: []host.Resource{file}},
 		}, nil
 	}
 }

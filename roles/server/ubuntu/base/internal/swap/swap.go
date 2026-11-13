@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // fstabLine swaps to the file at boot.
@@ -81,7 +82,7 @@ func (s swap) state() (swapState, error) {
 	if err != nil {
 		return swapState{}, err
 	}
-	return swapState{WantMiB: want, Areas: areas, AvailKiB: avail, DiskMiB: free, File: file, Booted: host.Booted(s.M)}, nil
+	return swapState{WantMiB: want, Areas: areas, AvailKiB: avail, DiskMiB: free, File: file, Booted: systemd.Booted(s.M)}, nil
 }
 
 // wantMiB returns the swap file's size: the setting, or the RAM rounded up to a whole GiB where it

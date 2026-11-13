@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // DefaultFile holds the default policies.
@@ -37,7 +38,7 @@ func (c setDefault) Apply(ctx context.Context) error {
 
 // Plan sets each policy that DefaultFile does not hold.
 func (d Defaults) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(d.M) {
+	if !systemd.Booted(d.M) {
 		d.Out.Say("ufw defaults: skipped, systemd is not running")
 		return nil, nil
 	}

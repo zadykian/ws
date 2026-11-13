@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -46,7 +47,7 @@ func (s stopped) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil || !slices.ContainsFunc(changes, func(c host.Change) bool { return step.KindOf(c) == step.Install }) {
 		return changes, err
 	}
-	if !host.Booted(s.m) {
+	if !systemd.Booted(s.m) {
 		s.out.Say("collector stop: skipped, systemd is not running")
 		return changes, nil
 	}

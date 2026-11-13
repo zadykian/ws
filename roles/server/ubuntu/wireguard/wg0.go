@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // wg0Files are networkd's two files for wg0.
@@ -34,7 +35,7 @@ type wg0 struct {
 // made. It plans the reload where a watched resource changes or wg0 is missing, as a key that
 // networkd couldn't read or a deletion by hand leaves it.
 func (w wg0) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(w.m) {
+	if !systemd.Booted(w.m) {
 		return nil, nil
 	}
 	_, statErr := w.m.Stat("/sys/class/net/wg0")

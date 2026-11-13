@@ -1,4 +1,5 @@
-package host
+// Package systemd runs units and user units, reloads systemd and enables lingering.
+package systemd
 
 import "github.com/zadykian/ws/engine/core/effect"
 

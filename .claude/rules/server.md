@@ -54,7 +54,7 @@ steps, and each role's page in `docs/` says what it sets up.
   alone, so a healthy one has no item.
 - Where a dry run skips a step, a step beside it shows what the run would change, as Go's move into
   `/usr/local/go` does ([claude's marketplaces](../../roles/server/ubuntu/claude/marketplaces.go)).
-- A step that needs a booted machine's systemd checks `host.Booted`: without one, as in CI's
+- A step that needs a booted machine's systemd checks `systemd.Booted`: without one, as in CI's
   container, it skips and says so.
 - A file a role writes has a `# Written by github.com/zadykian/ws` line at its top, where its format
   takes comments, as the roles' embedded templates and files do. Each run replaces a change made to

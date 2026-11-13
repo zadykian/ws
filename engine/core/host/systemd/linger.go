@@ -1,8 +1,9 @@
-package host
+package systemd
 
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/host"
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -13,7 +14,7 @@ import (
 // it now too.
 type Linger struct {
 	M    effect.Machine
-	User User
+	User host.User
 	Out  effect.Out
 }
 
@@ -29,14 +30,14 @@ func (c enableLinger) Apply(ctx context.Context) error {
 }
 
 // Plan looks for the file that loginctl makes.
-func (l Linger) Plan(context.Context) ([]Change, error) {
+func (l Linger) Plan(context.Context) ([]host.Change, error) {
 	if !Booted(l.M) {
 		l.Out.Say("lingering for %s: skipped, systemd is not running", l.User.Name)
 		return nil, nil
 	}
 	_, err := l.M.Stat("/var/lib/systemd/linger/" + l.User.Name)
 	if errors.Is(err, fs.ErrNotExist) {
-		return []Change{enableLinger{l}}, nil
+		return []host.Change{enableLinger{l}}, nil
 	}
 	return nil, err
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -49,14 +50,14 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 		{"left", host.Left{M: m, User: "ann", Group: "docker"}, []step.ChangeKind{step.Removal}},
 		{"packages", host.Packages{M: m, Names: []string{"curl"}}, []step.ChangeKind{step.Install}},
 		{"purged", host.Purged{M: m, Names: []string{"git"}}, []step.ChangeKind{step.Removal}},
-		{"reload", host.DaemonReload{M: m, U: u, Watch: watch}, []step.ChangeKind{step.Restart}},
-		{"start", host.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: host.Running},
+		{"reload", systemd.DaemonReload{M: m, U: u, Watch: watch}, []step.ChangeKind{step.Restart}},
+		{"start", systemd.Unit{M: m, U: u, Out: out, Name: "a.service", Enabled: true, Run: systemd.Running},
 			[]step.ChangeKind{step.Write, step.Restart}},
-		{"restart", host.Unit{M: m, U: u, Out: out, Name: "on.service", Run: host.Running, Watch: watch},
+		{"restart", systemd.Unit{M: m, U: u, Out: out, Name: "on.service", Run: systemd.Running, Watch: watch},
 			[]step.ChangeKind{step.Write, step.Restart}},
-		{"user unit", host.UserUnit{M: m, Account: host.Account{User: ann, UID: 1000}, Out: out, Name: "a.service"},
+		{"user unit", systemd.UserUnit{M: m, Account: host.Account{User: ann, UID: 1000}, Out: out, Name: "a.service"},
 			[]step.ChangeKind{step.Restart}},
-		{"linger", host.Linger{M: m, User: ann, Out: out}, []step.ChangeKind{step.Write}},
+		{"linger", systemd.Linger{M: m, User: ann, Out: out}, []step.ChangeKind{step.Write}},
 		{"package", host.Package{M: m, Name: "a", Source: host.PinnedFile{M: m, Version: "1", SHA256: map[string]string{"amd64": "s"},
 			URL: func(version, arch string) string { return "https://x/a_" + version + arch + ".deb" }}},
 			[]step.ChangeKind{step.Write, step.Write, step.Install}},

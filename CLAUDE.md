@@ -94,7 +94,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - A second run changes nothing: CI's `playbook` job runs it twice and fails where the second run
   reports a change ([ci.yml](.github/workflows/ci.yml)).
-- A step that needs a booted machine's systemd checks `host.Booted`, and skips without it, as in
+- A step that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
   CI's container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one

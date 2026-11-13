@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 const (
@@ -31,7 +32,7 @@ func (c sysctlNow) Apply(ctx context.Context) error {
 
 // Plan plans the change where IPv4 forwarding is off.
 func (c sysctlNow) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(c.m) {
+	if !systemd.Booted(c.m) {
 		return nil, nil
 	}
 	data, err := c.m.ReadFile(ipForward)

@@ -3,6 +3,7 @@ package security
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 )
 
@@ -24,6 +25,6 @@ func firewall(m effect.Machine, u effect.Units, out effect.Out) []host.Resource 
 			Owns: func(r ufw.Rule) bool { return r.To == ufw.Any }},
 		ufw.Defaults{M: m, Out: out, Incoming: "deny", Outgoing: "allow"},
 		ufw.Enable{M: m, Out: out},
-		host.Unit{M: m, U: u, Out: out, Name: "ufw.service", Enabled: true},
+		systemd.Unit{M: m, U: u, Out: out, Name: "ufw.service", Enabled: true},
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -46,7 +47,7 @@ func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 		}
 		files[n], bodies[n] = d, body
 	}
-	if !host.Booted(s.M) {
+	if !systemd.Booted(s.M) {
 		s.Out.Say("%s: skipped, systemd is not running", s.Name())
 		return step.Plan{}, nil
 	}

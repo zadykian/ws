@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // healthURL is the collector's health_check extension.
@@ -68,7 +69,7 @@ func (a answer) get(ctx context.Context) error {
 
 // Plan plans the wait where the collector does not answer now.
 func (a answer) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(a.m) {
+	if !systemd.Booted(a.m) {
 		a.out.Say("collector health: skipped, systemd is not running")
 		return nil, nil
 	}

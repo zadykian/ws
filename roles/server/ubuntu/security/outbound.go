@@ -3,6 +3,7 @@ package security
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // unitFile makes the file of a unit that the fill or the table needs.
@@ -36,7 +37,7 @@ func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource
 		return nil, err
 	}
 	var nft host.Resource = host.File{M: m, Path: tableFile, Content: table, Mode: 0o644}
-	if host.Booted(m) {
+	if systemd.Booted(m) {
 		nft = host.Validated{File: nft.(host.File), Check: func(p string) (string, []string) {
 			return "/usr/sbin/nft", []string{"-c", "-f", p}
 		}}
@@ -51,15 +52,15 @@ func outbound(m effect.Machine, u effect.Units, out effect.Out) ([]host.Resource
 		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755},
 		host.Dir{M: m, Path: tableDir, Mode: 0o755},
 		fillScript,
-	}, fill...), host.DaemonReload{M: m, U: u, Watch: fill},
-		host.Unit{M: m, U: u, Out: out, Name: pathUnit, Enabled: true, Run: host.Running, Watch: fill},
-		host.Unit{M: m, U: u, Out: out, Name: timerUnit, Enabled: true, Run: host.Running, Watch: fill},
-		host.Unit{M: m, U: u, Out: out, Name: fillUnit, Run: host.Triggered, Watch: append(fill[:len(fill):len(fill)], d)},
+	}, fill...), systemd.DaemonReload{M: m, U: u, Watch: fill},
+		systemd.Unit{M: m, U: u, Out: out, Name: pathUnit, Enabled: true, Run: systemd.Running, Watch: fill},
+		systemd.Unit{M: m, U: u, Out: out, Name: timerUnit, Enabled: true, Run: systemd.Running, Watch: fill},
+		systemd.Unit{M: m, U: u, Out: out, Name: fillUnit, Run: systemd.Triggered, Watch: append(fill[:len(fill):len(fill)], d)},
 		nft,
 		service,
-		host.DaemonReload{M: m, U: u, Watch: []host.Resource{service}},
+		systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{service}},
 		d,
-		host.Unit{M: m, U: u, Out: out, Name: outboundUnit, Enabled: true, Run: host.Running, Reload: true,
+		systemd.Unit{M: m, U: u, Out: out, Name: outboundUnit, Enabled: true, Run: systemd.Running, Reload: true,
 			Watch: []host.Resource{fillScript, nft, service, d}},
 	), nil
 }

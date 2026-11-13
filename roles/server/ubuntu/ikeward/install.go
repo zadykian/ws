@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -80,7 +81,7 @@ func (c installNow) Apply(ctx context.Context) error {
 
 // Plan asks install what it would change, on the files of the run.
 func (i Install) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(i.M) {
+	if !systemd.Booted(i.M) {
 		i.Out.Say("ikeward install: skipped, systemd is not running")
 		return nil, nil
 	}

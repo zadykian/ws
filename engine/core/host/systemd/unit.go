@@ -1,9 +1,10 @@
-package host
+package systemd
 
 import (
 	"cmp"
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/host"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -44,7 +45,7 @@ type Unit struct {
 	Reload bool
 	// Watch restarts a running unit where any of these resources has a change to make, as a
 	// handler does. They come before the unit in the group.
-	Watch []Resource
+	Watch []host.Resource
 }
 
 type unitCall struct {
@@ -71,7 +72,7 @@ func (c unitCall) Kind() step.ChangeKind {
 func (c unitCall) Apply(ctx context.Context) error { return c.do(ctx) }
 
 // Plan reads the unit's state over D-Bus.
-func (u Unit) Plan(ctx context.Context) ([]Change, error) {
+func (u Unit) Plan(ctx context.Context) ([]host.Change, error) {
 	if !Booted(u.M) {
 		u.Out.Say("%s: skipped, systemd is not running", u.Name)
 		return nil, nil
@@ -80,7 +81,7 @@ func (u Unit) Plan(ctx context.Context) ([]Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unit %s: %w", u.Name, err)
 	}
-	var cs []Change
+	var cs []host.Change
 	k := mark{u.M, u.Name}
 	owed, err := k.owed()
 	if err != nil {
@@ -193,7 +194,7 @@ func unitState(s effect.UnitState) string {
 }
 
 // anyChange reports whether any of the resources has a change to make.
-func anyChange(ctx context.Context, rs []Resource) (bool, error) {
+func anyChange(ctx context.Context, rs []host.Resource) (bool, error) {
 	for _, r := range rs {
 		if cs, err := r.Plan(ctx); err != nil || len(cs) > 0 {
 			return len(cs) > 0, err

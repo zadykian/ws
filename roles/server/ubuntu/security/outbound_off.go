@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // unitDirs are where a link can enable a unit: /etc for the units, /run for those enabled with
@@ -30,14 +31,14 @@ var outboundUnits = []string{pathUnit, timerUnit, fillUnit, outboundUnit}
 func outboundOff(m effect.Machine, u effect.Units, out effect.Out) []host.Resource {
 	var rs []host.Resource
 	for _, n := range outboundUnits {
-		rs = append(rs, host.Unit{M: m, U: u, Out: out, Name: n, Run: host.Stopped})
+		rs = append(rs, systemd.Unit{M: m, U: u, Out: out, Name: n, Run: systemd.Stopped})
 	}
 	gone := []host.Resource{links{m}}
 	for _, n := range outboundUnits {
 		gone = append(gone, host.Absent{M: m, Path: "/etc/systemd/system/" + n})
 	}
 	gone = append(gone, host.Absent{M: m, Path: tableDir}, host.Absent{M: m, Path: fillRecord})
-	return append(append(rs, gone...), host.DaemonReload{M: m, U: u, Watch: gone}, table{m, out})
+	return append(append(rs, gone...), systemd.DaemonReload{M: m, U: u, Watch: gone}, table{m, out})
 }
 
 // links is the removal of the links that enable the outbound table's units, in a directory of
@@ -105,7 +106,7 @@ func (c destroy) Apply(ctx context.Context) error {
 
 // Plan plans the removal where the kernel holds the table. No nft, or no table, is none to remove.
 func (t table) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(t.m) {
+	if !systemd.Booted(t.m) {
 		t.out.Say("outbound table: not looked for, systemd is not running")
 		return nil, nil
 	}

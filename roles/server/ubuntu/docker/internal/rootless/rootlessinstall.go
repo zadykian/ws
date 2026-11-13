@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // rootlessInstall runs Docker's tool as the user, which makes and starts the unit, enables it, and
@@ -24,7 +25,7 @@ func (r rootlessInstall) String() string { return "install " + r.a.Name + "'s ro
 // Plan looks at the files alone, so a dry run on a new machine needs no user's systemd. A run cut
 // between the tool's unit and its link runs the tool again, which keeps the unit.
 func (r rootlessInstall) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(r.m) {
+	if !systemd.Booted(r.m) {
 		r.out.Say("Docker rootless daemon: skipped, systemd is not running")
 		return nil, nil
 	}
@@ -44,7 +45,7 @@ func (r rootlessInstall) Plan(context.Context) ([]host.Change, error) {
 // Apply reloads the user's systemd first: one that started before dbus-user-session landed does
 // not know dbus.socket.
 func (r rootlessInstall) Apply(ctx context.Context) error {
-	env := host.SessionEnv(r.a.UID)
+	env := systemd.SessionEnv(r.a.UID)
 	if err := r.a.Pass(ctx, r.m, "env", slices.Concat(env, []string{"systemctl", "--user", "daemon-reload"})...); err != nil {
 		return err
 	}

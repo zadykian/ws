@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/signoz/internal/api"
 )
@@ -42,7 +42,7 @@ func (Ready) WaitsOn() string { return "signoz up" }
 
 // Plan asks once.
 func (r Ready) Plan(ctx context.Context) (step.Plan, error) {
-	if !host.Booted(r.M) {
+	if !systemd.Booted(r.M) {
 		r.Out.Say("%s: skipped, systemd is not running", r.Name())
 		return step.Plan{}, nil
 	}

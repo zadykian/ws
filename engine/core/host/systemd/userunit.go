@@ -1,9 +1,10 @@
-package host
+package systemd
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/host"
 	"io/fs"
 	"slices"
 	"strings"
@@ -17,10 +18,10 @@ import (
 // runs systemctl --user, as the user. A unit with no file is left to whatever installs it.
 type UserUnit struct {
 	M       effect.Machine
-	Account Account
+	Account host.Account
 	Out     effect.Out
 	Name    string
-	Watch   []Resource
+	Watch   []host.Resource
 }
 
 func (u UserUnit) mark() mark { return mark{u.M, u.Account.Name + "-" + u.Name} }
@@ -71,7 +72,7 @@ func (c userCall) Apply(ctx context.Context) error {
 
 // Plan starts a unit that is down, which serves any watched change too, and otherwise
 // restarts it for a watched change or a mark that an earlier run left.
-func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
+func (u UserUnit) Plan(ctx context.Context) ([]host.Change, error) {
 	if !Booted(u.M) {
 		u.Out.Say("%s's %s: skipped, systemd is not running", u.Account.Name, u.Name)
 		return nil, nil
@@ -88,7 +89,7 @@ func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
 		return nil, err
 	}
 	if !active {
-		return []Change{userCall{u: u, verb: "start"}}, nil
+		return []host.Change{userCall{u: u, verb: "start"}}, nil
 	}
 	k := u.mark()
 	owed, err := k.owed()
@@ -99,7 +100,7 @@ func (u UserUnit) Plan(ctx context.Context) ([]Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	var cs []Change
+	var cs []host.Change
 	if changed && !owed {
 		cs = append(cs, owe{k})
 	}

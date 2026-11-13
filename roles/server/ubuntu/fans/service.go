@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -43,8 +44,8 @@ func serviceParts(m effect.Machine, u effect.Units, out effect.Out, f values.Fan
 		unitFile := host.File{M: m, Path: unitPath, Content: unit, Mode: 0o644}
 		watch := []host.Resource{binary, conf, unitFile}
 		return append(watch,
-			host.DaemonReload{M: m, U: u, Watch: []host.Resource{unitFile}},
-			host.Unit{M: m, U: u, Out: out, Name: "ws-fans.service", Enabled: true, Run: host.Running, Watch: watch}), nil
+			systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{unitFile}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "ws-fans.service", Enabled: true, Run: systemd.Running, Watch: watch}), nil
 	}
 }
 

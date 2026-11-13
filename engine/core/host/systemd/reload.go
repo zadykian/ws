@@ -1,7 +1,8 @@
-package host
+package systemd
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/host"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
@@ -13,7 +14,7 @@ import (
 type DaemonReload struct {
 	M     effect.Machine
 	U     effect.Units
-	Watch []Resource
+	Watch []host.Resource
 }
 
 type reload struct{ u effect.Units }
@@ -28,12 +29,12 @@ func (reload) Forced() bool { return true }
 func (c reload) Apply(ctx context.Context) error { return c.u.DaemonReload(ctx) }
 
 // Plan plans a reload where a watched resource has a change.
-func (d DaemonReload) Plan(ctx context.Context) ([]Change, error) {
+func (d DaemonReload) Plan(ctx context.Context) ([]host.Change, error) {
 	if !Booted(d.M) {
 		return nil, nil
 	}
 	if changed, err := anyChange(ctx, d.Watch); err != nil || !changed {
 		return nil, err
 	}
-	return []Change{reload{d.U}}, nil
+	return []host.Change{reload{d.U}}, nil
 }

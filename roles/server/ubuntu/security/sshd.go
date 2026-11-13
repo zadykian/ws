@@ -3,6 +3,7 @@ package security
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // sshd allows SSH by key only. sshd -G parses the file, as a config of its own, before the file
@@ -25,7 +26,7 @@ func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]host
 	}
 	return []host.Resource{
 		file,
-		host.Unit{M: m, U: u, Out: out, Name: "ssh.service", Run: host.Running, Reload: true,
+		systemd.Unit{M: m, U: u, Out: out, Name: "ssh.service", Run: systemd.Running, Reload: true,
 			Watch: []host.Resource{file}},
 	}, nil
 }

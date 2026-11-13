@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // refusedMark is in /run, so that a reboot clears it.
@@ -33,7 +34,7 @@ func (c modules) loaded(name string) (bool, error) {
 }
 
 func (c modules) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(c.m) {
+	if !systemd.Booted(c.m) {
 		c.out.Say("fans' modules: skipped, systemd is not running")
 		return nil, nil
 	}

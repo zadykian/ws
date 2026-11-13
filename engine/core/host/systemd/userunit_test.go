@@ -1,4 +1,4 @@
-package host_test
+package systemd_test
 
 import (
 	"slices"
@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -16,7 +17,7 @@ const (
 	userShowState = "show --property=ActiveState --value docker.service"
 )
 
-func userUnitFixture(booted bool) (*effecttest.Machine, host.UserUnit, *effecttest.Out) {
+func userUnitFixture(booted bool) (*effecttest.Machine, systemd.UserUnit, *effecttest.Out) {
 	m := effecttest.NewMachine()
 	if booted {
 		m.Dirs["/run/systemd/system"] = 0o755
@@ -25,7 +26,7 @@ func userUnitFixture(booted bool) (*effecttest.Machine, host.UserUnit, *effectte
 		m.Results[userShow[len("root "):]+c] = effecttest.Result{}
 	}
 	out := &effecttest.Out{}
-	return m, host.UserUnit{M: m, Account: host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, Out: out,
+	return m, systemd.UserUnit{M: m, Account: host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, Out: out,
 		Name: "docker.service"}, out
 }
 

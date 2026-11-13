@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/cld"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/settings"
@@ -47,8 +48,8 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 	}
 	return append(list, user.WithAccount(m, "Claude restore", "Claude telemetry", func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{
-			host.Linger{M: m, User: user, Out: out},
-			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: host.Running},
+			systemd.Linger{M: m, User: user, Out: out},
+			systemd.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},
 			cld.Restore{M: m, Account: a, Out: out},
 		}, nil
 	}))

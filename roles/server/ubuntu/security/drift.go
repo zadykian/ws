@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // drift finds the outbound table in force other than its file's. A run cut short before the unit's
@@ -36,7 +37,7 @@ var list = []string{"--net", "sh", "-c", `"$1" "$2" && nft -s list table inet ws
 
 // Plan plans a reload where the tables differ.
 func (d drift) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(d.m) {
+	if !systemd.Booted(d.m) {
 		d.out.Say("outbound table: not compared with the kernel's, systemd is not running")
 		return nil, nil
 	}

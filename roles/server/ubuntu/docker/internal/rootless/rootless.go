@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // Resources makes the resources of ws_user's own daemon from its daemon.json and
@@ -35,14 +36,14 @@ func Resources(m effect.Machine, u effect.Units, out effect.Out, a host.Account,
 		subIDs{m, a.Name},
 		host.Dir{M: m, Path: path.Dir(delegatePath), Mode: 0o755},
 		delegation,
-		host.DaemonReload{M: m, U: u, Watch: []host.Resource{delegation}},
-		host.Linger{M: m, User: a.User, Out: out},
-		host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: host.Running},
+		systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{delegation}},
+		systemd.Linger{M: m, User: a.User, Out: out},
+		systemd.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: systemd.Running},
 		daemon,
 		sliceFile,
 		service,
 		rootlessInstall{m, a, out},
-		host.UserUnit{M: m, Account: a, Out: out, Name: "docker.service",
+		systemd.UserUnit{M: m, Account: a, Out: out, Name: "docker.service",
 			Watch: []host.Resource{daemon, sliceFile, service}},
 	}, nil
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // Parts are the resources of the script and the unit that keep Docker's containers off the Mac.
@@ -34,8 +35,8 @@ func dropResources(m effect.Machine, u effect.Units, out effect.Out, cable strin
 		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755},
 		host.Dir{M: m, Path: dropsDir, Mode: 0o755},
 		scriptFile, serviceFile,
-		host.DaemonReload{M: m, U: u, Watch: []host.Resource{serviceFile}},
-		host.Unit{M: m, U: u, Out: out, Name: "wireguard-docker-user.service", Enabled: true, Run: host.Running,
+		systemd.DaemonReload{M: m, U: u, Watch: []host.Resource{serviceFile}},
+		systemd.Unit{M: m, U: u, Out: out, Name: "wireguard-docker-user.service", Enabled: true, Run: systemd.Running,
 			Watch: []host.Resource{scriptFile, serviceFile}},
 	}, nil
 }

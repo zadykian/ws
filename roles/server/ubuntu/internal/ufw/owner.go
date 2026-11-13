@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/systemd"
 )
 
 // UserRules is the file where ufw keeps the rules given to it.
@@ -29,7 +30,7 @@ type Rules struct {
 
 // Plan adds the missing rules, then deletes the stale ones.
 func (r Rules) Plan(context.Context) ([]host.Change, error) {
-	if r.NeedsSystemd && !host.Booted(r.M) {
+	if r.NeedsSystemd && !systemd.Booted(r.M) {
 		r.Out.Say("ufw rules %q: skipped, systemd is not running", r.Comment)
 		return nil, nil
 	}
