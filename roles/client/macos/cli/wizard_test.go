@@ -48,7 +48,7 @@ func TestWizardCommandRefuses(t *testing.T) {
 
 func TestWizardCommandRuns(t *testing.T) {
 	p, _ := testWizardProcess("darwin", 501)
-	if status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check"); status != 1 ||
+	if status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check", "--server", "ws"); status != 1 ||
 		!strings.Contains(stderr, "ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET") {
 		t.Errorf("status = %d, stderr = %q; want the refusal to ask with no terminal", status, stderr)
 	}
@@ -77,7 +77,7 @@ func TestWizardCheckShowsTheAnswersDiff(t *testing.T) {
 	m := p.Machine.(*effecttest.Machine)
 	m.Results["mkdir -p /t/ws-wizard.lock"] = effecttest.Result{}
 	m.Results["mkdir -p /t/ws-wizard.lock/servers/ws"] = effecttest.Result{}
-	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check")
+	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check", "--server", "ws")
 	if status != 0 || !strings.Contains(stderr, "+WS_TARGET=cloud") {
 		t.Errorf("status = %d, stderr = %q; want the diff of the server's file", status, stderr)
 	}
@@ -94,7 +94,7 @@ func TestWizardCheckOnANewMacStopsAtHomebrew(t *testing.T) {
 	m := p.Machine.(*effecttest.Machine)
 	m.Results["xcode-select -p"] = effecttest.Result{Err: errors.New("exit status 2")}
 	m.Results["/opt/homebrew/bin/brew --version"] = effecttest.Result{Err: errors.New("no brew")}
-	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check")
+	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check", "--server", "ws")
 	if status != 0 {
 		t.Fatalf("status = %d, stderr = %q", status, stderr)
 	}
