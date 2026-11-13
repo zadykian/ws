@@ -29,8 +29,11 @@ const tunnelLibexec = "/usr/local/libexec/ws-tunnel"
 // client macos tunnel run`. Without WS_PUBLIC_KEY, ws's key, it installs no daemon yet.
 type Tunnel struct {
 	Conf conf.Conf
-	Home string
-	// Plist is the text of roles/client/macos/tunnel/files/com.github.zadykian.ws-tunnel.plist.
+	// Server is the name of the server whose daemon this is.
+	Server string
+	Home   string
+	// Plist is the text of roles/client/macos/tunnel/files/ws-tunnel.plist: a template, with @NAME@
+	// the server's name.
 	Plist []byte
 	// Self returns the bytes of this ws, which a build from the clone made. Nil means the
 	// executable's file.
@@ -185,7 +188,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 			daemon.Found = daemon.Want
 		}
 		parts = append(parts, file.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
-			file.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, file.Fixed{daemon})
+			file.File{M: t.M, Path: tunnelPlist, Content: t.plist(), Mode: 0o644}, file.Fixed{daemon})
 	}
 	return file.Gather(ctx, parts...)
 }

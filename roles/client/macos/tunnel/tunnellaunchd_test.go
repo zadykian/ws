@@ -3,6 +3,7 @@ package tunnel_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -121,5 +122,19 @@ func TestTunnelTriesABootstrapTenTimes(t *testing.T) {
 	err = s.Apply(context.Background(), p)
 	if err == nil || len(m.Calls) < 10 {
 		t.Errorf("Apply = %v after %d calls; want an error after 10 tries", err, len(m.Calls))
+	}
+}
+
+func TestTunnelRendersThePlistWithTheServersName(t *testing.T) {
+	s := daemonStep(effecttest.NewMachine())
+	s.Server, s.Plist = "lab", tunnel.Plist
+	got := lines(tunnelChanges(t, s))
+	for _, want := range []string{"ws-tunnel.lab</string>", "<string>--server</string>\n+\t\t<string>lab</string>", "/var/log/ws-tunnel.lab.log"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("Plan lacks %q", want)
+		}
+	}
+	if strings.Contains(got, "@NAME@") {
+		t.Error("Plan holds a name left unfilled")
 	}
 }
