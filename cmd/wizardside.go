@@ -17,28 +17,33 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 )
 
-// wizardSide is what differs between the wizards: their stages, the process that caffeinate waits
-// on, the Configure forms, and the state screen's read.
+// wizardSide is what differs between the wizards: engine.Side's fields, by their names, and the
+// Configure forms.
 type wizardSide struct {
-	stages func(wizardEffects, engine.WizardOptions) []step.Step
-	// pid is the process that caffeinate waits on. 0 on ws, which has no caffeinate.
-	pid   int
+	Stages func(engine.WizardEffects, engine.WizardOptions) []step.Step
+	// Pid is the process that caffeinate waits on. 0 on ws, which has no caffeinate.
+	Pid   int
 	forms func(context.Context) ([]tui.Sheet, func(context.Context), error)
-	read  func(string, *host.Sudo) (tui.StateReader, func(context.Context))
-	// before builds the steps that run first, on lines, before the lock and the screen.
-	before func(o engine.WizardOptions) []func(effect.Out) step.Step
+	Read  func(string, any) (tui.StateReader, func(context.Context))
+	// NewSudo makes the sudo that a scan, the state screen's read and the run share. Nil makes none.
+	NewSudo func() any
+	// Before builds the steps that run first, on lines, before the lock and the screen.
+	Before func(o engine.WizardOptions) []func(effect.Out) step.Step
 }
 
 // macSide is ws client macos wizard's side.
 func macSide(c *cobra.Command, p cli.Env) wizardSide {
 	return wizardSide{
-		stages: wizardStages,
-		pid:    p.Pid,
-		forms:  macForms(c.InOrStdin(), c.ErrOrStderr(), p),
-		read: func(side string, sudo *host.Sudo) (tui.StateReader, func(context.Context)) {
-			return macState(p, side, sudo)
+		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
+			return wizardStages(effectsOf(p, e), o)
 		},
-		before: func(o engine.WizardOptions) []func(effect.Out) step.Step {
+		Pid:     p.Pid,
+		forms:   macForms(c.InOrStdin(), c.ErrOrStderr(), p),
+		NewSudo: func() any { return &host.Sudo{} },
+		Read: func(side string, sudo any) (tui.StateReader, func(context.Context)) {
+			return macState(p, side, sudo.(*host.Sudo))
+		},
+		Before: func(o engine.WizardOptions) []func(effect.Out) step.Step {
 			if !o.Update {
 				return nil
 			}
@@ -56,11 +61,13 @@ func macSide(c *cobra.Command, p cli.Env) wizardSide {
 // forms are ws's values alone.
 func serverSide(p cli.Env) wizardSide {
 	return wizardSide{
-		stages: serverWizardStages,
+		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
+			return serverWizardStages(effectsOf(p, e), o)
+		},
 		forms: func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 			return serverSheets(p), nil, nil
 		},
-		read: func(string, *host.Sudo) (tui.StateReader, func(context.Context)) {
+		Read: func(string, any) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, p.Version), nil
 		},
 	}
