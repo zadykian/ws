@@ -24,7 +24,7 @@ func laterMachine() *effecttest.Machine {
 	}
 	m.Root["/etc/ws-tunnel/lab"] = effect.Attrs{Mode: 0o700}
 	m.Root["/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.lab.plist"] = effect.Attrs{Mode: 0o644}
-	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("lab\nprivate.key\nroutes.d\nws\n")}
+	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("lab\nprivate.key\nws\n")}
 	return m
 }
 
@@ -75,7 +75,7 @@ func TestTunnelPrunesNothingTheSecondTimeAndAppliesNothingInPlan(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
-	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("private.key\nroutes.d\nws\n")}
+	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("private.key\nws\n")}
 	if got := tunnelChanges(t, pruneStep(m)); len(got) != 0 {
 		t.Errorf("second Plan = %q; want none", got)
 	}

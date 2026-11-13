@@ -25,7 +25,7 @@ func daemonMachine() *effecttest.Machine {
 	for path, mode := range map[string]effect.Attrs{
 		"/usr/local": {Mode: 0o755}, "/usr/local/libexec": {Mode: 0o755}, "/usr/local/libexec/ws-tunnel": {Mode: 0o755},
 		"/usr/local/libexec/ws-tunnel/ws": {Mode: 0o755}, "/etc/ws-tunnel": {Mode: 0o700}, "/etc/ws-tunnel/ws": {Mode: 0o700},
-		"/etc/ws-tunnel/routes.d": {Mode: 0o755}, "/etc/ws-tunnel/private.key": {Mode: 0o600},
+		"/etc/ws-tunnel/ws/routes.d": {Mode: 0o755}, "/etc/ws-tunnel/private.key": {Mode: 0o600},
 		"/etc/ws-tunnel/ws/tunnel.conf":                                 {Mode: 0o600},
 		"/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.ws.plist": {Mode: 0o644},
 	} {
