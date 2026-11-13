@@ -53,7 +53,7 @@ func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
 	return resource.Group{}.Apply(ctx, p)
 }
 
-// changes plans routes.d/Set, and the signal that has a loaded daemon read it. A change of the
+// changes plans routes.d/Set, and the signal that has each loaded daemon read it. A change of the
 // file's owner or mode alone sends the signal too.
 func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	networks := r.Networks
@@ -77,9 +77,16 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if err != nil || len(cs) == 0 || r.Check {
 		return cs, err
 	}
-	if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+launchd.Label); err == nil {
-		cs = append(cs, launchd.Launchctl{M: r.M, Out: r.Out,
-			Args: []string{"kill", "SIGHUP", "system/" + launchd.Label}, Label: launchd.Label, Routes: true})
+	names, err := launchd.Installed(r.M)
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range names {
+		label := launchd.For(name).Label
+		if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+label); err == nil {
+			cs = append(cs, launchd.Launchctl{M: r.M, Out: r.Out,
+				Args: []string{"kill", "SIGHUP", "system/" + label}, Label: label, Routes: true})
+		}
 	}
 	return cs, nil
 }
