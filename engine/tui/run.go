@@ -24,8 +24,8 @@ const unwindBound = 5 * time.Second
 var (
 	// errLeft is the error of a screen that quit by itself, with the work unfinished.
 	errLeft = errors.New("the screen ended before the run")
-	// errPanic marks a panic of the work, which a cut must not hide.
-	errPanic = errors.New("panic")
+	// ErrPanic marks a panic of the work, which a cut must not hide.
+	ErrPanic = errors.New("panic")
 )
 
 // Config is what Run takes of the process.
@@ -149,7 +149,7 @@ func forward(signals <-chan os.Signal, program *tea.Program, gone <-chan struct{
 // failure is the cut's work, and so is a screen that broke as it closed.
 func ending(s session, broke error) error {
 	switch {
-	case errors.Is(s.err, errPanic):
+	case errors.Is(s.err, ErrPanic):
 		return s.err
 	case !s.done:
 		return cmp.Or(s.cutBy, broke, errLeft)
@@ -165,7 +165,7 @@ func ending(s session, broke error) error {
 func guarded(ctx context.Context, bridge *Bridge, work Work) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("%w: %v\n%s", errPanic, r, debug.Stack())
+			err = fmt.Errorf("%w: %v\n%s", ErrPanic, r, debug.Stack())
 		}
 	}()
 	return work(ctx, bridge)

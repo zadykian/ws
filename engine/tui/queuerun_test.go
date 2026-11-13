@@ -55,7 +55,7 @@ func TestTheOutputOfAQueueRunFitsItsStrip(t *testing.T) {
 	if got, want := q.run.Output().Size, inside(stripSize(widget.Size{Width: 100, Height: 30})); got != want {
 		t.Errorf("output %v, want %v", got, want)
 	}
-	if q = queueRunSent(q, haltedMsg{}); q.run.Output().Size != inside(stripSize(widget.Size{Width: 100, Height: 30})) {
+	if q = queueRunSent(q, HaltedMsg{}); q.run.Output().Size != inside(stripSize(widget.Size{Width: 100, Height: 30})) {
 		t.Errorf("past a stop, output %v", q.run.Output().Size)
 	}
 	if got := queueRunShown(q); !strings.Contains(got, "Stopping after Tools") {
@@ -82,7 +82,7 @@ func TestThePagesOfAQueueRunMoveItsStrip(t *testing.T) {
 
 func TestTheStopButtonOfAQueueRunGoesToTheSession(t *testing.T) {
 	q := queueRunSent(testQueueRun(), tab, tab, tab, tab)
-	if _, cmd := q.Update(enter); !runs(cmd, stopPressedMsg{}) {
+	if _, cmd := q.Update(enter); !runs(cmd, StopPressedMsg{}) {
 		t.Error("Enter on the stop button asked for no stop")
 	}
 }

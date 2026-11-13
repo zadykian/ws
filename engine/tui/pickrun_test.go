@@ -56,7 +56,7 @@ func TestAPanicOfTheScanOutlivesTheWait(t *testing.T) {
 		<-ctx.Done()
 		panic("the scan broke")
 	})
-	if !errors.Is(err, errPanic) {
+	if !errors.Is(err, ErrPanic) {
 		t.Errorf("awaitPick: %v", err)
 	}
 }

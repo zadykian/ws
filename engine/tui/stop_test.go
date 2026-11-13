@@ -55,7 +55,7 @@ func TestSessionStopsPastTheCurrentStepOnceConfirmed(t *testing.T) {
 	if !runs(cmd, haltedRunMsg{}) || !s.halted || s.confirming || s.stopping {
 		t.Fatalf("halted %v, confirming %v, stopping %v", s.halted, s.confirming, s.stopping)
 	}
-	if !errors.Is(s.cutBy, testCut(syscall.SIGINT)) || !slices.Contains(*got, tea.Msg(haltedMsg{})) {
+	if !errors.Is(s.cutBy, testCut(syscall.SIGINT)) || !slices.Contains(*got, tea.Msg(HaltedMsg{})) {
 		t.Errorf("cut by %v, the screen got %v", s.cutBy, *got)
 	}
 	s, cmd = feed(s, ctrlC)
@@ -80,7 +80,7 @@ func TestSessionGoesOnPastEsc(t *testing.T) {
 
 func TestSessionStopButtonGoesOnByTheFocus(t *testing.T) {
 	s, _ := haltingSession()
-	if s, _ = feed(s, stopPressedMsg{}, tab, tab, enter); s.confirming || s.halted {
+	if s, _ = feed(s, StopPressedMsg{}, tab, tab, enter); s.confirming || s.halted {
 		t.Errorf("Enter on the second button: confirming %v, halted %v", s.confirming, s.halted)
 	}
 }
@@ -110,7 +110,7 @@ func TestSessionEndsCtxWhereNothingConfirms(t *testing.T) {
 
 func TestSessionWithNoHaltEndsCtxOnTheFirstPress(t *testing.T) {
 	s, _ := testSession()
-	if s, cmd := feed(s, stopPressedMsg{}); !runs(cmd, stoppedMsg{}) || s.confirming {
+	if s, cmd := feed(s, StopPressedMsg{}); !runs(cmd, stoppedMsg{}) || s.confirming {
 		t.Errorf("confirming %v", s.confirming)
 	}
 }
@@ -226,13 +226,13 @@ func TestRunScreenStopButtonAsksTheSession(t *testing.T) {
 	for range 4 {
 		r = sent(r, tab)
 	}
-	if _, cmd := r.Update(enter); !runs(cmd, stopPressedMsg{}) {
+	if _, cmd := r.Update(enter); !runs(cmd, StopPressedMsg{}) {
 		t.Error("the button asked nothing")
 	}
 }
 
 func TestRunScreenShowsAStopInItsWindowsTitle(t *testing.T) {
-	r := sent(testRun(), haltedMsg{}, widget.Line{Kind: widget.Piped, Text: "still printing"})
+	r := sent(testRun(), HaltedMsg{}, widget.Line{Kind: widget.Piped, Text: "still printing"})
 	got := shown(r)
 	for _, want := range []string{"Stopping after base: Packages", "still printing", "[ctrl+c] stop now"} {
 		if !strings.Contains(got, want) {

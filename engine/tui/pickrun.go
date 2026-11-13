@@ -62,7 +62,7 @@ func awaitPick[C any](ctx context.Context, b *Bridge, picks <-chan C, scan Work)
 	for {
 		select {
 		case err := <-waiting:
-			if errors.Is(err, errPanic) {
+			if errors.Is(err, ErrPanic) {
 				return none, err
 			}
 			waiting = nil
@@ -82,7 +82,7 @@ func awaitPick[C any](ctx context.Context, b *Bridge, picks <-chan C, scan Work)
 
 // panicOf keeps a panic, the one end of a scan that a list's end must not hide.
 func panicOf(err error) error {
-	if errors.Is(err, errPanic) {
+	if errors.Is(err, ErrPanic) {
 		return err
 	}
 	return nil

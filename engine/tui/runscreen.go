@@ -89,7 +89,7 @@ func (r RunScreen) Updated(msg tea.Msg) (RunScreen, tea.Cmd) {
 		}
 		r.now = msg.at
 		return r, tea.Tick(time.Second, func(at time.Time) tea.Msg { return tickMsg{at} })
-	case haltedMsg:
+	case HaltedMsg:
 		r.halted = true
 		r.footer = widget.NewFooter(widget.Keys.PageUp, widget.Keys.PageDown, widget.Keys.Bottom, stopNowButton)
 		return r.fitted(), nil
@@ -148,7 +148,7 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 	case place == bottomPlace:
 		r.output = r.output.Move(-len(r.output.Rows))
 	case place == stopButtonPlace:
-		return r, func() tea.Msg { return stopPressedMsg{} }
+		return r, func() tea.Msg { return StopPressedMsg{} }
 	case key.Matches(msg, widget.Keys.Up):
 		r.output = r.output.Move(1)
 	case key.Matches(msg, widget.Keys.Down):

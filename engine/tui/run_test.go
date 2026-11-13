@@ -123,7 +123,7 @@ func TestRunTurnsAPanicOfTheWorkIntoAnError(t *testing.T) {
 	var out bytes.Buffer
 	err := Run(t.Context(), noKeys(&out), recorder{&[]tea.Msg{}},
 		func(context.Context, *Bridge) error { panic("a bug") })
-	if !errors.Is(err, errPanic) || !strings.Contains(err.Error(), "a bug") ||
+	if !errors.Is(err, ErrPanic) || !strings.Contains(err.Error(), "a bug") ||
 		!strings.Contains(err.Error(), "run_test.go") {
 		t.Errorf("Run: %v, want the value and the stack", err)
 	}
@@ -139,7 +139,7 @@ func TestRunReportsAPanicPastItsScreen(t *testing.T) {
 		<-b.gone
 		panic("a bug")
 	})
-	if !errors.Is(err, errPanic) {
+	if !errors.Is(err, ErrPanic) {
 		t.Errorf("Run: %v", err)
 	}
 }
@@ -230,7 +230,7 @@ func TestRunKeepsAHiddenAnswerOffEveryRecord(t *testing.T) {
 
 func TestEnding(t *testing.T) {
 	cut, failed := testCut(syscall.SIGINT), errors.New("a step failed")
-	panicked := fmt.Errorf("%w: a bug", errPanic)
+	panicked := fmt.Errorf("%w: a bug", ErrPanic)
 	cases := []struct {
 		name  string
 		s     session

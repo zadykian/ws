@@ -40,10 +40,10 @@ type (
 	endedMsg struct{}
 	// doneMsg is the end of a run's work.
 	doneMsg struct{ err error }
-	// stopPressedMsg is a screen's stop button, pressed by Enter: the key Ctrl-C reaches no screen.
-	stopPressedMsg struct{}
-	// haltedMsg tells the screen that the run ends with its current step.
-	haltedMsg struct{}
+	// StopPressedMsg is a screen's stop button, pressed by Enter: the key Ctrl-C reaches no screen.
+	StopPressedMsg struct{}
+	// HaltedMsg tells the screen that the run ends with its current step.
+	HaltedMsg struct{}
 )
 
 // session is a run's model: its screen, which takes every message that the session doesn't, with
@@ -104,7 +104,7 @@ func (s session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case doneMsg:
 		s.done, s.err = true, msg.err
 		return s, tea.Quit
-	case stopPressedMsg:
+	case StopPressedMsg:
 		return s.pressed()
 	case tea.KeyPressMsg:
 		if key.Matches(msg, widget.Keys.Interrupt) {
@@ -188,7 +188,7 @@ func (s session) confirmed(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		s.confirming, s.halted = false, true
 		s.cutBy = s.cut(syscall.SIGINT)
 		var cmd tea.Cmd
-		s.screen, cmd = s.screen.Update(haltedMsg{})
+		s.screen, cmd = s.screen.Update(HaltedMsg{})
 		return s, tea.Batch(s.halt, cmd)
 	}
 	return s, nil
