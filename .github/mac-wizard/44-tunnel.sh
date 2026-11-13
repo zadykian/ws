@@ -1,6 +1,6 @@
 #!/bin/sh
 # The Tunnel stage on the Mac that 43-terminal.sh leaves, whose tunnel has a handshake with the
-# stand-in ws. mac.conf's WS_PUBLIC_KEY goes first. With a new key for the stand-in's wg0, as a ws
+# stand-in ws. The server's WS_PUBLIC_KEY goes first. With a new key for the stand-in's wg0, as a ws
 # installed again has, --check must show that line replaced, and change nothing. A run must replace
 # it in place, have ws client macos tunnel take the key, and log in to ws through the tunnel.
 # Without wg0's peer, as a tagged run that failed leaves it, a run must run ws server ubuntu apply
@@ -50,6 +50,7 @@ standin_set() {
 
 { conf_print "$conf" | grep '^WS_PUBLIC_KEY=' && conf_print "$conf" | grep -v '^WS_PUBLIC_KEY='; } >"$RUNNER_TEMP/first"
 conf_write "$conf" <"$RUNNER_TEMP/first"
+conf_print "$conf" >"$RUNNER_TEMP/first"
 old=$(cat "$ws/wg0")
 sudo sh -c 'umask 077 && "$0" genkey >"$1/ws.key" && "$0" pubkey <"$1/ws.key" >"$1/wg0"' "$wg" "$ws"
 new=$(cat "$ws/wg0")
@@ -61,7 +62,7 @@ printf '%s\n' "$out" | grep -qx -- "-WS_PUBLIC_KEY=$old" &&
     error "--check exited $status, showed no WS_PUBLIC_KEY of wg0's new key, or changed mac.conf"
 n=$(logins)
 wizard
-[ "$(conf_print "$conf")" = "$(sed "1s|.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first")" ] && [ "$status" = 0 ] &&
+[ "$(conf_print "$conf")" = "$(sed "s|^WS_PUBLIC_KEY=.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first")" ] && [ "$status" = 0 ] &&
     printf '%s\n' "$out" | grep -q '^ws client macos wizard: ran launchctl kill SIGHUP ' &&
     [ "$(logins)" -eq $((n + 1)) ] ||
     error "a run with wg0's new key exited $status, or put no WS_PUBLIC_KEY in its line's place"

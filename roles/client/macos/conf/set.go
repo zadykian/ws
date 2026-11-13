@@ -48,7 +48,7 @@ func (f File) change(settings ...Setting) (before, after string, err error) {
 		after = replace(after, s.Key, s.Value)
 		lines = append(lines, Line(s.Key, s.Value))
 	}
-	if _, errs := Parse(after); len(errs) > 0 {
+	if _, errs := f.Scope.Parse(after); len(errs) > 0 {
 		for _, e := range errs {
 			f.Out.Say("%s", e.In(f.Path))
 		}

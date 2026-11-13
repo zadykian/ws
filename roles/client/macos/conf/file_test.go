@@ -13,7 +13,7 @@ func TestConfFileAdd(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
 	var out effecttest.Out
-	f := File{"/h/.config/ws/mac.conf", "Answers", m, &out}
+	f := File{Path: "/h/.config/ws/mac.conf", Stage: "Answers", M: m, Out: &out}
 	if err := f.Add(context.Background(), "WS_TARGET=lan\n"); err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestConfFileAdd(t *testing.T) {
 func TestConfFileRefusesAndLeavesLinks(t *testing.T) {
 	m := effecttest.NewMachine()
 	var out effecttest.Out
-	f := File{"/h/mac.conf", "Answers", m, &out}
+	f := File{Path: "/h/mac.conf", Stage: "Answers", M: m, Out: &out}
 	if err := f.Add(context.Background(), "WS_LAN=10.88.0.0/24\n"); !errors.Is(err, ErrRefused) {
 		t.Errorf("a WS_LAN without its address: %v, want a refusal", err)
 	}
