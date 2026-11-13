@@ -7,9 +7,9 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // Cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of the
@@ -108,37 +108,11 @@ func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 			"to another network: mac.conf's WS_CABLE_SERVICE must name the display's adapter's service",
 			service, router)
 	}
-	return step.Plan{Changes: []step.Change{
-		change.Run{
-			Root: true, Name: program, Args: []string{"-setmanual", service, cableClient, cableMask},
-			Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
-		},
-	}}, nil
+	return step.Plan{Changes: []step.Change{setManual{c, resource.Command{
+		M: c.M, Root: true, Name: program, Args: []string{"-setmanual", service, cableClient, cableMask},
+		Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
+	}}}}, nil
 }
 
-// Apply runs networksetup -setmanual, then reads the service again. Where it still shows other
-// settings, as a profile that manages it would leave them, the run stops with the remedy. That is
-// to set it by hand in System Settings › Network, as docs/mac.md's The cable says, or to empty
-// mac.conf's WS_CABLE_SERVICE.
-func (c Cable) Apply(ctx context.Context, p step.Plan) error {
-	for _, ch := range p.Changes {
-		if err := change.Apply(ctx, c.M, c.Out, ch); err != nil {
-			return err
-		}
-		run, ok := ch.(change.Run)
-		if !ok {
-			continue
-		}
-		info, err := c.M.RunShown(ctx, false, run.Name, "-getinfo", c.Conf.CableService)
-		if err != nil {
-			return fmt.Errorf("networksetup -getinfo %q failed: %w", c.Conf.CableService, err)
-		}
-		if other := cableOther(string(info)); other != "" {
-			return fmt.Errorf("networksetup -getinfo %q shows %s after %v: set it by hand in System "+
-				"Settings › Network, as docs/mac.md's The cable says, or empty mac.conf's WS_CABLE_SERVICE",
-				c.Conf.CableService, other, run.Line())
-		}
-		c.Out.Say("ran %s", run.Line())
-	}
-	return nil
-}
+// Apply applies the change, which runs networksetup -setmanual and checks the service.
+func (c Cable) Apply(ctx context.Context, p step.Plan) error { return resource.Group{}.Apply(ctx, p) }

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
@@ -62,12 +63,16 @@ func TestCableAppliesSetmanualThroughSudo(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
+	if got := step.Headline(p.Changes[0]); got != "would run networksetup -setmanual \"Dock\" 10.77.0.2 255.255.255.252" {
+		t.Errorf("headline = %q", got)
+	}
 	if got := m.Calls[len(m.Calls)-2]; got != "root /usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252" {
 		t.Errorf("last call = %q", got)
 	}
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{Err: errors.New("no")}
-	if err := s.Apply(context.Background(), p); err == nil {
-		t.Error("Apply succeeded where networksetup failed")
+	err := s.Apply(context.Background(), p)
+	if err == nil || !strings.HasPrefix(err.Error(), "would run networksetup -setmanual") {
+		t.Errorf("Apply err = %v, want the command's headline first", err)
 	}
 }
 
