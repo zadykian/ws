@@ -40,3 +40,10 @@ func TestRouteIsTheRouteCommand(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestRouteFromSlotOneIsTheRouteCommand(t *testing.T) {
+	r := ufw.Route("allow", "wg0", "ikeward0", "10.99.1.2", "ikeward")
+	if got, want := r.String(), "route allow in on wg0 out on ikeward0 from 10.99.1.2 to any"; got != want {
+		t.Errorf("String = %q, want %q", got, want)
+	}
+}
