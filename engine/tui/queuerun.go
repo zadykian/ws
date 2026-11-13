@@ -6,13 +6,13 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// QueueRun follows a run of a queue on the two lists that chose it, over what the run prints. The
+// QueueRun follows a run of a queue on the lists that chose it, over what the run prints. The
 // run's bar and clock count stages, and each step's mark moves in its list. A run of the stages
 // names them by their places in the queue, and Bridge.Observe sends this what it sends a RunScreen.
 type QueueRun struct {
 	run  RunScreen
 	list queue
-	at   map[Side]cursor
+	at   map[string]cursor
 }
 
 // NewQueueRun returns the screen of what choice runs, under the choice's boxes.
@@ -35,7 +35,7 @@ func (q QueueRun) Init() tea.Cmd {
 // the output to the strip.
 func (q QueueRun) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if e, ok := msg.(step.Event); ok {
-		var side Side
+		var side string
 		var line int
 		if q.list, side, line = q.list.follow(e); line >= 0 {
 			q.list.side, q.at = side, withCursor(q.at, side, cursor(line))

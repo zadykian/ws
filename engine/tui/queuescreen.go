@@ -44,8 +44,8 @@ func inside(frame Size) Size {
 }
 
 // sides returns the sides that have a stage, in the order the stages first name them.
-func (q queue) sides() []Side {
-	var sides []Side
+func (q queue) sides() []string {
+	var sides []string
 	for _, s := range q.stages {
 		if !slices.Contains(sides, s.side) {
 			sides = append(sides, s.side)
@@ -55,7 +55,7 @@ func (q queue) sides() []Side {
 }
 
 // pane is the place of side's list among the panes.
-func (q queue) pane(side Side) int { return max(slices.Index(q.sides(), side), 0) }
+func (q queue) pane(side string) int { return max(slices.Index(q.sides(), side), 0) }
 
 // panes returns the lists' panes, empty. A side's says so while a role of it stands unread, as a
 // check of one machine can't reach what another reports until that one is there.
@@ -76,7 +76,7 @@ func (q queue) panes() []Pane {
 
 // drawn returns the layout with the lists in its panes, a cursor a side. The side out of focus shows
 // none.
-func (q queue) drawn(layout Layout, theme Theme, window Size, at map[Side]cursor) Layout {
+func (q queue) drawn(layout Layout, theme Theme, window Size, at map[string]cursor) Layout {
 	sizes := layout.PaneSizes(window.Width, window.Height)
 	for i, side := range q.sides() {
 		there := at[side].within(len(q.lines(side)))

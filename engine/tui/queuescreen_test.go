@@ -273,18 +273,18 @@ func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
 }
 
 func TestThreeSidesDrawThreePanesAndTabWalksThem(t *testing.T) {
-	third := Side("VM")
+	third := "VM"
 	stages := []Stage{{Name: "One", Side: "ws"}, {Name: "Two", Side: "Mac"}, {Name: "Three", Side: third}, {Name: "Four", Side: "ws"}}
 	s := queueSent(openQueue("ws", testTheme, stages, make(chan QueueChoice, 1)), tea.WindowSizeMsg{Width: 120, Height: 30})
-	if got := s.list.sides(); !slices.Equal(got, []Side{"ws", "Mac", third}) || len(s.list.panes()) != 3 {
+	if got := s.list.sides(); !slices.Equal(got, []string{"ws", "Mac", third}) || len(s.list.panes()) != 3 {
 		t.Fatalf("sides %v, %d panes: want ws, Mac and the third, in the order named", got, len(s.list.panes()))
 	}
-	var seen []Side
+	var seen []string
 	for range 3 {
 		seen = append(seen, s.list.side)
 		s = queueSent(s, tab)
 	}
-	if !slices.Equal(seen, []Side{"ws", "Mac", third}) || s.footer.Focused() < 0 {
+	if !slices.Equal(seen, []string{"ws", "Mac", third}) || s.footer.Focused() < 0 {
 		t.Errorf("Tab met %v, then button %d", seen, s.footer.Focused())
 	}
 }

@@ -28,7 +28,7 @@ type QueueChoice struct {
 	// though its last run passed. One that a lock alone holds whole isn't.
 	Whole []string
 	// Side is the pane that faced the maintainer.
-	Side Side
+	Side string
 	// left is the screen as the maintainer left it, for Reopen and NewQueueRun.
 	left queueScreen
 }

@@ -9,7 +9,7 @@ import (
 // queueStage is a stage of a queue: its own row, the side that shows it, and a list of what it runs.
 type queueStage struct {
 	row  pickRow
-	side Side
+	side string
 	list pickList
 }
 
@@ -21,7 +21,7 @@ type queue struct {
 	// words is the filter the lists show under.
 	words string
 	// side is the list in focus.
-	side Side
+	side string
 }
 
 // queueOf returns the queue of stages. A group named as its stage has no heading, and one with no
@@ -57,7 +57,7 @@ type queueLine struct {
 
 // lines returns what the filter leaves of the side. A stage whose name the words miss loses its own
 // line, and keeps the steps they match.
-func (q queue) lines(side Side) []queueLine {
+func (q queue) lines(side string) []queueLine {
 	var lines []queueLine
 	for i, s := range q.stages {
 		if s.side != side {
@@ -94,14 +94,14 @@ func (q queue) filtered(words string) queue {
 }
 
 // narrowed returns the queue under words, and the cursor on its line of the side while that shows.
-func (q queue) narrowed(side Side, at cursor, words string) (queue, cursor) {
+func (q queue) narrowed(side string, at cursor, words string) (queue, cursor) {
 	was := q.lines(side)
 	q = q.filtered(words)
 	return q, kept(at, was, q.lines(side))
 }
 
 // view draws height lines of the side, the cursor's gutter where shown.
-func (q queue) view(theme Theme, side Side, height int, at cursor, shown bool) string {
+func (q queue) view(theme Theme, side string, height int, at cursor, shown bool) string {
 	lines := q.lines(side)
 	return windowed(theme, height, at, shown, len(lines), func(i int) string { return q.render(theme, lines[i]) })
 }

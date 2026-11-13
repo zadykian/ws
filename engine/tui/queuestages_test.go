@@ -19,14 +19,14 @@ func testStages() []Stage {
 
 func TestAQueueKeepsItsStagesInTheOrderTheyRun(t *testing.T) {
 	var names, waits []string
-	var sides []Side
+	var sides []string
 	for _, s := range queueOf(testStages()).stages {
 		names, sides, waits = append(names, s.row.name), append(sides, s.side), append(waits, s.row.waitsOn)
 	}
 	if want := []string{"Tools", "Setup", "Sudo", "Run", "Signing"}; !slices.Equal(names, want) {
 		t.Errorf("names = %q, want %q", names, want)
 	}
-	if want := []Side{"Mac", "Mac", "ws", "ws", "Mac"}; !slices.Equal(sides, want) {
+	if want := []string{"Mac", "Mac", "ws", "ws", "Mac"}; !slices.Equal(sides, want) {
 		t.Errorf("sides = %v, want %v", sides, want)
 	}
 	if want := []string{"", "Tools", "Setup", "Sudo", "Run"}; !slices.Equal(waits, want) {
@@ -55,7 +55,7 @@ func TestARoleOfAStageThatNoScanReadIsOneRow(t *testing.T) {
 }
 
 // drawnQueue is what a side of q shows, a line each, its colors gone.
-func drawnQueue(q queue, side Side) []string {
+func drawnQueue(q queue, side string) []string {
 	var got []string
 	for _, line := range q.lines(side) {
 		got = append(got, stripped(q.render(testTheme, line)))

@@ -22,14 +22,14 @@ type reportedMsg struct {
 	problem  string
 }
 
-// queueScreen is the queue's lists, the stages' two sides, over the strip of the detail. A scan fills
-// them behind the screen, and the maintainer can read and move as it goes.
+// queueScreen is the queue's lists, a side each, over the strip of the detail. A scan fills them
+// behind the screen, and the maintainer can read and move as it goes.
 type queueScreen struct {
 	listScreen
 	list queue
 	// at is the cursor on each side's list, by side. Never written in place: the screens are values,
 	// and Reopen reuses a left one, so withCursor copies it.
-	at     map[Side]cursor
+	at     map[string]cursor
 	footer Footer
 	// unread is why a machine reported nothing, and its steps stand as the queue named them.
 	unread string
@@ -201,10 +201,10 @@ func (s queueScreen) narrowed(words string) queueScreen {
 }
 
 // withCursor returns at with side's cursor set, on a copy.
-func withCursor(at map[Side]cursor, side Side, c cursor) map[Side]cursor {
+func withCursor(at map[string]cursor, side string, c cursor) map[string]cursor {
 	next := maps.Clone(at)
 	if next == nil {
-		next = map[Side]cursor{}
+		next = map[string]cursor{}
 	}
 	next[side] = c
 	return next
@@ -262,7 +262,7 @@ func (s queueScreen) tabbed(step int) queueScreen {
 }
 
 // faced returns s turned to side, whose cursor a filter can have left past its list.
-func (s queueScreen) faced(side Side) queueScreen {
+func (s queueScreen) faced(side string) queueScreen {
 	s.list.side = side
 	s.at = withCursor(s.at, side, s.at[side].within(len(s.list.lines(side))))
 	return s

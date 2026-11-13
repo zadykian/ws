@@ -80,10 +80,10 @@ func (q queue) reported(stage string, sections []StateSection) queue {
 // follow returns the queue with how a run left e's step, the side that shows it, and the line for
 // the cursor. A step that starts takes it, so that its list shows it, and no other event does: -1,
 // and a side that means nothing. The boxes stand, as a run takes no choice.
-func (q queue) follow(e step.Event) (queue, Side, int) {
+func (q queue) follow(e step.Event) (queue, string, int) {
 	i := q.stageOf(e)
 	if i < 0 {
-		return q, MacSide, -1
+		return q, "", -1
 	}
 	q.stages = slices.Clone(q.stages)
 	s := &q.stages[i]
