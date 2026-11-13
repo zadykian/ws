@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
+	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -48,7 +49,7 @@ func (secondRun) Report(context.Context) ([]step.Item, error) { return nil, nil 
 // config returns the text of config.d/ws.
 func (s SSH) config(ctx context.Context, f sshFacts, key keys.NamedKey) []byte {
 	return []byte(sshcfg.Config(sshcfg.Inputs{
-		User: s.Conf.User, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
+		User: s.Conf.User, Server: tunnel.Server, Patterns: sshcfg.IgnoreUnknown(string(f.UserConfig.Text), "UseKeychain"),
 		IdentityPub: key.Pub, IdentityAgent: key.Agent, CldTabs: s.cldTabs(ctx),
 	}))
 }
