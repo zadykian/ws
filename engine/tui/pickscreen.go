@@ -20,7 +20,7 @@ type Choice struct {
 // pickScreen is the list that a run is chosen from. A scan fills it behind the screen, and the
 // maintainer can read and move as it goes.
 type pickScreen struct {
-	list.ListScreen
+	list.Screen
 	list list.PickList
 	// at is the cursor on the list.
 	at     widget.Cursor
@@ -31,8 +31,8 @@ type pickScreen struct {
 
 // newPickScreen returns the screen of groups, its scan under way.
 func newPickScreen(title string, theme widget.Theme, groups []list.Group, picks chan<- Choice) pickScreen {
-	footer := widget.NewFooter(list.ListButtons()...)
-	s := pickScreen{ListScreen: list.ListScreen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
+	footer := widget.NewFooter(list.Buttons()...)
+	s := pickScreen{Screen: list.Screen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
 		list: list.NewPickList(groups), footer: footer, picks: picks}
 	return s.enabled()
 }
@@ -50,7 +50,7 @@ func (s pickScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case widget.Line:
 		s.list = s.list.Hear(msg)
 	case list.ScannedMsg:
-		s.ListScreen = s.Scanned(msg)
+		s.Screen = s.Scanned(msg)
 	case tea.WindowSizeMsg:
 		s.Window = widget.Size{Width: msg.Width, Height: msg.Height}
 	case tea.PasteMsg:
@@ -108,7 +108,7 @@ func (s pickScreen) pressed(msg tea.KeyPressMsg) (pickScreen, tea.Cmd) {
 func (s pickScreen) typed(msg tea.Msg) pickScreen {
 	var words string
 	var changed bool
-	if s.ListScreen, words, changed = s.Typed(msg, s.list.Words); changed {
+	if s.Screen, words, changed = s.Typed(msg, s.list.Words); changed {
 		s.list, s.at = s.list.Narrowed(s.at, words)
 	}
 	return s

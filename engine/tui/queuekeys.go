@@ -27,7 +27,7 @@ type reportedMsg struct {
 // queueScreen is the queue's lists, a side each, over the strip of the detail. A scan fills them
 // behind the screen, and the maintainer can read and move as it goes.
 type queueScreen struct {
-	list.ListScreen
+	list.Screen
 	list queue
 	// at is the cursor on each side's list, by side. Never written in place: the screens are values,
 	// and Reopen reuses a left one, so withCursor copies it.
@@ -41,8 +41,8 @@ type queueScreen struct {
 
 // openQueue returns the lists of stages, their scan under way. The configure button comes last.
 func openQueue(title string, theme widget.Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
-	buttons := append(list.ListButtons(), stateButton, configureButton)
-	s := queueScreen{ListScreen: list.ListScreen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
+	buttons := append(list.Buttons(), stateButton, configureButton)
+	s := queueScreen{Screen: list.Screen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
 		list: queueOf(stages), footer: widget.NewFooter(buttons...), picks: picks}
 	return s.enabled()
 }
@@ -115,7 +115,7 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case widget.Line:
 		s.list = s.list.hear(msg)
 	case list.ScannedMsg:
-		s.ListScreen = s.Scanned(msg)
+		s.Screen = s.Scanned(msg)
 		s.list = s.list.opened()
 	case reportedMsg:
 		s.unread = msg.problem
@@ -188,7 +188,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 func (s queueScreen) typed(msg tea.Msg) queueScreen {
 	var words string
 	var changed bool
-	if s.ListScreen, words, changed = s.Typed(msg, s.list.words); changed {
+	if s.Screen, words, changed = s.Typed(msg, s.list.words); changed {
 		s = s.narrowed(words)
 	}
 	return s

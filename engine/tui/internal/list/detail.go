@@ -10,7 +10,7 @@ import (
 
 // Detail draws notes, from the pane's top, in size. PgUp and PgDn move the list, so that what runs
 // past the pane stays for `c`, which prints a step's changes whole.
-func (s ListScreen) Detail(size widget.Size, notes []widget.Line) string {
+func (s Screen) Detail(size widget.Size, notes []widget.Line) string {
 	pane := widget.OutputPane{Theme: s.Theme, Size: size}
 	for _, line := range notes {
 		if len(pane.Rows) >= size.Height {
@@ -23,7 +23,7 @@ func (s ListScreen) Detail(size widget.Size, notes []widget.Line) string {
 
 // Warnings says why the scan stopped short, why a machine reported nothing, and which roles hold
 // changes left out.
-func (s ListScreen) Warnings(unread string, held []string) []widget.Line {
+func (s Screen) Warnings(unread string, held []string) []widget.Line {
 	var notes []widget.Line
 	if s.Problem != "" {
 		notes = append(notes, widget.Line{Kind: widget.Warned, Text: "The scan stopped: " + s.Problem})

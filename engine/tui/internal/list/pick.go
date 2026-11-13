@@ -71,9 +71,9 @@ type PickList struct {
 
 // NewPickList returns the list of groups, each step open and left out, each under its heading.
 func NewPickList(groups []Group) PickList {
-	formed := make([]ListGroup, len(groups))
+	formed := make([]RowGroup, len(groups))
 	for i, g := range groups {
-		formed[i] = ListGroup{Group: g}
+		formed[i] = RowGroup{Group: g}
 	}
 	return NewFormedList(formed)
 }

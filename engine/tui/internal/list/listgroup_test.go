@@ -8,7 +8,7 @@ import (
 )
 
 func formed() PickList {
-	return NewFormedList([]ListGroup{
+	return NewFormedList([]RowGroup{
 		{Group: Group{Name: "Setup", Steps: []string{"one", "two"}}, Form: GroupBare},
 		{Group: Group{Name: "base", Steps: []string{"Packages"}}},
 		{Group: Group{Name: "ssh"}, Form: GroupUnread},

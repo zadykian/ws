@@ -13,10 +13,10 @@ import (
 // queueFrame is the queue's screen at 100 by 30, its scan under way, with no footer.
 func queueFrame() queueScreen {
 	return queueScreen{
-		ListScreen: list.ListScreen{Title: "ws client macos wizard", Theme: testTheme, Window: widget.Size{Width: 100, Height: 30}, Scanning: true},
-		list:       queueOf(testStages()),
-		footer:     widget.NewFooter(append(list.ListButtons(), stateButton, configureButton)...),
-		picks:      make(chan QueueChoice, 1),
+		Screen: list.Screen{Title: "ws client macos wizard", Theme: testTheme, Window: widget.Size{Width: 100, Height: 30}, Scanning: true},
+		list:   queueOf(testStages()),
+		footer: widget.NewFooter(append(list.Buttons(), stateButton, configureButton)...),
+		picks:  make(chan QueueChoice, 1),
 	}
 }
 

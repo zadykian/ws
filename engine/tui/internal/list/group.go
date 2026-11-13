@@ -25,14 +25,14 @@ const (
 	GroupUnread // a group no scan read: one row by its name
 )
 
-// ListGroup is a group with the form it takes in a list.
-type ListGroup struct {
+// RowGroup is a group with the form it takes in a list.
+type RowGroup struct {
 	Group
 	Form groupForm
 }
 
 // NewFormedList returns the list of groups, each step open and left out.
-func NewFormedList(groups []ListGroup) PickList {
+func NewFormedList(groups []RowGroup) PickList {
 	var l PickList
 	for _, g := range groups {
 		if g.Form == GroupUnread {

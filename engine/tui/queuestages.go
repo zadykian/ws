@@ -32,9 +32,9 @@ type queue struct {
 func queueOf(stages []Stage) queue {
 	var q queue
 	for i, s := range stages {
-		groups := make([]list.ListGroup, len(s.Nested))
+		groups := make([]list.RowGroup, len(s.Nested))
 		for j, g := range s.Nested {
-			groups[j] = list.ListGroup{Group: g}
+			groups[j] = list.RowGroup{Group: g}
 			switch {
 			case g.Name == s.Name:
 				groups[j].Form = list.GroupBare
