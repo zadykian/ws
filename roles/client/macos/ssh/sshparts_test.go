@@ -40,3 +40,10 @@ func TestSSHPartsRefuseBeforeTheyPlanAnyChange(t *testing.T) {
 		t.Error("Plan found no refusal of an Include below a setting")
 	}
 }
+
+func TestSSHPartsAreOneAResource(t *testing.T) {
+	parts, err := partsOf(effecttest.NewMachine()).parts(t.Context())
+	if err != nil || len(parts) != 6 {
+		t.Errorf("parts = %d, %v; want the refusal, the copy, the directories, the file, the Include and the copy's report", len(parts), err)
+	}
+}

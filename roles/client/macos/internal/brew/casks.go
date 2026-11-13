@@ -5,11 +5,9 @@ package brew
 import (
 	"context"
 	"fmt"
-	"github.com/zadykian/ws/engine/core/resource/file"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
-	"github.com/zadykian/ws/engine/core/step"
 )
 
 const (
@@ -65,21 +63,6 @@ func (b Casks) Has(name string, dirs ...string) bool {
 	return false
 }
 
-// Cask plans Homebrew's cask where there is none of its files, and says whether they are there,
-// or would be after the plan. See Cask.Plan.
-func (b Casks) Cask(ctx context.Context, name string, there bool, missing string) ([]step.Change, bool, error) {
-	changes, ok, err := b.Resource(name, there, missing).plan(ctx)
-	return asSteps(changes), ok, err
-}
-
-func asSteps(changes []resource.Change) []step.Change {
-	cs := make([]step.Change, len(changes))
-	for i, c := range changes {
-		cs[i] = c
-	}
-	return cs
-}
-
 // Resource is the cask as a resource. The app's cask holds the changes after it.
 func (b Casks) Resource(name string, there bool, missing string) Cask {
 	return Cask{M: b.M, Out: b.Out, LookPath: b.LookPath, Failed: b.Failed, Name: name, There: there,
@@ -92,27 +75,7 @@ func CaskGone(name, missing string) string {
 		name, missing, name)
 }
 
-// Item says how the cask stands. See Cask.Report.
-func (b Casks) Item(ctx context.Context, name string, there bool, missing string) step.Item {
-	return b.Resource(name, there, missing).item(ctx)
-}
-
-// Report says how an app's cask and the font's stand.
-func (b Casks) Report(ctx context.Context, name, app, home string) file.Fixed {
-	return file.Fixed{
-		b.Item(ctx, name, b.Has(app, "/Applications", home+"/Applications"),
-			"no "+app+" is in /Applications or ~/Applications"),
-		b.Item(ctx, Font, b.Has(FontFile, home+"/Library/Fonts", "/Library/Fonts"), FontGone),
-	}
-}
-
 // FontResource is the font's cask, which holds nothing back.
 func (b Casks) FontResource(home string) Cask {
 	return b.Resource(Font, b.Has(FontFile, home+"/Library/Fonts", "/Library/Fonts"), FontGone)
-}
-
-// Font plans the font's cask where its file is missing.
-func (b Casks) Font(ctx context.Context, home string) ([]step.Change, error) {
-	changes, err := b.FontResource(home).Plan(ctx)
-	return asSteps(changes), err
 }

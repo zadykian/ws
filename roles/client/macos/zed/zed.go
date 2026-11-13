@@ -3,11 +3,7 @@
 package zed
 
 import (
-	"context"
-	"github.com/zadykian/ws/engine/core/resource/file"
-
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 )
 
@@ -33,33 +29,4 @@ func (z *Zed) casks() brew.Casks {
 		z.failed = map[string]bool{}
 	}
 	return brew.Casks{M: z.M, Out: z.Out, LookPath: z.LookPath, Failed: z.failed, App: "zed"}
-}
-
-// plan plans the app, then the font where the app is there or comes, and the files.
-func (z *Zed) plan(ctx context.Context) (step.Plan, error) {
-	b := z.casks()
-	app, ok, err := b.Cask(ctx, "zed", b.Has("Zed.app", "/Applications", z.Home+"/Applications"),
-		"no Zed.app is in /Applications or ~/Applications")
-	if err != nil || !ok {
-		return step.Plan{}, err
-	}
-	font, err := b.Font(ctx, z.Home)
-	if err != nil {
-		return step.Plan{}, err
-	}
-	files, err := z.files(ctx)
-	if err != nil {
-		return step.Plan{}, err
-	}
-	return step.Plan{Changes: append(append(app, font...), files...)}, nil
-}
-
-// report says how the casks and the files stand. settings.json is Zed's own, which ws writes once
-// and never reads, so a report only finds it.
-func (z *Zed) report(ctx context.Context) ([]step.Item, error) {
-	dir := z.Home + "/.config/zed"
-	files := z.whole()
-	return file.Gather(ctx, z.casks().Report(ctx, "zed", "Zed.app", z.Home),
-		z.dirs(), files[0], files[1],
-		file.UserPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }

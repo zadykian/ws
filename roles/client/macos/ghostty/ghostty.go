@@ -51,25 +51,6 @@ func (g *Ghostty) casks() brew.Casks {
 	return brew.Casks{M: g.M, Out: g.Out, LookPath: g.LookPath, Failed: g.failed, App: "ghostty"}
 }
 
-// plan plans the app, then the font where the app is there or comes, and the files.
-func (g *Ghostty) plan(ctx context.Context) (step.Plan, error) {
-	b := g.casks()
-	app, ok, err := b.Cask(ctx, "ghostty", b.Has("Ghostty.app", "/Applications", g.Home+"/Applications"),
-		"no Ghostty.app is in /Applications or ~/Applications")
-	if err != nil || !ok {
-		return step.Plan{}, err
-	}
-	font, err := b.Font(ctx, g.Home)
-	if err != nil {
-		return step.Plan{}, err
-	}
-	files, err := g.files(ctx)
-	if err != nil {
-		return step.Plan{}, err
-	}
-	return step.Plan{Changes: append(append(app, font...), files...)}, nil
-}
-
 // conf returns the config file that Ghostty's menu opens: the first of ghosttyConfigs that holds
 // anything, else the first that exists, else the first.
 func (g *Ghostty) conf() string {
@@ -154,13 +135,4 @@ func (g *Ghostty) resolve() func(string) (string, error) {
 		return g.Real
 	}
 	return filepath.EvalSymlinks
-}
-
-// report says how the casks, ws.ghostty and the line that reads it stand. A config that is a link
-// lacking the line stands against ws: a run only warns of it.
-func (g *Ghostty) report(ctx context.Context) ([]step.Item, error) {
-	config := g.conf()
-	wsFile := g.file(config)
-	return file.Gather(ctx, g.casks().Report(ctx, "ghostty", "Ghostty.app", g.Home),
-		g.dirs(config), wsFile, g.configLines(config, wsFile.Path))
 }

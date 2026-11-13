@@ -18,10 +18,10 @@ func casks(m *effecttest.Machine, out *effecttest.Out) brew.Casks {
 
 func TestACaskPlansItsInstallAsAWarnedCommand(t *testing.T) {
 	b := casks(effecttest.NewMachine(), &effecttest.Out{})
-	app, _, _ := b.Cask(context.Background(), "zed", false, "gone")
-	font, _, _ := b.Cask(context.Background(), "font", false, "gone")
+	app, _ := b.Resource("zed", false, "gone").Plan(context.Background())
+	font, _ := b.Resource("font", false, "gone").Plan(context.Background())
 	if len(app) != 1 || len(font) != 1 {
-		t.Fatalf("Cask = %v, %v; want an install each", app, font)
+		t.Fatalf("Plan = %v, %v; want an install each", app, font)
 	}
 	if step.Headline(app[0]) != "would run brew install --cask zed" || step.KindOf(app[0]) != step.Install ||
 		!app[0].(resource.Warned).Warned() || font[0].(resource.Warned).Warned() {
@@ -33,8 +33,8 @@ func TestAFailedInstallWarnsAndMarksTheCask(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Results["brew install --cask zed"] = effecttest.Result{Err: errors.New("down")}
 	b := casks(m, out)
-	cs, _, _ := b.Cask(context.Background(), "zed", false, "gone")
-	err := cs[0].(resource.Change).Apply(context.Background())
+	cs, _ := b.Resource("zed", false, "gone").Plan(context.Background())
+	err := cs[0].Apply(context.Background())
 	if err == nil || !b.Failed["zed"] || len(out.Lines) != 2 || out.Lines[1] != "warn: brew install --cask zed failed" {
 		t.Errorf("Apply = %v, failed %v, said %q; want the cause, marked, warned", err, b.Failed, out.Lines)
 	}
