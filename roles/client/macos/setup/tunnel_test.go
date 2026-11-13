@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
@@ -108,7 +109,7 @@ func TestTunnelApplyInstallsCopiesAndMakesTheKey(t *testing.T) {
 }
 
 func TestTunnelReportsThePlannedDirectoriesOfItsProgram(t *testing.T) {
-	got := reportOf(t, tunnelStep(effecttest.NewMachine()))
+	got := mactest.ReportOf(t, tunnelStep(effecttest.NewMachine()))
 	for _, name := range []string{"/h/.local", "/h/.local/bin"} {
 		if it := got[name]; it.Kind != step.DirItem || it.Found != "missing" {
 			t.Errorf("%s = %+v, want a directory, missing", name, it)

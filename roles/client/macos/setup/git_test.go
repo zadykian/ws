@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -206,11 +207,11 @@ func TestGitStopsAtALinkAndAtGitConfigFailing(t *testing.T) {
 }
 
 func TestGitSaysToOpenSecretiveForADeniedPub(t *testing.T) {
-	m := agentMachine(effecttest.NewMachine())
+	m := mactest.AgentMachine(effecttest.NewMachine())
 	g := gitStep(m, nil)
-	in := agentData + "/PublicKeys/a.pub"
-	m.Root[in] = m.Root[agentSock]
-	g.Home, g.Conf.GitSigningPubKey = agentHome, in
+	in := mactest.AgentData + "/PublicKeys/a.pub"
+	m.Root[in] = m.Root[mactest.AgentSock]
+	g.Home, g.Conf.GitSigningPubKey = mactest.AgentHome, in
 	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "open Secretive") {
 		t.Errorf("err = %v, want the word to open Secretive", err)
 	}
@@ -218,9 +219,9 @@ func TestGitSaysToOpenSecretiveForADeniedPub(t *testing.T) {
 
 func TestGitRefusesAnAgentKeyOfATypeWsLacks(t *testing.T) {
 	const line = "ssh-mldsa-65 AAAA me\n"
-	m := agentMachine(effecttest.NewMachine(), line)
+	m := mactest.AgentMachine(effecttest.NewMachine(), line)
 	g := gitStep(m, nil)
-	g.Home, g.Conf.GitSigningPubKey = agentHome, copyOf(line)
+	g.Home, g.Conf.GitSigningPubKey = mactest.AgentHome, mactest.CopyOf(line)
 	if _, err := g.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "which ws's OpenSSH lacks") {
 		t.Errorf("err = %v, want a type that ws's OpenSSH lacks", err)
 	}

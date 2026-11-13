@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -25,10 +26,10 @@ var keyUses = []struct {
 }
 
 const (
-	inBox    = agentData + "/PublicKeys/a.pub"
+	inBox    = mactest.AgentData + "/PublicKeys/a.pub"
 	filePub  = "~/k.pub"
 	fileKey  = "ssh-ed25519 AAAAC3Nz me@mac\n"
-	fileLine = agentHome + "/k.pub"
+	fileLine = mactest.AgentHome + "/k.pub"
 	mldsa    = "ssh-mldsa-65 AAAADHNzaC1tbGRzYS02NQ== ws\n"
 )
 
@@ -41,19 +42,19 @@ func TestReadKeyStops(t *testing.T) {
 		{"none named, no agent", func(*effecttest.Machine) string { return "" },
 			"mac.conf names no VAR, WORDS: run ws client macos wizard to pick or make one in Secretive"},
 		{"none named, two agent keys", func(m *effecttest.Machine) string {
-			agentMachine(m, agentKey, mldsa)
+			mactest.AgentMachine(m, mactest.AgentKey, mldsa)
 			return ""
 		}, "mac.conf names no VAR, WORDS: run ws client macos wizard, or add one of these lines to mac.conf, VAR=" +
-			sshcfg.AgentKeys(agentKey)[0].Pub() + " for " + sshcfg.AgentKeys(agentKey)[0].Label()},
+			sshcfg.AgentKeys(mactest.AgentKey)[0].Pub() + " for " + sshcfg.AgentKeys(mactest.AgentKey)[0].Label()},
 		{"missing", func(*effecttest.Machine) string { return filePub },
 			fileLine + ", mac.conf's VAR, is missing: make the key first, as PAGE says"},
 		{"unreadable", func(m *effecttest.Machine) string {
-			m.Root[fileLine] = m.Root[agentSock]
+			m.Root[fileLine] = m.Root[mactest.AgentSock]
 			return filePub
 		}, "cannot read " + fileLine + ": make it readable, or name another in mac.conf's VAR"},
 		{"denied in Secretive's container, no key listed", func(m *effecttest.Machine) string {
-			agentMachine(m)
-			m.Root[inBox] = m.Root[agentSock]
+			mactest.AgentMachine(m)
+			m.Root[inBox] = m.Root[mactest.AgentSock]
 			return inBox
 		}, "cannot read " + inBox + ", and Secretive's agent lists no key of it: open Secretive, or name another in mac.conf's VAR"},
 		{"certificate", fileText("ssh-ed25519-cert-v01@openssh.com AAAA\n"),
@@ -61,7 +62,7 @@ func TestReadKeyStops(t *testing.T) {
 		{"type ws lacks", fileText("ssh-mldsa-65 AAAA\n"),
 			fileLine + " holds a key of type ssh-mldsa-65, which ws's OpenSSH lacks: name the .pub of a P-256 or ed25519 key in mac.conf's VAR"},
 		{"type ws lacks, in the agent", func(m *effecttest.Machine) string {
-			agentMachine(m, mldsa)
+			mactest.AgentMachine(m, mldsa)
 			return sshcfg.AgentKeys(mldsa)[0].Pub()
 		}, "which ws's OpenSSH lacks: name the .pub of a P-256 or ed25519 key in mac.conf's VAR"},
 		{"private key", fileText("-----BEGIN OPENSSH PRIVATE KEY-----\nAAAA\n-----END OPENSSH PRIVATE KEY-----\n"),
@@ -75,7 +76,7 @@ func TestReadKeyStops(t *testing.T) {
 		for _, u := range keyUses {
 			m := effecttest.NewMachine()
 			pub := tc.set(m)
-			_, err := setup.ReadKey(context.Background(), m, u.conf(pub), agentHome, u.use)
+			_, err := setup.ReadKey(context.Background(), m, u.conf(pub), mactest.AgentHome, u.use)
 			want := strings.NewReplacer("VAR", u.name, "WORDS", u.words, "PAGE", u.page).Replace(tc.want)
 			if err == nil || !strings.Contains(err.Error(), want) {
 				t.Errorf("%s, %s: err = %v; want %q", tc.name, u.name, err, want)
@@ -93,7 +94,7 @@ func fileText(text string) func(m *effecttest.Machine) string {
 }
 
 func TestReadKeyReads(t *testing.T) {
-	line := sshcfg.AgentKeys(agentKey)[0]
+	line := sshcfg.AgentKeys(mactest.AgentKey)[0]
 	for _, tc := range []struct {
 		name            string
 		set             func(m *effecttest.Machine) string
@@ -102,25 +103,25 @@ func TestReadKeyReads(t *testing.T) {
 	}{
 		{"a file key", fileText(fileKey), filePub, fileLine, fileKey, false},
 		{"a .pub in the container, held", func(m *effecttest.Machine) string {
-			agentMachine(m, agentKey)
+			mactest.AgentMachine(m, mactest.AgentKey)
 			return "~/" + sshcfg.SecretiveData + "/PublicKeys/" + line.Name
-		}, line.Pub(), copyOf(agentKey), agentKey, true},
+		}, line.Pub(), mactest.CopyOf(mactest.AgentKey), mactest.AgentKey, true},
 		{"the copy before it exists", func(m *effecttest.Machine) string {
-			agentMachine(m, agentKey, agentGit)
-			return sshcfg.AgentKeys(agentGit)[0].Pub()
-		}, sshcfg.AgentKeys(agentGit)[0].Pub(), copyOf(agentGit), agentGit, true},
+			mactest.AgentMachine(m, mactest.AgentKey, mactest.AgentGit)
+			return sshcfg.AgentKeys(mactest.AgentGit)[0].Pub()
+		}, sshcfg.AgentKeys(mactest.AgentGit)[0].Pub(), mactest.CopyOf(mactest.AgentGit), mactest.AgentGit, true},
 		{"the agent down, the copy there", func(m *effecttest.Machine) string {
-			agentMachine(m)
-			m.Results[agentList] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
-			m.Files[copyOf(agentKey)] = []byte(agentKey)
-			m.Results["ssh-keygen -l -f "+copyOf(agentKey)] = effecttest.Result{}
+			mactest.AgentMachine(m)
+			m.Results[mactest.AgentList] = effecttest.Result{Err: errors.New("exit status 2: Connection refused")}
+			m.Files[mactest.CopyOf(mactest.AgentKey)] = []byte(mactest.AgentKey)
+			m.Results["ssh-keygen -l -f "+mactest.CopyOf(mactest.AgentKey)] = effecttest.Result{}
 			return line.Pub()
-		}, line.Pub(), copyOf(agentKey), agentKey, true},
+		}, line.Pub(), mactest.CopyOf(mactest.AgentKey), mactest.AgentKey, true},
 	} {
 		for _, u := range keyUses {
 			m := effecttest.NewMachine()
 			pub := tc.set(m)
-			k, err := setup.ReadKey(context.Background(), m, u.conf(pub), agentHome, u.use)
+			k, err := setup.ReadKey(context.Background(), m, u.conf(pub), mactest.AgentHome, u.use)
 			if err != nil || k.Pub != tc.pub || k.File != tc.file || k.Text != tc.text || k.Key.Base64 == "" {
 				t.Errorf("%s, %s: ReadKey = %+v, %v; want %s, %s, text %q", tc.name, u.name, k, err, tc.pub, tc.file, tc.text)
 			}

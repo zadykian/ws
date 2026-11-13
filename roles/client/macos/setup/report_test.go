@@ -10,27 +10,12 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
-// reportOf reads the step as ws client macos state does, and returns its items by name.
-func reportOf(t *testing.T, s step.Step) map[string]step.Item {
-	reports, err := step.Read(context.Background(), []step.Step{s})
-	if err != nil {
-		t.Fatal(err)
-	}
-	items := map[string]step.Item{}
-	for _, it := range reports[0].Items {
-		if it.Kind == step.CheckItem {
-			t.Fatalf("the step failed: %s", it.Conflict)
-		}
-		items[it.Name] = it
-	}
-	return items
-}
-
 func TestSSHReportsAFreshHome(t *testing.T) {
-	got := reportOf(t, sshStep(sshMachine(), &effecttest.Out{}))
+	got := mactest.ReportOf(t, sshStep(sshMachine(), &effecttest.Out{}))
 	for name, want := range map[string]string{
 		"/h/.ssh": "present", "/h/.ssh/config.d": "mode 700", "/h/.ssh/config.d/ws": "mode 600",
 		"/h/.ssh/config": "holds Include config.d/ws",
@@ -55,7 +40,7 @@ func TestSSHReportsAChangeToItsFile(t *testing.T) {
 	m := sshMachine()
 	m.Dirs["/h/.ssh"], m.Dirs["/h/.ssh/config.d"] = 0o700, 0o755
 	m.Files[file], m.Modes[file] = []byte(sshcfg.Header+"\nHost ws\n"), 0o600
-	got := reportOf(t, sshStep(m, &effecttest.Out{}))
+	got := mactest.ReportOf(t, sshStep(m, &effecttest.Out{}))
 	if it := got[file]; it.Found != "mode 600, other content" || !strings.Contains(it.Conflict, "by hand") ||
 		!strings.Contains(it.Diff, "+    HostName") {
 		t.Errorf("file = %+v, want a conflict and its diff", it)
@@ -68,7 +53,7 @@ func TestSSHReportsAChangeToItsFile(t *testing.T) {
 func TestSSHReportLeavesTheUsersConfigOut(t *testing.T) {
 	m := sshMachine()
 	m.Files["/h/.ssh/config"] = []byte("Host ws\n    IdentityFile ~/.ssh/hidden\n")
-	it := reportOf(t, sshStep(m, &effecttest.Out{}))["/h/.ssh/config"]
+	it := mactest.ReportOf(t, sshStep(m, &effecttest.Out{}))["/h/.ssh/config"]
 	if it.Found != "lacks it" || !strings.Contains(it.Conflict, "line 1") || it.Diff != "" {
 		t.Errorf("config = %+v, want the Include lacking, and line 1 named", it)
 	}
@@ -88,9 +73,9 @@ func TestSSHReportShowsAnIncludeBelowASettingAsOutOfPlace(t *testing.T) {
 }
 
 func TestSSHReportsWsCopyOfAKey(t *testing.T) {
-	s := sshStep(agentMachine(sshMachine(), agentKey), &effecttest.Out{})
-	s.Conf.IdentityPubKey = sshcfg.AgentKeys(agentKey)[0].Pub()
-	it := reportOf(t, s)[copyOf(agentKey)]
+	s := sshStep(mactest.AgentMachine(sshMachine(), mactest.AgentKey), &effecttest.Out{})
+	s.Conf.IdentityPubKey = sshcfg.AgentKeys(mactest.AgentKey)[0].Pub()
+	it := mactest.ReportOf(t, s)[mactest.CopyOf(mactest.AgentKey)]
 	if it.Kind != step.FileItem || it.Want != "present" || it.Found != "missing" {
 		t.Errorf("copy = %+v, want a file that is missing", it)
 	}
@@ -99,7 +84,7 @@ func TestSSHReportsWsCopyOfAKey(t *testing.T) {
 func TestGitWithoutNameReportsNothing(t *testing.T) {
 	_, g := gitReady()
 	g.Conf = conf.Conf{}
-	if got := reportOf(t, g); len(got) != 0 {
+	if got := mactest.ReportOf(t, g); len(got) != 0 {
 		t.Errorf("items = %v, want none", got)
 	}
 }
@@ -108,7 +93,7 @@ func TestGitReportsWhatItManages(t *testing.T) {
 	m, g := gitReady()
 	dir := gitHome + "/.config/ws/"
 	m.Files[dir+"gitconfig"] = []byte("[user]\n    name = other\n")
-	got := reportOf(t, g)
+	got := mactest.ReportOf(t, g)
 	if it := got["gh"]; it.Kind != step.PackageItem || it.Found != "installed" {
 		t.Errorf("gh = %+v", it)
 	}
@@ -154,7 +139,7 @@ func TestGitReportShowsGhToInstall(t *testing.T) {
 		return "/opt/bin/" + name, nil
 	}
 	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
-	got := reportOf(t, g)
+	got := mactest.ReportOf(t, g)
 	if got["gh"].Found != "missing" || got[gitPub].Found != "present" {
 		t.Errorf("gh = %+v, key = %+v, want gh missing", got["gh"], got[gitPub])
 	}

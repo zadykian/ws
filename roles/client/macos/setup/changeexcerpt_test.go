@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
@@ -20,7 +21,7 @@ const usersText = "[url \"https://oauth2:" + usersToken + "@example.test/\"]\n  
 func TestAReportShowsWsLinesAloneOfAUsersFile(t *testing.T) {
 	gitMachine, _, git := gitWithConfig(usersText, "", "")
 	gitMachine.Results["git config --file "+gitConfigFile+" --type path --get-all include.path"] =
-		effecttest.Result{Err: exitOne(t)}
+		effecttest.Result{Err: mactest.ExitOne(t)}
 	sshConfig := sshMachine()
 	sshConfig.Files["/h/.ssh/config"] = []byte(usersText)
 	ghosttyConfig := effecttest.NewMachine()
