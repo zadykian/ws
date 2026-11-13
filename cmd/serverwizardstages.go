@@ -13,10 +13,10 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// serverWizardStages returns the stages of ws server wizard, in order. They act on ws itself, with
-// the remote script on sh's stdin, as the Mac's wizard sends it over ssh. e.events hears ws's run, e.talks
-// runs claude's login, and e.hand takes what stays by hand. A list that chose ws's run in part gives
-// o.only, and one that ticked it whole o.update, as on the Mac.
+// serverWizardStages returns the stages of ws server ubuntu wizard, in order. They act on ws
+// itself, with the remote script on sh's stdin, as the Mac's wizard sends it over ssh. e.events
+// hears ws's run, e.talks runs claude's login, and e.hand takes what stays by hand. A list that
+// chose ws's run in part gives o.only, and one that ticked it whole o.update, as on the Mac.
 func serverWizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, out, hand := e.p, e.out, e.hand
 	m := p.machine

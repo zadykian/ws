@@ -49,8 +49,8 @@ func (o progOut) Observe(e step.Event) {
 	}
 }
 
-// sayChange prints a change under --check. ws mac apply printed a diff as diff -u does, with no prefix and
-// no blank line after it, and said nothing of the backup of a file.
+// sayChange prints a change under --check. ws client macos apply printed a diff as diff -u does,
+// with no prefix and no blank line after it, and said nothing of the backup of a file.
 func (o progOut) sayChange(c step.Change) {
 	switch c := c.(type) {
 	case setup.Write:
@@ -75,7 +75,7 @@ func macOf(p process, c conf.Conf, m effect.Machine, out effect.Out, text io.Wri
 	return setup.Mac{Conf: c, Home: p.getenv("HOME"), XDG: p.getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
 }
 
-// newMacApplyCmd returns ws mac apply.
+// newMacApplyCmd returns ws client macos apply.
 func newMacApplyCmd(p process) *cobra.Command {
 	var check bool
 	var only []string
@@ -126,7 +126,8 @@ func loadMacConf(p process) (settings conf.Conf, err error) {
 	return settings, nil
 }
 
-// setupRun runs ws mac apply's steps on the effects given to it. It names no step in its errors.
+// setupRun runs ws client macos apply's steps on the effects given to it. It names no step in its
+// errors.
 type setupRun func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error
 
 // runMacApply runs the steps that only names, or every step, from mac.conf. Under check it prints
@@ -169,9 +170,9 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 	return err
 }
 
-// setupOnScreen is a run of ws mac apply under the run screen. The rows name the screen's steps,
-// and the run acts on the screen's effects. What a run prints on stdout waits for the screen's end,
-// as it would paint over the screen at a terminal.
+// setupOnScreen is a run of ws client macos apply under the run screen. The rows name the screen's
+// steps, and the run acts on the screen's effects. What a run prints on stdout waits for the
+// screen's end, as it would paint over the screen at a terminal.
 func setupOnScreen(c *cobra.Command, p process, rows tui.Group, run setupRun, o step.Options) error {
 	return drawRun(c, p, runTitle(c, o.Check), []tui.Group{rows}, func(ctx context.Context, b *tui.Bridge) error {
 		e := b.Effects()

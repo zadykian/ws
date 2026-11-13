@@ -40,7 +40,8 @@ func TestWizardQueueSetsEachStageOnItsMachine(t *testing.T) {
 	}
 }
 
-// A chosen Cable locks ws mac apply, whose steps it applies: left out, the cable's service stays unset.
+// A chosen Cable locks ws client macos apply, whose steps it applies: left out, the cable's service
+// stays unset.
 func TestWizardQueueHoldsWsMacApplyBesideCable(t *testing.T) {
 	if cable := stageOf(t, queueOf(fakeProcess()), "Cable"); cable.Waits != "ws client macos apply" {
 		t.Errorf("Cable = %+v, want it behind ws client macos apply", cable)

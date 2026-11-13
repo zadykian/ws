@@ -12,13 +12,13 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 )
 
-// macDoc is what ws mac state --json prints.
+// macDoc is what ws client macos state --json prints.
 type macDoc struct {
 	Version string        `json:"version"`
 	Steps   []step.Report `json:"steps"`
 }
 
-// newMacStateCmd returns ws mac state.
+// newMacStateCmd returns ws client macos state.
 func newMacStateCmd(p process) *cobra.Command {
 	var asJSON bool
 	c := &cobra.Command{
@@ -39,8 +39,8 @@ func newMacStateCmd(p process) *cobra.Command {
 	return c
 }
 
-// runMacState prints what the steps of ws mac apply report. The ssh step that runs again is left
-// out: under a read it would repeat the first.
+// runMacState prints what the steps of ws client macos apply report. The ssh step that runs again
+// is left out: under a read it would repeat the first.
 func runMacState(c *cobra.Command, p process, asJSON bool) error {
 	settings, err := loadMacConf(p)
 	if err != nil {

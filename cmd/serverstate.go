@@ -14,7 +14,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
-// newStateCmd returns ws server state.
+// newStateCmd returns ws server ubuntu state.
 func newStateCmd(p process) *cobra.Command {
 	var opts apply.Options
 	var asJSON bool

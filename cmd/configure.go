@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/internal/wizard"
 )
 
-// newConfigureCmd returns ws mac configure.
+// newConfigureCmd returns ws client macos configure.
 func newConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
@@ -41,8 +41,8 @@ func runConfigure(c *cobra.Command, p process) error {
 	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), sheets...)
 }
 
-// macForms gives the forms' sheets, for ws mac configure and the wizard's list, and done, which lets
-// go of ws once they have ended.
+// macForms gives the forms' sheets, for ws client macos configure and the wizard's list, and done,
+// which lets go of ws once they have ended.
 func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 		form := wizard.ConfForm{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}

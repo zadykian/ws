@@ -13,7 +13,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// runFarSecrets runs ws mac secrets ARGS on a Mac whose ws is m, or where ssh fails with err.
+// runFarSecrets runs ws client macos secrets ARGS on a Mac whose ws is m, or where ssh fails with
+// err.
 func runFarSecrets(m *effecttest.Machine, err error, stdin string, args ...string) (int, string, string) {
 	p, mac := macTerminal()
 	mac.Files["/p12"] = []byte{0, 1, 2}

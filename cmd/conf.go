@@ -14,7 +14,7 @@ import (
 
 const confFile = ".config/ws/mac.conf"
 
-// newConfCmd returns ws mac conf.
+// newConfCmd returns ws client macos conf.
 func newConfCmd(p process) *cobra.Command {
 	var lines bool
 	c := &cobra.Command{

@@ -70,8 +70,8 @@ func TestServerWizardAtATerminalOpensOneList(t *testing.T) {
 // ranWs tells whether a call ran ws's run.
 func ranWs(call string) bool { return strings.HasSuffix(call, "sh -s -- run") }
 
-// screenServer is ws server wizard at a terminal, on a booted machine whose remote script reports a
-// good last run, and the keys that the lists read, past the scan.
+// screenServer is ws server ubuntu wizard at a terminal. The machine is booted and its remote script
+// reports a good last run. It reads the keys that the lists read, past the scan.
 func screenServer(keys io.ReadWriter) (int, *effecttest.Machine) {
 	p, m := wizardProcess("---\nsecurity_outbound: true\nws_user: ada\n", true,
 		"run v1.2.3 0 on - -\nactive -\nuser ada\noutbound on\nsecrets -\nvars -\nclaude ok\nsigning none\n")

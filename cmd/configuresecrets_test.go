@@ -14,8 +14,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// wsSecrets is a ws that takes the login as root, whose ws server secrets runs here on ws, as root,
-// or where ssh fails with err.
+// wsSecrets is a ws that takes the login as root, whose ws server ubuntu secrets runs here on ws,
+// as root, or where ssh fails with err.
 type wsSecrets struct {
 	farWs
 	ws  *effecttest.Machine

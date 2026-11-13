@@ -14,7 +14,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// newValuesCmd returns ws server values, which edits the machine's values.
+// newValuesCmd returns ws server ubuntu values, which edits the machine's values.
 func newValuesCmd(p process) *cobra.Command {
 	return group("values", "edit the machine's values", &cobra.Command{
 		Use:   "set KEY VALUE",
@@ -39,8 +39,8 @@ func runValuesSet(c *cobra.Command, p process, key, value string) error {
 
 // setServerValue writes key in the file, by rename and with its owner and mode, as the wizard's own
 // writes do, and says so on out. It writes nothing where the file holds the value already, and a
-// link stays the maintainer's to edit, as a rename would replace it. ws server wizard writes its
-// values through it too.
+// link stays the maintainer's to edit, as a rename would replace it. ws server ubuntu wizard writes
+// its values through it too.
 func setServerValue(m effect.Machine, out effect.Out, key, value string) error {
 	info, err := m.Stat(serverVars)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {

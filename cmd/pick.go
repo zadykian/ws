@@ -45,8 +45,8 @@ func pickServer(c *cobra.Command, p process, cfg apply.Config, list []roles.Role
 	return cfg, chosen, err
 }
 
-// pickSetup opens the list of ws mac apply's steps, scanned by a check. It returns the options that
-// the choice sets, and false where the maintainer left.
+// pickSetup opens the list of ws client macos apply's steps, scanned by a check. It returns the
+// options that the choice sets, and false where the maintainer left.
 func pickSetup(c *cobra.Command, p process, rows tui.Group, run setupRun) (step.Options, bool, error) {
 	scan := func(ctx context.Context, b *tui.Bridge) error {
 		return run(ctx, b.Effects().M, b, io.Discard, b.Options(step.Options{Check: true}))

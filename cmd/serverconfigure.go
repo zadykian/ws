@@ -10,7 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 )
 
-// newServerConfigureCmd returns ws server configure.
+// newServerConfigureCmd returns ws server ubuntu configure.
 func newServerConfigureCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
@@ -36,12 +36,12 @@ func runServerConfigure(c *cobra.Command, p process) error {
 	return tui.Configure(c.Context(), screenConfig(c, p), c.CommandPath(), serverSheets(p)...)
 }
 
-// serverSheets are the forms of ws server configure and of ws server wizard's list.
+// serverSheets are the forms of ws server ubuntu configure and of ws server ubuntu wizard's list.
 func serverSheets(p process) []tui.Sheet {
 	return []tui.Sheet{serverSecretsSheet(p), hostVarsSheet(serverOpen)}
 }
 
-// serverSecretsSheet is ws's secrets file, edited here as ws server secrets edits it.
+// serverSecretsSheet is ws's secrets file, edited here as ws server ubuntu secrets edits it.
 func serverSecretsSheet(p process) tui.Sheet {
 	return tui.Sheet{
 		Name:   "secrets",

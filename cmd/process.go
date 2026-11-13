@@ -34,7 +34,8 @@ type process struct {
 	outTTY bool
 	// version is this ws's version, as ws version prints it.
 	version string
-	// argv is ws's arguments, without the program, which ws mac wizard --update runs the new ws with.
+	// argv is ws's arguments, without the program, which ws client macos wizard --update runs the new
+	// ws with.
 	argv []string
 	// releases is the address of ws's releases, WS_RELEASES_URL or GitHub's.
 	releases string

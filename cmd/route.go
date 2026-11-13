@@ -13,7 +13,7 @@ import (
 
 const daemonLabel = "com.github.zadykian.ws-tunnel"
 
-// newTunnelLoadedCmd returns ws mac tunnel loaded.
+// newTunnelLoadedCmd returns ws client macos tunnel loaded.
 func newTunnelLoadedCmd(p process) *cobra.Command {
 	return &cobra.Command{
 		Use:   "loaded",
@@ -29,7 +29,7 @@ func newTunnelLoadedCmd(p process) *cobra.Command {
 	}
 }
 
-// newTunnelRoutesCmd returns ws mac tunnel routes.
+// newTunnelRoutesCmd returns ws client macos tunnel routes.
 func newTunnelRoutesCmd(p process) *cobra.Command {
 	var check bool
 	c := &cobra.Command{
@@ -47,7 +47,7 @@ func newTunnelRoutesCmd(p process) *cobra.Command {
 	return c
 }
 
-// newResolverCmd returns ws mac resolver.
+// newResolverCmd returns ws client macos resolver.
 func newResolverCmd(p process) *cobra.Command {
 	var check bool
 	c := &cobra.Command{

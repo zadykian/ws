@@ -11,8 +11,9 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// newMacSecretsCmd returns ws mac secrets, which edits ws's secrets file. Each command runs its own
-// of ws server secrets on ws as root, over the wizard's ssh, with a value on ssh's stdin.
+// newMacSecretsCmd returns ws client macos secrets, which edits ws's secrets file. Each command
+// runs its own of ws server ubuntu secrets on ws as root, over the wizard's ssh, with a value on
+// ssh's stdin.
 func newMacSecretsCmd(p process) *cobra.Command {
 	c := group("secrets", "edit ws's secrets file, over ssh", append([]*cobra.Command{{Use: "init",
 		Short: "make ws's age identity and an empty secrets file on ws", Args: cobra.NoArgs}},
@@ -32,11 +33,12 @@ func forward(c *cobra.Command, p process) {
 	}
 }
 
-// runFar runs ws server secrets with the command's path past ws mac secrets, its flags and its
-// arguments. The arguments follow a --, as a name may start with a dash. So set env A runs
-// ws server secrets set env -- A. set file sends the file at PATH, or stdin, and NAME alone. At a
-// terminal, it reaches root on ws before it asks a value, so that a value is asked only where it can
-// go. Else it reads stdin first, and sudo's password, where ws's sudo asks one, comes from /dev/tty.
+// runFar runs ws server ubuntu secrets with the command's path past ws client macos secrets, its
+// flags and its arguments. The arguments follow a --, as a name may start with a dash. So set env A
+// runs ws server ubuntu secrets set env -- A. set file sends the file at PATH, or stdin, and NAME
+// alone. At a terminal, it reaches root on ws before it asks a value, so that a value is asked only
+// where it can go. Else it reads stdin first, and sudo's password, where ws's sudo asks one, comes
+// from /dev/tty.
 func runFar(c *cobra.Command, p process, args []string) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)

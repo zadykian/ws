@@ -21,7 +21,7 @@ var secretsLabels = []string{
 
 // secretsSheet is the secrets file on the Configure screen. held lists its entries as "KIND NAME",
 // never a value: a field says whether its entry is set, and starts empty. A file entry holds bytes,
-// and an env or git entry beyond these needs a name, so ws mac secrets sets those.
+// and an env or git entry beyond these needs a name, so ws client macos secrets sets those.
 func secretsSheet(side secretsSide, held []string) tui.Sheet {
 	return tui.Sheet{
 		Name: "secrets",
@@ -66,8 +66,8 @@ type secretsSide interface {
 	Set(ctx context.Context, label, value string) error
 }
 
-// wsSide is ws's secrets file, which ws server secrets edits on ws over the wizard's ssh, a value on
-// ssh's stdin. set git, with no flag, keeps the entry's user name.
+// wsSide is ws's secrets file, which ws server ubuntu secrets edits on ws over the wizard's ssh, a
+// value on ssh's stdin. set git, with no flag, keeps the entry's user name.
 type wsSide struct{ ws *wizard.Session }
 
 func (s wsSide) Set(ctx context.Context, label, value string) error {

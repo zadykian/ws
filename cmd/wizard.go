@@ -21,11 +21,11 @@ type wizardOptions struct {
 	check, update bool
 	// only is ws's roles where the lists chose ws's run in part, as --only's entries.
 	only []string
-	// left is the run's LeftOut, which reaches the steps of ws mac apply too.
+	// left is the run's LeftOut, which reaches the steps of ws client macos apply too.
 	left func(parent, name string) bool
 }
 
-// newWizardCmd returns ws mac wizard.
+// newWizardCmd returns ws client macos wizard.
 func newWizardCmd(p process) *cobra.Command {
 	var o wizardOptions
 	c := &cobra.Command{
@@ -43,8 +43,8 @@ func newWizardCmd(p process) *cobra.Command {
 	return c
 }
 
-// wizardRefusal returns why ws mac wizard does not run here, or an empty string. It names the system
-// as uname -s does.
+// wizardRefusal returns why ws client macos wizard does not run here, or an empty string. It names
+// the system as uname -s does.
 func wizardRefusal(p process) string {
 	switch {
 	case p.goos != "darwin":
@@ -71,13 +71,13 @@ type wizardEffects struct {
 	// sudo is the stage that finds how to reach root on ws. A run takes it from the scan before it, so
 	// that its password is asked once.
 	sudo *wizard.Sudo
-	// stop is the run's Stop, which reaches the steps of ws mac apply too. Nil runs all.
+	// stop is the run's Stop, which reaches the steps of ws client macos apply too. Nil runs all.
 	stop func() error
 	// events hears ws's run. A plain run has none: it follows ws's run by its lines.
 	events step.Observer
 }
 
-// wizardStages returns the stages of ws mac wizard, in order.
+// wizardStages returns the stages of ws client macos wizard, in order.
 func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.check
@@ -129,8 +129,8 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	}
 }
 
-// runWizard runs ws mac wizard: its stages under a lock, and what stays by hand after a run in
-// which a stage acted. Under --check it prints what each stage would do and changes nothing.
+// runWizard runs ws client macos wizard: its stages under a lock, and what stays by hand after a
+// run in which a stage acted. Under --check it prints what each stage would do and changes nothing.
 func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
@@ -151,8 +151,8 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 	return wizardRun{c, p, macSide(c, p), o}.start(before...)
 }
 
-// shellDefaults is the shell role's git identity as lines of key: value, which ws mac wizard
-// offers as its answers.
+// shellDefaults is the shell role's git identity as lines of key: value, which ws client macos
+// wizard offers as its answers.
 func shellDefaults() []byte {
 	d := values.Default().Shell
 	return []byte("shell_git_name: " + d.GitName + "\nshell_git_email: " + d.GitEmail + "\n")

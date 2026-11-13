@@ -8,8 +8,8 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// newServerSecretsCmd returns ws server secrets, which keeps ws's secrets file, with its identity as
-// a systemd credential. ws mac secrets runs its commands here, over ssh.
+// newServerSecretsCmd returns ws server ubuntu secrets, which keeps ws's secrets file, with its
+// identity as a systemd credential. ws client macos secrets runs its commands here, over ssh.
 func newServerSecretsCmd(p process) *cobra.Command {
 	open := func() (secrets.Store, error) { return serverSecretsStore(p) }
 	return group("secrets", "keep ws's secrets file, with its identity as a systemd credential",

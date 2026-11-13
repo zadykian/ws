@@ -65,7 +65,7 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out progOut
 }
 
 // draw opens the lists over a scan and runs what they choose, or goes straight to the run under
-// --check, as ws mac apply does.
+// --check, as ws client macos apply does.
 func (w wizardRun) draw() error {
 	if !opensList(w.c, w.p, false) {
 		return w.whole()
@@ -188,8 +188,9 @@ func (w wizardRun) whole() error {
 }
 
 // optionsOf is the options of a run of what the lists chose, run being ws's run's name. A stage in part leaves out ws's roles by
-// --only, as they run on ws, and ws mac apply's steps by the run's filter. ws's run whole by a tick goes
-// once more, as under --update: a good last run says nothing of a step that drifted after it.
+// --only, as they run on ws, and ws client macos apply's steps by the run's filter. ws's run whole
+// by a tick goes once more, as under --update: a good last run says nothing of a step that drifted
+// after it.
 func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) wizardOptions {
 	o := w.o
 	o.check = choice.Next == tui.NextCheck

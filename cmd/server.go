@@ -26,8 +26,8 @@ const (
 	osRelease  = "/etc/os-release"
 )
 
-// serverRefusal returns why ws server apply does not run here, or "" where it does: as root on
-// Ubuntu 26.04, the one system that the steps are written for. osRelease is /etc/os-release.
+// serverRefusal returns why ws server ubuntu apply does not run here, or "" where it does: as root
+// on Ubuntu 26.04, the one system that the steps are written for. osRelease is /etc/os-release.
 func serverRefusal(euid int, osRelease []byte) string {
 	if euid != 0 {
 		return "run it as root"
@@ -65,7 +65,7 @@ func newUbuntuCmd(p process) *cobra.Command {
 		newValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
 }
 
-// newApplyCmd returns ws server apply.
+// newApplyCmd returns ws server ubuntu apply.
 func newApplyCmd(p process) *cobra.Command {
 	var opts apply.Options
 	var asJSON bool

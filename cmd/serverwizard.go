@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newServerWizardCmd returns ws server wizard.
+// newServerWizardCmd returns ws server ubuntu wizard.
 func newServerWizardCmd(p process) *cobra.Command {
 	var o wizardOptions
 	c := &cobra.Command{
@@ -25,9 +25,9 @@ func newServerWizardCmd(p process) *cobra.Command {
 	return c
 }
 
-// runServerWizard runs ws server wizard's stages under a lock, and what stays by hand of ws after a
-// run in which a stage acted. It runs as root, as the remote script does: sudo asks its password
-// before ws starts.
+// runServerWizard runs ws server ubuntu wizard's stages under a lock, and what stays by hand of ws
+// after a run in which a stage acted. It runs as root, as the remote script does: sudo asks its
+// password before ws starts.
 func runServerWizard(c *cobra.Command, p process, o wizardOptions) error {
 	if p.euid != 0 {
 		return errors.New("run it as root, by sudo: ws's values and its run are root's")

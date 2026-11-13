@@ -26,8 +26,8 @@ const (
 	leaveScreen = "\x1b[?1049l"
 )
 
-// serverTerminal returns a process with a terminal, as root on the one system that ws server apply
-// takes, with ca-certificates and tmux installed.
+// serverTerminal returns a process with a terminal, as root on the one system that ws server ubuntu
+// apply takes, with ca-certificates and tmux installed.
 func serverTerminal() (process, *effecttest.Machine) {
 	p := withEnv(fakeProcess(), map[string]string{"TERM": "xterm"})
 	p.tty, p.errTTY, p.euid = true, true, 0

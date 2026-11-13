@@ -20,7 +20,7 @@ type wizardSide struct {
 	read  func(tui.Side, *wizard.Sudo) (tui.StateReader, func(context.Context))
 }
 
-// macSide is ws mac wizard's side.
+// macSide is ws client macos wizard's side.
 func macSide(c *cobra.Command, p process) wizardSide {
 	return wizardSide{
 		stages: wizardStages,
@@ -32,8 +32,8 @@ func macSide(c *cobra.Command, p process) wizardSide {
 	}
 }
 
-// serverSide is ws server wizard's side. Every stage runs on ws, with no caffeinate, and the forms are
-// ws's values alone.
+// serverSide is ws server ubuntu wizard's side. Every stage runs on ws, with no caffeinate, and the
+// forms are ws's values alone.
 func serverSide(p process) wizardSide {
 	return wizardSide{
 		stages: serverWizardStages,
