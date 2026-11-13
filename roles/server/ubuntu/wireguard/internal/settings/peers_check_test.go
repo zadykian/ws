@@ -1,4 +1,4 @@
-package wireguard
+package settings
 
 import (
 	"strings"
@@ -35,12 +35,12 @@ func TestSettingsPeers(t *testing.T) {
 		"another subnet":    {values.Wireguard{Address: "10.98.0.1/24", Port: 51820, Peers: []values.WireguardPeer{{Name: "tv", Address: "10.98.0.9"}}}, ""},
 	} {
 		t.Run(name, func(t *testing.T) {
-			err := Settings(tc.w)
+			err := Validate(tc.w)
 			switch {
 			case tc.want == "" && err != nil:
-				t.Errorf("Settings = %v, want none", err)
+				t.Errorf("Validate = %v, want none", err)
 			case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
-				t.Errorf("Settings = %v, want a refusal with %q", err, tc.want)
+				t.Errorf("Validate = %v, want a refusal with %q", err, tc.want)
 			}
 		})
 	}

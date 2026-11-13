@@ -1,4 +1,4 @@
-package wireguard
+package settings
 
 import (
 	"net/netip"
@@ -28,21 +28,21 @@ func TestSettingsAddressAndPort(t *testing.T) {
 		"a single address": {"10.99.0.1/32", 51820, ""},
 	} {
 		t.Run(name, func(t *testing.T) {
-			err := Settings(values.Wireguard{Address: tc.address, Port: tc.port})
+			err := Validate(values.Wireguard{Address: tc.address, Port: tc.port})
 			switch {
 			case tc.want == "" && err != nil:
-				t.Errorf("Settings = %v, want none", err)
+				t.Errorf("Validate = %v, want none", err)
 			case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
-				t.Errorf("Settings = %v, want a refusal with %q", err, tc.want)
+				t.Errorf("Validate = %v, want a refusal with %q", err, tc.want)
 			}
 		})
 	}
 }
 
 func TestSettingsNamesEveryProblem(t *testing.T) {
-	err := Settings(values.Wireguard{Address: "10.99.0.255/24", Port: 0})
+	err := Validate(values.Wireguard{Address: "10.99.0.255/24", Port: 0})
 	if err == nil || !strings.Contains(err.Error(), "wireguard_port") || !strings.Contains(err.Error(), "wireguard_address") {
-		t.Errorf("Settings = %v, want both the port and the address named", err)
+		t.Errorf("Validate = %v, want both the port and the address named", err)
 	}
 }
 

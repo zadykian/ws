@@ -1,7 +1,5 @@
-// Package wireguard is the wireguard role as Go steps. It sets up wg0, the server's end of a
-// WireGuard tunnel for the Mac, from networkd's own files. It also sets up the drops that keep
-// Docker's containers off the Mac. See docs/wireguard.md.
-package wireguard
+// Package settings refuses the values the wireguard role cannot use.
+package settings
 
 import (
 	"errors"
@@ -26,12 +24,12 @@ const (
 	longestBroadcastPrefix = 30
 )
 
-// Settings refuses wg0's address and port, and the peers, that the role cannot use. The address is
+// Validate refuses wg0's address and port, and the peers, that the role cannot use. The address is
 // wg0's: an IPv4 address of a host, with the prefix length of the tunnel's subnet. Each peer has a
 // name of lowercase letters, digits and dashes, which names its key's file. It has an IPv4 address
 // of its own too, a host's in that subnet but not wg0's. With the peer mac, wg0 and mac take the
 // addresses the Mac's scripts fix. It names every problem it finds.
-func Settings(w values.Wireguard) error {
+func Validate(w values.Wireguard) error {
 	var problems []string
 	if w.Port < 1 || w.Port > maxPort {
 		problems = append(problems, fmt.Sprintf("wireguard_port is %d, not a port from 1 to %d.", w.Port, maxPort))
