@@ -42,7 +42,7 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   ([Makefile](../../Makefile)).
 - ws is cobra's: a command parses no flag or argument by hand and holds no usage text.
   `cli.Execute` runs the root, names the command in each error, and returns 2 for a usage error. A
-  group of commands exists on the systems where it runs. `newMacCmd` is built everywhere and tested
-  on Linux, and `groups` lists it in a `//go:build darwin` file
+  group of commands exists on the systems where it runs. `newMacCmd`, over macos/cli's `Command`, is
+  built everywhere and tested on Linux, and `groups` lists it in a `//go:build darwin` file
   ([groups_darwin.go](../../cmd/groups_darwin.go)). Commands take what they need from the
   process through `cli.Env`, which tests build from fakes with `clitest`.

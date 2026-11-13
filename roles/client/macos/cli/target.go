@@ -17,6 +17,8 @@ import (
 
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
 // read when the command runs.
+// The Mac's roles take their machine and out from Mac, which Run fills from the run's effects.
+// They leave the machine, units and out that Steps gets unused.
 func macTarget(p enginecli.Env, only *[]string) engine.Target {
 	return engine.Target{Wizard: macSide(p), Change: macChange, State: macReport(p), Refuse: func(engine.Call) string { return wizardRefusal(p) },
 		NoScreen: "it needs a terminal and no --plain: anywhere else, edit mac.conf by hand",
