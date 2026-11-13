@@ -40,13 +40,22 @@ func Installed(m effect.Machine) ([]string, error) {
 	}
 	var names []string
 	for _, e := range entries {
-		name, ok := strings.CutPrefix(e, labelPrefix)
-		if !ok {
-			continue
-		}
-		if name, ok = strings.CutSuffix(name, ".plist"); ok && name != "" && !strings.Contains(name, ".") {
+		if name, ok := nameIn(e, labelPrefix, ".plist"); ok {
 			names = append(names, name)
 		}
 	}
 	return names, nil
+}
+
+// nameIn returns the server's name between prefix and suffix in a file's name. A name holds no dot,
+// so a file of an older form, or one that ends in .new, gives none.
+func nameIn(entry, prefix, suffix string) (string, bool) {
+	name, ok := strings.CutPrefix(entry, prefix)
+	if !ok {
+		return "", false
+	}
+	if name, ok = strings.CutSuffix(name, suffix); ok && name != "" && !strings.Contains(name, ".") {
+		return name, true
+	}
+	return "", false
 }
