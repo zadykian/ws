@@ -73,11 +73,21 @@ func (t *Tunnel) self() ([]byte, error) {
 // Install puts the bytes of ws in the user's file, through a new file renamed over it, so that a
 // ws that runs from there keeps running. It stands for the build that ws client macos apply did.
 type Install struct {
+	M    effect.Machine
 	Path string
 	Data []byte
 }
 
 func (i Install) String() string { return "would build ws into " + i.Path }
+
+// Apply writes the new file and renames it over the old one.
+func (i Install) Apply(ctx context.Context) error {
+	if err := i.M.WriteFile(i.Path+".new", i.Data, 0o755); err != nil {
+		return err
+	}
+	_, err := i.M.Run(ctx, "mv", "-f", i.Path+".new", i.Path)
+	return err
+}
 
 // Kind is install.
 func (Install) Kind() step.ChangeKind { return step.Install }
@@ -105,7 +115,7 @@ func (t *Tunnel) program(self []byte) ([]step.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	return append(cs, Install{path, self}), nil
+	return append(cs, Install{t.M, path, self}), nil
 }
 
 // Plan plans ws, root's copy and the Mac's key.

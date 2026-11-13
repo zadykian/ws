@@ -2,7 +2,6 @@ package tunnel
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
@@ -16,11 +15,11 @@ func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 		var err error
 		switch c := c.(type) {
 		case Install:
-			err = t.install(ctx, c)
+			err = c.Apply(ctx)
 		case launchd.Launchctl:
 			err = c.Apply(ctx)
 		case KeyMake:
-			err = t.makeKey(ctx)
+			err = c.Apply(ctx)
 		default:
 			err = change.Apply(ctx, t.M, t.Out, c)
 		}
@@ -29,14 +28,4 @@ func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
 		}
 	}
 	return t.publish(ctx)
-}
-
-func (t *Tunnel) install(ctx context.Context, i Install) error {
-	if err := t.M.WriteFile(i.Path+".new", i.Data, 0o755); err != nil {
-		return fmt.Errorf("cannot install %s: %w", i.Path, err)
-	}
-	if _, err := t.M.Run(ctx, "mv", "-f", i.Path+".new", i.Path); err != nil {
-		return fmt.Errorf("cannot install %s: %w", i.Path, err)
-	}
-	return nil
 }
