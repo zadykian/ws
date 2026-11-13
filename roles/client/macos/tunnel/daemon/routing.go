@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"slices"
 
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/routing"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
@@ -35,7 +36,7 @@ func (d *Daemon) keepOut(a tunnel.Allowed) {
 // again each time.
 func (d *Daemon) route(ctx context.Context, a tunnel.Allowed) {
 	plan := tunnel.Routes(a.Want, d.routed)
-	failed, logs := RunRoutes(ctx, d.M, plan, d.Tun)
+	failed, logs := routing.RunRoutes(ctx, d.M, plan, d.Tun)
 	var applied []string
 	d.routed, d.unroutable, applied = plan.Applied(failed, a.Out, d.unroutable, d.Tun)
 	for _, line := range append(logs, applied...) {

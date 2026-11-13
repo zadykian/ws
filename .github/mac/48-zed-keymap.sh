@@ -1,5 +1,5 @@
 #!/bin/bash
-# ws client macos apply writes Zed's keymap.json as roles/client/macos/mac/zed/keymap.json, whole. A
+# ws client macos apply writes Zed's keymap.json as roles/client/macos/zed/files/keymap.json, whole. A
 # file with another first line is left, with one warning. The file then goes, and the next run must
 # write ws's back: a foreign keymap.json left behind would make every later run print the warning.
 
@@ -7,14 +7,14 @@ set -eo pipefail
 
 file=~/.config/zed/keymap.json
 fail=0
-cmp -s "$file" roles/client/macos/mac/zed/keymap.json ||
+cmp -s "$file" roles/client/macos/zed/files/keymap.json ||
     {
-        echo '::error::keymap.json is not roles/client/macos/mac/zed/keymap.json'
+        echo '::error::keymap.json is not roles/client/macos/zed/files/keymap.json'
         fail=1
     }
-sed '/^[[:space:]]*\/\//d' roles/client/macos/mac/zed/keymap.json | python3 -m json.tool >/dev/null ||
+sed '/^[[:space:]]*\/\//d' roles/client/macos/zed/files/keymap.json | python3 -m json.tool >/dev/null ||
     {
-        echo '::error::roles/client/macos/mac/zed/keymap.json does not parse under its comments'
+        echo '::error::roles/client/macos/zed/files/keymap.json does not parse under its comments'
         fail=1
     }
 printf '[]\n' >"$file"
@@ -37,7 +37,7 @@ ws client macos apply --only zed 2>&1 || {
     echo '::error::ws client macos apply --only zed failed after the file went'
     fail=1
 }
-cmp -s "$file" roles/client/macos/mac/zed/keymap.json ||
+cmp -s "$file" roles/client/macos/zed/files/keymap.json ||
     {
         echo '::error::ws client macos apply --only zed did not write ws'\''s keymap.json back'
         fail=1

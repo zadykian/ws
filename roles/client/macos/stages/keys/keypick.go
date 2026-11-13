@@ -6,7 +6,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -14,7 +14,7 @@ import (
 // fresh returns the first key that Secretive's agent lists and before lacks, or none. An agent that
 // does not answer lists none, as while Secretive starts.
 func (k *MacKey) fresh(ctx context.Context, before []sshcfg.AgentKey) sshcfg.AgentKey {
-	keys, _, _ := setup.SecretiveKeys(ctx, k.M, k.Home)
+	keys, _, _ := keys.SecretiveKeys(ctx, k.M, k.Home)
 	return unlisted(keys, before)
 }
 
@@ -32,7 +32,7 @@ func unlisted(keys, before []sshcfg.AgentKey) sshcfg.AgentKey {
 // starts. It waits up to 15 minutes, and says so where the agent is not there yet.
 func (k *MacKey) answer(ctx context.Context) ([]sshcfg.AgentKey, error) {
 	for left := 450; ; left-- {
-		keys, there, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+		keys, there, err := keys.SecretiveKeys(ctx, k.M, k.Home)
 		switch {
 		case there && err == nil:
 			return keys, nil

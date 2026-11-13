@@ -17,6 +17,9 @@ const (
 	macKey  = "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI="
 )
 
+// dir is the settings' directory the rig reads.
+const dir = "/etc/ws-tunnel"
+
 var errTest = errors.New("no")
 
 var t0 = time.Date(2026, 10, 31, 12, 0, 0, 0, time.UTC)

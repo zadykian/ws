@@ -9,7 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu"
 )
@@ -59,7 +59,7 @@ func TestWizardQueueHoldsWsMacApplyBesideCable(t *testing.T) {
 func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
 	queue := queueOf(fakeProcess())
 	nested := stageOf(t, queue, "ws client macos apply").Nested
-	if len(nested) != 1 || nested[0].Name != "ws client macos apply" || !slices.Equal(nested[0].Steps, setup.Names()) {
+	if len(nested) != 1 || nested[0].Name != "ws client macos apply" || !slices.Equal(nested[0].Steps, macos.Names()) {
 		t.Errorf("ws client macos apply holds %+v, want its steps by its name", nested)
 	}
 	run := stageOf(t, queue, "ws's run").Nested

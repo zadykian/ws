@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/routing"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
@@ -17,7 +18,7 @@ func (d *Daemon) choose(ctx context.Context) {
 		d.say("cannot list the Mac's addresses: %v", err)
 		out = nil
 	}
-	ifaces := ParseIfconfig(string(out), d.Tun)
+	ifaces := routing.ParseIfconfig(string(out), d.Tun)
 	now := d.Now()
 	info := d.peer()
 	decide := func() tunnel.Decision {
@@ -31,7 +32,7 @@ func (d *Daemon) choose(ctx context.Context) {
 	if beginning {
 		// The name is resolved anew at each round, as an address may change.
 		if d.set.Conf.Remote != "" {
-			d.resolved = Resolve(ctx, d.M, d.set.Conf.Remote)
+			d.resolved = routing.Resolve(ctx, d.M, d.set.Conf.Remote)
 			dec = decide()
 		}
 		d.seen, d.peerConf, d.misses = ifaces, d.set.Conf, 0

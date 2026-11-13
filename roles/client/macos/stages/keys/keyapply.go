@@ -7,7 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -20,7 +20,7 @@ func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 		case askKey:
 			err = k.ask(ctx, c.use)
 		default:
-			err = setup.Apply(ctx, k.M, k.Out, c)
+			err = change.Apply(ctx, k.M, k.Out, c)
 		}
 		if err != nil {
 			return err

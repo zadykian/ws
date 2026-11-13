@@ -11,7 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/git"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -21,7 +21,7 @@ const ghScopes = "write:public_key,write:ssh_signing_key"
 
 // Gh is the stage of GitHub's CLI: from Homebrew where missing, and logged in to github.com with
 // the scopes that add the Mac's keys. Its login's keys must hold the Mac's key for ws, which
-// Ubuntu's installer imports for ws's user. setup's git step, which runs after, adds git's signing
+// Ubuntu's installer imports for ws's user. The git step, which runs after, adds git's signing
 // key with that login.
 type Gh struct {
 	CLI
@@ -83,7 +83,7 @@ func (c ghLater) String() string {
 
 // ghPath returns the path of gh, and the change that installs it where PATH has none.
 func (g CLI) ghPath(ctx context.Context) (string, []step.Change, error) {
-	path, install, err := setup.FindGh(ctx, g.M, g.look)
+	path, install, err := git.FindGh(ctx, g.M, g.look)
 	if err != nil {
 		return "", nil, fmt.Errorf("%s: %w", stage.GitHub, err)
 	}

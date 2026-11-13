@@ -173,8 +173,8 @@ cut short must fail the sum. A run checks it before the install, which the case 
 ## The Mac
 
 Case 47 checks [Zed's files](mac-zed.md): `global_settings.json` must be
-`roles/client/macos/mac/zed/`'s whole, and a `settings.json` there must stay byte for byte. Case 48
-checks `keymap.json`: `roles/client/macos/mac/zed/`'s whole, a foreign one left with a warning, and
+`roles/client/macos/zed/files/`'s whole, and a `settings.json` there must stay byte for byte. Case 48
+checks `keymap.json`: `roles/client/macos/zed/files/`'s whole, a foreign one left with a warning, and
 ws's back once it goes. Case 87 checks [the zsh hook](mac-ghostty.md#the-zsh-hook): `zsh -i` must
 reset at each prompt, and the alternate screen after a 255 from `ssh` or from `cld --host` alone.
 

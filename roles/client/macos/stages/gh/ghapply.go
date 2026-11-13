@@ -3,10 +3,10 @@ package gh
 import (
 	"context"
 	"fmt"
-	"github.com/zadykian/ws/engine/core/remote"
 
+	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
@@ -15,7 +15,7 @@ func (g *Gh) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
 		var err error
 		switch c := c.(type) {
-		case setup.Run:
+		case change.Run:
 			if err = g.M.Pass(ctx, c.Root, c.Name, c.Args...); err != nil {
 				err = fmt.Errorf("%s: %s failed", stage.GitHub, c.Name+" "+c.Args[0])
 			}

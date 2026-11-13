@@ -19,17 +19,18 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - A run reports each step to a `step.Observer`, and each step ends with one event of `Done`,
   `Failed` or `Skipped`. A run inside another passes the observer on, and names its role or stage
   as `Options.Parent` ([step.go](../../engine/core/step/step.go)).
-- The Mac's steps are `setup.Mac`'s: a caller runs, reads or names them through it, and builds none
+- The Mac's steps are `macos.Mac`'s: a caller runs, reads or names them through it, and builds none
   itself. Each step is a role of one step, and `Run` runs them through `role.Run` as one role under
-  the run's parent ([mac.go](../../roles/client/macos/setup/mac.go)).
+  the run's parent ([mac.go](../../roles/client/macos/mac.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values, and it applies them. Tests compare the values.
-- A whole file that ws writes in the user's home is a `userFile`, and a directory it writes under
-  a `userDir`: a plan and a report read each alike. Its step chooses to warn or to stop at a file
-  that is not ws's ([report.go](../../roles/client/macos/setup/report.go),
-  [userdir.go](../../roles/client/macos/setup/userdir.go)). ws's lines in a user's file are `userLines`,
-  whose step warns or stops at a link or at misplaced lines
-  ([userlines.go](../../roles/client/macos/setup/userlines.go)).
+- A whole file that ws writes in the user's home is a `userfile.File`, and a directory it writes
+  under a `userfile.Dir`: a plan and a report read each alike. Its step chooses to warn or to stop
+  at a file that is not ws's
+  ([report.go](../../roles/client/macos/internal/userfile/report.go),
+  [userdir.go](../../roles/client/macos/internal/userfile/userdir.go)). ws's lines in a user's file
+  are `userfile.Lines`, whose step warns or stops at a link or at misplaced lines
+  ([userlines.go](../../roles/client/macos/internal/userfile/userlines.go)).
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.

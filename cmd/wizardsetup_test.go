@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 )
 
@@ -32,7 +32,7 @@ func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents
-	for _, name := range setup.Names() {
+	for _, name := range macos.Names() {
 		want = append(want, s.Name()+"/"+name)
 	}
 	if !slices.Equal(got, want) {
@@ -89,7 +89,7 @@ func TestWizardSetupStopsWhereTheRunDoes(t *testing.T) {
 	if _, err := s.Run(context.Background(), true); !errors.Is(err, stopped) {
 		t.Errorf("err = %v, want the stop", err)
 	}
-	if len(got.skipped) != len(setup.Names()) {
+	if len(got.skipped) != len(macos.Names()) {
 		t.Errorf("unreached = %q; want every step", got.skipped)
 	}
 }

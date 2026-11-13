@@ -1,3 +1,5 @@
+// Package daemon runs ws client macos tunnel's loop. It reads the Mac and the peer, asks the pure
+// functions of package tunnel what to do, and does it through effect.Machine and a Device.
 package daemon
 
 import (
@@ -8,6 +10,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
 
@@ -35,7 +38,7 @@ type Daemon struct {
 	// it through Send.
 	Events chan Event
 
-	set        Settings
+	set        settings.Settings
 	key        string
 	inUse      tunnel.Candidate // Tier TierNone where no path answers; empty before the first round
 	since      time.Time        // when inUse began

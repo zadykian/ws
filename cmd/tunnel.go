@@ -15,6 +15,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
+	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/wgdev"
 )
@@ -98,7 +99,7 @@ func tunnelRun(ctx context.Context, stdout io.Writer) error {
 		return err
 	}
 	defer tn.Close()
-	d := daemon.New(effect.OSMachine{}, tn, tn.Name(), daemon.Dir, stateFile, stdout)
+	d := daemon.New(effect.OSMachine{}, tn, tn.Name(), settings.Dir, stateFile, stdout)
 	d.Log = logFile
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -116,7 +117,7 @@ func tunnelStatus(ctx context.Context, p process) (string, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, statusWait)
 	defer cancel()
-	return daemon.Status(ctx, p.machine, uapi.Get, daemon.Dir, stateFile, time.Now())
+	return settings.Status(ctx, p.machine, uapi.Get, settings.Dir, stateFile, time.Now())
 }
 
 // tunnelKey makes the Mac's private key where none is, and returns the public key. The private key
@@ -125,5 +126,5 @@ func tunnelKey(ctx context.Context, p process) (string, error) {
 	if p.euid != 0 {
 		return "", errNotRoot
 	}
-	return daemon.Key(ctx, p.machine, rand.Reader, daemon.Dir)
+	return settings.Key(ctx, p.machine, rand.Reader, settings.Dir)
 }

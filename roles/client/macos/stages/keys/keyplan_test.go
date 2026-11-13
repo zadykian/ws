@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -84,7 +84,7 @@ func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
 	}
 	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=" + listed(p256)[0].Pub() + "\n")
 	p, err := k.Plan(context.Background())
-	if err != nil || len(p.Changes) != 1 || p.Changes[0] != (setup.KeyCopy{Path: copyOf(p256), Text: p256}) {
+	if err != nil || len(p.Changes) != 1 || p.Changes[0] != (change.KeyCopy{Path: copyOf(p256), Text: p256}) {
 		t.Fatalf("Plan = %v, %v; want the copy alone", p.Changes, err)
 	}
 	for _, call := range m.Calls {

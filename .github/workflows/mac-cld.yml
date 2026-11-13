@@ -173,26 +173,27 @@ jobs:
           echo "$version"
           head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws client macos apply" ||
               { echo "::error::ws.ghostty has no header"; fail=1; }
-          plain=roles/client/macos/mac
-          tail -n +2 "$support/ws.ghostty" | cmp -s - "$plain/ws.ghostty" ||
-              { echo "::error::ws.ghostty is not $plain/ws.ghostty under the header"; fail=1; }
+          plain=roles/client/macos/zed/files
+          wsghostty=roles/client/macos/ghostty/files/ws.ghostty
+          tail -n +2 "$support/ws.ghostty" | cmp -s - "$wsghostty" ||
+              { echo "::error::ws.ghostty is not $wsghostty under the header"; fail=1; }
           [ "$(grep -cx 'config-file = ?ws.ghostty' "$support/config.ghostty")" = 1 ] ||
               { echo '::error::config.ghostty does not read ws.ghostty once'; fail=1; }
           zed=~/.config/zed
           head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws client macos apply' ||
               { echo '::error::global_settings.json has no ws header'; fail=1; }
-          cmp -s "$zed/global_settings.json" "$plain/zed/global_settings.json" ||
-              { echo "::error::global_settings.json differs from the one in $plain/zed"; fail=1; }
+          cmp -s "$zed/global_settings.json" "$plain/global_settings.json" ||
+              { echo "::error::global_settings.json differs from the one in $plain"; fail=1; }
           grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$zed/settings.json" ||
               { echo '::error::settings.json has no seed for the host ws'; fail=1; }
           head -n 1 "$zed/keymap.json" | grep -q '^// Written by github.com/zadykian/ws' ||
               { echo '::error::keymap.json has no ws mark'; fail=1; }
-          cmp -s "$zed/keymap.json" "$plain/zed/keymap.json" ||
-              { echo "::error::keymap.json is not $plain/zed/keymap.json"; fail=1; }
+          cmp -s "$zed/keymap.json" "$plain/keymap.json" ||
+              { echo "::error::keymap.json is not $plain/keymap.json"; fail=1; }
           ghostty=/Applications/Ghostty.app/Contents/MacOS/ghostty
           "$ghostty" +validate-config ||
               { echo '::error::Ghostty refuses its config, above'; fail=1; }
-          family=$(sed -n 's/^font-family = \(..*\)$/\1/p' "$plain/ws.ghostty" | tail -n 1)
+          family=$(sed -n 's/^font-family = \(..*\)$/\1/p' "$wsghostty" | tail -n 1)
           fonts=$("$ghostty" +list-fonts --family="$family") ||
               { echo "::error::ghostty +list-fonts --family='$family' failed"; fail=1; }
           printf '%s\n' "$fonts"

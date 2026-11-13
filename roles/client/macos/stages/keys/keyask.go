@@ -10,7 +10,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -81,7 +82,7 @@ func (k *MacKey) login(c conf.Conf) string {
 // ask lists the agent's keys again, with the login key that an earlier answer may have named. It
 // names the key answered in mac.conf, or with no terminal, it stops and names each key's line.
 func (k *MacKey) ask(ctx context.Context, use keyUse) error {
-	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
+	keys, _, err := keys.SecretiveKeys(ctx, k.M, k.Home)
 	if err != nil {
 		return fmt.Errorf("%s: %w", stage.Key, err)
 	}
@@ -132,12 +133,12 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 // directories of the copies, which ssh and git read.
 // For ws's login key, it names Secretive's agent too, which holds the private key.
 func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) error {
-	copied, err := setup.PlanCopy(k.M, sshcfg.Expand(key.Pub(), k.Home), key.Line+"\n", k.Home)
+	copied, err := keys.PlanCopy(k.M, sshcfg.Expand(key.Pub(), k.Home), key.Line+"\n", k.Home)
 	if err != nil {
 		return err
 	}
 	for _, c := range copied {
-		if err := setup.Apply(ctx, k.M, k.Out, c); err != nil {
+		if err := change.Apply(ctx, k.M, k.Out, c); err != nil {
 			return err
 		}
 	}

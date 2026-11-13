@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/roles/client/macos/mac"
+	maczed "github.com/zadykian/ws/roles/client/macos/zed"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 )
 
@@ -29,7 +29,7 @@ func sharedFiles(t *testing.T) (fresh, zed, macZed map[string]any) {
 		t.Fatal(err)
 	}
 	fresh, _ = load(t)
-	for data, out := range map[string]*map[string]any{string(zedText): &zed, string(mac.ZedSettings): &macZed} {
+	for data, out := range map[string]*map[string]any{string(zedText): &zed, string(maczed.Settings): &macZed} {
 		if err := json.Unmarshal(withoutComments([]byte(data)), out); err != nil {
 			t.Fatal(err)
 		}
