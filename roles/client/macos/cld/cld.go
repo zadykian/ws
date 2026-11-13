@@ -36,14 +36,14 @@ func (*Cld) WaitsOn() string { return "" }
 // cldInstall installs cld with the install.sh of its latest release, as the claude role does on ws.
 // install.sh checks the binary against the release's cld.sha256 before it moves it into place, and
 // edits no shell profile.
-type cldInstall struct{}
+type cldInstall struct{ c *Cld }
 
 func (cldInstall) String() string {
 	return "would install cld into ~/.local/bin with the install.sh of its latest release"
 }
 
 // cldUpdate has cld replace itself where a newer release is out.
-type cldUpdate struct{}
+type cldUpdate struct{ c *Cld }
 
 func (cldUpdate) String() string { return "would run cld update" }
 
@@ -103,7 +103,7 @@ func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 		cs, tabs = c.update(ctx)
 		tabs = tabs || (c.Check && c.restoreTabs(ctx))
 	} else {
-		cs, tabs = []step.Change{cldInstall{}}, c.Check
+		cs, tabs = []step.Change{cldInstall{c}}, c.Check
 	}
 	if tabs && c.gains(ctx) {
 		cs = append(cs, change.Remark("would add the lines that start cld's watcher to config.d/ws, "+
@@ -139,10 +139,10 @@ func (c *Cld) update(ctx context.Context) ([]step.Change, bool) {
 		return nil, false
 	}
 	if _, err := c.M.Run(ctx, c.bin(), "help", "update"); err != nil {
-		return []step.Change{cldInstall{}}, c.Check
+		return []step.Change{cldInstall{c}}, c.Check
 	}
 	if !c.Check {
-		return []step.Change{cldUpdate{}}, false
+		return []step.Change{cldUpdate{c}}, false
 	}
 	out, err = c.M.Run(ctx, "curl", "-fsSIL", "--retry", "3", "-o", "/dev/null", "-w", "%{url_effective}",
 		cldReleases+"/latest")

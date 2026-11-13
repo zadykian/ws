@@ -4,20 +4,24 @@ import (
 	"context"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Apply installs or updates cld. A failure is a warning, and the next run tries again.
-func (c *Cld) Apply(ctx context.Context, p step.Plan) error {
-	c.tried = true
-	for _, ch := range p.Changes {
-		switch ch.(type) {
-		case cldInstall:
-			c.install(ctx)
-		case cldUpdate:
-			c.runUpdate(ctx)
-		}
-	}
+// Apply applies the changes, which install or update cld.
+func (c *Cld) Apply(ctx context.Context, p step.Plan) error { return resource.Group{}.Apply(ctx, p) }
+
+// Apply installs cld. A failure is a warning, and the next run tries again.
+func (i cldInstall) Apply(ctx context.Context) error {
+	i.c.tried = true
+	i.c.install(ctx)
+	return nil
+}
+
+// Apply has cld update itself. A failure is a warning, and the next run tries again.
+func (u cldUpdate) Apply(ctx context.Context) error {
+	u.c.tried = true
+	u.c.runUpdate(ctx)
 	return nil
 }
 
