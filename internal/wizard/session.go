@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // Session is the one way to ws of a wizard's run: the Mac's over ssh, or ws's own on the machine
@@ -122,7 +122,7 @@ func (s *Session) Secrets(ctx context.Context, in []byte, args ...string) ([]byt
 
 // Restate is State with ws's status read again, for a screen that reads ws more than once: a run
 // may have changed ws since.
-func (s *Session) Restate(ctx context.Context, version string) ([]apply.RoleState, error) {
+func (s *Session) Restate(ctx context.Context, version string) ([]role.RoleState, error) {
 	s.stale()
 	return s.State(ctx, version)
 }

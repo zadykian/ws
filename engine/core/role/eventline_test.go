@@ -1,4 +1,4 @@
-package apply_test
+package role_test
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/setup"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // fullDisk is a write that fails.
@@ -26,7 +26,7 @@ func TestEventLineHoldsNoFilesText(t *testing.T) {
 		t.Fatalf("the change holds no text to keep off: %q", c)
 	}
 	for _, kind := range []step.Kind{step.Planned, step.Started, step.Done} {
-		line, err := json.Marshal(apply.NewEventLine(step.Event{Kind: kind, Step: "Files", Changes: []step.Change{c}}))
+		line, err := json.Marshal(role.NewEventLine(step.Event{Kind: kind, Step: "Files", Changes: []step.Change{c}}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -35,7 +35,7 @@ func TestEventLineHoldsNoFilesText(t *testing.T) {
 		}
 	}
 	err := host.Group{}.Apply(context.Background(), step.Plan{Changes: []step.Change{fullDisk{c}}})
-	failed := apply.NewEventLine(step.Event{Kind: step.Failed, Step: "Files", Err: err}).Error
+	failed := role.NewEventLine(step.Event{Kind: step.Failed, Step: "Files", Err: err}).Error
 	if strings.Contains(failed, "TOKEN") || !strings.Contains(failed, "/a/.bashrc") || !strings.Contains(failed, "no space") {
 		t.Errorf("error = %q", failed)
 	}
@@ -56,15 +56,15 @@ func TestParseEventReadsWhatALineHolds(t *testing.T) {
 		{Kind: step.Skipped, Step: "Later", Index: 4, After: "Files"},
 	}
 	for _, want := range events {
-		line, err := json.Marshal(apply.NewEventLine(want))
+		line, err := json.Marshal(role.NewEventLine(want))
 		if err != nil {
 			t.Fatal(err)
 		}
-		got, ok := apply.ParseEvent(string(line))
+		got, ok := role.ParseEvent(string(line))
 		if !ok {
 			t.Fatalf("%s is no event", line)
 		}
-		if a, b := apply.NewEventLine(got), apply.NewEventLine(want); !reflect.DeepEqual(a, b) {
+		if a, b := role.NewEventLine(got), role.NewEventLine(want); !reflect.DeepEqual(a, b) {
 			t.Errorf("got %+v, want %+v", a, b)
 		}
 	}
@@ -84,7 +84,7 @@ func TestParseEventLeavesOtherLines(t *testing.T) {
 		`{"event":"done","step":"s","in`,
 		`[1,2]`,
 	} {
-		if e, ok := apply.ParseEvent(line); ok {
+		if e, ok := role.ParseEvent(line); ok {
 			t.Errorf("%q reads as %+v", line, e)
 		}
 	}

@@ -5,12 +5,12 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 func queueOf(p process) []tui.Stage {
@@ -92,8 +92,8 @@ func TestReportRolesLeavesPrepareOut(t *testing.T) {
 	report := func(stage string, s []tui.StateSection, problem string) {
 		sections, said = s, append(said, stage, problem)
 	}
-	states := []apply.RoleState{
-		{Role: apply.Prepare, Steps: []step.Report{{Step: "apt"}}},
+	states := []role.RoleState{
+		{Role: role.Prepare, Steps: []step.Report{{Step: "apt"}}},
 		{Role: "fans", Steps: []step.Report{{Step: "unit"}}},
 	}
 	reportRoles("ws's run", states, nil, report)

@@ -1,4 +1,4 @@
-package apply
+package role
 
 import (
 	"context"
@@ -16,7 +16,7 @@ const Prepare = "prepare"
 type Config struct {
 	Options
 	M effect.Machine
-	// U are the units every role of the run gets; prepareServer sets it once.
+	// U are the units every role of the run gets; the caller sets it once.
 	U   effect.Units
 	Out effect.Out
 	// Observer takes the events of every step, which name their role.

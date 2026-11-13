@@ -13,10 +13,10 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -67,7 +67,7 @@ func newUbuntuCmd(p process) *cobra.Command {
 
 // applyOptions are apply's flags: the runner's, and the --secrets path, which the runner never reads.
 type applyOptions struct {
-	apply.Options
+	role.Options
 	// Secrets is the age-encrypted file of --secrets, or empty.
 	Secrets string
 }
@@ -100,8 +100,8 @@ func newApplyCmd(p process) *cobra.Command {
 
 // serverRun is what a command that reads or sets the server up has made ready.
 type serverRun struct {
-	cfg    apply.Config
-	list   []apply.Role
+	cfg    role.Config
+	list   []role.Role
 	values values.Values
 	term   *effect.Terminal
 	out    progOut
@@ -113,7 +113,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 	if c.Flags().Changed("only") && len(opts.Only) == 0 {
 		return serverRun{}, usageError{errors.New("--only names no role")}
 	}
-	_, err := apply.Select(serverRoles(ubuntu.List(), values.Values{}, secrets.Secrets{}), opts.Only)
+	_, err := role.Select(serverRoles(ubuntu.List(), values.Values{}, secrets.Secrets{}), opts.Only)
 	if err != nil {
 		return serverRun{}, usageError{err}
 	}
@@ -139,7 +139,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 	if err != nil {
 		return serverRun{}, err
 	}
-	cfg := apply.Config{Options: opts.Options, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
+	cfg := role.Config{Options: opts.Options, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
 	r := serverRun{cfg: cfg, values: v, term: term, out: out}
 	if r.list, err = r.roles(sec); err != nil {
@@ -152,8 +152,8 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 }
 
 // roles returns the roles that --only names, closed over r's values and the secrets s.
-func (r serverRun) roles(s secrets.Secrets) ([]apply.Role, error) {
-	return apply.Select(serverRoles(ubuntu.List(), r.values, s), r.cfg.Only)
+func (r serverRun) roles(s secrets.Secrets) ([]role.Role, error) {
+	return role.Select(serverRoles(ubuntu.List(), r.values, s), r.cfg.Only)
 }
 
 // runApply sets the server up as opts say.
@@ -177,7 +177,7 @@ func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 	if drawsScreen(c, p) {
 		changed, err = applyOnScreen(c, p, r.cfg, r.list)
 	} else {
-		changed, err = apply.Run(c.Context(), r.cfg, r.list)
+		changed, err = role.Run(c.Context(), r.cfg, r.list)
 	}
 	r.term.Flush()
 	if err != nil {
@@ -186,7 +186,7 @@ func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 	if events != nil && events.err != nil {
 		return events.err
 	}
-	r.out.Say("%s", apply.Summary(changed, r.cfg.Check))
+	r.out.Say("%s", role.Summary(changed, r.cfg.Check))
 	return nil
 }
 
@@ -199,24 +199,24 @@ func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
 
 // onScreen is cfg as a work beside a screen takes it: on the screen's effects, with its output and
 // its events on b.
-func onScreen(cfg apply.Config, b *tui.Bridge) apply.Config {
+func onScreen(cfg role.Config, b *tui.Bridge) role.Config {
 	e, o := b.Effects(), b.Options(step.Options{})
 	cfg.M, cfg.Observer, cfg.Stop = e.M, o.Observer, o.Stop
 	cfg.Out, cfg.Prepare = b, prepareSteps(e.M, b)
 	return cfg
 }
 
-// applyOnScreen is apply.Run under the run screen. cfg's steps name the screen's rows, and the run
+// applyOnScreen is role.Run under the run screen. cfg's steps name the screen's rows, and the run
 // builds them again on the screen's effects. The roles it returns are those of a run that ended.
-func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []apply.Role) ([]string, error) {
+func applyOnScreen(c *cobra.Command, p process, cfg role.Config, list []role.Role) ([]string, error) {
 	var changed []string
 	p.machine = cfg.M // ws_home confines it.
 	err := drawRun(c, p, runTitle(c, cfg.Check), serverGroups(cfg, list), func(ctx context.Context, b *tui.Bridge) error {
 		run := onScreen(cfg, b)
 		var err error
-		changed, err = apply.Run(ctx, run, list)
+		changed, err = role.Run(ctx, run, list)
 		if err == nil { // A plain run prints the summary after the screen, and the log holds it.
-			b.Log(apply.Summary(changed, cfg.Check))
+			b.Log(role.Summary(changed, cfg.Check))
 		}
 		return err
 	})
@@ -227,8 +227,8 @@ func applyOnScreen(c *cobra.Command, p process, cfg apply.Config, list []apply.R
 }
 
 // serverGroups names the steps of a run, so that its screen lists each one before the first starts.
-func serverGroups(cfg apply.Config, list []apply.Role) []tui.Group {
-	groups := []tui.Group{tui.NewGroup(apply.Prepare, cfg.Prepare)}
+func serverGroups(cfg role.Config, list []role.Role) []tui.Group {
+	groups := []tui.Group{tui.NewGroup(role.Prepare, cfg.Prepare)}
 	for _, r := range list {
 		groups = append(groups, tui.NewGroup(r.Name, cfg.Steps(r)))
 	}

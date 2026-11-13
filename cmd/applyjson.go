@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // jsonEvents prints each event of a run as a line of JSON, and passes it on to next, which keeps
@@ -23,7 +23,7 @@ func newJSONEvents(w io.Writer, next step.Observer) *jsonEvents {
 // Observe prints the event, then hands it on.
 func (j *jsonEvents) Observe(e step.Event) {
 	if j.err == nil {
-		j.err = j.enc.Encode(apply.NewEventLine(e))
+		j.err = j.enc.Encode(role.NewEventLine(e))
 	}
 	j.next.Observe(e)
 }

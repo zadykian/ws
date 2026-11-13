@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // reportingWs is a far ws whose script gives its status and its report, at version.
@@ -34,7 +34,7 @@ func (w reportingWs) RunInput(ctx context.Context, in []byte, name string, args 
 	case slices.Contains(args, "status"):
 		return []byte("ws " + w.version + "\n"), nil
 	case slices.Contains(args, "state"):
-		return json.Marshal(apply.StateDoc{Version: w.version, Roles: []apply.RoleState{{Role: "base"}}})
+		return json.Marshal(role.StateDoc{Version: w.version, Roles: []role.RoleState{{Role: "base"}}})
 	}
 	return out, nil
 }

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
+	"github.com/zadykian/ws/engine/core/role"
 )
 
 // ErrOtherWs says that ws holds another version of ws, or none, as before the stage that installs
@@ -17,7 +17,7 @@ var ErrOtherWs = errors.New("ws's report refused")
 // State returns the roles of what ws server ubuntu state --json reports on ws, from a ws of this
 // version alone. It runs no state op where the status names another, and the report's own version
 // decides after that. The op changes nothing, so what the status read stands.
-func (s *Session) State(ctx context.Context, version string) ([]apply.RoleState, error) {
+func (s *Session) State(ctx context.Context, version string) ([]role.RoleState, error) {
 	st, ok := s.status(ctx)
 	if !ok {
 		return nil, errors.New("ws's report: ws's status read nothing")
@@ -29,7 +29,7 @@ func (s *Session) State(ctx context.Context, version string) ([]apply.RoleState,
 	if err != nil {
 		return nil, fmt.Errorf("ws's report: %w", err)
 	}
-	var doc apply.StateDoc
+	var doc role.StateDoc
 	if err := json.Unmarshal(out, &doc); err != nil {
 		return nil, fmt.Errorf("ws's report: %w", err)
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
+	"github.com/zadykian/ws/engine/core/role"
 )
 
 // operation is one job that a stage asks of ws through the session.
@@ -74,7 +74,7 @@ func script(op []string) []string {
 
 // event tells whether a line of a run's log is an event, and hands it on.
 func (s *Session) event(line string) bool {
-	e, ok := apply.ParseEvent(line)
+	e, ok := role.ParseEvent(line)
 	if ok && s.events != nil {
 		s.events.Observe(e)
 	}

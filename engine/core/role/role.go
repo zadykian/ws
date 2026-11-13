@@ -1,5 +1,6 @@
-// Package apply runs the server's roles for ws server ubuntu apply, each as Go steps.
-package apply
+// Package role runs a side's roles: a name and the steps it makes on a machine, in order, with their
+// state and the events' JSON lines.
+package role
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
@@ -14,7 +15,7 @@ type Role struct {
 	Steps func(m effect.Machine, u effect.Units, out effect.Out) []step.Step
 }
 
-// Options are the flags of ws server ubuntu apply.
+// Options are the flags of a run of roles.
 type Options struct {
 	// Check plans the steps and applies none.
 	Check bool

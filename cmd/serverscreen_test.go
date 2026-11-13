@@ -12,9 +12,9 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 const (
@@ -78,8 +78,8 @@ func (s stepOf) Plan(ctx context.Context) (step.Plan, error) {
 func (stepOf) Apply(context.Context, step.Plan) error { return nil }
 
 // roleOf is a role of one step, which makes takes the run's effects to build.
-func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) apply.Role {
-	return apply.Role{Name: name, Steps: func(m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
+func roleOf(name string, makes func(effect.Machine, effect.Out) step.Step) role.Role {
+	return role.Role{Name: name, Steps: func(m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 		return []step.Step{makes(m, out)}
 	}}
 }
@@ -91,13 +91,13 @@ func TestApplyOnScreenRunsTheRolesOnTheScreensEffects(t *testing.T) {
 	c, drawn := screenCommand(t, "")
 	var made []effect.Out
 	var on effect.Machine
-	role := roleOf("a", func(machine effect.Machine, out effect.Out) step.Step {
+	r := roleOf("a", func(machine effect.Machine, out effect.Out) step.Step {
 		made, on = append(made, out), machine
 		return stepOf{"one", func(context.Context) error { return nil }}
 	})
 	lines := &effecttest.Out{}
-	cfg := apply.Config{Options: apply.Options{Check: true}, M: m, Out: lines, Observer: step.Printer{Out: lines}}
-	changed, err := applyOnScreen(c, p, cfg, []apply.Role{role})
+	cfg := role.Config{Options: role.Options{Check: true}, M: m, Out: lines, Observer: step.Printer{Out: lines}}
+	changed, err := applyOnScreen(c, p, cfg, []role.Role{r})
 	if err != nil || !slices.Equal(changed, []string{"a"}) {
 		t.Fatalf("changed = %q, err = %v", changed, err)
 	}
@@ -135,17 +135,17 @@ func TestApplyOnScreenStopsPastTheCurrentStep(t *testing.T) {
 	next := roleOf("b", func(effect.Machine, effect.Out) step.Step {
 		return stepOf{"two", func(context.Context) error { reached = true; return nil }}
 	})
-	_, err := applyOnScreen(c, p, apply.Config{M: m, Out: &effecttest.Out{}}, []apply.Role{waits, next})
+	_, err := applyOnScreen(c, p, role.Config{M: m, Out: &effecttest.Out{}}, []role.Role{waits, next})
 	if !errors.Is(err, signalExit{syscall.SIGINT}) || reached {
 		t.Errorf("err = %v, the next role reached = %v", err, reached)
 	}
 }
 
 func TestServerGroupsNameEveryStepOfARun(t *testing.T) {
-	role := roleOf("a", func(effect.Machine, effect.Out) step.Step { return stepOf{name: "one"} })
-	cfg := apply.Config{M: effecttest.NewMachine(), Prepare: []step.Step{stepOf{name: "first"}}}
-	got := serverGroups(cfg, []apply.Role{role})
-	want := []tui.Group{{Name: apply.Prepare, Steps: []string{"first"}}, {Name: "a", Steps: []string{"one"}}}
+	r := roleOf("a", func(effect.Machine, effect.Out) step.Step { return stepOf{name: "one"} })
+	cfg := role.Config{M: effecttest.NewMachine(), Prepare: []step.Step{stepOf{name: "first"}}}
+	got := serverGroups(cfg, []role.Role{r})
+	want := []tui.Group{{Name: role.Prepare, Steps: []string{"first"}}, {Name: "a", Steps: []string{"one"}}}
 	if len(got) != 2 || got[0].Name != want[0].Name || !slices.Equal(got[0].Steps, want[0].Steps) ||
 		got[1].Name != want[1].Name || !slices.Equal(got[1].Steps, want[1].Steps) {
 		t.Errorf("groups = %+v, want %+v", got, want)
@@ -178,12 +178,12 @@ func TestServerApplyTakesAStepByName(t *testing.T) {
 func TestApplyOnScreenChecksTheStepsNamed(t *testing.T) {
 	p, m := serverTerminal()
 	c, drawn := screenCommand(t, "")
-	role := apply.Role{Name: "a", Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
+	r := role.Role{Name: "a", Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
 		plan := func(context.Context) error { return nil }
 		return []step.Step{stepOf{"one", plan}, stepOf{"two", plan}}
 	}}
-	cfg := apply.Config{Options: apply.Options{Check: true, Only: []string{"a/two"}}, M: m, Out: &effecttest.Out{}}
-	changed, err := applyOnScreen(c, p, cfg, []apply.Role{role})
+	cfg := role.Config{Options: role.Options{Check: true, Only: []string{"a/two"}}, M: m, Out: &effecttest.Out{}}
+	changed, err := applyOnScreen(c, p, cfg, []role.Role{r})
 	if err != nil || !slices.Equal(changed, []string{"a"}) {
 		t.Fatalf("changed = %q, err = %v", changed, err)
 	}

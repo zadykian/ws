@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // wsReport is a report of ws v1, as ws server ubuntu state --json prints it.
@@ -50,7 +50,7 @@ func TestSessionStateReturnsTheRoles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []apply.RoleState{{Role: "base", Steps: []step.Report{
+	want := []role.RoleState{{Role: "base", Steps: []step.Report{
 		{Step: "Packages", Items: []step.Item{{Kind: step.PackageItem, Name: "git", Want: "installed", Found: "missing"}},
 			Changes: []step.Pending{{Kind: step.Install, Text: "install git"}}},
 		{Step: "Later", After: "Packages"},

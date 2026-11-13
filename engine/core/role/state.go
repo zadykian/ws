@@ -1,4 +1,4 @@
-package apply
+package role
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// RoleState is what a role's steps report, as ws server ubuntu state prints it. Prepare's steps
+// RoleState is what a role's steps report, as a state report prints it. Prepare's steps
 // stand under the role Prepare.
-type RoleState struct {
+type RoleState struct { //nolint:revive // State names the function that reads them.
 	Role  string        `json:"role"`
 	Steps []step.Report `json:"steps"`
 }
 
-// StateDoc is what ws server ubuntu state --json prints, and what the Mac's wizard reads of it.
+// StateDoc is what a state report's --json prints, and what the Mac's wizard reads of it.
 // Version is that of the ws that read the steps.
 type StateDoc struct {
 	Version string      `json:"version"`
