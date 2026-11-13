@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"context"
@@ -9,16 +9,16 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-func tokenFixture(creds ...credential) (*effecttest.Machine, tokens) {
+func tokenFixture(creds ...Credential) (*effecttest.Machine, Tokens) {
 	m := effecttest.NewMachine()
 	m.Results["git config --file /home/ws/.config/git/tokens.gitconfig.ws-check --name-only --list"] = effecttest.Result{}
 	m.Results["git config --file - --name-only --list"] = effecttest.Result{
 		Out: []byte("credential.https://kept.example.helper\n")}
 	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	return m, tokens{M: m, A: a, Creds: creds}
+	return m, Tokens{M: m, A: a, Creds: creds}
 }
 
-func applyTokens(t *testing.T, tk tokens) []string {
+func applyTokens(t *testing.T, tk Tokens) []string {
 	changes, err := tk.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -35,8 +35,8 @@ func applyTokens(t *testing.T, tk tokens) []string {
 
 func TestTokensAreWrittenOnceAndNeverShown(t *testing.T) {
 	m, tk := tokenFixture(
-		credential{URL: "https://a.example", Token: "hunter2", ProactiveAuth: true},
-		credential{URL: "https://b.example", Token: "hunter3", Username: "bob"},
+		Credential{URL: "https://a.example", Token: "hunter2", ProactiveAuth: true},
+		Credential{URL: "https://b.example", Token: "hunter3", Username: "bob"},
 	)
 	m.Files["/home/ws/.config/git/tokens/kept.example"] = []byte("old")
 	m.Files["/home/ws/.config/git/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
@@ -71,7 +71,7 @@ func TestTokensLeaveEverythingWithoutEntries(t *testing.T) {
 }
 
 func TestTokensRefuseBeforeWriting(t *testing.T) {
-	m, tk := tokenFixture(credential{URL: "https://a.example", Token: "has space"})
+	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "has space"})
 	if _, err := tk.Plan(context.Background()); err == nil || strings.Contains(err.Error(), "has space") {
 		t.Errorf("got %v", err)
 	}
@@ -81,7 +81,7 @@ func TestTokensRefuseBeforeWriting(t *testing.T) {
 }
 
 func TestTokensOfADroppedURLGoWithTheWholeTruth(t *testing.T) {
-	m, tk := tokenFixture(credential{URL: "https://a.example", Token: "hunter2"})
+	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "hunter2"})
 	tk.Whole = true
 	m.Files["/home/ws/.config/git/tokens/kept.example"] = []byte("old")
 	m.Files["/home/ws/.config/git/tokens.gitconfig"] = []byte("[credential \"https://kept.example\"]\n")
@@ -125,7 +125,7 @@ func TestTokensWithAnEmptyTableRemoveWhatTheFileHeld(t *testing.T) {
 }
 
 func TestTokensRefuseALinkAtATokenFile(t *testing.T) {
-	m, tk := tokenFixture(credential{URL: "https://a.example", Token: "hunter2"})
+	m, tk := tokenFixture(Credential{URL: "https://a.example", Token: "hunter2"})
 	m.Links["/home/ws/.config/git/tokens/a.example"] = "/etc/shadow"
 	if _, err := tk.Plan(context.Background()); err == nil {
 		t.Error("no error for a link at a token file")

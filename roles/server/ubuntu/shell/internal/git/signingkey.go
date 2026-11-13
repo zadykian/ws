@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
-// signingKey makes the SSH key that signs commits, once, with no passphrase: tools and claude
+// SigningKey makes the SSH key that signs commits, once, with no passphrase: tools and claude
 // commit unattended, and the key only signs. docs/shell.md says how to revoke it, under Signing.
 // ssh-keygen refuses a path whose directory is missing, as a container's ~/.ssh may be, so the
 // directory comes first. A key in the home itself needs none. The user makes the key, and owns it.
-func signingKey(m effect.Machine, a host.Account, key string) []host.Resource {
+func SigningKey(m effect.Machine, a host.Account, key string) []host.Resource {
 	gen := keygen{M: m, User: a.User, Path: key}
 	if dir := plan.Below(a, path.Dir(key)); dir != "" {
 		return []host.Resource{a.Dir(m, dir, 0o700), gen}

@@ -1,4 +1,6 @@
-package shell
+// Package git sets up the shell role's git: ~/.gitconfig, the key that signs commits, the allowed
+// signers and the tokens for servers besides GitHub.
+package git
 
 import (
 	"context"
@@ -15,11 +17,11 @@ import (
 //go:embed files/gitconfig.tmpl files/tokens.gitconfig.tmpl
 var gitFiles embed.FS
 
-// gitconfig is ~/.gitconfig, which ws replaces whole. A real run keeps the old file beside it, as
+// Config is ~/.gitconfig, which ws replaces whole. A real run keeps the old file beside it, as
 // ~/.gitconfig.*~. A diff would print a credential that a file set up by hand holds, such as an
 // http.extraHeader, so it shows none. The settings of the machine's own go in ~/.config/git/local,
 // which the file includes last.
-type gitconfig struct {
+type Config struct {
 	M       effect.Machine
 	Out     effect.Out
 	A       host.Account
@@ -30,7 +32,7 @@ type gitconfig struct {
 	Signers string
 }
 
-func (g gitconfig) content() ([]byte, error) {
+func (g Config) content() ([]byte, error) {
 	return host.Render(gitFiles, "files/gitconfig.tmpl", struct {
 		Name, Email, Key, Signers string
 		Signing                   bool
@@ -39,7 +41,7 @@ func (g gitconfig) content() ([]byte, error) {
 
 // Plan says what the rewrite loses or replaces, then plans the file. Git must accept the new file
 // before it replaces the old one.
-func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
+func (g Config) Plan(ctx context.Context) ([]host.Change, error) {
 	content, err := g.content()
 	if err != nil {
 		return nil, err
@@ -52,7 +54,7 @@ func (g gitconfig) Plan(ctx context.Context) ([]host.Change, error) {
 	return host.Validated{File: f, Check: configCheck}.Plan(ctx)
 }
 
-func (g gitconfig) notes(ctx context.Context, content []byte) error {
+func (g Config) notes(ctx context.Context, content []byte) error {
 	old, err := g.A.ReadHome(g.M, ".gitconfig")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
@@ -82,7 +84,7 @@ func (g gitconfig) notes(ctx context.Context, content []byte) error {
 // signingNotes names the signing key that the rewrite replaces, which the note on dropped keys
 // misses as the key's name stays. It also names the signing settings of ~/.config/git/local, which
 // win over the role's.
-func (g gitconfig) signingNotes(ctx context.Context, old []byte) error {
+func (g Config) signingNotes(ctx context.Context, old []byte) error {
 	list, err := g.M.RunInput(ctx, old, "git", "config", "--file", "-", "--list")
 	if err != nil {
 		return err

@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"context"
@@ -15,7 +15,7 @@ func TestSigningKeyIsMadeOnceAsTheUser(t *testing.T) {
 	m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws ssh-keygen -q -t ed25519 -N  -f "+key] = effecttest.Result{}
 	var shown []string
 	for range 2 {
-		for _, r := range signingKey(m, a, key) {
+		for _, r := range SigningKey(m, a, key) {
 			changes, err := r.Plan(context.Background())
 			if err != nil {
 				t.Fatal(err)
@@ -39,7 +39,7 @@ func TestSigningKeyIsMadeOnceAsTheUser(t *testing.T) {
 // A key in the home itself needs no directory: a Dir at the home would be no path below it.
 func TestSigningKeyInTheHomePlansNoDirectory(t *testing.T) {
 	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
-	rs := signingKey(effecttest.NewMachine(), a, "/home/ws/id_ed25519_signing")
+	rs := SigningKey(effecttest.NewMachine(), a, "/home/ws/id_ed25519_signing")
 	if _, ok := rs[0].(keygen); len(rs) != 1 || !ok {
 		t.Errorf("resources %v; want the key alone", rs)
 	}

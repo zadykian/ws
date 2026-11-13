@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"context"
@@ -44,7 +44,7 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 	return f.Plan(ctx)
 }
 
-// allowedSigners returns the allowed signers file, whose directories the file makes.
-func allowedSigners(m effect.Machine, a host.Account, key, file, email string) []host.Resource {
+// AllowedSigners returns the allowed signers file, whose directories the file makes.
+func AllowedSigners(m effect.Machine, a host.Account, key, file, email string) []host.Resource {
 	return []host.Resource{signers{M: m, A: a, Key: key, Path: file, Email: email}}
 }

@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"maps"
@@ -10,18 +10,18 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// credential is one server's token, from the [git] table of the secrets file.
-type credential struct {
+// Credential is one server's token, from the [git] table of the secrets file.
+type Credential struct {
 	URL, Token, Username string
 	ProactiveAuth        bool
 }
 
-// credentials returns the table's entries, sorted by URL.
-func credentials(git map[string]secrets.Git) []credential {
-	var all []credential
+// Credentials returns the table's entries, sorted by URL.
+func Credentials(git map[string]secrets.Git) []Credential {
+	var all []Credential
 	for _, url := range slices.Sorted(maps.Keys(git)) {
 		g := git[url]
-		all = append(all, credential{URL: url, Token: g.Token, Username: g.Username, ProactiveAuth: g.ProactiveAuth})
+		all = append(all, Credential{URL: url, Token: g.Token, Username: g.Username, ProactiveAuth: g.ProactiveAuth})
 	}
 	return all
 }
@@ -50,11 +50,11 @@ var (
 
 // keptURLs returns the URLs whose helpers tokens.gitconfig holds and the list omits: a run keeps
 // their sections, as it keeps their tokens.
-func keptURLs(keys []string, listed []credential) []string {
+func keptURLs(keys []string, listed []Credential) []string {
 	var kept []string
 	for _, k := range keys {
 		m := helperKey.FindStringSubmatch(k)
-		if m == nil || slices.ContainsFunc(listed, func(c credential) bool { return c.URL == m[1] }) {
+		if m == nil || slices.ContainsFunc(listed, func(c Credential) bool { return c.URL == m[1] }) {
 			continue
 		}
 		kept = append(kept, m[1])
@@ -65,7 +65,7 @@ func keptURLs(keys []string, listed []credential) []string {
 
 // sections returns the helpers of tokens.gitconfig, sorted by URL: the present entries' and the
 // kept ones'. An entry's proactive auth is as the entry says, a kept one's as before.
-func sections(keys []string, creds []credential) []section {
+func sections(keys []string, creds []Credential) []section {
 	kept := keptURLs(keys, creds)
 	proactive := map[string]bool{}
 	for _, k := range keys {

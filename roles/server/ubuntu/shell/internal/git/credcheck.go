@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ var (
 
 // checkCredentials refuses the entries the role refused. The message never holds a token. keys are
 // those of tokens.gitconfig, whose kept URLs take file names too.
-func checkCredentials(creds []credential, keys []string) error {
+func checkCredentials(creds []Credential, keys []string) error {
 	var bad bool
 	files := map[string]bool{}
 	for _, c := range creds {

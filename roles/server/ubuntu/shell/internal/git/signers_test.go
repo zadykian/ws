@@ -1,4 +1,4 @@
-package shell
+package git
 
 import (
 	"context"
@@ -14,7 +14,7 @@ func TestAllowedSignersTrustTheKeyOnce(t *testing.T) {
 	m.Dirs["/home/ws/.config"] = 0o700
 	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	const key = "/home/ws/.ssh/k"
-	rs := allowedSigners(m, a, key, "/home/ws/.config/git/allowed_signers", "me@x.dev")
+	rs := AllowedSigners(m, a, key, "/home/ws/.config/git/allowed_signers", "me@x.dev")
 	run := func() []string {
 		var shown []string
 		for _, r := range rs {

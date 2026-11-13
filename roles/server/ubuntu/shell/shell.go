@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
+	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/git"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -32,20 +33,20 @@ func Steps(v values.Values, s secrets.Secrets, m effect.Machine, _ effect.Units,
 	}
 	if v.Shell.GitSigning {
 		steps = append(steps, user.WithAccount(m, keyStep, "", func(a host.Account) ([]host.Resource, error) {
-			return signingKey(m, a, v.GitSigningKey), nil
+			return git.SigningKey(m, a, v.GitSigningKey), nil
 		}), user.WithAccount(m, "Shell allowed signers", keyStep, func(a host.Account) ([]host.Resource, error) {
-			return allowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners, v.Shell.GitEmail), nil
+			return git.AllowedSigners(m, a, v.GitSigningKey, v.Shell.GitAllowedSigners, v.Shell.GitEmail), nil
 		}))
 	}
 	return append(steps, user.WithAccount(m, "Shell git config", "", func(a host.Account) ([]host.Resource, error) {
-		return []host.Resource{gitconfig{
+		return []host.Resource{git.Config{
 			M: m, Out: out, A: a, Name: v.Shell.GitName, Email: v.Shell.GitEmail, Signing: v.Shell.GitSigning,
 			Key: v.GitSigningKey, Signers: v.Shell.GitAllowedSigners,
 		}}, nil
 	}), user.WithAccount(m, "Shell secret env", "", func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{secretEnv{M: m, A: a, Env: s.Env, Whole: s.Whole}}, nil
 	}), user.WithAccount(m, "Shell git tokens", "", func(a host.Account) ([]host.Resource, error) {
-		return []host.Resource{tokens{M: m, A: a, Creds: credentials(s.Git), Whole: s.Whole}}, nil
+		return []host.Resource{git.Tokens{M: m, A: a, Creds: git.Credentials(s.Git), Whole: s.Whole}}, nil
 	}), user.WithAccount(m, "Shell clones", "", func(a host.Account) ([]host.Resource, error) {
 		return []host.Resource{clones{M: m, A: a, Clones: v.Shell.GitClones}}, nil
 	}))
