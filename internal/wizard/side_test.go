@@ -6,10 +6,10 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// TestEveryStageNamesItsMachine fails where a stage is added with no machine, as a screen could not
+// TestEveryStageStatesItsSide fails where a stage is added with no side, as a screen could not
 // put it in a list.
-func TestEveryStageNamesItsMachine(t *testing.T) {
-	want := map[string]Machine{
+func TestEveryStageStatesItsSide(t *testing.T) {
+	want := map[string]Side{
 		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
 		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: OnWs,
 		installStage: OnWs, runStage: OnWs, claudeStage: OnWs, signingStage: OnMac, tunnelStage: OnMac,
@@ -22,9 +22,9 @@ func TestEveryStageNamesItsMachine(t *testing.T) {
 		t.Fatalf("%d stages, %d wanted", len(stages), len(want))
 	}
 	for _, s := range stages {
-		got, ok := MachineOf(s)
+		got, ok := SideOf(s)
 		if !ok {
-			t.Errorf("%s names no machine", s.Name())
+			t.Errorf("%s states no side", s.Name())
 			continue
 		}
 		if got != want[s.Name()] {
@@ -33,8 +33,8 @@ func TestEveryStageNamesItsMachine(t *testing.T) {
 	}
 }
 
-func TestMachineOfAStepWithNone(t *testing.T) {
-	if m, ok := MachineOf(nil); ok || m != "" {
-		t.Errorf("MachineOf(nil) = %q, %v", m, ok)
+func TestSideOfAStepWithNone(t *testing.T) {
+	if m, ok := SideOf(nil); ok || m != "" {
+		t.Errorf("SideOf(nil) = %q, %v", m, ok)
 	}
 }

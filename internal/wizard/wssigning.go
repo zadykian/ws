@@ -20,7 +20,7 @@ type WsGitHub struct {
 	named bool
 }
 
-func (*WsGitHub) machine() Machine { return OnWs }
+func (*WsGitHub) side() Side { return OnWs }
 
 type signingByHand struct{ why string }
 

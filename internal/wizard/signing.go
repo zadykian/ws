@@ -26,8 +26,8 @@ type SigningGitHub interface {
 	lacks(ctx context.Context, ws *Session, line string) (step.Change, error)
 	// add adds line, or names it to add.
 	add(ctx context.Context, ws *Session, line string) error
-	// machine is the machine that the stage acts on.
-	machine() Machine
+	// side is the side that the stage acts on.
+	side() Side
 }
 
 // Name is the stage's name.
@@ -46,7 +46,7 @@ type MacGitHub struct {
 	Check bool
 }
 
-func (*MacGitHub) machine() Machine { return OnMac }
+func (*MacGitHub) side() Side { return OnMac }
 
 type signingAdd struct{ title string }
 

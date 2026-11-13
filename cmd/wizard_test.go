@@ -138,17 +138,17 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 	}
 }
 
-// TestWizardStagesNameTheirMachines puts the lists of the two machines on firm ground: each stage
+// TestWizardStagesStateTheirSides puts the lists of the two machines on firm ground: each stage
 // that the wizard runs names the machine it acts on.
-func TestWizardStagesNameTheirMachines(t *testing.T) {
+func TestWizardStagesStateTheirSides(t *testing.T) {
 	var out strings.Builder
 	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &wizard.Hand{},
 		sudo: &wizard.Sudo{}}, wizardOptions{})
 	onWs := 0
 	for _, s := range stages {
-		m, ok := wizard.MachineOf(s)
+		m, ok := wizard.SideOf(s)
 		if !ok {
-			t.Errorf("%s names no machine", s.Name())
+			t.Errorf("%s states no side", s.Name())
 		}
 		if m == wizard.OnWs {
 			onWs++
