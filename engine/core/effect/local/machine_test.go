@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"bytes"
@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 func TestOSMachineRun(t *testing.T) {
 	ctx := context.Background()
-	m := effect.OSMachine{Sudo: []string{"env", "WS_TEST=1"}}
+	m := local.OSMachine{Sudo: []string{"env", "WS_TEST=1"}}
 	if out, err := m.Run(ctx, "echo", "hi"); err != nil || string(out) != "hi\n" {
 		t.Errorf("Run = %q, %v; want hi", out, err)
 	}
@@ -31,7 +31,7 @@ func TestOSMachineRun(t *testing.T) {
 func TestOSMachineRunShownAndPass(t *testing.T) {
 	ctx := context.Background()
 	var stderr strings.Builder
-	m := effect.OSMachine{Sudo: []string{"env", "WS_TEST=1"}, Stderr: &stderr}
+	m := local.OSMachine{Sudo: []string{"env", "WS_TEST=1"}, Stderr: &stderr}
 	if out, err := m.RunShown(ctx, false, "sh", "-c", "echo out; echo err >&2"); err != nil || string(out) != "out\n" {
 		t.Errorf("RunShown = %q, %v; want out", out, err)
 	}
@@ -51,7 +51,7 @@ func TestOSMachineRunShownAndPass(t *testing.T) {
 }
 
 func TestOSMachineStat(t *testing.T) {
-	m := effect.OSMachine{}
+	m := local.OSMachine{}
 	dir := t.TempDir()
 	sub := filepath.Join(dir, "sub")
 	if err := os.Mkdir(sub, 0o700); err != nil {
@@ -75,7 +75,7 @@ func TestOSMachineStat(t *testing.T) {
 // A link whose target fails to stat for another reason than a missing file, ENOTDIR or ELOOP here,
 // keeps its Link. Tests run as root, so EACCES cannot be staged.
 func TestOSMachineStatKeepsALinkItCannotFollow(t *testing.T) {
-	m := effect.OSMachine{}
+	m := local.OSMachine{}
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "file"), nil, 0o600); err != nil {
 		t.Fatal(err)
@@ -96,13 +96,13 @@ func TestOSMachineReadDir(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "b"), nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if names, err := (effect.OSMachine{}).ReadDir(dir); err != nil || len(names) != 1 || names[0] != "b" {
+	if names, err := (local.OSMachine{}).ReadDir(dir); err != nil || len(names) != 1 || names[0] != "b" {
 		t.Errorf("ReadDir = %v, %v; want [b]", names, err)
 	}
 }
 
 func TestOSMachineMkdirChmod(t *testing.T) {
-	m := effect.OSMachine{}
+	m := local.OSMachine{}
 	dir := filepath.Join(t.TempDir(), "d")
 	if err := m.Mkdir(dir, 0o700); err != nil {
 		t.Fatal(err)
@@ -116,7 +116,7 @@ func TestOSMachineMkdirChmod(t *testing.T) {
 }
 
 func TestOSMachineRunInput(t *testing.T) {
-	m := effect.OSMachine{}
+	m := local.OSMachine{}
 	out, err := m.RunInput(context.Background(), []byte("echo $1\n"), "sh", "-s", "--", "ok")
 	if err != nil || string(out) != "ok\n" {
 		t.Errorf("RunInput = %q, %v; want ok", out, err)
@@ -125,7 +125,7 @@ func TestOSMachineRunInput(t *testing.T) {
 
 func TestOSMachinePassInput(t *testing.T) {
 	var stderr bytes.Buffer
-	m := effect.OSMachine{Stderr: &stderr}
+	m := local.OSMachine{Stderr: &stderr}
 	if err := m.PassInput(context.Background(), []byte("echo $1; echo err >&2\n"), "sh", "-s", "--", "ok"); err != nil {
 		t.Fatal(err)
 	}

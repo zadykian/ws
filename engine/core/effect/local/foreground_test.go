@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"bufio"
@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
-var _ effect.Foreground = effect.OSMachine{}
+var _ effect.Foreground = local.OSMachine{}
 
 // shown puts a pipe in place of os.Stderr, and returns what reads it.
 func shown(t *testing.T) *bufio.Reader {
@@ -42,7 +43,7 @@ func TestOSMachinePassForeground(t *testing.T) {
 	typed(t, "typed\n")
 	terminal := shown(t)
 	var pane bytes.Buffer
-	m := effect.OSMachine{Sudo: []string{"env", "WS_TEST=1"}, Stdin: effect.NoStdin, Stderr: &pane}
+	m := local.OSMachine{Sudo: []string{"env", "WS_TEST=1"}, Stdin: local.NoStdin, Stderr: &pane}
 	err := m.PassForeground(t.Context(), true, "sh", "-c",
 		`read -r line; echo "$line $WS_TEST $GIT_TERMINAL_PROMPT"; echo err >&2`)
 	if err != nil {
@@ -68,7 +69,7 @@ func ended(t *testing.T, script string) (*bufio.Reader, error) {
 	defer cancel()
 	done := make(chan error, 1)
 	go func() {
-		err := (effect.OSMachine{}).PassForeground(ctx, false, "sh", "-c", script)
+		err := (local.OSMachine{}).PassForeground(ctx, false, "sh", "-c", script)
 		_ = os.Stderr.Close()
 		done <- err
 	}()

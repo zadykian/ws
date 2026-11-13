@@ -1,4 +1,4 @@
-package effect
+package local
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"strconv"
 	"strings"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // rootWrite fills the new file under umask 077, so that no one but root reads it before its mode
@@ -34,27 +36,27 @@ func (m OSMachine) ReadRootFile(path string) ([]byte, error) {
 }
 
 // RootAttrs reads the owner and mode through sudo's stat.
-func (m OSMachine) RootAttrs(path string) (Attrs, error) {
+func (m OSMachine) RootAttrs(path string) (effect.Attrs, error) {
 	out, err := m.RunRoot(context.Background(), "sh", "-c", rootStat, "sh", path)
 	if err != nil {
-		return Attrs{}, err
+		return effect.Attrs{}, err
 	}
 	return parseAttrs(path, string(out))
 }
 
-func parseAttrs(path, out string) (Attrs, error) {
+func parseAttrs(path, out string) (effect.Attrs, error) {
 	out = strings.TrimSpace(out)
 	if out == "missing" {
-		return Attrs{}, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
+		return effect.Attrs{}, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
 	}
 	var uid, gid int
 	owner, bits, ok := strings.Cut(out, " ")
 	if _, err := fmt.Sscanf(owner, "%d:%d", &uid, &gid); err != nil || !ok {
-		return Attrs{}, fmt.Errorf("stat %s: unexpected output %q", path, out)
+		return effect.Attrs{}, fmt.Errorf("stat %s: unexpected output %q", path, out)
 	}
 	n, err := strconv.ParseUint(bits, 8, 32)
 	if err != nil {
-		return Attrs{}, fmt.Errorf("stat %s: unexpected output %q", path, out)
+		return effect.Attrs{}, fmt.Errorf("stat %s: unexpected output %q", path, out)
 	}
-	return Attrs{UID: uid, GID: gid, Mode: fs.FileMode(n).Perm()}, nil
+	return effect.Attrs{UID: uid, GID: gid, Mode: fs.FileMode(n).Perm()}, nil
 }

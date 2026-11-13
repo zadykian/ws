@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"archive/tar"
@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/host"
 )
 
@@ -41,7 +41,7 @@ func tarGz(t *testing.T, names ...string) string {
 
 func TestOSMachineUnpackStripsAndMakesTheDirectory(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "new")
-	err := effect.OSMachine{}.Unpack(context.Background(), tarGz(t, "top/a/f"), dir, 1)
+	err := local.OSMachine{}.Unpack(context.Background(), tarGz(t, "top/a/f"), dir, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestUnpackFileThroughTheMachine(t *testing.T) {
 
 func TestOSMachineUnpackRefusesAnEntryThatLeavesTheDirectory(t *testing.T) {
 	base := t.TempDir()
-	err := effect.OSMachine{}.Unpack(context.Background(), tarGz(t, "top/../../x"), filepath.Join(base, "d"), 1)
+	err := local.OSMachine{}.Unpack(context.Background(), tarGz(t, "top/../../x"), filepath.Join(base, "d"), 1)
 	if err == nil {
 		t.Fatal("a name that goes up unpacked")
 	}
@@ -89,7 +89,7 @@ func TestOSMachineUnpackRefusesALinkThatLeavesTheDirectory(t *testing.T) {
 		if err := os.WriteFile(file, buf.Bytes(), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		if err := (effect.OSMachine{}).Unpack(context.Background(), file, dir, 1); err == nil {
+		if err := (local.OSMachine{}).Unpack(context.Background(), file, dir, 1); err == nil {
 			t.Errorf("a link to %s unpacked", target)
 		}
 		if _, err := os.Lstat(filepath.Join(dir, "l")); err == nil {

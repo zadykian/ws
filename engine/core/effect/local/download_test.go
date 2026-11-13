@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 func TestDownloadRenamesOnAMatchAlone(t *testing.T) {
@@ -26,7 +27,7 @@ func TestDownloadRenamesOnAMatchAlone(t *testing.T) {
 	defer srv.Close()
 	path := filepath.Join(t.TempDir(), "f")
 	a := effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o644}
-	m := effect.OSMachine{}
+	m := local.OSMachine{}
 	ctx := context.Background()
 	if err := m.Download(ctx, srv.URL+"/f", path, strings.Repeat("0", 64), a); !errors.Is(err, effect.ErrSHA256) || !strings.Contains(err.Error(), "SHA-256 is ") {
 		t.Errorf("a wrong sum: err = %v, want an ErrSHA256 error", err)

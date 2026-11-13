@@ -1,4 +1,4 @@
-package effect
+package local
 
 import (
 	"context"
@@ -10,11 +10,13 @@ import (
 	"path/filepath"
 
 	"github.com/google/renameio/v2"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // Download streams the URL through SHA-256 into a pending file, and renames it over path only
 // where the sum, in hex, matches. Otherwise nothing is left and path is unchanged.
-func (OSMachine) Download(ctx context.Context, url, path, sum string, a Attrs) error {
+func (OSMachine) Download(ctx context.Context, url, path, sum string, a effect.Attrs) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -38,7 +40,7 @@ func (OSMachine) Download(ctx context.Context, url, path, sum string, a Attrs) e
 		return fmt.Errorf("download %s: %w", url, err)
 	}
 	if got := hex.EncodeToString(h.Sum(nil)); got != sum {
-		return fmt.Errorf("download %s: %w is %s, want %s", url, ErrSHA256, got, sum)
+		return fmt.Errorf("download %s: %w is %s, want %s", url, effect.ErrSHA256, got, sum)
 	}
 	if err := f.Chmod(a.Mode.Perm()); err != nil {
 		return err

@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // typed puts a file that holds text in place of os.Stdin, as a test's own is empty.
@@ -39,12 +39,12 @@ func TestOSMachinePassStdin(t *testing.T) {
 	}{
 		{"nil keeps ws's own", nil, "typed\n"},
 		{"a reader", strings.NewReader("given\n"), "given\n"},
-		{"none ends at once", effect.NoStdin, ""},
+		{"none ends at once", local.NoStdin, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var out bytes.Buffer
-			m := effect.OSMachine{Stdin: tt.stdin, Stderr: &out}
+			m := local.OSMachine{Stdin: tt.stdin, Stderr: &out}
 			if err := m.Pass(t.Context(), false, "cat"); err != nil {
 				t.Fatal(err)
 			}
@@ -60,11 +60,11 @@ func TestOSMachineStdinStopsGitAndSSHAsking(t *testing.T) {
 	t.Setenv("SSH_ASKPASS", "own")
 	t.Setenv("SSH_ASKPASS_REQUIRE", "never")
 	const show, want = `echo "$GIT_TERMINAL_PROMPT $SSH_ASKPASS $SSH_ASKPASS_REQUIRE"`, "0 false force\n"
-	if out, err := (effect.OSMachine{}).Run(t.Context(), "sh", "-c", show); err != nil || string(out) != "1 own never\n" {
+	if out, err := (local.OSMachine{}).Run(t.Context(), "sh", "-c", show); err != nil || string(out) != "1 own never\n" {
 		t.Errorf("a plain run gave %q, %v; want ws's own", out, err)
 	}
 	var passed bytes.Buffer
-	m := effect.OSMachine{Stdin: effect.NoStdin, Stderr: &passed}
+	m := local.OSMachine{Stdin: local.NoStdin, Stderr: &passed}
 	if out, err := m.Run(t.Context(), "sh", "-c", show); err != nil || string(out) != want {
 		t.Errorf("Run gave %q, %v; want %q", out, err, want)
 	}

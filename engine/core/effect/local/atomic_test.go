@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 func TestWriteAtomic(t *testing.T) {
@@ -14,7 +15,7 @@ func TestWriteAtomic(t *testing.T) {
 		t.Fatal(err)
 	}
 	a := effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o640}
-	if err := (effect.OSMachine{}).WriteAtomic(path, []byte("new"), a); err != nil {
+	if err := (local.OSMachine{}).WriteAtomic(path, []byte("new"), a); err != nil {
 		t.Fatal(err)
 	}
 	got, err := os.ReadFile(path) //nolint:gosec // a temporary path of the test
@@ -35,7 +36,7 @@ func TestSymlinkReplaces(t *testing.T) {
 	if err := os.WriteFile(path, []byte("file"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	m := effect.OSMachine{}
+	m := local.OSMachine{}
 	for _, target := range []string{"/a", "/b"} {
 		if err := m.Symlink(target, path); err != nil {
 			t.Fatal(err)

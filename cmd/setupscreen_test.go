@@ -12,6 +12,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 )
@@ -67,7 +68,7 @@ func TestMacApplyDrawsNothingWithPlain(t *testing.T) {
 
 func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 	p, _ := macTerminal()
-	p.machine = effect.OSMachine{}
+	p.machine = local.OSMachine{}
 	c, _ := screenCommand(t, "")
 	var machines []effect.Machine
 	var outs []effect.Out
@@ -84,8 +85,8 @@ func TestSetupOnScreenRunsOnTheScreensEffects(t *testing.T) {
 	if _, ok := outs[0].(*tui.Bridge); !ok {
 		t.Errorf("the run's steps got %T, want the screen's bridge", outs[0])
 	}
-	m, ok := machines[0].(effect.OSMachine)
-	if !ok || m.Ticket == nil || m.Stdin != effect.NoStdin || m.Stderr == nil {
+	m, ok := machines[0].(local.OSMachine)
+	if !ok || m.Ticket == nil || m.Stdin != local.NoStdin || m.Stderr == nil {
 		t.Errorf("the run's machine is %+v, want one that keeps its commands off the terminal", machines[0])
 	}
 }

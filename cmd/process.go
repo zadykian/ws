@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // process is what the commands take from the process they run in. Execute builds it from os, and
@@ -48,7 +49,7 @@ func newProcess() process {
 	info, ok := debug.ReadBuildInfo()
 	pwd, _ := os.Getwd()
 	return process{
-		machine:  effect.OSMachine{},
+		machine:  local.OSMachine{},
 		getenv:   os.Getenv,
 		lookup:   os.LookupEnv,
 		setenv:   os.Setenv,

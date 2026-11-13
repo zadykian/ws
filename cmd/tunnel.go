@@ -13,7 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
@@ -99,7 +99,7 @@ func tunnelRun(ctx context.Context, stdout io.Writer) error {
 		return err
 	}
 	defer tn.Close()
-	d := daemon.New(effect.OSMachine{}, tn, tn.Name(), settings.Dir, stateFile, stdout)
+	d := daemon.New(local.OSMachine{}, tn, tn.Name(), settings.Dir, stateFile, stdout)
 	d.Log = logFile
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

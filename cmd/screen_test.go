@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/tui"
 )
 
@@ -75,19 +76,19 @@ func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
 	var got effect.Machine
 	c, _ := screenCommand(t, "")
 	p := fakeProcess()
-	p.machine = effect.OSMachine{Sudo: []string{}, Confine: "/home/z"}
+	p.machine = local.OSMachine{Sudo: []string{}, Confine: "/home/z"}
 	err := drawRun(c, p, "title", nil, func(_ context.Context, b *tui.Bridge) error {
 		got = b.Effects().M
 		return nil
 	})
-	m, ok := got.(effect.OSMachine)
+	m, ok := got.(local.OSMachine)
 	if err != nil || !ok {
 		t.Fatalf("machine = %T, err = %v", got, err)
 	}
 	if m.Sudo == nil || len(m.Sudo) != 0 || m.Ticket != nil || m.Confine != "/home/z" {
 		t.Errorf("sudo = %q, a ticket = %v, confine = %q", m.Sudo, m.Ticket != nil, m.Confine)
 	}
-	if m.Stdin != effect.NoStdin || m.Stderr == nil {
+	if m.Stdin != local.NoStdin || m.Stderr == nil {
 		t.Errorf("stdin = %v, stderr = %v, want a command off the terminal", m.Stdin, m.Stderr)
 	}
 }

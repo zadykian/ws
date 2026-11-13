@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
@@ -131,7 +132,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 		return serverRun{}, err
 	}
 	// ws_home is known now: the machine's writes under it stay inside it.
-	if m, ok := p.machine.(effect.OSMachine); ok {
+	if m, ok := p.machine.(local.OSMachine); ok {
 		m.Confine = v.Home
 		p.machine = m
 	}

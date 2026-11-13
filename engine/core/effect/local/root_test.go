@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"errors"
@@ -9,10 +9,11 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 func TestOSMachineFiles(t *testing.T) {
-	m := effect.OSMachine{Sudo: []string{"env"}, Owner: fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())}
+	m := local.OSMachine{Sudo: []string{"env"}, Owner: fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())}
 	path := filepath.Join(t.TempDir(), "f")
 	if _, err := m.ReadFile(path); !errors.Is(err, fs.ErrNotExist) {
 		t.Errorf("ReadFile of a missing file: err = %v, want fs.ErrNotExist", err)
@@ -36,7 +37,7 @@ func TestOSMachineFiles(t *testing.T) {
 }
 
 func TestOSMachineRootFiles(t *testing.T) {
-	m := effect.OSMachine{Sudo: []string{"env"}, Owner: fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())}
+	m := local.OSMachine{Sudo: []string{"env"}, Owner: fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())}
 	dir := t.TempDir()
 	path := filepath.Join(dir, "f")
 	if _, err := m.RootAttrs(path); !errors.Is(err, fs.ErrNotExist) {
@@ -60,7 +61,7 @@ func TestOSMachineRootFiles(t *testing.T) {
 	if entries, _ := os.ReadDir(dir); len(entries) != 1 {
 		t.Errorf("the directory holds %d files, want the target alone", len(entries))
 	}
-	if err := (effect.OSMachine{Sudo: []string{"false"}}).WriteRootFile(path, nil, 0o600); err == nil {
+	if err := (local.OSMachine{Sudo: []string{"false"}}).WriteRootFile(path, nil, 0o600); err == nil {
 		t.Error("WriteRootFile through a failing sudo: err = nil")
 	}
 }

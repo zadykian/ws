@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"os"
@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // loggedSudo is a sudo that runs its command bare, and keeps a line of each in the log it returns.
 // It fails a chown or chmod whose -- follows an operand, as the Mac's tools read that -- as a file.
-func loggedSudo(t *testing.T) (effect.OSMachine, string) {
+func loggedSudo(t *testing.T) (local.OSMachine, string) {
 	log := filepath.Join(t.TempDir(), "sudo.log")
-	return effect.OSMachine{Sudo: []string{"sh", "-c", `printf '%s\n' "$1" >>"$0" && case $1$3 in chown-- | chmod--) exit 64 ;; esac && exec "$@"`, log}}, log
+	return local.OSMachine{Sudo: []string{"sh", "-c", `printf '%s\n' "$1" >>"$0" && case $1$3 in chown-- | chmod--) exit 64 ;; esac && exec "$@"`, log}}, log
 }
 
 func sudoRan(t *testing.T, log string) string {
@@ -26,7 +27,7 @@ func sudoRan(t *testing.T, log string) string {
 
 func TestAnotherOwnersFilesGoThroughSudo(t *testing.T) {
 	m, log := loggedSudo(t)
-	effect.RunAs(t, os.Getuid()+1, false)
+	local.RunAs(t, os.Getuid()+1, false)
 	t.Setenv("HOME", t.TempDir())
 	dir, own := t.TempDir(), effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o640}
 	if err := m.WriteAtomic(dir+"/f", []byte("new"), own); err != nil {
@@ -58,13 +59,13 @@ func TestAnotherOwnersFilesGoThroughSudo(t *testing.T) {
 func TestOwnAndConfinedFilesStayOffSudo(t *testing.T) {
 	m, log := loggedSudo(t)
 	dir, own := t.TempDir(), effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o640}
-	effect.RunAs(t, own.UID+1, false)
+	local.RunAs(t, own.UID+1, false)
 	m.Confine = dir
 	if err := m.WriteAtomic(dir+"/f", []byte("new"), own); err != nil {
 		t.Fatal(err)
 	}
 	m.Confine = ""
-	effect.RunAs(t, own.UID, true)
+	local.RunAs(t, own.UID, true)
 	if err := m.WriteAtomic(dir+"/g", []byte("new"), own); err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +83,7 @@ func TestOwnAndConfinedFilesStayOffSudo(t *testing.T) {
 func TestHomeAndLinksStayOffSudo(t *testing.T) {
 	m, log := loggedSudo(t)
 	dir, own := t.TempDir(), effect.Attrs{UID: os.Getuid(), GID: os.Getgid(), Mode: 0o640}
-	effect.RunAs(t, own.UID+1, false)
+	local.RunAs(t, own.UID+1, false)
 	t.Setenv("HOME", dir)
 	if err := m.WriteAtomic(dir+"/f", []byte("new"), own); err != nil {
 		t.Fatal(err)

@@ -227,7 +227,7 @@ as this screen has no window. sudo's password comes through a question over the 
 
 A screen owns the terminal, so a step's commands stay off it.
 
-- A screen sets `Stdin` of `effect.OSMachine` to `effect.NoStdin`, and a command finds the end of
+- A screen sets `Stdin` of `local.OSMachine` to `local.NoStdin`, and a command finds the end of
   its input at once.
 - `Bridge.Machine` sets `Stderr` to a pipe that sends what the commands print to the screen, a
   whole line at a time. What `Pass` prints then reaches the window, and leaves the terminal alone.
@@ -271,7 +271,7 @@ takes it from `Bridge.Effects`, with `Bridge.Foreground` and the run's stop:
   as `sudo -n` can run nothing. The error says to run with `--plain`, where sudo asks each time.
 - A ticker runs `sudo -n -v` each minute while a ticket holds, so that a long step, or a child's
   own sudo, finds one.
-- A stage that has sudo ask ahead of its lines calls `effect.Validate`. That is `sudo -v` in plain
+- A stage that has sudo ask ahead of its lines calls `local.Validate`. That is `sudo -v` in plain
   mode, and the same field under a screen.
 
 ws runs as root on the server, with no sudo, so there it asks nothing. `ws client macos apply` and

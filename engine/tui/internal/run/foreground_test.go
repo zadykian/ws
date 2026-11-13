@@ -8,7 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -19,7 +19,7 @@ func TestForegroundHoldsTheScreenOffForTheCommand(t *testing.T) {
 	b := newBridge(nil)
 	b.suspend = func() error { log = append(log, "suspend"); return nil }
 	b.resume = func() error { log = append(log, "resume"); return nil }
-	err := b.Foreground(effect.OSMachine{}).PassForeground(t.Context(), false, "ws-no-such-command")
+	err := b.Foreground(local.OSMachine{}).PassForeground(t.Context(), false, "ws-no-such-command")
 	if err == nil {
 		t.Error("a command that does not exist ran")
 	}
@@ -39,7 +39,7 @@ func TestForegroundPrintsDirectionsOnTheTerminalItLeft(t *testing.T) {
 	b.resume = func() error { log = append(log, "resume, "+printed.String()); return nil }
 	b.Say("ssh-keygen asks its passphrase twice")
 	for range 2 {
-		_ = b.Foreground(effect.OSMachine{}).PassForeground(t.Context(), false, "ws-no-such-command")
+		_ = b.Foreground(local.OSMachine{}).PassForeground(t.Context(), false, "ws-no-such-command")
 	}
 	said := "ssh-keygen asks its passphrase twice\n"
 	if want := []string{"suspend, ", "resume, " + said, "suspend, " + said, "resume, " + said}; !slices.Equal(log, want) {
@@ -55,7 +55,7 @@ func TestForegroundHasNoDirectionsOfAnEarlierStep(t *testing.T) {
 	b.pipe = &pipe{bridge: b}
 	b.Say("the step before is done")
 	b.Observe(step.Event{Step: "keys", Kind: step.Started})
-	_ = b.Foreground(effect.OSMachine{}).PassForeground(t.Context(), false, "ws-no-such-command")
+	_ = b.Foreground(local.OSMachine{}).PassForeground(t.Context(), false, "ws-no-such-command")
 	if printed.Len() != 0 {
 		t.Errorf("printed %q, want nothing", printed.String())
 	}
@@ -68,7 +68,7 @@ func TestForegroundTakesTheTicketWhileTheScreenCanAsk(t *testing.T) {
 	b := newBridge(nil)
 	b.suspend = func() error { log = append(log, "suspend"); return nil }
 	b.resume = func() error { log = append(log, "resume"); return nil }
-	m := effect.OSMachine{Sudo: []string{"ws-no-such-sudo"}, Ticket: func() error { log = append(log, "ticket"); return nil }}
+	m := local.OSMachine{Sudo: []string{"ws-no-such-sudo"}, Ticket: func() error { log = append(log, "ticket"); return nil }}
 	if err := b.Foreground(m).PassForeground(t.Context(), true, "true"); err == nil {
 		t.Error("a sudo that does not exist ran")
 	}
@@ -81,14 +81,14 @@ func TestForegroundKeepsTheScreenWhereSudoRefuses(t *testing.T) {
 	refused := errors.New("refused")
 	b := newBridge(nil)
 	b.suspend = func() error { t.Error("the screen left for a command with no ticket"); return nil }
-	m := effect.OSMachine{Ticket: func() error { return refused }}
+	m := local.OSMachine{Ticket: func() error { return refused }}
 	if err := b.Foreground(m).PassForeground(t.Context(), true, "true"); !errors.Is(err, refused) {
 		t.Errorf("err = %v, want the ticket's", err)
 	}
 }
 
 func TestForegroundTakesNoTicketForTheUsersCommand(t *testing.T) {
-	m := effect.OSMachine{Ticket: func() error { return errors.New("a ticket for the user's command") }}
+	m := local.OSMachine{Ticket: func() error { return errors.New("a ticket for the user's command") }}
 	if err := newBridge(nil).Foreground(m).PassForeground(t.Context(), false, "true"); err != nil {
 		t.Errorf("err = %v", err)
 	}
@@ -99,7 +99,7 @@ func TestForegroundRunsNothingWhereTheScreenCannotLeave(t *testing.T) {
 	b := newBridge(nil)
 	b.suspend = func() error { return boom }
 	b.resume = func() error { t.Error("resumed a screen that never left"); return nil }
-	err := b.Foreground(effect.OSMachine{}).PassForeground(t.Context(), false, "true")
+	err := b.Foreground(local.OSMachine{}).PassForeground(t.Context(), false, "true")
 	if !errors.Is(err, boom) {
 		t.Errorf("err = %v, want the suspension's", err)
 	}
@@ -109,7 +109,7 @@ func TestForegroundReportsAScreenThatCannotResume(t *testing.T) {
 	boom := errors.New("boom")
 	b := newBridge(nil)
 	b.resume = func() error { return boom }
-	if err := b.Foreground(effect.OSMachine{}).PassForeground(t.Context(), false, "true"); !errors.Is(err, boom) {
+	if err := b.Foreground(local.OSMachine{}).PassForeground(t.Context(), false, "true"); !errors.Is(err, boom) {
 		t.Errorf("err = %v, want the resume's", err)
 	}
 }

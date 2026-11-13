@@ -1,4 +1,4 @@
-package effect
+package local
 
 import (
 	"bytes"
@@ -13,6 +13,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // screenGrace bounds a command's end past its context under a screen. It stays above the 2 seconds
@@ -233,8 +235,8 @@ func commandError(cmd *exec.Cmd, err error) error {
 
 // Stat describes the path. A link whose target it cannot stat has a Link and no Mode, whatever the
 // error. A guard that looks for links must see one that points into a directory it cannot search.
-func (OSMachine) Stat(path string) (Info, error) {
-	var info Info
+func (OSMachine) Stat(path string) (effect.Info, error) {
+	var info effect.Info
 	if l, err := os.Readlink(path); err == nil {
 		info.Link = l
 	}
@@ -243,7 +245,7 @@ func (OSMachine) Stat(path string) (Info, error) {
 		if info.Link != "" {
 			return info, nil
 		}
-		return Info{}, err
+		return effect.Info{}, err
 	}
 	info.Mode = fi.Mode()
 	return info, nil

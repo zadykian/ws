@@ -3,7 +3,7 @@ package link
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
@@ -32,11 +32,11 @@ func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effectt
 }
 
 func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {
-	m := effect.OSMachine{Ticket: func() error { return effect.ErrNoTicket }}
+	m := local.OSMachine{Ticket: func() error { return local.ErrNoTicket }}
 	_, planned := (&tools.Setup{M: m, LookPath: func(string) (string, error) { return "", nil }}).Plan(context.Background())
 	tun, _ := newTunnel(keyA, session.Status{}, false)
 	tun.M = m
-	if err := tun.Apply(context.Background(), step.Plan{}); !errors.Is(err, effect.ErrNoTicket) || !errors.Is(planned, err) {
+	if err := tun.Apply(context.Background(), step.Plan{}); !errors.Is(err, local.ErrNoTicket) || !errors.Is(planned, err) {
 		t.Errorf("Apply = %v, Plan = %v", err, planned)
 	}
 }

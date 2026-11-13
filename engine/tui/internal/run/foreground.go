@@ -6,20 +6,21 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // foreground runs a command that talks to the maintainer with the terminal, while the screen is
 // suspended.
 type foreground struct {
 	b *Bridge
-	m effect.OSMachine
+	m local.OSMachine
 }
 
 // Foreground returns the machine's PassForeground, behind the screen's suspension: the screen
 // leaves the terminal first, and draws again once the command has ended. m is a machine that
 // Machine returned, so that a root command gets its ticket, while the screen can still ask. Where
 // the screen can't leave, the command doesn't run.
-func (b *Bridge) Foreground(m effect.OSMachine) effect.Foreground {
+func (b *Bridge) Foreground(m local.OSMachine) effect.Foreground {
 	return foreground{b, m}
 }
 

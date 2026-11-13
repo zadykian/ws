@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // A pipe of the test's own stands for a screen's: exec copies to it, as it does to any Stderr that
@@ -31,7 +31,7 @@ func TestPassUnderAScreenEnds(t *testing.T) {
 			r, w := io.Pipe()
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			m := effect.OSMachine{Stdin: effect.NoStdin, Stderr: w}
+			m := local.OSMachine{Stdin: local.NoStdin, Stderr: w}
 			var err error
 			go func() {
 				err = m.Pass(ctx, false, "sh", "-c", tt.script)

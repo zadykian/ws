@@ -1,4 +1,6 @@
-package effect
+// Package local is the effect.Machine of the machine that ws runs on: files, commands, sudo and
+// downloads.
+package local
 
 import (
 	"context"
@@ -9,12 +11,14 @@ import (
 	"strconv"
 
 	"github.com/google/renameio/v2"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // WriteAtomic fills a pending file beside path, gives it the owner and mode of a, and renames it
 // over path. So a reader sees the old file or the new one whole. Another owner than ws's own
 // needs root, which sudo gives where ws runs as a user.
-func (m OSMachine) WriteAtomic(path string, data []byte, a Attrs) error {
+func (m OSMachine) WriteAtomic(path string, data []byte, a effect.Attrs) error {
 	if a.UID >= 0 && m.asRoot(path) && another(path, a.UID) {
 		return m.sudoWrite(path, data, fmt.Sprintf("%d:%d", a.UID, a.GID), a.Mode)
 	}

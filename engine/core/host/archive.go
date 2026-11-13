@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/internal/archive"
 )
 
@@ -17,5 +17,5 @@ func Unpack(r io.Reader, root *os.Root, strip int) error {
 
 // UnpackFile makes dir with mode 0755, and unpacks the archive file in it as Unpack does.
 func UnpackFile(file, dir string, strip int) error {
-	return effect.OSMachine{}.Unpack(context.Background(), file, dir, strip)
+	return local.OSMachine{}.Unpack(context.Background(), file, dir, strip)
 }

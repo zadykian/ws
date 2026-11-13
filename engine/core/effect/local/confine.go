@@ -1,8 +1,10 @@
-package effect
+package local
 
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // confined opens Confine as a root when path lies under it, and gives path inside it. A nil root
@@ -27,7 +29,7 @@ func (m OSMachine) inside(path string) (string, bool) {
 
 // writeAtomicIn is WriteAtomic inside root: a pending file beside rel, with the owner and mode of
 // a set on it, renamed over rel.
-func writeAtomicIn(root *os.Root, rel string, data []byte, a Attrs) error {
+func writeAtomicIn(root *os.Root, rel string, data []byte, a effect.Attrs) error {
 	tmp := filepath.Join(filepath.Dir(rel), "."+filepath.Base(rel)+".ws-new")
 	_ = root.Remove(tmp)
 	f, err := root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)

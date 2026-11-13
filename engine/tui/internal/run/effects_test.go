@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -24,9 +25,9 @@ func effectsOf(t *testing.T, m effect.Machine) Effects {
 // The screen's machine keeps its commands off the terminal and asks for sudo's password, and Talks
 // suspends the screen for that machine.
 func TestEffectsWrapTheScreensMachine(t *testing.T) {
-	e := effectsOf(t, effect.OSMachine{Confine: "/home/z"})
-	m, ok := e.M.(effect.OSMachine)
-	if !ok || m.Stdin != effect.NoStdin || m.Ticket == nil || m.Confine != "/home/z" {
+	e := effectsOf(t, local.OSMachine{Confine: "/home/z"})
+	m, ok := e.M.(local.OSMachine)
+	if !ok || m.Stdin != local.NoStdin || m.Ticket == nil || m.Confine != "/home/z" {
 		t.Fatalf("machine = %+v", e.M)
 	}
 	if f, ok := e.Talks.(foreground); !ok || f.m.Ticket == nil {

@@ -1,4 +1,4 @@
-package effect_test
+package local_test
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // passLines runs the script under sh, takes the lines that start with "event ", and returns those it
@@ -24,7 +24,7 @@ func passLines(ctx context.Context, stdin, script string) ([]string, string, err
 		}
 		return false
 	}
-	err := effect.OSMachine{Stderr: &shown}.PassLines(ctx, []byte(stdin), take, "sh", "-c", script)
+	err := local.OSMachine{Stderr: &shown}.PassLines(ctx, []byte(stdin), take, "sh", "-c", script)
 	return taken, shown.String(), err
 }
 
@@ -93,7 +93,7 @@ func (brokenOut) Write([]byte) (int, error) { return 0, errors.New("broken") }
 
 func TestPassLinesReportsAStderrThatFails(t *testing.T) {
 	left := func(string) bool { return false }
-	err := effect.OSMachine{Stderr: brokenOut{}}.PassLines(context.Background(), nil, left, "sh", "-c", "echo x")
+	err := local.OSMachine{Stderr: brokenOut{}}.PassLines(context.Background(), nil, left, "sh", "-c", "echo x")
 	if err == nil || !strings.Contains(err.Error(), "broken") {
 		t.Errorf("err = %v", err)
 	}
