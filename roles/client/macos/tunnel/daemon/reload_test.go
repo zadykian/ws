@@ -86,3 +86,15 @@ func TestReloadRoutesTheNetworkOfAFailedTier(t *testing.T) {
 		t.Errorf("last set = %q, want AllowedIPs with the LAN, as the endpoint in use is the name", got)
 	}
 }
+
+func TestReloadStopsWhereTheSlotMoves(t *testing.T) {
+	r := onTheCable(t)
+	r.m.Files[dir+"/tunnel.conf"] = []byte("WS_PUBLIC_KEY=" + peerKey + "\nWS_SLOT=1\n" + confAll)
+	if !r.reload(context.Background()) {
+		t.Fatal("reload kept the daemon running, want a stop for launchd to restart it")
+	}
+	want := "tunnel.conf moves the tunnel to 10.99.1.0/24; stops, for launchd to start it there"
+	if got := r.lines()[len(r.lines())-1]; got != want {
+		t.Errorf("log = %q, want %q", got, want)
+	}
+}
