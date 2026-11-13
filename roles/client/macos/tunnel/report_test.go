@@ -21,7 +21,7 @@ func TestTunnelReportsAMacThatIsDone(t *testing.T) {
 	m := daemonMachine()
 	got := mactest.ReportOf(t, daemonStep(m))
 	for _, name := range []string{
-		"/h/.local/bin/ws", rootWs, "/etc/ws-tunnel", "/etc/ws-tunnel/routes.d", "/etc/ws-tunnel/ws", tunnelKey,
+		"/h/.local/bin/ws", rootWs, "/etc/ws-tunnel", "/etc/ws-tunnel/ws/routes.d", "/etc/ws-tunnel/ws", tunnelKey,
 		"/h/.config/ws/tunnel.pub", "/etc/ws-tunnel/ws/tunnel.conf", daemonName,
 		"/Library/LaunchDaemons/" + daemonName + ".plist",
 	} {

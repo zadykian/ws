@@ -41,7 +41,6 @@ func TestTunnelPlansTheCopyAndTheKeyOnAFreshMac(t *testing.T) {
 		"create directory /usr/local/libexec/ws-tunnel, owner 0:0, mode 755",
 		"create /usr/local/libexec/ws-tunnel/ws (content not shown)",
 		"create directory /etc/ws-tunnel, owner 0:0, mode 700",
-		"create directory /etc/ws-tunnel/routes.d, owner 0:0, mode 755",
 		"would make the Mac's WireGuard key, /etc/ws-tunnel/private.key",
 	})
 	if got != want {
@@ -54,7 +53,7 @@ func TestTunnelPlansNothingOnceDone(t *testing.T) {
 	m.Files["/h/.local/bin/ws"] = []byte("ws")
 	for path, mode := range map[string]effect.Attrs{
 		"/usr/local": {Mode: 0o755}, "/usr/local/libexec": {Mode: 0o755}, "/usr/local/libexec/ws-tunnel": {Mode: 0o755},
-		"/etc/ws-tunnel": {Mode: 0o700}, "/etc/ws-tunnel/routes.d": {Mode: 0o755}, "/etc/ws-tunnel/private.key": {Mode: 0o600},
+		"/etc/ws-tunnel": {Mode: 0o700}, "/etc/ws-tunnel/private.key": {Mode: 0o600},
 	} {
 		m.Root[path] = mode
 	}

@@ -66,7 +66,7 @@ func TestForNamesTheFilesOfOneServersDaemon(t *testing.T) {
 	want := launchd.Daemon{
 		Name: "lab", Label: "com.github.zadykian.ws-tunnel.lab",
 		Plist: "/Library/LaunchDaemons/com.github.zadykian.ws-tunnel.lab.plist",
-		Dir:   "/etc/ws-tunnel/lab", Conf: "/etc/ws-tunnel/lab/tunnel.conf",
+		Dir:   "/etc/ws-tunnel/lab", Routes: "/etc/ws-tunnel/lab/routes.d", Conf: "/etc/ws-tunnel/lab/tunnel.conf",
 		State: "/var/run/ws-tunnel.lab.state", Log: "/var/log/ws-tunnel.lab.log",
 	}
 	if got := launchd.For("lab"); got != want {

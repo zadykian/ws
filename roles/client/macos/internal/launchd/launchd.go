@@ -11,7 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// Dir holds the Mac's key and routes.d, and a directory of tunnel.conf per server, which only root can write.
+// Dir holds the Mac's key and a directory per server, which only root can write.
 const Dir = "/etc/ws-tunnel"
 
 // Launchctl has launchd run or signal the daemon, through sudo.
