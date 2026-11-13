@@ -1,6 +1,7 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
-// Zed's keys on the Mac: the Alt and F keys that Zed has an action for. The Cmd and Ctrl keys stay
-// Zed's macOS defaults.
+// Zed's keys on the Mac: the Alt and F keys that Zed has an action for, and Shift twice for the
+// command palette. The Cmd and Ctrl keys stay Zed's macOS defaults, but for Cmd+T, the one key of a
+// new terminal.
 // The block of keys left out, at this file's end, says which keys Zed lacks, and why.
 [
   // The global keys. No context, so each beats Zed's defaults wherever focus is.
@@ -43,7 +44,16 @@
       // The last task
       "shift-f5": "task::Rerun",
       "alt-f5": "debugger::Stop",
-      "alt-)": "zed::ResetUiFontSize"
+      "alt-)": "zed::ResetUiFontSize",
+      // Fires as the second Shift is released
+      "shift shift": "command_palette::Toggle"
+    }
+  },
+  // A new terminal opens on Cmd+T alone, which the editor and the terminal bind.
+  {
+    "context": "Workspace",
+    "unbind": {
+      "ctrl-~": "workspace::NewTerminal"
     }
   },
   // Editing, in every editor, the one-line ones too.
@@ -60,7 +70,9 @@
       "alt->": ["editor::SelectNext", { "replace_newest": false }],
       // Undoes the last selection change
       "alt-<": "editor::UndoSelection",
-      "alt-shift-g": "editor::SplitSelectionIntoLines"
+      "alt-shift-g": "editor::SplitSelectionIntoLines",
+      // A terminal tab beside the editor's; replaces Zed's project symbols
+      "cmd-t": "workspace::NewCenterTerminal"
     }
   },
   // Code, in the full editor alone, so that search bars and pickers keep their keys.
@@ -146,9 +158,13 @@
       "alt-z": "git::Fetch",
       "alt-v": "git::Push",
       "alt-left": "pane::ActivatePreviousItem",
-      "alt-right": "pane::ActivateNextItem"
+      "alt-right": "pane::ActivateNextItem",
+      // Cmd+T alone opens a terminal, as the workspace's section says
+      "cmd-n": "workspace::NewTerminal"
     },
     "bindings": {
+      // A tab beside this terminal's, in the panel or in the center
+      "cmd-t": "workspace::NewTerminal",
       // In the terminal, it closes the dock
       "f2": "workspace::CloseActiveDock",
       "alt-2": "workspace::CloseActiveDock"

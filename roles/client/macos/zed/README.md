@@ -124,6 +124,8 @@ Right too. F-keys, named keys and digits stay Zed's.
 
 ### Decisions in the file
 
+- **Command palette:** Shift twice opens it in every context, from the global section, beside
+  Zed's Cmd+Shift+P.
 - **Agent:** F7 and Alt+7 open the agent panel (`agent::ToggleFocus`).
 - **Edit predictions:** Tab and Alt+Tab stay Zed's.
 - F7 replaces Zed's F7, step over while stopped, and F10 steps over too.
@@ -135,10 +137,19 @@ Right too. F-keys, named keys and digits stay Zed's.
 
 ### The keys left to Zed
 
-The file binds no Cmd or Ctrl key, and no plain key: the arrows, Enter, Tab, Home, End and Page Up
-and Down. Zed's macOS defaults keep them, the completion and snippet keys too. So Cmd+W closes the
-tab, and Ctrl+C and Ctrl+R in the terminal reach the shell. Alt+click adds a cursor, and Shift+Alt+drag
-selects a column (`multi_cursor_modifier`).
+The file binds no Cmd or Ctrl key but Cmd+T, and no plain key: the arrows, Enter, Tab, Home, End
+and Page Up and Down. Zed's macOS defaults keep them, the completion and snippet keys too. So Cmd+W
+closes the tab, and Ctrl+C and Ctrl+R in the terminal reach the shell. Alt+click adds a cursor, and
+Shift+Alt+drag selects a column (`multi_cursor_modifier`).
+
+Cmd+T is the one key of a new terminal, so the file unbinds Zed's Ctrl+~ and the terminal's Cmd+N.
+
+- In an editor, Cmd+T opens a terminal tab in the center (`workspace::NewCenterTerminal`). That
+  covers the one-line editors too, such as the agent panel's message and the keymap editor's search.
+- In a terminal, Cmd+T opens a tab beside it (`workspace::NewTerminal`), in the panel or in the
+  center.
+- Elsewhere, Cmd+T stays Zed's: project symbols, the debug panel's thread picker, the keymap
+  editor's matching keys.
 
 ### Keys a Mac keyboard lacks
 
