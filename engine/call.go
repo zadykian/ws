@@ -16,8 +16,10 @@ type Call struct {
 	Out, Err io.Writer
 	// Plain and JSON are the flags that turn the screen off.
 	Plain, JSON bool
-	Machine     effect.Machine
-	Getenv      func(string) string
+	// Check is --check, and Selected tells that --only was given, even with no name.
+	Check, Selected bool
+	Machine         effect.Machine
+	Getenv          func(string) string
 	// TTY, ErrTTY and OutTTY tell whether stdin, stderr and stdout are terminals.
 	TTY, ErrTTY, OutTTY bool
 }

@@ -14,9 +14,11 @@ const JSONFlag = "json"
 func CallOf(c *cobra.Command, e Env) engine.Call {
 	plain, _ := c.Flags().GetBool(PlainFlag)
 	asJSON, _ := c.Flags().GetBool(JSONFlag)
+	check, _ := c.Flags().GetBool("check")
 	return engine.Call{
 		Path: c.CommandPath(), In: c.InOrStdin(), Out: c.OutOrStdout(), Err: c.ErrOrStderr(),
-		Plain: plain, JSON: asJSON, Machine: e.Machine, Getenv: e.Getenv,
+		Plain: plain, JSON: asJSON, Check: check, Selected: c.Flags().Changed("only"),
+		Machine: e.Machine, Getenv: e.Getenv,
 		TTY: e.TTY, ErrTTY: e.ErrTTY, OutTTY: e.OutTTY,
 	}
 }
