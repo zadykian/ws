@@ -44,3 +44,14 @@ func TestEveryKeyHasAScope(t *testing.T) {
 		}
 	}
 }
+
+func TestScopeKeepSplitsLinesByKey(t *testing.T) {
+	const lines = "WS_TARGET=lan\nWS_GIT_NAME=Ada\nWS_REMOTE=\n"
+	for scope, want := range map[Scope]string{
+		MacFile: "WS_GIT_NAME=Ada\n", ServerFile: "WS_TARGET=lan\nWS_REMOTE=\n", Both: lines,
+	} {
+		if got := scope.Keep(lines); got != want {
+			t.Errorf("scope %d keeps %q, want %q", scope, got, want)
+		}
+	}
+}
