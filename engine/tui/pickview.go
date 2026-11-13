@@ -6,65 +6,65 @@ import (
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
-// pickLine is a line of the list: a step, or the heading of the role whose first shown step is row.
-type pickLine struct {
-	row     int
-	heading bool
+// PickLine is a line of the list: a step, or the heading of the role whose first shown step is row.
+type PickLine struct {
+	Row     int
+	Heading bool
 }
 
 // shows says that the filter keeps r, by its role or its name.
-func (l pickList) shows(r pickRow) bool {
-	return strings.Contains(strings.ToLower(r.entry()), strings.ToLower(l.words))
+func (l PickList) shows(r PickRow) bool {
+	return strings.Contains(strings.ToLower(r.entry()), strings.ToLower(l.Words))
 }
 
-// named says that the filter's words are in name: a bare group's steps stand under it without a heading.
-func (l pickList) named(name string) bool {
-	return strings.Contains(strings.ToLower(name), strings.ToLower(l.words))
+// Named says that the filter's words are in name: a bare group's steps stand under it without a heading.
+func (l PickList) Named(name string) bool {
+	return strings.Contains(strings.ToLower(name), strings.ToLower(l.Words))
 }
 
-// lines returns what the filter leaves of the side, each step under its role's heading. A stage
+// Lines returns what the filter leaves of the side, each step under its role's heading. A stage
 // names the steps under it, so that a group called as its stage takes no heading of its own.
-func (l pickList) lines() []pickLine {
-	var lines []pickLine
+func (l PickList) Lines() []PickLine {
+	var lines []PickLine
 	parent := ""
-	for i, r := range l.rows {
+	for i, r := range l.Rows {
 		if !l.shows(r) {
 			continue
 		}
-		if r.parent != "" && r.parent != parent && (r.form != groupBare || !l.named(r.parent)) {
-			lines = append(lines, pickLine{row: i, heading: true})
+		if r.Parent != "" && r.Parent != parent && (r.Form != GroupBare || !l.Named(r.Parent)) {
+			lines = append(lines, PickLine{Row: i, Heading: true})
 		}
-		parent = r.parent
-		lines = append(lines, pickLine{row: i})
+		parent = r.Parent
+		lines = append(lines, PickLine{Row: i})
 	}
 	return lines
 }
 
-// current returns the line under the cursor. A filter can leave none.
-func (l pickList) current(at widget.Cursor) (pickLine, bool) {
-	lines := l.lines()
+// Current returns the line under the cursor. A filter can leave none.
+func (l PickList) Current(at widget.Cursor) (PickLine, bool) {
+	lines := l.Lines()
 	if int(at) >= len(lines) {
-		return pickLine{}, false
+		return PickLine{}, false
 	}
 	return lines[at], true
 }
 
-// filtered returns the list under words.
-func (l pickList) filtered(words string) pickList {
-	l.words = words
+// Filtered returns the list under words.
+func (l PickList) Filtered(words string) PickList {
+	l.Words = words
 	return l
 }
 
-// narrowed returns the list under words, and the cursor on its line while that shows.
-func (l pickList) narrowed(at widget.Cursor, words string) (pickList, widget.Cursor) {
-	was := l.lines()
-	l = l.filtered(words)
-	return l, widget.Kept(at, was, l.lines())
+// Narrowed returns the list under words, and the cursor on its line while that shows.
+func (l PickList) Narrowed(at widget.Cursor, words string) (PickList, widget.Cursor) {
+	was := l.Lines()
+	l = l.Filtered(words)
+	return l, widget.Kept(at, was, l.Lines())
 }
 
 // groupBox draws a role's box, which follows its steps: "[-]" says that some are on.
-func (l pickList) groupBox(parent string) string {
-	on, all := l.count(func(r pickRow) bool { return r.parent == parent })
+func (l PickList) groupBox(parent string) string {
+	on, all := l.count(func(r PickRow) bool { return r.Parent == parent })
 	switch on {
 	case 0:
 		return "[ ]"
@@ -74,25 +74,25 @@ func (l pickList) groupBox(parent string) string {
 	return "[-]"
 }
 
-// render draws a line. Its box and its mark differ by shape, as NO_COLOR takes the rest.
-func (l pickList) render(theme widget.Theme, line pickLine) string {
-	r := l.rows[line.row]
-	if line.heading {
-		return l.groupBox(r.parent) + " " + theme.PaneTitle.Render(r.parent)
+// Render draws a line. Its box and its mark differ by shape, as NO_COLOR takes the rest.
+func (l PickList) Render(theme widget.Theme, line PickLine) string {
+	r := l.Rows[line.Row]
+	if line.Heading {
+		return l.groupBox(r.Parent) + " " + theme.PaneTitle.Render(r.Parent)
 	}
-	mark, style := r.state.look(theme)
-	return r.indented() + r.box() + " " + style.Render(mark) + " " + r.name
+	mark, style := r.State.Look(theme)
+	return r.indented() + r.Box() + " " + style.Render(mark) + " " + r.Name
 }
 
-// view draws height lines of the list, the cursor's gutter always.
-func (l pickList) view(theme widget.Theme, height int, at widget.Cursor) string {
-	lines := l.lines()
-	return windowed(theme, height, at, true, len(lines), func(i int) string { return l.render(theme, lines[i]) })
+// View draws height lines of the list, the cursor's gutter always.
+func (l PickList) View(theme widget.Theme, height int, at widget.Cursor) string {
+	lines := l.Lines()
+	return Windowed(theme, height, at, true, len(lines), func(i int) string { return l.Render(theme, lines[i]) })
 }
 
-// windowed draws height of count lines, each by draw, the cursor's gutter where shown. The lines run
+// Windowed draws height of count lines, each by draw, the cursor's gutter where shown. The lines run
 // past a window, so that the cursor stays in sight.
-func windowed(theme widget.Theme, height int, at widget.Cursor, shown bool, count int, draw func(int) string) string {
+func Windowed(theme widget.Theme, height int, at widget.Cursor, shown bool, count int, draw func(int) string) string {
 	if count == 0 {
 		return theme.Muted.Render("No step matches.")
 	}

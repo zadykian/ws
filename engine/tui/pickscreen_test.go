@@ -44,7 +44,7 @@ func TestPickScreenFollowsTheScan(t *testing.T) {
 	if got := pickShown(s); !strings.Contains(got, "scanning 1/3") || !strings.Contains(got, "[x] ● Packages") {
 		t.Errorf("frame:\n%s", got)
 	}
-	if got := pickShown(pickSent(s, scannedMsg{})); !strings.Contains(got, "1 of 3 chosen") {
+	if got := pickShown(pickSent(s, ScannedMsg{})); !strings.Contains(got, "1 of 3 chosen") {
 		t.Errorf("frame:\n%s", got)
 	}
 }
@@ -69,7 +69,7 @@ func TestPickScreenFitsAnyWindow(t *testing.T) {
 // scannedPick is a screen past its scan, which found changes in Packages and in Keys.
 func scannedPick() pickScreen {
 	return pickSent(testPick(), planned("base", "Packages", 0, oneChange("a")), planned("base", "Locale", 1),
-		planned("ssh", "Keys", 0, oneChange("a")), scannedMsg{})
+		planned("ssh", "Keys", 0, oneChange("a")), ScannedMsg{})
 }
 
 func TestPickScreenKeysTurnTheBoxes(t *testing.T) {
@@ -87,14 +87,14 @@ func TestPickScreenKeysTurnTheBoxes(t *testing.T) {
 		{"pending", []tea.Msg{press('a'), press('p')}, []string{"base/Packages", "ssh/Keys"}},
 	}
 	for _, c := range cases {
-		if got := pickSent(scannedPick(), c.keys...).list.only(); !slices.Equal(got, c.want) {
+		if got := pickSent(scannedPick(), c.keys...).list.Only(); !slices.Equal(got, c.want) {
 			t.Errorf("%s: only = %q, want %q", c.name, got, c.want)
 		}
 	}
 }
 
 func TestPickScreenHoldsItsBoxesDuringTheScan(t *testing.T) {
-	if got := pickSent(testPick(), press('a')).list.only(); len(got) != 0 {
+	if got := pickSent(testPick(), press('a')).list.Only(); len(got) != 0 {
 		t.Errorf("only = %q, want none", got)
 	}
 }
@@ -152,33 +152,33 @@ func TestPickScreenFilterTakesTheKeysUntilEnter(t *testing.T) {
 		t.Errorf("frame:\n%s", got)
 	}
 	s = pickSent(s, enter, press('j'))
-	if got := s.at; s.filter.Editing || got != 1 {
-		t.Errorf("editing = %v, at = %d: keys past Enter move the list", s.filter.Editing, got)
+	if got := s.at; s.Filter.Editing || got != 1 {
+		t.Errorf("editing = %v, at = %d: keys past Enter move the list", s.Filter.Editing, got)
 	}
 }
 
 func TestPickScreenEscDropsTheFilter(t *testing.T) {
 	for _, keys := range [][]tea.Msg{{press('/'), press('k'), esc}, {press('/'), press('k'), enter, esc}} {
-		if s := pickSent(testPick(), keys...); s.filtering() {
-			t.Errorf("%v: words = %q, editing = %v", keys, s.list.words, s.filter.Editing)
+		if s := pickSent(testPick(), keys...); s.Filtering() {
+			t.Errorf("%v: words = %q, editing = %v", keys, s.list.Words, s.Filter.Editing)
 		}
 	}
 }
 
 func TestPickScreenFilterTakesAPasteWhileItHasTheKeys(t *testing.T) {
 	paste := tea.PasteMsg{Content: "Key"}
-	if s := pickSent(testPick(), paste); s.filtering() || s.list.words != "" {
-		t.Errorf("outside the filter, words = %q", s.list.words)
+	if s := pickSent(testPick(), paste); s.Filtering() || s.list.Words != "" {
+		t.Errorf("outside the filter, words = %q", s.list.Words)
 	}
 	s := pickSent(testPick(), press('/'), paste)
-	if got := pickShown(s); s.list.words != "Key" || !strings.Contains(got, "Keys") || strings.Contains(got, "Packages") {
-		t.Errorf("words = %q, frame:\n%s", s.list.words, got)
+	if got := pickShown(s); s.list.Words != "Key" || !strings.Contains(got, "Keys") || strings.Contains(got, "Packages") {
+		t.Errorf("words = %q, frame:\n%s", s.list.Words, got)
 	}
 }
 
 func TestPickScreenFilterTakesAnEditInsideItsWords(t *testing.T) {
 	left := tea.KeyPressMsg{Code: tea.KeyLeft}
-	if s := pickSent(testPick(), press('/'), press('k'), press('y'), left, press('e')); s.list.words != "key" {
-		t.Errorf("words = %q", s.list.words)
+	if s := pickSent(testPick(), press('/'), press('k'), press('y'), left, press('e')); s.list.Words != "key" {
+		t.Errorf("words = %q", s.list.Words)
 	}
 }

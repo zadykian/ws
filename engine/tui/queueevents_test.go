@@ -22,7 +22,7 @@ func TestAnEventOutsideEveryStageMovesNothing(t *testing.T) {
 func TestAStageTakesTheWordsTheScanSaidBeforeItsStepEnded(t *testing.T) {
 	q := queueOf(testStages()).hear(widget.Line{Kind: widget.Said, Text: "Tools: found it"})
 	q = q.take(planned("", "Tools", 0, oneChange("a")))
-	if said := q.stages[0].row.said; len(said) != 1 || said[0].Text != "found it" || len(q.heard) != 0 {
+	if said := q.stages[0].row.Said; len(said) != 1 || said[0].Text != "found it" || len(q.heard) != 0 {
 		t.Errorf("said = %+v, heard = %+v", said, q.heard)
 	}
 }
@@ -65,11 +65,11 @@ func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 	if got := drawnQueue(q, "ws"); !slices.Equal(got, want) {
 		t.Errorf("list = %q, want %q", got, want)
 	}
-	rows := q.stages[3].list.rows
-	if got := rows[1].said; len(got) != 1 || got[0].Text != "sets the locale" {
+	rows := q.stages[3].list.Rows
+	if got := rows[1].Said; len(got) != 1 || got[0].Text != "sets the locale" {
 		t.Errorf("said = %+v", got)
 	}
-	if got := rows[3].said; len(got) != 1 || got[0].Kind != widget.Warned || got[0].Text != "no sensor" {
+	if got := rows[3].Said; len(got) != 1 || got[0].Kind != widget.Warned || got[0].Text != "no sensor" {
 		t.Errorf("said = %+v", got)
 	}
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // detailOf is the words of the pane for the step of that name in l.
-func detailOf(l pickList, name string) []string {
+func detailOf(l PickList, name string) []string {
 	var got []string
 	for _, line := range (pickScreen{list: l, at: cursorOn(l, name)}).notes() {
 		got = append(got, line.Text)
@@ -29,7 +29,7 @@ func TestDetailSaysWhyAStepIsLocked(t *testing.T) {
 }
 
 func TestDetailShowsWhatTheScanSaid(t *testing.T) {
-	l := chain().hear(widget.Line{Kind: widget.Diffed, Text: "base: one: writes a\n+b"}).take(planned("base", "one", 0, oneChange("a")))
+	l := chain().Hear(widget.Line{Kind: widget.Diffed, Text: "base: one: writes a\n+b"}).Take(planned("base", "one", 0, oneChange("a")))
 	want := []string{"Holds changes.", "writes a\n+b"}
 	if got := detailOf(l, "one"); !slices.Equal(got, want) {
 		t.Errorf("detail = %q, want %q", got, want)
@@ -47,16 +47,16 @@ func TestDetailWordsEachStateOfTheScan(t *testing.T) {
 		{step.Event{Kind: step.Skipped, Parent: "base", Step: "one", After: "zero"}, "Not planned: it follows the changes of zero."},
 	}
 	for _, c := range cases {
-		if got := detailOf(chain().take(c.e), "one"); len(got) != 1 || got[0] != c.want {
+		if got := detailOf(chain().Take(c.e), "one"); len(got) != 1 || got[0] != c.want {
 			t.Errorf("detail = %q, want %q", got, c.want)
 		}
 	}
 }
 
 func TestDetailWarnsOfARolePassedOverAndOfAStoppedScan(t *testing.T) {
-	l := threeRoles().chose(func(r pickRow) bool { return r.name == "four" })
+	l := threeRoles().Chose(func(r PickRow) bool { return r.Name == "four" })
 	s := testPick()
-	s.list, s.scanning, s.problem = l, false, "no network"
+	s.list, s.Scanning, s.Problem = l, false, "no network"
 	got := pickShown(pickSent(s, tea.WindowSizeMsg{Width: 100, Height: 24}))
 	for _, want := range []string{"! 1 of 4 chosen", "The scan stopped: no network", "changes left out in a, b"} {
 		if !strings.Contains(got, want) {

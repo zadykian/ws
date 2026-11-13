@@ -6,10 +6,10 @@ import (
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
-// detail draws notes, from the pane's top, in size. PgUp and PgDn move the list, so that what runs
+// Detail draws notes, from the pane's top, in size. PgUp and PgDn move the list, so that what runs
 // past the pane stays for `c`, which prints a step's changes whole.
-func (s listScreen) detail(size widget.Size, notes []widget.Line) string {
-	pane := widget.OutputPane{Theme: s.theme, Size: size}
+func (s ListScreen) Detail(size widget.Size, notes []widget.Line) string {
+	pane := widget.OutputPane{Theme: s.Theme, Size: size}
 	for _, line := range notes {
 		if len(pane.Rows) >= size.Height {
 			break
@@ -19,12 +19,12 @@ func (s listScreen) detail(size widget.Size, notes []widget.Line) string {
 	return pane.Move(len(pane.Rows)).View()
 }
 
-// warnings says why the scan stopped short, why a machine reported nothing, and which roles hold
+// Warnings says why the scan stopped short, why a machine reported nothing, and which roles hold
 // changes left out.
-func (s listScreen) warnings(unread string, held []string) []widget.Line {
+func (s ListScreen) Warnings(unread string, held []string) []widget.Line {
 	var notes []widget.Line
-	if s.problem != "" {
-		notes = append(notes, widget.Line{Kind: widget.Warned, Text: "The scan stopped: " + s.problem})
+	if s.Problem != "" {
+		notes = append(notes, widget.Line{Kind: widget.Warned, Text: "The scan stopped: " + s.Problem})
 	}
 	if unread != "" {
 		notes = append(notes, widget.Line{Kind: widget.Warned, Text: "Not scanned: " + unread})
@@ -37,30 +37,30 @@ func (s listScreen) warnings(unread string, held []string) []widget.Line {
 	return notes
 }
 
-// notes says why the step stands as it does, then what the scan printed of it.
-func (r pickRow) notes() []widget.Line {
+// Notes says why the step stands as it does, then what the scan printed of it.
+func (r PickRow) Notes() []widget.Line {
 	var notes []widget.Line
-	if len(r.lockedBy) > 0 {
-		notes = append(notes, widget.Line{Kind: widget.Said, Text: "Locked: " + strings.Join(r.lockedBy, ", ") + " waits on it."})
+	if len(r.LockedBy) > 0 {
+		notes = append(notes, widget.Line{Kind: widget.Said, Text: "Locked: " + strings.Join(r.LockedBy, ", ") + " waits on it."})
 	}
-	if r.waitsOn != "" {
-		notes = append(notes, widget.Line{Kind: widget.Said, Text: "Waits on " + r.waitsOn + "."})
+	if r.WaitsOn != "" {
+		notes = append(notes, widget.Line{Kind: widget.Said, Text: "Waits on " + r.WaitsOn + "."})
 	}
-	return append(append(notes, widget.Line{Kind: widget.Said, Text: r.state.words(r.after)}), r.said...)
+	return append(append(notes, widget.Line{Kind: widget.Said, Text: r.State.words(r.After)}), r.Said...)
 }
 
 // words says how the scan left a step. after names the step whose changes it stands behind.
-func (s stepState) words(after string) string {
+func (s StepState) words(after string) string {
 	switch {
 	case after != "":
 		return "Not planned: it follows the changes of " + after + "."
-	case s == stepChanged:
+	case s == StepChanged:
 		return "Holds changes."
-	case s == stepSame:
+	case s == StepSame:
 		return "Nothing to change."
-	case s == stepFailed:
+	case s == StepFailed:
 		return "The scan failed here."
-	case s == stepSkipped:
+	case s == StepSkipped:
 		return "Not scanned: the scan ended first."
 	}
 	return "Not scanned yet."

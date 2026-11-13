@@ -20,7 +20,7 @@ type QueueRun struct {
 func NewQueueRun(title string, theme widget.Theme, choice QueueChoice) QueueRun {
 	var stages Group
 	for _, s := range choice.left.list.stages {
-		stages.Steps = append(stages.Steps, s.row.name)
+		stages.Steps = append(stages.Steps, s.row.Name)
 	}
 	run := NewRunScreen(title, theme, stages)
 	run.pane = func(window widget.Size) widget.Size { return inside(stripSize(window)) }

@@ -13,9 +13,9 @@ import (
 func queueBoxes(q queue) []string {
 	var drawn []string
 	for _, s := range q.stages {
-		drawn = append(drawn, s.row.box())
-		for _, r := range s.list.rows {
-			drawn = append(drawn, r.box())
+		drawn = append(drawn, s.row.Box())
+		for _, r := range s.list.Rows {
+			drawn = append(drawn, r.Box())
 		}
 	}
 	return drawn
@@ -49,10 +49,10 @@ func TestAStepsBoxTurnsAloneAndALockedOneHolds(t *testing.T) {
 func queueChoosing(q queue, names ...string) queue {
 	q.stages = slices.Clone(q.stages)
 	for i, s := range q.stages {
-		q.stages[i].row.chosen = slices.Contains(names, s.row.name)
-		q.stages[i].list.rows = slices.Clone(s.list.rows)
-		for j, r := range s.list.rows {
-			q.stages[i].list.rows[j].chosen = slices.Contains(names, r.name)
+		q.stages[i].row.Chosen = slices.Contains(names, s.row.Name)
+		q.stages[i].list.Rows = slices.Clone(s.list.Rows)
+		for j, r := range s.list.Rows {
+			q.stages[i].list.Rows[j].Chosen = slices.Contains(names, r.Name)
 		}
 	}
 	return q.settled()
@@ -157,7 +157,7 @@ func TestALeftOutWarningStaysAmongOneStagesRoles(t *testing.T) {
 
 func TestABulkChoiceLeavesWhatTheFilterHides(t *testing.T) {
 	q, _ := queueOf(testStages()).narrowed("Mac", 0, "two")
-	q = q.chose(func(pickRow) bool { return true })
+	q = q.chose(func(PickRow) bool { return true })
 	if want := []string{"[#]", "[x]", "[ ]", "[x]"}; !slices.Equal(queueBoxes(q)[:4], want) {
 		t.Errorf("boxes = %q, want %q", queueBoxes(q)[:4], want)
 	}

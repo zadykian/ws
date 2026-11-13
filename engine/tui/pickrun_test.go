@@ -22,7 +22,7 @@ func TestTheListHearsWhyAScanStopped(t *testing.T) {
 	if err != nil || got.Next != NextCheck {
 		t.Errorf("awaitPick = %v, %v", got, err)
 	}
-	if !slices.Equal(*sent, []tea.Msg{scannedMsg{"no network"}}) {
+	if !slices.Equal(*sent, []tea.Msg{ScannedMsg{"no network"}}) {
 		t.Errorf("sent %v", *sent)
 	}
 }

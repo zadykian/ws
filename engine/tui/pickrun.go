@@ -77,9 +77,9 @@ func awaitPick[C any](ctx context.Context, b *Bridge, picks <-chan C, scan Work)
 				return none, err
 			}
 			waiting = nil
-			msg := scannedMsg{}
+			msg := ScannedMsg{}
 			if err != nil {
-				msg.problem = err.Error()
+				msg.Problem = err.Error()
 			}
 			b.send(msg)
 		case choice := <-picks:

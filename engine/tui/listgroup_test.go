@@ -7,18 +7,18 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-func formed() pickList {
-	return newFormedList([]listGroup{
-		{Group: Group{Name: "Setup", Steps: []string{"one", "two"}}, form: groupBare},
+func formed() PickList {
+	return NewFormedList([]ListGroup{
+		{Group: Group{Name: "Setup", Steps: []string{"one", "two"}}, Form: GroupBare},
 		{Group: Group{Name: "base", Steps: []string{"Packages"}}},
-		{Group: Group{Name: "ssh"}, form: groupUnread},
+		{Group: Group{Name: "ssh"}, Form: GroupUnread},
 	})
 }
 
-func drawnList(l pickList) string {
+func drawnList(l PickList) string {
 	var got []string
-	for _, line := range l.lines() {
-		got = append(got, stripped(l.render(testTheme, line)))
+	for _, line := range l.Lines() {
+		got = append(got, stripped(l.Render(testTheme, line)))
 	}
 	return strings.Join(got, "|")
 }
@@ -30,7 +30,7 @@ func TestABareGroupHasNoHeading(t *testing.T) {
 }
 
 func TestAFilterThatMissesABareGroupsNameBringsItsHeadingBack(t *testing.T) {
-	if got, want := drawnList(formed().filtered("two")), "[ ] Setup|[ ] · two"; got != want {
+	if got, want := drawnList(formed().Filtered("two")), "[ ] Setup|[ ] · two"; got != want {
 		t.Errorf("list = %q, want %q", got, want)
 	}
 }
@@ -46,7 +46,7 @@ func TestAStepTheScanLackedJoinsItsGroup(t *testing.T) {
 		{"Run", "Run", "[ ] · Run|[ ] · one|[ ] · two|[ ] base|  [ ] · Packages|[ ] · ssh"},
 	} {
 		e := step.Event{Kind: step.Planned, Parent: tc.parent, Step: tc.name, Index: 9}
-		if got := drawnList(formed().joined(e)); got != tc.want {
+		if got := drawnList(formed().Joined(e)); got != tc.want {
 			t.Errorf("%s joins to %q, want %q", tc.name, got, tc.want)
 		}
 	}
@@ -54,8 +54,8 @@ func TestAStepTheScanLackedJoinsItsGroup(t *testing.T) {
 
 func TestAStepTheListHasJoinsNothing(t *testing.T) {
 	for _, e := range []step.Event{{Parent: "base", Step: "Packages", Index: 0}, {Step: "Setup", Index: 1}} {
-		if got := formed().joined(e); len(got.rows) != len(formed().rows) {
-			t.Errorf("%+v joins %+v", e, got.rows)
+		if got := formed().Joined(e); len(got.Rows) != len(formed().Rows) {
+			t.Errorf("%+v joins %+v", e, got.Rows)
 		}
 	}
 }

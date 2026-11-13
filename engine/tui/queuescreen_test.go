@@ -88,7 +88,7 @@ func wsStages() []Stage {
 
 func TestStagesAllOnWsStandInOneList(t *testing.T) {
 	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
-	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, press('/'), press('s'))
+	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, ScannedMsg{}, press('/'), press('s'))
 	got := queueShown(s)
 	for _, want := range []string{"ws server ubuntu wizard", "ws", "/ s", "   3 [x] · Signing", "Detail"} {
 		if !strings.Contains(got, want) {
@@ -102,8 +102,8 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 
 func TestTabLeavesOneListForTheButtons(t *testing.T) {
 	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
-	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
-	if s.list.side != "ws" || s.footer.Focused() != pickTogglePlace {
+	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, ScannedMsg{}, tab)
+	if s.list.side != "ws" || s.footer.Focused() != PickTogglePlace {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, shiftTab); s.list.side != "ws" || s.footer.Focused() >= 0 {
@@ -131,11 +131,11 @@ func chosenBy(t *testing.T, msgs ...tea.Msg) QueueChoice {
 }
 
 func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
-	s := queueSent(testQueueScreen(), scannedMsg{}, tab)
+	s := queueSent(testQueueScreen(), ScannedMsg{}, tab)
 	if s.list.side != "ws" || s.footer.Focused() >= 0 {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
-	if s = queueSent(s, tab); s.list.side != "ws" || s.footer.Focused() != pickTogglePlace {
+	if s = queueSent(s, tab); s.list.side != "ws" || s.footer.Focused() != PickTogglePlace {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	s = queueSent(s, shiftTab, shiftTab)
@@ -151,7 +151,7 @@ func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 }
 
 func TestAScansEndOpensTheQueueChosen(t *testing.T) {
-	got := chosenBy(t, scannedMsg{}, press('c'))
+	got := chosenBy(t, ScannedMsg{}, press('c'))
 	if got.Next != NextCheck || len(got.Only) != 5 || got.Partial != nil {
 		t.Errorf("choice = %+v", got)
 	}
@@ -164,11 +164,11 @@ func TestConfigureGoesBeforeTheScanEnds(t *testing.T) {
 }
 
 func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
-	s := queueSent(testQueueScreen(), planned("", "Setup", 1, oneChange("a")), scannedMsg{}, press('n'), press('p'))
+	s := queueSent(testQueueScreen(), planned("", "Setup", 1, oneChange("a")), ScannedMsg{}, press('n'), press('p'))
 	if got := s.list.only(); !slices.Equal(got, []string{"Tools", "Setup"}) {
 		t.Errorf("only = %q", got)
 	}
-	if !s.list.stages[0].row.on() || !s.list.stages[1].row.on() {
+	if !s.list.stages[0].row.On() || !s.list.stages[1].row.On() {
 		t.Errorf("stages = %+v", s.list.stages[:2])
 	}
 }
@@ -189,7 +189,7 @@ func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
 }
 
 func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
-	s := queueSent(testQueueScreen(), scannedMsg{})
+	s := queueSent(testQueueScreen(), ScannedMsg{})
 	s.list, s.at = queueChoosing(s.list, "one"), withCursor(s.at, "Mac", 1)
 	if got := queueShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
 		t.Errorf("frame:\n%s", got)
@@ -206,35 +206,35 @@ func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
 }
 
 func TestStateKeyNamesTheListInFocus(t *testing.T) {
-	if got := chosenBy(t, scannedMsg{}, press('s')); got.Next != NextState || got.Side != "Mac" || len(got.Only) != 0 {
+	if got := chosenBy(t, ScannedMsg{}, press('s')); got.Next != NextState || got.Side != "Mac" || len(got.Only) != 0 {
 		t.Errorf("s on the Mac's list = %+v", got)
 	}
-	if got := chosenBy(t, scannedMsg{}, tab, press('s')); got.Next != NextState || got.Side != "ws" {
+	if got := chosenBy(t, ScannedMsg{}, tab, press('s')); got.Next != NextState || got.Side != "ws" {
 		t.Errorf("s on ws's list = %+v", got)
 	}
 }
 
 func TestStateKeyWaitsForTheScanAndTheFilter(t *testing.T) {
-	if s := queueSent(testQueueScreen(), press('s')); s.left {
+	if s := queueSent(testQueueScreen(), press('s')); s.Left {
 		t.Error("s left a scan under way")
 	}
-	s := queueSent(testQueueScreen(), scannedMsg{}, press('/'), press('s'))
-	if s.left || s.list.words != "s" {
-		t.Errorf("left %v, words %q", s.left, s.list.words)
+	s := queueSent(testQueueScreen(), ScannedMsg{}, press('/'), press('s'))
+	if s.Left || s.list.words != "s" {
+		t.Errorf("left %v, words %q", s.Left, s.list.words)
 	}
 }
 
 // A list of steps alone has no machine to read, and no such button.
 func TestStateKeyIsAQueuesAlone(t *testing.T) {
-	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), scannedMsg{}, press('s'))
-	if s.left {
+	s := pickSent(newPickScreen("ws", testTheme, nil, make(chan Choice, 1)), ScannedMsg{}, press('s'))
+	if s.Left {
 		t.Error("s left a list of steps")
 	}
 }
 
 // What the maintainer chose comes back: a new scan would choose the boxes again.
 func TestReopenKeepsTheBoxesAndRunsNoScan(t *testing.T) {
-	s := queueSent(testQueueScreen(), scannedMsg{problem: "no network"}, press('n'), press(' '))
+	s := queueSent(testQueueScreen(), ScannedMsg{Problem: "no network"}, press('n'), press(' '))
 	var out bytes.Buffer
 	c := noKeys(&out)
 	c.In = strings.NewReader("\r")
@@ -253,7 +253,7 @@ func TestABridgeReportReachesTheScreen(t *testing.T) {
 }
 
 func TestEachSideKeepsItsCursor(t *testing.T) {
-	s := queueSent(testQueueScreen(), scannedMsg{}, press('j'), press('j'), press('j'), tab)
+	s := queueSent(testQueueScreen(), ScannedMsg{}, press('j'), press('j'), press('j'), tab)
 	if s.list.side != "ws" || s.at["Mac"] != 3 || s.at["ws"] != 0 {
 		t.Errorf("side %q, cursors %v", s.list.side, s.at)
 	}
@@ -266,7 +266,7 @@ func TestEachSideKeepsItsCursor(t *testing.T) {
 }
 
 func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
-	was := queueSent(testQueueScreen(), scannedMsg{}, press('j'))
+	was := queueSent(testQueueScreen(), ScannedMsg{}, press('j'))
 	moved := queueSent(was, press('j'), tab)
 	if was.at["Mac"] != 1 || was.at["ws"] != 0 || moved.at["Mac"] != 2 {
 		t.Errorf("cursors %v before, %v after", was.at, moved.at)

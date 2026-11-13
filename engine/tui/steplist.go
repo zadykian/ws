@@ -32,142 +32,143 @@ func NewGroup(parent string, steps []step.Step) Group {
 	return g
 }
 
-// stepState says how a run left a step.
-type stepState int
+// StepState says how a run left a step.
+type StepState int
 
+// The states of a step, from the scan's events.
 const (
-	stepOpen stepState = iota
-	stepSame
-	stepChanged
-	stepLeftOut
-	stepFailed
-	stepSkipped
+	StepOpen StepState = iota
+	StepSame
+	StepChanged
+	StepLeftOut
+	StepFailed
+	StepSkipped
 )
 
-// stateAfter is the state that e leaves its step in. Planned opens a step that has ended, as the
+// StateAfter is the state that e leaves its step in. Planned opens a step that has ended, as the
 // wizard runs its Setup's steps more than once.
-func stateAfter(e step.Event) stepState {
+func StateAfter(e step.Event) StepState {
 	switch e.Kind {
 	case step.Done:
 		switch {
 		case e.LeftOut:
-			return stepLeftOut
+			return StepLeftOut
 		case len(e.Changes) != 0:
-			return stepChanged
+			return StepChanged
 		}
-		return stepSame
+		return StepSame
 	case step.Failed:
-		return stepFailed
+		return StepFailed
 	case step.Skipped:
 		if e.LeftOut {
-			return stepLeftOut
+			return StepLeftOut
 		}
-		return stepSkipped
+		return StepSkipped
 	case step.Planned, step.Started:
 	}
-	return stepOpen
+	return StepOpen
 }
 
-// look is the mark and the style of a state. The marks differ by shape, as NO_COLOR takes the rest.
-func (s stepState) look(theme widget.Theme) (string, lipgloss.Style) {
+// Look is the mark and the style of a state. The marks differ by shape, as NO_COLOR takes the rest.
+func (s StepState) Look(theme widget.Theme) (string, lipgloss.Style) {
 	switch s {
-	case stepSame:
+	case StepSame:
 		return "✓", theme.Good
-	case stepChanged:
+	case StepChanged:
 		return "●", theme.Warn
-	case stepLeftOut:
+	case StepLeftOut:
 		return "○", theme.Muted
-	case stepFailed:
+	case StepFailed:
 		return "✗", theme.Bad
-	case stepSkipped:
+	case StepSkipped:
 		return "–", theme.Muted
-	case stepOpen:
+	case StepOpen:
 	}
 	return "·", theme.Muted
 }
 
-// stepRow is a step of the list. parent and index are what its events name it by, as a name can
+// StepRow is a step of the list. parent and index are what its events name it by, as a name can
 // come twice in a run.
-type stepRow struct {
-	parent string
-	index  int
-	name   string
-	state  stepState
+type StepRow struct {
+	Parent string
+	Index  int
+	Name   string
+	State  StepState
 }
 
-// label names the row in a line of its own.
-func (r stepRow) label() string {
-	if r.parent == "" {
-		return r.name
+// Label names the row in a line of its own.
+func (r StepRow) Label() string {
+	if r.Parent == "" {
+		return r.Name
 	}
-	return r.parent + ": " + r.name
+	return r.Parent + ": " + r.Name
 }
 
 // render draws the row, indented under a heading.
-func (r stepRow) render(theme widget.Theme, current bool) string {
-	mark, style := r.state.look(theme)
-	if current && r.state == stepOpen {
+func (r StepRow) render(theme widget.Theme, current bool) string {
+	mark, style := r.State.Look(theme)
+	if current && r.State == StepOpen {
 		mark, style = "▸", theme.PaneTitle
 	}
 	indent := ""
-	if r.parent != "" {
+	if r.Parent != "" {
 		indent = "  "
 	}
-	return indent + style.Render(mark+" "+r.name)
+	return indent + style.Render(mark+" "+r.Name)
 }
 
-// stepList is a run's steps in the order they run, so that the first one open is the current one.
-type stepList []stepRow
+// StepList is a run's steps in the order they run, so that the first one open is the current one.
+type StepList []StepRow
 
-// newStepList returns the list of groups, each step open.
-func newStepList(groups []Group) stepList {
-	var list stepList
+// NewStepList returns the list of groups, each step open.
+func NewStepList(groups []Group) StepList {
+	var list StepList
 	for _, g := range groups {
 		for i, name := range g.Steps {
-			list = append(list, stepRow{parent: g.Name, index: i, name: name})
+			list = append(list, StepRow{Parent: g.Name, Index: i, Name: name})
 		}
 	}
 	return list
 }
 
-// take returns the list with what e says of its step. The list is copied, as a screen's older value
+// Take returns the list with what e says of its step. The list is copied, as a screen's older value
 // shares it. A step outside the list moves nothing, and its lines show all the same.
-func (l stepList) take(e step.Event) stepList {
-	place := slices.IndexFunc(l, func(r stepRow) bool { return r.parent == e.Parent && r.index == e.Index })
+func (l StepList) Take(e step.Event) StepList {
+	place := slices.IndexFunc(l, func(r StepRow) bool { return r.Parent == e.Parent && r.Index == e.Index })
 	if place < 0 {
 		return l
 	}
 	l = slices.Clone(l)
-	l[place].state = stateAfter(e)
+	l[place].State = StateAfter(e)
 	return l
 }
 
-// at returns the place of the step that the run stands on, the failed one past a failure, or -1
+// At returns the place of the step that the run stands on, the failed one past a failure, or -1
 // where every step has ended.
-func (l stepList) at() int {
-	return slices.IndexFunc(l, func(r stepRow) bool { return r.state == stepOpen || r.state == stepFailed })
+func (l StepList) At() int {
+	return slices.IndexFunc(l, func(r StepRow) bool { return r.State == StepOpen || r.State == StepFailed })
 }
 
-// ended returns how many steps have ended.
-func (l stepList) ended() int {
+// Ended returns how many steps have ended.
+func (l StepList) Ended() int {
 	done := 0
 	for _, r := range l {
-		if r.state != stepOpen {
+		if r.State != StepOpen {
 			done++
 		}
 	}
 	return done
 }
 
-// view draws height lines of the list, the steps under their headings. A run has more steps than a
+// View draws height lines of the list, the steps under their headings. A run has more steps than a
 // window has lines, so the current one stays in sight, a third of the way down.
-func (l stepList) view(theme widget.Theme, height int) string {
-	at := l.at()
+func (l StepList) View(theme widget.Theme, height int) string {
+	at := l.At()
 	lines := make([]string, 0, len(l))
 	sight := 0
 	for i, row := range l {
-		if row.parent != "" && (i == 0 || row.parent != l[i-1].parent) {
-			lines = append(lines, theme.PaneTitle.Render(row.parent))
+		if row.Parent != "" && (i == 0 || row.Parent != l[i-1].Parent) {
+			lines = append(lines, theme.PaneTitle.Render(row.Parent))
 		}
 		if i == at || at < 0 {
 			sight = len(lines)

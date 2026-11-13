@@ -12,7 +12,7 @@ import (
 
 // The places of the queue's buttons that the flat list lacks, after the places that both share.
 const (
-	queueStatePlace = pickQuitPlace + 1 + iota
+	queueStatePlace = PickQuitPlace + 1 + iota
 	queueConfigurePlace
 )
 
@@ -26,7 +26,7 @@ type reportedMsg struct {
 // queueScreen is the queue's lists, a side each, over the strip of the detail. A scan fills them
 // behind the screen, and the maintainer can read and move as it goes.
 type queueScreen struct {
-	listScreen
+	ListScreen
 	list queue
 	// at is the cursor on each side's list, by side. Never written in place: the screens are values,
 	// and Reopen reuses a left one, so withCursor copies it.
@@ -40,8 +40,8 @@ type queueScreen struct {
 
 // openQueue returns the lists of stages, their scan under way. The configure button comes last.
 func openQueue(title string, theme widget.Theme, stages []Stage, picks chan<- QueueChoice) queueScreen {
-	buttons := append(listButtons(), stateButton, configureButton)
-	s := queueScreen{listScreen: listScreen{title: title, theme: theme, scanning: true, filter: widget.NewFilter()},
+	buttons := append(ListButtons(), stateButton, configureButton)
+	s := queueScreen{ListScreen: ListScreen{Title: title, Theme: theme, Scanning: true, Filter: widget.NewFilter()},
 		list: queueOf(stages), footer: widget.NewFooter(buttons...), picks: picks}
 	return s.enabled()
 }
@@ -54,44 +54,44 @@ func (s queueScreen) Init() tea.Cmd {
 // statusLine is the title's right side, of the stages alone.
 func (s queueScreen) statusLine() string {
 	on, scanned, all := s.list.count()
-	return s.status(on, scanned, all, len(s.list.passed()) > 0)
+	return s.Status(on, scanned, all, len(s.list.passed()) > 0)
 }
 
 // notes is the words of the strip: what holds for the whole queue, then the line under the cursor.
 func (s queueScreen) notes() []widget.Line {
-	notes := s.warnings(s.unread, s.list.passed())
+	notes := s.Warnings(s.unread, s.list.passed())
 	lines := s.list.lines(s.list.side)
 	at := int(s.at[s.list.side])
-	if at >= len(lines) || lines[at].line.heading {
+	if at >= len(lines) || lines[at].line.Heading {
 		return notes
 	}
 	line := lines[at]
 	row := s.list.stages[line.stage].row
 	switch {
 	case !line.head:
-		row = s.list.stages[line.stage].list.rows[line.line.row]
-	case s.list.partial()[row.name] != nil:
+		row = s.list.stages[line.stage].list.Rows[line.line.Row]
+	case s.list.partial()[row.Name] != nil:
 		notes = append(notes, widget.Line{Kind: widget.Said, Text: "Runs in part, so it stays pending."})
 	}
-	return append(notes, row.notes()...)
+	return append(notes, row.Notes()...)
 }
 
 // layout is the screen with its panes empty, as what fills them depends on their sizes.
 func (s queueScreen) layout() widget.Layout {
-	detail := widget.Pane{Title: "Detail", Body: s.detail(inside(stripSize(s.window)), s.notes())}
+	detail := widget.Pane{Title: "Detail", Body: s.Detail(inside(stripSize(s.Window)), s.notes())}
 	return widget.Layout{
-		Title:  s.title,
+		Title:  s.Title,
 		Status: s.statusLine(),
 		Panes:  s.list.panes(),
-		Below:  strip(s.theme, detail, s.window),
+		Below:  strip(s.Theme, detail, s.Window),
 		Footer: s.footer,
 	}
 }
 
 // listHeight is the lines of the pane of the list in focus that the list has.
 func (s queueScreen) listHeight() int {
-	height := s.layout().PaneSizes(s.window.Width, s.window.Height)[s.list.pane(s.list.side)].Height
-	if s.filtering() {
+	height := s.layout().PaneSizes(s.Window.Width, s.Window.Height)[s.list.pane(s.list.side)].Height
+	if s.Filtering() {
 		height--
 	}
 	return max(height, 0)
@@ -99,11 +99,11 @@ func (s queueScreen) listHeight() int {
 
 // View draws the lists, the filter's line over the one in focus.
 func (s queueScreen) View() tea.View {
-	l := s.list.drawn(s.layout(), s.theme, s.window, s.at)
-	if s.filtering() {
-		l.Panes[s.list.pane(s.list.side)].Body = s.filter.Line(s.theme) + "\n" + s.list.view(s.theme, s.list.side, s.listHeight(), s.at[s.list.side], true)
+	l := s.list.drawn(s.layout(), s.Theme, s.Window, s.at)
+	if s.Filtering() {
+		l.Panes[s.list.pane(s.list.side)].Body = s.Filter.Line(s.Theme) + "\n" + s.list.view(s.Theme, s.list.side, s.listHeight(), s.at[s.list.side], true)
 	}
-	return l.View(s.theme, s.window.Width, s.window.Height)
+	return l.View(s.Theme, s.Window.Width, s.Window.Height)
 }
 
 // Update takes the scan's events and lines, the window's size and the keys.
@@ -113,8 +113,8 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.list = s.list.take(msg)
 	case widget.Line:
 		s.list = s.list.hear(msg)
-	case scannedMsg:
-		s.listScreen = s.scanned(msg)
+	case ScannedMsg:
+		s.ListScreen = s.Scanned(msg)
 		s.list = s.list.opened()
 	case reportedMsg:
 		s.unread = msg.problem
@@ -122,9 +122,9 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s.list = s.list.reported(msg.stage, msg.sections)
 		}
 	case tea.WindowSizeMsg:
-		s.window = widget.Size{Width: msg.Width, Height: msg.Height}
+		s.Window = widget.Size{Width: msg.Width, Height: msg.Height}
 	case tea.PasteMsg:
-		if s.filter.Editing && !s.left {
+		if s.Filter.Editing && !s.Left {
 			s = s.typed(msg)
 		}
 	case tea.KeyPressMsg:
@@ -139,12 +139,12 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // choice.
 func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	switch {
-	case s.left:
+	case s.Left:
 		return s, nil
-	case s.held():
+	case s.Held():
 		return s.typed(msg), nil
 	case key.Matches(msg, widget.ClearKey):
-		s.filter = s.filter.Cleared()
+		s.Filter = s.Filter.Cleared()
 		s = s.narrowed("")
 		return s, nil
 	case key.Matches(msg, widget.Keys.Next):
@@ -155,23 +155,23 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 	var place int
 	s.footer, place = s.footer.Update(msg)
 	switch place {
-	case pickTogglePlace:
+	case PickTogglePlace:
 		s.list = s.list.toggled(s.list.side, s.at[s.list.side])
-	case pickAllPlace:
-		s.list = s.list.chose(func(pickRow) bool { return true })
-	case pickNonePlace:
-		s.list = s.list.chose(func(pickRow) bool { return false })
-	case pickInvertPlace:
-		s.list = s.list.chose(func(r pickRow) bool { return !r.on() })
-	case pickPendingPlace:
-		s.list = s.list.chose(pickRow.pending).whole(func(o queueStage) bool { return o.row.pending() })
-	case pickFilterPlace:
-		s.filter = s.filter.Opened()
-	case pickRunPlace:
+	case PickAllPlace:
+		s.list = s.list.chose(func(PickRow) bool { return true })
+	case PickNonePlace:
+		s.list = s.list.chose(func(PickRow) bool { return false })
+	case PickInvertPlace:
+		s.list = s.list.chose(func(r PickRow) bool { return !r.On() })
+	case PickPendingPlace:
+		s.list = s.list.chose(PickRow.Pending).whole(func(o queueStage) bool { return o.row.Pending() })
+	case PickFilterPlace:
+		s.Filter = s.Filter.Opened()
+	case PickRunPlace:
 		return s.leave(s.queueChoice(NextRun))
-	case pickCheckPlace:
+	case PickCheckPlace:
 		return s.leave(s.queueChoice(NextCheck))
-	case pickQuitPlace:
+	case PickQuitPlace:
 		return s.leave(s.queueChoice(NextLeave))
 	case queueConfigurePlace:
 		return s.leave(s.queueChoice(NextConfigure))
@@ -187,7 +187,7 @@ func (s queueScreen) pressed(msg tea.KeyPressMsg) (queueScreen, tea.Cmd) {
 func (s queueScreen) typed(msg tea.Msg) queueScreen {
 	var words string
 	var changed bool
-	if s.listScreen, words, changed = s.listScreen.typed(msg, s.list.words); changed {
+	if s.ListScreen, words, changed = s.Typed(msg, s.list.words); changed {
 		s = s.narrowed(words)
 	}
 	return s
@@ -222,7 +222,7 @@ func (s queueScreen) queueChoice(next Next) QueueChoice {
 
 // leave gives c to the work. A session quits with its work alone, and a screen never does.
 func (s queueScreen) leave(c QueueChoice) (queueScreen, tea.Cmd) {
-	s.left = true
+	s.Left = true
 	return s, func() tea.Msg {
 		s.picks <- c
 		return nil
@@ -233,12 +233,12 @@ func (s queueScreen) leave(c QueueChoice) (queueScreen, tea.Cmd) {
 // waits for something chosen, as a run with no Only runs every step. The state screen waits for the
 // scan's end, as both read the same machine.
 func (s queueScreen) enabled() queueScreen {
-	for place := pickTogglePlace; place <= pickPendingPlace; place++ {
-		s.footer = s.footer.Enable(place, !s.scanning)
+	for place := PickTogglePlace; place <= PickPendingPlace; place++ {
+		s.footer = s.footer.Enable(place, !s.Scanning)
 	}
-	some := !s.scanning && len(s.list.only()) > 0
-	s.footer = s.footer.Enable(pickRunPlace, some).Enable(pickCheckPlace, some)
-	s.footer = s.footer.Enable(queueStatePlace, !s.scanning)
+	some := !s.Scanning && len(s.list.only()) > 0
+	s.footer = s.footer.Enable(PickRunPlace, some).Enable(PickCheckPlace, some)
+	s.footer = s.footer.Enable(queueStatePlace, !s.Scanning)
 	return s
 }
 

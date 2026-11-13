@@ -12,9 +12,9 @@ import (
 // queueFrame is the queue's screen at 100 by 30, its scan under way, with no footer.
 func queueFrame() queueScreen {
 	return queueScreen{
-		listScreen: listScreen{title: "ws client macos wizard", theme: testTheme, window: widget.Size{Width: 100, Height: 30}, scanning: true},
+		ListScreen: ListScreen{Title: "ws client macos wizard", Theme: testTheme, Window: widget.Size{Width: 100, Height: 30}, Scanning: true},
 		list:       queueOf(testStages()),
-		footer:     widget.NewFooter(append(listButtons(), stateButton, configureButton)...),
+		footer:     widget.NewFooter(append(ListButtons(), stateButton, configureButton)...),
 		picks:      make(chan QueueChoice, 1),
 	}
 }
@@ -35,8 +35,8 @@ func TestTheQueueScreenGivesItsChoiceAndWaitsForTheWorkToEnd(t *testing.T) {
 	s.picks = picks
 	s, leaving := s.leave(s.queueChoice(NextCheck))
 	leaving()
-	if got := <-picks; got.Next != NextCheck || !s.left {
-		t.Errorf("choice = %+v, left %v", got, s.left)
+	if got := <-picks; got.Next != NextCheck || !s.Left {
+		t.Errorf("choice = %+v, left %v", got, s.Left)
 	}
 }
 
@@ -47,8 +47,8 @@ func TestTheQueueScreenLeavesForTheStateOfTheListInFocus(t *testing.T) {
 	s, _ = s.pressed(tab)
 	s, leaving := s.pressed(press('s'))
 	leaving()
-	if got := <-picks; got.Next != NextState || got.Side != "ws" || !s.left {
-		t.Errorf("choice = %+v, left %v", got, s.left)
+	if got := <-picks; got.Next != NextState || got.Side != "ws" || !s.Left {
+		t.Errorf("choice = %+v, left %v", got, s.Left)
 	}
 }
 
@@ -69,8 +69,8 @@ func TestTheQueueScreenHoldsItsBoxesUntilTheScanEnds(t *testing.T) {
 	if s = queueSent(s, press('a')); len(s.list.only()) != 0 {
 		t.Errorf("only = %q during the scan", s.list.only())
 	}
-	s = queueSent(s, scannedMsg{}, press('a'))
-	if s.scanning || len(s.list.only()) != 5 {
-		t.Errorf("scanning %v, only = %q", s.scanning, s.list.only())
+	s = queueSent(s, ScannedMsg{}, press('a'))
+	if s.Scanning || len(s.list.only()) != 5 {
+		t.Errorf("scanning %v, only = %q", s.Scanning, s.list.only())
 	}
 }

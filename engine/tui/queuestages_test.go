@@ -21,7 +21,7 @@ func TestAQueueKeepsItsStagesInTheOrderTheyRun(t *testing.T) {
 	var names, waits []string
 	var sides []string
 	for _, s := range queueOf(testStages()).stages {
-		names, sides, waits = append(names, s.row.name), append(sides, s.side), append(waits, s.row.waitsOn)
+		names, sides, waits = append(names, s.row.Name), append(sides, s.side), append(waits, s.row.WaitsOn)
 	}
 	if want := []string{"Tools", "Setup", "Sudo", "Run", "Signing"}; !slices.Equal(names, want) {
 		t.Errorf("names = %q, want %q", names, want)
@@ -38,8 +38,8 @@ func TestAStageKeepsItsStepsInAListOfItsOwn(t *testing.T) {
 	q := queueOf(testStages())
 	for i, want := range map[int]string{0: "", 1: "one two", 3: "base ssh"} {
 		var got []string
-		for _, r := range q.stages[i].list.rows {
-			got = append(got, r.name)
+		for _, r := range q.stages[i].list.Rows {
+			got = append(got, r.Name)
 		}
 		if joined := strings.Join(got, " "); joined != want {
 			t.Errorf("stage %d holds %q, want %q", i, joined, want)
@@ -48,8 +48,8 @@ func TestAStageKeepsItsStepsInAListOfItsOwn(t *testing.T) {
 }
 
 func TestARoleOfAStageThatNoScanReadIsOneRow(t *testing.T) {
-	rows := queueOf(testStages()).stages[3].list.rows
-	if len(rows) != 2 || rows[0].index != unreadIndex || rows[0].form != groupUnread {
+	rows := queueOf(testStages()).stages[3].list.Rows
+	if len(rows) != 2 || rows[0].Index != UnreadIndex || rows[0].Form != GroupUnread {
 		t.Errorf("rows = %+v", rows)
 	}
 }

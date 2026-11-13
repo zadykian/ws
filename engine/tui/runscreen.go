@@ -41,7 +41,7 @@ type tickMsg struct{ at time.Time }
 type RunScreen struct {
 	title   string
 	theme   widget.Theme
-	steps   stepList
+	steps   StepList
 	output  widget.OutputPane
 	footer  widget.Footer
 	window  widget.Size
@@ -59,7 +59,7 @@ func NewRunScreen(title string, theme widget.Theme, groups ...Group) RunScreen {
 	return RunScreen{
 		title:  title,
 		theme:  theme,
-		steps:  newStepList(groups),
+		steps:  NewStepList(groups),
 		output: widget.OutputPane{Theme: theme},
 		footer: widget.NewFooter(widget.Keys.PageUp, widget.Keys.PageDown, widget.Keys.Bottom, widget.Keys.Interrupt),
 	}
@@ -79,7 +79,7 @@ func (r RunScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (r RunScreen) update(msg tea.Msg) (RunScreen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case step.Event:
-		r.steps = r.steps.take(msg)
+		r.steps = r.steps.Take(msg)
 	case widget.Line:
 		r.output = r.output.Add(msg)
 	case tickMsg:
@@ -141,8 +141,8 @@ func (r RunScreen) pressed(msg tea.KeyPressMsg) (RunScreen, tea.Cmd) {
 // step's name.
 func (r RunScreen) layout() widget.Layout {
 	title := "Output"
-	if at := r.steps.at(); at >= 0 {
-		title = r.steps[at].label()
+	if at := r.steps.At(); at >= 0 {
+		title = r.steps[at].Label()
 		if r.halted {
 			title = "Stopping after " + title
 		}
@@ -159,20 +159,20 @@ func (r RunScreen) layout() widget.Layout {
 func (r RunScreen) View() tea.View {
 	l := r.layout()
 	sizes := l.PaneSizes(r.window.Width, r.window.Height)
-	l.Panes[0].Body = r.steps.view(r.theme, sizes[0].Height)
+	l.Panes[0].Body = r.steps.View(r.theme, sizes[0].Height)
 	l.Panes[1].Body = r.output.View()
 	return l.View(r.theme, r.window.Width, r.window.Height)
 }
 
 // status is the title's right side: the steps ended, their bar where it fits, and the elapsed time.
 func (r RunScreen) status() string {
-	count := fmt.Sprintf("%d/%d", r.steps.ended(), len(r.steps))
+	count := fmt.Sprintf("%d/%d", r.steps.Ended(), len(r.steps))
 	clock := elapsed(r.now.Sub(r.started))
 	room := r.window.Width - lipgloss.Width(r.title) - lipgloss.Width(count) - lipgloss.Width(clock) - statusGaps
 	if room < barLeast {
 		return count + " " + clock
 	}
-	return count + " " + bar(r.steps.ended(), len(r.steps), min(room, barMost)) + " " + clock
+	return count + " " + bar(r.steps.Ended(), len(r.steps), min(room, barMost)) + " " + clock
 }
 
 // bar draws done of total in width columns. Its two shades hold under NO_COLOR.
