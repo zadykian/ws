@@ -27,7 +27,7 @@ func exitFour(t *testing.T) error {
 func TestGitAddsTheKeyToGh(t *testing.T) {
 	_, g := gitReady()
 	g.M.(*effecttest.Machine).Results[gitList] = effecttest.Result{}
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 3 || p.Changes[2].String() != "would run "+gitAdd {
 		t.Fatalf("Plan = %v, %v; want two writes and the add", p.Changes, err)
 	}
@@ -42,7 +42,7 @@ func TestGitWaitsForGhBeforeAddingTheKey(t *testing.T) {
 		return "/opt/bin/" + n, nil
 	}
 	m.Results["brew --prefix"] = effecttest.Result{Out: []byte("/opt\n")}
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	last := p.Changes[len(p.Changes)-1].String()
 	if err != nil || !strings.HasSuffix(last, gitAdd+" once gh is installed, where it has a login that lacks the key") {
 		t.Errorf("Plan = %v, %v; want the wait on gh last", p.Changes, err)
@@ -61,11 +61,11 @@ func TestGitAppliesTheWaitingAddAfterGhIsInstalled(t *testing.T) {
 	m.Results["brew install gh"] = effecttest.Result{}
 	m.Results[gitList] = effecttest.Result{}
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := g.Apply(context.Background(), p); err != nil {
+	if err := g.Step().Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Contains(m.Calls, "run /opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac") {
@@ -84,14 +84,14 @@ func TestGitWarnsWhereGhCannotRegister(t *testing.T) {
 		m, g := gitReady()
 		out := g.Out.(*effecttest.Out)
 		m.Results[gitList] = effecttest.Result{Err: tc.err}
-		p, err := g.Plan(context.Background())
+		p, err := g.Step().Plan(context.Background())
 		if err != nil || len(p.Changes) != 3 || len(out.Lines) != 0 {
 			t.Fatalf("%s: Plan = %v, %v, lines %q; want two writes and a warning, said later", name, p.Changes, err, out.Lines)
 		}
 		if w := p.Changes[2].String(); !strings.Contains(w, tc.want) || !strings.Contains(w, "unverified") {
 			t.Errorf("%s: last change = %q; want the warning", name, w)
 		}
-		if err := g.Apply(context.Background(), p); err != nil {
+		if err := g.Step().Apply(context.Background(), p); err != nil {
 			t.Fatal(err)
 		}
 		if n := len(out.Lines); n != 3 || !strings.Contains(out.Lines[2], tc.want) {
@@ -105,7 +105,7 @@ func TestGitChecksThatGhListsTheKeyItAdded(t *testing.T) {
 	out := g.Out.(*effecttest.Out)
 	m.Results[gitList] = effecttest.Result{}
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
-	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
+	if err := g.Step().Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
 		Git: g, Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestGitGoesOnWhereGhCannotAddTheKey(t *testing.T) {
 	out := g.Out.(*effecttest.Out)
 	m.Results[gitList] = effecttest.Result{}
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{Err: errors.New("boom")}
-	if _, err := step.Run(context.Background(), []step.Step{g}, out, false); err != nil {
+	if _, err := step.Run(context.Background(), []step.Step{g.Step()}, out, false); err != nil {
 		t.Errorf("Run = %v; want the step to warn and go on", err)
 	}
 	if n := strings.Count(strings.Join(out.Lines, "\n"), "unverified"); n != 1 {
@@ -130,7 +130,7 @@ func TestGitGoesOnWhereGhCannotAddTheKey(t *testing.T) {
 func TestGitSaysWhereGhListsTheKey(t *testing.T) {
 	const line = "git's key is among GitHub's signing keys already"
 	_, g := gitReady()
-	p, err := g.Plan(context.Background())
+	p, err := g.Step().Plan(context.Background())
 	if last := p.Changes[len(p.Changes)-1].String(); err != nil || last != line {
 		t.Errorf("Plan = %v, %v; want the line after the writes", p.Changes, err)
 	}
@@ -142,11 +142,11 @@ func TestGitSaysWhereGhListsTheKey(t *testing.T) {
 func TestGitSaysNoAlreadyAfterItsAdd(t *testing.T) {
 	m, g := gitReady()
 	m.Results["/opt/bin/gh ssh-key add "+gitPub+" --type signing --title mac"] = effecttest.Result{}
-	if err := g.Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
+	if err := g.Step().Apply(context.Background(), step.Plan{Changes: []step.Change{git.Register{
 		Git: g, Gh: "/opt/bin/gh", Pub: gitPub, Public: "ssh-ed25519 AAAAC3Nz", Title: "mac"}}}); err != nil {
 		t.Fatal(err)
 	}
-	if p, err := g.Plan(context.Background()); err != nil || strings.Contains(fmt.Sprint(p.Changes), "already") {
+	if p, err := g.Step().Plan(context.Background()); err != nil || strings.Contains(fmt.Sprint(p.Changes), "already") {
 		t.Errorf("Plan after the add = %v, %v; want no line that the key was there already", p.Changes, err)
 	}
 }

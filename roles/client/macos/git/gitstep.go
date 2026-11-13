@@ -26,7 +26,7 @@ type gitPart struct{ g *Git }
 
 // Plan returns the changes, each of which applies itself.
 func (p gitPart) Plan(ctx context.Context) ([]resource.Change, error) {
-	plan, err := p.g.Plan(ctx)
+	plan, err := p.g.plan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,4 +34,4 @@ func (p gitPart) Plan(ctx context.Context) ([]resource.Change, error) {
 }
 
 // Report says how gh, the key, the files and the include stand.
-func (p gitPart) Report(ctx context.Context) ([]step.Item, error) { return p.g.Report(ctx) }
+func (p gitPart) Report(ctx context.Context) ([]step.Item, error) { return p.g.report(ctx) }

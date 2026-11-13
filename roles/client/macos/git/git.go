@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
@@ -40,12 +39,6 @@ type Git struct {
 	added bool
 }
 
-// Name is git.
-func (*Git) Name() string { return "git" }
-
-// WaitsOn is nothing.
-func (*Git) WaitsOn() string { return "" }
-
 func (g *Git) look(name string) (string, error) {
 	if g.LookPath != nil {
 		return g.LookPath(name)
@@ -53,8 +46,8 @@ func (g *Git) look(name string) (string, error) {
 	return exec.LookPath(name)
 }
 
-// Plan reads the signing key and gh, and plans to install gh.
-func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
+// plan reads the signing key and gh, and plans to install gh.
+func (g *Git) plan(ctx context.Context) (step.Plan, error) {
 	if g.Conf.GitName == "" {
 		return step.Plan{}, nil
 	}
@@ -91,9 +84,4 @@ func (g *Git) Plan(ctx context.Context) (step.Plan, error) {
 		cs = append(cs, waiting{g, key, gh, waits})
 	}
 	return step.Plan{Changes: g.withNotes(cs)}, nil
-}
-
-// Apply applies the plan as a group does. The registration waits for gh's install by itself.
-func (g *Git) Apply(ctx context.Context, p step.Plan) error {
-	return resource.Group{}.Apply(ctx, p)
 }
