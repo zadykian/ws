@@ -9,15 +9,16 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/zsh"
 )
 
 const zshSource = "source ~/.config/ws/zshrc\n"
 
-func zshStep(m *effecttest.Machine, out *effecttest.Out) *zsh.Zsh {
-	return &zsh.Zsh{Home: "/h", Hook: zsh.Hook, M: m, Out: out,
-		Now: func() time.Time { return time.Date(2026, 11, 9, 10, 0, 0, 0, time.UTC) }}
+func zshStep(m *effecttest.Machine, out *effecttest.Out) resource.Lazy {
+	return (&zsh.Zsh{Home: "/h", Hook: zsh.Hook, M: m, Out: out,
+		Now: func() time.Time { return time.Date(2026, 11, 9, 10, 0, 0, 0, time.UTC) }}).Step()
 }
 
 // The second plan finds roles/client/macos/zsh/files/zshrc's header, so the hook that ws embeds is its own.
@@ -77,5 +78,17 @@ func TestZshStopsAtAConfigThatIsNoDirectory(t *testing.T) {
 	if _, err := zshStep(m, &effecttest.Out{}).Plan(context.Background()); err == nil ||
 		!strings.Contains(err.Error(), "/h/.config is not a directory") {
 		t.Errorf("Plan's error = %v, want that /h/.config is no directory", err)
+	}
+}
+
+// A report warns of nothing: a plan says the warnings, and a report only reads.
+func TestZshReportWarnsNothing(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	m.Dirs["/h/.config"], m.Dirs["/h/.config/ws"] = 0o755, 0o700
+	m.Files["/h/.config/ws/zshrc"] = zsh.Hook
+	m.Files["/h/.zshrc"] = []byte("export EDITOR=vi\n")
+	m.Links["/h/.zshrc"] = "/dots/zshrc"
+	if _, err := zshStep(m, out).Report(context.Background()); err != nil || len(out.Lines) != 0 {
+		t.Errorf("Report = %v, said %q; want no warning", err, out.Lines)
 	}
 }
