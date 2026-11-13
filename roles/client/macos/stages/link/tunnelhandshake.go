@@ -18,7 +18,7 @@ import (
 // ws by a direct way, outside the tunnel.
 func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) error {
 	if first := t.SSH.First(); first != "" {
-		once := "mac.conf's way leads to ws"
+		once := "server.conf's way leads to ws"
 		if target == "lan" {
 			once = "ws's lease is static"
 		}

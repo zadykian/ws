@@ -47,7 +47,7 @@ func TestHostKeyPlan(t *testing.T) {
 	}
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n")
 	_, err := h.Plan(context.Background())
-	if err == nil || !strings.Contains(err.Error(), "and no WS_REMOTE_PORT; set those in mac.conf as roles/server/ubuntu/network/router.md has them") {
+	if err == nil || !strings.Contains(err.Error(), "and no WS_REMOTE_PORT; set those in server.conf as roles/server/ubuntu/network/router.md has them") {
 		t.Errorf("Plan with no way: %v", err)
 	}
 }

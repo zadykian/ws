@@ -58,7 +58,7 @@ func (h *Key) known(ctx context.Context, file string) bool {
 
 // noWay is the stop where no way leads to ws, naming what ws's target needs.
 func noWay(c conf.Conf) error {
-	how := "set those in mac.conf"
+	how := "set those in server.conf"
 	switch c.Target {
 	case "lan":
 		how += " as roles/server/ubuntu/network/router.md has them"

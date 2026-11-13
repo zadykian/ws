@@ -53,9 +53,9 @@ func (w MacWays) Missing() error {
 	_, err := conf.Read(w.M, w.Conf)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
-		return fmt.Errorf("ws is out of reach: no mac.conf at %s; the wizard or ws client macos configure writes it", w.Conf)
+		return fmt.Errorf("ws is out of reach: no server.conf at %s; the wizard or ws client macos configure writes it", w.Conf)
 	case err != nil:
-		return fmt.Errorf("ws is out of reach: mac.conf leaves no way: %w", err)
+		return fmt.Errorf("ws is out of reach: server.conf leaves no way: %w", err)
 	}
 	return nil
 }

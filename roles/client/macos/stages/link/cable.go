@@ -178,7 +178,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 			"ws server ubuntu apply --only network,wireguard there")
 	}
 	if none {
-		return c.change("write an empty WS_CABLE_SERVICE in mac.conf, for no cable")
+		return c.change("write an empty WS_CABLE_SERVICE in server.conf, for no cable")
 	}
 	if !in {
 		return c.change("ask for the cable's port and service")
@@ -198,7 +198,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return c.change("ask ws's port of the cable, name it in /etc/ws/host_vars.yml on ws, and run " +
 			"ws server ubuntu apply --only network,wireguard there")
 	}
-	return c.change("ask the Mac's service of the cable, write it in mac.conf as WS_CABLE_SERVICE, run " +
+	return c.change("ask the Mac's service of the cable, write it in server.conf as WS_CABLE_SERVICE, run " +
 		"ws client macos apply, which gives it 10.77.0.2, and ping " + cableEnd)
 }
 

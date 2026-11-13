@@ -20,7 +20,7 @@ func TestReadyShowsTheKeyAndWaitsForWg0(t *testing.T) {
 	if err != nil || len(cs) != 1 {
 		t.Fatalf("Plan = %v, %v; want the wait", cs, err)
 	}
-	if got := strings.Join(out.Lines, "\n"); !strings.Contains(got, "for WS_PUBLIC_KEY in the Mac's mac.conf: "+public) {
+	if got := strings.Join(out.Lines, "\n"); !strings.Contains(got, "for WS_PUBLIC_KEY in the Mac's server.conf: "+public) {
 		t.Errorf("output = %q", got)
 	}
 	if err := cs[0].Apply(t.Context()); err == nil || !strings.Contains(err.Error(), public) || slept != 2 {

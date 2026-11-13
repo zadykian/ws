@@ -82,11 +82,11 @@ func (c Cable) plan(ctx context.Context) (step.Plan, error) {
 	}
 	listed, disabled := serviceListed(string(list), service)
 	if !listed {
-		return step.Plan{}, fmt.Errorf("networksetup -listallnetworkservices lacks %q, mac.conf's "+
+		return step.Plan{}, fmt.Errorf("networksetup -listallnetworkservices lacks %q, server.conf's "+
 			"WS_CABLE_SERVICE: name the display's adapter's service as the list prints it", service)
 	}
 	if disabled {
-		c.Out.Warn("networksetup lists %q, mac.conf's WS_CABLE_SERVICE, as disabled, so the cable "+
+		c.Out.Warn("networksetup lists %q, server.conf's WS_CABLE_SERVICE, as disabled, so the cable "+
 			"carries nothing: turn it on in System Settings › Network", service)
 	}
 	info, err := c.M.RunShown(ctx, false, program, "-getinfo", service)
@@ -99,7 +99,7 @@ func (c Cable) plan(ctx context.Context) (step.Plan, error) {
 	}
 	if router := uplinkRouter(string(info)); router != "" {
 		return step.Plan{}, fmt.Errorf("networksetup -getinfo %q shows Router: %s, so the service routes "+
-			"to another network: mac.conf's WS_CABLE_SERVICE must name the display's adapter's service",
+			"to another network: server.conf's WS_CABLE_SERVICE must name the display's adapter's service",
 			service, router)
 	}
 	return step.Plan{Changes: []step.Change{setManual{c, resource.Command{

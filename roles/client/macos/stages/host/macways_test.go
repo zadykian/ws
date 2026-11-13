@@ -35,7 +35,7 @@ func TestMacWaysFromAddresses(t *testing.T) {
 func TestMacWaysSayWhyMacConfLeavesNone(t *testing.T) {
 	m := effecttest.NewMachine()
 	s := remote.SSH{M: m, Lock: "/l", Home: "/h", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}
-	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "no mac.conf at /h/mac.conf") {
+	if _, err := s.Way(context.Background()); err == nil || !strings.Contains(err.Error(), "no server.conf at /h/mac.conf") {
 		t.Errorf("Way with no mac.conf = %v", err)
 	}
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=moon\n")
