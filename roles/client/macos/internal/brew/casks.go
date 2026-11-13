@@ -6,12 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 const (
@@ -76,11 +76,11 @@ func CaskGone(name, missing string) string {
 // Item says how the cask stands, as cask reads it. brew is asked of one cask, and only where its
 // files are gone: a report covers what ws manages, never all that Homebrew holds.
 func (b Casks) Item(ctx context.Context, name string, there bool, missing string) step.Item {
-	item := step.Item{Kind: step.PackageItem, Name: name, Want: userfile.StateInstalled, Found: userfile.StateInstalled}
+	item := step.Item{Kind: step.PackageItem, Name: name, Want: file.StateInstalled, Found: file.StateInstalled}
 	if there {
 		return item
 	}
-	item.Found = userfile.StateMissing
+	item.Found = file.StateMissing
 	if _, err := b.M.Run(ctx, "brew", "list", "--cask", name); err == nil {
 		item.Conflict = CaskGone(name, missing)
 	}
@@ -88,8 +88,8 @@ func (b Casks) Item(ctx context.Context, name string, there bool, missing string
 }
 
 // Report says how an app's cask and the font's stand.
-func (b Casks) Report(ctx context.Context, name, app, home string) userfile.Fixed {
-	return userfile.Fixed{
+func (b Casks) Report(ctx context.Context, name, app, home string) file.Fixed {
+	return file.Fixed{
 		b.Item(ctx, name, b.Has(app, "/Applications", home+"/Applications"),
 			"no "+app+" is in /Applications or ~/Applications"),
 		b.Item(ctx, Font, b.Has(FontFile, home+"/Library/Fonts", "/Library/Fonts"), FontGone),

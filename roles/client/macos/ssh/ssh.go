@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -12,7 +13,6 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -110,12 +110,12 @@ func (s SSH) Report(ctx context.Context) ([]step.Item, error) {
 	parts := []step.Reporter{
 		sshDirs(s.M, s.Out, s.Home),
 		s.wsFile(s.config(ctx, f, key)),
-		userfile.Fixed{include},
+		file.Fixed{include},
 	}
 	if keys.Copied(key.File, key.Text, s.Home) {
 		parts = append(parts, keys.CopyDirs(s.M, s.Out, s.Home))
 	}
-	return userfile.Gather(ctx, append(parts, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)...)
+	return file.Gather(ctx, append(parts, keys.CopyReport(s.M, s.Out, key.File, key.Text, s.Home)...)...)
 }
 
 // Apply applies the changes in order.

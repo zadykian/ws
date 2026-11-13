@@ -2,6 +2,7 @@ package networks
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -9,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // applyInOrder applies the changes of a plan in order, with launchctl's signal as a change.
@@ -40,5 +40,5 @@ func (removal) Kind() step.ChangeKind { return step.Removal }
 
 // Item says that the file is to go.
 func (r removal) Item() step.Item {
-	return step.Item{Kind: step.FileItem, Name: r.path, Want: userfile.StateMissing, Found: userfile.StatePresent}
+	return step.Item{Kind: step.FileItem, Name: r.path, Want: file.StateMissing, Found: file.StatePresent}
 }

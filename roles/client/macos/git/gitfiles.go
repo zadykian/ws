@@ -2,38 +2,38 @@ package git
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // list returns the files of ~/.config/ws: the script for a key of Secretive's, the allowed signers
 // and gitconfig.
-func (g *Git) list(key keys.NamedKey, gh string) []userfile.File {
+func (g *Git) list(key keys.NamedKey, gh string) []file.UserFile {
 	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.File, Gh: gh, Dir: dir}
-	file := func(path, text string, mode fs.FileMode) userfile.File {
-		return userfile.File{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
+	userFile := func(path, text string, mode fs.FileMode) file.UserFile {
+		return file.UserFile{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
 	}
-	var list []userfile.File
+	var list []file.UserFile
 	if sshcfg.SecretiveKey(key.File, g.Home) {
 		in.Program = dir + "/secretive-ssh-keygen"
-		list = append(list, file(in.Program, gitcfg.Wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
+		list = append(list, userFile(in.Program, gitcfg.Wrapper(g.Home+"/"+sshcfg.SecretiveData), 0o755))
 	}
-	list = append(list, file(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Key.String()), 0o644))
-	return append(list, file(dir+"/gitconfig", gitcfg.Config(in), 0o644))
+	list = append(list, userFile(dir+"/allowed_signers", gitcfg.AllowedSigners(g.Conf.GitEmail, key.Key.String()), 0o644))
+	return append(list, userFile(dir+"/gitconfig", gitcfg.Config(in), 0o644))
 }
 
 // dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
-func (g *Git) dirs(pub, text string) userfile.Dirs {
+func (g *Git) dirs(pub, text string) file.UserDirs {
 	if keys.Copied(pub, text, g.Home) {
 		return keys.CopyDirs(g.M, g.Out, g.Home)
 	}
-	return userfile.WsDirs(g.M, g.Out, g.Home)
+	return file.WsDirs(g.M, g.Out, g.Home)
 }
 
 // files plans ~/.config/ws and the files in it.
@@ -70,17 +70,17 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	tool := step.Item{Kind: step.PackageItem, Name: "gh", Want: userfile.StateInstalled, Found: userfile.StateInstalled}
+	tool := step.Item{Kind: step.PackageItem, Name: "gh", Want: file.StateInstalled, Found: file.StateInstalled}
 	if install != nil {
-		tool.Found = userfile.StateMissing
+		tool.Found = file.StateMissing
 	}
-	parts := []step.Reporter{userfile.Fixed{tool}, g.dirs(key.File, key.Text)}
+	parts := []step.Reporter{file.Fixed{tool}, g.dirs(key.File, key.Text)}
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}
 	pub := keys.CopyReport(g.M, g.Out, key.File, key.Text, g.Home)
 	if len(pub) == 0 {
-		pub = []step.Reporter{userfile.Path{M: g.M, Kind: step.FileItem, Path: key.File}}
+		pub = []step.Reporter{file.UserPath{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}
-	return userfile.Gather(ctx, append(append(parts, pub...), g.gitconfigLines())...)
+	return file.Gather(ctx, append(append(parts, pub...), g.gitconfigLines())...)
 }

@@ -6,12 +6,11 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // configLines is the line that reads ws.ghostty, at the end of Ghostty's config.
-func (g *Ghostty) configLines(config, ws string) userfile.Lines {
-	return userfile.Lines{
+func (g *Ghostty) configLines(config, ws string) file.UserLines {
+	return file.UserLines{
 		M: g.M, Out: g.Out, Path: config, Lines: ghosttyLine + "\n", Shown: ghosttyLine, Mode: 0o644, Now: g.Now,
 		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
 			return ghosttyIncludes(config, string(text), ws, g.Home, g.resolve()), nil
@@ -22,7 +21,7 @@ func (g *Ghostty) configLines(config, ws string) userfile.Lines {
 // fileChanges returns the changes to ws.ghostty, ws, after dirs, the changes to its directory,
 // whose link warns once, and then lines, the changes to Ghostty's config. A stop of the config's,
 // such as a link that lacks the line, warns, and the config stays unchanged.
-func (g *Ghostty) fileChanges(ws, dirs []step.Change, link userfile.DirLink, holds bool, lines []step.Change, stop error) []step.Change {
+func (g *Ghostty) fileChanges(ws, dirs []step.Change, link file.UserDirLink, holds bool, lines []step.Change, stop error) []step.Change {
 	cs := dirs
 	differs := false
 	if len(ws) > 0 {

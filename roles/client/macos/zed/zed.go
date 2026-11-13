@@ -4,11 +4,11 @@ package zed
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine/core/resource/file"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // Zed sets up Zed, the Mac's editor for ws. It installs Zed and the font its settings name from
@@ -62,9 +62,9 @@ func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
 	dir := z.Home + "/.config/zed"
 	files := z.whole()
-	return userfile.Gather(ctx, z.casks().Report(ctx, "zed", "Zed.app", z.Home),
+	return file.Gather(ctx, z.casks().Report(ctx, "zed", "Zed.app", z.Home),
 		z.dirs(), files[0], files[1],
-		userfile.Path{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
+		file.UserPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
 }
 
 // Apply installs the casks. A failed install is a warning, and the next run tries again; where

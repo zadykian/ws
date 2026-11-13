@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"io/fs"
 	"path/filepath"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -83,8 +83,8 @@ func PlanCopy(m effect.Machine, out effect.Out, pub, text, home string) ([]step.
 }
 
 // CopyDirs is ws's directory with the directory of ws's copies in it.
-func CopyDirs(m effect.Machine, out effect.Out, home string) userfile.Dirs {
-	return append(userfile.WsDirs(m, out, home), userfile.Dir{M: m, Out: out, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
+func CopyDirs(m effect.Machine, out effect.Out, home string) file.UserDirs {
+	return append(file.WsDirs(m, out, home), file.UserDir{M: m, Out: out, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
 }
 
 // CopyChange returns the write of ws's copy at pub, or none where it holds text already.
@@ -107,5 +107,5 @@ func CopyReport(m effect.Machine, out effect.Out, pub, text, home string) []step
 	if !Copied(pub, text, home) {
 		return nil
 	}
-	return []step.Reporter{userfile.File{M: m, Out: out, Path: pub, Text: []byte(text)}}
+	return []step.Reporter{file.UserFile{M: m, Out: out, Path: pub, Text: []byte(text)}}
 }

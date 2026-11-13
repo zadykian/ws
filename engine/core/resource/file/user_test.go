@@ -1,10 +1,9 @@
-package userfile
+package file
 
 import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"io/fs"
 	"testing"
 
@@ -37,7 +36,7 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		c.setUp(m)
-		f := File{M: m, Path: target, Text: []byte("# ws\n"), Mode: c.mode,
+		f := UserFile{M: m, Path: target, Text: []byte("# ws\n"), Mode: c.mode,
 			Own: func(have []byte) bool { return bytes.HasPrefix(have, []byte("# ws")) }}
 		cs, planErr := f.Plan()
 		items, reportErr := f.Report(context.Background())
@@ -47,7 +46,7 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 			got = "not ws's"
 		case planErr != nil:
 			got = "fails"
-		case len(cs) == 1 && cs[0] == file.UserChmod{M: m, Path: target, Mode: c.mode}:
+		case len(cs) == 1 && cs[0] == UserChmod{M: m, Path: target, Mode: c.mode}:
 			got = "mode"
 		case len(cs) == 1:
 			got = "write"

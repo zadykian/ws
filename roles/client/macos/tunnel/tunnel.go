@@ -16,7 +16,6 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // tunnelLibexec holds root's copy of ws, which the daemon runs. The user owns ~/.local/bin, so a
@@ -84,8 +83,8 @@ func (i Install) String() string { return "would build ws into " + i.Path }
 func (Install) Kind() step.ChangeKind { return step.Install }
 
 // localBin is ~/.local/bin, which holds ws's program. A run makes it where missing, and leaves its mode.
-func localBin(m effect.Machine, out effect.Out, home string) userfile.Dirs {
-	return userfile.Dirs{
+func localBin(m effect.Machine, out effect.Out, home string) file.UserDirs {
+	return file.UserDirs{
 		{M: m, Out: out, Path: home + "/.local", Mode: 0o755},
 		{M: m, Out: out, Path: home + "/.local/bin", Mode: 0o755},
 	}
@@ -157,17 +156,17 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	parts := []step.Reporter{
 		localBin(t.M, t.Out, t.Home),
-		userfile.File{M: t.M, Out: t.Out, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
+		file.UserFile{M: t.M, Out: t.Out, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
 		file.Dir{M: t.M, Path: "/usr/local", Mode: 0o755},
 		file.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
 		file.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
 		file.File{M: t.M, Path: tunnelLibexec + "/ws", Content: self, Mode: 0o755, Secret: true},
 		file.Dir{M: t.M, Path: launchd.Dir, Mode: 0o700},
 		file.Dir{M: t.M, Path: launchd.Dir + "/routes.d", Mode: 0o755},
-		userfile.Fixed(key),
+		file.Fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, userfile.WsDirs(t.M, t.Out, t.Home), t.pub())
+		parts = append(parts, file.WsDirs(t.M, t.Out, t.Home), t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		daemon := step.Item{Kind: step.ServiceItem, Name: launchd.Label, Want: "loaded", Found: "not loaded"}
@@ -175,9 +174,9 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 			daemon.Found = daemon.Want
 		}
 		parts = append(parts, file.File{M: t.M, Path: launchd.Dir + "/tunnel.conf", Content: []byte(tunnelConf(t.Conf)), Mode: 0o600},
-			file.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, userfile.Fixed{daemon})
+			file.File{M: t.M, Path: tunnelPlist, Content: t.Plist, Mode: 0o644}, file.Fixed{daemon})
 	}
-	return userfile.Gather(ctx, parts...)
+	return file.Gather(ctx, parts...)
 }
 
 func (t *Tunnel) sleep(d time.Duration) {

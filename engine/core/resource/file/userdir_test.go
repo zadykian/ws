@@ -1,9 +1,8 @@
-package userfile
+package file
 
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -27,12 +26,12 @@ func TestUserDirPlanAgreesWithReport(t *testing.T) {
 	} {
 		m := effecttest.NewMachine()
 		c.setUp(m)
-		d := Dir{M: m, Path: dir, Mode: 0o700, Fix: c.fix}
-		cs, _, err := Dirs{d}.Plan()
+		d := UserDir{M: m, Path: dir, Mode: 0o700, Fix: c.fix}
+		cs, _, err := UserDirs{d}.Plan()
 		items, reportErr := d.Report(context.Background())
 		got := "nothing"
 		switch {
-		case len(cs) == 1 && cs[0] == file.UserChmod{M: m, Path: dir, Mode: 0o700}:
+		case len(cs) == 1 && cs[0] == UserChmod{M: m, Path: dir, Mode: 0o700}:
 			got = "mode"
 		case len(cs) == 1:
 			got = "make"
@@ -53,8 +52,8 @@ func TestUserDirPlanAgreesWithReport(t *testing.T) {
 func TestUserDirStopsAtAFileAndReportsItAsAConflict(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/d"] = []byte("x")
-	d := Dir{M: m, Path: "/h/d", Mode: 0o755}
-	if cs, _, err := (Dirs{d}).Plan(); !errors.Is(err, errNotDir) || len(cs) != 0 {
+	d := UserDir{M: m, Path: "/h/d", Mode: 0o755}
+	if cs, _, err := (UserDirs{d}).Plan(); !errors.Is(err, errNotDir) || len(cs) != 0 {
 		t.Errorf("plan = %v, %v, want errNotDir and no change", cs, err)
 	}
 	items, err := d.Report(context.Background())
@@ -66,9 +65,9 @@ func TestUserDirStopsAtAFileAndReportsItAsAConflict(t *testing.T) {
 func TestUserDirsGiveTheLastLinkAndStopAtTheFirstError(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Dirs["/t"], m.Dirs["/h"], m.Links["/a"], m.Links["/h/b"] = 0o755, 0o755, "/t", "/t"
-	ds := Dirs{{M: m, Path: "/a", Mode: 0o755}, {M: m, Path: "/h", Mode: 0o755}, {M: m, Path: "/h/b", Mode: 0o755}}
+	ds := UserDirs{{M: m, Path: "/a", Mode: 0o755}, {M: m, Path: "/h", Mode: 0o755}, {M: m, Path: "/h/b", Mode: 0o755}}
 	cs, link, err := ds.Plan()
-	if err != nil || len(cs) != 0 || link != (DirLink{"/h/b", "/t"}) {
+	if err != nil || len(cs) != 0 || link != (UserDirLink{"/h/b", "/t"}) {
 		t.Errorf("plan = %v, %v, %v, want the last link and no change", cs, link, err)
 	}
 	m.Files["/h/b"] = []byte("x")
