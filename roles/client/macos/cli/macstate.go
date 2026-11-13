@@ -20,7 +20,7 @@ type macDoc struct {
 }
 
 // newMacStateCmd returns ws client macos state.
-func newMacStateCmd(p enginecli.Env) *cobra.Command {
+func newMacStateCmd(p enginecli.Env, server *string) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "state",
 		Short: "report what the Mac's steps would change",
@@ -33,7 +33,7 @@ func newMacStateCmd(p enginecli.Env) *cobra.Command {
 			"The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each step with its items and changes.",
 		Args: cobra.NoArgs,
-		RunE: enginecli.State(macTarget(p, new([]string)), p),
+		RunE: enginecli.State(macTarget(p, new([]string), server), p),
 	}
 	c.Flags().Bool("json", false, "print the report as JSON")
 	return c
@@ -41,14 +41,14 @@ func newMacStateCmd(p enginecli.Env) *cobra.Command {
 
 // macRead is the state screen's read of the Mac. It takes mac.conf itself, as the wizard opens the
 // screen on a Mac that may have none: the header then says so, and the wizard stays.
-func macRead(p enginecli.Env) tui.StateReader {
+func macRead(p enginecli.Env, server *string) tui.StateReader {
 	return func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
-		settings, err := loadMacConf(p)
+		name, settings, err := loadMacConf(p, server)
 		if err != nil {
 			return nil, err
 		}
 		// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-		reports, err := macOf(p, settings, b.Effects().M, b, nil).State(ctx)
+		reports, err := macOf(p, name, settings, b.Effects().M, b, nil).State(ctx)
 		return []tui.StateSection{{Reports: reports}}, err
 	}
 }

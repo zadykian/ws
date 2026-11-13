@@ -29,7 +29,7 @@ func Lines(text string) (Conf, []Error) { return Both.Lines(text) }
 
 // Lines reads the text as the package's Lines does, and refuses a key of the other file as well.
 func (s Scope) Lines(text string) (Conf, []Error) {
-	c := Conf{Target: "lan"}
+	c := Conf{Target: "lan", Slot: "0"}
 	var errs []Error
 	for i, line := range strings.Split(text, "\n") {
 		line = strings.Trim(line, " \t")
@@ -104,9 +104,12 @@ func unquote(raw string) (string, bool) {
 	return raw, false
 }
 
-// defaults sets the keys with a default other than empty to it, but WS_USER, which Lines sets last.
+// defaults sets the keys with a default other than empty to it (the target and the slot), but WS_USER, which Lines sets last.
 func (c *Conf) defaults() {
 	if c.Target == "" {
 		c.Target = "lan"
+	}
+	if c.Slot == "" {
+		c.Slot = "0"
 	}
 }

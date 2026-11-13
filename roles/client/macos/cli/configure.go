@@ -15,7 +15,7 @@ import (
 )
 
 // newConfigureCmd returns ws client macos configure.
-func newConfigureCmd(p enginecli.Env) *cobra.Command {
+func newConfigureCmd(p enginecli.Env, server *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
 		Short: "edit mac.conf, the secrets and ws's host_vars on forms",
@@ -23,22 +23,26 @@ func newConfigureCmd(p enginecli.Env) *cobra.Command {
 			"writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, " +
 			"then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
-		RunE: enginecli.Configure(macTarget(p, new([]string)), p),
+		RunE: enginecli.Configure(macTarget(p, new([]string), server), p),
 	}
 }
 
 // macForms gives the forms' sheets, for ws client macos configure and the wizard's list, and done,
 // which lets go of ws once they have ended.
-func macForms(in io.Reader, errw io.Writer, p enginecli.Env) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
+func macForms(in io.Reader, errw io.Writer, p enginecli.Env, server *string) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
+		name, err := pickServer(p, server)
+		if err != nil {
+			return nil, nil, err
+		}
 		macConf := conf.Path(p.Getenv, p.Pwd)
-		form := conf.Form{Conf: macConf, Server: conf.ServerPath(macConf, conf.FirstServer), Defaults: shellDefaults(), M: p.Machine}
-		form, err := form.Load(effect.NewTerminal(in, errw))
+		form := conf.Form{Conf: macConf, Server: conf.ServerPath(macConf, name), Defaults: shellDefaults(), M: p.Machine}
+		form, err = form.Load(effect.NewTerminal(in, errw))
 		if err != nil {
 			return nil, nil, err
 		}
 		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
-		vars := &varsReach{p: p, sudo: &host.Sudo{}}
+		vars := &varsReach{p: p, server: name, sudo: &host.Sudo{}}
 		return []tui.Sheet{confSheet(form), vars.secretsSheet(), ubuntucli.HostVarsSheet(vars.reach)}, vars.close, nil
 	}
 }
