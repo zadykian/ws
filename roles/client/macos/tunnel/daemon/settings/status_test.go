@@ -41,8 +41,7 @@ func TestStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Status(context.Background(), statusMachine(stateText), tt.get, dir,
-				"/var/run/ws-tunnel.state", now)
+			got, err := Status(context.Background(), statusMachine(stateText), tt.get, paths, now)
 			if err != nil || got != tt.want {
 				t.Errorf("Status = %q, %v, want %q", got, err, tt.want)
 			}
@@ -53,7 +52,7 @@ func TestStatus(t *testing.T) {
 func TestStatusSocket(t *testing.T) {
 	var sock string
 	get := func(_ context.Context, s string) (string, error) { sock = s; return "", nil }
-	_, _ = Status(context.Background(), statusMachine(stateText), get, dir, "/var/run/ws-tunnel.state", t0)
+	_, _ = Status(context.Background(), statusMachine(stateText), get, paths, t0)
 	if sock != "/var/run/wireguard/utun4.sock" {
 		t.Errorf("socket = %q", sock)
 	}
@@ -74,7 +73,7 @@ func TestStatusFails(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Status(context.Background(), tt.m, get, dir, "/var/run/ws-tunnel.state", t0)
+			_, err := Status(context.Background(), tt.m, get, paths, t0)
 			if err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Errorf("err = %v, want one with %q", err, tt.want)
 			}
