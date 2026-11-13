@@ -52,7 +52,8 @@ another's takes. Each of the two refuses until one changes, in its own file's wo
 - `WS_TUNNEL_NETWORKS`: a network that overlaps one of the other's, as a network goes through one
   server's tunnel.
 - `WS_RESOLVERS`: a domain the other names, as `/etc/resolver` holds one file a domain.
-- `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file.
+- `WS_CABLE_SERVICE`: a cable the other names. Leave it empty in all but one server's file: the
+  cable reaches that server alone ([the tunnel](../tunnel/README.md#the-cable)).
 
 A file of another server that is missing or refused is left out: a run for that server refuses it.
 
