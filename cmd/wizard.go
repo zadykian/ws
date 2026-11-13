@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
@@ -24,19 +25,9 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// wizardOptions is what a run of a wizard's stages takes beside its effects: the flags, and what the
-// lists chose. Nil left and only run every stage whole.
-type wizardOptions struct {
-	check, update bool
-	// only is ws's roles where the lists chose ws's run in part, as --only's entries.
-	only []string
-	// left is the run's LeftOut, which reaches the steps of ws client macos apply too.
-	left func(parent, name string) bool
-}
-
 // newWizardCmd returns ws client macos wizard.
 func newWizardCmd(p cli.Env) *cobra.Command {
-	var o wizardOptions
+	var o engine.WizardOptions
 	c := &cobra.Command{
 		Use:   "wizard",
 		Short: "set the Mac up in stages",
@@ -47,8 +38,8 @@ func newWizardCmd(p cli.Env) *cobra.Command {
 		RunE: func(c *cobra.Command, _ []string) error { return runWizard(c, p, o) },
 	}
 	f := c.Flags()
-	f.BoolVar(&o.check, "check", false, "print what each stage would do and change nothing")
-	f.BoolVar(&o.update, "update", false, "install the latest ws first, and run it in place of this one")
+	f.BoolVar(&o.Check, "check", false, "print what each stage would do and change nothing")
+	f.BoolVar(&o.Update, "update", false, "install the latest ws first, and run it in place of this one")
 	return c
 }
 
@@ -87,9 +78,9 @@ type wizardEffects struct {
 }
 
 // wizardStages returns the stages of ws client macos wizard, in order.
-func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
+func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
-	check := o.check
+	check := o.Check
 	conf := confPath(p.Getenv, p.Pwd)
 	lock := wizard.LockPath(p.LockDir())
 	scratch := lock + "/mac.conf"
@@ -108,10 +99,10 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = hostKey.SSH, p.TTY, check, e.hidden, out
 	install := &tools.WsInstall{Ws: ws, Version: p.Version, URL: p.Releases, Out: out}
-	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.update, Only: o.only}
+	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.Update, Only: o.Only}
 	hand.Late(ws.Hand)
 	hand.Late(ghStage.Hand)
-	setup := wizardSetup(e, o.left, later)
+	setup := wizardSetup(e, o.Left, later)
 	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.TTY, Check: check, Env: p.Lookup, P: ask, Out: out}
 	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: later, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.Lookup, P: ask, Prog: prog, Tty: p.TTY, M: p.Machine, Out: out}
@@ -141,7 +132,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 
 // runWizard runs ws client macos wizard: its stages under a lock, and what stays by hand after a
 // run in which a stage acted. Under --check it prints what each stage would do and changes nothing.
-func runWizard(c *cobra.Command, p cli.Env, o wizardOptions) error {
+func runWizard(c *cobra.Command, p cli.Env, o engine.WizardOptions) error {
 	if why := wizardRefusal(p); why != "" {
 		return errors.New(why)
 	}
@@ -150,7 +141,7 @@ func runWizard(c *cobra.Command, p cli.Env, o wizardOptions) error {
 	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
 	_ = p.Setenv("WS_CONF", confPath(p.Getenv, p.Pwd))
 	var before []func(effect.Out) step.Step
-	if o.update {
+	if o.Update {
 		// Its own run, before the lock: the new ws takes the place of this process, which would leave the
 		// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
 		before = append(before, func(out effect.Out) step.Step {

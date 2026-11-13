@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
@@ -15,15 +16,15 @@ import (
 // serverWizardStages returns the stages of ws server ubuntu wizard, in order. They act on ws
 // itself, with the remote script on sh's stdin, as the Mac's wizard sends it over ssh. e.events
 // hears ws's run, e.talks runs claude's login, and e.hand takes what stays by hand. A list that
-// chose ws's run in part gives o.only, and one that ticked it whole o.update, as on the Mac.
-func serverWizardStages(e wizardEffects, o wizardOptions) []step.Step {
+// chose ws's run in part gives o.Only, and one that ticked it whole o.Update, as on the Mac.
+func serverWizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	p, out, hand := e.p, e.out, e.hand
 	m := p.Machine
 	vals := &stages.WsValues{Vars: serverVars, User: p.Getenv("SUDO_USER"), Tty: p.TTY, M: m, P: e.ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
 	ws := serverSession(m, e.talks, out, e.events)
-	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !systemd.Booted(m), Check: o.check, Out: out,
-		Version: p.Version, Update: o.update, Only: o.only}
+	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !systemd.Booted(m), Check: o.Check, Out: out,
+		Version: p.Version, Update: o.Update, Only: o.Only}
 	hand.Late(ws.Hand)
 	return []step.Step{vals, run, &stages.WsClaude{Ws: ws, Tty: p.TTY},
 		&stages.Signing{Ws: ws, GitHub: &stages.WsGitHub{M: m, Out: out, Hand: hand}}}

@@ -24,7 +24,7 @@ type wizardRun struct {
 	c    *cobra.Command
 	p    cli.Env
 	side wizardSide
-	o    wizardOptions
+	o    engine.WizardOptions
 }
 
 // start runs the wizard on lines, or on its lists at a terminal. The steps that before build run
@@ -41,7 +41,7 @@ func (w wizardRun) start(before ...func(effect.Out) step.Step) error {
 		for i, build := range before {
 			steps[i] = build(out)
 		}
-		if _, err := step.RunWith(ctx, steps, step.Options{Observer: out, Check: w.o.check}); err != nil {
+		if _, err := step.RunWith(ctx, steps, step.Options{Observer: out, Check: w.o.Check}); err != nil {
 			return engine.Cause(err)
 		}
 	}
@@ -62,7 +62,7 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out engine.
 	talks, _ := w.p.Machine.(effect.Foreground)
 	stages := w.side.stages(wizardEffects{p: w.p, prog: w.c.CommandPath(), talks: talks, ask: signalPrompt{term},
 		hidden: term, out: out, text: w.c.OutOrStdout(), obs: out, hand: hand, sudo: &host.Sudo{}}, w.o)
-	_, err := wizard.Run(ctx, w.p.Machine, step.Options{Observer: out, Check: w.o.check}, stages, w.p.LockDir(),
+	_, err := wizard.Run(ctx, w.p.Machine, step.Options{Observer: out, Check: w.o.Check}, stages, w.p.LockDir(),
 		w.side.pid, closing)
 	// The runner names the stage before the stage's own message.
 	return engine.Cause(err)
@@ -120,7 +120,7 @@ func (w wizardRun) effects(b *tui.Bridge, sudo *host.Sudo) wizardEffects {
 // installs it has read it, as ws's stages behind that need a ws at this version.
 func (w wizardRun) scan(sudo *host.Sudo) tui.Work {
 	check := w.o
-	check.check = true
+	check.Check = true
 	return func(ctx context.Context, b *tui.Bridge) error {
 		e := w.effects(b, sudo)
 		stages := w.side.stages(e, check)
@@ -164,12 +164,12 @@ func wsRunOf(list []step.Step) *stages.WsRun {
 
 // work is a run of the stages by o beside a screen. What stays by hand goes to the run's stdout, as in
 // a plain run.
-func (w wizardRun) work(o wizardOptions, sudo *host.Sudo) tui.Work {
+func (w wizardRun) work(o engine.WizardOptions, sudo *host.Sudo) tui.Work {
 	return func(ctx context.Context, b *tui.Bridge) error {
 		e := w.effects(b, sudo)
 		e.events = b
 		closing := func(ctx context.Context) { e.hand.Close(ctx, e.text) }
-		so := b.Options(step.Options{Check: o.check, LeftOut: o.left})
+		so := b.Options(step.Options{Check: o.Check, LeftOut: o.Left})
 		_, err := wizard.Run(ctx, e.p.Machine, so, w.side.stages(e, o), w.p.LockDir(), w.side.pid, closing)
 		return engine.Cause(err)
 	}
@@ -177,7 +177,7 @@ func (w wizardRun) work(o wizardOptions, sudo *host.Sudo) tui.Work {
 
 // running gives draw a run's config and the work of o. The run's stdout prints past the screen,
 // which it would paint over.
-func (w wizardRun) running(o wizardOptions, sudo *host.Sudo, draw func(tui.Config, tui.Work) error) error {
+func (w wizardRun) running(o engine.WizardOptions, sudo *host.Sudo, draw func(tui.Config, tui.Work) error) error {
 	cfg, done := engine.RunConfig(cli.CallOf(w.c, w.p), w.config())
 	defer done()
 	return draw(cfg, w.work(o, sudo))
@@ -186,7 +186,7 @@ func (w wizardRun) running(o wizardOptions, sudo *host.Sudo, draw func(tui.Confi
 // whole runs every stage, on the run screen of their names.
 func (w wizardRun) whole() error {
 	return w.running(w.o, &host.Sudo{}, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewRunScreen(engine.RunTitle(cli.CallOf(w.c, w.p), w.o.check), cfg.Theme, tui.NewGroup("", w.plainStages()))
+		screen := tui.NewRunScreen(engine.RunTitle(cli.CallOf(w.c, w.p), w.o.Check), cfg.Theme, tui.NewGroup("", w.plainStages()))
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }
@@ -195,11 +195,11 @@ func (w wizardRun) whole() error {
 // --only, as they run on ws, and ws client macos apply's steps by the run's filter. ws's run whole
 // by a tick goes once more, as under --update: a good last run says nothing of a step that drifted
 // after it.
-func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) wizardOptions {
+func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) engine.WizardOptions {
 	o := w.o
-	o.check = choice.Next == tui.NextCheck
-	o.update = o.update || slices.Contains(choice.Whole, run)
-	o.left, o.only = wizardLeft(choice), choice.Partial[run]
+	o.Check = choice.Next == tui.NextCheck
+	o.Update = o.Update || slices.Contains(choice.Whole, run)
+	o.Left, o.Only = wizardLeft(choice), choice.Partial[run]
 	return o
 }
 
@@ -207,7 +207,7 @@ func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) wizardOptions {
 func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo *host.Sudo) error {
 	o := w.optionsOf(choice, run)
 	return w.running(o, sudo, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewQueueRun(engine.RunTitle(cli.CallOf(w.c, w.p), o.check), cfg.Theme, choice)
+		screen := tui.NewQueueRun(engine.RunTitle(cli.CallOf(w.c, w.p), o.Check), cfg.Theme, choice)
 		return tui.Run(w.c.Context(), cfg, screen, work)
 	})
 }

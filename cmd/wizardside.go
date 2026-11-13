@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/zadykian/ws/engine"
 
 	"github.com/spf13/cobra"
 
@@ -14,7 +15,7 @@ import (
 // wizardSide is what differs between the wizards: their stages, the process that caffeinate waits
 // on, the Configure forms, and the state screen's read.
 type wizardSide struct {
-	stages func(wizardEffects, wizardOptions) []step.Step
+	stages func(wizardEffects, engine.WizardOptions) []step.Step
 	// pid is the process that caffeinate waits on. 0 on ws, which has no caffeinate.
 	pid   int
 	forms func(context.Context) ([]tui.Sheet, func(context.Context), error)
