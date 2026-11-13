@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // cldReleases is the page of cld's releases, whose latest has the install.sh that installs cld.
@@ -100,7 +100,7 @@ func (c *Cld) plan(ctx context.Context) step.Plan {
 		cs, tabs = []step.Change{cldInstall{c}}, c.Check
 	}
 	if tabs && c.gains(ctx) {
-		cs = append(cs, change.Remark("would add the lines that start cld's watcher to config.d/ws, "+
+		cs = append(cs, resource.Remark("would add the lines that start cld's watcher to config.d/ws, "+
 			"where that cld has restore tabs"))
 	}
 	return step.Plan{Changes: cs}
@@ -151,5 +151,5 @@ func (c *Cld) update(ctx context.Context) ([]step.Change, bool) {
 	if !cldRelease.MatchString(latest) || !cldOlder(have, latest) {
 		return nil, false
 	}
-	return []step.Change{change.Remark("would run cld update: cld " + have + ", the latest " + latest)}, true
+	return []step.Change{resource.Remark("would run cld update: cld " + have + ", the latest " + latest)}, true
 }

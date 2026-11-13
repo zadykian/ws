@@ -13,7 +13,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 )
 
@@ -93,11 +92,11 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		}
 		// The directory is planned once: a second mkdir would fail where the directory is new.
 		if i == 0 {
-			if cs, err = change.Plan(ctx, cs, resource.Said{Out: n.Out, Part: file.Dir{M: n.M, Path: resolverDir, Mode: 0o755}}); err != nil {
+			if cs, err = resource.Append(ctx, cs, resource.Said{Out: n.Out, Part: file.Dir{M: n.M, Path: resolverDir, Mode: 0o755}}); err != nil {
 				return nil, err
 			}
 		}
-		if cs, err = change.Plan(ctx, cs, resource.Said{Out: n.Out,
+		if cs, err = resource.Append(ctx, cs, resource.Said{Out: n.Out,
 			Part: file.File{M: n.M, Path: resolverFile, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}}); err != nil {
 			return nil, err
 		}

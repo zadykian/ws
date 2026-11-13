@@ -3,13 +3,14 @@ package keys_test
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
@@ -71,7 +72,7 @@ func TestPlanCopy(t *testing.T) {
 	}
 	m.Results["mkdir -p /h/"+sshcfg.KeyCopies] = effecttest.Result{}
 	for _, c := range got {
-		if err := change.Apply(context.Background(), m, &effecttest.Out{}, c); err != nil {
+		if err := (resource.Group{}).Apply(context.Background(), step.Plan{Changes: []step.Change{c}}); err != nil {
 			t.Fatal(err)
 		}
 	}
