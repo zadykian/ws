@@ -25,6 +25,7 @@ type Conf struct {
 	LAN       netip.Prefix
 	LANServer netip.Addr
 	Remote    string // a name or an address, resolved anew at each try
+	Cable     bool   // WS_CABLE=yes: the cable reaches this server
 	Port      uint16
 	Slot      slot.Slot // WS_SLOT; slot 0 where tunnel.conf has none
 }
@@ -68,6 +69,9 @@ func (c *Conf) set(name, value string) bool {
 	case "WS_REMOTE":
 		c.Remote = value
 		return check.Name(value)
+	case "WS_CABLE":
+		c.Cable = value == "yes"
+		return c.Cable
 	case "WS_SLOT":
 		s, ok := slot.Parse(value)
 		c.Slot = s
