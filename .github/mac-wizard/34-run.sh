@@ -17,6 +17,8 @@
 # server ubuntu apply.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
 remote_sh=$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote.sh
@@ -98,9 +100,9 @@ wizard
 started 1 2 && sudo grep -qx "ws_user: \"$(id -un)\"" "$vars" && [ "$status" = 0 ] ||
     error "a run with another ws_user exited $status, or named no ws_user: $(id -un)"
 
-WS_CONF=$RUNNER_TEMP/cloud.conf
+WS_CONF=$RUNNER_TEMP/confs/cloud/mac.conf
 export WS_CONF
-sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' ~/.config/ws/mac.conf >"$WS_CONF"
+conf_print ~/.config/ws/mac.conf | sed 's/^WS_TARGET=.*/WS_TARGET=cloud/' | conf_write "$WS_CONF"
 out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 printf '%s\n' "$out" | grep -q 'after naming security_outbound: false in ' ||
     error "ws client macos wizard --check on a cloud VM named no host_vars line before the run: $out"
@@ -123,7 +125,7 @@ sudo sed -i '' '/^security_outbound:/d' "$vars"
 wizard
 started 1 2 && sudo grep -qx 'security_outbound: false' "$vars" && [ "$status" = 0 ] ||
     error "a cloud VM's run without the line exited $status, or ran no ws server ubuntu apply"
-rm "$WS_CONF"
+rm -r "${WS_CONF%/*}"
 unset WS_CONF
 "$wsbin" client macos wizard --update </dev/null >"$RUNNER_TEMP/run.out" 2>&1
 grep -q "^- ws's outbound table: off, as ws's /etc/ws/host_vars.yml names security_outbound: false, " \

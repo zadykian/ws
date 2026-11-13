@@ -8,10 +8,12 @@
 # these may change that mac.conf, or leave a lock or file of the wizard's in $TMPDIR.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
-conf=$RUNNER_TEMP/key.conf
-named=$RUNNER_TEMP/named.conf
+conf=$RUNNER_TEMP/confs/key/mac.conf
+named=$RUNNER_TEMP/confs/named/mac.conf
 tmp=${TMPDIR:-/tmp}
 tmp=${tmp%/}
 fail=0
@@ -24,8 +26,9 @@ error() {
 }
 
 printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 WS_TARGET=lan WS_LAN= WS_GIT_NAME= \
-    WS_TUNNEL_NETWORKS= WS_RESOLVERS= >"$conf"
-cp "$conf" "$RUNNER_TEMP/key.conf.before"
+    WS_TUNNEL_NETWORKS= WS_RESOLVERS= |
+    conf_write "$conf"
+conf_print "$conf" >"$RUNNER_TEMP/key.conf.before"
 out=$(WS_CONF=$conf "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
@@ -39,7 +42,7 @@ printf '%s\n' "$out"
 want="ws client macos wizard: Mac key: would ask for ws's login key, in Secretive: make a new one (the default)"
 printf '%s\n' "$out" | grep -qxF "$want" && [ "$status" = 0 ] ||
     error "ws client macos wizard --check exited $status, saying no '$want'"
-{ cat "$conf" && echo "WS_IDENTITY_PUB_KEY=$RUNNER_TEMP/none.pub"; } >"$named"
+{ conf_print "$conf" && echo "WS_IDENTITY_PUB_KEY=$RUNNER_TEMP/none.pub"; } | conf_write "$named"
 out=$(WS_CONF=$named "$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
@@ -47,16 +50,16 @@ stop="ws client macos wizard: Mac key: $RUNNER_TEMP/none.pub, named in mac.conf'
 printf '%s\n' "$out" | grep -qF "$stop" && [ "$status" = 1 ] ||
     error "ws client macos wizard exited $status, naming no missing key"
 ! printf '%s\n' "$out" | grep -qE "$applied" || error 'ws client macos wizard ran ws client macos apply, with no key'
-{ cat "$conf" && echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub'; } >"$named"
+{ conf_print "$conf" && echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub'; } | conf_write "$named"
 out=$(WS_CONF=$named "$wsbin" client macos wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 ! printf '%s\n' "$out" | grep -q '^ws client macos wizard: Mac key: ' && [ "$status" = 0 ] ||
     error "ws client macos wizard --check exited $status, or printed a line of the Mac key stage, with the file key"
-rm -f "$named" "$RUNNER_TEMP/none.pub"
+rm -rf "${named%/*}" "$RUNNER_TEMP/none.pub"
 for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
     [ ! -e "$left" ] || error "ws client macos wizard left $left"
 done
-cmp -s "$conf" "$RUNNER_TEMP/key.conf.before" || error "ws client macos wizard changed $conf"
-rm -f "$conf" "$RUNNER_TEMP/key.conf.before"
+conf_print "$conf" | cmp -s - "$RUNNER_TEMP/key.conf.before" || error "ws client macos wizard changed $conf"
+rm -rf "${conf%/*}" "$RUNNER_TEMP/key.conf.before"
 exit "$fail"

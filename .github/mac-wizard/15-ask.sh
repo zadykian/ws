@@ -10,6 +10,8 @@
 # defaults. mac-vm on standin.sh's mac.conf, which holds WS_REMOTE, must stop, naming the key.
 
 set -u
+# shellcheck source=.github/mac-conf.sh
+. "$(dirname "$0")/../mac-conf.sh"
 
 wsbin=$HOME/.local/bin/ws
 conf=$HOME/.config/ws/mac.conf
@@ -25,7 +27,7 @@ error() {
 
 # kept NAME: the run NAME must leave mac.conf and $TMPDIR as they were.
 kept() {
-    cmp -s "$conf" "$RUNNER_TEMP/mac.conf" || error "$1 changed mac.conf"
+    conf_print "$conf" | cmp -s - "$RUNNER_TEMP/mac.conf" || error "$1 changed mac.conf"
     for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
         [ ! -e "$left" ] || error "$1 left $left"
     done
@@ -81,7 +83,7 @@ typed() {
     kept "ws client macos wizard --check with $what"
 }
 
-cp "$conf" "$RUNNER_TEMP/mac.conf"
+conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET' "$wsbin" client macos wizard
 quick 'ws client macos wizard: Answers: no terminal to ask WS_TARGET: set WS_TARGET' "$wsbin" client macos wizard --check
 quick 'WS_TARGET=home is not lan, cloud or mac-vm' env WS_TARGET=home "$wsbin" client macos wizard --check
@@ -128,11 +130,11 @@ printf '%s\n' '+WS_TARGET=lan' '+WS_LAN=10.88.0.0/24' '+WS_LAN_ADDRESS=10.88.0.1
     '+WS_RESOLVERS=' >"$RUNNER_TEMP/added"
 typed 'seven empty lines' '' '' '' '' '' '' ''
 
-conf=$RUNNER_TEMP/target.conf
+conf=$RUNNER_TEMP/confs/target/mac.conf
 WS_CONF=$conf
 export WS_CONF
-echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' >"$conf"
-cp "$conf" "$RUNNER_TEMP/mac.conf"
+echo 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' | conf_write "$conf"
+conf_print "$conf" >"$RUNNER_TEMP/mac.conf"
 quick 'ws client macos wizard: Answers: no terminal to ask WS_REMOTE: set WS_REMOTE' \
     env WS_TARGET=cloud "$wsbin" client macos wizard --check
 printf '%s\n' '+WS_TARGET=cloud' '+WS_REMOTE=ws.example.test' '+WS_REMOTE_PORT=22' \
@@ -151,5 +153,5 @@ for asked in "The Mac's network for its VMs (WS_LAN) [192.168.64.0/24]: " \
     'Answers: WS_LAN and WS_LAN_ADDRESS go together'; do
     grep -qF "$asked" "$RUNNER_TEMP/tty" || error "ws client macos wizard asked a VM on the Mac with no '$asked'"
 done
-rm "$conf"
+rm -r "${conf%/*}"
 exit "$fail"
