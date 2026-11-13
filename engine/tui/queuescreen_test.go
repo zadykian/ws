@@ -66,12 +66,12 @@ func TestAStripTakesAThirdOfTheWindowWithinBounds(t *testing.T) {
 }
 
 func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
-	stages := []Stage{{Name: "Run", Side: WsSide, Nested: []Group{{Name: "base"}}}}
+	stages := []Stage{{Name: "Run", Side: "ws", Nested: []Group{{Name: "base"}}}}
 	l := queueOf(stages)
-	if got := l.panes()[l.pane(WsSide)].Title; got != "ws: roles not scanned" {
+	if got := l.panes()[l.pane("ws")].Title; got != "ws: roles not scanned" {
 		t.Errorf("title = %q", got)
 	}
-	if got := l.reported("Run", nil).panes()[l.pane(WsSide)].Title; got != "ws" {
+	if got := l.reported("Run", nil).panes()[l.pane("ws")].Title; got != "ws" {
 		t.Errorf("title = %q", got)
 	}
 }
@@ -79,9 +79,9 @@ func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 // wsStages is a queue of ws server ubuntu wizard, whose every stage runs on ws.
 func wsStages() []Stage {
 	return []Stage{
-		{Name: "Values", Side: WsSide},
-		{Name: "Run", Side: WsSide, Waits: "Values", Nested: []Group{{Name: "base"}}},
-		{Name: "Signing", Side: WsSide, Waits: "Run"},
+		{Name: "Values", Side: "ws"},
+		{Name: "Run", Side: "ws", Waits: "Values", Nested: []Group{{Name: "base"}}},
+		{Name: "Signing", Side: "ws", Waits: "Run"},
 	}
 }
 
@@ -94,7 +94,7 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 			t.Errorf("no %q in:\n%s", want, got)
 		}
 	}
-	if strings.Contains(got, "Mac") || s.list.side != WsSide || len(s.layout().Panes) != 1 {
+	if strings.Contains(got, "Mac") || s.list.side != "ws" || len(s.layout().Panes) != 1 {
 		t.Errorf("side %q, frame:\n%s", s.list.side, got)
 	}
 }
@@ -102,10 +102,10 @@ func TestStagesAllOnWsStandInOneList(t *testing.T) {
 func TestTabLeavesOneListForTheButtons(t *testing.T) {
 	s := openQueue("ws server ubuntu wizard", testTheme, wsStages(), make(chan QueueChoice, 1))
 	s = queueSent(s, tea.WindowSizeMsg{Width: 100, Height: 30}, scannedMsg{}, tab)
-	if s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
+	if s.list.side != "ws" || s.footer.Focused() != pickTogglePlace {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
-	if s = queueSent(s, shiftTab); s.list.side != WsSide || s.footer.Focused() >= 0 {
+	if s = queueSent(s, shiftTab); s.list.side != "ws" || s.footer.Focused() >= 0 {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, shiftTab); s.footer.Focused() != queueConfigurePlace || !strings.Contains(queueShown(s), "configure") {
@@ -131,20 +131,20 @@ func chosenBy(t *testing.T, msgs ...tea.Msg) QueueChoice {
 
 func TestTabWalksTheTwoListsThenTheButtons(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{}, tab)
-	if s.list.side != WsSide || s.footer.Focused() >= 0 {
+	if s.list.side != "ws" || s.footer.Focused() >= 0 {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
-	if s = queueSent(s, tab); s.list.side != WsSide || s.footer.Focused() != pickTogglePlace {
+	if s = queueSent(s, tab); s.list.side != "ws" || s.footer.Focused() != pickTogglePlace {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	s = queueSent(s, shiftTab, shiftTab)
-	if s.list.side != MacSide || s.footer.Focused() >= 0 {
+	if s.list.side != "Mac" || s.footer.Focused() >= 0 {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 	if s = queueSent(s, shiftTab); s.footer.Focused() != queueConfigurePlace {
 		t.Errorf("focus %d", s.footer.Focused())
 	}
-	if s = queueSent(s, tab); s.list.side != MacSide || s.footer.Focused() >= 0 {
+	if s = queueSent(s, tab); s.list.side != "Mac" || s.footer.Focused() >= 0 {
 		t.Errorf("side %q, focus %d", s.list.side, s.footer.Focused())
 	}
 }
@@ -189,7 +189,7 @@ func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
 
 func TestAStageInPartSaysThatItStaysPending(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{})
-	s.list, s.at = queueChoosing(s.list, "one"), withCursor(s.at, MacSide, 1)
+	s.list, s.at = queueChoosing(s.list, "one"), withCursor(s.at, "Mac", 1)
 	if got := queueShown(s); !strings.Contains(got, "Runs in part, so it stays pending.") {
 		t.Errorf("frame:\n%s", got)
 	}
@@ -205,10 +205,10 @@ func TestPickStagesEndsTheScanWithTheChoice(t *testing.T) {
 }
 
 func TestStateKeyNamesTheListInFocus(t *testing.T) {
-	if got := chosenBy(t, scannedMsg{}, press('s')); got.Next != NextState || got.Side != MacSide || len(got.Only) != 0 {
+	if got := chosenBy(t, scannedMsg{}, press('s')); got.Next != NextState || got.Side != "Mac" || len(got.Only) != 0 {
 		t.Errorf("s on the Mac's list = %+v", got)
 	}
-	if got := chosenBy(t, scannedMsg{}, tab, press('s')); got.Next != NextState || got.Side != WsSide {
+	if got := chosenBy(t, scannedMsg{}, tab, press('s')); got.Next != NextState || got.Side != "ws" {
 		t.Errorf("s on ws's list = %+v", got)
 	}
 }
@@ -253,13 +253,13 @@ func TestABridgeReportReachesTheScreen(t *testing.T) {
 
 func TestEachSideKeepsItsCursor(t *testing.T) {
 	s := queueSent(testQueueScreen(), scannedMsg{}, press('j'), press('j'), press('j'), tab)
-	if s.list.side != WsSide || s.at[MacSide] != 3 || s.at[WsSide] != 0 {
+	if s.list.side != "ws" || s.at["Mac"] != 3 || s.at["ws"] != 0 {
 		t.Errorf("side %q, cursors %v", s.list.side, s.at)
 	}
 	if got := strings.Count(queueShown(s), "▸"); got != 1 {
 		t.Errorf("%d cursors drawn, want the focused list's alone", got)
 	}
-	if s = queueSent(s, shiftTab); s.list.side != MacSide || s.at[MacSide] != 3 {
+	if s = queueSent(s, shiftTab); s.list.side != "Mac" || s.at["Mac"] != 3 {
 		t.Errorf("side %q, cursors %v", s.list.side, s.at)
 	}
 }
@@ -267,16 +267,16 @@ func TestEachSideKeepsItsCursor(t *testing.T) {
 func TestAMoveLeavesTheScreenItCameFromItsCursors(t *testing.T) {
 	was := queueSent(testQueueScreen(), scannedMsg{}, press('j'))
 	moved := queueSent(was, press('j'), tab)
-	if was.at[MacSide] != 1 || was.at[WsSide] != 0 || moved.at[MacSide] != 2 {
+	if was.at["Mac"] != 1 || was.at["ws"] != 0 || moved.at["Mac"] != 2 {
 		t.Errorf("cursors %v before, %v after", was.at, moved.at)
 	}
 }
 
 func TestThreeSidesDrawThreePanesAndTabWalksThem(t *testing.T) {
 	third := Side("VM")
-	stages := []Stage{{Name: "One", Side: WsSide}, {Name: "Two", Side: MacSide}, {Name: "Three", Side: third}, {Name: "Four", Side: WsSide}}
+	stages := []Stage{{Name: "One", Side: "ws"}, {Name: "Two", Side: "Mac"}, {Name: "Three", Side: third}, {Name: "Four", Side: "ws"}}
 	s := queueSent(openQueue("ws", testTheme, stages, make(chan QueueChoice, 1)), tea.WindowSizeMsg{Width: 120, Height: 30})
-	if got := s.list.sides(); !slices.Equal(got, []Side{WsSide, MacSide, third}) || len(s.list.panes()) != 3 {
+	if got := s.list.sides(); !slices.Equal(got, []Side{"ws", "Mac", third}) || len(s.list.panes()) != 3 {
 		t.Fatalf("sides %v, %d panes: want ws, Mac and the third, in the order named", got, len(s.list.panes()))
 	}
 	var seen []Side
@@ -284,7 +284,7 @@ func TestThreeSidesDrawThreePanesAndTabWalksThem(t *testing.T) {
 		seen = append(seen, s.list.side)
 		s = queueSent(s, tab)
 	}
-	if !slices.Equal(seen, []Side{WsSide, MacSide, third}) || s.footer.Focused() < 0 {
+	if !slices.Equal(seen, []Side{"ws", "Mac", third}) || s.footer.Focused() < 0 {
 		t.Errorf("Tab met %v, then button %d", seen, s.footer.Focused())
 	}
 }

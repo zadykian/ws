@@ -10,10 +10,10 @@ import (
 func TestAnEventOutsideEveryStageMovesNothing(t *testing.T) {
 	was := queueOf(testStages()).hear(Line{Said, "x"})
 	got := was.take(planned("other", "x", 0))
-	if !slices.Equal(drawnQueue(got, MacSide), drawnQueue(was, MacSide)) || len(got.heard) != 0 {
+	if !slices.Equal(drawnQueue(got, "Mac"), drawnQueue(was, "Mac")) || len(got.heard) != 0 {
 		t.Errorf("queue = %+v", got)
 	}
-	if got = was.take(planned("", "x", 9)); !slices.Equal(drawnQueue(got, WsSide), drawnQueue(was, WsSide)) {
+	if got = was.take(planned("", "x", 9)); !slices.Equal(drawnQueue(got, "ws"), drawnQueue(was, "ws")) {
 		t.Errorf("queue = %+v", got)
 	}
 }
@@ -29,7 +29,7 @@ func TestAStageTakesTheWordsTheScanSaidBeforeItsStepEnded(t *testing.T) {
 func TestAnEventNamesAStepNoScanHad(t *testing.T) {
 	q := queueOf(testStages()).take(planned("", "Run", 3)).take(planned("base", "Packages", 0, oneChange("a")))
 	q = q.take(planned("base", "Locale", 1))
-	got := drawnQueue(q, WsSide)
+	got := drawnQueue(q, "ws")
 	want := []string{" 3 [#] · Sudo", " 4 [-] ✓ Run", "     [-] base", "       [x] ● Packages", "       [ ] ✓ Locale",
 		"     [ ] · ssh"}
 	if !slices.Equal(got, want) {
@@ -39,14 +39,14 @@ func TestAnEventNamesAStepNoScanHad(t *testing.T) {
 
 func TestAnEventOfAStageNamedAsItsGroupJoinsItsSteps(t *testing.T) {
 	q := queueOf(testStages()).take(planned("Setup", "three", 2))
-	if got := drawnQueue(q, MacSide)[4]; got != "     [ ] ✓ three" {
+	if got := drawnQueue(q, "Mac")[4]; got != "     [ ] ✓ three" {
 		t.Errorf("row = %q", got)
 	}
 }
 
 func TestAnEventOfAStageWithNoGroupOfItsNameJoinsItsList(t *testing.T) {
 	q := queueOf(testStages()).take(planned("Run", "Sudo again", 2))
-	if got := drawnQueue(q, WsSide)[2]; got != "     [ ] ✓ Sudo again" {
+	if got := drawnQueue(q, "ws")[2]; got != "     [ ] ✓ Sudo again" {
 		t.Errorf("row = %q", got)
 	}
 }
@@ -61,7 +61,7 @@ func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 	q := queueOf(testStages()).reported("Run", sections)
 	want := []string{" 3 [#] · Sudo", " 4 [-] · Run", "     [-] base", "       [ ] ✓ Packages", "       [x] ● Locale",
 		"       [x] – Time", "       [ ] ✗ Fans"}
-	if got := drawnQueue(q, WsSide); !slices.Equal(got, want) {
+	if got := drawnQueue(q, "ws"); !slices.Equal(got, want) {
 		t.Errorf("list = %q, want %q", got, want)
 	}
 	rows := q.stages[3].list.rows
@@ -76,7 +76,7 @@ func TestAReportNamesAStagesStepsInPlaceOfItsRoles(t *testing.T) {
 func TestAReportKeepsTheWordsOfTheFilter(t *testing.T) {
 	sections := []StateSection{{Name: "Run", Reports: []step.Report{{Step: "Packages"}, {Step: "Locale"}}}}
 	q := queueOf(testStages()).filtered("loc").reported("Run", sections)
-	if got, want := drawnQueue(q, WsSide), []string{"     [ ] Run", "     [ ] ✓ Locale"}; !slices.Equal(got, want) {
+	if got, want := drawnQueue(q, "ws"), []string{"     [ ] Run", "     [ ] ✓ Locale"}; !slices.Equal(got, want) {
 		t.Errorf("list = %q, want %q", got, want)
 	}
 }
@@ -84,14 +84,14 @@ func TestAReportKeepsTheWordsOfTheFilter(t *testing.T) {
 func TestARunMovesTheMarksAndLeavesTheBoxes(t *testing.T) {
 	q := queueOf(testStages()).take(planned("", "Tools", 0, oneChange("a")))
 	q, side, line := q.follow(step.Event{Kind: step.Started, Step: "Sudo", Index: 2})
-	if side != WsSide || line != 0 {
+	if side != "ws" || line != 0 {
 		t.Errorf("side %q, line %d", side, line)
 	}
 	q, _, line = q.follow(step.Event{Kind: step.Done, Step: "Tools", Index: 0, LeftOut: true})
 	if line >= 0 {
 		t.Errorf("line %d: a step done takes no cursor", line)
 	}
-	if got := drawnQueue(q, MacSide)[0]; got != " 1 [x] ○ Tools" {
+	if got := drawnQueue(q, "Mac")[0]; got != " 1 [x] ○ Tools" {
 		t.Errorf("row = %q", got)
 	}
 }
@@ -99,20 +99,20 @@ func TestARunMovesTheMarksAndLeavesTheBoxes(t *testing.T) {
 func TestARunLearnsTheStepsOfARoleAndOpensOneAgain(t *testing.T) {
 	event := step.Event{Kind: step.Planned, Parent: "ssh", Step: "Keys"}
 	q, side, line := queueOf(testStages()).follow(event)
-	if got := drawnQueue(q, WsSide)[3:]; !slices.Equal(got, []string{"     [ ] ssh", "       [ ] · Keys"}) {
+	if got := drawnQueue(q, "ws")[3:]; !slices.Equal(got, []string{"     [ ] ssh", "       [ ] · Keys"}) {
 		t.Errorf("list = %q", got)
 	}
-	if side != WsSide || line != 4 {
+	if side != "ws" || line != 4 {
 		t.Errorf("side %q, line %d: the cursor is on the step", side, line)
 	}
 	event.Kind = step.Done
 	q, _, _ = q.follow(event)
-	if got := drawnQueue(q, WsSide)[4]; got != "       [ ] ✓ Keys" {
+	if got := drawnQueue(q, "ws")[4]; got != "       [ ] ✓ Keys" {
 		t.Errorf("row = %q", got)
 	}
 	event.Kind = step.Planned
 	q, _, _ = q.follow(event)
-	if got := drawnQueue(q, WsSide)[4]; got != "       [ ] · Keys" {
+	if got := drawnQueue(q, "ws")[4]; got != "       [ ] · Keys" {
 		t.Errorf("row = %q", got)
 	}
 }

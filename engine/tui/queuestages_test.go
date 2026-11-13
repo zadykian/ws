@@ -9,11 +9,11 @@ import (
 // testStages is a queue across both sides: a stage of steps, a stage of roles no scan has read.
 func testStages() []Stage {
 	return []Stage{
-		{Name: "Tools", Side: MacSide},
-		{Name: "Setup", Side: MacSide, Waits: "Tools", Nested: []Group{{Name: "Setup", Steps: []string{"one", "two"}}}},
-		{Name: "Sudo", Side: WsSide, Waits: "Setup"},
-		{Name: "Run", Side: WsSide, Waits: "Sudo", Nested: []Group{{Name: "base"}, {Name: "ssh"}}},
-		{Name: "Signing", Side: MacSide, Waits: "Run"},
+		{Name: "Tools", Side: "Mac"},
+		{Name: "Setup", Side: "Mac", Waits: "Tools", Nested: []Group{{Name: "Setup", Steps: []string{"one", "two"}}}},
+		{Name: "Sudo", Side: "ws", Waits: "Setup"},
+		{Name: "Run", Side: "ws", Waits: "Sudo", Nested: []Group{{Name: "base"}, {Name: "ssh"}}},
+		{Name: "Signing", Side: "Mac", Waits: "Run"},
 	}
 }
 
@@ -26,7 +26,7 @@ func TestAQueueKeepsItsStagesInTheOrderTheyRun(t *testing.T) {
 	if want := []string{"Tools", "Setup", "Sudo", "Run", "Signing"}; !slices.Equal(names, want) {
 		t.Errorf("names = %q, want %q", names, want)
 	}
-	if want := []Side{MacSide, MacSide, WsSide, WsSide, MacSide}; !slices.Equal(sides, want) {
+	if want := []Side{"Mac", "Mac", "ws", "ws", "Mac"}; !slices.Equal(sides, want) {
 		t.Errorf("sides = %v, want %v", sides, want)
 	}
 	if want := []string{"", "Tools", "Setup", "Sudo", "Run"}; !slices.Equal(waits, want) {
@@ -66,43 +66,43 @@ func drawnQueue(q queue, side Side) []string {
 func TestAQueueNumbersItsStagesAcrossBothSides(t *testing.T) {
 	q := queueOf(testStages())
 	mac := []string{" 1 [ ] · Tools", " 2 [ ] · Setup", "     [ ] · one", "     [ ] · two", " 5 [ ] · Signing"}
-	if got := drawnQueue(q, MacSide); !slices.Equal(got, mac) {
+	if got := drawnQueue(q, "Mac"); !slices.Equal(got, mac) {
 		t.Errorf("Mac's list = %q, want %q", got, mac)
 	}
 	ws := []string{" 3 [ ] · Sudo", " 4 [ ] · Run", "     [ ] · base", "     [ ] · ssh"}
-	if got := drawnQueue(q, WsSide); !slices.Equal(got, ws) {
+	if got := drawnQueue(q, "ws"); !slices.Equal(got, ws) {
 		t.Errorf("ws's list = %q, want %q", got, ws)
 	}
 }
 
 func TestARoleOfAStageOpensUnderItsHeading(t *testing.T) {
-	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"Packages"}}}}}
-	got := strings.Join(drawnQueue(queueOf(stages), MacSide), "|")
+	stages := []Stage{{Name: "Run", Side: "Mac", Nested: []Group{{Name: "base", Steps: []string{"Packages"}}}}}
+	got := strings.Join(drawnQueue(queueOf(stages), "Mac"), "|")
 	if want := " 1 [ ] · Run|     [ ] base|       [ ] · Packages"; got != want {
 		t.Errorf("list = %q, want %q", got, want)
 	}
 }
 
 func TestAFilterLeavesAStepTheHeadingOfItsStage(t *testing.T) {
-	got := drawnQueue(queueOf(testStages()).filtered("two"), MacSide)
+	got := drawnQueue(queueOf(testStages()).filtered("two"), "Mac")
 	if want := []string{"     [ ] Setup", "     [ ] · two"}; !slices.Equal(got, want) {
 		t.Errorf("lines = %q, want %q", got, want)
 	}
 }
 
 func TestAQueueViewDrawsTheWindowUnderTheCursor(t *testing.T) {
-	got := stripped(queueOf(testStages()).view(testTheme, MacSide, 2, 2, true))
+	got := stripped(queueOf(testStages()).view(testTheme, "Mac", 2, 2, true))
 	if want := "▸      [ ] · one\n       [ ] · two"; got != want {
 		t.Errorf("view = %q, want %q", got, want)
 	}
 }
 
 func TestNarrowingKeepsTheCursorOnItsLine(t *testing.T) {
-	q, at := queueOf(testStages()).narrowed(MacSide, 3, "two")
+	q, at := queueOf(testStages()).narrowed("Mac", 3, "two")
 	if q.words != "two" || at != 1 {
 		t.Errorf("words %q, cursor %d", q.words, at)
 	}
-	if _, at = q.narrowed(MacSide, at, ""); at != 3 {
+	if _, at = q.narrowed("Mac", at, ""); at != 3 {
 		t.Errorf("cursor = %d, want 3", at)
 	}
 }

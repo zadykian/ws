@@ -45,7 +45,7 @@ func TestTheQueueScreenLeavesForTheStateOfTheListInFocus(t *testing.T) {
 	s, _ = s.pressed(tab)
 	s, leaving := s.pressed(press('s'))
 	leaving()
-	if got := <-picks; got.Next != NextState || got.Side != WsSide || !s.left {
+	if got := <-picks; got.Next != NextState || got.Side != "ws" || !s.left {
 		t.Errorf("choice = %+v, left %v", got, s.left)
 	}
 }

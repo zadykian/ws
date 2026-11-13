@@ -21,7 +21,7 @@ func queueBoxes(q queue) []string {
 }
 
 func TestAStagesBoxTurnsItsSteps(t *testing.T) {
-	side, at := MacSide, cursor(1)
+	side, at := "Mac", cursor(1)
 	q := queueOf(testStages()).toggled(side, at)
 	if got := queueBoxes(q)[1:4]; !slices.Equal(got, []string{"[x]", "[x]", "[x]"}) {
 		t.Errorf("boxes = %q", got)
@@ -32,14 +32,14 @@ func TestAStagesBoxTurnsItsSteps(t *testing.T) {
 }
 
 func TestAStepsBoxTurnsAloneAndALockedOneHolds(t *testing.T) {
-	q := queueOf(testStages()).toggled(MacSide, 3)
+	q := queueOf(testStages()).toggled("Mac", 3)
 	if got, want := queueBoxes(q)[:4], []string{"[#]", "[x]", "[ ]", "[x]"}; !slices.Equal(got, want) {
 		t.Errorf("boxes = %q, want %q", got, want)
 	}
-	if got := q.toggled(MacSide, 0); !slices.Equal(queueBoxes(got), queueBoxes(q)) {
+	if got := q.toggled("Mac", 0); !slices.Equal(queueBoxes(got), queueBoxes(q)) {
 		t.Errorf("a locked stage turned: %q", queueBoxes(got))
 	}
-	if got := queueBoxes(queueOf(testStages()).toggled(WsSide, 0))[:5]; !slices.Equal(got, []string{"[#]", "[#]", "[#]", "[#]", "[x]"}) {
+	if got := queueBoxes(queueOf(testStages()).toggled("ws", 0))[:5]; !slices.Equal(got, []string{"[#]", "[#]", "[#]", "[#]", "[x]"}) {
 		t.Errorf("a stage of the ws side left its lock: %q", got)
 	}
 }
@@ -59,7 +59,7 @@ func queueChoosing(q queue, names ...string) queue {
 
 func TestAStageFollowsTheStepsItRuns(t *testing.T) {
 	q := queueChoosing(queueOf(testStages()), "one")
-	if got := drawnQueue(q, MacSide); got[0] != " 1 [#] · Tools" || got[1] != " 2 [-] · Setup" {
+	if got := drawnQueue(q, "Mac"); got[0] != " 1 [#] · Tools" || got[1] != " 2 [-] · Setup" {
 		t.Errorf("list = %q", got)
 	}
 	if got, want := q.only(), []string{"Tools", "Setup"}; !slices.Equal(got, want) {
@@ -117,14 +117,14 @@ func TestWhatNoScanReachedStartsChosen(t *testing.T) {
 }
 
 func TestRolesUnreadFollowAStageThatFoundNothing(t *testing.T) {
-	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base"}}}}
+	stages := []Stage{{Name: "Run", Side: "Mac", Nested: []Group{{Name: "base"}}}}
 	if got := queueOf(stages).take(planned("", "Run", 0)).opened().only(); len(got) != 0 {
 		t.Errorf("only = %q", got)
 	}
 }
 
 func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
-	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	stages := []Stage{{Name: "Run", Side: "Mac", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
 	q := queueOf(stages).take(planned("base", "one", 0)).take(planned("base", "two", 1)).
 		take(planned("", "Run", 0, oneChange("a"))).opened()
 	if want := []string{"[x]", "[x]", "[x]"}; !slices.Equal(queueBoxes(q), want) {
@@ -133,7 +133,7 @@ func TestAStageDueRunsWholeWhereItsStepsReadClean(t *testing.T) {
 }
 
 func TestAStageRunsWhatTheScanFound(t *testing.T) {
-	stages := []Stage{{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
+	stages := []Stage{{Name: "Run", Side: "Mac", Nested: []Group{{Name: "base", Steps: []string{"one", "two"}}}}}
 	q := queueOf(stages).take(planned("base", "one", 0, oneChange("a"))).take(planned("base", "two", 1)).
 		take(planned("", "Run", 0)).opened()
 	if want := []string{"[x]", "[x]", "[ ]"}; !slices.Equal(queueBoxes(q), want) {
@@ -143,8 +143,8 @@ func TestAStageRunsWhatTheScanFound(t *testing.T) {
 
 func TestALeftOutWarningStaysAmongOneStagesRoles(t *testing.T) {
 	stages := []Stage{
-		{Name: "Setup", Side: MacSide, Nested: []Group{{Name: "Setup", Steps: []string{"one"}}}},
-		{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"two"}}, {Name: "ssh", Steps: []string{"three"}}}},
+		{Name: "Setup", Side: "Mac", Nested: []Group{{Name: "Setup", Steps: []string{"one"}}}},
+		{Name: "Run", Side: "Mac", Nested: []Group{{Name: "base", Steps: []string{"two"}}, {Name: "ssh", Steps: []string{"three"}}}},
 	}
 	q := queueOf(stages)
 	q = q.take(planned("Setup", "one", 0, oneChange("a"))).take(planned("base", "two", 0, oneChange("a")))
@@ -155,7 +155,7 @@ func TestALeftOutWarningStaysAmongOneStagesRoles(t *testing.T) {
 }
 
 func TestABulkChoiceLeavesWhatTheFilterHides(t *testing.T) {
-	q, _ := queueOf(testStages()).narrowed(MacSide, 0, "two")
+	q, _ := queueOf(testStages()).narrowed("Mac", 0, "two")
 	q = q.chose(func(pickRow) bool { return true })
 	if want := []string{"[#]", "[x]", "[ ]", "[x]"}; !slices.Equal(queueBoxes(q)[:4], want) {
 		t.Errorf("boxes = %q, want %q", queueBoxes(q)[:4], want)
@@ -164,8 +164,8 @@ func TestABulkChoiceLeavesWhatTheFilterHides(t *testing.T) {
 
 func TestAQueuePassesOverTheRolesOfEachStage(t *testing.T) {
 	stages := []Stage{
-		{Name: "Run", Side: MacSide, Nested: []Group{{Name: "base", Steps: []string{"one"}}, {Name: "ssh", Steps: []string{"two"}}}},
-		{Name: "Sudo", Side: WsSide, Nested: []Group{{Name: "net", Steps: []string{"three"}}, {Name: "dns", Steps: []string{"four"}}}},
+		{Name: "Run", Side: "Mac", Nested: []Group{{Name: "base", Steps: []string{"one"}}, {Name: "ssh", Steps: []string{"two"}}}},
+		{Name: "Sudo", Side: "ws", Nested: []Group{{Name: "net", Steps: []string{"three"}}, {Name: "dns", Steps: []string{"four"}}}},
 	}
 	q := queueOf(stages)
 	for _, e := range []step.Event{planned("base", "one", 0, oneChange("a")), planned("net", "three", 0, oneChange("a"))} {

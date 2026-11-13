@@ -60,7 +60,7 @@ func (f *fakeWizard) wizard() Wizard {
 // The state screen comes back to the lists with no scan, and the run takes what they chose then.
 func TestWizardStateComesBackWithNoScan(t *testing.T) {
 	run := QueueChoice{Next: NextRun, Only: []string{"Run"}}
-	s := &fakeScreens{choices: []QueueChoice{{Next: NextState, Side: WsSide}, {Next: NextState, Side: MacSide}, run}}
+	s := &fakeScreens{choices: []QueueChoice{{Next: NextState, Side: "ws"}, {Next: NextState, Side: "Mac"}, run}}
 	f := &fakeWizard{}
 	if err := f.wizard().loop(t.Context(), s); err != nil {
 		t.Fatal(err)
