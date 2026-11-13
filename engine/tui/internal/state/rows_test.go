@@ -1,15 +1,16 @@
-package tui
+package state
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 )
 
 // testSections is a server's report: a role of each kind of item, and a step left unread.
-func testSections() []StateSection {
-	return []StateSection{
+func testSections() []run.StateSection {
+	return []run.StateSection{
 		{Name: "docker", Reports: []step.Report{{
 			Step: "Packages",
 			Items: []step.Item{
@@ -71,7 +72,7 @@ func TestTabRowsSayWhatAPartIs(t *testing.T) {
 }
 
 func TestTabRowsNameAMacsStepAlone(t *testing.T) {
-	sections := []StateSection{{Reports: []step.Report{{Step: "Tools", After: "Keys"}}}}
+	sections := []run.StateSection{{Reports: []step.Report{{Step: "Tools", After: "Keys"}}}}
 	if got := tabRows(sections)[pendingTab][0].name; got != "Tools" {
 		t.Errorf("name %q", got)
 	}

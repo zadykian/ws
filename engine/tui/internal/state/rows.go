@@ -1,10 +1,11 @@
-package tui
+package state
 
 import (
 	"strings"
 	"unicode"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 )
 
 // The tabs of the state screen, in their order.
@@ -44,7 +45,7 @@ type stateRow struct {
 // tabRows sorts what sections report into the tabs. Each tab keeps the order of a run, so that a
 // role's rows stand together. An item that stands against ws shows under its kind and in Conflicts.
 // A step left unread goes under Pending, as a change before it holds it back.
-func tabRows(sections []StateSection) [tabCount][]stateRow {
+func tabRows(sections []run.StateSection) [tabCount][]stateRow {
 	var tabs [tabCount][]stateRow
 	for _, section := range sections {
 		for _, report := range section.Reports {

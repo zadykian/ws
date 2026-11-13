@@ -1,14 +1,15 @@
-package tui
+package state
 
 import (
 	"io"
 	"strings"
 
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/tuitest"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
-// The keys and fixtures that the tests of every package share, under the names these tests use.
+// The keys and fixtures that the tests share, under the names these tests use.
 var (
 	tab      = tuitest.Tab
 	shiftTab = tuitest.ShiftTab
@@ -27,6 +28,6 @@ var (
 const leaveBuffer = tuitest.LeaveBuffer
 
 // noKeys is a Config whose terminal gives no key, and whose output is out.
-func noKeys(out io.Writer) Config {
-	return Config{In: strings.NewReader(""), Out: out, Theme: testTheme, Cut: testCut}
+func noKeys(out io.Writer) run.Config {
+	return run.Config{In: strings.NewReader(""), Out: out, Theme: testTheme, Cut: testCut}
 }

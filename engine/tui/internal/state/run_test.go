@@ -1,4 +1,4 @@
-package tui
+package state
 
 import (
 	"context"
@@ -14,12 +14,12 @@ import (
 
 // typedAtRead returns a terminal, and a read that types the next of keys on it, again and again
 // until the terminal closes. `r` finds its button off while a read runs, and goes unheard there.
-func typedAtRead(t *testing.T, keys ...string) (Config, StateReader) {
+func typedAtRead(t *testing.T, keys ...string) (run.Config, StateReader) {
 	in, typing := io.Pipe()
 	t.Cleanup(func() { _ = typing.Close() })
 	c := noKeys(io.Discard)
 	c.In = in
-	return c, func(context.Context, *Bridge) ([]StateSection, error) {
+	return c, func(context.Context, *run.Bridge) ([]run.StateSection, error) {
 		if len(keys) == 0 {
 			return testSections(), nil
 		}
@@ -46,7 +46,7 @@ func TestRunStateReadsAtRAndEndsAtQ(t *testing.T) {
 
 func TestRunStateEndsARunningReadAtQ(t *testing.T) {
 	c, read := typedAtRead(t, "q")
-	err := RunState(t.Context(), c, "ws", func(ctx context.Context, b *Bridge) ([]StateSection, error) {
+	err := RunState(t.Context(), c, "ws", func(ctx context.Context, b *run.Bridge) ([]run.StateSection, error) {
 		_, _ = read(ctx, b)
 		<-ctx.Done()
 		return nil, ctx.Err()
@@ -65,7 +65,7 @@ func TestRunStateGivesTheCutsError(t *testing.T) {
 
 func TestRunStateTurnsAPanicOfAReadIntoAnError(t *testing.T) {
 	var out strings.Builder
-	err := RunState(t.Context(), noKeys(&out), "ws", func(context.Context, *Bridge) ([]StateSection, error) {
+	err := RunState(t.Context(), noKeys(&out), "ws", func(context.Context, *run.Bridge) ([]run.StateSection, error) {
 		panic("a bug")
 	})
 	if !errors.Is(err, run.ErrPanic) || !strings.Contains(out.String(), leaveBuffer) {

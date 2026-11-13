@@ -14,6 +14,7 @@ import (
 	"github.com/zadykian/ws/engine/tui/internal/pick"
 	"github.com/zadykian/ws/engine/tui/internal/queue"
 	"github.com/zadykian/ws/engine/tui/internal/run"
+	"github.com/zadykian/ws/engine/tui/internal/state"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -126,4 +127,15 @@ func PickStages(ctx context.Context, c Config, title string, stages []Stage, sca
 // No scan runs.
 func Reopen(ctx context.Context, c Config, left QueueChoice) (QueueChoice, error) {
 	return queue.Reopen(ctx, c, left)
+}
+
+// StateReader reads a machine and changes nothing. b gives the read's effects, for its lines to
+// reach the screen and not the terminal under it.
+type StateReader = state.StateReader
+
+// RunState draws the state screen on c.Out until q, and reads the machine in Run's work. So a
+// read's panic and a signal end as a run's do. A read goes on under the screen, which takes the
+// keys meanwhile, and q ends it through ctx. It returns nil after q, and Cut's error after a cut.
+func RunState(ctx context.Context, c Config, title string, read StateReader) error {
+	return state.RunState(ctx, c, title, read)
 }

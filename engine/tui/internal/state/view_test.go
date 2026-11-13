@@ -1,4 +1,4 @@
-package tui
+package state
 
 import (
 	"errors"
@@ -11,6 +11,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -62,7 +63,7 @@ func TestStateScreenShowsTheSelectionInALongList(t *testing.T) {
 	for i := range 100 {
 		items = append(items, step.Item{Kind: step.PackageItem, Name: fmt.Sprintf("row-%d.", i)})
 	}
-	report := StateRead{Sections: []StateSection{{Reports: []step.Report{{Items: items}}}}}
+	report := StateRead{Sections: []run.StateSection{{Reports: []step.Report{{Items: items}}}}}
 	s, _ := feedState(t, newTestState(), sized, report)
 	wantDrawn(t, s, "row-0.")
 	s, _ = feedState(t, s, press('G'))

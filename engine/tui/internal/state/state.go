@@ -1,4 +1,5 @@
-package tui
+// Package state draws the state screen: what a machine holds of what ws manages, by tab.
+package state
 
 import (
 	"slices"
@@ -6,6 +7,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -32,7 +34,7 @@ var (
 
 // StateRead is the end of a read: what the machine reports, or why it can't be read.
 type StateRead struct {
-	Sections []StateSection
+	Sections []run.StateSection
 	Err      error
 }
 

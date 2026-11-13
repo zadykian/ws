@@ -1,4 +1,4 @@
-package tui
+package state
 
 import (
 	"fmt"
@@ -9,12 +9,13 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 )
 
 // fileReport is a report of the file /a, with this diff, and of the file /b.
 func fileReport(diff string) StateRead {
 	items := []step.Item{{Kind: step.FileItem, Name: "/a", Diff: diff}, {Kind: step.FileItem, Name: "/b"}}
-	return StateRead{Sections: []StateSection{{Reports: []step.Report{{Items: items}}}}}
+	return StateRead{Sections: []run.StateSection{{Reports: []step.Report{{Items: items}}}}}
 }
 
 func TestStateScreenDrawsTheSelectedRow(t *testing.T) {

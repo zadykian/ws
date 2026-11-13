@@ -1,4 +1,4 @@
-package tui
+package state
 
 import (
 	"reflect"
@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 )
 
 // filtered is the screen with text typed into its filter.
@@ -105,7 +106,7 @@ func wordsState(t *testing.T, rows ...string) StateScreen {
 	for i, name := range rows {
 		items[i] = step.Item{Kind: step.PackageItem, Name: name}
 	}
-	read := StateRead{Sections: []StateSection{{Reports: []step.Report{{Step: "Packages", Items: items}}}}}
+	read := StateRead{Sections: []run.StateSection{{Reports: []step.Report{{Step: "Packages", Items: items}}}}}
 	s, _ := feedState(t, newTestState(), sized, read, press('G'))
 	return s
 }
