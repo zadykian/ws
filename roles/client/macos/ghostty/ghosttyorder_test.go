@@ -63,7 +63,7 @@ func TestGhosttyReportsInOrder(t *testing.T) {
 	}
 }
 
-// The step is the app's cask, the font's, then the files, which the app's install holds back.
+// The step has three parts: the app's cask, the font's, then the files. The waits are tested apart.
 func TestGhosttyPartsAreTheAppTheFontAndTheFiles(t *testing.T) {
 	m, out := freshGhostty()
 	parts, err := ghosttyStep(m, out).Parts(context.Background())
