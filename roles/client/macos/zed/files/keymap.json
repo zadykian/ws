@@ -125,68 +125,17 @@
   {
     "context": "Editor",
     "bindings": {
-      // Cmd+C is Zed's already
-      "ctrl-c": "editor::Copy",
-      // Cmd+X is Zed's already; Ctrl+X cuts in the editor too
-      "ctrl-x": "editor::Cut",
-      // Ctrl+V replaces Zed's emacs-style page down
-      "ctrl-v": "editor::Paste",
-      // Shift+Cmd+Z is Zed's; Cmd+Y stays Zed's: the agent's Allow once and Keep, and the git panel's stage and next
-      "ctrl-y": "editor::Redo",
-      "ctrl-shift-z": "editor::Redo",
-      // Cmd+Z is Zed's already
-      "ctrl-z": "editor::Undo",
-      "ctrl-?": "editor::ToggleBlockComments",
-      // Ctrl+K, Ctrl+U toggles rather than uncomments
-      "ctrl-alt-/": "editor::ToggleComments",
-      "ctrl-k c": "editor::ToggleComments",
-      "ctrl-k ctrl-c": "editor::ToggleComments",
-      "ctrl-k ctrl-/": "editor::ToggleComments",
-      "ctrl-k ctrl-u": "editor::ToggleComments",
-      // Mouse wheel left to Zed
-      "ctrl-_": "zed::DecreaseBufferFontSize",
-      "ctrl-+": "zed::IncreaseBufferFontSize",
-      "ctrl-|": "zed::ResetBufferFontSize",
-      "ctrl-delete": "editor::DeleteToNextWordEnd",
-      "ctrl-backspace": "editor::DeleteToPreviousWordStart",
-      // Replaces Zed's emacs-style delete
-      "ctrl-d": "editor::DuplicateSelection",
-      "ctrl-shift-j": "editor::JoinLines",
-      "ctrl-alt-shift-v": "editor::Paste",
-      "ctrl-shift-u": "editor::ToggleCase",
-      // Ctrl+A replaces Zed's emacs-style line start
-      "ctrl-a": "editor::SelectAll",
       // Replaces Zed's line duplicate up
       "alt-shift-up": "editor::AddSelectionAbove",
       // Replaces Zed's line duplicate down
       "alt-shift-down": "editor::AddSelectionBelow",
       "alt-+": "editor::SelectLargerSyntaxNode",
-      "ctrl-w": "editor::SelectLargerSyntaxNode",
       "alt-_": "editor::SelectSmallerSyntaxNode",
-      "ctrl-shift-w": "editor::SelectSmallerSyntaxNode",
       "alt-:": "editor::SelectAllMatches",
       "alt->": ["editor::SelectNext", { "replace_newest": false }],
       // Undoes the last selection change
       "alt-<": "editor::UndoSelection",
-      "alt-shift-g": "editor::SplitSelectionIntoLines",
-      // Replaces Zed's larger syntax node selection
-      "ctrl-shift-right": "editor::SelectToNextWordEnd",
-      // Replaces Zed's smaller syntax node selection
-      "ctrl-shift-left": "editor::SelectToPreviousWordStart",
-      "ctrl-m c": "editor::ScrollCursorCenter",
-      "ctrl-m ctrl-c": "editor::ScrollCursorCenter",
-      // macOS's Spaces take Ctrl+Right by default
-      "ctrl-right": "editor::MoveToNextWordEnd",
-      // macOS's Spaces take Ctrl+Left by default
-      "ctrl-left": "editor::MoveToPreviousWordStart",
-      // App windows takes Ctrl+Down by default
-      "ctrl-down": "editor::LineDown",
-      // Mission Control takes Ctrl+Up by default
-      "ctrl-up": "editor::LineUp",
-      "ctrl-shift-f3": "editor::FindPreviousMatch",
-      // Ctrl+F3: F-keys need Fn or the setting
-      "ctrl-f3": "editor::FindNextMatch",
-      "ctrl-i": "editor::ToggleInlayHints"
+      "alt-shift-g": "editor::SplitSelectionIntoLines"
     }
   },
   // Code, in the full editor alone, so that search bars and pickers keep their keys.
@@ -328,16 +277,6 @@
       // An untitled buffer; in the project panel (`ProjectPanel && not_editing`), `project_panel::NewFile`, a file there
       "ctrl-n": "workspace::NewFile",
       "ctrl-shift-r": "editor::RestartLanguageServer"
-    }
-  },
-  // The signature popup.
-  {
-    "context": "Editor && showing_signature_help",
-    "bindings": {
-      // The debugger pause's key too, outside the popup
-      "ctrl-shift-p": "editor::SignatureHelpPrevious",
-      "ctrl-down": "editor::SignatureHelpNext",
-      "ctrl-up": "editor::SignatureHelpPrevious"
     }
   },
   // The project panel: the tree keys, and F1 hides it again.
