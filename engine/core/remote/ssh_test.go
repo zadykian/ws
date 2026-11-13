@@ -20,6 +20,19 @@ func (f fixedWays) Direct(context.Context) (string, string, bool) {
 
 func (f fixedWays) Missing() error { return f.missing }
 
+// TestSSHRoom holds the longest lock that a server's name of 12 characters still fits.
+func TestSSHRoom(t *testing.T) {
+	for lock, want := range map[string]bool{
+		"/" + strings.Repeat("l", 72): true,
+		"/" + strings.Repeat("l", 73): false,
+	} {
+		s := SSH{Host: "ws", M: effecttest.NewMachine(), Lock: lock}
+		if got := s.room(); got != want {
+			t.Errorf("room of a lock of %d characters = %v; want %v", len(lock), got, want)
+		}
+	}
+}
+
 func TestSSHArgv(t *testing.T) {
 	const shared = "-o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o CheckHostIP=no " +
 		"-o ServerAliveInterval=15 -o PermitLocalCommand=no"
