@@ -41,7 +41,7 @@ func (d *Daemon) reload(ctx context.Context) {
 	a := d.allow(hosts)
 	// The peer exists once a round has tried an endpoint, whether it answered or not.
 	if len(d.round) > 0 || len(d.ends) > 0 {
-		text, err := uapi.SetAllowed(set.Conf.Key, a.IPs())
+		text, err := uapi.SetAllowed(set.Conf.Key, a.IPs(set.Conf.Slot.Server()))
 		if err == nil {
 			err = d.Dev.IpcSet(text)
 		}
