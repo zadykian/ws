@@ -10,6 +10,7 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
@@ -30,7 +31,31 @@ type Casks struct {
 	Out      effect.Out
 	LookPath func(string) (string, error)
 	Failed   map[string]bool // the casks whose install failed, so the plan skips them for the run
+	App      string          // the app's cask: the changes after it wait where its install fails
 }
+
+// Install is a cask's install. A failure is a warning, not an error, and the next run tries again.
+type Install struct {
+	resource.Command
+	Out    effect.Out
+	Failed map[string]bool
+	Name   string
+	Holds  bool
+}
+
+// Apply says the install, runs it, and on a failure warns and marks the cask failed for the run.
+func (i Install) Apply(ctx context.Context) error {
+	i.Out.Say("installing %s", i.Name)
+	err := i.Command.Apply(ctx)
+	if err != nil {
+		i.Out.Warn("brew install --cask %s failed", i.Name)
+		i.Failed[i.Name] = true
+	}
+	return err
+}
+
+// Warned is Holds: the changes after the app's install wait for it.
+func (i Install) Warned() bool { return i.Holds }
 
 // Has reports whether the first of the files is there. An app's cask puts it in /Applications or
 // ~/Applications, and a font's in ~/Library/Fonts or /Library/Fonts.
@@ -61,10 +86,17 @@ func (b Casks) Cask(ctx context.Context, name string, there bool, missing string
 		return nil, false, errors.New("install Homebrew first: https://brew.sh")
 	}
 	if _, err := b.M.Run(ctx, "brew", "list", "--cask", name); err != nil {
-		return []step.Change{change.Run{Name: "brew", Args: []string{"install", "--cask", name}}}, true, nil
+		return []step.Change{b.install(name)}, true, nil
 	}
 	b.Out.Warn("%s", CaskGone(name, missing))
 	return nil, false, nil
+}
+
+func (b Casks) install(name string) Install {
+	return Install{
+		Command: resource.Command{M: b.M, Name: "brew", Args: []string{"install", "--cask", name}, Of: step.Install},
+		Out:     b.Out, Failed: b.Failed, Name: name, Holds: name == b.App,
+	}
 }
 
 // CaskGone says why a cask that Homebrew has is missing from the Mac.
@@ -106,13 +138,8 @@ func (b Casks) Font(ctx context.Context, home string) ([]step.Change, error) {
 // again; where the app's fails, the other changes wait for it.
 func (b Casks) Install(ctx context.Context, p step.Plan, app string) error {
 	for _, c := range p.Changes {
-		if r, ok := c.(change.Run); ok {
-			cask := r.Args[len(r.Args)-1]
-			b.Out.Say("installing %s", cask)
-			if err := change.Apply(ctx, b.M, b.Out, c); err != nil {
-				b.Out.Warn("brew install --cask %s failed", cask)
-				b.Failed[cask] = true
-			}
+		if i, ok := c.(Install); ok {
+			_ = i.Apply(ctx)
 			continue
 		}
 		if b.Failed[app] {
