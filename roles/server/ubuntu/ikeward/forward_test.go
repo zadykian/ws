@@ -62,3 +62,14 @@ func TestOwnsOnlyTheRoutesFromWgToIkeward(t *testing.T) {
 		t.Error("a route from another interface is owned")
 	}
 }
+
+func TestForwardRoutesAMacAtSlotOne(t *testing.T) {
+	const add = "ufw route allow in on wg0 out on ikeward0 from 10.99.1.2 to any comment ikeward"
+	m := ufwMachine("0\n")
+	m.Files[sysctlPath] = sysctlFile
+	m.Results[add] = effecttest.Result{}
+	apply(t, forward(m, &effecttest.Out{}, []string{"10.99.1.2"}))
+	if !slices.Contains(m.Calls, "root "+add) {
+		t.Errorf("calls = %q, lack %q", m.Calls, add)
+	}
+}
