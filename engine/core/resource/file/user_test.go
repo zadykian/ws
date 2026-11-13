@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect"
@@ -64,6 +65,25 @@ func TestUserFilePlanAgreesWithReport(t *testing.T) {
 			if (it.Found != it.Want) != (got != "nothing") || (it.Conflict != "") != (got != "nothing" && c.name != "missing") {
 				t.Errorf("%s: report = %+v, plan %s", c.name, it, got)
 			}
+		}
+	}
+}
+
+// TestUserFileStopsOrWarnsWhereNotWs finds that a file that is not ws's stops a plan, and that it
+// draws one warning and no change where Warn is set.
+func TestUserFileStopsOrWarnsWhereNotWs(t *testing.T) {
+	for _, warn := range []bool{false, true} {
+		m, out := effecttest.NewMachine(), &effecttest.Out{}
+		m.Files["/h/f"] = []byte("mine\n")
+		f := UserFile{M: m, Out: out, Path: "/h/f", Text: []byte("# ws\n"), Warn: warn,
+			Own: func(have []byte) bool { return bytes.HasPrefix(have, []byte("# ws")) }}
+		cs, err := f.Plan(context.Background())
+		wantErr, wantSaid := error(ErrNotWs), []string(nil)
+		if warn {
+			wantErr, wantSaid = nil, []string{"warn: /h/f is not ws's: move it away, and the next run writes ws's"}
+		}
+		if len(cs) != 0 || !errors.Is(err, wantErr) || !slices.Equal(out.Lines, wantSaid) {
+			t.Errorf("Warn %v: plan = %v, %v, said %q; want %v and %q", warn, cs, err, out.Lines, wantErr, wantSaid)
 		}
 	}
 }

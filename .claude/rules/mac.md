@@ -25,8 +25,8 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values that apply themselves. Tests compare the plan's headlines (`step.Headline`).
 - A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes
-  under a `file.UserDir`. They are core's file resources: a plan and a report read each alike. Its
-  step warns or stops at a file that is not ws's
+  under a `file.UserDir`. They are core's file resources: a plan and a report read each alike. A
+  file that is not ws's stops its plan, or leaves it with a warning where its `Warn` is set
   ([user.go](../../engine/core/resource/file/user.go),
   [userdir.go](../../engine/core/resource/file/userdir.go)). ws's lines in a user's file are
   `file.UserLines`, whose step warns or stops at a link or at misplaced lines
