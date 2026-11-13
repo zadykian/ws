@@ -11,7 +11,7 @@ import (
 // the list leaves it out. mac.conf has WS_LAN_ADDRESS with WS_LAN alone, so the lease names an
 // address only with a LAN. Off the LAN, away's lines take the router's place.
 func (r MacReach) hand(h *Hand, s wsStatus) {
-	_, c, err := loadConf(confFile{r.SSH.Conf, runStage, r.SSH.M, r.Out})
+	_, c, err := loadConf(confFile{r.Conf, runStage, r.SSH.M, r.Out})
 	if err != nil {
 		return
 	}

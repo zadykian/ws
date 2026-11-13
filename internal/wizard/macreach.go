@@ -13,12 +13,14 @@ type MacReach struct {
 	SSH SSH
 	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
 	Sudo *Sudo
+	// Conf is mac.conf's path, which the reach reads for the target and WS_USER.
+	Conf string
 	Out  effect.Out
 }
 
 func (r MacReach) shell() Shell { return SSHShell{SSH: r.SSH, Root: r.Sudo} }
 
-func (r MacReach) want() (conf.Conf, error) { return macConf(r.SSH.M, r.SSH.Conf) }
+func (r MacReach) want() (conf.Conf, error) { return macConf(r.SSH.M, r.Conf) }
 
 func (r MacReach) user() (string, error) {
 	c, err := r.want()
