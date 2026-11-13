@@ -50,3 +50,20 @@ func TestWsClaudeApply(t *testing.T) {
 		t.Errorf("calls = %q; want the login", m.Calls)
 	}
 }
+
+func TestMacReachWantsTheSlotsAddressAndThePort(t *testing.T) {
+	for name, tc := range map[string]struct{ file, addr, port string }{
+		"no slot":      {"WS_TARGET=lan\n", "10.99.0.1/24", ""},
+		"slot 1":       {"WS_TARGET=lan\nWS_SLOT=1\nWS_PORT=51821\n", "10.99.1.1/24", "51821"},
+		"last slot":    {"WS_TARGET=lan\nWS_SLOT=15\n", "10.99.15.1/24", ""},
+		"port alone":   {"WS_TARGET=lan\nWS_PORT=51820\n", "10.99.0.1/24", "51820"},
+		"unset values": {"WS_TARGET=lan\nWS_USER=ada\n", "10.99.0.1/24", ""},
+	} {
+		m := effecttest.NewMachine()
+		m.Files["/h/server.conf"] = []byte(tc.file)
+		w, err := MacReach{SSH: remote.SSH{M: m}, Conf: "/h/server.conf"}.Want()
+		if err != nil || w.Address.String() != tc.addr || w.Port != tc.port {
+			t.Errorf("%s: Want = %v, %q, %v; want %s, %q", name, w.Address, w.Port, err, tc.addr, tc.port)
+		}
+	}
+}
