@@ -21,13 +21,13 @@ type Way struct {
 var errNoWay = errors.New("ssh finds no direct way to ws")
 
 // Login tells whether ssh logs in to ws at w as WS_USER by the Mac's key, and runs a command. It
-// connects only where known_hosts holds a key under ws. ssh's error comes back in one line, as ssh
+// connects only where known_hosts holds a key under the server's name. ssh's error comes back in one line, as ssh
 // ends each line with \r\n and an agent's refusal to sign comes before its last line.
 func (s SSH) Login(ctx context.Context, w Way) (ok bool, sshErr string) {
-	if !KnownHost(ctx, s.M, w.KnownHosts) {
+	if !KnownHost(ctx, s.M, w.KnownHosts, s.Host) {
 		return false, ""
 	}
-	out, err := s.Run(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
+	out, err := s.Run(ctx, "-o", "BatchMode=yes", s.Host, "echo", "ok")
 	if err == nil && strings.TrimSpace(string(out)) == "ok" {
 		return true, ""
 	}
@@ -37,9 +37,9 @@ func (s SSH) Login(ctx context.Context, w Way) (ok bool, sshErr string) {
 	return false, Stderr(err)
 }
 
-// KnownHost tells whether known_hosts, the file, holds a key under ws, on m.
-func KnownHost(ctx context.Context, m effect.Machine, file string) bool {
-	_, err := m.Run(ctx, "ssh-keygen", "-F", "ws", "-f", file)
+// KnownHost tells whether known_hosts, the file, holds a key under host, on m.
+func KnownHost(ctx context.Context, m effect.Machine, file, host string) bool {
+	_, err := m.Run(ctx, "ssh-keygen", "-F", host, "-f", file)
 	return err == nil
 }
 
@@ -49,7 +49,7 @@ func (s SSH) Way(ctx context.Context) (Way, error) {
 	if _, _, found := s.way(ctx); !found {
 		return Way{}, s.noWay()
 	}
-	out, err := s.M.Run(ctx, "ssh", append([]string{"-G"}, s.Argv(ctx, []string{"ws"})...)...)
+	out, err := s.M.Run(ctx, "ssh", append([]string{"-G"}, s.Argv(ctx, []string{s.Host})...)...)
 	if err != nil {
 		return Way{}, errNoWay
 	}
