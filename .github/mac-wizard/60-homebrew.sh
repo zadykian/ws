@@ -6,7 +6,7 @@
 
 set -u
 
-source=$HOME/repository/ws/internal/wizard/homebrew.go
+source=$HOME/repository/ws/roles/client/macos/stages/tools/homebrew.go
 tmp=$(mktemp -d "$RUNNER_TEMP/homebrew.XXXXXX")
 fail=0
 

@@ -21,7 +21,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
 
 1. Tools, then Homebrew: the Command Line Tools, through the dialog that `xcode-select --install`
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
-   `internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
+   `roles/client/macos/stages/tools/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
 2. Answers: the values `mac.conf` lacks, below.
 3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.

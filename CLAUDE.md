@@ -108,7 +108,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   binary, against its release's `ws.sha256` ([install.sh](install.sh),
   [update.go](engine/core/update/update.go)), and so are yamllint
   ([lint-requirements.in](.github/lint-requirements.in)) and Homebrew's `.pkg`, with its signer
-  ([homebrew.go](internal/wizard/homebrew.go)). Go is checked against the
+  ([homebrew.go](roles/client/macos/stages/tools/homebrew.go)). Go is checked against the
   SHA-256 its publisher lists ([devtools](docs/devtools.md)). The postgres-language-server and
   docker-language-server are checked against their SHA-256
   ([binaries.go](roles/server/ubuntu/devtools/binaries.go)). gopls and Delve are built through Go's

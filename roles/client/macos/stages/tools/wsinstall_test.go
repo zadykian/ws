@@ -1,4 +1,4 @@
-package wizard
+package tools
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 const releases = "https://example.org/releases"
 
 func newInstall(version, url string, status session.Status) (*WsInstall, *effecttest.Machine) {
-	r, m := newRun("lan", status, false, false)
-	return &WsInstall{Ws: r.Ws, Version: version, URL: url, Out: &effecttest.Out{}}, m
+	ws, m := sessiontest.New(status)
+	return &WsInstall{Ws: ws, Version: version, URL: url, Out: &effecttest.Out{}}, m
 }
 
 func TestWsInstallPlan(t *testing.T) {

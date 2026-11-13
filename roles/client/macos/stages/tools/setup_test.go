@@ -1,13 +1,11 @@
-package wizard
+package tools
 
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -68,16 +66,6 @@ func TestSetupWaitsOnTheMacKey(t *testing.T) {
 	}
 }
 
-func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {
-	m := effect.OSMachine{Ticket: func() error { return effect.ErrNoTicket }}
-	_, planned := (&Setup{M: m, LookPath: func(string) (string, error) { return "", nil }}).Plan(context.Background())
-	tun, _ := newTunnel(keyA, session.Status{}, false)
-	tun.M = m
-	if err := tun.Apply(context.Background(), step.Plan{}); !errors.Is(err, effect.ErrNoTicket) || !errors.Is(planned, err) {
-		t.Errorf("Apply = %v, Plan = %v", err, planned)
-	}
-}
-
 func TestSetupApply(t *testing.T) {
 	var checks []bool
 	s := &Setup{Run: func(_ context.Context, check bool) (bool, error) {
@@ -104,4 +92,11 @@ func TestSetupIsDoneOnceApplied(t *testing.T) {
 	if p, err := s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("Plan after Apply = %v, %v; want none", p, err)
 	}
+}
+
+func errText(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }

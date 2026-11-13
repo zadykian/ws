@@ -166,7 +166,7 @@ lines the defaults, for each target. After the first run, they must write the sa
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
 second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show the lines
 it would write there, from the answers in the environment, and write none. The case that reads
-[`homebrew.go`](../internal/wizard/homebrew.go)'s pins must download Homebrew's `.pkg` and match its
+[`homebrew.go`](../roles/client/macos/stages/tools/homebrew.go)'s pins must download Homebrew's `.pkg` and match its
 SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows `pkgutil`'s chain. The `.pkg`
 cut short must fail the sum. A run checks it before the install, which the case skips.
 

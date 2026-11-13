@@ -1,4 +1,7 @@
-package wizard
+// Package tools holds the wizard stages that put the Mac's tools in place.
+// They are the Command Line Tools, Homebrew, the update of ws,
+// the Mac's setup and the install of ws on ws.
+package tools
 
 import (
 	"context"

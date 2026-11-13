@@ -2,7 +2,11 @@ package wizard
 
 import (
 	"context"
+	"errors"
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"strings"
 	"testing"
@@ -24,6 +28,16 @@ func newTunnel(pub string, status session.Status, check bool) (*Tunnel, *effectt
 	m.Results["nc -z -G 3 -w 3 10.99.0.1 22"] = effecttest.Result{}
 	m.Results["ssh -G ws"] = effecttest.Result{Out: []byte("user root\nhostname 10.99.0.1\n")}
 	return &Tunnel{SSH: remote.SSH{M: m, Lock: "/l", Ways: MacWays{M: m, Conf: "/h/mac.conf"}}, Ws: r.Ws, Conf: "/h/mac.conf", Check: check, Home: "/h", M: m, Out: r.Out}, m
+}
+
+func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {
+	m := effect.OSMachine{Ticket: func() error { return effect.ErrNoTicket }}
+	_, planned := (&tools.Setup{M: m, LookPath: func(string) (string, error) { return "", nil }}).Plan(context.Background())
+	tun, _ := newTunnel(keyA, session.Status{}, false)
+	tun.M = m
+	if err := tun.Apply(context.Background(), step.Plan{}); !errors.Is(err, effect.ErrNoTicket) || !errors.Is(planned, err) {
+		t.Errorf("Apply = %v, Plan = %v", err, planned)
+	}
 }
 
 func TestTunnelPlan(t *testing.T) {

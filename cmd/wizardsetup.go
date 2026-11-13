@@ -6,9 +6,9 @@ import (
 	"io"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 )
 
 // wizardSetup returns the stage that runs the steps of ws client macos apply in the wizard's
@@ -17,9 +17,9 @@ import (
 // then. file is the mac.conf to read, which is Answers' would-be file under --check. obs takes the
 // steps' events, which name the stage: each of a stage's runs reports them again, a check before it
 // applies. It stops as the run does, and leaves out the steps that left names.
-func wizardSetup(e wizardEffects, left func(parent, name string) bool, file string) *wizard.Setup {
+func wizardSetup(e wizardEffects, left func(parent, name string) bool, file string) *tools.Setup {
 	p := e.p
-	s := &wizard.Setup{Conf: file, M: p.machine}
+	s := &tools.Setup{Conf: file, M: p.machine}
 	s.Run = func(ctx context.Context, check bool) (bool, error) {
 		text, err := p.machine.ReadFile(file)
 		if err != nil {

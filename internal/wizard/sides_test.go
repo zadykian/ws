@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
+	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 )
 
 // TestEveryStageStatesItsSide fails where a stage is added with no side, as a screen could not
@@ -22,8 +23,8 @@ func TestEveryStageStatesItsSide(t *testing.T) {
 		stage.Install: session.Ws, stages.RunStage: session.Ws, session.ClaudeStage: session.Ws, stages.SigningStage: stage.Mac, stage.Tunnel: stage.Mac,
 		stage.Cable: stage.Mac, (&stages.WsValues{}).Name(): session.Ws,
 	}
-	list := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &answers.Answers{}, &keys.MacKey{}, &gh.Gh{}, &Setup{},
-		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &gh.MacGitHub{}}, &Tunnel{}, &Cable{},
+	list := []step.Step{&tools.MacUpdate{}, &tools.Tools{}, &tools.Homebrew{}, &answers.Answers{}, &keys.MacKey{}, &gh.Gh{}, &tools.Setup{},
+		&HostKey{}, &Login{}, &Sudo{}, &tools.WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &gh.MacGitHub{}}, &Tunnel{}, &Cable{},
 		&stages.WsValues{}}
 	if len(list) != len(want) {
 		t.Fatalf("%d stages, %d wanted", len(list), len(want))

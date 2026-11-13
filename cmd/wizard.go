@@ -18,6 +18,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/stages/answers"
 	"github.com/zadykian/ws/roles/client/macos/stages/gh"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
+	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -104,7 +105,7 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	ws := session.New(wizard.MacReach{SSH: host.SSH, Sudo: sudo, Conf: later, Out: out},
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = host.SSH, p.tty, check, e.hidden, out
-	install := &wizard.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
+	install := &tools.WsInstall{Ws: ws, Version: p.version, URL: p.releases, Out: out}
 	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
 	hand.Late(ghStage.Hand)
@@ -114,8 +115,8 @@ func wizardStages(e wizardEffects, o wizardOptions) []step.Step {
 		MacApply: setup.Run, Env: p.lookup, P: ask, Prog: prog, Tty: p.tty, M: p.machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
-		&wizard.Tools{M: p.machine, Out: out, Sleep: time.Sleep},
-		&wizard.Homebrew{Lock: lock, M: p.machine, Out: out},
+		&tools.Tools{M: p.machine, Out: out, Sleep: time.Sleep},
+		&tools.Homebrew{Lock: lock, M: p.machine, Out: out},
 		&answers.Answers{Conf: conf, Defaults: shellDefaults(),
 			Prog: prog, Tty: p.tty, Check: check, Scratch: scratch, M: p.machine, P: ask, Out: out, Env: p.lookup},
 		&keys.MacKey{Conf: later, Home: p.getenv("HOME"),
@@ -151,7 +152,7 @@ func runWizard(c *cobra.Command, p process, o wizardOptions) error {
 		// Its own run, before the lock: the new ws takes the place of this process, which would leave the
 		// lock held. It runs before the screen too, on lines, or the new ws would find a terminal left raw.
 		before = append(before, func(out effect.Out) step.Step {
-			return &wizard.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases,
+			return &tools.MacUpdate{M: p.machine, Out: out, Version: p.version, URL: p.releases,
 				Home: p.getenv("HOME"), Args: p.argv}
 		})
 	}
