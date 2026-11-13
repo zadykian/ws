@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/settings"
 )
 
 // readScript is the script that asuser.Read runs.
@@ -28,25 +29,25 @@ func serveRead(m *effecttest.Machine, u host.User, file string, body []byte) {
 // reads go as the user and never as root.
 func TestReadsGoAsTheUserThroughLinks(t *testing.T) {
 	user := host.User{Name: "ws", Home: "/home/ws"}
-	settings := user.Home + "/.claude/settings.json"
+	userFile := user.Home + "/.claude/settings.json"
 	script := user.Home + "/.local/share/bash-completion/completions/cld"
-	for _, link := range []string{settings, user.Home + "/.claude", script, user.Home + "/.local/share"} {
+	for _, link := range []string{userFile, user.Home + "/.claude", script, user.Home + "/.local/share"} {
 		m := effecttest.NewMachine()
 		m.Links[link] = "/srv/target"
 		m.Files["/srv/target"] = []byte("root's data")
 		m.Files[user.Home+"/.local/bin/cld"] = nil
-		serveRead(m, user, settings, []byte("{}"))
+		serveRead(m, user, userFile, []byte("{}"))
 		serveRead(m, user, script, []byte("old\n"))
 		m.Results["runuser -u ws -- env -C /home/ws HOME=/home/ws /home/ws/.local/bin/cld completion bash"] =
 			effecttest.Result{Out: []byte("new\n")}
-		if _, err := (Telemetry{M: m, User: user, Env: map[string]string{"A": "1"}}).Plan(t.Context()); err != nil {
+		if _, err := (settings.Telemetry{M: m, User: user, Env: map[string]string{"A": "1"}}).Plan(t.Context()); err != nil {
 			t.Fatalf("telemetry, link at %s: %v", link, err)
 		}
 		if got, err := (Completion{M: m, User: user}).Plan(t.Context()); err != nil || len(got) != 1 {
 			t.Fatalf("completion, link at %s: %v %v", link, got, err)
 		}
 		for _, call := range m.Calls {
-			if call == "read "+settings || call == "read root "+script {
+			if call == "read "+userFile || call == "read root "+script {
 				t.Errorf("link at %s: %q reads as root or as ws itself", link, call)
 			}
 		}

@@ -1,4 +1,5 @@
-package claude
+// Package settings sets up claude's user settings and its telemetry in them.
+package settings
 
 import (
 	"context"
