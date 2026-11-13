@@ -52,3 +52,22 @@ func TestResolverRemovesItsFileAndLeavesAnothers(t *testing.T) {
 		t.Error("Plan replaced another's file")
 	}
 }
+
+func TestResolverAppliesAndSaysEachChange(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	r := &networks.Resolver{Domain: "a.test", Addresses: []string{"10.0.0.1"}, M: m, Out: out}
+	p, err := r.Plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.Apply(context.Background(), p); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"say: create directory /etc/resolver, owner 0:0, mode 755"}
+	if len(out.Lines) != 2 || out.Lines[0] != want[0] || !strings.HasPrefix(out.Lines[1], "say: ") {
+		t.Errorf("out = %q; want the directory's line, then the file's", out.Lines)
+	}
+	if _, ok := m.Files["/etc/resolver/a.test"]; !ok {
+		t.Error("Apply wrote no file")
+	}
+}

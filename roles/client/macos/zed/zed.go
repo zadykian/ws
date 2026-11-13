@@ -7,7 +7,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource/file"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 )
@@ -28,12 +27,6 @@ type Zed struct {
 	failed   map[string]bool // the casks whose install failed, so the plan skips them for the run
 }
 
-// Name is zed.
-func (*Zed) Name() string { return "zed" }
-
-// WaitsOn is nothing.
-func (*Zed) WaitsOn() string { return "" }
-
 // casks is the cask code that Zed shares with Ghostty, built from the step's fields.
 func (z *Zed) casks() brew.Casks {
 	if z.failed == nil {
@@ -42,8 +35,8 @@ func (z *Zed) casks() brew.Casks {
 	return brew.Casks{M: z.M, Out: z.Out, LookPath: z.LookPath, Failed: z.failed, App: "zed"}
 }
 
-// Plan plans the app, then the font where the app is there or comes, and the files.
-func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
+// plan plans the app, then the font where the app is there or comes, and the files.
+func (z *Zed) plan(ctx context.Context) (step.Plan, error) {
 	b := z.casks()
 	app, ok, err := b.Cask(ctx, "zed", b.Has("Zed.app", "/Applications", z.Home+"/Applications"),
 		"no Zed.app is in /Applications or ~/Applications")
@@ -54,25 +47,19 @@ func (z *Zed) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	files, err := z.files()
+	files, err := z.files(ctx)
 	if err != nil {
 		return step.Plan{}, err
 	}
 	return step.Plan{Changes: append(append(app, font...), files...)}, nil
 }
 
-// Report says how the casks and the files stand. settings.json is Zed's own, which ws writes once
+// report says how the casks and the files stand. settings.json is Zed's own, which ws writes once
 // and never reads, so a report only finds it.
-func (z *Zed) Report(ctx context.Context) ([]step.Item, error) {
+func (z *Zed) report(ctx context.Context) ([]step.Item, error) {
 	dir := z.Home + "/.config/zed"
 	files := z.whole()
 	return file.Gather(ctx, z.casks().Report(ctx, "zed", "Zed.app", z.Home),
 		z.dirs(), files[0], files[1],
 		file.UserPath{M: z.M, Kind: step.FileItem, Path: dir + "/settings.json"})
-}
-
-// Apply applies the plan as a group does. A failed cask install is a warning, and the next run
-// tries again; where the app's fails, the files wait for it.
-func (z *Zed) Apply(ctx context.Context, p step.Plan) error {
-	return resource.Group{}.Apply(ctx, p)
 }

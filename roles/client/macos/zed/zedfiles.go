@@ -1,9 +1,11 @@
 package zed
 
 import (
-	"github.com/zadykian/ws/engine/core/resource/file"
+	"context"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -25,18 +27,16 @@ const (
 // files plans Zed's directory and its three files. global_settings.json is Settings, replaced on
 // each run, and left with a warning where its first line is not ws's. keymap.json is Keymap,
 // replaced and left on the same terms with its own mark. settings.json is written where nothing is there, and never read.
-func (z *Zed) files() ([]step.Change, error) {
+func (z *Zed) files(ctx context.Context) ([]step.Change, error) {
 	dir := z.Home + "/.config/zed"
 	cs, link, err := z.dirs().Plan()
 	if err != nil {
 		return nil, err
 	}
 	for _, f := range z.whole() {
-		planned, err := file.Owned(z.Out, f)
-		if err != nil {
+		if cs, err = resource.Append(ctx, cs, f); err != nil {
 			return nil, err
 		}
-		cs = append(cs, planned...)
 	}
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
 		cs = append(cs, file.UserWrite{M: z.M, Out: z.Out, Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
@@ -54,8 +54,8 @@ func (z *Zed) dirs() file.UserDirs {
 func (z *Zed) whole() []file.UserFile {
 	dir := z.Home + "/.config/zed"
 	return []file.UserFile{
-		{M: z.M, Out: z.Out, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
-		{M: z.M, Out: z.Out, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
+		{M: z.M, Out: z.Out, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true), Warn: true},
+		{M: z.M, Out: z.Out, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false), Warn: true},
 	}
 }
 

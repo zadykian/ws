@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -106,4 +107,14 @@ func (b UserBackup) Apply(ctx context.Context) error {
 	}
 	b.Out.Say("kept the old %s as %s", b.Path, b.To)
 	return nil
+}
+
+// applying gives back the user's changes as the resource changes that each of them is, for a plan
+// of the user's file, directory or lines.
+func applying(cs []step.Change) []resource.Change {
+	changes := make([]resource.Change, len(cs))
+	for i, c := range cs {
+		changes[i] = c.(resource.Change)
+	}
+	return changes
 }

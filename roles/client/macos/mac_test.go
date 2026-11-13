@@ -10,7 +10,6 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos"
-	"github.com/zadykian/ws/roles/client/macos/cld"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/networks"
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
@@ -49,8 +48,6 @@ func TestMacStepsTakeTheCheck(t *testing.T) {
 		for _, s := range (macos.Mac{}).Rows(macos.Options{Options: step.Options{Check: check}}) {
 			var got bool
 			switch s := s.(type) {
-			case *cld.Cld:
-				got = s.Check
 			case *tunnel.Tunnel:
 				got = s.Check
 			case *networks.Networks:

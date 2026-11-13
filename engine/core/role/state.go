@@ -39,8 +39,10 @@ func State(ctx context.Context, c Config, list []Role) ([]RoleState, error) {
 		}
 		return nil
 	}
-	if err := read(Prepare, c.Prepare, nil); err != nil {
-		return states, err
+	if len(c.Prepare) > 0 {
+		if err := read(Prepare, c.Prepare, nil); err != nil {
+			return states, err
+		}
 	}
 	for _, r := range list {
 		if err := read(r.Name, c.Steps(r), c.leftOut()); err != nil {

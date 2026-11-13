@@ -5,13 +5,13 @@ package zsh
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"strings"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 const (
@@ -35,12 +35,6 @@ type Zsh struct {
 	Now func() time.Time
 }
 
-// Name is zsh.
-func (*Zsh) Name() string { return "zsh" }
-
-// WaitsOn is nothing.
-func (*Zsh) WaitsOn() string { return "" }
-
 func (z *Zsh) hook() string { return z.Home + "/.config/ws/zshrc" }
 
 func (z *Zsh) rc() string { return z.Home + "/.zshrc" }
@@ -61,13 +55,13 @@ func zshSources(text []byte) bool {
 	return false
 }
 
-// Plan plans ~/.config and ~/.config/ws, as the git step does, then the hook and the line.
-func (z *Zsh) Plan(ctx context.Context) (step.Plan, error) {
+// plan plans ~/.config and ~/.config/ws, as the git step does, then the hook and the line.
+func (z *Zsh) plan(ctx context.Context) (step.Plan, error) {
 	cs, link, err := file.WsDirs(z.M, z.Out, z.Home).Plan()
 	if err != nil {
 		return step.Plan{}, err
 	}
-	hook, err := z.hookFile().Plan()
+	cs, err = resource.Append(ctx, cs, z.hookFile())
 	switch {
 	case errors.Is(err, file.ErrNotWs):
 		z.Out.Warn("%s is not ws's: move it away, and the next run writes ws's and sources it", z.hook())
@@ -76,13 +70,11 @@ func (z *Zsh) Plan(ctx context.Context) (step.Plan, error) {
 	case err != nil:
 		return step.Plan{}, err
 	}
-	cs = append(cs, hook...)
-	line, err := z.rcLines().Plan(ctx)
+	cs, err = resource.Append(ctx, cs, z.rcLines())
 	if errors.Is(err, file.ErrLinked) {
 		z.Out.Warn("%s", err)
 		err = nil
 	}
-	cs = append(cs, line...)
 	link.Warn(z.Out, len(cs), "ws's files go there")
 	return step.Plan{Changes: cs}, err
 }
@@ -97,19 +89,9 @@ func (z *Zsh) rcLines() file.UserLines {
 	}
 }
 
-// Apply makes the directories and writes the files.
-func (z *Zsh) Apply(ctx context.Context, p step.Plan) error {
-	for _, c := range p.Changes {
-		if err := change.Apply(ctx, z.M, z.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Report says how the hook and the line stand. A ~/.zshrc that is a link lacking the line stands
+// report says how the hook and the line stand. A ~/.zshrc that is a link lacking the line stands
 // against ws: a run only warns of it.
-func (z *Zsh) Report(ctx context.Context) ([]step.Item, error) {
+func (z *Zsh) report(ctx context.Context) ([]step.Item, error) {
 	return file.Gather(ctx, file.WsDirs(z.M, z.Out, z.Home), z.hookFile(), z.rcLines())
 }
 

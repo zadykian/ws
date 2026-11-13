@@ -70,3 +70,14 @@ func TestZedReportShowsTheDirectoryItsPlanMakes(t *testing.T) {
 		}
 	}
 }
+
+// A report warns of nothing: a plan says the warnings, and a report only reads.
+func TestZedReportWarnsNothing(t *testing.T) {
+	m, out := effecttest.NewMachine(), &effecttest.Out{}
+	s := zedStep(m, out)
+	m.Dirs["/dots/zed"] = 0o755
+	m.Links["/h/.config/zed"] = "/dots/zed"
+	if _, err := s.Report(context.Background()); err != nil || len(out.Lines) != 0 {
+		t.Errorf("Report = %v, said %q; want no warning", err, out.Lines)
+	}
+}

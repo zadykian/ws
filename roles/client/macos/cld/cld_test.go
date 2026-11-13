@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/client/macos/cld"
 )
 
@@ -18,7 +19,7 @@ const (
 	cldNo   = "no"
 )
 
-func cldStep(check bool) (*cld.Cld, *effecttest.Machine, *effecttest.Out) {
+func cldStep(check bool) (resource.Lazy, *effecttest.Machine, *effecttest.Out) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
 	m.Modes[cldBin] = 0o755
 	m.Files[cldBin] = nil
@@ -26,10 +27,10 @@ func cldStep(check bool) (*cld.Cld, *effecttest.Machine, *effecttest.Out) {
 	m.Results[cldBin+" help update"] = effecttest.Result{}
 	m.Results[cldBin+" help restore tabs"] = effecttest.Result{Err: errors.New(cldNo)}
 	m.Results["brew list --cask ghostty"] = effecttest.Result{Err: errors.New(cldNo)}
-	return &cld.Cld{Home: "/h", M: m, Out: out, Check: check}, m, out
+	return (&cld.Cld{Home: "/h", M: m, Out: out, Check: check}).Step(), m, out
 }
 
-func cldChanges(t *testing.T, s *cld.Cld) []string {
+func cldChanges(t *testing.T, s resource.Lazy) []string {
 	p, err := s.Plan(context.Background())
 	if err != nil {
 		t.Fatal(err)

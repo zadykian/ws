@@ -9,19 +9,20 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/client/macos/zed"
 )
 
 const zedKeymap = "// Written by github.com/zadykian/ws, whose next run replaces any change.\n[]\n"
 
-func zedStep(m *effecttest.Machine, out *effecttest.Out) *zed.Zed {
+func zedStep(m *effecttest.Machine, out *effecttest.Out) resource.Lazy {
 	m.Dirs["/h/Applications/Zed.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
-	return &zed.Zed{
+	return (&zed.Zed{
 		Home: "/h", Settings: []byte("// Written by ws client macos apply: its next run replaces changes made here.\n{}\n"),
 		Keymap: []byte(zedKeymap), M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
-	}
+	}).Step()
 }
 
 func TestZedAppAndFontThereNeedNoBrew(t *testing.T) {

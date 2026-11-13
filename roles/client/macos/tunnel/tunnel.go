@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
@@ -29,7 +30,7 @@ const tunnelLibexec = "/usr/local/libexec/ws-tunnel"
 type Tunnel struct {
 	Conf conf.Conf
 	Home string
-	// Plist is the text of roles/client/macos/mac/com.github.zadykian.ws-tunnel.plist.
+	// Plist is the text of roles/client/macos/tunnel/files/com.github.zadykian.ws-tunnel.plist.
 	Plist []byte
 	// Self returns the bytes of this ws, which a build from the clone made. Nil means the
 	// executable's file.
@@ -73,11 +74,21 @@ func (t *Tunnel) self() ([]byte, error) {
 // Install puts the bytes of ws in the user's file, through a new file renamed over it, so that a
 // ws that runs from there keeps running. It stands for the build that ws client macos apply did.
 type Install struct {
+	M    effect.Machine
 	Path string
 	Data []byte
 }
 
 func (i Install) String() string { return "would build ws into " + i.Path }
+
+// Apply writes the new file and renames it over the old one.
+func (i Install) Apply(ctx context.Context) error {
+	if err := i.M.WriteFile(i.Path+".new", i.Data, 0o755); err != nil {
+		return err
+	}
+	_, err := i.M.Run(ctx, "mv", "-f", i.Path+".new", i.Path)
+	return err
+}
 
 // Kind is install.
 func (Install) Kind() step.ChangeKind { return step.Install }
@@ -105,7 +116,7 @@ func (t *Tunnel) program(self []byte) ([]step.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	return append(cs, Install{path, self}), nil
+	return append(cs, Install{t.M, path, self}), nil
 }
 
 // Plan plans ws, root's copy and the Mac's key.
@@ -178,6 +189,9 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 	}
 	return file.Gather(ctx, parts...)
 }
+
+// said has a core file change say its headline once it applies, as the Mac's changes do.
+func (t *Tunnel) said(r resource.Resource) resource.Said { return resource.Said{Out: t.Out, Part: r} }
 
 func (t *Tunnel) sleep(d time.Duration) {
 	if t.Sleep != nil {

@@ -12,7 +12,6 @@ import (
 	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	tunnel "github.com/zadykian/ws/roles/client/macos/tunnel/plan"
 )
@@ -50,7 +49,7 @@ func (r *Routes) Plan(ctx context.Context) (step.Plan, error) {
 
 // Apply applies the changes in order, so that the file is written before the daemon reads it.
 func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
-	return applyInOrder(ctx, r.M, r.Out, p)
+	return resource.Group{}.Apply(ctx, p)
 }
 
 // changes plans routes.d/Set, and the signal that has a loaded daemon read it. A change of the
@@ -63,7 +62,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 		case len(networks) == 0:
 			return nil, nil
 		case r.Check && !r.Alone:
-			return []step.Change{change.Remark("would put " + strings.Join(networks, " ") + " in " + routesFile + " " + routesAbsent)}, nil
+			return []step.Change{resource.Remark("would put " + strings.Join(networks, " ") + " in " + routesFile + " " + routesAbsent)}, nil
 		}
 		return nil, fmt.Errorf("%s/routes.d is missing: run ws client macos apply first", launchd.Dir)
 	} else if err != nil {
@@ -73,7 +72,7 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if len(networks) > 0 {
 		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(networks)), Mode: 0o644}
 	}
-	cs, err := change.Plan(ctx, nil, res)
+	cs, err := resource.Append(ctx, nil, resource.Said{Out: r.Out, Part: res})
 	if err != nil || len(cs) == 0 || r.Check {
 		return cs, err
 	}

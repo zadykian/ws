@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"io"
 	"io/fs"
 	"strings"
 
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // publicKey asks root's copy of ws for the Mac's public key. It returns "" where there is no copy
@@ -45,11 +45,9 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	pub, err := t.pub().Plan()
-	if err != nil {
+	if cs, err = resource.Append(ctx, cs, t.pub()); err != nil {
 		return nil, err
 	}
-	cs = append(cs, pub...)
 	link.Warn(t.Out, len(cs), "ws's files go there")
 	return cs, nil
 }
@@ -68,12 +66,7 @@ func (t *Tunnel) publish(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	for _, c := range cs {
-		if err := change.Apply(ctx, t.M, t.Out, c); err != nil {
-			return err
-		}
-	}
-	return nil
+	return resource.Group{}.Apply(ctx, step.Plan{Changes: cs})
 }
 
 // Finish prints the Mac's public key, with the commands that make it ws's peer, where the key is new

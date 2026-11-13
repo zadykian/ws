@@ -69,7 +69,7 @@ func (g *Git) plan(ctx context.Context) (step.Plan, error) {
 	if install != nil {
 		cs = append(cs, *install)
 	}
-	files, err := g.files(key, gh)
+	files, err := g.files(ctx, key, gh)
 	if err != nil {
 		return step.Plan{}, err
 	}

@@ -5,13 +5,13 @@ package ghostty
 import (
 	"context"
 	"errors"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 )
@@ -43,12 +43,6 @@ type Ghostty struct {
 	failed map[string]bool // the casks whose install failed, so the plan skips them for the run
 }
 
-// Name is ghostty.
-func (*Ghostty) Name() string { return "ghostty" }
-
-// WaitsOn is nothing.
-func (*Ghostty) WaitsOn() string { return "" }
-
 // casks is the cask code that Ghostty shares with Zed, built from the step's fields.
 func (g *Ghostty) casks() brew.Casks {
 	if g.failed == nil {
@@ -57,8 +51,8 @@ func (g *Ghostty) casks() brew.Casks {
 	return brew.Casks{M: g.M, Out: g.Out, LookPath: g.LookPath, Failed: g.failed, App: "ghostty"}
 }
 
-// Plan plans the app, then the font where the app is there or comes, and the files.
-func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
+// plan plans the app, then the font where the app is there or comes, and the files.
+func (g *Ghostty) plan(ctx context.Context) (step.Plan, error) {
 	b := g.casks()
 	app, ok, err := b.Cask(ctx, "ghostty", b.Has("Ghostty.app", "/Applications", g.Home+"/Applications"),
 		"no Ghostty.app is in /Applications or ~/Applications")
@@ -74,12 +68,6 @@ func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, err
 	}
 	return step.Plan{Changes: append(append(app, font...), files...)}, nil
-}
-
-// Apply applies the plan as a group does. A failed cask install is a warning, and the next run
-// tries again; where the app's fails, the files wait for it.
-func (g *Ghostty) Apply(ctx context.Context, p step.Plan) error {
-	return resource.Group{}.Apply(ctx, p)
 }
 
 // conf returns the config file that Ghostty's menu opens: the first of ghosttyConfigs that holds
@@ -114,7 +102,7 @@ func (g *Ghostty) conf() string {
 func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 	config := g.conf()
 	wsFile := g.file(config)
-	ws, err := wsFile.Plan()
+	ws, err := resource.Append(ctx, nil, wsFile)
 	switch {
 	case errors.Is(err, file.ErrNotWs):
 		g.Out.Warn("%s is not ws client macos apply's: move it away, as the script writes its own", wsFile.Path)
@@ -168,9 +156,9 @@ func (g *Ghostty) resolve() func(string) (string, error) {
 	return filepath.EvalSymlinks
 }
 
-// Report says how the casks, ws.ghostty and the line that reads it stand. A config that is a link
+// report says how the casks, ws.ghostty and the line that reads it stand. A config that is a link
 // lacking the line stands against ws: a run only warns of it.
-func (g *Ghostty) Report(ctx context.Context) ([]step.Item, error) {
+func (g *Ghostty) report(ctx context.Context) ([]step.Item, error) {
 	config := g.conf()
 	wsFile := g.file(config)
 	return file.Gather(ctx, g.casks().Report(ctx, "ghostty", "Ghostty.app", g.Home),

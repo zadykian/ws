@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/cable"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
@@ -35,7 +36,7 @@ func TestCablePlans(t *testing.T) {
 		"disabled": {"header\n*Dock\n", cableSet, "", 0},
 	} {
 		m, out := effecttest.NewMachine(), &effecttest.Out{}
-		p, err := cableStep(m, out, tc.list, tc.info).Plan(context.Background())
+		p, err := cableStep(m, out, tc.list, tc.info).Step().Plan(context.Background())
 		if tc.err != "" && (err == nil || !strings.Contains(err.Error(), tc.err)) {
 			t.Errorf("%s: err = %v, want %q", name, err, tc.err)
 		}
@@ -47,7 +48,7 @@ func TestCablePlans(t *testing.T) {
 
 func TestCableWithoutServiceLeavesTheNetworkAlone(t *testing.T) {
 	m := effecttest.NewMachine()
-	p, err := cable.Cable{M: m, Out: &effecttest.Out{}}.Plan(context.Background())
+	p, err := cable.Cable{M: m, Out: &effecttest.Out{}}.Step().Plan(context.Background())
 	if err != nil || len(p.Changes) != 0 || len(m.Calls) != 0 {
 		t.Errorf("Plan = %v, %v, calls %v; want none", p.Changes, err, m.Calls)
 	}
@@ -55,25 +56,29 @@ func TestCableWithoutServiceLeavesTheNetworkAlone(t *testing.T) {
 
 func TestCableAppliesSetmanualThroughSudo(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
-	s := cableStep(m, out, "h\nDock\n", "DHCP Configuration\n")
+	s := cableStep(m, out, "h\nDock\n", "DHCP Configuration\n").Step()
 	p, _ := s.Plan(context.Background())
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{}
 	m.Results["/usr/sbin/networksetup -getinfo Dock"] = effecttest.Result{Out: []byte(cableSet)}
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
+	if got := step.Headline(p.Changes[0]); got != "would run networksetup -setmanual \"Dock\" 10.77.0.2 255.255.255.252" {
+		t.Errorf("headline = %q", got)
+	}
 	if got := m.Calls[len(m.Calls)-2]; got != "root /usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252" {
 		t.Errorf("last call = %q", got)
 	}
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{Err: errors.New("no")}
-	if err := s.Apply(context.Background(), p); err == nil {
-		t.Error("Apply succeeded where networksetup failed")
+	err := s.Apply(context.Background(), p)
+	if err == nil || !strings.HasPrefix(err.Error(), "would run networksetup -setmanual") {
+		t.Errorf("Apply err = %v, want the command's headline first", err)
 	}
 }
 
 func TestCableApplyNamesTheRemedyWhereSetmanualDoesNotTake(t *testing.T) {
 	m := effecttest.NewMachine()
-	s := cableStep(m, &effecttest.Out{}, "h\nDock\n", "DHCP Configuration\n")
+	s := cableStep(m, &effecttest.Out{}, "h\nDock\n", "DHCP Configuration\n").Step()
 	p, _ := s.Plan(context.Background())
 	m.Results["/usr/sbin/networksetup -setmanual Dock 10.77.0.2 255.255.255.252"] = effecttest.Result{}
 	err := s.Apply(context.Background(), p)

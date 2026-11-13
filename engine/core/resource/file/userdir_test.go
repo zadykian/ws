@@ -27,7 +27,7 @@ func TestUserDirPlanAgreesWithReport(t *testing.T) {
 		m := effecttest.NewMachine()
 		c.setUp(m)
 		d := UserDir{M: m, Path: dir, Mode: 0o700, Fix: c.fix}
-		cs, _, err := UserDirs{d}.Plan()
+		cs, err := d.Plan(context.Background())
 		items, reportErr := d.Report(context.Background())
 		got := "nothing"
 		switch {
@@ -53,7 +53,7 @@ func TestUserDirStopsAtAFileAndReportsItAsAConflict(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/d"] = []byte("x")
 	d := UserDir{M: m, Path: "/h/d", Mode: 0o755}
-	if cs, _, err := (UserDirs{d}).Plan(); !errors.Is(err, errNotDir) || len(cs) != 0 {
+	if cs, err := d.Plan(context.Background()); !errors.Is(err, errNotDir) || len(cs) != 0 {
 		t.Errorf("plan = %v, %v, want errNotDir and no change", cs, err)
 	}
 	items, err := d.Report(context.Background())

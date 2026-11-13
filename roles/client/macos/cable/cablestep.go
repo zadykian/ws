@@ -7,9 +7,9 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // Cable gives the service that mac.conf's WS_CABLE_SERVICE names a Manual Configuration of the
@@ -25,12 +25,6 @@ type Cable struct {
 	LookPath func(string) (string, error)
 }
 
-// Name is cable.
-func (Cable) Name() string { return "cable" }
-
-// WaitsOn is nothing.
-func (Cable) WaitsOn() string { return "" }
-
 // program finds networksetup. sudo gets its path as the user's PATH finds it, whatever PATH sudo
 // would keep.
 func (c Cable) program() (string, error) {
@@ -45,9 +39,9 @@ func (c Cable) program() (string, error) {
 	return program, nil
 }
 
-// Report says how the service stands, where mac.conf names one. A disabled one is a conflict, as no
+// report says how the service stands, where mac.conf names one. A disabled one is a conflict, as no
 // run turns it on, and it keeps its address.
-func (c Cable) Report(ctx context.Context) ([]step.Item, error) {
+func (c Cable) report(ctx context.Context) ([]step.Item, error) {
 	if c.Conf.CableService == "" {
 		return nil, nil
 	}
@@ -72,8 +66,8 @@ func (c Cable) Report(ctx context.Context) ([]step.Item, error) {
 	return []step.Item{item}, nil
 }
 
-// Plan reads the service with networksetup.
-func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
+// plan reads the service with networksetup.
+func (c Cable) plan(ctx context.Context) (step.Plan, error) {
 	service := c.Conf.CableService
 	if service == "" {
 		return step.Plan{}, nil
@@ -108,37 +102,8 @@ func (c Cable) Plan(ctx context.Context) (step.Plan, error) {
 			"to another network: mac.conf's WS_CABLE_SERVICE must name the display's adapter's service",
 			service, router)
 	}
-	return step.Plan{Changes: []step.Change{
-		change.Run{
-			Root: true, Name: program, Args: []string{"-setmanual", service, cableClient, cableMask},
-			Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
-		},
-	}}, nil
-}
-
-// Apply runs networksetup -setmanual, then reads the service again. Where it still shows other
-// settings, as a profile that manages it would leave them, the run stops with the remedy. That is
-// to set it by hand in System Settings › Network, as docs/mac.md's The cable says, or to empty
-// mac.conf's WS_CABLE_SERVICE.
-func (c Cable) Apply(ctx context.Context, p step.Plan) error {
-	for _, ch := range p.Changes {
-		if err := change.Apply(ctx, c.M, c.Out, ch); err != nil {
-			return err
-		}
-		run, ok := ch.(change.Run)
-		if !ok {
-			continue
-		}
-		info, err := c.M.RunShown(ctx, false, run.Name, "-getinfo", c.Conf.CableService)
-		if err != nil {
-			return fmt.Errorf("networksetup -getinfo %q failed: %w", c.Conf.CableService, err)
-		}
-		if other := cableOther(string(info)); other != "" {
-			return fmt.Errorf("networksetup -getinfo %q shows %s after %v: set it by hand in System "+
-				"Settings › Network, as docs/mac.md's The cable says, or empty mac.conf's WS_CABLE_SERVICE",
-				c.Conf.CableService, other, run.Line())
-		}
-		c.Out.Say("ran %s", run.Line())
-	}
-	return nil
+	return step.Plan{Changes: []step.Change{setManual{c, resource.Command{
+		M: c.M, Root: true, Name: program, Args: []string{"-setmanual", service, cableClient, cableMask},
+		Label: fmt.Sprintf("networksetup -setmanual %q %s %s", service, cableClient, cableMask),
+	}}}}, nil
 }

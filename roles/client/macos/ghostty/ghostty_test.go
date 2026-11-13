@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/client/macos/ghostty"
 )
 
@@ -17,15 +18,15 @@ const (
 	ghosttyHead = "# Written by ws client macos apply: its next run replaces changes made here.\n"
 )
 
-func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) *ghostty.Ghostty {
+func ghosttyStep(m *effecttest.Machine, out *effecttest.Out) resource.Lazy {
 	m.Dirs["/h/Applications/Ghostty.app"] = 0o755
 	m.Files["/h/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf"] = nil
-	return &ghostty.Ghostty{
+	return (&ghostty.Ghostty{
 		Home: "/h", Settings: []byte("font-size = 13\n"), M: m, Out: out,
 		LookPath: func(string) (string, error) { return "brew", nil },
 		Real:     func(p string) (string, error) { return p, nil },
 		Now:      func() time.Time { return time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC) },
-	}
+	}).Step()
 }
 
 func TestGhosttyAppAndFontThereNeedNoBrew(t *testing.T) {

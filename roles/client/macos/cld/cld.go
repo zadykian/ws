@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // cldReleases is the page of cld's releases, whose latest has the install.sh that installs cld.
@@ -27,23 +27,17 @@ type Cld struct {
 	tried bool // install or update ran, so the plan is empty for the rest of the run
 }
 
-// Name is cld.
-func (*Cld) Name() string { return "cld" }
-
-// WaitsOn is nothing.
-func (*Cld) WaitsOn() string { return "" }
-
 // cldInstall installs cld with the install.sh of its latest release, as the claude role does on ws.
 // install.sh checks the binary against the release's cld.sha256 before it moves it into place, and
 // edits no shell profile.
-type cldInstall struct{}
+type cldInstall struct{ c *Cld }
 
 func (cldInstall) String() string {
 	return "would install cld into ~/.local/bin with the install.sh of its latest release"
 }
 
 // cldUpdate has cld replace itself where a newer release is out.
-type cldUpdate struct{}
+type cldUpdate struct{ c *Cld }
 
 func (cldUpdate) String() string { return "would run cld update" }
 
@@ -91,11 +85,11 @@ func (c *Cld) gains(ctx context.Context) bool {
 	return err != nil
 }
 
-// Plan plans cld's install where cld is missing, else its update. Under Check, a cld that is or
+// plan plans cld's install where cld is missing, else its update. Under Check, a cld that is or
 // will be there with restore tabs may bring the lines of ssh's file.
-func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
+func (c *Cld) plan(ctx context.Context) step.Plan {
 	if c.tried {
-		return step.Plan{}, nil
+		return step.Plan{}
 	}
 	var cs []step.Change
 	tabs := false
@@ -103,17 +97,17 @@ func (c *Cld) Plan(ctx context.Context) (step.Plan, error) {
 		cs, tabs = c.update(ctx)
 		tabs = tabs || (c.Check && c.restoreTabs(ctx))
 	} else {
-		cs, tabs = []step.Change{cldInstall{}}, c.Check
+		cs, tabs = []step.Change{cldInstall{c}}, c.Check
 	}
 	if tabs && c.gains(ctx) {
-		cs = append(cs, change.Remark("would add the lines that start cld's watcher to config.d/ws, "+
+		cs = append(cs, resource.Remark("would add the lines that start cld's watcher to config.d/ws, "+
 			"where that cld has restore tabs"))
 	}
-	return step.Plan{Changes: cs}, nil
+	return step.Plan{Changes: cs}
 }
 
-// Report says whether cld is there, with the version it names.
-func (c *Cld) Report(ctx context.Context) ([]step.Item, error) {
+// report says whether cld is there, with the version it names.
+func (c *Cld) report(ctx context.Context) ([]step.Item, error) {
 	item := step.Item{Kind: step.PackageItem, Name: "cld", Want: file.StateInstalled, Found: file.StateMissing}
 	if c.has() {
 		item.Found = file.StateInstalled
@@ -139,10 +133,10 @@ func (c *Cld) update(ctx context.Context) ([]step.Change, bool) {
 		return nil, false
 	}
 	if _, err := c.M.Run(ctx, c.bin(), "help", "update"); err != nil {
-		return []step.Change{cldInstall{}}, c.Check
+		return []step.Change{cldInstall{c}}, c.Check
 	}
 	if !c.Check {
-		return []step.Change{cldUpdate{}}, false
+		return []step.Change{cldUpdate{c}}, false
 	}
 	out, err = c.M.Run(ctx, "curl", "-fsSIL", "--retry", "3", "-o", "/dev/null", "-w", "%{url_effective}",
 		cldReleases+"/latest")
@@ -157,5 +151,5 @@ func (c *Cld) update(ctx context.Context) ([]step.Change, bool) {
 	if !cldRelease.MatchString(latest) || !cldOlder(have, latest) {
 		return nil, false
 	}
-	return []step.Change{change.Remark("would run cld update: cld " + have + ", the latest " + latest)}, true
+	return []step.Change{resource.Remark("would run cld update: cld " + have + ", the latest " + latest)}, true
 }

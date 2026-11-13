@@ -2,41 +2,16 @@ package tunnel
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
-	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 )
 
 // Apply applies the changes of the plan in order, so that root's copy of ws is there when the key
 // is made.
 func (t *Tunnel) Apply(ctx context.Context, p step.Plan) error {
-	for _, c := range p.Changes {
-		var err error
-		switch c := c.(type) {
-		case Install:
-			err = t.install(ctx, c)
-		case launchd.Launchctl:
-			err = c.Apply(ctx)
-		case KeyMake:
-			err = t.makeKey(ctx)
-		default:
-			err = change.Apply(ctx, t.M, t.Out, c)
-		}
-		if err != nil {
-			return err
-		}
+	if err := (resource.Group{}).Apply(ctx, p); err != nil {
+		return err
 	}
 	return t.publish(ctx)
-}
-
-func (t *Tunnel) install(ctx context.Context, i Install) error {
-	if err := t.M.WriteFile(i.Path+".new", i.Data, 0o755); err != nil {
-		return fmt.Errorf("cannot install %s: %w", i.Path, err)
-	}
-	if _, err := t.M.Run(ctx, "mv", "-f", i.Path+".new", i.Path); err != nil {
-		return fmt.Errorf("cannot install %s: %w", i.Path, err)
-	}
-	return nil
 }

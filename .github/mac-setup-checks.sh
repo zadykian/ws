@@ -120,10 +120,11 @@ logged() {
 # differs WHAT LINE... gives the no-op service the settings LINE..., on which ws client macos apply
 # must run one -setmanual and stop, naming WHAT.
 differs() {
-    what="ws client macos apply: networksetup -getinfo \"ws stand-in no-op\" shows $1 after networksetup"
+    line="networksetup -setmanual \"ws stand-in no-op\" $args"
+    what="ws client macos apply: would run $line: networksetup -getinfo \"ws stand-in no-op\" shows $1 after"
     shift
     printf '%s\n' "$@" >"$tmp/info-ws_stand_in_no_op"
-    stops "$what -setmanual \"ws stand-in no-op\" $args: "
+    stops "$what $line: "
     logged "4 -setmanual ws stand-in no-op $args"
 }
 
@@ -158,7 +159,7 @@ done
 logged
 # A -setmanual that fails stops ws client macos apply.
 with 'WS_CABLE_SERVICE="ws stand-in failing"'
-stops "ws client macos apply: networksetup -setmanual \"ws stand-in failing\" $args failed"
+stops "ws client macos apply: would run networksetup -setmanual \"ws stand-in failing\" $args: "
 logged "4 -setmanual ws stand-in failing $args"
 # The no-op's -setmanual exits 0 and changes nothing, which only the check after it catches.
 # So ws client macos apply must stop on each setting that differs, and name it. The cable's address

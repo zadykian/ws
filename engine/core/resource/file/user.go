@@ -8,6 +8,7 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -103,6 +104,8 @@ type UserFile struct {
 	Own func(have []byte) bool
 	// Binary keeps a program out of the diff.
 	Binary bool
+	// Warn has a plan leave a file that is not ws's with a warning, where it stops otherwise.
+	Warn bool
 }
 
 // ErrNotWs is a plan's error for a file that is not ws's: its step warns of it, or stops.
@@ -144,17 +147,20 @@ func (f UserFile) Change(found Found) []step.Change {
 	return nil
 }
 
-// Plan returns a write, a fix of the mode, or nothing. It returns ErrNotWs, and no change, where
-// the file is not ws's.
-func (f UserFile) Plan() ([]step.Change, error) {
+// Plan returns a write, a fix of the mode, or nothing. Where the file is not ws's, it plans nothing:
+// it warns where Warn is set, and returns ErrNotWs otherwise.
+func (f UserFile) Plan(context.Context) ([]resource.Change, error) {
 	found, ours, err := f.Read()
-	if err != nil {
+	switch {
+	case err != nil:
 		return nil, err
+	case ours:
+		return applying(f.Change(found)), nil
+	case f.Warn:
+		f.Out.Warn("%s is not ws's: move it away, and the next run writes ws's", f.Path)
+		return nil, nil
 	}
-	if !ours {
-		return nil, ErrNotWs
-	}
-	return f.Change(found), nil
+	return nil, ErrNotWs
 }
 
 // Report compares the file as a plan does. A file that isn't ws's shows no diff: a run leaves it,
@@ -183,16 +189,6 @@ func (f UserFile) Report(context.Context) ([]step.Item, error) {
 		}
 	}
 	return []step.Item{item}, nil
-}
-
-// Owned plans f, and leaves a file that is not ws's, with a warning.
-func Owned(out effect.Out, f UserFile) ([]step.Change, error) {
-	cs, err := f.Plan()
-	if errors.Is(err, ErrNotWs) {
-		out.Warn("%s is not ws's: move it away, and the next run writes ws's", f.Path)
-		return nil, nil
-	}
-	return cs, err
 }
 
 // lineItem is a line that ws keeps in a file of the user's. The rest of the file stays out of the

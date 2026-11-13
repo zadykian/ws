@@ -2,9 +2,10 @@ package git
 
 import (
 	"context"
-	"github.com/zadykian/ws/engine/core/resource/file"
 	"io/fs"
 
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
 	"github.com/zadykian/ws/roles/client/macos/internal/keys"
@@ -37,7 +38,7 @@ func (g *Git) dirs(pub, text string) file.UserDirs {
 }
 
 // files plans ~/.config/ws and the files in it.
-func (g *Git) files(key keys.NamedKey, gh string) ([]step.Change, error) {
+func (g *Git) files(ctx context.Context, key keys.NamedKey, gh string) ([]step.Change, error) {
 	cs, link, err := g.dirs(key.File, key.Text).Plan()
 	if err != nil {
 		return nil, err
@@ -46,11 +47,9 @@ func (g *Git) files(key keys.NamedKey, gh string) ([]step.Change, error) {
 		cs = append(cs, keys.CopyChange(g.M, g.Out, key.File, key.Text)...)
 	}
 	for _, f := range g.list(key, gh) {
-		planned, err := f.Plan()
-		if err != nil {
+		if cs, err = resource.Append(ctx, cs, f); err != nil {
 			return nil, err
 		}
-		cs = append(cs, planned...)
 	}
 	link.Warn(g.Out, len(cs), "ws's files go there")
 	return cs, nil
