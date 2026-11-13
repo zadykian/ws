@@ -4,6 +4,8 @@ import (
 	"context"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/zadykian/ws/engine/tui/internal/run"
 )
 
 // StateReader reads a machine and changes nothing. b gives the read's effects, for its lines to
@@ -17,7 +19,7 @@ func RunState(ctx context.Context, c Config, title string, read StateReader) err
 	ctx, end := context.WithCancelCause(ctx)
 	defer end(nil)
 	// The screen asks once a read has ended, so serve never has two reads to run.
-	a := NewAsks(end)
+	a := run.NewAsks(end)
 	ask := func() tea.Msg {
 		a.Ask(func(ctx context.Context, b *Bridge) tea.Msg {
 			sections, err := read(ctx, b)

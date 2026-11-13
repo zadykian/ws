@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -189,5 +190,5 @@ func (s pickScreen) notes() []widget.Line {
 // chose: a Choice with no steps where they left. Ctrl-C ends it as Cut says, and no stop is asked.
 func Pick(ctx context.Context, c Config, title string, groups []list.Group, scan Work) (Choice, error) {
 	picks := make(chan Choice, 1)
-	return Await(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
+	return run.Await(ctx, c, newPickScreen(title, c.Theme, groups, picks), picks, scan)
 }

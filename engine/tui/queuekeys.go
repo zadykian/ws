@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -110,7 +111,7 @@ func (s queueScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case list.ScannedMsg:
 		s.Screen = s.Scanned(msg)
 		s.list = s.list.opened()
-	case ReportedMsg:
+	case run.ReportedMsg:
 		s.unread = msg.Problem
 		if msg.Problem == "" {
 			s.list = s.list.reported(msg.Stage, msg.Sections)

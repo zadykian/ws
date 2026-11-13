@@ -11,6 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui/internal/list"
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -176,14 +177,14 @@ func TestPendingTurnsAWholeStageThatIsDue(t *testing.T) {
 
 func TestAReportFillsWsList(t *testing.T) {
 	sections := []StateSection{{Name: "base", Reports: []step.Report{{Step: "Packages"}}}}
-	got := queueShown(queueSent(testQueueScreen(), ReportedMsg{Stage: "Run", Sections: sections}))
+	got := queueShown(queueSent(testQueueScreen(), run.ReportedMsg{Stage: "Run", Sections: sections}))
 	if strings.Contains(got, "not scanned") || !strings.Contains(got, "✓ Packages") {
 		t.Errorf("frame:\n%s", got)
 	}
 }
 
 func TestARefusedReportLeavesTheRolesAndSaysWhy(t *testing.T) {
-	got := queueShown(queueSent(testQueueScreen(), ReportedMsg{Stage: "Run", Problem: "ws on ws is another version"}))
+	got := queueShown(queueSent(testQueueScreen(), run.ReportedMsg{Stage: "Run", Problem: "ws on ws is another version"}))
 	if !strings.Contains(got, "ws: roles not scanned") || !strings.Contains(got, "Not scanned: ws on ws is another version") {
 		t.Errorf("frame:\n%s", got)
 	}

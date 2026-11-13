@@ -1,4 +1,6 @@
-package tui
+// Package run follows a run on a screen: the Bridge that joins a work to its screen, the session
+// that holds its keys and the run screen itself.
+package run
 
 import (
 	"cmp"

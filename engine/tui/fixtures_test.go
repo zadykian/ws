@@ -1,8 +1,13 @@
 package tui
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"slices"
+	"strings"
+
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/tuitest"
@@ -15,7 +20,6 @@ var (
 	shiftTab = tuitest.ShiftTab
 	enter    = tuitest.Enter
 	esc      = tuitest.Esc
-	ctrlC    = tuitest.CtrlC
 	pgUp     = tuitest.PgUp
 	down     = tuitest.Down
 	press    = tuitest.Press
@@ -25,7 +29,6 @@ var (
 	testCut  = tuitest.Cut
 	planned  = tuitest.Planned
 
-	window    = widget.Size{Width: 80, Height: 24}
 	testTheme = widget.NewTheme(func(string) string { return "" })
 )
 
@@ -77,4 +80,27 @@ func cursorOn(l list.PickList, name string) widget.Cursor {
 func threeRoles() list.PickList {
 	l := list.NewPickList([]list.Group{{Name: "a", Steps: []string{"one"}}, {Name: "b", Steps: []string{"two", "three"}}, {Name: "c", Steps: []string{"four"}}})
 	return l.Take(planned("a", "one", 0, oneChange("x"))).Take(planned("b", "two", 0, oneChange("x")))
+}
+
+// noKeys is a Config whose terminal gives no key, and whose output is out.
+func noKeys(out io.Writer) Config {
+	return Config{In: strings.NewReader(""), Out: out, Theme: testTheme, Cut: testCut}
+}
+
+// waitForCtx is a work that heeds its context.
+func waitForCtx(ctx context.Context, _ *Bridge) error {
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+// runs says whether cmd, a batch or not, gives want.
+func runs(cmd tea.Cmd, want tea.Msg) bool {
+	if cmd == nil {
+		return false
+	}
+	msg := cmd()
+	if batch, ok := msg.(tea.BatchMsg); ok {
+		return slices.ContainsFunc(batch, func(c tea.Cmd) bool { return runs(c, want) })
+	}
+	return msg == want
 }

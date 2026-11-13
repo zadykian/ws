@@ -7,6 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -19,7 +20,7 @@ const noteRows = 6
 func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
 	ctx, end := context.WithCancelCause(ctx)
 	defer end(nil)
-	a := NewAsks(end)
+	a := run.NewAsks(end)
 	send := func(j configureJob) {
 		a.Ask(func(ctx context.Context, b *Bridge) tea.Msg {
 			sheet, err := j.run(ctx, b)
@@ -111,7 +112,7 @@ func (s configureScreen) noteLines(width int) []string {
 		if note.Kind == widget.Warned {
 			style = s.theme.Bad
 		}
-		lines = append(lines, strings.Split(style.Width(max(width, 1)).Render(CleanLines(note.Text)), "\n")...)
+		lines = append(lines, strings.Split(style.Width(max(width, 1)).Render(run.CleanLines(note.Text)), "\n")...)
 	}
 	return lines[max(len(lines)-noteRows, 0):]
 }

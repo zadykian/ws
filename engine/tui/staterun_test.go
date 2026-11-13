@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/zadykian/ws/engine/tui/internal/run"
 )
 
 // typedAtRead returns a terminal, and a read that types the next of keys on it, again and again
@@ -66,7 +68,7 @@ func TestRunStateTurnsAPanicOfAReadIntoAnError(t *testing.T) {
 	err := RunState(t.Context(), noKeys(&out), "ws", func(context.Context, *Bridge) ([]StateSection, error) {
 		panic("a bug")
 	})
-	if !errors.Is(err, ErrPanic) || !strings.Contains(out.String(), leaveBuffer) {
+	if !errors.Is(err, run.ErrPanic) || !strings.Contains(out.String(), leaveBuffer) {
 		t.Errorf("RunState: %v, on %q", err, out.String())
 	}
 }
