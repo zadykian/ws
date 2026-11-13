@@ -65,6 +65,8 @@ type runChange struct {
 	cloud bool
 	// user is the ws_user that host_vars is to name before the run, where it names another.
 	user string
+	// pairs are the host_vars pairs for wg0, which the run writes first.
+	pairs []string
 }
 
 func (c runChange) String() string { return RunStage + ": would " + c.text }
@@ -81,7 +83,11 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil {
 		return step.Plan{}, err
 	}
-	if r.partDone(ctx, c) {
+	pairs, err := tunnelPairs(ctx, r.Ws, c)
+	if err != nil {
+		return step.Plan{}, err
+	}
+	if len(pairs) == 0 && r.partDone(ctx, c) {
 		return step.Plan{}, nil
 	}
 	how := "run ws server ubuntu apply on ws in a unit of its own, and follow its log"
@@ -97,6 +103,9 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 		user = c.User
 		how += ", after naming ws_user: " + user + " in ws's host_vars"
 	}
+	if len(pairs) > 0 {
+		how += ", after naming " + naming(pairs) + " in ws's host_vars"
+	}
 	if c.Target == "cloud" {
 		how += ", after naming security_outbound: false in ws's host_vars"
 	}
@@ -108,7 +117,7 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 			how += "; its last full run exited " + last
 		}
 	}
-	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user}}}, nil
+	return step.Plan{Changes: []step.Change{runChange{text: how, cloud: c.Target == "cloud", user: user, pairs: pairs}}}, nil
 }
 
 // partDone is RunDone for what this run takes. A part that ran is all there is to do, and a part

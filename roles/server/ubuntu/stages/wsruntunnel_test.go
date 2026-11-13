@@ -2,8 +2,10 @@ package stages
 
 import (
 	"context"
+	"errors"
 	"net/netip"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
@@ -54,5 +56,62 @@ func TestTunnelPairsKeepsWhatHostVarsLacks(t *testing.T) {
 		if err != nil || !slices.Equal(pairs, tc.want) {
 			t.Errorf("%s: pairs = %q, %v; want %q", name, pairs, err, tc.want)
 		}
+	}
+}
+
+// tunnelRun is newRun over a Want at the address and the port, whose host_vars reads as file.
+func tunnelRun(address, port, file string) (*WsRun, *effecttest.Machine) {
+	r, m := newRun("lan", idleRun, false, false)
+	var a netip.Prefix
+	if address != "" {
+		a = netip.MustParsePrefix(address)
+	}
+	r.Ws = session.New(wantReach{fileReach{sessiontest.Reach{M: m}}, a, port},
+		session.Scripts{Remote: []byte("x"), Files: []byte("y")})
+	m.Results[sessiontest.Op("status")] = effecttest.Result{Out: sessiontest.Text(idleRun)}
+	m.Results[sessiontest.Op("values")] = effecttest.Result{Out: []byte(file)}
+	return r, m
+}
+
+// wantReach is a Reach whose Want names a tunnel, as the Mac's conf does at a slot.
+type wantReach struct {
+	fileReach
+	address netip.Prefix
+	port    string
+}
+
+func (r wantReach) Want() (session.Want, error) {
+	w, err := r.fileReach.Want()
+	w.Address, w.Port = r.address, r.port
+	return w, err
+}
+
+func TestWsRunPlansWhatHostVarsLacks(t *testing.T) {
+	for name, tc := range map[string]struct{ address, port, file, want string }{
+		"both":    {"10.99.1.1/24", "51821", "", "after naming wireguard_address: 10.99.1.1/24 and wireguard_port: 51821 in ws's host_vars"},
+		"address": {"10.99.1.1/24", "", "", "after naming wireguard_address: 10.99.1.1/24 in ws's host_vars"},
+		"held":    {"10.99.1.1/24", "51821", "wireguard_address: 10.99.1.1/24\nwireguard_port: 51821\n", ""},
+		"slot 0":  {"10.99.0.1/24", "", "", ""},
+	} {
+		r, m := tunnelRun(tc.address, tc.port, "---\n"+tc.file)
+		p, err := r.Plan(context.Background())
+		got := ""
+		if len(p.Changes) > 0 {
+			got = p.Changes[0].String()
+		}
+		if err != nil || (tc.want == "") != (got == "") || !strings.Contains(got, tc.want) {
+			t.Errorf("%s: Plan = %q, %v; want %q", name, got, err, tc.want)
+		}
+		if tc.address == "10.99.0.1/24" && slices.Contains(m.Calls, "run op values") {
+			t.Errorf("%s: calls = %q; want no values op", name, m.Calls)
+		}
+	}
+}
+
+func TestWsRunStopsWhereHostVarsCannotBeRead(t *testing.T) {
+	r, m := tunnelRun("10.99.1.1/24", "", "")
+	m.Results[sessiontest.Op("values")] = effecttest.Result{Err: errors.New("ssh: no route")}
+	if _, err := r.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "host_vars on ws") {
+		t.Errorf("Plan where the read fails = %v; want the stop", err)
 	}
 }
