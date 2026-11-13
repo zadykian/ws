@@ -80,7 +80,7 @@ sudo /usr/local/libexec/ws-tunnel/ws client macos tunnel status | grep -q '^late
     error "ws client macos wizard had no handshake, or logged in to ws through the tunnel other than once"
 ! grep -q 'WireGuard public key' "$RUNNER_TEMP/run.out" || error "ws client macos wizard printed ws client macos apply's key"
 printf '%s\n' "WS_USER=$(id -un)" WS_REMOTE=localhost WS_REMOTE_PORT=22022 'WS_IDENTITY_PUB_KEY=~/.ssh/id_ed25519.pub' \
-    WS_SLOT=0 WS_TARGET=lan WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
+    WS_TARGET=lan WS_LAN= WS_GIT_NAME= WS_TUNNEL_NETWORKS= WS_RESOLVERS= \
     "WS_PUBLIC_KEY=$(cat "$RUNNER_TEMP/ws/wg0")" | conf_write "$RUNNER_TEMP/run/mac.conf"
 conf_print "$RUNNER_TEMP/run/mac.conf" >"$RUNNER_TEMP/run.conf"
 conf_print ~/.config/ws/mac.conf | cmp -s - "$RUNNER_TEMP/run.conf" ||
