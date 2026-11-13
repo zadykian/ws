@@ -2,6 +2,9 @@ package link
 
 import (
 	"context"
+	"slices"
+
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/session/sessiontest"
@@ -91,6 +94,51 @@ func TestCableApplyNone(t *testing.T) {
 	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "none"
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_CABLE_SERVICE=\n") {
 		t.Errorf("Apply with none = %v, mac.conf %q; want an empty service", err, m.Files["/h/mac.conf"])
+	}
+}
+
+// chooser answers each choice by its text, and keeps the questions.
+type chooser struct {
+	effect.Prompt
+	answers map[string]string
+	asked   []effect.ChoiceQuestion
+}
+
+func (c *chooser) Choose(_ context.Context, q effect.ChoiceQuestion) (string, error) {
+	c.asked = append(c.asked, q)
+	return c.answers[q.Text], nil
+}
+
+func TestCableApplyChoosesPortAndServiceOnAScreen(t *testing.T) {
+	c, m, p := newCable(t, session.Status{}, cableLink, nil)
+	linked(m)
+	ch := &chooser{Prompt: p, answers: map[string]string{"ws's port of the cable (WS_CABLE_PORT)": "eth1 (carrier)",
+		"The Mac's service of the cable (WS_CABLE_SERVICE)": "USB LAN"}}
+	c.P = ch
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(m.Files["/h/mac.conf"]); !strings.Contains(got, "WS_CABLE_PORT=eth1\nWS_CABLE_SERVICE=\"USB LAN\"\n") {
+		t.Errorf("mac.conf = %q; want the port and the service", got)
+	}
+	want := []effect.ChoiceQuestion{{Options: []string{"eth0", "eth1 (carrier)", "none"}, Default: "eth1 (carrier)"},
+		{Options: []string{"Wi-Fi", "USB LAN", "none"}, Default: "USB LAN"}}
+	if !slices.EqualFunc(ch.asked, want, func(q, w effect.ChoiceQuestion) bool {
+		return slices.Equal(q.Options, w.Options) && q.Default == w.Default
+	}) {
+		t.Errorf("asked %+v, want the options and defaults of %+v", ch.asked, want)
+	}
+}
+
+func TestCableApplyChoosesNoneOnAScreen(t *testing.T) {
+	c, m, p := newCable(t, session.Status{}, "eth0 1 -\neth1 1 -\n", nil)
+	ch := &chooser{Prompt: p, answers: map[string]string{"ws's port of the cable (WS_CABLE_PORT)": "none"}}
+	c.P = ch
+	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_CABLE_SERVICE=\n") {
+		t.Errorf("Apply with none = %v, mac.conf %q; want an empty service", err, m.Files["/h/mac.conf"])
+	}
+	if len(ch.asked) != 1 || ch.asked[0].Default != "none" {
+		t.Errorf("asked %+v; want none first, as two ports have carrier", ch.asked)
 	}
 }
 
