@@ -24,5 +24,10 @@ func tunnelConf(c conf.Conf) string {
 		port = "51820"
 	}
 	b.WriteString("WS_PORT=" + port + "\n")
+	slot := c.Slot
+	if slot == "" {
+		slot = "0"
+	}
+	b.WriteString("WS_SLOT=" + slot + "\n")
 	return b.String()
 }

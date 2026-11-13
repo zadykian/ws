@@ -12,7 +12,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/tunnel"
 )
 
-const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/mac.conf.\nWS_PUBLIC_KEY=K\nWS_PORT=51820\n"
+const doneConf = "# Written by github.com/zadykian/ws: ws client macos apply, from ~/.config/ws/mac.conf.\nWS_PUBLIC_KEY=K\nWS_PORT=51820\nWS_SLOT=0\n"
 
 // daemonMachine is a Mac with ws, root's copy, the key, tunnel.conf and the plist in place.
 func daemonMachine() *effecttest.Machine {
