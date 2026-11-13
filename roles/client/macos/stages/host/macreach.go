@@ -43,7 +43,7 @@ func (MacReach) Rerun() string { return "run the wizard with --update" }
 func (r MacReach) Claude(ctx context.Context) error {
 	r.Out.Say("%s: claude auth login runs as WS_USER on ws: take its steps at this terminal, "+
 		"and open the address it shows in the Mac's browser", session.ClaudeStage)
-	if err := r.SSH.Pass(ctx, "-t", "ws", `exec bash -lc "claude auth login"`); err != nil {
+	if err := r.SSH.Pass(ctx, "-t", r.SSH.Host, `exec bash -lc "claude auth login"`); err != nil {
 		return errors.New(session.ClaudeStage + ": WS_USER's claude on ws still has no login, as above; run the wizard again")
 	}
 	return nil
