@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
 // tokens is git's tokens for servers besides GitHub. Each URL's in a file of its own, which the
@@ -72,5 +73,5 @@ func (t tokens) Plan(ctx context.Context) ([]host.Change, error) {
 		rs = append(rs, f)
 	}
 	rs = append(rs, host.Validated{File: t.A.File(t.M, ".config/git/tokens.gitconfig", content, 0o600), Check: configCheck})
-	return planAll(ctx, rs...)
+	return plan.All(ctx, rs...)
 }

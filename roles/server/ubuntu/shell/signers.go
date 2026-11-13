@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
 // signersHeader is the first line of the allowed signers file.
@@ -27,7 +28,7 @@ type signers struct {
 // Plan reads the public key. A dry run makes no key, so where there is none yet it plans nothing,
 // and the key's creation shows the change.
 func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
-	pub, err := s.A.ReadHome(s.M, below(s.A, s.Key)+".pub")
+	pub, err := s.A.ReadHome(s.M, plan.Below(s.A, s.Key)+".pub")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	}
@@ -38,7 +39,7 @@ func (s signers) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s.pub %w", s.Key, err)
 	}
-	f := s.A.File(s.M, below(s.A, s.Path), []byte(signersHeader+s.Email+" "+key.String()+"\n"), 0o644)
+	f := s.A.File(s.M, plan.Below(s.A, s.Path), []byte(signersHeader+s.Email+" "+key.String()+"\n"), 0o644)
 	f.Backup = true
 	return f.Plan(ctx)
 }

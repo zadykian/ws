@@ -44,14 +44,3 @@ func TestSigningKeyInTheHomePlansNoDirectory(t *testing.T) {
 		t.Errorf("resources %v; want the key alone", rs)
 	}
 }
-
-func TestBelowCleansThePathAndTheHome(t *testing.T) {
-	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws/"}}
-	for p, want := range map[string]string{
-		"/home/ws": "", "/home/ws//.ssh/k": ".ssh/k", "/home/ws/a/../b": "b", "/etc/k": "/etc/k",
-	} {
-		if got := below(a, p); got != want {
-			t.Errorf("below(%q) = %q, want %q", p, got, want)
-		}
-	}
-}

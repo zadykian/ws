@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
 // secretEnv is ~/.secrets/env, for ~/.bashrc and the otelcol role, from the secrets file's
@@ -43,9 +44,9 @@ func (s secretEnv) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, fmt.Errorf("%s lacks the line '%s' at its top, so it was written by hand: move its values into the secrets file's [env] table, remove the file, then run ws again", path, envMark)
 	}
 	if len(s.Env) == 0 {
-		return planAll(ctx, s.A.Absent(s.M, ".secrets/env"))
+		return plan.All(ctx, s.A.Absent(s.M, ".secrets/env"))
 	}
 	f := s.A.File(s.M, ".secrets/env", renderEnv(s.Env), 0o600)
 	f.Secret = true
-	return planAll(ctx, s.A.Dir(s.M, ".secrets", 0o700), f)
+	return plan.All(ctx, s.A.Dir(s.M, ".secrets", 0o700), f)
 }
