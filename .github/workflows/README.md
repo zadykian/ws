@@ -156,12 +156,12 @@ Typed, an empty line must take the `169.254` one, and `ping` answer. The next mu
 and one after ws's install or a failed roles' run name it again. Off the LAN, a run and `--check`
 must skip it, a cloud VM's naming its firewall.
 
-The cases give `mac.conf`'s other answers in the environment. With no terminal, a missing answer
-must stop a run and `--check` within 60 s, naming its key. A bad one from the environment must stop
-`--check`, with the form the key takes. `--check` must show the environment's answers as the lines
-it would add to `mac.conf`, and the first run must add them at its end. Typed at a terminal of
-`script`'s after bad ones, each asked again, the same answers must show the same lines, and empty
-lines the defaults, for each target. After the first run, they must write the same `mac.conf`.
+The cases give the other answers in the environment. With no terminal, a missing answer must stop a
+run and `--check` within 60 s, naming its key. A bad one from the environment must stop `--check`,
+with the form the key takes. `--check` must show the environment's answers as the lines it would add
+to `mac.conf` and the server's file, and the first run must add them at their ends. Typed at a
+terminal of `script`'s after bad ones, each asked again, the same answers must show the same lines,
+and empty lines the defaults, for each target. After the first run, they must write the same files.
 
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
 second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show the lines

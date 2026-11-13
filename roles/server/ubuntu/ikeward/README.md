@@ -90,7 +90,7 @@ ufw's default rules forward pings from any interface. So with forwarding on, any
 the VPN, as ikeward's page on
 [NAT](https://github.com/zadykian/ikeward/blob/v0.3.0/docs/nat.md#networks-the-server-forwards)
 says. The Mac sends the VPN's networks and domains into the tunnel with `WS_TUNNEL_NETWORKS` and
-`WS_RESOLVERS` in [mac.conf](../../../client/macos/README.md#macconf), or with a private repository's script
+`WS_RESOLVERS` in [server.conf](../../../client/macos/README.md#macconf), or with a private repository's script
 ([Routes and resolvers of another repository](../../../client/macos/README.md#routes-and-resolvers-of-another-repository)).
 
 ## Dry runs

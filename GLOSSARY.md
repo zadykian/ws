@@ -80,6 +80,6 @@ Core's `file.UserLines` hold them.
 _Avoid_: include line
 
 **ws's directory**:
-`~/.config/ws` on the Mac, mode 700, which holds `mac.conf` and the files that git, zsh and the
-tunnel read. A run sets that mode where it differs.
+`~/.config/ws` on the Mac, mode 700, which holds `mac.conf`, `servers/` and the files that git, zsh
+and the tunnel read. A run sets that mode where it differs.
 _Avoid_: config directory

@@ -1,7 +1,7 @@
 # The Mac's wizard
 
 `ws client macos wizard` sets up the Mac in stages, around `ws client macos apply` ([The
-Mac](../README.md)). It asks for the values that `~/.config/ws/mac.conf` lacks, makes the Mac's ssh
+Mac](../README.md)). It asks for the values that the Mac's files lack, makes the Mac's ssh
 key for ws and adds it to GitHub, then runs `ws client macos apply`. It takes ws's host key and
 checks that `WS_USER` on ws takes the Mac's key. It runs `ws server ubuntu apply` there, adds ws's
 signing key to GitHub by the Mac's gh, and logs claude in on ws. Then it exchanges the tunnel's
@@ -23,7 +23,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
    `roles/client/macos/stages/tools/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
-2. Answers: the values `mac.conf` lacks, below.
+2. Answers: the values the two files lack, below.
 3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
 4. gh on the Mac: gh's login to GitHub, and the Mac's key among the account's keys, said if there.
 5. ws client macos apply: `ws client macos apply`, after sudo's password, asked at each run,
@@ -59,14 +59,14 @@ its last change lands there, as the Tunnel and the Cable do.
 | More networks through the tunnel | `WS_TUNNEL_NETWORKS` | none | always |
 | Nameservers behind the tunnel | `WS_RESOLVERS` | none | always |
 
-Each answer goes in `mac.conf`, under the key that [mac.conf](../README.md#macconf) explains, but the
+Each answer goes in the file of its key, which [mac.conf](../README.md#macconf) explains, but the
 first. `WS_TARGET` names ws's machine: one on the LAN, a cloud VM, which needs `WS_REMOTE` and
 `WS_REMOTE_PORT`, or a VM on the Mac, which needs `WS_LAN`. The table gives the questions on the
 LAN, and [The wizard's targets](../conf/README.md) the others, with the keys that each refuses. The
 defaults are [The router](../../../server/ubuntu/network/router.md)'s LAN, lease and forward, and ws's own git identity. A key's
 answer comes from the first of these that has one:
 
-- `mac.conf`'s line for the key, even an empty one, so the wizard never asks it again;
+- the file's line for the key, even an empty one, so the wizard never asks it again;
 - the environment, under the key's name, as `WS_LAN=10.88.0.0/24`, or `WS_LAN=` for no value;
 - the terminal on the wizard's stdin, where an empty line takes the default in brackets, and `none`
   no value. A screen asks `WS_TARGET` as a choice of its three values, on the default first;
@@ -74,15 +74,15 @@ answer comes from the first of these that has one:
 
 A bad answer at the terminal is asked again, with the form the key takes. From the environment, it
 stops the run. ws's address and git's email take a value where asked. The wizard adds the answers at
-the end of `mac.conf`, and keeps its comments and order. It writes the file once `ws client macos
-apply` would take the whole. It stops before it asks on a `mac.conf` it can't read, or on a line
-that `ws client macos apply` would refuse. Where `mac.conf` is a link and lacks a key, it prints the
-lines to add to the link's file, and stops. The Cable stage asks `WS_CABLE_PORT` and
+the end of each file, and keeps their comments and order. It writes `mac.conf`, then the server's
+file, once `ws client macos apply` would take both. It stops before it asks on a file it can't read,
+or on a line that `ws client macos apply` would refuse. Where a file is a link and lacks a key, it
+prints the lines to add to the link's file, and stops. The Cable stage asks `WS_CABLE_PORT` and
 `WS_CABLE_SERVICE` ([The cable](#the-cable)). The other keys, such as `WS_USER` and `WS_PORT`, keep
 their defaults until set by hand.
 
 Under `--check`, the wizard asks too, and shows the lines it would add as a diff. `ws client macos
-apply --check` then reads the file it would write, in the lock, which `WS_CONF` names. `WS_CONF`
+apply --check` then reads the files it would write, in the lock, which `WS_CONF` names. `WS_CONF`
 names another `mac.conf` for both scripts.
 
 ## The Mac's key
