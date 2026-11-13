@@ -19,7 +19,7 @@ type fakeWs struct{ M *effecttest.Machine }
 func opLine(op ...string) string {
 	line := "op"
 	for _, word := range op {
-		line += " " + shellWord(word)
+		line += " " + Quote(word)
 	}
 	return line
 }

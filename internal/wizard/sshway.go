@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
+
+	"github.com/zadykian/ws/engine/core/effect"
 )
 
 // Way is what ssh -G prints for ws at its direct way.
@@ -24,7 +26,7 @@ var errNoWay = errors.New("ssh finds no direct way to ws")
 // connects only where known_hosts holds a key under ws. ssh's error comes back in one line, as ssh
 // ends each line with \r\n and an agent's refusal to sign comes before its last line.
 func (s SSH) login(ctx context.Context, w Way) (ok bool, sshErr string) {
-	if !hostKnown(ctx, s.M, w.KnownHosts) {
+	if !KnownHost(ctx, s.M, w.KnownHosts) {
 		return false, ""
 	}
 	out, err := s.Run(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
@@ -34,7 +36,13 @@ func (s SSH) login(ctx context.Context, w Way) (ok bool, sshErr string) {
 	if err == nil {
 		return false, ""
 	}
-	return false, stderrOf(err)
+	return false, Stderr(err)
+}
+
+// KnownHost tells whether known_hosts, the file, holds a key under ws, on m.
+func KnownHost(ctx context.Context, m effect.Machine, file string) bool {
+	_, err := m.Run(ctx, "ssh-keygen", "-F", "ws", "-f", file)
+	return err == nil
 }
 
 // Way reads ssh's settings for ws at its direct way, as argv gives it: the host and port that ssh

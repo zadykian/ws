@@ -50,7 +50,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 	if err != nil || strings.TrimSpace(string(out)) != "ok" {
 		last := ""
 		if err != nil {
-			lines := strings.Split(strings.TrimSpace(exitStatus.ReplaceAllString(err.Error(), "")), "\n")
+			lines := strings.Split(strings.TrimSpace(ExitStatus.ReplaceAllString(err.Error(), "")), "\n")
 			last = ": " + strings.TrimSpace(lines[len(lines)-1])
 		}
 		return errors.New(tunnelStage + ": ssh ws failed through the tunnel, where ws's run lets SSH in on " +

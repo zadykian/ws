@@ -78,7 +78,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 		s.way = sudoOpen
 		return step.Plan{}, nil
 	case strings.Contains(err.Error(), "exit status 255"):
-		return step.Plan{}, errors.New(sudoStage + ": ssh to ws failed: " + stderrOf(err))
+		return step.Plan{}, errors.New(sudoStage + ": ssh to ws failed: " + Stderr(err))
 	case s.Check && s.Tty:
 		return step.Plan{}, s.ask(ctx, w.User)
 	}
@@ -112,7 +112,7 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 			s.way, s.password = sudoAsked, password
 			return nil
 		}
-		why := stderrOf(err)
+		why := Stderr(err)
 		if !strings.Contains(why, "Authentication failed") {
 			return fmt.Errorf("%s: sudo on ws stopped: %s", sudoStage, why)
 		}

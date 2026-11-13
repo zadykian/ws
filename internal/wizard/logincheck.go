@@ -2,8 +2,6 @@ package wizard
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"regexp"
-	"strings"
 )
 
 // loginStage names the stage in its messages.
@@ -36,17 +34,3 @@ func (*Login) Side() Side { return OnMac }
 
 // WaitsOn is the Host key stage, without which ssh logs in nowhere.
 func (*Login) WaitsOn() string { return hostStage }
-
-// exitStatus is what the machine's error holds before the stderr of a command.
-var exitStatus = regexp.MustCompile(`^.*exit status \d+: `)
-
-// stderrOf returns the stderr that a failed command's error holds, in one line, without its argv.
-func stderrOf(err error) string {
-	var lines []string
-	for _, l := range strings.Split(exitStatus.ReplaceAllString(err.Error(), ""), "\n") {
-		if l = strings.TrimSpace(l); l != "" {
-			lines = append(lines, l)
-		}
-	}
-	return strings.Join(lines, "; ")
-}

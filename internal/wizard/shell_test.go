@@ -19,8 +19,8 @@ func TestShellWord(t *testing.T) {
 		"$HOME":                      "'$HOME'",
 		"a;b":                        "'a;b'",
 	} {
-		if got := shellWord(word); got != want {
-			t.Errorf("shellWord(%q) = %q, want %q", word, got, want)
+		if got := Quote(word); got != want {
+			t.Errorf("Quote(%q) = %q, want %q", word, got, want)
 		}
 	}
 }

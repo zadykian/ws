@@ -30,7 +30,7 @@ func (s SSHShell) args(cmd []string, in []byte) ([]string, []byte, error) {
 	cmd, in, err := s.Sudo.rooted(cmd, in)
 	args := []string{"-o", "BatchMode=yes", "ws"}
 	for _, word := range cmd {
-		args = append(args, shellWord(word))
+		args = append(args, Quote(word))
 	}
 	return args, in, err
 }
@@ -62,10 +62,10 @@ func (s SSHShell) Lines(ctx context.Context, in []byte, take func(line string) b
 	return s.SSH.PassLines(ctx, in, take, args...)
 }
 
-// shellWord returns word as sh reads it back: bare where it holds only letters, digits and
+// Quote returns word as sh reads it back: bare where it holds only letters, digits and
 // -_./=:,+@. Else it goes in single quotes, with each quote of its own closed, escaped and opened
 // again.
-func shellWord(word string) string {
+func Quote(word string) string {
 	if word != "" && strings.Trim(word, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_./=:,+@") == "" {
 		return word
 	}

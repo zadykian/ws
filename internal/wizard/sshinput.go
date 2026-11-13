@@ -6,9 +6,9 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// talk runs a command, never as root, that talks to the maintainer: by f, which gives it the terminal, or by m's
-// Pass where f is nil.
-func talk(ctx context.Context, f effect.Foreground, m effect.Machine, name string, args ...string) error {
+// Talk runs a command, never as root, that talks to the maintainer: by f, which gives it the
+// terminal, or by m's Pass where f is nil.
+func Talk(ctx context.Context, f effect.Foreground, m effect.Machine, name string, args ...string) error {
 	if f == nil {
 		return m.Pass(ctx, false, name, args...)
 	}
@@ -38,5 +38,5 @@ func (s SSH) PassLines(ctx context.Context, stdin []byte, take func(line string)
 // Pass runs ssh with the arguments, with its output passed to Stderr and standard input kept, for a
 // session at the terminal.
 func (s SSH) Pass(ctx context.Context, args ...string) error {
-	return talk(ctx, s.F, s.M, "ssh", s.argv(ctx, args)...)
+	return Talk(ctx, s.F, s.M, "ssh", s.argv(ctx, args)...)
 }

@@ -43,7 +43,7 @@ func (g *Gh) login(ctx context.Context, c ghLogin) error {
 		return err
 	}
 	args := append(append([]string{"auth"}, c.args...), "-h", "github.com", "-s", ghScopes)
-	if err := talk(ctx, g.F, g.M, path, args...); err != nil {
+	if err := Talk(ctx, g.F, g.M, path, args...); err != nil {
 		return fmt.Errorf("%s: %s failed", ghStage, c.line())
 	}
 	return nil

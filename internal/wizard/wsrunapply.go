@@ -21,7 +21,7 @@ func (r *WsRun) Apply(ctx context.Context, p step.Plan) error {
 	if c.user != "" {
 		if err := r.Ws.nameUser(ctx, c.user); err != nil {
 			return fmt.Errorf("%s: ws's host_vars lacks ws_user: %s: %s; mend that, then run the wizard again",
-				runStage, c.user, stderrOf(err))
+				runStage, c.user, Stderr(err))
 		}
 	}
 	// A part's plan reads no status, where the outbound line shows.
