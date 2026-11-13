@@ -93,7 +93,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 	}
 	ghStage := &gh.Gh{CLI: gh.CLI{Conf: later, Home: p.Getenv("HOME"), M: p.Machine, Out: out}, Tty: p.TTY, F: e.talks}
 	hostKey := &host.Key{Conf: laterServer, Lock: lock, Tty: p.TTY, Check: check, Env: p.Lookup,
-		SSH: remote.SSH{M: p.Machine, F: e.talks, Lock: lock, Home: p.Getenv("HOME"),
+		SSH: remote.SSH{M: p.Machine, F: e.talks, Lock: lock, Home: p.Getenv("HOME"), Host: name,
 			Ways: host.MacWays{M: p.Machine, Conf: laterServer}}, M: p.Machine, P: ask, Out: out}
 	sudo := e.sudo
 	ws := session.New(host.MacReach{SSH: hostKey.SSH, Sudo: sudo, Conf: laterServer, Out: out},

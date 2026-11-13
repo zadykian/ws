@@ -182,7 +182,7 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 		t.Fatalf("status = %d", status)
 	}
 	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.Version + "\n"), []byte(stdout)}
-	ws := session.New(host.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
+	ws := session.New(host.MacReach{SSH: remote.SSH{Host: "ws", M: m, Lock: "/t/l"}},
 		session.Scripts{Remote: session.RemoteScript})
 	roles, err := ws.State(context.Background(), p.Version)
 	if err != nil {
