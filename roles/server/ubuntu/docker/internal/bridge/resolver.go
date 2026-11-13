@@ -27,7 +27,7 @@ func resolverRules(d values.Docker) []ufw.Rule {
 	return rules
 }
 
-// ownsresolverRule tells the resolver's rules from others that carry its comment: a rule that
+// ownsResolverRule tells the resolver's rules from others that carry its comment: a rule that
 // allows any protocol, from any port, to a port, in on an interface. One of another form, such as
 // one that names a protocol or no interface, is left alone.
 func ownsResolverRule(r ufw.Rule) bool {
