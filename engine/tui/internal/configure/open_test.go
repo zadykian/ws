@@ -1,4 +1,4 @@
-package tui
+package configure
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -16,7 +17,7 @@ func unread(reads *int, err error) Sheet {
 	return Sheet{
 		Name:   "far.conf",
 		Fields: func(map[string]string) []widget.FieldSpec { return nil },
-		Open: func(context.Context, *Bridge) (Sheet, error) {
+		Open: func(context.Context, *run.Bridge) (Sheet, error) {
 			*reads++
 			return wayFile(), err
 		},

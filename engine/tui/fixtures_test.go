@@ -2,7 +2,6 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"slices"
 	"strings"
@@ -35,24 +34,6 @@ var (
 const leaveBuffer = tuitest.LeaveBuffer
 
 type oneChange = tuitest.OneChange
-
-// waySpecs asks for a port where the host has a value, as a wizard's question hangs on the one above
-// it.
-func waySpecs(edits map[string]string) []widget.FieldSpec {
-	if edits["HOST"] == "none" {
-		return []widget.FieldSpec{{Label: "HOST", Value: "ws.example"}, {Label: "USER"}}
-	}
-	return []widget.FieldSpec{{Label: "HOST", Value: "ws.example"}, {Label: "PORT", Default: "22"}, {Label: "USER"}}
-}
-
-// longSpecs is more fields than a short window holds.
-func longSpecs(map[string]string) []widget.FieldSpec {
-	specs := make([]widget.FieldSpec, 0, 6)
-	for i := range 6 {
-		specs = append(specs, widget.FieldSpec{Label: fmt.Sprintf("KEY%d", i), Help: "says more"})
-	}
-	return specs
-}
 
 // chain is a role whose steps wait on each other, beside one that waits on nothing.
 func chain() list.PickList {

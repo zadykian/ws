@@ -1,4 +1,4 @@
-package tui
+package configure
 
 import (
 	"context"
@@ -17,18 +17,18 @@ const noteRows = 6
 // Configure draws the sheets on c.Out, a form each, until a leave, with title over them. It returns
 // nil past a leave, and Cut's error past Ctrl-C or a signal, which drop what is unsaved. Saves run
 // here, off the screen's goroutine, and what they print stays on the screen.
-func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
+func Configure(ctx context.Context, c run.Config, title string, sheets ...Sheet) error {
 	ctx, end := context.WithCancelCause(ctx)
 	defer end(nil)
 	a := run.NewAsks(end)
 	send := func(j configureJob) {
-		a.Ask(func(ctx context.Context, b *Bridge) tea.Msg {
+		a.Ask(func(ctx context.Context, b *run.Bridge) tea.Msg {
 			sheet, err := j.run(ctx, b)
 			return savedMsg{j.place, sheet, err}
 		})
 	}
 	screen := newConfigureScreen(title, c.Theme, send, a.Leave, sheets)
-	return Run(ctx, c, screen, a.Serve)
+	return run.Run(ctx, c, screen, a.Serve)
 }
 
 // configureJob is what the screen asks of its work. It travels inside an ask's closure and never as a
@@ -40,7 +40,7 @@ type configureJob struct {
 }
 
 // run reads the sheet where it waits for that, and saves the edits otherwise.
-func (j configureJob) run(ctx context.Context, b *Bridge) (Sheet, error) {
+func (j configureJob) run(ctx context.Context, b *run.Bridge) (Sheet, error) {
 	if j.sheet.Open != nil {
 		return j.sheet.Open(ctx, b)
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/engine/tui/internal/configure"
 	"github.com/zadykian/ws/engine/tui/internal/list"
 	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
@@ -65,4 +66,14 @@ func Offscreen(m effect.Machine) *Bridge { return run.Offscreen(m) }
 // NewRunScreen returns the screen of a run of groups, which name every step before the run starts.
 func NewRunScreen(title string, theme Theme, groups ...Group) RunScreen {
 	return run.NewRunScreen(title, theme, groups...)
+}
+
+// Sheet is a file that the Configure screen edits.
+type Sheet = configure.Sheet
+
+// Configure draws the sheets on c.Out, a form each, until a leave, with title over them. It returns
+// nil past a leave, and Cut's error past Ctrl-C or a signal, which drop what is unsaved. Saves run
+// here, off the screen's goroutine, and what they print stays on the screen.
+func Configure(ctx context.Context, c Config, title string, sheets ...Sheet) error {
+	return configure.Configure(ctx, c, title, sheets...)
 }

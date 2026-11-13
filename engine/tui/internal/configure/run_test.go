@@ -1,4 +1,4 @@
-package tui
+package configure
 
 import (
 	"bytes"
@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/zadykian/ws/engine/tui/internal/run"
 )
 
 func TestConfigureSavesAndLeaves(t *testing.T) {
@@ -16,7 +18,7 @@ func TestConfigureSavesAndLeaves(t *testing.T) {
 	defer func() { _ = keys.Close() }()
 	saved := make(chan map[string]string, 1)
 	sheet := wayFile()
-	sheet.Save = func(_ context.Context, b *Bridge, edits map[string]string) (Sheet, error) {
+	sheet.Save = func(_ context.Context, b *run.Bridge, edits map[string]string) (Sheet, error) {
 		b.Say("wrote way.conf")
 		saved <- edits
 		return wayFile(), nil
@@ -24,7 +26,7 @@ func TestConfigureSavesAndLeaves(t *testing.T) {
 	ended := make(chan error, 1)
 	var out bytes.Buffer
 	go func() {
-		ended <- Configure(t.Context(), Config{In: in, Out: &out, Theme: testTheme, Cut: testCut}, "configure", sheet)
+		ended <- Configure(t.Context(), run.Config{In: in, Out: &out, Theme: testTheme, Cut: testCut}, "configure", sheet)
 	}()
 	if _, err := keys.Write([]byte("\t2222\x13")); err != nil {
 		t.Fatal(err)
@@ -52,7 +54,7 @@ func TestConfigureSavesAndLeaves(t *testing.T) {
 // A first sheet that waits for a read is read as the screen opens, with no key.
 func TestConfigureReadsTheFirstSheetAtOnce(t *testing.T) {
 	read := make(chan struct{})
-	sheet := Sheet{Name: "far", Fields: wayFile().Fields, Open: func(context.Context, *Bridge) (Sheet, error) {
+	sheet := Sheet{Name: "far", Fields: wayFile().Fields, Open: func(context.Context, *run.Bridge) (Sheet, error) {
 		close(read)
 		return wayFile(), nil
 	}}

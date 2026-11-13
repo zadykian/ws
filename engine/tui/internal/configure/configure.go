@@ -1,4 +1,5 @@
-package tui
+// Package configure draws the forms that edit a machine's files, a sheet each, and saves their edits.
+package configure
 
 import (
 	"context"
@@ -8,6 +9,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/zadykian/ws/engine/tui/internal/run"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -35,11 +37,11 @@ type Sheet struct {
 	// edit.
 	Fields func(edits map[string]string) []widget.FieldSpec
 	// Save writes the edits on the work's goroutine, and returns the sheet of what the file then holds.
-	Save func(ctx context.Context, b *Bridge, edits map[string]string) (Sheet, error)
+	Save func(ctx context.Context, b *run.Bridge, edits map[string]string) (Sheet, error)
 	// Open reads a file that takes time to reach, on the work's goroutine, once the sheet shows, and
 	// returns the sheet of what it holds, with no Open. Until then Ctrl-S tries it again. Nil means
 	// that Fields is ready, so that a file out of reach leaves the other sheets as they are.
-	Open func(ctx context.Context, b *Bridge) (Sheet, error)
+	Open func(ctx context.Context, b *run.Bridge) (Sheet, error)
 }
 
 // configureScreen edits its sheets, a form each, with one form on the screen.
