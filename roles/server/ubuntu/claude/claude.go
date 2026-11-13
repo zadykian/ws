@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/cld"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/settings"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -25,9 +26,9 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 	user := host.User{Name: v.User, Home: v.Home}
 	list := []step.Step{
 		host.Group{Title: installStep, Parts: []host.Resource{Install{M: m, User: user}}},
-		host.Group{Title: updateStep, After: installStep, Parts: []host.Resource{Update{M: m, User: user}}},
+		host.Group{Title: updateStep, After: installStep, Parts: []host.Resource{cld.Update{M: m, User: user}}},
 		host.Group{Title: "Claude cld completion", After: installStep, Parts: []host.Resource{
-			Completion{M: m, User: user},
+			cld.Completion{M: m, User: user},
 		}},
 		// A cld older than setup config user has it once the update is done.
 		host.Group{Title: "Claude user settings", After: updateStep, Parts: []host.Resource{
@@ -48,7 +49,7 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 		return []host.Resource{
 			host.Linger{M: m, User: user, Out: out},
 			host.Unit{M: m, U: u, Out: out, Name: fmt.Sprintf("user@%d.service", a.UID), Run: host.Running},
-			Restore{M: m, Account: a, Out: out},
+			cld.Restore{M: m, Account: a, Out: out},
 		}, nil
 	}))
 }

@@ -1,4 +1,6 @@
-package claude
+// Package cld sets up cld after its install: its update, its completion in bash, and its
+// restore of sessions at boot.
+package cld
 
 import (
 	"bytes"

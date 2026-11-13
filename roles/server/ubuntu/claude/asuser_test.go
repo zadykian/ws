@@ -6,6 +6,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/cld"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/settings"
 )
 
@@ -43,7 +44,7 @@ func TestReadsGoAsTheUserThroughLinks(t *testing.T) {
 		if _, err := (settings.Telemetry{M: m, User: user, Env: map[string]string{"A": "1"}}).Plan(t.Context()); err != nil {
 			t.Fatalf("telemetry, link at %s: %v", link, err)
 		}
-		if got, err := (Completion{M: m, User: user}).Plan(t.Context()); err != nil || len(got) != 1 {
+		if got, err := (cld.Completion{M: m, User: user}).Plan(t.Context()); err != nil || len(got) != 1 {
 			t.Fatalf("completion, link at %s: %v %v", link, got, err)
 		}
 		for _, call := range m.Calls {
