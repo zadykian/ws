@@ -93,7 +93,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	read, done := macState(p, string(session.Ws), &host.Sudo{})
+	read, done := macState(p, new(string), string(session.Ws), &host.Sudo{})
 	err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(session.Ws), read)
 	done(c.Context())
 	if err != nil {
@@ -108,7 +108,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c := screenCommand(t, "q")
-	read, done := macState(p, string(stage.Mac), &host.Sudo{})
+	read, done := macState(p, new(string), string(stage.Mac), &host.Sudo{})
 	if err := tui.RunState(c.Context(), engine.ScreenConfig(enginecli.CallOf(c, p)), string(stage.Mac), read); err != nil || done != nil {
 		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}

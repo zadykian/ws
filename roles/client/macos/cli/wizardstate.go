@@ -12,9 +12,9 @@ import (
 
 // macState is the state screen's read of side's machine, and what ends it. ws's reach takes sudo, the
 // scan's, which the run takes after it, and lets the lock go with the screen.
-func macState(p enginecli.Env, side string, sudo *host.Sudo) (tui.StateReader, func(context.Context)) {
+func macState(p enginecli.Env, server *string, side string, sudo *host.Sudo) (tui.StateReader, func(context.Context)) {
 	if side == string(stage.Mac) {
-		return macRead(p), nil
+		return macRead(p, server), nil
 	}
 	reach := &varsReach{p: p, sudo: sudo}
 	return ubuntucli.StateRead(reach.reach, p.Version), reach.close
