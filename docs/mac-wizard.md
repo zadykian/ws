@@ -21,7 +21,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
 
 1. Tools, then Homebrew: the Command Line Tools, through the dialog that `xcode-select --install`
    opens, waited on for 60 minutes. Then [Homebrew](https://brew.sh), from the `Homebrew.pkg` that
-   `internal/wizard/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
+   `roles/client/macos/stages/tools/homebrew.go` pins, checked by its SHA-256 and signer, through `sudo
    installer`. On a new Mac, `--check` stops there.
 2. Answers: the values `mac.conf` lacks, below.
 3. Mac key: the ssh key that the Mac offers ws, and git's, asked among Secretive's keys, below.
@@ -41,7 +41,7 @@ hand. The stages, in order, the first two of which install what the rest needs:
 13. Tunnel: the Mac's WireGuard key as `wg0`'s peer on ws, and `wg0`'s as `WS_PUBLIC_KEY`, below.
 14. Cable: on the LAN, ws's port of the cable in its `host_vars.yml`, and the Mac's service, below.
 
-Each stage names the machine it acts on, in `internal/wizard/machine.go`. Sudo, ws on ws, ws's run
+Each stage states the side it acts on, in its own file by `Side()`. Sudo, ws on ws, ws's run
 and claude on ws are ws's, and the rest are the Mac's. A stage that changes both is the Mac's where
 its last change lands there, as the Tunnel and the Cable do.
 
@@ -186,8 +186,8 @@ journal. The wizard takes it from its own version's ws alone: another's names ot
 
 ## ws's run
 
-The stage sends `roles/client/macos/mac/wizard-remote.sh`, the wizard's remote script, to root on ws
-over ssh at a direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server
+The stage sends `roles/server/ubuntu/session/wizard-remote.sh`, the wizard's remote script, to root
+on ws over ssh at a direct way, through [sudo](#sudo) where `WS_USER` isn't root. It runs `ws server
 ubuntu apply --json` in a unit of its own, `ws-wizard-STAMP`, through `systemd-run`, with root's
 `HOME` and a UTF-8 locale. That ws runs its roles ([The `playbook`
 job](checks.md#the-playbook-job)). The wizard prints the unit's log until it ends, past the [event

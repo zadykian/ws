@@ -19,7 +19,7 @@
 set -u
 
 wsbin=$HOME/.local/bin/ws
-remote_sh=$HOME/repository/ws/roles/client/macos/mac/wizard-remote.sh
+remote_sh=$HOME/repository/ws/roles/server/ubuntu/session/wizard-remote.sh
 ws=$RUNNER_TEMP/ws
 stamp=$ws/root/var/lib/ws-wizard/run
 vars="$ws/root"/etc/ws/host_vars.yml

@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 )
 
 // reportingWs is a far ws whose script gives its status and its report, at version.
@@ -43,7 +43,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 	p, m := macTerminal()
 	ws := newReportingWs(m, p.version)
 	p.machine = ws
-	reach := &varsReach{p: p, sudo: &wizard.Sudo{}}
+	reach := &varsReach{p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
 	read := stateRead(reach.reach, p.version)
 	for range 2 {
@@ -67,7 +67,7 @@ func TestWsReadGivesTheRolesAndReadsWsAgain(t *testing.T) {
 func TestWsReadRefusesAnotherVersion(t *testing.T) {
 	p, m := macTerminal()
 	p.machine = newReportingWs(m, "v0.0.1")
-	reach := &varsReach{p: p, sudo: &wizard.Sudo{}}
+	reach := &varsReach{p: p, sudo: &host.Sudo{}}
 	defer reach.close(context.Background())
 	if _, err := stateRead(reach.reach, p.version)(t.Context(), tui.Offscreen(p.machine)); err == nil || !strings.Contains(err.Error(), "holds v0.0.1") {
 		t.Errorf("err = %v", err)
@@ -88,7 +88,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 		<-ws.ops
 		_, _ = keys.Write([]byte("q"))
 	}()
-	read, done := macState(p, "ws", &wizard.Sudo{})
+	read, done := macState(p, "ws", &host.Sudo{})
 	err := tui.RunState(c.Context(), screenConfig(c, p), "ws", read)
 	done(c.Context())
 	if err != nil {
@@ -103,7 +103,7 @@ func TestWizardStateOfWsLetsTheLockGo(t *testing.T) {
 func TestWizardStateOfTheMacTakesNoLock(t *testing.T) {
 	p, m := macTerminal()
 	c, _ := screenCommand(t, "q")
-	read, done := macState(p, "Mac", &wizard.Sudo{})
+	read, done := macState(p, "Mac", &host.Sudo{})
 	if err := tui.RunState(c.Context(), screenConfig(c, p), "Mac", read); err != nil || done != nil {
 		t.Fatalf("err = %v, done = %v", err, done != nil)
 	}

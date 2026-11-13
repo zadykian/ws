@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"encoding/base64"
+	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"io"
 	"slices"
 	"strings"
@@ -11,7 +14,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 )
 
 // lockCalls counts the calls of the wizard's lock that hold what.
@@ -88,14 +90,14 @@ func TestVarsReachKeepsTheSudoItIsGiven(t *testing.T) {
 	p, m := macTerminal()
 	ws := newFarWs(m, "")
 	p.machine = ws
-	sudo := &wizard.Sudo{}
+	sudo := &host.Sudo{}
 	r := &varsReach{p: p, sudo: sudo}
 	defer r.close(context.Background())
 	got, err := r.reach(context.Background(), tui.Offscreen(r.p.machine))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := (wizard.VarsForm{Ws: got}).Load(context.Background()); err != nil {
+	if _, err := (values.Form{Ws: got}).Load(context.Background()); err != nil {
 		t.Errorf("the reach left sudo unread: %v", err)
 	}
 	if op := <-ws.ops; !slices.Equal(op, []string{"values"}) {

@@ -7,8 +7,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 )
 
 // newConfigureCmd returns ws client macos configure.
@@ -45,19 +47,19 @@ func runConfigure(c *cobra.Command, p process) error {
 // which lets go of ws once they have ended.
 func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
-		form := wizard.ConfForm{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
+		form := conf.Form{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
 		form, err := form.Load(effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()))
 		if err != nil {
 			return nil, nil, err
 		}
 		// One way to root serves both of ws's sheets, so that sudo's password is asked once.
-		vars := &varsReach{p: p, sudo: &wizard.Sudo{}}
+		vars := &varsReach{p: p, sudo: &host.Sudo{}}
 		return []tui.Sheet{confSheet(form), vars.secretsSheet(), hostVarsSheet(vars.reach)}, vars.close, nil
 	}
 }
 
 // confSheet is mac.conf on the Configure screen.
-func confSheet(form wizard.ConfForm) tui.Sheet {
+func confSheet(form conf.Form) tui.Sheet {
 	return tui.Sheet{
 		Name:   "mac.conf",
 		Fields: func(edits map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields(edits)) },
@@ -72,7 +74,7 @@ func confSheet(form wizard.ConfForm) tui.Sheet {
 }
 
 // fieldSpecs is a form's fields on the screen. A key that takes one of a few is a choice.
-func fieldSpecs(fields []wizard.Field) []tui.FieldSpec {
+func fieldSpecs(fields []form.Field) []tui.FieldSpec {
 	specs := make([]tui.FieldSpec, 0, len(fields))
 	for _, f := range fields {
 		spec := tui.FieldSpec{Label: f.Key, Help: f.Text, Value: f.Value, Default: f.Default,

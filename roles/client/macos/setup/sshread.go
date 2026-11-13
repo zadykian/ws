@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
 // read reads ~/.ssh as the directory stands, and stops at a config.d/ws that is not ws's. Its Stop is

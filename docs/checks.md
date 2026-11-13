@@ -90,7 +90,7 @@ at Sudo. At a terminal, it takes the right one after a wrong one, and neither sh
 cloud target with no `WS_USER` logs in as root, with no `sudo`. A `LocalCommand` that touches a file
 must run for a plain ssh to ws, not for the wizard's.
 
-The wizard's remote script, `roles/client/macos/mac/wizard-remote.sh`, runs as root on that `sshd`,
+The wizard's remote script, `roles/server/ubuntu/session/wizard-remote.sh`, runs as root on that `sshd`,
 through `sudo`, sent as the wizard sends it. `ws.sh` roots its paths in a directory of its own, and
 puts the stand-ins of [ws-standin.sh](../.github/mac-wizard/ws-standin.sh) for ws's programs first
 on its `PATH`. `status` must print the stamps and the stand-ins' states. Those are `wg0`'s key, the
@@ -103,7 +103,7 @@ in a unit of its own. It must print the log, event lines too. It must stamp ws's
 the line, which stops on a link, it stamps `off` and that file's sum. A tagged run after it must
 start its own unit and leave that stamp. A run must follow a full unit or one of its steps, and
 refuse another's. A full run cut off must remove the last stamp, so the next starts a unit. The
-files script, `roles/client/macos/mac/wizard-remote-files.sh`: its `link` must list the wired ports,
+files script, `roles/server/ubuntu/session/wizard-remote-files.sh`: its `link` must list the wired ports,
 `user NAME` name `ws_user`, `values` print `host_vars.yml` and `values PAIR...` run `ws server
 ubuntu values set` on each. `link PORT` must name one there, mode 600 in a 755 directory, once,
 which `status` names once the roles give `10.77.0.1`. With ws's secrets file and its credential, a
@@ -166,7 +166,7 @@ lines the defaults, for each target. After the first run, they must write the sa
 Last, the wizard with that `PATH` must find the runner's Command Line Tools and brew, so that a
 second run and `--check` print nothing. Where `WS_CONF` names no file, `--check` must show the lines
 it would write there, from the answers in the environment, and write none. The case that reads
-[`homebrew.go`](../internal/wizard/homebrew.go)'s pins must download Homebrew's `.pkg` and match its
+[`homebrew.go`](../roles/client/macos/stages/tools/homebrew.go)'s pins must download Homebrew's `.pkg` and match its
 SHA-256 and signer, the signer as `pkgSigner` reads it. The log shows `pkgutil`'s chain. The `.pkg`
 cut short must fail the sum. A run checks it before the install, which the case skips.
 

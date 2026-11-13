@@ -1,0 +1,33 @@
+package wizard
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io/fs"
+	"strings"
+
+	"github.com/zadykian/ws/engine/core/effect"
+)
+
+// LockName is the lock's name, a directory in the temporary directory that holds a run's own files.
+const LockName = "ws-wizard.lock"
+
+// LockPath returns the lock's path in tmp.
+func LockPath(tmp string) string { return strings.TrimRight(tmp, "/") + "/" + LockName }
+
+// Lock takes a run's lock, a directory in tmp, or fails where another run holds it. The returned
+// release removes the lock, and the files in it. A run calls it on every way out.
+func Lock(ctx context.Context, m effect.Machine, tmp string) (path string, release func(), err error) {
+	path = LockPath(tmp)
+	if err := m.Mkdir(path, 0o700); err != nil {
+		if errors.Is(err, fs.ErrExist) {
+			return "", nil, fmt.Errorf("another run holds %s: wait for it to end, or remove it where none runs", path)
+		}
+		return "", nil, fmt.Errorf("cannot make %s", path)
+	}
+	return path, func() {
+		// The context of a run that a signal ended is done, and the lock must go all the same.
+		_, _ = m.Run(context.WithoutCancel(ctx), "rm", "-rf", path)
+	}, nil
+}

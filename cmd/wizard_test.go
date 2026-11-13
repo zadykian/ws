@@ -3,13 +3,15 @@ package cmd
 import (
 	"context"
 	"errors"
+	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/roles/client/macos/mac"
+	"github.com/zadykian/ws/engine/core/remote"
 )
 
 // testWizardProcess returns the process of a Mac whose Command Line Tools and Homebrew are there, and
@@ -138,19 +140,19 @@ func TestWizardUpdateCheckInstallsNothing(t *testing.T) {
 	}
 }
 
-// TestWizardStagesNameTheirMachines puts the lists of the two machines on firm ground: each stage
+// TestWizardStagesStateTheirSides puts the lists of the two machines on firm ground: each stage
 // that the wizard runs names the machine it acts on.
-func TestWizardStagesNameTheirMachines(t *testing.T) {
+func TestWizardStagesStateTheirSides(t *testing.T) {
 	var out strings.Builder
 	stages := wizardStages(wizardEffects{p: fakeProcess(), prog: "ws client macos wizard", text: &out, hand: &wizard.Hand{},
-		sudo: &wizard.Sudo{}}, wizardOptions{})
+		sudo: &host.Sudo{}}, wizardOptions{})
 	onWs := 0
 	for _, s := range stages {
-		m, ok := wizard.MachineOf(s)
+		m, ok := wizard.SideOf(s)
 		if !ok {
-			t.Errorf("%s names no machine", s.Name())
+			t.Errorf("%s states no side", s.Name())
 		}
-		if m == wizard.OnWs {
+		if m == session.Ws {
 			onWs++
 		}
 	}
@@ -181,8 +183,8 @@ func TestWizardReadsWhatServerStatePrints(t *testing.T) {
 		t.Fatalf("status = %d", status)
 	}
 	m := wsOverSSH{effecttest.NewMachine(), []byte("ws " + p.version + "\n"), []byte(stdout)}
-	ws := wizard.NewSession(wizard.MacReach{SSH: wizard.SSH{M: m, Lock: "/t/l"}},
-		wizard.Scripts{Remote: mac.RemoteScript})
+	ws := session.New(host.MacReach{SSH: remote.SSH{M: m, Lock: "/t/l"}},
+		session.Scripts{Remote: session.RemoteScript})
 	roles, err := ws.State(context.Background(), p.version)
 	if err != nil {
 		t.Fatal(err)

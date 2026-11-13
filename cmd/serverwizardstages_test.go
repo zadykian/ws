@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	"github.com/zadykian/ws/engine/core/wizard"
 	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/internal/wizard"
 )
 
 // wizardProcess returns a root process on a machine that holds vars as host_vars, booted or not,

@@ -9,8 +9,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 )
 
 // lastEvents keeps the steps that end, each after its parent.
@@ -52,7 +52,7 @@ func (l *leftEvents) Observe(e step.Event) {
 	}
 }
 
-func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool) *wizard.Setup {
+func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool) *tools.Setup {
 	t.Helper()
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")

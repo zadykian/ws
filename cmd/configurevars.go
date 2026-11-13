@@ -3,12 +3,15 @@ package cmd
 import (
 	"cmp"
 	"context"
+	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
+	"github.com/zadykian/ws/roles/server/ubuntu/values"
 	"sync"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/remote"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
-	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
 // varsReach is the way to ws of the host_vars and secrets sheets, of the wizard's state screen and of
@@ -18,7 +21,7 @@ type varsReach struct {
 	p process
 	// sudo is the scan's, whose way to root the state screen keeps. It stands unread where the scan
 	// never reached it, and a read then asks. Nil makes a new one for each reach.
-	sudo *wizard.Sudo
+	sudo *host.Sudo
 	// mu guards lock and release: the work takes the lock, and the command lets it go, past a work
 	// that the screen's end left behind.
 	mu      sync.Mutex
@@ -28,7 +31,7 @@ type varsReach struct {
 
 // sessionOpen finds the session to ws of a sheet or a read, through the screen: the Mac's over ssh,
 // or ws's own.
-type sessionOpen func(ctx context.Context, b *tui.Bridge) (*wizard.Session, error)
+type sessionOpen func(ctx context.Context, b *tui.Bridge) (*session.Session, error)
 
 // hostVarsSheet is the host_vars form before its read, which open reaches ws for. The password that
 // sudo asks stays with the session, so that a save asks none.
@@ -41,7 +44,7 @@ func hostVarsSheet(open sessionOpen) tui.Sheet {
 			if err != nil {
 				return tui.Sheet{}, err
 			}
-			form, err := wizard.VarsForm{Ws: ws}.Load(ctx)
+			form, err := values.Form{Ws: ws}.Load(ctx)
 			if err != nil {
 				return tui.Sheet{}, err
 			}
@@ -51,7 +54,7 @@ func hostVarsSheet(open sessionOpen) tui.Sheet {
 }
 
 // reach finds how the session reaches root on ws, as the wizard's stages do, through the screen.
-func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*wizard.Session, error) {
+func (r *varsReach) reach(ctx context.Context, b *tui.Bridge) (*session.Session, error) {
 	return r.reachOn(ctx, b.Effects().M, b)
 }
 
@@ -63,17 +66,17 @@ type rootTalk interface {
 
 // reachOn is reach on m, which asks through t. The lock keeps a wizard's own run away, and holds
 // ssh's sockets.
-func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (*wizard.Session, error) {
+func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (*session.Session, error) {
 	lock, err := r.locked(ctx)
 	if err != nil {
 		return nil, err
 	}
 	conf := confPath(r.p.getenv, r.p.pwd)
-	ssh := wizard.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Conf: conf}
-	sudo := cmp.Or(r.sudo, &wizard.Sudo{})
+	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.getenv("HOME"), Ways: host.MacWays{M: m, Conf: conf}}
+	sudo := cmp.Or(r.sudo, &host.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
-	ws := wizard.NewSession(wizard.MacReach{SSH: ssh, Sudo: sudo, Out: t},
-		wizard.Scripts{Remote: mac.RemoteScript, Files: mac.RemoteFilesScript})
+	ws := session.New(host.MacReach{SSH: ssh, Sudo: sudo, Conf: conf, Out: t},
+		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript})
 	sudo.SSH, sudo.Tty, sudo.P, sudo.Out = ssh, r.p.tty, t, t
 	plan, err := sudo.Plan(ctx)
 	if err != nil {
@@ -108,13 +111,13 @@ func (r *varsReach) close(ctx context.Context) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.release != nil {
-		wizard.SSH{M: r.p.machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
+		remote.SSH{M: r.p.machine, Lock: r.lock}.End(context.WithoutCancel(ctx))
 		r.release()
 	}
 }
 
 // varsSheet is ws's host_vars on the Configure screen, as form read it.
-func varsSheet(form wizard.VarsForm) tui.Sheet {
+func varsSheet(form values.Form) tui.Sheet {
 	return tui.Sheet{
 		Name:   "host_vars",
 		Fields: func(map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields()) },

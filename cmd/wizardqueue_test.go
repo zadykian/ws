@@ -2,19 +2,20 @@ package cmd
 
 import (
 	"errors"
+	"github.com/zadykian/ws/engine/core/wizard"
 	"slices"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 func queueOf(p process) []tui.Stage {
-	return wizardQueue(wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &wizard.Sudo{}}, wizardOptions{}))
+	return wizardQueue(wizardStages(wizardEffects{p: p, hand: &wizard.Hand{}, sudo: &host.Sudo{}}, wizardOptions{}))
 }
 
 func stageOf(t *testing.T, queue []tui.Stage, name string) tui.Stage {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"maps"
 	"slices"
 	"strings"
 
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
@@ -68,7 +68,7 @@ type secretsSide interface {
 
 // wsSide is ws's secrets file, which ws server ubuntu secrets edits on ws over the wizard's ssh, a
 // value on ssh's stdin. set git, with no flag, keeps the entry's user name.
-type wsSide struct{ ws *wizard.Session }
+type wsSide struct{ ws *session.Session }
 
 func (s wsSide) Set(ctx context.Context, label, value string) error {
 	kind, name, err := secrets.CutLabel(label)
