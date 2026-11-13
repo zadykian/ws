@@ -9,7 +9,8 @@ import (
 
 // Command returns ws client macos, the commands that set up a Mac.
 func Command(p enginecli.Env) *cobra.Command {
+	var server string
 	return enginecli.Group("macos", "the commands for a Mac",
-		newConfCmd(p), newConfigureCmd(p), newMacApplyCmd(p), newMacStateCmd(p), newWizardCmd(p), newResolverCmd(p),
-		newTunnelCmd(p), newMacSecretsCmd(p))
+		newConfCmd(p), newConfigureCmd(p), newMacApplyCmd(p, &server), newMacStateCmd(p, &server), newWizardCmd(p),
+		newResolverCmd(p), newTunnelCmd(p), newMacSecretsCmd(p))
 }

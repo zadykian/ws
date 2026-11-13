@@ -16,14 +16,14 @@ import (
 )
 
 // macSide is ws client macos wizard's side.
-func macSide(p enginecli.Env) engine.Side {
+func macSide(p enginecli.Env, server *string) engine.Side {
 	return engine.Side{
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return wizardStages(effectsOf(p, e), o)
 		},
 		Pid: p.Pid, Change: macChange, Local: stage.Mac, NewSudo: func() any { return &host.Sudo{} }, Nested: nestedRows, WsRun: ubuntucli.WsRunSide(p),
 		Read: func(side string, sudo any) (tui.StateReader, func(context.Context)) {
-			return macState(p, side, sudo.(*host.Sudo))
+			return macState(p, server, side, sudo.(*host.Sudo))
 		},
 		Before: func(o engine.WizardOptions) []func(effect.Out) step.Step {
 			if !o.Update {

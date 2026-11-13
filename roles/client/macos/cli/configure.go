@@ -23,7 +23,7 @@ func newConfigureCmd(p enginecli.Env) *cobra.Command {
 			"writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, " +
 			"then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.",
 		Args: cobra.NoArgs,
-		RunE: enginecli.Configure(macTarget(p, new([]string)), p),
+		RunE: enginecli.Configure(macTarget(p, new([]string), new(string)), p),
 	}
 }
 

@@ -24,8 +24,8 @@ func TestSetupCommand(t *testing.T) {
 	}
 	p = fakeProcess()
 	p.Machine = m
-	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "is missing") {
-		t.Errorf("without HOME: status = %d, stderr = %q; want a missing mac.conf", status, stderr)
+	if status, _, stderr = runWs(p, "", "client", "macos", "apply", "--only", "ssh"); status != 1 || !strings.Contains(stderr, "no server in") {
+		t.Errorf("without HOME: status = %d, stderr = %q; want no server", status, stderr)
 	}
 }
 
@@ -87,7 +87,7 @@ func TestSetupCheckWithNoStepPlansSSHOnce(t *testing.T) {
 }
 
 func TestSetupStepNamesCompleteOnly(t *testing.T) {
-	c := newMacApplyCmd(fakeProcess())
+	c := newMacApplyCmd(fakeProcess(), new(string))
 	got, _ := c.GetFlagCompletionFunc("only")
 	names, _ := got(c, nil, "")
 	if want := []string{"ssh", "cable", "git", "ghostty", "zed", "cld", "zsh", "tunnel", "networks"}; !reflect.DeepEqual(names, want) {
@@ -108,8 +108,8 @@ func TestMacStateRefusesRootAndArgs(t *testing.T) {
 			t.Errorf("%q: status = %d, stderr = %q", args, status, stderr)
 		}
 	}
-	if status, _, stderr := runWs(fakeProcess(), "", "client", "macos", "state"); status != 1 || !strings.Contains(stderr, "is missing") {
-		t.Errorf("no mac.conf: status = %d, stderr = %q", status, stderr)
+	if status, _, stderr := runWs(fakeProcess(), "", "client", "macos", "state"); status != 1 || !strings.Contains(stderr, "no server in") {
+		t.Errorf("no server: status = %d, stderr = %q", status, stderr)
 	}
 }
 
@@ -170,7 +170,12 @@ func macStateAtTerminal() enginecli.Env {
 }
 
 func TestMacReadSaysThatMacConfIsMissing(t *testing.T) {
-	_, err := macRead(fakeProcess())(t.Context(), nil)
+	m := effecttest.NewMachine()
+	writeConfs(m, "", "")
+	delete(m.Files, "/h/.config/ws/mac.conf")
+	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
+	p.Machine = m
+	_, err := macRead(p, new(string))(t.Context(), nil)
 	if err == nil || !strings.Contains(err.Error(), "is missing") {
 		t.Errorf("err = %v", err)
 	}
