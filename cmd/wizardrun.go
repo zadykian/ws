@@ -89,7 +89,7 @@ func (w wizardRun) round() tui.Round {
 		run = r.Name
 	}
 	return tui.Round{
-		Stages: wizardQueue(w.t.Wizard, stages),
+		Stages: engine.WizardQueue(w.t.Wizard, stages),
 		Scan:   w.scan(sudo),
 		Read:   func(side string) (tui.StateReader, func(context.Context)) { return w.t.Wizard.Read(side, sudo) },
 		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, run, sudo) },
@@ -128,7 +128,7 @@ func (w wizardRun) scan(sudo any) tui.Work {
 		if run, ok := w.t.Wizard.WsRun(stages); ok {
 			o.Observer = afterStage{b, run.Await, func() {
 				states, err := run.State(ctx)
-				reportRoles(run.Name, states, err, b.Report)
+				engine.ReportRoles(run.Name, states, err, b.Report)
 			}}
 		}
 		_, err := wizard.Run(ctx, e.Machine, o, stages, w.p.LockDir(), w.t.Wizard.Pid, nil)
@@ -199,7 +199,7 @@ func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) engine.WizardOp
 	o := w.o
 	o.Check = choice.Next == tui.NextCheck
 	o.Update = o.Update || slices.Contains(choice.Whole, run)
-	o.Left, o.Only = wizardLeft(choice), choice.Partial[run]
+	o.Left, o.Only = engine.WizardLeft(choice), choice.Partial[run]
 	return o
 }
 
