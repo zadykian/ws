@@ -1,4 +1,4 @@
-package setup_test
+package cld_test
 
 import (
 	"context"

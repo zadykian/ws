@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/cld"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/ghostty"
 	"github.com/zadykian/ws/roles/client/macos/git"
@@ -40,7 +41,7 @@ func (m Mac) steps(check bool) []step.Step {
 		&git.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
 		&ghostty.Ghostty{Home: m.Home, Settings: ghostty.Settings, M: m.M, Out: m.Out},
 		&zed.Zed{Home: m.Home, Settings: zed.Settings, Keymap: zed.Keymap, M: m.M, Out: m.Out},
-		&setup.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},
+		&cld.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},
 		&zsh.Zsh{Home: m.Home, Hook: zsh.Hook, M: m.M, Out: m.Out, Now: time.Now},
 		&setup.Tunnel{Conf: m.Conf, Home: m.Home, Plist: mac.TunnelPlist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},

@@ -1,4 +1,5 @@
-package setup
+// Package cld installs the cld program on the Mac and keeps it at its release.
+package cld
 
 import (
 	"context"
