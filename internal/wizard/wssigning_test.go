@@ -53,7 +53,7 @@ func TestWsSigningApply(t *testing.T) {
 	if err := s.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(g.Hand.lines, "\n"); !strings.HasSuffix(got, "(docs/server-wizard.md): ssh-ed25519 AAA") {
+	if got := strings.Join(g.Hand.Lines(), "\n"); !strings.HasSuffix(got, "(docs/server-wizard.md): ssh-ed25519 AAA") {
 		t.Errorf("hand = %q", got)
 	}
 	if p, err := s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {

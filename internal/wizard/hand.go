@@ -19,6 +19,9 @@ func (h *Hand) Add(format string, a ...any) {
 	h.lines = append(h.lines, fmt.Sprintf(format, a...))
 }
 
+// Lines is the lines added so far, for a stage's test to read.
+func (h *Hand) Lines() []string { return h.lines }
+
 // Late registers a function that adds its lines when the run closes, after the stages.
 func (h *Hand) Late(f func(context.Context, *Hand)) { h.late = append(h.late, f) }
 

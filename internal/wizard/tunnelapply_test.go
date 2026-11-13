@@ -33,7 +33,7 @@ func TestTunnelApply(t *testing.T) {
 		if got := string(m.Files["/h/mac.conf"]); !strings.Contains(got, "WS_PUBLIC_KEY="+keyB+"\n") || !ran {
 			t.Errorf("%s: mac.conf = %q, setup ran %v; want wg0's key and a run", name, got, ran)
 		}
-		if got := strings.Join(tun.Hand.lines, "\n"); !strings.Contains(got, tc.hand) || (tc.hand != "") != tun.none {
+		if got := strings.Join(tun.Hand.Lines(), "\n"); !strings.Contains(got, tc.hand) || (tc.hand != "") != tun.none {
 			t.Errorf("%s: closing list = %q, none = %v", name, got, tun.none)
 		}
 	}

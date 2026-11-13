@@ -30,12 +30,12 @@ func TestWsHand(t *testing.T) {
 		h := &Hand{}
 		ws.Hand(context.Background(), h)
 		var got []string
-		for _, l := range h.lines {
+		for _, l := range h.Lines() {
 			head, _, _ := strings.Cut(l, ":")
 			got = append(got, head)
 		}
 		if !slices.Equal(got, tc.want) {
-			t.Errorf("%s: Hand = %q; want %q", name, h.lines, tc.want)
+			t.Errorf("%s: Hand = %q; want %q", name, h.Lines(), tc.want)
 		}
 	}
 }

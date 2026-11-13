@@ -20,7 +20,7 @@ func TestMacHand(t *testing.T) {
 		r, _ := newRun(tc.target, tc.status, false, false)
 		h := &Hand{}
 		r.Ws.Hand(context.Background(), h)
-		if got := strings.Join(h.lines, "\n"); !strings.Contains(got, tc.want) {
+		if got := strings.Join(h.Lines(), "\n"); !strings.Contains(got, tc.want) {
 			t.Errorf("%s: Hand = %q; want %q", name, got, tc.want)
 		}
 	}
