@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 
 	enginecli "github.com/zadykian/ws/engine/cli"
@@ -16,6 +17,6 @@ func macState(p enginecli.Env, server *string, side string, sudo *host.Sudo) (tu
 	if side == string(stage.Mac) {
 		return macRead(p, server), nil
 	}
-	reach := &varsReach{p: p, sudo: sudo}
+	reach := &varsReach{p: p, server: conf.FirstServer, sudo: sudo}
 	return ubuntucli.StateRead(reach.reach, p.Version), reach.close
 }
