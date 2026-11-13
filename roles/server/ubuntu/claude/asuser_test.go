@@ -8,7 +8,10 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 )
 
-// serveRead fakes the command that readAsUser runs for the user's file. A nil body is no file.
+// readScript is the script that asuser.Read runs.
+const readScript = `if [ -e "$1" ]; then printf y; cat "$1"; else printf n; fi`
+
+// serveRead fakes the command that asuser.Read runs for the user's file. A nil body is no file.
 func serveRead(m *effecttest.Machine, u host.User, file string, body []byte) {
 	out := []byte("n")
 	if body != nil {

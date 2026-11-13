@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/asuser"
 )
 
 // Completion sets up cld's completion in bash. cld writes the script only where it differs.
@@ -37,7 +38,7 @@ func (c Completion) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cld completion bash: %w", err)
 	}
-	have, err := readAsUser(ctx, c.M, c.User, c.User.Home+"/.local/share/bash-completion/completions/cld")
+	have, err := asuser.Read(ctx, c.M, c.User, c.User.Home+"/.local/share/bash-completion/completions/cld")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}

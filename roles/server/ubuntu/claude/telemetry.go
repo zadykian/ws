@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/asuser"
 )
 
 // telemetryRemoved are the env keys that Telemetry removes. A signal's own endpoint or protocol
@@ -69,7 +70,7 @@ func (c writeSettings) Apply(ctx context.Context) error {
 
 // Plan edits the settings in memory, and plans a write where env differs.
 func (t Telemetry) Plan(ctx context.Context) ([]host.Change, error) {
-	data, err := readAsUser(ctx, t.M, t.User, t.path())
+	data, err := asuser.Read(ctx, t.M, t.User, t.path())
 	created := errors.Is(err, fs.ErrNotExist)
 	if err != nil && !created {
 		return nil, err
