@@ -11,7 +11,7 @@ paths:
 The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `roles/`
 (its module is at the root), each linking its reason
 ([#273](https://github.com/zadykian/ws/issues/273)). The hard rules of
-[CLAUDE.md](../../CLAUDE.md#hard-rules) hold here too.
+[CLAUDE.md](../CLAUDE.md#hard-rules) hold here too.
 
 - Each step is isolated behind `step.Step`: it plans and applies one part of the setup, and reads
   no other step's state. A step that needs another done first names it in `Step.WaitsOn`
@@ -46,4 +46,4 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   built everywhere and tested on Linux, and `groups` lists it in a `//go:build darwin` file
   ([groups_macos.go](../../cmd/groups_macos.go)). Commands take what they need from the
   process through `cli.Env`, which tests build from fakes with `clitest`. depguard keeps cobra and
-  pflag in `cmd`, the `cli` packages and `tools/` ([.golangci.yml](../../.golangci.yml)).
+  pflag in `cmd`, the `cli` packages and `.tools/` ([golangci.yml](../../.tools/lint/golangci.yml)).

@@ -53,7 +53,7 @@ jobs:
       # As in mac.yml: ws, built into ~/.local/bin, which the steps run as ws client macos apply.
       - name: Build ws
         run: |
-          sh tools/build darwin arm64 ~/.local/bin/ws
+          sh .tools/build darwin arm64 ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
       # As in mac.yml: ws client macos apply stops where a directory above root's copies isn't
       # root's alone.

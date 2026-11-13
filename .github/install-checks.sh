@@ -1,7 +1,7 @@
 #!/bin/bash
 # The install job's cases: install.sh and ws update against a release laid out in a temporary
 # directory and served on loopback as GitHub serves it. Run it from the repository's root;
-# tools/build gets the Go.
+# .tools/build gets the Go.
 # The releases are of HEAD, built at tags that a copy of it makes and removes again.
 #
 #     v0.1.0 and v0.2.0  good; v0.2.0 is the latest
@@ -33,7 +33,7 @@ echo /.cache >>"$src/.git/info/exclude"
 build_release() {
     local dir=$tmp/releases/download/$1
     mkdir -p "$dir"
-    (cd "$src" && git tag "$1" && tools/build linux amd64 "$dir/ws-linux-amd64" && git tag -d "$1" >/dev/null)
+    (cd "$src" && git tag "$1" && .tools/build linux amd64 "$dir/ws-linux-amd64" && git tag -d "$1" >/dev/null)
     [ "$("$dir/ws-linux-amd64" version)" = "$1" ] || fail "the build at $1 prints another version"
     (cd "$dir" && sha256sum ws-linux-amd64 >ws.sha256)
 }
@@ -104,7 +104,7 @@ sed -i 's/^[0-9a-f]\{64\}/000000000000000000000000000000000000000000000000000000
 
 echo v0.2.0 >"$tmp/releases/latest"
 serve=$tmp/serve-releases
-"$(sh "$root/tools/run" -path go)" build -o "$serve" ./tools/serve-releases
+"$(sh "$root/.tools/run" -path go)" build -o "$serve" ./.tools/serve-releases
 "$serve" "$tmp/releases" 0 "$tmp/port" &
 server=$!
 for _ in $(seq 50); do

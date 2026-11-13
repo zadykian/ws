@@ -1,8 +1,8 @@
 #!/bin/sh
 # Runs one of the lint tools `make lint` uses, at the version pinned here:
 #
-#   tools/run NAME [ARG...]   runs the tool with the ARGs
-#   tools/run -path NAME      prints the path of the tool's executable, or of its file
+#   .tools/run NAME [ARG...]   runs the tool with the ARGs
+#   .tools/run -path NAME      prints the path of the tool's executable, or of its file
 #
 # lazygit-schema is a file to read, not to run: lazygit's config schema, which gotest hands the
 # lazygit role's test (roles/server/ubuntu/lazygit/README.md).
@@ -16,7 +16,7 @@ set -eu
 
 # say prints a message of the script's.
 say() {
-    printf 'tools/run: %s\n' "$*" >&2
+    printf '.tools/run: %s\n' "$*" >&2
 }
 
 # die prints a message of the script's and exits with status 1.
@@ -215,7 +215,7 @@ fetch() {
     curl -fsSL --retry 3 --proto-redir =https -o "$tmp/download" "$url" ||
         die "cannot download $url"
     [ "$(sha256 "$tmp/download")" = "$sum" ] ||
-        die "$url does not match the SHA-256 pinned in tools/run"
+        die "$url does not match the SHA-256 pinned in .tools/run"
     if $tree; then
         mkdir "$tmp/tree"
         tar -xzf "$tmp/download" -C "$tmp/tree" || die "cannot unpack $url"
@@ -245,7 +245,7 @@ main() {
         path=true
         shift
     fi
-    [ $# -ge 1 ] || die "usage: tools/run NAME [ARG...] or tools/run -path NAME"
+    [ $# -ge 1 ] || die "usage: .tools/run NAME [ARG...] or .tools/run -path NAME"
     name=$1
     shift
     platform
@@ -253,7 +253,7 @@ main() {
     cache=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)/.cache/tools
     bin=$cache/$name-$version/$exe
     if $file; then
-        $path || die "$name is a file to read: tools/run -path $name"
+        $path || die "$name is a file to read: .tools/run -path $name"
         [ -f "$bin" ] || fetch "$name"
     else
         [ -x "$bin" ] || fetch "$name"

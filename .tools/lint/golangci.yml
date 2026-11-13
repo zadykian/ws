@@ -1,6 +1,11 @@
 ---
 version: "2"
 
+# The file sits in .tools/lint, so ${base-path}, in depguard's files, is the module's root, where
+# go.mod is, rather than the file's directory.
+run:
+  relative-path-mode: gomod
+
 linters:
   default: standard
   enable:
@@ -22,12 +27,12 @@ linters:
             - "!${base-path}/cmd/**"
             - "!${base-path}/engine/cli/**"
             - "!${base-path}/roles/*/*/cli/**"
-            - "!${base-path}/tools/**"
+            - "!${base-path}/.tools/**"
           deny:
             - pkg: github.com/spf13/cobra
-              desc: cobra lives in cmd, the cli packages and tools/ alone
+              desc: cobra lives in cmd, the cli packages and .tools/ alone
             - pkg: github.com/spf13/pflag
-              desc: cobra's flags live in cmd, the cli packages and tools/ alone
+              desc: cobra's flags live in cmd, the cli packages and .tools/ alone
         core:
           list-mode: lax
           files:

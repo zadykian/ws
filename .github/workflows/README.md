@@ -6,7 +6,7 @@ on each. A stack opens as drafts, as a pull request opens before its link, and o
 names the stack. So these five skip a draft's `opened` run and start on `ready_for_review`, which
 the other three skip. A newer push to a pull request cancels the runs of the push before it.
 The checks of `rootless` and `mac-cld` are on their own pages ([rootless](rootless.md),
-[mac-cld](mac-cld.md)), and the gates of `make lint` on [theirs](../../tools/README.md).
+[mac-cld](mac-cld.md)), and the gates of `make lint` on [theirs](../../.tools/README.md).
 
 ## The `playbook` job
 
@@ -117,7 +117,7 @@ The stand-in ws holds a `curl` that writes a release's `install.sh`, which sets 
 `ws`. The first run must install v0.0.0, which the job's clone is tagged as, once. With v0.0.9, a
 newer release, on ws, a run must stop and name `ws client macos wizard --update`, with no install or
 unit. `standin.sh` serves a release v0.0.0, the job's build, as the latest on 127.0.0.1:22080 with
-[serve-releases](../../tools/serve-releases/main.go), and the job's `WS_RELEASES_URL` names it. So
+[serve-releases](../../.tools/serve-releases/main.go), and the job's `WS_RELEASES_URL` names it. So
 `--update` finds v0.0.0 and stays. A tagged clone built as v0.0.1, the latest, must make `--update`
 leave v0.0.1 as the Mac's `ws version` and as the stand-in ws's (case 59). The wizard's stage ws's
 run must wait for ws on ws under a fresh `--check`. The first run must run ws's apply through the
@@ -292,7 +292,7 @@ As Claude ends its turn, `make lint-tree` runs `make lint`, but its gitleaks sca
 branch's own commits, from `origin/main`.
 
 Each target runs the work tree's own code, as root on the server. That is its `Makefile` and
-`tools/` and the tools its pins name. So the plugin runs them only on a tree the maintainer
+`.tools/` and the tools its pins name. So the plugin runs them only on a tree the maintainer
 vouches for, as [the vouch rule][vouch] says.
 The gate code includes what [.claude/lint-gates](../../.claude/lint-gates) lists.
 

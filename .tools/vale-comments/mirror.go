@@ -187,7 +187,7 @@ func lineMirror(src []byte, marker string, directive *regexp.Regexp) *mirror {
 
 // unchecked matches Markdown, which Vale reads itself, and property lists. It matches a file not
 // written here too: foundryctl's, Vale's styles, the toolkit's, pip-compile's, Go's, npm's, a license.
-var unchecked = regexp.MustCompile(`^(?:\.vale/styles/|roles/server/ubuntu/signoz/(?:deployment/|casting\.yaml\.lock$)|` +
+var unchecked = regexp.MustCompile(`^(?:\.tools/lint/vale/styles/|roles/server/ubuntu/signoz/(?:deployment/|casting\.yaml\.lock$)|` +
 	`\.github/(?:ISSUE_TEMPLATE/|lint-requirements\.txt$)|go\.sum$)|(?:^|/)(?:LICENSE|package-lock\.json)$|\.(?:md|plist)$`)
 
 // mirrorOf mirrors the file's comments by its kind: Go's, JSONC's and go.mod's, else those of #.

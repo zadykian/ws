@@ -27,7 +27,7 @@ func TestWsInstallPlan(t *testing.T) {
 		"none":          {"v1.2.3", releases, "", "would install ws v1.2.3 on ws", ""},
 		"no status":     {"v1.2.3", releases, "v1.2.3", "would install ws v1.2.3 on ws", ""},
 		"a build":       {"v1.2.4-0.20261030-abc+dirty", releases, "v1.2.3", "", "not a release"},
-		"devel":         {"devel", releases, "", "", "not a release"},
+		"devel":         {"devel", releases, "", "", "by hand (.tools/build)"},
 		"an address":    {"v1.2.3", "http://example.org", "", "", "must start with https://"},
 	} {
 		i, m := newInstall(tc.version, tc.url, session.Status{Version: tc.held})

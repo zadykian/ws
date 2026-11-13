@@ -1,10 +1,10 @@
 # The gate code beyond the lint plugin's defaults, which no gate runs while it differs from HEAD.
-# It holds the pins of the Python tool, the Go linters' settings, module and workspace, and any
-# Python, Go, bytecode or extension module. python3 -m venv imports the modules from the tree's
-# root.
+# The defaults name tools at the root alone, so it holds .tools, the gates' tools and the linters'
+# settings. It holds the pins of the Python tool, Go's module and workspace, and any Python, Go,
+# bytecode or extension module. python3 -m venv imports the modules from the tree's root.
+.tools
 .github/lint-requirements.in
 .github/lint-requirements.txt
-.golangci*
 go.mod
 go.sum
 *.go

@@ -6,7 +6,7 @@ paths:
   - "**/*.yaml"
   - "**/*.sh"
   - ".githooks/*"
-  - "tools/*"
+  - ".tools/*"
 ---
 
 # Writing
@@ -15,7 +15,7 @@ ws's facts beside the
 [writing](https://github.com/zadykian/toolkit/blob/main/skills/writing/SKILL.md) skill, which
 holds the policy for comments and docs. They cover the Markdown and every comment: Go's, and
 those of the YAML, the shell scripts, the templates and the configs. `make vale` checks them all
-([The gates](../../tools/README.md)).
+([The gates](../../.tools/README.md)).
 
 - A step's `Name` says what it does. The comment above it says why, and what a dry run or a
   container does there where that differs.

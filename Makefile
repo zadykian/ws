@@ -14,12 +14,12 @@ LOG_OPTS =
 PYTHON = python3
 
 # yamllint, the one Python tool, at the pins and SHA-256 sums of .github/lint-requirements.txt. It
-# is installed again where a file it comes from is newer. tools/run downloads the other tools into
+# is installed again where a file it comes from is newer. .tools/run downloads the other tools into
 # .cache/tools.
 VENV = .cache/venv
 PIP_STAMP = $(VENV)/.installed
 
-# Go's tools, from tools/run, keep their caches in .cache and never fetch another toolchain. ws
+# Go's tools, from .tools/run, keep their caches in .cache and never fetch another toolchain. ws
 # builds without cgo; gotest turns it on for the race detector alone.
 export GOPATH = $(CURDIR)/.cache/go
 export GOMODCACHE = $(CURDIR)/.cache/go/pkg/mod
@@ -27,6 +27,12 @@ export GOCACHE = $(CURDIR)/.cache/go-build
 export GOTOOLCHAIN = local
 export GOWORK = off
 export CGO_ENABLED = 0
+
+# Go's ./... leaves out a directory whose name starts with a dot, and so the tools in .tools. The
+# Go gates name each directory of .tools that holds a Go file too, found at each run, so that a
+# new tool needs no edit here. A pattern that starts with ./ is a directory to Go.
+TOOLS_GO := $(patsubst %/,./%,$(sort $(dir \
+	$(shell find .tools -name '*.go' ! -path '*/testdata/*'))))
 
 .PHONY: lint shell yamllint sizecheck vale lychee rumdl actionlint zizmor \
 	gitleaks gofmt govet golangci-lint govulncheck gotest lint-file lint-tree
@@ -53,73 +59,75 @@ $(PIP_STAMP): .github/lint-requirements.in .github/lint-requirements.txt
 		--only-binary :all: -r .github/lint-requirements.txt
 	touch $@
 
-# ShellCheck and shfmt on the shell scripts, found by extension or shebang (tools/files). -x
+# ShellCheck and shfmt on the shell scripts, found by extension or shebang (.tools/files). -x
 # follows a script's source directives to the files outside FILES, so that a script checked alone
 # sees what it sources.
 shell:
-	@set -ef; files=$$(tools/files sh $(FILES)); [ -z "$$files" ] || { \
-		tools/run shellcheck -x $$files && tools/run shfmt -d -i 4 $$files; }
+	@set -ef; files=$$(.tools/files sh $(FILES)); [ -z "$$files" ] || { \
+		.tools/run shellcheck -x $$files && .tools/run shfmt -d -i 4 $$files; }
 
-# yamllint finds the YAML files itself, and leaves out those .yamllint ignores.
+# yamllint finds the YAML files itself, and leaves out those .tools/lint/yamllint.yml ignores.
 yamllint: $(PIP_STAMP)
-	@set -ef; if [ -z "$(FILES)" ]; then files=.; else files=$$(tools/files yaml $(FILES)); fi; \
-		[ -z "$$files" ] || $(VENV)/bin/yamllint --strict $$files
+	@set -ef; if [ -z "$(FILES)" ]; then files=.; else files=$$(.tools/files yaml $(FILES)); fi; \
+		[ -z "$$files" ] || $(VENV)/bin/yamllint --strict -c .tools/lint/yamllint.yml $$files
 
 # The size cap: 300 lines a file.
 sizecheck:
-	tools/sizecheck $(FILES)
+	.tools/sizecheck $(FILES)
 
-# Vale (.vale.ini) on the Markdown files git lists, new ones included. Vale would read any other
-# file whole, so tools/vale-comments mirrors its comments as Markdown for Vale.
+# Vale (.tools/lint/vale.ini) on the Markdown files git lists, new ones included. Vale would read
+# any other file whole, so .tools/vale-comments mirrors its comments as Markdown for Vale.
 vale:
-	@set -ef; files=$$(tools/files md $(FILES)); [ -z "$$files" ] || tools/run vale $$files; \
-		go=$$(tools/run -path go); "$$go" run ./tools/vale-comments $(FILES)
+	@set -ef; files=$$(.tools/files md $(FILES)); \
+		[ -z "$$files" ] || .tools/run vale --config=.tools/lint/vale.ini $$files; \
+		go=$$(.tools/run -path go); "$$go" run ./.tools/vale-comments $(FILES)
 
 # Links to files and their headings in the Markdown files.
 lychee:
-	@set -ef; files=$$(tools/files md $(FILES)); [ -z "$$files" ] || \
-		tools/run lychee --offline --include-fragments --no-progress $$files
+	@set -ef; files=$$(.tools/files md $(FILES)); [ -z "$$files" ] || \
+		.tools/run lychee --offline --include-fragments --no-progress $$files
 
-# rumdl (.rumdl.toml) on the Markdown files.
+# rumdl (.tools/lint/rumdl.toml) on the Markdown files.
 rumdl:
-	@set -ef; files=$$(tools/files md $(FILES)); [ -z "$$files" ] || tools/run rumdl check $$files
+	@set -ef; files=$$(.tools/files md $(FILES)); [ -z "$$files" ] || \
+		.tools/run rumdl check --config .tools/lint/rumdl.toml $$files
 
 # The workflows' shell scripts go through the pinned ShellCheck.
 actionlint:
-	shellcheck="$$(tools/run -path shellcheck)" && \
-		tools/run actionlint -shellcheck="$$shellcheck" -pyflakes=
+	shellcheck="$$(.tools/run -path shellcheck)" && \
+		.tools/run actionlint -shellcheck="$$shellcheck" -pyflakes=
 
 # The workflows, with the online audits where GH_TOKEN is set, as in CI.
 zizmor:
-	tools/run zizmor .
+	.tools/run zizmor .
 
 # The commits of LOG_OPTS. --redact keeps a secret it finds out of the log, which is public.
 gitleaks:
-	tools/run gitleaks git --no-banner --redact --verbose \
+	.tools/run gitleaks git --no-banner --redact --verbose \
 		$(if $(LOG_OPTS),--log-opts='$(LOG_OPTS)') .
 
-# The Go gates run at the root, the module, with the Go that tools/run pins first on the PATH.
+# The Go gates run at the root, the module, with the Go that .tools/run pins first on the PATH.
 # gofmt fails where it lists a file.
 gofmt:
-	@set -ef; go=$$(tools/run -path go); out=$$(git ls-files -z "*.go" | xargs -0 "$${go%/go}/gofmt" -l); \
+	@set -ef; go=$$(.tools/run -path go); out=$$(git ls-files -z "*.go" | xargs -0 "$${go%/go}/gofmt" -l); \
 		[ -z "$$out" ] || { echo "$$out"; echo "gofmt lists these files"; exit 1; }
 
 govet:
-	@set -ef; go=$$(tools/run -path go); "$$go" vet ./...
+	@set -ef; go=$$(.tools/run -path go); "$$go" vet ./... $(TOOLS_GO)
 
 golangci-lint:
-	@set -ef; go=$$(tools/run -path go); lint=$$(tools/run -path golangci-lint); \
-		PATH="$${go%/go}:$$PATH" "$$lint" run ./...
+	@set -ef; go=$$(.tools/run -path go); lint=$$(.tools/run -path golangci-lint); \
+		PATH="$${go%/go}:$$PATH" "$$lint" run --config .tools/lint/golangci.yml ./... $(TOOLS_GO)
 
 # govulncheck is the module's tool directive, at the version go.mod pins.
 govulncheck:
-	@set -ef; go=$$(tools/run -path go); "$$go" tool govulncheck ./...
+	@set -ef; go=$$(.tools/run -path go); "$$go" tool govulncheck ./... $(TOOLS_GO)
 
 # The race detector needs cgo, for the tests alone. LAZYGIT_SCHEMA names lazygit's config schema,
 # which the lazygit role's test holds its config to.
 gotest:
-	@set -ef; go=$$(tools/run -path go); schema=$$(tools/run -path lazygit-schema); \
-		LAZYGIT_SCHEMA=$$schema CGO_ENABLED=1 "$$go" test -race -count=1 ./...
+	@set -ef; go=$$(.tools/run -path go); schema=$$(.tools/run -path lazygit-schema); \
+		LAZYGIT_SCHEMA=$$schema CGO_ENABLED=1 "$$go" test -race -count=1 ./... $(TOOLS_GO)
 
 # The gates of each file of FILES, by its kind, as the lint plugin runs them after Claude edits a
 # file (.github/workflows/README.md). A workflow takes actionlint and zizmor too. Every file takes
