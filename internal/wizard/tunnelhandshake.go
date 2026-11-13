@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/remote"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"strings"
 	"time"
 )
@@ -27,9 +28,9 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 	}
 	if kick {
 		if err := t.M.Pass(ctx, true, "launchctl", "kickstart", "-k", "system/"+label); err != nil {
-			return fmt.Errorf("%s: launchctl kickstart -k system/%s failed", tunnelStage, label)
+			return fmt.Errorf("%s: launchctl kickstart -k system/%s failed", stage.Tunnel, label)
 		}
-		t.Out.Say("%s: ran launchctl kickstart -k system/%s, for wg0's new peer on ws", tunnelStage, label)
+		t.Out.Say("%s: ran launchctl kickstart -k system/%s, for wg0's new peer on ws", stage.Tunnel, label)
 	}
 	t.Sleep(2 * time.Second)
 	if !t.shake(ctx, 30) {
@@ -44,7 +45,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 		return nil
 	}
 	if !t.via(ctx) {
-		return errors.New(tunnelStage + ": ssh -G ws gives another host than " + wsEnd + ", ws's end of the " +
+		return errors.New(stage.Tunnel + ": ssh -G ws gives another host than " + wsEnd + ", ws's end of the " +
 			"tunnel, which ws client macos apply's config.d/ws names")
 	}
 	out, err := t.SSH.Tunnel(ctx, "-o", "BatchMode=yes", "ws", "echo", "ok")
@@ -54,7 +55,7 @@ func (t *Tunnel) handshake(ctx context.Context, target, port string, kick bool) 
 			lines := strings.Split(strings.TrimSpace(remote.ExitStatus.ReplaceAllString(err.Error(), "")), "\n")
 			last = ": " + strings.TrimSpace(lines[len(lines)-1])
 		}
-		return errors.New(tunnelStage + ": ssh ws failed through the tunnel, where ws's run lets SSH in on " +
+		return errors.New(stage.Tunnel + ": ssh ws failed through the tunnel, where ws's run lets SSH in on " +
 			"wg0, and fail2ban bans 10.99.0.2 for an hour after 5 failures" + last)
 	}
 	return nil

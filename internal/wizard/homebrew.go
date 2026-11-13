@@ -13,6 +13,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // Homebrew's release: its Homebrew.pkg, that file's SHA-256, and its signer, as pkgutil names it.
@@ -26,9 +27,6 @@ const (
 // brewPath is where Homebrew's .pkg puts brew on an Apple silicon Mac.
 const brewPath = "/opt/homebrew/bin/brew"
 
-// homebrewStage names the stage of Homebrew.
-const homebrewStage = "Homebrew"
-
 // Homebrew installs Homebrew from its pinned .pkg, checked by its SHA-256 and its signer, through
 // sudo.
 type Homebrew struct {
@@ -41,19 +39,19 @@ type Homebrew struct {
 }
 
 // Name is the stage's name.
-func (*Homebrew) Name() string { return homebrewStage }
+func (*Homebrew) Name() string { return stage.Homebrew }
 
 // Side is the Mac: Homebrew.
-func (*Homebrew) Side() guided.Side { return OnMac }
+func (*Homebrew) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is Tools: the installer needs the Command Line Tools.
-func (*Homebrew) WaitsOn() string { return toolsStage }
+func (*Homebrew) WaitsOn() string { return stage.Tools }
 
 // brewInstall is the change that installs Homebrew.
 type brewInstall struct{}
 
 func (brewInstall) String() string {
-	return homebrewStage + ": would install Homebrew " + brewVersion + " from its Homebrew.pkg, through sudo"
+	return stage.Homebrew + ": would install Homebrew " + brewVersion + " from its Homebrew.pkg, through sudo"
 }
 
 func (h *Homebrew) done(ctx context.Context) bool {
@@ -72,31 +70,31 @@ func (h *Homebrew) Plan(ctx context.Context) (step.Plan, error) {
 // Apply downloads the .pkg, checks its SHA-256 and signer, and installs it.
 func (h *Homebrew) Apply(ctx context.Context, _ step.Plan) error {
 	pkg := filepath.Join(h.Lock, "Homebrew.pkg")
-	h.Out.Say("%s: installing Homebrew %s", homebrewStage, brewVersion)
+	h.Out.Say("%s: installing Homebrew %s", stage.Homebrew, brewVersion)
 	if _, err := h.M.Run(ctx, "curl", "-fsSL", "-o", pkg, brewURL); err != nil {
-		return fmt.Errorf("%s: cannot download %s: %w", homebrewStage, brewURL, err)
+		return fmt.Errorf("%s: cannot download %s: %w", stage.Homebrew, brewURL, err)
 	}
 	defer func() { _, _ = h.M.Run(ctx, "rm", "-f", pkg) }()
 	data, err := h.M.ReadFile(pkg)
 	if err != nil {
-		return fmt.Errorf("%s: cannot read %s: %w", homebrewStage, pkg, err)
+		return fmt.Errorf("%s: cannot read %s: %w", stage.Homebrew, pkg, err)
 	}
 	want := cmp.Or(h.Sum, brewSHA256)
 	if sum := sha256.Sum256(data); hex.EncodeToString(sum[:]) != want {
-		return fmt.Errorf("%s: %s's SHA-256 is %x, not the pinned one", homebrewStage, pkg, sum)
+		return fmt.Errorf("%s: %s's SHA-256 is %x, not the pinned one", stage.Homebrew, pkg, sum)
 	}
 	out, err := h.M.Run(ctx, "pkgutil", "--check-signature", pkg)
 	if err != nil {
-		return fmt.Errorf("%s: pkgutil cannot check %s: %w", homebrewStage, pkg, err)
+		return fmt.Errorf("%s: pkgutil cannot check %s: %w", stage.Homebrew, pkg, err)
 	}
 	if signer := pkgSigner(string(out)); signer != brewSigner {
-		return fmt.Errorf("%s: %s is signed by '%s', not '%s'", homebrewStage, pkg, signer, brewSigner)
+		return fmt.Errorf("%s: %s is signed by '%s', not '%s'", stage.Homebrew, pkg, signer, brewSigner)
 	}
 	if err := h.M.Pass(ctx, true, "installer", "-pkg", pkg, "-target", "/"); err != nil {
-		return fmt.Errorf("%s: sudo installer failed on %s: %w", homebrewStage, pkg, err)
+		return fmt.Errorf("%s: sudo installer failed on %s: %w", stage.Homebrew, pkg, err)
 	}
 	if !h.done(ctx) {
-		return fmt.Errorf("%s: no brew runs after the install", homebrewStage)
+		return fmt.Errorf("%s: no brew runs after the install", stage.Homebrew)
 	}
 	return nil
 }

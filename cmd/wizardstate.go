@@ -6,12 +6,13 @@ import (
 
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // macState is the state screen's read of side's machine, and what ends it. ws's reach takes sudo, the
 // scan's, which the run takes after it, and lets the lock go with the screen.
 func macState(p process, side string, sudo *wizard.Sudo) (tui.StateReader, func(context.Context)) {
-	if side == string(wizard.OnMac) {
+	if side == string(stage.Mac) {
 		return macRead(p), nil
 	}
 	reach := &varsReach{p: p, sudo: sudo}

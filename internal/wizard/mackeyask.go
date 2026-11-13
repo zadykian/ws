@@ -12,6 +12,7 @@ import (
 	"github.com/zadykian/ws/internal/sshcfg"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // newKey, the default option, has the user make a key in Secretive's app, so that a keypress never
@@ -44,7 +45,7 @@ func (a askKey) String() string {
 		}
 		options[i] = o
 	}
-	return fmt.Sprintf("%s: would ask for %s: %s", macKey, a.q.Text, strings.Join(options, "; "))
+	return fmt.Sprintf("%s: would ask for %s: %s", stage.Key, a.q.Text, strings.Join(options, "; "))
 }
 
 // keyQuestion offers each P-256 key of keys by its label, and a new one, the default. login names
@@ -82,7 +83,7 @@ func (k *MacKey) login(c conf.Conf) string {
 func (k *MacKey) ask(ctx context.Context, use keyUse) error {
 	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
 	if err != nil {
-		return fmt.Errorf("%s: %w", macKey, err)
+		return fmt.Errorf("%s: %w", stage.Key, err)
 	}
 	if !k.Tty {
 		return noTerminal(use, keys)
@@ -94,7 +95,7 @@ func (k *MacKey) ask(ctx context.Context, use keyUse) error {
 	login := k.login(c)
 	answer, err := effect.Choose(ctx, k.P, keyQuestion(use, keys, login))
 	if errors.Is(err, io.EOF) {
-		return fmt.Errorf("%s: the terminal ended before the answer", macKey)
+		return fmt.Errorf("%s: the terminal ended before the answer", stage.Key)
 	}
 	if err != nil {
 		return err
@@ -121,10 +122,10 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 	}
 	if len(lines) == 0 {
 		return fmt.Errorf("%s: no terminal to ask for %s, and Secretive's agent lists no P-256 key: run the wizard "+
-			"at a terminal to make one, or name a key's .pub in mac.conf's %s", macKey, use.name, use.key)
+			"at a terminal to make one, or name a key's .pub in mac.conf's %s", stage.Key, use.name, use.key)
 	}
 	return fmt.Errorf("%s: no terminal to ask for %s: add one of these lines to mac.conf, %s; or run the wizard "+
-		"at a terminal", macKey, use.name, strings.Join(lines, "; "))
+		"at a terminal", stage.Key, use.name, strings.Join(lines, "; "))
 }
 
 // name names the key in mac.conf, once it plans and writes ws's copy of its .pub, with the

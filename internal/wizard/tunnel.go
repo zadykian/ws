@@ -10,10 +10,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// tunnelStage names the stage in its messages.
-const tunnelStage = "Tunnel"
 
 const (
 	label = "com.github.zadykian.ws-tunnel"
@@ -48,17 +46,17 @@ type Tunnel struct {
 }
 
 // Name is the stage's name.
-func (*Tunnel) Name() string { return tunnelStage }
+func (*Tunnel) Name() string { return stage.Tunnel }
 
 // Side is the Mac: the stage ends in the Mac's WireGuard configuration and mac.conf.
-func (*Tunnel) Side() guided.Side { return OnMac }
+func (*Tunnel) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is ws's run, which makes wg0.
 func (*Tunnel) WaitsOn() string { return stages.RunStage }
 
 type tunnelChange string
 
-func (c tunnelChange) String() string { return tunnelStage + ": would " + string(c) }
+func (c tunnelChange) String() string { return stage.Tunnel + ": would " + string(c) }
 
 // Plan is empty where ws's wg0 has the Mac's key as its peer, WS_PUBLIC_KEY is wg0's key, and
 // launchd has ws-tunnel loaded. ws's SSH port must answer through the tunnel too, and ssh ws go
@@ -71,7 +69,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	mac := t.pub()
 	if mac == "" && t.Check {
-		t.Out.Say("%s: after ws client macos apply", tunnelStage)
+		t.Out.Say("%s: after ws client macos apply", stage.Tunnel)
 		return step.Plan{}, nil
 	}
 	s, ok := t.Ws.Status(ctx)
@@ -92,7 +90,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	case wg0 != c.PublicKey:
 		if t.Check {
 			// Under --check mac.conf is the scratch file, as for the stages before.
-			if err := (confFile{t.Conf, tunnelStage, t.M, t.Out}).show("WS_PUBLIC_KEY", wg0); err != nil {
+			if err := (confFile{t.Conf, stage.Tunnel, t.M, t.Out}).show("WS_PUBLIC_KEY", wg0); err != nil {
 				return step.Plan{}, err
 			}
 		}

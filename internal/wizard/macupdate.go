@@ -9,10 +9,8 @@ import (
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// macUpdateStage names the stage in its messages.
-const macUpdateStage = "ws on the Mac"
 
 // MacUpdate is the stage of --update that puts the latest release of ws on the Mac, and runs the
 // command again with it. It runs in a step.Run of its own, before the lock is taken: an Exec would
@@ -27,10 +25,10 @@ type MacUpdate struct {
 }
 
 // Name is the stage's name.
-func (*MacUpdate) Name() string { return macUpdateStage }
+func (*MacUpdate) Name() string { return stage.Update }
 
 // Side is the Mac: the stage installs ws's tool before the others.
-func (*MacUpdate) Side() guided.Side { return OnMac }
+func (*MacUpdate) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is empty: the stage comes before the others.
 func (*MacUpdate) WaitsOn() string { return "" }
@@ -38,7 +36,7 @@ func (*MacUpdate) WaitsOn() string { return "" }
 type macUpdate struct{ tag string }
 
 func (c macUpdate) String() string {
-	return fmt.Sprintf("%s: would install ws %s on the Mac, and run this command again with it", macUpdateStage, c.tag)
+	return fmt.Sprintf("%s: would install ws %s on the Mac, and run this command again with it", stage.Update, c.tag)
 }
 
 // latestTag returns the tag that the redirect of URL/latest names, the part after /tag/, or false
@@ -55,7 +53,7 @@ func latestTag(redirect string) (string, bool) {
 // release stays: it warns and plans nothing.
 func (u *MacUpdate) Plan(ctx context.Context) (step.Plan, error) {
 	if !check.Release(u.Version) {
-		u.Out.Warn("%s: this ws is %s, not a release: --update leaves it", macUpdateStage, u.Version)
+		u.Out.Warn("%s: this ws is %s, not a release: --update leaves it", stage.Update, u.Version)
 		return step.Plan{}, nil
 	}
 	if !check.ReleasesURL(u.URL) {

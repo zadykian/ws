@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"io/fs"
 	"strings"
 )
@@ -30,7 +31,7 @@ func (h *HostKey) add(ctx context.Context) error {
 	line := scanKey(ctx, h.M, way)
 	if line == "" {
 		if h.Check {
-			h.Out.Say("%s: %s; a run would ask its address now", hostStage, noAnswer(way))
+			h.Out.Say("%s: %s; a run would ask its address now", stage.Host, noAnswer(way))
 			return nil
 		}
 		if way, line, err = h.question().ask(ctx, c.Target, way); err != nil {
@@ -40,7 +41,7 @@ func (h *HostKey) add(ctx context.Context) error {
 	// ssh -G prints the host name in lower case, which WS_REMOTE may not be.
 	if way.Host == strings.ToLower(c.Remote) {
 		h.Out.Say("%s: warning: through WS_REMOTE, ws's new sshd faces the internet, with any password "+
-			"login its installer allowed, until ws's run sets up its security role", hostStage)
+			"login its installer allowed, until ws's run sets up its security role", stage.Host)
 	}
 	fp, err := h.fingerprint(ctx, line)
 	if err != nil {
@@ -58,11 +59,11 @@ func (h *HostKey) write(file, line string) error {
 	if err == nil && info.Link != "" {
 		why := fmt.Sprintf("%s is a link to %s, which the wizard leaves", file, info.Link)
 		if h.Check {
-			return fmt.Errorf("%s: %s: a run would print ws's line for its file", hostStage, why)
+			return fmt.Errorf("%s: %s: a run would print ws's line for its file", stage.Host, why)
 		}
-		h.Out.Say("%s: %s: add this line to its file, then run the wizard again", hostStage, why)
+		h.Out.Say("%s: %s: add this line to its file, then run the wizard again", stage.Host, why)
 		h.Out.Raw("ws %s", line)
-		return fmt.Errorf("%s: %s", hostStage, "known_hosts is left as it is")
+		return fmt.Errorf("%s: %s", stage.Host, "known_hosts is left as it is")
 	}
 	mode := fs.FileMode(0o600)
 	if err == nil {
@@ -70,7 +71,7 @@ func (h *HostKey) write(file, line string) error {
 	}
 	before, err := h.M.ReadFile(file)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("%s: cannot read %s", hostStage, file)
+		return fmt.Errorf("%s: cannot read %s", stage.Host, file)
 	}
 	after := string(before)
 	if after != "" && !strings.HasSuffix(after, "\n") {

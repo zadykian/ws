@@ -7,16 +7,17 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // TestEveryStageStatesItsSide fails where a stage is added with no side, as a screen could not
 // put it in a list.
 func TestEveryStageStatesItsSide(t *testing.T) {
 	want := map[string]guided.Side{
-		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
-		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: session.Ws,
-		installStage: session.Ws, stages.RunStage: session.Ws, session.ClaudeStage: session.Ws, stages.SigningStage: OnMac, tunnelStage: OnMac,
-		cableStage: OnMac, (&stages.WsValues{}).Name(): session.Ws,
+		stage.Update: stage.Mac, stage.Tools: stage.Mac, stage.Homebrew: stage.Mac, stage.Answers: stage.Mac, stage.Key: stage.Mac,
+		stage.GitHub: stage.Mac, stage.Setup: stage.Mac, stage.Host: stage.Mac, stage.Login: stage.Mac, stage.Sudo: session.Ws,
+		stage.Install: session.Ws, stages.RunStage: session.Ws, session.ClaudeStage: session.Ws, stages.SigningStage: stage.Mac, stage.Tunnel: stage.Mac,
+		stage.Cable: stage.Mac, (&stages.WsValues{}).Name(): session.Ws,
 	}
 	list := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},
 		&HostKey{}, &Login{}, &Sudo{}, &WsInstall{}, &stages.WsRun{}, &stages.WsClaude{}, &stages.Signing{GitHub: &MacGitHub{}}, &Tunnel{}, &Cable{},

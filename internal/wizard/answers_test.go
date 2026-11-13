@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 const confPathForTest = "/h/.config/ws/mac.conf"
@@ -59,7 +60,7 @@ func TestAnswersPlan(t *testing.T) {
 // homebrewDone stands in for the Homebrew stage, which Answers waits on.
 type homebrewDone struct{}
 
-func (homebrewDone) Name() string                            { return homebrewStage }
+func (homebrewDone) Name() string                            { return stage.Homebrew }
 func (homebrewDone) WaitsOn() string                         { return "" }
 func (homebrewDone) Plan(context.Context) (step.Plan, error) { return step.Plan{}, nil }
 func (homebrewDone) Apply(context.Context, step.Plan) error  { return nil }

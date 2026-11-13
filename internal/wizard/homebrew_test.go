@@ -11,6 +11,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 func TestPkgSigner(t *testing.T) {
@@ -38,12 +39,12 @@ func TestBrewSHA256IsHex(t *testing.T) {
 }
 
 func TestHomebrewWaitsOnTools(t *testing.T) {
-	if got := (&Homebrew{}).WaitsOn(); got != toolsStage {
-		t.Errorf("WaitsOn = %q, want %q", got, toolsStage)
+	if got := (&Homebrew{}).WaitsOn(); got != stage.Tools {
+		t.Errorf("WaitsOn = %q, want %q", got, stage.Tools)
 	}
 	for _, s := range []step.Step{&Answers{}, &Gh{}, &Setup{}, &Cable{}} {
-		if got := s.WaitsOn(); got != homebrewStage {
-			t.Errorf("%s waits on %q, want %q", s.Name(), got, homebrewStage)
+		if got := s.WaitsOn(); got != stage.Homebrew {
+			t.Errorf("%s waits on %q, want %q", s.Name(), got, stage.Homebrew)
 		}
 	}
 }

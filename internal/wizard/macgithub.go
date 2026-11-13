@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // MacGitHub is the Mac's gh login, which lists and adds the key. ws's own gh holds no token that may
@@ -21,7 +22,7 @@ type MacGitHub struct {
 }
 
 // Side is the Mac: the stage acts through the Mac's gh.
-func (*MacGitHub) Side() guided.Side { return OnMac }
+func (*MacGitHub) Side() guided.Side { return stage.Mac }
 
 type signingAdd struct{ title string }
 
@@ -39,10 +40,10 @@ func (s *MacGitHub) Lacks(ctx context.Context, ws *session.Session, line string)
 	}
 	if _, err := s.Gh.M.Run(ctx, path, "auth", "status", "-h", "github.com"); err != nil {
 		if s.Check {
-			s.Gh.Out.Say("%s: after %s on the Mac", stages.SigningStage, ghStage)
+			s.Gh.Out.Say("%s: after %s on the Mac", stages.SigningStage, stage.GitHub)
 			return nil, nil
 		}
-		return nil, fmt.Errorf("%s: the Mac's gh has no login: the stage %s mends it", stages.SigningStage, ghStage)
+		return nil, fmt.Errorf("%s: the Mac's gh has no login: the stage %s mends it", stages.SigningStage, stage.GitHub)
 	}
 	keys, err := s.Gh.api(ctx, path, "user/ssh_signing_keys")
 	if err != nil {

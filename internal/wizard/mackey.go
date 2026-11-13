@@ -5,10 +5,8 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// macKey names the stage in its messages.
-const macKey = "Mac key"
 
 // MacKey is the stage that names the key that ssh offers ws in mac.conf's WS_IDENTITY_PUB_KEY.
 // Where mac.conf names none, it offers each P-256 key of Secretive's agent, and a new one, which
@@ -27,10 +25,10 @@ type MacKey struct {
 }
 
 // Name is the stage's name.
-func (*MacKey) Name() string { return macKey }
+func (*MacKey) Name() string { return stage.Key }
 
 // Side is the Mac: its ssh key.
-func (*MacKey) Side() guided.Side { return OnMac }
+func (*MacKey) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is Answers, which gives mac.conf the lines that this stage reads.
-func (*MacKey) WaitsOn() string { return answers }
+func (*MacKey) WaitsOn() string { return stage.Answers }

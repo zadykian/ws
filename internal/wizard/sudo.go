@@ -11,10 +11,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// sudoStage names the stage in its messages.
-const sudoStage = "Sudo"
 
 // sudoTries is how many passwords the stage takes, as sudo's own three.
 const sudoTries = 3
@@ -45,19 +43,19 @@ type Sudo struct {
 }
 
 // Name is the stage's name.
-func (*Sudo) Name() string { return sudoStage }
+func (*Sudo) Name() string { return stage.Sudo }
 
 // Side is ws: how its scripts reach root.
 func (*Sudo) Side() guided.Side { return session.Ws }
 
 // WaitsOn is the stage that checks the login, without which sudo answers nothing.
-func (*Sudo) WaitsOn() string { return loginStage }
+func (*Sudo) WaitsOn() string { return stage.Login }
 
 // sudoAsk is the change that asks for the password.
 type sudoAsk struct{ user string }
 
 func (a sudoAsk) String() string {
-	return sudoStage + ": would ask for " + a.user + "'s sudo password on ws, at the terminal"
+	return stage.Sudo + ": would ask for " + a.user + "'s sudo password on ws, at the terminal"
 }
 
 // Plan reads how a script reaches root. Under --check at a terminal it asks too, as the Answers
@@ -69,7 +67,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 	}
 	w, err := s.SSH.Way(ctx)
 	if err != nil {
-		return step.Plan{}, errors.New(sudoStage + ": " + err.Error())
+		return step.Plan{}, errors.New(stage.Sudo + ": " + err.Error())
 	}
 	if w.User == "root" {
 		s.way = sudoLogin
@@ -81,7 +79,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 		s.way = sudoOpen
 		return step.Plan{}, nil
 	case strings.Contains(err.Error(), "exit status 255"):
-		return step.Plan{}, errors.New(sudoStage + ": ssh to ws failed: " + remote.Stderr(err))
+		return step.Plan{}, errors.New(stage.Sudo + ": ssh to ws failed: " + remote.Stderr(err))
 	case s.Check && s.Tty:
 		return step.Plan{}, s.ask(ctx, w.User)
 	}
@@ -92,7 +90,7 @@ func (s *Sudo) Plan(ctx context.Context) (step.Plan, error) {
 func (s *Sudo) Apply(ctx context.Context, p step.Plan) error {
 	c, ok := p.Changes[0].(sudoAsk)
 	if !ok {
-		return fmt.Errorf("%s: unknown change %T", sudoStage, p.Changes[0])
+		return fmt.Errorf("%s: unknown change %T", stage.Sudo, p.Changes[0])
 	}
 	return s.ask(ctx, c.user)
 }
@@ -102,12 +100,12 @@ func (s *Sudo) Apply(ctx context.Context, p step.Plan) error {
 func (s *Sudo) ask(ctx context.Context, user string) error {
 	if !s.Tty {
 		return fmt.Errorf("%s: %s's sudo on ws asks for a password, and no terminal is here to ask it: "+
-			"run the wizard at a terminal", sudoStage, user)
+			"run the wizard at a terminal", stage.Sudo, user)
 	}
 	for try := 1; ; try++ {
 		password, err := s.P.AskHidden(ctx, user+"'s sudo password on ws")
 		if err != nil {
-			return fmt.Errorf("%s: %w", sudoStage, err)
+			return fmt.Errorf("%s: %w", stage.Sudo, err)
 		}
 		_, err = s.SSH.RunInput(ctx, []byte(password+"\n"), "-o", "BatchMode=yes", "ws",
 			"sudo", "-k", "-S", "-p", "''", "true")
@@ -117,12 +115,12 @@ func (s *Sudo) ask(ctx context.Context, user string) error {
 		}
 		why := remote.Stderr(err)
 		if !strings.Contains(why, "Authentication failed") {
-			return fmt.Errorf("%s: sudo on ws stopped: %s", sudoStage, why)
+			return fmt.Errorf("%s: sudo on ws stopped: %s", stage.Sudo, why)
 		}
 		if try == sudoTries {
-			return fmt.Errorf("%s: sudo on ws refused the password %d times", sudoStage, sudoTries)
+			return fmt.Errorf("%s: sudo on ws refused the password %d times", stage.Sudo, sudoTries)
 		}
-		s.Out.Say("%s: sudo on ws refused the password", sudoStage)
+		s.Out.Say("%s: sudo on ws refused the password", stage.Sudo)
 	}
 }
 
@@ -141,5 +139,5 @@ func (s *Sudo) Rooted(cmd []string, in []byte) ([]string, []byte, error) {
 	case sudoAsked:
 		return append([]string{"sudo", "-k", "-S", "-p", ""}, cmd...), append([]byte(s.password+"\n"), in...), nil
 	}
-	return nil, nil, errors.New(sudoStage + ": the stage has not read how to reach root on ws")
+	return nil, nil, errors.New(stage.Sudo + ": the stage has not read how to reach root on ws")
 }

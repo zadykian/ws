@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/internal/sshcfg"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // made has the user make what in Secretive's app, installed where missing, and returns the key
@@ -13,7 +14,7 @@ func (k *MacKey) made(ctx context.Context, what string, before []sshcfg.AgentKey
 	if !k.app() {
 		if err := k.M.Pass(ctx, false, "brew", "install", "--cask", "secretive"); err != nil {
 			return sshcfg.AgentKey{}, fmt.Errorf("%s: brew install --cask secretive failed: install Secretive, "+
-				"then run the wizard again", macKey)
+				"then run the wizard again", stage.Key)
 		}
 	}
 	k.open(ctx)
@@ -26,7 +27,7 @@ func (k *MacKey) made(ctx context.Context, what string, before []sshcfg.AgentKey
 	}
 	if key := unlisted(now, before); key.Name != "" {
 		return sshcfg.AgentKey{}, fmt.Errorf("%s: Secretive's agent lists %s, which the question did not offer: "+
-			"run the wizard again to pick it, or to make a new one", macKey, key.Label())
+			"run the wizard again to pick it, or to make a new one", stage.Key, key.Label())
 	}
 	return k.wait(ctx, now, what)
 }
@@ -34,6 +35,6 @@ func (k *MacKey) made(ctx context.Context, what string, before []sshcfg.AgentKey
 // open opens Secretive's app, or says to by hand.
 func (k *MacKey) open(ctx context.Context) {
 	if _, err := k.M.Run(ctx, "open", "-a", "Secretive"); err != nil {
-		k.Out.Say("%s: warning: open cannot find Secretive: open it by hand", macKey)
+		k.Out.Say("%s: warning: open cannot find Secretive: open it by hand", stage.Key)
 	}
 }

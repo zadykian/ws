@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // errMissing stops Plan's walk over the keys at the first that mac.conf lacks.
@@ -39,19 +40,15 @@ type Answers struct {
 }
 
 // Name is the stage's name.
-func (*Answers) Name() string { return answers }
+func (*Answers) Name() string { return stage.Answers }
 
 // Side is the Mac: mac.conf.
-func (*Answers) Side() guided.Side { return OnMac }
+func (*Answers) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is Homebrew: on a new Mac, a --check run stops there, as the install does.
-func (*Answers) WaitsOn() string { return homebrewStage }
+func (*Answers) WaitsOn() string { return stage.Homebrew }
 
-type todo string
-
-func (c todo) String() string { return string(c) }
-
-func (a *Answers) file() confFile { return confFile{a.Conf, answers, a.M, a.Out} }
+func (a *Answers) file() confFile { return confFile{a.Conf, stage.Answers, a.M, a.Out} }
 
 // load reads mac.conf and says each line that conf refuses, which ws client macos apply would stop
 // at.
@@ -86,13 +83,13 @@ func (a *Answers) Plan(ctx context.Context) (step.Plan, error) {
 	err = a.sequence(c, text, func(q question) (string, error) { first = q.key; return "", errMissing }).run()
 	switch {
 	case errors.Is(err, errMissing):
-		return step.Plan{Changes: []step.Change{todo(fmt.Sprintf(
-			"%s: would ask for the values that %s lacks, from %s on, and add them", answers, a.Conf, first))}}, nil
+		return step.Plan{Changes: []step.Change{stage.Todo(fmt.Sprintf(
+			"%s: would ask for the values that %s lacks, from %s on, and add them", stage.Answers, a.Conf, first))}}, nil
 	case err != nil:
 		return step.Plan{}, err
 	}
 	if _, errs := conf.Parse(text); len(errs) > 0 {
-		return step.Plan{Changes: []step.Change{todo(answers + ": ws client macos apply would refuse " + a.Conf)}}, nil
+		return step.Plan{Changes: []step.Change{stage.Todo(stage.Answers + ": ws client macos apply would refuse " + a.Conf)}}, nil
 	}
 	return step.Plan{}, nil
 }
@@ -112,7 +109,7 @@ func (a *Answers) refusal(lines string) error {
 	if lines != "" {
 		with = " with the answers"
 	}
-	return fmt.Errorf("%s: ws client macos apply would refuse %s%s, as above; fix it, then run the wizard again", answers, a.Conf, with)
+	return fmt.Errorf("%s: ws client macos apply would refuse %s%s, as above; fix it, then run the wizard again", stage.Answers, a.Conf, with)
 }
 
 // Apply asks for the values that mac.conf lacks, in order, and adds them to it. A mac.conf that
@@ -153,7 +150,7 @@ func (a *Answers) rehearse(ctx context.Context, text string, c conf.Conf) error 
 	}
 	a.Out.Diff(a.Conf, []byte(before), []byte(after))
 	if err := a.M.WriteFile(a.Scratch, []byte(after), 0o600); err != nil {
-		return fmt.Errorf("%s: cannot write %s", answers, a.Scratch)
+		return fmt.Errorf("%s: cannot write %s", stage.Answers, a.Scratch)
 	}
 	return nil
 }

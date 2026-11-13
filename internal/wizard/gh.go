@@ -10,10 +10,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// ghStage names the stage in its messages.
-const ghStage = "gh on the Mac"
 
 // ghScopes are the scopes of gh's login that gh ssh-key add needs, for a key that logs in and for
 // one that signs.
@@ -45,21 +43,21 @@ type GhCLI struct {
 }
 
 // Name is the stage's name.
-func (*Gh) Name() string { return ghStage }
+func (*Gh) Name() string { return stage.GitHub }
 
 // Side is the Mac: gh's login and the Mac's key among the account's.
-func (*Gh) Side() guided.Side { return OnMac }
+func (*Gh) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is Homebrew, which gh comes from. Under --check, where the Mac key is still to be made,
 // Plan says it would add the key once made, as wizard-gh.sh did.
-func (*Gh) WaitsOn() string { return homebrewStage }
+func (*Gh) WaitsOn() string { return stage.Homebrew }
 
 // ghLogin is the change that has gh log in, or refresh the scopes of its login. Its device flow
 // shows a code to enter in the browser, at github.com/login/device.
 type ghLogin struct{ args []string }
 
 func (c ghLogin) String() string {
-	return fmt.Sprintf("%s: would run %s", ghStage, c.line())
+	return fmt.Sprintf("%s: would run %s", stage.GitHub, c.line())
 }
 
 func (c ghLogin) line() string {
@@ -71,21 +69,21 @@ type ghAdd struct{ pub, title string }
 
 func (c ghAdd) line() string { return "gh ssh-key add " + c.pub + " --title " + c.title }
 
-func (c ghAdd) String() string { return fmt.Sprintf("%s: would run %s", ghStage, c.line()) }
+func (c ghAdd) String() string { return fmt.Sprintf("%s: would run %s", stage.GitHub, c.line()) }
 
 // ghLater is the change that adds the Mac's key once made. Where the key is still missing at Apply,
 // it fails with the reason.
 type ghLater struct{ err error }
 
 func (c ghLater) String() string {
-	return ghStage + ": would run gh ssh-key add for the Mac's key, once it is made"
+	return stage.GitHub + ": would run gh ssh-key add for the Mac's key, once it is made"
 }
 
 // ghPath returns the path of gh, and the change that installs it where PATH has none.
 func (g GhCLI) ghPath(ctx context.Context) (string, []step.Change, error) {
 	path, install, err := setup.FindGh(ctx, g.M, g.look)
 	if err != nil {
-		return "", nil, fmt.Errorf("%s: %w", ghStage, err)
+		return "", nil, fmt.Errorf("%s: %w", stage.GitHub, err)
 	}
 	if install != nil {
 		return path, []step.Change{install}, nil

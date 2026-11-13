@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // firstQuestion asks ws's address now, for the Host key stage and the Login stage, each from its
@@ -37,9 +38,9 @@ func (q firstQuestion) ask(ctx context.Context, target string, w remote.Way) (re
 	if !set {
 		if !q.tty {
 			return w, "", fmt.Errorf("%s: %s, and no terminal is there to ask its address now: set WS_FIRST_ADDRESS",
-				hostStage, none)
+				stage.Host, none)
 		}
-		q.out.Say("%s: %s; where Ubuntu isn't installed on ws yet, an empty answer stops the run", hostStage, none)
+		q.out.Say("%s: %s; where Ubuntu isn't installed on ws yet, an empty answer stops the run", stage.Host, none)
 		where := "as the router's leases show it"
 		switch target {
 		case "cloud":
@@ -52,22 +53,22 @@ func (q firstQuestion) ask(ctx context.Context, target string, w remote.Way) (re
 			if a == "" || check.IPv4(a) {
 				return nil
 			}
-			return fmt.Errorf("%s: %s is not an IPv4 address", hostStage, a)
+			return fmt.Errorf("%s: %s is not an IPv4 address", stage.Host, a)
 		}})
 		if err != nil {
-			return w, "", fmt.Errorf("%s: the terminal ended before ws's address", hostStage)
+			return w, "", fmt.Errorf("%s: the terminal ended before ws's address", stage.Host)
 		}
 		if first == "" {
-			return w, "", fmt.Errorf("%s: no address for ws; once Ubuntu is installed on it, run the wizard again", hostStage)
+			return w, "", fmt.Errorf("%s: no address for ws; once Ubuntu is installed on it, run the wizard again", stage.Host)
 		}
 	}
 	if !check.IPv4(first) {
-		return w, "", fmt.Errorf("%s: WS_FIRST_ADDRESS=%s is not an IPv4 address", hostStage, first)
+		return w, "", fmt.Errorf("%s: WS_FIRST_ADDRESS=%s is not an IPv4 address", stage.Host, first)
 	}
 	if err := q.ssh.M.WriteFile(q.ssh.Lock+"/"+remote.FirstFile, []byte(first+"\n"), 0o600); err != nil {
 		return w, "", err
 	}
-	either := fmt.Errorf("%s: ws doesn't answer at %s:%s with an ed25519 key either", hostStage, first, w.Port)
+	either := fmt.Errorf("%s: ws doesn't answer at %s:%s with an ed25519 key either", stage.Host, first, w.Port)
 	nw, err := q.ssh.Way(ctx)
 	if err != nil {
 		return w, "", either

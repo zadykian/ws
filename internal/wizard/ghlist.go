@@ -3,6 +3,7 @@ package wizard
 import (
 	"context"
 	"fmt"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"strings"
 )
 
@@ -35,7 +36,7 @@ func (g GhCLI) api(ctx context.Context, gh, path string) ([]string, error) {
 		if strings.Contains(err.Error(), "HTTP 404") {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("%s: gh api %s failed: %w", ghStage, path, err)
+		return nil, fmt.Errorf("%s: gh api %s failed: %w", stage.GitHub, path, err)
 	}
 	return append([]string{}, strings.Split(strings.TrimSpace(string(out)), "\n")...), nil
 }

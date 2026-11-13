@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // Plan finds what gh lacks: its install, a login with the scopes, and the Mac's key for ws among
@@ -47,7 +48,7 @@ func (g *Gh) Plan(ctx context.Context) (step.Plan, error) {
 	// The key is there, so the stage has nothing to do: say why, so that a key picked among
 	// Secretive's is known to be on GitHub already. Where this run added it, its add said so.
 	if !g.added {
-		g.Out.Say("%s: the Mac's key is among GitHub's authentication keys already", ghStage)
+		g.Out.Say("%s: the Mac's key is among GitHub's authentication keys already", stage.GitHub)
 	}
 	return step.Plan{}, nil
 }

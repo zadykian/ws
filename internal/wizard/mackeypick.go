@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/internal/sshcfg"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // fresh returns the first key that Secretive's agent lists and before lacks, or none. An agent that
@@ -39,9 +40,9 @@ func (k *MacKey) answer(ctx context.Context) ([]sshcfg.AgentKey, error) {
 			return nil, ctx.Err()
 		case left < 0:
 			return nil, fmt.Errorf("%s: Secretive's agent did not answer in 15 minutes: open Secretive, then run the "+
-				"wizard again", macKey)
+				"wizard again", stage.Key)
 		case left == 450:
-			k.Out.Say("%s: the wizard waits up to 15 minutes for Secretive's agent, which its app starts", macKey)
+			k.Out.Say("%s: the wizard waits up to 15 minutes for Secretive's agent, which its app starts", stage.Key)
 		}
 		k.Sleep(2 * time.Second)
 	}
@@ -51,7 +52,7 @@ func (k *MacKey) answer(ctx context.Context) ([]sshcfg.AgentKey, error) {
 // lists besides those of before. It fails on a key other than P-256, as an ML-DSA one, which ws's
 // OpenSSH lacks.
 func (k *MacKey) wait(ctx context.Context, before []sshcfg.AgentKey, what string) (sshcfg.AgentKey, error) {
-	k.Out.Say("%s: in Secretive, make %s; the wizard waits up to 15 minutes for it", macKey, what)
+	k.Out.Say("%s: in Secretive, make %s; the wizard waits up to 15 minutes for it", stage.Key, what)
 	got := k.fresh(ctx, before)
 	for left := 450; got.Name == ""; got = k.fresh(ctx, before) {
 		// A signal ends the wait at once, as a trap did in sh.
@@ -60,13 +61,13 @@ func (k *MacKey) wait(ctx context.Context, before []sshcfg.AgentKey, what string
 		}
 		if left--; left < 0 {
 			return got, fmt.Errorf("%s: Secretive made no key in 15 minutes: make %s, then run the wizard again",
-				macKey, what)
+				stage.Key, what)
 		}
 		k.Sleep(2 * time.Second)
 	}
 	if !got.P256() {
 		return got, fmt.Errorf("%s: %s is not the P-256 key asked for: remove it in Secretive, make %s, then run the "+
-			"wizard again", macKey, got.Label(), what)
+			"wizard again", stage.Key, got.Label(), what)
 	}
 	return got, nil
 }

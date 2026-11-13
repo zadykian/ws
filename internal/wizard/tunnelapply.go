@@ -8,6 +8,7 @@ import (
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // Apply gives ws's wg0 the Mac's key as its peer, where mac.pub holds another or wg0 lacks it. The
@@ -21,7 +22,7 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	case errors.Is(err, effect.ErrNoTicket):
 		return err
 	case err != nil:
-		return errors.New(tunnelStage + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
+		return errors.New(stage.Tunnel + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")
 	}
 	c, err := macConf(t.M, t.Conf)
 	if err != nil {
@@ -30,28 +31,28 @@ func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
 	out, err := t.M.RunRoot(ctx, libexec, "client", "macos", "tunnel", "key")
 	mac := strings.TrimSpace(string(out))
 	if err != nil || !check.Key(mac) {
-		return errors.New(tunnelStage + ": root's ws client macos tunnel key prints no key: run ws client macos apply, which makes both")
+		return errors.New(stage.Tunnel + ": root's ws client macos tunnel key prints no key: run ws client macos apply, which makes both")
 	}
 	s, _ := t.Ws.Status(ctx)
 	peered := s.MacKey != mac || !s.Peered
 	if peered {
 		t.Out.Say("%s: the Mac's key goes to /etc/wireguard/mac.pub on ws, and ws server ubuntu apply --only "+
-			"wireguard runs there in a unit of its own, which gives wg0 that peer", tunnelStage)
+			"wireguard runs there in a unit of its own, which gives wg0 that peer", stage.Tunnel)
 		if err := t.Ws.NamePeer(ctx, mac); err != nil {
 			return err
 		}
 		var ok bool
 		if s, ok = t.Ws.Status(ctx); !ok || !s.Peered {
-			return errors.New(tunnelStage + ": ws's wg0 lacks the Mac's key after ws server ubuntu apply --only " +
+			return errors.New(stage.Tunnel + ": ws's wg0 lacks the Mac's key after ws server ubuntu apply --only " +
 				"wireguard: mend what it printed, then run the wizard again")
 		}
 	}
 	wg0 := s.WgKey
 	if wg0 == "" {
-		return errors.New(tunnelStage + ": ws has no wg0 key: mend what it printed, then run the wizard again")
+		return errors.New(stage.Tunnel + ": ws has no wg0 key: mend what it printed, then run the wizard again")
 	}
 	if wg0 != c.PublicKey {
-		file := confFile{t.Conf, tunnelStage, t.M, t.Out}
+		file := confFile{t.Conf, stage.Tunnel, t.M, t.Out}
 		if err := file.set(ctx, "WS_PUBLIC_KEY", wg0); err != nil {
 			return err
 		}

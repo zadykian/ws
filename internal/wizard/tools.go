@@ -9,10 +9,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// toolsStage names the stage of the Command Line Tools.
-const toolsStage = "Tools"
 
 // toolsWait is how long the stage waits for the install of the Command Line Tools, and toolsPoll
 // how often it looks.
@@ -30,10 +28,10 @@ type Tools struct {
 }
 
 // Name is the stage's name.
-func (*Tools) Name() string { return toolsStage }
+func (*Tools) Name() string { return stage.Tools }
 
 // Side is the Mac: the Command Line Tools.
-func (*Tools) Side() guided.Side { return OnMac }
+func (*Tools) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is empty: the tools come first.
 func (*Tools) WaitsOn() string { return "" }
@@ -42,7 +40,7 @@ func (*Tools) WaitsOn() string { return "" }
 type toolsInstall struct{}
 
 func (toolsInstall) String() string {
-	return toolsStage + ": would run xcode-select --install, for the Command Line Tools"
+	return stage.Tools + ": would run xcode-select --install, for the Command Line Tools"
 }
 
 // done tells whether the Command Line Tools, or Xcode, are there: xcode-select names a directory
@@ -70,14 +68,14 @@ func (t *Tools) Plan(ctx context.Context) (step.Plan, error) {
 func (t *Tools) Apply(ctx context.Context, _ step.Plan) error {
 	// An error is ignored: a dialog may be open from an earlier run.
 	_, _ = t.M.Run(ctx, "xcode-select", "--install")
-	t.Out.Say("%s: click Install in the Command Line Tools' dialog; waiting up to 60 minutes", toolsStage)
+	t.Out.Say("%s: click Install in the Command Line Tools' dialog; waiting up to 60 minutes", stage.Tools)
 	sleep := t.Sleep
 	if sleep == nil {
 		sleep = time.Sleep
 	}
 	for waited := time.Duration(0); !t.done(ctx); waited += toolsPoll {
 		if waited >= toolsWait {
-			return fmt.Errorf("%s: no Command Line Tools after 60 minutes", toolsStage)
+			return fmt.Errorf("%s: no Command Line Tools after 60 minutes", stage.Tools)
 		}
 		if err := ctx.Err(); err != nil {
 			return err

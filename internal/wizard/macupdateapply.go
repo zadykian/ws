@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // Apply downloads the install.sh of the latest release into a directory of its own, runs it, and
@@ -21,7 +22,7 @@ func (u *MacUpdate) Apply(ctx context.Context, p step.Plan) error {
 	file := tmp + "/install.sh"
 	err = u.M.Pass(ctx, false, "curl", "-fsSL", "--retry", "3", "--proto-redir", "=https", "-o", file, u.URL+"/download/"+tag+"/install.sh")
 	if err == nil {
-		u.Out.Say("%s: installing ws %s", macUpdateStage, tag)
+		u.Out.Say("%s: installing ws %s", stage.Update, tag)
 		err = u.M.Pass(ctx, false, "env", "WS_VERSION="+tag, "WS_RELEASES_URL="+u.URL, "sh", file)
 	}
 	_, _ = u.M.Run(ctx, "rm", "-rf", tmp)

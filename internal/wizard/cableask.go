@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // cableAnswer is the answer to a question of the Cable stage: a value, empty for none.
@@ -32,12 +33,12 @@ func (c *Cable) ask(ctx context.Context, key, text, def string, list []string) (
 	if value, set := c.Env(key); set {
 		if value != "" && !slices.Contains(list, value) {
 			return "", fmt.Errorf("%s: %s comes from the environment, and '%s' is none of %s: set it to one, "+
-				"or to nothing for none", cableStage, key, value, strings.Join(list, ", "))
+				"or to nothing for none", stage.Cable, key, value, strings.Join(list, ", "))
 		}
 		return value, nil
 	}
 	if !c.Tty {
-		return "", fmt.Errorf("%s: no terminal to ask %s: set %s, or set it to nothing for none", cableStage, key, key)
+		return "", fmt.Errorf("%s: no terminal to ask %s: set %s, or set it to nothing for none", stage.Cable, key, key)
 	}
 	hint := "none"
 	if def != "" {
@@ -47,12 +48,12 @@ func (c *Cable) ask(ctx context.Context, key, text, def string, list []string) (
 	raw, err := c.P.Ask(ctx, effect.Question{Text: text + " (" + key + ") [" + hint + "]",
 		Valid: func(raw string) error {
 			if v := cableAnswer(raw, def); v != "" && !slices.Contains(list, v) {
-				return fmt.Errorf("%s: %s: '%s' is none of those", c.Prog, cableStage, v)
+				return fmt.Errorf("%s: %s: '%s' is none of those", c.Prog, stage.Cable, v)
 			}
 			return nil
 		}})
 	if errors.Is(err, io.EOF) {
-		return "", fmt.Errorf("%s: the terminal ended before %s's answer: set %s", cableStage, key, key)
+		return "", fmt.Errorf("%s: the terminal ended before %s's answer: set %s", stage.Cable, key, key)
 	}
 	if err != nil {
 		return "", err

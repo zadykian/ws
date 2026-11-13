@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // scanKey returns the ed25519 key that ws offers at the way's host and port, as "ssh-ed25519 KEY",
@@ -36,7 +37,7 @@ func (h *HostKey) fingerprint(ctx context.Context, line string) (string, error) 
 	if f := strings.Fields(string(out)); err == nil && len(f) > 1 {
 		return f[1], nil
 	}
-	return "", fmt.Errorf("%s: ssh-keygen cannot read the key that ws offers", hostStage)
+	return "", fmt.Errorf("%s: ssh-keygen cannot read the key that ws offers", stage.Host)
 }
 
 // offer returns the sentence that names the key that ws offers.

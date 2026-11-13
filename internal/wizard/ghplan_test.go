@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 func newGh(look func(string) (string, error)) (*Gh, *effecttest.Machine) {
@@ -66,7 +67,7 @@ func TestGhPlanSaysWhereListed(t *testing.T) {
 	if _, err := g.Plan(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	want := "say: " + ghStage + ": the Mac's key is among GitHub's authentication keys already"
+	want := "say: " + stage.GitHub + ": the Mac's key is among GitHub's authentication keys already"
 	if got := g.Out.(*effecttest.Out).Lines; len(got) != 1 || got[0] != want {
 		t.Errorf("lines = %q, want %q", got, want)
 	}

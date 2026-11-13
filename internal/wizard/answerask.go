@@ -7,10 +7,8 @@ import (
 	"io"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// answers names the stage in its messages.
-const answers = "Answers"
 
 // asker gets the answers of the Answers stage: from the environment, which sets a key even to
 // nothing, else from the maintainer.
@@ -35,25 +33,25 @@ func (a *asker) ask(ctx context.Context, q question) (string, error) {
 	value, set := a.env(q.key)
 	if set {
 		if why := q.refusal(value, a.lan()); why != "" {
-			a.out.Say("%s: %s", answers, why)
-			return "", fmt.Errorf("%s: %s comes from the environment: set it to such a value, or unset it", answers, q.key)
+			a.out.Say("%s: %s", stage.Answers, why)
+			return "", fmt.Errorf("%s: %s comes from the environment: set it to such a value, or unset it", stage.Answers, q.key)
 		}
 	} else {
 		if !a.tty {
-			return "", fmt.Errorf("%s: no terminal to ask %s: set %s", answers, q.key, q.key)
+			return "", fmt.Errorf("%s: no terminal to ask %s: set %s", stage.Answers, q.key, q.key)
 		}
 		if !a.told {
-			a.out.Say("%s: values for %s; an empty line takes the one in brackets, and none leaves it empty", answers, a.conf)
+			a.out.Say("%s: values for %s; an empty line takes the one in brackets, and none leaves it empty", stage.Answers, a.conf)
 			a.told = true
 		}
 		raw, err := a.p.Ask(ctx, effect.Question{Text: q.prompt(), Valid: func(raw string) error {
 			if why := q.refusal(q.reply(raw), a.lan()); why != "" {
-				return fmt.Errorf("%s: %s: %s", a.prog, answers, why)
+				return fmt.Errorf("%s: %s: %s", a.prog, stage.Answers, why)
 			}
 			return nil
 		}})
 		if errors.Is(err, io.EOF) {
-			return "", fmt.Errorf("%s: the terminal ended before %s's answer: set %s", answers, q.key, q.key)
+			return "", fmt.Errorf("%s: the terminal ended before %s's answer: set %s", stage.Answers, q.key, q.key)
 		}
 		if err != nil {
 			return "", err

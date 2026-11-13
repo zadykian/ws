@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
@@ -19,7 +20,7 @@ import (
 func wizardQueue(stages []step.Step) []tui.Stage {
 	queue := make([]tui.Stage, len(stages))
 	for i, s := range stages {
-		queue[i] = tui.Stage{Name: s.Name(), Side: string(wizard.OnMac), Waits: guided.Locks(s), Nested: nestedRows(s.Name())}
+		queue[i] = tui.Stage{Name: s.Name(), Side: string(stage.Mac), Waits: guided.Locks(s), Nested: nestedRows(s.Name())}
 		if m, ok := guided.SideOf(s); ok {
 			queue[i].Side = string(m)
 		}

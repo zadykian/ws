@@ -12,10 +12,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// cableStage names the stage in its messages.
-const cableStage = "Cable"
 
 // cableEnd is ws's end of the cable, given to its port by the network role. The Mac's service gets
 // the other end.
@@ -64,23 +62,23 @@ type cablePort struct{ name, carrier, addrs string }
 var cableEndAt = regexp.MustCompile(`(^| )` + regexp.QuoteMeta(cableEnd) + `/`)
 
 // Name is the stage's name.
-func (*Cable) Name() string { return cableStage }
+func (*Cable) Name() string { return stage.Cable }
 
 // Locks is ws client macos apply, whose steps the stage applies itself, so a list holds them on
 // beside it. A plain run's Cable reads Homebrew as ever.
-func (*Cable) Locks() string { return setupStage }
+func (*Cable) Locks() string { return stage.Setup }
 
 // Side is the Mac: the cable's service, after ws's port in host_vars.yml.
-func (*Cable) Side() guided.Side { return OnMac }
+func (*Cable) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is Homebrew: under --check on a new Mac, Answers is skipped and writes no mac.conf to
 // read. Plan says itself that the stage is after ws's run, as wizard-cable.sh's cable_after did.
 // That run makes /etc/ws/host_vars.yml on ws, where it has no cable to see off the LAN.
-func (*Cable) WaitsOn() string { return homebrewStage }
+func (*Cable) WaitsOn() string { return stage.Homebrew }
 
 type cableChange string
 
-func (c cableChange) String() string { return cableStage + ": would " + string(c) }
+func (c cableChange) String() string { return stage.Cable + ": would " + string(c) }
 
 // read sets the ports to what ws lists. It lists them once port holds 10.77.0.1, or after 10 s, in
 // one login, where port is set.
@@ -93,7 +91,7 @@ func (c *Cable) read(ctx context.Context, port string) error {
 		out, err = c.Ws.WaitPorts(ctx, port)
 	}
 	if err != nil {
-		return fmt.Errorf("%s: link failed on ws: %w", cableStage, err)
+		return fmt.Errorf("%s: link failed on ws: %w", stage.Cable, err)
 	}
 	c.ports = nil
 	for _, l := range strings.Split(string(out), "\n") {
@@ -155,7 +153,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 	// false, and the plan says the stage comes after it, as wizard-cable.sh's cable_after did.
 	w, err := c.SSH.Way(ctx)
 	if err != nil && !c.Check {
-		return step.Plan{}, fmt.Errorf("%s: %w", cableStage, err)
+		return step.Plan{}, fmt.Errorf("%s: %w", stage.Cable, err)
 	}
 	in := false
 	if err == nil {
@@ -169,7 +167,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if c.Check && !none && (!in || !c.RunDone(ctx, session.Want{Target: cf.Target, User: cf.User})) {
-		c.Out.Say("%s: after %s", cableStage, stages.RunStage)
+		c.Out.Say("%s: after %s", stage.Cable, stages.RunStage)
 		return step.Plan{}, nil
 	}
 	if !c.lacks() {

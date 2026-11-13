@@ -9,10 +9,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// setupStage names the stage in its messages.
-const setupStage = "ws client macos apply"
 
 // Setup is the stage that has ws client macos apply set up the Mac from mac.conf, after sudo's
 // password rather than amid its lines. ws client macos apply changes only what differs, and is
@@ -34,15 +32,15 @@ type Setup struct {
 }
 
 // Name is the stage's name.
-func (*Setup) Name() string { return setupStage }
+func (*Setup) Name() string { return stage.Setup }
 
 // Side is the Mac: ws client macos apply.
-func (*Setup) Side() guided.Side { return OnMac }
+func (*Setup) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is Homebrew, which ws client macos apply needs. Under --check, ws client macos apply's
 // plan stands alone, as setup_after in sh did, and the git step says itself what waits on the
 // login.
-func (*Setup) WaitsOn() string { return homebrewStage }
+func (*Setup) WaitsOn() string { return stage.Homebrew }
 
 // Plan runs ws client macos apply's plan, which prints each change it finds. Where PATH has no
 // brew, ws client macos apply would stop, so the plan waits on Homebrew. It waits on the Mac key
@@ -56,10 +54,10 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 		look = exec.LookPath
 	}
 	if _, err := look("brew"); err != nil {
-		return step.Plan{Changes: []step.Change{todo(setupStage + ": after Homebrew")}}, nil
+		return step.Plan{Changes: []step.Change{stage.Todo(stage.Setup + ": after Homebrew")}}, nil
 	}
 	if s.unnamed() {
-		return step.Plan{Changes: []step.Change{todo(setupStage + ": after " + macKey)}}, nil
+		return step.Plan{Changes: []step.Change{stage.Todo(stage.Setup + ": after " + stage.Key)}}, nil
 	}
 	if !s.sudoed {
 		switch err := effect.Validate(ctx, s.M); {
@@ -74,7 +72,7 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 	if err != nil || !changed {
 		return step.Plan{}, err
 	}
-	return step.Plan{Changes: []step.Change{todo(setupStage + ": would apply the steps above")}}, nil
+	return step.Plan{Changes: []step.Change{stage.Todo(stage.Setup + ": would apply the steps above")}}, nil
 }
 
 // unnamed reports whether mac.conf lacks a key that the Mac key stage asks for. Under --check that

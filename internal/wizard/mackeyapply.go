@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 // Apply makes what the plan lists, in order. A change but a question is PlanCopy's: a directory
@@ -30,7 +31,7 @@ func (k *MacKey) Apply(ctx context.Context, p step.Plan) error {
 // refused words the stop where mac.conf with a new line would be refused.
 func refused(err error) error {
 	if errors.Is(err, errRefused) {
-		return fmt.Errorf("%s: ssh has no usable key for ws, as above; mend that, then run the wizard again", macKey)
+		return fmt.Errorf("%s: ssh has no usable key for ws, as above; mend that, then run the wizard again", stage.Key)
 	}
 	return err
 }

@@ -9,9 +9,10 @@ import (
 	"github.com/zadykian/ws/internal/sshcfg"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
-func (k *MacKey) file() confFile { return confFile{k.Conf, macKey, k.M, k.Out} }
+func (k *MacKey) file() confFile { return confFile{k.Conf, stage.Key, k.M, k.Out} }
 
 // Plan finds what the key that ssh offers ws lacks: a question where mac.conf names none, or ws's
 // copy of a key of Secretive's. A file key must be there, and an agent's key listed by its agent.
@@ -36,7 +37,7 @@ func (k *MacKey) changes(ctx context.Context, c conf.Conf) ([]step.Change, error
 	}
 	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", macKey, err)
+		return nil, fmt.Errorf("%s: %w", stage.Key, err)
 	}
 	return []step.Change{askKey{loginUse, keyQuestion(loginUse, keys, k.login(c))}}, nil
 }
@@ -54,7 +55,7 @@ func (k *MacKey) named(ctx context.Context, c conf.Conf) ([]step.Change, error) 
 	pub, agent := key.File, sshcfg.Expand(key.Agent, k.Home)
 	if !k.listed(ctx, key.Key, agent) {
 		return nil, fmt.Errorf("%s: the agent at %s lists no key of %s: open Secretive, where it is that agent, "+
-			"or start the agent, then run the wizard again", macKey, agent, pub)
+			"or start the agent, then run the wizard again", stage.Key, agent, pub)
 	}
 	// The stages after this one offer the key, and ssh reads its .pub for that.
 	return setup.PlanCopy(k.M, pub, key.Text, k.Home)
@@ -73,7 +74,7 @@ func (k *MacKey) gitQuestion(ctx context.Context, c conf.Conf) ([]step.Change, e
 	}
 	keys, _, err := setup.SecretiveKeys(ctx, k.M, k.Home)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", macKey, err)
+		return nil, fmt.Errorf("%s: %w", stage.Key, err)
 	}
 	return []step.Change{askKey{gitUse, keyQuestion(gitUse, keys, k.login(c))}}, nil
 }

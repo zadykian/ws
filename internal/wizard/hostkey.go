@@ -9,10 +9,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
-
-// hostStage names the stage in its messages.
-const hostStage = "Host key"
 
 // HostKey is the stage of ws's host key: the ed25519 key that ws offers, matched against ws's
 // console. It goes in known_hosts under the name ws, which config.d/ws's HostKeyAlias gives each
@@ -31,19 +29,19 @@ type HostKey struct {
 }
 
 // Name is the stage's name.
-func (*HostKey) Name() string { return hostStage }
+func (*HostKey) Name() string { return stage.Host }
 
 // Side is the Mac: known_hosts holds ws's host key.
-func (*HostKey) Side() guided.Side { return OnMac }
+func (*HostKey) Side() guided.Side { return stage.Mac }
 
 // WaitsOn is ws client macos apply, which writes config.d/ws.
-func (*HostKey) WaitsOn() string { return setupStage }
+func (*HostKey) WaitsOn() string { return stage.Setup }
 
 // hostAdd is the change that adds ws's key to known_hosts.
 type hostAdd struct{ file string }
 
 func (c hostAdd) String() string {
-	return hostStage + ": would add ws's key to " + c.file
+	return stage.Host + ": would add ws's key to " + c.file
 }
 
 // conf reads mac.conf.
@@ -79,7 +77,7 @@ func noWay(c conf.Conf) error {
 	default:
 		how += ", as docs/mac-targets.md says"
 	}
-	return errors.New(hostStage + ": ssh finds no direct way to ws from this network: no cable, no address in " +
+	return errors.New(stage.Host + ": ssh finds no direct way to ws from this network: no cable, no address in " +
 		"WS_LAN and no WS_REMOTE_PORT; " + how)
 }
 

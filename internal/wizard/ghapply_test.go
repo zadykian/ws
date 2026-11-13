@@ -8,6 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 )
 
 func TestGhApply(t *testing.T) {
@@ -67,7 +68,7 @@ func TestGhSaysNoAlreadyAfterItsAdd(t *testing.T) {
 	if p, err := g.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Fatalf("Plan after the add = %v, %v; want nothing", p.Changes, err)
 	}
-	want := "say: " + ghStage + ": ran gh ssh-key add /h/k.pub --title mac"
+	want := "say: " + stage.GitHub + ": ran gh ssh-key add /h/k.pub --title mac"
 	if got := g.Out.(*effecttest.Out).Lines; len(got) != 1 || got[0] != want {
 		t.Errorf("lines = %q, want %q alone", got, want)
 	}
