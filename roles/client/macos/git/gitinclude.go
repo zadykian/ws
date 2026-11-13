@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"os/exec"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/gitcfg"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // includeText is what goes at the top of ~/.gitconfig, so that the file's own settings come after
@@ -36,9 +36,9 @@ func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string,
 // gitconfigLines is the include at the top of ~/.gitconfig. Its place is wrong where it comes twice
 // or sits below the file's own settings, which it then overrides. git config reads the file, so the
 // step stops before it acts, as the ssh step does for ssh's Include.
-func (g *Git) gitconfigLines() userfile.Lines {
-	return userfile.Lines{
-		M: g.M, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
+func (g *Git) gitconfigLines() file.UserLines {
+	return file.UserLines{
+		M: g.M, Out: g.Out, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
 		Shown: "[include] path = ~/.config/ws/gitconfig",
 		Name:  "the include of ~/.config/ws/gitconfig",
 		Has:   g.included,
@@ -46,12 +46,12 @@ func (g *Git) gitconfigLines() userfile.Lines {
 }
 
 // included says whether the file includes ~/.config/ws/gitconfig, as git reads it.
-func (g *Git) included(ctx context.Context, _ effect.Machine, file string, _ []byte) (bool, error) {
-	paths, err := g.lines(ctx, file, "--type", "path", "--get-all", "include.path")
+func (g *Git) included(ctx context.Context, _ effect.Machine, path string, _ []byte) (bool, error) {
+	paths, err := g.lines(ctx, path, "--type", "path", "--get-all", "include.path")
 	if err != nil {
 		return false, err
 	}
-	names, err := g.lines(ctx, file, "--name-only", "--list")
+	names, err := g.lines(ctx, path, "--name-only", "--list")
 	if err != nil {
 		return false, err
 	}
@@ -61,7 +61,7 @@ func (g *Git) included(ctx context.Context, _ effect.Machine, file string, _ []b
 	}
 	holds, err := gitcfg.Included(paths, first, g.Home+"/.config/ws")
 	if err != nil {
-		return false, userfile.Misplaced("%s %v", file, err)
+		return false, file.Misplaced("%s %v", path, err)
 	}
 	return holds, nil
 }
@@ -69,15 +69,15 @@ func (g *Git) included(ctx context.Context, _ effect.Machine, file string, _ []b
 // includeChanges adds the notes to lines, the changes to ~/.gitconfig, where there are any. It warns
 // of the settings of identity and signing in the file itself, which win, and in git's XDG file,
 // which lose.
-func (g *Git) includeChanges(ctx context.Context, found userfile.Found, lines []step.Change) []step.Change {
+func (g *Git) includeChanges(ctx context.Context, found file.Found, lines []step.Change) []step.Change {
 	if len(lines) == 0 {
 		return nil
 	}
-	if file := g.Home + "/.gitconfig"; found.Exists {
-		names, _ := g.lines(ctx, file, "--name-only", "--list")
+	if rc := g.Home + "/.gitconfig"; found.Exists {
+		names, _ := g.lines(ctx, rc, "--name-only", "--list")
 		if own := gitcfg.Own(names); own != "" {
 			g.note("%s's own settings of %s, below the include, win over ~/.config/ws/gitconfig's",
-				file, own)
+				rc, own)
 		}
 	}
 	xdg := g.XDG

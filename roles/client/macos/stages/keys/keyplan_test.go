@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
 
@@ -77,14 +77,14 @@ func TestMacKeyPlanNeedsAFileKey(t *testing.T) {
 // must offer the agent's keys alone, and plan the copy of the one named that the stages after it
 // read.
 func TestMacKeyPlanTakesTheAgentsKey(t *testing.T) {
-	k, m, _ := newMacKey(t, "")
+	k, m, out := newMacKey(t, "")
 	agent(m, p256)
 	if got := planned(k); !strings.Contains(got, ": "+p256Label+"; make a new one (the default)]") {
 		t.Errorf("Plan = %q, want the agent's key offered", got)
 	}
 	m.Files[confPathForTest] = []byte("WS_IDENTITY_PUB_KEY=" + listed(p256)[0].Pub() + "\n")
 	p, err := k.Plan(context.Background())
-	if err != nil || len(p.Changes) != 1 || p.Changes[0] != (change.KeyCopy{Path: copyOf(p256), Text: p256}) {
+	if err != nil || len(p.Changes) != 1 || p.Changes[0] != (keys.Copy{M: m, Out: out, Path: copyOf(p256), Text: p256}) {
 		t.Fatalf("Plan = %v, %v; want the copy alone", p.Changes, err)
 	}
 	for _, call := range m.Calls {

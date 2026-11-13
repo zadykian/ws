@@ -1,4 +1,4 @@
-package userfile
+package file
 
 import (
 	"cmp"
@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
 
 // ErrLinked is a plan's error for a link that lacks ws's lines: a run would replace the link with a
@@ -35,10 +34,11 @@ func Misplaced(format string, a ...any) error {
 	return linesError{ErrMisplaced, fmt.Sprintf(format, a...)}
 }
 
-// Lines is ws's lines in a file of the user's that holds other text too. A run adds them once,
+// UserLines is ws's lines in a file of the user's that holds other text too. A run adds them once,
 // at the top or the end, and keeps the old file. One read gives the plan and the report.
-type Lines struct {
+type UserLines struct {
 	M    effect.Machine
+	Out  effect.Out
 	Path string
 	// Lines is the text to add. It ends in a newline.
 	Lines string
@@ -57,7 +57,7 @@ type Lines struct {
 }
 
 // remedy tells what to do in a file that a run leaves alone.
-func (l Lines) remedy() string {
+func (l UserLines) remedy() string {
 	if l.Top {
 		return "put '" + l.Shown + "' at the top of that file"
 	}
@@ -66,7 +66,7 @@ func (l Lines) remedy() string {
 
 // Read reads the file. link is where a link points. holds is whether the file has the lines, and
 // err is Misplaced where they sit out of place, with found read.
-func (l Lines) Read(ctx context.Context) (found Found, link string, holds bool, err error) {
+func (l UserLines) Read(ctx context.Context) (found Found, link string, holds bool, err error) {
 	info, err := l.M.Stat(l.Path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return Found{}, "", false, nil
@@ -83,7 +83,7 @@ func (l Lines) Read(ctx context.Context) (found Found, link string, holds bool, 
 }
 
 // After is the text that a run leaves, as read in found.
-func (l Lines) After(found Found, holds bool) []byte {
+func (l UserLines) After(found Found, holds bool) []byte {
 	switch {
 	case holds:
 		return found.Text
@@ -100,28 +100,28 @@ func (l Lines) After(found Found, holds bool) []byte {
 }
 
 // Changes plans what read found, or stops at its error, at a link that lacks the lines.
-func (l Lines) Changes(found Found, link string, holds bool, err error) ([]step.Change, error) {
+func (l UserLines) Changes(found Found, link string, holds bool, err error) ([]step.Change, error) {
 	switch {
 	case err != nil:
 		return nil, err
 	case holds:
 		return nil, nil
 	case !found.Exists:
-		return []step.Change{change.Write{Path: l.Path, Before: nil, After: l.After(found, false), Exists: false, Mode: l.Mode}}, nil
+		return []step.Change{UserWrite{M: l.M, Out: l.Out, Path: l.Path, Before: nil, After: l.After(found, false), Exists: false, Mode: l.Mode}}, nil
 	case link != "":
 		return nil, linesError{ErrLinked, fmt.Sprintf("%s is a link to %s: %s", l.Path, link, l.remedy())}
 	}
-	return []step.Change{Keep(l.Path, l.Now), change.Write{Path: l.Path, Before: found.Text, After: l.After(found, false), Exists: true, Mode: found.Mode.Perm()}}, nil
+	return []step.Change{Keep(l.M, l.Out, l.Path, l.Now), UserWrite{M: l.M, Out: l.Out, Path: l.Path, Before: found.Text, After: l.After(found, false), Exists: true, Mode: found.Mode.Perm()}}, nil
 }
 
 // Plan writes the lines where missing: none, a new file, or the old file kept and rewritten.
-func (l Lines) Plan(ctx context.Context) ([]step.Change, error) {
+func (l UserLines) Plan(ctx context.Context) ([]step.Change, error) {
 	found, link, holds, err := l.Read(ctx)
 	return l.Changes(found, link, holds, err)
 }
 
 // Item says how the file stands against what read found. A conflict is where the plan stops.
-func (l Lines) Item(found Found, link string, holds bool, err error) (step.Item, error) {
+func (l UserLines) Item(found Found, link string, holds bool, err error) (step.Item, error) {
 	item := lineItem(l.Path, cmp.Or(l.Name, l.Shown), found.Exists, holds)
 	switch {
 	case errors.Is(err, ErrMisplaced):
@@ -135,16 +135,16 @@ func (l Lines) Item(found Found, link string, holds bool, err error) (step.Item,
 }
 
 // Report reads the file as a plan does.
-func (l Lines) Report(ctx context.Context) ([]step.Item, error) {
+func (l UserLines) Report(ctx context.Context) ([]step.Item, error) {
 	found, link, holds, err := l.Read(ctx)
 	item, err := l.Item(found, link, holds, err)
 	return []step.Item{item}, err
 }
 
 // Keep copies the old file to PATH.TIME~. This is the one stamp of the copies.
-func Keep(file string, now func() time.Time) change.Backup {
+func Keep(m effect.Machine, out effect.Out, path string, now func() time.Time) UserBackup {
 	if now == nil {
 		now = time.Now
 	}
-	return change.Backup{Path: file, To: file + "." + now().Format("20060102150405") + "~"}
+	return UserBackup{M: m, Out: out, Path: path, To: path + "." + now().Format("20060102150405") + "~"}
 }

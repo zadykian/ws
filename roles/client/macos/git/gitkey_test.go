@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
+	"github.com/zadykian/ws/roles/client/macos/internal/keys"
 	"github.com/zadykian/ws/roles/client/macos/internal/mactest"
 	"github.com/zadykian/ws/roles/internal/sshcfg"
 )
@@ -32,7 +32,7 @@ func TestGitSignsWithTheCopyOfTheAgentsKey(t *testing.T) {
 	}
 	var copied, config bool
 	for _, c := range p.Changes {
-		copied = copied || c == change.KeyCopy{Path: pub, Text: line}
+		copied = copied || c == keys.Copy{M: m, Out: g.Out, Path: pub, Text: line}
 		config = config || strings.Contains(c.String(), `signingkey = "`+pub+`"`)
 	}
 	if !copied || !config {

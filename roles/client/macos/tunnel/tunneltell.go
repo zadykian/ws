@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"io"
 	"io/fs"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 // publicKey asks root's copy of ws for the Mac's public key. It returns "" where there is no copy
@@ -41,7 +41,7 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	t.public = public
-	cs, link, err := userfile.WsDirs(t.M, t.Home).Plan()
+	cs, link, err := file.WsDirs(t.M, t.Out, t.Home).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +55,8 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 }
 
 // pub is tunnel.pub, which holds the key that tell read. Its mode is the user's.
-func (t *Tunnel) pub() userfile.File {
-	return userfile.File{M: t.M, Path: t.pubFile(), Text: []byte(t.public + "\n")}
+func (t *Tunnel) pub() file.UserFile {
+	return file.UserFile{M: t.M, Out: t.Out, Path: t.pubFile(), Text: []byte(t.public + "\n")}
 }
 
 // publish writes tunnel.pub after the changes, where the key or root's copy was missing when the

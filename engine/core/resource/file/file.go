@@ -1,5 +1,7 @@
 // Package file puts files, directories, links and lines on the machine, and removes paths, each
-// as a resource that plans its changes and reports its state.
+// as a resource that plans its changes and reports its state. The User types do the same in the
+// user's home. They read and write as the user: a whole file, a directory, or ws's lines in a file
+// that holds other text.
 package file
 
 import (

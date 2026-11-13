@@ -133,7 +133,7 @@ func noTerminal(use keyUse, keys []sshcfg.AgentKey) error {
 // directories of the copies, which ssh and git read.
 // For ws's login key, it names Secretive's agent too, which holds the private key.
 func (k *MacKey) name(ctx context.Context, use keyUse, key sshcfg.AgentKey) error {
-	copied, err := keys.PlanCopy(k.M, sshcfg.Expand(key.Pub(), k.Home), key.Line+"\n", k.Home)
+	copied, err := keys.PlanCopy(k.M, k.Out, sshcfg.Expand(key.Pub(), k.Home), key.Line+"\n", k.Home)
 	if err != nil {
 		return err
 	}

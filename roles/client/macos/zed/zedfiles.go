@@ -1,11 +1,10 @@
 package zed
 
 import (
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/internal/change"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 const (
@@ -33,30 +32,30 @@ func (z *Zed) files() ([]step.Change, error) {
 		return nil, err
 	}
 	for _, f := range z.whole() {
-		planned, err := userfile.Owned(z.Out, f)
+		planned, err := file.Owned(z.Out, f)
 		if err != nil {
 			return nil, err
 		}
 		cs = append(cs, planned...)
 	}
 	if _, err := z.M.Stat(dir + "/settings.json"); err != nil {
-		cs = append(cs, change.Write{Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
+		cs = append(cs, file.UserWrite{M: z.M, Out: z.Out, Path: dir + "/settings.json", Before: nil, After: []byte(zedSeed), Exists: false, Mode: 0o644})
 	}
 	link.Warn(z.Out, len(cs), "Zed's files go there")
 	return cs, nil
 }
 
 // dirs returns ~/.config and Zed's directory in it.
-func (z *Zed) dirs() userfile.Dirs {
-	return userfile.Dirs{{M: z.M, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Path: z.Home + "/.config/zed", Mode: 0o755}}
+func (z *Zed) dirs() file.UserDirs {
+	return file.UserDirs{{M: z.M, Out: z.Out, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Out: z.Out, Path: z.Home + "/.config/zed", Mode: 0o755}}
 }
 
 // whole returns global_settings.json and keymap.json, the files that ws replaces whole.
-func (z *Zed) whole() []userfile.File {
+func (z *Zed) whole() []file.UserFile {
 	dir := z.Home + "/.config/zed"
-	return []userfile.File{
-		{M: z.M, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
-		{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
+	return []file.UserFile{
+		{M: z.M, Out: z.Out, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
+		{M: z.M, Out: z.Out, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
 	}
 }
 

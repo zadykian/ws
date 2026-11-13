@@ -14,7 +14,6 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
-	"github.com/zadykian/ws/roles/client/macos/internal/userfile"
 )
 
 const resolverDir = "/etc/resolver"
@@ -70,7 +69,7 @@ func (n *Networks) Report(ctx context.Context) ([]step.Item, error) {
 	for _, r := range list {
 		parts = append(parts, file.File{M: n.M, Path: resolverDir + "/" + r.Domain, Content: []byte(resolverText(r.Addresses)), Mode: 0o644})
 	}
-	return userfile.Gather(ctx, parts...)
+	return file.Gather(ctx, parts...)
 }
 
 func (n *Networks) routes(ctx context.Context) ([]step.Change, error) {
