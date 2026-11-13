@@ -31,5 +31,6 @@ func daemonOf(m effect.Machine, server string) (launchd.Daemon, error) {
 
 // daemonPaths names the files of d. The key is the Mac's, whatever the server.
 func daemonPaths(d launchd.Daemon) settings.Paths {
-	return settings.Paths{Conf: d.Conf, Key: launchd.Dir + "/private.key", Routes: d.Routes, State: d.State, Log: d.Log}
+	return settings.Paths{Conf: d.Conf, Key: launchd.Dir + "/private.key", Routes: d.Routes, State: d.State, Log: d.Log,
+		Root: launchd.Dir}
 }
