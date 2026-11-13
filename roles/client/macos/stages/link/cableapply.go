@@ -134,7 +134,7 @@ func (c *Cable) service(ctx context.Context) error {
 		return err
 	}
 	if _, err := c.M.Run(ctx, "ping", "-c", "1", "-t", "3", cableEnd); err != nil {
-		return fmt.Errorf("%s: ping -c 1 -t 3 %s, ws's end of the cable, got no answer: mac.conf's "+
+		return fmt.Errorf("%s: ping -c 1 -t 3 %s, ws's end of the cable, got no answer: server.conf's "+
 			"WS_CABLE_SERVICE must name the service of the adapter that the cable plugs into", stage.Cable, cableEnd)
 	}
 	return nil

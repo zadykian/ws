@@ -148,7 +148,7 @@ prints '' --check
 logged
 # A disabled service draws a warning on every run, and still gets the settings.
 with 'WS_CABLE_SERVICE="ws stand-in bridge"'
-warning="ws client macos apply: warning: networksetup lists \"ws stand-in bridge\", mac.conf's"
+warning="ws client macos apply: warning: networksetup lists \"ws stand-in bridge\", server.conf's"
 warning="$warning WS_CABLE_SERVICE, as disabled, so the cable carries nothing: turn it on in"
 warning="$warning System Settings › Network"
 prints "$warning${nl}ws client macos apply: ran networksetup -setmanual \"ws stand-in bridge\" $args"
@@ -158,7 +158,7 @@ logged "4 -setmanual ws stand-in bridge $args"
 # or is a glob that matches one.
 for service in 'ws stand-in absent' 'ws stand-in' 'stand-in 10/100/1G/2.5G LAN' 'ws stand-in*'; do
     with "WS_CABLE_SERVICE=\"$service\""
-    stops "ws client macos apply: networksetup -listallnetworkservices lacks \"$service\", mac.conf's"
+    stops "ws client macos apply: networksetup -listallnetworkservices lacks \"$service\", server.conf's"
 done
 logged
 # A -setmanual that fails stops ws client macos apply.

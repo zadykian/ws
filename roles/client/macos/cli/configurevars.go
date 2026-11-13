@@ -20,6 +20,8 @@ import (
 // reach.
 type varsReach struct {
 	p enginecli.Env
+	// server is the name of the server that it reaches.
+	server string
 	// sudo is the scan's, whose way to root the state screen keeps. It stands unread where the scan
 	// never reached it, and a read then asks. Nil makes a new one for each reach.
 	sudo *host.Sudo
@@ -49,7 +51,7 @@ func (r *varsReach) reachOn(ctx context.Context, m effect.Machine, t rootTalk) (
 		return nil, err
 	}
 	macConf := conf.Path(r.p.Getenv, r.p.Pwd)
-	server := conf.ServerPath(macConf, conf.FirstServer)
+	server := conf.ServerPath(macConf, r.server)
 	ssh := remote.SSH{M: m, Lock: lock, Home: r.p.Getenv("HOME"), Ways: host.MacWays{M: m, Conf: server}}
 	sudo := cmp.Or(r.sudo, &host.Sudo{})
 	// A kept one holds the effects of a screen that has ended.
