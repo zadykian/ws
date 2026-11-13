@@ -14,7 +14,7 @@ import (
 // serverTarget is ws server ubuntu apply's side of the verbs. opts holds the flags, read when the
 // command runs.
 func serverTarget(p cli.Env, opts *applyOptions) engine.Target {
-	return engine.Target{Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
+	return engine.Target{Wizard: serverSide(p), Prepare: func(_ context.Context, c engine.Call) (engine.Run, error) {
 		r, err := prepareServer(c, p, *opts)
 		if err != nil {
 			return engine.Run{}, err

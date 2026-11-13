@@ -18,7 +18,7 @@ import (
 // macTarget is ws client macos apply's side of the verbs. only holds the steps that --only names,
 // read when the command runs.
 func macTarget(p cli.Env, only *[]string) engine.Target {
-	return engine.Target{Change: macChange, State: macReport(p), Refuse: func(engine.Call) string { return wizardRefusal(p) },
+	return engine.Target{Wizard: macSide(p), Change: macChange, State: macReport(p), Refuse: func(engine.Call) string { return wizardRefusal(p) },
 		NoScreen: "it needs a terminal and no --plain: anywhere else, edit mac.conf by hand",
 		Sheets: func(ctx context.Context, c engine.Call) ([]tui.Sheet, func(context.Context), error) {
 			return macForms(c.In, c.Err, p)(ctx)

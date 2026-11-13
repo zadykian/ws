@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 
-	"github.com/spf13/cobra"
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
@@ -18,15 +17,9 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 )
 
-// wizardSide is a wizard's engine.Side, with its Configure forms.
-type wizardSide struct {
-	engine.Side
-	forms func(context.Context) ([]tui.Sheet, func(context.Context), error)
-}
-
 // macSide is ws client macos wizard's side.
-func macSide(c *cobra.Command, p cli.Env) wizardSide {
-	return wizardSide{forms: macForms(c.InOrStdin(), c.ErrOrStderr(), p), Side: engine.Side{
+func macSide(p cli.Env) engine.Side {
+	return engine.Side{
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return wizardStages(effectsOf(p, e), o)
 		},
@@ -45,14 +38,12 @@ func macSide(c *cobra.Command, p cli.Env) wizardSide {
 					Home: p.Getenv("HOME"), Args: p.Argv}
 			}}
 		},
-	}}
+	}
 }
 
-// serverSide is ws server ubuntu wizard's side. Every stage runs on ws, with no caffeinate, and the
-// forms are ws's values alone.
-func serverSide(p cli.Env) wizardSide {
-	forms := func(context.Context) ([]tui.Sheet, func(context.Context), error) { return serverSheets(p), nil, nil }
-	return wizardSide{forms: forms, Side: engine.Side{
+// serverSide is ws server ubuntu wizard's side. Every stage runs on ws, with no caffeinate.
+func serverSide(p cli.Env) engine.Side {
+	return engine.Side{
 		Stages: func(e engine.WizardEffects, o engine.WizardOptions) []step.Step {
 			return serverWizardStages(effectsOf(p, e), o)
 		},
@@ -60,7 +51,7 @@ func serverSide(p cli.Env) wizardSide {
 		Read: func(string, any) (tui.StateReader, func(context.Context)) {
 			return stateRead(serverOpen, p.Version), nil
 		},
-	}}
+	}
 }
 
 // effectsOf is e as the stages of p take it: p acts on e's machine.

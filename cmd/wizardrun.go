@@ -20,10 +20,10 @@ import (
 
 // wizardRun is a wizard's run at a terminal, over its side: the Mac's or ws's.
 type wizardRun struct {
-	c    *cobra.Command
-	p    cli.Env
-	side wizardSide
-	o    engine.WizardOptions
+	c *cobra.Command
+	p cli.Env
+	t engine.Target
+	o engine.WizardOptions
 }
 
 // start runs the wizard on lines, or on its lists at a terminal. The steps that before build run
@@ -59,10 +59,10 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out engine.
 		term.Flush()
 	}
 	talks, _ := w.p.Machine.(effect.Foreground)
-	stages := w.side.Stages(engine.WizardEffects{Machine: w.p.Machine, Prog: w.c.CommandPath(), Talks: talks,
+	stages := w.t.Wizard.Stages(engine.WizardEffects{Machine: w.p.Machine, Prog: w.c.CommandPath(), Talks: talks,
 		Ask: signalPrompt{term}, Hidden: term, Out: out, Text: w.c.OutOrStdout(), Obs: out, Hand: hand, Sudo: w.newSudo()}, w.o)
 	_, err := wizard.Run(ctx, w.p.Machine, step.Options{Observer: out, Check: w.o.Check}, stages, w.p.LockDir(),
-		w.side.Pid, closing)
+		w.t.Wizard.Pid, closing)
 	// The runner names the stage before the stage's own message.
 	return engine.Cause(err)
 }
@@ -74,7 +74,9 @@ func (w wizardRun) draw() error {
 		return w.whole()
 	}
 	return tui.RunWizard(w.c.Context(), tui.Wizard{Title: w.c.CommandPath(), Config: w.config(), Round: w.round,
-		Forms: w.side.forms})
+		Forms: func(ctx context.Context) ([]tui.Sheet, func(context.Context), error) {
+			return w.t.Sheets(ctx, cli.CallOf(w.c, w.p))
+		}})
 }
 
 // round is the works of a scan. A new one reads the forms' answers. The state screen's read of ws and
@@ -83,13 +85,13 @@ func (w wizardRun) round() tui.Round {
 	sudo := w.newSudo()
 	stages := w.plainStages()
 	var run string // ws's run, found once a round; a side with none has no name to choose
-	if r, ok := w.side.WsRun(stages); ok {
+	if r, ok := w.t.Wizard.WsRun(stages); ok {
 		run = r.Name
 	}
 	return tui.Round{
-		Stages: wizardQueue(w.side.Side, stages),
+		Stages: wizardQueue(w.t.Wizard, stages),
 		Scan:   w.scan(sudo),
-		Read:   func(side string) (tui.StateReader, func(context.Context)) { return w.side.Read(side, sudo) },
+		Read:   func(side string) (tui.StateReader, func(context.Context)) { return w.t.Wizard.Read(side, sudo) },
 		Run:    func(_ context.Context, choice tui.QueueChoice) error { return w.chosen(choice, run, sudo) },
 	}
 }
@@ -104,7 +106,7 @@ func (w wizardRun) config() tui.Config {
 
 // plainStages returns the stages for their names and machines alone: none of them runs.
 func (w wizardRun) plainStages() []step.Step {
-	return w.side.Stages(engine.WizardEffects{Machine: w.p.Machine, Hand: &wizard.Hand{}, Sudo: w.newSudo()}, w.o)
+	return w.t.Wizard.Stages(engine.WizardEffects{Machine: w.p.Machine, Hand: &wizard.Hand{}, Sudo: w.newSudo()}, w.o)
 }
 
 // effects returns the stages' effects on b, whose stdout waits for the screen's end.
@@ -121,15 +123,15 @@ func (w wizardRun) scan(sudo any) tui.Work {
 	check.Check = true
 	return func(ctx context.Context, b *tui.Bridge) error {
 		e := w.effects(b, sudo)
-		stages := w.side.Stages(e, check)
+		stages := w.t.Wizard.Stages(e, check)
 		o := b.Options(step.Options{Check: true})
-		if run, ok := w.side.WsRun(stages); ok {
+		if run, ok := w.t.Wizard.WsRun(stages); ok {
 			o.Observer = afterStage{b, run.Await, func() {
 				states, err := run.State(ctx)
 				reportRoles(run.Name, states, err, b.Report)
 			}}
 		}
-		_, err := wizard.Run(ctx, e.Machine, o, stages, w.p.LockDir(), w.side.Pid, nil)
+		_, err := wizard.Run(ctx, e.Machine, o, stages, w.p.LockDir(), w.t.Wizard.Pid, nil)
 		return engine.Cause(err)
 	}
 }
@@ -168,7 +170,7 @@ func (w wizardRun) work(o engine.WizardOptions, sudo any) tui.Work {
 		e.Events = b
 		closing := func(ctx context.Context) { e.Hand.Close(ctx, e.Text) }
 		so := b.Options(step.Options{Check: o.Check, LeftOut: o.Left})
-		_, err := wizard.Run(ctx, e.Machine, so, w.side.Stages(e, o), w.p.LockDir(), w.side.Pid, closing)
+		_, err := wizard.Run(ctx, e.Machine, so, w.t.Wizard.Stages(e, o), w.p.LockDir(), w.t.Wizard.Pid, closing)
 		return engine.Cause(err)
 	}
 }
@@ -212,16 +214,16 @@ func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo any) error {
 
 // newSudo makes the sudo that a scan, the state read and the run share, or none.
 func (w wizardRun) newSudo() any {
-	if w.side.NewSudo == nil {
+	if w.t.Wizard.NewSudo == nil {
 		return nil
 	}
-	return w.side.NewSudo()
+	return w.t.Wizard.NewSudo()
 }
 
 // sideBefore builds the steps that run first.
 func (w wizardRun) sideBefore() []func(effect.Out) step.Step {
-	if w.side.Before == nil {
+	if w.t.Wizard.Before == nil {
 		return nil
 	}
-	return w.side.Before(w.o)
+	return w.t.Wizard.Before(w.o)
 }

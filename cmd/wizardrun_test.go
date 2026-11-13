@@ -22,7 +22,7 @@ import (
 func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 	p, m := macTerminal()
 	c := screenCommand(t, "")
-	w := wizardRun{c, p, macSide(c, p), engine.WizardOptions{}}
+	w := wizardRun{c, p, macTarget(p, new([]string)), engine.WizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	var text bytes.Buffer
@@ -36,8 +36,8 @@ func TestWizardWorkRunsTheStagesOnTheScreensEffects(t *testing.T) {
 }
 
 // testSide is a side of stages that need no machine: no caffeinate, no forms and no state read.
-func testSide(stages ...step.Step) wizardSide {
-	return wizardSide{Side: engine.Side{WsRun: wsRunSide(fakeProcess()),
+func testSide(stages ...step.Step) engine.Target {
+	return engine.Target{Wizard: engine.Side{WsRun: wsRunSide(fakeProcess()),
 		Stages: func(engine.WizardEffects, engine.WizardOptions) []step.Step { return stages }}}
 }
 
@@ -142,7 +142,7 @@ func TestWsRunOfFindsNoneWhereNoneIs(t *testing.T) {
 
 // A tick in ws's run whole asks for a run, though the last one passed. Another stage's asks for none.
 func TestWizardRunGoesOnceMoreForATick(t *testing.T) {
-	w := wizardRun{p: fakeProcess(), side: testSide(&stages.WsRun{}, tickStep{name: "one"})}
+	w := wizardRun{p: fakeProcess(), t: testSide(&stages.WsRun{}, tickStep{name: "one"})}
 	run := wsRunOf(w.plainStages()).Name()
 	if !w.optionsOf(tui.QueueChoice{Whole: []string{"ws's run"}}, run).Update {
 		t.Error("a tick in ws's run left the last run to speak")
@@ -188,7 +188,7 @@ func TestWizardScanOfASideWithNoRunReportsNoRoles(t *testing.T) {
 func TestWizardScanChangesNothing(t *testing.T) {
 	p, m := macTerminal()
 	c := screenCommand(t, "")
-	w := wizardRun{c, p, macSide(c, p), engine.WizardOptions{}}
+	w := wizardRun{c, p, macTarget(p, new([]string)), engine.WizardOptions{}}
 	cfg := w.config()
 	screen := tui.NewRunScreen("ws", cfg.Theme, tui.Group{})
 	if err := tui.Run(context.Background(), cfg, screen, w.scan(&host.Sudo{})); err != nil {
