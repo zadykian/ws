@@ -7,10 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 // opensList says that a run opens the list of steps first: it draws a screen, and neither a
@@ -28,12 +27,12 @@ func pickSteps(c *cobra.Command, p process, groups []tui.Group, scan tui.Work) (
 
 // pickServer opens the list of the roles' steps, scanned by a check, and returns cfg and the roles
 // as the choice sets them. The roles are nil where the maintainer left.
-func pickServer(c *cobra.Command, p process, cfg apply.Config, list []roles.Role) (apply.Config, []roles.Role, error) {
+func pickServer(c *cobra.Command, p process, cfg role.Config, list []role.Role) (role.Config, []role.Role, error) {
 	p.machine = cfg.M // ws_home confines it.
 	scan := func(ctx context.Context, b *tui.Bridge) error {
 		look := onScreen(cfg, b)
 		look.Check, look.Only = true, nil
-		_, err := apply.Run(ctx, look, list)
+		_, err := role.Run(ctx, look, list)
 		return err
 	}
 	choice, err := pickSteps(c, p, serverGroups(cfg, list)[1:], scan)
@@ -41,7 +40,7 @@ func pickServer(c *cobra.Command, p process, cfg apply.Config, list []roles.Role
 		return cfg, nil, err
 	}
 	cfg.Only, cfg.Check = choice.Only, choice.Check
-	chosen, err := apply.Select(list, cfg.Only)
+	chosen, err := role.Select(list, cfg.Only)
 	return cfg, chosen, err
 }
 

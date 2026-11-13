@@ -1,4 +1,4 @@
-package apply
+package role
 
 import (
 	"context"
@@ -7,9 +7,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
-	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
 // Prepare is the parent of Config.Prepare's steps in a run's events, as a role is of its own.
@@ -18,11 +15,8 @@ const Prepare = "prepare"
 // Config is what Run needs.
 type Config struct {
 	Options
-	Values values.Values
-	// Secrets are the decrypted secrets, for the roles that read them.
-	Secrets secrets.Secrets
-	M       effect.Machine
-	// U are the units every role of the run gets; prepareServer sets it once.
+	M effect.Machine
+	// U are the units every role of the run gets; the caller sets it once.
 	U   effect.Units
 	Out effect.Out
 	// Observer takes the events of every step, which name their role.
@@ -31,23 +25,26 @@ type Config struct {
 	Prepare []step.Step
 	// Stop is the Stop of every step.Options here. Nil never stops.
 	Stop func() error
+	// LeftOut leaves steps out beside Only, as the Mac's runs and the wizard's do. Nil leaves none
+	// out. Run takes it; State does too, though no caller of State sets it.
+	LeftOut func(parent, step string) bool
 }
 
-// Steps returns r's steps as Run runs them, on M and Out. Given --secrets, they take the secrets as
-// the whole truth (secrets.Secrets.Whole).
-func (c Config) Steps(r roles.Role) []step.Step {
-	s := c.Secrets
-	s.Whole = c.Options.Secrets != ""
-	return r.Steps(c.Values, s, c.M, c.U, c.Out)
+// Steps returns r's steps as Run runs them, on M and Out.
+func (c Config) Steps(r Role) []step.Step {
+	return r.Steps(c.M, c.U, c.Out)
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
-// that would under Check. Only leaves steps out of the roles alone, as Prepare serves every step.
-func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
+// that would under Check. Only and LeftOut leave steps out of the roles alone, as Prepare serves every step. A run with no
+// Prepare steps sends no prepare event.
+func Run(ctx context.Context, c Config, list []Role) ([]string, error) {
 	o := step.Options{Observer: c.Observer, Check: c.Check, Parent: Prepare, Stop: c.Stop}
-	if _, err := step.RunWith(ctx, c.Prepare, o); err != nil {
-		c.unreached(list)
-		return nil, err
+	if len(c.Prepare) > 0 {
+		if _, err := step.RunWith(ctx, c.Prepare, o); err != nil {
+			c.unreached(list)
+			return nil, err
+		}
 	}
 	o.LeftOut = c.leftOut()
 	var changed []string
@@ -66,7 +63,7 @@ func Run(ctx context.Context, c Config, list []roles.Role) ([]string, error) {
 }
 
 // unreached ends the steps of the roles that a failure stopped short of.
-func (c Config) unreached(list []roles.Role) {
+func (c Config) unreached(list []Role) {
 	for _, r := range list {
 		o := step.Options{Observer: c.Observer, Check: c.Check, Parent: r.Name}
 		step.Unreached(c.Steps(r), o)

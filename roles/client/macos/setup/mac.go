@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/mac"
@@ -39,6 +40,17 @@ func (m Mac) steps(check bool) []step.Step {
 			Check: check},
 		&Networks{Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
 	}
+}
+
+// Roles returns the steps of steps(check) as roles of one step each, named by the step, in order.
+func (m Mac) Roles(check bool) []role.Role {
+	var roles []role.Role
+	for _, s := range m.steps(check) {
+		roles = append(roles, role.Role{Name: s.Name(), Steps: func(effect.Machine, effect.Units, effect.Out) []step.Step {
+			return []step.Step{s}
+		}})
+	}
+	return roles
 }
 
 // Names returns the names of the steps, in order: the rows of a list.

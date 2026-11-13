@@ -5,12 +5,12 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/setup"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
+	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 func queueOf(p process) []tui.Stage {
@@ -55,7 +55,7 @@ func TestWizardQueueNestsWhatItsStagesRun(t *testing.T) {
 		t.Errorf("ws client macos apply holds %+v, want its steps by its name", nested)
 	}
 	run := stageOf(t, queue, "ws's run").Nested
-	if len(run) != len(roles.List()) || run[0].Name != roles.List()[0].Name || len(run[0].Steps) != 0 {
+	if len(run) != len(ubuntu.Names()) || run[0].Name != ubuntu.Names()[0] || len(run[0].Steps) != 0 {
 		t.Errorf("ws's run holds %+v, want each role unread", run)
 	}
 }
@@ -92,8 +92,8 @@ func TestReportRolesLeavesPrepareOut(t *testing.T) {
 	report := func(stage string, s []tui.StateSection, problem string) {
 		sections, said = s, append(said, stage, problem)
 	}
-	states := []apply.RoleState{
-		{Role: apply.Prepare, Steps: []step.Report{{Step: "apt"}}},
+	states := []role.RoleState{
+		{Role: role.Prepare, Steps: []step.Report{{Step: "apt"}}},
 		{Role: "fans", Steps: []step.Report{{Step: "unit"}}},
 	}
 	reportRoles("ws's run", states, nil, report)

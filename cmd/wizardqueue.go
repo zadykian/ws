@@ -3,12 +3,12 @@ package cmd
 import (
 	"slices"
 
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
 	"github.com/zadykian/ws/roles/client/macos/setup"
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
+	"github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 // wizardQueue returns the stages as the lists show them, each on its machine, with the stage that
@@ -32,8 +32,8 @@ func nestedRows(stage string) []tui.Group {
 	case (&wizard.Setup{}).Name():
 		groups = []tui.Group{{Name: stage, Steps: setup.Names()}}
 	case (&wizard.WsRun{}).Name():
-		for _, r := range roles.List() {
-			groups = append(groups, tui.Group{Name: r.Name})
+		for _, name := range ubuntu.Names() {
+			groups = append(groups, tui.Group{Name: name})
 		}
 	}
 	return groups
@@ -58,12 +58,12 @@ func wizardLeft(choice tui.QueueChoice) func(parent, name string) bool {
 // reportRoles gives the lists what ws says of its roles, or why it says nothing. Prepare's steps
 // have no row, as in ws server ubuntu apply's own list. They run whatever the roles do, and a box
 // would choose nothing, where --only refuses their name.
-func reportRoles(stage string, states []apply.RoleState, err error, report func(string, []tui.StateSection, string)) {
+func reportRoles(stage string, states []role.RoleState, err error, report func(string, []tui.StateSection, string)) {
 	if err != nil {
 		report(stage, nil, err.Error())
 		return
 	}
 	report(stage, slices.DeleteFunc(roleSections(states), func(s tui.StateSection) bool {
-		return s.Name == apply.Prepare
+		return s.Name == role.Prepare
 	}), "")
 }

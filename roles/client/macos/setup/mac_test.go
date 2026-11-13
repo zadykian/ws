@@ -2,6 +2,7 @@ package setup_test
 
 import (
 	"bytes"
+	"io"
 	"slices"
 	"strings"
 	"testing"
@@ -23,6 +24,20 @@ func TestNamesComeInSetupShsOrder(t *testing.T) {
 	}
 	if !slices.Equal(got, want) {
 		t.Errorf("Rows = %q; want %q", got, want)
+	}
+}
+
+func TestRolesFollowNames(t *testing.T) {
+	var names []string
+	for _, r := range (setup.Mac{Text: io.Discard}).Roles(false) {
+		names = append(names, r.Name)
+		steps := r.Steps(nil, nil, nil)
+		if len(steps) != 1 || steps[0].Name() != r.Name {
+			t.Errorf("role %q holds steps %v, want one step of its name", r.Name, steps)
+		}
+	}
+	if !slices.Equal(names, setup.Names()) {
+		t.Errorf("roles = %q, want %q", names, setup.Names())
 	}
 }
 

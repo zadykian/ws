@@ -1,15 +1,13 @@
-package apply
+package role
 
 import (
 	"slices"
 	"strings"
 	"testing"
-
-	roles "github.com/zadykian/ws/roles/server/ubuntu"
 )
 
 func TestSelect(t *testing.T) {
-	list := []roles.Role{{Name: "a"}, {Name: "b"}, {Name: "c"}}
+	list := []Role{{Name: "a"}, {Name: "b"}, {Name: "c"}}
 	for _, tc := range []struct {
 		name string
 		only []string
@@ -42,7 +40,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestCheckSteps(t *testing.T) {
-	list := []roles.Role{role("a", named{name: "x y"})}
+	list := []Role{role("a", named{name: "x y"})}
 	for _, tc := range []struct {
 		only []string
 		want string
@@ -60,11 +58,11 @@ func TestCheckSteps(t *testing.T) {
 }
 
 func TestLeftOut(t *testing.T) {
-	var all Options
+	var all Config
 	if all.leftOut() != nil {
 		t.Error("no Only has a filter, want none")
 	}
-	some := Options{Only: []string{"a/x", "a/y", "b", "b/x"}}
+	some := Config{Options: Options{Only: []string{"a/x", "a/y", "b", "b/x"}}}
 	left := some.leftOut()
 	for _, tc := range []struct {
 		role, step string

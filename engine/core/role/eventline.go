@@ -1,4 +1,4 @@
-package apply
+package role
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ var eventNames = map[step.Kind]string{
 	step.Skipped: "skipped",
 }
 
-// EventLine is one event of a run, as ws server ubuntu apply --json prints it and the Mac's wizard
+// EventLine is one event of a run, as a run's --json prints it and the Mac's wizard
 // reads it. Each of Changes holds its first line alone, as firstLine says, and an error that names
 // a change holds the same.
 type EventLine struct {
@@ -50,7 +50,7 @@ func NewEventLine(e step.Event) EventLine {
 
 // firstLine is a change as a line holds it: what changes. The rest of its text is a file's diff, with
 // what the file holds now. The Mac's wizard runs ws in a unit, whose journal keeps each line past the
-// run and cuts one of more than 48 KiB. ws server ubuntu state --json has the diffs.
+// run and cuts one of more than 48 KiB. a state report's --json has the diffs.
 func firstLine(c step.Change) step.Pending {
 	return step.Pending{Kind: step.KindOf(c), Text: step.Headline(c)}
 }

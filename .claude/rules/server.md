@@ -13,8 +13,8 @@ steps, and each role's page in `docs/` says what it sets up.
 ## The roles
 
 - A role is the Go steps of `roles/server/ubuntu/NAME`, with its page, `docs/NAME.md`, and a line in
-  the README ([README](../../README.md)). `roles.List` lists the roles in the order they run
-  ([roles.go](../../roles/server/ubuntu/roles.go)).
+  the README ([README](../../README.md)). `ubuntu.Roles` lists the roles in the order they run,
+  each closed over the machine's values and secrets ([roles.go](../../roles/server/ubuntu/roles.go)).
 - The server's values are one struct, `values.Values`, parsed once from the machine's file with
   unknown keys refused. A role's steps read it and add no key without a commit of their own
   ([values.go](../../roles/server/ubuntu/values/values.go)).

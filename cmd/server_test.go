@@ -12,8 +12,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
 )
 
 func TestServerRefusal(t *testing.T) {
@@ -91,10 +91,10 @@ func TestLoadSecrets(t *testing.T) {
 	}
 	m.Files["/creds/ws-secrets"] = []byte("# created: now\n" + id.String() + "\n")
 	s, err := loadSecrets(m, "/s.age", env)
-	if err != nil || s.Env["A"] != "hunter2" {
+	if err != nil || s.Env["A"] != "hunter2" || !s.Whole {
 		t.Errorf("got %+v, %v", s, err)
 	}
-	if s, err = loadSecrets(m, "", noEnv); err != nil || s.Env != nil {
+	if s, err = loadSecrets(m, "", noEnv); err != nil || s.Env != nil || s.Whole {
 		t.Errorf("no file: %+v, %v", s, err)
 	}
 	other, _ := age.GenerateX25519Identity()
@@ -164,7 +164,7 @@ func TestServerStateHelp(t *testing.T) {
 }
 
 func TestWriteState(t *testing.T) {
-	states := []apply.RoleState{{Role: "base", Steps: []step.Report{
+	states := []role.RoleState{{Role: "base", Steps: []step.Report{
 		{Step: "Packages", Items: []step.Item{{Kind: step.PackageItem, Name: "git", Want: "installed", Found: "missing"}},
 			Changes: []step.Pending{{Kind: step.Install, Text: "install git"}}},
 		{Step: "Config", Items: []step.Item{{Kind: step.FileItem, Name: "/etc/x", Want: "written", Found: "differs",
@@ -195,7 +195,7 @@ func TestWriteState(t *testing.T) {
 
 func TestRoleSectionsNameTheRoles(t *testing.T) {
 	reports := []step.Report{{Step: "Packages"}}
-	got := roleSections([]apply.RoleState{{Role: "base", Steps: reports}, {Role: "docker"}})
+	got := roleSections([]role.RoleState{{Role: "base", Steps: reports}, {Role: "docker"}})
 	if len(got) != 2 || got[0].Name != "base" || len(got[0].Reports) != 1 || got[0].Reports[0].Step != "Packages" ||
 		got[1].Name != "docker" {
 		t.Errorf("sections = %+v", got)
@@ -219,7 +219,7 @@ func TestPrepareServerGivesTheRolesTheMachinesUnits(t *testing.T) {
 	p, _ := serverTerminal()
 	c := &cobra.Command{Use: "apply"}
 	c.SetContext(t.Context())
-	r, err := prepareServer(c, p, apply.Options{})
+	r, err := prepareServer(c, p, applyOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

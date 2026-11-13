@@ -9,14 +9,15 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/server/ubuntu/apply"
+	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
 // newStateCmd returns ws server ubuntu state.
 func newStateCmd(p process) *cobra.Command {
-	var opts apply.Options
+	var opts role.Options
 	var asJSON bool
 	c := &cobra.Command{
 		Use:   "state",
@@ -30,7 +31,7 @@ func newStateCmd(p process) *cobra.Command {
 			"--plain prints the report as text, and so does a pipe. The text is on stdout and ws's own lines on stderr. --json prints the version of ws, then " +
 			"each role with its steps, items and changes.",
 		Args: cobra.NoArgs,
-		RunE: func(c *cobra.Command, _ []string) error { return runState(c, p, opts, asJSON) },
+		RunE: func(c *cobra.Command, _ []string) error { return runState(c, p, applyOptions{Options: opts}, asJSON) },
 	}
 	f := c.Flags()
 	f.BoolVar(&asJSON, "json", false, "print the report as JSON")
@@ -39,32 +40,38 @@ func newStateCmd(p process) *cobra.Command {
 }
 
 // runState prints what the roles report.
-func runState(c *cobra.Command, p process, opts apply.Options, asJSON bool) error {
+func runState(c *cobra.Command, p process, opts applyOptions, asJSON bool) error {
 	r, err := prepareServer(c, p, opts)
 	if err != nil {
 		return err
+	}
+	// State reads the machine and takes no secrets. A step that needs them would write them out to
+	// plan, as ikeward's install does, and a report has no use for them.
+	list, err := r.roles(secrets.Secrets{Unread: true})
+	if err != nil {
+		return usageError{err}
 	}
 	if drawsReport(c, p) {
 		p.machine = r.cfg.M // ws_home confines it.
 		return tui.RunState(c.Context(), screenConfig(c, p), c.CommandPath(), func(ctx context.Context, b *tui.Bridge) ([]tui.StateSection, error) {
 			// The read takes the screen's effects as a run does, as the steps don't own the terminal under it.
-			states, err := apply.State(ctx, onScreen(r.cfg, b), r.list)
+			states, err := role.State(ctx, onScreen(r.cfg, b), list)
 			return roleSections(states), err
 		})
 	}
-	states, err := apply.State(c.Context(), r.cfg, r.list)
+	states, err := role.State(c.Context(), r.cfg, list)
 	r.term.Flush()
 	if err != nil {
 		return err
 	}
 	if asJSON {
-		return writeJSON(c.OutOrStdout(), apply.StateDoc{Version: p.version, Roles: states})
+		return writeJSON(c.OutOrStdout(), role.StateDoc{Version: p.version, Roles: states})
 	}
 	return writeState(c.OutOrStdout(), states)
 }
 
 // roleSections turns the roles' reports into the state screen's sections.
-func roleSections(states []apply.RoleState) []tui.StateSection {
+func roleSections(states []role.RoleState) []tui.StateSection {
 	sections := make([]tui.StateSection, len(states))
 	for i, s := range states {
 		sections[i] = tui.StateSection{Name: s.Role, Reports: s.Steps}
@@ -80,7 +87,7 @@ func writeJSON(w io.Writer, doc any) error {
 }
 
 // writeState prints the roles' reports as text.
-func writeState(w io.Writer, states []apply.RoleState) error {
+func writeState(w io.Writer, states []role.RoleState) error {
 	var b strings.Builder
 	for _, s := range states {
 		fmt.Fprintf(&b, "%s\n", s.Role)
