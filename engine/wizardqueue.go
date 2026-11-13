@@ -23,10 +23,10 @@ func WizardQueue(side Side, stages []step.Step) []tui.Stage {
 	return queue
 }
 
-// WizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
+// wizardLeft is the run's LeftOut for choice. It leaves out a stage that choice doesn't name with
 // its steps, and a step of ws client macos apply off in a stage it runs in part. ws client macos
 // apply's run asks it of the steps with a row alone.
-func WizardLeft(choice tui.QueueChoice) func(parent, name string) bool {
+func wizardLeft(choice tui.QueueChoice) func(parent, name string) bool {
 	return func(parent, name string) bool {
 		if parent == "" {
 			return !slices.Contains(choice.Only, name)
@@ -39,10 +39,10 @@ func WizardLeft(choice tui.QueueChoice) func(parent, name string) bool {
 	}
 }
 
-// ReportRoles gives the lists what ws says of its roles, or why it says nothing. Prepare's steps
+// reportRoles gives the lists what ws says of its roles, or why it says nothing. Prepare's steps
 // have no row, as in ws server ubuntu apply's own list. They run whatever the roles do, and a box
 // would choose nothing, where --only refuses their name.
-func ReportRoles(stage string, states []role.RoleState, err error, report func(string, []tui.StateSection, string)) {
+func reportRoles(stage string, states []role.RoleState, err error, report func(string, []tui.StateSection, string)) {
 	if err != nil {
 		report(stage, nil, err.Error())
 		return

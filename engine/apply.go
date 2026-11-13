@@ -28,10 +28,10 @@ func Apply(ctx context.Context, c Call, t Target) error {
 			return err
 		}
 	}
-	var events *JSONEvents
+	var events *jsonEvents
 	var line string
 	if DrawsScreen(c) {
-		err = DrawRun(ctx, c, RunTitle(c, o.Check), run.Groups(o.Check), func(ctx context.Context, b *tui.Bridge) error {
+		err = drawRun(ctx, c, runTitle(c, o.Check), run.Groups(o.Check), func(ctx context.Context, b *tui.Bridge) error {
 			e := b.Effects()
 			var err error
 			line, err = run.Do(ctx, Effects{M: e.M, Out: b, Text: e.Text}, b.Options(o))
@@ -43,7 +43,7 @@ func Apply(ctx context.Context, c Call, t Target) error {
 	} else {
 		o.Observer = lines
 		if c.JSON {
-			events = NewJSONEvents(c.Out, lines)
+			events = newJSONEvents(c.Out, lines)
 			o.Observer = events
 		}
 		line, err = run.Do(ctx, Effects{M: run.M, Out: lines, Text: c.Out}, o)

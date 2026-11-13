@@ -24,7 +24,7 @@ func (r *recorder) Observe(e step.Event) { *r = append(*r, e) }
 func TestJSONEventsPrintALinePerEventAndPassItOn(t *testing.T) {
 	var b bytes.Buffer
 	var next recorder
-	j := NewJSONEvents(&b, &next)
+	j := newJSONEvents(&b, &next)
 	events := []step.Event{
 		{Kind: step.Planned, Parent: "base", Step: "Packages", Changes: []step.Change{kindedChange{"install git"}, textChange("note")}},
 		{Kind: step.Started, Parent: "base", Step: "Packages", Index: 1},

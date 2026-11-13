@@ -13,7 +13,7 @@ import (
 func TestWizardLeftFollowsTheChoice(t *testing.T) {
 	const setup = "ws client macos apply"
 	choice := tui.QueueChoice{Only: []string{setup, "Tools"}, Partial: map[string][]string{setup: {setup + "/ssh", setup + "/zed"}}}
-	left := WizardLeft(choice)
+	left := wizardLeft(choice)
 	for _, tc := range []struct {
 		parent, name string
 		want         bool
@@ -28,10 +28,10 @@ func TestWizardLeftFollowsTheChoice(t *testing.T) {
 			t.Errorf("left(%q, %q) = %v, want %v", tc.parent, tc.name, got, tc.want)
 		}
 	}
-	if whole := WizardLeft(tui.QueueChoice{Only: []string{setup}}); whole(setup, "git") {
+	if whole := wizardLeft(tui.QueueChoice{Only: []string{setup}}); whole(setup, "git") {
 		t.Error("a stage run whole left a step out")
 	}
-	if off := WizardLeft(tui.QueueChoice{Only: []string{"Tools"}}); !off(setup, "git") {
+	if off := wizardLeft(tui.QueueChoice{Only: []string{"Tools"}}); !off(setup, "git") {
 		t.Error("a stage wholly off ran a step")
 	}
 }
@@ -46,7 +46,7 @@ func TestReportRolesLeavesPrepareOut(t *testing.T) {
 		{Role: role.Prepare, Steps: []step.Report{{Step: "apt"}}},
 		{Role: "fans", Steps: []step.Report{{Step: "unit"}}},
 	}
-	ReportRoles("ws's run", states, nil, report)
+	reportRoles("ws's run", states, nil, report)
 	if len(sections) != 1 || sections[0].Name != "fans" || !slices.Equal(said, []string{"ws's run", ""}) {
 		t.Errorf("sections = %+v, said %q; want the role fans alone", sections, said)
 	}
@@ -60,7 +60,7 @@ func TestReportRolesSaysWhyItHasNone(t *testing.T) {
 		}
 		problem = why
 	}
-	ReportRoles("ws's run", nil, errors.New("ws's report refused"), report)
+	reportRoles("ws's run", nil, errors.New("ws's report refused"), report)
 	if problem != "ws's report refused" {
 		t.Errorf("problem = %q", problem)
 	}

@@ -49,7 +49,7 @@ func TestScreenMachineKeepsRootsSudoAndTheConfine(t *testing.T) {
 		In: strings.NewReader(""), Err: io.Discard, Out: io.Discard, Getenv: func(string) string { return "" },
 		Machine: local.OSMachine{Sudo: []string{}, Confine: "/home/z"},
 	}
-	err := DrawRun(t.Context(), c, "title", nil, func(_ context.Context, b *tui.Bridge) error {
+	err := drawRun(t.Context(), c, "title", nil, func(_ context.Context, b *tui.Bridge) error {
 		got = b.Effects().M
 		return nil
 	})

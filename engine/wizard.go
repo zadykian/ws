@@ -60,7 +60,7 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out Lines) 
 	}
 	talks, _ := w.c.Machine.(effect.Foreground)
 	stages := w.t.Wizard.Stages(WizardEffects{Machine: w.c.Machine, Prog: w.c.Path, Talks: talks,
-		Ask: SignalPrompt{Prompt: term}, Hidden: term, Out: out, Text: w.c.Out, Obs: out, Hand: hand, Sudo: w.newSudo()}, w.o)
+		Ask: signalPrompt{Prompt: term}, Hidden: term, Out: out, Text: w.c.Out, Obs: out, Hand: hand, Sudo: w.newSudo()}, w.o)
 	_, err := wizard.Run(ctx, w.c.Machine, step.Options{Observer: out, Check: w.o.Check}, stages, w.c.LockDir,
 		w.t.Wizard.Pid, closing)
 	// The runner names the stage before the stage's own message.
@@ -128,7 +128,7 @@ func (w wizardRun) scan(sudo any) tui.Work {
 		if run, ok := w.t.Wizard.WsRun(stages); ok {
 			o.Observer = afterStage{b, run.Await, func() {
 				states, err := run.State(ctx)
-				ReportRoles(run.Name, states, err, b.Report)
+				reportRoles(run.Name, states, err, b.Report)
 			}}
 		}
 		_, err := wizard.Run(ctx, e.Machine, o, stages, w.c.LockDir, w.t.Wizard.Pid, nil)
@@ -168,7 +168,7 @@ func (w wizardRun) work(o WizardOptions, sudo any) tui.Work {
 // running gives draw a run's config and the work of o. The run's stdout prints past the screen,
 // which it would paint over.
 func (w wizardRun) running(o WizardOptions, sudo any, draw func(tui.Config, tui.Work) error) error {
-	cfg, done := RunConfig(w.c, w.config())
+	cfg, done := runConfig(w.c, w.config())
 	defer done()
 	return draw(cfg, w.work(o, sudo))
 }
@@ -176,7 +176,7 @@ func (w wizardRun) running(o WizardOptions, sudo any, draw func(tui.Config, tui.
 // whole runs every stage, on the run screen of their names.
 func (w wizardRun) whole() error {
 	return w.running(w.o, w.newSudo(), func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewRunScreen(RunTitle(w.c, w.o.Check), cfg.Theme, tui.NewGroup("", w.plainStages()))
+		screen := tui.NewRunScreen(runTitle(w.c, w.o.Check), cfg.Theme, tui.NewGroup("", w.plainStages()))
 		return tui.Run(w.ctx, cfg, screen, work)
 	})
 }
@@ -189,7 +189,7 @@ func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) WizardOptions {
 	o := w.o
 	o.Check = choice.Next == tui.NextCheck
 	o.Update = o.Update || slices.Contains(choice.Whole, run)
-	o.Left, o.Only = WizardLeft(choice), choice.Partial[run]
+	o.Left, o.Only = wizardLeft(choice), choice.Partial[run]
 	return o
 }
 
@@ -197,7 +197,7 @@ func (w wizardRun) optionsOf(choice tui.QueueChoice, run string) WizardOptions {
 func (w wizardRun) chosen(choice tui.QueueChoice, run string, sudo any) error {
 	o := w.optionsOf(choice, run)
 	return w.running(o, sudo, func(cfg tui.Config, work tui.Work) error {
-		screen := tui.NewQueueRun(RunTitle(w.c, o.Check), cfg.Theme, choice)
+		screen := tui.NewQueueRun(runTitle(w.c, o.Check), cfg.Theme, choice)
 		return tui.Run(w.ctx, cfg, screen, work)
 	})
 }
