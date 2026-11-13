@@ -54,7 +54,7 @@ func TestSudoRootLoginAsksNothing(t *testing.T) {
 	if err != nil || len(p.Changes) != 0 || s.way != sudoLogin {
 		t.Fatalf("Plan = %v, %v, way %d", p, err, s.way)
 	}
-	if cmd, in, _ := s.rooted([]string{"true"}, []byte("x")); strings.Join(cmd, " ") != "true" || string(in) != "x" {
+	if cmd, in, _ := s.Rooted([]string{"true"}, []byte("x")); strings.Join(cmd, " ") != "true" || string(in) != "x" {
 		t.Errorf("rooted = %q, %q", cmd, in)
 	}
 }
@@ -66,7 +66,7 @@ func TestSudoWithNoPasswordAsksNothing(t *testing.T) {
 	if err != nil || len(p.Changes) != 0 || s.way != sudoOpen {
 		t.Fatalf("Plan = %v, %v, way %d", p, err, s.way)
 	}
-	if cmd, in, _ := s.rooted([]string{"true"}, []byte("x")); strings.Join(cmd, " ") != "sudo -n true" || string(in) != "x" {
+	if cmd, in, _ := s.Rooted([]string{"true"}, []byte("x")); strings.Join(cmd, " ") != "sudo -n true" || string(in) != "x" {
 		t.Errorf("rooted = %q, %q", cmd, in)
 	}
 }
@@ -87,7 +87,7 @@ func TestSudoAsksUntilSudoTakesIt(t *testing.T) {
 	if again, err := s.Plan(context.Background()); err != nil || len(again.Changes) != 0 {
 		t.Errorf("Plan after Apply = %v, %v", again, err)
 	}
-	cmd, in, err := s.rooted([]string{"sh", "-s", "--", "status"}, []byte("echo\n"))
+	cmd, in, err := s.Rooted([]string{"sh", "-s", "--", "status"}, []byte("echo\n"))
 	if err != nil || !slices.Equal(cmd, []string{"sudo", "-k", "-S", "-p", "", "sh", "-s", "--", "status"}) || string(in) != sudoPassword+"\necho\n" {
 		t.Errorf("rooted = %q, %q, %v", cmd, in, err)
 	}
@@ -107,7 +107,7 @@ func TestSudoStopsAfterThreeWrongPasswords(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "refused the password 3 times") {
 		t.Fatalf("Apply = %v", err)
 	}
-	if _, _, err := s.rooted([]string{"true"}, nil); err == nil {
+	if _, _, err := s.Rooted([]string{"true"}, nil); err == nil {
 		t.Error("rooted took a refused password")
 	}
 }
@@ -158,7 +158,7 @@ func TestSudoStopsWhereSSHFails(t *testing.T) {
 func TestSessionThroughSudo(t *testing.T) {
 	s, m, _ := newSudo(t)
 	s.way, s.password = sudoAsked, sudoPassword
-	r := secretsSession(SSHShell{SSH: s.SSH, Sudo: s})
+	r := secretsSession(SSHShell{SSH: s.SSH, Root: s})
 	line := sudoLine(s, "sudo", "-k", "-S", "-p", "''", "sh", "-s", "--", "status")
 	m.Results[line] = effecttest.Result{Out: []byte("active -\n")}
 	if _, ok := r.status(context.Background()); !ok {
@@ -171,7 +171,7 @@ func TestSessionThroughSudo(t *testing.T) {
 
 func TestSessionBeforeTheStageReadsNothing(t *testing.T) {
 	s, _, _ := newSudo(t)
-	r := secretsSession(SSHShell{SSH: s.SSH, Sudo: s})
+	r := secretsSession(SSHShell{SSH: s.SSH, Root: s})
 	if _, ok := r.status(context.Background()); ok {
 		t.Error("Status read with the stage unread")
 	}

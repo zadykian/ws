@@ -16,7 +16,7 @@ type MacReach struct {
 	Out  effect.Out
 }
 
-func (r MacReach) shell() Shell { return SSHShell{SSH: r.SSH, Sudo: r.Sudo} }
+func (r MacReach) shell() Shell { return SSHShell{SSH: r.SSH, Root: r.Sudo} }
 
 func (r MacReach) want() (conf.Conf, error) { return macConf(r.SSH.M, r.SSH.Conf) }
 

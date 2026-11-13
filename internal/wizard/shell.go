@@ -16,18 +16,27 @@ type Shell interface {
 	Lines(ctx context.Context, in []byte, take func(line string) bool, cmd ...string) error
 }
 
+// Root wraps a command so that it runs as root on ws.
+type Root interface {
+	// Rooted returns the command and stdin that run cmd as root, with in as cmd's stdin.
+	Rooted(cmd []string, in []byte) ([]string, []byte, error)
+}
+
 // SSHShell runs a command on ws over ssh, which reaches ws at the address that the Host key stage
-// asked, where it asked one, and reaches root by Sudo.
+// asked, where it asked one, and reaches root by Root.
 type SSHShell struct {
 	SSH SSH
-	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
-	Sudo *Sudo
+	// Root is how a command reaches root. Nil runs it as the login, as the tests do.
+	Root Root
 }
 
 // args returns ssh's arguments and stdin for cmd as root, with in as cmd's stdin. ssh hands ws's
 // shell one line, so a word that its shell would read otherwise goes quoted.
 func (s SSHShell) args(cmd []string, in []byte) ([]string, []byte, error) {
-	cmd, in, err := s.Sudo.rooted(cmd, in)
+	var err error
+	if s.Root != nil {
+		cmd, in, err = s.Root.Rooted(cmd, in)
+	}
 	args := []string{"-o", "BatchMode=yes", "ws"}
 	for _, word := range cmd {
 		args = append(args, Quote(word))

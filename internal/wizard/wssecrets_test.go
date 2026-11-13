@@ -30,7 +30,7 @@ func secretsSession(sh Shell) *Session {
 
 func TestSessionSecretsSendsTheValueOnStdin(t *testing.T) {
 	m := effecttest.NewMachine()
-	sh := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}, Sudo: &Sudo{way: sudoAsked, password: "pw"}}
+	sh := SSHShell{SSH: SSH{M: m, Lock: "/t/l"}, Root: &Sudo{way: sudoAsked, password: "pw"}}
 	r := secretsSession(sh)
 	m.Results[secretsLine(sh, `set env 'A'\''B'`)] = effecttest.Result{Out: []byte("set\n")}
 	out, err := r.Secrets(context.Background(), []byte("dummy-value\n"), "set", "env", "A'B")
