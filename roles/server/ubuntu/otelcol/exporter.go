@@ -22,11 +22,11 @@ func exporter(m effect.Machine, u effect.Units, out effect.Out) func(context.Con
 		if err != nil {
 			return nil, err
 		}
-		file := host.File{M: m, Path: "/etc/default/prometheus-node-exporter", Content: args, Mode: 0o644}
+		defaults := host.File{M: m, Path: "/etc/default/prometheus-node-exporter", Content: args, Mode: 0o644}
 		return []host.Resource{
-			file,
+			defaults,
 			apt.Packages{M: m, Out: out, Names: []string{"prometheus-node-exporter"}},
-			systemd.Unit{M: m, U: u, Out: out, Name: "prometheus-node-exporter.service", Enabled: true, Run: systemd.Running, Watch: []host.Resource{file}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "prometheus-node-exporter.service", Enabled: true, Run: systemd.Running, Watch: []host.Resource{defaults}},
 		}, nil
 	}
 }

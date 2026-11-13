@@ -83,13 +83,13 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 	var err error
 	named := map[string]bool{}
 	for i, r := range resolvers(n.Conf.Resolvers) {
-		file := resolverDir + "/" + r.Domain
+		resolverFile := resolverDir + "/" + r.Domain
 		named[r.Domain] = true
-		if own, err := n.ownsFile(file); err != nil {
+		if own, err := n.ownsFile(resolverFile); err != nil {
 			return nil, err
 		} else if !own {
 			return nil, fmt.Errorf("%s is another script's, or written by hand: have that script call "+
-				"ws client macos resolver %s with no address, or move the file away", file, r.Domain)
+				"ws client macos resolver %s with no address, or move the file away", resolverFile, r.Domain)
 		}
 		// The directory is planned once: a second mkdir would fail where the directory is new.
 		if i == 0 {
@@ -97,7 +97,7 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 				return nil, err
 			}
 		}
-		if cs, err = change.Plan(ctx, cs, host.File{M: n.M, Path: file, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
+		if cs, err = change.Plan(ctx, cs, host.File{M: n.M, Path: resolverFile, Content: []byte(resolverText(r.Addresses)), Mode: 0o644}); err != nil {
 			return nil, err
 		}
 	}
@@ -106,19 +106,19 @@ func (n *Networks) resolvers(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	for _, name := range names {
-		file := resolverDir + "/" + name
+		resolverFile := resolverDir + "/" + name
 		if named[name] {
 			continue
 		}
-		if own, err := n.ownsFile(file); err != nil {
+		if own, err := n.ownsFile(resolverFile); err != nil {
 			return nil, err
 		} else if own {
-			gone, err := host.Absent{M: n.M, Path: file}.Plan(ctx)
+			gone, err := host.Absent{M: n.M, Path: resolverFile}.Plan(ctx)
 			if err != nil {
 				return nil, err
 			}
 			for _, c := range gone {
-				cs = append(cs, removal{c, file})
+				cs = append(cs, removal{c, resolverFile})
 			}
 		}
 	}

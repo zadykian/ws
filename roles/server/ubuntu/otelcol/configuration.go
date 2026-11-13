@@ -74,9 +74,9 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, user accoun
 			if err != nil {
 				return nil, err
 			}
-			file := host.File{M: m, Path: configDir + "/claude.env", Content: env, Mode: 0o600, Secret: true}
-			parts = append(parts, file, config)
-			watch = append(watch, file)
+			envFile := host.File{M: m, Path: configDir + "/claude.env", Content: env, Mode: 0o600, Secret: true}
+			parts = append(parts, envFile, config)
+			watch = append(watch, envFile)
 		} else {
 			gone := host.Absent{M: m, Path: configDir + "/claude.env"}
 			parts = append(parts, config, gone)

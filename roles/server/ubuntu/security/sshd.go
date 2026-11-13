@@ -18,15 +18,15 @@ func sshd(m effect.Machine, u effect.Units, out effect.Out, user string) ([]host
 	if err != nil {
 		return nil, err
 	}
-	file := host.Validated{
+	dropIn := host.Validated{
 		File: host.File{M: m, Path: "/etc/ssh/sshd_config.d/10-keys-only.conf", Content: conf, Mode: 0o644},
 		Check: func(path string) (string, []string) {
 			return "/usr/sbin/sshd", []string{"-G", "-f", path}
 		},
 	}
 	return []host.Resource{
-		file,
+		dropIn,
 		systemd.Unit{M: m, U: u, Out: out, Name: "ssh.service", Run: systemd.Running, Reload: true,
-			Watch: []host.Resource{file}},
+			Watch: []host.Resource{dropIn}},
 	}, nil
 }

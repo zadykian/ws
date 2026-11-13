@@ -91,17 +91,17 @@ func (t Tree) Plan(ctx context.Context) ([]Change, error) {
 	if err == nil && string(marker) == url+"\n" {
 		return t.cleaned(ctx, url)
 	}
-	file, err := t.Source.Cached(ctx)
+	archive, err := t.Source.Cached(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
 	}
 	var changes []Change
-	for _, r := range []Resource{Dir{M: t.M, Path: CacheDir, Mode: 0o755}, file} {
+	for _, r := range []Resource{Dir{M: t.M, Path: CacheDir, Mode: 0o755}, archive} {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err
 		}
 		changes = append(changes, more...)
 	}
-	return append(changes, installTree{t, file.Path, url}), nil
+	return append(changes, installTree{t, archive.Path, url}), nil
 }

@@ -20,16 +20,16 @@ func sudoParts(m effect.Machine, user string) ([]host.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	file := host.Validated{
+	dropIn := host.Validated{
 		File: host.File{M: m, Path: noCachePath, Content: conf, Mode: 0o440},
 		Check: func(path string) (string, []string) {
 			return "visudo", []string{"-cf", path}
 		},
 	}
 	if user == "root" {
-		return []host.Resource{file}, nil
+		return []host.Resource{dropIn}, nil
 	}
-	return []host.Resource{sudoRight{m, user}, file}, nil
+	return []host.Resource{sudoRight{m, user}, dropIn}, nil
 }
 
 // sudoRight fails where closing root's login would leave no way to root: the user can't run sudo,

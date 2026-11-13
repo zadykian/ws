@@ -65,7 +65,7 @@ func (c installPackage) check(ctx context.Context) error {
 // Plan plans the directory, the fetch and the install where the pinned version is not installed.
 // With the pinned version installed, Plan plans the removal of a file that a cut run left.
 func (p Package) Plan(ctx context.Context) ([]host.Change, error) {
-	file, err := p.Source.Cached(ctx)
+	archive, err := p.Source.Cached(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("package %s: %w", p.Name, err)
 	}
@@ -74,15 +74,15 @@ func (p Package) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	if have := states[p.Name]; have.Installed() && have.Version == p.Source.Version {
-		return host.Absent{M: p.M, Path: file.Path}.Plan(ctx)
+		return host.Absent{M: p.M, Path: archive.Path}.Plan(ctx)
 	}
 	var changes []host.Change
-	for _, r := range []host.Resource{host.Dir{M: p.M, Path: host.CacheDir, Mode: 0o755}, file} {
+	for _, r := range []host.Resource{host.Dir{M: p.M, Path: host.CacheDir, Mode: 0o755}, archive} {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err
 		}
 		changes = append(changes, more...)
 	}
-	return append(changes, installPackage{p, file.Path}), nil
+	return append(changes, installPackage{p, archive.Path}), nil
 }
