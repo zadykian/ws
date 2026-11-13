@@ -161,32 +161,6 @@
       // The server's code actions, of every kind
       // Alt+Insert: a Mac keyboard has no Insert
       "alt-enter": "editor::ToggleCodeActions",
-      "ctrl-m a": "editor::FoldAll",
-      "ctrl-m ctrl-a": "editor::FoldAll",
-      "ctrl-m s": "editor::Fold",
-      "ctrl-m ctrl-s": "editor::Fold",
-      "ctrl-m h": "editor::FoldSelectedRanges",
-      "ctrl-m ctrl-h": "editor::FoldSelectedRanges",
-      "ctrl-m u": "editor::FoldSelectedRanges",
-      "ctrl-m ctrl-u": "editor::FoldSelectedRanges",
-      "ctrl-m x": "editor::UnfoldAll",
-      "ctrl-m ctrl-x": "editor::UnfoldAll",
-      "ctrl-m m": "editor::ToggleFold",
-      "ctrl-m ctrl-m": "editor::ToggleFold",
-      "ctrl-m e": "editor::UnfoldLines",
-      "ctrl-m ctrl-e": "editor::UnfoldLines",
-      "ctrl-m o": "editor::FoldFunctionBodies",
-      "ctrl-m ctrl-o": "editor::FoldFunctionBodies",
-      // Ctrl+Alt+- in the editor, not the dock's size
-      "ctrl-alt--": "editor::FoldRecursive",
-      // Levels 1 to 5 fold below the level; both chords are Ctrl+* on a Mac
-      "ctrl-* 1": "editor::FoldAtLevel_1",
-      "ctrl-* 2": "editor::FoldAtLevel_2",
-      "ctrl-* 3": "editor::FoldAtLevel_3",
-      "ctrl-* 4": "editor::FoldAtLevel_4",
-      "ctrl-* 5": "editor::FoldAtLevel_5",
-      "ctrl-alt-+": "editor::UnfoldRecursive",
-      "ctrl-alt-=": "editor::UnfoldRecursive",
       "alt-pagedown": "editor::GoToDiagnostic",
       "alt-pageup": "editor::GoToPreviousDiagnostic",
       // F13 alone: a Mac has no menu key
@@ -196,27 +170,8 @@
       // Replaces Zed's Shift+F8
       "shift-f8": "editor::GoToPreviousHunk",
       "shift-f7": "editor::GoToPreviousHunk",
-      // The hunks at the cursor
-      "ctrl-alt-z": "git::Restore",
-      "ctrl-alt-shift-n": "editor::GoToHunk",
-      "ctrl-alt-shift-p": "editor::GoToPreviousHunk",
       // A log message; conditions from the gutter's menu
-      "alt-f9": "editor::EditLogBreakpoint",
-      "ctrl-alt-b": "editor::EditLogBreakpoint",
-      // In the editor alone, as a Ctrl+U chord would hold the shell's Ctrl+U
-      "ctrl-u u": "task::Rerun",
-      "ctrl-u ctrl-u": "task::Rerun",
-      // The test at the cursor, as a task
-      "ctrl-u r": "editor::SpawnNearestTask",
-      "ctrl-u ctrl-r": "editor::SpawnNearestTask",
-      "ctrl-u y": "task::Rerun",
-      "ctrl-u ctrl-y": "task::Rerun",
-      "ctrl-f9": "debugger::ToggleEnableBreakpoint",
-      // Ctrl+B in the editor alone: tmux's prefix in the terminal
-      "ctrl-b": "editor::ToggleBreakpoint",
-      // An untitled buffer; in the project panel (`ProjectPanel && not_editing`), `project_panel::NewFile`, a file there
-      "ctrl-n": "workspace::NewFile",
-      "ctrl-shift-r": "editor::RestartLanguageServer"
+      "alt-f9": "editor::EditLogBreakpoint"
     }
   },
   // The project panel: the tree keys, and F1 hides it again.
