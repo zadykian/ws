@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/zadykian/ws/engine"
 	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/host"
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
@@ -81,37 +82,37 @@ type wizardEffects struct {
 func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 	p, ask, out, prog, hand := e.p, e.ask, e.out, e.prog, e.hand
 	check := o.Check
-	conf := confPath(p.Getenv, p.Pwd)
+	macConf := conf.Path(p.Getenv, p.Pwd)
 	lock := wizard.LockPath(p.LockDir())
 	scratch := lock + "/mac.conf"
 	// Under --check the stages after Answers read the mac.conf that it would write, a file in the lock,
 	// as the old script pointed WS_CONF there.
-	later := conf
+	later, laterServer := macConf, conf.ServerPath(macConf, conf.FirstServer)
 	if check {
-		later = scratch
+		later, laterServer = scratch, conf.ServerPath(scratch, conf.FirstServer)
 	}
 	ghStage := &gh.Gh{CLI: gh.CLI{Conf: later, Home: p.Getenv("HOME"), M: p.Machine, Out: out}, Tty: p.TTY, F: e.talks}
-	hostKey := &host.Key{Conf: later, Lock: lock, Tty: p.TTY, Check: check, Env: p.Lookup,
+	hostKey := &host.Key{Conf: laterServer, Lock: lock, Tty: p.TTY, Check: check, Env: p.Lookup,
 		SSH: remote.SSH{M: p.Machine, F: e.talks, Lock: lock, Home: p.Getenv("HOME"),
-			Ways: host.MacWays{M: p.Machine, Conf: later}}, M: p.Machine, P: ask, Out: out}
+			Ways: host.MacWays{M: p.Machine, Conf: laterServer}}, M: p.Machine, P: ask, Out: out}
 	sudo := e.sudo
-	ws := session.New(host.MacReach{SSH: hostKey.SSH, Sudo: sudo, Conf: later, Out: out},
+	ws := session.New(host.MacReach{SSH: hostKey.SSH, Sudo: sudo, Conf: laterServer, Out: out},
 		session.Scripts{Remote: session.RemoteScript, Files: session.RemoteFilesScript, Events: e.events})
 	sudo.SSH, sudo.Tty, sudo.Check, sudo.P, sudo.Out = hostKey.SSH, p.TTY, check, e.hidden, out
 	install := &tools.WsInstall{Ws: ws, Version: p.Version, URL: p.Releases, Out: out}
 	run := &stages.WsRun{Ws: ws, Await: install.Name(), Check: check, Out: out, Version: p.Version, Update: o.Update, Only: o.Only}
 	hand.Late(ws.Hand)
 	hand.Late(ghStage.Hand)
-	setup := wizardSetup(e, o.Left, later)
+	setup := wizardSetup(e, o.Left, later, laterServer)
 	login := &host.Login{SSH: hostKey.SSH, Ws: ws, Gh: ghStage.CLI, Tty: p.TTY, Check: check, Env: p.Lookup, P: ask, Out: out}
-	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: later, Check: check, RunDone: run.RunDone,
+	cable := &link.Cable{Ws: ws, SSH: hostKey.SSH, Conf: laterServer, Check: check, RunDone: run.RunDone,
 		MacApply: setup.Run, Env: p.Lookup, P: ask, Prog: prog, Tty: p.TTY, M: p.Machine, Out: out}
 	hand.Late(cable.Hand)
 	return []step.Step{
 		&tools.Tools{M: p.Machine, Out: out, Sleep: time.Sleep},
 		&tools.Homebrew{Lock: lock, M: p.Machine, Out: out},
-		&answers.Answers{Conf: conf, Defaults: shellDefaults(),
-			Prog: prog, Tty: p.TTY, Check: check, Scratch: scratch, M: p.Machine, P: ask, Out: out, Env: p.Lookup},
+		&answers.Answers{Conf: macConf, Server: conf.ServerPath(macConf, conf.FirstServer), Defaults: shellDefaults(),
+			Prog: prog, Tty: p.TTY, Check: check, Scratch: scratch, ServerScratch: conf.ServerPath(scratch, conf.FirstServer), M: p.Machine, P: ask, Out: out, Env: p.Lookup},
 		&keys.MacKey{Conf: later, Home: p.Getenv("HOME"),
 			Lock: lock, Tty: p.TTY,
 			M: p.Machine, P: ask, Out: out, Sleep: time.Sleep},
@@ -124,7 +125,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions) []step.Step {
 		run,
 		&stages.WsClaude{Ws: ws, Tty: p.TTY},
 		&stages.Signing{Ws: ws, GitHub: &gh.MacGitHub{Gh: ghStage.CLI, Lock: lock, Check: check}},
-		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: later, Check: check, MacApply: setup.Run, Hand: hand, Home: p.Getenv("HOME"),
+		&link.Tunnel{SSH: hostKey.SSH, Ws: ws, Conf: laterServer, Check: check, MacApply: setup.Run, Hand: hand, Home: p.Getenv("HOME"),
 			Sleep: time.Sleep, M: p.Machine, Out: out},
 		cable,
 	}
@@ -139,7 +140,7 @@ func runWizard(c *cobra.Command, p enginecli.Env, o engine.WizardOptions) error 
 	// Homebrew's bin comes first in PATH, as a shell started before its install lacks it, and WS_CONF
 	// is set for the scripts that stages run.
 	_ = p.Setenv("PATH", "/opt/homebrew/bin:"+p.Getenv("PATH"))
-	_ = p.Setenv("WS_CONF", confPath(p.Getenv, p.Pwd))
+	_ = p.Setenv("WS_CONF", conf.Path(p.Getenv, p.Pwd))
 	return engine.Wizard(c.Context(), enginecli.CallOf(c, p), macTarget(p, new([]string)), o)
 }
 
