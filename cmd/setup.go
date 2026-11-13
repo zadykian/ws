@@ -15,8 +15,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
+	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 // progOut prefixes a line with the path of the command that prints it, and says each warning once,
@@ -53,9 +53,9 @@ func (o progOut) Observe(e step.Event) {
 // with no prefix and no blank line after it, and said nothing of the backup of a file.
 func (o progOut) sayChange(c step.Change) {
 	switch c := c.(type) {
-	case setup.Write:
+	case macos.Write:
 		o.Out.Say("%s", strings.TrimSuffix(c.String(), "\n"))
-	case setup.Backup:
+	case macos.Backup:
 	default:
 		o.Out.Say("%s: %v", o.prog, c)
 	}
@@ -71,15 +71,15 @@ func (o progOut) Warn(format string, a ...any) {
 
 // macOf returns the Mac's steps over the process's environment and the effects given to it.
 // No other function builds a Mac. text takes what a run prints on stdout.
-func macOf(p process, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) setup.Mac {
-	return setup.Mac{Conf: c, Home: p.getenv("HOME"), XDG: p.getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
+func macOf(p process, c conf.Conf, m effect.Machine, out effect.Out, text io.Writer) macos.Mac {
+	return macos.Mac{Conf: c, Home: p.getenv("HOME"), XDG: p.getenv("XDG_CONFIG_HOME"), M: m, Out: out, Text: text}
 }
 
 // newMacApplyCmd returns ws client macos apply.
 func newMacApplyCmd(p process) *cobra.Command {
 	var check bool
 	var only []string
-	names := setup.Names()
+	names := macos.Names()
 	c := &cobra.Command{
 		Use:   "apply",
 		Short: "set the Mac up from mac.conf",
@@ -137,7 +137,7 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 		return usageError{errors.New("--only names no step")}
 	}
 	for _, name := range only {
-		if !slices.Contains(setup.Names(), name) {
+		if !slices.Contains(macos.Names(), name) {
 			return usageError{fmt.Errorf("no step is named %q", name)}
 		}
 	}
@@ -146,11 +146,11 @@ func runMacApply(c *cobra.Command, p process, only []string, check bool) error {
 		return err
 	}
 	var run setupRun = func(ctx context.Context, m effect.Machine, out effect.Out, text io.Writer, o step.Options) error {
-		_, err := macOf(p, settings, m, out, text).Run(ctx, setup.Options{Options: o, Only: only})
+		_, err := macOf(p, settings, m, out, text).Run(ctx, macos.Options{Options: o, Only: only})
 		return unwrapStep(err)
 	}
 	rowsOf := func(check bool) tui.Group {
-		o := setup.Options{Options: step.Options{Check: check}, Only: only}
+		o := macos.Options{Options: step.Options{Check: check}, Only: only}
 		return tui.NewGroup("", macOf(p, settings, nil, nil, nil).Rows(o))
 	}
 	if opensList(c, p, len(only) > 0) {

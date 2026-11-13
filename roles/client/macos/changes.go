@@ -1,4 +1,4 @@
-package setup
+package macos
 
 import "github.com/zadykian/ws/roles/client/macos/internal/change"
 

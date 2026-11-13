@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
-	"github.com/zadykian/ws/roles/client/macos/setup"
+	"github.com/zadykian/ws/roles/client/macos"
 )
 
 func TestSetupCommand(t *testing.T) {
@@ -54,7 +54,7 @@ func TestProgOutPrefixesLines(t *testing.T) {
 func TestProgOutObservesAPlanAndWhatAStepIsBehind(t *testing.T) {
 	out := progOut{Out: &effecttest.Out{}, prog: "ws client macos apply", seen: map[string]bool{}}
 	plan := []step.Change{
-		setup.Write{Path: "/f", After: []byte("a\n")}, setup.Backup{Path: "/f", To: "/f.~"}, stringChange("would run x"),
+		macos.Write{Path: "/f", After: []byte("a\n")}, macos.Backup{Path: "/f", To: "/f.~"}, stringChange("would run x"),
 	}
 	out.Observe(step.Event{Kind: step.Planned, Step: "ssh", Changes: plan})
 	out.Observe(step.Event{Kind: step.Started, Step: "ssh", Changes: plan})

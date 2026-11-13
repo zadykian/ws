@@ -1,4 +1,5 @@
-package setup
+// Package macos runs the Mac's steps in order, as ws client macos apply, list and state do.
+package macos
 
 import (
 	"context"
@@ -10,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/mac"
+	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 // Mac is what the Mac's steps read and act through. It holds the order of ws client macos apply's
@@ -30,15 +32,15 @@ type Mac struct {
 func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		m.ssh(false),
-		Cable{Conf: m.Conf, M: m.M, Out: m.Out},
-		&Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
-		&Ghostty{Home: m.Home, Settings: mac.Ghostty, M: m.M, Out: m.Out},
-		&Zed{Home: m.Home, Settings: mac.ZedSettings, Keymap: mac.ZedKeymap, M: m.M, Out: m.Out},
-		&Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},
-		&Zsh{Home: m.Home, Hook: mac.Zshrc, M: m.M, Out: m.Out, Now: time.Now},
-		&Tunnel{Conf: m.Conf, Home: m.Home, Plist: mac.TunnelPlist, M: m.M, Out: m.Out, Text: m.Text,
+		setup.Cable{Conf: m.Conf, M: m.M, Out: m.Out},
+		&setup.Git{Conf: m.Conf, Home: m.Home, XDG: m.XDG, M: m.M, Out: m.Out},
+		&setup.Ghostty{Home: m.Home, Settings: mac.Ghostty, M: m.M, Out: m.Out},
+		&setup.Zed{Home: m.Home, Settings: mac.ZedSettings, Keymap: mac.ZedKeymap, M: m.M, Out: m.Out},
+		&setup.Cld{Home: m.Home, M: m.M, Out: m.Out, Check: check},
+		&setup.Zsh{Home: m.Home, Hook: mac.Zshrc, M: m.M, Out: m.Out, Now: time.Now},
+		&setup.Tunnel{Conf: m.Conf, Home: m.Home, Plist: mac.TunnelPlist, M: m.M, Out: m.Out, Text: m.Text,
 			Check: check},
-		&Networks{Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
+		&setup.Networks{Conf: m.Conf, M: m.M, Out: m.Out, Check: check},
 	}
 }
 

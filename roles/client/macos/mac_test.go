@@ -1,4 +1,4 @@
-package setup_test
+package macos_test
 
 import (
 	"bytes"
@@ -9,17 +9,18 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/setup"
 )
 
 func TestNamesComeInSetupShsOrder(t *testing.T) {
 	want := []string{"ssh", "cable", "git", "ghostty", "zed", "cld", "zsh", "tunnel", "networks"}
-	if got := setup.Names(); !slices.Equal(got, want) {
+	if got := macos.Names(); !slices.Equal(got, want) {
 		t.Errorf("Names = %q; want %q", got, want)
 	}
 	var got []string
-	for _, s := range (setup.Mac{Conf: conf.Conf{}, Home: "/h"}).Rows(setup.Options{Options: step.Options{Check: true}}) {
+	for _, s := range (macos.Mac{Conf: conf.Conf{}, Home: "/h"}).Rows(macos.Options{Options: step.Options{Check: true}}) {
 		got = append(got, s.Name())
 	}
 	if !slices.Equal(got, want) {
@@ -29,21 +30,21 @@ func TestNamesComeInSetupShsOrder(t *testing.T) {
 
 func TestRolesFollowNames(t *testing.T) {
 	var names []string
-	for _, r := range (setup.Mac{Text: io.Discard}).Roles(false) {
+	for _, r := range (macos.Mac{Text: io.Discard}).Roles(false) {
 		names = append(names, r.Name)
 		steps := r.Steps(nil, nil, nil)
 		if len(steps) != 1 || steps[0].Name() != r.Name {
 			t.Errorf("role %q holds steps %v, want one step of its name", r.Name, steps)
 		}
 	}
-	if !slices.Equal(names, setup.Names()) {
-		t.Errorf("roles = %q, want %q", names, setup.Names())
+	if !slices.Equal(names, macos.Names()) {
+		t.Errorf("roles = %q, want %q", names, macos.Names())
 	}
 }
 
 func TestMacStepsTakeTheCheck(t *testing.T) {
 	for _, check := range []bool{false, true} {
-		for _, s := range (setup.Mac{}).Rows(setup.Options{Options: step.Options{Check: check}}) {
+		for _, s := range (macos.Mac{}).Rows(macos.Options{Options: step.Options{Check: check}}) {
 			var got bool
 			switch s := s.(type) {
 			case *setup.Cld:
@@ -65,7 +66,7 @@ func TestMacStepsTakeTheCheck(t *testing.T) {
 func TestMacStateReadsUnderACheck(t *testing.T) {
 	m := effecttest.NewMachine()
 	var text bytes.Buffer
-	mac := setup.Mac{Conf: conf.Conf{User: "ada"}, Home: "/h", M: m, Out: &effecttest.Out{}, Text: &text}
+	mac := macos.Mac{Conf: conf.Conf{User: "ada"}, Home: "/h", M: m, Out: &effecttest.Out{}, Text: &text}
 	reports, err := mac.State(t.Context())
 	if err != nil {
 		t.Fatalf("State: %v", err)
@@ -74,7 +75,7 @@ func TestMacStateReadsUnderACheck(t *testing.T) {
 	for _, r := range reports {
 		names = append(names, r.Step)
 	}
-	if want := setup.Names(); !slices.Equal(names, want) {
+	if want := macos.Names(); !slices.Equal(names, want) {
 		t.Errorf("reports of %q; want %q", names, want)
 	}
 	for _, call := range m.Calls {

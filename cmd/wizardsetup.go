@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"github.com/zadykian/ws/engine/core/step"
+	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/client/macos/conf"
-	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 )
 
@@ -33,7 +33,7 @@ func wizardSetup(e wizardEffects, left func(parent, name string) bool, file stri
 		if c.PublicKey != "" {
 			w = e.text
 		}
-		return macOf(p, c, p.machine, e.out, w).Run(ctx, setup.Options{Options: step.Options{
+		return macOf(p, c, p.machine, e.out, w).Run(ctx, macos.Options{Options: step.Options{
 			Observer: e.obs, Check: check, Parent: s.Name(), Stop: e.stop, LeftOut: left,
 		}})
 	}

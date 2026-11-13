@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"github.com/zadykian/ws/engine/core/wizard"
+	"github.com/zadykian/ws/roles/client/macos"
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/roles/client/macos/setup"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
 	"github.com/zadykian/ws/roles/client/macos/stages/tools"
 	"github.com/zadykian/ws/roles/server/ubuntu"
@@ -33,7 +33,7 @@ func nestedRows(stage string) []tui.Group {
 	var groups []tui.Group
 	switch stage {
 	case (&tools.Setup{}).Name():
-		groups = []tui.Group{{Name: stage, Steps: setup.Names()}}
+		groups = []tui.Group{{Name: stage, Steps: macos.Names()}}
 	case (&stages.WsRun{}).Name():
 		for _, name := range ubuntu.Names() {
 			groups = append(groups, tui.Group{Name: name})
