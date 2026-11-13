@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/netip"
 	"path"
 	"strings"
 
@@ -84,7 +85,8 @@ func Load(m effect.Machine, path string) (Values, error) {
 	return v, nil
 }
 
-// derive fills the values that follow ws_home when the file leaves them empty.
+// derive fills the values that follow ws_home when the file leaves them empty. It lists the Mac
+// at wg0's address plus one where wireguard_peers is unset: an empty list keeps no peer.
 func (v *Values) derive() {
 	if v.Home == "" {
 		v.Home = "/root"
@@ -97,6 +99,11 @@ func (v *Values) derive() {
 	}
 	if v.Shell.GitAllowedSigners == "" {
 		v.Shell.GitAllowedSigners = v.Home + "/.config/git/allowed_signers"
+	}
+	if v.Wireguard.Peers == nil {
+		if p, err := netip.ParsePrefix(v.Wireguard.Address); err == nil && p.Addr().Is4() {
+			v.Wireguard.Peers = []WireguardPeer{{Name: "mac", Address: p.Addr().Next().String()}}
+		}
 	}
 }
 
