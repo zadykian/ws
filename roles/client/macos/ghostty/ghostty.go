@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/brew"
 )
@@ -75,10 +76,10 @@ func (g *Ghostty) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: append(append(app, font...), files...)}, nil
 }
 
-// Apply installs the casks. A failed install is a warning, and the next run tries again; where
-// the app's fails, the files wait for it.
+// Apply applies the plan as a group does. A failed cask install is a warning, and the next run
+// tries again; where the app's fails, the files wait for it.
 func (g *Ghostty) Apply(ctx context.Context, p step.Plan) error {
-	return g.casks().Install(ctx, p, "ghostty")
+	return resource.Group{}.Apply(ctx, p)
 }
 
 // conf returns the config file that Ghostty's menu opens: the first of ghosttyConfigs that holds

@@ -52,6 +52,9 @@ func TestGhosttyFailedInstallIsAWarningAndStopsTheRun(t *testing.T) {
 	if err := s.Apply(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
+	if _, ok := m.Files[ghosttyDir+"/ws.ghostty"]; ok || !slices.Contains(out.Lines, "warn: brew install --cask ghostty failed") {
+		t.Errorf("ws.ghostty written %v, out %q; want a warning and the files held", ok, out.Lines)
+	}
 	if p, err = s.Plan(context.Background()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("second Plan = %v, %v; want none", p.Changes, err)
 	}
