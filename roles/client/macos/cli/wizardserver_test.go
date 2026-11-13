@@ -37,3 +37,15 @@ func TestWizardServerNamesTheServerToSetUp(t *testing.T) {
 		}
 	}
 }
+
+func TestWizardRefusesASecondServer(t *testing.T) {
+	p, _ := testWizardProcess("darwin", 501)
+	m := p.Machine.(*effecttest.Machine)
+	m.Files[conf.ServerPath("/.config/ws/mac.conf", "ws")] = nil
+	withServerDirs(m)
+	status, _, stderr := runWs(p, "", "client", "macos", "wizard", "--check", "--server", "lab")
+	want := "ws client macos wizard: lab would be a second server, beside ws: the wizard sets up one server\n"
+	if status != 1 || stderr != want {
+		t.Errorf("status = %d, stderr = %q; want 1, %q", status, stderr, want)
+	}
+}
