@@ -29,15 +29,16 @@ func TestParseRoutes(t *testing.T) {
 }
 
 func TestParseRoutesLeavesOut(t *testing.T) {
-	files := map[string][]byte{"lab": []byte("10.99.0.0/16\n10.99.0.5/32\n10.77.0.0/30\n0.0.0.0/0\nnope\n10.2.0.5/24\n")}
+	files := map[string][]byte{"lab": []byte("10.99.0.0/16\n10.99.0.5/32\n10.99.15.0/24\n10.77.0.0/30\n0.0.0.0/0\nnope\n10.2.0.5/24\n")}
 	got, warnings := ParseRoutes(files)
-	// The first four overlap the tunnel's or the cable's subnet, the last two are no network.
+	// The first five overlap the tunnel's or the cable's subnet, the last two are no network.
 	if len(got) != 0 {
 		t.Errorf("networks %v, want none", got)
 	}
 	want := []string{
 		"routes.d/lab: leaves out '10.99.0.0/16', not a network it can route",
 		"routes.d/lab: leaves out '10.99.0.5/32', not a network it can route",
+		"routes.d/lab: leaves out '10.99.15.0/24', not a network it can route",
 		"routes.d/lab: leaves out '10.77.0.0/30', not a network it can route",
 		"routes.d/lab: leaves out '0.0.0.0/0', not a network it can route",
 		"routes.d/lab: leaves out 'nope', not a network it can route",

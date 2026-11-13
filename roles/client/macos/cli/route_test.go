@@ -40,7 +40,7 @@ func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 
 func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
 	status, _, stderr := runWs(fakeProcess(), "", "client", "macos", "tunnel", "routes", "test", "0.0.0.0/0")
-	if want := "ws client macos tunnel routes: test: 0.0.0.0/0 overlaps the tunnel's 10.99.0.0/24\n"; status != 1 || stderr != want {
+	if want := "ws client macos tunnel routes: test: 0.0.0.0/0 overlaps the tunnels' 10.99.0.0/20\n"; status != 1 || stderr != want {
 		t.Errorf("routes: status = %d, stderr = %q; want 1, %q", status, stderr, want)
 	}
 }
