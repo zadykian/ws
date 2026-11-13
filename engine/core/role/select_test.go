@@ -58,11 +58,11 @@ func TestCheckSteps(t *testing.T) {
 }
 
 func TestLeftOut(t *testing.T) {
-	var all Options
+	var all Config
 	if all.leftOut() != nil {
 		t.Error("no Only has a filter, want none")
 	}
-	some := Options{Only: []string{"a/x", "a/y", "b", "b/x"}}
+	some := Config{Options: Options{Only: []string{"a/x", "a/y", "b", "b/x"}}}
 	left := some.leftOut()
 	for _, tc := range []struct {
 		role, step string

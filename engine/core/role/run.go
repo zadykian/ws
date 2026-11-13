@@ -25,6 +25,9 @@ type Config struct {
 	Prepare []step.Step
 	// Stop is the Stop of every step.Options here. Nil never stops.
 	Stop func() error
+	// LeftOut leaves steps out beside Only, as the Mac's runs and the wizard's do. Nil leaves none
+	// out. Run takes it; State does too, though no caller of State sets it.
+	LeftOut func(parent, step string) bool
 }
 
 // Steps returns r's steps as Run runs them, on M and Out.
@@ -33,12 +36,15 @@ func (c Config) Steps(r Role) []step.Step {
 }
 
 // Run runs Prepare, then the steps of each role in order, and returns the roles that changed, or
-// that would under Check. Only leaves steps out of the roles alone, as Prepare serves every step.
+// that would under Check. Only and LeftOut leave steps out of the roles alone, as Prepare serves every step. A run with no
+// Prepare steps sends no prepare event.
 func Run(ctx context.Context, c Config, list []Role) ([]string, error) {
 	o := step.Options{Observer: c.Observer, Check: c.Check, Parent: Prepare, Stop: c.Stop}
-	if _, err := step.RunWith(ctx, c.Prepare, o); err != nil {
-		c.unreached(list)
-		return nil, err
+	if len(c.Prepare) > 0 {
+		if _, err := step.RunWith(ctx, c.Prepare, o); err != nil {
+			c.unreached(list)
+			return nil, err
+		}
 	}
 	o.LeftOut = c.leftOut()
 	var changed []string

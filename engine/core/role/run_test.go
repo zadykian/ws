@@ -101,6 +101,45 @@ func TestRunNamesNoRoleForStepsLeftOut(t *testing.T) {
 	}
 }
 
+// Config.LeftOut leaves steps out with Only and without it, and Only still keeps its own.
+func TestRunLeavesOutWhatConfigLeavesOut(t *testing.T) {
+	left := func(parent, name string) bool { return parent == "a" && name == "y" }
+	for _, only := range [][]string{nil, {"a", "b"}} {
+		doneX, doneY, doneZ := false, false, false
+		a := role("a", named{todo{&doneX}, "x"}, named{todo{&doneY}, "y"})
+		b := role("b", named{todo{&doneZ}, "y"})
+		c := Config{Options: Options{Only: only}, M: effecttest.NewMachine(), Out: &effecttest.Out{}, LeftOut: left}
+		got, err := Run(context.Background(), c, []Role{a, b})
+		if err != nil || !slices.Equal(got, []string{"a", "b"}) || !doneX || doneY || !doneZ {
+			t.Errorf("only %q: changed = %q, x, y, z applied = %v %v %v, err = %v", only, got, doneX, doneY, doneZ, err)
+		}
+	}
+	done := false
+	c := Config{Options: Options{Only: []string{"a/x"}}, M: effecttest.NewMachine(), Out: &effecttest.Out{},
+		LeftOut: func(string, string) bool { return false }}
+	if _, err := Run(context.Background(), c, []Role{role("a", named{todo{&done}, "y"})}); err != nil || done {
+		t.Errorf("Only a/x ran y beside a LeftOut of none: applied = %v, err = %v", done, err)
+	}
+}
+
+// parentsSeen keeps the parent of each event.
+type parentsSeen []string
+
+func (p *parentsSeen) Observe(e step.Event) { *p = append(*p, e.Parent) }
+
+// A run with no Prepare steps sends no prepare event, as the Mac's has none.
+func TestRunWithNoPrepareSendsNoPrepareEvent(t *testing.T) {
+	var parents parentsSeen
+	done := false
+	c := Config{M: effecttest.NewMachine(), Out: &effecttest.Out{}, Observer: &parents}
+	if _, err := Run(context.Background(), c, []Role{role("a", todo{&done})}); err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(parents, Prepare) || !done {
+		t.Errorf("parents = %q, applied = %v, want no %q event", parents, done, Prepare)
+	}
+}
+
 // failing is a step whose plan fails.
 type failing struct{ todo }
 

@@ -47,13 +47,17 @@ func (c Config) CheckSteps(list []Role) error {
 	return nil
 }
 
-// leftOut is the filter of a run's roles: a role named by ROLE/STEP alone keeps those steps. With
-// no Only it returns nil, as every role runs whole.
-func (o Options) leftOut() func(role, step string) bool {
-	if len(o.Only) == 0 {
-		return nil
+// leftOut is the filter of a run's roles: a role named by ROLE/STEP alone keeps those steps, and
+// LeftOut leaves out more. With neither it returns nil, as every role runs whole.
+func (c Config) leftOut() func(role, step string) bool {
+	if len(c.Only) == 0 {
+		return c.LeftOut
 	}
-	return func(role, step string) bool {
-		return !slices.Contains(o.Only, role) && !slices.Contains(o.Only, role+"/"+step)
+	only := func(role, step string) bool {
+		return !slices.Contains(c.Only, role) && !slices.Contains(c.Only, role+"/"+step)
 	}
+	if c.LeftOut == nil {
+		return only
+	}
+	return func(role, step string) bool { return only(role, step) || c.LeftOut(role, step) }
 }
