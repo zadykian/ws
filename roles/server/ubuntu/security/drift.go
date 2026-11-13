@@ -7,7 +7,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // drift finds the outbound table in force other than its file's. A run cut short before the unit's
@@ -35,8 +36,8 @@ func (reloadDue) Apply(context.Context) error { return nil }
 var list = []string{"--net", "sh", "-c", `"$1" "$2" && nft -s list table inet ws`, "sh", scriptFile, tableFile}
 
 // Plan plans a reload where the tables differ.
-func (d drift) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(d.m) {
+func (d drift) Plan(ctx context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(d.m) {
 		d.out.Say("outbound table: not compared with the kernel's, systemd is not running")
 		return nil, nil
 	}
@@ -51,11 +52,11 @@ func (d drift) Plan(ctx context.Context) ([]host.Change, error) {
 	}
 	loaded, err := d.m.RunRoot(ctx, "unshare", list...)
 	if err != nil {
-		return []host.Change{reloadDue{}}, nil //nolint:nilerr // a table that fails to load is a reload due
+		return []resource.Change{reloadDue{}}, nil //nolint:nilerr // a table that fails to load is a reload due
 	}
 	inForce, err := d.m.RunRoot(ctx, "nft", "-s", "list", "table", "inet", "ws")
 	if err != nil || !bytes.Equal(inForce, loaded) {
-		return []host.Change{reloadDue{}}, nil //nolint:nilerr // no table in force is a reload due
+		return []resource.Change{reloadDue{}}, nil //nolint:nilerr // no table in force is a reload due
 	}
 	return nil, nil
 }

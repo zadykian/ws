@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 func TestDotfilesAreTheRolesFiles(t *testing.T) {
 	m := effecttest.NewMachine()
-	got, err := dotfiles(m, host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1, GID: 2}, "amd64")
+	got, err := dotfiles(m, account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1, GID: 2}, "amd64")
 	if err != nil || len(got) != 2 {
 		t.Fatalf("got %d files, %v", len(got), err)
 	}
@@ -20,7 +21,7 @@ func TestDotfilesAreTheRolesFiles(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if f := got[i].(host.File); !bytes.Equal(f.Content, want) {
+		if f := got[i].(file.File); !bytes.Equal(f.Content, want) {
 			t.Errorf("%s differs from the role's rendering", name)
 		}
 	}

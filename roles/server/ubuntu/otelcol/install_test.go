@@ -9,16 +9,17 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 )
 
-func installGroup(m *effecttest.Machine, u effect.Units, out effect.Out) host.Group {
-	return host.Group{Title: installStep, Parts: []host.Resource{stopped{pinned(m), m, u, out}}}
+func installGroup(m *effecttest.Machine, u effect.Units, out effect.Out) resource.Group {
+	return resource.Group{Title: installStep, Parts: []resource.Resource{stopped{pinned(m), m, u, out}}}
 }
 
 func TestInstallRemovesAStrayDeb(t *testing.T) {
 	m := machine(effecttest.Package{Version: version, Status: "ii"})
-	m.Files[path.Join(host.CacheDir, debName("amd64"))] = []byte("deb")
+	m.Files[path.Join(fetch.CacheDir, debName("amd64"))] = []byte("deb")
 	p, err := installGroup(m, &effecttest.Units{}, &effecttest.Out{}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 1 || !strings.HasPrefix(p.Changes[0].String(), "remove ") {
 		t.Errorf("plan with a stray .deb = %v, %v; want its removal", p.Changes, err)
@@ -31,9 +32,9 @@ func TestOtherVersionDownloadsChecksInstallsAndRemoves(t *testing.T) {
 	old := sums["amd64"]
 	sums["amd64"] = fmt.Sprintf("%x", sha256.Sum256([]byte("deb")))
 	t.Cleanup(func() { sums["amd64"] = old })
-	m.Results["dpkg-deb -f "+path.Join(host.CacheDir, debName("amd64"))+" Package Version"] = effecttest.Result{Out: []byte("Package: otelcol-contrib\nVersion: " + version + "\n")}
+	m.Results["dpkg-deb -f "+path.Join(fetch.CacheDir, debName("amd64"))+" Package Version"] = effecttest.Result{Out: []byte("Package: otelcol-contrib\nVersion: " + version + "\n")}
 	m.Results["env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 "+
-		"-o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install -y --allow-downgrades "+path.Join(host.CacheDir, debName("amd64"))] = effecttest.Result{}
+		"-o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install -y --allow-downgrades "+path.Join(fetch.CacheDir, debName("amd64"))] = effecttest.Result{}
 	m.Dirs["/run/systemd/system"] = 0o755
 	u := &effecttest.Units{}
 	// The table keeps its rows through apt-get, so the install is planned and applied once, not re-planned.
@@ -45,7 +46,7 @@ func TestOtherVersionDownloadsChecksInstallsAndRemoves(t *testing.T) {
 	if err := in.Apply(t.Context(), p); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := m.Files[path.Join(host.CacheDir, debName("amd64"))]; ok {
+	if _, ok := m.Files[path.Join(fetch.CacheDir, debName("amd64"))]; ok {
 		t.Error("the .deb stays in /var/cache")
 	}
 	if got := strings.Join(u.Calls, ","); got != "stop otelcol-contrib.service,disable otelcol-contrib.service" {

@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func envFixture(env map[string]string) (*effecttest.Machine, Env) {
 	m := effecttest.NewMachine()
-	a := host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
+	a := account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000, GID: 1000}
 	return m, Env{M: m, A: a, Env: env}
 }
 

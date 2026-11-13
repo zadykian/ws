@@ -4,14 +4,15 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // Delve is Delve at a version, built with a Go version, for Zed's debugger. The
 // versions are the pins, without the v and the go.
 type Delve struct {
 	M                  effect.Machine
-	User               host.User
+	User               account.User
 	Path               string // where go install puts dlv
 	Version, GoVersion string
 }
@@ -29,10 +30,10 @@ func (c buildDelve) Apply(ctx context.Context) error {
 
 // Plan reads the binary's build info. go version -m only opens the file, so the caller runs it and
 // a dry run does too. A failed read counts as no Delve.
-func (d Delve) Plan(ctx context.Context) ([]host.Change, error) {
+func (d Delve) Plan(ctx context.Context) ([]resource.Change, error) {
 	out, err := d.M.Run(ctx, goBin, "version", "-m", d.Path)
 	if delveCurrent(out, err, d.GoVersion, d.Version) {
 		return nil, nil
 	}
-	return []host.Change{buildDelve{d}}, nil
+	return []resource.Change{buildDelve{d}}, nil
 }

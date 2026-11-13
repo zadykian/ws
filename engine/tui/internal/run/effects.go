@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // Effects is what a work beside a screen runs on, besides the Bridge, which takes its output and
@@ -36,11 +37,11 @@ func (b *Bridge) Effects() Effects {
 // ticket until the screen ends. A fake keeps its own commands, as it has no terminal to keep them
 // off.
 func (b *Bridge) effectsOn(ctx context.Context, m effect.Machine) Effects {
-	if machine, ok := m.(effect.OSMachine); ok {
+	if machine, ok := m.(local.OSMachine); ok {
 		m = b.Machine(ctx, machine)
 	}
 	talks, _ := m.(effect.Foreground)
-	if machine, ok := m.(effect.OSMachine); ok {
+	if machine, ok := m.(local.OSMachine); ok {
 		talks = b.Foreground(machine)
 	}
 	return Effects{M: m, Talks: talks, Text: b.text}

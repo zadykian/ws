@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 const goplsRead = "env HOME=/root /root/go/bin/gopls version -json"
 
 func newGopls(m *effecttest.Machine) Gopls {
-	return Gopls{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/gopls",
+	return Gopls{M: m, User: account.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/gopls",
 		Version: "0.23.0", GoVersion: "1.27.3"}
 }
 

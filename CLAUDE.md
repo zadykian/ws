@@ -16,8 +16,8 @@ sets up the Mac that works on the server. The rest is the docs, the lint gates' 
   `ws server ubuntu fans`, in `roles/server/ubuntu/fans/daemon`.
 - `go.mod`, `go.sum` and `.golangci.yml`: the Go module `github.com/zadykian/ws`, at the root.
   `main.go` runs `cmd`, the command. `engine/core` holds `step`,
-  `effect`, with `effect/effecttest`, and `host`, the resources the steps share, which are public:
-  another module builds steps on them.
+  `effect`, with `effect/effecttest`, `effect/local` and `effect/units`, and `resource`, the resources
+  the steps share, which are public: another module builds steps on them.
 - `GLOSSARY.md`: the words of the server's side and of the Mac's, such as the account and the
   home file.
 - `install.sh`: installs ws's binary from a release ([Releases](docs/releases.md)).
@@ -94,7 +94,7 @@ Each rule links where the repository gives its reason: a doc, a comment or a CI 
   container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - A second run changes nothing: CI's `playbook` job runs it twice and fails where the second run
   reports a change ([ci.yml](.github/workflows/ci.yml)).
-- A step that needs a booted machine's systemd checks `host.Booted`, and skips without it, as in
+- A step that needs a booted machine's systemd checks `systemd.Booted`, and skips without it, as in
   CI's container ([The `playbook` job](docs/checks.md#the-playbook-job)).
 - `release.yml` checks a release's files and notes for the local list's words before it publishes
   them. The list is the secret `FORBIDDEN_WORDS`, and the job fails on an empty one

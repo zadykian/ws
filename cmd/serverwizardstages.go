@@ -6,7 +6,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/stages"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -22,7 +22,7 @@ func serverWizardStages(e wizardEffects, o wizardOptions) []step.Step {
 	vals := &stages.WsValues{Vars: serverVars, User: p.getenv("SUDO_USER"), Tty: p.tty, M: m, P: e.ask,
 		Set: func(key, value string) error { return setServerValue(m, out, key, value) }}
 	ws := serverSession(m, e.talks, out, e.events)
-	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !host.Booted(m), Check: o.check, Out: out,
+	run := &stages.WsRun{Ws: ws, Await: vals.Name(), Unbooted: !systemd.Booted(m), Check: o.check, Out: out,
 		Version: p.version, Update: o.update, Only: o.only}
 	hand.Late(ws.Hand)
 	return []step.Step{vals, run, &stages.WsClaude{Ws: ws, Tty: p.tty},

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 const delveRead = goBin + " version -m /root/go/bin/dlv"
@@ -15,7 +15,7 @@ const delveRead = goBin + " version -m /root/go/bin/dlv"
 const dlvVersion = "1.27.2"
 
 func newDelve(m *effecttest.Machine) Delve {
-	return Delve{M: m, User: host.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/dlv",
+	return Delve{M: m, User: account.User{Name: "root", Home: "/root"}, Path: "/root/go/bin/dlv",
 		Version: dlvVersion, GoVersion: "1.27.3"}
 }
 

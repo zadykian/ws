@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // boardVendorFile is where DMI gives the board's maker.
@@ -36,7 +36,7 @@ type board struct {
 	vendor string
 }
 
-func (b board) Plan(context.Context) ([]host.Change, error) {
+func (b board) Plan(context.Context) ([]resource.Change, error) {
 	ok, err := onBoard(b.m, b.vendor)
 	if err != nil {
 		return nil, err
@@ -52,8 +52,8 @@ func (b board) Plan(context.Context) ([]host.Change, error) {
 }
 
 // gated makes the parts only on the board whose fans the role drives.
-func gated(m effect.Machine, vendor string, parts func(context.Context) ([]host.Resource, error)) func(context.Context) ([]host.Resource, error) {
-	return func(ctx context.Context) ([]host.Resource, error) {
+func gated(m effect.Machine, vendor string, parts func(context.Context) ([]resource.Resource, error)) func(context.Context) ([]resource.Resource, error) {
+	return func(ctx context.Context) ([]resource.Resource, error) {
 		ok, err := onBoard(m, vendor)
 		if err != nil || !ok {
 			return nil, err

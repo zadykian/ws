@@ -1,6 +1,6 @@
 package security
 
-import "github.com/zadykian/ws/engine/core/host"
+import "github.com/zadykian/ws/engine/core/resource"
 
 // Where the outbound table and its fill live, in a directory of ws's files alone.
 const (
@@ -22,5 +22,5 @@ type paths struct{ Script, Table string }
 
 // render fills the template files/NAME.tmpl.
 func render(name string) ([]byte, error) {
-	return host.Render(files, "files/"+name+".tmpl", paths{Script: scriptFile, Table: tableFile})
+	return resource.Render(files, "files/"+name+".tmpl", paths{Script: scriptFile, Table: tableFile})
 }

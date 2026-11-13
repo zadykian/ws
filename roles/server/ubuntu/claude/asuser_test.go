@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/cld"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/settings"
 )
@@ -14,7 +14,7 @@ import (
 const readScript = `if [ -e "$1" ]; then printf y; cat "$1"; else printf n; fi`
 
 // serveRead fakes the command that asuser.Read runs for the user's file. A nil body is no file.
-func serveRead(m *effecttest.Machine, u host.User, file string, body []byte) {
+func serveRead(m *effecttest.Machine, u account.User, file string, body []byte) {
 	out := []byte("n")
 	if body != nil {
 		out = append([]byte("y"), body...)
@@ -29,7 +29,7 @@ func serveRead(m *effecttest.Machine, u host.User, file string, body []byte) {
 // A link at the file or at a directory above it reaches only what the user could read, so the
 // reads go as the user and never as root.
 func TestReadsGoAsTheUserThroughLinks(t *testing.T) {
-	user := host.User{Name: "ws", Home: "/home/ws"}
+	user := account.User{Name: "ws", Home: "/home/ws"}
 	userFile := user.Home + "/.claude/settings.json"
 	script := user.Home + "/.local/share/bash-completion/completions/cld"
 	for _, link := range []string{userFile, user.Home + "/.claude", script, user.Home + "/.local/share"} {

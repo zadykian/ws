@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -46,7 +47,7 @@ func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 		}
 		files[n], bodies[n] = d, body
 	}
-	if !host.Booted(s.M) {
+	if !systemd.Booted(s.M) {
 		s.Out.Say("%s: skipped, systemd is not running", s.Name())
 		return step.Plan{}, nil
 	}
@@ -82,7 +83,7 @@ func (s Dashboards) Plan(ctx context.Context) (step.Plan, error) {
 // Apply creates and replaces what the plan found due.
 func (Dashboards) Apply(ctx context.Context, p step.Plan) error {
 	for _, c := range p.Changes {
-		if err := c.(host.Change).Apply(ctx); err != nil {
+		if err := c.(resource.Change).Apply(ctx); err != nil {
 			return fmt.Errorf("%s: %w", step.Headline(c), err)
 		}
 	}

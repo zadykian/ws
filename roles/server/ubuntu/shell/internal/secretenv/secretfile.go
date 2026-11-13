@@ -8,7 +8,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/shell/internal/plan"
 )
 
@@ -18,7 +19,7 @@ import (
 // wrote.
 type Env struct {
 	M   effect.Machine
-	A   host.Account
+	A   account.Account
 	Env map[string]string
 	// Whole is the secrets file's say that [env] is all: with none, the file goes.
 	Whole bool
@@ -28,7 +29,7 @@ type Env struct {
 // rather than replaced. A backup would copy its secrets, and the new file would drop what the
 // secrets file lacks, and so would a removal. A dry run stops there too. The file is read for its
 // first line alone.
-func (s Env) Plan(ctx context.Context) ([]host.Change, error) {
+func (s Env) Plan(ctx context.Context) ([]resource.Change, error) {
 	if len(s.Env) == 0 && !s.Whole {
 		return nil, nil
 	}

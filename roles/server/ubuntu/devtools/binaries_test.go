@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -40,12 +42,12 @@ func TestEachPinHoldsAHexDigestForBothArchitectures(t *testing.T) {
 }
 
 // pinnedOf returns the one pinned file that the step for the server makes.
-func pinnedOf(t *testing.T, name string, r release, url func(version, arch string) string) host.PinnedFile {
+func pinnedOf(t *testing.T, name string, r release, url func(version, arch string) string) fetch.PinnedFile {
 	parts := download(effecttest.NewMachine(), name, r, url).Parts
 	if len(parts) != 1 {
 		t.Fatalf("%s: %v", name, parts)
 	}
-	return parts[0].(host.PinnedFile)
+	return parts[0].(fetch.PinnedFile)
 }
 
 func TestEachServerIsRootsBinaryAtMode0755WithItsPin(t *testing.T) {
@@ -86,8 +88,8 @@ func servePins(t *testing.T, m *effecttest.Machine) {
 
 // withPackages returns serverSteps after an empty step of the name that the npm servers wait on.
 func withPackages(m *effecttest.Machine, user, home string) []step.Step {
-	return append([]step.Step{host.Group{Title: "Devtools packages"}},
-		serverSteps(m, host.User{Name: user, Home: home})...)
+	return append([]step.Step{resource.Group{Title: "Devtools packages"}},
+		serverSteps(m, account.User{Name: user, Home: home})...)
 }
 
 // runServers applies serverSteps on a machine with an empty home for the user, and returns it.

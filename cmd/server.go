@@ -12,7 +12,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/effect/local"
+	"github.com/zadykian/ws/engine/core/effect/units"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/engine/tui"
@@ -131,7 +134,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 		return serverRun{}, err
 	}
 	// ws_home is known now: the machine's writes under it stay inside it.
-	if m, ok := p.machine.(effect.OSMachine); ok {
+	if m, ok := p.machine.(local.OSMachine); ok {
 		m.Confine = v.Home
 		p.machine = m
 	}
@@ -139,7 +142,7 @@ func prepareServer(c *cobra.Command, p process, opts applyOptions) (serverRun, e
 	if err != nil {
 		return serverRun{}, err
 	}
-	cfg := role.Config{Options: opts.Options, M: p.machine, U: effect.OSUnits{}, Out: out, Observer: out,
+	cfg := role.Config{Options: opts.Options, M: p.machine, U: units.OSUnits{}, Out: out, Observer: out,
 		Prepare: prepareSteps(p.machine, out)}
 	r := serverRun{cfg: cfg, values: v, term: term, out: out}
 	if r.list, err = r.roles(sec); err != nil {
@@ -192,7 +195,7 @@ func runApply(c *cobra.Command, p process, opts applyOptions, asJSON bool) error
 
 // prepareSteps is what every role needs: ca-certificates serves the steps' downloads over HTTPS.
 func prepareSteps(m effect.Machine, out effect.Out) []step.Step {
-	return []step.Step{host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{
+	return []step.Step{resource.Group{Title: "Packages", Parts: []resource.Resource{apt.Packages{
 		M: m, Out: out, Names: []string{"ca-certificates"},
 	}}}}
 }

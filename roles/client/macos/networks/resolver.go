@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
@@ -49,29 +49,29 @@ func (r *Resolver) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, fmt.Errorf("%s: macOS takes 3 nameservers for a domain, not %d",
 			r.Domain, len(r.Addresses))
 	}
-	file := resolverDir + "/" + r.Domain
-	text, err := r.M.ReadRootFile(file)
+	resolverFile := resolverDir + "/" + r.Domain
+	text, err := r.M.ReadRootFile(resolverFile)
 	exists := !errors.Is(err, fs.ErrNotExist)
 	if err != nil && exists {
 		return step.Plan{}, err
 	}
 	if first, _, _ := strings.Cut(string(text), "\n"); exists && first != resolverCmdHeader {
 		if len(r.Addresses) > 0 {
-			return step.Plan{}, fmt.Errorf("%s is there, and ws client macos resolver didn't write it: move it away first", file)
+			return step.Plan{}, fmt.Errorf("%s is there, and ws client macos resolver didn't write it: move it away first", resolverFile)
 		}
-		r.Out.Say("leaves %s, which ws client macos resolver didn't write", file)
+		r.Out.Say("leaves %s, which ws client macos resolver didn't write", resolverFile)
 		return step.Plan{}, nil
 	}
 	if len(r.Addresses) == 0 {
-		cs, err := change.Plan(ctx, nil, host.Absent{M: r.M, Path: file})
+		cs, err := change.Plan(ctx, nil, file.Absent{M: r.M, Path: resolverFile})
 		return step.Plan{Changes: cs}, err
 	}
-	cs, err := change.Plan(ctx, nil, host.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
+	cs, err := change.Plan(ctx, nil, file.Dir{M: r.M, Path: resolverDir, Mode: 0o755})
 	if err != nil {
 		return step.Plan{}, err
 	}
 	want := resolverCmdHeader + "\nnameserver " + strings.Join(r.Addresses, "\nnameserver ") + "\n"
-	cs, err = change.Plan(ctx, cs, host.File{M: r.M, Path: file, Content: []byte(want), Mode: 0o644})
+	cs, err = change.Plan(ctx, cs, file.File{M: r.M, Path: resolverFile, Content: []byte(want), Mode: 0o644})
 	return step.Plan{Changes: cs}, err
 }
 

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
@@ -31,7 +31,7 @@ func applyInOrder(ctx context.Context, m effect.Machine, out effect.Out, p step.
 // removal is host's removal of a file that no Report names, as mac.conf no longer does. It says
 // what the file's Report would.
 type removal struct {
-	host.Change
+	resource.Change
 	path string
 }
 

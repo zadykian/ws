@@ -6,13 +6,13 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func TestKeyCheckRefusesNoKeys(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Root["/home/ws"] = effect.Attrs{UID: 1000, GID: 1000, Mode: 0o755}
-	k := keyCheck{m, host.User{Name: "ws", Home: "/home/ws"}}
+	k := keyCheck{m, account.User{Name: "ws", Home: "/home/ws"}}
 	if _, err := k.Plan(t.Context()); err == nil {
 		t.Fatal("a missing authorized_keys passed")
 	}
@@ -44,7 +44,7 @@ func TestKeyCheckRefusesAFileSSHDPassesOver(t *testing.T) {
 		m.Root["/home/ws"] = effect.Attrs{UID: 1000, GID: 1000, Mode: 0o755}
 		m.Root[file] = c.a
 		m.Files[file] = []byte("ssh-ed25519 AAAA me\n")
-		_, err := keyCheck{m, host.User{Name: "ws", Home: "/home/ws"}}.Plan(t.Context())
+		_, err := keyCheck{m, account.User{Name: "ws", Home: "/home/ws"}}.Plan(t.Context())
 		if (err == nil) != c.ok {
 			t.Errorf("%s: %v", c.name, err)
 		}
@@ -54,7 +54,7 @@ func TestKeyCheckRefusesAFileSSHDPassesOver(t *testing.T) {
 func TestKeyCheckPassesInAContainer(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/.dockerenv"] = nil
-	if _, err := (keyCheck{m, host.User{Name: "ws", Home: "/home/ws"}}).Plan(t.Context()); err != nil {
+	if _, err := (keyCheck{m, account.User{Name: "ws", Home: "/home/ws"}}).Plan(t.Context()); err != nil {
 		t.Errorf("a container was refused: %v", err)
 	}
 }
@@ -66,7 +66,7 @@ func TestKeyCheckRefusesALink(t *testing.T) {
 		m.Files["/home/ws/.ssh/authorized_keys"] = []byte("ssh-ed25519 AAAA me\n")
 		m.Root["/home/ws/.ssh/authorized_keys"] = effect.Attrs{UID: 1000, Mode: 0o600}
 		m.Links[link] = "/srv/target"
-		if _, err := (keyCheck{m, host.User{Name: "ws", Home: "/home/ws"}}).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "link") {
+		if _, err := (keyCheck{m, account.User{Name: "ws", Home: "/home/ws"}}).Plan(t.Context()); err == nil || !strings.Contains(err.Error(), "link") {
 			t.Errorf("a link at %s: %v", link, err)
 		}
 	}

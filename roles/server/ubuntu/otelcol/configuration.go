@@ -6,7 +6,10 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 const (
@@ -16,7 +19,7 @@ const (
 
 // remoteEndpoint reads the remote collector's endpoint from the user's ~/.secrets/env, or ""
 // where the file or the variable is missing. A bad value stops the run.
-func remoteEndpoint(m effect.Machine, user host.User) (string, error) {
+func remoteEndpoint(m effect.Machine, user account.User) (string, error) {
 	env, err := user.ReadHome(m, ".secrets/env")
 	if errors.Is(err, fs.ErrNotExist) {
 		return "", nil
@@ -38,8 +41,8 @@ func remoteEndpoint(m effect.Machine, user host.User) (string, error) {
 // one's. The remote endpoint is a stand-in there, as its value is only in the service's
 // environment. A change of any of them restarts the collector: a new endpoint needs a restart, as
 // the collector's reload rereads its config alone.
-func configuration(m effect.Machine, u effect.Units, out effect.Out, user host.User) func(context.Context) ([]host.Resource, error) {
-	return func(context.Context) ([]host.Resource, error) {
+func configuration(m effect.Machine, u effect.Units, out effect.Out, user account.User) func(context.Context) ([]resource.Resource, error) {
+	return func(context.Context) ([]resource.Resource, error) {
 		endpoint, err := remoteEndpoint(m, user)
 		if err != nil {
 			return nil, err
@@ -56,33 +59,33 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, user host.U
 		if err != nil {
 			return nil, err
 		}
-		journalFile := host.File{M: m, Path: dropIns + "/journal.conf", Content: journal, Mode: 0o644}
-		claudeFile := host.File{M: m, Path: dropIns + "/claude.conf", Content: claude, Mode: 0o644}
-		config := host.Validated{
-			File: host.File{M: m, Path: configDir + "/config.yaml", Content: cfg, Mode: 0o644},
+		journalFile := file.File{M: m, Path: dropIns + "/journal.conf", Content: journal, Mode: 0o644}
+		claudeFile := file.File{M: m, Path: dropIns + "/claude.conf", Content: claude, Mode: 0o644}
+		config := file.Validated{
+			File: file.File{M: m, Path: configDir + "/config.yaml", Content: cfg, Mode: 0o644},
 			Check: func(path string) (string, []string) {
 				return "env", []string{"OTEL_CLAUDE_EXPORTER_OTLP_ENDPOINT=http://remote.invalid:4317",
 					"/usr/bin/otelcol-contrib", "validate", "--config=" + path}
 			},
 		}
-		watch := []host.Resource{journalFile, claudeFile, config}
-		parts := []host.Resource{host.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
+		watch := []resource.Resource{journalFile, claudeFile, config}
+		parts := []resource.Resource{file.Dir{M: m, Path: dropIns, Mode: 0o755}, journalFile, claudeFile}
 		if endpoint != "" {
 			env, err := Env(user.Home, endpoint)
 			if err != nil {
 				return nil, err
 			}
-			file := host.File{M: m, Path: configDir + "/claude.env", Content: env, Mode: 0o600, Secret: true}
-			parts = append(parts, file, config)
-			watch = append(watch, file)
+			envFile := file.File{M: m, Path: configDir + "/claude.env", Content: env, Mode: 0o600, Secret: true}
+			parts = append(parts, envFile, config)
+			watch = append(watch, envFile)
 		} else {
-			gone := host.Absent{M: m, Path: configDir + "/claude.env"}
+			gone := file.Absent{M: m, Path: configDir + "/claude.env"}
 			parts = append(parts, config, gone)
 			watch = append(watch, gone)
 		}
 		parts = append(parts,
-			host.DaemonReload{M: m, U: u, Watch: []host.Resource{journalFile, claudeFile}},
-			host.Unit{M: m, U: u, Out: out, Name: "otelcol-contrib.service", Enabled: true, Run: host.Running, Watch: watch},
+			systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{journalFile, claudeFile}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "otelcol-contrib.service", Enabled: true, Run: systemd.Running, Watch: watch},
 		)
 		return parts, nil
 	}

@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 const noCachePath = "/etc/sudoers.d/ws-no-cache"
@@ -15,21 +16,21 @@ const noCachePath = "/etc/sudoers.d/ws-no-cache"
 // it, then the drop-in that ends sudo's cache. visudo reads it before it
 // is in place, though a broken one would not lock anyone out: sudo-rs skips the file with an error.
 // sudo skips a name with a dot, so the file under check has no effect.
-func sudoParts(m effect.Machine, user string) ([]host.Resource, error) {
+func sudoParts(m effect.Machine, user string) ([]resource.Resource, error) {
 	conf, err := files.ReadFile("files/ws-no-cache")
 	if err != nil {
 		return nil, err
 	}
-	file := host.Validated{
-		File: host.File{M: m, Path: noCachePath, Content: conf, Mode: 0o440},
+	dropIn := file.Validated{
+		File: file.File{M: m, Path: noCachePath, Content: conf, Mode: 0o440},
 		Check: func(path string) (string, []string) {
 			return "visudo", []string{"-cf", path}
 		},
 	}
 	if user == "root" {
-		return []host.Resource{file}, nil
+		return []resource.Resource{dropIn}, nil
 	}
-	return []host.Resource{sudoRight{m, user}, file}, nil
+	return []resource.Resource{sudoRight{m, user}, dropIn}, nil
 }
 
 // sudoRight fails where closing root's login would leave no way to root: the user can't run sudo,
@@ -40,7 +41,7 @@ type sudoRight struct {
 	user string
 }
 
-func (s sudoRight) Plan(ctx context.Context) ([]host.Change, error) {
+func (s sudoRight) Plan(ctx context.Context) ([]resource.Change, error) {
 	if inContainer(s.m) {
 		return nil, nil
 	}

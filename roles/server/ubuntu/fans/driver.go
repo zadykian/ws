@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // dkmsBinary is where the dkms package puts the command.
@@ -34,7 +34,7 @@ func (c command) Apply(ctx context.Context) error {
 
 // Plan reads DKMS's versions of the driver. Before dkms is installed, as in a dry run, it holds
 // none.
-func (d driver) Plan(ctx context.Context) ([]host.Change, error) {
+func (d driver) Plan(ctx context.Context) ([]resource.Change, error) {
 	kernel, err := kernelRelease(ctx, d.m)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (d driver) Plan(ctx context.Context) ([]host.Change, error) {
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-	var changes []host.Change
+	var changes []resource.Change
 	for _, v := range state.versions {
 		if v == nct6687Short {
 			continue

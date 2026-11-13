@@ -9,13 +9,14 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 // timezoneParts links /etc/localtime to the zone, without timedatectl, which needs a running
 // systemd, and keeps /etc/timezone in step where the machine has it.
-func timezoneParts(m effect.Machine, zone string) []host.Resource {
-	return []host.Resource{
+func timezoneParts(m effect.Machine, zone string) []resource.Resource {
+	return []resource.Resource{
 		zoneLink{M: m, Zone: zone},
 		legacyZone{M: m, Zone: zone},
 	}
@@ -28,7 +29,7 @@ type zoneLink struct {
 }
 
 // Plan refuses a zone that is no file under /usr/share/zoneinfo.
-func (z zoneLink) Plan(ctx context.Context) ([]host.Change, error) {
+func (z zoneLink) Plan(ctx context.Context) ([]resource.Change, error) {
 	if z.Zone == "" || path.IsAbs(z.Zone) || path.Clean(z.Zone) != z.Zone || strings.HasPrefix(z.Zone, "../") {
 		return nil, fmt.Errorf("base_timezone is %q: it takes a name under /usr/share/zoneinfo, such as Etc/UTC", z.Zone)
 	}
@@ -38,7 +39,7 @@ func (z zoneLink) Plan(ctx context.Context) ([]host.Change, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	return host.Link{M: z.M, Path: "/etc/localtime", Target: target}.Plan(ctx)
+	return file.Link{M: z.M, Path: "/etc/localtime", Target: target}.Plan(ctx)
 }
 
 // legacyZone is /etc/timezone. tzdata no longer uses it, but a machine installed with it may keep
@@ -49,11 +50,11 @@ type legacyZone struct {
 }
 
 // Plan plans the file where it exists, and none where it does not.
-func (z legacyZone) Plan(ctx context.Context) ([]host.Change, error) {
+func (z legacyZone) Plan(ctx context.Context) ([]resource.Change, error) {
 	if _, err := z.M.Stat("/etc/timezone"); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
-	return host.File{M: z.M, Path: "/etc/timezone", Content: []byte(z.Zone + "\n"), Mode: 0o644}.Plan(ctx)
+	return file.File{M: z.M, Path: "/etc/timezone", Content: []byte(z.Zone + "\n"), Mode: 0o644}.Plan(ctx)
 }

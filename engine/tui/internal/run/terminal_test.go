@@ -12,7 +12,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // quit is what the loop ends on.
@@ -88,7 +88,7 @@ func TestRunRefusesACommandPastTheScreen(t *testing.T) {
 	c.In = strings.NewReader("\x03\x03")
 	_ = Run(t.Context(), c, recorder{&[]tea.Msg{}}, func(ctx context.Context, b *Bridge) error {
 		<-b.gone
-		err := b.Foreground(effect.OSMachine{}).PassForeground(ctx, false, "true")
+		err := b.Foreground(local.OSMachine{}).PassForeground(ctx, false, "true")
 		if !errors.Is(err, errGone) {
 			t.Errorf("PassForeground: %v", err)
 		}

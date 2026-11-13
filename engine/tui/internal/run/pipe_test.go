@@ -8,7 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/tui/internal/widget"
 )
 
@@ -45,8 +45,8 @@ func TestPipeBoundsALineWithNoEnd(t *testing.T) {
 
 func TestMachineSendsWhatCommandsPrintToTheScreen(t *testing.T) {
 	b := newBridge(io.Discard)
-	m := b.Machine(t.Context(), effect.OSMachine{Sudo: []string{}})
-	if m.Stderr != b.pipe || m.Stdin != effect.NoStdin {
+	m := b.Machine(t.Context(), local.OSMachine{Sudo: []string{}})
+	if m.Stderr != b.pipe || m.Stdin != local.NoStdin {
 		t.Errorf("Stderr %v, Stdin %v", m.Stderr, m.Stdin)
 	}
 }

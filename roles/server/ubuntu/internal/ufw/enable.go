@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Enable turns ufw on, as `ufw enable` does, where ConfFile does not say ENABLED=yes or ufw status
@@ -26,8 +27,8 @@ func (c enableCall) Apply(ctx context.Context) error {
 }
 
 // Plan plans the enable.
-func (e Enable) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(e.M) {
+func (e Enable) Plan(ctx context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(e.M) {
 		e.Out.Say("ufw enable: skipped, systemd is not running")
 		return nil, nil
 	}
@@ -40,7 +41,7 @@ func (e Enable) Plan(ctx context.Context) ([]host.Change, error) {
 	if strings.EqualFold(conf["ENABLED"], "yes") && e.active(ctx) {
 		return nil, nil
 	}
-	return []host.Change{enableCall{e.M}}, nil
+	return []resource.Change{enableCall{e.M}}, nil
 }
 
 // active is whether ufw reports its rules as loaded. Where ufw fails, it plans the enable.

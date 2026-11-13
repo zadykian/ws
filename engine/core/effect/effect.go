@@ -4,8 +4,13 @@ package effect
 
 import (
 	"context"
+	"errors"
 	"io/fs"
 )
+
+// ErrSHA256 is what a body of a wrong SHA-256 wraps, so that a caller can tell it from a failed
+// fetch and not retry it.
+var ErrSHA256 = errors.New("SHA-256")
 
 // Question is what ws asks, with its default and its check of the answer.
 type Question struct {

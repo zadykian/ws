@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Check stops the run where docker0 lacks the address the values give. docker0 takes a moved
@@ -35,8 +36,8 @@ func (c bridgeMoves) Apply(context.Context) error {
 }
 
 // Plan reads docker0's addresses.
-func (c Check) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(c.M) {
+func (c Check) Plan(context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(c.M) {
 		c.Out.Say("docker0: skipped, systemd is not running")
 		return nil, nil
 	}
@@ -55,5 +56,5 @@ func (c Check) Plan(context.Context) ([]host.Change, error) {
 	if len(text) > 0 {
 		holds = strings.Join(text, ", ")
 	}
-	return []host.Change{bridgeMoves{holds, c.Want}}, nil
+	return []resource.Change{bridgeMoves{holds, c.Want}}, nil
 }

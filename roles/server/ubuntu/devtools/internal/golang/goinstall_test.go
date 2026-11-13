@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func TestGoInstallSetsTheEnvironment(t *testing.T) {
 	m := effecttest.NewMachine()
-	user := host.User{Name: "root", Home: "/root"}
+	user := account.User{Name: "root", Home: "/root"}
 	if err := goInstall(context.Background(), m, user, "x", "/root/go/bin/x", "example.test/x@v1"); err == nil {
 		t.Fatal("a program is built with no Go")
 	}

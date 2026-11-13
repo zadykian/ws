@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -21,7 +22,7 @@ import (
 // user settings; it needs no claude login.
 type Marketplaces struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	List []values.Marketplace
 }
 
@@ -129,7 +130,7 @@ func (c addMarketplace) Apply(ctx context.Context) error {
 // Plan lists the marketplaces claude knows, checks each known one against its source, and plans an
 // add for each other. Without claude, as in a dry run on a new machine, it lists none, so the plan
 // names every marketplace.
-func (p Marketplaces) Plan(ctx context.Context) ([]host.Change, error) {
+func (p Marketplaces) Plan(ctx context.Context) ([]resource.Change, error) {
 	var all []listed
 	if _, err := p.M.Stat(p.claude()); err == nil {
 		if all, err = p.list(ctx); err != nil {
@@ -138,7 +139,7 @@ func (p Marketplaces) Plan(ctx context.Context) ([]host.Change, error) {
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-	var changes []host.Change
+	var changes []resource.Change
 	for _, mk := range p.List {
 		known := false
 		for _, l := range all {

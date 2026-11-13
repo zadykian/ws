@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
@@ -89,5 +89,5 @@ func sections(keys []string, creds []Credential) []section {
 // tokensConfig renders ~/.config/git/tokens.gitconfig: the helpers, which name the tokens' files
 // and never a token.
 func tokensConfig(s []section) ([]byte, error) {
-	return host.Render(gitFiles, "files/tokens.gitconfig.tmpl", struct{ Sections []section }{s})
+	return resource.Render(gitFiles, "files/tokens.gitconfig.tmpl", struct{ Sections []section }{s})
 }

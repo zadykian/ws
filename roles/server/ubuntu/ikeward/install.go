@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -79,8 +80,8 @@ func (c installNow) Apply(ctx context.Context) error {
 }
 
 // Plan asks install what it would change, on the files of the run.
-func (i Install) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(i.M) {
+func (i Install) Plan(ctx context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(i.M) {
 		i.Out.Say("ikeward install: skipped, systemd is not running")
 		return nil, nil
 	}
@@ -89,11 +90,11 @@ func (i Install) Plan(ctx context.Context) ([]host.Change, error) {
 		i.Out.Say("ikeward install: the secrets hold no profile, so the VPN stays as it is")
 		return nil, nil
 	}
-	var changes []host.Change
+	var changes []resource.Change
 	err := p.with(ctx, func() error {
 		code, dry, err := i.run(ctx, p, "--dry-run")
 		if code == exitChanged {
-			changes = []host.Change{installNow{i, dry}}
+			changes = []resource.Change{installNow{i, dry}}
 		}
 		return err
 	})

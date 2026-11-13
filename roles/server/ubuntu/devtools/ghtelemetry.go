@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // GHTelemetry turns gh's telemetry off for User, as gh 2.91.0 and later send it unless told not to.
 type GHTelemetry struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 }
 
 type telemetryOff struct{ g GHTelemetry }
@@ -24,12 +25,12 @@ func (c telemetryOff) Apply(ctx context.Context) error {
 
 // Plan turns telemetry off where gh's setting is not disabled. A gh that is not installed yet
 // answers with an error, which counts as on.
-func (g GHTelemetry) Plan(ctx context.Context) ([]host.Change, error) {
+func (g GHTelemetry) Plan(ctx context.Context) ([]resource.Change, error) {
 	out, err := g.User.Output(ctx, g.M, "env", quietGH("config", "get", "telemetry")...)
 	if err == nil && strings.TrimSpace(string(out)) == "disabled" {
 		return nil, nil
 	}
-	return []host.Change{telemetryOff{g}}, nil
+	return []resource.Change{telemetryOff{g}}, nil
 }
 
 // quietGH returns the arguments of env that run gh with args, and GH_TELEMETRY=0, so that the

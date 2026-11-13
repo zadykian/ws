@@ -7,7 +7,9 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -25,20 +27,20 @@ const terminalPath = terminalDir + "/terminal"
 
 // Steps returns the role's steps in order.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, _ effect.Out) []step.Step {
-	user := host.User{Name: v.User, Home: v.Home}
+	user := account.User{Name: v.User, Home: v.Home}
 	return []step.Step{
-		host.Group{Title: "Zed terminal", Parts: terminalParts(m)},
-		user.WithAccount(m, "Zed settings", "Zed terminal", func(a host.Account) ([]host.Resource, error) {
+		resource.Group{Title: "Zed terminal", Parts: terminalParts(m)},
+		user.WithAccount(m, "Zed settings", "Zed terminal", func(a account.Account) ([]resource.Resource, error) {
 			settings, err := settingsFile(v)
 			if err != nil {
 				return nil, err
 			}
 			f := a.File(m, ".config/zed/settings.json", settings, 0o644)
 			f.Backup = true
-			return []host.Resource{f}, nil
+			return []resource.Resource{f}, nil
 		}),
-		host.Group{Title: "Zed open-file limit", Parts: []host.Resource{
-			host.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
+		resource.Group{Title: "Zed open-file limit", Parts: []resource.Resource{
+			file.File{M: m, Path: limitsPath, Content: limitsFile(v), Mode: 0o644},
 		}},
 	}
 }
@@ -57,18 +59,18 @@ func limitsFile(v values.Values) []byte {
 // settingsFile renders ~/.config/zed/settings.json: the paths of the language servers lie under the
 // home, which may be root's on a cloud VM. The server's file wins over the Mac's, which Zed forwards.
 func settingsFile(v values.Values) ([]byte, error) {
-	return host.Render(files, "files/settings.json.tmpl", struct{ Home string }{v.Home})
+	return resource.Render(files, "files/settings.json.tmpl", struct{ Home string }{v.Home})
 }
 
 // terminalParts installs the wrapper at mode 0755 and its tmux.conf at 0644. Both parents are made
 // here: --only zed may run where security has not made /usr/local/lib/ws.
-func terminalParts(m effect.Machine) []host.Resource {
+func terminalParts(m effect.Machine) []resource.Resource {
 	script, _ := files.ReadFile("files/terminal")
 	conf, _ := files.ReadFile("files/tmux.conf")
-	return []host.Resource{
-		host.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755, CreateOnly: true},
-		host.Dir{M: m, Path: terminalDir, Mode: 0o755},
-		host.File{M: m, Path: terminalPath, Content: script, Mode: 0o755},
-		host.File{M: m, Path: terminalDir + "/tmux.conf", Content: conf, Mode: 0o644},
+	return []resource.Resource{
+		file.Dir{M: m, Path: "/usr/local/lib/ws", Mode: 0o755, CreateOnly: true},
+		file.Dir{M: m, Path: terminalDir, Mode: 0o755},
+		file.File{M: m, Path: terminalPath, Content: script, Mode: 0o755},
+		file.File{M: m, Path: terminalDir + "/tmux.conf", Content: conf, Mode: 0o644},
 	}
 }

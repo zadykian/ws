@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 	"github.com/zadykian/ws/roles/server/ubuntu/claude/internal/asuser"
 )
 
@@ -32,7 +33,7 @@ var telemetryRemoved = []string{
 // bytes would differ at every run.
 type Telemetry struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Env is the keys to set, with their values.
 	Env map[string]string
 }
@@ -69,7 +70,7 @@ func (c writeSettings) Apply(ctx context.Context) error {
 }
 
 // Plan edits the settings in memory, and plans a write where env differs.
-func (t Telemetry) Plan(ctx context.Context) ([]host.Change, error) {
+func (t Telemetry) Plan(ctx context.Context) ([]resource.Change, error) {
 	data, err := asuser.Read(ctx, t.M, t.User, t.path())
 	created := errors.Is(err, fs.ErrNotExist)
 	if err != nil && !created {
@@ -82,5 +83,5 @@ func (t Telemetry) Plan(ctx context.Context) ([]host.Change, error) {
 	if edit.none() && !created {
 		return nil, nil
 	}
-	return []host.Change{writeSettings{t, out, edit, created}}, nil
+	return []resource.Change{writeSettings{t, out, edit, created}}, nil
 }

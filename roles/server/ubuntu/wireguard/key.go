@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/internal/wgkey"
 )
 
@@ -55,10 +55,10 @@ func (c setKeyMode) Apply(context.Context) error {
 
 // Plan plans the key where none exists, or its owner, group and mode where they differ. A file that
 // holds no private key is an error.
-func (k key) Plan(context.Context) ([]host.Change, error) {
+func (k key) Plan(context.Context) ([]resource.Change, error) {
 	text, err := k.m.ReadRootFile(keyFile)
 	if errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{makeKey{k}}, nil
+		return []resource.Change{makeKey{k}}, nil
 	}
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (k key) Plan(context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	if got != (effect.Attrs{GID: k.gid, Mode: keyMode}) {
-		return []host.Change{setKeyMode{k}}, nil
+		return []resource.Change{setKeyMode{k}}, nil
 	}
 	return nil, nil
 }

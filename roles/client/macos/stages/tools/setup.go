@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/keys"
@@ -61,8 +62,8 @@ func (s *Setup) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{Changes: []step.Change{stage.Todo(stage.Setup + ": after " + stage.Key)}}, nil
 	}
 	if !s.sudoed {
-		switch err := effect.Validate(ctx, s.M); {
-		case errors.Is(err, effect.ErrNoTicket):
+		switch err := local.Validate(ctx, s.M); {
+		case errors.Is(err, local.ErrNoTicket):
 			return step.Plan{}, err
 		case err != nil:
 			return step.Plan{}, errors.New("sudo -v failed; ws client macos apply needs sudo, as an admin of the Mac")

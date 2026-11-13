@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/bridge"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -37,8 +39,8 @@ func orDefault(s, def string) string {
 // restarts dockerd, which live-restore carries past without stopping the running containers. A
 // new daemon.json applies to the networks and containers created afterwards, and to the default
 // bridge only as dockerd starts with no container running.
-func configuration(m effect.Machine, u effect.Units, out effect.Out, d values.Docker, size DiskSize) func(context.Context) ([]host.Resource, error) {
-	return func(_ context.Context) ([]host.Resource, error) {
+func configuration(m effect.Machine, u effect.Units, out effect.Out, d values.Docker, size DiskSize) func(context.Context) ([]resource.Resource, error) {
+	return func(_ context.Context) ([]resource.Resource, error) {
 		d, err := WithLimits(m, d)
 		if err != nil {
 			return nil, err
@@ -63,26 +65,26 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, d values.Do
 		if err != nil {
 			return nil, err
 		}
-		daemon := host.Validated{
-			File: host.File{M: m, Path: "/etc/docker/daemon.json", Content: daemonJSON, Mode: 0o644},
+		daemon := file.Validated{
+			File: file.File{M: m, Path: "/etc/docker/daemon.json", Content: daemonJSON, Mode: 0o644},
 			Check: func(path string) (string, []string) {
 				return "dockerd", []string{"--validate", "--config-file", path}
 			},
 		}
-		resolvedFile := host.File{M: m, Path: "/etc/systemd/resolved.conf.d/docker.conf", Content: resolved, Mode: 0o644}
-		sliceFile := host.File{M: m, Path: "/etc/systemd/system/docker.slice", Content: slice, Mode: 0o644}
-		overrideFile := host.File{M: m, Path: "/etc/systemd/system/docker.service.d/override.conf", Content: override, Mode: 0o644}
-		return []host.Resource{
+		resolvedFile := file.File{M: m, Path: "/etc/systemd/resolved.conf.d/docker.conf", Content: resolved, Mode: 0o644}
+		sliceFile := file.File{M: m, Path: "/etc/systemd/system/docker.slice", Content: slice, Mode: 0o644}
+		overrideFile := file.File{M: m, Path: "/etc/systemd/system/docker.service.d/override.conf", Content: override, Mode: 0o644}
+		return []resource.Resource{
 			daemon,
-			host.Dir{M: m, Path: "/etc/systemd/resolved.conf.d", Mode: 0o755},
+			file.Dir{M: m, Path: "/etc/systemd/resolved.conf.d", Mode: 0o755},
 			resolvedFile,
-			host.Unit{M: m, U: u, Out: out, Name: "systemd-resolved.service", Run: host.Running, Watch: []host.Resource{resolvedFile}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "systemd-resolved.service", Run: systemd.Running, Watch: []resource.Resource{resolvedFile}},
 			bridge.Resolver(m, out, d),
-			host.Dir{M: m, Path: "/etc/systemd/system/docker.service.d", Mode: 0o755},
+			file.Dir{M: m, Path: "/etc/systemd/system/docker.service.d", Mode: 0o755},
 			sliceFile,
 			overrideFile,
-			host.DaemonReload{M: m, U: u, Watch: []host.Resource{sliceFile, overrideFile}},
-			host.Unit{M: m, U: u, Out: out, Name: "docker.service", Enabled: true, Run: host.Running, Watch: []host.Resource{daemon, overrideFile}},
+			systemd.DaemonReload{M: m, U: u, Watch: []resource.Resource{sliceFile, overrideFile}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "docker.service", Enabled: true, Run: systemd.Running, Watch: []resource.Resource{daemon, overrideFile}},
 		}, nil
 	}
 }

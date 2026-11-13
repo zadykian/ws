@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func installFixture(booted bool) (*effecttest.Machine, rootlessInstall, *effecttest.Out) {
@@ -14,7 +14,7 @@ func installFixture(booted bool) (*effecttest.Machine, rootlessInstall, *effectt
 		m.Dirs["/run/systemd/system"] = 0o755
 	}
 	out := &effecttest.Out{}
-	return m, rootlessInstall{m, host.Account{User: host.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, out}, out
+	return m, rootlessInstall{m, account.Account{User: account.User{Name: "ws", Home: "/home/ws"}, UID: 1000}, out}, out
 }
 
 func TestRootlessInstallSkipsWithoutSystemd(t *testing.T) {

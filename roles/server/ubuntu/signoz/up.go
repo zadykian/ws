@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -56,7 +56,7 @@ func (Up) WaitsOn() string { return "signoz password" }
 
 // Plan reads the mark and, without it, the running services.
 func (u Up) Plan(ctx context.Context) (step.Plan, error) {
-	if !host.Booted(u.M) {
+	if !systemd.Booted(u.M) {
 		u.Out.Say("%s: skipped, systemd is not running", u.Name())
 		return step.Plan{}, nil
 	}

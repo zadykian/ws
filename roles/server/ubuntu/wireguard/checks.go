@@ -5,7 +5,8 @@ import (
 	"errors"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // networkdCheck refuses a machine where systemd-networkd doesn't run, as on Ubuntu Desktop, whose
@@ -16,8 +17,8 @@ type networkdCheck struct {
 	u effect.Units
 }
 
-func (c networkdCheck) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(c.m) {
+func (c networkdCheck) Plan(ctx context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(c.m) {
 		return nil, nil
 	}
 	s, err := c.u.State(ctx, "systemd-networkd.service")

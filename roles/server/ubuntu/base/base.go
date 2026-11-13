@@ -4,7 +4,8 @@ package base
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/base/internal/swap"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -15,11 +16,11 @@ import (
 // Swappiness. The role takes no secrets.
 func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units, out effect.Out) []step.Step {
 	return []step.Step{
-		host.Group{Title: "Packages", Parts: []host.Resource{host.Packages{M: m, Out: out, Recommends: true, Names: v.Base.Packages}}},
-		host.Group{Title: "Locale", Parts: localeParts(m, v.Base.Locale)},
-		host.Group{Title: "Timezone", Parts: timezoneParts(m, v.Base.Timezone)},
-		host.Group{Title: "Upgrades", Parts: upgradesParts(m, u, out)},
-		host.Group{Title: "Swap", Parts: swap.Parts(m, out, swap.Setting{SizeMiB: v.Base.SwapSizeMB, Swappiness: v.Base.Swappiness})},
-		host.Group{Title: "Swappiness", Parts: swap.Swappiness(m, out, v.Base.Swappiness)},
+		resource.Group{Title: "Packages", Parts: []resource.Resource{apt.Packages{M: m, Out: out, Recommends: true, Names: v.Base.Packages}}},
+		resource.Group{Title: "Locale", Parts: localeParts(m, v.Base.Locale)},
+		resource.Group{Title: "Timezone", Parts: timezoneParts(m, v.Base.Timezone)},
+		resource.Group{Title: "Upgrades", Parts: upgradesParts(m, u, out)},
+		resource.Group{Title: "Swap", Parts: swap.Parts(m, out, swap.Setting{SizeMiB: v.Base.SwapSizeMB, Swappiness: v.Base.Swappiness})},
+		resource.Group{Title: "Swappiness", Parts: swap.Swappiness(m, out, v.Base.Swappiness)},
 	}
 }

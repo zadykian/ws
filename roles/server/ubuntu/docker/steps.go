@@ -8,7 +8,8 @@ import (
 	"net/netip"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/docker/internal/bridge"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
@@ -39,19 +40,19 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, si
 	held func() ([]netip.Prefix, error)) []step.Step {
 	d := v.Docker
 	steps := []step.Step{
-		host.Lazy{Title: repositoryStep, Parts: repository(m)},
+		resource.Lazy{Title: repositoryStep, Parts: repository(m)},
 		// iproute2, from Ubuntu's archive, gives the route check its ip; a container lacks it.
-		host.Group{Title: packagesStep, After: repositoryStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Recommends: true, Names: packages(v)},
+		resource.Group{Title: packagesStep, After: repositoryStep, Parts: []resource.Resource{
+			apt.Packages{M: m, Out: out, Recommends: true, Names: packages(v)},
 		}},
-		host.Group{Title: routesStep, After: packagesStep, Parts: []host.Resource{bridge.Routes{M: m, D: d, Bridge: bridgeCIDR(d)}}},
+		resource.Group{Title: routesStep, After: packagesStep, Parts: []resource.Resource{bridge.Routes{M: m, D: d, Bridge: bridgeCIDR(d)}}},
 	}
 	if v.User != "root" {
-		steps = append(steps, host.Group{Title: membersStep, After: packagesStep, Parts: []host.Resource{host.Left{M: m, User: v.User, Group: "docker"}}})
+		steps = append(steps, resource.Group{Title: membersStep, After: packagesStep, Parts: []resource.Resource{resource.Left{M: m, User: v.User, Group: "docker"}}})
 	}
 	steps = append(steps,
-		host.Lazy{Title: configStep, After: routesStep, Parts: configuration(m, u, out, d, size)},
-		host.Group{Title: bridgeStep, After: configStep, Parts: []host.Resource{
+		resource.Lazy{Title: configStep, After: routesStep, Parts: configuration(m, u, out, d, size)},
+		resource.Group{Title: bridgeStep, After: configStep, Parts: []resource.Resource{
 			bridge.Check{M: m, Out: out, Held: held, Want: bridgeCIDR(d)},
 		}},
 	)

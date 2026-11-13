@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/role"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -40,7 +40,7 @@ func TestEventLineHoldsNoFilesText(t *testing.T) {
 			t.Errorf("line = %s", line)
 		}
 	}
-	err := host.Group{}.Apply(context.Background(), step.Plan{Changes: []step.Change{fullDisk{c}}})
+	err := resource.Group{}.Apply(context.Background(), step.Plan{Changes: []step.Change{fullDisk{c}}})
 	failed := role.NewEventLine(step.Event{Kind: step.Failed, Step: "Files", Err: err}).Error
 	if strings.Contains(failed, "TOKEN") || !strings.Contains(failed, "/a/.bashrc") || !strings.Contains(failed, "no space") {
 		t.Errorf("error = %q", failed)

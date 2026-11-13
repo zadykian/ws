@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // wg0Files are networkd's two files for wg0.
@@ -27,14 +28,14 @@ var wg0Files embed.FS
 type wg0 struct {
 	m effect.Machine
 	// watch are the key and the files: a change of any reloads networkd.
-	watch []host.Resource
+	watch []resource.Resource
 }
 
 // Plan plans the deletion of wg0 where it holds another key than the file's, or the file is to be
 // made. It plans the reload where a watched resource changes or wg0 is missing, as a key that
 // networkd couldn't read or a deletion by hand leaves it.
-func (w wg0) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(w.m) {
+func (w wg0) Plan(ctx context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(w.m) {
 		return nil, nil
 	}
 	_, statErr := w.m.Stat("/sys/class/net/wg0")
@@ -46,7 +47,7 @@ func (w wg0) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil || why == "" {
 		return nil, err
 	}
-	var cs []host.Change
+	var cs []resource.Change
 	if remove {
 		cs = append(cs, deleteLink{w.m})
 	}

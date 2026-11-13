@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/check"
-	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
@@ -19,8 +19,8 @@ import (
 // later run. It takes root's key rather than tunnel.pub, which the user can write, as the key it
 // sends becomes ws's peer.
 func (t *Tunnel) Apply(ctx context.Context, _ step.Plan) error {
-	switch err := effect.Validate(ctx, t.M); {
-	case errors.Is(err, effect.ErrNoTicket):
+	switch err := local.Validate(ctx, t.M); {
+	case errors.Is(err, local.ErrNoTicket):
 		return err
 	case err != nil:
 		return errors.New(stage.Tunnel + ": sudo -v failed; the Mac's key is root's, as an admin of the Mac")

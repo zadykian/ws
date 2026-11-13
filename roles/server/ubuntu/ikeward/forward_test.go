@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 const (
@@ -46,7 +46,7 @@ func TestForwardWithNoPeerRemovesTheFileAndTheRules(t *testing.T) {
 func TestForwardPlansNothingOnceSettled(t *testing.T) {
 	m := ufwMachine("1\n")
 	m.Files[sysctlPath] = sysctlFile
-	g := host.Group{Title: "forward", Parts: forward(m, &effecttest.Out{}, []string{"10.99.0.9"})}
+	g := resource.Group{Title: "forward", Parts: forward(m, &effecttest.Out{}, []string{"10.99.0.9"})}
 	if p, err := g.Plan(t.Context()); err != nil || len(p.Changes) != 0 {
 		t.Errorf("plan = %v, %v; want nothing", p.Changes, err)
 	}

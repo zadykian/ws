@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // exporter makes the parts that set up node_exporter, which gives the temperatures and fans that
@@ -14,17 +17,17 @@ import (
 // comes without its recommends, which add textfile scripts for collectors it leaves off. A change
 // of the arguments restarts node_exporter here rather than at the collector's step, as a run cut
 // short between the two would lose the restart.
-func exporter(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]host.Resource, error) {
-	return func(context.Context) ([]host.Resource, error) {
+func exporter(m effect.Machine, u effect.Units, out effect.Out) func(context.Context) ([]resource.Resource, error) {
+	return func(context.Context) ([]resource.Resource, error) {
 		args, err := files.ReadFile("files/prometheus-node-exporter")
 		if err != nil {
 			return nil, err
 		}
-		file := host.File{M: m, Path: "/etc/default/prometheus-node-exporter", Content: args, Mode: 0o644}
-		return []host.Resource{
-			file,
-			host.Packages{M: m, Out: out, Names: []string{"prometheus-node-exporter"}},
-			host.Unit{M: m, U: u, Out: out, Name: "prometheus-node-exporter.service", Enabled: true, Run: host.Running, Watch: []host.Resource{file}},
+		defaults := file.File{M: m, Path: "/etc/default/prometheus-node-exporter", Content: args, Mode: 0o644}
+		return []resource.Resource{
+			defaults,
+			apt.Packages{M: m, Out: out, Names: []string{"prometheus-node-exporter"}},
+			systemd.Unit{M: m, U: u, Out: out, Name: "prometheus-node-exporter.service", Enabled: true, Run: systemd.Running, Watch: []resource.Resource{defaults}},
 		}, nil
 	}
 }

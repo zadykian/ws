@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // GHLogin logs gh in to github.com by Token, as User. ws has no keyring, so --insecure-storage
@@ -25,21 +26,21 @@ func (loginGH) String() string { return "log gh in by token.github" }
 
 // Apply gives the token to gh on its standard input. A refusal names the command, not the token.
 func (c loginGH) Apply(ctx context.Context) error {
-	u := host.User{Name: c.g.User, Home: c.g.Home}
+	u := account.User{Name: c.g.User, Home: c.g.Home}
 	return u.PassInput(ctx, c.g.M, []byte(c.g.Token), "gh", "auth", "login", "-h", "github.com",
 		"-p", "https", "--insecure-storage", "--with-token")
 }
 
 // Plan logs gh in where its token for github.com is not Token. A gh that holds none, or that is
 // not installed yet, answers with an error, which counts as no login.
-func (g GHLogin) Plan(ctx context.Context) ([]host.Change, error) {
+func (g GHLogin) Plan(ctx context.Context) ([]resource.Change, error) {
 	if g.Token == "" {
 		return nil, nil
 	}
-	u := host.User{Name: g.User, Home: g.Home}
+	u := account.User{Name: g.User, Home: g.Home}
 	if out, err := u.Output(ctx, g.M, "gh", "auth", "token", "-h", "github.com"); err == nil &&
 		strings.TrimSpace(string(out)) == g.Token {
 		return nil, nil
 	}
-	return []host.Change{loginGH{g}}, nil
+	return []resource.Change{loginGH{g}}, nil
 }

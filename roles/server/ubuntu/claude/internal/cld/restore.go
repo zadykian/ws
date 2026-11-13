@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // Restore has the user's systemd restore cld's sessions as it starts, which brings back the
@@ -19,7 +21,7 @@ import (
 // systemd, so Restore plans nothing there.
 type Restore struct {
 	M       effect.Machine
-	Account host.Account
+	Account account.Account
 	Out     effect.Out
 }
 
@@ -32,7 +34,7 @@ func (r Restore) cld() string { return r.Account.Home + "/.local/bin/cld" }
 // files. With the user's bus, systemctl --user finds the user's systemd.
 func (r Restore) loginShell(args ...string) (string, []string) {
 	argv := append([]string{"-i", "HOME=" + r.Account.Home, "USER=" + r.Account.Name, "LOGNAME=" + r.Account.Name,
-		"SHELL=/bin/bash"}, host.SessionEnv(r.Account.UID)...)
+		"SHELL=/bin/bash"}, systemd.SessionEnv(r.Account.UID)...)
 	argv = append(argv, "/bin/bash", "-c", `set -a && . /etc/environment && exec /bin/bash -l "$@"`, "bash")
 	return "env", append(argv, args...)
 }
@@ -99,8 +101,8 @@ func (s setupRestore) Apply(ctx context.Context) error {
 // Plan compares cld-restore.service with what cld writes. It also looks for the link that
 // systemctl --user enable makes, as cld enables the unit at every run but reports only whether it
 // wrote its file.
-func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {
-	if !host.Booted(r.M) {
+func (r Restore) Plan(ctx context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(r.M) {
 		r.Out.Say("Claude restore: skipped, systemd is not running")
 		return nil, nil
 	}
@@ -115,11 +117,11 @@ func (r Restore) Plan(ctx context.Context) ([]host.Change, error) {
 		return nil, err
 	}
 	if stale.Match(out) {
-		return []host.Change{setupRestore{r}}, nil
+		return []resource.Change{setupRestore{r}}, nil
 	}
 	_, err = r.M.Stat(r.Account.Home + "/.config/systemd/user/default.target.wants/cld-restore.service")
 	if errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{setupRestore{r}}, nil
+		return []resource.Change{setupRestore{r}}, nil
 	}
 	return nil, err
 }

@@ -9,7 +9,9 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 const npmBin = "/usr/bin/npm"
@@ -31,9 +33,9 @@ func Bin(home, name string) string { return serversDir(home) + "/node_modules/.b
 // Files returns the two files of the lock, the install they feed and sql-formatter's link.
 // Their directories are made as the user's, so root's would not break the user's own tools, such as
 // claude and pip --user.
-func Files(m effect.Machine, a host.Account) ([]host.Resource, error) {
+func Files(m effect.Machine, a account.Account) ([]resource.Resource, error) {
 	sum := sha256.New()
-	var parts []host.Resource
+	var parts []resource.Resource
 	for _, name := range []string{"package.json", "package-lock.json"} {
 		content, err := serversLock.ReadFile("servers/" + name)
 		if err != nil {
@@ -43,14 +45,14 @@ func Files(m effect.Machine, a host.Account) ([]host.Resource, error) {
 		parts = append(parts, a.File(m, serversRel+"/"+name, content, 0o644))
 	}
 	return append(parts, npmInstall{M: m, Account: a, Digest: fmt.Sprintf("%x", sum.Sum(nil))},
-		host.Link{M: m, Path: formatterLink, Target: Bin(a.Home, "sql-formatter")}), nil
+		file.Link{M: m, Path: formatterLink, Target: Bin(a.Home, "sql-formatter")}), nil
 }
 
 // npmInstall runs npm ci. Plan cannot see the files written earlier in the step, so a stamp of
 // their digest in node_modules, which npm ci removes, tells it the install is current.
 type npmInstall struct {
 	M       effect.Machine
-	Account host.Account
+	Account account.Account
 	Digest  string
 }
 
@@ -76,15 +78,15 @@ func (c runNpm) Apply(ctx context.Context) error {
 }
 
 // Plan finds a change where npm is missing or the stamp is missing or another digest.
-func (n npmInstall) Plan(context.Context) ([]host.Change, error) {
+func (n npmInstall) Plan(context.Context) ([]resource.Change, error) {
 	if _, err := n.M.Stat(npmBin); errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{runNpm{n}}, nil
+		return []resource.Change{runNpm{n}}, nil
 	} else if err != nil {
 		return nil, err
 	}
 	got, err := n.Account.ReadHome(n.M, stampRel)
 	if errors.Is(err, fs.ErrNotExist) || (err == nil && string(got) != n.Digest+"\n") {
-		return []host.Change{runNpm{n}}, nil
+		return []resource.Change{runNpm{n}}, nil
 	}
 	return nil, err
 }

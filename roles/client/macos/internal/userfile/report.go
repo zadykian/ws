@@ -93,7 +93,7 @@ func (p Path) Report(context.Context) ([]step.Item, error) {
 	return []step.Item{p.itemOf(Found{Exists: true, Mode: info.Mode})}, nil
 }
 
-// File is a file of the user's that ws writes, as host.File is one of root's. Its plan and its
+// File is a file of the user's that ws writes, as file.File is one of root's. Its plan and its
 // report read it alike, so that a report stands off where a plan changes the file or leaves it.
 type File struct {
 	M    effect.Machine

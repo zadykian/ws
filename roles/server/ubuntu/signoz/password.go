@@ -7,16 +7,17 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 // Password is the step that writes root.env once, with the password of SigNoz's root user. No one
 // logs in with it. The step generates it on the machine, and only root reads it. A new password
 // marks the containers for recreation, as they read root.env at start.
-func Password(m effect.Machine, dir string) host.Group {
-	return host.Group{
+func Password(m effect.Machine, dir string) resource.Group {
+	return resource.Group{
 		Title: "signoz password", After: "signoz files",
-		Parts: []host.Resource{password{M: m, Dir: dir}},
+		Parts: []resource.Resource{password{M: m, Dir: dir}},
 	}
 }
 
@@ -45,13 +46,13 @@ func (c generate) Apply(context.Context) error {
 
 // Plan generates the password where root.env is missing, and keeps the content of one that is
 // there, whatever it holds, but its owner and mode.
-func (p password) Plan(ctx context.Context) ([]host.Change, error) {
+func (p password) Plan(ctx context.Context) ([]resource.Change, error) {
 	have, err := p.M.ReadRootFile(p.path())
 	if errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{generate{p}}, nil
+		return []resource.Change{generate{p}}, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return host.File{M: p.M, Path: p.path(), Content: have, Mode: 0o600, Secret: true}.Plan(ctx)
+	return file.File{M: p.M, Path: p.path(), Content: have, Mode: 0o600, Secret: true}.Plan(ctx)
 }

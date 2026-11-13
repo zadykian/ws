@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -37,18 +38,18 @@ func Steps(v values.Values, _ secrets.Secrets, m effect.Machine, u effect.Units,
 func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, random io.Reader,
 	sleep func(time.Duration)) []step.Step {
 	return []step.Step{
-		host.Group{Title: settingsStep, Parts: []host.Resource{settings.Check{W: v.Wireguard}}},
+		resource.Group{Title: settingsStep, Parts: []resource.Resource{settings.Check{W: v.Wireguard}}},
 		// networkd, its directory /etc/systemd/network and its group systemd-network come with
 		// systemd, which a container may lack, so that --only wireguard stands alone. iptables
 		// holds the containers' drops. wireguard-tools' recommends serve wg-quick, which the role
 		// doesn't use.
-		host.Group{Title: packagesStep, After: settingsStep, Parts: []host.Resource{
-			host.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
+		resource.Group{Title: packagesStep, After: settingsStep, Parts: []resource.Resource{
+			apt.Packages{M: m, Out: out, Names: []string{"wireguard-tools", "systemd", "iptables"}},
 		}},
 		// Ahead of wg0, which the drops don't need: a run that stops on wg0 still puts them in.
-		host.Lazy{Title: dropsStep, After: packagesStep, Parts: drops.Parts(m, u, out, v.Network.DirectLinkInterface)},
-		host.Lazy{Title: tunnelStep, After: dropsStep, Parts: tunnel(m, u, out, random, v)},
-		host.Group{Title: keyStep, After: tunnelStep, Parts: []host.Resource{
+		resource.Lazy{Title: dropsStep, After: packagesStep, Parts: drops.Parts(m, u, out, v.Network.DirectLinkInterface)},
+		resource.Lazy{Title: tunnelStep, After: dropsStep, Parts: tunnel(m, u, out, random, v)},
+		resource.Group{Title: keyStep, After: tunnelStep, Parts: []resource.Resource{
 			ready{m: m, out: out, tries: 10, pause: time.Second, sleep: sleep},
 		}},
 	}

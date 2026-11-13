@@ -6,7 +6,8 @@ import (
 	"io/fs"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // installRustup is rustup's own installer, which curl pipes into sh. `--no-modify-path` leaves PATH
@@ -32,14 +33,14 @@ func (c runRustup) String() string {
 // Apply runs the installer as the user, with the user's HOME.
 func (c runRustup) Apply(ctx context.Context) error {
 	r := c.r
-	return host.User{Name: r.User, Home: r.Home}.Pass(ctx, r.M, "bash", "-c", installRustup)
+	return account.User{Name: r.User, Home: r.Home}.Pass(ctx, r.M, "bash", "-c", installRustup)
 }
 
 // Plan installs rustup where ~/.cargo/bin/rustup is missing.
-func (r Rustup) Plan(context.Context) ([]host.Change, error) {
+func (r Rustup) Plan(context.Context) ([]resource.Change, error) {
 	_, err := r.M.Stat(r.Home + "/.cargo/bin/rustup")
 	if errors.Is(err, fs.ErrNotExist) {
-		return []host.Change{runRustup{r}}, nil
+		return []resource.Change{runRustup{r}}, nil
 	}
 	return nil, err
 }

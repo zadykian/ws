@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 )
@@ -58,7 +58,7 @@ func TestApply(t *testing.T) {
 
 func TestApplySaysAHostChangeByItsHeadline(t *testing.T) {
 	m, out := effecttest.NewMachine(), &effecttest.Out{}
-	cs, err := host.File{M: m, Path: "/e/f", Content: []byte("x\n"), Mode: 0o644}.Plan(context.Background())
+	cs, err := file.File{M: m, Path: "/e/f", Content: []byte("x\n"), Mode: 0o644}.Plan(context.Background())
 	if err != nil || len(cs) != 1 {
 		t.Fatalf("Plan = %v, %v; want one change", cs, err)
 	}

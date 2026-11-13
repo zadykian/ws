@@ -6,7 +6,7 @@ import (
 	"embed"
 	"encoding/json"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 //go:embed files
@@ -22,5 +22,5 @@ func Render(iface, address string) ([]byte, error) {
 		b, _ := json.Marshal(s) // a string always marshals
 		return string(b)
 	}
-	return host.Render(files, "files/60-direct-link.yaml.tmpl", struct{ Interface, Address string }{quoted(iface), quoted(address)})
+	return resource.Render(files, "files/60-direct-link.yaml.tmpl", struct{ Interface, Address string }{quoted(iface), quoted(address)})
 }

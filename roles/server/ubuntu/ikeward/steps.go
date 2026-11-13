@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -48,23 +48,23 @@ func steps(v values.Ikeward, s secrets.Secrets, m effect.Machine, out effect.Out
 		return nil
 	}
 	return []step.Step{
-		host.Lazy{Title: downloadStep, Parts: func(context.Context) ([]host.Resource, error) {
+		resource.Lazy{Title: downloadStep, Parts: func(context.Context) ([]resource.Resource, error) {
 			if err := ready(); err != nil {
 				return nil, err
 			}
-			return []host.Resource{file}, nil
+			return []resource.Resource{file}, nil
 		}},
 		// The forwarding needs not the binary, so a check shows its plan while the download is due.
-		host.Lazy{Title: forwardStep, Parts: func(context.Context) ([]host.Resource, error) {
+		resource.Lazy{Title: forwardStep, Parts: func(context.Context) ([]resource.Resource, error) {
 			if err := ready(); err != nil {
 				return nil, err
 			}
 			return forward(m, out, v.ForwardFrom), nil
 		}},
-		host.Group{Title: installStep, After: downloadStep, Parts: []host.Resource{
+		resource.Group{Title: installStep, After: downloadStep, Parts: []resource.Resource{
 			Install{M: m, Out: out, Values: v, Secrets: s},
 		}},
-		host.Group{Title: statusStep, After: installStep, Parts: []host.Resource{
+		resource.Group{Title: statusStep, After: installStep, Parts: []resource.Resource{
 			Status{M: m, Out: out, Tries: tries, Wait: wait},
 		}},
 	}

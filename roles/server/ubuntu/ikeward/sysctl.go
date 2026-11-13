@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 const (
@@ -30,8 +32,8 @@ func (c sysctlNow) Apply(ctx context.Context) error {
 }
 
 // Plan plans the change where IPv4 forwarding is off.
-func (c sysctlNow) Plan(context.Context) ([]host.Change, error) {
-	if !host.Booted(c.m) {
+func (c sysctlNow) Plan(context.Context) ([]resource.Change, error) {
+	if !systemd.Booted(c.m) {
 		return nil, nil
 	}
 	data, err := c.m.ReadFile(ipForward)
@@ -41,14 +43,14 @@ func (c sysctlNow) Plan(context.Context) ([]host.Change, error) {
 	if strings.TrimSpace(string(data)) == "1" {
 		return nil, nil
 	}
-	return []host.Change{c}, nil
+	return []resource.Change{c}, nil
 }
 
 // sysctl returns the resources of IPv4 forwarding at boot and now, or the removal of the file
 // where none is wanted.
-func sysctl(m effect.Machine, want bool) []host.Resource {
+func sysctl(m effect.Machine, want bool) []resource.Resource {
 	if !want {
-		return []host.Resource{host.Absent{M: m, Path: sysctlPath}}
+		return []resource.Resource{file.Absent{M: m, Path: sysctlPath}}
 	}
-	return []host.Resource{host.File{M: m, Path: sysctlPath, Content: sysctlFile, Mode: 0o644}, sysctlNow{m}}
+	return []resource.Resource{file.File{M: m, Path: sysctlPath, Content: sysctlFile, Mode: 0o644}, sysctlNow{m}}
 }

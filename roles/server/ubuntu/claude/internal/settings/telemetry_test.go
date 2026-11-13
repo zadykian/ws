@@ -6,16 +6,16 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
-var rootUser = host.User{Name: "root", Home: "/root"}
+var rootUser = account.User{Name: "root", Home: "/root"}
 
 // settingsReadScript is the script that asuser.Read runs.
 const settingsReadScript = `if [ -e "$1" ]; then printf y; cat "$1"; else printf n; fi`
 
 // serveSettings fakes the command that asuser.Read runs for the user's file. A nil body is no file.
-func serveSettings(m *effecttest.Machine, u host.User, file string, body []byte) {
+func serveSettings(m *effecttest.Machine, u account.User, file string, body []byte) {
 	out := []byte("n")
 	if body != nil {
 		out = append([]byte("y"), body...)

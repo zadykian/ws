@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 const (
@@ -30,7 +31,7 @@ func TestGHTelemetryPlan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := effecttest.NewMachine()
 			m.Results[telemetryGet], m.Results[telemetrySet] = tt.held, effecttest.Result{}
-			g := GHTelemetry{M: m, User: host.User{Name: "ws", Home: "/home/ws"}}
+			g := GHTelemetry{M: m, User: account.User{Name: "ws", Home: "/home/ws"}}
 			changes, err := g.Plan(context.Background())
 			if err != nil || len(changes) != tt.want {
 				t.Fatalf("got %v, %v; want %d changes", changes, err, tt.want)
@@ -43,7 +44,7 @@ func TestGHTelemetryPlan(t *testing.T) {
 	}
 }
 
-func apply(t *testing.T, changes []host.Change) {
+func apply(t *testing.T, changes []resource.Change) {
 	for _, c := range changes {
 		if err := c.Apply(context.Background()); err != nil {
 			t.Fatal(err)

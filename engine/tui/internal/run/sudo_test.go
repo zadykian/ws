@@ -17,6 +17,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 // The commands of sudo, as the fake's table names them.
@@ -72,7 +73,7 @@ func TestSudoEndsWhereARightPasswordLeavesNoTicket(t *testing.T) {
 	m := noTicket()
 	m.Results[sudoCheck] = effecttest.Result{}
 	s := &sudo{m: m, p: &effecttest.Prompt{T: t, Hidden: []string{"right"}}}
-	if err := s.ticket(t.Context()); !errors.Is(err, effect.ErrNoTicket) || s.held.Load() {
+	if err := s.ticket(t.Context()); !errors.Is(err, local.ErrNoTicket) || s.held.Load() {
 		t.Errorf("err = %v, held = %v", err, s.held.Load())
 	}
 }
@@ -190,13 +191,13 @@ func TestBridgeMachineTakesThePasswordOnTheScreen(t *testing.T) {
 			asked++
 		}
 	}
-	m := b.Machine(t.Context(), effect.OSMachine{})
+	m := b.Machine(t.Context(), local.OSMachine{})
 	for range 2 {
 		if out, err := m.RunRoot(t.Context(), "echo", "as root"); err != nil || string(out) != "as root\n" {
 			t.Fatalf("RunRoot = %q, %v", out, err)
 		}
 	}
-	if err := effect.Validate(t.Context(), m); err != nil || asked != 2 {
+	if err := local.Validate(t.Context(), m); err != nil || asked != 2 {
 		t.Errorf("Validate: %v, %d questions", err, asked)
 	}
 }
@@ -212,7 +213,7 @@ func TestBridgeMachineEndsAQuestionWithTheRun(t *testing.T) {
 			cancel()
 		}
 	}
-	m := b.Machine(ctx, effect.OSMachine{})
+	m := b.Machine(ctx, local.OSMachine{})
 	if err := m.WriteRootFile(filepath.Join(t.TempDir(), "file"), nil, 0o600); !errors.Is(err, context.Canceled) {
 		t.Errorf("err = %v", err)
 	}
@@ -220,8 +221,8 @@ func TestBridgeMachineEndsAQuestionWithTheRun(t *testing.T) {
 
 func TestBridgeMachineOfRootAsksNothing(t *testing.T) {
 	b, _ := testBridge(io.Discard)
-	m := b.Machine(t.Context(), effect.OSMachine{Sudo: []string{}})
-	if m.Sudo == nil || len(m.Sudo) != 0 || m.Ticket != nil || m.Stdin != effect.NoStdin {
+	m := b.Machine(t.Context(), local.OSMachine{Sudo: []string{}})
+	if m.Sudo == nil || len(m.Sudo) != 0 || m.Ticket != nil || m.Stdin != local.NoStdin {
 		t.Errorf("machine = %+v", m)
 	}
 }

@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 // keyURL and ascSHA256 are Docker's apt key as its install guide for Ubuntu gives it. The checksum
@@ -50,19 +52,19 @@ func release(m effect.Machine) (string, error) {
 
 // repository makes the parts that add Docker's apt key and source. It reads the release and
 // dpkg's architecture as it plans.
-func repository(m effect.Machine) func(context.Context) ([]host.Resource, error) {
-	return func(ctx context.Context) ([]host.Resource, error) {
+func repository(m effect.Machine) func(context.Context) ([]resource.Resource, error) {
+	return func(ctx context.Context) ([]resource.Resource, error) {
 		rel, err := release(m)
 		if err != nil {
 			return nil, err
 		}
-		arch, err := host.Architecture(ctx, m)
+		arch, err := fetch.Architecture(ctx, m)
 		if err != nil {
 			return nil, err
 		}
-		return []host.Resource{
-			host.Download{M: m, URL: keyURL, Path: keyPath, SHA256: ascSHA256, Mode: 0o644},
-			host.File{M: m, Path: sourcesPath, Content: Sources(rel, arch), Mode: 0o644},
+		return []resource.Resource{
+			fetch.Download{M: m, URL: keyURL, Path: keyPath, SHA256: ascSHA256, Mode: 0o644},
+			file.File{M: m, Path: sourcesPath, Content: Sources(rel, arch), Mode: 0o644},
 		}, nil
 	}
 }

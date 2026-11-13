@@ -7,7 +7,8 @@ import (
 	"context"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -25,23 +26,23 @@ const (
 // GPU the steps after the first plan nothing.
 func Steps(_ values.Values, _ secrets.Secrets, m effect.Machine, _ effect.Units, out effect.Out) []step.Step {
 	return []step.Step{
-		host.Group{Title: gpuStep, Parts: []host.Resource{gpu{m, out}}},
-		host.Lazy{Title: packagesStep, After: gpuStep, Parts: gated(m, func(ctx context.Context) ([]host.Resource, error) {
+		resource.Group{Title: gpuStep, Parts: []resource.Resource{gpu{m, out}}},
+		resource.Lazy{Title: packagesStep, After: gpuStep, Parts: gated(m, func(ctx context.Context) ([]resource.Resource, error) {
 			names, err := packageNames(ctx, m)
 			if err != nil {
 				return nil, err
 			}
-			return []host.Resource{host.Packages{M: m, Out: out, Names: names}}, nil
+			return []resource.Resource{apt.Packages{M: m, Out: out, Names: names}}, nil
 		})},
-		host.Lazy{Title: driverStep, After: packagesStep, Parts: gated(m, func(context.Context) ([]host.Resource, error) {
-			return []host.Resource{reboot{m, out}}, nil
+		resource.Lazy{Title: driverStep, After: packagesStep, Parts: gated(m, func(context.Context) ([]resource.Resource, error) {
+			return []resource.Resource{reboot{m, out}}, nil
 		})},
 	}
 }
 
 // gated makes the parts only on a machine with NVIDIA's GPU.
-func gated(m effect.Machine, parts func(context.Context) ([]host.Resource, error)) func(context.Context) ([]host.Resource, error) {
-	return func(ctx context.Context) ([]host.Resource, error) {
+func gated(m effect.Machine, parts func(context.Context) ([]resource.Resource, error)) func(context.Context) ([]resource.Resource, error) {
+	return func(ctx context.Context) ([]resource.Resource, error) {
 		ok, err := hasGPU(m)
 		if err != nil || !ok {
 			return nil, err

@@ -7,13 +7,14 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 )
 
 // UserRules is the file where ufw keeps the rules given to it.
 const UserRules = "/etc/ufw/user.rules"
 
-// Rules is a host.Resource of the rules a role owns, those with Comment. Those in Want are added
+// Rules is a resource.Resource of the rules a role owns, those with Comment. Those in Want are added
 // where missing, and the others deleted, as ufw keeps a rule until then, a former address's too.
 type Rules struct {
 	M       effect.Machine
@@ -28,8 +29,8 @@ type Rules struct {
 }
 
 // Plan adds the missing rules, then deletes the stale ones.
-func (r Rules) Plan(context.Context) ([]host.Change, error) {
-	if r.NeedsSystemd && !host.Booted(r.M) {
+func (r Rules) Plan(context.Context) ([]resource.Change, error) {
+	if r.NeedsSystemd && !systemd.Booted(r.M) {
 		r.Out.Say("ufw rules %q: skipped, systemd is not running", r.Comment)
 		return nil, nil
 	}
@@ -51,7 +52,7 @@ func (r Rules) Plan(context.Context) ([]host.Change, error) {
 		}
 		want = append(want, w.normal())
 	}
-	var changes []host.Change
+	var changes []resource.Change
 	for _, w := range want {
 		if !slices.Contains(have, w) {
 			changes = append(changes, ufwCall{r.M, false, w})

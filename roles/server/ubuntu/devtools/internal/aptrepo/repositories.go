@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 )
 
 //go:embed repository.sources.tmpl
@@ -47,21 +48,21 @@ type Repositories struct {
 // expires in 2027. A key goes in only where its repository pins each certificate in it: apt trusts
 // every certificate in its file. A vendor's server can fail for a moment, so curl tries
 // again.
-func (r Repositories) Plan(ctx context.Context) ([]host.Change, error) {
+func (r Repositories) Plan(ctx context.Context) ([]resource.Change, error) {
 	release, err := r.release()
 	if err != nil {
 		return nil, err
 	}
-	var parts []host.Resource
+	var parts []resource.Resource
 	for _, path := range r.Replaced(release) {
-		parts = append(parts, host.Absent{M: r.M, Path: path})
+		parts = append(parts, file.Absent{M: r.M, Path: path})
 	}
 	repos := r.List(release)
 	for _, repo := range repos {
 		if !repo.Needed {
 			parts = append(parts,
-				host.Absent{M: r.M, Path: fmt.Sprintf("%s/%s.sources", sourcesDir, repo.Name)},
-				host.Absent{M: r.M, Path: fmt.Sprintf("%s/%s.asc", keyring, repo.Name)})
+				file.Absent{M: r.M, Path: fmt.Sprintf("%s/%s.sources", sourcesDir, repo.Name)},
+				file.Absent{M: r.M, Path: fmt.Sprintf("%s/%s.asc", keyring, repo.Name)})
 		}
 	}
 	for _, repo := range repos {
@@ -72,16 +73,16 @@ func (r Repositories) Plan(ctx context.Context) ([]host.Change, error) {
 		if err != nil {
 			return nil, err
 		}
-		sources, err := host.Render(templates, "repository.sources.tmpl", repo)
+		sources, err := resource.Render(templates, "repository.sources.tmpl", repo)
 		if err != nil {
 			return nil, err
 		}
 		parts = append(parts,
 			// The diff is off: a key that changes shows no diff, as it would be base64 alone.
-			host.File{M: r.M, Path: fmt.Sprintf("%s/%s.asc", keyring, repo.Name), Content: key, Mode: 0o644, Secret: true},
-			host.File{M: r.M, Path: fmt.Sprintf("%s/%s.sources", sourcesDir, repo.Name), Content: sources, Mode: 0o644})
+			file.File{M: r.M, Path: fmt.Sprintf("%s/%s.asc", keyring, repo.Name), Content: key, Mode: 0o644, Secret: true},
+			file.File{M: r.M, Path: fmt.Sprintf("%s/%s.sources", sourcesDir, repo.Name), Content: sources, Mode: 0o644})
 	}
-	var changes []host.Change
+	var changes []resource.Change
 	for _, part := range parts {
 		c, err := part.Plan(ctx)
 		if err != nil {

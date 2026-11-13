@@ -3,7 +3,7 @@ package settings
 import (
 	"context"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -11,4 +11,4 @@ import (
 type Check struct{ W values.Wireguard }
 
 // Plan fails with the refusal of the settings check, or plans nothing.
-func (c Check) Plan(context.Context) ([]host.Change, error) { return nil, Validate(c.W) }
+func (c Check) Plan(context.Context) ([]resource.Change, error) { return nil, Validate(c.W) }

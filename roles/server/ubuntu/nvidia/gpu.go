@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 )
 
 // pciDevices holds a directory per PCI device, with its class and vendor.
@@ -47,7 +47,7 @@ type gpu struct {
 	out effect.Out
 }
 
-func (g gpu) Plan(ctx context.Context) ([]host.Change, error) {
+func (g gpu) Plan(ctx context.Context) ([]resource.Change, error) {
 	ok, err := hasGPU(g.m)
 	if err != nil || ok {
 		return nil, err

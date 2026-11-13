@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 )
 
@@ -24,7 +24,7 @@ func TestDefaultsRunUfw(t *testing.T) {
 func TestDefaultsAndEnableSkipWithoutSystemd(t *testing.T) {
 	out := &effecttest.Out{}
 	m := effecttest.NewMachine()
-	for _, r := range []host.Resource{ufw.Defaults{M: m, Out: out, Incoming: "deny"}, ufw.Enable{M: m, Out: out}} {
+	for _, r := range []resource.Resource{ufw.Defaults{M: m, Out: out, Incoming: "deny"}, ufw.Enable{M: m, Out: out}} {
 		if got := planned(t, r); got != nil {
 			t.Errorf("%T planned %q without systemd", r, got)
 		}

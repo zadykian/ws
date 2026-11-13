@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // dotnetBin is the .NET SDK's command, from devtools' packages.
@@ -22,7 +23,7 @@ const dotnetBin = "/usr/bin/dotnet"
 // among them, and a plan must change nothing. NuGet names the directories in lower case.
 type roslynTool struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Path is where dotnet tool install --global puts the command, and where languages.toml names it.
 	Path string
 	// Version is the pin. Empty means the package's.
@@ -65,7 +66,7 @@ func (c installRoslyn) Apply(ctx context.Context) error {
 }
 
 // Plan reads the store's directories.
-func (r roslynTool) Plan(context.Context) ([]host.Change, error) {
+func (r roslynTool) Plan(context.Context) ([]resource.Change, error) {
 	installed, err := r.M.ReadDir(path.Dir(r.Path) + "/.store/roslyn-language-server")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
@@ -73,5 +74,5 @@ func (r roslynTool) Plan(context.Context) ([]host.Change, error) {
 	if slices.Equal(installed, []string{strings.ToLower(r.version())}) {
 		return nil, nil
 	}
-	return []host.Change{installRoslyn{r, installed}}, nil
+	return []resource.Change{installRoslyn{r, installed}}, nil
 }

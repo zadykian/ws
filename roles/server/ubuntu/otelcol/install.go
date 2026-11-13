@@ -5,7 +5,10 @@ import (
 	"slices"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/apt"
+	"github.com/zadykian/ws/engine/core/resource/fetch"
+	"github.com/zadykian/ws/engine/core/resource/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -17,14 +20,14 @@ const installStep = "Collector install"
 
 // pinned is the collector's .deb as a package, which plans from the pin and removes the file once
 // it installs.
-func pinned(m effect.Machine) host.Package {
-	return host.Package{M: m, Name: "otelcol-contrib", Source: host.PinnedFile{M: m, Version: version, URL: debURL, SHA256: sums}}
+func pinned(m effect.Machine) apt.Package {
+	return apt.Package{M: m, Name: "otelcol-contrib", Source: fetch.PinnedFile{M: m, Version: version, URL: debURL, SHA256: sums}}
 }
 
 // stopped plans the package, and the stop of the collector that it started and enabled where the
 // package installs. Without systemd booted it says so and plans no stop.
 type stopped struct {
-	pkg host.Package
+	pkg apt.Package
 	m   effect.Machine
 	u   effect.Units
 	out effect.Out
@@ -41,12 +44,12 @@ func (c stop) Apply(ctx context.Context) error {
 	return c.u.Disable(ctx, "otelcol-contrib.service")
 }
 
-func (s stopped) Plan(ctx context.Context) ([]host.Change, error) {
+func (s stopped) Plan(ctx context.Context) ([]resource.Change, error) {
 	changes, err := s.pkg.Plan(ctx)
-	if err != nil || !slices.ContainsFunc(changes, func(c host.Change) bool { return step.KindOf(c) == step.Install }) {
+	if err != nil || !slices.ContainsFunc(changes, func(c resource.Change) bool { return step.KindOf(c) == step.Install }) {
 		return changes, err
 	}
-	if !host.Booted(s.m) {
+	if !systemd.Booted(s.m) {
 		s.out.Say("collector stop: skipped, systemd is not running")
 		return changes, nil
 	}

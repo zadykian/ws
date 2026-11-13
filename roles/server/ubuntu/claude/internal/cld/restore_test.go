@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 func restoreMachine(check string) (*effecttest.Machine, Restore) {
 	m := effecttest.NewMachine()
 	m.Dirs["/run/systemd/system"] = 0o755
 	m.Files["/root/.local/bin/cld"] = nil
-	r := Restore{M: m, Account: host.Account{User: cldUser}, Out: &effecttest.Out{}}
+	r := Restore{M: m, Account: account.Account{User: cldUser}, Out: &effecttest.Out{}}
 	name, args := r.loginShell("-c", compare, r.cld())
 	m.Results["env HOME=/root "+name+" "+strings.Join(args, " ")] = effecttest.Result{Out: []byte(check)}
 	return m, r

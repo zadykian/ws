@@ -9,7 +9,8 @@ import (
 
 	"github.com/zadykian/ws/engine/core/check"
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/file"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/internal/change"
 	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
@@ -56,21 +57,21 @@ func (r *Routes) Apply(ctx context.Context, p step.Plan) error {
 // file's owner or mode alone sends the signal too.
 func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	networks := r.Networks
-	file := launchd.Dir + "/routes.d/" + r.Set
+	routesFile := launchd.Dir + "/routes.d/" + r.Set
 	if _, err := r.M.RootAttrs(launchd.Dir + "/routes.d"); errors.Is(err, fs.ErrNotExist) {
 		switch {
 		case len(networks) == 0:
 			return nil, nil
 		case r.Check && !r.Alone:
-			return []step.Change{change.Remark("would put " + strings.Join(networks, " ") + " in " + file + " " + routesAbsent)}, nil
+			return []step.Change{change.Remark("would put " + strings.Join(networks, " ") + " in " + routesFile + " " + routesAbsent)}, nil
 		}
 		return nil, fmt.Errorf("%s/routes.d is missing: run ws client macos apply first", launchd.Dir)
 	} else if err != nil {
 		return nil, err
 	}
-	var res host.Resource = host.Absent{M: r.M, Path: file}
+	var res resource.Resource = file.Absent{M: r.M, Path: routesFile}
 	if len(networks) > 0 {
-		res = host.File{M: r.M, Path: file, Content: []byte(routesText(networks)), Mode: 0o644}
+		res = file.File{M: r.M, Path: routesFile, Content: []byte(routesText(networks)), Mode: 0o644}
 	}
 	cs, err := change.Plan(ctx, nil, res)
 	if err != nil || len(cs) == 0 || r.Check {

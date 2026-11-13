@@ -9,7 +9,8 @@ import (
 	"strings"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // UserSettings has cld add to claude's user settings what they lack. It adds the permission set,
@@ -18,7 +19,7 @@ import (
 // cld keeps every value already there, and leaves env, which Telemetry writes, alone.
 type UserSettings struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Permissions is read-only, cld or none. Notifications is the channel, or empty for none: cld
 	// refuses an empty channel, so without one the option is left out.
 	Permissions, Notifications string
@@ -55,7 +56,7 @@ func (c setUserSettings) Apply(ctx context.Context) error {
 
 // Plan runs cld on a copy of the file, removed after, and reads its report: Left where it would
 // change nothing. Without cld, the install step reports the change.
-func (s UserSettings) Plan(ctx context.Context) (_ []host.Change, err error) {
+func (s UserSettings) Plan(ctx context.Context) (_ []resource.Change, err error) {
 	if _, err := s.M.Stat(s.cld()); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	} else if err != nil {
@@ -93,5 +94,5 @@ func (s UserSettings) Plan(ctx context.Context) (_ []host.Change, err error) {
 	if text == "" || strings.HasPrefix(text, "Left ") {
 		return nil, nil
 	}
-	return []host.Change{setUserSettings{s, text}}, nil
+	return []resource.Change{setUserSettings{s, text}}, nil
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	maczed "github.com/zadykian/ws/roles/client/macos/zed"
 	"github.com/zadykian/ws/roles/server/ubuntu/devtools"
 )
@@ -24,7 +24,7 @@ func at(v any, path ...string) any {
 }
 
 func sharedFiles(t *testing.T) (fresh, zed, macZed map[string]any) {
-	zedText, err := host.Render(os.DirFS("../zed"), "files/settings.json.tmpl", struct{ Home string }{"/home/ws"})
+	zedText, err := resource.Render(os.DirFS("../zed"), "files/settings.json.tmpl", struct{ Home string }{"/home/ws"})
 	if err != nil {
 		t.Fatal(err)
 	}

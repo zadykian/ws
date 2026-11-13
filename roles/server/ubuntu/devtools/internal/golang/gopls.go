@@ -6,14 +6,15 @@ import (
 	"fmt"
 
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
+	"github.com/zadykian/ws/engine/core/resource/account"
 )
 
 // Gopls is gopls at the pinned version, built with devtools' Go. gopls type-checks with the Go it
 // was built with, so a new Go needs a new gopls too.
 type Gopls struct {
 	M    effect.Machine
-	User host.User
+	User account.User
 	// Path is where go install puts gopls, and where languages.toml names it.
 	Path string
 	// Version and GoVersion are the pins, without the v and the go.
@@ -33,7 +34,7 @@ func (c buildGopls) Apply(ctx context.Context) error {
 
 // Plan reads gopls's version and the Go that built it. A gopls that is missing fails the
 // command, which counts as another version.
-func (g Gopls) Plan(ctx context.Context) ([]host.Change, error) {
+func (g Gopls) Plan(ctx context.Context) ([]resource.Change, error) {
 	out, err := g.User.Output(ctx, g.M, g.Path, "version", "-json")
 	if err == nil {
 		var got struct{ Version, GoVersion string }
@@ -44,5 +45,5 @@ func (g Gopls) Plan(ctx context.Context) ([]host.Change, error) {
 			return nil, nil
 		}
 	}
-	return []host.Change{buildGopls{g}}, nil
+	return []resource.Change{buildGopls{g}}, nil
 }

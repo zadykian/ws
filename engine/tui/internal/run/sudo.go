@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/effect/local"
 )
 
 const (
@@ -44,7 +45,7 @@ func (s *sudo) ticket(ctx context.Context) error {
 		// Nothing follows the password: sudo would read the next line as its next try.
 		if _, refused = s.m.RunInput(ctx, []byte(password+"\n"), "sudo", "-S", "-p", "", "-v"); refused == nil {
 			if err := s.look(ctx); err != nil {
-				return fmt.Errorf("%w: %w", effect.ErrNoTicket, err)
+				return fmt.Errorf("%w: %w", local.ErrNoTicket, err)
 			}
 			return nil
 		}
@@ -85,8 +86,8 @@ func (s *sudo) hold(ctx context.Context) {
 // what they print reaches the screen, and sudo's password comes through a question. Its ticket
 // holds until ctx ends. A machine with its own Sudo, such as root's on ws, has no password to ask
 // for.
-func (b *Bridge) Machine(ctx context.Context, m effect.OSMachine) effect.OSMachine {
-	m.Stdin, m.Stderr = effect.NoStdin, b.pipe
+func (b *Bridge) Machine(ctx context.Context, m local.OSMachine) local.OSMachine {
+	m.Stdin, m.Stderr = local.NoStdin, b.pipe
 	if m.Sudo != nil {
 		return m
 	}

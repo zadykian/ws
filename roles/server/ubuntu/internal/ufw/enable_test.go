@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/resource"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 )
 
@@ -15,7 +15,7 @@ func booted() *effecttest.Machine {
 	return m
 }
 
-func planned(t *testing.T, r host.Resource) (got []string) {
+func planned(t *testing.T, r resource.Resource) (got []string) {
 	changes, err := r.Plan(t.Context())
 	if err != nil {
 		t.Fatal(err)
