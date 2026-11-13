@@ -76,7 +76,7 @@ func TestAReadRoleClearsTheTitleOfWsList(t *testing.T) {
 	}
 }
 
-// wsStages is a queue of ws server wizard, whose every stage runs on ws.
+// wsStages is a queue of ws server ubuntu wizard, whose every stage runs on ws.
 func wsStages() []Stage {
 	return []Stage{
 		{Name: "Values", Side: WsSide},
