@@ -18,15 +18,15 @@ concurrency:
 permissions: {}
 
 jobs:
-  # Ghostty, Zed and cld on a Mac, in docs/mac-ghostty.md's order. ws client macos apply runs with a
-  # stand-in for ws's key, so that the tunnel's daemon loads and a second run prints nothing. On
-  # a runner without Ghostty, Zed, their font or cld, --check must change nothing. Where their
-  # casks fail, a run must install cld alone. A run must then install Ghostty, Zed and the font
-  # from Homebrew's casks, and Ghostty's settings, which Ghostty must take. ssh's LocalCommand
-  # must follow whether cld has restore tabs and Ghostty's app. Stubs then stand in for cld. The
-  # first gains restore tabs as it updates, so that one run adds the lines, and the line runs here
-  # before a release of cld has it. Under the second, which lacks it, a run drops them. Gated as
-  # ci.yml's playbook job.
+  # Ghostty, Zed and cld on a Mac, in roles/client/macos/ghostty/README.md's order. ws client macos
+  # apply runs with a stand-in for ws's key, so that the tunnel's daemon loads and a second run
+  # prints nothing. On a runner without Ghostty, Zed, their font or cld, --check must change
+  # nothing. Where their casks fail, a run must install cld alone. A run must then install Ghostty,
+  # Zed and the font from Homebrew's casks, and Ghostty's settings, which Ghostty must take. ssh's
+  # LocalCommand must follow whether cld has restore tabs and Ghostty's app. Stubs then stand in for
+  # cld. The first gains restore tabs as it updates, so that one run adds the lines, and the line
+  # runs here before a release of cld has it. Under the second, which lacks it, a run drops them.
+  # Gated as ci.yml's playbook job.
   mac-cld:
     if: >-
       (github.event.action != 'opened' || !github.event.pull_request.draft) &&

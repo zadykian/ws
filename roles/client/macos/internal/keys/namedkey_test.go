@@ -19,9 +19,9 @@ var keyUses = []struct {
 	name, words, page string
 	conf              func(pub string) conf.Conf
 }{
-	{keys.LoginKey, "WS_IDENTITY_PUB_KEY", "ws's login key", "docs/mac.md",
+	{keys.LoginKey, "WS_IDENTITY_PUB_KEY", "ws's login key", "roles/client/macos/README.md",
 		func(pub string) conf.Conf { return conf.Conf{IdentityPubKey: pub} }},
-	{keys.SigningKey, "WS_GIT_SIGNING_PUB_KEY", "git's signing key", "docs/mac-git.md",
+	{keys.SigningKey, "WS_GIT_SIGNING_PUB_KEY", "git's signing key", "roles/client/macos/git/README.md",
 		func(pub string) conf.Conf { return conf.Conf{GitSigningPubKey: pub} }},
 }
 

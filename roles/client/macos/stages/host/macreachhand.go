@@ -24,7 +24,7 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 			"a cloud VM; remove that line, then run the wizard with --update (roles/server/ubuntu/security/README.md, Outbound).")
 	}
 	h.Add("macOS's local network: where it asks whether Ghostty, Zed or another app may find " +
-		"devices there, allow it (docs/mac.md, ssh's hosts).")
+		"devices there, allow it (roles/client/macos/README.md, ssh's hosts).")
 	first := r.SSH.First()
 	if c.Target != "lan" {
 		away(h, c, first)
@@ -45,7 +45,7 @@ func (r MacReach) Hand(h *guided.Hand, s session.Status) {
 
 // away adds what stays by hand of a cloud VM or a VM on the Mac, which have no router. Where the
 // run asked ws's address, mac.conf's way must lead to it. A cloud VM's provider must let the tunnel
-// in (docs/mac-targets.md).
+// in (roles/client/macos/conf/README.md).
 func away(h *guided.Hand, c conf.Conf, first string) {
 	target := c.Target
 	way := "WS_LAN_ADDRESS"
@@ -54,10 +54,10 @@ func away(h *guided.Hand, c conf.Conf, first string) {
 	}
 	if first != "" {
 		h.Add("ws's address: %s in mac.conf must lead to ws, as this run reached it at %s "+
-			"(docs/mac-targets.md).", way, first)
+			"(roles/client/macos/conf/README.md).", way, first)
 	}
 	if target == "cloud" {
-		h.Add("The provider's firewall: UDP %s open to ws, for the tunnel (docs/mac-targets.md).",
+		h.Add("The provider's firewall: UDP %s open to ws, for the tunnel (roles/client/macos/conf/README.md).",
 			cmp.Or(c.Port, "51820"))
 	}
 }

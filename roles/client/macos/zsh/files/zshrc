@@ -2,7 +2,7 @@
 #
 # ~/.zshrc sources this file. tmux, Fresh and cld's sessions turn modes on in the terminal, and a
 # dropped ssh leaves them on: the mouse would type escape codes at the prompt. So, before each
-# prompt, the hook turns them off (docs/mac-ghostty.md).
+# prompt, the hook turns them off (roles/client/macos/ghostty/README.md).
 
 # The reports of the mouse, focus and the colour scheme; modifyOtherKeys and kitty's flags; cursor
 # keys and keypad; the cursor's style and visibility.

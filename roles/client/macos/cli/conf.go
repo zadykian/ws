@@ -59,7 +59,7 @@ func runConf(c *cobra.Command, p enginecli.Env, args []string, lines bool) error
 	}
 	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
+		return fmt.Errorf("%s is missing: roles/client/macos/README.md says what goes in it", file)
 	}
 	if err != nil {
 		return err

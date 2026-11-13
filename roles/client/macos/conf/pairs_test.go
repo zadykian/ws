@@ -17,7 +17,7 @@ func TestPairs(t *testing.T) {
 		{"cloud ok", "WS_TARGET=cloud\nWS_REMOTE=a.b\nWS_REMOTE_PORT=22", ""},
 		{"mac-vm", "WS_TARGET=mac-vm", "WS_TARGET=mac-vm needs WS_LAN"},
 		{"cloud with lan", "WS_TARGET=cloud\nWS_REMOTE=a.b\nWS_REMOTE_PORT=22\nWS_LAN=10.88.0.0/24\n" +
-			"WS_LAN_ADDRESS=10.88.0.2\nWS_CABLE_PORT=en1", "has another target's key: WS_LAN WS_CABLE_PORT (docs"},
+			"WS_LAN_ADDRESS=10.88.0.2\nWS_CABLE_PORT=en1", "has another target's key: WS_LAN WS_CABLE_PORT (roles"},
 		{"mac-vm with remote", "WS_TARGET=mac-vm\nWS_LAN=10.88.0.0/24\nWS_LAN_ADDRESS=10.88.0.2\nWS_REMOTE=a.b",
 			"has another target's key: WS_REMOTE ("},
 		{"root on the lan", "WS_USER=root", "WS_USER=root needs WS_TARGET=cloud"},

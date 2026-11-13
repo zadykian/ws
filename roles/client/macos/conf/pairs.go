@@ -26,11 +26,11 @@ func pairs(c Conf) []Error {
 		return refuse("WS_TARGET=mac-vm needs WS_LAN")
 	// Root is the login of a cloud VM alone: a machine of one's own has its user, and logs root out.
 	case c.User == "root" && c.Target != "cloud":
-		return refuse("WS_USER=root needs WS_TARGET=cloud (docs/mac-targets.md)")
+		return refuse("WS_USER=root needs WS_TARGET=cloud (roles/client/macos/conf/README.md)")
 	}
 	if away := foreign(c); len(away) > 0 {
 		return refuse("WS_TARGET=" + c.Target + " has another target's key: " +
-			strings.Join(away, " ") + " (docs/mac-targets.md)")
+			strings.Join(away, " ") + " (roles/client/macos/conf/README.md)")
 	}
 	switch {
 	case (c.GitName == "") != (c.GitEmail == ""):

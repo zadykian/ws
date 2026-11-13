@@ -52,7 +52,7 @@ func (s *Sequence) Run() error {
 	return nil
 }
 
-// ways asks the machine, then the ways to it (docs/mac-targets.md). A cloud VM has its name or
+// ways asks the machine, then the ways to it (roles/client/macos/conf/README.md). A cloud VM has its name or
 // address and its SSH port alone, and a VM on the Mac the Mac's network for its VMs and its address
 // there. On the LAN, ws's address is asked only with a LAN, and the router's port only with its
 // name. They default to the router's lease where the LAN holds it, and its forward

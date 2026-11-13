@@ -75,7 +75,7 @@ func loadMacConf(p enginecli.Env) (settings conf.Conf, err error) {
 	}
 	text, err := p.Machine.ReadFile(file)
 	if errors.Is(err, fs.ErrNotExist) {
-		return conf.Conf{}, fmt.Errorf("%s is missing: docs/mac.md says what goes in it", file)
+		return conf.Conf{}, fmt.Errorf("%s is missing: roles/client/macos/README.md says what goes in it", file)
 	}
 	if err != nil {
 		return conf.Conf{}, err

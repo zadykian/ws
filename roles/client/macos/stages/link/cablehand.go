@@ -29,5 +29,5 @@ func (c *Cable) Hand(_ context.Context, h *wizard.Hand) {
 			"WS_CABLE_PORT=PORT in the environment."
 	}
 	h.Add("%s", text+" Without the cable, run the line once with WS_CABLE_SERVICE= in the environment "+
-		"(docs/mac-wizard.md, The cable).")
+		"(roles/client/macos/stages/README.md, The cable).")
 }
