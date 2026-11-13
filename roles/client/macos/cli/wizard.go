@@ -111,7 +111,7 @@ func wizardStages(e wizardEffects, o engine.WizardOptions, name string) []step.S
 	return []step.Step{
 		&tools.Tools{M: p.Machine, Out: out, Sleep: time.Sleep},
 		&tools.Homebrew{Lock: lock, M: p.Machine, Out: out},
-		&answers.Answers{Conf: macConf, Server: conf.ServerPath(macConf, name), Defaults: shellDefaults(),
+		&answers.Answers{Conf: macConf, Server: conf.ServerPath(macConf, name), Slot: "0", Defaults: shellDefaults(),
 			Prog: prog, Tty: p.TTY, Check: check, Scratch: scratch, ServerScratch: conf.ServerPath(scratch, name), M: p.Machine, P: ask, Out: out, Env: p.Lookup},
 		&keys.MacKey{Conf: later, Home: p.Getenv("HOME"),
 			Lock: lock, Tty: p.TTY,

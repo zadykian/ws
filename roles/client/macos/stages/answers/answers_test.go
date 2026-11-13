@@ -174,3 +174,34 @@ func TestAnswersCheckRefusesABadEnvironment(t *testing.T) {
 		t.Errorf("Plan = %v", err)
 	}
 }
+
+func TestAnswersHeadASlotlessServerFileWithTheSlot(t *testing.T) {
+	for name, tc := range map[string]struct{ server, slot, want string }{
+		"new file":      {"", "0", "WS_SLOT=0\nWS_TARGET=lan\n"},
+		"no slot given": {"", "", "WS_TARGET=lan\n"},
+		"slot kept":     {"WS_SLOT=3\n", "0", "WS_SLOT=3\nWS_TARGET=lan\n"},
+		"file lacking":  {"WS_USER=ada\n", "0", "WS_USER=ada\nWS_SLOT=0\nWS_TARGET=lan\n"},
+	} {
+		a, out := newAnswers(t, "WS_GIT_NAME=ada\nWS_GIT_EMAIL=a@b.c\n", tc.server)
+		a.Slot = tc.slot
+		a.P.(*effecttest.Prompt).Answers = map[string]string{
+			"The machine ws runs on: lan, cloud or mac-vm (WS_TARGET) [lan]":                          "",
+			"ws's home LAN (WS_LAN) [10.88.0.0/24, or none]":                                          "none",
+			"The router's name on the internet (WS_REMOTE) [none]":                                    "none",
+			"More networks through the tunnel, split by blanks (WS_TUNNEL_NETWORKS) [none]":           "",
+			"Nameservers behind the tunnel, as DOMAIN=ADDRESS, split by blanks (WS_RESOLVERS) [none]": "",
+		}
+		m := a.M.(*effecttest.Machine)
+		m.Results["mkdir -p /h/.config/ws"] = effecttest.Result{}
+		m.Results["mkdir -p /h/.config/ws/servers/ws"] = effecttest.Result{}
+		if _, err := step.Run(context.Background(), []step.Step{homebrewDone{}, a}, out, false); err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if got := string(m.Files[serverPathForTest]); !strings.HasPrefix(got, tc.want) {
+			t.Errorf("%s: server file = %q, want it to start with %q", name, got, tc.want)
+		}
+		if got := string(m.Files[confPathForTest]); strings.Contains(got, "WS_SLOT") {
+			t.Errorf("%s: mac.conf = %q, want no slot", name, got)
+		}
+	}
+}
