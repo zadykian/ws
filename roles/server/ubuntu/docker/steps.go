@@ -43,7 +43,7 @@ func steps(v values.Values, m effect.Machine, u effect.Units, out effect.Out, si
 		host.Group{Title: packagesStep, After: repositoryStep, Parts: []host.Resource{
 			host.Packages{M: m, Out: out, Recommends: true, Names: packages(v)},
 		}},
-		host.Group{Title: routesStep, After: packagesStep, Parts: []host.Resource{routeCheck{m, d}}},
+		host.Group{Title: routesStep, After: packagesStep, Parts: []host.Resource{routeCheck{m, d, bridgeCIDR(d)}}},
 	}
 	if v.User != "root" {
 		steps = append(steps, host.Group{Title: membersStep, After: packagesStep, Parts: []host.Resource{host.Left{M: m, User: v.User, Group: "docker"}}})

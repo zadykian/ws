@@ -14,8 +14,9 @@ import (
 // in a table of its own. It runs before daemon.json takes the pool. The routes are those of the
 // moment, and a VPN that is down has none.
 type routeCheck struct {
-	m effect.Machine
-	d values.Docker
+	m      effect.Machine
+	d      values.Docker
+	bridge string // the default bridge's address with its prefix length
 }
 
 // Plan reads the routes of every table, and plans no change.
@@ -28,7 +29,7 @@ func (c routeCheck) Plan(ctx context.Context) ([]host.Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	found, err := Conflicts(routes, c.d.AddressPool, bridgeCIDR(c.d))
+	found, err := Conflicts(routes, c.d.AddressPool, c.bridge)
 	if err != nil {
 		return nil, err
 	}

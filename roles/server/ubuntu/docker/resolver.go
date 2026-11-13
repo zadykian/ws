@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
@@ -10,6 +11,11 @@ const resolverComment = "DNS from containers"
 
 // resolverBridges are the interfaces of Docker's bridges: docker0, and br-+ for the rest.
 var resolverBridges = []string{"docker0", "br-+"}
+
+// resolver makes the ufw rules that let Docker's networks reach the resolver on the default bridge.
+func resolver(m effect.Machine, out effect.Out, d values.Docker) ufw.Rules {
+	return ufw.Rules{M: m, Out: out, Comment: resolverComment, Want: resolverRules(d), Owns: ownsResolverRule, NeedsSystemd: true}
+}
 
 // resolverRules allows lookups from Docker's bridges to the resolver on the default bridge.
 func resolverRules(d values.Docker) []ufw.Rule {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
-	"github.com/zadykian/ws/roles/server/ubuntu/internal/ufw"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
@@ -77,7 +76,7 @@ func configuration(m effect.Machine, u effect.Units, out effect.Out, d values.Do
 			host.Dir{M: m, Path: "/etc/systemd/resolved.conf.d", Mode: 0o755},
 			resolvedFile,
 			host.Unit{M: m, U: u, Out: out, Name: "systemd-resolved.service", Run: host.Running, Watch: []host.Resource{resolvedFile}},
-			ufw.Rules{M: m, Out: out, Comment: resolverComment, Want: resolverRules(d), Owns: ownsResolverRule, NeedsSystemd: true},
+			resolver(m, out, d),
 			host.Dir{M: m, Path: "/etc/systemd/system/docker.service.d", Mode: 0o755},
 			sliceFile,
 			overrideFile,
