@@ -24,13 +24,13 @@ The rules a change to the ws CLI keeps, in `main.go`, `cmd/`, `engine/` and `rol
   the run's parent ([mac.go](../../roles/client/macos/mac.go)).
 - A step is pure wherever it can be: it reads, a pure function turns what it read into `Change`
   values, and it applies them. Tests compare the values.
-- A whole file that ws writes in the user's home is a `userfile.File`, and a directory it writes
-  under a `userfile.Dir`: a plan and a report read each alike. Its step chooses to warn or to stop
-  at a file that is not ws's
-  ([report.go](../../roles/client/macos/internal/userfile/report.go),
-  [userdir.go](../../roles/client/macos/internal/userfile/userdir.go)). ws's lines in a user's file
-  are `userfile.Lines`, whose step warns or stops at a link or at misplaced lines
-  ([userlines.go](../../roles/client/macos/internal/userfile/userlines.go)).
+- A whole file that ws writes in the user's home is a `file.UserFile`, and a directory it writes
+  under a `file.UserDir`. They are core's file resources: a plan and a report read each alike. Its
+  step warns or stops at a file that is not ws's
+  ([user.go](../../engine/core/resource/file/user.go),
+  [userdir.go](../../engine/core/resource/file/userdir.go)). ws's lines in a user's file are
+  `file.UserLines`, whose step warns or stops at a link or at misplaced lines
+  ([userlines.go](../../engine/core/resource/file/userlines.go)).
 - Effects are passed in: a step holds `effect.Prompt`, `effect.Out` and `effect.Machine` as fields
   and a function takes them as parameters. Tests use the fakes of
   [effecttest](../../engine/core/effect/effecttest/effecttest.go), never the real ones.
