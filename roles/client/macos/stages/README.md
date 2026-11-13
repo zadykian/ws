@@ -263,10 +263,10 @@ closing list says to dock the Mac and run the line again. Docked, the stage asks
 cable, the one with carrier by default. It names the port in `/etc/ws/host_vars.yml` on ws, which
 both roles read, then runs `ws server ubuntu apply --only network,wireguard` there; the next run of
 the wizard runs the whole, as `host_vars.yml` changed. Once the port holds `10.77.0.1`, the stage
-asks the Mac's service of the cable. The default is the one service with a `169.254` address, which
-an adapter gives itself where no DHCP server answers. The answer goes in `mac.conf` as
-`WS_CABLE_SERVICE`, then `ws client macos apply` gives the service `10.77.0.2` ([The
-cable](../README.md#the-cable)), and `ping 10.77.0.1` must get an answer.
+asks the Mac's service of the cable. A screen asks it and the port as a choice. The default is the
+one service with a `169.254` address, which an adapter gives itself where no DHCP server answers.
+The answer goes in `mac.conf` as `WS_CABLE_SERVICE`, then `ws client macos apply` gives the service
+`10.77.0.2` ([The cable](../README.md#the-cable)), and `ping 10.77.0.1` must get an answer.
 
 `none` as either answer writes an empty `WS_CABLE_SERVICE`, so the wizard asks neither again, as
 where ws has no cable. From the environment, at a terminal too, `WS_CABLE_PORT` and
