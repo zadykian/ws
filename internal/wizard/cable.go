@@ -86,9 +86,9 @@ func (c *Cable) read(ctx context.Context, port string) error {
 	var out []byte
 	var err error
 	if port == "" {
-		out, err = c.Ws.ports(ctx)
+		out, err = c.Ws.Ports(ctx)
 	} else {
-		out, err = c.Ws.waitPorts(ctx, port)
+		out, err = c.Ws.WaitPorts(ctx, port)
 	}
 	if err != nil {
 		return fmt.Errorf("%s: link failed on ws: %w", cableStage, err)
@@ -167,7 +167,7 @@ func (c *Cable) Plan(ctx context.Context) (step.Plan, error) {
 		return step.Plan{}, nil
 	}
 	if c.Check && !none && (!in || !c.RunDone(ctx, Want{Target: cf.Target, User: cf.User})) {
-		c.Out.Say("%s: after %s", cableStage, runStage)
+		c.Out.Say("%s: after %s", cableStage, RunStage)
 		return step.Plan{}, nil
 	}
 	if !c.lacks() {

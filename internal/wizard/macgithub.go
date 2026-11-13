@@ -19,28 +19,28 @@ type MacGitHub struct {
 	Check bool
 }
 
-func (*MacGitHub) side() guided.Side { return OnMac }
+func (*MacGitHub) Side() guided.Side { return OnMac }
 
 type signingAdd struct{ title string }
 
 func (c signingAdd) String() string {
-	return signingStage + ": would run gh ssh-key add --type signing --title " + c.title +
+	return SigningStage + ": would run gh ssh-key add --type signing --title " + c.title +
 		" for ws's signing key"
 }
 
-// lacks is empty where the Mac's gh lists the key among its login's signing keys. gh's errors other
+// Lacks is empty where the Mac's gh lists the key among its login's signing keys. gh's errors other
 // than a 404, which shows its login lacks the scope, stop it, as the gh stage mends first.
-func (s *MacGitHub) lacks(ctx context.Context, ws *Session, line string) (step.Change, error) {
+func (s *MacGitHub) Lacks(ctx context.Context, ws *Session, line string) (step.Change, error) {
 	path, _, err := s.Gh.ghPath(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if _, err := s.Gh.M.Run(ctx, path, "auth", "status", "-h", "github.com"); err != nil {
 		if s.Check {
-			s.Gh.Out.Say("%s: after %s on the Mac", signingStage, ghStage)
+			s.Gh.Out.Say("%s: after %s on the Mac", SigningStage, ghStage)
 			return nil, nil
 		}
-		return nil, errors.New(signingStage + ": the Mac's gh has no login: the stage " + ghStage + " mends it")
+		return nil, errors.New(SigningStage + ": the Mac's gh has no login: the stage " + ghStage + " mends it")
 	}
 	keys, err := s.Gh.api(ctx, path, "user/ssh_signing_keys")
 	if err != nil {
@@ -51,24 +51,24 @@ func (s *MacGitHub) lacks(ctx context.Context, ws *Session, line string) (step.C
 			return nil, nil
 		}
 	}
-	return signingAdd{ws.known().Hostname}, nil
+	return signingAdd{ws.Known().Hostname}, nil
 }
 
-// add adds the key to the Mac's gh login, titled with ws's hostname, from a file in the lock.
-func (s *MacGitHub) add(ctx context.Context, ws *Session, line string) error {
+// Add adds the key to the Mac's gh login, titled with ws's hostname, from a file in the lock.
+func (s *MacGitHub) Add(ctx context.Context, ws *Session, line string) error {
 	path, _, err := s.Gh.ghPath(ctx)
 	if err != nil {
 		return err
 	}
-	title := ws.known().Hostname
+	title := ws.Known().Hostname
 	file := s.Lock + "/signing.pub"
 	if err := s.Gh.M.WriteFile(file, []byte(line+"\n"), 0o600); err != nil {
-		return fmt.Errorf("%s: %w", signingStage, err)
+		return fmt.Errorf("%s: %w", SigningStage, err)
 	}
 	add := "gh ssh-key add --type signing --title " + title
 	if _, err := s.Gh.M.Run(ctx, path, "ssh-key", "add", file, "--type", "signing", "--title", title); err != nil {
-		return fmt.Errorf("%s: %s failed", signingStage, add)
+		return fmt.Errorf("%s: %s failed", SigningStage, add)
 	}
-	s.Gh.Out.Say("%s: ran %s for ws's signing key", signingStage, add)
+	s.Gh.Out.Say("%s: ran %s for ws's signing key", SigningStage, add)
 	return nil
 }

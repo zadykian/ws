@@ -52,7 +52,7 @@ func (*Tunnel) Name() string { return tunnelStage }
 func (*Tunnel) Side() guided.Side { return OnMac }
 
 // WaitsOn is ws's run, which makes wg0.
-func (*Tunnel) WaitsOn() string { return runStage }
+func (*Tunnel) WaitsOn() string { return RunStage }
 
 type tunnelChange string
 
@@ -72,7 +72,7 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 		t.Out.Say("%s: after ws client macos apply", tunnelStage)
 		return step.Plan{}, nil
 	}
-	s, ok := t.Ws.status(ctx)
+	s, ok := t.Ws.Status(ctx)
 	if ok && c.PublicKey != "" && s.WgKey == c.PublicKey && s.Peered && mac != "" && s.MacKey == mac &&
 		t.loaded(ctx) && (t.SSH.First() != "" || t.none || (t.port(ctx) && t.via(ctx))) {
 		return step.Plan{}, nil

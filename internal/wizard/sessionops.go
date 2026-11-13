@@ -115,56 +115,56 @@ func (s *Session) do(ctx context.Context, o operation, args ...[]string) ([]byte
 	return out, nil
 }
 
-// ports lists ws's wired ports.
-func (s *Session) ports(ctx context.Context) ([]byte, error) { return s.do(ctx, opPorts) }
+// Ports lists ws's wired ports.
+func (s *Session) Ports(ctx context.Context) ([]byte, error) { return s.do(ctx, opPorts) }
 
-// waitPorts lists the ports once port holds 10.77.0.1, or after 10 s, in one login.
-func (s *Session) waitPorts(ctx context.Context, port string) ([]byte, error) {
+// WaitPorts lists the ports once port holds 10.77.0.1, or after 10 s, in one login.
+func (s *Session) WaitPorts(ctx context.Context, port string) ([]byte, error) {
 	return s.do(ctx, opWait, []string{port})
 }
 
-// nameCable names the port in ws's host_vars and runs the network and wireguard roles there.
-func (s *Session) nameCable(ctx context.Context, port string) error {
+// NameCable names the port in ws's host_vars and runs the network and wireguard roles there.
+func (s *Session) NameCable(ctx context.Context, port string) error {
 	_, err := s.do(ctx, opNameCable, []string{port}, []string{"--only", "network,wireguard"})
 	return err
 }
 
-// namePeer puts the Mac's key in ws's wg0 peer file and runs the wireguard role there.
-func (s *Session) namePeer(ctx context.Context, key string) error {
+// NamePeer puts the Mac's key in ws's wg0 peer file and runs the wireguard role there.
+func (s *Session) NamePeer(ctx context.Context, key string) error {
 	_, err := s.do(ctx, opNamePeer, []string{key}, []string{"--only", "wireguard"})
 	return err
 }
 
-// nameUser names ws_user in ws's host_vars.
-func (s *Session) nameUser(ctx context.Context, user string) error {
+// NameUser names ws_user in ws's host_vars.
+func (s *Session) NameUser(ctx context.Context, user string) error {
 	_, err := s.do(ctx, opNameUser, []string{user})
 	return err
 }
 
-// install runs install.sh of the version, from url, on ws.
-func (s *Session) install(ctx context.Context, version, url string) error {
+// Install runs install.sh of the version, from url, on ws.
+func (s *Session) Install(ctx context.Context, version, url string) error {
 	_, err := s.do(ctx, opInstall, []string{version, url})
 	return err
 }
 
-// run runs ws server ubuntu apply with args.
-func (s *Session) run(ctx context.Context, args []string) error {
+// Run runs ws server ubuntu apply with args.
+func (s *Session) Run(ctx context.Context, args []string) error {
 	_, err := s.do(ctx, opRun, args)
 	return err
 }
 
-// outbound names security_outbound: false in ws's host_vars.
-func (s *Session) outbound(ctx context.Context) error {
+// Outbound names security_outbound: false in ws's host_vars.
+func (s *Session) Outbound(ctx context.Context) error {
 	_, err := s.do(ctx, opOutbound)
 	return err
 }
 
-// values reads ws's host_vars, as the files script prints it: empty where the file is missing.
-func (s *Session) values(ctx context.Context) ([]byte, error) { return s.do(ctx, opValues) }
+// Values reads ws's host_vars, as the files script prints it: empty where the file is missing.
+func (s *Session) Values(ctx context.Context) ([]byte, error) { return s.do(ctx, opValues) }
 
-// setValues writes each KEY=VALUE pair of pairs into ws's host_vars in one login. A pair goes as
+// SetValues writes each KEY=VALUE pair of pairs into ws's host_vars in one login. A pair goes as
 // base64, as the files script says.
-func (s *Session) setValues(ctx context.Context, pairs []string) error {
+func (s *Session) SetValues(ctx context.Context, pairs []string) error {
 	enc := make([]string, len(pairs))
 	for i, p := range pairs {
 		enc[i] = base64.StdEncoding.EncodeToString([]byte(p))

@@ -13,12 +13,12 @@ func TestWsHand(t *testing.T) {
 	device := "Each device's ssh key on ws"
 	for name, tc := range map[string]struct {
 		target string
-		status wsStatus
+		status Status
 		want   []string
 	}{
-		"fans":  {"cloud", wsStatus{FansRefused: true}, []string{"ws's fans' driver", device}},
-		"lan":   {"lan", wsStatus{}, []string{"ws's lease, on a machine on the LAN", device}},
-		"cloud": {"cloud", wsStatus{}, []string{device}},
+		"fans":  {"cloud", Status{FansRefused: true}, []string{"ws's fans' driver", device}},
+		"lan":   {"lan", Status{}, []string{"ws's lease, on a machine on the LAN", device}},
+		"cloud": {"cloud", Status{}, []string{device}},
 	} {
 		ws, _ := wsSession(tc.status)
 		far := ws.reach.(fakeReach)

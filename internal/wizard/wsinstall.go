@@ -41,7 +41,7 @@ func (c wsInstall) String() string {
 // ws's, so that an update on ws is not undone. It stops too where this ws is no release, or where
 // URL is no address to fetch from.
 func (i *WsInstall) Plan(ctx context.Context) (step.Plan, error) {
-	s, ok := i.Ws.status(ctx)
+	s, ok := i.Ws.Status(ctx)
 	if ok && s.Version == i.Version {
 		return step.Plan{}, nil
 	}

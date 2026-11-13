@@ -22,7 +22,7 @@ type shellReach struct {
 	sh remote.Shell
 }
 
-func (r shellReach) shell() remote.Shell { return r.sh }
+func (r shellReach) Shell() remote.Shell { return r.sh }
 
 // secretsSession returns a session that reaches ws through sh.
 func secretsSession(sh remote.Shell) *Session {
@@ -67,13 +67,13 @@ func TestSessionSecretsLeavesTheStatusStale(t *testing.T) {
 	ctx := context.Background()
 	m := effecttest.NewMachine()
 	ws := NewSession(fakeReach{Reach: MacReach{}, M: m}, Scripts{Remote: []byte("x")})
-	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{}.text()}
+	m.Results[opLine("status")] = effecttest.Result{Out: Status{}.text()}
 	m.Results[wsPath+" server ubuntu secrets keys"] = effecttest.Result{}
-	ws.status(ctx)
+	ws.Status(ctx)
 	if _, err := ws.Secrets(ctx, nil, "keys"); err != nil {
 		t.Fatal(err)
 	}
-	ws.status(ctx)
+	ws.Status(ctx)
 	if got := strings.Count(strings.Join(m.Calls, "\n"), opLine("status")); got != 2 {
 		t.Errorf("status read %d times, want 2", got)
 	}

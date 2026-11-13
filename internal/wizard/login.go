@@ -44,7 +44,7 @@ func (r *Login) Apply(ctx context.Context, _ step.Plan) error {
 }
 
 func (r *Login) stop(ctx context.Context, w remote.Way) error {
-	c, err := r.Ws.want()
+	c, err := r.Ws.Want()
 	if err != nil {
 		return err
 	}

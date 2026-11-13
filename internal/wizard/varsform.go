@@ -23,7 +23,7 @@ type VarsForm struct {
 
 // Load reads the file. A machine without one reads as the defaults.
 func (f VarsForm) Load(ctx context.Context) (VarsForm, error) {
-	text, err := f.Ws.values(ctx)
+	text, err := f.Ws.Values(ctx)
 	if err != nil {
 		return f, errors.New("host_vars on ws: " + remote.Stderr(err))
 	}
@@ -64,7 +64,7 @@ func (f VarsForm) Save(ctx context.Context, out effect.Out, edits map[string]str
 	for _, key := range slices.Sorted(maps.Keys(edits)) {
 		pairs = append(pairs, key+"="+edits[key])
 	}
-	if err := f.Ws.setValues(ctx, pairs); err != nil {
+	if err := f.Ws.SetValues(ctx, pairs); err != nil {
 		return f, errors.New("host_vars on ws: " + remote.Stderr(err))
 	}
 	out.Say("wrote host_vars: the next ws server ubuntu apply takes it")

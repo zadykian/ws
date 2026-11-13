@@ -10,7 +10,7 @@ import (
 
 const releases = "https://example.org/releases"
 
-func newInstall(version, url string, status wsStatus) (*WsInstall, *effecttest.Machine) {
+func newInstall(version, url string, status Status) (*WsInstall, *effecttest.Machine) {
 	r, m := newRun("lan", status, false, false)
 	return &WsInstall{Ws: r.Ws, Version: version, URL: url, Out: &effecttest.Out{}}, m
 }
@@ -28,7 +28,7 @@ func TestWsInstallPlan(t *testing.T) {
 		"devel":         {"devel", releases, "", "", "not a release"},
 		"an address":    {"v1.2.3", "http://example.org", "", "", "must start with https://"},
 	} {
-		i, m := newInstall(tc.version, tc.url, wsStatus{Version: tc.held})
+		i, m := newInstall(tc.version, tc.url, Status{Version: tc.held})
 		if name == "no status" {
 			delete(m.Results, opLine("status"))
 		}

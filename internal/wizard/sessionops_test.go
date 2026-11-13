@@ -56,28 +56,28 @@ func TestEachOperationsStaleRule(t *testing.T) {
 		run     func(*Session) error
 		changes bool
 	}{
-		"ports":     {func(s *Session) error { _, err := s.ports(ctx); return err }, false},
-		"waitPorts": {func(s *Session) error { _, err := s.waitPorts(ctx, "eth1"); return err }, false},
-		"nameCable": {func(s *Session) error { return s.nameCable(ctx, "eth1") }, true},
-		"nameUser":  {func(s *Session) error { return s.nameUser(ctx, "ada") }, true},
-		"namePeer":  {func(s *Session) error { return s.namePeer(ctx, "key") }, true},
-		"install":   {func(s *Session) error { return s.install(ctx, "v1", "url") }, true},
-		"run":       {func(s *Session) error { return s.run(ctx, nil) }, true},
-		"outbound":  {func(s *Session) error { return s.outbound(ctx) }, true},
-		"values":    {func(s *Session) error { _, err := s.values(ctx); return err }, false},
-		"setValues": {func(s *Session) error { return s.setValues(ctx, []string{"a=b"}) }, true},
+		"ports":     {func(s *Session) error { _, err := s.Ports(ctx); return err }, false},
+		"waitPorts": {func(s *Session) error { _, err := s.WaitPorts(ctx, "eth1"); return err }, false},
+		"nameCable": {func(s *Session) error { return s.NameCable(ctx, "eth1") }, true},
+		"nameUser":  {func(s *Session) error { return s.NameUser(ctx, "ada") }, true},
+		"namePeer":  {func(s *Session) error { return s.NamePeer(ctx, "key") }, true},
+		"install":   {func(s *Session) error { return s.Install(ctx, "v1", "url") }, true},
+		"run":       {func(s *Session) error { return s.Run(ctx, nil) }, true},
+		"outbound":  {func(s *Session) error { return s.Outbound(ctx) }, true},
+		"values":    {func(s *Session) error { _, err := s.Values(ctx); return err }, false},
+		"setValues": {func(s *Session) error { return s.SetValues(ctx, []string{"a=b"}) }, true},
 	} {
 		m := effecttest.NewMachine()
-		s := macSession(m, remote.SSH{M: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{})
+		s := macSession(m, remote.SSH{M: m, Lock: "/l"}, &effecttest.Out{}, Status{})
 		for _, line := range []string{"link", "link eth1", "wait eth1", "user ada", "peer key", "install v1 url",
 			"run", "run --only network,wireguard", "run --only wireguard", "outbound", "values", "values YT1i"} {
 			m.Results["op "+line] = effecttest.Result{}
 		}
-		s.status(ctx)
+		s.Status(ctx)
 		if err := tc.run(s); err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}
-		s.status(ctx)
+		s.Status(ctx)
 		want := 1
 		if tc.changes {
 			want = 2

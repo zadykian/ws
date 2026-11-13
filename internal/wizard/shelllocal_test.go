@@ -21,7 +21,7 @@ func TestSessionOnWsRunsTheScriptLocally(t *testing.T) {
 	m := effecttest.NewMachine()
 	r := localSession(m, nil)
 	m.Results["sh -s -- status"] = effecttest.Result{Out: []byte("ws abc\n")}
-	if s, ok := r.status(context.Background()); !ok || s.Version != "abc" {
+	if s, ok := r.Status(context.Background()); !ok || s.Version != "abc" {
 		t.Fatalf("status read %q; calls %q", s.Version, m.Calls)
 	}
 	m.Results[wsPath+" server ubuntu secrets set env A'B"] = effecttest.Result{Out: []byte("set\n")}
@@ -38,7 +38,7 @@ func TestFollowOnWsHandsEventsOn(t *testing.T) {
 	h := &heard{}
 	r := localSession(m, h)
 	m.Results["sh -s -- run --only=signoz/signoz up"] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.run(context.Background(), onlyArgs([]string{"signoz/signoz up"})); err != nil {
+	if err := r.Run(context.Background(), onlyArgs([]string{"signoz/signoz up"})); err != nil {
 		t.Fatal(err)
 	}
 	if got := h.steps(); !slices.Equal(got, []string{"ssh/keys"}) {
@@ -55,7 +55,7 @@ func TestFollowOnWsWithoutLines(t *testing.T) {
 	h := &heard{}
 	r := localSession(struct{ effect.Machine }{m}, h)
 	m.Results["sh -s -- run"] = effecttest.Result{Out: []byte(runLog)}
-	if err := r.run(context.Background(), nil); err != nil || len(*h) != 0 {
+	if err := r.Run(context.Background(), nil); err != nil || len(*h) != 0 {
 		t.Errorf("run = %v, events %v", err, *h)
 	}
 	if !slices.Equal(m.Calls, []string{"run sh -s -- run"}) {
@@ -69,12 +69,12 @@ func TestLocalShellNamesWsUser(t *testing.T) {
 	user := "ada"
 	r := NewSession(WsReach{M: m, Read: func() (Want, error) { return Want{User: user}, nil }}, Scripts{Remote: []byte("echo\n")})
 	m.Results["env SUDO_USER=ada sh -s -- status"] = effecttest.Result{Out: []byte("claude ok\n")}
-	if s, ok := r.status(context.Background()); !ok || s.Claude != "ok" {
+	if s, ok := r.Status(context.Background()); !ok || s.Claude != "ok" {
 		t.Errorf("status read %q; calls %q", s.Claude, m.Calls)
 	}
 	user = ""
 	m.Results["sh -s -- install v1 url"] = effecttest.Result{}
-	if err := r.install(context.Background(), "v1", "url"); err != nil || m.Calls[len(m.Calls)-1] != "run sh -s -- install v1 url" {
+	if err := r.Install(context.Background(), "v1", "url"); err != nil || m.Calls[len(m.Calls)-1] != "run sh -s -- install v1 url" {
 		t.Errorf("Pass = %v; calls %q", err, m.Calls)
 	}
 }

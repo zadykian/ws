@@ -21,22 +21,22 @@ type WsGitHub struct {
 	named bool
 }
 
-func (*WsGitHub) side() guided.Side { return OnWs }
+func (*WsGitHub) Side() guided.Side { return OnWs }
 
 type signingByHand struct{ why string }
 
 func (c signingByHand) String() string {
-	return signingStage + ": would list ws's signing key in what stays by hand, as " + c.why
+	return SigningStage + ": would list ws's signing key in what stays by hand, as " + c.why
 }
 
-// lacks is empty where GitHub lists the key among the signing keys of WS_USER's GitHub login.
-func (s *WsGitHub) lacks(ctx context.Context, ws *Session, line string) (step.Change, error) {
+// Lacks is empty where GitHub lists the key among the signing keys of WS_USER's GitHub login.
+func (s *WsGitHub) Lacks(ctx context.Context, ws *Session, line string) (step.Change, error) {
 	if s.named {
 		return nil, nil
 	}
-	user, err := ws.user()
+	user, err := ws.User()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", signingStage, err)
+		return nil, fmt.Errorf("%s: %w", SigningStage, err)
 	}
 	login := githubLoginOf(ctx, s.M, user)
 	if login == "" {
@@ -49,11 +49,11 @@ func (s *WsGitHub) lacks(ctx context.Context, ws *Session, line string) (step.Ch
 	return signingByHand{"GitHub lists it for no login of WS_USER's"}, nil
 }
 
-// add lists the key in what stays by hand, to add on GitHub, as ws holds no token that may.
-func (s *WsGitHub) add(_ context.Context, _ *Session, line string) error {
+// Add lists the key in what stays by hand, to add on GitHub, as ws holds no token that may.
+func (s *WsGitHub) Add(_ context.Context, _ *Session, line string) error {
 	s.Hand.Add("ws's signing key on GitHub: add it as a signing key at https://github.com/settings/ssh/new, "+
 		"so that GitHub shows ws's commits as verified (docs/server-wizard.md): %s", line)
-	s.Out.Say("%s: GitHub lacks ws's signing key, which the list at the end names", signingStage)
+	s.Out.Say("%s: GitHub lacks ws's signing key, which the list at the end names", SigningStage)
 	s.named = true
 	return nil
 }

@@ -32,7 +32,7 @@ func signingKeysOf(ctx context.Context, m effect.Machine, login string) ([]strin
 		"https://api.github.com/users/"+login+"/ssh_signing_keys?per_page=100")
 	var keys []struct{ Key string }
 	if err != nil || json.Unmarshal(out, &keys) != nil {
-		return nil, errors.New(signingStage + ": curl read no list of signing keys from GitHub's API")
+		return nil, errors.New(SigningStage + ": curl read no list of signing keys from GitHub's API")
 	}
 	var lines []string
 	for _, k := range keys {

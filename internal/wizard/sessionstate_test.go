@@ -28,7 +28,7 @@ const wsReport = `{
 func stateSession(held, report string) (*Session, *effecttest.Machine) {
 	m := effecttest.NewMachine()
 	r := NewSession(fakeReach{Reach: MacReach{}, M: m}, Scripts{Remote: []byte("echo\n")})
-	m.Results[opLine("status")] = effecttest.Result{Out: wsStatus{Version: held}.text()}
+	m.Results[opLine("status")] = effecttest.Result{Out: Status{Version: held}.text()}
 	m.Results[opLine("state")] = effecttest.Result{Out: []byte(report)}
 	return r, m
 }

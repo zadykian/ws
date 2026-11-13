@@ -14,7 +14,7 @@ func TestParseStatus(t *testing.T) {
 	text := "run v1.2.3 0 off aa11 bb22\nlast ws-wizard-1 0\nactive -\nws v1.2.3\nuser -\nmac.pub mk\n" +
 		"wg0 wk\nsigning ssh-ed25519 AAAA\nhostname ws\nclaude login\nfans refused\ncable enp1s0\n" +
 		"peer ok\noutbound off\nsecrets aa11\nvars -\nactive ws-wizard-2\n"
-	want := wsStatus{Run: stamp{Version: "v1.2.3", Exit: "0", Off: true, Secrets: "aa11", Vars: "bb22"},
+	want := Status{Run: Stamp{Version: "v1.2.3", Exit: "0", Off: true, Secrets: "aa11", Vars: "bb22"},
 		Version: "v1.2.3", MacKey: "mk", WgKey: "wk", Signing: "ssh-ed25519 AAAA", Hostname: "ws",
 		Claude: "login", FansRefused: true, Cable: "enp1s0", Peered: true, OutboundOff: true, Secrets: "aa11"}
 	if got := parseStatus(text); got != want {
@@ -24,7 +24,7 @@ func TestParseStatus(t *testing.T) {
 
 // text is the status as the remote script prints it, with - for an empty field, so that a stage's
 // test states ws's status as a value.
-func (s wsStatus) text() []byte {
+func (s Status) text() []byte {
 	word := func(set bool, yes, no string) string {
 		if set {
 			return yes
@@ -32,7 +32,7 @@ func (s wsStatus) text() []byte {
 		return no
 	}
 	run := "-"
-	if s.Run != (stamp{}) {
+	if s.Run != (Stamp{}) {
 		run = strings.Join([]string{cmp.Or(s.Run.Version, "-"), cmp.Or(s.Run.Exit, "-"), word(s.Run.Off, "off", "on"),
 			cmp.Or(s.Run.Secrets, "-"), cmp.Or(s.Run.Vars, "-")}, " ")
 	}
@@ -50,7 +50,7 @@ func (s wsStatus) text() []byte {
 func TestStatusText(t *testing.T) {
 	full := parseStatus("run v1 0 off aa bb\nactive u\nws v1\nuser alice\nmac.pub mk\nwg0 wk\n" +
 		"signing none\nhostname ws\nclaude ok\nfans refused\ncable p\npeer ok\noutbound off\nsecrets s\nvars v\n")
-	for _, s := range []wsStatus{{}, full} {
+	for _, s := range []Status{{}, full} {
 		if got := parseStatus(string(s.text())); got != s {
 			t.Errorf("parseStatus(%q) = %+v; want %+v", s.text(), got, s)
 		}
@@ -58,7 +58,7 @@ func TestStatusText(t *testing.T) {
 }
 
 func TestParseStamp(t *testing.T) {
-	for text, want := range map[string]stamp{
+	for text, want := range map[string]Stamp{
 		"-":                   {},
 		"v1 0 on - -":         {Version: "v1", Exit: "0"},
 		"- 1 off aa bb":       {Exit: "1", Off: true, Secrets: "aa", Vars: "bb"},
@@ -102,7 +102,7 @@ func TestStatusPinsScript(t *testing.T) {
 		t.Errorf("the script's status prints %v; the parse reads %v", names, want)
 	}
 	for name, value := range statusLines {
-		if parseStatus(name+" "+value) == (wsStatus{}) {
+		if parseStatus(name+" "+value) == (Status{}) {
 			t.Errorf("the parse leaves %s", name)
 		}
 	}

@@ -12,7 +12,7 @@ func TestWsClaude(t *testing.T) {
 		"no login":  {"login", "would run claude auth login"},
 		"none":      {"none", "ws lacks WS_USER's claude"},
 	} {
-		r, _ := newRun("lan", wsStatus{Claude: tc.claude}, false, false)
+		r, _ := newRun("lan", Status{Claude: tc.claude}, false, false)
 		p, err := (&WsClaude{Ws: r.Ws, Tty: true}).Plan(context.Background())
 		got := errText(err)
 		for _, c := range p.Changes {

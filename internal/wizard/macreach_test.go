@@ -12,7 +12,7 @@ import (
 
 // macSession returns the Mac's session over ssh, whose remote script answers status on m with the
 // value's text.
-func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status wsStatus) *Session {
+func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, status Status) *Session {
 	ws := NewSession(fakeReach{Reach: MacReach{SSH: ssh, Conf: "/h/mac.conf", Out: out}, M: m},
 		Scripts{Remote: []byte("x"), Files: []byte("y")})
 	m.Results[opLine("status")] = effecttest.Result{Out: status.text()}
@@ -21,7 +21,7 @@ func macSession(m *effecttest.Machine, ssh remote.SSH, out *effecttest.Out, stat
 
 func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 	m := effecttest.NewMachine()
-	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, wsStatus{Claude: "login"})
+	ws := macSession(m, remote.SSH{M: m, F: m, Lock: "/l"}, &effecttest.Out{}, Status{Claude: "login"})
 	c := &WsClaude{Ws: ws, Tty: true}
 	_ = c.Apply(context.Background(), step.Plan{})
 	got := callsWith(m, `claude auth login`)
@@ -31,7 +31,7 @@ func TestWsClaudeLoginTakesTheTerminal(t *testing.T) {
 }
 
 func TestWsClaudeApply(t *testing.T) {
-	r, m := newRun("lan", wsStatus{Claude: "login"}, false, false)
+	r, m := newRun("lan", Status{Claude: "login"}, false, false)
 	if err := (&WsClaude{Ws: r.Ws}).Apply(context.Background(), step.Plan{}); err == nil ||
 		!strings.Contains(err.Error(), "no terminal") {
 		t.Errorf("Apply without a terminal = %v", err)

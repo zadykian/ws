@@ -14,7 +14,7 @@ const cableLink = "eth0 - -\neth1 1 -\n"
 
 // newCable returns the stage after a full run of this ws, whose status names the cable that status
 // does.
-func newCable(t *testing.T, status wsStatus, link string, env map[string]string) (*Cable, *effecttest.Machine, *effecttest.Prompt) {
+func newCable(t *testing.T, status Status, link string, env map[string]string) (*Cable, *effecttest.Machine, *effecttest.Prompt) {
 	root, m := newLogin(effecttest.Result{Out: []byte("ok\n")})
 	status.Run = idleRun.Run
 	out := &effecttest.Out{}
@@ -43,7 +43,7 @@ func TestCablePlan(t *testing.T) {
 		"has end":    {"", "", "eth1 1 10.77.0.1/24\n", "ask the Mac's service", nil},
 		"none given": {"", "", cableLink, "empty WS_CABLE_SERVICE", map[string]string{"WS_CABLE_SERVICE": ""}},
 	} {
-		c, m, _ := newCable(t, wsStatus{Cable: tc.cable}, tc.link, tc.env)
+		c, m, _ := newCable(t, Status{Cable: tc.cable}, tc.link, tc.env)
 		m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf + tc.conf)
 		p, err := c.Plan(context.Background())
 		got := errText(err)
@@ -57,7 +57,7 @@ func TestCablePlan(t *testing.T) {
 }
 
 func TestCableApplyAsksPortAndService(t *testing.T) {
-	c, m, p := newCable(t, wsStatus{}, cableLink, nil)
+	c, m, p := newCable(t, Status{}, cableLink, nil)
 	m.Results[opLine("link", "eth1")] = effecttest.Result{}
 	m.Results[opLine("run", "--only", "network,wireguard")] = effecttest.Result{}
 	m.Results[opLine("wait", "eth1")] = effecttest.Result{Out: []byte("eth1 1 10.77.0.1/24\n")}
@@ -76,7 +76,7 @@ func TestCableApplyAsksPortAndService(t *testing.T) {
 }
 
 func TestCableApplyNone(t *testing.T) {
-	c, m, p := newCable(t, wsStatus{}, cableLink, nil)
+	c, m, p := newCable(t, Status{}, cableLink, nil)
 	p.Answers["ws's port of the cable, of eth0, eth1 (carrier) (WS_CABLE_PORT) [eth1, or none]"] = "none"
 	if err := c.Apply(context.Background(), step.Plan{}); err != nil || !strings.Contains(string(m.Files["/h/mac.conf"]), "WS_CABLE_SERVICE=\n") {
 		t.Errorf("Apply with none = %v, mac.conf %q; want an empty service", err, m.Files["/h/mac.conf"])
@@ -84,14 +84,14 @@ func TestCableApplyNone(t *testing.T) {
 }
 
 func TestCableApplyEnvPortOutsideList(t *testing.T) {
-	c, _, _ := newCable(t, wsStatus{}, cableLink, map[string]string{"WS_CABLE_PORT": "eth9"})
+	c, _, _ := newCable(t, Status{}, cableLink, map[string]string{"WS_CABLE_PORT": "eth9"})
 	if err := c.Apply(context.Background(), step.Plan{}); err == nil || !strings.Contains(err.Error(), "none of eth0, eth1") {
 		t.Errorf("Apply = %v; want a refusal of the environment's port", err)
 	}
 }
 
 func TestCableHand(t *testing.T) {
-	c, _, _ := newCable(t, wsStatus{}, "eth0 - -\n", nil)
+	c, _, _ := newCable(t, Status{}, "eth0 - -\n", nil)
 	c.ports = []cablePort{{"eth0", "-", "-"}}
 	var h guided.Hand
 	c.Hand(context.Background(), &h)
@@ -105,7 +105,7 @@ func TestCableHand(t *testing.T) {
 }
 
 func TestCablePlanAfterRunUnderCheck(t *testing.T) {
-	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
+	c, m, _ := newCable(t, Status{}, cableLink, nil)
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	c.Check = true
 	c.RunDone = func(context.Context, Want) bool { return false }
@@ -117,7 +117,7 @@ func TestCablePlanAfterRunUnderCheck(t *testing.T) {
 }
 
 func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
-	c, m, _ := newCable(t, wsStatus{}, cableLink, nil)
+	c, m, _ := newCable(t, Status{}, cableLink, nil)
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	c.Check = true
 	for k := range m.Results {
@@ -133,7 +133,7 @@ func TestCablePlanAfterRunWithNoWayUnderCheck(t *testing.T) {
 }
 
 func TestCablePlanReadsNoPortsWhereTheEnvironmentNamesOne(t *testing.T) {
-	c, m, _ := newCable(t, wsStatus{}, cableLink, map[string]string{"WS_CABLE_PORT": "eth1"})
+	c, m, _ := newCable(t, Status{}, cableLink, map[string]string{"WS_CABLE_PORT": "eth1"})
 	m.Files["/h/mac.conf"] = []byte("WS_TARGET=lan\n" + wayConf)
 	if _, err := c.Plan(context.Background()); err != nil || len(c.ports) != 0 {
 		t.Errorf("Plan = %v, read ports %v; want no read of link", err, c.ports)

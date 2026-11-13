@@ -18,7 +18,7 @@ var ErrOtherWs = errors.New("ws's report refused")
 // version alone. It runs no state op where the status names another, and the report's own version
 // decides after that. The op changes nothing, so what the status read stands.
 func (s *Session) State(ctx context.Context, version string) ([]role.RoleState, error) {
-	st, ok := s.status(ctx)
+	st, ok := s.Status(ctx)
 	if !ok {
 		return nil, errors.New("ws's report: ws's status read nothing")
 	}

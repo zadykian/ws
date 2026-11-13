@@ -29,24 +29,24 @@ type Session struct {
 // heldStatus is what status read of ws. read is set until a change, and got where status read any.
 type heldStatus struct {
 	read, got bool
-	last      wsStatus
+	last      Status
 }
 
 // Reach is how a Session reaches ws: MacReach or WsReach.
 type Reach interface {
-	// shell runs a command as root on ws.
-	shell() remote.Shell
-	// want reads the target and WS_USER that ws's run is to leave: mac.conf's on the Mac, and
+	// Shell runs a command as root on ws.
+	Shell() remote.Shell
+	// Want reads the target and WS_USER that ws's run is to leave: mac.conf's on the Mac, and
 	// host_vars' on ws.
-	want() (Want, error)
-	// user returns WS_USER, whose claude and git config the stages read.
-	user() (string, error)
-	// claude runs claude auth login as WS_USER at the terminal.
-	claude(ctx context.Context) error
-	// rerun says how to run ws server ubuntu apply again, for a stop that needs it.
-	rerun() string
-	// hand adds what stays by hand of this way's ws, as the status s read it.
-	hand(h *guided.Hand, s wsStatus)
+	Want() (Want, error)
+	// User returns WS_USER, whose claude and git config the stages read.
+	User() (string, error)
+	// Claude runs claude auth login as WS_USER at the terminal.
+	Claude(ctx context.Context) error
+	// Rerun says how to run ws server ubuntu apply again, for a stop that needs it.
+	Rerun() string
+	// Hand adds what stays by hand of this way's ws, as the status s read it.
+	Hand(h *guided.Hand, s Status)
 }
 
 // Want is what ws's run is to leave: the target, lan or cloud, and WS_USER. The server reads no
@@ -62,17 +62,17 @@ type Scripts struct {
 
 // NewSession returns the session of r, which runs sc's scripts.
 func NewSession(r Reach, sc Scripts) *Session {
-	return &Session{reach: r, shell: r.shell(), remote: sc.Remote, files: sc.Files, events: sc.Events}
+	return &Session{reach: r, shell: r.Shell(), remote: sc.Remote, files: sc.Files, events: sc.Events}
 }
 
-// status reads what the remote script's status prints once, until an operation that changes ws, or
+// Status reads what the remote script's status prints once, until an operation that changes ws, or
 // claude's login, runs. It reports whether it read any: the Shell or the script fails where root is
 // out of reach.
-func (s *Session) status(ctx context.Context) (wsStatus, bool) {
+func (s *Session) Status(ctx context.Context) (Status, bool) {
 	h := &s.held
 	if !h.read {
 		out, err := s.do(ctx, opStatus)
-		h.read, h.got, h.last = true, err == nil && strings.TrimSpace(string(out)) != "", wsStatus{}
+		h.read, h.got, h.last = true, err == nil && strings.TrimSpace(string(out)) != "", Status{}
 		if h.got {
 			h.last = parseStatus(string(out))
 		}
@@ -80,33 +80,33 @@ func (s *Session) status(ctx context.Context) (wsStatus, bool) {
 	return h.last, h.got
 }
 
-// known returns what status last read, with no read of its own: zero before the first.
-func (s *Session) known() wsStatus { return s.held.last }
+// Known returns what status last read, with no read of its own: zero before the first.
+func (s *Session) Known() Status { return s.held.last }
 
 // stale has the next status read ws again. An operation that changes ws marks it, and so does
 // claude's login, which runs outside the scripts.
 func (s *Session) stale() { s.held.read = false }
 
-// want reads what ws's run is to leave.
-func (s *Session) want() (Want, error) { return s.reach.want() }
+// Want reads what ws's run is to leave.
+func (s *Session) Want() (Want, error) { return s.reach.Want() }
 
-// rerun says how to run ws server ubuntu apply again, for a stop that needs it.
-func (s *Session) rerun() string { return s.reach.rerun() }
+// Rerun says how to run ws server ubuntu apply again, for a stop that needs it.
+func (s *Session) Rerun() string { return s.reach.Rerun() }
 
-// user returns WS_USER, whose claude and git config the stages read.
-func (s *Session) user() (string, error) { return s.reach.user() }
+// User returns WS_USER, whose claude and git config the stages read.
+func (s *Session) User() (string, error) { return s.reach.User() }
 
-// claude runs claude's login as WS_USER. The login changes what the status reads, outside the
+// Claude runs claude's login as WS_USER. The login changes what the status reads, outside the
 // scripts.
-func (s *Session) claude(ctx context.Context) error {
+func (s *Session) Claude(ctx context.Context) error {
 	s.stale()
-	return s.reach.claude(ctx)
+	return s.reach.Claude(ctx)
 }
 
 // Hand adds what stays by hand of ws to the list, from the remote script's status.
 func (s *Session) Hand(ctx context.Context, h *guided.Hand) {
-	st, _ := s.status(ctx)
-	s.reach.hand(h, st)
+	st, _ := s.Status(ctx)
+	s.reach.Hand(h, st)
 }
 
 // Secrets runs ws server ubuntu secrets ARGS on ws as root, with in as its stdin, and returns its

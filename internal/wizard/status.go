@@ -2,11 +2,11 @@ package wizard
 
 import "strings"
 
-// wsStatus is what the remote script's status prints of ws, each line in a field of its own. A
+// Status is what the remote script's status prints of ws, each line in a field of its own. A
 // field is empty where ws has none, which the script prints as -.
-type wsStatus struct {
+type Status struct {
 	// Run is the last full run's stamp, zero where none ran.
-	Run stamp
+	Run Stamp
 	// Active is the unit of the run that runs now.
 	Active string
 	// Version is what ws's binary prints as its version.
@@ -35,9 +35,9 @@ type wsStatus struct {
 	Secrets, Vars string
 }
 
-// stamp is a full run's stamp, which the remote script's job writes as five words: VERSION STATUS
+// Stamp is a full run's stamp, which the remote script's job writes as five words: VERSION STATUS
 // on|off SECRETSUM VARSSUM. A field is empty where the stamp names -.
-type stamp struct {
+type Stamp struct {
 	// Version is what the run's ws printed as its version before the run.
 	Version string
 	// Exit is ws server ubuntu apply's status.
@@ -51,9 +51,9 @@ type stamp struct {
 
 // parseStatus reads the status's lines, NAME VALUE. The first line of a name counts, and a name
 // the wizard does not read is left.
-func parseStatus(text string) wsStatus {
+func parseStatus(text string) Status {
 	seen := map[string]bool{}
-	var s wsStatus
+	var s Status
 	for _, l := range strings.Split(text, "\n") {
 		name, value, ok := strings.Cut(l, " ")
 		if !ok || seen[name] {
@@ -66,7 +66,7 @@ func parseStatus(text string) wsStatus {
 }
 
 // set puts the value of the line NAME in its field.
-func (s *wsStatus) set(name, value string) {
+func (s *Status) set(name, value string) {
 	text := map[string]*string{"active": &s.Active, "ws": &s.Version, "user": &s.User, "mac.pub": &s.MacKey,
 		"wg0": &s.WgKey, "signing": &s.Signing, "hostname": &s.Hostname, "claude": &s.Claude,
 		"cable": &s.Cable, "secrets": &s.Secrets, "vars": &s.Vars}
@@ -86,12 +86,12 @@ func (s *wsStatus) set(name, value string) {
 }
 
 // parseStamp reads a stamp of five words, and returns a zero one for any other text.
-func parseStamp(text string) stamp {
+func parseStamp(text string) Stamp {
 	f := strings.Fields(text)
 	if len(f) != 5 {
-		return stamp{}
+		return Stamp{}
 	}
-	return stamp{Version: none(f[0]), Exit: none(f[1]), Off: f[2] == "off", Secrets: none(f[3]),
+	return Stamp{Version: none(f[0]), Exit: none(f[1]), Off: f[2] == "off", Secrets: none(f[3]),
 		Vars: none(f[4])}
 }
 

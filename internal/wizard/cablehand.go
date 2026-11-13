@@ -10,7 +10,7 @@ import (
 // of ws's had carrier. It names WS_CABLE_PORT for the ports that ws keeps down, whose carrier link
 // can't read, and an empty WS_CABLE_SERVICE for a Mac without the cable.
 func (c *Cable) Hand(_ context.Context, h *guided.Hand) {
-	if cf, err := c.Ws.want(); err != nil || cf.Target != "lan" || !c.lacks() {
+	if cf, err := c.Ws.Want(); err != nil || cf.Target != "lan" || !c.lacks() {
 		return
 	}
 	text := "The cable: dock the Mac at the display that ws's cable plugs into, then run the line again, " +

@@ -13,7 +13,7 @@ func TestEveryStageStatesItsSide(t *testing.T) {
 	want := map[string]guided.Side{
 		macUpdateStage: OnMac, toolsStage: OnMac, homebrewStage: OnMac, answers: OnMac, macKey: OnMac,
 		ghStage: OnMac, setupStage: OnMac, hostStage: OnMac, loginStage: OnMac, sudoStage: OnWs,
-		installStage: OnWs, runStage: OnWs, claudeStage: OnWs, signingStage: OnMac, tunnelStage: OnMac,
+		installStage: OnWs, RunStage: OnWs, ClaudeStage: OnWs, SigningStage: OnMac, tunnelStage: OnMac,
 		cableStage: OnMac, valuesStage: OnWs,
 	}
 	stages := []step.Step{&MacUpdate{}, &Tools{}, &Homebrew{}, &Answers{}, &MacKey{}, &Gh{}, &Setup{},

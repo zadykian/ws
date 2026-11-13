@@ -12,7 +12,7 @@ import (
 
 const keysCmd = "curl -fsSL --retry 3 --proto =https https://api.github.com/users/ada-1/ssh_signing_keys?per_page=100"
 
-func newWsSigning(status wsStatus, login, listed string) (*Signing, *WsGitHub) {
+func newWsSigning(status Status, login, listed string) (*Signing, *WsGitHub) {
 	ws, m := wsSession(status)
 	m.Results[loginCmd] = effecttest.Result{Out: []byte(login)}
 	m.Results[keysCmd] = effecttest.Result{Out: []byte(listed)}
@@ -21,12 +21,12 @@ func newWsSigning(status wsStatus, login, listed string) (*Signing, *WsGitHub) {
 }
 
 func TestWsSigningPlan(t *testing.T) {
-	key := wsStatus{Signing: "ssh-ed25519 AAA"}
+	key := Status{Signing: "ssh-ed25519 AAA"}
 	for name, tc := range map[string]struct {
-		status              wsStatus
+		status              Status
 		login, listed, want string
 	}{
-		"no key":   {wsStatus{Signing: "none"}, "", "", ""},
+		"no key":   {Status{Signing: "none"}, "", "", ""},
 		"listed":   {key, "motd\nada-1\n", `[{"id":1,"key":"ssh-ed25519 AAA"}]`, ""},
 		"missing":  {key, "ada-1\n", `[{"key":"ssh-ed25519 BBB"}]`, "lists it for no login"},
 		"no login": {key, "", "", "names a GitHub login"},
@@ -50,7 +50,7 @@ func TestWsSigningPlan(t *testing.T) {
 
 // The key goes to what stays by hand, to add on GitHub, and the run plans nothing more of it.
 func TestWsSigningApply(t *testing.T) {
-	s, g := newWsSigning(wsStatus{Signing: "ssh-ed25519 AAA"}, "", "")
+	s, g := newWsSigning(Status{Signing: "ssh-ed25519 AAA"}, "", "")
 	if err := s.Apply(context.Background(), step.Plan{}); err != nil {
 		t.Fatal(err)
 	}

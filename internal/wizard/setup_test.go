@@ -70,7 +70,7 @@ func TestSetupWaitsOnTheMacKey(t *testing.T) {
 func TestStagesGiveTheWordsOfNoTicket(t *testing.T) {
 	m := effect.OSMachine{Ticket: func() error { return effect.ErrNoTicket }}
 	_, planned := (&Setup{M: m, LookPath: func(string) (string, error) { return "", nil }}).Plan(context.Background())
-	tun, _ := newTunnel(keyA, wsStatus{}, false)
+	tun, _ := newTunnel(keyA, Status{}, false)
 	tun.M = m
 	if err := tun.Apply(context.Background(), step.Plan{}); !errors.Is(err, effect.ErrNoTicket) || !errors.Is(planned, err) {
 		t.Errorf("Apply = %v, Plan = %v", err, planned)

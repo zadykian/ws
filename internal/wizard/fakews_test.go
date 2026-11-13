@@ -54,7 +54,7 @@ type fakeReach struct {
 	M *effecttest.Machine
 }
 
-func (r fakeReach) shell() remote.Shell { return fakeWs{M: r.M} }
+func (r fakeReach) Shell() remote.Shell { return fakeWs{M: r.M} }
 
 func TestFakeWsKeysAScriptByItsOp(t *testing.T) {
 	m := effecttest.NewMachine()

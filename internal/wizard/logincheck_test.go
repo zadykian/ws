@@ -19,7 +19,7 @@ func newLogin(login effecttest.Result) (*Login, *effecttest.Machine) {
 	h, m := newHost(nil)
 	m.Results["ssh-keygen -F ws -f "+hostsOf] = effecttest.Result{}
 	m.Results[loginCall] = login
-	ws := macSession(m, h.SSH, h.Out.(*effecttest.Out), wsStatus{})
+	ws := macSession(m, h.SSH, h.Out.(*effecttest.Out), Status{})
 	return &Login{SSH: h.SSH, Ws: ws, Gh: GhCLI{Conf: "/h/mac.conf", Home: "/h", M: m, Out: h.Out}, Tty: h.Tty, Env: h.Env, P: h.P, Out: h.Out}, m
 }
 

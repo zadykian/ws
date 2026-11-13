@@ -13,7 +13,7 @@ import (
 // On ws, the login runs by runuser as host_vars' WS_USER, and a missing claude names ws server
 // ubuntu apply.
 func TestWsClaudeHere(t *testing.T) {
-	ws, m := wsSession(wsStatus{Claude: "none"})
+	ws, m := wsSession(Status{Claude: "none"})
 	c := &WsClaude{Ws: ws, Tty: true}
 	if _, err := c.Plan(context.Background()); err == nil || !strings.Contains(err.Error(), "run sudo ws server ubuntu apply") {
 		t.Errorf("Plan where claude is missing = %v", err)

@@ -9,8 +9,8 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// runStage names the stage in its messages.
-const runStage = "ws's run"
+// RunStage names the stage in its messages.
+const RunStage = "ws's run"
 
 // WsRun is the stage of ws's run, ws server ubuntu apply, in a unit of its own on ws. The remote
 // script starts it and follows it. A run goes on where ssh drops, and the next run of the wizard
@@ -39,7 +39,7 @@ type WsRun struct {
 }
 
 // Name is the stage's name.
-func (*WsRun) Name() string { return runStage }
+func (*WsRun) Name() string { return RunStage }
 
 // Side is ws: ws server ubuntu apply runs there.
 func (*WsRun) Side() guided.Side { return OnWs }
@@ -53,8 +53,8 @@ func (r *WsRun) RunDone(ctx context.Context, c Want) bool {
 	if r.Update && !r.ran {
 		return false
 	}
-	s, ok := r.Ws.status(ctx)
-	return ok && s.done(r.Version, c)
+	s, ok := r.Ws.Status(ctx)
+	return ok && done(s, r.Version, c)
 }
 
 // runChange is the change that runs ws server ubuntu apply.
@@ -66,17 +66,17 @@ type runChange struct {
 	user string
 }
 
-func (c runChange) String() string { return runStage + ": would " + c.text }
+func (c runChange) String() string { return RunStage + ": would " + c.text }
 
 // Plan reads ws's last run, and finds whether ws server ubuntu apply is to run or to be followed.
 // Under --check it says what would happen.
 func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if r.Unbooted {
 		r.Out.Say("%s: ws's systemd isn't booted, as in a container, so no unit runs ws server ubuntu apply: "+
-			"run sudo ws server ubuntu apply", runStage)
+			"run sudo ws server ubuntu apply", RunStage)
 		return step.Plan{}, nil
 	}
-	c, err := r.Ws.want()
+	c, err := r.Ws.Want()
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -87,12 +87,12 @@ func (r *WsRun) Plan(ctx context.Context) (step.Plan, error) {
 	if len(r.Only) > 0 {
 		how = "run ws server ubuntu apply on ws for the steps chosen, in a unit of its own, and follow its log"
 	}
-	s := r.Ws.known()
+	s := r.Ws.Known()
 	if s.Secrets != "" {
 		how += ", with ws's secrets file"
 	}
 	user := ""
-	if !s.named(c) {
+	if !named(s, c) {
 		user = c.User
 		how += ", after naming ws_user: " + user + " in ws's host_vars"
 	}
@@ -122,6 +122,6 @@ func (r *WsRun) partDone(ctx context.Context, c Want) bool {
 // fail says what to do where ws server ubuntu apply ran no full run to its end. It names no cause,
 // as ssh has printed it, or ws has.
 func fail() error {
-	return errors.New(runStage + ": ws server ubuntu apply stopped, as above, or ssh dropped while " +
+	return errors.New(RunStage + ": ws server ubuntu apply stopped, as above, or ssh dropped while " +
 		"it goes on; mend what it printed, then run the wizard again, which follows a run that goes on")
 }

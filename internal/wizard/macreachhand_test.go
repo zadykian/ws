@@ -10,13 +10,13 @@ import (
 func TestMacHand(t *testing.T) {
 	for name, tc := range map[string]struct {
 		target string
-		status wsStatus
+		status Status
 		want   string
 	}{
-		"lan":   {"lan", wsStatus{FansRefused: true}, "ws's fans' driver"},
-		"local": {"lan", wsStatus{}, "macOS's local network"},
-		"cloud": {"cloud", wsStatus{OutboundOff: true}, "The provider's firewall: UDP 51820"},
-		"off":   {"lan", wsStatus{OutboundOff: true}, "ws's outbound table"},
+		"lan":   {"lan", Status{FansRefused: true}, "ws's fans' driver"},
+		"local": {"lan", Status{}, "macOS's local network"},
+		"cloud": {"cloud", Status{OutboundOff: true}, "The provider's firewall: UDP 51820"},
+		"off":   {"lan", Status{OutboundOff: true}, "ws's outbound table"},
 	} {
 		r, _ := newRun(tc.target, tc.status, false, false)
 		h := &guided.Hand{}

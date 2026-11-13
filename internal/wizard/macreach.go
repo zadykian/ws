@@ -18,27 +18,27 @@ type MacReach struct {
 	Out  effect.Out
 }
 
-func (r MacReach) shell() remote.Shell { return remote.SSHShell{SSH: r.SSH, Root: r.Sudo} }
+func (r MacReach) Shell() remote.Shell { return remote.SSHShell{SSH: r.SSH, Root: r.Sudo} }
 
-func (r MacReach) want() (Want, error) {
+func (r MacReach) Want() (Want, error) {
 	c, err := macConf(r.SSH.M, r.Conf)
 	return Want{Target: c.Target, User: c.User}, err
 }
 
-func (r MacReach) user() (string, error) {
-	c, err := r.want()
+func (r MacReach) User() (string, error) {
+	c, err := r.Want()
 	return c.User, err
 }
 
-func (MacReach) rerun() string { return "run the wizard with --update" }
+func (MacReach) Rerun() string { return "run the wizard with --update" }
 
-// claude runs the login in a session of ssh -t, through a login shell, whose PATH has ~/.local/bin,
+// Claude runs the login in a session of ssh -t, through a login shell, whose PATH has ~/.local/bin,
 // where claude is.
-func (r MacReach) claude(ctx context.Context) error {
+func (r MacReach) Claude(ctx context.Context) error {
 	r.Out.Say("%s: claude auth login runs as WS_USER on ws: take its steps at this terminal, "+
-		"and open the address it shows in the Mac's browser", claudeStage)
+		"and open the address it shows in the Mac's browser", ClaudeStage)
 	if err := r.SSH.Pass(ctx, "-t", "ws", `exec bash -lc "claude auth login"`); err != nil {
-		return errors.New(claudeStage + ": WS_USER's claude on ws still has no login, as above; run the wizard again")
+		return errors.New(ClaudeStage + ": WS_USER's claude on ws still has no login, as above; run the wizard again")
 	}
 	return nil
 }
