@@ -3,13 +3,14 @@
 [The terminal UI](../../README.md) holds what every screen shares, such as the modes and the
 fields.
 
-`ws client macos configure` edits `mac.conf` on a form, ws's secrets file on a second, and ws's
-host_vars on a third. A form has a field for each key: the key, its value and its help. A key shows
-where the wizard's Answers stage would ask it, by `WS_TARGET`, and an edit moves the fields at once,
-as a `WS_REMOTE` brings its port. A key that the stage never asks, such as `WS_USER`, stays the
-file's. The screen draws or stops: with no terminal, or under `--plain`, it refuses, and the file
-stays open to an editor. A line that `ws client macos apply` would refuse stops it before the
-screen, as a form has no field for it. Keys that disagree open, as the form mends them.
+`ws client macos configure` edits `mac.conf` and the server's file on a form, ws's secrets file on a
+second, and ws's host_vars on a third. A form has a field for each key: the key, its value and its
+help. A key shows where the wizard's Answers stage would ask it, by `WS_TARGET`, and an edit moves
+the fields at once, as a `WS_REMOTE` brings its port. A key that the stage never asks, such as
+`WS_USER`, stays the file's. The screen draws or stops: with no terminal, or under `--plain`, it
+refuses, and the file stays open to an editor. A line that `ws client macos apply` would refuse
+stops it before the screen, as a form has no field for it. Keys that disagree open, as the form
+mends them.
 
 Tab, Enter and Down go to the next field, Shift-Tab and Up to the one before, and past either end
 to the buttons. A key that needs a value shows the wizard's default in brackets, and a save writes
