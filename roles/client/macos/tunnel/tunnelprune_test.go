@@ -45,8 +45,12 @@ func TestTunnelRemovesTheDaemonOfAServerThatIsGone(t *testing.T) {
 			t.Errorf("Plan lacks %q:\n%s", want, got)
 		}
 	}
-	if strings.Contains(got, "/ws-tunnel/ws") || strings.Contains(got, "ws-tunnel.ws") {
-		t.Errorf("Plan touches the daemon of ws:\n%s", got)
+	for _, line := range strings.Split(got, "\n") {
+		if strings.HasPrefix(line, "remove ") || strings.Contains(line, "bootout") {
+			if strings.Contains(line, "/ws-tunnel/ws") || strings.Contains(line, "ws-tunnel.ws") {
+				t.Errorf("Plan removes the daemon of ws: %q", line)
+			}
+		}
 	}
 }
 
@@ -88,5 +92,20 @@ func TestTunnelDoesNotKickADaemonItPrunes(t *testing.T) {
 		if strings.Contains(c, "kickstart") && strings.Contains(c, "lab") {
 			t.Errorf("Plan kicks lab: %q", c)
 		}
+	}
+}
+
+func TestTunnelHasTheDaemonsThatStayReadAgainOnceAServerGoes(t *testing.T) {
+	m := laterMachine()
+	m.Files["/h/.config/ws/servers/box/server.conf"] = []byte("x")
+	m.Dirs["/h/.config/ws/servers/box"] = 0o755
+	otherDaemon(m, "box")
+	m.Results["ls -1 /etc/ws-tunnel"] = effecttest.Result{Out: []byte("box\nlab\nprivate.key\nws\n")}
+	got := lines(tunnelChanges(t, pruneStep(m)))
+	if !strings.Contains(got, "would run launchctl kill SIGHUP system/com.github.zadykian.ws-tunnel.box") {
+		t.Errorf("Plan does not signal box:\n%s", got)
+	}
+	if strings.Contains(got, "kill SIGHUP system/com.github.zadykian.ws-tunnel.lab") {
+		t.Errorf("Plan signals the daemon it removes:\n%s", got)
 	}
 }
