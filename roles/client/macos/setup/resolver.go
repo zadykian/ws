@@ -13,8 +13,8 @@ import (
 	"github.com/zadykian/ws/engine/core/step"
 )
 
-// resolverCmdHeader is the first line of the files that ws mac resolver writes. Those of the networks
-// step have their own, so each owner leaves the other's.
+// resolverCmdHeader is the first line of the files that ws client macos resolver writes. Those of
+// the networks step have their own, so each owner leaves the other's.
 const resolverCmdHeader = "# Written by github.com/zadykian/ws: ws client macos resolver, which removes this file when given no address."
 
 // Resolver has macOS ask the nameservers Addresses, up to 3, for Domain and the names under it, and

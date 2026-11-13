@@ -85,8 +85,8 @@ func (t *Tunnel) finish(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// /etc/wireguard and ws server apply are root's, so a WS_USER other than root goes through sudo,
-	// with a terminal for its password. The key, which is public, goes in the remote command, so
+	// /etc/wireguard and ws server ubuntu apply are root's, so a WS_USER other than root goes through
+	// sudo, with a terminal for its password. The key, which is public, goes in the remote command, so
 	// that ssh's stdin stays the terminal.
 	sudo, tty := "", ""
 	if t.Conf.User != "root" {

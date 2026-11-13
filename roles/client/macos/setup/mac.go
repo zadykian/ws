@@ -11,8 +11,8 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/mac"
 )
 
-// Mac is what the Mac's steps read and act through. It holds the order of ws mac apply's steps, so
-// that no caller builds them itself.
+// Mac is what the Mac's steps read and act through. It holds the order of ws client macos apply's
+// steps, so that no caller builds them itself.
 type Mac struct {
 	Conf conf.Conf
 	Home string
@@ -24,8 +24,8 @@ type Mac struct {
 	Text io.Writer
 }
 
-// steps returns the steps in the order ws mac apply runs them. Under check, the steps that plan
-// again after they apply plan once.
+// steps returns the steps in the order ws client macos apply runs them. Under check, the steps that
+// plan again after they apply plan once.
 func (m Mac) steps(check bool) []step.Step {
 	return []step.Step{
 		m.ssh(false),

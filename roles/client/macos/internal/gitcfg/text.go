@@ -1,5 +1,5 @@
-// Package gitcfg holds the texts of the git step of ws mac apply, as pure functions: the files it
-// writes, and what it makes of git's answers.
+// Package gitcfg holds the texts of the git step of ws client macos apply, as pure functions: the
+// files it writes, and what it makes of git's answers.
 package gitcfg
 
 import "strings"

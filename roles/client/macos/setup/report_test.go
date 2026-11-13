@@ -13,7 +13,7 @@ import (
 	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
-// reportOf reads the step as ws mac state does, and returns its items by name.
+// reportOf reads the step as ws client macos state does, and returns its items by name.
 func reportOf(t *testing.T, s step.Step) map[string]step.Item {
 	reports, err := step.Read(context.Background(), []step.Step{s})
 	if err != nil {
