@@ -38,7 +38,7 @@ func newStateCmd(p cli.Env) *cobra.Command {
 
 // runState prints what the roles report.
 func runState(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error {
-	r, err := prepareServer(c, p, opts)
+	r, err := prepareServer(cli.CallOf(c, p), p, opts)
 	if err != nil {
 		return err
 	}

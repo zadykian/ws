@@ -114,8 +114,8 @@ type serverRun struct {
 
 // prepareServer checks where the command runs, then loads the values and the secrets that the
 // roles read. The steps of --only follow the values, so they are checked last.
-func prepareServer(c *cobra.Command, p cli.Env, opts applyOptions) (serverRun, error) {
-	if c.Flags().Changed("only") && len(opts.Only) == 0 {
+func prepareServer(call engine.Call, p cli.Env, opts applyOptions) (serverRun, error) {
+	if call.Selected && len(opts.Only) == 0 {
 		return serverRun{}, engine.UsageError{Err: errors.New("--only names no role")}
 	}
 	_, err := role.Select(ubuntu.Roles(values.Values{}, secrets.Secrets{}), opts.Only)
@@ -129,8 +129,8 @@ func prepareServer(c *cobra.Command, p cli.Env, opts applyOptions) (serverRun, e
 	if why := serverRefusal(p.Euid, text); why != "" {
 		return serverRun{}, errors.New(why)
 	}
-	term := effect.NewTerminal(strings.NewReader(""), c.ErrOrStderr())
-	out := linesOf(term, c.CommandPath())
+	term := effect.NewTerminal(strings.NewReader(""), call.Err)
+	out := linesOf(term, call.Path)
 	v, err := values.Load(p.Machine, serverVars)
 	if err != nil {
 		return serverRun{}, err
@@ -163,7 +163,7 @@ func (r serverRun) roles(s secrets.Secrets) ([]role.Role, error) {
 
 // runApply sets the server up as opts say.
 func runApply(c *cobra.Command, p cli.Env, opts applyOptions, asJSON bool) error {
-	r, err := prepareServer(c, p, opts)
+	r, err := prepareServer(cli.CallOf(c, p), p, opts)
 	if err != nil {
 		return err
 	}
