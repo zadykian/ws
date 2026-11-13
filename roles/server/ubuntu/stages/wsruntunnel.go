@@ -3,6 +3,7 @@ package stages
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/zadykian/ws/roles/server/ubuntu/session"
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
@@ -38,4 +39,13 @@ func tunnelPairs(ctx context.Context, ws values.Store, w session.Want) ([]string
 		}
 	}
 	return pairs, nil
+}
+
+// naming says what a run writes before it starts, as "wireguard_address: A and wireguard_port: P".
+func naming(pairs []string) string {
+	named := make([]string, len(pairs))
+	for i, p := range pairs {
+		named[i] = strings.Replace(p, "=", ": ", 1)
+	}
+	return strings.Join(named, " and ")
 }
