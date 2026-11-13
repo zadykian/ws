@@ -95,13 +95,35 @@ func (a *Answers) collect(ctx context.Context, text string, c conf.Conf) (string
 	return ask.lines, err
 }
 
-// refusal words conf's refusal of mac.conf with the lines.
-func (a *Answers) refusal(lines string) error {
+// part is one file of the stage: its text now, its text with the answers, and its scratch copy.
+type part struct {
+	file          conf.File
+	scratch       string
+	before, after string
+}
+
+// compose returns each file with its lines added. A file refused with its lines is said, and stops
+// the stage.
+func (a *Answers) compose(lines string) ([]part, error) {
+	p := part{file: a.file(), scratch: a.Scratch}
+	var err error
+	p.before, p.after, err = p.file.Compose(lines)
+	if errors.Is(err, conf.ErrRefused) {
+		return nil, a.refusal(p.file.Path, lines)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return []part{p}, nil
+}
+
+// refusal words conf's refusal of the file at path with the lines.
+func (a *Answers) refusal(path, lines string) error {
 	with := ""
 	if lines != "" {
 		with = " with the answers"
 	}
-	return fmt.Errorf("%s: ws client macos apply would refuse %s%s, as above; fix it, then run the wizard again", stage.Answers, a.Conf, with)
+	return fmt.Errorf("%s: ws client macos apply would refuse %s%s, as above; fix it, then run the wizard again", stage.Answers, path, with)
 }
 
 // Apply asks for the values that mac.conf lacks, in order, and adds them to it. A mac.conf that
@@ -115,11 +137,16 @@ func (a *Answers) Apply(ctx context.Context, _ step.Plan) error {
 	if err != nil {
 		return err
 	}
-	err = a.file().Add(ctx, lines)
-	if errors.Is(err, conf.ErrRefused) {
-		return a.refusal(lines)
+	parts, err := a.compose(lines)
+	if err != nil {
+		return err
 	}
-	return err
+	for _, p := range parts {
+		if err := p.file.Write(ctx, p.after); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // rehearse does Apply's asking under --check, and shows the diff of mac.conf instead of writing it.
@@ -130,19 +157,18 @@ func (a *Answers) rehearse(ctx context.Context, text string, c conf.Conf) error 
 	if err != nil {
 		return err
 	}
-	before, after, err := a.file().Compose(lines)
-	if errors.Is(err, conf.ErrRefused) {
-		return a.refusal(lines)
-	}
+	parts, err := a.compose(lines)
 	if err != nil {
 		return err
 	}
-	if _, err := a.M.Stat(path.Dir(a.Conf)); err != nil {
-		a.Out.Say("would make %s", path.Dir(a.Conf))
-	}
-	a.Out.Diff(a.Conf, []byte(before), []byte(after))
-	if err := a.M.WriteFile(a.Scratch, []byte(after), 0o600); err != nil {
-		return fmt.Errorf("%s: cannot write %s", stage.Answers, a.Scratch)
+	for _, p := range parts {
+		if _, err := a.M.Stat(path.Dir(p.file.Path)); err != nil {
+			a.Out.Say("would make %s", path.Dir(p.file.Path))
+		}
+		a.Out.Diff(p.file.Path, []byte(p.before), []byte(p.after))
+		if err := a.M.WriteFile(p.scratch, []byte(p.after), 0o600); err != nil {
+			return fmt.Errorf("%s: cannot write %s", stage.Answers, p.scratch)
+		}
 	}
 	return nil
 }
