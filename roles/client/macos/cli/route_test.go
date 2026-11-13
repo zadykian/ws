@@ -49,4 +49,9 @@ func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
 	if want := "ws client macos tunnel routes: test: 0.0.0.0/0 overlaps the tunnels' 10.99.0.0/20\n"; status != 1 || stderr != want {
 		t.Errorf("routes: status = %d, stderr = %q; want 1, %q", status, stderr, want)
 	}
+	status, _, stderr = runWs(p, "", "client", "macos", "tunnel", "routes", "test", "10.1.0.0/24")
+	want := "ws client macos tunnel routes: --server is required: it names the server whose tunnel takes the networks\n"
+	if status != 1 || stderr != want {
+		t.Errorf("no --server: status = %d, stderr = %q; want 1, %q", status, stderr, want)
+	}
 }

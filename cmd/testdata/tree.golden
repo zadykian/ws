@@ -314,7 +314,7 @@ Global Flags:
       --plain           print lines, with no full-screen display
       --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel routes
-It has the tunnel take the networks of NAME, or drop the file of NAME where it gets none.
+It has the tunnel of --server, which is required, take the networks of NAME, or drop the file of NAME where it gets none.
 
 Usage:
   ws client macos tunnel routes NAME [CIDR...] [flags]
