@@ -15,7 +15,7 @@ type MacReach struct {
 	SSH remote.SSH
 	// Sudo is how a command reaches root. Nil runs it as the login, as the tests do.
 	Sudo *Sudo
-	// Conf is mac.conf's path, which the reach reads for the target and WS_USER.
+	// Conf is the server file's path, which the reach reads for the target, WS_USER, WS_SLOT and WS_PORT.
 	Conf string
 	Out  effect.Out
 }
@@ -23,10 +23,10 @@ type MacReach struct {
 // Shell runs a command as root on ws over the Mac's ssh, through sudo where WS_USER isn't root.
 func (r MacReach) Shell() remote.Shell { return remote.SSHShell{SSH: r.SSH, Root: r.Sudo} }
 
-// Want reads the target and WS_USER from mac.conf.
+// Want reads the target, WS_USER, WS_SLOT and WS_PORT from the server's conf.
 func (r MacReach) Want() (session.Want, error) {
 	c, err := conf.Read(r.SSH.M, r.Conf)
-	return session.Want{Target: c.Target, User: c.User}, err
+	return session.Want{Target: c.Target, User: c.User, Address: c.TunnelSlot().Wg0(), Port: c.Port}, err
 }
 
 // User returns WS_USER from mac.conf.
