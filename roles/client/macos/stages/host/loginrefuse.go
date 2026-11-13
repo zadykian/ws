@@ -11,8 +11,9 @@ import (
 // refuse says why WS_USER refuses the Mac's key, and what to do, or under --check that a run would.
 func (r *Login) refuse(ctx context.Context, w remote.Way, sshErr string) error {
 	if strings.Contains(sshErr, "Host key verification failed") {
-		return fmt.Errorf("%s: ws at %s:%s offers another host key than known_hosts holds under ws: where ws was "+
-			"installed again, run ssh-keygen -R ws, then the wizard again", stage.Login, w.Host, w.Port)
+		return fmt.Errorf("%s: ws at %s:%s offers another host key than known_hosts holds under %s: where ws was "+
+			"installed again, run ssh-keygen -R %s, then the wizard again", stage.Login, w.Host, w.Port, r.SSH.Host,
+			r.SSH.Host)
 	}
 	if sshErr != "" {
 		sshErr = ". ssh's error: " + sshErr

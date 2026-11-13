@@ -53,7 +53,7 @@ func (h *Key) add(ctx context.Context) error {
 	return h.write(way.KnownHosts, line)
 }
 
-// write adds ws's line to known_hosts, or shows it under --check.
+// write adds the server's line to known_hosts, under its name,, or shows it under --check.
 func (h *Key) write(file, line string) error {
 	info, err := h.M.Stat(file)
 	if err == nil && info.Link != "" {
@@ -62,7 +62,7 @@ func (h *Key) write(file, line string) error {
 			return fmt.Errorf("%s: %s: a run would print ws's line for its file", stage.Host, why)
 		}
 		h.Out.Say("%s: %s: add this line to its file, then run the wizard again", stage.Host, why)
-		h.Out.Raw("ws %s", line)
+		h.Out.Raw("%s %s", h.SSH.Host, line)
 		return fmt.Errorf("%s: %s", stage.Host, "known_hosts is left as it is")
 	}
 	mode := fs.FileMode(0o600)
@@ -77,7 +77,7 @@ func (h *Key) write(file, line string) error {
 	if after != "" && !strings.HasSuffix(after, "\n") {
 		after += "\n"
 	}
-	after += "ws " + line + "\n"
+	after += h.SSH.Host + " " + line + "\n"
 	if h.Check {
 		h.Out.Diff(file, before, []byte(after))
 		return nil
