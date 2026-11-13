@@ -11,11 +11,8 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/step"
 	"github.com/zadykian/ws/roles/client/macos/conf"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/stages/stage"
-)
-
-const (
-	label = "com.github.zadykian.ws-tunnel"
 )
 
 // Tunnel is the stage of the keys' exchange of the WireGuard tunnel between the Mac and ws. The
@@ -32,6 +29,8 @@ type Tunnel struct {
 	// Conf is mac.conf's path. Check is set under --check.
 	Conf  string
 	Check bool
+	// Server is the name of the server whose daemon ws-tunnel is.
+	Server string
 	// MacApply runs ws client macos apply, as the Setup stage's Run does, again once WS_PUBLIC_KEY is
 	// wg0's.
 	MacApply func(ctx context.Context, check bool) (bool, error)
@@ -99,3 +98,6 @@ func (t *Tunnel) Plan(ctx context.Context) (step.Plan, error) {
 	return step.Plan{Changes: append(ch, tunnelChange("run ws client macos apply again, which loads ws-tunnel, and wait up "+
 		"to 30 s for ws-tunnel's handshake, then log in to ws through it"))}, nil
 }
+
+// label is the label of the server's daemon in launchd.
+func (t Tunnel) label() string { return launchd.For(t.Server).Label }
