@@ -60,7 +60,7 @@ func (w wizardRun) lines(ctx context.Context, term *effect.Terminal, out engine.
 	}
 	talks, _ := w.p.Machine.(effect.Foreground)
 	stages := w.t.Wizard.Stages(engine.WizardEffects{Machine: w.p.Machine, Prog: w.c.CommandPath(), Talks: talks,
-		Ask: signalPrompt{term}, Hidden: term, Out: out, Text: w.c.OutOrStdout(), Obs: out, Hand: hand, Sudo: w.newSudo()}, w.o)
+		Ask: engine.SignalPrompt{Prompt: term}, Hidden: term, Out: out, Text: w.c.OutOrStdout(), Obs: out, Hand: hand, Sudo: w.newSudo()}, w.o)
 	_, err := wizard.Run(ctx, w.p.Machine, step.Options{Observer: out, Check: w.o.Check}, stages, w.p.LockDir(),
 		w.t.Wizard.Pid, closing)
 	// The runner names the stage before the stage's own message.
