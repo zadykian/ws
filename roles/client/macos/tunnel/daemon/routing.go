@@ -53,13 +53,13 @@ func (d *Daemon) writeState(ctx context.Context) {
 	if d.inUse.Host.IsValid() {
 		s.Endpoint = netip.AddrPortFrom(d.inUse.Host, d.set.Conf.Port).String()
 	}
-	next := d.StateFile + ".new"
+	next := d.Paths.State + ".new"
 	if err := d.M.WriteFile(next, []byte(s.Encode()), 0o644); err != nil {
 		d.say("cannot write %s: %v", next, err)
 		return
 	}
-	if err := d.run(ctx, "mv", "-f", next, d.StateFile); err != nil {
-		d.say("cannot write %s: %v", d.StateFile, err)
+	if err := d.run(ctx, "mv", "-f", next, d.Paths.State); err != nil {
+		d.say("cannot write %s: %v", d.Paths.State, err)
 	}
 }
 

@@ -60,7 +60,7 @@ func TestWriteState(t *testing.T) {
 	r.since, r.routed = t0, []netip.Prefix{far}
 	r.allowed.Out = []netip.Prefix{lan}
 	r.writeState(context.Background())
-	got, err := tunnel.ParseState(string(r.m.Files[r.StateFile]))
+	got, err := tunnel.ParseState(string(r.m.Files[r.Paths.State]))
 	want := tunnel.State{
 		Tier: tunnel.TierLAN, Endpoint: "192.168.1.7:51822", Interface: "utun4", Since: t0,
 		Routes: []netip.Prefix{far}, LeftOut: []netip.Prefix{lan},
@@ -68,7 +68,7 @@ func TestWriteState(t *testing.T) {
 	if err != nil || got.Encode() != want.Encode() {
 		t.Errorf("state = %q, %v; want %q", got.Encode(), err, want.Encode())
 	}
-	if _, left := r.m.Files[r.StateFile+".new"]; left || !slices.Contains(r.m.runs, "mv -f "+r.StateFile+".new "+r.StateFile) {
+	if _, left := r.m.Files[r.Paths.State+".new"]; left || !slices.Contains(r.m.runs, "mv -f "+r.Paths.State+".new "+r.Paths.State) {
 		t.Errorf("the new file was not moved over: runs = %q", r.m.runs)
 	}
 }
@@ -77,7 +77,7 @@ func TestWriteStateNone(t *testing.T) {
 	r := newRig("")
 	r.inUse = tunnel.Candidate{Tier: tunnel.TierNone}
 	r.writeState(context.Background())
-	if got, _ := tunnel.ParseState(string(r.m.Files[r.StateFile])); got.Tier != tunnel.TierNone || got.Endpoint != "" {
+	if got, _ := tunnel.ParseState(string(r.m.Files[r.Paths.State])); got.Tier != tunnel.TierNone || got.Endpoint != "" {
 		t.Errorf("state = %+v, want tier none and no endpoint", got)
 	}
 }
