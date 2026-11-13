@@ -124,6 +124,8 @@ Right too. F-keys, named keys and digits stay Zed's.
 
 ### Decisions in the file
 
+- **Command palette:** Shift twice opens it in every context, from the global section, beside
+  Zed's Cmd+Shift+P.
 - **Agent:** F7 and Alt+7 open the agent panel (`agent::ToggleFocus`).
 - **Edit predictions:** Tab and Alt+Tab stay Zed's.
 - F7 replaces Zed's F7, step over while stopped, and F10 steps over too.

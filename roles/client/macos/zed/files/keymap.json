@@ -1,6 +1,7 @@
 // Written by github.com/zadykian/ws, whose next run replaces any change made here.
-// Zed's keys on the Mac: the Alt and F keys that Zed has an action for. The Cmd and Ctrl keys stay
-// Zed's macOS defaults, but for Cmd+T, the one key of a new terminal.
+// Zed's keys on the Mac: the Alt and F keys that Zed has an action for, and Shift twice for the
+// command palette. The Cmd and Ctrl keys stay Zed's macOS defaults, but for Cmd+T, the one key of a
+// new terminal.
 // The block of keys left out, at this file's end, says which keys Zed lacks, and why.
 [
   // The global keys. No context, so each beats Zed's defaults wherever focus is.
@@ -43,7 +44,9 @@
       // The last task
       "shift-f5": "task::Rerun",
       "alt-f5": "debugger::Stop",
-      "alt-)": "zed::ResetUiFontSize"
+      "alt-)": "zed::ResetUiFontSize",
+      // Fires as the second Shift is released
+      "shift shift": "command_palette::Toggle"
     }
   },
   // A new terminal opens on Cmd+T alone, which the editor and the terminal bind.
