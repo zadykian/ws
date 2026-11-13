@@ -37,7 +37,7 @@ func serverSecretsSheet(p cli.Env) tui.Sheet {
 		Open: func(ctx context.Context, b *tui.Bridge) (tui.Sheet, error) {
 			on := p
 			on.Machine = b.Effects().M
-			store, err := serverSecretsStore(on)
+			store, err := ubuntucli.ServerSecretsStore(on)
 			if err != nil {
 				return tui.Sheet{}, err
 			}

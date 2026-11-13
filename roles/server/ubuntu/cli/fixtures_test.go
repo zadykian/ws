@@ -13,6 +13,6 @@ func fakeProcess() enginecli.Env { return clitest.Env() }
 // runWs runs args on the root of ws server, with stdin, and returns the status, stdout and stderr.
 func runWs(p enginecli.Env, stdin string, args ...string) (status int, stdout, stderr string) {
 	server := enginecli.Group("server", "the server's systems",
-		enginecli.Group("ubuntu", "the commands for an Ubuntu server", NewValuesCmd(p)))
+		enginecli.Group("ubuntu", "the commands for an Ubuntu server", NewValuesCmd(p), NewSecretsCmd(p)))
 	return clitest.Run(p, []*cobra.Command{server}, stdin, args...)
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect"
+	ubuntucli "github.com/zadykian/ws/roles/server/ubuntu/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
@@ -18,7 +19,7 @@ import (
 func newMacSecretsCmd(p cli.Env) *cobra.Command {
 	c := cli.Group("secrets", "edit ws's secrets file, over ssh", append([]*cobra.Command{{Use: "init",
 		Short: "make ws's age identity and an empty secrets file on ws", Args: cobra.NoArgs}},
-		secretsEditCmds(p, nil)...)...)
+		ubuntucli.SecretsEdit(p, nil)...)...)
 	forward(c, p)
 	return c
 }
@@ -91,10 +92,10 @@ func runFar(c *cobra.Command, p cli.Env, args []string) error {
 func farInput(c *cobra.Command, p cli.Env, far, args []string) ([]byte, []string, error) {
 	switch {
 	case far[0] == "set" && far[1] == secrets.KindFile:
-		in, err := readProfile(c, p, args)
+		in, err := ubuntucli.ReadProfile(c, p, args)
 		return in, args[:1], err
 	case far[0] == "set":
-		value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), far[1]+" "+args[0])
+		value, err := ubuntucli.ReadValue(c.InOrStdin(), c.ErrOrStderr(), far[1]+" "+args[0])
 		return []byte(value + "\n"), args, err
 	}
 	return nil, args, nil

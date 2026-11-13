@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"fmt"
@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/zadykian/ws/engine/cli"
+	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/roles/server/ubuntu/secrets"
 )
 
-// openStore returns the store that a command edits, or why the command doesn't run.
-type openStore func() (secrets.Store, error)
+// OpenStore returns the store that a command edits, or why the command doesn't run.
+type OpenStore func() (secrets.Store, error)
 
-// secretsEditCmds returns set, unset and keys, which edit the store that open returns.
-func secretsEditCmds(p cli.Env, open openStore) []*cobra.Command {
+// SecretsEdit returns set, unset and keys, which edit the store that open returns.
+func SecretsEdit(p enginecli.Env, open OpenStore) []*cobra.Command {
 	return []*cobra.Command{newSecretsSetCmd(p, open), {
 		Use:   "unset KIND NAME",
 		Short: "drop an entry",
@@ -34,7 +34,7 @@ func secretsEditCmds(p cli.Env, open openStore) []*cobra.Command {
 }
 
 // editIn opens the store and edits it with fn.
-func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) error {
+func editIn(c *cobra.Command, open OpenStore, fn func(*secrets.Secrets) error) error {
 	s, err := open()
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func editIn(c *cobra.Command, open openStore, fn func(*secrets.Secrets) error) e
 
 // newSecretsSetCmd returns set, of ws server ubuntu secrets and ws client macos secrets, with a
 // command per kind.
-func newSecretsSetCmd(p cli.Env, open openStore) *cobra.Command {
+func newSecretsSetCmd(p enginecli.Env, open OpenStore) *cobra.Command {
 	cmds := []*cobra.Command{newSecretsSetGitCmd(open), newSecretsSetFileCmd(p, open)}
 	for _, kind := range []string{secrets.KindToken, secrets.KindEnv, secrets.KindPassword} {
 		cmds = append(cmds, &cobra.Command{
@@ -52,7 +52,7 @@ func newSecretsSetCmd(p cli.Env, open openStore) *cobra.Command {
 			Short: "set the " + kind + " NAME, from a prompt with no echo or from stdin",
 			Args:  cobra.ExactArgs(1),
 			RunE: func(c *cobra.Command, args []string) error {
-				value, err := readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(kind, args[0]))
+				value, err := ReadValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(kind, args[0]))
 				if err != nil {
 					return err
 				}
@@ -60,11 +60,11 @@ func newSecretsSetCmd(p cli.Env, open openStore) *cobra.Command {
 			},
 		})
 	}
-	return cli.Group("set", "set an entry, whose value never goes in an argument", cmds...)
+	return enginecli.Group("set", "set an entry, whose value never goes in an argument", cmds...)
 }
 
 // newSecretsSetGitCmd returns set git.
-func newSecretsSetGitCmd(open openStore) *cobra.Command {
+func newSecretsSetGitCmd(open OpenStore) *cobra.Command {
 	var g secrets.Git
 	c := &cobra.Command{
 		Use:   "git URL",
@@ -72,7 +72,7 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			var err error
-			if g.Token, err = readValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(secrets.KindGit, args[0])); err != nil {
+			if g.Token, err = ReadValue(c.InOrStdin(), c.ErrOrStderr(), secrets.Label(secrets.KindGit, args[0])); err != nil {
 				return err
 			}
 			return editIn(c, open, func(s *secrets.Secrets) error {
@@ -99,13 +99,13 @@ func newSecretsSetGitCmd(open openStore) *cobra.Command {
 }
 
 // newSecretsSetFileCmd returns set file.
-func newSecretsSetFileCmd(p cli.Env, open openStore) *cobra.Command {
+func newSecretsSetFileCmd(p enginecli.Env, open OpenStore) *cobra.Command {
 	return &cobra.Command{
 		Use:   "file NAME [PATH]",
 		Short: "set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(c *cobra.Command, args []string) error {
-			data, err := readProfile(c, p, args)
+			data, err := ReadProfile(c, p, args)
 			if err != nil {
 				return err
 			}
@@ -114,9 +114,9 @@ func newSecretsSetFileCmd(p cli.Env, open openStore) *cobra.Command {
 	}
 }
 
-// readProfile reads the file at args[1], else stdin whole, as bytes: a terminal is refused, as no
+// ReadProfile reads the file at args[1], else stdin whole, as bytes: a terminal is refused, as no
 // prompt takes a .p12.
-func readProfile(c *cobra.Command, p cli.Env, args []string) ([]byte, error) {
+func ReadProfile(c *cobra.Command, p enginecli.Env, args []string) ([]byte, error) {
 	if len(args) == 2 {
 		return p.Machine.ReadFile(args[1])
 	}
@@ -133,9 +133,9 @@ func readProfile(c *cobra.Command, p cli.Env, args []string) ([]byte, error) {
 	return data, nil
 }
 
-// readValue reads a secret: at a terminal, a line with no echo, asked on stderr; else
+// ReadValue reads a secret: at a terminal, a line with no echo, asked on stderr; else
 // stdin to its end, less one trailing newline. The error names no value.
-func readValue(stdin io.Reader, stderr io.Writer, what string) (string, error) {
+func ReadValue(stdin io.Reader, stderr io.Writer, what string) (string, error) {
 	var value string
 	if f, ok := stdin.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
 		_, _ = io.WriteString(stderr, what+": ")
@@ -159,7 +159,7 @@ func readValue(stdin io.Reader, stderr io.Writer, what string) (string, error) {
 }
 
 // secretsKeys prints each entry as KIND NAME, never a value.
-func secretsKeys(c *cobra.Command, open openStore) error {
+func secretsKeys(c *cobra.Command, open OpenStore) error {
 	s, err := open()
 	if err != nil {
 		return err

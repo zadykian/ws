@@ -67,7 +67,7 @@ func newServerCmd(p cli.Env) *cobra.Command {
 // newUbuntuCmd returns ws server ubuntu, the commands that set up an Ubuntu server.
 func newUbuntuCmd(p cli.Env) *cobra.Command {
 	return cli.Group("ubuntu", "the commands for an Ubuntu server", newApplyCmd(p), newStateCmd(p), newFansCmd(p),
-		ubuntucli.NewValuesCmd(p), newServerSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
+		ubuntucli.NewValuesCmd(p), ubuntucli.NewSecretsCmd(p), newServerWizardCmd(p), newServerConfigureCmd(p))
 }
 
 // applyOptions are apply's flags: the runner's, and the --secrets path, which the runner never reads.
