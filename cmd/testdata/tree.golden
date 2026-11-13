@@ -52,7 +52,8 @@ Available Commands:
   wizard      set the Mac up in stages
 
 Flags:
-  -h, --help   help for macos
+  -h, --help            help for macos
+      --server string   the server to act on, which may be left out where there is one
 
 Global Flags:
       --plain   print lines, with no full-screen display
@@ -70,7 +71,8 @@ Flags:
       --only strings   run the named steps alone, as a list or by repeating the flag
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos conf
 It reads FILE, else $WS_CONF, else ~/.config/ws/mac.conf, and the server's file, servers/ws/server.conf beside it, and prints the checked settings as shell assignments, or the errors of a file it refuses.
 
@@ -82,7 +84,8 @@ Flags:
       --lines   check each line alone, as a wizard checks an answer before the file holds its key
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos configure
 It shows the keys that ws client macos wizard would ask, by WS_TARGET, with what mac.conf holds, and writes them on Ctrl-S. Ctrl-N goes to ws's secrets, which show as set or not, never their values, then to ws's host_vars, both read over ssh. It needs a terminal: anywhere else, edit the file by hand.
 
@@ -93,7 +96,8 @@ Flags:
   -h, --help   help for configure
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos resolver
 It has macOS ask the nameservers for DOMAIN, or drop the file of DOMAIN where it gets none.
 
@@ -105,7 +109,8 @@ Flags:
   -h, --help    help for resolver
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets
 edit ws's secrets file, over ssh
 
@@ -123,7 +128,8 @@ Flags:
   -h, --help   help for secrets
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos secrets [command] --help" for more information about a command.
 == ws client macos secrets init
@@ -136,7 +142,8 @@ Flags:
   -h, --help   help for init
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets keys
 print each entry as KIND NAME, never a value
 
@@ -147,7 +154,8 @@ Flags:
   -h, --help   help for keys
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets set
 set an entry, whose value never goes in an argument
 
@@ -166,7 +174,8 @@ Flags:
   -h, --help   help for set
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos secrets set [command] --help" for more information about a command.
 == ws client macos secrets set env
@@ -179,7 +188,8 @@ Flags:
   -h, --help   help for env
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets set file
 set a profile file (vpn_p12, vpn_sswan) from the file at PATH, or from stdin
 
@@ -190,7 +200,8 @@ Flags:
   -h, --help   help for file
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets set git
 set a git server's token, from a prompt with no echo or from stdin
 
@@ -203,7 +214,8 @@ Flags:
       --username string   the user name that git sends with the token, else the entry's
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets set password
 set the password NAME, from a prompt with no echo or from stdin
 
@@ -214,7 +226,8 @@ Flags:
   -h, --help   help for password
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets set token
 set the token NAME, from a prompt with no echo or from stdin
 
@@ -225,7 +238,8 @@ Flags:
   -h, --help   help for token
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos secrets unset
 drop an entry
 
@@ -236,7 +250,8 @@ Flags:
   -h, --help   help for unset
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos state
 It reads alone and applies nothing, as ws client macos apply --check does, and needs what it needs: mac.conf, and not root. The Mac's steps report the packages, services and files ws manages there, and a step that fails stands in the report as a check. The exit code stays 0. A report holds no secret.
 
@@ -250,7 +265,8 @@ Flags:
       --json   print the report as JSON
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel
 the Mac's tunnel to ws
 
@@ -269,7 +285,8 @@ Flags:
   -h, --help   help for tunnel
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 
 Use "ws client macos tunnel [command] --help" for more information about a command.
 == ws client macos tunnel key
@@ -282,7 +299,8 @@ Flags:
   -h, --help   help for key
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel loaded
 Anyone may read launchd's system domain, so it needs no sudo.
 
@@ -293,7 +311,8 @@ Flags:
   -h, --help   help for loaded
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel routes
 It has the tunnel take the networks of NAME, or drop the file of NAME where it gets none.
 
@@ -305,7 +324,8 @@ Flags:
   -h, --help    help for routes
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel run
 The daemon logs to stdout, launchd's log file. SIGHUP reads the settings again, and SIGTERM stops it.
 
@@ -316,7 +336,8 @@ Flags:
   -h, --help   help for run
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos tunnel status
 print the way in use and the peer, as root
 
@@ -327,7 +348,8 @@ Flags:
   -h, --help   help for status
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws client macos wizard
 At a terminal the stages open as two lists, by the machine each runs on, and the ones chosen run. The stages run under a lock, and what stays by hand is listed after a run in which a stage acted. Under --check each stage prints what it would do and changes nothing.
 
@@ -340,7 +362,8 @@ Flags:
       --update   install the latest ws first, and run it in place of this one
 
 Global Flags:
-      --plain   print lines, with no full-screen display
+      --plain           print lines, with no full-screen display
+      --server string   the server to act on, which may be left out where there is one
 == ws server
 the server's systems
 
