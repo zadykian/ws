@@ -141,12 +141,12 @@ func (g *Ghostty) files(ctx context.Context) ([]step.Change, error) {
 // dirs is the directory of Ghostty's config alone. Its parent is ~/Library/Application Support on
 // any Mac, so a run plans no more.
 func (g *Ghostty) dirs(config string) userfile.Dirs {
-	return userfile.Dirs{{M: g.M, Path: filepath.Dir(config), Mode: 0o755}}
+	return userfile.Dirs{{M: g.M, Out: g.Out, Path: filepath.Dir(config), Mode: 0o755}}
 }
 
 // file is ws.ghostty, beside Ghostty's config.
 func (g *Ghostty) file(config string) userfile.File {
-	return userfile.File{M: g.M, Path: filepath.Dir(config) + "/ws.ghostty", Text: g.want(), Mode: 0o644, Own: ghosttyOwn}
+	return userfile.File{M: g.M, Out: g.Out, Path: filepath.Dir(config) + "/ws.ghostty", Text: g.want(), Mode: 0o644, Own: ghosttyOwn}
 }
 
 // ghosttyOwn says whether ws.ghostty's first line is ws's.

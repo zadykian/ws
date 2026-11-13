@@ -72,11 +72,11 @@ func unnamed(u KeyUse, keys []sshcfg.AgentKey) error {
 // PlanCopy returns the changes that make ws's copy at pub hold text: the directories of the copies,
 // ~/.config/ws and ~/.config with them, where missing, then the copy. It returns none for a .pub
 // elsewhere and for one with no text from the agent, and no copy where it holds text already.
-func PlanCopy(m effect.Machine, pub, text, home string) ([]step.Change, error) {
+func PlanCopy(m effect.Machine, out effect.Out, pub, text, home string) ([]step.Change, error) {
 	if !Copied(pub, text, home) {
 		return nil, nil
 	}
-	cs, _, err := CopyDirs(m, home).Plan()
+	cs, _, err := CopyDirs(m, out, home).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +84,8 @@ func PlanCopy(m effect.Machine, pub, text, home string) ([]step.Change, error) {
 }
 
 // CopyDirs is ws's directory with the directory of ws's copies in it.
-func CopyDirs(m effect.Machine, home string) userfile.Dirs {
-	return append(userfile.WsDirs(m, home), userfile.Dir{M: m, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
+func CopyDirs(m effect.Machine, out effect.Out, home string) userfile.Dirs {
+	return append(userfile.WsDirs(m, out, home), userfile.Dir{M: m, Out: out, Path: home + "/" + sshcfg.KeyCopies, Mode: 0o755})
 }
 
 // CopyChange returns the write of ws's copy at pub, or none where it holds text already.
@@ -104,9 +104,9 @@ func Copied(pub, text, home string) bool {
 
 // CopyReport reports ws's copy of a .pub, where it keeps one. A run writes the copy where its text
 // differs, and leaves its mode.
-func CopyReport(m effect.Machine, pub, text, home string) []step.Reporter {
+func CopyReport(m effect.Machine, out effect.Out, pub, text, home string) []step.Reporter {
 	if !Copied(pub, text, home) {
 		return nil
 	}
-	return []step.Reporter{userfile.File{M: m, Path: pub, Text: []byte(text)}}
+	return []step.Reporter{userfile.File{M: m, Out: out, Path: pub, Text: []byte(text)}}
 }

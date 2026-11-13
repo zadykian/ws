@@ -97,6 +97,7 @@ func (p Path) Report(context.Context) ([]step.Item, error) {
 // report read it alike, so that a report stands off where a plan changes the file or leaves it.
 type File struct {
 	M    effect.Machine
+	Out  effect.Out
 	Path string
 	Text []byte
 	// Mode is the file's mode. 0 leaves it to the user until a write, which sets 644.

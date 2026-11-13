@@ -41,7 +41,7 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 		return nil, err
 	}
 	t.public = public
-	cs, link, err := userfile.WsDirs(t.M, t.Home).Plan()
+	cs, link, err := userfile.WsDirs(t.M, t.Out, t.Home).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (t *Tunnel) tell(ctx context.Context) ([]step.Change, error) {
 
 // pub is tunnel.pub, which holds the key that tell read. Its mode is the user's.
 func (t *Tunnel) pub() userfile.File {
-	return userfile.File{M: t.M, Path: t.pubFile(), Text: []byte(t.public + "\n")}
+	return userfile.File{M: t.M, Out: t.Out, Path: t.pubFile(), Text: []byte(t.public + "\n")}
 }
 
 // publish writes tunnel.pub after the changes, where the key or root's copy was missing when the

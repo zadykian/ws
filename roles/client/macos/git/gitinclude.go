@@ -38,7 +38,7 @@ func (g *Git) lines(ctx context.Context, file string, args ...string) ([]string,
 // step stops before it acts, as the ssh step does for ssh's Include.
 func (g *Git) gitconfigLines() userfile.Lines {
 	return userfile.Lines{
-		M: g.M, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
+		M: g.M, Out: g.Out, Path: g.Home + "/.gitconfig", Lines: includeText, Top: true, Mode: 0o644, Now: g.Now,
 		Shown: "[include] path = ~/.config/ws/gitconfig",
 		Name:  "the include of ~/.config/ws/gitconfig",
 		Has:   g.included,

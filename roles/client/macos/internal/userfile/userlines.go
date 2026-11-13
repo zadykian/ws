@@ -39,6 +39,7 @@ func Misplaced(format string, a ...any) error {
 // at the top or the end, and keeps the old file. One read gives the plan and the report.
 type Lines struct {
 	M    effect.Machine
+	Out  effect.Out
 	Path string
 	// Lines is the text to add. It ends in a newline.
 	Lines string

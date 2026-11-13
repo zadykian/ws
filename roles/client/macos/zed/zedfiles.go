@@ -48,15 +48,15 @@ func (z *Zed) files() ([]step.Change, error) {
 
 // dirs returns ~/.config and Zed's directory in it.
 func (z *Zed) dirs() userfile.Dirs {
-	return userfile.Dirs{{M: z.M, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Path: z.Home + "/.config/zed", Mode: 0o755}}
+	return userfile.Dirs{{M: z.M, Out: z.Out, Path: z.Home + "/.config", Mode: 0o755}, {M: z.M, Out: z.Out, Path: z.Home + "/.config/zed", Mode: 0o755}}
 }
 
 // whole returns global_settings.json and keymap.json, the files that ws replaces whole.
 func (z *Zed) whole() []userfile.File {
 	dir := z.Home + "/.config/zed"
 	return []userfile.File{
-		{M: z.M, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
-		{M: z.M, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
+		{M: z.M, Out: z.Out, Path: dir + "/global_settings.json", Text: z.Settings, Mode: 0o644, Own: zedOwn(zedHeader, true)},
+		{M: z.M, Out: z.Out, Path: dir + "/keymap.json", Text: z.Keymap, Mode: 0o644, Own: zedOwn(zedKeymapMark, false)},
 	}
 }
 

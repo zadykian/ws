@@ -84,10 +84,10 @@ func (i Install) String() string { return "would build ws into " + i.Path }
 func (Install) Kind() step.ChangeKind { return step.Install }
 
 // localBin is ~/.local/bin, which holds ws's program. A run makes it where missing, and leaves its mode.
-func localBin(m effect.Machine, home string) userfile.Dirs {
+func localBin(m effect.Machine, out effect.Out, home string) userfile.Dirs {
 	return userfile.Dirs{
-		{M: m, Path: home + "/.local", Mode: 0o755},
-		{M: m, Path: home + "/.local/bin", Mode: 0o755},
+		{M: m, Out: out, Path: home + "/.local", Mode: 0o755},
+		{M: m, Out: out, Path: home + "/.local/bin", Mode: 0o755},
 	}
 }
 
@@ -102,7 +102,7 @@ func (t *Tunnel) program(self []byte) ([]step.Change, error) {
 	if err == nil && bytes.Equal(have, self) {
 		return nil, nil
 	}
-	cs, _, err := localBin(t.M, t.Home).Plan()
+	cs, _, err := localBin(t.M, t.Out, t.Home).Plan()
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +156,8 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		key[i].Kind = step.FileItem
 	}
 	parts := []step.Reporter{
-		localBin(t.M, t.Home),
-		userfile.File{M: t.M, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
+		localBin(t.M, t.Out, t.Home),
+		userfile.File{M: t.M, Out: t.Out, Path: t.Home + "/.local/bin/ws", Text: self, Binary: true},
 		file.Dir{M: t.M, Path: "/usr/local", Mode: 0o755},
 		file.Dir{M: t.M, Path: "/usr/local/libexec", Mode: 0o755},
 		file.Dir{M: t.M, Path: tunnelLibexec, Mode: 0o755},
@@ -167,7 +167,7 @@ func (t *Tunnel) Report(ctx context.Context) ([]step.Item, error) {
 		userfile.Fixed(key),
 	}
 	if t.public != "" {
-		parts = append(parts, userfile.WsDirs(t.M, t.Home), t.pub())
+		parts = append(parts, userfile.WsDirs(t.M, t.Out, t.Home), t.pub())
 	}
 	if t.Conf.PublicKey != "" {
 		daemon := step.Item{Kind: step.ServiceItem, Name: launchd.Label, Want: "loaded", Found: "not loaded"}

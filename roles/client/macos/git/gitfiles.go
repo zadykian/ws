@@ -17,7 +17,7 @@ func (g *Git) list(key keys.NamedKey, gh string) []userfile.File {
 	dir := g.Home + "/.config/ws"
 	in := gitcfg.Inputs{Name: g.Conf.GitName, Email: g.Conf.GitEmail, Key: key.File, Gh: gh, Dir: dir}
 	file := func(path, text string, mode fs.FileMode) userfile.File {
-		return userfile.File{M: g.M, Path: path, Text: []byte(text), Mode: mode}
+		return userfile.File{M: g.M, Out: g.Out, Path: path, Text: []byte(text), Mode: mode}
 	}
 	var list []userfile.File
 	if sshcfg.SecretiveKey(key.File, g.Home) {
@@ -31,9 +31,9 @@ func (g *Git) list(key keys.NamedKey, gh string) []userfile.File {
 // dirs is ws's directory, with the directory of ws's copies where git signs with a copy.
 func (g *Git) dirs(pub, text string) userfile.Dirs {
 	if keys.Copied(pub, text, g.Home) {
-		return keys.CopyDirs(g.M, g.Home)
+		return keys.CopyDirs(g.M, g.Out, g.Home)
 	}
-	return userfile.WsDirs(g.M, g.Home)
+	return userfile.WsDirs(g.M, g.Out, g.Home)
 }
 
 // files plans ~/.config/ws and the files in it.
@@ -78,7 +78,7 @@ func (g *Git) Report(ctx context.Context) ([]step.Item, error) {
 	for _, f := range g.list(key, gh) {
 		parts = append(parts, f)
 	}
-	pub := keys.CopyReport(g.M, key.File, key.Text, g.Home)
+	pub := keys.CopyReport(g.M, g.Out, key.File, key.Text, g.Home)
 	if len(pub) == 0 {
 		pub = []step.Reporter{userfile.Path{M: g.M, Kind: step.FileItem, Path: key.File}}
 	}

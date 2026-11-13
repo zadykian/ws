@@ -63,7 +63,7 @@ func zshSources(text []byte) bool {
 
 // Plan plans ~/.config and ~/.config/ws, as the git step does, then the hook and the line.
 func (z *Zsh) Plan(ctx context.Context) (step.Plan, error) {
-	cs, link, err := userfile.WsDirs(z.M, z.Home).Plan()
+	cs, link, err := userfile.WsDirs(z.M, z.Out, z.Home).Plan()
 	if err != nil {
 		return step.Plan{}, err
 	}
@@ -90,7 +90,7 @@ func (z *Zsh) Plan(ctx context.Context) (step.Plan, error) {
 // rcLines is zshLine at the end of ~/.zshrc.
 func (z *Zsh) rcLines() userfile.Lines {
 	return userfile.Lines{
-		M: z.M, Path: z.rc(), Lines: zshLine + "\n", Shown: zshLine, Mode: 0o644, Now: z.Now,
+		M: z.M, Out: z.Out, Path: z.rc(), Lines: zshLine + "\n", Shown: zshLine, Mode: 0o644, Now: z.Now,
 		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
 			return zshSources(text), nil
 		},
@@ -110,10 +110,10 @@ func (z *Zsh) Apply(ctx context.Context, p step.Plan) error {
 // Report says how the hook and the line stand. A ~/.zshrc that is a link lacking the line stands
 // against ws: a run only warns of it.
 func (z *Zsh) Report(ctx context.Context) ([]step.Item, error) {
-	return userfile.Gather(ctx, userfile.WsDirs(z.M, z.Home), z.hookFile(), z.rcLines())
+	return userfile.Gather(ctx, userfile.WsDirs(z.M, z.Out, z.Home), z.hookFile(), z.rcLines())
 }
 
 // hookFile is the hook, mode 644.
 func (z *Zsh) hookFile() userfile.File {
-	return userfile.File{M: z.M, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}
+	return userfile.File{M: z.M, Out: z.Out, Path: z.hook(), Text: z.Hook, Mode: 0o644, Own: zshOwn}
 }

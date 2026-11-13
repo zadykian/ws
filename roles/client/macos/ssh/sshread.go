@@ -18,7 +18,7 @@ func (s SSH) read(ctx context.Context) (sshFacts, error) {
 	dir := s.Home + "/.ssh"
 	f := sshFacts{Home: s.Home}
 	var err error
-	if f.Dirs, f.DirLink, err = sshDirs(s.M, s.Home).Plan(); err != nil {
+	if f.Dirs, f.DirLink, err = sshDirs(s.M, s.Out, s.Home).Plan(); err != nil {
 		return f, err
 	}
 	var ours bool
@@ -46,7 +46,7 @@ func (s SSH) read(ctx context.Context) (sshFacts, error) {
 // is out of place: ssh would take that setting first.
 func (s SSH) configLines() userfile.Lines {
 	return userfile.Lines{
-		M: s.M, Path: s.Home + "/.ssh/config", Lines: includeLine + "\n", Shown: includeLine, Top: true,
+		M: s.M, Out: s.Out, Path: s.Home + "/.ssh/config", Lines: includeLine + "\n", Shown: includeLine, Top: true,
 		Mode: sshFileMode, Now: s.Now, Has: s.included,
 	}
 }
@@ -68,7 +68,7 @@ func firstLine(text []byte) string {
 
 // wsFile is config.d/ws, which holds text.
 func (s SSH) wsFile(text []byte) userfile.File {
-	return userfile.File{M: s.M, Path: s.Home + "/.ssh/config.d/ws", Text: text, Mode: sshFileMode, Own: sshOwn}
+	return userfile.File{M: s.M, Out: s.Out, Path: s.Home + "/.ssh/config.d/ws", Text: text, Mode: sshFileMode, Own: sshOwn}
 }
 
 // sshOwn says whether config.d/ws's first line is ws's.

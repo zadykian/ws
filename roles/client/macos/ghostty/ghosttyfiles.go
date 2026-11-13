@@ -12,7 +12,7 @@ import (
 // configLines is the line that reads ws.ghostty, at the end of Ghostty's config.
 func (g *Ghostty) configLines(config, ws string) userfile.Lines {
 	return userfile.Lines{
-		M: g.M, Path: config, Lines: ghosttyLine + "\n", Shown: ghosttyLine, Mode: 0o644, Now: g.Now,
+		M: g.M, Out: g.Out, Path: config, Lines: ghosttyLine + "\n", Shown: ghosttyLine, Mode: 0o644, Now: g.Now,
 		Has: func(_ context.Context, _ effect.Machine, _ string, text []byte) (bool, error) {
 			return ghosttyIncludes(config, string(text), ws, g.Home, g.resolve()), nil
 		},

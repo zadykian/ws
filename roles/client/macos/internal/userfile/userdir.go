@@ -19,6 +19,7 @@ var errNotDir = errors.New("is not a directory")
 // its report read it alike, from one stat.
 type Dir struct {
 	M    effect.Machine
+	Out  effect.Out
 	Path string
 	Mode fs.FileMode
 	// Fix says whether a run sets Mode where the mode differs. Otherwise a run makes the directory
@@ -116,9 +117,9 @@ func (ds Dirs) Report(ctx context.Context) ([]step.Item, error) {
 
 // WsDirs is ~/.config and ws's directory in it, which git, zsh and the tunnel write under. A run
 // sets the mode of ws's directory, which holds mac.conf.
-func WsDirs(m effect.Machine, home string) Dirs {
+func WsDirs(m effect.Machine, out effect.Out, home string) Dirs {
 	return Dirs{
-		{M: m, Path: home + "/.config", Mode: 0o755},
-		{M: m, Path: home + "/.config/ws", Mode: 0o700, Fix: true},
+		{M: m, Out: out, Path: home + "/.config", Mode: 0o755},
+		{M: m, Out: out, Path: home + "/.config/ws", Mode: 0o700, Fix: true},
 	}
 }

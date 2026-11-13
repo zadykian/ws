@@ -43,9 +43,9 @@ func sshChanges(f sshFacts, text []byte) []step.Change {
 }
 
 // sshDirs is ~/.ssh and its config.d. A run sets the mode of config.d, which holds the hosts.
-func sshDirs(m effect.Machine, home string) userfile.Dirs {
+func sshDirs(m effect.Machine, out effect.Out, home string) userfile.Dirs {
 	return userfile.Dirs{
-		{M: m, Path: home + "/.ssh", Mode: sshDirMode},
-		{M: m, Path: home + "/.ssh/config.d", Mode: sshDirMode, Fix: true},
+		{M: m, Out: out, Path: home + "/.ssh", Mode: sshDirMode},
+		{M: m, Out: out, Path: home + "/.ssh/config.d", Mode: sshDirMode, Fix: true},
 	}
 }
