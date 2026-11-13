@@ -11,7 +11,7 @@ if [ -z "${TUNNEL-}" ]; then
     echo "::error::TUNNEL, ws's path, is unset: mac.yml's job sets it"
     exit 1
 fi
-log=/var/log/ws-tunnel.log
+log=/var/log/ws-tunnel.ws.log
 fail=0
 
 # error MESSAGE... prints an ::error:: line, and fails the script at its end.

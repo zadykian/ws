@@ -85,7 +85,7 @@ printf '%s\n' "$out" | grep -q '^ws client macos wizard: Tunnel: ran launchctl k
     error "a run without mac.pub on ws exited $status, or gave wg0 no peer and the daemon no restart"
 
 standin_set listen-port 51821
-sudo launchctl kickstart -k system/com.github.zadykian.ws-tunnel
+sudo launchctl kickstart -k system/com.github.zadykian.ws-tunnel.ws
 start=$(date +%s)
 wizard
 listed="^- The tunnel's handshake: .* 30 s, .* UDP 51820, .* router's forward .* Background "

@@ -11,7 +11,7 @@ set -eo pipefail
 
 pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit }'; }
 was=$(pid) || true
-lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.log)
+lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.ws.log)
 conf_set ~/.config/ws/mac.conf WS_LAN_ADDRESS=127.0.0.2
 ws client macos apply 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
     {
@@ -38,7 +38,7 @@ remote || {
     echo '::error::no handshake on the remote tier in 60 s'
     exit 1
 }
-new=$(sudo tail -n "+$((lines + 1))" /var/log/ws-tunnel.log)
+new=$(sudo tail -n "+$((lines + 1))" /var/log/ws-tunnel.ws.log)
 now=$(pid) || true
 if [ -z "$was" ] || [ "$now" != "$was" ]; then
     echo "::error::the daemon was pid '$was' before the SIGHUP, and is pid '$now'"
