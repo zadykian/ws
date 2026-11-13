@@ -80,17 +80,11 @@ func (r *Routes) changes(ctx context.Context) ([]step.Change, error) {
 	if err != nil || len(cs) == 0 || r.Check {
 		return cs, err
 	}
-	names, err := launchd.Installed(r.M)
+	reread, err := launchd.Reread(ctx, r.M, r.Out)
 	if err != nil {
 		return nil, err
 	}
-	for _, name := range names {
-		label := launchd.For(name).Label
-		if _, err := r.M.Run(ctx, "launchctl", "print", "system/"+label); err == nil {
-			cs = append(cs, launchd.Launchctl{M: r.M, Out: r.Out,
-				Args: []string{"kill", "SIGHUP", "system/" + label}, Label: label, Routes: true})
-		}
-	}
+	cs = append(cs, reread...)
 	return cs, nil
 }
 
