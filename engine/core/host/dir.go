@@ -20,8 +20,8 @@ type Dir struct {
 	UID, GID int
 	// CreateOnly leaves an existing directory alone, whatever its mode and owner.
 	CreateOnly bool
-	// home, set by Account.Dir alone, is the home that the path lies below.
-	home string
+	// Home, set by Account.Dir alone, is the home that the path lies below.
+	Home string
 }
 
 type setDir struct {
@@ -43,7 +43,7 @@ func (c setDir) Apply(context.Context) error {
 	if err := c.d.guard(); err != nil {
 		return err
 	}
-	if err := paths.MakeParents(c.d.M, c.d.home, c.d.Path, c.d.UID, c.d.GID); err != nil {
+	if err := paths.MakeParents(c.d.M, c.d.Home, c.d.Path, c.d.UID, c.d.GID); err != nil {
 		return err
 	}
 	if !c.exists {
@@ -59,10 +59,10 @@ func (c setDir) Apply(context.Context) error {
 
 // guard refuses a link on the way to a home directory. Another Dir is not checked.
 func (d Dir) guard() error {
-	if d.home == "" {
+	if d.Home == "" {
 		return nil
 	}
-	return paths.GuardHome(d.M, d.home, d.Path)
+	return paths.GuardHome(d.M, d.Home, d.Path)
 }
 
 // Plan reads the directory's owner and mode.

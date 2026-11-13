@@ -27,8 +27,8 @@ type File struct {
 	// edit, where set, makes the content from the file as Apply finds it, so that two resources
 	// of one file, planned together, keep each other's edit.
 	edit func(before []byte) []byte
-	// home, set by Account.File alone, is the home that the path lies below.
-	home string
+	// Home, set by Account.File alone, is the home that the path lies below.
+	Home string
 }
 
 func (f File) attrs() effect.Attrs { return effect.Attrs{UID: f.UID, GID: f.GID, Mode: f.Mode.Perm()} }
@@ -59,7 +59,7 @@ func (c writeFile) Apply(context.Context) error {
 	if err := c.f.guard(); err != nil {
 		return err
 	}
-	if err := paths.MakeParents(c.f.M, c.f.home, c.f.Path, c.f.UID, c.f.GID); err != nil {
+	if err := paths.MakeParents(c.f.M, c.f.Home, c.f.Path, c.f.UID, c.f.GID); err != nil {
 		return err
 	}
 	if c.f.edit != nil {
@@ -79,10 +79,10 @@ func (c writeFile) Apply(context.Context) error {
 
 // guard refuses a link on the way to a home file. Another File is not checked.
 func (f File) guard() error {
-	if f.home == "" {
+	if f.Home == "" {
 		return nil
 	}
-	return paths.GuardHome(f.M, f.home, f.Path)
+	return paths.GuardHome(f.M, f.Home, f.Path)
 }
 
 // Plan reads the file and its attributes as root.

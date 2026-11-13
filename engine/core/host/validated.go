@@ -37,7 +37,7 @@ func (c checked) Apply(ctx context.Context) error {
 	if err := f.guard(); err != nil {
 		return err
 	}
-	if err := paths.MakeParents(f.M, f.home, f.Path, f.UID, f.GID); err != nil {
+	if err := paths.MakeParents(f.M, f.Home, f.Path, f.UID, f.GID); err != nil {
 		return err
 	}
 	if err := f.M.WriteAtomic(pending, f.Content, f.attrs()); err != nil {

@@ -15,8 +15,8 @@ import (
 type Absent struct {
 	M    effect.Machine
 	Path string
-	// home, set by Account.Absent alone, is the home that the path lies below.
-	home string
+	// Home, set by Account.Absent alone, is the home that the path lies below.
+	Home string
 }
 
 type removePath struct{ a Absent }
@@ -37,10 +37,10 @@ func (c removePath) Apply(ctx context.Context) error {
 
 // guard refuses a link on the way to a path under the home. Another Absent is not checked.
 func (a Absent) guard() error {
-	if a.home == "" {
+	if a.Home == "" {
 		return nil
 	}
-	return paths.GuardHome(a.M, a.home, a.Path)
+	return paths.GuardHome(a.M, a.Home, a.Path)
 }
 
 // Plan plans the removal of a path that exists.
