@@ -76,6 +76,11 @@ func New(m effect.Machine, dev Device, tun, dir, stateFile string, out io.Writer
 	}
 }
 
+// paths names the daemon's files, from the directory of its settings.
+func (d *Daemon) paths() settings.Paths {
+	return settings.Paths{Conf: d.Dir + "/tunnel.conf", Key: d.Dir + "/private.key", Routes: d.Dir + "/routes.d", State: d.StateFile, Log: d.Log}
+}
+
 // Send puts an event in the loop's channel.
 func (d *Daemon) Send(e Event) { d.Events <- e }
 

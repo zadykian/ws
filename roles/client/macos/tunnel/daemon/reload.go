@@ -15,7 +15,7 @@ import (
 // A moved slot changes the utun's address, its route and the peer's AllowedIPs. So reload reports
 // it, and the daemon stops, for launchd to start it again at the new slot.
 func (d *Daemon) reload(ctx context.Context) (moved bool) {
-	set, err := settings.ReadSettings(ctx, d.M, d.Dir)
+	set, err := settings.ReadSettings(ctx, d.M, d.paths())
 	if err != nil {
 		d.say("%v; keeps the settings it had", err)
 		set.Conf = d.set.Conf

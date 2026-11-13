@@ -15,6 +15,7 @@ import (
 
 	enginecli "github.com/zadykian/ws/engine/cli"
 	"github.com/zadykian/ws/engine/core/effect/local"
+	"github.com/zadykian/ws/roles/client/macos/internal/launchd"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/settings"
 	"github.com/zadykian/ws/roles/client/macos/tunnel/daemon/uapi"
@@ -29,6 +30,14 @@ const stateFile = "/var/run/ws-tunnel.state"
 
 // logFile is launchd's file for the daemon's output, which the daemon starts anew past a size.
 const logFile = "/var/log/ws-tunnel.log"
+
+// daemonPaths names the daemon's files.
+func daemonPaths() settings.Paths {
+	return settings.Paths{
+		Conf: launchd.Dir + "/tunnel.conf", Key: launchd.Dir + "/private.key", Routes: launchd.Dir + "/routes.d",
+		State: stateFile, Log: logFile,
+	}
+}
 
 // watchWait is how long the watch of network changes waits before it starts notifyutil again.
 const watchWait = 5 * time.Second
@@ -100,7 +109,7 @@ func tunnelRun(ctx context.Context, stdout io.Writer) error {
 		return err
 	}
 	defer tn.Close()
-	d := daemon.New(local.OSMachine{}, tn, tn.Name(), settings.Dir, stateFile, stdout)
+	d := daemon.New(local.OSMachine{}, tn, tn.Name(), launchd.Dir, stateFile, stdout)
 	d.Log = logFile
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -118,7 +127,7 @@ func tunnelStatus(ctx context.Context, p enginecli.Env) (string, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, statusWait)
 	defer cancel()
-	return settings.Status(ctx, p.Machine, uapi.Get, settings.Dir, stateFile, time.Now())
+	return settings.Status(ctx, p.Machine, uapi.Get, daemonPaths(), time.Now())
 }
 
 // tunnelKey makes the Mac's private key where none is, and returns the public key. The private key
@@ -127,5 +136,5 @@ func tunnelKey(ctx context.Context, p enginecli.Env) (string, error) {
 	if p.Euid != 0 {
 		return "", errNotRoot
 	}
-	return settings.Key(ctx, p.Machine, rand.Reader, settings.Dir)
+	return settings.Key(ctx, p.Machine, rand.Reader, daemonPaths().Key)
 }
