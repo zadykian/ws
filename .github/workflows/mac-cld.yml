@@ -1,9 +1,9 @@
 name: mac-cld
 
-# ws mac apply's ghostty, zed and cld steps on macOS, in a workflow of its own beside mac.yml, which
-# nears its 300 lines. It runs on mac.yml's events: every pull request, whatever its base, and on
-# main each pull request's merge. The job runs on a stack's top pull request alone, as mac.yml's
-# does.
+# ws client macos apply's ghostty, zed and cld steps on macOS, in a workflow of its own beside
+# mac.yml, which nears its 300 lines. It runs on mac.yml's events: every pull request, whatever its
+# base, and on main each pull request's merge. The job runs on a stack's top pull request alone, as
+# mac.yml's does.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -18,7 +18,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  # Ghostty, Zed and cld on a Mac, in docs/mac-ghostty.md's order. ws mac apply runs with a
+  # Ghostty, Zed and cld on a Mac, in docs/mac-ghostty.md's order. ws client macos apply runs with a
   # stand-in for ws's key, so that the tunnel's daemon loads and a second run prints nothing. On
   # a runner without Ghostty, Zed, their font or cld, --check must change nothing. Where their
   # casks fail, a run must install cld alone. A run must then install Ghostty, Zed and the font
@@ -35,8 +35,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-    # bash with pipefail, rather than the default bash -e, so that a failing ws mac apply fails its
-    # step through a tee too.
+    # bash with pipefail, rather than the default bash -e, so that a failing ws client macos apply
+    # fails its step through a tee too.
     defaults:
       run:
         shell: bash
@@ -50,12 +50,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # As in mac.yml: ws, built into ~/.local/bin, which the steps run as ws mac apply.
+      # As in mac.yml: ws, built into ~/.local/bin, which the steps run as ws client macos apply.
       - name: Build ws
         run: |
           sh tools/build darwin arm64 ~/.local/bin/ws
           echo ~/.local/bin >>"$GITHUB_PATH"
-      # As in mac.yml: ws mac apply stops where a directory above root's copies isn't root's alone.
+      # As in mac.yml: ws client macos apply stops where a directory above root's copies isn't
+      # root's alone.
       - name: Make /usr/local root's, as on a Mac
         run: |
           for dir in /usr/local /usr/local/libexec; do
@@ -67,7 +68,7 @@ jobs:
               fi
           done
       # Any 32 bytes in base64 pass for ws's key: the daemon loads, and no handshake is needed.
-      # ws mac apply needs a login key that mac.conf names: a file key, made here.
+      # ws client macos apply needs a login key that mac.conf names: a file key, made here.
       - name: mac.conf, with a stand-in for ws's key, on a runner without Ghostty, Zed or cld
         run: |
           fail=0
@@ -89,14 +90,14 @@ jobs:
       # follow, and both of Ghostty's files, and writes none of them.
       - name: --check without Ghostty or Zed changes nothing
         run: |
-          ws mac apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
-              { echo '::error::ws mac apply --check failed'; exit 1; }
+          ws client macos apply --check 2>&1 | tee "$RUNNER_TEMP/check.out" ||
+              { echo '::error::ws client macos apply --check failed'; exit 1; }
           fail=0
           for path in /Applications/Ghostty.app /Applications/Zed.app ~/Library/Fonts/"$FONT" \
               ~/.local/bin/cld ~/.config/ghostty ~/.config/zed \
               "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
-                  echo "::error::ws mac apply --check made $path"
+                  echo "::error::ws client macos apply --check made $path"
                   fail=1
               fi
           done
@@ -107,13 +108,13 @@ jobs:
               ": would add the lines that start cld's watcher to config.d/ws, " \
               '^+window-save-state = always$' '^+config-file = ?ws.ghostty$'; do
               grep -q -- "$line" "$RUNNER_TEMP/check.out" ||
-                  { echo "::error::ws mac apply --check showed no line '$line'"; fail=1; }
+                  { echo "::error::ws client macos apply --check showed no line '$line'"; fail=1; }
           done
           exit "$fail"
       # A brew whose install of the casks ghostty and zed fails, as where Homebrew can't be reached,
-      # comes first on PATH. ws mac apply must warn and go on: cld, whose cld version must run, and
-      # nothing of Ghostty's or Zed's, nor ssh's lines.
-      - name: Where Ghostty's and Zed's casks fail, ws mac apply installs cld alone
+      # comes first on PATH. ws client macos apply must warn and go on: cld, whose cld version must
+      # run, and nothing of Ghostty's or Zed's, nor ssh's lines.
+      - name: Where Ghostty's and Zed's casks fail, ws client macos apply installs cld alone
         run: |
           mkdir -p "$RUNNER_TEMP/brew"
           cat >"$RUNNER_TEMP/brew/brew" <<EOF
@@ -122,19 +123,20 @@ jobs:
           exec $(command -v brew) "\$@"
           EOF
           chmod 755 "$RUNNER_TEMP/brew/brew"
-          PATH=$RUNNER_TEMP/brew:$PATH ws mac apply 2>&1 | tee "$RUNNER_TEMP/failed.out" ||
-              { echo '::error::ws mac apply with a failed cask failed'; exit 1; }
+          PATH=$RUNNER_TEMP/brew:$PATH ws client macos apply 2>&1 | tee "$RUNNER_TEMP/failed.out" ||
+              { echo '::error::ws client macos apply with a failed cask failed'; exit 1; }
           fail=0
           grep -q ': warning: brew install --cask ghostty failed$' "$RUNNER_TEMP/failed.out" ||
-              { echo '::error::ws mac apply gave no warning of the failed cask'; fail=1; }
+              { echo '::error::ws client macos apply gave no warning of the failed cask'; fail=1; }
           grep -q ': warning: brew install --cask zed failed$' "$RUNNER_TEMP/failed.out" ||
-              { echo '::error::ws mac apply gave no warning of the failed Zed cask'; fail=1; }
+              { echo '::error::ws client macos apply gave no warning of the failed Zed cask'
+                fail=1; }
           ~/.local/bin/cld version || { echo '::error::~/.local/bin/cld version failed'; fail=1; }
           for path in /Applications/Ghostty.app /Applications/Zed.app ~/.config/ghostty \
               ~/.config/zed \
               "$HOME/Library/Application Support/com.mitchellh.ghostty"; do
               if [ -e "$path" ]; then
-                  echo "::error::ws mac apply with a failed cask made $path"
+                  echo "::error::ws client macos apply with a failed cask made $path"
                   fail=1
               fi
           done
@@ -146,17 +148,18 @@ jobs:
       # +list-fonts, which looks a family up as the config does, must find ws.ghostty's last one.
       # The release of cld that install.sh installed has restore tabs, or not yet: ssh's lines must
       # follow it either way.
-      - name: ws mac apply installs Ghostty, Zed, the font and Ghostty's settings
+      - name: ws client macos apply installs Ghostty, Zed, the font and Ghostty's settings
         run: |
-          ws mac apply || { echo '::error::ws mac apply failed'; exit 1; }
+          ws client macos apply || { echo '::error::ws client macos apply failed'; exit 1; }
           fail=0
           support="$HOME/Library/Application Support/com.mitchellh.ghostty"
           [ -d /Applications/Ghostty.app ] ||
-              { echo '::error::ws mac apply installed no /Applications/Ghostty.app'; fail=1; }
+              { echo '::error::ws client macos apply installed no /Applications/Ghostty.app'
+                fail=1; }
           brew list --cask ghostty >/dev/null ||
               { echo "::error::Ghostty is not brew's cask ghostty"; fail=1; }
           [ -d /Applications/Zed.app ] ||
-              { echo '::error::ws mac apply installed no /Applications/Zed.app'; fail=1; }
+              { echo '::error::ws client macos apply installed no /Applications/Zed.app'; fail=1; }
           brew list --cask zed >/dev/null ||
               { echo "::error::Zed is not brew's cask zed"; fail=1; }
           zedv=$(zed --version) || { echo '::error::zed --version failed'; fail=1; }
@@ -164,11 +167,11 @@ jobs:
           printf '%s\n' "$zedv" | grep -Eq '^Zed [0-9.]+ – /Applications/Zed\.app$' ||
               { echo '::error::zed --version is not Zed N – /Applications/Zed.app'; fail=1; }
           [ -f ~/Library/Fonts/"$FONT" ] ||
-              { echo "::error::ws mac apply installed no $FONT"; fail=1; }
+              { echo "::error::ws client macos apply installed no $FONT"; fail=1; }
           version=$(~/.local/bin/cld version) ||
               { echo '::error::~/.local/bin/cld version failed'; exit 1; }
           echo "$version"
-          head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws mac apply" ||
+          head -n 1 "$support/ws.ghostty" | grep -q "^# Written by ws client macos apply" ||
               { echo "::error::ws.ghostty has no header"; fail=1; }
           plain=roles/client/macos/mac
           tail -n +2 "$support/ws.ghostty" | cmp -s - "$plain/ws.ghostty" ||
@@ -176,7 +179,7 @@ jobs:
           [ "$(grep -cx 'config-file = ?ws.ghostty' "$support/config.ghostty")" = 1 ] ||
               { echo '::error::config.ghostty does not read ws.ghostty once'; fail=1; }
           zed=~/.config/zed
-          head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws mac apply' ||
+          head -n 1 "$zed/global_settings.json" | grep -q '^// Written by ws client macos apply' ||
               { echo '::error::global_settings.json has no ws header'; fail=1; }
           cmp -s "$zed/global_settings.json" "$plain/zed/global_settings.json" ||
               { echo "::error::global_settings.json differs from the one in $plain/zed"; fail=1; }
@@ -226,11 +229,11 @@ jobs:
           esac
           EOF
           chmod 755 ~/.local/bin/cld
-          ws mac apply 2>&1 | tee "$RUNNER_TEMP/gain.out" ||
-              { echo '::error::ws mac apply with the stub failed'; exit 1; }
+          ws client macos apply 2>&1 | tee "$RUNNER_TEMP/gain.out" ||
+              { echo '::error::ws client macos apply with the stub failed'; exit 1; }
           fail=0
           grep -q ': Updated cld 0.13.0 to 0.14.0: ' "$RUNNER_TEMP/gain.out" ||
-              { echo '::error::ws mac apply printed no Updated line of the stub'; fail=1; }
+              { echo '::error::ws client macos apply printed no Updated line of the stub'; fail=1; }
           sh .github/mac-cld-checks.sh lines yes || fail=1
           sh .github/mac-cld-checks.sh watch "$RUNNER_TEMP/watch.log" || fail=1
           sh .github/mac-cld-checks.sh quiet || fail=1
@@ -241,24 +244,26 @@ jobs:
       - name: Without Ghostty's app, a cld with restore tabs gives ssh no lines
         run: |
           sudo mv /Applications/Ghostty.app "$RUNNER_TEMP/Ghostty.app"
-          PATH=$RUNNER_TEMP/brew:$PATH ws mac apply ||
-              { echo '::error::ws mac apply without Ghostty failed'; exit 1; }
+          PATH=$RUNNER_TEMP/brew:$PATH ws client macos apply ||
+              { echo '::error::ws client macos apply without Ghostty failed'; exit 1; }
           fail=0
           sh .github/mac-cld-checks.sh lines no || fail=1
           sudo mv "$RUNNER_TEMP/Ghostty.app" /Applications/Ghostty.app
-          ws mac apply || { echo '::error::ws mac apply with Ghostty failed'; exit 1; }
+          ws client macos apply ||
+              { echo '::error::ws client macos apply with Ghostty failed'; exit 1; }
           sh .github/mac-cld-checks.sh lines yes || fail=1
           exit "$fail"
       # This stub's help restore tabs exits 2, as cld 0.13.0's does, whatever the release has.
-      - name: With a cld without restore tabs, ws mac apply drops ssh's lines
+      - name: With a cld without restore tabs, ws client macos apply drops ssh's lines
         run: |
           cat >~/.local/bin/cld <<EOF
           #!/bin/sh
           [ "\$*" != 'help restore tabs' ] || exit 2
           exec "$RUNNER_TEMP/cld-release" "\$@"
           EOF
-          ws mac apply ||
-              { echo '::error::ws mac apply with a cld without restore tabs failed'; exit 1; }
+          ws client macos apply ||
+              { echo '::error::ws client macos apply with a cld without restore tabs failed'
+                exit 1; }
           fail=0
           sh .github/mac-cld-checks.sh lines no || fail=1
           sh .github/mac-cld-checks.sh quiet || fail=1

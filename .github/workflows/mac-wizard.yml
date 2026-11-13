@@ -1,7 +1,7 @@
 name: mac-wizard
 
-# ws mac wizard on macOS, in a workflow of its own beside mac.yml, on the same events. They are
-# every pull request, whatever its base, and on main each pull request's merge.
+# ws client macos wizard on macOS, in a workflow of its own beside mac.yml, on the same events. They
+# are every pull request, whatever its base, and on main each pull request's merge.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -44,8 +44,8 @@ jobs:
           mkdir -p ~/repository
           cp -R "$GITHUB_WORKSPACE" ~/repository/ws
       # ws is built from the clone into ~/.local/bin by tools/build, and the cases run it as
-      # ws mac wizard. The clone is tagged v0.0.0 first, so that ws is a release, as the wizard
-      # installs ws on ws only for a release. The stand-in ws takes the install.
+      # ws client macos wizard. The clone is tagged v0.0.0 first, so that ws is a release, as the
+      # wizard installs ws on ws only for a release. The stand-in ws takes the install.
       - name: Build ws
         run: |
           git -C ~/repository/ws tag v0.0.0

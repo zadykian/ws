@@ -7,7 +7,7 @@
 set -u
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
-known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
 path=$(cat "$RUNNER_TEMP/path")
@@ -20,22 +20,22 @@ error() {
 }
 
 for args in '' --check; do
-    out=$(PATH=$path "$wsbin" mac wizard ${args:+"$args"} 2>&1)
+    out=$(PATH=$path "$wsbin" client macos wizard ${args:+"$args"} 2>&1)
     status=$?
     printf '%s\n' "$out"
-    [ "$status" = 0 ] || error "ws mac wizard${args:+ $args} exited $status"
-    [ -z "${out#"$known"}" ] || error "ws mac wizard${args:+ $args} printed what it should not"
+    [ "$status" = 0 ] || error "ws client macos wizard${args:+ $args} exited $status"
+    [ -z "${out#"$known"}" ] || error "ws client macos wizard${args:+ $args} printed what it should not"
 done
 
 conf=$RUNNER_TEMP/tools.conf
 user=$(id -un)
 out=$(WS_CONF=$conf WS_USER=$user WS_TARGET=lan WS_LAN='' WS_REMOTE=localhost WS_REMOTE_PORT=22022 \
     WS_GIT_NAME='' WS_TUNNEL_NETWORKS='' WS_RESOLVERS='' PATH=$path \
-    "$wsbin" mac wizard --check 2>&1)
+    "$wsbin" client macos wizard --check 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qx '+WS_REMOTE=localhost' && [ "$status" = 0 ] ||
-    error "ws mac wizard --check exited $status, with no line the wizard would write to $conf"
-[ ! -e "$conf" ] || error "ws mac wizard --check wrote $conf"
+    error "ws client macos wizard --check exited $status, with no line the wizard would write to $conf"
+[ ! -e "$conf" ] || error "ws client macos wizard --check wrote $conf"
 rm -f "$conf"
 exit "$fail"

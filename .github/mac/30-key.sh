@@ -1,5 +1,5 @@
 #!/bin/bash
-# Without ws's key, ws mac apply makes the Mac's key and installs no daemon.
+# Without ws's key, ws client macos apply makes the Mac's key and installs no daemon.
 # The key it prints, and the command that makes it ws's peer, must hold the Mac's public key,
 # which the stand-in ws below takes as its peer. Root's daemon runs the copy of ws, so it must be
 # root's alone. Stand-ins for the apps of
@@ -8,9 +8,9 @@
 set -eo pipefail
 
 sh .github/mac-standins.sh
-ws mac apply | tee "$RUNNER_TEMP/first.out" ||
+ws client macos apply | tee "$RUNNER_TEMP/first.out" ||
     {
-        echo "::error::ws mac apply without ws's key failed"
+        echo "::error::ws client macos apply without ws's key failed"
         exit 1
     }
 fail=0
@@ -22,13 +22,13 @@ mac=$(sudo sh -c '"$1" pubkey <"$2"' sh "$wg" /etc/ws-tunnel/private.key) ||
     }
 key=$(sed -n "s/^The Mac's WireGuard public key is //p" "$RUNNER_TEMP/first.out")
 if [[ ! $key =~ ^[A-Za-z0-9+/]{43}=$ ]] || [ "$key" != "$mac" ]; then
-    echo "::error::ws mac apply printed '$key' as the Mac's public key, not '$mac'"
+    echo "::error::ws client macos apply printed '$key' as the Mac's public key, not '$mac'"
     fail=1
 fi
 give="    ssh -t -o HostName=ADDRESS -o Port=PORT ws \"printf '%s\\n' '$mac' | sudo tee /etc/wireguard/mac.pub >/dev/null\""
 grep -qxF "$give" "$RUNNER_TEMP/first.out" ||
     {
-        echo "::error::ws mac apply printed no command that gives ws '$mac'"
+        echo "::error::ws client macos apply printed no command that gives ws '$mac'"
         fail=1
     }
 printf '%s\n' "$key" >"$RUNNER_TEMP/mac.pub"
@@ -48,7 +48,7 @@ printf '%s\n' "$mac" | cmp -s - ~/.config/ws/tunnel.pub ||
         fail=1
     }
 if launchctl print "system/$LABEL" >/dev/null 2>&1; then
-    echo "::error::ws mac apply loaded the daemon without ws's key"
+    echo "::error::ws client macos apply loaded the daemon without ws's key"
     fail=1
 fi
 [ "$(ssh -G ws | awk '$1 == "hostname" { print $2 }')" = 10.99.0.1 ] ||

@@ -29,18 +29,18 @@ prompts() {
 
 rm "$ws/sudo.open"
 (umask 077 && printf '%s\n' "$password" >"$ws/sudo.password")
-out=$("$wsbin" mac wizard </dev/null 2>&1)
+out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qF "Sudo: $(id -un)'s sudo on ws asks for a password, and no terminal" &&
     [ "$status" = 1 ] ||
-    error "ws mac wizard exited $status, or did not stop at Sudo, with no terminal"
-out=$("$wsbin" mac wizard --check </dev/null 2>&1)
+    error "ws client macos wizard exited $status, or did not stop at Sudo, with no terminal"
+out=$("$wsbin" client macos wizard --check </dev/null 2>&1)
 status=$?
 printf '%s\n' "$out"
 printf '%s\n' "$out" | grep -qF "Sudo: would ask for $(id -un)'s sudo password on ws" &&
     [ "$status" = 0 ] ||
-    error "ws mac wizard --check exited $status, or said not that it would ask"
+    error "ws client macos wizard --check exited $status, or said not that it would ask"
 : >"$ws/sudo.log"
 {
     prompts 1
@@ -48,12 +48,12 @@ printf '%s\n' "$out" | grep -qF "Sudo: would ask for $(id -un)'s sudo password o
     prompts 2
     printf '%s\n' "$password"
     sleep 5
-} | script -q /dev/null "$wsbin" --plain mac wizard >"$tty" 2>&1
+} | script -q /dev/null "$wsbin" --plain client macos wizard >"$tty" 2>&1
 status=$?
 tr -d '\r' <"$tty"
 tr -d '\r' <"$tty" | grep -qF 'Sudo: sudo on ws refused the password' &&
     [ "$status" = 0 ] ||
-    error "ws mac wizard at a terminal exited $status, or did not refuse the wrong password"
+    error "ws client macos wizard at a terminal exited $status, or did not refuse the wrong password"
 grep -qF "$password" "$tty" "$ws/log" "$ws/sudo.log" && error 'the password showed in a transcript or a log'
 grep -q "^sudo -k -S -p '' sh -s -- status$" "$ws/sudo.log" || error 'no status was read through sudo -k -S -p'
 rm -f "$tty" "$ws/sudo.password"

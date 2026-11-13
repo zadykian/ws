@@ -1,8 +1,8 @@
 #!/bin/bash
 # With nothing at WS_LAN_ADDRESS, the remote tier.
-# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as ws mac apply requires, where nothing answers.
-# macOS's lo0 has 127.0.0.1 alone, and a handshake on the LAN tier fails the step. The daemon
-# takes the new tunnel.conf on SIGHUP, in place: it keeps its pid and logs a reload. A daemon
+# WS_LAN_ADDRESS becomes 127.0.0.2, inside WS_LAN as ws client macos apply requires, where nothing
+# answers. macOS's lo0 has 127.0.0.1 alone, and a handshake on the LAN tier fails the step. The
+# daemon takes the new tunnel.conf on SIGHUP, in place: it keeps its pid and logs a reload. A daemon
 # that died of the SIGHUP, and that launchd started again, would log a start.
 
 set -eo pipefail
@@ -11,18 +11,18 @@ pid() { sudo launchctl print "system/$LABEL" | awk '$1 == "pid" { print $3; exit
 was=$(pid) || true
 lines=$(sudo awk 'END { print NR }' /var/log/ws-tunnel.log)
 sed -i '' 's/^WS_LAN_ADDRESS=.*/WS_LAN_ADDRESS=127.0.0.2/' ~/.config/ws/mac.conf
-ws mac apply 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
+ws client macos apply 2>&1 | tee "$RUNNER_TEMP/hup.out" ||
     {
-        echo '::error::ws mac apply with a new WS_LAN_ADDRESS failed'
+        echo '::error::ws client macos apply with a new WS_LAN_ADDRESS failed'
         exit 1
     }
 grep -q "ran launchctl kill SIGHUP system/$LABEL" "$RUNNER_TEMP/hup.out" ||
     {
-        echo '::error::ws mac apply sent the daemon no SIGHUP for a new tunnel.conf'
+        echo '::error::ws client macos apply sent the daemon no SIGHUP for a new tunnel.conf'
         exit 1
     }
 remote() {
-    status=$(sudo "$TUNNEL" mac tunnel status 2>&1) || true
+    status=$(sudo "$TUNNEL" client macos tunnel status 2>&1) || true
     printf '%s\n' "$status" | grep -qx 'tier: remote' &&
         printf '%s\n' "$status" | grep -qx 'endpoint: 127.0.0.1:51820' &&
         printf '%s\n' "$status" | grep -Eq '^latest handshake: [0-9]+ s ago$'

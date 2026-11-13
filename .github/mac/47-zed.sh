@@ -1,13 +1,13 @@
 #!/bin/bash
-# ws mac apply writes Zed's global_settings.json, which is roles/client/macos/mac/zed's file whole, and
-# settings.json, the seed, where none exists. A settings.json that is there is left byte for
-# byte.
+# ws client macos apply writes Zed's global_settings.json, which is roles/client/macos/mac/zed's
+# file whole, and settings.json, the seed, where none exists. A settings.json that is there is left
+# byte for byte.
 
 set -eo pipefail
 
 dir=~/.config/zed
 fail=0
-head -n 1 "$dir/global_settings.json" | grep -qxF '// Written by ws mac apply: its next run replaces changes made here.' ||
+head -n 1 "$dir/global_settings.json" | grep -qxF '// Written by ws client macos apply: its next run replaces changes made here.' ||
     {
         echo '::error::global_settings.json has no ws header'
         fail=1
@@ -33,13 +33,13 @@ grep -qxF '{ "ssh_connections": [{ "host": "ws" }] }' "$dir/settings.json" ||
         fail=1
     }
 printf '{ "theme": "mine" }\n' >"$dir/settings.json"
-ws mac apply zed 2>&1 || {
-    echo '::error::ws mac apply zed failed'
+ws client macos apply --only zed 2>&1 || {
+    echo '::error::ws client macos apply --only zed failed'
     fail=1
 }
 [ "$(cat "$dir/settings.json")" = '{ "theme": "mine" }' ] ||
     {
-        echo '::error::ws mac apply zed changed a settings.json that was there'
+        echo '::error::ws client macos apply --only zed changed a settings.json that was there'
         fail=1
     }
 exit "$fail"

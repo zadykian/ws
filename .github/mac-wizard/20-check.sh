@@ -1,7 +1,7 @@
 #!/bin/sh
 # A fresh --check, with standin.sh's PATH, which lacks brew. The wizard must
 # still find brew, and show the Include for ~/.ssh/config. It must show the Mac's key it would add
-# to gh's login. The Host key stage must wait for ws mac apply, Login for it,
+# to gh's login. The Host key stage must wait for ws client macos apply, Login for it,
 # Sudo for Login, and ws on ws for Sudo. ws's run must wait for ws on ws, and the Signing key,
 # claude on ws, the Tunnel and the Cable for ws's run. It must write none of the paths that
 # mac.yml's --check step lists, keep ~/.ssh/config unchanged, and install no formula or cask. It
@@ -31,42 +31,42 @@ config() {
 path=$(cat "$RUNNER_TEMP/path")
 { brew list --formula && brew list --cask; } >"$RUNNER_TEMP/brew"
 config >"$RUNNER_TEMP/config"
-out=$(PATH=$path "$wsbin" mac wizard --check 2>&1)
+out=$(PATH=$path "$wsbin" client macos wizard --check 2>&1)
 status=$?
 printf '%s\n' "$out"
-[ "$status" = 0 ] || error "ws mac wizard --check exited $status"
-! printf '%s\n' "$out" | grep -q ': after Homebrew$' || error "ws mac wizard --check found no brew"
+[ "$status" = 0 ] || error "ws client macos wizard --check exited $status"
+! printf '%s\n' "$out" | grep -q ': after Homebrew$' || error "ws client macos wizard --check found no brew"
 printf '%s\n' "$out" | grep -qx '+Include config.d/ws' ||
-    error "ws mac wizard --check showed no Include for ~/.ssh/config"
-printf '%s\n' "$out" | grep -q '^ws mac wizard: gh on the Mac: would run gh ssh-key add ' ||
-    error "ws mac wizard --check showed no key it would add to gh's login"
-printf '%s\n' "$out" | grep -qx 'ws mac wizard: Host key: after ws mac apply' ||
-    error "ws mac wizard --check showed no Host key stage after ws mac apply"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: Login: after Host key" ||
-    error "ws mac wizard --check showed no Login stage after the Host key"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: Sudo: after Login" ||
-    error "ws mac wizard --check showed no Sudo stage after Login"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: ws on ws: after Sudo" ||
-    error "ws mac wizard --check showed no ws on ws stage after Sudo"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: ws's run: after ws on ws" ||
-    error "ws mac wizard --check showed no ws's run after ws on ws"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: Signing key: after ws's run" ||
-    error "ws mac wizard --check showed no Signing key after ws's run"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: claude on ws: after ws's run" ||
-    error "ws mac wizard --check showed no claude on ws after ws's run"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: Tunnel: after ws's run" ||
-    error "ws mac wizard --check showed no Tunnel stage after ws's run"
-printf '%s\n' "$out" | grep -qx "ws mac wizard: Cable: after ws's run" ||
-    error "ws mac wizard --check showed no Cable stage after ws's run"
+    error "ws client macos wizard --check showed no Include for ~/.ssh/config"
+printf '%s\n' "$out" | grep -q '^ws client macos wizard: gh on the Mac: would run gh ssh-key add ' ||
+    error "ws client macos wizard --check showed no key it would add to gh's login"
+printf '%s\n' "$out" | grep -qx 'ws client macos wizard: Host key: after ws client macos apply' ||
+    error "ws client macos wizard --check showed no Host key stage after ws client macos apply"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: Login: after Host key" ||
+    error "ws client macos wizard --check showed no Login stage after the Host key"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: Sudo: after Login" ||
+    error "ws client macos wizard --check showed no Sudo stage after Login"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: ws on ws: after Sudo" ||
+    error "ws client macos wizard --check showed no ws on ws stage after Sudo"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: ws's run: after ws on ws" ||
+    error "ws client macos wizard --check showed no ws's run after ws on ws"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: Signing key: after ws's run" ||
+    error "ws client macos wizard --check showed no Signing key after ws's run"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: claude on ws: after ws's run" ||
+    error "ws client macos wizard --check showed no claude on ws after ws's run"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: Tunnel: after ws's run" ||
+    error "ws client macos wizard --check showed no Tunnel stage after ws's run"
+printf '%s\n' "$out" | grep -qx "ws client macos wizard: Cable: after ws's run" ||
+    error "ws client macos wizard --check showed no Cable stage after ws's run"
 for made in ~/.ssh/config.d ~/.ssh/config.*~ /etc/ws-tunnel /usr/local/libexec/ws-tunnel \
     /Library/LaunchDaemons/com.github.zadykian.ws-tunnel.plist; do
-    ! sudo test -e "$made" || error "ws mac wizard --check made $made"
+    ! sudo test -e "$made" || error "ws client macos wizard --check made $made"
 done
 config | cmp -s - "$RUNNER_TEMP/config" ||
-    error "ws mac wizard --check changed ~/.ssh/config"
+    error "ws client macos wizard --check changed ~/.ssh/config"
 { brew list --formula && brew list --cask; } | cmp -s - "$RUNNER_TEMP/brew" ||
-    error "ws mac wizard --check installed a formula or a cask"
+    error "ws client macos wizard --check installed a formula or a cask"
 for left in "$tmp/ws-wizard.lock" "$tmp"/ws.*; do
-    [ ! -e "$left" ] || error "ws mac wizard --check left $left"
+    [ ! -e "$left" ] || error "ws client macos wizard --check left $left"
 done
 exit "$fail"

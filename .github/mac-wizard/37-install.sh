@@ -22,10 +22,10 @@ grep -qx 'http://127.0.0.1:22080/download/v0.0.0/install.sh' "$ws/install.log" |
 
 echo v0.0.9 | sudo tee "$ws/ws.version" >/dev/null
 units=$(wc -l <"$ws/run.log")
-out=$("$wsbin" mac wizard </dev/null 2>&1)
+out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
-[ "$status" != 0 ] || error "ws mac wizard exited 0 with the newer v0.0.9 on ws"
-printf '%s\n' "$out" | grep -qF 'ws mac wizard --update' || error "the run with v0.0.9 on ws did not name --update: $out"
+[ "$status" != 0 ] || error "ws client macos wizard exited 0 with the newer v0.0.9 on ws"
+printf '%s\n' "$out" | grep -qF 'ws client macos wizard --update' || error "the run with v0.0.9 on ws did not name --update: $out"
 [ "$(wc -l <"$ws/install.log")" -eq 1 ] && [ "$(cat "$ws/ws.version")" = v0.0.9 ] ||
     error "the run with v0.0.9 on ws installed: $(cat "$ws/install.log")"
 [ "$(wc -l <"$ws/run.log")" -eq "$units" ] || error "the run with v0.0.9 on ws started a unit"

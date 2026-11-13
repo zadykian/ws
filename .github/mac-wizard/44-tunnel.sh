@@ -2,19 +2,19 @@
 # The Tunnel stage on the Mac that 43-terminal.sh leaves, whose tunnel has a handshake with the
 # stand-in ws. mac.conf's WS_PUBLIC_KEY goes first. With a new key for the stand-in's wg0, as a ws
 # installed again has, --check must show that line replaced, and change nothing. A run must replace
-# it in place, have ws mac tunnel take the key, and log in to ws through the tunnel. Without wg0's peer,
-# as a tagged run that failed leaves it, a run must run ws server apply --only wireguard and restart
-# the daemon. Without the stand-in's mac.pub too, it must write mac.pub first. Where nothing answers
-# on UDP 51820, a run must exit 0 within a minute, its closing list naming it, the router's forward
-# and the Background. Once it answers, a run must exit 0, and the next print nothing. Without
-# tunnel.pub, --check must show it and the Tunnel stage after ws's run, which waits for ws mac apply
-# through the stages between. A run must then write it at the ws mac apply stage, and leave the Tunnel
-# stage alone.
+# it in place, have ws client macos tunnel take the key, and log in to ws through the tunnel.
+# Without wg0's peer, as a tagged run that failed leaves it, a run must run ws server ubuntu apply
+# --only wireguard and restart the daemon. Without the stand-in's mac.pub too, it must write mac.pub
+# first. Where nothing answers on UDP 51820, a run must exit 0 within a minute, its closing list
+# naming it, the router's forward and the Background. Once it answers, a run must exit 0, and the
+# next print nothing. Without tunnel.pub, --check must show it and the Tunnel stage after ws's run,
+# which waits for ws client macos apply through the stages between. A run must then write it at the
+# ws client macos apply stage, and leave the Tunnel stage alone.
 
 set -u
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
-known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
 conf=$HOME/.config/ws/mac.conf
@@ -31,7 +31,7 @@ error() {
 
 # wizard [ARG]: a run of the wizard with no terminal. It prints the output, and sets out and status.
 wizard() {
-    out=$("$wsbin" mac wizard "$@" </dev/null 2>&1)
+    out=$("$wsbin" client macos wizard "$@" </dev/null 2>&1)
     status=$?
     printf '%s\n' "$out"
 }
@@ -60,7 +60,7 @@ printf '%s\n' "$out" | grep -qx -- "-WS_PUBLIC_KEY=$old" &&
 n=$(logins)
 wizard
 sed "1s|.*|WS_PUBLIC_KEY=$new|" "$RUNNER_TEMP/first" | cmp -s - "$conf" && [ "$status" = 0 ] &&
-    printf '%s\n' "$out" | grep -q '^ws mac wizard: ran launchctl kill SIGHUP ' &&
+    printf '%s\n' "$out" | grep -q '^ws client macos wizard: ran launchctl kill SIGHUP ' &&
     [ "$(logins)" -eq $((n + 1)) ] ||
     error "a run with wg0's new key exited $status, or put no WS_PUBLIC_KEY in its line's place"
 
@@ -68,7 +68,7 @@ mac=$(sudo sh -c '"$0" pubkey <"$1"' "$wg" /etc/ws-tunnel/private.key)
 tagged=$(grep -cx -- '--only wireguard' "$ws/server.log")
 standin_set peer "$mac" remove
 wizard
-printf '%s\n' "$out" | grep -q '^ws mac wizard: Tunnel: ran launchctl kickstart -k ' &&
+printf '%s\n' "$out" | grep -q '^ws client macos wizard: Tunnel: ran launchctl kickstart -k ' &&
     ! printf '%s\n' "$out" | grep -q '^wizard-remote\.sh: wrote ' && [ "$status" = 0 ] &&
     [ "$(grep -cx -- '--only wireguard' "$ws/server.log")" -eq $((tagged + 1)) ] ||
     error "a run with mac.pub but without wg0's peer exited $status, or ran no --only wireguard"
@@ -76,7 +76,7 @@ printf '%s\n' "$out" | grep -q '^ws mac wizard: Tunnel: ran launchctl kickstart 
 sudo rm "$peer"
 standin_set peer "$mac" remove
 wizard
-printf '%s\n' "$out" | grep -q '^ws mac wizard: Tunnel: ran launchctl kickstart -k ' &&
+printf '%s\n' "$out" | grep -q '^ws client macos wizard: Tunnel: ran launchctl kickstart -k ' &&
     [ "$(sudo cat "$peer")" = "$mac" ] &&
     [ "$(tail -n 1 "$ws/server.log")" = '--only wireguard' ] && [ "$status" = 0 ] ||
     error "a run without mac.pub on ws exited $status, or gave wg0 no peer and the daemon no restart"
@@ -100,12 +100,12 @@ pub=$HOME/.config/ws/tunnel.pub
 rm "$pub"
 wizard --check
 printf '%s\n' "$out" | grep -qxF "+$mac" &&
-    printf '%s\n' "$out" | grep -qx "ws mac wizard: Tunnel: after ws's run" &&
+    printf '%s\n' "$out" | grep -qx "ws client macos wizard: Tunnel: after ws's run" &&
     [ ! -e "$pub" ] && [ "$status" = 0 ] ||
     error "--check without tunnel.pub exited $status, wrote it, or showed no Tunnel after ws's run"
 wizard
-printf '%s\n' "$out" | grep -qxF "ws mac wizard: wrote $pub" &&
-    ! printf '%s\n' "$out" | grep -q '^ws mac wizard: Tunnel: ' &&
+printf '%s\n' "$out" | grep -qxF "ws client macos wizard: wrote $pub" &&
+    ! printf '%s\n' "$out" | grep -q '^ws client macos wizard: Tunnel: ' &&
     [ "$(cat "$pub")" = "$mac" ] && [ "$status" = 0 ] ||
     error "a run without tunnel.pub exited $status, wrote no Mac's key there, or acted at Tunnel"
 rm -rf "$RUNNER_TEMP/first"

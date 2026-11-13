@@ -7,7 +7,7 @@
 set -u
 
 # The one line of the gh stage that a run says where the account holds the Mac's key.
-known="ws mac wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
+known="ws client macos wizard: gh on the Mac: the Mac's key is among GitHub's authentication keys already"
 
 wsbin=$HOME/.local/bin/ws
 ws=$RUNNER_TEMP/ws
@@ -27,21 +27,21 @@ if [ -e /usr/local/bin/claude ]; then
 fi
 sudo ln -s "$(cd "$(dirname "$0")" && pwd)/ws-standin.sh" /usr/local/bin/claude
 rm "$ws/claude"
-"$wsbin" mac wizard </dev/null >/dev/null 2>&1
+"$wsbin" client macos wizard </dev/null >/dev/null 2>&1
 lines=$(wc -l <"$ws/log")
 # script gives the wizard a terminal of its own, which the session of ssh -t takes.
-{ sleep 5; } | script -q /dev/null "$wsbin" --plain mac wizard >"$RUNNER_TEMP/tty" 2>&1
+{ sleep 5; } | script -q /dev/null "$wsbin" --plain client macos wizard >"$RUNNER_TEMP/tty" 2>&1
 status=$?
 tr -d '\r' <"$RUNNER_TEMP/tty"
 tail -n "+$((lines + 1))" "$ws/log" | tee "$RUNNER_TEMP/sessions"
-[ "$status" = 0 ] || error "ws mac wizard at a terminal exited $status"
+[ "$status" = 0 ] || error "ws client macos wizard at a terminal exited $status"
 grep -qxF "$(id -un): exec bash -lc \"claude auth login\"" "$RUNNER_TEMP/sessions" ||
     error "no session on ws ran claude auth login"
 grep -qF 'What stays by hand:' "$RUNNER_TEMP/tty" && [ -f "$ws/claude" ] ||
-    error "ws mac wizard left claude logged out on ws, or listed nothing by hand"
+    error "ws client macos wizard left claude logged out on ws, or listed nothing by hand"
 rm -f "$RUNNER_TEMP/sessions"
 sudo rm /usr/local/bin/claude
-out=$("$wsbin" mac wizard </dev/null 2>&1)
+out=$("$wsbin" client macos wizard </dev/null 2>&1)
 status=$?
-[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws mac wizard after it exited $status: '$out'"
+[ "$status" = 0 ] && [ -z "${out#"$known"}" ] || error "ws client macos wizard after it exited $status: '$out'"
 exit "$fail"
