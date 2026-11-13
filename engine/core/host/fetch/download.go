@@ -1,4 +1,6 @@
-package host
+// Package fetch downloads what ws pins: a file, an archive unpacked into a tree, and the machine's
+// architecture for the release asset to take.
+package fetch
 
 import (
 	"context"
@@ -9,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/internal/paths"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -82,23 +85,23 @@ func (c setAttrs) Apply(context.Context) error {
 }
 
 // Plan hashes the file, and plans a download where the file is missing or its sum differs.
-func (d Download) Plan(context.Context) ([]Change, error) {
+func (d Download) Plan(context.Context) ([]host.Change, error) {
 	body, err := d.M.ReadRootFile(d.Path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return []Change{fetch{d}}, nil
+		return []host.Change{fetch{d}}, nil
 	}
 	if err != nil {
 		return nil, err
 	}
 	if fmt.Sprintf("%x", sha256.Sum256(body)) != d.SHA256 {
-		return []Change{fetch{d}}, nil
+		return []host.Change{fetch{d}}, nil
 	}
 	got, err := d.M.RootAttrs(d.Path)
 	if err != nil {
 		return nil, err
 	}
 	if got != d.attrs() {
-		return []Change{setAttrs{d}}, nil
+		return []host.Change{setAttrs{d}}, nil
 	}
 	return nil, nil
 }

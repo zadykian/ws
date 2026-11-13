@@ -5,6 +5,7 @@ package devtools
 import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 // A release pins one server's version and the SHA-256 of its binary for each architecture, as
@@ -54,6 +55,6 @@ func dockerLSURL(version, arch string) string {
 // download is the step that puts r's binary at /usr/local/bin/name, root's and mode 0755 so any
 // ws_user can run it. An architecture with no pin fails the step's Plan, before any URL exists.
 func download(m effect.Machine, name string, r release, url func(version, arch string) string) host.Group {
-	return host.Group{Title: "Devtools " + name, Parts: []host.Resource{host.PinnedFile{M: m,
+	return host.Group{Title: "Devtools " + name, Parts: []host.Resource{fetch.PinnedFile{M: m,
 		Version: r.version, URL: url, SHA256: r.sha256, Path: "/usr/local/bin/" + name, Mode: 0o755}}}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
 	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -47,7 +48,7 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 		{"validated", host.Validated{File: host.File{M: m, Path: "/new", Mode: 0o644}}, []step.ChangeKind{step.Write}},
 		{"dir", host.Dir{M: m, Path: "/d", Mode: 0o755}, []step.ChangeKind{step.Write}},
 		{"link", host.Link{M: m, Path: "/l", Target: "/t"}, []step.ChangeKind{step.Write}},
-		{"download", host.Download{M: m, Path: "/new", SHA256: "0"}, []step.ChangeKind{step.Write}},
+		{"download", fetch.Download{M: m, Path: "/new", SHA256: "0"}, []step.ChangeKind{step.Write}},
 		{"absent", host.Absent{M: m, Path: "/old"}, []step.ChangeKind{step.Removal}},
 		{"left", host.Left{M: m, User: "ann", Group: "docker"}, []step.ChangeKind{step.Removal}},
 		{"packages", apt.Packages{M: m, Names: []string{"curl"}}, []step.ChangeKind{step.Install}},
@@ -60,7 +61,7 @@ func TestKindsOfTheResourcesChanges(t *testing.T) {
 		{"user unit", systemd.UserUnit{M: m, Account: account.Account{User: ann, UID: 1000}, Out: out, Name: "a.service"},
 			[]step.ChangeKind{step.Restart}},
 		{"linger", systemd.Linger{M: m, User: ann, Out: out}, []step.ChangeKind{step.Write}},
-		{"package", apt.Package{M: m, Name: "a", Source: host.PinnedFile{M: m, Version: "1", SHA256: map[string]string{"amd64": "s"},
+		{"package", apt.Package{M: m, Name: "a", Source: fetch.PinnedFile{M: m, Version: "1", SHA256: map[string]string{"amd64": "s"},
 			URL: func(version, arch string) string { return "https://x/a_" + version + arch + ".deb" }}},
 			[]step.ChangeKind{step.Write, step.Write, step.Install}},
 	}

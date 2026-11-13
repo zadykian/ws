@@ -1,4 +1,4 @@
-package host_test
+package fetch_test
 
 import (
 	"archive/tar"
@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 const (
 	treeURL  = "https://x/1.2/t-amd64.tar"
-	treeFile = host.CacheDir + "/t-amd64.tar"
+	treeFile = fetch.CacheDir + "/t-amd64.tar"
 	treeDir  = "/opt/t"
 )
 
@@ -39,12 +39,12 @@ func treeArchive(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
-func treeFixture(t *testing.T) (*effecttest.Machine, host.Tree) {
+func treeFixture(t *testing.T) (*effecttest.Machine, fetch.Tree) {
 	m := effecttest.NewMachine()
 	body := treeArchive(t)
 	m.Results["dpkg --print-architecture"] = effecttest.Result{Out: []byte("amd64\n")}
 	m.Pages[treeURL] = body
-	return m, host.Tree{M: m, Path: treeDir, Strip: 1, Source: host.PinnedFile{M: m, Version: "1.2",
+	return m, fetch.Tree{M: m, Path: treeDir, Strip: 1, Source: fetch.PinnedFile{M: m, Version: "1.2",
 		SHA256: map[string]string{"amd64": sumOf(string(body))},
 		URL:    func(version, arch string) string { return "https://x/" + version + "/t-" + arch + ".tar" }}}
 }
@@ -54,7 +54,7 @@ func TestTreeInstallsStagedAndMovedWhole(t *testing.T) {
 	m.Files[treeDir+"/old"] = []byte("old")
 	m.Dirs[treeDir] = 0o755
 	got := applyAll(t, tree)
-	want := []string{"create directory " + host.CacheDir + ", owner 0:0, mode 755",
+	want := []string{"create directory " + fetch.CacheDir + ", owner 0:0, mode 755",
 		"download " + treeURL + " to " + treeFile, "install " + treeURL + " in " + treeDir}
 	if !slices.Equal(got, want) {
 		t.Fatalf("plan = %q, want %q", got, want)

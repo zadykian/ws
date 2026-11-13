@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 func machine(arch string, have effecttest.Package) *effecttest.Machine {
@@ -36,7 +37,7 @@ func TestInstallPlansFromThePinOnANewMachine(t *testing.T) {
 
 func TestInstallOnlyClearsTheDebWhereTheVersionIsInstalled(t *testing.T) {
 	m := machine("amd64", effecttest.Package{Version: version, Status: "ii"})
-	m.Files[path.Join(host.CacheDir, debName("amd64"))] = []byte("deb")
+	m.Files[path.Join(fetch.CacheDir, debName("amd64"))] = []byte("deb")
 	p, err := (host.Group{Title: installStep, Parts: []host.Resource{pinned(m)}}).Plan(t.Context())
 	if err != nil || len(p.Changes) != 1 || strings.Contains(p.Changes[0].String(), "install") {
 		t.Errorf("plan = %v, %v; want only the .deb's removal", p.Changes, err)

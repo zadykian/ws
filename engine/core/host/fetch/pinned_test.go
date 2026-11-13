@@ -1,4 +1,4 @@
-package host_test
+package fetch_test
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 func sumOf(body string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(body))) }
 
-func pinned(m *effecttest.Machine, sums map[string]string) host.PinnedFile {
-	return host.PinnedFile{M: m, Version: "1.2", Path: "/usr/local/bin/x", Mode: 0o755, SHA256: sums,
+func pinned(m *effecttest.Machine, sums map[string]string) fetch.PinnedFile {
+	return fetch.PinnedFile{M: m, Version: "1.2", Path: "/usr/local/bin/x", Mode: 0o755, SHA256: sums,
 		URL: func(version, arch string) string { return "https://x/" + version + "/x-" + arch }}
 }
 

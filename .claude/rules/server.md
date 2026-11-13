@@ -69,14 +69,14 @@ steps, and each role's page in `docs/` says what it sets up.
 ## Downloads and keys
 
 - A download is checked against its SHA-256 before it writes `dest`, and downloaded again
-  where `dest` holds another ([the Go download](../../engine/core/host/download.go)).
+  where `dest` holds another ([the Go download](../../engine/core/host/fetch/download.go)).
 - A fetch tries five times, ten seconds apart, and stops at once on a wrong SHA-256, which
-  `effect.ErrSHA256` names ([the fetch](../../engine/core/host/download.go)).
+  `effect.ErrSHA256` names ([the fetch](../../engine/core/host/fetch/download.go)).
 - A package plans from its pin, a name and a version, and fetches its file only where that version
   is not installed. Before dpkg, it checks the file's own name and version against the pin
   ([package.go](../../engine/core/host/apt/package.go)).
 - A tree is unpacked beside its target and moved in whole, and its marker is its probe
-  ([tree.go](../../engine/core/host/tree.go)).
+  ([tree.go](../../engine/core/host/fetch/tree.go)).
 - An apt repository's key goes in only where its entry pins the primary fingerprint of each
   certificate in it, and it holds one at least
   ([devtools' pins](../../roles/server/ubuntu/devtools/pins.go)). Docker's key goes in only with the

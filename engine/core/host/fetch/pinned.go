@@ -1,4 +1,4 @@
-package host
+package fetch
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -61,7 +62,7 @@ func (p PinnedFile) download(ctx context.Context) (Download, error) {
 }
 
 // Plan plans what Download plans for the file of the machine's architecture.
-func (p PinnedFile) Plan(ctx context.Context) ([]Change, error) {
+func (p PinnedFile) Plan(ctx context.Context) ([]host.Change, error) {
 	d, err := p.download(ctx)
 	if err != nil {
 		return nil, err

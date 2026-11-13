@@ -1,4 +1,4 @@
-package host_test
+package fetch_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 // flaky fails the first fails Downloads with err, and counts them all.
@@ -27,7 +27,7 @@ func (f *flaky) Download(ctx context.Context, url, path, sum string, a effect.At
 }
 
 func fetchOnce(ctx context.Context, t *testing.T, m effect.Machine, sum string) error {
-	changes, err := host.Download{M: m, URL: "u", Path: "/f", SHA256: sum, Mode: 0o644}.Plan(ctx)
+	changes, err := fetch.Download{M: m, URL: "u", Path: "/f", SHA256: sum, Mode: 0o644}.Plan(ctx)
 	if err != nil || len(changes) != 1 {
 		t.Fatalf("plan = %v, %v; want one change", changes, err)
 	}
@@ -37,7 +37,7 @@ func fetchOnce(ctx context.Context, t *testing.T, m effect.Machine, sum string) 
 const bodySum = "230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5" // SHA-256 of "body"
 
 func TestDownloadRetriesAFailedFetch(t *testing.T) {
-	defer host.FixRetryWait(time.Millisecond)()
+	defer fetch.FixRetryWait(time.Millisecond)()
 	m := effecttest.NewMachine()
 	m.Pages["u"] = []byte("body")
 	f := &flaky{Machine: m, fails: 2, err: errors.New("503")}
@@ -47,7 +47,7 @@ func TestDownloadRetriesAFailedFetch(t *testing.T) {
 }
 
 func TestDownloadGivesUpAfterFiveTriesAndKeepsEachError(t *testing.T) {
-	defer host.FixRetryWait(time.Millisecond)()
+	defer fetch.FixRetryWait(time.Millisecond)()
 	m := effecttest.NewMachine()
 	f := &flaky{Machine: m, fails: 9, err: errors.New("503")}
 	err := fetchOnce(t.Context(), t, f, bodySum)
@@ -57,7 +57,7 @@ func TestDownloadGivesUpAfterFiveTriesAndKeepsEachError(t *testing.T) {
 }
 
 func TestDownloadDoesNotRetryAWrongSum(t *testing.T) {
-	defer host.FixRetryWait(time.Millisecond)()
+	defer fetch.FixRetryWait(time.Millisecond)()
 	m := effecttest.NewMachine()
 	m.Pages["u"] = []byte("body")
 	f := &flaky{Machine: m}
@@ -68,7 +68,7 @@ func TestDownloadDoesNotRetryAWrongSum(t *testing.T) {
 }
 
 func TestDownloadStopsOnADoneContext(t *testing.T) {
-	defer host.FixRetryWait(time.Hour)()
+	defer fetch.FixRetryWait(time.Hour)()
 	m := effecttest.NewMachine()
 	f := &flaky{Machine: m, fails: 9, err: errors.New("503")}
 	ctx, cancel := context.WithCancel(t.Context())

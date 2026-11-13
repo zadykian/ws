@@ -7,6 +7,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -22,14 +23,14 @@ func TestReportsOfPaths(t *testing.T) {
 		r    step.Reporter
 		want step.Item
 	}{
-		{host.Download{M: m, Path: "/new", Mode: 0o644},
+		{fetch.Download{M: m, Path: "/new", Mode: 0o644},
 			step.Item{Kind: step.FileItem, Name: "/new", Want: asRoot, Found: "missing"}},
-		{host.Download{M: m, Path: "/f", SHA256: "0", Mode: 0o644},
+		{fetch.Download{M: m, Path: "/f", SHA256: "0", Mode: 0o644},
 			step.Item{Kind: step.FileItem, Name: "/f", Want: asRoot, Found: asRoot + ", other content",
 				Conflict: "differs from the download ws pins: a change by hand, or another version of ws"}},
-		{host.Download{M: m, Path: "/f", SHA256: sum, Mode: 0o644},
+		{fetch.Download{M: m, Path: "/f", SHA256: sum, Mode: 0o644},
 			step.Item{Kind: step.FileItem, Name: "/f", Want: asRoot, Found: asRoot}},
-		{host.Download{M: m, Path: "/f", SHA256: sum, Mode: 0o600},
+		{fetch.Download{M: m, Path: "/f", SHA256: sum, Mode: 0o600},
 			step.Item{Kind: step.FileItem, Name: "/f", Want: "owner 0:0, mode 600", Found: asRoot, Conflict: changed}},
 		{host.Dir{M: m, Path: "/new", Mode: 0o755},
 			step.Item{Kind: step.DirItem, Name: "/new", Want: "owner 0:0, mode 755", Found: "missing"}},

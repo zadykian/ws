@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
-	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 const (
-	pkgFile = host.CacheDir + "/a_amd64.deb"
+	pkgFile = fetch.CacheDir + "/a_amd64.deb"
 	pkgApt  = "env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 " +
 		"-o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold " +
 		"install -y --allow-downgrades " + pkgFile
@@ -30,7 +30,7 @@ func packageFixture(row effecttest.Package) (*effecttest.Machine, apt.Package) {
 	m.Results[pkgDeb] = effecttest.Result{Out: []byte("Package: a\nVersion: 1.2\n")}
 	m.Results[pkgApt] = effecttest.Result{}
 	m.Pages["https://x/1.2/a_amd64.deb"] = []byte("deb")
-	return m, apt.Package{M: m, Name: "a", Source: host.PinnedFile{M: m, Version: "1.2",
+	return m, apt.Package{M: m, Name: "a", Source: fetch.PinnedFile{M: m, Version: "1.2",
 		SHA256: map[string]string{"amd64": sumOf("deb")},
 		URL:    func(version, arch string) string { return "https://x/" + version + "/a_" + arch + ".deb" }}}
 }

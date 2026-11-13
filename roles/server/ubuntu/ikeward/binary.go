@@ -2,7 +2,7 @@ package ikeward
 
 import (
 	"github.com/zadykian/ws/engine/core/effect"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 // version is ikeward's, from its release's binary. sums are the SHA-256 of that binary for each
@@ -28,6 +28,6 @@ func binaryURL(version, arch string) string {
 // binaryFile makes the release's binary without install.sh, where install.sh would put it. Its
 // download is checked against the SHA-256 before it writes the file, and made again where the
 // file holds another, a former version's.
-func binaryFile(m effect.Machine) host.PinnedFile {
-	return host.PinnedFile{M: m, Version: version, URL: binaryURL, SHA256: sums, Path: binary, Mode: 0o755}
+func binaryFile(m effect.Machine) fetch.PinnedFile {
+	return fetch.PinnedFile{M: m, Version: version, URL: binaryURL, SHA256: sums, Path: binary, Mode: 0o755}
 }

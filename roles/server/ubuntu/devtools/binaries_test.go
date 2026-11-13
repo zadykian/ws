@@ -11,6 +11,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/account"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -41,12 +42,12 @@ func TestEachPinHoldsAHexDigestForBothArchitectures(t *testing.T) {
 }
 
 // pinnedOf returns the one pinned file that the step for the server makes.
-func pinnedOf(t *testing.T, name string, r release, url func(version, arch string) string) host.PinnedFile {
+func pinnedOf(t *testing.T, name string, r release, url func(version, arch string) string) fetch.PinnedFile {
 	parts := download(effecttest.NewMachine(), name, r, url).Parts
 	if len(parts) != 1 {
 		t.Fatalf("%s: %v", name, parts)
 	}
-	return parts[0].(host.PinnedFile)
+	return parts[0].(fetch.PinnedFile)
 }
 
 func TestEachServerIsRootsBinaryAtMode0755WithItsPin(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/local"
-	"github.com/zadykian/ws/engine/core/host"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 )
 
 func tarGz(t *testing.T, names ...string) string {
@@ -55,10 +55,10 @@ func TestOSMachineUnpackStripsAndMakesTheDirectory(t *testing.T) {
 
 func TestUnpackFileThroughTheMachine(t *testing.T) {
 	file := tarGz(t, "top/f")
-	if err := host.UnpackFile(file, filepath.Join(t.TempDir(), "d"), 1); err != nil {
+	if err := fetch.UnpackFile(file, filepath.Join(t.TempDir(), "d"), 1); err != nil {
 		t.Error(err)
 	}
-	if err := host.UnpackFile(file+"-none", t.TempDir(), 1); err == nil {
+	if err := fetch.UnpackFile(file+"-none", t.TempDir(), 1); err == nil {
 		t.Error("a missing archive unpacked")
 	}
 }

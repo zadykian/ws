@@ -1,4 +1,4 @@
-package host
+package fetch
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/zadykian/ws/engine/core/effect"
+	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/step"
 )
 
@@ -64,10 +65,10 @@ func (c installTree) Apply(ctx context.Context) error {
 // cleaned plans the removal of what a run cut short left beside a current tree: its archive, and
 // its staging directory. The archive's name needs the URL alone, so the source is not asked for a
 // sum.
-func (t Tree) cleaned(ctx context.Context, url string) ([]Change, error) {
-	var changes []Change
+func (t Tree) cleaned(ctx context.Context, url string) ([]host.Change, error) {
+	var changes []host.Change
 	for _, p := range []string{path.Join(CacheDir, path.Base(url)), t.staging()} {
-		more, err := Absent{M: t.M, Path: p}.Plan(ctx)
+		more, err := host.Absent{M: t.M, Path: p}.Plan(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +80,7 @@ func (t Tree) cleaned(ctx context.Context, url string) ([]Change, error) {
 // Plan plans the removal of leftovers where the marker holds the pinned URL. Otherwise it plans the
 // directory, the fetch of the archive and the install. It asks the source for its sum only for the
 // fetch.
-func (t Tree) Plan(ctx context.Context) ([]Change, error) {
+func (t Tree) Plan(ctx context.Context) ([]host.Change, error) {
 	url, _, err := t.Source.resolve(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
@@ -95,8 +96,8 @@ func (t Tree) Plan(ctx context.Context) ([]Change, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tree %s: %w", t.Path, err)
 	}
-	var changes []Change
-	for _, r := range []Resource{Dir{M: t.M, Path: CacheDir, Mode: 0o755}, archive} {
+	var changes []host.Change
+	for _, r := range []host.Resource{host.Dir{M: t.M, Path: CacheDir, Mode: 0o755}, archive} {
 		more, err := r.Plan(ctx)
 		if err != nil {
 			return nil, err

@@ -7,6 +7,7 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/host"
 	"github.com/zadykian/ws/engine/core/host/apt"
+	"github.com/zadykian/ws/engine/core/host/fetch"
 	"github.com/zadykian/ws/engine/core/host/systemd"
 	"github.com/zadykian/ws/engine/core/step"
 )
@@ -20,7 +21,7 @@ const installStep = "Collector install"
 // pinned is the collector's .deb as a package, which plans from the pin and removes the file once
 // it installs.
 func pinned(m effect.Machine) apt.Package {
-	return apt.Package{M: m, Name: "otelcol-contrib", Source: host.PinnedFile{M: m, Version: version, URL: debURL, SHA256: sums}}
+	return apt.Package{M: m, Name: "otelcol-contrib", Source: fetch.PinnedFile{M: m, Version: version, URL: debURL, SHA256: sums}}
 }
 
 // stopped plans the package, and the stop of the collector that it started and enabled where the
