@@ -1,4 +1,4 @@
-package setup_test
+package zed_test
 
 import (
 	"context"

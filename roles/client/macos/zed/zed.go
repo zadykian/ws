@@ -1,4 +1,6 @@
-package setup
+// Package zed installs Zed and its font on the Mac, and writes the settings and keymap that Zed
+// reads.
+package zed
 
 import (
 	"context"
