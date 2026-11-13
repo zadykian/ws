@@ -11,7 +11,8 @@
 # - units/NAME is a unit's log, as the journal holds it, and units/NAME.on is there while it runs;
 # - run.log holds systemd-run's arguments, and server.log the arguments of ws server ubuntu apply
 #   past its --json, which it requires, a line each. values.log holds those of ws server ubuntu
-#   values set, a line each, each argument in brackets;
+#   values set, a line each, each argument in brackets. It writes the pair in root's host_vars
+#   too, as ws does, where the wizard reads it back;
 # - secrets.log holds the arguments of ws server ubuntu secrets, a line each, secrets.in its last
 #   stdin, and keys what its keys prints;
 # - creds/UNIT holds a unit's credentials, and seen/ the identity and the secrets file that
@@ -169,7 +170,16 @@ ws)
             shift 3
             printf '[%s]' "$@" >>"$s/values.log"
             echo >>"$s/values.log"
-            exit 0
+            # set -- KEY VALUE: the key's line goes, and a value that is not empty comes last.
+            vars="$s/root"/etc/ws/host_vars.yml
+            mkdir -p "${vars%/*}" || exit 1
+            umask 077
+            {
+                grep -v "^$2:" "$vars" 2>/dev/null
+                [ -z "$3" ] || echo "$2: $3"
+            } >"$vars.new"
+            mv -f "$vars.new" "$vars"
+            exit
         fi
         if [ "$2 ${3-}" = 'state --json' ]; then
             echo "report of $(cat "$s/ws.version") with $HOME and $LC_ALL"
