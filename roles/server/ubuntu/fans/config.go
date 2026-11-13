@@ -7,7 +7,7 @@ import (
 	"github.com/zadykian/ws/roles/server/ubuntu/values"
 )
 
-// configPath is the file that ws server fans reads.
+// configPath is the file that ws server ubuntu fans reads.
 const configPath = "/etc/ws-fans.json"
 
 // pair converts a value for rising and one for falling.
