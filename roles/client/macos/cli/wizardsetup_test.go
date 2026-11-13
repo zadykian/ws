@@ -24,11 +24,11 @@ func (l *lastEvents) Observe(e step.Event) {
 
 func TestWizardSetupPassesTheObserverOn(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
 	p := withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	p.Machine = m
 	var got lastEvents
-	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/mac.conf")
+	s := wizardSetup(wizardEffects{p: p, text: io.Discard, out: &effecttest.Out{}, obs: &got}, nil, "/h/mac.conf", "/h/servers/ws/server.conf")
 	// The fake machine fails ssh's plan, and each step ends all the same.
 	_, _ = s.Run(context.Background(), true)
 	var want lastEvents
@@ -55,10 +55,10 @@ func (l *leftEvents) Observe(e step.Event) {
 func setupOf(t *testing.T, e wizardEffects, left func(parent, name string) bool) *tools.Setup {
 	t.Helper()
 	m := effecttest.NewMachine()
-	m.Files["/h/mac.conf"] = []byte("WS_USER=ada\n")
+	m.Files["/h/mac.conf"], m.Files["/h/servers/ws/server.conf"] = []byte(""), []byte("WS_USER=ada\n")
 	e.p = withEnv(fakeProcess(), map[string]string{"HOME": "/h"})
 	e.p.Machine, e.text, e.out = m, io.Discard, &effecttest.Out{}
-	return wizardSetup(e, left, "/h/mac.conf")
+	return wizardSetup(e, left, "/h/mac.conf", "/h/servers/ws/server.conf")
 }
 
 func TestWizardSetupWaitsOnTheMacKeyStage(t *testing.T) {
