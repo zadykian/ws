@@ -26,7 +26,7 @@ type rig struct {
 }
 
 func newRig(iface, address string) rig {
-	m := netplanMachine()
+	m := rigMachine()
 	m.Dirs["/run/systemd/system"] = 0o755
 	m.Dirs["/sys/class/net/enp5s0"] = 0o755
 	m.Results[ipPrefix+"-4 route show default table all"] = effecttest.Result{Out: []byte("[]")}

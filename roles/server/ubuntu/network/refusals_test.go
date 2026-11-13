@@ -24,7 +24,7 @@ func TestTheStepRefuses(t *testing.T) {
 				`[{"ifname":"enp5s0","address":"00:1a:2b:3c:4d:5e","addr_info":[{"family":"inet","local":"192.168.1.5","prefixlen":24,"scope":"global","dynamic":true}]}]`)}
 		}, "enp5s0 holds 192.168.1.5/24 from DHCP, outside 10.77.0.0/30"},
 		{"a sibling entry that fits", "enp5s0", "10.77.0.1/30", func(r rig) {
-			r.m.Results["netplan get --root-dir "+scratch] = effecttest.Result{Out: []byte("network:\n  ethernets:\n    enp5s0: {}\n    lan:\n      match:\n        name: enp*\n")}
+			r.m.Results["netplan get --root-dir "+scratchDir] = effecttest.Result{Out: []byte("network:\n  ethernets:\n    enp5s0: {}\n    lan:\n      match:\n        name: enp*\n")}
 		}, "netplan's entry lan fits enp5s0"},
 		{"networkd that does not run", "enp5s0", "10.77.0.1/30", func(r rig) {
 			r.u.States = nil
