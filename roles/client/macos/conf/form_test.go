@@ -1,4 +1,4 @@
-package wizard
+package conf
 
 import (
 	"context"
@@ -9,16 +9,15 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/core/form"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // formOf returns the form of mac.conf's text.
-func formOf(t *testing.T, text string) (ConfForm, *effecttest.Machine) {
+func formOf(t *testing.T, text string) (Form, *effecttest.Machine) {
 	t.Helper()
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte(text)
 	m.Results["mkdir -p /h"] = effecttest.Result{}
-	f, err := ConfForm{Conf: "/h/mac.conf", Defaults: []byte("shell_git_name: A B\nshell_git_email: a@b.dev\n"), M: m}.
+	f, err := Form{Conf: "/h/mac.conf", Defaults: []byte("shell_git_name: A B\nshell_git_email: a@b.dev\n"), M: m}.
 		Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
@@ -36,7 +35,7 @@ func TestConfFormLoadReadsTheFile(t *testing.T) {
 func TestConfFormLoadRefusesABadLine(t *testing.T) {
 	m := effecttest.NewMachine()
 	m.Files["/h/mac.conf"] = []byte("no line\n")
-	if _, err := (ConfForm{Conf: "/h/mac.conf", M: m}).Load(&effecttest.Out{}); err == nil {
+	if _, err := (Form{Conf: "/h/mac.conf", M: m}).Load(&effecttest.Out{}); err == nil {
 		t.Error("Load = nil; want a refusal")
 	}
 }
@@ -184,13 +183,13 @@ func TestConfFormSaveRefusals(t *testing.T) {
 	signed := "WS_GIT_NAME=Me\nWS_GIT_EMAIL=me@b.dev\nWS_GIT_SIGNING_PUB_KEY=~/.ssh/k.pub\n"
 	f, m := formOf(t, signed)
 	_, err := f.Save(context.Background(), &effecttest.Out{}, map[string]string{"WS_GIT_NAME": ""})
-	if !errors.Is(err, conf.ErrRefused) || string(m.Files["/h/mac.conf"]) != signed {
+	if !errors.Is(err, ErrRefused) || string(m.Files["/h/mac.conf"]) != signed {
 		t.Errorf("a signing key with no name: %v, mac.conf = %q", err, m.Files["/h/mac.conf"])
 	}
 	f, m = formOf(t, "")
 	m.Links["/h/mac.conf"] = "/dotfiles/mac.conf"
 	out := &effecttest.Out{}
-	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, conf.ErrRefused) {
+	if _, err := f.Save(context.Background(), out, map[string]string{"WS_REMOTE": "r.example"}); !errors.Is(err, ErrRefused) {
 		t.Errorf("a link: %v", err)
 	}
 	if said := strings.Join(out.Lines, "\n"); !strings.Contains(said, "is a link") || !strings.Contains(said, "WS_REMOTE=r.example") {

@@ -10,6 +10,7 @@ import (
 	"github.com/zadykian/ws/engine/core/form"
 	"github.com/zadykian/ws/engine/tui"
 	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // newConfigureCmd returns ws client macos configure.
@@ -46,7 +47,7 @@ func runConfigure(c *cobra.Command, p process) error {
 // which lets go of ws once they have ended.
 func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, func(context.Context), error) {
 	return func(context.Context) ([]tui.Sheet, func(context.Context), error) {
-		form := wizard.ConfForm{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
+		form := conf.Form{Conf: confPath(p.getenv, p.pwd), Defaults: shellDefaults(), M: p.machine}
 		form, err := form.Load(effect.NewTerminal(c.InOrStdin(), c.ErrOrStderr()))
 		if err != nil {
 			return nil, nil, err
@@ -58,7 +59,7 @@ func macForms(c *cobra.Command, p process) func(context.Context) ([]tui.Sheet, f
 }
 
 // confSheet is mac.conf on the Configure screen.
-func confSheet(form wizard.ConfForm) tui.Sheet {
+func confSheet(form conf.Form) tui.Sheet {
 	return tui.Sheet{
 		Name:   "mac.conf",
 		Fields: func(edits map[string]string) []tui.FieldSpec { return fieldSpecs(form.Fields(edits)) },

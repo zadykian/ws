@@ -1,4 +1,4 @@
-package wizard
+package conf
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/engine/core/form"
-	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 // configureStage names the Configure screen in what a save says.
@@ -21,22 +20,22 @@ var targets = []string{"lan", "cloud", "mac-vm"}
 // WS_LAN on a cloud VM, and a key that doesn't show has no field to clear it by.
 var wayKeys = []string{"WS_LAN", "WS_LAN_ADDRESS", "WS_REMOTE", "WS_REMOTE_PORT", "WS_GIT_EMAIL"}
 
-// ConfForm is mac.conf as a form: the keys that the Answers stage would ask where the file lacked
+// Form is mac.conf as a form: the keys that the Answers stage would ask where the file lacked
 // them all, as the edits so far lead it. A key that the stage never asks stays the file's.
-type ConfForm struct {
+type Form struct {
 	// Conf is mac.conf's path.
 	Conf string
 	// Defaults is the text of the shell role's defaults, whose git identity ws's git takes.
 	Defaults []byte
 	M        effect.Machine
 	// file is what mac.conf held at the last load.
-	file conf.Conf
+	file Conf
 }
 
 // Load reads mac.conf, says each line that conf refuses, and fails on one: a form shows keys, and
 // has no field for a line that is none. A refusal of keys that go together opens, as a form mends it.
-func (f ConfForm) Load(out effect.Out) (ConfForm, error) {
-	_, c, err := (conf.File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).Load()
+func (f Form) Load(out effect.Out) (Form, error) {
+	_, c, err := (File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).Load()
 	if err != nil {
 		return f, err
 	}
@@ -46,16 +45,16 @@ func (f ConfForm) Load(out effect.Out) (ConfForm, error) {
 
 // walk runs the Answers stage's sequence, each question getting the value that the form holds, and
 // returns the questions it reached and the values it ended on.
-func (f ConfForm) walk(edits map[string]string) ([]conf.Question, map[string]string) {
-	var asked []conf.Question
-	s := conf.Sequence{
+func (f Form) walk(edits map[string]string) ([]Question, map[string]string) {
+	var asked []Question
+	s := Sequence{
 		Vals:  map[string]string{},
 		Lacks: func(string) bool { return true },
-		Ask: func(q conf.Question) (string, error) {
+		Ask: func(q Question) (string, error) {
 			asked = append(asked, q)
 			return f.wanted(q, edits), nil
 		},
-		Role: func(name string) string { return conf.Default(f.Defaults, name) },
+		Role: func(name string) string { return Default(f.Defaults, name) },
 	}
 	_ = s.Run() // ask returns no error, which is what would stop the walk.
 	return asked, s.Vals
@@ -64,7 +63,7 @@ func (f ConfForm) walk(edits map[string]string) ([]conf.Question, map[string]str
 // wanted is the value that a save would leave for the key: an edit, or the file's, or the default of
 // a key that needs a value. An optional key's default stays the wizard's offer, as a form shows the
 // file and a value nobody typed would land unseen.
-func (f ConfForm) wanted(q conf.Question, edits map[string]string) string {
+func (f Form) wanted(q Question, edits map[string]string) string {
 	if raw, ok := edits[q.Key]; ok {
 		return fieldValue(q, raw)
 	}
@@ -76,7 +75,7 @@ func (f ConfForm) wanted(q conf.Question, edits map[string]string) string {
 
 // fieldValue reads what a field holds as the wizard reads an answer. But an empty field of an
 // optional key is an empty value, which is what the form shows.
-func fieldValue(q conf.Question, raw string) string {
+func fieldValue(q Question, raw string) string {
 	if raw == "" && q.Need == "" {
 		return ""
 	}
@@ -84,7 +83,7 @@ func fieldValue(q conf.Question, raw string) string {
 }
 
 // Fields returns the keys that show under the edits, in the order that the stage asks them.
-func (f ConfForm) Fields(edits map[string]string) []form.Field {
+func (f Form) Fields(edits map[string]string) []form.Field {
 	asked, vals := f.walk(edits)
 	fields := make([]form.Field, 0, len(asked))
 	for _, q := range asked {
@@ -109,12 +108,12 @@ func (f ConfForm) Fields(edits map[string]string) []form.Field {
 
 // settings lists what a save changes: each key that shows, and an empty value for one that holds a
 // value and no longer has a place. The cable's keys never show, and go with the LAN.
-func (f ConfForm) settings(edits map[string]string) []conf.Setting {
+func (f Form) settings(edits map[string]string) []Setting {
 	asked, vals := f.walk(edits)
-	var changes []conf.Setting
+	var changes []Setting
 	for _, q := range asked {
 		if v := f.wanted(q, edits); v != f.file.Value(q.Key) {
-			changes = append(changes, conf.Setting{Key: q.Key, Value: v})
+			changes = append(changes, Setting{Key: q.Key, Value: v})
 		}
 	}
 	gone := wayKeys
@@ -123,7 +122,7 @@ func (f ConfForm) settings(edits map[string]string) []conf.Setting {
 	}
 	for _, key := range gone {
 		if _, shows := vals[key]; !shows && f.file.Value(key) != "" {
-			changes = append(changes, conf.Setting{Key: key})
+			changes = append(changes, Setting{Key: key})
 		}
 	}
 	return changes
@@ -131,13 +130,13 @@ func (f ConfForm) settings(edits map[string]string) []conf.Setting {
 
 // Save writes the changes to mac.conf as one and returns the form of what it then holds. It says the
 // keys that it emptied, as some of them no longer show.
-func (f ConfForm) Save(ctx context.Context, out effect.Out, edits map[string]string) (ConfForm, error) {
+func (f Form) Save(ctx context.Context, out effect.Out, edits map[string]string) (Form, error) {
 	changes := f.settings(edits)
 	if len(changes) == 0 {
 		out.Say("%s holds these values already", f.Conf)
 		return f, nil
 	}
-	if err := (conf.File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).SetAll(ctx, changes...); err != nil {
+	if err := (File{Path: f.Conf, Stage: configureStage, M: f.M, Out: out}).SetAll(ctx, changes...); err != nil {
 		return f, err
 	}
 	var emptied []string

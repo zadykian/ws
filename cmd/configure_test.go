@@ -9,7 +9,7 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/engine/tui"
-	"github.com/zadykian/ws/internal/wizard"
+	"github.com/zadykian/ws/roles/client/macos/conf"
 )
 
 func TestMacConfigureAtATerminalDrawsAForm(t *testing.T) {
@@ -52,7 +52,7 @@ func TestMacConfigureWritesWhatAFormSaves(t *testing.T) {
 
 func TestConfSheetDrawsWhatTheFormGives(t *testing.T) {
 	_, m := macTerminal()
-	form, err := wizard.ConfForm{Conf: "/h/.config/ws/mac.conf", M: m}.Load(&effecttest.Out{})
+	form, err := conf.Form{Conf: "/h/.config/ws/mac.conf", M: m}.Load(&effecttest.Out{})
 	if err != nil {
 		t.Fatal(err)
 	}
